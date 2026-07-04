@@ -16,10 +16,6 @@ patch=1,EE,20AF3694,extended,3F400000
 author=solid1353
 patch=1,EE,102298BC,extended,00004040
 
-[Sub cost = 5/15]
-author=solid1353
-patch=1,EE,102298BC,extended,000040A0
-
 [Disable RPS]
 author=solid1353
 patch=1,EE,202457C8,extended,14400077
@@ -53,7 +49,3 @@ patch=1,EE,201E7A9C,extended,00000000
 [Disable extra hit with aura punishment]
 author=solid1353
 patch=1,EE,2023B5E8,extended,104300C9
-
-// [Disable extra hit]
-// author=solid1353
-// patch=1,EE,20241F40,extended,100000AA

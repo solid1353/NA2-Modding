@@ -60,6 +60,8 @@ Current PNACH sections:
 
 Scratch/intermediate folders should be created only when needed, preferably under root `temp/` with names tied to the task. Extractions of original source archives stay beside the source archive under `source/`.
 
+When adding a new root folder, document it in both md project files and add a `.gitkeep` unless the folder is intentionally untracked/generated. For binary modding, prefer persistent target folders under `work/` over repeated fresh disassembly. State the tools/software used for each change, and keep command chunks short and reusable.
+
 ## Trash Rule
 
 Use `trash/` for project-local removals instead of hard deletion when practical. Trash batches are timestamped and include a manifest/log.

@@ -28,6 +28,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Treat top-level `old/` as the user's personal folder. Do not inspect, search, execute from, modify, move, delete, or otherwise touch it unless explicitly instructed.
 - Treat `utils/old/` as an untrusted tool/archive dump. Do not execute tools from it until inspected and chosen for a specific task.
 - Log every binary patch: file, offset, original bytes, new bytes, reason.
+- For PNACH logic changes, keep section names synchronized with `pcsx2/gamesettings/SLPS-25837_<crc>.ini` enabled cheat names.
 - For string patches, always check encoded byte length before writing.
 - Prefer Shift-JIS / CP932-compatible text unless proven otherwise.
 - DATA.CVM password is `cc2fuku`.
@@ -37,6 +38,17 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Avoid GUI-only workflows when CLI/scripted alternatives exist.
 - Ask before destructive actions, mass rewrites, ISO rebuilds, or modifying originals.
 - If uncertain, inspect and report instead of acting.
+
+
+## Workspace creation rules
+
+- New root folders are allowed when useful, but every new root folder must be described in `AGENTS.md` and `PROJECT_CONTEXT.md` and contain a `.gitkeep` unless it is intentionally untracked/generated.
+- Use root `temp/` for throwaway/intermediate work only. Clean task subfolders there after failed or finished experiments when they are no longer useful.
+- Use root `work/` for persistent reverse-engineering and binary-mod work. Keep work separated by target/task, for example `work/<target>/base/`, `work/<target>/mod/`, and `work/<target>/analysis/`.
+- Do not mix source/reference files with modified files. Baseline copies, modified copies, analysis outputs, and release/build outputs must live in clearly separate folders.
+- Do not repeatedly disassemble the same binary from scratch when a preserved analysis workspace is available; reuse and update the relevant `work/<target>/analysis/` materials.
+- State explicitly what software/tools were used for a task. If the right tool is uncertain or missing, ask the user to provide or approve one.
+- Prefer short, reusable command/script chunks over long multi-stage one-off commands. Break repetitive work into scripts or small verifiable steps.
 
 ## Release / milestone rules
 

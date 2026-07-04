@@ -3,6 +3,8 @@
 !/source/.gitkeep
 /build/*
 !/build/.gitkeep
+/ghidra
+/disassembly
 
 # Local emulator install/runtime data
 /pcsx2/*

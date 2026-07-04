@@ -29,6 +29,10 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Treat `utils/old/` as an untrusted tool/archive dump. Do not execute tools from it until inspected and chosen for a specific task.
 - Log every binary patch: file, offset, original bytes, new bytes, reason.
 - For PNACH logic changes, keep section names synchronized with `pcsx2/gamesettings/SLPS-25837_<crc>.ini` enabled cheat names.
+- Keep active PNACH files clean: confirmed named sections only, plus temporary hypothesis patches at the very top when actively testing.
+- Temporary PNACH hypothesis patches go at the top of the file as always-on `patch=` lines with comment-only names, not `[tag]` sections. Do not add them to gamesettings.
+- Move old candidates, failed experiments, and speculative addresses to `HYPOTHESES.md`.
+- Track concrete active plans and queued investigations in `TASKS.md`, not general rules or PNACH comments.
 - For string patches, always check encoded byte length before writing.
 - Prefer Shift-JIS / CP932-compatible text unless proven otherwise.
 - DATA.CVM password is `cc2fuku`.
@@ -74,7 +78,7 @@ When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2
 
 ## Current release file list
 
-Keep the live release list in `release_files.txt`. Current release contents are `BTL.BIN`, `ETC.BIN`, boot ELF `SLPS_258.37`, the actualized game settings INI, and the actualized PNACH. Ask for release name and confirm file list/ISO before creating a release. Then actualize and copy files into `releases/<release_name>/` without overwriting existing paths.
+Keep the live release list in `RELEASE_FILES.md`. Current release contents are `BTL.BIN`, `ETC.BIN`, boot ELF `SLPS_258.37`, the actualized game settings INI, and the actualized PNACH. Ask for release name and confirm file list/ISO before creating a release. Then actualize and copy files into `releases/<release_name>/` without overwriting existing paths.
 ## Report format
 
 Report files read, files created/modified, whether originals were untouched, scripts/commands used, hashes/sizes, and uncertainties.

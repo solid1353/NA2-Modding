@@ -1,13 +1,5 @@
 gametitle=Naruto Shippuuden: Narutimate Accel 2 (SLPS-25837)
 
-// [Disable RPS (old)]
-// author=solid1353
-// patch=1,EE,202457C8,extended,1000007A
-
-// [Disable extra hit (old)]
-// author=solid1353
-// patch=1,EE,20241F40,extended,100000AA
-
 [Widescreen 16:9]
 gsaspectratio=16:9
 patch=1,EE,20AF3694,extended,3F400000

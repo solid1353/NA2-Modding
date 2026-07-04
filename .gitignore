@@ -33,3 +33,6 @@ Thumbs.db
 Desktop.ini
 *.tmp
 *.bak
+
+# Binaries
+*.bin

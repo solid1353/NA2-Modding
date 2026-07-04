@@ -31,6 +31,7 @@ Current PNACH:
 - Canonical editable PNACH: `cheats/C0659AD1.pnach`
 - Actualized PNACH hardlinks live in `cheats/SLPS-25837_<crc>.pnach`.
 - Root `cheats/` is a real project folder and the only cheats folder we manage.
+- Temporary PNACH hypothesis patches go at the top of `cheats/C0659AD1.pnach` as always-on `patch=` lines with comment-only names, not `[tag]` sections. Only update gamesettings after a patch is confirmed and promoted to a real named section.
 - Live PNACH size when inspected: `1059` bytes.
 
 Current PNACH sections:
@@ -51,10 +52,12 @@ Current PNACH sections:
 
 - `source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
 - `source/*.files/`: extracted views of original source archives. Treat as read-only reference.
-- `build/`: active working outputs, including current modded ISO and current PNACH.
+- `build/`: active working outputs, including current modded ISO, current PNACH, and loose replacement files awaiting ISO rebuild.
 - `releases/`: symlink to `C:\Users\solid\Documents\Mods\NA2\releases`; frozen milestone artifacts only. Append-only; never alter existing contents.
 - `logs/`: inventories, hashes, patch records, and investigation notes.
 - `scripts/`: repeatable tooling.
+- `HYPOTHESES.md`: archived patch candidates, failed experiments, unverified addresses, and speculative leads.
+- `TASKS.md`: concrete active tasks, test plans, and queued investigations only; no general workflow rules.
 - `trash/`: timestamped holding area for deleted/retired workspace items.
 - `old/`: user's personal folder. Off-limits unless explicitly instructed.
 
@@ -130,6 +133,11 @@ Use `scripts/split_cvm_rofs.ps1` to split the encrypted CVM safely without runni
 
 - `check_translation_lengths.ps1`: checks CP932 byte lengths for translation tables.
 - `extract_afs.ps1`: extracts AFS archives for inspection when needed.
+- `extract_iso_file.ps1`: extracts one file from an ISO into a chosen output path.
+- `replace_iso_file_same_size.ps1`: replaces a same-size file extent inside an ISO in place.
+- `compare_translation_files.ps1`: compares translated `BTL.BIN`, `ETC.BIN`, and `SLPS_258.37` against source copies and writes TSV reports.
+- `extract_changed_string_slots.ps1`: extracts changed CP932 string slots for translation review.
+- `apply_string_slot_patches.ps1`: applies validated CP932 string-slot patches and writes a patch log.
 - `inventory_project.ps1`: creates timestamped inventory/hash reports under `logs/`.
 - `set_original_readonly.ps1`: applies and verifies Windows read-only attributes under `source/`.
 - `move_to_trash.ps1`: moves project-local files/folders to timestamped `trash/` batches and refuses protected folders.
@@ -238,7 +246,7 @@ When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2
 
 Release root is `C:\Users\solid\Documents\Mods\NA2\releases`, exposed through the root `releases/` symlink. Before release, ask for the release name and confirm the release file list and ISO source. Default ISO source is the ISO in `build/`. Then actualize, extract/copy the current release files to `releases/<release_name>/`, and stop if any target path already exists.
 
-Current release file list is tracked in `release_files.txt`: `BTL.BIN`, `ETC.BIN`, boot ELF `SLPS_258.37`, actualized game settings INI, and actualized PNACH.
+Current release file list is tracked in `RELEASE_FILES.md`: `BTL.BIN`, `ETC.BIN`, boot ELF `SLPS_258.37`, actualized game settings INI, and actualized PNACH.
 
 
 

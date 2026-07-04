@@ -54,11 +54,19 @@ $AfsPath = (Resolve-Path -LiteralPath $AfsPath).Path
 
 if ([string]::IsNullOrWhiteSpace($OutDir)) {
     $parent = Split-Path -Parent $AfsPath
-    $base = [IO.Path]::GetFileNameWithoutExtension($AfsPath)
-    $OutDir = Join-Path $parent ($base + "_extracted")
+    $base = [IO.Path]::GetFileName($AfsPath)
+    $OutDir = Join-Path $parent ($base + ".files")
 }
 
-New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+if (Test-Path -LiteralPath $OutDir) {
+    $existing = @(Get-ChildItem -Force -LiteralPath $OutDir)
+    if ($existing.Count -ne 0) {
+        throw "Output directory already exists and is not empty; refusing to merge or overwrite: $OutDir"
+    }
+}
+else {
+    New-Item -ItemType Directory -Path $OutDir | Out-Null
+}
 
 $fs = [IO.File]::OpenRead($AfsPath)
 
@@ -143,8 +151,41 @@ finally {
     $fs.Dispose()
 }
 
-$logPath = Join-Path $OutDir "extraction_log.tsv"
-$logRows | Export-Csv -LiteralPath $logPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8
+$root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$sourceRoot = Join-Path $root "source"
+$logDir = Join-Path $root "logs"
+New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+
+if ($OutDir.StartsWith($sourceRoot, [StringComparison]::OrdinalIgnoreCase)) {
+    $logPath = Join-Path $logDir "source_afs_extraction_log.tsv"
+    $sourceLogRel = ""
+    $containerRel = $OutDir.Substring($sourceRoot.Length + 1)
+    $containerArchiveRel = if ($containerRel.EndsWith(".files")) { $containerRel.Substring(0, $containerRel.Length - 6) } else { $containerRel }
+    $centralRows = foreach ($row in $logRows) {
+        [pscustomobject]@{
+            SourceLog = $sourceLogRel
+            Container = $containerArchiveRel
+            ExtractedDir = $containerRel
+            Index = $row.Index
+            OffsetHex = $row.OffsetHex
+            SizeHex = $row.SizeHex
+            Size = $row.Size
+            Extension = $row.Extension
+            Output = if ($row.Output -and $row.Output.StartsWith($sourceRoot, [StringComparison]::OrdinalIgnoreCase)) { $row.Output.Substring($sourceRoot.Length + 1) } else { $row.Output }
+        }
+    }
+
+    if (Test-Path -LiteralPath $logPath) {
+        $centralRows | Export-Csv -LiteralPath $logPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8 -Append
+    }
+    else {
+        $centralRows | Export-Csv -LiteralPath $logPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8
+    }
+}
+else {
+    $logPath = Join-Path $OutDir "extraction_log.tsv"
+    $logRows | Export-Csv -LiteralPath $logPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8
+}
 
 Write-Host "AFS entries: $count"
 Write-Host "Extracted to:"
@@ -158,3 +199,12 @@ Get-ChildItem -LiteralPath $OutDir -File |
     Sort-Object Name |
     Select-Object Name, Count |
     Format-Table -AutoSize
+
+$root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$readonlyScript = Join-Path $PSScriptRoot "set_original_readonly.ps1"
+if ($OutDir.StartsWith((Join-Path $root "source"), [StringComparison]::OrdinalIgnoreCase) -and
+    (Test-Path -LiteralPath $readonlyScript)) {
+    & $readonlyScript | Out-Null
+}
+
+

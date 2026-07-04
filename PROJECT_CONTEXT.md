@@ -49,7 +49,7 @@ Current PNACH sections:
 
 ## Working Layout
 
-- `source/`: untouched source media. Do not modify unless explicitly instructed.
+- `source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
 - `source/*.files/`: extracted views of original source archives. Treat as read-only reference.
 - `build/`: active working outputs, including current modded ISO and current PNACH.
 - `releases/`: symlink to `C:\Users\solid\Documents\Mods\NA2\releases`; frozen milestone artifacts only. Append-only; never alter existing contents.
@@ -58,7 +58,7 @@ Current PNACH sections:
 - `trash/`: timestamped holding area for deleted/retired workspace items.
 - `old/`: user's personal folder. Off-limits unless explicitly instructed.
 
-Scratch/intermediate folders should be created only when needed and named for the task. Extractions of original source archives stay beside the source archive under `source/`.
+Scratch/intermediate folders should be created only when needed, preferably under root `temp/` with names tied to the task. Extractions of original source archives stay beside the source archive under `source/`.
 
 ## Trash Rule
 
@@ -107,9 +107,22 @@ original/
       ETC.BIN
 ```
 
-For edited/build versions, do not edit anything under `source/` in place. Copy the needed file or archive into a task/build folder first, then patch that copy through scripts and log the source path and output path.
+For edited/build versions, do not edit anything under `source/` in place. Copy the needed file or archive into a task/build folder first, then patch that copy through scripts and log the source path and output path. If extraction or inspection needs metadata, write it under `logs/` using source-relative paths instead of placing files in `source/`.
 
 The `source/` tree should also have Windows read-only attributes applied. Use `scripts/set_original_readonly.ps1` after extracting new original-source content or if attributes need to be restored.
+
+
+## DATA.CVM Extraction
+
+Confirmed ROFS/CVM password for `source/NA2.iso.files/DATA/DATA.CVM`: `cc2fuku`.
+
+Current split/extraction outputs:
+
+- `source/NA2.iso.files/DATA/DATA.CVM.files/DATA.CVM.iso`
+- `source/NA2.iso.files/DATA/DATA.CVM.files/DATA.CVM.hdr`
+- `source/NA2.iso.files/DATA/DATA.CVM.files/DATA.CVM.iso.files/`
+
+Use `scripts/split_cvm_rofs.ps1` to split the encrypted CVM safely without running `utils/old/CVM Parser/cvm_tool.exe`.
 
 ## Current Scripts
 
@@ -224,6 +237,7 @@ When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2
 Release root is `C:\Users\solid\Documents\Mods\NA2\releases`, exposed through the root `releases/` symlink. Before release, ask for the release name and confirm the release file list and ISO source. Default ISO source is the ISO in `build/`. Then actualize, extract/copy the current release files to `releases/<release_name>/`, and stop if any target path already exists.
 
 Current release file list is tracked in `release_files.txt`: `BTL.BIN`, `ETC.BIN`, boot ELF `SLPS_258.37`, actualized game settings INI, and actualized PNACH.
+
 
 
 

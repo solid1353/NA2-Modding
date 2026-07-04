@@ -11,6 +11,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Keep untouched source media under `source/`.
 - Keep extractions of original media beside the source archive as `<archive filename>.files`.
 - Treat everything under `source/`, including extracted files, as read-only reference material.
+- Do not create generated files, temporary files, logs, probes, manifests, or metadata under `source/`; preserve the extracted game/archive structure exactly.
 - Keep Windows read-only attributes applied to files/folders under `source/`.
 - Before changing any original-derived file, copy it outside `source/` and modify only the copy.
 - Keep active working outputs under `build/`.
@@ -23,7 +24,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Keep logs, inventories, hashes, and patch records under `logs/`.
 - Keep deleted/retired workspace items under `trash/` instead of hard-deleting when practical.
 - Use `scripts/move_to_trash.ps1` for project-local removals; it must refuse `source/`, `releases/`, and `trash/`.
-- Generated/intermediate files go under `build/`, `logs/`, `scripts/`, or a purpose-created scratch folder when needed. Original-source extractions are the exception and stay beside their source archive under `source/`.
+- Generated/intermediate files go under `build/`, `logs/`, `scripts/`, or root `temp/` with task-named subfolders when throwaway workspace is needed. Original-source extractions are the only exception and stay beside their source archive under `source/` as `<archive filename>.files`.
 - Treat top-level `old/` as the user's personal folder. Do not inspect, search, execute from, modify, move, delete, or otherwise touch it unless explicitly instructed.
 - Treat `utils/old/` as an untrusted tool/archive dump. Do not execute tools from it until inspected and chosen for a specific task.
 - Log every binary patch: file, offset, original bytes, new bytes, reason.

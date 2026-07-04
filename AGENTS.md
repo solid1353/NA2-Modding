@@ -1,0 +1,71 @@
+# AGENTS.md
+
+PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
+
+## Hard rules
+
+- Never change binary files manually.
+- All binary changes must go through scripts.
+- Preserve file sizes unless explicitly instructed.
+- Do not modify files under `source/` unless explicitly instructed.
+- Keep untouched source media under `source/`.
+- Keep extractions of original media beside the source archive as `<archive filename>.files`.
+- Treat everything under `source/`, including extracted files, as read-only reference material.
+- Keep Windows read-only attributes applied to files/folders under `source/`.
+- Before changing any original-derived file, copy it outside `source/` and modify only the copy.
+- Keep active working outputs under `build/`.
+- Keep frozen milestone artifacts under `releases/` (`C:\Users\solid\Documents\Mods\NA2\releases`).
+- Never alter, overwrite, rename, move, or delete anything under `releases/`.
+- Only create new uniquely named milestone outputs under `releases/`.
+- If a target path under `releases/` already exists, stop immediately and inspect/report manually.
+- Every release PNACH must correspond to the PCSX2 CRC of the ELF inside the paired release ISO.
+- Before reporting a release as valid, check the paired ISO/ELF CRC against the PNACH filename and warn if they do not match or cannot be verified.
+- Keep logs, inventories, hashes, and patch records under `logs/`.
+- Keep deleted/retired workspace items under `trash/` instead of hard-deleting when practical.
+- Use `scripts/move_to_trash.ps1` for project-local removals; it must refuse `source/`, `releases/`, and `trash/`.
+- Generated/intermediate files go under `build/`, `logs/`, `scripts/`, or a purpose-created scratch folder when needed. Original-source extractions are the exception and stay beside their source archive under `source/`.
+- Treat top-level `old/` as the user's personal folder. Do not inspect, search, execute from, modify, move, delete, or otherwise touch it unless explicitly instructed.
+- Treat `utils/old/` as an untrusted tool/archive dump. Do not execute tools from it until inspected and chosen for a specific task.
+- Log every binary patch: file, offset, original bytes, new bytes, reason.
+- For string patches, always check encoded byte length before writing.
+- Prefer Shift-JIS / CP932-compatible text unless proven otherwise.
+- DATA.CVM password is `cc2fuku`.
+- Do not expand DATA.CVM, ELF, BIN, AFS, CCS, or ISO structures unless explicitly instructed.
+- Do not include `ADV.bin` in release builds unless explicitly requested.
+- Do not delete/rename PSS files blindly.
+- Avoid GUI-only workflows when CLI/scripted alternatives exist.
+- Ask before destructive actions, mass rewrites, ISO rebuilds, or modifying originals.
+- If uncertain, inspect and report instead of acting.
+
+## Release / milestone rules
+
+For file-level translation releases, one zip only. Zip filename gets version/postfix. Internal filenames must be exactly:
+
+- `BTL.BIN`
+- `ETC.bin`
+- `SLPS_258.37`
+- `translation_log.tsv`
+
+No postfixes inside the zip. Never include `ADV.bin` unless explicitly requested.
+
+For full project milestones, place new frozen files in `release/` with clear version/postfix names. Active working files stay in `build/`.
+
+`releases/` is append-only/frozen. Do not rewrite, rename, move, delete, or modify existing release files or folders. If the intended output name already exists, stop and inspect manually instead of choosing a workaround.
+
+Release PNACH files are coupled to the boot ELF CRC of their paired ISO. Always verify the PNACH CRC suffix against the ISO's actual PCSX2 game CRC before treating a release as valid. If verification is unavailable or inconclusive, report that uncertainty clearly.
+
+
+## Actualize workflow
+
+When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2-style ELF CRC from the boot ELF inside that ISO, rename `pcsx2/gamesettings/SLPS-25837_********.ini` to match the actual CRC, and create `cheats/SLPS-25837_<crc>.pnach` as a hardlink to `cheats/C0659AD1.pnach` if it does not already exist.
+
+## Current release file list
+
+Keep the live release list in `release_files.txt`. Current release contents are `BTL.BIN`, `ETC.BIN`, boot ELF `SLPS_258.37`, the actualized game settings INI, and the actualized PNACH. Ask for release name and confirm file list/ISO before creating a release. Then actualize and copy files into `releases/<release_name>/` without overwriting existing paths.
+## Report format
+
+Report files read, files created/modified, whether originals were untouched, scripts/commands used, hashes/sizes, and uncertainties.
+
+
+
+

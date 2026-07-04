@@ -1,0 +1,35 @@
+# Heavy or source-owned game data
+/source/*
+!/source/.gitkeep
+/build/*
+!/build/.gitkeep
+
+# Local emulator install/runtime data
+/pcsx2/*
+!/pcsx2/.gitkeep
+!/pcsx2/gamesettings/
+!/pcsx2/gamesettings/**
+
+# Keep active cheats as normal tracked text files
+!/cheats/
+!/cheats/**
+
+# Personal/off-limits and scratch areas
+/old/*
+!/old/.gitkeep
+/trash/*
+!/trash/.gitkeep
+/utils/old/*
+!/utils/old/.gitkeep
+
+# Logs: keep folder and curated notes; ignore generated inventories/tables by default
+/logs/*
+!/logs/.gitkeep
+!/logs/*.md
+!/logs/*.txt
+
+# Windows/editor noise
+Thumbs.db
+Desktop.ini
+*.tmp
+*.bak

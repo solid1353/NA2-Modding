@@ -28,10 +28,10 @@ Current modded ISO:
 
 Current PNACH:
 
-- Canonical editable PNACH: `cheats/C0659AD1.pnach`
-- Actualized PNACH hardlinks live in `cheats/SLPS-25837_<crc>.pnach`.
+- Canonical editable PNACH base: `cheats/SLPS-25837_C0659AD1.pnach`
+- Actualized PNACH links live in `cheats/SLPS-25837_<crc>.pnach` and point to `cheats/SLPS-25837_C0659AD1.pnach`.
 - Root `cheats/` is a real project folder and the only cheats folder we manage.
-- Temporary PNACH hypothesis patches go at the top of `cheats/C0659AD1.pnach` as always-on `patch=` lines with comment-only names, not `[tag]` sections. Only update gamesettings after a patch is confirmed and promoted to a real named section.
+- Temporary PNACH hypothesis patches go at the top of `cheats/SLPS-25837_C0659AD1.pnach` as always-on `patch=` lines with comment-only names, not `[tag]` sections. Only update gamesettings after a patch is confirmed and promoted to a real named section.
 - Live PNACH size when inspected: `1059` bytes.
 
 Current PNACH sections:
@@ -53,7 +53,7 @@ Current PNACH sections:
 - `source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
 - `source/*.files/`: extracted views of original source archives. Treat as read-only reference.
 - `build/`: active working outputs, including current modded ISO, current PNACH, and loose replacement files awaiting ISO rebuild.
-- `releases/`: symlink to `C:\Users\solid\Documents\Mods\NA2\releases`; frozen milestone artifacts only. Append-only; never alter existing contents.
+- `releases/`: link to `C:\Users\solid\Documents\Mods\NA2\releases`; frozen milestone artifacts only. Append-only; never alter existing contents.
 - `logs/`: inventories, hashes, patch records, and investigation notes.
 - `scripts/`: repeatable tooling.
 - `HYPOTHESES.md`: archived patch candidates, failed experiments, unverified addresses, and speculative leads.
@@ -177,7 +177,7 @@ PCSX2 cheat filenames include the game CRC, for example:
 
 `SLPS-25837_BCB73695.pnach`
 
-If the boot ELF inside the ISO changes, PCSX2 may report a different CRC. Actualize creates a matching `cheats/SLPS-25837_<crc>.pnach` hardlink to `cheats/C0659AD1.pnach`.
+If the boot ELF inside the ISO changes, PCSX2 may report a different CRC. Actualize creates a matching `cheats/SLPS-25837_<crc>.pnach` link to `cheats/SLPS-25837_C0659AD1.pnach`.
 
 PCSX2 should use the project root `cheats/` folder for this mod workflow.
 
@@ -240,13 +240,15 @@ DATA.CVM password: cc2fuku.
 
 ## Actualize Workflow
 
-When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2-style ELF CRC from the boot ELF inside that ISO, rename `pcsx2/gamesettings/SLPS-25837_********.ini` to match the actual CRC, and create `cheats/SLPS-25837_<crc>.pnach` as a hardlink to `cheats/C0659AD1.pnach` if it does not already exist.
+When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2-style ELF CRC from the boot ELF inside that ISO. Keep base files named `cheats/SLPS-25837_C0659AD1.pnach` and `pcsx2/gamesettings/SLPS-25837_C0659AD1.ini`. Create CRC-named links `cheats/SLPS-25837_<crc>.pnach` and `pcsx2/gamesettings/SLPS-25837_<crc>.ini` if missing. Never delete old CRC links during actualize.
 
 ## Release Workflow
 
-Release root is `C:\Users\solid\Documents\Mods\NA2\releases`, exposed through the root `releases/` symlink. Before release, ask for the release name and confirm the release file list and ISO source. Default ISO source is the ISO in `build/`. Then actualize, extract/copy the current release files to `releases/<release_name>/`, and stop if any target path already exists.
+Release root is `C:\Users\solid\Documents\Mods\NA2\releases`, exposed through the root `releases/` link. Before release, ask for the release name and confirm the release file list and ISO source. Default ISO source is the ISO in `build/`. Then actualize, extract/copy the current release files to `releases/<release_name>/`, and stop if any target path already exists.
 
 Current release file list is tracked in `RELEASE_FILES.md`: `BTL.BIN`, `ETC.BIN`, boot ELF `SLPS_258.37`, actualized game settings INI, and actualized PNACH.
+
+
 
 
 

@@ -1,0 +1,7 @@
+id	old_offset	pointer_offset	new_offset	bytes	translation
+BTL_0286	0x20A758	0x20A7D0	0x222A00	19	Ｔｅａｍ　Ｍｏｄｅ
+BTL_0287	0x20A768	0x20A7D8	0x222A20	31	Ｃｏｍｍａｎｄ　Ｄｉｓｐｌａｙ
+BTL_0288	0x20A778	0x20A7DC	0x222A40	29	Ｄａｍａｇｅ　Ｄｉｓｐｌａｙ
+BTL_0289	0x20A788	0x20A7E0	0x222A60	23	Ｇｕｉｄｅ　Ｖｏｉｃｅ
+BTL_0290	0x20A798	0x20A7F8	0x222A80	37	Ｓｕｂｓｔｉｔｕｔｉｏｎ　Ｊｕｔｓｕ
+BTL_0291	0x20A7A8	0x20A800	0x222AB0	31	Ｐｕｒｓｕｉｔ　Ｃｏｕｎｔｅｒ

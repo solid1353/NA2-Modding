@@ -1,0 +1,4 @@
+id	file	offset_hex	old_slot_capacity_bytes	source_japanese	previous_release_english	proposed_translation	notes	reason
+BTL_0312	BTL.BIN	0x20B468	12	対戦相手の設定	Opponent Set	Ｏｐｐｏｎｅｎｔ　Ｓｅｔｔｉｎｇｓ		pointer_hits_0
+BTL_0313	BTL.BIN	0x20B4D0	38	<r練習設定|れんしゅうせってい>をデフォルトに<r戻|もど>しました。	Practice settings restored to default.	Ｐｒａｃｔｉｃｅ　ｓｅｔｔｉｎｇｓ　ｒｅｓｔｏｒｅｄ　ｔｏ　ｄｅｆａｕｌｔ．		pointer_hits_0
+BTL_0314	BTL.BIN	0x20B7F8	7	連係攻撃	TeamAtk	Ｔｅａｍ　Ａｔｔａｃｋ		pointer_hits_0

@@ -123,7 +123,7 @@ if ([string]::IsNullOrWhiteSpace($IsoPath)) {
 
 $IsoPath = (Resolve-Path -LiteralPath $IsoPath).Path
 if ([string]::IsNullOrWhiteSpace($CanonicalPnach)) {
-    $CanonicalPnach = Join-Path $root "cheats\C0659AD1.pnach"
+    $CanonicalPnach = Join-Path $root "cheats\SLPS-25837_C0659AD1.pnach"
 }
 $CanonicalPnach = (Resolve-Path -LiteralPath $CanonicalPnach).Path
 $cheatsDir = Split-Path -Parent $CanonicalPnach
@@ -165,23 +165,20 @@ if (-not (Test-Path -LiteralPath $gamesettingsDir)) {
     throw "Game settings directory not found: $gamesettingsDir"
 }
 
+$baseIni = Join-Path $gamesettingsDir "${Serial}_C0659AD1.ini"
+if (-not (Test-Path -LiteralPath $baseIni)) {
+    throw "Base game settings file not found: $baseIni"
+}
+
 $iniName = "${Serial}_${crc}.ini"
 $targetIni = Join-Path $gamesettingsDir $iniName
-$iniPattern = "${Serial}_*.ini"
-$matchingInis = @(Get-ChildItem -File -LiteralPath $gamesettingsDir -Filter $iniPattern)
 
 if (Test-Path -LiteralPath $targetIni) {
-    if ($matchingInis.Count -gt 1) {
-        throw "Target game settings exists, but multiple $iniPattern files are present. Stop and inspect: $gamesettingsDir"
-    }
     $iniStatus = "exists"
 }
 else {
-    if ($matchingInis.Count -ne 1) {
-        throw "Expected exactly one $iniPattern file to rename. Found $($matchingInis.Count). Stop and inspect: $gamesettingsDir"
-    }
-    Move-Item -LiteralPath $matchingInis[0].FullName -Destination $targetIni
-    $iniStatus = "renamed from $($matchingInis[0].Name)"
+    New-Item -ItemType HardLink -Path $targetIni -Target $baseIni | Out-Null
+    $iniStatus = "created link"
 }
 
 $pnachName = "${Serial}_${crc}.pnach"
@@ -192,19 +189,22 @@ if (Test-Path -LiteralPath $targetPnach) {
 }
 else {
     New-Item -ItemType HardLink -Path $targetPnach -Target $CanonicalPnach | Out-Null
-    $pnachStatus = "created hardlink"
+    $pnachStatus = "created link"
 }
-
 [pscustomobject]@{
     Iso = $IsoPath
     BootElf = $bootPath
     PCSX2ElfCRC = $crc
+    BaseGameSettingsIni = $baseIni
     GameSettingsIni = $targetIni
     GameSettingsStatus = $iniStatus
     CanonicalPnach = $CanonicalPnach
     CheatsPnach = $targetPnach
     PnachStatus = $pnachStatus
 }
+
+
+
 
 
 

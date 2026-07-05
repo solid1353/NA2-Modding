@@ -63,7 +63,21 @@ Current PNACH sections:
 
 Scratch/intermediate folders should be created only when needed, preferably under root `temp/` with names tied to the task. Extractions of original source archives stay beside the source archive under `source/`.
 
-When adding a new root folder, document it in both md project files and add a `.gitkeep` unless the folder is intentionally untracked/generated. For binary modding, prefer persistent target folders under `work/` over repeated fresh disassembly. State the tools/software used for each change, and keep command chunks short and reusable.
+The following root folders are workspace-only or generated and are ignored directly by Git; keep this list current instead of adding `.gitkeep` placeholders or unignore rules for empty folders. If the project is started fresh from Git, the agent should recreate any missing folders from this list before using them:
+
+- `source/`: source reference tree; protected/read-only game files.
+- `build/`: active scratch build outputs and test ISO contents.
+- `pcsx2/`: local emulator config/runtime material for this workspace, except tracked `pcsx2/gamesettings/`.
+- `old/`: user's personal folder; off-limits unless explicitly instructed.
+- `trash/`: project-local holding area for retired/deleted items.
+- `utils/old/`: untrusted historical dump.
+- `logs/`: generated inventories, hashes, and investigation notes.
+- `temp/`: short-lived task scratch files.
+- `work/`: persistent reverse-engineering/modding work products.
+- `ghidra/`: local Ghidra installation.
+- `disassembly/`: local Ghidra projects and exports.
+
+When adding a new root folder, document it in the project markdown and decide whether it is tracked project text or workspace-only/generated. For binary modding, prefer persistent target folders under `work/` over repeated fresh disassembly. State the tools/software used for each change, and keep command chunks short and reusable.
 
 ## Trash Rule
 

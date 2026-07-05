@@ -28,9 +28,9 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Treat top-level `old/` as the user's personal folder. Do not inspect, search, execute from, modify, move, delete, or otherwise touch it unless explicitly instructed.
 - Treat `utils/old/` as an untrusted tool/archive dump. Do not execute tools from it until inspected and chosen for a specific task.
 - Log every binary patch: file, offset, original bytes, new bytes, reason.
-- For PNACH logic changes, keep section names synchronized with `pcsx2/gamesettings/SLPS-25837_<crc>.ini` enabled cheat names.
+- PNACH is the single source of truth for cheats. `// [Name]` is only a label/comment; a cheat is enabled only when its executable `patch=`/setting line is uncommented. Disabled proven cheats and disabled hypotheses must have their executable lines commented out.
 - Keep active PNACH files clean: confirmed named sections only, plus temporary hypothesis patches at the very top when actively testing.
-- Temporary PNACH hypothesis patches go at the top of the file as always-on `patch=` lines with comment-only names, not `[tag]` sections. Do not add them to gamesettings.
+- Temporary PNACH hypothesis patches go at the top of the file as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 - Move old candidates, failed experiments, and speculative addresses to `HYPOTHESES.md`.
 - Track concrete active plans and queued investigations in `TASKS.md`, not general rules or PNACH comments.
 - For string patches, always check encoded byte length before writing.
@@ -74,11 +74,11 @@ Release PNACH files are coupled to the boot ELF CRC of their paired ISO. Always 
 
 ## Actualize workflow
 
-When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2-style ELF CRC from the boot ELF inside that ISO. Keep base files named `cheats/SLPS-25837_C0659AD1.pnach` and `pcsx2/gamesettings/SLPS-25837_C0659AD1.ini`. Create CRC-named links `cheats/SLPS-25837_<crc>.pnach` and `pcsx2/gamesettings/SLPS-25837_<crc>.ini` if missing. Never delete old CRC links during actualize.
+When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2-style ELF CRC from the boot ELF inside that ISO. Keep the base file named `cheats/SLPS-25837_C0659AD1.pnach`. Create the CRC-named symlink `cheats/SLPS-25837_<crc>.pnach` to `cheats/SLPS-25837_C0659AD1.pnach` if missing. Never delete old CRC links during actualize.
 
 ## Current release file list
 
-Keep the live release list in `RELEASE_FILES.md`. Current release contents are `BTL.BIN`, `ETC.BIN`, boot ELF `SLPS_258.37`, the actualized game settings INI, and the actualized PNACH. Ask for release name and confirm file list/ISO before creating a release. Then actualize and copy files into `releases/<release_name>/` without overwriting existing paths.
+Keep the live release list in `RELEASE_FILES.md`. Current release contents are `BTL.BIN`, `ETC.BIN`, boot ELF `SLPS_258.37`, and the actualized PNACH. Ask for release name and confirm file list/ISO before creating a release. Then actualize and copy files into `releases/<release_name>/` without overwriting existing paths.
 ## Report format
 
 Report files read, files created/modified, whether originals were untouched, scripts/commands used, hashes/sizes, and uncertainties.

@@ -1,9 +1,7 @@
 # Heavy/generated workspace folders documented in PROJECT_CONTEXT.md
 /source/
 /build/
-/pcsx2/*
-!/pcsx2/gamesettings/
-!/pcsx2/gamesettings/**
+/pcsx2/
 /old/
 /trash/
 /utils/old/

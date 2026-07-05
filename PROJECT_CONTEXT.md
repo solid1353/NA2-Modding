@@ -29,24 +29,9 @@ Current modded ISO:
 Current PNACH:
 
 - Canonical editable PNACH base: `cheats/SLPS-25837_C0659AD1.pnach`
-- Actualized PNACH links live in `cheats/SLPS-25837_<crc>.pnach` and point to `cheats/SLPS-25837_C0659AD1.pnach`.
+- Actualized PNACH symlinks live in `cheats/SLPS-25837_<crc>.pnach` and point to `cheats/SLPS-25837_C0659AD1.pnach`.
 - Root `cheats/` is a real project folder and the only cheats folder we manage.
-- Temporary PNACH hypothesis patches go at the top of `cheats/SLPS-25837_C0659AD1.pnach` as always-on `patch=` lines with comment-only names, not `[tag]` sections. Only update gamesettings after a patch is confirmed and promoted to a real named section.
-- Live PNACH size when inspected: `1059` bytes.
-
-Current PNACH sections:
-
-- Widescreen 16:9
-- Skip CC2 intro
-- Skip opening
-- Sub cost = 3/15
-- Disable RPS
-- Simple display off
-- Practice voice off by default
-- Practice support off by default
-- Practice command display off by default
-- Disable extra hit with aura punishment
-- Commented-out Disable extra hit patch
+- PNACH labels such as `// [Skip CC2 intro]` are comments only. A cheat is enabled only when its executable `patch=`/setting line is uncommented. Disabled proven cheats and disabled hypotheses must keep their executable lines commented out. Temporary PNACH hypothesis patches go at the top as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 
 ## Working Layout
 
@@ -67,7 +52,7 @@ The following root folders are workspace-only or generated and are ignored direc
 
 - `source/`: source reference tree; protected/read-only game files.
 - `build/`: active scratch build outputs and test ISO contents.
-- `pcsx2/`: local emulator config/runtime material for this workspace, except tracked `pcsx2/gamesettings/`.
+- `pcsx2/`: local emulator config/runtime material for this workspace; ignored by Git.
 - `old/`: user's personal folder; off-limits unless explicitly instructed.
 - `trash/`: project-local holding area for retired/deleted items.
 - `utils/old/`: untrusted historical dump.
@@ -129,7 +114,6 @@ original/
 For edited/build versions, do not edit anything under `source/` in place. Copy the needed file or archive into a task/build folder first, then patch that copy through scripts and log the source path and output path. If extraction or inspection needs metadata, write it under `logs/` using source-relative paths instead of placing files in `source/`.
 
 The `source/` tree should also have Windows read-only attributes applied. Use `scripts/set_original_readonly.ps1` after extracting new original-source content or if attributes need to be restored.
-
 
 ## DATA.CVM Extraction
 
@@ -198,7 +182,6 @@ PCSX2 should use the project root `cheats/` folder for this mod workflow.
 Known PCSX2 paths from prior notes:
 
 - Log: `C:\Games\Emulators\PCSX2 2.6.2\logs\emulog.txt`
-- Game settings: `C:\Games\Emulators\PCSX2 2.6.2\gamesettings`
 - Cheats: project root `cheats/`
 
 Known log pattern:
@@ -254,16 +237,10 @@ DATA.CVM password: cc2fuku.
 
 ## Actualize Workflow
 
-When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2-style ELF CRC from the boot ELF inside that ISO. Keep base files named `cheats/SLPS-25837_C0659AD1.pnach` and `pcsx2/gamesettings/SLPS-25837_C0659AD1.ini`. Create CRC-named links `cheats/SLPS-25837_<crc>.pnach` and `pcsx2/gamesettings/SLPS-25837_<crc>.ini` if missing. Never delete old CRC links during actualize.
+When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2-style ELF CRC from the boot ELF inside that ISO. Keep the base file named `cheats/SLPS-25837_C0659AD1.pnach`. Create the CRC-named symlink `cheats/SLPS-25837_<crc>.pnach` to `cheats/SLPS-25837_C0659AD1.pnach` if missing. Never delete old CRC links during actualize.
 
 ## Release Workflow
 
 Release root is `C:\Users\solid\Documents\Mods\NA2\releases`, exposed through the root `releases/` link. Before release, ask for the release name and confirm the release file list and ISO source. Default ISO source is the ISO in `build/`. Then actualize, extract/copy the current release files to `releases/<release_name>/`, and stop if any target path already exists.
 
-Current release file list is tracked in `RELEASE_FILES.md`: `BTL.BIN`, `ETC.BIN`, boot ELF `SLPS_258.37`, actualized game settings INI, and actualized PNACH.
-
-
-
-
-
-
+Current release file list is tracked in `RELEASE_FILES.md`: `BTL.BIN`, `ETC.BIN`, boot ELF `SLPS_258.37`, and actualized PNACH.

@@ -1,4 +1,4 @@
-# Heavy/generated workspace folders documented in PROJECT_CONTEXT.md
+# Heavy/generated workspace folders
 /source/
 /build/
 /pcsx2/
@@ -11,7 +11,11 @@
 /ghidra/
 /disassembly/
 /translation_package_builder/work
+__pycache__/
 
 # Windows/editor noise
 Thumbs.db
 Desktop.ini
+# Generated PCSX2 CRC aliases; canonical PNACH remains tracked
+/cheats/SLPS-25837_*.pnach
+!/cheats/SLPS-25837_C0659AD1.pnach

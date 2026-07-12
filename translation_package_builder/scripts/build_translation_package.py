@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Build a self-contained NA2 translation apply package.
+"""Build one NA2 translation patch TSV.
 
-The builder preserves the accumulated safe NA2 translation baseline, replaces
-verified matching slots with official English strings from UN5 PRG/TEXTENG.BIN,
-and patches the NA2 executable string tables used by battle/practice/shop UI.
-It never edits an ISO and never reads translation TSVs.
+The builder derives all BTL, ETC, and executable translation edits from the clean
+NA2/UN5 sources, but emits no replacement binaries. The resulting TSV is applied
+after all selected binary packages have been composed.
 """
 from __future__ import annotations
 
@@ -317,7 +316,25 @@ def apply_runtime_ui_fixes(
     output_etc: bytearray,
     clean_slps: bytes,
     output_slps: bytearray,
-) -> dict[str, int]:
+) -> tuple[dict[str, int], list[dict[str, object]]]:
+    text_annotations: list[dict[str, object]] = []
+
+    def annotate(
+        path: str,
+        offset: int,
+        length: int,
+        source_text: str,
+        replacement_text: str,
+    ) -> None:
+        text_annotations.append(
+            {
+                "path": path,
+                "start": offset,
+                "end": offset + length,
+                "source_text": source_text,
+                "replacement_text": replacement_text,
+            }
+        )
     # Direct BTL strings missed by the legacy baseline.
     btl_slots = [
         (0x209CD0, 16, "使用不可", "No Use"),
@@ -341,6 +358,7 @@ def apply_runtime_ui_fixes(
             replacement_text=replacement,
             label=f"BTL UI fix at 0x{offset:X}",
         )
+        annotate("PRG/BTL.BIN", offset, capacity, source, replacement)
 
     # Shop help strings visible in the reported shop screen.
     etc_slots = [
@@ -373,6 +391,7 @@ def apply_runtime_ui_fixes(
             replacement_text=replacement,
             label=f"ETC shop UI fix at 0x{offset:X}",
         )
+        annotate("PRG/ETC.BIN", offset, capacity, source, replacement)
 
     # Executable-resident practice values and labels. Each entry is an exact
     # fixed slot in the clean SLPS executable.
@@ -420,6 +439,7 @@ def apply_runtime_ui_fixes(
             replacement_text=replacement,
             label=f"SLPS UI fix at 0x{offset:X}",
         )
+        annotate("SLPS_258.37", offset, capacity, source, replacement)
 
     # Common short character-name tables used by shop/collection UI.
     name_slots = [
@@ -456,6 +476,7 @@ def apply_runtime_ui_fixes(
             replacement_text=replacement,
             label=f"SLPS name fix at 0x{offset:X}",
         )
+        annotate("SLPS_258.37", offset, 8, source, replacement)
 
     # Confirmation choices, including the shop quit prompt shown in the report.
     yes_offsets = [
@@ -474,6 +495,13 @@ def apply_runtime_ui_fixes(
             replacement_text="Yes",
             label=f"SLPS Yes fix at 0x{offset:X}",
         )
+        annotate(
+            "SLPS_258.37",
+            offset,
+            len("はい".encode("cp932")) + 1,
+            "はい",
+            "Yes",
+        )
     for offset in no_offsets:
         patch_exact_bytes(
             clean_slps,
@@ -482,6 +510,13 @@ def apply_runtime_ui_fixes(
             source_text="いいえ",
             replacement_text="No",
             label=f"SLPS No fix at 0x{offset:X}",
+        )
+        annotate(
+            "SLPS_258.37",
+            offset,
+            len("いいえ".encode("cp932")) + 1,
+            "いいえ",
+            "No",
         )
 
     # Exact long official labels do not fit their original 8/16-byte slots.
@@ -509,6 +544,7 @@ def apply_runtime_ui_fixes(
             raise ValueError("BTL UI string pool does not fit in host slot")
         output_btl[cursor : cursor + len(payload)] = payload
         pool_offsets[text] = cursor
+        annotate("PRG/BTL.BIN", cursor, len(payload), "", text)
         cursor += len(payload)
 
     pointer_rewrites = {
@@ -526,15 +562,18 @@ def apply_runtime_ui_fixes(
             4, "little"
         )
 
-    return {
-        "btl_direct_slots": len(btl_slots),
-        "etc_direct_slots": len(etc_slots),
-        "slps_ui_slots": len(slps_slots),
-        "slps_name_slots": len(name_slots),
-        "slps_yes_no_slots": len(yes_offsets) + len(no_offsets),
-        "btl_pointer_rewrites": len(pointer_rewrites),
-        "btl_pool_strings": len(pool_offsets),
-    }
+    return (
+        {
+            "btl_direct_slots": len(btl_slots),
+            "etc_direct_slots": len(etc_slots),
+            "slps_ui_slots": len(slps_slots),
+            "slps_name_slots": len(name_slots),
+            "slps_yes_no_slots": len(yes_offsets) + len(no_offsets),
+            "btl_pointer_rewrites": len(pointer_rewrites),
+            "btl_pool_strings": len(pool_offsets),
+        },
+        text_annotations,
+    )
 
 
 def patch_rows(
@@ -648,30 +687,107 @@ def write_csv(path: Path, rows: Iterable[dict]) -> None:
         writer.writerows(rows)
 
 
-def validate_zip(path: Path, expected: dict[str, bytes]) -> None:
-    with zipfile.ZipFile(path, "r") as archive:
-        infos = archive.infolist()
-        names = [info.filename.replace("\\", "/") for info in infos]
-        if any(info.is_dir() for info in infos):
-            raise ValueError("Package contains a directory entry")
-        normalized = [normalize_path(name) for name in names]
-        if len(normalized) != len(set(normalized)):
-            raise ValueError("Package contains duplicate normalized paths")
-        expected_names = [normalize_path(name) for name in expected]
-        if sorted(normalized) != sorted(expected_names):
-            raise ValueError(
-                f"Package paths differ from expected: got {names}, expected {list(expected)}"
+def diff_rows(
+    path: str,
+    clean: bytes,
+    output: bytes,
+    text_annotations: Sequence[dict[str, object]] = (),
+) -> list[dict[str, str]]:
+    if len(clean) != len(output):
+        raise ValueError(f"Cannot emit fixed-offset patches for size-changed file: {path}")
+
+    normalized_path = normalize_path(path)
+    annotations = [
+        annotation
+        for annotation in text_annotations
+        if normalize_path(str(annotation["path"])) == normalized_path
+    ]
+
+    changed_ranges: list[tuple[int, int]] = []
+    start: Optional[int] = None
+    for index, (before, after) in enumerate(zip(clean, output)):
+        if before != after and start is None:
+            start = index
+        elif before == after and start is not None:
+            changed_ranges.append((start, index))
+            start = None
+    if start is not None:
+        changed_ranges.append((start, len(clean)))
+
+    rows: list[dict[str, str]] = []
+    for range_start, range_end in changed_ranges:
+        boundaries = {range_start, range_end}
+        for annotation in annotations:
+            annotation_start = int(annotation["start"])
+            annotation_end = int(annotation["end"])
+            if range_start < annotation_end and range_end > annotation_start:
+                boundaries.add(max(range_start, annotation_start))
+                boundaries.add(min(range_end, annotation_end))
+
+        ordered = sorted(boundaries)
+        for segment_start, segment_end in zip(ordered, ordered[1:]):
+            if segment_start >= segment_end:
+                continue
+            matching = [
+                annotation
+                for annotation in annotations
+                if segment_start < int(annotation["end"])
+                and segment_end > int(annotation["start"])
+            ]
+            if matching:
+                # Later operations override earlier ones at the same location.
+                annotation = matching[-1]
+                source_text = str(annotation["source_text"])
+                replacement_text = str(annotation["replacement_text"])
+            else:
+                source_text = ""
+                replacement_text = ""
+
+            rows.append(
+                {
+                    "path": path,
+                    "offset": f"0x{segment_start:X}",
+                    "expected_hex": clean[segment_start:segment_end].hex().upper(),
+                    "replacement_hex": output[segment_start:segment_end].hex().upper(),
+                    "source_text": source_text,
+                    "replacement_text": replacement_text,
+                }
             )
-        by_normalized = {normalize_path(info.filename): info for info in infos}
-        for name, payload in expected.items():
-            archived = archive.read(by_normalized[normalize_path(name)])
-            if archived != payload:
-                raise ValueError(f"Archived bytes do not match generated file: {name}")
+    return rows
+
+
+def write_translation_tsv(path: Path, rows: list[dict[str, str]]) -> None:
+    if not rows:
+        raise ValueError("No translation patches were generated")
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        with temporary.open("w", encoding="utf-8-sig", newline="") as handle:
+            writer = csv.DictWriter(
+                handle,
+                fieldnames=[
+                    "path",
+                    "offset",
+                    "expected_hex",
+                    "replacement_hex",
+                    "source_text",
+                    "replacement_text",
+                ],
+                delimiter="\t",
+                lineterminator="\n",
+            )
+            writer.writeheader()
+            writer.writerows(rows)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Build NA2 translation replacements with official UN5 TEXTENG and executable UI fixes"
+        description="Build one NA2 translation TSV from clean NA2 and official UN5 sources"
     )
     parser.add_argument("--na2-iso", type=Path)
     parser.add_argument("--na2-folder", type=Path)
@@ -708,10 +824,12 @@ def main() -> int:
             if actual is not None and actual != expected:
                 raise ValueError(f"Unexpected {key} SHA-1: {actual}; expected {expected}")
 
-    baseline_path = args.data_root / "baseline.json"
-    official_path = args.data_root / "texteng_map.json"
-    baseline_rows = json.loads(baseline_path.read_text(encoding="utf-8"))
-    official_rows = json.loads(official_path.read_text(encoding="utf-8"))
+    baseline_rows = json.loads(
+        (args.data_root / "baseline.json").read_text(encoding="utf-8")
+    )
+    official_rows = json.loads(
+        (args.data_root / "texteng_map.json").read_text(encoding="utf-8")
+    )
 
     output_files = {target: bytearray(clean_files[target]) for target in selected}
     output_slps = bytearray(clean_slps)
@@ -723,9 +841,20 @@ def main() -> int:
         official_rows=official_rows,
         texteng=texteng,
     )
+    text_annotations: list[dict[str, object]] = [
+        {
+            "path": FILE_SPECS[str(entry["file"]).upper()][0],
+            "start": int(str(entry["offset_hex"]), 16),
+            "end": int(str(entry["offset_hex"]), 16) + int(entry["capacity"]),
+            "source_text": str(entry["source"]),
+            "replacement_text": str(entry["translation"]),
+        }
+        for entry in patch_log
+    ]
+
     runtime_stats: dict[str, int] = {}
     if {"BTL", "ETC"}.issubset(selected):
-        runtime_stats = apply_runtime_ui_fixes(
+        runtime_stats, runtime_annotations = apply_runtime_ui_fixes(
             clean_btl=clean_files["BTL"],
             output_btl=output_files["BTL"],
             clean_etc=clean_files["ETC"],
@@ -733,116 +862,76 @@ def main() -> int:
             clean_slps=clean_slps,
             output_slps=output_slps,
         )
+        text_annotations.extend(runtime_annotations)
+
+    rows: list[dict[str, str]] = []
+    for target in selected_list:
+        rows.extend(
+            diff_rows(
+                FILE_SPECS[target][0],
+                clean_files[target],
+                bytes(output_files[target]),
+                text_annotations,
+            )
+        )
+    if runtime_stats:
+        rows.extend(
+            diff_rows(
+                "SLPS_258.37",
+                clean_slps,
+                bytes(output_slps),
+                text_annotations,
+            )
+        )
 
     run_id = dt.datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3] + f"_pid{os.getpid()}"
-    run_root = args.work_root / "runs" / run_id
-    package_root = run_root / "package"
-    log_root = run_root / "logs"
-    (package_root / "PRG").mkdir(parents=True, exist_ok=False)
-    log_root.mkdir(parents=True, exist_ok=False)
-
-    expected_zip: dict[str, bytes] = {}
-    for target in selected_list:
-        iso_path = FILE_SPECS[target][0]
-        payload = bytes(output_files[target])
-        if len(payload) != len(clean_files[target]):
-            raise ValueError(f"Generated {iso_path} size changed")
-        destination = package_root / Path(iso_path)
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(payload)
-        expected_zip[iso_path] = payload
-
-    slps_payload = bytes(output_slps)
-    if len(slps_payload) != len(clean_slps):
-        raise ValueError("Generated SLPS_258.37 size changed")
-    slps_destination = package_root / "SLPS_258.37"
-    slps_destination.write_bytes(slps_payload)
-    expected_zip["SLPS_258.37"] = slps_payload
-
     output_dir = args.output_directory.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
-    final_name = f"NA2_APPLY__TRANSLATION__{run_id}.zip"
-    final_path = output_dir / final_name
+    final_path = output_dir / f"NA2_APPLY__TRANSLATION__{run_id}.tsv"
     if final_path.exists():
         raise FileExistsError(final_path)
+    write_translation_tsv(final_path, rows)
 
-    temporary_path: Optional[Path] = None
-    try:
-        fd, temporary_name = tempfile.mkstemp(
-            prefix=".NA2_TRANSLATION_BUILD_", suffix=".tmp", dir=output_dir
-        )
-        os.close(fd)
-        temporary_path = Path(temporary_name)
-        with zipfile.ZipFile(
-            temporary_path,
-            "w",
-            compression=zipfile.ZIP_DEFLATED,
-            compresslevel=9,
-        ) as archive:
-            for iso_path in sorted(expected_zip):
-                archive.writestr(iso_path, expected_zip[iso_path])
-        validate_zip(temporary_path, expected_zip)
-        os.replace(temporary_path, final_path)
-        temporary_path = None
-    finally:
-        if temporary_path is not None and temporary_path.exists():
-            temporary_path.unlink()
-
+    run_root = args.work_root / "runs" / run_id
+    run_root.mkdir(parents=True, exist_ok=False)
     hashes = {
         FILE_SPECS[target][0]: {
             "source_sha1": sha1(clean_files[target]),
-            "output_sha1": sha1(bytes(output_files[target])),
+            "translated_sha1": sha1(bytes(output_files[target])),
             "size": len(output_files[target]),
         }
         for target in selected_list
     }
-    hashes["SLPS_258.37"] = {
-        "source_sha1": sha1(clean_slps),
-        "output_sha1": sha1(bytes(output_slps)),
-        "size": len(output_slps),
-    }
+    if runtime_stats:
+        hashes["SLPS_258.37"] = {
+            "source_sha1": sha1(clean_slps),
+            "translated_sha1": sha1(bytes(output_slps)),
+            "size": len(output_slps),
+        }
     summary = {
-        "mode": "safe baseline plus official UN5 TEXTENG and executable UI fixes",
+        "mode": "single post-composition translation TSV",
         "run_id": run_id,
-        "package": str(final_path),
+        "translation_tsv": str(final_path),
+        "patch_rows": len(rows),
         "targets": selected_list,
         "source_hashes": actual_hashes,
-        "files": hashes,
+        "translated_file_hashes": hashes,
         "stats": stats,
         "runtime_ui_fixes": runtime_stats,
-        "official_texteng_rows_total": sum(
-            1 for row in official_rows if str(row["file"]).upper() in selected
-        ),
-        "logs": str(log_root),
     }
-    write_csv(log_root / "translation_patch_log.tsv", patch_log)
-    (log_root / "build_summary.json").write_text(
-        json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    (run_root / "build_summary.json").write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
     )
 
-    print("Built NA2 translation package:")
+    print("Built NA2 translation TSV:")
     print(f"  {final_path}")
-    for target in selected_list:
-        iso_path = FILE_SPECS[target][0]
-        info = hashes[iso_path]
-        target_stats = stats[target]
+    print(f"  patch rows: {len(rows)}")
+    for path, info in hashes.items():
         print(
-            f"  {iso_path}: {info['size']} bytes, "
-            f"SHA-1 {info['output_sha1']}"
+            f"  {path}: {info['size']} bytes, translated SHA-1 "
+            f"{info['translated_sha1']}"
         )
-        print(
-            f"    baseline rows: {target_stats['baseline']}; "
-            f"official UN5 TEXTENG rows: {target_stats['official']} "
-            f"({target_stats['official_changed']} changed from baseline)"
-        )
-    slps_info = hashes["SLPS_258.37"]
-    print(
-        f"  SLPS_258.37: {slps_info['size']} bytes, "
-        f"SHA-1 {slps_info['output_sha1']}"
-    )
-    if runtime_stats:
-        print(f"    runtime UI fixes: {sum(runtime_stats.values())}")
-    print(f"  Logs: {log_root}")
     return 0
 
 

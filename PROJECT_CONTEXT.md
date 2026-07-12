@@ -115,7 +115,12 @@ Use `scripts/split_cvm_rofs.ps1` to split the encrypted CVM safely without runni
 
 ## Current Scripts
 
-- `apply_latest_na2.ps1` / `apply_latest_na2.py`: standard testing process for rebuilding `build/Current.iso` from the source ISO with provided packages and launching it in PCSX2.
+- Root `na2.ps1` is the command entrypoint; helper scripts stay under `scripts/`.
+- Bare `na2` performs the standard workflow: update builder, generate the translation TSV, build with Font + Translation, actualize the PNACH symlink, then launch PCSX2.
+- `scripts/apply_latest_na2.ps1` / `scripts/apply_latest_na2.py`: copy the clean ISO, apply selected replacement ZIPs, apply the newest translation TSV last, verify, and optionally launch PCSX2.
+- `na2 act` actualizes the PNACH symlink for the ELF CRC of the ISO in `build/`; it does not manage gamesettings.
+- `na2 ub` means **update builder**. `scripts/update_translation_package_builder.ps1` installs the newest `NA2_translation_package_builder*.zip` from Downloads while moving the previous builder to timestamped `trash/`.
+- Translation TSV schema: `path`, `offset`, `expected_hex`, `replacement_hex`, `source_text`, `replacement_text`; translation owns no replacement binaries.
 - `check_translation_lengths.ps1`: checks CP932 byte lengths for translation tables.
 - `extract_afs.ps1`: extracts AFS archives for inspection when needed.
 - `extract_iso_file.ps1`: extracts one file from an ISO into a chosen output path.

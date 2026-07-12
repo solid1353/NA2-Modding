@@ -10,7 +10,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$builderRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$builderRoot = $PSScriptRoot
 $projectRoot = Split-Path -Parent $builderRoot
 $builder = Join-Path $builderRoot 'scripts\build_translation_package.py'
 $dataRoot = Join-Path $builderRoot 'data'

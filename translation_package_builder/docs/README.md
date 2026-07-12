@@ -1,27 +1,11 @@
-# NA2 Translation Package Builder v6
+# NA2 Translation Package Builder v14
 
-Builds a self-contained translation package from clean NA2 files and official
-UN5 `PRG/TEXTENG.BIN` strings.
+Builder-only package. Extract `translation_package_builder/` into the NA2 project root.
 
-This revision also patches the NA2 executable string tables used by the
-Practice and Shop interfaces. It fixes the bad `Chakra -> Q` baseline entry,
-translates the reported Practice labels/values, Shop character names and
-Yes/No choices, and adds the missing Shop help strings.
+The builder creates one `NA2_APPLY__TRANSLATION__<timestamp>.tsv` in the selected output directory. The TSV columns are exactly:
 
-The builder:
+`path\toffset\texpected_hex\treplacement_hex\tsource_text\treplacement_text`
 
-- preserves the existing safe BTL/ETC translation baseline;
-- replaces verified matching entries with official UN5 English wording;
-- patches verified fixed strings in clean `SLPS_258.37`;
-- reads no translation TSV files;
-- never edits an ISO;
-- writes `NA2_APPLY__TRANSLATION__*.zip` to Downloads.
+Readable text patches populate `source_text` and `replacement_text`. Binary-only patches leave both fields empty.
 
-The generated package contains exactly:
-
-- `PRG/BTL.BIN`
-- `PRG/ETC.BIN`
-- `SLPS_258.37`
-
-Stylized menu headers, button legends and purchase badges that are stored as
-images are outside this text-package pass.
+The builder does not include or modify `na2.ps1` or any project-level helper scripts.

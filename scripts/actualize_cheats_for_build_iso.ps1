@@ -127,7 +127,6 @@ if ([string]::IsNullOrWhiteSpace($CanonicalPnach)) {
 }
 $CanonicalPnach = (Resolve-Path -LiteralPath $CanonicalPnach).Path
 $cheatsDir = Split-Path -Parent $CanonicalPnach
-$gamesettingsDir = Join-Path $root "pcsx2\gamesettings"
 
 $iso = [IO.File]::OpenRead($IsoPath)
 try {
@@ -161,26 +160,6 @@ finally {
     $iso.Dispose()
 }
 
-if (-not (Test-Path -LiteralPath $gamesettingsDir)) {
-    throw "Game settings directory not found: $gamesettingsDir"
-}
-
-$baseIni = Join-Path $gamesettingsDir "${Serial}_C0659AD1.ini"
-if (-not (Test-Path -LiteralPath $baseIni)) {
-    throw "Base game settings file not found: $baseIni"
-}
-
-$iniName = "${Serial}_${crc}.ini"
-$targetIni = Join-Path $gamesettingsDir $iniName
-
-if (Test-Path -LiteralPath $targetIni) {
-    $iniStatus = "exists"
-}
-else {
-    New-Item -ItemType HardLink -Path $targetIni -Target $baseIni | Out-Null
-    $iniStatus = "created link"
-}
-
 $pnachName = "${Serial}_${crc}.pnach"
 $targetPnach = Join-Path $cheatsDir $pnachName
 
@@ -188,23 +167,14 @@ if (Test-Path -LiteralPath $targetPnach) {
     $pnachStatus = "exists"
 }
 else {
-    New-Item -ItemType HardLink -Path $targetPnach -Target $CanonicalPnach | Out-Null
-    $pnachStatus = "created link"
+    New-Item -ItemType SymbolicLink -Path $targetPnach -Target (Split-Path -Leaf $CanonicalPnach) | Out-Null
+    $pnachStatus = "created symlink"
 }
 [pscustomobject]@{
     Iso = $IsoPath
     BootElf = $bootPath
     PCSX2ElfCRC = $crc
-    BaseGameSettingsIni = $baseIni
-    GameSettingsIni = $targetIni
-    GameSettingsStatus = $iniStatus
     CanonicalPnach = $CanonicalPnach
     CheatsPnach = $targetPnach
     PnachStatus = $pnachStatus
 }
-
-
-
-
-
-

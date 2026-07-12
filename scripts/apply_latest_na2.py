@@ -2,427 +2,366 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import fnmatch
 import os
+import re
 import shutil
-import stat
 import sys
 import zipfile
-from dataclasses import dataclass
 from pathlib import Path
 
-sys.dont_write_bytecode = True
-
-SECTOR = 2048
+from iso9660_tools import Iso9660, SECTOR
 
 
-@dataclass(frozen=True)
-class IsoRecord:
-    path: str
-    is_dir: bool
-    extent: int
-    size: int
-
-    @property
-    def byte_offset(self) -> int:
-        return self.extent * SECTOR
+def normalize(path: str) -> str:
+    return path.replace("\\", "/").strip("/").upper()
 
 
-class Iso9660:
-    def __init__(self, path: Path) -> None:
-        self.path = path
-        self.file_size = path.stat().st_size
-        self.records: list[IsoRecord] = []
-        self.by_path: dict[str, IsoRecord] = {}
-
-        primary = self._read_primary_volume_descriptor()
-        root_length = primary[156]
-        if root_length < 34:
-            raise RuntimeError(f"Invalid ISO root directory record: {path}")
-
-        root = self._parse_record(primary[156:156 + root_length], "")
-        if not root.is_dir:
-            raise RuntimeError(f"ISO root record is not a directory: {path}")
-
-        self._add_record(root)
-        self._read_directory(root, set())
-
-    def _read_primary_volume_descriptor(self) -> bytes:
-        with self.path.open("rb") as handle:
-            primary: bytes | None = None
-            for sector in range(16, 128):
-                handle.seek(sector * SECTOR)
-                descriptor = handle.read(SECTOR)
-                if len(descriptor) != SECTOR:
-                    break
-                if descriptor[1:6] != b"CD001" or descriptor[6] != 1:
-                    continue
-                if descriptor[0] == 1 and primary is None:
-                    primary = descriptor
-                if descriptor[0] == 255:
-                    break
-
-        if primary is None:
-            raise RuntimeError(f"ISO9660 primary volume descriptor not found: {self.path}")
-        return primary
-
-    @staticmethod
-    def _both_endian_u32(raw: bytes, offset: int, context: str) -> int:
-        little = int.from_bytes(raw[offset:offset + 4], "little")
-        big = int.from_bytes(raw[offset + 4:offset + 8], "big")
-        if little != big:
-            raise RuntimeError(f"Invalid both-endian ISO field in {context}")
-        return little
-
-    def _parse_record(self, raw: bytes, path: str) -> IsoRecord:
-        if len(raw) < 34 or raw[0] != len(raw):
-            raise RuntimeError(f"Invalid ISO directory record for {path or '/'}")
-
-        extent = self._both_endian_u32(raw, 2, path or "/")
-        size = self._both_endian_u32(raw, 10, path or "/")
-        flags = raw[25]
-        if flags & 0x80:
-            raise RuntimeError(f"Multi-extent ISO file is unsupported: {path or '/'}")
-
-        byte_offset = extent * SECTOR
-        if byte_offset > self.file_size or size > self.file_size - byte_offset:
-            raise RuntimeError(f"ISO record points outside the image: {path or '/'}")
-
-        return IsoRecord(
-            path=path,
-            is_dir=bool(flags & 0x02),
-            extent=extent,
-            size=size,
-        )
-
-    @staticmethod
-    def _decode_name(raw: bytes, parent: str) -> str:
-        try:
-            name = raw.decode("ascii")
-        except UnicodeDecodeError as error:
-            raise RuntimeError(
-                f"Non-ASCII ISO9660 identifier under {parent or '/'}"
-            ) from error
-
-        name = name.split(";", 1)[0].rstrip(".").upper()
-        if not name or "/" in name or "\\" in name:
-            raise RuntimeError(f"Invalid ISO9660 identifier under {parent or '/'}")
-        return name
-
-    def _add_record(self, record: IsoRecord) -> None:
-        if record.path in self.by_path:
-            raise RuntimeError(f"Duplicate ISO path: {record.path or '/'}")
-        self.records.append(record)
-        self.by_path[record.path] = record
-
-    def _read_directory(
-        self,
-        directory: IsoRecord,
-        active_directories: set[tuple[int, int]],
-    ) -> None:
-        identity = (directory.extent, directory.size)
-        if identity in active_directories:
-            raise RuntimeError(f"Recursive ISO directory reference: {directory.path or '/'}")
-
-        active_directories.add(identity)
-        try:
-            data = self.read_file(directory)
-            offset = 0
-            while offset < len(data):
-                length = data[offset]
-                if length == 0:
-                    offset = ((offset // SECTOR) + 1) * SECTOR
-                    continue
-                if length < 34 or offset + length > len(data):
-                    raise RuntimeError(
-                        f"Invalid directory data in {directory.path or '/'}"
-                    )
-
-                raw = data[offset:offset + length]
-                name_length = raw[32]
-                if 33 + name_length > len(raw):
-                    raise RuntimeError(
-                        f"Invalid file identifier in {directory.path or '/'}"
-                    )
-                identifier = raw[33:33 + name_length]
-                offset += length
-
-                if identifier in (b"\x00", b"\x01"):
-                    continue
-
-                name = self._decode_name(identifier, directory.path)
-                path = f"{directory.path}/{name}" if directory.path else name
-                record = self._parse_record(raw, path)
-                self._add_record(record)
-                if record.is_dir:
-                    self._read_directory(record, active_directories)
-        finally:
-            active_directories.remove(identity)
-
-    def read_file(self, record: IsoRecord) -> bytes:
-        with self.path.open("rb") as handle:
-            handle.seek(record.byte_offset)
-            data = handle.read(record.size)
-        if len(data) != record.size:
-            raise RuntimeError(f"Failed to read ISO record: {record.path or '/'}")
-        return data
+def normalize_category(value: str) -> str:
+    category = "".join(char if char.isalnum() else "_" for char in value.strip().upper())
+    category = "_".join(part for part in category.split("_") if part)
+    if not category:
+        raise ValueError("Empty package category")
+    return category
 
 
-@dataclass(frozen=True)
-class Package:
-    source: str
-    path: Path
-    payloads: dict[str, bytes]
+def filename_release_key(path: Path) -> tuple[int, str, int, str]:
+    name = path.name.upper()
+    timestamp_match = re.search(r"(?<!\d)(20\d{6})[_-](\d{6})(?!\d)", name)
+    version_match = re.search(r"(?:^|[_-])V(\d+)(?:[_-]|\.|$)", name)
+    timestamp = "" if timestamp_match is None else "".join(timestamp_match.groups())
+    version = -1 if version_match is None else int(version_match.group(1))
+    return (int(bool(timestamp)), timestamp, version, name)
 
 
-def normalize_source(value: str) -> str:
-    source = value.strip().upper()
-    if not source:
-        raise argparse.ArgumentTypeError("Package source cannot be empty")
-    if any(character not in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_" for character in source):
-        raise argparse.ArgumentTypeError(
-            f"Invalid package source {value!r}; use only letters, digits, and underscores"
-        )
-    return source
-
-
-def normalize_zip_path(raw_path: str, *, is_directory: bool) -> str:
-    if not raw_path or "\x00" in raw_path:
-        raise RuntimeError(f"Unsafe ZIP path: {raw_path!r}")
-
-    path = raw_path.replace("\\", "/")
-    if path.startswith("/"):
-        raise RuntimeError(f"Unsafe ZIP path: {raw_path!r}")
-    if is_directory:
-        path = path.removesuffix("/")
-    elif path.endswith("/"):
-        raise RuntimeError(f"Unsafe ZIP file path: {raw_path!r}")
-
-    parts = path.split("/")
-    if any(part in ("", ".", "..") for part in parts):
-        raise RuntimeError(f"Unsafe ZIP path: {raw_path!r}")
-    if ":" in parts[0]:
-        raise RuntimeError(f"Unsafe ZIP path: {raw_path!r}")
-
-    return "/".join(parts).upper()
-
-
-def latest_package(directory: Path, source: str) -> Path:
-    prefix = f"NA2_APPLY__{source}__"
+def latest_file(directory: Path, pattern: str) -> Path:
+    pattern_upper = pattern.upper()
     matches = [
         path
         for path in directory.iterdir()
-        if path.is_file()
-        and path.name.upper().startswith(prefix)
-        and path.name.upper().endswith(".ZIP")
+        if path.is_file() and fnmatch.fnmatch(path.name.upper(), pattern_upper)
     ]
     if not matches:
-        pattern = f"NA2_APPLY__{source}__*.zip"
-        raise FileNotFoundError(
-            f"No package exists for source {source}: {directory / pattern}"
-        )
-    return max(matches, key=lambda path: (path.stat().st_mtime_ns, path.name.upper()))
+        raise FileNotFoundError(f"No file matches {directory / pattern}")
+    return max(matches, key=filename_release_key)
 
 
-def validate_package(package_path: Path, source_name: str, source_iso: Iso9660) -> Package:
-    payloads: dict[str, bytes] = {}
-    seen_paths: set[str] = set()
-
-    try:
-        archive = zipfile.ZipFile(package_path)
-    except zipfile.BadZipFile as error:
-        raise RuntimeError(f"Invalid ZIP for source {source_name}: {package_path}") from error
-
-    with archive:
-        for info in archive.infolist():
-            is_directory = info.is_dir()
-            path = normalize_zip_path(info.filename, is_directory=is_directory)
-            if path in seen_paths:
-                raise RuntimeError(
-                    f"Duplicate normalized ZIP path in {package_path.name}: {path}"
-                )
-            seen_paths.add(path)
-
-            record = source_iso.by_path.get(path)
-            if record is None or record.is_dir != is_directory:
-                entry_kind = "directory" if is_directory else "file"
-                raise RuntimeError(
-                    f"Unexpected {entry_kind} in {package_path.name}; "
-                    f"path does not match the source ISO: {path}"
-                )
-            if is_directory:
-                continue
-
-            unix_mode = info.external_attr >> 16
-            unix_type = stat.S_IFMT(unix_mode)
-            if info.create_system == 3 and unix_type not in (0, stat.S_IFREG):
-                raise RuntimeError(
-                    f"Unsupported non-regular ZIP entry in {package_path.name}: "
-                    f"{info.filename!r}"
-                )
-            if info.flag_bits & 0x1:
-                raise RuntimeError(
-                    f"Encrypted ZIP entry is not supported in {package_path.name}: "
-                    f"{info.filename!r}"
-                )
-            if info.file_size != record.size:
-                raise RuntimeError(
-                    f"Replacement size differs in {package_path.name} for {path}: "
-                    f"expected {record.size} bytes, got {info.file_size}"
-                )
-
-            try:
-                payloads[path] = archive.read(info)
-            except (zipfile.BadZipFile, RuntimeError, NotImplementedError) as error:
-                raise RuntimeError(
-                    f"Failed to validate ZIP entry in {package_path.name}: "
-                    f"{info.filename!r}: {error}"
-                ) from error
-
-    if not payloads:
-        raise RuntimeError(f"Package contains no replacement files: {package_path.name}")
-
-    return Package(source=source_name, path=package_path, payloads=payloads)
-
-
-def find_conflicts(packages: list[Package]) -> dict[str, list[Package]]:
-    owners: dict[str, list[Package]] = {}
-    for package in packages:
-        for path in package.payloads:
-            owners.setdefault(path, []).append(package)
-    return {path: items for path, items in owners.items() if len(items) > 1}
-
-
-def recreate_output(source_iso: Path, output_iso: Path) -> None:
+def initialize(source_iso: Path, output_iso: Path) -> None:
     temporary = output_iso.with_suffix(output_iso.suffix + ".initializing")
-    temporary.unlink(missing_ok=True)
-    print("Recreating output with a complete source ISO copy...")
+    if temporary.exists():
+        temporary.unlink()
+    print("Initializing output with one full source ISO copy...")
+    shutil.copyfile(source_iso, temporary)
+    os.replace(temporary, output_iso)
+
+
+def directory_record_offset(iso: Iso9660, path: str) -> int:
+    parent_path, _, leaf = path.rpartition("/")
+    parent = iso.by_path.get(parent_path)
+    if parent is None or not parent.is_dir:
+        raise RuntimeError(f"Parent directory not found for {path}")
+    data = iso.read_file(parent)
+    offset = 0
+    while offset < len(data):
+        length = data[offset]
+        if length == 0:
+            offset = ((offset // SECTOR) + 1) * SECTOR
+            continue
+        raw = data[offset : offset + length]
+        name_length = raw[32]
+        name_bytes = raw[33 : 33 + name_length]
+        if name_bytes not in (b"\x00", b"\x01"):
+            name = name_bytes.decode("ascii").split(";", 1)[0].upper()
+            if name == leaf:
+                return parent.byte_offset + offset
+        offset += length
+    raise RuntimeError(f"Directory record not found for {path}")
+
+
+def write_both_endian_32(output, offset: int, value: int) -> None:
+    output.seek(offset)
+    output.write(value.to_bytes(4, "little"))
+    output.write(value.to_bytes(4, "big"))
+
+
+def update_volume_space_size(output, sectors: int) -> None:
+    for sector in range(16, 128):
+        offset = sector * SECTOR
+        output.seek(offset)
+        descriptor = output.read(SECTOR)
+        if len(descriptor) != SECTOR or descriptor[1:6] != b"CD001":
+            continue
+        if descriptor[0] == 1:
+            write_both_endian_32(output, offset + 80, sectors)
+        if descriptor[0] == 255:
+            break
+
+
+def load_zip_payloads(
+    package: Path,
+    *,
+    source: Iso9660,
+    payloads: dict[str, bytearray],
+    owners: dict[str, str],
+) -> list[str]:
+    applied: list[str] = []
+    seen: set[str] = set()
+    with zipfile.ZipFile(package) as archive:
+        for info in archive.infolist():
+            if info.is_dir():
+                continue
+            path = normalize(info.filename)
+            if path in seen:
+                raise RuntimeError(f"Duplicate ZIP path in {package.name}: {path}")
+            seen.add(path)
+            if path in owners:
+                raise RuntimeError(
+                    f"Selected ZIP packages replace the same ISO path: {path} "
+                    f"({owners[path]} and {package.name})"
+                )
+            record = source.by_path.get(path)
+            if record is None or record.is_dir:
+                raise RuntimeError(f"ZIP path is not in the clean source ISO: {path}")
+            payloads[path] = bytearray(archive.read(info))
+            owners[path] = package.name
+            applied.append(path)
+    if not applied:
+        raise RuntimeError(f"Package contains no files: {package}")
+    return applied
+
+
+def parse_offset(value: str, *, row_number: int) -> int:
+    text = value.strip()
+    if not text:
+        raise ValueError(f"Translation TSV row {row_number}: empty offset")
     try:
-        shutil.copyfile(source_iso, temporary)
-        os.replace(temporary, output_iso)
-    except Exception:
-        temporary.unlink(missing_ok=True)
-        raise
+        return int(text, 0)
+    except ValueError as exc:
+        raise ValueError(
+            f"Translation TSV row {row_number}: invalid offset {value!r}"
+        ) from exc
+
+
+def parse_hex(value: str, *, field: str, row_number: int) -> bytes:
+    compact = "".join(value.split())
+    if not compact:
+        raise ValueError(f"Translation TSV row {row_number}: empty {field}")
+    if len(compact) % 2:
+        raise ValueError(f"Translation TSV row {row_number}: odd-length {field}")
+    try:
+        return bytes.fromhex(compact)
+    except ValueError as exc:
+        raise ValueError(
+            f"Translation TSV row {row_number}: invalid {field}"
+        ) from exc
+
+
+def apply_translation_tsv(
+    table: Path,
+    *,
+    source: Iso9660,
+    payloads: dict[str, bytearray],
+    owners: dict[str, str],
+) -> tuple[int, list[str]]:
+    patch_fields = ["path", "offset", "expected_hex", "replacement_hex"]
+    descriptive_fields = patch_fields + ["source_text", "replacement_text"]
+    patched_paths: list[str] = []
+    patched_set: set[str] = set()
+    row_count = 0
+
+    with table.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        fields = reader.fieldnames or []
+        if fields not in (patch_fields, descriptive_fields):
+            raise ValueError(
+                "Translation TSV columns must be either: "
+                + "\t".join(patch_fields)
+                + " or "
+                + "\t".join(descriptive_fields)
+            )
+
+        for row_number, row in enumerate(reader, 2):
+            if not any((value or "").strip() for value in row.values()):
+                continue
+            path = normalize(row["path"])
+            record = source.by_path.get(path)
+            if record is None or record.is_dir:
+                raise RuntimeError(
+                    f"Translation TSV row {row_number}: path is not in the clean source ISO: {path}"
+                )
+            if path not in payloads:
+                payloads[path] = bytearray(source.read_file(record))
+                owners[path] = table.name
+
+            offset = parse_offset(row["offset"], row_number=row_number)
+            expected = parse_hex(
+                row["expected_hex"], field="expected_hex", row_number=row_number
+            )
+            replacement = parse_hex(
+                row["replacement_hex"], field="replacement_hex", row_number=row_number
+            )
+            if len(expected) != len(replacement):
+                raise ValueError(
+                    f"Translation TSV row {row_number}: expected/replacement lengths differ "
+                    f"({len(expected)} != {len(replacement)})"
+                )
+
+            data = payloads[path]
+            end = offset + len(expected)
+            if offset < 0 or end > len(data):
+                raise ValueError(
+                    f"Translation TSV row {row_number}: range 0x{offset:X}-0x{end:X} "
+                    f"is outside {path} ({len(data)} bytes)"
+                )
+            actual = bytes(data[offset:end])
+            if actual != expected:
+                raise RuntimeError(
+                    f"Translation conflict in {table.name}, row {row_number}, {path} "
+                    f"at 0x{offset:X}: expected {expected.hex().upper()}, "
+                    f"found {actual.hex().upper()}"
+                )
+            data[offset:end] = replacement
+            owners[path] = table.name
+            row_count += 1
+            if path not in patched_set:
+                patched_set.add(path)
+                patched_paths.append(path)
+
+    if row_count == 0:
+        raise RuntimeError(f"Translation TSV contains no patch rows: {table}")
+    return row_count, patched_paths
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Compose explicitly selected NA2 apply-package sources onto a fresh "
-            "complete copy of the clean source ISO."
+            "Recreate the output ISO, compose the newest selected NA2 ZIP packages, "
+            "then apply the newest translation TSV last."
         )
     )
     parser.add_argument("--source", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--downloads", required=True, type=Path)
-    parser.add_argument(
-        "--package",
-        required=True,
-        action="append",
-        type=normalize_source,
-        dest="package_sources",
-        help=(
-            "Package source label, repeated as needed; selects the newest "
-            "NA2_APPLY__<SOURCE>__*.zip"
-        ),
-    )
+    parser.add_argument("--package", action="append", default=[])
     args = parser.parse_args()
 
-    source_iso_path = args.source.resolve()
-    output_iso_path = args.output.resolve()
+    source_iso = args.source.resolve()
+    output_iso = args.output.resolve()
     downloads = args.downloads.resolve()
-
-    if not source_iso_path.is_file():
-        raise FileNotFoundError(f"Source ISO does not exist: {source_iso_path}")
+    if not source_iso.is_file():
+        raise FileNotFoundError(source_iso)
     if not downloads.is_dir():
-        raise NotADirectoryError(f"Package directory does not exist: {downloads}")
-    if source_iso_path == output_iso_path:
+        raise FileNotFoundError(downloads)
+    if source_iso == output_iso:
         raise ValueError("Source and output ISO paths must differ")
 
-    duplicate_sources = sorted(
-        source
-        for source in set(args.package_sources)
-        if args.package_sources.count(source) > 1
-    )
-    if duplicate_sources:
-        raise RuntimeError(
-            "Package source selected more than once: " + ", ".join(duplicate_sources)
+    requested = args.package or ["Font", "Translation"]
+    categories: list[str] = []
+    for value in requested:
+        category = normalize_category(value)
+        if category not in categories:
+            categories.append(category)
+
+    zip_categories = [category for category in categories if category != "TRANSLATION"]
+    translation_selected = "TRANSLATION" in categories
+
+    packages: list[tuple[str, Path]] = []
+    for category in zip_categories:
+        package = latest_file(downloads, f"NA2_APPLY__{category}__*.zip")
+        packages.append((category, package))
+
+    translation_table = None
+    if translation_selected:
+        translation_table = latest_file(
+            downloads, "NA2_APPLY__TRANSLATION__*.tsv"
         )
 
-    package_sources = args.package_sources
+    source = Iso9660(source_iso)
+    payloads: dict[str, bytearray] = {}
+    owners: dict[str, str] = {}
+    package_paths: dict[str, list[str]] = {}
 
-    print("SELECTED NA2 APPLY PACKAGES:")
-    selected_paths: list[Path] = []
-    for source in package_sources:
-        package_path = latest_package(downloads, source)
-        selected_paths.append(package_path)
-        print(f"  [{source}] {package_path}")
+    for category, package in packages:
+        package_paths[category] = load_zip_payloads(
+            package,
+            source=source,
+            payloads=payloads,
+            owners=owners,
+        )
 
-    source_iso = Iso9660(source_iso_path)
-    packages = [
-        validate_package(package_path, source, source_iso)
-        for source, package_path in zip(package_sources, selected_paths, strict=True)
-    ]
+    translated_rows = 0
+    translated_paths: list[str] = []
+    if translation_table is not None:
+        translated_rows, translated_paths = apply_translation_tsv(
+            translation_table,
+            source=source,
+            payloads=payloads,
+            owners=owners,
+        )
 
-    conflicts = find_conflicts(packages)
-    if conflicts:
-        lines = ["Selected packages replace the same ISO path(s):"]
-        for path in sorted(conflicts):
-            labels = ", ".join(
-                f"{package.source} ({package.path.name})"
-                for package in conflicts[path]
-            )
-            lines.append(f"  {path}: {labels}")
-        raise RuntimeError("\n".join(lines))
+    if not payloads:
+        raise RuntimeError("No package files or translation patches were selected")
 
-    output_iso_path.parent.mkdir(parents=True, exist_ok=True)
-    recreate_output(source_iso_path, output_iso_path)
+    output_iso.parent.mkdir(parents=True, exist_ok=True)
+    initialize(source_iso, output_iso)
+    current = Iso9660(output_iso)
+    with output_iso.open("r+b") as output:
+        for path, data in payloads.items():
+            record = current.by_path[path]
+            payload = bytes(data)
+            if len(payload) == record.size:
+                output.seek(record.byte_offset)
+                output.write(payload)
+                continue
 
-    with output_iso_path.open("r+b") as output:
-        for package in packages:
-            for path in sorted(package.payloads):
-                output.seek(source_iso.by_path[path].byte_offset)
-                output.write(package.payloads[path])
+            output.seek(0, os.SEEK_END)
+            extent = (output.tell() + SECTOR - 1) // SECTOR
+            output.seek(extent * SECTOR)
+            output.write(payload)
+            padding = (-len(payload)) % SECTOR
+            if padding:
+                output.write(b"\x00" * padding)
+
+            record_offset = directory_record_offset(current, path)
+            write_both_endian_32(output, record_offset + 2, extent)
+            write_both_endian_32(output, record_offset + 10, len(payload))
+
+        output.seek(0, os.SEEK_END)
+        sectors = (output.tell() + SECTOR - 1) // SECTOR
+        output.truncate(sectors * SECTOR)
+        update_volume_space_size(output, sectors)
         output.flush()
         os.fsync(output.fileno())
 
-    result = Iso9660(output_iso_path)
-    if output_iso_path.stat().st_size != source_iso_path.stat().st_size:
-        raise RuntimeError("Final ISO size differs from the source ISO")
-
-    source_tree = {(record.path, record.is_dir) for record in source_iso.records}
+    result = Iso9660(output_iso)
+    source_tree = {(record.path, record.is_dir) for record in source.records}
     result_tree = {(record.path, record.is_dir) for record in result.records}
     if result_tree != source_tree:
         raise RuntimeError("Final ISO file tree differs from the source tree")
 
-    expected_replacements = {
-        path: data
-        for package in packages
-        for path, data in package.payloads.items()
-    }
-    for source_record in source_iso.records:
+    for source_record in source.records:
         if source_record.is_dir:
             continue
-
         result_record = result.by_path.get(source_record.path)
         if result_record is None or result_record.is_dir:
             raise RuntimeError(f"Final ISO is missing source file: {source_record.path}")
-
-        expected = expected_replacements.get(source_record.path)
-        if expected is None:
-            expected = source_iso.read_file(source_record)
+        expected = bytes(payloads[source_record.path]) if source_record.path in payloads else source.read_file(source_record)
         if result.read_file(result_record) != expected:
-            raise RuntimeError(
-                f"Final ISO file verification failed: {source_record.path}"
-            )
+            raise RuntimeError(f"Final ISO file verification failed: {source_record.path}")
 
     green = "\033[32m"
     reset = "\033[0m"
-    print("Applied files:")
-    for package in packages:
-        print(f"  [{package.source}] {package.path.name}")
-        for path in sorted(package.payloads):
-            print(f"    {green}{path}{reset}")
-    print(f"ISO: {output_iso_path}")
+    for category, package in packages:
+        print(f"Applied {category} package: {package.name}")
+        for path in sorted(package_paths[category]):
+            print(f"  {green}{path}{reset}")
+    if translation_table is not None:
+        print(f"Applied translation table: {translation_table.name}")
+        print(f"  rows: {translated_rows}")
+        for path in sorted(translated_paths):
+            print(f"  {green}{path}{reset}")
+    print(f"ISO: {output_iso}")
     return 0
 
 

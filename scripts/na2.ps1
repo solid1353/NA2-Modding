@@ -32,6 +32,10 @@ param(
 
 $na2Root = 'C:\Games\Modding\UN Modding\NA2 Modding'
 $command = if ($Mode) { $Mode.ToLowerInvariant() } else { '' }
+if ($command -eq 'ub') {
+    & (Join-Path $na2Root 'scripts\update_translation_package_builder.ps1')
+    return
+}
 if ($command -eq 'tr') {
     $builderArgs = @{}
     @{

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Build a self-contained NA2 translation apply package.
 
-The builder preserves the accumulated safe NA2 translation baseline and then
-replaces verified matching slots with the official English strings read directly
-from UN5 PRG/TEXTENG.BIN. It never edits an ISO and never reads translation TSVs.
+The builder preserves the accumulated safe NA2 translation baseline, replaces
+verified matching slots with official English strings from UN5 PRG/TEXTENG.BIN,
+and patches the NA2 executable string tables used by battle/practice/shop UI.
+It never edits an ISO and never reads translation TSVs.
 """
 from __future__ import annotations
 
@@ -25,6 +26,7 @@ SECTOR = 2048
 EXPECTED_SHA1 = {
     "NA2_BTL": "bf7fc7331a2a4f34fc90b84b45772ae1f6bcab03",
     "NA2_ETC": "dcfffd7eb14e484a4c0fbc195599a0b45a9a11c1",
+    "NA2_SLPS": "bbe206bbf4da0ee815b437226ceb6a533c95833e",
     "UN5_TEXTENG": "77fafba95157e44ccd61783a04aba87c4b98b1fb",
 }
 FILE_SPECS = {
@@ -32,6 +34,8 @@ FILE_SPECS = {
     "ETC": ("PRG/ETC.BIN", ["PRG/ETC.BIN", "ETC.BIN"]),
 }
 TEXTENG_CANDIDATES = ["PRG/TEXTENG.BIN", "TEXTENG.BIN"]
+SLPS_CANDIDATES = ["SLPS_258.37"]
+BTL_RUNTIME_BASE = 0x6B3F00
 
 
 @dataclass(frozen=True)
@@ -255,6 +259,284 @@ def write_slot(output: bytearray, offset: int, capacity: int, replacement: bytes
     )
 
 
+
+
+def patch_exact_slot(
+    clean: bytes,
+    output: bytearray,
+    *,
+    offset: int,
+    capacity: int,
+    source_text: str,
+    replacement_text: str,
+    label: str,
+) -> None:
+    verify_source_literal(
+        clean,
+        offset=offset,
+        source_text=source_text,
+        capacity=capacity,
+        label=label,
+    )
+    try:
+        replacement = replacement_text.encode("ascii")
+    except UnicodeEncodeError as exc:
+        raise ValueError(f"{label}: replacement is not ASCII") from exc
+    write_slot(output, offset, capacity, replacement)
+
+
+def patch_exact_bytes(
+    clean: bytes,
+    output: bytearray,
+    *,
+    offset: int,
+    source_text: str,
+    replacement_text: str,
+    label: str,
+) -> None:
+    source = source_text.encode("cp932") + b"\x00"
+    replacement = replacement_text.encode("ascii") + b"\x00"
+    if len(replacement) > len(source):
+        raise ValueError(f"{label}: replacement is longer than source storage")
+    actual = clean[offset : offset + len(source)]
+    if actual != source:
+        raise ValueError(
+            f"{label}: clean-source mismatch at 0x{offset:X}; "
+            f"expected {source.hex()}, got {actual.hex()}"
+        )
+    output[offset : offset + len(source)] = replacement + b"\x00" * (
+        len(source) - len(replacement)
+    )
+
+
+def apply_runtime_ui_fixes(
+    *,
+    clean_btl: bytes,
+    output_btl: bytearray,
+    clean_etc: bytes,
+    output_etc: bytearray,
+    clean_slps: bytes,
+    output_slps: bytearray,
+) -> dict[str, int]:
+    # Direct BTL strings missed by the legacy baseline.
+    btl_slots = [
+        (0x209CD0, 16, "使用不可", "No Use"),
+        (0x209D98, 16, "飛び道具", "Projectile"),
+        (0x209DA8, 16, "高速移動", "High Speed"),
+        (0x209DE0, 16, "動かない", "Don't Move"),
+        (0x209DF0, 16, "必ず返す", "Always"),
+        (0x20A210, 16, "対戦時間", "Battle Time"),
+        (0x20A748, 16, "連係攻撃", "Linked Attack"),
+        (0x20A768, 16, "コマンド表示", "Command Display"),
+        (0x20A788, 16, "案内忍音声", "Guide Sound"),
+        (0x20A7A8, 16, "追い討ち返し", "Extra Counter"),
+    ]
+    for offset, capacity, source, replacement in btl_slots:
+        patch_exact_slot(
+            clean_btl,
+            output_btl,
+            offset=offset,
+            capacity=capacity,
+            source_text=source,
+            replacement_text=replacement,
+            label=f"BTL UI fix at 0x{offset:X}",
+        )
+
+    # Shop help strings visible in the reported shop screen.
+    etc_slots = [
+        (
+            0x2F230,
+            112,
+            "<r購入|こうにゅう>する<r商品|しょうひん>を<r選|えら>び、<iconCIRCLE>ボタンを<r押|お>してください。",
+            "Press <iconCIRCLE> to choose item.",
+        ),
+        (
+            0x2F3F0,
+            112,
+            "<r購入|こうにゅう>する<r商品|しょうひん>にカーソルを<r合|あ>わせ、<iconCIRCLE>ボタンを<r押|お>してください。",
+            "Select an item and press <iconCIRCLE> to buy.",
+        ),
+        (
+            0x2F460,
+            160,
+            "<iconSQUARE>ボタンを<r押|お>すとポイントを<r使|つか>ってボーナスゲームを<r行|おこな>うことができます。",
+            "Press <iconSQUARE> to use points to play a bonus game.",
+        ),
+    ]
+    for offset, capacity, source, replacement in etc_slots:
+        patch_exact_slot(
+            clean_etc,
+            output_etc,
+            offset=offset,
+            capacity=capacity,
+            source_text=source,
+            replacement_text=replacement,
+            label=f"ETC shop UI fix at 0x{offset:X}",
+        )
+
+    # Executable-resident practice values and labels. Each entry is an exact
+    # fixed slot in the clean SLPS executable.
+    slps_slots = [
+        (0x505B48, 8, "楽々", "V.Easy"),
+        (0x505B50, 8, "ふつう", "Normal"),
+        (0x505B58, 8, "激むず", "V.Hard"),
+        (0x505B60, 8, "究極", "Max"),
+        (0x505B68, 8, "なし", "None"),
+        (0x505B70, 8, "少なめ", "Low"),
+        (0x505B78, 8, "多め", "High"),
+        (0x505B80, 8, "通常", "Normal"),
+        (0x505B98, 8, "回転", "Turn"),
+        (0x505BA0, 8, "連打", "Combo"),
+        (0x505BB0, 8, "オフ", "Off"),
+        (0x505BB8, 8, "オン", "On"),
+        (0x505BC8, 8, "半分", "Half"),
+        (0x505BE0, 16, "オート", "Auto"),
+        (0x505BF0, 8, "手動", "Manual"),
+        (0x505BF8, 8, "ＣＯＭ", "COM"),
+        (0x505C00, 8, "立ち", "Stand"),
+        (0x505C08, 8, "しない", "None"),
+        (0x505C10, 8, "単発", "Single"),
+        (0x505C18, 8, "コンボ", "Combo"),
+        (0x505C20, 8, "奥義", "Ult."),
+        (0x505C28, 8, "忍術", "Jutsu"),
+        (0x505C30, 8, "する", "Use"),
+        (0x505C40, 8, "追う", "Chase"),
+        (0x505C60, 16, "乱発", "Frequent"),
+        (0x505C70, 8, "難易度", "Level"),
+        (0x505CA0, 8, "体力", "Health"),
+        (0x505CA8, 8, "状態", "Status"),
+        (0x505CB0, 8, "強さ", "Power"),
+        (0x505CB8, 8, "攻撃", "Attack"),
+        (0x505CC0, 8, "ガード", "Guard"),
+        (0x505CC8, 8, "行動", "Action"),
+    ]
+    for offset, capacity, source, replacement in slps_slots:
+        patch_exact_slot(
+            clean_slps,
+            output_slps,
+            offset=offset,
+            capacity=capacity,
+            source_text=source,
+            replacement_text=replacement,
+            label=f"SLPS UI fix at 0x{offset:X}",
+        )
+
+    # Common short character-name tables used by shop/collection UI.
+    name_slots = [
+        (0x506450, "ナルト", "Naruto"),
+        (0x506458, "サクラ", "Sakura"),
+        (0x506460, "カカシ", "Kakashi"),
+        (0x506468, "ネジ", "Neji"),
+        (0x506470, "サイ", "Sai"),
+        (0x506478, "サスケ", "Sasuke"),
+        (0x506480, "シズネ", "Shizune"),
+        (0x506488, "アスマ", "Asuma"),
+        (0x506490, "テマリ", "Temari"),
+        (0x506498, "ヤマト", "Yamato"),
+        (0x5064A0, "リー", "Lee"),
+        (0x5064A8, "ガイ", "Guy"),
+        (0x5064B0, "いの", "Ino"),
+        (0x5064B8, "キバ", "Kiba"),
+        (0x5064C0, "シノ", "Shino"),
+        (0x5064C8, "ヒナタ", "Hinata"),
+        (0x506648, "クナイ", "Kunai"),
+        (0x506650, "サイ", "Sai"),
+        (0x506658, "テマリ", "Temari"),
+        (0x506660, "サソリ", "Sasori"),
+        (0x506668, "シズネ", "Shizune"),
+        (0x506670, "ヤマト", "Yamato"),
+    ]
+    for offset, source, replacement in name_slots:
+        patch_exact_slot(
+            clean_slps,
+            output_slps,
+            offset=offset,
+            capacity=8,
+            source_text=source,
+            replacement_text=replacement,
+            label=f"SLPS name fix at 0x{offset:X}",
+        )
+
+    # Confirmation choices, including the shop quit prompt shown in the report.
+    yes_offsets = [
+        0x503110, 0x5031A0, 0x506760, 0x506FA8,
+    ]
+    no_offsets = [
+        0x503118, 0x5031A8, 0x504668, 0x505AD8,
+        0x5066A8, 0x506768, 0x506FB0,
+    ]
+    for offset in yes_offsets:
+        patch_exact_bytes(
+            clean_slps,
+            output_slps,
+            offset=offset,
+            source_text="はい",
+            replacement_text="Yes",
+            label=f"SLPS Yes fix at 0x{offset:X}",
+        )
+    for offset in no_offsets:
+        patch_exact_bytes(
+            clean_slps,
+            output_slps,
+            offset=offset,
+            source_text="いいえ",
+            replacement_text="No",
+            label=f"SLPS No fix at 0x{offset:X}",
+        )
+
+    # Exact long official labels do not fit their original 8/16-byte slots.
+    # Store them in the unused tail of the translated item-spawn help slot and
+    # redirect only the BTL pointers that need them.
+    pool_host_offset = 0x20A340
+    pool_host_capacity = 240
+    host = output_btl[pool_host_offset : pool_host_offset + pool_host_capacity]
+    first_nul = host.find(0)
+    if first_nul < 0:
+        raise ValueError("BTL string-pool host has no NUL terminator")
+    cursor = pool_host_offset + first_nul + 1
+    pool_limit = pool_host_offset + pool_host_capacity
+    pool_offsets: dict[str, int] = {}
+    for text in [
+        "Difficulty",
+        "Ultimate Jutsu",
+        "Strength",
+        "Guide Ninja Sound",
+        "Extra Hit Counter",
+        "Ultimate",
+    ]:
+        payload = text.encode("ascii") + b"\x00"
+        if cursor + len(payload) > pool_limit:
+            raise ValueError("BTL UI string pool does not fit in host slot")
+        output_btl[cursor : cursor + len(payload)] = payload
+        pool_offsets[text] = cursor
+        cursor += len(payload)
+
+    pointer_rewrites = {
+        0x20A264: "Difficulty",
+        0x20A270: "Ultimate Jutsu",
+        0x20A7CC: "Ultimate Jutsu",
+        0x20A7E0: "Guide Ninja Sound",
+        0x20A7E8: "Strength",
+        0x20A800: "Extra Hit Counter",
+        0x209DD4: "Ultimate",
+    }
+    for pointer_offset, text in pointer_rewrites.items():
+        runtime_pointer = BTL_RUNTIME_BASE + pool_offsets[text]
+        output_btl[pointer_offset : pointer_offset + 4] = runtime_pointer.to_bytes(
+            4, "little"
+        )
+
+    return {
+        "btl_direct_slots": len(btl_slots),
+        "etc_direct_slots": len(etc_slots),
+        "slps_ui_slots": len(slps_slots),
+        "slps_name_slots": len(name_slots),
+        "slps_yes_no_slots": len(yes_offsets) + len(no_offsets),
+        "btl_pointer_rewrites": len(pointer_rewrites),
+        "btl_pool_strings": len(pool_offsets),
+    }
+
+
 def patch_rows(
     *,
     selected: set[str],
@@ -389,7 +671,7 @@ def validate_zip(path: Path, expected: dict[str, bytes]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Build NA2 BTL/ETC replacements with verified official UN5 TEXTENG ports"
+        description="Build NA2 translation replacements with official UN5 TEXTENG and executable UI fixes"
     )
     parser.add_argument("--na2-iso", type=Path)
     parser.add_argument("--na2-folder", type=Path)
@@ -411,11 +693,13 @@ def main() -> int:
         target: na2.read(FILE_SPECS[target][1], f"NA2 {FILE_SPECS[target][0]}")
         for target in selected
     }
+    clean_slps = na2.read(SLPS_CANDIDATES, "NA2 SLPS_258.37")
     texteng = un5.read(TEXTENG_CANDIDATES, "UN5 PRG/TEXTENG.BIN")
 
     actual_hashes = {
         "NA2_BTL": sha1(clean_files["BTL"]) if "BTL" in selected else None,
         "NA2_ETC": sha1(clean_files["ETC"]) if "ETC" in selected else None,
+        "NA2_SLPS": sha1(clean_slps),
         "UN5_TEXTENG": sha1(texteng),
     }
     if not args.no_strict_hash:
@@ -430,6 +714,7 @@ def main() -> int:
     official_rows = json.loads(official_path.read_text(encoding="utf-8"))
 
     output_files = {target: bytearray(clean_files[target]) for target in selected}
+    output_slps = bytearray(clean_slps)
     patch_log, stats = patch_rows(
         selected=selected,
         clean_files=clean_files,
@@ -438,6 +723,16 @@ def main() -> int:
         official_rows=official_rows,
         texteng=texteng,
     )
+    runtime_stats: dict[str, int] = {}
+    if {"BTL", "ETC"}.issubset(selected):
+        runtime_stats = apply_runtime_ui_fixes(
+            clean_btl=clean_files["BTL"],
+            output_btl=output_files["BTL"],
+            clean_etc=clean_files["ETC"],
+            output_etc=output_files["ETC"],
+            clean_slps=clean_slps,
+            output_slps=output_slps,
+        )
 
     run_id = dt.datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3] + f"_pid{os.getpid()}"
     run_root = args.work_root / "runs" / run_id
@@ -456,6 +751,13 @@ def main() -> int:
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(payload)
         expected_zip[iso_path] = payload
+
+    slps_payload = bytes(output_slps)
+    if len(slps_payload) != len(clean_slps):
+        raise ValueError("Generated SLPS_258.37 size changed")
+    slps_destination = package_root / "SLPS_258.37"
+    slps_destination.write_bytes(slps_payload)
+    expected_zip["SLPS_258.37"] = slps_payload
 
     output_dir = args.output_directory.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -494,14 +796,20 @@ def main() -> int:
         }
         for target in selected_list
     }
+    hashes["SLPS_258.37"] = {
+        "source_sha1": sha1(clean_slps),
+        "output_sha1": sha1(bytes(output_slps)),
+        "size": len(output_slps),
+    }
     summary = {
-        "mode": "safe baseline plus verified official UN5 TEXTENG overrides",
+        "mode": "safe baseline plus official UN5 TEXTENG and executable UI fixes",
         "run_id": run_id,
         "package": str(final_path),
         "targets": selected_list,
         "source_hashes": actual_hashes,
         "files": hashes,
         "stats": stats,
+        "runtime_ui_fixes": runtime_stats,
         "official_texteng_rows_total": sum(
             1 for row in official_rows if str(row["file"]).upper() in selected
         ),
@@ -527,6 +835,13 @@ def main() -> int:
             f"official UN5 TEXTENG rows: {target_stats['official']} "
             f"({target_stats['official_changed']} changed from baseline)"
         )
+    slps_info = hashes["SLPS_258.37"]
+    print(
+        f"  SLPS_258.37: {slps_info['size']} bytes, "
+        f"SHA-1 {slps_info['output_sha1']}"
+    )
+    if runtime_stats:
+        print(f"    runtime UI fixes: {sum(runtime_stats.values())}")
     print(f"  Logs: {log_root}")
     return 0
 

@@ -16,6 +16,7 @@ __pycache__/
 # Windows/editor noise
 Thumbs.db
 Desktop.ini
+
 # Generated PCSX2 CRC aliases; canonical PNACH remains tracked
 /cheats/SLPS-25837_*.pnach
 !/cheats/SLPS-25837_C0659AD1.pnach

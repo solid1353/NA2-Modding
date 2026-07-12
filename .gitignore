@@ -10,6 +10,7 @@
 /work/
 /ghidra/
 /disassembly/
+/translation_package_builder/work
 
 # Windows/editor noise
 Thumbs.db

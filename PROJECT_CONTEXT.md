@@ -129,6 +129,7 @@ Use `scripts/split_cvm_rofs.ps1` to split the encrypted CVM safely without runni
 
 ## Current Scripts
 
+- `apply_latest_na2.ps1` / `apply_latest_na2.py`: standard testing process for rebuilding `build/Current.iso` from the source ISO with provided packages and launching it in PCSX2.
 - `check_translation_lengths.ps1`: checks CP932 byte lengths for translation tables.
 - `extract_afs.ps1`: extracts AFS archives for inspection when needed.
 - `extract_iso_file.ps1`: extracts one file from an ISO into a chosen output path.

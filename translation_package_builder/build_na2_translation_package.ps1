@@ -1,35 +1,82 @@
 param(
-    [string]$Na2Iso = 'C:\Games\Modding\UN Modding\NA2 Modding\source\NA2.iso',
-    [string]$OutputDirectory = 'C:\Users\solid\Downloads',
-    [string]$BtlApplyTsv,
-    [string]$EtcApplyTsv,
+    [string]$Na2Iso,
+    [string]$Na2Folder,
+    [string]$Un5Iso,
+    [string]$Un5Folder,
+    [string]$OutputDirectory = (Join-Path $HOME 'Downloads'),
+    [string]$Apply = 'BTL,ETC',
     [switch]$NoStrictHash
 )
 
 $ErrorActionPreference = 'Stop'
 
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$builder = Join-Path $scriptDir 'scripts\build_translation_package.py'
+$builderRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectRoot = Split-Path -Parent $builderRoot
+$builder = Join-Path $builderRoot 'scripts\build_translation_package.py'
+$dataRoot = Join-Path $builderRoot 'data'
 
-if ([string]::IsNullOrWhiteSpace($BtlApplyTsv)) {
-    $BtlApplyTsv = Join-Path $scriptDir 'translations\apply\btl_apply.tsv'
-}
-if ([string]::IsNullOrWhiteSpace($EtcApplyTsv)) {
-    $EtcApplyTsv = Join-Path $scriptDir 'translations\apply\etc_apply.tsv'
+if ([string]::IsNullOrWhiteSpace($Na2Folder)) {
+    $candidate = Join-Path $projectRoot 'source\NA2'
+    if (Test-Path -LiteralPath $candidate -PathType Container) {
+        $Na2Folder = $candidate
+    }
 }
 
-$argsList = @(
-    $builder,
-    '--na2-iso', $Na2Iso,
+if ([string]::IsNullOrWhiteSpace($Na2Iso)) {
+    $candidate = Join-Path $projectRoot 'source\NA2.iso'
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+        $Na2Iso = $candidate
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($Un5Folder)) {
+    $candidate = Join-Path $projectRoot 'source\UN5'
+    if (Test-Path -LiteralPath $candidate -PathType Container) {
+        $Un5Folder = $candidate
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($Un5Iso)) {
+    $candidate = Join-Path $projectRoot 'source\UN5.iso'
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+        $Un5Iso = $candidate
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($Na2Folder) -and [string]::IsNullOrWhiteSpace($Na2Iso)) {
+    throw 'NA2 source not found. Expected source\NA2 or source\NA2.iso.'
+}
+
+if ([string]::IsNullOrWhiteSpace($Un5Folder) -and [string]::IsNullOrWhiteSpace($Un5Iso)) {
+    throw 'UN5 source not found. Expected source\UN5 or source\UN5.iso.'
+}
+
+$arguments = @(
     '--output-directory', $OutputDirectory,
-    '--btl-tsv', $BtlApplyTsv,
-    '--etc-tsv', $EtcApplyTsv
+    '--work-root', (Join-Path $builderRoot 'work'),
+    '--data-root', $dataRoot,
+    '--apply', $Apply
 )
-if ($NoStrictHash) {
-    $argsList += '--no-strict-hash'
+
+if (-not [string]::IsNullOrWhiteSpace($Na2Folder)) {
+    $arguments += @('--na2-folder', $Na2Folder)
+}
+elseif (-not [string]::IsNullOrWhiteSpace($Na2Iso)) {
+    $arguments += @('--na2-iso', $Na2Iso)
 }
 
-& python @argsList
+if (-not [string]::IsNullOrWhiteSpace($Un5Folder)) {
+    $arguments += @('--un5-folder', $Un5Folder)
+}
+elseif (-not [string]::IsNullOrWhiteSpace($Un5Iso)) {
+    $arguments += @('--un5-iso', $Un5Iso)
+}
+
+if ($NoStrictHash) {
+    $arguments += '--no-strict-hash'
+}
+
+& python $builder @arguments
 if ($LASTEXITCODE -ne 0) {
-    throw "Translation package builder failed with exit code $LASTEXITCODE."
+    throw "Translation package builder failed with exit code $LASTEXITCODE"
 }

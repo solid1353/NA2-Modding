@@ -1,17 +1,9 @@
 #!/usr/bin/env python3
-"""Build a self-contained NA2 translation replacement package.
+"""Build a self-contained NA2 translation apply package.
 
-Reads clean PRG/BTL.BIN and PRG/ETC.BIN directly from the authoritative
-NA2 ISO, applies the bundled approved TSV rows in place, and writes:
-
-    NA2_APPLY__TRANSLATION__*.zip
-
-The ZIP contains exactly:
-
-    PRG/BTL.BIN
-    PRG/ETC.BIN
-
-This tool never writes or patches an ISO.
+The builder preserves the accumulated safe NA2 translation baseline and then
+replaces verified matching slots with the official English strings read directly
+from UN5 PRG/TEXTENG.BIN. It never edits an ISO and never reads translation TSVs.
 """
 from __future__ import annotations
 
@@ -21,463 +13,521 @@ import datetime as dt
 import hashlib
 import json
 import os
-import re
+import shutil
 import sys
+import tempfile
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, Optional, Sequence
 
 SECTOR = 2048
 EXPECTED_SHA1 = {
-    "NA2_BTL.BIN": "bf7fc7331a2a4f34fc90b84b45772ae1f6bcab03",
-    "NA2_ETC.BIN": "dcfffd7eb14e484a4c0fbc195599a0b45a9a11c1",
+    "NA2_BTL": "bf7fc7331a2a4f34fc90b84b45772ae1f6bcab03",
+    "NA2_ETC": "dcfffd7eb14e484a4c0fbc195599a0b45a9a11c1",
+    "UN5_TEXTENG": "77fafba95157e44ccd61783a04aba87c4b98b1fb",
 }
-ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_BTL_TSV = ROOT / "translations" / "apply" / "btl_apply.tsv"
-DEFAULT_ETC_TSV = ROOT / "translations" / "apply" / "etc_apply.tsv"
-EXPECTED_ZIP_PATHS = ("PRG/BTL.BIN", "PRG/ETC.BIN")
+FILE_SPECS = {
+    "BTL": ("PRG/BTL.BIN", ["PRG/BTL.BIN", "BTL.BIN"]),
+    "ETC": ("PRG/ETC.BIN", ["PRG/ETC.BIN", "ETC.BIN"]),
+}
+TEXTENG_CANDIDATES = ["PRG/TEXTENG.BIN", "TEXTENG.BIN"]
 
 
 @dataclass(frozen=True)
 class IsoRecord:
     path: str
-    raw_name: str
     extent: int
     size: int
     flags: int
 
     @property
     def is_dir(self) -> bool:
-        return (self.flags & 0x02) != 0
-
-    @property
-    def byte_offset(self) -> int:
-        return self.extent * SECTOR
+        return bool(self.flags & 2)
 
 
 class Iso9660:
-    def __init__(self, iso_path: Path) -> None:
-        self.iso_path = iso_path
-        self._data = iso_path.read_bytes()
+    def __init__(self, path: Path) -> None:
+        self.path = path.resolve()
+        self.data = self.path.read_bytes()
         self.records: Dict[str, IsoRecord] = {}
-        self.root_record: Optional[IsoRecord] = None
         self._parse()
 
-    def _parse_dir_record_at(self, data: bytes, off: int) -> Tuple[Optional[IsoRecord], int]:
-        if off >= len(data):
+    @staticmethod
+    def _decode_name(raw: bytes) -> str:
+        if raw in (b"\x00", b"\x01"):
+            return ""
+        return raw.decode("ascii", "replace").split(";", 1)[0].upper()
+
+    @staticmethod
+    def _record(buf: bytes, offset: int) -> tuple[Optional[tuple[int, int, int, bytes]], int]:
+        if offset >= len(buf) or buf[offset] == 0:
             return None, 0
-        length = data[off]
-        if length == 0:
-            return None, 0
-        rec = data[off : off + length]
+        length = buf[offset]
+        rec = buf[offset : offset + length]
         if len(rec) < 34:
-            raise ValueError(f"Bad short directory record at offset {off}")
+            raise ValueError(f"Invalid ISO directory record at 0x{offset:X}")
         extent = int.from_bytes(rec[2:6], "little")
         size = int.from_bytes(rec[10:14], "little")
         flags = rec[25]
-        name_len = rec[32]
-        name_bytes = rec[33 : 33 + name_len]
-        if name_bytes == b"\x00":
-            raw_name = "."
-        elif name_bytes == b"\x01":
-            raw_name = ".."
-        else:
-            raw_name = name_bytes.decode("ascii", errors="replace")
-        return IsoRecord("", raw_name, extent, size, flags), length
+        name_length = rec[32]
+        return (extent, size, flags, rec[33 : 33 + name_length]), length
 
-    @staticmethod
-    def _norm_component(raw: str) -> str:
-        return raw.split(";", 1)[0].upper()
-
-    def _parse_directory(self, rec: IsoRecord, prefix: str) -> None:
-        start = rec.byte_offset
-        end = start + rec.size
-        data = self._data[start:end]
-        off = 0
-        while off < len(data):
-            length = data[off]
-            if length == 0:
-                off = ((off // SECTOR) + 1) * SECTOR
+    def _walk(self, record: IsoRecord, prefix: str) -> None:
+        directory = self.data[
+            record.extent * SECTOR : record.extent * SECTOR + record.size
+        ]
+        offset = 0
+        while offset < len(directory):
+            if directory[offset] == 0:
+                offset = ((offset // SECTOR) + 1) * SECTOR
                 continue
-            child, used = self._parse_dir_record_at(data, off)
-            if child is None or used == 0:
+            parsed, used = self._record(directory, offset)
+            if parsed is None:
                 break
-            off += used
-            if child.raw_name in (".", ".."):
+            offset += used
+            extent, size, flags, raw_name = parsed
+            name = self._decode_name(raw_name)
+            if not name:
                 continue
-            component = self._norm_component(child.raw_name)
-            path = f"{prefix}/{component}" if prefix else component
-            full = IsoRecord(path, child.raw_name, child.extent, child.size, child.flags)
-            self.records[path] = full
-            if full.is_dir:
-                self._parse_directory(full, path)
+            path = f"{prefix}/{name}" if prefix else name
+            child = IsoRecord(path, extent, size, flags)
+            self.records[path] = child
+            if child.is_dir:
+                self._walk(child, path)
 
     def _parse(self) -> None:
-        pvd = None
-        for sector in range(16, min(128, len(self._data) // SECTOR)):
-            off = sector * SECTOR
-            if self._data[off] == 1 and self._data[off + 1 : off + 6] == b"CD001":
-                pvd = self._data[off : off + SECTOR]
+        pvd: Optional[bytes] = None
+        for sector in range(16, min(128, len(self.data) // SECTOR)):
+            offset = sector * SECTOR
+            if self.data[offset] == 1 and self.data[offset + 1 : offset + 6] == b"CD001":
+                pvd = self.data[offset : offset + SECTOR]
                 break
         if pvd is None:
-            raise ValueError(f"{self.iso_path}: no ISO9660 Primary Volume Descriptor found")
-        root_rec, _ = self._parse_dir_record_at(pvd, 156)
-        if root_rec is None:
-            raise ValueError("Could not parse ISO root directory record")
-        root_rec = IsoRecord("", "/", root_rec.extent, root_rec.size, root_rec.flags)
-        self.root_record = root_rec
-        self._parse_directory(root_rec, "")
+            raise ValueError(f"No ISO9660 primary volume descriptor: {self.path}")
+        parsed, _ = self._record(pvd, 156)
+        if parsed is None:
+            raise ValueError("Invalid ISO root record")
+        extent, size, flags, _ = parsed
+        self._walk(IsoRecord("", extent, size, flags), "")
 
-    def read_file(self, rec: IsoRecord) -> bytes:
-        if rec.is_dir:
-            raise ValueError(f"{rec.path} is a directory")
-        start = rec.byte_offset
-        return self._data[start : start + rec.size]
-
-    def find_file(self, candidates: Iterable[str], label: str) -> IsoRecord:
-        normalized = [c.strip("/").replace("\\", "/").upper() for c in candidates]
+    def read(self, candidates: Sequence[str], label: str) -> bytes:
+        normalized = [normalize_path(x) for x in candidates]
         for candidate in normalized:
-            rec = self.records.get(candidate)
-            if rec is not None and not rec.is_dir:
-                return rec
-        wanted = {c.rsplit("/", 1)[-1] for c in normalized}
-        matches = [r for p, r in self.records.items() if not r.is_dir and p.rsplit("/", 1)[-1] in wanted]
+            record = self.records.get(candidate)
+            if record and not record.is_dir:
+                return self.data[
+                    record.extent * SECTOR : record.extent * SECTOR + record.size
+                ]
+        basenames = {x.rsplit("/", 1)[-1] for x in normalized}
+        matches = [
+            record
+            for path, record in self.records.items()
+            if not record.is_dir and path.rsplit("/", 1)[-1] in basenames
+        ]
         if len(matches) == 1:
-            return matches[0]
-        if matches:
-            details = "\n".join(f"  {m.path} size=0x{m.size:X}" for m in matches)
-            raise FileNotFoundError(f"Ambiguous {label}:\n{details}")
-        checked = "\n".join(f"  {c}" for c in normalized)
-        raise FileNotFoundError(f"Could not find {label}. Tried:\n{checked}")
+            record = matches[0]
+            return self.data[
+                record.extent * SECTOR : record.extent * SECTOR + record.size
+            ]
+        raise FileNotFoundError(f"Could not uniquely locate {label} in {self.path}")
 
 
-def sha1_bytes(data: bytes) -> str:
+class FolderSource:
+    def __init__(self, root: Path) -> None:
+        self.root = root.resolve()
+        if not self.root.is_dir():
+            raise FileNotFoundError(self.root)
+        self.files = {
+            normalize_path(path.relative_to(self.root).as_posix()): path
+            for path in self.root.rglob("*")
+            if path.is_file()
+        }
+
+    def read(self, candidates: Sequence[str], label: str) -> bytes:
+        normalized = [normalize_path(x) for x in candidates]
+        for candidate in normalized:
+            path = self.files.get(candidate)
+            if path:
+                return path.read_bytes()
+        basenames = {x.rsplit("/", 1)[-1] for x in normalized}
+        matches = [
+            path
+            for name, path in self.files.items()
+            if name.rsplit("/", 1)[-1] in basenames
+        ]
+        if len(matches) == 1:
+            return matches[0].read_bytes()
+        raise FileNotFoundError(f"Could not uniquely locate {label} under {self.root}")
+
+
+def normalize_path(value: str) -> str:
+    return value.strip("/\\").replace("\\", "/").upper()
+
+
+def sha1(data: bytes) -> str:
     return hashlib.sha1(data).hexdigest()
 
 
-def check_sha1(data: bytes, expected: str, label: str, strict: bool) -> str:
-    actual = sha1_bytes(data)
-    if actual.lower() != expected.lower():
-        message = f"SHA-1 mismatch for {label}: expected {expected}, actual {actual}"
-        if strict:
-            raise RuntimeError(message)
-        print("WARNING: " + message, file=sys.stderr)
-    return actual
+def parse_apply(value: str) -> list[str]:
+    selected = [
+        part.strip().upper()
+        for part in value.replace(";", ",").split(",")
+        if part.strip()
+    ]
+    selected = [part for part in selected if part not in {"NONE", "NO", "OFF"}]
+    unknown = sorted(set(selected) - set(FILE_SPECS))
+    if unknown:
+        raise ValueError("Unsupported target(s): " + ", ".join(unknown))
+    if not selected:
+        raise ValueError("No translation targets selected")
+    return list(dict.fromkeys(selected))
 
 
-def cp932_bytes(text: str) -> bytes:
+def source_from(folder: Optional[Path], iso: Optional[Path], label: str):
+    if folder is not None and folder.is_dir():
+        return FolderSource(folder)
+    if iso is not None and iso.is_file():
+        return Iso9660(iso)
+    details = []
+    if folder is not None:
+        details.append(f"folder={folder}")
+    if iso is not None:
+        details.append(f"iso={iso}")
+    suffix = ", ".join(details) if details else "no path supplied"
+    raise FileNotFoundError(f"{label} source not found ({suffix})")
+
+
+def read_ascii_z(data: bytes, offset: int, label: str) -> str:
+    if offset < 0 or offset >= len(data):
+        raise ValueError(f"{label}: TEXTENG offset 0x{offset:X} is outside the file")
+    end = data.find(b"\x00", offset)
+    if end < 0:
+        raise ValueError(f"{label}: unterminated TEXTENG string at 0x{offset:X}")
+    raw = data[offset:end]
     try:
-        return text.encode("cp932")
+        text = raw.decode("ascii")
+    except UnicodeDecodeError as exc:
+        raise ValueError(f"{label}: non-ASCII TEXTENG string at 0x{offset:X}") from exc
+    if not text:
+        raise ValueError(f"{label}: empty TEXTENG string at 0x{offset:X}")
+    if any(ord(char) < 0x20 and char not in "\t\r\n" for char in text):
+        raise ValueError(f"{label}: unsupported control character in TEXTENG string")
+    return text
+
+
+def verify_source_literal(
+    clean: bytes,
+    *,
+    offset: int,
+    source_text: str,
+    capacity: int,
+    label: str,
+) -> bytes:
+    try:
+        source_bytes = source_text.encode("cp932")
     except UnicodeEncodeError as exc:
-        raise ValueError(f"Text is not CP932-encodable: {text!r}: {exc}") from exc
+        raise ValueError(f"{label}: source text is not CP932-encodable") from exc
+    if capacity < len(source_bytes) + 1:
+        raise ValueError(
+            f"{label}: capacity {capacity} is smaller than source literal plus NUL "
+            f"({len(source_bytes) + 1})"
+        )
+    if offset < 0 or offset + capacity > len(clean):
+        raise ValueError(f"{label}: slot 0x{offset:X}+{capacity} is outside the file")
+    actual = clean[offset : offset + len(source_bytes)]
+    actual_nul = clean[offset + len(source_bytes)]
+    if actual != source_bytes or actual_nul != 0:
+        raise ValueError(
+            f"{label}: clean-source mismatch at 0x{offset:X}; expected "
+            f"{source_bytes.hex()}, got {actual.hex()} and NUL=0x{actual_nul:02X}"
+        )
+    return source_bytes
 
 
-ASSET_TOKEN_RE = re.compile(
-    r"(?ix)"
-    r"(^|\b)(ANM|OBJ|TEX|CMP|BGM|SE|SND|EFFECT|EFF|MDL|MOT|CHR|STAGE|SPR|GIM|TIM|CCS)_[A-Za-z0-9_%.-]+"
-    r"|\b[a-z0-9_./-]+\.ccs\b"
-    r"|\b[a-z0-9_./-]+\.(anm|gim|tim|bin|tm2|mdl|mot|seq|vag)\b"
-    r"|\bcha\d{2}[a-z]?\b"
-    r"|\bton0%d\b"
-    r"|\beffect0x\.ccs\b"
-    r"|\b(spine|trall)\b"
-)
+def write_slot(output: bytearray, offset: int, capacity: int, replacement: bytes) -> None:
+    if len(replacement) > capacity - 1:
+        raise ValueError(
+            f"replacement length {len(replacement)} exceeds slot payload {capacity - 1}"
+        )
+    output[offset : offset + capacity] = (
+        replacement + b"\x00" + b"\x00" * (capacity - len(replacement) - 1)
+    )
 
 
-def reject_translation_candidate(text: str, source_text: str = "") -> str:
-    value = (text or "").strip()
-    if not value:
-        return "empty_candidate"
-    if ASSET_TOKEN_RE.search(value):
-        return "asset_or_internal_identifier"
-    if "%" in value and "%" not in (source_text or ""):
-        return "unsafe_ascii_percent_added"
-    if re.fullmatch(r"[a-z]{2,}\d*[a-z]?", value) and " " not in value:
-        return "identifier_like_lowercase_token"
-    return ""
+def patch_rows(
+    *,
+    selected: set[str],
+    clean_files: dict[str, bytes],
+    output_files: dict[str, bytearray],
+    baseline_rows: list[dict],
+    official_rows: list[dict],
+    texteng: bytes,
+) -> tuple[list[dict], dict[str, dict[str, int]]]:
+    log: list[dict] = []
+    stats = {
+        target: {"baseline": 0, "official": 0, "official_changed": 0}
+        for target in selected
+    }
+
+    for row in baseline_rows:
+        target = str(row["file"]).upper()
+        if target not in selected:
+            continue
+        offset = int(row["offset"])
+        capacity = int(row["capacity"])
+        source_text = str(row["source"])
+        translation = str(row["translation"])
+        row_id = str(row.get("id", ""))
+        label = f"baseline {target} {row_id or hex(offset)}"
+        source_bytes = verify_source_literal(
+            clean_files[target],
+            offset=offset,
+            source_text=source_text,
+            capacity=capacity,
+            label=label,
+        )
+        try:
+            replacement = translation.encode("cp932")
+        except UnicodeEncodeError as exc:
+            raise ValueError(f"{label}: translation is not CP932-encodable") from exc
+        write_slot(output_files[target], offset, capacity, replacement)
+        stats[target]["baseline"] += 1
+        log.append(
+            {
+                "phase": "baseline",
+                "file": target,
+                "id": row_id,
+                "offset_hex": f"0x{offset:X}",
+                "capacity": capacity,
+                "source": source_text,
+                "translation": translation,
+                "source_bytes": len(source_bytes),
+                "replacement_bytes": len(replacement),
+                "texteng_offset_hex": "",
+            }
+        )
+
+    for index, row in enumerate(official_rows, 1):
+        target = str(row["file"]).upper()
+        if target not in selected:
+            continue
+        offset = int(row["offset"])
+        capacity = int(row["capacity"])
+        source_text = str(row["source"])
+        texteng_offset = int(row["texteng_offset"])
+        label = f"official {target} #{index} at 0x{offset:X}"
+        source_bytes = verify_source_literal(
+            clean_files[target],
+            offset=offset,
+            source_text=source_text,
+            capacity=capacity,
+            label=label,
+        )
+        official_text = read_ascii_z(texteng, texteng_offset, label)
+        replacement = official_text.encode("ascii")
+        before = bytes(output_files[target][offset : offset + capacity])
+        write_slot(output_files[target], offset, capacity, replacement)
+        after = bytes(output_files[target][offset : offset + capacity])
+        stats[target]["official"] += 1
+        if after != before:
+            stats[target]["official_changed"] += 1
+        log.append(
+            {
+                "phase": "official_texteng",
+                "file": target,
+                "id": "",
+                "offset_hex": f"0x{offset:X}",
+                "capacity": capacity,
+                "source": source_text,
+                "translation": official_text,
+                "source_bytes": len(source_bytes),
+                "replacement_bytes": len(replacement),
+                "texteng_offset_hex": f"0x{texteng_offset:X}",
+            }
+        )
+
+    return log, stats
 
 
-def read_tsv(path: Path) -> List[dict[str, str]]:
-    with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        return list(csv.DictReader(handle, delimiter="\t"))
-
-
-def write_tsv(path: Path, rows: List[dict[str, str]]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fields: List[str] = []
-    seen: set[str] = set()
+def write_csv(path: Path, rows: Iterable[dict]) -> None:
+    rows = list(rows)
+    if not rows:
+        path.write_text("", encoding="utf-8-sig")
+        return
+    fields: list[str] = []
     for row in rows:
         for key in row:
-            if key not in seen:
+            if key not in fields:
                 fields.append(key)
-                seen.add(key)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t", lineterminator="\n", extrasaction="ignore")
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t")
         writer.writeheader()
         writer.writerows(rows)
 
 
-def common_row_values(row: dict[str, str]) -> tuple[str, str, str, str, str]:
-    return (
-        row.get("id", ""),
-        row.get("offset_hex", "") or row.get("offset", ""),
-        row.get("source_japanese") or row.get("source_text") or row.get("ja_text") or row.get("old_text") or "",
-        row.get("chosen_translation") or row.get("new_text") or row.get("en_text") or row.get("proposed_translation") or "",
-        (row.get("enabled") or row.get("apply") or "yes").strip().lower(),
-    )
-
-
-def patch_btl_inplace(blob: bytearray, rows: List[dict[str, str]]) -> Tuple[List[dict[str, str]], dict[str, int]]:
-    log: List[dict[str, str]] = []
-    stats = {"rows": 0, "patched": 0, "skipped": 0}
-    for row in rows:
-        stats["rows"] += 1
-        rid, offset_hex, source_text, new_text, enabled = common_row_values(row)
-        entry = {
-            "id": rid,
-            "file_label": "BTL",
-            "offset_hex": offset_hex,
-            "source_text": source_text,
-            "new_text": new_text,
-            "status": "",
-            "reason": "",
-            "source_cp932_bytes": "",
-            "new_cp932_bytes": "",
-            "old_expected_cp932_hex": "",
-            "old_actual_hex": "",
-            "old_actual_nul_hex": "",
-        }
-        if enabled in ("0", "false", "no", "n", "skip", "disabled"):
-            entry.update(status="skipped", reason="disabled_by_tsv")
-        else:
-            reason = reject_translation_candidate(new_text, source_text)
-            if reason:
-                entry.update(status="skipped", reason=reason)
-            else:
-                try:
-                    offset = int(offset_hex, 16)
-                    old_data = cp932_bytes(source_text)
-                    new_data = cp932_bytes(new_text)
-                    old_len = len(old_data)
-                    entry["source_cp932_bytes"] = str(old_len)
-                    entry["new_cp932_bytes"] = str(len(new_data))
-                    entry["old_expected_cp932_hex"] = old_data.hex(" ")
-                    write_len = old_len + 1
-                    if offset < 0 or offset + write_len > len(blob):
-                        raise ValueError(f"literal_region_outside_btl_size_0x{len(blob):X}")
-                    actual_old = bytes(blob[offset : offset + old_len])
-                    actual_nul = blob[offset + old_len]
-                    entry["old_actual_hex"] = actual_old.hex(" ")
-                    entry["old_actual_nul_hex"] = f"0x{actual_nul:02X}"
-                    if actual_old != old_data or actual_nul != 0:
-                        raise ValueError("original_literal_mismatch_or_missing_nul")
-                    if len(new_data) > old_len:
-                        raise ValueError("replacement_longer_than_original_literal_under_safe_policy")
-                    old_region = bytes(blob[offset : offset + write_len])
-                    blob[offset : offset + write_len] = new_data + b"\x00" + b"\x00" * (old_len - len(new_data))
-                    entry.update(status="patched", reason="ok", old_region_sha1=sha1_bytes(old_region))
-                except Exception as exc:
-                    entry.update(status="skipped", reason=str(exc))
-        stats[entry["status"]] += 1
-        log.append(entry)
-    return log, stats
-
-
-def patch_etc_inplace(blob: bytearray, rows: List[dict[str, str]]) -> Tuple[List[dict[str, str]], dict[str, int]]:
-    log: List[dict[str, str]] = []
-    stats = {"rows": 0, "patched": 0, "skipped": 0}
-    for row in rows:
-        stats["rows"] += 1
-        rid, offset_hex, source_text, new_text, enabled = common_row_values(row)
-        entry = {
-            "id": rid,
-            "file_label": "ETC",
-            "offset_hex": offset_hex,
-            "slot_capacity": row.get("slot_capacity", ""),
-            "source_text": source_text,
-            "new_text": new_text,
-            "status": "",
-            "reason": "",
-            "source_cp932_bytes": "",
-            "new_cp932_bytes": "",
-            "old_expected_cp932_hex": "",
-            "old_actual_hex": "",
-            "old_actual_nul_hex": "",
-        }
-        if enabled in ("0", "false", "no", "n", "skip", "disabled"):
-            entry.update(status="skipped", reason="disabled_by_tsv")
-        else:
-            reason = reject_translation_candidate(new_text, source_text)
-            if reason:
-                entry.update(status="skipped", reason=reason)
-            else:
-                try:
-                    offset = int(offset_hex, 16)
-                    old_data = cp932_bytes(source_text)
-                    new_data = cp932_bytes(new_text)
-                    old_len = len(old_data)
-                    entry["source_cp932_bytes"] = str(old_len)
-                    entry["new_cp932_bytes"] = str(len(new_data))
-                    entry["old_expected_cp932_hex"] = old_data.hex(" ")
-                    raw_capacity = (row.get("slot_capacity") or "").strip()
-                    slot_capacity = int(raw_capacity, 0) if raw_capacity else old_len + 1
-                    entry["slot_capacity"] = str(slot_capacity)
-                    if slot_capacity < old_len + 1:
-                        raise ValueError("slot_capacity_smaller_than_original_literal_plus_nul")
-                    if offset < 0 or offset + slot_capacity > len(blob):
-                        raise ValueError(f"literal_region_outside_ETC_size_0x{len(blob):X}")
-                    actual_old = bytes(blob[offset : offset + old_len])
-                    actual_nul = blob[offset + old_len]
-                    entry["old_actual_hex"] = actual_old.hex(" ")
-                    entry["old_actual_nul_hex"] = f"0x{actual_nul:02X}"
-                    if actual_old != old_data or actual_nul != 0:
-                        raise ValueError("original_literal_mismatch_or_missing_nul")
-                    if len(new_data) > slot_capacity - 1:
-                        raise ValueError("replacement_longer_than_declared_slot_capacity")
-                    old_region = bytes(blob[offset : offset + slot_capacity])
-                    blob[offset : offset + slot_capacity] = new_data + b"\x00" + b"\x00" * (slot_capacity - len(new_data) - 1)
-                    entry.update(status="patched", reason="ok", old_region_sha1=sha1_bytes(old_region))
-                except Exception as exc:
-                    entry.update(status="skipped", reason=str(exc))
-        stats[entry["status"]] += 1
-        log.append(entry)
-    return log, stats
-
-
-def validate_zip(path: Path, expected: Dict[str, bytes]) -> Dict[str, str]:
+def validate_zip(path: Path, expected: dict[str, bytes]) -> None:
     with zipfile.ZipFile(path, "r") as archive:
         infos = archive.infolist()
         names = [info.filename.replace("\\", "/") for info in infos]
-        if names != list(EXPECTED_ZIP_PATHS):
-            raise RuntimeError(f"Unexpected ZIP contents/order: {names}")
-        if len({name.upper() for name in names}) != len(names):
-            raise RuntimeError("ZIP contains duplicate normalized paths")
-        hashes: Dict[str, str] = {}
-        for info, name in zip(infos, names):
-            if info.is_dir():
-                raise RuntimeError(f"Unexpected directory entry in ZIP: {name}")
-            data = archive.read(info)
-            if data != expected[name]:
-                raise RuntimeError(f"ZIP bytes differ from generated file: {name}")
-            hashes[name] = sha1_bytes(data)
-        return hashes
+        if any(info.is_dir() for info in infos):
+            raise ValueError("Package contains a directory entry")
+        normalized = [normalize_path(name) for name in names]
+        if len(normalized) != len(set(normalized)):
+            raise ValueError("Package contains duplicate normalized paths")
+        expected_names = [normalize_path(name) for name in expected]
+        if sorted(normalized) != sorted(expected_names):
+            raise ValueError(
+                f"Package paths differ from expected: got {names}, expected {list(expected)}"
+            )
+        by_normalized = {normalize_path(info.filename): info for info in infos}
+        for name, payload in expected.items():
+            archived = archive.read(by_normalized[normalize_path(name)])
+            if archived != payload:
+                raise ValueError(f"Archived bytes do not match generated file: {name}")
 
 
-def main(argv: Optional[List[str]] = None) -> int:
-    parser = argparse.ArgumentParser(description="Build NA2_APPLY__TRANSLATION__*.zip from clean NA2.iso and current BTL/ETC TSVs.")
-    parser.add_argument("--na2-iso", required=True, type=Path)
-    parser.add_argument("--output-directory", required=True, type=Path)
-    parser.add_argument("--btl-tsv", type=Path, default=DEFAULT_BTL_TSV)
-    parser.add_argument("--etc-tsv", type=Path, default=DEFAULT_ETC_TSV)
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Build NA2 BTL/ETC replacements with verified official UN5 TEXTENG ports"
+    )
+    parser.add_argument("--na2-iso", type=Path)
+    parser.add_argument("--na2-folder", type=Path)
+    parser.add_argument("--un5-iso", type=Path)
+    parser.add_argument("--un5-folder", type=Path)
+    parser.add_argument("--output-directory", type=Path, required=True)
+    parser.add_argument("--work-root", type=Path, required=True)
+    parser.add_argument("--data-root", type=Path, required=True)
+    parser.add_argument("--apply", default="BTL,ETC")
     parser.add_argument("--no-strict-hash", action="store_true")
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
 
-    na2_iso = args.na2_iso.resolve()
-    output_directory = args.output_directory.resolve()
-    btl_tsv = args.btl_tsv.resolve()
-    etc_tsv = args.etc_tsv.resolve()
-    strict = not args.no_strict_hash
+    selected_list = parse_apply(args.apply)
+    selected = set(selected_list)
+    na2 = source_from(args.na2_folder, args.na2_iso, "NA2")
+    un5 = source_from(args.un5_folder, args.un5_iso, "UN5")
 
-    if not na2_iso.is_file():
-        raise FileNotFoundError(f"Clean NA2 ISO not found: {na2_iso}")
-    if not btl_tsv.is_file():
-        raise FileNotFoundError(f"BTL apply TSV not found: {btl_tsv}")
-    if not etc_tsv.is_file():
-        raise FileNotFoundError(f"ETC apply TSV not found: {etc_tsv}")
-
-    run_id = dt.datetime.now().strftime("%Y%m%d_%H%M%S_%f") + f"_pid{os.getpid()}"
-    run_dir = ROOT / "work" / "runs" / run_id
-    logs_dir = run_dir / "logs"
-    package_root = run_dir / "package"
-    prg_dir = package_root / "PRG"
-    prg_dir.mkdir(parents=True, exist_ok=False)
-    logs_dir.mkdir(parents=True, exist_ok=False)
-
-    print(f"Reading clean NA2 ISO: {na2_iso}")
-    iso = Iso9660(na2_iso)
-    btl_rec = iso.find_file(["PRG/BTL.BIN"], "NA2 PRG/BTL.BIN")
-    etc_rec = iso.find_file(["PRG/ETC.BIN"], "NA2 PRG/ETC.BIN")
-    btl_source = iso.read_file(btl_rec)
-    etc_source = iso.read_file(etc_rec)
-
-    source_hashes = {
-        "PRG/BTL.BIN": check_sha1(btl_source, EXPECTED_SHA1["NA2_BTL.BIN"], "NA2 BTL.BIN", strict),
-        "PRG/ETC.BIN": check_sha1(etc_source, EXPECTED_SHA1["NA2_ETC.BIN"], "NA2 ETC.BIN", strict),
+    clean_files = {
+        target: na2.read(FILE_SPECS[target][1], f"NA2 {FILE_SPECS[target][0]}")
+        for target in selected
     }
+    texteng = un5.read(TEXTENG_CANDIDATES, "UN5 PRG/TEXTENG.BIN")
 
-    btl_rows = read_tsv(btl_tsv)
-    etc_rows = read_tsv(etc_tsv)
-    btl_output = bytearray(btl_source)
-    etc_output = bytearray(etc_source)
-    btl_log, btl_stats = patch_btl_inplace(btl_output, btl_rows)
-    etc_log, etc_stats = patch_etc_inplace(etc_output, etc_rows)
-
-    if len(btl_output) != btl_rec.size:
-        raise RuntimeError("Generated BTL.BIN size differs from source ISO record size")
-    if len(etc_output) != etc_rec.size:
-        raise RuntimeError("Generated ETC.BIN size differs from source ISO record size")
-
-    btl_path = prg_dir / "BTL.BIN"
-    etc_path = prg_dir / "ETC.BIN"
-    btl_path.write_bytes(btl_output)
-    etc_path.write_bytes(etc_output)
-
-    expected = {
-        "PRG/BTL.BIN": bytes(btl_output),
-        "PRG/ETC.BIN": bytes(etc_output),
+    actual_hashes = {
+        "NA2_BTL": sha1(clean_files["BTL"]) if "BTL" in selected else None,
+        "NA2_ETC": sha1(clean_files["ETC"]) if "ETC" in selected else None,
+        "UN5_TEXTENG": sha1(texteng),
     }
-    generated_hashes = {name: sha1_bytes(data) for name, data in expected.items()}
+    if not args.no_strict_hash:
+        for key, expected in EXPECTED_SHA1.items():
+            actual = actual_hashes.get(key)
+            if actual is not None and actual != expected:
+                raise ValueError(f"Unexpected {key} SHA-1: {actual}; expected {expected}")
 
-    write_tsv(logs_dir / "btl_patch_log.tsv", btl_log)
-    write_tsv(logs_dir / "btl_skipped_rows.tsv", [row for row in btl_log if row.get("status") == "skipped"])
-    write_tsv(logs_dir / "etc_patch_log.tsv", etc_log)
-    write_tsv(logs_dir / "etc_skipped_rows.tsv", [row for row in etc_log if row.get("status") == "skipped"])
+    baseline_path = args.data_root / "baseline.json"
+    official_path = args.data_root / "texteng_map.json"
+    baseline_rows = json.loads(baseline_path.read_text(encoding="utf-8"))
+    official_rows = json.loads(official_path.read_text(encoding="utf-8"))
 
-    output_directory.mkdir(parents=True, exist_ok=True)
+    output_files = {target: bytearray(clean_files[target]) for target in selected}
+    patch_log, stats = patch_rows(
+        selected=selected,
+        clean_files=clean_files,
+        output_files=output_files,
+        baseline_rows=baseline_rows,
+        official_rows=official_rows,
+        texteng=texteng,
+    )
+
+    run_id = dt.datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3] + f"_pid{os.getpid()}"
+    run_root = args.work_root / "runs" / run_id
+    package_root = run_root / "package"
+    log_root = run_root / "logs"
+    (package_root / "PRG").mkdir(parents=True, exist_ok=False)
+    log_root.mkdir(parents=True, exist_ok=False)
+
+    expected_zip: dict[str, bytes] = {}
+    for target in selected_list:
+        iso_path = FILE_SPECS[target][0]
+        payload = bytes(output_files[target])
+        if len(payload) != len(clean_files[target]):
+            raise ValueError(f"Generated {iso_path} size changed")
+        destination = package_root / Path(iso_path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(payload)
+        expected_zip[iso_path] = payload
+
+    output_dir = args.output_directory.resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
     final_name = f"NA2_APPLY__TRANSLATION__{run_id}.zip"
-    final_path = output_directory / final_name
-    temp_path = output_directory / f".NA2_TRANSLATION_BUILD_{run_id}.tmp.zip"
-    if final_path.exists() or temp_path.exists():
-        raise FileExistsError(f"Refusing to overwrite existing package path for run {run_id}")
+    final_path = output_dir / final_name
+    if final_path.exists():
+        raise FileExistsError(final_path)
 
+    temporary_path: Optional[Path] = None
     try:
-        with zipfile.ZipFile(temp_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
-            archive.writestr("PRG/BTL.BIN", expected["PRG/BTL.BIN"])
-            archive.writestr("PRG/ETC.BIN", expected["PRG/ETC.BIN"])
-        zip_hashes = validate_zip(temp_path, expected)
-        os.replace(temp_path, final_path)
+        fd, temporary_name = tempfile.mkstemp(
+            prefix=".NA2_TRANSLATION_BUILD_", suffix=".tmp", dir=output_dir
+        )
+        os.close(fd)
+        temporary_path = Path(temporary_name)
+        with zipfile.ZipFile(
+            temporary_path,
+            "w",
+            compression=zipfile.ZIP_DEFLATED,
+            compresslevel=9,
+        ) as archive:
+            for iso_path in sorted(expected_zip):
+                archive.writestr(iso_path, expected_zip[iso_path])
+        validate_zip(temporary_path, expected_zip)
+        os.replace(temporary_path, final_path)
+        temporary_path = None
     finally:
-        if temp_path.exists():
-            temp_path.unlink()
+        if temporary_path is not None and temporary_path.exists():
+            temporary_path.unlink()
 
-    summary = {
-        "tool": "NA2 Translation Package Builder v1",
-        "source_iso": str(na2_iso),
-        "output_zip": str(final_path),
-        "btl_tsv": str(btl_tsv),
-        "etc_tsv": str(etc_tsv),
-        "source_hashes": source_hashes,
-        "generated_hashes": generated_hashes,
-        "zip_hashes": zip_hashes,
-        "source_record_sizes": {
-            "PRG/BTL.BIN": btl_rec.size,
-            "PRG/ETC.BIN": etc_rec.size,
-        },
-        "btl_stats": btl_stats,
-        "etc_stats": etc_stats,
-        "zip_paths": list(EXPECTED_ZIP_PATHS),
+    hashes = {
+        FILE_SPECS[target][0]: {
+            "source_sha1": sha1(clean_files[target]),
+            "output_sha1": sha1(bytes(output_files[target])),
+            "size": len(output_files[target]),
+        }
+        for target in selected_list
     }
-    (logs_dir / "build_summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    summary = {
+        "mode": "safe baseline plus verified official UN5 TEXTENG overrides",
+        "run_id": run_id,
+        "package": str(final_path),
+        "targets": selected_list,
+        "source_hashes": actual_hashes,
+        "files": hashes,
+        "stats": stats,
+        "official_texteng_rows_total": sum(
+            1 for row in official_rows if str(row["file"]).upper() in selected
+        ),
+        "logs": str(log_root),
+    }
+    write_csv(log_root / "translation_patch_log.tsv", patch_log)
+    (log_root / "build_summary.json").write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
-    print("")
-    print("TRANSLATION PACKAGE CREATED")
+    print("Built NA2 translation package:")
     print(f"  {final_path}")
-    for name in EXPECTED_ZIP_PATHS:
-        print(f"  {name}  size={len(expected[name])}  sha1={generated_hashes[name]}")
-    print(f"  BTL rows: patched={btl_stats['patched']} skipped={btl_stats['skipped']}")
-    print(f"  ETC rows: patched={etc_stats['patched']} skipped={etc_stats['skipped']}")
-    print(f"  Logs: {logs_dir}")
+    for target in selected_list:
+        iso_path = FILE_SPECS[target][0]
+        info = hashes[iso_path]
+        target_stats = stats[target]
+        print(
+            f"  {iso_path}: {info['size']} bytes, "
+            f"SHA-1 {info['output_sha1']}"
+        )
+        print(
+            f"    baseline rows: {target_stats['baseline']}; "
+            f"official UN5 TEXTENG rows: {target_stats['official']} "
+            f"({target_stats['official_changed']} changed from baseline)"
+        )
+    print(f"  Logs: {log_root}")
     return 0
 
 
@@ -486,4 +536,4 @@ if __name__ == "__main__":
         raise SystemExit(main())
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
-        raise SystemExit(1)
+        raise

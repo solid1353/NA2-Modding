@@ -1,0 +1,4962 @@
+[
+  {
+    "id": "BTL_0001",
+    "file": "BTL",
+    "offset": 1948336,
+    "capacity": 34,
+    "source": "<r忍術|にんじゅつ>なし",
+    "translation": "No Ninjutsu"
+  },
+  {
+    "id": "BTL_0002",
+    "file": "BTL",
+    "offset": 1954112,
+    "capacity": 16,
+    "source": "ふっとばすぞ左",
+    "translation": "Blow Away Left"
+  },
+  {
+    "id": "BTL_0003",
+    "file": "BTL",
+    "offset": 1954128,
+    "capacity": 16,
+    "source": "つぶすぞ",
+    "translation": "Crush It"
+  },
+  {
+    "id": "BTL_0007",
+    "file": "BTL",
+    "offset": 1974160,
+    "capacity": 32,
+    "source": "ダミーカメラ＃０",
+    "translation": "Dummy Camera #0"
+  },
+  {
+    "id": "BTL_0009",
+    "file": "BTL",
+    "offset": 1974224,
+    "capacity": 32,
+    "source": "演出カメラ「丑」",
+    "translation": "Event Camera: Ox"
+  },
+  {
+    "id": "BTL_0011",
+    "file": "BTL",
+    "offset": 1974544,
+    "capacity": 32,
+    "source": "<r忍者学校|アカデミー>",
+    "translation": "Academy"
+  },
+  {
+    "id": "BTL_0012",
+    "file": "BTL",
+    "offset": 1974576,
+    "capacity": 32,
+    "source": "<r下忍|げにん>ランクＡ",
+    "translation": "Genin Rank A"
+  },
+  {
+    "id": "BTL_0013",
+    "file": "BTL",
+    "offset": 1974608,
+    "capacity": 32,
+    "source": "<r下忍|げにん>ランクＢ",
+    "translation": "Genin Rank B"
+  },
+  {
+    "id": "BTL_0014",
+    "file": "BTL",
+    "offset": 1974640,
+    "capacity": 32,
+    "source": "<r下忍|げにん>ランクＣ",
+    "translation": "Genin Rank C"
+  },
+  {
+    "id": "BTL_0015",
+    "file": "BTL",
+    "offset": 1974672,
+    "capacity": 32,
+    "source": "<r下忍|げにん>ランクＤ",
+    "translation": "Genin Rank D"
+  },
+  {
+    "id": "BTL_0016",
+    "file": "BTL",
+    "offset": 1974704,
+    "capacity": 48,
+    "source": "<r砂|すな>の<r三姉弟|さんきょうだい>",
+    "translation": "Sand Siblings"
+  },
+  {
+    "id": "BTL_0017",
+    "file": "BTL",
+    "offset": 1974752,
+    "capacity": 32,
+    "source": "<r霧|きり>の<r刺客|しかく>",
+    "translation": "Mist Assassins"
+  },
+  {
+    "id": "BTL_0018",
+    "file": "BTL",
+    "offset": 1974784,
+    "capacity": 32,
+    "source": "<r新紅班|しんくれないはん>",
+    "translation": "New Team Kurenai"
+  },
+  {
+    "id": "BTL_0019",
+    "file": "BTL",
+    "offset": 1974816,
+    "capacity": 32,
+    "source": "<r新|しん>アスマ<r班|はん>",
+    "translation": "New Team Asuma"
+  },
+  {
+    "id": "BTL_0020",
+    "file": "BTL",
+    "offset": 1974848,
+    "capacity": 32,
+    "source": "<r新|しん>ガイ<r班|はん>",
+    "translation": "New Team Guy"
+  },
+  {
+    "id": "BTL_0021",
+    "file": "BTL",
+    "offset": 1974880,
+    "capacity": 32,
+    "source": "<r新|しん>カカシ<r班|はん>",
+    "translation": "New Team Kakashi"
+  },
+  {
+    "id": "BTL_0022",
+    "file": "BTL",
+    "offset": 1974912,
+    "capacity": 32,
+    "source": "<r上忍|じょうにん>ランクＡ",
+    "translation": "Jonin Rank A"
+  },
+  {
+    "id": "BTL_0023",
+    "file": "BTL",
+    "offset": 1974944,
+    "capacity": 32,
+    "source": "<r上忍|じょうにん>ランクＢ",
+    "translation": "Jonin Rank B"
+  },
+  {
+    "id": "BTL_0024",
+    "file": "BTL",
+    "offset": 1974976,
+    "capacity": 32,
+    "source": "<r砂|すな>の<r強者|つわもの>",
+    "translation": "Sand Elites"
+  },
+  {
+    "id": "BTL_0025",
+    "file": "BTL",
+    "offset": 1975008,
+    "capacity": 48,
+    "source": "<r音|おと>の<r五人衆|ごにんしゅう>",
+    "translation": "Sound Five"
+  },
+  {
+    "id": "BTL_0026",
+    "file": "BTL",
+    "offset": 1975056,
+    "capacity": 32,
+    "source": "<r邪|よこしま>なる<r者|もの>",
+    "translation": "Wicked Ones"
+  },
+  {
+    "id": "BTL_0027",
+    "file": "BTL",
+    "offset": 1975088,
+    "capacity": 48,
+    "source": "<r伝説|でんせつ>の<r三忍|さんにん>",
+    "translation": "Legendary Sannin"
+  },
+  {
+    "id": "BTL_0028",
+    "file": "BTL",
+    "offset": 1975136,
+    "capacity": 32,
+    "source": "“<r暁|あかつき>”",
+    "translation": "Akatsuki"
+  },
+  {
+    "id": "BTL_0029",
+    "file": "BTL",
+    "offset": 1975168,
+    "capacity": 32,
+    "source": "<r火影|ほかげ>たち",
+    "translation": "The Hokage"
+  },
+  {
+    "id": "BTL_0030",
+    "file": "BTL",
+    "offset": 1975200,
+    "capacity": 32,
+    "source": "<r特別対戦|とくべつたいせん>",
+    "translation": "Special Battle"
+  },
+  {
+    "id": "BTL_0031",
+    "file": "BTL",
+    "offset": 1975232,
+    "capacity": 48,
+    "source": "<r金髪五人衆|きんぱつごにんしゅう>",
+    "translation": "Blond Squad"
+  },
+  {
+    "id": "BTL_0032",
+    "file": "BTL",
+    "offset": 1975280,
+    "capacity": 32,
+    "source": "<r傀儡軍団|くぐつぐんだん>",
+    "translation": "Puppet Corps"
+  },
+  {
+    "id": "BTL_0033",
+    "file": "BTL",
+    "offset": 1975312,
+    "capacity": 32,
+    "source": "<r木|こ>ノ<r葉先生|はせんせい>",
+    "translation": "Leaf Teachers"
+  },
+  {
+    "id": "BTL_0034",
+    "file": "BTL",
+    "offset": 1975344,
+    "capacity": 32,
+    "source": "<r血継限界|けっけいげんかい>",
+    "translation": "Kekkei Genkai"
+  },
+  {
+    "id": "BTL_0035",
+    "file": "BTL",
+    "offset": 1975376,
+    "capacity": 36,
+    "source": "<r高|たか>みの<r者|もの>たち",
+    "translation": "High-Ranking Shinobi"
+  },
+  {
+    "id": "BTL_0036",
+    "file": "BTL",
+    "offset": 1975920,
+    "capacity": 32,
+    "source": "<r撒|ま>き<r菱|びし>",
+    "translation": "Caltrops"
+  },
+  {
+    "id": "BTL_0037",
+    "file": "BTL",
+    "offset": 1975952,
+    "capacity": 32,
+    "source": "<r兵糧丸|ひょうろうがん>",
+    "translation": "Soldier Pills"
+  },
+  {
+    "id": "BTL_0038",
+    "file": "BTL",
+    "offset": 1975984,
+    "capacity": 32,
+    "source": "<r上忍|じょうにん>の<r靴|くつ>",
+    "translation": "Jonin Shoes"
+  },
+  {
+    "id": "BTL_0039",
+    "file": "BTL",
+    "offset": 1976016,
+    "capacity": 32,
+    "source": "カカシ<r人形|にんぎょう>",
+    "translation": "Kakashi Doll"
+  },
+  {
+    "id": "BTL_0040",
+    "file": "BTL",
+    "offset": 1976048,
+    "capacity": 32,
+    "source": "<r根性|こんじょう>のおもり",
+    "translation": "Guts Weight"
+  },
+  {
+    "id": "BTL_0041",
+    "file": "BTL",
+    "offset": 1976080,
+    "capacity": 32,
+    "source": "<r風魔手裏剣|ふうましゅりけん>",
+    "translation": "Fuma Shuriken"
+  },
+  {
+    "id": "BTL_0042",
+    "file": "BTL",
+    "offset": 1976112,
+    "capacity": 48,
+    "source": "<r呪札|じゅさつ>　<r鎧崩|よろいくず>し",
+    "translation": "Armor-Break Charm"
+  },
+  {
+    "id": "BTL_0043",
+    "file": "BTL",
+    "offset": 1976160,
+    "capacity": 32,
+    "source": "<r亀甲丸|きっこうがん>",
+    "translation": "Kikko Pill"
+  },
+  {
+    "id": "BTL_0044",
+    "file": "BTL",
+    "offset": 1976192,
+    "capacity": 32,
+    "source": "<r炸裂|さくれつ>クナイ",
+    "translation": "Blast Kunai"
+  },
+  {
+    "id": "BTL_0045",
+    "file": "BTL",
+    "offset": 1976224,
+    "capacity": 32,
+    "source": "<r起爆|きばく>クナイ",
+    "translation": "Explosive Kunai"
+  },
+  {
+    "id": "BTL_0046",
+    "file": "BTL",
+    "offset": 1976256,
+    "capacity": 32,
+    "source": "<r医療|いりょう>パック",
+    "translation": "Medical Pack"
+  },
+  {
+    "id": "BTL_0047",
+    "file": "BTL",
+    "offset": 1976288,
+    "capacity": 48,
+    "source": "<r雲隠|くもがく>れの<r巻物|まきもの>",
+    "translation": "Hidden Cloud Scroll"
+  },
+  {
+    "id": "BTL_0048",
+    "file": "BTL",
+    "offset": 1976336,
+    "capacity": 32,
+    "source": "<r毒煙玉|どくけむりだま>",
+    "translation": "Poison Smoke Bomb"
+  },
+  {
+    "id": "BTL_0049",
+    "file": "BTL",
+    "offset": 1976368,
+    "capacity": 32,
+    "source": "<r起爆札|きばくふだ>",
+    "translation": "Paper Bomb"
+  },
+  {
+    "id": "BTL_0050",
+    "file": "BTL",
+    "offset": 1976400,
+    "capacity": 32,
+    "source": "<r元気丸|げんきがん>",
+    "translation": "Energy Pill"
+  },
+  {
+    "id": "BTL_0051",
+    "file": "BTL",
+    "offset": 1976432,
+    "capacity": 32,
+    "source": "<r蝦蟇油|ガマあぶら>",
+    "translation": "Toad Oil"
+  },
+  {
+    "id": "BTL_0052",
+    "file": "BTL",
+    "offset": 1976464,
+    "capacity": 32,
+    "source": "<r起爆|きばく>シール",
+    "translation": "Explosive Seal"
+  },
+  {
+    "id": "BTL_0053",
+    "file": "BTL",
+    "offset": 1976496,
+    "capacity": 48,
+    "source": "<r千影手裏剣|せんえいしゅりけん>",
+    "translation": "Thousand Shadow Shuriken"
+  },
+  {
+    "id": "BTL_0054",
+    "file": "BTL",
+    "offset": 1976544,
+    "capacity": 32,
+    "source": "<r痺|しび>れ<r玉|たま>",
+    "translation": "Stun Bomb"
+  },
+  {
+    "id": "BTL_0055",
+    "file": "BTL",
+    "offset": 1976576,
+    "capacity": 24,
+    "source": "<r博打玉|ばくちだま>",
+    "translation": "Gamble Bomb"
+  },
+  {
+    "id": "BTL_0056",
+    "file": "BTL",
+    "offset": 1976600,
+    "capacity": 24,
+    "source": "アイテムポーチ",
+    "translation": "Item Pouch"
+  },
+  {
+    "id": "BTL_0057",
+    "file": "BTL",
+    "offset": 1976624,
+    "capacity": 48,
+    "source": "<r忍具乱舞|にんぐらんぶ>の<r巻物|まきもの>",
+    "translation": "Ninja Tool Barrage Scroll"
+  },
+  {
+    "id": "BTL_0058",
+    "file": "BTL",
+    "offset": 1976672,
+    "capacity": 48,
+    "source": "<r金|きん>の<r装飾品|そうしょくひん>",
+    "translation": "Gold Ornament"
+  },
+  {
+    "id": "BTL_0059",
+    "file": "BTL",
+    "offset": 1976720,
+    "capacity": 32,
+    "source": "<r琥珀|こはく>の<r塊|かたまり>",
+    "translation": "Amber Lump"
+  },
+  {
+    "id": "BTL_0060",
+    "file": "BTL",
+    "offset": 1976752,
+    "capacity": 16,
+    "source": "<r古銭|こせん>",
+    "translation": "Old Coin"
+  },
+  {
+    "id": "BTL_0061",
+    "file": "BTL",
+    "offset": 1976768,
+    "capacity": 48,
+    "source": "<r特別交渉手形|とくべつこうしょうてがた>",
+    "translation": "Special Negotiation Pass"
+  },
+  {
+    "id": "BTL_0062",
+    "file": "BTL",
+    "offset": 1976816,
+    "capacity": 48,
+    "source": "<r紅玉|こうぎょく>の<r指輪|ゆびわ>",
+    "translation": "Ruby Ring"
+  },
+  {
+    "id": "BTL_0063",
+    "file": "BTL",
+    "offset": 1976864,
+    "capacity": 32,
+    "source": "<r治癒|ちゆ>の<r巻物|まきもの>",
+    "translation": "Healing Scroll"
+  },
+  {
+    "id": "BTL_0064",
+    "file": "BTL",
+    "offset": 1976896,
+    "capacity": 48,
+    "source": "<r白銀|はくぎん>の<r延棒|のべぼう>",
+    "translation": "Silver Bar"
+  },
+  {
+    "id": "BTL_0065",
+    "file": "BTL",
+    "offset": 1976944,
+    "capacity": 32,
+    "source": "<r連係|れんけい>の<r笛|ふえ>",
+    "translation": "Team Flute"
+  },
+  {
+    "id": "BTL_0066",
+    "file": "BTL",
+    "offset": 1976976,
+    "capacity": 32,
+    "source": "<r稀代|きだい>の<r秘宝|ひほう>",
+    "translation": "Rare Treasure"
+  },
+  {
+    "id": "BTL_0067",
+    "file": "BTL",
+    "offset": 1977008,
+    "capacity": 48,
+    "source": "<r全開|ぜんかい>の<r額当|ひたいあ>て",
+    "translation": "Full-Power Headband"
+  },
+  {
+    "id": "BTL_0068",
+    "file": "BTL",
+    "offset": 1977056,
+    "capacity": 48,
+    "source": "<r気配遮断装束|けはいしゃだんしょうぞく>",
+    "translation": "Concealment Robe"
+  },
+  {
+    "id": "BTL_0069",
+    "file": "BTL",
+    "offset": 1977104,
+    "capacity": 240,
+    "source": "<color00FFFF><r究極連激戦|ナルティメットれんげきせん><colorFFFFFF>では、<r定|さだ>められた<r相手|あいて>と<r連続|れんぞく>で<r闘|たたか>い、<r最後|さいご>まで<r勝|か>ち<r残|のこ>ることで<r報酬|ほうしゅう>を<r得|え>ることができます。",
+    "translation": "<color00FFFF>Ultimate Chain<colorFFFFFF>: fight the set opponents in a row and survive to the end to earn rewards."
+  },
+  {
+    "id": "BTL_0070",
+    "file": "BTL",
+    "offset": 1977344,
+    "capacity": 208,
+    "source": "<color00FFFF><r壮絶|そうぜつ>サバイバル<colorFFFFFF>ではランダムで<r出現|しゅつげん>する<r相手|あいて>と<r無限|むげん>に<r闘|たたか>い、どこまで<r勝|か>ち<r残|のこ>れるかを<r競|きそ>うことができます。",
+    "translation": "<color00FFFF>Survival<colorFFFFFF>: fight randomly appearing opponents endlessly and see how long you can survive."
+  },
+  {
+    "id": "BTL_0071",
+    "file": "BTL",
+    "offset": 1977552,
+    "capacity": 176,
+    "source": "<color00FFFF><r自分|じぶん>ルール<r戦闘|せんとう><colorFFFFFF>では、<r戦闘条件|せんとうじょうけん>を<r任意|にんい>に<r設定|せってい>して<r闘|たたか>うことができます。",
+    "translation": "<color00FFFF>Custom Rules Battle<colorFFFFFF>: freely set battle conditions before fighting."
+  },
+  {
+    "id": "BTL_0072",
+    "file": "BTL",
+    "offset": 1977728,
+    "capacity": 96,
+    "source": "<color00FFFF><r熱血対戦|ねっけつたいせん><colorFFFFFF>を<r終了|しゅうりょう>しますか？",
+    "translation": "Quit <color00FFFF>Hot-Blooded Versus<colorFFFFFF>?"
+  },
+  {
+    "id": "BTL_0073",
+    "file": "BTL",
+    "offset": 1977824,
+    "capacity": 80,
+    "source": "<color00FFFF><r壮絶|そうぜつ>サバイバル<colorFFFFFF>を開始しますか？",
+    "translation": "Start <color00FFFF>Survival<colorFFFFFF>?"
+  },
+  {
+    "id": "BTL_0074",
+    "file": "BTL",
+    "offset": 1978208,
+    "capacity": 32,
+    "source": "<r中忍|ちゅうにん>レベル",
+    "translation": "Chunin Level"
+  },
+  {
+    "id": "BTL_0075",
+    "file": "BTL",
+    "offset": 1978240,
+    "capacity": 32,
+    "source": "<r上忍|じょうにん>レベル",
+    "translation": "Jonin Level"
+  },
+  {
+    "id": "BTL_0076",
+    "file": "BTL",
+    "offset": 1978272,
+    "capacity": 32,
+    "source": "<r火影|ほかげ>レベル",
+    "translation": "Hokage Level"
+  },
+  {
+    "id": "BTL_0077",
+    "file": "BTL",
+    "offset": 1978304,
+    "capacity": 32,
+    "source": "<r特殊戦闘|とくしゅせんとう>",
+    "translation": "Special Battle"
+  },
+  {
+    "id": "BTL_0078",
+    "file": "BTL",
+    "offset": 1978368,
+    "capacity": 48,
+    "source": "レベルを<r選択|せんたく>してください。",
+    "translation": "Select a level."
+  },
+  {
+    "id": "BTL_0079",
+    "file": "BTL",
+    "offset": 1978416,
+    "capacity": 48,
+    "source": "ランクを<r選択|せんたく>してください。",
+    "translation": "Select a rank."
+  },
+  {
+    "id": "BTL_0080",
+    "file": "BTL",
+    "offset": 1978464,
+    "capacity": 33,
+    "source": "これでよろしいでしょうか？",
+    "translation": "Is this OK?"
+  },
+  {
+    "id": "BTL_0082",
+    "file": "BTL",
+    "offset": 1978640,
+    "capacity": 80,
+    "source": "<ruby好|す>きな<ruby条件|じょうけん>を<ruby設定|せってい>してください。",
+    "translation": "Set any conditions you like."
+  },
+  {
+    "id": "BTL_0083",
+    "file": "BTL",
+    "offset": 1978720,
+    "capacity": 64,
+    "source": "ＣＯＭの<ruby強|つよ>さを<ruby変更|へんこう>できます。",
+    "translation": "Change COM strength."
+  },
+  {
+    "id": "BTL_0084",
+    "file": "BTL",
+    "offset": 1978784,
+    "capacity": 96,
+    "source": "<ruby奥義|おうぎ>の<ruby入力勝負|にゅうりょくしょうぶ>を<ruby変更|へんこう>できます。",
+    "translation": "Change the Ultimate input battle."
+  },
+  {
+    "id": "BTL_0085",
+    "file": "BTL",
+    "offset": 1978880,
+    "capacity": 80,
+    "source": "『はい』を<ruby選択|せんたく>で<ruby戦闘|せんとう>を<ruby開始|かいし>します。",
+    "translation": "Select Yes to start the battle."
+  },
+  {
+    "id": "BTL_0086",
+    "file": "BTL",
+    "offset": 1978960,
+    "capacity": 80,
+    "source": "<ruby条件|じょうけん>が１つも<ruby設定|せってい>されていないです。",
+    "translation": "No conditions have been set."
+  },
+  {
+    "id": "BTL_0087",
+    "file": "BTL",
+    "offset": 1979040,
+    "capacity": 48,
+    "source": "すでに<ruby設定済|せっていず>みです。",
+    "translation": "Already set."
+  },
+  {
+    "id": "BTL_0089",
+    "file": "BTL",
+    "offset": 1979248,
+    "capacity": 16,
+    "source": "基本条件",
+    "translation": "Basic"
+  },
+  {
+    "id": "BTL_0090",
+    "file": "BTL",
+    "offset": 1979264,
+    "capacity": 112,
+    "source": "<ruby方向|ほうこう>キー<ruby左右|さゆう>でＣＯＭの<ruby強|つよ>さを<ruby変更|へんこう>できます。",
+    "translation": "Press Left/Right to change COM strength."
+  },
+  {
+    "id": "BTL_0091",
+    "file": "BTL",
+    "offset": 1979376,
+    "capacity": 128,
+    "source": "<ruby方向|ほうこう>キー<ruby左右|さゆう>で<ruby奥義|おうぎ>の<ruby入力勝負|にゅうりょくしょうぶ>を<ruby変更|へんこう>できます。",
+    "translation": "Press Left/Right to change the Ultimate input battle."
+  },
+  {
+    "id": "BTL_0092",
+    "file": "BTL",
+    "offset": 1979504,
+    "capacity": 16,
+    "source": "やさしい",
+    "translation": "Easy"
+  },
+  {
+    "id": "BTL_0093",
+    "file": "BTL",
+    "offset": 1979520,
+    "capacity": 16,
+    "source": "むずかしい",
+    "translation": "Hard"
+  },
+  {
+    "id": "BTL_0095",
+    "file": "BTL",
+    "offset": 1979576,
+    "capacity": 16,
+    "source": "ランダム",
+    "translation": "Random"
+  },
+  {
+    "id": "BTL_0096",
+    "file": "BTL",
+    "offset": 1979592,
+    "capacity": 16,
+    "source": "コマンド",
+    "translation": "Command"
+  },
+  {
+    "id": "BTL_0097",
+    "file": "BTL",
+    "offset": 1979608,
+    "capacity": 24,
+    "source": "タイミング",
+    "translation": "Timing"
+  },
+  {
+    "id": "BTL_0098",
+    "file": "BTL",
+    "offset": 1979664,
+    "capacity": 48,
+    "source": "お<r手軽条件|てがるじょうけん>１",
+    "translation": "Preset Rule 1"
+  },
+  {
+    "id": "BTL_0099",
+    "file": "BTL",
+    "offset": 1979712,
+    "capacity": 48,
+    "source": "お<r手軽条件|てがるじょうけん>２",
+    "translation": "Preset Rule 2"
+  },
+  {
+    "id": "BTL_0100",
+    "file": "BTL",
+    "offset": 1979760,
+    "capacity": 48,
+    "source": "お<r手軽条件|てがるじょうけん>３",
+    "translation": "Preset Rule 3"
+  },
+  {
+    "id": "BTL_0101",
+    "file": "BTL",
+    "offset": 1979808,
+    "capacity": 48,
+    "source": "<r無重力戦闘|むじゅうりょくせんとう>",
+    "translation": "Zero-Gravity Battle"
+  },
+  {
+    "id": "BTL_0102",
+    "file": "BTL",
+    "offset": 1979856,
+    "capacity": 80,
+    "source": "<r速度差|そくどさ>が<r激|はげ>しい<r状態|じょうたい>で<r戦闘|せんとう>",
+    "translation": "Battle with extreme speed differences"
+  },
+  {
+    "id": "BTL_0103",
+    "file": "BTL",
+    "offset": 1979936,
+    "capacity": 48,
+    "source": "<r大|だい>ダメージにめげずに<r戦闘|せんとう>",
+    "translation": "Battle through heavy damage"
+  },
+  {
+    "id": "BTL_0104",
+    "file": "BTL",
+    "offset": 1979984,
+    "capacity": 34,
+    "source": "<r極限戦闘|きょくげんせんとう>",
+    "translation": "Extreme Battle"
+  },
+  {
+    "id": "BTL_0105",
+    "file": "BTL",
+    "offset": 1980640,
+    "capacity": 16,
+    "source": "<r忍|にん>",
+    "translation": "Shinobi"
+  },
+  {
+    "id": "BTL_0106",
+    "file": "BTL",
+    "offset": 1980656,
+    "capacity": 16,
+    "source": "%sカウント",
+    "translation": "%s Count"
+  },
+  {
+    "id": "BTL_0107",
+    "file": "BTL",
+    "offset": 1980768,
+    "capacity": 34,
+    "source": "<r壮絶|そうぜつ>サバイバル",
+    "translation": "Survival"
+  },
+  {
+    "id": "BTL_0108",
+    "file": "BTL",
+    "offset": 1980864,
+    "capacity": 32,
+    "source": "<r撃破忍数|げきはにんずう>",
+    "translation": "Defeated Shinobi"
+  },
+  {
+    "id": "BTL_0109",
+    "file": "BTL",
+    "offset": 1980896,
+    "capacity": 32,
+    "source": "%s<color000000><r忍|にん>",
+    "translation": "%s<color000000> Shinobi"
+  },
+  {
+    "id": "BTL_0110",
+    "file": "BTL",
+    "offset": 1980928,
+    "capacity": 16,
+    "source": "クリアタイム",
+    "translation": "Clear Time"
+  },
+  {
+    "id": "BTL_0111",
+    "file": "BTL",
+    "offset": 1980944,
+    "capacity": 32,
+    "source": "%s<color000000>カウント",
+    "translation": "%s<color000000> Count"
+  },
+  {
+    "id": "BTL_0112",
+    "file": "BTL",
+    "offset": 1980976,
+    "capacity": 32,
+    "source": "<r忍名|しのびめい>",
+    "translation": "Shinobi Name"
+  },
+  {
+    "id": "BTL_0113",
+    "file": "BTL",
+    "offset": 1981008,
+    "capacity": 32,
+    "source": "<r所持金|しょじきん>",
+    "translation": "Money Held"
+  },
+  {
+    "id": "BTL_0114",
+    "file": "BTL",
+    "offset": 1981040,
+    "capacity": 32,
+    "source": "<r報酬金|ほうしゅうきん>",
+    "translation": "Reward Money"
+  },
+  {
+    "id": "BTL_0115",
+    "file": "BTL",
+    "offset": 1981072,
+    "capacity": 16,
+    "source": "<r両|りょう>",
+    "translation": "Ryo"
+  },
+  {
+    "id": "BTL_0116",
+    "file": "BTL",
+    "offset": 1981088,
+    "capacity": 32,
+    "source": "クリア<r報酬|ほうしゅう>",
+    "translation": "Clear Reward"
+  },
+  {
+    "id": "BTL_0117",
+    "file": "BTL",
+    "offset": 1981120,
+    "capacity": 32,
+    "source": "レベルクリア<r報酬|ほうしゅう>",
+    "translation": "Level Clear Reward"
+  },
+  {
+    "id": "BTL_0118",
+    "file": "BTL",
+    "offset": 1981152,
+    "capacity": 48,
+    "source": "「<color2820FF>%s<color000000>」クリア！",
+    "translation": "Cleared \"%s\"!"
+  },
+  {
+    "id": "BTL_0119",
+    "file": "BTL",
+    "offset": 1981200,
+    "capacity": 64,
+    "source": "<r新|あら>たなランク「<color2820FF>%s<color000000>」に",
+    "translation": "New rank \"%s\""
+  },
+  {
+    "id": "BTL_0120",
+    "file": "BTL",
+    "offset": 1981264,
+    "capacity": 48,
+    "source": "<r挑戦|ちょうせん>できるようになりました！！",
+    "translation": "is now available!!"
+  },
+  {
+    "id": "BTL_0121",
+    "file": "BTL",
+    "offset": 1981328,
+    "capacity": 64,
+    "source": "<r新|あら>たなレベル「<color2820FF>%s<color000000>」に",
+    "translation": "New level \"%s\""
+  },
+  {
+    "id": "BTL_0122",
+    "file": "BTL",
+    "offset": 1981408,
+    "capacity": 112,
+    "source": "「<color080860><r究極連激戦|ナルティメットれんげきせん><color000000>」<r全|ぜん>クリア<r報酬|ほうしゅう>！",
+    "translation": "All-clear reward for <color080860>Ultimate Chain<color000000>!"
+  },
+  {
+    "id": "BTL_0123",
+    "file": "BTL",
+    "offset": 1981520,
+    "capacity": 128,
+    "source": "<r装備品|そうびひん>「<color2820FF><r気配遮断装束|けはいしゃだんしょうぞく><color000000>」を<r手|て>に<r入|い>れた！",
+    "translation": "Got equipment \"<color2820FF>Concealment Robe<color000000>\"!"
+  },
+  {
+    "id": "BTL_0124",
+    "file": "BTL",
+    "offset": 1981648,
+    "capacity": 112,
+    "source": "「<color080860>フリーバトル<color000000>」などの「<color080860><r難易度設定|なんいどせってい><color000000>」に",
+    "translation": "In <color080860>Free Battle<color000000> and other <color080860>Difficulty<color000000> settings,"
+  },
+  {
+    "id": "BTL_0125",
+    "file": "BTL",
+    "offset": 1981760,
+    "capacity": 144,
+    "source": "<r最|もっと>も<r手強|てごわ>い<r難易度|なんいど>の「<color2820FF><r究極|ナルティメット><color000000>」が<r追加|ついか>されました！",
+    "translation": "the toughest difficulty, \"<color2820FF>Ultimate<color000000>\", has been added!"
+  },
+  {
+    "id": "BTL_0126",
+    "file": "BTL",
+    "offset": 1981904,
+    "capacity": 80,
+    "source": "<r腕|うで>に<r覚|おぼ>えのある<r者|もの>よ、<r挑戦|ちょうせん>せよ！！",
+    "translation": "Skilled fighters, take the challenge!!"
+  },
+  {
+    "id": "BTL_0127",
+    "file": "BTL",
+    "offset": 1982016,
+    "capacity": 64,
+    "source": "<color080860>ランクイン<r報酬|ほうしゅう>！<color000000>",
+    "translation": "<color080860>Ranking Reward!<color000000>"
+  },
+  {
+    "id": "BTL_0128",
+    "file": "BTL",
+    "offset": 1982080,
+    "capacity": 80,
+    "source": "<color2820FF>%s<r位|い><color000000>に<r入賞|にゅうしょう>した<r君|きみ>に",
+    "translation": "For placing <color2820FF>%s<color000000>,"
+  },
+  {
+    "id": "BTL_0129",
+    "file": "BTL",
+    "offset": 1982160,
+    "capacity": 48,
+    "source": "「<color2820FF>%s<color000000>」をプレゼント！",
+    "translation": "you receive \"<color2820FF>%s<color000000>\"!"
+  },
+  {
+    "id": "BTL_0130",
+    "file": "BTL",
+    "offset": 1982832,
+    "capacity": 32,
+    "source": "%s × %s<r個|こ>",
+    "translation": "%s × %s"
+  },
+  {
+    "id": "BTL_0131",
+    "file": "BTL",
+    "offset": 1982864,
+    "capacity": 48,
+    "source": "<r自分|じぶん>ルール<r戦闘|せんとう>",
+    "translation": "Custom Rules Battle"
+  },
+  {
+    "id": "BTL_0132",
+    "file": "BTL",
+    "offset": 1987920,
+    "capacity": 64,
+    "source": "<r敵|てき>は<r忍術|にんじゅつ>にて<r攻|せ>めるべし",
+    "translation": "Defeat with Ninjutsu"
+  },
+  {
+    "id": "BTL_0133",
+    "file": "BTL",
+    "offset": 1987984,
+    "capacity": 48,
+    "source": "<r敵|てき>は<r奥義|おうぎ>にて<r攻|せ>めるべし",
+    "translation": "Defeat with an Ultimate"
+  },
+  {
+    "id": "BTL_0134",
+    "file": "BTL",
+    "offset": 1988032,
+    "capacity": 64,
+    "source": "<r敵|てき>は<r連係攻撃|れんけいこうげき>にて<r攻|せ>めるべし",
+    "translation": "Defeat with Team Attacks"
+  },
+  {
+    "id": "BTL_0135",
+    "file": "BTL",
+    "offset": 1988096,
+    "capacity": 64,
+    "source": "<r変|か>わり<r身|み>にて<r敵|てき>を<r欺|あざむ>くべし",
+    "translation": "Deceive with Substitution"
+  },
+  {
+    "id": "BTL_0136",
+    "file": "BTL",
+    "offset": 1988160,
+    "capacity": 64,
+    "source": "<r追|お>い<r討|う>ちにて<r敵|てき>を<r追撃|ついげき>すべし",
+    "translation": "Chase with Pursuit Attacks"
+  },
+  {
+    "id": "BTL_0137",
+    "file": "BTL",
+    "offset": 1988224,
+    "capacity": 80,
+    "source": "<r連続|れんぞく><r攻撃|こうげき>にて<r敵|てき>を<r圧倒|あっとう>するべし",
+    "translation": "Overwhelm with combos"
+  },
+  {
+    "id": "BTL_0138",
+    "file": "BTL",
+    "offset": 1988304,
+    "capacity": 64,
+    "source": "<r特殊忍具|とくしゅにんぐ>を<r用|もち>いて<r攻|せ>めるべし",
+    "translation": "Attack with special ninja tools"
+  },
+  {
+    "id": "BTL_0139",
+    "file": "BTL",
+    "offset": 1988368,
+    "capacity": 64,
+    "source": "<r敵|てき>は<r素早|すばや>く<r排除|はいじょ>すべし",
+    "translation": "Defeat the enemy quickly"
+  },
+  {
+    "id": "BTL_0140",
+    "file": "BTL",
+    "offset": 1988432,
+    "capacity": 64,
+    "source": "<r己|おのれ>の<r体力|たいりょく>は<r温存|おんぞん>すべし",
+    "translation": "Preserve your health"
+  },
+  {
+    "id": "BTL_0141",
+    "file": "BTL",
+    "offset": 1988496,
+    "capacity": 48,
+    "source": "<r強者|つわもの>を<r打|う>ち<r破|やぶ>るべし",
+    "translation": "Defeat the strong foe"
+  },
+  {
+    "id": "BTL_0142",
+    "file": "BTL",
+    "offset": 1988544,
+    "capacity": 64,
+    "source": "<r秘|ひ>めたる<r力|ちから>を<r解|と>き<r放|はな>つべし",
+    "translation": "Unleash hidden power"
+  },
+  {
+    "id": "BTL_0143",
+    "file": "BTL",
+    "offset": 1988608,
+    "capacity": 80,
+    "source": "<r挑発|ちょうはつ>を<r以|も>って<r敵|てき>を<r刺激|しげき>すべし",
+    "translation": "Provoke the enemy with taunts"
+  },
+  {
+    "id": "BTL_0144",
+    "file": "BTL",
+    "offset": 1988688,
+    "capacity": 48,
+    "source": "<r壊|こわ>れ<r物|もの>を<r破壊|はかい>すべし",
+    "translation": "Destroy breakable objects"
+  },
+  {
+    "id": "BTL_0145",
+    "file": "BTL",
+    "offset": 1988736,
+    "capacity": 64,
+    "source": "<r特殊|とくしゅ><r条件|じょうけん>を<r完遂|かんすい>すべし",
+    "translation": "Complete special conditions"
+  },
+  {
+    "id": "BTL_0146",
+    "file": "BTL",
+    "offset": 1988800,
+    "capacity": 64,
+    "source": "<r敵|てき>の<r奥義|おうぎ>を<r打|う>ち<r破|やぶ>るべし",
+    "translation": "Break the enemy Ultimate"
+  },
+  {
+    "id": "BTL_0147",
+    "file": "BTL",
+    "offset": 1988864,
+    "capacity": 64,
+    "source": "<r術|じゅつ>の<r競|せ>り<r合|あ>いにて<r勝利|しょうり>すべし",
+    "translation": "Win the jutsu clash"
+  },
+  {
+    "id": "BTL_0148",
+    "file": "BTL",
+    "offset": 1988928,
+    "capacity": 64,
+    "source": "<r敵|てき>に<r残影|ざんえい>をもって<r挑|いど>むべし",
+    "translation": "Challenge with Afterimage"
+  },
+  {
+    "id": "BTL_0149",
+    "file": "BTL",
+    "offset": 1988992,
+    "capacity": 32,
+    "source": "コンボ<r数|すう>%sHitボーナス",
+    "translation": "Combo %sHit Bonus"
+  },
+  {
+    "id": "BTL_0150",
+    "file": "BTL",
+    "offset": 1989024,
+    "capacity": 48,
+    "source": "<r所持|しょじ>アイテム%s<r個|こ>ボーナス",
+    "translation": "Held Item %s Bonus"
+  },
+  {
+    "id": "BTL_0151",
+    "file": "BTL",
+    "offset": 1989072,
+    "capacity": 48,
+    "source": "<r背景破壊|はいけいはかい>ボーナス",
+    "translation": "Stage Destruction Bonus"
+  },
+  {
+    "id": "BTL_0152",
+    "file": "BTL",
+    "offset": 1989120,
+    "capacity": 48,
+    "source": "<r残影勝利|ざんえいしょうり>ボーナス",
+    "translation": "Afterimage Win Bonus"
+  },
+  {
+    "id": "BTL_0153",
+    "file": "BTL",
+    "offset": 1989168,
+    "capacity": 32,
+    "source": "<r奥義|おうぎ>ボーナス",
+    "translation": "Ultimate Bonus"
+  },
+  {
+    "id": "BTL_0154",
+    "file": "BTL",
+    "offset": 1989200,
+    "capacity": 64,
+    "source": "<r敵|てき>%sカウント<r以内撃破|いないげきは>ボーナス",
+    "translation": "Defeat Enemy in %s Count Bonus"
+  },
+  {
+    "id": "BTL_0156",
+    "file": "BTL",
+    "offset": 1989312,
+    "capacity": 48,
+    "source": "キャラクター<r組|く>み<r合|あ>わせボーナス",
+    "translation": "Character Pair Bonus"
+  },
+  {
+    "id": "BTL_0157",
+    "file": "BTL",
+    "offset": 1989360,
+    "capacity": 64,
+    "source": "<r特殊連係攻撃|とくしゅれんけいこうげき>%sHitボーナス",
+    "translation": "Special Team Attack %sHit Bonus"
+  },
+  {
+    "id": "BTL_0158",
+    "file": "BTL",
+    "offset": 1989424,
+    "capacity": 48,
+    "source": "<r連係忍術|れんけいにんじゅつ>%sHitボーナス",
+    "translation": "Team Ninjutsu %sHit Bonus"
+  },
+  {
+    "id": "BTL_0159",
+    "file": "BTL",
+    "offset": 1989472,
+    "capacity": 48,
+    "source": "<r連係奥義|れんけいおうぎ>%sHitボーナス",
+    "translation": "Team Ultimate %sHit Bonus"
+  },
+  {
+    "id": "BTL_0162",
+    "file": "BTL",
+    "offset": 1989568,
+    "capacity": 16,
+    "source": "カウント",
+    "translation": "Count"
+  },
+  {
+    "id": "BTL_0165",
+    "file": "BTL",
+    "offset": 2109584,
+    "capacity": 32,
+    "source": "赤丸スライドアタック",
+    "translation": "Akamaru Slide Attack"
+  },
+  {
+    "id": "BTL_0166",
+    "file": "BTL",
+    "offset": 2109616,
+    "capacity": 32,
+    "source": "ダイナミックマーキング",
+    "translation": "Dynamic Marking"
+  },
+  {
+    "id": "BTL_0167",
+    "file": "BTL",
+    "offset": 2109648,
+    "capacity": 32,
+    "source": "ブタ体当たりフィニッシュ",
+    "translation": "Pig Tackle Finish"
+  },
+  {
+    "id": "BTL_0169",
+    "file": "BTL",
+    "offset": 2109712,
+    "capacity": 32,
+    "source": "忍犬　フィニッシュ",
+    "translation": "Ninken Finish"
+  },
+  {
+    "id": "BTL_0171",
+    "file": "BTL",
+    "offset": 2109776,
+    "capacity": 24,
+    "source": "鬼鮫スイコウダン",
+    "translation": "Water Shark"
+  },
+  {
+    "id": "BTL_0172",
+    "file": "BTL",
+    "offset": 2132528,
+    "capacity": 32,
+    "source": "<r操作設定|そうさせってい>",
+    "translation": "Control Settings"
+  },
+  {
+    "id": "BTL_0173",
+    "file": "BTL",
+    "offset": 2132560,
+    "capacity": 48,
+    "source": "<r基本操作|きほんそうさ>コマンド<r表|ひょう>",
+    "translation": "Basic Command List"
+  },
+  {
+    "id": "BTL_0174",
+    "file": "BTL",
+    "offset": 2132608,
+    "capacity": 32,
+    "source": "１Ｐコマンド<r表|ひょう>",
+    "translation": "1P Command List"
+  },
+  {
+    "id": "BTL_0175",
+    "file": "BTL",
+    "offset": 2132640,
+    "capacity": 32,
+    "source": "２Ｐコマンド<r表|ひょう>",
+    "translation": "2P Command List"
+  },
+  {
+    "id": "BTL_0176",
+    "file": "BTL",
+    "offset": 2132672,
+    "capacity": 48,
+    "source": "１Ｐか２Ｐのコマンド表（設定しろや）",
+    "translation": "1P/2P Command List"
+  },
+  {
+    "id": "BTL_0177",
+    "file": "BTL",
+    "offset": 2132720,
+    "capacity": 32,
+    "source": "<r練習設定|れんしゅうせってい>",
+    "translation": "Practice Settings"
+  },
+  {
+    "id": "BTL_0178",
+    "file": "BTL",
+    "offset": 2132752,
+    "capacity": 48,
+    "source": "かんたん<r表示|ひょうじ><r設定|せってい>",
+    "translation": "Simple Display Settings"
+  },
+  {
+    "id": "BTL_0179",
+    "file": "BTL",
+    "offset": 2132800,
+    "capacity": 32,
+    "source": "アイテムストック",
+    "translation": "Item Stock"
+  },
+  {
+    "id": "BTL_0180",
+    "file": "BTL",
+    "offset": 2132832,
+    "capacity": 48,
+    "source": "<r任務|にんむ>の<r条件|じょうけん>",
+    "translation": "Mission Conditions"
+  },
+  {
+    "id": "BTL_0181",
+    "file": "BTL",
+    "offset": 2132880,
+    "capacity": 32,
+    "source": "クリア<r条件|じょうけん>",
+    "translation": "Clear Conditions"
+  },
+  {
+    "id": "BTL_0182",
+    "file": "BTL",
+    "offset": 2132912,
+    "capacity": 48,
+    "source": "ゲームモード<r選択|せんたく>に<r戻|もど>る",
+    "translation": "Return to Mode Select"
+  },
+  {
+    "id": "BTL_0183",
+    "file": "BTL",
+    "offset": 2132960,
+    "capacity": 48,
+    "source": "キャラクター<r選択|せんたく>に<r戻|もど>る",
+    "translation": "Return to Character Select"
+  },
+  {
+    "id": "BTL_0184",
+    "file": "BTL",
+    "offset": 2133008,
+    "capacity": 32,
+    "source": "ヒーローモードに<r戻|もど>る",
+    "translation": "Return to Hero Mode"
+  },
+  {
+    "id": "BTL_0185",
+    "file": "BTL",
+    "offset": 2133040,
+    "capacity": 48,
+    "source": "<r対戦|たいせん>を<r終了|しゅうりょう>する",
+    "translation": "End Battle"
+  },
+  {
+    "id": "BTL_0186",
+    "file": "BTL",
+    "offset": 2133160,
+    "capacity": 16,
+    "source": "キャンセル",
+    "translation": "Cancel"
+  },
+  {
+    "id": "BTL_0187",
+    "file": "BTL",
+    "offset": 2133232,
+    "capacity": 32,
+    "source": "<r対戦|たいせん>",
+    "translation": "Versus:"
+  },
+  {
+    "id": "BTL_0188",
+    "file": "BTL",
+    "offset": 2133264,
+    "capacity": 32,
+    "source": "<r練習|れんしゅう>",
+    "translation": "Practice:"
+  },
+  {
+    "id": "BTL_0190",
+    "file": "BTL",
+    "offset": 2133376,
+    "capacity": 32,
+    "source": "を<r終了|しゅうりょう>して",
+    "translation": "End and return to"
+  },
+  {
+    "id": "BTL_0191",
+    "file": "BTL",
+    "offset": 2133408,
+    "capacity": 32,
+    "source": "キャラクター<r選択|せんたく>",
+    "translation": "Character Select"
+  },
+  {
+    "id": "BTL_0192",
+    "file": "BTL",
+    "offset": 2133440,
+    "capacity": 32,
+    "source": "ゲームモード<r選択|せんたく>",
+    "translation": "Mode Select"
+  },
+  {
+    "id": "BTL_0193",
+    "file": "BTL",
+    "offset": 2133472,
+    "capacity": 16,
+    "source": "ヒーローモード",
+    "translation": "Hero Mode"
+  },
+  {
+    "id": "BTL_0196",
+    "file": "BTL",
+    "offset": 2133728,
+    "capacity": 32,
+    "source": "アイテム<r名|めい>",
+    "translation": "Item Name"
+  },
+  {
+    "id": "BTL_0197",
+    "file": "BTL",
+    "offset": 2133760,
+    "capacity": 32,
+    "source": "<r所持数|しょじすう>",
+    "translation": "Owned"
+  },
+  {
+    "id": "BTL_0198",
+    "file": "BTL",
+    "offset": 2133792,
+    "capacity": 32,
+    "source": "<r使用数|しようすう>",
+    "translation": "Used"
+  },
+  {
+    "id": "BTL_0199",
+    "file": "BTL",
+    "offset": 2133824,
+    "capacity": 32,
+    "source": "<r空|あき>ストック<r数|すう>",
+    "translation": "Empty Stocks"
+  },
+  {
+    "id": "BTL_0200",
+    "file": "BTL",
+    "offset": 2133872,
+    "capacity": 48,
+    "source": "チャクラゲージ<r壱以上|いちいじょう>",
+    "translation": "Chakra Gauge 1+"
+  },
+  {
+    "id": "BTL_0201",
+    "file": "BTL",
+    "offset": 2133920,
+    "capacity": 48,
+    "source": "チャクラゲージ<r弐以上|にいじょう>",
+    "translation": "Chakra Gauge 2+"
+  },
+  {
+    "id": "BTL_0202",
+    "file": "BTL",
+    "offset": 2133968,
+    "capacity": 32,
+    "source": "チャクラゲージ<r参|さん>",
+    "translation": "Chakra Gauge 3"
+  },
+  {
+    "id": "BTL_0203",
+    "file": "BTL",
+    "offset": 2134000,
+    "capacity": 32,
+    "source": "<r地上|ちじょう><r投|な>げ",
+    "translation": "Ground Throw"
+  },
+  {
+    "id": "BTL_0204",
+    "file": "BTL",
+    "offset": 2134032,
+    "capacity": 32,
+    "source": "<r空中|くうちゅう><r投|な>げ",
+    "translation": "Air Throw"
+  },
+  {
+    "id": "BTL_0205",
+    "file": "BTL",
+    "offset": 2134064,
+    "capacity": 32,
+    "source": "ジャンプ<r中|ちゅう>に",
+    "translation": "During Jump"
+  },
+  {
+    "id": "BTL_0206",
+    "file": "BTL",
+    "offset": 2134096,
+    "capacity": 32,
+    "source": "チャクラ<r消費|しょうひ>",
+    "translation": "Uses Chakra"
+  },
+  {
+    "id": "BTL_0207",
+    "file": "BTL",
+    "offset": 2134128,
+    "capacity": 32,
+    "source": "<r当|あ>て<r身技|みわざ>",
+    "translation": "Counter Move"
+  },
+  {
+    "id": "BTL_0208",
+    "file": "BTL",
+    "offset": 2134160,
+    "capacity": 32,
+    "source": "<r連打技|れんだわざ>",
+    "translation": "Mash Move"
+  },
+  {
+    "id": "BTL_0209",
+    "file": "BTL",
+    "offset": 2134192,
+    "capacity": 32,
+    "source": "<r溜|た>め<r技|わざ>",
+    "translation": "Charge Move"
+  },
+  {
+    "id": "BTL_0210",
+    "file": "BTL",
+    "offset": 2134224,
+    "capacity": 48,
+    "source": "<r空中|くうちゅう><r連打技|れんだわざ>",
+    "translation": "Air Mash Move"
+  },
+  {
+    "id": "BTL_0211",
+    "file": "BTL",
+    "offset": 2134272,
+    "capacity": 48,
+    "source": "<r空中|くうちゅう><r溜|た>め<r技|わざ>",
+    "translation": "Air Charge Move"
+  },
+  {
+    "id": "BTL_0212",
+    "file": "BTL",
+    "offset": 2134320,
+    "capacity": 64,
+    "source": "チャクラ<r消費|しょうひ>／<r当|あ>て<r身技|みわざ>",
+    "translation": "Uses Chakra / Counter"
+  },
+  {
+    "id": "BTL_0213",
+    "file": "BTL",
+    "offset": 2134384,
+    "capacity": 48,
+    "source": "チャクラ<r消費|しょうひ>／<r溜|た>め<r技|わざ>",
+    "translation": "Uses Chakra / Charge"
+  },
+  {
+    "id": "BTL_0214",
+    "file": "BTL",
+    "offset": 2134432,
+    "capacity": 48,
+    "source": "チャクラ<r消費|しょうひ>／<r連打技|れんだわざ>",
+    "translation": "Uses Chakra / Mash"
+  },
+  {
+    "id": "BTL_0215",
+    "file": "BTL",
+    "offset": 2134480,
+    "capacity": 48,
+    "source": "<r溜|た>め<r技|わざ>　<r弱|じゃく>",
+    "translation": "Charge Move Weak"
+  },
+  {
+    "id": "BTL_0216",
+    "file": "BTL",
+    "offset": 2134528,
+    "capacity": 48,
+    "source": "<r溜|た>め<r技|わざ>　<r強|きょう>",
+    "translation": "Charge Move Strong"
+  },
+  {
+    "id": "BTL_0217",
+    "file": "BTL",
+    "offset": 2134576,
+    "capacity": 32,
+    "source": "／<r空中可|くうちゅうか>",
+    "translation": "/ Air OK"
+  },
+  {
+    "id": "BTL_0218",
+    "file": "BTL",
+    "offset": 2134608,
+    "capacity": 32,
+    "source": "／<r通常奥義|つうじょうおうぎ>",
+    "translation": "/ Normal Ultimate"
+  },
+  {
+    "id": "BTL_0219",
+    "file": "BTL",
+    "offset": 2134640,
+    "capacity": 32,
+    "source": "／<r逆転奥義|ぎゃくてんおうぎ>",
+    "translation": "/ Comeback Ultimate"
+  },
+  {
+    "id": "BTL_0220",
+    "file": "BTL",
+    "offset": 2134672,
+    "capacity": 32,
+    "source": "／<r覚醒奥義|かくせいおうぎ>",
+    "translation": "/ Awakening Ultimate"
+  },
+  {
+    "id": "BTL_0221",
+    "file": "BTL",
+    "offset": 2134704,
+    "capacity": 32,
+    "source": "／<r連係奥義|れんけいおうぎ>",
+    "translation": "/ Team Ultimate"
+  },
+  {
+    "id": "BTL_0222",
+    "file": "BTL",
+    "offset": 2134832,
+    "capacity": 32,
+    "source": "（ジャンプ<r中|ちゅう>）",
+    "translation": "(During Jump)"
+  },
+  {
+    "id": "BTL_0223",
+    "file": "BTL",
+    "offset": 2134864,
+    "capacity": 48,
+    "source": "（<r相手|あいて>の<r前|まえ>で）",
+    "translation": "(In front of opponent)"
+  },
+  {
+    "id": "BTL_0224",
+    "file": "BTL",
+    "offset": 2134912,
+    "capacity": 48,
+    "source": "<r後側方向|うしろがわほうこう>キー",
+    "translation": "Back Direction Key"
+  },
+  {
+    "id": "BTL_0225",
+    "file": "BTL",
+    "offset": 2134960,
+    "capacity": 80,
+    "source": "（<r相手|あいて>の<r攻撃|こうげき>の<r当|あ>たる<r瞬間|しゅんかん>）",
+    "translation": "(As the opponent attack hits)"
+  },
+  {
+    "id": "BTL_0226",
+    "file": "BTL",
+    "offset": 2135040,
+    "capacity": 80,
+    "source": "（<r投|な>げられた<r時|とき>、<r叩|たた>き<r付|つ>けられる<r瞬間|しゅんかん>）",
+    "translation": "(When thrown, as you hit the ground)"
+  },
+  {
+    "id": "BTL_0227",
+    "file": "BTL",
+    "offset": 2135120,
+    "capacity": 80,
+    "source": "（<r吹|ふ>っ<r飛|と>ばした<r方向|ほうこう>の<r方向|ほうこう>キー）",
+    "translation": "(Direction the enemy was launched)"
+  },
+  {
+    "id": "BTL_0228",
+    "file": "BTL",
+    "offset": 2135200,
+    "capacity": 96,
+    "source": "（<r相手|あいて>の<r追|お>い<r討|う>ち<r攻撃|こうげき>が<r当|あ>たる<r瞬間|しゅんかん>）",
+    "translation": "(As the enemy pursuit attack hits)"
+  },
+  {
+    "id": "BTL_0229",
+    "file": "BTL",
+    "offset": 2135296,
+    "capacity": 32,
+    "source": "（しばらく<r押|お>す）",
+    "translation": "(Hold briefly)"
+  },
+  {
+    "id": "BTL_0230",
+    "file": "BTL",
+    "offset": 2135328,
+    "capacity": 32,
+    "source": "（<r地上|ちじょう>で）",
+    "translation": "(On the ground)"
+  },
+  {
+    "id": "BTL_0231",
+    "file": "BTL",
+    "offset": 2135360,
+    "capacity": 112,
+    "source": "（<r高速移動|こうそくいどう>の<r相殺中|そうさいちゅう>や<r攻撃|こうげき>の<r相殺中|そうさいちゅう>）",
+    "translation": "(During high-speed move clash or attack clash)"
+  },
+  {
+    "id": "BTL_0232",
+    "file": "BTL",
+    "offset": 2135472,
+    "capacity": 96,
+    "source": "（マニュアル：<r出現後|しゅつげんご>もう<r一度|いちど><r押|お>すと<r攻撃|こうげき>）",
+    "translation": "(Manual: press again after it appears to attack)"
+  },
+  {
+    "id": "BTL_0233",
+    "file": "BTL",
+    "offset": 2135632,
+    "capacity": 32,
+    "source": "<r連係攻撃|れんけいこうげき>",
+    "translation": "Team Attack"
+  },
+  {
+    "id": "BTL_0234",
+    "file": "BTL",
+    "offset": 2135664,
+    "capacity": 32,
+    "source": "アイテム<r選択|せんたく>",
+    "translation": "Item Select"
+  },
+  {
+    "id": "BTL_0235",
+    "file": "BTL",
+    "offset": 2135696,
+    "capacity": 24,
+    "source": "アイテム<r使用|しよう>",
+    "translation": "Use Item"
+  },
+  {
+    "id": "BTL_0236",
+    "file": "BTL",
+    "offset": 2135720,
+    "capacity": 24,
+    "source": "ジャンプ",
+    "translation": "Jump"
+  },
+  {
+    "id": "BTL_0237",
+    "file": "BTL",
+    "offset": 2135744,
+    "capacity": 32,
+    "source": "<r二段|にだん>ジャンプ",
+    "translation": "Double Jump"
+  },
+  {
+    "id": "BTL_0238",
+    "file": "BTL",
+    "offset": 2135776,
+    "capacity": 32,
+    "source": "<r高速移動|こうそくいどう>",
+    "translation": "High-Speed Move"
+  },
+  {
+    "id": "BTL_0239",
+    "file": "BTL",
+    "offset": 2135808,
+    "capacity": 32,
+    "source": "<r飛|と>び<r退|の>き",
+    "translation": "Backstep"
+  },
+  {
+    "id": "BTL_0240",
+    "file": "BTL",
+    "offset": 2135840,
+    "capacity": 64,
+    "source": "<r変|か>わり<r身|み>の<r術|じゅつ>（チャクラ<r消費|しょうひ>）",
+    "translation": "Substitution Jutsu (uses Chakra)"
+  },
+  {
+    "id": "BTL_0241",
+    "file": "BTL",
+    "offset": 2135904,
+    "capacity": 32,
+    "source": "<r受|う>け<r身|み>",
+    "translation": "Recovery"
+  },
+  {
+    "id": "BTL_0242",
+    "file": "BTL",
+    "offset": 2135936,
+    "capacity": 32,
+    "source": "<r追|お>い<r討|う>ち",
+    "translation": "Pursuit"
+  },
+  {
+    "id": "BTL_0243",
+    "file": "BTL",
+    "offset": 2135968,
+    "capacity": 48,
+    "source": "<r追|お>い<r討|う>ち<r返|がえ>し",
+    "translation": "Pursuit Counter"
+  },
+  {
+    "id": "BTL_0244",
+    "file": "BTL",
+    "offset": 2136016,
+    "capacity": 32,
+    "source": "チャクラをためる",
+    "translation": "Charge Chakra"
+  },
+  {
+    "id": "BTL_0245",
+    "file": "BTL",
+    "offset": 2136048,
+    "capacity": 32,
+    "source": "<r挑発|ちょうはつ>",
+    "translation": "Taunt"
+  },
+  {
+    "id": "BTL_0246",
+    "file": "BTL",
+    "offset": 2136080,
+    "capacity": 48,
+    "source": "<r奥|おく>へ<r軸移動|じくいどう>",
+    "translation": "Axis Step Back"
+  },
+  {
+    "id": "BTL_0247",
+    "file": "BTL",
+    "offset": 2136128,
+    "capacity": 48,
+    "source": "<r手前|てまえ>へ<r軸移動|じくいどう>",
+    "translation": "Axis Step Forward"
+  },
+  {
+    "id": "BTL_0248",
+    "file": "BTL",
+    "offset": 2136176,
+    "capacity": 32,
+    "source": "ガード<r崩|くず>し",
+    "translation": "Guard Break"
+  },
+  {
+    "id": "BTL_0249",
+    "file": "BTL",
+    "offset": 2136208,
+    "capacity": 48,
+    "source": "<r残影追|ざんえいお>い<r討|う>ち",
+    "translation": "Afterimage Pursuit"
+  },
+  {
+    "id": "BTL_0250",
+    "file": "BTL",
+    "offset": 2137216,
+    "capacity": 16,
+    "source": "やさしい",
+    "translation": "Easy"
+  },
+  {
+    "id": "BTL_0251",
+    "file": "BTL",
+    "offset": 2137232,
+    "capacity": 16,
+    "source": "むずかしい",
+    "translation": "Hard"
+  },
+  {
+    "id": "BTL_0253",
+    "file": "BTL",
+    "offset": 2137312,
+    "capacity": 16,
+    "source": "ランダム",
+    "translation": "Random"
+  },
+  {
+    "id": "BTL_0254",
+    "file": "BTL",
+    "offset": 2137328,
+    "capacity": 16,
+    "source": "コマンド",
+    "translation": "Command"
+  },
+  {
+    "id": "BTL_0255",
+    "file": "BTL",
+    "offset": 2137344,
+    "capacity": 16,
+    "source": "タイミング",
+    "translation": "Timing"
+  },
+  {
+    "id": "BTL_0256",
+    "file": "BTL",
+    "offset": 2137384,
+    "capacity": 16,
+    "source": "ギリギリ",
+    "translation": "Critical"
+  },
+  {
+    "id": "BTL_0257",
+    "file": "BTL",
+    "offset": 2137416,
+    "capacity": 16,
+    "source": "マニュアル",
+    "translation": "Manual"
+  },
+  {
+    "id": "BTL_0258",
+    "file": "BTL",
+    "offset": 2137432,
+    "capacity": 16,
+    "source": "ジャンプ",
+    "translation": "Jump"
+  },
+  {
+    "id": "BTL_0259",
+    "file": "BTL",
+    "offset": 2137448,
+    "capacity": 24,
+    "source": "二段ジャンプ",
+    "translation": "Double Jump"
+  },
+  {
+    "id": "BTL_0264",
+    "file": "BTL",
+    "offset": 2137600,
+    "capacity": 17,
+    "source": "使用しない",
+    "translation": "Do Not Use"
+  },
+  {
+    "id": "BTL_0265",
+    "file": "BTL",
+    "offset": 2137632,
+    "capacity": 112,
+    "source": "「<r使用不可|しようふか>」は、<r奥義|おうぎ>が<r使|つか>えなくなるので<r注意|ちゅうい>してください。",
+    "translation": "When set to \"Unavailable\", Ultimates cannot be used."
+  },
+  {
+    "id": "BTL_0266",
+    "file": "BTL",
+    "offset": 2137744,
+    "capacity": 112,
+    "source": "「ランダム」にすると<r入力勝負|にゅうりょくしょうぶ>の<r方法|ほうほう>が<r毎回変化|まいかいへんか>します。",
+    "translation": "When set to \"Random\", the input battle changes each time."
+  },
+  {
+    "id": "BTL_0267",
+    "file": "BTL",
+    "offset": 2137856,
+    "capacity": 80,
+    "source": "「コマンド」にするとボタンの<r入力勝負|にゅうりょくしょうぶ>になります。",
+    "translation": "When set to \"Command\", it becomes a button input battle."
+  },
+  {
+    "id": "BTL_0268",
+    "file": "BTL",
+    "offset": 2137936,
+    "capacity": 96,
+    "source": "「タイミング」にするとボタンをタイミング<r良|よ>く<r押|お>す<r勝負|しょうぶ>になります。",
+    "translation": "When set to \"Timing\", it becomes a contest of pressing the button with good timing."
+  },
+  {
+    "id": "BTL_0269",
+    "file": "BTL",
+    "offset": 2138032,
+    "capacity": 144,
+    "source": "「<r回転|かいてん>」にすると<r左|ひだり>スティック、もしくは<r右|みぎ>スティックの<r回転数勝負|かいてんすうしょうぶ>になります。",
+    "translation": "When set to \"Rotate\", it becomes a contest of rotating the left or right stick."
+  },
+  {
+    "id": "BTL_0270",
+    "file": "BTL",
+    "offset": 2138176,
+    "capacity": 80,
+    "source": "「<r連打|れんだ>」にするとボタンの<r連打勝負|れんだしょうぶ>になります。",
+    "translation": "When set to \"Mash\", it becomes a button-mashing contest."
+  },
+  {
+    "id": "BTL_0271",
+    "file": "BTL",
+    "offset": 2138288,
+    "capacity": 112,
+    "source": "「<r通常|つうじょう>」にすると<r一定時間|いっていじかん>で<r体力|たいりょく>が<r全回復|ぜんかいふく>します。",
+    "translation": "When set to \"Normal\", health fully recovers after a set time."
+  },
+  {
+    "id": "BTL_0272",
+    "file": "BTL",
+    "offset": 2138400,
+    "capacity": 128,
+    "source": "「<r半分|はんぶん>」にすると<r一定時間|いっていじかん>で<r体力|たいりょく>が<r半分|はんぶん>まで<r回復|かいふく>します。",
+    "translation": "When set to \"Half\", health recovers up to half after a set time."
+  },
+  {
+    "id": "BTL_0273",
+    "file": "BTL",
+    "offset": 2138528,
+    "capacity": 96,
+    "source": "「ギリギリ」にすると<r常|つね>に<r体力|たいりょく>がギリギリの<r状態|じょうたい>になります。",
+    "translation": "When set to \"Critical\", health always stays barely above zero."
+  },
+  {
+    "id": "BTL_0275",
+    "file": "BTL",
+    "offset": 2138656,
+    "capacity": 16,
+    "source": "アイテム出現",
+    "translation": "Item Spawn"
+  },
+  {
+    "id": "BTL_0276",
+    "file": "BTL",
+    "offset": 2138672,
+    "capacity": 16,
+    "source": "チャクラ",
+    "translation": " Q"
+  },
+  {
+    "id": "BTL_0277",
+    "file": "BTL",
+    "offset": 2138688,
+    "capacity": 32,
+    "source": "ハンディキャップ",
+    "translation": "Handicap"
+  },
+  {
+    "id": "BTL_0278",
+    "file": "BTL",
+    "offset": 2138752,
+    "capacity": 96,
+    "source": "<r方向|ほうこう>キー<r左右|さゆう>で<r対戦時間|たいせんじかん>の<r変更|へんこう>ができます。",
+    "translation": "Press Left/Right to change battle time."
+  },
+  {
+    "id": "BTL_0279",
+    "file": "BTL",
+    "offset": 2138848,
+    "capacity": 96,
+    "source": "<r方向|ほうこう>キー<r左右|さゆう>でＣＯＭの<r強|つよ>さを<r変更|へんこう>できます。",
+    "translation": "Press Left/Right to change COM strength."
+  },
+  {
+    "id": "BTL_0280",
+    "file": "BTL",
+    "offset": 2138944,
+    "capacity": 240,
+    "source": "<r方向|ほうこう>キー<r左右|さゆう>でアイテムの<r出現率|しゅつげんりつ>が<r変更|へんこう>できます。　　　　　<r多|おお>めにすると、いつもよりゲーム<r中|ちゅう>に<r出現|しゅつげん>するアイテムの<r数|かず>が<r多|おお>くなります。",
+    "translation": "Press Left/Right to change item spawn rate. Higher settings make more items appear during battle."
+  },
+  {
+    "id": "BTL_0281",
+    "file": "BTL",
+    "offset": 2139184,
+    "capacity": 160,
+    "source": "<r方向|ほうこう>キー<r左右|さゆう>で<r忍術|にんじゅつ>などを<r使用|しよう>した<r時|とき>に、チャクラが<r減|へ>るか<r減|へ>らないかを<r設定|せってい>できます。",
+    "translation": "Press Left/Right to set whether Chakra decreases when using Ninjutsu and similar actions."
+  },
+  {
+    "id": "BTL_0282",
+    "file": "BTL",
+    "offset": 2139344,
+    "capacity": 144,
+    "source": "<r方向|ほうこう>キー<r左右|さゆう>で<r奥義|おうぎ>の<r入力勝負|にゅうりょくしょうぶ>の<r切|き>り<r替|か>えなどが<r設定|せってい>できます。",
+    "translation": "Press Left/Right to switch Ultimate input battle settings."
+  },
+  {
+    "id": "BTL_0283",
+    "file": "BTL",
+    "offset": 2139488,
+    "capacity": 256,
+    "source": "<r方向|ほうこう>キー<r左右|さゆう>でハンディキャップの<r設定|せってい>ができます。　　　　　<r赤|あか>いマークが<r多|おお>いほど、１Ｐが<r有利|ゆうり>。<r逆|ぎゃく>に<r青|あお>いマークが<r多|おお>いと２Ｐが<r有利|ゆうり>な<r設定|せってい>です。",
+    "translation": "Press Left/Right to set the handicap. More red marks favor 1P; more blue marks favor 2P."
+  },
+  {
+    "id": "BTL_0284",
+    "file": "BTL",
+    "offset": 2139776,
+    "capacity": 68,
+    "source": "<r対戦設定|たいせんせってい>をデフォルトに<r戻|もど>しました。",
+    "translation": "Battle settings restored to default."
+  },
+  {
+    "id": "BTL_0286",
+    "file": "BTL",
+    "offset": 2139992,
+    "capacity": 16,
+    "source": "連係モード",
+    "translation": "Team Mode"
+  },
+  {
+    "id": "BTL_0288",
+    "file": "BTL",
+    "offset": 2140024,
+    "capacity": 16,
+    "source": "ダメージ量表示",
+    "translation": "Damage Display"
+  },
+  {
+    "id": "BTL_0290",
+    "file": "BTL",
+    "offset": 2140056,
+    "capacity": 16,
+    "source": "変わり身の術",
+    "translation": "Substitution"
+  },
+  {
+    "id": "BTL_0292",
+    "file": "BTL",
+    "offset": 2140176,
+    "capacity": 128,
+    "source": "<r方向|ほうこう>キー<r左右|さゆう>でプレイヤーの<r体力|たいりょく>の<r状態|じょうたい>を<r設定|せってい>することができます。",
+    "translation": "Press Left/Right to set the player health state."
+  },
+  {
+    "id": "BTL_0293",
+    "file": "BTL",
+    "offset": 2140304,
+    "capacity": 112,
+    "source": "<r方向|ほうこう>キー<r左右|さゆう>でチャクラが<r減|へ>るか<r減|へ>らないかを<r設定|せってい>できます。",
+    "translation": "Press Left/Right to set whether Chakra decreases."
+  },
+  {
+    "id": "BTL_0294",
+    "file": "BTL",
+    "offset": 2140416,
+    "capacity": 144,
+    "source": "<r方向|ほうこう>キー<r左右|さゆう>でプレイヤーの<r連係|れんけい>ゲージの<r溜|た>まり<r方|かた>を<r設定|せってい>することができます。",
+    "translation": "Press Left/Right to set how the player Team Gauge fills."
+  },
+  {
+    "id": "BTL_0295",
+    "file": "BTL",
+    "offset": 2140560,
+    "capacity": 128,
+    "source": "<r方向|ほうこう>キー<r左右|さゆう>で<r連係|れんけい>の<r発動|はつどう>の<r仕方|しかた>を<r設定|せってい>することができます。",
+    "translation": "Press Left/Right to set how Team Attacks are activated."
+  },
+  {
+    "id": "BTL_0296",
+    "file": "BTL",
+    "offset": 2140688,
+    "capacity": 112,
+    "source": "<r方向|ほうこう>キー<r左右|さゆう>でアイテムの<r出現頻度|しゅつげんひんど>を<r設定|せってい>できます。",
+    "translation": "Press Left/Right to set item spawn frequency."
+  },
+  {
+    "id": "BTL_0297",
+    "file": "BTL",
+    "offset": 2140800,
+    "capacity": 112,
+    "source": "<r方向|ほうこう>キー<r左右|さゆう>でコマンドの<r表示|ひょうじ>をするか、しないかの<r設定|せってい>ができます。",
+    "translation": "Press Left/Right to show or hide the command display."
+  },
+  {
+    "id": "BTL_0298",
+    "file": "BTL",
+    "offset": 2140912,
+    "capacity": 160,
+    "source": "<r方向|ほうこう>キー<r左右|さゆう>で<r相手|あいて>に<r対|たい>するダメージ<r量|りょう>の<r表示|ひょうじ>をするか、しないかの<r設定|せってい>ができます。",
+    "translation": "Press Left/Right to show or hide damage dealt to the opponent."
+  },
+  {
+    "id": "BTL_0299",
+    "file": "BTL",
+    "offset": 2141072,
+    "capacity": 144,
+    "source": "<r方向|ほうこう>キー<r左右|さゆう>でプラクティス<r中|ちゅう>の<r案内忍音声|あんないにんおんせい>の<r設定|せってい>をすることができます。",
+    "translation": "Press Left/Right to set the Practice guide ninja voice."
+  },
+  {
+    "id": "BTL_0300",
+    "file": "BTL",
+    "offset": 2141216,
+    "capacity": 112,
+    "source": "<r状態|じょうたい>が「ＣＯＭ」に<r設定|せってい>されている<r時|とき>の<r強|つよ>さを<r指定|してい>できます。",
+    "translation": "Set the strength used when State is set to COM."
+  },
+  {
+    "id": "BTL_0301",
+    "file": "BTL",
+    "offset": 2141328,
+    "capacity": 160,
+    "source": "<r状態|じょうたい>が「<r立|た>ち・ジャンプ・<r二段|にだん>ジャンプ」に<r設定|せってい>されている<r時|とき>の<r攻撃|こうげき>パターンを<r指定|してい>できます。",
+    "translation": "Set the attack pattern used when State is Stand, Jump, or Double Jump."
+  },
+  {
+    "id": "BTL_0302",
+    "file": "BTL",
+    "offset": 2141488,
+    "capacity": 160,
+    "source": "<r状態|じょうたい>が「<r立|た>ち・ジャンプ・<r二段|にだん>ジャンプ」に<r設定|せってい>されている<r時|とき>のガードパターンを<r指定|してい>できます。",
+    "translation": "Set the guard pattern used when State is Stand, Jump, or Double Jump."
+  },
+  {
+    "id": "BTL_0303",
+    "file": "BTL",
+    "offset": 2141648,
+    "capacity": 160,
+    "source": "<r状態|じょうたい>が「<r立|た>ち・ジャンプ・<r二段|にだん>ジャンプ」に<r設定|せってい>されている<r時|とき>の<r行動|こうどう>パターンを<r指定|してい>できます。",
+    "translation": "Set the behavior pattern used when State is Stand, Jump, or Double Jump."
+  },
+  {
+    "id": "BTL_0304",
+    "file": "BTL",
+    "offset": 2141808,
+    "capacity": 160,
+    "source": "<r状態|じょうたい>が「ＣＯＭ」に<r設定|せってい>されている<r時|とき>の<r変|か>わり<r身|み>の<r術|じゅつ>の<r使用頻度|しようひんど>を<r指定|してい>できます。",
+    "translation": "Set Substitution Jutsu frequency when State is COM."
+  },
+  {
+    "id": "BTL_0305",
+    "file": "BTL",
+    "offset": 2141968,
+    "capacity": 176,
+    "source": "<r状態|じょうたい>が「<r手動|しゅどう>」<r以外|いがい>に<r設定|せってい>されている<r時|とき>の<r連係攻撃|れんけいこうげき>の<r使用頻度|しようひんど>を<r指定|してい>できます。",
+    "translation": "Set Team Attack frequency when State is not Manual."
+  },
+  {
+    "id": "BTL_0306",
+    "file": "BTL",
+    "offset": 2142144,
+    "capacity": 176,
+    "source": "<r状態|じょうたい>が「<r手動|しゅどう>」<r以外|いがい>に<r設定|せってい>されている<r時|とき>の<r追|お>い<r討|う>ち<r返|がえ>しの<r頻度|ひんど>を<r指定|してい>できます。",
+    "translation": "Set Pursuit Counter frequency when State is not Manual."
+  },
+  {
+    "id": "BTL_0307",
+    "file": "BTL",
+    "offset": 2142400,
+    "capacity": 176,
+    "source": "<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。<r手動|しゅどう>では、<r別|べつ>のコントローラで<r操作|そうさ>する<r事|こと>ができます。",
+    "translation": "Set the opponent state. In Manual, they can be controlled with another controller."
+  },
+  {
+    "id": "BTL_0308",
+    "file": "BTL",
+    "offset": 2142576,
+    "capacity": 160,
+    "source": "<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。ＣＯＭでは、コンピュータと<r対戦|たいせん>する<r事|こと>ができます。",
+    "translation": "Set the opponent state. In COM, you can fight the computer."
+  },
+  {
+    "id": "BTL_0309",
+    "file": "BTL",
+    "offset": 2142736,
+    "capacity": 192,
+    "source": "<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。<r立|た>ちでは、<r立|た>った<r状態|じょうたい>で<r下記|かき>で<r指定|してい>した<r行動|こうどう>をします。",
+    "translation": "Set the opponent state. In Stand, they stand and use the actions set below."
+  },
+  {
+    "id": "BTL_0310",
+    "file": "BTL",
+    "offset": 2142928,
+    "capacity": 176,
+    "source": "<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。ジャンプでは、ジャンプしながら<r下記|かき>で<r指定|してい>した<r行動|こうどう>をします。",
+    "translation": "Set the opponent state. In Jump, they jump and use the actions set below."
+  },
+  {
+    "id": "BTL_0311",
+    "file": "BTL",
+    "offset": 2143104,
+    "capacity": 208,
+    "source": "<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。<r二段|にだん>ジャンプでは、<r二段|にだん>ジャンプしながら<r下記|かき>で<r指定|してい>した<r行動|こうどう>をします。",
+    "translation": "Set the opponent state. In Double Jump, they double-jump and use the actions set below."
+  },
+  {
+    "id": "BTL_0313",
+    "file": "BTL",
+    "offset": 2143440,
+    "capacity": 72,
+    "source": "<r練習設定|れんしゅうせってい>をデフォルトに<r戻|もど>しました。",
+    "translation": "Practice settings restored to default."
+  },
+  {
+    "id": "ETC_0001",
+    "file": "ETC",
+    "offset": 151376,
+    "capacity": 72,
+    "source": "<color080860>コレクション<color000000>を<r終了|しゅうりょう>しますか？",
+    "translation": "Quit Collection?"
+  },
+  {
+    "id": "ETC_0002",
+    "file": "ETC",
+    "offset": 151448,
+    "capacity": 24,
+    "source": "うずまきナルト",
+    "translation": "Naruto Uzumaki"
+  },
+  {
+    "id": "ETC_0003",
+    "file": "ETC",
+    "offset": 151472,
+    "capacity": 24,
+    "source": "<r春野|はるの>サクラ",
+    "translation": "Sakura Haruno"
+  },
+  {
+    "id": "ETC_0004",
+    "file": "ETC",
+    "offset": 151520,
+    "capacity": 24,
+    "source": "<r日向|ひゅうが>ネジ",
+    "translation": "Neji Hyuga"
+  },
+  {
+    "id": "ETC_0005",
+    "file": "ETC",
+    "offset": 151544,
+    "capacity": 16,
+    "source": "ロック・リー",
+    "translation": "Rock Lee"
+  },
+  {
+    "id": "ETC_0006",
+    "file": "ETC",
+    "offset": 151560,
+    "capacity": 16,
+    "source": "テンテン",
+    "translation": "Tenten"
+  },
+  {
+    "id": "ETC_0007",
+    "file": "ETC",
+    "offset": 151576,
+    "capacity": 24,
+    "source": "マイト・ガイ",
+    "translation": "Might Guy"
+  },
+  {
+    "id": "ETC_0008",
+    "file": "ETC",
+    "offset": 151600,
+    "capacity": 32,
+    "source": "<r奈良|なら>シカマル",
+    "translation": "Shikamaru Nara"
+  },
+  {
+    "id": "ETC_0009",
+    "file": "ETC",
+    "offset": 151632,
+    "capacity": 32,
+    "source": "<r秋道|あきみち>チョウジ",
+    "translation": "Choji Akimichi"
+  },
+  {
+    "id": "ETC_0010",
+    "file": "ETC",
+    "offset": 151664,
+    "capacity": 32,
+    "source": "<r山中|やまなか>いの",
+    "translation": "Ino Yamanaka"
+  },
+  {
+    "id": "ETC_0011",
+    "file": "ETC",
+    "offset": 151696,
+    "capacity": 32,
+    "source": "<r猿飛|さるとび>アスマ",
+    "translation": "Asuma Sarutobi"
+  },
+  {
+    "id": "ETC_0012",
+    "file": "ETC",
+    "offset": 151728,
+    "capacity": 32,
+    "source": "<r犬塚|いぬづか>キバ",
+    "translation": "Kiba Inuzuka"
+  },
+  {
+    "id": "ETC_0013",
+    "file": "ETC",
+    "offset": 151760,
+    "capacity": 32,
+    "source": "<r油女|あぶらめ>シノ",
+    "translation": "Shino Aburame"
+  },
+  {
+    "id": "ETC_0014",
+    "file": "ETC",
+    "offset": 151792,
+    "capacity": 32,
+    "source": "<r日向|ひゅうが>ヒナタ",
+    "translation": "Hinata Hyuga"
+  },
+  {
+    "id": "ETC_0015",
+    "file": "ETC",
+    "offset": 151824,
+    "capacity": 32,
+    "source": "<r夕日|ゆうひ><r紅|くれない>",
+    "translation": "Kurenai Yuhi"
+  },
+  {
+    "id": "ETC_0016",
+    "file": "ETC",
+    "offset": 151856,
+    "capacity": 40,
+    "source": "<r風影|かぜかげ>・<r我愛羅|ガアラ>",
+    "translation": "Kazekage Gaara"
+  },
+  {
+    "id": "ETC_0017",
+    "file": "ETC",
+    "offset": 151896,
+    "capacity": 24,
+    "source": "カンクロウ",
+    "translation": "Kankuro"
+  },
+  {
+    "id": "ETC_0018",
+    "file": "ETC",
+    "offset": 151920,
+    "capacity": 32,
+    "source": "チヨバア（<r体術|たいじゅつ>）",
+    "translation": "Chiyo (Taijutsu)"
+  },
+  {
+    "id": "ETC_0019",
+    "file": "ETC",
+    "offset": 151968,
+    "capacity": 32,
+    "source": "<r干柿鬼鮫|ほしがきキサメ>",
+    "translation": "Kisame Hoshigaki"
+  },
+  {
+    "id": "ETC_0020",
+    "file": "ETC",
+    "offset": 152000,
+    "capacity": 16,
+    "source": "デイダラ",
+    "translation": "Deidara"
+  },
+  {
+    "id": "ETC_0021",
+    "file": "ETC",
+    "offset": 152016,
+    "capacity": 16,
+    "source": "サソリ・ヒルコ",
+    "translation": "Sasori Hiruko"
+  },
+  {
+    "id": "ETC_0022",
+    "file": "ETC",
+    "offset": 152032,
+    "capacity": 16,
+    "source": "チヨバア",
+    "translation": "Chiyo"
+  },
+  {
+    "id": "ETC_0023",
+    "file": "ETC",
+    "offset": 152048,
+    "capacity": 24,
+    "source": "<r自来也|じらいや>",
+    "translation": "Jiraiya"
+  },
+  {
+    "id": "ETC_0024",
+    "file": "ETC",
+    "offset": 152072,
+    "capacity": 24,
+    "source": "<r綱手|ツナデ>",
+    "translation": "Tsunade"
+  },
+  {
+    "id": "ETC_0025",
+    "file": "ETC",
+    "offset": 152096,
+    "capacity": 32,
+    "source": "<r大蛇丸|オロチまる>",
+    "translation": "Orochimaru"
+  },
+  {
+    "id": "ETC_0026",
+    "file": "ETC",
+    "offset": 152128,
+    "capacity": 24,
+    "source": "<r薬師|やくし>カブト",
+    "translation": "Kabuto Yakushi"
+  },
+  {
+    "id": "ETC_0027",
+    "file": "ETC",
+    "offset": 152176,
+    "capacity": 64,
+    "source": "<r九尾第四覚醒状態|きゅうびだいよんかくせいじょうたい>",
+    "translation": "4-Tail Naruto"
+  },
+  {
+    "id": "ETC_0028",
+    "file": "ETC",
+    "offset": 152240,
+    "capacity": 48,
+    "source": "サソリ（<r自分傀儡|じぶんくぐつ>）",
+    "translation": "Sasori (Puppet)"
+  },
+  {
+    "id": "ETC_0029",
+    "file": "ETC",
+    "offset": 152288,
+    "capacity": 48,
+    "source": "うずまきナルト（<r旧章|きゅうしょう>）",
+    "translation": "Naruto (PTS)"
+  },
+  {
+    "id": "ETC_0030",
+    "file": "ETC",
+    "offset": 152336,
+    "capacity": 48,
+    "source": "うちはサスケ（<r旧章|きゅうしょう>）",
+    "translation": "Sasuke (PTS)"
+  },
+  {
+    "id": "ETC_0031",
+    "file": "ETC",
+    "offset": 152384,
+    "capacity": 48,
+    "source": "<r春野|はるの>サクラ（<r旧章|きゅうしょう>）",
+    "translation": "Sakura (PTS)"
+  },
+  {
+    "id": "ETC_0032",
+    "file": "ETC",
+    "offset": 152432,
+    "capacity": 48,
+    "source": "<r日向|ひゅうが>ネジ（<r旧章|きゅうしょう>）",
+    "translation": "Neji (PTS)"
+  },
+  {
+    "id": "ETC_0033",
+    "file": "ETC",
+    "offset": 152480,
+    "capacity": 48,
+    "source": "ロック・リー（<r旧章|きゅうしょう>）",
+    "translation": "Lee (PTS)"
+  },
+  {
+    "id": "ETC_0034",
+    "file": "ETC",
+    "offset": 152528,
+    "capacity": 48,
+    "source": "テンテン（<r旧章|きゅうしょう>）",
+    "translation": "Tenten (PTS)"
+  },
+  {
+    "id": "ETC_0035",
+    "file": "ETC",
+    "offset": 152576,
+    "capacity": 48,
+    "source": "<r奈良|なら>シカマル（<r旧章|きゅうしょう>）",
+    "translation": "Shikamaru (PTS)"
+  },
+  {
+    "id": "ETC_0036",
+    "file": "ETC",
+    "offset": 152624,
+    "capacity": 64,
+    "source": "<r秋道|あきみち>チョウジ（<r旧章|きゅうしょう>）",
+    "translation": "Choji (PTS)"
+  },
+  {
+    "id": "ETC_0037",
+    "file": "ETC",
+    "offset": 152688,
+    "capacity": 48,
+    "source": "<r山中|やまなか>いの（<r旧章|きゅうしょう>）",
+    "translation": "Ino (PTS)"
+  },
+  {
+    "id": "ETC_0038",
+    "file": "ETC",
+    "offset": 152736,
+    "capacity": 48,
+    "source": "<r犬塚|いぬづか>キバ（<r旧章|きゅうしょう>）",
+    "translation": "Kiba (PTS)"
+  },
+  {
+    "id": "ETC_0039",
+    "file": "ETC",
+    "offset": 152784,
+    "capacity": 48,
+    "source": "<r油女|あぶらめ>シノ（<r旧章|きゅうしょう>）",
+    "translation": "Shino (PTS)"
+  },
+  {
+    "id": "ETC_0040",
+    "file": "ETC",
+    "offset": 152832,
+    "capacity": 48,
+    "source": "<r日向|ひゅうが>ヒナタ（<r旧章|きゅうしょう>）",
+    "translation": "Hinata (PTS)"
+  },
+  {
+    "id": "ETC_0041",
+    "file": "ETC",
+    "offset": 152880,
+    "capacity": 32,
+    "source": "<r日向|ひゅうが>ハナビ",
+    "translation": "Hanabi Hyuga"
+  },
+  {
+    "id": "ETC_0042",
+    "file": "ETC",
+    "offset": 152912,
+    "capacity": 48,
+    "source": "<r木|こ>ノ<r葉丸|はまる><r軍団|ぐんだん>",
+    "translation": "Konohamaru Corps"
+  },
+  {
+    "id": "ETC_0043",
+    "file": "ETC",
+    "offset": 152960,
+    "capacity": 16,
+    "source": "みたらしアンコ",
+    "translation": "Anko Mitarashi"
+  },
+  {
+    "id": "ETC_0044",
+    "file": "ETC",
+    "offset": 152976,
+    "capacity": 32,
+    "source": "<r初代火影|しょだいほかげ>",
+    "translation": "1st Hokage"
+  },
+  {
+    "id": "ETC_0045",
+    "file": "ETC",
+    "offset": 153008,
+    "capacity": 32,
+    "source": "<r二代目火影|にだいめほかげ>",
+    "translation": "2nd Hokage"
+  },
+  {
+    "id": "ETC_0046",
+    "file": "ETC",
+    "offset": 153040,
+    "capacity": 32,
+    "source": "<r三代目火影|さんだいめほかげ>",
+    "translation": "3rd Hokage"
+  },
+  {
+    "id": "ETC_0047",
+    "file": "ETC",
+    "offset": 153072,
+    "capacity": 48,
+    "source": "<r黄色|きいろ>い<r閃光|せんこう>",
+    "translation": "Yellow Flash"
+  },
+  {
+    "id": "ETC_0048",
+    "file": "ETC",
+    "offset": 153120,
+    "capacity": 64,
+    "source": "<r砂瀑|さばく>の<r我愛羅|ガアラ>（<r旧章|きゅうしょう>）",
+    "translation": "Gaara (PTS)"
+  },
+  {
+    "id": "ETC_0049",
+    "file": "ETC",
+    "offset": 153184,
+    "capacity": 48,
+    "source": "カンクロウ（<r旧章|きゅうしょう>）",
+    "translation": "Kankuro (PTS)"
+  },
+  {
+    "id": "ETC_0050",
+    "file": "ETC",
+    "offset": 153232,
+    "capacity": 32,
+    "source": "テマリ（<r旧章|きゅうしょう>）",
+    "translation": "Temari (PTS)"
+  },
+  {
+    "id": "ETC_0051",
+    "file": "ETC",
+    "offset": 153264,
+    "capacity": 24,
+    "source": "<r君麻呂|キミマロ>",
+    "translation": "Kimimaro"
+  },
+  {
+    "id": "ETC_0052",
+    "file": "ETC",
+    "offset": 153288,
+    "capacity": 24,
+    "source": "<r左近|サコン>",
+    "translation": "Sakon"
+  },
+  {
+    "id": "ETC_0053",
+    "file": "ETC",
+    "offset": 153312,
+    "capacity": 32,
+    "source": "<r多由也|タユヤ>",
+    "translation": "Tayuya"
+  },
+  {
+    "id": "ETC_0054",
+    "file": "ETC",
+    "offset": 153344,
+    "capacity": 32,
+    "source": "<r鬼童丸|キドウマル>",
+    "translation": "Kidomaru"
+  },
+  {
+    "id": "ETC_0055",
+    "file": "ETC",
+    "offset": 153376,
+    "capacity": 32,
+    "source": "<r次郎坊|ジロウボウ>",
+    "translation": "Jirobo"
+  },
+  {
+    "id": "ETC_0056",
+    "file": "ETC",
+    "offset": 153408,
+    "capacity": 32,
+    "source": "<r桃地|ももち><r再不斬|ザブザ>",
+    "translation": "Zabuza Momochi"
+  },
+  {
+    "id": "ETC_0057",
+    "file": "ETC",
+    "offset": 153440,
+    "capacity": 16,
+    "source": "<r白|ハク>",
+    "translation": "Haku"
+  },
+  {
+    "id": "ETC_0058",
+    "file": "ETC",
+    "offset": 153456,
+    "capacity": 48,
+    "source": "うずまきナルト（<r九尾|きゅうび>）",
+    "translation": "Naruto (Nine-Tails)"
+  },
+  {
+    "id": "ETC_0059",
+    "file": "ETC",
+    "offset": 153504,
+    "capacity": 48,
+    "source": "うちはサスケ<r状態|じょうたい>２",
+    "translation": "Sasuke State 2"
+  },
+  {
+    "id": "ETC_0060",
+    "file": "ETC",
+    "offset": 153552,
+    "capacity": 32,
+    "source": "すい<r拳|けん>リー",
+    "translation": "Drunken Lee"
+  },
+  {
+    "id": "ETC_0061",
+    "file": "ETC",
+    "offset": 153584,
+    "capacity": 48,
+    "source": "<r憑依体我愛羅|ひょういたいガアラ>",
+    "translation": "Shukaku Gaara"
+  },
+  {
+    "id": "ETC_0062",
+    "file": "ETC",
+    "offset": 153632,
+    "capacity": 32,
+    "source": "<r超|ちょう>チョウジ",
+    "translation": "Super Choji"
+  },
+  {
+    "id": "ETC_0063",
+    "file": "ETC",
+    "offset": 153664,
+    "capacity": 48,
+    "source": "<r次郎坊|ジロウボウ><r状態|じょうたい>２",
+    "translation": "Jirobo State 2"
+  },
+  {
+    "id": "ETC_0064",
+    "file": "ETC",
+    "offset": 153712,
+    "capacity": 48,
+    "source": "<r鬼童丸|キドウマル><r状態|じょうたい>２",
+    "translation": "Kidomaru State 2"
+  },
+  {
+    "id": "ETC_0065",
+    "file": "ETC",
+    "offset": 153760,
+    "capacity": 48,
+    "source": "<r多由也|タユヤ><r状態|じょうたい>２",
+    "translation": "Tayuya State 2"
+  },
+  {
+    "id": "ETC_0066",
+    "file": "ETC",
+    "offset": 153808,
+    "capacity": 48,
+    "source": "<r左近|サコン><r状態|じょうたい>２",
+    "translation": "Sakon State 2"
+  },
+  {
+    "id": "ETC_0067",
+    "file": "ETC",
+    "offset": 153856,
+    "capacity": 40,
+    "source": "<r君麻呂|キミマロ><r状態|じょうたい>２",
+    "translation": "Kimimaro State 2"
+  },
+  {
+    "id": "ETC_0068",
+    "file": "ETC",
+    "offset": 153896,
+    "capacity": 28,
+    "source": "ジオラマ",
+    "translation": "Diorama"
+  },
+  {
+    "id": "ETC_0069",
+    "file": "ETC",
+    "offset": 154880,
+    "capacity": 40,
+    "source": "<r影分身|かげぶんしん>の<r術|じゅつ>",
+    "translation": "Shadow Clone"
+  },
+  {
+    "id": "ETC_0070",
+    "file": "ETC",
+    "offset": 154944,
+    "capacity": 24,
+    "source": "<r暴走|ぼうそう>",
+    "translation": "Rampage"
+  },
+  {
+    "id": "ETC_0071",
+    "file": "ETC",
+    "offset": 154992,
+    "capacity": 40,
+    "source": "<r気|き>を<r引|ひ>き<r締|し>めて…",
+    "translation": "Stay Sharp..."
+  },
+  {
+    "id": "ETC_0072",
+    "file": "ETC",
+    "offset": 155056,
+    "capacity": 24,
+    "source": "<r女|おんな>らしく",
+    "translation": "Like a Lady"
+  },
+  {
+    "id": "ETC_0073",
+    "file": "ETC",
+    "offset": 155104,
+    "capacity": 32,
+    "source": "<r拳|こぶし>に<r力|ちから>を！",
+    "translation": "Power Fist!"
+  },
+  {
+    "id": "ETC_0074",
+    "file": "ETC",
+    "offset": 155152,
+    "capacity": 48,
+    "source": "<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>",
+    "translation": "Super Beast Scroll"
+  },
+  {
+    "id": "ETC_0075",
+    "file": "ETC",
+    "offset": 155216,
+    "capacity": 24,
+    "source": "<r索敵|さくてき>",
+    "translation": "Search"
+  },
+  {
+    "id": "ETC_0076",
+    "file": "ETC",
+    "offset": 155264,
+    "capacity": 24,
+    "source": "<r飛翔|ひしょう>",
+    "translation": "Flight"
+  },
+  {
+    "id": "ETC_0077",
+    "file": "ETC",
+    "offset": 155376,
+    "capacity": 32,
+    "source": "<r牽制攻撃|けんせいこうげき>",
+    "translation": "Feint Attack"
+  },
+  {
+    "id": "ETC_0078",
+    "file": "ETC",
+    "offset": 155424,
+    "capacity": 32,
+    "source": "<r忍犬口寄|にんけんくちよ>せ",
+    "translation": "Ninken Summon"
+  },
+  {
+    "id": "ETC_0079",
+    "file": "ETC",
+    "offset": 155472,
+    "capacity": 24,
+    "source": "<r柔拳|じゅうけん>",
+    "translation": "Gentle Fist"
+  },
+  {
+    "id": "ETC_0080",
+    "file": "ETC",
+    "offset": 155520,
+    "capacity": 32,
+    "source": "<r八卦空掌|はっけくうしょう>",
+    "translation": "Air Palm"
+  },
+  {
+    "id": "ETC_0081",
+    "file": "ETC",
+    "offset": 155616,
+    "capacity": 32,
+    "source": "<r戦闘姿勢|せんとうしせい>",
+    "translation": "Battle Stance"
+  },
+  {
+    "id": "ETC_0082",
+    "file": "ETC",
+    "offset": 155664,
+    "capacity": 40,
+    "source": "<r木|こ>ノ<r葉昇風|はしょうふう>",
+    "translation": "Leaf Rising Wind"
+  },
+  {
+    "id": "ETC_0083",
+    "file": "ETC",
+    "offset": 155728,
+    "capacity": 40,
+    "source": "<r限界|げんかい>を<r超|こ>えろ！",
+    "translation": "Break Limits!"
+  },
+  {
+    "id": "ETC_0084",
+    "file": "ETC",
+    "offset": 155792,
+    "capacity": 40,
+    "source": "<r忍具|にんぐ>の<r使|つか>い<r手|て>",
+    "translation": "Tool User"
+  },
+  {
+    "id": "ETC_0085",
+    "file": "ETC",
+    "offset": 155856,
+    "capacity": 32,
+    "source": "<r棒体術|ぼうたいじゅつ>",
+    "translation": "Staff Taijutsu"
+  },
+  {
+    "id": "ETC_0086",
+    "file": "ETC",
+    "offset": 155968,
+    "capacity": 40,
+    "source": "<r熱血青春|ねっけつせいしゅん>ポーズ！",
+    "translation": "Hot-Blooded Pose!"
+  },
+  {
+    "id": "ETC_0087",
+    "file": "ETC",
+    "offset": 156032,
+    "capacity": 24,
+    "source": "<r朝孔雀|あさくじゃく>",
+    "translation": "Morning Peacock"
+  },
+  {
+    "id": "ETC_0088",
+    "file": "ETC",
+    "offset": 156080,
+    "capacity": 24,
+    "source": "<r開門|かいもん>ッ！",
+    "translation": "Open Gate!"
+  },
+  {
+    "id": "ETC_0089",
+    "file": "ETC",
+    "offset": 156136,
+    "capacity": 16,
+    "source": "ホラよっ！",
+    "translation": "Here!"
+  },
+  {
+    "id": "ETC_0090",
+    "file": "ETC",
+    "offset": 156176,
+    "capacity": 40,
+    "source": "<r忍法|にんぽう>・<r影縫|かげぬ>い",
+    "translation": "Shadow Stitching"
+  },
+  {
+    "id": "ETC_0091",
+    "file": "ETC",
+    "offset": 156448,
+    "capacity": 24,
+    "source": "かわいさアピール",
+    "translation": "Cute Appeal"
+  },
+  {
+    "id": "ETC_0092",
+    "file": "ETC",
+    "offset": 156496,
+    "capacity": 32,
+    "source": "<r綺麗|きれい>な<r花|はな>",
+    "translation": "Pretty Flower"
+  },
+  {
+    "id": "ETC_0093",
+    "file": "ETC",
+    "offset": 156576,
+    "capacity": 24,
+    "source": "<r装着|そうちゃく>！",
+    "translation": "Equip!"
+  },
+  {
+    "id": "ETC_0094",
+    "file": "ETC",
+    "offset": 156624,
+    "capacity": 24,
+    "source": "<r一閃|いっせん>！",
+    "translation": "Flash!"
+  },
+  {
+    "id": "ETC_0095",
+    "file": "ETC",
+    "offset": 156672,
+    "capacity": 24,
+    "source": "<r登場|とうじょう>",
+    "translation": "Entrance"
+  },
+  {
+    "id": "ETC_0096",
+    "file": "ETC",
+    "offset": 156760,
+    "capacity": 16,
+    "source": "ダイナミック！",
+    "translation": "Dynamic!"
+  },
+  {
+    "id": "ETC_0097",
+    "file": "ETC",
+    "offset": 156800,
+    "capacity": 32,
+    "source": "<r静|しず>かな<r男|おとこ>",
+    "translation": "Quiet Man"
+  },
+  {
+    "id": "ETC_0098",
+    "file": "ETC",
+    "offset": 156848,
+    "capacity": 24,
+    "source": "<r寄壊蟲|きかいちゅう>",
+    "translation": "Destruction Bugs"
+  },
+  {
+    "id": "ETC_0099",
+    "file": "ETC",
+    "offset": 157056,
+    "capacity": 24,
+    "source": "<r掌打|しょうだ>！",
+    "translation": "Palm Strike!"
+  },
+  {
+    "id": "ETC_0100",
+    "file": "ETC",
+    "offset": 157152,
+    "capacity": 32,
+    "source": "<r幻術発動|げんじゅつはつどう>",
+    "translation": "Genjutsu Activate"
+  },
+  {
+    "id": "ETC_0101",
+    "file": "ETC",
+    "offset": 157200,
+    "capacity": 16,
+    "source": "こんなものね",
+    "translation": "That's That"
+  },
+  {
+    "id": "ETC_0102",
+    "file": "ETC",
+    "offset": 157232,
+    "capacity": 16,
+    "source": "<r威圧|いあつ>",
+    "translation": "Pressure"
+  },
+  {
+    "id": "ETC_0103",
+    "file": "ETC",
+    "offset": 157264,
+    "capacity": 24,
+    "source": "<r砂|すな>の<r殻|から>",
+    "translation": "Sand Shell"
+  },
+  {
+    "id": "ETC_0104",
+    "file": "ETC",
+    "offset": 157312,
+    "capacity": 24,
+    "source": "<r逃|に>がさん…",
+    "translation": "No Escape..."
+  },
+  {
+    "id": "ETC_0105",
+    "file": "ETC",
+    "offset": 157376,
+    "capacity": 40,
+    "source": "<r傀儡|くぐつ>の<r巻物|まきもの>",
+    "translation": "Puppet Scroll"
+  },
+  {
+    "id": "ETC_0106",
+    "file": "ETC",
+    "offset": 157488,
+    "capacity": 32,
+    "source": "<r巨大扇子|きょだいせんす>",
+    "translation": "Giant Fan"
+  },
+  {
+    "id": "ETC_0107",
+    "file": "ETC",
+    "offset": 157696,
+    "capacity": 24,
+    "source": "<r父|ちち>と<r母|はは>",
+    "translation": "Father and Mother"
+  },
+  {
+    "id": "ETC_0108",
+    "file": "ETC",
+    "offset": 157824,
+    "capacity": 32,
+    "source": "<r鋭|するど>い<r蹴|け>り",
+    "translation": "Sharp Kick"
+  },
+  {
+    "id": "ETC_0109",
+    "file": "ETC",
+    "offset": 157872,
+    "capacity": 24,
+    "source": "<r幻術|げんじゅつ>！？",
+    "translation": "Genjutsu!?"
+  },
+  {
+    "id": "ETC_0110",
+    "file": "ETC",
+    "offset": 157984,
+    "capacity": 40,
+    "source": "<r大刀|だいとう>・<r鮫肌|サメハダ>",
+    "translation": "Samehada"
+  },
+  {
+    "id": "ETC_0111",
+    "file": "ETC",
+    "offset": 158160,
+    "capacity": 32,
+    "source": "<r芸術作品|げいじゅつさくひん>",
+    "translation": "Artwork"
+  },
+  {
+    "id": "ETC_0112",
+    "file": "ETC",
+    "offset": 158208,
+    "capacity": 32,
+    "source": "<r空|そら>から<r攻|せ>める！",
+    "translation": "Attack from Above!"
+  },
+  {
+    "id": "ETC_0113",
+    "file": "ETC",
+    "offset": 158256,
+    "capacity": 40,
+    "source": "<r完璧|かんぺき>なる<r攻守|こうしゅ>",
+    "translation": "Perfect Off/Def"
+  },
+  {
+    "id": "ETC_0114",
+    "file": "ETC",
+    "offset": 158320,
+    "capacity": 48,
+    "source": "<r一番|いちばん>のお<r気|き>に<r入|い>り",
+    "translation": "Favorite"
+  },
+  {
+    "id": "ETC_0115",
+    "file": "ETC",
+    "offset": 158384,
+    "capacity": 32,
+    "source": "<r自分自身|じぶんじしん>",
+    "translation": "Myself"
+  },
+  {
+    "id": "ETC_0116",
+    "file": "ETC",
+    "offset": 158480,
+    "capacity": 56,
+    "source": "<r四代目|よんだいめ>が<r遺|のこ>した<r術|じゅつ>",
+    "translation": "4th's Jutsu"
+  },
+  {
+    "id": "ETC_0117",
+    "file": "ETC",
+    "offset": 158560,
+    "capacity": 32,
+    "source": "<r蝦蟇仙人|ガマせんにん>",
+    "translation": "Toad Sage"
+  },
+  {
+    "id": "ETC_0118",
+    "file": "ETC",
+    "offset": 158720,
+    "capacity": 32,
+    "source": "<r痛天脚|つうてんきゃく>",
+    "translation": "Heaven Kick"
+  },
+  {
+    "id": "ETC_0119",
+    "file": "ETC",
+    "offset": 158832,
+    "capacity": 24,
+    "source": "<r突撃|とつげき>！",
+    "translation": "Charge!"
+  },
+  {
+    "id": "ETC_0120",
+    "file": "ETC",
+    "offset": 158960,
+    "capacity": 48,
+    "source": "<r木遁|もくとん>・<r木錠壁|もくじょうへき>",
+    "translation": "Wood Locking Wall"
+  },
+  {
+    "id": "ETC_0121",
+    "file": "ETC",
+    "offset": 159024,
+    "capacity": 32,
+    "source": "<r不敵|ふてき>な<r笑|え>み",
+    "translation": "Fearless Smile"
+  },
+  {
+    "id": "ETC_0122",
+    "file": "ETC",
+    "offset": 159072,
+    "capacity": 40,
+    "source": "<r潜影多蛇手|せんえいたじゃしゅ>",
+    "translation": "Hidden Shadow Snakes"
+  },
+  {
+    "id": "ETC_0123",
+    "file": "ETC",
+    "offset": 159136,
+    "capacity": 40,
+    "source": "<r脅威|きょうい>の<r存在|そんざい>",
+    "translation": "Threat"
+  },
+  {
+    "id": "ETC_0124",
+    "file": "ETC",
+    "offset": 159200,
+    "capacity": 48,
+    "source": "<r大蛇丸|オロチまる>への<r忠誠|ちゅうせい>",
+    "translation": "Loyal to Orochimaru"
+  },
+  {
+    "id": "ETC_0125",
+    "file": "ETC",
+    "offset": 159296,
+    "capacity": 16,
+    "source": "ストック",
+    "translation": "Stock"
+  },
+  {
+    "id": "ETC_0126",
+    "file": "ETC",
+    "offset": 159432,
+    "capacity": 28,
+    "source": "<r千鳥|ちどり>",
+    "translation": "Chidori"
+  },
+  {
+    "id": "ETC_0127",
+    "file": "ETC",
+    "offset": 165392,
+    "capacity": 48,
+    "source": "<r雷切|らいきり>・<r一尖|いっせん>",
+    "translation": "Raikiri: Issen"
+  },
+  {
+    "id": "ETC_0128",
+    "file": "ETC",
+    "offset": 165488,
+    "capacity": 32,
+    "source": "コピー<r忍術|にんじゅつ>",
+    "translation": "Copy Ninjutsu"
+  },
+  {
+    "id": "ETC_0129",
+    "file": "ETC",
+    "offset": 165568,
+    "capacity": 48,
+    "source": "<r八卦六十四掌|はっけろくじゅうよんしょう>",
+    "translation": "64 Palms"
+  },
+  {
+    "id": "ETC_0130",
+    "file": "ETC",
+    "offset": 166624,
+    "capacity": 32,
+    "source": "<r砂縛牢|さばくろう>",
+    "translation": "Sand Prison"
+  },
+  {
+    "id": "ETC_0131",
+    "file": "ETC",
+    "offset": 169792,
+    "capacity": 32,
+    "source": "<r牙通牙|がつうが>",
+    "translation": "Fang Over Fang"
+  },
+  {
+    "id": "ETC_0132",
+    "file": "ETC",
+    "offset": 169824,
+    "capacity": 32,
+    "source": "<r牙狼牙|がろうが>",
+    "translation": "Wolf Fang"
+  },
+  {
+    "id": "ETC_0133",
+    "file": "ETC",
+    "offset": 170032,
+    "capacity": 32,
+    "source": "<r白眼|びゃくがん>",
+    "translation": "Byakugan"
+  },
+  {
+    "id": "ETC_0134",
+    "file": "ETC",
+    "offset": 170592,
+    "capacity": 48,
+    "source": "<r飛雷神|ひらいしん>の<r術|じゅつ>",
+    "translation": "Flying Raijin"
+  },
+  {
+    "id": "ETC_0135",
+    "file": "ETC",
+    "offset": 170640,
+    "capacity": 32,
+    "source": "<r砂瀑大葬|さばくたいそう>",
+    "translation": "Sand Burial"
+  },
+  {
+    "id": "ETC_0136",
+    "file": "ETC",
+    "offset": 176864,
+    "capacity": 48,
+    "source": "<r木|こ>ノ<r葉|は><r隠|がく>れの<r里|さと>",
+    "translation": "Hidden Leaf"
+  },
+  {
+    "id": "ETC_0137",
+    "file": "ETC",
+    "offset": 176912,
+    "capacity": 32,
+    "source": "<r木|こ>ノ<r葉|は>の<r門|もん>",
+    "translation": "Leaf Gate"
+  },
+  {
+    "id": "ETC_0138",
+    "file": "ETC",
+    "offset": 176944,
+    "capacity": 48,
+    "source": "<r五封結界|ごふうけっかい>の<r崖|がけ>",
+    "translation": "Five-Seal Cliff"
+  },
+  {
+    "id": "ETC_0139",
+    "file": "ETC",
+    "offset": 176992,
+    "capacity": 32,
+    "source": "<r暁|あかつき>のアジト",
+    "translation": "Akatsuki Hideout"
+  },
+  {
+    "id": "ETC_0140",
+    "file": "ETC",
+    "offset": 177024,
+    "capacity": 32,
+    "source": "<r根|ね>の<r本部|ほんぶ>",
+    "translation": "Root HQ"
+  },
+  {
+    "id": "ETC_0141",
+    "file": "ETC",
+    "offset": 177056,
+    "capacity": 32,
+    "source": "<r天地橋|てんちきょう>",
+    "translation": "Tenchi Bridge"
+  },
+  {
+    "id": "ETC_0142",
+    "file": "ETC",
+    "offset": 177088,
+    "capacity": 32,
+    "source": "<r大蛇丸|オロチまる>のアジト",
+    "translation": "Orochimaru Hideout"
+  },
+  {
+    "id": "ETC_0143",
+    "file": "ETC",
+    "offset": 177120,
+    "capacity": 48,
+    "source": "<r大蛇|だいじゃ>の<r祭壇|さいだん>",
+    "translation": "Great Snake Altar"
+  },
+  {
+    "id": "ETC_0144",
+    "file": "ETC",
+    "offset": 177168,
+    "capacity": 32,
+    "source": "<r賑|にぎ>わいの<r里|さと>",
+    "translation": "Busy Village"
+  },
+  {
+    "id": "ETC_0145",
+    "file": "ETC",
+    "offset": 177200,
+    "capacity": 32,
+    "source": "<r火影|ほかげ>の<r屋敷|やしき>",
+    "translation": "Hokage Mansion"
+  },
+  {
+    "id": "ETC_0146",
+    "file": "ETC",
+    "offset": 177232,
+    "capacity": 32,
+    "source": "<r世界|せかい>を<r駆|か>ける",
+    "translation": "Across the World"
+  },
+  {
+    "id": "ETC_0147",
+    "file": "ETC",
+    "offset": 177264,
+    "capacity": 32,
+    "source": "<r砂隠|すながく>れの<r里|さと>",
+    "translation": "Hidden Sand"
+  },
+  {
+    "id": "ETC_0148",
+    "file": "ETC",
+    "offset": 177296,
+    "capacity": 48,
+    "source": "<r邪傑|じゃけつ>の<r巣穴|すあな>",
+    "translation": "Villain Lair"
+  },
+  {
+    "id": "ETC_0149",
+    "file": "ETC",
+    "offset": 177344,
+    "capacity": 32,
+    "source": "<r赤雲|せきうん>",
+    "translation": "Red Clouds"
+  },
+  {
+    "id": "ETC_0150",
+    "file": "ETC",
+    "offset": 177376,
+    "capacity": 32,
+    "source": "<r激戦|げきせん>を<r越|こ>えて",
+    "translation": "After Fierce Battle"
+  },
+  {
+    "id": "ETC_0151",
+    "file": "ETC",
+    "offset": 177408,
+    "capacity": 32,
+    "source": "カカシ<r道場|どうじょう>",
+    "translation": "Kakashi Dojo"
+  },
+  {
+    "id": "ETC_0152",
+    "file": "ETC",
+    "offset": 177440,
+    "capacity": 32,
+    "source": "やすらぎと<r再会|さいかい>と",
+    "translation": "Peace and Reunion"
+  },
+  {
+    "id": "ETC_0153",
+    "file": "ETC",
+    "offset": 177472,
+    "capacity": 32,
+    "source": "<r暗雲|あんうん><r来|きた>る",
+    "translation": "Dark Clouds"
+  },
+  {
+    "id": "ETC_0154",
+    "file": "ETC",
+    "offset": 177504,
+    "capacity": 48,
+    "source": "<r風影|かぜかげ><r襲撃|しゅうげき>",
+    "translation": "Kazekage Assault"
+  },
+  {
+    "id": "ETC_0155",
+    "file": "ETC",
+    "offset": 177552,
+    "capacity": 32,
+    "source": "<r緊急指令|きんきゅうしれい>",
+    "translation": "Emergency Order"
+  },
+  {
+    "id": "ETC_0156",
+    "file": "ETC",
+    "offset": 177584,
+    "capacity": 32,
+    "source": "<r走|はし>る<r緊迫|きんぱく>",
+    "translation": "Rising Tension"
+  },
+  {
+    "id": "ETC_0157",
+    "file": "ETC",
+    "offset": 177616,
+    "capacity": 48,
+    "source": "<r恐|おそ>ろしき<r怪人|かいじん>",
+    "translation": "Fearsome Monster"
+  },
+  {
+    "id": "ETC_0158",
+    "file": "ETC",
+    "offset": 177664,
+    "capacity": 48,
+    "source": "<r真紅|しんく>の<r激闘|げきとう>",
+    "translation": "Crimson Battle"
+  },
+  {
+    "id": "ETC_0159",
+    "file": "ETC",
+    "offset": 177712,
+    "capacity": 48,
+    "source": "<r闇|やみ>を<r抱|いだ>きし<r者|もの>たち",
+    "translation": "Those Bearing Darkness"
+  },
+  {
+    "id": "ETC_0160",
+    "file": "ETC",
+    "offset": 177760,
+    "capacity": 48,
+    "source": "<r虚|うつ>ろ<r消|き>えゆく<r世界|せかい>",
+    "translation": "Fading Hollow World"
+  },
+  {
+    "id": "ETC_0161",
+    "file": "ETC",
+    "offset": 177808,
+    "capacity": 16,
+    "source": "<r絆|きずな>",
+    "translation": "Bonds"
+  },
+  {
+    "id": "ETC_0162",
+    "file": "ETC",
+    "offset": 177824,
+    "capacity": 48,
+    "source": "<r偽|いつわ>りの<r存在|そんざい>",
+    "translation": "False Existence"
+  },
+  {
+    "id": "ETC_0163",
+    "file": "ETC",
+    "offset": 177872,
+    "capacity": 48,
+    "source": "<r最凶|さいきょう>の<r傀儡師|くぐつし>",
+    "translation": "Deadliest Puppeteer"
+  },
+  {
+    "id": "ETC_0164",
+    "file": "ETC",
+    "offset": 177920,
+    "capacity": 32,
+    "source": "<r決意|けつい><r固|かた>めて",
+    "translation": "Firm Resolve"
+  },
+  {
+    "id": "ETC_0165",
+    "file": "ETC",
+    "offset": 177952,
+    "capacity": 32,
+    "source": "サクラ<r舞|ま>う",
+    "translation": "Sakura Dances"
+  },
+  {
+    "id": "ETC_0166",
+    "file": "ETC",
+    "offset": 177984,
+    "capacity": 48,
+    "source": "<r猛|た>け<r吼|ほ>ゆる<r者|もの>",
+    "translation": "Roaring Beast"
+  },
+  {
+    "id": "ETC_0167",
+    "file": "ETC",
+    "offset": 178032,
+    "capacity": 48,
+    "source": "<r願|ねが>い…<r空|そら>に<r舞|ま>いて",
+    "translation": "Wish in the Sky"
+  },
+  {
+    "id": "ETC_0168",
+    "file": "ETC",
+    "offset": 178080,
+    "capacity": 48,
+    "source": "<r新生|しんせい>の<r一斑|いっぱん>",
+    "translation": "New Team"
+  },
+  {
+    "id": "ETC_0169",
+    "file": "ETC",
+    "offset": 178128,
+    "capacity": 32,
+    "source": "<r碧|あお>き<r背中|せなか>",
+    "translation": "Blue Back"
+  },
+  {
+    "id": "ETC_0170",
+    "file": "ETC",
+    "offset": 178160,
+    "capacity": 32,
+    "source": "<r巨悪現|きょあくあらわ>る",
+    "translation": "Great Evil Appears"
+  },
+  {
+    "id": "ETC_0171",
+    "file": "ETC",
+    "offset": 178192,
+    "capacity": 48,
+    "source": "<r荒|あ>れ<r狂|くる>う<r獣|けもの>",
+    "translation": "Raging Beast"
+  },
+  {
+    "id": "ETC_0172",
+    "file": "ETC",
+    "offset": 178240,
+    "capacity": 48,
+    "source": "<r切迫|せっぱく>の<r二人|ふたり>",
+    "translation": "Two in Crisis"
+  },
+  {
+    "id": "ETC_0173",
+    "file": "ETC",
+    "offset": 178288,
+    "capacity": 40,
+    "source": "<r帰|かえ>るべき<r場所|ばしょ>へ",
+    "translation": "Where We Belong"
+  },
+  {
+    "id": "ETC_0174",
+    "file": "ETC",
+    "offset": 178328,
+    "capacity": 28,
+    "source": "オルゴール",
+    "translation": "Music Box"
+  },
+  {
+    "id": "ETC_0175",
+    "file": "ETC",
+    "offset": 179040,
+    "capacity": 32,
+    "source": "<r悲|かな>しみと<r怒|いか>り",
+    "translation": "Sadness and Anger"
+  },
+  {
+    "id": "ETC_0176",
+    "file": "ETC",
+    "offset": 179072,
+    "capacity": 32,
+    "source": "ナルトの<r決意|けつい>",
+    "translation": "Naruto's Resolve"
+  },
+  {
+    "id": "ETC_0177",
+    "file": "ETC",
+    "offset": 179104,
+    "capacity": 32,
+    "source": "<r激情|げきじょう>",
+    "translation": "Passion"
+  },
+  {
+    "id": "ETC_0178",
+    "file": "ETC",
+    "offset": 179136,
+    "capacity": 32,
+    "source": "<r二人|ふたり>の<r繋|つな>がり",
+    "translation": "Two Bonds"
+  },
+  {
+    "id": "ETC_0179",
+    "file": "ETC",
+    "offset": 179168,
+    "capacity": 32,
+    "source": "<r再会|さいかい>…そして…",
+    "translation": "Reunion... And..."
+  },
+  {
+    "id": "ETC_0180",
+    "file": "ETC",
+    "offset": 179200,
+    "capacity": 32,
+    "source": "サクラの<r約束|やくそく>",
+    "translation": "Sakura's Promise"
+  },
+  {
+    "id": "ETC_0181",
+    "file": "ETC",
+    "offset": 179232,
+    "capacity": 16,
+    "source": "<r決意|けつい>",
+    "translation": "Resolve"
+  },
+  {
+    "id": "ETC_0182",
+    "file": "ETC",
+    "offset": 179248,
+    "capacity": 24,
+    "source": "<r負|ま>けん<r気|き>",
+    "translation": "Fighting Spirit"
+  },
+  {
+    "id": "ETC_0183",
+    "file": "ETC",
+    "offset": 179272,
+    "capacity": 24,
+    "source": "ナルトのために",
+    "translation": "For Naruto"
+  },
+  {
+    "id": "ETC_0184",
+    "file": "ETC",
+    "offset": 179296,
+    "capacity": 32,
+    "source": "いつも<r通|どお>り",
+    "translation": "As Always"
+  },
+  {
+    "id": "ETC_0185",
+    "file": "ETC",
+    "offset": 179328,
+    "capacity": 48,
+    "source": "<r初|はじ>めての<r一言|ひとこと>",
+    "translation": "First Words"
+  },
+  {
+    "id": "ETC_0186",
+    "file": "ETC",
+    "offset": 179376,
+    "capacity": 48,
+    "source": "<r狙|ねら>ったキャラ<r位置|いち>",
+    "translation": "Target Position"
+  },
+  {
+    "id": "ETC_0187",
+    "file": "ETC",
+    "offset": 179424,
+    "capacity": 32,
+    "source": "<r冷|つめ>たい<r言葉|ことば>",
+    "translation": "Cold Words"
+  },
+  {
+    "id": "ETC_0188",
+    "file": "ETC",
+    "offset": 179456,
+    "capacity": 32,
+    "source": "<r感情|かんじょう>",
+    "translation": "Emotion"
+  },
+  {
+    "id": "ETC_0189",
+    "file": "ETC",
+    "offset": 179488,
+    "capacity": 32,
+    "source": "<r確|たし>かめたいもの",
+    "translation": "What I Want to Know"
+  },
+  {
+    "id": "ETC_0190",
+    "file": "ETC",
+    "offset": 179520,
+    "capacity": 32,
+    "source": "カカシの<r本気|ほんき>",
+    "translation": "Kakashi Serious"
+  },
+  {
+    "id": "ETC_0191",
+    "file": "ETC",
+    "offset": 179552,
+    "capacity": 48,
+    "source": "<r成長|せいちょう>への<r喜|よろこ>び",
+    "translation": "Joy of Growth"
+  },
+  {
+    "id": "ETC_0192",
+    "file": "ETC",
+    "offset": 179600,
+    "capacity": 48,
+    "source": "ナルトの<r気持|きも>ち・<r壱|いち>",
+    "translation": "Naruto's Feelings 1"
+  },
+  {
+    "id": "ETC_0193",
+    "file": "ETC",
+    "offset": 179648,
+    "capacity": 48,
+    "source": "ナルトの<r気持|きも>ち・<r弐|に>",
+    "translation": "Naruto's Feelings 2"
+  },
+  {
+    "id": "ETC_0194",
+    "file": "ETC",
+    "offset": 179696,
+    "capacity": 32,
+    "source": "<r正|ただ>しき<r道|みち>へ",
+    "translation": "To the Right Path"
+  },
+  {
+    "id": "ETC_0195",
+    "file": "ETC",
+    "offset": 179728,
+    "capacity": 48,
+    "source": "“<r暁|あかつき>”を<r前|まえ>に",
+    "translation": "Facing Akatsuki"
+  },
+  {
+    "id": "ETC_0196",
+    "file": "ETC",
+    "offset": 179776,
+    "capacity": 48,
+    "source": "<r偽者|にせもの>との<r遭遇|そうぐう>",
+    "translation": "Fake Encounter"
+  },
+  {
+    "id": "ETC_0197",
+    "file": "ETC",
+    "offset": 179824,
+    "capacity": 48,
+    "source": "<r勝利|しょうり>の<r確信|かくしん>",
+    "translation": "Certain Victory"
+  },
+  {
+    "id": "ETC_0198",
+    "file": "ETC",
+    "offset": 179872,
+    "capacity": 32,
+    "source": "<r近距離戦|きんきょりせん>",
+    "translation": "Close Combat"
+  },
+  {
+    "id": "ETC_0199",
+    "file": "ETC",
+    "offset": 179904,
+    "capacity": 32,
+    "source": "<r揺|ゆ>るぎない<r自信|じしん>",
+    "translation": "Unshakable Confidence"
+  },
+  {
+    "id": "ETC_0200",
+    "file": "ETC",
+    "offset": 179936,
+    "capacity": 32,
+    "source": "<r修業不足|しゅぎょうぶそく>？",
+    "translation": "Need More Training?"
+  },
+  {
+    "id": "ETC_0201",
+    "file": "ETC",
+    "offset": 179968,
+    "capacity": 32,
+    "source": "<r勝利|しょうり>！",
+    "translation": "Victory!"
+  },
+  {
+    "id": "ETC_0202",
+    "file": "ETC",
+    "offset": 180000,
+    "capacity": 32,
+    "source": "<r真剣勝負|しんけんしょうぶ>！",
+    "translation": "Serious Match!"
+  },
+  {
+    "id": "ETC_0203",
+    "file": "ETC",
+    "offset": 180032,
+    "capacity": 32,
+    "source": "<r青春|せいしゅん>とは！",
+    "translation": "What Is Youth!"
+  },
+  {
+    "id": "ETC_0204",
+    "file": "ETC",
+    "offset": 180064,
+    "capacity": 32,
+    "source": "<r感激|かんげき>！",
+    "translation": "Moved!"
+  },
+  {
+    "id": "ETC_0205",
+    "file": "ETC",
+    "offset": 180096,
+    "capacity": 32,
+    "source": "つっこみ<r役|やく>",
+    "translation": "Straight Man"
+  },
+  {
+    "id": "ETC_0206",
+    "file": "ETC",
+    "offset": 180128,
+    "capacity": 32,
+    "source": "テンテンの<r自信|じしん>",
+    "translation": "Tenten's Confidence"
+  },
+  {
+    "id": "ETC_0207",
+    "file": "ETC",
+    "offset": 180160,
+    "capacity": 32,
+    "source": "<r勝負開始|しょうぶかいし>",
+    "translation": "Battle Start"
+  },
+  {
+    "id": "ETC_0208",
+    "file": "ETC",
+    "offset": 180192,
+    "capacity": 32,
+    "source": "ちょっと<r感心|かんしん>",
+    "translation": "A Bit Impressed"
+  },
+  {
+    "id": "ETC_0209",
+    "file": "ETC",
+    "offset": 180224,
+    "capacity": 32,
+    "source": "<r川|かわ>の<r国|くに>へ！！",
+    "translation": "To the Land of Rivers!!"
+  },
+  {
+    "id": "ETC_0210",
+    "file": "ETC",
+    "offset": 180256,
+    "capacity": 32,
+    "source": "<r獣|けもの>レベル…？",
+    "translation": "Beast Level...?"
+  },
+  {
+    "id": "ETC_0211",
+    "file": "ETC",
+    "offset": 180288,
+    "capacity": 40,
+    "source": "<r高揚|こうよう>する<r心|こころ>！！",
+    "translation": "Rising Excitement!!"
+  },
+  {
+    "id": "ETC_0212",
+    "file": "ETC",
+    "offset": 180328,
+    "capacity": 24,
+    "source": "さすがオレ！！",
+    "translation": "That's Me!!"
+  },
+  {
+    "id": "ETC_0213",
+    "file": "ETC",
+    "offset": 180352,
+    "capacity": 40,
+    "source": "<r謎|なぞ>の<r忍現|しのびあらわ>る",
+    "translation": "Mysterious Ninja"
+  },
+  {
+    "id": "ETC_0214",
+    "file": "ETC",
+    "offset": 180416,
+    "capacity": 48,
+    "source": "<r面倒|めんどう>くささ<r満点|まんてん>",
+    "translation": "Total Drag"
+  },
+  {
+    "id": "ETC_0215",
+    "file": "ETC",
+    "offset": 180464,
+    "capacity": 32,
+    "source": "<r男|おとこ>の<r意地|いじ>",
+    "translation": "Manly Pride"
+  },
+  {
+    "id": "ETC_0216",
+    "file": "ETC",
+    "offset": 180496,
+    "capacity": 48,
+    "source": "<r明晰|めいせき>な<r頭脳|ずのう>",
+    "translation": "Sharp Mind"
+  },
+  {
+    "id": "ETC_0217",
+    "file": "ETC",
+    "offset": 180544,
+    "capacity": 32,
+    "source": "ポッチャリ<r系|けい>",
+    "translation": "Chubby Type"
+  },
+  {
+    "id": "ETC_0218",
+    "file": "ETC",
+    "offset": 180576,
+    "capacity": 32,
+    "source": "<r強力|ごうりき>チョウジ",
+    "translation": "Powerful Choji"
+  },
+  {
+    "id": "ETC_0219",
+    "file": "ETC",
+    "offset": 180608,
+    "capacity": 32,
+    "source": "シカマルとの<r連係|れんけい>",
+    "translation": "Teamwork with Shikamaru"
+  },
+  {
+    "id": "ETC_0220",
+    "file": "ETC",
+    "offset": 180640,
+    "capacity": 32,
+    "source": "<r準備万端|じゅんびばんたん>",
+    "translation": "All Ready"
+  },
+  {
+    "id": "ETC_0221",
+    "file": "ETC",
+    "offset": 180672,
+    "capacity": 32,
+    "source": "<r旧知|きゅうち>の<r仲|なか>",
+    "translation": "Old Friends"
+  },
+  {
+    "id": "ETC_0222",
+    "file": "ETC",
+    "offset": 180704,
+    "capacity": 32,
+    "source": "いの<r登場|とうじょう>",
+    "translation": "Ino Appears"
+  },
+  {
+    "id": "ETC_0223",
+    "file": "ETC",
+    "offset": 180736,
+    "capacity": 48,
+    "source": "<r久々|ひさびさ>の<r対面|たいめん>",
+    "translation": "Reunion After Long"
+  },
+  {
+    "id": "ETC_0224",
+    "file": "ETC",
+    "offset": 180784,
+    "capacity": 32,
+    "source": "サクラと<r共闘|きょうとう>？",
+    "translation": "Team Up with Sakura?"
+  },
+  {
+    "id": "ETC_0225",
+    "file": "ETC",
+    "offset": 180816,
+    "capacity": 32,
+    "source": "チョウジと<r連係|れんけい>",
+    "translation": "Teamwork with Choji"
+  },
+  {
+    "id": "ETC_0226",
+    "file": "ETC",
+    "offset": 180848,
+    "capacity": 32,
+    "source": "<r自信満々|じしんまんまん>",
+    "translation": "Full Confidence"
+  },
+  {
+    "id": "ETC_0227",
+    "file": "ETC",
+    "offset": 180880,
+    "capacity": 32,
+    "source": "<r戦闘|せんとう>へ",
+    "translation": "To Battle"
+  },
+  {
+    "id": "ETC_0228",
+    "file": "ETC",
+    "offset": 180912,
+    "capacity": 32,
+    "source": "<r優|やさ>しい<r言葉|ことば>",
+    "translation": "Kind Words"
+  },
+  {
+    "id": "ETC_0229",
+    "file": "ETC",
+    "offset": 180944,
+    "capacity": 32,
+    "source": "<r感謝|かんしゃ>",
+    "translation": "Thanks"
+  },
+  {
+    "id": "ETC_0230",
+    "file": "ETC",
+    "offset": 180976,
+    "capacity": 32,
+    "source": "アスマの<r意地|いじ>",
+    "translation": "Asuma's Pride"
+  },
+  {
+    "id": "ETC_0231",
+    "file": "ETC",
+    "offset": 181008,
+    "capacity": 32,
+    "source": "<r新|あら>たな<r手|て>",
+    "translation": "A New Move"
+  },
+  {
+    "id": "ETC_0232",
+    "file": "ETC",
+    "offset": 181040,
+    "capacity": 32,
+    "source": "ナルトとの<r再会|さいかい>",
+    "translation": "Reunion with Naruto"
+  },
+  {
+    "id": "ETC_0233",
+    "file": "ETC",
+    "offset": 181072,
+    "capacity": 32,
+    "source": "<r大|おお>きくなった？",
+    "translation": "Grown Up?"
+  },
+  {
+    "id": "ETC_0234",
+    "file": "ETC",
+    "offset": 181104,
+    "capacity": 32,
+    "source": "ヒナタが<r倒|たお>れて",
+    "translation": "Hinata Falls"
+  },
+  {
+    "id": "ETC_0235",
+    "file": "ETC",
+    "offset": 181136,
+    "capacity": 24,
+    "source": "ヒナタを<r守|まも>って",
+    "translation": "Protect Hinata"
+  },
+  {
+    "id": "ETC_0236",
+    "file": "ETC",
+    "offset": 181264,
+    "capacity": 32,
+    "source": "<r静|しず>かなる<r自信|じしん>",
+    "translation": "Quiet Confidence"
+  },
+  {
+    "id": "ETC_0237",
+    "file": "ETC",
+    "offset": 181296,
+    "capacity": 32,
+    "source": "<r微|かす>かな<r安心|あんしん>",
+    "translation": "Faint Relief"
+  },
+  {
+    "id": "ETC_0238",
+    "file": "ETC",
+    "offset": 181328,
+    "capacity": 32,
+    "source": "ナルトを<r見|み>かけて",
+    "translation": "Spotting Naruto"
+  },
+  {
+    "id": "ETC_0239",
+    "file": "ETC",
+    "offset": 181360,
+    "capacity": 32,
+    "source": "<r戦闘前|せんとうまえ>",
+    "translation": "Before Battle"
+  },
+  {
+    "id": "ETC_0240",
+    "file": "ETC",
+    "offset": 181392,
+    "capacity": 32,
+    "source": "つのる<r心配|しんぱい>",
+    "translation": "Growing Worry"
+  },
+  {
+    "id": "ETC_0241",
+    "file": "ETC",
+    "offset": 181424,
+    "capacity": 32,
+    "source": "ナルトの<r助太刀|すけだち>",
+    "translation": "Naruto Helps"
+  },
+  {
+    "id": "ETC_0242",
+    "file": "ETC",
+    "offset": 181456,
+    "capacity": 48,
+    "source": "<r感謝|かんしゃ>の<r言葉|ことば>",
+    "translation": "Words of Thanks"
+  },
+  {
+    "id": "ETC_0243",
+    "file": "ETC",
+    "offset": 181504,
+    "capacity": 32,
+    "source": "<r幻術使|げんじゅつつか>い",
+    "translation": "Genjutsu User"
+  },
+  {
+    "id": "ETC_0244",
+    "file": "ETC",
+    "offset": 181536,
+    "capacity": 32,
+    "source": "アスマと<r共闘|きょうとう>",
+    "translation": "Team Up with Asuma"
+  },
+  {
+    "id": "ETC_0245",
+    "file": "ETC",
+    "offset": 181568,
+    "capacity": 32,
+    "source": "<r共|とも>に…！",
+    "translation": "Together...!"
+  },
+  {
+    "id": "ETC_0246",
+    "file": "ETC",
+    "offset": 181600,
+    "capacity": 32,
+    "source": "<r肩透|かたす>かし",
+    "translation": "Letdown"
+  },
+  {
+    "id": "ETC_0247",
+    "file": "ETC",
+    "offset": 181632,
+    "capacity": 48,
+    "source": "<r不注意厳禁|ふちゅういげんきん>",
+    "translation": "No Carelessness"
+  },
+  {
+    "id": "ETC_0248",
+    "file": "ETC",
+    "offset": 181680,
+    "capacity": 32,
+    "source": "<r風影|かぜかげ>として",
+    "translation": "As Kazekage"
+  },
+  {
+    "id": "ETC_0249",
+    "file": "ETC",
+    "offset": 181712,
+    "capacity": 48,
+    "source": "<r空虚|くうきょ>な<r世界|せかい>で",
+    "translation": "In an Empty World"
+  },
+  {
+    "id": "ETC_0250",
+    "file": "ETC",
+    "offset": 181760,
+    "capacity": 32,
+    "source": "<r存在|そんざい>",
+    "translation": "Existence"
+  },
+  {
+    "id": "ETC_0251",
+    "file": "ETC",
+    "offset": 181792,
+    "capacity": 32,
+    "source": "<r新|あたら>しい<r自分|じぶん>",
+    "translation": "New Self"
+  },
+  {
+    "id": "ETC_0252",
+    "file": "ETC",
+    "offset": 181824,
+    "capacity": 24,
+    "source": "<r弟|おとうと>のために",
+    "translation": "For My Brother"
+  },
+  {
+    "id": "ETC_0253",
+    "file": "ETC",
+    "offset": 181848,
+    "capacity": 24,
+    "source": "<r驚|おどろ>き",
+    "translation": "Surprise"
+  },
+  {
+    "id": "ETC_0254",
+    "file": "ETC",
+    "offset": 181872,
+    "capacity": 48,
+    "source": "<r滲|にじ>み<r出|で>る<r悔|くや>しさ",
+    "translation": "Leaking Frustration"
+  },
+  {
+    "id": "ETC_0255",
+    "file": "ETC",
+    "offset": 181920,
+    "capacity": 32,
+    "source": "<r自慢|じまん>の<r傀儡|くぐつ>",
+    "translation": "Proud Puppet"
+  },
+  {
+    "id": "ETC_0256",
+    "file": "ETC",
+    "offset": 181952,
+    "capacity": 32,
+    "source": "<r姉|あね>と<r共|とも>に",
+    "translation": "With My Sister"
+  },
+  {
+    "id": "ETC_0257",
+    "file": "ETC",
+    "offset": 181984,
+    "capacity": 48,
+    "source": "<r風|かぜ>の<r使|つか>い<r手|て>",
+    "translation": "Wind User"
+  },
+  {
+    "id": "ETC_0258",
+    "file": "ETC",
+    "offset": 182032,
+    "capacity": 32,
+    "source": "<r我愛羅|ガアラ>の<r前|まえ>で",
+    "translation": "Before Gaara"
+  },
+  {
+    "id": "ETC_0259",
+    "file": "ETC",
+    "offset": 182064,
+    "capacity": 32,
+    "source": "<r手加減|てかげん>",
+    "translation": "Holding Back"
+  },
+  {
+    "id": "ETC_0260",
+    "file": "ETC",
+    "offset": 182096,
+    "capacity": 32,
+    "source": "<r姉|あね>の<r喜|よろこ>び",
+    "translation": "Sister's Joy"
+  },
+  {
+    "id": "ETC_0261",
+    "file": "ETC",
+    "offset": 182128,
+    "capacity": 32,
+    "source": "<r邂逅|かいこう>",
+    "translation": "Encounter"
+  },
+  {
+    "id": "ETC_0262",
+    "file": "ETC",
+    "offset": 182160,
+    "capacity": 24,
+    "source": "<r忠告|ちゅうこく>",
+    "translation": "Warning"
+  },
+  {
+    "id": "ETC_0263",
+    "file": "ETC",
+    "offset": 182184,
+    "capacity": 24,
+    "source": "<r余裕|よゆう>",
+    "translation": "Composure"
+  },
+  {
+    "id": "ETC_0264",
+    "file": "ETC",
+    "offset": 182208,
+    "capacity": 48,
+    "source": "<r九尾|きゅうび>の<r人柱力|じんちゅうりき>",
+    "translation": "Nine-Tails Jinchuriki"
+  },
+  {
+    "id": "ETC_0265",
+    "file": "ETC",
+    "offset": 182256,
+    "capacity": 48,
+    "source": "<r強者|きょうしゃ>の<r男|おとこ>",
+    "translation": "Strong Man"
+  },
+  {
+    "id": "ETC_0266",
+    "file": "ETC",
+    "offset": 182304,
+    "capacity": 48,
+    "source": "<r珍獣|ちんじゅう>との<r再会|さいかい>",
+    "translation": "Reunion with Beast"
+  },
+  {
+    "id": "ETC_0267",
+    "file": "ETC",
+    "offset": 182352,
+    "capacity": 32,
+    "source": "<r獣|けもの>レベル",
+    "translation": "Beast Level"
+  },
+  {
+    "id": "ETC_0268",
+    "file": "ETC",
+    "offset": 182384,
+    "capacity": 48,
+    "source": "<r襲|おそ>い<r掛|か>かる<r鬼鮫|キサメ>",
+    "translation": "Kisame Attacks"
+  },
+  {
+    "id": "ETC_0269",
+    "file": "ETC",
+    "offset": 182432,
+    "capacity": 48,
+    "source": "<r高揚|こうよう>する<r心|こころ>",
+    "translation": "Rising Excitement"
+  },
+  {
+    "id": "ETC_0270",
+    "file": "ETC",
+    "offset": 182480,
+    "capacity": 32,
+    "source": "<r苛立|いらだ>ち",
+    "translation": "Irritation"
+  },
+  {
+    "id": "ETC_0271",
+    "file": "ETC",
+    "offset": 182512,
+    "capacity": 48,
+    "source": "<r一尾|いちび>の<r人柱力|じんちゅうりき>",
+    "translation": "One-Tail Jinchuriki"
+  },
+  {
+    "id": "ETC_0272",
+    "file": "ETC",
+    "offset": 182560,
+    "capacity": 32,
+    "source": "<r刺激|しげき>を<r求|もと>めて",
+    "translation": "Seeking Excitement"
+  },
+  {
+    "id": "ETC_0273",
+    "file": "ETC",
+    "offset": 182592,
+    "capacity": 32,
+    "source": "<r変|か>わり<r者|もの>",
+    "translation": "Oddball"
+  },
+  {
+    "id": "ETC_0274",
+    "file": "ETC",
+    "offset": 182624,
+    "capacity": 32,
+    "source": "デイダラの<r挑発|ちょうはつ>",
+    "translation": "Deidara's Taunt"
+  },
+  {
+    "id": "ETC_0275",
+    "file": "ETC",
+    "offset": 182656,
+    "capacity": 16,
+    "source": "<r予告|よこく>",
+    "translation": "Notice"
+  },
+  {
+    "id": "ETC_0276",
+    "file": "ETC",
+    "offset": 182720,
+    "capacity": 32,
+    "source": "<r最後|さいご>の<r喜|よろこ>び",
+    "translation": "Final Joy"
+  },
+  {
+    "id": "ETC_0277",
+    "file": "ETC",
+    "offset": 182752,
+    "capacity": 32,
+    "source": "<r砂|すな>と<r木|こ>ノ<r葉|は>",
+    "translation": "Sand and Leaf"
+  },
+  {
+    "id": "ETC_0278",
+    "file": "ETC",
+    "offset": 182784,
+    "capacity": 32,
+    "source": "<r最後|さいご>のお<r願|ねが>い",
+    "translation": "Last Request"
+  },
+  {
+    "id": "ETC_0279",
+    "file": "ETC",
+    "offset": 182816,
+    "capacity": 32,
+    "source": "サソリの<r性格|せいかく>",
+    "translation": "Sasori's Nature"
+  },
+  {
+    "id": "ETC_0280",
+    "file": "ETC",
+    "offset": 182848,
+    "capacity": 48,
+    "source": "<r三代目風影|さんだいめかぜかげ>",
+    "translation": "Third Kazekage"
+  },
+  {
+    "id": "ETC_0281",
+    "file": "ETC",
+    "offset": 182896,
+    "capacity": 32,
+    "source": "<r自分傀儡|じぶんくぐつ>",
+    "translation": "Self Puppet"
+  },
+  {
+    "id": "ETC_0282",
+    "file": "ETC",
+    "offset": 182928,
+    "capacity": 32,
+    "source": "<r止|と>まる<r傀儡|くぐつ>",
+    "translation": "Stopped Puppet"
+  },
+  {
+    "id": "ETC_0283",
+    "file": "ETC",
+    "offset": 182960,
+    "capacity": 48,
+    "source": "<r自来也|じらいや>の<r魅力|みりょく>？",
+    "translation": "Jiraiya's Charm?"
+  },
+  {
+    "id": "ETC_0284",
+    "file": "ETC",
+    "offset": 183008,
+    "capacity": 32,
+    "source": "<r取材|しゅざい>",
+    "translation": "Research"
+  },
+  {
+    "id": "ETC_0285",
+    "file": "ETC",
+    "offset": 183040,
+    "capacity": 32,
+    "source": "<r因縁|いんねん>のケリ",
+    "translation": "End of a Grudge"
+  },
+  {
+    "id": "ETC_0286",
+    "file": "ETC",
+    "offset": 183072,
+    "capacity": 32,
+    "source": "<r高笑|たかわら>い",
+    "translation": "Loud Laugh"
+  },
+  {
+    "id": "ETC_0287",
+    "file": "ETC",
+    "offset": 183104,
+    "capacity": 40,
+    "source": "<r三忍|さんにん>の<r実力|じつりょく>",
+    "translation": "Sannin Power"
+  },
+  {
+    "id": "ETC_0288",
+    "file": "ETC",
+    "offset": 183144,
+    "capacity": 24,
+    "source": "<r監視|かんし>",
+    "translation": "Watch"
+  },
+  {
+    "id": "ETC_0289",
+    "file": "ETC",
+    "offset": 183168,
+    "capacity": 32,
+    "source": "<r決着|けっちゃく>の<r時|とき>",
+    "translation": "Time to Settle"
+  },
+  {
+    "id": "ETC_0290",
+    "file": "ETC",
+    "offset": 183200,
+    "capacity": 48,
+    "source": "<r綱手|ツナデ>の<r性格|せいかく>",
+    "translation": "Tsunade's Nature"
+  },
+  {
+    "id": "ETC_0291",
+    "file": "ETC",
+    "offset": 183248,
+    "capacity": 32,
+    "source": "<r五代目火影|ごだいめほかげ>",
+    "translation": "Fifth Hokage"
+  },
+  {
+    "id": "ETC_0292",
+    "file": "ETC",
+    "offset": 183280,
+    "capacity": 32,
+    "source": "<r綱手|ツナデ>と<r組手|くみて>",
+    "translation": "Spar with Tsunade"
+  },
+  {
+    "id": "ETC_0293",
+    "file": "ETC",
+    "offset": 183312,
+    "capacity": 32,
+    "source": "<r本領発揮|ほんりょうはっき>",
+    "translation": "True Power"
+  },
+  {
+    "id": "ETC_0294",
+    "file": "ETC",
+    "offset": 183344,
+    "capacity": 32,
+    "source": "<r付|つ>き<r人|びと>シズネ",
+    "translation": "Attendant Shizune"
+  },
+  {
+    "id": "ETC_0295",
+    "file": "ETC",
+    "offset": 183376,
+    "capacity": 40,
+    "source": "<r医療忍者|いりょうにんじゃ>として",
+    "translation": "As a Medical Ninja"
+  },
+  {
+    "id": "ETC_0296",
+    "file": "ETC",
+    "offset": 183416,
+    "capacity": 24,
+    "source": "おめでとう！",
+    "translation": "Congrats!"
+  },
+  {
+    "id": "ETC_0297",
+    "file": "ETC",
+    "offset": 183440,
+    "capacity": 32,
+    "source": "<r代行|だいこう>の<r男|おとこ>",
+    "translation": "Substitute Man"
+  },
+  {
+    "id": "ETC_0298",
+    "file": "ETC",
+    "offset": 183472,
+    "capacity": 16,
+    "source": "チームワーク",
+    "translation": "Teamwork"
+  },
+  {
+    "id": "ETC_0299",
+    "file": "ETC",
+    "offset": 183488,
+    "capacity": 48,
+    "source": "<r共通|きょうつう>の<r目的|もくてき>",
+    "translation": "Common Goal"
+  },
+  {
+    "id": "ETC_0300",
+    "file": "ETC",
+    "offset": 183536,
+    "capacity": 32,
+    "source": "<r軽|かる>い<r挑発|ちょうはつ>",
+    "translation": "Light Taunt"
+  },
+  {
+    "id": "ETC_0301",
+    "file": "ETC",
+    "offset": 183568,
+    "capacity": 32,
+    "source": "<r行動|こうどう>あるのみ",
+    "translation": "Act Now"
+  },
+  {
+    "id": "ETC_0302",
+    "file": "ETC",
+    "offset": 183600,
+    "capacity": 48,
+    "source": "<r大蛇丸|オロチまる><r現|あらわ>る",
+    "translation": "Orochimaru Appears"
+  },
+  {
+    "id": "ETC_0303",
+    "file": "ETC",
+    "offset": 183648,
+    "capacity": 32,
+    "source": "<r挑発|ちょうはつ>",
+    "translation": "Taunt"
+  },
+  {
+    "id": "ETC_0304",
+    "file": "ETC",
+    "offset": 183680,
+    "capacity": 32,
+    "source": "<r二人|ふたり>の<r対比|たいひ>",
+    "translation": "Two Contrasts"
+  },
+  {
+    "id": "ETC_0305",
+    "file": "ETC",
+    "offset": 183712,
+    "capacity": 32,
+    "source": "<r通告|つうこく>",
+    "translation": "Notice"
+  },
+  {
+    "id": "ETC_0306",
+    "file": "ETC",
+    "offset": 183744,
+    "capacity": 48,
+    "source": "<r五年|ごねん>ぶりの<r再会|さいかい>",
+    "translation": "Reunion After 5 Years"
+  },
+  {
+    "id": "ETC_0307",
+    "file": "ETC",
+    "offset": 183792,
+    "capacity": 32,
+    "source": "<r共感|きょうかん>",
+    "translation": "Sympathy"
+  },
+  {
+    "id": "ETC_0308",
+    "file": "ETC",
+    "offset": 183824,
+    "capacity": 32,
+    "source": "カブトの<r挑発|ちょうはつ>",
+    "translation": "Kabuto's Taunt"
+  },
+  {
+    "id": "ETC_0309",
+    "file": "ETC",
+    "offset": 183856,
+    "capacity": 32,
+    "source": "<r感心|かんしん>",
+    "translation": "Impressed"
+  },
+  {
+    "id": "ETC_0310",
+    "file": "ETC",
+    "offset": 183888,
+    "capacity": 32,
+    "source": "サスケの<r存在|そんざい>",
+    "translation": "Sasuke's Existence"
+  },
+  {
+    "id": "ETC_0311",
+    "file": "ETC",
+    "offset": 183936,
+    "capacity": 16,
+    "source": "<r気|き>まぐれ",
+    "translation": "Whim"
+  },
+  {
+    "id": "ETC_0312",
+    "file": "ETC",
+    "offset": 183952,
+    "capacity": 32,
+    "source": "<r愚|おろ>かなること",
+    "translation": "Foolishness"
+  },
+  {
+    "id": "ETC_0313",
+    "file": "ETC",
+    "offset": 183984,
+    "capacity": 32,
+    "source": "<r兄|あに>との<r繋|つな>がり",
+    "translation": "Bond with Brother"
+  },
+  {
+    "id": "ETC_0314",
+    "file": "ETC",
+    "offset": 184016,
+    "capacity": 52,
+    "source": "<r目障|めざわ>りな<r存在|そんざい>",
+    "translation": "Eyesore"
+  },
+  {
+    "id": "ETC_0315",
+    "file": "ETC",
+    "offset": 186704,
+    "capacity": 40,
+    "source": "<r紅班勢揃|くれないはんせいぞろ>い",
+    "translation": "Team Kurenai Assembles"
+  },
+  {
+    "id": "ETC_0316",
+    "file": "ETC",
+    "offset": 186832,
+    "capacity": 24,
+    "source": "いのシカチョウトリオ",
+    "translation": "Ino-Shika-Cho Trio"
+  },
+  {
+    "id": "ETC_0317",
+    "file": "ETC",
+    "offset": 186928,
+    "capacity": 32,
+    "source": "ナルトの<r帰郷|ききょう>",
+    "translation": "Naruto Returns"
+  },
+  {
+    "id": "ETC_0318",
+    "file": "ETC",
+    "offset": 186992,
+    "capacity": 40,
+    "source": "<r風影|かぜかげ>の<r闘|たたか>い",
+    "translation": "Kazekage Battle"
+  },
+  {
+    "id": "ETC_0319",
+    "file": "ETC",
+    "offset": 187104,
+    "capacity": 48,
+    "source": "<r木|こ>ノ<r葉|は>の<r白|しろ>い<r牙|きば>！？",
+    "translation": "White Fang of Leaf!?"
+  },
+  {
+    "id": "ETC_0320",
+    "file": "ETC",
+    "offset": 187264,
+    "capacity": 40,
+    "source": "“<r暁|あかつき>”の<r目的|もくてき>",
+    "translation": "Akatsuki Goal"
+  },
+  {
+    "id": "ETC_0321",
+    "file": "ETC",
+    "offset": 187440,
+    "capacity": 40,
+    "source": "<r傀儡師|くぐつし>の<r激闘|げきとう>",
+    "translation": "Puppeteer Battle"
+  },
+  {
+    "id": "ETC_0322",
+    "file": "ETC",
+    "offset": 187552,
+    "capacity": 40,
+    "source": "<r突然|とつぜん>の<r襲撃|しゅうげき>！",
+    "translation": "Sudden Attack!"
+  },
+  {
+    "id": "ETC_0323",
+    "file": "ETC",
+    "offset": 187808,
+    "capacity": 24,
+    "source": "シミュレーション",
+    "translation": "Simulation"
+  },
+  {
+    "id": "ETC_0324",
+    "file": "ETC",
+    "offset": 188016,
+    "capacity": 40,
+    "source": "<r人外|じんがい>の<r闘|たたか>い",
+    "translation": "Inhuman Battle"
+  },
+  {
+    "id": "ETC_0325",
+    "file": "ETC",
+    "offset": 188240,
+    "capacity": 40,
+    "source": "<r運命|うんめい>の<r再会|さいかい>",
+    "translation": "Fated Reunion"
+  },
+  {
+    "id": "ETC_0326",
+    "file": "ETC",
+    "offset": 188400,
+    "capacity": 48,
+    "source": "<r漆黒|しっこく>に<r浮|う>かぶ<r影|かげ>",
+    "translation": "Shadow in Black"
+  },
+  {
+    "id": "ETC_0336",
+    "file": "ETC",
+    "offset": 192080,
+    "capacity": 32,
+    "source": "<r対戦相手|たいせんあいて>",
+    "translation": "Opponent"
+  },
+  {
+    "id": "ETC_0327",
+    "file": "ETC",
+    "offset": 193184,
+    "capacity": 48,
+    "source": "<r人形|にんぎょう>を<r購入|こうにゅう>します。",
+    "translation": "Buy figures."
+  },
+  {
+    "id": "ETC_0328",
+    "file": "ETC",
+    "offset": 193232,
+    "capacity": 48,
+    "source": "<r奥義|おうぎ>を<r購入|こうにゅう>します。",
+    "translation": "Buy Ultimates."
+  },
+  {
+    "id": "ETC_0329",
+    "file": "ETC",
+    "offset": 193280,
+    "capacity": 48,
+    "source": "<r音楽|おんがく>を<r購入|こうにゅう>します。",
+    "translation": "Buy music."
+  },
+  {
+    "id": "ETC_0330",
+    "file": "ETC",
+    "offset": 193328,
+    "capacity": 48,
+    "source": "<r音声|おんせい>を<r購入|こうにゅう>します。",
+    "translation": "Buy voices."
+  },
+  {
+    "id": "ETC_0331",
+    "file": "ETC",
+    "offset": 193376,
+    "capacity": 64,
+    "source": "<r案内忍|あんないにん>を<r購入|こうにゅう>します。",
+    "translation": "Buy guide ninja."
+  },
+  {
+    "id": "ETC_0332",
+    "file": "ETC",
+    "offset": 193440,
+    "capacity": 80,
+    "source": "<r購入|こうにゅう>するキャラクターを<r選択|せんたく>してください。",
+    "translation": "Choose a character to buy."
+  },
+  {
+    "id": "ETC_0333",
+    "file": "ETC",
+    "offset": 193792,
+    "capacity": 80,
+    "source": "<color080860>ショップ<color000000>を<r終了|しゅうりょう>しますか？",
+    "translation": "Quit Shop?"
+  },
+  {
+    "id": "ETC_0334",
+    "file": "ETC",
+    "offset": 194288,
+    "capacity": 48,
+    "source": "ハズレくじを<r引|ひ>いてしまいました…。",
+    "translation": "You drew a losing ticket..."
+  },
+  {
+    "id": "ETC_0335",
+    "file": "ETC",
+    "offset": 194736,
+    "capacity": 48,
+    "source": "<r残念|ざんねん>、はずれてしまいました。",
+    "translation": "Too bad, you missed."
+  }
+]

@@ -1,44 +1,25 @@
-# NA2 Translation Package Builder
+# NA2 Translation Package Builder v5
 
-This tool replaces the old ISO-patcher workflow for translation builds.
-It does not create or modify an ISO.
+Builds a self-contained translation package from clean NA2 files and official
+UN5 `PRG/TEXTENG.BIN` strings.
 
-It reads the clean source ISO:
+The builder:
 
-`C:\Games\Modding\UN Modding\NA2 Modding\source\NA2.iso`
+- preserves the previously working safe BTL/ETC translation baseline;
+- replaces verified matching entries with the official UN5 English wording;
+- reads no translation TSV files;
+- never edits an ISO;
+- writes `NA2_APPLY__TRANSLATION__*.zip` to Downloads;
+- includes only `PRG/BTL.BIN` and `PRG/ETC.BIN`.
 
-It applies:
-
-- `translations\apply\btl_apply.tsv`
-- `translations\apply\etc_apply.tsv`
-
-It writes a self-contained package to:
-
-`C:\Users\solid\Downloads\NA2_APPLY__TRANSLATION__*.zip`
-
-The package contains exactly:
-
-- `PRG/BTL.BIN`
-- `PRG/ETC.BIN`
-
-Run:
+Run from the project:
 
 ```powershell
-.\build_na2_translation_package.ps1
+& '.\translation_package_builder\build_na2_translation_package.ps1'
 ```
 
-Then test it with:
+Then test with the project's existing translation-package command:
 
 ```powershell
-na2 -Translation
+na2 tr
 ```
-
-Optional overrides:
-
-```powershell
-.\build_na2_translation_package.ps1 `
-  -Na2Iso 'D:\path\NA2.iso' `
-  -OutputDirectory 'D:\output'
-```
-
-`-NoStrictHash` permits a source whose BTL/ETC hashes differ from the known clean NA2 files. Normally leave strict checking enabled.

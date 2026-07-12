@@ -1,1 +1,1 @@
-NA2 Translation Package Builder v1
+5.0.0

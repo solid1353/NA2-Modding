@@ -1,0 +1,285 @@
+id	offset_hex	source_japanese	chosen_translation	notes	enabled
+BTL_0001	0x1DBAB0	<r忍術|にんじゅつ>なし	No Ninjutsu	from filtered v13 patched row; explicit apply v17	yes
+BTL_0002	0x1DD140	ふっとばすぞ左	Blow Away Left	from filtered v13 patched row; explicit apply v17	yes
+BTL_0003	0x1DD150	つぶすぞ	Crush It	from filtered v13 patched row; explicit apply v17	yes
+BTL_0007	0x1E1F90	ダミーカメラ＃０	Dummy Camera #0	from filtered v13 patched row; explicit apply v17	yes
+BTL_0009	0x1E1FD0	演出カメラ「丑」	Event Camera: Ox	from filtered v13 patched row; explicit apply v17	yes
+BTL_0011	0x1E2110	<r忍者学校|アカデミー>	Academy	from filtered v13 patched row; explicit apply v17	yes
+BTL_0012	0x1E2130	<r下忍|げにん>ランクＡ	Genin Rank A	from filtered v13 patched row; explicit apply v17	yes
+BTL_0013	0x1E2150	<r下忍|げにん>ランクＢ	Genin Rank B	from filtered v13 patched row; explicit apply v17	yes
+BTL_0014	0x1E2170	<r下忍|げにん>ランクＣ	Genin Rank C	from filtered v13 patched row; explicit apply v17	yes
+BTL_0015	0x1E2190	<r下忍|げにん>ランクＤ	Genin Rank D	from filtered v13 patched row; explicit apply v17	yes
+BTL_0016	0x1E21B0	<r砂|すな>の<r三姉弟|さんきょうだい>	Sand Siblings	from filtered v13 patched row; explicit apply v17	yes
+BTL_0017	0x1E21E0	<r霧|きり>の<r刺客|しかく>	Mist Assassins	from filtered v13 patched row; explicit apply v17	yes
+BTL_0018	0x1E2200	<r新紅班|しんくれないはん>	New Team Kurenai	from filtered v13 patched row; explicit apply v17	yes
+BTL_0019	0x1E2220	<r新|しん>アスマ<r班|はん>	New Team Asuma	from filtered v13 patched row; explicit apply v17	yes
+BTL_0020	0x1E2240	<r新|しん>ガイ<r班|はん>	New Team Guy	from filtered v13 patched row; explicit apply v17	yes
+BTL_0021	0x1E2260	<r新|しん>カカシ<r班|はん>	New Team Kakashi	from filtered v13 patched row; explicit apply v17	yes
+BTL_0022	0x1E2280	<r上忍|じょうにん>ランクＡ	Jonin Rank A	from filtered v13 patched row; explicit apply v17	yes
+BTL_0023	0x1E22A0	<r上忍|じょうにん>ランクＢ	Jonin Rank B	from filtered v13 patched row; explicit apply v17	yes
+BTL_0024	0x1E22C0	<r砂|すな>の<r強者|つわもの>	Sand Elites	from filtered v13 patched row; explicit apply v17	yes
+BTL_0025	0x1E22E0	<r音|おと>の<r五人衆|ごにんしゅう>	Sound Five	from filtered v13 patched row; explicit apply v17	yes
+BTL_0026	0x1E2310	<r邪|よこしま>なる<r者|もの>	Wicked Ones	from filtered v13 patched row; explicit apply v17	yes
+BTL_0027	0x1E2330	<r伝説|でんせつ>の<r三忍|さんにん>	Legendary Sannin	from filtered v13 patched row; explicit apply v17	yes
+BTL_0028	0x1E2360	“<r暁|あかつき>”	Akatsuki	from filtered v13 patched row; explicit apply v17	yes
+BTL_0029	0x1E2380	<r火影|ほかげ>たち	The Hokage	from filtered v13 patched row; explicit apply v17	yes
+BTL_0030	0x1E23A0	<r特別対戦|とくべつたいせん>	Special Battle	from filtered v13 patched row; explicit apply v17	yes
+BTL_0031	0x1E23C0	<r金髪五人衆|きんぱつごにんしゅう>	Blond Squad	from filtered v13 patched row; explicit apply v17	yes
+BTL_0032	0x1E23F0	<r傀儡軍団|くぐつぐんだん>	Puppet Corps	from filtered v13 patched row; explicit apply v17	yes
+BTL_0033	0x1E2410	<r木|こ>ノ<r葉先生|はせんせい>	Leaf Teachers	from filtered v13 patched row; explicit apply v17	yes
+BTL_0034	0x1E2430	<r血継限界|けっけいげんかい>	Kekkei Genkai	from filtered v13 patched row; explicit apply v17	yes
+BTL_0035	0x1E2450	<r高|たか>みの<r者|もの>たち	High-Ranking Shinobi	from filtered v13 patched row; explicit apply v17	yes
+BTL_0036	0x1E2670	<r撒|ま>き<r菱|びし>	Caltrops	from filtered v13 patched row; explicit apply v17	yes
+BTL_0037	0x1E2690	<r兵糧丸|ひょうろうがん>	Soldier Pills	from filtered v13 patched row; explicit apply v17	yes
+BTL_0038	0x1E26B0	<r上忍|じょうにん>の<r靴|くつ>	Jonin Shoes	from filtered v13 patched row; explicit apply v17	yes
+BTL_0039	0x1E26D0	カカシ<r人形|にんぎょう>	Kakashi Doll	from filtered v13 patched row; explicit apply v17	yes
+BTL_0040	0x1E26F0	<r根性|こんじょう>のおもり	Guts Weight	from filtered v13 patched row; explicit apply v17	yes
+BTL_0041	0x1E2710	<r風魔手裏剣|ふうましゅりけん>	Fuma Shuriken	from filtered v13 patched row; explicit apply v17	yes
+BTL_0042	0x1E2730	<r呪札|じゅさつ>　<r鎧崩|よろいくず>し	Armor-Break Charm	from filtered v13 patched row; explicit apply v17	yes
+BTL_0043	0x1E2760	<r亀甲丸|きっこうがん>	Kikko Pill	from filtered v13 patched row; explicit apply v17	yes
+BTL_0044	0x1E2780	<r炸裂|さくれつ>クナイ	Blast Kunai	from filtered v13 patched row; explicit apply v17	yes
+BTL_0045	0x1E27A0	<r起爆|きばく>クナイ	Explosive Kunai	from filtered v13 patched row; explicit apply v17	yes
+BTL_0046	0x1E27C0	<r医療|いりょう>パック	Medical Pack	from filtered v13 patched row; explicit apply v17	yes
+BTL_0047	0x1E27E0	<r雲隠|くもがく>れの<r巻物|まきもの>	Hidden Cloud Scroll	from filtered v13 patched row; explicit apply v17	yes
+BTL_0048	0x1E2810	<r毒煙玉|どくけむりだま>	Poison Smoke Bomb	from filtered v13 patched row; explicit apply v17	yes
+BTL_0049	0x1E2830	<r起爆札|きばくふだ>	Paper Bomb	from filtered v13 patched row; explicit apply v17	yes
+BTL_0050	0x1E2850	<r元気丸|げんきがん>	Energy Pill	from filtered v13 patched row; explicit apply v17	yes
+BTL_0051	0x1E2870	<r蝦蟇油|ガマあぶら>	Toad Oil	from filtered v13 patched row; explicit apply v17	yes
+BTL_0052	0x1E2890	<r起爆|きばく>シール	Explosive Seal	from filtered v13 patched row; explicit apply v17	yes
+BTL_0053	0x1E28B0	<r千影手裏剣|せんえいしゅりけん>	Thousand Shadow Shuriken	from filtered v13 patched row; explicit apply v17	yes
+BTL_0054	0x1E28E0	<r痺|しび>れ<r玉|たま>	Stun Bomb	from filtered v13 patched row; explicit apply v17	yes
+BTL_0055	0x1E2900	<r博打玉|ばくちだま>	Gamble Bomb	from filtered v13 patched row; explicit apply v17	yes
+BTL_0056	0x1E2918	アイテムポーチ	Item Pouch	from filtered v13 patched row; explicit apply v17	yes
+BTL_0057	0x1E2930	<r忍具乱舞|にんぐらんぶ>の<r巻物|まきもの>	Ninja Tool Barrage Scroll	from filtered v13 patched row; explicit apply v17	yes
+BTL_0058	0x1E2960	<r金|きん>の<r装飾品|そうしょくひん>	Gold Ornament	from filtered v13 patched row; explicit apply v17	yes
+BTL_0059	0x1E2990	<r琥珀|こはく>の<r塊|かたまり>	Amber Lump	from filtered v13 patched row; explicit apply v17	yes
+BTL_0060	0x1E29B0	<r古銭|こせん>	Old Coin	from filtered v13 patched row; explicit apply v17	yes
+BTL_0061	0x1E29C0	<r特別交渉手形|とくべつこうしょうてがた>	Special Negotiation Pass	from filtered v13 patched row; explicit apply v17	yes
+BTL_0062	0x1E29F0	<r紅玉|こうぎょく>の<r指輪|ゆびわ>	Ruby Ring	from filtered v13 patched row; explicit apply v17	yes
+BTL_0063	0x1E2A20	<r治癒|ちゆ>の<r巻物|まきもの>	Healing Scroll	from filtered v13 patched row; explicit apply v17	yes
+BTL_0064	0x1E2A40	<r白銀|はくぎん>の<r延棒|のべぼう>	Silver Bar	from filtered v13 patched row; explicit apply v17	yes
+BTL_0065	0x1E2A70	<r連係|れんけい>の<r笛|ふえ>	Team Flute	from filtered v13 patched row; explicit apply v17	yes
+BTL_0066	0x1E2A90	<r稀代|きだい>の<r秘宝|ひほう>	Rare Treasure	from filtered v13 patched row; explicit apply v17	yes
+BTL_0067	0x1E2AB0	<r全開|ぜんかい>の<r額当|ひたいあ>て	Full-Power Headband	from filtered v13 patched row; explicit apply v17	yes
+BTL_0068	0x1E2AE0	<r気配遮断装束|けはいしゃだんしょうぞく>	Concealment Robe	from filtered v13 patched row; explicit apply v17	yes
+BTL_0069	0x1E2B10	<color00FFFF><r究極連激戦|ナルティメットれんげきせん><colorFFFFFF>では、<r定|さだ>められた<r相手|あいて>と<r連続|れんぞく>で<r闘|たたか>い、<r最後|さいご>まで<r勝|か>ち<r残|のこ>ることで<r報酬|ほうしゅう>を<r得|え>ることができます。	<color00FFFF>Ultimate Chain<colorFFFFFF>: fight the set opponents in a row and survive to the end to earn rewards.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0070	0x1E2C00	<color00FFFF><r壮絶|そうぜつ>サバイバル<colorFFFFFF>ではランダムで<r出現|しゅつげん>する<r相手|あいて>と<r無限|むげん>に<r闘|たたか>い、どこまで<r勝|か>ち<r残|のこ>れるかを<r競|きそ>うことができます。	<color00FFFF>Survival<colorFFFFFF>: fight randomly appearing opponents endlessly and see how long you can survive.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0071	0x1E2CD0	<color00FFFF><r自分|じぶん>ルール<r戦闘|せんとう><colorFFFFFF>では、<r戦闘条件|せんとうじょうけん>を<r任意|にんい>に<r設定|せってい>して<r闘|たたか>うことができます。	<color00FFFF>Custom Rules Battle<colorFFFFFF>: freely set battle conditions before fighting.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0072	0x1E2D80	<color00FFFF><r熱血対戦|ねっけつたいせん><colorFFFFFF>を<r終了|しゅうりょう>しますか？	Quit <color00FFFF>Hot-Blooded Versus<colorFFFFFF>?	from filtered v13 patched row; explicit apply v17	yes
+BTL_0073	0x1E2DE0	<color00FFFF><r壮絶|そうぜつ>サバイバル<colorFFFFFF>を開始しますか？	Start <color00FFFF>Survival<colorFFFFFF>?	from filtered v13 patched row; explicit apply v17	yes
+BTL_0074	0x1E2F60	<r中忍|ちゅうにん>レベル	Chunin Level	from filtered v13 patched row; explicit apply v17	yes
+BTL_0075	0x1E2F80	<r上忍|じょうにん>レベル	Jonin Level	from filtered v13 patched row; explicit apply v17	yes
+BTL_0076	0x1E2FA0	<r火影|ほかげ>レベル	Hokage Level	from filtered v13 patched row; explicit apply v17	yes
+BTL_0077	0x1E2FC0	<r特殊戦闘|とくしゅせんとう>	Special Battle	from filtered v13 patched row; explicit apply v17	yes
+BTL_0078	0x1E3000	レベルを<r選択|せんたく>してください。	Select a level.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0079	0x1E3030	ランクを<r選択|せんたく>してください。	Select a rank.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0080	0x1E3060	これでよろしいでしょうか？	Is this OK?	from filtered v13 patched row; explicit apply v17	yes
+BTL_0082	0x1E3110	<ruby好|す>きな<ruby条件|じょうけん>を<ruby設定|せってい>してください。	Set any conditions you like.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0083	0x1E3160	ＣＯＭの<ruby強|つよ>さを<ruby変更|へんこう>できます。	Change COM strength.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0084	0x1E31A0	<ruby奥義|おうぎ>の<ruby入力勝負|にゅうりょくしょうぶ>を<ruby変更|へんこう>できます。	Change the Ultimate input battle.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0085	0x1E3200	『はい』を<ruby選択|せんたく>で<ruby戦闘|せんとう>を<ruby開始|かいし>します。	Select Yes to start the battle.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0086	0x1E3250	<ruby条件|じょうけん>が１つも<ruby設定|せってい>されていないです。	No conditions have been set.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0087	0x1E32A0	すでに<ruby設定済|せっていず>みです。	Already set.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0089	0x1E3370	基本条件	Basic	from filtered v13 patched row; explicit apply v17	yes
+BTL_0090	0x1E3380	<ruby方向|ほうこう>キー<ruby左右|さゆう>でＣＯＭの<ruby強|つよ>さを<ruby変更|へんこう>できます。	Press Left/Right to change COM strength.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0091	0x1E33F0	<ruby方向|ほうこう>キー<ruby左右|さゆう>で<ruby奥義|おうぎ>の<ruby入力勝負|にゅうりょくしょうぶ>を<ruby変更|へんこう>できます。	Press Left/Right to change the Ultimate input battle.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0092	0x1E3470	やさしい	Easy	from filtered v13 patched row; explicit apply v17	yes
+BTL_0093	0x1E3480	むずかしい	Hard	from filtered v13 patched row; explicit apply v17	yes
+BTL_0095	0x1E34B8	ランダム	Random	from filtered v13 patched row; explicit apply v17	yes
+BTL_0096	0x1E34C8	コマンド	Command	from filtered v13 patched row; explicit apply v17	yes
+BTL_0097	0x1E34D8	タイミング	Timing	from filtered v13 patched row; explicit apply v17	yes
+BTL_0098	0x1E3510	お<r手軽条件|てがるじょうけん>１	Preset Rule 1	from filtered v13 patched row; explicit apply v17	yes
+BTL_0099	0x1E3540	お<r手軽条件|てがるじょうけん>２	Preset Rule 2	from filtered v13 patched row; explicit apply v17	yes
+BTL_0100	0x1E3570	お<r手軽条件|てがるじょうけん>３	Preset Rule 3	from filtered v13 patched row; explicit apply v17	yes
+BTL_0101	0x1E35A0	<r無重力戦闘|むじゅうりょくせんとう>	Zero-Gravity Battle	from filtered v13 patched row; explicit apply v17	yes
+BTL_0102	0x1E35D0	<r速度差|そくどさ>が<r激|はげ>しい<r状態|じょうたい>で<r戦闘|せんとう>	Battle with extreme speed differences	from filtered v13 patched row; explicit apply v17	yes
+BTL_0103	0x1E3620	<r大|だい>ダメージにめげずに<r戦闘|せんとう>	Battle through heavy damage	from filtered v13 patched row; explicit apply v17	yes
+BTL_0104	0x1E3650	<r極限戦闘|きょくげんせんとう>	Extreme Battle	from filtered v13 patched row; explicit apply v17	yes
+BTL_0105	0x1E38E0	<r忍|にん>	Shinobi	from filtered v13 patched row; explicit apply v17	yes
+BTL_0106	0x1E38F0	%sカウント	%s Count	from filtered v13 patched row; explicit apply v17	yes
+BTL_0107	0x1E3960	<r壮絶|そうぜつ>サバイバル	Survival	from filtered v13 patched row; explicit apply v17	yes
+BTL_0108	0x1E39C0	<r撃破忍数|げきはにんずう>	Defeated Shinobi	from filtered v13 patched row; explicit apply v17	yes
+BTL_0109	0x1E39E0	%s<color000000><r忍|にん>	%s<color000000> Shinobi	from filtered v13 patched row; explicit apply v17	yes
+BTL_0110	0x1E3A00	クリアタイム	Clear Time	from filtered v13 patched row; explicit apply v17	yes
+BTL_0111	0x1E3A10	%s<color000000>カウント	%s<color000000> Count	from filtered v13 patched row; explicit apply v17	yes
+BTL_0112	0x1E3A30	<r忍名|しのびめい>	Shinobi Name	from filtered v13 patched row; explicit apply v17	yes
+BTL_0113	0x1E3A50	<r所持金|しょじきん>	Money Held	from filtered v13 patched row; explicit apply v17	yes
+BTL_0114	0x1E3A70	<r報酬金|ほうしゅうきん>	Reward Money	from filtered v13 patched row; explicit apply v17	yes
+BTL_0115	0x1E3A90	<r両|りょう>	Ryo	from filtered v13 patched row; explicit apply v17	yes
+BTL_0116	0x1E3AA0	クリア<r報酬|ほうしゅう>	Clear Reward	from filtered v13 patched row; explicit apply v17	yes
+BTL_0117	0x1E3AC0	レベルクリア<r報酬|ほうしゅう>	Level Clear Reward	from filtered v13 patched row; explicit apply v17	yes
+BTL_0118	0x1E3AE0	「<color2820FF>%s<color000000>」クリア！	"Cleared ""%s""!"	from filtered v13 patched row; explicit apply v17	yes
+BTL_0119	0x1E3B10	<r新|あら>たなランク「<color2820FF>%s<color000000>」に	"New rank ""%s"""	from filtered v13 patched row; explicit apply v17	yes
+BTL_0120	0x1E3B50	<r挑戦|ちょうせん>できるようになりました！！	is now available!!	from filtered v13 patched row; explicit apply v17	yes
+BTL_0121	0x1E3B90	<r新|あら>たなレベル「<color2820FF>%s<color000000>」に	"New level ""%s"""	from filtered v13 patched row; explicit apply v17	yes
+BTL_0122	0x1E3BE0	「<color080860><r究極連激戦|ナルティメットれんげきせん><color000000>」<r全|ぜん>クリア<r報酬|ほうしゅう>！	All-clear reward for <color080860>Ultimate Chain<color000000>!	from filtered v13 patched row; explicit apply v17	yes
+BTL_0123	0x1E3C50	<r装備品|そうびひん>「<color2820FF><r気配遮断装束|けはいしゃだんしょうぞく><color000000>」を<r手|て>に<r入|い>れた！	"Got equipment ""<color2820FF>Concealment Robe<color000000>""!"	from filtered v13 patched row; explicit apply v17	yes
+BTL_0124	0x1E3CD0	「<color080860>フリーバトル<color000000>」などの「<color080860><r難易度設定|なんいどせってい><color000000>」に	In <color080860>Free Battle<color000000> and other <color080860>Difficulty<color000000> settings,	from filtered v13 patched row; explicit apply v17	yes
+BTL_0125	0x1E3D40	<r最|もっと>も<r手強|てごわ>い<r難易度|なんいど>の「<color2820FF><r究極|ナルティメット><color000000>」が<r追加|ついか>されました！	"the toughest difficulty, ""<color2820FF>Ultimate<color000000>"", has been added!"	from filtered v13 patched row; explicit apply v17	yes
+BTL_0126	0x1E3DD0	<r腕|うで>に<r覚|おぼ>えのある<r者|もの>よ、<r挑戦|ちょうせん>せよ！！	Skilled fighters, take the challenge!!	from filtered v13 patched row; explicit apply v17	yes
+BTL_0127	0x1E3E40	<color080860>ランクイン<r報酬|ほうしゅう>！<color000000>	<color080860>Ranking Reward!<color000000>	from filtered v13 patched row; explicit apply v17	yes
+BTL_0128	0x1E3E80	<color2820FF>%s<r位|い><color000000>に<r入賞|にゅうしょう>した<r君|きみ>に	For placing <color2820FF>%s<color000000>,	from filtered v13 patched row; explicit apply v17	yes
+BTL_0129	0x1E3ED0	「<color2820FF>%s<color000000>」をプレゼント！	"you receive ""<color2820FF>%s<color000000>""!"	from filtered v13 patched row; explicit apply v17	yes
+BTL_0130	0x1E4170	%s × %s<r個|こ>	%s × %s	from filtered v13 patched row; explicit apply v17	yes
+BTL_0131	0x1E4190	<r自分|じぶん>ルール<r戦闘|せんとう>	Custom Rules Battle	from filtered v13 patched row; explicit apply v17	yes
+BTL_0132	0x1E5550	<r敵|てき>は<r忍術|にんじゅつ>にて<r攻|せ>めるべし	Defeat with Ninjutsu	from filtered v13 patched row; explicit apply v17	yes
+BTL_0133	0x1E5590	<r敵|てき>は<r奥義|おうぎ>にて<r攻|せ>めるべし	Defeat with an Ultimate	from filtered v13 patched row; explicit apply v17	yes
+BTL_0134	0x1E55C0	<r敵|てき>は<r連係攻撃|れんけいこうげき>にて<r攻|せ>めるべし	Defeat with Team Attacks	from filtered v13 patched row; explicit apply v17	yes
+BTL_0135	0x1E5600	<r変|か>わり<r身|み>にて<r敵|てき>を<r欺|あざむ>くべし	Deceive with Substitution	from filtered v13 patched row; explicit apply v17	yes
+BTL_0136	0x1E5640	<r追|お>い<r討|う>ちにて<r敵|てき>を<r追撃|ついげき>すべし	Chase with Pursuit Attacks	from filtered v13 patched row; explicit apply v17	yes
+BTL_0137	0x1E5680	<r連続|れんぞく><r攻撃|こうげき>にて<r敵|てき>を<r圧倒|あっとう>するべし	Overwhelm with combos	from filtered v13 patched row; explicit apply v17	yes
+BTL_0138	0x1E56D0	<r特殊忍具|とくしゅにんぐ>を<r用|もち>いて<r攻|せ>めるべし	Attack with special ninja tools	from filtered v13 patched row; explicit apply v17	yes
+BTL_0139	0x1E5710	<r敵|てき>は<r素早|すばや>く<r排除|はいじょ>すべし	Defeat the enemy quickly	from filtered v13 patched row; explicit apply v17	yes
+BTL_0140	0x1E5750	<r己|おのれ>の<r体力|たいりょく>は<r温存|おんぞん>すべし	Preserve your health	from filtered v13 patched row; explicit apply v17	yes
+BTL_0141	0x1E5790	<r強者|つわもの>を<r打|う>ち<r破|やぶ>るべし	Defeat the strong foe	from filtered v13 patched row; explicit apply v17	yes
+BTL_0142	0x1E57C0	<r秘|ひ>めたる<r力|ちから>を<r解|と>き<r放|はな>つべし	Unleash hidden power	from filtered v13 patched row; explicit apply v17	yes
+BTL_0143	0x1E5800	<r挑発|ちょうはつ>を<r以|も>って<r敵|てき>を<r刺激|しげき>すべし	Provoke the enemy with taunts	from filtered v13 patched row; explicit apply v17	yes
+BTL_0144	0x1E5850	<r壊|こわ>れ<r物|もの>を<r破壊|はかい>すべし	Destroy breakable objects	from filtered v13 patched row; explicit apply v17	yes
+BTL_0145	0x1E5880	<r特殊|とくしゅ><r条件|じょうけん>を<r完遂|かんすい>すべし	Complete special conditions	from filtered v13 patched row; explicit apply v17	yes
+BTL_0146	0x1E58C0	<r敵|てき>の<r奥義|おうぎ>を<r打|う>ち<r破|やぶ>るべし	Break the enemy Ultimate	from filtered v13 patched row; explicit apply v17	yes
+BTL_0147	0x1E5900	<r術|じゅつ>の<r競|せ>り<r合|あ>いにて<r勝利|しょうり>すべし	Win the jutsu clash	from filtered v13 patched row; explicit apply v17	yes
+BTL_0148	0x1E5940	<r敵|てき>に<r残影|ざんえい>をもって<r挑|いど>むべし	Challenge with Afterimage	from filtered v13 patched row; explicit apply v17	yes
+BTL_0149	0x1E5980	コンボ<r数|すう>%sHitボーナス	Combo %sHit Bonus	from filtered v13 patched row; explicit apply v17	yes
+BTL_0150	0x1E59A0	<r所持|しょじ>アイテム%s<r個|こ>ボーナス	Held Item %s Bonus	from filtered v13 patched row; explicit apply v17	yes
+BTL_0151	0x1E59D0	<r背景破壊|はいけいはかい>ボーナス	Stage Destruction Bonus	from filtered v13 patched row; explicit apply v17	yes
+BTL_0152	0x1E5A00	<r残影勝利|ざんえいしょうり>ボーナス	Afterimage Win Bonus	from filtered v13 patched row; explicit apply v17	yes
+BTL_0153	0x1E5A30	<r奥義|おうぎ>ボーナス	Ultimate Bonus	from filtered v13 patched row; explicit apply v17	yes
+BTL_0154	0x1E5A50	<r敵|てき>%sカウント<r以内撃破|いないげきは>ボーナス	Defeat Enemy in %s Count Bonus	from filtered v13 patched row; explicit apply v17	yes
+BTL_0156	0x1E5AC0	キャラクター<r組|く>み<r合|あ>わせボーナス	Character Pair Bonus	from filtered v13 patched row; explicit apply v17	yes
+BTL_0157	0x1E5AF0	<r特殊連係攻撃|とくしゅれんけいこうげき>%sHitボーナス	Special Team Attack %sHit Bonus	from filtered v13 patched row; explicit apply v17	yes
+BTL_0158	0x1E5B30	<r連係忍術|れんけいにんじゅつ>%sHitボーナス	Team Ninjutsu %sHit Bonus	from filtered v13 patched row; explicit apply v17	yes
+BTL_0159	0x1E5B60	<r連係奥義|れんけいおうぎ>%sHitボーナス	Team Ultimate %sHit Bonus	from filtered v13 patched row; explicit apply v17	yes
+BTL_0162	0x1E5BC0	カウント	Count	from filtered v13 patched row; explicit apply v17	yes
+BTL_0165	0x203090	赤丸スライドアタック	Akamaru Slide Attack	from filtered v13 patched row; explicit apply v17	yes
+BTL_0166	0x2030B0	ダイナミックマーキング	Dynamic Marking	from filtered v13 patched row; explicit apply v17	yes
+BTL_0167	0x2030D0	ブタ体当たりフィニッシュ	Pig Tackle Finish	from filtered v13 patched row; explicit apply v17	yes
+BTL_0169	0x203110	忍犬　フィニッシュ	Ninken Finish	from filtered v13 patched row; explicit apply v17	yes
+BTL_0171	0x203150	鬼鮫スイコウダン	Water Shark	from filtered v13 patched row; explicit apply v17	yes
+BTL_0172	0x208A30	<r操作設定|そうさせってい>	Control Settings	from filtered v13 patched row; explicit apply v17	yes
+BTL_0173	0x208A50	<r基本操作|きほんそうさ>コマンド<r表|ひょう>	Basic Command List	from filtered v13 patched row; explicit apply v17	yes
+BTL_0174	0x208A80	１Ｐコマンド<r表|ひょう>	1P Command List	from filtered v13 patched row; explicit apply v17	yes
+BTL_0175	0x208AA0	２Ｐコマンド<r表|ひょう>	2P Command List	from filtered v13 patched row; explicit apply v17	yes
+BTL_0176	0x208AC0	１Ｐか２Ｐのコマンド表（設定しろや）	1P/2P Command List	from filtered v13 patched row; explicit apply v17	yes
+BTL_0177	0x208AF0	<r練習設定|れんしゅうせってい>	Practice Settings	from filtered v13 patched row; explicit apply v17	yes
+BTL_0178	0x208B10	かんたん<r表示|ひょうじ><r設定|せってい>	Simple Display Settings	from filtered v13 patched row; explicit apply v17	yes
+BTL_0179	0x208B40	アイテムストック	Item Stock	from filtered v13 patched row; explicit apply v17	yes
+BTL_0180	0x208B60	<r任務|にんむ>の<r条件|じょうけん>	Mission Conditions	from filtered v13 patched row; explicit apply v17	yes
+BTL_0181	0x208B90	クリア<r条件|じょうけん>	Clear Conditions	from filtered v13 patched row; explicit apply v17	yes
+BTL_0182	0x208BB0	ゲームモード<r選択|せんたく>に<r戻|もど>る	Return to Mode Select	from filtered v13 patched row; explicit apply v17	yes
+BTL_0183	0x208BE0	キャラクター<r選択|せんたく>に<r戻|もど>る	Return to Character Select	from filtered v13 patched row; explicit apply v17	yes
+BTL_0184	0x208C10	ヒーローモードに<r戻|もど>る	Return to Hero Mode	from filtered v13 patched row; explicit apply v17	yes
+BTL_0185	0x208C30	<r対戦|たいせん>を<r終了|しゅうりょう>する	End Battle	from filtered v13 patched row; explicit apply v17	yes
+BTL_0186	0x208CA8	キャンセル	Cancel	from filtered v13 patched row; explicit apply v17	yes
+BTL_0187	0x208CF0	<r対戦|たいせん>	Versus:	from filtered v13 patched row; explicit apply v17	yes
+BTL_0188	0x208D10	<r練習|れんしゅう>	Practice:	from filtered v13 patched row; explicit apply v17	yes
+BTL_0190	0x208D80	を<r終了|しゅうりょう>して	End and return to	from filtered v13 patched row; explicit apply v17	yes
+BTL_0191	0x208DA0	キャラクター<r選択|せんたく>	Character Select	from filtered v13 patched row; explicit apply v17	yes
+BTL_0192	0x208DC0	ゲームモード<r選択|せんたく>	Mode Select	from filtered v13 patched row; explicit apply v17	yes
+BTL_0193	0x208DE0	ヒーローモード	Hero Mode	from filtered v13 patched row; explicit apply v17	yes
+BTL_0196	0x208EE0	アイテム<r名|めい>	Item Name	from filtered v13 patched row; explicit apply v17	yes
+BTL_0197	0x208F00	<r所持数|しょじすう>	Owned	from filtered v13 patched row; explicit apply v17	yes
+BTL_0198	0x208F20	<r使用数|しようすう>	Used	from filtered v13 patched row; explicit apply v17	yes
+BTL_0199	0x208F40	<r空|あき>ストック<r数|すう>	Empty Stocks	from filtered v13 patched row; explicit apply v17	yes
+BTL_0200	0x208F70	チャクラゲージ<r壱以上|いちいじょう>	Chakra Gauge 1+	from filtered v13 patched row; explicit apply v17	yes
+BTL_0201	0x208FA0	チャクラゲージ<r弐以上|にいじょう>	Chakra Gauge 2+	from filtered v13 patched row; explicit apply v17	yes
+BTL_0202	0x208FD0	チャクラゲージ<r参|さん>	Chakra Gauge 3	from filtered v13 patched row; explicit apply v17	yes
+BTL_0203	0x208FF0	<r地上|ちじょう><r投|な>げ	Ground Throw	from filtered v13 patched row; explicit apply v17	yes
+BTL_0204	0x209010	<r空中|くうちゅう><r投|な>げ	Air Throw	from filtered v13 patched row; explicit apply v17	yes
+BTL_0205	0x209030	ジャンプ<r中|ちゅう>に	During Jump	from filtered v13 patched row; explicit apply v17	yes
+BTL_0206	0x209050	チャクラ<r消費|しょうひ>	Uses Chakra	from filtered v13 patched row; explicit apply v17	yes
+BTL_0207	0x209070	<r当|あ>て<r身技|みわざ>	Counter Move	from filtered v13 patched row; explicit apply v17	yes
+BTL_0208	0x209090	<r連打技|れんだわざ>	Mash Move	from filtered v13 patched row; explicit apply v17	yes
+BTL_0209	0x2090B0	<r溜|た>め<r技|わざ>	Charge Move	from filtered v13 patched row; explicit apply v17	yes
+BTL_0210	0x2090D0	<r空中|くうちゅう><r連打技|れんだわざ>	Air Mash Move	from filtered v13 patched row; explicit apply v17	yes
+BTL_0211	0x209100	<r空中|くうちゅう><r溜|た>め<r技|わざ>	Air Charge Move	from filtered v13 patched row; explicit apply v17	yes
+BTL_0212	0x209130	チャクラ<r消費|しょうひ>／<r当|あ>て<r身技|みわざ>	Uses Chakra / Counter	from filtered v13 patched row; explicit apply v17	yes
+BTL_0213	0x209170	チャクラ<r消費|しょうひ>／<r溜|た>め<r技|わざ>	Uses Chakra / Charge	from filtered v13 patched row; explicit apply v17	yes
+BTL_0214	0x2091A0	チャクラ<r消費|しょうひ>／<r連打技|れんだわざ>	Uses Chakra / Mash	from filtered v13 patched row; explicit apply v17	yes
+BTL_0215	0x2091D0	<r溜|た>め<r技|わざ>　<r弱|じゃく>	Charge Move Weak	from filtered v13 patched row; explicit apply v17	yes
+BTL_0216	0x209200	<r溜|た>め<r技|わざ>　<r強|きょう>	Charge Move Strong	from filtered v13 patched row; explicit apply v17	yes
+BTL_0217	0x209230	／<r空中可|くうちゅうか>	/ Air OK	from filtered v13 patched row; explicit apply v17	yes
+BTL_0218	0x209250	／<r通常奥義|つうじょうおうぎ>	/ Normal Ultimate	from filtered v13 patched row; explicit apply v17	yes
+BTL_0219	0x209270	／<r逆転奥義|ぎゃくてんおうぎ>	/ Comeback Ultimate	from filtered v13 patched row; explicit apply v17	yes
+BTL_0220	0x209290	／<r覚醒奥義|かくせいおうぎ>	/ Awakening Ultimate	from filtered v13 patched row; explicit apply v17	yes
+BTL_0221	0x2092B0	／<r連係奥義|れんけいおうぎ>	/ Team Ultimate	from filtered v13 patched row; explicit apply v17	yes
+BTL_0222	0x209330	（ジャンプ<r中|ちゅう>）	(During Jump)	from filtered v13 patched row; explicit apply v17	yes
+BTL_0223	0x209350	（<r相手|あいて>の<r前|まえ>で）	(In front of opponent)	from filtered v13 patched row; explicit apply v17	yes
+BTL_0224	0x209380	<r後側方向|うしろがわほうこう>キー	Back Direction Key	from filtered v13 patched row; explicit apply v17	yes
+BTL_0225	0x2093B0	（<r相手|あいて>の<r攻撃|こうげき>の<r当|あ>たる<r瞬間|しゅんかん>）	(As the opponent attack hits)	from filtered v13 patched row; explicit apply v17	yes
+BTL_0226	0x209400	（<r投|な>げられた<r時|とき>、<r叩|たた>き<r付|つ>けられる<r瞬間|しゅんかん>）	(When thrown, as you hit the ground)	from filtered v13 patched row; explicit apply v17	yes
+BTL_0227	0x209450	（<r吹|ふ>っ<r飛|と>ばした<r方向|ほうこう>の<r方向|ほうこう>キー）	(Direction the enemy was launched)	from filtered v13 patched row; explicit apply v17	yes
+BTL_0228	0x2094A0	（<r相手|あいて>の<r追|お>い<r討|う>ち<r攻撃|こうげき>が<r当|あ>たる<r瞬間|しゅんかん>）	(As the enemy pursuit attack hits)	from filtered v13 patched row; explicit apply v17	yes
+BTL_0229	0x209500	（しばらく<r押|お>す）	(Hold briefly)	from filtered v13 patched row; explicit apply v17	yes
+BTL_0230	0x209520	（<r地上|ちじょう>で）	(On the ground)	from filtered v13 patched row; explicit apply v17	yes
+BTL_0231	0x209540	（<r高速移動|こうそくいどう>の<r相殺中|そうさいちゅう>や<r攻撃|こうげき>の<r相殺中|そうさいちゅう>）	(During high-speed move clash or attack clash)	from filtered v13 patched row; explicit apply v17	yes
+BTL_0232	0x2095B0	（マニュアル：<r出現後|しゅつげんご>もう<r一度|いちど><r押|お>すと<r攻撃|こうげき>）	(Manual: press again after it appears to attack)	from filtered v13 patched row; explicit apply v17	yes
+BTL_0233	0x209650	<r連係攻撃|れんけいこうげき>	Team Attack	from filtered v13 patched row; explicit apply v17	yes
+BTL_0234	0x209670	アイテム<r選択|せんたく>	Item Select	from filtered v13 patched row; explicit apply v17	yes
+BTL_0235	0x209690	アイテム<r使用|しよう>	Use Item	from filtered v13 patched row; explicit apply v17	yes
+BTL_0236	0x2096A8	ジャンプ	Jump	from filtered v13 patched row; explicit apply v17	yes
+BTL_0237	0x2096C0	<r二段|にだん>ジャンプ	Double Jump	from filtered v13 patched row; explicit apply v17	yes
+BTL_0238	0x2096E0	<r高速移動|こうそくいどう>	High-Speed Move	from filtered v13 patched row; explicit apply v17	yes
+BTL_0239	0x209700	<r飛|と>び<r退|の>き	Backstep	from filtered v13 patched row; explicit apply v17	yes
+BTL_0240	0x209720	<r変|か>わり<r身|み>の<r術|じゅつ>（チャクラ<r消費|しょうひ>）	Substitution Jutsu (uses Chakra)	from filtered v13 patched row; explicit apply v17	yes
+BTL_0241	0x209760	<r受|う>け<r身|み>	Recovery	from filtered v13 patched row; explicit apply v17	yes
+BTL_0242	0x209780	<r追|お>い<r討|う>ち	Pursuit	from filtered v13 patched row; explicit apply v17	yes
+BTL_0243	0x2097A0	<r追|お>い<r討|う>ち<r返|がえ>し	Pursuit Counter	from filtered v13 patched row; explicit apply v17	yes
+BTL_0244	0x2097D0	チャクラをためる	Charge Chakra	from filtered v13 patched row; explicit apply v17	yes
+BTL_0245	0x2097F0	<r挑発|ちょうはつ>	Taunt	from filtered v13 patched row; explicit apply v17	yes
+BTL_0246	0x209810	<r奥|おく>へ<r軸移動|じくいどう>	Axis Step Back	from filtered v13 patched row; explicit apply v17	yes
+BTL_0247	0x209840	<r手前|てまえ>へ<r軸移動|じくいどう>	Axis Step Forward	from filtered v13 patched row; explicit apply v17	yes
+BTL_0248	0x209870	ガード<r崩|くず>し	Guard Break	from filtered v13 patched row; explicit apply v17	yes
+BTL_0249	0x209890	<r残影追|ざんえいお>い<r討|う>ち	Afterimage Pursuit	from filtered v13 patched row; explicit apply v17	yes
+BTL_0250	0x209C80	やさしい	Easy	from filtered v13 patched row; explicit apply v17	yes
+BTL_0251	0x209C90	むずかしい	Hard	from filtered v13 patched row; explicit apply v17	yes
+BTL_0253	0x209CE0	ランダム	Random	from filtered v13 patched row; explicit apply v17	yes
+BTL_0254	0x209CF0	コマンド	Command	from filtered v13 patched row; explicit apply v17	yes
+BTL_0255	0x209D00	タイミング	Timing	from filtered v13 patched row; explicit apply v17	yes
+BTL_0256	0x209D28	ギリギリ	Critical	from filtered v13 patched row; explicit apply v17	yes
+BTL_0257	0x209D48	マニュアル	Manual	from filtered v13 patched row; explicit apply v17	yes
+BTL_0258	0x209D58	ジャンプ	Jump	from filtered v13 patched row; explicit apply v17	yes
+BTL_0259	0x209D68	二段ジャンプ	Double Jump	from filtered v13 patched row; explicit apply v17	yes
+BTL_0264	0x209E00	使用しない	Do Not Use	from filtered v13 patched row; explicit apply v17	yes
+BTL_0265	0x209E20	「<r使用不可|しようふか>」は、<r奥義|おうぎ>が<r使|つか>えなくなるので<r注意|ちゅうい>してください。	"When set to ""Unavailable"", Ultimates cannot be used."	from filtered v13 patched row; explicit apply v17	yes
+BTL_0266	0x209E90	「ランダム」にすると<r入力勝負|にゅうりょくしょうぶ>の<r方法|ほうほう>が<r毎回変化|まいかいへんか>します。	"When set to ""Random"", the input battle changes each time."	from filtered v13 patched row; explicit apply v17	yes
+BTL_0267	0x209F00	「コマンド」にするとボタンの<r入力勝負|にゅうりょくしょうぶ>になります。	"When set to ""Command"", it becomes a button input battle."	from filtered v13 patched row; explicit apply v17	yes
+BTL_0268	0x209F50	「タイミング」にするとボタンをタイミング<r良|よ>く<r押|お>す<r勝負|しょうぶ>になります。	"When set to ""Timing"", it becomes a contest of pressing the button with good timing."	from filtered v13 patched row; explicit apply v17	yes
+BTL_0269	0x209FB0	「<r回転|かいてん>」にすると<r左|ひだり>スティック、もしくは<r右|みぎ>スティックの<r回転数勝負|かいてんすうしょうぶ>になります。	"When set to ""Rotate"", it becomes a contest of rotating the left or right stick."	from filtered v13 patched row; explicit apply v17	yes
+BTL_0270	0x20A040	「<r連打|れんだ>」にするとボタンの<r連打勝負|れんだしょうぶ>になります。	"When set to ""Mash"", it becomes a button-mashing contest."	from filtered v13 patched row; explicit apply v17	yes
+BTL_0271	0x20A0B0	「<r通常|つうじょう>」にすると<r一定時間|いっていじかん>で<r体力|たいりょく>が<r全回復|ぜんかいふく>します。	"When set to ""Normal"", health fully recovers after a set time."	from filtered v13 patched row; explicit apply v17	yes
+BTL_0272	0x20A120	「<r半分|はんぶん>」にすると<r一定時間|いっていじかん>で<r体力|たいりょく>が<r半分|はんぶん>まで<r回復|かいふく>します。	"When set to ""Half"", health recovers up to half after a set time."	from filtered v13 patched row; explicit apply v17	yes
+BTL_0273	0x20A1A0	「ギリギリ」にすると<r常|つね>に<r体力|たいりょく>がギリギリの<r状態|じょうたい>になります。	"When set to ""Critical"", health always stays barely above zero."	from filtered v13 patched row; explicit apply v17	yes
+BTL_0275	0x20A220	アイテム出現	Item Spawn	from filtered v13 patched row; explicit apply v17	yes
+BTL_0276	0x20A230	チャクラ	 Q	from filtered v13 patched row; explicit apply v17	yes
+BTL_0277	0x20A240	ハンディキャップ	Handicap	from filtered v13 patched row; explicit apply v17	yes
+BTL_0278	0x20A280	<r方向|ほうこう>キー<r左右|さゆう>で<r対戦時間|たいせんじかん>の<r変更|へんこう>ができます。	Press Left/Right to change battle time.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0279	0x20A2E0	<r方向|ほうこう>キー<r左右|さゆう>でＣＯＭの<r強|つよ>さを<r変更|へんこう>できます。	Press Left/Right to change COM strength.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0280	0x20A340	<r方向|ほうこう>キー<r左右|さゆう>でアイテムの<r出現率|しゅつげんりつ>が<r変更|へんこう>できます。　　　　　<r多|おお>めにすると、いつもよりゲーム<r中|ちゅう>に<r出現|しゅつげん>するアイテムの<r数|かず>が<r多|おお>くなります。	Press Left/Right to change item spawn rate. Higher settings make more items appear during battle.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0281	0x20A430	<r方向|ほうこう>キー<r左右|さゆう>で<r忍術|にんじゅつ>などを<r使用|しよう>した<r時|とき>に、チャクラが<r減|へ>るか<r減|へ>らないかを<r設定|せってい>できます。	Press Left/Right to set whether Chakra decreases when using Ninjutsu and similar actions.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0282	0x20A4D0	<r方向|ほうこう>キー<r左右|さゆう>で<r奥義|おうぎ>の<r入力勝負|にゅうりょくしょうぶ>の<r切|き>り<r替|か>えなどが<r設定|せってい>できます。	Press Left/Right to switch Ultimate input battle settings.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0283	0x20A560	<r方向|ほうこう>キー<r左右|さゆう>でハンディキャップの<r設定|せってい>ができます。　　　　　<r赤|あか>いマークが<r多|おお>いほど、１Ｐが<r有利|ゆうり>。<r逆|ぎゃく>に<r青|あお>いマークが<r多|おお>いと２Ｐが<r有利|ゆうり>な<r設定|せってい>です。	Press Left/Right to set the handicap. More red marks favor 1P; more blue marks favor 2P.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0284	0x20A680	<r対戦設定|たいせんせってい>をデフォルトに<r戻|もど>しました。	Battle settings restored to default.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0286	0x20A758	連係モード	Team Mode	from filtered v13 patched row; explicit apply v17	yes
+BTL_0288	0x20A778	ダメージ量表示	Damage Display	from filtered v13 patched row; explicit apply v17	yes
+BTL_0290	0x20A798	変わり身の術	Substitution	from filtered v13 patched row; explicit apply v17	yes
+BTL_0292	0x20A810	<r方向|ほうこう>キー<r左右|さゆう>でプレイヤーの<r体力|たいりょく>の<r状態|じょうたい>を<r設定|せってい>することができます。	Press Left/Right to set the player health state.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0293	0x20A890	<r方向|ほうこう>キー<r左右|さゆう>でチャクラが<r減|へ>るか<r減|へ>らないかを<r設定|せってい>できます。	Press Left/Right to set whether Chakra decreases.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0294	0x20A900	<r方向|ほうこう>キー<r左右|さゆう>でプレイヤーの<r連係|れんけい>ゲージの<r溜|た>まり<r方|かた>を<r設定|せってい>することができます。	Press Left/Right to set how the player Team Gauge fills.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0295	0x20A990	<r方向|ほうこう>キー<r左右|さゆう>で<r連係|れんけい>の<r発動|はつどう>の<r仕方|しかた>を<r設定|せってい>することができます。	Press Left/Right to set how Team Attacks are activated.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0296	0x20AA10	<r方向|ほうこう>キー<r左右|さゆう>でアイテムの<r出現頻度|しゅつげんひんど>を<r設定|せってい>できます。	Press Left/Right to set item spawn frequency.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0297	0x20AA80	<r方向|ほうこう>キー<r左右|さゆう>でコマンドの<r表示|ひょうじ>をするか、しないかの<r設定|せってい>ができます。	Press Left/Right to show or hide the command display.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0298	0x20AAF0	<r方向|ほうこう>キー<r左右|さゆう>で<r相手|あいて>に<r対|たい>するダメージ<r量|りょう>の<r表示|ひょうじ>をするか、しないかの<r設定|せってい>ができます。	Press Left/Right to show or hide damage dealt to the opponent.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0299	0x20AB90	<r方向|ほうこう>キー<r左右|さゆう>でプラクティス<r中|ちゅう>の<r案内忍音声|あんないにんおんせい>の<r設定|せってい>をすることができます。	Press Left/Right to set the Practice guide ninja voice.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0300	0x20AC20	<r状態|じょうたい>が「ＣＯＭ」に<r設定|せってい>されている<r時|とき>の<r強|つよ>さを<r指定|してい>できます。	Set the strength used when State is set to COM.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0301	0x20AC90	<r状態|じょうたい>が「<r立|た>ち・ジャンプ・<r二段|にだん>ジャンプ」に<r設定|せってい>されている<r時|とき>の<r攻撃|こうげき>パターンを<r指定|してい>できます。	Set the attack pattern used when State is Stand, Jump, or Double Jump.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0302	0x20AD30	<r状態|じょうたい>が「<r立|た>ち・ジャンプ・<r二段|にだん>ジャンプ」に<r設定|せってい>されている<r時|とき>のガードパターンを<r指定|してい>できます。	Set the guard pattern used when State is Stand, Jump, or Double Jump.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0303	0x20ADD0	<r状態|じょうたい>が「<r立|た>ち・ジャンプ・<r二段|にだん>ジャンプ」に<r設定|せってい>されている<r時|とき>の<r行動|こうどう>パターンを<r指定|してい>できます。	Set the behavior pattern used when State is Stand, Jump, or Double Jump.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0304	0x20AE70	<r状態|じょうたい>が「ＣＯＭ」に<r設定|せってい>されている<r時|とき>の<r変|か>わり<r身|み>の<r術|じゅつ>の<r使用頻度|しようひんど>を<r指定|してい>できます。	Set Substitution Jutsu frequency when State is COM.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0305	0x20AF10	<r状態|じょうたい>が「<r手動|しゅどう>」<r以外|いがい>に<r設定|せってい>されている<r時|とき>の<r連係攻撃|れんけいこうげき>の<r使用頻度|しようひんど>を<r指定|してい>できます。	Set Team Attack frequency when State is not Manual.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0306	0x20AFC0	<r状態|じょうたい>が「<r手動|しゅどう>」<r以外|いがい>に<r設定|せってい>されている<r時|とき>の<r追|お>い<r討|う>ち<r返|がえ>しの<r頻度|ひんど>を<r指定|してい>できます。	Set Pursuit Counter frequency when State is not Manual.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0307	0x20B0C0	<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。<r手動|しゅどう>では、<r別|べつ>のコントローラで<r操作|そうさ>する<r事|こと>ができます。	Set the opponent state. In Manual, they can be controlled with another controller.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0308	0x20B170	<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。ＣＯＭでは、コンピュータと<r対戦|たいせん>する<r事|こと>ができます。	Set the opponent state. In COM, you can fight the computer.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0309	0x20B210	<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。<r立|た>ちでは、<r立|た>った<r状態|じょうたい>で<r下記|かき>で<r指定|してい>した<r行動|こうどう>をします。	Set the opponent state. In Stand, they stand and use the actions set below.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0310	0x20B2D0	<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。ジャンプでは、ジャンプしながら<r下記|かき>で<r指定|してい>した<r行動|こうどう>をします。	Set the opponent state. In Jump, they jump and use the actions set below.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0311	0x20B380	<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。<r二段|にだん>ジャンプでは、<r二段|にだん>ジャンプしながら<r下記|かき>で<r指定|してい>した<r行動|こうどう>をします。	Set the opponent state. In Double Jump, they double-jump and use the actions set below.	from filtered v13 patched row; explicit apply v17	yes
+BTL_0313	0x20B4D0	<r練習設定|れんしゅうせってい>をデフォルトに<r戻|もど>しました。	Practice settings restored to default.	from filtered v13 patched row; explicit apply v17	yes

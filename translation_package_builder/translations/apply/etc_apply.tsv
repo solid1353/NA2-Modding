@@ -1,0 +1,337 @@
+id	offset_hex	slot_capacity	source_japanese	chosen_translation	notes	enabled
+ETC_0001	0x24F50	72	<color080860>コレクション<color000000>を<r終了|しゅうりょう>しますか？	Quit Collection?	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0002	0x24F98	24	うずまきナルト	Naruto Uzumaki	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0003	0x24FB0	24	<r春野|はるの>サクラ	Sakura Haruno	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0004	0x24FE0	24	<r日向|ひゅうが>ネジ	Neji Hyuga	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0005	0x24FF8	16	ロック・リー	Rock Lee	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0006	0x25008	16	テンテン	Tenten	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0007	0x25018	24	マイト・ガイ	Might Guy	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0008	0x25030	32	<r奈良|なら>シカマル	Shikamaru Nara	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0009	0x25050	32	<r秋道|あきみち>チョウジ	Choji Akimichi	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0010	0x25070	32	<r山中|やまなか>いの	Ino Yamanaka	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0011	0x25090	32	<r猿飛|さるとび>アスマ	Asuma Sarutobi	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0012	0x250B0	32	<r犬塚|いぬづか>キバ	Kiba Inuzuka	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0013	0x250D0	32	<r油女|あぶらめ>シノ	Shino Aburame	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0014	0x250F0	32	<r日向|ひゅうが>ヒナタ	Hinata Hyuga	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0015	0x25110	32	<r夕日|ゆうひ><r紅|くれない>	Kurenai Yuhi	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0016	0x25130	40	<r風影|かぜかげ>・<r我愛羅|ガアラ>	Kazekage Gaara	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0017	0x25158	24	カンクロウ	Kankuro	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0018	0x25170	32	チヨバア（<r体術|たいじゅつ>）	Chiyo (Taijutsu)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0019	0x251A0	32	<r干柿鬼鮫|ほしがきキサメ>	Kisame Hoshigaki	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0020	0x251C0	16	デイダラ	Deidara	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0021	0x251D0	16	サソリ・ヒルコ	Sasori Hiruko	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0022	0x251E0	16	チヨバア	Chiyo	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0023	0x251F0	24	<r自来也|じらいや>	Jiraiya	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0024	0x25208	24	<r綱手|ツナデ>	Tsunade	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0025	0x25220	32	<r大蛇丸|オロチまる>	Orochimaru	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0026	0x25240	24	<r薬師|やくし>カブト	Kabuto Yakushi	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0027	0x25270	64	<r九尾第四覚醒状態|きゅうびだいよんかくせいじょうたい>	4-Tail Naruto	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0028	0x252B0	48	サソリ（<r自分傀儡|じぶんくぐつ>）	Sasori (Puppet)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0029	0x252E0	48	うずまきナルト（<r旧章|きゅうしょう>）	Naruto (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0030	0x25310	48	うちはサスケ（<r旧章|きゅうしょう>）	Sasuke (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0031	0x25340	48	<r春野|はるの>サクラ（<r旧章|きゅうしょう>）	Sakura (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0032	0x25370	48	<r日向|ひゅうが>ネジ（<r旧章|きゅうしょう>）	Neji (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0033	0x253A0	48	ロック・リー（<r旧章|きゅうしょう>）	Lee (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0034	0x253D0	48	テンテン（<r旧章|きゅうしょう>）	Tenten (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0035	0x25400	48	<r奈良|なら>シカマル（<r旧章|きゅうしょう>）	Shikamaru (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0036	0x25430	64	<r秋道|あきみち>チョウジ（<r旧章|きゅうしょう>）	Choji (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0037	0x25470	48	<r山中|やまなか>いの（<r旧章|きゅうしょう>）	Ino (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0038	0x254A0	48	<r犬塚|いぬづか>キバ（<r旧章|きゅうしょう>）	Kiba (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0039	0x254D0	48	<r油女|あぶらめ>シノ（<r旧章|きゅうしょう>）	Shino (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0040	0x25500	48	<r日向|ひゅうが>ヒナタ（<r旧章|きゅうしょう>）	Hinata (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0041	0x25530	32	<r日向|ひゅうが>ハナビ	Hanabi Hyuga	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0042	0x25550	48	<r木|こ>ノ<r葉丸|はまる><r軍団|ぐんだん>	Konohamaru Corps	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0043	0x25580	16	みたらしアンコ	Anko Mitarashi	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0044	0x25590	32	<r初代火影|しょだいほかげ>	1st Hokage	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0045	0x255B0	32	<r二代目火影|にだいめほかげ>	2nd Hokage	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0046	0x255D0	32	<r三代目火影|さんだいめほかげ>	3rd Hokage	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0047	0x255F0	48	<r黄色|きいろ>い<r閃光|せんこう>	Yellow Flash	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0048	0x25620	64	<r砂瀑|さばく>の<r我愛羅|ガアラ>（<r旧章|きゅうしょう>）	Gaara (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0049	0x25660	48	カンクロウ（<r旧章|きゅうしょう>）	Kankuro (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0050	0x25690	32	テマリ（<r旧章|きゅうしょう>）	Temari (PTS)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0051	0x256B0	24	<r君麻呂|キミマロ>	Kimimaro	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0052	0x256C8	24	<r左近|サコン>	Sakon	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0053	0x256E0	32	<r多由也|タユヤ>	Tayuya	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0054	0x25700	32	<r鬼童丸|キドウマル>	Kidomaru	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0055	0x25720	32	<r次郎坊|ジロウボウ>	Jirobo	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0056	0x25740	32	<r桃地|ももち><r再不斬|ザブザ>	Zabuza Momochi	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0057	0x25760	16	<r白|ハク>	Haku	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0058	0x25770	48	うずまきナルト（<r九尾|きゅうび>）	Naruto (Nine-Tails)	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0059	0x257A0	48	うちはサスケ<r状態|じょうたい>２	Sasuke State 2	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0060	0x257D0	32	すい<r拳|けん>リー	Drunken Lee	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0061	0x257F0	48	<r憑依体我愛羅|ひょういたいガアラ>	Shukaku Gaara	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0062	0x25820	32	<r超|ちょう>チョウジ	Super Choji	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0063	0x25840	48	<r次郎坊|ジロウボウ><r状態|じょうたい>２	Jirobo State 2	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0064	0x25870	48	<r鬼童丸|キドウマル><r状態|じょうたい>２	Kidomaru State 2	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0065	0x258A0	48	<r多由也|タユヤ><r状態|じょうたい>２	Tayuya State 2	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0066	0x258D0	48	<r左近|サコン><r状態|じょうたい>２	Sakon State 2	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0067	0x25900	40	<r君麻呂|キミマロ><r状態|じょうたい>２	Kimimaro State 2	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0068	0x25928	28	ジオラマ	Diorama	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0069	0x25D00	40	<r影分身|かげぶんしん>の<r術|じゅつ>	Shadow Clone	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0070	0x25D40	24	<r暴走|ぼうそう>	Rampage	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0071	0x25D70	40	<r気|き>を<r引|ひ>き<r締|し>めて…	Stay Sharp...	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0072	0x25DB0	24	<r女|おんな>らしく	Like a Lady	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0073	0x25DE0	32	<r拳|こぶし>に<r力|ちから>を！	Power Fist!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0074	0x25E10	48	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>	Super Beast Scroll	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0075	0x25E50	24	<r索敵|さくてき>	Search	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0076	0x25E80	24	<r飛翔|ひしょう>	Flight	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0077	0x25EF0	32	<r牽制攻撃|けんせいこうげき>	Feint Attack	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0078	0x25F20	32	<r忍犬口寄|にんけんくちよ>せ	Ninken Summon	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0079	0x25F50	24	<r柔拳|じゅうけん>	Gentle Fist	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0080	0x25F80	32	<r八卦空掌|はっけくうしょう>	Air Palm	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0081	0x25FE0	32	<r戦闘姿勢|せんとうしせい>	Battle Stance	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0082	0x26010	40	<r木|こ>ノ<r葉昇風|はしょうふう>	Leaf Rising Wind	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0083	0x26050	40	<r限界|げんかい>を<r超|こ>えろ！	Break Limits!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0084	0x26090	40	<r忍具|にんぐ>の<r使|つか>い<r手|て>	Tool User	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0085	0x260D0	32	<r棒体術|ぼうたいじゅつ>	Staff Taijutsu	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0086	0x26140	40	<r熱血青春|ねっけつせいしゅん>ポーズ！	Hot-Blooded Pose!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0087	0x26180	24	<r朝孔雀|あさくじゃく>	Morning Peacock	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0088	0x261B0	24	<r開門|かいもん>ッ！	Open Gate!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0089	0x261E8	16	ホラよっ！	Here!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0090	0x26210	40	<r忍法|にんぽう>・<r影縫|かげぬ>い	Shadow Stitching	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0091	0x26320	24	かわいさアピール	Cute Appeal	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0092	0x26350	32	<r綺麗|きれい>な<r花|はな>	Pretty Flower	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0093	0x263A0	24	<r装着|そうちゃく>！	Equip!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0094	0x263D0	24	<r一閃|いっせん>！	Flash!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0095	0x26400	24	<r登場|とうじょう>	Entrance	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0096	0x26458	16	ダイナミック！	Dynamic!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0097	0x26480	32	<r静|しず>かな<r男|おとこ>	Quiet Man	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0098	0x264B0	24	<r寄壊蟲|きかいちゅう>	Destruction Bugs	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0099	0x26580	24	<r掌打|しょうだ>！	Palm Strike!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0100	0x265E0	32	<r幻術発動|げんじゅつはつどう>	Genjutsu Activate	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0101	0x26610	16	こんなものね	That's That	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0102	0x26630	16	<r威圧|いあつ>	Pressure	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0103	0x26650	24	<r砂|すな>の<r殻|から>	Sand Shell	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0104	0x26680	24	<r逃|に>がさん…	No Escape...	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0105	0x266C0	40	<r傀儡|くぐつ>の<r巻物|まきもの>	Puppet Scroll	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0106	0x26730	32	<r巨大扇子|きょだいせんす>	Giant Fan	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0107	0x26800	24	<r父|ちち>と<r母|はは>	Father and Mother	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0108	0x26880	32	<r鋭|するど>い<r蹴|け>り	Sharp Kick	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0109	0x268B0	24	<r幻術|げんじゅつ>！？	Genjutsu!?	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0110	0x26920	40	<r大刀|だいとう>・<r鮫肌|サメハダ>	Samehada	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0111	0x269D0	32	<r芸術作品|げいじゅつさくひん>	Artwork	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0112	0x26A00	32	<r空|そら>から<r攻|せ>める！	Attack from Above!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0113	0x26A30	40	<r完璧|かんぺき>なる<r攻守|こうしゅ>	Perfect Off/Def	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0114	0x26A70	48	<r一番|いちばん>のお<r気|き>に<r入|い>り	Favorite	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0115	0x26AB0	32	<r自分自身|じぶんじしん>	Myself	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0116	0x26B10	56	<r四代目|よんだいめ>が<r遺|のこ>した<r術|じゅつ>	4th's Jutsu	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0117	0x26B60	32	<r蝦蟇仙人|ガマせんにん>	Toad Sage	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0118	0x26C00	32	<r痛天脚|つうてんきゃく>	Heaven Kick	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0119	0x26C70	24	<r突撃|とつげき>！	Charge!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0120	0x26CF0	48	<r木遁|もくとん>・<r木錠壁|もくじょうへき>	Wood Locking Wall	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0121	0x26D30	32	<r不敵|ふてき>な<r笑|え>み	Fearless Smile	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0122	0x26D60	40	<r潜影多蛇手|せんえいたじゃしゅ>	Hidden Shadow Snakes	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0123	0x26DA0	40	<r脅威|きょうい>の<r存在|そんざい>	Threat	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0124	0x26DE0	48	<r大蛇丸|オロチまる>への<r忠誠|ちゅうせい>	Loyal to Orochimaru	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0125	0x26E40	16	ストック	Stock	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0126	0x26EC8	28	<r千鳥|ちどり>	Chidori	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0127	0x28610	48	<r雷切|らいきり>・<r一尖|いっせん>	Raikiri: Issen	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0128	0x28670	32	コピー<r忍術|にんじゅつ>	Copy Ninjutsu	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0129	0x286C0	48	<r八卦六十四掌|はっけろくじゅうよんしょう>	64 Palms	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0130	0x28AE0	32	<r砂縛牢|さばくろう>	Sand Prison	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0131	0x29740	32	<r牙通牙|がつうが>	Fang Over Fang	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0132	0x29760	32	<r牙狼牙|がろうが>	Wolf Fang	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0133	0x29830	32	<r白眼|びゃくがん>	Byakugan	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0134	0x29A60	48	<r飛雷神|ひらいしん>の<r術|じゅつ>	Flying Raijin	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0135	0x29A90	32	<r砂瀑大葬|さばくたいそう>	Sand Burial	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0136	0x2B2E0	48	<r木|こ>ノ<r葉|は><r隠|がく>れの<r里|さと>	Hidden Leaf	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0137	0x2B310	32	<r木|こ>ノ<r葉|は>の<r門|もん>	Leaf Gate	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0138	0x2B330	48	<r五封結界|ごふうけっかい>の<r崖|がけ>	Five-Seal Cliff	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0139	0x2B360	32	<r暁|あかつき>のアジト	Akatsuki Hideout	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0140	0x2B380	32	<r根|ね>の<r本部|ほんぶ>	Root HQ	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0141	0x2B3A0	32	<r天地橋|てんちきょう>	Tenchi Bridge	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0142	0x2B3C0	32	<r大蛇丸|オロチまる>のアジト	Orochimaru Hideout	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0143	0x2B3E0	48	<r大蛇|だいじゃ>の<r祭壇|さいだん>	Great Snake Altar	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0144	0x2B410	32	<r賑|にぎ>わいの<r里|さと>	Busy Village	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0145	0x2B430	32	<r火影|ほかげ>の<r屋敷|やしき>	Hokage Mansion	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0146	0x2B450	32	<r世界|せかい>を<r駆|か>ける	Across the World	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0147	0x2B470	32	<r砂隠|すながく>れの<r里|さと>	Hidden Sand	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0148	0x2B490	48	<r邪傑|じゃけつ>の<r巣穴|すあな>	Villain Lair	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0149	0x2B4C0	32	<r赤雲|せきうん>	Red Clouds	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0150	0x2B4E0	32	<r激戦|げきせん>を<r越|こ>えて	After Fierce Battle	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0151	0x2B500	32	カカシ<r道場|どうじょう>	Kakashi Dojo	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0152	0x2B520	32	やすらぎと<r再会|さいかい>と	Peace and Reunion	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0153	0x2B540	32	<r暗雲|あんうん><r来|きた>る	Dark Clouds	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0154	0x2B560	48	<r風影|かぜかげ><r襲撃|しゅうげき>	Kazekage Assault	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0155	0x2B590	32	<r緊急指令|きんきゅうしれい>	Emergency Order	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0156	0x2B5B0	32	<r走|はし>る<r緊迫|きんぱく>	Rising Tension	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0157	0x2B5D0	48	<r恐|おそ>ろしき<r怪人|かいじん>	Fearsome Monster	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0158	0x2B600	48	<r真紅|しんく>の<r激闘|げきとう>	Crimson Battle	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0159	0x2B630	48	<r闇|やみ>を<r抱|いだ>きし<r者|もの>たち	Those Bearing Darkness	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0160	0x2B660	48	<r虚|うつ>ろ<r消|き>えゆく<r世界|せかい>	Fading Hollow World	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0161	0x2B690	16	<r絆|きずな>	Bonds	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0162	0x2B6A0	48	<r偽|いつわ>りの<r存在|そんざい>	False Existence	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0163	0x2B6D0	48	<r最凶|さいきょう>の<r傀儡師|くぐつし>	Deadliest Puppeteer	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0164	0x2B700	32	<r決意|けつい><r固|かた>めて	Firm Resolve	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0165	0x2B720	32	サクラ<r舞|ま>う	Sakura Dances	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0166	0x2B740	48	<r猛|た>け<r吼|ほ>ゆる<r者|もの>	Roaring Beast	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0167	0x2B770	48	<r願|ねが>い…<r空|そら>に<r舞|ま>いて	Wish in the Sky	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0168	0x2B7A0	48	<r新生|しんせい>の<r一斑|いっぱん>	New Team	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0169	0x2B7D0	32	<r碧|あお>き<r背中|せなか>	Blue Back	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0170	0x2B7F0	32	<r巨悪現|きょあくあらわ>る	Great Evil Appears	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0171	0x2B810	48	<r荒|あ>れ<r狂|くる>う<r獣|けもの>	Raging Beast	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0172	0x2B840	48	<r切迫|せっぱく>の<r二人|ふたり>	Two in Crisis	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0173	0x2B870	40	<r帰|かえ>るべき<r場所|ばしょ>へ	Where We Belong	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0174	0x2B898	28	オルゴール	Music Box	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0175	0x2BB60	32	<r悲|かな>しみと<r怒|いか>り	Sadness and Anger	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0176	0x2BB80	32	ナルトの<r決意|けつい>	Naruto's Resolve	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0177	0x2BBA0	32	<r激情|げきじょう>	Passion	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0178	0x2BBC0	32	<r二人|ふたり>の<r繋|つな>がり	Two Bonds	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0179	0x2BBE0	32	<r再会|さいかい>…そして…	Reunion... And...	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0180	0x2BC00	32	サクラの<r約束|やくそく>	Sakura's Promise	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0181	0x2BC20	16	<r決意|けつい>	Resolve	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0182	0x2BC30	24	<r負|ま>けん<r気|き>	Fighting Spirit	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0183	0x2BC48	24	ナルトのために	For Naruto	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0184	0x2BC60	32	いつも<r通|どお>り	As Always	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0185	0x2BC80	48	<r初|はじ>めての<r一言|ひとこと>	First Words	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0186	0x2BCB0	48	<r狙|ねら>ったキャラ<r位置|いち>	Target Position	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0187	0x2BCE0	32	<r冷|つめ>たい<r言葉|ことば>	Cold Words	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0188	0x2BD00	32	<r感情|かんじょう>	Emotion	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0189	0x2BD20	32	<r確|たし>かめたいもの	What I Want to Know	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0190	0x2BD40	32	カカシの<r本気|ほんき>	Kakashi Serious	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0191	0x2BD60	48	<r成長|せいちょう>への<r喜|よろこ>び	Joy of Growth	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0192	0x2BD90	48	ナルトの<r気持|きも>ち・<r壱|いち>	Naruto's Feelings 1	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0193	0x2BDC0	48	ナルトの<r気持|きも>ち・<r弐|に>	Naruto's Feelings 2	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0194	0x2BDF0	32	<r正|ただ>しき<r道|みち>へ	To the Right Path	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0195	0x2BE10	48	“<r暁|あかつき>”を<r前|まえ>に	Facing Akatsuki	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0196	0x2BE40	48	<r偽者|にせもの>との<r遭遇|そうぐう>	Fake Encounter	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0197	0x2BE70	48	<r勝利|しょうり>の<r確信|かくしん>	Certain Victory	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0198	0x2BEA0	32	<r近距離戦|きんきょりせん>	Close Combat	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0199	0x2BEC0	32	<r揺|ゆ>るぎない<r自信|じしん>	Unshakable Confidence	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0200	0x2BEE0	32	<r修業不足|しゅぎょうぶそく>？	Need More Training?	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0201	0x2BF00	32	<r勝利|しょうり>！	Victory!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0202	0x2BF20	32	<r真剣勝負|しんけんしょうぶ>！	Serious Match!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0203	0x2BF40	32	<r青春|せいしゅん>とは！	What Is Youth!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0204	0x2BF60	32	<r感激|かんげき>！	Moved!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0205	0x2BF80	32	つっこみ<r役|やく>	Straight Man	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0206	0x2BFA0	32	テンテンの<r自信|じしん>	Tenten's Confidence	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0207	0x2BFC0	32	<r勝負開始|しょうぶかいし>	Battle Start	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0208	0x2BFE0	32	ちょっと<r感心|かんしん>	A Bit Impressed	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0209	0x2C000	32	<r川|かわ>の<r国|くに>へ！！	To the Land of Rivers!!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0210	0x2C020	32	<r獣|けもの>レベル…？	Beast Level...?	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0211	0x2C040	40	<r高揚|こうよう>する<r心|こころ>！！	Rising Excitement!!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0212	0x2C068	24	さすがオレ！！	That's Me!!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0213	0x2C080	40	<r謎|なぞ>の<r忍現|しのびあらわ>る	Mysterious Ninja	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0214	0x2C0C0	48	<r面倒|めんどう>くささ<r満点|まんてん>	Total Drag	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0215	0x2C0F0	32	<r男|おとこ>の<r意地|いじ>	Manly Pride	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0216	0x2C110	48	<r明晰|めいせき>な<r頭脳|ずのう>	Sharp Mind	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0217	0x2C140	32	ポッチャリ<r系|けい>	Chubby Type	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0218	0x2C160	32	<r強力|ごうりき>チョウジ	Powerful Choji	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0219	0x2C180	32	シカマルとの<r連係|れんけい>	Teamwork with Shikamaru	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0220	0x2C1A0	32	<r準備万端|じゅんびばんたん>	All Ready	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0221	0x2C1C0	32	<r旧知|きゅうち>の<r仲|なか>	Old Friends	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0222	0x2C1E0	32	いの<r登場|とうじょう>	Ino Appears	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0223	0x2C200	48	<r久々|ひさびさ>の<r対面|たいめん>	Reunion After Long	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0224	0x2C230	32	サクラと<r共闘|きょうとう>？	Team Up with Sakura?	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0225	0x2C250	32	チョウジと<r連係|れんけい>	Teamwork with Choji	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0226	0x2C270	32	<r自信満々|じしんまんまん>	Full Confidence	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0227	0x2C290	32	<r戦闘|せんとう>へ	To Battle	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0228	0x2C2B0	32	<r優|やさ>しい<r言葉|ことば>	Kind Words	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0229	0x2C2D0	32	<r感謝|かんしゃ>	Thanks	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0230	0x2C2F0	32	アスマの<r意地|いじ>	Asuma's Pride	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0231	0x2C310	32	<r新|あら>たな<r手|て>	A New Move	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0232	0x2C330	32	ナルトとの<r再会|さいかい>	Reunion with Naruto	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0233	0x2C350	32	<r大|おお>きくなった？	Grown Up?	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0234	0x2C370	32	ヒナタが<r倒|たお>れて	Hinata Falls	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0235	0x2C390	24	ヒナタを<r守|まも>って	Protect Hinata	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0236	0x2C410	32	<r静|しず>かなる<r自信|じしん>	Quiet Confidence	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0237	0x2C430	32	<r微|かす>かな<r安心|あんしん>	Faint Relief	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0238	0x2C450	32	ナルトを<r見|み>かけて	Spotting Naruto	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0239	0x2C470	32	<r戦闘前|せんとうまえ>	Before Battle	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0240	0x2C490	32	つのる<r心配|しんぱい>	Growing Worry	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0241	0x2C4B0	32	ナルトの<r助太刀|すけだち>	Naruto Helps	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0242	0x2C4D0	48	<r感謝|かんしゃ>の<r言葉|ことば>	Words of Thanks	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0243	0x2C500	32	<r幻術使|げんじゅつつか>い	Genjutsu User	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0244	0x2C520	32	アスマと<r共闘|きょうとう>	Team Up with Asuma	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0245	0x2C540	32	<r共|とも>に…！	Together...!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0246	0x2C560	32	<r肩透|かたす>かし	Letdown	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0247	0x2C580	48	<r不注意厳禁|ふちゅういげんきん>	No Carelessness	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0248	0x2C5B0	32	<r風影|かぜかげ>として	As Kazekage	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0249	0x2C5D0	48	<r空虚|くうきょ>な<r世界|せかい>で	In an Empty World	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0250	0x2C600	32	<r存在|そんざい>	Existence	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0251	0x2C620	32	<r新|あたら>しい<r自分|じぶん>	New Self	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0252	0x2C640	24	<r弟|おとうと>のために	For My Brother	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0253	0x2C658	24	<r驚|おどろ>き	Surprise	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0254	0x2C670	48	<r滲|にじ>み<r出|で>る<r悔|くや>しさ	Leaking Frustration	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0255	0x2C6A0	32	<r自慢|じまん>の<r傀儡|くぐつ>	Proud Puppet	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0256	0x2C6C0	32	<r姉|あね>と<r共|とも>に	With My Sister	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0257	0x2C6E0	48	<r風|かぜ>の<r使|つか>い<r手|て>	Wind User	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0258	0x2C710	32	<r我愛羅|ガアラ>の<r前|まえ>で	Before Gaara	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0259	0x2C730	32	<r手加減|てかげん>	Holding Back	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0260	0x2C750	32	<r姉|あね>の<r喜|よろこ>び	Sister's Joy	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0261	0x2C770	32	<r邂逅|かいこう>	Encounter	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0262	0x2C790	24	<r忠告|ちゅうこく>	Warning	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0263	0x2C7A8	24	<r余裕|よゆう>	Composure	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0264	0x2C7C0	48	<r九尾|きゅうび>の<r人柱力|じんちゅうりき>	Nine-Tails Jinchuriki	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0265	0x2C7F0	48	<r強者|きょうしゃ>の<r男|おとこ>	Strong Man	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0266	0x2C820	48	<r珍獣|ちんじゅう>との<r再会|さいかい>	Reunion with Beast	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0267	0x2C850	32	<r獣|けもの>レベル	Beast Level	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0268	0x2C870	48	<r襲|おそ>い<r掛|か>かる<r鬼鮫|キサメ>	Kisame Attacks	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0269	0x2C8A0	48	<r高揚|こうよう>する<r心|こころ>	Rising Excitement	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0270	0x2C8D0	32	<r苛立|いらだ>ち	Irritation	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0271	0x2C8F0	48	<r一尾|いちび>の<r人柱力|じんちゅうりき>	One-Tail Jinchuriki	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0272	0x2C920	32	<r刺激|しげき>を<r求|もと>めて	Seeking Excitement	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0273	0x2C940	32	<r変|か>わり<r者|もの>	Oddball	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0274	0x2C960	32	デイダラの<r挑発|ちょうはつ>	Deidara's Taunt	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0275	0x2C980	16	<r予告|よこく>	Notice	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0276	0x2C9C0	32	<r最後|さいご>の<r喜|よろこ>び	Final Joy	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0277	0x2C9E0	32	<r砂|すな>と<r木|こ>ノ<r葉|は>	Sand and Leaf	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0278	0x2CA00	32	<r最後|さいご>のお<r願|ねが>い	Last Request	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0279	0x2CA20	32	サソリの<r性格|せいかく>	Sasori's Nature	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0280	0x2CA40	48	<r三代目風影|さんだいめかぜかげ>	Third Kazekage	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0281	0x2CA70	32	<r自分傀儡|じぶんくぐつ>	Self Puppet	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0282	0x2CA90	32	<r止|と>まる<r傀儡|くぐつ>	Stopped Puppet	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0283	0x2CAB0	48	<r自来也|じらいや>の<r魅力|みりょく>？	Jiraiya's Charm?	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0284	0x2CAE0	32	<r取材|しゅざい>	Research	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0285	0x2CB00	32	<r因縁|いんねん>のケリ	End of a Grudge	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0286	0x2CB20	32	<r高笑|たかわら>い	Loud Laugh	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0287	0x2CB40	40	<r三忍|さんにん>の<r実力|じつりょく>	Sannin Power	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0288	0x2CB68	24	<r監視|かんし>	Watch	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0289	0x2CB80	32	<r決着|けっちゃく>の<r時|とき>	Time to Settle	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0290	0x2CBA0	48	<r綱手|ツナデ>の<r性格|せいかく>	Tsunade's Nature	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0291	0x2CBD0	32	<r五代目火影|ごだいめほかげ>	Fifth Hokage	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0292	0x2CBF0	32	<r綱手|ツナデ>と<r組手|くみて>	Spar with Tsunade	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0293	0x2CC10	32	<r本領発揮|ほんりょうはっき>	True Power	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0294	0x2CC30	32	<r付|つ>き<r人|びと>シズネ	Attendant Shizune	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0295	0x2CC50	40	<r医療忍者|いりょうにんじゃ>として	As a Medical Ninja	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0296	0x2CC78	24	おめでとう！	Congrats!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0297	0x2CC90	32	<r代行|だいこう>の<r男|おとこ>	Substitute Man	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0298	0x2CCB0	16	チームワーク	Teamwork	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0299	0x2CCC0	48	<r共通|きょうつう>の<r目的|もくてき>	Common Goal	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0300	0x2CCF0	32	<r軽|かる>い<r挑発|ちょうはつ>	Light Taunt	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0301	0x2CD10	32	<r行動|こうどう>あるのみ	Act Now	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0302	0x2CD30	48	<r大蛇丸|オロチまる><r現|あらわ>る	Orochimaru Appears	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0303	0x2CD60	32	<r挑発|ちょうはつ>	Taunt	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0304	0x2CD80	32	<r二人|ふたり>の<r対比|たいひ>	Two Contrasts	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0305	0x2CDA0	32	<r通告|つうこく>	Notice	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0306	0x2CDC0	48	<r五年|ごねん>ぶりの<r再会|さいかい>	Reunion After 5 Years	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0307	0x2CDF0	32	<r共感|きょうかん>	Sympathy	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0308	0x2CE10	32	カブトの<r挑発|ちょうはつ>	Kabuto's Taunt	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0309	0x2CE30	32	<r感心|かんしん>	Impressed	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0310	0x2CE50	32	サスケの<r存在|そんざい>	Sasuke's Existence	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0311	0x2CE80	16	<r気|き>まぐれ	Whim	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0312	0x2CE90	32	<r愚|おろ>かなること	Foolishness	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0313	0x2CEB0	32	<r兄|あに>との<r繋|つな>がり	Bond with Brother	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0314	0x2CED0	52	<r目障|めざわ>りな<r存在|そんざい>	Eyesore	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0315	0x2D950	40	<r紅班勢揃|くれないはんせいぞろ>い	Team Kurenai Assembles	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0316	0x2D9D0	24	いのシカチョウトリオ	Ino-Shika-Cho Trio	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0317	0x2DA30	32	ナルトの<r帰郷|ききょう>	Naruto Returns	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0318	0x2DA70	40	<r風影|かぜかげ>の<r闘|たたか>い	Kazekage Battle	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0319	0x2DAE0	48	<r木|こ>ノ<r葉|は>の<r白|しろ>い<r牙|きば>！？	White Fang of Leaf!?	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0320	0x2DB80	40	“<r暁|あかつき>”の<r目的|もくてき>	Akatsuki Goal	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0321	0x2DC30	40	<r傀儡師|くぐつし>の<r激闘|げきとう>	Puppeteer Battle	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0322	0x2DCA0	40	<r突然|とつぜん>の<r襲撃|しゅうげき>！	Sudden Attack!	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0323	0x2DDA0	24	シミュレーション	Simulation	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0324	0x2DE70	40	<r人外|じんがい>の<r闘|たたか>い	Inhuman Battle	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0325	0x2DF50	40	<r運命|うんめい>の<r再会|さいかい>	Fated Reunion	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0326	0x2DFF0	48	<r漆黒|しっこく>に<r浮|う>かぶ<r影|かげ>	Shadow in Black	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0336	0x2EE50	32	<r対戦相手|たいせんあいて>	Opponent	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0327	0x2F2A0	48	<r人形|にんぎょう>を<r購入|こうにゅう>します。	Buy figures.	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0328	0x2F2D0	48	<r奥義|おうぎ>を<r購入|こうにゅう>します。	Buy Ultimates.	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0329	0x2F300	48	<r音楽|おんがく>を<r購入|こうにゅう>します。	Buy music.	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0330	0x2F330	48	<r音声|おんせい>を<r購入|こうにゅう>します。	Buy voices.	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0331	0x2F360	64	<r案内忍|あんないにん>を<r購入|こうにゅう>します。	Buy guide ninja.	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0332	0x2F3A0	80	<r購入|こうにゅう>するキャラクターを<r選択|せんたく>してください。	Choose a character to buy.	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0333	0x2F500	80	<color080860>ショップ<color000000>を<r終了|しゅうりょう>しますか？	Quit Shop?	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0334	0x2F6F0	48	ハズレくじを<r引|ひ>いてしまいました…。	You drew a losing ticket...	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes
+ETC_0335	0x2F8B0	48	<r残念|ざんねん>、はずれてしまいました。	Too bad, you missed.	ASCII in-place ETC apply from previous v4b reference table; no ETC growth/no relocation	yes

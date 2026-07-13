@@ -36,6 +36,22 @@ param(
 )
 
 $na2Root = $PSScriptRoot
+$logDirectory = Join-Path $na2Root 'logs'
+$logTimestamp = Get-Date -Format 'yyyyMMdd_HHmmss_fff'
+$logPath = Join-Path $logDirectory "na2_${logTimestamp}_pid$PID.log"
+$transcriptStarted = $false
+
+try {
+    New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
+    Start-Transcript -LiteralPath $logPath -UseMinimalHeader | Out-Null
+    $transcriptStarted = $true
+    Write-Host "[na2] Log: $logPath" -ForegroundColor DarkGray
+}
+catch {
+    Write-Warning "Could not start NA2 log: $_"
+}
+
+try {
 $scriptsRoot = Join-Path $na2Root 'scripts'
 $builderRoot = Join-Path $na2Root 'translation_package_builder'
 $command = if ($Mode) { $Mode.ToLowerInvariant() } else { '' }
@@ -226,4 +242,10 @@ if ($fullWorkflow) {
     }
     Write-Na2Stage '5/5 Launch rebuilt ISO in PCSX2'
     & $apply @runArgs
+}
+}
+finally {
+    if ($transcriptStarted) {
+        Stop-Transcript | Out-Null
+    }
 }

@@ -1,51 +1,51 @@
-# NA2 Translation Package Builder v21
+# NA2 Translation Package Builder v22
 
-This builder produces one post-composition translation TSV for Naruto: Narutimate Accel 2. It does not package or modify replacement BIN or ELF files.
+This builder produces one post-composition translation TSV for Naruto: Narutimate Accel 2. It never packages or modifies replacement BIN or ELF files.
 
-## Purpose and integration
+## Integration model
 
-The surrounding NA2 build pipeline composes selected replacement packages first, then applies the generated translation TSV over the composed files. Translation therefore does not own any replacement binary and can safely patch text or pointers inside files supplied by another package.
+The surrounding NA2 pipeline composes selected replacement packages first, then applies the generated translation TSV over the composed files. Translation therefore owns no replacement binary and can patch text or pointers inside files supplied by another package.
 
-The builder itself owns only translation discovery and mapping data. Project-level apply/build scripts are outside this archive.
+Project-level scripts are not included. This archive contains only `translation_package_builder`.
 
 ## Source and target scope
 
-The builder reads these clean NA2 targets:
+Clean NA2 targets:
 
 - `PRG/BTL.BIN`
 - `PRG/ETC.BIN`
 - `SLPS_258.37`
 
-It reads official English data from:
+Official UN5 sources:
 
-- UN5 `PRG/BTL.BIN`
-- UN5 `PRG/ETC.BIN`
-- UN5 `PRG/TEXTENG.BIN`
-- UN5 `SLES_556.05`
+- `PRG/BTL.BIN`
+- `PRG/ETC.BIN`
+- `PRG/TEXTENG.BIN`
+- `SLES_556.05`
 
-The builder contains no hardcoded translated prose. Runtime text is read from the supplied NA2 and UN5 binaries using numeric mappings. Executable disassembly may be used while authoring or validating mappings, but it is not required to run the builder and is not included.
+The builder contains no hardcoded translated prose. It reads all emitted English text from the supplied UN5 binaries at build time. The paired executable disassemblies were used to author and validate numeric mappings, but are not required at runtime and are not included.
 
-## Mapping data
+## Mapping file
 
-All structural mappings are stored in `data/mappings.tsv`. It contains exactly these columns:
+`mappings.tsv` is stored directly in the builder root. It contains exactly these columns:
 
 `mode`, `target`, `target_offset`, `capacity`, `source`, `source_offset`, `pool_offset`, `pool_capacity`, `runtime_base`, `pointer_offsets`, `reason`
 
-Supported row modes:
+Row modes:
 
-- `slot`: copies one NUL-terminated official source string into a fixed-capacity NA2 slot.
-- `pool`: writes an official source string into a verified relocation pool and rewrites one or more pointer locations in the same target file.
-- `unresolved`: records a known NA2 text target that still lacks a verified structural mapping.
+- `slot`: copy one NUL-terminated official UN5 string into a verified fixed-capacity NA2 slot.
+- `pool`: write official UN5 text into a verified relocation pool and rewrite the listed target-file pointers.
+- `unresolved`: retain a known NA2 text target for which no safe official-source mapping has yet been proven.
 
-Offsets, capacities, runtime bases, and pointer locations are numeric structural data. `mappings.tsv` contains no translation text.
+The mapping file contains only structural data: file identifiers, offsets, capacities, runtime addresses, pointer locations, and status reasons. It contains no translation strings.
 
-## Generated output
+## Output
 
 Each run creates:
 
 `translation_package_builder\work\runs\<run id>\`
 
-The run directory contains:
+containing:
 
 - `NA2_APPLY__TRANSLATION__<UTC+3 run id>.tsv`
 - `build_summary.json`
@@ -54,13 +54,15 @@ The generated translation TSV contains exactly these six columns in this order:
 
 `path`, `offset`, `expected_hex`, `replacement_hex`, `source_text`, `replacement_text`
 
-Readable text patches populate both text columns. Pointer writes, cleared relocation bytes, and other binary-only patches leave them empty.
+Readable text patches populate the text columns. Pointer writes, relocation-pool clearing, and other binary-only patches leave them empty.
 
-## Validation and failure behavior
+## Safety behavior
 
-Known clean-source SHA-1 values are checked by default. `-NoStrictHash` disables that check only for deliberate experiments.
+Known clean-source SHA-1 values are checked by default. `-NoStrictHash` disables this only for deliberate experiments.
 
-A fixed-slot mapping is skipped when its official source text cannot fit safely. Invalid offsets, overlapping slots, malformed strings, bad pointers, and undersized relocation pools fail or are reported rather than guessed. `build_summary.json` records source hashes, translated hashes, patch counts, runtime skips, and unresolved mappings.
+The builder rejects invalid offsets, malformed source strings, overlapping fixed slots, invalid pointers, and undersized relocation pools. A fixed-slot mapping whose official source text does not fit is skipped and recorded instead of overrunning adjacent data. No guessed translation text is emitted.
+
+`build_summary.json` records source hashes, translated hashes, patch counts, runtime skips, and unresolved mappings.
 
 ## Default targets and aliases
 
@@ -74,16 +76,17 @@ Default selection: `BTL,ETC,SLPS`.
 & '.\translation_package_builder\build_na2_translation_package.ps1'
 ```
 
-Optional extracted-source folders or ISO files can be supplied through the wrapper parameters documented in `build_na2_translation_package.ps1`.
+Optional extracted-source folders or ISO files can be supplied through the wrapper parameters defined in `build_na2_translation_package.ps1`.
 
-## Version 21
+## Version 22
 
-Version 21 used the paired UN5/NA2 Practice screens and both executable disassemblies to validate additional fixed slots, enum tables, and pointer call sites. It corrected one previously wrong official-source mapping, added safe relocation entries where official text exceeds the original slot, and reduced the unresolved mapping set without adding translation prose to the builder.
+Version 22 expands v21 using the paired NA2/UN5 executable disassemblies and verified parallel data-table structure. It adds only numeric official-source mappings that fit existing slots or use already verified relocation rules. One ambiguous character-name candidate was deliberately left unresolved rather than guessed.
+
+The mapping file moved from `data\mappings.tsv` to root `mappings.tsv`.
 
 Validated against the supplied clean sources:
 
-- 359 fixed-slot mappings
+- 596 fixed-slot mappings
 - 26 relocation entries
-- 349 unresolved numeric targets
-- 470 generated patch rows
+- 112 unresolved numeric targets
 - zero runtime skips

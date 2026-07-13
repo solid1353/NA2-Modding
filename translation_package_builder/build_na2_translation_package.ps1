@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 $builderRoot = $PSScriptRoot
 $projectRoot = Split-Path -Parent $builderRoot
 $builder = Join-Path $builderRoot 'scripts\build_translation_package.py'
-$dataRoot = Join-Path $builderRoot 'data'
+$mappingRoot = $builderRoot
 
 if ([string]::IsNullOrWhiteSpace($Na2Folder)) {
     $candidate = Join-Path $projectRoot 'source\NA2'
@@ -52,7 +52,7 @@ if ([string]::IsNullOrWhiteSpace($Un5Folder) -and [string]::IsNullOrWhiteSpace($
 
 $arguments = @(
     '--work-root', (Join-Path $builderRoot 'work'),
-    '--data-root', $dataRoot,
+    '--data-root', $mappingRoot,
     '--apply', $Apply
 )
 

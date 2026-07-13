@@ -38,7 +38,7 @@ Current PNACH:
 - `source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
 - `source/*.files/`: extracted views of original source archives. Treat as read-only reference.
 - `build/`: active working outputs, including current modded ISO, current PNACH, and loose replacement files awaiting ISO rebuild.
-- `packages/`: tracked frozen copies of explicitly accepted reusable package milestones. Test packages remain outside this folder.
+- `packages/`: tracked frozen copies of explicitly accepted reusable package milestones. Test packages remain outside this folder. Milestone filenames use `NA2_APPLY__<TYPE>__<YYYYMMDD_HHMMSS>__<VERSION>__<MEANING>.<ext>`.
 - `releases/`: link to `C:\Users\solid\Documents\Mods\NA2\releases`; frozen milestone artifacts only. Append-only; never alter existing contents.
 - `logs/`: generated records grouped into task-specific subfolders. Current groups are `na2/`, `font/`, `translation/`, `extraction/`, `inventory/`, and `trash/`; no files should be written directly in the `logs/` root. Each `na2` run keeps its timestamped transcript and refreshes `logs/na2/latest.log` when the transcript closes.
 - `scripts/`: repeatable tooling.

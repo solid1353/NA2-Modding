@@ -359,6 +359,37 @@ def read_target_slot(data: bytes, offset: int, capacity: int, label: str) -> tup
     return text, raw
 
 
+NAMED_COLOR_TAG_EQUIVALENTS = {
+    "<WHITE>": ("<WHITE>", "<colorFFFFFF>"),
+    "<BLACK>": ("<BLACK>", "<color000000>"),
+    "<RED>": ("<RED>",),
+}
+
+
+def adapt_source_markup(source_text: str, target_text: str, label: str) -> str:
+    """Translate UN5 named color tags into the verified local NA2 tag dialect.
+
+    NA2 and UN5 share generic <colorRRGGBB>, icon, line-break, and other
+    markup. Their named color aliases are not identical in every renderer.
+    The target slot itself is the authority: a named UN5 color token is
+    rewritten only to an equivalent token already used by that NA2 string.
+    """
+    adapted = source_text
+    for source_tag, target_candidates in NAMED_COLOR_TAG_EQUIVALENTS.items():
+        if source_tag not in adapted:
+            continue
+        replacement = next(
+            (candidate for candidate in target_candidates if candidate in target_text),
+            None,
+        )
+        if replacement is None:
+            raise ValueError(
+                f"{label}: cannot verify an NA2 equivalent for source tag {source_tag}"
+            )
+        adapted = adapted.replace(source_tag, replacement)
+    return adapted
+
+
 def read_pointer_target_text(data: bytes, pointer_offset: int, runtime_base: int) -> str:
     if pointer_offset < 0 or pointer_offset + 4 > len(data):
         return ""
@@ -405,12 +436,14 @@ def apply_slot_mappings(
         source_offset = int(row["source_offset"])
         label = f"slot mapping #{index} {target} 0x{offset:X}"
         try:
-            source_text, source_bytes = read_ascii_z(
+            official_text, _ = read_ascii_z(
                 official_sources[source_key], source_offset, label
             )
             target_text, _ = read_target_slot(
                 clean_targets[target], offset, capacity, label
             )
+            source_text = adapt_source_markup(official_text, target_text, label)
+            source_bytes = source_text.encode("ascii")
             if len(source_bytes) > capacity - 1:
                 skipped.append({
                     "target": target,
@@ -483,18 +516,24 @@ def apply_pool_mappings(
             source_key = str(entry["source"])
             source_offset = int(entry["source_offset"])
             entry_label = f"{label} entry #{entry_index}"
-            source_text, source_bytes = read_ascii_z(
+            official_text, _ = read_ascii_z(
                 official_sources[source_key], source_offset, entry_label
             )
-            payload = source_bytes + b"\x00"
-            total += len(payload)
             pointer_offsets = [int(value) for value in entry["pointer_offsets"]]
             if not pointer_offsets:
                 raise ValueError(f"{entry_label}: no pointer offsets")
             for pointer_offset in pointer_offsets:
                 if pointer_offset < 0 or pointer_offset + 4 > len(clean_targets[target]):
                     raise ValueError(f"{entry_label}: pointer offset is outside the file")
-            resolved.append((entry, source_text, payload, pointer_offsets))
+            source_target_text = read_pointer_target_text(
+                clean_targets[target], pointer_offsets[0], runtime_base
+            )
+            source_text = adapt_source_markup(
+                official_text, source_target_text, entry_label
+            )
+            payload = source_text.encode("ascii") + b"\x00"
+            total += len(payload)
+            resolved.append((entry, source_target_text, source_text, payload, pointer_offsets))
 
         if total > pool_capacity:
             skipped.append({
@@ -508,10 +547,7 @@ def apply_pool_mappings(
 
         output_targets[target][pool_offset : pool_offset + pool_capacity] = b"\x00" * pool_capacity
         cursor = pool_offset
-        for _entry, source_text, payload, pointer_offsets in resolved:
-            source_target_text = read_pointer_target_text(
-                clean_targets[target], pointer_offsets[0], runtime_base
-            )
+        for _entry, source_target_text, source_text, payload, pointer_offsets in resolved:
             output_targets[target][cursor : cursor + len(payload)] = payload
             pointer_value = runtime_base + cursor
             for pointer_offset in pointer_offsets:

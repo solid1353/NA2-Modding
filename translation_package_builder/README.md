@@ -1,4 +1,4 @@
-# NA2 Translation Package Builder v22
+# NA2 Translation Package Builder v25
 
 This builder produces one post-composition translation TSV for Naruto: Narutimate Accel 2. It never packages or modifies replacement BIN or ELF files.
 
@@ -39,6 +39,20 @@ Row modes:
 
 The mapping file contains only structural data: file identifiers, offsets, capacities, runtime addresses, pointer locations, and status reasons. It contains no translation strings.
 
+## Markup handling
+
+NA2 and UN5 share inline markup, but some named color aliases differ by renderer. v25 does not strip tags and does not emit them blindly.
+
+For each mapped string, the builder reads the original NA2 target text and converts a named UN5 color token only to an equivalent token already used by that NA2 slot:
+
+- UN5 `<WHITE>` becomes NA2 `<colorFFFFFF>` when the target slot uses that token.
+- UN5 `<BLACK>` remains `<BLACK>` when the target slot uses it, or becomes `<color000000>` when that is the target slot's verified form.
+- `<RED>` is retained only when the target slot also uses `<RED>`.
+
+Generic color tags such as `<color00FFFF>`, icon tags, `<br>`, and other shared markup are preserved unchanged. If a named color token has no verified equivalent in the target string, that mapping is rejected instead of displaying the token literally or guessing.
+
+These markup tokens are structural renderer commands, not translation prose.
+
 ## Output
 
 Each run creates:
@@ -60,7 +74,7 @@ Readable text patches populate the text columns. Pointer writes, relocation-pool
 
 Known clean-source SHA-1 values are checked by default. `-NoStrictHash` disables this only for deliberate experiments.
 
-The builder rejects invalid offsets, malformed source strings, overlapping fixed slots, invalid pointers, and undersized relocation pools. A fixed-slot mapping whose official source text does not fit is skipped and recorded instead of overrunning adjacent data. No guessed translation text is emitted.
+The builder rejects invalid offsets, malformed source strings, overlapping fixed slots, invalid pointers, undersized relocation pools, and unverified named-color conversions. A fixed-slot mapping whose official source text does not fit is skipped and recorded instead of overrunning adjacent data. No guessed translation text is emitted.
 
 `build_summary.json` records source hashes, translated hashes, patch counts, runtime skips, and unresolved mappings.
 
@@ -78,15 +92,27 @@ Default selection: `BTL,ETC,SLPS`.
 
 Optional extracted-source folders or ISO files can be supplied through the wrapper parameters defined in `build_na2_translation_package.ps1`.
 
-## Version 22
+## Version 25
 
-Version 22 expands v21 using the paired NA2/UN5 executable disassemblies and verified parallel data-table structure. It adds only numeric official-source mappings that fit existing slots or use already verified relocation rules. One ambiguous character-name candidate was deliberately left unresolved rather than guessed.
+Version 25 restores the verified v23 mapping expansion on top of v24's corrected Game Mode description boundary.
 
-The mapping file moved from `data\mappings.tsv` to root `mappings.tsv`.
+Restored mappings include:
+
+- the full Simple Display explanation at `BTL.BIN + 0x208E60` instead of the incorrect mid-string v22/v24 target at `0x208EA0`;
+- sixteen official Battle/Practice Settings explanations previously reverted to unresolved rows;
+- Return-to-screen prompts and Master Mode start-selection text;
+- `Linked Mode`, `Manual`, `Auto`, `Yes`, and the relocated official `Ultimate` label.
+
+The final Options description remains limited to 128 bytes. The seven-entry Game Mode description pointer table at `SLPS_258.37 + 0x4B1DE0..0x4B1DFB` remains byte-identical to the clean executable.
+
+The builder now adapts UN5 named color aliases to the verified NA2 markup dialect. This fixes literal strings such as `Practice<WHITE>` without deleting color formatting.
 
 Validated against the supplied clean sources:
 
-- 596 fixed-slot mappings
-- 26 relocation entries
-- 112 unresolved numeric targets
+- 629 fixed-slot mappings
+- 27 relocation entries
+- 96 unresolved numeric targets
+- 799 generated TSV patch rows
 - zero runtime skips
+- zero literal `<WHITE>` tokens in translated output
+- Game Mode description pointer table unchanged

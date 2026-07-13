@@ -24,6 +24,28 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function Stop-PortablePcsx2 {
+    $portableExe = if ($Pcsx2Exe) {
+        $Pcsx2Exe
+    } else {
+        Join-Path (Split-Path $PSScriptRoot -Parent) 'pcsx2\pcsx2-qt.exe'
+    }
+
+    $portablePath = [System.IO.Path]::GetFullPath($portableExe)
+    $processName = [System.IO.Path]::GetFileNameWithoutExtension($portablePath)
+    $processes = @(Get-Process -Name $processName -ErrorAction SilentlyContinue | Where-Object {
+        $_.Path -and [System.IO.Path]::GetFullPath($_.Path) -ieq $portablePath
+    })
+
+    if ($processes.Count -eq 0) {
+        return
+    }
+
+    Write-Host "Closing portable PCSX2 before replacing the output ISO: $portablePath" -ForegroundColor Yellow
+    $processes | Stop-Process -Force
+    $processes | Wait-Process
+}
+
 if ($Help) {
     $scriptName = $MyInvocation.MyCommand.Name
     @(
@@ -85,6 +107,8 @@ if (-not $RunOnly) {
     if (-not $PackageDirectory) {
         throw 'Required argument missing: -d / -PackageDirectory'
     }
+
+    Stop-PortablePcsx2
 
     $arguments = @(
         (Join-Path $PSScriptRoot 'apply_latest_na2.py')

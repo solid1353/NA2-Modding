@@ -10,7 +10,7 @@ if (-not (Test-Path -LiteralPath $Root)) {
     throw "Root not found: $Root"
 }
 
-$logDir = Join-Path $Root "logs"
+$logDir = Join-Path $Root "logs\inventory"
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 
 $stamp = Get-Date -Format "yyyyMMdd_HHmmss"

@@ -36,9 +36,10 @@ param(
 )
 
 $na2Root = $PSScriptRoot
-$logDirectory = Join-Path $na2Root 'logs'
+$logDirectory = Join-Path $na2Root 'logs\na2'
 $logTimestamp = Get-Date -Format 'yyyyMMdd_HHmmss_fff'
 $logPath = Join-Path $logDirectory "na2_${logTimestamp}_pid$PID.log"
+$latestLogPath = Join-Path $logDirectory 'latest.log'
 $transcriptStarted = $false
 
 try {
@@ -247,5 +248,11 @@ if ($fullWorkflow) {
 finally {
     if ($transcriptStarted) {
         Stop-Transcript | Out-Null
+        try {
+            Copy-Item -LiteralPath $logPath -Destination $latestLogPath -Force
+        }
+        catch {
+            Write-Warning "Could not refresh NA2 latest log: $_"
+        }
     }
 }

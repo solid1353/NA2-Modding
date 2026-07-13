@@ -41,7 +41,7 @@ if (-not ($columns -contains $NewColumn)) {
 
 if ([string]::IsNullOrWhiteSpace($OutPath)) {
     $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-    $logDir = Join-Path $root "logs"
+    $logDir = Join-Path $root "logs\translation"
     New-Item -ItemType Directory -Force -Path $logDir | Out-Null
     $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
     $OutPath = Join-Path $logDir ("translation_length_check_" + $stamp + ".tsv")

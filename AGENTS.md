@@ -15,13 +15,14 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Keep Windows read-only attributes applied to files/folders under `source/`.
 - Before changing any original-derived file, copy it outside `source/` and modify only the copy.
 - Keep active working outputs under `build/`.
+- Keep frozen reusable package milestones under `packages/`; do not mix ordinary test packages into it.
 - Keep frozen milestone artifacts under `releases/` (`C:\Users\solid\Documents\Mods\NA2\releases`).
 - Never alter, overwrite, rename, move, or delete anything under `releases/`.
 - Only create new uniquely named milestone outputs under `releases/`.
 - If a target path under `releases/` already exists, stop immediately and inspect/report manually.
 - Every release PNACH must correspond to the PCSX2 CRC of the ELF inside the paired release ISO.
 - Before reporting a release as valid, check the paired ISO/ELF CRC against the PNACH filename and warn if they do not match or cannot be verified.
-- Keep logs, inventories, hashes, and patch records under `logs/`.
+- Keep logs, inventories, hashes, and patch records under task-specific subfolders of `logs/`; do not write files directly in the `logs/` root.
 - Keep deleted/retired workspace items under `trash/` instead of hard-deleting when practical.
 - Use `scripts/move_to_trash.ps1` for project-local removals; it must refuse `source/`, `releases/`, and `trash/`.
 - Generated/intermediate files go under `build/`, `logs/`, `scripts/`, or root `temp/` with task-named subfolders when throwaway workspace is needed. Original-source extractions are the only exception and stay beside their source archive under `source/` as `<archive filename>.files`.
@@ -74,7 +75,7 @@ Release PNACH files are coupled to the boot ELF CRC of their paired ISO. Always 
 
 ## Actualize workflow
 
-When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2-style ELF CRC from the boot ELF inside that ISO. Keep the base file named `cheats/SLPS-25837_C0659AD1.pnach`. Create the CRC-named symlink `cheats/SLPS-25837_<crc>.pnach` to `cheats/SLPS-25837_C0659AD1.pnach` if missing. Never delete old CRC links during actualize.
+When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2-style ELF CRC from the boot ELF inside that ISO. Keep the base file named `cheats/SLPS-25837_C0659AD1.pnach`. Delete obsolete `cheats/SLPS-25837_<crc>.pnach` symbolic links directly, without moving them to trash, then create the current CRC-named symlink to `cheats/SLPS-25837_C0659AD1.pnach` if missing. Never delete the canonical PNACH or any real PNACH file during actualize.
 
 ## Current release file list
 

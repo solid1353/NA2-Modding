@@ -163,6 +163,20 @@ finally {
 $pnachName = "${Serial}_${crc}.pnach"
 $targetPnach = Join-Path $cheatsDir $pnachName
 
+$removedPnachSymlinks = @(
+    Get-ChildItem -LiteralPath $cheatsDir -Filter "${Serial}_*.pnach" -Force |
+        Where-Object {
+            $_.FullName -ne $targetPnach -and
+            $_.FullName -ne $CanonicalPnach -and
+            $_.LinkType -eq "SymbolicLink"
+        } |
+        ForEach-Object {
+            $name = $_.Name
+            Remove-Item -LiteralPath $_.FullName -Force
+            $name
+        }
+)
+
 if (Test-Path -LiteralPath $targetPnach) {
     $pnachStatus = "exists"
 }
@@ -177,4 +191,5 @@ else {
     CanonicalPnach = $CanonicalPnach
     CheatsPnach = $targetPnach
     PnachStatus = $pnachStatus
+    RemovedPnachSymlinks = $removedPnachSymlinks
 }

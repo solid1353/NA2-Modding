@@ -38,8 +38,9 @@ Current PNACH:
 - `source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
 - `source/*.files/`: extracted views of original source archives. Treat as read-only reference.
 - `build/`: active working outputs, including current modded ISO, current PNACH, and loose replacement files awaiting ISO rebuild.
+- `packages/`: tracked frozen copies of explicitly accepted reusable package milestones. Test packages remain outside this folder.
 - `releases/`: link to `C:\Users\solid\Documents\Mods\NA2\releases`; frozen milestone artifacts only. Append-only; never alter existing contents.
-- `logs/`: inventories, hashes, patch records, and investigation notes.
+- `logs/`: generated records grouped into task-specific subfolders. Current groups are `na2/`, `font/`, `translation/`, `extraction/`, `inventory/`, and `trash/`; no files should be written directly in the `logs/` root. Each `na2` run keeps its timestamped transcript and refreshes `logs/na2/latest.log` when the transcript closes.
 - `scripts/`: repeatable tooling.
 - `HYPOTHESES.md`: archived patch candidates, failed experiments, unverified addresses, and speculative leads.
 - `TASKS.md`: concrete active tasks, test plans, and queued investigations only; no general workflow rules.
@@ -118,7 +119,7 @@ Use `scripts/split_cvm_rofs.ps1` to split the encrypted CVM safely without runni
 - Root `na2.ps1` is the command entrypoint; helper scripts stay under `scripts/`.
 - Bare `na2` performs the standard workflow: update builder, generate the translation TSV, build with Font + Translation, actualize the PNACH symlink, then launch PCSX2.
 - `scripts/apply_latest_na2.ps1` / `scripts/apply_latest_na2.py`: copy the clean ISO, apply selected replacement ZIPs, apply the newest translation TSV last, verify, and optionally launch PCSX2.
-- `na2 act` actualizes the PNACH symlink for the ELF CRC of the ISO in `build/`; it does not manage gamesettings.
+- `na2 act` actualizes the PNACH symlink for the ELF CRC of the ISO in `build/`; it directly deletes obsolete CRC-named PNACH symlinks, preserves the canonical PNACH and real files.
 - `na2 ub` means **update builder**. `scripts/update_translation_package_builder.ps1` installs the newest `NA2_translation_package_builder*.zip` from Downloads while moving the previous builder to timestamped `trash/`.
 - Translation TSV schema: `path`, `offset`, `expected_hex`, `replacement_hex`, `source_text`, `replacement_text`; translation owns no replacement binaries.
 - `check_translation_lengths.ps1`: checks CP932 byte lengths for translation tables.
@@ -229,7 +230,7 @@ DATA.CVM password: cc2fuku.
 
 ## Actualize Workflow
 
-When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2-style ELF CRC from the boot ELF inside that ISO. Keep the base file named `cheats/SLPS-25837_C0659AD1.pnach`. Create the CRC-named symlink `cheats/SLPS-25837_<crc>.pnach` to `cheats/SLPS-25837_C0659AD1.pnach` if missing. Never delete old CRC links during actualize.
+When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2-style ELF CRC from the boot ELF inside that ISO. Keep the base file named `cheats/SLPS-25837_C0659AD1.pnach`. Delete every obsolete matching CRC-named symbolic link directly, without trashing it, then create the current `cheats/SLPS-25837_<crc>.pnach` symlink to the canonical PNACH if missing. Never delete the canonical PNACH or a real PNACH file.
 
 ## Release Workflow
 

@@ -206,7 +206,7 @@ finally {
     $iso.Dispose()
 }
 
-$logDir = Join-Path $root "logs"
+$logDir = Join-Path $root "logs\extraction"
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $logPath = Join-Path $logDir ("extract_iso9660_" + $stamp + ".tsv")

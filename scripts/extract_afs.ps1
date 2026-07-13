@@ -153,7 +153,7 @@ finally {
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $sourceRoot = Join-Path $root "source"
-$logDir = Join-Path $root "logs"
+$logDir = Join-Path $root "logs\extraction"
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 
 if ($OutDir.StartsWith($sourceRoot, [StringComparison]::OrdinalIgnoreCase)) {
@@ -183,7 +183,8 @@ if ($OutDir.StartsWith($sourceRoot, [StringComparison]::OrdinalIgnoreCase)) {
     }
 }
 else {
-    $logPath = Join-Path $OutDir "extraction_log.tsv"
+    $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $logPath = Join-Path $logDir ("extract_afs_" + $stamp + ".tsv")
     $logRows | Export-Csv -LiteralPath $logPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8
 }
 

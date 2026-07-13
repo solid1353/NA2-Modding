@@ -10,7 +10,7 @@ $ErrorActionPreference = "Stop"
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $trashRoot = Join-Path $root "trash"
-$logDir = Join-Path $root "logs"
+$logDir = Join-Path $root "logs\trash"
 
 New-Item -ItemType Directory -Force -Path $trashRoot | Out-Null
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null

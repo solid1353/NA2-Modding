@@ -243,16 +243,22 @@ def main() -> int:
     parser.add_argument("--source", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--downloads", required=True, type=Path)
+    parser.add_argument("--translation-tsv", type=Path)
     parser.add_argument("--package", action="append", default=[])
     args = parser.parse_args()
 
     source_iso = args.source.resolve()
     output_iso = args.output.resolve()
     downloads = args.downloads.resolve()
+    explicit_translation = (
+        args.translation_tsv.resolve() if args.translation_tsv else None
+    )
     if not source_iso.is_file():
         raise FileNotFoundError(source_iso)
     if not downloads.is_dir():
         raise FileNotFoundError(downloads)
+    if explicit_translation is not None and not explicit_translation.is_file():
+        raise FileNotFoundError(explicit_translation)
     if source_iso == output_iso:
         raise ValueError("Source and output ISO paths must differ")
 
@@ -273,9 +279,11 @@ def main() -> int:
 
     translation_table = None
     if translation_selected:
-        translation_table = latest_file(
+        translation_table = explicit_translation or latest_file(
             downloads, "NA2_APPLY__TRANSLATION__*.tsv"
         )
+    elif explicit_translation is not None:
+        raise ValueError("--translation-tsv requires the Translation package")
 
     source = Iso9660(source_iso)
     payloads: dict[str, bytearray] = {}

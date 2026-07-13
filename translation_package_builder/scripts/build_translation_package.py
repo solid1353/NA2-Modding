@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""Build one NA2 translation patch TSV.
-
-The builder derives all BTL, ETC, and executable translation edits from the clean
-NA2/UN5 sources, but emits no replacement binaries. The resulting TSV is applied
-after all selected binary packages have been composed.
-"""
 from __future__ import annotations
 
 import argparse
@@ -13,28 +7,50 @@ import datetime as dt
 import hashlib
 import json
 import os
-import shutil
 import sys
-import tempfile
-import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Sequence
 
 SECTOR = 2048
+UTC_PLUS_3 = dt.timezone(dt.timedelta(hours=3))
+
+TARGET_SPECS = {
+    "BTL": ("PRG/BTL.BIN", ["PRG/BTL.BIN", "BTL.BIN"]),
+    "ETC": ("PRG/ETC.BIN", ["PRG/ETC.BIN", "ETC.BIN"]),
+    "SLPS": ("SLPS_258.37", ["SLPS_258.37"]),
+}
+
+SOURCE_SPECS = {
+    "UN5_BTL": ["PRG/BTL.BIN", "BTL.BIN"],
+    "UN5_ETC": ["PRG/ETC.BIN", "ETC.BIN"],
+    "UN5_TEXTENG": ["PRG/TEXTENG.BIN", "TEXTENG.BIN"],
+    "UN5_SLES": ["SLES_556.05"],
+}
+
+MAPPING_FIELDS = [
+    "mode",
+    "target",
+    "target_offset",
+    "capacity",
+    "source",
+    "source_offset",
+    "pool_offset",
+    "pool_capacity",
+    "runtime_base",
+    "pointer_offsets",
+    "reason",
+]
+
 EXPECTED_SHA1 = {
     "NA2_BTL": "bf7fc7331a2a4f34fc90b84b45772ae1f6bcab03",
     "NA2_ETC": "dcfffd7eb14e484a4c0fbc195599a0b45a9a11c1",
     "NA2_SLPS": "bbe206bbf4da0ee815b437226ceb6a533c95833e",
+    "UN5_BTL": "874b9d64ddec7f9f742a08831505155001adb863",
+    "UN5_ETC": "1c9b05bc501cac21b7da17c5fc6c99dd3869f3be",
     "UN5_TEXTENG": "77fafba95157e44ccd61783a04aba87c4b98b1fb",
+    "UN5_SLES": "fe54357b016bc579b435a593e330d2d0ff822cdf",
 }
-FILE_SPECS = {
-    "BTL": ("PRG/BTL.BIN", ["PRG/BTL.BIN", "BTL.BIN"]),
-    "ETC": ("PRG/ETC.BIN", ["PRG/ETC.BIN", "ETC.BIN"]),
-}
-TEXTENG_CANDIDATES = ["PRG/TEXTENG.BIN", "TEXTENG.BIN"]
-SLPS_CANDIDATES = ["SLPS_258.37"]
-BTL_RUNTIME_BASE = 0x6B3F00
 
 
 @dataclass(frozen=True)
@@ -67,14 +83,14 @@ class Iso9660:
         if offset >= len(buf) or buf[offset] == 0:
             return None, 0
         length = buf[offset]
-        rec = buf[offset : offset + length]
-        if len(rec) < 34:
+        record = buf[offset : offset + length]
+        if len(record) < 34:
             raise ValueError(f"Invalid ISO directory record at 0x{offset:X}")
-        extent = int.from_bytes(rec[2:6], "little")
-        size = int.from_bytes(rec[10:14], "little")
-        flags = rec[25]
-        name_length = rec[32]
-        return (extent, size, flags, rec[33 : 33 + name_length]), length
+        extent = int.from_bytes(record[2:6], "little")
+        size = int.from_bytes(record[10:14], "little")
+        flags = record[25]
+        name_length = record[32]
+        return (extent, size, flags, record[33 : 33 + name_length]), length
 
     def _walk(self, record: IsoRecord, prefix: str) -> None:
         directory = self.data[
@@ -115,14 +131,14 @@ class Iso9660:
         self._walk(IsoRecord("", extent, size, flags), "")
 
     def read(self, candidates: Sequence[str], label: str) -> bytes:
-        normalized = [normalize_path(x) for x in candidates]
+        normalized = [normalize_path(value) for value in candidates]
         for candidate in normalized:
             record = self.records.get(candidate)
             if record and not record.is_dir:
                 return self.data[
                     record.extent * SECTOR : record.extent * SECTOR + record.size
                 ]
-        basenames = {x.rsplit("/", 1)[-1] for x in normalized}
+        basenames = {value.rsplit("/", 1)[-1] for value in normalized}
         matches = [
             record
             for path, record in self.records.items()
@@ -148,12 +164,12 @@ class FolderSource:
         }
 
     def read(self, candidates: Sequence[str], label: str) -> bytes:
-        normalized = [normalize_path(x) for x in candidates]
+        normalized = [normalize_path(value) for value in candidates]
         for candidate in normalized:
             path = self.files.get(candidate)
             if path:
                 return path.read_bytes()
-        basenames = {x.rsplit("/", 1)[-1] for x in normalized}
+        basenames = {value.rsplit("/", 1)[-1] for value in normalized}
         matches = [
             path
             for name, path in self.files.items()
@@ -172,587 +188,408 @@ def sha1(data: bytes) -> str:
     return hashlib.sha1(data).hexdigest()
 
 
-def parse_apply(value: str) -> list[str]:
-    selected = [
-        part.strip().upper()
-        for part in value.replace(";", ",").split(",")
-        if part.strip()
-    ]
-    selected = [part for part in selected if part not in {"NONE", "NO", "OFF"}]
-    unknown = sorted(set(selected) - set(FILE_SPECS))
-    if unknown:
-        raise ValueError("Unsupported target(s): " + ", ".join(unknown))
-    if not selected:
-        raise ValueError("No translation targets selected")
-    return list(dict.fromkeys(selected))
-
-
 def source_from(folder: Optional[Path], iso: Optional[Path], label: str):
     if folder is not None and folder.is_dir():
         return FolderSource(folder)
     if iso is not None and iso.is_file():
         return Iso9660(iso)
-    details = []
+    supplied = []
     if folder is not None:
-        details.append(f"folder={folder}")
+        supplied.append(f"folder={folder}")
     if iso is not None:
-        details.append(f"iso={iso}")
-    suffix = ", ".join(details) if details else "no path supplied"
-    raise FileNotFoundError(f"{label} source not found ({suffix})")
+        supplied.append(f"iso={iso}")
+    raise FileNotFoundError(f"{label} source not found ({', '.join(supplied) or 'no path supplied'})")
 
 
-def read_ascii_z(data: bytes, offset: int, label: str) -> str:
+def parse_apply(value: str) -> list[str]:
+    aliases = {"ELF": "SLPS", "SLES": "SLPS", "EXE": "SLPS"}
+    selected: list[str] = []
+    for part in value.replace(";", ",").split(","):
+        item = part.strip().upper()
+        if not item or item in {"NONE", "NO", "OFF"}:
+            continue
+        if item == "ALL":
+            selected.extend(TARGET_SPECS)
+            continue
+        selected.append(aliases.get(item, item))
+    unknown = sorted(set(selected) - set(TARGET_SPECS))
+    if unknown:
+        raise ValueError("Unsupported target(s): " + ", ".join(unknown))
+    selected = list(dict.fromkeys(selected))
+    if not selected:
+        raise ValueError("No translation targets selected")
+    return selected
+
+
+def parse_mapping_int(value: str, label: str) -> int:
+    text = value.strip()
+    if not text:
+        raise ValueError(f"{label}: missing integer value")
+    try:
+        number = int(text, 0)
+    except ValueError as exc:
+        raise ValueError(f"{label}: invalid integer {text!r}") from exc
+    if number < 0:
+        raise ValueError(f"{label}: negative integer {number}")
+    return number
+
+
+def load_mappings_tsv(path: Path) -> dict[str, object]:
+    slots: list[dict[str, object]] = []
+    pools: list[dict[str, object]] = []
+    pools_by_key: dict[tuple[str, int, int, int], dict[str, object]] = {}
+    unresolved: list[dict[str, object]] = []
+
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        if reader.fieldnames != MAPPING_FIELDS:
+            raise ValueError(
+                "mappings.tsv must contain exactly these columns in this order: "
+                + "\t".join(MAPPING_FIELDS)
+            )
+        for line_number, raw in enumerate(reader, 2):
+            row = {key: (value or "").strip() for key, value in raw.items()}
+            mode = row["mode"].lower()
+            target = row["target"].upper()
+            label = f"mappings.tsv line {line_number}"
+            if target not in TARGET_SPECS:
+                raise ValueError(f"{label}: unsupported target {target!r}")
+
+            if mode == "slot":
+                source = row["source"].upper()
+                if source not in SOURCE_SPECS:
+                    raise ValueError(f"{label}: unsupported source {source!r}")
+                slots.append({
+                    "mode": "slot",
+                    "target": target,
+                    "target_offset": parse_mapping_int(row["target_offset"], label),
+                    "capacity": parse_mapping_int(row["capacity"], label),
+                    "source": source,
+                    "source_offset": parse_mapping_int(row["source_offset"], label),
+                })
+                continue
+
+            if mode == "pool":
+                source = row["source"].upper()
+                if source not in SOURCE_SPECS:
+                    raise ValueError(f"{label}: unsupported source {source!r}")
+                pool_offset = parse_mapping_int(row["pool_offset"], label)
+                pool_capacity = parse_mapping_int(row["pool_capacity"], label)
+                runtime_base = parse_mapping_int(row["runtime_base"], label)
+                pointer_values = [
+                    value.strip()
+                    for value in row["pointer_offsets"].split(",")
+                    if value.strip()
+                ]
+                if not pointer_values:
+                    raise ValueError(f"{label}: pool row has no pointer offsets")
+                key = (target, pool_offset, pool_capacity, runtime_base)
+                pool = pools_by_key.get(key)
+                if pool is None:
+                    pool = {
+                        "mode": "pool",
+                        "target": target,
+                        "pool_offset": pool_offset,
+                        "pool_capacity": pool_capacity,
+                        "runtime_base": runtime_base,
+                        "entries": [],
+                    }
+                    pools_by_key[key] = pool
+                    pools.append(pool)
+                pool["entries"].append({
+                    "source": source,
+                    "source_offset": parse_mapping_int(row["source_offset"], label),
+                    "pointer_offsets": [
+                        parse_mapping_int(value, label) for value in pointer_values
+                    ],
+                })
+                continue
+
+            if mode == "unresolved":
+                reason = row["reason"]
+                if not reason:
+                    raise ValueError(f"{label}: unresolved row has no reason")
+                unresolved.append({
+                    "target": target,
+                    "target_offset": parse_mapping_int(row["target_offset"], label),
+                    "capacity": parse_mapping_int(row["capacity"], label),
+                    "reason": reason,
+                })
+                continue
+
+            raise ValueError(f"{label}: unsupported mode {mode!r}")
+
+    if not slots and not pools:
+        raise ValueError("mappings.tsv contains no resolved mappings")
+    return {"slots": slots, "pools": pools, "unresolved": unresolved}
+
+
+def read_ascii_z(data: bytes, offset: int, label: str) -> tuple[str, bytes]:
     if offset < 0 or offset >= len(data):
-        raise ValueError(f"{label}: TEXTENG offset 0x{offset:X} is outside the file")
+        raise ValueError(f"{label}: source offset 0x{offset:X} is outside the file")
     end = data.find(b"\x00", offset)
     if end < 0:
-        raise ValueError(f"{label}: unterminated TEXTENG string at 0x{offset:X}")
+        raise ValueError(f"{label}: unterminated source string at 0x{offset:X}")
     raw = data[offset:end]
+    if not raw:
+        raise ValueError(f"{label}: empty source string at 0x{offset:X}")
     try:
         text = raw.decode("ascii")
     except UnicodeDecodeError as exc:
-        raise ValueError(f"{label}: non-ASCII TEXTENG string at 0x{offset:X}") from exc
-    if not text:
-        raise ValueError(f"{label}: empty TEXTENG string at 0x{offset:X}")
+        raise ValueError(f"{label}: source string is not ASCII") from exc
     if any(ord(char) < 0x20 and char not in "\t\r\n" for char in text):
-        raise ValueError(f"{label}: unsupported control character in TEXTENG string")
-    return text
+        raise ValueError(f"{label}: source string contains unsupported control bytes")
+    return text, raw
 
 
-def verify_source_literal(
-    clean: bytes,
-    *,
-    offset: int,
-    source_text: str,
-    capacity: int,
-    label: str,
-) -> bytes:
+def read_target_slot(data: bytes, offset: int, capacity: int, label: str) -> tuple[str, bytes]:
+    if capacity <= 0:
+        raise ValueError(f"{label}: non-positive capacity")
+    if offset < 0 or offset + capacity > len(data):
+        raise ValueError(f"{label}: target range 0x{offset:X}+{capacity} is outside the file")
+    slot = data[offset : offset + capacity]
+    end = slot.find(b"\x00")
+    if end < 0:
+        raise ValueError(f"{label}: target slot has no NUL terminator")
+    raw = slot[:end]
     try:
-        source_bytes = source_text.encode("cp932")
-    except UnicodeEncodeError as exc:
-        raise ValueError(f"{label}: source text is not CP932-encodable") from exc
-    if capacity < len(source_bytes) + 1:
-        raise ValueError(
-            f"{label}: capacity {capacity} is smaller than source literal plus NUL "
-            f"({len(source_bytes) + 1})"
-        )
-    if offset < 0 or offset + capacity > len(clean):
-        raise ValueError(f"{label}: slot 0x{offset:X}+{capacity} is outside the file")
-    actual = clean[offset : offset + len(source_bytes)]
-    actual_nul = clean[offset + len(source_bytes)]
-    if actual != source_bytes or actual_nul != 0:
-        raise ValueError(
-            f"{label}: clean-source mismatch at 0x{offset:X}; expected "
-            f"{source_bytes.hex()}, got {actual.hex()} and NUL=0x{actual_nul:02X}"
-        )
-    return source_bytes
+        text = raw.decode("cp932")
+    except UnicodeDecodeError:
+        text = ""
+    return text, raw
+
+
+def read_pointer_target_text(data: bytes, pointer_offset: int, runtime_base: int) -> str:
+    if pointer_offset < 0 or pointer_offset + 4 > len(data):
+        return ""
+    pointer = int.from_bytes(data[pointer_offset : pointer_offset + 4], "little")
+    offset = pointer - runtime_base
+    if offset < 0 or offset >= len(data):
+        return ""
+    end = data.find(b"\x00", offset)
+    if end < 0:
+        return ""
+    try:
+        return data[offset:end].decode("cp932")
+    except UnicodeDecodeError:
+        return ""
 
 
 def write_slot(output: bytearray, offset: int, capacity: int, replacement: bytes) -> None:
     if len(replacement) > capacity - 1:
-        raise ValueError(
-            f"replacement length {len(replacement)} exceeds slot payload {capacity - 1}"
-        )
+        raise ValueError("replacement does not fit target slot")
     output[offset : offset + capacity] = (
         replacement + b"\x00" + b"\x00" * (capacity - len(replacement) - 1)
     )
 
 
-
-
-def patch_exact_slot(
-    clean: bytes,
-    output: bytearray,
-    *,
-    offset: int,
-    capacity: int,
-    source_text: str,
-    replacement_text: str,
-    label: str,
-) -> None:
-    verify_source_literal(
-        clean,
-        offset=offset,
-        source_text=source_text,
-        capacity=capacity,
-        label=label,
-    )
-    try:
-        replacement = replacement_text.encode("ascii")
-    except UnicodeEncodeError as exc:
-        raise ValueError(f"{label}: replacement is not ASCII") from exc
-    write_slot(output, offset, capacity, replacement)
-
-
-def patch_exact_bytes(
-    clean: bytes,
-    output: bytearray,
-    *,
-    offset: int,
-    source_text: str,
-    replacement_text: str,
-    label: str,
-) -> None:
-    source = source_text.encode("cp932") + b"\x00"
-    replacement = replacement_text.encode("ascii") + b"\x00"
-    if len(replacement) > len(source):
-        raise ValueError(f"{label}: replacement is longer than source storage")
-    actual = clean[offset : offset + len(source)]
-    if actual != source:
-        raise ValueError(
-            f"{label}: clean-source mismatch at 0x{offset:X}; "
-            f"expected {source.hex()}, got {actual.hex()}"
-        )
-    output[offset : offset + len(source)] = replacement + b"\x00" * (
-        len(source) - len(replacement)
-    )
-
-
-def apply_runtime_ui_fixes(
-    *,
-    clean_btl: bytes,
-    output_btl: bytearray,
-    clean_etc: bytes,
-    output_etc: bytearray,
-    clean_slps: bytes,
-    output_slps: bytearray,
-) -> tuple[dict[str, int], list[dict[str, object]]]:
-    text_annotations: list[dict[str, object]] = []
-
-    def annotate(
-        path: str,
-        offset: int,
-        length: int,
-        source_text: str,
-        replacement_text: str,
-    ) -> None:
-        text_annotations.append(
-            {
-                "path": path,
-                "start": offset,
-                "end": offset + length,
-                "source_text": source_text,
-                "replacement_text": replacement_text,
-            }
-        )
-    # Direct BTL strings missed by the legacy baseline.
-    btl_slots = [
-        (0x209CD0, 16, "使用不可", "No Use"),
-        (0x209D98, 16, "飛び道具", "Projectile"),
-        (0x209DA8, 16, "高速移動", "High Speed"),
-        (0x209DE0, 16, "動かない", "Don't Move"),
-        (0x209DF0, 16, "必ず返す", "Always"),
-        (0x20A210, 16, "対戦時間", "Battle Time"),
-        (0x20A748, 16, "連係攻撃", "Linked Attack"),
-        (0x20A768, 16, "コマンド表示", "Command Display"),
-        (0x20A788, 16, "案内忍音声", "Guide Sound"),
-        (0x20A7A8, 16, "追い討ち返し", "Extra Counter"),
-    ]
-    for offset, capacity, source, replacement in btl_slots:
-        patch_exact_slot(
-            clean_btl,
-            output_btl,
-            offset=offset,
-            capacity=capacity,
-            source_text=source,
-            replacement_text=replacement,
-            label=f"BTL UI fix at 0x{offset:X}",
-        )
-        annotate("PRG/BTL.BIN", offset, capacity, source, replacement)
-
-    # Shop help strings visible in the reported shop screen.
-    etc_slots = [
-        (
-            0x2F230,
-            112,
-            "<r購入|こうにゅう>する<r商品|しょうひん>を<r選|えら>び、<iconCIRCLE>ボタンを<r押|お>してください。",
-            "Press <iconCIRCLE> to choose item.",
-        ),
-        (
-            0x2F3F0,
-            112,
-            "<r購入|こうにゅう>する<r商品|しょうひん>にカーソルを<r合|あ>わせ、<iconCIRCLE>ボタンを<r押|お>してください。",
-            "Select an item and press <iconCIRCLE> to buy.",
-        ),
-        (
-            0x2F460,
-            160,
-            "<iconSQUARE>ボタンを<r押|お>すとポイントを<r使|つか>ってボーナスゲームを<r行|おこな>うことができます。",
-            "Press <iconSQUARE> to use points to play a bonus game.",
-        ),
-    ]
-    for offset, capacity, source, replacement in etc_slots:
-        patch_exact_slot(
-            clean_etc,
-            output_etc,
-            offset=offset,
-            capacity=capacity,
-            source_text=source,
-            replacement_text=replacement,
-            label=f"ETC shop UI fix at 0x{offset:X}",
-        )
-        annotate("PRG/ETC.BIN", offset, capacity, source, replacement)
-
-    # Executable-resident practice values and labels. Each entry is an exact
-    # fixed slot in the clean SLPS executable.
-    slps_slots = [
-        (0x505B48, 8, "楽々", "V.Easy"),
-        (0x505B50, 8, "ふつう", "Normal"),
-        (0x505B58, 8, "激むず", "V.Hard"),
-        (0x505B60, 8, "究極", "Max"),
-        (0x505B68, 8, "なし", "None"),
-        (0x505B70, 8, "少なめ", "Low"),
-        (0x505B78, 8, "多め", "High"),
-        (0x505B80, 8, "通常", "Normal"),
-        (0x505B98, 8, "回転", "Turn"),
-        (0x505BA0, 8, "連打", "Combo"),
-        (0x505BB0, 8, "オフ", "Off"),
-        (0x505BB8, 8, "オン", "On"),
-        (0x505BC8, 8, "半分", "Half"),
-        (0x505BE0, 16, "オート", "Auto"),
-        (0x505BF0, 8, "手動", "Manual"),
-        (0x505BF8, 8, "ＣＯＭ", "COM"),
-        (0x505C00, 8, "立ち", "Stand"),
-        (0x505C08, 8, "しない", "None"),
-        (0x505C10, 8, "単発", "Single"),
-        (0x505C18, 8, "コンボ", "Combo"),
-        (0x505C20, 8, "奥義", "Ult."),
-        (0x505C28, 8, "忍術", "Jutsu"),
-        (0x505C30, 8, "する", "Use"),
-        (0x505C40, 8, "追う", "Chase"),
-        (0x505C60, 16, "乱発", "Frequent"),
-        (0x505C70, 8, "難易度", "Level"),
-        (0x505CA0, 8, "体力", "Health"),
-        (0x505CA8, 8, "状態", "Status"),
-        (0x505CB0, 8, "強さ", "Power"),
-        (0x505CB8, 8, "攻撃", "Attack"),
-        (0x505CC0, 8, "ガード", "Guard"),
-        (0x505CC8, 8, "行動", "Action"),
-    ]
-    for offset, capacity, source, replacement in slps_slots:
-        patch_exact_slot(
-            clean_slps,
-            output_slps,
-            offset=offset,
-            capacity=capacity,
-            source_text=source,
-            replacement_text=replacement,
-            label=f"SLPS UI fix at 0x{offset:X}",
-        )
-        annotate("SLPS_258.37", offset, capacity, source, replacement)
-
-    # Common short character-name tables used by shop/collection UI.
-    name_slots = [
-        (0x506450, "ナルト", "Naruto"),
-        (0x506458, "サクラ", "Sakura"),
-        (0x506460, "カカシ", "Kakashi"),
-        (0x506468, "ネジ", "Neji"),
-        (0x506470, "サイ", "Sai"),
-        (0x506478, "サスケ", "Sasuke"),
-        (0x506480, "シズネ", "Shizune"),
-        (0x506488, "アスマ", "Asuma"),
-        (0x506490, "テマリ", "Temari"),
-        (0x506498, "ヤマト", "Yamato"),
-        (0x5064A0, "リー", "Lee"),
-        (0x5064A8, "ガイ", "Guy"),
-        (0x5064B0, "いの", "Ino"),
-        (0x5064B8, "キバ", "Kiba"),
-        (0x5064C0, "シノ", "Shino"),
-        (0x5064C8, "ヒナタ", "Hinata"),
-        (0x506648, "クナイ", "Kunai"),
-        (0x506650, "サイ", "Sai"),
-        (0x506658, "テマリ", "Temari"),
-        (0x506660, "サソリ", "Sasori"),
-        (0x506668, "シズネ", "Shizune"),
-        (0x506670, "ヤマト", "Yamato"),
-    ]
-    for offset, source, replacement in name_slots:
-        patch_exact_slot(
-            clean_slps,
-            output_slps,
-            offset=offset,
-            capacity=8,
-            source_text=source,
-            replacement_text=replacement,
-            label=f"SLPS name fix at 0x{offset:X}",
-        )
-        annotate("SLPS_258.37", offset, 8, source, replacement)
-
-    # Confirmation choices, including the shop quit prompt shown in the report.
-    yes_offsets = [
-        0x503110, 0x5031A0, 0x506760, 0x506FA8,
-    ]
-    no_offsets = [
-        0x503118, 0x5031A8, 0x504668, 0x505AD8,
-        0x5066A8, 0x506768, 0x506FB0,
-    ]
-    for offset in yes_offsets:
-        patch_exact_bytes(
-            clean_slps,
-            output_slps,
-            offset=offset,
-            source_text="はい",
-            replacement_text="Yes",
-            label=f"SLPS Yes fix at 0x{offset:X}",
-        )
-        annotate(
-            "SLPS_258.37",
-            offset,
-            len("はい".encode("cp932")) + 1,
-            "はい",
-            "Yes",
-        )
-    for offset in no_offsets:
-        patch_exact_bytes(
-            clean_slps,
-            output_slps,
-            offset=offset,
-            source_text="いいえ",
-            replacement_text="No",
-            label=f"SLPS No fix at 0x{offset:X}",
-        )
-        annotate(
-            "SLPS_258.37",
-            offset,
-            len("いいえ".encode("cp932")) + 1,
-            "いいえ",
-            "No",
-        )
-
-    # Exact long official labels do not fit their original 8/16-byte slots.
-    # Store them in the unused tail of the translated item-spawn help slot and
-    # redirect only the BTL pointers that need them.
-    pool_host_offset = 0x20A340
-    pool_host_capacity = 240
-    host = output_btl[pool_host_offset : pool_host_offset + pool_host_capacity]
-    first_nul = host.find(0)
-    if first_nul < 0:
-        raise ValueError("BTL string-pool host has no NUL terminator")
-    cursor = pool_host_offset + first_nul + 1
-    pool_limit = pool_host_offset + pool_host_capacity
-    pool_offsets: dict[str, int] = {}
-    for text in [
-        "Difficulty",
-        "Ultimate Jutsu",
-        "Strength",
-        "Guide Ninja Sound",
-        "Extra Hit Counter",
-        "Ultimate",
-    ]:
-        payload = text.encode("ascii") + b"\x00"
-        if cursor + len(payload) > pool_limit:
-            raise ValueError("BTL UI string pool does not fit in host slot")
-        output_btl[cursor : cursor + len(payload)] = payload
-        pool_offsets[text] = cursor
-        annotate("PRG/BTL.BIN", cursor, len(payload), "", text)
-        cursor += len(payload)
-
-    pointer_rewrites = {
-        0x20A264: "Difficulty",
-        0x20A270: "Ultimate Jutsu",
-        0x20A7CC: "Ultimate Jutsu",
-        0x20A7E0: "Guide Ninja Sound",
-        0x20A7E8: "Strength",
-        0x20A800: "Extra Hit Counter",
-        0x209DD4: "Ultimate",
-    }
-    for pointer_offset, text in pointer_rewrites.items():
-        runtime_pointer = BTL_RUNTIME_BASE + pool_offsets[text]
-        output_btl[pointer_offset : pointer_offset + 4] = runtime_pointer.to_bytes(
-            4, "little"
-        )
-
-    return (
-        {
-            "btl_direct_slots": len(btl_slots),
-            "etc_direct_slots": len(etc_slots),
-            "slps_ui_slots": len(slps_slots),
-            "slps_name_slots": len(name_slots),
-            "slps_yes_no_slots": len(yes_offsets) + len(no_offsets),
-            "btl_pointer_rewrites": len(pointer_rewrites),
-            "btl_pool_strings": len(pool_offsets),
-        },
-        text_annotations,
-    )
-
-
-def patch_rows(
-    *,
+def apply_slot_mappings(
+    mappings: Sequence[dict],
     selected: set[str],
-    clean_files: dict[str, bytes],
-    output_files: dict[str, bytearray],
-    baseline_rows: list[dict],
-    official_rows: list[dict],
-    texteng: bytes,
-) -> tuple[list[dict], dict[str, dict[str, int]]]:
-    log: list[dict] = []
-    stats = {
-        target: {"baseline": 0, "official": 0, "official_changed": 0}
-        for target in selected
-    }
+    clean_targets: dict[str, bytes],
+    output_targets: dict[str, bytearray],
+    official_sources: dict[str, bytes],
+) -> tuple[list[dict[str, object]], list[dict[str, object]], dict[str, int]]:
+    annotations: list[dict[str, object]] = []
+    skipped: list[dict[str, object]] = []
+    stats = {"mapped": 0, "changed": 0, "skipped_too_long": 0, "skipped_invalid": 0}
 
-    for row in baseline_rows:
-        target = str(row["file"]).upper()
+    occupied: dict[str, list[tuple[int, int]]] = {target: [] for target in selected}
+    for index, row in enumerate(mappings, 1):
+        target = str(row["target"]).upper()
         if target not in selected:
             continue
-        offset = int(row["offset"])
+        offset = int(row["target_offset"])
         capacity = int(row["capacity"])
-        source_text = str(row["source"])
-        translation = str(row["translation"])
-        row_id = str(row.get("id", ""))
-        label = f"baseline {target} {row_id or hex(offset)}"
-        source_bytes = verify_source_literal(
-            clean_files[target],
-            offset=offset,
-            source_text=source_text,
-            capacity=capacity,
-            label=label,
-        )
+        source_key = str(row["source"])
+        source_offset = int(row["source_offset"])
+        label = f"slot mapping #{index} {target} 0x{offset:X}"
         try:
-            replacement = translation.encode("cp932")
-        except UnicodeEncodeError as exc:
-            raise ValueError(f"{label}: translation is not CP932-encodable") from exc
-        write_slot(output_files[target], offset, capacity, replacement)
-        stats[target]["baseline"] += 1
-        log.append(
-            {
-                "phase": "baseline",
-                "file": target,
-                "id": row_id,
-                "offset_hex": f"0x{offset:X}",
+            source_text, source_bytes = read_ascii_z(
+                official_sources[source_key], source_offset, label
+            )
+            target_text, _ = read_target_slot(
+                clean_targets[target], offset, capacity, label
+            )
+            if len(source_bytes) > capacity - 1:
+                skipped.append({
+                    "target": target,
+                    "target_offset": f"0x{offset:X}",
+                    "capacity": capacity,
+                    "source": source_key,
+                    "source_offset": f"0x{source_offset:X}",
+                    "reason": "SOURCE_TEXT_TOO_LONG",
+                    "source_bytes": len(source_bytes),
+                })
+                stats["skipped_too_long"] += 1
+                continue
+            for start, end in occupied[target]:
+                if offset < end and start < offset + capacity:
+                    raise ValueError(f"{label}: overlaps another slot mapping")
+            occupied[target].append((offset, offset + capacity))
+            before = bytes(output_targets[target][offset : offset + capacity])
+            write_slot(output_targets[target], offset, capacity, source_bytes)
+            after = bytes(output_targets[target][offset : offset + capacity])
+            annotations.append({
+                "path": TARGET_SPECS[target][0],
+                "start": offset,
+                "end": offset + capacity,
+                "source_text": target_text,
+                "replacement_text": source_text,
+            })
+            stats["mapped"] += 1
+            if before != after:
+                stats["changed"] += 1
+        except Exception as exc:
+            skipped.append({
+                "target": target,
+                "target_offset": f"0x{offset:X}",
                 "capacity": capacity,
-                "source": source_text,
-                "translation": translation,
-                "source_bytes": len(source_bytes),
-                "replacement_bytes": len(replacement),
-                "texteng_offset_hex": "",
-            }
-        )
+                "source": source_key,
+                "source_offset": f"0x{source_offset:X}",
+                "reason": "INVALID_MAPPING",
+                "detail": str(exc),
+            })
+            stats["skipped_invalid"] += 1
+    return annotations, skipped, stats
 
-    for index, row in enumerate(official_rows, 1):
-        target = str(row["file"]).upper()
+
+def apply_pool_mappings(
+    pools: Sequence[dict],
+    selected: set[str],
+    clean_targets: dict[str, bytes],
+    output_targets: dict[str, bytearray],
+    official_sources: dict[str, bytes],
+) -> tuple[list[dict[str, object]], list[dict[str, object]], dict[str, int]]:
+    annotations: list[dict[str, object]] = []
+    skipped: list[dict[str, object]] = []
+    stats = {"pools": 0, "entries": 0, "pointer_writes": 0}
+
+    for pool_index, pool in enumerate(pools, 1):
+        target = str(pool["target"]).upper()
         if target not in selected:
             continue
-        offset = int(row["offset"])
-        capacity = int(row["capacity"])
-        source_text = str(row["source"])
-        texteng_offset = int(row["texteng_offset"])
-        label = f"official {target} #{index} at 0x{offset:X}"
-        source_bytes = verify_source_literal(
-            clean_files[target],
-            offset=offset,
-            source_text=source_text,
-            capacity=capacity,
-            label=label,
-        )
-        official_text = read_ascii_z(texteng, texteng_offset, label)
-        replacement = official_text.encode("ascii")
-        before = bytes(output_files[target][offset : offset + capacity])
-        write_slot(output_files[target], offset, capacity, replacement)
-        after = bytes(output_files[target][offset : offset + capacity])
-        stats[target]["official"] += 1
-        if after != before:
-            stats[target]["official_changed"] += 1
-        log.append(
-            {
-                "phase": "official_texteng",
-                "file": target,
-                "id": "",
-                "offset_hex": f"0x{offset:X}",
-                "capacity": capacity,
-                "source": source_text,
-                "translation": official_text,
-                "source_bytes": len(source_bytes),
-                "replacement_bytes": len(replacement),
-                "texteng_offset_hex": f"0x{texteng_offset:X}",
-            }
-        )
+        pool_offset = int(pool["pool_offset"])
+        pool_capacity = int(pool["pool_capacity"])
+        runtime_base = int(pool["runtime_base"])
+        entries = list(pool.get("entries", []))
+        label = f"pool mapping #{pool_index} {target} 0x{pool_offset:X}"
+        if pool_offset < 0 or pool_offset + pool_capacity > len(clean_targets[target]):
+            raise ValueError(f"{label}: pool is outside the target file")
 
-    return log, stats
+        resolved = []
+        total = 0
+        for entry_index, entry in enumerate(entries, 1):
+            source_key = str(entry["source"])
+            source_offset = int(entry["source_offset"])
+            entry_label = f"{label} entry #{entry_index}"
+            source_text, source_bytes = read_ascii_z(
+                official_sources[source_key], source_offset, entry_label
+            )
+            payload = source_bytes + b"\x00"
+            total += len(payload)
+            pointer_offsets = [int(value) for value in entry["pointer_offsets"]]
+            if not pointer_offsets:
+                raise ValueError(f"{entry_label}: no pointer offsets")
+            for pointer_offset in pointer_offsets:
+                if pointer_offset < 0 or pointer_offset + 4 > len(clean_targets[target]):
+                    raise ValueError(f"{entry_label}: pointer offset is outside the file")
+            resolved.append((entry, source_text, payload, pointer_offsets))
 
+        if total > pool_capacity:
+            skipped.append({
+                "target": target,
+                "pool_offset": f"0x{pool_offset:X}",
+                "pool_capacity": pool_capacity,
+                "required": total,
+                "reason": "POOL_TOO_SMALL",
+            })
+            continue
 
-def write_csv(path: Path, rows: Iterable[dict]) -> None:
-    rows = list(rows)
-    if not rows:
-        path.write_text("", encoding="utf-8-sig")
-        return
-    fields: list[str] = []
-    for row in rows:
-        for key in row:
-            if key not in fields:
-                fields.append(key)
-    with path.open("w", encoding="utf-8-sig", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t")
-        writer.writeheader()
-        writer.writerows(rows)
+        output_targets[target][pool_offset : pool_offset + pool_capacity] = b"\x00" * pool_capacity
+        cursor = pool_offset
+        for _entry, source_text, payload, pointer_offsets in resolved:
+            source_target_text = read_pointer_target_text(
+                clean_targets[target], pointer_offsets[0], runtime_base
+            )
+            output_targets[target][cursor : cursor + len(payload)] = payload
+            pointer_value = runtime_base + cursor
+            for pointer_offset in pointer_offsets:
+                output_targets[target][pointer_offset : pointer_offset + 4] = pointer_value.to_bytes(4, "little")
+                stats["pointer_writes"] += 1
+            annotations.append({
+                "path": TARGET_SPECS[target][0],
+                "start": cursor,
+                "end": cursor + len(payload),
+                "source_text": source_target_text,
+                "replacement_text": source_text,
+            })
+            cursor += len(payload)
+            stats["entries"] += 1
+        stats["pools"] += 1
+
+    return annotations, skipped, stats
 
 
 def diff_rows(
     path: str,
     clean: bytes,
     output: bytes,
-    text_annotations: Sequence[dict[str, object]] = (),
+    annotations: Sequence[dict[str, object]],
 ) -> list[dict[str, str]]:
     if len(clean) != len(output):
         raise ValueError(f"Cannot emit fixed-offset patches for size-changed file: {path}")
 
-    normalized_path = normalize_path(path)
-    annotations = [
-        annotation
-        for annotation in text_annotations
-        if normalize_path(str(annotation["path"])) == normalized_path
+    normalized = normalize_path(path)
+    relevant = [
+        item for item in annotations
+        if normalize_path(str(item["path"])) == normalized
     ]
 
-    changed_ranges: list[tuple[int, int]] = []
+    ranges: list[tuple[int, int]] = []
     start: Optional[int] = None
     for index, (before, after) in enumerate(zip(clean, output)):
         if before != after and start is None:
             start = index
         elif before == after and start is not None:
-            changed_ranges.append((start, index))
+            ranges.append((start, index))
             start = None
     if start is not None:
-        changed_ranges.append((start, len(clean)))
+        ranges.append((start, len(clean)))
 
     rows: list[dict[str, str]] = []
-    for range_start, range_end in changed_ranges:
+    for range_start, range_end in ranges:
         boundaries = {range_start, range_end}
-        for annotation in annotations:
+        for annotation in relevant:
             annotation_start = int(annotation["start"])
             annotation_end = int(annotation["end"])
-            if range_start < annotation_end and range_end > annotation_start:
+            if range_start < annotation_end and annotation_start < range_end:
                 boundaries.add(max(range_start, annotation_start))
                 boundaries.add(min(range_end, annotation_end))
-
         ordered = sorted(boundaries)
         for segment_start, segment_end in zip(ordered, ordered[1:]):
             if segment_start >= segment_end:
                 continue
             matching = [
-                annotation
-                for annotation in annotations
-                if segment_start < int(annotation["end"])
-                and segment_end > int(annotation["start"])
+                item for item in relevant
+                if segment_start < int(item["end"])
+                and int(item["start"]) < segment_end
             ]
             if matching:
-                # Later operations override earlier ones at the same location.
                 annotation = matching[-1]
                 source_text = str(annotation["source_text"])
                 replacement_text = str(annotation["replacement_text"])
             else:
                 source_text = ""
                 replacement_text = ""
-
-            rows.append(
-                {
-                    "path": path,
-                    "offset": f"0x{segment_start:X}",
-                    "expected_hex": clean[segment_start:segment_end].hex().upper(),
-                    "replacement_hex": output[segment_start:segment_end].hex().upper(),
-                    "source_text": source_text,
-                    "replacement_text": replacement_text,
-                }
-            )
+            rows.append({
+                "path": path,
+                "offset": f"0x{segment_start:X}",
+                "expected_hex": clean[segment_start:segment_end].hex().upper(),
+                "replacement_hex": output[segment_start:segment_end].hex().upper(),
+                "source_text": source_text,
+                "replacement_text": replacement_text,
+            })
     return rows
 
 
@@ -760,21 +597,17 @@ def write_translation_tsv(path: Path, rows: list[dict[str, str]]) -> None:
     if not rows:
         raise ValueError("No translation patches were generated")
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    fields = [
+        "path",
+        "offset",
+        "expected_hex",
+        "replacement_hex",
+        "source_text",
+        "replacement_text",
+    ]
     try:
         with temporary.open("w", encoding="utf-8-sig", newline="") as handle:
-            writer = csv.DictWriter(
-                handle,
-                fieldnames=[
-                    "path",
-                    "offset",
-                    "expected_hex",
-                    "replacement_hex",
-                    "source_text",
-                    "replacement_text",
-                ],
-                delimiter="\t",
-                lineterminator="\n",
-            )
+            writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t", lineterminator="\n")
             writer.writeheader()
             writer.writerows(rows)
             handle.flush()
@@ -785,18 +618,21 @@ def write_translation_tsv(path: Path, rows: list[dict[str, str]]) -> None:
             temporary.unlink()
 
 
+def write_json(path: Path, value: object) -> None:
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Build one NA2 translation TSV from clean NA2 and official UN5 sources"
+        description="Build one NA2 post-composition translation TSV from official UN5 sources"
     )
     parser.add_argument("--na2-iso", type=Path)
     parser.add_argument("--na2-folder", type=Path)
     parser.add_argument("--un5-iso", type=Path)
     parser.add_argument("--un5-folder", type=Path)
-    parser.add_argument("--output-directory", type=Path, required=True)
     parser.add_argument("--work-root", type=Path, required=True)
     parser.add_argument("--data-root", type=Path, required=True)
-    parser.add_argument("--apply", default="BTL,ETC")
+    parser.add_argument("--apply", default="BTL,ETC,SLPS")
     parser.add_argument("--no-strict-hash", action="store_true")
     args = parser.parse_args()
 
@@ -805,18 +641,18 @@ def main() -> int:
     na2 = source_from(args.na2_folder, args.na2_iso, "NA2")
     un5 = source_from(args.un5_folder, args.un5_iso, "UN5")
 
-    clean_files = {
-        target: na2.read(FILE_SPECS[target][1], f"NA2 {FILE_SPECS[target][0]}")
-        for target in selected
+    clean_targets = {
+        target: na2.read(TARGET_SPECS[target][1], f"NA2 {TARGET_SPECS[target][0]}")
+        for target in selected_list
     }
-    clean_slps = na2.read(SLPS_CANDIDATES, "NA2 SLPS_258.37")
-    texteng = un5.read(TEXTENG_CANDIDATES, "UN5 PRG/TEXTENG.BIN")
+    official_sources = {
+        key: un5.read(candidates, key)
+        for key, candidates in SOURCE_SPECS.items()
+    }
 
     actual_hashes = {
-        "NA2_BTL": sha1(clean_files["BTL"]) if "BTL" in selected else None,
-        "NA2_ETC": sha1(clean_files["ETC"]) if "ETC" in selected else None,
-        "NA2_SLPS": sha1(clean_slps),
-        "UN5_TEXTENG": sha1(texteng),
+        **{f"NA2_{target}": sha1(data) for target, data in clean_targets.items()},
+        **{key: sha1(data) for key, data in official_sources.items()},
     }
     if not args.no_strict_hash:
         for key, expected in EXPECTED_SHA1.items():
@@ -824,114 +660,78 @@ def main() -> int:
             if actual is not None and actual != expected:
                 raise ValueError(f"Unexpected {key} SHA-1: {actual}; expected {expected}")
 
-    baseline_rows = json.loads(
-        (args.data_root / "baseline.json").read_text(encoding="utf-8")
-    )
-    official_rows = json.loads(
-        (args.data_root / "texteng_map.json").read_text(encoding="utf-8")
-    )
+    mapping_path = args.data_root / "mappings.tsv"
+    mapping_data = load_mappings_tsv(mapping_path)
 
-    output_files = {target: bytearray(clean_files[target]) for target in selected}
-    output_slps = bytearray(clean_slps)
-    patch_log, stats = patch_rows(
-        selected=selected,
-        clean_files=clean_files,
-        output_files=output_files,
-        baseline_rows=baseline_rows,
-        official_rows=official_rows,
-        texteng=texteng,
-    )
-    text_annotations: list[dict[str, object]] = [
-        {
-            "path": FILE_SPECS[str(entry["file"]).upper()][0],
-            "start": int(str(entry["offset_hex"]), 16),
-            "end": int(str(entry["offset_hex"]), 16) + int(entry["capacity"]),
-            "source_text": str(entry["source"]),
-            "replacement_text": str(entry["translation"]),
-        }
-        for entry in patch_log
-    ]
-
-    runtime_stats: dict[str, int] = {}
-    if {"BTL", "ETC"}.issubset(selected):
-        runtime_stats, runtime_annotations = apply_runtime_ui_fixes(
-            clean_btl=clean_files["BTL"],
-            output_btl=output_files["BTL"],
-            clean_etc=clean_files["ETC"],
-            output_etc=output_files["ETC"],
-            clean_slps=clean_slps,
-            output_slps=output_slps,
-        )
-        text_annotations.extend(runtime_annotations)
-
-    rows: list[dict[str, str]] = []
-    for target in selected_list:
-        rows.extend(
-            diff_rows(
-                FILE_SPECS[target][0],
-                clean_files[target],
-                bytes(output_files[target]),
-                text_annotations,
-            )
-        )
-    if runtime_stats:
-        rows.extend(
-            diff_rows(
-                "SLPS_258.37",
-                clean_slps,
-                bytes(output_slps),
-                text_annotations,
-            )
-        )
-
-    run_id = dt.datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3] + f"_pid{os.getpid()}"
-    output_dir = args.output_directory.resolve()
-    output_dir.mkdir(parents=True, exist_ok=True)
-    final_path = output_dir / f"NA2_APPLY__TRANSLATION__{run_id}.tsv"
-    if final_path.exists():
-        raise FileExistsError(final_path)
-    write_translation_tsv(final_path, rows)
-
-    run_root = args.work_root / "runs" / run_id
-    run_root.mkdir(parents=True, exist_ok=False)
-    hashes = {
-        FILE_SPECS[target][0]: {
-            "source_sha1": sha1(clean_files[target]),
-            "translated_sha1": sha1(bytes(output_files[target])),
-            "size": len(output_files[target]),
-        }
+    output_targets = {
+        target: bytearray(clean_targets[target])
         for target in selected_list
     }
-    if runtime_stats:
-        hashes["SLPS_258.37"] = {
-            "source_sha1": sha1(clean_slps),
-            "translated_sha1": sha1(bytes(output_slps)),
-            "size": len(output_slps),
+
+    slot_annotations, slot_skipped, slot_stats = apply_slot_mappings(
+        mapping_data.get("slots", []),
+        selected,
+        clean_targets,
+        output_targets,
+        official_sources,
+    )
+    pool_annotations, pool_skipped, pool_stats = apply_pool_mappings(
+        mapping_data.get("pools", []),
+        selected,
+        clean_targets,
+        output_targets,
+        official_sources,
+    )
+    annotations = slot_annotations + pool_annotations
+
+    rows: list[dict[str, str]] = []
+    translated_hashes = {}
+    for target in selected_list:
+        path = TARGET_SPECS[target][0]
+        output = bytes(output_targets[target])
+        rows.extend(diff_rows(path, clean_targets[target], output, annotations))
+        translated_hashes[path] = {
+            "source_sha1": sha1(clean_targets[target]),
+            "translated_sha1": sha1(output),
+            "size": len(output),
         }
+
+    now = dt.datetime.now(UTC_PLUS_3)
+    run_id = now.strftime("%Y%m%d_%H%M%S_%f")[:-3] + f"_pid{os.getpid()}"
+    run_root = args.work_root.resolve() / "runs" / run_id
+    run_root.mkdir(parents=True, exist_ok=False)
+    final_path = run_root / f"NA2_APPLY__TRANSLATION__{run_id}.tsv"
+    write_translation_tsv(final_path, rows)
+
+    selected_unresolved = [
+        row for row in mapping_data.get("unresolved", [])
+        if str(row.get("target", "")).upper() in selected
+    ]
     summary = {
-        "mode": "single post-composition translation TSV",
+        "mode": "official-source post-composition TSV",
         "run_id": run_id,
+        "timezone": "UTC+03:00",
         "translation_tsv": str(final_path),
         "patch_rows": len(rows),
         "targets": selected_list,
         "source_hashes": actual_hashes,
-        "translated_file_hashes": hashes,
-        "stats": stats,
-        "runtime_ui_fixes": runtime_stats,
+        "translated_file_hashes": translated_hashes,
+        "slot_stats": slot_stats,
+        "pool_stats": pool_stats,
+        "skipped_runtime": slot_skipped + pool_skipped,
+        "unresolved_mappings": selected_unresolved,
     }
-    (run_root / "build_summary.json").write_text(
-        json.dumps(summary, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+    write_json(run_root / "build_summary.json", summary)
 
     print("Built NA2 translation TSV:")
     print(f"  {final_path}")
     print(f"  patch rows: {len(rows)}")
-    for path, info in hashes.items():
-        print(
-            f"  {path}: {info['size']} bytes, translated SHA-1 "
-            f"{info['translated_sha1']}"
-        )
+    print(f"  mapped text slots: {slot_stats['mapped']}")
+    print(f"  relocated official strings: {pool_stats['entries']}")
+    print(f"  runtime skips: {len(slot_skipped) + len(pool_skipped)}")
+    print(f"  unresolved numeric mappings: {len(selected_unresolved)}")
+    for path, info in translated_hashes.items():
+        print(f"  {path}: {info['size']} bytes, translated SHA-1 {info['translated_sha1']}")
     return 0
 
 

@@ -9,6 +9,7 @@ param(
     [string]$OutputIso,
     [Alias('d')]
     [string]$PackageDirectory,
+    [string]$TranslationTsv,
     [Alias('e')]
     [string]$Pcsx2Exe,
     [Alias('p')]
@@ -93,6 +94,9 @@ if (-not $RunOnly) {
     )
     foreach ($package in $selectedPackages) {
         $arguments += @('--package', $package)
+    }
+    if (-not [string]::IsNullOrWhiteSpace($TranslationTsv)) {
+        $arguments += @('--translation-tsv', $TranslationTsv)
     }
 
     & python -B @arguments

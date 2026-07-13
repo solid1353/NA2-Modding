@@ -3,8 +3,7 @@ param(
     [string]$Na2Folder,
     [string]$Un5Iso,
     [string]$Un5Folder,
-    [string]$OutputDirectory = (Join-Path $HOME 'Downloads'),
-    [string]$Apply = 'BTL,ETC',
+    [string]$Apply = 'BTL,ETC,SLPS',
     [switch]$NoStrictHash
 )
 
@@ -52,7 +51,6 @@ if ([string]::IsNullOrWhiteSpace($Un5Folder) -and [string]::IsNullOrWhiteSpace($
 }
 
 $arguments = @(
-    '--output-directory', $OutputDirectory,
     '--work-root', (Join-Path $builderRoot 'work'),
     '--data-root', $dataRoot,
     '--apply', $Apply
@@ -61,14 +59,14 @@ $arguments = @(
 if (-not [string]::IsNullOrWhiteSpace($Na2Folder)) {
     $arguments += @('--na2-folder', $Na2Folder)
 }
-elseif (-not [string]::IsNullOrWhiteSpace($Na2Iso)) {
+else {
     $arguments += @('--na2-iso', $Na2Iso)
 }
 
 if (-not [string]::IsNullOrWhiteSpace($Un5Folder)) {
     $arguments += @('--un5-folder', $Un5Folder)
 }
-elseif (-not [string]::IsNullOrWhiteSpace($Un5Iso)) {
+else {
     $arguments += @('--un5-iso', $Un5Iso)
 }
 

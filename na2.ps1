@@ -9,6 +9,7 @@ param(
     [string]$OutputIso,
     [Alias('d')]
     [string]$PackageDirectory,
+    [string]$TranslationTsv,
     [Alias('e')]
     [string]$Pcsx2Exe,
     [Alias('p')]
@@ -44,15 +45,37 @@ function Write-Na2Stage {
     Write-Host "[na2] $Message" -ForegroundColor Cyan
 }
 
+function Get-LatestBuilderTranslationTsv {
+    $runsRoot = Join-Path $builderRoot 'work\runs'
+    if (-not (Test-Path -LiteralPath $runsRoot -PathType Container)) {
+        return $null
+    }
+
+    $summary = Get-ChildItem -LiteralPath $runsRoot -Recurse -File -Filter 'build_summary.json' |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if (-not $summary) {
+        return $null
+    }
+
+    $run = Get-Content -LiteralPath $summary.FullName -Raw | ConvertFrom-Json
+    $table = [string]$run.translation_tsv
+    if ([string]::IsNullOrWhiteSpace($table) -or -not (Test-Path -LiteralPath $table -PathType Leaf)) {
+        throw "Builder run summary does not reference an existing translation TSV: $($summary.FullName)"
+    }
+    return (Resolve-Path -LiteralPath $table).Path
+}
+
 function Invoke-TranslationBuilder {
     if ($BtlApplyTsv -or $EtcApplyTsv) {
         throw 'BtlApplyTsv and EtcApplyTsv are obsolete. The translation builder now produces one unified TSV.'
     }
+    if ($OutputDirectory) {
+        throw 'OutputDirectory is obsolete. Translation builder runs are stored under translation_package_builder\work\runs.'
+    }
 
     $builderArgs = @{}
     @{
-        Na2Iso          = $Na2Iso
-        OutputDirectory = $OutputDirectory
+        Na2Iso = $Na2Iso
     }.GetEnumerator() | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Value) } |
         ForEach-Object { $builderArgs[$_.Key] = $_.Value }
     if ($NoStrictHash) { $builderArgs.NoStrictHash = $true }
@@ -69,7 +92,7 @@ $fullWorkflow = -not $command -and
     -not $InputIso -and -not $OutputIso -and -not $PackageDirectory -and
     -not $Pcsx2Exe -and -not $Packages -and -not $BuildOnly -and
     -not $RunOnly -and -not $Help -and -not $Na2Iso -and
-    -not $OutputDirectory -and -not $BtlApplyTsv -and -not $EtcApplyTsv -and
+    -not $OutputDirectory -and -not $TranslationTsv -and -not $BtlApplyTsv -and -not $EtcApplyTsv -and
     -not $NoStrictHash -and -not $IsoPath -and -not $CanonicalPnach -and
     -not $Serial -and -not $RemainingArguments.Count
 
@@ -140,6 +163,7 @@ $applyArgs = @{
     InputIso         = $InputIso
     OutputIso        = $OutputIso
     PackageDirectory = $PackageDirectory
+    TranslationTsv   = $TranslationTsv
     Pcsx2Exe         = $Pcsx2Exe
 }.GetEnumerator() | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Value) } |
     ForEach-Object { $applyArgs[$_.Key] = $_.Value }
@@ -155,8 +179,16 @@ if ($command) {
         $packageNames[[string]$_]
     }
 }
-elseif (-not $Packages) {
+elseif (-not $Packages -and -not $RunOnly) {
     $applyArgs.Packages = @('Font', 'Translation')
+}
+
+$translationSelected = @($applyArgs.Packages | Where-Object { $_ -ieq 'Translation' }).Count -gt 0
+if ($translationSelected -and -not $applyArgs.TranslationTsv) {
+    $latestBuilderTsv = Get-LatestBuilderTranslationTsv
+    if ($latestBuilderTsv) {
+        $applyArgs.TranslationTsv = $latestBuilderTsv
+    }
 }
 
 if ($fullWorkflow) {

@@ -1,20 +1,29 @@
-# NA2 Translation Package Builder v20
+# NA2 Translation Package Builder v21
 
-This builder produces one post-composition translation TSV. It does not package or modify replacement BIN or ELF files.
+This builder produces one post-composition translation TSV for Naruto: Narutimate Accel 2. It does not package or modify replacement BIN or ELF files.
 
-## Source scope
+## Purpose and integration
 
-The builder reads all relevant official source files:
+The surrounding NA2 build pipeline composes selected replacement packages first, then applies the generated translation TSV over the composed files. Translation therefore does not own any replacement binary and can safely patch text or pointers inside files supplied by another package.
 
-- NA2 `PRG/BTL.BIN`
-- NA2 `PRG/ETC.BIN`
-- NA2 `SLPS_258.37`
+The builder itself owns only translation discovery and mapping data. Project-level apply/build scripts are outside this archive.
+
+## Source and target scope
+
+The builder reads these clean NA2 targets:
+
+- `PRG/BTL.BIN`
+- `PRG/ETC.BIN`
+- `SLPS_258.37`
+
+It reads official English data from:
+
 - UN5 `PRG/BTL.BIN`
 - UN5 `PRG/ETC.BIN`
 - UN5 `PRG/TEXTENG.BIN`
 - UN5 `SLES_556.05`
 
-The builder contains no hardcoded translated prose. Readable source and replacement text is extracted from the supplied NA2 and UN5 binaries at build time. Entries without a verified official source offset are skipped and listed in the run summary.
+The builder contains no hardcoded translated prose. Runtime text is read from the supplied NA2 and UN5 binaries using numeric mappings. Executable disassembly may be used while authoring or validating mappings, but it is not required to run the builder and is not included.
 
 ## Mapping data
 
@@ -22,36 +31,42 @@ All structural mappings are stored in `data/mappings.tsv`. It contains exactly t
 
 `mode`, `target`, `target_offset`, `capacity`, `source`, `source_offset`, `pool_offset`, `pool_capacity`, `runtime_base`, `pointer_offsets`, `reason`
 
-The row modes are:
+Supported row modes:
 
-- `slot`: maps one fixed-capacity NA2 text slot to an official UN5 source string.
-- `pool`: places an official UN5 string in a relocation pool and rewrites one or more pointers.
-- `unresolved`: records an NA2 target for which no verified official source mapping is currently known.
+- `slot`: copies one NUL-terminated official source string into a fixed-capacity NA2 slot.
+- `pool`: writes an official source string into a verified relocation pool and rewrites one or more pointer locations in the same target file.
+- `unresolved`: records a known NA2 text target that still lacks a verified structural mapping.
 
-Offsets and pointer locations are numeric structural data. `mappings.tsv` contains no translated strings. Multiple pointer offsets in one pool row are comma-separated.
+Offsets, capacities, runtime bases, and pointer locations are numeric structural data. `mappings.tsv` contains no translation text.
 
-## Output
+## Generated output
 
-Each run creates one directory:
+Each run creates:
 
 `translation_package_builder\work\runs\<run id>\`
 
-That directory contains both:
+The run directory contains:
 
-- `NA2_APPLY__TRANSLATION__<UTC+3 timestamp>.tsv`
+- `NA2_APPLY__TRANSLATION__<UTC+3 run id>.tsv`
 - `build_summary.json`
 
-The generated translation TSV contains exactly these columns in this order:
+The generated translation TSV contains exactly these six columns in this order:
 
 `path`, `offset`, `expected_hex`, `replacement_hex`, `source_text`, `replacement_text`
 
-Text columns are populated for readable text patches. Pointer writes, cleared pool bytes, and other binary-only segments leave them empty.
+Readable text patches populate both text columns. Pointer writes, cleared relocation bytes, and other binary-only patches leave them empty.
 
-## Default targets
+## Validation and failure behavior
 
-`BTL,ETC,SLPS`
+Known clean-source SHA-1 values are checked by default. `-NoStrictHash` disables that check only for deliberate experiments.
 
-`ELF`, `SLES`, and `EXE` are accepted aliases for `SLPS`. `ALL` selects all targets.
+A fixed-slot mapping is skipped when its official source text cannot fit safely. Invalid offsets, overlapping slots, malformed strings, bad pointers, and undersized relocation pools fail or are reported rather than guessed. `build_summary.json` records source hashes, translated hashes, patch counts, runtime skips, and unresolved mappings.
+
+## Default targets and aliases
+
+Default selection: `BTL,ETC,SLPS`.
+
+`ELF`, `SLES`, and `EXE` alias `SLPS`. `ALL` selects all targets.
 
 ## Direct use
 
@@ -59,21 +74,16 @@ Text columns are populated for readable text patches. Pointer writes, cleared po
 & '.\translation_package_builder\build_na2_translation_package.ps1'
 ```
 
-Optional parameters support extracted source folders or ISO files:
+Optional extracted-source folders or ISO files can be supplied through the wrapper parameters documented in `build_na2_translation_package.ps1`.
 
-```powershell
-& '.\translation_package_builder\build_na2_translation_package.ps1' `
-    -Na2Folder '.\source\NA2' `
-    -Un5Folder '.\source\UN5' `
-    -Apply 'BTL,ETC,SLPS'
-```
+## Version 21
 
-Strict SHA-1 validation is enabled for the known source set. `-NoStrictHash` disables that validation for deliberate experiments.
+Version 21 used the paired UN5/NA2 Practice screens and both executable disassemblies to validate additional fixed slots, enum tables, and pointer call sites. It corrected one previously wrong official-source mapping, added safe relocation entries where official text exceeds the original slot, and reduced the unresolved mapping set without adding translation prose to the builder.
 
-## Runtime records
+Validated against the supplied clean sources:
 
-`build_summary.json` records the generated TSV path, source hashes, translated hashes, applied counts, runtime skips, and unresolved mappings.
-
-## Version 20
-
-The structural mapping store was converted from nested JSON to one auditable TSV. All 339 fixed-slot mappings, 20 relocation-pool entries, and 373 unresolved targets were preserved. Translation generation and output format are unchanged.
+- 359 fixed-slot mappings
+- 26 relocation entries
+- 349 unresolved numeric targets
+- 470 generated patch rows
+- zero runtime skips

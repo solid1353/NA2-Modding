@@ -29,6 +29,7 @@ SOURCE_SPECS = {
 }
 
 MAPPING_FIELDS = [
+    "enabled",
     "mode",
     "target",
     "target_offset",
@@ -39,8 +40,24 @@ MAPPING_FIELDS = [
     "pool_capacity",
     "runtime_base",
     "pointer_offsets",
+    "transform",
+    "arg1_source",
+    "arg1_offset",
+    "arg2_source",
+    "arg2_offset",
+    "expected_hex",
+    "replacement_hex",
     "reason",
 ]
+
+SOURCE_TRANSFORMS = {
+    "",
+    "format_arg1",
+    "format_args",
+    "format_prefix_arg2",
+    "format_suffix_arg2",
+    "empty",
+}
 
 EXPECTED_SHA1 = {
     "NA2_BTL": "bf7fc7331a2a4f34fc90b84b45772ae1f6bcab03",
@@ -234,11 +251,65 @@ def parse_mapping_int(value: str, label: str) -> int:
     return number
 
 
+def parse_enabled(value: str, label: str) -> bool:
+    if value not in {"0", "1"}:
+        raise ValueError(f"{label}: enabled must be the numeric flag 0 or 1")
+    return value == "1"
+
+
+def parse_hex_bytes(value: str, label: str) -> bytes:
+    text = value.strip().replace(" ", "")
+    if not text or len(text) % 2:
+        raise ValueError(f"{label}: invalid hexadecimal byte sequence")
+    try:
+        return bytes.fromhex(text)
+    except ValueError as exc:
+        raise ValueError(f"{label}: invalid hexadecimal byte sequence") from exc
+
+
+def source_reference(row: dict[str, str], prefix: str, label: str) -> Optional[dict[str, object]]:
+    source_key = f"{prefix}_source" if prefix else "source"
+    offset_key = f"{prefix}_offset" if prefix else "source_offset"
+    source = row[source_key].upper()
+    offset = row[offset_key]
+    if not source and not offset:
+        return None
+    if source not in SOURCE_SPECS:
+        raise ValueError(f"{label}: unsupported source {source!r}")
+    return {
+        "source": source,
+        "source_offset": parse_mapping_int(offset, label),
+    }
+
+
+def parse_source_spec(row: dict[str, str], label: str) -> dict[str, object]:
+    transform = row["transform"].lower()
+    if transform not in SOURCE_TRANSFORMS:
+        raise ValueError(f"{label}: unsupported source transform {transform!r}")
+    primary = source_reference(row, "", label)
+    if primary is None:
+        raise ValueError(f"{label}: source mapping has no primary source")
+    arg1 = source_reference(row, "arg1", label)
+    arg2 = source_reference(row, "arg2", label)
+    if transform in {"format_arg1", "format_args", "format_prefix_arg2"} and arg1 is None:
+        raise ValueError(f"{label}: transform {transform!r} requires arg1")
+    if transform == "format_args" and arg2 is None:
+        raise ValueError(f"{label}: transform {transform!r} requires arg2")
+    return {
+        **primary,
+        "transform": transform,
+        "arg1": arg1,
+        "arg2": arg2,
+    }
+
+
 def load_mappings_tsv(path: Path) -> dict[str, object]:
     slots: list[dict[str, object]] = []
     pools: list[dict[str, object]] = []
     pools_by_key: dict[tuple[str, int, int, int], dict[str, object]] = {}
+    byte_patches: list[dict[str, object]] = []
     unresolved: list[dict[str, object]] = []
+    disabled: list[dict[str, object]] = []
 
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
@@ -252,27 +323,33 @@ def load_mappings_tsv(path: Path) -> dict[str, object]:
             mode = row["mode"].lower()
             target = row["target"].upper()
             label = f"mappings.tsv line {line_number}"
+            enabled = parse_enabled(row["enabled"], label)
             if target not in TARGET_SPECS:
                 raise ValueError(f"{label}: unsupported target {target!r}")
+            if not enabled:
+                disabled.append({
+                    "line": line_number,
+                    "mode": mode,
+                    "target": target,
+                    "target_offset": row["target_offset"],
+                    "pool_offset": row["pool_offset"],
+                    "reason": row["reason"],
+                })
+                continue
 
             if mode == "slot":
-                source = row["source"].upper()
-                if source not in SOURCE_SPECS:
-                    raise ValueError(f"{label}: unsupported source {source!r}")
                 slots.append({
                     "mode": "slot",
                     "target": target,
                     "target_offset": parse_mapping_int(row["target_offset"], label),
                     "capacity": parse_mapping_int(row["capacity"], label),
-                    "source": source,
-                    "source_offset": parse_mapping_int(row["source_offset"], label),
+                    **parse_source_spec(row, label),
+                    "reason": row["reason"],
                 })
                 continue
 
             if mode == "pool":
-                source = row["source"].upper()
-                if source not in SOURCE_SPECS:
-                    raise ValueError(f"{label}: unsupported source {source!r}")
+                source_spec = parse_source_spec(row, label)
                 pool_offset = parse_mapping_int(row["pool_offset"], label)
                 pool_capacity = parse_mapping_int(row["pool_capacity"], label)
                 runtime_base = parse_mapping_int(row["runtime_base"], label)
@@ -297,11 +374,26 @@ def load_mappings_tsv(path: Path) -> dict[str, object]:
                     pools_by_key[key] = pool
                     pools.append(pool)
                 pool["entries"].append({
-                    "source": source,
-                    "source_offset": parse_mapping_int(row["source_offset"], label),
+                    **source_spec,
                     "pointer_offsets": [
                         parse_mapping_int(value, label) for value in pointer_values
                     ],
+                    "reason": row["reason"],
+                })
+                continue
+
+            if mode == "bytes":
+                expected = parse_hex_bytes(row["expected_hex"], label)
+                replacement = parse_hex_bytes(row["replacement_hex"], label)
+                if len(expected) != len(replacement):
+                    raise ValueError(f"{label}: byte patch changes file size")
+                byte_patches.append({
+                    "mode": "bytes",
+                    "target": target,
+                    "target_offset": parse_mapping_int(row["target_offset"], label),
+                    "expected": expected,
+                    "replacement": replacement,
+                    "reason": row["reason"],
                 })
                 continue
 
@@ -319,12 +411,18 @@ def load_mappings_tsv(path: Path) -> dict[str, object]:
 
             raise ValueError(f"{label}: unsupported mode {mode!r}")
 
-    if not slots and not pools:
+    if not slots and not pools and not byte_patches:
         raise ValueError("mappings.tsv contains no resolved mappings")
-    return {"slots": slots, "pools": pools, "unresolved": unresolved}
+    return {
+        "slots": slots,
+        "pools": pools,
+        "byte_patches": byte_patches,
+        "unresolved": unresolved,
+        "disabled": disabled,
+    }
 
 
-def read_ascii_z(data: bytes, offset: int, label: str) -> tuple[str, bytes]:
+def read_official_z(data: bytes, offset: int, label: str) -> tuple[str, bytes]:
     if offset < 0 or offset >= len(data):
         raise ValueError(f"{label}: source offset 0x{offset:X} is outside the file")
     end = data.find(b"\x00", offset)
@@ -333,13 +431,56 @@ def read_ascii_z(data: bytes, offset: int, label: str) -> tuple[str, bytes]:
     raw = data[offset:end]
     if not raw:
         raise ValueError(f"{label}: empty source string at 0x{offset:X}")
-    try:
-        text = raw.decode("ascii")
-    except UnicodeDecodeError as exc:
-        raise ValueError(f"{label}: source string is not ASCII") from exc
+    text = raw.decode("cp1252")
     if any(ord(char) < 0x20 and char not in "\t\r\n" for char in text):
         raise ValueError(f"{label}: source string contains unsupported control bytes")
     return text, raw
+
+
+def resolve_source_text(
+    spec: dict[str, object],
+    official_sources: dict[str, bytes],
+    label: str,
+) -> str:
+    source_key = str(spec["source"])
+    source_offset = int(spec["source_offset"])
+    template, _ = read_official_z(official_sources[source_key], source_offset, label)
+
+    def read_arg(name: str) -> Optional[str]:
+        ref = spec.get(name)
+        if ref is None:
+            return None
+        text, _ = read_official_z(
+            official_sources[str(ref["source"])],
+            int(ref["source_offset"]),
+            f"{label} {name}",
+        )
+        return text
+
+    arg1 = read_arg("arg1")
+    arg2 = read_arg("arg2")
+    transform = str(spec.get("transform", ""))
+    if transform == "":
+        return template
+    if transform == "empty":
+        return ""
+    if transform == "format_arg1":
+        if "%1" not in template or arg1 is None:
+            raise ValueError(f"{label}: format_arg1 cannot resolve %1")
+        return template.replace("%1", arg1)
+    if transform == "format_args":
+        if "%1" not in template or "%2" not in template or arg1 is None or arg2 is None:
+            raise ValueError(f"{label}: format_args cannot resolve both placeholders")
+        return template.replace("%1", arg1).replace("%2", arg2)
+    if transform == "format_prefix_arg2":
+        if "%1" not in template or "%2" not in template or arg1 is None:
+            raise ValueError(f"{label}: format_prefix_arg2 cannot resolve template")
+        return template.replace("%1", arg1).split("%2", 1)[0]
+    if transform == "format_suffix_arg2":
+        if "%2" not in template:
+            raise ValueError(f"{label}: format_suffix_arg2 cannot resolve template")
+        return template.split("%2", 1)[1]
+    raise ValueError(f"{label}: unsupported transform {transform!r}")
 
 
 def read_target_slot(data: bytes, offset: int, capacity: int, label: str) -> tuple[str, bytes]:
@@ -436,14 +577,12 @@ def apply_slot_mappings(
         source_offset = int(row["source_offset"])
         label = f"slot mapping #{index} {target} 0x{offset:X}"
         try:
-            official_text, _ = read_ascii_z(
-                official_sources[source_key], source_offset, label
-            )
+            official_text = resolve_source_text(row, official_sources, label)
             target_text, _ = read_target_slot(
                 clean_targets[target], offset, capacity, label
             )
             source_text = adapt_source_markup(official_text, target_text, label)
-            source_bytes = source_text.encode("ascii")
+            source_bytes = source_text.encode("cp1252")
             if len(source_bytes) > capacity - 1:
                 skipped.append({
                     "target": target,
@@ -516,9 +655,7 @@ def apply_pool_mappings(
             source_key = str(entry["source"])
             source_offset = int(entry["source_offset"])
             entry_label = f"{label} entry #{entry_index}"
-            official_text, _ = read_ascii_z(
-                official_sources[source_key], source_offset, entry_label
-            )
+            official_text = resolve_source_text(entry, official_sources, entry_label)
             pointer_offsets = [int(value) for value in entry["pointer_offsets"]]
             if not pointer_offsets:
                 raise ValueError(f"{entry_label}: no pointer offsets")
@@ -531,7 +668,7 @@ def apply_pool_mappings(
             source_text = adapt_source_markup(
                 official_text, source_target_text, entry_label
             )
-            payload = source_text.encode("ascii") + b"\x00"
+            payload = source_text.encode("cp1252") + b"\x00"
             total += len(payload)
             resolved.append((entry, source_target_text, source_text, payload, pointer_offsets))
 
@@ -565,6 +702,47 @@ def apply_pool_mappings(
         stats["pools"] += 1
 
     return annotations, skipped, stats
+
+
+def apply_byte_mappings(
+    mappings: Sequence[dict],
+    selected: set[str],
+    output_targets: dict[str, bytearray],
+) -> tuple[list[dict[str, object]], dict[str, int]]:
+    annotations: list[dict[str, object]] = []
+    stats = {"mapped": 0, "changed": 0}
+    occupied: dict[str, list[tuple[int, int]]] = {target: [] for target in selected}
+    for index, row in enumerate(mappings, 1):
+        target = str(row["target"]).upper()
+        if target not in selected:
+            continue
+        offset = int(row["target_offset"])
+        expected = bytes(row["expected"])
+        replacement = bytes(row["replacement"])
+        label = f"byte mapping #{index} {target} 0x{offset:X}"
+        if offset < 0 or offset + len(expected) > len(output_targets[target]):
+            raise ValueError(f"{label}: patch range is outside the file")
+        for start, end in occupied[target]:
+            if offset < end and start < offset + len(expected):
+                raise ValueError(f"{label}: overlaps another byte mapping")
+        occupied[target].append((offset, offset + len(expected)))
+        actual = bytes(output_targets[target][offset : offset + len(expected)])
+        if actual != expected:
+            raise ValueError(
+                f"{label}: expected {expected.hex().upper()}, found {actual.hex().upper()}"
+            )
+        output_targets[target][offset : offset + len(expected)] = replacement
+        annotations.append({
+            "path": TARGET_SPECS[target][0],
+            "start": offset,
+            "end": offset + len(expected),
+            "source_text": "",
+            "replacement_text": "",
+        })
+        stats["mapped"] += 1
+        if expected != replacement:
+            stats["changed"] += 1
+    return annotations, stats
 
 
 def diff_rows(
@@ -718,7 +896,12 @@ def main() -> int:
         output_targets,
         official_sources,
     )
-    annotations = slot_annotations + pool_annotations
+    byte_annotations, byte_stats = apply_byte_mappings(
+        mapping_data.get("byte_patches", []),
+        selected,
+        output_targets,
+    )
+    annotations = slot_annotations + pool_annotations + byte_annotations
 
     rows: list[dict[str, str]] = []
     translated_hashes = {}
@@ -754,6 +937,8 @@ def main() -> int:
         "translated_file_hashes": translated_hashes,
         "slot_stats": slot_stats,
         "pool_stats": pool_stats,
+        "byte_patch_stats": byte_stats,
+        "disabled_mappings": mapping_data.get("disabled", []),
         "skipped_runtime": slot_skipped + pool_skipped,
         "unresolved_mappings": selected_unresolved,
     }
@@ -764,6 +949,8 @@ def main() -> int:
     print(f"  patch rows: {len(rows)}")
     print(f"  mapped text slots: {slot_stats['mapped']}")
     print(f"  relocated official strings: {pool_stats['entries']}")
+    print(f"  structural byte patches: {byte_stats['mapped']}")
+    print(f"  disabled mapping rows: {len(mapping_data.get('disabled', []))}")
     print(f"  runtime skips: {len(slot_skipped) + len(pool_skipped)}")
     print(f"  unresolved numeric mappings: {len(selected_unresolved)}")
     for path, info in translated_hashes.items():

@@ -4,6 +4,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 
 ## Hard rules
 
+- Use only repository-relative paths in project files, scripts, configuration, logs, manifests, metadata, and generated artifacts; never persist machine-specific absolute paths.
 - Never change binary files manually.
 - All binary changes must go through scripts.
 - Preserve file sizes unless explicitly instructed.

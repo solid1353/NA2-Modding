@@ -41,11 +41,11 @@ EXPECTED_SHA1 = {
     "UN5_TEXTENG": "77fafba95157e44ccd61783a04aba87c4b98b1fb",
     "UN5_SLES": "fe54357b016bc579b435a593e330d2d0ff822cdf",
 }
-VALID_MODES = {"slot", "shorten", "bytes", "unresolved"}
+VALID_MODES = {"slot", "sequence", "shorten", "bytes", "unresolved"}
 VALID_TRANSFORMS = {
     "", "empty", "format_arg1", "format_args", "format_prefix_arg2",
     "format_suffix_arg2", "between_placeholders", "after_placeholder2",
-    "split_br", "join_br_parts", "append_space", "flatten_br_slice",
+    "split_br", "split_br_sequence", "join_br_parts", "append_space", "flatten_br_slice",
 }
 NAMED_COLOR_TAG_EQUIVALENTS = {
     "<WHITE>": ("<WHITE>", "<colorFFFFFF>"),
@@ -529,6 +529,55 @@ def resolve_source_text(row: dict[str, object], sources: dict[str, bytes], label
     raise ValueError(f"{label}: unsupported transform {transform!r}")
 
 
+def resolve_source_sequence(row: dict[str, object], sources: dict[str, bytes], label: str) -> list[str]:
+    source = str(row["source"])
+    offset = int(row["source_offset"])
+    template = read_official_z(sources[source], offset, label)
+    transform = str(row.get("transform", ""))
+    arguments = dict(row.get("arguments", {}))
+    if transform != "split_br_sequence":
+        raise ValueError(f"{label}: sequence mode requires split_br_sequence")
+    values = [parse_int(value, label) for value in arguments.get("parts", "").split(",") if value.strip()]
+    if not values:
+        raise ValueError(f"{label}: split_br_sequence has no parts")
+    pieces = template.split("<br>")
+    if max(values) >= len(pieces):
+        raise ValueError(f"{label}: sequence part is outside {len(pieces)} parts")
+    return [pieces[value] for value in values]
+
+
+def read_target_sequence(data: bytes, offset: int, capacity: int, label: str) -> tuple[list[str], bytes]:
+    if capacity <= 0 or offset < 0 or offset + capacity > len(data):
+        raise ValueError(f"{label}: invalid target range 0x{offset:X}+{capacity}")
+    region = data[offset:offset + capacity]
+    fragments: list[str] = []
+    cursor = 0
+    while cursor < len(region):
+        if all(value == 0 for value in region[cursor:]):
+            break
+        end = region.find(b"\x00", cursor)
+        if end < 0:
+            raise ValueError(f"{label}: target sequence has no terminating NUL")
+        raw = region[cursor:end]
+        if not raw:
+            raise ValueError(f"{label}: target sequence contains an empty fragment before its zero-padded tail")
+        try:
+            fragments.append(raw.decode("cp932"))
+        except UnicodeDecodeError:
+            fragments.append("")
+        cursor = end + 1
+    if not fragments:
+        raise ValueError(f"{label}: target sequence is empty")
+    return fragments, region[:cursor]
+
+
+def write_sequence(output: bytearray, offset: int, capacity: int, fragments: list[bytes]) -> None:
+    payload = b"".join(fragment + b"\x00" for fragment in fragments) + b"\x00"
+    if len(payload) > capacity:
+        raise ValueError(f"replacement sequence is {len(payload)} bytes but block allows {capacity}")
+    output[offset:offset + capacity] = payload + b"\x00" * (capacity - len(payload))
+
+
 def read_target_slot(data: bytes, offset: int, capacity: int, label: str) -> tuple[str, bytes]:
     if capacity <= 0 or offset < 0 or offset + capacity > len(data):
         raise ValueError(f"{label}: invalid target range 0x{offset:X}+{capacity}")
@@ -586,7 +635,7 @@ def parse_mappings(rows: list[dict[str, str]]) -> dict[str, list[dict[str, objec
             continue
         common = {"id": row["id"], "section": row["section"] or "unclassified", "mode": mode,
                   "target": target, "reason": row["reason"]}
-        if mode in {"slot", "shorten"}:
+        if mode in {"slot", "sequence", "shorten"}:
             source, source_offset = parse_source_ref(row["source_ref"], label)
             transform = row["transform"].lower()
             if transform not in VALID_TRANSFORMS:
@@ -594,8 +643,10 @@ def parse_mappings(rows: list[dict[str, str]]) -> dict[str, list[dict[str, objec
             short_text = row["value"]
             if mode == "shorten" and (not short_text.startswith("[S]") or not short_text):
                 raise ValueError(f"{label}: shorten rows require [S]-prefixed value")
-            if mode == "slot" and short_text:
-                raise ValueError(f"{label}: slot rows require an empty value")
+            if mode in {"slot", "sequence"} and short_text:
+                raise ValueError(f"{label}: {mode} rows require an empty value")
+            if mode == "sequence" and transform != "split_br_sequence":
+                raise ValueError(f"{label}: sequence rows require split_br_sequence")
             result["text"].append({
                 **common,
                 "target_offset": parse_int(row["target_offset"], label),
@@ -637,15 +688,31 @@ def apply_text_mappings(mappings, selected, clean_targets, output_targets, offic
         for start, end, prior in occupied[target]:
             if offset < end and start < offset + capacity:
                 raise ValueError(f"{label}: overlaps {prior} at 0x{start:X}-0x{end:X}")
-        official = resolve_source_text(row, official_sources, label)
-        target_text, _ = read_target_slot(clean_targets[target], offset, capacity, label)
-        if row["mode"] == "shorten":
-            replacement_text = str(row["short_text"])
-            stats["shortened"] += 1
+        if row["mode"] == "sequence":
+            target_fragments, _ = read_target_sequence(clean_targets[target], offset, capacity, label)
+            official_fragments = resolve_source_sequence(row, official_sources, label)
+            target_context = "<NUL>".join(target_fragments)
+            replacement_fragments = [
+                adapt_source_markup(fragment, target_context, label) for fragment in official_fragments
+            ]
+            write_sequence(
+                output_targets[target],
+                offset,
+                capacity,
+                [fragment.encode("cp1252") for fragment in replacement_fragments],
+            )
+            target_text = target_context
+            replacement_text = "<NUL>".join(replacement_fragments)
         else:
-            replacement_text = adapt_source_markup(official, target_text, label)
-        replacement = replacement_text.encode("cp1252")
-        write_slot(output_targets[target], offset, capacity, replacement)
+            official = resolve_source_text(row, official_sources, label)
+            target_text, _ = read_target_slot(clean_targets[target], offset, capacity, label)
+            if row["mode"] == "shorten":
+                replacement_text = str(row["short_text"])
+                stats["shortened"] += 1
+            else:
+                replacement_text = adapt_source_markup(official, target_text, label)
+            replacement = replacement_text.encode("cp1252")
+            write_slot(output_targets[target], offset, capacity, replacement)
         occupied[target].append((offset, offset + capacity, str(row["id"])))
         annotations.append({"path": TARGET_SPECS[target][0], "start": offset, "end": offset + capacity,
                             "source_text": target_text, "replacement_text": replacement_text})

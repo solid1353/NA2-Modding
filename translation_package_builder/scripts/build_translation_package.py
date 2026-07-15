@@ -7,58 +7,32 @@ import datetime as dt
 import hashlib
 import json
 import os
+import re
 import sys
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Sequence
+from typing import Dict, Optional, Sequence
 
 SECTOR = 2048
 UTC_PLUS_3 = dt.timezone(dt.timedelta(hours=3))
+BUILDER_VERSION = 27
 
 TARGET_SPECS = {
     "BTL": ("PRG/BTL.BIN", ["PRG/BTL.BIN", "BTL.BIN"]),
     "ETC": ("PRG/ETC.BIN", ["PRG/ETC.BIN", "ETC.BIN"]),
     "SLPS": ("SLPS_258.37", ["SLPS_258.37"]),
 }
-
 SOURCE_SPECS = {
     "UN5_BTL": ["PRG/BTL.BIN", "BTL.BIN"],
     "UN5_ETC": ["PRG/ETC.BIN", "ETC.BIN"],
     "UN5_TEXTENG": ["PRG/TEXTENG.BIN", "TEXTENG.BIN"],
     "UN5_SLES": ["SLES_556.05"],
 }
-
 MAPPING_FIELDS = [
-    "enabled",
-    "mode",
-    "target",
-    "target_offset",
-    "capacity",
-    "source",
-    "source_offset",
-    "pool_offset",
-    "pool_capacity",
-    "runtime_base",
-    "pointer_offsets",
-    "transform",
-    "arg1_source",
-    "arg1_offset",
-    "arg2_source",
-    "arg2_offset",
-    "expected_hex",
-    "replacement_hex",
-    "reason",
+    "id", "enabled", "section", "mode", "target", "target_offset", "capacity",
+    "source_ref", "transform", "arguments", "value", "reason",
 ]
-
-SOURCE_TRANSFORMS = {
-    "",
-    "format_arg1",
-    "format_args",
-    "format_prefix_arg2",
-    "format_suffix_arg2",
-    "empty",
-}
-
 EXPECTED_SHA1 = {
     "NA2_BTL": "bf7fc7331a2a4f34fc90b84b45772ae1f6bcab03",
     "NA2_ETC": "dcfffd7eb14e484a4c0fbc195599a0b45a9a11c1",
@@ -67,6 +41,17 @@ EXPECTED_SHA1 = {
     "UN5_ETC": "1c9b05bc501cac21b7da17c5fc6c99dd3869f3be",
     "UN5_TEXTENG": "77fafba95157e44ccd61783a04aba87c4b98b1fb",
     "UN5_SLES": "fe54357b016bc579b435a593e330d2d0ff822cdf",
+}
+VALID_MODES = {"slot", "shorten", "bytes", "unresolved"}
+VALID_TRANSFORMS = {
+    "", "empty", "format_arg1", "format_args", "format_prefix_arg2",
+    "format_suffix_arg2", "between_placeholders", "after_placeholder2",
+    "split_br", "join_br_parts", "append_space",
+}
+NAMED_COLOR_TAG_EQUIVALENTS = {
+    "<WHITE>": ("<WHITE>", "<colorFFFFFF>"),
+    "<BLACK>": ("<BLACK>", "<color000000>"),
+    "<RED>": ("<RED>",),
 }
 
 
@@ -96,23 +81,21 @@ class Iso9660:
         return raw.decode("ascii", "replace").split(";", 1)[0].upper()
 
     @staticmethod
-    def _record(buf: bytes, offset: int) -> tuple[Optional[tuple[int, int, int, bytes]], int]:
+    def _record(buf: bytes, offset: int):
         if offset >= len(buf) or buf[offset] == 0:
             return None, 0
         length = buf[offset]
-        record = buf[offset : offset + length]
+        record = buf[offset:offset + length]
         if len(record) < 34:
             raise ValueError(f"Invalid ISO directory record at 0x{offset:X}")
         extent = int.from_bytes(record[2:6], "little")
         size = int.from_bytes(record[10:14], "little")
         flags = record[25]
         name_length = record[32]
-        return (extent, size, flags, record[33 : 33 + name_length]), length
+        return (extent, size, flags, record[33:33 + name_length]), length
 
     def _walk(self, record: IsoRecord, prefix: str) -> None:
-        directory = self.data[
-            record.extent * SECTOR : record.extent * SECTOR + record.size
-        ]
+        directory = self.data[record.extent * SECTOR:record.extent * SECTOR + record.size]
         offset = 0
         while offset < len(directory):
             if directory[offset] == 0:
@@ -133,11 +116,11 @@ class Iso9660:
                 self._walk(child, path)
 
     def _parse(self) -> None:
-        pvd: Optional[bytes] = None
+        pvd = None
         for sector in range(16, min(128, len(self.data) // SECTOR)):
             offset = sector * SECTOR
-            if self.data[offset] == 1 and self.data[offset + 1 : offset + 6] == b"CD001":
-                pvd = self.data[offset : offset + SECTOR]
+            if self.data[offset] == 1 and self.data[offset + 1:offset + 6] == b"CD001":
+                pvd = self.data[offset:offset + SECTOR]
                 break
         if pvd is None:
             raise ValueError(f"No ISO9660 primary volume descriptor: {self.path}")
@@ -152,20 +135,13 @@ class Iso9660:
         for candidate in normalized:
             record = self.records.get(candidate)
             if record and not record.is_dir:
-                return self.data[
-                    record.extent * SECTOR : record.extent * SECTOR + record.size
-                ]
+                return self.data[record.extent * SECTOR:record.extent * SECTOR + record.size]
         basenames = {value.rsplit("/", 1)[-1] for value in normalized}
-        matches = [
-            record
-            for path, record in self.records.items()
-            if not record.is_dir and path.rsplit("/", 1)[-1] in basenames
-        ]
+        matches = [record for path, record in self.records.items()
+                   if not record.is_dir and path.rsplit("/", 1)[-1] in basenames]
         if len(matches) == 1:
             record = matches[0]
-            return self.data[
-                record.extent * SECTOR : record.extent * SECTOR + record.size
-            ]
+            return self.data[record.extent * SECTOR:record.extent * SECTOR + record.size]
         raise FileNotFoundError(f"Could not uniquely locate {label} in {self.path}")
 
 
@@ -174,11 +150,8 @@ class FolderSource:
         self.root = root.resolve()
         if not self.root.is_dir():
             raise FileNotFoundError(self.root)
-        self.files = {
-            normalize_path(path.relative_to(self.root).as_posix()): path
-            for path in self.root.rglob("*")
-            if path.is_file()
-        }
+        self.files = {normalize_path(path.relative_to(self.root).as_posix()): path
+                      for path in self.root.rglob("*") if path.is_file()}
 
     def read(self, candidates: Sequence[str], label: str) -> bytes:
         normalized = [normalize_path(value) for value in candidates]
@@ -187,11 +160,8 @@ class FolderSource:
             if path:
                 return path.read_bytes()
         basenames = {value.rsplit("/", 1)[-1] for value in normalized}
-        matches = [
-            path
-            for name, path in self.files.items()
-            if name.rsplit("/", 1)[-1] in basenames
-        ]
+        matches = [path for name, path in self.files.items()
+                   if name.rsplit("/", 1)[-1] in basenames]
         if len(matches) == 1:
             return matches[0].read_bytes()
         raise FileNotFoundError(f"Could not uniquely locate {label} under {self.root}")
@@ -203,6 +173,10 @@ def normalize_path(value: str) -> str:
 
 def sha1(data: bytes) -> str:
     return hashlib.sha1(data).hexdigest()
+
+
+def sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
 
 
 def source_from(folder: Optional[Path], iso: Optional[Path], label: str):
@@ -220,15 +194,15 @@ def source_from(folder: Optional[Path], iso: Optional[Path], label: str):
 
 def parse_apply(value: str) -> list[str]:
     aliases = {"ELF": "SLPS", "SLES": "SLPS", "EXE": "SLPS"}
-    selected: list[str] = []
+    selected = []
     for part in value.replace(";", ",").split(","):
         item = part.strip().upper()
         if not item or item in {"NONE", "NO", "OFF"}:
             continue
         if item == "ALL":
             selected.extend(TARGET_SPECS)
-            continue
-        selected.append(aliases.get(item, item))
+        else:
+            selected.append(aliases.get(item, item))
     unknown = sorted(set(selected) - set(TARGET_SPECS))
     if unknown:
         raise ValueError("Unsupported target(s): " + ", ".join(unknown))
@@ -238,26 +212,20 @@ def parse_apply(value: str) -> list[str]:
     return selected
 
 
-def parse_mapping_int(value: str, label: str) -> int:
+def parse_int(value: str, label: str) -> int:
     text = value.strip()
     if not text:
-        raise ValueError(f"{label}: missing integer value")
+        raise ValueError(f"{label}: missing integer")
     try:
-        number = int(text, 0)
+        result = int(text, 0)
     except ValueError as exc:
         raise ValueError(f"{label}: invalid integer {text!r}") from exc
-    if number < 0:
-        raise ValueError(f"{label}: negative integer {number}")
-    return number
+    if result < 0:
+        raise ValueError(f"{label}: negative integer")
+    return result
 
 
-def parse_enabled(value: str, label: str) -> bool:
-    if value not in {"0", "1"}:
-        raise ValueError(f"{label}: enabled must be the numeric flag 0 or 1")
-    return value == "1"
-
-
-def parse_hex_bytes(value: str, label: str) -> bytes:
+def parse_hex(value: str, label: str) -> bytes:
     text = value.strip().replace(" ", "")
     if not text or len(text) % 2:
         raise ValueError(f"{label}: invalid hexadecimal byte sequence")
@@ -267,162 +235,158 @@ def parse_hex_bytes(value: str, label: str) -> bytes:
         raise ValueError(f"{label}: invalid hexadecimal byte sequence") from exc
 
 
-def source_reference(row: dict[str, str], prefix: str, label: str) -> Optional[dict[str, object]]:
-    source_key = f"{prefix}_source" if prefix else "source"
-    offset_key = f"{prefix}_offset" if prefix else "source_offset"
-    source = row[source_key].upper()
-    offset = row[offset_key]
-    if not source and not offset:
-        return None
+def parse_arguments(value: str, label: str) -> dict[str, str]:
+    result = {}
+    if not value.strip():
+        return result
+    for item in value.split(";"):
+        if "=" not in item:
+            raise ValueError(f"{label}: malformed argument {item!r}")
+        key, val = item.split("=", 1)
+        key = key.strip().lower()
+        if not key or key in result:
+            raise ValueError(f"{label}: duplicate/empty argument key")
+        result[key] = val.strip()
+    return result
+
+
+def parse_source_ref(value: str, label: str) -> tuple[str, int]:
+    match = re.fullmatch(r"([A-Za-z0-9_]+)@(0[xX][0-9A-Fa-f]+|[0-9]+)", value.strip())
+    if not match:
+        raise ValueError(f"{label}: malformed source reference {value!r}")
+    source = match.group(1).upper()
     if source not in SOURCE_SPECS:
         raise ValueError(f"{label}: unsupported source {source!r}")
-    return {
-        "source": source,
-        "source_offset": parse_mapping_int(offset, label),
-    }
+    return source, int(match.group(2), 0)
 
 
-def parse_source_spec(row: dict[str, str], label: str) -> dict[str, object]:
-    transform = row["transform"].lower()
-    if transform not in SOURCE_TRANSFORMS:
-        raise ValueError(f"{label}: unsupported source transform {transform!r}")
-    primary = source_reference(row, "", label)
-    if primary is None:
-        raise ValueError(f"{label}: source mapping has no primary source")
-    arg1 = source_reference(row, "arg1", label)
-    arg2 = source_reference(row, "arg2", label)
-    if transform in {"format_arg1", "format_args", "format_prefix_arg2"} and arg1 is None:
-        raise ValueError(f"{label}: transform {transform!r} requires arg1")
-    if transform == "format_args" and arg2 is None:
-        raise ValueError(f"{label}: transform {transform!r} requires arg2")
-    return {
-        **primary,
-        "transform": transform,
-        "arg1": arg1,
-        "arg2": arg2,
-    }
-
-
-def load_mappings_tsv(path: Path) -> dict[str, object]:
-    slots: list[dict[str, object]] = []
-    pools: list[dict[str, object]] = []
-    pools_by_key: dict[tuple[str, int, int, int], dict[str, object]] = {}
-    byte_patches: list[dict[str, object]] = []
-    unresolved: list[dict[str, object]] = []
-    disabled: list[dict[str, object]] = []
-
+def read_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
         if reader.fieldnames != MAPPING_FIELDS:
-            raise ValueError(
-                "mappings.tsv must contain exactly these columns in this order: "
-                + "\t".join(MAPPING_FIELDS)
-            )
-        for line_number, raw in enumerate(reader, 2):
-            row = {key: (value or "").strip() for key, value in raw.items()}
-            mode = row["mode"].lower()
-            target = row["target"].upper()
-            label = f"mappings.tsv line {line_number}"
-            enabled = parse_enabled(row["enabled"], label)
-            if target not in TARGET_SPECS:
-                raise ValueError(f"{label}: unsupported target {target!r}")
-            if not enabled:
-                disabled.append({
-                    "line": line_number,
-                    "mode": mode,
-                    "target": target,
-                    "target_offset": row["target_offset"],
-                    "pool_offset": row["pool_offset"],
-                    "reason": row["reason"],
-                })
-                continue
-
-            if mode == "slot":
-                slots.append({
-                    "mode": "slot",
-                    "target": target,
-                    "target_offset": parse_mapping_int(row["target_offset"], label),
-                    "capacity": parse_mapping_int(row["capacity"], label),
-                    **parse_source_spec(row, label),
-                    "reason": row["reason"],
-                })
-                continue
-
-            if mode == "pool":
-                source_spec = parse_source_spec(row, label)
-                pool_offset = parse_mapping_int(row["pool_offset"], label)
-                pool_capacity = parse_mapping_int(row["pool_capacity"], label)
-                runtime_base = parse_mapping_int(row["runtime_base"], label)
-                pointer_values = [
-                    value.strip()
-                    for value in row["pointer_offsets"].split(",")
-                    if value.strip()
-                ]
-                if not pointer_values:
-                    raise ValueError(f"{label}: pool row has no pointer offsets")
-                key = (target, pool_offset, pool_capacity, runtime_base)
-                pool = pools_by_key.get(key)
-                if pool is None:
-                    pool = {
-                        "mode": "pool",
-                        "target": target,
-                        "pool_offset": pool_offset,
-                        "pool_capacity": pool_capacity,
-                        "runtime_base": runtime_base,
-                        "entries": [],
-                    }
-                    pools_by_key[key] = pool
-                    pools.append(pool)
-                pool["entries"].append({
-                    **source_spec,
-                    "pointer_offsets": [
-                        parse_mapping_int(value, label) for value in pointer_values
-                    ],
-                    "reason": row["reason"],
-                })
-                continue
-
-            if mode == "bytes":
-                expected = parse_hex_bytes(row["expected_hex"], label)
-                replacement = parse_hex_bytes(row["replacement_hex"], label)
-                if len(expected) != len(replacement):
-                    raise ValueError(f"{label}: byte patch changes file size")
-                byte_patches.append({
-                    "mode": "bytes",
-                    "target": target,
-                    "target_offset": parse_mapping_int(row["target_offset"], label),
-                    "expected": expected,
-                    "replacement": replacement,
-                    "reason": row["reason"],
-                })
-                continue
-
-            if mode == "unresolved":
-                reason = row["reason"]
-                if not reason:
-                    raise ValueError(f"{label}: unresolved row has no reason")
-                unresolved.append({
-                    "target": target,
-                    "target_offset": parse_mapping_int(row["target_offset"], label),
-                    "capacity": parse_mapping_int(row["capacity"], label),
-                    "reason": reason,
-                })
-                continue
-
-            raise ValueError(f"{label}: unsupported mode {mode!r}")
-
-    if not slots and not pools and not byte_patches:
-        raise ValueError("mappings.tsv contains no resolved mappings")
-    return {
-        "slots": slots,
-        "pools": pools,
-        "byte_patches": byte_patches,
-        "unresolved": unresolved,
-        "disabled": disabled,
-    }
+            raise ValueError("mappings.tsv must contain exactly these columns in this order: " + "\t".join(MAPPING_FIELDS))
+        rows = [{key: (value or "").strip() for key, value in raw.items()} for raw in reader]
+    ids = [row["id"] for row in rows]
+    if any(not value for value in ids) or len(ids) != len(set(ids)):
+        raise ValueError("mappings.tsv contains empty or duplicate ids")
+    return rows
 
 
-def read_official_z(data: bytes, offset: int, label: str) -> tuple[str, bytes]:
+def write_rows_atomic(path: Path, rows: list[dict[str, str]]) -> None:
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        with temporary.open("w", encoding="utf-8-sig", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=MAPPING_FIELDS, delimiter="\t", lineterminator="\n")
+            writer.writeheader()
+            writer.writerows(rows)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
+
+
+def row_semantic_keys(row: dict[str, str]) -> list[str]:
+    def value(name: str) -> str:
+        return (row.get(name) or "").strip().upper()
+
+    source_ref = value("source_ref")
+    if not source_ref and value("source") and value("source_offset"):
+        source_ref = f"{value('source')}@{value('source_offset')}"
+    mode = value("mode")
+    target = value("target")
+    target_offset = value("target_offset")
+    reason = value("reason")
+    keys = [
+        f"EXACT|{mode}|{target}|{target_offset}|{source_ref}|{reason}",
+        f"LOCATION|{mode}|{target}|{target_offset}|{source_ref}",
+        f"SOURCE|{target}|{source_ref}|{reason}",
+    ]
+    if reason:
+        keys.append(f"REASON|{reason}|{target}|{source_ref}")
+    return keys
+
+
+def read_any_mapping_enabled(path: Path) -> tuple[dict[str, str], dict[str, str]]:
+    by_id: dict[str, str] = {}
+    by_key: dict[str, str] = {}
+    try:
+        with path.open("r", encoding="utf-8-sig", newline="") as handle:
+            reader = csv.DictReader(handle, delimiter="\t")
+            for raw in reader:
+                row = {key: (value or "").strip() for key, value in raw.items()}
+                enabled = row.get("enabled", "")
+                if enabled not in {"0", "1"}:
+                    continue
+                if row.get("id"):
+                    by_id[row["id"]] = enabled
+                for key in row_semantic_keys(row):
+                    by_key.setdefault(key, enabled)
+    except (OSError, csv.Error):
+        return {}, {}
+    return by_id, by_key
+
+
+def persist_enabled_state(mapping_path: Path, data_root: Path) -> list[dict[str, str]]:
+    """Preserve enabled flags across builder replacement and ordinary builds.
+
+    The packaged mappings hash distinguishes untouched defaults from an edited working
+    table. An edited current table always wins. Otherwise prior state or the newest
+    trashed builder is merged by stable id, with semantic fallback for pre-v27 TSVs.
+    """
+    rows = read_rows(mapping_path)
+    default_hash_path = data_root / "MAPPINGS_DEFAULT.sha256"
+    default_hash = default_hash_path.read_text(encoding="ascii").strip().lower()
+    current_hash = sha256(mapping_path.read_bytes()).lower()
+    project_root = data_root.resolve().parent
+    state_root = project_root / "work" / "translation_builder_state"
+    state_path = state_root / "enabled_state.tsv"
+
+    prior_by_id: dict[str, str] = {}
+    prior_by_key: dict[str, str] = {}
+    if current_hash == default_hash:
+        allow_prior_enable = False
+        if state_path.is_file():
+            prior_by_id, prior_by_key = read_any_mapping_enabled(state_path)
+            allow_prior_enable = True
+        else:
+            trash_root = project_root / "trash"
+            candidates = sorted(
+                trash_root.glob("translation_package_builder_removed_*/mappings.tsv"),
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            ) if trash_root.is_dir() else []
+            if candidates:
+                prior_by_id, prior_by_key = read_any_mapping_enabled(candidates[0])
+                # Pre-v27 tables have no stable ids. Migrate explicit user disables only;
+                # old enabled defaults must not revive rows v27 deliberately retired.
+                allow_prior_enable = bool(prior_by_id)
+        changed = False
+        for row in rows:
+            value = prior_by_id.get(row["id"])
+            if value is None:
+                for key in row_semantic_keys(row):
+                    if key in prior_by_key:
+                        value = prior_by_key[key]
+                        break
+            should_apply = value == "0" or (value == "1" and allow_prior_enable)
+            if should_apply and row["enabled"] != value:
+                row["enabled"] = value
+                changed = True
+        if changed:
+            write_rows_atomic(mapping_path, rows)
+
+    state_root.mkdir(parents=True, exist_ok=True)
+    state_rows = [{key: "" for key in MAPPING_FIELDS} for _ in rows]
+    for dest, source in zip(state_rows, rows):
+        for key in MAPPING_FIELDS:
+            dest[key] = source.get(key, "")
+    write_rows_atomic(state_path, state_rows)
+    return rows
+
+
+def read_official_z(data: bytes, offset: int, label: str) -> str:
     if offset < 0 or offset >= len(data):
         raise ValueError(f"{label}: source offset 0x{offset:X} is outside the file")
     end = data.find(b"\x00", offset)
@@ -434,61 +398,69 @@ def read_official_z(data: bytes, offset: int, label: str) -> tuple[str, bytes]:
     text = raw.decode("cp1252")
     if any(ord(char) < 0x20 and char not in "\t\r\n" for char in text):
         raise ValueError(f"{label}: source string contains unsupported control bytes")
-    return text, raw
+    return text
 
 
-def resolve_source_text(
-    spec: dict[str, object],
-    official_sources: dict[str, bytes],
-    label: str,
-) -> str:
-    source_key = str(spec["source"])
-    source_offset = int(spec["source_offset"])
-    template, _ = read_official_z(official_sources[source_key], source_offset, label)
+def resolve_source_text(row: dict[str, object], sources: dict[str, bytes], label: str) -> str:
+    source = str(row["source"])
+    offset = int(row["source_offset"])
+    template = read_official_z(sources[source], offset, label)
+    transform = str(row.get("transform", ""))
+    arguments = dict(row.get("arguments", {}))
 
-    def read_arg(name: str) -> Optional[str]:
-        ref = spec.get(name)
-        if ref is None:
-            return None
-        text, _ = read_official_z(
-            official_sources[str(ref["source"])],
-            int(ref["source_offset"]),
-            f"{label} {name}",
-        )
-        return text
+    def arg(name: str) -> str:
+        if name not in arguments:
+            raise ValueError(f"{label}: transform {transform!r} requires {name}")
+        src, off = parse_source_ref(arguments[name], label)
+        return read_official_z(sources[src], off, f"{label} {name}")
 
-    arg1 = read_arg("arg1")
-    arg2 = read_arg("arg2")
-    transform = str(spec.get("transform", ""))
     if transform == "":
         return template
     if transform == "empty":
         return ""
     if transform == "format_arg1":
-        if "%1" not in template or arg1 is None:
-            raise ValueError(f"{label}: format_arg1 cannot resolve %1")
-        return template.replace("%1", arg1)
+        if "%1" not in template:
+            raise ValueError(f"{label}: template has no %1")
+        return template.replace("%1", arg("arg1"))
     if transform == "format_args":
-        if "%1" not in template or "%2" not in template or arg1 is None or arg2 is None:
-            raise ValueError(f"{label}: format_args cannot resolve both placeholders")
-        return template.replace("%1", arg1).replace("%2", arg2)
+        if "%1" not in template or "%2" not in template:
+            raise ValueError(f"{label}: template lacks placeholders")
+        return template.replace("%1", arg("arg1")).replace("%2", arg("arg2"))
     if transform == "format_prefix_arg2":
-        if "%1" not in template or "%2" not in template or arg1 is None:
-            raise ValueError(f"{label}: format_prefix_arg2 cannot resolve template")
-        return template.replace("%1", arg1).split("%2", 1)[0]
-    if transform == "format_suffix_arg2":
+        if "%1" not in template or "%2" not in template:
+            raise ValueError(f"{label}: template lacks placeholders")
+        return template.replace("%1", arg("arg1")).split("%2", 1)[0]
+    if transform in {"format_suffix_arg2", "after_placeholder2"}:
         if "%2" not in template:
-            raise ValueError(f"{label}: format_suffix_arg2 cannot resolve template")
+            raise ValueError(f"{label}: template has no %2")
         return template.split("%2", 1)[1]
+    if transform == "between_placeholders":
+        if "%1" not in template or "%2" not in template:
+            raise ValueError(f"{label}: template lacks placeholders")
+        return template.split("%1", 1)[1].split("%2", 1)[0]
+    if transform == "split_br":
+        part = parse_int(arguments.get("part", ""), label)
+        pieces = template.split("<br>")
+        if part >= len(pieces):
+            raise ValueError(f"{label}: split part {part} is outside {len(pieces)} parts")
+        return pieces[part]
+    if transform == "join_br_parts":
+        values = [parse_int(value, label) for value in arguments.get("parts", "").split(",") if value.strip()]
+        if not values:
+            raise ValueError(f"{label}: join_br_parts has no parts")
+        pieces = template.split("<br>")
+        if max(values) >= len(pieces):
+            raise ValueError(f"{label}: join part is outside {len(pieces)} parts")
+        return arguments.get("join", "<br>").join(pieces[value] for value in values)
+    if transform == "append_space":
+        return template + " "
     raise ValueError(f"{label}: unsupported transform {transform!r}")
 
 
 def read_target_slot(data: bytes, offset: int, capacity: int, label: str) -> tuple[str, bytes]:
-    if capacity <= 0:
-        raise ValueError(f"{label}: non-positive capacity")
-    if offset < 0 or offset + capacity > len(data):
-        raise ValueError(f"{label}: target range 0x{offset:X}+{capacity} is outside the file")
-    slot = data[offset : offset + capacity]
+    if capacity <= 0 or offset < 0 or offset + capacity > len(data):
+        raise ValueError(f"{label}: invalid target range 0x{offset:X}+{capacity}")
+    slot = data[offset:offset + capacity]
     end = slot.find(b"\x00")
     if end < 0:
         raise ValueError(f"{label}: target slot has no NUL terminator")
@@ -500,309 +472,177 @@ def read_target_slot(data: bytes, offset: int, capacity: int, label: str) -> tup
     return text, raw
 
 
-NAMED_COLOR_TAG_EQUIVALENTS = {
-    "<WHITE>": ("<WHITE>", "<colorFFFFFF>"),
-    "<BLACK>": ("<BLACK>", "<color000000>"),
-    "<RED>": ("<RED>",),
-}
-
-
 def adapt_source_markup(source_text: str, target_text: str, label: str) -> str:
-    """Translate UN5 named color tags into the verified local NA2 tag dialect.
-
-    NA2 and UN5 share generic <colorRRGGBB>, icon, line-break, and other
-    markup. Their named color aliases are not identical in every renderer.
-    The target slot itself is the authority: a named UN5 color token is
-    rewritten only to an equivalent token already used by that NA2 string.
-    """
     adapted = source_text
-    for source_tag, target_candidates in NAMED_COLOR_TAG_EQUIVALENTS.items():
+    for source_tag, candidates in NAMED_COLOR_TAG_EQUIVALENTS.items():
         if source_tag not in adapted:
             continue
-        replacement = next(
-            (candidate for candidate in target_candidates if candidate in target_text),
-            None,
-        )
+        replacement = next((candidate for candidate in candidates if candidate in target_text), None)
         if replacement is None:
-            raise ValueError(
-                f"{label}: cannot verify an NA2 equivalent for source tag {source_tag}"
-            )
+            raise ValueError(f"{label}: cannot verify an NA2 equivalent for {source_tag}")
         adapted = adapted.replace(source_tag, replacement)
     return adapted
 
 
-def read_pointer_target_text(data: bytes, pointer_offset: int, runtime_base: int) -> str:
-    if pointer_offset < 0 or pointer_offset + 4 > len(data):
-        return ""
-    pointer = int.from_bytes(data[pointer_offset : pointer_offset + 4], "little")
-    offset = pointer - runtime_base
-    if offset < 0 or offset >= len(data):
-        return ""
-    end = data.find(b"\x00", offset)
-    if end < 0:
-        return ""
-    try:
-        return data[offset:end].decode("cp932")
-    except UnicodeDecodeError:
-        return ""
-
-
 def write_slot(output: bytearray, offset: int, capacity: int, replacement: bytes) -> None:
     if len(replacement) > capacity - 1:
-        raise ValueError("replacement does not fit target slot")
-    output[offset : offset + capacity] = (
-        replacement + b"\x00" + b"\x00" * (capacity - len(replacement) - 1)
-    )
+        raise ValueError(f"replacement is {len(replacement)} bytes but slot allows {capacity - 1}")
+    output[offset:offset + capacity] = replacement + b"\x00" + b"\x00" * (capacity - len(replacement) - 1)
 
 
-def apply_slot_mappings(
-    mappings: Sequence[dict],
-    selected: set[str],
-    clean_targets: dict[str, bytes],
-    output_targets: dict[str, bytearray],
-    official_sources: dict[str, bytes],
-) -> tuple[list[dict[str, object]], list[dict[str, object]], dict[str, int]]:
-    annotations: list[dict[str, object]] = []
-    skipped: list[dict[str, object]] = []
-    stats = {"mapped": 0, "changed": 0, "skipped_too_long": 0, "skipped_invalid": 0}
+def parse_mappings(rows: list[dict[str, str]]) -> dict[str, list[dict[str, object]]]:
+    result = {"text": [], "bytes": [], "unresolved": [], "inactive": []}
+    for line, row in enumerate(rows, 2):
+        label = f"mappings.tsv line {line} ({row['id']})"
+        if row["enabled"] not in {"0", "1"}:
+            raise ValueError(f"{label}: enabled must be 0 or 1")
+        mode = row["mode"].lower()
+        if mode not in VALID_MODES:
+            raise ValueError(f"{label}: unsupported mode {mode!r}")
+        target = row["target"].upper()
+        if target not in TARGET_SPECS:
+            raise ValueError(f"{label}: unsupported target {target!r}")
+        if row["enabled"] == "0":
+            result["inactive"].append(row)
+            continue
+        common = {"id": row["id"], "section": row["section"] or "unclassified", "mode": mode,
+                  "target": target, "reason": row["reason"]}
+        if mode in {"slot", "shorten"}:
+            source, source_offset = parse_source_ref(row["source_ref"], label)
+            transform = row["transform"].lower()
+            if transform not in VALID_TRANSFORMS:
+                raise ValueError(f"{label}: unsupported transform {transform!r}")
+            short_text = row["value"]
+            if mode == "shorten" and (not short_text.startswith("[S]") or not short_text):
+                raise ValueError(f"{label}: shorten rows require [S]-prefixed value")
+            if mode == "slot" and short_text:
+                raise ValueError(f"{label}: slot rows require an empty value")
+            result["text"].append({
+                **common,
+                "target_offset": parse_int(row["target_offset"], label),
+                "capacity": parse_int(row["capacity"], label),
+                "source": source,
+                "source_offset": source_offset,
+                "transform": transform,
+                "arguments": parse_arguments(row["arguments"], label),
+                "short_text": short_text,
+            })
+        elif mode == "bytes":
+            if "=>" not in row["value"]:
+                raise ValueError(f"{label}: bytes value must be EXPECTED=>REPLACEMENT")
+            expected_text, replacement_text = row["value"].split("=>", 1)
+            expected = parse_hex(expected_text, label)
+            replacement = parse_hex(replacement_text, label)
+            if len(expected) != len(replacement):
+                raise ValueError(f"{label}: byte patch changes file size")
+            result["bytes"].append({**common, "target_offset": parse_int(row["target_offset"], label),
+                                    "expected": expected, "replacement": replacement})
+        else:
+            result["unresolved"].append({**common, "target_offset": parse_int(row["target_offset"], label),
+                                         "capacity": parse_int(row["capacity"], label)})
+    return result
 
-    occupied: dict[str, list[tuple[int, int]]] = {target: [] for target in selected}
-    for index, row in enumerate(mappings, 1):
-        target = str(row["target"]).upper()
+
+def apply_text_mappings(mappings, selected, clean_targets, output_targets, official_sources):
+    annotations = []
+    occupied: dict[str, list[tuple[int, int, str]]] = defaultdict(list)
+    stats = Counter()
+    sections = Counter()
+    for row in mappings:
+        target = str(row["target"])
         if target not in selected:
             continue
         offset = int(row["target_offset"])
         capacity = int(row["capacity"])
-        source_key = str(row["source"])
-        source_offset = int(row["source_offset"])
-        label = f"slot mapping #{index} {target} 0x{offset:X}"
-        try:
-            official_text = resolve_source_text(row, official_sources, label)
-            target_text, _ = read_target_slot(
-                clean_targets[target], offset, capacity, label
-            )
-            source_text = adapt_source_markup(official_text, target_text, label)
-            source_bytes = source_text.encode("cp1252")
-            if len(source_bytes) > capacity - 1:
-                skipped.append({
-                    "target": target,
-                    "target_offset": f"0x{offset:X}",
-                    "capacity": capacity,
-                    "source": source_key,
-                    "source_offset": f"0x{source_offset:X}",
-                    "reason": "SOURCE_TEXT_TOO_LONG",
-                    "source_bytes": len(source_bytes),
-                })
-                stats["skipped_too_long"] += 1
-                continue
-            for start, end in occupied[target]:
-                if offset < end and start < offset + capacity:
-                    raise ValueError(f"{label}: overlaps another slot mapping")
-            occupied[target].append((offset, offset + capacity))
-            before = bytes(output_targets[target][offset : offset + capacity])
-            write_slot(output_targets[target], offset, capacity, source_bytes)
-            after = bytes(output_targets[target][offset : offset + capacity])
-            annotations.append({
-                "path": TARGET_SPECS[target][0],
-                "start": offset,
-                "end": offset + capacity,
-                "source_text": target_text,
-                "replacement_text": source_text,
-            })
-            stats["mapped"] += 1
-            if before != after:
-                stats["changed"] += 1
-        except Exception as exc:
-            skipped.append({
-                "target": target,
-                "target_offset": f"0x{offset:X}",
-                "capacity": capacity,
-                "source": source_key,
-                "source_offset": f"0x{source_offset:X}",
-                "reason": "INVALID_MAPPING",
-                "detail": str(exc),
-            })
-            stats["skipped_invalid"] += 1
-    return annotations, skipped, stats
+        label = f"{row['id']} {target} 0x{offset:X}"
+        for start, end, prior in occupied[target]:
+            if offset < end and start < offset + capacity:
+                raise ValueError(f"{label}: overlaps {prior} at 0x{start:X}-0x{end:X}")
+        official = resolve_source_text(row, official_sources, label)
+        target_text, _ = read_target_slot(clean_targets[target], offset, capacity, label)
+        if row["mode"] == "shorten":
+            replacement_text = str(row["short_text"])
+            stats["shortened"] += 1
+        else:
+            replacement_text = adapt_source_markup(official, target_text, label)
+        replacement = replacement_text.encode("cp1252")
+        write_slot(output_targets[target], offset, capacity, replacement)
+        occupied[target].append((offset, offset + capacity, str(row["id"])))
+        annotations.append({"path": TARGET_SPECS[target][0], "start": offset, "end": offset + capacity,
+                            "source_text": target_text, "replacement_text": replacement_text})
+        stats["mapped"] += 1
+        if clean_targets[target][offset:offset + capacity] != bytes(output_targets[target][offset:offset + capacity]):
+            stats["changed"] += 1
+        sections[str(row["section"])] += 1
+    return annotations, dict(stats), dict(sorted(sections.items()))
 
 
-def apply_pool_mappings(
-    pools: Sequence[dict],
-    selected: set[str],
-    clean_targets: dict[str, bytes],
-    output_targets: dict[str, bytearray],
-    official_sources: dict[str, bytes],
-) -> tuple[list[dict[str, object]], list[dict[str, object]], dict[str, int]]:
-    annotations: list[dict[str, object]] = []
-    skipped: list[dict[str, object]] = []
-    stats = {"pools": 0, "entries": 0, "pointer_writes": 0}
-
-    for pool_index, pool in enumerate(pools, 1):
-        target = str(pool["target"]).upper()
-        if target not in selected:
-            continue
-        pool_offset = int(pool["pool_offset"])
-        pool_capacity = int(pool["pool_capacity"])
-        runtime_base = int(pool["runtime_base"])
-        entries = list(pool.get("entries", []))
-        label = f"pool mapping #{pool_index} {target} 0x{pool_offset:X}"
-        if pool_offset < 0 or pool_offset + pool_capacity > len(clean_targets[target]):
-            raise ValueError(f"{label}: pool is outside the target file")
-
-        resolved = []
-        total = 0
-        for entry_index, entry in enumerate(entries, 1):
-            source_key = str(entry["source"])
-            source_offset = int(entry["source_offset"])
-            entry_label = f"{label} entry #{entry_index}"
-            official_text = resolve_source_text(entry, official_sources, entry_label)
-            pointer_offsets = [int(value) for value in entry["pointer_offsets"]]
-            if not pointer_offsets:
-                raise ValueError(f"{entry_label}: no pointer offsets")
-            for pointer_offset in pointer_offsets:
-                if pointer_offset < 0 or pointer_offset + 4 > len(clean_targets[target]):
-                    raise ValueError(f"{entry_label}: pointer offset is outside the file")
-            source_target_text = read_pointer_target_text(
-                clean_targets[target], pointer_offsets[0], runtime_base
-            )
-            source_text = adapt_source_markup(
-                official_text, source_target_text, entry_label
-            )
-            payload = source_text.encode("cp1252") + b"\x00"
-            total += len(payload)
-            resolved.append((entry, source_target_text, source_text, payload, pointer_offsets))
-
-        if total > pool_capacity:
-            skipped.append({
-                "target": target,
-                "pool_offset": f"0x{pool_offset:X}",
-                "pool_capacity": pool_capacity,
-                "required": total,
-                "reason": "POOL_TOO_SMALL",
-            })
-            continue
-
-        output_targets[target][pool_offset : pool_offset + pool_capacity] = b"\x00" * pool_capacity
-        cursor = pool_offset
-        for _entry, source_target_text, source_text, payload, pointer_offsets in resolved:
-            output_targets[target][cursor : cursor + len(payload)] = payload
-            pointer_value = runtime_base + cursor
-            for pointer_offset in pointer_offsets:
-                output_targets[target][pointer_offset : pointer_offset + 4] = pointer_value.to_bytes(4, "little")
-                stats["pointer_writes"] += 1
-            annotations.append({
-                "path": TARGET_SPECS[target][0],
-                "start": cursor,
-                "end": cursor + len(payload),
-                "source_text": source_target_text,
-                "replacement_text": source_text,
-            })
-            cursor += len(payload)
-            stats["entries"] += 1
-        stats["pools"] += 1
-
-    return annotations, skipped, stats
-
-
-def apply_byte_mappings(
-    mappings: Sequence[dict],
-    selected: set[str],
-    output_targets: dict[str, bytearray],
-) -> tuple[list[dict[str, object]], dict[str, int]]:
-    annotations: list[dict[str, object]] = []
-    stats = {"mapped": 0, "changed": 0}
-    occupied: dict[str, list[tuple[int, int]]] = {target: [] for target in selected}
-    for index, row in enumerate(mappings, 1):
-        target = str(row["target"]).upper()
+def apply_byte_mappings(mappings, selected, output_targets):
+    annotations = []
+    occupied: dict[str, list[tuple[int, int, str]]] = defaultdict(list)
+    stats = Counter()
+    sections = Counter()
+    for row in mappings:
+        target = str(row["target"])
         if target not in selected:
             continue
         offset = int(row["target_offset"])
         expected = bytes(row["expected"])
         replacement = bytes(row["replacement"])
-        label = f"byte mapping #{index} {target} 0x{offset:X}"
+        label = f"{row['id']} {target} 0x{offset:X}"
         if offset < 0 or offset + len(expected) > len(output_targets[target]):
-            raise ValueError(f"{label}: patch range is outside the file")
-        for start, end in occupied[target]:
+            raise ValueError(f"{label}: patch outside file")
+        for start, end, prior in occupied[target]:
             if offset < end and start < offset + len(expected):
-                raise ValueError(f"{label}: overlaps another byte mapping")
-        occupied[target].append((offset, offset + len(expected)))
-        actual = bytes(output_targets[target][offset : offset + len(expected)])
+                raise ValueError(f"{label}: overlaps {prior}")
+        actual = bytes(output_targets[target][offset:offset + len(expected)])
         if actual != expected:
-            raise ValueError(
-                f"{label}: expected {expected.hex().upper()}, found {actual.hex().upper()}"
-            )
-        output_targets[target][offset : offset + len(expected)] = replacement
-        annotations.append({
-            "path": TARGET_SPECS[target][0],
-            "start": offset,
-            "end": offset + len(expected),
-            "source_text": "",
-            "replacement_text": "",
-        })
+            raise ValueError(f"{label}: expected {expected.hex().upper()}, found {actual.hex().upper()}")
+        output_targets[target][offset:offset + len(expected)] = replacement
+        occupied[target].append((offset, offset + len(expected), str(row["id"])))
+        annotations.append({"path": TARGET_SPECS[target][0], "start": offset, "end": offset + len(expected),
+                            "source_text": "", "replacement_text": ""})
         stats["mapped"] += 1
         if expected != replacement:
             stats["changed"] += 1
-    return annotations, stats
+        sections[str(row["section"])] += 1
+    return annotations, dict(stats), dict(sorted(sections.items()))
 
 
-def diff_rows(
-    path: str,
-    clean: bytes,
-    output: bytes,
-    annotations: Sequence[dict[str, object]],
-) -> list[dict[str, str]]:
+def diff_rows(path: str, clean: bytes, output: bytes, annotations) -> list[dict[str, str]]:
     if len(clean) != len(output):
         raise ValueError(f"Cannot emit fixed-offset patches for size-changed file: {path}")
-
     normalized = normalize_path(path)
-    relevant = [
-        item for item in annotations
-        if normalize_path(str(item["path"])) == normalized
-    ]
-
-    ranges: list[tuple[int, int]] = []
-    start: Optional[int] = None
+    relevant = [item for item in annotations if normalize_path(str(item["path"])) == normalized]
+    ranges = []
+    start = None
     for index, (before, after) in enumerate(zip(clean, output)):
         if before != after and start is None:
             start = index
         elif before == after and start is not None:
-            ranges.append((start, index))
-            start = None
+            ranges.append((start, index)); start = None
     if start is not None:
         ranges.append((start, len(clean)))
-
-    rows: list[dict[str, str]] = []
+    rows = []
     for range_start, range_end in ranges:
         boundaries = {range_start, range_end}
         for annotation in relevant:
-            annotation_start = int(annotation["start"])
-            annotation_end = int(annotation["end"])
-            if range_start < annotation_end and annotation_start < range_end:
-                boundaries.add(max(range_start, annotation_start))
-                boundaries.add(min(range_end, annotation_end))
+            a, b = int(annotation["start"]), int(annotation["end"])
+            if range_start < b and a < range_end:
+                boundaries.add(max(range_start, a)); boundaries.add(min(range_end, b))
         ordered = sorted(boundaries)
-        for segment_start, segment_end in zip(ordered, ordered[1:]):
-            if segment_start >= segment_end:
+        for a, b in zip(ordered, ordered[1:]):
+            if a >= b:
                 continue
-            matching = [
-                item for item in relevant
-                if segment_start < int(item["end"])
-                and int(item["start"]) < segment_end
-            ]
-            if matching:
-                annotation = matching[-1]
-                source_text = str(annotation["source_text"])
-                replacement_text = str(annotation["replacement_text"])
-            else:
-                source_text = ""
-                replacement_text = ""
+            matching = [item for item in relevant if a < int(item["end"]) and int(item["start"]) < b]
+            annotation = matching[-1] if matching else None
             rows.append({
                 "path": path,
-                "offset": f"0x{segment_start:X}",
-                "expected_hex": clean[segment_start:segment_end].hex().upper(),
-                "replacement_hex": output[segment_start:segment_end].hex().upper(),
-                "source_text": source_text,
-                "replacement_text": replacement_text,
+                "offset": f"0x{a:X}",
+                "expected_hex": clean[a:b].hex().upper(),
+                "replacement_hex": output[a:b].hex().upper(),
+                "source_text": str(annotation["source_text"]) if annotation else "",
+                "replacement_text": str(annotation["replacement_text"]) if annotation else "",
             })
     return rows
 
@@ -810,22 +650,12 @@ def diff_rows(
 def write_translation_tsv(path: Path, rows: list[dict[str, str]]) -> None:
     if not rows:
         raise ValueError("No translation patches were generated")
+    fields = ["path", "offset", "expected_hex", "replacement_hex", "source_text", "replacement_text"]
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    fields = [
-        "path",
-        "offset",
-        "expected_hex",
-        "replacement_hex",
-        "source_text",
-        "replacement_text",
-    ]
     try:
         with temporary.open("w", encoding="utf-8-sig", newline="") as handle:
             writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t", lineterminator="\n")
-            writer.writeheader()
-            writer.writerows(rows)
-            handle.flush()
-            os.fsync(handle.fileno())
+            writer.writeheader(); writer.writerows(rows); handle.flush(); os.fsync(handle.fileno())
         os.replace(temporary, path)
     finally:
         if temporary.exists():
@@ -837,9 +667,7 @@ def write_json(path: Path, value: object) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Build one NA2 post-composition translation TSV from official UN5 sources"
-    )
+    parser = argparse.ArgumentParser(description="Build one NA2 post-composition translation TSV from official UN5 sources")
     parser.add_argument("--na2-iso", type=Path)
     parser.add_argument("--na2-folder", type=Path)
     parser.add_argument("--un5-iso", type=Path)
@@ -854,16 +682,8 @@ def main() -> int:
     selected = set(selected_list)
     na2 = source_from(args.na2_folder, args.na2_iso, "NA2")
     un5 = source_from(args.un5_folder, args.un5_iso, "UN5")
-
-    clean_targets = {
-        target: na2.read(TARGET_SPECS[target][1], f"NA2 {TARGET_SPECS[target][0]}")
-        for target in selected_list
-    }
-    official_sources = {
-        key: un5.read(candidates, key)
-        for key, candidates in SOURCE_SPECS.items()
-    }
-
+    clean_targets = {target: na2.read(TARGET_SPECS[target][1], f"NA2 {TARGET_SPECS[target][0]}") for target in selected_list}
+    official_sources = {key: un5.read(candidates, key) for key, candidates in SOURCE_SPECS.items()}
     actual_hashes = {
         **{f"NA2_{target}": sha1(data) for target, data in clean_targets.items()},
         **{key: sha1(data) for key, data in official_sources.items()},
@@ -875,40 +695,22 @@ def main() -> int:
                 raise ValueError(f"Unexpected {key} SHA-1: {actual}; expected {expected}")
 
     mapping_path = args.data_root / "mappings.tsv"
-    mapping_data = load_mappings_tsv(mapping_path)
+    rows_raw = persist_enabled_state(mapping_path, args.data_root)
+    mappings = parse_mappings(rows_raw)
+    output_targets = {target: bytearray(clean_targets[target]) for target in selected_list}
 
-    output_targets = {
-        target: bytearray(clean_targets[target])
-        for target in selected_list
-    }
+    text_annotations, text_stats, text_sections = apply_text_mappings(
+        mappings["text"], selected, clean_targets, output_targets, official_sources)
+    byte_annotations, byte_stats, byte_sections = apply_byte_mappings(
+        mappings["bytes"], selected, output_targets)
+    annotations = text_annotations + byte_annotations
 
-    slot_annotations, slot_skipped, slot_stats = apply_slot_mappings(
-        mapping_data.get("slots", []),
-        selected,
-        clean_targets,
-        output_targets,
-        official_sources,
-    )
-    pool_annotations, pool_skipped, pool_stats = apply_pool_mappings(
-        mapping_data.get("pools", []),
-        selected,
-        clean_targets,
-        output_targets,
-        official_sources,
-    )
-    byte_annotations, byte_stats = apply_byte_mappings(
-        mapping_data.get("byte_patches", []),
-        selected,
-        output_targets,
-    )
-    annotations = slot_annotations + pool_annotations + byte_annotations
-
-    rows: list[dict[str, str]] = []
+    patch_rows = []
     translated_hashes = {}
     for target in selected_list:
         path = TARGET_SPECS[target][0]
         output = bytes(output_targets[target])
-        rows.extend(diff_rows(path, clean_targets[target], output, annotations))
+        patch_rows.extend(diff_rows(path, clean_targets[target], output, annotations))
         translated_hashes[path] = {
             "source_sha1": sha1(clean_targets[target]),
             "translated_sha1": sha1(output),
@@ -920,39 +722,41 @@ def main() -> int:
     run_root = args.work_root.resolve() / "runs" / run_id
     run_root.mkdir(parents=True, exist_ok=False)
     final_path = run_root / f"NA2_APPLY__TRANSLATION__{run_id}.tsv"
-    write_translation_tsv(final_path, rows)
+    write_translation_tsv(final_path, patch_rows)
 
-    selected_unresolved = [
-        row for row in mapping_data.get("unresolved", [])
-        if str(row.get("target", "")).upper() in selected
-    ]
+    active_by_mode = Counter(row["mode"] for row in mappings["text"] if row["target"] in selected)
+    active_by_mode.update(row["mode"] for row in mappings["bytes"] if row["target"] in selected)
+    active_sections = Counter(text_sections)
+    active_sections.update(byte_sections)
     summary = {
+        "builder_version": BUILDER_VERSION,
         "mode": "official-source post-composition TSV",
         "run_id": run_id,
         "timezone": "UTC+03:00",
         "translation_tsv": str(final_path),
-        "patch_rows": len(rows),
         "targets": selected_list,
+        "output": {
+            "patch_rows": len(patch_rows),
+            "text_mappings_applied": text_stats.get("mapped", 0),
+            "text_mappings_changed": text_stats.get("changed", 0),
+            "shortened_mappings_applied": text_stats.get("shortened", 0),
+            "structural_patches_applied": byte_stats.get("mapped", 0),
+        },
+        "active_mapping_coverage": {
+            "by_mode": dict(sorted(active_by_mode.items())),
+            "by_section": dict(sorted(active_sections.items())),
+        },
         "source_hashes": actual_hashes,
         "translated_file_hashes": translated_hashes,
-        "slot_stats": slot_stats,
-        "pool_stats": pool_stats,
-        "byte_patch_stats": byte_stats,
-        "disabled_mappings": mapping_data.get("disabled", []),
-        "skipped_runtime": slot_skipped + pool_skipped,
-        "unresolved_mappings": selected_unresolved,
     }
     write_json(run_root / "build_summary.json", summary)
 
     print("Built NA2 translation TSV:")
     print(f"  {final_path}")
-    print(f"  patch rows: {len(rows)}")
-    print(f"  mapped text slots: {slot_stats['mapped']}")
-    print(f"  relocated official strings: {pool_stats['entries']}")
-    print(f"  structural byte patches: {byte_stats['mapped']}")
-    print(f"  disabled mapping rows: {len(mapping_data.get('disabled', []))}")
-    print(f"  runtime skips: {len(slot_skipped) + len(pool_skipped)}")
-    print(f"  unresolved numeric mappings: {len(selected_unresolved)}")
+    print(f"  patch rows: {len(patch_rows)}")
+    print(f"  text mappings applied: {text_stats.get('mapped', 0)}")
+    print(f"  shortened mappings: {text_stats.get('shortened', 0)}")
+    print(f"  structural byte patches: {byte_stats.get('mapped', 0)}")
     for path, info in translated_hashes.items():
         print(f"  {path}: {info['size']} bytes, translated SHA-1 {info['translated_sha1']}")
     return 0

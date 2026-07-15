@@ -1,8 +1,8 @@
-# NA2 Translation Package Builder v26
+# NA2 Translation Package Builder v27
 
-This builder generates one post-composition translation TSV for Naruto: Narutimate Accel 2. It never packages replacement BIN or ELF files. The surrounding NA2 pipeline composes selected packages first and then applies the generated TSV over the composed files.
+This builder generates one post-composition translation TSV for Naruto: Narutimate Accel 2. It never packages patched BIN or ELF payloads. The surrounding NA2 pipeline composes selected packages first, then applies the generated TSV over the composed files.
 
-Project-level scripts are not included. This archive contains only `translation_package_builder`.
+This archive contains only `translation_package_builder`. Project-level wrapper and ISO-building scripts remain outside the package.
 
 ## Source and target scope
 
@@ -19,38 +19,62 @@ Official UN5 sources:
 - `PRG/TEXTENG.BIN`
 - `SLES_556.05`
 
-All emitted English text is read from exact UN5 offsets at build time. `mappings.tsv` and the Python builder contain no hardcoded translated prose. The paired executable disassemblies were used to identify structures and call sites, but are not needed at runtime and are not included.
+Normal `slot` mappings read their English bytes from exact UN5 offsets at build time. The only manual English permitted is in `shorten` rows, where the replacement begins with `[S]` and exists because the official UN5 text cannot fit the original NA2 slot safely. No translation is relocated into spare space and no text pointer is rewritten.
 
-## Mapping file and `enabled` flag
+## Compact `mappings.tsv`
 
-`mappings.tsv` is in the builder root. Its first column is the numeric flag `enabled`:
+`mappings.tsv` remains the single canonical mapping table. TSV has no worksheet tabs, so the `section` column is the page/filter key for grouping mappings by screen or mode. The v27 schema removes the relocation-only columns and combines sparse fields, reducing the table from 19 columns to 12:
 
-- `1`: apply the row.
-- `0`: skip the row completely and record it under `disabled_mappings` in `build_summary.json`.
+`id`, `enabled`, `section`, `mode`, `target`, `target_offset`, `capacity`, `source_ref`, `transform`, `arguments`, `value`, `reason`
 
-Use `0` to disable a suspicious row or an entire rollback group without deleting mapping data. TSV has no portable checkbox metadata, so it cannot natively display checkboxes; `0`/`1` is the reliable representation in text editors, scripts, and spreadsheet applications.
+### Stable IDs and enabled state
 
-The columns, in order, are:
+- `id` is a stable mapping identifier.
+- `enabled=1` applies the row.
+- `enabled=0` keeps the row in `mappings.tsv` but does not apply it.
 
-`enabled`, `mode`, `target`, `target_offset`, `capacity`, `source`, `source_offset`, `pool_offset`, `pool_capacity`, `runtime_base`, `pointer_offsets`, `transform`, `arg1_source`, `arg1_offset`, `arg2_source`, `arg2_offset`, `expected_hex`, `replacement_hex`, `reason`
+Enabled flags persist outside the replaceable builder directory at:
 
-Row modes:
+`work\translation_builder_state\enabled_state.tsv`
 
-- `slot`: copy one NUL-terminated official UN5 string into a verified fixed-capacity NA2 slot.
-- `pool`: write official UN5 text into a verified relocation pool and rewrite the listed target-file pointers.
-- `bytes`: apply a size-preserving structural byte patch after verifying `expected_hex` exactly.
-- `unresolved`: retain a known NA2 target for which no safe official-source mapping has been proven.
+The builder distinguishes an untouched packaged `mappings.tsv` from a user-edited one using `MAPPINGS_DEFAULT.sha256`:
 
-Supported source transforms are structural operations over strings read from UN5:
+1. A user-edited current table always wins and updates persistent state.
+2. After the builder is replaced, the packaged defaults inherit matching saved flags by stable `id`.
+3. On first migration, the builder can recover flags from the newest `trash\translation_package_builder_removed_*\mappings.tsv`, including explicit user-disabled rows from the old v26 schema through semantic matching.
+4. The effective flags are written back atomically to `mappings.tsv`.
 
-- blank: use the official string unchanged.
-- `format_arg1`: substitute official `arg1` for `%1`.
-- `format_args`: substitute official `arg1` and `arg2` for `%1` and `%2`.
-- `format_prefix_arg2`: substitute `%1`, then keep the official template prefix before `%2`.
-- `format_suffix_arg2`: keep the official template suffix after `%2`.
-- `empty`: emit only a NUL terminator for a deliberately empty assembly fragment.
+This persistence is implemented inside the builder and does not depend on Codex wrapper behavior.
 
-These transforms are used for source-derived dialog assembly. They do not contain English prose.
+### Modes
+
+- `slot`: copy exact official UN5 text, optionally using a source-derived transform.
+- `shorten`: use the `[S]` replacement in `value` while retaining the exact UN5 source reference for traceability.
+- `bytes`: fixed-size structural patch represented as `EXPECTED=>REPLACEMENT` in `value`.
+- `unresolved`: retain a investigated but unsafe/unproven mapping in the canonical table without applying it.
+
+v27 has no `pool` mode. Existing v25/v26 relocations were returned to their original targets. Text that does not fit is explicitly shortened at the original slot instead of being moved elsewhere.
+
+### Source references and transforms
+
+`source_ref` uses `SOURCE@OFFSET`, for example `UN5_TEXTENG@0x29430`.
+
+Supported source-derived transforms include:
+
+- `format_arg1`, `format_args`
+- `format_prefix_arg2`, `format_suffix_arg2`
+- `between_placeholders`, `after_placeholder2`
+- `split_br`, `join_br_parts`
+- `append_space`
+- `empty`
+
+Arguments use compact key/value syntax, for example:
+
+- `arg1=UN5_TEXTENG@0x708`
+- `part=1`
+- `parts=2,3;join=<br>`
+
+Transforms select or assemble bytes from official UN5 strings. They do not contain translated prose.
 
 ## Output
 
@@ -63,117 +87,93 @@ containing:
 - `NA2_APPLY__TRANSLATION__<run id>.tsv`
 - `build_summary.json`
 
-The generated translation TSV still contains exactly six columns:
+The generated translation TSV contains exactly six columns:
 
 `path`, `offset`, `expected_hex`, `replacement_hex`, `source_text`, `replacement_text`
 
-Readable text patches populate the text columns. Pointer writes, pool clearing, and structural code patches leave them empty.
+`build_summary.json` now contains only general and aggregate run information:
+
+- builder version, run ID, timezone, selected targets;
+- patch and mapping totals;
+- active mapping coverage grouped by mode and section;
+- source and translated-file hashes.
+
+Individual disabled and unresolved rows are not copied into the summary. Their sole authoritative location is `mappings.tsv`.
 
 ## Safety behavior
 
-Known clean-source SHA-1 values are checked by default. `-NoStrictHash` disables that check only for deliberate experiments.
+Known clean-source SHA-1 values are checked by default. `-NoStrictHash` disables those checks only for deliberate experiments.
 
-The builder rejects malformed flags, invalid offsets, malformed source strings, overlapping fixed slots, unexpected code bytes, invalid pointers, undersized pools, and unverified named-color conversions. Fixed-slot text that does not fit is skipped and logged rather than overrunning adjacent data.
+The builder rejects malformed flags, duplicate IDs, invalid offsets, invalid source references, malformed transforms, overlapping active mappings, unexpected structural bytes, text that exceeds its declared slot, and invalid named-color conversion. Enabled bad mappings fail the build instead of silently disappearing into a runtime-skips list.
 
-Official Western text is read as Windows-1252 so the original UN5 byte stream, including characters such as the DUALSHOCK registered mark, can be preserved. NA2 target text is still decoded as CP932 for target-side markup inspection.
-
-`build_summary.json` records hashes, patch counts, disabled rows, runtime skips, unresolved mappings, and structural byte-patch counts.
+Official Western text is decoded as Windows-1252. NA2 target strings are decoded as CP932 for inspection and markup adaptation. File sizes never change.
 
 ## Markup handling
 
-NA2 and UN5 share inline markup, but named color aliases differ in some renderers. The target slot remains the authority:
+NA2 and UN5 share generic inline markup, but named color aliases can differ between renderers. The original NA2 target remains the authority:
 
-- UN5 `<WHITE>` becomes NA2 `<colorFFFFFF>` when that target uses it.
-- UN5 `<BLACK>` remains `<BLACK>` when the target uses it, or becomes `<color000000>` when that is the verified target form.
-- `<RED>` is retained only when the target also uses `<RED>`.
-- Generic color, icon, line-break, and other shared tags are preserved.
+- UN5 `<WHITE>` becomes NA2 `<colorFFFFFF>` only where that target uses it.
+- UN5 `<BLACK>` remains `<BLACK>` or becomes `<color000000>` according to the verified target form.
+- `<RED>` is retained only where the target supports it.
+- Other shared color, icon, line-break, and control tags are preserved.
 
-No tags are stripped merely because they are inconvenient. If no verified NA2 equivalent exists, the mapping is rejected.
+## Version 27 changes
 
-## Version 26 changes
+### Revalidated corrections
 
-v26 continues from the accepted v25 baseline.
+- `ON` and `OFF` were rechecked at the binary level. NA2 originally stores CP932 katakana at the four affected targets; v26/v27 write exact ASCII `ON` and `OFF` from UN5. Their remaining visual letter spacing is renderer/font behavior, not fullwidth SJIS replacement data.
+- Fixed the remaining Japanese `Yes` at `SLPS_258.37 + 0x504670`.
+- Fixed blank `Reunion Time I` by replacing the complete prefixed NA2 slot from `0x2FFB9E` rather than leaving the two-byte control prefix in front of ASCII text.
+- Preserved the structural trailing space after `Play Time`.
+- Changed the Command Chart property label from `Charge Chakra` to exact UN5 `Charge`.
 
-### Practice, Free Battle, and Command Chart
+### Character Select and Options
 
-- Added the official Opponent Settings Status help text.
-- Mapped `Random` from its exact UN5 executable offset.
-- Redirected the four ON/OFF targets to exact uppercase ASCII UN5 offsets.
-- Added official `Guard`, `Flee`, `Taunt`, `(Hold)`, and `or` mappings.
-- Corrected `Recovery` to the official `Rebound` source.
-- Relocated the full official Flee directional instruction and rewrote its pointer.
-- Rebuilt Practice/Free Battle confirmation assembly from official UN5 templates and official mode labels.
-- Added four verified MIPS instruction-word changes so the two direct Free Battle quit paths use the source-derived full sentence instead of concatenating incompatible fragments.
-- Added the real spaced-Yes target used by Shop/Collection; the existing Practice/Free Battle Yes mapping remains active.
+- Added exact `1P vs. 2P`, `1P vs. COM`, `COM vs. 2P`, and `COM vs. COM`, restoring the missing period and removing fullwidth SJIS labels.
+- Added `Back to Game Mode Screen`.
+- Added Music Settings volume, output-mode, and reset-result text.
+- Added the Options difficulty-reset result.
 
-### Options and save/load
+### Save and memory-card UI
 
-- Added the five runtime Options description strings, preserving their verified color markup.
-- Added verified runtime save/load strings: save prompt, load-selection prompt, load confirmation, load-completed message, save-location prompt, and Play Time.
-- `Unused`, Next, OK, and Back were not mapped because no verified corresponding runtime target/source pair was proven for those screenshots. Their visible forms may be graphical or generated.
+- Replaced the three loading-list ruby glyphs with exact UN5 `1`, `2`, and `3`.
+- Replaced the unused-slot ruby string with exact UN5 `Empty`.
+- Added save completion, create-new-data, overwrite warning/prompt, return-to-title, and no-loadable-data strings.
+- Added saving progress using the original NA2 fragments; fragments that cannot hold official UN5 text are visibly `[S]` shortened.
+- Added the full unformatted-card flow while preserving NA2's separate notification and confirmation steps.
+- Added formatting progress/completion and save-area creation progress/completion.
+- Added missing-card, missing-game-data, and create-game-data states.
+- Long save/memory-card text remains in original slots. No spare-space relocation or pointer rewrite is used.
 
-### Shop
+The save date and elapsed-time numerals are generated by executable code rather than stored in the translated string slots. A verified ASCII-renderer/code mapping was not proven safely in v27, so that single code-level issue remains an `unresolved` row in `mappings.tsv`. Static slot numbers and `Empty` are translated now.
 
-- Corrected the final Shop help slot from 160 to 112 bytes. The old size erased the nine-entry help pointer table at `ETC.BIN + 0x2F4D0`; v26 stops exactly at that table.
-- Added verified Shop-list copies for Sai, Tenten, Temari, Sasori, Jiraiya, Shizune, Yamato, and Haku.
-- Added the spaced Yes target used by the Shop/Collection confirmation UI.
-- Money, Ryo, and Points were investigated. Runtime strings with similar wording exist elsewhere, but no verified Shop-HUD target slots were found. No unrelated mappings were added; those labels remain outside v26.
+### Removal of relocation behavior
 
-### Collection
+- Removed all active text pools and pointer rewrites.
+- Disabled the four v26 MIPS redirects that depended on relocated dialog fragments.
+- Rebuilt the Free Battle/Practice dialog fragments in their original slots.
+- Converted former long relocations into exact original-slot mappings where they fit.
+- Converted the remaining oversized entries into traceable `[S]` mappings.
 
-- Added the seven captured Movie-list titles.
-- Added the eleven captured Character-list titles.
-- Relocated The Boar-Deer-Butterfly Trio into a verified ETC zero pool because its original slot is too small.
-- Built Quit Collection? from the official generic UN5 Quit template plus the official Collection label.
+### Mapping and summary maintenance
 
-## Rollback ledger
+- Added stable IDs and persistent enabled-state handling.
+- Replaced the sparse v26 table with the compact 12-column schema.
+- Added `section` grouping for practical filtering instead of pretending a TSV can contain worksheet tabs, because file formats remain stubbornly literal.
+- Removed individual disabled, unresolved, and runtime-skip records from `build_summary.json`.
 
-Every v26 mapping change has a `reason` beginning with `V26_`. Filter the final column to find a group. Set `enabled` to `0` for all rows in a group to suppress that group on the next build.
+## v27 test checklist
 
-Main groups:
-
-- `V26_OPPONENT_STATUS_HELP`
-- `V26_RANDOM`
-- `V26_ASCII_ON_OFF`
-- `V26_COMMAND_LABELS`
-- `V26_FLEE_HELP_RELOCATION`
-- `V26_REBOUND`
-- `V26_DIALOG_*`
-- `V26_OPTIONS_HELP`
-- `V26_SAVE_LOAD`
-- `V26_SHOP_HELP_BOUNDARY`
-- `V26_SHOP_NAMES*`
-- `V26_COLLECTION_MOVIES`
-- `V26_COLLECTION_CHARACTERS*`
-- `V26_COLLECTION_EXIT`
-
-The three old v25 dialog-fragment rows are retained with `enabled=0` and reason `V26_DISABLED_LEGACY_DIALOG_FRAGMENT`. To restore the exact v25 dialog method, disable every `V26_DIALOG_*` row and re-enable those three legacy rows. The accepted v25 archive remains the complete builder-level fallback if the new parser or transform support itself must be rolled back.
-
-`V26_SHOP_HELP_BOUNDARY` can be disabled safely; doing so leaves the clean Japanese target and its pointer table intact. Do not restore the old 160-byte capacity unless deliberately reproducing the v25 pointer-table corruption.
-
-## Deliberately logged for later
-
-These are rendering tasks, not reasons to alter official text:
-
-- identify and port UN5 automatic fit-to-width behavior;
-- Chakra Charge Gauge instruction beginning with `1+...`;
-- long Substitution Jutsu, Flee, Extra Hit, Shadowblur, Options, Collection, and confirmation text;
-- investigate fullwidth SJIS numeric characters and map them to verified UN5 ASCII numeric sources only where structurally correct.
-
-Until that renderer work is done, preserve exact UN5 strings. Do not shorten them or insert manual line breaks.
-
-## v26 test checklist
-
-Test these screens before accepting v26:
-
-1. Opponent Settings: Status help is English; Linked Attack shows Random; ON/OFF are compact uppercase ASCII.
-2. Practice/Free Battle confirmations: return to Character Select and Game Mode Select for both modes; direct Quit Battle in Free Battle; Yes and No choices; no mixed Japanese/English assembly.
-3. Command Chart: Guard, Flee, Taunt, `(Hold)`, `or`, Rebound, and the full Flee instruction. Verify Charge Chakra remains correct.
-4. Options: all five bottom descriptions are English, colors render correctly, and no literal `<WHITE>` or other tag appears.
-5. Save/load: save prompt, load selection, load confirmation, load completed, save-location prompt, and Play Time. `Unused` and graphical controls are expected to remain unchanged in v26.
-6. Shop: visit every Shop section and verify the blue help strip is present; check all eight newly mapped names; open the quit dialog and verify Yes/No. Money/Ryo/Points are expected to remain unchanged.
-7. Collection: Movie titles, Character titles on both captured pages, and Quit Collection? with Yes/No.
-8. Stability: enter and leave each affected screen repeatedly, verify no white screen or crash, and verify unrelated v25 translations and font behavior did not regress.
+1. Character Select: all four matchup labels use ASCII and include `vs.`; `Back to Game Mode Screen` is English; confirmation `Yes` is English.
+2. Command Chart: `Charge` appears instead of `Charge Chakra`; `[S]` entries remain readable and do not corrupt adjacent strings.
+3. Practice settings: inspect all four ON/OFF copies. The output bytes are ASCII; note renderer spacing separately from translation data.
+4. Collection: `Reunion Time I` is visible; long shortened title remains in its original slot; quit confirmation uses English `Yes`.
+5. Music/Options: verify the three Music Settings messages and difficulty-reset result.
+6. Save list: slots show `1`, `2`, `3`, and `Empty`; `Play Time` has a separator before the elapsed time.
+7. Normal save/load: overwrite, saving, save completion, create data, missing card, no loadable data, incompatible-data, and return-to-title states.
+8. Unformatted card: notification, format prompt, formatting, completion, missing save area, creation prompt, creation, and completion in NA2's actual sequence.
+9. Regression: enter and leave affected screens repeatedly; verify no blank text, pointer corruption, white screen, or crash.
+10. Enabled persistence: disable one harmless mapping, build once, replace the builder directory with a clean v27 copy, build again, and verify the same ID remains disabled.
 
 ## Direct use
 

@@ -7,6 +7,13 @@ Boot ELF: SLPS_258.37
 
 Goal: practical PCSX2 modding/translation/patching, not a native PC port.
 
+## Codex Project Location
+
+- Real project and Git root: `C:\Games\Modding\UN Modding\NA2 Modding`.
+- The old saved Codex project path, `C:\Games\Modding\NA Modding\NA2 Modding\Codex`, is only a hidden NTFS junction to the real root.
+- Create the replacement Codex project directly against the real root. Keep the junction until the replacement project and its tasks can read the workspace correctly; remove it only after explicit user approval.
+- Start every migration-related task with `git status` and `git log -1`; do not rely on a hard-coded commit ID in this document.
+
 This project currently has two mod parts:
 
 - ISO changes: currently translation-only.
@@ -50,6 +57,17 @@ Current PNACH:
 Scratch/intermediate folders should be created only when needed, preferably under root `temp/` with names tied to the task. Extractions of original source archives stay beside the source archive under `source/`.
 When adding a new root folder, document it in the project markdown and decide whether it is tracked project text or workspace-only/generated. For binary modding, prefer persistent target folders under `work/` over repeated fresh disassembly. State the tools/software used for each change, and keep command chunks short and reusable.
 See non-tracked folders in gitignore, need to be recreated if starting anew.
+
+## Task Separation After Migration
+
+Use separate Codex tasks against the same real project root:
+
+- Coordination / build workflow: repository structure, `na2`, packages, actualize, releases, and cross-task integration.
+- GF4 font rendering: GF4/GF4C assets, NA2/UN5 renderer comparison, metrics, positioning, and auto-fit logic.
+- Translation integration: consume ChatGPT-owned builder releases, validate TSV/build compatibility, and report builder issues without editing the builder.
+- Logic / PNACH: gameplay patches and reverse engineering unrelated to font or translation work.
+
+All tasks must read `AGENTS.md`, `PROJECT_CONTEXT.md`, `TASKS.md`, and `HYPOTHESES.md` before acting. Binary outputs and experiments remain shared, so each task must re-check Git status and current package/build state before modifying files.
 
 ## Trash Rule
 

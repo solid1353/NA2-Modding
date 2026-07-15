@@ -2,7 +2,25 @@
 
 ## In Progress
 
-- Prettify text / polish translated UI strings.
+### Translation
+- Translate remaining strings.
+- Test extensively.
+
+### Swap buttons in menus.
+- Collect GPT's TSVs with hypotheses.
+- Decide on a format.
+- Teach Codex to apply it.
+- Test.
+
+### Raw binary patcher
+
+- Define repository-owned TSV schemas for mappings, candidates, patches, and edits.
+- Convert the existing proven font changes into named binary patches.
+- Build a raw binary patcher with hash, expected-byte, size, conflict, atomicity, and logging checks.
+- Verify that the patcher reproduces the current font outputs byte-for-byte.
+- Update the main build scripts to call the patcher while preserving their existing entry points.
+- Review GPT-produced UN5-to-NA2 mapping TSVs and approve candidates before application.
+- Later integrate texture, sound, data-pack, and translation modules under the same orchestrator.
 
 ## Backlog
 

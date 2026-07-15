@@ -6,11 +6,11 @@
 /trash/
 /utils/old/
 /logs/
-/temp/
 /work/
 /ghidra/
 /disassembly/
 /translation_package_builder/work/
+/releases
 __pycache__/
 
 # Windows/editor noise

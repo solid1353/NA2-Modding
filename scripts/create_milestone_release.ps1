@@ -10,7 +10,7 @@ param(
 
     [string]$ExpectedCrc = "",
 
-    [string]$ReleaseDir = (Join-Path (Resolve-Path (Join-Path $PSScriptRoot "..")).Path "release")
+    [string]$ReleaseDir = (Join-Path (Resolve-Path (Join-Path $PSScriptRoot "..")).Path "releases")
 )
 
 Set-StrictMode -Version Latest

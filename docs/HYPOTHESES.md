@@ -50,9 +50,8 @@ Status: active test, pending in-game check.
 - Previous polished text: `Ｑｕｉｔ？`
 - Test text: `Quit Collection Menu?`
 - Reason: this slot is null-terminated and has zero padding through `0x24F97`, before the next visible string begins at `0x24F98`.
-- Backups:
-  - `work/text_polish/etc_bin/backups/ETC.BIN.loose.20260704-155734.bak`
-  - `work/text_polish/etc_bin/backups/ETC.BIN.iso.20260704-155734.bak`
+- The former working binaries, patch table, and patch record were retired from
+  `work/` in recoverable trash batch `20260715_172049`.
 
 
 ## PNACH Candidates

@@ -1,6 +1,0 @@
-id	file	offset_hex	old_slot_capacity_bytes	source_japanese	previous_release_english	proposed_translation	notes	reason
-BTL_0275	BTL.BIN	0x20A220	5	アイテム出現	Items	Ｉｔｅｍ　Ｓｐａｗｎ		pointer_hits_2
-BTL_0276	BTL.BIN	0x20A230	6	チャクラ	Chakra	Ｃｈａｋｒａ		pointer_hits_2
-BTL_0282	BTL.BIN	0x20A4D0	62	<r方向|ほうこう>キー<r左右|さゆう>で<r奥義|おうぎ>の<r入力勝負|にゅうりょくしょうぶ>の<r切|き>り<r替|か>えなどが<r設定|せってい>できます。	Press Left/Right to switch the Ultimate input battle settings.	Ｐｒｅｓｓ　Ｌｅｆｔ／Ｒｉｇｈｔ　ｔｏ　ｓｗｉｔｃｈ　Ｕｌｔｉｍａｔｅ　ｉｎｐｕｔ　ｂａｔｔｌｅ　ｓｅｔｔｉｎｇｓ．		pointer_hits_2
-BTL_0284	BTL.BIN	0x20A680	36	<r対戦設定|たいせんせってい>をデフォルトに<r戻|もど>しました。	Battle settings restored to default.	Ｂａｔｔｌｅ　ｓｅｔｔｉｎｇｓ　ｒｅｓｔｏｒｅｄ　ｔｏ　ｄｅｆａｕｌｔ．		pointer_hits_0
-BTL_0285	BTL.BIN	0x20A748	8	連係攻撃	Team Atk	Ｔｅａｍ　Ａｔｔａｃｋ		pointer_hits_2

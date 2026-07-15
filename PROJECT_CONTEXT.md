@@ -10,9 +10,10 @@ Goal: practical PCSX2 modding/translation/patching, not a native PC port.
 ## Codex Project Location
 
 - Real project and Git root: `C:\Games\Modding\UN Modding\NA2 Modding`.
-- The old saved Codex project path, `C:\Games\Modding\NA Modding\NA2 Modding\Codex`, is only a hidden NTFS junction to the real root.
-- Create the replacement Codex project directly against the real root. Keep the junction until the replacement project and its tasks can read the workspace correctly; remove it only after explicit user approval.
-- Start every migration-related task with `git status` and `git log -1`; do not rely on a hard-coded commit ID in this document.
+- Migration to the real root was completed on 2026-07-15.
+- The obsolete junction at `C:\Games\Modding\NA Modding\NA2 Modding\Codex` has been removed and must not be recreated.
+- The old saved-project UI entry `NA2 Modding Old` may remain, but it must not be used.
+- Four dedicated Codex tasks point to the real project root.
 
 This project currently has two mod parts:
 
@@ -58,7 +59,7 @@ Scratch/intermediate folders should be created only when needed, preferably unde
 When adding a new root folder, document it in the project markdown and decide whether it is tracked project text or workspace-only/generated. For binary modding, prefer persistent target folders under `work/` over repeated fresh disassembly. State the tools/software used for each change, and keep command chunks short and reusable.
 See non-tracked folders in gitignore, need to be recreated if starting anew.
 
-## Task Separation After Migration
+## Codex Task Separation
 
 Use separate Codex tasks against the same real project root:
 

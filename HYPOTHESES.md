@@ -4,7 +4,7 @@ Use this file for old patch candidates, failed experiments, unverified addresses
 
 ## GF4 Font Rendering Handoff
 
-Status: paused for Codex project migration. Do not generate another GF4 package until the new GF4 task has re-read this section and the preserved disassembly.
+Status: paused after v23 and ready to resume only in the dedicated GF4 task after rereading this handoff and the preserved disassembly. Do not generate another GF4 package before that review.
 
 ### Current visual state
 

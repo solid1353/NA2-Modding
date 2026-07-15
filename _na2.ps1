@@ -37,16 +37,22 @@ param(
 
 $na2Root = $PSScriptRoot
 $logDirectory = Join-Path $na2Root 'logs\na2'
-$logTimestamp = Get-Date -Format 'yyyyMMdd_HHmmss_fff'
-$logPath = Join-Path $logDirectory "na2_${logTimestamp}_pid$PID.log"
 $latestLogPath = Join-Path $logDirectory 'latest.log'
+$rollingLogPath = Join-Path $logDirectory 'rolling.log'
+$runStarted = Get-Date
 $transcriptStarted = $false
+
+function Format-Na2LogTimestamp {
+    param([datetime]$Value)
+    $Value.ToString("dddd, d MMMM yyyy 'at' HH:mm:ss.fff zzz", [Globalization.CultureInfo]::InvariantCulture)
+}
 
 try {
     New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
-    Start-Transcript -LiteralPath $logPath -UseMinimalHeader | Out-Null
+    Start-Transcript -LiteralPath $latestLogPath -UseMinimalHeader -Force | Out-Null
     $transcriptStarted = $true
-    Write-Host "[na2] Log: $logPath" -ForegroundColor DarkGray
+    Write-Host "[na2] Latest log: $latestLogPath" -ForegroundColor DarkGray
+    Write-Host "[na2] Rolling log: $rollingLogPath" -ForegroundColor DarkGray
 }
 catch {
     Write-Warning "Could not start NA2 log: $_"
@@ -249,10 +255,23 @@ finally {
     if ($transcriptStarted) {
         Stop-Transcript | Out-Null
         try {
-            Copy-Item -LiteralPath $logPath -Destination $latestLogPath -Force
+            $runEnded = Get-Date
+            $separator = '=' * 80
+            $header = @(
+                $separator
+                "NA2 run started: $(Format-Na2LogTimestamp $runStarted)"
+                "NA2 run ended:   $(Format-Na2LogTimestamp $runEnded)"
+                $separator
+            ) -join [Environment]::NewLine
+            $transcript = Get-Content -LiteralPath $latestLogPath -Raw
+            $section = $header + [Environment]::NewLine + $transcript.TrimEnd() +
+                [Environment]::NewLine + [Environment]::NewLine
+            $utf8 = [Text.UTF8Encoding]::new($false)
+            [IO.File]::WriteAllText($latestLogPath, $section, $utf8)
+            [IO.File]::AppendAllText($rollingLogPath, $section, $utf8)
         }
         catch {
-            Write-Warning "Could not refresh NA2 latest log: $_"
+            Write-Warning "Could not finalize NA2 logs: $_"
         }
     }
 }

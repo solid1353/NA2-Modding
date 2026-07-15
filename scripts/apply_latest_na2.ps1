@@ -114,7 +114,7 @@ if (-not $RunOnly) {
         (Join-Path $PSScriptRoot 'apply_latest_na2.py')
         '--source', $InputIso
         '--output', $OutputIso
-        '--downloads', $PackageDirectory
+        '--package-directory', $PackageDirectory
     )
     foreach ($package in $selectedPackages) {
         $arguments += @('--package', $package)

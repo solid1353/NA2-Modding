@@ -1,5 +1,5 @@
 param(
-    [string]$LogPath = "C:\Games\Emulators\PCSX2 2.6.2\logs\emulog.txt",
+    [string]$LogPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'pcsx2\logs\emulog.txt'),
     [string]$PnachPath = "",
     [string]$Serial = "SLPS-25837"
 )

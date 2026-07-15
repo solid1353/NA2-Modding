@@ -40,8 +40,8 @@ function Assert-TrashAllowed {
         throw "Refusing to trash anything under source/: $RelativePath"
     }
 
-    if ($first -eq "release") {
-        throw "Refusing to trash anything under release/: $RelativePath"
+    if ($first -eq "releases") {
+        throw "Refusing to trash anything under releases/: $RelativePath"
     }
 
     if ($first -eq "trash") {

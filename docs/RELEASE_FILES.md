@@ -1,7 +1,7 @@
 # Release Files
 
 Default ISO source: build/*.iso, usually build/Current.iso unless specified.
-Release root: C:\Users\solid\Documents\Mods\NA2\releases, exposed as root symlink releases/.
+Release root: `releases/`.
 
 Files currently included in a release:
 - BTL.BIN from build ISO -> BTL.BIN

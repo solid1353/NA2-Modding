@@ -12,13 +12,13 @@ Status: paused after v23 and ready to resume only in the dedicated GF4 task afte
 - v23 changed the NA2 ELF instruction at file offset `0x866E0` from `80 BF 02 3C` (`-1.0`) to `00 00 02 3C` (`0.0`) to mimic UN5 ASCII tracking.
 - The user observed no meaningful visual change from that experiment. The Controls menu still shows oversized/chunky English, inconsistent spacing, and long entries clipped at the right edge.
 - Final comparison screenshot: `logs/font/20260713_095523__v23__no_visible_change.png`.
-- The one-off v23 builder script was retired to project trash. Its patch log remains under `logs/font/`; the test ZIP remains in Downloads, not in `packages/`.
+- The one-off v23 builder script was retired to project trash. Its patch log remains under `logs/font/`; the reproducible test ZIP is preserved as `packages/NA2_APPLY__FONT__20260713_084649__v23__un5_ascii_zero_tracking.zip`.
 - The last `na2` log that built v23 is `logs/na2/na2_20260713_095820_889_pid33216.log`; `logs/na2/latest.log` mirrors it.
 
 ### Preserved milestones
 
-- `packages/font/NA2_APPLY__FONT__20260712_052042__m01__un5_14x20_clean_coverage.zip`
-- `packages/font/NA2_APPLY__FONT__20260712_054105__m02__un5_14x20_aligned_metrics.zip`
+- `milestones/packages/NA2_MILESTONE__FONT__m01__20260712_052042__un5_14x20_clean_coverage.zip`
+- `milestones/packages/NA2_MILESTONE__FONT__m02__20260712_054105__un5_14x20_aligned_metrics.zip`
 
 These are frozen reference packages, not proof that all rendering problems are solved.
 
@@ -59,7 +59,7 @@ Status: active test, pending in-game check.
 
 ### Disable RPS (old)
 
-Status: archived, replaced by current `[Disable RPS]` section in `cheats/C0659AD1.pnach`.
+Status: archived, replaced by current `[Disable RPS]` section in `cheats/SLPS-25837_C0659AD1.pnach`.
 
 ```ini
 // [Disable RPS (old)]
@@ -69,7 +69,7 @@ Status: archived, replaced by current `[Disable RPS]` section in `cheats/C0659AD
 
 ### Disable extra hit (old)
 
-Status: archived, replaced by current `[Disable extra hit with aura punishment]` section in `cheats/C0659AD1.pnach`.
+Status: archived, replaced by current `[Disable extra hit with aura punishment]` section in `cheats/SLPS-25837_C0659AD1.pnach`.
 
 ```ini
 // [Disable extra hit (old)]

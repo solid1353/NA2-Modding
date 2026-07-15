@@ -10,7 +10,7 @@
 /work/
 /ghidra/
 /disassembly/
-/translation_package_builder/work
+/translation_package_builder/work/
 __pycache__/
 
 # Windows/editor noise

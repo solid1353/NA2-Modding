@@ -173,7 +173,7 @@ if ($command -and $command -notmatch '^(f|t|ft|tf)$') {
 $applyArgs = @{
     InputIso         = Join-Path $na2Root 'source\NA2.iso'
     OutputIso        = Join-Path $na2Root 'build\Current.iso'
-    PackageDirectory = Join-Path $HOME 'Downloads'
+    PackageDirectory = Join-Path $na2Root 'packages'
     Pcsx2Exe         = Join-Path $na2Root 'pcsx2\pcsx2-qt.exe'
 }
 @{

@@ -1,4 +1,4 @@
-# NA2 Translation Package Builder v31
+# NA2 Translation Package Builder v32
 
 This builder generates one post-composition translation TSV for **Naruto: Narutimate Accel 2**. It never packages patched BIN or ELF payloads. The surrounding NA2 pipeline composes selected packages first, then applies the generated TSV over the composed files.
 
@@ -6,8 +6,8 @@ This archive contains only `translation_package_builder`. Project-level wrapper 
 
 ## Builder metadata
 
-- Version: `31`
-- Packaged `mappings.tsv` SHA-256: `dab4fa4cfc825d850d71e13909ab8e8cab91d97a4e95855b3c61b4dd0a9b0b17`
+- Version: `32`
+- Packaged `mappings.tsv` SHA-256: `d335823a52126d2633106e0a39e4e021e2194864104965df49a7808443be5e57`
 
 The README is the canonical home for both values. The builder does not ship one-line `VERSION.txt` or `MAPPINGS_DEFAULT.sha256` files. It reads and validates this metadata directly from `README.md`.
 
@@ -145,6 +145,71 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
 
+## Version 32 changes
+
+### Collection character-model animation pass
+
+v32 traces the remaining Japanese mannequin/model animation labels through the per-character `if...anmN` identifiers shared by NA2 and UN5. It adds or activates 35 verified mappings:
+
+- 32 exact official names copied from `PRG/TEXTENG.BIN` or the UN5 executable short-string table;
+- `M0717` is activated as exact `Hey!` after its identifier match was confirmed;
+- `[S]Long Time!` is used for `Long Time No See!`, which cannot fit Ino's 16-byte NA2 slot;
+- `[S]Now` is used for `Now then...`, which cannot fit Kankuro's 8-byte executable slot.
+
+This completes every untranslated Japanese model-animation label found in the supplied 54-screen v31 review set, including Naruto, Kakashi, Neji, Tenten, Shikamaru, Choji, Ino, Asuma, Kiba, Shino, Hinata, Kurenai, Kankuro, Temari, Chiyo, Itachi, Kisame, Deidara, Jiraiya, Tsunade, Shizune, Yamato, Orochimaru, Kabuto, and Sasuke entries.
+
+### Collection voice/audio title pass
+
+v32 adds or activates 20 verified voice-title mappings by matching their position in the official UN5 title sequence and, where applicable, the UN5 executable's short-string copies. This includes the supplied Sai, Kakashi, Shikamaru, Choji, Shino, Kiba, Itachi, Orochimaru, Chiyo, Kabuto, Sasuke, and Sasori screenshots.
+
+Two constrained slots use traceable shortening:
+
+- `[S]Naru/Sasuke` for official `Naruto and Sasuke` in a 16-byte ETC slot;
+- `[S]Task` for official `Assignment` in an 8-byte executable slot.
+
+Temari's `姉の喜び` remains unresolved as `M0725`: no exact official UN5 English source has been verified, so v32 deliberately leaves it untouched.
+
+### Remaining Collection jutsu and shared battle-name gaps
+
+v32 fills all 16 verified gaps in the Collection ultimate/special-jutsu sequence exposed by the screenshot set, including:
+
+- `Facing the Sunset`;
+- `My Rule: One` and `My Rule: Two`;
+- `IQ 200` in both verified target copies;
+- `Super Human Boulder 2`;
+- `Sand Spear Funeral`;
+- `Ten Puppets of Chikamatsu`;
+- `Puppet: Iron Sand Cluster 2`;
+- `Chakra Dissection Blade: Destroy`;
+- `Partial Expansion Jutsu 2`;
+- `Galium Spurium Dance 2`;
+- `Summoning: Rashomon, Abyss 2`;
+- `Tongue-Lash Combo 2`;
+- `Raining Spider 2`;
+- `Earth Style: Terra Shield 2`.
+
+The battle-select/Command Chart shared strings `鹿蝶封結` and `涅槃精舎の術` are also mapped to exact UN5 `Kachofuketsu` and `Temple of Nirvana Technique`.
+
+No string is relocated and no pointer is rewritten. Every new exact mapping fits its original zero-padded slot; only the four explicitly marked `[S]` rows use manual shortening.
+
+### Packaged table totals
+
+The packaged v32 table contains 2,241 mappings: 2,231 enabled and 10 disabled. Enabled rows comprise 2,135 `slot`, 4 `sequence`, 33 `shorten`, and 59 `unresolved` mappings. All four structural `bytes` rows remain disabled.
+
+All script and generated-artifact path references remain relative. v32 adds no absolute path literals, patched payload files, relocation pools, or target-size changes.
+
+### v32 build validation
+
+A clean-source full build was validated with all three targets selected:
+
+- 2,436 six-column TSV patch rows;
+- 2,172 applied text mappings;
+- 33 shortened mappings;
+- zero active structural patches;
+- unchanged target file sizes;
+- relative `translation_tsv` in `build_summary.json`;
+- successful v31-to-v32 persistent-state migration with `M0745=1` and all new v32 IDs retaining their packaged enabled defaults.
+
 ## Version 31 changes
 
 ### Character Command Chart expansion
@@ -247,6 +312,13 @@ The packaged v30 table contains 854 mappings: 844 enabled and 10 disabled. Activ
 
 This log persists unresolved visual/runtime findings across builder versions. Entries implemented in the current builder remain in the verification section until confirmed in-game.
 
+### Implemented in v32, runtime verification required
+
+- **Collection character models:** verify the newly covered mannequin/model animation labels across the supplied roster screenshots, including the short `[S]Long Time!` and `[S]Now` entries.
+- **Collection voice/audio lists:** verify the newly covered title entries, especially `[S]Naru/Sasuke` and `[S]Task`; Temari's `姉の喜び` is intentionally still Japanese.
+- **Collection jutsu lists:** verify all newly filled numbered/alternate moves, including My Rule 1/2, the second Human Boulder, Iron Sand Cluster, Rashomon, Tongue-Lash, Raining Spider, and Terra Shield entries.
+- **Battle select and Command Chart:** verify `Kachofuketsu` and `Temple of Nirvana Technique` replace the two remaining Japanese names in the supplied screenshots.
+
 ### Implemented in v31, runtime verification required
 
 - **All character Command Charts:** verify character-specific move names across the roster, not only Naruto, and report any still-visible Japanese name with its character and screen position.
@@ -271,7 +343,8 @@ This log persists unresolved visual/runtime findings across builder versions. En
 
 ### Open
 
-- **Startup no-card choice capitalization:** later replace the visible `Yes` and `No` labels with uppercase `YES` and `NO`; intentionally not included in v30.
+- **Temari voice title:** `姉の喜び` remains untouched because no exact official UN5 English source offset has been verified; retained as unresolved `M0725`.
+- **Startup no-card choice capitalization:** later replace the visible `Yes` and `No` labels with uppercase `YES` and `NO`; intentionally not included yet.
 - **Options main-screen graphical labels:** the `Options` logo, difficulty/value, controls, screen, audio, restore, confirm, and back labels remain Japanese in supplied screenshots. They appear to use graphical/CCS resources outside the current text targets and remain untouched pending extracted NA2 and UN5 assets.
 - **Collection Movie screen chrome:** the `Collection` title, `Movie` category heading, and play/back prompts remain Japanese and appear to use graphical/CCS resources outside the current text targets.
 - **Collection movie-title fit:** exact UN5 titles are present, but several extend beyond the visible right edge. They remain unshortened until a requested shortening or verified UN5 width/scale behavior is applied.
@@ -280,18 +353,18 @@ This log persists unresolved visual/runtime findings across builder versions. En
 
 PCSX2 application chrome, toolbar text, pause indicators, graphical controller prompts, and emulator toasts are not game translation issues and are not logged here.
 
-## v31 test checklist
+## v32 test checklist
 
-1. Build from a clean installed v31 directory and confirm the summary reports builder version 31.
-2. Confirm `build_summary.json` contains only a relative TSV filename and no absolute host paths.
-3. Preserve external enabled state and verify `M0745=1`; all new v31 IDs should use packaged enabled defaults.
-4. Open Command Charts for characters throughout the roster and verify the displayed move names are English, with special attention to characters before and after Naruto in table order.
-5. Verify Naruto still shows `Great Ball Rasengan`, `Charging Kick`, `Clone Jumping Explosion Hit`, and the previously translated normal attacks.
-6. Check every available Ultimate Jutsu page for multiple English entries per character; Naruto must not stop at only `Unchanging Relationship`.
-7. Verify `8 Trigrams 64 Palms`, `Giant Sand Burial`, and `Wolf Fang Over Fang` are complete rather than suffix-only.
-8. Verify the eight new shortened target copies fit their slots and visibly retain the `[S]` marker.
-9. Recheck Options, Theater, save/load, and memory-card dialogs to ensure the larger mapping table did not regress earlier pointer/sequence fixes.
-10. Generated TSV validation: six columns, fixed-size patches only, relative summary reference, no target overlap, and successful composition with the current Font package.
+1. Build from a clean installed v32 directory and confirm the summary reports builder version 32.
+2. Confirm `build_summary.json`, console output, scripts, and documentation contain only relative path references.
+3. Preserve external enabled state and verify `M0745=1`; all new v32 IDs must use packaged enabled defaults.
+4. Recheck all 54 supplied Collection screenshots and confirm every v32-covered model-animation, voice-title, and jutsu entry is English.
+5. Confirm Temari's `姉の喜び` remains unchanged rather than receiving a guessed translation.
+6. Verify the four new shortened entries visibly retain `[S]` and fit their fixed slots: `Long Time!`, `Now`, `Naru/Sasuke`, and `Task`.
+7. Verify `Kachofuketsu` appears in both the battle-select and Command Chart contexts using the shared target string.
+8. Verify `Temple of Nirvana Technique` appears in the battle-select entry.
+9. Recheck v29-v31 Options, Theater, save/load, memory-card, Naruto, and roster-wide Command Chart fixes for regressions.
+10. Generated TSV validation: exactly six columns, fixed-size patches only, relative summary reference, no active overlap, unchanged target file sizes, and successful composition with the current Font package.
 
 ## Integration expectations
 

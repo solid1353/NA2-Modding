@@ -1,4 +1,4 @@
-# NA2 Translation Package Builder v30
+# NA2 Translation Package Builder v31
 
 This builder generates one post-composition translation TSV for **Naruto: Narutimate Accel 2**. It never packages patched BIN or ELF payloads. The surrounding NA2 pipeline composes selected packages first, then applies the generated TSV over the composed files.
 
@@ -6,8 +6,8 @@ This archive contains only `translation_package_builder`. Project-level wrapper 
 
 ## Builder metadata
 
-- Version: `30`
-- Packaged `mappings.tsv` SHA-256: `f6415ef5a27dbbf0d7f0f555ce7f2092fed149a9502a2086513d25fd922e98db`
+- Version: `31`
+- Packaged `mappings.tsv` SHA-256: `dab4fa4cfc825d850d71e13909ab8e8cab91d97a4e95855b3c61b4dd0a9b0b17`
 
 The README is the canonical home for both values. The builder does not ship one-line `VERSION.txt` or `MAPPINGS_DEFAULT.sha256` files. It reads and validates this metadata directly from `README.md`.
 
@@ -145,6 +145,58 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
 
+## Version 31 changes
+
+### Character Command Chart expansion
+
+v31 ports the character-specific Command Chart move names by matching the actual table structures instead of searching for isolated Japanese strings.
+
+NA2 contains 74 verified command-record arrays in `SLPS_258.37`. Each record is `0x54` bytes and stores its displayed-name pointer at record offset `+0x08`. UN5 contains the corresponding per-character pointer arrays in `PRG/TEXTENG.BIN`. The builder data was expanded only where the NA2 record index and the corresponding UN5 pointer-table index both reference nonblank text. The Naruto mappings introduced in v28-v30 served as the anchor and were reproduced exactly by this method before it was extended to the other characters.
+
+This adds 1,041 new Command Chart mappings:
+
+- 1,035 exact official UN5 names that fit their original NA2 slots;
+- 6 traceable `[S]` shortenings for the only command names that do not fit;
+- no relocation pools, pointer rewrites, or writes beyond original zero-padded string slots.
+
+Together with the 15 already-mapped Naruto entries, v31 covers 1,056 unique command-name targets across the 74 shared character tables. One table contains two NA2/UN5 presence differences; those unmatched entries remain untouched rather than being guessed.
+
+The six new shortened command names are:
+
+- `[S]Fairy Tale is Real!!`
+- `[S]Bamboo Shoot Thrust`
+- `[S]Clover Boar`
+- `[S]Anesth. Wt.`
+- `[S]Clarity Rush`
+- `[S]Inst. Blade`
+
+### Ultimate and character-specific jutsu expansion
+
+Ultimate/special-jutsu records use a separate verified `0x14`-byte structure. The first word is the localized name pointer, while the remaining four metadata words are identical between NA2 and UN5. Matching those four words identifies the official UN5 name without relying on string order or manual translation.
+
+v31 covers:
+
+- 153 unique executable-side names in `SLPS_258.37`, including all discovered Naruto Ultimate Jutsu entries rather than only `Unchanging Relationship`;
+- 146 verified duplicate names in `PRG/ETC.BIN`;
+- 152 newly added SLPS mappings and 133 newly added ETC mappings;
+- one shortened official name in each target: `[S]8 Trigrams Mountain Break` for `8 Trigrams Mountain Break Attack`.
+
+Three older suffix-only ETC mappings are corrected to their complete official names:
+
+- `64 Palms` becomes `8 Trigrams 64 Palms`;
+- `Sand Burial` becomes `Giant Sand Burial`;
+- `Wolf Fang` becomes `Wolf Fang Over Fang`.
+
+Previously unresolved `M0718`, `M0719`, and `M0720` are now pointer-verified and active for `Lightning Blade, Single Sharpness`, `Ninja Art: Copy Jutsu`, and `Flying Thunder God Jutsu`.
+
+Three record-selected UN5 names contain decorative color tags while separate plain official copies also exist in `TEXTENG.BIN`. v31 references those plain official copies because the corresponding NA2 slots contain no verified color-tag form. No English wording is invented.
+
+### Packaged table totals
+
+The packaged v31 table contains 2,180 mappings: 2,170 enabled and 10 disabled. Enabled rows comprise 2,066 `slot`, 4 `sequence`, 29 `shorten`, and 71 `unresolved` mappings. All four structural `bytes` rows remain disabled.
+
+All generated paths remain relative. v31 adds no absolute script paths, no patched payload files, and no relocation behavior.
+
 ## Version 30 changes
 
 ### Packed multi-string message blocks
@@ -195,6 +247,13 @@ The packaged v30 table contains 854 mappings: 844 enabled and 10 disabled. Activ
 
 This log persists unresolved visual/runtime findings across builder versions. Entries implemented in the current builder remain in the verification section until confirmed in-game.
 
+### Implemented in v31, runtime verification required
+
+- **All character Command Charts:** verify character-specific move names across the roster, not only Naruto, and report any still-visible Japanese name with its character and screen position.
+- **Ultimate Jutsu lists:** verify that each character's multiple Ultimate Jutsu names are translated, including Naruto entries beyond `Unchanging Relationship`.
+- **Previously partial ETC names:** verify full `8 Trigrams 64 Palms`, `Giant Sand Burial`, and `Wolf Fang Over Fang` text where those copies are used.
+- **New `[S]` entries:** verify the eight newly shortened target copies display completely and remain understandable.
+
 ### Implemented in v30, runtime verification required
 
 - **Standard no-card notice:** the lower dialog should show the complete exact UN5 no-card and insertion message instead of mostly Japanese text.
@@ -221,18 +280,18 @@ This log persists unresolved visual/runtime findings across builder versions. En
 
 PCSX2 application chrome, toolbar text, pause indicators, graphical controller prompts, and emulator toasts are not game translation issues and are not logged here.
 
-## v30 test checklist
+## v31 test checklist
 
-1. Build from a clean installed v30 directory and confirm the summary reports builder version 30.
+1. Build from a clean installed v31 directory and confirm the summary reports builder version 31.
 2. Confirm `build_summary.json` contains only a relative TSV filename and no absolute host paths.
-3. Enabled migration: preserve external state and verify `M0745=1`; redesigned `M0813`, `M0816`, and `M0829` should preserve their stable-ID flags, while new `M0857`-`M0859` use packaged defaults.
-4. Standard no-card notice: verify all four exact UN5 text parts are visible and no Japanese fragment remains.
-5. Unformatted-card dialog: verify the complete lower notice and separate upper `Format memory card (PS2)?` prompt.
-6. Startup no-card prompt: verify the complete message reaches `Start the game anyway?` and the existing mixed-case `Yes` / `No` labels remain unchanged for now.
-7. Naruto Command Chart: verify `Unchanging Relationship`, `Charging Kick`, and `Clone Jumping Explosion Hit` are visible in the active entries.
-8. Options and Collection: verify the v29 help-line and first-Theater-entry repairs remain intact.
-9. Re-enter save/load screens repeatedly and verify no blank text, early termination, overlap, white screen, or crash.
-10. Generated TSV validation: six columns, fixed-size patches only, relative summary reference, and successful composition with the current Font package.
+3. Preserve external enabled state and verify `M0745=1`; all new v31 IDs should use packaged enabled defaults.
+4. Open Command Charts for characters throughout the roster and verify the displayed move names are English, with special attention to characters before and after Naruto in table order.
+5. Verify Naruto still shows `Great Ball Rasengan`, `Charging Kick`, `Clone Jumping Explosion Hit`, and the previously translated normal attacks.
+6. Check every available Ultimate Jutsu page for multiple English entries per character; Naruto must not stop at only `Unchanging Relationship`.
+7. Verify `8 Trigrams 64 Palms`, `Giant Sand Burial`, and `Wolf Fang Over Fang` are complete rather than suffix-only.
+8. Verify the eight new shortened target copies fit their slots and visibly retain the `[S]` marker.
+9. Recheck Options, Theater, save/load, and memory-card dialogs to ensure the larger mapping table did not regress earlier pointer/sequence fixes.
+10. Generated TSV validation: six columns, fixed-size patches only, relative summary reference, no target overlap, and successful composition with the current Font package.
 
 ## Integration expectations
 

@@ -1,4 +1,8 @@
 {
   "files.eol": "\n",
-  "diffEditor.ignoreTrimWhitespace": true
+  "diffEditor.ignoreTrimWhitespace": true,
+  "editor.formatOnSave": false,
+  "editor.formatOnPaste": false,
+  "editor.formatOnType": false,
+  "files.trimTrailingWhitespace": true
 }

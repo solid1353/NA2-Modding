@@ -126,9 +126,15 @@ function Get-LatestBuilderTranslationTsv {
 
     $run = Get-Content -LiteralPath $summary.FullName -Raw | ConvertFrom-Json
     $table = [string]$run.translation_tsv
-    if ([string]::IsNullOrWhiteSpace($table) -or -not (Test-Path -LiteralPath $table -PathType Leaf)) {
+    if ([string]::IsNullOrWhiteSpace($table)) {
+        throw "Builder run summary does not reference a translation TSV: $($summary.FullName)"
+    }
+
+    $table = Join-Path $summary.DirectoryName $table
+    if (-not (Test-Path -LiteralPath $table -PathType Leaf)) {
         throw "Builder run summary does not reference an existing translation TSV: $($summary.FullName)"
     }
+
     return (Resolve-Path -LiteralPath $table).Path
 }
 

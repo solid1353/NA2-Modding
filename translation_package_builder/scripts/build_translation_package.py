@@ -537,6 +537,13 @@ def read_target_slot(data: bytes, offset: int, capacity: int, label: str) -> tup
     if end < 0:
         raise ValueError(f"{label}: target slot has no NUL terminator")
     raw = slot[:end]
+    padding = slot[end + 1:]
+    first_structural = next((index for index, value in enumerate(padding, end + 1) if value != 0), None)
+    if first_structural is not None:
+        raise ValueError(
+            f"{label}: declared slot crosses nonzero data at 0x{offset + first_structural:X}; "
+            "reduce capacity to the actual zero-padded string boundary"
+        )
     try:
         text = raw.decode("cp932")
     except UnicodeDecodeError:
@@ -806,7 +813,9 @@ def main() -> int:
         "mode": "official-source post-composition TSV",
         "run_id": run_id,
         "timezone": "UTC+03:00",
-        "translation_tsv": str(final_path),
+        # build_summary.json and the TSV share one run directory, so the filename
+        # is the stable relative reference and never leaks a machine-specific path.
+        "translation_tsv": final_path.name,
         "targets": selected_list,
         "output": {
             "patch_rows": len(patch_rows),
@@ -824,8 +833,9 @@ def main() -> int:
     }
     write_json(run_root / "build_summary.json", summary)
 
+    display_path = Path("runs") / run_id / final_path.name
     print("Built NA2 translation TSV:")
-    print(f"  {final_path}")
+    print(f"  {display_path.as_posix()}")
     print(f"  patch rows: {len(patch_rows)}")
     print(f"  text mappings applied: {text_stats.get('mapped', 0)}")
     print(f"  shortened mappings: {text_stats.get('shortened', 0)}")

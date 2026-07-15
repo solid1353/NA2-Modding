@@ -1,4 +1,4 @@
-# NA2 Translation Package Builder v28
+# NA2 Translation Package Builder v29
 
 This builder generates one post-composition translation TSV for **Naruto: Narutimate Accel 2**. It never packages patched BIN or ELF payloads. The surrounding NA2 pipeline composes selected packages first, then applies the generated TSV over the composed files.
 
@@ -6,10 +6,10 @@ This archive contains only `translation_package_builder`. Project-level wrapper 
 
 ## Builder metadata
 
-- Version: `28`
-- Packaged `mappings.tsv` SHA-256: `318c8d866cdda2ff32e8e9171d38e966212d1f26c29444253b63b40bfa635607`
+- Version: `29`
+- Packaged `mappings.tsv` SHA-256: `f9af6c5caa975168a4b1aa609a3d87785c364b4e5c748b4e9ae56b23570413ed`
 
-The README is the canonical home for both values. v28 no longer ships one-line `VERSION.txt` or `MAPPINGS_DEFAULT.sha256` files. The builder reads and validates this metadata directly from `README.md`.
+The README is the canonical home for both values. The builder does not ship one-line `VERSION.txt` or `MAPPINGS_DEFAULT.sha256` files. It reads and validates this metadata directly from `README.md`.
 
 ## Source and target scope
 
@@ -26,7 +26,7 @@ Official UN5 sources:
 - `PRG/TEXTENG.BIN`
 - `SLES_556.05`
 
-Normal `slot` mappings read their English bytes from exact UN5 offsets at build time. The only manual English permitted is in `shorten` rows, where the replacement begins with `[S]` because the official UN5 text cannot fit the original NA2 slot safely. No translation is relocated into spare space and no text pointer is rewritten.
+Normal `slot` mappings read their English bytes from exact UN5 offsets at build time. The only manual English permitted is in `shorten` rows, where the replacement begins with `[S]` because the official UN5 text cannot fit the original NA2 slot. No translation is relocated into spare space and no text pointer is rewritten.
 
 ## Canonical `mappings.tsv`
 
@@ -46,7 +46,7 @@ Enabled flags persist outside the replaceable builder directory at:
 
 `work\translation_builder_state\enabled_state.tsv`
 
-v28 distinguishes packaged defaults from actual user changes as follows:
+Packaged defaults are distinguished from actual user changes as follows:
 
 1. A user-edited current `mappings.tsv` always wins and refreshes persistent state.
 2. An untouched packaged table inherits saved flags by stable `id` only.
@@ -55,7 +55,7 @@ v28 distinguishes packaged defaults from actual user changes as follows:
 5. Legacy semantic migration is used only for an archived table proven different from its packaged default. An archive without a verifiable default hash is skipped rather than guessed at.
 6. Effective flags are written atomically to both `mappings.tsv` and persistent state.
 
-This fixes the v27 migration defect where the new enabled `M0745` dialog mapping could inherit `enabled=0` from an unchanged, default-disabled v26 relocation fragment. A byte-identical v26 default now has no authority over redesigned v27/v28 mappings.
+This preserves the v28 repair for the migration defect where the new enabled `M0745` dialog mapping could inherit `enabled=0` from an unchanged, default-disabled v26 relocation fragment.
 
 ### Modes
 
@@ -87,7 +87,7 @@ Arguments use compact key/value syntax, for example:
 - `parts=2,3;join=<br>`
 - `start=13;end=83`
 
-`flatten_br_slice` replaces each official UN5 `<br>` with one space and selects a verified character range. v28 uses it to distribute one official loading sentence across NA2's three original fixed slots without embedding manual prose.
+`flatten_br_slice` replaces each official UN5 `<br>` with one space and selects a verified character range. It is used to distribute one official loading sentence across NA2's three original fixed slots without embedding manual prose.
 
 ## Output
 
@@ -104,9 +104,12 @@ The generated translation TSV contains exactly six columns:
 
 `path`, `offset`, `expected_hex`, `replacement_hex`, `source_text`, `replacement_text`
 
+All paths written into generated artifacts are relative. In particular, `build_summary.json` stores the translation TSV as its filename relative to the summary's own run directory, never as a machine-specific absolute path. ISO target paths inside the TSV remain ISO-root-relative.
+
 `build_summary.json` contains only general and aggregate run information:
 
 - builder version, run ID, timezone, and selected targets;
+- relative translation TSV reference;
 - patch and mapping totals;
 - active mapping coverage grouped by mode and section;
 - source and translated-file hashes.
@@ -119,6 +122,15 @@ Known clean-source SHA-1 values are checked by default. `-NoStrictHash` disables
 
 The builder rejects malformed flags, duplicate IDs, invalid offsets, invalid source references, malformed transforms, overlapping active mappings, unexpected structural bytes, text exceeding its declared slot, and invalid named-color conversion. Enabled bad mappings fail the build instead of becoming silent runtime skips.
 
+### Exact slot boundaries
+
+A text mapping's `capacity` must end inside zero padding belonging to that string. The builder now rejects a declared slot if any nonzero byte appears after the original NUL terminator within that capacity. This prevents a text write from zero-filling adjacent pointer tables or other structural data.
+
+This check directly guards against both v28 regressions fixed in v29:
+
+- `M0776` crossed from the `Credits` string into the Collection movie-pointer table at `SLPS + 0x2FFD1C`.
+- `M0792` crossed from the difficulty-reset result string into the Options navigation table at `SLPS + 0x4B2BF0`.
+
 Official Western text is decoded as Windows-1252. NA2 target strings are decoded as CP932 for inspection and markup adaptation. File sizes never change.
 
 ## Markup handling
@@ -130,88 +142,79 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
 
-## Version 28 changes
+## Version 29 changes
 
-### Builder packaging cleanup
+### Options help-line regression repair
 
-- Removed `VERSION.txt`.
-- Removed `MAPPINGS_DEFAULT.sha256`.
-- Moved the canonical version and packaged mapping hash into this README.
-- Added strict README metadata parsing so missing or malformed release metadata fails visibly.
+The existing exact UN5 mappings were already present:
 
-### Enabled-state migration repair
+- `Set the Com strength for when in the Free Battle and Practice.`
+- `Assign button controls.`
 
-- Fixed the `M0745` v26-to-v27 migration defect.
-- Persistent state now merges by stable ID only.
-- Archived mappings are ignored when byte-identical to their own packaged defaults.
-- Legacy semantic migration is attempted only for a table proven to contain changes.
-- New or redesigned mappings therefore retain their v28 packaged flags when the old installation had no actual user edits.
+They appeared blank because `M0792` declared a 72-byte slot at `SLPS + 0x4B2BB0` and zero-filled six bytes of the Options navigation pointer table beginning at `SLPS + 0x4B2BF0`.
 
-### Save/load loading message
+v29 reduces `M0792` to the actual 64-byte string slot. The pointer table remains unchanged, allowing the existing Difficulty Settings and Control Settings help mappings to be reached again.
 
-The Japanese three-line loading warning shown below the save list is replaced using the exact official UN5 sentence:
+### Missing first Theater entry repair
 
-`Loading from memory card (PS2). Please do not remove memory card (PS2), controller, or reset/switch off the console.`
+Two separate v28 defects affected the first movie title:
 
-The official `<br>` is flattened to one space and the sentence is sliced across the three existing NA2 slots. No manual translation, relocation, or slot expansion is used.
+- `M0776` declared a 32-byte `Credits` slot and zero-filled the first movie-title pointer at `SLPS + 0x2FFD1C`.
+- `M0770` wrote `Reunion Time I` at `SLPS + 0x2FFB9E`, two bytes before the address actually stored in the movie-title pointer table.
 
-### Naruto Command Chart
+v29 limits `M0776` to 28 bytes, preserving the pointer table, and moves `M0770` to the real pointer target at `SLPS + 0x2FFBA0` with a 64-byte capacity. The original two bytes at `0x2FFB9E-0x2FFB9F` are left untouched. The official UN5 title remains exactly `Reunion Time I`.
 
-Added exact UN5 mappings for the visible Naruto command page:
+### Remaining Naruto Command Chart attacks
 
-- `Naruto Uzumaki Combo Attack`
-- `Great Ball Rasengan`
-- `Flying Shadow Rising Attack`
-- `Clone Jutsu: Head Split`
-- `Whirlwind Kick`
-- `Demon Wind Charging Transformation`
-- `Charging Rasengan`
-- `Nindo Attack`
-- `Demon Wind Assault`
-- `Jumping Express`
-- `Rising Windmill`
-- `Flying Shadow Attack`
-- `Instant Hand Bullet`
+Added exact UN5 mappings for the two visible Japanese entries missed by v28:
 
-Also resolved the category labels to exact UN5 `Combo` and `Charge`, and mapped the remaining static duplicate `Naruto` labels that use the same verified source string.
+- `特攻蹴撃` -> `Charging Kick` from `UN5_TEXTENG + 0x51F0`, targeting `SLPS + 0x30CAE0`.
+- `分身跳爆打` -> `Clone Jumping Explosion Hit` from `UN5_TEXTENG + 0xA800`, targeting `SLPS + 0x3D9E20`.
 
-### Carried-forward v27 baseline
+The second official UN5 string contains its original trailing space before the NUL terminator; the builder copies it exactly.
 
-v28 retains the accepted v27 behavior: stable mapping IDs, original-slot text only, traceable `[S]` shortening, no active relocation pools or pointer redirects, exact ASCII `ON`/`OFF`, corrected `Yes`, visible `Reunion Time I`, Character Select matchup labels, Music/Options result messages, save-list numbers and `Empty`, and the expanded save/memory-card flow.
+### Relative generated paths
 
-The packaged v28 table contains 854 mappings: 844 enabled and 10 disabled. Active mappings comprise 748 `slot` rows and 22 `shorten` rows. Seventy-four enabled `unresolved` entries remain documented but unapplied; all four structural `bytes` rows remain disabled.
+`build_summary.json` now writes the translation TSV as a relative filename. Console output also reports the generated TSV relative to the builder's work directory instead of printing an absolute host path.
+
+### Carried-forward baseline
+
+v29 retains the accepted v27/v28 behavior: stable mapping IDs, original-slot text only, traceable `[S]` shortening, no active relocation pools or pointer redirects, the `M0745` migration repair, exact ASCII `ON`/`OFF`, corrected `Yes`, Character Select matchup labels, Music/Options result messages, save-list numbers and `Empty`, and the expanded save/memory-card flow.
+
+The packaged v29 table contains 856 mappings: 846 enabled and 10 disabled. Active mappings comprise 750 `slot` rows and 22 `shorten` rows. Seventy-four enabled `unresolved` entries remain documented but unapplied; all four structural `bytes` rows remain disabled.
 
 ## Rolling runtime issue log
 
-This log persists unresolved visual/runtime findings across builder versions. An entry is removed from the open section only after a verified fix, rather than vanishing because a new ZIP was born and developed selective amnesia.
+This log persists unresolved visual/runtime findings across builder versions. Entries implemented in the current builder remain in the verification section until confirmed in-game.
 
-### Resolved in v28
+### Implemented in v29, runtime verification required
 
-- **Save/load list, lower message panel:** Japanese loading text replaced from official UN5 across the original three slots.
-- **Naruto Command Chart:** visible move names, `Combo`, `Charge`, and static `Naruto` labels mapped from exact UN5 sources.
-- **Enabled-state migration:** unchanged v26 defaults can no longer disable redesigned `M0745`.
+- **Options, Difficulty Settings:** bottom blue help line should again show `Set the Com strength for when in the Free Battle and Practice.`
+- **Options, Control Settings:** bottom blue help line should again show `Assign button controls.`
+- **Collection Movie list:** first entry should again show `Reunion Time I` in the correct list position.
+- **Naruto Command Chart:** `特攻蹴撃` should show `Charging Kick`.
+- **Naruto Command Chart:** `分身跳爆打` should show `Clone Jumping Explosion Hit`.
 
 ### Open
 
-- **Options main screen:** the `Options` logo, difficulty/value, controls, screen, audio, restore, confirm, and back labels remain Japanese in the supplied screenshots. Existing translated BTL text does not affect these rendered labels, which indicates a separate graphical/CCS resource path, likely the referenced `option.ccs` inside DATA.CVM. The required NA2 and UN5 resource payloads are outside the current builder source set. Left untouched until those assets are extracted and structurally compared.
-- **Collection Movie screen chrome:** the `Collection` title, `Movie` category heading, and play/back prompts remain Japanese and appear to use graphical/CCS resources outside the current text targets. Left untouched pending verified donor and target assets.
-- **Collection movie-title fit:** exact UN5 titles are already present, but several extend beyond the visible right edge. They remain unshortened. This is a text-fit/renderer candidate and must be solved by reproducing verified UN5 width/scale behavior, not by altering official strings.
+- **Options main-screen graphical labels:** the `Options` logo, difficulty/value, controls, screen, audio, restore, confirm, and back labels remain Japanese in supplied screenshots. They appear to use graphical/CCS resources outside the current text targets and remain untouched pending extracted NA2 and UN5 assets.
+- **Collection Movie screen chrome:** the `Collection` title, `Movie` category heading, and play/back prompts remain Japanese and appear to use graphical/CCS resources outside the current text targets.
+- **Collection movie-title fit:** exact UN5 titles are present, but several extend beyond the visible right edge. They remain unshortened until a requested shortening or verified UN5 width/scale behavior is applied.
 - **Command Chart chrome:** any remaining Japanese heading or back prompt that is graphical rather than string-backed remains outside current scope pending resource extraction.
 - **Dynamic save date/time numerals:** retained as unresolved mapping `M0833`; the digits are generated by executable code and still require a verified renderer/code mapping.
 
-PCSX2 application chrome, toolbar text, pause indicators, and emulator toasts are not game translation issues and are not logged here.
+PCSX2 application chrome, toolbar text, pause indicators, graphical controller prompts, and emulator toasts are not game translation issues and are not logged here.
 
-## v28 test checklist
+## v29 test checklist
 
-1. Build from a clean installed v28 directory and confirm the summary reports builder version 28.
-2. Enabled migration: with an unchanged archived v26 default and no persistent state, verify `M0745` remains enabled.
-3. Existing state: leave `work\translation_builder_state\enabled_state.tsv` in place, build once, and verify `M0745=1` is preserved while new v28 IDs adopt packaged defaults.
-4. Save list: slots show `1`, `2`, `3`, and `Empty`; the lower loading warning is fully English and adjacent data is intact.
-5. Naruto Command Chart: verify the character label, `Combo`, `Charge`, and all thirteen visible move names.
-6. Options: confirm no regression or blank labels. Remaining Japanese graphical labels are expected and logged above.
-7. Collection: confirm all movie titles remain exact UN5 text; record clipping only as renderer fit, not as a translation shortening request.
-8. Regression: repeatedly enter and leave save/load, Command Chart, Options, and Collection screens; verify no blank text, overlap corruption, white screen, or crash.
-9. Generated TSV validation: six columns, fixed-size patches only, and successful composition with the current Font package.
+1. Build from a clean installed v29 directory and confirm the summary reports builder version 29.
+2. Confirm `build_summary.json` contains only a relative TSV filename and no absolute host paths.
+3. Enabled migration: preserve external state and verify `M0745=1`; new IDs `M0855` and `M0856` should take their packaged enabled defaults.
+4. Options: verify both Difficulty Settings and Control Settings bottom help lines are visible and exact.
+5. Collection: verify the first movie row is `Reunion Time I`, all later entries retain their positions, and `Credits` remains visible.
+6. Naruto Command Chart: verify `Charging Kick` and `Clone Jumping Explosion Hit` replace the two remaining Japanese attacks.
+7. Save/load, Options, Collection, and Command Chart: enter and leave repeatedly and verify no blank text, pointer-table corruption, overlap, white screen, or crash.
+8. Generated TSV validation: six columns, fixed-size patches only, and successful composition with the current Font package.
 
 ## Integration expectations
 

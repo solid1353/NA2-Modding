@@ -4,6 +4,7 @@
 
 ### Translation
 - Test translated strings extensively and deal with remainders.
+- Fix flickering bug on Damage line in Practice mode.
 - Deal with unresolved (mappings.tsv and ChatGPT's history).
 - Replace UI textures (consider already upscaled or upscaling them myself).
 

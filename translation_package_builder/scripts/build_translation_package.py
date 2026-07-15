@@ -16,7 +16,6 @@ from typing import Dict, Optional, Sequence
 
 SECTOR = 2048
 UTC_PLUS_3 = dt.timezone(dt.timedelta(hours=3))
-BUILDER_VERSION = 27
 
 TARGET_SPECS = {
     "BTL": ("PRG/BTL.BIN", ["PRG/BTL.BIN", "BTL.BIN"]),
@@ -46,7 +45,7 @@ VALID_MODES = {"slot", "shorten", "bytes", "unresolved"}
 VALID_TRANSFORMS = {
     "", "empty", "format_arg1", "format_args", "format_prefix_arg2",
     "format_suffix_arg2", "between_placeholders", "after_placeholder2",
-    "split_br", "join_br_parts", "append_space",
+    "split_br", "join_br_parts", "append_space", "flatten_br_slice",
 }
 NAMED_COLOR_TAG_EQUIVALENTS = {
     "<WHITE>": ("<WHITE>", "<colorFFFFFF>"),
@@ -328,16 +327,69 @@ def read_any_mapping_enabled(path: Path) -> tuple[dict[str, str], dict[str, str]
     return by_id, by_key
 
 
-def persist_enabled_state(mapping_path: Path, data_root: Path) -> list[dict[str, str]]:
-    """Preserve enabled flags across builder replacement and ordinary builds.
+def read_packaged_mappings_hash(builder_root: Path) -> Optional[str]:
+    """Read the packaged mappings hash from README metadata or a legacy sidecar."""
+    readme_path = builder_root / "README.md"
+    if readme_path.is_file():
+        try:
+            text = readme_path.read_text(encoding="utf-8")
+        except OSError:
+            text = ""
+        match = re.search(
+            r"(?mi)^- Packaged `mappings\.tsv` SHA-256:\s*`([0-9a-f]{64})`\s*$",
+            text,
+        )
+        if match:
+            return match.group(1).lower()
 
-    The packaged mappings hash distinguishes untouched defaults from an edited working
-    table. An edited current table always wins. Otherwise prior state or the newest
-    trashed builder is merged by stable id, with semantic fallback for pre-v27 TSVs.
+    legacy_path = builder_root / "MAPPINGS_DEFAULT.sha256"
+    if legacy_path.is_file():
+        try:
+            value = legacy_path.read_text(encoding="ascii").strip().lower()
+        except OSError:
+            return None
+        if re.fullmatch(r"[0-9a-f]{64}", value):
+            return value
+    return None
+
+
+def read_builder_metadata(data_root: Path) -> tuple[int, str]:
+    """Read the canonical builder version and packaged mappings hash from README."""
+    readme_path = data_root / "README.md"
+    try:
+        text = readme_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ValueError(f"Could not read builder metadata from {readme_path}") from exc
+
+    version_match = re.search(r"(?mi)^- Version:\s*`([0-9]+)`\s*$", text)
+    hash_match = re.search(
+        r"(?mi)^- Packaged `mappings\.tsv` SHA-256:\s*`([0-9a-f]{64})`\s*$",
+        text,
+    )
+    if version_match is None or hash_match is None:
+        raise ValueError(
+            "README.md must contain Builder metadata entries for Version and "
+            "Packaged `mappings.tsv` SHA-256"
+        )
+    version = int(version_match.group(1))
+    if version <= 0:
+        raise ValueError("README.md builder Version must be positive")
+    return version, hash_match.group(1).lower()
+
+
+def persist_enabled_state(
+    mapping_path: Path,
+    data_root: Path,
+    packaged_hash: str,
+) -> list[dict[str, str]]:
+    """Preserve enabled flags while distinguishing user edits from old defaults.
+
+    A user-edited current table wins. An untouched packaged table first inherits
+    stable-ID state. Trash migration is attempted only when the archived table can
+    be proven different from its own packaged default; unchanged old defaults are
+    skipped, so redesigned mappings keep their new packaged flags.
     """
     rows = read_rows(mapping_path)
-    default_hash_path = data_root / "MAPPINGS_DEFAULT.sha256"
-    default_hash = default_hash_path.read_text(encoding="ascii").strip().lower()
     current_hash = sha256(mapping_path.read_bytes()).lower()
     project_root = data_root.resolve().parent
     state_root = project_root / "work" / "translation_builder_state"
@@ -345,27 +397,41 @@ def persist_enabled_state(mapping_path: Path, data_root: Path) -> list[dict[str,
 
     prior_by_id: dict[str, str] = {}
     prior_by_key: dict[str, str] = {}
-    if current_hash == default_hash:
-        allow_prior_enable = False
+    allow_prior_enable = False
+
+    if current_hash == packaged_hash:
         if state_path.is_file():
-            prior_by_id, prior_by_key = read_any_mapping_enabled(state_path)
+            # Persistent state uses stable IDs only. Semantic matching here could let
+            # a retired mapping mutate a redesigned row that happens to look similar.
+            prior_by_id, _ = read_any_mapping_enabled(state_path)
             allow_prior_enable = True
         else:
             trash_root = project_root / "trash"
             candidates = sorted(
                 trash_root.glob("translation_package_builder_removed_*/mappings.tsv"),
-                key=lambda p: p.stat().st_mtime,
+                key=lambda candidate: candidate.stat().st_mtime,
                 reverse=True,
             ) if trash_root.is_dir() else []
-            if candidates:
-                prior_by_id, prior_by_key = read_any_mapping_enabled(candidates[0])
-                # Pre-v27 tables have no stable ids. Migrate explicit user disables only;
-                # old enabled defaults must not revive rows v27 deliberately retired.
+
+            for candidate in candidates:
+                old_packaged_hash = read_packaged_mappings_hash(candidate.parent)
+                if old_packaged_hash is None:
+                    # Without the old default hash, packaged flags and user edits
+                    # cannot be distinguished safely.
+                    continue
+                candidate_hash = sha256(candidate.read_bytes()).lower()
+                if candidate_hash == old_packaged_hash:
+                    # Byte-identical old defaults contain no user flag edits.
+                    continue
+                prior_by_id, prior_by_key = read_any_mapping_enabled(candidate)
                 allow_prior_enable = bool(prior_by_id)
+                if prior_by_id or prior_by_key:
+                    break
+
         changed = False
         for row in rows:
             value = prior_by_id.get(row["id"])
-            if value is None:
+            if value is None and prior_by_key:
                 for key in row_semantic_keys(row):
                     if key in prior_by_key:
                         value = prior_by_key[key]
@@ -378,10 +444,7 @@ def persist_enabled_state(mapping_path: Path, data_root: Path) -> list[dict[str,
             write_rows_atomic(mapping_path, rows)
 
     state_root.mkdir(parents=True, exist_ok=True)
-    state_rows = [{key: "" for key in MAPPING_FIELDS} for _ in rows]
-    for dest, source in zip(state_rows, rows):
-        for key in MAPPING_FIELDS:
-            dest[key] = source.get(key, "")
+    state_rows = [{key: source.get(key, "") for key in MAPPING_FIELDS} for source in rows]
     write_rows_atomic(state_path, state_rows)
     return rows
 
@@ -454,6 +517,15 @@ def resolve_source_text(row: dict[str, object], sources: dict[str, bytes], label
         return arguments.get("join", "<br>").join(pieces[value] for value in values)
     if transform == "append_space":
         return template + " "
+    if transform == "flatten_br_slice":
+        flattened = template.replace("<br>", " ")
+        start = parse_int(arguments.get("start", ""), label)
+        end = parse_int(arguments.get("end", ""), label)
+        if start > end or end > len(flattened):
+            raise ValueError(
+                f"{label}: slice {start}:{end} is outside flattened text length {len(flattened)}"
+            )
+        return flattened[start:end]
     raise ValueError(f"{label}: unsupported transform {transform!r}")
 
 
@@ -694,8 +766,9 @@ def main() -> int:
             if actual is not None and actual != expected:
                 raise ValueError(f"Unexpected {key} SHA-1: {actual}; expected {expected}")
 
+    builder_version, packaged_hash = read_builder_metadata(args.data_root)
     mapping_path = args.data_root / "mappings.tsv"
-    rows_raw = persist_enabled_state(mapping_path, args.data_root)
+    rows_raw = persist_enabled_state(mapping_path, args.data_root, packaged_hash)
     mappings = parse_mappings(rows_raw)
     output_targets = {target: bytearray(clean_targets[target]) for target in selected_list}
 
@@ -729,7 +802,7 @@ def main() -> int:
     active_sections = Counter(text_sections)
     active_sections.update(byte_sections)
     summary = {
-        "builder_version": BUILDER_VERSION,
+        "builder_version": builder_version,
         "mode": "official-source post-composition TSV",
         "run_id": run_id,
         "timezone": "UTC+03:00",

@@ -39,12 +39,56 @@ $na2Root = $PSScriptRoot
 $logDirectory = Join-Path $na2Root 'logs\na2'
 $latestLogPath = Join-Path $logDirectory 'latest.log'
 $rollingLogPath = Join-Path $logDirectory 'rolling.log'
+$maxRollingLogSections = 500
 $runStarted = Get-Date
 $transcriptStarted = $false
 
 function Format-Na2LogTimestamp {
     param([datetime]$Value)
     $Value.ToString("dddd, d MMMM yyyy 'at' HH:mm:ss.fff zzz", [Globalization.CultureInfo]::InvariantCulture)
+}
+
+function Limit-Na2RollingLog {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateRange(1, [int]::MaxValue)]
+        [int]$MaxSections
+    )
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        return
+    }
+
+    $fullPath = [IO.Path]::GetFullPath($Path)
+    $content = [IO.File]::ReadAllText($fullPath)
+    $sectionStarts = [regex]::Matches(
+        $content,
+        '(?m)^={80}\r?\nNA2 run started:'
+    )
+    if ($sectionStarts.Count -le $MaxSections) {
+        return
+    }
+
+    $firstRetained = $sectionStarts[$sectionStarts.Count - $MaxSections].Index
+    $trimmed = $content.Substring($firstRetained)
+    $temporary = "$fullPath.$PID.tmp"
+    $backup = "$fullPath.$PID.bak"
+    $utf8 = [Text.UTF8Encoding]::new($false)
+    try {
+        [IO.File]::WriteAllText($temporary, $trimmed, $utf8)
+        [IO.File]::Replace($temporary, $fullPath, $backup)
+    }
+    finally {
+        if (Test-Path -LiteralPath $temporary) {
+            Remove-Item -Force -LiteralPath $temporary
+        }
+        if (Test-Path -LiteralPath $backup) {
+            Remove-Item -Force -LiteralPath $backup
+        }
+    }
 }
 
 try {
@@ -269,6 +313,7 @@ finally {
             $utf8 = [Text.UTF8Encoding]::new($false)
             [IO.File]::WriteAllText($latestLogPath, $section, $utf8)
             [IO.File]::AppendAllText($rollingLogPath, $section, $utf8)
+            Limit-Na2RollingLog -Path $rollingLogPath -MaxSections $maxRollingLogSections
         }
         catch {
             Write-Warning "Could not finalize NA2 logs: $_"

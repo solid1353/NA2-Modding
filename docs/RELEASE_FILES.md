@@ -1,6 +1,6 @@
 # Release Files
 
-Default ISO source: build/*.iso, usually build/Current.iso unless specified.
+ISO source: select the intended `build/*.iso` explicitly when creating a release.
 Release root: `releases/`.
 
 Files currently included in a release:

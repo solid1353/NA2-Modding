@@ -21,7 +21,6 @@
 - Later integrate texture, sound, data-pack, and translation modules under the same orchestrator.
 
 ### Modular patching
-- Retire redundant active builder/menu/history ZIPs now that the pinned profile has exact full-ISO parity.
 - Add a native texture/data-pack module for `GF4.BIN`, then retire the remaining font m01 compatibility ZIP.
 - Add sound and structured data-pack modules using the same profile contract.
 - Explore other necessities.

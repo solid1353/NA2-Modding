@@ -1,0 +1,6 @@
+field	value
+source_archive	NA2_menu_input_mappings__20260716__review_only.zip
+source_archive_sha256	C08114863BF635A86273766718F7E7F05D639FBE452203CECE3567AB14FBADB1
+import_result	56 mappings, 167 anchors, and 106 candidate edits normalized into 55 atomic patches.
+byte_validation	All 106 NA2 expected words and all 106 UN5 source words matched the clean reference files.
+retention	The original import archive is retained in Git history; this normalized evidence record replaces the active package dependency.

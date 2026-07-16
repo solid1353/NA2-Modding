@@ -180,9 +180,6 @@ if ($Help) {
         '  na2 ub    Retired; import new mappings into the integrated module instead'
         '  na2 tr    Export a standalone translation TSV for review/compatibility'
         '  na2 act   Actualize the PNACH symlink for the build ISO CRC'
-        '  na2 f     Apply Font package'
-        '  na2 t     Apply Translation TSV'
-        '  na2 ft    Apply Font package, then Translation TSV'
         ''
     ) | Write-Output
 }
@@ -216,7 +213,7 @@ if ($command -eq 'act') {
     return
 }
 
-if ($command -and $command -notmatch '^(f|t|ft|tf)$') {
+if ($command) {
     throw "Unknown NA2 command: $Mode"
 }
 
@@ -247,24 +244,20 @@ if ($fullWorkflow) {
     $applyArgs.BuildOnly = $true
 }
 elseif (-not $RunOnly -and -not $applyArgs.ContainsKey('Profile')) {
-    if (-not $applyArgs.ContainsKey('PackageDirectory')) {
-        $applyArgs.PackageDirectory = Join-Path $na2Root 'packages'
+    if (-not $Packages) {
+        $applyArgs.Profile = 'na2_patcher\profiles\current'
+        $applyArgs.ProfileLogDirectory = 'logs\na2_patcher\current_' + (Get-Date -Format 'yyyyMMdd_HHmmss_fff')
     }
-    if ($command) {
-        $packageNames = @{ f = 'Font'; t = 'Translation' }
-        $applyArgs.Packages = $command.ToCharArray() | ForEach-Object {
-            $packageNames[[string]$_]
+    else {
+        if (-not $applyArgs.ContainsKey('PackageDirectory')) {
+            $applyArgs.PackageDirectory = Join-Path $na2Root 'packages'
         }
-    }
-    elseif (-not $Packages) {
-        $applyArgs.Packages = @('Font', 'Translation')
-    }
-
-    $translationSelected = @($applyArgs.Packages | Where-Object { $_ -ieq 'Translation' }).Count -gt 0
-    if ($translationSelected -and -not $applyArgs.ContainsKey('TranslationTsv')) {
-        $latestBuilderTsv = Get-LatestBuilderTranslationTsv
-        if ($latestBuilderTsv) {
-            $applyArgs.TranslationTsv = $latestBuilderTsv
+        $translationSelected = @($applyArgs.Packages | Where-Object { $_ -ieq 'Translation' }).Count -gt 0
+        if ($translationSelected -and -not $applyArgs.ContainsKey('TranslationTsv')) {
+            $latestBuilderTsv = Get-LatestBuilderTranslationTsv
+            if ($latestBuilderTsv) {
+                $applyArgs.TranslationTsv = $latestBuilderTsv
+            }
         }
     }
 }

@@ -9,24 +9,19 @@
 - Replace UI textures (consider already upscaled or upscaling them myself).
 
 ### Swap buttons in menus.
-- Collect GPT's TSVs with hypotheses.
-- Decide on a format.
-- Teach Codex to apply it.
-- Test.
+- `ELF-M001` and `ELF-M002` each produced no changes when tested alone across the title/load/save matrix. Keep both disabled but testable; the combined family result may require multiple handlers in sequence.
+- Runtime-test `ELF-M003` independently. If it also has no effect alone, isolate handler combinations rather than discarding the statically matched patches.
+- Identify loading behavior separately if it remains unchanged after the save/load-family test.
+- Keep Master Mode outside the current button-swap scope.
+- Review and approve additional named handler groups individually; do not reapply the broad ETC package.
 
 ### Raw binary patcher
-- Define repository-owned TSV schemas for mappings, candidates, patches, and edits.
-- Convert the existing proven font changes into named binary patches.
-- Build a raw binary patcher with hash, expected-byte, size, conflict, atomicity, and logging checks.
-- Verify that the patcher reproduces the current font outputs byte-for-byte.
-- Update the main build scripts to call the patcher while preserving their existing entry points.
-- Review GPT-produced UN5-to-NA2 mapping TSVs and approve candidates before application.
+- Keep existing font ZIP composition until a texture/data asset module handles `GF4.BIN` and related resources.
+- Convert newly approved GPT mappings into named patch groups instead of replacement binaries.
 - Later integrate texture, sound, data-pack, and translation modules under the same orchestrator.
 
 ### Modular patching
-- Create the base.
-- Integrate raw binary patcher.
-- Integrate tranlator.
+- Integrate the translator as a formal module instead of the compositor's final special-case stage.
 - Explore other necessities.
 
 ## Backlog

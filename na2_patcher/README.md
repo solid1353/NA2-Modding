@@ -31,7 +31,7 @@ The current profile composes:
 4. immutable translation milestone m03/v33 through the integrated `translation` module.
 
 The disabled `Testing` section remains a separate raw package. The empty
-`Rendering` patch-set scaffold remains outside the active profile until populated.
+`Rendering` patch set remains listed as a disabled module until populated.
 
 Migrated PNACH structure uses the existing format directly: one patch set per
 section, one patch row per cheat, and one or more edit rows per subcheat. The

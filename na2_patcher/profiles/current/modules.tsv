@@ -1,4 +1,4 @@
 module_id	order	enabled	module	input	expected_sha256	selection	reason
 font_m01	10	1	raw_binary	na2_patcher/modules/raw_binary/patch_sets/font_m01	01535960781C0FD04C1B522AA5D4832ABD9B3E2049B9E04C5D0E41930FED487A	font_m01	Declarative size-preserving reconstruction of the accepted clean-coverage font milestone.
-menu_input	20	1	raw_binary	na2_patcher/modules/raw_binary/patch_sets/menu_input_20260716	D26E2BC386E23C672964D5C809319BE2FF310E2E298A732BBEE9F28693845E2B	ELF-M008	Runtime-proven generic menu accept/cancel decoder.
+menu_input	20	0	raw_binary	na2_patcher/modules/raw_binary/patch_sets/menu_input_20260716	D26E2BC386E23C672964D5C809319BE2FF310E2E298A732BBEE9F28693845E2B	ELF-M008	Runtime-proven generic menu accept/cancel decoder.
 translation_m03_v33	30	1	translation	na2_patcher/milestones/translation_m03_v33/mappings.tsv	F7CF3BE222DA4F81B6BEBA0299FDD69DC514D3C816CB0916DD4C649B7AEF800F	BTL,ETC,SLPS	Immutable translation milestone m03 snapshot using canonical v33 mappings.

@@ -177,15 +177,10 @@ if ($Help) {
     @(
         'NA2 shortcuts:'
         '  na2       Build the pinned modular profile, actualize PNACH, then run'
-        '  na2 ub    Retired; import new mappings into the integrated module instead'
         '  na2 tr    Export a standalone translation TSV for review/compatibility'
         '  na2 act   Actualize the PNACH symlink for the build ISO CRC'
         ''
     ) | Write-Output
-}
-
-if ($command -eq 'ub') {
-    throw 'na2 ub is retired. Import new mappings into na2_patcher\modules\translation, validate them, then create a new immutable profile snapshot.'
 }
 
 if ($command -eq 'tr') {

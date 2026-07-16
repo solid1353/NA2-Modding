@@ -120,7 +120,6 @@ Use `scripts/split_cvm_rofs.ps1` to split the encrypted CVM safely without runni
 - Bare `na2` performs the standard workflow: build the pinned current profile with the integrated translation module, actualize the PNACH symlink, then launch PCSX2.
 - `scripts/apply_latest_na2.ps1` / `scripts/apply_latest_na2.py`: copy the clean ISO, execute a hash-pinned ordered profile, verify the complete output, actualize PNACH, and optionally launch PCSX2. Legacy explicit ZIP/TSV arguments remain temporarily available for rollback.
 - `na2 act` actualizes the PNACH symlink for the ELF CRC of the ISO in `build/`; it directly deletes obsolete CRC-named PNACH symlinks, preserves the canonical PNACH and real files.
-- `na2 ub` is retired. New GPT translation work is imported as canonical mapping data, validated through the integrated engine, and frozen into a new immutable snapshot/profile after parity checks.
 - Translation TSV schema: `path`, `offset`, `expected_hex`, `replacement_hex`, `source_text`, `replacement_text`; translation owns no replacement binaries.
 - `check_translation_lengths.ps1`: checks CP932 byte lengths for translation tables.
 - `extract_afs.ps1`: extracts AFS archives for inspection when needed.

@@ -10,6 +10,7 @@
 /ghidra/
 /disassembly/
 /releases
+/screenshots
 __pycache__/
 
 # Windows/editor noise

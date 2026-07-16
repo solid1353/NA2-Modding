@@ -9,8 +9,8 @@
 - Replace UI textures (consider already upscaled or upscaling them myself).
 
 ### Swap buttons in menus.
-- `ELF-M001` and `ELF-M002` each produced no changes when tested alone across the title/load/save matrix. Keep both disabled but testable; the combined family result may require multiple handlers in sequence.
-- Runtime-test `ELF-M003` independently. If it also has no effect alone, isolate handler combinations rather than discarding the statically matched patches.
+- `ELF-M001`, `ELF-M002`, and `ELF-M003` each produced no changes when tested alone across the title/load/save matrix. Keep all three disabled but testable; the combined family result is interaction-dependent.
+- After the translation/orchestrator migration, isolate pairwise save/load handler combinations instead of discarding the statically matched patches.
 - Identify loading behavior separately if it remains unchanged after the save/load-family test.
 - Keep Master Mode outside the current button-swap scope.
 - Review and approve additional named handler groups individually; do not reapply the broad ETC package.

@@ -18,7 +18,8 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Do not create generated files, temporary files, logs, probes, manifests, or metadata under `source/`; preserve the extracted game/archive structure exactly.
 - Keep Windows read-only attributes applied to files/folders under `source/`.
 - Before changing any original-derived file, copy it outside `source/` and modify only the copy.
-- Keep active ISO outputs under `build/`; do not store PNACH files, loose replacements, logs, or other working files there.
+- Keep only the active working ISO under `build/`, normally `build/Current.iso`; do not store PNACH files, loose replacements, logs, or other working files there.
+- Temporary, parity-check, and hypothesis-test ISOs must be permanently deleted as soon as their result is recorded. Never leave completed temporary ISOs accumulating under `build/`.
 - Do not recreate a top-level `packages/` staging/history directory. Normal builds consume hash-pinned profile modules. Keep temporary imported archives under a task-specific `work/temp/` folder, normalize useful data into a module, then retire the archive to `trash/`.
 - Keep frozen reusable package milestones under `milestones/packages/`; do not mix ordinary test packages into it. Every milestone uses `mNN`: `NA2_MILESTONE__<TYPE>__mNN__<YYYYMMDD_HHMMSS>__<MEANING>.<ext>`. When the artifact also has a distinct source/builder version, insert `vNN__` after the timestamp; never use `vNN` as the milestone identifier.
 - New translation milestones freeze immutable canonical mapping data plus a hash-pinned profile; the integrated translation engine is versioned with the repository. Translation m03/v33 is the sole retained legacy builder-archive fallback. Generated translation TSVs are compatibility run outputs, not milestones.

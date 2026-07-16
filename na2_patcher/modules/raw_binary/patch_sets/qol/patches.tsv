@@ -1,0 +1,4 @@
+patch_id	default_enabled	status	confidence	name	description	source_mapping_id	runtime_classification	review_notes
+ELF-Q001	1	runtime_proven	verified	Intro skips	Skip the CC2 intro and opening.	pnach_intro_skips	Runtime-proven in PNACH and confirmed after static migration.	Exact file-backed conversion.
+ELF-Q002	1	runtime_proven	verified	Practice QoL	Set voice, support, and command display off by default.	pnach_practice_qol	Runtime-proven in PNACH and confirmed after static migration.	Exact file-backed conversion.
+ELF-Q003	1	runtime_proven	verified	Simple display off	Set simple display off by default.	pnach_simple_display	Runtime-proven in PNACH and confirmed after static migration.	Exact file-backed conversion.

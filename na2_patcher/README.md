@@ -26,9 +26,17 @@ Adjacent documentation and authoring tools do not affect the profile pin. Transl
 The current profile composes:
 
 1. exact font m01 `GF4.BIN` and ELF reconstruction through `raw_binary`;
-2. immutable translation milestone m03/v33 through the integrated `translation` module.
+2. the runtime-proven menu-input handler set through `raw_binary`;
+3. separate `QoL` and `Battle logic` raw-binary sections using their preserved default states;
+4. immutable translation milestone m03/v33 through the integrated `translation` module.
 
-`ELF-M008` remains listed in the current profile but is intentionally disabled while the wider menu-input port is WIP. Its runtime-proven status is preserved in the raw-binary patch set; profile membership does not imply activation.
+The disabled `Testing` section remains a separate raw package. The confirmed but
+disabled runtime-only `Rendering` section is rendered from
+`na2_patcher/modules/pnach/sections/rendering.pnach` before PNACH actualization.
+
+Migrated PNACH structure uses the existing format directly: one patch set per
+section, one patch row per cheat, and one or more edit rows per subcheat. The
+patch's `default_enabled` value preserves whether that cheat was enabled.
 
 Build it with:
 

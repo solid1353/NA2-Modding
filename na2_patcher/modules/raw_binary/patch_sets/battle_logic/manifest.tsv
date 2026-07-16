@@ -1,0 +1,2 @@
+schema_version	package_id	package_version	game	description	evidence_path
+1	battle_logic	1	NA2	File-backed migration of the canonical PNACH Battle logic section.	na2_patcher/modules/raw_binary/patch_sets/battle_logic/README.md

@@ -143,6 +143,12 @@ if ([string]::IsNullOrWhiteSpace($IsoPath)) {
 $IsoPath = (Resolve-Path -LiteralPath $IsoPath).Path
 if ([string]::IsNullOrWhiteSpace($CanonicalPnach)) {
     $CanonicalPnach = Join-Path $root "cheats\SLPS-25837_C0659AD1.pnach"
+    & python -B (Join-Path $root "na2_patcher\modules\pnach\render.py") `
+        --workspace $root `
+        --output "cheats/SLPS-25837_C0659AD1.pnach"
+    if ($LASTEXITCODE -ne 0) {
+        throw "PNACH section rendering failed (exit $LASTEXITCODE)."
+    }
 }
 $CanonicalPnach = (Resolve-Path -LiteralPath $CanonicalPnach).Path
 $cheatsDir = Split-Path -Parent $CanonicalPnach

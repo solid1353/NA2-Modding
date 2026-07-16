@@ -1,0 +1,7 @@
+edit_id	patch_id	order	destination_target_id	destination_offset	operation	length	expected_hex	expected_sha256	replacement_hex	source_target_id	source_offset	source_expected_hex	source_expected_sha256	blob_path	blob_offset	blob_sha256	fill_hex	reason
+ELF-Q001-01	ELF-Q001	10	slps_258_37	0xDE868	replace	4	DCCB83A7		DCCB84A7									Convert EE write 0x201DE768 = 0xA784CBDC.
+ELF-Q001-02	ELF-Q001	20	slps_258_37	0xDE8C4	replace	4	02000424		07000010									Convert EE write 0x201DE7C4 = 0x10000007.
+ELF-Q002-01	ELF-Q002	10	slps_258_37	0xE7C30	replace	4	2530C700		00000000									Convert voice-off default at EE address 0x201E7B30.
+ELF-Q002-02	ELF-Q002	20	slps_258_37	0xE7C7C	replace	4	0B0085A0		00000000									Convert support-off default at EE address 0x201E7B7C.
+ELF-Q002-03	ELF-Q002	30	slps_258_37	0xE7B9C	replace	4	00008790		00000000									Convert command-display-off default at EE address 0x201E7A9C.
+ELF-Q003-01	ELF-Q003	10	slps_258_37	0xE7BAC	replace	4	25186600		00000000									Convert simple-display-off default at EE address 0x201E7AAC.

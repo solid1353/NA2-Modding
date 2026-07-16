@@ -23,14 +23,14 @@ Run commands from the repository root.
 
 ```powershell
 python -m na2_patcher.modules.raw_binary.engine validate `
-  --package na2_patcher/modules/raw_binary/patch_sets/menu_input_20260716 `
+  --package na2_patcher/modules/raw_binary/patch_sets/menu_input `
   --root na2=source/NA2 `
   --root un5=source/UN5
 ```
 
 ```powershell
 python -m na2_patcher.modules.raw_binary.engine plan `
-  --package na2_patcher/modules/raw_binary/patch_sets/menu_input_20260716 `
+  --package na2_patcher/modules/raw_binary/patch_sets/menu_input `
   --root na2=source/NA2 `
   --root un5=source/UN5 `
   --patch ELF-M008

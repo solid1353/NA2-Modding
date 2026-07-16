@@ -16,7 +16,7 @@ The project combines four related areas:
 
 - English translation through generated, validated patch tables.
 - GF4/GF4C font-resource and renderer reverse engineering.
-- Gameplay and default-setting changes through PCSX2 PNACH patches.
+- Gameplay and default-setting changes through named raw-binary modules, with PNACH retained for emulator/runtime-only behavior and temporary hypotheses.
 - Scripted package composition, ISO verification, CRC actualization, and frozen
   milestone releases.
 

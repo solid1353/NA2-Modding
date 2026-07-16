@@ -9,6 +9,7 @@ import re
 import shutil
 import sys
 import zipfile
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -56,13 +57,41 @@ def latest_file(directory: Path, pattern: str) -> Path:
     return max(matches, key=filename_release_key)
 
 
-def initialize(source_iso: Path, output_iso: Path) -> None:
-    temporary = output_iso.with_suffix(output_iso.suffix + ".initializing")
-    if temporary.exists():
-        temporary.unlink()
-    print("Initializing output with one full source ISO copy...")
-    shutil.copyfile(source_iso, temporary)
-    os.replace(temporary, output_iso)
+def building_iso_path(output_iso: Path) -> Path:
+    return output_iso.with_name(output_iso.name + ".building")
+
+
+@contextmanager
+def staged_output_iso(source_iso: Path, output_iso: Path):
+    """Build beside the final ISO and promote it only after full success."""
+    output_iso.parent.mkdir(parents=True, exist_ok=True)
+    building_iso = building_iso_path(output_iso)
+    if source_iso == building_iso:
+        raise ValueError("Source ISO cannot use the reserved .building output path")
+    if building_iso.exists() or building_iso.is_symlink():
+        if not building_iso.is_file() and not building_iso.is_symlink():
+            raise RuntimeError(f"Temporary build path is not a file: {building_iso}")
+        building_iso.unlink()
+
+    print(f"Initializing temporary output: {building_iso.name}")
+    try:
+        shutil.copyfile(source_iso, building_iso)
+        yield building_iso
+        os.replace(building_iso, output_iso)
+    except BaseException:
+        if building_iso.exists() or building_iso.is_symlink():
+            building_iso.unlink()
+        raise
+
+
+def payload_size_changes(
+    source: Iso9660, payloads: dict[str, bytearray]
+) -> list[tuple[str, int, int]]:
+    return [
+        (path, source.by_path[path].size, len(data))
+        for path, data in payloads.items()
+        if len(data) != source.by_path[path].size
+    ]
 
 
 def directory_record_offset(iso: Iso9660, path: str) -> int:
@@ -557,6 +586,11 @@ def main() -> int:
     parser.add_argument("--raw-patch", action="append", default=[])
     parser.add_argument("--raw-defaults", action="store_true")
     parser.add_argument("--raw-log-directory", type=Path)
+    parser.add_argument(
+        "--allow-size-changes",
+        action="store_true",
+        help="Allow legacy payloads to relocate ISO files whose sizes change.",
+    )
     args = parser.parse_args()
 
     workspace = args.workspace.resolve()
@@ -701,70 +735,86 @@ def main() -> int:
     if not payloads:
         raise RuntimeError("No package files or translation patches were selected")
 
-    output_iso.parent.mkdir(parents=True, exist_ok=True)
-    initialize(source_iso, output_iso)
-    current = Iso9660(output_iso)
-    with output_iso.open("r+b") as output:
-        for path, data in payloads.items():
-            record = current.by_path[path]
-            payload = bytes(data)
-            if len(payload) == record.size:
-                output.seek(record.byte_offset)
+    size_changes = payload_size_changes(source, payloads)
+    if size_changes and not args.allow_size_changes:
+        details = ", ".join(
+            f"{path} ({old_size} -> {new_size})"
+            for path, old_size, new_size in size_changes
+        )
+        raise RuntimeError(
+            "Selected payloads change ISO file sizes; pass --allow-size-changes "
+            f"only for an explicitly approved relocation build: {details}"
+        )
+
+    with staged_output_iso(source_iso, output_iso) as working_iso:
+        current = Iso9660(working_iso)
+        with working_iso.open("r+b") as output:
+            for path, data in payloads.items():
+                record = current.by_path[path]
+                payload = bytes(data)
+                if len(payload) == record.size:
+                    output.seek(record.byte_offset)
+                    output.write(payload)
+                    continue
+
+                output.seek(0, os.SEEK_END)
+                extent = (output.tell() + SECTOR - 1) // SECTOR
+                output.seek(extent * SECTOR)
                 output.write(payload)
-                continue
+                padding = (-len(payload)) % SECTOR
+                if padding:
+                    output.write(b"\x00" * padding)
+
+                record_offset = directory_record_offset(current, path)
+                write_both_endian_32(output, record_offset + 2, extent)
+                write_both_endian_32(output, record_offset + 10, len(payload))
 
             output.seek(0, os.SEEK_END)
-            extent = (output.tell() + SECTOR - 1) // SECTOR
-            output.seek(extent * SECTOR)
-            output.write(payload)
-            padding = (-len(payload)) % SECTOR
-            if padding:
-                output.write(b"\x00" * padding)
+            sectors = (output.tell() + SECTOR - 1) // SECTOR
+            output.truncate(sectors * SECTOR)
+            update_volume_space_size(output, sectors)
+            output.flush()
+            os.fsync(output.fileno())
 
-            record_offset = directory_record_offset(current, path)
-            write_both_endian_32(output, record_offset + 2, extent)
-            write_both_endian_32(output, record_offset + 10, len(payload))
+        result = Iso9660(working_iso)
+        source_tree = {(record.path, record.is_dir) for record in source.records}
+        result_tree = {(record.path, record.is_dir) for record in result.records}
+        if result_tree != source_tree:
+            raise RuntimeError("Final ISO file tree differs from the source tree")
 
-        output.seek(0, os.SEEK_END)
-        sectors = (output.tell() + SECTOR - 1) // SECTOR
-        output.truncate(sectors * SECTOR)
-        update_volume_space_size(output, sectors)
-        output.flush()
-        os.fsync(output.fileno())
+        for source_record in source.records:
+            if source_record.is_dir:
+                continue
+            result_record = result.by_path.get(source_record.path)
+            if result_record is None or result_record.is_dir:
+                raise RuntimeError(f"Final ISO is missing source file: {source_record.path}")
+            expected = (
+                bytes(payloads[source_record.path])
+                if source_record.path in payloads
+                else source.read_file(source_record)
+            )
+            if result.read_file(result_record) != expected:
+                raise RuntimeError(
+                    f"Final ISO file verification failed: {source_record.path}"
+                )
 
-    result = Iso9660(output_iso)
-    source_tree = {(record.path, record.is_dir) for record in source.records}
-    result_tree = {(record.path, record.is_dir) for record in result.records}
-    if result_tree != source_tree:
-        raise RuntimeError("Final ISO file tree differs from the source tree")
-
-    for source_record in source.records:
-        if source_record.is_dir:
-            continue
-        result_record = result.by_path.get(source_record.path)
-        if result_record is None or result_record.is_dir:
-            raise RuntimeError(f"Final ISO is missing source file: {source_record.path}")
-        expected = bytes(payloads[source_record.path]) if source_record.path in payloads else source.read_file(source_record)
-        if result.read_file(result_record) != expected:
-            raise RuntimeError(f"Final ISO file verification failed: {source_record.path}")
-
-    if profile is not None:
-        assert profile_log_directory is not None
-        write_profile_log(
-            profile,
-            profile_results,
-            profile_log_directory,
-            workspace=workspace,
-            output_iso_text=output_iso.relative_to(workspace).as_posix(),
-        )
-    elif raw_result is not None:
-        assert raw_log_directory is not None
-        write_raw_composition_log(
-            raw_result,
-            raw_log_directory,
-            output_iso_text=str(args.output),
-            log_directory_text=raw_log_text,
-        )
+        if profile is not None:
+            assert profile_log_directory is not None
+            write_profile_log(
+                profile,
+                profile_results,
+                profile_log_directory,
+                workspace=workspace,
+                output_iso_text=output_iso.relative_to(workspace).as_posix(),
+            )
+        elif raw_result is not None:
+            assert raw_log_directory is not None
+            write_raw_composition_log(
+                raw_result,
+                raw_log_directory,
+                output_iso_text=str(args.output),
+                log_directory_text=raw_log_text,
+            )
 
     green = "\033[32m"
     reset = "\033[0m"

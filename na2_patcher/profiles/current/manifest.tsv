@@ -1,4 +1,4 @@
 key	value
 schema_version	1
 profile_id	current
-description	Font m01 compatibility overlay, runtime-proven ELF-M008, and translation milestone m03/v33.
+description	Font m01 and translation milestone m03/v33; menu-input ELF-M008 retained but intentionally disabled as WIP.

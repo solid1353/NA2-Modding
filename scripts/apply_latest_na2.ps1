@@ -17,6 +17,7 @@ param(
     [string[]]$RawRoots,
     [switch]$RawDefaults,
     [string]$RawLogDirectory,
+    [switch]$AllowSizeChanges,
     [Alias('e')]
     [string]$Pcsx2Exe,
     [Alias('p')]
@@ -71,6 +72,7 @@ if ($Help) {
         '  any valid source-ISO files. ZIP-to-ZIP path overlap is rejected.'
         '  Selected packages are applied in the exact order provided.'
         '  Optional raw patch composition runs after ZIP packages and before Translation.'
+        '  File-size changes are rejected unless -AllowSizeChanges is explicitly supplied.'
         '  Use -RawPatchPackage with -RawDefaults or -RawPatches, plus -RawRoots and'
         '  a new task-specific -RawLogDirectory.'
         '  Preferred: use -Profile with a pinned modular profile directory and a new'
@@ -129,6 +131,9 @@ if (-not $RunOnly) {
         '--source', $InputIso
         '--output', $OutputIso
     )
+    if ($AllowSizeChanges) {
+        $arguments += '--allow-size-changes'
+    }
     if ($profileSelected) {
         $arguments += @('--profile', $Profile, '--profile-log-directory', $ProfileLogDirectory)
     }

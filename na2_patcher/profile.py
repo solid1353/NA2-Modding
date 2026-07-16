@@ -19,6 +19,13 @@ MODULE_FIELDS = [
     "reason",
 ]
 MODULE_TYPES = {"zip_overlay", "raw_binary", "translation"}
+RAW_BINARY_CONTROL_FILES = (
+    "manifest.tsv",
+    "targets.tsv",
+    "patches.tsv",
+    "relations.tsv",
+    "edits.tsv",
+)
 
 
 @dataclass(frozen=True)
@@ -67,17 +74,9 @@ def _workspace_path(value: str, label: str, workspace: Path) -> Path:
     return resolved
 
 
-def content_sha256(path: Path) -> str:
-    """Hash one file or a directory tree deterministically."""
-    if path.is_file():
-        return hashlib.sha256(path.read_bytes()).hexdigest().upper()
-    if not path.is_dir():
-        raise FileNotFoundError(path)
+def _tree_digest(path: Path, files: list[Path]) -> str:
     digest = hashlib.sha256()
-    files = sorted(item for item in path.rglob("*") if item.is_file())
-    if not files:
-        raise ValueError(f"Cannot hash empty directory: {path}")
-    for item in files:
+    for item in sorted(files, key=lambda value: value.relative_to(path).as_posix()):
         relative = item.relative_to(path).as_posix().encode("utf-8")
         data_hash = hashlib.sha256(item.read_bytes()).hexdigest().upper().encode("ascii")
         digest.update(relative)
@@ -85,6 +84,73 @@ def content_sha256(path: Path) -> str:
         digest.update(data_hash)
         digest.update(b"\n")
     return digest.hexdigest().upper()
+
+
+def content_sha256(path: Path) -> str:
+    """Hash one file or a complete directory tree deterministically."""
+    if path.is_file():
+        return hashlib.sha256(path.read_bytes()).hexdigest().upper()
+    if not path.is_dir():
+        raise FileNotFoundError(path)
+    files = [item for item in path.rglob("*") if item.is_file()]
+    if not files:
+        raise ValueError(f"Cannot hash empty directory: {path}")
+    return _tree_digest(path, files)
+
+
+def _raw_binary_content_files(path: Path) -> list[Path]:
+    # Normalize once so Windows short/long path aliases cannot make blob paths
+    # appear to sit outside the same package during digest calculation.
+    path = path.resolve()
+    files = [path / name for name in RAW_BINARY_CONTROL_FILES]
+    missing = [item.name for item in files if not item.is_file()]
+    if missing:
+        raise FileNotFoundError(
+            f"Raw-binary module is missing canonical input files: {', '.join(missing)}"
+        )
+
+    edits_path = path / "edits.tsv"
+    with edits_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        fields = reader.fieldnames or []
+        if "blob_path" not in fields:
+            raise ValueError(f"{edits_path}: missing blob_path column")
+        blob_paths = {
+            (row.get("blob_path") or "").strip()
+            for row in reader
+            if (row.get("blob_path") or "").strip()
+        }
+
+    root = path
+    for value in sorted(blob_paths):
+        candidate = Path(value.replace("\\", "/"))
+        if candidate.is_absolute() or ".." in candidate.parts:
+            raise ValueError(
+                f"{edits_path}: blob_path must be package-relative: {value!r}"
+            )
+        blob = (path / candidate).resolve()
+        try:
+            blob.relative_to(root)
+        except ValueError as exc:
+            raise ValueError(f"{edits_path}: blob_path escapes package: {value!r}") from exc
+        if not blob.is_file():
+            raise FileNotFoundError(blob)
+        files.append(blob)
+    return files
+
+
+def module_content_sha256(path: Path, module_type: str) -> str:
+    """Hash only executable module inputs, excluding adjacent documentation."""
+    path = path.resolve()
+    if module_type not in MODULE_TYPES:
+        raise ValueError(f"Unsupported module type: {module_type!r}")
+    if path.is_file():
+        return content_sha256(path)
+    if not path.is_dir():
+        raise FileNotFoundError(path)
+    if module_type == "raw_binary":
+        return _tree_digest(path, _raw_binary_content_files(path))
+    return content_sha256(path)
 
 
 def load_profile(directory: Path, workspace: Path) -> Profile:
@@ -133,6 +199,7 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
         seen_orders.add(order)
         if row["enabled"] not in {"0", "1"}:
             raise ValueError(f"Module {module_id}: enabled must be 0 or 1")
+        enabled = row["enabled"] == "1"
         module_type = row["module"]
         if module_type not in MODULE_TYPES:
             raise ValueError(f"Module {module_id}: unsupported module {module_type!r}")
@@ -144,11 +211,12 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
         expected = row["expected_sha256"].upper()
         if len(expected) != 64 or any(char not in "0123456789ABCDEF" for char in expected):
             raise ValueError(f"Module {module_id}: expected_sha256 must be 64 hex digits")
-        actual = content_sha256(input_path)
-        if actual != expected:
-            raise ValueError(
-                f"Module {module_id}: input SHA-256 {actual} does not match {expected}"
-            )
+        if enabled:
+            actual = module_content_sha256(input_path, module_type)
+            if actual != expected:
+                raise ValueError(
+                    f"Module {module_id}: input SHA-256 {actual} does not match {expected}"
+                )
         selection = tuple(
             item.strip() for item in row["selection"].split(",") if item.strip()
         )
@@ -156,7 +224,7 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
             ProfileModule(
                 module_id=module_id,
                 order=order,
-                enabled=row["enabled"] == "1",
+                enabled=enabled,
                 module=module_type,
                 input_path=input_path,
                 expected_sha256=expected,

@@ -8,7 +8,8 @@
 - Deal with unresolved (mappings.tsv and ChatGPT's history).
 - Replace UI textures (consider already upscaled or upscaling them myself).
 
-### Swap buttons in menus.
+### Swap buttons in menus
+- `ELF-M008` is runtime-proven for major front-end menus but intentionally disabled in the current profile while the broader menu-input port remains WIP. Do not silently re-enable it.
 - `ELF-M001`, `ELF-M002`, and `ELF-M003` each produced no changes when tested alone across the title/load/save matrix. Keep all three disabled but testable; the combined family result is interaction-dependent.
 - After the translation/orchestrator migration, isolate pairwise save/load handler combinations instead of discarding the statically matched patches.
 - Identify loading behavior separately if it remains unchanged after the save/load-family test.

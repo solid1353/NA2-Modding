@@ -1,0 +1,24 @@
+* text=auto eol=lf
+
+# Binary game, release, and tool artifacts must never be line-normalized.
+*.afs binary
+*.AFS binary
+*.bin binary
+*.BIN binary
+*.ccs binary
+*.CCS binary
+*.cvm binary
+*.CVM binary
+*.dll binary
+*.elf binary
+*.exe binary
+*.gif binary
+*.iso binary
+*.ISO binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.pss binary
+*.PSS binary
+*.webp binary
+*.zip binary

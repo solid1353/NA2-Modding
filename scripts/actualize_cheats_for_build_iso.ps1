@@ -9,6 +9,25 @@ $ErrorActionPreference = "Stop"
 
 $sectorSize = 2048
 
+function Get-SymbolicLinkDestinationPath {
+    param([IO.FileSystemInfo]$Item)
+
+    if ($Item.LinkType -ne "SymbolicLink") {
+        throw "PNACH alias is not a symbolic link: $($Item.FullName)"
+    }
+    $linkTarget = [string]$Item.LinkTarget
+    if ([string]::IsNullOrWhiteSpace($linkTarget)) {
+        throw "Could not read PNACH symlink target: $($Item.FullName)"
+    }
+    $candidate = if ([IO.Path]::IsPathRooted($linkTarget)) {
+        $linkTarget
+    }
+    else {
+        Join-Path $Item.DirectoryName $linkTarget
+    }
+    return (Resolve-Path -LiteralPath $candidate).Path
+}
+
 function Read-UInt32LE {
     param([byte[]]$Data, [int]$Offset)
     return [BitConverter]::ToUInt32($Data, $Offset)
@@ -177,13 +196,43 @@ $removedPnachSymlinks = @(
         }
 )
 
-if (Test-Path -LiteralPath $targetPnach) {
-    $pnachStatus = "exists"
+$targetItem = Get-Item -LiteralPath $targetPnach -Force -ErrorAction SilentlyContinue
+if ($targetPnach -eq $CanonicalPnach) {
+    $pnachStatus = "canonical PNACH already matches CRC"
+}
+elseif ($null -ne $targetItem) {
+    if ($targetItem.LinkType -ne "SymbolicLink") {
+        throw "Refusing to replace real PNACH file at CRC alias path: $targetPnach"
+    }
+    $existingDestination = $null
+    try {
+        $existingDestination = Get-SymbolicLinkDestinationPath -Item $targetItem
+    }
+    catch {
+        # A dangling or unreadable symlink is safe to replace; a real file is not.
+    }
+    if ($existingDestination -ne $CanonicalPnach) {
+        Remove-Item -LiteralPath $targetPnach -Force
+        New-Item -ItemType SymbolicLink -Path $targetPnach -Target (Split-Path -Leaf $CanonicalPnach) | Out-Null
+        $pnachStatus = "replaced incorrect symlink"
+    }
+    else {
+        $pnachStatus = "verified symlink"
+    }
 }
 else {
     New-Item -ItemType SymbolicLink -Path $targetPnach -Target (Split-Path -Leaf $CanonicalPnach) | Out-Null
     $pnachStatus = "created symlink"
 }
+
+if ($targetPnach -ne $CanonicalPnach) {
+    $verifiedItem = Get-Item -LiteralPath $targetPnach -Force
+    $verifiedDestination = Get-SymbolicLinkDestinationPath -Item $verifiedItem
+    if ($verifiedDestination -ne $CanonicalPnach) {
+        throw "PNACH alias verification failed: $targetPnach -> $verifiedDestination"
+    }
+}
+
 [pscustomobject]@{
     Iso = $IsoPath
     BootElf = $bootPath

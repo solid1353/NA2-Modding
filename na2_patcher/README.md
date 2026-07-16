@@ -10,13 +10,25 @@ Each profile directory contains:
 
 Schema v1 supports `zip_overlay`, `raw_binary`, and `translation`. `zip_overlay` remains a legacy compatibility type, but the current profile uses only declarative, size-preserving raw-binary and translation modules.
 
-Profiles never select the newest file implicitly. Module inputs are content-hashed, and imported ZIP history is retired after exact profile parity is proven.
+Profiles never select the newest file implicitly. Enabled module inputs are content-hashed before composition. Disabled modules remain visible in the profile as WIP or review candidates but do not block the active build when their contents change.
+
+For raw-binary modules, the profile hash covers only executable package inputs:
+
+- `manifest.tsv`
+- `targets.tsv`
+- `patches.tsv`
+- `relations.tsv`
+- `edits.tsv`
+- every blob referenced by `blob_path`
+
+Adjacent documentation and authoring tools do not affect the profile pin. Translation and ZIP inputs are hashed as exact files.
 
 The current profile composes:
 
 1. exact font m01 `GF4.BIN` and ELF reconstruction through `raw_binary`;
-2. runtime-proven `ELF-M008` through `raw_binary`;
-3. immutable translation milestone m03/v33 through the integrated `translation` module.
+2. immutable translation milestone m03/v33 through the integrated `translation` module.
+
+`ELF-M008` remains listed in the current profile but is intentionally disabled while the wider menu-input port is WIP. Its runtime-proven status is preserved in the raw-binary patch set; profile membership does not imply activation.
 
 Build it with:
 
@@ -28,6 +40,10 @@ Build it with:
   -ProfileLogDirectory logs/na2_patcher/current_<unique_run_id>
 ```
 
-The ordinary `na2` shortcut supplies these values automatically, actualizes the PNACH, and launches PCSX2. Standalone translation TSV export remains available through `na2 tr` for review and external compatibility; it is not an intermediate of profile builds.
+The compositor writes the candidate ISO as `build/Current.iso.building`, verifies it completely, writes the build logs, and only then replaces `build/Current.iso`. Any caught build failure removes the `.building` file and preserves the previous `Current.iso`.
+
+File-size changes are rejected by default. Legacy relocation behavior is available only through the explicit `-AllowSizeChanges` / `--allow-size-changes` option.
+
+The ordinary `na2` shortcut supplies the profile values automatically. Its first stage builds without PNACH actualization; its second stage actualizes once for the completed ISO and launches PCSX2. Standalone translation TSV export remains available through `na2 tr` for review and external compatibility; it is not an intermediate of profile builds.
 
 Translation milestone data is copied into `na2_patcher/milestones/` and hash-pinned by the profile. This allows the live translation workspace to advance without mutating an older reproducible profile.

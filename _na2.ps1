@@ -20,6 +20,8 @@ param(
     [switch]$BuildOnly,
     [Alias('r')]
     [switch]$RunOnly,
+    [switch]$SkipActualize,
+    [switch]$AllowSizeChanges,
     [Alias('h')]
     [switch]$Help,
 
@@ -167,7 +169,7 @@ $fullWorkflow = -not $command -and
     -not $InputIso -and -not $OutputIso -and -not $PackageDirectory -and
     -not $Profile -and -not $ProfileLogDirectory -and
     -not $Pcsx2Exe -and -not $Packages -and -not $BuildOnly -and
-    -not $RunOnly -and -not $Help -and -not $Na2Iso -and
+    -not $RunOnly -and -not $SkipActualize -and -not $AllowSizeChanges -and -not $Help -and -not $Na2Iso -and
     -not $OutputDirectory -and -not $TranslationTsv -and -not $BtlApplyTsv -and -not $EtcApplyTsv -and
     -not $NoStrictHash -and -not $IsoPath -and -not $CanonicalPnach -and
     -not $Serial -and -not $RemainingArguments.Count
@@ -230,13 +232,16 @@ $applyArgs = @{
 
 if ($Packages)  { $applyArgs.Packages = $Packages }
 if ($BuildOnly) { $applyArgs.BuildOnly = $true }
-if ($RunOnly)   { $applyArgs.RunOnly = $true }
-if ($Help)      { $applyArgs.Help = $true }
+if ($RunOnly)          { $applyArgs.RunOnly = $true }
+if ($SkipActualize)     { $applyArgs.SkipActualize = $true }
+if ($AllowSizeChanges)  { $applyArgs.AllowSizeChanges = $true }
+if ($Help)             { $applyArgs.Help = $true }
 
 if ($fullWorkflow) {
     $applyArgs.Profile = 'na2_patcher\profiles\current'
     $applyArgs.ProfileLogDirectory = 'logs\na2_patcher\current_' + (Get-Date -Format 'yyyyMMdd_HHmmss_fff')
     $applyArgs.BuildOnly = $true
+    $applyArgs.SkipActualize = $true
 }
 elseif (-not $RunOnly -and -not $applyArgs.ContainsKey('Profile')) {
     if (-not $Packages) {
@@ -259,7 +264,7 @@ elseif (-not $RunOnly -and -not $applyArgs.ContainsKey('Profile')) {
 
 $apply = Join-Path $scriptsRoot 'apply_latest_na2.ps1'
 if ($fullWorkflow) {
-    Write-Na2Stage '1/2 Build and actualize pinned modular profile'
+    Write-Na2Stage '1/2 Build pinned modular profile'
 }
 elseif ($RunOnly) {
     Write-Na2Stage 'Run existing output ISO'
@@ -286,7 +291,7 @@ if ($fullWorkflow) {
         Pcsx2Exe  = $applyArgs.Pcsx2Exe
         RunOnly   = $true
     }
-    Write-Na2Stage '2/2 Launch rebuilt ISO in PCSX2'
+    Write-Na2Stage '2/2 Actualize PNACH and launch rebuilt ISO in PCSX2'
     & $apply @runArgs
 }
 }

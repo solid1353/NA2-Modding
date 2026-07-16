@@ -4,9 +4,9 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 
 ## Hard rules
 
-- Use only repository-relative paths in project files, scripts, configuration, logs, manifests, metadata, and generated artifacts; never persist machine-specific absolute paths.
+- Use only repository-relative paths in canonical project files, scripts, configuration, logs, manifests, metadata, and generated artifacts; never persist machine-specific absolute paths there. Dated `.agents/` handoffs may record machine-specific paths as non-authoritative migration context.
 - Codex is authorized to create commits and push this project's current branch without requesting approval for each operation. Prefer coherent checkpoints and do not commit half-classified runtime experiments when a result is imminent.
-- Use `na2_patcher/profiles/current/` as the active reproducible build definition. Profiles must pin every module input by hash and use only repository-relative paths; do not select newest packages implicitly in the normal workflow.
+- Use `na2_patcher/profiles/current/` as the active reproducible build definition. Profiles must pin every enabled module input by hash and use only repository-relative paths; do not select newest packages implicitly in the normal workflow. Raw-binary profile hashes cover canonical TSV inputs and referenced blobs, not adjacent documentation.
 - Treat `na2_patcher/milestones/` mapping snapshots as immutable module data. New translation work gets a new uniquely named snapshot/profile; never rewrite an existing snapshot.
 - Never change binary files manually.
 - All binary changes must go through scripts.
@@ -18,7 +18,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Do not create generated files, temporary files, logs, probes, manifests, or metadata under `source/`; preserve the extracted game/archive structure exactly.
 - Keep Windows read-only attributes applied to files/folders under `source/`.
 - Before changing any original-derived file, copy it outside `source/` and modify only the copy.
-- Keep only the active working ISO under `build/`, normally `build/Current.iso`; do not store PNACH files, loose replacements, logs, or other working files there.
+- Keep only the active working ISO under `build/`, normally `build/Current.iso`; do not store PNACH files, loose replacements, logs, or other working files there. During a build, `build/Current.iso.building` is the only standard temporary ISO and must be removed on failure or atomically promoted on success.
 - Temporary, parity-check, and hypothesis-test ISOs may remain under `build/` while they have a concrete future testing or comparison use. Permanently delete them as soon as they become useless; never leave obsolete ISOs accumulating under `build/`.
 - Do not recreate a top-level `packages/` staging/history directory. Normal builds consume hash-pinned profile modules. Keep temporary imported archives under a task-specific `work/temp/` folder, normalize useful data into a module, then retire the archive to `trash/`.
 - Do not recreate a top-level `milestones/` package archive directory. Keep immutable reproducible module data under `na2_patcher/milestones/` or as a hash-pinned declarative patch set beside its module; retain retired package archives only in Git history.
@@ -43,7 +43,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Temporary PNACH hypothesis patches go at the top of the file as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 - Move old candidates, failed experiments, and speculative addresses to `docs/HYPOTHESES.md`.
 - Track concrete active plans and queued investigations in `docs/TASKS.md`, not general rules or PNACH comments.
-- For string patches, always check encoded byte length before writing.
+- For string patches, always check encoded byte length before writing. `[S]`-prefixed `shorten` mappings are authorized manual fit exceptions when they retain an exact official UN5 source reference.
 - Prefer Shift-JIS / CP932-compatible text unless proven otherwise.
 - DATA.CVM password is `cc2fuku`.
 - Do not expand DATA.CVM, ELF, BIN, AFS, CCS, or ISO structures unless explicitly instructed.
@@ -53,6 +53,12 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Ask before destructive actions, mass rewrites, ISO rebuilds, or modifying originals.
 - If uncertain, inspect and report instead of acting.
 
+
+## Cross-install Codex handoffs
+
+- `.agents/` is intentional handoff infrastructure shared by separate Windows installations and Codex instances. Do not delete, ignore, or classify it as disposable clutter without reviewing its contents.
+- Handoffs are dated context snapshots, not canonical configuration. Live repository state, `AGENTS.md`, current docs, and the user override them.
+- Machine-specific paths and task IDs are permitted inside dated handoffs only because they describe the originating installation; never copy them into active scripts or manifests.
 
 ## Workspace creation rules
 

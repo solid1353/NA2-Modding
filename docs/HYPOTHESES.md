@@ -18,7 +18,7 @@ Status: paused after v23 and ready to resume only in the dedicated GF4 task afte
 ### Preserved milestones
 
 - `milestones/packages/NA2_MILESTONE__FONT__m01__20260712_052042__un5_14x20_clean_coverage.zip`
-- `milestones/packages/NA2_MILESTONE__FONT__m02__20260712_054105__un5_14x20_aligned_metrics.zip`
+- Font m02 aligned-metrics ZIP was retired from the workspace and remains available through Git history.
 
 These are frozen reference packages, not proof that all rendering problems are solved.
 

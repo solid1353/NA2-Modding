@@ -1,0 +1,4 @@
+module_id	order	enabled	module	input	expected_sha256	selection	reason
+font_m01	10	1	zip_overlay	packages/NA2_APPLY__FONT__20260715_180136__m01__un5_14x20_clean_coverage.zip	FC345460BBC22A263C6D0AB8A728A156273BB226707BFC64B3D3C813753E7410		Temporary compatibility overlay until GF4.BIN has a native asset module.
+menu_input	20	1	raw_binary	raw_binary_patcher/patch_sets/menu_input_20260716	1538B171A621C634021B4B1954603E397EEEF96BED5F44C5E56E21556CCD9867	ELF-M008	Runtime-proven generic menu accept/cancel decoder.
+translation_m03_v33	30	1	translation	na2_patcher/milestones/translation_m03_v33/mappings.tsv	F7CF3BE222DA4F81B6BEBA0299FDD69DC514D3C816CB0916DD4C649B7AEF800F	BTL,ETC,SLPS	Immutable translation milestone m03 snapshot using canonical v33 mappings.

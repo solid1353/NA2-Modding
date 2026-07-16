@@ -9,6 +9,8 @@ param(
     [string]$OutputIso,
     [Alias('d')]
     [string]$PackageDirectory,
+    [string]$Profile,
+    [string]$ProfileLogDirectory,
     [string]$TranslationTsv,
     [Alias('e')]
     [string]$Pcsx2Exe,
@@ -163,26 +165,20 @@ function Invoke-TranslationBuilder {
 
 $fullWorkflow = -not $command -and
     -not $InputIso -and -not $OutputIso -and -not $PackageDirectory -and
+    -not $Profile -and -not $ProfileLogDirectory -and
     -not $Pcsx2Exe -and -not $Packages -and -not $BuildOnly -and
     -not $RunOnly -and -not $Help -and -not $Na2Iso -and
     -not $OutputDirectory -and -not $TranslationTsv -and -not $BtlApplyTsv -and -not $EtcApplyTsv -and
     -not $NoStrictHash -and -not $IsoPath -and -not $CanonicalPnach -and
     -not $Serial -and -not $RemainingArguments.Count
 
-if ($fullWorkflow) {
-    Write-Na2Stage '1/5 Update translation builder'
-    & (Join-Path $scriptsRoot 'update_translation_package_builder.ps1')
-    Write-Na2Stage '2/5 Generate translation TSV'
-    Invoke-TranslationBuilder
-}
-
 if ($Help) {
     Write-Na2Stage 'Show command help'
     @(
         'NA2 shortcuts:'
-        '  na2       Update builder, translate, build, actualize PNACH, then run'
-        '  na2 ub    Update translation builder'
-        '  na2 tr    Generate translation TSV'
+        '  na2       Build the pinned modular profile, actualize PNACH, then run'
+        '  na2 ub    Retired; import new mappings into the integrated module instead'
+        '  na2 tr    Export a standalone translation TSV for review/compatibility'
         '  na2 act   Actualize the PNACH symlink for the build ISO CRC'
         '  na2 f     Apply Font package'
         '  na2 t     Apply Translation TSV'
@@ -192,9 +188,7 @@ if ($Help) {
 }
 
 if ($command -eq 'ub') {
-    Write-Na2Stage 'Update translation builder'
-    & (Join-Path $scriptsRoot 'update_translation_package_builder.ps1')
-    return
+    throw 'na2 ub is retired. Import new mappings into translation_package_builder, validate them, then create a new immutable profile snapshot.'
 }
 
 if ($command -eq 'tr') {
@@ -227,15 +221,16 @@ if ($command -and $command -notmatch '^(f|t|ft|tf)$') {
 }
 
 $applyArgs = @{
-    InputIso         = Join-Path $na2Root 'source\NA2.iso'
-    OutputIso        = Join-Path $na2Root 'build\Current.iso'
-    PackageDirectory = Join-Path $na2Root 'packages'
-    Pcsx2Exe         = Join-Path $na2Root 'pcsx2\pcsx2-qt.exe'
+    InputIso  = Join-Path $na2Root 'source\NA2.iso'
+    OutputIso = Join-Path $na2Root 'build\Current.iso'
+    Pcsx2Exe  = Join-Path $na2Root 'pcsx2\pcsx2-qt.exe'
 }
 @{
     InputIso         = $InputIso
     OutputIso        = $OutputIso
     PackageDirectory = $PackageDirectory
+    Profile          = $Profile
+    ProfileLogDirectory = $ProfileLogDirectory
     TranslationTsv   = $TranslationTsv
     Pcsx2Exe         = $Pcsx2Exe
 }.GetEnumerator() | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Value) } |
@@ -246,34 +241,43 @@ if ($BuildOnly) { $applyArgs.BuildOnly = $true }
 if ($RunOnly)   { $applyArgs.RunOnly = $true }
 if ($Help)      { $applyArgs.Help = $true }
 
-if ($command) {
-    $packageNames = @{ f = 'Font'; t = 'Translation' }
-    $applyArgs.Packages = $command.ToCharArray() | ForEach-Object {
-        $packageNames[[string]$_]
-    }
-}
-elseif (-not $Packages -and -not $RunOnly) {
-    $applyArgs.Packages = @('Font', 'Translation')
-}
-
-$translationSelected = @($applyArgs.Packages | Where-Object { $_ -ieq 'Translation' }).Count -gt 0
-if ($translationSelected -and -not $applyArgs.TranslationTsv) {
-    $latestBuilderTsv = Get-LatestBuilderTranslationTsv
-    if ($latestBuilderTsv) {
-        $applyArgs.TranslationTsv = $latestBuilderTsv
-    }
-}
-
 if ($fullWorkflow) {
+    $applyArgs.Profile = 'na2_patcher\profiles\current'
+    $applyArgs.ProfileLogDirectory = 'logs\na2_patcher\current_' + (Get-Date -Format 'yyyyMMdd_HHmmss_fff')
     $applyArgs.BuildOnly = $true
+}
+elseif (-not $RunOnly -and -not $applyArgs.ContainsKey('Profile')) {
+    if (-not $applyArgs.ContainsKey('PackageDirectory')) {
+        $applyArgs.PackageDirectory = Join-Path $na2Root 'packages'
+    }
+    if ($command) {
+        $packageNames = @{ f = 'Font'; t = 'Translation' }
+        $applyArgs.Packages = $command.ToCharArray() | ForEach-Object {
+            $packageNames[[string]$_]
+        }
+    }
+    elseif (-not $Packages) {
+        $applyArgs.Packages = @('Font', 'Translation')
+    }
+
+    $translationSelected = @($applyArgs.Packages | Where-Object { $_ -ieq 'Translation' }).Count -gt 0
+    if ($translationSelected -and -not $applyArgs.ContainsKey('TranslationTsv')) {
+        $latestBuilderTsv = Get-LatestBuilderTranslationTsv
+        if ($latestBuilderTsv) {
+            $applyArgs.TranslationTsv = $latestBuilderTsv
+        }
+    }
 }
 
 $apply = Join-Path $scriptsRoot 'apply_latest_na2.ps1'
 if ($fullWorkflow) {
-    Write-Na2Stage '3/5 Build ISO with Font package and Translation TSV'
+    Write-Na2Stage '1/2 Build and actualize pinned modular profile'
 }
 elseif ($RunOnly) {
     Write-Na2Stage 'Run existing output ISO'
+}
+elseif ($applyArgs.ContainsKey('Profile')) {
+    Write-Na2Stage ("Build profile: " + $applyArgs.Profile)
 }
 elseif ($BuildOnly) {
     Write-Na2Stage ("Build ISO with: " + ($applyArgs.Packages -join ', '))
@@ -289,15 +293,12 @@ if ($RemainingArguments.Count) {
 }
 
 if ($fullWorkflow) {
-    Write-Na2Stage '4/5 Actualize PNACH symlink for rebuilt ISO CRC'
-    & (Join-Path $scriptsRoot 'actualize_cheats_for_build_iso.ps1') -IsoPath $applyArgs.OutputIso
-
     $runArgs = @{
         OutputIso = $applyArgs.OutputIso
         Pcsx2Exe  = $applyArgs.Pcsx2Exe
         RunOnly   = $true
     }
-    Write-Na2Stage '5/5 Launch rebuilt ISO in PCSX2'
+    Write-Na2Stage '2/2 Launch rebuilt ISO in PCSX2'
     & $apply @runArgs
 }
 }

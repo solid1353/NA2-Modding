@@ -9,6 +9,8 @@ param(
     [string]$OutputIso,
     [Alias('d')]
     [string]$PackageDirectory,
+    [string]$Profile,
+    [string]$ProfileLogDirectory,
     [string]$TranslationTsv,
     [string]$RawPatchPackage,
     [string[]]$RawPatches,
@@ -71,6 +73,8 @@ if ($Help) {
         '  Optional raw patch composition runs after ZIP packages and before Translation.'
         '  Use -RawPatchPackage with -RawDefaults or -RawPatches, plus -RawRoots and'
         '  a new task-specific -RawLogDirectory.'
+        '  Preferred: use -Profile with a pinned modular profile directory and a new'
+        '  task-specific -ProfileLogDirectory. Profile mode rejects legacy package options.'
         ''
         'Modes:'
         '  (none)          Build from selected sources, then run'
@@ -91,49 +95,65 @@ if (-not $OutputIso) {
 }
 
 $selectedPackages = @($Packages | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+$profileSelected = -not [string]::IsNullOrWhiteSpace($Profile)
 
 if ($RunOnly -and $selectedPackages.Count -gt 0) {
     throw '-Packages does not apply to -r / -RunOnly.'
+}
+if ($RunOnly -and $profileSelected) {
+    throw '-Profile does not apply to -r / -RunOnly.'
 }
 
 Stop-PortablePcsx2
 
 if (-not $RunOnly) {
-    if ($selectedPackages.Count -eq 0) {
+    if (-not $profileSelected -and $selectedPackages.Count -eq 0) {
         throw 'Select at least one package with -Packages or -p.'
     }
     if (-not $InputIso) {
         throw 'Required argument missing: -i / -InputIso'
     }
-    if (-not $PackageDirectory) {
+    if (-not $profileSelected -and -not $PackageDirectory) {
         throw 'Required argument missing: -d / -PackageDirectory'
+    }
+    if ($profileSelected -and [string]::IsNullOrWhiteSpace($ProfileLogDirectory)) {
+        throw '-ProfileLogDirectory is required with -Profile.'
+    }
+    if ($profileSelected -and ($selectedPackages.Count -gt 0 -or $PackageDirectory -or $TranslationTsv -or $RawPatchPackage)) {
+        throw '-Profile cannot be combined with legacy package/raw/translation options.'
     }
 
     $arguments = @(
         (Join-Path $PSScriptRoot 'apply_latest_na2.py')
+        '--workspace', (Split-Path $PSScriptRoot -Parent)
         '--source', $InputIso
         '--output', $OutputIso
-        '--package-directory', $PackageDirectory
     )
-    foreach ($package in $selectedPackages) {
-        $arguments += @('--package', $package)
+    if ($profileSelected) {
+        $arguments += @('--profile', $Profile, '--profile-log-directory', $ProfileLogDirectory)
     }
-    if (-not [string]::IsNullOrWhiteSpace($TranslationTsv)) {
-        $arguments += @('--translation-tsv', $TranslationTsv)
-    }
-    if (-not [string]::IsNullOrWhiteSpace($RawPatchPackage)) {
-        $arguments += @('--raw-patch-package', $RawPatchPackage)
-        foreach ($root in @($RawRoots | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })) {
-            $arguments += @('--raw-root', $root)
+    else {
+        $arguments += @('--package-directory', $PackageDirectory)
+        foreach ($package in $selectedPackages) {
+            $arguments += @('--package', $package)
         }
-        foreach ($patch in @($RawPatches | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })) {
-            $arguments += @('--raw-patch', $patch)
+        if (-not [string]::IsNullOrWhiteSpace($TranslationTsv)) {
+            $arguments += @('--translation-tsv', $TranslationTsv)
         }
-        if ($RawDefaults) {
-            $arguments += '--raw-defaults'
-        }
-        if (-not [string]::IsNullOrWhiteSpace($RawLogDirectory)) {
-            $arguments += @('--raw-log-directory', $RawLogDirectory)
+        if (-not [string]::IsNullOrWhiteSpace($RawPatchPackage)) {
+            $arguments += @('--raw-patch-package', $RawPatchPackage)
+            foreach ($root in @($RawRoots | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })) {
+                $arguments += @('--raw-root', $root)
+            }
+            foreach ($patch in @($RawPatches | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })) {
+                $arguments += @('--raw-patch', $patch)
+            }
+            if ($RawDefaults) {
+                $arguments += '--raw-defaults'
+            }
+            if (-not [string]::IsNullOrWhiteSpace($RawLogDirectory)) {
+                $arguments += @('--raw-log-directory', $RawLogDirectory)
+            }
         }
     }
 

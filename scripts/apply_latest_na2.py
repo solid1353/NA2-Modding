@@ -19,6 +19,8 @@ if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
 from raw_binary_patcher import patch_binary
+from na2_patcher.profile import Profile, ProfileModule, load_profile
+from na2_patcher.modules import translation as translation_module
 
 
 def normalize(path: str) -> str:
@@ -164,6 +166,70 @@ def parse_hex(value: str, *, field: str, row_number: int) -> bytes:
         ) from exc
 
 
+def apply_translation_rows(
+    rows: list[dict[str, str]],
+    *,
+    owner_name: str,
+    source: Iso9660,
+    payloads: dict[str, bytearray],
+    owners: dict[str, str],
+) -> tuple[int, list[str]]:
+    patched_paths: list[str] = []
+    patched_set: set[str] = set()
+    row_count = 0
+
+    for row_number, row in enumerate(rows, 2):
+        if not any((value or "").strip() for value in row.values()):
+            continue
+        path = normalize(row["path"])
+        record = source.by_path.get(path)
+        if record is None or record.is_dir:
+            raise RuntimeError(
+                f"Translation row {row_number}: path is not in the clean source ISO: {path}"
+            )
+        if path not in payloads:
+            payloads[path] = bytearray(source.read_file(record))
+            owners[path] = owner_name
+
+        offset = parse_offset(row["offset"], row_number=row_number)
+        expected = parse_hex(
+            row["expected_hex"], field="expected_hex", row_number=row_number
+        )
+        replacement = parse_hex(
+            row["replacement_hex"], field="replacement_hex", row_number=row_number
+        )
+        if len(expected) != len(replacement):
+            raise ValueError(
+                f"Translation row {row_number}: expected/replacement lengths differ "
+                f"({len(expected)} != {len(replacement)})"
+            )
+
+        data = payloads[path]
+        end = offset + len(expected)
+        if offset < 0 or end > len(data):
+            raise ValueError(
+                f"Translation row {row_number}: range 0x{offset:X}-0x{end:X} "
+                f"is outside {path} ({len(data)} bytes)"
+            )
+        actual = bytes(data[offset:end])
+        if actual != expected:
+            raise RuntimeError(
+                f"Translation conflict in {owner_name}, row {row_number}, {path} "
+                f"at 0x{offset:X}: expected {expected.hex().upper()}, "
+                f"found {actual.hex().upper()}"
+            )
+        data[offset:end] = replacement
+        owners[path] = owner_name
+        row_count += 1
+        if path not in patched_set:
+            patched_set.add(path)
+            patched_paths.append(path)
+
+    if row_count == 0:
+        raise RuntimeError(f"Translation module contains no patch rows: {owner_name}")
+    return row_count, patched_paths
+
+
 def apply_translation_tsv(
     table: Path,
     *,
@@ -173,10 +239,6 @@ def apply_translation_tsv(
 ) -> tuple[int, list[str]]:
     patch_fields = ["path", "offset", "expected_hex", "replacement_hex"]
     descriptive_fields = patch_fields + ["source_text", "replacement_text"]
-    patched_paths: list[str] = []
-    patched_set: set[str] = set()
-    row_count = 0
-
     with table.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
         fields = reader.fieldnames or []
@@ -187,57 +249,14 @@ def apply_translation_tsv(
                 + " or "
                 + "\t".join(descriptive_fields)
             )
-
-        for row_number, row in enumerate(reader, 2):
-            if not any((value or "").strip() for value in row.values()):
-                continue
-            path = normalize(row["path"])
-            record = source.by_path.get(path)
-            if record is None or record.is_dir:
-                raise RuntimeError(
-                    f"Translation TSV row {row_number}: path is not in the clean source ISO: {path}"
-                )
-            if path not in payloads:
-                payloads[path] = bytearray(source.read_file(record))
-                owners[path] = table.name
-
-            offset = parse_offset(row["offset"], row_number=row_number)
-            expected = parse_hex(
-                row["expected_hex"], field="expected_hex", row_number=row_number
-            )
-            replacement = parse_hex(
-                row["replacement_hex"], field="replacement_hex", row_number=row_number
-            )
-            if len(expected) != len(replacement):
-                raise ValueError(
-                    f"Translation TSV row {row_number}: expected/replacement lengths differ "
-                    f"({len(expected)} != {len(replacement)})"
-                )
-
-            data = payloads[path]
-            end = offset + len(expected)
-            if offset < 0 or end > len(data):
-                raise ValueError(
-                    f"Translation TSV row {row_number}: range 0x{offset:X}-0x{end:X} "
-                    f"is outside {path} ({len(data)} bytes)"
-                )
-            actual = bytes(data[offset:end])
-            if actual != expected:
-                raise RuntimeError(
-                    f"Translation conflict in {table.name}, row {row_number}, {path} "
-                    f"at 0x{offset:X}: expected {expected.hex().upper()}, "
-                    f"found {actual.hex().upper()}"
-                )
-            data[offset:end] = replacement
-            owners[path] = table.name
-            row_count += 1
-            if path not in patched_set:
-                patched_set.add(path)
-                patched_paths.append(path)
-
-    if row_count == 0:
-        raise RuntimeError(f"Translation TSV contains no patch rows: {table}")
-    return row_count, patched_paths
+        rows = [dict(row) for row in reader]
+    return apply_translation_rows(
+        rows,
+        owner_name=table.name,
+        source=source,
+        payloads=payloads,
+        owners=owners,
+    )
 
 
 def apply_raw_patch_set(
@@ -372,6 +391,152 @@ def write_raw_composition_log(
     )
 
 
+def _translation_source_arguments(root: Path, prefix: str) -> dict[str, Path]:
+    if root.is_dir():
+        return {f"{prefix}_folder": root}
+    if root.is_file():
+        return {f"{prefix}_iso": root}
+    raise FileNotFoundError(root)
+
+
+def apply_profile_modules(
+    profile: Profile,
+    *,
+    source: Iso9660,
+    payloads: dict[str, bytearray],
+    owners: dict[str, str],
+) -> list[dict[str, object]]:
+    results: list[dict[str, object]] = []
+    for module in profile.modules:
+        if not module.enabled:
+            continue
+        if module.module == "zip_overlay":
+            paths = load_zip_payloads(
+                module.input_path,
+                source=source,
+                payloads=payloads,
+                owners=owners,
+            )
+            results.append({"module": module, "paths": paths})
+            continue
+        if module.module == "raw_binary":
+            result = apply_raw_patch_set(
+                module.input_path,
+                roots=profile.roots,
+                requested_patches=list(module.selection),
+                defaults=not module.selection,
+                source=source,
+                payloads=payloads,
+                owners=owners,
+            )
+            results.append({"module": module, "raw_result": result, "paths": result["patched_paths"]})
+            continue
+        if module.module == "translation":
+            if module.input_path.name.lower() != "mappings.tsv":
+                raise ValueError(
+                    f"Translation module {module.module_id} input must be mappings.tsv"
+                )
+            if "na2" not in profile.roots or "un5" not in profile.roots:
+                raise ValueError("Translation module requires na2 and un5 profile roots")
+            plan = translation_module.build_translation_plan(
+                **_translation_source_arguments(profile.roots["na2"], "na2"),
+                **_translation_source_arguments(profile.roots["un5"], "un5"),
+                data_root=module.input_path.parent,
+                apply=",".join(module.selection) if module.selection else "BTL,ETC,SLPS",
+                strict_hash=True,
+                persist_state=False,
+            )
+            rows, paths = apply_translation_rows(
+                plan.patch_rows,
+                owner_name=module.module_id,
+                source=source,
+                payloads=payloads,
+                owners=owners,
+            )
+            results.append(
+                {
+                    "module": module,
+                    "translation_plan": plan,
+                    "translation_rows": rows,
+                    "paths": paths,
+                }
+            )
+            continue
+        raise AssertionError(module.module)
+    return results
+
+
+def write_profile_log(
+    profile: Profile,
+    results: list[dict[str, object]],
+    log_directory: Path,
+    *,
+    workspace: Path,
+    output_iso_text: str,
+) -> None:
+    log_directory.mkdir(parents=True, exist_ok=False)
+    module_rows: list[dict[str, object]] = []
+    for item in results:
+        module = item["module"]
+        assert isinstance(module, ProfileModule)
+        paths = item.get("paths", [])
+        assert isinstance(paths, list)
+        module_rows.append(
+            {
+                "module_id": module.module_id,
+                "order": module.order,
+                "module": module.module,
+                "input": module.input_path.relative_to(workspace).as_posix(),
+                "input_sha256": module.expected_sha256,
+                "selection": ",".join(module.selection),
+                "patched_paths": ",".join(sorted(str(path) for path in paths)),
+            }
+        )
+        module_log = log_directory / module.module_id
+        if "raw_result" in item:
+            write_raw_composition_log(
+                item["raw_result"],
+                module_log,
+                output_iso_text=output_iso_text,
+                log_directory_text=module_log.relative_to(workspace).as_posix(),
+            )
+        if "translation_plan" in item:
+            plan = item["translation_plan"]
+            assert isinstance(plan, translation_module.TranslationPlan)
+            module_log.mkdir(parents=True, exist_ok=True)
+            translation_module.write_translation_tsv(
+                module_log / "translation_plan.tsv", plan.patch_rows
+            )
+            translation_module.write_json(
+                module_log / "translation_summary.json", plan.summary
+            )
+    patch_binary.write_tsv(
+        log_directory / "modules.tsv",
+        [
+            "module_id",
+            "order",
+            "module",
+            "input",
+            "input_sha256",
+            "selection",
+            "patched_paths",
+        ],
+        module_rows,
+    )
+    patch_binary.write_tsv(
+        log_directory / "run_summary.tsv",
+        ["timestamp_utc", "profile_id", "output_iso", "module_count"],
+        [
+            {
+                "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "profile_id": profile.manifest["profile_id"],
+                "output_iso": output_iso_text.replace("\\", "/"),
+                "module_count": len(results),
+            }
+        ],
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
@@ -381,7 +546,10 @@ def main() -> int:
     )
     parser.add_argument("--source", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument("--package-directory", required=True, type=Path)
+    parser.add_argument("--workspace", type=Path, default=Path.cwd())
+    parser.add_argument("--package-directory", type=Path)
+    parser.add_argument("--profile", type=Path)
+    parser.add_argument("--profile-log-directory", type=Path)
     parser.add_argument("--translation-tsv", type=Path)
     parser.add_argument("--package", action="append", default=[])
     parser.add_argument("--raw-patch-package", type=Path)
@@ -391,20 +559,51 @@ def main() -> int:
     parser.add_argument("--raw-log-directory", type=Path)
     args = parser.parse_args()
 
+    workspace = args.workspace.resolve()
     source_iso = args.source.resolve()
     output_iso = args.output.resolve()
-    package_directory = args.package_directory.resolve()
+    package_directory = args.package_directory.resolve() if args.package_directory else None
     explicit_translation = (
         args.translation_tsv.resolve() if args.translation_tsv else None
     )
     if not source_iso.is_file():
         raise FileNotFoundError(source_iso)
-    if not package_directory.is_dir():
-        raise FileNotFoundError(package_directory)
     if explicit_translation is not None and not explicit_translation.is_file():
         raise FileNotFoundError(explicit_translation)
     if source_iso == output_iso:
         raise ValueError("Source and output ISO paths must differ")
+
+    profile = None
+    profile_log_directory = None
+    if args.profile is not None:
+        legacy_options = bool(
+            args.package_directory
+            or args.translation_tsv
+            or args.package
+            or args.raw_patch_package
+            or args.raw_root
+            or args.raw_patch
+            or args.raw_defaults
+            or args.raw_log_directory
+        )
+        if legacy_options:
+            raise ValueError("--profile cannot be combined with legacy package/raw/translation options")
+        if args.profile_log_directory is None:
+            raise ValueError("--profile-log-directory is required with --profile")
+        profile_directory = (
+            args.profile if args.profile.is_absolute() else workspace / args.profile
+        )
+        profile = load_profile(profile_directory, workspace)
+        profile_log_directory = patch_binary.command_relative_path(
+            str(args.profile_log_directory), "--profile-log-directory", workspace
+        )
+        if profile_log_directory.exists():
+            raise FileExistsError(profile_log_directory)
+    else:
+        if args.profile_log_directory is not None:
+            raise ValueError("--profile-log-directory requires --profile")
+        if package_directory is None or not package_directory.is_dir():
+            raise FileNotFoundError(package_directory or "--package-directory")
 
     raw_requested = args.raw_patch_package is not None
     raw_options_present = bool(
@@ -417,7 +616,6 @@ def main() -> int:
     raw_log_directory = None
     raw_log_text = ""
     if raw_requested:
-        workspace = Path.cwd().resolve()
         raw_package_directory = patch_binary.command_relative_path(
             str(args.raw_patch_package), "--raw-patch-package", workspace
         )
@@ -433,63 +631,72 @@ def main() -> int:
         if raw_log_directory.exists():
             raise FileExistsError(raw_log_directory)
 
-    requested = args.package or ["Font", "Translation"]
-    categories: list[str] = []
-    for value in requested:
-        category = normalize_category(value)
-        if category not in categories:
-            categories.append(category)
-
-    zip_categories = [category for category in categories if category != "TRANSLATION"]
-    translation_selected = "TRANSLATION" in categories
-
     packages: list[tuple[str, Path]] = []
-    for category in zip_categories:
-        package = latest_file(package_directory, f"NA2_APPLY__{category}__*.zip")
-        packages.append((category, package))
-
     translation_table = None
-    if translation_selected:
-        translation_table = explicit_translation or latest_file(
-            package_directory, "NA2_APPLY__TRANSLATION__*.tsv"
-        )
-    elif explicit_translation is not None:
-        raise ValueError("--translation-tsv requires the Translation package")
+    if profile is None:
+        assert package_directory is not None
+        requested = args.package or ["Font", "Translation"]
+        categories: list[str] = []
+        for value in requested:
+            category = normalize_category(value)
+            if category not in categories:
+                categories.append(category)
+
+        zip_categories = [category for category in categories if category != "TRANSLATION"]
+        translation_selected = "TRANSLATION" in categories
+        for category in zip_categories:
+            package = latest_file(package_directory, f"NA2_APPLY__{category}__*.zip")
+            packages.append((category, package))
+
+        if translation_selected:
+            translation_table = explicit_translation or latest_file(
+                package_directory, "NA2_APPLY__TRANSLATION__*.tsv"
+            )
+        elif explicit_translation is not None:
+            raise ValueError("--translation-tsv requires the Translation package")
 
     source = Iso9660(source_iso)
     payloads: dict[str, bytearray] = {}
     owners: dict[str, str] = {}
     package_paths: dict[str, list[str]] = {}
-
-    for category, package in packages:
-        package_paths[category] = load_zip_payloads(
-            package,
-            source=source,
-            payloads=payloads,
-            owners=owners,
-        )
-
     raw_result = None
-    if raw_package_directory is not None:
-        raw_result = apply_raw_patch_set(
-            raw_package_directory,
-            roots=raw_roots,
-            requested_patches=args.raw_patch,
-            defaults=args.raw_defaults,
-            source=source,
-            payloads=payloads,
-            owners=owners,
-        )
-
     translated_rows = 0
     translated_paths: list[str] = []
-    if translation_table is not None:
-        translated_rows, translated_paths = apply_translation_tsv(
-            translation_table,
+    profile_results: list[dict[str, object]] = []
+    if profile is not None:
+        profile_results = apply_profile_modules(
+            profile,
             source=source,
             payloads=payloads,
             owners=owners,
         )
+    else:
+        for category, package in packages:
+            package_paths[category] = load_zip_payloads(
+                package,
+                source=source,
+                payloads=payloads,
+                owners=owners,
+            )
+
+        if raw_package_directory is not None:
+            raw_result = apply_raw_patch_set(
+                raw_package_directory,
+                roots=raw_roots,
+                requested_patches=args.raw_patch,
+                defaults=args.raw_defaults,
+                source=source,
+                payloads=payloads,
+                owners=owners,
+            )
+
+        if translation_table is not None:
+            translated_rows, translated_paths = apply_translation_tsv(
+                translation_table,
+                source=source,
+                payloads=payloads,
+                owners=owners,
+            )
 
     if not payloads:
         raise RuntimeError("No package files or translation patches were selected")
@@ -541,7 +748,16 @@ def main() -> int:
         if result.read_file(result_record) != expected:
             raise RuntimeError(f"Final ISO file verification failed: {source_record.path}")
 
-    if raw_result is not None:
+    if profile is not None:
+        assert profile_log_directory is not None
+        write_profile_log(
+            profile,
+            profile_results,
+            profile_log_directory,
+            workspace=workspace,
+            output_iso_text=output_iso.relative_to(workspace).as_posix(),
+        )
+    elif raw_result is not None:
         assert raw_log_directory is not None
         write_raw_composition_log(
             raw_result,
@@ -552,24 +768,42 @@ def main() -> int:
 
     green = "\033[32m"
     reset = "\033[0m"
-    for category, package in packages:
-        print(f"Applied {category} package: {package.name}")
-        for path in sorted(package_paths[category]):
-            print(f"  {green}{path}{reset}")
-    if raw_result is not None:
-        raw_package = raw_result["package"]
-        assert isinstance(raw_package, patch_binary.Package)
-        print(f"Applied raw patch set: {raw_package.manifest['package_id']}")
-        print(f"  patches: {len(raw_result['selected'])}")
-        print(f"  edits: {len(raw_result['edits'])}")
-        for path in sorted(raw_result["patched_paths"]):
-            print(f"  {green}{path}{reset}")
-    if translation_table is not None:
-        print(f"Applied translation table: {translation_table.name}")
-        print(f"  rows: {translated_rows}")
-        for path in sorted(translated_paths):
-            print(f"  {green}{path}{reset}")
-    print(f"ISO: {output_iso}")
+    if profile is not None:
+        print(f"Applied profile: {profile.manifest['profile_id']}")
+        for item in profile_results:
+            module = item["module"]
+            assert isinstance(module, ProfileModule)
+            detail = ""
+            if "raw_result" in item:
+                detail = f", {len(item['raw_result']['edits'])} edits"
+            elif "translation_rows" in item:
+                detail = f", {item['translation_rows']} rows"
+            print(f"  {module.order:03d} {module.module_id} ({module.module}{detail})")
+            for path in sorted(str(value) for value in item.get("paths", [])):
+                print(f"    {green}{path}{reset}")
+    else:
+        for category, package in packages:
+            print(f"Applied {category} package: {package.name}")
+            for path in sorted(package_paths[category]):
+                print(f"  {green}{path}{reset}")
+        if raw_result is not None:
+            raw_package = raw_result["package"]
+            assert isinstance(raw_package, patch_binary.Package)
+            print(f"Applied raw patch set: {raw_package.manifest['package_id']}")
+            print(f"  patches: {len(raw_result['selected'])}")
+            print(f"  edits: {len(raw_result['edits'])}")
+            for path in sorted(raw_result["patched_paths"]):
+                print(f"  {green}{path}{reset}")
+        if translation_table is not None:
+            print(f"Applied translation table: {translation_table.name}")
+            print(f"  rows: {translated_rows}")
+            for path in sorted(translated_paths):
+                print(f"  {green}{path}{reset}")
+    try:
+        display_iso = output_iso.relative_to(workspace).as_posix()
+    except ValueError:
+        display_iso = output_iso.name
+    print(f"ISO: {display_iso}")
     return 0
 
 

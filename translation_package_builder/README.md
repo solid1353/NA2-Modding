@@ -1,6 +1,6 @@
 # NA2 Translation Package Builder v33
 
-This builder generates one post-composition translation TSV for **Naruto: Narutimate Accel 2**. It never packages patched BIN or ELF payloads. The surrounding NA2 pipeline composes selected packages first, then applies the generated TSV over the composed files.
+This builder exports one post-composition translation TSV for **Naruto: Narutimate Accel 2**. It never packages patched BIN or ELF payloads. The normal NA2 profile workflow now invokes `na2_patcher/modules/translation.py` directly and logs the same plan without using a TSV as an inter-stage handoff; this builder remains the standalone review/compatibility interface.
 
 This archive contains only `translation_package_builder`. Project-level wrapper and ISO-building scripts remain outside the package.
 
@@ -397,11 +397,12 @@ PCSX2 application chrome, toolbar text, pause indicators, graphical controller p
 
 ## Integration expectations
 
-- Install/extract this builder as `translation_package_builder` under the NA2 project root.
+- The translation engine is repository-owned at `na2_patcher/modules/translation.py`; this directory owns the live mappings and compatibility wrapper only.
+- Do not replace the integrated engine by extracting a builder archive over the project.
 - Do not copy builder `work` output into the archive.
 - Do not add patched `BTL.BIN`, `ETC.BIN`, or `SLPS_258.37` payloads to builder releases.
-- The surrounding `na2` workflow owns package composition and ISO application.
-- Translation is applied after selected packages so it can safely target their composed files.
+- The profile orchestrator owns composition and ISO application.
+- Translation is an ordered first-class module and is currently applied after the font overlay and raw menu patch so conflicts are checked against their composed bytes.
 
 ## Direct use
 

@@ -5,6 +5,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 ## Hard rules
 
 - Use only repository-relative paths in project files, scripts, configuration, logs, manifests, metadata, and generated artifacts; never persist machine-specific absolute paths.
+- Codex is authorized to create commits and push this project's current branch without requesting approval for each operation. Prefer coherent checkpoints and do not commit half-classified runtime experiments when a result is imminent.
 - Never change binary files manually.
 - All binary changes must go through scripts.
 - Preserve file sizes unless explicitly instructed.
@@ -80,6 +81,10 @@ Release PNACH files are coupled to the boot ELF CRC of their paired ISO. Always 
 ## Actualize workflow
 
 When asked to actualize, use the ISO in `build/` by default. Calculate the PCSX2-style ELF CRC from the boot ELF inside that ISO. Keep the base file named `cheats/SLPS-25837_C0659AD1.pnach`. Delete obsolete `cheats/SLPS-25837_<crc>.pnach` symbolic links directly, without moving them to trash, then create the current CRC-named symlink to `cheats/SLPS-25837_C0659AD1.pnach` if missing. Never delete the canonical PNACH or any real PNACH file during actualize.
+
+Before handing off or launching any ISO, actualize the PNACH alias for that exact ISO and verify that the resulting CRC-named symlink exists. Do not skip this step unless the user explicitly requests a no-PNACH isolation run.
+
+Before rebuilding or launching a test ISO, unconditionally issue the close command for the project-local `pcsx2/pcsx2-qt.exe`. Do not probe first to see whether PCSX2 is running; closing an absent process should be treated as a harmless no-op.
 
 ## Current release file list
 

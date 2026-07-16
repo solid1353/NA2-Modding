@@ -9,9 +9,16 @@ import re
 import shutil
 import sys
 import zipfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 from iso9660_tools import Iso9660, SECTOR
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
+
+from raw_binary_patcher import patch_binary
 
 
 def normalize(path: str) -> str:
@@ -233,6 +240,138 @@ def apply_translation_tsv(
     return row_count, patched_paths
 
 
+def apply_raw_patch_set(
+    package_directory: Path,
+    *,
+    roots: dict[str, Path],
+    requested_patches: list[str],
+    defaults: bool,
+    source: Iso9660,
+    payloads: dict[str, bytearray],
+    owners: dict[str, str],
+) -> dict[str, object]:
+    package = patch_binary.load_package(package_directory)
+    target_data = patch_binary.verify_package_data(package, roots)
+    selected = patch_binary.selected_patch_ids(
+        package,
+        requested_patches,
+        defaults,
+    )
+    edits = patch_binary.validate_selection(package, selected, for_apply=True)
+
+    initial_buffers: dict[str, bytes | bytearray] = {}
+    target_paths: dict[str, str] = {}
+    for target_id in {edit.destination_target_id for edit in edits}:
+        target = package.targets[target_id]
+        path = normalize(target.path.as_posix())
+        record = source.by_path.get(path)
+        if record is None or record.is_dir:
+            raise RuntimeError(
+                f"Raw patch destination is not in the clean source ISO: {path}"
+            )
+        initial_buffers[target_id] = (
+            payloads[path] if path in payloads else source.read_file(record)
+        )
+        target_paths[target_id] = path
+
+    buffers, patch_rows, before_hashes = patch_binary.compose_edits(
+        package,
+        target_data,
+        edits,
+        initial_buffers,
+    )
+    after_hashes: dict[str, str] = {}
+    patched_paths: list[str] = []
+    for target_id, data in buffers.items():
+        path = target_paths[target_id]
+        payloads[path] = data
+        owners[path] = package.manifest["package_id"]
+        after_hashes[target_id] = patch_binary.data_sha256(data)
+        patched_paths.append(path)
+
+    return {
+        "package": package,
+        "selected": selected,
+        "edits": edits,
+        "patch_rows": patch_rows,
+        "before_hashes": before_hashes,
+        "after_hashes": after_hashes,
+        "patched_paths": patched_paths,
+    }
+
+
+def write_raw_composition_log(
+    result: dict[str, object],
+    log_directory: Path,
+    *,
+    output_iso_text: str,
+    log_directory_text: str,
+) -> None:
+    package = result["package"]
+    selected = result["selected"]
+    edits = result["edits"]
+    before_hashes = result["before_hashes"]
+    after_hashes = result["after_hashes"]
+    assert isinstance(package, patch_binary.Package)
+    assert isinstance(selected, list)
+    assert isinstance(edits, list)
+    assert isinstance(before_hashes, dict)
+    assert isinstance(after_hashes, dict)
+
+    patch_binary.write_tsv(
+        log_directory / "patch_log.tsv",
+        [
+            "package_id", "patch_id", "edit_id", "target_id", "path",
+            "offset", "length", "original_hex", "new_hex", "operation", "reason",
+        ],
+        result["patch_rows"],
+    )
+    patch_binary.write_tsv(
+        log_directory / "selected_patches.tsv",
+        ["patch_id", "status", "confidence", "name"],
+        [
+            {
+                "patch_id": patch_id,
+                "status": package.patches[patch_id].status,
+                "confidence": package.patches[patch_id].confidence,
+                "name": package.patches[patch_id].name,
+            }
+            for patch_id in selected
+        ],
+    )
+    patch_binary.write_tsv(
+        log_directory / "staged_file_hashes.tsv",
+        ["target_id", "path", "size", "before_sha256", "after_sha256"],
+        [
+            {
+                "target_id": target_id,
+                "path": package.targets[target_id].path.as_posix(),
+                "size": package.targets[target_id].expected_size,
+                "before_sha256": before_hashes[target_id],
+                "after_sha256": after_hashes[target_id],
+            }
+            for target_id in sorted(after_hashes)
+        ],
+    )
+    patch_binary.write_tsv(
+        log_directory / "run_summary.tsv",
+        [
+            "timestamp_utc", "schema_version", "package_id", "package_version",
+            "output_iso", "log_directory", "patch_count", "edit_count",
+        ],
+        [{
+            "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "schema_version": package.manifest["schema_version"],
+            "package_id": package.manifest["package_id"],
+            "package_version": package.manifest["package_version"],
+            "output_iso": output_iso_text.replace("\\", "/"),
+            "log_directory": log_directory_text.replace("\\", "/"),
+            "patch_count": len(selected),
+            "edit_count": len(edits),
+        }],
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
@@ -245,6 +384,11 @@ def main() -> int:
     parser.add_argument("--package-directory", required=True, type=Path)
     parser.add_argument("--translation-tsv", type=Path)
     parser.add_argument("--package", action="append", default=[])
+    parser.add_argument("--raw-patch-package", type=Path)
+    parser.add_argument("--raw-root", action="append", default=[], metavar="ID=PATH")
+    parser.add_argument("--raw-patch", action="append", default=[])
+    parser.add_argument("--raw-defaults", action="store_true")
+    parser.add_argument("--raw-log-directory", type=Path)
     args = parser.parse_args()
 
     source_iso = args.source.resolve()
@@ -261,6 +405,33 @@ def main() -> int:
         raise FileNotFoundError(explicit_translation)
     if source_iso == output_iso:
         raise ValueError("Source and output ISO paths must differ")
+
+    raw_requested = args.raw_patch_package is not None
+    raw_options_present = bool(
+        args.raw_root or args.raw_patch or args.raw_defaults or args.raw_log_directory
+    )
+    if not raw_requested and raw_options_present:
+        raise ValueError("Raw patch options require --raw-patch-package")
+    raw_package_directory = None
+    raw_roots: dict[str, Path] = {}
+    raw_log_directory = None
+    raw_log_text = ""
+    if raw_requested:
+        workspace = Path.cwd().resolve()
+        raw_package_directory = patch_binary.command_relative_path(
+            str(args.raw_patch_package), "--raw-patch-package", workspace
+        )
+        if not raw_package_directory.is_dir():
+            raise FileNotFoundError(raw_package_directory)
+        raw_roots = patch_binary.parse_roots(args.raw_root, workspace)
+        if args.raw_log_directory is None:
+            raise ValueError("--raw-log-directory is required with raw patches")
+        raw_log_text = str(args.raw_log_directory)
+        raw_log_directory = patch_binary.command_relative_path(
+            raw_log_text, "--raw-log-directory", workspace
+        )
+        if raw_log_directory.exists():
+            raise FileExistsError(raw_log_directory)
 
     requested = args.package or ["Font", "Translation"]
     categories: list[str] = []
@@ -293,6 +464,18 @@ def main() -> int:
     for category, package in packages:
         package_paths[category] = load_zip_payloads(
             package,
+            source=source,
+            payloads=payloads,
+            owners=owners,
+        )
+
+    raw_result = None
+    if raw_package_directory is not None:
+        raw_result = apply_raw_patch_set(
+            raw_package_directory,
+            roots=raw_roots,
+            requested_patches=args.raw_patch,
+            defaults=args.raw_defaults,
             source=source,
             payloads=payloads,
             owners=owners,
@@ -358,11 +541,28 @@ def main() -> int:
         if result.read_file(result_record) != expected:
             raise RuntimeError(f"Final ISO file verification failed: {source_record.path}")
 
+    if raw_result is not None:
+        assert raw_log_directory is not None
+        write_raw_composition_log(
+            raw_result,
+            raw_log_directory,
+            output_iso_text=str(args.output),
+            log_directory_text=raw_log_text,
+        )
+
     green = "\033[32m"
     reset = "\033[0m"
     for category, package in packages:
         print(f"Applied {category} package: {package.name}")
         for path in sorted(package_paths[category]):
+            print(f"  {green}{path}{reset}")
+    if raw_result is not None:
+        raw_package = raw_result["package"]
+        assert isinstance(raw_package, patch_binary.Package)
+        print(f"Applied raw patch set: {raw_package.manifest['package_id']}")
+        print(f"  patches: {len(raw_result['selected'])}")
+        print(f"  edits: {len(raw_result['edits'])}")
+        for path in sorted(raw_result["patched_paths"]):
             print(f"  {green}{path}{reset}")
     if translation_table is not None:
         print(f"Applied translation table: {translation_table.name}")

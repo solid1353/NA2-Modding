@@ -12,6 +12,8 @@ Current PNACH:
 
 - Canonical editable PNACH base: `cheats/SLPS-25837_C0659AD1.pnach`
 - Actualized PNACH symlinks live in `cheats/SLPS-25837_<crc>.pnach` and point to `cheats/SLPS-25837_C0659AD1.pnach`.
+- Current verified working-build snapshot: `build/Current.iso`, size `1,928,429,568`, SHA-256 `2614C6B7D71C4D9BAF39D091FC4194F16F70D0007C5761C72BB9320239BBAD2C`, boot ELF CRC `08983B71`. It composes font milestone m01, runtime-proven raw patch `ELF-M008`, and translation-builder v33 output. Treat this as a dated working snapshot, not a permanently current translation version. The single active PNACH alias follows the exact ISO most recently handed off or launched; it currently targets isolated `ELF-M001` test CRC `08983B71`. This CRC collides with `Current.iso` even though their ELF SHA-256 hashes differ.
+- PNACH actualization is mandatory before every ISO handoff or launch unless the user explicitly requests a no-PNACH isolation run.
 - Root `cheats/` is a real project folder and the only cheats folder we manage.
 - PNACH labels such as `// [Skip CC2 intro]` are comments only. A cheat is enabled only when its executable `patch=`/setting line is uncommented. Disabled proven cheats and disabled hypotheses must keep their executable lines commented out. Temporary PNACH hypothesis patches go at the top as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 
@@ -26,6 +28,7 @@ Current PNACH:
 - `releases/`: ignored relative link to the frozen milestone archive outside the repository. It contains milestone artifacts only; never alter existing contents.
 - `logs/`: generated records grouped into task-specific subfolders. Current groups are `na2/`, `font/`, `translation/`, `packages/`, `milestones/`, `extraction/`, `inventory/`, and `trash/`; no files should be written directly in the `logs/` root. `na2` keeps only `logs/na2/latest.log` for the most recent completed run and `logs/na2/rolling.log` for the newest 500 runs, with sections separated by human-readable timestamps.
 - `scripts/`: repeatable tooling.
+- `raw_binary_patcher/`: repository-owned schema v1, CLI validator/patcher, normalized disabled GPT candidates, and verified historical font ELF patch groups. It never applies `pending`, `runtime_failed`, or `deprecated` patches and writes only new same-size outputs with complete logs. The main ISO compositor can apply proven raw patches after ZIP packages and before the translation TSV, with staged-byte conflict checks.
 - `docs/`: repository-wide context, active plans, hypotheses, and release documentation. Component-specific READMEs remain beside their components.
 - `docs/HYPOTHESES.md`: archived patch candidates, failed experiments, unverified addresses, and speculative leads.
 - `docs/TASKS.md`: concrete active tasks, test plans, and queued investigations only; no general workflow rules.

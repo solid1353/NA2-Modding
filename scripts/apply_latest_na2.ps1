@@ -10,6 +10,11 @@ param(
     [Alias('d')]
     [string]$PackageDirectory,
     [string]$TranslationTsv,
+    [string]$RawPatchPackage,
+    [string[]]$RawPatches,
+    [string[]]$RawRoots,
+    [switch]$RawDefaults,
+    [string]$RawLogDirectory,
     [Alias('e')]
     [string]$Pcsx2Exe,
     [Alias('p')]
@@ -18,6 +23,7 @@ param(
     [switch]$BuildOnly,
     [Alias('r')]
     [switch]$RunOnly,
+    [switch]$SkipActualize,
     [Alias('h')]
     [switch]$Help
 )
@@ -31,19 +37,8 @@ function Stop-PortablePcsx2 {
         Join-Path (Split-Path $PSScriptRoot -Parent) 'pcsx2\pcsx2-qt.exe'
     }
 
-    $portablePath = [System.IO.Path]::GetFullPath($portableExe)
-    $processName = [System.IO.Path]::GetFileNameWithoutExtension($portablePath)
-    $processes = @(Get-Process -Name $processName -ErrorAction SilentlyContinue | Where-Object {
-        $_.Path -and [System.IO.Path]::GetFullPath($_.Path) -ieq $portablePath
-    })
-
-    if ($processes.Count -eq 0) {
-        return
-    }
-
-    Write-Host "Closing portable PCSX2 before replacing the output ISO: $portablePath" -ForegroundColor Yellow
-    $processes | Stop-Process -Force
-    $processes | Wait-Process
+    $processName = [System.IO.Path]::GetFileNameWithoutExtension($portableExe)
+    Stop-Process -Name $processName -Force -ErrorAction SilentlyContinue
 }
 
 if ($Help) {
@@ -73,11 +68,15 @@ if ($Help) {
         '  Package source names control selection only; package contents may target'
         '  any valid source-ISO files. ZIP-to-ZIP path overlap is rejected.'
         '  Selected packages are applied in the exact order provided.'
+        '  Optional raw patch composition runs after ZIP packages and before Translation.'
+        '  Use -RawPatchPackage with -RawDefaults or -RawPatches, plus -RawRoots and'
+        '  a new task-specific -RawLogDirectory.'
         ''
         'Modes:'
         '  (none)          Build from selected sources, then run'
         '  -b, -BuildOnly  Build from selected sources; do not run'
         '  -r, -RunOnly    Run the existing output ISO without rebuilding'
+        '  -SkipActualize  Explicit no-PNACH isolation mode; otherwise actualize before handoff/launch'
         '  -h, -Help       Show this help'
     ) -join [Environment]::NewLine | Write-Output
     return
@@ -97,6 +96,8 @@ if ($RunOnly -and $selectedPackages.Count -gt 0) {
     throw '-Packages does not apply to -r / -RunOnly.'
 }
 
+Stop-PortablePcsx2
+
 if (-not $RunOnly) {
     if ($selectedPackages.Count -eq 0) {
         throw 'Select at least one package with -Packages or -p.'
@@ -107,8 +108,6 @@ if (-not $RunOnly) {
     if (-not $PackageDirectory) {
         throw 'Required argument missing: -d / -PackageDirectory'
     }
-
-    Stop-PortablePcsx2
 
     $arguments = @(
         (Join-Path $PSScriptRoot 'apply_latest_na2.py')
@@ -122,6 +121,21 @@ if (-not $RunOnly) {
     if (-not [string]::IsNullOrWhiteSpace($TranslationTsv)) {
         $arguments += @('--translation-tsv', $TranslationTsv)
     }
+    if (-not [string]::IsNullOrWhiteSpace($RawPatchPackage)) {
+        $arguments += @('--raw-patch-package', $RawPatchPackage)
+        foreach ($root in @($RawRoots | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })) {
+            $arguments += @('--raw-root', $root)
+        }
+        foreach ($patch in @($RawPatches | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })) {
+            $arguments += @('--raw-patch', $patch)
+        }
+        if ($RawDefaults) {
+            $arguments += '--raw-defaults'
+        }
+        if (-not [string]::IsNullOrWhiteSpace($RawLogDirectory)) {
+            $arguments += @('--raw-log-directory', $RawLogDirectory)
+        }
+    }
 
     & python -B @arguments
     if ($LASTEXITCODE -ne 0) {
@@ -129,12 +143,26 @@ if (-not $RunOnly) {
     }
 }
 
+if (-not (Test-Path -LiteralPath $OutputIso -PathType Leaf)) {
+    throw "ISO does not exist: $OutputIso"
+}
+
+if (-not $SkipActualize) {
+    $global:LASTEXITCODE = 0
+    try {
+        & (Join-Path $PSScriptRoot 'actualize_cheats_for_build_iso.ps1') -IsoPath $OutputIso
+    }
+    catch {
+        throw "PNACH actualization failed: $($_.Exception.Message)"
+    }
+    if ($LASTEXITCODE -ne 0) {
+        throw "PNACH actualization failed (exit $LASTEXITCODE)."
+    }
+}
+
 if (-not $BuildOnly) {
     if (-not $Pcsx2Exe) {
         throw 'Required argument missing: -e / -Pcsx2Exe'
-    }
-    if (-not (Test-Path -LiteralPath $OutputIso -PathType Leaf)) {
-        throw "ISO does not exist: $OutputIso"
     }
     if (-not (Test-Path -LiteralPath $Pcsx2Exe -PathType Leaf)) {
         throw "PCSX2 executable does not exist: $Pcsx2Exe"

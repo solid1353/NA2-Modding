@@ -1,0 +1,2 @@
+schema_version	package_id	package_version	game	description	evidence_path
+1	font_elf_history	1	NA2	Verified ELF portions of preserved and runtime-tested font packages.	docs/HYPOTHESES.md

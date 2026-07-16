@@ -1,0 +1,10 @@
+column	required	type	description
+patch_id	1	identifier	Atomic named patch group.
+default_enabled	1	boolean:0|1	Allowed only for runtime_proven patches.
+status	1	enum:pending|approved_for_test|runtime_proven|runtime_failed|deprecated	Review/runtime state.
+confidence	1	enum:high|medium|low|verified	Analytical confidence.
+name	1	string	Short human-readable name.
+description	1	string	Scope or likely runtime location.
+source_mapping_id	0	identifier	Corresponding analytical mapping.
+runtime_classification	0	string	Observed runtime screen/effect.
+review_notes	0	string	Ambiguity and review notes; never executable.

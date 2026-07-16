@@ -1,0 +1,7 @@
+column	required	type	description
+target_id	1	identifier	Target referenced by edits.
+root_id	1	identifier	Runtime root binding such as na2 or un5.
+role	1	enum:destination|source|both	Permitted use.
+path	1	relative_path	Logical file path below the bound root.
+expected_size	1	integer	Exact clean file size.
+expected_sha256	1	sha256	Exact clean file hash.

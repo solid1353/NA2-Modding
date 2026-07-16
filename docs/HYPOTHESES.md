@@ -58,7 +58,7 @@ Status: active test, pending in-game check.
 
 ### Disable RPS (old)
 
-Status: archived, replaced by current `[Disable RPS]` section in `cheats/SLPS-25837_C0659AD1.pnach`.
+Status: archived; the confirmed file-backed form is retained in the integrated raw-binary patch sets rather than PNACH.
 
 ```ini
 // [Disable RPS (old)]
@@ -68,7 +68,7 @@ Status: archived, replaced by current `[Disable RPS]` section in `cheats/SLPS-25
 
 ### Disable extra hit (old)
 
-Status: archived, replaced by current `[Disable extra hit with aura punishment]` section in `cheats/SLPS-25837_C0659AD1.pnach`.
+Status: archived; the confirmed file-backed form is retained in the integrated `battle_logic` raw-binary patch set rather than PNACH.
 
 ```ini
 // [Disable extra hit (old)]

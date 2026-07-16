@@ -16,7 +16,7 @@ The project combines four related areas:
 
 - English translation through generated, validated patch tables.
 - GF4/GF4C font-resource and renderer reverse engineering.
-- Gameplay and default-setting changes through named raw-binary modules, with PNACH retained for emulator/runtime-only behavior and temporary hypotheses.
+- Gameplay and default-setting changes through named raw-binary modules, with PNACH retained for stable resident-ELF/runtime behavior and carefully bounded temporary hypotheses. On-demand overlays such as `BTL.BIN` and `ETC.BIN` are tested through file patches and ISO rebuilds, not unguarded fixed-address cheats.
 - Scripted package composition, ISO verification, CRC actualization, and frozen
   milestone releases.
 

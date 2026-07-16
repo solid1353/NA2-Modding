@@ -17,6 +17,9 @@ Current PNACH:
 - PNACH actualization is mandatory before every ISO handoff or launch unless the user explicitly requests a no-PNACH isolation run.
 - Root `cheats/` is a real project folder and the only cheats folder we manage.
 - PNACH labels such as `// [Skip CC2 intro]` are comments only. A cheat is enabled only when its executable `patch=`/setting line is uncommented. Disabled proven cheats and disabled hypotheses must keep their executable lines commented out. Temporary PNACH hypothesis patches go at the top as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
+- Fixed-address PNACH hypotheses are safe by default only for the boot ELF or another region proven to remain resident and stable for the entire write lifetime.
+- `BTL.BIN`, `ETC.BIN`, and other on-demand modules are loaded and unloaded into reusable EE memory. Never test them with unguarded fixed-address PNACH writes: patch the file through the raw-binary module, rebuild the ISO, and test that build instead.
+- A runtime overlay PNACH write is permitted only with a proven load-state/signature guard. Dynamic heap targets require a proven allocation, address, and lifetime.
 
 ## Working Layout
 

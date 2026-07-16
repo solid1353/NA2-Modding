@@ -39,6 +39,9 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Treat `utils/old/` as an untrusted tool/archive dump. Do not execute tools from it until inspected and chosen for a specific task.
 - Log every binary patch: file, offset, original bytes, new bytes, reason.
 - PNACH is the source of truth only for emulator settings, runtime-only memory patches, and temporary hypotheses that cannot yet be represented as file-backed module edits. Permanent file-backed changes belong in named `na2_patcher` raw-binary patch sets and must not remain enabled in PNACH. `// [Name]` is only a label/comment; a PNACH item is enabled only when its executable `patch=`/setting line is uncommented.
+- Use fixed-address PNACH writes for hypothesis testing only when the target is in the boot ELF or another region proven to remain resident and stable for the entire write lifetime.
+- Never apply an unguarded fixed-address PNACH write to `BTL.BIN`, `ETC.BIN`, or another module that is loaded and unloaded on demand; the same EE address may hold unrelated data while that module is absent. Test those hypotheses by patching the file through scripts, rebuilding the ISO, and recording the result.
+- Runtime overlay PNACH testing is exceptional and requires a proven load-state/signature guard. Avoid fixed writes to dynamic heap objects unless their allocation, address, and lifetime are established.
 - Keep active PNACH files clean: confirmed named sections only, plus temporary hypothesis patches at the very top when actively testing.
 - Temporary PNACH hypothesis patches go at the top of the file as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 - Move old candidates, failed experiments, and speculative addresses to `docs/HYPOTHESES.md`.
@@ -102,7 +105,6 @@ Keep the live release list in `docs/RELEASE_FILES.md`. Current release contents 
 ## Report format
 
 Report files read, files created/modified, whether originals were untouched, scripts/commands used, hashes/sizes, and uncertainties.
-
 
 
 

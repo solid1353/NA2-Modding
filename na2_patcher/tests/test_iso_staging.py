@@ -50,6 +50,21 @@ class IsoStagingTests(unittest.TestCase):
             self.assertEqual(output.read_bytes(), b"verified build")
             self.assertFalse(building_iso_path(output).exists())
 
+    def test_stage_only_preserves_current_and_leaves_verified_candidate(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.iso"
+            output = root / "build" / "Current.iso"
+            source.write_bytes(b"new source")
+            output.parent.mkdir()
+            output.write_bytes(b"known good")
+
+            with staged_output_iso(source, output, promote=False) as temporary:
+                temporary.write_bytes(b"verified build")
+
+            self.assertEqual(output.read_bytes(), b"known good")
+            self.assertEqual(building_iso_path(output).read_bytes(), b"verified build")
+
     def test_payload_size_changes_reports_only_changed_files(self) -> None:
         source = SimpleNamespace(
             by_path={

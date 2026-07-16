@@ -62,8 +62,13 @@ def building_iso_path(output_iso: Path) -> Path:
 
 
 @contextmanager
-def staged_output_iso(source_iso: Path, output_iso: Path):
-    """Build beside the final ISO and promote it only after full success."""
+def staged_output_iso(source_iso: Path, output_iso: Path, *, promote: bool = True):
+    """Build beside the final ISO and optionally promote it after full success.
+
+    ``promote=False`` is used by the PowerShell orchestration wrapper.  It
+    leaves the fully verified ``.building`` candidate in place so the wrapper
+    can close PCSX2, rotate Current to Previous, and promote the candidate.
+    """
     output_iso.parent.mkdir(parents=True, exist_ok=True)
     building_iso = building_iso_path(output_iso)
     if source_iso == building_iso:
@@ -77,7 +82,8 @@ def staged_output_iso(source_iso: Path, output_iso: Path):
     try:
         shutil.copyfile(source_iso, building_iso)
         yield building_iso
-        os.replace(building_iso, output_iso)
+        if promote:
+            os.replace(building_iso, output_iso)
     except BaseException:
         if building_iso.exists() or building_iso.is_symlink():
             building_iso.unlink()
@@ -587,6 +593,11 @@ def main() -> int:
     parser.add_argument("--raw-defaults", action="store_true")
     parser.add_argument("--raw-log-directory", type=Path)
     parser.add_argument(
+        "--stage-only",
+        action="store_true",
+        help="leave the verified .building ISO for the orchestration wrapper to promote",
+    )
+    parser.add_argument(
         "--allow-size-changes",
         action="store_true",
         help="Allow legacy payloads to relocate ISO files whose sizes change.",
@@ -746,7 +757,7 @@ def main() -> int:
             f"only for an explicitly approved relocation build: {details}"
         )
 
-    with staged_output_iso(source_iso, output_iso) as working_iso:
+    with staged_output_iso(source_iso, output_iso, promote=not args.stage_only) as working_iso:
         current = Iso9660(working_iso)
         with working_iso.open("r+b") as output:
             for path, data in payloads.items():
@@ -853,7 +864,10 @@ def main() -> int:
         display_iso = output_iso.relative_to(workspace).as_posix()
     except ValueError:
         display_iso = output_iso.name
-    print(f"ISO: {display_iso}")
+    if args.stage_only:
+        print(f"Verified staged ISO: {building_iso_path(output_iso).name}")
+    else:
+        print(f"ISO: {display_iso}")
     return 0
 
 

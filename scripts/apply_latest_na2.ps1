@@ -44,6 +44,42 @@ function Stop-PortablePcsx2 {
     Stop-Process -Name $processName -Force -ErrorAction SilentlyContinue
 }
 
+function Promote-VerifiedIso {
+    param([Parameter(Mandatory = $true)][string]$CurrentIso)
+
+    $current = [System.IO.Path]::GetFullPath($CurrentIso)
+    $candidate = "$current.building"
+    if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+        throw "Verified staged ISO does not exist: $candidate"
+    }
+
+    $directory = [System.IO.Path]::GetDirectoryName($current)
+    $isStandardCurrent = [System.IO.Path]::GetFileName($current) -ieq 'Current.iso'
+    $previous = if ($isStandardCurrent) { Join-Path $directory 'Previous.iso' } else { $null }
+    $rotatedCurrent = $false
+
+    try {
+        if ($previous -and (Test-Path -LiteralPath $current -PathType Leaf)) {
+            [System.IO.File]::Move($current, $previous, $true)
+            $rotatedCurrent = $true
+        }
+        [System.IO.File]::Move($candidate, $current, $true)
+    }
+    catch {
+        if ($rotatedCurrent -and
+            -not (Test-Path -LiteralPath $current) -and
+            (Test-Path -LiteralPath $previous -PathType Leaf)) {
+            [System.IO.File]::Move($previous, $current, $true)
+        }
+        throw
+    }
+    finally {
+        if (Test-Path -LiteralPath $candidate) {
+            Remove-Item -Force -LiteralPath $candidate
+        }
+    }
+}
+
 if ($Help) {
     $scriptName = $MyInvocation.MyCommand.Name
     @(
@@ -77,6 +113,8 @@ if ($Help) {
         '  a new task-specific -RawLogDirectory.'
         '  Preferred: use -Profile with a pinned modular profile directory and a new'
         '  task-specific -ProfileLogDirectory. Profile mode rejects legacy package options.'
+        '  A verified Current.iso.building is promoted only after PCSX2 is closed:'
+        '  Current.iso replaces Previous.iso, then the candidate becomes Current.iso.'
         ''
         'Modes:'
         '  (none)          Build from selected sources, then run'
@@ -96,6 +134,14 @@ if (-not $OutputIso) {
     throw 'Required argument missing: -o / -OutputIso'
 }
 
+$workspaceRoot = Split-Path $PSScriptRoot -Parent
+$resolvedOutputIso = if ([System.IO.Path]::IsPathRooted($OutputIso)) {
+    [System.IO.Path]::GetFullPath($OutputIso)
+}
+else {
+    [System.IO.Path]::GetFullPath((Join-Path $workspaceRoot $OutputIso))
+}
+
 $selectedPackages = @($Packages | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 $profileSelected = -not [string]::IsNullOrWhiteSpace($Profile)
 
@@ -106,9 +152,9 @@ if ($RunOnly -and $profileSelected) {
     throw '-Profile does not apply to -r / -RunOnly.'
 }
 
-Stop-PortablePcsx2
-
 if (-not $RunOnly) {
+    # Required before any rebuild, and repeated immediately before promotion.
+    Stop-PortablePcsx2
     if (-not $profileSelected -and $selectedPackages.Count -eq 0) {
         throw 'Select at least one package with -Packages or -p.'
     }
@@ -127,9 +173,10 @@ if (-not $RunOnly) {
 
     $arguments = @(
         (Join-Path $PSScriptRoot 'apply_latest_na2.py')
-        '--workspace', (Split-Path $PSScriptRoot -Parent)
+        '--workspace', $workspaceRoot
         '--source', $InputIso
         '--output', $OutputIso
+        '--stage-only'
     )
     if ($AllowSizeChanges) {
         $arguments += '--allow-size-changes'
@@ -162,20 +209,34 @@ if (-not $RunOnly) {
         }
     }
 
-    & python -B @arguments
-    if ($LASTEXITCODE -ne 0) {
-        throw "NA2 ISO build failed (exit $LASTEXITCODE)."
+    $candidateIso = "${resolvedOutputIso}.building"
+    try {
+        & python -B @arguments
+        if ($LASTEXITCODE -ne 0) {
+            throw "NA2 ISO build failed (exit $LASTEXITCODE)."
+        }
+
+        Stop-PortablePcsx2
+        Promote-VerifiedIso -CurrentIso $resolvedOutputIso
+    }
+    finally {
+        if (Test-Path -LiteralPath $candidateIso) {
+            Remove-Item -Force -LiteralPath $candidateIso
+        }
     }
 }
+else {
+    Stop-PortablePcsx2
+}
 
-if (-not (Test-Path -LiteralPath $OutputIso -PathType Leaf)) {
-    throw "ISO does not exist: $OutputIso"
+if (-not (Test-Path -LiteralPath $resolvedOutputIso -PathType Leaf)) {
+    throw "ISO does not exist: $resolvedOutputIso"
 }
 
 if (-not $SkipActualize) {
     $global:LASTEXITCODE = 0
     try {
-        & (Join-Path $PSScriptRoot 'actualize_cheats_for_build_iso.ps1') -IsoPath $OutputIso
+        & (Join-Path $PSScriptRoot 'actualize_cheats_for_build_iso.ps1') -IsoPath $resolvedOutputIso
     }
     catch {
         throw "PNACH actualization failed: $($_.Exception.Message)"
@@ -193,5 +254,5 @@ if (-not $BuildOnly) {
         throw "PCSX2 executable does not exist: $Pcsx2Exe"
     }
 
-    Start-Process -FilePath $Pcsx2Exe -ArgumentList @('-batch', "`"$OutputIso`"")
+    Start-Process -FilePath $Pcsx2Exe -ArgumentList @('-batch', "`"$resolvedOutputIso`"")
 }

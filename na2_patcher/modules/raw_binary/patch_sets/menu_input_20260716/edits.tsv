@@ -38,6 +38,8 @@ BTL-P036	BTL-M016	10	na2_btl	0x001C37F0	copy	4	40000232			un5_btl	0x001CCC68	100
 BTL-P037	BTL-M017	10	na2_btl	0x001C46F0	copy	4	4000C230			un5_btl	0x001CE0F4	1000C230						BTL-owned battle-adjacent UI/state input range.
 BTL-P038	BTL-M018	10	na2_btl	0x001C65D0	copy	4	4000C230			un5_btl	0x001D0004	1000C230						BTL-owned battle-adjacent UI/state input range.
 BTL-P039	BTL-M019	10	na2_btl	0x001C8560	copy	4	20000332			un5_btl	0x001D1FB8	40000332						BTL-owned battle-adjacent UI/state input range.
+BTL-P044	BTL-M019	11	na2_btl	0x001C86AC	copy	4	20006330			un5_btl	0x001D21A0	40006330						ccStartMenuPrivateCmd player/view branch: use Cross for the UN5 operation path.
+BTL-P045	BTL-M019	12	na2_btl	0x001C86D4	copy	4	40000332			un5_btl	0x001D1FC4	10000332						ccStartMenuPrivateCmd close branch: use Triangle for UN5 cancel.
 BTL-P040	BTL-M020	10	na2_btl	0x001CBC18	copy	4	20006230			un5_btl	0x001D57C4	40006230						BTL-owned battle-adjacent UI/state input range.
 BTL-P041	BTL-M020	11	na2_btl	0x001CBCD4	copy	4	40006230			un5_btl	0x001D57D0	10006230						BTL-owned battle-adjacent UI/state input range.
 BTL-P042	BTL-M021	10	na2_btl	0x001CD7D0	copy	4	20006230			un5_btl	0x001D7520	40006230						BTL-owned battle-adjacent UI/state input range.
@@ -72,6 +74,36 @@ ELF-P027	ELF-M014	10	na2_elf	0x002BBF6C	copy	4	40006330			un5_elf	0x002CEC04	100
 ELF-P028	ELF-M014	11	na2_elf	0x002BC2D8	copy	4	40006330			un5_elf	0x002CECFC	10006330						Two-player join/selection state machine; the differing checks are cancel/back actions.
 ELF-P029	ELF-M015	10	na2_elf	0x002BC478	copy	4	20008330			un5_elf	0x002CF148	40008330						Five-item selector with confirm, cancel, and cyclic vertical navigation.
 ELF-P030	ELF-M015	11	na2_elf	0x002BC4B4	copy	4	40008330			un5_elf	0x002CF154	10008330						Five-item selector with confirm, cancel, and cyclic vertical navigation.
+ELF-P031	ELF-M016	10	na2_elf	0x000E5FF4	copy	4	20000232			un5_elf	0x000EBEDC	40000232						Save/load confirm-only helper used repeatedly by the parent controller.
+ELF-P032	ELF-M017	10	na2_elf	0x000E7540	copy	4	20006230			un5_elf	0x000ED3F8	40006230						Blocking memory-card/save-load prompt loop with confirm-to-advance behavior.
+ELF-P033	ELF-M018	10	na2_elf	0x000FAD98	copy	4	20004230			un5_elf	0x001019C0	40004230						Confirm-to-close overlay rendered inside another front-end object.
+ELF-P034	ELF-M019	10	na2_elf	0x00284DD4	copy	4	20004230			un5_elf	0x002964C4	40004230						Two-player multi-action front-end input decoder: first accept path.
+ELF-P035	ELF-M019	11	na2_elf	0x00284DF0	copy	4	20004230			un5_elf	0x002964D4	40004230						Two-player multi-action front-end input decoder: second accept path.
+ELF-P036	ELF-M019	12	na2_elf	0x00284E0C	copy	4	40006230			un5_elf	0x002964E4	10006230						Two-player multi-action front-end input decoder: cancel path.
+ELF-P037	ELF-M020	10	na2_elf	0x00288330	copy	4	2000A330			un5_elf	0x00299BC0	4000A330						Second controller-assignment subhandler: accept path.
+ELF-P038	ELF-M020	11	na2_elf	0x00288360	copy	4	4000A330			un5_elf	0x00299BCC	1000A330						Second controller-assignment subhandler: cancel path.
+ELF-P039	ELF-M021	10	na2_elf	0x00289680	copy	4	20006230			un5_elf	0x0029AFF4	40006230						Sound Settings handler: accept path.
+ELF-P040	ELF-M021	11	na2_elf	0x0028974C	copy	4	40006230			un5_elf	0x0029B000	10006230						Sound Settings handler: rollback/cancel path.
+ELF-P041	ELF-M022	10	na2_elf	0x00290AE8	copy	4	20008230			un5_elf	0x002A2828	40008230						Timed confirm-to-advance state after a short input delay.
+ELF-P042	ELF-M023	10	na2_elf	0x002B7ABC	copy	4	20006230			un5_elf	0x002CA66C	40006230						Two-item front-end/setup submenu: accept path.
+ELF-P043	ELF-M023	11	na2_elf	0x002B7B34	copy	4	40006230			un5_elf	0x002CA678	10006230						Two-item front-end/setup submenu: cancel path.
+ELF-P044	ELF-M024	10	na2_elf	0x000E6ED0	copy	4	20000232			un5_elf	0x000ECCF0	40000232						Shared two-choice Yes/No modal accept check.
+ELF-P045	ELF-M024	11	na2_elf	0x000E6F24	copy	4	40000232			un5_elf	0x000ECD2C	10000232						Shared two-choice Yes/No modal cancel check.
+ELF-P046	ELF-M025	10	na2_elf	0x000DF910	copy	4	20080232			un5_elf	0x000E55D4	40080232						Title controller combined Start/accept check.
+ELF-P047	ELF-M025	11	na2_elf	0x000DFB0C	copy	4	60080232			un5_elf	0x000E5758	50080232						Title controller combined Start/accept/cancel check.
+ELF-P048	ELF-M026	10	na2_elf	0x002B5F64	copy	4	20006230			un5_elf	0x002C8A68	40006230						Character-selection primary-state accept check.
+ELF-P049	ELF-M026	11	na2_elf	0x002B5F84	copy	4	40006230			un5_elf	0x002C8A74	10006230						Character-selection primary-state cancel check.
+ELF-P050	ELF-M026	12	na2_elf	0x002B5FF0	copy	4	10006230			un5_elf	0x002C8A8C	20006230						Character-selection primary-state operation1 check.
+ELF-P051	ELF-M026	13	na2_elf	0x002B60FC	copy	4	20006230			un5_elf	0x002C8AE8	40006230						Character-selection secondary-state accept check.
+ELF-P052	ELF-M026	14	na2_elf	0x002B611C	copy	4	40006230			un5_elf	0x002C8AF4	10006230						Character-selection secondary-state cancel check.
+ELF-P053	ELF-M026	15	na2_elf	0x002B6150	copy	4	10006230			un5_elf	0x002C8B00	20006230						Character-selection secondary-state operation1 check.
+ELF-P054	ELF-M027	10	na2_elf	0x000DF29C	copy	4	2008A230			un5_elf	0x000E4F44	4008A230						Title New Game/Continue combined Start/accept check.
+ELF-P055	ELF-M028	10	na2_elf	0x002B6A54	copy	4	20006230			un5_elf	0x002C95BC	40006230						Support-selection first-state accept check.
+ELF-P056	ELF-M028	11	na2_elf	0x002B6C70	copy	4	40006230			un5_elf	0x002C95C8	10006230						Support-selection first-state cancel check.
+ELF-P057	ELF-M028	12	na2_elf	0x002B6CDC	copy	4	10006230			un5_elf	0x002C95D4	20006230						Support-selection first-state operation1 check.
+ELF-P058	ELF-M028	13	na2_elf	0x002B6DE8	copy	4	20006230			un5_elf	0x002C9630	40006230						Support-selection second-state accept check.
+ELF-P059	ELF-M028	14	na2_elf	0x002B7000	copy	4	40006230			un5_elf	0x002C963C	10006230						Support-selection second-state cancel check.
+ELF-P060	ELF-M028	15	na2_elf	0x002B7034	copy	4	10006230			un5_elf	0x002C9648	20006230						Support-selection second-state operation1 check.
 ETC-P001	ETC-M001	10	na2_etc	0x000012F8	copy	4	20006230			un5_etc	0x00001538	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
 ETC-P002	ETC-M001	11	na2_etc	0x0000131C	copy	4	40006230			un5_etc	0x00001544	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
 ETC-P003	ETC-M002	10	na2_etc	0x00001FB0	copy	4	20008230			un5_etc	0x00002230	40008230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.

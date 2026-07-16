@@ -40,7 +40,7 @@ Build it with:
   -ProfileLogDirectory logs/na2_patcher/current_<unique_run_id>
 ```
 
-The compositor writes the candidate ISO as `build/Current.iso.building`, verifies it completely, writes the build logs, and only then replaces `build/Current.iso`. Any caught build failure removes the `.building` file and preserves the previous `Current.iso`.
+The compositor writes the candidate ISO as `build/Current.iso.building`, verifies it completely, fsyncs it, and writes the build logs before promotion. The PowerShell orchestration wrapper then closes portable PCSX2, atomically replaces `build/Previous.iso` with the outgoing `build/Current.iso`, and atomically promotes the verified candidate to `build/Current.iso`. A failed promotion restores the outgoing ISO to `Current.iso` when safe, and any caught failure removes `.building`.
 
 File-size changes are rejected by default. Legacy relocation behavior is available only through the explicit `-AllowSizeChanges` / `--allow-size-changes` option.
 

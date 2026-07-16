@@ -1,4 +1,4 @@
 key	value
 schema_version	1
 profile_id	current
-description	Font m01 and translation milestone m03/v33; menu-input ELF-M008 retained but intentionally disabled as WIP.
+description	Current integrated menu-input build: font m01, translation m03/v33, 28 ELF handlers, 19 ETC handlers, and the disassembly-classified BTL setup/stage/command/pause handler set.

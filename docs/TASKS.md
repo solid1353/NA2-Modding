@@ -2,19 +2,16 @@
 
 ## In Progress
 
-### Translation
+### String translation
 - Test translated strings extensively and deal with remainders.
 - Fix flickering bug on Damage line in Practice mode.
 - Deal with unresolved (mappings.tsv and ChatGPT's history).
+
+### UI Translation
 - Replace UI textures (consider already upscaled or upscaling them myself).
 
-### Swap buttons in menus
-- `ELF-M008` is runtime-proven for major front-end menus but intentionally disabled in the current profile while the broader menu-input port remains WIP. Do not silently re-enable it.
-- `ELF-M001`, `ELF-M002`, and `ELF-M003` each produced no changes when tested alone across the title/load/save matrix. Keep all three disabled but testable; the combined family result is interaction-dependent.
-- After the translation/orchestrator migration, isolate pairwise save/load handler combinations instead of discarding the statically matched patches.
-- Identify loading behavior separately if it remains unchanged after the save/load-family test.
-- Keep Master Mode outside the current button-swap scope.
-- Review and approve additional named handler groups individually; do not reapply the broad ETC package.
+### Menu restructuring
+- Analyze differences against UN6 and remove adventure mode.
 
 ### Raw binary module
 - Maintain the exact atomic font m01 `GF4.BIN` and ELF reconstruction as the current baseline.

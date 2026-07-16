@@ -1,2 +1,0 @@
-schema_version	package_id	package_version	game	description	evidence_path
-1	menu_input_candidates_20260716	1	NA2	Disabled UN5-to-NA2 menu-input candidates pending review and runtime classification.	raw_binary_patcher/patch_sets/menu_input_20260716/evidence.tsv

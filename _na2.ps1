@@ -106,7 +106,7 @@ catch {
 
 try {
 $scriptsRoot = Join-Path $na2Root 'scripts'
-$builderRoot = Join-Path $na2Root 'translation_package_builder'
+$translationModuleRoot = Join-Path $na2Root 'na2_patcher\modules\translation'
 $command = if ($Mode) { $Mode.ToLowerInvariant() } else { '' }
 
 function Write-Na2Stage {
@@ -114,8 +114,8 @@ function Write-Na2Stage {
     Write-Host "[na2] $Message" -ForegroundColor Cyan
 }
 
-function Get-LatestBuilderTranslationTsv {
-    $runsRoot = Join-Path $builderRoot 'work\runs'
+function Get-LatestTranslationTsv {
+    $runsRoot = Join-Path $na2Root 'logs\na2_patcher\translation_exports\runs'
     if (-not (Test-Path -LiteralPath $runsRoot -PathType Container)) {
         return $null
     }
@@ -129,37 +129,37 @@ function Get-LatestBuilderTranslationTsv {
     $run = Get-Content -LiteralPath $summary.FullName -Raw | ConvertFrom-Json
     $table = [string]$run.translation_tsv
     if ([string]::IsNullOrWhiteSpace($table)) {
-        throw "Builder run summary does not reference a translation TSV: $($summary.FullName)"
+        throw "Translation export summary does not reference a translation TSV: $($summary.FullName)"
     }
 
     $table = Join-Path $summary.DirectoryName $table
     if (-not (Test-Path -LiteralPath $table -PathType Leaf)) {
-        throw "Builder run summary does not reference an existing translation TSV: $($summary.FullName)"
+        throw "Translation export summary does not reference an existing translation TSV: $($summary.FullName)"
     }
 
     return (Resolve-Path -LiteralPath $table).Path
 }
 
-function Invoke-TranslationBuilder {
+function Invoke-TranslationExport {
     if ($BtlApplyTsv -or $EtcApplyTsv) {
-        throw 'BtlApplyTsv and EtcApplyTsv are obsolete. The translation builder now produces one unified TSV.'
+        throw 'BtlApplyTsv and EtcApplyTsv are obsolete. The translation module now produces one unified TSV.'
     }
     if ($OutputDirectory) {
-        throw 'OutputDirectory is obsolete. Translation builder runs are stored under translation_package_builder\work\runs.'
+        throw 'OutputDirectory is obsolete. Translation exports are stored under logs\na2_patcher\translation_exports\runs.'
     }
 
-    $builderArgs = @{}
+    $exportArgs = @{}
     @{
         Na2Iso = $Na2Iso
     }.GetEnumerator() | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Value) } |
-        ForEach-Object { $builderArgs[$_.Key] = $_.Value }
-    if ($NoStrictHash) { $builderArgs.NoStrictHash = $true }
+        ForEach-Object { $exportArgs[$_.Key] = $_.Value }
+    if ($NoStrictHash) { $exportArgs.NoStrictHash = $true }
 
-    $builder = Join-Path $builderRoot 'build_na2_translation_package.ps1'
+    $export = Join-Path $translationModuleRoot 'export_translation.ps1'
     if ($RemainingArguments.Count) {
-        & $builder @builderArgs @RemainingArguments
+        & $export @exportArgs @RemainingArguments
     } else {
-        & $builder @builderArgs
+        & $export @exportArgs
     }
 }
 
@@ -185,12 +185,12 @@ if ($Help) {
 }
 
 if ($command -eq 'ub') {
-    throw 'na2 ub is retired. Import new mappings into translation_package_builder, validate them, then create a new immutable profile snapshot.'
+    throw 'na2 ub is retired. Import new mappings into na2_patcher\modules\translation, validate them, then create a new immutable profile snapshot.'
 }
 
 if ($command -eq 'tr') {
     Write-Na2Stage 'Generate translation TSV'
-    Invoke-TranslationBuilder
+    Invoke-TranslationExport
     return
 }
 
@@ -254,9 +254,9 @@ elseif (-not $RunOnly -and -not $applyArgs.ContainsKey('Profile')) {
         }
         $translationSelected = @($applyArgs.Packages | Where-Object { $_ -ieq 'Translation' }).Count -gt 0
         if ($translationSelected -and -not $applyArgs.ContainsKey('TranslationTsv')) {
-            $latestBuilderTsv = Get-LatestBuilderTranslationTsv
-            if ($latestBuilderTsv) {
-                $applyArgs.TranslationTsv = $latestBuilderTsv
+            $latestTranslationTsv = Get-LatestTranslationTsv
+            if ($latestTranslationTsv) {
+                $applyArgs.TranslationTsv = $latestTranslationTsv
             }
         }
     }

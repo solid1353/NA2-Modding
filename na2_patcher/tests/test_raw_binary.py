@@ -7,11 +7,7 @@ import unittest
 from dataclasses import replace
 from pathlib import Path
 
-import sys
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-import patch_binary as patcher
+from na2_patcher.modules.raw_binary import engine as patcher
 
 
 def sha256(data: bytes) -> str:
@@ -156,7 +152,7 @@ class RawBinaryPatcherTests(unittest.TestCase):
                 output,
                 "work/temp/output",
                 logs,
-                "logs/raw_binary_patcher/test",
+                "logs/na2_patcher/raw_binary/test",
             )
             result = (output / "target.bin").read_bytes()
             self.assertEqual(len(result), 16)

@@ -15,10 +15,10 @@
 - Keep Master Mode outside the current button-swap scope.
 - Review and approve additional named handler groups individually; do not reapply the broad ETC package.
 
-### Raw binary patcher
+### Raw binary module
 - Keep existing font ZIP composition until a texture/data asset module handles `GF4.BIN` and related resources.
 - Convert newly approved GPT mappings into named patch groups instead of replacement binaries.
-- Later integrate texture, sound, data-pack, and translation modules under the same orchestrator.
+- Add future texture, sound, and structured data-pack modules under the same orchestrator.
 
 ### Modular patching
 - Add a native texture/data-pack module for `GF4.BIN`, then retire the remaining font m01 compatibility ZIP.

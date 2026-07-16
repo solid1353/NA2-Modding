@@ -1,4 +1,4 @@
-# Raw binary patcher
+# Raw binary module
 
 This component applies repository-owned declarative TSV patch sets to verified clean
 binaries. GPT-generated mapping archives are evidence inputs, not executable patch
@@ -22,15 +22,15 @@ sets.
 Run commands from the repository root.
 
 ```powershell
-python raw_binary_patcher/patch_binary.py validate `
-  --package raw_binary_patcher/patch_sets/menu_input_20260716 `
+python -m na2_patcher.modules.raw_binary.engine validate `
+  --package na2_patcher/modules/raw_binary/patch_sets/menu_input_20260716 `
   --root na2=source/NA2 `
   --root un5=source/UN5
 ```
 
 ```powershell
-python raw_binary_patcher/patch_binary.py plan `
-  --package raw_binary_patcher/patch_sets/menu_input_20260716 `
+python -m na2_patcher.modules.raw_binary.engine plan `
+  --package na2_patcher/modules/raw_binary/patch_sets/menu_input_20260716 `
   --root na2=source/NA2 `
   --root un5=source/UN5 `
   --patch ELF-M008
@@ -39,15 +39,17 @@ python raw_binary_patcher/patch_binary.py plan `
 Application requires a new output directory and an approved patch status:
 
 ```powershell
-python raw_binary_patcher/patch_binary.py apply `
-  --package raw_binary_patcher/patch_sets/example `
+python -m na2_patcher.modules.raw_binary.engine apply `
+  --package na2_patcher/modules/raw_binary/patch_sets/example `
   --root na2=source/NA2 `
   --root un5=source/UN5 `
   --patch example_patch `
   --output-root work/temp/example_patch_output
 ```
 
-Default logs are written under `logs/raw_binary_patcher/<run-id>/`.
+Default standalone logs are written under `logs/na2_patcher/raw_binary/<run-id>/`.
+Profile builds store the same patch and hash tables beneath that profile run's
+module directory.
 
 ## Patch status lifecycle
 

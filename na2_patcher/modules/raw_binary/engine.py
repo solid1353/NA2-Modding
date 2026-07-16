@@ -925,7 +925,7 @@ def main() -> int:
         log_text = args.log_directory
     else:
         run_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
-        log_text = f"logs/raw_binary_patcher/{run_id}"
+        log_text = f"logs/na2_patcher/raw_binary/{run_id}"
     log_directory = command_relative_path(log_text, "--log-directory", workspace)
     apply_package(
         package,

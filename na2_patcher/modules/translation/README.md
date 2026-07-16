@@ -1,15 +1,13 @@
-# NA2 Translation Package Builder v33
+# NA2 translation module (mapping version 33)
 
-This builder exports one post-composition translation TSV for **Naruto: Narutimate Accel 2**. It never packages patched BIN or ELF payloads. The normal NA2 profile workflow now invokes `na2_patcher/modules/translation.py` directly and logs the same plan without using a TSV as an inter-stage handoff; this builder remains the standalone review/compatibility interface.
+This first-class `na2_patcher` module builds an in-memory translation plan for **Naruto: Narutimate Accel 2**. It never packages patched BIN or ELF payloads. Normal profile builds invoke `engine.py` directly and log the plan without using a TSV as an inter-stage handoff. `na2 tr` exports the same plan as a standalone TSV plus JSON summary for review and compatibility.
 
-This archive contains only `translation_package_builder`. Project-level wrapper and ISO-building scripts remain outside the package.
-
-## Builder metadata
+## Mapping metadata
 
 - Version: `33`
 - Packaged `mappings.tsv` SHA-256: `f7cf3be222da4f81b6beba0299fdd69dc514d3c816cb0916dd4c649b7aef800f`
 
-The README is the canonical home for both values. The builder does not ship one-line `VERSION.txt` or `MAPPINGS_DEFAULT.sha256` files. It reads and validates this metadata directly from `README.md`.
+The README is the canonical home for both values. The module does not use one-line `VERSION.txt` or `MAPPINGS_DEFAULT.sha256` sidecars; it reads and validates this metadata directly from `README.md`.
 
 ## Source and target scope
 
@@ -42,18 +40,16 @@ The 12 columns are:
 - `enabled=1` applies the row.
 - `enabled=0` retains the row without applying it.
 
-Enabled flags persist outside the replaceable builder directory at:
+Enabled flags persist outside the module directory at:
 
-`work\translation_builder_state\enabled_state.tsv`
+`work\na2_patcher\translation\enabled_state.tsv`
 
 Packaged defaults are distinguished from actual user changes as follows:
 
 1. A user-edited current `mappings.tsv` always wins and refreshes persistent state.
 2. An untouched packaged table inherits saved flags by stable `id` only.
-3. If no state exists, archived builders under `trash\translation_package_builder_removed_*` are considered only when their own packaged-default hash is available.
-4. An archived table that is byte-for-byte identical to its packaged default is skipped because it contains no user edits.
-5. Legacy semantic migration is used only for an archived table proven different from its packaged default. An archive without a verifiable default hash is skipped rather than guessed at.
-6. Effective flags are written atomically to both `mappings.tsv` and persistent state.
+3. The former `work\translation_builder_state\enabled_state.tsv` is accepted only as a one-time migration source when the new state file does not exist.
+4. Effective flags are written atomically to both `mappings.tsv` and persistent state.
 
 This preserves the v28 repair for the migration defect where the new enabled `M0745` dialog mapping could inherit `enabled=0` from an unchanged, default-disabled v26 relocation fragment.
 
@@ -96,7 +92,7 @@ Arguments use compact key/value syntax, for example:
 
 Each run creates:
 
-`translation_package_builder\work\runs\<UTC+3 run id>\`
+`logs\na2_patcher\translation_exports\runs\<UTC+3 run id>\`
 
 containing:
 
@@ -111,7 +107,7 @@ All paths written into generated artifacts are relative. In particular, `build_s
 
 `build_summary.json` contains only general and aggregate run information:
 
-- builder version, run ID, timezone, and selected targets;
+- mapping version, run ID, timezone, and selected targets;
 - relative translation TSV reference;
 - patch and mapping totals;
 - active mapping coverage grouped by mode and section;
@@ -123,11 +119,11 @@ Disabled and unresolved rows remain solely in `mappings.tsv`.
 
 Known clean-source SHA-1 values are checked by default. `-NoStrictHash` disables those checks only for deliberate experiments.
 
-The builder rejects malformed flags, duplicate IDs, invalid offsets, invalid source references, malformed transforms, overlapping active mappings, unexpected structural bytes, text exceeding its declared slot or sequence block, malformed target sequences, and invalid named-color conversion. Enabled bad mappings fail the build instead of becoming silent runtime skips.
+The module rejects malformed flags, duplicate IDs, invalid offsets, invalid source references, malformed transforms, overlapping active mappings, unexpected structural bytes, text exceeding its declared slot or sequence block, malformed target sequences, and invalid named-color conversion. Enabled bad mappings fail the build instead of becoming silent runtime skips.
 
 ### Exact slot boundaries
 
-A text mapping's `capacity` must end inside zero padding belonging to that string. The builder now rejects a declared slot if any nonzero byte appears after the original NUL terminator within that capacity. This prevents a text write from zero-filling adjacent pointer tables or other structural data.
+A text mapping's `capacity` must end inside zero padding belonging to that string. The module rejects a declared slot if any nonzero byte appears after the original NUL terminator within that capacity. This prevents a text write from zero-filling adjacent pointer tables or other structural data.
 
 This check directly guards against both v28 regressions fixed in v29:
 
@@ -242,7 +238,7 @@ A clean-source full build was validated with all three targets selected:
 
 v31 ports the character-specific Command Chart move names by matching the actual table structures instead of searching for isolated Japanese strings.
 
-NA2 contains 74 verified command-record arrays in `SLPS_258.37`. Each record is `0x54` bytes and stores its displayed-name pointer at record offset `+0x08`. UN5 contains the corresponding per-character pointer arrays in `PRG/TEXTENG.BIN`. The builder data was expanded only where the NA2 record index and the corresponding UN5 pointer-table index both reference nonblank text. The Naruto mappings introduced in v28-v30 served as the anchor and were reproduced exactly by this method before it was extended to the other characters.
+NA2 contains 74 verified command-record arrays in `SLPS_258.37`. Each record is `0x54` bytes and stores its displayed-name pointer at record offset `+0x08`. UN5 contains the corresponding per-character pointer arrays in `PRG/TEXTENG.BIN`. The mapping data was expanded only where the NA2 record index and the corresponding UN5 pointer-table index both reference nonblank text. The Naruto mappings introduced in v28-v30 served as the anchor and were reproduced exactly by this method before it was extended to the other characters.
 
 This adds 1,041 new Command Chart mappings:
 
@@ -292,7 +288,7 @@ All generated paths remain relative. v31 adds no absolute script paths, no patch
 
 ### Packed multi-string message blocks
 
-Several NA2 dialogs are stored as consecutive NUL-terminated fragments inside one fixed-size region. Earlier builder versions treated each fragment as an independent fixed slot and zero-filled the remainder of every original fragment. When an English fragment was shorter than the Japanese one, the inserted zero padding created an early empty string and stopped the renderer before later fragments.
+Several NA2 dialogs are stored as consecutive NUL-terminated fragments inside one fixed-size region. Earlier mapping versions treated each fragment as an independent fixed slot and zero-filled the remainder of every original fragment. When an English fragment was shorter than the Japanese one, the inserted zero padding created an early empty string and stopped the renderer before later fragments.
 
 v30 adds `sequence` mode for these verified blocks. A sequence mapping:
 
@@ -336,7 +332,7 @@ The packaged v30 table contains 854 mappings: 844 enabled and 10 disabled. Activ
 
 ## Rolling runtime issue log
 
-This log persists unresolved visual/runtime findings across builder versions. Entries implemented in the current builder remain in the verification section until confirmed in-game.
+This log persists unresolved visual/runtime findings across mapping versions. Entries implemented in the current module remain in the verification section until confirmed in-game.
 
 ### Implemented in v33, runtime verification required
 
@@ -384,7 +380,7 @@ PCSX2 application chrome, toolbar text, pause indicators, graphical controller p
 
 ## v33 test checklist
 
-1. Build from a clean installed v33 directory and confirm the summary reports builder version 33.
+1. Export from a clean mapping-version-33 module and confirm the summary reports version 33.
 2. Confirm `build_summary.json`, console output, scripts, and documentation contain only relative path references.
 3. Preserve external enabled state and verify `M0745=1`; `M0725` must remain enabled and apply as a `slot` mapping.
 4. Recheck all 54 supplied Collection screenshots and confirm every v32-covered model-animation, voice-title, and jutsu entry is English.
@@ -397,17 +393,17 @@ PCSX2 application chrome, toolbar text, pause indicators, graphical controller p
 
 ## Integration expectations
 
-- The translation engine is repository-owned at `na2_patcher/modules/translation.py`; this directory owns the live mappings and compatibility wrapper only.
-- Do not replace the integrated engine by extracting a builder archive over the project.
-- Do not copy builder `work` output into the archive.
-- Do not add patched `BTL.BIN`, `ETC.BIN`, or `SLPS_258.37` payloads to builder releases.
+- The repository-owned engine, live mappings, documentation, and export wrapper all live in `na2_patcher/modules/translation/`.
+- Do not replace the integrated module by extracting a legacy builder archive over the project.
+- Do not copy generated exports back into the module.
+- Do not add patched `BTL.BIN`, `ETC.BIN`, or `SLPS_258.37` payloads to translation milestones.
 - The profile orchestrator owns composition and ISO application.
 - Translation is an ordered first-class module and is currently applied after the font overlay and raw menu patch so conflicts are checked against their composed bytes.
 
 ## Direct use
 
 ```powershell
-& '.\translation_package_builder\build_na2_translation_package.ps1'
+& '.\na2_patcher\modules\translation\export_translation.ps1'
 ```
 
 Default target selection is `BTL,ETC,SLPS`. `ELF`, `SLES`, and `EXE` alias `SLPS`; `ALL` selects every target.

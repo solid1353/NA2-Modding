@@ -37,5 +37,6 @@ context rather than repeated here.
   contents.
 
 Component-specific documentation stays with its component, including the
-[package history](packages/README.md) and
-[translation package builder](translation_package_builder/README.md).
+[package history](packages/README.md), the
+[translation module](na2_patcher/modules/translation/README.md), and the
+[raw binary module](na2_patcher/modules/raw_binary/README.md).

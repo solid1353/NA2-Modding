@@ -18,7 +18,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
-from raw_binary_patcher import patch_binary
+from na2_patcher.modules.raw_binary import engine as patch_binary
 from na2_patcher.profile import Profile, ProfileModule, load_profile
 from na2_patcher.modules import translation as translation_module
 

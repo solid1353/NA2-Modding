@@ -9,10 +9,11 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$builderRoot = $PSScriptRoot
-$projectRoot = Split-Path -Parent $builderRoot
-$builder = Join-Path $builderRoot 'scripts\build_translation_package.py'
-$mappingRoot = $builderRoot
+$moduleRoot = $PSScriptRoot
+$projectRoot = [IO.Path]::GetFullPath((Join-Path $moduleRoot '..\..\..'))
+$engine = Join-Path $moduleRoot 'engine.py'
+$mappingRoot = $moduleRoot
+$workRoot = Join-Path $projectRoot 'logs\na2_patcher\translation_exports'
 
 if ([string]::IsNullOrWhiteSpace($Na2Folder)) {
     $candidate = Join-Path $projectRoot 'source\NA2'
@@ -51,7 +52,7 @@ if ([string]::IsNullOrWhiteSpace($Un5Folder) -and [string]::IsNullOrWhiteSpace($
 }
 
 $arguments = @(
-    '--work-root', (Join-Path $builderRoot 'work'),
+    '--work-root', $workRoot,
     '--data-root', $mappingRoot,
     '--apply', $Apply
 )
@@ -74,7 +75,7 @@ if ($NoStrictHash) {
     $arguments += '--no-strict-hash'
 }
 
-& python $builder @arguments
+& python $engine @arguments
 if ($LASTEXITCODE -ne 0) {
-    throw "Translation package builder failed with exit code $LASTEXITCODE"
+    throw "NA2 translation module failed with exit code $LASTEXITCODE"
 }

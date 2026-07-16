@@ -68,7 +68,7 @@ class IsoRecord:
 
 @dataclass(frozen=True)
 class TranslationPlan:
-    builder_version: int
+    mapping_version: int
     packaged_mappings_sha256: str
     patch_rows: list[dict[str, str]]
     summary: dict[str, object]
@@ -335,39 +335,13 @@ def read_any_mapping_enabled(path: Path) -> tuple[dict[str, str], dict[str, str]
     return by_id, by_key
 
 
-def read_packaged_mappings_hash(builder_root: Path) -> Optional[str]:
-    """Read the packaged mappings hash from README metadata or a legacy sidecar."""
-    readme_path = builder_root / "README.md"
-    if readme_path.is_file():
-        try:
-            text = readme_path.read_text(encoding="utf-8")
-        except OSError:
-            text = ""
-        match = re.search(
-            r"(?mi)^- Packaged `mappings\.tsv` SHA-256:\s*`([0-9a-f]{64})`\s*$",
-            text,
-        )
-        if match:
-            return match.group(1).lower()
-
-    legacy_path = builder_root / "MAPPINGS_DEFAULT.sha256"
-    if legacy_path.is_file():
-        try:
-            value = legacy_path.read_text(encoding="ascii").strip().lower()
-        except OSError:
-            return None
-        if re.fullmatch(r"[0-9a-f]{64}", value):
-            return value
-    return None
-
-
-def read_builder_metadata(data_root: Path) -> tuple[int, str]:
-    """Read the canonical builder version and packaged mappings hash from README."""
+def read_mapping_metadata(data_root: Path) -> tuple[int, str]:
+    """Read the canonical mapping version and packaged mappings hash from README."""
     readme_path = data_root / "README.md"
     try:
         text = readme_path.read_text(encoding="utf-8")
     except OSError as exc:
-        raise ValueError(f"Could not read builder metadata from {readme_path}") from exc
+        raise ValueError(f"Could not read mapping metadata from {readme_path}") from exc
 
     version_match = re.search(r"(?mi)^- Version:\s*`([0-9]+)`\s*$", text)
     hash_match = re.search(
@@ -376,12 +350,12 @@ def read_builder_metadata(data_root: Path) -> tuple[int, str]:
     )
     if version_match is None or hash_match is None:
         raise ValueError(
-            "README.md must contain Builder metadata entries for Version and "
+            "README.md must contain mapping metadata entries for Version and "
             "Packaged `mappings.tsv` SHA-256"
         )
     version = int(version_match.group(1))
     if version <= 0:
-        raise ValueError("README.md builder Version must be positive")
+        raise ValueError("README.md mapping Version must be positive")
     return version, hash_match.group(1).lower()
 
 
@@ -393,49 +367,36 @@ def persist_enabled_state(
     """Preserve enabled flags while distinguishing user edits from old defaults.
 
     A user-edited current table wins. An untouched packaged table first inherits
-    stable-ID state. Trash migration is attempted only when the archived table can
-    be proven different from its own packaged default; unchanged old defaults are
-    skipped, so redesigned mappings keep their new packaged flags.
+    stable-ID state. A legacy state file is accepted for one-time migration, but
+    archived builder directories are no longer searched.
     """
     rows = read_rows(mapping_path)
     current_hash = sha256(mapping_path.read_bytes()).lower()
-    project_root = data_root.resolve().parent
-    state_root = project_root / "work" / "translation_builder_state"
+    project_root = next(
+        (
+            parent
+            for parent in (data_root.resolve(), *data_root.resolve().parents)
+            if (parent / "AGENTS.md").is_file() and (parent / "na2_patcher").is_dir()
+        ),
+        None,
+    )
+    if project_root is None:
+        raise ValueError(f"Could not locate repository root from {data_root}")
+    state_root = project_root / "work" / "na2_patcher" / "translation"
     state_path = state_root / "enabled_state.tsv"
+    legacy_state_path = project_root / "work" / "translation_builder_state" / "enabled_state.tsv"
 
     prior_by_id: dict[str, str] = {}
     prior_by_key: dict[str, str] = {}
     allow_prior_enable = False
 
     if current_hash == packaged_hash:
-        if state_path.is_file():
+        inherited_state_path = state_path if state_path.is_file() else legacy_state_path
+        if inherited_state_path.is_file():
             # Persistent state uses stable IDs only. Semantic matching here could let
             # a retired mapping mutate a redesigned row that happens to look similar.
-            prior_by_id, _ = read_any_mapping_enabled(state_path)
+            prior_by_id, _ = read_any_mapping_enabled(inherited_state_path)
             allow_prior_enable = True
-        else:
-            trash_root = project_root / "trash"
-            candidates = sorted(
-                trash_root.glob("translation_package_builder_removed_*/mappings.tsv"),
-                key=lambda candidate: candidate.stat().st_mtime,
-                reverse=True,
-            ) if trash_root.is_dir() else []
-
-            for candidate in candidates:
-                old_packaged_hash = read_packaged_mappings_hash(candidate.parent)
-                if old_packaged_hash is None:
-                    # Without the old default hash, packaged flags and user edits
-                    # cannot be distinguished safely.
-                    continue
-                candidate_hash = sha256(candidate.read_bytes()).lower()
-                if candidate_hash == old_packaged_hash:
-                    # Byte-identical old defaults contain no user flag edits.
-                    continue
-                prior_by_id, prior_by_key = read_any_mapping_enabled(candidate)
-                allow_prior_enable = bool(prior_by_id)
-                if prior_by_id or prior_by_key:
-                    break
-
         changed = False
         for row in rows:
             value = prior_by_id.get(row["id"])
@@ -854,7 +815,7 @@ def build_translation_plan(
                 raise ValueError(f"Unexpected {key} SHA-1: {actual}; expected {expected}")
 
     data_root = data_root.resolve()
-    builder_version, packaged_hash = read_builder_metadata(data_root)
+    mapping_version, packaged_hash = read_mapping_metadata(data_root)
     mapping_path = data_root / "mappings.tsv"
     rows_raw = (
         persist_enabled_state(mapping_path, data_root, packaged_hash)
@@ -895,7 +856,7 @@ def build_translation_plan(
     active_sections = Counter(text_sections)
     active_sections.update(byte_sections)
     summary: dict[str, object] = {
-        "builder_version": builder_version,
+        "mapping_version": mapping_version,
         "mode": "official-source translation module",
         "targets": selected_list,
         "output": {
@@ -913,7 +874,7 @@ def build_translation_plan(
         "translated_file_hashes": translated_hashes,
     }
     return TranslationPlan(
-        builder_version=builder_version,
+        mapping_version=mapping_version,
         packaged_mappings_sha256=packaged_hash,
         patch_rows=patch_rows,
         summary=summary,
@@ -953,7 +914,7 @@ def main() -> int:
     plan_output = dict(plan.summary["output"])
     translated_hashes = dict(plan.summary["translated_file_hashes"])
     summary = {
-        "builder_version": plan.builder_version,
+        "mapping_version": plan.mapping_version,
         "mode": "official-source post-composition TSV",
         "run_id": run_id,
         "timezone": "UTC+03:00",

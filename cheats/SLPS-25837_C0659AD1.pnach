@@ -1,5 +1,7 @@
 gametitle=Naruto Shippuuden: Narutimate Accel 2 (SLPS-25837)
 
+// # Testing
+
 // Substitution reliability hypothesis - bypass 0x800 action-flag skip
 // patch=1,EE,201917A8,extended,00000000
 // patch=1,EE,20191C80,extended,00000000
@@ -8,35 +10,35 @@ gametitle=Naruto Shippuuden: Narutimate Accel 2 (SLPS-25837)
 // Substitution reliability hypothesis - allow primary action outside mode bits == 3
 // patch=1,EE,20190FD4,extended,00000000
 
+// # Rendering
+
 // [Widescreen 16:9]
 // gsaspectratio=16:9
 // patch=1,EE,20AF3694,extended,3F400000
 
-// [Sub cost = 3/15]
-// patch=1,EE,102298BC,extended,00004040
+// # QoL
 
-// [Skip CC2 intro]
-patch=1,EE,201DE768,extended,A784CBDC
+// [Intro skips]
+patch=1,EE,201DE768,extended,A784CBDC // skip CC2 intro
+patch=1,EE,201DE7C4,extended,10000007 // skip opening
 
-// [Skip opening]
-patch=1,EE,201DE7C4,extended,10000007
+// [Practice QoL]
+patch=1,EE,201E7B30,extended,00000000 // voice off by default
+patch=1,EE,201E7B7C,extended,00000000 // support off by default
+patch=1,EE,201E7A9C,extended,00000000 // command display off by default
 
 // [Simple display off]
 patch=1,EE,201E7AAC,extended,00000000
 
-// [Practice voice off by default]
-patch=1,EE,201E7B30,extended,00000000
+// # Battle logic
 
-// [Practice support off by default]
-patch=1,EE,201E7B7C,extended,00000000
-
-// [Practice command display off by default]
-patch=1,EE,201E7A9C,extended,00000000
-
-// [Disable RPS]
+// [Disable Shadowblur Extra Hit]
 patch=1,EE,202457C8,extended,14400077
 patch=1,EE,202457D0,extended,10000078
 patch=1,EE,202457D4,extended,00000000
 
-// [Disable extra hit with aura punishment]
+// [Disable extra hit with aura punishment for initiator]
 patch=1,EE,2023B5E8,extended,104300C9
+
+// [Sub cost = 3/15]
+// patch=1,EE,102298BC,extended,00004040

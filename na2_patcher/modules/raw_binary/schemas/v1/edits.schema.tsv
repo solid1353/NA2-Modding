@@ -3,12 +3,12 @@ edit_id	1	identifier	Unique edit identifier.
 patch_id	1	identifier	Owning atomic patch.
 order	1	integer	Stable order within the patch.
 destination_target_id	1	identifier	Target to modify.
-destination_offset	1	integer	File offset; hexadecimal is permitted.
-operation	1	enum:replace|copy|blob|fill	Edit operation.
+destination_offset	1	integer	File offset, or EE address for ee_write; hexadecimal is permitted.
+operation	1	enum:replace|copy|blob|fill|ee_write	Edit operation; ee_write is a runtime 32-bit EE-memory subcheat rendered to PNACH.
 length	1	integer	Exact unchanged range length.
 expected_hex	conditional	hex	Exact destination bytes; exclusive with expected_sha256.
 expected_sha256	conditional	sha256	Destination range hash; exclusive with expected_hex.
-replacement_hex	conditional	hex	Required by replace.
+replacement_hex	conditional	hex	Required by replace and ee_write.
 source_target_id	conditional	identifier	Required by copy.
 source_offset	conditional	integer	Required by copy.
 source_expected_hex	conditional	hex	Exact copy-source bytes; exclusive with source_expected_sha256.

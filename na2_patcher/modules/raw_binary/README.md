@@ -16,6 +16,8 @@ sets.
 - Pending candidates can be inspected with `plan` but cannot be applied.
 - Outputs must be new, stay outside input roots, and preserve target sizes.
 - Every applied edit and before/after file hash is logged.
+- Runtime-only `ee_write` edits stay in ordinary section patch sets and are
+  rendered to PNACH; they are never treated as file offsets.
 
 ## Commands
 

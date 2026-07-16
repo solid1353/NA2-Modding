@@ -1,2 +1,2 @@
 patch_id	default_enabled	status	confidence	name	description	source_mapping_id	runtime_classification	review_notes
-ELF-H001	0	pending	medium	Substitution reliability hypothesis	Combined hypothesis for action-flag skips, impact threshold, and primary-action mode gating.	pnach_substitution_reliability	Unverified; not applicable until separately approved.	Preserved from disabled PNACH data.
+ELF-H001	0	pending	medium	Substitution reliability hypothesis	Substitution reliability experiment.	pnach_substitution_reliability	Unverified; not applicable until separately approved.	Preserved from disabled PNACH data.

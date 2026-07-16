@@ -12,7 +12,7 @@ Current PNACH:
 
 - Canonical editable PNACH base: `cheats/SLPS-25837_C0659AD1.pnach`
 - Actualized PNACH symlinks live in `cheats/SLPS-25837_<crc>.pnach` and point to `cheats/SLPS-25837_C0659AD1.pnach`.
-- Former PNACH sections preserve their hierarchy without extra schema: `QoL`, `Battle logic`, and `Testing` are separate raw-binary packages; patches are cheats, edits are subcheats, and `default_enabled` preserves state. `Rendering` is a separate patcher-owned native PNACH section because its confirmed EE write targets runtime memory rather than file-backed ELF bytes.
+- Former PNACH sections are separate raw-binary patch sets: `Testing`, `Rendering`, `QoL`, and `Battle logic`. Patches are cheats, edits are subcheats, and `default_enabled` preserves state. Rendering's confirmed runtime address uses the raw module's `ee_write` operation and is emitted to PNACH during actualization instead of being misrepresented as an ELF file offset.
 - Current verified working-build snapshot: `build/Current.iso`, size `1,928,429,568`, SHA-256 `2614C6B7D71C4D9BAF39D091FC4194F16F70D0007C5761C72BB9320239BBAD2C`, boot ELF CRC `08983B71`. That preserved snapshot includes font m01, runtime-proven `ELF-M008`, and translation m03/v33. `ELF-M008` is now intentionally disabled in the active profile while the wider menu-input port remains WIP, so the profile no longer claims byte-for-byte parity with this older snapshot. The active PNACH alias recorded for the snapshot is `cheats/SLPS-25837_08983B71.pnach`.
 - PNACH actualization is mandatory before every ISO handoff or launch unless the user explicitly requests a no-PNACH isolation run.
 - Root `cheats/` is a real project folder and the only cheats folder we manage.

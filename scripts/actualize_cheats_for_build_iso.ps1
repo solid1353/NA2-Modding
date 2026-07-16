@@ -143,7 +143,7 @@ if ([string]::IsNullOrWhiteSpace($IsoPath)) {
 $IsoPath = (Resolve-Path -LiteralPath $IsoPath).Path
 if ([string]::IsNullOrWhiteSpace($CanonicalPnach)) {
     $CanonicalPnach = Join-Path $root "cheats\SLPS-25837_C0659AD1.pnach"
-    & python -B (Join-Path $root "na2_patcher\modules\pnach\render.py") `
+    & python -B (Join-Path $root "na2_patcher\modules\raw_binary\tools\render_runtime_pnach.py") `
         --workspace $root `
         --output "cheats/SLPS-25837_C0659AD1.pnach"
     if ($LASTEXITCODE -ne 0) {

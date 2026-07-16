@@ -1,6 +1,6 @@
 edit_id	patch_id	order	destination_target_id	destination_offset	operation	length	expected_hex	expected_sha256	replacement_hex	source_target_id	source_offset	source_expected_hex	source_expected_sha256	blob_path	blob_offset	blob_sha256	fill_hex	reason
-ELF-B001-01	ELF-B001	10	slps_258_37	0x1458C8	replace	4	7A004010		77004014									Convert EE write 0x202457C8 = 0x14400077.
-ELF-B001-02	ELF-B001	20	slps_258_37	0x1458D0	replace	4	120B40A6		78000010									Convert EE write 0x202457D0 = 0x10000078.
-ELF-B001-03	ELF-B001	30	slps_258_37	0x1458D4	replace	4	140B40A6		00000000									Convert EE write 0x202457D4 = 0x00000000.
-ELF-B002-01	ELF-B002	10	slps_258_37	0x13B6E8	replace	4	08004310		C9004310									Convert EE write 0x2023B5E8 = 0x104300C9.
-ELF-S001-01	ELF-S001	10	slps_258_37	0x1299BC	replace	2	803F		4040									Convert 16-bit EE write 0x102298BC = 0x4040.
+ELF-B001-01	ELF-B001	10	slps_258_37	0x1458C8	replace	4	7A004010		77004014									Change the Shadowblur extra-hit condition branch.
+ELF-B001-02	ELF-B001	20	slps_258_37	0x1458D0	replace	4	120B40A6		78000010									Skip the Shadowblur extra-hit path.
+ELF-B001-03	ELF-B001	30	slps_258_37	0x1458D4	replace	4	140B40A6		00000000									Clear the Shadowblur branch delay slot.
+ELF-B002-01	ELF-B002	10	slps_258_37	0x13B6E8	replace	4	08004310		C9004310									Disable the extra hit while retaining aura punishment for the initiator.
+ELF-S001-01	ELF-S001	10	slps_258_37	0x1299BC	replace	2	803F		4040									Set substitution cost to 3/15.

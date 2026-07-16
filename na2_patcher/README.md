@@ -30,9 +30,9 @@ The current profile composes:
 3. separate `QoL` and `Battle logic` raw-binary sections using their preserved default states;
 4. immutable translation milestone m03/v33 through the integrated `translation` module.
 
-The disabled `Testing` section remains a separate raw package. The confirmed but
-disabled runtime-only `Rendering` section is rendered from
-`na2_patcher/modules/pnach/sections/rendering.pnach` before PNACH actualization.
+The disabled `Testing` and `Rendering` sections remain separate raw packages.
+Rendering's `ee_write` subcheat is emitted to the canonical PNACH by the
+raw-binary tool before actualization.
 
 Migrated PNACH structure uses the existing format directly: one patch set per
 section, one patch row per cheat, and one or more edit rows per subcheat. The

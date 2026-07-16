@@ -1,0 +1,2 @@
+schema_version	package_id	package_version	game	description	evidence_path
+1	rendering	1	NA2	Rendering section migrated from canonical PNACH as runtime EE-memory subcheats.	na2_patcher/modules/raw_binary/patch_sets/rendering/README.md

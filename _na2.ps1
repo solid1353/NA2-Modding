@@ -250,7 +250,7 @@ elseif (-not $RunOnly -and -not $applyArgs.ContainsKey('Profile')) {
     }
     else {
         if (-not $applyArgs.ContainsKey('PackageDirectory')) {
-            $applyArgs.PackageDirectory = Join-Path $na2Root 'packages'
+            throw 'Legacy -Packages mode requires an explicit -PackageDirectory; the top-level packages directory was retired.'
         }
         $translationSelected = @($applyArgs.Packages | Where-Object { $_ -ieq 'Translation' }).Count -gt 0
         if ($translationSelected -and -not $applyArgs.ContainsKey('TranslationTsv')) {

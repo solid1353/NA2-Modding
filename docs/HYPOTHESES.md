@@ -12,7 +12,7 @@ Status: paused after v23 and ready to resume only in the dedicated GF4 task afte
 - v23 changed the NA2 ELF instruction at file offset `0x866E0` from `80 BF 02 3C` (`-1.0`) to `00 00 02 3C` (`0.0`) to mimic UN5 ASCII tracking.
 - The user observed no meaningful visual change from that experiment. The Controls menu still shows oversized/chunky English, inconsistent spacing, and long entries clipped at the right edge.
 - Final comparison screenshot: `logs/font/20260713_095523__v23__no_visible_change.png`.
-- The one-off v23 builder script was retired to project trash. Its patch log remains under `logs/font/`; the reproducible test ZIP is preserved as `packages/NA2_APPLY__FONT__20260713_084649__v23__un5_ascii_zero_tracking.zip`.
+- The one-off v23 builder script was retired to project trash. Its patch log remains under `logs/font/`; the reproducible test ZIP was retired from the workspace and remains available through Git history.
 - The last `na2` log that built v23 is `logs/na2/na2_20260713_095820_889_pid33216.log`; `logs/na2/latest.log` mirrors it.
 
 ### Preserved milestones

@@ -43,7 +43,7 @@ class RawBinaryPatcherTests(unittest.TestCase):
                 "package_version": 1,
                 "game": "NA2",
                 "description": "test fixture",
-                "evidence_path": "packages/evidence.zip",
+                "evidence_path": "evidence/source.zip",
             }],
         )
         write_tsv(

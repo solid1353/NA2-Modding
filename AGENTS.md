@@ -99,9 +99,6 @@ Before handing off or launching any ISO, actualize the PNACH alias for that exac
 
 Before rebuilding or launching a test ISO, unconditionally issue the close command for the project-local `pcsx2/pcsx2-qt.exe`. Do not probe first to see whether PCSX2 is running; closing an absent process should be treated as a harmless no-op.
 
-## Current release file list
-
-Keep the live release list in `docs/RELEASE_FILES.md`. Current release contents are `BTL.BIN`, `ETC.BIN`, boot ELF `SLPS_258.37`, and the actualized PNACH. Ask for release name and confirm file list/ISO before creating a release. Then actualize and copy files into `releases/<release_name>/` without overwriting existing paths.
 ## Report format
 
 Report files read, files created/modified, whether originals were untouched, scripts/commands used, hashes/sizes, and uncertainties.

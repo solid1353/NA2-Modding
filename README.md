@@ -30,11 +30,9 @@ context rather than repeated here.
   rules.
 - [Project context](docs/PROJECT_CONTEXT.md) records verified local state,
   directory roles, and established workflows.
-- [Tasks](docs/TASKS.md) contains concrete active plans and queued work.
+- [Tasks](TASKS.md) contains concrete active plans and queued work.
 - [Hypotheses](docs/HYPOTHESES.md) preserves rejected experiments and unresolved
   reverse-engineering leads.
-- [Release files](docs/RELEASE_FILES.md) defines the current frozen release
-  contents.
 
 Component-specific documentation stays with its component, including the
 [translation module](na2_patcher/modules/translation/README.md) and the

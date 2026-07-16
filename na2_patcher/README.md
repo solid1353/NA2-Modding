@@ -28,7 +28,7 @@ The current profile composes:
 1. exact font m01 `GF4.BIN` and ELF reconstruction through `raw_binary`;
 2. the runtime-proven menu-input handler set through `raw_binary`;
 3. separate `QoL` and `Battle logic` raw-binary sections using their preserved default states;
-4. immutable translation milestone m03/v33 through the integrated `translation` module.
+4. hash-pinned v33 mappings from the integrated `translation` module.
 
 The disabled `Testing` section remains a separate raw package. The empty
 `Rendering` patch set remains listed as a disabled module until populated.
@@ -53,4 +53,4 @@ File-size changes are rejected by default. Legacy relocation behavior is availab
 
 The ordinary `na2` shortcut supplies the profile values automatically. Its first stage builds without PNACH actualization; its second stage actualizes once for the completed ISO and launches PCSX2. Standalone translation TSV export remains available through `na2 tr` for review and external compatibility; it is not an intermediate of profile builds.
 
-Translation milestone data is copied into `na2_patcher/milestones/` and hash-pinned by the profile. This allows the live translation workspace to advance without mutating an older reproducible profile.
+The profile references `na2_patcher/modules/translation/mappings.tsv` directly and pins its exact hash. Updating that table therefore requires an explicit profile-pin update.

@@ -23,7 +23,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Do not recreate a top-level `packages/` staging/history directory. Normal builds consume hash-pinned profile modules. Keep temporary imported archives under a task-specific `work/temp/` folder, normalize useful data into a module, then retire the archive to `trash/`.
 - Do not recreate a top-level `milestones/` package archive directory. Keep immutable reproducible module data under `na2_patcher/milestones/` or as a hash-pinned declarative patch set beside its module; retain retired package archives only in Git history.
 - New translation milestones freeze immutable canonical mapping data plus a hash-pinned profile; the integrated translation engine is versioned with the repository. Legacy translation builder archives are retained only in Git history. Generated translation TSVs are compatibility run outputs, not milestones.
-- Treat `na2_patcher/modules/translation/mappings.tsv` as the live replaceable translation workspace. Reproducible builds must reference an immutable snapshot under `na2_patcher/milestones/`, never the live table.
+- Treat `na2_patcher/modules/translation/mappings.tsv` as the translation module's current versioned input. Profiles may reference it only with an exact content hash; changing it requires updating the profile pin as an explicit translation version change.
 - `na2 tr` is a compatibility/review export interface. The normal profile workflow invokes the translation module directly and records its generated plan and summary under the profile run log.
 - Keep frozen milestone artifacts under the ignored root `releases/` relative link.
 - Never alter, overwrite, rename, move, or delete anything under `releases/`.
@@ -105,7 +105,6 @@ Keep the live release list in `docs/RELEASE_FILES.md`. Current release contents 
 ## Report format
 
 Report files read, files created/modified, whether originals were untouched, scripts/commands used, hashes/sizes, and uncertainties.
-
 
 
 

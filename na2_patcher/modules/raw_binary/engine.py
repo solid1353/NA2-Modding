@@ -680,7 +680,7 @@ def validate_selection(package: Package, selected: list[str], *, for_apply: bool
         ]
         if runtime_edits:
             raise PatchError(
-                "Runtime EE writes must be rendered to PNACH, not applied to a file: "
+                "Runtime EE writes have no active application backend and cannot be applied to a file: "
                 + ", ".join(runtime_edits)
             )
     for patch_id, relation, related in package.relations:

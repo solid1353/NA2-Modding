@@ -4,7 +4,7 @@ patch_id	1	identifier	Owning atomic patch.
 order	1	integer	Stable order within the patch.
 destination_target_id	1	identifier	Target to modify.
 destination_offset	1	integer	File offset, or EE address for ee_write; hexadecimal is permitted.
-operation	1	enum:replace|copy|blob|fill|ee_write	Edit operation; ee_write is a runtime 32-bit EE-memory subcheat rendered to PNACH.
+operation	1	enum:replace|copy|blob|fill|ee_write	Edit operation; ee_write retains an inactive 32-bit EE-memory mapping and has no application backend.
 length	1	integer	Exact unchanged range length.
 expected_hex	conditional	hex	Exact destination bytes; exclusive with expected_sha256.
 expected_sha256	conditional	sha256	Destination range hash; exclusive with expected_hex.

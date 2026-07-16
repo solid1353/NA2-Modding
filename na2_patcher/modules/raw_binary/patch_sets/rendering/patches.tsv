@@ -1,2 +1,1 @@
 patch_id	default_enabled	status	confidence	name	description	source_mapping_id	runtime_classification	review_notes
-EE-R001	0	runtime_proven	verified	Widescreen 16:9	Widescreen runtime aspect setting.	pnach_widescreen	Confirmed runtime rendering cheat; disabled in canonical state.	Runtime EE write; not a file-backed ELF range.

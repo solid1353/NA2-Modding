@@ -16,8 +16,6 @@ sets.
 - Pending candidates can be inspected with `plan` but cannot be applied.
 - Outputs must be new, stay outside input roots, and preserve target sizes.
 - Every applied edit and before/after file hash is logged.
-- Runtime-only `ee_write` edits may be retained as inactive mapping data; the
-  file patcher rejects them and never treats EE addresses as file offsets.
 - Do not use fixed-address PNACH writes against on-demand overlays such as
   `BTL.BIN` or `ETC.BIN`; test those edits by patching the file and rebuilding.
 

@@ -12,7 +12,7 @@ Current PNACH:
 
 - Canonical editable PNACH base: `cheats/SLPS-25837_C0659AD1.pnach`
 - Actualized PNACH symlinks live in `cheats/SLPS-25837_<crc>.pnach` and point to `cheats/SLPS-25837_C0659AD1.pnach`.
-- Former PNACH sections are separate raw-binary patch sets: `Testing`, `Rendering`, `QoL`, and `Battle logic`. Patches are cheats, edits are subcheats, and `default_enabled` preserves state. The disabled Rendering data is retained in its patch set but is not emitted to PNACH.
+- Former PNACH sections preserved as raw-binary patch sets are `Testing`, `Rendering`, `QoL`, and `Battle logic`. Patches are cheats, edits are subcheats, and `default_enabled` preserves state. Rendering is currently an empty scaffold outside the active profile.
 - PNACH actualization is mandatory before every ISO handoff or launch unless the user explicitly requests a no-PNACH isolation run.
 - Root `cheats/` is a real project folder and the only cheats folder we manage.
 - PNACH labels such as `// [Skip CC2 intro]` are comments only. A cheat is enabled only when its executable `patch=`/setting line is uncommented. Disabled proven cheats and disabled hypotheses must keep their executable lines commented out. Temporary PNACH hypothesis patches go at the top as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
@@ -212,7 +212,6 @@ Prior known PNACH patch notes:
 - RPS Disable / Consume Circle
 - Intro/logo PSS skip
 - Opening skip
-- Widescreen
 
 Prior warnings:
 

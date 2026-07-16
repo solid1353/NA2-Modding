@@ -74,7 +74,7 @@ PATCH_STATUSES = {
 APPLICABLE_STATUSES = {"approved_for_test", "runtime_proven"}
 CONFIDENCE_VALUES = {"high", "medium", "low", "verified"}
 ROLES = {"destination", "source", "both"}
-OPERATIONS = {"replace", "copy", "blob", "fill", "ee_write"}
+OPERATIONS = {"replace", "copy", "blob", "fill"}
 RELATIONS = {"requires", "conflicts"}
 
 
@@ -463,23 +463,6 @@ def load_package(directory: Path) -> Package:
                 raise PatchError(f"edit {edit_id}: fill has unrelated data fields")
             if len(bytes.fromhex(fill_hex)) != 1:
                 raise PatchError(f"edit {edit_id}: fill_hex must be exactly one byte")
-        elif operation == "ee_write":
-            if len(bytes.fromhex(replacement_hex)) != length or length != 4:
-                raise PatchError(f"edit {edit_id}: ee_write must contain one 32-bit word")
-            if expected_sha:
-                raise PatchError(f"edit {edit_id}: ee_write requires expected_hex")
-            if (
-                source_id
-                or source_offset is not None
-                or source_expected_hex
-                or source_expected_sha
-                or blob_path
-                or blob_offset is not None
-                or blob_sha
-                or fill_hex
-            ):
-                raise PatchError(f"edit {edit_id}: ee_write has unrelated source fields")
-
         edits.append(
             Edit(
                 edit_id=edit_id,
@@ -617,11 +600,6 @@ def verify_package_data(package: Package, roots: dict[str, Path]) -> dict[str, b
         for target_id, target in package.targets.items()
     }
     for edit in package.edits:
-        if edit.operation == "ee_write":
-            replacement = bytes.fromhex(edit.replacement_hex)
-            if len(replacement) != edit.length:
-                raise PatchError(f"edit {edit.edit_id}: replacement length mismatch")
-            continue
         destination = target_data[edit.destination_target_id]
         current = verify_range(
             destination,
@@ -673,16 +651,6 @@ def validate_selection(package: Package, selected: list[str], *, for_apply: bool
                 f"{patch_id} ({package.patches[patch_id].status})" for patch_id in blocked
             )
             raise PatchError(f"Selected patches are not approved for application: {details}")
-        runtime_edits = [
-            edit.edit_id
-            for edit in package.edits
-            if edit.patch_id in selected_set and edit.operation == "ee_write"
-        ]
-        if runtime_edits:
-            raise PatchError(
-                "Runtime EE writes have no active application backend and cannot be applied to a file: "
-                + ", ".join(runtime_edits)
-            )
     for patch_id, relation, related in package.relations:
         if patch_id not in selected_set:
             continue

@@ -3,8 +3,7 @@
 ## In Progress
 
 ### Project
-- Forbid agents writing to TASKS.md.
-- Add logging of enabled cheats to launch command.
+- Continue with logging of enabled cheats to launch command.
 
 ### UI Translation
 - Add texture patcher to import assets from UN5.

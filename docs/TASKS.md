@@ -16,12 +16,12 @@
 - Review and approve additional named handler groups individually; do not reapply the broad ETC package.
 
 ### Raw binary module
-- Keep existing font ZIP composition until a texture/data asset module handles `GF4.BIN` and related resources.
+- Maintain the exact atomic font m01 `GF4.BIN` and ELF reconstruction as the current baseline.
 - Convert newly approved GPT mappings into named patch groups instead of replacement binaries.
 - Add future texture, sound, and structured data-pack modules under the same orchestrator.
 
 ### Modular patching
-- Add a native texture/data-pack module for `GF4.BIN`, then retire the remaining font m01 compatibility ZIP.
+- Replace the raw GF4 ranges with structured format-aware operations only after the container format is understood well enough to improve safety or authoring.
 - Add sound and structured data-pack modules using the same profile contract.
 - Explore other necessities.
 

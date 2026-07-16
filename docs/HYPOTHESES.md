@@ -4,7 +4,7 @@ Use this file for old patch candidates, failed experiments, unverified addresses
 
 ## GF4 Font Rendering Handoff
 
-Status: paused after v23 and ready to resume only in the dedicated GF4 task after rereading this handoff and the preserved disassembly. Do not generate another GF4 package before that review.
+Status: paused after v23 and ready to resume only in the dedicated GF4 task after rereading this handoff and the preserved disassembly. Do not generate another GF4 hypothesis before that review.
 
 ### Current visual state
 
@@ -15,12 +15,12 @@ Status: paused after v23 and ready to resume only in the dedicated GF4 task afte
 - The one-off v23 builder script was retired to project trash. Its patch log remains under `logs/font/`; the reproducible test ZIP was retired from the workspace and remains available through Git history.
 - The last `na2` log that built v23 is `logs/na2/na2_20260713_095820_889_pid33216.log`; `logs/na2/latest.log` mirrors it.
 
-### Preserved milestones
+### Preserved normalized data
 
-- `milestones/packages/NA2_MILESTONE__FONT__m01__20260712_052042__un5_14x20_clean_coverage.zip`
+- `na2_patcher/modules/raw_binary/patch_sets/font_m01/` exactly reconstructs the accepted m01 `GF4.BIN` and ELF outputs from clean NA2 files.
 - Font m02 aligned-metrics ZIP was retired from the workspace and remains available through Git history.
 
-These are frozen reference packages, not proof that all rendering problems are solved.
+These records preserve accepted and tested states; they are not proof that all rendering problems are solved.
 
 ### Confirmed observations
 

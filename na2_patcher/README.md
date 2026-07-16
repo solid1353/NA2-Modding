@@ -8,13 +8,13 @@ Each profile directory contains:
 - `roots.tsv`: repository-relative logical source bindings.
 - `modules.tsv`: ordered module instances with exact input hashes and selections.
 
-Schema v1 supports `zip_overlay`, `raw_binary`, and `translation`. The ZIP overlay is a temporary compatibility module for assets such as `GF4.BIN`; it will be retired after the texture/data-pack module can reproduce the current font asset exactly. Raw binary and translation modules are declarative and size-preserving.
+Schema v1 supports `zip_overlay`, `raw_binary`, and `translation`. `zip_overlay` remains a legacy compatibility type, but the current profile uses only declarative, size-preserving raw-binary and translation modules.
 
-Profiles never select the newest file implicitly. Frozen releases and existing package milestones remain untouched; active ZIP history is retired only after profile parity is proven.
+Profiles never select the newest file implicitly. Module inputs are content-hashed, and imported ZIP history is retired after exact profile parity is proven.
 
 The current profile composes:
 
-1. the font m01 ZIP through the temporary `zip_overlay` compatibility module;
+1. exact font m01 `GF4.BIN` and ELF reconstruction through `raw_binary`;
 2. runtime-proven `ELF-M008` through `raw_binary`;
 3. immutable translation milestone m03/v33 through the integrated `translation` module.
 

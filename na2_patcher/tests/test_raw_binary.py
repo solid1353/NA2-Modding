@@ -8,6 +8,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from na2_patcher.modules.raw_binary import engine as patcher
+from na2_patcher.modules.raw_binary.tools import import_zip_overlay
 
 
 def sha256(data: bytes) -> str:
@@ -213,6 +214,20 @@ class RawBinaryPatcherTests(unittest.TestCase):
                     edits,
                     {"destination": staged},
                 )
+
+
+class ZipOverlayImporterTests(unittest.TestCase):
+    def test_changed_ranges_merge_only_small_unchanged_gaps(self) -> None:
+        self.assertEqual(
+            import_zip_overlay.changed_ranges(
+                b"abcdefghij", b"aXcdYfghiZ", maximum_gap=2
+            ),
+            [(1, 5), (9, 10)],
+        )
+
+    def test_rejects_unsafe_zip_entry(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Unsafe"):
+            import_zip_overlay.normalized_entry("../escape.bin")
 
 
 if __name__ == "__main__":

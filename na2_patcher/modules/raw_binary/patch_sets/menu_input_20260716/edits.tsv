@@ -137,3 +137,4 @@ ETC-P030	ETC-M016	11	na2_etc	0x0001A67C	copy	4	20006230			un5_etc	0x0001B450	400
 ETC-P031	ETC-M017	10	na2_etc	0x0001E0FC	copy	4	20006330			un5_etc	0x0001F164	40006330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
 ETC-P032	ETC-M018	10	na2_etc	0x0001E98C	copy	4	20006330			un5_etc	0x0001FAA4	40006330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
 ETC-P033	ETC-M019	10	na2_etc	0x0001F358	copy	4	20004230			un5_etc	0x0002058C	40004230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+BTL-P046	BTL-M022	10	na2_btl	0x00066210	replace	4	20006330		40006330									Battle-results tally fast-forward: use Cross instead of the inherited Circle check; UN5 retains the same Circle oversight at BTL offset 0x000692B0.

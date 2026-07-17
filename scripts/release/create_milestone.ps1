@@ -8,18 +8,14 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$PnachPath,
 
-    [string]$ExpectedCrc = "",
-
-    [string]$ReleaseDir = ""
+    [string]$ExpectedCrc = ""
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot 'project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
-if ([string]::IsNullOrWhiteSpace($ReleaseDir)) {
-    $ReleaseDir = $projectPaths.releases
-}
+$ReleaseDir = $projectPaths.releases
 
 function Get-SafeName {
     param([string]$Value)

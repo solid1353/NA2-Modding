@@ -1,23 +1,10 @@
 [CmdletBinding()]
-param(
-    [string]$InputIso,
-    [string]$OutputIso,
-    [string]$Profile,
-    [string]$ProfileLogDirectory,
-    [string]$Pcsx2Exe,
-    [switch]$AllowSizeChanges
-)
+param()
 
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot 'project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
+. (Join-Path $PSScriptRoot 'process.ps1')
 $projectPaths = Get-Na2ProjectPaths
-
-function Stop-PortablePcsx2 {
-    param([Parameter(Mandatory = $true)][string]$Executable)
-
-    $processName = [IO.Path]::GetFileNameWithoutExtension($Executable)
-    Stop-Process -Name $processName -Force -ErrorAction SilentlyContinue
-}
 
 function Test-FileContentEqual {
     param(
@@ -92,59 +79,45 @@ function Promote-VerifiedIso {
     }
 }
 
-if ([string]::IsNullOrWhiteSpace($InputIso)) {
-    $InputIso = Join-Path $projectPaths.source 'NA2.iso'
-}
-if ([string]::IsNullOrWhiteSpace($OutputIso)) {
-    $OutputIso = Join-Path $projectPaths.build 'Current.iso'
-}
-if ([string]::IsNullOrWhiteSpace($Profile)) {
-    $Profile = [IO.Path]::GetRelativePath(
-        $projectPaths.repository,
-        (Join-Path $projectPaths.patcher 'profiles\current')
-    )
-}
-if ([string]::IsNullOrWhiteSpace($ProfileLogDirectory)) {
-    $profileLog = Join-Path $projectPaths.logs (
-        'na2_patcher\current_' + (Get-Date -Format 'yyyyMMdd_HHmmss_fff')
-    )
-    $ProfileLogDirectory = [IO.Path]::GetRelativePath($projectPaths.repository, $profileLog)
-}
-if ([string]::IsNullOrWhiteSpace($Pcsx2Exe)) {
-    $Pcsx2Exe = Join-Path $projectPaths.pcsx2 'pcsx2-qt.exe'
-}
-
-$resolvedOutputIso = if ([IO.Path]::IsPathRooted($OutputIso)) {
-    [IO.Path]::GetFullPath($OutputIso)
-}
-else {
-    [IO.Path]::GetFullPath((Join-Path $projectPaths.repository $OutputIso))
-}
+$inputIso = Join-Path $projectPaths.source 'NA2.iso'
+$resolvedOutputIso = [IO.Path]::GetFullPath((Join-Path $projectPaths.build 'Current.iso'))
+$profile = [IO.Path]::GetRelativePath(
+    $projectPaths.repository,
+    (Join-Path $projectPaths.patcher 'profiles\current')
+)
+$profileLog = Join-Path $projectPaths.logs (
+    'na2_patcher\current_' + (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
+)
+$profileLogDirectory = [IO.Path]::GetRelativePath($projectPaths.repository, $profileLog)
+$pcsx2Exe = Join-Path $projectPaths.pcsx2 'pcsx2-qt.exe'
 $candidateIso = "$resolvedOutputIso.building"
 $arguments = @(
-    (Join-Path $PSScriptRoot 'build_na2_profile.py')
-    '--workspace', $projectPaths.repository
-    '--source', $InputIso
+    '-B'
+    '-m', 'na2_patcher.build_profile'
+    '--source', $inputIso
     '--output', $resolvedOutputIso
-    '--profile', $Profile
-    '--profile-log-directory', $ProfileLogDirectory
+    '--profile', $profile
+    '--profile-log-directory', $profileLogDirectory
 )
-if ($AllowSizeChanges) {
-    $arguments += '--allow-size-changes'
-}
 
-Stop-PortablePcsx2 -Executable $Pcsx2Exe
+Stop-Na2Pcsx2 -Executable $pcsx2Exe
 try {
-    $buildOutput = & python -B @arguments
-    $buildExitCode = $LASTEXITCODE
+    Push-Location $projectPaths.repository
+    try {
+        $buildOutput = & python @arguments
+        $buildExitCode = $LASTEXITCODE
+    }
+    finally {
+        Pop-Location
+    }
     $buildOutput | ForEach-Object { Write-Host $_ }
     if ($buildExitCode -ne 0) {
         throw "NA2 profile build failed (exit $buildExitCode)."
     }
 
-    Stop-PortablePcsx2 -Executable $Pcsx2Exe
+    Stop-Na2Pcsx2 -Executable $pcsx2Exe
     $promotion = Promote-VerifiedIso -CurrentIso $resolvedOutputIso
-    $promotion | Add-Member -NotePropertyName ProfileLogDirectory -NotePropertyValue $ProfileLogDirectory
+    $promotion | Add-Member -NotePropertyName ProfileLogDirectory -NotePropertyValue $profileLogDirectory
     $promotion
 }
 finally {

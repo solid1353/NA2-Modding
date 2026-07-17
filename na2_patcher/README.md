@@ -41,13 +41,13 @@ patch's `default_enabled` value preserves whether that cheat was enabled.
 Build the configured current profile with:
 
 ```powershell
-& scripts/build_na2.ps1
+& scripts/na2/build.ps1
 ```
 
-`scripts/build_na2_profile.py` writes the candidate ISO as `build/Current.iso.building`, verifies it completely, fsyncs it, and writes the profile log before returning. `scripts/build_na2.ps1` compares the candidate with `Current.iso`; an identical candidate is discarded without touching `Current.iso` or `Previous.iso`, while a changed candidate atomically replaces `Previous.iso` with the outgoing `Current.iso` and becomes the new `Current.iso`. A failed promotion restores the outgoing ISO when safe, and any caught failure removes `.building`.
+`na2_patcher/build_profile.py` writes the candidate ISO as `build/Current.iso.building`, verifies it completely, fsyncs it, and writes the profile log before returning. `scripts/na2/build.ps1` compares the candidate with `Current.iso`; an identical candidate is discarded without touching `Current.iso` or `Previous.iso`, while a changed candidate atomically replaces `Previous.iso` with the outgoing `Current.iso` and becomes the new `Current.iso`. A failed promotion restores the outgoing ISO when safe, and any caught failure removes `.building`.
 
-File-size changes are rejected by default. Relocation is available only through the internal explicit `-AllowSizeChanges` / `--allow-size-changes` option for an approved profile build.
+File-size changes are always rejected. Structural expansion requires a separately designed and approved implementation rather than a build flag.
 
-The ordinary `na2` command dispatches the profile build, then delegates PNACH actualization and PCSX2 launch to `scripts/launch_na2.ps1`. `na2 -c` launches `Current.iso` without rebuilding, and `na2 -p` launches `Previous.iso` without rebuilding. Standalone translation TSV export remains available through `na2 tr` for review and external compatibility; it is not an intermediate of profile builds.
+The ordinary `na2` command dispatches the profile build, then delegates mandatory PNACH actualization and PCSX2 launch to `scripts/na2/launch.ps1`. `na2 -c` launches `Current.iso` without rebuilding, and `na2 -p` launches `Previous.iso` without rebuilding. Translation is invoked only as a pinned profile module and records its review plan inside the profile log.
 
 The profile references `na2_patcher/modules/translation/mappings.tsv` directly and pins its exact hash. Updating that table therefore requires an explicit profile-pin update.

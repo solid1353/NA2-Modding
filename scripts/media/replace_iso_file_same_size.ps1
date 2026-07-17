@@ -1,12 +1,12 @@
 param(
     [Parameter(Mandatory = $true)] [string]$IsoPath,
     [Parameter(Mandatory = $true)] [string]$IsoFilePath,
-    [Parameter(Mandatory = $true)] [string]$OutPath
+    [Parameter(Mandatory = $true)] [string]$ReplacementPath
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot 'project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 $sectorSize = 2048
 
@@ -68,10 +68,11 @@ function Find-IsoPath([IO.FileStream]$Iso, [object]$RootRecord, [string]$Path) {
     $current
 }
 
-if (Test-Path -LiteralPath $OutPath) { throw "Output already exists: $OutPath" }
-New-Item -ItemType Directory -Force -Path (Split-Path -Parent $OutPath) | Out-Null
+$isoResolved = (Resolve-Path -LiteralPath $IsoPath).Path
+$replacementResolved = (Resolve-Path -LiteralPath $ReplacementPath).Path
+$replacementBytes = [IO.File]::ReadAllBytes($replacementResolved)
 
-$iso = [IO.File]::OpenRead((Resolve-Path -LiteralPath $IsoPath).Path)
+$iso = [IO.File]::Open($isoResolved, [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
 try {
     $pvd = [byte[]]::new($sectorSize)
     $iso.Position = 16 * $sectorSize
@@ -80,8 +81,21 @@ try {
     $rootRecord = Read-DirectoryRecord $pvd 156
     $record = Find-IsoPath $iso $rootRecord $IsoFilePath
     if ($null -eq $record -or $record.IsDirectory) { throw "ISO file not found: $IsoFilePath" }
-    [IO.File]::WriteAllBytes($OutPath, (Read-IsoExtent $iso $record.Extent $record.Size))
-    [pscustomobject]@{ Iso = $IsoPath; IsoFilePath = $IsoFilePath; OutPath = $OutPath; Size = $record.Size }
+    if ($replacementBytes.Length -ne [int]$record.Size) {
+        throw "Replacement size $($replacementBytes.Length) does not match ISO file size $($record.Size)."
+    }
+    $byteOffset = [int64]$record.Extent * $sectorSize
+    $iso.Position = $byteOffset
+    $iso.Write($replacementBytes, 0, $replacementBytes.Length)
+    $iso.Flush()
+    [pscustomobject]@{
+        Iso = $isoResolved
+        IsoFilePath = $IsoFilePath
+        Replacement = $replacementResolved
+        Size = $record.Size
+        Extent = $record.Extent
+        IsoByteOffset = "0x{0:X}" -f $byteOffset
+    }
 }
 finally {
     $iso.Dispose()

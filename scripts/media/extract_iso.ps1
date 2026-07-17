@@ -7,7 +7,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot 'project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
 $sectorSize = 2048
@@ -213,10 +213,10 @@ $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $logPath = Join-Path $logDir ("extract_iso9660_" + $stamp + ".tsv")
 $logRows | Export-Csv -LiteralPath $logPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8
 
-$readonlyScript = Join-Path $PSScriptRoot "set_original_readonly.ps1"
+$readonlyScript = Join-Path $projectPaths.scripts 'project\set_source_readonly.ps1'
 if ($OutDir.StartsWith($projectPaths.source, [StringComparison]::OrdinalIgnoreCase) -and
     (Test-Path -LiteralPath $readonlyScript)) {
-    & $readonlyScript | Out-Null
+    & $readonlyScript -SourceDir $OutDir | Out-Null
 }
 
 Write-Host "Extracted ISO:"

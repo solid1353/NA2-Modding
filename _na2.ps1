@@ -1,27 +1,19 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
+    [ValidateSet('act')]
     [string]$Mode,
 
     [Alias('c')]
     [switch]$Current,
     [Alias('p')]
     [switch]$Previous,
-    [switch]$SkipActualize,
-    [switch]$StartMinimized,
     [Alias('h')]
-    [switch]$Help,
-
-    [string]$Na2Iso,
-    [switch]$NoStrictHash,
-
-    [string]$IsoPath,
-    [string]$CanonicalPnach,
-    [string]$Serial
+    [switch]$Help
 )
 
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot 'scripts\project_paths.ps1')
+. (Join-Path $PSScriptRoot 'scripts\lib\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 $logDirectory = Join-Path $projectPaths.logs 'na2'
 $latestLogPath = Join-Path $logDirectory 'latest.log'
@@ -97,16 +89,6 @@ try {
     if ($command -and $runSelected) {
         throw '-Current / -c and -Previous / -p cannot be combined with a command mode.'
     }
-    if (($Na2Iso -or $NoStrictHash) -and $command -ne 'tr') {
-        throw '-Na2Iso and -NoStrictHash apply only to na2 tr.'
-    }
-    if (($IsoPath -or $CanonicalPnach -or $Serial) -and $command -ne 'act') {
-        throw '-IsoPath, -CanonicalPnach, and -Serial apply only to na2 act.'
-    }
-    if ($command -and ($SkipActualize -or $StartMinimized)) {
-        throw '-SkipActualize and -StartMinimized apply only to na2, na2 -c, or na2 -p.'
-    }
-
     if ($Help) {
         Write-Na2Stage 'Show command help'
         @(
@@ -114,69 +96,33 @@ try {
             '  na2       Build the pinned current profile, conditionally rotate, then run Current.iso'
             '  na2 -c    Run build/Current.iso without rebuilding'
             '  na2 -p    Run build/Previous.iso without rebuilding'
-            '  na2 tr    Export a standalone translation TSV for review/compatibility'
-            '  na2 act   Actualize the PNACH symlink for the selected ISO CRC'
+            '  na2 act   Actualize the PNACH symlink for build/Current.iso without launching'
             ''
         ) | Write-Output
         return
     }
 
-    if ($command -eq 'tr') {
-        Write-Na2Stage 'Generate translation TSV'
-        $translationArgs = @{}
-        if (-not [string]::IsNullOrWhiteSpace($Na2Iso)) {
-            $translationArgs.Na2Iso = $Na2Iso
-        }
-        if ($NoStrictHash) {
-            $translationArgs.NoStrictHash = $true
-        }
-        & (Join-Path $projectPaths.patcher 'modules\translation\export_translation.ps1') @translationArgs
-        return
-    }
-
     if ($command -eq 'act') {
-        Write-Na2Stage 'Actualize PNACH symlink for selected ISO CRC'
-        $actualizeArgs = @{}
-        @{
-            IsoPath = $IsoPath
-            CanonicalPnach = $CanonicalPnach
-            Serial = $Serial
-        }.GetEnumerator() | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Value) } |
-            ForEach-Object { $actualizeArgs[$_.Key] = $_.Value }
-        & (Join-Path $projectPaths.scripts 'actualize_cheats_for_build_iso.ps1') @actualizeArgs
+        Write-Na2Stage 'Actualize PNACH symlink for Current.iso CRC'
+        & (Join-Path $projectPaths.scripts 'na2\actualize_pnach.ps1')
         return
-    }
-
-    if ($command) {
-        throw "Unknown NA2 command: $Mode"
-    }
-
-    $windowStyle = if ($StartMinimized) { 'Minimized' } else { 'Normal' }
-    $launchArgs = @{
-        Pcsx2Exe = Join-Path $projectPaths.pcsx2 'pcsx2-qt.exe'
-        WindowStyle = $windowStyle
-    }
-    if ($SkipActualize) {
-        $launchArgs.SkipActualize = $true
     }
 
     if ($runSelected) {
         $isoName = if ($Previous) { 'Previous.iso' } else { 'Current.iso' }
-        $launchArgs.IsoPath = Join-Path $projectPaths.build $isoName
         Write-Na2Stage "Run $isoName without rebuilding"
-        & (Join-Path $projectPaths.scripts 'launch_na2.ps1') @launchArgs
+        & (Join-Path $projectPaths.scripts 'na2\launch.ps1') -IsoPath (Join-Path $projectPaths.build $isoName)
         return
     }
 
     Write-Na2Stage '1/2 Build pinned current profile'
-    $buildResult = & (Join-Path $projectPaths.scripts 'build_na2.ps1')
+    $buildResult = & (Join-Path $projectPaths.scripts 'na2\build.ps1')
     if (-not $buildResult -or $buildResult.Status -notin @('unchanged', 'updated')) {
         throw 'Profile build did not return a valid promotion result.'
     }
 
     Write-Na2Stage '2/2 Actualize PNACH and launch Current.iso'
-    $launchArgs.IsoPath = Join-Path $projectPaths.build 'Current.iso'
-    & (Join-Path $projectPaths.scripts 'launch_na2.ps1') @launchArgs
+    & (Join-Path $projectPaths.scripts 'na2\launch.ps1') -IsoPath (Join-Path $projectPaths.build 'Current.iso')
 }
 finally {
     if ($transcriptStarted) {

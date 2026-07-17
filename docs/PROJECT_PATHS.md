@@ -12,7 +12,7 @@ The manifest currently defines these stable logical names:
 - `repository`: the repository itself; this must remain `.`.
 - `source`: read-only original media, extracted views, and preserved disassemblies.
 - `utils`: shared utilities, including Ghidra and the untrusted historical dump.
-- `build`, `logs`, `patcher`, `releases`, `scripts`, `trash`, and `work`:
+- `build`, `logs`, `patcher`, `releases`, `scripts`, and `work`:
   their corresponding project areas.
 - `pcsx2_files`: project-owned PCSX2-related files: the canonical PNACH,
   screenshots, and input recordings.
@@ -26,23 +26,25 @@ the same syntax. Other profile inputs remain repository-relative and hash-pinned
 
 ## PowerShell
 
-Every PowerShell entry point dot-sources `scripts/project_paths.ps1` and loads the
-manifest before doing work:
+Every PowerShell entry point dot-sources `scripts/lib/project_paths.ps1` and
+loads the manifest before doing work. For example, a script one directory below
+`scripts/` uses:
 
 ```powershell
-. (Join-Path $PSScriptRoot 'project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 $iso = Join-Path $projectPaths.source 'NA2.iso'
 ```
 
-The root `_na2.ps1` entry point uses `scripts/project_paths.ps1` as its bootstrap.
-The manifest and both path loaders are stable bootstrap files and should not be
-moved during an ordinary directory migration.
+The root `_na2.ps1` entry point uses `scripts/lib/project_paths.ps1` as its
+bootstrap. The manifest and shared path loaders are stable bootstrap files and
+should not be moved during an ordinary directory migration.
 
 ## Python
 
-Repository Python code imports the shared loader from `na2_patcher.project_paths`.
-Standalone tools in `scripts/` use the small `scripts/project_paths.py` bootstrap:
+Repository Python code imports the shared loader from
+`na2_patcher.project_paths`. Preserved menu-input research tools use their small
+local `scripts/research/menu_input/project_paths.py` bootstrap:
 
 ```python
 from project_paths import PROJECT_PATHS

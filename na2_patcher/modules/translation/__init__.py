@@ -1,9 +1,8 @@
-"""Translation planning and standalone export support."""
+"""Translation planning for profile composition."""
 
 from .engine import (
     TranslationPlan,
     build_translation_plan,
-    main,
     write_json,
     write_translation_tsv,
 )
@@ -11,7 +10,6 @@ from .engine import (
 __all__ = [
     "TranslationPlan",
     "build_translation_plan",
-    "main",
     "write_json",
     "write_translation_tsv",
 ]

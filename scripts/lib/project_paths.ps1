@@ -3,7 +3,7 @@ Set-StrictMode -Version Latest
 function Get-Na2ProjectPaths {
     [CmdletBinding()]
     param(
-        [string]$ManifestPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'project-paths.json'),
+        [string]$ManifestPath = (Join-Path $PSScriptRoot '..\..\project-paths.json'),
         [switch]$AllowMissing
     )
 

@@ -1,26 +1,21 @@
 [CmdletBinding()]
 param(
     [string]$IsoPath,
-    [string]$Pcsx2Exe,
     [ValidateRange(1, 300)]
     [int]$WaitSeconds = 5
 )
 
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot 'project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
+. (Join-Path $PSScriptRoot 'process.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
 if ([string]::IsNullOrWhiteSpace($IsoPath)) {
     $IsoPath = Join-Path $projectPaths.build 'Current.iso'
 }
-if ([string]::IsNullOrWhiteSpace($Pcsx2Exe)) {
-    $Pcsx2Exe = Join-Path $projectPaths.pcsx2 'pcsx2-qt.exe'
-}
-
-$resolvedPcsx2Exe = [IO.Path]::GetFullPath($Pcsx2Exe)
+$resolvedPcsx2Exe = [IO.Path]::GetFullPath((Join-Path $projectPaths.pcsx2 'pcsx2-qt.exe'))
 $pcsx2Ini = Join-Path $projectPaths.pcsx2 'inis\PCSX2.ini'
-$launchScript = Join-Path $PSScriptRoot 'launch_na2.ps1'
-$processName = [IO.Path]::GetFileNameWithoutExtension($resolvedPcsx2Exe)
+$launchScript = Join-Path $PSScriptRoot 'launch.ps1'
 $originalIniBytes = $null
 
 if (-not ('Na2TestWindow' -as [type])) {
@@ -41,32 +36,6 @@ public static class Na2TestWindow {
     public static extern bool SetForegroundWindow(IntPtr hWnd);
 }
 '@
-}
-
-function Get-TestPcsx2Processes {
-    @(Get-Process -Name $processName -ErrorAction SilentlyContinue | Where-Object {
-        try {
-            [IO.Path]::Equals([IO.Path]::GetFullPath($_.Path), $resolvedPcsx2Exe)
-        }
-        catch {
-            $false
-        }
-    })
-}
-
-function Stop-TestPcsx2Processes {
-    $processes = @(Get-TestPcsx2Processes)
-    foreach ($process in $processes) {
-        Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-    }
-    foreach ($process in $processes) {
-        try {
-            $process.WaitForExit(5000) | Out-Null
-        }
-        catch {
-            # A process that already exited needs no further cleanup.
-        }
-    }
 }
 
 try {
@@ -91,11 +60,11 @@ try {
     $foregroundBeforeLaunch = [Na2TestWindow]::GetForegroundWindow()
     Write-Host '[na2] Agent test launch: hidden, muted, and non-activating' -ForegroundColor Cyan
 
-    & $launchScript -IsoPath $IsoPath -Pcsx2Exe $resolvedPcsx2Exe -WindowStyle Hidden
+    & $launchScript -IsoPath $IsoPath -WindowStyle Hidden
 
     $deadline = [DateTime]::UtcNow.AddSeconds(10)
     do {
-        $testProcesses = @(Get-TestPcsx2Processes)
+        $testProcesses = @(Get-Na2Pcsx2Process -Executable $resolvedPcsx2Exe)
         if ($testProcesses.Count -gt 0) {
             break
         }
@@ -110,7 +79,7 @@ try {
     $closeDeadline = [DateTime]::UtcNow.AddSeconds($WaitSeconds)
     do {
         $foregroundWindow = [Na2TestWindow]::GetForegroundWindow()
-        foreach ($process in @(Get-TestPcsx2Processes)) {
+        foreach ($process in @(Get-Na2Pcsx2Process -Executable $resolvedPcsx2Exe)) {
             $process.Refresh()
             $window = $process.MainWindowHandle
             if ($window -ne [IntPtr]::Zero) {
@@ -124,7 +93,7 @@ try {
     } while ([DateTime]::UtcNow -lt $closeDeadline)
 }
 finally {
-    Stop-TestPcsx2Processes
+    Stop-Na2Pcsx2 -Executable $resolvedPcsx2Exe
     if ($null -ne $originalIniBytes) {
         [IO.File]::WriteAllBytes($pcsx2Ini, $originalIniBytes)
         Write-Host '[na2] PCSX2 closed; original audio setting restored' -ForegroundColor Cyan

@@ -1,29 +1,17 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import argparse
 import csv
-import datetime as dt
 import hashlib
 import json
 import os
 import re
-import sys
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional, Sequence
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
-if str(REPOSITORY_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPOSITORY_ROOT))
-
-from na2_patcher.project_paths import load_project_paths
-
-PROJECT_PATHS = load_project_paths(REPOSITORY_ROOT)
-
 SECTOR = 2048
-UTC_PLUS_3 = dt.timezone(dt.timedelta(hours=3))
 
 TARGET_SPECS = {
     "BTL": ("PRG/BTL.BIN", ["PRG/BTL.BIN", "BTL.BIN"]),
@@ -190,10 +178,6 @@ def sha1(data: bytes) -> str:
     return hashlib.sha1(data).hexdigest()
 
 
-def sha256(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
-
-
 def source_from(folder: Optional[Path], iso: Optional[Path], label: str):
     if folder is not None and folder.is_dir():
         return FolderSource(folder)
@@ -287,62 +271,6 @@ def read_rows(path: Path) -> list[dict[str, str]]:
     return rows
 
 
-def write_rows_atomic(path: Path, rows: list[dict[str, str]]) -> None:
-    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    try:
-        with temporary.open("w", encoding="utf-8-sig", newline="") as handle:
-            writer = csv.DictWriter(handle, fieldnames=MAPPING_FIELDS, delimiter="\t", lineterminator="\n")
-            writer.writeheader()
-            writer.writerows(rows)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temporary, path)
-    finally:
-        if temporary.exists():
-            temporary.unlink()
-
-
-def row_semantic_keys(row: dict[str, str]) -> list[str]:
-    def value(name: str) -> str:
-        return (row.get(name) or "").strip().upper()
-
-    source_ref = value("source_ref")
-    if not source_ref and value("source") and value("source_offset"):
-        source_ref = f"{value('source')}@{value('source_offset')}"
-    mode = value("mode")
-    target = value("target")
-    target_offset = value("target_offset")
-    reason = value("reason")
-    keys = [
-        f"EXACT|{mode}|{target}|{target_offset}|{source_ref}|{reason}",
-        f"LOCATION|{mode}|{target}|{target_offset}|{source_ref}",
-        f"SOURCE|{target}|{source_ref}|{reason}",
-    ]
-    if reason:
-        keys.append(f"REASON|{reason}|{target}|{source_ref}")
-    return keys
-
-
-def read_any_mapping_enabled(path: Path) -> tuple[dict[str, str], dict[str, str]]:
-    by_id: dict[str, str] = {}
-    by_key: dict[str, str] = {}
-    try:
-        with path.open("r", encoding="utf-8-sig", newline="") as handle:
-            reader = csv.DictReader(handle, delimiter="\t")
-            for raw in reader:
-                row = {key: (value or "").strip() for key, value in raw.items()}
-                enabled = row.get("enabled", "")
-                if enabled not in {"0", "1"}:
-                    continue
-                if row.get("id"):
-                    by_id[row["id"]] = enabled
-                for key in row_semantic_keys(row):
-                    by_key.setdefault(key, enabled)
-    except (OSError, csv.Error):
-        return {}, {}
-    return by_id, by_key
-
-
 def read_mapping_metadata(data_root: Path) -> tuple[int, str]:
     """Read the canonical mapping version and packaged mappings hash from README."""
     readme_path = data_root / "README.md"
@@ -365,65 +293,6 @@ def read_mapping_metadata(data_root: Path) -> tuple[int, str]:
     if version <= 0:
         raise ValueError("README.md mapping Version must be positive")
     return version, hash_match.group(1).lower()
-
-
-def persist_enabled_state(
-    mapping_path: Path,
-    data_root: Path,
-    packaged_hash: str,
-) -> list[dict[str, str]]:
-    """Preserve enabled flags while distinguishing user edits from old defaults.
-
-    A user-edited current table wins. An untouched packaged table first inherits
-    stable-ID state. A legacy state file is accepted for one-time migration, but
-    archived builder directories are no longer searched.
-    """
-    rows = read_rows(mapping_path)
-    current_hash = sha256(mapping_path.read_bytes()).lower()
-    project_root = next(
-        (
-            parent
-            for parent in (data_root.resolve(), *data_root.resolve().parents)
-            if (parent / "AGENTS.md").is_file() and (parent / "na2_patcher").is_dir()
-        ),
-        None,
-    )
-    if project_root is None:
-        raise ValueError(f"Could not locate repository root from {data_root}")
-    state_root = project_root / "work" / "na2_patcher" / "translation"
-    state_path = state_root / "enabled_state.tsv"
-    legacy_state_path = project_root / "work" / "translation_builder_state" / "enabled_state.tsv"
-
-    prior_by_id: dict[str, str] = {}
-    prior_by_key: dict[str, str] = {}
-    allow_prior_enable = False
-
-    if current_hash == packaged_hash:
-        inherited_state_path = state_path if state_path.is_file() else legacy_state_path
-        if inherited_state_path.is_file():
-            # Persistent state uses stable IDs only. Semantic matching here could let
-            # a retired mapping mutate a redesigned row that happens to look similar.
-            prior_by_id, _ = read_any_mapping_enabled(inherited_state_path)
-            allow_prior_enable = True
-        changed = False
-        for row in rows:
-            value = prior_by_id.get(row["id"])
-            if value is None and prior_by_key:
-                for key in row_semantic_keys(row):
-                    if key in prior_by_key:
-                        value = prior_by_key[key]
-                        break
-            should_apply = value == "0" or (value == "1" and allow_prior_enable)
-            if should_apply and row["enabled"] != value:
-                row["enabled"] = value
-                changed = True
-        if changed:
-            write_rows_atomic(mapping_path, rows)
-
-    state_root.mkdir(parents=True, exist_ok=True)
-    state_rows = [{key: source.get(key, "") for key in MAPPING_FIELDS} for source in rows]
-    write_rows_atomic(state_path, state_rows)
-    return rows
 
 
 def read_official_z(data: bytes, offset: int, label: str) -> str:
@@ -797,8 +666,6 @@ def build_translation_plan(
     un5_folder: Optional[Path] = None,
     data_root: Path,
     apply: str = "BTL,ETC,SLPS",
-    strict_hash: bool = True,
-    persist_state: bool = True,
 ) -> TranslationPlan:
     """Build a validated in-memory translation plan for another orchestrator."""
     selected_list = parse_apply(apply)
@@ -816,20 +683,15 @@ def build_translation_plan(
         **{f"NA2_{target}": sha1(data) for target, data in clean_targets.items()},
         **{key: sha1(data) for key, data in official_sources.items()},
     }
-    if strict_hash:
-        for key, expected in EXPECTED_SHA1.items():
-            actual = actual_hashes.get(key)
-            if actual is not None and actual != expected:
-                raise ValueError(f"Unexpected {key} SHA-1: {actual}; expected {expected}")
+    for key, expected in EXPECTED_SHA1.items():
+        actual = actual_hashes.get(key)
+        if actual is not None and actual != expected:
+            raise ValueError(f"Unexpected {key} SHA-1: {actual}; expected {expected}")
 
     data_root = data_root.resolve()
     mapping_version, packaged_hash = read_mapping_metadata(data_root)
     mapping_path = data_root / "mappings.tsv"
-    rows_raw = (
-        persist_enabled_state(mapping_path, data_root, packaged_hash)
-        if persist_state
-        else read_rows(mapping_path)
-    )
+    rows_raw = read_rows(mapping_path)
     mappings = parse_mappings(rows_raw)
     output_targets = {
         target: bytearray(clean_targets[target]) for target in selected_list
@@ -887,71 +749,3 @@ def build_translation_plan(
         patch_rows=patch_rows,
         summary=summary,
     )
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Build one NA2 post-composition translation TSV from official UN5 sources")
-    parser.add_argument("--na2-iso", type=Path)
-    parser.add_argument("--na2-folder", type=Path)
-    parser.add_argument("--un5-iso", type=Path)
-    parser.add_argument("--un5-folder", type=Path)
-    parser.add_argument("--work-root", type=Path, required=True)
-    parser.add_argument("--data-root", type=Path, required=True)
-    parser.add_argument("--apply", default="BTL,ETC,SLPS")
-    parser.add_argument("--no-strict-hash", action="store_true")
-    args = parser.parse_args()
-
-    plan = build_translation_plan(
-        na2_iso=args.na2_iso,
-        na2_folder=args.na2_folder,
-        un5_iso=args.un5_iso,
-        un5_folder=args.un5_folder,
-        data_root=args.data_root,
-        apply=args.apply,
-        strict_hash=not args.no_strict_hash,
-        persist_state=True,
-    )
-
-    now = dt.datetime.now(UTC_PLUS_3)
-    run_id = now.strftime("%Y%m%d_%H%M%S_%f")[:-3] + f"_pid{os.getpid()}"
-    run_root = args.work_root.resolve() / "runs" / run_id
-    run_root.mkdir(parents=True, exist_ok=False)
-    final_path = run_root / f"NA2_APPLY__TRANSLATION__{run_id}.tsv"
-    write_translation_tsv(final_path, plan.patch_rows)
-
-    plan_output = dict(plan.summary["output"])
-    translated_hashes = dict(plan.summary["translated_file_hashes"])
-    summary = {
-        "mapping_version": plan.mapping_version,
-        "mode": "official-source post-composition TSV",
-        "run_id": run_id,
-        "timezone": "UTC+03:00",
-        # build_summary.json and the TSV share one run directory, so the filename
-        # is the stable relative reference and never leaks a machine-specific path.
-        "translation_tsv": final_path.name,
-        "targets": plan.summary["targets"],
-        "output": plan_output,
-        "active_mapping_coverage": plan.summary["active_mapping_coverage"],
-        "source_hashes": plan.summary["source_hashes"],
-        "translated_file_hashes": translated_hashes,
-    }
-    write_json(run_root / "build_summary.json", summary)
-
-    display_path = Path("runs") / run_id / final_path.name
-    print("Built NA2 translation TSV:")
-    print(f"  {display_path.as_posix()}")
-    print(f"  patch rows: {len(plan.patch_rows)}")
-    print(f"  text mappings applied: {plan_output.get('text_mappings_applied', 0)}")
-    print(f"  shortened mappings: {plan_output.get('shortened_mappings_applied', 0)}")
-    print(f"  structural byte patches: {plan_output.get('structural_patches_applied', 0)}")
-    for path, info in translated_hashes.items():
-        print(f"  {path}: {info['size']} bytes, translated SHA-1 {info['translated_sha1']}")
-    return 0
-
-
-if __name__ == "__main__":
-    try:
-        raise SystemExit(main())
-    except Exception as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        raise

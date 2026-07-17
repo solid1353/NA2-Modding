@@ -1,6 +1,6 @@
 # NA2 translation module (mapping version 33)
 
-This first-class `na2_patcher` module builds an in-memory translation plan for **Naruto: Narutimate Accel 2**. It never packages patched BIN or ELF payloads. Normal profile builds invoke `engine.py` directly and log the plan without using a TSV as an inter-stage handoff. `na2 tr` exports the same plan as a standalone TSV plus JSON summary for review and compatibility.
+This first-class `na2_patcher` module builds an in-memory translation plan for **Naruto: Narutimate Accel 2**. It never packages patched BIN or ELF payloads. Profile builds invoke `engine.py` directly and log the plan without using a TSV as an inter-stage handoff. There is no standalone export command.
 
 ## Mapping metadata
 
@@ -39,19 +39,10 @@ The 12 columns are:
 - `id` is a stable mapping identifier.
 - `enabled=1` applies the row.
 - `enabled=0` retains the row without applying it.
-
-Enabled flags persist outside the module directory at:
-
-`work\na2_patcher\translation\enabled_state.tsv`
-
-Packaged defaults are distinguished from actual user changes as follows:
-
-1. A user-edited current `mappings.tsv` always wins and refreshes persistent state.
-2. An untouched packaged table inherits saved flags by stable `id` only.
-3. The former `work\translation_builder_state\enabled_state.tsv` is accepted only as a one-time migration source when the new state file does not exist.
-4. Effective flags are written atomically to both `mappings.tsv` and persistent state.
-
-This preserves the v28 repair for the migration defect where the new enabled `M0745` dialog mapping could inherit `enabled=0` from an unchanged, default-disabled v26 relocation fragment.
+- `mappings.tsv` is the only enabled-state source. Profile builds never rewrite it
+  or inherit flags from external state.
+- Changing an enabled flag changes the canonical module input and therefore
+  requires an explicit profile hash update.
 
 ### Modes
 
@@ -90,25 +81,24 @@ Arguments use compact key/value syntax, for example:
 
 ## Output
 
-Each run creates:
+Each profile build records the translation module under:
 
-`logs\na2_patcher\translation_exports\runs\<UTC+3 run id>\`
+`logs/na2_patcher/current_<run id>/<module id>/`
 
 containing:
 
-- `NA2_APPLY__TRANSLATION__<run id>.tsv`
-- `build_summary.json`
+- `translation_plan.tsv`
+- `translation_summary.json`
 
 The generated translation TSV contains exactly six columns:
 
 `path`, `offset`, `expected_hex`, `replacement_hex`, `source_text`, `replacement_text`
 
-All paths written into generated artifacts are relative. In particular, `build_summary.json` stores the translation TSV as its filename relative to the summary's own run directory, never as a machine-specific absolute path. ISO target paths inside the TSV remain ISO-root-relative.
+All ISO target paths inside the TSV remain ISO-root-relative. The profile-level module inventory also records only repository-relative paths.
 
-`build_summary.json` contains only general and aggregate run information:
+`translation_summary.json` contains general and aggregate information:
 
-- mapping version, run ID, timezone, and selected targets;
-- relative translation TSV reference;
+- mapping version and selected targets;
 - patch and mapping totals;
 - active mapping coverage grouped by mode and section;
 - source and translated-file hashes.
@@ -117,7 +107,7 @@ Disabled and unresolved rows remain solely in `mappings.tsv`.
 
 ## Safety behavior
 
-Known clean-source SHA-1 values are checked by default. `-NoStrictHash` disables those checks only for deliberate experiments.
+Known clean-source SHA-1 values are always checked. Unknown source media is rejected before a plan is produced.
 
 The module rejects malformed flags, duplicate IDs, invalid offsets, invalid source references, malformed transforms, overlapping active mappings, unexpected structural bytes, text exceeding its declared slot or sequence block, malformed target sequences, and invalid named-color conversion. Enabled bad mappings fail the build instead of becoming silent runtime skips.
 
@@ -229,8 +219,8 @@ A clean-source full build was validated with all three targets selected:
 - 33 shortened mappings;
 - zero active structural patches;
 - unchanged target file sizes;
-- relative `translation_tsv` in `build_summary.json`;
-- successful v31-to-v32 persistent-state migration with `M0745=1` and all new v32 IDs retaining their packaged enabled defaults.
+- a relative six-column translation plan in the profile module log;
+- `M0745=1` and all new v32 IDs retaining their packaged enabled defaults.
 
 ## Version 31 changes
 
@@ -313,7 +303,7 @@ v30 replaces the broken fragment-by-fragment mappings with four packed sequence 
 - `M0829`, `SLPS + 0x3046A0`, the exact startup no-card Yes/No prompt from `UN5_TEXTENG + 0x29A10`:
   `No memory card (PS2) is inserted.<br>Please insert a memory card (PS2) in MEMORY CARD slot 1.<br>At least 102 KB of free space is necessary to save Naruto Shippuden: Ultimate Ninja 5 data. Start the game anyway?`
 
-Retired fragment rows `M0814`, `M0815`, `M0817`, `M0830`, and `M0831` are removed. Their old persistent enabled-state entries are harmless because state migration applies only to IDs still present in the current table.
+Retired fragment rows `M0814`, `M0815`, `M0817`, `M0830`, and `M0831` are removed. Obsolete external enabled-state files are no longer read; the canonical table is authoritative.
 
 ### Naruto Ultimate Jutsu name
 
@@ -393,17 +383,11 @@ PCSX2 application chrome, toolbar text, pause indicators, graphical controller p
 
 ## Integration expectations
 
-- The repository-owned engine, live mappings, documentation, and export wrapper all live in `na2_patcher/modules/translation/`.
+- The repository-owned engine, live mappings, and documentation all live in `na2_patcher/modules/translation/`.
 - Do not replace the integrated module by extracting a legacy builder archive over the project.
-- Do not copy generated exports back into the module.
+- Do not copy generated profile-log plans back into the module.
 - Do not add patched `BTL.BIN`, `ETC.BIN`, or `SLPS_258.37` payloads to translation milestones.
 - The profile orchestrator owns composition and ISO application.
 - Translation is an ordered first-class module and is currently applied after the font overlay and raw menu patch so conflicts are checked against their composed bytes.
 
-## Direct use
-
-```powershell
-& '.\na2_patcher\modules\translation\export_translation.ps1'
-```
-
-Default target selection is `BTL,ETC,SLPS`. `ELF`, `SLES`, and `EXE` alias `SLPS`; `ALL` selects every target.
+The module has no standalone CLI. Target selection belongs to the hash-pinned profile.

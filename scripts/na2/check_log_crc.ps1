@@ -6,7 +6,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot 'project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 if ([string]::IsNullOrWhiteSpace($LogPath)) {
     $LogPath = Join-Path $projectPaths.pcsx2 'logs\emulog.txt'

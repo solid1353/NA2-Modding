@@ -32,9 +32,9 @@ replaced with a copied machine-specific absolute path.
 - `@source/*.files/`: extracted views of original source archives. Treat as read-only reference.
 - `build/`: normally contains `build/Current.iso` and may retain at most `build/Previous.iso` as rotation history. Standard builds use `build/Current.iso.building` in the same directory and delete it on caught failure. After verification and log creation, a byte-identical candidate is discarded without changing `Current.iso` or `Previous.iso`; a changed candidate rotates `Current.iso` to `Previous.iso` and becomes `Current.iso`. Other temporary, parity-check, and hypothesis-test ISOs may remain while they have a concrete future testing or comparison use, but are permanently deleted as soon as they become useless.
 - There are no top-level `packages/` or `milestones/` archive directories. Temporary imported archives live under task-specific `work/temp/` folders until normalized or retired. Immutable reproducible data lives beside its module or under `na2_patcher/milestones/`; retired archives remain available through Git history.
-- `na2_patcher/modules/translation/mappings.tsv` is the translation module's current hash-pinned v33 input, and `na2 tr` remains a standalone TSV export with a JSON build summary under `logs/na2_patcher/translation_exports/`. The current profile references this module input directly by exact hash. All legacy translation builder archives have been retired from the workspace after exact profile parity and remain available through Git history.
+- `na2_patcher/modules/translation/mappings.tsv` is the translation module's current hash-pinned v33 input. The current profile invokes the translation engine directly and records its plan under the profile run log; no standalone export or source-hash bypass exists. All legacy translation builder archives have been retired from the workspace after exact profile parity and remain available through Git history.
 - `releases/`: ignored relative link to the frozen milestone archive outside the repository. It contains milestone artifacts only; never alter existing contents.
-- `logs/`: generated records grouped into task-specific subfolders. Current groups include `na2/`, `na2_patcher/`, `font/`, `translation/`, `packages/`, `milestones/`, `extraction/`, `inventory/`, and `trash/`; no files should be written directly in the `logs/` root. `na2` keeps only `logs/na2/latest.log` for the most recent completed run and `logs/na2/rolling.log` for the newest 500 runs, with sections separated by human-readable timestamps.
+- `logs/`: generated records grouped into task-specific subfolders; no files should be written directly in the `logs/` root. `na2` keeps only `logs/na2/latest.log` for the most recent completed run and `logs/na2/rolling.log` for the newest 500 runs, with sections separated by human-readable timestamps.
 - `scripts/`: repeatable tooling.
 - `@pcsx2_files/`: project-owned PCSX2 artifacts. The canonical PNACH and input recordings are tracked; screenshots remain local and ignored.
 - `@pcsx2/`: portable, self-contained PCSX2 installation. BIOS, memory cards, logs, saves, settings, and other support data stay inside this root. Its game-list media paths may point to `@build/` and `@source/`; its CRC-named cheat symlinks target the canonical PNACH under `@pcsx2_files/`.
@@ -45,7 +45,6 @@ replaced with a copied machine-specific absolute path.
 - `docs/HYPOTHESES.md`: archived patch candidates, failed experiments, unverified addresses, and speculative leads.
 - `TASKS.md`: concrete active tasks, test plans, and queued investigations only; no general workflow rules.
 - `work/temp/`: ignored throwaway/intermediate workspace, organized into task-named subfolders and cleaned when no longer useful.
-- `trash/`: timestamped holding area for deleted/retired workspace items.
 - `old/`: user's personal folder. Off-limits unless explicitly instructed.
 
 Scratch/intermediate folders should be created only when needed under `@work/temp/`, with names tied to the task. Extractions of original source archives stay beside the source archive under `@source/`.
@@ -62,18 +61,6 @@ Use separate Codex tasks against the same real project root:
 - Logic / PNACH: gameplay patches and reverse engineering unrelated to font or translation work.
 
 All tasks must read `AGENTS.md`, `docs/PROJECT_CONTEXT.md`, `TASKS.md`, and `docs/HYPOTHESES.md` before acting. Binary outputs and experiments remain shared, so each task must re-check Git status and current package/build state before modifying files.
-
-## Trash Rule
-
-Use `trash/` for project-local removals instead of hard deletion when practical. Trash batches are timestamped and include a manifest/log.
-
-Never trash or delete anything under:
-
-- `@source/`
-- `releases/`
-- `trash/`
-
-Use `scripts/move_to_trash.ps1` for safe project-local trash moves.
 
 ## Extraction Layout
 
@@ -112,7 +99,7 @@ original/
 
 For edited/build versions, do not edit anything under `@source/` in place. Copy the needed file or archive into a task/build folder first, then patch that copy through scripts and log the source path and output path. If extraction or inspection needs metadata, write it under `@logs/` using source-relative paths instead of placing files in `@source/`.
 
-The `@source/` tree should also have Windows read-only attributes applied. Use `scripts/set_original_readonly.ps1` after extracting new original-source content or if attributes need to be restored.
+The `@source/` tree should also have Windows read-only attributes applied. Use `scripts/project/set_source_readonly.ps1` after extracting new original-source content or if attributes need to be restored.
 
 ## DATA.CVM Extraction
 
@@ -124,32 +111,17 @@ Current split/extraction outputs:
 - `@source/NA2.iso.files/DATA/DATA.CVM.files/DATA.CVM.hdr`
 - `@source/NA2.iso.files/DATA/DATA.CVM.files/DATA.CVM.iso.files/`
 
-Use `scripts/split_cvm_rofs.ps1` to split the encrypted CVM safely without running `@utils/old/CVM Parser/cvm_tool.exe`.
+Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without running `@utils/old/CVM Parser/cvm_tool.exe`.
 
 ## Current Scripts
 
-- Root `_na2.ps1` is the only public command entrypoint and owns command dispatch plus latest/rolling transcript management; build, promotion, PNACH, and process-launch implementation stay under `scripts/`.
-- Bare `na2` performs the standard workflow in two stages: build the pinned current profile, promote and rotate it only when its content differs from `Current.iso`, then actualize the PNACH exactly once and launch `Current.iso`. `na2 -c` runs `Current.iso` without rebuilding; `na2 -p` runs `Previous.iso` without rebuilding. Root `-r` / `-RunOnly` is intentionally unsupported.
-- `scripts/build_na2.ps1`: internal build/promotion helper. It closes portable PCSX2, invokes the pinned profile compositor, compares the verified candidate with `Current.iso` by size and SHA-256, discards an identical candidate, or safely rotates and promotes a changed candidate. It does not actualize PNACH or launch PCSX2.
-- `scripts/build_na2_profile.py`: profile-only ISO compositor. It accepts one explicit hash-pinned profile, applies its ordered modules, verifies the entire staged ISO, writes the profile log, and leaves `Current.iso.building` for PowerShell promotion. It has no direct newest-package, standalone raw-patch, or standalone translation CLI modes.
-- `scripts/launch_na2.ps1`: internal launch helper. It closes portable PCSX2, validates the selected ISO, actualizes PNACH unless explicitly skipped, logs enabled cheats, and launches PCSX2 with the requested window style. It never builds or rotates an ISO.
-- Build transcripts explicitly record `ISO result: unchanged` for an identical discarded candidate or `ISO result: updated` for a different promoted candidate, plus the rotation result.
-- Agent-run PCSX2 launch validation uses `scripts/test_pcsx2_launch.ps1`, which delegates launch behavior to `scripts/launch_na2.ps1`. It temporarily mutes PCSX2, launches it hidden without intentionally activating it, re-hides any exposed window, restores the previous foreground window if PCSX2 took focus, closes it after the requested validation window, and restores the original audio setting; normal user launches are unchanged.
-- `na2 act` removes managed aliases when the canonical PNACH is zero bytes; otherwise it actualizes the symlink for the ELF CRC of the ISO in `@build/`. It preserves other games, real PNACH files, and unrelated symlinks.
-- `scripts/pnach_state.ps1` identifies zero-byte canonical PNACH files and extracts enabled named cheats for launch logging.
-- Translation TSV schema: `path`, `offset`, `expected_hex`, `replacement_hex`, `source_text`, `replacement_text`; translation owns no replacement binaries.
-- `check_translation_lengths.ps1`: checks CP932 byte lengths for translation tables.
-- `extract_afs.ps1`: extracts AFS archives for inspection when needed.
-- `extract_iso_file.ps1`: extracts one file from an ISO into a chosen output path.
-- `replace_iso_file_same_size.ps1`: replaces a same-size file extent inside an ISO in place.
-- `compare_translation_files.ps1`: compares translated `BTL.BIN`, `ETC.BIN`, and `SLPS_258.37` against source copies and writes TSV reports.
-- `extract_changed_string_slots.ps1`: extracts changed CP932 string slots for translation review.
-- `apply_string_slot_patches.ps1`: applies validated CP932 string-slot patches and writes a patch log.
-- `inventory_project.ps1`: creates timestamped inventory/hash reports under `logs/`.
-- `set_original_readonly.ps1`: applies and verifies Windows read-only attributes under `@source/`.
-- `move_to_trash.ps1`: moves project-local files/folders to timestamped `trash/` batches and refuses protected folders.
-- `check_pcsx2_crc.ps1`: reads PCSX2 logs for the latest boot Game CRC and compares it with a PNACH filename.
-- `create_milestone_release.ps1`: creates a new append-only milestone folder under `releases/`; refuses existing names and records a manifest.
+- Root `_na2.ps1` is the only routine user-facing entrypoint. Bare `na2` builds the pinned current profile, rotates only when the verified candidate differs, actualizes PNACH, and launches `Current.iso`. `na2 -c` and `na2 -p` launch the current or previous ISO without rebuilding; `na2 act` actualizes `Current.iso` without launching.
+- `scripts/na2/` contains build/promotion, mandatory PNACH actualization, PCSX2 process/launch handling, CRC diagnostics, and the agent-only hidden/muted launch test. Build transcripts explicitly report `ISO result: unchanged` or `ISO result: updated` and the rotation result.
+- `na2_patcher/build_profile.py` is the profile-only ISO compositor. It applies one explicit hash-pinned profile, rejects all file-size changes, verifies the complete staged ISO, writes the profile log, and leaves `Current.iso.building` for PowerShell promotion.
+- `scripts/media/` contains the retained ISO, AFS, and CVM inspection/extraction tools. The encrypted-CVM workflow is `split_cvm_rofs.ps1`; the older `extract_cvm.ps1` remains available as a diagnostic.
+- `scripts/project/` contains repository inventory and configured-source read-only maintenance. `scripts/release/` contains append-only milestone creation.
+- `scripts/research/menu_input/` and `scripts/research/translation/` retain useful one-off analysis tools outside the normal build path. Their lack of runtime callers does not make them disposable.
+- See `scripts/README.md` for the maintained directory contract and individual responsibilities.
 
 ## Utils Dump
 

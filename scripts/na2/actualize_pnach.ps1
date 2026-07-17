@@ -1,14 +1,14 @@
 param(
-    [string]$IsoPath = "",
-    [string]$CanonicalPnach = "",
-    [string]$Serial = "SLPS-25837"
+    [string]$IsoPath = ""
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot 'project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 . (Join-Path $PSScriptRoot 'pnach_state.ps1')
 $projectPaths = Get-Na2ProjectPaths
+$Serial = 'SLPS-25837'
+$CanonicalPnach = Join-Path $projectPaths.pcsx2_files 'SLPS-25837_C0659AD1.pnach'
 
 $sectorSize = 2048
 
@@ -150,9 +150,6 @@ function Get-Pcsx2ElfCrcFromBytes {
     return ('{0:X8}' -f $crc)
 }
 
-if ([string]::IsNullOrWhiteSpace($CanonicalPnach)) {
-    $CanonicalPnach = Join-Path $projectPaths.pcsx2_files "SLPS-25837_C0659AD1.pnach"
-}
 $CanonicalPnach = (Resolve-Path -LiteralPath $CanonicalPnach).Path
 $pnachState = Get-Na2PnachState -Path $CanonicalPnach
 $cheatsDir = Join-Path $projectPaths.pcsx2 'cheats'

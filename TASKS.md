@@ -3,11 +3,11 @@
 ## In Progress
 
 ### Project
+- Deal with the "old" directory.
 - Properly unpack NA2, UN3, UN5, UN6.
 - Research which NA2 binaries require full disassembly, targeted disassembly, or data-only inspection, and document the minimum reusable analysis workflow.
 - [Subject to change] re-disassemble NA2, disassemble UN6.
 - Re-check everything and make source directory read-only.
-- Deal with the "old" directory.
 
 ### UI Translation
 - Add texture patcher to import assets from UN5.
@@ -23,10 +23,8 @@
 
 ### Project
 - Solve concurrent memcard access for pcsx2.
-- Come up with /trash cleanup policy.
-- Investigate `@utils/old`.
+- Come up with a log cleanup policy.
 - Develop a release process.
-- Refactor.
 
 ### Logic
 - Improve substitution reliability.

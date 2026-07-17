@@ -7,7 +7,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot 'project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
 $sectorSize = 2048
@@ -179,15 +179,15 @@ finally {
     $fs.Dispose()
 }
 
-$isoExtractor = Join-Path $PSScriptRoot "extract_iso9660.ps1"
+$isoExtractor = Join-Path $projectPaths.scripts 'media\extract_iso.ps1'
 if (Test-Path -LiteralPath $isoExtractor) {
     & $isoExtractor -IsoPath $isoOut
 }
 
-$readonlyScript = Join-Path $PSScriptRoot "set_original_readonly.ps1"
+$readonlyScript = Join-Path $projectPaths.scripts 'project\set_source_readonly.ps1'
 if ($OutDir.StartsWith($projectPaths.source, [StringComparison]::OrdinalIgnoreCase) -and
     (Test-Path -LiteralPath $readonlyScript)) {
-    & $readonlyScript | Out-Null
+    & $readonlyScript -SourceDir $OutDir | Out-Null
 }
 
 Write-Host "Extracted CVM:"

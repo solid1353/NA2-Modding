@@ -6,7 +6,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 
 - Use only repository-relative paths in canonical project files, scripts, configuration, logs, manifests, metadata, and generated artifacts; never persist machine-specific absolute paths there. Absolute paths are permitted only in dated `.agents/` handoffs as non-authoritative migration context, transient in-memory command arguments or diagnostic output when a tool requires them, and user-facing clickable file links. Do not persist an absolute path anywhere else unless the user explicitly authorizes that specific exception.
 - The task workflow and its approval gates apply only to selected work from `TASKS.md`. Perform small, direct, low-risk changes immediately without a plan, intelligence-level recommendation, or approval gate; keep them in the current changeset unless the user says otherwise.
-- For a selected task, only read-only inspection is allowed before plan approval. Only a standalone exact ASCII response of `approved` or `qwe` authorizes changes. A second standalone exact approval after result review authorizes task deletion, commit, and push.
+- For a selected task, only read-only inspection is allowed before plan approval. An unambiguous ASCII use of `approved` or `qwe` authorizes changes and may appear within a longer message. A second unambiguous approval after result review authorizes task deletion, commit, and push.
 - The user may edit files or create commits while agents are working; treat this as expected concurrent activity, not an anomaly or blocker. Refresh Git status and history before staging, committing, and pushing; preserve concurrent user work and stage only the intended changes unless the user directs otherwise. Agents may push the user's existing commits together with their own. Pause when concurrent changes directly overlap or conflict with the agent's work, or materially change the requested outcome.
 - Execute freely within an approved task, including major implementation changes. If the task becomes unclear or the whole approach is wrong, stop safely and clarify; a replacement plan requires approval.
 - Use `na2_patcher/profiles/current/` as the active reproducible build definition. Profiles must pin every enabled module input by hash and use only repository-relative paths; do not select newest packages implicitly in the normal workflow. Raw-binary profile hashes cover canonical TSV inputs and referenced blobs, not adjacent documentation.
@@ -25,11 +25,11 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Keep only the active working ISOs under `build/`: `build/Current.iso` and, when rotation history exists, at most `build/Previous.iso`; do not store PNACH files, loose replacements, logs, or other working files there. During a build, `build/Current.iso.building` is the only standard temporary ISO. Remove it on failure; after successful verification, discard it without rotation when its content matches `Current.iso`, or atomically promote it when the content differs.
 - Every build log must report `ISO result: unchanged` when the verified candidate matches `Current.iso`, or `ISO result: updated` when a different candidate is promoted, together with whether rotation occurred.
 - Temporary, parity-check, and hypothesis-test ISOs may remain under `build/` while they have a concrete future testing or comparison use. Permanently delete them as soon as they become useless; never leave obsolete ISOs accumulating under `build/`.
-- Do not recreate a top-level `packages/` staging/history directory. Normal builds consume hash-pinned profile modules. Keep temporary imported archives under a task-specific `work/temp/` folder, normalize useful data into a module, then retire the archive to `trash/`.
+- Do not recreate a top-level `packages/` staging/history directory. Normal builds consume hash-pinned profile modules. Keep temporary imported archives under a task-specific `work/temp/` folder, normalize useful data into a module, verify it, then delete the archive or deliberately preserve an irreplaceable copy outside the repository.
 - Do not recreate a top-level `milestones/` package archive directory. Keep immutable reproducible module data under `na2_patcher/milestones/` or as a hash-pinned declarative patch set beside its module; retain retired package archives only in Git history.
 - New translation milestones freeze immutable canonical mapping data plus a hash-pinned profile; the integrated translation engine is versioned with the repository. Legacy translation builder archives are retained only in Git history. Generated translation TSVs are compatibility run outputs, not milestones.
 - Treat `na2_patcher/modules/translation/mappings.tsv` as the translation module's current versioned input. Profiles may reference it only with an exact content hash; changing it requires updating the profile pin as an explicit translation version change.
-- `na2 tr` is a compatibility/review export interface. The normal profile workflow invokes the translation module directly and records its generated plan and summary under the profile run log.
+- The normal profile workflow invokes the translation module directly and records its generated plan and summary under the profile run log. There is no standalone translation-export command or source-hash bypass.
 - Keep frozen milestone artifacts under the ignored root `releases/` relative link.
 - Never alter, overwrite, rename, move, or delete anything under `releases/`.
 - Only create new uniquely named milestone outputs under `releases/`.
@@ -37,9 +37,8 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Every release PNACH must correspond to the PCSX2 CRC of the ELF inside the paired release ISO.
 - Before reporting a release as valid, check the paired ISO/ELF CRC against the PNACH filename and warn if they do not match or cannot be verified.
 - Keep logs, inventories, hashes, and patch records under task-specific subfolders of `logs/`; do not write files directly in the `logs/` root.
-- Keep deleted/retired workspace items under `trash/` instead of hard-deleting when practical.
-- Use `scripts/move_to_trash.ps1` for project-local removals; it must refuse `@source/`, `@releases/`, and `@trash/`.
-- Generated/intermediate files go under `@logs/`, `@scripts/`, or `@work/temp/` with task-named subfolders when throwaway workspace is needed. Completed working ISOs are the only outputs kept under `@build/`. Original-source extractions stay beside their source archive under `@source/` as `<archive filename>.files`.
+- Do not recreate a project `trash/` holding area. Git history is the recovery mechanism for tracked files. Delete confirmed disposable generated files directly; before deleting an irreplaceable untracked input, preserve it deliberately outside the repository.
+- Generated/intermediate files go under `@logs/` or `@work/temp/` with task-named subfolders when throwaway workspace is needed. `@scripts/` contains maintained code only. Completed working ISOs are the only outputs kept under `@build/`. Original-source extractions stay beside their source archive under `@source/` as `<archive filename>.files`.
 - Treat top-level `old/` as the user's personal folder. Do not inspect, search, execute from, modify, move, delete, or otherwise touch it unless explicitly instructed.
 - Treat `@utils/old/` as an untrusted tool/archive dump. Do not execute tools from it until inspected and chosen for a specific task.
 - Log every binary patch: file, offset, original bytes, new bytes, reason.
@@ -67,11 +66,11 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 1. Tasks may be added to `TASKS.md` at any time by the user, or by an agent when the user orders it.
 2. After a successful push—or whenever the user asks what is next—the agent reads `TASKS.md`, reports several relevant `In Progress` choices and any closely related `Backlog` choices word for word without paraphrasing and in their original order, avoids dumping the whole file, and asks the user to select one.
 3. The agent may perform read-only inspection, then gives a short plan, recommends an intelligence level, and ends with **Awaiting plan approval**.
-4. Only an exact standalone ASCII `approved` or `qwe` authorizes changes.
+4. An unambiguous ASCII `approved` or `qwe`, including within a longer message, authorizes changes.
 5. The agent executes freely within the approved task, including major changes.
 6. If the task becomes unclear or the whole approach is wrong, stop and clarify; a replacement plan needs approval.
 7. The agent reports the result.
-8. Only another exact standalone ASCII `approved` or `qwe` authorizes task deletion, commit, and push.
+8. Another unambiguous ASCII `approved` or `qwe`, including within a longer message, authorizes task deletion, commit, and push.
 9. The user's concurrent edits and commits are expected. The agent preserves them, refreshes Git state before Git operations, and may push the user's existing commits with its own.
 10. Queued instructions remain part of the same changeset unless the user says otherwise.
 
@@ -85,6 +84,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 ## Workspace creation rules
 
 - `docs/` contains repository-wide context, plans, hypotheses, and release documentation. Keep component-specific READMEs beside their components.
+- Keep maintained scripts grouped by responsibility under `scripts/lib/`, `scripts/na2/`, `scripts/media/`, `scripts/project/`, `scripts/release/`, or `scripts/research/`. Do not restore the former flat script dump; update `scripts/README.md` when a responsibility changes.
 - Use `work/temp/` for throwaway/intermediate work only. Clean task subfolders there after failed or finished experiments when they are no longer useful.
 - Use `work/` outside `work/temp/` for persistent reverse-engineering and binary-mod work. Keep work separated by target/task, for example `work/<target>/base/`, `work/<target>/mod/`, and `work/<target>/analysis/`.
 - Do not mix source/reference files with modified files. Baseline copies, modified copies, analysis outputs, and release/build outputs must live in clearly separate folders.
@@ -112,7 +112,7 @@ Release PNACH files are coupled to the boot ELF CRC of their paired ISO. Always 
 
 ## Actualize workflow
 
-The root command interface is: bare `na2` builds the current profile, conditionally rotates a changed ISO, and launches `Current.iso`; `na2 -c` launches `Current.iso` without rebuilding; `na2 -p` launches `Previous.iso` without rebuilding. Root `-r` / `-RunOnly` is unsupported. `_na2.ps1` owns only public dispatch and transcript management; `scripts/build_na2.ps1` owns profile build and ISO promotion/rotation; `scripts/build_na2_profile.py` owns profile-only ISO composition and verification; `scripts/launch_na2.ps1` owns PNACH actualization, enabled-cheat logging, and PCSX2 launch. Do not recombine these responsibilities or restore direct newest-package selection.
+The root command interface is: bare `na2` builds the current profile, conditionally rotates a changed ISO, and launches `Current.iso`; `na2 -c` launches `Current.iso` without rebuilding; `na2 -p` launches `Previous.iso` without rebuilding; `na2 act` actualizes `Current.iso` without launching. No other public build, path-override, hash-bypass, or launch-bypass arguments are supported. `_na2.ps1` owns only public dispatch and transcript management; `scripts/na2/build.ps1` owns profile build and ISO promotion/rotation; `na2_patcher/build_profile.py` owns profile-only ISO composition and verification; `scripts/na2/launch.ps1` owns mandatory PNACH actualization, enabled-cheat logging, and PCSX2 launch. Do not recombine these responsibilities or restore direct newest-package selection.
 
 When asked to actualize, keep the canonical file named `@pcsx2_files/SLPS-25837_C0659AD1.pnach`. Managed aliases are only matching-serial symlinks that resolve to this canonical file; preserve all real PNACH files, other games, and unrelated symlinks. If the canonical file is zero bytes, delete its managed aliases directly and skip ISO/CRC inspection. Otherwise, use the ISO in `@build/` by default, calculate the PCSX2-style ELF CRC from its boot ELF, delete obsolete managed aliases, and create the current CRC-named relative symlink targeting the canonical project PNACH if missing. Refuse an occupied target filename instead of overwriting an unmanaged file or symlink.
 
@@ -122,7 +122,7 @@ Before launching PCSX2, log enabled cheat names from uncommented PNACH `patch=` 
 
 Before rebuilding or launching a test ISO, unconditionally issue the close command for the configured `@pcsx2/pcsx2-qt.exe`. Do not probe first to see whether PCSX2 is running; closing an absent process should be treated as a harmless no-op.
 
-If an agent launches PCSX2 for testing, it must use `scripts/test_pcsx2_launch.ps1`. The wrapper temporarily mutes PCSX2, starts it hidden without intentionally activating it, re-hides any exposed window, restores the previous foreground window if PCSX2 took focus, closes the test instance after the validation window, and restores the original audio setting even when testing fails. Normal user launches remain unchanged.
+If an agent launches PCSX2 for testing, it must use `scripts/na2/test_launch.ps1`. The wrapper temporarily mutes PCSX2, starts it hidden without intentionally activating it, re-hides any exposed window, restores the previous foreground window if PCSX2 took focus, closes the test instance after the validation window, and restores the original audio setting even when testing fails. Normal user launches remain unchanged.
 
 ## Task report format
 

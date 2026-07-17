@@ -5,22 +5,19 @@ import argparse
 import csv
 import os
 import shutil
-import sys
 import zipfile
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from iso9660_tools import Iso9660, SECTOR
-from project_paths import PROJECT_PATHS
+from .iso9660 import Iso9660
+from .modules import translation as translation_module
+from .modules.raw_binary import engine as patch_binary
+from .profile import Profile, ProfileModule, load_profile
+from .project_paths import load_project_paths
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
-if str(REPOSITORY_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPOSITORY_ROOT))
 
-from na2_patcher.modules.raw_binary import engine as patch_binary
-from na2_patcher.profile import Profile, ProfileModule, load_profile
-from na2_patcher.modules import translation as translation_module
+PROJECT_PATHS = load_project_paths(Path(__file__).resolve())
 
 
 def normalize(path: str) -> str:
@@ -61,48 +58,6 @@ def payload_size_changes(
         for path, data in payloads.items()
         if len(data) != source.by_path[path].size
     ]
-
-
-def directory_record_offset(iso: Iso9660, path: str) -> int:
-    parent_path, _, leaf = path.rpartition("/")
-    parent = iso.by_path.get(parent_path)
-    if parent is None or not parent.is_dir:
-        raise RuntimeError(f"Parent directory not found for {path}")
-    data = iso.read_file(parent)
-    offset = 0
-    while offset < len(data):
-        length = data[offset]
-        if length == 0:
-            offset = ((offset // SECTOR) + 1) * SECTOR
-            continue
-        raw = data[offset : offset + length]
-        name_length = raw[32]
-        name_bytes = raw[33 : 33 + name_length]
-        if name_bytes not in (b"\x00", b"\x01"):
-            name = name_bytes.decode("ascii").split(";", 1)[0].upper()
-            if name == leaf:
-                return parent.byte_offset + offset
-        offset += length
-    raise RuntimeError(f"Directory record not found for {path}")
-
-
-def write_both_endian_32(output, offset: int, value: int) -> None:
-    output.seek(offset)
-    output.write(value.to_bytes(4, "little"))
-    output.write(value.to_bytes(4, "big"))
-
-
-def update_volume_space_size(output, sectors: int) -> None:
-    for sector in range(16, 128):
-        offset = sector * SECTOR
-        output.seek(offset)
-        descriptor = output.read(SECTOR)
-        if len(descriptor) != SECTOR or descriptor[1:6] != b"CD001":
-            continue
-        if descriptor[0] == 1:
-            write_both_endian_32(output, offset + 80, sectors)
-        if descriptor[0] == 255:
-            break
 
 
 def load_zip_payloads(
@@ -441,8 +396,6 @@ def apply_profile_modules(
                 **_translation_source_arguments(profile.roots["un5"], "un5"),
                 data_root=module.input_path.parent,
                 apply=",".join(module.selection) if module.selection else "BTL,ETC,SLPS",
-                strict_hash=True,
-                persist_state=False,
             )
             rows, paths = apply_translation_rows(
                 plan.patch_rows,
@@ -541,17 +494,11 @@ def main() -> int:
     )
     parser.add_argument("--source", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument("--workspace", type=Path, default=PROJECT_PATHS.repository)
     parser.add_argument("--profile", required=True, type=Path)
     parser.add_argument("--profile-log-directory", required=True, type=Path)
-    parser.add_argument(
-        "--allow-size-changes",
-        action="store_true",
-        help="Allow an explicitly approved profile to relocate size-changing ISO files.",
-    )
     args = parser.parse_args()
 
-    workspace = args.workspace.resolve()
+    workspace = PROJECT_PATHS.repository
     source_iso = args.source.resolve()
     output_iso = args.output.resolve()
     if not source_iso.is_file():
@@ -581,14 +528,13 @@ def main() -> int:
         raise RuntimeError("The profile selected no file changes")
 
     size_changes = payload_size_changes(source, payloads)
-    if size_changes and not args.allow_size_changes:
+    if size_changes:
         details = ", ".join(
             f"{path} ({old_size} -> {new_size})"
             for path, old_size, new_size in size_changes
         )
         raise RuntimeError(
-            "Selected payloads change ISO file sizes; pass --allow-size-changes "
-            f"only for an explicitly approved relocation build: {details}"
+            f"Profile payloads must preserve ISO file sizes: {details}"
         )
 
     with staged_output_iso(source_iso, output_iso) as working_iso:
@@ -597,27 +543,8 @@ def main() -> int:
             for path, data in payloads.items():
                 record = current.by_path[path]
                 payload = bytes(data)
-                if len(payload) == record.size:
-                    output.seek(record.byte_offset)
-                    output.write(payload)
-                    continue
-
-                output.seek(0, os.SEEK_END)
-                extent = (output.tell() + SECTOR - 1) // SECTOR
-                output.seek(extent * SECTOR)
+                output.seek(record.byte_offset)
                 output.write(payload)
-                padding = (-len(payload)) % SECTOR
-                if padding:
-                    output.write(b"\x00" * padding)
-
-                record_offset = directory_record_offset(current, path)
-                write_both_endian_32(output, record_offset + 2, extent)
-                write_both_endian_32(output, record_offset + 10, len(payload))
-
-            output.seek(0, os.SEEK_END)
-            sectors = (output.tell() + SECTOR - 1) // SECTOR
-            output.truncate(sectors * SECTOR)
-            update_volume_space_size(output, sectors)
             output.flush()
             os.fsync(output.fileno())
 

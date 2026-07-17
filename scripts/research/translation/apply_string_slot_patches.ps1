@@ -7,7 +7,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot 'project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\..\lib\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 $encoding = [Text.Encoding]::GetEncoding(932)
 

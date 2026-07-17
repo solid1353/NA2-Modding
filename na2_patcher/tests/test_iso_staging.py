@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-import sys
 import tempfile
 import unittest
 from types import SimpleNamespace
 from pathlib import Path
 
-REPOSITORY = Path(__file__).resolve().parents[2]
-SCRIPTS = REPOSITORY / "scripts"
-if str(SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS))
-
-from build_na2_profile import building_iso_path, payload_size_changes, staged_output_iso
+from na2_patcher.build_profile import (
+    building_iso_path,
+    payload_size_changes,
+    staged_output_iso,
+)
 
 
 class IsoStagingTests(unittest.TestCase):

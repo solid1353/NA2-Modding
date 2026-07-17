@@ -8,10 +8,9 @@
   - NUN5: ELF, ADV.BIN, BTL.BIN, ETC.BIN, TEXTENG.BIN, TEXTFRN.BIN, TEXTGER.BIN, TEXTITA.BIN, TEXTSPA.BIN.
   - NUN6: ELF, ADV.BIN, BTL.BIN, ETC.BIN, MOD.BIN, TEXTBRA.BIN.
   - Shared identical IOP modules (analyze once): CRI_ADXI.IRX, MODULES.BIN, SNDBASE.IRX.
-- Do a shallow check and make source and disassembly directories read-only.
 
 ### UI Translation
-- Add texture patcher to import assets from NUN5.
+- Add texture patcher to import assets from NUN5 (investigate NUN5 DATA.CVM unpacked and stripped first?).
 - Investigate upscaling variants.
 
 ### Menu restructuring

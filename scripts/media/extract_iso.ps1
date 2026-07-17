@@ -2,7 +2,11 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$IsoPath,
 
-    [string]$OutDir = ""
+    [string]$OutDir = "",
+
+    [switch]$NoLog,
+
+    [switch]$SkipReadOnly
 )
 
 Set-StrictMode -Version Latest
@@ -21,6 +25,60 @@ function Read-UInt32LE {
     return [BitConverter]::ToUInt32($Data, $Offset)
 }
 
+function Read-IsoRecordingTime {
+    param(
+        [byte[]]$Data,
+        [int]$Offset,
+        [string]$Context
+    )
+
+    $year = 1900 + [int]$Data[$Offset]
+    $month = [int]$Data[$Offset + 1]
+    $day = [int]$Data[$Offset + 2]
+    $hour = [int]$Data[$Offset + 3]
+    $minute = [int]$Data[$Offset + 4]
+    $second = [int]$Data[$Offset + 5]
+    $offsetByte = [int]$Data[$Offset + 6]
+    $offsetQuarters = if ($offsetByte -ge 128) { $offsetByte - 256 } else { $offsetByte }
+
+    if ($year -eq 1900 -and $month -eq 0 -and $day -eq 0 -and
+        $hour -eq 0 -and $minute -eq 0 -and $second -eq 0 -and
+        $offsetQuarters -eq 0) {
+        return $null
+    }
+
+    if ($offsetQuarters -lt -48 -or $offsetQuarters -gt 52) {
+        throw "Invalid ISO timezone offset in ${Context}: $offsetQuarters quarter-hours"
+    }
+
+    try {
+        $timezoneOffset = [TimeSpan]::FromMinutes($offsetQuarters * 15)
+        return [DateTimeOffset]::new($year, $month, $day, $hour, $minute, $second, $timezoneOffset)
+    }
+    catch {
+        throw "Invalid ISO recording time in ${Context}: $year-$month-$day $hour`:$minute`:$second (UTC quarter offset $offsetQuarters)"
+    }
+}
+
+function Set-IsoRecordedTime {
+    param(
+        [string]$Path,
+        [object]$RecordedAt,
+        [DateTimeOffset]$FallbackRecordedAt
+    )
+
+    $effectiveTime = if ($null -ne $RecordedAt) { [DateTimeOffset]$RecordedAt } else { $FallbackRecordedAt }
+
+    if ((Get-Item -LiteralPath $Path).PSIsContainer) {
+        [IO.Directory]::SetCreationTimeUtc($Path, $effectiveTime.UtcDateTime)
+        [IO.Directory]::SetLastWriteTimeUtc($Path, $effectiveTime.UtcDateTime)
+    }
+    else {
+        [IO.File]::SetCreationTimeUtc($Path, $effectiveTime.UtcDateTime)
+        [IO.File]::SetLastWriteTimeUtc($Path, $effectiveTime.UtcDateTime)
+    }
+}
+
 function Read-DirectoryRecord {
     param(
         [byte[]]$Data,
@@ -36,6 +94,7 @@ function Read-DirectoryRecord {
     $extent = Read-UInt32LE -Data $Data -Offset ($Offset + 2)
     $size = Read-UInt32LE -Data $Data -Offset ($Offset + 10)
     $flags = [int]$Data[$Offset + 25]
+    $recordedAt = Read-IsoRecordingTime -Data $Data -Offset ($Offset + 18) -Context "directory record at byte $Offset"
     $nameLength = [int]$Data[$Offset + 32]
     $nameBytes = [byte[]]::new($nameLength)
     [Array]::Copy($Data, $Offset + 33, $nameBytes, 0, $nameLength)
@@ -58,6 +117,7 @@ function Read-DirectoryRecord {
         Flags = $flags
         Name = $name
         IsDirectory = (($flags -band 0x02) -ne 0)
+        RecordedAt = $recordedAt
     }
 }
 
@@ -66,7 +126,9 @@ function Copy-ExtentToFile {
         [IO.FileStream]$IsoStream,
         [uint32]$Extent,
         [uint32]$Size,
-        [string]$OutPath
+        [string]$OutPath,
+        [object]$RecordedAt,
+        [DateTimeOffset]$FallbackRecordedAt
     )
 
     if (Test-Path -LiteralPath $OutPath) {
@@ -95,6 +157,8 @@ function Copy-ExtentToFile {
     finally {
         $out.Dispose()
     }
+
+    Set-IsoRecordedTime -Path $OutPath -RecordedAt $RecordedAt -FallbackRecordedAt $FallbackRecordedAt
 }
 
 function Extract-Directory {
@@ -103,7 +167,8 @@ function Extract-Directory {
         [object]$DirRecord,
         [string]$OutPath,
         [System.Collections.Generic.List[object]]$LogRows,
-        [string]$RelativePrefix
+        [string]$RelativePrefix,
+        [DateTimeOffset]$FallbackRecordedAt
     )
 
     if (-not (Test-Path -LiteralPath $OutPath)) {
@@ -147,21 +212,27 @@ function Extract-Directory {
 
         $childOut = Join-Path $OutPath $record.Name
 
+        $effectiveRecordedAt = if ($null -ne $record.RecordedAt) { [DateTimeOffset]$record.RecordedAt } else { $FallbackRecordedAt }
         $LogRows.Add([pscustomobject]@{
             Path = $childRelative
             Type = if ($record.IsDirectory) { "dir" } else { "file" }
             Extent = $record.Extent
             OffsetHex = ("0x{0:X}" -f ([int64]$record.Extent * $sectorSize))
             Size = $record.Size
+            RecordedAt = $effectiveRecordedAt.ToString("o")
+            TimestampSource = if ($null -ne $record.RecordedAt) { "iso9660_recording_time" } else { "container_fallback" }
         })
 
         if ($record.IsDirectory) {
-            Extract-Directory -IsoStream $IsoStream -DirRecord $record -OutPath $childOut -LogRows $LogRows -RelativePrefix $childRelative
+            Extract-Directory -IsoStream $IsoStream -DirRecord $record -OutPath $childOut -LogRows $LogRows -RelativePrefix $childRelative -FallbackRecordedAt $FallbackRecordedAt
         }
         else {
-            Copy-ExtentToFile -IsoStream $IsoStream -Extent $record.Extent -Size $record.Size -OutPath $childOut
+            Copy-ExtentToFile -IsoStream $IsoStream -Extent $record.Extent -Size $record.Size -OutPath $childOut -RecordedAt $record.RecordedAt -FallbackRecordedAt $FallbackRecordedAt
         }
     }
+
+
+    Set-IsoRecordedTime -Path $OutPath -RecordedAt $DirRecord.RecordedAt -FallbackRecordedAt $FallbackRecordedAt
 }
 
 if (-not (Test-Path -LiteralPath $IsoPath)) {
@@ -169,9 +240,10 @@ if (-not (Test-Path -LiteralPath $IsoPath)) {
 }
 
 $IsoPath = (Resolve-Path -LiteralPath $IsoPath).Path
+$isoFile = Get-Item -LiteralPath $IsoPath
+$fallbackRecordedAt = [DateTimeOffset]$isoFile.LastWriteTime
 
 if ([string]::IsNullOrWhiteSpace($OutDir)) {
-    $isoFile = Get-Item -LiteralPath $IsoPath
     $OutDir = Join-Path $isoFile.DirectoryName ($isoFile.Name + ".files")
 }
 
@@ -201,20 +273,24 @@ try {
         New-Item -ItemType Directory -Path $OutDir | Out-Null
     }
 
-    Extract-Directory -IsoStream $iso -DirRecord $rootRecord -OutPath $OutDir -LogRows $logRows -RelativePrefix ""
+    Extract-Directory -IsoStream $iso -DirRecord $rootRecord -OutPath $OutDir -LogRows $logRows -RelativePrefix "" -FallbackRecordedAt $fallbackRecordedAt
 }
 finally {
     $iso.Dispose()
 }
 
-$logDir = Join-Path $projectPaths.logs "extraction"
-New-Item -ItemType Directory -Force -Path $logDir | Out-Null
-$stamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$logPath = Join-Path $logDir ("extract_iso9660_" + $stamp + ".tsv")
-$logRows | Export-Csv -LiteralPath $logPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8
+$logPath = ""
+if (-not $NoLog) {
+    $logDir = Join-Path $projectPaths.logs "extraction"
+    New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+    $stamp = Get-Date -Format "yyyyMMdd_HHmmss_fff"
+    $logPath = Join-Path $logDir ("extract_iso9660_" + $stamp + "_pid" + $PID + ".tsv")
+    $logRows | Export-Csv -LiteralPath $logPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8
+}
 
 $readonlyScript = Join-Path $projectPaths.scripts 'project\set_source_readonly.ps1'
-if ($OutDir.StartsWith($projectPaths.source, [StringComparison]::OrdinalIgnoreCase) -and
+if (-not $SkipReadOnly -and
+    $OutDir.StartsWith($projectPaths.source, [StringComparison]::OrdinalIgnoreCase) -and
     (Test-Path -LiteralPath $readonlyScript)) {
     & $readonlyScript -SourceDir $OutDir | Out-Null
 }
@@ -225,5 +301,7 @@ Write-Host "Output:"
 Write-Host $OutDir
 Write-Host "Entries:"
 Write-Host $logRows.Count
-Write-Host "Log:"
-Write-Host $logPath
+if ($logPath) {
+    Write-Host "Log:"
+    Write-Host $logPath
+}

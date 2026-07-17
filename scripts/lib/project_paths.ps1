@@ -45,3 +45,41 @@ function Get-Na2ProjectPaths {
 
     return [pscustomobject]$resolved
 }
+
+function ConvertTo-Na2ProjectPath {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [object]$ProjectPaths
+    )
+
+    $fullPath = [IO.Path]::GetFullPath($Path)
+    $roots = @(
+        $ProjectPaths.PSObject.Properties |
+            Where-Object { $_.Name -ne 'ManifestPath' } |
+            ForEach-Object {
+                [pscustomobject]@{
+                    Name = $_.Name
+                    Path = [IO.Path]::GetFullPath([string]$_.Value)
+                }
+            } |
+            Sort-Object { $_.Path.Length } -Descending
+    )
+
+    foreach ($root in $roots) {
+        if ([IO.Path]::Equals($fullPath, $root.Path)) {
+            return "@$($root.Name)"
+        }
+
+        $prefix = $root.Path.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+        if ($fullPath.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
+            $relative = $fullPath.Substring($prefix.Length).Replace([IO.Path]::DirectorySeparatorChar, '/')
+            return "@$($root.Name)/$relative"
+        }
+    }
+
+    throw "Path is outside configured project roots: $Path"
+}

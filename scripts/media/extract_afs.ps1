@@ -2,7 +2,11 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$AfsPath,
 
-    [string]$OutDir = ""
+    [string]$OutDir = "",
+
+    [switch]$NoLog,
+
+    [switch]$SkipReadOnly
 )
 
 Set-StrictMode -Version Latest
@@ -48,11 +52,83 @@ function Get-GuessedExtension {
     return ".bin"
 }
 
+function Read-AfsMetadata {
+    param(
+        [IO.BinaryReader]$Reader,
+        [int]$Count,
+        [int64]$ArchiveLength
+    )
+
+    $result = @()
+    if ($Reader.BaseStream.Position + 8 -gt $ArchiveLength) {
+        return $result
+    }
+
+    $metadataOffset = [int64]$Reader.ReadUInt32()
+    $metadataSize = [int64]$Reader.ReadUInt32()
+    $requiredSize = [int64]$Count * 48
+    if ($metadataOffset -le 0 -or
+        $metadataSize -lt $requiredSize -or
+        $metadataOffset + $requiredSize -gt $ArchiveLength) {
+        return $result
+    }
+
+    $Reader.BaseStream.Position = $metadataOffset
+    for ($i = 0; $i -lt $Count; $i++) {
+        $nameBytes = $Reader.ReadBytes(32)
+        if ($nameBytes.Length -ne 32) {
+            throw "Unexpected EOF in AFS metadata row $i"
+        }
+        $zero = [Array]::IndexOf($nameBytes, [byte]0)
+        $nameLength = if ($zero -ge 0) { $zero } else { $nameBytes.Length }
+        $originalName = [Text.Encoding]::ASCII.GetString($nameBytes, 0, $nameLength)
+        $year = [int]$Reader.ReadUInt16()
+        $month = [int]$Reader.ReadUInt16()
+        $day = [int]$Reader.ReadUInt16()
+        $hour = [int]$Reader.ReadUInt16()
+        $minute = [int]$Reader.ReadUInt16()
+        $second = [int]$Reader.ReadUInt16()
+        [void]$Reader.ReadUInt32()
+
+        $recordedAt = $null
+        try {
+            $recordedAt = [DateTime]::new($year, $month, $day, $hour, $minute, $second, [DateTimeKind]::Unspecified)
+        }
+        catch {
+            $recordedAt = $null
+        }
+        $result += [pscustomobject]@{
+            OriginalName = $originalName
+            RecordedAt = $recordedAt
+        }
+    }
+
+    return $result
+}
+
+function Set-AfsRecordedTime {
+    param(
+        [string]$Path,
+        [DateTime]$RecordedAt
+    )
+
+    if ((Get-Item -LiteralPath $Path).PSIsContainer) {
+        [IO.Directory]::SetCreationTime($Path, $RecordedAt)
+        [IO.Directory]::SetLastWriteTime($Path, $RecordedAt)
+    }
+    else {
+        [IO.File]::SetCreationTime($Path, $RecordedAt)
+        [IO.File]::SetLastWriteTime($Path, $RecordedAt)
+    }
+}
+
 if (-not (Test-Path -LiteralPath $AfsPath)) {
     throw "AFS not found: $AfsPath"
 }
 
 $AfsPath = (Resolve-Path -LiteralPath $AfsPath).Path
+$afsItem = Get-Item -LiteralPath $AfsPath
+$fallbackTime = $afsItem.LastWriteTime
 
 if ([string]::IsNullOrWhiteSpace($OutDir)) {
     $parent = Split-Path -Parent $AfsPath
@@ -94,17 +170,14 @@ try {
         })
     }
 
+    $metadata = @(Read-AfsMetadata -Reader $br -Count $count -ArchiveLength $fs.Length)
+
     $logRows = New-Object System.Collections.Generic.List[object]
 
     foreach ($entry in $entries) {
-        if ($entry.Size -eq 0) {
-            continue
-        }
-
         $end = [int64]$entry.Offset + [int64]$entry.Size
         if ($end -gt $fs.Length) {
-            Write-Warning ("Skipping invalid entry {0:D3}: offset=0x{1:X}, size=0x{2:X}" -f $entry.Index, $entry.Offset, $entry.Size)
-            continue
+            throw ("Invalid AFS entry {0:D3}: offset=0x{1:X}, size=0x{2:X}" -f $entry.Index, $entry.Offset, $entry.Size)
         }
 
         $sampleLen = [Math]::Min([int64]$entry.Size, [int64]512)
@@ -139,12 +212,25 @@ try {
             $out.Dispose()
         }
 
+        $metadataRow = if ($metadata.Count -eq $count) { $metadata[$entry.Index] } else { $null }
+        $recordedAt = if ($null -ne $metadataRow -and $null -ne $metadataRow.RecordedAt) {
+            [DateTime]$metadataRow.RecordedAt
+        }
+        else {
+            $fallbackTime
+        }
+        $timestampSource = if ($null -ne $metadataRow -and $null -ne $metadataRow.RecordedAt) { "afs_metadata" } else { "container_fallback" }
+        Set-AfsRecordedTime -Path $outPath -RecordedAt $recordedAt
+
         $logRows.Add([pscustomobject]@{
             Index = $entry.Index
             OffsetHex = ("0x{0:X}" -f $entry.Offset)
             SizeHex = ("0x{0:X}" -f $entry.Size)
             Size = $entry.Size
             Extension = $ext
+            OriginalName = if ($null -ne $metadataRow) { $metadataRow.OriginalName } else { "" }
+            RecordedAt = $recordedAt.ToString("yyyy-MM-ddTHH:mm:ss")
+            TimestampSource = $timestampSource
             Output = $outPath
         })
     }
@@ -153,47 +239,37 @@ finally {
     $fs.Dispose()
 }
 
-$sourceRoot = $projectPaths.source
-$logDir = Join-Path $projectPaths.logs "extraction"
-New-Item -ItemType Directory -Force -Path $logDir | Out-Null
-
-if ($OutDir.StartsWith($sourceRoot, [StringComparison]::OrdinalIgnoreCase)) {
-    $logPath = Join-Path $logDir "source_afs_extraction_log.tsv"
-    $sourceLogRel = ""
-    $containerRel = $OutDir.Substring($sourceRoot.Length + 1)
-    $containerArchiveRel = if ($containerRel.EndsWith(".files")) { $containerRel.Substring(0, $containerRel.Length - 6) } else { $containerRel }
-    $centralRows = foreach ($row in $logRows) {
+$logPath = ""
+if (-not $NoLog) {
+    $logDir = Join-Path $projectPaths.logs "extraction"
+    New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+    $stamp = Get-Date -Format "yyyyMMdd_HHmmss_fff"
+    $logPath = Join-Path $logDir ("extract_afs_" + $stamp + "_pid" + $PID + ".tsv")
+    $persistedRows = foreach ($row in $logRows) {
         [pscustomobject]@{
-            SourceLog = $sourceLogRel
-            Container = $containerArchiveRel
-            ExtractedDir = $containerRel
+            Container = ConvertTo-Na2ProjectPath -Path $AfsPath -ProjectPaths $projectPaths
+            ExtractedDir = ConvertTo-Na2ProjectPath -Path $OutDir -ProjectPaths $projectPaths
             Index = $row.Index
             OffsetHex = $row.OffsetHex
             SizeHex = $row.SizeHex
             Size = $row.Size
             Extension = $row.Extension
-            Output = if ($row.Output -and $row.Output.StartsWith($sourceRoot, [StringComparison]::OrdinalIgnoreCase)) { $row.Output.Substring($sourceRoot.Length + 1) } else { $row.Output }
+            OriginalName = $row.OriginalName
+            RecordedAt = $row.RecordedAt
+            TimestampSource = $row.TimestampSource
+            Output = ConvertTo-Na2ProjectPath -Path $row.Output -ProjectPaths $projectPaths
         }
     }
-
-    if (Test-Path -LiteralPath $logPath) {
-        $centralRows | Export-Csv -LiteralPath $logPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8 -Append
-    }
-    else {
-        $centralRows | Export-Csv -LiteralPath $logPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8
-    }
-}
-else {
-    $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
-    $logPath = Join-Path $logDir ("extract_afs_" + $stamp + ".tsv")
-    $logRows | Export-Csv -LiteralPath $logPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8
+    $persistedRows | Export-Csv -LiteralPath $logPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8
 }
 
 Write-Host "AFS entries: $count"
 Write-Host "Extracted to:"
 Write-Host $OutDir
-Write-Host "Log:"
-Write-Host $logPath
+if ($logPath) {
+    Write-Host "Log:"
+    Write-Host $logPath
+}
 Write-Host ""
 
 Get-ChildItem -LiteralPath $OutDir -File |
@@ -202,8 +278,11 @@ Get-ChildItem -LiteralPath $OutDir -File |
     Select-Object Name, Count |
     Format-Table -AutoSize
 
+Set-AfsRecordedTime -Path $OutDir -RecordedAt $fallbackTime
+
 $readonlyScript = Join-Path $projectPaths.scripts 'project\set_source_readonly.ps1'
-if ($OutDir.StartsWith($projectPaths.source, [StringComparison]::OrdinalIgnoreCase) -and
+if (-not $SkipReadOnly -and
+    $OutDir.StartsWith($projectPaths.source, [StringComparison]::OrdinalIgnoreCase) -and
     (Test-Path -LiteralPath $readonlyScript)) {
     & $readonlyScript -SourceDir $OutDir | Out-Null
 }

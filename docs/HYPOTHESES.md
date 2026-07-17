@@ -10,7 +10,9 @@ The unresolved work remains at least three separate problems: glyph appearance, 
 
 ### Disassembly leads
 
-- Reuse the preserved projects/exports under `@source/NA2_disassembly` and `@source/NUN5_disassembly`; do not disassemble either ELF from scratch.
+- Reuse any applicable historical project/export evidence from Git history and
+  maintain current projects under `@work/NA2/analysis/` and
+  `@work/NUN5/analysis/`; never place analysis work under `@source/`.
 - NA2 ASCII setup lead: `FUN_00186510`.
 - NUN5 counterpart: `FUN_001878e0`.
 - NUN5 boxed auto-fit leads: `FUN_00389df0` and `FUN_0018b1b0`.

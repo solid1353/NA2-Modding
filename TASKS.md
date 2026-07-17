@@ -3,13 +3,12 @@
 ## In Progress
 
 ### Project
-- Properly unpack NA2, UN3, NUN5, NUN6.
 - Disassemble executable binaries in Ghidra:
   - NA2: ELF, ADV.BIN, BTL.BIN, ETC.BIN.
   - NUN5: ELF, ADV.BIN, BTL.BIN, ETC.BIN, TEXTENG.BIN, TEXTFRN.BIN, TEXTGER.BIN, TEXTITA.BIN, TEXTSPA.BIN.
   - NUN6: ELF, ADV.BIN, BTL.BIN, ETC.BIN, MOD.BIN, TEXTBRA.BIN.
   - Shared identical IOP modules (analyze once): CRI_ADXI.IRX, MODULES.BIN, SNDBASE.IRX.
-- Re-check everything and make source directory read-only.
+- Do a shallow check and make source and disassembly directories read-only.
 
 ### UI Translation
 - Add texture patcher to import assets from NUN5.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 SECTOR = 2048
@@ -12,6 +13,7 @@ class IsoRecord:
     is_dir: bool
     extent: int
     size: int
+    recorded_at: datetime | None
 
     @property
     def byte_offset(self) -> int:
@@ -78,11 +80,37 @@ class Iso9660:
         if byte_offset > self.file_size or size > self.file_size - byte_offset:
             raise RuntimeError(f"ISO record points outside the image: {path or '/'}")
 
+        date = raw[18:25]
+        recorded_at: datetime | None
+        if date == b"\0" * 7:
+            recorded_at = None
+        else:
+            offset_quarters = date[6] - 256 if date[6] >= 128 else date[6]
+            if not -48 <= offset_quarters <= 52:
+                raise RuntimeError(
+                    f"Invalid ISO timezone offset for {path or '/'}: {offset_quarters}"
+                )
+            try:
+                recorded_at = datetime(
+                    1900 + date[0],
+                    date[1],
+                    date[2],
+                    date[3],
+                    date[4],
+                    date[5],
+                    tzinfo=timezone(timedelta(minutes=offset_quarters * 15)),
+                )
+            except ValueError as error:
+                raise RuntimeError(
+                    f"Invalid ISO recording time for {path or '/'}"
+                ) from error
+
         return IsoRecord(
             path=path,
             is_dir=bool(flags & 0x02),
             extent=extent,
             size=size,
+            recorded_at=recorded_at,
         )
 
     @staticmethod

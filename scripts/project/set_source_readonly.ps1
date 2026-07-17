@@ -1,19 +1,29 @@
 param(
-    [string]$SourceDir = ""
+    [Parameter(Mandatory = $true)]
+    [string]$SourceDir
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
-if ([string]::IsNullOrWhiteSpace($SourceDir)) {
-    $SourceDir = $projectPaths.source
-}
 
+$SourceDir = [IO.Path]::GetFullPath($SourceDir)
+$sourceRoot = [IO.Path]::GetFullPath($projectPaths.source)
+$sourcePrefix = $sourceRoot.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+$oldRoot = Join-Path $sourceRoot '__old'
+$oldPrefix = $oldRoot.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+if ([IO.Path]::Equals($SourceDir, $sourceRoot) -or
+    -not $SourceDir.StartsWith($sourcePrefix, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "SourceDir must name one explicit active item below @source: $SourceDir"
+}
+if ([IO.Path]::Equals($SourceDir, $oldRoot) -or
+    $SourceDir.StartsWith($oldPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Refusing to inspect or modify @source/__old: $SourceDir"
+}
 if (-not (Test-Path -LiteralPath $SourceDir)) {
     throw "Original dir not found: $SourceDir"
 }
-
 $SourceDir = (Resolve-Path -LiteralPath $SourceDir).Path
 
 $items = @(

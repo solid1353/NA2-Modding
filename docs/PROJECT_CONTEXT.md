@@ -2,11 +2,10 @@
 
 ## Stable Local References
 
-Original ISO:
-
-- Path: `@source/NA2.iso` (resolved through `project-paths.json`)
-- Size: `1,928,429,568`
-- SHA256: `CA105F7BDBEEAA3275F871C9702B9C77ED985CE140FAE8EAC28CB153E263D0C3`
+Original source ISOs are `@source/NA2.iso`, `@source/NUN3.iso`,
+`@source/NUN5.iso`, and `@source/NUN6 A35.iso`. NUN6 A35 is a Brazilian mod of
+NUN5, not an official successor. It is retained as a feature donor because it
+contains many modifications that may later be ported to NA2.
 
 Current PNACH:
 
@@ -68,10 +67,16 @@ All tasks must read `AGENTS.md`, `docs/PROJECT_CONTEXT.md`, `TASKS.md`, and `doc
 
 All extracted original files stay under `@source/`, beside the archive they came from.
 
-Original ISO extraction layout:
+Canonical ISO extraction layout:
 
 - `@source/NA2.iso`
 - `@source/NA2.iso.files/`
+- `@source/NUN3.iso`
+- `@source/NUN3.iso.files/`
+- `@source/NUN5.iso`
+- `@source/NUN5.iso.files/`
+- `@source/NUN6 A35.iso`
+- `@source/NUN6 A35.iso.files/`
 
 Nested archive convention:
 
@@ -101,11 +106,26 @@ original/
 
 For edited/build versions, do not edit anything under `@source/` in place. Copy the needed file or archive into a task/build folder first, then patch that copy through scripts and log the source path and output path. If extraction or inspection needs metadata, write it under `@logs/` using source-relative paths instead of placing files in `@source/`.
 
-The `@source/` tree should also have Windows read-only attributes applied. Use `scripts/project/set_source_readonly.ps1` after extracting new original-source content or if attributes need to be restored.
+Use `scripts/media/extract_source_iso.ps1` for a new canonical extraction. It
+stages the work under `@work/temp/`, recursively expands CVM, inner ISO, AFS,
+and nested AFS containers, verifies file sets and byte contents, normalizes
+timestamps from archive metadata or deterministic container fallbacks, then
+promotes exactly one `<ISO filename>.files` tree. It refuses to merge into an
+existing tree. Use `scripts/media/verify_extraction.py` to recheck an existing
+tree.
+
+The active `@source/` ISOs and extraction trees have Windows read-only
+attributes applied. Use `scripts/project/set_source_readonly.ps1 -SourceDir`
+with one explicit active ISO extraction tree after adding new original-source
+content or when attributes need to be restored. The script refuses the whole
+source root and anything under `@source/__old/`.
 
 ## DATA.CVM Extraction
 
-Confirmed ROFS/CVM password for `@source/NA2.iso.files/DATA/DATA.CVM`: `cc2fuku`.
+Confirmed ROFS/CVM passwords:
+
+- NA2, NUN3, and NUN5: `cc2fuku`
+- NUN6 A35: `Iruka`
 
 Current split/extraction outputs:
 
@@ -120,7 +140,10 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 - Root `_na2.ps1` is the only routine user-facing entrypoint. Bare `na2` builds the pinned current profile, rotates only when the verified candidate differs, actualizes PNACH, and launches `Current.iso`. `na2 -c` and `na2 -p` launch the current or previous ISO without rebuilding; `na2 act` actualizes `Current.iso` without launching.
 - `scripts/na2/` contains build/promotion, mandatory PNACH actualization, PCSX2 process/launch handling, CRC diagnostics, and the agent-only hidden/muted launch test. Build transcripts explicitly report `ISO result: unchanged` or `ISO result: updated` and the rotation result.
 - `na2_patcher/build_profile.py` is the profile-only ISO compositor. It applies one explicit hash-pinned profile, rejects all file-size changes, verifies the complete staged ISO, writes the profile log, and leaves `Current.iso.building` for PowerShell promotion.
-- `scripts/media/` contains the retained ISO, AFS, and CVM inspection/extraction tools. The encrypted-CVM workflow is `split_cvm_rofs.ps1`; direct same-size ISO replacement survives only as an unsupported reference under `scripts/archive/`.
+- `scripts/media/` contains the recursive source extractor, its byte-parity
+  verifier, and focused ISO, AFS, and CVM building blocks. Direct same-size ISO
+  replacement survives only as an unsupported reference under
+  `scripts/archive/`.
 - `scripts/project/` contains configured-source read-only maintenance. There is currently no maintained release-creation script; the release workflow will be redesigned before new automation is added.
 - `scripts/archive/` contains unsupported historical reference implementations. Inspect and explicitly select one before use; archived scripts are never part of the normal workflow.
 - `scripts/research/menu_input/` and `scripts/research/translation/` retain useful one-off analysis tools outside the normal build path. Their lack of runtime callers does not make them disposable.
@@ -216,7 +239,7 @@ Prior warnings:
 
 ## CVM Notes
 
-DATA.CVM password: cc2fuku.
+DATA.CVM passwords: `cc2fuku` for NA2, NUN3, and NUN5; `Iruka` for NUN6 A35.
 
 ## Actualize Workflow
 

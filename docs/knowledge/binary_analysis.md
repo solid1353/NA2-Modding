@@ -14,9 +14,9 @@ though the boot ELF warrants a full-program analysis project.
 
 ## Decision
 
-- `SLPS_258.37` is the only current full-program disassembly candidate. That
-  work already exists under `@source/NA2_disassembly/`; do not disassemble it
-  again by default.
+- `SLPS_258.37` is the only current full-program disassembly candidate. Create
+  or restore its maintained analysis under `@work/NA2/analysis/`; source trees
+  contain original binaries only and must never contain Ghidra projects.
 - `PRG/BTL.BIN`, `PRG/ETC.BIN`, and `PRG/ADV.BIN` are members of the same
   `MWo3` EE overlay family. They contain code and data but load on demand, so
   create baseline Ghidra programs now, then keep manual analysis tied to a
@@ -32,11 +32,35 @@ though the boot ELF warrants a full-program analysis project.
   files, and placeholders require format-aware data inspection rather than
   disassembly unless execution evidence proves otherwise.
 
-Therefore the follow-up Ghidra task should preserve the existing NA2 boot-ELF
-project, create baseline programs for the three NA2 EE overlays and three shared
-IOP executables, and create corresponding executable baselines for NUN5 and NUN6.
+NUN6 A35 is a Brazilian mod derived from NUN5, not an official sequel. Its
+analysis value is specifically as a feature donor: compare its executable and
+overlay changes against NUN5, identify implemented modifications, and preserve
+portable behavior that may later be ported to NA2.
+
+Therefore the follow-up Ghidra task should create or restore a maintained NA2
+boot-ELF project, create baseline programs for the three NA2 EE overlays and
+three shared IOP executables, and create corresponding executable baselines for
+NUN5 and NUN6.
 The task lists the directly signature-confirmed ELF and `MWo3` files for each
 game; it does not include resource files merely because they use `.BIN` names.
+
+## Canonical disassembly inputs
+
+- NA2: `@source/NA2.iso.files/SLPS_258.37`, plus `PRG/ADV.BIN`,
+  `PRG/BTL.BIN`, and `PRG/ETC.BIN` below the same tree.
+- NUN5: `@source/NUN5.iso.files/SLES_556.05`, plus `PRG/ADV.BIN`,
+  `PRG/BTL.BIN`, `PRG/ETC.BIN`, `PRG/TEXTENG.BIN`, `PRG/TEXTFRN.BIN`,
+  `PRG/TEXTGER.BIN`, `PRG/TEXTITA.BIN`, and `PRG/TEXTSPA.BIN`.
+- NUN6 A35: `@source/NUN6 A35.iso.files/SLUS_556.06`, plus `PRG/ADV.BIN`,
+  `PRG/BTL.BIN`, `PRG/ETC.BIN`, `PRG/MOD.BIN`, and `PRG/TEXTBRA.BIN`.
+- Shared identical IOP inputs (analyze the NA2 copy once):
+  `@source/NA2.iso.files/MODULES/CRI_ADXI.IRX`,
+  `@source/NA2.iso.files/MODULES/MODULES.BIN`, and
+  `@source/NA2.iso.files/MODULES/SNDBASE.IRX`.
+
+All current paths above were confirmed after the 2026-07-18 recursive source
+extraction. Keep Ghidra projects and exports under each target's
+`@work/<target>/analysis/` tree; the inputs remain read-only.
 
 ## Signature evidence
 
@@ -73,11 +97,11 @@ useful:
 - global callers, callees, references, types, or data flow are required;
 - the resulting project will be reused and maintained rather than discarded.
 
-For NA2 this applies only to `SLPS_258.37`, and the required project already
-exists. The preserved decompiler export and listing are supporting views, not a
-reason to regenerate the program. The preserved listing omits undefined bytes;
-prior work established that exporting all undefined data produces an oversized,
-low-value artifact.
+For NA2 this applies only to `SLPS_258.37`. Reuse a maintained project under
+`@work/NA2/analysis/` once one exists. Historical decompiler exports and
+listings are supporting views available through Git history, not canonical
+source material. Prior work established that exporting all undefined data
+produces an oversized, low-value artifact.
 
 ### Targeted disassembly
 
@@ -155,10 +179,9 @@ component separately.
 
 ## Existing reusable analysis
 
-- `@source/NA2_disassembly/__ghidra/NA2_dis.gpr`: preserved boot-ELF Ghidra
-  project. Copy it outside `@source/` before opening it in a mode that writes.
-- `@source/NA2_disassembly/SLPS_258.37.c`: preserved decompiler export.
-- `@source/NA2_disassembly/SLPS_258.37.txt`: preserved focused listing.
+- Historical NA2 boot-ELF Ghidra material and focused exports remain available
+  through Git history. Restore useful evidence only into `@work/NA2/analysis/`;
+  never recreate analysis work under `@source/`.
 - `scripts/research/menu_input/`: range disassembler, direct-call finder,
   address-reference finder, MIPS mask analyzer, and Ghidra-export comparison
   helpers for targeted EE work.

@@ -53,7 +53,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Agents may read and manage `TASKS.md` under the task workflow below. Tasks may be added at any time by the user, or by an agent when the user orders it. Agents may move tasks between `In Progress` and `Backlog`, execute selected tasks after plan approval, and delete a completed task only after result approval.
 - For string patches, always check encoded byte length before writing. `[S]`-prefixed `shorten` mappings are authorized manual fit exceptions when they retain an exact official NUN5 source reference.
 - Prefer Shift-JIS / CP932-compatible text unless proven otherwise.
-- DATA.CVM password is `cc2fuku`.
+- The confirmed DATA.CVM password is `cc2fuku` for NA2, NUN3, and NUN5, and `Iruka` for NUN6 A35.
 - Do not expand DATA.CVM, ELF, BIN, AFS, CCS, or ISO structures unless explicitly instructed.
 - Do not include `ADV.bin` in release builds unless explicitly requested.
 - Do not delete/rename PSS files blindly.

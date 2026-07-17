@@ -58,7 +58,7 @@ See non-tracked folders in gitignore, need to be recreated if starting anew.
 Use separate Codex tasks against the same real project root:
 
 - Coordination / build workflow: repository structure, `na2`, profiles, actualize, releases, and cross-task integration.
-- GF4 font rendering: GF4/GF4C assets, NA2/UN5 renderer comparison, metrics, positioning, and auto-fit logic.
+- GF4 font rendering: GF4/GF4C assets, NA2/NUN5 renderer comparison, metrics, positioning, and auto-fit logic.
 - Translation: maintain mappings, validate module/profile compatibility, and investigate translation issues without bypassing the pinned milestone workflow.
 - Logic / PNACH: gameplay patches and reverse engineering unrelated to font or translation work.
 

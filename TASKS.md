@@ -3,20 +3,20 @@
 ## In Progress
 
 ### Project
-- Properly unpack NA2, UN3, UN5, UN6.
+- Properly unpack NA2, UN3, NUN5, NUN6.
 - Disassemble executable binaries in Ghidra:
   - NA2: ELF, ADV.BIN, BTL.BIN, ETC.BIN.
-  - UN5: ELF, ADV.BIN, BTL.BIN, ETC.BIN, TEXTENG.BIN, TEXTFRN.BIN, TEXTGER.BIN, TEXTITA.BIN, TEXTSPA.BIN.
-  - UN6: ELF, ADV.BIN, BTL.BIN, ETC.BIN, MOD.BIN, TEXTBRA.BIN.
+  - NUN5: ELF, ADV.BIN, BTL.BIN, ETC.BIN, TEXTENG.BIN, TEXTFRN.BIN, TEXTGER.BIN, TEXTITA.BIN, TEXTSPA.BIN.
+  - NUN6: ELF, ADV.BIN, BTL.BIN, ETC.BIN, MOD.BIN, TEXTBRA.BIN.
   - Shared identical IOP modules (analyze once): CRI_ADXI.IRX, MODULES.BIN, SNDBASE.IRX.
 - Re-check everything and make source directory read-only.
 
 ### UI Translation
-- Add texture patcher to import assets from UN5.
+- Add texture patcher to import assets from NUN5.
 - Investigate upscaling variants.
 
 ### Menu restructuring
-- Analyze differences against UN6 and remove adventure mode.
+- Analyze differences against NUN6 and remove adventure mode.
 
 ### String translation
 - Deal with unresolved (mappings.tsv and ChatGPT's history) and other remainders (like chakra pickup message in battle).
@@ -35,7 +35,7 @@
 - Fix extra hit floating animation (or maybe not?).
 
 ### Font
-- Research UN5 auto-adjust behavior.
+- Research NUN5 auto-adjust behavior.
 - Resume GF4 renderer work in the dedicated GF4 task, starting from the recorded v22/v23 results rather than another blind resource swap.
 
 ### Testing

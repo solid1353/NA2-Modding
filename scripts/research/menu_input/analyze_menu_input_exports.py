@@ -78,7 +78,7 @@ def score(left: Function, right: Function) -> float:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("na2", type=Path)
-    parser.add_argument("un5", type=Path)
+    parser.add_argument("nun5", type=Path)
     parser.add_argument("--minimum-score", type=float, default=0.82)
     parser.add_argument("--minimum-address", type=lambda value: int(value, 0), default=0)
     parser.add_argument("--ordinal-window", type=int, default=80)
@@ -86,10 +86,10 @@ def main() -> int:
     args = parser.parse_args()
 
     na2 = [f for f in parse_functions(args.na2) if int(f.name[4:], 16) >= args.minimum_address]
-    un5 = parse_functions(args.un5)
-    print("na2_function\tna2_line\tna2_masks_10_20_40_80\tun5_function\tun5_line\tun5_masks_10_20_40_80\tscore\tsecond_score")
+    nun5 = parse_functions(args.nun5)
+    print("na2_function\tna2_line\tna2_masks_10_20_40_80\tnun5_function\tnun5_line\tnun5_masks_10_20_40_80\tscore\tsecond_score")
     for left in na2:
-        nearby = [right for right in un5 if abs(left.ordinal - right.ordinal) <= args.ordinal_window]
+        nearby = [right for right in nun5 if abs(left.ordinal - right.ordinal) <= args.ordinal_window]
         ranked = sorted(((score(left, right), right) for right in nearby), reverse=True, key=lambda item: item[0])
         if len(ranked) < 2:
             continue

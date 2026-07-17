@@ -2,7 +2,7 @@ field	value
 source_archive	NA2_menu_input_mappings__20260716__review_only.zip
 source_archive_sha256	C08114863BF635A86273766718F7E7F05D639FBE452203CECE3567AB14FBADB1
 import_result	56 mappings, 167 anchors, and 106 candidate edits normalized into 55 atomic patches.
-byte_validation	All 106 NA2 expected words and all 106 UN5 source words matched the clean reference files.
+byte_validation	All 106 NA2 expected words and all 106 NUN5 source words matched the clean reference files.
 retention	The original import archive is retained in Git history; this normalized evidence record replaces the active package dependency.
-runtime_extension	BTL-M022/BTL-P046 was added from a slot-2 runtime-only binary search: BTL offset 0x00066210 changes 20006330 to 40006330, while the corresponding UN5 offset 0x000692B0 remains Circle and is intentionally not copied.
+runtime_extension	BTL-M022/BTL-P046 was added from a slot-2 runtime-only binary search: BTL offset 0x00066210 changes 20006330 to 40006330, while the corresponding NUN5 offset 0x000692B0 remains Circle and is intentionally not copied.
 save_load_runtime_matrix	The complete four-build, 13-screen save/load runtime matrix is retained in runtime_tests.tsv; ELF-M001/M002/M003 were inert independently but changed selected load/save states when combined over the ELF-M008 baseline.

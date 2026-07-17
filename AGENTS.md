@@ -51,7 +51,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Temporary PNACH hypothesis patches go at the top of the file as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 - Put confirmed subroutine roles, caller/callee relationships, state-machine behavior, address mappings, runtime observations, and useful negative results under `docs/knowledge/` or beside the canonical module data they describe. Move unresolved candidates, failed speculative addresses, and unconfirmed interpretations to `docs/HYPOTHESES.md`; do not use it as the confirmed knowledge base.
 - Agents may read and manage `TASKS.md` under the task workflow below. Tasks may be added at any time by the user, or by an agent when the user orders it. Agents may move tasks between `In Progress` and `Backlog`, execute selected tasks after plan approval, and delete a completed task only after result approval.
-- For string patches, always check encoded byte length before writing. `[S]`-prefixed `shorten` mappings are authorized manual fit exceptions when they retain an exact official UN5 source reference.
+- For string patches, always check encoded byte length before writing. `[S]`-prefixed `shorten` mappings are authorized manual fit exceptions when they retain an exact official NUN5 source reference.
 - Prefer Shift-JIS / CP932-compatible text unless proven otherwise.
 - DATA.CVM password is `cc2fuku`.
 - Do not expand DATA.CVM, ELF, BIN, AFS, CCS, or ISO structures unless explicitly instructed.

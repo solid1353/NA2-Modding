@@ -25,14 +25,14 @@ def write_tsv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> N
 class RawBinaryPatcherTests(unittest.TestCase):
     def make_fixture(self, root: Path) -> tuple[patcher.Package, dict[str, Path], dict[str, bytes]]:
         na2 = root / "na2"
-        un5 = root / "un5"
+        nun5 = root / "nun5"
         package_dir = root / "package"
         na2.mkdir()
-        un5.mkdir()
+        nun5.mkdir()
         clean = bytes(range(16))
         source = bytes.fromhex("AABBCCDD") + bytes(range(4, 16))
         (na2 / "target.bin").write_bytes(clean)
-        (un5 / "source.bin").write_bytes(source)
+        (nun5 / "source.bin").write_bytes(source)
 
         write_tsv(
             package_dir / "manifest.tsv",
@@ -60,7 +60,7 @@ class RawBinaryPatcherTests(unittest.TestCase):
                 },
                 {
                     "target_id": "source",
-                    "root_id": "un5",
+                    "root_id": "nun5",
                     "role": "source",
                     "path": "source.bin",
                     "expected_size": len(source),
@@ -131,7 +131,7 @@ class RawBinaryPatcherTests(unittest.TestCase):
             ],
         )
         package = patcher.load_package(package_dir)
-        roots = {"na2": na2, "un5": un5}
+        roots = {"na2": na2, "nun5": nun5}
         target_data = patcher.verify_package_data(package, roots)
         return package, roots, target_data
 

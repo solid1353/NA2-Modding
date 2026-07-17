@@ -19,10 +19,10 @@ TARGET_SPECS = {
     "SLPS": ("SLPS_258.37", ["SLPS_258.37"]),
 }
 SOURCE_SPECS = {
-    "UN5_BTL": ["PRG/BTL.BIN", "BTL.BIN"],
-    "UN5_ETC": ["PRG/ETC.BIN", "ETC.BIN"],
-    "UN5_TEXTENG": ["PRG/TEXTENG.BIN", "TEXTENG.BIN"],
-    "UN5_SLES": ["SLES_556.05"],
+    "NUN5_BTL": ["PRG/BTL.BIN", "BTL.BIN"],
+    "NUN5_ETC": ["PRG/ETC.BIN", "ETC.BIN"],
+    "NUN5_TEXTENG": ["PRG/TEXTENG.BIN", "TEXTENG.BIN"],
+    "NUN5_SLES": ["SLES_556.05"],
 }
 MAPPING_FIELDS = [
     "id", "enabled", "section", "mode", "target", "target_offset", "capacity",
@@ -32,10 +32,10 @@ EXPECTED_SHA1 = {
     "NA2_BTL": "bf7fc7331a2a4f34fc90b84b45772ae1f6bcab03",
     "NA2_ETC": "dcfffd7eb14e484a4c0fbc195599a0b45a9a11c1",
     "NA2_SLPS": "bbe206bbf4da0ee815b437226ceb6a533c95833e",
-    "UN5_BTL": "874b9d64ddec7f9f742a08831505155001adb863",
-    "UN5_ETC": "1c9b05bc501cac21b7da17c5fc6c99dd3869f3be",
-    "UN5_TEXTENG": "77fafba95157e44ccd61783a04aba87c4b98b1fb",
-    "UN5_SLES": "fe54357b016bc579b435a593e330d2d0ff822cdf",
+    "NUN5_BTL": "874b9d64ddec7f9f742a08831505155001adb863",
+    "NUN5_ETC": "1c9b05bc501cac21b7da17c5fc6c99dd3869f3be",
+    "NUN5_TEXTENG": "77fafba95157e44ccd61783a04aba87c4b98b1fb",
+    "NUN5_SLES": "fe54357b016bc579b435a593e330d2d0ff822cdf",
 }
 VALID_MODES = {"slot", "sequence", "shorten", "bytes", "unresolved"}
 VALID_TRANSFORMS = {
@@ -662,8 +662,8 @@ def build_translation_plan(
     *,
     na2_iso: Optional[Path] = None,
     na2_folder: Optional[Path] = None,
-    un5_iso: Optional[Path] = None,
-    un5_folder: Optional[Path] = None,
+    nun5_iso: Optional[Path] = None,
+    nun5_folder: Optional[Path] = None,
     data_root: Path,
     apply: str = "BTL,ETC,SLPS",
 ) -> TranslationPlan:
@@ -671,13 +671,13 @@ def build_translation_plan(
     selected_list = parse_apply(apply)
     selected = set(selected_list)
     na2 = source_from(na2_folder, na2_iso, "NA2")
-    un5 = source_from(un5_folder, un5_iso, "UN5")
+    nun5 = source_from(nun5_folder, nun5_iso, "NUN5")
     clean_targets = {
         target: na2.read(TARGET_SPECS[target][1], f"NA2 {TARGET_SPECS[target][0]}")
         for target in selected_list
     }
     official_sources = {
-        key: un5.read(candidates, key) for key, candidates in SOURCE_SPECS.items()
+        key: nun5.read(candidates, key) for key, candidates in SOURCE_SPECS.items()
     }
     actual_hashes = {
         **{f"NA2_{target}": sha1(data) for target, data in clean_targets.items()},

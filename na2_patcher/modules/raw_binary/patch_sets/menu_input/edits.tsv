@@ -1,140 +1,140 @@
 edit_id	patch_id	order	destination_target_id	destination_offset	operation	length	expected_hex	expected_sha256	replacement_hex	source_target_id	source_offset	source_expected_hex	source_expected_sha256	blob_path	blob_offset	blob_sha256	fill_hex	reason
-BTL-P001	BTL-M001	10	na2_btl	0x000087C4	copy	4	40006230			un5_btl	0x00008CB4	10006230						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P002	BTL-M001	11	na2_btl	0x000087D0	copy	4	10006230			un5_btl	0x00008CC0	20006230						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P003	BTL-M001	12	na2_btl	0x0000889C	copy	4	20006330			un5_btl	0x00008D5C	40006330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P004	BTL-M001	13	na2_btl	0x00008978	copy	4	20008330			un5_btl	0x00008E78	40008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P005	BTL-M001	14	na2_btl	0x000089B8	copy	4	40008330			un5_btl	0x00008E84	10008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P006	BTL-M002	10	na2_btl	0x0000AA50	copy	4	20006230			un5_btl	0x0000AFF0	40006230						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P007	BTL-M002	11	na2_btl	0x0000AA70	copy	4	40006230			un5_btl	0x0000AFFC	10006230						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P008	BTL-M002	12	na2_btl	0x0000AA88	copy	4	10006230			un5_btl	0x0000B008	20006230						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P009	BTL-M002	13	na2_btl	0x0000AB50	copy	4	40004230			un5_btl	0x0000B0F0	10004230						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P010	BTL-M003	10	na2_btl	0x0002B1EC	copy	4	20006230			un5_btl	0x0002C0DC	40006230						BTL-owned battle-adjacent UI/state input range.
-BTL-P011	BTL-M003	11	na2_btl	0x0002B24C	copy	4	40006230			un5_btl	0x0002C0F4	10006230						BTL-owned battle-adjacent UI/state input range.
-BTL-P012	BTL-M004	10	na2_btl	0x0002B860	copy	4	20006230			un5_btl	0x0002C788	40006230						BTL-owned battle-adjacent UI/state input range.
-BTL-P013	BTL-M004	11	na2_btl	0x0002B890	copy	4	40006230			un5_btl	0x0002C794	10006230						BTL-owned battle-adjacent UI/state input range.
-BTL-P014	BTL-M005	10	na2_btl	0x0002C9FC	copy	4	20006230			un5_btl	0x0002D960	40006230						BTL-owned battle-adjacent UI/state input range.
-BTL-P015	BTL-M005	11	na2_btl	0x0002CA14	copy	4	40006230			un5_btl	0x0002D96C	10006230						BTL-owned battle-adjacent UI/state input range.
-BTL-P016	BTL-M006	10	na2_btl	0x0002D200	copy	4	20006230			un5_btl	0x0002E1C8	40006230						BTL-owned battle-adjacent UI/state input range.
-BTL-P017	BTL-M006	11	na2_btl	0x0002D230	copy	4	40006230			un5_btl	0x0002E1D4	10006230						BTL-owned battle-adjacent UI/state input range.
-BTL-P018	BTL-M007	10	na2_btl	0x00034B18	copy	4	40004230			un5_btl	0x00035F90	10004230						BTL-owned battle-adjacent UI/state input range.
-BTL-P019	BTL-M008	10	na2_btl	0x0003689C	copy	4	20004230			un5_btl	0x00038050	40004230						BTL-owned battle-adjacent UI/state input range.
-BTL-P020	BTL-M008	11	na2_btl	0x00036988	copy	4	20004230			un5_btl	0x0003810C	40004230						BTL-owned battle-adjacent UI/state input range.
-BTL-P021	BTL-M009	10	na2_btl	0x00037944	copy	4	20004230			un5_btl	0x000391B8	40004230						BTL-owned battle-adjacent UI/state input range.
-BTL-P022	BTL-M009	11	na2_btl	0x00037A38	copy	4	20004230			un5_btl	0x00039288	40004230						BTL-owned battle-adjacent UI/state input range.
-BTL-P023	BTL-M010	10	na2_btl	0x0003894C	copy	4	20006330			un5_btl	0x0003A170	40006330						BTL-owned battle-adjacent UI/state input range.
-BTL-P024	BTL-M011	10	na2_btl	0x000399C8	copy	4	20004230			un5_btl	0x0003B1EC	40004230						BTL-owned battle-adjacent UI/state input range.
-BTL-P025	BTL-M011	11	na2_btl	0x00039B84	copy	4	20004230			un5_btl	0x0003B380	40004230						BTL-owned battle-adjacent UI/state input range.
-BTL-P026	BTL-M012	10	na2_btl	0x00060944	copy	4	20008330			un5_btl	0x00063584	40008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P027	BTL-M012	11	na2_btl	0x000609A4	copy	4	40008330			un5_btl	0x00063590	10008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P028	BTL-M012	12	na2_btl	0x00060A04	copy	4	10008330			un5_btl	0x0006359C	20008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P029	BTL-M013	10	na2_btl	0x00060C70	copy	4	20008330			un5_btl	0x00063880	40008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P030	BTL-M013	11	na2_btl	0x00060CD0	copy	4	40008330			un5_btl	0x0006388C	10008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P031	BTL-M013	12	na2_btl	0x00060D34	copy	4	10008330			un5_btl	0x00063898	20008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
-BTL-P032	BTL-M014	10	na2_btl	0x0006637C	copy	4	40006330			un5_btl	0x0006940C	10006330						BTL-owned battle-adjacent UI/state input range.
-BTL-P033	BTL-M014	11	na2_btl	0x0006649C	copy	4	20004230			un5_btl	0x0006953C	40004230						BTL-owned battle-adjacent UI/state input range.
-BTL-P034	BTL-M015	10	na2_btl	0x001C2490	copy	4	2000C230			un5_btl	0x001CB65C	4000C230						BTL-owned battle-adjacent UI/state input range.
-BTL-P035	BTL-M015	11	na2_btl	0x001C2548	copy	4	4000C230			un5_btl	0x001CB778	1000C230						BTL-owned battle-adjacent UI/state input range.
-BTL-P036	BTL-M016	10	na2_btl	0x001C37F0	copy	4	40000232			un5_btl	0x001CCC68	10000232						BTL-owned battle-adjacent UI/state input range.
-BTL-P037	BTL-M017	10	na2_btl	0x001C46F0	copy	4	4000C230			un5_btl	0x001CE0F4	1000C230						BTL-owned battle-adjacent UI/state input range.
-BTL-P038	BTL-M018	10	na2_btl	0x001C65D0	copy	4	4000C230			un5_btl	0x001D0004	1000C230						BTL-owned battle-adjacent UI/state input range.
-BTL-P039	BTL-M019	10	na2_btl	0x001C8560	copy	4	20000332			un5_btl	0x001D1FB8	40000332						BTL-owned battle-adjacent UI/state input range.
-BTL-P044	BTL-M019	11	na2_btl	0x001C86AC	copy	4	20006330			un5_btl	0x001D21A0	40006330						ccStartMenuPrivateCmd player/view branch: use Cross for the UN5 operation path.
-BTL-P045	BTL-M019	12	na2_btl	0x001C86D4	copy	4	40000332			un5_btl	0x001D1FC4	10000332						ccStartMenuPrivateCmd close branch: use Triangle for UN5 cancel.
-BTL-P040	BTL-M020	10	na2_btl	0x001CBC18	copy	4	20006230			un5_btl	0x001D57C4	40006230						BTL-owned battle-adjacent UI/state input range.
-BTL-P041	BTL-M020	11	na2_btl	0x001CBCD4	copy	4	40006230			un5_btl	0x001D57D0	10006230						BTL-owned battle-adjacent UI/state input range.
-BTL-P042	BTL-M021	10	na2_btl	0x001CD7D0	copy	4	20006230			un5_btl	0x001D7520	40006230						BTL-owned battle-adjacent UI/state input range.
-BTL-P043	BTL-M021	11	na2_btl	0x001CD804	copy	4	40006230			un5_btl	0x001D752C	10006230						BTL-owned battle-adjacent UI/state input range.
-ELF-P001	ELF-M001	10	na2_elf	0x000E461C	copy	4	20002232			un5_elf	0x000EA3F4	40002232						Multi-state front-end prompt/message controller with six confirm-only branches.
-ELF-P002	ELF-M001	11	na2_elf	0x000E470C	copy	4	20002232			un5_elf	0x000EA490	40002232						Multi-state front-end prompt/message controller with six confirm-only branches.
-ELF-P003	ELF-M001	12	na2_elf	0x000E4A7C	copy	4	20002232			un5_elf	0x000EA7CC	40002232						Multi-state front-end prompt/message controller with six confirm-only branches.
-ELF-P004	ELF-M001	13	na2_elf	0x000E4C50	copy	4	20002232			un5_elf	0x000EAE9C	40002232						Multi-state front-end prompt/message controller with six confirm-only branches.
-ELF-P005	ELF-M001	14	na2_elf	0x000E4CD0	copy	4	20002232			un5_elf	0x000EAF04	40002232						Multi-state front-end prompt/message controller with six confirm-only branches.
-ELF-P006	ELF-M001	15	na2_elf	0x000E4F5C	copy	4	20002232			un5_elf	0x000EB12C	40002232						Multi-state front-end prompt/message controller with six confirm-only branches.
-ELF-P007	ELF-M002	10	na2_elf	0x000E6C20	copy	4	20008230			un5_elf	0x000ECA10	40008230						Paired confirm/cancel modal or list-state handler.
-ELF-P008	ELF-M002	11	na2_elf	0x000E6CC0	copy	4	40008230			un5_elf	0x000ECA1C	10008230						Paired confirm/cancel modal or list-state handler.
-ELF-P009	ELF-M003	10	na2_elf	0x000E7118	copy	4	20006230			un5_elf	0x000ECE78	40006230						Simple confirm-to-close/advance handler.
-ELF-P010	ELF-M004	10	na2_elf	0x000F3974	copy	4	20004230			un5_elf	0x000FA264	40004230						Confirm-gated state transition after an animation/object becomes active.
-ELF-P011	ELF-M005	10	na2_elf	0x000F894C	copy	4	20004230			un5_elf	0x000FF47C	40004230						Player-indexed confirm-gated transition handler.
-ELF-P012	ELF-M006	10	na2_elf	0x000FA15C	copy	4	2000A230			un5_elf	0x00100DA4	4000A230						Two-state timed prompt controller with confirm acceleration/advance.
-ELF-P013	ELF-M006	11	na2_elf	0x000FA1F0	copy	4	2000B030			un5_elf	0x00100E38	4000B030						Two-state timed prompt controller with confirm acceleration/advance.
-ELF-P014	ELF-M007	10	na2_elf	0x000FC2EC	copy	4	20006330			un5_elf	0x0010302C	40006330						Player-indexed list/prompt handler with confirm and directional navigation.
-ELF-P015	ELF-M008	10	na2_elf	0x00283440	copy	4	2000A330			un5_elf	0x00292250	4000A330						Generic selectable-list/modal input decoder. It sets distinct result flags for accept, cancel, and navigation.
-ELF-P016	ELF-M008	11	na2_elf	0x00283488	copy	4	4000A330			un5_elf	0x00292274	1000A330						Generic selectable-list/modal input decoder. It sets distinct result flags for accept, cancel, and navigation.
-ELF-P017	ELF-M009	10	na2_elf	0x002858E8	copy	4	20006230			un5_elf	0x00296F08	40006230						Parent menu state machine wrapping child selectable objects and confirm/cancel transitions.
-ELF-P018	ELF-M009	11	na2_elf	0x00285918	copy	4	40006230			un5_elf	0x00296F14	10006230						Parent menu state machine wrapping child selectable objects and confirm/cancel transitions.
-ELF-P019	ELF-M010	10	na2_elf	0x00287F44	copy	4	2000A330			un5_elf	0x002997C4	4000A330						Controller/button-assignment options handler with reset, confirm, cancel, and directional edits.
-ELF-P020	ELF-M010	11	na2_elf	0x00287FC8	copy	4	4000A330			un5_elf	0x002997D0	1000A330						Controller/button-assignment options handler with reset, confirm, cancel, and directional edits.
-ELF-P021	ELF-M011	10	na2_elf	0x0028A9F8	copy	4	20008230			un5_elf	0x0029C3D8	40008230						Two-axis numeric adjustment handler with reset, confirm, cancel, and directional edits.
-ELF-P022	ELF-M011	11	na2_elf	0x0028AA44	copy	4	40008230			un5_elf	0x0029C3E4	10008230						Two-axis numeric adjustment handler with reset, confirm, cancel, and directional edits.
-ELF-P023	ELF-M012	10	na2_elf	0x0028B824	copy	4	2000A330			un5_elf	0x0029D284	4000A330						Four-way options/submenu handler with confirm/cancel state transitions.
-ELF-P024	ELF-M012	11	na2_elf	0x0028B8F0	copy	4	4000A330			un5_elf	0x0029D290	1000A330						Four-way options/submenu handler with confirm/cancel state transitions.
-ELF-P025	ELF-M013	10	na2_elf	0x0028BC00	copy	4	20008330			un5_elf	0x0029D670	40008330						Numeric/list selector with confirm, cancel, and vertical navigation.
-ELF-P026	ELF-M013	11	na2_elf	0x0028BC24	copy	4	40008330			un5_elf	0x0029D67C	10008330						Numeric/list selector with confirm, cancel, and vertical navigation.
-ELF-P027	ELF-M014	10	na2_elf	0x002BBF6C	copy	4	40006330			un5_elf	0x002CEC04	10006330						Two-player join/selection state machine; the differing checks are cancel/back actions.
-ELF-P028	ELF-M014	11	na2_elf	0x002BC2D8	copy	4	40006330			un5_elf	0x002CECFC	10006330						Two-player join/selection state machine; the differing checks are cancel/back actions.
-ELF-P029	ELF-M015	10	na2_elf	0x002BC478	copy	4	20008330			un5_elf	0x002CF148	40008330						Five-item selector with confirm, cancel, and cyclic vertical navigation.
-ELF-P030	ELF-M015	11	na2_elf	0x002BC4B4	copy	4	40008330			un5_elf	0x002CF154	10008330						Five-item selector with confirm, cancel, and cyclic vertical navigation.
-ELF-P031	ELF-M016	10	na2_elf	0x000E5FF4	copy	4	20000232			un5_elf	0x000EBEDC	40000232						Save/load confirm-only helper used repeatedly by the parent controller.
-ELF-P032	ELF-M017	10	na2_elf	0x000E7540	copy	4	20006230			un5_elf	0x000ED3F8	40006230						Blocking memory-card/save-load prompt loop with confirm-to-advance behavior.
-ELF-P033	ELF-M018	10	na2_elf	0x000FAD98	copy	4	20004230			un5_elf	0x001019C0	40004230						Confirm-to-close overlay rendered inside another front-end object.
-ELF-P034	ELF-M019	10	na2_elf	0x00284DD4	copy	4	20004230			un5_elf	0x002964C4	40004230						Two-player multi-action front-end input decoder: first accept path.
-ELF-P035	ELF-M019	11	na2_elf	0x00284DF0	copy	4	20004230			un5_elf	0x002964D4	40004230						Two-player multi-action front-end input decoder: second accept path.
-ELF-P036	ELF-M019	12	na2_elf	0x00284E0C	copy	4	40006230			un5_elf	0x002964E4	10006230						Two-player multi-action front-end input decoder: cancel path.
-ELF-P037	ELF-M020	10	na2_elf	0x00288330	copy	4	2000A330			un5_elf	0x00299BC0	4000A330						Second controller-assignment subhandler: accept path.
-ELF-P038	ELF-M020	11	na2_elf	0x00288360	copy	4	4000A330			un5_elf	0x00299BCC	1000A330						Second controller-assignment subhandler: cancel path.
-ELF-P039	ELF-M021	10	na2_elf	0x00289680	copy	4	20006230			un5_elf	0x0029AFF4	40006230						Sound Settings handler: accept path.
-ELF-P040	ELF-M021	11	na2_elf	0x0028974C	copy	4	40006230			un5_elf	0x0029B000	10006230						Sound Settings handler: rollback/cancel path.
-ELF-P041	ELF-M022	10	na2_elf	0x00290AE8	copy	4	20008230			un5_elf	0x002A2828	40008230						Timed confirm-to-advance state after a short input delay.
-ELF-P042	ELF-M023	10	na2_elf	0x002B7ABC	copy	4	20006230			un5_elf	0x002CA66C	40006230						Two-item front-end/setup submenu: accept path.
-ELF-P043	ELF-M023	11	na2_elf	0x002B7B34	copy	4	40006230			un5_elf	0x002CA678	10006230						Two-item front-end/setup submenu: cancel path.
-ELF-P044	ELF-M024	10	na2_elf	0x000E6ED0	copy	4	20000232			un5_elf	0x000ECCF0	40000232						Shared two-choice Yes/No modal accept check.
-ELF-P045	ELF-M024	11	na2_elf	0x000E6F24	copy	4	40000232			un5_elf	0x000ECD2C	10000232						Shared two-choice Yes/No modal cancel check.
-ELF-P046	ELF-M025	10	na2_elf	0x000DF910	copy	4	20080232			un5_elf	0x000E55D4	40080232						Title controller combined Start/accept check.
-ELF-P047	ELF-M025	11	na2_elf	0x000DFB0C	copy	4	60080232			un5_elf	0x000E5758	50080232						Title controller combined Start/accept/cancel check.
-ELF-P048	ELF-M026	10	na2_elf	0x002B5F64	copy	4	20006230			un5_elf	0x002C8A68	40006230						Character-selection primary-state accept check.
-ELF-P049	ELF-M026	11	na2_elf	0x002B5F84	copy	4	40006230			un5_elf	0x002C8A74	10006230						Character-selection primary-state cancel check.
-ELF-P050	ELF-M026	12	na2_elf	0x002B5FF0	copy	4	10006230			un5_elf	0x002C8A8C	20006230						Character-selection primary-state operation1 check.
-ELF-P051	ELF-M026	13	na2_elf	0x002B60FC	copy	4	20006230			un5_elf	0x002C8AE8	40006230						Character-selection secondary-state accept check.
-ELF-P052	ELF-M026	14	na2_elf	0x002B611C	copy	4	40006230			un5_elf	0x002C8AF4	10006230						Character-selection secondary-state cancel check.
-ELF-P053	ELF-M026	15	na2_elf	0x002B6150	copy	4	10006230			un5_elf	0x002C8B00	20006230						Character-selection secondary-state operation1 check.
-ELF-P054	ELF-M027	10	na2_elf	0x000DF29C	copy	4	2008A230			un5_elf	0x000E4F44	4008A230						Title New Game/Continue combined Start/accept check.
-ELF-P055	ELF-M028	10	na2_elf	0x002B6A54	copy	4	20006230			un5_elf	0x002C95BC	40006230						Support-selection first-state accept check.
-ELF-P056	ELF-M028	11	na2_elf	0x002B6C70	copy	4	40006230			un5_elf	0x002C95C8	10006230						Support-selection first-state cancel check.
-ELF-P057	ELF-M028	12	na2_elf	0x002B6CDC	copy	4	10006230			un5_elf	0x002C95D4	20006230						Support-selection first-state operation1 check.
-ELF-P058	ELF-M028	13	na2_elf	0x002B6DE8	copy	4	20006230			un5_elf	0x002C9630	40006230						Support-selection second-state accept check.
-ELF-P059	ELF-M028	14	na2_elf	0x002B7000	copy	4	40006230			un5_elf	0x002C963C	10006230						Support-selection second-state cancel check.
-ELF-P060	ELF-M028	15	na2_elf	0x002B7034	copy	4	10006230			un5_elf	0x002C9648	20006230						Support-selection second-state operation1 check.
-ETC-P001	ETC-M001	10	na2_etc	0x000012F8	copy	4	20006230			un5_etc	0x00001538	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P002	ETC-M001	11	na2_etc	0x0000131C	copy	4	40006230			un5_etc	0x00001544	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P003	ETC-M002	10	na2_etc	0x00001FB0	copy	4	20008230			un5_etc	0x00002230	40008230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P004	ETC-M002	11	na2_etc	0x00002108	copy	4	40008230			un5_etc	0x0000223C	10008230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P005	ETC-M003	10	na2_etc	0x0000368C	copy	4	20008330			un5_etc	0x0000394C	40008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P006	ETC-M003	11	na2_etc	0x000036E8	copy	4	40008330			un5_etc	0x00003958	10008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P007	ETC-M004	10	na2_etc	0x000067E0	copy	4	20008330			un5_etc	0x00006B4C	40008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P008	ETC-M004	11	na2_etc	0x00006860	copy	4	40008330			un5_etc	0x00006BD0	10008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P009	ETC-M005	10	na2_etc	0x00007A78	copy	4	20008330			un5_etc	0x00007E7C	40008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P010	ETC-M005	11	na2_etc	0x00007AF8	copy	4	40008330			un5_etc	0x0000813C	10008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P011	ETC-M006	10	na2_etc	0x00009894	copy	4	40006330			un5_etc	0x00009CD4	10006330						ETC-owned front-end input decision range. Includes the regional secondary-action Triangle-to-Square move.
-ETC-P012	ETC-M006	11	na2_etc	0x0000990C	copy	4	10004230			un5_etc	0x00009D4C	80004230						ETC-owned front-end input decision range. Includes the regional secondary-action Triangle-to-Square move.
-ETC-P013	ETC-M007	10	na2_etc	0x0000C1B8	copy	4	20006230			un5_etc	0x0000C784	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P014	ETC-M007	11	na2_etc	0x0000C238	copy	4	40006230			un5_etc	0x0000CAB4	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P015	ETC-M008	10	na2_etc	0x0000C698	copy	4	20008330			un5_etc	0x0000CBBC	40008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P016	ETC-M008	11	na2_etc	0x0000C718	copy	4	40008330			un5_etc	0x0000CF60	10008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P017	ETC-M009	10	na2_etc	0x0000D01C	copy	4	40004230			un5_etc	0x0000D56C	10004230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P018	ETC-M010	10	na2_etc	0x0000EB14	copy	4	20008330			un5_etc	0x0000F148	40008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P019	ETC-M010	11	na2_etc	0x0000EB98	copy	4	40008330			un5_etc	0x0000F41C	10008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P020	ETC-M011	10	na2_etc	0x0000FF40	copy	4	20006230			un5_etc	0x00010634	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P021	ETC-M011	11	na2_etc	0x0000FFC0	copy	4	40006230			un5_etc	0x00010A30	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P022	ETC-M012	10	na2_etc	0x00011664	copy	4	20006230			un5_etc	0x00011E10	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P023	ETC-M012	11	na2_etc	0x000116E8	copy	4	40006230			un5_etc	0x000120E8	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P024	ETC-M013	10	na2_etc	0x00011B90	copy	4	40006330			un5_etc	0x00012360	10006330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P025	ETC-M014	10	na2_etc	0x00017BFC	copy	4	20006230			un5_etc	0x000187F0	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P026	ETC-M014	11	na2_etc	0x00017E24	copy	4	40006230			un5_etc	0x00018A94	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P027	ETC-M015	10	na2_etc	0x00019118	copy	4	20006230			un5_etc	0x00019DCC	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P028	ETC-M015	11	na2_etc	0x00019140	copy	4	40006230			un5_etc	0x00019DD8	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P029	ETC-M016	10	na2_etc	0x0001A654	copy	4	40006230			un5_etc	0x0001B444	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P030	ETC-M016	11	na2_etc	0x0001A67C	copy	4	20006230			un5_etc	0x0001B450	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P031	ETC-M017	10	na2_etc	0x0001E0FC	copy	4	20006330			un5_etc	0x0001F164	40006330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P032	ETC-M018	10	na2_etc	0x0001E98C	copy	4	20006330			un5_etc	0x0001FAA4	40006330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-ETC-P033	ETC-M019	10	na2_etc	0x0001F358	copy	4	20004230			un5_etc	0x0002058C	40004230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
-BTL-P046	BTL-M022	10	na2_btl	0x00066210	replace	4	20006330		40006330									Battle-results tally fast-forward: use Cross instead of the inherited Circle check; UN5 retains the same Circle oversight at BTL offset 0x000692B0.
+BTL-P001	BTL-M001	10	na2_btl	0x000087C4	copy	4	40006230			nun5_btl	0x00008CB4	10006230						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P002	BTL-M001	11	na2_btl	0x000087D0	copy	4	10006230			nun5_btl	0x00008CC0	20006230						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P003	BTL-M001	12	na2_btl	0x0000889C	copy	4	20006330			nun5_btl	0x00008D5C	40006330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P004	BTL-M001	13	na2_btl	0x00008978	copy	4	20008330			nun5_btl	0x00008E78	40008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P005	BTL-M001	14	na2_btl	0x000089B8	copy	4	40008330			nun5_btl	0x00008E84	10008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P006	BTL-M002	10	na2_btl	0x0000AA50	copy	4	20006230			nun5_btl	0x0000AFF0	40006230						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P007	BTL-M002	11	na2_btl	0x0000AA70	copy	4	40006230			nun5_btl	0x0000AFFC	10006230						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P008	BTL-M002	12	na2_btl	0x0000AA88	copy	4	10006230			nun5_btl	0x0000B008	20006230						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P009	BTL-M002	13	na2_btl	0x0000AB50	copy	4	40004230			nun5_btl	0x0000B0F0	10004230						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P010	BTL-M003	10	na2_btl	0x0002B1EC	copy	4	20006230			nun5_btl	0x0002C0DC	40006230						BTL-owned battle-adjacent UI/state input range.
+BTL-P011	BTL-M003	11	na2_btl	0x0002B24C	copy	4	40006230			nun5_btl	0x0002C0F4	10006230						BTL-owned battle-adjacent UI/state input range.
+BTL-P012	BTL-M004	10	na2_btl	0x0002B860	copy	4	20006230			nun5_btl	0x0002C788	40006230						BTL-owned battle-adjacent UI/state input range.
+BTL-P013	BTL-M004	11	na2_btl	0x0002B890	copy	4	40006230			nun5_btl	0x0002C794	10006230						BTL-owned battle-adjacent UI/state input range.
+BTL-P014	BTL-M005	10	na2_btl	0x0002C9FC	copy	4	20006230			nun5_btl	0x0002D960	40006230						BTL-owned battle-adjacent UI/state input range.
+BTL-P015	BTL-M005	11	na2_btl	0x0002CA14	copy	4	40006230			nun5_btl	0x0002D96C	10006230						BTL-owned battle-adjacent UI/state input range.
+BTL-P016	BTL-M006	10	na2_btl	0x0002D200	copy	4	20006230			nun5_btl	0x0002E1C8	40006230						BTL-owned battle-adjacent UI/state input range.
+BTL-P017	BTL-M006	11	na2_btl	0x0002D230	copy	4	40006230			nun5_btl	0x0002E1D4	10006230						BTL-owned battle-adjacent UI/state input range.
+BTL-P018	BTL-M007	10	na2_btl	0x00034B18	copy	4	40004230			nun5_btl	0x00035F90	10004230						BTL-owned battle-adjacent UI/state input range.
+BTL-P019	BTL-M008	10	na2_btl	0x0003689C	copy	4	20004230			nun5_btl	0x00038050	40004230						BTL-owned battle-adjacent UI/state input range.
+BTL-P020	BTL-M008	11	na2_btl	0x00036988	copy	4	20004230			nun5_btl	0x0003810C	40004230						BTL-owned battle-adjacent UI/state input range.
+BTL-P021	BTL-M009	10	na2_btl	0x00037944	copy	4	20004230			nun5_btl	0x000391B8	40004230						BTL-owned battle-adjacent UI/state input range.
+BTL-P022	BTL-M009	11	na2_btl	0x00037A38	copy	4	20004230			nun5_btl	0x00039288	40004230						BTL-owned battle-adjacent UI/state input range.
+BTL-P023	BTL-M010	10	na2_btl	0x0003894C	copy	4	20006330			nun5_btl	0x0003A170	40006330						BTL-owned battle-adjacent UI/state input range.
+BTL-P024	BTL-M011	10	na2_btl	0x000399C8	copy	4	20004230			nun5_btl	0x0003B1EC	40004230						BTL-owned battle-adjacent UI/state input range.
+BTL-P025	BTL-M011	11	na2_btl	0x00039B84	copy	4	20004230			nun5_btl	0x0003B380	40004230						BTL-owned battle-adjacent UI/state input range.
+BTL-P026	BTL-M012	10	na2_btl	0x00060944	copy	4	20008330			nun5_btl	0x00063584	40008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P027	BTL-M012	11	na2_btl	0x000609A4	copy	4	40008330			nun5_btl	0x00063590	10008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P028	BTL-M012	12	na2_btl	0x00060A04	copy	4	10008330			nun5_btl	0x0006359C	20008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P029	BTL-M013	10	na2_btl	0x00060C70	copy	4	20008330			nun5_btl	0x00063880	40008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P030	BTL-M013	11	na2_btl	0x00060CD0	copy	4	40008330			nun5_btl	0x0006388C	10008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P031	BTL-M013	12	na2_btl	0x00060D34	copy	4	10008330			nun5_btl	0x00063898	20008330						BTL-owned battle-adjacent UI/state input range. Contains a multi-button regional permutation, not merely a single confirm literal.
+BTL-P032	BTL-M014	10	na2_btl	0x0006637C	copy	4	40006330			nun5_btl	0x0006940C	10006330						BTL-owned battle-adjacent UI/state input range.
+BTL-P033	BTL-M014	11	na2_btl	0x0006649C	copy	4	20004230			nun5_btl	0x0006953C	40004230						BTL-owned battle-adjacent UI/state input range.
+BTL-P034	BTL-M015	10	na2_btl	0x001C2490	copy	4	2000C230			nun5_btl	0x001CB65C	4000C230						BTL-owned battle-adjacent UI/state input range.
+BTL-P035	BTL-M015	11	na2_btl	0x001C2548	copy	4	4000C230			nun5_btl	0x001CB778	1000C230						BTL-owned battle-adjacent UI/state input range.
+BTL-P036	BTL-M016	10	na2_btl	0x001C37F0	copy	4	40000232			nun5_btl	0x001CCC68	10000232						BTL-owned battle-adjacent UI/state input range.
+BTL-P037	BTL-M017	10	na2_btl	0x001C46F0	copy	4	4000C230			nun5_btl	0x001CE0F4	1000C230						BTL-owned battle-adjacent UI/state input range.
+BTL-P038	BTL-M018	10	na2_btl	0x001C65D0	copy	4	4000C230			nun5_btl	0x001D0004	1000C230						BTL-owned battle-adjacent UI/state input range.
+BTL-P039	BTL-M019	10	na2_btl	0x001C8560	copy	4	20000332			nun5_btl	0x001D1FB8	40000332						BTL-owned battle-adjacent UI/state input range.
+BTL-P044	BTL-M019	11	na2_btl	0x001C86AC	copy	4	20006330			nun5_btl	0x001D21A0	40006330						ccStartMenuPrivateCmd player/view branch: use Cross for the NUN5 operation path.
+BTL-P045	BTL-M019	12	na2_btl	0x001C86D4	copy	4	40000332			nun5_btl	0x001D1FC4	10000332						ccStartMenuPrivateCmd close branch: use Triangle for NUN5 cancel.
+BTL-P040	BTL-M020	10	na2_btl	0x001CBC18	copy	4	20006230			nun5_btl	0x001D57C4	40006230						BTL-owned battle-adjacent UI/state input range.
+BTL-P041	BTL-M020	11	na2_btl	0x001CBCD4	copy	4	40006230			nun5_btl	0x001D57D0	10006230						BTL-owned battle-adjacent UI/state input range.
+BTL-P042	BTL-M021	10	na2_btl	0x001CD7D0	copy	4	20006230			nun5_btl	0x001D7520	40006230						BTL-owned battle-adjacent UI/state input range.
+BTL-P043	BTL-M021	11	na2_btl	0x001CD804	copy	4	40006230			nun5_btl	0x001D752C	10006230						BTL-owned battle-adjacent UI/state input range.
+ELF-P001	ELF-M001	10	na2_elf	0x000E461C	copy	4	20002232			nun5_elf	0x000EA3F4	40002232						Multi-state front-end prompt/message controller with six confirm-only branches.
+ELF-P002	ELF-M001	11	na2_elf	0x000E470C	copy	4	20002232			nun5_elf	0x000EA490	40002232						Multi-state front-end prompt/message controller with six confirm-only branches.
+ELF-P003	ELF-M001	12	na2_elf	0x000E4A7C	copy	4	20002232			nun5_elf	0x000EA7CC	40002232						Multi-state front-end prompt/message controller with six confirm-only branches.
+ELF-P004	ELF-M001	13	na2_elf	0x000E4C50	copy	4	20002232			nun5_elf	0x000EAE9C	40002232						Multi-state front-end prompt/message controller with six confirm-only branches.
+ELF-P005	ELF-M001	14	na2_elf	0x000E4CD0	copy	4	20002232			nun5_elf	0x000EAF04	40002232						Multi-state front-end prompt/message controller with six confirm-only branches.
+ELF-P006	ELF-M001	15	na2_elf	0x000E4F5C	copy	4	20002232			nun5_elf	0x000EB12C	40002232						Multi-state front-end prompt/message controller with six confirm-only branches.
+ELF-P007	ELF-M002	10	na2_elf	0x000E6C20	copy	4	20008230			nun5_elf	0x000ECA10	40008230						Paired confirm/cancel modal or list-state handler.
+ELF-P008	ELF-M002	11	na2_elf	0x000E6CC0	copy	4	40008230			nun5_elf	0x000ECA1C	10008230						Paired confirm/cancel modal or list-state handler.
+ELF-P009	ELF-M003	10	na2_elf	0x000E7118	copy	4	20006230			nun5_elf	0x000ECE78	40006230						Simple confirm-to-close/advance handler.
+ELF-P010	ELF-M004	10	na2_elf	0x000F3974	copy	4	20004230			nun5_elf	0x000FA264	40004230						Confirm-gated state transition after an animation/object becomes active.
+ELF-P011	ELF-M005	10	na2_elf	0x000F894C	copy	4	20004230			nun5_elf	0x000FF47C	40004230						Player-indexed confirm-gated transition handler.
+ELF-P012	ELF-M006	10	na2_elf	0x000FA15C	copy	4	2000A230			nun5_elf	0x00100DA4	4000A230						Two-state timed prompt controller with confirm acceleration/advance.
+ELF-P013	ELF-M006	11	na2_elf	0x000FA1F0	copy	4	2000B030			nun5_elf	0x00100E38	4000B030						Two-state timed prompt controller with confirm acceleration/advance.
+ELF-P014	ELF-M007	10	na2_elf	0x000FC2EC	copy	4	20006330			nun5_elf	0x0010302C	40006330						Player-indexed list/prompt handler with confirm and directional navigation.
+ELF-P015	ELF-M008	10	na2_elf	0x00283440	copy	4	2000A330			nun5_elf	0x00292250	4000A330						Generic selectable-list/modal input decoder. It sets distinct result flags for accept, cancel, and navigation.
+ELF-P016	ELF-M008	11	na2_elf	0x00283488	copy	4	4000A330			nun5_elf	0x00292274	1000A330						Generic selectable-list/modal input decoder. It sets distinct result flags for accept, cancel, and navigation.
+ELF-P017	ELF-M009	10	na2_elf	0x002858E8	copy	4	20006230			nun5_elf	0x00296F08	40006230						Parent menu state machine wrapping child selectable objects and confirm/cancel transitions.
+ELF-P018	ELF-M009	11	na2_elf	0x00285918	copy	4	40006230			nun5_elf	0x00296F14	10006230						Parent menu state machine wrapping child selectable objects and confirm/cancel transitions.
+ELF-P019	ELF-M010	10	na2_elf	0x00287F44	copy	4	2000A330			nun5_elf	0x002997C4	4000A330						Controller/button-assignment options handler with reset, confirm, cancel, and directional edits.
+ELF-P020	ELF-M010	11	na2_elf	0x00287FC8	copy	4	4000A330			nun5_elf	0x002997D0	1000A330						Controller/button-assignment options handler with reset, confirm, cancel, and directional edits.
+ELF-P021	ELF-M011	10	na2_elf	0x0028A9F8	copy	4	20008230			nun5_elf	0x0029C3D8	40008230						Two-axis numeric adjustment handler with reset, confirm, cancel, and directional edits.
+ELF-P022	ELF-M011	11	na2_elf	0x0028AA44	copy	4	40008230			nun5_elf	0x0029C3E4	10008230						Two-axis numeric adjustment handler with reset, confirm, cancel, and directional edits.
+ELF-P023	ELF-M012	10	na2_elf	0x0028B824	copy	4	2000A330			nun5_elf	0x0029D284	4000A330						Four-way options/submenu handler with confirm/cancel state transitions.
+ELF-P024	ELF-M012	11	na2_elf	0x0028B8F0	copy	4	4000A330			nun5_elf	0x0029D290	1000A330						Four-way options/submenu handler with confirm/cancel state transitions.
+ELF-P025	ELF-M013	10	na2_elf	0x0028BC00	copy	4	20008330			nun5_elf	0x0029D670	40008330						Numeric/list selector with confirm, cancel, and vertical navigation.
+ELF-P026	ELF-M013	11	na2_elf	0x0028BC24	copy	4	40008330			nun5_elf	0x0029D67C	10008330						Numeric/list selector with confirm, cancel, and vertical navigation.
+ELF-P027	ELF-M014	10	na2_elf	0x002BBF6C	copy	4	40006330			nun5_elf	0x002CEC04	10006330						Two-player join/selection state machine; the differing checks are cancel/back actions.
+ELF-P028	ELF-M014	11	na2_elf	0x002BC2D8	copy	4	40006330			nun5_elf	0x002CECFC	10006330						Two-player join/selection state machine; the differing checks are cancel/back actions.
+ELF-P029	ELF-M015	10	na2_elf	0x002BC478	copy	4	20008330			nun5_elf	0x002CF148	40008330						Five-item selector with confirm, cancel, and cyclic vertical navigation.
+ELF-P030	ELF-M015	11	na2_elf	0x002BC4B4	copy	4	40008330			nun5_elf	0x002CF154	10008330						Five-item selector with confirm, cancel, and cyclic vertical navigation.
+ELF-P031	ELF-M016	10	na2_elf	0x000E5FF4	copy	4	20000232			nun5_elf	0x000EBEDC	40000232						Save/load confirm-only helper used repeatedly by the parent controller.
+ELF-P032	ELF-M017	10	na2_elf	0x000E7540	copy	4	20006230			nun5_elf	0x000ED3F8	40006230						Blocking memory-card/save-load prompt loop with confirm-to-advance behavior.
+ELF-P033	ELF-M018	10	na2_elf	0x000FAD98	copy	4	20004230			nun5_elf	0x001019C0	40004230						Confirm-to-close overlay rendered inside another front-end object.
+ELF-P034	ELF-M019	10	na2_elf	0x00284DD4	copy	4	20004230			nun5_elf	0x002964C4	40004230						Two-player multi-action front-end input decoder: first accept path.
+ELF-P035	ELF-M019	11	na2_elf	0x00284DF0	copy	4	20004230			nun5_elf	0x002964D4	40004230						Two-player multi-action front-end input decoder: second accept path.
+ELF-P036	ELF-M019	12	na2_elf	0x00284E0C	copy	4	40006230			nun5_elf	0x002964E4	10006230						Two-player multi-action front-end input decoder: cancel path.
+ELF-P037	ELF-M020	10	na2_elf	0x00288330	copy	4	2000A330			nun5_elf	0x00299BC0	4000A330						Second controller-assignment subhandler: accept path.
+ELF-P038	ELF-M020	11	na2_elf	0x00288360	copy	4	4000A330			nun5_elf	0x00299BCC	1000A330						Second controller-assignment subhandler: cancel path.
+ELF-P039	ELF-M021	10	na2_elf	0x00289680	copy	4	20006230			nun5_elf	0x0029AFF4	40006230						Sound Settings handler: accept path.
+ELF-P040	ELF-M021	11	na2_elf	0x0028974C	copy	4	40006230			nun5_elf	0x0029B000	10006230						Sound Settings handler: rollback/cancel path.
+ELF-P041	ELF-M022	10	na2_elf	0x00290AE8	copy	4	20008230			nun5_elf	0x002A2828	40008230						Timed confirm-to-advance state after a short input delay.
+ELF-P042	ELF-M023	10	na2_elf	0x002B7ABC	copy	4	20006230			nun5_elf	0x002CA66C	40006230						Two-item front-end/setup submenu: accept path.
+ELF-P043	ELF-M023	11	na2_elf	0x002B7B34	copy	4	40006230			nun5_elf	0x002CA678	10006230						Two-item front-end/setup submenu: cancel path.
+ELF-P044	ELF-M024	10	na2_elf	0x000E6ED0	copy	4	20000232			nun5_elf	0x000ECCF0	40000232						Shared two-choice Yes/No modal accept check.
+ELF-P045	ELF-M024	11	na2_elf	0x000E6F24	copy	4	40000232			nun5_elf	0x000ECD2C	10000232						Shared two-choice Yes/No modal cancel check.
+ELF-P046	ELF-M025	10	na2_elf	0x000DF910	copy	4	20080232			nun5_elf	0x000E55D4	40080232						Title controller combined Start/accept check.
+ELF-P047	ELF-M025	11	na2_elf	0x000DFB0C	copy	4	60080232			nun5_elf	0x000E5758	50080232						Title controller combined Start/accept/cancel check.
+ELF-P048	ELF-M026	10	na2_elf	0x002B5F64	copy	4	20006230			nun5_elf	0x002C8A68	40006230						Character-selection primary-state accept check.
+ELF-P049	ELF-M026	11	na2_elf	0x002B5F84	copy	4	40006230			nun5_elf	0x002C8A74	10006230						Character-selection primary-state cancel check.
+ELF-P050	ELF-M026	12	na2_elf	0x002B5FF0	copy	4	10006230			nun5_elf	0x002C8A8C	20006230						Character-selection primary-state operation1 check.
+ELF-P051	ELF-M026	13	na2_elf	0x002B60FC	copy	4	20006230			nun5_elf	0x002C8AE8	40006230						Character-selection secondary-state accept check.
+ELF-P052	ELF-M026	14	na2_elf	0x002B611C	copy	4	40006230			nun5_elf	0x002C8AF4	10006230						Character-selection secondary-state cancel check.
+ELF-P053	ELF-M026	15	na2_elf	0x002B6150	copy	4	10006230			nun5_elf	0x002C8B00	20006230						Character-selection secondary-state operation1 check.
+ELF-P054	ELF-M027	10	na2_elf	0x000DF29C	copy	4	2008A230			nun5_elf	0x000E4F44	4008A230						Title New Game/Continue combined Start/accept check.
+ELF-P055	ELF-M028	10	na2_elf	0x002B6A54	copy	4	20006230			nun5_elf	0x002C95BC	40006230						Support-selection first-state accept check.
+ELF-P056	ELF-M028	11	na2_elf	0x002B6C70	copy	4	40006230			nun5_elf	0x002C95C8	10006230						Support-selection first-state cancel check.
+ELF-P057	ELF-M028	12	na2_elf	0x002B6CDC	copy	4	10006230			nun5_elf	0x002C95D4	20006230						Support-selection first-state operation1 check.
+ELF-P058	ELF-M028	13	na2_elf	0x002B6DE8	copy	4	20006230			nun5_elf	0x002C9630	40006230						Support-selection second-state accept check.
+ELF-P059	ELF-M028	14	na2_elf	0x002B7000	copy	4	40006230			nun5_elf	0x002C963C	10006230						Support-selection second-state cancel check.
+ELF-P060	ELF-M028	15	na2_elf	0x002B7034	copy	4	10006230			nun5_elf	0x002C9648	20006230						Support-selection second-state operation1 check.
+ETC-P001	ETC-M001	10	na2_etc	0x000012F8	copy	4	20006230			nun5_etc	0x00001538	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P002	ETC-M001	11	na2_etc	0x0000131C	copy	4	40006230			nun5_etc	0x00001544	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P003	ETC-M002	10	na2_etc	0x00001FB0	copy	4	20008230			nun5_etc	0x00002230	40008230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P004	ETC-M002	11	na2_etc	0x00002108	copy	4	40008230			nun5_etc	0x0000223C	10008230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P005	ETC-M003	10	na2_etc	0x0000368C	copy	4	20008330			nun5_etc	0x0000394C	40008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P006	ETC-M003	11	na2_etc	0x000036E8	copy	4	40008330			nun5_etc	0x00003958	10008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P007	ETC-M004	10	na2_etc	0x000067E0	copy	4	20008330			nun5_etc	0x00006B4C	40008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P008	ETC-M004	11	na2_etc	0x00006860	copy	4	40008330			nun5_etc	0x00006BD0	10008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P009	ETC-M005	10	na2_etc	0x00007A78	copy	4	20008330			nun5_etc	0x00007E7C	40008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P010	ETC-M005	11	na2_etc	0x00007AF8	copy	4	40008330			nun5_etc	0x0000813C	10008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P011	ETC-M006	10	na2_etc	0x00009894	copy	4	40006330			nun5_etc	0x00009CD4	10006330						ETC-owned front-end input decision range. Includes the regional secondary-action Triangle-to-Square move.
+ETC-P012	ETC-M006	11	na2_etc	0x0000990C	copy	4	10004230			nun5_etc	0x00009D4C	80004230						ETC-owned front-end input decision range. Includes the regional secondary-action Triangle-to-Square move.
+ETC-P013	ETC-M007	10	na2_etc	0x0000C1B8	copy	4	20006230			nun5_etc	0x0000C784	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P014	ETC-M007	11	na2_etc	0x0000C238	copy	4	40006230			nun5_etc	0x0000CAB4	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P015	ETC-M008	10	na2_etc	0x0000C698	copy	4	20008330			nun5_etc	0x0000CBBC	40008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P016	ETC-M008	11	na2_etc	0x0000C718	copy	4	40008330			nun5_etc	0x0000CF60	10008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P017	ETC-M009	10	na2_etc	0x0000D01C	copy	4	40004230			nun5_etc	0x0000D56C	10004230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P018	ETC-M010	10	na2_etc	0x0000EB14	copy	4	20008330			nun5_etc	0x0000F148	40008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P019	ETC-M010	11	na2_etc	0x0000EB98	copy	4	40008330			nun5_etc	0x0000F41C	10008330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P020	ETC-M011	10	na2_etc	0x0000FF40	copy	4	20006230			nun5_etc	0x00010634	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P021	ETC-M011	11	na2_etc	0x0000FFC0	copy	4	40006230			nun5_etc	0x00010A30	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P022	ETC-M012	10	na2_etc	0x00011664	copy	4	20006230			nun5_etc	0x00011E10	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P023	ETC-M012	11	na2_etc	0x000116E8	copy	4	40006230			nun5_etc	0x000120E8	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P024	ETC-M013	10	na2_etc	0x00011B90	copy	4	40006330			nun5_etc	0x00012360	10006330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P025	ETC-M014	10	na2_etc	0x00017BFC	copy	4	20006230			nun5_etc	0x000187F0	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P026	ETC-M014	11	na2_etc	0x00017E24	copy	4	40006230			nun5_etc	0x00018A94	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P027	ETC-M015	10	na2_etc	0x00019118	copy	4	20006230			nun5_etc	0x00019DCC	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P028	ETC-M015	11	na2_etc	0x00019140	copy	4	40006230			nun5_etc	0x00019DD8	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P029	ETC-M016	10	na2_etc	0x0001A654	copy	4	40006230			nun5_etc	0x0001B444	10006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P030	ETC-M016	11	na2_etc	0x0001A67C	copy	4	20006230			nun5_etc	0x0001B450	40006230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P031	ETC-M017	10	na2_etc	0x0001E0FC	copy	4	20006330			nun5_etc	0x0001F164	40006330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P032	ETC-M018	10	na2_etc	0x0001E98C	copy	4	20006330			nun5_etc	0x0001FAA4	40006330						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+ETC-P033	ETC-M019	10	na2_etc	0x0001F358	copy	4	20004230			nun5_etc	0x0002058C	40004230						ETC-owned front-end input decision range. Implements regional accept/cancel or confirm-only behavior.
+BTL-P046	BTL-M022	10	na2_btl	0x00066210	replace	4	20006330		40006330									Battle-results tally fast-forward: use Cross instead of the inherited Circle check; NUN5 retains the same Circle oversight at BTL offset 0x000692B0.

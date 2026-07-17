@@ -1,5 +1,5 @@
 patch_id	default_enabled	status	confidence	name	description	source_mapping_id	runtime_classification	review_notes
 font_m01_elf_coverage	0	runtime_proven	verified	Font milestone m01 ELF coverage	ELF edits from the accepted clean-coverage milestone.		Accepted font milestone m01.	Full active reconstruction: na2_patcher/modules/raw_binary/patch_sets/font_m01.
 font_m02_elf_aligned_metrics	0	runtime_proven	verified	Font milestone m02 aligned metrics	Additional ELF edits layered on milestone m01.		Accepted font milestone m02.	Retired m02 archive is available through Git history.
-font_v22_elf_ascii_cell_width	0	runtime_proven	verified	Font v22 ASCII cell width	Renderer edit from the tested v22 package.		Clean and non-patchy; closer to UN5, but clipping remained.	Retired v22 archive is available through Git history.
+font_v22_elf_ascii_cell_width	0	runtime_proven	verified	Font v22 ASCII cell width	Renderer edit from the tested v22 package.		Clean and non-patchy; closer to NUN5, but clipping remained.	Retired v22 archive is available through Git history.
 font_v23_elf_zero_tracking	0	runtime_failed	verified	Font v23 zero tracking	Additional renderer hypothesis tested on top of v22.		No meaningful visible improvement.	Retired v23 archive is available through Git history.

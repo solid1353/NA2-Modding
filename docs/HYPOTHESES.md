@@ -6,16 +6,16 @@ Use this file for old patch candidates, failed experiments, unverified addresses
 
 Status: paused after v23. Confirmed observations, the exact patch record, and the final comparison screenshot are preserved in `docs/knowledge/font/README.md`; canonical accepted and historical patch data remain under `na2_patcher/modules/raw_binary/patch_sets/`. Review those records and the preserved disassembly before proposing another experiment.
 
-The unresolved work remains at least three separate problems: glyph appearance, positioning/advance behavior, and missing UN5-style auto-fit/squish for text that exceeds a box.
+The unresolved work remains at least three separate problems: glyph appearance, positioning/advance behavior, and missing NUN5-style auto-fit/squish for text that exceeds a box.
 
 ### Disassembly leads
 
-- Reuse the preserved projects/exports under `@source/NA2_disassembly` and `@source/UN5_disassembly`; do not disassemble either ELF from scratch.
+- Reuse the preserved projects/exports under `@source/NA2_disassembly` and `@source/NUN5_disassembly`; do not disassemble either ELF from scratch.
 - NA2 ASCII setup lead: `FUN_00186510`.
-- UN5 counterpart: `FUN_001878e0`.
-- UN5 boxed auto-fit leads: `FUN_00389df0` and `FUN_0018b1b0`.
+- NUN5 counterpart: `FUN_001878e0`.
+- NUN5 boxed auto-fit leads: `FUN_00389df0` and `FUN_0018b1b0`.
 - NA2 menu lead: `FUN_003885b0`, which calls `FUN_00379240` and appears to center/draw without the corresponding 128-pixel auto-fit path.
-- A full UN5 text-renderer transplant is unsafe. Continue with small, proven renderer-logic comparisons and script-generated patches only.
+- A full NUN5 text-renderer transplant is unsafe. Continue with small, proven renderer-logic comparisons and script-generated patches only.
 
 ## Legacy 2022 Scratch Notes
 
@@ -33,7 +33,7 @@ hypotheses unless current module data or a new test proves them.
 - `Battle options 208A30.bin` was a mixed draft with placeholders and swapped
   navigation labels, not a canonical extraction or patch input.
 - `SLPS_258.37` was an experimental scratch ELF containing legacy instruction
-  edits, coherent UN5-derived text, and literal test strings such as
+  edits, coherent NUN5-derived text, and literal test strings such as
   `asdfasdfasdf`. Do not use it as a build input or translation source.
 
 ### Gameplay leads
@@ -57,12 +57,12 @@ hypotheses unless current module data or a new test proves them.
 
 - Possible unmapped item/equipment strings occupy ELF file range
   `0x4B01E0-0x4B04D0`. The old ELF overwrote them with test text, so recover
-  only from clean NA2 and official UN5 sources.
+  only from clean NA2 and official NUN5 sources.
 - Dialogue targets `0x2FFD40`, `0x2FFD58`, `0x2FFD80`, `0x2FFDB0`, and
-  `0x2FFDC0` matched official UN5 dialogue during the audit but are not current
+  `0x2FFDC0` matched official NUN5 dialogue during the audit but are not current
   mapping rows.
 - Controller/help targets near `0x4B1E30`, `0x4B24E0`, `0x4B2580`, and
-  `0x4B25D0` have apparent UN5 counterparts. Their visibility and reachability
+  `0x4B25D0` have apparent NUN5 counterparts. Their visibility and reachability
   are untested.
 - A character CCS filename table appears to begin at file `0x301D48`.
 - `0x494EFC` and `0x49AF8C` were labelled as possible Sai-lion and

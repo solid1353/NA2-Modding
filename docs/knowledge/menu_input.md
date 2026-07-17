@@ -27,7 +27,7 @@ The durable conclusion is an interaction result, not proof that every candidate 
 
 The module already retains the reusable subroutine and regional comparison data:
 
-- `fresh_function_map.tsv` maps NA2/UN5 functions, file offsets, input masks, scope, and evidence.
+- `fresh_function_map.tsv` maps NA2/NUN5 functions, file offsets, input masks, scope, and evidence.
 - `patches.tsv` records runtime classification and review conclusions.
 - `edits.tsv` records exact guarded byte edits.
 - `evidence.tsv` records import and validation provenance.

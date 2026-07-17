@@ -81,27 +81,27 @@ def similarity(left: list[int], right: list[int]) -> float:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("na2", type=Path)
-    parser.add_argument("un5", type=Path)
+    parser.add_argument("nun5", type=Path)
     parser.add_argument("--radius", type=int, default=32)
     parser.add_argument("--minimum-score", type=float, default=0.72)
     parser.add_argument("--minimum-margin", type=float, default=0.04)
     args = parser.parse_args()
 
     na2_words = words(args.na2.read_bytes())
-    un5_words = words(args.un5.read_bytes())
+    nun5_words = words(args.nun5.read_bytes())
     na2_hits = hits(na2_words)
-    un5_hits = hits(un5_words)
+    nun5_hits = hits(nun5_words)
 
     print(
-        "na2_offset\tna2_registers\tna2_mask\tun5_offset\tun5_registers\t"
-        "un5_mask\tscore\tsecond_score\tmargin"
+        "na2_offset\tna2_registers\tna2_mask\tnun5_offset\tnun5_registers\t"
+        "nun5_mask\tscore\tsecond_score\tmargin"
     )
     for left in na2_hits:
         left_context = context(na2_words, left, args.radius)
         ranked = sorted(
             (
-                (similarity(left_context, context(un5_words, right, args.radius)), right)
-                for right in un5_hits
+                (similarity(left_context, context(nun5_words, right, args.radius)), right)
+                for right in nun5_hits
             ),
             reverse=True,
             key=lambda item: item[0],

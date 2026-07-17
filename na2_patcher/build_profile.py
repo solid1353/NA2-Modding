@@ -316,11 +316,11 @@ def apply_profile_modules(
                 raise ValueError(
                     f"Translation module {module.module_id} input must be mappings.tsv"
                 )
-            if "na2" not in profile.roots or "un5" not in profile.roots:
-                raise ValueError("Translation module requires na2 and un5 profile roots")
+            if "na2" not in profile.roots or "nun5" not in profile.roots:
+                raise ValueError("Translation module requires na2 and nun5 profile roots")
             plan = translation_module.build_translation_plan(
                 **_translation_source_arguments(profile.roots["na2"], "na2"),
-                **_translation_source_arguments(profile.roots["un5"], "un5"),
+                **_translation_source_arguments(profile.roots["nun5"], "nun5"),
                 data_root=module.input_path.parent,
                 apply=",".join(module.selection) if module.selection else "BTL,ETC,SLPS",
             )

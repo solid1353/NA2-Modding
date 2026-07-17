@@ -5,7 +5,7 @@ This first-class `na2_patcher` module builds an in-memory translation plan for *
 ## Mapping metadata
 
 - Version: `33`
-- Packaged `mappings.tsv` SHA-256: `f7cf3be222da4f81b6beba0299fdd69dc514d3c816cb0916dd4c649b7aef800f`
+- Packaged `mappings.tsv` SHA-256: `c4f317c0a86c2be3fb07512652ce5e50d9b73ae485ebaa502c4ed1fabc9c28a5`
 
 The README is the canonical home for both values. The module does not use one-line `VERSION.txt` or `MAPPINGS_DEFAULT.sha256` sidecars; it reads and validates this metadata directly from `README.md`.
 
@@ -17,14 +17,14 @@ Clean NA2 targets:
 - `PRG/ETC.BIN`
 - `SLPS_258.37`
 
-Official UN5 sources:
+Official NUN5 sources:
 
 - `PRG/BTL.BIN`
 - `PRG/ETC.BIN`
 - `PRG/TEXTENG.BIN`
 - `SLES_556.05`
 
-`slot` and `sequence` mappings read their English bytes from exact UN5 offsets at build time. The only manual English permitted is in `shorten` rows, where the replacement begins with `[S]` because the official UN5 text cannot fit the original NA2 slot. No translation is relocated into spare space and no text pointer is rewritten.
+`slot` and `sequence` mappings read their English bytes from exact NUN5 offsets at build time. The only manual English permitted is in `shorten` rows, where the replacement begins with `[S]` because the official NUN5 text cannot fit the original NA2 slot. No translation is relocated into spare space and no text pointer is rewritten.
 
 ## Canonical `mappings.tsv`
 
@@ -46,9 +46,9 @@ The 12 columns are:
 
 ### Modes
 
-- `slot`: copy one exact official UN5 text value into one original NA2 slot.
-- `sequence`: pack selected exact `<br>` parts from one official UN5 string into one verified NA2 multi-string block using NUL separators.
-- `shorten`: use the `[S]` replacement in `value`, retaining the exact UN5 source reference for traceability.
+- `slot`: copy one exact official NUN5 text value into one original NA2 slot.
+- `sequence`: pack selected exact `<br>` parts from one official NUN5 string into one verified NA2 multi-string block using NUL separators.
+- `shorten`: use the `[S]` replacement in `value`, retaining the exact NUN5 source reference for traceability.
 - `bytes`: fixed-size structural patch represented as `EXPECTED=>REPLACEMENT` in `value`.
 - `unresolved`: retain an investigated but unsafe or unproven mapping without applying it.
 
@@ -56,7 +56,7 @@ There is no `pool` mode. Text stays in its original target slot.
 
 ### Source references and transforms
 
-`source_ref` uses `SOURCE@OFFSET`, for example `UN5_TEXTENG@0x29430`.
+`source_ref` uses `SOURCE@OFFSET`, for example `NUN5_TEXTENG@0x29430`.
 
 Supported source-derived transforms:
 
@@ -70,14 +70,14 @@ Supported source-derived transforms:
 
 Arguments use compact key/value syntax, for example:
 
-- `arg1=UN5_TEXTENG@0x708`
+- `arg1=NUN5_TEXTENG@0x708`
 - `part=1`
 - `parts=2,3;join=<br>`
 - `start=13;end=83`
 
-`split_br_sequence` selects official UN5 `<br>` parts listed by `parts=...` and writes them as consecutive NUL-terminated NA2 fragments.
+`split_br_sequence` selects official NUN5 `<br>` parts listed by `parts=...` and writes them as consecutive NUL-terminated NA2 fragments.
 
-`flatten_br_slice` replaces each official UN5 `<br>` with one space and selects a verified character range. It is used to distribute one official loading sentence across NA2's three original fixed slots without embedding manual prose.
+`flatten_br_slice` replaces each official NUN5 `<br>` with one space and selects a verified character range. It is used to distribute one official loading sentence across NA2's three original fixed slots without embedding manual prose.
 
 ## Output
 
@@ -126,8 +126,8 @@ Official Western text is decoded as Windows-1252. NA2 target strings are decoded
 
 The original NA2 target is authoritative for renderer-specific color forms:
 
-- UN5 `<WHITE>` becomes NA2 `<colorFFFFFF>` only where that target uses it.
-- UN5 `<BLACK>` remains `<BLACK>` or becomes `<color000000>` according to the verified target form.
+- NUN5 `<WHITE>` becomes NA2 `<colorFFFFFF>` only where that target uses it.
+- NUN5 `<BLACK>` remains `<BLACK>` or becomes `<color000000>` according to the verified target form.
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
 
@@ -135,7 +135,7 @@ The original NA2 target is authoritative for renderer-specific color forms:
 
 ### Temari Collection voice-title resolution
 
-The previously unresolved Temari voice title `姉の喜び` is now mapped to the exact official UN5 title `Silent Confidence`. The user supplied the matching UN5 Collection screenshot, and the binary source was verified at `PRG/TEXTENG.BIN + 0x24B0`.
+The previously unresolved Temari voice title `姉の喜び` is now mapped to the exact official NUN5 title `Silent Confidence`. The user supplied the matching NUN5 Collection screenshot, and the binary source was verified at `PRG/TEXTENG.BIN + 0x24B0`.
 
 `M0725` now applies an enabled `slot` mapping to `PRG/ETC.BIN + 0x2C750`. The 18-byte English string fits the original 32-byte zero-padded NA2 slot, so no shortening, relocation, pointer rewrite, or file-size change is required.
 
@@ -161,9 +161,9 @@ A clean-source full build was validated with all three targets selected:
 
 ### Collection character-model animation pass
 
-v32 traces the remaining Japanese mannequin/model animation labels through the per-character `if...anmN` identifiers shared by NA2 and UN5. It adds or activates 35 verified mappings:
+v32 traces the remaining Japanese mannequin/model animation labels through the per-character `if...anmN` identifiers shared by NA2 and NUN5. It adds or activates 35 verified mappings:
 
-- 32 exact official names copied from `PRG/TEXTENG.BIN` or the UN5 executable short-string table;
+- 32 exact official names copied from `PRG/TEXTENG.BIN` or the NUN5 executable short-string table;
 - `M0717` is activated as exact `Hey!` after its identifier match was confirmed;
 - `[S]Long Time!` is used for `Long Time No See!`, which cannot fit Ino's 16-byte NA2 slot;
 - `[S]Now` is used for `Now then...`, which cannot fit Kankuro's 8-byte executable slot.
@@ -172,14 +172,14 @@ This completes every untranslated Japanese model-animation label found in the su
 
 ### Collection voice/audio title pass
 
-v32 adds or activates 20 verified voice-title mappings by matching their position in the official UN5 title sequence and, where applicable, the UN5 executable's short-string copies. This includes the supplied Sai, Kakashi, Shikamaru, Choji, Shino, Kiba, Itachi, Orochimaru, Chiyo, Kabuto, Sasuke, and Sasori screenshots.
+v32 adds or activates 20 verified voice-title mappings by matching their position in the official NUN5 title sequence and, where applicable, the NUN5 executable's short-string copies. This includes the supplied Sai, Kakashi, Shikamaru, Choji, Shino, Kiba, Itachi, Orochimaru, Chiyo, Kabuto, Sasuke, and Sasori screenshots.
 
 Two constrained slots use traceable shortening:
 
 - `[S]Naru/Sasuke` for official `Naruto and Sasuke` in a 16-byte ETC slot;
 - `[S]Task` for official `Assignment` in an 8-byte executable slot.
 
-Temari's `姉の喜び` remained unresolved as `M0725` in v32 because no exact official UN5 English source had yet been verified. It is resolved in v33 after the matching UN5 screen and binary source were supplied.
+Temari's `姉の喜び` remained unresolved as `M0725` in v32 because no exact official NUN5 English source had yet been verified. It is resolved in v33 after the matching NUN5 screen and binary source were supplied.
 
 ### Remaining Collection jutsu and shared battle-name gaps
 
@@ -200,7 +200,7 @@ v32 fills all 16 verified gaps in the Collection ultimate/special-jutsu sequence
 - `Raining Spider 2`;
 - `Earth Style: Terra Shield 2`.
 
-The battle-select/Command Chart shared strings `鹿蝶封結` and `涅槃精舎の術` are also mapped to exact UN5 `Kachofuketsu` and `Temple of Nirvana Technique`.
+The battle-select/Command Chart shared strings `鹿蝶封結` and `涅槃精舎の術` are also mapped to exact NUN5 `Kachofuketsu` and `Temple of Nirvana Technique`.
 
 No string is relocated and no pointer is rewritten. Every new exact mapping fits its original zero-padded slot; only the four explicitly marked `[S]` rows use manual shortening.
 
@@ -228,15 +228,15 @@ A clean-source full build was validated with all three targets selected:
 
 v31 ports the character-specific Command Chart move names by matching the actual table structures instead of searching for isolated Japanese strings.
 
-NA2 contains 74 verified command-record arrays in `SLPS_258.37`. Each record is `0x54` bytes and stores its displayed-name pointer at record offset `+0x08`. UN5 contains the corresponding per-character pointer arrays in `PRG/TEXTENG.BIN`. The mapping data was expanded only where the NA2 record index and the corresponding UN5 pointer-table index both reference nonblank text. The Naruto mappings introduced in v28-v30 served as the anchor and were reproduced exactly by this method before it was extended to the other characters.
+NA2 contains 74 verified command-record arrays in `SLPS_258.37`. Each record is `0x54` bytes and stores its displayed-name pointer at record offset `+0x08`. NUN5 contains the corresponding per-character pointer arrays in `PRG/TEXTENG.BIN`. The mapping data was expanded only where the NA2 record index and the corresponding NUN5 pointer-table index both reference nonblank text. The Naruto mappings introduced in v28-v30 served as the anchor and were reproduced exactly by this method before it was extended to the other characters.
 
 This adds 1,041 new Command Chart mappings:
 
-- 1,035 exact official UN5 names that fit their original NA2 slots;
+- 1,035 exact official NUN5 names that fit their original NA2 slots;
 - 6 traceable `[S]` shortenings for the only command names that do not fit;
 - no relocation pools, pointer rewrites, or writes beyond original zero-padded string slots.
 
-Together with the 15 already-mapped Naruto entries, v31 covers 1,056 unique command-name targets across the 74 shared character tables. One table contains two NA2/UN5 presence differences; those unmatched entries remain untouched rather than being guessed.
+Together with the 15 already-mapped Naruto entries, v31 covers 1,056 unique command-name targets across the 74 shared character tables. One table contains two NA2/NUN5 presence differences; those unmatched entries remain untouched rather than being guessed.
 
 The six new shortened command names are:
 
@@ -249,7 +249,7 @@ The six new shortened command names are:
 
 ### Ultimate and character-specific jutsu expansion
 
-Ultimate/special-jutsu records use a separate verified `0x14`-byte structure. The first word is the localized name pointer, while the remaining four metadata words are identical between NA2 and UN5. Matching those four words identifies the official UN5 name without relying on string order or manual translation.
+Ultimate/special-jutsu records use a separate verified `0x14`-byte structure. The first word is the localized name pointer, while the remaining four metadata words are identical between NA2 and NUN5. Matching those four words identifies the official NUN5 name without relying on string order or manual translation.
 
 v31 covers:
 
@@ -266,7 +266,7 @@ Three older suffix-only ETC mappings are corrected to their complete official na
 
 Previously unresolved `M0718`, `M0719`, and `M0720` are now pointer-verified and active for `Lightning Blade, Single Sharpness`, `Ninja Art: Copy Jutsu`, and `Flying Thunder God Jutsu`.
 
-Three record-selected UN5 names contain decorative color tags while separate plain official copies also exist in `TEXTENG.BIN`. v31 references those plain official copies because the corresponding NA2 slots contain no verified color-tag form. No English wording is invented.
+Three record-selected NUN5 names contain decorative color tags while separate plain official copies also exist in `TEXTENG.BIN`. v31 references those plain official copies because the corresponding NA2 slots contain no verified color-tag form. No English wording is invented.
 
 ### Packaged table totals
 
@@ -282,7 +282,7 @@ Several NA2 dialogs are stored as consecutive NUL-terminated fragments inside on
 
 v30 adds `sequence` mode for these verified blocks. A sequence mapping:
 
-- reads exact parts from one official UN5 string;
+- reads exact parts from one official NUN5 string;
 - writes the selected parts consecutively with one NUL terminator after each part;
 - writes one additional NUL after the complete sequence;
 - zero-fills only the unused tail of the whole verified block;
@@ -294,20 +294,20 @@ Generated TSV annotations render the internal separators as `<NUL>` for readabil
 
 v30 replaces the broken fragment-by-fragment mappings with four packed sequence mappings:
 
-- `M0857`, `SLPS + 0x3039E0`, exact UN5 no-card notice from `UN5_TEXTENG + 0x29060`:
+- `M0857`, `SLPS + 0x3039E0`, exact NUN5 no-card notice from `NUN5_TEXTENG + 0x29060`:
   `No memory card (PS2) is inserted in <br>MEMORY CARD slot 1.<br>Please insert a memory card (PS2) in<br>MEMORY CARD slot 1.`
-- `M0813`, `SLPS + 0x303C40`, the lower unformatted-card notice from parts 0 and 1 of `UN5_TEXTENG + 0x291D0`:
+- `M0813`, `SLPS + 0x303C40`, the lower unformatted-card notice from parts 0 and 1 of `NUN5_TEXTENG + 0x291D0`:
   `The memory card (PS2) in <br>MEMORY CARD slot 1 is unformatted.`
-- `M0816`, `SLPS + 0x303CE0`, the separate upper prompt from part 2 of `UN5_TEXTENG + 0x291D0`:
+- `M0816`, `SLPS + 0x303CE0`, the separate upper prompt from part 2 of `NUN5_TEXTENG + 0x291D0`:
   `Format memory card (PS2)?`
-- `M0829`, `SLPS + 0x3046A0`, the exact startup no-card Yes/No prompt from `UN5_TEXTENG + 0x29A10`:
+- `M0829`, `SLPS + 0x3046A0`, the exact startup no-card Yes/No prompt from `NUN5_TEXTENG + 0x29A10`:
   `No memory card (PS2) is inserted.<br>Please insert a memory card (PS2) in MEMORY CARD slot 1.<br>At least 102 KB of free space is necessary to save Naruto Shippuden: Ultimate Ninja 5 data. Start the game anyway?`
 
 Retired fragment rows `M0814`, `M0815`, `M0817`, `M0830`, and `M0831` are removed. Obsolete external enabled-state files are no longer read; the canonical table is authoritative.
 
 ### Naruto Ultimate Jutsu name
 
-The visible `変わらない関係` entry is translated with the exact UN5 name `Unchanging Relationship` from `UN5_TEXTENG + 0x3F60`.
+The visible `変わらない関係` entry is translated with the exact NUN5 name `Unchanging Relationship` from `NUN5_TEXTENG + 0x3F60`.
 
 Both verified NA2 copies are covered:
 
@@ -326,7 +326,7 @@ This log persists unresolved visual/runtime findings across mapping versions. En
 
 ### Implemented in v33, runtime verification required
 
-- **Temari voice title:** verify `姉の喜び` now displays exact UN5 `Silent Confidence` in the Collection character voice list.
+- **Temari voice title:** verify `姉の喜び` now displays exact NUN5 `Silent Confidence` in the Collection character voice list.
 
 ### Implemented in v32, runtime verification required
 
@@ -344,9 +344,9 @@ This log persists unresolved visual/runtime findings across mapping versions. En
 
 ### Implemented in v30, runtime verification required
 
-- **Standard no-card notice:** the lower dialog should show the complete exact UN5 no-card and insertion message instead of mostly Japanese text.
+- **Standard no-card notice:** the lower dialog should show the complete exact NUN5 no-card and insertion message instead of mostly Japanese text.
 - **Unformatted-card dialog:** the lower notice should show `The memory card (PS2) in MEMORY CARD slot 1 is unformatted.` and the upper prompt should show `Format memory card (PS2)?`.
-- **Startup no-card Yes/No prompt:** the complete exact UN5 prompt should appear instead of stopping after `No memory card (PS2) is inserted in`.
+- **Startup no-card Yes/No prompt:** the complete exact NUN5 prompt should appear instead of stopping after `No memory card (PS2) is inserted in`.
 - **Naruto Command Chart:** `変わらない関係` should show `Unchanging Relationship`.
 
 ### Carried from v29, runtime verification still required
@@ -360,9 +360,9 @@ This log persists unresolved visual/runtime findings across mapping versions. En
 ### Open
 
 - **Startup no-card choice capitalization:** later replace the visible `Yes` and `No` labels with uppercase `YES` and `NO`; intentionally not included yet.
-- **Options main-screen graphical labels:** the `Options` logo, difficulty/value, controls, screen, audio, restore, confirm, and back labels remain Japanese in supplied screenshots. They appear to use graphical/CCS resources outside the current text targets and remain untouched pending extracted NA2 and UN5 assets.
+- **Options main-screen graphical labels:** the `Options` logo, difficulty/value, controls, screen, audio, restore, confirm, and back labels remain Japanese in supplied screenshots. They appear to use graphical/CCS resources outside the current text targets and remain untouched pending extracted NA2 and NUN5 assets.
 - **Collection Movie screen chrome:** the `Collection` title, `Movie` category heading, and play/back prompts remain Japanese and appear to use graphical/CCS resources outside the current text targets.
-- **Collection movie-title fit:** exact UN5 titles are present, but several extend beyond the visible right edge. They remain unshortened until a requested shortening or verified UN5 width/scale behavior is applied.
+- **Collection movie-title fit:** exact NUN5 titles are present, but several extend beyond the visible right edge. They remain unshortened until a requested shortening or verified NUN5 width/scale behavior is applied.
 - **Command Chart chrome:** any remaining Japanese heading or back prompt that is graphical rather than string-backed remains outside current scope pending resource extraction.
 - **Dynamic save date/time numerals:** retained as unresolved mapping `M0833`; the digits are generated by executable code and still require a verified renderer/code mapping.
 
@@ -374,7 +374,7 @@ PCSX2 application chrome, toolbar text, pause indicators, graphical controller p
 2. Confirm `build_summary.json`, console output, scripts, and documentation contain only relative path references.
 3. Preserve external enabled state and verify `M0745=1`; `M0725` must remain enabled and apply as a `slot` mapping.
 4. Recheck all 54 supplied Collection screenshots and confirm every v32-covered model-animation, voice-title, and jutsu entry is English.
-5. Confirm Temari's final voice-title entry displays exact UN5 `Silent Confidence`.
+5. Confirm Temari's final voice-title entry displays exact NUN5 `Silent Confidence`.
 6. Verify the four new shortened entries visibly retain `[S]` and fit their fixed slots: `Long Time!`, `Now`, `Naru/Sasuke`, and `Task`.
 7. Verify `Kachofuketsu` appears in both the battle-select and Command Chart contexts using the shared target string.
 8. Verify `Temple of Nirvana Technique` appears in the battle-select entry.

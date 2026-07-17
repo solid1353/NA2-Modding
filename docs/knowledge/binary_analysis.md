@@ -22,7 +22,7 @@ though the boot ELF warrants a full-program analysis project.
   create baseline Ghidra programs now, then keep manual analysis tied to a
   concrete question.
 - `MODULES/CRI_ADXI.IRX`, `MODULES/SNDBASE.IRX`, and `MODULES/MODULES.BIN` are
-  IOP ELF/IRX executables. The current NA2, UN5, and UN6 copies are byte-identical,
+  IOP ELF/IRX executables. The current NA2, NUN5, and NUN6 copies are byte-identical,
   so create one reusable baseline Ghidra program for each and deepen the analysis
   only when an audio, streaming, or IOP behavior requires it.
 - `MODULES/IOPRP300.IMG` is a `RESET`/`ROMDIR` IOP image. Inspect its container
@@ -34,7 +34,7 @@ though the boot ELF warrants a full-program analysis project.
 
 Therefore the follow-up Ghidra task should preserve the existing NA2 boot-ELF
 project, create baseline programs for the three NA2 EE overlays and three shared
-IOP executables, and create corresponding executable baselines for UN5 and UN6.
+IOP executables, and create corresponding executable baselines for NUN5 and NUN6.
 The task lists the directly signature-confirmed ELF and `MWo3` files for each
 game; it does not include resource files merely because they use `.BIN` names.
 

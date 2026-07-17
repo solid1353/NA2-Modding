@@ -1,14 +1,10 @@
 # Heavy/generated workspace folders
-/source/
 /build/
 /pcsx2/
 /old/
 /trash/
-/utils/old/
 /logs/
 /work/
-/ghidra/
-/disassembly/
 /releases
 /screenshots
 __pycache__/

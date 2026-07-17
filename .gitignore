@@ -1,12 +1,13 @@
+# Windows noise
+Thumbs.db
+Desktop.ini
+
 # Heavy/generated workspace folders
 /build/
-/old/
 /logs/
 /work/
-/releases
 /pcsx2_files/screenshots/
 __pycache__/
 
-# Windows/editor noise
-Thumbs.db
-Desktop.ini
+# Temporary releases symlink
+/releases

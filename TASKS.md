@@ -23,6 +23,7 @@
 ### Project
 - Solve concurrent memcard access for pcsx2.
 - Develop a release process.
+- Add explicit profile selection to the `na2` build-only and build-and-launch workflows.
 
 ### Logic
 - Improve substitution reliability.

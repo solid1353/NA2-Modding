@@ -45,7 +45,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Keep active PNACH files clean: confirmed named sections only, plus temporary hypothesis patches at the very top when actively testing.
 - Temporary PNACH hypothesis patches go at the top of the file as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 - Move old candidates, failed experiments, and speculative addresses to `docs/HYPOTHESES.md`.
-- Treat `docs/TASKS.md` as user-owned and read-only. Agents may read it for context but must never create, edit, append, rewrite, restore, stage, or commit it. Report agent plans and queued work in conversation instead.
+- Agents may read and manage `TASKS.md` when asked. They may execute contained tasks and move them between `In Progress` and `Backlog`; after a task has been completed and the user has approved the result, they may delete that task from the file. Before executing a task whose scope, expected result, or constraints are not perfectly clear, always request clarification and do not move or execute it speculatively. Route each task to the most appropriate existing Codex task/chat, or create a new one when needed.
 - For string patches, always check encoded byte length before writing. `[S]`-prefixed `shorten` mappings are authorized manual fit exceptions when they retain an exact official UN5 source reference.
 - Prefer Shift-JIS / CP932-compatible text unless proven otherwise.
 - DATA.CVM password is `cc2fuku`.
@@ -102,5 +102,4 @@ Before rebuilding or launching a test ISO, unconditionally issue the close comma
 ## Report format
 
 Report files read, files created/modified, whether originals were untouched, scripts/commands used, hashes/sizes, and uncertainties.
-
 

@@ -3,7 +3,6 @@
 ## In Progress
 
 ### Project
-- Permit agents to read TASKS.md, execute or move contained tasks between "In Progress"/"Backlog" when asked and delete them after execution when the result is approved. If a task to be executed is not perfectly clear, agent should always request clarification. Agent should also choose the best chat for the task or create a new one if needed.
 - Update directories in docs (disassembly, utils, ghidra, source, see the latest commit).
 - Move pcsx2 up one level, make it self-contained, symlink cheats and update everything.
 - Actualize only when pnach is not empty, add logging of enabled cheats to launch command.

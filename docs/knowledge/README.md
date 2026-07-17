@@ -32,6 +32,8 @@ Operational logs remain disposable after their durable findings are promoted. Gi
 
 ## Current records
 
+- `binary_analysis.md` and `binary_analysis_inventory.tsv`: minimum analysis
+  levels for known NA2 artifacts and the reusable escalation workflow.
 - `menu_input.md`: save/load input-handler runtime findings and their canonical evidence.
 - `substitution.md`: substitution reliability control flow, failed tests, and next investigation boundary.
 - `media/`: exact outer-ISO, `DATA.CVM`, and AFS layout inventories.

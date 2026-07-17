@@ -4,8 +4,11 @@
 
 ### Project
 - Properly unpack NA2, UN3, UN5, UN6.
-- Research which NA2 binaries require full disassembly, targeted disassembly, or data-only inspection, and document the minimum reusable analysis workflow.
-- [Subject to change] re-disassemble NA2, disassemble UN6.
+- Disassemble executable binaries in Ghidra:
+  - NA2: ELF, ADV.BIN, BTL.BIN, ETC.BIN.
+  - UN5: ELF, ADV.BIN, BTL.BIN, ETC.BIN, TEXTENG.BIN, TEXTFRN.BIN, TEXTGER.BIN, TEXTITA.BIN, TEXTSPA.BIN.
+  - UN6: ELF, ADV.BIN, BTL.BIN, ETC.BIN, MOD.BIN, TEXTBRA.BIN.
+  - Shared identical IOP modules (analyze once): CRI_ADXI.IRX, MODULES.BIN, SNDBASE.IRX.
 - Re-check everything and make source directory read-only.
 
 ### UI Translation

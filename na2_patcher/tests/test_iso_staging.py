@@ -11,7 +11,7 @@ SCRIPTS = REPOSITORY / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
-from apply_latest_na2 import building_iso_path, payload_size_changes, staged_output_iso
+from build_na2_profile import building_iso_path, payload_size_changes, staged_output_iso
 
 
 class IsoStagingTests(unittest.TestCase):
@@ -34,7 +34,7 @@ class IsoStagingTests(unittest.TestCase):
             self.assertEqual(output.read_bytes(), b"known good")
             self.assertFalse(building_iso_path(output).exists())
 
-    def test_success_atomically_promotes_temporary_iso(self) -> None:
+    def test_success_leaves_verified_candidate_for_promotion(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "source.iso"
@@ -46,21 +46,6 @@ class IsoStagingTests(unittest.TestCase):
             with staged_output_iso(source, output) as temporary:
                 temporary.write_bytes(b"verified build")
                 self.assertEqual(output.read_bytes(), b"known good")
-
-            self.assertEqual(output.read_bytes(), b"verified build")
-            self.assertFalse(building_iso_path(output).exists())
-
-    def test_stage_only_preserves_current_and_leaves_verified_candidate(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            source = root / "source.iso"
-            output = root / "build" / "Current.iso"
-            source.write_bytes(b"new source")
-            output.parent.mkdir()
-            output.write_bytes(b"known good")
-
-            with staged_output_iso(source, output, promote=False) as temporary:
-                temporary.write_bytes(b"verified build")
 
             self.assertEqual(output.read_bytes(), b"known good")
             self.assertEqual(building_iso_path(output).read_bytes(), b"verified build")

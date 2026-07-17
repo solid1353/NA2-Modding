@@ -38,24 +38,16 @@ Migrated PNACH structure uses the existing format directly: one patch set per
 section, one patch row per cheat, and one or more edit rows per subcheat. The
 patch's `default_enabled` value preserves whether that cheat was enabled.
 
-Build it with:
+Build the configured current profile with:
 
 ```powershell
-. scripts/project_paths.ps1
-$paths = Get-Na2ProjectPaths
-$profile = [IO.Path]::GetRelativePath($paths.repository, (Join-Path $paths.patcher 'profiles\current'))
-$profileLog = [IO.Path]::GetRelativePath($paths.repository, (Join-Path $paths.logs 'na2_patcher\current_<unique_run_id>'))
-& scripts/apply_latest_na2.ps1 -BuildOnly `
-  -InputIso (Join-Path $paths.source 'NA2.iso') `
-  -OutputIso (Join-Path $paths.build 'Current.iso') `
-  -Profile $profile `
-  -ProfileLogDirectory $profileLog
+& scripts/build_na2.ps1
 ```
 
-The compositor writes the candidate ISO as `build/Current.iso.building`, verifies it completely, fsyncs it, and writes the build logs before promotion. The PowerShell orchestration wrapper then closes portable PCSX2, atomically replaces `build/Previous.iso` with the outgoing `build/Current.iso`, and atomically promotes the verified candidate to `build/Current.iso`. A failed promotion restores the outgoing ISO to `Current.iso` when safe, and any caught failure removes `.building`.
+`scripts/build_na2_profile.py` writes the candidate ISO as `build/Current.iso.building`, verifies it completely, fsyncs it, and writes the profile log before returning. `scripts/build_na2.ps1` compares the candidate with `Current.iso`; an identical candidate is discarded without touching `Current.iso` or `Previous.iso`, while a changed candidate atomically replaces `Previous.iso` with the outgoing `Current.iso` and becomes the new `Current.iso`. A failed promotion restores the outgoing ISO when safe, and any caught failure removes `.building`.
 
-File-size changes are rejected by default. Legacy relocation behavior is available only through the explicit `-AllowSizeChanges` / `--allow-size-changes` option.
+File-size changes are rejected by default. Relocation is available only through the internal explicit `-AllowSizeChanges` / `--allow-size-changes` option for an approved profile build.
 
-The ordinary `na2` shortcut supplies the profile values automatically. Its first stage builds without PNACH actualization; its second stage actualizes once for the completed ISO and launches PCSX2. Standalone translation TSV export remains available through `na2 tr` for review and external compatibility; it is not an intermediate of profile builds.
+The ordinary `na2` command dispatches the profile build, then delegates PNACH actualization and PCSX2 launch to `scripts/launch_na2.ps1`. `na2 -c` launches `Current.iso` without rebuilding, and `na2 -p` launches `Previous.iso` without rebuilding. Standalone translation TSV export remains available through `na2 tr` for review and external compatibility; it is not an intermediate of profile builds.
 
 The profile references `na2_patcher/modules/translation/mappings.tsv` directly and pins its exact hash. Updating that table therefore requires an explicit profile-pin update.

@@ -3,50 +3,26 @@ param(
     [Parameter(Position = 0)]
     [string]$Mode,
 
-    [Alias('i')]
-    [string]$InputIso,
-    [Alias('o')]
-    [string]$OutputIso,
-    [Alias('d')]
-    [string]$PackageDirectory,
-    [string]$Profile,
-    [string]$ProfileLogDirectory,
-    [string]$TranslationTsv,
-    [Alias('e')]
-    [string]$Pcsx2Exe,
+    [Alias('c')]
+    [switch]$Current,
     [Alias('p')]
-    [string[]]$Packages,
-    [Alias('b')]
-    [switch]$BuildOnly,
-    [Alias('r')]
-    [switch]$RunOnly,
+    [switch]$Previous,
     [switch]$SkipActualize,
     [switch]$StartMinimized,
-    [switch]$AllowSizeChanges,
     [Alias('h')]
     [switch]$Help,
 
     [string]$Na2Iso,
-    [string]$OutputDirectory,
-    [string]$BtlApplyTsv,
-    [string]$EtcApplyTsv,
     [switch]$NoStrictHash,
 
     [string]$IsoPath,
     [string]$CanonicalPnach,
-    [string]$Serial,
-
-    [Parameter(ValueFromRemainingArguments = $true)]
-    [object[]]$RemainingArguments
+    [string]$Serial
 )
 
+$ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'scripts\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
-$na2Root = $projectPaths.repository
-$currentProfile = [IO.Path]::GetRelativePath(
-    $na2Root,
-    (Join-Path $projectPaths.patcher 'profiles\current')
-)
 $logDirectory = Join-Path $projectPaths.logs 'na2'
 $latestLogPath = Join-Path $logDirectory 'latest.log'
 $rollingLogPath = Join-Path $logDirectory 'rolling.log'
@@ -61,12 +37,8 @@ function Format-Na2LogTimestamp {
 
 function Limit-Na2RollingLog {
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$Path,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateRange(1, [int]::MaxValue)]
-        [int]$MaxSections
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][ValidateRange(1, [int]::MaxValue)][int]$MaxSections
     )
 
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
@@ -75,10 +47,7 @@ function Limit-Na2RollingLog {
 
     $fullPath = [IO.Path]::GetFullPath($Path)
     $content = [IO.File]::ReadAllText($fullPath)
-    $sectionStarts = [regex]::Matches(
-        $content,
-        '(?m)^={80}\r?\nNA2 run started:'
-    )
+    $sectionStarts = [regex]::Matches($content, '(?m)^={80}\r?\nNA2 run started:')
     if ($sectionStarts.Count -le $MaxSections) {
         return
     }
@@ -102,6 +71,11 @@ function Limit-Na2RollingLog {
     }
 }
 
+function Write-Na2Stage {
+    param([string]$Message)
+    Write-Host "[na2] $Message" -ForegroundColor Cyan
+}
+
 try {
     New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
     Start-Transcript -LiteralPath $latestLogPath -UseMinimalHeader -Force | Out-Null
@@ -114,203 +88,95 @@ catch {
 }
 
 try {
-$scriptsRoot = $projectPaths.scripts
-$translationModuleRoot = Join-Path $projectPaths.patcher 'modules\translation'
-$command = if ($Mode) { $Mode.ToLowerInvariant() } else { '' }
-$hasRemainingArguments = $null -ne $RemainingArguments -and $RemainingArguments.Count -gt 0
+    $command = if ($Mode) { $Mode.ToLowerInvariant() } else { '' }
+    $runSelected = $Current -or $Previous
 
-function Write-Na2Stage {
-    param([string]$Message)
-    Write-Host "[na2] $Message" -ForegroundColor Cyan
-}
-
-function Get-LatestTranslationTsv {
-    $runsRoot = Join-Path $projectPaths.logs 'na2_patcher\translation_exports\runs'
-    if (-not (Test-Path -LiteralPath $runsRoot -PathType Container)) {
-        return $null
+    if ($Current -and $Previous) {
+        throw '-Current / -c and -Previous / -p cannot be used together.'
+    }
+    if ($command -and $runSelected) {
+        throw '-Current / -c and -Previous / -p cannot be combined with a command mode.'
+    }
+    if (($Na2Iso -or $NoStrictHash) -and $command -ne 'tr') {
+        throw '-Na2Iso and -NoStrictHash apply only to na2 tr.'
+    }
+    if (($IsoPath -or $CanonicalPnach -or $Serial) -and $command -ne 'act') {
+        throw '-IsoPath, -CanonicalPnach, and -Serial apply only to na2 act.'
+    }
+    if ($command -and ($SkipActualize -or $StartMinimized)) {
+        throw '-SkipActualize and -StartMinimized apply only to na2, na2 -c, or na2 -p.'
     }
 
-    $summary = Get-ChildItem -LiteralPath $runsRoot -Recurse -File -Filter 'build_summary.json' |
-        Sort-Object LastWriteTime -Descending | Select-Object -First 1
-    if (-not $summary) {
-        return $null
+    if ($Help) {
+        Write-Na2Stage 'Show command help'
+        @(
+            'NA2 commands:'
+            '  na2       Build the pinned current profile, conditionally rotate, then run Current.iso'
+            '  na2 -c    Run build/Current.iso without rebuilding'
+            '  na2 -p    Run build/Previous.iso without rebuilding'
+            '  na2 tr    Export a standalone translation TSV for review/compatibility'
+            '  na2 act   Actualize the PNACH symlink for the selected ISO CRC'
+            ''
+        ) | Write-Output
+        return
     }
 
-    $run = Get-Content -LiteralPath $summary.FullName -Raw | ConvertFrom-Json
-    $table = [string]$run.translation_tsv
-    if ([string]::IsNullOrWhiteSpace($table)) {
-        throw "Translation export summary does not reference a translation TSV: $($summary.FullName)"
-    }
-
-    $table = Join-Path $summary.DirectoryName $table
-    if (-not (Test-Path -LiteralPath $table -PathType Leaf)) {
-        throw "Translation export summary does not reference an existing translation TSV: $($summary.FullName)"
-    }
-
-    return (Resolve-Path -LiteralPath $table).Path
-}
-
-function Invoke-TranslationExport {
-    if ($BtlApplyTsv -or $EtcApplyTsv) {
-        throw 'BtlApplyTsv and EtcApplyTsv are obsolete. The translation module now produces one unified TSV.'
-    }
-    if ($OutputDirectory) {
-        throw 'OutputDirectory is obsolete. Translation exports are stored under logs\na2_patcher\translation_exports\runs.'
-    }
-
-    $exportArgs = @{}
-    @{
-        Na2Iso = $Na2Iso
-    }.GetEnumerator() | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Value) } |
-        ForEach-Object { $exportArgs[$_.Key] = $_.Value }
-    if ($NoStrictHash) { $exportArgs.NoStrictHash = $true }
-
-    $export = Join-Path $translationModuleRoot 'export_translation.ps1'
-    if ($hasRemainingArguments) {
-        & $export @exportArgs @RemainingArguments
-    } else {
-        & $export @exportArgs
-    }
-}
-
-$fullWorkflow = -not $command -and
-    -not $InputIso -and -not $OutputIso -and -not $PackageDirectory -and
-    -not $Profile -and -not $ProfileLogDirectory -and
-    -not $Pcsx2Exe -and -not $Packages -and -not $BuildOnly -and
-    -not $RunOnly -and -not $SkipActualize -and -not $AllowSizeChanges -and -not $Help -and -not $Na2Iso -and
-    -not $OutputDirectory -and -not $TranslationTsv -and -not $BtlApplyTsv -and -not $EtcApplyTsv -and
-    -not $NoStrictHash -and -not $IsoPath -and -not $CanonicalPnach -and
-    -not $Serial -and -not $hasRemainingArguments
-
-if ($Help) {
-    Write-Na2Stage 'Show command help'
-    @(
-        'NA2 shortcuts:'
-        '  na2       Build the pinned modular profile, actualize PNACH, then run'
-        '  na2 tr    Export a standalone translation TSV for review/compatibility'
-        '  na2 act   Actualize the PNACH symlink for the build ISO CRC'
-        ''
-    ) | Write-Output
-}
-
-if ($command -eq 'tr') {
-    Write-Na2Stage 'Generate translation TSV'
-    Invoke-TranslationExport
-    return
-}
-
-if ($command -eq 'act') {
-    Write-Na2Stage 'Actualize PNACH symlink for build ISO CRC'
-    $actualizeArgs = @{}
-    @{
-        IsoPath        = $IsoPath
-        CanonicalPnach = $CanonicalPnach
-        Serial         = $Serial
-    }.GetEnumerator() | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Value) } |
-        ForEach-Object { $actualizeArgs[$_.Key] = $_.Value }
-
-    $actualize = Join-Path $scriptsRoot 'actualize_cheats_for_build_iso.ps1'
-    if ($hasRemainingArguments) {
-        & $actualize @actualizeArgs @RemainingArguments
-    } else {
-        & $actualize @actualizeArgs
-    }
-    return
-}
-
-if ($command) {
-    throw "Unknown NA2 command: $Mode"
-}
-
-$applyArgs = @{
-    InputIso  = Join-Path $projectPaths.source 'NA2.iso'
-    OutputIso = Join-Path $projectPaths.build 'Current.iso'
-    Pcsx2Exe  = Join-Path $projectPaths.pcsx2 'pcsx2-qt.exe'
-}
-@{
-    InputIso         = $InputIso
-    OutputIso        = $OutputIso
-    PackageDirectory = $PackageDirectory
-    Profile          = $Profile
-    ProfileLogDirectory = $ProfileLogDirectory
-    TranslationTsv   = $TranslationTsv
-    Pcsx2Exe         = $Pcsx2Exe
-}.GetEnumerator() | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Value) } |
-    ForEach-Object { $applyArgs[$_.Key] = $_.Value }
-
-if ($Packages)  { $applyArgs.Packages = $Packages }
-if ($BuildOnly) { $applyArgs.BuildOnly = $true }
-if ($RunOnly)          { $applyArgs.RunOnly = $true }
-if ($SkipActualize)     { $applyArgs.SkipActualize = $true }
-if ($StartMinimized)    { $applyArgs.StartMinimized = $true }
-if ($AllowSizeChanges)  { $applyArgs.AllowSizeChanges = $true }
-if ($Help)             { $applyArgs.Help = $true }
-
-if ($fullWorkflow) {
-    $applyArgs.Profile = $currentProfile
-    $profileLog = Join-Path $projectPaths.logs ('na2_patcher\current_' + (Get-Date -Format 'yyyyMMdd_HHmmss_fff'))
-    $applyArgs.ProfileLogDirectory = [IO.Path]::GetRelativePath($na2Root, $profileLog)
-    $applyArgs.BuildOnly = $true
-    $applyArgs.SkipActualize = $true
-}
-elseif (-not $RunOnly -and -not $applyArgs.ContainsKey('Profile')) {
-    if (-not $Packages) {
-        $applyArgs.Profile = $currentProfile
-        $profileLog = Join-Path $projectPaths.logs ('na2_patcher\current_' + (Get-Date -Format 'yyyyMMdd_HHmmss_fff'))
-        $applyArgs.ProfileLogDirectory = [IO.Path]::GetRelativePath($na2Root, $profileLog)
-    }
-    else {
-        if (-not $applyArgs.ContainsKey('PackageDirectory')) {
-            throw 'Legacy -Packages mode requires an explicit -PackageDirectory; the top-level packages directory was retired.'
+    if ($command -eq 'tr') {
+        Write-Na2Stage 'Generate translation TSV'
+        $translationArgs = @{}
+        if (-not [string]::IsNullOrWhiteSpace($Na2Iso)) {
+            $translationArgs.Na2Iso = $Na2Iso
         }
-        $translationSelected = @($applyArgs.Packages | Where-Object { $_ -ieq 'Translation' }).Count -gt 0
-        if ($translationSelected -and -not $applyArgs.ContainsKey('TranslationTsv')) {
-            $latestTranslationTsv = Get-LatestTranslationTsv
-            if ($latestTranslationTsv) {
-                $applyArgs.TranslationTsv = $latestTranslationTsv
-            }
+        if ($NoStrictHash) {
+            $translationArgs.NoStrictHash = $true
         }
+        & (Join-Path $projectPaths.patcher 'modules\translation\export_translation.ps1') @translationArgs
+        return
     }
-}
 
-$apply = Join-Path $scriptsRoot 'apply_latest_na2.ps1'
-if ($fullWorkflow) {
-    Write-Na2Stage '1/2 Build pinned modular profile'
-}
-elseif ($Help) {
-    # Shortcut help was already labelled above; apply_latest_na2.ps1 prints details.
-}
-elseif ($RunOnly) {
-    Write-Na2Stage 'Run existing output ISO'
-}
-elseif ($applyArgs.ContainsKey('Profile')) {
-    Write-Na2Stage ("Build profile: " + $applyArgs.Profile)
-}
-elseif ($BuildOnly) {
-    Write-Na2Stage ("Build ISO with: " + ($applyArgs.Packages -join ', '))
-}
-elseif (-not $Help) {
-    Write-Na2Stage ("Build and run ISO with: " + ($applyArgs.Packages -join ', '))
-}
-
-if ($hasRemainingArguments) {
-    & $apply @applyArgs @RemainingArguments
-} else {
-    & $apply @applyArgs
-}
-
-if ($fullWorkflow) {
-    $runArgs = @{
-        OutputIso = $applyArgs.OutputIso
-        Pcsx2Exe  = $applyArgs.Pcsx2Exe
-        RunOnly   = $true
+    if ($command -eq 'act') {
+        Write-Na2Stage 'Actualize PNACH symlink for selected ISO CRC'
+        $actualizeArgs = @{}
+        @{
+            IsoPath = $IsoPath
+            CanonicalPnach = $CanonicalPnach
+            Serial = $Serial
+        }.GetEnumerator() | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Value) } |
+            ForEach-Object { $actualizeArgs[$_.Key] = $_.Value }
+        & (Join-Path $projectPaths.scripts 'actualize_cheats_for_build_iso.ps1') @actualizeArgs
+        return
     }
-    if ($StartMinimized) {
-        $runArgs.StartMinimized = $true
+
+    if ($command) {
+        throw "Unknown NA2 command: $Mode"
     }
-    Write-Na2Stage '2/2 Actualize PNACH and launch rebuilt ISO in PCSX2'
-    & $apply @runArgs
-}
+
+    $windowStyle = if ($StartMinimized) { 'Minimized' } else { 'Normal' }
+    $launchArgs = @{
+        Pcsx2Exe = Join-Path $projectPaths.pcsx2 'pcsx2-qt.exe'
+        WindowStyle = $windowStyle
+    }
+    if ($SkipActualize) {
+        $launchArgs.SkipActualize = $true
+    }
+
+    if ($runSelected) {
+        $isoName = if ($Previous) { 'Previous.iso' } else { 'Current.iso' }
+        $launchArgs.IsoPath = Join-Path $projectPaths.build $isoName
+        Write-Na2Stage "Run $isoName without rebuilding"
+        & (Join-Path $projectPaths.scripts 'launch_na2.ps1') @launchArgs
+        return
+    }
+
+    Write-Na2Stage '1/2 Build pinned current profile'
+    $buildResult = & (Join-Path $projectPaths.scripts 'build_na2.ps1')
+    if (-not $buildResult -or $buildResult.Status -notin @('unchanged', 'updated')) {
+        throw 'Profile build did not return a valid promotion result.'
+    }
+
+    Write-Na2Stage '2/2 Actualize PNACH and launch Current.iso'
+    $launchArgs.IsoPath = Join-Path $projectPaths.build 'Current.iso'
+    & (Join-Path $projectPaths.scripts 'launch_na2.ps1') @launchArgs
 }
 finally {
     if ($transcriptStarted) {

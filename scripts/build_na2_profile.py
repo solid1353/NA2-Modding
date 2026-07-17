@@ -3,9 +3,7 @@ from __future__ import annotations
 
 import argparse
 import csv
-import fnmatch
 import os
-import re
 import shutil
 import sys
 import zipfile
@@ -29,47 +27,13 @@ def normalize(path: str) -> str:
     return path.replace("\\", "/").strip("/").upper()
 
 
-def normalize_category(value: str) -> str:
-    category = "".join(char if char.isalnum() else "_" for char in value.strip().upper())
-    category = "_".join(part for part in category.split("_") if part)
-    if not category:
-        raise ValueError("Empty package category")
-    return category
-
-
-def filename_release_key(path: Path) -> tuple[int, str, int, str]:
-    name = path.name.upper()
-    timestamp_match = re.search(r"(?<!\d)(20\d{6})[_-](\d{6})(?!\d)", name)
-    version_match = re.search(r"(?:^|[_-])V(\d+)(?:[_-]|\.|$)", name)
-    timestamp = "" if timestamp_match is None else "".join(timestamp_match.groups())
-    version = -1 if version_match is None else int(version_match.group(1))
-    return (int(bool(timestamp)), timestamp, version, name)
-
-
-def latest_file(directory: Path, pattern: str) -> Path:
-    pattern_upper = pattern.upper()
-    matches = [
-        path
-        for path in directory.iterdir()
-        if path.is_file() and fnmatch.fnmatch(path.name.upper(), pattern_upper)
-    ]
-    if not matches:
-        raise FileNotFoundError(f"No file matches {directory / pattern}")
-    return max(matches, key=filename_release_key)
-
-
 def building_iso_path(output_iso: Path) -> Path:
     return output_iso.with_name(output_iso.name + ".building")
 
 
 @contextmanager
-def staged_output_iso(source_iso: Path, output_iso: Path, *, promote: bool = True):
-    """Build beside the final ISO and optionally promote it after full success.
-
-    ``promote=False`` is used by the PowerShell orchestration wrapper.  It
-    leaves the fully verified ``.building`` candidate in place so the wrapper
-    can close PCSX2, rotate Current to Previous, and promote the candidate.
-    """
+def staged_output_iso(source_iso: Path, output_iso: Path):
+    """Build beside the final ISO and leave the verified candidate for promotion."""
     output_iso.parent.mkdir(parents=True, exist_ok=True)
     building_iso = building_iso_path(output_iso)
     if source_iso == building_iso:
@@ -83,8 +47,6 @@ def staged_output_iso(source_iso: Path, output_iso: Path, *, promote: bool = Tru
     try:
         shutil.copyfile(source_iso, building_iso)
         yield building_iso
-        if promote:
-            os.replace(building_iso, output_iso)
     except BaseException:
         if building_iso.exists() or building_iso.is_symlink():
             building_iso.unlink()
@@ -575,177 +537,48 @@ def write_profile_log(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description=(
-            "Recreate the output ISO, compose the newest selected NA2 ZIP packages, "
-            "then apply the newest translation TSV last."
-        )
+        description="Build a verified staged NA2 ISO from one hash-pinned profile."
     )
     parser.add_argument("--source", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--workspace", type=Path, default=PROJECT_PATHS.repository)
-    parser.add_argument("--package-directory", type=Path)
-    parser.add_argument("--profile", type=Path)
-    parser.add_argument("--profile-log-directory", type=Path)
-    parser.add_argument("--translation-tsv", type=Path)
-    parser.add_argument("--package", action="append", default=[])
-    parser.add_argument("--raw-patch-package", type=Path)
-    parser.add_argument("--raw-root", action="append", default=[], metavar="ID=PATH")
-    parser.add_argument("--raw-patch", action="append", default=[])
-    parser.add_argument("--raw-defaults", action="store_true")
-    parser.add_argument("--raw-log-directory", type=Path)
-    parser.add_argument(
-        "--stage-only",
-        action="store_true",
-        help="leave the verified .building ISO for the orchestration wrapper to promote",
-    )
+    parser.add_argument("--profile", required=True, type=Path)
+    parser.add_argument("--profile-log-directory", required=True, type=Path)
     parser.add_argument(
         "--allow-size-changes",
         action="store_true",
-        help="Allow legacy payloads to relocate ISO files whose sizes change.",
+        help="Allow an explicitly approved profile to relocate size-changing ISO files.",
     )
     args = parser.parse_args()
 
     workspace = args.workspace.resolve()
     source_iso = args.source.resolve()
     output_iso = args.output.resolve()
-    package_directory = args.package_directory.resolve() if args.package_directory else None
-    explicit_translation = (
-        args.translation_tsv.resolve() if args.translation_tsv else None
-    )
     if not source_iso.is_file():
         raise FileNotFoundError(source_iso)
-    if explicit_translation is not None and not explicit_translation.is_file():
-        raise FileNotFoundError(explicit_translation)
     if source_iso == output_iso:
         raise ValueError("Source and output ISO paths must differ")
 
-    profile = None
-    profile_log_directory = None
-    if args.profile is not None:
-        legacy_options = bool(
-            args.package_directory
-            or args.translation_tsv
-            or args.package
-            or args.raw_patch_package
-            or args.raw_root
-            or args.raw_patch
-            or args.raw_defaults
-            or args.raw_log_directory
-        )
-        if legacy_options:
-            raise ValueError("--profile cannot be combined with legacy package/raw/translation options")
-        if args.profile_log_directory is None:
-            raise ValueError("--profile-log-directory is required with --profile")
-        profile_directory = (
-            args.profile if args.profile.is_absolute() else workspace / args.profile
-        )
-        profile = load_profile(profile_directory, workspace)
-        profile_log_directory = patch_binary.command_relative_path(
-            str(args.profile_log_directory), "--profile-log-directory", workspace
-        )
-        if profile_log_directory.exists():
-            raise FileExistsError(profile_log_directory)
-    else:
-        if args.profile_log_directory is not None:
-            raise ValueError("--profile-log-directory requires --profile")
-        if package_directory is None or not package_directory.is_dir():
-            raise FileNotFoundError(package_directory or "--package-directory")
-
-    raw_requested = args.raw_patch_package is not None
-    raw_options_present = bool(
-        args.raw_root or args.raw_patch or args.raw_defaults or args.raw_log_directory
+    profile_directory = args.profile if args.profile.is_absolute() else workspace / args.profile
+    profile = load_profile(profile_directory, workspace)
+    profile_log_directory = patch_binary.command_relative_path(
+        str(args.profile_log_directory), "--profile-log-directory", workspace
     )
-    if not raw_requested and raw_options_present:
-        raise ValueError("Raw patch options require --raw-patch-package")
-    raw_package_directory = None
-    raw_roots: dict[str, Path] = {}
-    raw_log_directory = None
-    raw_log_text = ""
-    if raw_requested:
-        raw_package_directory = patch_binary.command_relative_path(
-            str(args.raw_patch_package), "--raw-patch-package", workspace
-        )
-        if not raw_package_directory.is_dir():
-            raise FileNotFoundError(raw_package_directory)
-        raw_roots = patch_binary.parse_roots(args.raw_root, workspace)
-        if args.raw_log_directory is None:
-            raise ValueError("--raw-log-directory is required with raw patches")
-        raw_log_text = str(args.raw_log_directory)
-        raw_log_directory = patch_binary.command_relative_path(
-            raw_log_text, "--raw-log-directory", workspace
-        )
-        if raw_log_directory.exists():
-            raise FileExistsError(raw_log_directory)
-
-    packages: list[tuple[str, Path]] = []
-    translation_table = None
-    if profile is None:
-        assert package_directory is not None
-        requested = args.package or ["Font", "Translation"]
-        categories: list[str] = []
-        for value in requested:
-            category = normalize_category(value)
-            if category not in categories:
-                categories.append(category)
-
-        zip_categories = [category for category in categories if category != "TRANSLATION"]
-        translation_selected = "TRANSLATION" in categories
-        for category in zip_categories:
-            package = latest_file(package_directory, f"NA2_APPLY__{category}__*.zip")
-            packages.append((category, package))
-
-        if translation_selected:
-            translation_table = explicit_translation or latest_file(
-                package_directory, "NA2_APPLY__TRANSLATION__*.tsv"
-            )
-        elif explicit_translation is not None:
-            raise ValueError("--translation-tsv requires the Translation package")
+    if profile_log_directory.exists():
+        raise FileExistsError(profile_log_directory)
 
     source = Iso9660(source_iso)
     payloads: dict[str, bytearray] = {}
     owners: dict[str, str] = {}
-    package_paths: dict[str, list[str]] = {}
-    raw_result = None
-    translated_rows = 0
-    translated_paths: list[str] = []
-    profile_results: list[dict[str, object]] = []
-    if profile is not None:
-        profile_results = apply_profile_modules(
-            profile,
-            source=source,
-            payloads=payloads,
-            owners=owners,
-        )
-    else:
-        for category, package in packages:
-            package_paths[category] = load_zip_payloads(
-                package,
-                source=source,
-                payloads=payloads,
-                owners=owners,
-            )
-
-        if raw_package_directory is not None:
-            raw_result = apply_raw_patch_set(
-                raw_package_directory,
-                roots=raw_roots,
-                requested_patches=args.raw_patch,
-                defaults=args.raw_defaults,
-                source=source,
-                payloads=payloads,
-                owners=owners,
-            )
-
-        if translation_table is not None:
-            translated_rows, translated_paths = apply_translation_tsv(
-                translation_table,
-                source=source,
-                payloads=payloads,
-                owners=owners,
-            )
+    profile_results = apply_profile_modules(
+        profile,
+        source=source,
+        payloads=payloads,
+        owners=owners,
+    )
 
     if not payloads:
-        raise RuntimeError("No package files or translation patches were selected")
+        raise RuntimeError("The profile selected no file changes")
 
     size_changes = payload_size_changes(source, payloads)
     if size_changes and not args.allow_size_changes:
@@ -758,7 +591,7 @@ def main() -> int:
             f"only for an explicitly approved relocation build: {details}"
         )
 
-    with staged_output_iso(source_iso, output_iso, promote=not args.stage_only) as working_iso:
+    with staged_output_iso(source_iso, output_iso) as working_iso:
         current = Iso9660(working_iso)
         with working_iso.open("r+b") as output:
             for path, data in payloads.items():
@@ -810,65 +643,33 @@ def main() -> int:
                     f"Final ISO file verification failed: {source_record.path}"
                 )
 
-        if profile is not None:
-            assert profile_log_directory is not None
-            write_profile_log(
-                profile,
-                profile_results,
-                profile_log_directory,
-                workspace=workspace,
-                output_iso_text=output_iso.relative_to(workspace).as_posix(),
-            )
-        elif raw_result is not None:
-            assert raw_log_directory is not None
-            write_raw_composition_log(
-                raw_result,
-                raw_log_directory,
-                output_iso_text=str(args.output),
-                log_directory_text=raw_log_text,
-            )
+        try:
+            output_iso_text = output_iso.relative_to(workspace).as_posix()
+        except ValueError:
+            output_iso_text = output_iso.name
+        write_profile_log(
+            profile,
+            profile_results,
+            profile_log_directory,
+            workspace=workspace,
+            output_iso_text=output_iso_text,
+        )
 
     green = "\033[32m"
     reset = "\033[0m"
-    if profile is not None:
-        print(f"Applied profile: {profile.manifest['profile_id']}")
-        for item in profile_results:
-            module = item["module"]
-            assert isinstance(module, ProfileModule)
-            detail = ""
-            if "raw_result" in item:
-                detail = f", {len(item['raw_result']['edits'])} edits"
-            elif "translation_rows" in item:
-                detail = f", {item['translation_rows']} rows"
-            print(f"  {module.order:03d} {module.module_id} ({module.module}{detail})")
-            for path in sorted(str(value) for value in item.get("paths", [])):
-                print(f"    {green}{path}{reset}")
-    else:
-        for category, package in packages:
-            print(f"Applied {category} package: {package.name}")
-            for path in sorted(package_paths[category]):
-                print(f"  {green}{path}{reset}")
-        if raw_result is not None:
-            raw_package = raw_result["package"]
-            assert isinstance(raw_package, patch_binary.Package)
-            print(f"Applied raw patch set: {raw_package.manifest['package_id']}")
-            print(f"  patches: {len(raw_result['selected'])}")
-            print(f"  edits: {len(raw_result['edits'])}")
-            for path in sorted(raw_result["patched_paths"]):
-                print(f"  {green}{path}{reset}")
-        if translation_table is not None:
-            print(f"Applied translation table: {translation_table.name}")
-            print(f"  rows: {translated_rows}")
-            for path in sorted(translated_paths):
-                print(f"  {green}{path}{reset}")
-    try:
-        display_iso = output_iso.relative_to(workspace).as_posix()
-    except ValueError:
-        display_iso = output_iso.name
-    if args.stage_only:
-        print(f"Verified staged ISO: {building_iso_path(output_iso).name}")
-    else:
-        print(f"ISO: {display_iso}")
+    print(f"Applied profile: {profile.manifest['profile_id']}")
+    for item in profile_results:
+        module = item["module"]
+        assert isinstance(module, ProfileModule)
+        detail = ""
+        if "raw_result" in item:
+            detail = f", {len(item['raw_result']['edits'])} edits"
+        elif "translation_rows" in item:
+            detail = f", {item['translation_rows']} rows"
+        print(f"  {module.order:03d} {module.module_id} ({module.module}{detail})")
+        for path in sorted(str(value) for value in item.get("paths", [])):
+            print(f"    {green}{path}{reset}")
+    print(f"Verified staged ISO: {building_iso_path(output_iso).name}")
     return 0
 
 

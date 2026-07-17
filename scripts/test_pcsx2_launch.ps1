@@ -19,7 +19,7 @@ if ([string]::IsNullOrWhiteSpace($Pcsx2Exe)) {
 
 $resolvedPcsx2Exe = [IO.Path]::GetFullPath($Pcsx2Exe)
 $pcsx2Ini = Join-Path $projectPaths.pcsx2 'inis\PCSX2.ini'
-$applyScript = Join-Path $PSScriptRoot 'apply_latest_na2.ps1'
+$launchScript = Join-Path $PSScriptRoot 'launch_na2.ps1'
 $processName = [IO.Path]::GetFileNameWithoutExtension($resolvedPcsx2Exe)
 $originalIniBytes = $null
 
@@ -91,7 +91,7 @@ try {
     $foregroundBeforeLaunch = [Na2TestWindow]::GetForegroundWindow()
     Write-Host '[na2] Agent test launch: hidden, muted, and non-activating' -ForegroundColor Cyan
 
-    & $applyScript -RunOnly -OutputIso $IsoPath -Pcsx2Exe $resolvedPcsx2Exe -StartHidden
+    & $launchScript -IsoPath $IsoPath -Pcsx2Exe $resolvedPcsx2Exe -WindowStyle Hidden
 
     $deadline = [DateTime]::UtcNow.AddSeconds(10)
     do {

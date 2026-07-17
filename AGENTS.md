@@ -22,7 +22,8 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Do not create generated files, temporary files, logs, probes, manifests, or metadata under `@source/`; preserve the extracted game/archive structure exactly.
 - Keep Windows read-only attributes applied to files/folders under `@source/`.
 - Before changing any original-derived file, copy it outside `@source/` and modify only the copy.
-- Keep only the active working ISO under `build/`, normally `build/Current.iso`; do not store PNACH files, loose replacements, logs, or other working files there. During a build, `build/Current.iso.building` is the only standard temporary ISO and must be removed on failure or atomically promoted on success.
+- Keep only the active working ISOs under `build/`: `build/Current.iso` and, when rotation history exists, at most `build/Previous.iso`; do not store PNACH files, loose replacements, logs, or other working files there. During a build, `build/Current.iso.building` is the only standard temporary ISO. Remove it on failure; after successful verification, discard it without rotation when its content matches `Current.iso`, or atomically promote it when the content differs.
+- Every build log must report `ISO result: unchanged` when the verified candidate matches `Current.iso`, or `ISO result: updated` when a different candidate is promoted, together with whether rotation occurred.
 - Temporary, parity-check, and hypothesis-test ISOs may remain under `build/` while they have a concrete future testing or comparison use. Permanently delete them as soon as they become useless; never leave obsolete ISOs accumulating under `build/`.
 - Do not recreate a top-level `packages/` staging/history directory. Normal builds consume hash-pinned profile modules. Keep temporary imported archives under a task-specific `work/temp/` folder, normalize useful data into a module, then retire the archive to `trash/`.
 - Do not recreate a top-level `milestones/` package archive directory. Keep immutable reproducible module data under `na2_patcher/milestones/` or as a hash-pinned declarative patch set beside its module; retain retired package archives only in Git history.
@@ -110,6 +111,8 @@ Release PNACH files are coupled to the boot ELF CRC of their paired ISO. Always 
 
 
 ## Actualize workflow
+
+The root command interface is: bare `na2` builds the current profile, conditionally rotates a changed ISO, and launches `Current.iso`; `na2 -c` launches `Current.iso` without rebuilding; `na2 -p` launches `Previous.iso` without rebuilding. Root `-r` / `-RunOnly` is unsupported. `_na2.ps1` owns only public dispatch and transcript management; `scripts/build_na2.ps1` owns profile build and ISO promotion/rotation; `scripts/build_na2_profile.py` owns profile-only ISO composition and verification; `scripts/launch_na2.ps1` owns PNACH actualization, enabled-cheat logging, and PCSX2 launch. Do not recombine these responsibilities or restore direct newest-package selection.
 
 When asked to actualize, keep the canonical file named `@pcsx2_files/SLPS-25837_C0659AD1.pnach`. Managed aliases are only matching-serial symlinks that resolve to this canonical file; preserve all real PNACH files, other games, and unrelated symlinks. If the canonical file is zero bytes, delete its managed aliases directly and skip ISO/CRC inspection. Otherwise, use the ISO in `@build/` by default, calculate the PCSX2-style ELF CRC from its boot ELF, delete obsolete managed aliases, and create the current CRC-named relative symlink targeting the canonical project PNACH if missing. Refuse an occupied target filename instead of overwriting an unmanaged file or symlink.
 

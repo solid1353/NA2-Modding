@@ -4,22 +4,20 @@
 
 ### Project
 - Properly unpack NA2, UN3, UN5, UN6.
-- Do I need to disassemble BTL/ETC/other or is ELF enough?
-- Re-disassemble NA2.
-- Disassemble UN6.
+- Research which NA2 binaries require full disassembly, targeted disassembly, or data-only inspection, and document the minimum reusable analysis workflow.
+- [Subject to change] re-disassemble NA2, disassemble UN6.
 - Re-check everything and make source directory read-only.
 - Deal with the "old" directory.
 
 ### UI Translation
 - Add texture patcher to import assets from UN5.
-- Add unarchiving ISOs to a needed extent in sources if the necessary folders are missing, leave an instruction on support for agents.
 - Investigate upscaling variants.
 
 ### Menu restructuring
 - Analyze differences against UN6 and remove adventure mode.
 
 ### String translation
-- Deal with unresolved (mappings.tsv and ChatGPT's history) and other remainders.
+- Deal with unresolved (mappings.tsv and ChatGPT's history) and other remainders (like chakra pickup message in battle).
 
 ## Backlog
 

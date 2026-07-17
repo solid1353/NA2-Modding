@@ -2,10 +2,8 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import os
 import shutil
-import zipfile
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -58,39 +56,6 @@ def payload_size_changes(
         for path, data in payloads.items()
         if len(data) != source.by_path[path].size
     ]
-
-
-def load_zip_payloads(
-    package: Path,
-    *,
-    source: Iso9660,
-    payloads: dict[str, bytearray],
-    owners: dict[str, str],
-) -> list[str]:
-    applied: list[str] = []
-    seen: set[str] = set()
-    with zipfile.ZipFile(package) as archive:
-        for info in archive.infolist():
-            if info.is_dir():
-                continue
-            path = normalize(info.filename)
-            if path in seen:
-                raise RuntimeError(f"Duplicate ZIP path in {package.name}: {path}")
-            seen.add(path)
-            if path in owners:
-                raise RuntimeError(
-                    f"Selected ZIP packages replace the same ISO path: {path} "
-                    f"({owners[path]} and {package.name})"
-                )
-            record = source.by_path.get(path)
-            if record is None or record.is_dir:
-                raise RuntimeError(f"ZIP path is not in the clean source ISO: {path}")
-            payloads[path] = bytearray(archive.read(info))
-            owners[path] = package.name
-            applied.append(path)
-    if not applied:
-        raise RuntimeError(f"Package contains no files: {package}")
-    return applied
 
 
 def parse_offset(value: str, *, row_number: int) -> int:
@@ -181,35 +146,6 @@ def apply_translation_rows(
     if row_count == 0:
         raise RuntimeError(f"Translation module contains no patch rows: {owner_name}")
     return row_count, patched_paths
-
-
-def apply_translation_tsv(
-    table: Path,
-    *,
-    source: Iso9660,
-    payloads: dict[str, bytearray],
-    owners: dict[str, str],
-) -> tuple[int, list[str]]:
-    patch_fields = ["path", "offset", "expected_hex", "replacement_hex"]
-    descriptive_fields = patch_fields + ["source_text", "replacement_text"]
-    with table.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
-        fields = reader.fieldnames or []
-        if fields not in (patch_fields, descriptive_fields):
-            raise ValueError(
-                "Translation TSV columns must be either: "
-                + "\t".join(patch_fields)
-                + " or "
-                + "\t".join(descriptive_fields)
-            )
-        rows = [dict(row) for row in reader]
-    return apply_translation_rows(
-        rows,
-        owner_name=table.name,
-        source=source,
-        payloads=payloads,
-        owners=owners,
-    )
 
 
 def apply_raw_patch_set(
@@ -362,15 +298,6 @@ def apply_profile_modules(
     results: list[dict[str, object]] = []
     for module in profile.modules:
         if not module.enabled:
-            continue
-        if module.module == "zip_overlay":
-            paths = load_zip_payloads(
-                module.input_path,
-                source=source,
-                payloads=payloads,
-                owners=owners,
-            )
-            results.append({"module": module, "paths": paths})
             continue
         if module.module == "raw_binary":
             result = apply_raw_patch_set(

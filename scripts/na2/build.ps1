@@ -3,6 +3,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\lib\build_log.ps1')
 . (Join-Path $PSScriptRoot 'process.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
@@ -85,9 +86,11 @@ $profile = [IO.Path]::GetRelativePath(
     $projectPaths.repository,
     (Join-Path $projectPaths.patcher 'profiles\current')
 )
-$profileLog = Join-Path $projectPaths.logs (
-    'na2_patcher\current_' + (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
-)
+$logDirectory = Join-Path $projectPaths.logs 'na2'
+$buildLogRoot = Join-Path $logDirectory 'builds'
+New-Item -ItemType Directory -Path $buildLogRoot -Force | Out-Null
+$buildId = (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
+$profileLog = Join-Path $buildLogRoot $buildId
 $profileLogDirectory = [IO.Path]::GetRelativePath($projectPaths.repository, $profileLog)
 $pcsx2Exe = Join-Path $projectPaths.pcsx2 'pcsx2-qt.exe'
 $candidateIso = "$resolvedOutputIso.building"
@@ -101,6 +104,7 @@ $arguments = @(
 )
 
 Stop-Na2Pcsx2 -Executable $pcsx2Exe
+$promotionCompleted = $false
 try {
     Push-Location $projectPaths.repository
     try {
@@ -114,14 +118,33 @@ try {
     if ($buildExitCode -ne 0) {
         throw "NA2 profile build failed (exit $buildExitCode)."
     }
+    if (-not (Test-Path -LiteralPath $profileLog -PathType Container)) {
+        throw 'Profile build completed without creating its structured build record.'
+    }
 
     Stop-Na2Pcsx2 -Executable $pcsx2Exe
     $promotion = Promote-VerifiedIso -CurrentIso $resolvedOutputIso
-    $promotion | Add-Member -NotePropertyName ProfileLogDirectory -NotePropertyValue $profileLogDirectory
+    $promotionCompleted = $true
+    $buildRecord = Complete-Na2BuildRecord `
+        -LogDirectory $logDirectory `
+        -BuildId $buildId `
+        -Result $promotion.Status `
+        -Rotated $promotion.Rotated `
+        -CurrentIso $promotion.CurrentIso `
+        -PreviousIso $promotion.PreviousIso `
+        -Profile $profile `
+        -ProjectPaths $projectPaths
+    $recordAction = if ($buildRecord.Reused) { 'reused' } else { 'retained' }
+    Write-Host "[na2] Build record: $recordAction $($buildRecord.BuildRecord)." -ForegroundColor Cyan
+    $promotion | Add-Member -NotePropertyName BuildId -NotePropertyValue $buildRecord.BuildId
+    $promotion | Add-Member -NotePropertyName ProfileLogDirectory -NotePropertyValue $buildRecord.BuildRecord
     $promotion
 }
 finally {
     if (Test-Path -LiteralPath $candidateIso) {
         Remove-Item -Force -LiteralPath $candidateIso
+    }
+    if (-not $promotionCompleted -and (Test-Path -LiteralPath $profileLog -PathType Container)) {
+        Remove-Item -LiteralPath $profileLog -Recurse -Force
     }
 }

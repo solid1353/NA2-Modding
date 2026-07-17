@@ -23,7 +23,6 @@
 
 ### Project
 - Solve concurrent memcard access for pcsx2.
-- Come up with a log cleanup policy.
 - Develop a release process.
 
 ### Logic

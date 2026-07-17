@@ -6,28 +6,14 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
-$projectPaths = Get-Na2ProjectPaths
+. (Join-Path $PSScriptRoot 'pcsx2_elf_crc.ps1')
 
 $resolved = Resolve-Path -LiteralPath $ElfPath
 $path = $resolved.ProviderPath
 
 $bytes = [System.IO.File]::ReadAllBytes($path)
-[uint32]$crc = 0
-
 $wordCount = [int]([math]::Floor($bytes.Length / 4))
-for ($i = 0; $i -lt $wordCount; $i++) {
-    $offset = $i * 4
-    [uint32]$word =
-        [uint32]$bytes[$offset] -bor
-        ([uint32]$bytes[$offset + 1] -shl 8) -bor
-        ([uint32]$bytes[$offset + 2] -shl 16) -bor
-        ([uint32]$bytes[$offset + 3] -shl 24)
-
-    $crc = $crc -bxor $word
-}
-
-$crcText = '{0:X8}' -f $crc
+$crcText = Get-Pcsx2ElfCrc -Bytes $bytes
 
 if ($Detailed) {
     [pscustomobject]@{

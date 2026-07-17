@@ -36,7 +36,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - If a target path under `releases/` already exists, stop immediately and inspect/report manually.
 - Every release PNACH must correspond to the PCSX2 CRC of the ELF inside the paired release ISO.
 - Before reporting a release as valid, check the paired ISO/ELF CRC against the PNACH filename and warn if they do not match or cannot be verified.
-- Keep logs, inventories, hashes, and patch records under task-specific subfolders of `logs/`; do not write files directly in the `logs/` root.
+- Keep logs, inventories, hashes, and patch records under task-specific subfolders of `logs/`; do not write files directly in the `logs/` root. Logs are disposable execution records, not the sole store of project knowledge. Before pruning a log or temporary handoff, promote reusable confirmed findings into tracked `docs/knowledge/` documentation or canonical module-local data. Follow `docs/LOGGING.md` for retention and cleanup.
 - Do not recreate a project `trash/` holding area. Git history is the recovery mechanism for tracked files. Delete confirmed disposable generated files directly; before deleting an irreplaceable untracked input, preserve it deliberately outside the repository.
 - Generated/intermediate files go under `@logs/` or `@work/temp/` with task-named subfolders when throwaway workspace is needed. `@scripts/` contains maintained code only. Completed working ISOs are the only outputs kept under `@build/`. Original-source extractions stay beside their source archive under `@source/` as `<archive filename>.files`.
 - Treat top-level `old/` as the user's personal folder. Do not inspect, search, execute from, modify, move, delete, or otherwise touch it unless explicitly instructed.
@@ -48,7 +48,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Runtime overlay PNACH testing is exceptional and requires a proven load-state/signature guard. Avoid fixed writes to dynamic heap objects unless their allocation, address, and lifetime are established.
 - Keep active PNACH files clean: confirmed named sections only, plus temporary hypothesis patches at the very top when actively testing.
 - Temporary PNACH hypothesis patches go at the top of the file as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
-- Move old candidates, failed experiments, and speculative addresses to `docs/HYPOTHESES.md`.
+- Put confirmed subroutine roles, caller/callee relationships, state-machine behavior, address mappings, runtime observations, and useful negative results under `docs/knowledge/` or beside the canonical module data they describe. Move unresolved candidates, failed speculative addresses, and unconfirmed interpretations to `docs/HYPOTHESES.md`; do not use it as the confirmed knowledge base.
 - Agents may read and manage `TASKS.md` under the task workflow below. Tasks may be added at any time by the user, or by an agent when the user orders it. Agents may move tasks between `In Progress` and `Backlog`, execute selected tasks after plan approval, and delete a completed task only after result approval.
 - For string patches, always check encoded byte length before writing. `[S]`-prefixed `shorten` mappings are authorized manual fit exceptions when they retain an exact official UN5 source reference.
 - Prefer Shift-JIS / CP932-compatible text unless proven otherwise.
@@ -84,13 +84,14 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 ## Workspace creation rules
 
 - `docs/` contains repository-wide context, plans, hypotheses, and release documentation. Keep component-specific READMEs beside their components.
-- Keep maintained scripts grouped by responsibility under `scripts/lib/`, `scripts/na2/`, `scripts/media/`, `scripts/project/`, `scripts/release/`, or `scripts/research/`. Do not restore the former flat script dump; update `scripts/README.md` when a responsibility changes.
+- Keep maintained scripts grouped by responsibility under `scripts/lib/`, `scripts/na2/`, `scripts/media/`, `scripts/project/`, or `scripts/research/`. `scripts/archive/` is reserved for unsupported historical reference implementations; inspect and explicitly select an archived script before using it, and never treat it as part of the normal workflow. Do not restore the former flat script dump; update `scripts/README.md` when a responsibility changes.
+- Prefer cohesive files organized by responsibility. Split a file when it contains independent concerns, becomes difficult to navigate or test, or causes unrelated changes to collide. Do not split files solely because they are large; a large file is acceptable when it represents one coherent implementation and splitting would reduce clarity.
 - Use `work/temp/` for throwaway/intermediate work only. Clean task subfolders there after failed or finished experiments when they are no longer useful.
 - Use `work/` outside `work/temp/` for persistent reverse-engineering and binary-mod work. Keep work separated by target/task, for example `work/<target>/base/`, `work/<target>/mod/`, and `work/<target>/analysis/`.
 - Do not mix source/reference files with modified files. Baseline copies, modified copies, analysis outputs, and release/build outputs must live in clearly separate folders.
 - Do not repeatedly disassemble the same binary from scratch when a preserved analysis workspace is available; reuse and update the relevant `work/<target>/analysis/` materials.
 - State explicitly what software/tools were used for a task. If the right tool is uncertain or missing, ask the user to provide or approve one.
-- Prefer short, reusable command/script chunks over long multi-stage one-off commands. Break repetitive work into scripts or small verifiable steps.
+- Prefer reusable, verifiable commands and scripts over long one-off command chains. Keep closely related implementation together when that is clearer than introducing additional files.
 
 ## Release / milestone rules
 

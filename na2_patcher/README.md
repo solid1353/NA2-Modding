@@ -9,7 +9,9 @@ Each profile directory contains:
   `project-paths.json`.
 - `modules.tsv`: ordered module instances with exact input hashes and selections.
 
-Schema v1 supports `zip_overlay`, `raw_binary`, and `translation`. `zip_overlay` remains a legacy compatibility type, but the current profile uses only declarative, size-preserving raw-binary and translation modules.
+Schema v1 supports declarative, size-preserving `raw_binary` and `translation`
+modules. Package and ZIP-overlay workflows are retired; profiles consume only
+repository-owned declarative inputs.
 
 Profiles never select the newest file implicitly. Enabled module inputs are content-hashed before composition. Disabled modules remain visible in the profile as WIP or review candidates but do not block the active build when their contents change.
 
@@ -22,7 +24,8 @@ For raw-binary modules, the profile hash covers only executable package inputs:
 - `edits.tsv`
 - every blob referenced by `blob_path`
 
-Adjacent documentation and authoring tools do not affect the profile pin. Translation and ZIP inputs are hashed as exact files.
+Adjacent documentation and authoring tools do not affect the profile pin.
+Translation inputs are hashed as exact files.
 
 The current profile composes:
 

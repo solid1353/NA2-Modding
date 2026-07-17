@@ -17,7 +17,7 @@ The project combines four related areas:
 - English translation through generated, validated patch tables.
 - GF4/GF4C font-resource and renderer reverse engineering.
 - Gameplay and default-setting changes through named raw-binary modules, with PNACH retained for stable resident-ELF/runtime behavior and carefully bounded temporary hypotheses. On-demand overlays such as `BTL.BIN` and `ETC.BIN` are tested through file patches and ISO rebuilds, not unguarded fixed-address cheats.
-- Scripted package composition, ISO verification, CRC actualization, and frozen
+- Scripted profile composition, ISO verification, CRC actualization, and frozen
   milestone releases.
 
 Work is organized as reproducible, versioned artifacts. The detailed lifecycle
@@ -32,6 +32,10 @@ context rather than repeated here.
   directory roles, and established workflows.
 - [Project paths](docs/PROJECT_PATHS.md) documents the single path manifest,
   logical root notation, and migration procedure.
+- [Logging and retention](docs/LOGGING.md) defines bounded execution logs and
+  promotion of reusable findings.
+- [Knowledge index](docs/knowledge/README.md) preserves confirmed findings and
+  evidence that must outlive disposable logs.
 - [Tasks](TASKS.md) contains concrete active plans and queued work.
 - [Hypotheses](docs/HYPOTHESES.md) preserves rejected experiments and unresolved
   reverse-engineering leads.

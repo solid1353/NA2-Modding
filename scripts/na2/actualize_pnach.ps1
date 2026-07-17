@@ -6,6 +6,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 . (Join-Path $PSScriptRoot 'pnach_state.ps1')
+. (Join-Path $PSScriptRoot 'pcsx2_elf_crc.ps1')
 $projectPaths = Get-Na2ProjectPaths
 $Serial = 'SLPS-25837'
 $CanonicalPnach = Join-Path $projectPaths.pcsx2_files 'SLPS-25837_C0659AD1.pnach'
@@ -133,23 +134,6 @@ function Find-IsoPath {
     return $current
 }
 
-function Get-Pcsx2ElfCrcFromBytes {
-    param([byte[]]$Bytes)
-
-    [uint32]$crc = 0
-    $wordCount = [int]([math]::Floor($Bytes.Length / 4))
-    for ($i = 0; $i -lt $wordCount; $i++) {
-        $offset = $i * 4
-        [uint32]$word =
-            [uint32]$Bytes[$offset] -bor
-            ([uint32]$Bytes[$offset + 1] -shl 8) -bor
-            ([uint32]$Bytes[$offset + 2] -shl 16) -bor
-            ([uint32]$Bytes[$offset + 3] -shl 24)
-        $crc = $crc -bxor $word
-    }
-    return ('{0:X8}' -f $crc)
-}
-
 $CanonicalPnach = (Resolve-Path -LiteralPath $CanonicalPnach).Path
 $pnachState = Get-Na2PnachState -Path $CanonicalPnach
 $cheatsDir = Join-Path $projectPaths.pcsx2 'cheats'
@@ -218,7 +202,7 @@ try {
     if ($null -eq $elfRecord) { throw "Boot ELF not found in ISO: $bootPath" }
 
     $elfBytes = Read-IsoExtent -IsoStream $iso -Extent $elfRecord.Extent -Size $elfRecord.Size
-    $crc = Get-Pcsx2ElfCrcFromBytes -Bytes $elfBytes
+    $crc = Get-Pcsx2ElfCrc -Bytes $elfBytes
 }
 finally {
     $iso.Dispose()

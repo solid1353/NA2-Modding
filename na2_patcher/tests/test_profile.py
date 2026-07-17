@@ -52,7 +52,7 @@ class ProfileTests(unittest.TestCase):
                     "one",
                     "10",
                     enabled,
-                    "zip_overlay",
+                    "translation",
                     "source/input.bin",
                     expected_hash,
                     "",
@@ -89,7 +89,7 @@ class ProfileTests(unittest.TestCase):
                     "module_id": "enabled",
                     "order": "20",
                     "enabled": "1",
-                    "module": "zip_overlay",
+                    "module": "translation",
                     "input": "source/input.bin",
                     "expected_sha256": hashlib.sha256(b"profile input")
                     .hexdigest()
@@ -107,6 +107,20 @@ class ProfileTests(unittest.TestCase):
             profile = load_profile(disabled, workspace)
             self.assertFalse(profile.modules[0].enabled)
             self.assertTrue(profile.modules[1].enabled)
+
+    def test_rejects_retired_zip_overlay_module(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            expected = hashlib.sha256(b"profile input").hexdigest().upper()
+            profile_path = self.create_profile(workspace, expected)
+            modules = profile_path / "modules.tsv"
+            text = modules.read_text(encoding="utf-8")
+            modules.write_text(
+                text.replace("\ttranslation\t", "\tzip_overlay\t"),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "unsupported module 'zip_overlay'"):
+                load_profile(profile_path, workspace)
 
     def test_directory_hash_is_path_and_content_sensitive(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

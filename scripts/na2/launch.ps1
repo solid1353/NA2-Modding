@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
-. (Join-Path $PSScriptRoot 'pnach_state.ps1')
+. (Join-Path $PSScriptRoot '..\lib\run_log.ps1')
 . (Join-Path $PSScriptRoot 'process.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
@@ -31,7 +31,9 @@ if (-not (Test-Path -LiteralPath $resolvedPcsx2Exe -PathType Leaf)) {
 
 $global:LASTEXITCODE = 0
 try {
-    & (Join-Path $PSScriptRoot 'actualize_pnach.ps1') -IsoPath $resolvedIso
+    $actualizeOutput = @(
+        & (Join-Path $PSScriptRoot 'actualize_pnach.ps1') -IsoPath $resolvedIso
+    )
 }
 catch {
     throw "PNACH actualization failed: $($_.Exception.Message)"
@@ -39,14 +41,22 @@ catch {
 if ($LASTEXITCODE -ne 0) {
     throw "PNACH actualization failed (exit $LASTEXITCODE)."
 }
+if ($actualizeOutput.Count -ne 1) {
+    throw "PNACH actualization returned $($actualizeOutput.Count) results; expected one."
+}
+$actualizeResult = $actualizeOutput[0]
+Write-Host (
+    Format-Na2ActualizeStatus `
+        -Result $actualizeResult `
+        -ProjectPaths $projectPaths
+) -ForegroundColor Cyan
 
-$canonicalPnach = Join-Path $projectPaths.pcsx2_files 'SLPS-25837_C0659AD1.pnach'
-$pnachState = Get-Na2PnachState -Path $canonicalPnach
-$enabledCheats = if ($pnachState.EnabledCheats.Count -eq 0) {
+$enabledCheatNames = @($actualizeResult.EnabledCheats)
+$enabledCheats = if ($enabledCheatNames.Count -eq 0) {
     'none'
 }
 else {
-    $pnachState.EnabledCheats -join ', '
+    $enabledCheatNames -join ', '
 }
 Write-Host "[na2] Enabled cheats: $enabledCheats" -ForegroundColor Cyan
 

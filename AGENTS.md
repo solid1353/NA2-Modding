@@ -5,7 +5,8 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 ## Hard rules
 
 - Use only repository-relative paths in canonical project files, scripts, configuration, logs, manifests, metadata, and generated artifacts; never persist machine-specific absolute paths there. Absolute paths are permitted only in dated `.agents/` handoffs as non-authoritative migration context, transient in-memory command arguments or diagnostic output when a tool requires them, and user-facing clickable file links. Do not persist an absolute path anywhere else unless the user explicitly authorizes that specific exception.
-- Before plan approval, only read-only inspection is allowed. Only a standalone exact ASCII response of `approved` or `qwe` authorizes changes. A second standalone exact approval after result review authorizes task deletion, commit, and push.
+- The task workflow and its approval gates apply only to selected work from `TASKS.md`. Perform small, direct, low-risk changes immediately without a plan, intelligence-level recommendation, or approval gate; keep them in the current changeset unless the user says otherwise.
+- For a selected task, only read-only inspection is allowed before plan approval. Only a standalone exact ASCII response of `approved` or `qwe` authorizes changes. A second standalone exact approval after result review authorizes task deletion, commit, and push.
 - The user may edit files or create commits while agents are working; treat this as expected concurrent activity, not an anomaly or blocker. Refresh Git status and history before staging, committing, and pushing; preserve concurrent user work and stage only the intended changes unless the user directs otherwise. Agents may push the user's existing commits together with their own. Pause when concurrent changes directly overlap or conflict with the agent's work, or materially change the requested outcome.
 - Execute freely within an approved task, including major implementation changes. If the task becomes unclear or the whole approach is wrong, stop safely and clarify; a replacement plan requires approval.
 - Use `na2_patcher/profiles/current/` as the active reproducible build definition. Profiles must pin every enabled module input by hash and use only repository-relative paths; do not select newest packages implicitly in the normal workflow. Raw-binary profile hashes cover canonical TSV inputs and referenced blobs, not adjacent documentation.
@@ -116,6 +117,6 @@ Before handing off or launching any ISO, actualize the PNACH alias for that exac
 
 Before rebuilding or launching a test ISO, unconditionally issue the close command for the project-local `pcsx2/pcsx2-qt.exe`. Do not probe first to see whether PCSX2 is running; closing an absent process should be treated as a harmless no-op.
 
-## Report format
+## Task report format
 
-Report files read, files created/modified, whether originals were untouched, scripts/commands used, hashes/sizes, and uncertainties.
+For completed `TASKS.md` tasks, report files read, files created/modified, whether originals were untouched, scripts/commands used, sizes, and uncertainties. This format does not apply to small direct changes.

@@ -116,6 +116,7 @@ try {
 $scriptsRoot = $projectPaths.scripts
 $translationModuleRoot = Join-Path $projectPaths.patcher 'modules\translation'
 $command = if ($Mode) { $Mode.ToLowerInvariant() } else { '' }
+$hasRemainingArguments = $null -ne $RemainingArguments -and $RemainingArguments.Count -gt 0
 
 function Write-Na2Stage {
     param([string]$Message)
@@ -164,7 +165,7 @@ function Invoke-TranslationExport {
     if ($NoStrictHash) { $exportArgs.NoStrictHash = $true }
 
     $export = Join-Path $translationModuleRoot 'export_translation.ps1'
-    if ($RemainingArguments.Count) {
+    if ($hasRemainingArguments) {
         & $export @exportArgs @RemainingArguments
     } else {
         & $export @exportArgs
@@ -178,7 +179,7 @@ $fullWorkflow = -not $command -and
     -not $RunOnly -and -not $SkipActualize -and -not $AllowSizeChanges -and -not $Help -and -not $Na2Iso -and
     -not $OutputDirectory -and -not $TranslationTsv -and -not $BtlApplyTsv -and -not $EtcApplyTsv -and
     -not $NoStrictHash -and -not $IsoPath -and -not $CanonicalPnach -and
-    -not $Serial -and -not $RemainingArguments.Count
+    -not $Serial -and -not $hasRemainingArguments
 
 if ($Help) {
     Write-Na2Stage 'Show command help'
@@ -208,7 +209,7 @@ if ($command -eq 'act') {
         ForEach-Object { $actualizeArgs[$_.Key] = $_.Value }
 
     $actualize = Join-Path $scriptsRoot 'actualize_cheats_for_build_iso.ps1'
-    if ($RemainingArguments.Count) {
+    if ($hasRemainingArguments) {
         & $actualize @actualizeArgs @RemainingArguments
     } else {
         & $actualize @actualizeArgs
@@ -274,6 +275,9 @@ $apply = Join-Path $scriptsRoot 'apply_latest_na2.ps1'
 if ($fullWorkflow) {
     Write-Na2Stage '1/2 Build pinned modular profile'
 }
+elseif ($Help) {
+    # Shortcut help was already labelled above; apply_latest_na2.ps1 prints details.
+}
 elseif ($RunOnly) {
     Write-Na2Stage 'Run existing output ISO'
 }
@@ -287,7 +291,7 @@ elseif (-not $Help) {
     Write-Na2Stage ("Build and run ISO with: " + ($applyArgs.Packages -join ', '))
 }
 
-if ($RemainingArguments.Count) {
+if ($hasRemainingArguments) {
     & $apply @applyArgs @RemainingArguments
 } else {
     & $apply @applyArgs

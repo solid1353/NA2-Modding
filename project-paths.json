@@ -8,7 +8,7 @@
     "cheats": "cheats",
     "logs": "logs",
     "patcher": "na2_patcher",
-    "pcsx2": "pcsx2",
+    "pcsx2": "../__pcsx2",
     "releases": "releases",
     "scripts": "scripts",
     "trash": "trash",

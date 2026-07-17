@@ -132,14 +132,11 @@ function Get-Pcsx2ElfCrcFromBytes {
     return ('{0:X8}' -f $crc)
 }
 
-$root = $projectPaths.repository
-
 if ([string]::IsNullOrWhiteSpace($IsoPath)) {
-    $isos = @(Get-ChildItem -File -LiteralPath $projectPaths.build -Filter "*.iso")
-    if ($isos.Count -ne 1) {
-        throw "Expected exactly one ISO in build/. Found $($isos.Count). Pass -IsoPath explicitly."
+    $IsoPath = Join-Path $projectPaths.build 'Current.iso'
+    if (-not (Test-Path -LiteralPath $IsoPath -PathType Leaf)) {
+        throw "Default build ISO does not exist: $IsoPath. Pass -IsoPath explicitly."
     }
-    $IsoPath = $isos[0].FullName
 }
 
 $IsoPath = (Resolve-Path -LiteralPath $IsoPath).Path
@@ -147,7 +144,12 @@ if ([string]::IsNullOrWhiteSpace($CanonicalPnach)) {
     $CanonicalPnach = Join-Path $projectPaths.cheats "SLPS-25837_C0659AD1.pnach"
 }
 $CanonicalPnach = (Resolve-Path -LiteralPath $CanonicalPnach).Path
-$cheatsDir = Split-Path -Parent $CanonicalPnach
+$cheatsDir = Join-Path $projectPaths.pcsx2 'cheats'
+if (-not (Test-Path -LiteralPath $cheatsDir -PathType Container)) {
+    throw "Configured PCSX2 cheats directory does not exist: $cheatsDir"
+}
+$cheatsDir = (Resolve-Path -LiteralPath $cheatsDir).Path
+$canonicalLinkTarget = [IO.Path]::GetRelativePath($cheatsDir, $CanonicalPnach)
 
 $iso = [IO.File]::OpenRead($IsoPath)
 try {
@@ -199,10 +201,7 @@ $removedPnachSymlinks = @(
 )
 
 $targetItem = Get-Item -LiteralPath $targetPnach -Force -ErrorAction SilentlyContinue
-if ($targetPnach -eq $CanonicalPnach) {
-    $pnachStatus = "canonical PNACH already matches CRC"
-}
-elseif ($null -ne $targetItem) {
+if ($null -ne $targetItem) {
     if ($targetItem.LinkType -ne "SymbolicLink") {
         throw "Refusing to replace real PNACH file at CRC alias path: $targetPnach"
     }
@@ -215,7 +214,7 @@ elseif ($null -ne $targetItem) {
     }
     if ($existingDestination -ne $CanonicalPnach) {
         Remove-Item -LiteralPath $targetPnach -Force
-        New-Item -ItemType SymbolicLink -Path $targetPnach -Target (Split-Path -Leaf $CanonicalPnach) | Out-Null
+        New-Item -ItemType SymbolicLink -Path $targetPnach -Target $canonicalLinkTarget | Out-Null
         $pnachStatus = "replaced incorrect symlink"
     }
     else {
@@ -223,16 +222,14 @@ elseif ($null -ne $targetItem) {
     }
 }
 else {
-    New-Item -ItemType SymbolicLink -Path $targetPnach -Target (Split-Path -Leaf $CanonicalPnach) | Out-Null
+    New-Item -ItemType SymbolicLink -Path $targetPnach -Target $canonicalLinkTarget | Out-Null
     $pnachStatus = "created symlink"
 }
 
-if ($targetPnach -ne $CanonicalPnach) {
-    $verifiedItem = Get-Item -LiteralPath $targetPnach -Force
-    $verifiedDestination = Get-SymbolicLinkDestinationPath -Item $verifiedItem
-    if ($verifiedDestination -ne $CanonicalPnach) {
-        throw "PNACH alias verification failed: $targetPnach -> $verifiedDestination"
-    }
+$verifiedItem = Get-Item -LiteralPath $targetPnach -Force
+$verifiedDestination = Get-SymbolicLinkDestinationPath -Item $verifiedItem
+if ($verifiedDestination -ne $CanonicalPnach) {
+    throw "PNACH alias verification failed: $targetPnach -> $verifiedDestination"
 }
 
 [pscustomobject]@{

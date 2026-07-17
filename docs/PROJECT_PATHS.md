@@ -12,8 +12,11 @@ The manifest currently defines these stable logical names:
 - `repository`: the repository itself; this must remain `.`.
 - `source`: read-only original media, extracted views, and preserved disassemblies.
 - `utils`: shared utilities, including Ghidra and the untrusted historical dump.
-- `build`, `cheats`, `logs`, `patcher`, `pcsx2`, `releases`, `scripts`, `trash`, and
-  `work`: their corresponding project areas.
+- `build`, `cheats`, `logs`, `patcher`, `releases`, `scripts`, `trash`, and `work`:
+  their corresponding project areas.
+- `pcsx2`: the portable, self-contained PCSX2 installation. Its support folders
+  remain under `@pcsx2/`; only its CRC-named PNACH symlinks target the canonical
+  project PNACH under `@cheats/`.
 
 Documentation uses `@root/child` notation, such as `@source/NA2.iso`. This is a
 logical reference, not a literal filesystem path. Profile `roots.tsv` files accept

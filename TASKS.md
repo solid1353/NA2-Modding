@@ -3,7 +3,6 @@
 ## In Progress
 
 ### Project
-- Deal with the "old" directory.
 - Properly unpack NA2, UN3, UN5, UN6.
 - Research which NA2 binaries require full disassembly, targeted disassembly, or data-only inspection, and document the minimum reusable analysis workflow.
 - [Subject to change] re-disassemble NA2, disassemble UN6.

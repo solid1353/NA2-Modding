@@ -3,7 +3,8 @@
 ## In Progress
 
 ### Project
-- Continue with logging of enabled cheats to launch command.
+- Actualize only when pnach is not empty, add logging of enabled cheats to launch command.
+- Add unarchiving ISOs in sources if NA2/UN5 folders are missing.
 
 ### UI Translation
 - Add texture patcher to import assets from UN5.
@@ -20,6 +21,7 @@
 ### Project
 - Analyze old files.
 - Develop a release process.
+- Refactor.
 
 ### Logic
 - Improve substitution reliability.

@@ -7,6 +7,8 @@ import argparse
 import re
 from pathlib import Path
 
+from project_paths import PROJECT_PATHS
+
 
 FUNCTION_RE = re.compile(r"(?m)^(?:[\w *]+)\s+(FUN_([0-9a-f]{8}))\([^\n]*\)\s*\n\s*\{")
 FACE_MASKS = {0x10: "triangle", 0x20: "circle", 0x40: "cross", 0x80: "square"}

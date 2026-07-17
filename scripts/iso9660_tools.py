@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from project_paths import PROJECT_PATHS
+
 SECTOR = 2048
 
 

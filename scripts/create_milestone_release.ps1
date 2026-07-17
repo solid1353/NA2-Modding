@@ -10,11 +10,16 @@ param(
 
     [string]$ExpectedCrc = "",
 
-    [string]$ReleaseDir = (Join-Path (Resolve-Path (Join-Path $PSScriptRoot "..")).Path "releases")
+    [string]$ReleaseDir = ""
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
+if ([string]::IsNullOrWhiteSpace($ReleaseDir)) {
+    $ReleaseDir = $projectPaths.releases
+}
 
 function Get-SafeName {
     param([string]$Value)

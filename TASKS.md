@@ -3,7 +3,6 @@
 ## In Progress
 
 ### Project
-- Update directories in docs (disassembly, utils, ghidra, source, find new ones yourself, search ".." and project folder).
 - Move pcsx2 up one level, make it self-contained, symlink cheats and update everything.
 - Actualize only when pnach is not empty, add logging of enabled cheats to launch command.
 - Properly unpack NA2, UN3, UN5, UN6.
@@ -29,7 +28,7 @@
 ### Project
 - Solve concurrent memcard access for pcsx2.
 - Come up with /trash cleanup policy.
-- Investigate utils/old.
+- Investigate `@utils/old`.
 - Develop a release process.
 - Refactor.
 

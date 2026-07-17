@@ -1,16 +1,21 @@
 param(
-    [string]$Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path,
+    [string]$Root = "",
     [int]$MaxHashSizeMB = 2048
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
+if ([string]::IsNullOrWhiteSpace($Root)) {
+    $Root = $projectPaths.repository
+}
 
 if (-not (Test-Path -LiteralPath $Root)) {
     throw "Root not found: $Root"
 }
 
-$logDir = Join-Path $Root "logs\inventory"
+$logDir = Join-Path $projectPaths.logs "inventory"
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 
 $stamp = Get-Date -Format "yyyyMMdd_HHmmss"

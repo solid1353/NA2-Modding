@@ -32,7 +32,7 @@ These records preserve accepted and tested states; they are not proof that all r
 
 ### Disassembly leads
 
-- Reuse the preserved projects/exports under `disassembly/NA2` and `disassembly/UN5`; do not disassemble either ELF from scratch.
+- Reuse the preserved projects/exports under `@source/NA2_disassembly` and `@source/UN5_disassembly`; do not disassemble either ELF from scratch.
 - NA2 ASCII setup lead: `FUN_00186510`.
 - UN5 counterpart: `FUN_001878e0`.
 - UN5 boxed auto-fit leads: `FUN_00389df0` and `FUN_0018b1b0`.

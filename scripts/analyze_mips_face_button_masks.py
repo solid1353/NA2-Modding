@@ -13,6 +13,8 @@ import difflib
 from dataclasses import dataclass
 from pathlib import Path
 
+from project_paths import PROJECT_PATHS
+
 
 FACE_MASKS = {0x10: "triangle", 0x20: "circle", 0x40: "cross", 0x80: "square"}
 

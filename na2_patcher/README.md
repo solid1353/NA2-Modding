@@ -5,7 +5,8 @@ Profiles replace implicit newest-package selection with explicit, reproducible m
 Each profile directory contains:
 
 - `manifest.tsv`: schema version, profile ID, and description.
-- `roots.tsv`: repository-relative logical source bindings.
+- `roots.tsv`: repository-relative bindings or `@root/...` aliases resolved from
+  `project-paths.json`.
 - `modules.tsv`: ordered module instances with exact input hashes and selections.
 
 Schema v1 supports `zip_overlay`, `raw_binary`, and `translation`. `zip_overlay` remains a legacy compatibility type, but the current profile uses only declarative, size-preserving raw-binary and translation modules.
@@ -40,11 +41,15 @@ patch's `default_enabled` value preserves whether that cheat was enabled.
 Build it with:
 
 ```powershell
+. scripts/project_paths.ps1
+$paths = Get-Na2ProjectPaths
+$profile = [IO.Path]::GetRelativePath($paths.repository, (Join-Path $paths.patcher 'profiles\current'))
+$profileLog = [IO.Path]::GetRelativePath($paths.repository, (Join-Path $paths.logs 'na2_patcher\current_<unique_run_id>'))
 & scripts/apply_latest_na2.ps1 -BuildOnly `
-  -InputIso source/NA2.iso `
-  -OutputIso build/Current.iso `
-  -Profile na2_patcher/profiles/current `
-  -ProfileLogDirectory logs/na2_patcher/current_<unique_run_id>
+  -InputIso (Join-Path $paths.source 'NA2.iso') `
+  -OutputIso (Join-Path $paths.build 'Current.iso') `
+  -Profile $profile `
+  -ProfileLogDirectory $profileLog
 ```
 
 The compositor writes the candidate ISO as `build/Current.iso.building`, verifies it completely, fsyncs it, and writes the build logs before promotion. The PowerShell orchestration wrapper then closes portable PCSX2, atomically replaces `build/Previous.iso` with the outgoing `build/Current.iso`, and atomically promotes the verified candidate to `build/Current.iso`. A failed promotion restores the outgoing ISO to `Current.iso` when safe, and any caught failure removes `.building`.

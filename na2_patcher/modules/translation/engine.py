@@ -14,6 +14,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional, Sequence
 
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
+
+from na2_patcher.project_paths import load_project_paths
+
+PROJECT_PATHS = load_project_paths(REPOSITORY_ROOT)
+
 SECTOR = 2048
 UTC_PLUS_3 = dt.timezone(dt.timedelta(hours=3))
 

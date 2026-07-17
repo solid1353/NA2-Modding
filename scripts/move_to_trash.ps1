@@ -7,10 +7,12 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
 
-$root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$trashRoot = Join-Path $root "trash"
-$logDir = Join-Path $root "logs\trash"
+$root = $projectPaths.repository
+$trashRoot = $projectPaths.trash
+$logDir = Join-Path $projectPaths.logs "trash"
 
 New-Item -ItemType Directory -Force -Path $trashRoot | Out-Null
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
@@ -35,10 +37,6 @@ function Assert-TrashAllowed {
     param([string]$RelativePath)
 
     $first = ($RelativePath -split '[\\/]', 2)[0]
-
-    if ($first -eq "source") {
-        throw "Refusing to trash anything under source/: $RelativePath"
-    }
 
     if ($first -eq "releases") {
         throw "Refusing to trash anything under releases/: $RelativePath"
@@ -90,7 +88,7 @@ foreach ($item in $items) {
     $rows.Add([pscustomobject]@{
         Timestamp = $stamp
         Source = $item.Relative
-        TrashPath = ("trash\" + $stamp + "\" + $item.Relative)
+        TrashPath = [IO.Path]::GetRelativePath($root, $target)
         Reason = $Reason
     })
 }
@@ -106,4 +104,3 @@ Write-Host $batchDir
 Write-Host "Items:" $rows.Count
 Write-Host "Log:"
 Write-Host $logPath
-

@@ -32,12 +32,14 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
 
 function Stop-PortablePcsx2 {
     $portableExe = if ($Pcsx2Exe) {
         $Pcsx2Exe
     } else {
-        Join-Path (Split-Path $PSScriptRoot -Parent) 'pcsx2\pcsx2-qt.exe'
+        Join-Path $projectPaths.pcsx2 'pcsx2-qt.exe'
     }
 
     $processName = [System.IO.Path]::GetFileNameWithoutExtension($portableExe)
@@ -134,7 +136,7 @@ if (-not $OutputIso) {
     throw 'Required argument missing: -o / -OutputIso'
 }
 
-$workspaceRoot = Split-Path $PSScriptRoot -Parent
+$workspaceRoot = $projectPaths.repository
 $resolvedOutputIso = if ([System.IO.Path]::IsPathRooted($OutputIso)) {
     [System.IO.Path]::GetFullPath($OutputIso)
 }

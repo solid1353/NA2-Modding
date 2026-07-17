@@ -4,21 +4,23 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 
 ## Hard rules
 
-- Use only repository-relative paths in canonical project files, scripts, configuration, logs, manifests, metadata, and generated artifacts; never persist machine-specific absolute paths there. Dated `.agents/` handoffs may record machine-specific paths as non-authoritative migration context.
-- Codex is authorized to create commits and push this project's current branch without requesting approval for each operation. Prefer coherent checkpoints and do not commit half-classified runtime experiments when a result is imminent.
-- Treat a standalone user response of `qwe` as explicit approval of the completed result. After the user approves a completed result, commit the relevant completed work and push the current branch without requesting separate commit or push approval. The user may edit files or create commits while agents are working; treat this as expected concurrent activity, not an anomaly or blocker. Refresh Git status and history before staging, committing, and pushing; preserve concurrent user work and stage only the agent's intended changes unless the user directs otherwise. Agents may always push the user's existing commits together with their own. Pause only when concurrent changes directly overlap or conflict with the agent's work, or materially change the requested outcome.
+- Use only repository-relative paths in canonical project files, scripts, configuration, logs, manifests, metadata, and generated artifacts; never persist machine-specific absolute paths there. Absolute paths are permitted only in dated `.agents/` handoffs as non-authoritative migration context, transient in-memory command arguments or diagnostic output when a tool requires them, and user-facing clickable file links. Do not persist an absolute path anywhere else unless the user explicitly authorizes that specific exception.
+- Do not commit or push the current changeset until the user approves the completed result. Treat `qwe` exactly as the word `approved`: it approves either a proposed plan or a completed result, according to the stage of the workflow. After completion approval, remove the completed task from `TASKS.md`, commit the coherent approved changeset, and push the current branch without requesting separate commit or push approval. Commands queued before completion approval belong to the same changeset and commit unless the user explicitly separates them.
+- The user may edit files or create commits while agents are working; treat this as expected concurrent activity, not an anomaly or blocker. Refresh Git status and history before staging, committing, and pushing; preserve concurrent user work and stage only the intended changes unless the user directs otherwise. Agents may push the user's existing commits together with their own. Pause when concurrent changes directly overlap or conflict with the agent's work, or materially change the requested outcome.
+- If anything becomes unclear at any point—including after work has started—stop at the current safe boundary, preserve the work in progress, explain the ambiguity, and request clarification. Do not continue speculatively or silently choose an interpretation that could affect scope, behavior, safety, or the expected result.
 - Use `na2_patcher/profiles/current/` as the active reproducible build definition. Profiles must pin every enabled module input by hash and use only repository-relative paths; do not select newest packages implicitly in the normal workflow. Raw-binary profile hashes cover canonical TSV inputs and referenced blobs, not adjacent documentation.
 - Treat `na2_patcher/milestones/` mapping snapshots as immutable module data. New translation work gets a new uniquely named snapshot/profile; never rewrite an existing snapshot.
 - Never change binary files manually.
 - All binary changes must go through scripts.
 - Preserve file sizes unless explicitly instructed.
-- Do not modify files under `source/` unless explicitly instructed.
-- Keep untouched source media under `source/`.
+- Treat `project-paths.json` as the single source of truth for directory roots. Every script must load it through the shared PowerShell or Python path loader; do not duplicate configured root locations in scripts or profiles. Documentation refers to configured roots as `@root/...`.
+- Do not modify files under the configured `source` root (`@source/`) unless explicitly instructed.
+- Keep untouched source media under `@source/`.
 - Keep extractions of original media beside the source archive as `<archive filename>.files`.
-- Treat everything under `source/`, including extracted files, as read-only reference material.
-- Do not create generated files, temporary files, logs, probes, manifests, or metadata under `source/`; preserve the extracted game/archive structure exactly.
-- Keep Windows read-only attributes applied to files/folders under `source/`.
-- Before changing any original-derived file, copy it outside `source/` and modify only the copy.
+- Treat everything under `@source/`, including extracted files, as read-only reference material.
+- Do not create generated files, temporary files, logs, probes, manifests, or metadata under `@source/`; preserve the extracted game/archive structure exactly.
+- Keep Windows read-only attributes applied to files/folders under `@source/`.
+- Before changing any original-derived file, copy it outside `@source/` and modify only the copy.
 - Keep only the active working ISO under `build/`, normally `build/Current.iso`; do not store PNACH files, loose replacements, logs, or other working files there. During a build, `build/Current.iso.building` is the only standard temporary ISO and must be removed on failure or atomically promoted on success.
 - Temporary, parity-check, and hypothesis-test ISOs may remain under `build/` while they have a concrete future testing or comparison use. Permanently delete them as soon as they become useless; never leave obsolete ISOs accumulating under `build/`.
 - Do not recreate a top-level `packages/` staging/history directory. Normal builds consume hash-pinned profile modules. Keep temporary imported archives under a task-specific `work/temp/` folder, normalize useful data into a module, then retire the archive to `trash/`.
@@ -34,10 +36,10 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Before reporting a release as valid, check the paired ISO/ELF CRC against the PNACH filename and warn if they do not match or cannot be verified.
 - Keep logs, inventories, hashes, and patch records under task-specific subfolders of `logs/`; do not write files directly in the `logs/` root.
 - Keep deleted/retired workspace items under `trash/` instead of hard-deleting when practical.
-- Use `scripts/move_to_trash.ps1` for project-local removals; it must refuse `source/`, `releases/`, and `trash/`.
-- Generated/intermediate files go under `logs/`, `scripts/`, or `work/temp/` with task-named subfolders when throwaway workspace is needed. Completed working ISOs are the only outputs kept under `build/`. Original-source extractions stay beside their source archive under `source/` as `<archive filename>.files`.
+- Use `scripts/move_to_trash.ps1` for project-local removals; it must refuse `@source/`, `@releases/`, and `@trash/`.
+- Generated/intermediate files go under `@logs/`, `@scripts/`, or `@work/temp/` with task-named subfolders when throwaway workspace is needed. Completed working ISOs are the only outputs kept under `@build/`. Original-source extractions stay beside their source archive under `@source/` as `<archive filename>.files`.
 - Treat top-level `old/` as the user's personal folder. Do not inspect, search, execute from, modify, move, delete, or otherwise touch it unless explicitly instructed.
-- Treat `utils/old/` as an untrusted tool/archive dump. Do not execute tools from it until inspected and chosen for a specific task.
+- Treat `@utils/old/` as an untrusted tool/archive dump. Do not execute tools from it until inspected and chosen for a specific task.
 - Log every binary patch: file, offset, original bytes, new bytes, reason.
 - PNACH is the source of truth only for emulator settings, runtime-only memory patches, and temporary hypotheses that cannot yet be represented as file-backed module edits. Permanent file-backed changes belong in named `na2_patcher` raw-binary patch sets and must not remain enabled in PNACH. `// [Name]` is only a label/comment; a PNACH item is enabled only when its executable `patch=`/setting line is uncommented.
 - Use fixed-address PNACH writes for hypothesis testing only when the target is in the boot ELF or another region proven to remain resident and stable for the entire write lifetime.
@@ -46,7 +48,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Keep active PNACH files clean: confirmed named sections only, plus temporary hypothesis patches at the very top when actively testing.
 - Temporary PNACH hypothesis patches go at the top of the file as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 - Move old candidates, failed experiments, and speculative addresses to `docs/HYPOTHESES.md`.
-- Agents may read and manage `TASKS.md` when asked. They may execute contained tasks and move them between `In Progress` and `Backlog`; after a task has been completed and the user has approved the result, they may delete that task from the file. Before executing a task whose scope, expected result, or constraints are not perfectly clear, always request clarification and do not move or execute it speculatively. Route each task to the most appropriate existing Codex task/chat, or create a new one when needed.
+- Agents may read and manage `TASKS.md` under the task workflow below. Add tasks only on the user's order. Agents may move tasks between `In Progress` and `Backlog`, execute selected tasks after plan approval, and delete a completed task only as part of the approved commit/push step. Route each selected task to the most appropriate existing Codex task/chat, or create a new one when needed.
 - For string patches, always check encoded byte length before writing. `[S]`-prefixed `shorten` mappings are authorized manual fit exceptions when they retain an exact official UN5 source reference.
 - Prefer Shift-JIS / CP932-compatible text unless proven otherwise.
 - DATA.CVM password is `cc2fuku`.
@@ -56,6 +58,17 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Avoid GUI-only workflows when CLI/scripted alternatives exist.
 - Ask before destructive actions, mass rewrites, ISO rebuilds, or modifying originals.
 - If uncertain, inspect and report instead of acting.
+
+
+## Task workflow and approval
+
+1. The user, or an agent acting on the user's order, may add work to `TASKS.md` at any time. Do not treat newly queued commands as a separate changeset unless the user says so.
+2. When choosing what to do next, read `TASKS.md`, briefly present the relevant `In Progress` and `Backlog` options, and ask the user to select the task. If routing matters, recommend the best existing Codex task/chat or a new one.
+3. After a task is selected, briefly describe the proposed plan and recommend an appropriate intelligence/reasoning level with a short justification. Discuss or revise the plan until the user approves it with `approved`, `qwe`, or another unambiguous approval.
+4. Execute the approved plan. If anything becomes unclear mid-task, stop safely and request clarification before continuing.
+5. Report the completed result for review. If the user requests corrections, keep the task and current changeset open, revise the plan when needed, and continue the review loop.
+6. When the user approves the completed result with `approved`, `qwe`, or another unambiguous approval, delete the completed task from `TASKS.md`, include all approved queued work in the same coherent commit, refresh Git state, commit, and push.
+7. After a successful push, read `TASKS.md`, ask what to do next, and present enough task information for the user to choose.
 
 
 ## Cross-install Codex handoffs

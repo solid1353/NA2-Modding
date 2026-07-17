@@ -6,6 +6,8 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
 $sectorSize = 2048
 
 function Read-UInt32LE([byte[]]$Data, [int]$Offset) {

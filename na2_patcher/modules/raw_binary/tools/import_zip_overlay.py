@@ -15,10 +15,13 @@ if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
 from na2_patcher.modules.raw_binary import engine
+from na2_patcher.project_paths import load_project_paths
+
+PROJECT_PATHS = load_project_paths(REPOSITORY_ROOT)
 
 
 def repository_path(value: str, label: str, *, must_exist: bool = True) -> Path:
-    workspace = Path.cwd().resolve()
+    workspace = PROJECT_PATHS.repository
     raw = Path(value)
     if raw.is_absolute() or ".." in raw.parts:
         raise ValueError(f"{label} must be repository-relative: {value}")

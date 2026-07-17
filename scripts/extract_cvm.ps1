@@ -7,6 +7,8 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
 
 $sectorSize = 2048
 
@@ -80,7 +82,6 @@ if (-not (Test-Path -LiteralPath $CvmPath)) {
     throw "CVM not found: $CvmPath"
 }
 
-$root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $CvmPath = (Resolve-Path -LiteralPath $CvmPath).Path
 $cvmItem = Get-Item -LiteralPath $CvmPath
 
@@ -184,7 +185,7 @@ if (Test-Path -LiteralPath $isoExtractor) {
 }
 
 $readonlyScript = Join-Path $PSScriptRoot "set_original_readonly.ps1"
-if ($OutDir.StartsWith((Join-Path $root "source"), [StringComparison]::OrdinalIgnoreCase) -and
+if ($OutDir.StartsWith($projectPaths.source, [StringComparison]::OrdinalIgnoreCase) -and
     (Test-Path -LiteralPath $readonlyScript)) {
     & $readonlyScript | Out-Null
 }
@@ -197,4 +198,3 @@ Write-Host "Header:"
 Write-Host $headerOut
 Write-Host "Inner ISO:"
 Write-Host $isoOut
-

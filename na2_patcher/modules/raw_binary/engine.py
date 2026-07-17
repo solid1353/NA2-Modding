@@ -13,6 +13,13 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
+
+from na2_patcher.project_paths import load_project_paths, resolve_alias
+
+PROJECT_PATHS = load_project_paths(REPOSITORY_ROOT)
 
 MANIFEST_FIELDS = [
     "schema_version",
@@ -502,7 +509,15 @@ def parse_roots(values: list[str], workspace: Path) -> dict[str, Path]:
             raise PatchError(f"Invalid --root binding: {value!r}")
         if root_id in roots:
             raise PatchError(f"Duplicate --root binding: {root_id}")
-        path = command_relative_path(path_text, f"root {root_id}", workspace)
+        if path_text.startswith("@"):
+            try:
+                path = resolve_alias(path_text, PROJECT_PATHS)
+            except (KeyError, ValueError) as exc:
+                raise PatchError(
+                    f"Invalid project-root alias for root {root_id}: {path_text!r}"
+                ) from exc
+        else:
+            path = command_relative_path(path_text, f"root {root_id}", workspace)
         if not path.is_dir():
             raise PatchError(f"Root is not a directory: {path_text}")
         roots[root_id] = path
@@ -893,7 +908,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
-    workspace = Path.cwd().resolve()
+    workspace = PROJECT_PATHS.repository
     package_path = command_relative_path(args.package, "--package", workspace)
     if not package_path.is_dir():
         raise PatchError(f"Package directory does not exist: {args.package}")
@@ -924,7 +939,8 @@ def main() -> int:
         log_text = args.log_directory
     else:
         run_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
-        log_text = f"logs/na2_patcher/raw_binary/{run_id}"
+        logs_relative = PROJECT_PATHS.path("logs").relative_to(workspace).as_posix()
+        log_text = f"{logs_relative}/na2_patcher/raw_binary/{run_id}"
     log_directory = command_relative_path(log_text, "--log-directory", workspace)
     apply_package(
         package,

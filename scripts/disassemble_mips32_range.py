@@ -11,6 +11,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from project_paths import PROJECT_PATHS
+
 
 REG = (
     "zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",

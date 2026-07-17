@@ -1,11 +1,16 @@
 param(
-    [string]$LogPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'pcsx2\logs\emulog.txt'),
+    [string]$LogPath = "",
     [string]$PnachPath = "",
     [string]$Serial = "SLPS-25837"
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
+if ([string]::IsNullOrWhiteSpace($LogPath)) {
+    $LogPath = Join-Path $projectPaths.pcsx2 'logs\emulog.txt'
+}
 
 function Get-LatestGameCrcFromLog {
     param([string]$Path)

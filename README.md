@@ -30,6 +30,8 @@ context rather than repeated here.
   rules.
 - [Project context](docs/PROJECT_CONTEXT.md) records verified local state,
   directory roles, and established workflows.
+- [Project paths](docs/PROJECT_PATHS.md) documents the single path manifest,
+  logical root notation, and migration procedure.
 - [Tasks](TASKS.md) contains concrete active plans and queued work.
 - [Hypotheses](docs/HYPOTHESES.md) preserves rejected experiments and unresolved
   reverse-engineering leads.

@@ -6,6 +6,8 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
 
 $sectorSize = 2048
 
@@ -130,10 +132,10 @@ function Get-Pcsx2ElfCrcFromBytes {
     return ('{0:X8}' -f $crc)
 }
 
-$root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$root = $projectPaths.repository
 
 if ([string]::IsNullOrWhiteSpace($IsoPath)) {
-    $isos = @(Get-ChildItem -File -LiteralPath (Join-Path $root "build") -Filter "*.iso")
+    $isos = @(Get-ChildItem -File -LiteralPath $projectPaths.build -Filter "*.iso")
     if ($isos.Count -ne 1) {
         throw "Expected exactly one ISO in build/. Found $($isos.Count). Pass -IsoPath explicitly."
     }
@@ -142,7 +144,7 @@ if ([string]::IsNullOrWhiteSpace($IsoPath)) {
 
 $IsoPath = (Resolve-Path -LiteralPath $IsoPath).Path
 if ([string]::IsNullOrWhiteSpace($CanonicalPnach)) {
-    $CanonicalPnach = Join-Path $root "cheats\SLPS-25837_C0659AD1.pnach"
+    $CanonicalPnach = Join-Path $projectPaths.cheats "SLPS-25837_C0659AD1.pnach"
 }
 $CanonicalPnach = (Resolve-Path -LiteralPath $CanonicalPnach).Path
 $cheatsDir = Split-Path -Parent $CanonicalPnach

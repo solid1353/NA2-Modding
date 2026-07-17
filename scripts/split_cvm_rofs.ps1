@@ -15,6 +15,8 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
 
 $sectorSize = 0x800
 
@@ -228,8 +230,7 @@ function Parse-Directory([IO.FileStream]$Stream, [int]$Extent, [int]$Size, [int]
 }
 
 if ([string]::IsNullOrWhiteSpace($RofsCryptSource)) {
-    $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-    $RofsCryptSource = Join-Path $root 'utils\old\CVM Parser\rofs_crypt.cpp'
+    $RofsCryptSource = Join-Path $projectPaths.utils 'old\CVM Parser\rofs_crypt.cpp'
 }
 
 $CvmPath = (Resolve-Path -LiteralPath $CvmPath).Path
@@ -310,4 +311,3 @@ finally {
     if ($null -ne $out) { $out.Dispose() }
     $stream.Dispose()
 }
-

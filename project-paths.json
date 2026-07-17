@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "roots": {
+    "repository": ".",
+    "source": "../__source",
+    "utils": "../__utils",
+    "build": "build",
+    "cheats": "cheats",
+    "logs": "logs",
+    "patcher": "na2_patcher",
+    "pcsx2": "pcsx2",
+    "releases": "releases",
+    "scripts": "scripts",
+    "trash": "trash",
+    "work": "work"
+  }
+}

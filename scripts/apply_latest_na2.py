@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from iso9660_tools import Iso9660, SECTOR
+from project_paths import PROJECT_PATHS
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 if str(REPOSITORY_ROOT) not in sys.path:
@@ -581,7 +582,7 @@ def main() -> int:
     )
     parser.add_argument("--source", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument("--workspace", type=Path, default=Path.cwd())
+    parser.add_argument("--workspace", type=Path, default=PROJECT_PATHS.repository)
     parser.add_argument("--package-directory", type=Path)
     parser.add_argument("--profile", type=Path)
     parser.add_argument("--profile-log-directory", type=Path)

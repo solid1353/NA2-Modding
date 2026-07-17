@@ -7,6 +7,8 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
 
 $sectorSize = 2048
 
@@ -167,7 +169,6 @@ if (-not (Test-Path -LiteralPath $IsoPath)) {
 }
 
 $IsoPath = (Resolve-Path -LiteralPath $IsoPath).Path
-$root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 
 if ([string]::IsNullOrWhiteSpace($OutDir)) {
     $isoFile = Get-Item -LiteralPath $IsoPath
@@ -206,14 +207,14 @@ finally {
     $iso.Dispose()
 }
 
-$logDir = Join-Path $root "logs\extraction"
+$logDir = Join-Path $projectPaths.logs "extraction"
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $logPath = Join-Path $logDir ("extract_iso9660_" + $stamp + ".tsv")
 $logRows | Export-Csv -LiteralPath $logPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8
 
 $readonlyScript = Join-Path $PSScriptRoot "set_original_readonly.ps1"
-if ($OutDir.StartsWith((Join-Path $root "source"), [StringComparison]::OrdinalIgnoreCase) -and
+if ($OutDir.StartsWith($projectPaths.source, [StringComparison]::OrdinalIgnoreCase) -and
     (Test-Path -LiteralPath $readonlyScript)) {
     & $readonlyScript | Out-Null
 }
@@ -226,4 +227,3 @@ Write-Host "Entries:"
 Write-Host $logRows.Count
 Write-Host "Log:"
 Write-Host $logPath
-

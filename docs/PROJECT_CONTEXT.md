@@ -4,7 +4,7 @@
 
 Original ISO:
 
-- Path: `source/NA2.iso`
+- Path: `@source/NA2.iso` (resolved through `project-paths.json`)
 - Size: `1,928,429,568`
 - SHA256: `CA105F7BDBEEAA3275F871C9702B9C77ED985CE140FAE8EAC28CB153E263D0C3`
 
@@ -22,8 +22,12 @@ Current PNACH:
 
 ## Working Layout
 
-- `source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
-- `source/*.files/`: extracted views of original source archives. Treat as read-only reference.
+Directory roots are configured once in `project-paths.json`; see
+`docs/PROJECT_PATHS.md`. The `@root/...` notation below is logical and must not be
+replaced with a copied machine-specific absolute path.
+
+- `@source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
+- `@source/*.files/`: extracted views of original source archives. Treat as read-only reference.
 - `build/`: normally contains `build/Current.iso`. Standard builds use `build/Current.iso.building` in the same directory, delete it on caught failure, and atomically replace `Current.iso` only after verification and log creation. Other temporary, parity-check, and hypothesis-test ISOs may remain while they have a concrete future testing or comparison use, but are permanently deleted as soon as they become useless.
 - There are no top-level `packages/` or `milestones/` archive directories. Temporary imported archives live under task-specific `work/temp/` folders until normalized or retired. Immutable reproducible data lives beside its module or under `na2_patcher/milestones/`; retired archives remain available through Git history.
 - `na2_patcher/modules/translation/mappings.tsv` is the translation module's current hash-pinned v33 input, and `na2 tr` remains a standalone TSV export with a JSON build summary under `logs/na2_patcher/translation_exports/`. The current profile references this module input directly by exact hash. All legacy translation builder archives have been retired from the workspace after exact profile parity and remain available through Git history.
@@ -35,12 +39,12 @@ Current PNACH:
 - `.agents/`: dated human-readable handoffs exchanged between separate Windows installations and Codex instances. They may contain machine-specific paths as historical context, are non-authoritative, and must be reviewed rather than deleted as clutter.
 - `docs/`: repository-wide context, active plans, hypotheses, and release documentation. Component-specific READMEs remain beside their components.
 - `docs/HYPOTHESES.md`: archived patch candidates, failed experiments, unverified addresses, and speculative leads.
-- `docs/TASKS.md`: concrete active tasks, test plans, and queued investigations only; no general workflow rules.
+- `TASKS.md`: concrete active tasks, test plans, and queued investigations only; no general workflow rules.
 - `work/temp/`: ignored throwaway/intermediate workspace, organized into task-named subfolders and cleaned when no longer useful.
 - `trash/`: timestamped holding area for deleted/retired workspace items.
 - `old/`: user's personal folder. Off-limits unless explicitly instructed.
 
-Scratch/intermediate folders should be created only when needed under `work/temp/`, with names tied to the task. Extractions of original source archives stay beside the source archive under `source/`.
+Scratch/intermediate folders should be created only when needed under `@work/temp/`, with names tied to the task. Extractions of original source archives stay beside the source archive under `@source/`.
 For binary modding, prefer persistent target folders under `work/` over repeated fresh disassembly. State the tools/software used for each change, and keep command chunks short and reusable.
 See non-tracked folders in gitignore, need to be recreated if starting anew.
 
@@ -53,7 +57,7 @@ Use separate Codex tasks against the same real project root:
 - Translation: maintain mappings, validate module/profile compatibility, and investigate translation issues without bypassing the pinned milestone workflow.
 - Logic / PNACH: gameplay patches and reverse engineering unrelated to font or translation work.
 
-All tasks must read `AGENTS.md`, `docs/PROJECT_CONTEXT.md`, `docs/TASKS.md`, and `docs/HYPOTHESES.md` before acting. Binary outputs and experiments remain shared, so each task must re-check Git status and current package/build state before modifying files.
+All tasks must read `AGENTS.md`, `docs/PROJECT_CONTEXT.md`, `TASKS.md`, and `docs/HYPOTHESES.md` before acting. Binary outputs and experiments remain shared, so each task must re-check Git status and current package/build state before modifying files.
 
 ## Trash Rule
 
@@ -61,7 +65,7 @@ Use `trash/` for project-local removals instead of hard deletion when practical.
 
 Never trash or delete anything under:
 
-- `source/`
+- `@source/`
 - `releases/`
 - `trash/`
 
@@ -69,12 +73,12 @@ Use `scripts/move_to_trash.ps1` for safe project-local trash moves.
 
 ## Extraction Layout
 
-All extracted original files stay under `source/`, beside the archive they came from.
+All extracted original files stay under `@source/`, beside the archive they came from.
 
 Original ISO extraction layout:
 
-- `source/NA2.iso`
-- `source/NA2.iso.files/`
+- `@source/NA2.iso`
+- `@source/NA2.iso.files/`
 
 Nested archive convention:
 
@@ -102,21 +106,21 @@ original/
       ETC.BIN
 ```
 
-For edited/build versions, do not edit anything under `source/` in place. Copy the needed file or archive into a task/build folder first, then patch that copy through scripts and log the source path and output path. If extraction or inspection needs metadata, write it under `logs/` using source-relative paths instead of placing files in `source/`.
+For edited/build versions, do not edit anything under `@source/` in place. Copy the needed file or archive into a task/build folder first, then patch that copy through scripts and log the source path and output path. If extraction or inspection needs metadata, write it under `@logs/` using source-relative paths instead of placing files in `@source/`.
 
-The `source/` tree should also have Windows read-only attributes applied. Use `scripts/set_original_readonly.ps1` after extracting new original-source content or if attributes need to be restored.
+The `@source/` tree should also have Windows read-only attributes applied. Use `scripts/set_original_readonly.ps1` after extracting new original-source content or if attributes need to be restored.
 
 ## DATA.CVM Extraction
 
-Confirmed ROFS/CVM password for `source/NA2.iso.files/DATA/DATA.CVM`: `cc2fuku`.
+Confirmed ROFS/CVM password for `@source/NA2.iso.files/DATA/DATA.CVM`: `cc2fuku`.
 
 Current split/extraction outputs:
 
-- `source/NA2.iso.files/DATA/DATA.CVM.files/DATA.CVM.iso`
-- `source/NA2.iso.files/DATA/DATA.CVM.files/DATA.CVM.hdr`
-- `source/NA2.iso.files/DATA/DATA.CVM.files/DATA.CVM.iso.files/`
+- `@source/NA2.iso.files/DATA/DATA.CVM.files/DATA.CVM.iso`
+- `@source/NA2.iso.files/DATA/DATA.CVM.files/DATA.CVM.hdr`
+- `@source/NA2.iso.files/DATA/DATA.CVM.files/DATA.CVM.iso.files/`
 
-Use `scripts/split_cvm_rofs.ps1` to split the encrypted CVM safely without running `utils/old/CVM Parser/cvm_tool.exe`.
+Use `scripts/split_cvm_rofs.ps1` to split the encrypted CVM safely without running `@utils/old/CVM Parser/cvm_tool.exe`.
 
 ## Current Scripts
 
@@ -133,7 +137,7 @@ Use `scripts/split_cvm_rofs.ps1` to split the encrypted CVM safely without runni
 - `extract_changed_string_slots.ps1`: extracts changed CP932 string slots for translation review.
 - `apply_string_slot_patches.ps1`: applies validated CP932 string-slot patches and writes a patch log.
 - `inventory_project.ps1`: creates timestamped inventory/hash reports under `logs/`.
-- `set_original_readonly.ps1`: applies and verifies Windows read-only attributes under `source/`.
+- `set_original_readonly.ps1`: applies and verifies Windows read-only attributes under `@source/`.
 - `move_to_trash.ps1`: moves project-local files/folders to timestamped `trash/` batches and refuses protected folders.
 - `check_pcsx2_crc.ps1`: reads PCSX2 logs for the latest boot Game CRC and compares it with a PNACH filename.
 - `create_milestone_release.ps1`: creates a new append-only milestone folder under `releases/`; refuses existing names and records a manifest.
@@ -142,7 +146,7 @@ Use `scripts/split_cvm_rofs.ps1` to split the encrypted CVM safely without runni
 
 Top-level `old/` is personal user space and should not be inspected, searched, executed from, modified, moved, deleted, or otherwise touched unless the user explicitly asks for it.
 
-`utils/old/` is an untrusted historical tool/archive dump. It may contain useful tools or source references, but nothing there should be treated as current workflow or executed blindly.
+`@utils/old/` is an untrusted historical tool/archive dump. It may contain useful tools or source references, but nothing there should be treated as current workflow or executed blindly.
 
 Observed examples include AFS tools, CCS tools, Ghidra/EmotionEngine material, Kuriimu, PS2Dis, PSS tools, StudioCCS variants, and many unknown `.bin` files. Inspect and select a tool for a specific task before using it.
 

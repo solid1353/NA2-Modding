@@ -1,9 +1,14 @@
 param(
-    [string]$SourceDir = (Join-Path (Resolve-Path (Join-Path $PSScriptRoot "..")).Path "source")
+    [string]$SourceDir = ""
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
+if ([string]::IsNullOrWhiteSpace($SourceDir)) {
+    $SourceDir = $projectPaths.source
+}
 
 if (-not (Test-Path -LiteralPath $SourceDir)) {
     throw "Original dir not found: $SourceDir"
@@ -39,4 +44,3 @@ if ($notReadOnly.Count -gt 0) {
     $notReadOnly | Select-Object FullName, Attributes | Format-Table -AutoSize
     throw "Some source files/folders are not read-only."
 }
-

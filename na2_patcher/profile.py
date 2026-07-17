@@ -5,6 +5,8 @@ import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
+from .project_paths import ProjectPaths, load_project_paths, resolve_alias
+
 
 MANIFEST_FIELDS = ["key", "value"]
 ROOT_FIELDS = ["root_id", "path"]
@@ -72,6 +74,20 @@ def _workspace_path(value: str, label: str, workspace: Path) -> Path:
     except ValueError as exc:
         raise ValueError(f"{label} escapes the repository: {value!r}") from exc
     return resolved
+
+
+def _profile_root_path(
+    value: str, label: str, workspace: Path, project_paths: ProjectPaths
+) -> Path:
+    if value.startswith("@"):
+        try:
+            resolved = resolve_alias(value, project_paths)
+        except (KeyError, ValueError) as exc:
+            raise ValueError(f"{label} has an invalid project-root alias: {value!r}") from exc
+        if not resolved.exists():
+            raise FileNotFoundError(resolved)
+        return resolved
+    return _workspace_path(value, label, workspace)
 
 
 def _tree_digest(path: Path, files: list[Path]) -> str:
@@ -172,11 +188,19 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
 
     root_rows = _read_tsv(directory / "roots.tsv", ROOT_FIELDS)
     roots: dict[str, Path] = {}
+    project_paths: ProjectPaths | None = None
     for row in root_rows:
         root_id = row["root_id"]
         if not root_id or root_id in roots:
             raise ValueError(f"Duplicate or empty profile root_id: {root_id!r}")
-        root = _workspace_path(row["path"], f"root {root_id}", workspace)
+        if row["path"].startswith("@"):
+            if project_paths is None:
+                project_paths = load_project_paths(workspace)
+            root = _profile_root_path(
+                row["path"], f"root {root_id}", workspace, project_paths
+            )
+        else:
+            root = _workspace_path(row["path"], f"root {root_id}", workspace)
         if not root.exists():
             raise FileNotFoundError(root)
         roots[root_id] = root

@@ -6,6 +6,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
 
 $resolved = Resolve-Path -LiteralPath $ElfPath
 $path = $resolved.ProviderPath

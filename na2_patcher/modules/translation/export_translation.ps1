@@ -10,45 +10,47 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $moduleRoot = $PSScriptRoot
-$projectRoot = [IO.Path]::GetFullPath((Join-Path $moduleRoot '..\..\..'))
+. (Join-Path $moduleRoot '..\..\..\scripts\project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
+$projectRoot = $projectPaths.repository
 $engine = Join-Path $moduleRoot 'engine.py'
 $mappingRoot = $moduleRoot
-$workRoot = Join-Path $projectRoot 'logs\na2_patcher\translation_exports'
+$workRoot = Join-Path $projectPaths.logs 'na2_patcher\translation_exports'
 
 if ([string]::IsNullOrWhiteSpace($Na2Folder)) {
-    $candidate = Join-Path $projectRoot 'source\NA2'
+    $candidate = Join-Path $projectPaths.source 'NA2'
     if (Test-Path -LiteralPath $candidate -PathType Container) {
         $Na2Folder = $candidate
     }
 }
 
 if ([string]::IsNullOrWhiteSpace($Na2Iso)) {
-    $candidate = Join-Path $projectRoot 'source\NA2.iso'
+    $candidate = Join-Path $projectPaths.source 'NA2.iso'
     if (Test-Path -LiteralPath $candidate -PathType Leaf) {
         $Na2Iso = $candidate
     }
 }
 
 if ([string]::IsNullOrWhiteSpace($Un5Folder)) {
-    $candidate = Join-Path $projectRoot 'source\UN5'
+    $candidate = Join-Path $projectPaths.source 'UN5'
     if (Test-Path -LiteralPath $candidate -PathType Container) {
         $Un5Folder = $candidate
     }
 }
 
 if ([string]::IsNullOrWhiteSpace($Un5Iso)) {
-    $candidate = Join-Path $projectRoot 'source\UN5.iso'
+    $candidate = Join-Path $projectPaths.source 'UN5.iso'
     if (Test-Path -LiteralPath $candidate -PathType Leaf) {
         $Un5Iso = $candidate
     }
 }
 
 if ([string]::IsNullOrWhiteSpace($Na2Folder) -and [string]::IsNullOrWhiteSpace($Na2Iso)) {
-    throw 'NA2 source not found. Expected source\NA2 or source\NA2.iso.'
+    throw "NA2 source not found under configured source root: $($projectPaths.source)"
 }
 
 if ([string]::IsNullOrWhiteSpace($Un5Folder) -and [string]::IsNullOrWhiteSpace($Un5Iso)) {
-    throw 'UN5 source not found. Expected source\UN5 or source\UN5.iso.'
+    throw "UN5 source not found under configured source root: $($projectPaths.source)"
 }
 
 $arguments = @(

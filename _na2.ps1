@@ -39,8 +39,14 @@ param(
     [object[]]$RemainingArguments
 )
 
-$na2Root = $PSScriptRoot
-$logDirectory = Join-Path $na2Root 'logs\na2'
+. (Join-Path $PSScriptRoot 'scripts\project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
+$na2Root = $projectPaths.repository
+$currentProfile = [IO.Path]::GetRelativePath(
+    $na2Root,
+    (Join-Path $projectPaths.patcher 'profiles\current')
+)
+$logDirectory = Join-Path $projectPaths.logs 'na2'
 $latestLogPath = Join-Path $logDirectory 'latest.log'
 $rollingLogPath = Join-Path $logDirectory 'rolling.log'
 $maxRollingLogSections = 500
@@ -107,8 +113,8 @@ catch {
 }
 
 try {
-$scriptsRoot = Join-Path $na2Root 'scripts'
-$translationModuleRoot = Join-Path $na2Root 'na2_patcher\modules\translation'
+$scriptsRoot = $projectPaths.scripts
+$translationModuleRoot = Join-Path $projectPaths.patcher 'modules\translation'
 $command = if ($Mode) { $Mode.ToLowerInvariant() } else { '' }
 
 function Write-Na2Stage {
@@ -117,7 +123,7 @@ function Write-Na2Stage {
 }
 
 function Get-LatestTranslationTsv {
-    $runsRoot = Join-Path $na2Root 'logs\na2_patcher\translation_exports\runs'
+    $runsRoot = Join-Path $projectPaths.logs 'na2_patcher\translation_exports\runs'
     if (-not (Test-Path -LiteralPath $runsRoot -PathType Container)) {
         return $null
     }
@@ -215,9 +221,9 @@ if ($command) {
 }
 
 $applyArgs = @{
-    InputIso  = Join-Path $na2Root 'source\NA2.iso'
-    OutputIso = Join-Path $na2Root 'build\Current.iso'
-    Pcsx2Exe  = Join-Path $na2Root 'pcsx2\pcsx2-qt.exe'
+    InputIso  = Join-Path $projectPaths.source 'NA2.iso'
+    OutputIso = Join-Path $projectPaths.build 'Current.iso'
+    Pcsx2Exe  = Join-Path $projectPaths.pcsx2 'pcsx2-qt.exe'
 }
 @{
     InputIso         = $InputIso
@@ -238,15 +244,17 @@ if ($AllowSizeChanges)  { $applyArgs.AllowSizeChanges = $true }
 if ($Help)             { $applyArgs.Help = $true }
 
 if ($fullWorkflow) {
-    $applyArgs.Profile = 'na2_patcher\profiles\current'
-    $applyArgs.ProfileLogDirectory = 'logs\na2_patcher\current_' + (Get-Date -Format 'yyyyMMdd_HHmmss_fff')
+    $applyArgs.Profile = $currentProfile
+    $profileLog = Join-Path $projectPaths.logs ('na2_patcher\current_' + (Get-Date -Format 'yyyyMMdd_HHmmss_fff'))
+    $applyArgs.ProfileLogDirectory = [IO.Path]::GetRelativePath($na2Root, $profileLog)
     $applyArgs.BuildOnly = $true
     $applyArgs.SkipActualize = $true
 }
 elseif (-not $RunOnly -and -not $applyArgs.ContainsKey('Profile')) {
     if (-not $Packages) {
-        $applyArgs.Profile = 'na2_patcher\profiles\current'
-        $applyArgs.ProfileLogDirectory = 'logs\na2_patcher\current_' + (Get-Date -Format 'yyyyMMdd_HHmmss_fff')
+        $applyArgs.Profile = $currentProfile
+        $profileLog = Join-Path $projectPaths.logs ('na2_patcher\current_' + (Get-Date -Format 'yyyyMMdd_HHmmss_fff'))
+        $applyArgs.ProfileLogDirectory = [IO.Path]::GetRelativePath($na2Root, $profileLog)
     }
     else {
         if (-not $applyArgs.ContainsKey('PackageDirectory')) {

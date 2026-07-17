@@ -7,6 +7,8 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
 
 function Test-AsciiContains {
     param(
@@ -151,9 +153,8 @@ finally {
     $fs.Dispose()
 }
 
-$root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$sourceRoot = Join-Path $root "source"
-$logDir = Join-Path $root "logs\extraction"
+$sourceRoot = $projectPaths.source
+$logDir = Join-Path $projectPaths.logs "extraction"
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 
 if ($OutDir.StartsWith($sourceRoot, [StringComparison]::OrdinalIgnoreCase)) {
@@ -201,11 +202,9 @@ Get-ChildItem -LiteralPath $OutDir -File |
     Select-Object Name, Count |
     Format-Table -AutoSize
 
-$root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $readonlyScript = Join-Path $PSScriptRoot "set_original_readonly.ps1"
-if ($OutDir.StartsWith((Join-Path $root "source"), [StringComparison]::OrdinalIgnoreCase) -and
+if ($OutDir.StartsWith($projectPaths.source, [StringComparison]::OrdinalIgnoreCase) -and
     (Test-Path -LiteralPath $readonlyScript)) {
     & $readonlyScript | Out-Null
 }
-
 

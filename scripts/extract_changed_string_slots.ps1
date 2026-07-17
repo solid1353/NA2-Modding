@@ -1,21 +1,26 @@
 param(
-    [string]$ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path,
+    [string]$ProjectRoot = "",
     [string]$OutPath = ""
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
+    $ProjectRoot = $projectPaths.repository
+}
 
 if ([string]::IsNullOrWhiteSpace($OutPath)) {
-    $OutPath = Join-Path $ProjectRoot "work\translation_compare\reports\changed_string_slots.tsv"
+    $OutPath = Join-Path $projectPaths.work "translation_compare\reports\changed_string_slots.tsv"
 }
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $OutPath) | Out-Null
 $encoding = [Text.Encoding]::GetEncoding(932)
 
 $pairs = @(
-    @{ Name = "BTL.BIN"; Source = "source\NA2.iso.files\PRG\BTL.BIN"; Build = "work\translation_compare\build_current\BTL.BIN" },
-    @{ Name = "ETC.BIN"; Source = "source\NA2.iso.files\PRG\ETC.BIN"; Build = "work\translation_compare\build_current\ETC.BIN" },
-    @{ Name = "SLPS_258.37"; Source = "source\NA2.iso.files\SLPS_258.37"; Build = "work\translation_compare\build_current\SLPS_258.37" }
+    @{ Name = "BTL.BIN"; Source = Join-Path $projectPaths.source "NA2.iso.files\PRG\BTL.BIN"; Build = Join-Path $projectPaths.work "translation_compare\build_current\BTL.BIN" },
+    @{ Name = "ETC.BIN"; Source = Join-Path $projectPaths.source "NA2.iso.files\PRG\ETC.BIN"; Build = Join-Path $projectPaths.work "translation_compare\build_current\ETC.BIN" },
+    @{ Name = "SLPS_258.37"; Source = Join-Path $projectPaths.source "NA2.iso.files\SLPS_258.37"; Build = Join-Path $projectPaths.work "translation_compare\build_current\SLPS_258.37" }
 )
 
 function Find-StringStart([byte[]]$Bytes, [int]$Offset) {
@@ -41,8 +46,8 @@ function Decode-Bytes([byte[]]$Bytes, [int]$Start, [int]$End, [Text.Encoding]$En
 
 $rows = [System.Collections.Generic.List[object]]::new()
 foreach ($pair in $pairs) {
-    $sourcePath = Join-Path $ProjectRoot $pair.Source
-    $buildPath = Join-Path $ProjectRoot $pair.Build
+    $sourcePath = $pair.Source
+    $buildPath = $pair.Build
     $source = [IO.File]::ReadAllBytes($sourcePath)
     $build = [IO.File]::ReadAllBytes($buildPath)
     $seen = @{}

@@ -10,6 +10,14 @@ import zipfile
 from collections import defaultdict
 from pathlib import Path, PurePosixPath
 
+REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
+
+from na2_patcher.project_paths import load_project_paths, resolve_alias
+
+PROJECT_PATHS = load_project_paths(REPOSITORY_ROOT)
+
 
 MAPPING_FIELDS = [
     "mapping_id", "component", "na2_path", "un5_path", "na2_sha256", "un5_sha256",
@@ -89,22 +97,31 @@ def logical_parts(value: str) -> tuple[str, str]:
 
 
 def main() -> int:
+    project_paths = PROJECT_PATHS
     parser = argparse.ArgumentParser(description="Normalize GPT menu mapping TSVs into raw patcher schema v1.")
     parser.add_argument("--archive", required=True)
     parser.add_argument("--output", required=True)
-    parser.add_argument("--root", action="append", default=["na2=source/NA2", "un5=source/UN5"])
+    parser.add_argument("--root", action="append")
     args = parser.parse_args()
 
-    archive_path = repository_relative(args.archive, "--archive")
-    output = repository_relative(args.output, "--output")
+    archive_path = project_paths.repository / repository_relative(args.archive, "--archive")
+    output = project_paths.repository / repository_relative(args.output, "--output")
     if output.exists():
         raise ValueError(f"Output already exists: {output}")
-    roots: dict[str, Path] = {}
-    for binding in args.root:
+    roots: dict[str, Path] = {
+        "na2": project_paths.path("source", "NA2"),
+        "un5": project_paths.path("source", "UN5"),
+    }
+    for binding in args.root or []:
         root_id, separator, value = binding.partition("=")
         if not separator or not re.fullmatch(r"[a-z][a-z0-9_-]*", root_id):
             raise ValueError(f"Invalid root binding: {binding}")
-        roots[root_id] = repository_relative(value, f"root {root_id}")
+        if value.startswith("@"):
+            roots[root_id] = resolve_alias(value, project_paths)
+        else:
+            roots[root_id] = project_paths.repository / repository_relative(
+                value, f"root {root_id}"
+            )
 
     with zipfile.ZipFile(archive_path) as archive:
         mappings = read_archive_tsv(archive, "handler_mappings.tsv", MAPPING_FIELDS)

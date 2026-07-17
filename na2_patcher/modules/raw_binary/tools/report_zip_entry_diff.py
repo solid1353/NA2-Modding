@@ -3,15 +3,23 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import sys
 import zipfile
 from pathlib import Path
 
+REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
+
+from na2_patcher.project_paths import load_project_paths
+
+PROJECT_PATHS = load_project_paths(REPOSITORY_ROOT)
 
 def relative_path(value: str) -> Path:
     path = Path(value)
     if path.is_absolute() or ".." in path.parts:
         raise ValueError("Paths must be repository-relative")
-    return path
+    return PROJECT_PATHS.repository / path
 
 
 def main() -> int:

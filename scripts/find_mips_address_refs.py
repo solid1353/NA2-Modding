@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from project_paths import PROJECT_PATHS
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()

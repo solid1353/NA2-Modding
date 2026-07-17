@@ -64,7 +64,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 ## Task workflow and approval
 
 1. Tasks may be added to `TASKS.md` at any time by the user, or by an agent when the user orders it.
-2. After a successful push—or whenever the user asks what is next—the agent reads `TASKS.md`, reports the relevant `In Progress` and `Backlog` entries word for word without paraphrasing, and asks the user to select one.
+2. After a successful push—or whenever the user asks what is next—the agent reads `TASKS.md`, reports several relevant `In Progress` choices and any closely related `Backlog` choices word for word without paraphrasing and in their original order, avoids dumping the whole file, and asks the user to select one.
 3. The agent may perform read-only inspection, then gives a short plan, recommends an intelligence level, and ends with **Awaiting plan approval**.
 4. Only an exact standalone ASCII `approved` or `qwe` authorizes changes.
 5. The agent executes freely within the approved task, including major changes.
@@ -111,11 +111,15 @@ Release PNACH files are coupled to the boot ELF CRC of their paired ISO. Always 
 
 ## Actualize workflow
 
-When asked to actualize, use the ISO in `@build/` by default. Calculate the PCSX2-style ELF CRC from the boot ELF inside that ISO. Keep the canonical file named `@cheats/SLPS-25837_C0659AD1.pnach`. Delete obsolete `@pcsx2/cheats/SLPS-25837_<crc>.pnach` symbolic links directly, without moving them to trash, then create the current CRC-named relative symlink in `@pcsx2/cheats/` targeting the canonical project PNACH if missing. Never delete the canonical PNACH or any real PNACH file during actualize.
+When asked to actualize, keep the canonical file named `@pcsx2_files/SLPS-25837_C0659AD1.pnach`. Managed aliases are only matching-serial symlinks that resolve to this canonical file; preserve all real PNACH files, other games, and unrelated symlinks. If the canonical file is zero bytes, delete its managed aliases directly and skip ISO/CRC inspection. Otherwise, use the ISO in `@build/` by default, calculate the PCSX2-style ELF CRC from its boot ELF, delete obsolete managed aliases, and create the current CRC-named relative symlink targeting the canonical project PNACH if missing. Refuse an occupied target filename instead of overwriting an unmanaged file or symlink.
 
-Before handing off or launching any ISO, actualize the PNACH alias for that exact ISO and verify that the resulting CRC-named symlink exists. Do not skip this step unless the user explicitly requests a no-PNACH isolation run.
+Before handing off or launching any ISO, run actualization for that exact ISO. For a non-empty canonical PNACH, verify that the resulting CRC-named symlink exists; for a zero-byte canonical PNACH, verify that its managed aliases are absent. Do not skip this step unless the user explicitly requests a no-PNACH isolation run.
+
+Before launching PCSX2, log enabled cheat names from uncommented PNACH `patch=` or setting lines. Metadata-only lines do not count; report `none` when there are no enabled cheats.
 
 Before rebuilding or launching a test ISO, unconditionally issue the close command for the configured `@pcsx2/pcsx2-qt.exe`. Do not probe first to see whether PCSX2 is running; closing an absent process should be treated as a harmless no-op.
+
+If an agent launches PCSX2 for testing, it must use `scripts/test_pcsx2_launch.ps1`. The wrapper temporarily mutes PCSX2, starts it hidden without intentionally activating it, re-hides any exposed window, restores the previous foreground window if PCSX2 took focus, closes the test instance after the validation window, and restores the original audio setting even when testing fails. Normal user launches remain unchanged.
 
 ## Task report format
 

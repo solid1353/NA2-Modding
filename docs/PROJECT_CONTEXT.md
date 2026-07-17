@@ -10,11 +10,13 @@ Original ISO:
 
 Current PNACH:
 
-- Canonical editable PNACH base: `@cheats/SLPS-25837_C0659AD1.pnach`
-- Actualized PNACH symlinks live in `@pcsx2/cheats/SLPS-25837_<crc>.pnach` and point to `@cheats/SLPS-25837_C0659AD1.pnach`.
+- Canonical editable PNACH base: `@pcsx2_files/SLPS-25837_C0659AD1.pnach`
+- Actualized PNACH symlinks live in `@pcsx2/cheats/SLPS-25837_<crc>.pnach` and point to `@pcsx2_files/SLPS-25837_C0659AD1.pnach`.
 - Former PNACH sections preserved as raw-binary patch sets are `Testing`, `Rendering`, `QoL`, and `Battle logic`. Patches are cheats, edits are subcheats, and `default_enabled` preserves state. Rendering is currently an empty disabled module in the active profile.
 - PNACH actualization is mandatory before every ISO handoff or launch unless the user explicitly requests a no-PNACH isolation run.
-- `@cheats/` contains only the Git-tracked canonical PNACH. The actualizer manages CRC-named relative symlinks under `@pcsx2/cheats/`.
+- A zero-byte canonical PNACH removes its managed PCSX2 CRC aliases and skips ISO/CRC inspection. Managed aliases are matching-serial symlinks that resolve to this canonical file; other games, real PNACH files, and unrelated symlinks are preserved.
+- `@pcsx2_files/` contains the Git-tracked canonical PNACH, project input recordings, and ignored local screenshots. The actualizer manages CRC-named relative symlinks under `@pcsx2/cheats/`.
+- Every normal PCSX2 launch logs enabled named cheats from uncommented `patch=` or setting lines, or `none` when no cheats are enabled.
 - PNACH labels such as `// [Skip CC2 intro]` are comments only. A cheat is enabled only when its executable `patch=`/setting line is uncommented. Disabled proven cheats and disabled hypotheses must keep their executable lines commented out. Temporary PNACH hypothesis patches go at the top as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 - Fixed-address PNACH hypotheses are safe by default only for the boot ELF or another region proven to remain resident and stable for the entire write lifetime.
 - `BTL.BIN`, `ETC.BIN`, and other on-demand modules are loaded and unloaded into reusable EE memory. Never test them with unguarded fixed-address PNACH writes: patch the file through the raw-binary module, rebuild the ISO, and test that build instead.
@@ -34,7 +36,8 @@ replaced with a copied machine-specific absolute path.
 - `releases/`: ignored relative link to the frozen milestone archive outside the repository. It contains milestone artifacts only; never alter existing contents.
 - `logs/`: generated records grouped into task-specific subfolders. Current groups include `na2/`, `na2_patcher/`, `font/`, `translation/`, `packages/`, `milestones/`, `extraction/`, `inventory/`, and `trash/`; no files should be written directly in the `logs/` root. `na2` keeps only `logs/na2/latest.log` for the most recent completed run and `logs/na2/rolling.log` for the newest 500 runs, with sections separated by human-readable timestamps.
 - `scripts/`: repeatable tooling.
-- `@pcsx2/`: portable, self-contained PCSX2 installation. BIOS, memory cards, logs, saves, settings, and other support data stay inside this root. Its game-list media paths may point to `@build/` and `@source/`; its CRC-named cheat symlinks target the canonical PNACH under `@cheats/`.
+- `@pcsx2_files/`: project-owned PCSX2 artifacts. The canonical PNACH and input recordings are tracked; screenshots remain local and ignored.
+- `@pcsx2/`: portable, self-contained PCSX2 installation. BIOS, memory cards, logs, saves, settings, and other support data stay inside this root. Its game-list media paths may point to `@build/` and `@source/`; its CRC-named cheat symlinks target the canonical PNACH under `@pcsx2_files/`.
 - `na2_patcher/modules/raw_binary/`: repository-owned schema v1, CLI validator/patcher, the exact font m01 reconstruction, normalized disabled GPT candidates, and verified historical font ELF patch groups. It never applies `pending`, `runtime_failed`, or `deprecated` patches and writes only new same-size outputs with complete logs. The main ISO compositor applies ordered raw patches before translation with staged-byte conflict checks.
 - `na2_patcher/`: profile schemas, ordered module orchestration, immutable module-data snapshots, and the translation/raw-binary implementations. `na2_patcher/profiles/current/` enables font m01 and translation m03/v33 by exact executable-input hashes. Runtime-proven `ELF-M008` remains listed but intentionally disabled as WIP. Raw-binary hashes cover canonical TSVs and referenced blobs, not adjacent READMEs or authoring tools.
 - `.agents/`: dated human-readable handoffs exchanged between separate Windows installations and Codex instances. They may contain machine-specific paths as historical context, are non-authoritative, and must be reviewed rather than deleted as clutter.
@@ -128,7 +131,9 @@ Use `scripts/split_cvm_rofs.ps1` to split the encrypted CVM safely without runni
 - Root `_na2.ps1` is the command entrypoint; helper scripts stay under `scripts/`.
 - Bare `na2` performs the standard workflow in two stages: build and atomically promote the pinned current profile, then actualize the PNACH exactly once for the completed ISO and launch PCSX2.
 - `scripts/apply_latest_na2.ps1` / `scripts/apply_latest_na2.py`: copy the clean ISO to `build/Current.iso.building`, execute a hash-pinned ordered profile, verify the complete temporary output, atomically promote it to `Current.iso`, actualize PNACH when requested, and optionally launch PCSX2. Legacy explicit ZIP/TSV arguments remain temporarily available for rollback; file-size changes require explicit `-AllowSizeChanges`.
-- `na2 act` actualizes the PNACH symlink for the ELF CRC of the ISO in `@build/`; it directly deletes obsolete CRC-named PNACH symlinks from `@pcsx2/cheats/`, while preserving the canonical PNACH and real files.
+- Agent-run PCSX2 launch validation uses `scripts/test_pcsx2_launch.ps1`. It temporarily mutes PCSX2, launches it hidden without intentionally activating it, re-hides any exposed window, restores the previous foreground window if PCSX2 took focus, closes it after the requested validation window, and restores the original audio setting; normal user launches are unchanged.
+- `na2 act` removes managed aliases when the canonical PNACH is zero bytes; otherwise it actualizes the symlink for the ELF CRC of the ISO in `@build/`. It preserves other games, real PNACH files, and unrelated symlinks.
+- `scripts/pnach_state.ps1` identifies zero-byte canonical PNACH files and extracts enabled named cheats for launch logging.
 - Translation TSV schema: `path`, `offset`, `expected_hex`, `replacement_hex`, `source_text`, `replacement_text`; translation owns no replacement binaries.
 - `check_translation_lengths.ps1`: checks CP932 byte lengths for translation tables.
 - `extract_afs.ps1`: extracts AFS archives for inspection when needed.
@@ -176,14 +181,14 @@ PCSX2 cheat filenames include the game CRC, for example:
 
 `SLPS-25837_BCB73695.pnach`
 
-If the boot ELF inside the ISO changes, PCSX2 may report a different CRC. Actualize creates a matching `@pcsx2/cheats/SLPS-25837_<crc>.pnach` link to `@cheats/SLPS-25837_C0659AD1.pnach`.
+If the boot ELF inside the ISO changes, PCSX2 may report a different CRC. Actualize creates a matching `@pcsx2/cheats/SLPS-25837_<crc>.pnach` link to `@pcsx2_files/SLPS-25837_C0659AD1.pnach`.
 
 PCSX2 uses its internal `@pcsx2/cheats/` folder. Only the canonical PNACH is tracked in the project; actualized CRC aliases are relative symlinks in the portable installation.
 
 Known PCSX2 paths from prior notes:
 
 - Log: `@pcsx2/logs/emulog.txt`
-- Cheats: CRC aliases in `@pcsx2/cheats/`, targeting the canonical `@cheats/SLPS-25837_C0659AD1.pnach`
+- Cheats: CRC aliases in `@pcsx2/cheats/`, targeting the canonical `@pcsx2_files/SLPS-25837_C0659AD1.pnach`
 
 Known log pattern:
 
@@ -237,7 +242,7 @@ DATA.CVM password: cc2fuku.
 
 ## Actualize Workflow
 
-When asked to actualize, use the ISO in `@build/` by default. Calculate the PCSX2-style ELF CRC from the boot ELF inside that ISO. Keep the canonical file named `@cheats/SLPS-25837_C0659AD1.pnach`. Delete every obsolete matching CRC-named symbolic link from `@pcsx2/cheats/` directly, without trashing it, then create the current relative `@pcsx2/cheats/SLPS-25837_<crc>.pnach` symlink targeting the canonical PNACH if missing. Never delete the canonical PNACH or a real PNACH file.
+When asked to actualize, keep the canonical file named `@pcsx2_files/SLPS-25837_C0659AD1.pnach`. Managed aliases are matching-serial symlinks that resolve to this canonical file; preserve other games, real PNACH files, and unrelated symlinks. If the canonical file is zero bytes, delete its managed aliases directly and skip ISO/CRC inspection. Otherwise, use the ISO in `@build/` by default, calculate the PCSX2-style ELF CRC from its boot ELF, delete obsolete managed aliases, and create the current relative `@pcsx2/cheats/SLPS-25837_<crc>.pnach` symlink targeting the canonical PNACH if missing. Refuse an occupied target filename instead of overwriting it.
 
 ## Release Workflow
 

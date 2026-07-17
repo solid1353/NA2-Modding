@@ -27,12 +27,15 @@ param(
     [Alias('r')]
     [switch]$RunOnly,
     [switch]$SkipActualize,
+    [switch]$StartMinimized,
+    [switch]$StartHidden,
     [Alias('h')]
     [switch]$Help
 )
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'project_paths.ps1')
+. (Join-Path $PSScriptRoot 'pnach_state.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
 function Stop-PortablePcsx2 {
@@ -123,6 +126,8 @@ if ($Help) {
         '  -b, -BuildOnly  Build from selected sources; do not run'
         '  -r, -RunOnly    Run the existing output ISO without rebuilding'
         '  -SkipActualize  Explicit no-PNACH isolation mode; otherwise actualize before handoff/launch'
+        '  -StartMinimized Start PCSX2 minimized; intended for agent-run validation'
+        '  -StartHidden    Start PCSX2 hidden; intended for non-interrupting agent validation'
         '  -h, -Help       Show this help'
     ) -join [Environment]::NewLine | Write-Output
     return
@@ -130,6 +135,9 @@ if ($Help) {
 
 if ($BuildOnly -and $RunOnly) {
     throw '-b and -r cannot be used together.'
+}
+if ($StartMinimized -and $StartHidden) {
+    throw '-StartMinimized and -StartHidden cannot be used together.'
 }
 
 if (-not $OutputIso) {
@@ -238,7 +246,8 @@ if (-not (Test-Path -LiteralPath $resolvedOutputIso -PathType Leaf)) {
 if (-not $SkipActualize) {
     $global:LASTEXITCODE = 0
     try {
-        & (Join-Path $PSScriptRoot 'actualize_cheats_for_build_iso.ps1') -IsoPath $resolvedOutputIso
+        $actualizeResult = & (Join-Path $PSScriptRoot 'actualize_cheats_for_build_iso.ps1') -IsoPath $resolvedOutputIso
+        $actualizeResult | Write-Output
     }
     catch {
         throw "PNACH actualization failed: $($_.Exception.Message)"
@@ -256,5 +265,30 @@ if (-not $BuildOnly) {
         throw "PCSX2 executable does not exist: $Pcsx2Exe"
     }
 
-    Start-Process -FilePath $Pcsx2Exe -ArgumentList @('-batch', "`"$resolvedOutputIso`"")
+    $enabledCheats = if ($SkipActualize) {
+        'not checked (-SkipActualize)'
+    }
+    else {
+        $canonicalPnach = Join-Path $projectPaths.pcsx2_files 'SLPS-25837_C0659AD1.pnach'
+        $pnachState = Get-Na2PnachState -Path $canonicalPnach
+        if ($pnachState.EnabledCheats.Count -eq 0) {
+            'none'
+        }
+        else {
+            $pnachState.EnabledCheats -join ', '
+        }
+    }
+    Write-Host "[na2] Enabled cheats: $enabledCheats" -ForegroundColor Cyan
+
+    $startArguments = @{
+        FilePath = $Pcsx2Exe
+        ArgumentList = @('-batch', "`"$resolvedOutputIso`"")
+    }
+    if ($StartHidden) {
+        $startArguments.WindowStyle = 'Hidden'
+    }
+    elseif ($StartMinimized) {
+        $startArguments.WindowStyle = 'Minimized'
+    }
+    Start-Process @startArguments
 }

@@ -21,6 +21,7 @@ param(
     [Alias('r')]
     [switch]$RunOnly,
     [switch]$SkipActualize,
+    [switch]$StartMinimized,
     [switch]$AllowSizeChanges,
     [Alias('h')]
     [switch]$Help,
@@ -241,6 +242,7 @@ if ($Packages)  { $applyArgs.Packages = $Packages }
 if ($BuildOnly) { $applyArgs.BuildOnly = $true }
 if ($RunOnly)          { $applyArgs.RunOnly = $true }
 if ($SkipActualize)     { $applyArgs.SkipActualize = $true }
+if ($StartMinimized)    { $applyArgs.StartMinimized = $true }
 if ($AllowSizeChanges)  { $applyArgs.AllowSizeChanges = $true }
 if ($Help)             { $applyArgs.Help = $true }
 
@@ -302,6 +304,9 @@ if ($fullWorkflow) {
         OutputIso = $applyArgs.OutputIso
         Pcsx2Exe  = $applyArgs.Pcsx2Exe
         RunOnly   = $true
+    }
+    if ($StartMinimized) {
+        $runArgs.StartMinimized = $true
     }
     Write-Na2Stage '2/2 Actualize PNACH and launch rebuilt ISO in PCSX2'
     & $apply @runArgs

@@ -7,6 +7,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot 'project_paths.ps1')
+. (Join-Path $PSScriptRoot 'pnach_state.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
 $sectorSize = 2048
@@ -28,6 +29,23 @@ function Get-SymbolicLinkDestinationPath {
         Join-Path $Item.DirectoryName $linkTarget
     }
     return (Resolve-Path -LiteralPath $candidate).Path
+}
+
+function Test-CanonicalPnachSymlink {
+    param(
+        [IO.FileSystemInfo]$Item,
+        [string]$CanonicalPnach
+    )
+
+    if ($Item.LinkType -ne "SymbolicLink") {
+        return $false
+    }
+    try {
+        return (Get-SymbolicLinkDestinationPath -Item $Item) -eq $CanonicalPnach
+    }
+    catch {
+        return $false
+    }
 }
 
 function Read-UInt32LE {
@@ -132,24 +150,50 @@ function Get-Pcsx2ElfCrcFromBytes {
     return ('{0:X8}' -f $crc)
 }
 
-if ([string]::IsNullOrWhiteSpace($IsoPath)) {
-    $IsoPath = Join-Path $projectPaths.build 'Current.iso'
-    if (-not (Test-Path -LiteralPath $IsoPath -PathType Leaf)) {
-        throw "Default build ISO does not exist: $IsoPath. Pass -IsoPath explicitly."
-    }
-}
-
-$IsoPath = (Resolve-Path -LiteralPath $IsoPath).Path
 if ([string]::IsNullOrWhiteSpace($CanonicalPnach)) {
-    $CanonicalPnach = Join-Path $projectPaths.cheats "SLPS-25837_C0659AD1.pnach"
+    $CanonicalPnach = Join-Path $projectPaths.pcsx2_files "SLPS-25837_C0659AD1.pnach"
 }
 $CanonicalPnach = (Resolve-Path -LiteralPath $CanonicalPnach).Path
+$pnachState = Get-Na2PnachState -Path $CanonicalPnach
 $cheatsDir = Join-Path $projectPaths.pcsx2 'cheats'
 if (-not (Test-Path -LiteralPath $cheatsDir -PathType Container)) {
     throw "Configured PCSX2 cheats directory does not exist: $cheatsDir"
 }
 $cheatsDir = (Resolve-Path -LiteralPath $cheatsDir).Path
 $canonicalLinkTarget = [IO.Path]::GetRelativePath($cheatsDir, $CanonicalPnach)
+
+if ($pnachState.IsEmpty) {
+    $removedPnachSymlinks = @(
+        Get-ChildItem -LiteralPath $cheatsDir -Filter "${Serial}_*.pnach" -Force |
+            Where-Object {
+                Test-CanonicalPnachSymlink -Item $_ -CanonicalPnach $CanonicalPnach
+            } |
+            ForEach-Object {
+                $name = $_.Name
+                Remove-Item -LiteralPath $_.FullName -Force
+                $name
+            }
+    )
+
+    return [pscustomobject]@{
+        Iso = $null
+        BootElf = $null
+        PCSX2ElfCRC = $null
+        CanonicalPnach = $CanonicalPnach
+        CheatsPnach = $null
+        PnachStatus = "skipped empty canonical PNACH"
+        RemovedPnachSymlinks = $removedPnachSymlinks
+        EnabledCheats = @()
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($IsoPath)) {
+    $IsoPath = Join-Path $projectPaths.build 'Current.iso'
+    if (-not (Test-Path -LiteralPath $IsoPath -PathType Leaf)) {
+        throw "Default build ISO does not exist: $IsoPath. Pass -IsoPath explicitly."
+    }
+}
+$IsoPath = (Resolve-Path -LiteralPath $IsoPath).Path
 
 $iso = [IO.File]::OpenRead($IsoPath)
 try {
@@ -190,8 +234,7 @@ $removedPnachSymlinks = @(
     Get-ChildItem -LiteralPath $cheatsDir -Filter "${Serial}_*.pnach" -Force |
         Where-Object {
             $_.FullName -ne $targetPnach -and
-            $_.FullName -ne $CanonicalPnach -and
-            $_.LinkType -eq "SymbolicLink"
+            (Test-CanonicalPnachSymlink -Item $_ -CanonicalPnach $CanonicalPnach)
         } |
         ForEach-Object {
             $name = $_.Name
@@ -205,21 +248,11 @@ if ($null -ne $targetItem) {
     if ($targetItem.LinkType -ne "SymbolicLink") {
         throw "Refusing to replace real PNACH file at CRC alias path: $targetPnach"
     }
-    $existingDestination = $null
-    try {
-        $existingDestination = Get-SymbolicLinkDestinationPath -Item $targetItem
-    }
-    catch {
-        # A dangling or unreadable symlink is safe to replace; a real file is not.
-    }
+    $existingDestination = Get-SymbolicLinkDestinationPath -Item $targetItem
     if ($existingDestination -ne $CanonicalPnach) {
-        Remove-Item -LiteralPath $targetPnach -Force
-        New-Item -ItemType SymbolicLink -Path $targetPnach -Target $canonicalLinkTarget | Out-Null
-        $pnachStatus = "replaced incorrect symlink"
+        throw "Refusing to replace unmanaged PNACH symlink at CRC alias path: $targetPnach -> $existingDestination"
     }
-    else {
-        $pnachStatus = "verified symlink"
-    }
+    $pnachStatus = "verified symlink"
 }
 else {
     New-Item -ItemType SymbolicLink -Path $targetPnach -Target $canonicalLinkTarget | Out-Null
@@ -240,4 +273,5 @@ if ($verifiedDestination -ne $CanonicalPnach) {
     CheatsPnach = $targetPnach
     PnachStatus = $pnachStatus
     RemovedPnachSymlinks = $removedPnachSymlinks
+    EnabledCheats = $pnachState.EnabledCheats
 }

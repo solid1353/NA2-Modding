@@ -5,7 +5,7 @@
 /logs/
 /work/
 /releases
-/screenshots
+/pcsx2_files/screenshots/
 __pycache__/
 
 # Windows/editor noise

@@ -3,7 +3,6 @@
 ## In Progress
 
 ### Project
-- Actualize only when pnach is not empty, add logging of enabled cheats to launch command.
 - Properly unpack NA2, UN3, UN5, UN6.
 - Do I need to disassemble BTL/ETC/other or is ELF enough?
 - Re-disassemble NA2.

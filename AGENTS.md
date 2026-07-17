@@ -5,9 +5,9 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 ## Hard rules
 
 - Use only repository-relative paths in canonical project files, scripts, configuration, logs, manifests, metadata, and generated artifacts; never persist machine-specific absolute paths there. Absolute paths are permitted only in dated `.agents/` handoffs as non-authoritative migration context, transient in-memory command arguments or diagnostic output when a tool requires them, and user-facing clickable file links. Do not persist an absolute path anywhere else unless the user explicitly authorizes that specific exception.
-- Do not commit or push the current changeset until the user approves the completed result. Treat `qwe` exactly as the word `approved`: it approves either a proposed plan or a completed result, according to the stage of the workflow. After completion approval, remove the completed task from `TASKS.md`, commit the coherent approved changeset, and push the current branch without requesting separate commit or push approval. Commands queued before completion approval belong to the same changeset and commit unless the user explicitly separates them.
+- Before plan approval, only read-only inspection is allowed. Only a standalone exact ASCII response of `approved` or `qwe` authorizes changes. A second standalone exact approval after result review authorizes task deletion, commit, and push.
 - The user may edit files or create commits while agents are working; treat this as expected concurrent activity, not an anomaly or blocker. Refresh Git status and history before staging, committing, and pushing; preserve concurrent user work and stage only the intended changes unless the user directs otherwise. Agents may push the user's existing commits together with their own. Pause when concurrent changes directly overlap or conflict with the agent's work, or materially change the requested outcome.
-- If anything becomes unclear at any point—including after work has started—stop at the current safe boundary, preserve the work in progress, explain the ambiguity, and request clarification. Do not continue speculatively or silently choose an interpretation that could affect scope, behavior, safety, or the expected result.
+- Execute freely within an approved task, including major implementation changes. If the task becomes unclear or the whole approach is wrong, stop safely and clarify; a replacement plan requires approval.
 - Use `na2_patcher/profiles/current/` as the active reproducible build definition. Profiles must pin every enabled module input by hash and use only repository-relative paths; do not select newest packages implicitly in the normal workflow. Raw-binary profile hashes cover canonical TSV inputs and referenced blobs, not adjacent documentation.
 - Treat `na2_patcher/milestones/` mapping snapshots as immutable module data. New translation work gets a new uniquely named snapshot/profile; never rewrite an existing snapshot.
 - Never change binary files manually.
@@ -48,7 +48,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 - Keep active PNACH files clean: confirmed named sections only, plus temporary hypothesis patches at the very top when actively testing.
 - Temporary PNACH hypothesis patches go at the top of the file as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 - Move old candidates, failed experiments, and speculative addresses to `docs/HYPOTHESES.md`.
-- Agents may read and manage `TASKS.md` under the task workflow below. Add tasks only on the user's order. Agents may move tasks between `In Progress` and `Backlog`, execute selected tasks after plan approval, and delete a completed task only as part of the approved commit/push step. Route each selected task to the most appropriate existing Codex task/chat, or create a new one when needed.
+- Agents may read and manage `TASKS.md` under the task workflow below. Tasks may be added at any time by the user, or by an agent when the user orders it. Agents may move tasks between `In Progress` and `Backlog`, execute selected tasks after plan approval, and delete a completed task only after result approval.
 - For string patches, always check encoded byte length before writing. `[S]`-prefixed `shorten` mappings are authorized manual fit exceptions when they retain an exact official UN5 source reference.
 - Prefer Shift-JIS / CP932-compatible text unless proven otherwise.
 - DATA.CVM password is `cc2fuku`.
@@ -62,13 +62,16 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 
 ## Task workflow and approval
 
-1. The user, or an agent acting on the user's order, may add work to `TASKS.md` at any time. Do not treat newly queued commands as a separate changeset unless the user says so.
-2. When choosing what to do next, read `TASKS.md`, briefly present the relevant `In Progress` and `Backlog` options, and ask the user to select the task. If routing matters, recommend the best existing Codex task/chat or a new one.
-3. After a task is selected, briefly describe the proposed plan and recommend an appropriate intelligence/reasoning level with a short justification. Discuss or revise the plan until the user approves it with `approved`, `qwe`, or another unambiguous approval.
-4. Execute the approved plan. If anything becomes unclear mid-task, stop safely and request clarification before continuing.
-5. Report the completed result for review. If the user requests corrections, keep the task and current changeset open, revise the plan when needed, and continue the review loop.
-6. When the user approves the completed result with `approved`, `qwe`, or another unambiguous approval, delete the completed task from `TASKS.md`, include all approved queued work in the same coherent commit, refresh Git state, commit, and push.
-7. After a successful push, read `TASKS.md`, ask what to do next, and present enough task information for the user to choose.
+1. Tasks may be added to `TASKS.md` at any time by the user, or by an agent when the user orders it.
+2. After a successful push—or whenever the user asks what is next—the agent reads `TASKS.md`, summarizes the relevant `In Progress` and `Backlog` choices, and asks the user to select one.
+3. The agent may perform read-only inspection, then gives a short plan, recommends an intelligence level, and ends with **Awaiting plan approval**.
+4. Only an exact standalone ASCII `approved` or `qwe` authorizes changes.
+5. The agent executes freely within the approved task, including major changes.
+6. If the task becomes unclear or the whole approach is wrong, stop and clarify; a replacement plan needs approval.
+7. The agent reports the result.
+8. Only another exact standalone ASCII `approved` or `qwe` authorizes task deletion, commit, and push.
+9. The user's concurrent edits and commits are expected. The agent preserves them, refreshes Git state before Git operations, and may push the user's existing commits with its own.
+10. Queued instructions remain part of the same changeset unless the user says otherwise.
 
 
 ## Cross-install Codex handoffs

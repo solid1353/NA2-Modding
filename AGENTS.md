@@ -6,6 +6,7 @@ PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Acce
 
 - Use only repository-relative paths in canonical project files, scripts, configuration, logs, manifests, metadata, and generated artifacts; never persist machine-specific absolute paths there. Dated `.agents/` handoffs may record machine-specific paths as non-authoritative migration context.
 - Codex is authorized to create commits and push this project's current branch without requesting approval for each operation. Prefer coherent checkpoints and do not commit half-classified runtime experiments when a result is imminent.
+- Treat a standalone user response of `qwe` as explicit approval of the completed result. After the user approves a completed result, commit the relevant completed work and push the current branch without requesting separate commit or push approval. The user may edit files or create commits while agents are working; treat this as expected concurrent activity, not an anomaly or blocker. Refresh Git status and history before staging, committing, and pushing; preserve concurrent user work and stage only the agent's intended changes unless the user directs otherwise. Agents may always push the user's existing commits together with their own. Pause only when concurrent changes directly overlap or conflict with the agent's work, or materially change the requested outcome.
 - Use `na2_patcher/profiles/current/` as the active reproducible build definition. Profiles must pin every enabled module input by hash and use only repository-relative paths; do not select newest packages implicitly in the normal workflow. Raw-binary profile hashes cover canonical TSV inputs and referenced blobs, not adjacent documentation.
 - Treat `na2_patcher/milestones/` mapping snapshots as immutable module data. New translation work gets a new uniquely named snapshot/profile; never rewrite an existing snapshot.
 - Never change binary files manually.
@@ -102,4 +103,3 @@ Before rebuilding or launching a test ISO, unconditionally issue the close comma
 ## Report format
 
 Report files read, files created/modified, whether originals were untouched, scripts/commands used, hashes/sizes, and uncertainties.
-

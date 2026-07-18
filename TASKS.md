@@ -3,7 +3,6 @@
 ## In Progress
 
 ### [UI Translation](docs/plans/ui_translation.md)
-- Refactor to only include patches, not blobs.
 - Deal with savestates 1-6.
 - Investigate upscaling.
 

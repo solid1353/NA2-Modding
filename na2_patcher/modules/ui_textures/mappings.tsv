@@ -1,0 +1,73 @@
+mapping_id	enabled	container_id	target_texture	donor_texture	transform	reason
+UI-BTL-001	1	battlegauge	x\battle\tex\x_kantan.bmp	x\battle\tex\x_kantan.bmp	copy	English battle control prompts.
+UI-BTL-002	1	battlegauge	x\battle\tex\xcombat01.bmp	x\battle\tex\xcombat01.bmp	copy	English Start Battle label.
+UI-BTL-003	1	battlegauge	x\battle\tex\xcombo.bmp	x\battle\tex\xcombo.bmp	copy	English Hits counter label.
+UI-BTL-004	1	battlegauge	x\battle\tex\xcount.bmp	x\battle\tex\xcount.bmp	copy	Official English layout clears the redundant separate count atlas.
+UI-BTL-005	1	battlegauge	x\battle\tex\xfails.bmp	x\battle\tex\xfails.bmp	copy	English Fail label.
+UI-BTL-006	1	battlegauge	x\battle\tex\xgauge.bmp	x\battle\tex\xgauge.bmp	copy	Official English battle gauge label/icon variant.
+UI-BTL-007	1	battlegauge	x\battle\tex\xicon.bmp	x\battle\tex\xicon.bmp	copy	English move and character-name abbreviations.
+UI-BTL-008	1	battlegauge	x\battle\tex\xicon_b.bmp	x\battle\tex\xicon_b.bmp	copy	English combat-stat abbreviations.
+UI-BTL-009	1	battlegauge	x\battle\tex\xselect.bmp	x\battle\tex\xselect.bmp	copy	English item/status labels.
+UI-BTL-010	1	battlegauge	x\battle\tex\xselect2.bmp	x\battle\tex\xselect2.bmp	copy	English substitution and status labels.
+UI-BTL-011	1	battlegauge	x\battle\tex\xselect5.bmp	x\battle\tex\xselect5.bmp	copy	English battle-result modifiers.
+UI-BTL-012	1	battlegauge	x\battle\tex\xsuccess.bmp	x\battle\tex\xsuccess.bmp	copy	English Pass label.
+UI-BTL-013	1	battlegauge	x\battle\tex\xtext.bmp	x\battle\tex\xtext.bmp	copy	English mission-result labels.
+UI-CHAR-001	1	charsel1	m\sel1\tex\char_name01.bmp	m\sel1\tex\char_name01.bmp	copy	Official English character names.
+UI-CHAR-002	1	charsel1	m\sel1\tex\char_ytype.bmp	m\sel1\tex\char_ytype.bmp	copy	English character-type labels.
+UI-CHAR-003	1	charsel1	m\sel1\tex\charsel01.bmp	m\sel1\tex\charsel01.bmp	copy	English character-select controls and labels.
+UI-CONT-001	1	continue	r\continue\tex\continue.bmp	r\continue\tex\continue.bmp	copy	English Game Over and retry labels.
+UI-HOME-001	1	home	m\home\tex\home01.bmp	m\home\tex\home01.bmp	copy	Official English collection character names.
+UI-HOME-002	1	home	m\home\tex\home02.bmp	m\home\tex\home02.bmp	copy	English collection menu labels.
+UI-HOME-003	1	home	m\home\tex\home03.bmp	m\home\tex\home03.bmp	copy	English collection category labels.
+UI-HOME-004	1	home	m\home\tex\home_vt.bmp	m\home\tex\home_vt.bmp	copy	English Video label.
+UI-HOME-005	1	home	m\home\tex\homepanel.bmp	m\home\tex\homepanel.bmp	copy	English collection viewer controls.
+UI-LOAD-001	1	loading_spload	x\spload\tex\spload01.bmp	x\spload\tex\spload01.bmp	copy	English Fight loading label.
+UI-MAP-001	1	mapsel1	m\map\tex\mapname01.bmp	m\map\tex\mapname01.bmp	copy	Official English stage names.
+UI-MAP-002	1	mapsel1	m\map\tex\mapsel01.bmp	m\map\tex\mapsel01.bmp	copy	English stage-select labels.
+UI-MODE-002	1	mode2cmn	x\mode2\tex\mode2name.bmp	x\mode2\tex\mode2name.bmp	copy	Official English mode label.
+UI-MODE-003	1	mode2gav	x\mode2\tex\gav\mode2gav.bmp	x\mode2\tex\gav\mode2gav.bmp	copy	English Possession Mode label.
+UI-MODE-004	1	mode2jrv	x\mode2\tex\jrv\mode2jrv.bmp	x\mode2\tex\jrv\mode2jrv.bmp	copy	English Curse Mark Mode Stage 2 label.
+UI-MODE-005	1	mode2kdv	x\mode2\tex\kdv\mode2kdv.bmp	x\mode2\tex\kdv\mode2kdv.bmp	indexed_top_rows_64	English Curse Mark Mode Stage 2 label; preserve the NA2 portrait and palette to fit the fixed member capacity.
+UI-MODE-006	1	mode2kmv	x\mode2\tex\kmv\mode2kmv.bmp	x\mode2\tex\kmv\mode2kmv.bmp	copy	English Curse Mark Mode Stage 2 label.
+UI-MODE-007	1	mode2nrv	x\mode2\tex\nrv\mode2nrv.bmp	x\mode2\tex\nrv\mode2nrv.bmp	copy	English Nine-Tailed Mode label.
+UI-MODE-008	1	mode2nwv	x\mode2\tex\nwv\mode2nwv.bmp	x\mode2\tex\nwv\mode2nwv.bmp	copy	English Fourth Awakened Mode label.
+UI-MODE-009	1	mode2rov	x\mode2\tex\rov\mode2rov.bmp	x\mode2\tex\rov\mode2rov.bmp	copy	English Loopy Fist Mode label.
+UI-MODE-010	1	mode2scv	x\mode2\tex\scv\mode2scv.bmp	x\mode2\tex\scv\mode2scv.bmp	copy	English Human Puppet Mode label.
+UI-MODE-011	1	mode2skv	x\mode2\tex\skv\mode2skv.bmp	x\mode2\tex\skv\mode2skv.bmp	copy	English Curse Mark Mode Stage 2 label.
+UI-MODE-012	1	mode2ssv	x\mode2\tex\ssv\mode2ssv.bmp	x\mode2\tex\ssv\mode2ssv.bmp	copy	English Curse Mark Mode Stage 2 label.
+UI-MODE-013	1	mode2tov	x\mode2\tex\tov\mode2tov.bmp	x\mode2\tex\tov\mode2tov.bmp	copy	English Super Choji Mode label.
+UI-MODE-014	1	mode2tyv	x\mode2\tex\tyv\mode2tyv.bmp	x\mode2\tex\tyv\mode2tyv.bmp	copy	English Curse Mark Mode Stage 2 label.
+UI-MSEL-001	1	modesel1	m\mode\tex\modesel02.bmp	m\mode\tex\modesel02.bmp	copy	English main-menu mode labels.
+UI-RASH-001	1	n_rash	x\battle\tex\xrush.bmp	x\battle\tex\xrush.bmp	copy	English button-rush instructions and result labels.
+UI-RASH-002	1	n_rash2	x\battle\tex\xrush.bmp	x\battle\tex\xrush.bmp	copy	English button-rush instructions and result labels.
+UI-RASH-003	1	n_rash4	x\battle\tex\xrush.bmp	x\battle\tex\xrush.bmp	copy	English button-rush instructions and result labels.
+UI-NINMU-001	1	ninmu	r\ninmu\tex\ninmu01.bmp	r\ninmu\tex\ninmu01.bmp	copy	English mission-result labels.
+UI-OPT-001	1	option	m\option\tex\option.bmp	m\option\tex\option.bmp	copy	English settings labels.
+UI-OPT-002	1	option	m\option\tex\option2.bmp	m\option\tex\option2.bmp	copy	English options and difficulty labels.
+UI-OUGI-001	1	ougi	m\ougi\tex\ougi_text_a1.bmp	m\ougi\tex\ougi_text_a1.bmp	split_left	Left half of official English Ultimate Jutsu label.
+UI-OUGI-002	1	ougi	m\ougi\tex\ougi_text_a2.bmp	m\ougi\tex\ougi_text_a1.bmp	split_right	Right half of official English Ultimate Jutsu label.
+UI-OUGI-003	1	ougi	m\ougi\tex\ougi_text_b1.bmp	m\ougi\tex\ougi_text_b1.bmp	split_left	Left half of official English Reversal label.
+UI-OUGI-004	1	ougi	m\ougi\tex\ougi_text_b2.bmp	m\ougi\tex\ougi_text_b1.bmp	split_right	Right half of official English Reversal label.
+UI-OUGI-005	1	ougi	m\ougi\tex\ougi_text_c1.bmp	m\ougi\tex\ougi_text_c1.bmp	split_left	Left half of official English Awakened label.
+UI-OUGI-006	1	ougi	m\ougi\tex\ougi_text_c2.bmp	m\ougi\tex\ougi_text_c1.bmp	split_right	Right half of official English Awakened label.
+UI-OUGI-007	1	ougi	m\ougi\tex\ougi_text_d1.bmp	m\ougi\tex\ougi_text_d1.bmp	split_left	Left half of official English Linked label.
+UI-OUGI-008	1	ougi	m\ougi\tex\ougi_text_d2.bmp	m\ougi\tex\ougi_text_d1.bmp	split_right	Right half of official English Linked label.
+UI-OUGI-009	1	ougi	m\ougi\tex\ougi_gauge2.bmp	m\ougi\tex\ougi_gauge2.bmp	copy	English Press Spin and button-rush labels.
+UI-OUGI-010	1	ougi	m\ougi\tex\ougi_gauge3.bmp	m\ougi\tex\ougi_gauge3.bmp	copy	English Failed and Success labels.
+UI-OUGI-011	1	ougi	m\ougi\tex\ougi_spgau1.bmp	m\ougi\tex\ougi_spgau1.bmp	copy	English OK and ERROR labels.
+UI-OUGI-012	1	ougi	m\ougi\tex\ougi_spgau2.bmp	m\ougi\tex\ougi_spgau2.bmp	copy	English damage-interruption labels.
+UI-PRAC-001	1	prac	m\prac\tex\p_wind1.bmp	m\prac\tex\p_wind1.bmp	copy	Official English OK marker.
+UI-PRAC-002	1	prac	m\prac\tex\prac_t01.bmp	m\prac\tex\prac_t01.bmp	copy	English Practice Settings label.
+UI-SET-001	1	setting	m\setting\tex\s_menu.bmp	m\setting\tex\s_menu.bmp	copy	English Battle Settings label.
+UI-SHOP-001	1	shop	m\shop\tex\buybg.bmp	m\shop\tex\buybg.bmp	copy	English shop background labels.
+UI-SHOP-002	1	shop	m\shop\tex\shop_mg.bmp	m\shop\tex\shop_mg.bmp	copy	English shop interaction labels.
+UI-SHOP-003	1	shop	m\shop\tex\shop_mg02.bmp	m\shop\tex\shop_mg02.bmp	copy	English shop result labels.
+UI-SHOP-004	1	shop	m\shop\tex\shop_t01.bmp	m\shop\tex\shop_t01.bmp	copy	English shop cabinet labels.
+UI-SHOP-005	1	shop	m\shop\tex\shop_t02.bmp	m\shop\tex\shop_t02.bmp	copy	English shop category labels.
+UI-SPB-001	1	spbattle	x\spbattle\tex\spbattle01.bmp	x\spbattle\tex\spbattle01.bmp	copy	English special-battle menu labels.
+UI-SPB-002	1	spbattle	x\spbattle\tex\spbattle02.bmp	x\spbattle\tex\spbattle02.bmp	copy	English special-battle labels and counters.
+UI-SPB-003	1	spbattle	x\spbattle\tex\spbattle03.bmp	x\spbattle\tex\spbattle03.bmp	copy	English special-battle result labels.
+UI-TITLE-001	1	title	m\t\tex\mtttl02.bmp	m\t\tex\mtttl02.bmp	copy	Official English title and New/Load Game labels.
+UI-VS-001	1	vs	m\vs\tex\vs_t01.bmp	m\vs\tex\vs_t01.bmp	copy	English versus-screen labels.
+UI-VS-002	1	vs	m\vs\tex\vs_t02.bmp	m\vs\tex\vs_t02.bmp	copy	English versus settings labels.
+UI-NINKA-001	1	xninka	m\ninka\tex\xninka.bmp	m\ninka\tex\xninka.bmp	copy	English ninja-card result labels.

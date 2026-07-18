@@ -10,8 +10,8 @@ Each profile directory contains:
 - `modules.tsv`: ordered module instances with exact input hashes and selections.
 
 Schema v1 supports declarative, size-preserving `raw_binary`, `translation`,
-and `disc_identity` modules. Package and ZIP-overlay workflows are retired;
-profiles consume only repository-owned declarative inputs.
+`ui_textures`, and `disc_identity` modules. Package and ZIP-overlay workflows
+are retired; profiles consume only repository-owned declarative inputs.
 
 Profiles never select the newest file implicitly. Enabled module inputs are content-hashed before composition. Disabled modules remain visible in the profile as WIP or review candidates but do not block the active build when their contents change.
 
@@ -25,7 +25,10 @@ For raw-binary modules, the profile hash covers only executable package inputs:
 - every blob referenced by `blob_path`
 
 Adjacent documentation and authoring tools do not affect the profile pin.
-Translation and disc-identity inputs are hashed as exact files.
+UI-texture hashes cover `containers.tsv`, `mappings.tsv`, `strategies.tsv`, and
+every replacement referenced by `blob_path`; their parser, authoring code, and
+documentation are excluded. Translation and disc-identity inputs are hashed as
+exact files.
 
 The current profile composes:
 
@@ -35,7 +38,9 @@ The current profile composes:
 4. the fixed-size memory-card title through the `string_replacements`
    raw-binary patch set;
 5. hash-pinned v33 mappings from the integrated `translation` module;
-6. the declared equal-length `SLPS_258.37` to `SLPS_222.28` boot identity
+6. 33 fixed-size official NUN5 UI container imports through `ui_textures`;
+7. the paired one-part OUGI construction-loop edit through `raw_binary`;
+8. the declared equal-length `SLPS_258.37` to `SLPS_222.28` boot identity
    change through `disc_identity`.
 
 The disabled `Testing` section remains a separate raw package. The empty
@@ -58,6 +63,6 @@ its declared equal-length boot-file rename and verifies the resulting tree;
 all other tree changes are rejected. Structural expansion requires a separately
 designed and approved implementation rather than a build flag.
 
-The ordinary `na2` command dispatches the profile build, then delegates mandatory PNACH actualization and PCSX2 launch to `scripts/na2/launch.ps1`. `na2 -c` launches `Current.iso` without rebuilding, and `na2 -p` launches `Previous.iso` without rebuilding. Translation is invoked only as a pinned profile module and records its review plan inside the profile log.
+The ordinary `na2` command dispatches the profile build, then delegates mandatory PNACH actualization and PCSX2 launch to `scripts/na2/launch.ps1`. `na2 -c` launches `Current.iso` without rebuilding, and `na2 -p` launches `Previous.iso` without rebuilding. Translation and UI texture transplantation are invoked only as pinned profile modules and record their review plans or per-container patch tables inside the profile log.
 
 The profile references `na2_patcher/modules/translation/mappings.tsv` directly and pins its exact hash. Updating that table therefore requires an explicit profile-pin update.

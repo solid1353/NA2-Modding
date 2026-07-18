@@ -3,8 +3,7 @@
 ## In Progress
 
 ### UI Translation
-- Add texture patcher to import assets from NUN5 (investigate NUN5 DATA.CVM unpacked and stripped first?).
-- Investigate upscaling variants.
+- See [UI Translation working context and plan](docs/plans/ui_translation.md).
 
 ### Menu restructuring
 - Analyze differences against NUN6 and remove adventure mode.

@@ -1,0 +1,2 @@
+edit_id	patch_id	order	destination_target_id	destination_offset	operation	length	expected_hex	expected_sha256	replacement_hex	source_target_id	source_offset	source_expected_hex	source_expected_sha256	blob_path	blob_offset	blob_sha256	fill_hex	reason
+UI-BTL-001-01	UI-BTL-001	10	na2_btl	0xB5E80	replace	4	0200422A		0100422A									Match the one-part English OUGI label layout used by both NUN5 and NUN6.

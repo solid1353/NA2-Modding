@@ -166,6 +166,37 @@ class ProfileTests(unittest.TestCase):
             second = module_content_sha256(package, "raw_binary")
             self.assertNotEqual(first, second)
 
+    def test_ui_texture_hash_includes_only_manifests_and_referenced_blobs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory) / "package"
+            package.mkdir()
+            (package / "containers.tsv").write_text(
+                "container_id\nexample\n", encoding="utf-8"
+            )
+            (package / "mappings.tsv").write_text("mapping_id\none\n", encoding="utf-8")
+            (package / "payload.bin").write_bytes(b"one")
+            (package / "strategies.tsv").write_text(
+                "container_id\tblob_path\nexample\tpayload.bin\n",
+                encoding="utf-8",
+            )
+            (package / "README.md").write_text("first\n", encoding="utf-8")
+            (package / "engine.py").write_text("first\n", encoding="utf-8")
+
+            first = module_content_sha256(package, "ui_textures")
+            (package / "README.md").write_text("second\n", encoding="utf-8")
+            (package / "engine.py").write_text("second\n", encoding="utf-8")
+            self.assertEqual(first, module_content_sha256(package, "ui_textures"))
+
+            (package / "payload.bin").write_bytes(b"two")
+            second = module_content_sha256(package, "ui_textures")
+            self.assertNotEqual(first, second)
+
+            (package / "mappings.tsv").write_text(
+                "mapping_id\ntwo\n", encoding="utf-8"
+            )
+            third = module_content_sha256(package, "ui_textures")
+            self.assertNotEqual(second, third)
+
     def test_current_enabled_module_hashes_match(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         modules_path = (

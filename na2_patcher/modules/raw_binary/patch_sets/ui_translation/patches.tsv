@@ -1,0 +1,2 @@
+patch_id	default_enabled	status	confidence	name	description	source_mapping_id	runtime_classification	review_notes
+UI-BTL-001	0	approved_for_test	verified	Use one-part Ultimate Jutsu label	Make the OUGI label constructor instantiate one 128x64 regional label instead of two 64x64 Japanese halves.	UI-OUGI-LAYOUT-001		Exact NUN5 and NUN6 instruction match; must be applied with the whole NUN5 OUGI.CCS import; NA2 runtime verification remains pending.

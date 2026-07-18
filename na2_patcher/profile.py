@@ -20,13 +20,18 @@ MODULE_FIELDS = [
     "selection",
     "reason",
 ]
-MODULE_TYPES = {"disc_identity", "raw_binary", "translation"}
+MODULE_TYPES = {"disc_identity", "raw_binary", "translation", "ui_textures"}
 RAW_BINARY_CONTROL_FILES = (
     "manifest.tsv",
     "targets.tsv",
     "patches.tsv",
     "relations.tsv",
     "edits.tsv",
+)
+UI_TEXTURE_CONTROL_FILES = (
+    "containers.tsv",
+    "mappings.tsv",
+    "strategies.tsv",
 )
 
 
@@ -155,6 +160,48 @@ def _raw_binary_content_files(path: Path) -> list[Path]:
     return files
 
 
+def _ui_texture_content_files(path: Path) -> list[Path]:
+    path = path.resolve()
+    files = [path / name for name in UI_TEXTURE_CONTROL_FILES]
+    missing = [item.name for item in files if not item.is_file()]
+    if missing:
+        raise FileNotFoundError(
+            f"UI-texture module is missing canonical input files: {', '.join(missing)}"
+        )
+
+    strategies_path = path / "strategies.tsv"
+    with strategies_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        fields = reader.fieldnames or []
+        if "blob_path" not in fields:
+            raise ValueError(f"{strategies_path}: missing blob_path column")
+        blob_paths = {
+            (row.get("blob_path") or "").strip()
+            for row in reader
+            if (row.get("blob_path") or "").strip()
+        }
+    if not blob_paths:
+        raise ValueError(f"{strategies_path}: no replacement blobs are referenced")
+
+    for value in sorted(blob_paths):
+        candidate = Path(value.replace("\\", "/"))
+        if candidate.is_absolute() or ".." in candidate.parts:
+            raise ValueError(
+                f"{strategies_path}: blob_path must be package-relative: {value!r}"
+            )
+        blob = (path / candidate).resolve()
+        try:
+            blob.relative_to(path)
+        except ValueError as exc:
+            raise ValueError(
+                f"{strategies_path}: blob_path escapes package: {value!r}"
+            ) from exc
+        if not blob.is_file():
+            raise FileNotFoundError(blob)
+        files.append(blob)
+    return files
+
+
 def module_content_sha256(path: Path, module_type: str) -> str:
     """Hash only executable module inputs, excluding adjacent documentation."""
     path = path.resolve()
@@ -166,6 +213,8 @@ def module_content_sha256(path: Path, module_type: str) -> str:
         raise FileNotFoundError(path)
     if module_type == "raw_binary":
         return _tree_digest(path, _raw_binary_content_files(path))
+    if module_type == "ui_textures":
+        return _tree_digest(path, _ui_texture_content_files(path))
     return content_sha256(path)
 
 

@@ -12,6 +12,7 @@ from .iso9660 import Iso9660
 from .modules import translation as translation_module
 from .modules.disc_identity import engine as disc_identity_module
 from .modules.raw_binary import engine as patch_binary
+from .modules.ui_textures import engine as ui_texture_module
 from .profile import Profile, ProfileModule, load_profile
 from .project_paths import load_project_paths
 
@@ -209,6 +210,44 @@ def apply_raw_patch_set(
     }
 
 
+def apply_ui_texture_package(
+    package_directory: Path,
+    *,
+    module_id: str,
+    roots: dict[str, Path],
+    selection: tuple[str, ...],
+    source: Iso9660,
+    payloads: dict[str, bytearray],
+    owners: dict[str, str],
+) -> tuple[ui_texture_module.UiTexturePlan, str]:
+    if "na2" not in roots or "nun5" not in roots:
+        raise ValueError("UI texture module requires na2 and nun5 profile roots")
+    if not roots["na2"].is_dir() or not roots["nun5"].is_dir():
+        raise ValueError(
+            "UI texture module requires extracted na2 and nun5 profile roots"
+        )
+    if not package_directory.is_dir():
+        raise ValueError(f"UI texture module input must be a directory: {package_directory}")
+
+    plan = ui_texture_module.build_ui_texture_plan(
+        na2_root=roots["na2"],
+        nun5_root=roots["nun5"],
+        data_root=package_directory,
+        selection=selection,
+    )
+    path = "DATA/DATA.CVM"
+    record = source.by_path.get(path)
+    if record is None or record.is_dir:
+        raise RuntimeError("UI texture module requires DATA/DATA.CVM in the source ISO")
+    data = payloads.get(path)
+    if data is None:
+        data = bytearray(source.read_file(record))
+    plan.apply_to_cvm(data)
+    payloads[path] = data
+    owners[path] = module_id
+    return plan, path
+
+
 def write_raw_composition_log(
     result: dict[str, object],
     log_directory: Path,
@@ -278,6 +317,85 @@ def write_raw_composition_log(
             "patch_count": len(selected),
             "edit_count": len(edits),
         }],
+    )
+
+
+def write_ui_texture_log(
+    plan: ui_texture_module.UiTexturePlan,
+    log_directory: Path,
+) -> None:
+    log_directory.mkdir(parents=True, exist_ok=True)
+    patch_binary.write_tsv(
+        log_directory / "patch_log.tsv",
+        [
+            "file",
+            "member",
+            "offset",
+            "length",
+            "original_sha256",
+            "new_blob_path",
+            "new_sha256",
+            "mapping_ids",
+            "reason",
+        ],
+        [
+            {
+                "file": "DATA/DATA.CVM",
+                "member": result.spec.path,
+                "offset": f"0x{result.outer_cvm_offset:X}",
+                "length": len(result.replacement),
+                "original_sha256": ui_texture_module.sha256(result.original),
+                "new_blob_path": result.strategy.blob_path,
+                "new_sha256": ui_texture_module.sha256(result.replacement),
+                "mapping_ids": ",".join(result.mapping_ids),
+                "reason": result.strategy.reason,
+            }
+            for result in plan.containers
+        ],
+    )
+    patch_binary.write_tsv(
+        log_directory / "container_summary.tsv",
+        [
+            "container_id",
+            "strategy",
+            "fixed_size",
+            "compressed_stream_size",
+            "zero_padding",
+            "target_sha256",
+            "donor_sha256",
+            "blob_sha256",
+            "payload_sha256",
+        ],
+        [
+            {
+                key: row[key]
+                for key in (
+                    "container_id",
+                    "strategy",
+                    "fixed_size",
+                    "compressed_stream_size",
+                    "zero_padding",
+                    "target_sha256",
+                    "donor_sha256",
+                    "blob_sha256",
+                    "payload_sha256",
+                )
+            }
+            for row in ui_texture_module.result_rows(plan)
+        ],
+    )
+    patch_binary.write_tsv(
+        log_directory / "run_summary.tsv",
+        ["container_count", "mapping_count", "fixed_bytes"],
+        [
+            {
+                "container_count": len(plan.containers),
+                "mapping_count": plan.mapping_count,
+                "fixed_bytes": sum(
+                    len(result.replacement) for result in plan.containers
+                ),
+            }
+        ],
     )
 
 
@@ -370,6 +488,24 @@ def apply_profile_modules(
                 }
             )
             continue
+        if module.module == "ui_textures":
+            plan, path = apply_ui_texture_package(
+                module.input_path,
+                module_id=module.module_id,
+                roots=profile.roots,
+                selection=module.selection,
+                source=source,
+                payloads=payloads,
+                owners=owners,
+            )
+            results.append(
+                {
+                    "module": module,
+                    "ui_texture_plan": plan,
+                    "paths": [path],
+                }
+            )
+            continue
         raise AssertionError(module.module)
     return results
 
@@ -418,6 +554,10 @@ def write_profile_log(
             translation_module.write_json(
                 module_log / "translation_summary.json", plan.summary
             )
+        if "ui_texture_plan" in item:
+            plan = item["ui_texture_plan"]
+            assert isinstance(plan, ui_texture_module.UiTexturePlan)
+            write_ui_texture_log(plan, module_log)
         if "disc_identity" in item:
             identity = item["disc_identity"]
             assert isinstance(identity, disc_identity_module.DiscIdentity)
@@ -610,6 +750,10 @@ def main() -> int:
             detail = f", {len(item['raw_result']['edits'])} edits"
         elif "translation_rows" in item:
             detail = f", {item['translation_rows']} rows"
+        elif "ui_texture_plan" in item:
+            plan = item["ui_texture_plan"]
+            assert isinstance(plan, ui_texture_module.UiTexturePlan)
+            detail = f", {len(plan.containers)} containers, {plan.mapping_count} mappings"
         elif "disc_identity" in item:
             detail = f", {len(item['identity_edits'])} edits"
         print(f"  {module.order:03d} {module.module_id} ({module.module}{detail})")

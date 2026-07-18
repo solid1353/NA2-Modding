@@ -11,7 +11,7 @@ PS2 modding/reverse-engineering workspace for Narutimate Accel v2.28, based on N
 - For every agent-authored Git commit, override the author for that commit only. An agent may use only the `.agents/git-authors.tsv` entry whose `agent_name` exactly matches its own normal name; if no matching entry exists, use the agent's normal name and a normalized `<agent-name>@agent.invalid` address. Never use another agent's registered identity. Do not change repository or global Git identity, rewrite commit subjects, or alter user-authored commits.
 - Execute freely within an approved task, including major implementation changes. If the task becomes unclear or the whole approach is wrong, stop safely and clarify; a replacement plan requires approval.
 - Use `na2_patcher/profiles/current/` as the active reproducible build definition. Profiles must pin every enabled module input by hash and use only repository-relative paths; do not select newest packages implicitly in the normal workflow. Raw-binary profile hashes cover canonical TSV inputs and referenced blobs, not adjacent documentation.
-- Treat `na2_patcher/milestones/` mapping snapshots as immutable module data. New translation work gets a new uniquely named snapshot/profile; never rewrite an existing snapshot.
+- Use annotated Git tags for accepted reproducible checkpoints. A checkpoint tag must target a committed state whose profile pins, module inputs, and documentation agree; tags do not replace frozen binary release artifacts.
 - Never change binary files manually.
 - All binary changes must go through scripts.
 - Preserve file sizes unless explicitly instructed.
@@ -27,13 +27,13 @@ PS2 modding/reverse-engineering workspace for Narutimate Accel v2.28, based on N
 - Every build log must report `ISO result: unchanged` when the verified candidate matches `Current.iso`, or `ISO result: updated` when a different candidate is promoted, together with whether rotation occurred.
 - Temporary, parity-check, and hypothesis-test ISOs may remain under `build/` while they have a concrete future testing or comparison use. Permanently delete them as soon as they become useless; never leave obsolete ISOs accumulating under `build/`.
 - Do not recreate a top-level `packages/` staging/history directory. Normal builds consume hash-pinned profile modules. Keep temporary imported archives under a task-specific `work/temp/` folder, normalize useful data into a module, verify it, then delete the archive or deliberately preserve an irreplaceable copy outside the repository.
-- Do not recreate a top-level `milestones/` package archive directory. Keep immutable reproducible module data under `na2_patcher/milestones/` or as a hash-pinned declarative patch set beside its module; retain retired package archives only in Git history.
-- New translation milestones freeze immutable canonical mapping data plus a hash-pinned profile; the integrated translation engine is versioned with the repository. Legacy translation builder archives are retained only in Git history. Generated translation TSVs are compatibility run outputs, not milestones.
+- Do not recreate a top-level `milestones/` package archive directory or `na2_patcher/milestones/` snapshot tree. Keep reproducible module data as hash-pinned declarative inputs beside its module; retain retired inputs and package archives through Git history and annotated checkpoint tags.
+- Translation checkpoints tag the complete committed project state, including canonical mapping data, its exact profile pin, and the integrated engine version. Do not duplicate mappings into snapshot directories. Legacy translation builder archives remain only in Git history. Generated translation TSVs are compatibility run outputs, not checkpoint inputs.
 - Treat `na2_patcher/modules/translation/mappings.tsv` as the translation module's current versioned input. Profiles may reference it only with an exact content hash; changing it requires updating the profile pin as an explicit translation version change.
 - The normal profile workflow invokes the translation module directly and records its generated plan and summary under the profile run log. There is no standalone translation-export command or source-hash bypass.
-- Keep frozen milestone artifacts under the ignored root `releases/` relative link.
+- Keep frozen release artifacts under the ignored root `releases/` relative link.
 - Never alter, overwrite, rename, move, or delete anything under `releases/`.
-- Only create new uniquely named milestone outputs under `releases/`.
+- Only create new uniquely named release outputs under `releases/`.
 - If a target path under `releases/` already exists, stop immediately and inspect/report manually.
 - Every release PNACH must correspond to the PCSX2 CRC of the ELF inside the paired release ISO.
 - Before reporting a release as valid, check the paired ISO/ELF CRC against the PNACH filename and warn if they do not match or cannot be verified.
@@ -95,7 +95,7 @@ PS2 modding/reverse-engineering workspace for Narutimate Accel v2.28, based on N
 - State explicitly what software/tools were used for a task. If the right tool is uncertain or missing, ask the user to provide or approve one.
 - Prefer reusable, verifiable commands and scripts over long one-off command chains. Keep closely related implementation together when that is clearer than introducing additional files.
 
-## Release / milestone rules
+## Release and checkpoint rules
 
 For file-level translation releases, one zip only. Zip filename gets version/postfix. Internal filenames must be exactly:
 
@@ -106,7 +106,9 @@ For file-level translation releases, one zip only. Zip filename gets version/pos
 
 No postfixes inside the zip. Never include `ADV.bin` unless explicitly requested.
 
-For full project milestones, place new frozen files in `releases/` with clear version/postfix names. Active working ISOs stay in `build/`.
+For full project releases, place new frozen files in `releases/` with clear version/postfix names. Active working ISOs stay in `build/`.
+
+Use annotated Git tags for accepted reproducible source checkpoints. Tags must point to committed project states and must not be used as substitutes for external ISO, ZIP, PNACH, checksum, or other frozen release artifacts.
 
 `releases/` is append-only/frozen. Do not rewrite, rename, move, delete, or modify existing release files or folders. If the intended output name already exists, stop and inspect manually instead of choosing a workaround.
 

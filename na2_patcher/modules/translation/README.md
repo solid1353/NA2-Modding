@@ -386,7 +386,7 @@ PCSX2 application chrome, toolbar text, pause indicators, graphical controller p
 - The repository-owned engine, live mappings, and documentation all live in `na2_patcher/modules/translation/`.
 - Do not replace the integrated module by extracting a legacy builder archive over the project.
 - Do not copy generated profile-log plans back into the module.
-- Do not add patched `BTL.BIN`, `ETC.BIN`, or `SLPS_258.37` payloads to translation milestones.
+- Do not add patched `BTL.BIN`, `ETC.BIN`, or `SLPS_258.37` payloads to the translation module or checkpoint commits; binary deliverables belong only in the frozen release archive.
 - The profile orchestrator owns composition and ISO application.
 - Translation is an ordered first-class module and is currently applied after the font overlay and raw menu patch so conflicts are checked against their composed bytes.
 

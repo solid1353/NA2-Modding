@@ -34,16 +34,16 @@ replaced with a copied machine-specific absolute path.
 - `@source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
 - `@source/*.files/`: extracted views of original source archives. Treat as read-only reference.
 - `build/`: normally contains `build/Current.iso` and may retain at most `build/Previous.iso` as rotation history. Standard builds use `build/Current.iso.building` in the same directory and delete it on caught failure. After verification and log creation, a byte-identical candidate is discarded without changing `Current.iso` or `Previous.iso`; a changed candidate rotates `Current.iso` to `Previous.iso` and becomes `Current.iso`. Other temporary, parity-check, and hypothesis-test ISOs may remain while they have a concrete future testing or comparison use, but are permanently deleted as soon as they become useless.
-- There are no top-level `packages/` or `milestones/` archive directories. Temporary imported archives live under task-specific `work/temp/` folders until normalized or retired. Immutable reproducible data lives beside its module or under `na2_patcher/milestones/`; retired archives remain available through Git history.
+- There are no top-level `packages/` or `milestones/` archive directories and no `na2_patcher/milestones/` snapshot tree. Temporary imported archives live under task-specific `work/temp/` folders until normalized or retired. Reproducible data lives as hash-pinned inputs beside its module; complete accepted states are preserved by annotated Git tags, and retired archives remain available through Git history.
 - `na2_patcher/modules/translation/mappings.tsv` is the translation module's current hash-pinned v33 input. The current profile invokes the translation engine directly and records its plan under the profile run log; no standalone export or source-hash bypass exists. All legacy translation builder archives have been retired from the workspace after exact profile parity and remain available through Git history.
-- `releases/`: ignored relative link to the frozen milestone archive outside the repository. It contains milestone artifacts only; never alter existing contents.
+- `releases/`: ignored relative link to the frozen release archive outside the repository. It contains binary release artifacts only; never alter existing contents.
 - `logs/`: disposable execution records grouped into task-specific subfolders; no files should be written directly in the `logs/` root. `na2` keeps `logs/na2/latest.log` plus one `rolling.log` capped at the newest 20 completed operational invocations. Structured profile records under `logs/na2/builds/` are retained only for `Current.iso` and `Previous.iso`; one atomically replaced `logs/na2/builds.tsv` maps both ISO names to their records. See `docs/LOGGING.md`.
 - `scripts/`: repeatable tooling.
 - `@pcsx2_files/`: project-owned PCSX2 artifacts. The canonical PNACH and input recordings are tracked; screenshots remain local and ignored.
 - `@pcsx2/`: portable, self-contained PCSX2 installation. BIOS, memory cards, logs, saves, settings, and other support data stay inside this root. Its game-list media paths may point to `@build/` and `@source/`; its CRC-named cheat symlinks target the canonical PNACH under `@pcsx2_files/`.
 - `na2_patcher/modules/raw_binary/`: repository-owned schema v1, CLI validator/patcher, the exact font m01 reconstruction, canonical menu-input mappings and runtime classifications, the UI translation's paired OUGI code edit, and verified historical font ELF patch groups. It never applies `pending`, `runtime_failed`, or `deprecated` patches and writes only new same-size outputs with complete logs. The main ISO compositor applies all modules in explicit profile order with staged-byte conflict checks.
 - `na2_patcher/modules/ui_textures/`: hash-pinned fixed-size CCS container imports from the official NUN5 donor. Its production blobs carry matching pixels, models, UVs, and animations; `MODE2KDV.CCS` is the one declared indexed-row capacity exception. Profile hashes cover its three canonical TSVs and referenced blobs, not its parser, authoring code, or documentation.
-- `na2_patcher/`: profile schemas, ordered module orchestration, immutable module-data snapshots, and the translation/raw-binary/UI-texture/disc-identity implementations. `na2_patcher/profiles/current/` enables the font, menu-input, QoL, battle-logic, string-replacement, text translation, UI-texture, paired UI-code, and disc-identity modules by exact executable-input hashes. Raw-binary and UI-texture hashes exclude adjacent READMEs and authoring tools. The disc-identity module runs last and performs the declared equal-length `SLPS_258.37` to `SLPS_222.28` boot-path rename.
+- `na2_patcher/`: profile schemas, ordered module orchestration, hash-pinned module data, and the translation/raw-binary/UI-texture/disc-identity implementations. `na2_patcher/profiles/current/` enables the font, menu-input, QoL, battle-logic, string-replacement, text translation, UI-texture, paired UI-code, and disc-identity modules by exact executable-input hashes. Raw-binary and UI-texture hashes exclude adjacent READMEs and authoring tools. The disc-identity module runs last and performs the declared equal-length `SLPS_258.37` to `SLPS_222.28` boot-path rename.
 - `.agents/`: dated human-readable handoffs exchanged between separate Windows installations and Codex instances. They may contain machine-specific paths as historical context, are non-authoritative, and must be reviewed rather than deleted as clutter.
 - `docs/`: repository-wide context, confirmed knowledge, active plans, hypotheses, and release documentation. Component-specific READMEs remain beside their components.
 - `docs/knowledge/`: confirmed findings, reusable negative results, and supporting evidence promoted out of disposable logs. Module-owned structured evidence remains beside its module.
@@ -63,7 +63,7 @@ Use separate Codex tasks against the same real project root:
 
 - Coordination / build workflow: repository structure, `na2`, profiles, actualize, releases, and cross-task integration.
 - GF4 font rendering: GF4/GF4C assets, NA2/NUN5 renderer comparison, metrics, positioning, and auto-fit logic.
-- Translation: maintain mappings, validate module/profile compatibility, and investigate translation issues without bypassing the pinned milestone workflow.
+- Translation: maintain mappings, validate module/profile compatibility, and investigate translation issues without bypassing the hash-pinned profile workflow.
 - Logic / PNACH: gameplay patches and reverse engineering unrelated to font or translation work.
 
 All tasks must read `AGENTS.md`, `docs/PROJECT_CONTEXT.md`, `TASKS.md`, and `docs/HYPOTHESES.md` before acting. Binary outputs and experiments remain shared, so each task must re-check Git status and current package/build state before modifying files.
@@ -164,11 +164,11 @@ Observed examples include AFS tools, CCS tools, Ghidra/EmotionEngine material, K
 
 ## Release Folder Rule
 
-`releases/` is for milestone outputs only. Existing contents are frozen.
+`releases/` is for release artifacts only. Existing contents are frozen.
 
 Allowed:
 
-- Create a new uniquely named milestone file/folder.
+- Create a new uniquely named release file/folder.
 
 Not allowed:
 
@@ -258,4 +258,4 @@ When asked to actualize, keep the canonical file named `@pcsx2_files/SLPS-25837_
 
 ## Release Workflow
 
-Existing output under the root `releases/` link remains frozen and append-only. The former milestone-creation script and stale file-list document have been retired; release composition and verification will be redesigned before another automated release is created. Until then, stop and agree on a new release plan rather than reconstructing the retired workflow ad hoc.
+Existing output under the root `releases/` link remains frozen and append-only. The former release-creation script and stale file-list document have been retired; release composition and verification will be redesigned before another automated release is created. Until then, stop and agree on a new release plan rather than reconstructing the retired workflow ad hoc.

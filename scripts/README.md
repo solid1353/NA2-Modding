@@ -20,7 +20,10 @@ research utility.
   `extract_iso.ps1`, `extract_afs.ps1`, and `split_cvm_rofs.ps1` remain focused
   building blocks; ISO changes belong in hash-pinned profiles, not direct
   file-replacement helpers.
-- `project/`: source read-only maintenance.
+- `project/`: source and completed-analysis read-only maintenance.
+- `research/ghidra/`: hash-pinned headless Ghidra imports into the shared
+  `@analysis/disassembly/` root, MWo3 preparation, portable source-path
+  normalization, C/ASCII export, and compact summaries.
 - `research/menu_input/`: preserved MIPS and Ghidra analysis helpers from the
   menu-input investigation.
 - `research/translation/`: retained translation-table length validator. It is

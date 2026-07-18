@@ -10,7 +10,9 @@ move of shared media/tools should require changing this file only.
 The manifest currently defines these stable logical names:
 
 - `repository`: the repository itself; this must remain `.`.
-- `source`: read-only original media, extracted views, and preserved disassemblies.
+- `source`: read-only original media and extracted views.
+- `analysis`: shared reverse-engineering projects and disassembly exports for
+  related game projects.
 - `utils`: shared utilities, including Ghidra and the untrusted historical dump.
 - `build`, `logs`, `patcher`, `releases`, `scripts`, and `work`:
   their corresponding project areas.

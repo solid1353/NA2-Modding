@@ -19,7 +19,7 @@ This is a useful negative result: do not repeat this single-field tracking patch
 - The v22 state was clean and closer to NUN5, but glyphs could touch or overlap and long text still clipped.
 - `na2_patcher/modules/raw_binary/patch_sets/font_m01/` canonically reconstructs the accepted clean-coverage font state. Historical ELF experiments, including v23, are normalized under `font_elf_history/`.
 
-The remaining font work still separates into glyph appearance, positioning/advance behavior, and missing NUN5-style auto-fit/squish. Reuse applicable historical evidence from Git history and maintain current analysis under `@work/NA2/analysis/` and `@work/NUN5/analysis/`, never under `@source/`.
+The remaining font work still separates into glyph appearance, positioning/advance behavior, and missing NUN5-style auto-fit/squish. Reuse applicable historical evidence from Git history and maintain current analysis under `@analysis/disassembly/NA2/` and `@analysis/disassembly/NUN5/`, never under `@source/`.
 
 Relevant static-analysis leads retained from the investigation:
 

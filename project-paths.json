@@ -3,11 +3,12 @@
   "roots": {
     "repository": ".",
     "source": "../__source",
+    "analysis": "../__analysis",
     "utils": "../__utils",
+    "pcsx2": "../__pcsx2",
     "build": "build",
     "logs": "logs",
     "patcher": "na2_patcher",
-    "pcsx2": "../__pcsx2",
     "pcsx2_files": "pcsx2_files",
     "releases": "releases",
     "scripts": "scripts",

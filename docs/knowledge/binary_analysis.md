@@ -15,7 +15,7 @@ though the boot ELF warrants a full-program analysis project.
 ## Decision
 
 - `SLPS_258.37` is the only current full-program disassembly candidate. Create
-  or restore its maintained analysis under `@work/NA2/analysis/`; source trees
+  or restore its maintained analysis under `@analysis/disassembly/NA2/`; source trees
   contain original binaries only and must never contain Ghidra projects.
 - `PRG/BTL.BIN`, `PRG/ETC.BIN`, and `PRG/ADV.BIN` are members of the same
   `MWo3` EE overlay family. They contain code and data but load on demand, so
@@ -59,8 +59,8 @@ game; it does not include resource files merely because they use `.BIN` names.
   `@source/NA2.iso.files/MODULES/SNDBASE.IRX`.
 
 All current paths above were confirmed after the 2026-07-18 recursive source
-extraction. Keep Ghidra projects and exports under each target's
-`@work/<target>/analysis/` tree; the inputs remain read-only.
+extraction. Keep shared Ghidra projects and exports under each target's
+`@analysis/disassembly/<target>/` tree; the inputs remain read-only.
 
 ## Signature evidence
 
@@ -97,8 +97,8 @@ useful:
 - global callers, callees, references, types, or data flow are required;
 - the resulting project will be reused and maintained rather than discarded.
 
-For NA2 this applies only to `SLPS_258.37`. Reuse a maintained project under
-`@work/NA2/analysis/` once one exists. Historical decompiler exports and
+For NA2 this applies only to `SLPS_258.37`. Reuse the maintained project under
+`@analysis/disassembly/NA2/`. Historical decompiler exports and
 listings are supporting views available through Git history, not canonical
 source material. Prior work established that exporting all undefined data
 produces an oversized, low-value artifact.
@@ -144,7 +144,7 @@ component separately.
    Do not begin with an instruction to disassemble everything.
 2. **Reuse existing knowledge.** Check `docs/knowledge/`, module-local evidence,
    `docs/HYPOTHESES.md`, current patch definitions, preserved exports, and
-   `work/<target>/analysis/` before creating another analysis workspace.
+   `@analysis/disassembly/<target>/` before creating another analysis workspace.
 3. **Identify the exact input.** Record the configured-root path, size, content
    hash, signature/format, and whether the file is an original, extraction,
    baseline copy, or modified copy. Keep `@source/` untouched.
@@ -156,10 +156,10 @@ component separately.
    structured resources, a targeted code slice for a narrow executable
    question, and a full maintained project only when the escalation criteria
    above are satisfied.
-6. **Create working material outside the source root.** Copy the required
-   baseline or preserved analysis to `work/<target>/base/` or
-   `work/<target>/analysis/`. Put experiments in `work/<target>/mod/` or a
-   task-specific `work/temp/` folder. Never let Ghidra locks, caches, exports,
+6. **Create working material outside the source root.** Keep maintained shared
+   analysis under `@analysis/disassembly/<target>/`. Put baseline copies and
+   experiments in `@work/<target>/base/`, `@work/<target>/mod/`, or a
+   task-specific `@work/temp/` folder. Never let Ghidra locks, caches, exports,
    probes, or scripts write under `@source/`.
 7. **Preserve the minimum evidence.** Record tool/version, import settings,
    function or range boundaries, callers/callees or references used, byte and
@@ -179,9 +179,27 @@ component separately.
 
 ## Existing reusable analysis
 
-- Historical NA2 boot-ELF Ghidra material and focused exports remain available
-  through Git history. Restore useful evidence only into `@work/NA2/analysis/`;
-  never recreate analysis work under `@source/`.
+- Maintained Ghidra 12.1.2 projects now exist under
+  `@analysis/disassembly/NA2/`, `@analysis/disassembly/NUN5/`,
+  `@analysis/disassembly/NUN6/`, and
+  `@analysis/disassembly/shared_NA2_NUN5_NUN6/`. The
+  configured analysis root is shared between related projects. Each tree contains a
+  Ghidra project, a portable manifest, per-program summaries, decompiled C,
+  and an ASCII listing. The NUN6 tree also contains the initial NUN5 donor-pair
+  comparison record.
+- EE programs use `ghidra-emotionengine-reloaded` and
+  `r5900:LE:32:default`. IOP programs use `MIPS:LE:32:default`. MWo3 baseline
+  imports map file offset `0x40` to the load base stored at header offset
+  `0x08`, and use the header value at `0x0c` as the executable text span.
+- ASCII exports retain the normal listing fields but omit undefined data;
+  decompiled C retains Ghidra's `undefined`, `undefined1`, `undefined4`, and
+  related inferred types. This prevents low-value undefined-byte dumps without
+  discarding unresolved type information.
+- All persisted manifests and exported text use configured-root aliases. Ghidra
+  program source paths are normalized to `@source/...` after import. The four
+  completed analysis trees are recursively read-only; clear that protection
+  deliberately before updating a maintained project, then restore it when the
+  update is complete.
 - `scripts/research/menu_input/`: range disassembler, direct-call finder,
   address-reference finder, MIPS mask analyzer, and Ghidra-export comparison
   helpers for targeted EE work.
@@ -193,11 +211,11 @@ component separately.
 - `docs/knowledge/media/`: canonical outer-ISO, CVM, and AFS inventories for
   data/layout work.
 
-## Limits of this audit
+## Limits of the baseline
 
-This task inspected signatures, inventories, preserved analysis, scripts, and
-canonical patch evidence. It did not run Ghidra, disassemble a new range,
-re-extract source media, modify a binary, build an ISO, or launch PCSX2. The
-classification should be revisited when the unpacking task reveals a genuinely
-new executable family or when runtime evidence proves that a data-classified
-member contains executed code.
+The baseline creates reusable projects and exports for every executable named
+in the task, but it does not claim that automatic function boundaries, inferred
+types, or decompilation are correct. The NUN6 comparison record identifies
+where donor binaries differ from NUN5; it does not yet classify the behavior of
+those differences. Confirmed roles and portable modifications still require
+focused reverse engineering and, where applicable, runtime testing.

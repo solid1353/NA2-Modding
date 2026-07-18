@@ -8,8 +8,10 @@ PS2 modding/reverse-engineering workspace for Narutimate Accel v2.28, based on N
 - The task workflow and its approval gates apply only to selected work from `TASKS.md`. Perform small, direct, low-risk changes immediately without a plan, intelligence-level recommendation, or approval gate; keep them in the current changeset unless the user says otherwise.
 - For a selected task, only read-only inspection is allowed before plan approval. An unambiguous ASCII use of `approved` or `qwe` authorizes changes and may appear within a longer message. A second unambiguous approval after result review authorizes task deletion, commit, and push.
 - The user may edit files or create commits while agents are working; treat this as expected concurrent activity, not an anomaly or blocker. Refresh Git status and history before staging, committing, and pushing; preserve concurrent user work and stage only the intended changes unless the user directs otherwise. Agents may push the user's existing commits together with their own. Pause when concurrent changes directly overlap or conflict with the agent's work, or materially change the requested outcome.
+- When progress depends on another task, user action, or external process and no necessary in-scope work remains, stop the active turn instead of busy-waiting, repeatedly polling, or inventing unrelated work. Schedule a thread wakeup at a reasonable interval. Each wakeup performs one bounded status check; if the dependency is still unresolved, make no repository changes, stop again, and schedule the next wakeup. Disable the wakeup as soon as the dependency resolves.
 - For every agent-authored Git commit, override the author for that commit only. An agent may use only the `.agents/git-authors.tsv` entry whose `agent_name` exactly matches its own normal name; if no matching entry exists, use the agent's normal name and a normalized `<agent-name>@agent.invalid` address. Never use another agent's registered identity. Do not change repository or global Git identity, rewrite commit subjects, or alter user-authored commits.
 - Execute freely within an approved task, including major implementation changes. If the task becomes unclear or the whole approach is wrong, stop safely and clarify; a replacement plan requires approval.
+- During an already-approved task, user questions, corrections, objections, status requests, and rhetorical questions are not stop signals. Answer or acknowledge them briefly and continue executing in the same turn. Stop only when the user explicitly says `stop`, `pause`, or `wait`, when required user input is genuinely missing, or when the task has become unsafe or materially unclear.
 - Use `na2_patcher/profiles/current/` as the active reproducible build definition. Profiles must pin every enabled module input by hash and use only repository-relative paths; do not select newest packages implicitly in the normal workflow. Raw-binary profile hashes cover canonical TSV inputs and referenced blobs, not adjacent documentation.
 - Use annotated Git tags for accepted reproducible checkpoints. A checkpoint tag must target a committed state whose profile pins, module inputs, and documentation agree; tags do not replace frozen binary release artifacts.
 - Never change binary files manually.
@@ -83,15 +85,17 @@ the change in the plan. Progress updates during a long inspection must keep the
 current phase and required next response clear.
 
 1. Tasks may be added to `TASKS.md` at any time by the user, or by an agent when the user orders it.
-2. After a successful push—or whenever the user asks what is next—the agent reads `TASKS.md`, reports several relevant `In Progress` choices and any closely related `Backlog` choices word for word without paraphrasing and in their original order, preserves their original section and subsection headings so the task context remains visible, avoids dumping the whole file, and asks the user to select one.
-3. The agent may perform read-only inspection, then gives a short plan, recommends an intelligence level, and ends with **Awaiting plan approval**.
-4. An unambiguous ASCII `approved` or `qwe`, including within a longer message, authorizes changes.
-5. The agent executes freely within the approved task, including major changes.
-6. If the task becomes unclear or the whole approach is wrong, stop and clarify; a replacement plan needs approval.
-7. The agent reports the result.
-8. Another unambiguous ASCII `approved` or `qwe`, including within a longer message, authorizes task deletion, commit, and push.
-9. The user's concurrent edits and commits are expected. The agent preserves them, refreshes Git state before Git operations, and may push the user's existing commits with its own.
-10. Queued instructions remain part of the same changeset unless the user says otherwise.
+2. Each workstream subsection is coordinated by a Codex task whose title exactly matches the subsection heading. The coordinator owns that workstream across statuses, so do not add redundant coordinator metadata to `TASKS.md`.
+3. When useful, a workstream subsection or individual task may have a dedicated context or plan document. Creating such a document is optional, but if one is created, it must be linked directly from the corresponding subsection heading or task entry in `TASKS.md`.
+4. After a successful push—or whenever the user asks what is next—the agent reads `TASKS.md`, reports several relevant `In Progress` choices and any closely related `Backlog` choices word for word without paraphrasing and in their original order, preserves their original section and subsection headings so the task context remains visible, avoids dumping the whole file, and asks the user to select one.
+5. The agent may perform read-only inspection, then gives a short plan, recommends an intelligence level, and ends with **Awaiting plan approval**.
+6. An unambiguous ASCII `approved` or `qwe`, including within a longer message, authorizes changes.
+7. The agent executes freely within the approved task, including major changes.
+8. If the task becomes unclear or the whole approach is wrong, stop and clarify; a replacement plan needs approval.
+9. The agent reports the result.
+10. Another unambiguous ASCII `approved` or `qwe`, including within a longer message, authorizes task deletion, commit, and push.
+11. The user's concurrent edits and commits are expected. The agent preserves them, refreshes Git state before Git operations, and may push the user's existing commits with its own.
+12. Queued instructions remain part of the same changeset unless the user says otherwise.
 
 
 ## Cross-install Codex handoffs

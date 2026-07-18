@@ -2,33 +2,32 @@
 
 ## In Progress
 
-### UI Translation
-- See [UI Translation working context and plan](docs/plans/ui_translation.md).
+### [UI Translation](docs/plans/ui_translation.md)
+- Finish replacement.
+- Refactor to only include patches, not blobs.
+- Investigate upscaling.
 
-### Menu restructuring
+### Project
+- [Raw-binary patch hierarchy and profile-driven workflows](docs/plans/raw_binary_patch_hierarchy_and_profiles.md).
+- Develop a release process (unstash, adapt and continue).
+
+### [Font](docs/knowledge/font/README.md)
+- Research and implement NUN5 auto-adjust behavior.
+- Resume GF4 renderer work in the dedicated GF4 task, starting from the recorded v22/v23 results rather than another blind resource swap.
+
+### QoL
 - Analyze differences against NUN6 and remove adventure mode.
 
 ### String translation
-- Deal with unresolved (mappings.tsv and ChatGPT's history) and other remainders (like chakra pickup message in battle).
+- Audit and polish.
 
 ## Backlog
 
-### Project
-- Develop a release process.
-
-### Profiles
-- Rework into feature_sets, implement feature_set merge.
-- Add explicit profile selection to the `na2` build-only and build-and-launch workflows.
-
 ### Logic
-- Improve substitution reliability.
+- [Improve substitution reliability](docs/knowledge/substitution.md).
 - Add substitution bar.
 - Disable support.
 - Fix extra hit floating animation (or maybe not?).
-
-### Font
-- Research NUN5 auto-adjust behavior.
-- Resume GF4 renderer work in the dedicated GF4 task, starting from the recorded v22/v23 results rather than another blind resource swap.
 
 ### Testing
 - Basically everything.

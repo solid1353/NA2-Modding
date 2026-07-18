@@ -16,6 +16,9 @@
 ### Project
 - Solve concurrent memcard access for pcsx2.
 - Develop a release process.
+
+### Profiles
+- Rework into feature_sets, implement feature_set merge.
 - Add explicit profile selection to the `na2` build-only and build-and-launch workflows.
 
 ### Logic

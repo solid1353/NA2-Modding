@@ -64,6 +64,24 @@ PS2 modding/reverse-engineering workspace for Narutimate Accel v2.28, based on N
 
 ## Task workflow and approval
 
+Read-only inspection for a selected task may begin immediately without plan
+approval. At the start of any inspection that may take more than a brief check,
+the agent must provide this status block before or with its first inspection
+action:
+
+```text
+Phase: read-only inspection
+Purpose: gather enough evidence for the plan
+Changes: none
+Recommended effort: <level>
+Next response: short plan + effort recommendation + approval gate
+```
+
+The initial effort recommendation is provisional and must be stated even when
+inspection is still needed. If the evidence changes the recommendation, explain
+the change in the plan. Progress updates during a long inspection must keep the
+current phase and required next response clear.
+
 1. Tasks may be added to `TASKS.md` at any time by the user, or by an agent when the user orders it.
 2. After a successful push—or whenever the user asks what is next—the agent reads `TASKS.md`, reports several relevant `In Progress` choices and any closely related `Backlog` choices word for word without paraphrasing and in their original order, preserves their original section and subsection headings so the task context remains visible, avoids dumping the whole file, and asks the user to select one.
 3. The agent may perform read-only inspection, then gives a short plan, recommends an intelligence level, and ends with **Awaiting plan approval**.

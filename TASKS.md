@@ -9,7 +9,7 @@
 
 ### Project
 - [Raw-binary patch hierarchy and profile-driven workflows](docs/plans/raw_binary_patch_hierarchy_and_profiles.md).
-- Develop a release process (unstash, adapt and continue).
+- [Develop a release process (unstash, adapt and continue)](docs/RELEASE_PROCESS.md).
 
 ### [Font](docs/knowledge/font/README.md)
 - Research and implement NUN5 auto-adjust behavior.

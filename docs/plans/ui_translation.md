@@ -83,24 +83,86 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 - Most selected NA2/NUN5 containers have identical internal file/object name sets. The structural exceptions are BATTLEGAUGE, CHARSEL1, CONTINUE, OUGI, SPBATTLE, and one TITLE animation name; their external resource names and internal animation ownership must be checked rather than assumed. OUGI is the only confirmed case so far that requires a companion executable/BIN edit.
 - Deterministically recompressed complete NUN5 payloads fit the fixed NA2 member capacity for every selected container except `MODENAME/MODE2KDV.CCS`. This includes HOME, whose original donor gzip is larger but whose recompressed stream has 19,940 bytes of headroom. `MODE2KDV` remains 207 bytes too large even with Zopfli.
 - `MODE2KDV` has a verified fixed-capacity alternative: retain the NA2 container, palette, portrait, and lower 192 rows; remap the donor texture's top 64 visual rows to the nearest NA2 palette entries. The preview preserves the English banner and portrait cleanly, and the resulting stream fits with 111 bytes of headroom.
+- Ten manually paired F1 savestates were imported for NUN5 and Current: Mode
+  Select, Options, Collection Characters, Collection Movie, four character-name
+  selections, and two stage-name selections. All 20 `.p2s` files and embedded
+  screenshots passed integrity checks. Pulsating labels are treated as capture
+  phase noise; semantic mismatch, missing text, clipping, order, and placement
+  remain defects.
+- The wrong bottom button prompts are a shared-asset defect, not separate
+  per-screen offsets. `CMN/GAUGE.CCS` contains `TEX_xpanel`: NA2 literally shows
+  Circle/decision and Cross/back, while NUN5 supplies Cross/OK and Triangle/Back.
+  The complete official NUN5 container fits the unchanged 72,505-byte NA2 member
+  with 9,035 bytes of zero padding and is now the pinned `gauge` replacement.
+- The character-select renderer reads 96 eight-byte UV records from the boot ELF,
+  not from `CHARSEL1.CCS`. NA2 `FUN_0037d410` uses ELF file offset `0x4D4F70`;
+  NUN5 `FUN_0038c3a0` uses `0x4DC120`. All 96 records differ. `UI-ELF-001`
+  copies the complete range with source and destination range-hash guards.
+- The stage-name problem combines wrong rectangles with missing width fitting.
+  NA2 and NUN5 have the same 24 stage IDs and indices in the same order, but NA2
+  stores Japanese rectangles inline at BTL file offset `0x20FC10`; NUN5 reads its
+  English rectangles from ELF file offset `0x4DDB90` and horizontally fits any
+  source wider than 214 pixels. `UI-BTL-002` copies all 24 official rectangles
+  and stores the exact single-precision `min(1, 214/width)` result in NA2's
+  redundant index word. The one other index consumer now uses the already
+  matched loop index, and the draw path loads the stored scale. No code cave or
+  absolute jump is used.
+- The Options root renderer uses five menu-label and six difficulty-label
+  rectangles from the boot ELF even when the complete NUN5 `OPTION.CCS` is
+  present. NA2 and NUN5 use byte-identical screen positions, scales, and arrow
+  rectangle; their label rectangles differ. `UI-ELF-002` copies the complete
+  guarded 96-byte NUN5 block, including its eight-byte zero separator, from ELF
+  file offset `0x4DDD10` to NA2 file offset `0x4D53E0`.
+- The Collection Movie strings were already exact official NUN5 text. NUN5's
+  `ETC.BIN` has a separate `ccHomeIspMovie` construction path that NA2 does not
+  invoke, so NA2 prints four long titles on one clipped line. Translation
+  mapping version 34 uses the source-derived `insert_br_after_words` transform
+  to insert only the four official NUN5 line breaks. Every word remains sourced
+  from the original NUN5 string and all four results fit their existing fixed
+  boot-ELF slots without an overlay edit or relocation.
 
 ## Production artifacts and validation
 
-- `na2_patcher/modules/ui_textures/` contains 33 fixed-size blobs, 72 reviewed
+- `na2_patcher/modules/ui_textures/` contains 34 fixed-size blobs, 76 reviewed
   mappings, pinned source/donor/blob/payload hashes, the deterministic verifier,
-  and authoring support. The canonical replacement bytes total 5,201,893 bytes.
+  and authoring support. The canonical replacement bytes total 5,274,398 bytes.
 - `na2_patcher/modules/raw_binary/patch_sets/ui_translation/` contains
-  `UI-BTL-001`, the one four-byte OUGI loop edit. It remains
-  `approved_for_test` until the affected battle screens are visually verified.
+  four atomic companion patches and 53 guarded edits: `UI-BTL-001` for OUGI,
+  `UI-BTL-002` for stage rectangles/width fitting, `UI-ELF-001` for the
+  complete character-name rectangle table, and `UI-ELF-002` for the complete
+  Options label tables. They remain `approved_for_test` until the affected
+  screens are visually verified.
+- Translation mapping version 34 adds deterministic source-derived line breaks
+  for the four clipped Collection Movie titles. A clean-source full in-memory
+  plan produced 2,439 fixed-size patch rows with all three targets selected.
 - `na2_patcher/profiles/current/modules.tsv` enables both modules by canonical
   executable-input hash.
-- All 29 repository tests passed after integration. The focused UI suite proves
-  donor equality for all 32 whole-container imports, exact KDV changed-region
-  bounds, OUGI topology, fixed member sizes, and complete profile logging.
+- The focused UI-texture suite has seven passing tests, the runtime harness has
+  fourteen passing tests, and the raw package validates/plans all four atomic
+  patches. Temporary isolated applications proved `UI-BTL-002` preserves stage
+  keys and reproduces every donor rectangle/scale, while `UI-ELF-002` produces
+  the exact 96-byte donor Options block; both preserve target sizes. The full
+  repository suite must be rerun after the current batch is complete.
 - Build record `@logs/na2/builds/20260718_061234_625_pid41880/` fully verified
-  and promoted a changed 1,928,429,568-byte `NA2.28 - Current.iso`, rotating the previous
-  image. An independent on-disc check found all 33 member ranges exact and the
-  BTL bytes at `0xB5E80` equal to `01 00 42 2A`.
+  and promoted a changed 1,928,429,568-byte image. It is now
+  `NA2.28 - Previous.iso`. An independent on-disc check found all 33 member ranges exact and the
+  BTL bytes at `0xB5E80` equal to `01 00 42 2A`. This build predates the global
+  `GAUGE.CCS`, character-table, and stage-layout fixes and is the captured
+  defect baseline.
+- Build record `@logs/na2/builds/20260718_094002_615_pid32972/` verified and
+  promoted the complete current batch as the new 1,928,429,568-byte
+  `NA2.28 - Current.iso`, rotating the defect baseline to Previous. The ISO
+  SHA-256 is
+  `2568D4DBD59BAD54442CB33041E0EB5784CB11F4CA36EE7A1AC49A85B3D50876`.
+  Independent on-disc checks passed the exact `CMN/GAUGE.CCS` blob, OUGI byte,
+  final BTL hash, complete character and Options tables, all four Movie line
+  breaks, renamed boot file, and preserved BTL/ELF sizes.
+- The new Current boot ELF has PCSX2 CRC `2FD18170`. The runtime target guard and
+  its CRC-specific PCSX2 settings filename were updated; the settings copy is
+  byte-identical to the previous neutral Current override and preserves the
+  dedicated NA2 memory card. Both NUN5 and Current pass the neutral-rendering
+  preflight. The canonical PNACH is empty, so actualization removed no aliases
+  and enabled no cheats.
 - A hidden, muted 20-second PCSX2 smoke test loaded `NA2.28 - Current.iso`, executed
   `SLPS_222.28`, reported CRC `71ADE583`, and stayed running without a boot-time
   error. The canonical PNACH was empty, so no cheats or managed aliases were
@@ -131,25 +193,84 @@ production writer.
 3. Treat `MODE2KDV` as the single declared indexed-row exception: preserve the NA2 payload and palette and import only the donor's top 64 visual rows through a deterministic palette remap.
 4. Keep the outer DATA.CVM member size, ISO record size, and all source files unchanged. Refuse any output that cannot fit the original fixed capacity.
 5. Represent the OUGI one-part loop as a separate approved-for-test raw-binary BTL patch with exact expected bytes and provenance from matching NUN5/NUN6 behavior.
-6. Validate every output by decompressing/reparsing it, checking the intentional decoded visual set, comparing full-container payloads to the donor, verifying the KDV preserved region, and recording hashes/capacity.
-7. The proven UI module and companion raw-binary patch are integrated into the
+6. Import the common `CMN/GAUGE.CCS` container as one fixed-size donor unit so
+   its global regional button legends, matching models, and UVs remain coupled.
+7. Pair `CHARSEL1.CCS` with the complete homologous NUN5 boot-ELF character-name
+   rectangle table rather than applying per-character guesses.
+8. Pair `MAPSEL1.CCS` with all 24 NUN5 stage rectangles and the equivalent
+   214-pixel fit scale stored inside NA2's existing record topology.
+9. Pair `OPTION.CCS` with the complete NUN5 Options and difficulty rectangle
+   tables from the boot ELF.
+10. Reproduce the four NUN5 Collection Movie line breaks with a validated
+    source-derived text transform instead of transplanting an unrelated larger
+    `ETC.BIN` routine.
+11. Validate every output by decompressing/reparsing it, checking the intentional decoded visual set, comparing full-container payloads to the donor, verifying the KDV preserved region, and recording hashes/capacity.
+12. The proven UI module and companion raw-binary patches are integrated into the
    hash-pinned current profile without overwriting concurrent work.
+
+## Runtime comparison workflow
+
+- The normal runtime comparison is intentionally two-way: official NUN5 is the
+  English target and Current is the result being corrected. Vanilla NA2 is an
+  optional diagnostic fallback only; no routine third capture is required.
+- `scripts/research/ui_translation/` provides a PINE-backed, read-only-first
+  capture harness. It verifies live serial/CRC identity, ISO hash, rendering
+  conditions, and paused state before archiving a `.p2s`, its embedded
+  `Screenshot.png`, and a repository-relative manifest under
+  `@work/ui_translation/runtime_cases/`.
+- The focused harness suite has 14 passing tests. Its manual F1 importer preserves
+  the user-created states, extracts embedded screenshots, hashes inputs, and
+  records repository-relative manifests without requiring a live PINE capture.
+- Ten matching NUN5/Current pairs are archived under
+  `@work/ui_translation/runtime_cases/`; the two contact sheets are under
+  `@work/ui_translation/runtime_review/`.
+- The configured savestate folder was cleared before the fresh pilot. The 14
+  prior slot, resume, and backup states were moved to the Windows Recycle Bin.
+- Texture replacements are disabled. Current and NUN5 both pass the
+  neutral-rendering preflight. NUN5's per-game settings now permanently use
+  `4:3`, and its former `Widescreen 16:9` patch override has been removed while
+  preserving the dedicated NUN5 memory-card selection.
+- Recommended capture priority is CHARSEL1 first, then BATTLEGAUGE, OUGI,
+  TITLE, MODESEL1/MAPSEL1, CONTINUE, SPBATTLE, and the hybrid MODE2KDV banner.
+  Shop, HOME/Collection, options/practice, clash prompts, and result screens
+  are secondary coverage rather than prerequisites for the pilot.
+
+### Current defect matrix from the ten pairs
+
+- Mode Select and Collection Characters have acceptable main labels; their
+  bottom prompts are covered by the global `GAUGE.CCS` fix.
+- Options has severe fragmented/cut labels because the old ISO still uses the
+  Japanese ELF rectangle tables. The complete-table `UI-ELF-002` fix is pending
+  runtime verification together with the global prompt donor.
+- Collection Movie has four right-edge-clipped titles. Mapping version 34 now
+  inserts the exact official NUN5 two-line breaks; runtime must verify that the
+  existing row boxes render them without overlap. Apparent title duplication
+  is not counted while pulse phase can explain it.
+- Character Select showed wrong names for Sai and Shikamaru, one correct Shino
+  name, and a blank Kurenai nameplate. The complete 96-record ELF fix addresses
+  the shared cause instead of those four samples individually.
+- Stage Select showed clipped/reordered Hidden Leaf and Hidden Sand names. The
+  24-record BTL/ELF patch addresses both selection order and the missing NUN5
+  width-fit behavior.
+- Every captured bottom bar displayed the wrong regional prompts. This is the
+  global `TEX_xpanel` defect and must be judged once after the next build, while
+  still checking that no screen uses a separate legend.
 
 ## Open questions
 
-- Whether BATTLEGAUGE, CHARSEL1, CONTINUE, SPBATTLE, and TITLE require any companion code/name adjustment after their complete donor containers are tested. Current static evidence says their externally loaded names remain available; OUGI is the one confirmed code edit.
+- Whether BATTLEGAUGE, CONTINUE, SPBATTLE, and TITLE require further companion
+  code/name adjustment after the next runtime pass.
 - How `LOGO.CCS` should be treated, given its intentionally unmatched regional/language textures.
 - How PCSX2 texture hashes/names in the upscale pack map back to CCS entries.
 - Which NUN6 A35 files differ from NUN5 specifically because of Brazilian Portuguese localization, and whether those differences reveal a proven texture-import method.
 
 ## Current status and next checkpoint
 
-Static implementation, deterministic verification, profile integration, full ISO
-verification, and a clean boot smoke test are complete. Original game sources
-were not modified; only the two explicitly authorized redundant auxiliary
-references were deleted. The first user-visible pass found many issues, so this
-state is an initial reproducible visual baseline rather than an accepted UI
-result. The next checkpoint is to inventory the failures by exact screen and
-symptom, prioritizing OUGI, BATTLEGAUGE, CHARSEL1, CONTINUE, SPBATTLE, TITLE,
-and MODE2KDV. Cutoff, placement, missing-resource, animation, and unrelated-art
-problems must be separated before changing another offset or container strategy.
+The first ten-pair user-visible pass is archived and classified. The global
+bottom-prompt donor, complete character-name table, complete stage-name
+rectangle/fit patch, complete Options rectangle block, and Collection Movie
+line breaks are integrated and statically verified; the source ISO trees remain
+untouched. The full 37-test repository suite and 14-test runtime-harness suite
+pass, and the new Current ISO is ready. Compare the same paired screens against
+NUN5. Runtime results decide whether each raw patch is promoted, revised, or
+marked failed.

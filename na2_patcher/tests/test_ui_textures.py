@@ -37,8 +37,8 @@ class UiTextureTests(unittest.TestCase):
         )
 
     def test_complete_package_is_pinned_and_fixed_size(self) -> None:
-        self.assertEqual(len(self.plan.containers), 33)
-        self.assertEqual(self.plan.mapping_count, 72)
+        self.assertEqual(len(self.plan.containers), 34)
+        self.assertEqual(self.plan.mapping_count, 76)
         for result in self.plan.containers:
             self.assertEqual(
                 len(result.replacement), len(result.original), result.spec.path
@@ -54,7 +54,7 @@ class UiTextureTests(unittest.TestCase):
             for result in self.plan.containers
             if result.strategy.strategy == "whole"
         ]
-        self.assertEqual(len(whole), 32)
+        self.assertEqual(len(whole), 33)
         for result in whole:
             self.assertEqual(
                 gzip.decompress(result.replacement),
@@ -129,6 +129,25 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(len(engine.parse_ccs(output_payload)), 20)
         self.assertEqual(output_payload, donor_payload)
 
+    def test_gauge_import_replaces_the_global_regional_button_legend(self) -> None:
+        result = self.result("gauge")
+        target_payload = gzip.decompress(result.original)
+        output_payload = gzip.decompress(result.replacement)
+        donor_payload = gzip.decompress(result.donor)
+        texture_name = r"x\window\tex\xpanel.bmp"
+        target_entry = engine.parse_ccs(target_payload)[texture_name]
+        output_entry = engine.parse_ccs(output_payload)[texture_name]
+        donor_entry = engine.parse_ccs(donor_payload)[texture_name]
+
+        target_rgba = engine.decoded_rgba(target_payload, target_entry)
+        output_rgba = engine.decoded_rgba(output_payload, output_entry)
+        donor_rgba = engine.decoded_rgba(donor_payload, donor_entry)
+        self.assertIsNotNone(target_rgba)
+        self.assertIsNotNone(output_rgba)
+        self.assertIsNotNone(donor_rgba)
+        self.assertNotEqual(target_rgba, output_rgba)
+        self.assertEqual(output_rgba, donor_rgba)
+
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")
         end = result.outer_cvm_offset + len(result.original)
@@ -165,12 +184,12 @@ class UiTextureTests(unittest.TestCase):
             ) as handle:
                 summary = list(csv.DictReader(handle, delimiter="\t"))
 
-            self.assertEqual(len(patches), 33)
+            self.assertEqual(len(patches), 34)
             self.assertTrue(all(row["file"] == "DATA/DATA.CVM" for row in patches))
             self.assertTrue(all(row["original_sha256"] for row in patches))
             self.assertTrue(all(row["new_sha256"] for row in patches))
-            self.assertEqual(summary[0]["container_count"], "33")
-            self.assertEqual(summary[0]["mapping_count"], "72")
+            self.assertEqual(summary[0]["container_count"], "34")
+            self.assertEqual(summary[0]["mapping_count"], "76")
 
 
 if __name__ == "__main__":

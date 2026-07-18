@@ -8,16 +8,19 @@ GUI tool.
 ## Safety and reproducibility
 
 - `containers.tsv` pins every clean NA2 target and official NUN5 donor member.
-- `mappings.tsv` records the 72 intentional texture relationships and validates
+- `mappings.tsv` records the 76 intentional texture relationships and validates
   that the donor has no additional decoded visual changes outside that scope.
 - `strategies.tsv` pins each fixed-size replacement blob and its decompressed CCS
   payload.
-- All 33 replacements preserve their original NA2 member size and therefore do
+- All 34 replacements preserve their original NA2 member size and therefore do
   not move any `DATA.CVM` member or ISO extent.
-- Thirty-two containers carry the complete NUN5 CCS payload, including matching
+- Thirty-three containers carry the complete NUN5 CCS payload, including matching
   models, UVs, layout, and animation data. `MODE2KDV.CCS` is the sole capacity
   exception: it retains the NA2 palette and lower 192 visual rows and imports the
   donor's top 64 label rows after nearest-palette-index remapping.
+- `CMN/GAUGE.CCS` supplies the shared regional UI atlas. In particular,
+  `TEX_xpanel` replaces NA2's Circle/決定 and Cross/戻る legends with NUN5's
+  Cross/OK and Triangle/Back legends everywhere the common panel is used.
 - The NUN5 one-part `OUGI.CCS` layout also requires the paired, size-preserving
   `UI-BTL-001` raw-binary patch in
   `na2_patcher/modules/raw_binary/patch_sets/ui_translation/`.

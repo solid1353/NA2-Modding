@@ -16,6 +16,10 @@ UI-CHAR-001	1	charsel1	m\sel1\tex\char_name01.bmp	m\sel1\tex\char_name01.bmp	cop
 UI-CHAR-002	1	charsel1	m\sel1\tex\char_ytype.bmp	m\sel1\tex\char_ytype.bmp	copy	English character-type labels.
 UI-CHAR-003	1	charsel1	m\sel1\tex\charsel01.bmp	m\sel1\tex\charsel01.bmp	copy	English character-select controls and labels.
 UI-CONT-001	1	continue	r\continue\tex\continue.bmp	r\continue\tex\continue.bmp	copy	English Game Over and retry labels.
+UI-GAUGE-001	1	gauge	x\load\tex\load_b\xload_b.bmp	x\load\tex\load_b\xload_b.bmp	copy	Official English loading and title branding.
+UI-GAUGE-002	1	gauge	x\window\tex\xgauge5.bmp	x\window\tex\xgauge5.bmp	copy	Official English character-name atlas used by common UI windows.
+UI-GAUGE-003	1	gauge	x\window\tex\xmenu.bmp	x\window\tex\xmenu.bmp	copy	English common control-settings labels.
+UI-GAUGE-004	1	gauge	x\window\tex\xpanel.bmp	x\window\tex\xpanel.bmp	copy	English common button legend with Cross OK and Triangle Back prompts.
 UI-HOME-001	1	home	m\home\tex\home01.bmp	m\home\tex\home01.bmp	copy	Official English collection character names.
 UI-HOME-002	1	home	m\home\tex\home02.bmp	m\home\tex\home02.bmp	copy	English collection menu labels.
 UI-HOME-003	1	home	m\home\tex\home03.bmp	m\home\tex\home03.bmp	copy	English collection category labels.

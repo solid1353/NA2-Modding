@@ -1,2 +1,54 @@
 edit_id	patch_id	order	destination_target_id	destination_offset	operation	length	expected_hex	expected_sha256	replacement_hex	source_target_id	source_offset	source_expected_hex	source_expected_sha256	blob_path	blob_offset	blob_sha256	fill_hex	reason
 UI-BTL-001-01	UI-BTL-001	10	na2_btl	0xB5E80	replace	4	0200422A		0100422A									Match the one-part English OUGI label layout used by both NUN5 and NUN6.
+UI-BTL-002-01	UI-BTL-002	10	na2_btl	0x606BC	replace	4	0000508C		2D802002									Use the matched loop index directly so the redundant per-record index word can hold the stage-name scale.
+UI-BTL-002-02	UI-BTL-002	20	na2_btl	0x6156C	replace	8	803F023C00708244		04006EC400000000									Load the precomputed horizontal scale from the selected 16-byte stage record.
+UI-BTL-002-S00	UI-BTL-002	100	na2_btl	0x20FC14	replace	4	00000000		4F236C3F									Store the NUN5-equivalent horizontal scale for stage row 0 (232px source width).
+UI-BTL-002-S01	UI-BTL-002	101	na2_btl	0x20FC24	replace	4	01000000		4F236C3F									Store the NUN5-equivalent horizontal scale for stage row 1 (232px source width).
+UI-BTL-002-S02	UI-BTL-002	102	na2_btl	0x20FC34	replace	4	02000000		6969493F									Store the NUN5-equivalent horizontal scale for stage row 2 (272px source width).
+UI-BTL-002-S03	UI-BTL-002	103	na2_btl	0x20FC44	replace	4	03000000		0000803F									Store the NUN5-equivalent horizontal scale for stage row 3 (208px source width).
+UI-BTL-002-S04	UI-BTL-002	104	na2_btl	0x20FC54	replace	4	04000000		7D411F3F									Store the NUN5-equivalent horizontal scale for stage row 4 (344px source width).
+UI-BTL-002-S05	UI-BTL-002	105	na2_btl	0x20FC64	replace	4	05000000		0000803F									Store the NUN5-equivalent horizontal scale for stage row 5 (160px source width).
+UI-BTL-002-S06	UI-BTL-002	106	na2_btl	0x20FC74	replace	4	06000000		0000803F									Store the NUN5-equivalent horizontal scale for stage row 6 (168px source width).
+UI-BTL-002-S07	UI-BTL-002	107	na2_btl	0x20FC84	replace	4	07000000		4444643F									Store the NUN5-equivalent horizontal scale for stage row 7 (240px source width).
+UI-BTL-002-S08	UI-BTL-002	108	na2_btl	0x20FC94	replace	4	08000000		E4383E3F									Store the NUN5-equivalent horizontal scale for stage row 8 (288px source width).
+UI-BTL-002-S09	UI-BTL-002	109	na2_btl	0x20FCA4	replace	4	09000000		0000803F									Store the NUN5-equivalent horizontal scale for stage row 9 (200px source width).
+UI-BTL-002-S10	UI-BTL-002	110	na2_btl	0x20FCB4	replace	4	0A000000		2FA17D3F									Store the NUN5-equivalent horizontal scale for stage row 10 (216px source width).
+UI-BTL-002-S11	UI-BTL-002	111	na2_btl	0x20FCC4	replace	4	0B000000		2FA17D3F									Store the NUN5-equivalent horizontal scale for stage row 11 (216px source width).
+UI-BTL-002-S12	UI-BTL-002	112	na2_btl	0x20FCD4	replace	4	0C000000		0000563F									Store the NUN5-equivalent horizontal scale for stage row 12 (256px source width).
+UI-BTL-002-S13	UI-BTL-002	113	na2_btl	0x20FCE4	replace	4	0D000000		0000563F									Store the NUN5-equivalent horizontal scale for stage row 13 (256px source width).
+UI-BTL-002-S14	UI-BTL-002	114	na2_btl	0x20FCF4	replace	4	0E000000		E535343F									Store the NUN5-equivalent horizontal scale for stage row 14 (304px source width).
+UI-BTL-002-S15	UI-BTL-002	115	na2_btl	0x20FD04	replace	4	0F000000		0000803F									Store the NUN5-equivalent horizontal scale for stage row 15 (152px source width).
+UI-BTL-002-S16	UI-BTL-002	116	na2_btl	0x20FD14	replace	4	10000000		0000803F									Store the NUN5-equivalent horizontal scale for stage row 16 (168px source width).
+UI-BTL-002-S17	UI-BTL-002	117	na2_btl	0x20FD24	replace	4	11000000		0000803F									Store the NUN5-equivalent horizontal scale for stage row 17 (176px source width).
+UI-BTL-002-S18	UI-BTL-002	118	na2_btl	0x20FD34	replace	4	12000000		E1834F3F									Store the NUN5-equivalent horizontal scale for stage row 18 (264px source width).
+UI-BTL-002-S19	UI-BTL-002	119	na2_btl	0x20FD44	replace	4	13000000		0000563F									Store the NUN5-equivalent horizontal scale for stage row 19 (256px source width).
+UI-BTL-002-S20	UI-BTL-002	120	na2_btl	0x20FD54	replace	4	14000000		0000803F									Store the NUN5-equivalent horizontal scale for stage row 20 (192px source width).
+UI-BTL-002-S21	UI-BTL-002	121	na2_btl	0x20FD64	replace	4	15000000		0000803F									Store the NUN5-equivalent horizontal scale for stage row 21 (168px source width).
+UI-BTL-002-S22	UI-BTL-002	122	na2_btl	0x20FD74	replace	4	16000000		3BA8433F									Store the NUN5-equivalent horizontal scale for stage row 22 (280px source width).
+UI-BTL-002-S23	UI-BTL-002	123	na2_btl	0x20FD84	replace	4	17000000		0000803F									Store the NUN5-equivalent horizontal scale for stage row 23 (184px source width).
+UI-BTL-002-R00	UI-BTL-002	200	na2_btl	0x20FC18	copy	8	00000000BE002800			nun5_elf	0x4DDB90	00000000E8002000						Copy official NUN5 stage-name UV rectangle row 0.
+UI-BTL-002-R01	UI-BTL-002	201	na2_btl	0x20FC28	copy	8	BE00000090002800			nun5_elf	0x4DDB98	E8000000E8002000						Copy official NUN5 stage-name UV rectangle row 1.
+UI-BTL-002-R02	UI-BTL-002	202	na2_btl	0x20FC38	copy	8	4E010000A8002800			nun5_elf	0x4DDBA0	0000200010012000						Copy official NUN5 stage-name UV rectangle row 2.
+UI-BTL-002-R03	UI-BTL-002	203	na2_btl	0x20FC48	copy	8	0000280086002800			nun5_elf	0x4DDBA8	10012000D0002000						Copy official NUN5 stage-name UV rectangle row 3.
+UI-BTL-002-R04	UI-BTL-002	204	na2_btl	0x20FC58	copy	8	860028008E002800			nun5_elf	0x4DDBB0	0000400058012000						Copy official NUN5 stage-name UV rectangle row 4.
+UI-BTL-002-R05	UI-BTL-002	205	na2_btl	0x20FC68	copy	8	14012800A4002800			nun5_elf	0x4DDBB8	58014000A0002000						Copy official NUN5 stage-name UV rectangle row 5.
+UI-BTL-002-R06	UI-BTL-002	206	na2_btl	0x20FC78	copy	8	00005000B4004400			nun5_elf	0x4DDBC0	00006000A8002000						Copy official NUN5 stage-name UV rectangle row 6.
+UI-BTL-002-R07	UI-BTL-002	207	na2_btl	0x20FC88	copy	8	B40050008C002800			nun5_elf	0x4DDBC8	A8006000F0002000						Copy official NUN5 stage-name UV rectangle row 7.
+UI-BTL-002-R08	UI-BTL-002	208	na2_btl	0x20FC98	copy	8	40015000BA004400			nun5_elf	0x4DDBD0	A800600120012800						Copy official NUN5 stage-name UV rectangle row 8.
+UI-BTL-002-R09	UI-BTL-002	209	na2_btl	0x20FCA8	copy	8	0000940074002800			nun5_elf	0x4DDBD8	00008000C8002000						Copy official NUN5 stage-name UV rectangle row 9.
+UI-BTL-002-R10	UI-BTL-002	210	na2_btl	0x20FCB8	copy	8	740094008C002800			nun5_elf	0x4DDBE0	C8008000D8002000						Copy official NUN5 stage-name UV rectangle row 10.
+UI-BTL-002-R11	UI-BTL-002	211	na2_btl	0x20FCC8	copy	8	180194008E002800			nun5_elf	0x4DDBE8	0000A000D8002000						Copy official NUN5 stage-name UV rectangle row 11.
+UI-BTL-002-R12	UI-BTL-002	212	na2_btl	0x20FCD8	copy	8	0000BC008C002800			nun5_elf	0x4DDBF0	D800A00000012000						Copy official NUN5 stage-name UV rectangle row 12.
+UI-BTL-002-R13	UI-BTL-002	213	na2_btl	0x20FCE8	copy	8	8C00BC00AE004400			nun5_elf	0x4DDBF8	0000C00000012000						Copy official NUN5 stage-name UV rectangle row 13.
+UI-BTL-002-R14	UI-BTL-002	214	na2_btl	0x20FCF8	copy	8	3A01BC00C2002800			nun5_elf	0x4DDC00	0000E00030012000						Copy official NUN5 stage-name UV rectangle row 14.
+UI-BTL-002-R15	UI-BTL-002	215	na2_btl	0x20FD08	copy	8	0000000188002800			nun5_elf	0x4DDC08	0001C00098002000						Copy official NUN5 stage-name UV rectangle row 15.
+UI-BTL-002-R16	UI-BTL-002	216	na2_btl	0x20FD18	copy	8	880000018C002800			nun5_elf	0x4DDC10	3001E000A8002000						Copy official NUN5 stage-name UV rectangle row 16.
+UI-BTL-002-R17	UI-BTL-002	217	na2_btl	0x20FD28	copy	8	1401000174002800			nun5_elf	0x4DDC18	00000001B0002000						Copy official NUN5 stage-name UV rectangle row 17.
+UI-BTL-002-R18	UI-BTL-002	218	na2_btl	0x20FD38	copy	8	00002801C0002800			nun5_elf	0x4DDC20	B000000108012000						Copy official NUN5 stage-name UV rectangle row 18.
+UI-BTL-002-R19	UI-BTL-002	219	na2_btl	0x20FD48	copy	8	C000280174002800			nun5_elf	0x4DDC28	0000200100012000						Copy official NUN5 stage-name UV rectangle row 19.
+UI-BTL-002-R20	UI-BTL-002	220	na2_btl	0x20FD58	copy	8	340128018C002800			nun5_elf	0x4DDC30	00012001C0002000						Copy official NUN5 stage-name UV rectangle row 20.
+UI-BTL-002-R21	UI-BTL-002	221	na2_btl	0x20FD68	copy	8	A0016C015A002800			nun5_elf	0x4DDC38	00006001A8002000						Copy official NUN5 stage-name UV rectangle row 21.
+UI-BTL-002-R22	UI-BTL-002	222	na2_btl	0x20FD78	copy	8	C0006C0184002800			nun5_elf	0x4DDC40	0000400118012000						Copy official NUN5 stage-name UV rectangle row 22.
+UI-BTL-002-R23	UI-BTL-002	223	na2_btl	0x20FD88	copy	8	46016C015A002800			nun5_elf	0x4DDC48	18014001B8002000						Copy official NUN5 stage-name UV rectangle row 23.
+UI-ELF-001-01	UI-ELF-001	10	na2_elf	0x4D4F70	copy	768		2455BFFFECE2BF98FB2849F04CA43C7D450C20F3BEFF01CE30A8729EC20A626B		nun5_elf	0x4DC120		DBFBA67C2EBCFE2C25AEA3B5C3B2C0A96000F5041E825436CC5559E4CF10A82B					Copy the complete official NUN5 96-entry character-name atlas rectangle table.
+UI-ELF-002-01	UI-ELF-002	10	na2_elf	0x4D53E0	copy	96		250C8D6930CFEDA248197FF49FDFA90BF62F49E7DF2F6BA8044440CC61FA0EB1		nun5_elf	0x4DDD10		465F506C9BCA4E4D05A90B71847313DE04D9B9BB4C471068D9BD316DE4B2099B					Copy the complete official NUN5 English Options-menu and difficulty-label atlas rectangle tables, including their shared zero separator.

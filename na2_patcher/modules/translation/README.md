@@ -1,11 +1,11 @@
-# NA2 translation module (mapping version 33)
+# NA2 translation module (mapping version 34)
 
 This first-class `na2_patcher` module builds an in-memory translation plan for **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*. It never packages patched BIN or ELF payloads. Profile builds invoke `engine.py` directly and log the plan without using a TSV as an inter-stage handoff. There is no standalone export command.
 
 ## Mapping metadata
 
-- Version: `33`
-- Packaged `mappings.tsv` SHA-256: `c4f317c0a86c2be3fb07512652ce5e50d9b73ae485ebaa502c4ed1fabc9c28a5`
+- Version: `34`
+- Packaged `mappings.tsv` SHA-256: `8f7f244f286ab3572e674d52b50409e6d5345c70a7d43e69ba2d754d82d0dbe7`
 
 The README is the canonical home for both values. The module does not use one-line `VERSION.txt` or `MAPPINGS_DEFAULT.sha256` sidecars; it reads and validates this metadata directly from `README.md`.
 
@@ -64,6 +64,7 @@ Supported source-derived transforms:
 - `format_prefix_arg2`, `format_suffix_arg2`
 - `between_placeholders`, `after_placeholder2`
 - `split_br`, `split_br_sequence`, `join_br_parts`
+- `insert_br_after_words`
 - `flatten_br_slice`
 - `append_space`
 - `empty`
@@ -73,9 +74,15 @@ Arguments use compact key/value syntax, for example:
 - `arg1=NUN5_TEXTENG@0x708`
 - `part=1`
 - `parts=2,3;join=<br>`
+- `words=3`
 - `start=13;end=83`
 
 `split_br_sequence` selects official NUN5 `<br>` parts listed by `parts=...` and writes them as consecutive NUL-terminated NA2 fragments.
+
+`insert_br_after_words` retains every word from one exact official NUN5 source
+string and inserts one `<br>` after the declared word count. It is used for the
+four Collection Movie titles that NUN5 wraps automatically but NA2 otherwise
+clips when the same official text is copied into its original fixed slot.
 
 `flatten_br_slice` replaces each official NUN5 `<br>` with one space and selects a verified character range. It is used to distribute one official loading sentence across NA2's three original fixed slots without embedding manual prose.
 
@@ -130,6 +137,43 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - NUN5 `<BLACK>` remains `<BLACK>` or becomes `<color000000>` according to the verified target form.
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
+
+## Version 34 changes
+
+### Collection Movie line wrapping
+
+Four exact official NUN5 movie titles already fit their original NA2 executable
+slots but NA2 rendered each title as one clipped line. NUN5's `ETC.BIN`
+contains an additional Movie-specific construction path using
+`ccHomeIspMovie`; the NA2 homolog does not invoke that path. Porting the whole
+overlay routine would also import unrelated object-layout and renderer-call
+changes.
+
+`M0771` through `M0774` now use `insert_br_after_words` to preserve every word
+from their existing exact NUN5 source references while reproducing the line
+breaks visible in the official NUN5 screen:
+
+- `Sealing Jutsu: Nine<br>Phantom Dragons`
+- `People of Endless<br>Darkness`
+- `Ninja Art: Beast<br>Scroll Replicas`
+- `Fourth Awakened<br>Mode`
+
+The transform accepts only a valid single-space word boundary. All four results
+fit their existing fixed slots; no shortening, relocation, pointer rewrite,
+overlay edit, or target-size change is used.
+
+### v34 build validation
+
+A clean-source full in-memory plan was validated with all three targets
+selected:
+
+- mapping version 34 and the packaged mapping hash matched the README;
+- 2,439 six-column TSV patch rows;
+- 2,173 applied and changed text mappings;
+- 33 shortened mappings;
+- zero active structural patches;
+- all four Collection Movie replacements contained the declared `<br>` at the
+  official word boundary and remained inside their original slots.
 
 ## Version 33 changes
 
@@ -324,6 +368,11 @@ The packaged v30 table contains 854 mappings: 844 enabled and 10 disabled. Activ
 
 This log persists unresolved visual/runtime findings across mapping versions. Entries implemented in the current module remain in the verification section until confirmed in-game.
 
+### Implemented in v34, runtime verification required
+
+- **Collection Movie title fit:** verify the four long titles render on the same
+  two lines as official NUN5 without clipping or overlap.
+
 ### Implemented in v33, runtime verification required
 
 - **Temari voice title:** verify `姉の喜び` now displays exact NUN5 `Silent Confidence` in the Collection character voice list.
@@ -360,17 +409,18 @@ This log persists unresolved visual/runtime findings across mapping versions. En
 ### Open
 
 - **Startup no-card choice capitalization:** later replace the visible `Yes` and `No` labels with uppercase `YES` and `NO`; intentionally not included yet.
-- **Options main-screen graphical labels:** the `Options` logo, difficulty/value, controls, screen, audio, restore, confirm, and back labels remain Japanese in supplied screenshots. They appear to use graphical/CCS resources outside the current text targets and remain untouched pending extracted NA2 and NUN5 assets.
-- **Collection Movie screen chrome:** the `Collection` title, `Movie` category heading, and play/back prompts remain Japanese and appear to use graphical/CCS resources outside the current text targets.
-- **Collection movie-title fit:** exact NUN5 titles are present, but several extend beyond the visible right edge. They remain unshortened until a requested shortening or verified NUN5 width/scale behavior is applied.
+- **Options main-screen graphical labels:** owned by the separate UI-texture and
+  layout task; they remain outside this text module.
+- **Collection Movie screen chrome:** graphical title/category and button assets
+  are owned by the separate UI-texture task and remain outside this text module.
 - **Command Chart chrome:** any remaining Japanese heading or back prompt that is graphical rather than string-backed remains outside current scope pending resource extraction.
 - **Dynamic save date/time numerals:** retained as unresolved mapping `M0833`; the digits are generated by executable code and still require a verified renderer/code mapping.
 
 PCSX2 application chrome, toolbar text, pause indicators, graphical controller prompts, and emulator toasts are not game translation issues and are not logged here.
 
-## v33 test checklist
+## v34 test checklist
 
-1. Export from a clean mapping-version-33 module and confirm the summary reports version 33.
+1. Build from a clean mapping-version-34 module and confirm the summary reports version 34.
 2. Confirm `build_summary.json`, console output, scripts, and documentation contain only relative path references.
 3. Preserve external enabled state and verify `M0745=1`; `M0725` must remain enabled and apply as a `slot` mapping.
 4. Recheck all 54 supplied Collection screenshots and confirm every v32-covered model-animation, voice-title, and jutsu entry is English.
@@ -379,7 +429,9 @@ PCSX2 application chrome, toolbar text, pause indicators, graphical controller p
 7. Verify `Kachofuketsu` appears in both the battle-select and Command Chart contexts using the shared target string.
 8. Verify `Temple of Nirvana Technique` appears in the battle-select entry.
 9. Recheck v29-v31 Options, Theater, save/load, memory-card, Naruto, and roster-wide Command Chart fixes for regressions.
-10. Generated TSV validation: exactly six columns, fixed-size patches only, relative summary reference, no active overlap, unchanged target file sizes, and successful composition with the current Font package.
+10. Confirm the four long Collection Movie titles use the exact two-line NUN5
+    breaks without clipping or overlapping adjacent entries.
+11. Generated TSV validation: exactly six columns, fixed-size patches only, relative summary reference, no active overlap, unchanged target file sizes, and successful composition with the current Font package.
 
 ## Integration expectations
 

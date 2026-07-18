@@ -41,7 +41,8 @@ VALID_MODES = {"slot", "sequence", "shorten", "bytes", "unresolved"}
 VALID_TRANSFORMS = {
     "", "empty", "format_arg1", "format_args", "format_prefix_arg2",
     "format_suffix_arg2", "between_placeholders", "after_placeholder2",
-    "split_br", "split_br_sequence", "join_br_parts", "append_space", "flatten_br_slice",
+    "split_br", "split_br_sequence", "join_br_parts", "insert_br_after_words",
+    "append_space", "flatten_br_slice",
 }
 NAMED_COLOR_TAG_EQUIVALENTS = {
     "<WHITE>": ("<WHITE>", "<colorFFFFFF>"),
@@ -361,6 +362,16 @@ def resolve_source_text(row: dict[str, object], sources: dict[str, bytes], label
         if max(values) >= len(pieces):
             raise ValueError(f"{label}: join part is outside {len(pieces)} parts")
         return arguments.get("join", "<br>").join(pieces[value] for value in values)
+    if transform == "insert_br_after_words":
+        count = parse_int(arguments.get("words", ""), label)
+        pieces = template.split(" ")
+        if any(not piece for piece in pieces):
+            raise ValueError(f"{label}: source text does not use single-space word boundaries")
+        if count <= 0 or count >= len(pieces):
+            raise ValueError(
+                f"{label}: word break {count} is outside 1..{len(pieces) - 1}"
+            )
+        return " ".join(pieces[:count]) + "<br>" + " ".join(pieces[count:])
     if transform == "append_space":
         return template + " "
     if transform == "flatten_br_slice":

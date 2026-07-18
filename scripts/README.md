@@ -27,6 +27,9 @@ research utility.
   game cohorts.
 - `research/menu_input/`: preserved MIPS and Ghidra analysis helpers from the
   menu-input investigation.
+- `research/ui_translation/`: PINE identity checks, controlled savestate and
+  embedded-screenshot capture, rendering preflight, and read-only runtime
+  memory inspection for NUN5-to-NA2 UI comparisons.
 - `research/translation/`: retained translation-table length validator. It is
   not part of normal profile builds.
 

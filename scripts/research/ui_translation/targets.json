@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "targets": {
+    "nun5": {
+      "image": {
+        "kind": "root_alias",
+        "value": "@source/NUN5.iso"
+      },
+      "serial": "SLES-55605",
+      "crc": "C071D4C1",
+      "settings_file": "SLES-55605_C071D4C1.ini"
+    },
+    "current": {
+      "image": {
+        "kind": "project_file",
+        "value": "current_iso"
+      },
+      "serial": "SLPS-22228",
+      "crc": "2FD18170",
+      "settings_file": "SLPS-22228_2FD18170.ini"
+    }
+  }
+}

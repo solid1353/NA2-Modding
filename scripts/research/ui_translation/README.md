@@ -30,8 +30,9 @@ cannot be explained from NUN5 and Current plus the unpacked static sources.
   `@work/ui_translation/runtime_cases/`. Only after that succeeds is the newly
   generated slot state removed from `@pcsx2/sstates/`; pass
   `--keep-slot-state` to retain it there.
-- The harness currently exposes read-only memory access. Guarded writes will be
-  added only after the first pilot identifies a concrete runtime structure.
+- Runtime writes require an exact serial/CRC match, neutral rendering settings,
+  paused PCSX2, an exact expected-byte range, and complete readback. A failed
+  write attempts to restore the guarded bytes before reporting failure.
 
 ## Workflow
 
@@ -78,6 +79,20 @@ For targeted read-only runtime inspection:
 ```powershell
 python scripts/research/ui_translation/ui_runtime.py read `
   --target current --address 0x00100000 --width 32 --count 4
+```
+
+For a concrete, reversible runtime hypothesis, take both expected and
+replacement bytes from pinned files and patch only while PCSX2 is paused:
+
+```powershell
+python scripts/research/ui_translation/ui_runtime.py patch `
+  --target current `
+  --address 0x005D4E70 `
+  --expected-file "@source/NUN5.iso.files/SLES_556.05" `
+  --expected-offset 0x4DC120 `
+  --replacement-file "@source/NUN5.iso.files/SLES_556.05" `
+  --replacement-offset 0x4DDDD0 `
+  --length 0x300
 ```
 
 Run the focused tests with:

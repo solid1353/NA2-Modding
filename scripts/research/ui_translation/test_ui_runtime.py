@@ -92,12 +92,63 @@ class PineClientTests(unittest.TestCase):
             struct.pack("<I", 9) + b"\x02" + struct.pack("<I", 0x00100000),
         )
 
+    def test_write32(self) -> None:
+        sock = FakeSocket(pine_reply())
+        client = ui_runtime.PineClient(sock)  # type: ignore[arg-type]
+
+        client.write(0x00100000, 32, 0x12345678)
+
+        self.assertEqual(
+            bytes(sock.sent),
+            struct.pack("<I", 13)
+            + b"\x06"
+            + struct.pack("<I", 0x00100000)
+            + struct.pack("<I", 0x12345678),
+        )
+
     def test_rejected_request(self) -> None:
         client = ui_runtime.PineClient(  # type: ignore[arg-type]
             FakeSocket(pine_reply(ok=False))
         )
         with self.assertRaises(ui_runtime.PineProtocolError):
             client.status()
+
+
+class GuardedPatchTests(unittest.TestCase):
+    class MemoryClient:
+        def __init__(self, data: bytes):
+            self.data = bytearray(data)
+
+        def read(self, address: int, width: int) -> int:
+            size = width // 8
+            return int.from_bytes(self.data[address : address + size], "little")
+
+        def write(self, address: int, width: int, value: int) -> None:
+            size = width // 8
+            self.data[address : address + size] = value.to_bytes(size, "little")
+
+    def test_exact_guard_and_readback(self) -> None:
+        client = self.MemoryClient(bytes(range(32)))
+        expected = bytes(range(3, 22))
+        replacement = bytes(reversed(expected))
+
+        result = ui_runtime.guarded_patch_memory(
+            client, 3, expected, replacement  # type: ignore[arg-type]
+        )
+
+        self.assertEqual(client.data[3:22], replacement)
+        self.assertTrue(result["readback_verified"])
+
+    def test_mismatch_rejects_without_writing(self) -> None:
+        original = bytes(range(16))
+        client = self.MemoryClient(original)
+
+        with self.assertRaisesRegex(ui_runtime.UiRuntimeError, "rejected"):
+            ui_runtime.guarded_patch_memory(
+                client, 4, b"wrong", b"RIGHT"  # type: ignore[arg-type]
+            )
+
+        self.assertEqual(bytes(client.data), original)
 
 
 class RenderingTests(unittest.TestCase):

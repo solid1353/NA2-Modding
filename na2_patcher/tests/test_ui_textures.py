@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import csv
 import gzip
+import struct
 import tempfile
 import unittest
 from pathlib import Path
 
 from na2_patcher.build_profile import write_ui_texture_log
+from na2_patcher.modules.raw_binary import engine as raw_binary
 from na2_patcher.modules.ui_textures import engine
 
 
@@ -54,7 +56,7 @@ class UiTextureTests(unittest.TestCase):
             for result in self.plan.containers
             if result.strategy.strategy == "whole"
         ]
-        self.assertEqual(len(whole), 33)
+        self.assertEqual(len(whole), 32)
         for result in whole:
             self.assertEqual(
                 gzip.decompress(result.replacement),
@@ -120,6 +122,70 @@ class UiTextureTests(unittest.TestCase):
         self.assertTrue(changed)
         self.assertTrue(all(allowed_start <= index < allowed_end for index in changed))
 
+    def test_mapsel1_imports_only_labels_and_keeps_na2_stage_pictures(self) -> None:
+        result = self.result("mapsel1")
+        target_payload = gzip.decompress(result.original)
+        output_payload = gzip.decompress(result.replacement)
+        donor_payload = gzip.decompress(result.donor)
+        target_entries = engine.parse_ccs(target_payload)
+        output_entries = engine.parse_ccs(output_payload)
+        donor_entries = engine.parse_ccs(donor_payload)
+        mappings = [
+            item
+            for item in self.plan.package.mappings
+            if item.container_id == "mapsel1"
+        ]
+
+        self.assertEqual(
+            [item.target_texture for item in mappings],
+            [r"m\map\tex\mapname01.bmp", r"m\map\tex\mapsel01.bmp"],
+        )
+        allowed_ranges: list[tuple[int, int]] = []
+        for mapping in mappings:
+            target = target_entries[mapping.target_texture.casefold()]
+            output = output_entries[mapping.target_texture.casefold()]
+            donor = donor_entries[mapping.donor_texture.casefold()]
+            for target_part, output_part, donor_part in zip(
+                target.textures + target.palettes,
+                output.textures + output.palettes,
+                donor.textures + donor.palettes,
+                strict=True,
+            ):
+                self.assertEqual(target_part.data_offset, output_part.data_offset)
+                start = target_part.data_offset
+                end = start + target_part.data_size
+                donor_start = donor_part.data_offset
+                donor_end = donor_start + donor_part.data_size
+                self.assertEqual(
+                    output_payload[start:end], donor_payload[donor_start:donor_end]
+                )
+                allowed_ranges.append((start, end))
+
+        changed = {
+            index
+            for index, (before, after) in enumerate(zip(target_payload, output_payload))
+            if before != after
+        }
+        self.assertTrue(changed)
+        self.assertTrue(
+            all(
+                any(start <= index < end for start, end in allowed_ranges)
+                for index in changed
+            )
+        )
+
+        stage_pictures = [
+            entry
+            for name, entry in target_entries.items()
+            if "mappure" in name
+        ]
+        self.assertTrue(stage_pictures)
+        for entry in stage_pictures:
+            for part in entry.textures + entry.palettes:
+                start = part.data_offset
+                end = start + part.data_size
+                self.assertEqual(target_payload[start:end], output_payload[start:end])
+
     def test_ougi_import_replaces_two_part_layout_with_nun5_one_part_layout(self) -> None:
         result = self.result("ougi")
         target_payload = gzip.decompress(result.original)
@@ -147,6 +213,129 @@ class UiTextureTests(unittest.TestCase):
         self.assertIsNotNone(donor_rgba)
         self.assertNotEqual(target_rgba, output_rgba)
         self.assertEqual(output_rgba, donor_rgba)
+
+    def test_character_name_patch_uses_localized_table_not_portrait_grid(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = raw_binary.load_package(
+            repository
+            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+        )
+        edit = next(item for item in package.edits if item.edit_id == "UI-ELF-001-01")
+        self.assertEqual(edit.source_target_id, "nun5_elf")
+        self.assertEqual(edit.source_offset, 0x4DDDD0)
+        self.assertEqual(edit.length, 96 * 8)
+
+        _na2_root, nun5_root, _data_root = engine.default_roots()
+        nun5_elf = (nun5_root / "SLES_556.05").read_bytes()
+        source = nun5_elf[edit.source_offset : edit.source_offset + edit.length]
+        self.assertEqual(raw_binary.data_sha256(source), edit.source_expected_sha256)
+        records = list(struct.iter_unpack("<hhhh", source))
+        nonblank = [record for record in records if record != (0, 0, 0, 0)]
+
+        self.assertEqual(len(records), 96)
+        self.assertGreater(len({width for _x, _y, width, _height in nonblank}), 10)
+        self.assertEqual({height for _x, _y, _width, height in nonblank}, {30})
+        self.assertTrue(
+            all(
+                0 <= x < 512
+                and 0 <= y < 256
+                and 0 < width <= 512 - x
+                and 0 < height <= 256 - y
+                for x, y, width, height in nonblank
+            )
+        )
+
+        rejected = nun5_elf[0x4DC120 : 0x4DC120 + edit.length]
+        rejected_records = list(struct.iter_unpack("<hhhh", rejected))
+        self.assertEqual(
+            {(width, height) for _x, _y, width, height in rejected_records},
+            {(38, 46)},
+        )
+
+    def test_battle_name_patch_uses_localized_table_and_width_fitter(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = raw_binary.load_package(
+            repository
+            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+        )
+        table = next(item for item in package.edits if item.edit_id == "UI-ELF-004-01")
+        helper = next(item for item in package.edits if item.edit_id == "UI-BTL-003-01")
+        hook = next(item for item in package.edits if item.edit_id == "UI-BTL-003-02")
+
+        self.assertEqual(table.source_target_id, "nun5_elf")
+        self.assertEqual(table.source_offset, 0x4DEA30)
+        self.assertEqual(table.destination_offset, 0x4B14A0)
+        self.assertEqual(table.length, 95 * 8)
+
+        _na2_root, nun5_root, _data_root = engine.default_roots()
+        nun5_elf = (nun5_root / "SLES_556.05").read_bytes()
+        source = nun5_elf[table.source_offset : table.source_offset + table.length]
+        self.assertEqual(raw_binary.data_sha256(source), table.source_expected_sha256)
+        records = list(struct.iter_unpack("<hhhh", source))
+        nonblank = [record for record in records if record != (0, 0, 0, 0)]
+        self.assertEqual(len(records), 95)
+        self.assertEqual({height for _x, _y, _width, height in nonblank}, {24})
+        self.assertEqual(max(width for _x, _y, width, _height in nonblank), 208)
+
+        self.assertEqual(helper.destination_target_id, "na2_btl")
+        self.assertEqual(helper.destination_offset, 0x40)
+        self.assertEqual(helper.length, 44)
+        self.assertEqual(
+            helper.replacement_hex,
+            "0010844400000000A0108046341000460300004500000000000084442000804642"
+            "0101460800E003640060C4",
+        )
+        self.assertEqual(hook.destination_offset, 0x67F44)
+        self.assertEqual(hook.expected_hex, "42010146640060C4")
+        self.assertEqual(hook.replacement_hex, "D0CF1A0CA0000424")
+        self.assertEqual(min(208.0, 160.0), 160.0)
+        self.assertEqual(min(112.0, 160.0), 112.0)
+
+    def test_options_index_route_matches_nun5_valid_domain(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = raw_binary.load_package(
+            repository
+            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+        )
+        edit = next(item for item in package.edits if item.edit_id == "UI-ELF-003-01")
+
+        self.assertEqual(edit.destination_offset, 0x28C40C)
+        self.assertEqual(edit.length, 8)
+        self.assertEqual(edit.expected_hex, "0500032405008310")
+        self.assertEqual(edit.replacement_hex, "0400832C05006010")
+
+        def uses_alternate_object(index: int) -> bool:
+            below_four = int(index < 4)
+            return below_four == 0 or index == 0
+
+        self.assertEqual(
+            {index for index in range(6) if uses_alternate_object(index)},
+            {0, 4, 5},
+        )
+
+    def test_practice_settings_patch_uses_nun5_rectangle_and_anchor(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = raw_binary.load_package(
+            repository
+            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+        )
+        anchor = next(item for item in package.edits if item.edit_id == "UI-BTL-004-01")
+        rectangle = next(
+            item for item in package.edits if item.edit_id == "UI-BTL-004-02"
+        )
+
+        self.assertEqual(anchor.destination_offset, 0xCFA0)
+        self.assertEqual(anchor.expected_hex, "7042023C")
+        self.assertEqual(anchor.replacement_hex, "C842023C")
+        self.assertEqual(rectangle.destination_offset, 0x20C9D8)
+        self.assertEqual(rectangle.expected_hex, "0100190170001600")
+        self.assertEqual(rectangle.source_target_id, "nun5_elf")
+        self.assertEqual(rectangle.source_offset, 0x4DE0E0)
+        self.assertEqual(rectangle.source_expected_hex, "00001801B0001800")
+        self.assertEqual(
+            struct.unpack("<hhhh", bytes.fromhex(rectangle.source_expected_hex)),
+            (0, 280, 176, 24),
+        )
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")

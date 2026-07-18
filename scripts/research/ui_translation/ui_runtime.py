@@ -258,6 +258,7 @@ def rendering_for_target(
 
 class PineClient:
     READ_OPCODES = {8: 0x00, 16: 0x01, 32: 0x02, 64: 0x03}
+    WRITE_OPCODES = {8: 0x04, 16: 0x05, 32: 0x06, 64: 0x07}
     VERSION = 0x08
     SAVE_STATE = 0x09
     TITLE = 0x0B
@@ -377,6 +378,25 @@ class PineClient:
             )
         return int.from_bytes(reply, "little")
 
+    def write(self, address: int, width: int, value: int) -> None:
+        try:
+            opcode = self.WRITE_OPCODES[width]
+        except KeyError as exc:
+            raise UiRuntimeError(f"Unsupported write width: {width}") from exc
+        if not 0 <= address <= 0xFFFFFFFF:
+            raise UiRuntimeError(f"Address is outside 32-bit range: {address:#x}")
+        if not 0 <= value < 1 << width:
+            raise UiRuntimeError(
+                f"Value is outside unsigned {width}-bit range: {value:#x}"
+            )
+        reply = self._exchange(
+            bytes([opcode])
+            + struct.pack("<I", address)
+            + value.to_bytes(width // 8, "little")
+        )
+        if reply:
+            raise PineProtocolError(f"Unexpected data in PINE Write{width} reply")
+
 
 def assert_live_target(target: Target, identity: LiveIdentity) -> None:
     mismatches: list[str] = []
@@ -406,6 +426,126 @@ def _hash_file_cached(path_text: str, size: int, mtime_ns: int) -> str:
 def hash_file(path: Path) -> str:
     stat = path.stat()
     return _hash_file_cached(str(path.resolve()), stat.st_size, stat.st_mtime_ns)
+
+
+def resolve_runtime_input(value: str, paths: ProjectPaths) -> Path:
+    if value.startswith("@"):
+        try:
+            result = resolve_alias(value, paths)
+        except (KeyError, ValueError) as exc:
+            raise UiRuntimeError(f"Invalid project-root alias: {value!r}") from exc
+    else:
+        candidate = Path(value)
+        if candidate.is_absolute() or ".." in candidate.parts:
+            raise UiRuntimeError(
+                f"Runtime input must be repository-relative or an @root alias: {value!r}"
+            )
+        result = (REPOSITORY_ROOT / candidate).resolve()
+        try:
+            result.relative_to(REPOSITORY_ROOT)
+        except ValueError as exc:
+            raise UiRuntimeError(f"Runtime input escapes the repository: {value!r}") from exc
+    if not result.is_file():
+        raise UiRuntimeError(f"Runtime input is not a file: {value!r}")
+    return result
+
+
+def file_slice(path: Path, offset: int, length: int) -> bytes:
+    if offset < 0:
+        raise UiRuntimeError(f"File offset cannot be negative: {offset}")
+    if length < 1 or length > 1024 * 1024:
+        raise UiRuntimeError("Patch length must be between 1 and 1048576 bytes")
+    size = path.stat().st_size
+    if offset + length > size:
+        raise UiRuntimeError(
+            f"Requested range 0x{offset:X}..0x{offset + length:X} exceeds "
+            f"{path.name} size 0x{size:X}"
+        )
+    with path.open("rb") as handle:
+        handle.seek(offset)
+        data = handle.read(length)
+    if len(data) != length:
+        raise UiRuntimeError(f"Short read from runtime input: {path.name}")
+    return data
+
+
+def memory_chunks(address: int, length: int) -> Iterable[tuple[int, int, int]]:
+    if address < 0 or length < 0 or address + length > 0x100000000:
+        raise UiRuntimeError(
+            f"Memory range is outside 32-bit address space: {address:#x}+{length:#x}"
+        )
+    cursor = 0
+    while cursor < length:
+        remaining = length - cursor
+        width = 64 if remaining >= 8 else 32 if remaining >= 4 else 16 if remaining >= 2 else 8
+        size = width // 8
+        yield address + cursor, width, size
+        cursor += size
+
+
+def read_memory_range(client: PineClient, address: int, length: int) -> bytes:
+    result = bytearray()
+    for chunk_address, width, size in memory_chunks(address, length):
+        result.extend(client.read(chunk_address, width).to_bytes(size, "little"))
+    return bytes(result)
+
+
+def write_memory_range(client: PineClient, address: int, data: bytes) -> None:
+    cursor = 0
+    for chunk_address, width, size in memory_chunks(address, len(data)):
+        client.write(
+            chunk_address,
+            width,
+            int.from_bytes(data[cursor : cursor + size], "little"),
+        )
+        cursor += size
+
+
+def guarded_patch_memory(
+    client: PineClient,
+    address: int,
+    expected: bytes,
+    replacement: bytes,
+) -> dict[str, object]:
+    if not expected or len(expected) != len(replacement):
+        raise UiRuntimeError(
+            "Expected and replacement memory ranges must have the same non-zero length"
+        )
+    current = read_memory_range(client, address, len(expected))
+    if current != expected:
+        mismatch = next(
+            index
+            for index, (actual, wanted) in enumerate(zip(current, expected))
+            if actual != wanted
+        )
+        raise UiRuntimeError(
+            f"Guarded memory patch rejected at 0x{address + mismatch:08X}: "
+            f"live {current[mismatch]:02X} != expected {expected[mismatch]:02X}; "
+            f"live SHA-256 {hashlib.sha256(current).hexdigest().upper()}"
+        )
+    try:
+        write_memory_range(client, address, replacement)
+        verified = read_memory_range(client, address, len(replacement))
+        if verified != replacement:
+            raise UiRuntimeError(
+                "Guarded memory patch readback mismatch: "
+                f"got {hashlib.sha256(verified).hexdigest().upper()}"
+            )
+    except BaseException as exc:
+        try:
+            write_memory_range(client, address, expected)
+            rolled_back = read_memory_range(client, address, len(expected)) == expected
+        except BaseException:
+            rolled_back = False
+        suffix = "runtime bytes restored" if rolled_back else "runtime rollback failed"
+        raise UiRuntimeError(f"Guarded memory patch failed; {suffix}: {exc}") from exc
+    return {
+        "address": f"0x{address:08X}",
+        "length": len(replacement),
+        "expected_sha256": hashlib.sha256(expected).hexdigest().upper(),
+        "replacement_sha256": hashlib.sha256(replacement).hexdigest().upper(),
+        "readback_verified": True,
+    }
 
 
 def logical_path(path: Path, paths: ProjectPaths) -> str:
@@ -890,6 +1030,18 @@ def build_parser(target_names: list[str]) -> argparse.ArgumentParser:
     read.add_argument("--width", type=int, choices=[8, 16, 32, 64], required=True)
     read.add_argument("--count", type=int, default=1)
 
+    patch = commands.add_parser(
+        "patch",
+        help="apply a paused, identity-checked, exact-byte-guarded EE hypothesis",
+    )
+    patch.add_argument("--target", choices=target_names, required=True)
+    patch.add_argument("--address", type=_parse_int, required=True)
+    patch.add_argument("--expected-file", required=True)
+    patch.add_argument("--expected-offset", type=_parse_int, required=True)
+    patch.add_argument("--replacement-file", required=True)
+    patch.add_argument("--replacement-offset", type=_parse_int, required=True)
+    patch.add_argument("--length", type=_parse_int, required=True)
+
     return parser
 
 
@@ -979,6 +1131,50 @@ def run(argv: list[str] | None = None) -> int:
                     "identity": asdict(identity),
                     "width": args.width,
                     "values": values,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+        return 0
+
+    if args.command == "patch":
+        if rendering.blockers:
+            raise UiRuntimeError(
+                "Runtime patch preflight failed: " + "; ".join(rendering.blockers)
+            )
+        expected_path = resolve_runtime_input(args.expected_file, paths)
+        replacement_path = resolve_runtime_input(args.replacement_file, paths)
+        expected = file_slice(expected_path, args.expected_offset, args.length)
+        replacement = file_slice(
+            replacement_path, args.replacement_offset, args.length
+        )
+        with PineClient.connect(rendering.pine_port) as client:
+            identity = client.identity()
+            assert_live_target(target, identity)
+            if identity.status != "paused":
+                raise UiRuntimeError(
+                    f"Guarded memory patches require paused PCSX2; status is {identity.status}"
+                )
+            result = guarded_patch_memory(
+                client, args.address, expected, replacement
+            )
+        print(
+            json.dumps(
+                {
+                    "target": target.target_id,
+                    "identity": asdict(identity),
+                    "expected_source": {
+                        "path": logical_path(expected_path, paths),
+                        "offset": f"0x{args.expected_offset:X}",
+                        "file_sha256": hash_file(expected_path),
+                    },
+                    "replacement_source": {
+                        "path": logical_path(replacement_path, paths),
+                        "offset": f"0x{args.replacement_offset:X}",
+                        "file_sha256": hash_file(replacement_path),
+                    },
+                    "patch": result,
                 },
                 indent=2,
                 ensure_ascii=False,

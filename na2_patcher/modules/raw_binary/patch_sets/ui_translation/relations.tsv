@@ -1,1 +1,2 @@
 patch_id	relation	related_patch_id
+UI-BTL-003	requires	UI-ELF-004

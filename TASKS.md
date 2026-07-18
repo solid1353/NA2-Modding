@@ -3,7 +3,6 @@
 ## In Progress
 
 ### [UI Translation](docs/plans/ui_translation.md)
-- Finish replacement.
 - Refactor to only include patches, not blobs.
 - Investigate upscaling.
 

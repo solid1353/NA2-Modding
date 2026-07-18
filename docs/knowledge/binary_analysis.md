@@ -191,6 +191,10 @@ component separately.
   combined Ghidra project. Each target has portable manifests, per-program
   summaries, decompiled C, and ASCII listings. The NUN6 tree also contains the
   initial NUN5 donor-pair comparison record.
+- The maintained boot-ELF export views are
+  `@analysis/disassembly/NA2/exports/SLPS_258.37/` and
+  `@analysis/disassembly/NUN5/exports/SLES_556.05/`. Use the target's exact
+  executable name when selecting an export.
 - EE programs use `ghidra-emotionengine-reloaded` and
   `r5900:LE:32:default`. IOP programs use `MIPS:LE:32:default`. MWo3 baseline
   imports map file offset `0x40` to the load base stored at header offset

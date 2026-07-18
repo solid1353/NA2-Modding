@@ -56,13 +56,13 @@ Build the configured current profile with:
 & scripts/na2/build.ps1
 ```
 
-`na2_patcher/build_profile.py` writes the candidate ISO as `build/Current.iso.building`, verifies it completely, fsyncs it, and writes the profile log before returning. `scripts/na2/build.ps1` compares the candidate with `Current.iso`; an identical candidate is discarded without touching `Current.iso` or `Previous.iso`, while a changed candidate atomically replaces `Previous.iso` with the outgoing `Current.iso` and becomes the new `Current.iso`. A failed promotion restores the outgoing ISO when safe, and any caught failure removes `.building`.
+`na2_patcher/build_profile.py` writes the candidate ISO as `build/NA2.28 - Current.iso.building`, verifies it completely, fsyncs it, and writes the profile log before returning. `scripts/na2/build.ps1` compares the candidate with `NA2.28 - Current.iso`; an identical candidate is discarded without touching `NA2.28 - Current.iso` or `NA2.28 - Previous.iso`, while a changed candidate atomically replaces `NA2.28 - Previous.iso` with the outgoing `NA2.28 - Current.iso` and becomes the new `NA2.28 - Current.iso`. A failed promotion restores the outgoing ISO when safe, and any caught failure removes `.building`.
 
 File-size changes are always rejected. The disc-identity module permits only
 its declared equal-length boot-file rename and verifies the resulting tree;
 all other tree changes are rejected. Structural expansion requires a separately
 designed and approved implementation rather than a build flag.
 
-The ordinary `na2` command dispatches the profile build, then delegates mandatory PNACH actualization and PCSX2 launch to `scripts/na2/launch.ps1`. `na2 -c` launches `Current.iso` without rebuilding, and `na2 -p` launches `Previous.iso` without rebuilding. Translation and UI texture transplantation are invoked only as pinned profile modules and record their review plans or per-container patch tables inside the profile log.
+The ordinary `na2` command dispatches the profile build, then delegates mandatory PNACH actualization and PCSX2 launch to `scripts/na2/launch.ps1`. `na2 -c` launches `NA2.28 - Current.iso` without rebuilding, and `na2 -p` launches `NA2.28 - Previous.iso` without rebuilding. Translation and UI texture transplantation are invoked only as pinned profile modules and record their review plans or per-container patch tables inside the profile log.
 
 The profile references `na2_patcher/modules/translation/mappings.tsv` directly and pins its exact hash. Updating that table therefore requires an explicit profile-pin update.

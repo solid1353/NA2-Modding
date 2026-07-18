@@ -194,7 +194,7 @@ if ($pnachState.IsEmpty) {
 }
 
 if ([string]::IsNullOrWhiteSpace($IsoPath)) {
-    $IsoPath = Join-Path $projectPaths.build 'Current.iso'
+    $IsoPath = $projectPaths.files.current_iso
     if (-not (Test-Path -LiteralPath $IsoPath -PathType Leaf)) {
         throw "Default build ISO does not exist: $IsoPath. Pass -IsoPath explicitly."
     }

@@ -30,16 +30,20 @@ try {
         patcher = Join-Path $repository 'na2_patcher'
         pcsx2 = Join-Path $testRoot 'pcsx2'
         scripts = Join-Path $repository 'scripts'
+        files = [pscustomobject]@{
+            current_iso = Join-Path $build 'NA2.28 - Current.iso'
+            previous_iso = Join-Path $build 'NA2.28 - Previous.iso'
+        }
     }
     New-Item -ItemType Directory -Force -Path $logs, $build | Out-Null
     $externalPath = 'C{0}{1}Private{1}outside.txt' -f `
         [IO.Path]::VolumeSeparatorChar, [IO.Path]::DirectorySeparatorChar
 
     $portable = ConvertTo-Na2PortableText `
-        -Text "ISO: $build\Current.iso`nExternal: $externalPath" `
+        -Text "ISO: $build\NA2.28 - Current.iso`nExternal: $externalPath" `
         -ProjectPaths $paths
     Assert-Na2Test `
-        -Condition ($portable -match 'ISO: @build/Current\.iso') `
+        -Condition ($portable -match 'ISO: @build/NA2\.28 - Current\.iso') `
         -Message 'Configured build path was not converted to @build.'
     Assert-Na2Test `
         -Condition ($portable -match 'Redacted output containing an external absolute path') `
@@ -53,7 +57,7 @@ try {
             -Mode "test-$index" `
             -ProjectPaths $paths `
             -MaxRollingSections 20
-        Write-Host "run-marker-$index $build\Current.iso"
+        Write-Host "run-marker-$index $build\NA2.28 - Current.iso"
         Complete-Na2RunLog -Context $context -Outcome succeeded
     }
 
@@ -77,16 +81,16 @@ try {
     $failurePaths = $paths.PSObject.Copy()
     $failurePaths.logs = Join-Path $repository 'failure-logs'
     $failureContext = Start-Na2RunLog -Mode failure-test -ProjectPaths $failurePaths
-    Write-Host "failure marker $build\Current.iso"
+    Write-Host "failure marker $build\NA2.28 - Current.iso"
     $failureExternalPath = 'C{0}{1}Private{1}failure.txt' -f `
         [IO.Path]::VolumeSeparatorChar, [IO.Path]::DirectorySeparatorChar
     Complete-Na2RunLog `
         -Context $failureContext `
         -Outcome failed `
-        -FailureMessage "Configured: $build\Current.iso`nExternal: $failureExternalPath"
+        -FailureMessage "Configured: $build\NA2.28 - Current.iso`nExternal: $failureExternalPath"
     $failureLog = [IO.File]::ReadAllText((Join-Path $failurePaths.logs 'na2\latest.log'))
     Assert-Na2Test -Condition ($failureLog -match '(?m)^outcome: failed$') -Message 'Failed outcome was not recorded.'
-    Assert-Na2Test -Condition ($failureLog -match '@build/Current\.iso') -Message 'Failure path was not made portable.'
+    Assert-Na2Test -Condition ($failureLog -match '@build/NA2\.28 - Current\.iso') -Message 'Failure path was not made portable.'
     Assert-Na2Test -Condition (-not (Test-Na2WindowsAbsolutePath -Text $failureLog)) -Message 'Failure log contains an absolute path.'
 
     $fakeRepository = Join-Path $testRoot 'help-project'
@@ -111,6 +115,10 @@ try {
     "releases": "releases",
     "scripts": "scripts",
     "work": "work"
+  },
+  "files": {
+    "current_iso": "@build/NA2.28 - Current.iso",
+    "previous_iso": "@build/NA2.28 - Previous.iso"
   }
 }
 '@
@@ -169,23 +177,26 @@ Write-Host '[na2] ISO result: unchanged; rotation: no.'
     foreach ($buildId in 'old-previous', 'old-current', 'new-current', 'orphan') {
         New-Item -ItemType Directory -Force -Path (Join-Path $buildRecords $buildId) | Out-Null
     }
-    Set-Content -NoNewline -LiteralPath (Join-Path $build 'Current.iso') -Value 'current'
-    Set-Content -NoNewline -LiteralPath (Join-Path $build 'Previous.iso') -Value 'previous'
+    Set-Content -NoNewline -LiteralPath $paths.files.current_iso -Value 'current'
+    Set-Content -NoNewline -LiteralPath $paths.files.previous_iso -Value 'previous'
     Set-Na2BuildMap `
         -LogDirectory $structuredLog `
         -CurrentBuildId 'old-current' `
-        -PreviousBuildId 'old-previous'
+        -PreviousBuildId 'old-previous' `
+        -ProjectPaths $paths
     $record = Complete-Na2BuildRecord `
         -LogDirectory $structuredLog `
         -BuildId 'new-current' `
         -Result updated `
         -Rotated $true `
-        -CurrentIso (Join-Path $build 'Current.iso') `
-        -PreviousIso (Join-Path $build 'Previous.iso') `
+        -CurrentIso $paths.files.current_iso `
+        -PreviousIso $paths.files.previous_iso `
         -Profile (Join-Path $paths.patcher 'profiles\current') `
         -ProjectPaths $paths
     Assert-Na2Test -Condition ($record.BuildId -eq 'new-current') -Message 'Updated build was not retained.'
-    $updatedBuildMap = Read-Na2BuildMap -LogDirectory $structuredLog
+    $updatedBuildMap = Read-Na2BuildMap `
+        -LogDirectory $structuredLog `
+        -ProjectPaths $paths
     Assert-Na2Test `
         -Condition ($updatedBuildMap.CurrentBuildId -eq 'new-current') `
         -Message 'Current build mapping was not advanced.'
@@ -196,15 +207,15 @@ Write-Host '[na2] ISO result: unchanged; rotation: no.'
     Assert-Na2Test `
         -Condition ($buildMapText -ceq (
             "iso`tbuild_record`n" +
-            "@build/Current.iso`t@logs/na2/builds/new-current`n" +
-            "@build/Previous.iso`t@logs/na2/builds/old-current`n"
+            "@build/NA2.28 - Current.iso`t@logs/na2/builds/new-current`n" +
+            "@build/NA2.28 - Previous.iso`t@logs/na2/builds/old-current`n"
         )) `
         -Message 'builds.tsv does not contain the exact atomic two-ISO mapping.'
     $remainingRecords = @(Get-ChildItem -LiteralPath $buildRecords -Directory).Name
     Assert-Na2Test -Condition ($remainingRecords.Count -eq 2) -Message 'Unreferenced build records were not pruned.'
     $buildResult = [IO.File]::ReadAllText((Join-Path $buildRecords 'new-current\build_result.tsv'))
     Assert-Na2Test -Condition ($buildResult -match "updated`tyes") -Message 'build_result.tsv lacks result/rotation.'
-    Assert-Na2Test -Condition ($buildResult -match '@build/Current\.iso') -Message 'build_result.tsv lacks a portable ISO path.'
+    Assert-Na2Test -Condition ($buildResult -match '@build/NA2\.28 - Current\.iso') -Message 'build_result.tsv lacks a portable ISO path.'
     Assert-Na2Test -Condition (-not (Test-Na2WindowsAbsolutePath -Text $buildResult)) -Message 'build_result.tsv contains an absolute path.'
 
     New-Item -ItemType Directory -Path (Join-Path $buildRecords 'duplicate') | Out-Null
@@ -213,8 +224,8 @@ Write-Host '[na2] ISO result: unchanged; rotation: no.'
         -BuildId duplicate `
         -Result unchanged `
         -Rotated $false `
-        -CurrentIso (Join-Path $build 'Current.iso') `
-        -PreviousIso (Join-Path $build 'Previous.iso') `
+        -CurrentIso $paths.files.current_iso `
+        -PreviousIso $paths.files.previous_iso `
         -Profile 'na2_patcher/profiles/current' `
         -ProjectPaths $paths
     Assert-Na2Test -Condition $unchanged.Reused -Message 'Unchanged build did not reuse the current record.'
@@ -231,22 +242,24 @@ Write-Host '[na2] ISO result: unchanged; rotation: no.'
         -BuildId $firstBuildId `
         -Result unchanged `
         -Rotated $false `
-        -CurrentIso (Join-Path $build 'Current.iso') `
+        -CurrentIso $paths.files.current_iso `
         -PreviousIso $null `
         -Profile 'na2_patcher/profiles/current' `
         -ProjectPaths $paths
     Assert-Na2Test -Condition (-not $firstUnchanged.Reused) -Message 'First unchanged build was incorrectly discarded.'
-    $firstBuildMap = Read-Na2BuildMap -LogDirectory $freshStructuredLog
+    $firstBuildMap = Read-Na2BuildMap `
+        -LogDirectory $freshStructuredLog `
+        -ProjectPaths $paths
     Assert-Na2Test `
         -Condition ($firstBuildMap.CurrentBuildId -eq $firstBuildId) `
         -Message 'First unchanged build did not establish the current mapping.'
     Assert-Na2Test `
         -Condition ([string]::IsNullOrWhiteSpace($firstBuildMap.PreviousBuildId)) `
-        -Message 'Unavailable Previous.iso record was not left empty.'
+        -Message 'Unavailable previous ISO record was not left empty.'
     $firstBuildMapText = [IO.File]::ReadAllText((Join-Path $freshStructuredLog 'builds.tsv'))
     Assert-Na2Test `
-        -Condition ($firstBuildMapText -match "(?m)^@build/Previous\.iso`t$") `
-        -Message 'builds.tsv omitted the empty Previous.iso row.'
+        -Condition ($firstBuildMapText -match "(?m)^@build/NA2\.28 - Previous\.iso`t$") `
+        -Message 'builds.tsv omitted the empty previous ISO row.'
     $firstBuildResult = [IO.File]::ReadAllText(
         (Join-Path $freshStructuredLog "builds\$firstBuildId\build_result.tsv")
     )

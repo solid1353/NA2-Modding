@@ -15,6 +15,7 @@ MANIFEST_NAME = "project-paths.json"
 class ProjectPaths:
     manifest: Path
     roots: Mapping[str, Path]
+    files: Mapping[str, Path]
 
     @property
     def repository(self) -> Path:
@@ -28,6 +29,12 @@ class ProjectPaths:
         for child in children:
             result /= child
         return result
+
+    def file(self, name: str) -> Path:
+        try:
+            return self.files[name]
+        except KeyError as exc:
+            raise KeyError(f"Unknown project file: {name}") from exc
 
 
 def _find_manifest(start: Path) -> Path:
@@ -78,7 +85,62 @@ def load_project_paths(
             "The 'repository' root must resolve to the directory containing "
             f"{MANIFEST_NAME}"
         )
-    return ProjectPaths(manifest_path, MappingProxyType(roots))
+    configured_files = data.get("files")
+    if not isinstance(configured_files, dict) or not configured_files:
+        raise ValueError("Project path manifest has no files")
+    files: dict[str, Path] = {}
+    for name, raw_value in configured_files.items():
+        if not isinstance(raw_value, str) or not raw_value:
+            raise ValueError(
+                f"Project file {name!r} must be a non-empty "
+                "repository-relative path or @root path"
+            )
+
+        if raw_value.startswith("@"):
+            root_and_child = raw_value[1:].replace("\\", "/").split("/", 1)
+            if len(root_and_child) != 2 or not all(root_and_child):
+                raise ValueError(
+                    f"Project file {name!r} has an invalid root alias: {raw_value!r}"
+                )
+            root, child = root_and_child
+            try:
+                base_path = roots[root]
+            except KeyError as exc:
+                raise ValueError(
+                    f"Project file {name!r} references unknown project root "
+                    f"{root!r}"
+                ) from exc
+            value = Path(child)
+            if value.is_absolute() or ".." in value.parts:
+                raise ValueError(
+                    f"Project file {name!r} must remain within configured root "
+                    f"{root!r}"
+                )
+        else:
+            base_path = repository
+            value = Path(raw_value)
+            if value.is_absolute():
+                raise ValueError(
+                    f"Project file {name!r} must be a non-empty "
+                    "repository-relative path or @root path"
+                )
+
+        configured_path = Path(os.path.abspath(base_path / value))
+        if raw_value.startswith("@") and base_path not in configured_path.parents:
+            raise ValueError(
+                f"Project file {name!r} must remain within its configured root"
+            )
+        if repository not in configured_path.parents:
+            raise ValueError(
+                f"Project file {name!r} must remain within the repository"
+            )
+        files[name] = configured_path
+
+    return ProjectPaths(
+        manifest_path,
+        MappingProxyType(roots),
+        MappingProxyType(files),
+    )
 
 
 def resolve_alias(value: str, paths: ProjectPaths) -> Path:

@@ -14,7 +14,6 @@
 ## Backlog
 
 ### Project
-- Solve concurrent memcard access for pcsx2.
 - Develop a release process.
 
 ### Profiles

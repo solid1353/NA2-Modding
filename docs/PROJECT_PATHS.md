@@ -1,9 +1,16 @@
 # Project path configuration
 
-`project-paths.json` is the single source of truth for project directory roots.
-Every persisted value in it must be relative to the repository directory; the
-PowerShell and Python loaders reject absolute paths. A repository migration or a
-move of shared media/tools should require changing this file only.
+`project-paths.json` is the single source of truth for project directory roots
+and canonical project files. Every persisted value in it must be relative to
+the repository directory; the PowerShell and Python loaders reject absolute
+paths. A repository migration or a move of shared media/tools should require
+changing this file only.
+
+Stable paths and named files used by maintained workflows belong in this
+manifest instead of being repeated as literals. Prefer the root and file
+abstractions wherever they make the workflow easier to relocate or understand,
+but do not add entries solely for transient, generated, caller-supplied, or
+genuinely local one-off paths.
 
 ## Named roots
 
@@ -25,6 +32,19 @@ The manifest currently defines these stable logical names:
 Documentation uses `@root/child` notation, such as `@source/NA2.iso`. This is a
 logical reference, not a literal filesystem path. Profile `roots.tsv` files accept
 the same syntax. Other profile inputs remain repository-relative and hash-pinned.
+
+## Named files
+
+The manifest also defines canonical file paths which may not exist yet before
+their producing workflow runs. File entries should reference a named root with
+`@root/child` syntax so the root path is not duplicated:
+
+- `current_iso`: `@build/NA2.28 - Current.iso`.
+- `previous_iso`: `@build/NA2.28 - Previous.iso`.
+
+PowerShell accesses these as `$projectPaths.files.current_iso` and
+`$projectPaths.files.previous_iso`. Python accesses them through
+`PROJECT_PATHS.file("current_iso")` and `PROJECT_PATHS.file("previous_iso")`.
 
 ## PowerShell
 
@@ -56,8 +76,9 @@ iso = PROJECT_PATHS.path("source", "NA2.iso")
 
 ## Migration procedure
 
-1. Move the directory without changing its contents.
-2. Edit only that root's repository-relative value in `project-paths.json`.
+1. Move the directory or canonical file without changing its contents.
+2. Edit only that root or file's repository-relative value in
+   `project-paths.json`.
 3. Run the path-loader checks and automated tests.
 4. Search documentation for literal legacy paths and express them as `@root/...`.
 

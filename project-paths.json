@@ -13,5 +13,9 @@
     "releases": "releases",
     "scripts": "scripts",
     "work": "work"
+  },
+  "files": {
+    "current_iso": "@build/NA2.28 - Current.iso",
+    "previous_iso": "@build/NA2.28 - Previous.iso"
   }
 }

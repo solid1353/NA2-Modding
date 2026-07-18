@@ -1,4 +1,5 @@
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot 'project_paths.ps1')
 . (Join-Path $PSScriptRoot 'run_log.ps1')
 
 function ConvertFrom-Na2BuildRecordPath {
@@ -23,9 +24,26 @@ function ConvertFrom-Na2BuildRecordPath {
     return $buildId
 }
 
+function Get-Na2ConfiguredIsoMapKeys {
+    [CmdletBinding()]
+    param([Parameter(Mandatory = $true)][psobject]$ProjectPaths)
+
+    [pscustomobject]@{
+        Current = ConvertTo-Na2ProjectPath `
+            -Path $ProjectPaths.files.current_iso `
+            -ProjectPaths $ProjectPaths
+        Previous = ConvertTo-Na2ProjectPath `
+            -Path $ProjectPaths.files.previous_iso `
+            -ProjectPaths $ProjectPaths
+    }
+}
+
 function Read-Na2BuildMap {
     [CmdletBinding()]
-    param([Parameter(Mandatory = $true)][string]$LogDirectory)
+    param(
+        [Parameter(Mandatory = $true)][string]$LogDirectory,
+        [Parameter(Mandatory = $true)][psobject]$ProjectPaths
+    )
 
     $mapPath = Join-Path $LogDirectory 'builds.tsv'
     if (-not (Test-Path -LiteralPath $mapPath -PathType Leaf)) {
@@ -40,26 +58,27 @@ function Read-Na2BuildMap {
         throw 'builds.tsv must contain its exact header and exactly two ISO rows.'
     }
     $rows = @($lines | Select-Object -Skip 1 | ConvertFrom-Csv -Delimiter "`t" -Header iso, build_record)
-    $expectedIsoRows = @('@build/Current.iso', '@build/Previous.iso')
+    $isoKeys = Get-Na2ConfiguredIsoMapKeys -ProjectPaths $ProjectPaths
+    $expectedIsoRows = @($isoKeys.Current, $isoKeys.Previous)
     $actualIsoText = @($rows.iso | Sort-Object) -join "`n"
     $expectedIsoText = @($expectedIsoRows | Sort-Object) -join "`n"
     if ($actualIsoText -cne $expectedIsoText) {
-        throw 'builds.tsv must contain one row each for @build/Current.iso and @build/Previous.iso.'
+        throw "builds.tsv must contain one row each for $($isoKeys.Current) and $($isoKeys.Previous)."
     }
 
-    $currentRecord = [string]($rows | Where-Object iso -CEQ '@build/Current.iso').build_record
-    $previousRecord = [string]($rows | Where-Object iso -CEQ '@build/Previous.iso').build_record
+    $currentRecord = [string]($rows | Where-Object iso -CEQ $isoKeys.Current).build_record
+    $previousRecord = [string]($rows | Where-Object iso -CEQ $isoKeys.Previous).build_record
     $currentBuildId = ConvertFrom-Na2BuildRecordPath `
         -BuildRecord $currentRecord `
         -LogDirectory $LogDirectory
     if ([string]::IsNullOrWhiteSpace($currentBuildId)) {
-        throw 'The @build/Current.iso row in builds.tsv must reference a retained build record.'
+        throw "The $($isoKeys.Current) row in builds.tsv must reference a retained build record."
     }
     $previousBuildId = ConvertFrom-Na2BuildRecordPath `
         -BuildRecord $previousRecord `
         -LogDirectory $LogDirectory
     if ($currentBuildId -eq $previousBuildId) {
-        throw 'Current.iso and Previous.iso cannot reference the same build record.'
+        throw 'Current and previous ISOs cannot reference the same build record.'
     }
 
     return [pscustomobject]@{
@@ -73,7 +92,8 @@ function Set-Na2BuildMap {
     param(
         [Parameter(Mandatory = $true)][string]$LogDirectory,
         [Parameter(Mandatory = $true)][string]$CurrentBuildId,
-        [AllowNull()][string]$PreviousBuildId
+        [AllowNull()][string]$PreviousBuildId,
+        [Parameter(Mandatory = $true)][psobject]$ProjectPaths
     )
 
     if ($CurrentBuildId -eq $PreviousBuildId) {
@@ -98,10 +118,11 @@ function Set-Na2BuildMap {
     else {
         "@logs/na2/builds/$PreviousBuildId"
     }
+    $isoKeys = Get-Na2ConfiguredIsoMapKeys -ProjectPaths $ProjectPaths
     $content = @(
         "iso`tbuild_record"
-        "@build/Current.iso`t@logs/na2/builds/$CurrentBuildId"
-        "@build/Previous.iso`t$previousRecord"
+        "$($isoKeys.Current)`t@logs/na2/builds/$CurrentBuildId"
+        "$($isoKeys.Previous)`t$previousRecord"
     ) -join "`n"
     Set-Na2Utf8FileAtomic `
         -Path (Join-Path $LogDirectory 'builds.tsv') `
@@ -188,7 +209,9 @@ function Complete-Na2BuildRecord {
     if (-not (Test-Path -LiteralPath $recordDirectory -PathType Container)) {
         throw "Profile build record does not exist: builds/$BuildId"
     }
-    $buildMap = Read-Na2BuildMap -LogDirectory $LogDirectory
+    $buildMap = Read-Na2BuildMap `
+        -LogDirectory $LogDirectory `
+        -ProjectPaths $ProjectPaths
     $currentBuildId = $buildMap.CurrentBuildId
     $previousBuildId = $buildMap.PreviousBuildId
 
@@ -225,7 +248,8 @@ function Complete-Na2BuildRecord {
     Set-Na2BuildMap `
         -LogDirectory $LogDirectory `
         -CurrentBuildId $effectiveCurrentBuildId `
-        -PreviousBuildId $effectivePreviousBuildId
+        -PreviousBuildId $effectivePreviousBuildId `
+        -ProjectPaths $ProjectPaths
     Remove-Na2UnreferencedBuildRecords `
         -LogDirectory $LogDirectory `
         -CurrentBuildId $effectiveCurrentBuildId `

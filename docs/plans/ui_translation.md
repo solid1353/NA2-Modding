@@ -98,10 +98,10 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   donor equality for all 32 whole-container imports, exact KDV changed-region
   bounds, OUGI topology, fixed member sizes, and complete profile logging.
 - Build record `@logs/na2/builds/20260718_061234_625_pid41880/` fully verified
-  and promoted a changed 1,928,429,568-byte `Current.iso`, rotating the previous
+  and promoted a changed 1,928,429,568-byte `NA2.28 - Current.iso`, rotating the previous
   image. An independent on-disc check found all 33 member ranges exact and the
   BTL bytes at `0xB5E80` equal to `01 00 42 2A`.
-- A hidden, muted 20-second PCSX2 smoke test loaded `Current.iso`, executed
+- A hidden, muted 20-second PCSX2 smoke test loaded `NA2.28 - Current.iso`, executed
   `SLPS_222.28`, reported CRC `71ADE583`, and stayed running without a boot-time
   error. The canonical PNACH was empty, so no cheats or managed aliases were
   active. This is boot validation, not screen-by-screen UI approval.

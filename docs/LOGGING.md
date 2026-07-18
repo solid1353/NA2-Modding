@@ -26,15 +26,16 @@ knowledge.
 - `rolling.log`: the newest 20 completed operational invocations, stored as
   bounded sections in one file.
 - `builds/<build-id>/`: structured profile records retained only while they
-  correspond to `@build/Current.iso` or `@build/Previous.iso`.
+  correspond to `@build/NA2.28 - Current.iso` or
+  `@build/NA2.28 - Previous.iso`.
 - `builds.tsv`: a single atomically replaced `iso` / `build_record` mapping.
-  It always contains rows for `@build/Current.iso` and
-  `@build/Previous.iso`; the latter record is empty when no corresponding
-  retained build record is available.
+  It always contains rows for the configured current and previous ISO files;
+  the previous record is empty when no corresponding retained build record is
+  available.
 
-Help output is not logged. A verified candidate identical to `Current.iso`
-records `ISO result: unchanged` in the command log and does not retain another
-full structured profile record. A changed candidate records
+Help output is not logged. A verified candidate identical to
+`NA2.28 - Current.iso` records `ISO result: unchanged` in the command log and
+does not retain another full structured profile record. A changed candidate records
 `ISO result: updated`; its structured record becomes current and the previous
 current record rotates with the outgoing ISO. Unreferenced structured records
 are deleted only after the complete two-ISO mapping has been replaced.

@@ -38,6 +38,62 @@ function Get-Na2ProjectPaths {
         $resolved[$name] = $path
     }
 
+    $configuredFiles = $manifest.files
+    if ($null -eq $configuredFiles) {
+        throw 'Project path manifest has no files.'
+    }
+    $fileNames = @($configuredFiles.PSObject.Properties.Name)
+    if ($fileNames.Count -eq 0) {
+        throw 'Project path manifest has no files.'
+    }
+    $resolvedFiles = [ordered]@{}
+    foreach ($name in $fileNames) {
+        $value = [string]$configuredFiles.$name
+        if ([string]::IsNullOrWhiteSpace($value) -or [IO.Path]::IsPathRooted($value)) {
+            throw "Project file '$name' must be a non-empty repository-relative path or @root path: $value"
+        }
+
+        $basePath = $repositoryRoot
+        $relativePath = $value
+        if ($value.StartsWith('@')) {
+            $aliasMatch = [regex]::Match($value, '^@(?<root>[^/\\]+)[/\\](?<child>.+)$')
+            if (-not $aliasMatch.Success) {
+                throw "Project file '$name' has an invalid root alias: $value"
+            }
+
+            $rootName = $aliasMatch.Groups['root'].Value
+            if (-not $resolved.Contains($rootName)) {
+                throw "Project file '$name' references unknown project root '$rootName': $value"
+            }
+
+            $basePath = [string]$resolved[$rootName]
+            $relativePath = $aliasMatch.Groups['child'].Value
+            if ([IO.Path]::IsPathRooted($relativePath)) {
+                throw "Project file '$name' has an invalid root-relative path: $value"
+            }
+        }
+
+        $path = [IO.Path]::GetFullPath((Join-Path $basePath $relativePath))
+        $basePrefix = $basePath.TrimEnd(
+            [IO.Path]::DirectorySeparatorChar,
+            [IO.Path]::AltDirectorySeparatorChar
+        ) + [IO.Path]::DirectorySeparatorChar
+        if ($value.StartsWith('@') -and
+            -not $path.StartsWith($basePrefix, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "Project file '$name' must remain within its configured root: $value"
+        }
+
+        $repositoryPrefix = $repositoryRoot.TrimEnd(
+            [IO.Path]::DirectorySeparatorChar,
+            [IO.Path]::AltDirectorySeparatorChar
+        ) + [IO.Path]::DirectorySeparatorChar
+        if (-not $path.StartsWith($repositoryPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "Project file '$name' must remain within the repository: $value"
+        }
+        $resolvedFiles[$name] = $path
+    }
+    $resolved['files'] = [pscustomobject]$resolvedFiles
+
     if (-not $resolved.Contains('repository') -or
         -not [IO.Path]::Equals($resolved.repository, $repositoryRoot)) {
         throw "The 'repository' root must resolve to the directory containing project-paths.json."
@@ -59,7 +115,7 @@ function ConvertTo-Na2ProjectPath {
     $fullPath = [IO.Path]::GetFullPath($Path)
     $roots = @(
         $ProjectPaths.PSObject.Properties |
-            Where-Object { $_.Name -ne 'ManifestPath' } |
+            Where-Object { $_.Name -notin @('ManifestPath', 'files') } |
             ForEach-Object {
                 [pscustomobject]@{
                     Name = $_.Name

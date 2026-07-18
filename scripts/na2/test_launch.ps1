@@ -11,7 +11,7 @@ $ErrorActionPreference = 'Stop'
 $projectPaths = Get-Na2ProjectPaths
 
 if ([string]::IsNullOrWhiteSpace($IsoPath)) {
-    $IsoPath = Join-Path $projectPaths.build 'Current.iso'
+    $IsoPath = $projectPaths.files.current_iso
 }
 $resolvedPcsx2Exe = [IO.Path]::GetFullPath((Join-Path $projectPaths.pcsx2 'pcsx2-qt.exe'))
 $pcsx2Ini = Join-Path $projectPaths.pcsx2 'inis\PCSX2.ini'

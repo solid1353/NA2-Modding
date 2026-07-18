@@ -17,14 +17,14 @@ class IsoStagingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "source.iso"
-            output = root / "build" / "Current.iso"
+            output = root / "build" / "NA2.28 - Current.iso"
             source.write_bytes(b"new source")
             output.parent.mkdir()
             output.write_bytes(b"known good")
 
             with self.assertRaisesRegex(RuntimeError, "synthetic failure"):
                 with staged_output_iso(source, output) as temporary:
-                    self.assertEqual(temporary, output.parent / "Current.iso.building")
+                    self.assertEqual(temporary, output.parent / "NA2.28 - Current.iso.building")
                     self.assertEqual(temporary.read_bytes(), b"new source")
                     self.assertEqual(output.read_bytes(), b"known good")
                     raise RuntimeError("synthetic failure")
@@ -36,7 +36,7 @@ class IsoStagingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "source.iso"
-            output = root / "build" / "Current.iso"
+            output = root / "build" / "NA2.28 - Current.iso"
             source.write_bytes(b"new source")
             output.parent.mkdir()
             output.write_bytes(b"known good")

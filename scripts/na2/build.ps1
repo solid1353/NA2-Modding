@@ -25,21 +25,21 @@ function Test-FileContentEqual {
 }
 
 function Promote-VerifiedIso {
-    param([Parameter(Mandatory = $true)][string]$CurrentIso)
+    param(
+        [Parameter(Mandatory = $true)][string]$CurrentIso,
+        [Parameter(Mandatory = $true)][string]$PreviousIso
+    )
 
     $current = [IO.Path]::GetFullPath($CurrentIso)
+    $previous = [IO.Path]::GetFullPath($PreviousIso)
     $candidate = "$current.building"
     if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
         throw "Verified staged ISO does not exist: $candidate"
     }
 
-    $directory = [IO.Path]::GetDirectoryName($current)
-    $isStandardCurrent = [IO.Path]::GetFileName($current) -ieq 'Current.iso'
-    $previous = if ($isStandardCurrent) { Join-Path $directory 'Previous.iso' } else { $null }
-
     if ((Test-Path -LiteralPath $current -PathType Leaf) -and
         (Test-FileContentEqual -LeftPath $candidate -RightPath $current)) {
-        Write-Host '[na2] ISO result: unchanged; candidate matches Current.iso, promotion and rotation skipped.' -ForegroundColor Cyan
+        Write-Host "[na2] ISO result: unchanged; candidate matches $([IO.Path]::GetFileName($current)), promotion and rotation skipped." -ForegroundColor Cyan
         return [pscustomobject]@{
             Status = 'unchanged'
             CurrentIso = $current
@@ -50,7 +50,7 @@ function Promote-VerifiedIso {
 
     $rotatedCurrent = $false
     try {
-        if ($previous -and (Test-Path -LiteralPath $current -PathType Leaf)) {
+        if (Test-Path -LiteralPath $current -PathType Leaf) {
             [IO.File]::Move($current, $previous, $true)
             $rotatedCurrent = $true
         }
@@ -66,12 +66,12 @@ function Promote-VerifiedIso {
     }
 
     $rotationResult = if ($rotatedCurrent) {
-        'previous image retained as Previous.iso'
+        "previous image retained as $([IO.Path]::GetFileName($previous))"
     }
     else {
         'no previous image was available to retain'
     }
-    Write-Host "[na2] ISO result: updated; candidate promoted to Current.iso, $rotationResult." -ForegroundColor Cyan
+    Write-Host "[na2] ISO result: updated; candidate promoted to $([IO.Path]::GetFileName($current)), $rotationResult." -ForegroundColor Cyan
     [pscustomobject]@{
         Status = 'updated'
         CurrentIso = $current
@@ -81,7 +81,8 @@ function Promote-VerifiedIso {
 }
 
 $inputIso = Join-Path $projectPaths.source 'NA2.iso'
-$resolvedOutputIso = [IO.Path]::GetFullPath((Join-Path $projectPaths.build 'Current.iso'))
+$resolvedOutputIso = [IO.Path]::GetFullPath($projectPaths.files.current_iso)
+$resolvedPreviousIso = [IO.Path]::GetFullPath($projectPaths.files.previous_iso)
 $profile = [IO.Path]::GetRelativePath(
     $projectPaths.repository,
     (Join-Path $projectPaths.patcher 'profiles\current')
@@ -123,7 +124,9 @@ try {
     }
 
     Stop-Na2Pcsx2 -Executable $pcsx2Exe
-    $promotion = Promote-VerifiedIso -CurrentIso $resolvedOutputIso
+    $promotion = Promote-VerifiedIso `
+        -CurrentIso $resolvedOutputIso `
+        -PreviousIso $resolvedPreviousIso
     $promotionCompleted = $true
     $buildRecord = Complete-Na2BuildRecord `
         -LogDirectory $logDirectory `

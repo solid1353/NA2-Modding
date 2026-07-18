@@ -85,9 +85,9 @@ the change in the plan. Progress updates during a long inspection must keep the
 current phase and required next response clear.
 
 1. Tasks may be added to `TASKS.md` at any time by the user, or by an agent when the user orders it.
-2. Each workstream subsection is coordinated by a Codex task whose title exactly matches the subsection heading. The coordinator owns that workstream across statuses, so do not add redundant coordinator metadata to `TASKS.md`.
+2. Except for `Unsorted`, each workstream subsection is coordinated by a Codex task whose title exactly matches the subsection heading. The coordinator owns that workstream across statuses, so do not add redundant coordinator metadata to `TASKS.md`. `Unsorted` is an intake area and does not have its own coordinator.
 3. When useful, a workstream subsection or individual task may have a dedicated context or plan document. Creating such a document is optional, but if one is created, it must be linked directly from the corresponding subsection heading or task entry in `TASKS.md`.
-4. After a successful push—or whenever the user asks what is next—the agent reads `TASKS.md`, reports several relevant `In Progress` choices and any closely related `Backlog` choices word for word without paraphrasing and in their original order, preserves their original section and subsection headings so the task context remains visible, avoids dumping the whole file, and asks the user to select one.
+4. After a successful push—or whenever the user asks what is next—the workstream coordinator reads `TASKS.md` and reports only the choices under its matching workstream subsection across statuses, word for word without paraphrasing and in their original order. It preserves the applicable status and subsection headings so the task context remains visible, omits unrelated workstreams, and asks the user to select one.
 5. The agent may perform read-only inspection, then gives a short plan, recommends an intelligence level, and ends with **Awaiting plan approval**.
 6. An unambiguous ASCII `approved` or `qwe`, including within a longer message, authorizes changes.
 7. The agent executes freely within the approved task, including major changes.
@@ -96,6 +96,16 @@ current phase and required next response clear.
 10. Another unambiguous ASCII `approved` or `qwe`, including within a longer message, authorizes task deletion, commit, and push.
 11. The user's concurrent edits and commits are expected. The agent preserves them, refreshes Git state before Git operations, and may push the user's existing commits with its own.
 12. Queued instructions remain part of the same changeset unless the user says otherwise.
+
+### Task coordinator responsibilities
+
+- The Codex task titled `Task coordinator` is the global coordinator for the task system, not a workstream coordinator. It maintains the relationship between `TASKS.md` workstreams and their Codex coordinator tasks; it does not select or execute workstream tasks unless the user explicitly directs it to do so.
+- In the `Task coordinator` task, a user request to `actualize` or `actualize chats` means synchronize the Codex task chats with the live `AGENTS.md` and `TASKS.md`. It does not invoke `na2 act` or perform ISO/PNACH actualization. Requests that explicitly concern an ISO, PNACH, PCSX2, or the `na2 act` command follow the separate Actualize workflow below.
+- Chat actualization reads the live files and inventories existing Codex tasks for this project. It derives workstreams from subsection headings across all statuses, treats matching subsection names as one workstream, and excludes the `Unsorted` intake area.
+- Chat actualization reuses and renames suitable existing tasks before creating missing coordinators, maintains exactly one coordinator named for each workstream, and gives each coordinator status-independent scope limited to that workstream. A dedicated chat for an individual linked task may remain separate, but it is not the workstream coordinator.
+- Chat actualization rebuilds the project's pinned-chat set and display order. It unpins every project chat, then repins only the required chats so `General` is always first and `Task coordinator` is always second. After them, it follows the live `In Progress` order in `TASKS.md`: for each workstream subsection, pin its coordinator first, followed by any existing dedicated chats for its individual tasks in task order. Chats that do not represent current `In Progress` work remain unpinned. Use the pin sequence required by the app to produce this displayed order, and verify the final pinned set and order.
+- Chat actualization does not select or begin task work. It updates existing chats only when their coordination rules or scope are stale, and it reports which coordinators were reused, renamed, created, or signaled.
+- Do not archive, delete, merge, or repurpose unrelated or surplus chats during actualization unless the user explicitly requests it.
 
 
 ## Cross-install Codex handoffs

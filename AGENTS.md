@@ -91,14 +91,15 @@ current phase and required next response clear.
 5. When an approved completed task is deleted and that leaves its workstream subsection empty, move the whole empty subsection to `Archive` as part of the same completion update; never delete the subsection. If a task later returns, move the subsection out of `Archive`: to the top of `In Progress` when that task is approved for active work, or to `Backlog` only when the user explicitly directs it there. Keep the coordinator chat available but unpinned; do not archive the Codex chat merely because its workstream is under `Archive`.
 6. When useful, a workstream subsection or individual task may have a dedicated context or plan document. Creating such a document is optional, but if one is created, it must be linked directly from the corresponding subsection heading or task entry in `TASKS.md`.
 7. After a successful push—or whenever the user asks what is next—the workstream coordinator reads `TASKS.md` and reports only the choices under its matching workstream subsection across statuses, word for word without paraphrasing and in their original order. It preserves the applicable status and subsection headings so the task context remains visible, omits unrelated workstreams, and asks the user to select one.
-8. The agent may perform read-only inspection, then gives a short plan, recommends an intelligence level, and ends with **Awaiting plan approval**.
-9. An unambiguous ASCII `approved` or `qwe`, including within a longer message, authorizes changes.
-10. The agent executes freely within the approved task, including major changes.
-11. If the task becomes unclear or the whole approach is wrong, stop and clarify; a replacement plan needs approval.
-12. The agent reports the result.
-13. Another unambiguous ASCII `approved` or `qwe`, including within a longer message, authorizes task deletion, commit, and push.
-14. The user's concurrent edits and commits are expected. The agent preserves them, refreshes Git state before Git operations, and may push the user's existing commits with its own.
-15. Queued instructions remain part of the same changeset unless the user says otherwise.
+8. After any authorized task-management edit to `TASKS.md`, commit that task update immediately without requesting separate commit approval. Stage only `TASKS.md` and any dedicated task context or plan document created or edited specifically as part of the same task-management update; never include concurrent implementation or unrelated work. Run the required chat actualization before this automatic commit when a workstream subsection changed. This automatic task-management commit does not authorize a push. Deleting a completed task still requires result approval before the deletion is made.
+9. The agent may perform read-only inspection, then gives a short plan, recommends an intelligence level, and ends with **Awaiting plan approval**.
+10. An unambiguous ASCII `approved` or `qwe`, including within a longer message, authorizes changes.
+11. The agent executes freely within the approved task, including major changes.
+12. If the task becomes unclear or the whole approach is wrong, stop and clarify; a replacement plan needs approval.
+13. The agent reports the result.
+14. Another unambiguous ASCII `approved` or `qwe`, including within a longer message, authorizes completed-task deletion, committing implementation or result changes, and push. Task-management-only changes already committed under rule 8 do not require another commit.
+15. The user's concurrent edits and commits are expected. The agent preserves them, refreshes Git state before Git operations, and may push the user's existing commits with its own.
+16. Queued instructions remain part of the same changeset unless the user says otherwise.
 
 ### Task coordinator responsibilities
 

@@ -466,13 +466,19 @@ def decoded_rgba(payload: bytes, entry: TextureEntry) -> tuple[int, int, bytes] 
 
 
 def validate_visual_coverage(
-    container_id: str,
+    strategy: Strategy,
     mappings: list[Mapping],
     target_payload: bytes,
     donor_payload: bytes,
     target_entries: dict[str, TextureEntry],
     donor_entries: dict[str, TextureEntry],
 ) -> None:
+    # A mapped container deliberately preserves every target visual that is not
+    # named by a mapping. Whole-container imports still require declarations for
+    # every decoded donor difference because they import the complete payload.
+    if strategy.strategy == "mapped":
+        return
+
     covered = {mapping.target_texture.casefold() for mapping in mappings}
     uncovered = []
     for name in sorted(target_entries.keys() & donor_entries.keys()):
@@ -484,7 +490,7 @@ def validate_visual_coverage(
             uncovered.append(target_entries[name].name)
     if uncovered:
         raise ValueError(
-            f"{container_id}: donor contains uncovered decoded visual changes: "
+            f"{strategy.container_id}: donor contains uncovered decoded visual changes: "
             + ", ".join(uncovered)
         )
 
@@ -565,6 +571,43 @@ def indexed_top_rows_payload(
     result[
         target_tex_section.data_offset : target_tex_section.data_offset + target_tex_section.data_size
     ] = target_tex
+    return bytes(result)
+
+
+def copy_mapping_payload(
+    target_payload: bytes,
+    donor_payload: bytes,
+    mapping: Mapping,
+) -> bytes:
+    """Copy one mapped texture's TEX/CLT data into the target CCS layout."""
+    if mapping.transform != "copy":
+        raise ValueError(f"{mapping.mapping_id}: copy payload requires transform=copy")
+
+    target_entries = parse_ccs(target_payload)
+    donor_entries = parse_ccs(donor_payload)
+    validate_mapping(
+        mapping,
+        target_payload,
+        donor_payload,
+        target_entries,
+        donor_entries,
+    )
+    target = target_entries[mapping.target_texture.casefold()]
+    donor = donor_entries[mapping.donor_texture.casefold()]
+    result = bytearray(target_payload)
+    component_pairs = zip(
+        target.textures + target.palettes,
+        donor.textures + donor.palettes,
+        strict=True,
+    )
+    for target_section, donor_section in component_pairs:
+        target_start = target_section.data_offset
+        target_end = target_start + target_section.data_size
+        donor_start = donor_section.data_offset
+        donor_end = donor_start + donor_section.data_size
+        result[target_start:target_end] = donor_payload[donor_start:donor_end]
+    if len(result) != len(target_payload):
+        raise AssertionError(f"{mapping.mapping_id}: mapped copy changed CCS size")
     return bytes(result)
 
 
@@ -662,9 +705,23 @@ def expected_payload(
             raise ValueError(f"{strategy.container_id}: whole strategy cannot use indexed-row transforms")
         return donor_payload
     indexed = [mapping for mapping in mappings if INDEXED_TOP_ROWS.fullmatch(mapping.transform)]
-    if len(indexed) != 1 or len(mappings) != 1:
-        raise ValueError(f"{strategy.container_id}: mapped strategy requires one indexed-row mapping")
-    return indexed_top_rows_payload(target_payload, donor_payload, indexed[0])
+    if indexed:
+        if len(indexed) != 1 or len(mappings) != 1:
+            raise ValueError(
+                f"{strategy.container_id}: mapped indexed-row strategy requires exactly one mapping"
+            )
+        return indexed_top_rows_payload(target_payload, donor_payload, indexed[0])
+
+    copied = [mapping for mapping in mappings if mapping.transform == "copy"]
+    if not copied or len(copied) != len(mappings):
+        raise ValueError(
+            f"{strategy.container_id}: mapped strategy requires one indexed-row mapping "
+            "or one or more copy mappings"
+        )
+    payload = target_payload
+    for mapping in copied:
+        payload = copy_mapping_payload(payload, donor_payload, mapping)
+    return payload
 
 
 def source_members(
@@ -719,7 +776,7 @@ def build_plan(
         for mapping in mappings:
             validate_mapping(mapping, target_payload, donor_payload, target_entries, donor_entries)
         validate_visual_coverage(
-            container_id,
+            strategy,
             mappings,
             target_payload,
             donor_payload,

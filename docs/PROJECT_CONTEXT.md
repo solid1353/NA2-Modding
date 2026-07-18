@@ -1,5 +1,9 @@
 # Project Context
 
+The modified project game is named *Narutimate Accel v2.28*. It is based on
+*Naruto Shippuuden: Narutimate Accel 2*, whose clean source identity remains
+`SLPS-25837`.
+
 ## Stable Local References
 
 Original source ISOs are `@source/NA2.iso`, `@source/NUN3.iso`,
@@ -10,7 +14,7 @@ contains many modifications that may later be ported to NA2.
 Current PNACH:
 
 - Canonical editable PNACH base: `@pcsx2_files/SLPS-25837_C0659AD1.pnach`
-- Actualized PNACH symlinks live in `@pcsx2/cheats/SLPS-25837_<crc>.pnach` and point to `@pcsx2_files/SLPS-25837_C0659AD1.pnach`.
+- The modified project image uses `SLPS-22228`; its actualized PNACH symlinks live in `@pcsx2/cheats/SLPS-22228_<crc>.pnach` and point to `@pcsx2_files/SLPS-25837_C0659AD1.pnach`. The canonical PNACH keeps its historical source-game name.
 - Former PNACH sections preserved as raw-binary patch sets are `Testing`, `Rendering`, `QoL`, and `Battle logic`. Patches are cheats, edits are subcheats, and `default_enabled` preserves state. Rendering is currently an empty disabled module in the active profile.
 - PNACH actualization is mandatory before every ISO handoff or launch unless the user explicitly requests a no-PNACH isolation run.
 - A zero-byte canonical PNACH removes its managed PCSX2 CRC aliases and skips ISO/CRC inspection. Managed aliases are matching-serial symlinks that resolve to this canonical file; other games, real PNACH files, and unrelated symlinks are preserved.
@@ -38,7 +42,7 @@ replaced with a copied machine-specific absolute path.
 - `@pcsx2_files/`: project-owned PCSX2 artifacts. The canonical PNACH and input recordings are tracked; screenshots remain local and ignored.
 - `@pcsx2/`: portable, self-contained PCSX2 installation. BIOS, memory cards, logs, saves, settings, and other support data stay inside this root. Its game-list media paths may point to `@build/` and `@source/`; its CRC-named cheat symlinks target the canonical PNACH under `@pcsx2_files/`.
 - `na2_patcher/modules/raw_binary/`: repository-owned schema v1, CLI validator/patcher, the exact font m01 reconstruction, canonical menu-input mappings and runtime classifications, and verified historical font ELF patch groups. It never applies `pending`, `runtime_failed`, or `deprecated` patches and writes only new same-size outputs with complete logs. The main ISO compositor applies ordered raw patches before translation with staged-byte conflict checks.
-- `na2_patcher/`: profile schemas, ordered module orchestration, immutable module-data snapshots, and the translation/raw-binary implementations. `na2_patcher/profiles/current/` enables the font, menu-input, QoL, battle-logic, and translation modules by exact executable-input hashes. Raw-binary hashes cover canonical TSVs and referenced blobs, not adjacent READMEs or authoring tools.
+- `na2_patcher/`: profile schemas, ordered module orchestration, immutable module-data snapshots, and the translation/raw-binary/disc-identity implementations. `na2_patcher/profiles/current/` enables the font, menu-input, QoL, battle-logic, string-replacement, translation, and disc-identity modules by exact executable-input hashes. Raw-binary hashes cover canonical TSVs and referenced blobs, not adjacent READMEs or authoring tools. The disc-identity module runs last and performs the declared equal-length `SLPS_258.37` to `SLPS_222.28` boot-path rename.
 - `.agents/`: dated human-readable handoffs exchanged between separate Windows installations and Codex instances. They may contain machine-specific paths as historical context, are non-authoritative, and must be reviewed rather than deleted as clutter.
 - `docs/`: repository-wide context, confirmed knowledge, active plans, hypotheses, and release documentation. Component-specific READMEs remain beside their components.
 - `docs/knowledge/`: confirmed findings, reusable negative results, and supporting evidence promoted out of disposable logs. Module-owned structured evidence remains beside its module.
@@ -180,9 +184,9 @@ Every release PNACH must match the PCSX2 CRC for the boot ELF inside the paired 
 
 PCSX2 cheat filenames include the game CRC, for example:
 
-`SLPS-25837_BCB73695.pnach`
+`SLPS-22228_BCB73695.pnach`
 
-If the boot ELF inside the ISO changes, PCSX2 may report a different CRC. Actualize creates a matching `@pcsx2/cheats/SLPS-25837_<crc>.pnach` link to `@pcsx2_files/SLPS-25837_C0659AD1.pnach`.
+If the boot ELF inside the ISO changes, PCSX2 may report a different CRC. Actualize derives the serial from the ISO boot path and creates a matching `@pcsx2/cheats/SLPS-22228_<crc>.pnach` link to `@pcsx2_files/SLPS-25837_C0659AD1.pnach` for the modified project image.
 
 PCSX2 uses its internal `@pcsx2/cheats/` folder. Only the canonical PNACH is tracked in the project; actualized CRC aliases are relative symlinks in the portable installation.
 
@@ -193,7 +197,13 @@ Known PCSX2 paths from prior notes:
 
 Known log pattern:
 
+Original-source historical pattern:
+
 `ELF Loading: cdrom0:\SLPS_258.37;1, Game CRC = 870F8722, EntryPoint = 0x00100008`
+
+Modified-project pattern after the disc-identity module:
+
+`ELF Loading: cdrom0:\SLPS_222.28;1, Game CRC = <crc>, EntryPoint = 0x00100008`
 
 ## Prior GPT Handoff Notes
 
@@ -243,7 +253,7 @@ DATA.CVM passwords: `cc2fuku` for NA2, NUN3, and NUN5; `Iruka` for NUN6 A35.
 
 ## Actualize Workflow
 
-When asked to actualize, keep the canonical file named `@pcsx2_files/SLPS-25837_C0659AD1.pnach`. Managed aliases are matching-serial symlinks that resolve to this canonical file; preserve other games, real PNACH files, and unrelated symlinks. If the canonical file is zero bytes, delete its managed aliases directly and skip ISO/CRC inspection. Otherwise, use the ISO in `@build/` by default, calculate the PCSX2-style ELF CRC from its boot ELF, delete obsolete managed aliases, and create the current relative `@pcsx2/cheats/SLPS-25837_<crc>.pnach` symlink targeting the canonical PNACH if missing. Refuse an occupied target filename instead of overwriting it.
+When asked to actualize, keep the canonical file named `@pcsx2_files/SLPS-25837_C0659AD1.pnach`. Managed aliases use the serial derived from the selected ISO boot path: normally `SLPS-22228` for the modified project image, or legacy `SLPS-25837` for an older/source-identity image. Preserve other games, real PNACH files, and unrelated symlinks. If the canonical file is zero bytes, delete managed aliases for both project serials directly and skip ISO/CRC inspection. Otherwise, use the ISO in `@build/` by default, calculate the PCSX2-style ELF CRC from its boot ELF, delete obsolete managed aliases, and create the current relative `@pcsx2/cheats/<serial>_<crc>.pnach` symlink targeting the canonical PNACH if missing. Refuse an occupied target filename instead of overwriting it.
 
 ## Release Workflow
 

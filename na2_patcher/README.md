@@ -9,9 +9,9 @@ Each profile directory contains:
   `project-paths.json`.
 - `modules.tsv`: ordered module instances with exact input hashes and selections.
 
-Schema v1 supports declarative, size-preserving `raw_binary` and `translation`
-modules. Package and ZIP-overlay workflows are retired; profiles consume only
-repository-owned declarative inputs.
+Schema v1 supports declarative, size-preserving `raw_binary`, `translation`,
+and `disc_identity` modules. Package and ZIP-overlay workflows are retired;
+profiles consume only repository-owned declarative inputs.
 
 Profiles never select the newest file implicitly. Enabled module inputs are content-hashed before composition. Disabled modules remain visible in the profile as WIP or review candidates but do not block the active build when their contents change.
 
@@ -25,14 +25,18 @@ For raw-binary modules, the profile hash covers only executable package inputs:
 - every blob referenced by `blob_path`
 
 Adjacent documentation and authoring tools do not affect the profile pin.
-Translation inputs are hashed as exact files.
+Translation and disc-identity inputs are hashed as exact files.
 
 The current profile composes:
 
 1. exact font m01 `GF4.BIN` and ELF reconstruction through `raw_binary`;
 2. the runtime-proven menu-input handler set through `raw_binary`;
 3. separate `QoL` and `Battle logic` raw-binary sections using their preserved default states;
-4. hash-pinned v33 mappings from the integrated `translation` module.
+4. the fixed-size memory-card title through the `string_replacements`
+   raw-binary patch set;
+5. hash-pinned v33 mappings from the integrated `translation` module;
+6. the declared equal-length `SLPS_258.37` to `SLPS_222.28` boot identity
+   change through `disc_identity`.
 
 The disabled `Testing` section remains a separate raw package. The empty
 `Rendering` patch set remains listed as a disabled module until populated.
@@ -49,7 +53,10 @@ Build the configured current profile with:
 
 `na2_patcher/build_profile.py` writes the candidate ISO as `build/Current.iso.building`, verifies it completely, fsyncs it, and writes the profile log before returning. `scripts/na2/build.ps1` compares the candidate with `Current.iso`; an identical candidate is discarded without touching `Current.iso` or `Previous.iso`, while a changed candidate atomically replaces `Previous.iso` with the outgoing `Current.iso` and becomes the new `Current.iso`. A failed promotion restores the outgoing ISO when safe, and any caught failure removes `.building`.
 
-File-size changes are always rejected. Structural expansion requires a separately designed and approved implementation rather than a build flag.
+File-size changes are always rejected. The disc-identity module permits only
+its declared equal-length boot-file rename and verifies the resulting tree;
+all other tree changes are rejected. Structural expansion requires a separately
+designed and approved implementation rather than a build flag.
 
 The ordinary `na2` command dispatches the profile build, then delegates mandatory PNACH actualization and PCSX2 launch to `scripts/na2/launch.ps1`. `na2 -c` launches `Current.iso` without rebuilding, and `na2 -p` launches `Previous.iso` without rebuilding. Translation is invoked only as a pinned profile module and records its review plan inside the profile log.
 

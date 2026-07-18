@@ -1,13 +1,15 @@
-# Naruto Shippuuden: Narutimate Accel 2 Modding
+# Narutimate Accel v2.28 Modding
 
-A scripted modding and reverse-engineering workspace for the PlayStation 2 game
-*Naruto Shippuuden: Narutimate Accel 2*. The project targets PCSX2 and the
-original game formats; it is not a native PC port.
+A scripted modding and reverse-engineering workspace for the PlayStation 2
+project *Narutimate Accel v2.28*, based on *Naruto Shippuuden: Narutimate Accel
+2*. The project targets PCSX2 and the original game formats; it is not a native
+PC port.
 
 | | |
 |---|---|
-| Game serial | `SLPS-25837` |
-| Boot ELF | `SLPS_258.37` |
+| Project serial | `SLPS-22228` |
+| Project boot ELF | `SLPS_222.28` |
+| Source serial | `SLPS-25837` |
 | Platform | PlayStation 2 |
 
 ## Project scope

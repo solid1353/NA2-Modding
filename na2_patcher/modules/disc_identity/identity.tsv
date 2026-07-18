@@ -1,0 +1,2 @@
+source_boot_path	replacement_boot_path	reason
+SLPS_258.37	SLPS_222.28	Assign the modified project image the distinct SLPS-22228 serial without changing ISO or payload sizes.

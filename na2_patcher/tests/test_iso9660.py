@@ -38,6 +38,14 @@ class Iso9660TimestampTests(unittest.TestCase):
         record = self.parser()._parse_record(directory_record(b"\0" * 7), "TEST")
         self.assertIsNone(record.recorded_at)
 
+    def test_preserves_directory_record_offset(self) -> None:
+        record = self.parser()._parse_record(
+            directory_record(b"\0" * 7),
+            "TEST",
+            0x1234,
+        )
+        self.assertEqual(record.directory_record_offset, 0x1234)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -257,7 +257,7 @@ Write-Host '[na2] ISO result: unchanged; rotation: no.'
     $status = Format-Na2ActualizeStatus `
         -Result ([pscustomobject]@{
             PCSX2ElfCRC = 'C0659AD1'
-            CheatsPnach = Join-Path $paths.pcsx2 'cheats\SLPS-25837_C0659AD1.pnach'
+            CheatsPnach = Join-Path $paths.pcsx2 'cheats\SLPS-22228_C0659AD1.pnach'
             PnachStatus = 'verified symlink'
             RemovedPnachSymlinks = @('old-link')
         }) `

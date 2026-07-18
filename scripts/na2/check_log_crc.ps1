@@ -1,7 +1,7 @@
 param(
     [string]$LogPath = "",
     [string]$PnachPath = "",
-    [string]$Serial = "SLPS-25837"
+    [string]$Serial = "SLPS-22228"
 )
 
 Set-StrictMode -Version Latest

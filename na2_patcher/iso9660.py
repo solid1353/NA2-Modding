@@ -14,6 +14,7 @@ class IsoRecord:
     extent: int
     size: int
     recorded_at: datetime | None
+    directory_record_offset: int | None = None
 
     @property
     def byte_offset(self) -> int:
@@ -66,7 +67,12 @@ class Iso9660:
             raise RuntimeError(f"Invalid both-endian ISO field in {context}")
         return little
 
-    def _parse_record(self, raw: bytes, path: str) -> IsoRecord:
+    def _parse_record(
+        self,
+        raw: bytes,
+        path: str,
+        directory_record_offset: int | None = None,
+    ) -> IsoRecord:
         if len(raw) < 34 or raw[0] != len(raw):
             raise RuntimeError(f"Invalid ISO directory record for {path or '/'}")
 
@@ -111,6 +117,7 @@ class Iso9660:
             extent=extent,
             size=size,
             recorded_at=recorded_at,
+            directory_record_offset=directory_record_offset,
         )
 
     @staticmethod
@@ -156,6 +163,7 @@ class Iso9660:
                         f"Invalid directory data in {directory.path or '/'}"
                     )
 
+                record_offset = offset
                 raw = data[offset:offset + length]
                 name_length = raw[32]
                 if 33 + name_length > len(raw):
@@ -170,7 +178,11 @@ class Iso9660:
 
                 name = self._decode_name(identifier, directory.path)
                 path = f"{directory.path}/{name}" if directory.path else name
-                record = self._parse_record(raw, path)
+                record = self._parse_record(
+                    raw,
+                    path,
+                    directory.byte_offset + record_offset,
+                )
                 self._add_record(record)
                 if record.is_dir:
                     self._read_directory(record, active_directories)

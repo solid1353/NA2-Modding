@@ -1,6 +1,6 @@
 # AGENTS.md
 
-PS2 modding/reverse-engineering workspace for Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
+PS2 modding/reverse-engineering workspace for Narutimate Accel v2.28, based on Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 
 ## Hard rules
 

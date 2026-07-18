@@ -20,7 +20,7 @@ MODULE_FIELDS = [
     "selection",
     "reason",
 ]
-MODULE_TYPES = {"raw_binary", "translation"}
+MODULE_TYPES = {"disc_identity", "raw_binary", "translation"}
 RAW_BINARY_CONTROL_FILES = (
     "manifest.tsv",
     "targets.tsv",

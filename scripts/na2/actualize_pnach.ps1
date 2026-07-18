@@ -8,8 +8,8 @@ $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot 'pnach_state.ps1')
 . (Join-Path $PSScriptRoot 'pcsx2_elf_crc.ps1')
 $projectPaths = Get-Na2ProjectPaths
-$Serial = 'SLPS-25837'
 $CanonicalPnach = Join-Path $projectPaths.pcsx2_files 'SLPS-25837_C0659AD1.pnach'
+$ManagedSerials = @('SLPS-25837', 'SLPS-22228')
 
 $sectorSize = 2048
 
@@ -47,6 +47,31 @@ function Test-CanonicalPnachSymlink {
     catch {
         return $false
     }
+}
+
+function Get-DiscSerialFromBootPath {
+    param([Parameter(Mandatory = $true)][string]$BootPath)
+
+    $name = [IO.Path]::GetFileName($BootPath)
+    if ($name -notmatch '^(?<prefix>[A-Za-z]{4})_(?<first>[0-9]{3})\.(?<last>[0-9]{2})$') {
+        throw "Could not derive a PS2 serial from boot executable: $BootPath"
+    }
+    return ("{0}-{1}{2}" -f $Matches.prefix, $Matches.first, $Matches.last).ToUpperInvariant()
+}
+
+function Get-ManagedPnachSymlinks {
+    param(
+        [Parameter(Mandatory = $true)][string]$CheatsDirectory,
+        [Parameter(Mandatory = $true)][string]$CanonicalPnach,
+        [Parameter(Mandatory = $true)][string[]]$Serials
+    )
+
+    $serialPattern = '^(?:' + (($Serials | ForEach-Object { [regex]::Escape($_) }) -join '|') + ')_[0-9A-Fa-f]{8}\.pnach$'
+    Get-ChildItem -LiteralPath $CheatsDirectory -Filter '*.pnach' -Force |
+        Where-Object {
+            $_.Name -match $serialPattern -and
+            (Test-CanonicalPnachSymlink -Item $_ -CanonicalPnach $CanonicalPnach)
+        }
 }
 
 function Read-UInt32LE {
@@ -145,10 +170,10 @@ $canonicalLinkTarget = [IO.Path]::GetRelativePath($cheatsDir, $CanonicalPnach)
 
 if ($pnachState.IsEmpty) {
     $removedPnachSymlinks = @(
-        Get-ChildItem -LiteralPath $cheatsDir -Filter "${Serial}_*.pnach" -Force |
-            Where-Object {
-                Test-CanonicalPnachSymlink -Item $_ -CanonicalPnach $CanonicalPnach
-            } |
+        Get-ManagedPnachSymlinks `
+            -CheatsDirectory $cheatsDir `
+            -CanonicalPnach $CanonicalPnach `
+            -Serials $ManagedSerials |
             ForEach-Object {
                 $name = $_.Name
                 Remove-Item -LiteralPath $_.FullName -Force
@@ -197,6 +222,10 @@ try {
 
     $bootPath = (($bootLine -replace '^\s*BOOT2?\s*=\s*', '') -replace '^\s*cdrom0?:\\?', '' -replace ';[0-9]+\s*$', '').Trim()
     $bootPath = $bootPath -replace '\\', '/'
+    $Serial = Get-DiscSerialFromBootPath -BootPath $bootPath
+    if ($Serial -notin $ManagedSerials) {
+        throw "Boot serial is not managed by this project: $Serial"
+    }
 
     $elfRecord = Find-IsoPath -IsoStream $iso -RootRecord $rootRecord -Path $bootPath
     if ($null -eq $elfRecord) { throw "Boot ELF not found in ISO: $bootPath" }
@@ -212,10 +241,12 @@ $pnachName = "${Serial}_${crc}.pnach"
 $targetPnach = Join-Path $cheatsDir $pnachName
 
 $removedPnachSymlinks = @(
-    Get-ChildItem -LiteralPath $cheatsDir -Filter "${Serial}_*.pnach" -Force |
+    Get-ManagedPnachSymlinks `
+        -CheatsDirectory $cheatsDir `
+        -CanonicalPnach $CanonicalPnach `
+        -Serials $ManagedSerials |
         Where-Object {
-            $_.FullName -ne $targetPnach -and
-            (Test-CanonicalPnachSymlink -Item $_ -CanonicalPnach $CanonicalPnach)
+            $_.FullName -ne $targetPnach
         } |
         ForEach-Object {
             $name = $_.Name

@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .iso9660 import Iso9660
 from .modules import translation as translation_module
+from .modules.disc_identity import engine as disc_identity_module
 from .modules.raw_binary import engine as patch_binary
 from .profile import Profile, ProfileModule, load_profile
 from .project_paths import load_project_paths
@@ -299,6 +300,35 @@ def apply_profile_modules(
     for module in profile.modules:
         if not module.enabled:
             continue
+        if module.module == "disc_identity":
+            if any("disc_identity" in item for item in results):
+                raise ValueError("Profile may enable only one disc_identity module")
+            if module.selection:
+                raise ValueError("disc_identity modules do not accept selections")
+            identity = disc_identity_module.load_identity(module.input_path)
+            system_path = "SYSTEM.CNF"
+            record = source.by_path.get(system_path)
+            if record is None or record.is_dir:
+                raise RuntimeError("Disc identity requires SYSTEM.CNF in the source ISO")
+            initial = payloads.get(system_path, bytearray(source.read_file(record)))
+            updated, system_edit = disc_identity_module.apply_system_cnf(
+                identity,
+                initial,
+            )
+            payloads[system_path] = updated
+            owners[system_path] = module.module_id
+            results.append(
+                {
+                    "module": module,
+                    "disc_identity": identity,
+                    "identity_edits": [system_edit],
+                    "paths": [
+                        system_path,
+                        f"{identity.source_boot_path} -> {identity.replacement_boot_path}",
+                    ],
+                }
+            )
+            continue
         if module.module == "raw_binary":
             result = apply_raw_patch_set(
                 module.input_path,
@@ -388,6 +418,34 @@ def write_profile_log(
             translation_module.write_json(
                 module_log / "translation_summary.json", plan.summary
             )
+        if "disc_identity" in item:
+            identity = item["disc_identity"]
+            assert isinstance(identity, disc_identity_module.DiscIdentity)
+            edits = item["identity_edits"]
+            assert isinstance(edits, list)
+            patch_binary.write_tsv(
+                module_log / "patch_log.tsv",
+                [
+                    "target",
+                    "offset",
+                    "length",
+                    "original_hex",
+                    "new_hex",
+                    "reason",
+                ],
+                edits,
+            )
+            patch_binary.write_tsv(
+                module_log / "run_summary.tsv",
+                ["source_serial", "replacement_serial", "edit_count"],
+                [
+                    {
+                        "source_serial": identity.source_serial,
+                        "replacement_serial": identity.replacement_serial,
+                        "edit_count": len(edits),
+                    }
+                ],
+            )
     patch_binary.write_tsv(
         log_directory / "modules.tsv",
         [
@@ -475,16 +533,48 @@ def main() -> int:
             output.flush()
             os.fsync(output.fileno())
 
+        identity_items = [
+            item for item in profile_results if "disc_identity" in item
+        ]
+        if identity_items:
+            identity_item = identity_items[0]
+            identity = identity_item["disc_identity"]
+            assert isinstance(identity, disc_identity_module.DiscIdentity)
+            iso_edit = disc_identity_module.apply_iso_directory_identifier(
+                identity,
+                Iso9660(working_iso),
+            )
+            identity_item["identity_edits"].append(iso_edit)
+
         result = Iso9660(working_iso)
-        source_tree = {(record.path, record.is_dir) for record in source.records}
+        identity = (
+            identity_items[0]["disc_identity"] if identity_items else None
+        )
+        source_tree = set()
+        for record in source.records:
+            path = record.path
+            if (
+                isinstance(identity, disc_identity_module.DiscIdentity)
+                and path == identity.source_boot_path
+            ):
+                path = identity.replacement_boot_path
+            source_tree.add((path, record.is_dir))
         result_tree = {(record.path, record.is_dir) for record in result.records}
         if result_tree != source_tree:
-            raise RuntimeError("Final ISO file tree differs from the source tree")
+            raise RuntimeError(
+                "Final ISO file tree differs from the source tree plus its declared identity rename"
+            )
 
         for source_record in source.records:
             if source_record.is_dir:
                 continue
-            result_record = result.by_path.get(source_record.path)
+            result_path = source_record.path
+            if (
+                isinstance(identity, disc_identity_module.DiscIdentity)
+                and result_path == identity.source_boot_path
+            ):
+                result_path = identity.replacement_boot_path
+            result_record = result.by_path.get(result_path)
             if result_record is None or result_record.is_dir:
                 raise RuntimeError(f"Final ISO is missing source file: {source_record.path}")
             expected = (
@@ -520,6 +610,8 @@ def main() -> int:
             detail = f", {len(item['raw_result']['edits'])} edits"
         elif "translation_rows" in item:
             detail = f", {item['translation_rows']} rows"
+        elif "disc_identity" in item:
+            detail = f", {len(item['identity_edits'])} edits"
         print(f"  {module.order:03d} {module.module_id} ({module.module}{detail})")
         for path in sorted(str(value) for value in item.get("paths", [])):
             print(f"    {green}{path}{reset}")

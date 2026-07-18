@@ -1,6 +1,6 @@
 # NA2 translation module (mapping version 33)
 
-This first-class `na2_patcher` module builds an in-memory translation plan for **Naruto: Narutimate Accel 2**. It never packages patched BIN or ELF payloads. Profile builds invoke `engine.py` directly and log the plan without using a TSV as an inter-stage handoff. There is no standalone export command.
+This first-class `na2_patcher` module builds an in-memory translation plan for **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*. It never packages patched BIN or ELF payloads. Profile builds invoke `engine.py` directly and log the plan without using a TSV as an inter-stage handoff. There is no standalone export command.
 
 ## Mapping metadata
 

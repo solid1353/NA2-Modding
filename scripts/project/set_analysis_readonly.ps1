@@ -6,7 +6,7 @@ $ErrorActionPreference = 'Stop'
 $projectPaths = Get-Na2ProjectPaths
 
 if (-not $AnalysisDirs -or $AnalysisDirs.Count -eq 0) {
-    $AnalysisDirs = @('NA2', 'NUN5', 'NUN6', 'shared_NA2_NUN5_NUN6') | ForEach-Object {
+    $AnalysisDirs = @('NA2', 'NUN3', 'NUN5', 'NUN6', 'shared') | ForEach-Object {
         Join-Path $projectPaths.analysis "disassembly\$_"
     }
 }

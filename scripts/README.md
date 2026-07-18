@@ -23,7 +23,8 @@ research utility.
 - `project/`: source and completed-analysis read-only maintenance.
 - `research/ghidra/`: hash-pinned headless Ghidra imports into the shared
   `@analysis/disassembly/` root, MWo3 preparation, portable source-path
-  normalization, C/ASCII export, and compact summaries.
+  normalization, C/ASCII export, verified manifests, and exact shared-binary
+  game cohorts.
 - `research/menu_input/`: preserved MIPS and Ghidra analysis helpers from the
   menu-input investigation.
 - `research/translation/`: retained translation-table length validator. It is

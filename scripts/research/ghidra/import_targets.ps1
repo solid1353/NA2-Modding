@@ -1,6 +1,8 @@
 param(
-    [ValidateSet('all', 'NA2', 'NUN5', 'NUN6', 'shared')]
+    [ValidateSet('all', 'NA2', 'NUN3', 'NUN5', 'NUN6', 'shared')]
     [string]$Target = 'all',
+    [string]$Program,
+    [switch]$ReanalyzeExisting,
     [switch]$VerifyOnly
 )
 
@@ -30,6 +32,10 @@ function Find-JavaHome {
 
 $targets = Import-Csv -LiteralPath (Join-Path $PSScriptRoot 'targets.tsv') -Delimiter "`t"
 if ($Target -ne 'all') { $targets = @($targets | Where-Object target -eq $Target) }
+if ($Program) { $targets = @($targets | Where-Object program -eq $Program) }
+if ($targets.Count -eq 0) { throw 'No matching Ghidra targets.' }
+if ($ReanalyzeExisting -and -not $Program) { throw '-ReanalyzeExisting requires -Program.' }
+if ($ReanalyzeExisting -and $VerifyOnly) { throw '-ReanalyzeExisting cannot be combined with -VerifyOnly.' }
 
 foreach ($item in $targets) {
     $inputPath = Resolve-SourceAlias $item.source
@@ -65,10 +71,37 @@ $env:PATH = (Join-Path $env:JAVA_HOME 'bin') + ';' + $env:PATH
 New-Item -ItemType Directory -Force -Path $env:APPDATA, $env:LOCALAPPDATA | Out-Null
 
 foreach ($item in $targets) {
-    $analysisDirectory = if ($item.target -eq 'shared') { 'shared_NA2_NUN5_NUN6' } else { $item.target }
+    $analysisDirectory = if ($item.target -eq 'shared') { 'shared' } else { $item.target }
     $analysisRoot = Join-Path $projectPaths.analysis "disassembly\$analysisDirectory"
     $projectRoot = Join-Path $analysisRoot 'ghidra'
-    $summaryPath = Join-Path $analysisRoot "summaries\$($item.program).tsv"
+    $artifactRoot = if ($item.target -eq 'shared') { Join-Path $analysisRoot $item.shared_scope } else { $analysisRoot }
+    $summaryPath = Join-Path $artifactRoot "summaries\$($item.program).tsv"
+    if ($ReanalyzeExisting) {
+        if (-not (Test-Path -LiteralPath $projectRoot -PathType Container)) {
+            throw "Ghidra project is missing: $($item.target)"
+        }
+        $inputPath = Resolve-SourceAlias $item.source
+        $loadBase = '-'
+        if ($item.format -eq 'mwo3') {
+            $stream = [IO.File]::OpenRead($inputPath)
+            try {
+                $header = New-Object byte[] 12
+                [void]$stream.Read($header, 0, $header.Length)
+            }
+            finally { $stream.Dispose() }
+            if ([Text.Encoding]::ASCII.GetString($header, 0, 4) -ne 'MWo3') { throw "Invalid MWo3 input: $($item.source)" }
+            $loadBase = '0x{0:X8}' -f [BitConverter]::ToUInt32($header, 8)
+        }
+        $arguments = @(
+            $projectRoot, $item.target, '-process', $item.program,
+            '-scriptPath', $PSScriptRoot,
+            '-postScript', 'WriteAnalysisSummary.java', $summaryPath, $item.source,
+            $item.expected_sha256, $item.format, $loadBase
+        )
+        & $headless @arguments
+        if ($LASTEXITCODE -ne 0) { throw "Ghidra reanalysis failed: $($item.target)/$($item.program)" }
+        continue
+    }
     if (Test-Path -LiteralPath $summaryPath) {
         Write-Host "Skip existing:" "$($item.target)/$($item.program)"
         continue
@@ -109,8 +142,7 @@ foreach ($item in $targets) {
     $arguments += @(
         '-scriptPath', $PSScriptRoot,
         '-postScript', 'WriteAnalysisSummary.java', $summaryPath, $item.source,
-        $item.expected_sha256, $item.format, $loadBase,
-        '-analysisTimeoutPerFile', '900'
+        $item.expected_sha256, $item.format, $loadBase
     )
     & $headless @arguments
     if ($LASTEXITCODE -ne 0) { throw "Ghidra import failed: $($item.target)/$($item.program)" }

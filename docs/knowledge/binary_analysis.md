@@ -22,9 +22,11 @@ though the boot ELF warrants a full-program analysis project.
   create baseline Ghidra programs now, then keep manual analysis tied to a
   concrete question.
 - `MODULES/CRI_ADXI.IRX`, `MODULES/SNDBASE.IRX`, and `MODULES/MODULES.BIN` are
-  IOP ELF/IRX executables. The current NA2, NUN5, and NUN6 copies are byte-identical,
-  so create one reusable baseline Ghidra program for each and deepen the analysis
-  only when an audio, streaming, or IOP behavior requires it.
+  IOP ELF/IRX executables. `MODULES.BIN` is byte-identical across NA2, NUN3,
+  NUN5, and NUN6. `CRI_ADXI.IRX` and `SNDBASE.IRX` are byte-identical across
+  NA2, NUN5, and NUN6, while NUN3 has distinct versions. Keep one baseline per
+  distinct binary and deepen it only when an audio, streaming, or IOP behavior
+  requires it.
 - `MODULES/IOPRP300.IMG` is a `RESET`/`ROMDIR` IOP image. Inspect its container
   structure first and analyze an individual contained executable only when a
   task identifies one.
@@ -40,7 +42,7 @@ portable behavior that may later be ported to NA2.
 Therefore the follow-up Ghidra task should create or restore a maintained NA2
 boot-ELF project, create baseline programs for the three NA2 EE overlays and
 three shared IOP executables, and create corresponding executable baselines for
-NUN5 and NUN6.
+NUN3, NUN5, and NUN6.
 The task lists the directly signature-confirmed ELF and `MWo3` files for each
 game; it does not include resource files merely because they use `.BIN` names.
 
@@ -48,15 +50,17 @@ game; it does not include resource files merely because they use `.BIN` names.
 
 - NA2: `@source/NA2.iso.files/SLPS_258.37`, plus `PRG/ADV.BIN`,
   `PRG/BTL.BIN`, and `PRG/ETC.BIN` below the same tree.
+- NUN3: `@source/NUN3.iso.files/SLUS_217.27`, plus `PRG/BATTLE.BIN`,
+  `PRG/HOME.BIN`, `PRG/RPG.BIN`, and the distinct `MODULES/CRI_ADXI.IRX`
+  and `MODULES/SNDBASE.IRX` binaries.
 - NUN5: `@source/NUN5.iso.files/SLES_556.05`, plus `PRG/ADV.BIN`,
   `PRG/BTL.BIN`, `PRG/ETC.BIN`, `PRG/TEXTENG.BIN`, `PRG/TEXTFRN.BIN`,
   `PRG/TEXTGER.BIN`, `PRG/TEXTITA.BIN`, and `PRG/TEXTSPA.BIN`.
 - NUN6 A35: `@source/NUN6 A35.iso.files/SLUS_556.06`, plus `PRG/ADV.BIN`,
   `PRG/BTL.BIN`, `PRG/ETC.BIN`, `PRG/MOD.BIN`, and `PRG/TEXTBRA.BIN`.
-- Shared identical IOP inputs (analyze the NA2 copy once):
-  `@source/NA2.iso.files/MODULES/CRI_ADXI.IRX`,
-  `@source/NA2.iso.files/MODULES/MODULES.BIN`, and
-  `@source/NA2.iso.files/MODULES/SNDBASE.IRX`.
+- Shared identical IOP inputs analyze the NA2 copy once. `MODULES.BIN` belongs
+  to the NA2/NUN3/NUN5/NUN6 cohort; `CRI_ADXI.IRX` and `SNDBASE.IRX` belong to
+  the NA2/NUN5/NUN6 cohort.
 
 All current paths above were confirmed after the 2026-07-18 recursive source
 extraction. Keep shared Ghidra projects and exports under each target's
@@ -180,13 +184,13 @@ component separately.
 ## Existing reusable analysis
 
 - Maintained Ghidra 12.1.2 projects now exist under
-  `@analysis/disassembly/NA2/`, `@analysis/disassembly/NUN5/`,
-  `@analysis/disassembly/NUN6/`, and
-  `@analysis/disassembly/shared_NA2_NUN5_NUN6/`. The
-  configured analysis root is shared between related projects. Each tree contains a
-  Ghidra project, a portable manifest, per-program summaries, decompiled C,
-  and an ASCII listing. The NUN6 tree also contains the initial NUN5 donor-pair
-  comparison record.
+  `@analysis/disassembly/NA2/`, `@analysis/disassembly/NUN3/`,
+  `@analysis/disassembly/NUN5/`, `@analysis/disassembly/NUN6/`, and
+  `@analysis/disassembly/shared/`. Shared IOP artifacts are separated into the
+  exact `NA2_NUN5_NUN6` and `NA2_NUN3_NUN5_NUN6` cohorts while retaining one
+  combined Ghidra project. Each target has portable manifests, per-program
+  summaries, decompiled C, and ASCII listings. The NUN6 tree also contains the
+  initial NUN5 donor-pair comparison record.
 - EE programs use `ghidra-emotionengine-reloaded` and
   `r5900:LE:32:default`. IOP programs use `MIPS:LE:32:default`. MWo3 baseline
   imports map file offset `0x40` to the load base stored at header offset
@@ -196,8 +200,8 @@ component separately.
   related inferred types. This prevents low-value undefined-byte dumps without
   discarding unresolved type information.
 - All persisted manifests and exported text use configured-root aliases. Ghidra
-  program source paths are normalized to `@source/...` after import. The four
-  completed analysis trees are recursively read-only; clear that protection
+  program source paths are normalized to `@source/...` after import. The five
+  completed analysis roots are recursively read-only; clear that protection
   deliberately before updating a maintained project, then restore it when the
   update is complete.
 - `scripts/research/menu_input/`: range disassembler, direct-call finder,

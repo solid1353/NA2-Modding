@@ -333,7 +333,7 @@ def write_ui_texture_log(
             "offset",
             "length",
             "original_sha256",
-            "new_blob_path",
+            "derivation",
             "new_sha256",
             "mapping_ids",
             "reason",
@@ -345,7 +345,7 @@ def write_ui_texture_log(
                 "offset": f"0x{result.outer_cvm_offset:X}",
                 "length": len(result.replacement),
                 "original_sha256": ui_texture_module.sha256(result.original),
-                "new_blob_path": result.strategy.blob_path,
+                "derivation": f"canonical_nun5_{result.strategy.strategy}",
                 "new_sha256": ui_texture_module.sha256(result.replacement),
                 "mapping_ids": ",".join(result.mapping_ids),
                 "reason": result.strategy.reason,
@@ -363,7 +363,7 @@ def write_ui_texture_log(
             "zero_padding",
             "target_sha256",
             "donor_sha256",
-            "blob_sha256",
+            "replacement_sha256",
             "payload_sha256",
         ],
         [
@@ -377,7 +377,7 @@ def write_ui_texture_log(
                     "zero_padding",
                     "target_sha256",
                     "donor_sha256",
-                    "blob_sha256",
+                    "replacement_sha256",
                     "payload_sha256",
                 )
             }

@@ -17,7 +17,7 @@ PC port.
 The project combines four related areas:
 
 - English text and UI-texture translation through generated, validated patch
-  tables and fixed-size official donor-container imports.
+  tables and fixed-size source-derived official donor-container imports.
 - GF4/GF4C font-resource and renderer reverse engineering.
 - Gameplay and default-setting changes through named raw-binary modules, with PNACH retained for stable resident-ELF/runtime behavior and carefully bounded temporary hypotheses. On-demand overlays such as `BTL.BIN` and `ETC.BIN` are tested through file patches and ISO rebuilds, not unguarded fixed-address cheats.
 - Scripted profile composition, ISO verification, CRC actualization, annotated
@@ -47,3 +47,9 @@ Component-specific documentation stays with its component, including the
 [translation module](na2_patcher/modules/translation/README.md) and the
 [raw binary module](na2_patcher/modules/raw_binary/README.md), plus the
 [UI texture module](na2_patcher/modules/ui_textures/README.md).
+
+Install the pinned patcher dependency before building the current profile:
+
+```powershell
+python -m pip install -r na2_patcher/requirements.txt
+```

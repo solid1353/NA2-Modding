@@ -1,56 +1,70 @@
 # UI texture translation module
 
-This module imports the selected official English NUN5 UI containers into the
-fixed-size NA2 `DATA/DATA.CVM` member ranges. Normal profile builds consume the
-hash-pinned blobs under `blobs/`; they do not recompress assets or depend on a
-GUI tool.
+This module derives the selected official English NUN5 UI containers directly
+from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
+`DATA/DATA.CVM` member ranges. No replacement CCS blobs are stored in Git.
 
 ## Safety and reproducibility
 
 - `containers.tsv` pins every clean NA2 target and official NUN5 donor member.
-- `mappings.tsv` records the 76 intentional texture relationships and validates
-  that the donor has no additional decoded visual changes outside that scope.
-- `strategies.tsv` pins each fixed-size replacement blob and its decompressed CCS
-  payload.
-- All 34 replacements preserve their original NA2 member size and therefore do
-  not move any `DATA.CVM` member or ISO extent.
-- Thirty-three containers carry the complete NUN5 CCS payload, including matching
-  models, UVs, layout, and animation data. `MODE2KDV.CCS` is the sole capacity
-  exception: it retains the NA2 palette and lower 192 visual rows and imports the
-  donor's top 64 label rows after nearest-palette-index remapping.
+- `mappings.tsv` records 76 reviewed texture relationships.
+- `strategies.tsv` pins each derived fixed-size replacement hash and its
+  decompressed CCS payload hash.
+- All 34 derived replacements preserve their original NA2 member size and
+  therefore do not move a `DATA.CVM` member or ISO extent. Their fixed ranges
+  total 5,274,398 bytes.
+- Thirty-two `whole` strategies import the complete NUN5 CCS payload so pixels,
+  models, UVs, layout, and animation data remain coupled.
+- `MAPSEL1.CCS` is a mapped structural exception: it starts from NA2 and copies
+  only the paired NUN5 TEX/CLT data for the stage-name atlas and Stage Select
+  label. NA2's stage-picture atlases and CCS structure remain unchanged.
+- `MODE2KDV.CCS` is a mapped capacity exception: it retains the NA2 portrait,
+  palette, and lower 192 visual rows, then imports the donor's top 64 label rows
+  through deterministic nearest-palette-index remapping.
 - `CMN/GAUGE.CCS` supplies the shared regional UI atlas. In particular,
-  `TEX_xpanel` replaces NA2's Circle/決定 and Cross/戻る legends with NUN5's
-  Cross/OK and Triangle/Back legends everywhere the common panel is used.
-- The NUN5 one-part `OUGI.CCS` layout also requires the paired, size-preserving
-  `UI-BTL-001` raw-binary patch in
+  `TEX_xpanel` replaces NA2's Circle/decision and Cross/back legends with
+  NUN5's Cross/OK and Triangle/Back legends wherever the common panel is used.
+- The NUN5 one-part `OUGI.CCS` layout also requires the paired,
+  size-preserving `UI-BTL-001` semantic port in
   `na2_patcher/modules/raw_binary/patch_sets/ui_translation/`.
+
+The engine searches deterministic zlib encodings first. Five fixed-capacity
+members require Zopfli; `na2_patcher/requirements.txt` pins the verified
+`zopfli==0.4.3` implementation. A normal build fails clearly instead of using
+different or unpinned output bytes when that dependency is unavailable.
 
 ## Commands
 
-Verify the pinned production inputs from the repository root:
+Install the pinned patcher dependency:
+
+```powershell
+python -m pip install -r na2_patcher/requirements.txt
+```
+
+Derive and verify every pinned production replacement from the repository root:
 
 ```powershell
 python -m na2_patcher.modules.ui_textures.engine verify
 ```
 
-Write a review-only extraction outside the source roots:
+Write a review-only generated extraction outside the source roots:
 
 ```powershell
 python -m na2_patcher.modules.ui_textures.engine preview `
   --output work/temp/ui_texture_preview
 ```
 
-`author` is a maintainer command for regenerating blobs after an intentional
-mapping or source change. It uses deterministic zlib searches and optionally
-Zopfli when the normal candidates do not fit. Regenerated hashes must be reviewed
-and pinned explicitly in `strategies.tsv`.
+Changing a mapping, strategy, compressor version, or canonical source must
+produce the exact pinned payload and replacement hashes or fail. Any intentional
+hash change therefore requires explicit review and a profile-pin update; there
+is no blob-authoring command or stored binary fallback.
 
 ## Evidence and tools
 
-The investigation used the repository's extracted NA2, NUN5, and Brazilian NUN6
-sources; a purpose-built CCS parser and texture decoder; gzip/zlib and Zopfli for
-authoring; CCSFileExplorerMSF 3.0.0.0 for independent visual inspection; and the
-StudioCCS source tree under `@utils/old/` as CCS format evidence only. No tool from
-the untrusted historical utilities tree was executed. The reasoning, asset
-inventory, capacity results, layout comparison, and remaining runtime gate are in
-`docs/plans/ui_translation.md`.
+The investigation used the repository's extracted NA2, NUN5, and Brazilian
+NUN6 sources; preserved Ghidra exports; a purpose-built CCS parser and texture
+decoder; gzip/zlib and Zopfli 0.4.3; and CCSFileExplorerMSF 3.0.0.0 for
+independent visual inspection. StudioCCS material under `@utils/old/` was used
+as format evidence only; no untrusted historical utility was executed. The
+reasoning, inventory, layout comparisons, and historical runtime evidence are
+recorded in `docs/plans/ui_translation.md`.

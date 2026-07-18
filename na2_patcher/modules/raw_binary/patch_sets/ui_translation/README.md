@@ -3,18 +3,27 @@
 This patch set holds size-preserving executable changes that are inseparable from
 the NUN5 UI container import but do not belong inside `DATA.CVM`.
 
+Its 82 guarded edits are donor-first: 45 copy bytes directly from canonical
+NUN5 files (37 from the ELF, seven from `BTL.BIN`, and one from `ETC.BIN`).
+Another 24 store the exact values of NUN5's stage-width formula in NA2's
+different inline-record layout. The remaining 13 are documented NA2-specific
+ports where the equivalent NUN5 behavior has a different instruction or data
+topology, or where NA2 intentionally needs a different value.
+
 ## UI-BTL-001: one-part OUGI label
 
-NA2's Ultimate Jutsu banner uses two 64x64 label halves. The official English NUN5
-and Brazilian NUN6 versions both use one 128x64 label and the same one-iteration
-construction loop. The whole-container `OUGI.CCS` import supplies that one-part
-model, UV, texture, and animation layout.
+NA2's Ultimate Jutsu banner uses two 64x64 label halves. The official English
+NUN5 and Brazilian NUN6 versions both use one 128x64 label and one-part
+construction behavior. The whole-container `OUGI.CCS` import supplies that
+one-part model, UV, texture, and animation layout.
 
 At BTL file offset `0xB5E80`, NA2 contains `02 00 42 2A`
-(`slti v0,s2,2`). NUN5 and NUN6 contain `01 00 42 2A`
-(`slti v0,s2,1`) at the structurally equivalent instruction. `UI-BTL-001` makes
-that exact four-byte replacement. It preserves the file size and is disabled by
-default until the combined texture/code build is runtime-tested.
+(`slti v0,s2,2`). `UI-BTL-001` replaces it with `01 00 42 2A`
+(`slti v0,s2,1`) to port the donor's one-part behavior into NA2's loop. The
+canonical NUN5 ELF, BTL, ETC, and ADV files do not contain that exact four-byte
+instruction, so this row correctly remains an authored semantic port rather
+than claiming an arbitrary donor copy. It preserves the file size and is
+runtime-proven with the imported one-part container.
 
 Validate and inspect the planned edit from the repository root:
 
@@ -55,7 +64,9 @@ precomputed single-precision NUN5 scale. At BTL file offset `0x6156C`, the
 original `1.0` initialization becomes `lwc1 f14,4(v1); nop`. The remaining 24
 rectangle fields are copied from the hash-pinned NUN5 ELF table.
 
-The patch is 50 individually guarded edits. A temporary application verified
+The patch is 50 individually guarded edits: 24 rectangle rows copy NUN5's
+English ELF table, 24 scale rows store the exact result of NUN5's width formula,
+and two code rows adapt NA2's inline-record topology. A temporary application verified
 that all 24 stage keys remain unchanged and match NUN5, every rectangle equals
 the official English table, every scale equals the NUN5 formula, all changed
 bytes stay inside declared ranges, and the 2,237,184-byte BTL size is unchanged.
@@ -132,9 +143,10 @@ cross-build evidence:
 - NUN5 `FUN_006d4170` calls localized accessor `FUN_003d46c0`, whose English
   table resolves to ELF file offset `0x4DE0E0`, and passes X=`100.0`.
 
-`UI-BTL-004` copies the official NUN5 rectangle `(0, 280, 176, 24)` and changes
-only the `lui v0,0x4270` X constant to `lui v0,0x42c8`. Both edits are exactly
-guarded, preserve BTL size, and remain confined to the Practice Settings path.
+`UI-BTL-004` copies the official NUN5 rectangle `(0, 280, 176, 24)` from its
+ELF and copies the structurally equivalent `lui v0,0x42c8` instruction from
+NUN5 BTL file offset `0xD500`. Both edits are exactly guarded, preserve BTL
+size, and remain confined to the Practice Settings path.
 
 The two edits were applied to a paused Current runtime and read back exactly.
 After one redraw, the sprite object reported X=`276`, Y=`356`, size `176x24`,
@@ -155,10 +167,11 @@ the exact English NUN5 rectangles for:
 
 NUN5's Jutsu helper offsets its 62x26 label by 26 pixels and the three input
 glyphs by 40 pixels. NA2's static draw path lacks those additions. A 16-byte
-helper is installed in verified loaded zero padding at BTL file offset `0x70`,
-the label path calls it at `0x9188`, and the existing input accumulator is
-initialized with 40 at `0x91BC..0x91C3`. The localized 160x24 Battle Settings
-prompt is drawn at the official X=`94` through the constant at `0xCFD8`.
+NA2 helper is installed in verified loaded zero padding at BTL file offset
+`0x70`, the label path calls it at `0x9188`, and the two structurally equivalent
+40-pixel accumulator instructions are copied from NUN5 BTL offsets `0x974C`
+and `0x9750` into `0x91BC..0x91C3`. The localized 160x24 Battle Settings prompt
+is drawn at the official X=`94` through the constant at `0xCFD8`.
 
 The NUN5 renderer passes X=`260` for `Customize Jutsu`, but guarded testing
 showed that transplanting this constant into NA2's different draw path wraps
@@ -181,8 +194,9 @@ Y=`44`, and scale `1.4`. NUN5 uses one English 94x30 rectangle at X=`256`,
 Y=`24`, with scale `1.2` and a Y=`64` render constant.
 
 `UI-BTL-006` copies the exact NUN5 rectangle from ELF file offset `0x4DE110`,
-zeros the unused second-glyph record, and changes the four position/scale code
-constants at BTL file offsets `0xCCB4`, `0xCD5C`, `0xCD64`, and `0xCDA4`.
+zeros the unused second-glyph record, ports the differently stored X/Y fields,
+and copies the four structurally equivalent scale/render instruction ranges
+from NUN5 BTL into NA2 offsets `0xCCB4`, `0xCD5C`, `0xCD64`, and `0xCDA4`.
 Eight guarded live writes were read back exactly. The resulting one-part label
 matches the paired NUN5 capture; small frame-to-frame outline differences are
 the screen's normal pulsation.

@@ -5,6 +5,7 @@ import gzip
 import struct
 import tempfile
 import unittest
+from collections import Counter
 from pathlib import Path
 
 from na2_patcher.build_profile import write_ui_texture_log
@@ -31,6 +32,9 @@ class UiTextureTests(unittest.TestCase):
             data_root=data_root,
         )
 
+    def test_module_has_no_stored_replacement_blobs(self) -> None:
+        self.assertFalse((self.plan.package.directory / "blobs").exists())
+
     def result(self, container_id: str) -> engine.ContainerResult:
         return next(
             result
@@ -38,7 +42,7 @@ class UiTextureTests(unittest.TestCase):
             if result.spec.container_id == container_id
         )
 
-    def test_complete_package_is_pinned_and_fixed_size(self) -> None:
+    def test_complete_package_is_source_derived_pinned_and_fixed_size(self) -> None:
         self.assertEqual(len(self.plan.containers), 34)
         self.assertEqual(self.plan.mapping_count, 76)
         for result in self.plan.containers:
@@ -46,7 +50,8 @@ class UiTextureTests(unittest.TestCase):
                 len(result.replacement), len(result.original), result.spec.path
             )
             self.assertEqual(
-                engine.sha256(result.replacement), result.strategy.blob_sha256
+                engine.sha256(result.replacement),
+                result.strategy.replacement_sha256,
             )
             self.assertEqual(result.payload_sha256, result.strategy.payload_sha256)
 
@@ -326,7 +331,10 @@ class UiTextureTests(unittest.TestCase):
 
         self.assertEqual(anchor.destination_offset, 0xCFA0)
         self.assertEqual(anchor.expected_hex, "7042023C")
-        self.assertEqual(anchor.replacement_hex, "C842023C")
+        self.assertEqual(anchor.operation, "copy")
+        self.assertEqual(anchor.source_target_id, "nun5_btl")
+        self.assertEqual(anchor.source_offset, 0xD500)
+        self.assertEqual(anchor.source_expected_hex, "C842023C")
         self.assertEqual(rectangle.destination_offset, 0x20C9D8)
         self.assertEqual(rectangle.expected_hex, "0100190170001600")
         self.assertEqual(rectangle.source_target_id, "nun5_elf")
@@ -336,6 +344,38 @@ class UiTextureTests(unittest.TestCase):
             struct.unpack("<hhhh", bytes.fromhex(rectangle.source_expected_hex)),
             (0, 280, 176, 24),
         )
+
+    def test_raw_patch_provenance_is_donor_first(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = raw_binary.load_package(
+            repository
+            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+        )
+        operations = Counter(edit.operation for edit in package.edits)
+        copy_sources = Counter(
+            edit.source_target_id
+            for edit in package.edits
+            if edit.operation == "copy"
+        )
+        stage_scales = [
+            edit
+            for edit in package.edits
+            if edit.edit_id.startswith("UI-BTL-002-S")
+        ]
+        adaptations = [
+            edit
+            for edit in package.edits
+            if edit.operation == "replace" and edit not in stage_scales
+        ]
+
+        self.assertEqual(len(package.edits), 82)
+        self.assertEqual(operations, {"copy": 45, "replace": 37})
+        self.assertEqual(
+            copy_sources,
+            {"nun5_elf": 37, "nun5_btl": 7, "nun5_etc": 1},
+        )
+        self.assertEqual(len(stage_scales), 24)
+        self.assertEqual(len(adaptations), 13)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")
@@ -377,6 +417,9 @@ class UiTextureTests(unittest.TestCase):
             self.assertTrue(all(row["file"] == "DATA/DATA.CVM" for row in patches))
             self.assertTrue(all(row["original_sha256"] for row in patches))
             self.assertTrue(all(row["new_sha256"] for row in patches))
+            self.assertTrue(
+                all(row["derivation"].startswith("canonical_nun5_") for row in patches)
+            )
             self.assertEqual(summary[0]["container_count"], "34")
             self.assertEqual(summary[0]["mapping_count"], "76")
 

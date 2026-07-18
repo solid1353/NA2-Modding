@@ -19,31 +19,30 @@ to preserve context meanwhile.
   the object ID when resuming because the numbered stash reference can move.
 - Release work was deliberately stashed so UI Translation could continue
   without release-owned changes in its way.
-- UI Translation replacement is now finished and committed as `b491d10`
-  (`Finish UI texture replacement`) on `origin/master`, after the user's
-  existing `48c347d` task update.
+- Commit `b491d10` (`Finish UI texture replacement`) is the accepted
+  pre-refactor runtime baseline on `origin/master`, after the user's existing
+  `48c347d` task update. The source-derived successor described below must be
+  used once its result is accepted and committed.
 - Applying the stash is not the final integration step: release-owned shared
-  files must be reconciled with the accepted UI implementation and the release
-  must preserve the blob-pinned profile described below.
+  files must be reconciled with the accepted source-derived UI implementation
+  and its then-current profile pins.
 - No production EXE, byte-parity result, clean-machine result, accepted version
   tag, or published GitHub Release exists yet.
 
 ## Product decision
 
 The release is one click-to-run Windows console EXE. The user does not install
-Python and does not supply mappings, blobs, configuration, paths, command-line
+Python and does not supply mappings, configuration, paths, command-line
 arguments, or any other project files. The EXE embeds the Python interpreter,
 patcher code, current hash-pinned profile, curated mappings, patch tables,
-metadata, the 34 profile-pinned UI blobs, and every other repository-owned
-resource needed by the build.
+metadata, the UI derivation recipes and pinned compressor dependency, and every
+other repository-owned resource needed by the build.
 
 The user supplies only clean supported NA2 and NUN5 ISO files by placing them
 beside the EXE. Filenames do not matter. Original or donor game data must not be
-embedded in the public EXE except for the already curated, repository-tracked,
-hash-pinned UI replacement blobs that are part of the accepted profile. Direct
-derivation of those blobs from NUN5 is explicitly deferred to the separate UI
-task `Refactor to only include patches, not blobs.` It is not the intended
-behavior for this release state.
+embedded in the public EXE. The accepted UI workflow derives all 34 fixed-size
+replacements from those user-supplied source ISOs and verifies the generated
+payload and replacement hashes; no UI replacement blobs are packaged.
 
 PyInstaller one-file packaging is the current implementation choice. It bundles
 the interpreter, so the end user does not need a Python installation. Early
@@ -97,10 +96,12 @@ These identities are release inputs, not timeless facts. Recheck them against
 the accepted source media before sealing a release. The manifest version and
 EXE name must also be advanced together before publication.
 
-## Accepted UI baseline for release integration
+## UI baseline for release integration
 
-The release must consume the exact accepted state from `b491d10` without
-rewriting its UI-owned files:
+Commit `b491d10` and the pins below describe the accepted pre-refactor runtime
+baseline. The release stash predates the approved blobless refactor; when this
+deferred task resumes, replace these historical values with the then-current
+accepted UI commit and profile pins rather than restoring them:
 
 - `ui_textures_nun5_v1` profile pin:
   `298D33DF7CD48D59BB018E82547C64971A8D6C54606EEC713A4BC65D51D732D3`
@@ -118,10 +119,25 @@ rewriting its UI-owned files:
 - Verified Shop bytes at `PRG/ETC.BIN` offset `0x30308`:
   `A90081013E001A004101C1011E001600`
 
-The UI raw package baseline contains 5 targets, 11 patches, and 82 edits. Its
-focused `UI-ETC-001` plan resolves to one exact edit. The UI runtime suite passed
-17 tests, the full `na2_patcher` suite passed 42 tests, and the accepted profile
-build record is `@logs/na2/builds/20260718_233134_587_pid36704/`.
+The live blobless implementation supersedes those two UI module pins:
+
+- `ui_textures_nun5_v1`:
+  `DB224E90C20D41FA18CADB7C9EC47EB7A4770662C560420DBA3104D0210BB723`
+- `ui_translation_code_v1`:
+  `9086A208724C81A3FB06255AD45A770D1366DCF7B0143D45CD32004DA8DE250E`
+
+It removes 34 stored replacement files, derives the same bytes from the clean
+NA2/NUN5 inputs, and validates as 6 targets, 11 patches, and 82 raw edits. The
+complete patcher suite passes 47 tests, and a normal non-launching profile build
+reported `ISO result: unchanged` against the Current ISO hash above. The old
+runtime evidence remains the behavioral baseline until the user performs the
+requested game validation and accepts this refactor.
+
+The historical UI raw package baseline contains 5 targets, 11 patches, and 82
+edits. Its focused `UI-ETC-001` plan resolves to one exact edit. The UI runtime
+suite passed 17 tests, the full `na2_patcher` suite passed 42 tests, and the
+accepted profile build record is
+`@logs/na2/builds/20260718_233134_587_pid36704/`.
 
 These results are the integration baseline, not proof that the packaged EXE
 passes. Release validation must reproduce the accepted ISO bytes through the
@@ -141,10 +157,10 @@ packaged path.
   original ISOs to the ordinary profile compositor. It must remain a thin
   release adapter rather than a second patching implementation.
 - `na2_patcher/cvm.py` reads the encrypted DATA.CVM inner ISO directly from the
-  original game ISO using the confirmed `cc2fuku` password. That stashed direct
-  reader must not be used to replace the accepted 34-blob UI workflow in this
-  release. Retain it only where another verified release-root operation actually
-  requires it; otherwise treat it as deferred direct-derivation work.
+  original game ISO using the confirmed `cc2fuku` password. The source-derived
+  UI workflow now requires the release adapter to expose the same verified NA2
+  and NUN5 members as the extracted-root workflow. Reuse this reader only after
+  proving byte parity; do not create a second UI derivation implementation.
 
 ### Shared patcher changes
 
@@ -157,10 +173,10 @@ packaged path.
 - `na2_patcher/modules/raw_binary/engine.py` separates byte-data validation from
   extracted-file loading so release builds can supply target data read from an
   ISO. Its clean error path also needs the stashed `sys` import preserved.
-- `na2_patcher/modules/ui_textures/engine.py` currently has an unstaged,
-  release-owned mapped-copy implementation required by the committed MAPSEL1
-  strategy. Preserve and commit that behavior with release-owned regression
-  tests. Do not add direct NUN5 UI derivation to this release state.
+- `na2_patcher/modules/ui_textures/engine.py` now owns the accepted direct
+  NUN5 derivation and mapped-copy behavior required by MAPSEL1 and MODE2KDV.
+  Preserve that implementation and its regression tests; adapt only its source
+  reader boundary for packaged ISO inputs.
 - `na2_patcher/modules/translation/engine.py` has release-related refactoring in
   the stash. When integrating it, preserve the current rule that `[S]` is
   intended display text: `shorten` mappings must emit the complete `[S]...`
@@ -181,11 +197,11 @@ packaged path.
 - `.github/workflows/build-release.yml` runs the same PowerShell builder on a
   clean Windows runner. Manual runs upload a short-lived workflow artifact;
   annotated `v*` tags publish the EXE and checksum as a GitHub Release.
-- The packaging resource inventory must include all 34 profile-pinned files in
-  `na2_patcher/modules/ui_textures/blobs/`, including the retained 577241-byte
-  mapped `MAPSEL1.CCS`. It must reject missing, extra, or hash-mismatched blob
-  inputs rather than rejecting the blob directory itself. Original ISO files
-  and extracted source trees remain forbidden packaging inputs.
+- The packaging resource inventory must include the three profile-pinned UI
+  recipe TSVs, the integrated engine, and pinned `zopfli==0.4.3` runtime. It
+  must reject a bundled UI `blobs/` directory or any original/donor game bytes.
+  Original ISO files and extracted source trees remain forbidden packaging
+  inputs; the end user supplies the two clean ISOs at runtime.
 - Production candidates are created under `work/temp/release/candidates/`.
   `-Development` allows dirty inputs and uses a development-only candidate
   directory. Neither mode writes directly into the append-only `releases/`
@@ -247,9 +263,9 @@ Translation workstream. The following contract must be preserved when resuming:
   must not import those differences or reject the plan solely because they
   exist.
 - Existing `indexed_top_rows` behavior must remain intact.
-- The accepted release state uses the same 34 profile-pinned UI blobs as the
-  normal workflow. Direct NUN5 derivation belongs to the separate future
-  blob-retirement task and must not be introduced during this integration.
+- The accepted normal workflow derives all 34 profile-pinned UI replacements
+  directly from canonical NA2/NUN5 members. The packaged workflow must produce
+  the same bytes from the user-supplied clean ISOs and must not restore blobs.
 - After the release stash was created, the shared mapped-copy portion of
   `na2_patcher/modules/ui_textures/engine.py` was left in the UI worktree so the
   UI profile would continue to function. Its focused suite passed 12 tests at
@@ -257,16 +273,15 @@ Translation workstream. The following contract must be preserved when resuming:
 
 Because the stash also contains an older release-modified copy of the same
 engine, never resolve an apply conflict by choosing the complete stashed file.
-Start from the current accepted engine plus its existing unstaged mapped-copy
-diff, restore the release-owned mapped-copy regression tests, and omit the
-stashed direct-ISO/CVM UI path.
+Start from the current accepted engine, preserve its mapped-copy regression
+tests, and adapt the stashed direct-ISO/CVM reader only as the source boundary
+needed by that same engine.
 
 ## Safe resumption procedure
 
 1. Re-read `AGENTS.md`, `TASKS.md`, this document, and the live Git status.
-2. Confirm that `b491d10` remains the accepted UI baseline and that the profile
-   pins above still match. Do not alter its committed UI files unless a release
-   integration failure proves a narrowly scoped correction is necessary.
+2. Confirm the latest accepted UI commit and both current profile pins. Treat
+   `b491d10` and the hashes above as historical pre-refactor evidence only.
 3. Confirm the stash object still exists:
 
    ```powershell
@@ -281,11 +296,11 @@ stashed direct-ISO/CVM UI path.
    the release files selectively. The current document supersedes the stashed
    copy; do not overwrite it with the shorter version.
 5. Reconcile shared files instead of taking either side wholesale. Preserve the
-   committed `na2_patcher/profiles/current/modules.tsv`; merge only the
-   release-owned mapped-copy engine diff and tests. Update packaging resource
-   lists to embed the 34 accepted blobs.
+   committed `na2_patcher/profiles/current/modules.tsv`, current source-derived
+   UI engine, and tests. Update packaging resource lists to include recipes and
+   Zopfli and to reject UI blobs.
 6. Keep `[S]` display text intact, keep ordinary extracted-root builds working,
-   and remove or disable the stashed direct-NUN5 UI path for this release state.
+   and make the packaged ISO-reader path feed the same UI derivation logic.
 7. Run focused tests first, then the complete validation gates below.
 8. Leave the stash in place until the restored implementation is committed and
    the user accepts the result. Dropping it is a separate destructive cleanup
@@ -303,16 +318,17 @@ stashed direct-ISO/CVM UI path.
 - Run CVM tests, including encrypted reads, wrong-password rejection, bounds,
   and parity with available extracted references.
 - Run raw-binary, profile, translation, and UI suites against the accepted
-  profile-pinned blob workflow. Direct ISO-root UI derivation is out of scope.
+  profile-pinned source-derived workflow, including extracted-root versus
+  direct-ISO replacement parity.
 - Confirm mapped-copy UI behavior and current MAPSEL1 strategy remain intact.
 
 ### Packaged artifact validation
 
 - Build with the exact pinned Windows/Python/package toolchain.
 - Confirm the packaged self-test passes and the output is a Windows PE file.
-- Audit bundled resources: the exact 34 pinned UI blobs must be present; no ISO,
-  extracted original game tree, machine-specific path, log, extra blob, or
-  unpinned input may be present.
+- Audit bundled resources: the three UI recipe TSVs, engine, and pinned Zopfli
+  dependency must be present; no UI replacement blob, ISO, extracted original
+  game tree, machine-specific path, log, or unpinned input may be present.
 - Confirm the EXE runs on a clean supported Windows machine without Python or
   repository files installed.
 - Record the actual EXE size and SHA-256; replace the early size estimate with
@@ -374,9 +390,10 @@ a local release gate.
 - Actual packaged EXE size and startup behavior.
 - Whether Python `3.14.6` and every pinned wheel are available and stable on the
   chosen GitHub runner when implementation resumes.
-- Exact packaging manifest entries and hashes for all 34 accepted UI blobs.
-- Whether any stashed direct ISO/CVM code remains necessary outside the deferred
-  UI blob-retirement work.
+- Exact packaging manifest entries and hashes for the source-derived UI recipes,
+  engine, and pinned Zopfli runtime.
+- The narrowest integration of the stashed direct ISO/CVM reader that supplies
+  source members to the accepted UI engine without duplicating its logic.
 - Full output ISO SHA-256 and byte parity with the normal builder.
 - Clean-machine behavior, antivirus/SmartScreen friction, and console lifetime.
 - Final release version, executable filename, annotated tag, and release notes.

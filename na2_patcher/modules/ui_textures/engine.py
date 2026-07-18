@@ -18,7 +18,7 @@ from ...project_paths import load_project_paths, resolve_alias
 
 try:
     import zopfli.gzip as zopfli_gzip
-except ImportError:  # Authoring only. Normal builds consume hash-pinned blobs.
+except ImportError:
     zopfli_gzip = None
 
 
@@ -40,8 +40,7 @@ MAPPING_FIELDS = [
 STRATEGY_FIELDS = [
     "container_id",
     "strategy",
-    "blob_path",
-    "blob_sha256",
+    "replacement_sha256",
     "payload_sha256",
     "reason",
 ]
@@ -97,10 +96,8 @@ def checked_relative_path(value: str, label: str) -> str:
     return candidate.as_posix()
 
 
-def checked_hash(value: str, label: str, *, allow_unpinned: bool = False) -> str:
+def checked_hash(value: str, label: str) -> str:
     result = value.upper()
-    if allow_unpinned and (not result or set(result) == {"0"}):
-        return ""
     if len(result) != 64 or any(char not in "0123456789ABCDEF" for char in result):
         raise ValueError(f"{label} must be 64 hexadecimal digits")
     return result
@@ -128,8 +125,7 @@ class Mapping:
 class Strategy:
     container_id: str
     strategy: str
-    blob_path: str
-    blob_sha256: str
+    replacement_sha256: str
     payload_sha256: str
     reason: str
 
@@ -205,7 +201,7 @@ class UiTexturePlan:
         return sum(len(result.mapping_ids) for result in self.containers)
 
 
-def load_package(directory: Path, *, allow_unpinned: bool = False) -> Package:
+def load_package(directory: Path) -> Package:
     directory = directory.resolve()
     container_rows = read_tsv(directory / "containers.tsv", CONTAINER_FIELDS)
     mapping_rows = read_tsv(directory / "mappings.tsv", MAPPING_FIELDS)
@@ -230,7 +226,6 @@ def load_package(directory: Path, *, allow_unpinned: bool = False) -> Package:
         )
 
     strategies: dict[str, Strategy] = {}
-    blob_paths: set[str] = set()
     for line, row in enumerate(strategy_rows, 2):
         label = f"strategies.tsv line {line}"
         container_id = row["container_id"]
@@ -241,20 +236,11 @@ def load_package(directory: Path, *, allow_unpinned: bool = False) -> Package:
         strategy = row["strategy"]
         if strategy not in VALID_STRATEGIES:
             raise ValueError(f"{label}: unsupported strategy {strategy!r}")
-        blob_path = checked_relative_path(row["blob_path"], label)
-        if blob_path.casefold() in blob_paths:
-            raise ValueError(f"{label}: duplicate blob_path {blob_path!r}")
-        blob_paths.add(blob_path.casefold())
         strategies[container_id] = Strategy(
             container_id=container_id,
             strategy=strategy,
-            blob_path=blob_path,
-            blob_sha256=checked_hash(
-                row["blob_sha256"], label, allow_unpinned=allow_unpinned
-            ),
-            payload_sha256=checked_hash(
-                row["payload_sha256"], label, allow_unpinned=allow_unpinned
-            ),
+            replacement_sha256=checked_hash(row["replacement_sha256"], label),
+            payload_sha256=checked_hash(row["payload_sha256"], label),
             reason=row["reason"],
         )
     missing_strategies = containers.keys() - strategies.keys()
@@ -668,6 +654,11 @@ def repack_gzip_exact(original: bytes, payload: bytes) -> tuple[bytes, int, int]
             if len(optimized) < len(stream):
                 stream = optimized
     if len(stream) > len(original):
+        if zopfli_gzip is None:
+            raise RuntimeError(
+                "Fixed-capacity CCS derivation requires zopfli==0.4.3; "
+                "install na2_patcher/requirements.txt"
+            )
         raise RuntimeError(
             f"Recompressed CCS is {len(stream) - len(original)} bytes larger than its fixed capacity"
         )
@@ -676,14 +667,6 @@ def repack_gzip_exact(original: bytes, payload: bytes) -> tuple[bytes, int, int]
     if len(result) != len(original) or gzip.decompress(result) != payload:
         raise AssertionError("Exact-size gzip verification failed")
     return result, len(stream), padding
-
-
-def gzip_stream_size(data: bytes) -> tuple[int, int]:
-    decoder = zlib.decompressobj(wbits=31)
-    decoder.decompress(data)
-    decoder.flush()
-    size = len(data) - len(decoder.unused_data)
-    return size, len(data) - size
 
 
 def selected_container_ids(package: Package, selection: tuple[str, ...]) -> list[str]:
@@ -743,9 +726,8 @@ def build_plan(
     nun5_root: Path,
     data_root: Path,
     selection: tuple[str, ...] = (),
-    author: bool = False,
 ) -> UiTexturePlan:
-    package = load_package(data_root, allow_unpinned=author)
+    package = load_package(data_root)
     target_iso, donor_iso, target_header = source_members(na2_root, nun5_root)
     mappings_by_container: dict[str, list[Mapping]] = defaultdict(list)
     for mapping in package.mappings:
@@ -786,30 +768,17 @@ def build_plan(
         payload = expected_payload(strategy, target_payload, donor_payload, mappings)
         payload_hash = sha256(payload)
 
-        if author:
-            replacement, stream_size, padding = repack_gzip_exact(original, payload)
-            if strategy.payload_sha256 and strategy.payload_sha256 != payload_hash:
-                raise RuntimeError(f"Unexpected authored payload SHA-256 for {spec.path}")
-            if strategy.blob_sha256 and strategy.blob_sha256 != sha256(replacement):
-                raise RuntimeError(f"Unexpected authored blob SHA-256 for {spec.path}")
-        else:
-            blob = (package.directory / strategy.blob_path).resolve()
-            try:
-                blob.relative_to(package.directory)
-            except ValueError as exc:
-                raise ValueError(f"Blob path escapes UI package: {strategy.blob_path}") from exc
-            replacement = blob.read_bytes()
-            if sha256(replacement) != strategy.blob_sha256:
-                raise RuntimeError(f"Unexpected blob SHA-256 for {spec.path}: {sha256(replacement)}")
-            if len(replacement) != len(original):
-                raise RuntimeError(
-                    f"Pinned blob size differs for {spec.path}: {len(replacement)} != {len(original)}"
-                )
-            if gzip.decompress(replacement) != payload:
-                raise RuntimeError(f"Pinned blob payload differs from expected import for {spec.path}")
-            if payload_hash != strategy.payload_sha256:
-                raise RuntimeError(f"Unexpected payload SHA-256 for {spec.path}: {payload_hash}")
-            stream_size, padding = gzip_stream_size(replacement)
+        replacement, stream_size, padding = repack_gzip_exact(original, payload)
+        replacement_hash = sha256(replacement)
+        if payload_hash != strategy.payload_sha256:
+            raise RuntimeError(
+                f"Unexpected derived payload SHA-256 for {spec.path}: {payload_hash}"
+            )
+        if replacement_hash != strategy.replacement_sha256:
+            raise RuntimeError(
+                f"Unexpected derived replacement SHA-256 for {spec.path}: "
+                f"{replacement_hash}"
+            )
 
         results.append(
             ContainerResult(
@@ -840,37 +809,7 @@ def build_ui_texture_plan(
         nun5_root=nun5_root,
         data_root=data_root,
         selection=selection,
-        author=False,
     )
-
-
-def build_authoring_plan(
-    *,
-    na2_root: Path,
-    nun5_root: Path,
-    data_root: Path,
-    selection: tuple[str, ...] = (),
-) -> UiTexturePlan:
-    return build_plan(
-        na2_root=na2_root,
-        nun5_root=nun5_root,
-        data_root=data_root,
-        selection=selection,
-        author=True,
-    )
-
-
-def write_authoring_blobs(plan: UiTexturePlan, *, replace: bool = False) -> None:
-    for result in plan.containers:
-        output = (plan.package.directory / result.strategy.blob_path).resolve()
-        try:
-            output.relative_to(plan.package.directory)
-        except ValueError as exc:
-            raise ValueError(f"Blob path escapes UI package: {result.strategy.blob_path}") from exc
-        if output.exists() and not replace:
-            raise FileExistsError(output)
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_bytes(result.replacement)
 
 
 def result_rows(plan: UiTexturePlan) -> list[dict[str, object]]:
@@ -885,7 +824,7 @@ def result_rows(plan: UiTexturePlan) -> list[dict[str, object]]:
             "zero_padding": result.padding_size,
             "target_sha256": sha256(result.original),
             "donor_sha256": sha256(result.donor),
-            "blob_sha256": sha256(result.replacement),
+            "replacement_sha256": sha256(result.replacement),
             "payload_sha256": result.payload_sha256,
             "outer_cvm_offset": f"0x{result.outer_cvm_offset:X}",
         }
@@ -932,7 +871,7 @@ def default_roots() -> tuple[Path, Path, Path]:
 def print_results(plan: UiTexturePlan) -> None:
     print(
         "container_id\tstrategy\tfixed_size\tcompressed_stream_size\tzero_padding\t"
-        "blob_sha256\tpayload_sha256"
+        "replacement_sha256\tpayload_sha256"
     )
     for row in result_rows(plan):
         print(
@@ -944,7 +883,7 @@ def print_results(plan: UiTexturePlan) -> None:
                     "fixed_size",
                     "compressed_stream_size",
                     "zero_padding",
-                    "blob_sha256",
+                    "replacement_sha256",
                     "payload_sha256",
                 )
             )
@@ -952,12 +891,13 @@ def print_results(plan: UiTexturePlan) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build fixed-size NUN5-to-NA2 UI CCS imports")
+    parser = argparse.ArgumentParser(
+        description="Derive fixed-size NUN5-to-NA2 UI CCS imports"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
-    author_parser = subparsers.add_parser("author", help="author hash-pinned CCS blobs")
-    author_parser.add_argument("--selection", default="")
-    author_parser.add_argument("--replace", action="store_true")
-    verify_parser = subparsers.add_parser("verify", help="verify pinned blobs against both games")
+    verify_parser = subparsers.add_parser(
+        "verify", help="derive and verify pinned replacements from both games"
+    )
     verify_parser.add_argument("--selection", default="")
     preview_parser = subparsers.add_parser("preview", help="write verified CCS members for review")
     preview_parser.add_argument("--output", required=True)
@@ -966,16 +906,6 @@ def main() -> int:
 
     na2_root, nun5_root, data_root = default_roots()
     selection = parse_selection(args.selection)
-    if args.command == "author":
-        plan = build_authoring_plan(
-            na2_root=na2_root,
-            nun5_root=nun5_root,
-            data_root=data_root,
-            selection=selection,
-        )
-        write_authoring_blobs(plan, replace=args.replace)
-        print_results(plan)
-        return 0
     plan = build_ui_texture_plan(
         na2_root=na2_root,
         nun5_root=nun5_root,

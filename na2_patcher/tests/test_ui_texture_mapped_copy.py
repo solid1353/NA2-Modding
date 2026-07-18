@@ -87,8 +87,7 @@ def strategy(kind: str) -> engine.Strategy:
     return engine.Strategy(
         container_id="mapped",
         strategy=kind,
-        blob_path="blobs/mapped.ccs",
-        blob_sha256="",
+        replacement_sha256="",
         payload_sha256="",
         reason="test",
     )

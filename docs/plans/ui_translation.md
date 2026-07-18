@@ -144,21 +144,31 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 
 ## Production artifacts and validation
 
-- `na2_patcher/modules/ui_textures/` contains 34 fixed-size blobs, 76 reviewed
-  mappings, pinned source/donor/blob/payload hashes, the deterministic verifier,
-  and authoring support. The canonical replacement bytes total 5,274,398 bytes.
+- `na2_patcher/modules/ui_textures/` contains 34 source-derived fixed-size
+  recipes, 76 reviewed mappings, pinned source/donor/replacement/payload hashes,
+  and the deterministic verifier. The generated replacement ranges total
+  5,274,398 bytes, but no replacement CCS blobs are stored in the repository.
+  Static parity regenerated all 34 former production files byte-for-byte.
 - `na2_patcher/modules/raw_binary/patch_sets/ui_translation/` contains 11 atomic
   companion patches and 82 guarded edits across BTL, ETC, and the boot ELF.
-  All are now runtime-proven, including the 16-byte Shop currency rectangle
-  correction `UI-ETC-001`.
+  Forty-five rows copy canonical NUN5 bytes directly (37 ELF, seven BTL, one
+  ETC), 24 store values computed from NUN5's stage-width formula in NA2's
+  different record layout, and 13 are minimal NA2-specific behavior ports.
+  All behavior remains the previously runtime-proven baseline, including the
+  16-byte Shop currency rectangle correction `UI-ETC-001`.
 - Translation mapping version 34 adds deterministic source-derived line breaks
   for the four clipped Collection Movie titles. A clean-source full in-memory
   plan produced 2,439 fixed-size patch rows with all three targets selected.
 - `na2_patcher/profiles/current/modules.tsv` enables both modules by canonical
   executable-input hash.
-- The raw package validates as 5 targets, 11 patches, and 82 edits; the focused
-  `UI-ETC-001` plan resolves to one exact guarded edit. The runtime harness passes
-  17 tests and the full patcher suite passes 42 tests.
+- The raw package validates as 6 targets, 11 patches, and 82 edits; the focused
+  `UI-ETC-001` plan resolves to one exact guarded edit. The historical runtime
+  harness passes 17 tests; the current complete patcher suite passes 47 tests.
+- The 2026-07-19 non-launching normal profile build derived all 34 replacements,
+  applied all 82 companion edits, and reported `ISO result: unchanged`. It
+  discarded the byte-identical candidate without rotation and reused build
+  record `@logs/na2/builds/20260718_233134_587_pid36704/`; Current remains
+  SHA-256 `C90B6B51AF8D4FB7DAC327DF144D1017653BDF8CC398CD1C837AAB53BC538A4C`.
 - Build record `@logs/na2/builds/20260718_061234_625_pid41880/` fully verified
   and promoted a changed 1,928,429,568-byte image. It is now
   `NA2.28 - Previous.iso`. An independent on-disc check found all 33 member ranges exact and the
@@ -170,7 +180,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   `NA2.28 - Current.iso`, rotating the defect baseline to Previous. The ISO
   SHA-256 is
   `2568D4DBD59BAD54442CB33041E0EB5784CB11F4CA36EE7A1AC49A85B3D50876`.
-  Independent on-disc checks passed the exact `CMN/GAUGE.CCS` blob, OUGI byte,
+  Independent on-disc checks passed the exact `CMN/GAUGE.CCS` replacement, OUGI byte,
   final BTL hash, complete character and Options tables, all four Movie line
   breaks, renamed boot file, and preserved BTL/ELF sizes.
 - The pre-final Current boot ELF had PCSX2 CRC `2FD18170`. The runtime target guard and
@@ -204,9 +214,11 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   match official NUN5, its `.tmp` examples are exact decompressions, and its
   inventory role is reproduced by maintained extraction/module tooling. The
   deleted tree contained 3,474 files totaling 742,699,364 bytes.
-- The unpacked upscale pack, official NUN5 source/extraction, production blobs,
-  and tracked evidence remain. The deleted auxiliary copies are not locally
-  recoverable except by re-extraction or reacquiring the distribution.
+- The unpacked upscale pack, official NUN5 source/extraction, and tracked
+  evidence remain. The 34 formerly tracked production blobs were removed after
+  exact source-derivation parity; they remain recoverable through Git history.
+  The deleted auxiliary source copies are not locally recoverable except by
+  re-extraction or reacquiring the distribution.
 
 ## Implemented technical design
 
@@ -215,10 +227,13 @@ CCSFileExplorerMSF as an inspector and independent validator, not as the
 production writer.
 
 1. Keep a declarative repository-relative inventory of the intentionally translated textures, including structural relationships such as the paired NA2 OUGI labels.
-2. For normal containers, verify both source hashes, decompress the complete official NUN5 CCS payload, recompress it deterministically into the unchanged NA2 member capacity, and pad only after the valid gzip stream. This carries the donor's matching models, UVs, and animations together with its translated pixels.
+2. For normal containers, verify both source hashes, decompress the complete official NUN5 CCS payload, recompress it deterministically into the unchanged NA2 member capacity, and pad only after the valid gzip stream. The normal profile performs this derivation directly; zlib is tried first and the five tighter members use pinned Zopfli 0.4.3. This carries the donor's matching models, UVs, and animations together with its translated pixels without storing replacement blobs.
 3. Treat `MODE2KDV` as the single declared indexed-row exception: preserve the NA2 payload and palette and import only the donor's top 64 visual rows through a deterministic palette remap.
 4. Keep the outer DATA.CVM member size, ISO record size, and all source files unchanged. Refuse any output that cannot fit the original fixed capacity.
-5. Represent the OUGI one-part loop as a separate approved-for-test raw-binary BTL patch with exact expected bytes and provenance from matching NUN5/NUN6 behavior.
+5. Represent the OUGI one-part loop as a separate raw-binary BTL semantic port.
+   NUN5 proves the one-part behavior, but the exact NA2 replacement instruction
+   is absent from canonical NUN5 ELF/BTL/ETC/ADV and therefore cannot honestly
+   be represented as a donor copy.
 6. Import the common `CMN/GAUGE.CCS` container as one fixed-size donor unit so
    its global regional button legends, matching models, and UVs remain coupled.
 7. Pair `CHARSEL1.CCS` with the complete homologous NUN5 boot-ELF character-name
@@ -289,12 +304,14 @@ Shop. Slot 7's accepted image is a corrected NA2 result and is no longer used
 as a donor target. Slot 3's final guarded test proves the exact 16-byte Shop
 rectangle correction. The source ISO trees remain untouched.
 
-Integration is complete. The final profile was rebuilt and promoted, its Shop
-bytes were independently checked on-disc, PNACH actualization reported no
-managed aliases because the canonical PNACH is empty, and the hidden wrapper
-closed with the original audio setting restored. Old slots 3, 5, and 7 are
-preserved under their original Current CRC; loading them under the new CRC would
-restore pre-final emulated memory and is therefore not claimed as fresh-ISO
-proof. Disposable slots 249 through 255 and redundant UI temporary exports were
-removed. The separate remaining workstream items are blobless refactoring and
-upscaling research, not part of this completed replacement task.
+The blobless refactor now derives the same 34 fixed-size CCS replacements from
+canonical NA2/NUN5 inputs and expresses seven more renderer rows as direct NUN5
+BTL copies. It deliberately does not alter the previously accepted UI output
+bytes or address the preserved defects in savestates 1-6. Static parity, all 47
+patcher tests, and the byte-identical non-launching profile build pass. By
+explicit user instruction, PCSX2 and game-screen validation are left to the
+user after this implementation report.
+
+Old slots 1-6 remain preserved as the defect baseline for the separate
+`Deal with savestates 1-6.` task. Upscaling research is also a separate
+workstream item.

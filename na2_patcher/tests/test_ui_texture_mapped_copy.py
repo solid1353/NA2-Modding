@@ -15,6 +15,8 @@ def _write_name(buffer: bytearray, offset: int, value: str, size: int) -> None:
 
 def synthetic_ccs(
     textures: list[tuple[str, int, tuple[int, int, int]]],
+    *,
+    palette_reference_base: int,
 ) -> bytes:
     """Create a small CCS with one TEX and one CLT object per BMP file."""
     file_count = len(textures)
@@ -47,6 +49,7 @@ def synthetic_ccs(
         palette_object_id = texture_object_id + 1
 
         tex_data = bytearray(0x1C)
+        struct.pack_into("<I", tex_data, 0, palette_reference_base + index)
         tex_data[0xC] = 1
         tex_data[0xD] = 1
         tex_data[0x18:] = bytes([pixel_index]) * 4
@@ -101,14 +104,16 @@ class MappedCopyTests(unittest.TestCase):
                 (self.names[0], 0, (0x10, 0x20, 0x30)),
                 (self.names[1], 0, (0x20, 0x30, 0x40)),
                 (self.names[2], 0, (0x30, 0x40, 0x50)),
-            ]
+            ],
+            palette_reference_base=0x100,
         )
         self.donor = synthetic_ccs(
             [
                 (self.names[0], 0, (0xA0, 0xB0, 0xC0)),
                 (self.names[1], 0, (0xB0, 0xC0, 0xD0)),
                 (self.names[2], 0, (0xC0, 0xD0, 0xE0)),
-            ]
+            ],
+            palette_reference_base=0x200,
         )
         self.mappings = [
             mapping("copy-a", self.names[0]),
@@ -132,9 +137,40 @@ class MappedCopyTests(unittest.TestCase):
             donor_entry = donor_entries[name]
             output_entry = output_entries[name]
             for target_part, donor_part, output_part in zip(
-                target_entry.textures + target_entry.palettes,
-                donor_entry.textures + donor_entry.palettes,
-                output_entry.textures + output_entry.palettes,
+                target_entry.textures,
+                donor_entry.textures,
+                output_entry.textures,
+                strict=True,
+            ):
+                target_range = slice(
+                    target_part.data_offset,
+                    target_part.data_offset + target_part.data_size,
+                )
+                donor_range = slice(
+                    donor_part.data_offset,
+                    donor_part.data_offset + donor_part.data_size,
+                )
+                output_range = slice(
+                    output_part.data_offset,
+                    output_part.data_offset + output_part.data_size,
+                )
+                self.assertNotEqual(
+                    self.target[target_range.start : target_range.start + 4],
+                    self.donor[donor_range.start : donor_range.start + 4],
+                )
+                self.assertEqual(
+                    output[output_range.start : output_range.start + 4],
+                    self.target[target_range.start : target_range.start + 4],
+                )
+                self.assertEqual(
+                    output[output_range.start + 4 : output_range.stop],
+                    self.donor[donor_range.start + 4 : donor_range.stop],
+                )
+                allowed.update(range(target_range.start + 4, target_range.stop))
+            for target_part, donor_part, output_part in zip(
+                target_entry.palettes,
+                donor_entry.palettes,
+                output_entry.palettes,
                 strict=True,
             ):
                 target_range = slice(

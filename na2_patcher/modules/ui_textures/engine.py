@@ -565,7 +565,12 @@ def copy_mapping_payload(
     donor_payload: bytes,
     mapping: Mapping,
 ) -> bytes:
-    """Copy one mapped texture's TEX/CLT data into the target CCS layout."""
+    """Copy one mapped texture's pixels/palette into the target CCS layout.
+
+    The first TEX word is a CCS object reference to the paired palette.  Object
+    IDs are container-local, so mapped imports must retain the target word even
+    when the donor TEX/CLT component signatures otherwise match exactly.
+    """
     if mapping.transform != "copy":
         raise ValueError(f"{mapping.mapping_id}: copy payload requires transform=copy")
 
@@ -581,12 +586,23 @@ def copy_mapping_payload(
     target = target_entries[mapping.target_texture.casefold()]
     donor = donor_entries[mapping.donor_texture.casefold()]
     result = bytearray(target_payload)
-    component_pairs = zip(
-        target.textures + target.palettes,
-        donor.textures + donor.palettes,
+    for target_section, donor_section in zip(
+        target.textures,
+        donor.textures,
         strict=True,
-    )
-    for target_section, donor_section in component_pairs:
+    ):
+        target_start = target_section.data_offset
+        target_end = target_start + target_section.data_size
+        donor_start = donor_section.data_offset
+        donor_end = donor_start + donor_section.data_size
+        if target_section.data_size < 4:
+            raise ValueError(f"{mapping.mapping_id}: TEX data is too short")
+        result[target_start + 4 : target_end] = donor_payload[donor_start + 4 : donor_end]
+    for target_section, donor_section in zip(
+        target.palettes,
+        donor.palettes,
+        strict=True,
+    ):
         target_start = target_section.data_offset
         target_end = target_start + target_section.data_size
         donor_start = donor_section.data_offset

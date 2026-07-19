@@ -72,6 +72,8 @@ UI-BTL-005-11	UI-BTL-005	140	na2_btl	0x20C9F8	copy	8	7900210016001600			nun5_elf
 UI-BTL-005-12	UI-BTL-005	150	na2_btl	0x20CA00	copy	8	9100210016001600			nun5_elf	0x4DE130	6500210016001600						Copy official NUN5 Jutsu input-glyph rectangle 3.
 UI-BTL-005-13	UI-BTL-005	160	na2_btl	0x20CA10	copy	8	010021002E001E00			nun5_elf	0x4DE100	010001003E001A00						Copy the official NUN5 Jutsu1 label rectangle (1,1,62,26).
 UI-BTL-005-14	UI-BTL-005	170	na2_btl	0x20CA18	copy	8	310021002E001E00			nun5_elf	0x4DE108	410001003E001A00						Copy the official NUN5 Jutsu2 label rectangle (65,1,62,26).
+UI-BTL-005-15	UI-BTL-005	180	na2_btl	0xA0	replace	16	00000000000000000000000000000000		C4F2E2270A10F1030800400000000000									Install a size-preserving wrapper in loaded zero padding. It tail-calls the original Jutsu-label renderer normally, but returns immediately when the caller's established states 4-6 sentinel is zero so submenu overlays cannot reveal the base labels beneath them.
+UI-BTL-005-16	UI-BTL-005	190	na2_btl	0x9E44	replace	4	04F41A0C		E8CF1A0C									Route the VS confirmation Jutsu-label draw through the state-aware wrapper at live EE 0x006B3FA0.
 UI-BTL-006-01	UI-BTL-006	10	na2_btl	0x20C938	replace	4	00005843		00008043									Move the Round label base X from 216 to the official NUN5 X=256.
 UI-BTL-006-02	UI-BTL-006	20	na2_btl	0x20C940	replace	4	00003042		0000C041									Move the Round label base Y from 44 to the official NUN5 Y=24.
 UI-BTL-006-03	UI-BTL-006	30	na2_btl	0x20C970	copy	8	A100410026002600			nun5_elf	0x4DE110	810001005E001E00						Replace the first Japanese Round glyph rectangle with the official one-part NUN5 English Round rectangle (129,1,94,30).
@@ -81,3 +83,7 @@ UI-BTL-006-06	UI-BTL-006	60	na2_btl	0xCD5C	copy	4	3042023C			nun5_btl	0xD3B4	804
 UI-BTL-006-07	UI-BTL-006	70	na2_btl	0xCD64	copy	8	B33F023C33334234			nun5_btl	0xD3BC	993F023C9A994234						Copy the structurally equivalent official NUN5 1.2 Round render-scale instructions.
 UI-BTL-006-08	UI-BTL-006	80	na2_btl	0xCDA4	copy	8	B33F033C33336334			nun5_btl	0xD3FC	993F033C9A996334						Copy the structurally equivalent official NUN5 1.2 Round spacing-scale instructions.
 UI-ETC-001-01	UI-ETC-001	10	na2_etc	0x30308	copy	16	A90081012A001A00D500810112001A00			nun5_etc	0x292F8	A90081013E001A004101C1011E001600						Copy the official NUN5 full-width Money and Ryo atlas rectangles while preserving the shared Shop panel record and NA2 value logic.
+UI-ETC-001-02	UI-ETC-001	20	na2_etc	0x249A4	copy	4	7A43023C			nun5_etc	0x25E88	7E43023C						Copy the structurally equivalent official NUN5 Money X=254 instruction over NA2 X=250.
+UI-ETC-001-03	UI-ETC-001	30	na2_etc	0x249CC	copy	4	4042023C			nun5_etc	0x25EB0	4842023C						Copy the structurally equivalent official NUN5 Ryo Y=50 instruction over NA2 Y=48.
+UI-ELF-005-01	UI-ELF-005	10	na2_elf	0x504710	copy	8	01008D01CE001600			nun5_elf	0x4DE318	01008901FE001A00						Copy the official NUN5 English Mode Select START-label rectangle (1,393,254,26).
+UI-ELF-005-02	UI-ELF-005	20	na2_elf	0x285F28	replace	4	0243023C		1643023C									Move the START label from X=130 to NUN5's X=150 while retaining NA2's v0 destination register required by the following instruction.

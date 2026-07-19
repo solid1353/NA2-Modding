@@ -6,6 +6,12 @@ touching a running emulator, or connect to PCSX2's local PINE server for a new
 single capture or targeted read-only memory inspection. It does not launch
 PCSX2 or automate controller input.
 
+`match_assembly_function.py` compares one preserved Ghidra assembly function
+against another build by normalized instruction structure. It accepts both the
+`text:006bcfd0   ...` overlay export form and the truncated
+`SECTION4:0038...` boot-ELF form, so existing exports can be reused without
+another disassembly.
+
 The normal comparison has two targets:
 
 - `nun5`: the official English reference at `@source/NUN5.iso`.
@@ -99,4 +105,13 @@ Run the focused tests with:
 
 ```powershell
 python scripts/research/ui_translation/test_ui_runtime.py
+```
+
+Find a cross-build function match with:
+
+```powershell
+python scripts/research/ui_translation/match_assembly_function.py `
+  work/ui_translation/disassembly_refs/NA2/BTL/BTL.BIN.txt `
+  FUN_006bcfd0 `
+  work/ui_translation/disassembly_refs/NUN5/BTL/BTL.BIN.txt
 ```

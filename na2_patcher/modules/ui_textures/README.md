@@ -13,11 +13,17 @@ from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
 - All 34 derived replacements preserve their original NA2 member size and
   therefore do not move a `DATA.CVM` member or ISO extent. Their fixed ranges
   total 5,274,398 bytes.
-- Thirty-two `whole` strategies import the complete NUN5 CCS payload so pixels,
+- Thirty-one `whole` strategies import the complete NUN5 CCS payload so pixels,
   models, UVs, layout, and animation data remain coupled.
+- `HOME.CCS` is a mapped structural exception: it keeps NA2's collection
+  models, UVs, layout, and animation data, and copies only the five official
+  English TEX/CLT pairs used by the visible collection labels.
 - `MAPSEL1.CCS` is a mapped structural exception: it starts from NA2 and copies
   only the paired NUN5 TEX/CLT data for the stage-name atlas and Stage Select
   label. NA2's stage-picture atlases and CCS structure remain unchanged.
+- Mapped `copy` imports retain the first word of every NA2 TEX section because
+  it is a container-local palette-object reference; pixel data after that word
+  and the complete paired CLT payload come from NUN5.
 - `MODE2KDV.CCS` is a mapped capacity exception: it retains the NA2 portrait,
   palette, and lower 192 visual rows, then imports the donor's top 64 label rows
   through deterministic nearest-palette-index remapping.

@@ -10,8 +10,8 @@ from pathlib import Path
 
 FUNCTION = re.compile(r";undefined (?P<name>FUN_[0-9a-fA-F]{8})\(")
 INSTRUCTION = re.compile(
-    r"^text:(?P<address>[0-9a-fA-F]{8})\s+"
-    r"(?P<bytes>[0-9a-fA-F]{8})\s+"
+    r"^(?:text|SECTION\d+):(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{4}\.\.\.)"
+    r"\s*(?P<bytes>[0-9a-fA-F]{8})\s+"
     r"(?P<body>.*?)(?:\s*;.*)?$"
 )
 SYMBOL = re.compile(r"\b(?:FUN|SUB|LAB)_[0-9a-fA-F]{8}\b")
@@ -61,9 +61,8 @@ def parse_functions(path: Path) -> dict[str, Function]:
         instruction_match = INSTRUCTION.match(line)
         if instruction_match is None:
             continue
-        address = int(instruction_match.group("address"), 16)
         if current_address is None:
-            current_address = address
+            current_address = int(current_name.removeprefix("FUN_"), 16)
         signatures.append(normalized_instruction(instruction_match.group("body")))
     finish()
     return functions

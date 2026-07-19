@@ -181,11 +181,26 @@ is the closest non-wrapping NA2 equivalent. Together with NUN5's exact
 complete prompt like the paired NUN5 capture. The rejected X=`260` write is not
 retained.
 
-All 14 edits were matched against their original bytes, written through PINE,
-read back exactly, and captured from user-provided slot 7. They restored both
-Jutsu labels, the two arrows and Circle input graphics, and both bottom prompts.
-This patch changes texture selection and placement only. It does not change or
-evaluate command-name text or font rendering.
+The first 14 edits were matched against their original bytes, written through
+PINE, read back exactly, and captured from user-provided slot 7. They restored
+both Jutsu labels, the two arrows and Circle input graphics, and both bottom
+prompts.
+
+Preserved slot 6 exposed a separate draw-order defect when the Jutsu selector
+is open: NA2 leaves those base-screen Jutsu labels visible beneath the
+translucent selector rows, while the paired NUN5 state does not expose them.
+Both savestates contain selector state `6`. The shared caller already keeps
+`s1=0` for submenu states 4, 5, and 6, so a 16-byte wrapper in loaded zero
+padding at BTL offset `0xA0` uses that existing sentinel. It returns without
+drawing in those submenu states and otherwise tail-calls the unchanged original
+renderer at EE `0x006BD010`. The call at BTL offset `0x9E44` is redirected to
+the wrapper at EE `0x006B3FA0`. This is an NA2-specific size-preserving port:
+NUN5 relies on its different localized render path to hide the same underlying
+labels. The wrapper is statically verified and deliberately left for the
+user-requested runtime pass.
+
+This patch changes texture selection, placement, and submenu visibility only.
+It does not change or evaluate command-name text or font rendering.
 
 ## UI-BTL-006: localized Round label layout
 
@@ -201,7 +216,7 @@ Eight guarded live writes were read back exactly. The resulting one-part label
 matches the paired NUN5 capture; small frame-to-frame outline differences are
 the screen's normal pulsation.
 
-## UI-ETC-001: localized Shop currency labels
+## UI-ETC-001: localized Shop currency-label layout
 
 Importing the complete NUN5 `SHOP.CCS` supplies the correct English atlas, but
 NA2's Shop renderer still copies its Japanese currency rectangles from
@@ -222,7 +237,31 @@ in full and the existing seven-digit `9999999` value remained visible. The
 source and destination `ETC.BIN` files are size/hash pinned and remain
 untouched.
 
-Inspect all eleven UI companion patches together:
+The paired slot-2 captures then exposed two small anchor differences. In the
+matched Shop renderer, NA2 uses Money X=`250` and Ryo Y=`48`; NUN5 uses Money
+X=`254` and Ryo Y=`50`. `UI-ETC-001` now also copies the exact homologous NUN5
+instructions from ETC offsets `0x25E88` and `0x25EB0` into NA2 offsets
+`0x249A4` and `0x249CC`. The already-correct Money Y and Ryo X paths remain
+unchanged. These two copies are statically verified and await the same
+user-requested runtime pass.
+
+## UI-ELF-005: localized Mode Select START layout
+
+The whole NUN5 `MODESEL1.CCS` import supplies the English START artwork, but
+NA2's static rectangle still selected only `(1,397,206,22)` and drew it at
+X=`130`. That truncates the 254-pixel English label visible in preserved slot 1.
+NUN5 `FUN_003972e0` obtains rectangle `(1,393,254,26)` from localized accessor
+`FUN_003d4bc0` (English table entry at ELF offset `0x4DE318`) and draws it at
+X=`150`.
+
+`UI-ELF-005` copies that exact eight-byte rectangle into NA2 ELF offset
+`0x504710`. The X constant at NA2 offset `0x285F28` is an authored
+same-register port from `130` to `150`: the corresponding NUN5 instruction
+writes `v1`, while NA2's following instruction consumes `v0`, so copying the
+four instruction bytes verbatim would be incorrect. Both edits preserve ELF
+size and are statically verified for the user-requested runtime pass.
+
+Inspect all twelve UI companion patches together:
 
 ```powershell
 python -m na2_patcher.modules.raw_binary.engine validate `
@@ -244,5 +283,6 @@ python -m na2_patcher.modules.raw_binary.engine plan `
   --patch UI-ELF-001 `
   --patch UI-ELF-002 `
   --patch UI-ELF-003 `
-  --patch UI-ELF-004
+  --patch UI-ELF-004 `
+  --patch UI-ELF-005
 ```

@@ -17,9 +17,6 @@
 - Make font identical to UN5.
 - Fix alignment issues.
 
-### QoL
-- Analyze differences against NUN6 and remove adventure mode.
-
 ### String translation
 - Audit and polish.
 - Deal with shortened strings.
@@ -37,3 +34,5 @@
 - Basically everything.
 
 ## Archive
+
+### QoL

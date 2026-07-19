@@ -68,6 +68,15 @@ PS2 modding/reverse-engineering workspace for Narutimate Accel v2.28, based on N
 
 ## Task workflow and approval
 
+Before inspecting, planning, or executing a selected task, verify that it belongs
+to the current Codex task/chat's workstream and responsibility. If it belongs in
+another existing workstream coordinator or dedicated task chat, route it there
+immediately with the task text, status, user instructions, relevant context,
+and any work already performed; tell the user where it was routed, then stop
+handling it in the current chat. Do not duplicate the task across chats. If no
+suitable chat exists, send one setup request to `Task coordinator` and follow
+the chat-creation approval rules below instead of absorbing the work locally.
+
 Read-only inspection for a selected task may begin immediately without plan
 approval. At the start of any inspection that may take more than a brief check,
 the agent must provide this status block before or with its first inspection
@@ -128,6 +137,7 @@ from the user, state `Needed from you: nothing` instead of omitting the line.
 - Creating, renaming, moving between statuses, or explicitly deleting a workstream subsection in `TASKS.md` automatically requires chat actualization immediately after the file change. If `Task coordinator` made the change, it actualizes directly; if another chat made the change, that chat must promptly send `Task coordinator` one concise actualization request with the changed subsection and its new status or removal state.
 - Do not archive, delete, merge, or repurpose unrelated or surplus chats during actualization unless the user explicitly requests it.
 - A workstream chat that needs global chat actualization or another coordination change outside its own scope must send one concise request to the Codex task titled `Task coordinator` instead of performing the global change itself. Include the requesting workstream, the needed change, and any relevant live state. Do not repeatedly message or poll the coordinator. The `Task coordinator` performs the coordination work and sends the outcome back when the requesting chat needs it to continue. If the coordinator cannot be found or contacted, report that to the user rather than taking over silently.
+- When a selected task is presented in the wrong chat, route it to the existing matching workstream coordinator or dedicated task chat rather than merely recommending that the user move it. The handoff must preserve the exact task wording, status, user instructions, relevant evidence, and required next step. The receiving chat becomes responsible for inspection, planning, approval, execution, and reporting; the originating chat must not continue parallel work.
 - Agents should proactively recommend a separate Codex task when the current chat is accumulating enough unrelated information, sustained digression, or distinct responsibilities that context quality or workstream focus is likely to degrade. Recommend an exact task title and a concise responsibility boundary, explain what should move there, and prefer an existing suitable task over creating a duplicate. Do not recommend a new task for a brief tangent that can be handled cleanly in the current context, and do not create one until the user explicitly asks or approves. After approval, route new-workstream or global coordination setup through `Task coordinator`.
 
 

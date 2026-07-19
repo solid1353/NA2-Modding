@@ -60,7 +60,16 @@ python -m pip install -r na2_patcher/requirements.txt
 & scripts/na2/build.ps1
 ```
 
-`na2_patcher/build_profile.py` writes the candidate ISO as `build/NA2.28 - Current.iso.building`, verifies it completely, fsyncs it, and writes the profile log before returning. `scripts/na2/build.ps1` compares the candidate with `NA2.28 - Current.iso`; an identical candidate is discarded without touching `NA2.28 - Current.iso` or `NA2.28 - Previous.iso`, while a changed candidate atomically replaces `NA2.28 - Previous.iso` with the outgoing `NA2.28 - Current.iso` and becomes the new `NA2.28 - Current.iso`. A failed promotion restores the outgoing ISO when safe, and any caught failure removes `.building`.
+Before staging, `na2_patcher/build_preflight.py` hashes both canonical source
+ISOs, the complete `na2_patcher/` tree except generated Python caches, the
+selected profile path, and the active Python/Zlib/Zopfli versions. A matching
+successful receipt is accepted only when the configured Current ISO also
+matches the receipt's size and SHA-256. That hit returns the ordinary
+`unchanged`/no-rotation build result without module derivation or a `.building`
+file. A missing, stale, malformed, or tampered receipt safely falls through to
+the full verified build.
+
+`na2_patcher/build_profile.py` writes the candidate ISO as `build/NA2.28 - Current.iso.building`, verifies it completely, fsyncs it, and writes the profile log before returning. `scripts/na2/build.ps1` compares the candidate with `NA2.28 - Current.iso`; an identical candidate is discarded without touching `NA2.28 - Current.iso` or `NA2.28 - Previous.iso`, while a changed candidate atomically replaces `NA2.28 - Previous.iso` with the outgoing `NA2.28 - Current.iso` and becomes the new `NA2.28 - Current.iso`. A failed promotion restores the outgoing ISO when safe, and any caught failure removes `.building`. Only a successful build and promotion may atomically update the preflight receipt.
 
 File-size changes are always rejected. The disc-identity module permits only
 its declared equal-length boot-file rename and verifies the resulting tree;

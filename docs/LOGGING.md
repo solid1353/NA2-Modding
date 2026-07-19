@@ -32,6 +32,9 @@ knowledge.
   It always contains rows for the configured current and previous ISO files;
   the previous record is empty when no corresponding retained build record is
   available.
+- `preflight/current.json`: the atomically replaced successful-build receipt
+  used for no-op detection. It records only portable logical labels, the
+  deterministic input fingerprint, and the Current ISO size and SHA-256.
 
 Help output is not logged. A verified candidate identical to
 `NA2.28 - Current.iso` records `ISO result: unchanged` in the command log and
@@ -39,6 +42,8 @@ does not retain another full structured profile record. A changed candidate reco
 `ISO result: updated`; its structured record becomes current and the previous
 current record rotates with the outgoing ISO. Unreferenced structured records
 are deleted only after the complete two-ISO mapping has been replaced.
+Deleting or corrupting the preflight receipt is safe: the next invocation runs
+the complete verified build and recreates the receipt only after success.
 
 Persistent command logs must be normalized after transcript capture. They omit
 PowerShell transcript boilerplate, replace configured roots with aliases, and

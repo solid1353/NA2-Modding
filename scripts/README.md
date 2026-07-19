@@ -34,6 +34,10 @@ research utility.
   not part of normal profile builds.
 
 Normal builds call `na2_patcher.build_profile` through `na2/build.ps1`.
+Before that call, `na2/build.ps1` checks the deterministic successful-build
+receipt through `na2_patcher.build_preflight`; an exact hit returns the normal
+unchanged result without staging an ISO. `na2/test_build_preflight.ps1` covers
+the cache-hit and safe full-build-fallback dispatch paths.
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 

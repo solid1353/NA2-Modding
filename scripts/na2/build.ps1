@@ -24,6 +24,57 @@ function Test-FileContentEqual {
     $leftHash -ceq $rightHash
 }
 
+function Invoke-Na2BuildPreflight {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet('check', 'record')][string]$Command,
+        [Parameter(Mandatory = $true)][string]$Na2Iso,
+        [Parameter(Mandatory = $true)][string]$Nun5Iso,
+        [Parameter(Mandatory = $true)][string]$CurrentIso,
+        [Parameter(Mandatory = $true)][string]$Profile,
+        [Parameter(Mandatory = $true)][string]$Receipt,
+        [AllowNull()][string]$ExpectedFingerprint,
+        [Parameter(Mandatory = $true)][string]$Repository
+    )
+
+    $arguments = @(
+        '-B'
+        '-m', 'na2_patcher.build_preflight'
+        $Command
+        '--na2-iso', $Na2Iso
+        '--nun5-iso', $Nun5Iso
+        '--current', $CurrentIso
+        '--profile', $Profile
+        '--receipt', $Receipt
+    )
+    if ($Command -eq 'record') {
+        if ([string]::IsNullOrWhiteSpace($ExpectedFingerprint)) {
+            throw 'Cannot record a build receipt without the pre-build fingerprint.'
+        }
+        $arguments += @('--expected-fingerprint', $ExpectedFingerprint)
+    }
+
+    Push-Location $Repository
+    try {
+        $output = @(& python @arguments)
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        Pop-Location
+    }
+    if ($exitCode -ne 0) {
+        throw "NA2 build preflight failed to execute (exit $exitCode)."
+    }
+    if ($output.Count -ne 1) {
+        throw 'NA2 build preflight did not return exactly one JSON result.'
+    }
+    try {
+        return $output[0] | ConvertFrom-Json
+    }
+    catch {
+        throw 'NA2 build preflight returned invalid JSON.'
+    }
+}
+
 function Promote-VerifiedIso {
     param(
         [Parameter(Mandatory = $true)][string]$CurrentIso,
@@ -81,6 +132,7 @@ function Promote-VerifiedIso {
 }
 
 $inputIso = Join-Path $projectPaths.source 'NA2.iso'
+$nun5Iso = Join-Path $projectPaths.source 'NUN5.iso'
 $resolvedOutputIso = [IO.Path]::GetFullPath($projectPaths.files.current_iso)
 $resolvedPreviousIso = [IO.Path]::GetFullPath($projectPaths.files.previous_iso)
 $profile = [IO.Path]::GetRelativePath(
@@ -90,11 +142,83 @@ $profile = [IO.Path]::GetRelativePath(
 $logDirectory = Join-Path $projectPaths.logs 'na2'
 $buildLogRoot = Join-Path $logDirectory 'builds'
 New-Item -ItemType Directory -Path $buildLogRoot -Force | Out-Null
+$receiptPath = Join-Path $logDirectory 'preflight\current.json'
+$candidateIso = "$resolvedOutputIso.building"
+
+try {
+    $preflight = Invoke-Na2BuildPreflight `
+        -Command check `
+        -Na2Iso $inputIso `
+        -Nun5Iso $nun5Iso `
+        -CurrentIso $resolvedOutputIso `
+        -Profile $profile `
+        -Receipt $receiptPath `
+        -Repository $projectPaths.repository
+}
+catch {
+    $preflight = [pscustomobject]@{
+        status = 'miss'
+        reason = 'preflight-command-error'
+        detail = $_.Exception.Message
+    }
+}
+
+if ($preflight.status -eq 'hit') {
+    try {
+        $buildMap = Read-Na2BuildMap `
+            -LogDirectory $logDirectory `
+            -ProjectPaths $projectPaths
+        if ([string]::IsNullOrWhiteSpace($buildMap.CurrentBuildId)) {
+            throw 'The Current ISO has no retained build record.'
+        }
+        $buildRecord = "@logs/na2/builds/$($buildMap.CurrentBuildId)"
+        Write-Host (
+            "[na2] Preflight: cache hit; fingerprint $($preflight.fingerprint); " +
+            "Current SHA-256 $($preflight.output_sha256)."
+        ) -ForegroundColor Cyan
+        Write-Host '[na2] ISO result: unchanged; preflight cache hit; rotation: no.' -ForegroundColor Cyan
+        Write-Host "[na2] Build record: reused $buildRecord." -ForegroundColor Cyan
+        return [pscustomobject]@{
+            Status = 'unchanged'
+            CurrentIso = $resolvedOutputIso
+            PreviousIso = $resolvedPreviousIso
+            Rotated = $false
+            BuildId = $buildMap.CurrentBuildId
+            ProfileLogDirectory = $buildRecord
+            PreflightCacheHit = $true
+        }
+    }
+    catch {
+        $preflight = [pscustomobject]@{
+            status = 'miss'
+            reason = 'build-record-invalid'
+            detail = $_.Exception.Message
+            fingerprint = $preflight.fingerprint
+        }
+    }
+}
+
+$preflightDetail = if ($preflight.PSObject.Properties.Name -contains 'detail') {
+    ": $($preflight.detail)"
+}
+else {
+    ''
+}
+Write-Host (
+    "[na2] Preflight: cache miss ($($preflight.reason)$preflightDetail); " +
+    'running the full verified build.'
+) -ForegroundColor Yellow
+$preflightFingerprint = if ($preflight.PSObject.Properties.Name -contains 'fingerprint') {
+    [string]$preflight.fingerprint
+}
+else {
+    $null
+}
+
 $buildId = (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
 $profileLog = Join-Path $buildLogRoot $buildId
 $profileLogDirectory = [IO.Path]::GetRelativePath($projectPaths.repository, $profileLog)
 $pcsx2Exe = Join-Path $projectPaths.pcsx2 'pcsx2-qt.exe'
-$candidateIso = "$resolvedOutputIso.building"
 $arguments = @(
     '-B'
     '-m', 'na2_patcher.build_profile'
@@ -141,6 +265,41 @@ try {
     Write-Host "[na2] Build record: $recordAction $($buildRecord.BuildRecord)." -ForegroundColor Cyan
     $promotion | Add-Member -NotePropertyName BuildId -NotePropertyValue $buildRecord.BuildId
     $promotion | Add-Member -NotePropertyName ProfileLogDirectory -NotePropertyValue $buildRecord.BuildRecord
+    $promotion | Add-Member -NotePropertyName PreflightCacheHit -NotePropertyValue $false
+    if (-not [string]::IsNullOrWhiteSpace($preflightFingerprint)) {
+        try {
+            $receiptResult = Invoke-Na2BuildPreflight `
+                -Command record `
+                -Na2Iso $inputIso `
+                -Nun5Iso $nun5Iso `
+                -CurrentIso $resolvedOutputIso `
+                -Profile $profile `
+                -Receipt $receiptPath `
+                -ExpectedFingerprint $preflightFingerprint `
+                -Repository $projectPaths.repository
+            if ($receiptResult.status -eq 'written') {
+                Write-Host (
+                    "[na2] Preflight receipt: updated for fingerprint " +
+                    "$($receiptResult.fingerprint)."
+                ) -ForegroundColor Cyan
+            }
+            else {
+                Write-Warning (
+                    "Preflight receipt was not updated ($($receiptResult.reason)); " +
+                    'the next build will safely run in full.'
+                )
+            }
+        }
+        catch {
+            Write-Warning (
+                "Preflight receipt was not updated: $($_.Exception.Message) " +
+                'The next build will safely run in full.'
+            )
+        }
+    }
+    else {
+        Write-Warning 'Preflight fingerprint was unavailable; the next build will safely run in full.'
+    }
     $promotion
 }
 finally {

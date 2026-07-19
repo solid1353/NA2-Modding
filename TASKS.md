@@ -23,6 +23,7 @@
 ### String translation
 - Audit and polish.
 - Deal with shortened strings.
+- Research hooking up external files.
 
 ## Backlog
 

@@ -42,7 +42,7 @@ until logical width, visible glyph bounds, advances, and centering are measured
 for the same strings. The historical m01 and semantic-palette experiments are
 negative evidence, not implementation parents.
 
-## Active tasks
+## Active task
 
 ### Make font identical to UN5
 
@@ -66,6 +66,8 @@ Final parity still requires matched NA2/NUN5 captures at the same presentation
 scale, with representative short and long strings and no missing, touching,
 overlapping, or palette-damaged glyphs. The current result is the accepted
 integration baseline, not the final weight match.
+
+## Completed implementation baseline
 
 ### Fix alignment issues
 

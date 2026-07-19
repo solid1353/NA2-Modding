@@ -14,9 +14,7 @@
 - Investigate cross-platform development/deployment possibilities.
 
 ### [Font](docs/plans/font.md)
-- Research and implement NUN5 auto-adjust behavior.
 - Make font identical to UN5.
-- Fix alignment issues.
 
 ### String translation
 - Audit and polish.

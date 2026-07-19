@@ -1,5 +1,32 @@
 # QoL
 
-Exact static migration of the canonical PNACH `QoL` section. This package is the
-section, each row in `patches.tsv` is a cheat, and its rows in `edits.tsv` are
-the subcheats. `default_enabled` preserves the original enabled state.
+File-backed quality-of-life patches for the NA2 boot ELF. The original three
+patches are exact static migrations of the canonical PNACH `QoL` section. Each
+row in `patches.tsv` is a selectable patch and its rows in `edits.tsv` are the
+guarded binary edits.
+
+## ELF-Q004: Remove Adventure mode
+
+NUN6 A35 removes Adventure from the Mode Select carousel by storing the signed
+sentinel `-1` in entry 0 of the boot ELF's seven-entry mode table. The menu setup
+loop skips entries whose table value is negative, so the item is omitted rather
+than displayed and blocked after selection.
+
+The corresponding tables are:
+
+- NA2: virtual address `0x005D51D0`, ELF offset `0x4D52D0`, values
+  `(4, 2, 3, -1, 5, 6, 7)`.
+- NUN5: virtual address `0x005DC300`, ELF offset `0x4DC480`, values
+  `(4, 2, 3, -1, 5, 6, 7)`.
+- NUN6 A35: the NUN5 address and offset, values
+  `(-1, 2, 3, -1, -1, -1, 7)`.
+
+`ELF-Q004` changes only NA2 entry 0 from `04 00 00 00` to `FF FF FF FF`.
+NUN6's changes to entries 4 and 5 are unrelated and are intentionally not
+ported. NUN5 is not a suitable byte donor because its entry 0 matches NA2; the
+raw replacement is used because the desired behavior deliberately follows the
+NUN6 variant. The source ELF remains untouched and the output size is preserved.
+
+Runtime testing of the integrated Current ISO confirmed that Adventure is absent
+and the remaining Mode Select entries work normally. `ELF-Q004` is therefore
+enabled by default with status `runtime_proven`.

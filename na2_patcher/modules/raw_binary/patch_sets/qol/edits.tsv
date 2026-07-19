@@ -5,3 +5,4 @@ ELF-Q002-01	ELF-Q002	10	slps_258_37	0xE7C30	replace	4	2530C700		00000000								
 ELF-Q002-02	ELF-Q002	20	slps_258_37	0xE7C7C	replace	4	0B0085A0		00000000									Support off by default.
 ELF-Q002-03	ELF-Q002	30	slps_258_37	0xE7B9C	replace	4	00008790		00000000									Command display off by default.
 ELF-Q003-01	ELF-Q003	10	slps_258_37	0xE7BAC	replace	4	25186600		00000000									Simple display off by default.
+ELF-Q004-01	ELF-Q004	10	slps_258_37	0x4D52D0	replace	4	04000000		FFFFFFFF									Mark only the Adventure Mode Select entry unavailable, matching NUN6's filtered-carousel behavior.

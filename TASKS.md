@@ -7,7 +7,6 @@
 - Investigate upscaling.
 
 ### Project
-- Support deterministic ISO file insertion for external translation files.
 - [Raw-binary patch hierarchy and profile-driven workflows](docs/plans/raw_binary_patch_hierarchy_and_profiles.md).
 - Work folder cleanup.
 - [Develop a release process (deferred indefinitely)](docs/RELEASE_PROCESS.md).

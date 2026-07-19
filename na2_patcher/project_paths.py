@@ -130,7 +130,7 @@ def load_project_paths(
             raise ValueError(
                 f"Project file {name!r} must remain within its configured root"
             )
-        if repository not in configured_path.parents:
+        if not raw_value.startswith("@") and repository not in configured_path.parents:
             raise ValueError(
                 f"Project file {name!r} must remain within the repository"
             )

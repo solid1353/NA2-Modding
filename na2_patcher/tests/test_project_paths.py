@@ -54,6 +54,28 @@ class ProjectPathTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "remain within the repository"):
                 load_project_paths(manifest)
 
+    def test_loads_file_below_external_configured_root(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            root = workspace / "repository"
+            source = workspace / "source"
+            root.mkdir()
+            source.mkdir()
+            manifest = {
+                "schema_version": 1,
+                "roots": {
+                    "repository": ".",
+                    "source": "../source",
+                },
+                "files": {"nun5_iso": "@source/NUN5.iso"},
+            }
+            manifest_path = root / "project-paths.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            paths = load_project_paths(manifest_path)
+
+            self.assertEqual(paths.file("nun5_iso"), source.resolve() / "NUN5.iso")
+
     def test_rejects_file_alias_escape(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

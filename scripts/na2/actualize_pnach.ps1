@@ -1,5 +1,6 @@
 param(
-    [string]$IsoPath = ""
+    [string]$IsoPath = "",
+    [string[]]$PreserveIsoPath = @()
 )
 
 Set-StrictMode -Version Latest
@@ -159,6 +160,55 @@ function Find-IsoPath {
     return $current
 }
 
+function Get-IsoPnachIdentity {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $resolvedPath = (Resolve-Path -LiteralPath $Path).Path
+    $iso = [IO.File]::OpenRead($resolvedPath)
+    try {
+        $pvd = [byte[]]::new($sectorSize)
+        $iso.Position = 16 * $sectorSize
+        [void]$iso.Read($pvd, 0, $pvd.Length)
+
+        $magic = [Text.Encoding]::ASCII.GetString($pvd, 1, 5)
+        if ($pvd[0] -ne 1 -or $magic -ne "CD001") {
+            throw "Primary Volume Descriptor not found at sector 16."
+        }
+
+        $rootRecord = Read-DirectoryRecord -Data $pvd -Offset 156
+        $systemRecord = Find-IsoPath -IsoStream $iso -RootRecord $rootRecord -Path "SYSTEM.CNF"
+        if ($null -eq $systemRecord) { throw "SYSTEM.CNF not found in ISO." }
+
+        $systemText = [Text.Encoding]::ASCII.GetString((Read-IsoExtent -IsoStream $iso -Extent $systemRecord.Extent -Size $systemRecord.Size))
+        $bootLine = ($systemText -split "`r?`n" | Where-Object { $_ -match '^\s*BOOT2?\s*=' } | Select-Object -First 1)
+        if ([string]::IsNullOrWhiteSpace($bootLine)) { throw "Boot line not found in SYSTEM.CNF." }
+
+        $bootPath = (($bootLine -replace '^\s*BOOT2?\s*=\s*', '') -replace '^\s*cdrom0?:\\?', '' -replace ';[0-9]+\s*$', '').Trim()
+        $bootPath = $bootPath -replace '\\', '/'
+        $serial = Get-DiscSerialFromBootPath -BootPath $bootPath
+        if ($serial -notin $ManagedSerials) {
+            throw "Boot serial is not managed by this project: $serial"
+        }
+
+        $elfRecord = Find-IsoPath -IsoStream $iso -RootRecord $rootRecord -Path $bootPath
+        if ($null -eq $elfRecord) { throw "Boot ELF not found in ISO: $bootPath" }
+
+        $elfBytes = Read-IsoExtent -IsoStream $iso -Extent $elfRecord.Extent -Size $elfRecord.Size
+        $crc = Get-Pcsx2ElfCrc -Bytes $elfBytes
+    }
+    finally {
+        $iso.Dispose()
+    }
+
+    [pscustomobject]@{
+        Iso = $resolvedPath
+        BootElf = $bootPath
+        Serial = $serial
+        CRC = $crc
+        PnachName = "${serial}_${crc}.pnach"
+    }
+}
+
 $CanonicalPnach = (Resolve-Path -LiteralPath $CanonicalPnach).Path
 $pnachState = Get-Na2PnachState -Path $CanonicalPnach
 $cheatsDir = Join-Path $projectPaths.pcsx2 'cheats'
@@ -199,46 +249,16 @@ if ([string]::IsNullOrWhiteSpace($IsoPath)) {
         throw "Default build ISO does not exist: $IsoPath. Pass -IsoPath explicitly."
     }
 }
-$IsoPath = (Resolve-Path -LiteralPath $IsoPath).Path
-
-$iso = [IO.File]::OpenRead($IsoPath)
-try {
-    $pvd = [byte[]]::new($sectorSize)
-    $iso.Position = 16 * $sectorSize
-    [void]$iso.Read($pvd, 0, $pvd.Length)
-
-    $magic = [Text.Encoding]::ASCII.GetString($pvd, 1, 5)
-    if ($pvd[0] -ne 1 -or $magic -ne "CD001") {
-        throw "Primary Volume Descriptor not found at sector 16."
-    }
-
-    $rootRecord = Read-DirectoryRecord -Data $pvd -Offset 156
-    $systemRecord = Find-IsoPath -IsoStream $iso -RootRecord $rootRecord -Path "SYSTEM.CNF"
-    if ($null -eq $systemRecord) { throw "SYSTEM.CNF not found in ISO." }
-
-    $systemText = [Text.Encoding]::ASCII.GetString((Read-IsoExtent -IsoStream $iso -Extent $systemRecord.Extent -Size $systemRecord.Size))
-    $bootLine = ($systemText -split "`r?`n" | Where-Object { $_ -match '^\s*BOOT2?\s*=' } | Select-Object -First 1)
-    if ([string]::IsNullOrWhiteSpace($bootLine)) { throw "Boot line not found in SYSTEM.CNF." }
-
-    $bootPath = (($bootLine -replace '^\s*BOOT2?\s*=\s*', '') -replace '^\s*cdrom0?:\\?', '' -replace ';[0-9]+\s*$', '').Trim()
-    $bootPath = $bootPath -replace '\\', '/'
-    $Serial = Get-DiscSerialFromBootPath -BootPath $bootPath
-    if ($Serial -notin $ManagedSerials) {
-        throw "Boot serial is not managed by this project: $Serial"
-    }
-
-    $elfRecord = Find-IsoPath -IsoStream $iso -RootRecord $rootRecord -Path $bootPath
-    if ($null -eq $elfRecord) { throw "Boot ELF not found in ISO: $bootPath" }
-
-    $elfBytes = Read-IsoExtent -IsoStream $iso -Extent $elfRecord.Extent -Size $elfRecord.Size
-    $crc = Get-Pcsx2ElfCrc -Bytes $elfBytes
-}
-finally {
-    $iso.Dispose()
-}
-
-$pnachName = "${Serial}_${crc}.pnach"
-$targetPnach = Join-Path $cheatsDir $pnachName
+$identity = Get-IsoPnachIdentity -Path $IsoPath
+$preservedIdentities = @(
+    $PreserveIsoPath |
+        Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+        ForEach-Object { Get-IsoPnachIdentity -Path $_ }
+)
+$desiredPnachNames = @($identity.PnachName) + @($preservedIdentities.PnachName) |
+    Select-Object -Unique
+$targetPnach = Join-Path $cheatsDir $identity.PnachName
+$desiredPnachPaths = @($desiredPnachNames | ForEach-Object { Join-Path $cheatsDir $_ })
 
 $removedPnachSymlinks = @(
     Get-ManagedPnachSymlinks `
@@ -246,7 +266,7 @@ $removedPnachSymlinks = @(
         -CanonicalPnach $CanonicalPnach `
         -Serials $ManagedSerials |
         Where-Object {
-            $_.FullName -ne $targetPnach
+            $_.FullName -notin $desiredPnachPaths
         } |
         ForEach-Object {
             $name = $_.Name
@@ -255,35 +275,42 @@ $removedPnachSymlinks = @(
         }
 )
 
-$targetItem = Get-Item -LiteralPath $targetPnach -Force -ErrorAction SilentlyContinue
-if ($null -ne $targetItem) {
-    if ($targetItem.LinkType -ne "SymbolicLink") {
-        throw "Refusing to replace real PNACH file at CRC alias path: $targetPnach"
+foreach ($desiredPnachPath in $desiredPnachPaths) {
+    $targetItem = Get-Item -LiteralPath $desiredPnachPath -Force -ErrorAction SilentlyContinue
+    if ($null -ne $targetItem) {
+        if ($targetItem.LinkType -ne "SymbolicLink") {
+            throw "Refusing to replace real PNACH file at CRC alias path: $desiredPnachPath"
+        }
+        $existingDestination = Get-SymbolicLinkDestinationPath -Item $targetItem
+        if ($existingDestination -ne $CanonicalPnach) {
+            throw "Refusing to replace unmanaged PNACH symlink at CRC alias path: $desiredPnachPath -> $existingDestination"
+        }
+        if ($desiredPnachPath -eq $targetPnach) {
+            $pnachStatus = "verified symlink"
+        }
     }
-    $existingDestination = Get-SymbolicLinkDestinationPath -Item $targetItem
-    if ($existingDestination -ne $CanonicalPnach) {
-        throw "Refusing to replace unmanaged PNACH symlink at CRC alias path: $targetPnach -> $existingDestination"
+    else {
+        New-Item -ItemType SymbolicLink -Path $desiredPnachPath -Target $canonicalLinkTarget | Out-Null
+        if ($desiredPnachPath -eq $targetPnach) {
+            $pnachStatus = "created symlink"
+        }
     }
-    $pnachStatus = "verified symlink"
-}
-else {
-    New-Item -ItemType SymbolicLink -Path $targetPnach -Target $canonicalLinkTarget | Out-Null
-    $pnachStatus = "created symlink"
-}
 
-$verifiedItem = Get-Item -LiteralPath $targetPnach -Force
-$verifiedDestination = Get-SymbolicLinkDestinationPath -Item $verifiedItem
-if ($verifiedDestination -ne $CanonicalPnach) {
-    throw "PNACH alias verification failed: $targetPnach -> $verifiedDestination"
+    $verifiedItem = Get-Item -LiteralPath $desiredPnachPath -Force
+    $verifiedDestination = Get-SymbolicLinkDestinationPath -Item $verifiedItem
+    if ($verifiedDestination -ne $CanonicalPnach) {
+        throw "PNACH alias verification failed: $desiredPnachPath -> $verifiedDestination"
+    }
 }
 
 [pscustomobject]@{
-    Iso = $IsoPath
-    BootElf = $bootPath
-    PCSX2ElfCRC = $crc
+    Iso = $identity.Iso
+    BootElf = $identity.BootElf
+    PCSX2ElfCRC = $identity.CRC
     CanonicalPnach = $CanonicalPnach
     CheatsPnach = $targetPnach
     PnachStatus = $pnachStatus
+    PreservedPnachAliases = @($preservedIdentities | ForEach-Object { Join-Path $cheatsDir $_.PnachName })
     RemovedPnachSymlinks = $removedPnachSymlinks
     EnabledCheats = $pnachState.EnabledCheats
 }

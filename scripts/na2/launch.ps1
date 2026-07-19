@@ -3,7 +3,8 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$IsoPath,
     [ValidateSet('Normal', 'Minimized', 'Hidden')]
-    [string]$WindowStyle = 'Normal'
+    [string]$WindowStyle = 'Normal',
+    [switch]$KeepExistingInstance
 )
 
 $ErrorActionPreference = 'Stop'
@@ -20,7 +21,9 @@ else {
 }
 $resolvedPcsx2Exe = [IO.Path]::GetFullPath((Join-Path $projectPaths.pcsx2 'pcsx2-qt.exe'))
 
-Stop-Na2Pcsx2 -Executable $resolvedPcsx2Exe
+if (-not $KeepExistingInstance) {
+    Stop-Na2Pcsx2 -Executable $resolvedPcsx2Exe
+}
 
 if (-not (Test-Path -LiteralPath $resolvedIso -PathType Leaf)) {
     throw "ISO does not exist: $resolvedIso"
@@ -28,37 +31,6 @@ if (-not (Test-Path -LiteralPath $resolvedIso -PathType Leaf)) {
 if (-not (Test-Path -LiteralPath $resolvedPcsx2Exe -PathType Leaf)) {
     throw "PCSX2 executable does not exist: $resolvedPcsx2Exe"
 }
-
-$global:LASTEXITCODE = 0
-try {
-    $actualizeOutput = @(
-        & (Join-Path $PSScriptRoot 'actualize_pnach.ps1') -IsoPath $resolvedIso
-    )
-}
-catch {
-    throw "PNACH actualization failed: $($_.Exception.Message)"
-}
-if ($LASTEXITCODE -ne 0) {
-    throw "PNACH actualization failed (exit $LASTEXITCODE)."
-}
-if ($actualizeOutput.Count -ne 1) {
-    throw "PNACH actualization returned $($actualizeOutput.Count) results; expected one."
-}
-$actualizeResult = $actualizeOutput[0]
-Write-Host (
-    Format-Na2ActualizeStatus `
-        -Result $actualizeResult `
-        -ProjectPaths $projectPaths
-) -ForegroundColor Cyan
-
-$enabledCheatNames = @($actualizeResult.EnabledCheats)
-$enabledCheats = if ($enabledCheatNames.Count -eq 0) {
-    'none'
-}
-else {
-    $enabledCheatNames -join ', '
-}
-Write-Host "[na2] Enabled cheats: $enabledCheats" -ForegroundColor Cyan
 
 $startArguments = @{
     FilePath = $resolvedPcsx2Exe

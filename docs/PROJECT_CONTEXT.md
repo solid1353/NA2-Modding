@@ -142,7 +142,7 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 
 ## Current Scripts
 
-- Root `_na2.ps1` is the only routine user-facing entrypoint. Bare `na2` builds the pinned current profile, rotates only when the verified candidate differs, actualizes PNACH, and launches `NA2.28 - Current.iso`. `na2 -c` and `na2 -p` launch the configured current or previous ISO without rebuilding; `na2 act` actualizes `NA2.28 - Current.iso` without launching.
+- Root `_na2.ps1` is the only routine user-facing entrypoint. Bare `na2` builds the pinned current profile, rotates only when the verified candidate differs, actualizes the Current PNACH alias while retaining the Previous alias, and launches `NA2.28 - Current.iso`. `na2 -c`, `na2 -p`, and `na2 -un5` are pure launch selectors: they do not rebuild, terminate an existing PCSX2 instance, or change PNACH aliases. `na2 act` performs the same Current/Previous alias maintenance without building or launching.
 - `scripts/na2/` contains build/promotion, mandatory PNACH actualization, PCSX2 process/launch handling, CRC diagnostics, and the agent-only hidden/muted launch test. Build transcripts explicitly report `ISO result: unchanged` or `ISO result: updated` and the rotation result.
 - `na2_patcher/build_profile.py` is the profile-only ISO compositor. It applies one explicit hash-pinned profile, rejects all file-size changes, verifies the complete staged ISO, writes the profile log, and leaves `NA2.28 - Current.iso.building` for PowerShell promotion.
 - `scripts/media/` contains the recursive source extractor, its byte-parity

@@ -87,7 +87,8 @@ function Get-Na2ProjectPaths {
             [IO.Path]::DirectorySeparatorChar,
             [IO.Path]::AltDirectorySeparatorChar
         ) + [IO.Path]::DirectorySeparatorChar
-        if (-not $path.StartsWith($repositoryPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        if (-not $value.StartsWith('@') -and
+            -not $path.StartsWith($repositoryPrefix, [StringComparison]::OrdinalIgnoreCase)) {
             throw "Project file '$name' must remain within the repository: $value"
         }
         $resolvedFiles[$name] = $path

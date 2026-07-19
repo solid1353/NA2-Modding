@@ -8,6 +8,8 @@ param(
     [switch]$Current,
     [Alias('p')]
     [switch]$Previous,
+    [Alias('un5')]
+    [switch]$Nun5,
     [Alias('h')]
     [switch]$Help
 )
@@ -18,6 +20,7 @@ $ErrorActionPreference = 'Stop'
 $projectPaths = Get-Na2ProjectPaths
 $currentIsoName = [IO.Path]::GetFileName($projectPaths.files.current_iso)
 $previousIsoName = [IO.Path]::GetFileName($projectPaths.files.previous_iso)
+$nun5IsoName = [IO.Path]::GetFileName($projectPaths.files.nun5_iso)
 
 function Write-Na2Stage {
     param([string]$Message)
@@ -25,21 +28,22 @@ function Write-Na2Stage {
 }
 
 $command = if ($Mode) { $Mode.ToLowerInvariant() } else { '' }
-$runSelected = $Current -or $Previous
+$runSelected = $Current -or $Previous -or $Nun5
 
-if ($Current -and $Previous) {
-    throw '-Current / -c and -Previous / -p cannot be used together.'
+if (@($Current, $Previous, $Nun5).Where({ $_ }).Count -gt 1) {
+    throw '-Current / -c, -Previous / -p, and -Nun5 / -un5 cannot be used together.'
 }
 if ($command -and $runSelected) {
-    throw '-Current / -c and -Previous / -p cannot be combined with a command mode.'
+    throw 'ISO launch switches cannot be combined with a command mode.'
 }
 if ($Help) {
     @(
         'NA2 commands:'
         "  na2       Build the pinned current profile, conditionally rotate, then run $currentIsoName"
-        "  na2 -c    Run build/$currentIsoName without rebuilding"
-        "  na2 -p    Run build/$previousIsoName without rebuilding"
-        "  na2 act   Actualize the PNACH symlink for build/$currentIsoName without launching"
+        "  na2 -c    Run build/$currentIsoName without rebuilding or closing PCSX2"
+        "  na2 -p    Run build/$previousIsoName without rebuilding or closing PCSX2"
+        "  na2 -un5  Run @source/$nun5IsoName without rebuilding or closing PCSX2"
+        "  na2 act   Maintain Current/Previous PNACH symlinks without building or launching"
         ''
     ) | Write-Output
     return
@@ -53,6 +57,9 @@ elseif ($Previous) {
 }
 elseif ($Current) {
     'current'
+}
+elseif ($Nun5) {
+    'nun5'
 }
 else {
     'build'
@@ -70,8 +77,14 @@ $runFailure = ''
 try {
     if ($command -eq 'act') {
         Write-Na2Stage "Actualize PNACH symlink for $currentIsoName CRC"
+        $actualizeArguments = @{
+            IsoPath = $projectPaths.files.current_iso
+        }
+        if (Test-Path -LiteralPath $projectPaths.files.previous_iso -PathType Leaf) {
+            $actualizeArguments.PreserveIsoPath = @($projectPaths.files.previous_iso)
+        }
         $actualizeOutput = @(
-            & (Join-Path $projectPaths.scripts 'na2\actualize_pnach.ps1')
+            & (Join-Path $projectPaths.scripts 'na2\actualize_pnach.ps1') @actualizeArguments
         )
         if ($actualizeOutput.Count -ne 1) {
             throw "PNACH actualization returned $($actualizeOutput.Count) results; expected one."
@@ -81,18 +94,32 @@ try {
                 -Result $actualizeOutput[0] `
                 -ProjectPaths $projectPaths
         ) -ForegroundColor Cyan
+        $enabledCheatNames = @($actualizeOutput[0].EnabledCheats)
+        $enabledCheats = if ($enabledCheatNames.Count -eq 0) {
+            'none'
+        }
+        else {
+            $enabledCheatNames -join ', '
+        }
+        Write-Host "[na2] Enabled cheats: $enabledCheats" -ForegroundColor Cyan
     }
     elseif ($runSelected) {
         $isoPath = if ($Previous) {
             $projectPaths.files.previous_iso
+        }
+        elseif ($Nun5) {
+            $projectPaths.files.nun5_iso
         }
         else {
             $projectPaths.files.current_iso
         }
         $isoName = [IO.Path]::GetFileName($isoPath)
         Write-Na2Stage "Run $isoName without rebuilding"
-        & (Join-Path $projectPaths.scripts 'na2\launch.ps1') `
-            -IsoPath $isoPath
+        $launchArguments = @{
+            IsoPath = $isoPath
+            KeepExistingInstance = $true
+        }
+        & (Join-Path $projectPaths.scripts 'na2\launch.ps1') @launchArguments
     }
     else {
         Write-Na2Stage '1/2 Build pinned current profile'
@@ -101,7 +128,7 @@ try {
             throw 'Profile build did not return a valid promotion result.'
         }
 
-        Write-Na2Stage "2/2 Actualize PNACH and launch $currentIsoName"
+        Write-Na2Stage "2/2 Launch $currentIsoName"
         & (Join-Path $projectPaths.scripts 'na2\launch.ps1') `
             -IsoPath $projectPaths.files.current_iso
     }

@@ -118,7 +118,8 @@ try {
   },
   "files": {
     "current_iso": "@build/NA2.28 - Current.iso",
-    "previous_iso": "@build/NA2.28 - Previous.iso"
+    "previous_iso": "@build/NA2.28 - Previous.iso",
+    "nun5_iso": "@source/NUN5.iso"
   }
 }
 '@
@@ -146,8 +147,8 @@ try {
 }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'launch.ps1') -Content @'
-param([string]$IsoPath)
-Write-Host "[fake] launch $IsoPath"
+param([string]$IsoPath, [switch]$KeepExistingInstance)
+Write-Host "[fake] launch $IsoPath keep-existing=$KeepExistingInstance"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'build.ps1') -Content @'
 Write-Host '[na2] ISO result: unchanged; rotation: no.'
@@ -156,22 +157,28 @@ Write-Host '[na2] ISO result: unchanged; rotation: no.'
     & (Join-Path $fakeRepository '_na2.ps1') act
     & (Join-Path $fakeRepository '_na2.ps1') -Current
     & (Join-Path $fakeRepository '_na2.ps1') -Previous
+    & (Join-Path $fakeRepository '_na2.ps1') -un5
     & (Join-Path $fakeRepository '_na2.ps1')
     $fakeLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na2\latest.log'))
     $fakeRolling = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na2\rolling.log'))
     Assert-Na2Test -Condition ($fakeLatest -match '(?m)^mode: build$') -Message 'Root build mode was not logged.'
-    foreach ($mode in 'actualize', 'current', 'previous', 'build') {
+    foreach ($mode in 'actualize', 'current', 'previous', 'nun5', 'build') {
         Assert-Na2Test `
             -Condition ($fakeRolling -match "(?m)^mode: $mode$") `
             -Message "Root $mode dispatch was not logged."
     }
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 4) `
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 5) `
         -Message 'Root dispatch test produced the wrong rolling-log section count.'
     Assert-Na2Test `
         -Condition (-not (Test-Na2WindowsAbsolutePath -Text $fakeRolling)) `
         -Message 'Root dispatch persisted an absolute path.'
-
+    Assert-Na2Test `
+        -Condition ([regex]::Matches($fakeRolling, 'keep-existing=True').Count -eq 3) `
+        -Message 'Current/Previous/NUN5 dispatch did not preserve an existing PCSX2 instance.'
+    Assert-Na2Test `
+        -Condition ([regex]::Matches($fakeRolling, 'keep-existing=False').Count -eq 1) `
+        -Message 'Build-and-launch dispatch unexpectedly preserved an existing PCSX2 instance.'
     $structuredLog = Join-Path $logs 'na2'
     $buildRecords = Join-Path $structuredLog 'builds'
     foreach ($buildId in 'old-previous', 'old-current', 'new-current', 'orphan') {

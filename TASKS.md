@@ -7,7 +7,6 @@
 - Investigate upscaling.
 
 ### Project
-- Add deterministic receipt-backed preflight no-op detection for bare `na2` builds before creating the `.building` ISO.
 - [Raw-binary patch hierarchy and profile-driven workflows](docs/plans/raw_binary_patch_hierarchy_and_profiles.md).
 - [Develop a release process (deferred indefinitely)](docs/RELEASE_PROCESS.md).
 - Investigate cross-platform development/deployment possibilities.

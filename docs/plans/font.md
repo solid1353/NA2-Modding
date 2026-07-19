@@ -79,9 +79,10 @@ The implementation must reproduce NUN5's fit decision as well as its scaling:
 
 ## Preserved baseline and evidence
 
-- `na2_patcher/modules/raw_binary/patch_sets/font_m01/` is the accepted active
-  clean-coverage baseline. Its canonical package hash is
-  `7F08FC58F1EBEF47B586CFB05BCCFC09F599D453390DC25331F7018ADF1F17AF`.
+- `na2_patcher/modules/raw_binary/patch_sets/font_m01/` contains the accepted
+  clean-coverage baseline and its mutually exclusive semantic-NUN5 appearance
+  candidate. The current raw-binary module content hash is
+  `3730783CD412A2798C2DFBBA58CD3E582DA5247F966BD2F94BC7ADA2A9ED3FD7`.
 - The accepted `font_m01` output hashes are documented beside that patch set.
 - `na2_patcher/modules/raw_binary/patch_sets/font_elf_history/` preserves
   historical ELF experiments.

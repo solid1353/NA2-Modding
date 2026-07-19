@@ -64,3 +64,86 @@ of the unresolved renderer positioning/advance work.
 The temporary patch rows and current-profile selection were removed after the
 runtime review. The accepted `font_m01` package and its profile hash were
 restored unchanged.
+
+## 2026-07-19 semantic NUN5 appearance candidate
+
+Matched 1708x1282 captures of the Control Settings screen separate the current
+defects. For the same `Attack`, `Item Use`, `Item Select`, and `Linked Attack`
+labels, visible widths are already close to NUN5, but the NA2 main-row ink is
+31 pixels high instead of 36, its bottom edge is consistently 8 pixels too
+high, and its horizontal center drifts farther left as the string grows. The
+four-label center error fits approximately `8.6 - 7.38 * character_count`
+pixels (`R^2` about 0.98). The static `SELECT button: Return to Defaults`
+legend is essentially the same 832x38 versus 831x38 appearance but is 99
+pixels farther right in NA2. These measurements identify separate raster,
+vertical-placement, and logical-advance/centering problems; fixing weight
+alone cannot establish alignment parity.
+
+Static structure establishes a safe size-preserving NUN5 data experiment.
+NUN5's single GF4 descriptor contains 223 14x20 cells with a 140-byte stride;
+the accepted m01 descriptor reserves 123 cells at NA2 `0xD9240`. A literal
+copy of NUN5 cells `0..122` is nevertheless invalid. Both parsers map printable
+ASCII directly as `byte - 0x20`, but NUN5 cells `59..64` and `91..94` are blank
+or have different semantics. That blind copy would remove the brackets used
+by `[S]` mappings and other translated-English punctuation. NUN5 also stores
+the literal at-sign in cell `63`, while NA2 printable ASCII addresses cell
+`32`. The direct first-123 candidate with GF4 SHA-256
+`8E426B252D45B735D78A3D64657BE8E37F4856150D454314F67DAFF8D48C203D`
+was therefore rejected statically and must not be restored.
+
+The corrected `font_nun5_appearance` patch imports exact official NUN5 cells
+and metric rows for the same-semantic ranges `0..31`, `33..58`, `65..90`, and
+`95..122`. It relocates exact NUN5 source cell and metric row `63` to NA2
+destination cell `32`. Cells `59..64` and `91..94` retain their accepted m01
+glyph shapes and metrics. Their bitmap indices are deterministically converted
+from the m01 palette to the NUN5 palette with this mapping:
+
+`0->0, 1->1, 2->2, 3->3, 4->4, 5->5, 6->8, 7->7, 8->8, 9->B, A->A, B->C, C->F, D->F, E->E, F->E`.
+
+The exact official raster and metric operations are:
+
+- cells `0..31`: NUN5 raster `0x4C..0x11CC` to NA2
+  `0xD9240..0xDA3C0`; NUN5 metrics `0x7BE8..0x7C68` to NA2
+  `0xD59E0..0xD5A60`;
+- cell `32` from source cell `63`: raster `0x22C0..0x234C` to
+  `0xDA3C0..0xDA44C`; metric `0x7CE4..0x7CE8` to
+  `0xD5A60..0xD5A64`;
+- cells `33..58`: raster `0x1258..0x2090` to `0xDA44C..0xDB284`;
+  metrics `0x7C6C..0x7CD4` to `0xD5A64..0xD5ACC`;
+- cells `65..90`: raster `0x23D8..0x3210` to `0xDB5CC..0xDC404`;
+  metrics `0x7CEC..0x7D54` to `0xD5AE4..0xD5B4C`;
+- cells `95..122`: raster `0x3440..0x4390` to `0xDC634..0xDD584`;
+  metrics `0x7D64..0x7DD4` to `0xD5B5C..0xD5BCC`;
+- GF4C palette `0x28..0x68` to the same NA2 range, with source SHA-256
+  `499B64CDF2DFEA7C29D89834491A9C307B9653D4FFC217EC20CF8F358DAC0D3C`.
+
+The corrected expected outputs are GF4
+`690D0E53F30BD150C64F609DB8951D313A90F341F39B7486A8ED6A5E943A2FFE`,
+GF4C `C6C889B795BB6137120252FAE887B48CB4304A0854A761F5942B50818D9D2FBD`,
+and ELF `5541FB6C3CFFE15B318AC68C49E2254BE52E3C8BC99AC5B823CFE53FD7BEB01F`.
+The independent generator and raw-binary engine produced byte-identical GF4
+and GF4C outputs. The 123-cell bitmap-block SHA-256 is
+`4EBB5F0753717718024F159D1D1B0612FDA566FA4B36F8B2F4E3A819F5E3C907`;
+the 123-row metric-block SHA-256 is
+`A6C51E67E25634CC3B9F128A75C694B274485CD45D3ACD36379A3385B9D55458`.
+
+Exact NUN5 cells `95..122` are outside printable ASCII and best satisfy the
+appearance-parity objective, but eight of those NUN5 cells are blank where m01
+had data. Runtime review must therefore include untranslated Japanese or
+halfwidth text in addition to translated English. A fallback that preserves
+those m01 cells is statically defined by the investigation but is not enabled.
+
+This candidate is mutually exclusive with `font_m01` and remains
+`approved_for_test`. It is not v22: it uses the confirmed m01 destination
+`0xD9240`, retains 123 cells and m01 ELF behavior, does not import v22 pointer
+tokens or its renderer-width edit, and is not a padded or unpadded whole-file
+swap.
+
+A matched runtime comparison on 2026-07-19 confirmed that the candidate is
+visually almost identical to NUN5 on the Control Settings screen. `Attack`,
+`Item Use`, `Item Select`, and `Linked Attack` have the intended NUN5-like
+glyph appearance, while the retained brackets in `[S]Ult Prep` render
+correctly. The remaining conspicuous differences are positioning, advances,
+and alignment, which belong to the next Font task rather than this asset
+candidate. Broader untranslated halfwidth-kana coverage remains unverified,
+so the patch retains its `approved_for_test` classification.

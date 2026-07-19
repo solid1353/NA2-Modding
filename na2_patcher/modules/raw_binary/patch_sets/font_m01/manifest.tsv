@@ -1,2 +1,2 @@
 schema_version	package_id	package_version	game	description	evidence_path
-1	font_m01	1	NA2	Exact declarative normalization of the accepted NUN5 14x20 clean-coverage font milestone.	docs/HYPOTHESES.md
+1	font_m01	3	NA2	Accepted font_m01 baseline plus a separately selectable semantic NUN5 glyph-appearance experiment.	docs/knowledge/font/README.md

@@ -9,12 +9,16 @@ matched measurements, exact patch records, and negative results are preserved
 in `docs/knowledge/font/README.md`; canonical accepted and historical patch
 data remain under `na2_patcher/modules/raw_binary/patch_sets/`.
 
-Clean NA2 GF4/GF4C is the accepted asset. Controls overflow now uses a local
-shrink-only helper, and the reviewed Controls and character-modal placement is
-corrected locally. The old v22/v23, palette, descriptor-height, and
-threshold-only experiments remain negative evidence, not active candidates.
-If another screen exposes a distinct font defect, begin from the accepted
-clean package and prove that screen's call path before adding a new hypothesis.
+The accepted integration baseline uses a guarded native 14x20 NUN5-derived
+secondary atlas in GF4 while keeping clean NA2 GF4C. Controls overflow uses a
+local shrink-only helper, and the reviewed Controls and character-modal
+placement is corrected locally. Halfwidth Latin glyphs remain visibly bolder
+than NUN5 and are explicitly deferred to the next refinement iteration;
+fullwidth Shift-JIS Save/Load digits are not a Latin-weight target. The old
+v22/v23, palette, descriptor-height, 10x22, global-parser, and threshold-only
+experiments remain negative evidence, not active candidates. Future work must
+start from the accepted native package and prove any change against matched
+captures before changing its established layout.
 
 ### Disassembly leads
 

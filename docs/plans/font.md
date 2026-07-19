@@ -2,11 +2,12 @@
 
 ## Objective
 
-Make NA2 English text fit and align as cleanly as the UN5/NUN5 reference while
-starting from clean NA2 assets. The clean font is serviceable and complete;
-asset replacement is no longer assumed to be necessary. Renderer geometry,
-measurement, positioning, and boxed auto-fit take priority, and glyph data is
-changed only if matched captures still prove an appearance defect afterward.
+Make NA2 English text fit and align as cleanly as the UN5/NUN5 reference. The
+accepted integration baseline combines call-local renderer fixes with a native
+14x20 NUN5-derived secondary font generated from clean NA2 and official NUN5
+sources. Renderer geometry, measurement, positioning, and boxed auto-fit
+remain separate from raster-weight refinement so an appearance change cannot
+silently invalidate the accepted layout.
 
 Confirmed findings and negative results remain canonical in
 `docs/knowledge/font/README.md`. This document defines the active work and its
@@ -14,19 +15,27 @@ execution order.
 
 ## Current result for review
 
-The implementation keeps clean NA2 GF4/GF4C unchanged. Matched captures show
-that the remaining material defects were call-local placement and overflow,
-not an asset failure. The active `font` package now supplies separately
-selectable, runtime-proven Controls auto-fit and character-modal alignment.
-The rejected 28x28 quad experiment remains disabled as negative evidence.
+The implementation preserves clean NA2 GF4C and file sizes while installing a
+guarded native 14x20 secondary atlas in GF4. Matched captures show a good
+accepted result for Controls, Practice, Save/Load, and the character modal:
+overflowing Controls text fits, `Linked Attack` stays full width, and reviewed
+rows align closely with NUN5. The remaining visible defect is that halfwidth
+Latin glyphs are noticeably bolder than NUN5. The user accepted this iteration
+and deferred weight refinement to the next one. Fullwidth Shift-JIS Save/Load
+digits are not a Latin-weight parity target. The rejected 28x28 quad experiment
+remains disabled as negative evidence.
 
 ## Required execution order
 
-1. Establish the clean NA2 GF4/GF4C baseline and isolate vertical geometry.
-2. Fix horizontal and vertical alignment while keeping clean glyph assets.
-3. Reproduce NUN5's boxed measurement and shrink-only auto-fit decision.
-4. Revisit glyph appearance only if matched captures still show a material
-   asset defect after layout is correct.
+1. Completed: establish the clean NA2 GF4/GF4C baseline and isolate vertical
+   geometry.
+2. Completed for the reviewed screens: fix horizontal and vertical alignment
+   with call-local edits.
+3. Completed for the reviewed Controls call sites: reproduce NUN5's
+   shrink-only fit decision and restore renderer state after every draw.
+4. Next iteration: refine the accepted native donor's halfwidth Latin weight
+   against matched NUN5 captures without moving rows pixel-by-pixel unless the
+   refined metrics genuinely change their measured centers.
 
 Auto-adjust is downstream of horizontal metrics. A scaling test is not valid
 until logical width, visible glyph bounds, advances, and centering are measured
@@ -37,23 +46,26 @@ negative evidence, not implementation parents.
 
 ### Make font identical to UN5
 
-Runtime review determined that no asset change is needed for this result:
+The accepted integration baseline uses a new donor generated independently of
+the rejected historical candidates:
 
-- Use clean NA2 GF4 and GF4C while renderer alignment and fit are corrected.
-- Compare glyph shape, apparent size, weight, raster coverage, and consistency
-  against matched NUN5 captures only after placement is stable.
-- Retain clean NA2's complete 95/95 printable-ASCII coverage.
-- Treat `font_m01` and `font_nun5_appearance` as historical comparison data;
-  do not copy their descriptor, placement, palette, or 123-cell construction.
-- If a later screen proves an independent glyph defect, derive any donor from
-  clean NA2 and official NUN5 structures and preserve NA2 palette semantics.
-- Preserve file sizes and express every accepted binary change through a
-  script-generated raw-binary patch.
+- Import native 14x20 NUN5 geometry and metric rows only for same-semantic
+  English cells.
+- Reconstruct unsupported punctuation from clean NA2 and retain complete
+  95/95 printable-ASCII coverage.
+- Preserve clean NA2 GF4C palette semantics and both target file sizes.
+- Bound the shortened 123-cell secondary atlas locally and keep the primary
+  font parser unchanged.
+- Treat `font_m01`, `font_nun5_appearance`, the 10x22 resample, and the global
+  parser experiment as negative or comparison evidence, not implementation
+  parents.
+- Refine the remaining heavier Latin weight in the next iteration using
+  matched captures; do not use fullwidth Shift-JIS digits as a weight target.
 
-Acceptance requires matched NA2/NUN5 captures at the same presentation scale,
-with representative short and long strings and no missing, touching,
-overlapping, or palette-damaged glyphs. No font-asset patch is an acceptable
-outcome if clean assets already satisfy this requirement.
+Final parity still requires matched NA2/NUN5 captures at the same presentation
+scale, with representative short and long strings and no missing, touching,
+overlapping, or palette-damaged glyphs. The current result is the accepted
+integration baseline, not the final weight match.
 
 ### Fix alignment issues
 
@@ -75,10 +87,13 @@ same metric initialization or renderer state.
 
 The first clean-source test at ELF file offset `0x88064` was runtime-rejected:
 it made the untouched 24x24 quad 28x28, stretching both axes without changing
-logical measurement. The accepted alignment changes are call-local instead:
-the Controls row origin moves from 48 to 50, and the character modal uses five
-measured X positions plus corrected row Y values. The modal centers are within
-one pixel of NUN5; its selected red row matches exactly.
+logical measurement. The accepted alignment changes are call-local instead.
+Controls preloads the clean 48-unit row origin, then shifts only its left and
+right text labels one local X unit for native visible-ink centering without
+moving selection markers. The character modal uses independently measured X
+values `81.75, 73.375, 72.375, 63.5, 3.5` and retains its accepted local Y
+behavior. Reviewed ordinary-row centers are within one pixel of NUN5, and the
+long fifth row fits within the modal.
 
 ### Research and implement NUN5 auto-adjust behavior
 
@@ -95,19 +110,20 @@ scaling, without redirecting NA2 to a layout-incompatible NUN5 function:
 - Verify both the threshold decision and final visual bounds; do not accept a
   result merely because clipping disappears.
 
-Clean NA2's applicable ASCII width is `9.5 * byte_count + 1`. The local helper
-keeps every string below 14 bytes at scale `1.0`, so `Linked Attack` remains
-full width, and applies `128 / measured_width` only to overflow. The official
-19-byte `Ultimate Jutsu Prep` probe fits with scale `256 / 363` and centers
-within half a pixel of NUN5. Scale returns to `1.0` before the next call, and
-`OFF`, Save/Load, Practice, GF4, and GF4C remain outside the fit decision.
+The local helper measures through the accepted native secondary-font metrics,
+keeps non-overflowing text at scale `1.0`, and applies the box ratio only to
+overflow. `Linked Attack` remains full width, while the official 19-byte
+`Ultimate Jutsu Prep` probe fits and centers closely to NUN5. Scale returns to
+`1.0` before the next call. `OFF` remains on the ordinary renderer, and
+Save/Load and Practice remain outside the Controls fit decision.
 
 ## Preserved baseline and evidence
 
 - `na2_patcher/modules/raw_binary/patch_sets/font/` contains the active
-  clean-source, runtime-proven alignment and fit components. It targets only
-  clean `SLPS_258.37` and contains no GF4 or GF4C edit. Its current module hash
-  is `86C229F4132A1388CEDFAD9EAF7735856911EF6B6D2E197DCEDC0C0762133AF4`.
+  runtime-proven native secondary font, alignment, and fit components. It
+  targets clean `SLPS_258.37` and `DATA/GF4.BIN`, preserves clean GF4C, and
+  has module hash
+  `9FC3C4905DFF6D14BAAA848C56E6C17D1DE4E79EEFAB2E1A7A74FAD6A25013F8`.
 - `na2_patcher/modules/raw_binary/patch_sets/font_m01/` is historical evidence.
   Its semantic NUN5 appearance patch is disabled and `runtime_failed`.
 - `na2_patcher/modules/raw_binary/patch_sets/font_elf_history/` preserves

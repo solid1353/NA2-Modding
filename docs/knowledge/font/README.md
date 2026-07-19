@@ -1,16 +1,73 @@
 # Font renderer and asset findings
 
-This directory preserves the visual and byte-level evidence for the font v23 tracking experiment performed on 2026-07-13.
+This directory preserves confirmed visual, structural, and byte-level Font
+evidence, including accepted implementations and rejected historical tests.
 
-## 2026-07-19 accepted clean-font result
+## 2026-07-20 accepted native 14x20 integration baseline
 
-The current implementation starts from clean NA2, not from m01, v22, v23, or
-the rejected semantic-palette candidate. Static inspection establishes a
+The current package is version 5 with module hash
+`9FC3C4905DFF6D14BAAA848C56E6C17D1DE4E79EEFAB2E1A7A74FAD6A25013F8`.
+It is a new, deterministic donor built from hash-verified clean NA2 and
+official NUN5 inputs; it is not based on m01, v22/v23, the rejected semantic
+palette swap, the 10x22 resample, or a whole-file GF4 replacement.
+
+`font_nun5_glyphs` installs native NUN5 14x20 geometry and metrics for
+same-semantic English cells. Unsupported punctuation is reconstructed from
+clean NA2, retaining 95/95 printable-ASCII coverage. The 123-cell secondary
+atlas is locally bounded; packed metric rows occupy only value words of empty
+primary-map slots and are decoded by secondary-only draw and measurement
+hooks. Clean NA2 GF4C remains untouched. The deterministic generator verifies
+these referenced blobs:
+
+- atlas: 17,220 bytes, SHA-256
+  `6E4B988E512568F0A91E0226A8A4046362C1A4EF078E50BBF630BEEF90333736`;
+- packed map: 1,736 bytes, SHA-256
+  `6F691015E5BA54EA87B2976970D828863E274BB543CC3D531D93800018EB7A5E`;
+- decoder: 316 bytes, SHA-256
+  `06406ABC5E10AD85A13ECFA4396064354CC0FD85EE090FA5AEEA4040EE62D8F7`;
+- measurement hook: 24 bytes, SHA-256
+  `8B7A75C0FDFD2F055ACFC1FCF90996E298CE363E112659579513A89606FE7C1C`.
+
+The runtime-reviewed `native_final_v2` result contains exactly 19 edits: seven
+glyph edits, nine Controls fit/alignment edits, and three character-modal
+alignment edits. All four preserved NA2 savestates contain the same payload.
+The canonical package was recovered byte-for-byte from those states before
+closeout; a later unreviewed modal-scaling experiment was removed. Matched
+Controls, Practice, Save/Load, and character-modal comparisons were presented
+to the user, who accepted the result as good while noting that halfwidth Latin
+glyphs remain noticeably bolder than NUN5. That weight difference is the next
+refinement target. Fullwidth Shift-JIS Save/Load digits use a different glyph
+path and are excluded from Latin-weight comparison.
+
+Controls retains full-width `Linked Attack`, fits the official 19-byte
+`Ultimate Jutsu Prep` probe, leaves `OFF` on the ordinary renderer, and
+restores local scale immediately after a fitted draw. Its labels move one
+local X unit without moving selection markers. The character modal uses local
+X values `81.75, 73.375, 72.375, 63.5, 3.5`; reviewed ordinary-row centers are
+within one pixel of NUN5 and the long fifth row fits inside the modal.
+
+A clean file-backed apply preserved both file sizes and produced:
+
+- `DATA/GF4.BIN`: 906,678 bytes, SHA-256
+  `79BA614746E667A70A068A0A889085D028D8019884182E78041026A77971AA25`;
+- `SLPS_258.37`: 5,273,256 bytes, SHA-256
+  `EF0A61F163C22D25B4C4C28E6D9AC543EC6E3B93BC66E1087C33C7F1A0F791E6`.
+
+The verification output and complete patch log are retained under
+`work/Font/verification/font_package_v5_reviewed/` and
+`work/Font/verification/font_package_v5_reviewed_log/`. The latest integrated
+ISO build predates this exact recovered package; the Project task owns the
+next integrated build after the Font commit.
+
+## 2026-07-19 superseded clean-font baseline
+
+This earlier baseline started from clean NA2, not from m01, v22, v23, or the
+rejected semantic-palette candidate. Static inspection established a
 coherent 10x22 bitmap font with 157 cells and complete printable-ASCII
 coverage: 95/95 semantic slots exist and 94/94 non-space slots contain visible
 raster data. The median visible glyph box is 6x14 pixels, with median top 4 and
-bottom 17. Matched runtime captures confirm that this asset is serviceable;
-the accepted patch changes no byte in `DATA/GF4.BIN` or `DATA/GF4C.BIN`.
+bottom 17. Matched runtime captures confirmed that this asset was serviceable,
+but the later accepted native baseline superseded its unchanged-GF4 result.
 
 The isolated descriptor-height experiment at ELF file offset `0x88064` is
 rejected. Changing `0C 00 20 C6` to `10 00 20 C6` did not make a Y-only
@@ -218,8 +275,8 @@ primary raster uses palette index 15 for 265,344 of 1,746,272 pixels
 Changing GF4C therefore reinterprets a large existing pixel population and
 explains the deterministic outline damage. The patch is now classified
 `runtime_failed`, remains disabled as negative evidence, and must not be used
-as a donor or implementation parent. Current Font work keeps clean NA2 GF4 and
-GF4C unchanged unless later matched evidence proves an independent asset need.
+as a donor or implementation parent. The accepted native baseline changes only
+the bounded secondary GF4 data and keeps clean NA2 GF4C unchanged.
 
 The fresh matched modal captures also give a concrete overflow reference. At
 1708x1281, the visible red instructional-text ink spans approximately

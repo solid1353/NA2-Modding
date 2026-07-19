@@ -34,8 +34,9 @@ files.
 
 The current profile composes:
 
-1. clean NA2 font assets plus runtime-proven Controls shrink-only fit and
-   character-modal alignment through the standalone `font` raw-binary package;
+1. the runtime-proven native 14x20 NUN5-derived secondary font, Controls
+   shrink-only fit, and character-modal alignment through the standalone
+   `font` raw-binary package, while preserving clean NA2 GF4C;
 2. the runtime-proven menu-input handler set through `raw_binary`;
 3. separate `QoL` and `Battle logic` raw-binary sections using their preserved default states;
 4. the fixed-size memory-card title through the `string_replacements`

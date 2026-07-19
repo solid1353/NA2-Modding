@@ -3,7 +3,7 @@
 ## In Progress
 
 ### [UI Translation](docs/plans/ui_translation.md)
-- Deal with savestates 1-6.
+- Deal with remaining issues/regressions.
 - Investigate upscaling.
 
 ### Project

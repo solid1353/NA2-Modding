@@ -38,3 +38,7 @@ Operational logs remain disposable after their durable findings are promoted. Gi
 - `substitution.md`: substitution reliability control flow, failed tests, and next investigation boundary.
 - `media/`: exact outer-ISO, `DATA.CVM`, and AFS layout inventories.
 - `font/`: durable visual and byte-level evidence from the font v23 negative result.
+- `external_translation_files.md` and
+  `external_translation_shortening_refs.tsv`: two-file `MOD.BIN` +
+  `TEXTENG.BIN` feasibility, loader/memory/ISO constraints, and the complete
+  pointer inventory for enabled `[S]` shortening mappings.

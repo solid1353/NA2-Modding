@@ -55,9 +55,12 @@ A clean file-backed apply preserved both file sizes and produced:
 
 The verification output and complete patch log are retained under
 `work/Font/verification/font_package_v5_reviewed/` and
-`work/Font/verification/font_package_v5_reviewed_log/`. The latest integrated
-ISO build predates this exact recovered package; the Project task owns the
-next integrated build after the Font commit.
+`work/Font/verification/font_package_v5_reviewed_log/`. The integrated profile
+gate at `@logs/na2/builds/20260720_011314_550_pid31820/` passed the full 80-test
+suite, selected the same three Font patches and 19 edits, reproduced both
+documented file hashes, updated Current, and rotated Previous. The final ISO's
+boot ELF CRC is `1852E63F`; a controlled hidden 15-second PCSX2 boot reported
+the same CRC. The build left no `.building` ISO or PCSX2 process behind.
 
 ## 2026-07-19 superseded clean-font baseline
 

@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .iso9660 import Iso9660
+from .iso9660 import Iso9660, IsoInsertion, insert_files, normalize_iso_path
 from .modules import translation as translation_module
 from .modules.disc_identity import engine as disc_identity_module
 from .modules.raw_binary import engine as patch_binary
@@ -18,10 +18,14 @@ from .project_paths import load_project_paths
 
 
 PROJECT_PATHS = load_project_paths(Path(__file__).resolve())
+EXTERNAL_TRANSLATION_INSERTION_PATHS = (
+    "PRG/MOD.BIN",
+    "PRG/TEXTENG.BIN",
+)
 
 
 def normalize(path: str) -> str:
-    return path.replace("\\", "/").strip("/").upper()
+    return normalize_iso_path(path)
 
 
 def building_iso_path(output_iso: Path) -> Path:
@@ -248,6 +252,125 @@ def apply_ui_texture_package(
     return plan, path
 
 
+def apply_external_translation_package(
+    package_directory: Path,
+    *,
+    module_id: str,
+    roots: dict[str, Path],
+    selection: tuple[str, ...],
+    source: Iso9660,
+    payloads: dict[str, bytearray],
+    owners: dict[str, str],
+    insertions: dict[str, bytes],
+    insertion_owners: dict[str, str],
+) -> tuple[object, object, int, list[str]]:
+    if selection:
+        raise ValueError("external_translation modules do not accept selections")
+    if not package_directory.is_dir():
+        raise ValueError(
+            f"External-translation module input must be a directory: {package_directory}"
+        )
+
+    # Kept lazy so profiles without this module do not require its package.
+    from .modules import external_translation as external_translation_module
+
+    plan = external_translation_module.build_external_translation_plan(
+        package_directory=package_directory,
+        roots=roots,
+    )
+    edits = tuple(plan.edits)
+    if not edits:
+        raise RuntimeError(f"External-translation module contains no edits: {module_id}")
+
+    patched_paths: list[str] = []
+    patched_set: set[str] = set()
+    for edit_number, edit in enumerate(edits, 1):
+        path = normalize(edit.path)
+        if path != edit.path:
+            raise ValueError(
+                f"External-translation edit {edit_number} path is not normalized: "
+                f"{edit.path!r}"
+            )
+        record = source.by_path.get(path)
+        if record is None or record.is_dir:
+            raise RuntimeError(
+                f"External-translation edit {edit_number} path is not in the clean "
+                f"source ISO: {path}"
+            )
+        expected = bytes(edit.expected)
+        replacement = bytes(edit.replacement)
+        if not expected:
+            raise ValueError(
+                f"External-translation edit {edit_number} has an empty guarded range"
+            )
+        if len(expected) != len(replacement):
+            raise ValueError(
+                f"External-translation edit {edit_number} must preserve length "
+                f"({len(expected)} != {len(replacement)})"
+            )
+        offset = edit.offset
+        if not isinstance(offset, int):
+            raise TypeError(
+                f"External-translation edit {edit_number} offset must be an integer"
+            )
+        data = payloads.get(path)
+        if data is None:
+            data = bytearray(source.read_file(record))
+            payloads[path] = data
+        end = offset + len(expected)
+        if offset < 0 or end > len(data):
+            raise ValueError(
+                f"External-translation edit {edit_number} range "
+                f"0x{offset:X}-0x{end:X} is outside {path} ({len(data)} bytes)"
+            )
+        actual = bytes(data[offset:end])
+        if actual != expected:
+            raise RuntimeError(
+                f"External-translation conflict in {module_id}, edit {edit_number}, "
+                f"{path} at 0x{offset:X}: expected {expected.hex().upper()}, "
+                f"found {actual.hex().upper()}"
+            )
+        data[offset:end] = replacement
+        owners[path] = module_id
+        if path not in patched_set:
+            patched_set.add(path)
+            patched_paths.append(path)
+
+    planned_insertions: dict[str, bytes] = {}
+    for supplied_path, supplied_data in plan.insertions.items():
+        path = normalize(supplied_path)
+        if path != supplied_path:
+            raise ValueError(
+                f"External-translation insertion path is not normalized: {supplied_path!r}"
+            )
+        if path in planned_insertions:
+            raise ValueError(f"Duplicate external-translation insertion path: {path}")
+        if not isinstance(supplied_data, (bytes, bytearray, memoryview)):
+            raise TypeError(
+                f"External-translation insertion payload must be bytes: {path}"
+            )
+        planned_insertions[path] = bytes(supplied_data)
+    if tuple(sorted(planned_insertions)) != EXTERNAL_TRANSLATION_INSERTION_PATHS:
+        raise RuntimeError(
+            "External-translation module must insert exactly "
+            + ", ".join(EXTERNAL_TRANSLATION_INSERTION_PATHS)
+        )
+    for path in EXTERNAL_TRANSLATION_INSERTION_PATHS:
+        if path in insertions:
+            raise RuntimeError(f"Multiple modules declare ISO insertion path: {path}")
+        if not planned_insertions[path]:
+            raise ValueError(f"External-translation insertion payload is empty: {path}")
+        insertions[path] = planned_insertions[path]
+        insertion_owners[path] = module_id
+
+    return (
+        external_translation_module,
+        plan,
+        len(edits),
+        patched_paths + list(EXTERNAL_TRANSLATION_INSERTION_PATHS),
+    )
+
+
 def write_raw_composition_log(
     result: dict[str, object],
     log_directory: Path,
@@ -399,6 +522,55 @@ def write_ui_texture_log(
     )
 
 
+def write_external_translation_log(
+    external_translation_module: object,
+    plan: object,
+    insertion_results: tuple[IsoInsertion, ...],
+    log_directory: Path,
+) -> None:
+    log_directory.mkdir(parents=True, exist_ok=True)
+    patch_binary.write_tsv(
+        log_directory / "patch_log.tsv",
+        [
+            "target",
+            "offset",
+            "length",
+            "original_hex",
+            "new_hex",
+            "mapping_id",
+            "kind",
+            "reason",
+        ],
+        external_translation_module.patch_log_rows(plan),
+    )
+    patch_binary.write_tsv(
+        log_directory / "insertions.tsv",
+        [
+            "path",
+            "extent",
+            "byte_offset",
+            "size",
+            "sha256",
+            "directory_record_offset",
+        ],
+        [
+            {
+                "path": result.path,
+                "extent": result.extent,
+                "byte_offset": f"0x{result.byte_offset:X}",
+                "size": result.size,
+                "sha256": result.sha256,
+                "directory_record_offset": f"0x{result.directory_record_offset:X}",
+            }
+            for result in insertion_results
+        ],
+    )
+    translation_module.write_json(
+        log_directory / "external_translation_summary.json",
+        plan.summary,
+    )
+
+
 def _translation_source_arguments(root: Path, prefix: str) -> dict[str, Path]:
     if root.is_dir():
         return {f"{prefix}_folder": root}
@@ -413,6 +585,8 @@ def apply_profile_modules(
     source: Iso9660,
     payloads: dict[str, bytearray],
     owners: dict[str, str],
+    insertions: dict[str, bytes],
+    insertion_owners: dict[str, str],
 ) -> list[dict[str, object]]:
     results: list[dict[str, object]] = []
     for module in profile.modules:
@@ -506,6 +680,37 @@ def apply_profile_modules(
                 }
             )
             continue
+        if module.module == "external_translation":
+            if any("external_translation_plan" in item for item in results):
+                raise ValueError(
+                    "Profile may enable only one external_translation module"
+                )
+            (
+                external_translation_module,
+                plan,
+                edit_count,
+                paths,
+            ) = apply_external_translation_package(
+                module.input_path,
+                module_id=module.module_id,
+                roots=profile.roots,
+                selection=module.selection,
+                source=source,
+                payloads=payloads,
+                owners=owners,
+                insertions=insertions,
+                insertion_owners=insertion_owners,
+            )
+            results.append(
+                {
+                    "module": module,
+                    "external_translation_module": external_translation_module,
+                    "external_translation_plan": plan,
+                    "external_translation_edits": edit_count,
+                    "paths": paths,
+                }
+            )
+            continue
         raise AssertionError(module.module)
     return results
 
@@ -558,6 +763,20 @@ def write_profile_log(
             plan = item["ui_texture_plan"]
             assert isinstance(plan, ui_texture_module.UiTexturePlan)
             write_ui_texture_log(plan, module_log)
+        if "external_translation_plan" in item:
+            insertion_results = item.get("insertion_results")
+            if not isinstance(insertion_results, tuple) or not all(
+                isinstance(result, IsoInsertion) for result in insertion_results
+            ):
+                raise RuntimeError(
+                    f"Missing verified insertion results for {module.module_id}"
+                )
+            write_external_translation_log(
+                item["external_translation_module"],
+                item["external_translation_plan"],
+                insertion_results,
+                module_log,
+            )
         if "disc_identity" in item:
             identity = item["disc_identity"]
             assert isinstance(identity, disc_identity_module.DiscIdentity)
@@ -642,14 +861,18 @@ def main() -> int:
     source = Iso9660(source_iso)
     payloads: dict[str, bytearray] = {}
     owners: dict[str, str] = {}
+    insertions: dict[str, bytes] = {}
+    insertion_owners: dict[str, str] = {}
     profile_results = apply_profile_modules(
         profile,
         source=source,
         payloads=payloads,
         owners=owners,
+        insertions=insertions,
+        insertion_owners=insertion_owners,
     )
 
-    if not payloads:
+    if not payloads and not insertions:
         raise RuntimeError("The profile selected no file changes")
 
     size_changes = payload_size_changes(source, payloads)
@@ -686,6 +909,20 @@ def main() -> int:
             )
             identity_item["identity_edits"].append(iso_edit)
 
+        insertion_results = insert_files(working_iso, insertions)
+        if working_iso.stat().st_size != source.file_size:
+            raise RuntimeError("Profile composition changed the ISO image size")
+        results_by_owner: dict[str, list[IsoInsertion]] = {}
+        for insertion in insertion_results:
+            owner = insertion_owners[insertion.path]
+            results_by_owner.setdefault(owner, []).append(insertion)
+        for item in profile_results:
+            module = item["module"]
+            assert isinstance(module, ProfileModule)
+            owned = results_by_owner.get(module.module_id)
+            if owned:
+                item["insertion_results"] = tuple(owned)
+
         result = Iso9660(working_iso)
         identity = (
             identity_items[0]["disc_identity"] if identity_items else None
@@ -699,10 +936,12 @@ def main() -> int:
             ):
                 path = identity.replacement_boot_path
             source_tree.add((path, record.is_dir))
+        source_tree.update((path, False) for path in insertions)
         result_tree = {(record.path, record.is_dir) for record in result.records}
         if result_tree != source_tree:
             raise RuntimeError(
-                "Final ISO file tree differs from the source tree plus its declared identity rename"
+                "Final ISO file tree differs from the source tree plus its declared "
+                "identity rename and insertions"
             )
 
         for source_record in source.records:
@@ -726,6 +965,21 @@ def main() -> int:
                 raise RuntimeError(
                     f"Final ISO file verification failed: {source_record.path}"
                 )
+
+        insertion_by_path = {item.path: item for item in insertion_results}
+        if set(insertion_by_path) != set(insertions):
+            raise RuntimeError("Final ISO insertion result set is incomplete")
+        for path, payload in insertions.items():
+            result_record = result.by_path.get(path)
+            insertion = insertion_by_path[path]
+            if (
+                result_record is None
+                or result_record.is_dir
+                or result_record.extent != insertion.extent
+                or result_record.size != len(payload)
+                or result.read_file(result_record) != payload
+            ):
+                raise RuntimeError(f"Final ISO insertion verification failed: {path}")
 
         try:
             output_iso_text = output_iso.relative_to(workspace).as_posix()
@@ -754,6 +1008,11 @@ def main() -> int:
             plan = item["ui_texture_plan"]
             assert isinstance(plan, ui_texture_module.UiTexturePlan)
             detail = f", {len(plan.containers)} containers, {plan.mapping_count} mappings"
+        elif "external_translation_plan" in item:
+            detail = (
+                f", {item['external_translation_edits']} edits, "
+                f"{len(item.get('insertion_results', ()))} insertions"
+            )
         elif "disc_identity" in item:
             detail = f", {len(item['identity_edits'])} edits"
         print(f"  {module.order:03d} {module.module_id} ({module.module}{detail})")

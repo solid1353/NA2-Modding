@@ -200,6 +200,33 @@ class ProfileTests(unittest.TestCase):
             third = module_content_sha256(package, "ui_textures")
             self.assertNotEqual(second, third)
 
+    def test_external_translation_hash_includes_only_control_files(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory) / "external_translation"
+            package.mkdir()
+            (package / "manifest.tsv").write_text(
+                "key\tvalue\nschema_version\t1\n", encoding="utf-8"
+            )
+            (package / "pointer_refs.tsv").write_text(
+                "mapping_id\toffset\none\t0x10\n", encoding="utf-8"
+            )
+            (package / "README.md").write_text("first\n", encoding="utf-8")
+            (package / "engine.py").write_text("first\n", encoding="utf-8")
+
+            first = module_content_sha256(package, "external_translation")
+            (package / "README.md").write_text("second\n", encoding="utf-8")
+            (package / "engine.py").write_text("second\n", encoding="utf-8")
+            self.assertEqual(
+                first, module_content_sha256(package, "external_translation")
+            )
+
+            (package / "pointer_refs.tsv").write_text(
+                "mapping_id\toffset\none\t0x20\n", encoding="utf-8"
+            )
+            self.assertNotEqual(
+                first, module_content_sha256(package, "external_translation")
+            )
+
     def test_current_enabled_module_hashes_match(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         modules_path = (

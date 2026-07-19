@@ -20,7 +20,13 @@ MODULE_FIELDS = [
     "selection",
     "reason",
 ]
-MODULE_TYPES = {"disc_identity", "raw_binary", "translation", "ui_textures"}
+MODULE_TYPES = {
+    "disc_identity",
+    "external_translation",
+    "raw_binary",
+    "translation",
+    "ui_textures",
+}
 RAW_BINARY_CONTROL_FILES = (
     "manifest.tsv",
     "targets.tsv",
@@ -32,6 +38,10 @@ UI_TEXTURE_CONTROL_FILES = (
     "containers.tsv",
     "mappings.tsv",
     "strategies.tsv",
+)
+EXTERNAL_TRANSLATION_CONTROL_FILES = (
+    "manifest.tsv",
+    "pointer_refs.tsv",
 )
 
 
@@ -171,6 +181,18 @@ def _ui_texture_content_files(path: Path) -> list[Path]:
     return files
 
 
+def _external_translation_content_files(path: Path) -> list[Path]:
+    path = path.resolve()
+    files = [path / name for name in EXTERNAL_TRANSLATION_CONTROL_FILES]
+    missing = [item.name for item in files if not item.is_file()]
+    if missing:
+        raise FileNotFoundError(
+            "External-translation module is missing canonical input files: "
+            + ", ".join(missing)
+        )
+    return files
+
+
 def module_content_sha256(path: Path, module_type: str) -> str:
     """Hash only executable module inputs, excluding adjacent documentation."""
     path = path.resolve()
@@ -182,6 +204,8 @@ def module_content_sha256(path: Path, module_type: str) -> str:
         raise FileNotFoundError(path)
     if module_type == "raw_binary":
         return _tree_digest(path, _raw_binary_content_files(path))
+    if module_type == "external_translation":
+        return _tree_digest(path, _external_translation_content_files(path))
     if module_type == "ui_textures":
         return _tree_digest(path, _ui_texture_content_files(path))
     return content_sha256(path)

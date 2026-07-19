@@ -78,7 +78,7 @@ Phase: read-only inspection
 Purpose: gather enough evidence for the plan
 Changes: none
 Recommended effort: <level>
-Next response: short plan + effort recommendation + approval gate
+Next response: short plan + effort recommendation + needed user inputs + approval gate
 ```
 
 The initial effort recommendation is provisional and must be stated even when
@@ -93,6 +93,13 @@ every stop, pause, dependency, safety, or relaunch boundary. Stating the level
 only in commentary or an earlier response does not satisfy this requirement; if
 the recommendation changes, explain why.
 
+Every selected-task plan must include a standalone `Needed from you: <items>`
+line beside `Recommended effort`. Ask specifically for every user-supplied input
+or action that is expected or may materially help execution, such as savestates
+at named screens, screenshots, files, test results, tool access, or an in-game
+action. Explain when each requested item is needed. If the agent needs nothing
+from the user, state `Needed from you: nothing` instead of omitting the line.
+
 1. Tasks may be added to `TASKS.md` at any time by the user, or by an agent when the user orders it.
 2. Each workstream subsection is coordinated by a Codex task whose title exactly matches the subsection heading. The coordinator owns that workstream across statuses, so do not add redundant coordinator metadata to `TASKS.md`.
 3. Each workstream subsection appears under exactly one status. Move the whole subsection when its status changes; never split one workstream across statuses. `In Progress` contains active workstreams, `Backlog` contains workstreams with one or more deferred tasks, and `Archive` contains persistent workstreams with no current tasks. `Testing` is always the final workstream subsection within whichever status contains it.
@@ -101,7 +108,7 @@ the recommendation changes, explain why.
 6. When useful, a workstream subsection or individual task may have a dedicated context or plan document. Creating such a document is optional, but if one is created, it must be linked directly from the corresponding subsection heading or task entry in `TASKS.md`.
 7. After a successful push—or whenever the user asks what is next—the workstream coordinator reads `TASKS.md` and reports only the choices under its matching workstream subsection across statuses, word for word without paraphrasing and in their original order. It preserves the applicable status and subsection headings so the task context remains visible, omits unrelated workstreams, and asks the user to select one.
 8. After any authorized task-management edit to `TASKS.md`, commit and push that task update immediately without requesting approval. Stage only `TASKS.md` and any dedicated task context or plan document created or edited specifically as part of the same task-management update; never include concurrent implementation or unrelated work. Run the required chat actualization before this automatic commit and push when a workstream subsection changed. Deleting a completed task still requires result approval before the deletion is made.
-9. The agent may perform read-only inspection, then gives a short plan, recommends an intelligence level, and ends with **Awaiting plan approval**.
+9. The agent may perform read-only inspection, then gives a short plan, recommends an intelligence level, asks for the specific user-supplied inputs or actions needed under the policy above, and ends with **Awaiting plan approval**.
 10. An unambiguous `approved`, `qwe`, or keyboard-layout equivalent of `qwe` as defined above, including within a longer message, authorizes changes.
 11. The agent executes freely within the approved task, including major changes.
 12. If the task becomes unclear or the whole approach is wrong, stop and clarify; a replacement plan needs approval.

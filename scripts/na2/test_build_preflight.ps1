@@ -24,6 +24,18 @@ try {
     New-Item -ItemType Directory -Force -Path $scriptRoot, $libRoot | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'build.ps1') -Destination $scriptRoot
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'process.ps1') -Destination $scriptRoot
+    [IO.File]::WriteAllText(
+        (Join-Path $scriptRoot 'actualize_pnach.ps1'),
+        @'
+[pscustomobject]@{
+    PCSX2ElfCRC = ''
+    CheatsPnach = ''
+    PnachStatus = 'test'
+    RemovedPnachSymlinks = @()
+    EnabledCheats = @()
+}
+'@
+    )
     foreach ($name in 'project_paths.ps1', 'run_log.ps1', 'build_log.ps1') {
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot "..\lib\$name") -Destination $libRoot
     }
@@ -34,6 +46,8 @@ try {
   "roots": {
     "repository": ".",
     "source": "source",
+    "source_na2": "@source/NA2.iso.files",
+    "source_nun5": "@source/NUN5.iso.files",
     "build": "build",
     "logs": "logs",
     "patcher": "na2_patcher",
@@ -41,13 +55,15 @@ try {
     "scripts": "scripts"
   },
   "files": {
+    "na2_iso": "@source/NA2.iso",
+    "nun5_iso": "@source/NUN5.iso",
     "current_iso": "@build/NA2.28 - Current.iso",
     "previous_iso": "@build/NA2.28 - Previous.iso"
   }
 }
 '@
     [IO.File]::WriteAllText((Join-Path $repository 'project-paths.json'), $manifest)
-    foreach ($directory in 'source', 'build', 'logs', 'na2_patcher', 'pcsx2') {
+    foreach ($directory in 'source\NA2.iso.files', 'source\NUN5.iso.files', 'build', 'logs', 'na2_patcher', 'pcsx2') {
         New-Item -ItemType Directory -Force -Path (Join-Path $repository $directory) | Out-Null
     }
     New-Item -ItemType Directory -Force `

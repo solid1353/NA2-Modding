@@ -6,10 +6,10 @@ The modified project game is named *Narutimate Accel v2.28*. It is based on
 
 ## Stable Local References
 
-Original source ISOs are `@source/NA2.iso`, `@source/NUN3.iso`,
-`@source/NUN5.iso`, and `@source/NUN6 A35.iso`. NUN6 A35 is a Brazilian mod of
-NUN5, not an official successor. It is retained as a feature donor because it
-contains many modifications that may later be ported to NA2.
+Original source ISOs are the `na2_iso`, `nun3_iso`, `nun5_iso`, and `nun6_iso`
+project files. NUN6 A35 is a Brazilian mod of NUN5, not an official successor.
+It is retained as a feature donor because it contains many modifications that
+may later be ported to NA2.
 
 Current PNACH:
 
@@ -74,14 +74,14 @@ All extracted original files stay under `@source/`, beside the archive they came
 
 Canonical ISO extraction layout:
 
-- `@source/NA2.iso`
-- `@source/NA2.iso.files/`
-- `@source/NUN3.iso`
-- `@source/NUN3.iso.files/`
-- `@source/NUN5.iso`
-- `@source/NUN5.iso.files/`
-- `@source/NUN6 A35.iso`
-- `@source/NUN6 A35.iso.files/`
+- project file `na2_iso`
+- `@source_na2/`
+- project file `nun3_iso`
+- `@source_nun3/`
+- project file `nun5_iso`
+- `@source_nun5/`
+- project file `nun6_iso`
+- `@source_nun6/`
 
 Nested archive convention:
 
@@ -134,15 +134,15 @@ Confirmed ROFS/CVM passwords:
 
 Current split/extraction outputs:
 
-- `@source/NA2.iso.files/DATA/DATA.CVM.files/DATA.CVM.iso`
-- `@source/NA2.iso.files/DATA/DATA.CVM.files/DATA.CVM.hdr`
-- `@source/NA2.iso.files/DATA/DATA.CVM.files/DATA.CVM.iso.files/`
+- `@source_na2/DATA/DATA.CVM.files/DATA.CVM.iso`
+- `@source_na2/DATA/DATA.CVM.files/DATA.CVM.hdr`
+- `@source_na2/DATA/DATA.CVM.files/DATA.CVM.iso.files/`
 
 Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without running `@utils/old/CVM Parser/cvm_tool.exe`.
 
 ## Current Scripts
 
-- Root `_na2.ps1` is the only routine user-facing entrypoint. Bare `na2` builds the pinned current profile, rotates only when the verified candidate differs, actualizes the Current PNACH alias while retaining the Previous alias, and launches `NA2.28 - Current.iso`. `na2 -c`, `na2 -p`, and `na2 -un5` are pure launch selectors: they do not rebuild, terminate an existing PCSX2 instance, or change PNACH aliases. `na2 act` performs the same Current/Previous alias maintenance without building or launching.
+- Root `_na2.ps1` is the only routine user-facing entrypoint. Bare `na2` builds the pinned current profile, rotates only when the verified candidate differs, actualizes the Current PNACH alias while retaining the Previous alias, and launches `NA2.28 - Current.iso`. `na2 -c` and `na2 -p` are pure project-ISO launch selectors: they do not rebuild, terminate an existing PCSX2 instance, or change PNACH aliases. Source-game launch shortcuts are user-profile commands, not part of `_na2.ps1`. `na2 act` performs the same Current/Previous alias maintenance without building or launching.
 - `scripts/na2/` contains build/promotion, mandatory PNACH actualization, PCSX2 process/launch handling, CRC diagnostics, and the agent-only hidden/muted launch test. Build transcripts explicitly report `ISO result: unchanged` or `ISO result: updated` and the rotation result.
 - `na2_patcher/build_profile.py` is the profile-only ISO compositor. It applies one explicit hash-pinned profile, rejects all file-size changes, verifies the complete staged ISO, writes the profile log, and leaves `NA2.28 - Current.iso.building` for PowerShell promotion.
 - `scripts/media/` contains the recursive source extractor, its byte-parity

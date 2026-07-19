@@ -26,16 +26,57 @@ function Get-Na2ProjectPaths {
         throw 'Project path manifest has no roots.'
     }
 
-    foreach ($name in $names) {
-        $value = [string]$manifest.roots.$name
-        if ([string]::IsNullOrWhiteSpace($value) -or [IO.Path]::IsPathRooted($value)) {
-            throw "Project root '$name' must be a non-empty repository-relative path: $value"
+    $pending = [Collections.Generic.List[string]]::new()
+    foreach ($name in $names) { $pending.Add($name) }
+    while ($pending.Count -gt 0) {
+        $madeProgress = $false
+        foreach ($name in @($pending)) {
+            $value = [string]$manifest.roots.$name
+            if ([string]::IsNullOrWhiteSpace($value) -or [IO.Path]::IsPathRooted($value)) {
+                throw "Project root '$name' must be a non-empty repository-relative path or @root path: $value"
+            }
+
+            $basePath = $repositoryRoot
+            $relativePath = $value
+            if ($value.StartsWith('@')) {
+                $aliasMatch = [regex]::Match($value, '^@(?<root>[^/\\]+)(?:[/\\](?<child>.*))?$')
+                if (-not $aliasMatch.Success) {
+                    throw "Project root '$name' has an invalid root alias: $value"
+                }
+                $parentName = $aliasMatch.Groups['root'].Value
+                if ($parentName -notin $names) {
+                    throw "Project root '$name' references unknown project root '$parentName': $value"
+                }
+                if (-not $resolved.Contains($parentName)) { continue }
+                $basePath = [string]$resolved[$parentName]
+                $relativePath = $aliasMatch.Groups['child'].Value
+            }
+
+            $path = if ([string]::IsNullOrEmpty($relativePath)) {
+                [IO.Path]::GetFullPath($basePath)
+            }
+            else {
+                [IO.Path]::GetFullPath((Join-Path $basePath $relativePath))
+            }
+            $basePrefix = $basePath.TrimEnd(
+                [IO.Path]::DirectorySeparatorChar,
+                [IO.Path]::AltDirectorySeparatorChar
+            ) + [IO.Path]::DirectorySeparatorChar
+            if ($value.StartsWith('@') -and
+                -not [IO.Path]::Equals($path, $basePath) -and
+                -not $path.StartsWith($basePrefix, [StringComparison]::OrdinalIgnoreCase)) {
+                throw "Project root '$name' must remain within '$parentName': $value"
+            }
+            if (-not $AllowMissing -and -not (Test-Path -LiteralPath $path)) {
+                throw "Configured project root '$name' does not exist: $path"
+            }
+            $resolved[$name] = $path
+            [void]$pending.Remove($name)
+            $madeProgress = $true
         }
-        $path = [IO.Path]::GetFullPath((Join-Path $repositoryRoot $value))
-        if (-not $AllowMissing -and -not (Test-Path -LiteralPath $path)) {
-            throw "Configured project root '$name' does not exist: $path"
+        if (-not $madeProgress) {
+            throw "Project root aliases contain a dependency cycle: $($pending -join ', ')"
         }
-        $resolved[$name] = $path
     }
 
     $configuredFiles = $manifest.files
@@ -139,4 +180,48 @@ function ConvertTo-Na2ProjectPath {
     }
 
     throw "Path is outside configured project roots: $Path"
+}
+
+function Resolve-Na2ProjectPathAlias {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Alias,
+
+        [Parameter(Mandatory = $true)]
+        [object]$ProjectPaths
+    )
+
+    $aliasMatch = [regex]::Match(
+        $Alias,
+        '^@(?<root>[^/\\]+)(?:[/\\](?<child>.*))?$'
+    )
+    if (-not $aliasMatch.Success) {
+        throw "Invalid project root alias: $Alias"
+    }
+
+    $rootName = $aliasMatch.Groups['root'].Value
+    $rootProperty = $ProjectPaths.PSObject.Properties[$rootName]
+    if ($null -eq $rootProperty -or $rootName -in @('ManifestPath', 'files')) {
+        throw "Unknown project root '$rootName': $Alias"
+    }
+
+    $rootPath = [IO.Path]::GetFullPath([string]$rootProperty.Value)
+    $child = $aliasMatch.Groups['child'].Value
+    if ([string]::IsNullOrEmpty($child)) {
+        return $rootPath
+    }
+    if ([IO.Path]::IsPathRooted($child)) {
+        throw "Invalid project root alias: $Alias"
+    }
+
+    $resolved = [IO.Path]::GetFullPath((Join-Path $rootPath $child))
+    $rootPrefix = $rootPath.TrimEnd(
+        [IO.Path]::DirectorySeparatorChar,
+        [IO.Path]::AltDirectorySeparatorChar
+    ) + [IO.Path]::DirectorySeparatorChar
+    if (-not $resolved.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Project root alias escapes '$rootName': $Alias"
+    }
+    return $resolved
 }

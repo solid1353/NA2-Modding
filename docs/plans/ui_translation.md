@@ -34,9 +34,9 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 
 ### Game sources and donors
 
-- `@source/NA2.iso.files/`: unpacked NA2 target files.
-- `@source/NUN5.iso.files/`: unpacked official NUN5 English donor files.
-- `@source/NUN6 A35.iso.files/`: unpacked NUN6 A35 mod/reference files; reportedly translated into Brazilian Portuguese in both textures and text.
+- `@source_na2/`: unpacked NA2 target files.
+- `@source_nun5/`: unpacked official NUN5 English donor files.
+- `@source_nun6/`: unpacked NUN6 A35 mod/reference files; reportedly translated into Brazilian Portuguese in both textures and text.
 - `@analysis/disassembly/NA2/exports/SLPS_258.37/`: existing searchable NA2 boot-ELF C/TXT export.
 - `@analysis/disassembly/NUN5/exports/SLES_556.05/`: existing searchable NUN5 boot-ELF C/TXT export. Check it by its exact `SLES` name; a prior `BTL|SLPS`-filtered inventory accidentally excluded it and caused a redundant temporary export attempt.
 - `@analysis/disassembly/NA2/exports/ETC.BIN/` and

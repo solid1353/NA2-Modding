@@ -165,8 +165,8 @@ function Promote-VerifiedIso {
     }
 }
 
-$inputIso = Join-Path $projectPaths.source 'NA2.iso'
-$nun5Iso = Join-Path $projectPaths.source 'NUN5.iso'
+$inputIso = $projectPaths.files.na2_iso
+$nun5Iso = $projectPaths.files.nun5_iso
 $resolvedOutputIso = [IO.Path]::GetFullPath($projectPaths.files.current_iso)
 $resolvedPreviousIso = [IO.Path]::GetFullPath($projectPaths.files.previous_iso)
 $profile = [IO.Path]::GetRelativePath(

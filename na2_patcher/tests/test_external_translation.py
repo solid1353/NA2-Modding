@@ -6,7 +6,7 @@ from pathlib import Path
 
 from na2_patcher.modules.external_translation import engine
 from na2_patcher.modules.translation import engine as translation_engine
-from na2_patcher.project_paths import load_project_paths, resolve_alias
+from na2_patcher.project_paths import load_project_paths
 
 
 class ExternalTranslationTests(unittest.TestCase):
@@ -15,8 +15,8 @@ class ExternalTranslationTests(unittest.TestCase):
         cls.repository = Path(__file__).resolve().parents[2]
         paths = load_project_paths(cls.repository)
         cls.roots = {
-            "na2": resolve_alias("@source/NA2.iso.files", paths),
-            "nun5": resolve_alias("@source/NUN5.iso.files", paths),
+            "na2": paths.path("source_na2"),
+            "nun5": paths.path("source_nun5"),
         }
         cls.package = (
             cls.repository / "na2_patcher" / "modules" / "external_translation"

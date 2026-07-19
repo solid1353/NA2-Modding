@@ -3,6 +3,10 @@
   "roots": {
     "repository": ".",
     "source": "../__source",
+    "source_na2": "@source/NA2.iso.files",
+    "source_nun3": "@source/NUN3.iso.files",
+    "source_nun5": "@source/NUN5.iso.files",
+    "source_nun6": "@source/NUN6 A35.iso.files",
     "analysis": "../__analysis",
     "utils": "../__utils",
     "pcsx2": "../__pcsx2",
@@ -15,8 +19,11 @@
     "work": "work"
   },
   "files": {
+    "na2_iso": "@source/NA2.iso",
+    "nun3_iso": "@source/NUN3.iso",
+    "nun5_iso": "@source/NUN5.iso",
+    "nun6_iso": "@source/NUN6 A35.iso",
     "current_iso": "@build/NA2.28 - Current.iso",
-    "previous_iso": "@build/NA2.28 - Previous.iso",
-    "nun5_iso": "@source/NUN5.iso"
+    "previous_iso": "@build/NA2.28 - Previous.iso"
   }
 }

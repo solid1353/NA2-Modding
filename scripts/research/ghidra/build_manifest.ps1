@@ -10,10 +10,7 @@ $ErrorActionPreference = 'Stop'
 $projectPaths = Get-Na2ProjectPaths
 
 function Resolve-SourceAlias([string]$Alias) {
-    if (-not $Alias.StartsWith('@source/', [StringComparison]::Ordinal)) {
-        throw "Unsupported source alias: $Alias"
-    }
-    return Join-Path $projectPaths.source $Alias.Substring(8)
+    return Resolve-Na2ProjectPathAlias -Alias $Alias -ProjectPaths $projectPaths
 }
 
 $analysisDirectory = if ($Target -eq 'shared') { 'shared' } else { $Target }

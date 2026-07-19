@@ -8,8 +8,6 @@ param(
     [switch]$Current,
     [Alias('p')]
     [switch]$Previous,
-    [Alias('un5')]
-    [switch]$Nun5,
     [Alias('h')]
     [switch]$Help
 )
@@ -20,7 +18,6 @@ $ErrorActionPreference = 'Stop'
 $projectPaths = Get-Na2ProjectPaths
 $currentIsoName = [IO.Path]::GetFileName($projectPaths.files.current_iso)
 $previousIsoName = [IO.Path]::GetFileName($projectPaths.files.previous_iso)
-$nun5IsoName = [IO.Path]::GetFileName($projectPaths.files.nun5_iso)
 
 function Write-Na2Stage {
     param([string]$Message)
@@ -28,10 +25,10 @@ function Write-Na2Stage {
 }
 
 $command = if ($Mode) { $Mode.ToLowerInvariant() } else { '' }
-$runSelected = $Current -or $Previous -or $Nun5
+$runSelected = $Current -or $Previous
 
-if (@($Current, $Previous, $Nun5).Where({ $_ }).Count -gt 1) {
-    throw '-Current / -c, -Previous / -p, and -Nun5 / -un5 cannot be used together.'
+if ($Current -and $Previous) {
+    throw '-Current / -c and -Previous / -p cannot be used together.'
 }
 if ($command -and $runSelected) {
     throw 'ISO launch switches cannot be combined with a command mode.'
@@ -42,7 +39,6 @@ if ($Help) {
         "  na2       Build the pinned current profile, conditionally rotate, then run $currentIsoName"
         "  na2 -c    Run build/$currentIsoName without rebuilding or closing PCSX2"
         "  na2 -p    Run build/$previousIsoName without rebuilding or closing PCSX2"
-        "  na2 -un5  Run @source/$nun5IsoName without rebuilding or closing PCSX2"
         "  na2 act   Maintain Current/Previous PNACH symlinks without building or launching"
         ''
     ) | Write-Output
@@ -57,9 +53,6 @@ elseif ($Previous) {
 }
 elseif ($Current) {
     'current'
-}
-elseif ($Nun5) {
-    'nun5'
 }
 else {
     'build'
@@ -106,9 +99,6 @@ try {
     elseif ($runSelected) {
         $isoPath = if ($Previous) {
             $projectPaths.files.previous_iso
-        }
-        elseif ($Nun5) {
-            $projectPaths.files.nun5_iso
         }
         else {
             $projectPaths.files.current_iso

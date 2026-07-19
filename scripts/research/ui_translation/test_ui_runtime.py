@@ -379,14 +379,14 @@ class StateArchiveTests(unittest.TestCase):
                     "build": build,
                     "work": work,
                 },
-                files={},
+                files={"nun5_iso": image},
             )
             target = ui_runtime.Target(
                 target_id="nun5",
                 serial="SLES-55605",
                 crc="C071D4C1",
-                image_kind="root_alias",
-                image_value="@source/NUN5.iso",
+                image_kind="project_file",
+                image_value="nun5_iso",
                 settings_file="SLES-55605_C071D4C1.ini",
             )
             state = pcsx2 / "sstates" / "SLES-55605 (C071D4C1).01.p2s"

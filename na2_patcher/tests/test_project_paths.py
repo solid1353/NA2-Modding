@@ -27,6 +27,8 @@ class ProjectPathTests(unittest.TestCase):
             manifest = self.write_manifest(
                 root,
                 {
+                    "na2_iso": "@build/NA2.iso",
+                    "nun5_iso": "@build/NUN5.iso",
                     "current_iso": "@build/NA2.28 - Current.iso",
                     "previous_iso": "@build/NA2.28 - Previous.iso",
                 },
@@ -34,6 +36,14 @@ class ProjectPathTests(unittest.TestCase):
 
             paths = load_project_paths(manifest)
 
+            self.assertEqual(
+                paths.file("na2_iso"),
+                root.resolve() / "build" / "NA2.iso",
+            )
+            self.assertEqual(
+                paths.file("nun5_iso"),
+                root.resolve() / "build" / "NUN5.iso",
+            )
             self.assertEqual(
                 paths.file("current_iso"),
                 root.resolve() / "build" / "NA2.28 - Current.iso",
@@ -75,6 +85,48 @@ class ProjectPathTests(unittest.TestCase):
             paths = load_project_paths(manifest_path)
 
             self.assertEqual(paths.file("nun5_iso"), source.resolve() / "NUN5.iso")
+
+    def test_loads_root_below_another_configured_root(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            root = workspace / "repository"
+            source = workspace / "source"
+            extracted = source / "NA2.iso.files"
+            root.mkdir()
+            extracted.mkdir(parents=True)
+            manifest = {
+                "schema_version": 1,
+                "roots": {
+                    "repository": ".",
+                    "source_na2": "@source/NA2.iso.files",
+                    "source": "../source",
+                },
+                "files": {"na2_iso": "@source/NA2.iso"},
+            }
+            manifest_path = root / "project-paths.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            paths = load_project_paths(manifest_path)
+
+            self.assertEqual(paths.path("source_na2"), extracted.resolve())
+
+    def test_rejects_root_alias_cycle(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = {
+                "schema_version": 1,
+                "roots": {
+                    "repository": ".",
+                    "first": "@second/child",
+                    "second": "@first/child",
+                },
+                "files": {"current_iso": "Current.iso"},
+            }
+            manifest_path = root / "project-paths.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "dependency cycle"):
+                load_project_paths(manifest_path, allow_missing=True)
 
     def test_rejects_file_alias_escape(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

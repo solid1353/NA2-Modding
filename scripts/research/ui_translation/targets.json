@@ -3,8 +3,8 @@
   "targets": {
     "nun5": {
       "image": {
-        "kind": "root_alias",
-        "value": "@source/NUN5.iso"
+        "kind": "project_file",
+        "value": "nun5_iso"
       },
       "serial": "SLES-55605",
       "crc": "C071D4C1",

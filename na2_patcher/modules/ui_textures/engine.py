@@ -878,8 +878,8 @@ def default_roots() -> tuple[Path, Path, Path]:
     repository = Path(__file__).resolve().parents[3]
     paths = load_project_paths(repository)
     return (
-        resolve_alias("@source/NA2.iso.files", paths),
-        resolve_alias("@source/NUN5.iso.files", paths),
+        paths.path("source_na2"),
+        paths.path("source_nun5"),
         Path(__file__).resolve().parent,
     )
 

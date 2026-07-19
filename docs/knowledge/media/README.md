@@ -4,13 +4,13 @@ These exact inventories were promoted from the 2026-07-03/04 extraction logs so 
 
 | Durable file | Contents | Entries |
 | --- | --- | ---: |
-| `na2_iso9660.tsv` | Outer `@source/NA2.iso` ISO9660 layout: path, object type, extent, byte offset, and size | 36: 32 files, 4 directories |
-| `data_cvm_iso9660.tsv` | Decrypted ISO payload layout from `@source/NA2.iso.files/DATA/DATA.CVM` | 2,332: 2,312 files, 20 directories |
-| `afs_members.tsv` | Consolidated nested AFS-member layout under `@source/NA2.iso.files` | 9,480 members across 170 AFS containers |
+| `na2_iso9660.tsv` | Outer `na2_iso` project-file ISO9660 layout: path, object type, extent, byte offset, and size | 36: 32 files, 4 directories |
+| `data_cvm_iso9660.tsv` | Decrypted ISO payload layout from `@source_na2/DATA/DATA.CVM` | 2,332: 2,312 files, 20 directories |
+| `afs_members.tsv` | Consolidated nested AFS-member layout under `@source_na2` | 9,480 members across 170 AFS containers |
 
 The TSV files are exact copies of the original inventories. Backslash paths inside them are historical extraction-relative paths:
 
-- paths in `na2_iso9660.tsv` are relative to the root of `@source/NA2.iso`;
+- paths in `na2_iso9660.tsv` are relative to the root of project file `na2_iso`;
 - paths in `data_cvm_iso9660.tsv` are relative to the decrypted ISO payload of `DATA.CVM`;
 - paths in `afs_members.tsv` begin with `NA2.iso.files` and are relative to `@source/`.
 

@@ -26,15 +26,15 @@ Run commands from the repository root.
 ```powershell
 python -m na2_patcher.modules.raw_binary.engine validate `
   --package na2_patcher/modules/raw_binary/patch_sets/menu_input `
-  --root na2=@source/NA2.iso.files `
-  --root nun5=@source/NUN5.iso.files
+  --root na2=@source_na2 `
+  --root nun5=@source_nun5
 ```
 
 ```powershell
 python -m na2_patcher.modules.raw_binary.engine plan `
   --package na2_patcher/modules/raw_binary/patch_sets/menu_input `
-  --root na2=@source/NA2.iso.files `
-  --root nun5=@source/NUN5.iso.files `
+  --root na2=@source_na2 `
+  --root nun5=@source_nun5 `
   --patch ELF-M008
 ```
 
@@ -43,8 +43,8 @@ Application requires a new output directory and an approved patch status:
 ```powershell
 python -m na2_patcher.modules.raw_binary.engine apply `
   --package na2_patcher/modules/raw_binary/patch_sets/example `
-  --root na2=@source/NA2.iso.files `
-  --root nun5=@source/NUN5.iso.files `
+  --root na2=@source_na2 `
+  --root nun5=@source_nun5 `
   --patch example_patch `
   --output-root work/temp/example_patch_output
 ```

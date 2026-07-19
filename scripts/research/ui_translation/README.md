@@ -14,7 +14,7 @@ another disassembly.
 
 The normal comparison has two targets:
 
-- `nun5`: the official English reference at `@source/NUN5.iso`.
+- `nun5`: the official English reference selected by project file `nun5_iso`.
 - `current`: the current project image selected by `project-paths.json`.
 
 Vanilla NA2 is not part of the routine capture path. Use it only when a result
@@ -94,9 +94,9 @@ replacement bytes from pinned files and patch only while PCSX2 is paused:
 python scripts/research/ui_translation/ui_runtime.py patch `
   --target current `
   --address 0x005D4E70 `
-  --expected-file "@source/NUN5.iso.files/SLES_556.05" `
+  --expected-file "@source_nun5/SLES_556.05" `
   --expected-offset 0x4DC120 `
-  --replacement-file "@source/NUN5.iso.files/SLES_556.05" `
+  --replacement-file "@source_nun5/SLES_556.05" `
   --replacement-offset 0x4DDDD0 `
   --length 0x300
 ```

@@ -48,15 +48,15 @@ game; it does not include resource files merely because they use `.BIN` names.
 
 ## Canonical disassembly inputs
 
-- NA2: `@source/NA2.iso.files/SLPS_258.37`, plus `PRG/ADV.BIN`,
+- NA2: `@source_na2/SLPS_258.37`, plus `PRG/ADV.BIN`,
   `PRG/BTL.BIN`, and `PRG/ETC.BIN` below the same tree.
-- NUN3: `@source/NUN3.iso.files/SLUS_217.27`, plus `PRG/BATTLE.BIN`,
+- NUN3: `@source_nun3/SLUS_217.27`, plus `PRG/BATTLE.BIN`,
   `PRG/HOME.BIN`, `PRG/RPG.BIN`, and the distinct `MODULES/CRI_ADXI.IRX`
   and `MODULES/SNDBASE.IRX` binaries.
-- NUN5: `@source/NUN5.iso.files/SLES_556.05`, plus `PRG/ADV.BIN`,
+- NUN5: `@source_nun5/SLES_556.05`, plus `PRG/ADV.BIN`,
   `PRG/BTL.BIN`, `PRG/ETC.BIN`, `PRG/TEXTENG.BIN`, `PRG/TEXTFRN.BIN`,
   `PRG/TEXTGER.BIN`, `PRG/TEXTITA.BIN`, and `PRG/TEXTSPA.BIN`.
-- NUN6 A35: `@source/NUN6 A35.iso.files/SLUS_556.06`, plus `PRG/ADV.BIN`,
+- NUN6 A35: `@source_nun6/SLUS_556.06`, plus `PRG/ADV.BIN`,
   `PRG/BTL.BIN`, `PRG/ETC.BIN`, `PRG/MOD.BIN`, and `PRG/TEXTBRA.BIN`.
 - Shared identical IOP inputs analyze the NA2 copy once. `MODULES.BIN` belongs
   to the NA2/NUN3/NUN5/NUN6 cohort; `CRI_ADXI.IRX` and `SNDBASE.IRX` belong to

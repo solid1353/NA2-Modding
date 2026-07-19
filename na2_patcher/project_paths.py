@@ -63,13 +63,57 @@ def load_project_paths(
 
     repository = manifest_path.parent.resolve()
     roots: dict[str, Path] = {}
-    for name, raw_value in configured.items():
-        value = Path(raw_value)
-        if not isinstance(raw_value, str) or not raw_value or value.is_absolute():
+    resolving: set[str] = set()
+
+    def resolve_root(name: str) -> Path:
+        if name in roots:
+            return roots[name]
+        if name in resolving:
             raise ValueError(
-                f"Project root {name!r} must be a non-empty repository-relative path"
+                f"Project root aliases contain a dependency cycle at {name!r}"
             )
-        configured_path = Path(os.path.abspath(repository / value))
+        try:
+            raw_value = configured[name]
+        except KeyError as exc:
+            raise ValueError(f"Unknown project root: {name!r}") from exc
+        if not isinstance(raw_value, str) or not raw_value:
+            raise ValueError(
+                f"Project root {name!r} must be a non-empty repository-relative "
+                "path or @root path"
+            )
+
+        resolving.add(name)
+        if raw_value.startswith("@"):
+            root_and_child = raw_value[1:].replace("\\", "/").split("/", 1)
+            parent_name = root_and_child[0]
+            child = root_and_child[1] if len(root_and_child) == 2 else ""
+            child_path = Path(child)
+            if (
+                not parent_name
+                or parent_name not in configured
+                or child_path.is_absolute()
+                or ".." in child_path.parts
+            ):
+                raise ValueError(
+                    f"Project root {name!r} has an invalid root alias: {raw_value!r}"
+                )
+            base_path = resolve_root(parent_name)
+            configured_path = Path(os.path.abspath(base_path / child_path))
+            if (
+                configured_path != base_path
+                and base_path not in configured_path.parents
+            ):
+                raise ValueError(
+                    f"Project root {name!r} must remain within {parent_name!r}"
+                )
+        else:
+            value = Path(raw_value)
+            if value.is_absolute():
+                raise ValueError(
+                    f"Project root {name!r} must be a non-empty repository-relative "
+                    "path or @root path"
+                )
+            configured_path = Path(os.path.abspath(repository / value))
         if (
             not allow_missing
             and not configured_path.exists()
@@ -79,6 +123,11 @@ def load_project_paths(
                 f"Configured project root {name!r}: {configured_path}"
             )
         roots[name] = configured_path
+        resolving.remove(name)
+        return configured_path
+
+    for name in configured:
+        resolve_root(name)
 
     if roots.get("repository") != repository:
         raise ValueError(

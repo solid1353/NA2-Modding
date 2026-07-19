@@ -30,11 +30,11 @@ Validate and inspect the planned edit from the repository root:
 ```powershell
 python -m na2_patcher.modules.raw_binary.engine validate `
   --package na2_patcher/modules/raw_binary/patch_sets/ui_translation `
-  --root na2=@source/NA2.iso.files
+  --root na2=@source_na2
 
 python -m na2_patcher.modules.raw_binary.engine plan `
   --package na2_patcher/modules/raw_binary/patch_sets/ui_translation `
-  --root na2=@source/NA2.iso.files `
+  --root na2=@source_na2 `
   --patch UI-BTL-001
 ```
 
@@ -271,13 +271,13 @@ Inspect all thirteen UI companion patches together:
 ```powershell
 python -m na2_patcher.modules.raw_binary.engine validate `
   --package na2_patcher/modules/raw_binary/patch_sets/ui_translation `
-  --root na2=@source/NA2.iso.files `
-  --root nun5=@source/NUN5.iso.files
+  --root na2=@source_na2 `
+  --root nun5=@source_nun5
 
 python -m na2_patcher.modules.raw_binary.engine plan `
   --package na2_patcher/modules/raw_binary/patch_sets/ui_translation `
-  --root na2=@source/NA2.iso.files `
-  --root nun5=@source/NUN5.iso.files `
+  --root na2=@source_na2 `
+  --root nun5=@source_nun5 `
   --patch UI-BTL-001 `
   --patch UI-BTL-002 `
   --patch UI-BTL-003 `

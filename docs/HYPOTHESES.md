@@ -86,22 +86,21 @@ actionable leads.
 
 ## External Translation Files
 
-Status: unimplemented static leads. Confirmed layout, loader, donor, ISO, and
-pointer-inventory findings are recorded in
-`docs/knowledge/external_translation_files.md` and
-`docs/knowledge/external_translation_shortening_refs.tsv`.
+Status: generated module implemented; ISO/runtime validation pending. Confirmed
+layout, loader, donor, and ISO findings are recorded in
+`docs/knowledge/external_translation_files.md`; the canonical pointer inventory
+is `na2_patcher/modules/external_translation/pointer_refs.tsv`.
 
-- Candidate boot hook: redirect the call at runtime `0x001E0F20` in
+- Generated boot hook: redirect the call at runtime `0x001E0F20` in
   `FUN_001e0ee0` through a resident stub, then load `MOD.BIN`, invoke its fixed
-  bootstrap, and resume the original `FUN_001bda50` call. This control-flow
-  sequence has not been assembled or run.
+  bootstrap, and resume the original `FUN_001bda50` call. Exact instruction
+  words are unit-tested; this control-flow sequence has not been run.
 - Candidate resident cave: ELF file `0x00507414-0x0050747F` / runtime
   `0x00607314-0x0060737F` is zero-filled and has no aligned exact pointer found
   in SLPS, BTL, or ETC. Absence of a pointer is not proof that the range is safe.
 - Candidate memory envelope: reserve `TEXTENG.BIN` at `0x008F3D00`,
-  `MOD.BIN` at `0x00940000`, and move the final marker to `0x00A28900` exactly
-  as an envelope. NA2 runtime stability after reducing the heap by about
-  `0x14B880` bytes is unknown.
+  `MOD.BIN` at `0x00940000`, and move the final marker only to `0x00940100`.
+  NA2 runtime stability after reducing the heap by `0x63080` bytes is unknown.
 - Candidate FLIST behavior: the direct PRG loader appears able to open both
   explicit paths without FLIST registration. NUN6 lists `MOD.BIN` but not its
   text file, so an NA2 proof of concept should test omission rather than treat

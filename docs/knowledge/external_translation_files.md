@@ -1,22 +1,21 @@
 # External Translation Files
 
-Status: static-analysis result, 2026-07-19. No NA2 binary, ISO, profile, or
-translation mapping was changed, and the proposed loader has not been tested at
-runtime.
+Status: generated module and profile integration implemented, 2026-07-19;
+real-ISO and runtime validation remain pending. The canonical translation
+mapping is unchanged.
 
 ## Conclusion
 
-NA2 can plausibly support external translation data without expanding the ISO
-image or adding a renderer hook. The intended architecture is exactly two files
-under `PRG/`:
+The implemented architecture uses exactly two generated files under `PRG/`
+without expanding the ISO image or adding a renderer hook:
 
 - `MOD.BIN`: resident MWO3 code containing the external-text bootstrap and any
   later translation-specific runtime logic;
 - `TEXTENG.BIN`: resident MWO3 data containing a deterministic CP932 string
   pool.
 
-This is not a proposal to replace those files with one combined file. The first
-implementation should externalize only the messages needed to eliminate the 33
+These files are deliberately not combined. The first implementation
+externalizes only the messages needed to eliminate the 33
 enabled `[S]` `shorten` mappings. All 33 are statically addressable: 30 rows have
 direct address references and three continuation rows are covered through their
 containing full-message pointer. The inventory resolves to 35 distinct pointer
@@ -25,10 +24,10 @@ share their already-recorded parent pointer, and the M0825 continuation adds the
 M0823 parent pointer. Consequently, the initial design does not need to hook the
 renderer or rewrite pointers after BTL/ETC loads.
 
-The design is feasible on static evidence, but it depends on controlled ISO file
-insertion that the current profile compositor deliberately does not support. It
-also needs runtime validation of the new memory reservation, boot hook, file
-lookup, and mode transitions before it can become an enabled module.
+The generator, guarded edit plan, profile module type, and controlled ISO-file
+insertion are implemented and unit-tested. Runtime validation of the new memory
+reservation, boot hook, direct file lookup, and mode transitions is still
+required.
 
 ## Evidence and provenance
 
@@ -57,7 +56,7 @@ Methods and tools:
 - aligned little-endian pointer scans plus PowerShell size, hash, ISO-layout,
   and byte inspection.
 
-`ADV.bin` was neither inspected nor changed for this research.
+`ADV.bin` was neither inspected nor changed by the research or implementation.
 
 ## Donor behavior
 
@@ -111,8 +110,8 @@ MWO3 files begin with a `MWo3` header. For loaded data and pointers, raw file
 offset maps as `load_base + file_offset`; the header occupies the first `0x40`
 bytes in memory. Some existing Ghidra MOD imports map file offset `0x40` to the
 displayed load base, so their displayed code labels are `0x40` lower than the
-raw-memory/file-offset formula. Any future implementation must state which
-convention it uses and verify raw bytes before writing a jump or pointer.
+raw-memory/file-offset formula. The implementation uses the raw formula and
+verifies every generated jump, pointer, and source byte.
 
 ## NA2 loader and memory layout
 
@@ -125,8 +124,8 @@ NA2's generic PRG loader `FUN_001be7f0(slot, filename)`:
 4. passes the loaded MWO3 image to `FUN_00100270` for cache maintenance, BSS
    clearing, and constructor processing.
 
-The destination table currently has slot 0 = `0x00100000`, slot 1 =
-`0x006B3F00`, and zeroes thereafter. A future guarded patch can assign:
+The clean destination table has slot 0 = `0x00100000`, slot 1 =
+`0x006B3F00`, and zeroes thereafter. The guarded module assigns:
 
 - slot 2 = `0x00940000` for `MOD.BIN`;
 - slot 3 = `0x008F3D00` for `TEXTENG.BIN`.
@@ -143,14 +142,14 @@ NA2's ELF currently describes:
   `0x008DD080`;
 - a final zero-size marker at `0x008DD080`.
 
-The NUN6-compatible candidate reservation is:
+The implemented minimal reservation is:
 
 | Region | Base | Maximum bytes | End |
 | --- | ---: | ---: | ---: |
 | Existing NA2 overlays | `0x006B3F00` | `0x229180` | `0x008DD080` |
 | Safety gap | `0x008DD080` | `0x16C80` | `0x008F3D00` |
 | `TEXTENG.BIN` envelope | `0x008F3D00` | `0x4C300` | `0x00940000` |
-| `MOD.BIN` envelope | `0x00940000` | `0xE8900` | `0x00A28900` |
+| `MOD.BIN` envelope | `0x00940000` | `0x100` | `0x00940100` |
 
 Moving the final marker is a structural patch, not merely a program-header
 edit. Four NA2 instruction pairs construct the current `0x008DD080` boundary:
@@ -165,13 +164,13 @@ edit. Four NA2 instruction pairs construct the current `0x008DD080` boundary:
 The corresponding structural occurrences also include program-header words at
 file offsets `0xBC` and `0xC0`, a literal pointer at `0x2F79F4`, and a section
 header address at `0x50763C`. NUN6 changes the equivalent four instruction
-pairs and final marker to `0x00A28900`, which is strong donor evidence that all
-sites must move together. Runtime safety in NA2 is still unproved: this change
-reduces the heap by approximately `0x14B880` bytes.
+pairs and final marker together; the module follows that structural precedent
+but moves only to its actual fixed end at `0x00940100`. Runtime safety in NA2 is
+still unproved; the implemented change reduces the heap by `0x63080` bytes.
 
 ## Fixed two-file bootstrap
 
-The smallest coherent bootstrap is:
+The generated bootstrap is:
 
 1. Patch the existing call at runtime `0x001E0F20` in NA2 constructor
    `FUN_001e0ee0` to a tiny resident ELF stub.
@@ -182,13 +181,13 @@ The smallest coherent bootstrap is:
 4. Static guarded patches redirect every selected SLPS/BTL/ETC pointer to its
    generated `TEXTENG.BIN` string address.
 
-A candidate stub/string cave exists at ELF file range
-`0x00507414-0x0050747F` (runtime `0x00607314-0x0060737F`): 108 zero bytes at the
-end of the main load segment. An aligned exact-pointer scan of SLPS, BTL, and ETC
-found no reference into it. This remains a hypothesis until control-flow and
-runtime testing confirm the range is safe.
+A 76-byte stub/string payload uses the start of ELF file range
+`0x00507414-0x0050747F` (runtime `0x00607314-0x0060737F`), which contains 108
+guarded zero bytes at the end of the main load segment. An aligned exact-pointer
+scan of SLPS, BTL, and ETC found no reference into it. Runtime testing must still
+confirm that the cave is safe.
 
-`TEXTENG.BIN` should be deterministic and reproducible:
+`TEXTENG.BIN` generation is deterministic and reproducible:
 
 - use a stable mapping-ID order and CP932 encoding;
 - obtain the exact official string through each mapping's existing
@@ -202,37 +201,49 @@ runtime testing confirm the range is safe.
 - emit a guarded patch plan that records each pointer's original bytes and new
   address.
 
+The generated outputs are:
+
+| File | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `PRG/MOD.BIN` | 256 | `C00D69E124E425741745B7B61A2FE07B48AFD729806F96113C6FF81D957706DA` |
+| `PRG/TEXTENG.BIN` | 200,192 | `AA5E7C6ADCDFDC3A7695AF295DD488EA91D926B01ED9DDD191550C98E3F4EAB9` |
+
+The text output copies the official NUN5 file exactly after its updated MWO3
+header and appends only four mapping-derived strings at offsets `0x30D00`,
+`0x30D3C`, `0x30D74`, and `0x30D98`.
+
 The three continuation mappings are M0812 through parent M0810, M0820 through
 parent M0818, and M0825 through parent M0823. M0823 is an enabled `slot` row,
 not an `[S]` row, but the external pool must emit its complete official message
 to make the M0825 continuation reachable through that one parent pointer. The
-complete reusable inventory is in `external_translation_shortening_refs.tsv`.
+complete reusable inventory is now canonical module data in
+`na2_patcher/modules/external_translation/pointer_refs.tsv`.
 
 BTL and ETC themselves contain the applicable pointer words. A static patch to
 those files is therefore restored whenever the overlay loads; no post-load
 runtime rewrite is required. Strings resident above the largest overlay remain
 outside the BTL/ETC overwrite region.
 
-## Future module boundary
+## Module boundary
 
-This should be a separate project-side `external_translation` module, not a
-change to the existing translation builder, mapping schema, mapping values,
-defaults, migration behavior, or enabled-state behavior. Its pinned inputs
-should include the exact current `mappings.tsv` hash and the official NUN5
-source artifacts already resolved through the shared project-path loader.
+This is a separate project-side `external_translation` module, not a change to
+the existing translation builder, mapping schema, mapping values, defaults,
+migration behavior, or enabled-state behavior. Its manifest pins the exact
+current `mappings.tsv` hash and all source/output hashes; source artifacts are
+resolved through the shared project-path loader.
 
-The module should own:
+The module owns:
 
 - deterministic generation and validation of `MOD.BIN` and `TEXTENG.BIN`;
 - guarded SLPS/BTL/ETC pointer edits and the loader/memory structural edits;
 - a machine-readable patch log for every binary write;
 - requests for the two new ISO paths through the general compositor interface.
 
-The existing translation module should continue applying all current inline
-translations first. The external module then redirects only the selected
-shortening cases; the now-unreferenced shortened inline bytes remain harmless
-and preserve current behavior when the external module is disabled. `ADV.bin`
-is outside this module and remains excluded.
+The existing translation module applies all current inline translations first.
+The external module then redirects only the selected shortening cases and
+restores their now-dead inline slots to exact clean NA2 bytes. When the external
+module is disabled, the unchanged translation module still produces the current
+`[S]` fallback text. `ADV.bin` is outside this module and remains excluded.
 
 ## ISO integration constraint
 
@@ -248,13 +259,11 @@ payload extents fit without increasing the ISO byte length, but an allocator
 must preserve the final nonzero bytes and validate every selected sector rather
 than assuming the whole tail is disposable.
 
-The current compositor intentionally rejects file-size changes, requires the
-result tree to match the source tree plus the identity rename, and exposes only
-read-only ISO 9660 parsing. Implementation therefore has a Project-workstream
-dependency: add general, validated ISO-file insertion support that can write the
-two records, update the PRG `.` and root/parent directory-size metadata, allocate
-verified extents, and revalidate the final tree and unchanged ISO size. This
-must not be implemented as a translation-only byte hack.
+The Project compositor now has general validated ISO-file insertion support. It
+writes both records, updates the PRG `.` and root/parent directory-size
+metadata, allocates only verified-zero extents, and revalidates the final tree,
+payload hashes, source files, and unchanged ISO size. This remains general
+compositor behavior rather than a translation-only byte hack.
 
 NA2's `FLIST` does not list either external file. NUN6 adds `prg\MOD.BIN` to
 its `FLIST` but does not add `TEXTBRA.BIN`. NA2's generic loader opens explicit
@@ -263,26 +272,26 @@ case and separators. The minimal proof of concept should therefore omit an
 FLIST edit initially and treat successful direct loading as a runtime test. Add
 an FLIST record only if that test proves it necessary.
 
-## Required implementation gates
+## Validation gates
 
-Before this architecture can be enabled, a future task must verify all of the
-following:
+Implemented and covered by focused tests:
 
-1. The Project-owned compositor can add both files while preserving ISO size,
-   existing files, directory validity, and source immutability.
-2. The final marker and every hardcoded boundary site are changed together and
-   pass boot, frontend, battle, result, save/load, and repeated mode-transition
-   testing.
-3. The selected PS2/R5900 assembler or toolchain is documented and
-   reproducible. No suitable compiler/assembler was present on PATH during this
-   research.
-4. `MOD.BIN` is within `0xE8900` bytes, `TEXTENG.BIN` is within `0x4C300` bytes,
-   and every emitted pointer lies within the declared text image.
-5. Generation resolves all 33 selected mappings as 30 direct rows and three
-   parent-message continuations, produces the expected 35 distinct pointer
-   writes, and refuses any count or original-byte mismatch.
-6. Both ISO entries exist with the expected names, lengths, hashes, and extents
-   before launch; missing-file behavior is never left to the loader's retry
-   loop.
-7. Runtime testing confirms that direct loading works without an FLIST entry;
-   if not, the FLIST requirement is documented and implemented explicitly.
+1. A dependency-free MIPS encoder generates the two fixed bootstrap routines;
+   exact instruction-word tests verify their calls and returns.
+2. `MOD.BIN` is exactly `0x100` bytes, `TEXTENG.BIN` is `0x30E00` bytes, and
+   every emitted pointer lies within the declared text image.
+3. Generation resolves all 33 selected mappings as 30 direct rows and three
+   parent-message continuations, produces 35 distinct pointer writes and 35
+   inline reversals, and refuses any count or original-byte mismatch.
+4. The final marker and every hardcoded boundary site change together in one
+   guarded 85-edit plan.
+5. The Project-owned compositor validates both ISO insertions, their records,
+   extents, bytes, hashes, fixed image size, original files, and final tree.
+
+Still required at runtime:
+
+1. Boot and confirm both direct PRG loads succeed without an `FLIST` entry.
+2. Exercise frontend, battle, result, save/load, and repeated mode transitions
+   to test the smaller heap and resident-memory boundary.
+3. Visit representative shortened-string screens and confirm the full official
+   strings render from external memory.

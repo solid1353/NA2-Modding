@@ -6,7 +6,6 @@ Desktop.ini
 /build/
 /logs/
 /work/
-/pcsx2_files/screenshots/
 __pycache__/
 
 # Temporary releases symlink

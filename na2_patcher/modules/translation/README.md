@@ -1,11 +1,11 @@
-# NA2 translation module (mapping version 34)
+# NA2 translation module (mapping version 35)
 
 This first-class `na2_patcher` module builds an in-memory translation plan for **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*. It never packages patched BIN or ELF payloads. Profile builds invoke `engine.py` directly and log the plan without using a TSV as an inter-stage handoff. There is no standalone export command.
 
 ## Mapping metadata
 
-- Version: `34`
-- Packaged `mappings.tsv` SHA-256: `8f7f244f286ab3572e674d52b50409e6d5345c70a7d43e69ba2d754d82d0dbe7`
+- Version: `35`
+- Packaged `mappings.tsv` SHA-256: `c4f317c0a86c2be3fb07512652ce5e50d9b73ae485ebaa502c4ed1fabc9c28a5`
 
 The README is the canonical home for both values. The module does not use one-line `VERSION.txt` or `MAPPINGS_DEFAULT.sha256` sidecars; it reads and validates this metadata directly from `README.md`.
 
@@ -80,9 +80,9 @@ Arguments use compact key/value syntax, for example:
 `split_br_sequence` selects official NUN5 `<br>` parts listed by `parts=...` and writes them as consecutive NUL-terminated NA2 fragments.
 
 `insert_br_after_words` retains every word from one exact official NUN5 source
-string and inserts one `<br>` after the declared word count. It is used for the
-four Collection Movie titles that NUN5 wraps automatically but NA2 otherwise
-clips when the same official text is copied into its original fixed slot.
+string and inserts one `<br>` after the declared word count. The transform
+remains supported by the engine, but no current mapping uses it. The v34
+Collection Movie use was rejected and rolled back in v35.
 
 `flatten_br_slice` replaces each official NUN5 `<br>` with one space and selects a verified character range. It is used to distribute one official loading sentence across NA2's three original fixed slots without embedding manual prose.
 
@@ -138,7 +138,30 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
 
-## Version 34 changes
+## Version 35 changes
+
+### Collection Movie exact-source rollback
+
+`M0771` through `M0774` again copy their exact official NUN5 source strings
+without an authored `<br>` transform. Version 34 incorrectly treated a
+text/font fit issue as part of the UI-texture task and inserted line breaks that
+were not present in the selected NUN5 bytes. Version 35 restores the prior
+source-derived mappings exactly; any remaining overflow belongs to separate
+text/font work and is outside the UI-texture scope.
+
+### v35 build validation
+
+A clean-source full in-memory plan was validated with all three targets:
+
+- mapping version 35 and the packaged mapping hash matched the README;
+- 2,437 six-column TSV patch rows;
+- 2,173 applied and changed text mappings;
+- 33 shortened mappings;
+- zero active structural patches;
+- all four Collection Movie rows retained their exact NUN5 source strings and
+  contained no authored `<br>` transform.
+
+## Version 34 changes (superseded by v35)
 
 ### Collection Movie line wrapping
 
@@ -149,7 +172,7 @@ contains an additional Movie-specific construction path using
 overlay routine would also import unrelated object-layout and renderer-call
 changes.
 
-`M0771` through `M0774` now use `insert_br_after_words` to preserve every word
+`M0771` through `M0774` used `insert_br_after_words` to preserve every word
 from their existing exact NUN5 source references while reproducing the line
 breaks visible in the official NUN5 screen:
 
@@ -160,7 +183,8 @@ breaks visible in the official NUN5 screen:
 
 The transform accepts only a valid single-space word boundary. All four results
 fit their existing fixed slots; no shortening, relocation, pointer rewrite,
-overlay edit, or target-size change is used.
+overlay edit, or target-size change was used. Runtime review rejected this
+authored text change, so v35 removes it.
 
 ### v34 build validation
 
@@ -368,10 +392,10 @@ The packaged v30 table contains 854 mappings: 844 enabled and 10 disabled. Activ
 
 This log persists unresolved visual/runtime findings across mapping versions. Entries implemented in the current module remain in the verification section until confirmed in-game.
 
-### Implemented in v34, runtime verification required
+### Rejected in v34 and rolled back in v35
 
-- **Collection Movie title fit:** verify the four long titles render on the same
-  two lines as official NUN5 without clipping or overlap.
+- **Collection Movie authored line breaks:** removed from `M0771` through
+  `M0774`; any remaining fit issue is separate text/font work.
 
 ### Implemented in v33, runtime verification required
 
@@ -418,9 +442,9 @@ This log persists unresolved visual/runtime findings across mapping versions. En
 
 PCSX2 application chrome, toolbar text, pause indicators, graphical controller prompts, and emulator toasts are not game translation issues and are not logged here.
 
-## v34 test checklist
+## v35 test checklist
 
-1. Build from a clean mapping-version-34 module and confirm the summary reports version 34.
+1. Build from a clean mapping-version-35 module and confirm the summary reports version 35.
 2. Confirm `build_summary.json`, console output, scripts, and documentation contain only relative path references.
 3. Preserve external enabled state and verify `M0745=1`; `M0725` must remain enabled and apply as a `slot` mapping.
 4. Recheck all 54 supplied Collection screenshots and confirm every v32-covered model-animation, voice-title, and jutsu entry is English.
@@ -429,8 +453,9 @@ PCSX2 application chrome, toolbar text, pause indicators, graphical controller p
 7. Verify `Kachofuketsu` appears in both the battle-select and Command Chart contexts using the shared target string.
 8. Verify `Temple of Nirvana Technique` appears in the battle-select entry.
 9. Recheck v29-v31 Options, Theater, save/load, memory-card, Naruto, and roster-wide Command Chart fixes for regressions.
-10. Confirm the four long Collection Movie titles use the exact two-line NUN5
-    breaks without clipping or overlapping adjacent entries.
+10. Confirm the four long Collection Movie mappings copy their exact NUN5
+    source strings and contain no authored `<br>`; text/font fit is outside
+    this UI-texture task.
 11. Generated TSV validation: exactly six columns, fixed-size patches only, relative summary reference, no active overlap, unchanged target file sizes, and successful composition with the current Font package.
 
 ## Integration expectations

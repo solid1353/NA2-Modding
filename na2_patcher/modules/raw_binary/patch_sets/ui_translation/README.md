@@ -3,10 +3,10 @@
 This patch set holds size-preserving executable changes that are inseparable from
 the NUN5 UI container import but do not belong inside `DATA.CVM`.
 
-Its 82 guarded edits are donor-first: 45 copy bytes directly from canonical
-NUN5 files (37 from the ELF, seven from `BTL.BIN`, and one from `ETC.BIN`).
+Its 86 guarded edits are donor-first: 47 copy bytes directly from canonical
+NUN5 files (39 from the ELF, seven from `BTL.BIN`, and one from `ETC.BIN`).
 Another 24 store the exact values of NUN5's stage-width formula in NA2's
-different inline-record layout. The remaining 13 are documented NA2-specific
+different inline-record layout. The remaining 15 are documented NA2-specific
 ports where the equivalent NUN5 behavior has a different instruction or data
 topology, or where NA2 intentionally needs a different value.
 
@@ -60,13 +60,16 @@ the clipping visible in NA2.
 cave. In the NA2 table, every second key word is exactly the matched loop index.
 The only other code consumer at BTL file offset `0x606BC` is changed from loading
 that redundant word to `move s0,s1`. The freed word in each record stores the
-precomputed single-precision NUN5 scale. At BTL file offset `0x6156C`, the
-original `1.0` initialization becomes `lwc1 f14,4(v1); nop`. The remaining 24
-rectangle fields are copied from the hash-pinned NUN5 ELF table.
+precomputed single-precision NUN5 scale. The original code initialized both
+axes to `1.0` by loading `f14` and copying it to `f15`. At BTL file offset
+`0x61570`, the `mtc1` destination changes from `f14` to `f15` so vertical
+scale stays at `1.0`; at `0x6157C`, the former `mov.s f15,f14` becomes
+`lwc1 f14,4(v1)` so only horizontal scale receives the precomputed fit. The
+remaining 24 rectangle fields are copied from the hash-pinned NUN5 ELF table.
 
-The patch is 50 individually guarded edits: 24 rectangle rows copy NUN5's
+The patch is 51 individually guarded edits: 24 rectangle rows copy NUN5's
 English ELF table, 24 scale rows store the exact result of NUN5's width formula,
-and two code rows adapt NA2's inline-record topology. A temporary application verified
+and three code rows adapt NA2's inline-record topology. A temporary application verified
 that all 24 stage keys remain unchanged and match NUN5, every rectangle equals
 the official English table, every scale equals the NUN5 formula, all changed
 bytes stay inside declared ranges, and the 2,237,184-byte BTL size is unchanged.
@@ -181,23 +184,15 @@ is the closest non-wrapping NA2 equivalent. Together with NUN5's exact
 complete prompt like the paired NUN5 capture. The rejected X=`260` write is not
 retained.
 
-The first 14 edits were matched against their original bytes, written through
+All 14 edits were matched against their original bytes, written through
 PINE, read back exactly, and captured from user-provided slot 7. They restored
 both Jutsu labels, the two arrows and Circle input graphics, and both bottom
 prompts.
 
-Preserved slot 6 exposed a separate draw-order defect when the Jutsu selector
-is open: NA2 leaves those base-screen Jutsu labels visible beneath the
-translucent selector rows, while the paired NUN5 state does not expose them.
-Both savestates contain selector state `6`. The shared caller already keeps
-`s1=0` for submenu states 4, 5, and 6, so a 16-byte wrapper in loaded zero
-padding at BTL offset `0xA0` uses that existing sentinel. It returns without
-drawing in those submenu states and otherwise tail-calls the unchanged original
-renderer at EE `0x006BD010`. The call at BTL offset `0x9E44` is redirected to
-the wrapper at EE `0x006B3FA0`. This is an NA2-specific size-preserving port:
-NUN5 relies on its different localized render path to hide the same underlying
-labels. The wrapper is statically verified and deliberately left for the
-user-requested runtime pass.
+The later submenu-suppression wrapper was rejected: the NUN5 reference retains
+the Jutsu1/Jutsu2 graphics beneath the open selector, while the wrapper removed
+them and left unrelated garbage visible. Its code-cave write and call hook are
+removed; the runtime-proven 14 texture/placement edits remain unchanged.
 
 This patch changes texture selection, placement, and submenu visibility only.
 It does not change or evaluate command-name text or font rendering.
@@ -237,13 +232,11 @@ in full and the existing seven-digit `9999999` value remained visible. The
 source and destination `ETC.BIN` files are size/hash pinned and remain
 untouched.
 
-The paired slot-2 captures then exposed two small anchor differences. In the
-matched Shop renderer, NA2 uses Money X=`250` and Ryo Y=`48`; NUN5 uses Money
-X=`254` and Ryo Y=`50`. `UI-ETC-001` now also copies the exact homologous NUN5
-instructions from ETC offsets `0x25E88` and `0x25EB0` into NA2 offsets
-`0x249A4` and `0x249CC`. The already-correct Money Y and Ryo X paths remain
-unchanged. These two copies are statically verified and await the same
-user-requested runtime pass.
+The later Money-X and Ryo-Y anchor copies were unrelated to the reported
+`Bonus Game` label and changed a screen the user had already accepted. They
+are removed. Static comparison shows the complete NUN5 `SHOP.CCS` donor
+already carries the exact Bonus Game model/anchor; the small capture difference
+is normal label pulsation and does not justify another binary edit.
 
 ## UI-ELF-005: localized Mode Select START layout
 
@@ -261,7 +254,19 @@ writes `v1`, while NA2's following instruction consumes `v0`, so copying the
 four instruction bytes verbatim would be incorrect. Both edits preserve ELF
 size and are statically verified for the user-requested runtime pass.
 
-Inspect all twelve UI companion patches together:
+## UI-ELF-006: localized Controls Vibration-label rectangle
+
+The whole NUN5 `CMN/GAUGE.CCS` import supplies the English `TEX_xmenu`
+artwork, but NA2's boot-ELF table still selects the Japanese rectangle
+`(1,69,42,22)` at file offset `0x4D53C0`. NUN5's localized table selects
+`(64,88,64,20)` at file offset `0x4DEA28`.
+
+`UI-ELF-006` copies that exact eight-byte NUN5 rectangle into the homologous
+NA2 table. It changes only the graphical Vibration label selection; surrounding
+OFF/On text and font rendering are outside scope. Both ranges are guarded and
+the ELF size is preserved.
+
+Inspect all thirteen UI companion patches together:
 
 ```powershell
 python -m na2_patcher.modules.raw_binary.engine validate `
@@ -284,5 +289,6 @@ python -m na2_patcher.modules.raw_binary.engine plan `
   --patch UI-ELF-002 `
   --patch UI-ELF-003 `
   --patch UI-ELF-004 `
-  --patch UI-ELF-005
+  --patch UI-ELF-005 `
+  --patch UI-ELF-006
 ```

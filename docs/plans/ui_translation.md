@@ -127,13 +127,11 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   rectangle; their label rectangles differ. `UI-ELF-002` copies the complete
   guarded 96-byte NUN5 block, including its eight-byte zero separator, from ELF
   file offset `0x4DDD10` to NA2 file offset `0x4D53E0`.
-- The Collection Movie strings were already exact official NUN5 text. NUN5's
-  `ETC.BIN` has a separate `ccHomeIspMovie` construction path that NA2 does not
-  invoke, so NA2 prints four long titles on one clipped line. Translation
-  mapping version 34 uses the source-derived `insert_br_after_words` transform
-  to insert only the four official NUN5 line breaks. Every word remains sourced
-  from the original NUN5 string and all four results fit their existing fixed
-  boot-ELF slots without an overlay edit or relocation.
+- The Collection Movie strings were already exact official NUN5 text. The
+  authored `insert_br_after_words` transforms added in mapping version 34 were
+  not part of texture translation and were rejected during runtime review.
+  Mapping version 35 restores `M0771` through `M0774` to their exact prior NUN5
+  source copies with no inserted `<br>`; text/font fit remains out of scope.
 - The imported `SHOP.CCS` is already the exact complete NUN5 donor payload. The
   clipped `Money` and wrong unit therefore came from NA2's static Shop rectangle
   table in `ETC.BIN`, not from the CCS container. NA2 file offset `0x30300`
@@ -142,27 +140,30 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   `(169,385,62,26)` `Money` and `(321,449,30,22)` `Ryo` rectangles.
 - A guarded live write at EE `0x006E4208` matched the expected NA2 bytes and
   read back exactly. Preserved slot 3 then rendered both labels completely with
-  the existing seven-digit `9999999` value visible. NUN5 keeps the same Ryo X
-  position. The newer paired slot 2 exposed two remaining anchor differences:
-  NA2 uses Money X=`250` and Ryo Y=`48`, while NUN5 uses X=`254` and Y=`50`.
-  The two exact homologous NUN5 ETC instructions are now donor copies at NA2
-  offsets `0x249A4` and `0x249CC`.
+  the existing seven-digit `9999999` value visible. The later Money-X and
+  Ryo-Y anchor additions were unrelated to the reported Bonus Game pulse and
+  changed an accepted screen, so they are removed.
 - Preserved slot 1 showed that the imported Mode Select START art was clipped by
   NA2's static `(1,397,206,22)` rectangle and X=`130` anchor. NUN5 localized
   accessor `FUN_003d4bc0` supplies `(1,393,254,26)` and renderer
   `FUN_003972e0` uses X=`150`. `UI-ELF-005` copies the exact rectangle and uses
   an authored same-register immediate port for X because the two compiled
   renderers use different destination registers.
-- Preserved slot 5 exposed Stage Select corruption caused by copying the first
-  TEX word from NUN5. That word is not pixel data: it references a
-  container-local palette object. The mapped importer now preserves the NA2
-  word and copies only the remaining TEX bytes plus the complete NUN5 CLT.
-- Preserved slot 6 and its paired NUN5 state both contain selector state `6`.
-  NA2 exposes the translated base Jutsu labels beneath the translucent open
-  selector. `UI-BTL-005` now routes that draw through a 16-byte wrapper that
-  returns for the caller's established states 4-6 sentinel and tail-calls the
-  original renderer otherwise. This narrow visibility port intentionally
-  differs from NUN5's localized queue path and leaves all text/font data alone.
+- Paired slot 1 proves the stage-picture pixels themselves already match while
+  NA2's retained CCS structure associates and positions them incorrectly.
+  `MAPSEL1.CCS` therefore uses the complete NUN5 donor so pictures, ordering,
+  models, UVs, and labels remain coupled. The stage-name fitter now leaves
+  vertical scale at `1.0` and applies the 214-pixel cap only horizontally.
+- Paired slot 2 proves NUN5 retains the Jutsu1/Jutsu2 graphics beneath the open
+  selector. The later suppression wrapper and hook caused the regression and
+  are removed; the original 14 runtime-proven rectangle/placement edits remain.
+- Paired slots 4 through 7 prove that texture-only HOME import retained
+  incompatible NA2 models and UVs. `HOME.CCS` returns to the complete NUN5
+  donor, restoring Collection chrome, Characters/Previous Page, the accepted
+  character-details layout, and Movie/Play graphics together.
+- Paired slot 8 resolves the missing graphical Vibration label through an exact
+  eight-byte NUN5 boot-ELF rectangle copy. OFF/On text and font data are not
+  changed.
 - Slot 5 Controls and slot 7 Customize are complete. The accepted Customize
   screenshot is the corrected NA2 result produced by this task, not a NUN5
   donor reference. Its X=`255` placement remains the live-proven NA2 correction.
@@ -174,21 +175,22 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   and the deterministic verifier. The generated replacement ranges total
   5,274,398 bytes, but no replacement CCS blobs are stored in the repository.
   Static parity regenerated all 34 former production files byte-for-byte.
-- `na2_patcher/modules/raw_binary/patch_sets/ui_translation/` contains 12 atomic
-  companion patches and 88 guarded edits across BTL, ETC, and the boot ELF.
-  Forty-eight rows copy canonical NUN5 bytes directly (38 ELF, seven BTL, three
+- `na2_patcher/modules/raw_binary/patch_sets/ui_translation/` contains 13 atomic
+  companion patches and 86 guarded edits across BTL, ETC, and the boot ELF.
+  Forty-seven rows copy canonical NUN5 bytes directly (39 ELF, seven BTL, one
   ETC), 24 store values computed from NUN5's stage-width formula in NA2's
-  different record layout, and 16 are minimal NA2-specific behavior ports.
-  The six new Mode Select, Shop-anchor, and Jutsu-overlay edits are statically
-  verified and intentionally await the user's runtime pass.
-- Translation mapping version 34 adds deterministic source-derived line breaks
-  for the four clipped Collection Movie titles. A clean-source full in-memory
-  plan produced 2,439 fixed-size patch rows with all three targets selected.
+  different record layout, and 15 are minimal NA2-specific behavior ports.
+  The stage-fit correction and Vibration rectangle are statically verified and
+  intentionally await the user's runtime pass.
+- Translation mapping version 35 restores the four Collection Movie rows to
+  exact official NUN5 source strings with no authored line breaks. A
+  clean-source full in-memory plan produced 2,437 fixed-size patch rows with
+  all three targets selected.
 - `na2_patcher/profiles/current/modules.tsv` enables both modules by canonical
   executable-input hash.
-- The raw package validates as 6 targets, 12 patches, and 88 edits. The UI
-  texture plan derives all 34 members with HOME, MAPSEL1, and MODE2KDV as the
-  three mapped exceptions. The historical runtime harness remains available;
+- The raw package validates as 6 targets, 13 patches, and 86 edits. The UI
+  texture plan derives all 34 members with 33 whole donors and MODE2KDV as the
+  only mapped exception. The historical runtime harness remains available;
   current focused and complete-suite results are refreshed with each build.
 - The 2026-07-19 non-launching normal profile build derived all 34 replacements
   through 76 texture mappings, applied all 88 companion edits, and reported
@@ -306,48 +308,61 @@ production writer.
   Shop, HOME/Collection, options/practice, clash prompts, and result screens
   are secondary coverage rather than prerequisites for the pilot.
 
-### Final runtime result matrix
+### Paired savestate 1-8 correction matrix
 
-- Earlier accepted screens remain unchanged: Character Select and battle HUD
-  names, Options, Practice, Controls, Customize, and screens absent from the
-  supplied defect captures. Normal pulsation differences are not defects.
-- New slot 1: Mode Select START rectangle and X anchor are implemented through
-  `UI-ELF-005`.
-- New slot 2: Shop Money X and Ryo Y anchors are exact NUN5 ETC donor copies in
-  `UI-ETC-001`; the seven-digit value logic is unchanged.
-- New slots 3 and 4: HOME keeps NA2 structure and imports only the five visible
-  localized texture/palette pairs, removing the duplicate collection headers.
-- New slot 5: Stage Select keeps NA2 stage pictures, object IDs, and layout;
-  each mapped label decodes exactly to NUN5 after retaining the target TEX
-  palette reference.
-- New slot 6: the open Jutsu selector suppresses only the underlying
-  confirmation-label draw in submenu states; closed-screen labels and bottom
-  prompts remain on their existing paths.
-- Visible text overflow/font spacing is not part of this task and is neither a
-  deferred UI-texture defect nor a completion blocker.
+- Slot 1, Stage Select: use whole NUN5 `MAPSEL1.CCS` for exact stage
+  association/order/layout and keep stage-name vertical scale at `1.0` while
+  applying the 214-pixel fit only horizontally.
+- Slot 2, battle confirmation with selector open: remove the rejected
+  Jutsu-label suppression wrapper/hook and retain the 14 runtime-proven texture
+  rectangle, glyph, arrow, and prompt edits.
+- Slot 3, Shop: retain only the proven full-width Money/Ryo rectangle copy.
+  `Bonus Game` already has the exact donor model/anchor; its small screenshot
+  difference is normal pulsation.
+- Slot 4, Collection main: whole NUN5 `HOME.CCS` restores the complete
+  graphical chrome.
+- Slot 5, Collection Characters: whole HOME restores the full Characters and
+  Previous Page models/UVs.
+- Slot 6, character details: whole HOME restores the earlier accepted button
+  labels and layout that the mapped import regressed.
+- Slot 7, Collection Movie: whole HOME restores Movie and Play graphics;
+  mapping v35 removes the four unauthorized authored `<br>` transforms.
+- Slot 8, Controls: `UI-ELF-006` copies the exact NUN5 Vibration-label
+  rectangle used by the imported common UI atlas.
+- Visible text overflow/font spacing and OFF/On values are out of scope.
+  Normal pulsation differences are not defects.
 
 ## Open questions
 
-No static implementation question blocks the six-screen pass. Runtime visual
-acceptance remains with the user by explicit instruction; the newly extended
-raw patches stay `approved_for_test` until that pass. `LOGO.CCS`, upscale-pack
+No static implementation question blocks the eight-screen pass. Runtime visual
+acceptance remains with the user by explicit instruction; the stage fitter,
+Mode Select START, and Vibration patches stay `approved_for_test` until that
+pass. `LOGO.CCS`, upscale-pack
 hash mapping, and broader NUN6 comparison remain optional future research.
 
 ## Current status and next checkpoint
 
-All six preserved defects now have declarative implementations. The normal
+All eight preserved cases now have declarative implementations. The normal
 workflow still derives all 34 fixed-size CCS replacements directly from
 canonical NA2/NUN5 inputs with no stored replacement blobs. The source trees
-and both games' slots 1-6 remain untouched. All 52 patcher tests and the
-non-launching profile build pass; the updated Current ISO is ready for the
-user's preserved-state review. PCSX2 and screen-by-screen acceptance are
-deliberately left to the user.
+and original savestates remain untouched. Hash-matched copies of
+`NA2.28 - Previous.iso` and paired NA2.28/NUN5 states 1-8 live only under
+`work/temp/ui_translation_savestates_1_8_lab/`. Static validation passes all
+61 repository tests, exact-source raw composition, translation v35, and
+34-container derivation.
 
-The protected NA2 states intentionally retain their `273480D7` filenames while
-the updated Current CRC is `273C80F3`; they were not renamed, copied, or linked.
-Use PCSX2's explicit load-state-from-file path for those baselines rather than
-the current-CRC hotkey slot lookup.
+The non-launching profile build retained
+`@logs/na2/builds/20260719_071938_407_pid46920/`, promoted the
+1,928,429,568-byte Current ISO with SHA-256
+`8BC43A5C583F488A9D71CD17338E6164006CF68EF8C439A209F59640D77B7E37`,
+and rotated the prior Current to Previous with SHA-256
+`869170F6209EAF3B8E28CECC8AE24EF9D8C5C89431065AE78F3CEF11BDF8EDFD`.
+An immediate second build hit the receipt-backed preflight, reported
+`ISO result: unchanged`, performed no rotation, and created no `.building`
+image. PCSX2 was never launched; screen-by-screen acceptance is deliberately
+left to the user.
 
-After user runtime review, either promote the three extended/new raw patches to
-`runtime_proven` or retain a narrowly described defect for another iteration.
+After user runtime review, either promote the stage-fit and Vibration patches
+to `runtime_proven` or retain a narrowly described defect for another
+iteration.
 `Investigate upscaling.` remains the separate UI Translation workstream item.

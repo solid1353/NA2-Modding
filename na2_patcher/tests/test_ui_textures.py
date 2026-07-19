@@ -16,7 +16,8 @@ from na2_patcher.modules.ui_textures import engine
 class UiTextureTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        na2_root, nun5_root, data_root = engine.default_roots()
+        na2_root, nun5_root, _ = engine.default_roots()
+        data_root = Path(__file__).resolve().parents[1] / "modules/ui_textures"
         required = (
             na2_root / "DATA" / "DATA.CVM.files" / "DATA.CVM.iso",
             na2_root / "DATA" / "DATA.CVM.files" / "DATA.CVM.hdr",
@@ -61,7 +62,7 @@ class UiTextureTests(unittest.TestCase):
             for result in self.plan.containers
             if result.strategy.strategy == "whole"
         ]
-        self.assertEqual(len(whole), 31)
+        self.assertEqual(len(whole), 33)
         for result in whole:
             self.assertEqual(
                 gzip.decompress(result.replacement),
@@ -127,116 +128,57 @@ class UiTextureTests(unittest.TestCase):
         self.assertTrue(changed)
         self.assertTrue(all(allowed_start <= index < allowed_end for index in changed))
 
-    def assert_mapped_copy_container(
-        self,
-        container_id: str,
-        expected_textures: list[str],
-    ) -> tuple[bytes, bytes, dict[str, engine.TextureEntry]]:
-        result = self.result(container_id)
-        target_payload = gzip.decompress(result.original)
-        output_payload = gzip.decompress(result.replacement)
-        donor_payload = gzip.decompress(result.donor)
-        target_entries = engine.parse_ccs(target_payload)
-        output_entries = engine.parse_ccs(output_payload)
-        donor_entries = engine.parse_ccs(donor_payload)
-        mappings = [
-            item
-            for item in self.plan.package.mappings
-            if item.container_id == container_id
-        ]
-
+    def test_home_uses_the_complete_nun5_collection_container(self) -> None:
+        result = self.result("home")
+        self.assertEqual(result.strategy.strategy, "whole")
         self.assertEqual(
-            [item.target_texture for item in mappings],
-            expected_textures,
+            result.payload_sha256,
+            "9ADAC4D30DD9F2F9DE89732CD3B735F3531B48F90CD43F33711F9BCEF6434E20",
         )
-        allowed_ranges: list[tuple[int, int]] = []
-        for mapping in mappings:
-            target = target_entries[mapping.target_texture.casefold()]
-            output = output_entries[mapping.target_texture.casefold()]
-            donor = donor_entries[mapping.donor_texture.casefold()]
-            for target_part, output_part, donor_part in zip(
-                target.textures,
-                output.textures,
-                donor.textures,
-                strict=True,
-            ):
-                self.assertEqual(target_part.data_offset, output_part.data_offset)
-                start = target_part.data_offset
-                end = start + target_part.data_size
-                donor_start = donor_part.data_offset
-                donor_end = donor_start + donor_part.data_size
-                self.assertEqual(
-                    output_payload[start : start + 4],
-                    target_payload[start : start + 4],
-                )
-                self.assertEqual(
-                    output_payload[start + 4 : end],
-                    donor_payload[donor_start + 4 : donor_end],
-                )
-                allowed_ranges.append((start + 4, end))
-            for target_part, output_part, donor_part in zip(
-                target.palettes,
-                output.palettes,
-                donor.palettes,
-                strict=True,
-            ):
-                self.assertEqual(target_part.data_offset, output_part.data_offset)
-                start = target_part.data_offset
-                end = start + target_part.data_size
-                donor_start = donor_part.data_offset
-                donor_end = donor_start + donor_part.data_size
-                self.assertEqual(
-                    output_payload[start:end], donor_payload[donor_start:donor_end]
-                )
-                allowed_ranges.append((start, end))
-            self.assertEqual(
-                engine.decoded_rgba(output_payload, output),
-                engine.decoded_rgba(donor_payload, donor),
-            )
-
-        changed = {
-            index
-            for index, (before, after) in enumerate(zip(target_payload, output_payload))
-            if before != after
-        }
-        self.assertTrue(changed)
-        self.assertTrue(
-            all(
-                any(start <= index < end for start, end in allowed_ranges)
-                for index in changed
-            )
+        self.assertEqual(
+            gzip.decompress(result.replacement),
+            gzip.decompress(result.donor),
         )
-        return target_payload, output_payload, target_entries
-
-    def test_home_imports_only_localized_collection_textures(self) -> None:
-        self.assert_mapped_copy_container(
-            "home",
-            [
-                r"m\home\tex\home01.bmp",
-                r"m\home\tex\home02.bmp",
-                r"m\home\tex\home03.bmp",
-                r"m\home\tex\home_vt.bmp",
-                r"m\home\tex\homepanel.bmp",
-            ],
+        self.assertNotEqual(
+            gzip.decompress(result.replacement),
+            gzip.decompress(result.original),
         )
 
-    def test_mapsel1_imports_only_labels_and_keeps_na2_stage_pictures(self) -> None:
-        target_payload, output_payload, target_entries = self.assert_mapped_copy_container(
-            "mapsel1",
-            [r"m\map\tex\mapname01.bmp", r"m\map\tex\mapsel01.bmp"],
+    def test_mapsel1_uses_the_complete_nun5_stage_container(self) -> None:
+        result = self.result("mapsel1")
+        self.assertEqual(result.strategy.strategy, "whole")
+        self.assertEqual(
+            result.payload_sha256,
+            "D84507B403F6E607CFCD4EB7860D89EC7F56B3C593F591A537B5865582863A0E",
+        )
+        self.assertEqual(
+            gzip.decompress(result.replacement),
+            gzip.decompress(result.donor),
+        )
+        self.assertNotEqual(
+            gzip.decompress(result.replacement),
+            gzip.decompress(result.original),
         )
 
-        stage_pictures = [
-            entry
-            for name, entry in target_entries.items()
-            if "mappure" in name
-        ]
-        self.assertTrue(stage_pictures)
-        for entry in stage_pictures:
-            for part in entry.textures + entry.palettes:
-                start = part.data_offset
-                end = start + part.data_size
-                self.assertEqual(target_payload[start:end], output_payload[start:end])
+    def test_stage_fitter_scales_only_the_horizontal_axis(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = raw_binary.load_package(
+            repository
+            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+        )
+        vertical = next(
+            item for item in package.edits if item.edit_id == "UI-BTL-002-02"
+        )
+        horizontal = next(
+            item for item in package.edits if item.edit_id == "UI-BTL-002-03"
+        )
+
+        self.assertEqual(vertical.destination_offset, 0x61570)
+        self.assertEqual(vertical.expected_hex, "00708244")
+        self.assertEqual(vertical.replacement_hex, "00788244")
+        self.assertEqual(horizontal.destination_offset, 0x6157C)
+        self.assertEqual(horizontal.expected_hex, "C6730046")
+        self.assertEqual(horizontal.replacement_hex, "04006EC4")
 
     def test_ougi_import_replaces_two_part_layout_with_nun5_one_part_layout(self) -> None:
         result = self.result("ougi")
@@ -418,62 +360,59 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(anchor.expected_hex, "0243023C")
         self.assertEqual(anchor.replacement_hex, "1643023C")
 
-    def test_shop_patch_uses_exact_nun5_currency_anchors(self) -> None:
+    def test_shop_patch_retains_only_the_proven_nun5_currency_rectangles(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = raw_binary.load_package(
             repository
             / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
         )
-        money = next(
-            item for item in package.edits if item.edit_id == "UI-ETC-001-02"
-        )
-        ryo = next(
-            item for item in package.edits if item.edit_id == "UI-ETC-001-03"
-        )
+        edits = [item for item in package.edits if item.patch_id == "UI-ETC-001"]
 
-        self.assertEqual(money.destination_offset, 0x249A4)
-        self.assertEqual(money.expected_hex, "7A43023C")
-        self.assertEqual(money.source_target_id, "nun5_etc")
-        self.assertEqual(money.source_offset, 0x25E88)
-        self.assertEqual(money.source_expected_hex, "7E43023C")
-        self.assertEqual(ryo.destination_offset, 0x249CC)
-        self.assertEqual(ryo.expected_hex, "4042023C")
-        self.assertEqual(ryo.source_target_id, "nun5_etc")
-        self.assertEqual(ryo.source_offset, 0x25EB0)
-        self.assertEqual(ryo.source_expected_hex, "4842023C")
+        self.assertEqual(len(edits), 1)
+        rectangle = edits[0]
+        self.assertEqual(rectangle.edit_id, "UI-ETC-001-01")
+        self.assertEqual(rectangle.destination_offset, 0x30308)
+        self.assertEqual(rectangle.source_target_id, "nun5_etc")
+        self.assertEqual(rectangle.source_offset, 0x292F8)
 
-    def test_jutsu_overlay_wrapper_skips_only_submenu_sentinel_path(self) -> None:
+    def test_jutsu_patch_retains_the_fourteen_runtime_proven_edits(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = raw_binary.load_package(
             repository
             / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
         )
-        wrapper = next(
-            item for item in package.edits if item.edit_id == "UI-BTL-005-15"
-        )
-        hook = next(
-            item for item in package.edits if item.edit_id == "UI-BTL-005-16"
-        )
+        edits = [item for item in package.edits if item.patch_id == "UI-BTL-005"]
+        patch = package.patches["UI-BTL-005"]
 
-        self.assertEqual(wrapper.destination_offset, 0xA0)
-        self.assertEqual(wrapper.length, 16)
+        self.assertEqual(len(edits), 14)
         self.assertEqual(
-            wrapper.replacement_hex,
-            "C4F2E2270A10F1030800400000000000",
+            {item.edit_id for item in edits},
+            {f"UI-BTL-005-{index:02d}" for index in range(1, 15)},
         )
-        self.assertEqual(hook.destination_offset, 0x9E44)
-        self.assertEqual(hook.expected_hex, "04F41A0C")
-        self.assertEqual(hook.replacement_hex, "E8CF1A0C")
+        self.assertNotIn(0xA0, {item.destination_offset for item in edits})
+        self.assertNotIn(0x9E44, {item.destination_offset for item in edits})
+        self.assertEqual(patch.status, "runtime_proven")
+        self.assertEqual(patch.confidence, "verified")
 
-        caller_return = 0x006BDD4C
-        original_renderer = caller_return - 0xD3C
+    def test_controls_vibration_rectangle_is_an_exact_nun5_copy(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = raw_binary.load_package(
+            repository
+            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+        )
+        rectangle = next(
+            item for item in package.edits if item.edit_id == "UI-ELF-006-01"
+        )
 
-        def wrapper_target(submenu_sentinel: int) -> int:
-            return caller_return if submenu_sentinel == 0 else original_renderer
-
-        self.assertEqual(original_renderer, 0x006BD010)
-        self.assertEqual(wrapper_target(0), caller_return)
-        self.assertEqual(wrapper_target(1), original_renderer)
+        self.assertEqual(rectangle.destination_offset, 0x4D53C0)
+        self.assertEqual(rectangle.expected_hex, "010045002A001600")
+        self.assertEqual(rectangle.source_target_id, "nun5_elf")
+        self.assertEqual(rectangle.source_offset, 0x4DEA28)
+        self.assertEqual(rectangle.source_expected_hex, "4000580040001400")
+        self.assertEqual(
+            struct.unpack("<hhhh", bytes.fromhex(rectangle.source_expected_hex)),
+            (64, 88, 64, 20),
+        )
 
     def test_raw_patch_provenance_is_donor_first(self) -> None:
         repository = Path(__file__).resolve().parents[2]
@@ -498,14 +437,14 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(package.edits), 88)
-        self.assertEqual(operations, {"copy": 48, "replace": 40})
+        self.assertEqual(len(package.edits), 86)
+        self.assertEqual(operations, {"copy": 47, "replace": 39})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 38, "nun5_btl": 7, "nun5_etc": 3},
+            {"nun5_elf": 39, "nun5_btl": 7, "nun5_etc": 1},
         )
         self.assertEqual(len(stage_scales), 24)
-        self.assertEqual(len(adaptations), 16)
+        self.assertEqual(len(adaptations), 15)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")

@@ -39,10 +39,10 @@ The current profile composes:
 3. separate `QoL` and `Battle logic` raw-binary sections using their preserved default states;
 4. the fixed-size memory-card title through the `string_replacements`
    raw-binary patch set;
-5. hash-pinned v34 mappings from the integrated `translation` module;
+5. hash-pinned v35 mappings from the integrated `translation` module;
 6. 34 fixed-size source-derived official NUN5 UI container imports through
-   `ui_textures` (32 whole-container imports and two declared mapped imports);
-7. the 11 paired UI renderer/table corrections through `raw_binary`;
+   `ui_textures` (33 whole-container imports and one declared mapped import);
+7. the 13 paired UI renderer/table corrections through `raw_binary`;
 8. the declared equal-length `SLPS_258.37` to `SLPS_222.28` boot identity
    change through `disc_identity`.
 

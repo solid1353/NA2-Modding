@@ -1,6 +1,73 @@
-# Font v23 Negative Result
+# Font renderer and asset findings
 
 This directory preserves the visual and byte-level evidence for the font v23 tracking experiment performed on 2026-07-13.
+
+## 2026-07-19 accepted clean-font result
+
+The current implementation starts from clean NA2, not from m01, v22, v23, or
+the rejected semantic-palette candidate. Static inspection establishes a
+coherent 10x22 bitmap font with 157 cells and complete printable-ASCII
+coverage: 95/95 semantic slots exist and 94/94 non-space slots contain visible
+raster data. The median visible glyph box is 6x14 pixels, with median top 4 and
+bottom 17. Matched runtime captures confirm that this asset is serviceable;
+the accepted patch changes no byte in `DATA/GF4.BIN` or `DATA/GF4C.BIN`.
+
+The isolated descriptor-height experiment at ELF file offset `0x88064` is
+rejected. Changing `0C 00 20 C6` to `10 00 20 C6` did not make a Y-only
+correction. With the clean descriptor it produced a 28x28 quad instead of the
+untouched 24x24 quad, stretching both axes by 16.7 percent while logical
+measurement stayed unchanged. Runtime captures showed damaged outlines and
+no useful alignment improvement. The exact edit remains disabled as
+`font_vertical_quad_height` with `runtime_failed` status.
+
+The accepted package has two independent `runtime_proven` components:
+
+- `font_controls_auto_fit` affects only the first eight Controls action-label
+  calls plus the local Controls row origin. Clean plain-ASCII measurement is
+  `9.5 * byte_count + 1`; strings below 14 bytes retain horizontal scale
+  `1.0`. `Linked Attack` is 13 bytes and therefore stays full width. For an
+  overflowing string the helper applies `128 / measured_width`, corrects the
+  centered origin, draws through the original helper, and restores scale
+  `1.0`. The ninth `OFF` call remains on the ordinary renderer. The row origin
+  changes from 48 to 50, retaining the original 26.8-unit interval.
+- `font_modal_alignment` uses measured X values `84, 79, 79, 75, 13`, moves
+  the first four rows down one local unit, places the red row at local Y 117,
+  and compensates the selected shadow path by two X units.
+
+The official 19-byte `Ultimate Jutsu Prep` runtime probe measures 181.5 units
+and uses scale `256 / 363`, approximately `0.705234`. Its final clean-NA2 ink
+box is `(74,98)-(236,114)`, center `(154.5,105.5)`, compared with NUN5
+`(76,99)-(233,115)`, center `(154,106.5)`. It fits without clipping; the
+remaining five-pixel width difference is clean glyph appearance rather than
+placement. `Linked Attack` retains width 147 and `OFF` width 30, with no
+horizontal scaling.
+
+The four ordinary character-modal centers are `(318.5,182)`, `(319,212)`,
+`(317,242)`, and `(318.5,272)`; NUN5 is `(318,182)`, `(318,212)`,
+`(318,242)`, and `(318,272)`. The selected red row is exact at
+`(319,314.5)` in both. The accepted compact-table capture is byte-identical to
+the independently tested dynamic-centering proof.
+
+The package preserves the 5,273,256-byte ELF size. Applying it to the verified
+clean ELF produces SHA-256
+`3338654A24BCFCC5E101654A93E585335A9A9ECEE607AC018F43D0E54FD14217`.
+The Controls helper SHA-256 is
+`B26071C654C90085B78BC528E187E2D7BD74CE78363319C21CE30E45B54A13F3`;
+the tail derivation SHA-256 is
+`BF51639A21D85CD8A09D411B5F069099871E523E56736A06B363F7F785B65C0E`.
+The exact guarded captures and generated measurements remain under
+`work/Font/analysis/runtime_compare/`, and the clean apply log remains under
+`work/Font/verification/font_package_v2_log/`.
+
+The integrated profile build is retained at
+`@logs/na2/builds/20260719_202514_393_pid36044/`. It selected the two accepted
+Font patches, preserved the QoL module hash, promoted an updated Current ISO,
+and recorded Font's clean-to-patched ELF hashes above. The resulting Current
+ISO SHA-256 is
+`4273E20D03642CB287C4F3F7ECCA56E46B4CE412E627D6C006980A9EE61B45AB`.
+A controlled clean boot reported `SLPS-22228`, CRC `F3F4C52B`; read-only PINE
+verification matched all 78 changed Font words and confirmed the rejected
+quad-height word was absent.
 
 ## Experiment
 
@@ -54,20 +121,19 @@ The captured NA2 screen also confirms that visible font alignment is not yet
 equivalent to NUN5. Vertical baseline errors are mostly independent of a
 horizontal width test, but left bearings, tracking, glyph advances, and
 centering directly affect both the logical measured width and its relationship
-to visible glyph bounds. Auto-fit cannot be expected to match NUN5 until those
-horizontal metrics and the measurement path agree. Future work must compare,
-for the same string in both games, the logical measured width, rendered ink
-bounds, box origin/width, and final anchor before introducing another scaling
-hook. Do not repeat a threshold-only wrapper or treat auto-fit as independent
-of the unresolved renderer positioning/advance work.
+to visible glyph bounds. The temporary rows and profile selection were removed
+after that review.
 
-The temporary patch rows and current-profile selection were removed after the
-runtime review. The accepted `font_m01` package and its profile hash were
-restored unchanged.
+The accepted implementation above resolves this negative result without
+reusing its legacy measurement call. It proves the clean fixed-ASCII formula,
+keeps the 13-byte threshold decision correct, scales the three horizontal draw
+surfaces through one per-call factor, and restores that factor immediately.
+The failed threshold-only wrapper remains useful evidence: do not reinstate it
+or treat a box constant alone as a valid fit port.
 
-## 2026-07-19 semantic NUN5 appearance candidate
+## 2026-07-19 rejected semantic NUN5 appearance experiment
 
-Matched 1708x1282 captures of the Control Settings screen separate the current
+Matched 1708x1281 captures of the Control Settings screen separate the current
 defects. For the same `Attack`, `Item Use`, `Item Select`, and `Linked Attack`
 labels, visible widths are already close to NUN5, but the NA2 main-row ink is
 31 pixels high instead of 36, its bottom edge is consistently 8 pixels too
@@ -133,17 +199,31 @@ had data. Runtime review must therefore include untranslated Japanese or
 halfwidth text in addition to translated English. A fallback that preserves
 those m01 cells is statically defined by the investigation but is not enabled.
 
-This candidate is mutually exclusive with `font_m01` and remains
-`approved_for_test`. It is not v22: it uses the confirmed m01 destination
+This historical experiment is mutually exclusive with `font_m01` and is now
+`runtime_failed`. It is not v22: it uses the confirmed m01 destination
 `0xD9240`, retains 123 cells and m01 ELF behavior, does not import v22 pointer
 tokens or its renderer-width edit, and is not a padded or unpadded whole-file
 swap.
 
-A matched runtime comparison on 2026-07-19 confirmed that the candidate is
-visually almost identical to NUN5 on the Control Settings screen. `Attack`,
-`Item Use`, `Item Select`, and `Linked Attack` have the intended NUN5-like
-glyph appearance, while the retained brackets in `[S]Ult Prep` render
-correctly. The remaining conspicuous differences are positioning, advances,
-and alignment, which belong to the next Font task rather than this asset
-candidate. Broader untranslated halfwidth-kana coverage remains unverified,
-so the patch retains its `approved_for_test` classification.
+Runtime review on 2026-07-19 rejected this candidate. It did not materially
+improve ordinary letters and damaged outline and alpha behavior, most visibly
+on numeric glyphs. A byte-level audit found that all 84 same-semantic visible
+printable cells compared between the candidate and its m01 parent retained
+identical visible masks and metrics; the meaningful difference was palette
+interpretation rather than improved geometry.
+
+The coupled GF4C swap is unsafe for untouched NA2 raster data. Clean NA2's
+primary raster uses palette index 15 for 265,344 of 1,746,272 pixels
+(15.194884%). NA2 maps index 15 to opaque white, while NUN5 maps it to black.
+Changing GF4C therefore reinterprets a large existing pixel population and
+explains the deterministic outline damage. The patch is now classified
+`runtime_failed`, remains disabled as negative evidence, and must not be used
+as a donor or implementation parent. Current Font work keeps clean NA2 GF4 and
+GF4C unchanged unless later matched evidence proves an independent asset need.
+
+The fresh matched modal captures also give a concrete overflow reference. At
+1708x1281, the visible red instructional-text ink spans approximately
+`(455,822)-(1248,859)` in NUN5 and `(525,833)-(1278,865)` in the rejected NA2
+build, whose right edge is clipped. Because that NA2 capture also contains the
+failed asset/palette state, it is evidence for the screen and overflow symptom,
+not a clean-source renderer acceptance image.

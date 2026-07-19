@@ -4,9 +4,17 @@ Use this file for old patch candidates, failed experiments, unverified addresses
 
 ## GF4 Font Rendering Handoff
 
-Status: paused after v23. Confirmed observations, the exact patch record, and the final comparison screenshot are preserved in `docs/knowledge/font/README.md`; canonical accepted and historical patch data remain under `na2_patcher/modules/raw_binary/patch_sets/`. Review those records and the preserved disassembly before proposing another experiment.
+Status: resolved for the reviewed screens on 2026-07-19. Confirmed behavior,
+matched measurements, exact patch records, and negative results are preserved
+in `docs/knowledge/font/README.md`; canonical accepted and historical patch
+data remain under `na2_patcher/modules/raw_binary/patch_sets/`.
 
-The unresolved work remains at least three separate problems: glyph appearance, positioning/advance behavior, and missing NUN5-style auto-fit/squish for text that exceeds a box.
+Clean NA2 GF4/GF4C is the accepted asset. Controls overflow now uses a local
+shrink-only helper, and the reviewed Controls and character-modal placement is
+corrected locally. The old v22/v23, palette, descriptor-height, and
+threshold-only experiments remain negative evidence, not active candidates.
+If another screen exposes a distinct font defect, begin from the accepted
+clean package and prove that screen's call path before adding a new hypothesis.
 
 ### Disassembly leads
 
@@ -15,9 +23,11 @@ The unresolved work remains at least three separate problems: glyph appearance, 
   `@analysis/disassembly/NUN5/`; never place analysis work under `@source/`.
 - NA2 ASCII setup lead: `FUN_00186510`.
 - NUN5 counterpart: `FUN_001878e0`.
-- NUN5 boxed auto-fit leads: `FUN_00389df0` and `FUN_0018b1b0`.
-- NA2 menu lead: `FUN_003885b0`, which calls `FUN_00379240` and appears to center/draw without the corresponding 128-pixel auto-fit path.
-- A full NUN5 text-renderer transplant is unsafe. Continue with small, proven renderer-logic comparisons and script-generated patches only.
+- NUN5 boxed auto-fit reference: `FUN_00389df0` and `FUN_0018b1b0`.
+- NA2 Controls path: `FUN_003885b0`, with the first eight calls locally fitted
+  before the original `FUN_00379240` draw and the ninth call left ordinary.
+- A full NUN5 text-renderer transplant remains unsafe. Any future work must use
+  small, call-local, script-generated patches.
 
 ## Legacy 2022 Scratch Notes
 

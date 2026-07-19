@@ -1,0 +1,2 @@
+schema_version	package_id	package_version	game	description	evidence_path
+1	font	2	NA2	Runtime-proven clean-font alignment and local shrink-to-fit components, plus the rejected quad-height experiment as disabled evidence.	docs/knowledge/font/README.md

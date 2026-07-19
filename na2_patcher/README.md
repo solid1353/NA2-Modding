@@ -34,7 +34,8 @@ files.
 
 The current profile composes:
 
-1. exact font m01 `GF4.BIN` and ELF reconstruction through `raw_binary`;
+1. clean NA2 font assets plus runtime-proven Controls shrink-only fit and
+   character-modal alignment through the standalone `font` raw-binary package;
 2. the runtime-proven menu-input handler set through `raw_binary`;
 3. separate `QoL` and `Battle logic` raw-binary sections using their preserved default states;
 4. the fixed-size memory-card title through the `string_replacements`

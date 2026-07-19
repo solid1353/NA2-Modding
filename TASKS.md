@@ -8,8 +8,8 @@
 
 ### Project
 - [Raw-binary patch hierarchy and profile-driven workflows](docs/plans/raw_binary_patch_hierarchy_and_profiles.md).
-- [Develop a release process (deferred indefinitely)](docs/RELEASE_PROCESS.md).
 - Work folder cleanup.
+- [Develop a release process (deferred indefinitely)](docs/RELEASE_PROCESS.md).
 - Investigate cross-platform development/deployment possibilities.
 
 ### [Font](docs/plans/font.md)

@@ -11,15 +11,17 @@
 - [Develop a release process (deferred indefinitely)](docs/RELEASE_PROCESS.md).
 - Investigate cross-platform development/deployment possibilities.
 
-### [Font](docs/knowledge/font/README.md)
+### [Font](docs/plans/font.md)
 - Research and implement NUN5 auto-adjust behavior.
-- Resume GF4 renderer work in the dedicated GF4 task, starting from the recorded v22/v23 results rather than another blind resource swap.
+- Make font identical to UN5.
+- Fix alignment issues.
 
 ### QoL
 - Analyze differences against NUN6 and remove adventure mode.
 
 ### String translation
 - Audit and polish.
+- Deal with shortened strings.
 
 ## Backlog
 

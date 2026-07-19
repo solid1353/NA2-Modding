@@ -86,6 +86,13 @@ inspection is still needed. If the evidence changes the recommendation, explain
 the change in the plan. Progress updates during a long inspection must keep the
 current phase and required next response clear.
 
+Until a selected task is completed, every final response that hands control
+back to the user must include a standalone `Recommended effort: <level>` line.
+This applies after inspection, at approval gates, in execution handoffs, and at
+every stop, pause, dependency, safety, or relaunch boundary. Stating the level
+only in commentary or an earlier response does not satisfy this requirement; if
+the recommendation changes, explain why.
+
 1. Tasks may be added to `TASKS.md` at any time by the user, or by an agent when the user orders it.
 2. Each workstream subsection is coordinated by a Codex task whose title exactly matches the subsection heading. The coordinator owns that workstream across statuses, so do not add redundant coordinator metadata to `TASKS.md`.
 3. Each workstream subsection appears under exactly one status. Move the whole subsection when its status changes; never split one workstream across statuses. `In Progress` contains active workstreams, `Backlog` contains workstreams with one or more deferred tasks, and `Archive` contains persistent workstreams with no current tasks. `Testing` is always the final workstream subsection within whichever status contains it.

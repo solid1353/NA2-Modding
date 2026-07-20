@@ -2,6 +2,9 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$IsoPath,
 
+    [Parameter(Mandatory = $true)]
+    [string]$TaskTitle,
+
     [string]$CvmPassword = "",
 
     [switch]$KeepFailedWork
@@ -62,6 +65,13 @@ if (-not (Test-Path -LiteralPath $IsoPath -PathType Leaf)) {
     throw "ISO not found: $IsoPath"
 }
 
+if ([string]::IsNullOrWhiteSpace($TaskTitle) -or
+    $TaskTitle -ne $TaskTitle.Trim() -or
+    $TaskTitle -in @('.', '..') -or
+    $TaskTitle.IndexOfAny([IO.Path]::GetInvalidFileNameChars()) -ge 0) {
+    throw "TaskTitle must be one exact task-title directory name, without path separators: $TaskTitle"
+}
+
 $IsoPath = (Resolve-Path -LiteralPath $IsoPath).Path
 $isoItem = Get-Item -LiteralPath $IsoPath
 if (-not [IO.Path]::Equals($isoItem.Directory.FullName, $projectPaths.source)) {
@@ -81,14 +91,15 @@ if (Test-Path -LiteralPath $finalRoot) {
 
 $runId = Get-Date -Format "yyyyMMdd_HHmmss_fff"
 $runId = $runId + "_pid" + $PID + "_" + $isoItem.BaseName
-$stageParent = Join-Path $projectPaths.work 'temp\source_extraction'
+$taskWorkRoot = Join-Path $projectPaths.work $TaskTitle
+$stageParent = Join-Path $taskWorkRoot 'temp\source_extraction'
 $stageRun = Join-Path $stageParent $runId
 $stageRoot = Join-Path $stageRun ($isoItem.Name + '.files')
 $logDir = Join-Path $projectPaths.logs ("extraction\" + $runId)
 $summaryPath = Join-Path $logDir 'summary.tsv'
 $inventoryPath = Join-Path $logDir 'inventory.tsv'
 
-if (-not (Test-PathInside -Path $stageRun -Root (Join-Path $projectPaths.work 'temp'))) {
+if (-not (Test-PathInside -Path $stageRun -Root $stageParent)) {
     throw "Unsafe staging path: $stageRun"
 }
 
@@ -242,7 +253,7 @@ catch {
 }
 finally {
     if (Test-Path -LiteralPath $stageRun) {
-        $canRemove = Test-PathInside -Path $stageRun -Root (Join-Path $projectPaths.work 'temp\source_extraction')
+        $canRemove = Test-PathInside -Path $stageRun -Root $stageParent
         if (-not $canRemove) {
             throw "Refusing to clean unsafe staging path: $stageRun"
         }

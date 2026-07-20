@@ -13,9 +13,11 @@ research utility.
 - `na2/`: build, promotion, PNACH, PCSX2 launch, CRC diagnostics, and isolated
   agent tests for hidden launch and run logging.
 - `media/`: ISO, AFS, and CVM inspection/extraction tools. Use
-  `extract_source_iso.ps1` for canonical recursive source extraction: it stages
-  an outer ISO, expands CVM, inner ISO, AFS, and nested AFS containers, verifies
-  byte parity and timestamps, then promotes one `<ISO filename>.files` tree.
+  `extract_source_iso.ps1 -IsoPath <path> -TaskTitle <exact task title>` for
+  canonical recursive source extraction: it stages under
+  `work/<task title>/temp/source_extraction/`, expands CVM, inner ISO, AFS, and
+  nested AFS containers, verifies byte parity and timestamps, then promotes one
+  `<ISO filename>.files` tree. It never uses shared top-level `work/temp/`.
   `verify_extraction.py` can recheck an existing tree. The lower-level
   `extract_iso.ps1`, `extract_afs.ps1`, and `split_cvm_rofs.ps1` remain focused
   building blocks; ISO changes belong in hash-pinned profiles, not direct

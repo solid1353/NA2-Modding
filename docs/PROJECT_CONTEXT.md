@@ -111,9 +111,9 @@ original/
 
 For edited/build versions, do not edit anything under `@source/` in place. Copy the needed file or archive into a task/build folder first, then patch that copy through scripts and log the source path and output path. If extraction or inspection needs metadata, write it under `@logs/` using source-relative paths instead of placing files in `@source/`.
 
-Use `scripts/media/extract_source_iso.ps1` for a new canonical extraction. Its
-legacy shared staging path must be migrated to the invoking task's owned
-`work/<task title>/temp/` folder before the script is run; it must not recreate
+Use `scripts/media/extract_source_iso.ps1 -IsoPath <path> -TaskTitle <exact task
+title>` for a new canonical extraction. It stages under the invoking task's
+owned `work/<task title>/temp/source_extraction/` folder and never recreates
 top-level `work/temp/`. It recursively expands CVM, inner ISO, AFS,
 and nested AFS containers, verifies file sets and byte contents, normalizes
 timestamps from archive metadata or deterministic container fallbacks, then

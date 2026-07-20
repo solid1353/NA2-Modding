@@ -51,7 +51,6 @@ replaced with a copied machine-specific absolute path.
 - `docs/HYPOTHESES.md`: archived patch candidates, failed experiments, unverified addresses, and speculative leads.
 - `TASKS.md`: concrete active tasks, test plans, and queued investigations only; no general workflow rules.
 - `work/<task title>/temp/`: ignored throwaway/intermediate workspace owned by that exact Codex task and cleaned when no longer useful. The shared top-level `work/temp/` directory is forbidden; any legacy instance is General-owned cleanup material and must not receive new files.
-- `old/`: user's personal folder. Off-limits unless explicitly instructed.
 
 Scratch/intermediate folders should be created only when needed under the active task's `work/<task title>/temp/` folder. Extractions of original source archives stay beside the source archive under `@source/`.
 For binary modding, prefer persistent target folders under `work/` over repeated fresh disassembly. State the tools/software used for each change, and keep command chunks short and reusable.
@@ -157,8 +156,6 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 - See `scripts/README.md` for the maintained directory contract and individual responsibilities.
 
 ## Utils Dump
-
-Top-level `old/` is personal user space and should not be inspected, searched, executed from, modified, moved, deleted, or otherwise touched unless the user explicitly asks for it.
 
 `@utils/old/` is an untrusted historical tool/archive dump. It may contain useful tools or source references, but nothing there should be treated as current workflow or executed blindly.
 

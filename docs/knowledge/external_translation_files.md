@@ -1,8 +1,9 @@
 # External Translation Files
 
 Status: generated module and profile integration implemented, 2026-07-19;
-real-ISO and runtime validation remain pending. The canonical translation
-mapping is unchanged.
+initial real-ISO boot and direct external-file loading confirmed, 2026-07-20;
+broader runtime coverage remains pending. The canonical translation mapping is
+unchanged.
 
 ## Conclusion
 
@@ -259,18 +260,24 @@ payload extents fit without increasing the ISO byte length, but an allocator
 must preserve the final nonzero bytes and validate every selected sector rather
 than assuming the whole tail is disposable.
 
-The Project compositor now has general validated ISO-file insertion support. It
-writes both records, updates the PRG `.` and root/parent directory-size
-metadata, allocates only verified-zero extents, and revalidates the final tree,
-payload hashes, source files, and unchanged ISO size. This remains general
-compositor behavior rather than a translation-only byte hack.
+The Project compositor now has general validated hybrid-filesystem insertion
+support. It mirrors both records into the primary ISO9660 and UDF trees, updates
+their directory and file-entry metadata, allocates payloads and new UDF file
+entries only in verified-zero extents, updates the UDF integrity file count,
+and mirrors the boot-ELF rename into UDF. It rejects a stale or divergent bridge
+before writing, then reparses both filesystems and requires identical paths,
+types, extents, sizes, payload hashes, source preservation, and unchanged ISO
+size. This remains general compositor behavior rather than a translation-only
+byte hack.
 
 NA2's `FLIST` does not list either external file. NUN6 adds `prg\MOD.BIN` to
-its `FLIST` but does not add `TEXTBRA.BIN`. NA2's generic loader opens explicit
-`cdrom0:\PRG\...` paths, and the inspected FLIST path only normalizes name
-case and separators. The minimal proof of concept should therefore omit an
-FLIST edit initially and treat successful direct loading as a runtime test. Add
-an FLIST record only if that test proves it necessary.
+its `FLIST` but does not add `TEXTBRA.BIN`. NA2 startup uses FLIST as a
+cache-warming manifest: it resolves each normalized path to an in-memory LSN and
+size entry, while a cache miss falls back to ordinary disc search. The external
+files are each loaded once through explicit `cdrom0:\PRG\...` paths, so adding
+them would only move the same lookup work earlier. On 2026-07-20, the user
+confirmed that the integrated ISO works in-game with the original NA2 FLIST
+unchanged; no FLIST edit is required or included.
 
 ## Validation gates
 
@@ -285,13 +292,18 @@ Implemented and covered by focused tests:
    inline reversals, and refuses any count or original-byte mismatch.
 4. The final marker and every hardcoded boundary site change together in one
    guarded 85-edit plan.
-5. The Project-owned compositor validates both ISO insertions, their records,
-   extents, bytes, hashes, fixed image size, original files, and final tree.
+5. The Project-owned compositor validates both ISO9660/UDF insertions, their
+   records, extents, bytes, hashes, fixed image size, original files, and final
+   mirrored tree.
+
+Confirmed at runtime:
+
+1. The integrated ISO loads both external PRG files and works in-game without
+   adding either path to `FLIST.DIR`.
 
 Still required at runtime:
 
-1. Boot and confirm both direct PRG loads succeed without an `FLIST` entry.
-2. Exercise frontend, battle, result, save/load, and repeated mode transitions
+1. Exercise frontend, battle, result, save/load, and repeated mode transitions
    to test the smaller heap and resident-memory boundary.
-3. Visit representative shortened-string screens and confirm the full official
+2. Visit representative shortened-string screens and confirm the full official
    strings render from external memory.

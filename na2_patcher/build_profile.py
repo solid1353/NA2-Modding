@@ -8,7 +8,12 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .iso9660 import Iso9660, IsoInsertion, insert_files, normalize_iso_path
+from .iso9660 import (
+    Iso9660,
+    IsoInsertion,
+    compose_filesystems,
+    normalize_iso_path,
+)
 from .modules import translation as translation_module
 from .modules.disc_identity import engine as disc_identity_module
 from .modules.raw_binary import engine as patch_binary
@@ -552,6 +557,8 @@ def write_external_translation_log(
             "size",
             "sha256",
             "directory_record_offset",
+            "udf_file_entry_offset",
+            "udf_directory_record_offset",
         ],
         [
             {
@@ -561,6 +568,16 @@ def write_external_translation_log(
                 "size": result.size,
                 "sha256": result.sha256,
                 "directory_record_offset": f"0x{result.directory_record_offset:X}",
+                "udf_file_entry_offset": (
+                    f"0x{result.udf_file_entry_offset:X}"
+                    if result.udf_file_entry_offset is not None
+                    else ""
+                ),
+                "udf_directory_record_offset": (
+                    f"0x{result.udf_directory_record_offset:X}"
+                    if result.udf_directory_record_offset is not None
+                    else ""
+                ),
             }
             for result in insertion_results
         ],
@@ -909,7 +926,29 @@ def main() -> int:
             )
             identity_item["identity_edits"].append(iso_edit)
 
-        insertion_results = insert_files(working_iso, insertions)
+        udf_renames = {}
+        if identity_items:
+            identity = identity_items[0]["disc_identity"]
+            assert isinstance(identity, disc_identity_module.DiscIdentity)
+            udf_renames[identity.source_boot_path] = identity.replacement_boot_path
+        composition = compose_filesystems(
+            working_iso,
+            insertions,
+            udf_renames=udf_renames,
+        )
+        insertion_results = composition.insertions
+        if identity_items:
+            for rename in composition.udf_renames:
+                identity_items[0]["identity_edits"].append(
+                    {
+                        "target": "<UDF root directory>",
+                        "offset": f"0x{rename.identifier_offset:X}",
+                        "length": len(rename.original_identifier),
+                        "original_hex": rename.original_identifier.hex().upper(),
+                        "new_hex": rename.replacement_identifier.hex().upper(),
+                        "reason": "Mirror boot executable identifier in UDF tree",
+                    }
+                )
         if working_iso.stat().st_size != source.file_size:
             raise RuntimeError("Profile composition changed the ISO image size")
         results_by_owner: dict[str, list[IsoInsertion]] = {}

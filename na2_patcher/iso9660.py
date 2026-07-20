@@ -8,6 +8,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Mapping
 
+from .udf import Udf, UdfPlan
+
 SECTOR = 2048
 _ZERO_SECTOR = b"\0" * SECTOR
 _ISO_FILE_NAME = re.compile(r"[A-Z0-9_]+(?:\.[A-Z0-9_]+)?")
@@ -34,10 +36,35 @@ class IsoInsertion:
     size: int
     sha256: str
     directory_record_offset: int
+    udf_file_entry_offset: int | None = None
+    udf_directory_record_offset: int | None = None
 
     @property
     def byte_offset(self) -> int:
         return self.extent * SECTOR
+
+
+@dataclass(frozen=True)
+class IsoUdfRename:
+    source_path: str
+    replacement_path: str
+    identifier_offset: int
+    original_identifier: bytes
+    replacement_identifier: bytes
+
+
+@dataclass(frozen=True)
+class IsoComposition:
+    insertions: tuple[IsoInsertion, ...]
+    udf_renames: tuple[IsoUdfRename, ...]
+
+
+@dataclass(frozen=True)
+class _PlannedWrite:
+    offset: int
+    expected: bytes
+    replacement: bytes
+    reason: str
 
 
 class Iso9660:
@@ -497,19 +524,102 @@ def _directory_metadata_writes(
     return writes, entry_offsets
 
 
-def insert_files(
+def _normalized_renames(renames: Mapping[str, str]) -> dict[str, str]:
+    normalized: dict[str, str] = {}
+    replacements: set[str] = set()
+    for supplied_source, supplied_replacement in renames.items():
+        source = normalize_iso_path(supplied_source)
+        replacement = normalize_iso_path(supplied_replacement)
+        if source in normalized:
+            raise ValueError(f"Duplicate normalized ISO rename source: {source}")
+        if replacement in replacements:
+            raise ValueError(f"Duplicate normalized ISO rename target: {replacement}")
+        if source.rpartition("/")[0] != replacement.rpartition("/")[0]:
+            raise ValueError("UDF mirror renames cannot move files between directories")
+        normalized[source] = replacement
+        replacements.add(replacement)
+    return normalized
+
+
+def _validate_bridge_before_composition(
+    iso: Iso9660,
+    udf: Udf,
+    renames: Mapping[str, str],
+) -> None:
+    udf_tree = {
+        (renames.get(record.path, record.path), record.is_dir)
+        for record in udf.records
+    }
+    iso_tree = {(record.path, record.is_dir) for record in iso.records}
+    if udf_tree != iso_tree:
+        missing = sorted(iso_tree - udf_tree)
+        extra = sorted(udf_tree - iso_tree)
+        raise RuntimeError(
+            "ISO9660/UDF bridge tree mismatch before composition: "
+            f"missing={missing}, extra={extra}"
+        )
+    for udf_record in udf.records:
+        if udf_record.is_dir:
+            continue
+        iso_path = renames.get(udf_record.path, udf_record.path)
+        iso_record = iso.by_path[iso_path]
+        if (
+            iso_record.size != udf_record.information_length
+            or iso_record.extent != udf.absolute_extent(udf_record)
+        ):
+            raise RuntimeError(
+                f"ISO9660/UDF file mapping mismatch before composition: {iso_path}"
+            )
+
+
+def _validate_planned_writes(
+    image: Path,
+    writes: list[_PlannedWrite],
+    image_size: int,
+) -> list[_PlannedWrite]:
+    ordered = sorted(writes, key=lambda item: item.offset)
+    previous_end = 0
+    for index, write in enumerate(ordered):
+        if not write.expected or len(write.expected) != len(write.replacement):
+            raise RuntimeError(f"Invalid planned ISO write: {write.reason}")
+        end = write.offset + len(write.expected)
+        if write.offset < 0 or end > image_size:
+            raise RuntimeError(f"Planned ISO write is outside the image: {write.reason}")
+        if index and write.offset < previous_end:
+            raise RuntimeError(f"Overlapping planned ISO write: {write.reason}")
+        previous_end = end
+
+    with image.open("rb") as handle:
+        for write in ordered:
+            handle.seek(write.offset)
+            actual = handle.read(len(write.expected))
+            if actual != write.expected:
+                raise RuntimeError(
+                    f"ISO changed before planned write at 0x{write.offset:X}: "
+                    f"{write.reason}"
+                )
+    return ordered
+
+
+def compose_filesystems(
     image: Path,
     payloads: Mapping[str, bytes | bytearray],
-) -> tuple[IsoInsertion, ...]:
-    """Insert files into existing ISO directories without changing image size."""
-    if not payloads:
-        return ()
+    *,
+    udf_renames: Mapping[str, str] | None = None,
+) -> IsoComposition:
+    """Compose ISO9660 insertions and mirror them into an existing UDF bridge."""
+    if not payloads and not udf_renames:
+        return IsoComposition((), ())
 
     image = image.resolve()
     source = Iso9660(image)
     original_size = source.file_size
     if original_size % SECTOR:
         raise RuntimeError(f"ISO size is not sector-aligned: {original_size}")
+    renames = _normalized_renames(udf_renames or {})
+    udf = Udf(image) if Udf.is_present(image) else None
+    if udf is not None:
+        _validate_bridge_before_composition(source, udf, renames)
 
     normalized_payloads: dict[str, bytes] = {}
     parents: dict[str, IsoRecord] = {}
@@ -539,6 +649,10 @@ def insert_files(
         for record in source.records
     )
     allocation: dict[str, int] = {}
+    udf_file_entry_sectors: dict[str, int] = {}
+    planned_writes: list[_PlannedWrite] = []
+    directory_offsets: dict[str, int] = {}
+    udf_plan: UdfPlan | None = None
     with image.open("rb") as handle:
         search_sector = occupied_end
         for path in sorted(normalized_payloads):
@@ -553,8 +667,19 @@ def insert_files(
             allocation[path] = extent
             search_sector = extent + sector_count
 
+        if udf is not None:
+            for path in sorted(normalized_payloads):
+                sector = _find_zero_extent(
+                    handle,
+                    start_sector=search_sector,
+                    sector_count=1,
+                    volume_space_size=source.volume_space_size,
+                    path=f"UDF File Entry for {path}",
+                )
+                udf_file_entry_sectors[path] = sector
+                search_sector = sector + 1
+
         metadata_writes: list[tuple[int, bytes]] = []
-        directory_offsets: dict[str, int] = {}
         for parent_path in sorted(parents):
             entries = [
                 (path, allocation[path], len(normalized_payloads[path]))
@@ -570,31 +695,90 @@ def insert_files(
             metadata_writes.extend(writes)
             directory_offsets.update(offsets)
 
-        for path, extent in allocation.items():
-            sector_count = (len(normalized_payloads[path]) + SECTOR - 1) // SECTOR
-            handle.seek(extent * SECTOR)
-            if handle.read(sector_count * SECTOR) != _ZERO_SECTOR * sector_count:
-                raise RuntimeError(f"ISO tail extent changed before insertion: {path}")
-
-    with image.open("r+b") as output:
         for path in sorted(normalized_payloads):
-            output.seek(allocation[path] * SECTOR)
-            output.write(normalized_payloads[path])
-        for offset, data in sorted(metadata_writes, key=lambda item: item[0]):
-            output.seek(offset)
-            output.write(data)
+            extent = allocation[path]
+            payload = normalized_payloads[path]
+            sector_count = (len(payload) + SECTOR - 1) // SECTOR
+            handle.seek(extent * SECTOR)
+            expected = handle.read(sector_count * SECTOR)
+            if expected != _ZERO_SECTOR * sector_count:
+                raise RuntimeError(f"ISO tail extent changed before insertion: {path}")
+            replacement = payload + b"\0" * (len(expected) - len(payload))
+            planned_writes.append(
+                _PlannedWrite(
+                    extent * SECTOR,
+                    expected,
+                    replacement,
+                    f"inserted payload {path}",
+                )
+            )
+
+        for offset, replacement in metadata_writes:
+            handle.seek(offset)
+            expected = handle.read(len(replacement))
+            if len(expected) != len(replacement):
+                raise RuntimeError(f"Failed to read ISO metadata at 0x{offset:X}")
+            planned_writes.append(
+                _PlannedWrite(offset, expected, replacement, "ISO9660 directory metadata")
+            )
+
+    if udf is not None:
+        udf_plan = udf.plan_updates(
+            insertion_extents={
+                path: (allocation[path], len(normalized_payloads[path]))
+                for path in normalized_payloads
+            },
+            file_entry_sectors=udf_file_entry_sectors,
+            renames=renames,
+        )
+        planned_writes.extend(
+            _PlannedWrite(write.offset, write.expected, write.replacement, write.reason)
+            for write in udf_plan.writes
+        )
+
+    ordered_writes = _validate_planned_writes(image, planned_writes, original_size)
+    with image.open("r+b") as output:
+        for write in ordered_writes:
+            output.seek(write.offset)
+            output.write(write.replacement)
         output.flush()
         os.fsync(output.fileno())
 
     if image.stat().st_size != original_size:
-        raise RuntimeError("ISO insertion changed the image size")
+        raise RuntimeError("ISO composition changed the image size")
 
     result = Iso9660(image)
     expected_tree = {(record.path, record.is_dir) for record in source.records}
     expected_tree.update((path, False) for path in normalized_payloads)
     result_tree = {(record.path, record.is_dir) for record in result.records}
     if result_tree != expected_tree:
-        raise RuntimeError("ISO insertion changed the file tree beyond declared additions")
+        raise RuntimeError("ISO composition changed the file tree beyond declared additions")
+
+    result_udf: Udf | None = None
+    udf_insertions = {}
+    if udf is not None:
+        assert udf_plan is not None
+        result_udf = Udf(image)
+        result_udf_tree = {
+            (record.path, record.is_dir) for record in result_udf.records
+        }
+        if result_udf_tree != result_tree:
+            raise RuntimeError("Final ISO9660 and UDF file trees differ")
+        for path, iso_record in result.by_path.items():
+            udf_record = result_udf.by_path[path]
+            if iso_record.is_dir:
+                if not udf_record.is_dir:
+                    raise RuntimeError(f"Final ISO9660/UDF type mismatch: {path or '/'}")
+                continue
+            if (
+                udf_record.is_dir
+                or udf_record.information_length != iso_record.size
+                or result_udf.absolute_extent(udf_record) != iso_record.extent
+            ):
+                raise RuntimeError(f"Final ISO9660/UDF file mapping mismatch: {path}")
+        udf_insertions = {item.path: item for item in udf_plan.insertions}
+        if set(udf_insertions) != set(normalized_payloads):
+            raise RuntimeError("Final UDF insertion result set is incomplete")
 
     insertions: list[IsoInsertion] = []
     for path in sorted(normalized_payloads):
@@ -609,6 +793,11 @@ def insert_files(
             or result.read_file(record) != payload
         ):
             raise RuntimeError(f"Inserted ISO file verification failed: {path}")
+        udf_insertion = udf_insertions.get(path)
+        if result_udf is not None:
+            udf_record = result_udf.by_path[path]
+            if result_udf.read_file(udf_record) != payload:
+                raise RuntimeError(f"Inserted UDF file verification failed: {path}")
         insertions.append(
             IsoInsertion(
                 path=path,
@@ -616,6 +805,31 @@ def insert_files(
                 size=record.size,
                 sha256=hashlib.sha256(payload).hexdigest().upper(),
                 directory_record_offset=directory_offsets[path],
+                udf_file_entry_offset=(
+                    udf_insertion.file_entry_offset if udf_insertion else None
+                ),
+                udf_directory_record_offset=(
+                    udf_insertion.directory_record_offset if udf_insertion else None
+                ),
             )
         )
-    return tuple(insertions)
+
+    rename_results = tuple(
+        IsoUdfRename(
+            source_path=item.source_path,
+            replacement_path=item.replacement_path,
+            identifier_offset=item.identifier_offset,
+            original_identifier=item.original_identifier,
+            replacement_identifier=item.replacement_identifier,
+        )
+        for item in (udf_plan.renames if udf_plan is not None else ())
+    )
+    return IsoComposition(tuple(insertions), rename_results)
+
+
+def insert_files(
+    image: Path,
+    payloads: Mapping[str, bytes | bytearray],
+) -> tuple[IsoInsertion, ...]:
+    """Insert files into existing directories without changing image size."""
+    return compose_filesystems(image, payloads).insertions

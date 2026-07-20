@@ -88,6 +88,31 @@ The existing `DATA.CVM` inventory contains 2,310 CCS files, one 61,440-byte
 thousands of nominal disassembly targets. A CCS member remains data-only unless
 a later task proves that a specific section contains executed bytecode.
 
+## FLIST.DIR runtime lookup cache
+
+`FLIST.DIR` is a plain-text cache-warming manifest, not an authoritative disc
+index. During startup, NA2 `FUN_00143d98` reads its paths, normalizes separator
+and ASCII-case differences, resolves each path through the ordinary disc search,
+and records the normalized path together with its logical sector number (LSN)
+and byte size in the in-memory DVCI lookup table. It caches file-location
+metadata, not file contents.
+
+The file-open paths through `FUN_00142a80`, `FUN_00142b08`, and `FUN_00143230`
+query that table first. A cache miss explicitly falls back to the normal disc
+filesystem search, so a valid explicit `cdrom0:\...` path does not require an
+entry in `FLIST.DIR`. Registration can avoid repeated directory traversal and
+optical-disc seeks for frequently opened files, but it offers no material gain
+for a file opened only once because it merely performs the same resolution
+earlier during startup.
+
+NA2 and NUN5 have byte-identical 124-byte lists. NUN6 A35 adds
+`prg\MOD.BIN` but does not add `TEXTBRA.BIN`, consistent with prewarming its new
+resident code module rather than declaring every required file. On 2026-07-20,
+the user confirmed that the integrated NA2 ISO works in-game while loading the
+new `PRG/MOD.BIN` and `PRG/TEXTENG.BIN` through explicit paths with the original
+NA2 `FLIST.DIR` unchanged. External translation therefore intentionally omits a
+FLIST edit.
+
 ## Analysis levels
 
 ### Full existing program analysis

@@ -19,7 +19,7 @@ The project combines four related areas:
 - English text and UI-texture translation through generated, validated patch
   tables and fixed-size source-derived official donor-container imports.
 - GF4/GF4C font-resource and renderer reverse engineering.
-- Gameplay and default-setting changes through named raw-binary modules, with PNACH retained for stable resident-ELF/runtime behavior and carefully bounded temporary hypotheses. On-demand overlays such as `BTL.BIN` and `ETC.BIN` are tested through file patches and ISO rebuilds, not unguarded fixed-address cheats.
+- Gameplay and default-setting changes through named binary-patcher modules, with PNACH retained for stable resident-ELF/runtime behavior and carefully bounded temporary hypotheses. On-demand overlays such as `BTL.BIN` and `ETC.BIN` are tested through file patches and ISO rebuilds, not unguarded fixed-address cheats.
 - Scripted profile composition, ISO verification, CRC actualization, annotated
   reproducible checkpoints, and frozen releases.
 
@@ -45,8 +45,8 @@ context rather than repeated here.
 
 Component-specific documentation stays with its component, including the
 [translation module](na2_patcher/modules/translation/README.md) and the
-[raw binary module](na2_patcher/modules/raw_binary/README.md), plus the
-[UI texture module](na2_patcher/modules/ui_textures/README.md).
+[binary patcher module](na2_patcher/modules/binary_patcher/README.md), plus the
+[texture patcher module](na2_patcher/modules/texture_patcher/README.md).
 
 Install the pinned patcher dependency before building the current profile:
 

@@ -32,7 +32,7 @@ from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
   NUN5's Cross/OK and Triangle/Back legends wherever the common panel is used.
 - The NUN5 one-part `OUGI.CCS` layout also requires the paired,
   size-preserving `UI-BTL-001` semantic port in
-  `na2_patcher/modules/raw_binary/patch_sets/ui_translation/`.
+  `na2_patcher/modules/binary_patcher/patch_sets/ui_translation/`.
 
 The engine searches deterministic zlib encodings first. Five fixed-capacity
 members require Zopfli; `na2_patcher/requirements.txt` pins the verified
@@ -50,13 +50,13 @@ python -m pip install -r na2_patcher/requirements.txt
 Derive and verify every pinned production replacement from the repository root:
 
 ```powershell
-python -m na2_patcher.modules.ui_textures.engine verify
+python -m na2_patcher.modules.texture_patcher.engine verify
 ```
 
 Write a review-only generated extraction outside the source roots:
 
 ```powershell
-python -m na2_patcher.modules.ui_textures.engine preview `
+python -m na2_patcher.modules.texture_patcher.engine preview `
   --output work/temp/ui_texture_preview
 ```
 

@@ -36,18 +36,18 @@ SELECTION_KINDS = {"all", "group", "native", "patch"}
 MODULE_TYPES = {
     "disc_identity",
     "external_translation",
-    "raw_binary",
+    "binary_patcher",
     "translation",
-    "ui_textures",
+    "texture_patcher",
 }
-RAW_BINARY_CONTROL_FILES = (
+BINARY_PATCHER_CONTROL_FILES = (
     "manifest.tsv",
     "targets.tsv",
     "groups.tsv",
     "patches.tsv",
     "edits.tsv",
 )
-UI_TEXTURE_CONTROL_FILES = (
+TEXTURE_PATCHER_CONTROL_FILES = (
     "containers.tsv",
     "mappings.tsv",
     "strategies.tsv",
@@ -179,15 +179,15 @@ def content_sha256(path: Path) -> str:
     return _tree_digest(path, files)
 
 
-def _raw_binary_content_files(path: Path) -> list[Path]:
+def _binary_patcher_content_files(path: Path) -> list[Path]:
     # Normalize once so Windows short/long path aliases cannot make blob paths
     # appear to sit outside the same package during digest calculation.
     path = path.resolve()
-    files = [path / name for name in RAW_BINARY_CONTROL_FILES]
+    files = [path / name for name in BINARY_PATCHER_CONTROL_FILES]
     missing = [item.name for item in files if not item.is_file()]
     if missing:
         raise FileNotFoundError(
-            f"Raw-binary module is missing canonical input files: {', '.join(missing)}"
+            f"Binary-patcher module is missing canonical input files: {', '.join(missing)}"
         )
 
     edits_path = path / "edits.tsv"
@@ -220,13 +220,13 @@ def _raw_binary_content_files(path: Path) -> list[Path]:
     return files
 
 
-def _ui_texture_content_files(path: Path) -> list[Path]:
+def _texture_patcher_content_files(path: Path) -> list[Path]:
     path = path.resolve()
-    files = [path / name for name in UI_TEXTURE_CONTROL_FILES]
+    files = [path / name for name in TEXTURE_PATCHER_CONTROL_FILES]
     missing = [item.name for item in files if not item.is_file()]
     if missing:
         raise FileNotFoundError(
-            f"UI-texture module is missing canonical input files: {', '.join(missing)}"
+            f"Texture-patcher module is missing canonical input files: {', '.join(missing)}"
         )
     return files
 
@@ -266,12 +266,12 @@ def module_content_sha256(path: Path, module_type: str) -> str:
         return content_sha256(path)
     if not path.is_dir():
         raise FileNotFoundError(path)
-    if module_type == "raw_binary":
-        return _tree_digest(path, _raw_binary_content_files(path))
+    if module_type == "binary_patcher":
+        return _tree_digest(path, _binary_patcher_content_files(path))
     if module_type == "external_translation":
         return _tree_digest(path, _external_translation_content_files(path))
-    if module_type == "ui_textures":
-        return _tree_digest(path, _ui_texture_content_files(path))
+    if module_type == "texture_patcher":
+        return _tree_digest(path, _texture_patcher_content_files(path))
     return content_sha256(path)
 
 
@@ -441,7 +441,7 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
             module_type = str(module_definitions[module_id]["module"])
             allowed = (
                 {"group", "patch"}
-                if module_type == "raw_binary"
+                if module_type == "binary_patcher"
                 else {"all", "native"}
             )
             if selection_kind not in allowed:

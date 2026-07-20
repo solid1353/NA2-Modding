@@ -287,7 +287,7 @@ class ProfileTests(unittest.TestCase):
                 handle.write("one\tall\t\tsecond\n")
             self.assertNotEqual(first, feature_content_sha256(package))
 
-    def test_raw_binary_hash_excludes_documentation(self) -> None:
+    def test_binary_patcher_hash_excludes_documentation(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             package = Path(directory) / "package"
             package.mkdir()
@@ -301,16 +301,16 @@ class ProfileTests(unittest.TestCase):
             (package / "edits.tsv").write_text("blob_path\n", encoding="utf-8")
             (package / "README.md").write_text("first\n", encoding="utf-8")
 
-            first = module_content_sha256(package, "raw_binary")
+            first = module_content_sha256(package, "binary_patcher")
             (package / "README.md").write_text("second\n", encoding="utf-8")
-            second = module_content_sha256(package, "raw_binary")
+            second = module_content_sha256(package, "binary_patcher")
             self.assertEqual(first, second)
 
             (package / "patches.tsv").write_text("changed\n", encoding="utf-8")
-            third = module_content_sha256(package, "raw_binary")
+            third = module_content_sha256(package, "binary_patcher")
             self.assertNotEqual(second, third)
 
-    def test_raw_binary_hash_includes_referenced_blobs(self) -> None:
+    def test_binary_patcher_hash_includes_referenced_blobs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             package = Path(directory) / "package"
             package.mkdir()
@@ -326,13 +326,13 @@ class ProfileTests(unittest.TestCase):
                 "blob_path\npayload.bin\n", encoding="utf-8"
             )
 
-            first = module_content_sha256(package, "raw_binary")
+            first = module_content_sha256(package, "binary_patcher")
             (package / "groups.tsv").write_text("changed\n", encoding="utf-8")
-            groups_changed = module_content_sha256(package, "raw_binary")
+            groups_changed = module_content_sha256(package, "binary_patcher")
             self.assertNotEqual(first, groups_changed)
             (package / "groups.tsv").write_text("groups.tsv\n", encoding="utf-8")
             (package / "payload.bin").write_bytes(b"two")
-            second = module_content_sha256(package, "raw_binary")
+            second = module_content_sha256(package, "binary_patcher")
             self.assertNotEqual(first, second)
 
     def test_ui_texture_hash_includes_only_declarative_inputs(self) -> None:
@@ -351,22 +351,22 @@ class ProfileTests(unittest.TestCase):
             (package / "README.md").write_text("first\n", encoding="utf-8")
             (package / "engine.py").write_text("first\n", encoding="utf-8")
 
-            first = module_content_sha256(package, "ui_textures")
+            first = module_content_sha256(package, "texture_patcher")
             (package / "README.md").write_text("second\n", encoding="utf-8")
             (package / "engine.py").write_text("second\n", encoding="utf-8")
             (package / "generated.ccs").write_bytes(b"two")
-            self.assertEqual(first, module_content_sha256(package, "ui_textures"))
+            self.assertEqual(first, module_content_sha256(package, "texture_patcher"))
 
             (package / "mappings.tsv").write_text(
                 "mapping_id\ntwo\n", encoding="utf-8"
             )
-            second = module_content_sha256(package, "ui_textures")
+            second = module_content_sha256(package, "texture_patcher")
             self.assertNotEqual(first, second)
 
             (package / "strategies.tsv").write_text(
                 "container_id\tstrategy\nexample\tmapped\n", encoding="utf-8"
             )
-            third = module_content_sha256(package, "ui_textures")
+            third = module_content_sha256(package, "texture_patcher")
             self.assertNotEqual(second, third)
 
     def test_external_translation_hash_includes_only_control_files(self) -> None:
@@ -416,21 +416,21 @@ class ProfileTests(unittest.TestCase):
         profile_directory = repository / "na2_patcher" / "profiles" / "current"
         self.assertFalse((profile_directory / "feature_selections.tsv").exists())
 
-    def test_current_raw_binary_selections_are_group_only(self) -> None:
+    def test_current_binary_patcher_selections_are_group_only(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         profile = load_profile(
             repository / "na2_patcher" / "profiles" / "current",
             repository,
         )
         module_types = {module.module_id: module.module for module in profile.modules}
-        raw_selections = [
+        binary_selections = [
             selection
             for selection in profile.selections
-            if module_types[selection.module_id] == "raw_binary"
+            if module_types[selection.module_id] == "binary_patcher"
         ]
-        self.assertTrue(raw_selections)
+        self.assertTrue(binary_selections)
         self.assertEqual(
-            {selection.selection_kind for selection in raw_selections},
+            {selection.selection_kind for selection in binary_selections},
             {"group"},
         )
 

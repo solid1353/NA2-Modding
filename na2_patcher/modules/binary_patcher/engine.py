@@ -702,7 +702,7 @@ def resolve_patch_selections(
             patch_ids = [selection_id]
         else:
             raise PatchError(
-                f"Raw-binary selection kind must be group or patch: {selection_kind!r}"
+                f"Binary-patcher selection kind must be group or patch: {selection_kind!r}"
             )
         for patch_id in patch_ids:
             resolved.append(
@@ -1025,7 +1025,7 @@ def apply_package(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Validate and apply declarative raw binary patches.")
+    parser = argparse.ArgumentParser(description="Validate and apply declarative binary patcher patches.")
     subparsers = parser.add_subparsers(dest="command", required=True)
     for command in ("validate", "plan", "apply"):
         sub = subparsers.add_parser(command)
@@ -1080,7 +1080,7 @@ def main() -> int:
     else:
         run_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
         logs_relative = PROJECT_PATHS.path("logs").relative_to(workspace).as_posix()
-        log_text = f"{logs_relative}/na2_patcher/raw_binary/{run_id}"
+        log_text = f"{logs_relative}/na2_patcher/binary_patcher/{run_id}"
     log_directory = command_relative_path(log_text, "--log-directory", workspace)
     apply_package(
         package,

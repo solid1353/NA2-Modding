@@ -9,7 +9,7 @@ This module gives the modified project image the synthetic serial
 
 The original source image remains untouched. The boot ELF payload is still
 composed under its clean-source name before the final directory identifier is
-renamed, so existing translation and raw-binary modules do not need duplicate
+renamed, so existing translation and binary-patcher modules do not need duplicate
 targets. The final ISO size, boot ELF size, and extent remain unchanged.
 
 The game's hard-coded save directory `BISLPS-25837NARUTO5` is deliberately not

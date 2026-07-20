@@ -1,4 +1,4 @@
-# UI translation raw-binary patch set
+# UI translation binary-patcher patch set
 
 This patch set holds size-preserving executable changes that are inseparable from
 the NUN5 UI container import but do not belong inside `DATA.CVM`.
@@ -28,12 +28,12 @@ runtime-proven with the imported one-part container.
 Validate and inspect the planned edit from the repository root:
 
 ```powershell
-python -m na2_patcher.modules.raw_binary.engine validate `
-  --package na2_patcher/modules/raw_binary/patch_sets/ui_translation `
+python -m na2_patcher.modules.binary_patcher.engine validate `
+  --package na2_patcher/modules/binary_patcher/patch_sets/ui_translation `
   --root na2=@source_na2
 
-python -m na2_patcher.modules.raw_binary.engine plan `
-  --package na2_patcher/modules/raw_binary/patch_sets/ui_translation `
+python -m na2_patcher.modules.binary_patcher.engine plan `
+  --package na2_patcher/modules/binary_patcher/patch_sets/ui_translation `
   --root na2=@source_na2 `
   --patch UI-BTL-001
 ```
@@ -269,13 +269,13 @@ the ELF size is preserved.
 Inspect all thirteen UI companion patches together:
 
 ```powershell
-python -m na2_patcher.modules.raw_binary.engine validate `
-  --package na2_patcher/modules/raw_binary/patch_sets/ui_translation `
+python -m na2_patcher.modules.binary_patcher.engine validate `
+  --package na2_patcher/modules/binary_patcher/patch_sets/ui_translation `
   --root na2=@source_na2 `
   --root nun5=@source_nun5
 
-python -m na2_patcher.modules.raw_binary.engine plan `
-  --package na2_patcher/modules/raw_binary/patch_sets/ui_translation `
+python -m na2_patcher.modules.binary_patcher.engine plan `
+  --package na2_patcher/modules/binary_patcher/patch_sets/ui_translation `
   --root na2=@source_na2 `
   --root nun5=@source_nun5 `
   --patch UI-BTL-001 `

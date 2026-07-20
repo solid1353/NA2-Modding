@@ -7,7 +7,7 @@ import unittest
 from dataclasses import replace
 from pathlib import Path
 
-from na2_patcher.modules.raw_binary import engine as patcher
+from na2_patcher.modules.binary_patcher import engine as patcher
 
 
 def sha256(data: bytes) -> str:
@@ -22,7 +22,7 @@ def write_tsv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> N
         writer.writerows(rows)
 
 
-class RawBinaryPatcherTests(unittest.TestCase):
+class BinaryPatcherTests(unittest.TestCase):
     def make_fixture(self, root: Path) -> tuple[patcher.Package, dict[str, Path], dict[str, bytes]]:
         na2 = root / "na2"
         nun5 = root / "nun5"
@@ -162,7 +162,7 @@ class RawBinaryPatcherTests(unittest.TestCase):
                 output,
                 "work/temp/output",
                 logs,
-                "logs/na2_patcher/raw_binary/test",
+                "logs/na2_patcher/binary_patcher/test",
             )
             result = (output / "target.bin").read_bytes()
             self.assertEqual(len(result), 16)

@@ -177,7 +177,7 @@ class ContainerResult:
 
 
 @dataclass(frozen=True)
-class UiTexturePlan:
+class TexturePatchPlan:
     package: Package
     containers: tuple[ContainerResult, ...]
     target_header: bytes
@@ -742,7 +742,7 @@ def build_plan(
     nun5_root: Path,
     data_root: Path,
     selection: tuple[str, ...] = (),
-) -> UiTexturePlan:
+) -> TexturePatchPlan:
     package = load_package(data_root)
     target_iso, donor_iso, target_header = source_members(na2_root, nun5_root)
     mappings_by_container: dict[str, list[Mapping]] = defaultdict(list)
@@ -810,16 +810,16 @@ def build_plan(
                 mapping_ids=tuple(mapping.mapping_id for mapping in mappings),
             )
         )
-    return UiTexturePlan(package, tuple(results), target_header)
+    return TexturePatchPlan(package, tuple(results), target_header)
 
 
-def build_ui_texture_plan(
+def build_texture_patch_plan(
     *,
     na2_root: Path,
     nun5_root: Path,
     data_root: Path,
     selection: tuple[str, ...] = (),
-) -> UiTexturePlan:
+) -> TexturePatchPlan:
     return build_plan(
         na2_root=na2_root,
         nun5_root=nun5_root,
@@ -828,7 +828,7 @@ def build_ui_texture_plan(
     )
 
 
-def result_rows(plan: UiTexturePlan) -> list[dict[str, object]]:
+def result_rows(plan: TexturePatchPlan) -> list[dict[str, object]]:
     return [
         {
             "container_id": result.spec.container_id,
@@ -848,7 +848,7 @@ def result_rows(plan: UiTexturePlan) -> list[dict[str, object]]:
     ]
 
 
-def write_preview(plan: UiTexturePlan, output: Path) -> None:
+def write_preview(plan: TexturePatchPlan, output: Path) -> None:
     if output.exists():
         raise FileExistsError(output)
     output.mkdir(parents=True)
@@ -884,7 +884,7 @@ def default_roots() -> tuple[Path, Path, Path]:
     )
 
 
-def print_results(plan: UiTexturePlan) -> None:
+def print_results(plan: TexturePatchPlan) -> None:
     print(
         "container_id\tstrategy\tfixed_size\tcompressed_stream_size\tzero_padding\t"
         "replacement_sha256\tpayload_sha256"
@@ -922,7 +922,7 @@ def main() -> int:
 
     na2_root, nun5_root, data_root = default_roots()
     selection = parse_selection(args.selection)
-    plan = build_ui_texture_plan(
+    plan = build_texture_patch_plan(
         na2_root=na2_root,
         nun5_root=nun5_root,
         data_root=data_root,

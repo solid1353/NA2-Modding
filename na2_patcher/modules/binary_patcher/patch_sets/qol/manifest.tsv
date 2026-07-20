@@ -1,0 +1,2 @@
+schema_version	package_id	package_version	game	description	evidence_path
+2	qol	1	NA2	File-backed migration of the canonical PNACH QoL section.	na2_patcher/modules/binary_patcher/patch_sets/qol/README.md

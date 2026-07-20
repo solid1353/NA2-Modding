@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Find direct JAL call sites to a MIPS runtime address in a raw binary."""
+"""Find direct JAL call sites to a MIPS runtime address in a binary patcher."""
 
 from __future__ import annotations
 

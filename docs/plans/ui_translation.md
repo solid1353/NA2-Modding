@@ -170,12 +170,12 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 
 ## Production artifacts and validation
 
-- `na2_patcher/modules/ui_textures/` contains 34 source-derived fixed-size
+- `na2_patcher/modules/texture_patcher/` contains 34 source-derived fixed-size
   recipes, 76 reviewed mappings, pinned source/donor/replacement/payload hashes,
   and the deterministic verifier. The generated replacement ranges total
   5,274,398 bytes, but no replacement CCS blobs are stored in the repository.
   Static parity regenerated all 34 former production files byte-for-byte.
-- `na2_patcher/modules/raw_binary/patch_sets/ui_translation/` contains 13 atomic
+- `na2_patcher/modules/binary_patcher/patch_sets/ui_translation/` contains 13 atomic
   companion patches and 86 guarded edits across BTL, ETC, and the boot ELF.
   Forty-seven rows copy canonical NUN5 bytes directly (39 ELF, seven BTL, one
   ETC), 24 store values computed from NUN5's stage-width formula in NA2's
@@ -188,7 +188,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   all three targets selected.
 - `na2_patcher/profiles/current/modules.tsv` enables both modules by canonical
   executable-input hash.
-- The raw-binary patch set validates as 6 targets, 13 patches, and 86 edits. The UI
+- The binary-patcher patch set validates as 6 targets, 13 patches, and 86 edits. The UI
   texture plan derives all 34 members with 33 whole donors and MODE2KDV as the
   only mapped exception. The historical runtime harness remains available;
   current focused and complete-suite results are refreshed with each build.
@@ -263,7 +263,7 @@ production writer.
 2. For normal containers, verify both source hashes, decompress the complete official NUN5 CCS payload, recompress it deterministically into the unchanged NA2 member capacity, and pad only after the valid gzip stream. The normal profile performs this derivation directly; zlib is tried first and the five tighter members use pinned Zopfli 0.4.3. This carries the donor's matching models, UVs, and animations together with its translated pixels without storing replacement blobs.
 3. Treat `MODE2KDV` as the single declared indexed-row exception: preserve the NA2 payload and palette and import only the donor's top 64 visual rows through a deterministic palette remap.
 4. Keep the outer DATA.CVM member size, ISO record size, and all source files unchanged. Refuse any output that cannot fit the original fixed capacity.
-5. Represent the OUGI one-part loop as a separate raw-binary BTL semantic port.
+5. Represent the OUGI one-part loop as a separate binary-patcher BTL semantic port.
    NUN5 proves the one-part behavior, but the exact NA2 replacement instruction
    is absent from canonical NUN5 ELF/BTL/ETC/ADV and therefore cannot honestly
    be represented as a donor copy.
@@ -278,7 +278,7 @@ production writer.
 10. Leave text content and font rendering to their separate workstreams; this
     task changes no text bytes or translation mappings.
 11. Validate every output by decompressing/reparsing it, checking the intentional decoded visual set, comparing full-container payloads to the donor, verifying the KDV preserved region, and recording hashes/capacity.
-12. The proven UI module and companion raw-binary patches are integrated into the
+12. The proven UI module and companion binary-patcher patches are integrated into the
    hash-pinned current profile without overwriting concurrent work.
 
 ## Runtime comparison workflow

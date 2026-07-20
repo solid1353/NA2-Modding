@@ -12,11 +12,11 @@ Each profile directory contains:
 - `modules.tsv`: globally ordered module instances with exact input hashes.
 
 Feature-to-module selections do not live in profiles. Each reusable feature
-package owns its ordered `selections.tsv`; raw-binary selections may target
+package owns its ordered `selections.tsv`; binary-patcher selections may target
 groups or patches, while every current feature uses groups only.
 
-Profile schema v2 supports declarative `raw_binary`, `translation`,
-`ui_textures`, `external_translation`, and `disc_identity` modules. Package and
+Profile schema v2 supports declarative `binary_patcher`, `translation`,
+`texture_patcher`, `external_translation`, and `disc_identity` modules. Package and
 ZIP-overlay workflows are retired; profiles consume only repository-owned
 declarative inputs.
 
@@ -29,7 +29,7 @@ blocking the active build when their contents change.
 Feature hashes cover only the package's `manifest.tsv` and `selections.tsv`.
 Adjacent feature documentation and schemas do not affect profile pins.
 
-For raw-binary modules, the profile hash covers only executable package inputs:
+For binary-patcher modules, the profile hash covers only executable package inputs:
 
 - `manifest.tsv`
 - `targets.tsv`
@@ -39,7 +39,7 @@ For raw-binary modules, the profile hash covers only executable package inputs:
 - every blob referenced by `blob_path`
 
 Adjacent documentation and authoring tools do not affect the profile pin.
-UI-texture hashes cover only the three declarative inputs `containers.tsv`,
+Texture-patcher hashes cover only the three declarative inputs `containers.tsv`,
 `mappings.tsv`, and `strategies.tsv`; replacements are derived directly from
 the hash-pinned NA2 and NUN5 source members and checked against the hashes in
 those files. Parser code and adjacent documentation are excluded from the
@@ -50,24 +50,24 @@ The current profile composes:
 
 1. the runtime-proven native 14x20 NUN5-derived secondary font, Controls
    shrink-only fit, and character-modal alignment through the standalone
-   `font` raw-binary package, while preserving clean NA2 GF4C;
-2. the runtime-proven menu-input handler set through `raw_binary`;
-3. separate `QoL` and `Battle logic` raw-binary sections using their preserved default states;
+   `font` binary-patcher package, while preserving clean NA2 GF4C;
+2. the runtime-proven menu-input handler set through `binary_patcher`;
+3. separate `QoL` and `Battle logic` binary-patcher sections using their preserved default states;
 4. the fixed-size memory-card title through the `string_replacements`
-   raw-binary patch set;
+   binary-patcher patch set;
 5. hash-pinned v35 mappings from the integrated `translation` module;
 6. 34 fixed-size source-derived official NUN5 UI container imports through
-   `ui_textures` (33 whole-container imports and one declared mapped import);
-7. the 13 paired UI renderer/table corrections through `raw_binary`;
+   `texture_patcher` (33 whole-container imports and one declared mapped import);
+7. the 13 paired UI renderer/table corrections through `binary_patcher`;
 8. the generated `PRG/MOD.BIN` and `PRG/TEXTENG.BIN` payloads and their guarded
    loader/pointer edits through `external_translation`;
 9. the declared equal-length `SLPS_258.37` to `SLPS_222.28` boot identity
    change through `disc_identity`.
 
-The disabled `Testing` section remains a separate raw package. The empty
+The disabled `Testing` section remains a separate binary-patcher package. The empty
 `Rendering` patch set remains listed as a disabled module until populated.
 
-Migrated PNACH structure uses one raw package per former section, groups for
+Migrated PNACH structure uses one binary-patcher package per former section, groups for
 related controls, atomic patch rows for independently selectable behavior, and
 one or more exact edit rows per patch. The patch's `default_enabled` value
 preserves whether that behavior was enabled.

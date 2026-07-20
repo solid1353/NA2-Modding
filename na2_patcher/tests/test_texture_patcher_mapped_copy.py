@@ -3,7 +3,7 @@ from __future__ import annotations
 import struct
 import unittest
 
-from na2_patcher.modules.ui_textures import engine
+from na2_patcher.modules.texture_patcher import engine
 
 
 def _write_name(buffer: bytearray, offset: int, value: str, size: int) -> None:

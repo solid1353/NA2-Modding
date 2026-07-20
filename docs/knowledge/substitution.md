@@ -8,7 +8,7 @@ This document promotes the durable findings from the 2026-07-05 substitution-rel
 - Historical CRC alias during the investigation: `@pcsx2_files/SLPS-25837_E0F064C5.pnach`. CRC aliases are managed links and are not canonical.
 - Historical NA2 decompiler/Ghidra evidence remains available through Git
   history. Restore reusable analysis only under `@analysis/disassembly/NA2/`.
-- Reproducible substitution-cost patch: `ELF-S001` in `na2_patcher/modules/raw_binary/patch_sets/battle_logic/`.
+- Reproducible substitution-cost patch: `ELF-S001` in `na2_patcher/modules/binary_patcher/patch_sets/battle_logic/`.
 
 Function names below are Ghidra-generated names for the NA2 boot ELF and are stable only within the preserved analysis project.
 
@@ -28,7 +28,7 @@ The first test appears to call `FUN_001921c0` with invalid context. These result
 
 The historical 16-bit PNACH write at EE address `0x202298BC` changes a downstream substitution packet/cost field in `FUN_001c3da0` to `0x4040` (3/15). It affects an already-built packet and is not the reliability gate.
 
-It is preserved as disabled, runtime-proven raw-binary patch `ELF-S001`, which guards boot-ELF file offset `0x1299BC` and replaces `80 3F` with `40 40`. Use the module patch rather than restoring a permanent PNACH write.
+It is preserved as disabled, runtime-proven binary-patcher patch `ELF-S001`, which guards boot-ELF file offset `0x1299BC` and replaces `80 3F` with `40 40`. Use the module patch rather than restoring a permanent PNACH write.
 
 ## Established control flow
 

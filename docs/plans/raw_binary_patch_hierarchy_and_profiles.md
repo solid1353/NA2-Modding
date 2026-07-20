@@ -1,4 +1,4 @@
-# Raw-binary patch hierarchy and profile-driven workflows
+# Binary-patcher patch hierarchy and profile-driven workflows
 
 ## Objective
 
@@ -8,14 +8,14 @@ The active build hierarchy is:
 Profile
 └── Feature
     └── Module selection
-        ├── native/all selection for non-raw modules
-        └── raw-binary module / patch set
+        ├── native/all selection for non-binary-patcher modules
+        └── binary-patcher module / patch set
             └── selected group or patch
                 └── patch
                     └── edit
 ```
 
-A raw-binary module instance and its patch set are the same compositional node
+A binary-patcher module instance and its patch set are the same compositional node
 in this hierarchy. `module_id` and the package manifest's `package_id` remain
 technically distinct so a profile can pin and reuse package content without
 making its build-level identity part of the package format.
@@ -34,18 +34,18 @@ Feature selections do not live in profiles. Every reusable package under
 `selections.tsv`. The consuming profile supplies the stable module instances
 named by those selections and independently pins their executable inputs.
 
-For raw-binary modules, a selection row is conceptually
+For binary-patcher modules, a selection row is conceptually
 `(module_id, selection_kind, selection_id)`, where `selection_kind` may be
 `group` or `patch`. A feature may contain both kinds, repeated selections are
 preserved, and overlapping selections are not deduplicated. Every selection
 therefore keeps its own provenance in plans and logs.
 
-Current feature packages deliberately use only group selections for raw-binary
+Current feature packages deliberately use only group selections for binary-patcher
 modules. Direct patch selection is supported by the feature schema and engine
 for future isolated features and tests, but no current feature package selects
 a patch ID.
 
-Non-raw modules retain their existing semantics: `all` selects the complete
+Non-binary-patcher modules retain their existing semantics: `all` selects the complete
 module and `native` carries the module's native selector, such as a translation
 target. They do not need group catalogs merely to participate in features.
 
@@ -53,9 +53,9 @@ An enabled feature must select at least one module input. A disabled feature may
 be empty, which permits reserved features such as Rendering without inventing
 placeholder content.
 
-## Raw-binary schema v2
+## Binary-patcher schema v2
 
-Every raw-binary package has exactly five canonical control tables:
+Every binary-patcher package has exactly five canonical control tables:
 
 - `manifest.tsv`
 - `targets.tsv`
@@ -94,7 +94,7 @@ from overlapping ranges or selection metadata. Overlap itself is legal.
 
 ## Current canonical groups
 
-The feature packages enabled by the current profile select these raw-binary
+The feature packages enabled by the current profile select these binary-patcher
 groups:
 
 - Font: `glyph_data`, `auto_fit`, `alignment`
@@ -122,7 +122,7 @@ preserving their exact edits:
 
 The profile pins every enabled feature package and active module input by
 deterministic hash. Feature hashes cover only `manifest.tsv` and
-`selections.tsv`; raw-binary hashes cover the five canonical control tables
+`selections.tsv`; binary-patcher hashes cover the five canonical control tables
 plus referenced blobs. Adjacent documentation is excluded from both.
 
 Profile-run logs record enabled features, every feature-selection occurrence,
@@ -133,7 +133,7 @@ selection flag.
 
 ## Migration proof
 
-Before migration, a deterministic v1 baseline captured six enabled raw modules,
+Before migration, a deterministic v1 baseline captured six enabled binary-patcher modules,
 92 selected patches, and 256 selected edits. After migration, the group-only
 current feature packages expand to 95 patch instances and the same 256 edit
 instances; the patch-instance count increases only because the two QoL bundles
@@ -149,9 +149,9 @@ PCSX2.
 
 - Profile schema v2 enables and hash-pins reusable feature packages without
   storing feature selections in the profile.
-- Raw-binary schema v2 represents package -> group -> patch -> edit.
-- Current feature packages use raw group selections only.
-- Direct raw patch selection remains supported for future profiles/tests.
+- Binary-patcher schema v2 represents package -> group -> patch -> edit.
+- Current feature packages use binary-patcher group selections only.
+- Direct binary-patcher patch selection remains supported for future profiles/tests.
 - Overlapping and repeated selections retain provenance and are validated by
   deterministic ordered edit simulation rather than deduplication.
 - `relations.tsv` and live schema v1 support are removed.

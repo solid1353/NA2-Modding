@@ -236,7 +236,7 @@ component separately.
 - `scripts/research/menu_input/`: range disassembler, direct-call finder,
   address-reference finder, MIPS mask analyzer, and Ghidra-export comparison
   helpers for targeted EE work.
-- `na2_patcher/modules/raw_binary/patch_sets/menu_input/`: reusable overlay and
+- `na2_patcher/modules/binary_patcher/patch_sets/menu_input/`: reusable overlay and
   boot-ELF function maps, exact edits, provenance, and runtime tests.
 - `docs/knowledge/substitution.md`, `docs/knowledge/menu_input.md`, and
   `docs/knowledge/font/`: established analysis boundaries and negative results

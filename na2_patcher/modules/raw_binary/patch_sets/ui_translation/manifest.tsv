@@ -1,2 +1,0 @@
-schema_version	package_id	package_version	game	description	evidence_path
-2	ui_translation	1	NA2	Size-preserving code changes coupled to the NUN5 UI container import.	na2_patcher/modules/raw_binary/patch_sets/ui_translation/README.md

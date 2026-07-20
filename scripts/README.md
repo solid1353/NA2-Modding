@@ -43,8 +43,8 @@ the cache-hit and safe full-build-fallback dispatch paths.
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 
-Profiles consume repository-owned declarative raw-binary, translation,
-UI-texture, and disc-identity modules.
+Profiles consume repository-owned declarative binary-patcher, translation,
+Texture-patcher, and disc-identity modules.
 
 When adding a script, place it beside the workflow it supports. Do not add new
 files directly under `scripts/`; the root is reserved for this index and

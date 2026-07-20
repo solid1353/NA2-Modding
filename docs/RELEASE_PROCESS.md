@@ -103,7 +103,7 @@ baseline. The release stash predates the approved blobless refactor; when this
 deferred task resumes, replace these historical values with the then-current
 accepted UI commit and profile pins rather than restoring them:
 
-- `ui_textures_nun5_v1` profile pin:
+- `texture_patcher_nun5_v1` profile pin:
   `298D33DF7CD48D59BB018E82547C64971A8D6C54606EEC713A4BC65D51D732D3`
 - `ui_translation_code_v1` profile pin:
   `37B9FCBFC869A99D25DC4477FF1ECFD91262B0221ECC1E98E884E6A710E4EB53`
@@ -121,7 +121,7 @@ accepted UI commit and profile pins rather than restoring them:
 
 The live blobless implementation supersedes those two UI module pins:
 
-- `ui_textures_nun5_v1`:
+- `texture_patcher_nun5_v1`:
   `DB224E90C20D41FA18CADB7C9EC47EB7A4770662C560420DBA3104D0210BB723`
 - `ui_translation_code_v1`:
   `9086A208724C81A3FB06255AD45A770D1366DCF7B0143D45CD32004DA8DE250E`
@@ -133,7 +133,7 @@ reported `ISO result: unchanged` against the Current ISO hash above. The old
 runtime evidence remains the behavioral baseline until the user performs the
 requested game validation and accepts this refactor.
 
-The historical UI raw-binary baseline contains 5 targets, 11 patches, and 82
+The historical UI binary-patcher baseline contains 5 targets, 11 patches, and 82
 edits. Its focused `UI-ETC-001` plan resolves to one exact edit. The UI runtime
 suite passed 17 tests, the full `na2_patcher` suite passed 42 tests, and the
 accepted profile build record is
@@ -170,10 +170,10 @@ packaged path.
   `.building` behavior and log-facing output name.
 - `na2_patcher/profile.py` gains controlled profile loading for packaged roots
   and supports original ISO roots without weakening normal profile hashing.
-- `na2_patcher/modules/raw_binary/engine.py` separates byte-data validation from
+- `na2_patcher/modules/binary_patcher/engine.py` separates byte-data validation from
   extracted-file loading so release builds can supply target data read from an
   ISO. Its clean error path also needs the stashed `sys` import preserved.
-- `na2_patcher/modules/ui_textures/engine.py` now owns the accepted direct
+- `na2_patcher/modules/texture_patcher/engine.py` now owns the accepted direct
   NUN5 derivation and mapped-copy behavior required by MAPSEL1 and MODE2KDV.
   Preserve that implementation and its regression tests; adapt only its source
   reader boundary for packaged ISO inputs.
@@ -236,12 +236,12 @@ Modified files:
 - `README.md`
 - `docs/PROJECT_CONTEXT.md`
 - `na2_patcher/build_profile.py`
-- `na2_patcher/modules/raw_binary/engine.py`
+- `na2_patcher/modules/binary_patcher/engine.py`
 - `na2_patcher/modules/translation/engine.py`
-- `na2_patcher/modules/ui_textures/engine.py`
+- `na2_patcher/modules/texture_patcher/engine.py`
 - `na2_patcher/profile.py`
 - `na2_patcher/tests/test_profile.py`
-- `na2_patcher/tests/test_raw_binary.py`
+- `na2_patcher/tests/test_binary_patcher.py`
 - `scripts/README.md`
 
 The stash records 451 inserted and 161 deleted lines across its tracked-file
@@ -267,7 +267,7 @@ Translation workstream. The following contract must be preserved when resuming:
   directly from canonical NA2/NUN5 members. The packaged workflow must produce
   the same bytes from the user-supplied clean ISOs and must not restore blobs.
 - After the release stash was created, the shared mapped-copy portion of
-  `na2_patcher/modules/ui_textures/engine.py` was left in the UI worktree so the
+  `na2_patcher/modules/texture_patcher/engine.py` was left in the UI worktree so the
   UI profile would continue to function. Its focused suite passed 12 tests at
   that boundary.
 
@@ -317,7 +317,7 @@ needed by that same engine.
   rechecking after lock, failure cleanup, output size, and Enter-on-exit.
 - Run CVM tests, including encrypted reads, wrong-password rejection, bounds,
   and parity with available extracted references.
-- Run raw-binary, profile, translation, and UI suites against the accepted
+- Run binary-patcher, profile, translation, and UI suites against the accepted
   profile-pinned source-derived workflow, including extracted-root versus
   direct-ISO replacement parity.
 - Confirm mapped-copy UI behavior and current MAPSEL1 strategy remain intact.

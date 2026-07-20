@@ -16,8 +16,8 @@ from .iso9660 import (
 )
 from .modules import translation as translation_module
 from .modules.disc_identity import engine as disc_identity_module
-from .modules.raw_binary import engine as patch_binary
-from .modules.ui_textures import engine as ui_texture_module
+from .modules.binary_patcher import engine as binary_patcher_module
+from .modules.texture_patcher import engine as texture_patcher_module
 from .profile import FeatureSelection, Profile, ProfileModule, load_profile
 from .project_paths import load_project_paths
 
@@ -159,7 +159,7 @@ def apply_translation_rows(
     return row_count, patched_paths
 
 
-def apply_raw_patch_set(
+def apply_binary_patch_set(
     package_directory: Path,
     *,
     roots: dict[str, Path],
@@ -168,16 +168,16 @@ def apply_raw_patch_set(
     payloads: dict[str, bytearray],
     owners: dict[str, str],
 ) -> dict[str, object]:
-    package = patch_binary.load_package(package_directory)
-    target_data = patch_binary.verify_package_data(package, roots)
-    selected = patch_binary.resolve_patch_selections(
+    package = binary_patcher_module.load_package(package_directory)
+    target_data = binary_patcher_module.verify_package_data(package, roots)
+    selected = binary_patcher_module.resolve_patch_selections(
         package,
         [
             (item.feature_id, item.selection_kind, item.selection_id)
             for item in feature_selections
         ],
     )
-    edits = patch_binary.validate_patch_selections(
+    edits = binary_patcher_module.validate_patch_selections(
         package,
         selected,
         for_apply=True,
@@ -191,14 +191,14 @@ def apply_raw_patch_set(
         record = source.by_path.get(path)
         if record is None or record.is_dir:
             raise RuntimeError(
-                f"Raw patch destination is not in the clean source ISO: {path}"
+                f"Binary patch destination is not in the clean source ISO: {path}"
             )
         initial_buffers[target_id] = (
             payloads[path] if path in payloads else source.read_file(record)
         )
         target_paths[target_id] = path
 
-    buffers, patch_rows, before_hashes = patch_binary.compose_edits(
+    buffers, patch_rows, before_hashes = binary_patcher_module.compose_edits(
         package,
         target_data,
         edits,
@@ -210,7 +210,7 @@ def apply_raw_patch_set(
         path = target_paths[target_id]
         payloads[path] = data
         owners[path] = package.manifest["package_id"]
-        after_hashes[target_id] = patch_binary.data_sha256(data)
+        after_hashes[target_id] = binary_patcher_module.data_sha256(data)
         patched_paths.append(path)
 
     return {
@@ -224,7 +224,7 @@ def apply_raw_patch_set(
     }
 
 
-def apply_ui_texture_package(
+def apply_texture_patch_package(
     package_directory: Path,
     *,
     module_id: str,
@@ -233,17 +233,17 @@ def apply_ui_texture_package(
     source: Iso9660,
     payloads: dict[str, bytearray],
     owners: dict[str, str],
-) -> tuple[ui_texture_module.UiTexturePlan, str]:
+) -> tuple[texture_patcher_module.TexturePatchPlan, str]:
     if "na2" not in roots or "nun5" not in roots:
-        raise ValueError("UI texture module requires na2 and nun5 profile roots")
+        raise ValueError("Texture-patcher module requires na2 and nun5 profile roots")
     if not roots["na2"].is_dir() or not roots["nun5"].is_dir():
         raise ValueError(
-            "UI texture module requires extracted na2 and nun5 profile roots"
+            "Texture-patcher module requires extracted na2 and nun5 profile roots"
         )
     if not package_directory.is_dir():
-        raise ValueError(f"UI texture module input must be a directory: {package_directory}")
+        raise ValueError(f"Texture-patcher module input must be a directory: {package_directory}")
 
-    plan = ui_texture_module.build_ui_texture_plan(
+    plan = texture_patcher_module.build_texture_patch_plan(
         na2_root=roots["na2"],
         nun5_root=roots["nun5"],
         data_root=package_directory,
@@ -252,7 +252,7 @@ def apply_ui_texture_package(
     path = "DATA/DATA.CVM"
     record = source.by_path.get(path)
     if record is None or record.is_dir:
-        raise RuntimeError("UI texture module requires DATA/DATA.CVM in the source ISO")
+        raise RuntimeError("Texture-patcher module requires DATA/DATA.CVM in the source ISO")
     data = payloads.get(path)
     if data is None:
         data = bytearray(source.read_file(record))
@@ -381,7 +381,7 @@ def apply_external_translation_package(
     )
 
 
-def write_raw_composition_log(
+def write_binary_patch_log(
     result: dict[str, object],
     log_directory: Path,
     *,
@@ -393,13 +393,13 @@ def write_raw_composition_log(
     edits = result["edits"]
     before_hashes = result["before_hashes"]
     after_hashes = result["after_hashes"]
-    assert isinstance(package, patch_binary.Package)
+    assert isinstance(package, binary_patcher_module.Package)
     assert isinstance(selected, list)
     assert isinstance(edits, list)
     assert isinstance(before_hashes, dict)
     assert isinstance(after_hashes, dict)
 
-    patch_binary.write_tsv(
+    binary_patcher_module.write_tsv(
         log_directory / "patch_log.tsv",
         [
             "package_id", "feature_id", "selection_kind", "selection_id",
@@ -408,7 +408,7 @@ def write_raw_composition_log(
         ],
         result["patch_rows"],
     )
-    patch_binary.write_tsv(
+    binary_patcher_module.write_tsv(
         log_directory / "selected_patches.tsv",
         [
             "feature_id", "selection_kind", "selection_id", "group_id",
@@ -431,7 +431,7 @@ def write_raw_composition_log(
             for selection in selected
         ],
     )
-    patch_binary.write_tsv(
+    binary_patcher_module.write_tsv(
         log_directory / "staged_file_hashes.tsv",
         ["target_id", "path", "size", "before_sha256", "after_sha256"],
         [
@@ -445,7 +445,7 @@ def write_raw_composition_log(
             for target_id in sorted(after_hashes)
         ],
     )
-    patch_binary.write_tsv(
+    binary_patcher_module.write_tsv(
         log_directory / "run_summary.tsv",
         [
             "timestamp_utc", "schema_version", "package_id", "package_version",
@@ -474,12 +474,12 @@ def write_raw_composition_log(
     )
 
 
-def write_ui_texture_log(
-    plan: ui_texture_module.UiTexturePlan,
+def write_texture_patch_log(
+    plan: texture_patcher_module.TexturePatchPlan,
     log_directory: Path,
 ) -> None:
     log_directory.mkdir(parents=True, exist_ok=True)
-    patch_binary.write_tsv(
+    binary_patcher_module.write_tsv(
         log_directory / "patch_log.tsv",
         [
             "file",
@@ -498,16 +498,16 @@ def write_ui_texture_log(
                 "member": result.spec.path,
                 "offset": f"0x{result.outer_cvm_offset:X}",
                 "length": len(result.replacement),
-                "original_sha256": ui_texture_module.sha256(result.original),
+                "original_sha256": texture_patcher_module.sha256(result.original),
                 "derivation": f"canonical_nun5_{result.strategy.strategy}",
-                "new_sha256": ui_texture_module.sha256(result.replacement),
+                "new_sha256": texture_patcher_module.sha256(result.replacement),
                 "mapping_ids": ",".join(result.mapping_ids),
                 "reason": result.strategy.reason,
             }
             for result in plan.containers
         ],
     )
-    patch_binary.write_tsv(
+    binary_patcher_module.write_tsv(
         log_directory / "container_summary.tsv",
         [
             "container_id",
@@ -535,10 +535,10 @@ def write_ui_texture_log(
                     "payload_sha256",
                 )
             }
-            for row in ui_texture_module.result_rows(plan)
+            for row in texture_patcher_module.result_rows(plan)
         ],
     )
-    patch_binary.write_tsv(
+    binary_patcher_module.write_tsv(
         log_directory / "run_summary.tsv",
         ["container_count", "mapping_count", "fixed_bytes"],
         [
@@ -560,7 +560,7 @@ def write_external_translation_log(
     log_directory: Path,
 ) -> None:
     log_directory.mkdir(parents=True, exist_ok=True)
-    patch_binary.write_tsv(
+    binary_patcher_module.write_tsv(
         log_directory / "patch_log.tsv",
         [
             "target",
@@ -574,7 +574,7 @@ def write_external_translation_log(
         ],
         external_translation_module.patch_log_rows(plan),
     )
-    patch_binary.write_tsv(
+    binary_patcher_module.write_tsv(
         log_directory / "insertions.tsv",
         [
             "path",
@@ -664,8 +664,8 @@ def apply_profile_modules(
                 }
             )
             continue
-        if module.module == "raw_binary":
-            result = apply_raw_patch_set(
+        if module.module == "binary_patcher":
+            result = apply_binary_patch_set(
                 module.input_path,
                 roots=profile.roots,
                 feature_selections=module.selections,
@@ -673,7 +673,13 @@ def apply_profile_modules(
                 payloads=payloads,
                 owners=owners,
             )
-            results.append({"module": module, "raw_result": result, "paths": result["patched_paths"]})
+            results.append(
+                {
+                    "module": module,
+                    "binary_patch_result": result,
+                    "paths": result["patched_paths"],
+                }
+            )
             continue
         if module.module == "translation":
             if module.input_path.name.lower() != "mappings.tsv":
@@ -704,8 +710,8 @@ def apply_profile_modules(
                 }
             )
             continue
-        if module.module == "ui_textures":
-            plan, path = apply_ui_texture_package(
+        if module.module == "texture_patcher":
+            plan, path = apply_texture_patch_package(
                 module.input_path,
                 module_id=module.module_id,
                 roots=profile.roots,
@@ -717,7 +723,7 @@ def apply_profile_modules(
             results.append(
                 {
                     "module": module,
-                    "ui_texture_plan": plan,
+                    "texture_patch_plan": plan,
                     "paths": [path],
                 }
             )
@@ -787,9 +793,9 @@ def write_profile_log(
             }
         )
         module_log = log_directory / module.module_id
-        if "raw_result" in item:
-            write_raw_composition_log(
-                item["raw_result"],
+        if "binary_patch_result" in item:
+            write_binary_patch_log(
+                item["binary_patch_result"],
                 module_log,
                 output_iso_text=output_iso_text,
                 log_directory_text=module_log.relative_to(workspace).as_posix(),
@@ -804,10 +810,10 @@ def write_profile_log(
             translation_module.write_json(
                 module_log / "translation_summary.json", plan.summary
             )
-        if "ui_texture_plan" in item:
-            plan = item["ui_texture_plan"]
-            assert isinstance(plan, ui_texture_module.UiTexturePlan)
-            write_ui_texture_log(plan, module_log)
+        if "texture_patch_plan" in item:
+            plan = item["texture_patch_plan"]
+            assert isinstance(plan, texture_patcher_module.TexturePatchPlan)
+            write_texture_patch_log(plan, module_log)
         if "external_translation_plan" in item:
             insertion_results = item.get("insertion_results")
             if not isinstance(insertion_results, tuple) or not all(
@@ -827,7 +833,7 @@ def write_profile_log(
             assert isinstance(identity, disc_identity_module.DiscIdentity)
             edits = item["identity_edits"]
             assert isinstance(edits, list)
-            patch_binary.write_tsv(
+            binary_patcher_module.write_tsv(
                 module_log / "patch_log.tsv",
                 [
                     "target",
@@ -839,7 +845,7 @@ def write_profile_log(
                 ],
                 edits,
             )
-            patch_binary.write_tsv(
+            binary_patcher_module.write_tsv(
                 module_log / "run_summary.tsv",
                 ["source_serial", "replacement_serial", "edit_count"],
                 [
@@ -850,7 +856,7 @@ def write_profile_log(
                     }
                 ],
             )
-    patch_binary.write_tsv(
+    binary_patcher_module.write_tsv(
         log_directory / "features.tsv",
         [
             "feature_id", "enabled", "name", "description", "input",
@@ -872,7 +878,7 @@ def write_profile_log(
     enabled_features = {
         feature.feature_id for feature in profile.features if feature.enabled
     }
-    patch_binary.write_tsv(
+    binary_patcher_module.write_tsv(
         log_directory / "feature_selections.tsv",
         [
             "feature_id", "active", "module_id", "selection_kind",
@@ -890,7 +896,7 @@ def write_profile_log(
             for selection in profile.selections
         ],
     )
-    patch_binary.write_tsv(
+    binary_patcher_module.write_tsv(
         log_directory / "modules.tsv",
         [
             "module_id",
@@ -904,7 +910,7 @@ def write_profile_log(
         ],
         module_rows,
     )
-    patch_binary.write_tsv(
+    binary_patcher_module.write_tsv(
         log_directory / "run_summary.tsv",
         [
             "timestamp_utc", "profile_id", "output_iso", "feature_count",
@@ -943,7 +949,7 @@ def main() -> int:
 
     profile_directory = args.profile if args.profile.is_absolute() else workspace / args.profile
     profile = load_profile(profile_directory, workspace)
-    profile_log_directory = patch_binary.command_relative_path(
+    profile_log_directory = binary_patcher_module.command_relative_path(
         str(args.profile_log_directory), "--profile-log-directory", workspace
     )
     if profile_log_directory.exists():
@@ -1113,13 +1119,13 @@ def main() -> int:
         module = item["module"]
         assert isinstance(module, ProfileModule)
         detail = ""
-        if "raw_result" in item:
-            detail = f", {len(item['raw_result']['edits'])} edits"
+        if "binary_patch_result" in item:
+            detail = f", {len(item['binary_patch_result']['edits'])} edits"
         elif "translation_rows" in item:
             detail = f", {item['translation_rows']} rows"
-        elif "ui_texture_plan" in item:
-            plan = item["ui_texture_plan"]
-            assert isinstance(plan, ui_texture_module.UiTexturePlan)
+        elif "texture_patch_plan" in item:
+            plan = item["texture_patch_plan"]
+            assert isinstance(plan, texture_patcher_module.TexturePatchPlan)
             detail = f", {len(plan.containers)} containers, {plan.mapping_count} mappings"
         elif "external_translation_plan" in item:
             detail = (

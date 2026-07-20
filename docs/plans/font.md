@@ -121,7 +121,7 @@ Save/Load and Practice remain outside the Controls fit decision.
 
 ## Preserved baseline and evidence
 
-- `na2_patcher/modules/raw_binary/patch_sets/font/` contains the active
+- `na2_patcher/modules/binary_patcher/patch_sets/font/` contains the active
   runtime-proven native secondary font, alignment, and fit components. It
   targets clean `SLPS_258.37` and `DATA/GF4.BIN`, preserves clean GF4C, and
   has module hash

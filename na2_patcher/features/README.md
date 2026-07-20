@@ -8,7 +8,7 @@ of profiles. Each package contains:
 
 Profiles enable and hash-pin feature packages while separately defining and
 hash-pinning the module instances those selections reference. Current
-raw-binary feature packages select groups only. Direct patch selection remains
+binary-patcher feature packages select groups only. Direct patch selection remains
 available for isolated future features without changing the profile format.
 
 Feature hashes cover only `manifest.tsv` and `selections.tsv`; adjacent

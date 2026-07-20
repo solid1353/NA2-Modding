@@ -8,16 +8,16 @@ import unittest
 from collections import Counter
 from pathlib import Path
 
-from na2_patcher.build_profile import write_ui_texture_log
-from na2_patcher.modules.raw_binary import engine as raw_binary
-from na2_patcher.modules.ui_textures import engine
+from na2_patcher.build_profile import write_texture_patch_log
+from na2_patcher.modules.binary_patcher import engine as binary_patcher
+from na2_patcher.modules.texture_patcher import engine
 
 
 class UiTextureTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         na2_root, nun5_root, _ = engine.default_roots()
-        data_root = Path(__file__).resolve().parents[1] / "modules/ui_textures"
+        data_root = Path(__file__).resolve().parents[1] / "modules/texture_patcher"
         required = (
             na2_root / "DATA" / "DATA.CVM.files" / "DATA.CVM.iso",
             na2_root / "DATA" / "DATA.CVM.files" / "DATA.CVM.hdr",
@@ -27,7 +27,7 @@ class UiTextureTests(unittest.TestCase):
             raise unittest.SkipTest(
                 "UI texture verification requires extracted NA2 and NUN5 sources"
             )
-        cls.plan = engine.build_ui_texture_plan(
+        cls.plan = engine.build_texture_patch_plan(
             na2_root=na2_root,
             nun5_root=nun5_root,
             data_root=data_root,
@@ -162,9 +162,9 @@ class UiTextureTests(unittest.TestCase):
 
     def test_stage_fitter_scales_only_the_horizontal_axis(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        package = raw_binary.load_package(
+        package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
         )
         vertical = next(
             item for item in package.edits if item.edit_id == "UI-BTL-002-02"
@@ -210,9 +210,9 @@ class UiTextureTests(unittest.TestCase):
 
     def test_character_name_patch_uses_localized_table_not_portrait_grid(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        package = raw_binary.load_package(
+        package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
         )
         edit = next(item for item in package.edits if item.edit_id == "UI-ELF-001-01")
         self.assertEqual(edit.source_target_id, "nun5_elf")
@@ -222,7 +222,7 @@ class UiTextureTests(unittest.TestCase):
         _na2_root, nun5_root, _data_root = engine.default_roots()
         nun5_elf = (nun5_root / "SLES_556.05").read_bytes()
         source = nun5_elf[edit.source_offset : edit.source_offset + edit.length]
-        self.assertEqual(raw_binary.data_sha256(source), edit.source_expected_sha256)
+        self.assertEqual(binary_patcher.data_sha256(source), edit.source_expected_sha256)
         records = list(struct.iter_unpack("<hhhh", source))
         nonblank = [record for record in records if record != (0, 0, 0, 0)]
 
@@ -248,9 +248,9 @@ class UiTextureTests(unittest.TestCase):
 
     def test_battle_name_patch_uses_localized_table_and_width_fitter(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        package = raw_binary.load_package(
+        package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
         )
         table = next(item for item in package.edits if item.edit_id == "UI-ELF-004-01")
         helper = next(item for item in package.edits if item.edit_id == "UI-BTL-003-01")
@@ -264,7 +264,7 @@ class UiTextureTests(unittest.TestCase):
         _na2_root, nun5_root, _data_root = engine.default_roots()
         nun5_elf = (nun5_root / "SLES_556.05").read_bytes()
         source = nun5_elf[table.source_offset : table.source_offset + table.length]
-        self.assertEqual(raw_binary.data_sha256(source), table.source_expected_sha256)
+        self.assertEqual(binary_patcher.data_sha256(source), table.source_expected_sha256)
         records = list(struct.iter_unpack("<hhhh", source))
         nonblank = [record for record in records if record != (0, 0, 0, 0)]
         self.assertEqual(len(records), 95)
@@ -287,9 +287,9 @@ class UiTextureTests(unittest.TestCase):
 
     def test_options_index_route_matches_nun5_valid_domain(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        package = raw_binary.load_package(
+        package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
         )
         edit = next(item for item in package.edits if item.edit_id == "UI-ELF-003-01")
 
@@ -309,9 +309,9 @@ class UiTextureTests(unittest.TestCase):
 
     def test_practice_settings_patch_uses_nun5_rectangle_and_anchor(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        package = raw_binary.load_package(
+        package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
         )
         anchor = next(item for item in package.edits if item.edit_id == "UI-BTL-004-01")
         rectangle = next(
@@ -336,9 +336,9 @@ class UiTextureTests(unittest.TestCase):
 
     def test_mode_select_start_patch_uses_nun5_rectangle_and_na2_register(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        package = raw_binary.load_package(
+        package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
         )
         rectangle = next(
             item for item in package.edits if item.edit_id == "UI-ELF-005-01"
@@ -362,9 +362,9 @@ class UiTextureTests(unittest.TestCase):
 
     def test_shop_patch_retains_only_the_proven_nun5_currency_rectangles(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        package = raw_binary.load_package(
+        package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
         )
         edits = [item for item in package.edits if item.patch_id == "UI-ETC-001"]
 
@@ -377,9 +377,9 @@ class UiTextureTests(unittest.TestCase):
 
     def test_jutsu_patch_retains_the_fourteen_runtime_proven_edits(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        package = raw_binary.load_package(
+        package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
         )
         edits = [item for item in package.edits if item.patch_id == "UI-BTL-005"]
         patch = package.patches["UI-BTL-005"]
@@ -396,9 +396,9 @@ class UiTextureTests(unittest.TestCase):
 
     def test_controls_vibration_rectangle_is_an_exact_nun5_copy(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        package = raw_binary.load_package(
+        package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
         )
         rectangle = next(
             item for item in package.edits if item.edit_id == "UI-ELF-006-01"
@@ -414,11 +414,11 @@ class UiTextureTests(unittest.TestCase):
             (64, 88, 64, 20),
         )
 
-    def test_raw_patch_provenance_is_donor_first(self) -> None:
+    def test_binary_patch_provenance_is_donor_first(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        package = raw_binary.load_package(
+        package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/raw_binary/patch_sets/ui_translation"
+            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
         )
         operations = Counter(edit.operation for edit in package.edits)
         copy_sources = Counter(
@@ -454,7 +454,7 @@ class UiTextureTests(unittest.TestCase):
         cvm[result.outer_cvm_offset:end] = result.original
         before = bytes(cvm)
 
-        selected_plan = engine.UiTexturePlan(
+        selected_plan = engine.TexturePatchPlan(
             self.plan.package,
             (result,),
             self.plan.target_header,
@@ -471,8 +471,8 @@ class UiTextureTests(unittest.TestCase):
 
     def test_profile_log_records_every_container_patch(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory) / "ui_textures"
-            write_ui_texture_log(self.plan, output)
+            output = Path(directory) / "texture_patcher"
+            write_texture_patch_log(self.plan, output)
             with (output / "patch_log.tsv").open(
                 encoding="utf-8", newline=""
             ) as handle:

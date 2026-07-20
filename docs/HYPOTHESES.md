@@ -7,7 +7,7 @@ Use this file for old patch candidates, failed experiments, unverified addresses
 Status: resolved for the reviewed screens on 2026-07-19. Confirmed behavior,
 matched measurements, exact patch records, and negative results are preserved
 in `docs/knowledge/font/README.md`; canonical accepted and historical patch
-data remain under `na2_patcher/modules/raw_binary/patch_sets/`.
+data remain under `na2_patcher/modules/binary_patcher/patch_sets/`.
 
 The accepted integration baseline uses a guarded native 14x20 NUN5-derived
 secondary atlas in GF4 while keeping clean NA2 GF4C. Controls overflow uses a

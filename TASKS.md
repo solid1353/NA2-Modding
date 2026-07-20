@@ -32,9 +32,10 @@
 - Disable support.
 - Fix extra hit floating animation (or maybe not?).
 
+### QoL
+- Integrate save into the game, simplify the entry menu and replace old slps references in the ELF.
+
 ### Testing
 - Basically everything.
 
 ## Archive
-
-### QoL

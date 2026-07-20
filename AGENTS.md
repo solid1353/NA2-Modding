@@ -179,8 +179,6 @@ During build-time PNACH maintenance, keep the canonical file named `@pcsx2_files
 
 After a successful build, update the Current alias and retain the matching Previous alias when Previous exists. When the canonical PNACH is empty, remove all managed aliases. The `-c` and `-p` launch selectors never change PNACH aliases.
 
-During build-time PNACH maintenance, log enabled cheat names from uncommented PNACH `patch=` or setting lines. Metadata-only lines do not count; report `none` when there are no enabled cheats. Pure launch selectors do not inspect or report PNACH state.
-
 Before rebuilding or launching a test ISO, unconditionally issue the close command for the configured `@pcsx2/pcsx2-qt.exe`. Do not probe first to see whether PCSX2 is running; closing an absent process should be treated as a harmless no-op.
 
 If an agent launches PCSX2 for testing, it must use `scripts/na2/test_launch.ps1`. The wrapper temporarily mutes PCSX2, starts it hidden without intentionally activating it, re-hides any exposed window, restores the previous foreground window if PCSX2 took focus, closes the test instance after the validation window, and restores the original audio setting even when testing fails. Normal user launches remain unchanged.

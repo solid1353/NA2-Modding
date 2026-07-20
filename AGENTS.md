@@ -37,12 +37,7 @@ PS2 modding/reverse-engineering workspace for Narutimate Accel v2.28, based on N
 - Translation checkpoints tag the complete committed project state, including canonical mapping data, its exact profile pin, and the integrated engine version. Do not duplicate mappings into snapshot directories. Generated translation TSVs are compatibility run outputs, not checkpoint inputs.
 - Treat `na2_patcher/modules/translation/mappings.tsv` as the translation module's current versioned input. Profiles may reference it only with an exact content hash; changing it requires updating the profile pin as an explicit translation version change.
 - The normal profile workflow invokes the translation module directly and records its generated plan and summary under the profile run log. There is no standalone translation-export command or source-hash bypass.
-- Keep frozen release artifacts under the ignored root `releases/` relative link.
-- Never alter, overwrite, rename, move, or delete anything under `releases/`.
-- Only create new uniquely named release outputs under `releases/`.
-- If a target path under `releases/` already exists, stop immediately and inspect/report manually.
-- Every release PNACH must correspond to the PCSX2 CRC of the ELF inside the paired release ISO.
-- Before reporting a release as valid, check the paired ISO/ELF CRC against the PNACH filename and warn if they do not match or cannot be verified.
+- `releases/` is a symlink to a user-managed folder.
 - Keep logs, inventories, hashes, and patch records under task-specific subfolders of `logs/`; do not write files directly in the `logs/` root. Logs are disposable execution records, not the sole store of project knowledge. Before pruning a log or temporary handoff, promote reusable confirmed findings into tracked `docs/knowledge/` documentation or canonical module-local data. Follow `docs/LOGGING.md` for retention and cleanup.
 - Git history is the recovery mechanism for tracked files. Delete confirmed disposable generated files directly; before deleting an irreplaceable untracked input, preserve it deliberately outside the repository.
 - Never create or use the shared top-level `work/temp/` directory. If a legacy `work/temp/` exists, treat it as General-owned cleanup material and do not add anything to it. Generated/intermediate files go under `@logs/` or the active task's `work/<task title>/temp/` folder. `@scripts/` contains maintained code only. Completed working ISOs are the only outputs kept under `@build/`. Original-source extractions stay beside their source archive under `@source/` as `<archive filename>.files`.

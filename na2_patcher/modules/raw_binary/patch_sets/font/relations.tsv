@@ -1,4 +1,0 @@
-patch_id	relation	related_patch_id
-font_nun5_glyphs	conflicts	font_vertical_quad_height
-font_controls_auto_fit	requires	font_nun5_glyphs
-font_modal_alignment	requires	font_nun5_glyphs

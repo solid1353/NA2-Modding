@@ -7,20 +7,28 @@ Each profile directory contains:
 - `manifest.tsv`: schema version, profile ID, and description.
 - `roots.tsv`: repository-relative bindings or `@root/...` aliases resolved from
   `project-paths.json`.
-- `modules.tsv`: ordered module instances with exact input hashes and selections.
+- `features.tsv`: user-facing feature definitions and enabled states.
+- `modules.tsv`: globally ordered module instances with exact input hashes.
+- `feature_selections.tsv`: ordered feature-to-module selections. Raw-binary
+  selections may target groups or patches; the current profile uses groups only.
 
-Schema v1 supports declarative, size-preserving `raw_binary`, `translation`,
-`ui_textures`, and `disc_identity` modules. Package and ZIP-overlay workflows
-are retired; profiles consume only repository-owned declarative inputs.
+Profile schema v2 supports declarative `raw_binary`, `translation`,
+`ui_textures`, `external_translation`, and `disc_identity` modules. Package and
+ZIP-overlay workflows are retired; profiles consume only repository-owned
+declarative inputs.
 
-Profiles never select the newest file implicitly. Enabled module inputs are content-hashed before composition. Disabled modules remain visible in the profile as WIP or review candidates but do not block the active build when their contents change.
+Profiles never select the newest file implicitly. Enabled features contribute
+module selections; a module runs when at least one enabled feature selects it.
+Active module inputs are content-hashed before composition. Disabled features and
+unselected modules remain visible without blocking the active build when their
+contents change.
 
 For raw-binary modules, the profile hash covers only executable package inputs:
 
 - `manifest.tsv`
 - `targets.tsv`
+- `groups.tsv`
 - `patches.tsv`
-- `relations.tsv`
 - `edits.tsv`
 - every blob referenced by `blob_path`
 
@@ -45,15 +53,18 @@ The current profile composes:
 6. 34 fixed-size source-derived official NUN5 UI container imports through
    `ui_textures` (33 whole-container imports and one declared mapped import);
 7. the 13 paired UI renderer/table corrections through `raw_binary`;
-8. the declared equal-length `SLPS_258.37` to `SLPS_222.28` boot identity
+8. the generated `PRG/MOD.BIN` and `PRG/TEXTENG.BIN` payloads and their guarded
+   loader/pointer edits through `external_translation`;
+9. the declared equal-length `SLPS_258.37` to `SLPS_222.28` boot identity
    change through `disc_identity`.
 
 The disabled `Testing` section remains a separate raw package. The empty
 `Rendering` patch set remains listed as a disabled module until populated.
 
-Migrated PNACH structure uses the existing format directly: one patch set per
-section, one patch row per cheat, and one or more edit rows per subcheat. The
-patch's `default_enabled` value preserves whether that cheat was enabled.
+Migrated PNACH structure uses one raw package per former section, groups for
+related controls, atomic patch rows for independently selectable behavior, and
+one or more exact edit rows per patch. The patch's `default_enabled` value
+preserves whether that behavior was enabled.
 
 Build the configured current profile with:
 

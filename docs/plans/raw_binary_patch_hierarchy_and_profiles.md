@@ -2,197 +2,153 @@
 
 ## Objective
 
-Refactor the raw-binary patch system to represent and enforce this hierarchy:
+The active build hierarchy is:
 
 ```text
-Profile -> patch set -> group -> patch -> edit
+Profile
+└── Feature
+    └── Module selection
+        ├── native/all selection for non-raw modules
+        └── raw-binary module / patch set
+            └── selected group or patch
+                └── patch
+                    └── edit
 ```
 
-This hierarchy describes only the raw-binary branch. `Module` is a broader
-build-pipeline concept, not a level in the raw-binary content taxonomy.
-Profiles themselves are broader than raw-binary: they define the complete
-ordered build composition across raw-binary, translation, UI-texture, disc
-identity, and future module types. For a raw-binary profile entry, the selected
-content follows the hierarchy above.
+A raw-binary module instance and its patch set are the same compositional node
+in this hierarchy. `module_id` and the package manifest's `package_id` remain
+technically distinct so a profile can pin and reuse package content without
+making its build-level identity part of the package format.
 
-## Layer responsibilities
+## Profile schema v2
 
-- A profile is a thin, reproducible build or test definition. It selects and
-  configures all ordered module invocations, pins every executable input by
-  hash, and records the complete accepted build state. Within a raw-binary
-  invocation it selects atomic patch IDs.
-- A patch set is a cohesive feature domain such as Rendering or QoL.
-- A group organizes related patches within a patch set, such as Fonts, Aspect
-  Ratio, Startup, or Practice. Groups are organizational and are not initially
-  selectable.
-- A patch is an atomic selectable feature with its own status, confidence,
-  provenance, dependencies, conflicts, and runtime classification.
-- An edit is one exact binary operation belonging to a patch, including its
-  target, offset, expected bytes or hash, replacement source, length, and
-  reason.
+Profiles use three normalized tables in addition to their manifest and roots:
 
-## Schema and engine work
+- `features.tsv` declares ordered user-facing features and whether each one is
+  enabled.
+- `modules.tsv` declares ordered module instances, their engine type, input,
+  hash pin, and reason.
+- `feature_selections.tsv` binds a feature to a module and selects content from
+  that module.
 
-The architecture observed during the source task used raw-binary schema v1
-with patch-set-local `manifest.tsv`, `targets.tsv`, `patches.tsv`,
-`relations.tsv`, and `edits.tsv`. It represented patch set -> patch -> edit and
-had no first-class group layer. Treat that as the starting diagnosis, not a
-guaranteed-current snapshot; refresh the live engine and schemas before work.
+For raw-binary modules, a selection row is conceptually
+`(module_id, selection_kind, selection_id)`, where `selection_kind` may be
+`group` or `patch`. A feature may contain both kinds, repeated selections are
+preserved, and overlapping selections are not deduplicated. Every selection
+therefore keeps its own provenance in plans and logs.
 
-Introduce an explicit group representation, expected to be a patch-set-local
-`groups.tsv` plus a required `group_id` in `patches.tsv`, subject to final
-inspection and design. Update raw-binary loading, validation, selection,
-planning, application, logging, schemas, documentation, and focused tests.
+The current profile deliberately uses only group selections for raw-binary
+modules. Direct patch selection is supported by schema and engine for future
+isolated profiles and tests, but no current-profile row selects a patch ID.
 
-The validator must reject undeclared or duplicate groups, patches without a
-valid group, edits without a valid patch, empty patches, invalid relations, and
-profile selections that do not name atomic patches. Preserve dependency and
-conflict enforcement across patches.
+Non-raw modules retain their existing semantics: `all` selects the complete
+module and `native` carries the module's native selector, such as a translation
+target. They do not need group catalogs merely to participate in features.
 
-Structural validation cannot decide whether every feature is conceptually
-atomic. Existing patch sets therefore require a semantic review during
-migration rather than only a mechanical column addition.
+An enabled feature must select at least one module input. A disabled feature may
+be empty, which permits reserved features such as Rendering without inventing
+placeholder content.
 
-## Canonical migration
+## Raw-binary schema v2
 
-Migrate the existing raw-binary patch sets without changing their resulting
-binary bytes. Preserve exact expected bytes and hashes, target sizes, patch
-statuses, confidence, provenance, runtime classifications, disabled history,
-relations, edit ordering, and profile hash pins.
+Every raw-binary package has exactly five canonical control tables:
 
-The intended Rendering organization is:
+- `manifest.tsv`
+- `targets.tsv`
+- `groups.tsv`
+- `patches.tsv`
+- `edits.tsv`
 
-```text
-Rendering patch set
-├── Fonts group
-│   ├── Font patch
-│   │   └── Active native NUN5-derived GF4/ELF edits
-│   ├── Auto-fit patch
-│   │   └── Future NUN5-style renderer fitting edits
-│   └── Historical evidence in docs/knowledge/font/history/
-└── Aspect Ratio group
-    └── Future aspect-ratio patches
-```
+`groups.tsv` declares the package's selectable group catalog. Every patch must
+name one declared group, and every edit must name one declared patch. Empty
+packages are valid, but a declared group must contain at least one patch and a
+declared patch must contain at least one edit.
 
-The retired `font_m01` and `font_elf_history` records live under
-`docs/knowledge/font/history/` and must remain outside active patch-set
-discovery. Any future Rendering consolidation concerns only the active Font
-implementation; the disabled v22/v23 records remain knowledge evidence.
+Schema v1 is removed from the live engine. `relations.tsv` is also removed:
+patch dependencies and declared patch conflicts are not part of the current
+model. Edits that must always apply together belong to one atomic patch. A
+future schema can add explicit relations when a concrete need establishes the
+right semantics.
 
-QoL demonstrates why the group layer is needed. Its original PNACH hierarchy
-was migrated too literally: cheats became patches and subcheats became edits.
-Several independently meaningful features are consequently stored one level
-too low. More precisely:
+## Selection and conflict validation
 
-- `ELF-Q001 Intro skips` is semantically a Startup group containing the
-  independent Skip CC2 intro and Skip opening patches.
-- `ELF-Q002 Practice QoL` is semantically a Practice group containing the
-  independent Voice off, Support off, and Command display off patches.
-- `ELF-Q003 Simple display off` is already a proper one-edit atomic patch and
-  only needs a group assignment.
+Group selection expands to all patches in deterministic package order. Patch
+selection expands only the named patch. Expansion preserves every selection
+instance, including repeated and overlapping group/patch selections.
 
-Five of QoL's six current edit rows are therefore semantically atomic patches
-stored one level too low. The intended semantic organization is:
+After all active selections are materialized as concrete ordered edits, the
+compositor simulates them in memory before creating the `.building` ISO:
 
-```text
-QoL patch set
-├── Startup group
-│   ├── Skip CC2 intro patch
-│   │   └── Exact instruction edit
-│   └── Skip opening patch
-│       └── Exact instruction edit
-└── Practice group
-    ├── Voice off by default patch
-    │   └── Exact instruction edit
-    ├── Support off by default patch
-    │   └── Exact instruction edit
-    ├── Command display off by default patch
-    │   └── Exact instruction edit
-    └── Simple display off by default patch
-        └── Exact instruction edit
-```
+- if the current bytes match the edit guard, apply the replacement;
+- if the replacement is already present, record `already_satisfied`;
+- if an edit's guard matches bytes written by an earlier edit, apply it as a
+  valid ordered chain;
+- otherwise fail as a real selected-edit conflict.
 
-The same semantic review must be applied to the other canonical patch sets so
-that bundle-like rows become groups where appropriate and atomic features
-remain patches. A patch may still contain multiple edits when those edits are
-one inseparable feature.
+This validates the actual composed result instead of trying to infer conflicts
+from overlapping ranges or selection metadata. Overlap itself is legal.
 
-## Profile-driven workflows
+## Current canonical groups
 
-Profiles must become the shared entrypoint used by normal builds and controlled
-tests rather than passive manifests or data bypassed by scripts:
+The current profile selects these raw-binary groups:
 
-```text
-build or test command
--> select profile
--> verify every ordered module invocation and pinned input
--> for each raw-binary invocation, resolve selected atomic patches
--> validate groups, dependencies, and conflicts
--> generate the complete build or test plan
--> apply each module through its canonical engine
-```
+- Font: `glyph_data`, `auto_fit`, `alignment`
+- Menu input: `battle_ui`, `front_end`, `etc_ui`, `battle_results`
+- QoL: `startup`, `practice`, `mode_select`
+- Battle logic: `combat_rules`
+- String replacements: `identity`
+- UI translation code: `battle_ui`, `front_end`, `shop`
 
-Keep `na2_patcher/profiles/current/` as the default accepted build definition.
-Allow task-specific or test profiles to exercise isolated modules or
-raw-binary patches without modifying the current profile. Such profiles are
-reproducible fixtures: they pin every input, verify dependency/conflict
-behavior, generate reviewable plans, and support byte/hash comparisons against
-the accepted current profile. Groups remain organizational; tests normally
-select atomic patch IDs rather than groups.
+Testing remains a disabled feature with its `substitution` group available for
+controlled use. Rendering is a disabled, completely empty reserved package. It
+contains no aspect-ratio placeholder and no font content; Font remains a
+separate feature and package. Retired `font_m01` and `font_elf_history` active
+package directories are not recreated, while their useful historical evidence
+remains under `docs/knowledge/font/history/`.
 
-The original task requested explicit profile selection in the `na2` build-only
-and build-and-launch workflows. The current `AGENTS.md` public command contract
-allows only bare `na2`, `na2 -c`, `na2 -p`, and `na2 act`, and explicitly
-forbids additional public build arguments. This is a live design constraint,
-not permission to add another flag. Implementation must either keep explicit
-selection internal/test-only or obtain an approved change to the public command
-contract. Relevant scripts and tests must still invoke the same profile-driven
-planner instead of independently hard-coding patch sets or selections.
+QoL's former bundle rows are split into independent atomic patches while
+preserving their exact edits:
 
-Plans and logs must identify the selected profile, resolved patch sets, groups,
-patches, and edits. Stale input hashes or invalid selections must fail before
-binary modification begins.
+- Startup: Skip CC2 intro; Skip opening
+- Practice: Voice off; Support off; Command display off; Simple display off
+- Mode select: Remove Adventure
+
+## Reproducibility and logs
+
+The profile pins every enabled module input by deterministic hash. Raw-binary
+hashes cover the five canonical control tables plus referenced blobs, not
+adjacent documentation. Feature and selection tables are themselves part of
+the profile definition.
+
+Profile-run logs record enabled features, every feature-selection occurrence,
+module identity and hash, selected group/patch provenance, expanded patch/edit
+instances, and each edit outcome. The normal bare `na2` workflow continues to
+load `na2_patcher/profiles/current/`; this migration adds no public profile
+selection flag.
+
+## Migration proof
+
+Before migration, a deterministic v1 baseline captured six enabled raw modules,
+92 selected patches, and 256 selected edits. After migration, the group-only
+current profile expands to 95 patch instances and the same 256 edit instances;
+the patch-instance count increases only because the two QoL bundles became
+seven independent patches. Exact target paths, offsets, guards, replacement
+bytes, lengths, and ordering remain equivalent.
+
+Validation is intentionally file- and memory-backed only for this task. It
+loads every package, loads the complete current profile, composes all enabled
+modules in memory, and runs the Python suite. It does not build an ISO or launch
+PCSX2.
 
 ## Acceptance criteria
 
-- The raw-binary schema explicitly represents groups and enforces every level
-  from patch set through edit.
-- Existing canonical patch sets are migrated into semantically correct groups
-  and atomic patches.
-- Rendering contains Fonts and Aspect Ratio groups with the accepted font state
-  and appropriate disabled historical experiments preserved.
-- QoL exposes its independently meaningful controls as independently selectable
-  patches.
-- Profiles select atomic patches and pin all executable inputs by hash.
-- Profiles continue to define and order the complete build across every module
-  type; raw-binary selection is only one kind of profile entry.
-- Normal build and controlled test workflows use the same profile-driven
-  planning and application path.
-- Controlled tests can select explicit task-specific profiles without changing
-  `profiles/current/`; any public `na2` profile-selection interface requires a
-  separately approved command-contract change.
-- Focused schema, validation, dependency/conflict, selection, planning, and
-  profile tests pass.
-- The migrated current profile produces the same binary edit plan and output
-  bytes as before the refactor.
-- No source or release artifact is modified, and no binary is edited manually.
-
-## Execution constraints
-
-Before implementation, refresh live Git and workspace state and inspect the
-current raw-binary engine, schemas, patch sets, profiles, scripts, and tests.
-Concurrent edits are expected; preserve them and stop on direct overlap. Follow
-the selected-task approval gates in `AGENTS.md`. Do not build an ISO or launch
-PCSX2 unless runtime work is explicitly added to the task scope.
-
-The source task performed only read-only analysis plus creation of this context
-document and its `TASKS.md` link. No hierarchy refactor, schema migration,
-profile workflow implementation, binary modification, ISO build, or PCSX2 run
-was authorized or started. During that analysis, QoL's canonical tables were
-untouched even though engine/profile files had concurrent work elsewhere.
-
-Older handoff instructions named a dated `.agents` context file and
-`docs/TASKS.md`; those paths had already drifted when inspected. Inventory the
-live `.agents/` directory and use root `TASKS.md`, current documentation, live
-Git state, and the user's newest instructions as authority rather than
-recreating or assuming the obsolete paths.
+- Profile schema v2 represents Profile -> Feature -> Module selection.
+- Raw-binary schema v2 represents package -> group -> patch -> edit.
+- The current profile uses raw group selections only.
+- Direct raw patch selection remains supported for future profiles/tests.
+- Overlapping and repeated selections retain provenance and are validated by
+  deterministic ordered edit simulation rather than deduplication.
+- `relations.tsv` and live schema v1 support are removed.
+- Rendering is empty and Font is separate.
+- Existing current-profile binary edit bytes remain unchanged.
+- No source, release artifact, ISO, or binary is modified manually.

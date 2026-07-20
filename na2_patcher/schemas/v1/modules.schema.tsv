@@ -1,9 +1,0 @@
-field	required	description
-module_id	1	Stable unique module instance identifier.
-order	1	Unique nonnegative composition order.
-enabled	1	1 applies and hash-validates the module; 0 preserves it without application or active-build hash enforcement.
-module	1	raw_binary or translation.
-input	1	Repository-relative module input file or directory.
-expected_sha256	1	Exact executable-input hash: full file for translation; canonical TSVs plus referenced blobs for raw_binary.
-selection	0	Comma-separated module-specific patch IDs or translation targets.
-reason	1	Human-readable purpose and provenance.

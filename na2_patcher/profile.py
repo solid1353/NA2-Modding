@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -10,16 +11,29 @@ from .project_paths import ProjectPaths, load_project_paths, resolve_alias
 
 MANIFEST_FIELDS = ["key", "value"]
 ROOT_FIELDS = ["root_id", "path"]
+FEATURE_FIELDS = [
+    "feature_id",
+    "enabled",
+    "name",
+    "description",
+    "reason",
+]
 MODULE_FIELDS = [
     "module_id",
     "order",
-    "enabled",
     "module",
     "input",
     "expected_sha256",
-    "selection",
     "reason",
 ]
+FEATURE_SELECTION_FIELDS = [
+    "feature_id",
+    "module_id",
+    "selection_kind",
+    "selection_id",
+    "reason",
+]
+SELECTION_KINDS = {"all", "group", "native", "patch"}
 MODULE_TYPES = {
     "disc_identity",
     "external_translation",
@@ -30,8 +44,8 @@ MODULE_TYPES = {
 RAW_BINARY_CONTROL_FILES = (
     "manifest.tsv",
     "targets.tsv",
+    "groups.tsv",
     "patches.tsv",
-    "relations.tsv",
     "edits.tsv",
 )
 UI_TEXTURE_CONTROL_FILES = (
@@ -46,15 +60,43 @@ EXTERNAL_TRANSLATION_CONTROL_FILES = (
 
 
 @dataclass(frozen=True)
+class ProfileFeature:
+    feature_id: str
+    enabled: bool
+    name: str
+    description: str
+    reason: str
+
+
+@dataclass(frozen=True)
+class FeatureSelection:
+    feature_id: str
+    module_id: str
+    selection_kind: str
+    selection_id: str
+    reason: str
+    occurrence: int
+
+
+@dataclass(frozen=True)
 class ProfileModule:
     module_id: str
     order: int
-    enabled: bool
     module: str
     input_path: Path
     expected_sha256: str
-    selection: tuple[str, ...]
     reason: str
+    selections: tuple[FeatureSelection, ...]
+
+    @property
+    def enabled(self) -> bool:
+        return bool(self.selections)
+
+    @property
+    def selection(self) -> tuple[str, ...]:
+        if any(item.selection_kind == "all" for item in self.selections):
+            return ()
+        return tuple(item.selection_id for item in self.selections)
 
 
 @dataclass(frozen=True)
@@ -62,7 +104,9 @@ class Profile:
     directory: Path
     manifest: dict[str, str]
     roots: dict[str, Path]
+    features: tuple[ProfileFeature, ...]
     modules: tuple[ProfileModule, ...]
+    selections: tuple[FeatureSelection, ...]
 
 
 def _read_tsv(path: Path, fields: list[str]) -> list[dict[str, str]]:
@@ -223,8 +267,8 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
     manifest = {row["key"]: row["value"] for row in manifest_rows}
     if len(manifest) != len(manifest_rows):
         raise ValueError("manifest.tsv contains duplicate keys")
-    if manifest.get("schema_version") != "1":
-        raise ValueError("Profile schema_version must be 1")
+    if manifest.get("schema_version") != "2":
+        raise ValueError("Profile schema_version must be 2")
     if not manifest.get("profile_id"):
         raise ValueError("Profile manifest requires profile_id")
 
@@ -247,8 +291,36 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
             raise FileNotFoundError(root)
         roots[root_id] = root
 
+    feature_rows = _read_tsv(directory / "features.tsv", FEATURE_FIELDS)
+    features: list[ProfileFeature] = []
+    feature_by_id: dict[str, ProfileFeature] = {}
+    for row in feature_rows:
+        feature_id = row["feature_id"]
+        if (
+            not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", feature_id)
+            or feature_id in feature_by_id
+        ):
+            raise ValueError(f"Duplicate or invalid feature_id: {feature_id!r}")
+        if row["enabled"] not in {"0", "1"}:
+            raise ValueError(f"Feature {feature_id}: enabled must be 0 or 1")
+        if not row["name"]:
+            raise ValueError(f"Feature {feature_id}: name is empty")
+        feature = ProfileFeature(
+            feature_id=feature_id,
+            enabled=row["enabled"] == "1",
+            name=row["name"],
+            description=row["description"],
+            reason=row["reason"],
+        )
+        features.append(feature)
+        feature_by_id[feature_id] = feature
+    if not features:
+        raise ValueError("Profile has no features")
+    if not any(feature.enabled for feature in features):
+        raise ValueError("Profile has no enabled features")
+
     module_rows = _read_tsv(directory / "modules.tsv", MODULE_FIELDS)
-    modules: list[ProfileModule] = []
+    module_definitions: dict[str, dict[str, object]] = {}
     seen_ids: set[str] = set()
     seen_orders: set[int] = set()
     for row in module_rows:
@@ -263,9 +335,6 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
         if order < 0 or order in seen_orders:
             raise ValueError(f"Module {module_id}: order must be unique and nonnegative")
         seen_orders.add(order)
-        if row["enabled"] not in {"0", "1"}:
-            raise ValueError(f"Module {module_id}: enabled must be 0 or 1")
-        enabled = row["enabled"] == "1"
         module_type = row["module"]
         if module_type not in MODULE_TYPES:
             raise ValueError(f"Module {module_id}: unsupported module {module_type!r}")
@@ -277,27 +346,81 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
         expected = row["expected_sha256"].upper()
         if len(expected) != 64 or any(char not in "0123456789ABCDEF" for char in expected):
             raise ValueError(f"Module {module_id}: expected_sha256 must be 64 hex digits")
-        if enabled:
-            actual = module_content_sha256(input_path, module_type)
+        module_definitions[module_id] = {
+            "module_id": module_id,
+            "order": order,
+            "module": module_type,
+            "input_path": input_path,
+            "expected_sha256": expected,
+            "reason": row["reason"],
+        }
+
+    selection_rows = _read_tsv(
+        directory / "feature_selections.tsv", FEATURE_SELECTION_FIELDS
+    )
+    selections: list[FeatureSelection] = []
+    selections_by_module: dict[str, list[FeatureSelection]] = {
+        module_id: [] for module_id in module_definitions
+    }
+    feature_counts = {feature_id: 0 for feature_id in feature_by_id}
+    for occurrence, row in enumerate(selection_rows):
+        feature_id = row["feature_id"]
+        module_id = row["module_id"]
+        if feature_id not in feature_by_id:
+            raise ValueError(f"Unknown feature selection feature_id: {feature_id!r}")
+        if module_id not in module_definitions:
+            raise ValueError(f"Unknown feature selection module_id: {module_id!r}")
+        selection_kind = row["selection_kind"]
+        selection_id = row["selection_id"]
+        if selection_kind not in SELECTION_KINDS:
+            raise ValueError(
+                f"Feature selection {occurrence + 2}: invalid selection_kind"
+            )
+        if selection_kind == "all":
+            if selection_id:
+                raise ValueError("An all selection must have an empty selection_id")
+        elif not selection_id or "," in selection_id:
+            raise ValueError(
+                "Non-all feature selections require one non-list selection_id"
+            )
+        module_type = str(module_definitions[module_id]["module"])
+        allowed = {"group", "patch"} if module_type == "raw_binary" else {"all", "native"}
+        if selection_kind not in allowed:
+            raise ValueError(
+                f"Module {module_id} ({module_type}) does not support "
+                f"{selection_kind} selections"
+            )
+        selection = FeatureSelection(
+            feature_id=feature_id,
+            module_id=module_id,
+            selection_kind=selection_kind,
+            selection_id=selection_id,
+            reason=row["reason"],
+            occurrence=occurrence,
+        )
+        selections.append(selection)
+        feature_counts[feature_id] += 1
+        if feature_by_id[feature_id].enabled:
+            selections_by_module[module_id].append(selection)
+
+    for feature_id, count in feature_counts.items():
+        if count == 0 and feature_by_id[feature_id].enabled:
+            raise ValueError(f"Feature {feature_id} has no selections")
+
+    modules: list[ProfileModule] = []
+    for module_id, definition in module_definitions.items():
+        active = tuple(selections_by_module[module_id])
+        if active:
+            actual = module_content_sha256(
+                definition["input_path"],  # type: ignore[arg-type]
+                str(definition["module"]),
+            )
+            expected = str(definition["expected_sha256"])
             if actual != expected:
                 raise ValueError(
                     f"Module {module_id}: input SHA-256 {actual} does not match {expected}"
                 )
-        selection = tuple(
-            item.strip() for item in row["selection"].split(",") if item.strip()
-        )
-        modules.append(
-            ProfileModule(
-                module_id=module_id,
-                order=order,
-                enabled=enabled,
-                module=module_type,
-                input_path=input_path,
-                expected_sha256=expected,
-                selection=selection,
-                reason=row["reason"],
-            )
-        )
+        modules.append(ProfileModule(**definition, selections=active))  # type: ignore[arg-type]
 
     if not any(module.enabled for module in modules):
         raise ValueError("Profile has no enabled modules")
@@ -305,5 +428,7 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
         directory=directory,
         manifest=manifest,
         roots=roots,
+        features=tuple(features),
         modules=tuple(sorted(modules, key=lambda item: item.order)),
+        selections=tuple(selections),
     )

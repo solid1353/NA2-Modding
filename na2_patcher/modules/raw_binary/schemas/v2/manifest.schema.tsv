@@ -1,5 +1,5 @@
 column	required	type	description
-schema_version	1	literal:1	Repository-owned schema version.
+schema_version	1	literal:2	Repository-owned raw-binary package schema version.
 package_id	1	identifier	Stable patch-set identifier.
 package_version	1	string	Patch-set data version.
 game	1	string	Target game identifier.

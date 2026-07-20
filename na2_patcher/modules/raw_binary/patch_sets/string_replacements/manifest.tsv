@@ -1,2 +1,2 @@
 schema_version	package_id	package_version	game	description	evidence_path
-1	string_replacements	1	NA2	Fixed-size replacements for embedded game strings.	na2_patcher/modules/raw_binary/patch_sets/string_replacements/README.md
+2	string_replacements	1	NA2	Fixed-size replacements for embedded game strings.	na2_patcher/modules/raw_binary/patch_sets/string_replacements/README.md

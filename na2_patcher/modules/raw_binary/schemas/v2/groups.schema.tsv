@@ -1,0 +1,5 @@
+column	required	type	description
+group_id	1	identifier	Organizational group within one patch set.
+name	1	string	Short human-readable group name.
+description	0	string	Functional scope shared by the group's patches.
+review_notes	0	string	Non-executable review or migration notes.

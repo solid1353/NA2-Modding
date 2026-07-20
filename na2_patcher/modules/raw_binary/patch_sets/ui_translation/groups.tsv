@@ -1,0 +1,4 @@
+group_id	name	description	review_notes
+battle_ui	Battle UI	Localized battle HUD, prompts, labels, and confirmation layouts.	
+front_end	Front end	Localized boot-ELF menu and option layouts.	
+shop	Shop	Localized Shop label layouts.	

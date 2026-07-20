@@ -1,0 +1,9 @@
+feature_id	enabled	name	description	reason
+font	1	Font	Accepted NUN5-derived font rendering.	Build the accepted font implementation.
+menu_input	1	Menu input	Regional menu and overlay input behavior.	Apply the complete accepted input remap.
+qol	1	Quality of life	Startup, Practice, and mode-selection conveniences.	Apply accepted QoL behavior.
+battle_logic	1	Battle logic	Accepted battle-rule changes.	Apply accepted battle logic.
+testing	0	Testing	Unaccepted test-only behavior.	Keep test hypotheses out of the normal build.
+rendering	0	Rendering	Reserved rendering workstream.	Remain empty until rendering work is accepted.
+translation	1	Translation	Text, UI assets, UI code, and external translation support.	Compose the complete accepted English translation feature.
+disc_identity	1	Disc identity	Modified-project disc identity.	Give the composed image its distinct boot serial.

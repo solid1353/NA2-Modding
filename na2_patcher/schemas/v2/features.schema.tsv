@@ -1,0 +1,6 @@
+field	required	description
+feature_id	1	Stable user-facing feature identifier.
+enabled	1	1 contributes selections; 0 retains the feature without execution.
+name	1	Human-readable feature name.
+description	0	Feature scope.
+reason	1	Purpose and provenance in this profile.

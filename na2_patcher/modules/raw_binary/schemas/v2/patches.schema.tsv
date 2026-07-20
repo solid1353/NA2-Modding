@@ -1,5 +1,6 @@
 column	required	type	description
-patch_id	1	identifier	Atomic named patch group.
+patch_id	1	identifier	Atomic selectable patch identifier.
+group_id	1	identifier	Declared organizational group containing the patch.
 default_enabled	1	boolean:0|1	Allowed only for runtime_proven patches.
 status	1	enum:pending|approved_for_test|runtime_proven|runtime_failed|deprecated	Review/runtime state.
 confidence	1	enum:high|medium|low|verified	Analytical confidence.

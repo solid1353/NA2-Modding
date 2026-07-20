@@ -37,8 +37,15 @@ TARGET_FIELDS = [
     "expected_size",
     "expected_sha256",
 ]
+GROUP_FIELDS = [
+    "group_id",
+    "name",
+    "description",
+    "review_notes",
+]
 PATCH_FIELDS = [
     "patch_id",
+    "group_id",
     "default_enabled",
     "status",
     "confidence",
@@ -48,7 +55,6 @@ PATCH_FIELDS = [
     "runtime_classification",
     "review_notes",
 ]
-RELATION_FIELDS = ["patch_id", "relation", "related_patch_id"]
 EDIT_FIELDS = [
     "edit_id",
     "patch_id",
@@ -82,7 +88,6 @@ APPLICABLE_STATUSES = {"approved_for_test", "runtime_proven"}
 CONFIDENCE_VALUES = {"high", "medium", "low", "verified"}
 ROLES = {"destination", "source", "both"}
 OPERATIONS = {"replace", "copy", "blob", "fill"}
-RELATIONS = {"requires", "conflicts"}
 
 
 class PatchError(RuntimeError):
@@ -100,8 +105,17 @@ class Target:
 
 
 @dataclass(frozen=True)
+class Group:
+    group_id: str
+    name: str
+    description: str
+    review_notes: str
+
+
+@dataclass(frozen=True)
 class Patch:
     patch_id: str
+    group_id: str
     default_enabled: bool
     status: str
     confidence: str
@@ -140,9 +154,24 @@ class Package:
     directory: Path
     manifest: dict[str, str]
     targets: dict[str, Target]
+    groups: dict[str, Group]
     patches: dict[str, Patch]
-    relations: list[tuple[str, str, str]]
     edits: list[Edit]
+
+
+@dataclass(frozen=True)
+class PatchSelection:
+    feature_id: str
+    selection_kind: str
+    selection_id: str
+    patch_id: str
+    occurrence: int
+
+
+@dataclass(frozen=True)
+class SelectedEdit:
+    selection: PatchSelection
+    edit: Edit
 
 
 def parse_bool(value: str, label: str) -> bool:
@@ -253,7 +282,7 @@ def load_package(directory: Path) -> Package:
     if len(manifest_rows) != 1:
         raise PatchError("manifest.tsv must contain exactly one data row")
     manifest = manifest_rows[0]
-    if manifest["schema_version"] != "1":
+    if manifest["schema_version"] != "2":
         raise PatchError(f"Unsupported schema_version: {manifest['schema_version']}")
     unique_id(manifest["package_id"], "package_id", set())
     if manifest["evidence_path"]:
@@ -285,8 +314,21 @@ def load_package(directory: Path) -> Package:
                 row["expected_sha256"], f"target {target_id} expected_sha256"
             ),
         )
-    if not targets:
-        raise PatchError("targets.tsv contains no targets")
+
+    groups: dict[str, Group] = {}
+    seen = set()
+    for row_number, row in enumerate(
+        read_tsv(directory / "groups.tsv", GROUP_FIELDS), 2
+    ):
+        group_id = unique_id(row["group_id"], "group_id", seen)
+        if not row["name"]:
+            raise PatchError(f"groups.tsv row {row_number}: name is empty")
+        groups[group_id] = Group(
+            group_id=group_id,
+            name=row["name"],
+            description=row["description"],
+            review_notes=row["review_notes"],
+        )
 
     patches: dict[str, Patch] = {}
     seen = set()
@@ -294,6 +336,11 @@ def load_package(directory: Path) -> Package:
         read_tsv(directory / "patches.tsv", PATCH_FIELDS), 2
     ):
         patch_id = unique_id(row["patch_id"], "patch_id", seen)
+        group_id = row["group_id"]
+        if group_id not in groups:
+            raise PatchError(
+                f"patches.tsv row {row_number}: unknown group_id {group_id!r}"
+            )
         status = row["status"]
         if status not in PATCH_STATUSES:
             raise PatchError(f"patches.tsv row {row_number}: invalid status {status!r}")
@@ -312,6 +359,7 @@ def load_package(directory: Path) -> Package:
             )
         patches[patch_id] = Patch(
             patch_id=patch_id,
+            group_id=group_id,
             default_enabled=default_enabled,
             status=status,
             confidence=confidence,
@@ -321,24 +369,6 @@ def load_package(directory: Path) -> Package:
             runtime_classification=row["runtime_classification"],
             review_notes=row["review_notes"],
         )
-    if not patches:
-        raise PatchError("patches.tsv contains no patches")
-
-    relations: list[tuple[str, str, str]] = []
-    for row_number, row in enumerate(
-        read_tsv(directory / "relations.tsv", RELATION_FIELDS), 2
-    ):
-        patch_id = row["patch_id"]
-        related = row["related_patch_id"]
-        relation = row["relation"]
-        if patch_id not in patches or related not in patches:
-            raise PatchError(f"relations.tsv row {row_number}: unknown patch ID")
-        if patch_id == related:
-            raise PatchError(f"relations.tsv row {row_number}: self relationship")
-        if relation not in RELATIONS:
-            raise PatchError(f"relations.tsv row {row_number}: invalid relation")
-        relations.append((patch_id, relation, related))
-
     edits: list[Edit] = []
     seen = set()
     patch_edit_counts = {patch_id: 0 for patch_id in patches}
@@ -498,7 +528,14 @@ def load_package(directory: Path) -> Package:
         if count == 0:
             raise PatchError(f"patch {patch_id} has no edits")
 
-    return Package(directory, manifest, targets, patches, relations, edits)
+    group_patch_counts = {group_id: 0 for group_id in groups}
+    for patch in patches.values():
+        group_patch_counts[patch.group_id] += 1
+    for group_id, count in group_patch_counts.items():
+        if count == 0:
+            raise PatchError(f"group {group_id} has no patches")
+
+    return Package(directory, manifest, targets, groups, patches, edits)
 
 
 def parse_roots(values: list[str], workspace: Path) -> dict[str, Path]:
@@ -616,23 +653,15 @@ def verify_package_data(package: Package, roots: dict[str, Path]) -> dict[str, b
     }
     for edit in package.edits:
         destination = target_data[edit.destination_target_id]
-        current = verify_range(
+        verify_range(
             destination,
             edit.destination_offset,
             edit.length,
             f"edit {edit.edit_id} destination",
         )
-        verify_expectation(
-            current,
-            edit.expected_hex,
-            edit.expected_sha256,
-            f"edit {edit.edit_id} destination",
-        )
         replacement = replacement_for_edit(edit, package, target_data)
         if len(replacement) != edit.length:
             raise PatchError(f"edit {edit.edit_id}: replacement length mismatch")
-        if replacement == current:
-            raise PatchError(f"edit {edit.edit_id}: replacement is identical to expected data")
     return target_data
 
 
@@ -646,50 +675,104 @@ def selected_patch_ids(package: Package, requested: list[str], defaults: bool) -
         for patch_id in requested:
             if patch_id not in package.patches:
                 raise PatchError(f"Unknown patch ID: {patch_id}")
-            if patch_id not in selected:
-                selected.append(patch_id)
+            selected.append(patch_id)
     if not selected:
         raise PatchError("No patches selected")
     return selected
 
 
-def validate_selection(package: Package, selected: list[str], *, for_apply: bool) -> list[Edit]:
-    selected_set = set(selected)
+def resolve_patch_selections(
+    package: Package,
+    selections: list[tuple[str, str, str]],
+) -> list[PatchSelection]:
+    """Expand feature selections without collapsing overlapping provenance."""
+    resolved: list[PatchSelection] = []
+    for feature_id, selection_kind, selection_id in selections:
+        if selection_kind == "group":
+            if selection_id not in package.groups:
+                raise PatchError(f"Unknown group selection: {selection_id}")
+            patch_ids = [
+                patch.patch_id
+                for patch in package.patches.values()
+                if patch.group_id == selection_id
+            ]
+        elif selection_kind == "patch":
+            if selection_id not in package.patches:
+                raise PatchError(f"Unknown patch selection: {selection_id}")
+            patch_ids = [selection_id]
+        else:
+            raise PatchError(
+                f"Raw-binary selection kind must be group or patch: {selection_kind!r}"
+            )
+        for patch_id in patch_ids:
+            resolved.append(
+                PatchSelection(
+                    feature_id=feature_id,
+                    selection_kind=selection_kind,
+                    selection_id=selection_id,
+                    patch_id=patch_id,
+                    occurrence=len(resolved),
+                )
+            )
+    if not resolved:
+        raise PatchError("No patches selected")
+    return resolved
+
+
+def validate_patch_selections(
+    package: Package,
+    selections: list[PatchSelection],
+    *,
+    for_apply: bool,
+) -> list[SelectedEdit]:
     if for_apply:
         blocked = [
-            patch_id
-            for patch_id in selected
-            if package.patches[patch_id].status not in APPLICABLE_STATUSES
+            selection
+            for selection in selections
+            if package.patches[selection.patch_id].status not in APPLICABLE_STATUSES
         ]
         if blocked:
             details = ", ".join(
-                f"{patch_id} ({package.patches[patch_id].status})" for patch_id in blocked
+                f"{item.patch_id} ({package.patches[item.patch_id].status})"
+                for item in blocked
             )
             raise PatchError(f"Selected patches are not approved for application: {details}")
-    for patch_id, relation, related in package.relations:
-        if patch_id not in selected_set:
-            continue
-        if relation == "requires" and related not in selected_set:
-            raise PatchError(f"Patch {patch_id} requires {related}")
-        if relation == "conflicts" and related in selected_set:
-            raise PatchError(f"Patch {patch_id} conflicts with {related}")
-    edits = sorted(
-        (edit for edit in package.edits if edit.patch_id in selected_set),
-        key=lambda edit: (edit.destination_target_id, edit.destination_offset, edit.order, edit.edit_id),
+    edits_by_patch: dict[str, list[Edit]] = {}
+    for edit in package.edits:
+        edits_by_patch.setdefault(edit.patch_id, []).append(edit)
+    result = [
+        SelectedEdit(selection, edit)
+        for selection in selections
+        for edit in sorted(
+            edits_by_patch[selection.patch_id],
+            key=lambda item: (item.order, item.edit_id),
+        )
+    ]
+    return sorted(
+        result,
+        key=lambda item: (
+            item.edit.destination_target_id,
+            item.edit.destination_offset,
+            item.selection.occurrence,
+            item.edit.order,
+            item.edit.edit_id,
+        ),
     )
-    occupied: dict[str, list[tuple[int, int, str]]] = {}
-    for edit in edits:
-        ranges = occupied.setdefault(edit.destination_target_id, [])
-        start = edit.destination_offset
-        end = start + edit.length
-        for prior_start, prior_end, prior_id in ranges:
-            if start < prior_end and prior_start < end:
-                raise PatchError(
-                    f"Selected edits overlap: {prior_id} and {edit.edit_id} "
-                    f"in {edit.destination_target_id}"
-                )
-        ranges.append((start, end, edit.edit_id))
-    return edits
+
+
+def validate_selection(package: Package, selected: list[str], *, for_apply: bool) -> list[Edit]:
+    selections = resolve_patch_selections(
+        package,
+        [("", "patch", patch_id) for patch_id in selected],
+    )
+    return [
+        item.edit
+        for item in validate_patch_selections(
+            package,
+            selections,
+            for_apply=for_apply,
+        )
+    ]
 
 
 def write_tsv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> None:
@@ -703,7 +786,7 @@ def write_tsv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> N
 def compose_edits(
     package: Package,
     target_data: dict[str, bytes],
-    edits: list[Edit],
+    edits: list[Edit] | list[SelectedEdit],
     initial_buffers: dict[str, bytes | bytearray] | None = None,
 ) -> tuple[dict[str, bytearray], list[dict[str, object]], dict[str, str]]:
     """Apply already validated edits to in-memory buffers.
@@ -713,8 +796,19 @@ def compose_edits(
     stage, such as a font package. Every destination expectation is checked again
     against that staged state before any edit is accepted.
     """
+    selected_edits = [
+        item
+        if isinstance(item, SelectedEdit)
+        else SelectedEdit(
+            PatchSelection("", "patch", item.patch_id, item.patch_id, index),
+            item,
+        )
+        for index, item in enumerate(edits)
+    ]
     staged = initial_buffers or {}
-    destination_ids = {edit.destination_target_id for edit in edits}
+    destination_ids = {
+        item.edit.destination_target_id for item in selected_edits
+    }
     mutable: dict[str, bytearray] = {}
     before_hashes: dict[str, str] = {}
     for target_id in destination_ids:
@@ -729,7 +823,9 @@ def compose_edits(
         before_hashes[target_id] = data_sha256(initial)
 
     patch_rows: list[dict[str, object]] = []
-    for edit in edits:
+    for selected_edit in selected_edits:
+        edit = selected_edit.edit
+        selection = selected_edit.selection
         data = mutable[edit.destination_target_id]
         old = verify_range(
             bytes(data),
@@ -737,18 +833,41 @@ def compose_edits(
             edit.length,
             f"edit {edit.edit_id} staged destination",
         )
-        verify_expectation(
-            old,
-            edit.expected_hex,
-            edit.expected_sha256,
-            f"edit {edit.edit_id} staged destination",
-        )
         replacement = replacement_for_edit(edit, package, target_data)
-        data[edit.destination_offset : edit.destination_offset + edit.length] = replacement
+        if old == replacement:
+            outcome = "already_satisfied"
+        else:
+            try:
+                verify_expectation(
+                    old,
+                    edit.expected_hex,
+                    edit.expected_sha256,
+                    f"edit {edit.edit_id} staged destination",
+                )
+            except PatchError as exc:
+                origin = (
+                    f"feature {selection.feature_id}, "
+                    if selection.feature_id
+                    else ""
+                )
+                raise PatchError(
+                    f"Conflicting selected edit {edit.edit_id} "
+                    f"({origin}{selection.selection_kind} "
+                    f"{selection.selection_id}): {exc}"
+                ) from exc
+            data[edit.destination_offset : edit.destination_offset + edit.length] = replacement
+            outcome = "applied"
         target = package.targets[edit.destination_target_id]
+        patch = package.patches[edit.patch_id]
+        group = package.groups[patch.group_id]
         patch_rows.append(
             {
                 "package_id": package.manifest["package_id"],
+                "feature_id": selection.feature_id,
+                "selection_kind": selection.selection_kind,
+                "selection_id": selection.selection_id,
+                "group_id": group.group_id,
+                "group_name": group.name,
                 "patch_id": edit.patch_id,
                 "edit_id": edit.edit_id,
                 "target_id": target.target_id,
@@ -758,6 +877,7 @@ def compose_edits(
                 "original_hex": old.hex().upper(),
                 "new_hex": replacement.hex().upper(),
                 "operation": edit.operation,
+                "outcome": outcome,
                 "reason": edit.reason,
             }
         )
@@ -819,6 +939,11 @@ def apply_package(
             log_stage / "patch_log.tsv",
             [
                 "package_id",
+                "feature_id",
+                "selection_kind",
+                "selection_id",
+                "group_id",
+                "group_name",
                 "patch_id",
                 "edit_id",
                 "target_id",
@@ -828,15 +953,20 @@ def apply_package(
                 "original_hex",
                 "new_hex",
                 "operation",
+                "outcome",
                 "reason",
             ],
             patch_rows,
         )
         write_tsv(
             log_stage / "selected_patches.tsv",
-            ["patch_id", "status", "confidence", "name"],
+            ["group_id", "group_name", "patch_id", "status", "confidence", "name"],
             [
                 {
+                    "group_id": package.patches[patch_id].group_id,
+                    "group_name": package.groups[
+                        package.patches[patch_id].group_id
+                    ].name,
                     "patch_id": patch_id,
                     "status": package.patches[patch_id].status,
                     "confidence": package.patches[patch_id].confidence,
@@ -860,6 +990,7 @@ def apply_package(
                 "package_version",
                 "output_root",
                 "log_directory",
+                "group_count",
                 "patch_count",
                 "edit_count",
             ],
@@ -871,6 +1002,9 @@ def apply_package(
                     "package_version": package.manifest["package_version"],
                     "output_root": output_root_text.replace("\\", "/"),
                     "log_directory": log_directory_text.replace("\\", "/"),
+                    "group_count": len(
+                        {package.patches[patch_id].group_id for patch_id in selected}
+                    ),
                     "patch_count": len(selected),
                     "edit_count": len(edits),
                 }
@@ -919,7 +1053,8 @@ def main() -> int:
     if args.command == "validate":
         print(
             f"Validated {package.manifest['package_id']}: "
-            f"{len(package.targets)} targets, {len(package.patches)} patches, "
+            f"{len(package.targets)} targets, {len(package.groups)} groups, "
+            f"{len(package.patches)} patches, "
             f"{len(package.edits)} edits"
         )
         return 0
@@ -927,10 +1062,15 @@ def main() -> int:
     selected = selected_patch_ids(package, args.patch, args.defaults)
     edits = validate_selection(package, selected, for_apply=args.command == "apply")
     if args.command == "plan":
+        compose_edits(package, target_data, edits)
         for patch_id in selected:
             patch = package.patches[patch_id]
+            group = package.groups[patch.group_id]
             count = sum(edit.patch_id == patch_id for edit in edits)
-            print(f"{patch_id}\t{patch.status}\t{patch.confidence}\t{count}\t{patch.name}")
+            print(
+                f"{group.group_id}\t{group.name}\t{patch_id}\t{patch.status}\t"
+                f"{patch.confidence}\t{count}\t{patch.name}"
+            )
         print(f"Plan: {len(selected)} atomic patches, {len(edits)} edits; no files written")
         return 0
 

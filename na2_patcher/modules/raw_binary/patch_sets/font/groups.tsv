@@ -1,0 +1,5 @@
+group_id	name	description	review_notes
+glyph_data	Glyph data	Native font glyph and metric payloads.	
+auto_fit	Auto-fit	Shrink-only text fitting behavior.	
+alignment	Alignment	Local screen and modal alignment corrections.	
+experiments	Experiments	Rejected or retained font-rendering experiments.	Not enabled by the current profile.

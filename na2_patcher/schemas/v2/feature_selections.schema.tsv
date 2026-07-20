@@ -1,0 +1,6 @@
+field	required	description
+feature_id	1	Feature contributing this selection.
+module_id	1	Module instance receiving the selection.
+selection_kind	1	all or native for existing engines; group or patch for raw-binary modules.
+selection_id	conditional	One module-owned selection identifier; empty only for all.
+reason	1	Purpose and provenance of this selection edge.

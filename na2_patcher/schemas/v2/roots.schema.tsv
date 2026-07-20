@@ -1,0 +1,3 @@
+field	required	description
+root_id	1	Logical source root identifier.
+path	1	Repository-relative source folder or configured project-root alias.

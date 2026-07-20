@@ -1,0 +1,7 @@
+field	required	description
+module_id	1	Stable unique module instance identifier.
+order	1	Unique nonnegative global composition order.
+module	1	Registered module engine type.
+input	1	Repository-relative module input file or directory.
+expected_sha256	1	Exact executable-input hash.
+reason	1	Human-readable purpose and provenance.

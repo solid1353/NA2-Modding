@@ -38,7 +38,7 @@ class RawBinaryPatcherTests(unittest.TestCase):
             package_dir / "manifest.tsv",
             patcher.MANIFEST_FIELDS,
             [{
-                "schema_version": 1,
+                "schema_version": 2,
                 "package_id": "fixture",
                 "package_version": 1,
                 "game": "NA2",
@@ -69,10 +69,21 @@ class RawBinaryPatcherTests(unittest.TestCase):
             ],
         )
         write_tsv(
+            package_dir / "groups.tsv",
+            patcher.GROUP_FIELDS,
+            [{
+                "group_id": "fixture_group",
+                "name": "Fixture group",
+                "description": "Fixture patches.",
+                "review_notes": "",
+            }],
+        )
+        write_tsv(
             package_dir / "patches.tsv",
             patcher.PATCH_FIELDS,
             [{
                 "patch_id": "test_patch",
+                "group_id": "fixture_group",
                 "default_enabled": 0,
                 "status": "approved_for_test",
                 "confidence": "verified",
@@ -83,7 +94,6 @@ class RawBinaryPatcherTests(unittest.TestCase):
                 "review_notes": "",
             }],
         )
-        write_tsv(package_dir / "relations.tsv", patcher.RELATION_FIELDS, [])
         blank = {
             "expected_sha256": "",
             "replacement_hex": "",
@@ -159,6 +169,12 @@ class RawBinaryPatcherTests(unittest.TestCase):
             self.assertEqual(result[4:8], bytes.fromhex("10203040"))
             self.assertEqual(result[12:16], bytes.fromhex("AABBCCDD"))
             self.assertTrue((logs / "patch_log.tsv").is_file())
+            with (logs / "selected_patches.tsv").open(
+                encoding="utf-8", newline=""
+            ) as handle:
+                row = next(csv.DictReader(handle, delimiter="\t"))
+            self.assertEqual(row["group_id"], "fixture_group")
+            self.assertEqual(row["group_name"], "Fixture group")
             self.assertEqual((roots["na2"] / "target.bin").read_bytes(), bytes(range(16)))
 
     def test_pending_patch_cannot_apply(self) -> None:
@@ -213,5 +229,155 @@ class RawBinaryPatcherTests(unittest.TestCase):
                     edits,
                     {"destination": staged},
                 )
+
+    def test_v1_package_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            package, _, _ = self.make_fixture(root)
+            manifest = package.directory / "manifest.tsv"
+            manifest.write_text(
+                manifest.read_text(encoding="utf-8").replace("\n2\t", "\n1\t"),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(patcher.PatchError, "schema_version"):
+                patcher.load_package(package.directory)
+
+    def test_patch_must_reference_declared_group(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            package, _, _ = self.make_fixture(root)
+            patches = package.directory / "patches.tsv"
+            patches.write_text(
+                patches.read_text(encoding="utf-8").replace(
+                    "test_patch\tfixture_group\t",
+                    "test_patch\tmissing_group\t",
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(patcher.PatchError, "unknown group_id"):
+                patcher.load_package(package.directory)
+
+    def test_group_without_patches_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            package, _, _ = self.make_fixture(root)
+            groups = package.directory / "groups.tsv"
+            with groups.open("a", encoding="utf-8", newline="") as handle:
+                handle.write("unused\tUnused\tNo patches.\t\n")
+            with self.assertRaisesRegex(patcher.PatchError, "group unused has no patches"):
+                patcher.load_package(package.directory)
+
+    def test_group_and_patch_selections_preserve_overlapping_instances(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            package, _, target_data = self.make_fixture(Path(temporary))
+            selections = patcher.resolve_patch_selections(
+                package,
+                [
+                    ("feature", "group", "fixture_group"),
+                    ("feature", "patch", "test_patch"),
+                ],
+            )
+            self.assertEqual([item.patch_id for item in selections], ["test_patch"] * 2)
+            edits = patcher.validate_patch_selections(
+                package, selections, for_apply=True
+            )
+            buffers, rows, _ = patcher.compose_edits(package, target_data, edits)
+            self.assertEqual(len(edits), 4)
+            self.assertEqual(
+                [row["outcome"] for row in rows],
+                ["applied", "already_satisfied", "applied", "already_satisfied"],
+            )
+            self.assertEqual(buffers["destination"][4:8], bytes.fromhex("10203040"))
+
+    def test_empty_v2_package_is_valid(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary) / "empty"
+            write_tsv(
+                directory / "manifest.tsv",
+                patcher.MANIFEST_FIELDS,
+                [{
+                    "schema_version": 2,
+                    "package_id": "empty",
+                    "package_version": 1,
+                    "game": "NA2",
+                    "description": "Reserved empty package.",
+                    "evidence_path": "",
+                }],
+            )
+            write_tsv(directory / "targets.tsv", patcher.TARGET_FIELDS, [])
+            write_tsv(directory / "groups.tsv", patcher.GROUP_FIELDS, [])
+            write_tsv(directory / "patches.tsv", patcher.PATCH_FIELDS, [])
+            write_tsv(directory / "edits.tsv", patcher.EDIT_FIELDS, [])
+            package = patcher.load_package(directory)
+            self.assertEqual(package.groups, {})
+            self.assertEqual(package.patches, {})
+            self.assertEqual(patcher.verify_package_data(package, {}), {})
+
+    def test_incompatible_overlapping_patches_fail_during_composition(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            package, _, target_data = self.make_fixture(Path(temporary))
+            second_group = patcher.Group("second_group", "Second", "", "")
+            second_patch = replace(
+                package.patches["test_patch"],
+                patch_id="second_patch",
+                group_id="second_group",
+            )
+            package.groups["second_group"] = second_group
+            package.patches["second_patch"] = second_patch
+            package.edits.append(
+                replace(
+                    package.edits[0],
+                    edit_id="conflicting_edit",
+                    patch_id="second_patch",
+                    replacement_hex="FFFFFFFF",
+                )
+            )
+            selections = patcher.resolve_patch_selections(
+                package,
+                [
+                    ("feature", "patch", "test_patch"),
+                    ("feature", "patch", "second_patch"),
+                ],
+            )
+            edits = patcher.validate_patch_selections(
+                package, selections, for_apply=True
+            )
+            with self.assertRaisesRegex(patcher.PatchError, "Conflicting selected edit"):
+                patcher.compose_edits(package, target_data, edits)
+
+    def test_intentional_overlapping_patch_chain_is_applied_in_order(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            package, _, target_data = self.make_fixture(Path(temporary))
+            package.groups["second_group"] = patcher.Group(
+                "second_group", "Second", "", ""
+            )
+            package.patches["second_patch"] = replace(
+                package.patches["test_patch"],
+                patch_id="second_patch",
+                group_id="second_group",
+            )
+            package.edits.append(
+                replace(
+                    package.edits[0],
+                    edit_id="chained_edit",
+                    patch_id="second_patch",
+                    expected_hex="10203040",
+                    replacement_hex="55667788",
+                )
+            )
+            selections = patcher.resolve_patch_selections(
+                package,
+                [
+                    ("feature", "patch", "test_patch"),
+                    ("feature", "patch", "second_patch"),
+                ],
+            )
+            edits = patcher.validate_patch_selections(
+                package, selections, for_apply=True
+            )
+            buffers, rows, _ = patcher.compose_edits(package, target_data, edits)
+            self.assertEqual(buffers["destination"][4:8], bytes.fromhex("55667788"))
+            self.assertEqual(rows[0]["outcome"], "applied")
+            self.assertEqual(rows[1]["outcome"], "applied")
 if __name__ == "__main__":
     unittest.main()

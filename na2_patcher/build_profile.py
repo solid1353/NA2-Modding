@@ -18,7 +18,7 @@ from .modules import translation as translation_module
 from .modules.disc_identity import engine as disc_identity_module
 from .modules.raw_binary import engine as patch_binary
 from .modules.ui_textures import engine as ui_texture_module
-from .profile import Profile, ProfileModule, load_profile
+from .profile import FeatureSelection, Profile, ProfileModule, load_profile
 from .project_paths import load_project_paths
 
 
@@ -163,24 +163,29 @@ def apply_raw_patch_set(
     package_directory: Path,
     *,
     roots: dict[str, Path],
-    requested_patches: list[str],
-    defaults: bool,
+    feature_selections: tuple[FeatureSelection, ...],
     source: Iso9660,
     payloads: dict[str, bytearray],
     owners: dict[str, str],
 ) -> dict[str, object]:
     package = patch_binary.load_package(package_directory)
     target_data = patch_binary.verify_package_data(package, roots)
-    selected = patch_binary.selected_patch_ids(
+    selected = patch_binary.resolve_patch_selections(
         package,
-        requested_patches,
-        defaults,
+        [
+            (item.feature_id, item.selection_kind, item.selection_id)
+            for item in feature_selections
+        ],
     )
-    edits = patch_binary.validate_selection(package, selected, for_apply=True)
+    edits = patch_binary.validate_patch_selections(
+        package,
+        selected,
+        for_apply=True,
+    )
 
     initial_buffers: dict[str, bytes | bytearray] = {}
     target_paths: dict[str, str] = {}
-    for target_id in {edit.destination_target_id for edit in edits}:
+    for target_id in {item.edit.destination_target_id for item in edits}:
         target = package.targets[target_id]
         path = normalize(target.path.as_posix())
         record = source.by_path.get(path)
@@ -397,22 +402,33 @@ def write_raw_composition_log(
     patch_binary.write_tsv(
         log_directory / "patch_log.tsv",
         [
-            "package_id", "patch_id", "edit_id", "target_id", "path",
-            "offset", "length", "original_hex", "new_hex", "operation", "reason",
+            "package_id", "feature_id", "selection_kind", "selection_id",
+            "group_id", "group_name", "patch_id", "edit_id", "target_id", "path",
+            "offset", "length", "original_hex", "new_hex", "operation", "outcome", "reason",
         ],
         result["patch_rows"],
     )
     patch_binary.write_tsv(
         log_directory / "selected_patches.tsv",
-        ["patch_id", "status", "confidence", "name"],
+        [
+            "feature_id", "selection_kind", "selection_id", "group_id",
+            "group_name", "patch_id", "status", "confidence", "name",
+        ],
         [
             {
-                "patch_id": patch_id,
-                "status": package.patches[patch_id].status,
-                "confidence": package.patches[patch_id].confidence,
-                "name": package.patches[patch_id].name,
+                "feature_id": selection.feature_id,
+                "selection_kind": selection.selection_kind,
+                "selection_id": selection.selection_id,
+                "group_id": package.patches[selection.patch_id].group_id,
+                "group_name": package.groups[
+                    package.patches[selection.patch_id].group_id
+                ].name,
+                "patch_id": selection.patch_id,
+                "status": package.patches[selection.patch_id].status,
+                "confidence": package.patches[selection.patch_id].confidence,
+                "name": package.patches[selection.patch_id].name,
             }
-            for patch_id in selected
+            for selection in selected
         ],
     )
     patch_binary.write_tsv(
@@ -433,7 +449,8 @@ def write_raw_composition_log(
         log_directory / "run_summary.tsv",
         [
             "timestamp_utc", "schema_version", "package_id", "package_version",
-            "output_iso", "log_directory", "patch_count", "edit_count",
+            "output_iso", "log_directory", "group_count", "patch_count",
+            "unique_patch_count", "edit_count",
         ],
         [{
             "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -442,7 +459,16 @@ def write_raw_composition_log(
             "package_version": package.manifest["package_version"],
             "output_iso": output_iso_text.replace("\\", "/"),
             "log_directory": log_directory_text.replace("\\", "/"),
+            "group_count": len(
+                {
+                    package.patches[selection.patch_id].group_id
+                    for selection in selected
+                }
+            ),
             "patch_count": len(selected),
+            "unique_patch_count": len(
+                {selection.patch_id for selection in selected}
+            ),
             "edit_count": len(edits),
         }],
     )
@@ -642,8 +668,7 @@ def apply_profile_modules(
             result = apply_raw_patch_set(
                 module.input_path,
                 roots=profile.roots,
-                requested_patches=list(module.selection),
-                defaults=not module.selection,
+                feature_selections=module.selections,
                 source=source,
                 payloads=payloads,
                 owners=owners,
@@ -754,7 +779,10 @@ def write_profile_log(
                 "module": module.module,
                 "input": module.input_path.relative_to(workspace).as_posix(),
                 "input_sha256": module.expected_sha256,
-                "selection": ",".join(module.selection),
+                "feature_ids": ",".join(
+                    selection.feature_id for selection in module.selections
+                ),
+                "selection_count": len(module.selections),
                 "patched_paths": ",".join(sorted(str(path) for path in paths)),
             }
         )
@@ -823,6 +851,41 @@ def write_profile_log(
                 ],
             )
     patch_binary.write_tsv(
+        log_directory / "features.tsv",
+        ["feature_id", "enabled", "name", "description", "reason"],
+        [
+            {
+                "feature_id": feature.feature_id,
+                "enabled": int(feature.enabled),
+                "name": feature.name,
+                "description": feature.description,
+                "reason": feature.reason,
+            }
+            for feature in profile.features
+        ],
+    )
+    enabled_features = {
+        feature.feature_id for feature in profile.features if feature.enabled
+    }
+    patch_binary.write_tsv(
+        log_directory / "feature_selections.tsv",
+        [
+            "feature_id", "active", "module_id", "selection_kind",
+            "selection_id", "reason",
+        ],
+        [
+            {
+                "feature_id": selection.feature_id,
+                "active": int(selection.feature_id in enabled_features),
+                "module_id": selection.module_id,
+                "selection_kind": selection.selection_kind,
+                "selection_id": selection.selection_id,
+                "reason": selection.reason,
+            }
+            for selection in profile.selections
+        ],
+    )
+    patch_binary.write_tsv(
         log_directory / "modules.tsv",
         [
             "module_id",
@@ -830,19 +893,25 @@ def write_profile_log(
             "module",
             "input",
             "input_sha256",
-            "selection",
+            "feature_ids",
+            "selection_count",
             "patched_paths",
         ],
         module_rows,
     )
     patch_binary.write_tsv(
         log_directory / "run_summary.tsv",
-        ["timestamp_utc", "profile_id", "output_iso", "module_count"],
+        [
+            "timestamp_utc", "profile_id", "output_iso", "feature_count",
+            "enabled_feature_count", "module_count",
+        ],
         [
             {
                 "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "profile_id": profile.manifest["profile_id"],
                 "output_iso": output_iso_text.replace("\\", "/"),
+                "feature_count": len(profile.features),
+                "enabled_feature_count": len(enabled_features),
                 "module_count": len(results),
             }
         ],

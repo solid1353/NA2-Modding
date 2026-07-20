@@ -1,4 +1,0 @@
-column	required	type	description
-patch_id	1	identifier	Patch owning the relation.
-relation	1	enum:requires|conflicts	Relationship type.
-related_patch_id	1	identifier	Other patch.

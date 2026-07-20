@@ -10,8 +10,11 @@ sets.
 - Every input target is checked by size and SHA-256.
 - Every destination range is checked by exact bytes or a range SHA-256.
 - Copy operations also verify the exact source range.
-- Named patches are atomic; selected ranges may not overlap.
-- Dependencies and conflicts are enforced through `relations.tsv`.
+- Patch sets contain organizational groups and independently applicable atomic patches.
+- Group and patch selections may overlap and every selection occurrence retains provenance.
+- Concrete edits are simulated in deterministic order before output creation. Already-satisfied
+  writes and guarded chains are allowed; incompatible staged bytes are rejected as conflicts.
+- Raw-binary v2 has no patch dependency or declarative relation mechanism.
 - Only `approved_for_test` and `runtime_proven` patches can be applied.
 - Pending candidates can be inspected with `plan` but cannot be applied.
 - Outputs must be new, stay outside input roots, and preserve target sizes.
@@ -62,6 +65,9 @@ enabled by default only after it is `runtime_proven`.
 
 ## Schema
 
-Schema v1 is described by the column tables under `schemas/v1/`. TSV headers are
-strict and must match exactly. Complex relationships use normalized rows instead of
-lists or JSON inside cells.
+Schema v2 is described by the column tables under `schemas/v2/`. Every package has
+`manifest.tsv`, `targets.tsv`, `groups.tsv`, `patches.tsv`, and `edits.tsv`.
+Headers are strict and must match exactly. Groups organize patches; patches own one
+or more exact edits. A completely empty reserved package is valid, but declared
+groups without patches and patches without edits are rejected. Schema v1 is not
+accepted by the live engine and remains available only through Git history.

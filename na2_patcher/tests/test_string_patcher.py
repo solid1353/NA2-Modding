@@ -11,7 +11,10 @@ class StringPatcherTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.package_directory = (
-            Path(__file__).resolve().parents[1] / "modules" / "string_patcher"
+            Path(__file__).resolve().parents[1]
+            / "features"
+            / "translation"
+            / "string_patcher"
         )
         cls.package = string_patcher.build_binary_package(cls.package_directory)
 

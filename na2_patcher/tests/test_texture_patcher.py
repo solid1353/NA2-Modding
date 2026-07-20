@@ -16,8 +16,13 @@ from na2_patcher.modules.texture_patcher import engine
 class UiTextureTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        na2_root, nun5_root, _ = engine.default_roots()
-        data_root = Path(__file__).resolve().parents[1] / "modules/texture_patcher"
+        na2_root, nun5_root = engine.default_roots()
+        data_root = (
+            Path(__file__).resolve().parents[1]
+            / "features"
+            / "translation"
+            / "texture_patcher"
+        )
         required = (
             na2_root / "DATA" / "DATA.CVM.files" / "DATA.CVM.iso",
             na2_root / "DATA" / "DATA.CVM.files" / "DATA.CVM.hdr",
@@ -164,7 +169,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
+            / "na2_patcher/features/translation/binary_patcher"
         )
         vertical = next(
             item for item in package.edits if item.edit_id == "UI-BTL-002-02"
@@ -212,14 +217,14 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
+            / "na2_patcher/features/translation/binary_patcher"
         )
         edit = next(item for item in package.edits if item.edit_id == "UI-ELF-001-01")
         self.assertEqual(edit.source_target_id, "nun5_elf")
         self.assertEqual(edit.source_offset, 0x4DDDD0)
         self.assertEqual(edit.length, 96 * 8)
 
-        _na2_root, nun5_root, _data_root = engine.default_roots()
+        _na2_root, nun5_root = engine.default_roots()
         nun5_elf = (nun5_root / "SLES_556.05").read_bytes()
         source = nun5_elf[edit.source_offset : edit.source_offset + edit.length]
         self.assertEqual(binary_patcher.data_sha256(source), edit.source_expected_sha256)
@@ -250,7 +255,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
+            / "na2_patcher/features/translation/binary_patcher"
         )
         table = next(item for item in package.edits if item.edit_id == "UI-ELF-004-01")
         helper = next(item for item in package.edits if item.edit_id == "UI-BTL-003-01")
@@ -261,7 +266,7 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(table.destination_offset, 0x4B14A0)
         self.assertEqual(table.length, 95 * 8)
 
-        _na2_root, nun5_root, _data_root = engine.default_roots()
+        _na2_root, nun5_root = engine.default_roots()
         nun5_elf = (nun5_root / "SLES_556.05").read_bytes()
         source = nun5_elf[table.source_offset : table.source_offset + table.length]
         self.assertEqual(binary_patcher.data_sha256(source), table.source_expected_sha256)
@@ -289,7 +294,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
+            / "na2_patcher/features/translation/binary_patcher"
         )
         edit = next(item for item in package.edits if item.edit_id == "UI-ELF-003-01")
 
@@ -311,7 +316,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
+            / "na2_patcher/features/translation/binary_patcher"
         )
         anchor = next(item for item in package.edits if item.edit_id == "UI-BTL-004-01")
         rectangle = next(
@@ -338,7 +343,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
+            / "na2_patcher/features/translation/binary_patcher"
         )
         rectangle = next(
             item for item in package.edits if item.edit_id == "UI-ELF-005-01"
@@ -364,7 +369,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
+            / "na2_patcher/features/translation/binary_patcher"
         )
         edits = [item for item in package.edits if item.patch_id == "UI-ETC-001"]
 
@@ -379,7 +384,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
+            / "na2_patcher/features/translation/binary_patcher"
         )
         edits = [item for item in package.edits if item.patch_id == "UI-BTL-005"]
         patch = package.patches["UI-BTL-005"]
@@ -398,7 +403,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
+            / "na2_patcher/features/translation/binary_patcher"
         )
         rectangle = next(
             item for item in package.edits if item.edit_id == "UI-ELF-006-01"
@@ -418,7 +423,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/modules/binary_patcher/patch_sets/ui_translation"
+            / "na2_patcher/features/translation/binary_patcher"
         )
         operations = Counter(edit.operation for edit in package.edits)
         copy_sources = Counter(

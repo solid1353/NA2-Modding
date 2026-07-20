@@ -1,2 +1,0 @@
-schema_version	package_id	package_version	game	description	evidence_path
-2	rendering	1	NA2	Rendering patch set.	na2_patcher/modules/binary_patcher/patch_sets/rendering/README.md

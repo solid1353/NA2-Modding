@@ -7,7 +7,7 @@ Use this file for old patch candidates, failed experiments, unverified addresses
 Status: resolved for the reviewed screens on 2026-07-19. Confirmed behavior,
 matched measurements, exact patch records, and negative results are preserved
 in `docs/knowledge/font/README.md`; canonical accepted and historical patch
-data remain under `na2_patcher/modules/binary_patcher/patch_sets/`.
+data remain under their owning `na2_patcher/features/<feature>/binary_patcher/` package.
 
 The accepted integration baseline uses a guarded native 14x20 NUN5-derived
 secondary atlas in GF4 while keeping clean NA2 GF4C. Controls overflow uses a
@@ -93,7 +93,7 @@ actionable leads.
 Status: generated module implemented and initial ISO runtime passed. Confirmed
 layout, loader, donor, FLIST, and ISO findings are recorded in
 `docs/knowledge/external_translation_files.md`; the canonical pointer inventory
-is `na2_patcher/modules/external_translation/pointer_refs.tsv`.
+is `na2_patcher/features/translation/external_translation/pointer_refs.tsv`.
 
 - Candidate resident cave: ELF file `0x00507414-0x0050747F` / runtime
   `0x00607314-0x0060737F` is zero-filled and has no aligned exact pointer found

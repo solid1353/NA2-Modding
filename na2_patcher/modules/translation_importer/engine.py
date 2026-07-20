@@ -28,6 +28,7 @@ MAPPING_FIELDS = [
     "id", "enabled", "section", "mode", "target", "target_offset", "capacity",
     "source_ref", "transform", "arguments", "value", "reason",
 ]
+METADATA_FIELDS = ["key", "value"]
 EXPECTED_SHA1 = {
     "NA2_BTL": "bf7fc7331a2a4f34fc90b84b45772ae1f6bcab03",
     "NA2_ETC": "dcfffd7eb14e484a4c0fbc195599a0b45a9a11c1",
@@ -274,27 +275,38 @@ def read_rows(path: Path) -> list[dict[str, str]]:
 
 
 def read_mapping_metadata(data_root: Path) -> tuple[int, str]:
-    """Read the canonical mapping version and packaged mappings hash from README."""
-    readme_path = data_root / "README.md"
-    try:
-        text = readme_path.read_text(encoding="utf-8")
-    except OSError as exc:
-        raise ValueError(f"Could not read mapping metadata from {readme_path}") from exc
-
-    version_match = re.search(r"(?mi)^- Version:\s*`([0-9]+)`\s*$", text)
-    hash_match = re.search(
-        r"(?mi)^- Packaged `mappings\.tsv` SHA-256:\s*`([0-9a-f]{64})`\s*$",
-        text,
-    )
-    if version_match is None or hash_match is None:
+    """Read canonical mapping metadata from the feature-owned manifest."""
+    manifest_path = data_root / "manifest.tsv"
+    with manifest_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        if reader.fieldnames != METADATA_FIELDS:
+            raise ValueError(
+                "translation importer manifest.tsv must contain exactly: "
+                + "\t".join(METADATA_FIELDS)
+            )
+        rows = [
+            {key: (value or "").strip() for key, value in row.items()}
+            for row in reader
+            if any((value or "").strip() for value in row.values())
+        ]
+    metadata = {row["key"]: row["value"] for row in rows}
+    if len(metadata) != len(rows):
+        raise ValueError("translation importer manifest.tsv contains duplicate keys")
+    expected_keys = {"schema_version", "mapping_version", "mappings_sha256"}
+    if set(metadata) != expected_keys:
         raise ValueError(
-            "README.md must contain mapping metadata entries for Version and "
-            "Packaged `mappings.tsv` SHA-256"
+            "translation importer manifest.tsv keys must be exactly: "
+            + ", ".join(sorted(expected_keys))
         )
-    version = int(version_match.group(1))
+    if metadata["schema_version"] != "1":
+        raise ValueError("Unsupported translation importer schema_version")
+    version = parse_int(metadata["mapping_version"], "mapping_version")
     if version <= 0:
-        raise ValueError("README.md mapping Version must be positive")
-    return version, hash_match.group(1).lower()
+        raise ValueError("translation importer mapping_version must be positive")
+    packaged_hash = metadata["mappings_sha256"].lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", packaged_hash):
+        raise ValueError("translation importer mappings_sha256 must be SHA-256")
+    return version, packaged_hash
 
 
 def read_official_z(data: bytes, offset: int, label: str) -> str:
@@ -711,6 +723,12 @@ def build_translation_import_plan(
     data_root = data_root.resolve()
     mapping_version, packaged_hash = read_mapping_metadata(data_root)
     mapping_path = data_root / "mappings.tsv"
+    actual_mapping_hash = hashlib.sha256(mapping_path.read_bytes()).hexdigest()
+    if actual_mapping_hash != packaged_hash:
+        raise ValueError(
+            "translation importer mappings.tsv SHA-256 does not match manifest.tsv: "
+            f"{actual_mapping_hash} != {packaged_hash}"
+        )
     rows_raw = read_rows(mapping_path)
     mappings = parse_mappings(rows_raw)
     output_targets = {

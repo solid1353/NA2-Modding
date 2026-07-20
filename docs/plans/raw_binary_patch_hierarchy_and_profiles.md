@@ -30,9 +30,11 @@ Profiles use two normalized tables in addition to their manifest and roots:
   hash pin, and reason.
 
 Feature selections do not live in profiles. Every reusable package under
-`na2_patcher/features/<feature_id>/` owns a `manifest.tsv` and ordered
-`selections.tsv`. The consuming profile supplies the stable module instances
-named by those selections and independently pins their executable inputs.
+`na2_patcher/features/<feature_id>/` owns a `manifest.tsv`, ordered
+`selections.tsv`, one root `README.md`, and its feature-specific declarative
+module inputs. Reusable executable engines remain under `na2_patcher/modules/`.
+The consuming profile supplies the stable module instances named by those
+selections and independently pins each feature-owned input.
 
 For binary-patcher modules, a selection row is conceptually
 `(module_id, selection_kind, selection_id)`, where `selection_kind` may be

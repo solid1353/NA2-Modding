@@ -12,8 +12,10 @@ Each profile directory contains:
 - `modules.tsv`: globally ordered module instances with exact input hashes.
 
 Feature-to-module selections do not live in profiles. Each reusable feature
-package owns its ordered `selections.tsv`; binary-patcher selections may target
-groups or patches, while every current feature uses groups only.
+package owns its declarative module inputs, ordered `selections.tsv`, and one
+root README; reusable engines remain under `na2_patcher/modules/`.
+Binary-patcher selections may target groups or patches, while every current
+feature uses groups only.
 
 Profile schema v2 supports declarative `binary_patcher`, `translation_importer`,
 `string_patcher`, `texture_patcher`, `external_translation`, and
@@ -48,8 +50,8 @@ Texture-patcher hashes cover only the three declarative inputs `containers.tsv`,
 `mappings.tsv`, and `strategies.tsv`; replacements are derived directly from
 the hash-pinned NA2 and NUN5 source members and checked against the hashes in
 those files. Parser code and adjacent documentation are excluded from the
-module-content pin. Translation and disc-identity inputs are hashed as exact
-files.
+module-content pin. Translation-importer hashes cover its feature-owned
+`manifest.tsv` and `mappings.tsv`; disc-identity inputs are hashed as exact files.
 
 The current profile composes:
 
@@ -103,7 +105,7 @@ designed and approved implementation rather than a build flag.
 
 The ordinary `na2` command dispatches the profile build, then delegates mandatory PNACH actualization and PCSX2 launch to `scripts/na2/launch.ps1`. `na2 -c` launches `NA2.28 - Current.iso` without rebuilding, and `na2 -p` launches `NA2.28 - Previous.iso` without rebuilding. Translation and UI texture transplantation are invoked only as pinned profile modules and record their review plans or per-container patch tables inside the profile log.
 
-The profile references `na2_patcher/modules/translation_importer/mappings.tsv`
+The profile references `na2_patcher/features/translation/translation_importer/mappings.tsv`
 directly and pins its exact hash. Updating that table therefore requires an
 explicit profile-pin update. The importer emits no binary writes; the selected
 imports are compiled and applied only by the following `string_patcher` module.

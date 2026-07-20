@@ -28,14 +28,14 @@ Run commands from the repository root.
 
 ```powershell
 python -m na2_patcher.modules.binary_patcher.engine validate `
-  --package na2_patcher/modules/binary_patcher/patch_sets/menu_input `
+  --package na2_patcher/features/menu_input/binary_patcher `
   --root na2=@source_na2 `
   --root nun5=@source_nun5
 ```
 
 ```powershell
 python -m na2_patcher.modules.binary_patcher.engine plan `
-  --package na2_patcher/modules/binary_patcher/patch_sets/menu_input `
+  --package na2_patcher/features/menu_input/binary_patcher `
   --root na2=@source_na2 `
   --root nun5=@source_nun5 `
   --patch ELF-M008
@@ -45,10 +45,10 @@ Application requires a new output directory and an approved patch status:
 
 ```powershell
 python -m na2_patcher.modules.binary_patcher.engine apply `
-  --package na2_patcher/modules/binary_patcher/patch_sets/example `
+  --package na2_patcher/features/menu_input/binary_patcher `
   --root na2=@source_na2 `
   --root nun5=@source_nun5 `
-  --patch example_patch `
+  --patch ELF-M008 `
   --output-root work/temp/example_patch_output
 ```
 

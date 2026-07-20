@@ -625,9 +625,9 @@ def apply_profile_modules(
                 "translation_import_plan" in item for item in results
             ):
                 raise ValueError("Profile may enable only one translation_importer module")
-            if module.input_path.name.lower() != "mappings.tsv":
+            if not module.input_path.is_dir():
                 raise ValueError(
-                    f"Translation importer {module.module_id} input must be mappings.tsv"
+                    f"Translation importer {module.module_id} input must be a package directory"
                 )
             if "na2" not in profile.roots or "nun5" not in profile.roots:
                 raise ValueError(
@@ -638,7 +638,7 @@ def apply_profile_modules(
             plan = translation_importer_module.build_translation_import_plan(
                 **_translation_source_arguments(profile.roots["na2"], "na2"),
                 **_translation_source_arguments(profile.roots["nun5"], "nun5"),
-                data_root=module.input_path.parent,
+                data_root=module.input_path,
                 apply="BTL,ETC,SLPS",
             )
             pending_import_plan = plan

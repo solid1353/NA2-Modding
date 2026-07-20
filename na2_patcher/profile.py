@@ -49,6 +49,7 @@ BINARY_PATCHER_CONTROL_FILES = (
     "edits.tsv",
 )
 STRING_PATCHER_CONTROL_FILES = ("strings.tsv",)
+TRANSLATION_IMPORTER_CONTROL_FILES = ("manifest.tsv", "mappings.tsv")
 TEXTURE_PATCHER_CONTROL_FILES = (
     "containers.tsv",
     "mappings.tsv",
@@ -244,6 +245,18 @@ def _string_patcher_content_files(path: Path) -> list[Path]:
     return files
 
 
+def _translation_importer_content_files(path: Path) -> list[Path]:
+    path = path.resolve()
+    files = [path / name for name in TRANSLATION_IMPORTER_CONTROL_FILES]
+    missing = [item.name for item in files if not item.is_file()]
+    if missing:
+        raise FileNotFoundError(
+            "Translation-importer package is missing canonical input files: "
+            + ", ".join(missing)
+        )
+    return files
+
+
 def _external_translation_content_files(path: Path) -> list[Path]:
     path = path.resolve()
     files = [path / name for name in EXTERNAL_TRANSLATION_CONTROL_FILES]
@@ -283,6 +296,8 @@ def module_content_sha256(path: Path, module_type: str) -> str:
         return _tree_digest(path, _binary_patcher_content_files(path))
     if module_type == "string_patcher":
         return _tree_digest(path, _string_patcher_content_files(path))
+    if module_type == "translation_importer":
+        return _tree_digest(path, _translation_importer_content_files(path))
     if module_type == "external_translation":
         return _tree_digest(path, _external_translation_content_files(path))
     if module_type == "texture_patcher":

@@ -354,6 +354,33 @@ class ProfileTests(unittest.TestCase):
                 module_content_sha256(package, "string_patcher"),
             )
 
+    def test_translation_importer_hash_includes_only_declarative_inputs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory) / "translation_importer"
+            package.mkdir()
+            (package / "manifest.tsv").write_text(
+                "key\tvalue\nschema_version\t1\nmapping_version\t1\n"
+                f"mappings_sha256\t{'0' * 64}\n",
+                encoding="utf-8",
+            )
+            (package / "mappings.tsv").write_text("mapping\n", encoding="utf-8")
+            (package / "README.md").write_text("first\n", encoding="utf-8")
+            first = module_content_sha256(package, "translation_importer")
+            (package / "README.md").write_text("second\n", encoding="utf-8")
+            self.assertEqual(
+                first,
+                module_content_sha256(package, "translation_importer"),
+            )
+            (package / "manifest.tsv").write_text(
+                "key\tvalue\nschema_version\t1\nmapping_version\t2\n"
+                f"mappings_sha256\t{'0' * 64}\n",
+                encoding="utf-8",
+            )
+            self.assertNotEqual(
+                first,
+                module_content_sha256(package, "translation_importer"),
+            )
+
     def test_ui_texture_hash_includes_only_declarative_inputs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             package = Path(directory) / "package"
@@ -434,6 +461,16 @@ class ProfileTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         profile_directory = repository / "na2_patcher" / "profiles" / "current"
         self.assertFalse((profile_directory / "feature_selections.tsv").exists())
+
+    def test_each_feature_has_one_root_readme_and_no_nested_markdown(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        features = repository / "na2_patcher" / "features"
+        for feature in sorted(features.iterdir()):
+            if not feature.is_dir() or not (feature / "manifest.tsv").is_file():
+                continue
+            with self.subTest(feature=feature.name):
+                markdown = sorted(feature.rglob("*.md"))
+                self.assertEqual(markdown, [feature / "README.md"])
 
     def test_current_binary_backed_patcher_selections_are_group_only(self) -> None:
         repository = Path(__file__).resolve().parents[2]

@@ -19,7 +19,11 @@ class ExternalTranslationTests(unittest.TestCase):
             "nun5": paths.path("source_nun5"),
         }
         cls.package = (
-            cls.repository / "na2_patcher" / "modules" / "external_translation"
+            cls.repository
+            / "na2_patcher"
+            / "features"
+            / "translation"
+            / "external_translation"
         )
         cls.plan = engine.build_external_translation_plan(
             package_directory=cls.package,
@@ -145,7 +149,8 @@ class ExternalTranslationTests(unittest.TestCase):
             data_root=(
                 self.repository
                 / "na2_patcher"
-                / "modules"
+                / "features"
+                / "translation"
                 / "translation_importer"
             ),
             apply="BTL,ETC,SLPS",
@@ -168,7 +173,8 @@ class ExternalTranslationTests(unittest.TestCase):
             translation_importer.read_rows(
                 self.repository
                 / "na2_patcher"
-                / "modules"
+                / "features"
+                / "translation"
                 / "translation_importer"
                 / "mappings.tsv"
             )

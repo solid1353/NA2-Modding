@@ -1,2 +1,0 @@
-schema_version	package_id	package_version	game	description	evidence_path
-2	menu_input	1	NA2	NUN5-to-NA2 menu-input mappings with recorded runtime classifications.	na2_patcher/modules/binary_patcher/patch_sets/menu_input/evidence.tsv

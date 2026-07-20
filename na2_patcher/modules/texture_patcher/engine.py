@@ -874,13 +874,12 @@ def parse_selection(value: str) -> tuple[str, ...]:
     return tuple(item.strip() for item in value.split(",") if item.strip())
 
 
-def default_roots() -> tuple[Path, Path, Path]:
+def default_roots() -> tuple[Path, Path]:
     repository = Path(__file__).resolve().parents[3]
     paths = load_project_paths(repository)
     return (
         paths.path("source_na2"),
         paths.path("source_nun5"),
-        Path(__file__).resolve().parent,
     )
 
 
@@ -914,13 +913,19 @@ def main() -> int:
     verify_parser = subparsers.add_parser(
         "verify", help="derive and verify pinned replacements from both games"
     )
+    verify_parser.add_argument("--package", required=True, type=Path)
     verify_parser.add_argument("--selection", default="")
     preview_parser = subparsers.add_parser("preview", help="write verified CCS members for review")
+    preview_parser.add_argument("--package", required=True, type=Path)
     preview_parser.add_argument("--output", required=True)
     preview_parser.add_argument("--selection", default="")
     args = parser.parse_args()
 
-    na2_root, nun5_root, data_root = default_roots()
+    na2_root, nun5_root = default_roots()
+    repository = Path(__file__).resolve().parents[3]
+    data_root = args.package
+    if not data_root.is_absolute():
+        data_root = repository / data_root
     selection = parse_selection(args.selection)
     plan = build_texture_patch_plan(
         na2_root=na2_root,
@@ -931,7 +936,7 @@ def main() -> int:
     if args.command == "preview":
         output = Path(args.output)
         if not output.is_absolute():
-            output = Path(__file__).resolve().parents[3] / output
+            output = repository / output
         write_preview(plan, output.resolve())
     print_results(plan)
     return 0

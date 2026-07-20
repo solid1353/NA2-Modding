@@ -8,7 +8,7 @@ This document promotes the durable findings from the 2026-07-05 substitution-rel
 - Historical CRC alias during the investigation: `@pcsx2_files/SLPS-25837_E0F064C5.pnach`. CRC aliases are managed links and are not canonical.
 - Historical NA2 decompiler/Ghidra evidence remains available through Git
   history. Restore reusable analysis only under `@analysis/disassembly/NA2/`.
-- Reproducible substitution-cost patch: `ELF-S001` in `na2_patcher/modules/binary_patcher/patch_sets/battle_logic/`.
+- Reproducible substitution-cost patch: `ELF-S001` in `na2_patcher/features/battle_logic/binary_patcher/`.
 
 Function names below are Ghidra-generated names for the NA2 boot ELF and are stable only within the preserved analysis project.
 

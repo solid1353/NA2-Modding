@@ -1,2 +1,0 @@
-schema_version	package_id	package_version	game	description	evidence_path
-2	testing	1	NA2	Non-executable preservation of the canonical PNACH Testing section.	na2_patcher/modules/binary_patcher/patch_sets/testing/README.md

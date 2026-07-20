@@ -3,6 +3,7 @@
 ## In Progress
 
 ### [UI Translation](docs/plans/ui_translation.md)
+- Use TEXTENG.BIN wherever possible?
 - Deal with remaining issues/regressions.
 - Investigate upscaling.
 
@@ -17,9 +18,13 @@
 - Implement proper autofit/positions everywhere.
 
 ### String translation
+- Use TEXTENG.BIN wherever possible?
 - Polish, using the audit.
 
 ## Backlog
+
+### Bugs
+- Practice menu entries (like Damage) flicker again.
 
 ### Logic
 - [Improve substitution reliability](docs/knowledge/substitution.md).

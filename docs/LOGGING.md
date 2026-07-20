@@ -62,8 +62,7 @@ active work or immediate review. At task completion:
    and important negative tests into tracked knowledge.
 3. Verify that every required binary edit is represented by canonical patch data
    with its original bytes, replacement bytes, offset, and reason.
-4. Delete redundant generated logs directly. Do not create a replacement trash
-   archive.
+4. Delete redundant generated logs directly.
 
 Large inventories are allowed when their structured contents avoid expensive
 rediscovery. Size alone is not a reason to split or delete a useful record.

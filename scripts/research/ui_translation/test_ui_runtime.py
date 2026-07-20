@@ -330,7 +330,7 @@ class StateArchiveTests(unittest.TestCase):
                 )
 
             captures = list(
-                (work / "ui_translation" / "runtime_cases").rglob(
+                (work / "UI Translation" / "runtime_cases").rglob(
                     "manifest.json"
                 )
             )
@@ -401,7 +401,7 @@ class StateArchiveTests(unittest.TestCase):
             )
 
             captures = list(
-                (work / "ui_translation" / "runtime_cases").rglob(
+                (work / "UI Translation" / "runtime_cases").rglob(
                     "manifest.json"
                 )
             )

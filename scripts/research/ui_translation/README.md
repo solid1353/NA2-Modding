@@ -33,7 +33,7 @@ cannot be explained from NUN5 and Current plus the unpacked static sources.
   copies the F1 states by default, and records `manual_f1_import` rather than
   claiming a live PINE identity. `--consume-states` is explicit and destructive.
 - A capture is first copied and verified under
-  `@work/ui_translation/runtime_cases/`. Only after that succeeds is the newly
+  `@work/UI Translation/runtime_cases/`. Only after that succeeds is the newly
   generated slot state removed from `@pcsx2/sstates/`; pass
   `--keep-slot-state` to retain it there.
 - Runtime writes require an exact serial/CRC match, neutral rendering settings,
@@ -111,7 +111,7 @@ Find a cross-build function match with:
 
 ```powershell
 python scripts/research/ui_translation/match_assembly_function.py `
-  work/ui_translation/disassembly_refs/NA2/BTL/BTL.BIN.txt `
+  "work/UI Translation/disassembly_refs/NA2/BTL/BTL.BIN.txt" `
   FUN_006bcfd0 `
-  work/ui_translation/disassembly_refs/NUN5/BTL/BTL.BIN.txt
+  "work/UI Translation/disassembly_refs/NUN5/BTL/BTL.BIN.txt"
 ```

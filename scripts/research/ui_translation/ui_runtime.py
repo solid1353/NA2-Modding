@@ -735,7 +735,7 @@ def _archive_state(
 
     capture_id, captured_at = _utc_capture_id()
     parent = paths.path(
-        "work", "ui_translation", "runtime_cases", case_id, target.target_id
+        "work", "UI Translation", "runtime_cases", case_id, target.target_id
     )
     parent.mkdir(parents=True, exist_ok=True)
     final_dir = parent / capture_id

@@ -1,6 +1,6 @@
 # UI Translation Working Context
 
-Last refreshed: 2026-07-19
+Last refreshed: 2026-07-20
 
 This is the living handoff for the `TASKS.md` **UI Translation** task. Keep it concise enough to reread after context compaction. Refresh it only when a material fact, decision, plan, result, or blocker changes; do not turn it into a command-by-command log.
 
@@ -15,7 +15,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 - Convert user-supplied absolute paths to repository/configured-root-relative notation in project materials.
 - `@source/` is read-only reference material. The two explicitly authorized
   auxiliary cleanups were completed after their recorded conditions were met.
-- `work/ui_translation/` is a mutable task workspace. Its contents may be inspected, reorganized, modified, regenerated, or deleted as needed.
+- `work/UI Translation/` is the mutable task workspace. Its contents may be inspected, reorganized, modified, regenerated, or deleted as needed.
 - This task changes UI textures and the binary rectangle/placement logic required
   to display them. Text content and font spacing are entirely out of scope; no
   text mapping is added or modified here.
@@ -61,8 +61,8 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 
 ### Mutable working data
 
-- `work/ui_translation/DATA.CVM.iso.files/`: copied extracted DATA.CVM tree used instead of source material because CCSFileExplorerMSF's mutation behavior is not yet established.
-- `work/ui_translation/CCSFileExplorerMSF/`: current tool/test area, including the demonstrated extracted battle-gauge textures.
+- `work/UI Translation/DATA.CVM.iso.files/`: copied extracted DATA.CVM tree used instead of source material because CCSFileExplorerMSF's mutation behavior is not yet established.
+- `work/UI Translation/CCSFileExplorerMSF/`: current tool/test area, including the demonstrated extracted battle-gauge textures.
 
 ## Confirmed facts
 
@@ -290,13 +290,13 @@ production writer.
   capture harness. It verifies live serial/CRC identity, ISO hash, rendering
   conditions, and paused state before archiving a `.p2s`, its embedded
   `Screenshot.png`, and a repository-relative manifest under
-  `@work/ui_translation/runtime_cases/`.
-- The focused harness suite has 14 passing tests. Its manual F1 importer preserves
+  `@work/UI Translation/runtime_cases/`.
+- The focused harness suite has 17 passing tests. Its manual F1 importer preserves
   the user-created states, extracts embedded screenshots, hashes inputs, and
   records repository-relative manifests without requiring a live PINE capture.
 - Ten matching NUN5/Current pairs are archived under
-  `@work/ui_translation/runtime_cases/`; the two contact sheets are under
-  `@work/ui_translation/runtime_review/`.
+  `@work/UI Translation/runtime_cases/`; the two contact sheets are under
+  `@work/UI Translation/runtime_review/`.
 - The configured savestate folder was cleared before the fresh pilot. The 14
   prior slot, resume, and backup states were moved to the Windows Recycle Bin.
 - Texture replacements are disabled. Current and NUN5 both pass the
@@ -345,10 +345,13 @@ hash mapping, and broader NUN6 comparison remain optional future research.
 All eight preserved cases now have declarative implementations. The normal
 workflow still derives all 34 fixed-size CCS replacements directly from
 canonical NA2/NUN5 inputs with no stored replacement blobs. The source trees
-and original savestates remain untouched. Hash-matched copies of
-`NA2.28 - Previous.iso` and paired NA2.28/NUN5 states 1-8 live only under
-`work/temp/ui_translation_savestates_1_8_lab/`. Static validation passes all
-61 repository tests, exact-source raw composition, translation v35, and
+and original savestates remain untouched. The unique historical
+`NA2.28 - Previous.iso`, paired NA2.28/NUN5 states 1-8, and the minimal
+Zstandard extraction helper now live under
+`@work/UI Translation/runtime_baselines/savestates_1_8/`. The former ownerless
+lab was removed after deleting its regenerable EE-memory dumps, embedded
+screenshot copies, and superseded exploratory scripts. Static validation
+passes all 61 repository tests, exact-source raw composition, translation v35, and
 34-container derivation.
 
 The non-launching profile build retained

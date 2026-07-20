@@ -171,26 +171,6 @@ from the user, state `Needed from you: nothing` instead of omitting the line.
 - State explicitly what software/tools were used for a task. If the right tool is uncertain or missing, ask the user to provide or approve one.
 - Prefer reusable, verifiable commands and scripts over long one-off command chains. Keep closely related implementation together when that is clearer than introducing additional files.
 
-## Release and checkpoint rules
-
-For file-level translation releases, one zip only. Zip filename gets version/postfix. Internal filenames must be exactly:
-
-- `BTL.BIN`
-- `ETC.bin`
-- `SLPS_258.37`
-- `translation_log.tsv`
-
-No postfixes inside the zip. Never include `ADV.bin` unless explicitly requested.
-
-For full project releases, place new frozen files in `releases/` with clear version/postfix names. Active working ISOs stay in `build/`.
-
-Use annotated Git tags for accepted reproducible source checkpoints. Tags must point to committed project states and must not be used as substitutes for external ISO, ZIP, PNACH, checksum, or other frozen release artifacts.
-
-`releases/` is append-only/frozen. Do not rewrite, rename, move, delete, or modify existing release files or folders. If the intended output name already exists, stop and inspect manually instead of choosing a workaround.
-
-Release PNACH files are coupled to the boot ELF CRC of their paired ISO. Always verify the PNACH CRC suffix against the ISO's actual PCSX2 game CRC before treating a release as valid. If verification is unavailable or inconclusive, report that uncertainty clearly.
-
-
 ## Actualize workflow
 
 The root command interface is: bare `na2` builds the current profile, conditionally rotates a changed ISO, maintains Current/Previous PNACH aliases, and launches `NA2.28 - Current.iso`; `na2 -c` launches `NA2.28 - Current.iso` without rebuilding, closing PCSX2, or changing PNACH aliases; `na2 -p` launches `NA2.28 - Previous.iso` with the same no-maintenance behavior; `na2 act` maintains the Current/Previous PNACH aliases without building or launching. Source-game launch shortcuts belong in the user's shared PowerShell profile rather than `_na2.ps1`. No other public build, path-override, hash-bypass, or launch-bypass arguments are supported. `_na2.ps1` owns only public dispatch and transcript management; `scripts/na2/build.ps1` owns profile build, ISO promotion/rotation, and the corresponding PNACH alias maintenance; `na2_patcher/build_profile.py` owns profile-only ISO composition and verification; `scripts/na2/launch.ps1` only starts PCSX2 for a selected ISO. Do not recombine these responsibilities or restore direct newest-input selection.

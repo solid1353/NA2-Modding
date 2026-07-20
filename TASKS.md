@@ -2,13 +2,12 @@
 
 ## In Progress
 
-### [UI Translation](docs/plans/ui_translation.md)
-- Use TEXTENG.BIN wherever possible?
-- Deal with remaining issues/regressions.
-- Investigate upscaling.
-
 ### Project
-- [Raw-binary patch hierarchy and profile-driven workflows](docs/plans/raw_binary_patch_hierarchy_and_profiles.md).
+- Finish stash@{0}: On master: WIP remove selections.
+- Remove modules in profiles and stuff like this.
+- Regroup features.
+- Decide on TEXTENG.BIN usage policy.
+- Consider retiring cheats.
 - [Develop a release process (deferred indefinitely)](docs/RELEASE_PROCESS.md).
 - Investigate cross-platform development/deployment possibilities.
 - Work folder cleanup?
@@ -17,19 +16,25 @@
 - Make font identical to UN5.
 - Implement proper autofit/positions everywhere.
 
+### [UI Translation](docs/plans/ui_translation.md)
+- Deal with remaining issues/regressions.
+- Investigate upscaling.
+
 ### String translation
-- Use TEXTENG.BIN wherever possible?
 - Polish, using the audit.
 
 ## Backlog
 
 ### Bugs
-- Practice menu entries (like Damage) flicker again.
+- Practice menu entries (like Damage) flicker again (unstable).
 
 ### Logic
+- Make knj cost selective.
+- Make xDash cost 1 chakra.
+- Add damage scaling?
+- Replace support selector with J/UJ selector.
 - [Improve substitution reliability](docs/knowledge/substitution.md).
 - Add substitution bar.
-- Disable support.
 - Fix extra hit floating animation (or maybe not?).
 
 ### QoL

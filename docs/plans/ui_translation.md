@@ -15,7 +15,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 - Convert user-supplied absolute paths to repository/configured-root-relative notation in project materials.
 - `@source/` is read-only reference material. The two explicitly authorized
   auxiliary cleanups were completed after their recorded conditions were met.
-- `work/UI Translation/` is the mutable task workspace. Its contents may be inspected, reorganized, modified, regenerated, or deleted as needed.
+- `work/UI translation/` is the mutable task workspace. Its contents may be inspected, reorganized, modified, regenerated, or deleted as needed.
 - This task changes UI textures and the binary rectangle/placement logic required
   to display them. Text content and font spacing are entirely out of scope; no
   text mapping is added or modified here.
@@ -61,8 +61,8 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 
 ### Mutable working data
 
-- `work/UI Translation/DATA.CVM.iso.files/`: copied extracted DATA.CVM tree used instead of source material because CCSFileExplorerMSF's mutation behavior is not yet established.
-- `work/UI Translation/CCSFileExplorerMSF/`: current tool/test area, including the demonstrated extracted battle-gauge textures.
+- `work/UI translation/DATA.CVM.iso.files/`: copied extracted DATA.CVM tree used instead of source material because CCSFileExplorerMSF's mutation behavior is not yet established.
+- `work/UI translation/CCSFileExplorerMSF/`: current tool/test area, including the demonstrated extracted battle-gauge textures.
 
 ## Confirmed facts
 
@@ -290,13 +290,13 @@ production writer.
   capture harness. It verifies live serial/CRC identity, ISO hash, rendering
   conditions, and paused state before archiving a `.p2s`, its embedded
   `Screenshot.png`, and a repository-relative manifest under
-  `@work/UI Translation/runtime_cases/`.
+  `@work/UI translation/runtime_cases/`.
 - The focused harness suite has 17 passing tests. Its manual F1 importer preserves
   the user-created states, extracts embedded screenshots, hashes inputs, and
   records repository-relative manifests without requiring a live PINE capture.
 - Ten matching NUN5/Current pairs are archived under
-  `@work/UI Translation/runtime_cases/`; the two contact sheets are under
-  `@work/UI Translation/runtime_review/`.
+  `@work/UI translation/runtime_cases/`; the two contact sheets are under
+  `@work/UI translation/runtime_review/`.
 - The configured savestate folder was cleared before the fresh pilot. The 14
   prior slot, resume, and backup states were moved to the Windows Recycle Bin.
 - Texture replacements are disabled. Current and NUN5 both pass the
@@ -348,7 +348,7 @@ canonical NA2/NUN5 inputs with no stored replacement blobs. The source trees
 and original savestates remain untouched. The unique historical
 `NA2.28 - Previous.iso`, paired NA2.28/NUN5 states 1-8, and the minimal
 Zstandard extraction helper now live under
-`@work/UI Translation/runtime_baselines/savestates_1_8/`. The former ownerless
+`@work/UI translation/runtime_baselines/savestates_1_8/`. The former ownerless
 lab was removed after deleting its regenerable EE-memory dumps, embedded
 screenshot copies, and superseded exploratory scripts. Static validation
 passes all 61 repository tests, exact-source raw composition, translation v35, and

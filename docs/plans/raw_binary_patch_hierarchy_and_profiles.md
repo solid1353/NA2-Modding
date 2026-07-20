@@ -22,14 +22,17 @@ making its build-level identity part of the package format.
 
 ## Profile schema v2
 
-Profiles use three normalized tables in addition to their manifest and roots:
+Profiles use two normalized tables in addition to their manifest and roots:
 
-- `features.tsv` declares ordered user-facing features and whether each one is
-  enabled.
+- `features.tsv` enables reusable feature packages and pins each package's
+  declarative input hash.
 - `modules.tsv` declares ordered module instances, their engine type, input,
   hash pin, and reason.
-- `feature_selections.tsv` binds a feature to a module and selects content from
-  that module.
+
+Feature selections do not live in profiles. Every reusable package under
+`na2_patcher/features/<feature_id>/` owns a `manifest.tsv` and ordered
+`selections.tsv`. The consuming profile supplies the stable module instances
+named by those selections and independently pins their executable inputs.
 
 For raw-binary modules, a selection row is conceptually
 `(module_id, selection_kind, selection_id)`, where `selection_kind` may be
@@ -37,9 +40,10 @@ For raw-binary modules, a selection row is conceptually
 preserved, and overlapping selections are not deduplicated. Every selection
 therefore keeps its own provenance in plans and logs.
 
-The current profile deliberately uses only group selections for raw-binary
-modules. Direct patch selection is supported by schema and engine for future
-isolated profiles and tests, but no current-profile row selects a patch ID.
+Current feature packages deliberately use only group selections for raw-binary
+modules. Direct patch selection is supported by the feature schema and engine
+for future isolated features and tests, but no current feature package selects
+a patch ID.
 
 Non-raw modules retain their existing semantics: `all` selects the complete
 module and `native` carries the module's native selector, such as a translation
@@ -90,7 +94,8 @@ from overlapping ranges or selection metadata. Overlap itself is legal.
 
 ## Current canonical groups
 
-The current profile selects these raw-binary groups:
+The feature packages enabled by the current profile select these raw-binary
+groups:
 
 - Font: `glyph_data`, `auto_fit`, `alignment`
 - Menu input: `battle_ui`, `front_end`, `etc_ui`, `battle_results`
@@ -115,10 +120,10 @@ preserving their exact edits:
 
 ## Reproducibility and logs
 
-The profile pins every enabled module input by deterministic hash. Raw-binary
-hashes cover the five canonical control tables plus referenced blobs, not
-adjacent documentation. Feature and selection tables are themselves part of
-the profile definition.
+The profile pins every enabled feature package and active module input by
+deterministic hash. Feature hashes cover only `manifest.tsv` and
+`selections.tsv`; raw-binary hashes cover the five canonical control tables
+plus referenced blobs. Adjacent documentation is excluded from both.
 
 Profile-run logs record enabled features, every feature-selection occurrence,
 module identity and hash, selected group/patch provenance, expanded patch/edit
@@ -130,10 +135,10 @@ selection flag.
 
 Before migration, a deterministic v1 baseline captured six enabled raw modules,
 92 selected patches, and 256 selected edits. After migration, the group-only
-current profile expands to 95 patch instances and the same 256 edit instances;
-the patch-instance count increases only because the two QoL bundles became
-seven independent patches. Exact target paths, offsets, guards, replacement
-bytes, lengths, and ordering remain equivalent.
+current feature packages expand to 95 patch instances and the same 256 edit
+instances; the patch-instance count increases only because the two QoL bundles
+became seven independent patches. Exact target paths, offsets, guards,
+replacement bytes, lengths, and ordering remain equivalent.
 
 Validation is intentionally file- and memory-backed only for this task. It
 loads every package, loads the complete current profile, composes all enabled
@@ -142,9 +147,10 @@ PCSX2.
 
 ## Acceptance criteria
 
-- Profile schema v2 represents Profile -> Feature -> Module selection.
+- Profile schema v2 enables and hash-pins reusable feature packages without
+  storing feature selections in the profile.
 - Raw-binary schema v2 represents package -> group -> patch -> edit.
-- The current profile uses raw group selections only.
+- Current feature packages use raw group selections only.
 - Direct raw patch selection remains supported for future profiles/tests.
 - Overlapping and repeated selections retain provenance and are validated by
   deterministic ordered edit simulation rather than deduplication.

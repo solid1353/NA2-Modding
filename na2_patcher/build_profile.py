@@ -852,13 +852,18 @@ def write_profile_log(
             )
     patch_binary.write_tsv(
         log_directory / "features.tsv",
-        ["feature_id", "enabled", "name", "description", "reason"],
+        [
+            "feature_id", "enabled", "name", "description", "input",
+            "input_sha256", "reason",
+        ],
         [
             {
                 "feature_id": feature.feature_id,
                 "enabled": int(feature.enabled),
                 "name": feature.name,
                 "description": feature.description,
+                "input": feature.input_path.relative_to(workspace).as_posix(),
+                "input_sha256": feature.expected_sha256,
                 "reason": feature.reason,
             }
             for feature in profile.features

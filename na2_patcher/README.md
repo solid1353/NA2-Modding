@@ -7,10 +7,13 @@ Each profile directory contains:
 - `manifest.tsv`: schema version, profile ID, and description.
 - `roots.tsv`: repository-relative bindings or `@root/...` aliases resolved from
   `project-paths.json`.
-- `features.tsv`: user-facing feature definitions and enabled states.
+- `features.tsv`: enabled states plus exact hashes and paths for reusable feature
+  packages under `na2_patcher/features/`.
 - `modules.tsv`: globally ordered module instances with exact input hashes.
-- `feature_selections.tsv`: ordered feature-to-module selections. Raw-binary
-  selections may target groups or patches; the current profile uses groups only.
+
+Feature-to-module selections do not live in profiles. Each reusable feature
+package owns its ordered `selections.tsv`; raw-binary selections may target
+groups or patches, while every current feature uses groups only.
 
 Profile schema v2 supports declarative `raw_binary`, `translation`,
 `ui_textures`, `external_translation`, and `disc_identity` modules. Package and
@@ -19,9 +22,12 @@ declarative inputs.
 
 Profiles never select the newest file implicitly. Enabled features contribute
 module selections; a module runs when at least one enabled feature selects it.
-Active module inputs are content-hashed before composition. Disabled features and
-unselected modules remain visible without blocking the active build when their
-contents change.
+Enabled feature packages and active module inputs are content-hashed before
+composition. Disabled features and unselected modules remain visible without
+blocking the active build when their contents change.
+
+Feature hashes cover only the package's `manifest.tsv` and `selections.tsv`.
+Adjacent feature documentation and schemas do not affect profile pins.
 
 For raw-binary modules, the profile hash covers only executable package inputs:
 

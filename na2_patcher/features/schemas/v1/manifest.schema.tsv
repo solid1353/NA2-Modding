@@ -1,0 +1,3 @@
+field	required	description
+key	1	Unique feature metadata key.
+value	1	Metadata value; schema_version must be 1.

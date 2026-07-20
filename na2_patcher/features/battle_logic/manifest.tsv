@@ -1,0 +1,5 @@
+key	value
+schema_version	1
+feature_id	battle_logic
+name	Battle logic
+description	Accepted battle-rule changes.

@@ -1,6 +1,6 @@
 field	required	description
-feature_id	1	Stable user-facing feature identifier.
-enabled	1	1 contributes selections; 0 retains the feature without execution.
-name	1	Human-readable feature name.
-description	0	Feature scope.
-reason	1	Purpose and provenance in this profile.
+feature_id	1	Stable user-facing feature identifier matching the feature package manifest.
+enabled	1	1 resolves the pinned feature selections; 0 retains the feature without execution.
+input	1	Repository-relative feature package directory.
+expected_sha256	1	Exact hash of the feature package manifest and selections.
+reason	1	Purpose for including this feature in the profile.

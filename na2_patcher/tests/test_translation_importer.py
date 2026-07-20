@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import unittest
 
-from na2_patcher.modules.translation import engine
+from na2_patcher.modules.translation_importer import engine
 
 
-class TranslationTests(unittest.TestCase):
+class TranslationImporterTests(unittest.TestCase):
     def test_insert_br_after_words_preserves_official_text(self) -> None:
         source = b"Sealing Jutsu: Nine Phantom Dragons\x00"
         row = {

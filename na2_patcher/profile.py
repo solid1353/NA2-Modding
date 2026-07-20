@@ -38,7 +38,7 @@ MODULE_TYPES = {
     "external_translation",
     "binary_patcher",
     "string_patcher",
-    "translation",
+    "translation_importer",
     "texture_patcher",
 }
 BINARY_PATCHER_CONTROL_FILES = (

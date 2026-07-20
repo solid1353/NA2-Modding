@@ -66,6 +66,52 @@ class StringPatcherTests(unittest.TestCase):
         self.assertEqual(rows[0]["outcome"], "applied")
         self.assertEqual(rows[0]["package_id"], "string_patcher")
 
+    def test_compiles_imported_strings_into_selectable_binary_groups(self) -> None:
+        package = string_patcher.build_binary_package(
+            self.package_directory,
+            imported_rows=(
+                {
+                    "import_id": "BTL-I0001",
+                    "group_id": "BTL",
+                    "path": "PRG/BTL.BIN",
+                    "offset": "0x2",
+                    "expected_hex": "4A50",
+                    "replacement_hex": "454E",
+                    "source_mapping_id": "BTL-M001",
+                    "reason": "Import official battle text.",
+                },
+            ),
+            imported_targets={
+                "PRG/BTL.BIN": {
+                    "root_id": "na2",
+                    "expected_size": 8,
+                    "expected_sha256": "0" * 64,
+                }
+            },
+        )
+
+        self.assertIn("BTL", package.groups)
+        self.assertEqual(package.patches["BTL-I0001"].source_mapping_id, "BTL-M001")
+        selected = binary_patcher.resolve_patch_selections(
+            package,
+            [("translation", "group", "BTL")],
+        )
+        edits = binary_patcher.validate_patch_selections(
+            package,
+            selected,
+            for_apply=True,
+        )
+        imported_edit = edits[0].edit
+        target_id = imported_edit.destination_target_id
+        baseline = b"\0\0JP\0\0\0\0"
+        buffers, rows, _ = binary_patcher.compose_edits(
+            package,
+            {target_id: baseline},
+            edits,
+        )
+        self.assertEqual(bytes(buffers[target_id]), b"\0\0EN\0\0\0\0")
+        self.assertEqual(rows[0]["source_mapping_id"], "BTL-M001")
+
 
 if __name__ == "__main__":
     unittest.main()

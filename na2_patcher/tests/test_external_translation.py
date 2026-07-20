@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from na2_patcher.modules.external_translation import engine
-from na2_patcher.modules.translation import engine as translation_engine
+from na2_patcher.modules.translation_importer import engine as translation_importer
 from na2_patcher.project_paths import load_project_paths
 
 
@@ -130,22 +130,27 @@ class ExternalTranslationTests(unittest.TestCase):
             self.assertEqual(len(edit.expected), len(edit.replacement))
 
     def test_external_edits_reverse_every_inline_shortening_after_translation(self) -> None:
-        na2 = translation_engine.FolderSource(self.roots["na2"])
+        na2 = translation_importer.FolderSource(self.roots["na2"])
         clean = {
             target: na2.read(spec[1], f"NA2 {target}")
-            for target, spec in translation_engine.TARGET_SPECS.items()
+            for target, spec in translation_importer.TARGET_SPECS.items()
         }
         composed = {
-            translation_engine.TARGET_SPECS[target][0]: bytearray(payload)
+            translation_importer.TARGET_SPECS[target][0]: bytearray(payload)
             for target, payload in clean.items()
         }
-        translation = translation_engine.build_translation_plan(
+        translation = translation_importer.build_translation_import_plan(
             na2_folder=self.roots["na2"],
             nun5_folder=self.roots["nun5"],
-            data_root=self.repository / "na2_patcher" / "modules" / "translation",
+            data_root=(
+                self.repository
+                / "na2_patcher"
+                / "modules"
+                / "translation_importer"
+            ),
             apply="BTL,ETC,SLPS",
         )
-        for row in translation.patch_rows:
+        for row in translation.import_rows:
             path = row["path"]
             offset = int(row["offset"], 0)
             expected = bytes.fromhex(row["expected_hex"])
@@ -159,12 +164,12 @@ class ExternalTranslationTests(unittest.TestCase):
             self.assertEqual(actual, edit.expected, edit.mapping_id)
             data[edit.offset : edit.offset + len(edit.expected)] = edit.replacement
 
-        parsed = translation_engine.parse_mappings(
-            translation_engine.read_rows(
+        parsed = translation_importer.parse_mappings(
+            translation_importer.read_rows(
                 self.repository
                 / "na2_patcher"
                 / "modules"
-                / "translation"
+                / "translation_importer"
                 / "mappings.tsv"
             )
         )
@@ -172,7 +177,7 @@ class ExternalTranslationTests(unittest.TestCase):
             if mapping["mode"] != "shorten":
                 continue
             target = str(mapping["target"])
-            path = translation_engine.TARGET_SPECS[target][0]
+            path = translation_importer.TARGET_SPECS[target][0]
             offset = int(mapping["target_offset"])
             capacity = int(mapping["capacity"])
             self.assertEqual(

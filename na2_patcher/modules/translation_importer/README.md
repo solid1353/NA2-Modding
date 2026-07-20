@@ -1,6 +1,11 @@
-# NA2 translation module (mapping version 35)
+# NA2 translation importer (mapping version 35)
 
-This first-class `na2_patcher` module builds an in-memory translation plan for **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*. It never packages patched BIN or ELF payloads. Profile builds invoke `engine.py` directly and log the plan without using a TSV as an inter-stage handoff. There is no standalone export command.
+This first-class `na2_patcher` module imports and validates official strings for
+**Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
+It never writes BIN or ELF payloads. Profile builds pass its in-memory import
+rows directly to `string_patcher`, which compiles them into a shared
+`binary_patcher` package. There is no standalone export command or file-backed
+inter-stage handoff.
 
 ## Mapping metadata
 
@@ -37,7 +42,7 @@ The 12 columns are:
 ### Stable IDs and enabled state
 
 - `id` is a stable mapping identifier.
-- `enabled=1` applies the row.
+- `enabled=1` imports the row for downstream `string_patcher` selection.
 - `enabled=0` retains the row without applying it.
 - `mappings.tsv` is the only enabled-state source. Profile builds never rewrite it
   or inherit flags from external state.
@@ -88,22 +93,23 @@ Collection Movie use was rejected and rolled back in v35.
 
 ## Output
 
-Each profile build records the translation module under:
+Each profile build records the translation importer under:
 
 `logs/na2_patcher/current_<run id>/<module id>/`
 
 containing:
 
-- `translation_plan.tsv`
-- `translation_summary.json`
+- `translation_imports.tsv`
+- `translation_import_summary.json`
 
-The generated translation TSV contains exactly six columns:
+The generated import TSV contains exactly ten columns:
 
-`path`, `offset`, `expected_hex`, `replacement_hex`, `source_text`, `replacement_text`
+`import_id`, `group_id`, `path`, `offset`, `expected_hex`, `replacement_hex`,
+`source_text`, `replacement_text`, `source_mapping_id`, `reason`
 
 All ISO target paths inside the TSV remain ISO-root-relative. The profile-level module inventory also records only repository-relative paths.
 
-`translation_summary.json` contains general and aggregate information:
+`translation_import_summary.json` contains general and aggregate information:
 
 - mapping version and selected targets;
 - patch and mapping totals;
@@ -287,7 +293,7 @@ A clean-source full build was validated with all three targets selected:
 - 33 shortened mappings;
 - zero active structural patches;
 - unchanged target file sizes;
-- a relative six-column translation plan in the profile module log;
+- a relative ten-column import inventory in the profile module log;
 - `M0745=1` and all new v32 IDs retaining their packaged enabled defaults.
 
 ## Version 31 changes
@@ -456,15 +462,20 @@ PCSX2 application chrome, toolbar text, pause indicators, graphical controller p
 10. Confirm the four long Collection Movie mappings copy their exact NUN5
     source strings and contain no authored `<br>`; text/font fit is outside
     this Texture-patcher task.
-11. Generated TSV validation: exactly six columns, fixed-size patches only, relative summary reference, no active overlap, unchanged target file sizes, and successful composition with the current Font package.
+11. Generated TSV validation: exactly ten columns, fixed-size imports only,
+    relative summary reference, no active overlap, unchanged target file sizes,
+    and successful compilation/application through `string_patcher` and the
+    current Font package.
 
 ## Integration expectations
 
-- The repository-owned engine, live mappings, and documentation all live in `na2_patcher/modules/translation/`.
+- The repository-owned engine, live mappings, and documentation all live in `na2_patcher/modules/translation_importer/`.
 - Do not replace the integrated module by extracting a legacy builder archive over the project.
 - Do not copy generated profile-log plans back into the module.
-- Do not add patched `BTL.BIN`, `ETC.BIN`, or `SLPS_258.37` payloads to the translation module or checkpoint commits; binary deliverables belong only in the frozen release archive.
-- The profile orchestrator owns composition and ISO application.
-- Translation is an ordered first-class module and is currently applied after the font overlay and raw menu patch so conflicts are checked against their composed bytes.
+- Do not add patched `BTL.BIN`, `ETC.BIN`, or `SLPS_258.37` payloads to the importer or checkpoint commits; binary deliverables belong only in the frozen release archive.
+- `string_patcher` owns conversion of imported rows into selectable BTL, ETC,
+  and SLPS patch groups; `binary_patcher` owns guards, conflicts, writes, and logs.
+- The profile orchestrator owns composition and ISO application. The importer
+  must run immediately before its consuming `string_patcher` instance.
 
 The module has no standalone CLI. Target selection belongs to the hash-pinned profile.

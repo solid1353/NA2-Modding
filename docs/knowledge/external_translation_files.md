@@ -53,7 +53,7 @@ Methods and tools:
 - `scripts/research/menu_input/find_mips_address_refs.py` and
   `scripts/research/menu_input/disassemble_mips32_range.py`;
 - quote-aware parsing of
-  `na2_patcher/modules/translation/mappings.tsv`;
+  `na2_patcher/modules/translation_importer/mappings.tsv`;
 - aligned little-endian pointer scans plus PowerShell size, hash, ISO-layout,
   and byte inspection.
 
@@ -228,10 +228,10 @@ outside the BTL/ETC overwrite region.
 ## Module boundary
 
 This is a separate project-side `external_translation` module, not a change to
-the existing translation builder, mapping schema, mapping values, defaults,
-migration behavior, or enabled-state behavior. Its manifest pins the exact
-current `mappings.tsv` hash and all source/output hashes; source artifacts are
-resolved through the shared project-path loader.
+the translation importer, mapping schema, mapping values, defaults, migration
+behavior, or enabled-state behavior. Its manifest pins the exact current
+`mappings.tsv` hash and all source/output hashes; source artifacts are resolved
+through the shared project-path loader.
 
 The module owns:
 
@@ -240,11 +240,12 @@ The module owns:
 - a machine-readable patch log for every binary write;
 - requests for the two new ISO paths through the general compositor interface.
 
-The existing translation module applies all current inline translations first.
-The external module then redirects only the selected shortening cases and
-restores their now-dead inline slots to exact clean NA2 bytes. When the external
-module is disabled, the unchanged translation module still produces the current
-`[S]` fallback text. `ADV.bin` is outside this module and remains excluded.
+The translation importer first produces validated rows and `string_patcher`
+applies all selected inline translations through `binary_patcher`. The external
+module then redirects only the selected shortening cases and restores their
+now-dead inline slots to exact clean NA2 bytes. When the external module is
+disabled, `string_patcher` still produces the current `[S]` fallback text.
+`ADV.bin` is outside this module and remains excluded.
 
 ## ISO integration constraint
 

@@ -45,9 +45,11 @@ modules. Direct patch selection is supported by the feature schema and engine
 for future isolated features and tests, but no current feature package selects
 a patch ID.
 
-Non-binary-patcher modules retain their existing semantics: `all` selects the complete
-module and `native` carries the module's native selector, such as a translation
-target. They do not need group catalogs merely to participate in features.
+Non-binary-patcher modules retain their existing semantics: `all` selects the
+complete module and `native` carries a module-specific selector when one exists.
+For example, `translation_importer` uses `all` because downstream BTL/ETC/SLPS
+selection belongs to `string_patcher`. Non-binary modules do not need group
+catalogs merely to participate in features.
 
 An enabled feature must select at least one module input. A disabled feature may
 be empty, which permits reserved features such as Rendering without inventing
@@ -101,7 +103,7 @@ groups:
 - Menu input: `battle_ui`, `front_end`, `etc_ui`, `battle_results`
 - QoL: `startup`, `practice`, `mode_select`
 - Battle logic: `combat_rules`
-- String patcher (delegated to `binary_patcher`): `identity`
+- String patcher (delegated to `binary_patcher`): `identity`, `BTL`, `ETC`, `SLPS`
 - UI translation code: `battle_ui`, `front_end`, `shop`
 
 Testing remains a disabled feature with its `substitution` group available for

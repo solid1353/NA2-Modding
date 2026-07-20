@@ -177,7 +177,7 @@ packaged path.
   NUN5 derivation and mapped-copy behavior required by MAPSEL1 and MODE2KDV.
   Preserve that implementation and its regression tests; adapt only its source
   reader boundary for packaged ISO inputs.
-- `na2_patcher/modules/translation/engine.py` has release-related refactoring in
+- `na2_patcher/modules/translation_importer/engine.py` has release-related refactoring in
   the stash. When integrating it, preserve the current rule that `[S]` is
   intended display text: `shorten` mappings must emit the complete `[S]...`
   value, not strip the prefix.
@@ -237,7 +237,7 @@ Modified files:
 - `docs/PROJECT_CONTEXT.md`
 - `na2_patcher/build_profile.py`
 - `na2_patcher/modules/binary_patcher/engine.py`
-- `na2_patcher/modules/translation/engine.py`
+- `na2_patcher/modules/translation_importer/engine.py`
 - `na2_patcher/modules/texture_patcher/engine.py`
 - `na2_patcher/profile.py`
 - `na2_patcher/tests/test_profile.py`

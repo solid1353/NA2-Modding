@@ -14,7 +14,7 @@ from .iso9660 import (
     compose_filesystems,
     normalize_iso_path,
 )
-from .modules import translation as translation_module
+from .modules import translation_importer as translation_importer_module
 from .modules.disc_identity import engine as disc_identity_module
 from .modules.binary_patcher import engine as binary_patcher_module
 from .modules.string_patcher import engine as string_patcher_module
@@ -68,96 +68,6 @@ def payload_size_changes(
         for path, data in payloads.items()
         if len(data) != source.by_path[path].size
     ]
-
-
-def parse_offset(value: str, *, row_number: int) -> int:
-    text = value.strip()
-    if not text:
-        raise ValueError(f"Translation TSV row {row_number}: empty offset")
-    try:
-        return int(text, 0)
-    except ValueError as exc:
-        raise ValueError(
-            f"Translation TSV row {row_number}: invalid offset {value!r}"
-        ) from exc
-
-
-def parse_hex(value: str, *, field: str, row_number: int) -> bytes:
-    compact = "".join(value.split())
-    if not compact:
-        raise ValueError(f"Translation TSV row {row_number}: empty {field}")
-    if len(compact) % 2:
-        raise ValueError(f"Translation TSV row {row_number}: odd-length {field}")
-    try:
-        return bytes.fromhex(compact)
-    except ValueError as exc:
-        raise ValueError(
-            f"Translation TSV row {row_number}: invalid {field}"
-        ) from exc
-
-
-def apply_translation_rows(
-    rows: list[dict[str, str]],
-    *,
-    owner_name: str,
-    source: Iso9660,
-    payloads: dict[str, bytearray],
-    owners: dict[str, str],
-) -> tuple[int, list[str]]:
-    patched_paths: list[str] = []
-    patched_set: set[str] = set()
-    row_count = 0
-
-    for row_number, row in enumerate(rows, 2):
-        if not any((value or "").strip() for value in row.values()):
-            continue
-        path = normalize(row["path"])
-        record = source.by_path.get(path)
-        if record is None or record.is_dir:
-            raise RuntimeError(
-                f"Translation row {row_number}: path is not in the clean source ISO: {path}"
-            )
-        if path not in payloads:
-            payloads[path] = bytearray(source.read_file(record))
-            owners[path] = owner_name
-
-        offset = parse_offset(row["offset"], row_number=row_number)
-        expected = parse_hex(
-            row["expected_hex"], field="expected_hex", row_number=row_number
-        )
-        replacement = parse_hex(
-            row["replacement_hex"], field="replacement_hex", row_number=row_number
-        )
-        if len(expected) != len(replacement):
-            raise ValueError(
-                f"Translation row {row_number}: expected/replacement lengths differ "
-                f"({len(expected)} != {len(replacement)})"
-            )
-
-        data = payloads[path]
-        end = offset + len(expected)
-        if offset < 0 or end > len(data):
-            raise ValueError(
-                f"Translation row {row_number}: range 0x{offset:X}-0x{end:X} "
-                f"is outside {path} ({len(data)} bytes)"
-            )
-        actual = bytes(data[offset:end])
-        if actual != expected:
-            raise RuntimeError(
-                f"Translation conflict in {owner_name}, row {row_number}, {path} "
-                f"at 0x{offset:X}: expected {expected.hex().upper()}, "
-                f"found {actual.hex().upper()}"
-            )
-        data[offset:end] = replacement
-        owners[path] = owner_name
-        row_count += 1
-        if path not in patched_set:
-            patched_set.add(path)
-            patched_paths.append(path)
-
-    if row_count == 0:
-        raise RuntimeError(f"Translation module contains no patch rows: {owner_name}")
-    return row_count, patched_paths
 
 
 def apply_binary_patch_set(
@@ -406,7 +316,8 @@ def write_binary_patch_log(
         log_directory / "patch_log.tsv",
         [
             "package_id", "feature_id", "selection_kind", "selection_id",
-            "group_id", "group_name", "patch_id", "edit_id", "target_id", "path",
+            "group_id", "group_name", "patch_id", "source_mapping_id",
+            "edit_id", "target_id", "path",
             "offset", "length", "original_hex", "new_hex", "operation", "outcome", "reason",
         ],
         result["patch_rows"],
@@ -415,7 +326,8 @@ def write_binary_patch_log(
         log_directory / "selected_patches.tsv",
         [
             "feature_id", "selection_kind", "selection_id", "group_id",
-            "group_name", "patch_id", "status", "confidence", "name",
+            "group_name", "patch_id", "source_mapping_id", "status",
+            "confidence", "name",
         ],
         [
             {
@@ -427,6 +339,9 @@ def write_binary_patch_log(
                     package.patches[selection.patch_id].group_id
                 ].name,
                 "patch_id": selection.patch_id,
+                "source_mapping_id": package.patches[
+                    selection.patch_id
+                ].source_mapping_id,
                 "status": package.patches[selection.patch_id].status,
                 "confidence": package.patches[selection.patch_id].confidence,
                 "name": package.patches[selection.patch_id].name,
@@ -611,7 +526,7 @@ def write_external_translation_log(
             for result in insertion_results
         ],
     )
-    translation_module.write_json(
+    translation_importer_module.write_json(
         log_directory / "external_translation_summary.json",
         plan.summary,
     )
@@ -635,6 +550,7 @@ def apply_profile_modules(
     insertion_owners: dict[str, str],
 ) -> list[dict[str, object]]:
     results: list[dict[str, object]] = []
+    pending_import_plan: translation_importer_module.TranslationImportPlan | None = None
     for module in profile.modules:
         if not module.enabled:
             continue
@@ -669,7 +585,19 @@ def apply_profile_modules(
             continue
         if module.module in {"binary_patcher", "string_patcher"}:
             compiled_package = (
-                string_patcher_module.build_binary_package(module.input_path)
+                string_patcher_module.build_binary_package(
+                    module.input_path,
+                    imported_rows=(
+                        pending_import_plan.import_rows
+                        if pending_import_plan is not None
+                        else ()
+                    ),
+                    imported_targets=(
+                        pending_import_plan.targets
+                        if pending_import_plan is not None
+                        else None
+                    ),
+                )
                 if module.module == "string_patcher"
                 else None
             )
@@ -689,33 +617,37 @@ def apply_profile_modules(
                     "paths": result["patched_paths"],
                 }
             )
+            if module.module == "string_patcher":
+                pending_import_plan = None
             continue
-        if module.module == "translation":
+        if module.module == "translation_importer":
+            if pending_import_plan is not None or any(
+                "translation_import_plan" in item for item in results
+            ):
+                raise ValueError("Profile may enable only one translation_importer module")
             if module.input_path.name.lower() != "mappings.tsv":
                 raise ValueError(
-                    f"Translation module {module.module_id} input must be mappings.tsv"
+                    f"Translation importer {module.module_id} input must be mappings.tsv"
                 )
             if "na2" not in profile.roots or "nun5" not in profile.roots:
-                raise ValueError("Translation module requires na2 and nun5 profile roots")
-            plan = translation_module.build_translation_plan(
+                raise ValueError(
+                    "Translation importer requires na2 and nun5 profile roots"
+                )
+            if any(item.selection_kind != "all" for item in module.selections):
+                raise ValueError("translation_importer accepts only an all selection")
+            plan = translation_importer_module.build_translation_import_plan(
                 **_translation_source_arguments(profile.roots["na2"], "na2"),
                 **_translation_source_arguments(profile.roots["nun5"], "nun5"),
                 data_root=module.input_path.parent,
-                apply=",".join(module.selection) if module.selection else "BTL,ETC,SLPS",
+                apply="BTL,ETC,SLPS",
             )
-            rows, paths = apply_translation_rows(
-                plan.patch_rows,
-                owner_name=module.module_id,
-                source=source,
-                payloads=payloads,
-                owners=owners,
-            )
+            pending_import_plan = plan
             results.append(
                 {
                     "module": module,
-                    "translation_plan": plan,
-                    "translation_rows": rows,
-                    "paths": paths,
+                    "translation_import_plan": plan,
+                    "translation_import_rows": len(plan.import_rows),
+                    "paths": [],
                 }
             )
             continue
@@ -769,6 +701,10 @@ def apply_profile_modules(
             )
             continue
         raise AssertionError(module.module)
+    if pending_import_plan is not None:
+        raise ValueError(
+            "translation_importer requires a following enabled string_patcher module"
+        )
     return results
 
 
@@ -809,15 +745,17 @@ def write_profile_log(
                 output_iso_text=output_iso_text,
                 log_directory_text=module_log.relative_to(workspace).as_posix(),
             )
-        if "translation_plan" in item:
-            plan = item["translation_plan"]
-            assert isinstance(plan, translation_module.TranslationPlan)
-            module_log.mkdir(parents=True, exist_ok=True)
-            translation_module.write_translation_tsv(
-                module_log / "translation_plan.tsv", plan.patch_rows
+        if "translation_import_plan" in item:
+            plan = item["translation_import_plan"]
+            assert isinstance(
+                plan, translation_importer_module.TranslationImportPlan
             )
-            translation_module.write_json(
-                module_log / "translation_summary.json", plan.summary
+            module_log.mkdir(parents=True, exist_ok=True)
+            translation_importer_module.write_import_tsv(
+                module_log / "translation_imports.tsv", plan.import_rows
+            )
+            translation_importer_module.write_json(
+                module_log / "translation_import_summary.json", plan.summary
             )
         if "texture_patch_plan" in item:
             plan = item["texture_patch_plan"]
@@ -1130,8 +1068,8 @@ def main() -> int:
         detail = ""
         if "binary_patch_result" in item:
             detail = f", {len(item['binary_patch_result']['edits'])} edits"
-        elif "translation_rows" in item:
-            detail = f", {item['translation_rows']} rows"
+        elif "translation_import_rows" in item:
+            detail = f", {item['translation_import_rows']} imports"
         elif "texture_patch_plan" in item:
             plan = item["texture_patch_plan"]
             assert isinstance(plan, texture_patcher_module.TexturePatchPlan)

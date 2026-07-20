@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import codecs
 import csv
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
@@ -192,39 +193,65 @@ def load_specs(directory: Path) -> tuple[StringSpec, ...]:
     return tuple(specs)
 
 
-def build_binary_package(directory: Path) -> binary_patcher.Package:
+def build_binary_package(
+    directory: Path,
+    *,
+    imported_rows: Sequence[Mapping[str, str]] = (),
+    imported_targets: Mapping[str, Mapping[str, object]] | None = None,
+) -> binary_patcher.Package:
     directory = directory.resolve()
     specs = load_specs(directory)
+    imported_targets = imported_targets or {}
     targets: dict[str, binary_patcher.Target] = {}
     target_ids: dict[tuple[str, str], str] = {}
     groups: dict[str, binary_patcher.Group] = {}
     patches: dict[str, binary_patcher.Patch] = {}
     edits: list[binary_patcher.Edit] = []
 
-    for spec in specs:
-        target_key = (spec.root_id, spec.path)
+    def ensure_target(
+        *,
+        root_id: str,
+        path: str,
+        expected_size: int,
+        expected_sha256: str,
+        label: str,
+    ) -> str:
+        normalized_path = binary_patcher.relative_posix(
+            path, f"{label} path"
+        ).as_posix()
+        target_key = (root_id, normalized_path)
         target_id = target_ids.get(target_key)
         if target_id is None:
             target_id = f"string_target_{len(target_ids) + 1:03d}"
             target_ids[target_key] = target_id
             targets[target_id] = binary_patcher.Target(
                 target_id=target_id,
-                root_id=spec.root_id,
+                root_id=root_id,
                 role="destination",
-                path=PurePosixPath(spec.path),
-                expected_size=spec.expected_size,
-                expected_sha256=spec.expected_sha256,
+                path=PurePosixPath(normalized_path),
+                expected_size=expected_size,
+                expected_sha256=expected_sha256,
             )
-        else:
-            target = targets[target_id]
-            if (
-                target.expected_size != spec.expected_size
-                or target.expected_sha256 != spec.expected_sha256
-            ):
-                raise binary_patcher.PatchError(
-                    f"{spec.string_id}: inconsistent identity for target "
-                    f"{spec.root_id}:{spec.path}"
-                )
+            return target_id
+        target = targets[target_id]
+        if (
+            target.expected_size != expected_size
+            or target.expected_sha256 != expected_sha256
+        ):
+            raise binary_patcher.PatchError(
+                f"{label}: inconsistent identity for target "
+                f"{root_id}:{normalized_path}"
+            )
+        return target_id
+
+    for spec in specs:
+        target_id = ensure_target(
+            root_id=spec.root_id,
+            path=spec.path,
+            expected_size=spec.expected_size,
+            expected_sha256=spec.expected_sha256,
+            label=spec.string_id,
+        )
         groups.setdefault(
             spec.group_id,
             binary_patcher.Group(
@@ -271,6 +298,111 @@ def build_binary_package(directory: Path) -> binary_patcher.Package:
                 blob_sha256="",
                 fill_hex="",
                 reason=spec.reason,
+            )
+        )
+
+    for row_number, row in enumerate(imported_rows, 1):
+        label = f"translation import row {row_number}"
+        import_id = str(row.get("import_id", "")).strip()
+        group_id = str(row.get("group_id", "")).strip()
+        path = binary_patcher.relative_posix(
+            str(row.get("path", "")), f"{label} path"
+        ).as_posix()
+        if not import_id or import_id in patches:
+            raise binary_patcher.PatchError(
+                f"{label}: missing or duplicate import_id {import_id!r}"
+            )
+        if not group_id:
+            raise binary_patcher.PatchError(f"{label}: group_id is empty")
+        metadata = imported_targets.get(path)
+        if metadata is None:
+            raise binary_patcher.PatchError(
+                f"{label}: missing imported target metadata for {path}"
+            )
+        root_id = str(metadata.get("root_id", "")).strip()
+        if not root_id:
+            raise binary_patcher.PatchError(f"{label}: imported root_id is empty")
+        try:
+            expected_size = int(metadata.get("expected_size", 0))
+        except (TypeError, ValueError) as exc:
+            raise binary_patcher.PatchError(
+                f"{label}: invalid imported expected_size"
+            ) from exc
+        expected_sha256 = binary_patcher.normalized_sha256(
+            str(metadata.get("expected_sha256", "")),
+            f"{label} expected_sha256",
+        )
+        offset = binary_patcher.parse_int(
+            str(row.get("offset", "")), f"{label} offset"
+        )
+        try:
+            expected = bytes.fromhex(str(row.get("expected_hex", "")))
+            replacement = bytes.fromhex(str(row.get("replacement_hex", "")))
+        except ValueError as exc:
+            raise binary_patcher.PatchError(
+                f"{label}: invalid expected/replacement hexadecimal bytes"
+            ) from exc
+        if not expected or len(expected) != len(replacement):
+            raise binary_patcher.PatchError(
+                f"{label}: imported edit must be nonempty and fixed-length"
+            )
+        if offset < 0 or offset + len(expected) > expected_size:
+            raise binary_patcher.PatchError(
+                f"{label}: imported edit exceeds target size"
+            )
+        target_id = ensure_target(
+            root_id=root_id,
+            path=path,
+            expected_size=expected_size,
+            expected_sha256=expected_sha256,
+            label=label,
+        )
+        reason = (
+            str(row.get("reason", "")).strip()
+            or "Import official translation text."
+        )
+        groups.setdefault(
+            group_id,
+            binary_patcher.Group(
+                group_id=group_id,
+                name=group_id,
+                description="Imported string patch selection group.",
+                review_notes="",
+            ),
+        )
+        patches[import_id] = binary_patcher.Patch(
+            patch_id=import_id,
+            group_id=group_id,
+            default_enabled=False,
+            status="approved_for_test",
+            confidence="verified",
+            name=import_id,
+            description=reason,
+            source_mapping_id=str(row.get("source_mapping_id", "")).strip(),
+            runtime_classification="",
+            review_notes="",
+        )
+        edits.append(
+            binary_patcher.Edit(
+                edit_id=f"{import_id}-string",
+                patch_id=import_id,
+                order=10,
+                destination_target_id=target_id,
+                destination_offset=offset,
+                operation="replace",
+                length=len(expected),
+                expected_hex=expected.hex().upper(),
+                expected_sha256="",
+                replacement_hex=replacement.hex().upper(),
+                source_target_id="",
+                source_offset=None,
+                source_expected_hex="",
+                source_expected_sha256="",
+                blob_path=None,
+                blob_offset=None,
+                blob_sha256="",
+                fill_hex="",
+                reason=reason,
             )
         )
 

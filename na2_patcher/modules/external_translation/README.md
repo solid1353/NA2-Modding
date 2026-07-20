@@ -12,7 +12,7 @@ The module deterministically generates exactly two ISO insertions:
 - `PRG/MOD.BIN`: a minimal resident MWO3 bootstrap that asks NA2's existing PRG
   loader to load `TEXTENG.BIN`.
 
-The existing translation module still runs first. This module then:
+The translation importer and consuming string patcher still run first. This module then:
 
 1. redirects every inventoried use of a shortened slot to its official external
    string;

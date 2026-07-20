@@ -15,10 +15,10 @@ Feature-to-module selections do not live in profiles. Each reusable feature
 package owns its ordered `selections.tsv`; binary-patcher selections may target
 groups or patches, while every current feature uses groups only.
 
-Profile schema v2 supports declarative `binary_patcher`, `string_patcher`,
-`translation`, `texture_patcher`, `external_translation`, and `disc_identity`
-modules. Package and ZIP-overlay workflows are retired; profiles consume only
-repository-owned declarative inputs.
+Profile schema v2 supports declarative `binary_patcher`, `translation_importer`,
+`string_patcher`, `texture_patcher`, `external_translation`, and
+`disc_identity` modules. Package and ZIP-overlay workflows are retired;
+profiles consume only repository-owned declarative inputs.
 
 Profiles never select the newest file implicitly. Enabled features contribute
 module selections; a module runs when at least one enabled feature selects it.
@@ -41,8 +41,9 @@ inputs:
 
 Adjacent documentation and authoring tools do not affect the profile pin.
 `string_patcher` hashes only its semantic `strings.tsv`; its compiler and
-README are excluded. At composition time those string declarations become an
-in-memory binary-patcher package.
+README are excluded. At composition time those local declarations and the
+validated rows from a preceding `translation_importer` become one in-memory
+binary-patcher package.
 Texture-patcher hashes cover only the three declarative inputs `containers.tsv`,
 `mappings.tsv`, and `strategies.tsv`; replacements are derived directly from
 the hash-pinned NA2 and NUN5 source members and checked against the hashes in
@@ -57,9 +58,10 @@ The current profile composes:
    `font` binary-patcher package, while preserving clean NA2 GF4C;
 2. the runtime-proven menu-input handler set through `binary_patcher`;
 3. separate `QoL` and `Battle logic` binary-patcher sections using their preserved default states;
-4. the fixed-size memory-card title through `string_patcher`, delegated to the
-   shared `binary_patcher` engine;
-5. hash-pinned v35 mappings from the integrated `translation` module;
+4. hash-pinned v35 mappings through `translation_importer`, which imports and
+   validates official strings without writing game payloads;
+5. the fixed-size memory-card title plus imported BTL/ETC/SLPS strings through
+   `string_patcher`, delegated to the shared `binary_patcher` engine;
 6. 34 fixed-size source-derived official NUN5 UI container imports through
    `texture_patcher` (33 whole-container imports and one declared mapped import);
 7. the 13 paired UI renderer/table corrections through `binary_patcher`;
@@ -101,4 +103,7 @@ designed and approved implementation rather than a build flag.
 
 The ordinary `na2` command dispatches the profile build, then delegates mandatory PNACH actualization and PCSX2 launch to `scripts/na2/launch.ps1`. `na2 -c` launches `NA2.28 - Current.iso` without rebuilding, and `na2 -p` launches `NA2.28 - Previous.iso` without rebuilding. Translation and UI texture transplantation are invoked only as pinned profile modules and record their review plans or per-container patch tables inside the profile log.
 
-The profile references `na2_patcher/modules/translation/mappings.tsv` directly and pins its exact hash. Updating that table therefore requires an explicit profile-pin update.
+The profile references `na2_patcher/modules/translation_importer/mappings.tsv`
+directly and pins its exact hash. Updating that table therefore requires an
+explicit profile-pin update. The importer emits no binary writes; the selected
+imports are compiled and applied only by the following `string_patcher` module.

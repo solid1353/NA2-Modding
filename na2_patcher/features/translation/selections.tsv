@@ -1,8 +1,9 @@
 module_id	selection_kind	selection_id	reason
+translation_importer_m03_v35	all		Import every validated official-string target for downstream selection.
 string_patcher	group	identity	Select the fixed-size game-title replacement group.
-translation_m03_v35	native	BTL	Select battle text mappings.
-translation_m03_v35	native	ETC	Select overlay text mappings.
-translation_m03_v35	native	SLPS	Select boot-ELF text mappings.
+string_patcher	group	BTL	Patch imported battle strings into the game.
+string_patcher	group	ETC	Patch imported overlay strings into the game.
+string_patcher	group	SLPS	Patch imported boot-ELF strings into the game.
 texture_patcher_nun5_v1	all		Invoke the accepted UI texture package.
 ui_translation_code_v1	group	battle_ui	Select localized battle UI code and tables.
 ui_translation_code_v1	group	front_end	Select localized front-end UI code and tables.

@@ -7,7 +7,7 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..translation import engine as translation_module
+from ..translation_importer import engine as translation_importer
 
 
 MANIFEST_FIELDS = ["key", "value"]
@@ -225,7 +225,7 @@ def _source_arguments(root: Path, prefix: str) -> dict[str, Path]:
 
 
 def _read_source(root: Path, candidates: list[str], label: str) -> bytes:
-    source = translation_module.source_from(
+    source = translation_importer.source_from(
         root if root.is_dir() else None,
         root if root.is_file() else None,
         label,
@@ -251,18 +251,18 @@ def _translation_inputs(
 ]:
     if "na2" not in roots or "nun5" not in roots:
         raise ValueError("external translation requires na2 and nun5 roots")
-    translation_directory = package_directory.parent / "translation"
+    translation_directory = package_directory.parent / "translation_importer"
     mappings_path = translation_directory / "mappings.tsv"
     _require_hash(mappings_path.read_bytes(), manifest["mapping_sha256"], "mappings.tsv")
 
-    parsed = translation_module.parse_mappings(
-        translation_module.read_rows(mappings_path)
+    parsed = translation_importer.parse_mappings(
+        translation_importer.read_rows(mappings_path)
     )
     text_by_id = {str(row["id"]): row for row in parsed["text"]}
     if len(text_by_id) != len(parsed["text"]):
         raise ValueError("canonical translation mappings contain duplicate enabled text IDs")
 
-    translation_plan = translation_module.build_translation_plan(
+    translation_plan = translation_importer.build_translation_import_plan(
         **_source_arguments(roots["na2"], "na2"),
         **_source_arguments(roots["nun5"], "nun5"),
         data_root=translation_directory,
@@ -274,7 +274,7 @@ def _translation_inputs(
     clean_targets = {
         target: _read_source(
             roots["na2"],
-            translation_module.TARGET_SPECS[target][1],
+            translation_importer.TARGET_SPECS[target][1],
             f"NA2 {target}",
         )
         for target in TARGET_PATHS
@@ -289,14 +289,14 @@ def _translation_inputs(
 
     official_sources = {
         source_id: _read_source(roots["nun5"], candidates, source_id)
-        for source_id, candidates in translation_module.SOURCE_SPECS.items()
+        for source_id, candidates in translation_importer.SOURCE_SPECS.items()
     }
     _require_hash(
         official_sources["NUN5_TEXTENG"],
         manifest["nun5_texteng_sha256"],
         "NUN5 TEXTENG.BIN",
     )
-    return text_by_id, translation_plan.patch_rows, clean_targets, official_sources
+    return text_by_id, translation_plan.import_rows, clean_targets, official_sources
 
 
 def _validate_reference_coverage(
@@ -416,14 +416,14 @@ def _build_texteng(
 
         raw_source = mapping_id in parent_ids or not str(mapping["transform"])
         if raw_source:
-            text = translation_module.read_official_z(
+            text = translation_importer.read_official_z(
                 official_sources[source_id], source_offset, mapping_id
             )
             address = load_base + source_offset
             materialization = "donor"
             file_offset = source_offset
         else:
-            text = translation_module.resolve_source_text(
+            text = translation_importer.resolve_source_text(
                 mapping, official_sources, mapping_id
             )
             encoded = text.encode("cp1252") + b"\0"

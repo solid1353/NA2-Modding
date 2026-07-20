@@ -64,10 +64,11 @@ class IsoRecord:
 
 
 @dataclass(frozen=True)
-class TranslationPlan:
+class TranslationImportPlan:
     mapping_version: int
     packaged_mappings_sha256: str
-    patch_rows: list[dict[str, str]]
+    import_rows: list[dict[str, str]]
+    targets: dict[str, dict[str, object]]
     summary: dict[str, object]
 
 
@@ -572,7 +573,8 @@ def apply_text_mappings(mappings, selected, clean_targets, output_targets, offic
             write_slot(output_targets[target], offset, capacity, replacement)
         occupied[target].append((offset, offset + capacity, str(row["id"])))
         annotations.append({"path": TARGET_SPECS[target][0], "start": offset, "end": offset + capacity,
-                            "source_text": target_text, "replacement_text": replacement_text})
+                            "source_text": target_text, "replacement_text": replacement_text,
+                            "mapping_id": str(row["id"]), "reason": str(row["reason"])})
         stats["mapped"] += 1
         if clean_targets[target][offset:offset + capacity] != bytes(output_targets[target][offset:offset + capacity]):
             stats["changed"] += 1
@@ -604,7 +606,8 @@ def apply_byte_mappings(mappings, selected, output_targets):
         output_targets[target][offset:offset + len(expected)] = replacement
         occupied[target].append((offset, offset + len(expected), str(row["id"])))
         annotations.append({"path": TARGET_SPECS[target][0], "start": offset, "end": offset + len(expected),
-                            "source_text": "", "replacement_text": ""})
+                            "source_text": "", "replacement_text": "",
+                            "mapping_id": str(row["id"]), "reason": str(row["reason"])})
         stats["mapped"] += 1
         if expected != replacement:
             stats["changed"] += 1
@@ -646,14 +649,20 @@ def diff_rows(path: str, clean: bytes, output: bytes, annotations) -> list[dict[
                 "replacement_hex": output[a:b].hex().upper(),
                 "source_text": str(annotation["source_text"]) if annotation else "",
                 "replacement_text": str(annotation["replacement_text"]) if annotation else "",
+                "source_mapping_id": str(annotation["mapping_id"]) if annotation else "",
+                "reason": str(annotation["reason"]) if annotation else "Imported translation string.",
             })
     return rows
 
 
-def write_translation_tsv(path: Path, rows: list[dict[str, str]]) -> None:
+def write_import_tsv(path: Path, rows: list[dict[str, str]]) -> None:
     if not rows:
-        raise ValueError("No translation patches were generated")
-    fields = ["path", "offset", "expected_hex", "replacement_hex", "source_text", "replacement_text"]
+        raise ValueError("No translation imports were generated")
+    fields = [
+        "import_id", "group_id", "path", "offset", "expected_hex",
+        "replacement_hex", "source_text", "replacement_text",
+        "source_mapping_id", "reason",
+    ]
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     try:
         with temporary.open("w", encoding="utf-8-sig", newline="") as handle:
@@ -669,7 +678,7 @@ def write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def build_translation_plan(
+def build_translation_import_plan(
     *,
     na2_iso: Optional[Path] = None,
     na2_folder: Optional[Path] = None,
@@ -677,8 +686,8 @@ def build_translation_plan(
     nun5_folder: Optional[Path] = None,
     data_root: Path,
     apply: str = "BTL,ETC,SLPS",
-) -> TranslationPlan:
-    """Build a validated in-memory translation plan for another orchestrator."""
+) -> TranslationImportPlan:
+    """Import and validate strings without writing them into game payloads."""
     selected_list = parse_apply(apply)
     selected = set(selected_list)
     na2 = source_from(na2_folder, na2_iso, "NA2")
@@ -716,12 +725,23 @@ def build_translation_plan(
     )
     annotations = text_annotations + byte_annotations
 
-    patch_rows: list[dict[str, str]] = []
+    import_rows: list[dict[str, str]] = []
+    import_targets: dict[str, dict[str, object]] = {}
     translated_hashes: dict[str, dict[str, object]] = {}
     for target in selected_list:
         path = TARGET_SPECS[target][0]
         output = bytes(output_targets[target])
-        patch_rows.extend(diff_rows(path, clean_targets[target], output, annotations))
+        rows = diff_rows(path, clean_targets[target], output, annotations)
+        for row in rows:
+            row["import_id"] = f"{target}-I{len(import_rows) + 1:04d}"
+            row["group_id"] = target
+            import_rows.append(row)
+        import_targets[path] = {
+            "root_id": "na2",
+            "path": path,
+            "expected_size": len(clean_targets[target]),
+            "expected_sha256": hashlib.sha256(clean_targets[target]).hexdigest().upper(),
+        }
         translated_hashes[path] = {
             "source_sha1": sha1(clean_targets[target]),
             "translated_sha1": sha1(output),
@@ -738,10 +758,10 @@ def build_translation_plan(
     active_sections.update(byte_sections)
     summary: dict[str, object] = {
         "mapping_version": mapping_version,
-        "mode": "official-source translation module",
+        "mode": "official-source translation importer",
         "targets": selected_list,
         "output": {
-            "patch_rows": len(patch_rows),
+            "import_rows": len(import_rows),
             "text_mappings_applied": text_stats.get("mapped", 0),
             "text_mappings_changed": text_stats.get("changed", 0),
             "shortened_mappings_applied": text_stats.get("shortened", 0),
@@ -754,9 +774,10 @@ def build_translation_plan(
         "source_hashes": actual_hashes,
         "translated_file_hashes": translated_hashes,
     }
-    return TranslationPlan(
+    return TranslationImportPlan(
         mapping_version=mapping_version,
         packaged_mappings_sha256=packaged_hash,
-        patch_rows=patch_rows,
+        import_rows=import_rows,
+        targets=import_targets,
         summary=summary,
     )

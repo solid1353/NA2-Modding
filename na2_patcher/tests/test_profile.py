@@ -96,7 +96,7 @@ class ProfileTests(unittest.TestCase):
                 [
                     "one",
                     "10",
-                    "translation",
+                    "translation_importer",
                     "source/input.bin",
                     expected_hash,
                     "test",
@@ -223,7 +223,7 @@ class ProfileTests(unittest.TestCase):
                 {
                     "module_id": "enabled",
                     "order": "20",
-                    "module": "translation",
+                    "module": "translation_importer",
                     "input": "source/input.bin",
                     "expected_sha256": hashlib.sha256(b"profile input")
                     .hexdigest()
@@ -253,7 +253,7 @@ class ProfileTests(unittest.TestCase):
             modules = profile_path / "modules.tsv"
             text = modules.read_text(encoding="utf-8")
             modules.write_text(
-                text.replace("\ttranslation\t", "\tzip_overlay\t"),
+                text.replace("\ttranslation_importer\t", "\tzip_overlay\t"),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "unsupported module 'zip_overlay'"):

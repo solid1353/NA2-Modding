@@ -34,7 +34,7 @@ replaced with a copied machine-specific absolute path.
 - `@source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
 - `@source/*.files/`: extracted views of original source archives. Treat as read-only reference.
 - `build/`: normally contains `build/NA2.28 - Current.iso` and may retain at most `build/NA2.28 - Previous.iso` as rotation history. Standard builds use `build/NA2.28 - Current.iso.building` in the same directory and delete it on caught failure. After verification and log creation, a byte-identical candidate is discarded without changing the current or previous ISO; a changed candidate rotates the current ISO to the configured previous path and becomes the new current ISO. Other temporary, parity-check, and hypothesis-test ISOs may remain while they have a concrete future testing or comparison use, but are permanently deleted as soon as they become useless.
-- There are no top-level `packages/` or `milestones/` archive directories and no `na2_patcher/milestones/` snapshot tree. Temporary imported archives live under task-specific `work/temp/` folders until normalized or retired. Reproducible data lives as hash-pinned inputs beside its module; complete accepted states are preserved by annotated Git tags, and retired archives remain available through Git history.
+- There are no top-level `packages/` or `milestones/` archive directories and no `na2_patcher/milestones/` snapshot tree. Temporary imported archives live under the active task's `work/<task title>/temp/` folder until normalized or retired. Reproducible data lives as hash-pinned inputs beside its module; complete accepted states are preserved by annotated Git tags, and retired archives remain available through Git history.
 - `na2_patcher/modules/translation/mappings.tsv` is the translation module's current hash-pinned v34 input. The current profile invokes the translation engine directly and records its plan under the profile run log; no standalone export or source-hash bypass exists. All legacy translation builder archives have been retired from the workspace after exact profile parity and remain available through Git history.
 - `releases/`: ignored relative link to the frozen release archive outside the repository. It contains binary release artifacts only; never alter existing contents.
 - `logs/`: disposable execution records grouped into task-specific subfolders; no files should be written directly in the `logs/` root. `na2` keeps `logs/na2/latest.log` plus one `rolling.log` capped at the newest 20 completed operational invocations. Structured profile records under `logs/na2/builds/` are retained only for the configured current and previous ISO files; one atomically replaced `logs/na2/builds.tsv` maps both ISO names to their records. See `docs/LOGGING.md`.
@@ -50,10 +50,10 @@ replaced with a copied machine-specific absolute path.
 - `docs/LOGGING.md`: log contents, bounded retention, cleanup, and knowledge-promotion policy.
 - `docs/HYPOTHESES.md`: archived patch candidates, failed experiments, unverified addresses, and speculative leads.
 - `TASKS.md`: concrete active tasks, test plans, and queued investigations only; no general workflow rules.
-- `work/temp/`: ignored throwaway/intermediate workspace, organized into task-named subfolders and cleaned when no longer useful.
+- `work/<task title>/temp/`: ignored throwaway/intermediate workspace owned by that exact Codex task and cleaned when no longer useful. The shared top-level `work/temp/` directory is forbidden; any legacy instance is General-owned cleanup material and must not receive new files.
 - `old/`: user's personal folder. Off-limits unless explicitly instructed.
 
-Scratch/intermediate folders should be created only when needed under `@work/temp/`, with names tied to the task. Extractions of original source archives stay beside the source archive under `@source/`.
+Scratch/intermediate folders should be created only when needed under the active task's `work/<task title>/temp/` folder. Extractions of original source archives stay beside the source archive under `@source/`.
 For binary modding, prefer persistent target folders under `work/` over repeated fresh disassembly. State the tools/software used for each change, and keep command chunks short and reusable.
 See non-tracked folders in gitignore, need to be recreated if starting anew.
 
@@ -111,8 +111,10 @@ original/
 
 For edited/build versions, do not edit anything under `@source/` in place. Copy the needed file or archive into a task/build folder first, then patch that copy through scripts and log the source path and output path. If extraction or inspection needs metadata, write it under `@logs/` using source-relative paths instead of placing files in `@source/`.
 
-Use `scripts/media/extract_source_iso.ps1` for a new canonical extraction. It
-stages the work under `@work/temp/`, recursively expands CVM, inner ISO, AFS,
+Use `scripts/media/extract_source_iso.ps1` for a new canonical extraction. Its
+legacy shared staging path must be migrated to the invoking task's owned
+`work/<task title>/temp/` folder before the script is run; it must not recreate
+top-level `work/temp/`. It recursively expands CVM, inner ISO, AFS,
 and nested AFS containers, verifies file sets and byte contents, normalizes
 timestamps from archive metadata or deterministic container fallbacks, then
 promotes exactly one `<ISO filename>.files` tree. It refuses to merge into an

@@ -5,5 +5,5 @@ qol	1	na2_patcher/features/qol	7DC3742851DEF155336FD3012E11E614A841BE13361770C1A
 battle_logic	1	na2_patcher/features/battle_logic	DCEC8FA103CCD538710523A925B989964B10995690E989A71E1AC553A5D9522F	Apply accepted battle logic.
 testing	0	na2_patcher/features/testing	0D2E1B7FED089EB2E41058F16C3C8EE661A857C7623EF0E6A895BB44F7CEBEFF	Keep test hypotheses out of the normal build.
 rendering	0	na2_patcher/features/rendering	14802B0098652DF93142446B601BB136868A201F1465161E7EBCA2882AF7CCAC	Remain empty until rendering work is accepted.
-translation	1	na2_patcher/features/translation	C4E1E8154E9B23A90F152A453BDCD99393DB8305A97CAC08A5ABCD802F76ED5B	Compose the complete accepted English translation feature.
+translation	1	na2_patcher/features/translation	D14E58EC8B0EC06C5372776F48782A416A2F501EE6B96FF44C71080873CB72EF	Compose the complete accepted English translation feature.
 disc_identity	1	na2_patcher/features/disc_identity	EEF2704F7A98BCC9DFB1D723C51DE11CA067861EB06F24D5FC390AD6665C6DEE	Give the composed image its distinct boot serial.

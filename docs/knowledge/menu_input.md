@@ -1,6 +1,6 @@
 # Menu Input Runtime Knowledge
 
-This record preserves runtime behavior that was previously available only in dated binary-patcher patcher logs. The canonical per-screen results are in `na2_patcher/modules/binary_patcher/patch_sets/menu_input/runtime_tests.tsv`.
+This record preserves runtime behavior that was previously available only in dated binary-patcher logs. The canonical per-screen results are in `na2_patcher/modules/binary_patcher/patch_sets/menu_input/runtime_tests.tsv`.
 
 ## Save/load handler family
 
@@ -37,4 +37,4 @@ These module files are the canonical evidence. This document is the interpretati
 
 ## Provenance
 
-The matrices were observed on 2026-07-16 local time in four test builds represented by the former `@logs/binary_patcher_patcher/save_load_*` run directories. Their UTC build timestamps and exact candidate sets are retained in `runtime_tests.tsv`.
+The matrices were observed on 2026-07-16 local time in four test builds represented by the former `@logs/raw_binary_patcher/save_load_*` run directories. Their UTC build timestamps and exact candidate sets are retained in `runtime_tests.tsv`.

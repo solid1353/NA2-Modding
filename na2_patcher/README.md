@@ -15,10 +15,10 @@ Feature-to-module selections do not live in profiles. Each reusable feature
 package owns its ordered `selections.tsv`; binary-patcher selections may target
 groups or patches, while every current feature uses groups only.
 
-Profile schema v2 supports declarative `binary_patcher`, `translation`,
-`texture_patcher`, `external_translation`, and `disc_identity` modules. Package and
-ZIP-overlay workflows are retired; profiles consume only repository-owned
-declarative inputs.
+Profile schema v2 supports declarative `binary_patcher`, `string_patcher`,
+`translation`, `texture_patcher`, `external_translation`, and `disc_identity`
+modules. Package and ZIP-overlay workflows are retired; profiles consume only
+repository-owned declarative inputs.
 
 Profiles never select the newest file implicitly. Enabled features contribute
 module selections; a module runs when at least one enabled feature selects it.
@@ -29,7 +29,8 @@ blocking the active build when their contents change.
 Feature hashes cover only the package's `manifest.tsv` and `selections.tsv`.
 Adjacent feature documentation and schemas do not affect profile pins.
 
-For binary-patcher modules, the profile hash covers only executable package inputs:
+For `binary_patcher` modules, the profile hash covers only executable package
+inputs:
 
 - `manifest.tsv`
 - `targets.tsv`
@@ -39,6 +40,9 @@ For binary-patcher modules, the profile hash covers only executable package inpu
 - every blob referenced by `blob_path`
 
 Adjacent documentation and authoring tools do not affect the profile pin.
+`string_patcher` hashes only its semantic `strings.tsv`; its compiler and
+README are excluded. At composition time those string declarations become an
+in-memory binary-patcher package.
 Texture-patcher hashes cover only the three declarative inputs `containers.tsv`,
 `mappings.tsv`, and `strategies.tsv`; replacements are derived directly from
 the hash-pinned NA2 and NUN5 source members and checked against the hashes in
@@ -53,8 +57,8 @@ The current profile composes:
    `font` binary-patcher package, while preserving clean NA2 GF4C;
 2. the runtime-proven menu-input handler set through `binary_patcher`;
 3. separate `QoL` and `Battle logic` binary-patcher sections using their preserved default states;
-4. the fixed-size memory-card title through the `string_replacements`
-   binary-patcher patch set;
+4. the fixed-size memory-card title through `string_patcher`, delegated to the
+   shared `binary_patcher` engine;
 5. hash-pinned v35 mappings from the integrated `translation` module;
 6. 34 fixed-size source-derived official NUN5 UI container imports through
    `texture_patcher` (33 whole-container imports and one declared mapped import);

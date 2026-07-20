@@ -24,7 +24,7 @@ equal-length edits after every file-backed module has been composed:
    `SLPS_222.28;1`.
 
 The second edit is ISO filesystem metadata, not an ELF string replacement, so
-it deliberately does not belong to the `string_replacements` patch set. The
+it deliberately does not belong to the `string_patcher` module. The
 composer logs both original and replacement bytes and verifies the one declared
 tree rename. No file extent, file size, or ISO size changes.
 

@@ -37,6 +37,7 @@ MODULE_TYPES = {
     "disc_identity",
     "external_translation",
     "binary_patcher",
+    "string_patcher",
     "translation",
     "texture_patcher",
 }
@@ -47,6 +48,7 @@ BINARY_PATCHER_CONTROL_FILES = (
     "patches.tsv",
     "edits.tsv",
 )
+STRING_PATCHER_CONTROL_FILES = ("strings.tsv",)
 TEXTURE_PATCHER_CONTROL_FILES = (
     "containers.tsv",
     "mappings.tsv",
@@ -231,6 +233,17 @@ def _texture_patcher_content_files(path: Path) -> list[Path]:
     return files
 
 
+def _string_patcher_content_files(path: Path) -> list[Path]:
+    path = path.resolve()
+    files = [path / name for name in STRING_PATCHER_CONTROL_FILES]
+    missing = [item.name for item in files if not item.is_file()]
+    if missing:
+        raise FileNotFoundError(
+            f"String-patcher module is missing canonical input files: {', '.join(missing)}"
+        )
+    return files
+
+
 def _external_translation_content_files(path: Path) -> list[Path]:
     path = path.resolve()
     files = [path / name for name in EXTERNAL_TRANSLATION_CONTROL_FILES]
@@ -268,6 +281,8 @@ def module_content_sha256(path: Path, module_type: str) -> str:
         raise FileNotFoundError(path)
     if module_type == "binary_patcher":
         return _tree_digest(path, _binary_patcher_content_files(path))
+    if module_type == "string_patcher":
+        return _tree_digest(path, _string_patcher_content_files(path))
     if module_type == "external_translation":
         return _tree_digest(path, _external_translation_content_files(path))
     if module_type == "texture_patcher":
@@ -441,7 +456,7 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
             module_type = str(module_definitions[module_id]["module"])
             allowed = (
                 {"group", "patch"}
-                if module_type == "binary_patcher"
+                if module_type in {"binary_patcher", "string_patcher"}
                 else {"all", "native"}
             )
             if selection_kind not in allowed:

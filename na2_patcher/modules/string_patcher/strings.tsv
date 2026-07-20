@@ -1,0 +1,2 @@
+string_id	group_id	default_enabled	status	confidence	root_id	path	expected_size	expected_sha256	offset	capacity	encoding	storage	expected_text	replacement_text	reason	review_notes
+ELF-S001	identity	0	approved_for_test	verified	na2	SLPS_258.37	5273256	20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF	0x2FBAE0	64	cp932	nul_padded	ＮＡＲＵＴＯ－ナルト－　疾風伝ナルティメットアクセル２	ＮＡ　ｖ２．２８	Replace the original CP932 memory-card title with the full-width CP932 title NA v2.28 and preserve the 64-byte slot.	Awaiting runtime verification in the PS2 memory-card browser.

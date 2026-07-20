@@ -46,6 +46,7 @@ context rather than repeated here.
 Component-specific documentation stays with its component, including the
 [translation module](na2_patcher/modules/translation/README.md) and the
 [binary patcher module](na2_patcher/modules/binary_patcher/README.md), plus the
+[string patcher module](na2_patcher/modules/string_patcher/README.md) and the
 [texture patcher module](na2_patcher/modules/texture_patcher/README.md).
 
 Install the pinned patcher dependency before building the current profile:

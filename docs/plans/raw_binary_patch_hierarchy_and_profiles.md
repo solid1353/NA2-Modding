@@ -101,7 +101,7 @@ groups:
 - Menu input: `battle_ui`, `front_end`, `etc_ui`, `battle_results`
 - QoL: `startup`, `practice`, `mode_select`
 - Battle logic: `combat_rules`
-- String replacements: `identity`
+- String patcher (delegated to `binary_patcher`): `identity`
 - UI translation code: `battle_ui`, `front_end`, `shop`
 
 Testing remains a disabled feature with its `substitution` group available for
@@ -123,7 +123,8 @@ preserving their exact edits:
 The profile pins every enabled feature package and active module input by
 deterministic hash. Feature hashes cover only `manifest.tsv` and
 `selections.tsv`; binary-patcher hashes cover the five canonical control tables
-plus referenced blobs. Adjacent documentation is excluded from both.
+plus referenced blobs, while string-patcher hashes cover only its semantic
+`strings.tsv`. Adjacent documentation and engine code are excluded.
 
 Profile-run logs record enabled features, every feature-selection occurrence,
 module identity and hash, selected group/patch provenance, expanded patch/edit

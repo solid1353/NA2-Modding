@@ -1,2 +1,0 @@
-patch_id	group_id	default_enabled	status	confidence	name	description	source_mapping_id	runtime_classification	review_notes
-ELF-S001	identity	0	approved_for_test	verified	Game title	Replace the embedded memory-card title with the project title.			Awaiting runtime verification in the PS2 memory-card browser.

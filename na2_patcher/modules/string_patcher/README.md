@@ -1,7 +1,14 @@
-# String replacements
+# String patcher
 
-This patch set owns fixed-size replacements for embedded NA2 strings that do not
-belong to the official NUN5-backed translation mapping module.
+This module owns fixed-size replacements for embedded NA2 strings that do not
+belong to the official NUN5-backed translation mapping module. Its sole
+executable input is `strings.tsv`, which declares text-oriented fields such as
+encoding, storage mode, expected text, replacement text, byte capacity, and
+target location. The module validates and encodes those declarations, then
+compiles an in-memory binary-patcher package. Profile composition delegates all
+selection, byte guards, conflict handling, replacement, and logging behavior to
+`na2_patcher.modules.binary_patcher.engine`. No binary-patcher tables or
+duplicate patch engine are stored here.
 
 ## `ELF-S001` — Game title
 

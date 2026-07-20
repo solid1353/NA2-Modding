@@ -1,5 +1,5 @@
 module_id	selection_kind	selection_id	reason
-string_replacements	group	identity	Select the fixed-size game-title replacement group.
+string_patcher	group	identity	Select the fixed-size game-title replacement group.
 translation_m03_v35	native	BTL	Select battle text mappings.
 translation_m03_v35	native	ETC	Select overlay text mappings.
 translation_m03_v35	native	SLPS	Select boot-ELF text mappings.

@@ -335,6 +335,25 @@ class ProfileTests(unittest.TestCase):
             second = module_content_sha256(package, "binary_patcher")
             self.assertNotEqual(first, second)
 
+    def test_string_patcher_hash_includes_only_string_declarations(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory) / "string_patcher"
+            package.mkdir()
+            (package / "strings.tsv").write_text("string_id\none\n", encoding="utf-8")
+            (package / "README.md").write_text("first\n", encoding="utf-8")
+            (package / "engine.py").write_text("first\n", encoding="utf-8")
+
+            first = module_content_sha256(package, "string_patcher")
+            (package / "README.md").write_text("second\n", encoding="utf-8")
+            (package / "engine.py").write_text("second\n", encoding="utf-8")
+            self.assertEqual(first, module_content_sha256(package, "string_patcher"))
+
+            (package / "strings.tsv").write_text("string_id\ntwo\n", encoding="utf-8")
+            self.assertNotEqual(
+                first,
+                module_content_sha256(package, "string_patcher"),
+            )
+
     def test_ui_texture_hash_includes_only_declarative_inputs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             package = Path(directory) / "package"
@@ -416,7 +435,7 @@ class ProfileTests(unittest.TestCase):
         profile_directory = repository / "na2_patcher" / "profiles" / "current"
         self.assertFalse((profile_directory / "feature_selections.tsv").exists())
 
-    def test_current_binary_patcher_selections_are_group_only(self) -> None:
+    def test_current_binary_backed_patcher_selections_are_group_only(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         profile = load_profile(
             repository / "na2_patcher" / "profiles" / "current",
@@ -426,7 +445,8 @@ class ProfileTests(unittest.TestCase):
         binary_selections = [
             selection
             for selection in profile.selections
-            if module_types[selection.module_id] == "binary_patcher"
+            if module_types[selection.module_id]
+            in {"binary_patcher", "string_patcher"}
         ]
         self.assertTrue(binary_selections)
         self.assertEqual(

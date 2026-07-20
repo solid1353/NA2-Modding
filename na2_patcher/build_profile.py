@@ -17,6 +17,7 @@ from .iso9660 import (
 from .modules import translation as translation_module
 from .modules.disc_identity import engine as disc_identity_module
 from .modules.binary_patcher import engine as binary_patcher_module
+from .modules.string_patcher import engine as string_patcher_module
 from .modules.texture_patcher import engine as texture_patcher_module
 from .profile import FeatureSelection, Profile, ProfileModule, load_profile
 from .project_paths import load_project_paths
@@ -162,13 +163,15 @@ def apply_translation_rows(
 def apply_binary_patch_set(
     package_directory: Path,
     *,
+    package: binary_patcher_module.Package | None = None,
     roots: dict[str, Path],
     feature_selections: tuple[FeatureSelection, ...],
     source: Iso9660,
     payloads: dict[str, bytearray],
     owners: dict[str, str],
 ) -> dict[str, object]:
-    package = binary_patcher_module.load_package(package_directory)
+    if package is None:
+        package = binary_patcher_module.load_package(package_directory)
     target_data = binary_patcher_module.verify_package_data(package, roots)
     selected = binary_patcher_module.resolve_patch_selections(
         package,
@@ -664,9 +667,15 @@ def apply_profile_modules(
                 }
             )
             continue
-        if module.module == "binary_patcher":
+        if module.module in {"binary_patcher", "string_patcher"}:
+            compiled_package = (
+                string_patcher_module.build_binary_package(module.input_path)
+                if module.module == "string_patcher"
+                else None
+            )
             result = apply_binary_patch_set(
                 module.input_path,
+                package=compiled_package,
                 roots=profile.roots,
                 feature_selections=module.selections,
                 source=source,

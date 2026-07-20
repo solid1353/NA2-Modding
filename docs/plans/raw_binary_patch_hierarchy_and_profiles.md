@@ -34,12 +34,12 @@ content follows the hierarchy above.
 ## Schema and engine work
 
 The architecture observed during the source task used raw-binary schema v1
-with package-local `manifest.tsv`, `targets.tsv`, `patches.tsv`,
+with patch-set-local `manifest.tsv`, `targets.tsv`, `patches.tsv`,
 `relations.tsv`, and `edits.tsv`. It represented patch set -> patch -> edit and
 had no first-class group layer. Treat that as the starting diagnosis, not a
 guaranteed-current snapshot; refresh the live engine and schemas before work.
 
-Introduce an explicit group representation, expected to be a package-local
+Introduce an explicit group representation, expected to be a patch-set-local
 `groups.tsv` plus a required `group_id` in `patches.tsv`, subject to final
 inspection and design. Update raw-binary loading, validation, selection,
 planning, application, logging, schemas, documentation, and focused tests.
@@ -146,7 +146,7 @@ forbids additional public build arguments. This is a live design constraint,
 not permission to add another flag. Implementation must either keep explicit
 selection internal/test-only or obtain an approved change to the public command
 contract. Relevant scripts and tests must still invoke the same profile-driven
-planner instead of independently hard-coding packages or selections.
+planner instead of independently hard-coding patch sets or selections.
 
 Plans and logs must identify the selected profile, resolved patch sets, groups,
 patches, and edits. Stale input hashes or invalid selections must fail before
@@ -179,7 +179,7 @@ binary modification begins.
 ## Execution constraints
 
 Before implementation, refresh live Git and workspace state and inspect the
-current raw-binary engine, schemas, packages, profiles, scripts, and tests.
+current raw-binary engine, schemas, patch sets, profiles, scripts, and tests.
 Concurrent edits are expected; preserve them and stop on direct overlap. Follow
 the selected-task approval gates in `AGENTS.md`. Do not build an ISO or launch
 PCSX2 unless runtime work is explicitly added to the task scope.

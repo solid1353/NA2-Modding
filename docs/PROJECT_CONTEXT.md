@@ -34,8 +34,8 @@ replaced with a copied machine-specific absolute path.
 - `@source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
 - `@source/*.files/`: extracted views of original source archives. Treat as read-only reference.
 - `build/`: normally contains `build/NA2.28 - Current.iso` and may retain at most `build/NA2.28 - Previous.iso` as rotation history. Standard builds use `build/NA2.28 - Current.iso.building` in the same directory and delete it on caught failure. After verification and log creation, a byte-identical candidate is discarded without changing the current or previous ISO; a changed candidate rotates the current ISO to the configured previous path and becomes the new current ISO. Other temporary, parity-check, and hypothesis-test ISOs may remain while they have a concrete future testing or comparison use, but are permanently deleted as soon as they become useless.
-- There are no top-level `packages/` or `milestones/` archive directories and no `na2_patcher/milestones/` snapshot tree. Temporary imported archives live under the active task's `work/<task title>/temp/` folder until normalized or retired. Reproducible data lives as hash-pinned inputs beside its module; complete accepted states are preserved by annotated Git tags, and retired archives remain available through Git history.
-- `na2_patcher/modules/translation/mappings.tsv` is the translation module's current hash-pinned v34 input. The current profile invokes the translation engine directly and records its plan under the profile run log; no standalone export or source-hash bypass exists. All legacy translation builder archives have been retired from the workspace after exact profile parity and remain available through Git history.
+- Temporary imported archives live under the active task's `work/<task title>/temp/` folder until normalized or retired. Reproducible data lives as hash-pinned inputs beside its module; complete accepted states are preserved by annotated Git tags, and retired inputs remain available through Git history.
+- `na2_patcher/modules/translation/mappings.tsv` is the translation module's current hash-pinned v34 input. The current profile invokes the translation engine directly and records its plan under the profile run log; no standalone export or source-hash bypass exists.
 - `releases/`: ignored relative link to the frozen release archive outside the repository. It contains binary release artifacts only; never alter existing contents.
 - `logs/`: disposable execution records grouped into task-specific subfolders; no files should be written directly in the `logs/` root. `na2` keeps `logs/na2/latest.log` plus one `rolling.log` capped at the newest 20 completed operational invocations. Structured profile records under `logs/na2/builds/` are retained only for the configured current and previous ISO files; one atomically replaced `logs/na2/builds.tsv` maps both ISO names to their records. See `docs/LOGGING.md`.
 - `scripts/`: repeatable tooling.
@@ -65,7 +65,7 @@ Use separate Codex tasks against the same real project root:
 - Translation: maintain mappings, validate module/profile compatibility, and investigate translation issues without bypassing the hash-pinned profile workflow.
 - Logic / PNACH: gameplay patches and reverse engineering unrelated to font or translation work.
 
-All tasks must read `AGENTS.md`, `docs/PROJECT_CONTEXT.md`, `TASKS.md`, and `docs/HYPOTHESES.md` before acting. Binary outputs and experiments remain shared, so each task must re-check Git status and current package/build state before modifying files.
+All tasks must read `AGENTS.md`, `docs/PROJECT_CONTEXT.md`, `TASKS.md`, and `docs/HYPOTHESES.md` before acting. Binary outputs and experiments remain shared, so each task must re-check Git status and current profile/build state before modifying files.
 
 ## Extraction Layout
 
@@ -221,12 +221,6 @@ File role hypotheses:
 - `logo.ccs`: likely startup/logo texture/animation data, not normal string translation.
 - PSS files: movie/video files. Do not delete/rename blindly.
 - AFS files: archives, not directly playable audio streams. Extract first, then inspect contained files.
-
-Prior package mentioned:
-
-- `narutimate_translation_latest_all_v6_substantial.zip`
-- Claimed contents: `BTL.BIN`, `ETC.bin`, `SLPS_258.37`, `translation_v6_log.tsv`
-- Claimed stats: 238 exact replacements, 14 offset-based replacements, 17 already-present strings.
 
 Prior known PNACH patch notes:
 

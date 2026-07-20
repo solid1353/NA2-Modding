@@ -133,7 +133,7 @@ reported `ISO result: unchanged` against the Current ISO hash above. The old
 runtime evidence remains the behavioral baseline until the user performs the
 requested game validation and accepts this refactor.
 
-The historical UI raw package baseline contains 5 targets, 11 patches, and 82
+The historical UI raw-binary baseline contains 5 targets, 11 patches, and 82
 edits. Its focused `UI-ETC-001` plan resolves to one exact edit. The UI runtime
 suite passed 17 tests, the full `na2_patcher` suite passed 42 tests, and the
 accepted profile build record is

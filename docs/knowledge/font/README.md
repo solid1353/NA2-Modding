@@ -5,7 +5,7 @@ evidence, including accepted implementations and rejected historical tests.
 
 ## 2026-07-20 accepted native 14x20 integration baseline
 
-The current package is version 5 with module hash
+The current patch set is version 5 with module hash
 `9FC3C4905DFF6D14BAAA848C56E6C17D1DE4E79EEFAB2E1A7A74FAD6A25013F8`.
 It is a new, deterministic donor built from hash-verified clean NA2 and
 official NUN5 inputs; it is not based on m01, v22/v23, the rejected semantic
@@ -31,7 +31,7 @@ these referenced blobs:
 The runtime-reviewed `native_final_v2` result contains exactly 19 edits: seven
 glyph edits, nine Controls fit/alignment edits, and three character-modal
 alignment edits. All four preserved NA2 savestates contain the same payload.
-The canonical package was recovered byte-for-byte from those states before
+The canonical patch set was recovered byte-for-byte from those states before
 closeout; a later unreviewed modal-scaling experiment was removed. Matched
 Controls, Practice, Save/Load, and character-modal comparisons were presented
 to the user, who accepted the result as good while noting that halfwidth Latin
@@ -80,7 +80,7 @@ measurement stayed unchanged. Runtime captures showed damaged outlines and
 no useful alignment improvement. The exact edit remains disabled as
 `font_vertical_quad_height` with `runtime_failed` status.
 
-The accepted package has two independent `runtime_proven` components:
+The accepted patch set has two independent `runtime_proven` components:
 
 - `font_controls_auto_fit` affects only the first eight Controls action-label
   calls plus the local Controls row origin. Clean plain-ASCII measurement is
@@ -108,7 +108,7 @@ The four ordinary character-modal centers are `(318.5,182)`, `(319,212)`,
 `(319,314.5)` in both. The accepted compact-table capture is byte-identical to
 the independently tested dynamic-centering proof.
 
-The package preserves the 5,273,256-byte ELF size. Applying it to the verified
+The patch set preserves the 5,273,256-byte ELF size. Applying it to the verified
 clean ELF produces SHA-256
 `3338654A24BCFCC5E101654A93E585335A9A9ECEE607AC018F43D0E54FD14217`.
 The Controls helper SHA-256 is

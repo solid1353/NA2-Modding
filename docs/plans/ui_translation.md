@@ -188,7 +188,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   all three targets selected.
 - `na2_patcher/profiles/current/modules.tsv` enables both modules by canonical
   executable-input hash.
-- The raw package validates as 6 targets, 13 patches, and 86 edits. The UI
+- The raw-binary patch set validates as 6 targets, 13 patches, and 86 edits. The UI
   texture plan derives all 34 members with 33 whole donors and MODE2KDV as the
   only mapped exception. The historical runtime harness remains available;
   current focused and complete-suite results are refreshed with each build.

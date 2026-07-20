@@ -126,10 +126,11 @@ Save/Load and Practice remain outside the Controls fit decision.
   targets clean `SLPS_258.37` and `DATA/GF4.BIN`, preserves clean GF4C, and
   has module hash
   `9FC3C4905DFF6D14BAAA848C56E6C17D1DE4E79EEFAB2E1A7A74FAD6A25013F8`.
-- `na2_patcher/modules/raw_binary/patch_sets/font_m01/` is historical evidence.
+- `docs/knowledge/font/history/font_m01/` is historical evidence, deliberately
+  kept outside active patch-set discovery.
   Its semantic NUN5 appearance patch is disabled and `runtime_failed`.
-- `na2_patcher/modules/raw_binary/patch_sets/font_elf_history/` preserves
-  historical ELF experiments.
+- `docs/knowledge/font/history/font_elf_history/` preserves historical ELF
+  experiments outside active patch-set discovery.
 - `docs/knowledge/font/README.md` records the v23 and 2026-07-19 auto-fit
   negative results.
 - Reuse the preserved NA2 and NUN5 analysis under

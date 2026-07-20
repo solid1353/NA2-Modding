@@ -66,17 +66,18 @@ The intended Rendering organization is:
 Rendering patch set
 ├── Fonts group
 │   ├── Font patch
-│   │   └── Accepted current font_m01 GF4/ELF coverage edits
+│   │   └── Active native NUN5-derived GF4/ELF edits
 │   ├── Auto-fit patch
 │   │   └── Future NUN5-style renderer fitting edits
-│   └── Disabled historical font experiment patches
+│   └── Historical evidence in docs/knowledge/font/history/
 └── Aspect Ratio group
     └── Future aspect-ratio patches
 ```
 
-The currently separate `font_m01` and `font_elf_history` data should be
-consolidated into Rendering while preserving the accepted current state and
-appropriate disabled v22/v23 history.
+The retired `font_m01` and `font_elf_history` records live under
+`docs/knowledge/font/history/` and must remain outside active patch-set
+discovery. Any future Rendering consolidation concerns only the active Font
+implementation; the disabled v22/v23 records remain knowledge evidence.
 
 QoL demonstrates why the group layer is needed. Its original PNACH hierarchy
 was migrated too literally: cheats became patches and subcheats became edits.

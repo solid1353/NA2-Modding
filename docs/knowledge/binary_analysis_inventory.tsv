@@ -1,5 +1,5 @@
 artifact	format_or_role	size_bytes	default_analysis	trigger_or_reason	existing_evidence	confidence
-@source_na2/DATA/GF4.BIN	GF4 font/resource container	906678	data_only	Inspect glyph tables and resource ranges; no executable signature	font_m01 patch set and font knowledge record	high
+@source_na2/DATA/GF4.BIN	GF4 font/resource container	906678	data_only	Inspect glyph tables and resource ranges; no executable signature	font m01 history record and font knowledge record	high
 @source_na2/DATA/GF4C.BIN	GF4 companion table	104	data_only	Compare structured companion values; no execution evidence	font knowledge record	medium
 @source_na2/DATA/GRF4.BIN	GF4-family resource	6756	data_only	Parse or compare resource structure before interpreting values	outer-ISO inventory	medium
 @source_na2/DATA/PLVOICE.AFS	AFS voice archive	22192128	data_only	Inventory or extract audio members for a concrete audio task	AFS member inventory	high

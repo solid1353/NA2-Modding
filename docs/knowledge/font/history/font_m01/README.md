@@ -1,9 +1,10 @@
-# Historical font m01 experiments
+# Historical font m01 records
 
-This package preserves the old m01 line as historical evidence. It is no
-longer selected by the current profile and is not a parent for clean-source
-Font work. One atomic `font_m01` patch can still reproduce the former baseline
-from clean NA2 inputs:
+This directory preserves the old m01 line as historical evidence. It is not
+under active patch-set discovery, is not selected by the current profile, and
+is not a parent for clean-source Font work. The retained declarative
+`font_m01` record can still reproduce the former baseline from clean NA2
+inputs:
 
 - `DATA/GF4.BIN`: six verified replacement ranges; output SHA-256
   `7E01BB6101431F1628F8ECF541ACA1D71AB1A42F27A2E20E01C951CE15CB49AF`.
@@ -12,8 +13,8 @@ from clean NA2 inputs:
 
 The source package SHA-256 was
 `FC345460BBC22A263C6D0AB8A728A156273BB226707BFC64B3D3C813753E7410`.
-The archive and conversion tooling are retained only in Git history. The
-declarative TSVs are the active source of truth.
+The archive and conversion tooling are retained only in Git history. These
+declarative TSVs are the preserved audit source, not active build inputs.
 
 ## Rejected semantic NUN5 appearance experiment
 

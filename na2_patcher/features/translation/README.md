@@ -9,10 +9,9 @@ while reusable executable engines remain under `na2_patcher/modules/`.
 - [Binary patcher](#ui-translation-binary-patcher-patch-set)
 - [External translation](#external-translation)
 
-`manifest.tsv` declares the feature and `selections.tsv` selects the ordered
-module groups and packages that compose it. Other features may reuse those
-module inputs through their own selections; physical ownership does not limit
-selection.
+`manifest.tsv` declares the feature. Its module-named subdirectories are the
+module inputs that compose it; enabling Translation enables all of them, and
+the profile supplies their global order and hash pins.
 
 ## NA2 translation importer (mapping version 35)
 
@@ -60,7 +59,7 @@ The 12 columns are:
 #### Stable IDs and enabled state
 
 - `id` is a stable mapping identifier.
-- `enabled=1` imports the row for downstream `string_patcher` selection.
+- `enabled=1` imports the row for downstream `string_patcher` composition.
 - `enabled=0` retains the row without applying it.
 - `mappings.tsv` is the only enabled-state source. Profile builds never rewrite it
   or inherit flags from external state.
@@ -491,12 +490,13 @@ PCSX2 application chrome, toolbar text, pause indicators, graphical controller p
 - Do not replace the integrated module by extracting a legacy builder archive over the project.
 - Do not copy generated profile-log plans back into the module.
 - Do not add patched `BTL.BIN`, `ETC.BIN`, or `SLPS_258.37` payloads to the importer or checkpoint commits; binary deliverables belong only in the frozen release archive.
-- `string_patcher` owns conversion of imported rows into selectable BTL, ETC,
-  and SLPS patch groups; `binary_patcher` owns guards, conflicts, writes, and logs.
+- `string_patcher` owns conversion of imported rows into default-enabled BTL,
+  ETC, and SLPS patches; `binary_patcher` owns guards, conflicts, writes, and logs.
 - The profile orchestrator owns composition and ISO application. The importer
   must run immediately before its consuming `string_patcher` instance.
 
-The module has no standalone CLI. Target selection belongs to the hash-pinned profile.
+The module has no standalone CLI. Mapping `enabled` flags determine imported
+targets, and enabling the Translation feature invokes the complete importer.
 
 ## String patcher
 
@@ -505,7 +505,8 @@ sole persisted executable input is `strings.tsv`, which contains local semantic
 declarations such as encoding, storage mode, expected text, replacement text,
 capacity, and target location. At profile composition time it also accepts
 validated in-memory rows from `translation_importer`. It compiles both sources
-into one in-memory binary-patcher package with selectable groups, then delegates
+into one in-memory binary-patcher package with organizational groups and
+default-enabled patches, then delegates
 byte guards, conflict handling, replacement, and logging to
 `na2_patcher.modules.binary_patcher.engine`. Imported mapping data is not copied
 into this module, and no binary-patcher tables or duplicate patch engine are

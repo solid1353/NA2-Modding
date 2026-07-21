@@ -1,7 +1,7 @@
 column	required	type	description
-patch_id	1	identifier	Atomic selectable patch identifier.
+patch_id	1	identifier	Atomic patch identifier.
 group_id	1	identifier	Declared organizational group containing the patch.
-default_enabled	1	boolean:0|1	Allowed only for runtime_proven patches.
+default_enabled	1	boolean:0|1	Normal-composition flag; allowed only for approved_for_test or runtime_proven patches.
 status	1	enum:pending|approved_for_test|runtime_proven|runtime_failed|deprecated	Review/runtime state.
 confidence	1	enum:high|medium|low|verified	Analytical confidence.
 name	1	string	Short human-readable name.

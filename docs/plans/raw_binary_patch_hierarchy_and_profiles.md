@@ -7,12 +7,9 @@ The active build hierarchy is:
 ```text
 Profile
 └── Feature
-    └── Module selection
-        ├── native/all selection for non-binary-patcher modules
-        └── binary-patcher module / patch set
-            └── selected group or patch
-                └── patch
-                    └── edit
+    └── Module input
+        └── patch
+            └── edit
 ```
 
 A binary-patcher module instance and its patch set are the same compositional node
@@ -29,33 +26,23 @@ Profiles use two normalized tables in addition to their manifest and roots:
 - `modules.tsv` declares ordered module instances, their engine type, input,
   hash pin, and reason.
 
-Feature selections do not live in profiles. Every reusable package under
-`na2_patcher/features/<feature_id>/` owns a `manifest.tsv`, ordered
-`selections.tsv`, one root `README.md`, and its feature-specific declarative
-module inputs. Reusable executable engines remain under `na2_patcher/modules/`.
-The consuming profile supplies the stable module instances named by those
-selections and independently pins each feature-owned input.
+Every reusable package under `na2_patcher/features/<feature_id>/` owns a
+`manifest.tsv`, one root `README.md`, and module-named subdirectories containing
+its declarative inputs. Reusable executable engines remain under
+`na2_patcher/modules/`.
 
-For binary-patcher modules, a selection row is conceptually
-`(module_id, selection_kind, selection_id)`, where `selection_kind` may be
-`group` or `patch`. A feature may contain both kinds, repeated selections are
-preserved, and overlapping selections are not deduplicated. Every selection
-therefore keeps its own provenance in plans and logs.
+The directories themselves define ownership. Every profile module input must
+be beneath exactly one feature directory, and its first subdirectory must equal
+the module engine type. Enabling a feature enables all module inputs it owns.
+The profile independently supplies their stable instance IDs, global order,
+and content hashes; there is no feature-selection table or duplicated
+feature-level module catalog.
 
-Current feature packages deliberately use only group selections for binary-patcher
-modules. Direct patch selection is supported by the feature schema and engine
-for future isolated features and tests, but no current feature package selects
-a patch ID.
-
-Non-binary-patcher modules retain their existing semantics: `all` selects the
-complete module and `native` carries a module-specific selector when one exists.
-For example, `translation_importer` uses `all` because downstream BTL/ETC/SLPS
-selection belongs to `string_patcher`. Non-binary modules do not need group
-catalogs merely to participate in features.
-
-An enabled feature must select at least one module input. A disabled feature may
-be empty, which permits reserved features such as Rendering without inventing
-placeholder content.
+Binary-patcher packages declare their normal composition through
+`default_enabled` on each patch. Disabled experimental, failed, or unrelated
+patches may remain in the same package for inspection without entering the
+normal profile build. Focused CLI commands can still request explicit patch IDs
+for research and validation, but this is not part of feature composition.
 
 ## Binary-patcher schema v2
 
@@ -67,7 +54,7 @@ Every binary-patcher package has exactly five canonical control tables:
 - `patches.tsv`
 - `edits.tsv`
 
-`groups.tsv` declares the package's selectable group catalog. Every patch must
+`groups.tsv` declares the package's organizational group catalog. Every patch must
 name one declared group, and every edit must name one declared patch. Empty
 packages are valid, but a declared group must contain at least one patch and a
 declared patch must contain at least one edit.
@@ -78,28 +65,26 @@ model. Edits that must always apply together belong to one atomic patch. A
 future schema can add explicit relations when a concrete need establishes the
 right semantics.
 
-## Selection and conflict validation
+## Composition and conflict validation
 
-Group selection expands to all patches in deterministic package order. Patch
-selection expands only the named patch. Expansion preserves every selection
-instance, including repeated and overlapping group/patch selections.
-
-After all active selections are materialized as concrete ordered edits, the
+Each enabled binary-patcher module expands its default-enabled patches in
+deterministic package order. After those patches are materialized as concrete
+ordered edits, the
 compositor simulates them in memory before creating the `.building` ISO:
 
 - if the current bytes match the edit guard, apply the replacement;
 - if the replacement is already present, record `already_satisfied`;
 - if an edit's guard matches bytes written by an earlier edit, apply it as a
   valid ordered chain;
-- otherwise fail as a real selected-edit conflict.
+- otherwise fail as a real composed-edit conflict.
 
 This validates the actual composed result instead of trying to infer conflicts
-from overlapping ranges or selection metadata. Overlap itself is legal.
+from overlapping ranges or separate dependency metadata. Overlap itself is legal.
 
 ## Current canonical groups
 
-The feature packages enabled by the current profile select these binary-patcher
-groups:
+The feature packages enabled by the current profile default-enable patches in
+these binary-patcher groups:
 
 - Font: `glyph_data`, `auto_fit`, `alignment`
 - Menu input: `battle_ui`, `front_end`, `etc_ui`, `battle_results`
@@ -125,22 +110,21 @@ preserving their exact edits:
 ## Reproducibility and logs
 
 The profile pins every enabled feature package and active module input by
-deterministic hash. Feature hashes cover only `manifest.tsv` and
-`selections.tsv`; binary-patcher hashes cover the five canonical control tables
+deterministic hash. Feature hashes cover only `manifest.tsv`; binary-patcher
+hashes cover the five canonical control tables
 plus referenced blobs, while string-patcher hashes cover only its semantic
 `strings.tsv`. Adjacent documentation and engine code are excluded.
 
-Profile-run logs record enabled features, every feature-selection occurrence,
-module identity and hash, selected group/patch provenance, expanded patch/edit
-instances, and each edit outcome. The normal bare `na2` workflow continues to
-load `na2_patcher/profiles/current/`; this migration adds no public profile
-selection flag.
+Profile-run logs record enabled features, folder-derived module ownership,
+module identity and hash, applied default patch/edit instances, and each edit
+outcome. The normal bare `na2` workflow continues to load
+`na2_patcher/profiles/current/`.
 
 ## Migration proof
 
 Before migration, a deterministic v1 baseline captured six enabled binary-patcher modules,
-92 selected patches, and 256 selected edits. After migration, the group-only
-current feature packages expand to 95 patch instances and the same 256 edit
+92 selected patches, and 256 selected edits. After migration, the current
+feature packages expand to 95 default patch instances and the same 256 edit
 instances; the patch-instance count increases only because the two QoL bundles
 became seven independent patches. Exact target paths, offsets, guards,
 replacement bytes, lengths, and ordering remain equivalent.
@@ -152,13 +136,13 @@ PCSX2.
 
 ## Acceptance criteria
 
-- Profile schema v2 enables and hash-pins reusable feature packages without
-  storing feature selections in the profile.
+- Profile schema v2 enables and hash-pins reusable feature packages and derives
+  module ownership from their directories.
 - Binary-patcher schema v2 represents package -> group -> patch -> edit.
-- Current feature packages use binary-patcher group selections only.
-- Direct binary-patcher patch selection remains supported for future profiles/tests.
-- Overlapping and repeated selections retain provenance and are validated by
-  deterministic ordered edit simulation rather than deduplication.
+- Feature selection tables and schemas are removed without replacement.
+- Normal composition applies each enabled module's default-enabled patches.
+- Overlapping patches are validated by deterministic ordered edit simulation
+  rather than deduplication.
 - `relations.tsv` and live schema v1 support are removed.
 - Rendering is empty and Font is separate.
 - Existing current-profile binary edit bytes remain unchanged.

@@ -1,4 +1,0 @@
-module_id	selection_kind	selection_id	reason
-font	group	glyph_data	Select accepted font glyph data.
-font	group	auto_fit	Select accepted shrink-only fitting.
-font	group	alignment	Select accepted font alignment corrections.

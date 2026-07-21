@@ -2,7 +2,7 @@
 
 File-backed quality-of-life patches for the NA2 boot ELF. The original three
 patches are exact static migrations of the canonical PNACH `QoL` section. Each
-row in `patches.tsv` is a selectable patch and its rows in `edits.tsv` are the
+row in `patches.tsv` is an atomic patch and its rows in `edits.tsv` are the
 guarded binary edits.
 
 ## ELF-Q004: Remove Adventure mode

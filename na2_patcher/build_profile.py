@@ -19,7 +19,7 @@ from .modules.disc_identity import engine as disc_identity_module
 from .modules.binary_patcher import engine as binary_patcher_module
 from .modules.string_patcher import engine as string_patcher_module
 from .modules.texture_patcher import engine as texture_patcher_module
-from .profile import FeatureSelection, Profile, ProfileModule, load_profile
+from .profile import Profile, ProfileModule, load_profile
 from .project_paths import load_project_paths
 
 
@@ -75,7 +75,7 @@ def apply_binary_patch_set(
     *,
     package: binary_patcher_module.Package | None = None,
     roots: dict[str, Path],
-    feature_selections: tuple[FeatureSelection, ...],
+    feature_id: str,
     source: Iso9660,
     payloads: dict[str, bytearray],
     owners: dict[str, str],
@@ -83,22 +83,16 @@ def apply_binary_patch_set(
     if package is None:
         package = binary_patcher_module.load_package(package_directory)
     target_data = binary_patcher_module.verify_package_data(package, roots)
-    selected = binary_patcher_module.resolve_patch_selections(
-        package,
-        [
-            (item.feature_id, item.selection_kind, item.selection_id)
-            for item in feature_selections
-        ],
+    selected = binary_patcher_module.selected_patch_ids(
+        package, [], defaults=True
     )
-    edits = binary_patcher_module.validate_patch_selections(
-        package,
-        selected,
-        for_apply=True,
+    edits = binary_patcher_module.validate_selection(
+        package, selected, for_apply=True
     )
 
     initial_buffers: dict[str, bytes | bytearray] = {}
     target_paths: dict[str, str] = {}
-    for target_id in {item.edit.destination_target_id for item in edits}:
+    for target_id in {item.destination_target_id for item in edits}:
         target = package.targets[target_id]
         path = normalize(target.path.as_posix())
         record = source.by_path.get(path)
@@ -116,6 +110,7 @@ def apply_binary_patch_set(
         target_data,
         edits,
         initial_buffers,
+        feature_id=feature_id,
     )
     after_hashes: dict[str, str] = {}
     patched_paths: list[str] = []
@@ -142,7 +137,6 @@ def apply_texture_patch_package(
     *,
     module_id: str,
     roots: dict[str, Path],
-    selection: tuple[str, ...],
     source: Iso9660,
     payloads: dict[str, bytearray],
     owners: dict[str, str],
@@ -160,7 +154,7 @@ def apply_texture_patch_package(
         na2_root=roots["na2"],
         nun5_root=roots["nun5"],
         data_root=package_directory,
-        selection=selection,
+        selection=(),
     )
     path = "DATA/DATA.CVM"
     record = source.by_path.get(path)
@@ -180,15 +174,12 @@ def apply_external_translation_package(
     *,
     module_id: str,
     roots: dict[str, Path],
-    selection: tuple[str, ...],
     source: Iso9660,
     payloads: dict[str, bytearray],
     owners: dict[str, str],
     insertions: dict[str, bytes],
     insertion_owners: dict[str, str],
 ) -> tuple[object, object, int, list[str]]:
-    if selection:
-        raise ValueError("external_translation modules do not accept selections")
     if not package_directory.is_dir():
         raise ValueError(
             f"External-translation module input must be a directory: {package_directory}"
@@ -315,8 +306,8 @@ def write_binary_patch_log(
     binary_patcher_module.write_tsv(
         log_directory / "patch_log.tsv",
         [
-            "package_id", "feature_id", "selection_kind", "selection_id",
-            "group_id", "group_name", "patch_id", "source_mapping_id",
+            "package_id", "feature_id", "group_id", "group_name",
+            "patch_id", "source_mapping_id",
             "edit_id", "target_id", "path",
             "offset", "length", "original_hex", "new_hex", "operation", "outcome", "reason",
         ],
@@ -325,28 +316,24 @@ def write_binary_patch_log(
     binary_patcher_module.write_tsv(
         log_directory / "selected_patches.tsv",
         [
-            "feature_id", "selection_kind", "selection_id", "group_id",
-            "group_name", "patch_id", "source_mapping_id", "status",
+            "group_id", "group_name", "patch_id", "source_mapping_id", "status",
             "confidence", "name",
         ],
         [
             {
-                "feature_id": selection.feature_id,
-                "selection_kind": selection.selection_kind,
-                "selection_id": selection.selection_id,
-                "group_id": package.patches[selection.patch_id].group_id,
+                "group_id": package.patches[patch_id].group_id,
                 "group_name": package.groups[
-                    package.patches[selection.patch_id].group_id
+                    package.patches[patch_id].group_id
                 ].name,
-                "patch_id": selection.patch_id,
+                "patch_id": patch_id,
                 "source_mapping_id": package.patches[
-                    selection.patch_id
+                    patch_id
                 ].source_mapping_id,
-                "status": package.patches[selection.patch_id].status,
-                "confidence": package.patches[selection.patch_id].confidence,
-                "name": package.patches[selection.patch_id].name,
+                "status": package.patches[patch_id].status,
+                "confidence": package.patches[patch_id].confidence,
+                "name": package.patches[patch_id].name,
             }
-            for selection in selected
+            for patch_id in selected
         ],
     )
     binary_patcher_module.write_tsv(
@@ -379,14 +366,12 @@ def write_binary_patch_log(
             "log_directory": log_directory_text.replace("\\", "/"),
             "group_count": len(
                 {
-                    package.patches[selection.patch_id].group_id
-                    for selection in selected
+                    package.patches[patch_id].group_id
+                    for patch_id in selected
                 }
             ),
             "patch_count": len(selected),
-            "unique_patch_count": len(
-                {selection.patch_id for selection in selected}
-            ),
+            "unique_patch_count": len(set(selected)),
             "edit_count": len(edits),
         }],
     )
@@ -557,8 +542,6 @@ def apply_profile_modules(
         if module.module == "disc_identity":
             if any("disc_identity" in item for item in results):
                 raise ValueError("Profile may enable only one disc_identity module")
-            if module.selection:
-                raise ValueError("disc_identity modules do not accept selections")
             identity = disc_identity_module.load_identity(module.input_path)
             system_path = "SYSTEM.CNF"
             record = source.by_path.get(system_path)
@@ -605,7 +588,7 @@ def apply_profile_modules(
                 module.input_path,
                 package=compiled_package,
                 roots=profile.roots,
-                feature_selections=module.selections,
+                feature_id=module.feature_id,
                 source=source,
                 payloads=payloads,
                 owners=owners,
@@ -633,8 +616,6 @@ def apply_profile_modules(
                 raise ValueError(
                     "Translation importer requires na2 and nun5 profile roots"
                 )
-            if any(item.selection_kind != "all" for item in module.selections):
-                raise ValueError("translation_importer accepts only an all selection")
             plan = translation_importer_module.build_translation_import_plan(
                 **_translation_source_arguments(profile.roots["na2"], "na2"),
                 **_translation_source_arguments(profile.roots["nun5"], "nun5"),
@@ -656,7 +637,6 @@ def apply_profile_modules(
                 module.input_path,
                 module_id=module.module_id,
                 roots=profile.roots,
-                selection=module.selection,
                 source=source,
                 payloads=payloads,
                 owners=owners,
@@ -683,7 +663,6 @@ def apply_profile_modules(
                 module.input_path,
                 module_id=module.module_id,
                 roots=profile.roots,
-                selection=module.selection,
                 source=source,
                 payloads=payloads,
                 owners=owners,
@@ -730,10 +709,7 @@ def write_profile_log(
                 "module": module.module,
                 "input": module.input_path.relative_to(workspace).as_posix(),
                 "input_sha256": module.expected_sha256,
-                "feature_ids": ",".join(
-                    selection.feature_id for selection in module.selections
-                ),
-                "selection_count": len(module.selections),
+                "feature_id": module.feature_id,
                 "patched_paths": ",".join(sorted(str(path) for path in paths)),
             }
         )
@@ -822,27 +798,6 @@ def write_profile_log(
             for feature in profile.features
         ],
     )
-    enabled_features = {
-        feature.feature_id for feature in profile.features if feature.enabled
-    }
-    binary_patcher_module.write_tsv(
-        log_directory / "feature_selections.tsv",
-        [
-            "feature_id", "active", "module_id", "selection_kind",
-            "selection_id", "reason",
-        ],
-        [
-            {
-                "feature_id": selection.feature_id,
-                "active": int(selection.feature_id in enabled_features),
-                "module_id": selection.module_id,
-                "selection_kind": selection.selection_kind,
-                "selection_id": selection.selection_id,
-                "reason": selection.reason,
-            }
-            for selection in profile.selections
-        ],
-    )
     binary_patcher_module.write_tsv(
         log_directory / "modules.tsv",
         [
@@ -851,8 +806,7 @@ def write_profile_log(
             "module",
             "input",
             "input_sha256",
-            "feature_ids",
-            "selection_count",
+            "feature_id",
             "patched_paths",
         ],
         module_rows,

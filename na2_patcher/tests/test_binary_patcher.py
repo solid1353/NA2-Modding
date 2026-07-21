@@ -267,26 +267,18 @@ class BinaryPatcherTests(unittest.TestCase):
             with self.assertRaisesRegex(patcher.PatchError, "group unused has no patches"):
                 patcher.load_package(package.directory)
 
-    def test_group_and_patch_selections_preserve_overlapping_instances(self) -> None:
+    def test_default_patch_selection_applies_once(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             package, _, target_data = self.make_fixture(Path(temporary))
-            selections = patcher.resolve_patch_selections(
-                package,
-                [
-                    ("feature", "group", "fixture_group"),
-                    ("feature", "patch", "test_patch"),
-                ],
+            package.patches["test_patch"] = replace(
+                package.patches["test_patch"], default_enabled=True
             )
-            self.assertEqual([item.patch_id for item in selections], ["test_patch"] * 2)
-            edits = patcher.validate_patch_selections(
-                package, selections, for_apply=True
-            )
+            selected = patcher.selected_patch_ids(package, [], defaults=True)
+            self.assertEqual(selected, ["test_patch"])
+            edits = patcher.validate_selection(package, selected, for_apply=True)
             buffers, rows, _ = patcher.compose_edits(package, target_data, edits)
-            self.assertEqual(len(edits), 4)
-            self.assertEqual(
-                [row["outcome"] for row in rows],
-                ["applied", "already_satisfied", "applied", "already_satisfied"],
-            )
+            self.assertEqual(len(edits), 2)
+            self.assertEqual([row["outcome"] for row in rows], ["applied", "applied"])
             self.assertEqual(buffers["destination"][4:8], bytes.fromhex("10203040"))
 
     def test_empty_v2_package_is_valid(self) -> None:
@@ -332,18 +324,11 @@ class BinaryPatcherTests(unittest.TestCase):
                     replacement_hex="FFFFFFFF",
                 )
             )
-            selections = patcher.resolve_patch_selections(
-                package,
-                [
-                    ("feature", "patch", "test_patch"),
-                    ("feature", "patch", "second_patch"),
-                ],
+            edits = patcher.validate_selection(
+                package, ["test_patch", "second_patch"], for_apply=True
             )
-            edits = patcher.validate_patch_selections(
-                package, selections, for_apply=True
-            )
-            with self.assertRaisesRegex(patcher.PatchError, "Conflicting selected edit"):
-                patcher.compose_edits(package, target_data, edits)
+            with self.assertRaisesRegex(patcher.PatchError, "Conflicting edit"):
+                patcher.compose_edits(package, target_data, edits, feature_id="feature")
 
     def test_intentional_overlapping_patch_chain_is_applied_in_order(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -365,15 +350,8 @@ class BinaryPatcherTests(unittest.TestCase):
                     replacement_hex="55667788",
                 )
             )
-            selections = patcher.resolve_patch_selections(
-                package,
-                [
-                    ("feature", "patch", "test_patch"),
-                    ("feature", "patch", "second_patch"),
-                ],
-            )
-            edits = patcher.validate_patch_selections(
-                package, selections, for_apply=True
+            edits = patcher.validate_selection(
+                package, ["test_patch", "second_patch"], for_apply=True
             )
             buffers, rows, _ = patcher.compose_edits(package, target_data, edits)
             self.assertEqual(buffers["destination"][4:8], bytes.fromhex("55667788"))

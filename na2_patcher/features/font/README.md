@@ -6,8 +6,8 @@ GF4 replacement as an implementation parent. The accepted build changes
 `DATA/GF4.BIN` and `SLPS_258.37` without changing either file's size;
 `DATA/GF4C.BIN` remains byte-identical to clean NA2.
 
-Three components are enabled by default and selected together by the current
-profile:
+Three components are enabled by default and applied together when the Font
+feature is enabled:
 
 - `font_nun5_glyphs` installs native 14x20 NUN5 raster geometry and metrics
   for same-semantic English cells. Unsupported printable punctuation is

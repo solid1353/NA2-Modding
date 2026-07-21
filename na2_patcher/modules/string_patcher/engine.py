@@ -179,9 +179,12 @@ def load_specs(directory: Path) -> tuple[StringSpec, ...]:
             reason=row["reason"].strip(),
             review_notes=row["review_notes"].strip(),
         )
-        if spec.default_enabled and spec.status != "runtime_proven":
+        if (
+            spec.default_enabled
+            and spec.status not in binary_patcher.APPLICABLE_STATUSES
+        ):
             raise binary_patcher.PatchError(
-                f"{path} row {row_number}: default-enabled strings must be runtime_proven"
+                f"{path} row {row_number}: default-enabled strings must be applicable"
             )
         if not spec.reason:
             raise binary_patcher.PatchError(
@@ -373,7 +376,7 @@ def build_binary_package(
         patches[import_id] = binary_patcher.Patch(
             patch_id=import_id,
             group_id=group_id,
-            default_enabled=False,
+            default_enabled=True,
             status="approved_for_test",
             confidence="verified",
             name=import_id,

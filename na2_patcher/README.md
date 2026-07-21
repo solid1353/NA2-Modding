@@ -11,24 +11,24 @@ Each profile directory contains:
   packages under `na2_patcher/features/`.
 - `modules.tsv`: globally ordered module instances with exact input hashes.
 
-Feature-to-module selections do not live in profiles. Each reusable feature
-package owns its declarative module inputs, ordered `selections.tsv`, and one
-root README; reusable engines remain under `na2_patcher/modules/`.
-Binary-patcher selections may target groups or patches, while every current
-feature uses groups only.
+Each reusable feature package owns its declarative module inputs and one root
+README; reusable engines remain under `na2_patcher/modules/`. Folder ownership
+is the feature-to-module relationship: every module input must be beneath
+exactly one feature, and its first feature subdirectory must match its engine
+type.
 
 Profile schema v2 supports declarative `binary_patcher`, `translation_importer`,
 `string_patcher`, `texture_patcher`, `external_translation`, and
 `disc_identity` modules. Package and ZIP-overlay workflows are retired;
 profiles consume only repository-owned declarative inputs.
 
-Profiles never select the newest file implicitly. Enabled features contribute
-module selections; a module runs when at least one enabled feature selects it.
+Profiles never select the newest file implicitly. Enabling a feature enables
+every module input it owns.
 Enabled feature packages and active module inputs are content-hashed before
-composition. Disabled features and unselected modules remain visible without
+composition. Disabled features and their modules remain visible without
 blocking the active build when their contents change.
 
-Feature hashes cover only the package's `manifest.tsv` and `selections.tsv`.
+Feature hashes cover only the package's `manifest.tsv`.
 Adjacent feature documentation and schemas do not affect profile pins.
 
 For `binary_patcher` modules, the profile hash covers only executable package
@@ -76,7 +76,7 @@ The disabled `Testing` section remains a separate binary-patcher package. The em
 `Rendering` patch set remains listed as a disabled module until populated.
 
 Migrated PNACH structure uses one binary-patcher package per former section, groups for
-related controls, atomic patch rows for independently selectable behavior, and
+related controls, atomic patch rows for independently applicable behavior, and
 one or more exact edit rows per patch. The patch's `default_enabled` value
 preserves whether that behavior was enabled.
 

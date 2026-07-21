@@ -1,4 +1,0 @@
-module_id	selection_kind	selection_id	reason
-qol	group	startup	Select independent startup skips.
-qol	group	practice	Select independent Practice defaults.
-qol	group	mode_select	Select accepted mode availability behavior.

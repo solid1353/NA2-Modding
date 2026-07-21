@@ -11,7 +11,9 @@ sets.
 - Every destination range is checked by exact bytes or a range SHA-256.
 - Copy operations also verify the exact source range.
 - Patch sets contain organizational groups and independently applicable atomic patches.
-- Group and patch selections may overlap and every selection occurrence retains provenance.
+- Normal profile composition applies every `default_enabled` patch in package order.
+- Focused CLI commands may request explicit patch IDs without changing feature composition.
+- Patch ranges may overlap; ordered composition accepts compatible chains and rejects guard conflicts.
 - Concrete edits are simulated in deterministic order before output creation. Already-satisfied
   writes and guarded chains are allowed; incompatible staged bytes are rejected as conflicts.
 - Binary-patcher v2 has no patch dependency or declarative relation mechanism.
@@ -61,7 +63,8 @@ module directory.
 `pending` -> `approved_for_test` -> `runtime_proven` or `runtime_failed`
 
 `deprecated` keeps historical data without permitting application. A patch may be
-enabled by default only after it is `runtime_proven`.
+enabled by default while it is `approved_for_test` or `runtime_proven`; normal
+profile composition is itself a verified test path for accepted integrated work.
 
 ## Schema
 

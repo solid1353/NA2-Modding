@@ -1,5 +1,0 @@
-module_id	selection_kind	selection_id	reason
-menu_input	group	battle_ui	Select battle-owned input handlers.
-menu_input	group	front_end	Select boot-ELF front-end input handlers.
-menu_input	group	etc_ui	Select ETC-owned input handlers.
-menu_input	group	battle_results	Select battle-results input behavior.

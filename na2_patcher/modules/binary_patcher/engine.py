@@ -159,21 +159,6 @@ class Package:
     edits: list[Edit]
 
 
-@dataclass(frozen=True)
-class PatchSelection:
-    feature_id: str
-    selection_kind: str
-    selection_id: str
-    patch_id: str
-    occurrence: int
-
-
-@dataclass(frozen=True)
-class SelectedEdit:
-    selection: PatchSelection
-    edit: Edit
-
-
 def parse_bool(value: str, label: str) -> bool:
     if value == "0":
         return False
@@ -353,9 +338,9 @@ def load_package(directory: Path) -> Package:
             row["default_enabled"],
             f"patches.tsv row {row_number} default_enabled",
         )
-        if default_enabled and status != "runtime_proven":
+        if default_enabled and status not in APPLICABLE_STATUSES:
             raise PatchError(
-                f"patch {patch_id}: only runtime_proven patches may be enabled by default"
+                f"patch {patch_id}: default-enabled patches must be applicable"
             )
         patches[patch_id] = Patch(
             patch_id=patch_id,
@@ -681,98 +666,46 @@ def selected_patch_ids(package: Package, requested: list[str], defaults: bool) -
     return selected
 
 
-def resolve_patch_selections(
-    package: Package,
-    selections: list[tuple[str, str, str]],
-) -> list[PatchSelection]:
-    """Expand feature selections without collapsing overlapping provenance."""
-    resolved: list[PatchSelection] = []
-    for feature_id, selection_kind, selection_id in selections:
-        if selection_kind == "group":
-            if selection_id not in package.groups:
-                raise PatchError(f"Unknown group selection: {selection_id}")
-            patch_ids = [
-                patch.patch_id
-                for patch in package.patches.values()
-                if patch.group_id == selection_id
-            ]
-        elif selection_kind == "patch":
-            if selection_id not in package.patches:
-                raise PatchError(f"Unknown patch selection: {selection_id}")
-            patch_ids = [selection_id]
-        else:
-            raise PatchError(
-                f"Binary-patcher selection kind must be group or patch: {selection_kind!r}"
-            )
-        for patch_id in patch_ids:
-            resolved.append(
-                PatchSelection(
-                    feature_id=feature_id,
-                    selection_kind=selection_kind,
-                    selection_id=selection_id,
-                    patch_id=patch_id,
-                    occurrence=len(resolved),
-                )
-            )
-    if not resolved:
+def validate_selection(package: Package, selected: list[str], *, for_apply: bool) -> list[Edit]:
+    if not selected:
         raise PatchError("No patches selected")
-    return resolved
-
-
-def validate_patch_selections(
-    package: Package,
-    selections: list[PatchSelection],
-    *,
-    for_apply: bool,
-) -> list[SelectedEdit]:
+    for patch_id in selected:
+        if patch_id not in package.patches:
+            raise PatchError(f"Unknown patch ID: {patch_id}")
     if for_apply:
         blocked = [
-            selection
-            for selection in selections
-            if package.patches[selection.patch_id].status not in APPLICABLE_STATUSES
+            patch_id
+            for patch_id in selected
+            if package.patches[patch_id].status not in APPLICABLE_STATUSES
         ]
         if blocked:
             details = ", ".join(
-                f"{item.patch_id} ({package.patches[item.patch_id].status})"
-                for item in blocked
+                f"{patch_id} ({package.patches[patch_id].status})"
+                for patch_id in blocked
             )
             raise PatchError(f"Selected patches are not approved for application: {details}")
     edits_by_patch: dict[str, list[Edit]] = {}
     for edit in package.edits:
         edits_by_patch.setdefault(edit.patch_id, []).append(edit)
-    result = [
-        SelectedEdit(selection, edit)
-        for selection in selections
+    occurrences = {patch_id: index for index, patch_id in enumerate(selected)}
+    result: list[Edit] = [
+        edit
+        for patch_id in selected
         for edit in sorted(
-            edits_by_patch[selection.patch_id],
+            edits_by_patch[patch_id],
             key=lambda item: (item.order, item.edit_id),
         )
     ]
     return sorted(
         result,
         key=lambda item: (
-            item.edit.destination_target_id,
-            item.edit.destination_offset,
-            item.selection.occurrence,
-            item.edit.order,
-            item.edit.edit_id,
+            item.destination_target_id,
+            item.destination_offset,
+            occurrences[item.patch_id],
+            item.order,
+            item.edit_id,
         ),
     )
-
-
-def validate_selection(package: Package, selected: list[str], *, for_apply: bool) -> list[Edit]:
-    selections = resolve_patch_selections(
-        package,
-        [("", "patch", patch_id) for patch_id in selected],
-    )
-    return [
-        item.edit
-        for item in validate_patch_selections(
-            package,
-            selections,
-            for_apply=for_apply,
-        )
-    ]
 
 
 def write_tsv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> None:
@@ -786,8 +719,10 @@ def write_tsv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> N
 def compose_edits(
     package: Package,
     target_data: dict[str, bytes],
-    edits: list[Edit] | list[SelectedEdit],
+    edits: list[Edit],
     initial_buffers: dict[str, bytes | bytearray] | None = None,
+    *,
+    feature_id: str = "",
 ) -> tuple[dict[str, bytearray], list[dict[str, object]], dict[str, str]]:
     """Apply already validated edits to in-memory buffers.
 
@@ -796,18 +731,9 @@ def compose_edits(
     stage, such as a font package. Every destination expectation is checked again
     against that staged state before any edit is accepted.
     """
-    selected_edits = [
-        item
-        if isinstance(item, SelectedEdit)
-        else SelectedEdit(
-            PatchSelection("", "patch", item.patch_id, item.patch_id, index),
-            item,
-        )
-        for index, item in enumerate(edits)
-    ]
     staged = initial_buffers or {}
     destination_ids = {
-        item.edit.destination_target_id for item in selected_edits
+        item.destination_target_id for item in edits
     }
     mutable: dict[str, bytearray] = {}
     before_hashes: dict[str, str] = {}
@@ -823,9 +749,7 @@ def compose_edits(
         before_hashes[target_id] = data_sha256(initial)
 
     patch_rows: list[dict[str, object]] = []
-    for selected_edit in selected_edits:
-        edit = selected_edit.edit
-        selection = selected_edit.selection
+    for edit in edits:
         data = mutable[edit.destination_target_id]
         old = verify_range(
             bytes(data),
@@ -845,15 +769,10 @@ def compose_edits(
                     f"edit {edit.edit_id} staged destination",
                 )
             except PatchError as exc:
-                origin = (
-                    f"feature {selection.feature_id}, "
-                    if selection.feature_id
-                    else ""
-                )
+                origin = f"feature {feature_id}, " if feature_id else ""
                 raise PatchError(
-                    f"Conflicting selected edit {edit.edit_id} "
-                    f"({origin}{selection.selection_kind} "
-                    f"{selection.selection_id}): {exc}"
+                    f"Conflicting edit {edit.edit_id} "
+                    f"({origin}patch {edit.patch_id}): {exc}"
                 ) from exc
             data[edit.destination_offset : edit.destination_offset + edit.length] = replacement
             outcome = "applied"
@@ -863,9 +782,7 @@ def compose_edits(
         patch_rows.append(
             {
                 "package_id": package.manifest["package_id"],
-                "feature_id": selection.feature_id,
-                "selection_kind": selection.selection_kind,
-                "selection_id": selection.selection_id,
+                "feature_id": feature_id,
                 "group_id": group.group_id,
                 "group_name": group.name,
                 "patch_id": edit.patch_id,
@@ -941,8 +858,6 @@ def apply_package(
             [
                 "package_id",
                 "feature_id",
-                "selection_kind",
-                "selection_id",
                 "group_id",
                 "group_name",
                 "patch_id",

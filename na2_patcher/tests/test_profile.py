@@ -8,7 +8,6 @@ from pathlib import Path
 
 from na2_patcher.profile import (
     FEATURE_FIELDS,
-    FEATURE_SELECTION_FIELDS,
     MODULE_FIELDS,
     content_sha256,
     feature_content_sha256,
@@ -30,7 +29,6 @@ class ProfileTests(unittest.TestCase):
         self,
         workspace: Path,
         feature_id: str,
-        selections: list[list[str]],
     ) -> Path:
         package = workspace / "features" / feature_id
         write_tsv(
@@ -43,11 +41,6 @@ class ProfileTests(unittest.TestCase):
                 ["description", "Test feature."],
             ],
         )
-        write_tsv(
-            package / "selections.tsv",
-            FEATURE_SELECTION_FIELDS,
-            selections,
-        )
         return package
 
     def create_profile(
@@ -57,14 +50,12 @@ class ProfileTests(unittest.TestCase):
         *,
         enabled: str = "1",
     ) -> Path:
-        source = workspace / "source" / "input.bin"
-        source.parent.mkdir(parents=True)
-        source.write_bytes(b"profile input")
-        feature = self.create_feature(
-            workspace,
-            "feature",
-            [["one", "all", "", "test"]],
-        )
+        source = workspace / "source"
+        source.mkdir(parents=True)
+        feature = self.create_feature(workspace, "feature")
+        module_input = feature / "translation_importer" / "input.bin"
+        module_input.parent.mkdir()
+        module_input.write_bytes(b"profile input")
         profile = workspace / "profiles" / "test"
         write_tsv(
             profile / "manifest.tsv",
@@ -97,7 +88,7 @@ class ProfileTests(unittest.TestCase):
                     "one",
                     "10",
                     "translation_importer",
-                    "source/input.bin",
+                    "features/feature/translation_importer/input.bin",
                     expected_hash,
                     "test",
                 ]
@@ -125,79 +116,64 @@ class ProfileTests(unittest.TestCase):
             workspace = Path(directory)
             expected = hashlib.sha256(b"profile input").hexdigest().upper()
             profile_path = self.create_profile(workspace, expected)
-            with (workspace / "features" / "feature" / "selections.tsv").open(
+            with (workspace / "features" / "feature" / "manifest.tsv").open(
                 "a", encoding="utf-8", newline=""
             ) as handle:
-                handle.write("one\tall\t\tchanged\n")
+                handle.write("changed\twithout repinning\n")
 
             with self.assertRaisesRegex(ValueError, "Feature feature: input SHA-256"):
                 load_profile(profile_path, workspace)
 
-    def test_preserves_duplicate_feature_selection_occurrences(self) -> None:
+    def test_rejects_module_outside_feature_directory(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
             expected = hashlib.sha256(b"profile input").hexdigest().upper()
             profile_path = self.create_profile(workspace, expected)
-            with (workspace / "features" / "feature" / "selections.tsv").open(
-                "a", encoding="utf-8", newline=""
-            ) as handle:
-                handle.write("one\tall\t\tsecond occurrence\n")
-            features = profile_path / "features.tsv"
-            with features.open(encoding="utf-8", newline="") as handle:
+            outside = workspace / "outside" / "input.bin"
+            outside.parent.mkdir()
+            outside.write_bytes(b"profile input")
+            modules = profile_path / "modules.tsv"
+            with modules.open(encoding="utf-8", newline="") as handle:
                 rows = list(csv.DictReader(handle, delimiter="\t"))
-            rows[0]["expected_sha256"] = feature_content_sha256(
-                workspace / "features" / "feature"
-            )
-            with features.open("w", encoding="utf-8", newline="") as handle:
+            rows[0]["input"] = "outside/input.bin"
+            with modules.open("w", encoding="utf-8", newline="") as handle:
                 writer = csv.DictWriter(
-                    handle, fieldnames=FEATURE_FIELDS, delimiter="\t", lineterminator="\n"
+                    handle, fieldnames=MODULE_FIELDS, delimiter="\t", lineterminator="\n"
                 )
                 writer.writeheader()
                 writer.writerows(rows)
+            with self.assertRaisesRegex(ValueError, "exactly one feature directory"):
+                load_profile(profile_path, workspace)
 
-            profile = load_profile(profile_path, workspace)
-            self.assertEqual(len(profile.selections), 2)
-            self.assertEqual(len(profile.modules[0].selections), 2)
-            self.assertEqual(
-                [selection.occurrence for selection in profile.modules[0].selections],
-                [0, 1],
-            )
-
-    def test_rejects_enabled_feature_without_selections(self) -> None:
+    def test_rejects_module_subfolder_that_does_not_match_engine(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
             expected = hashlib.sha256(b"profile input").hexdigest().upper()
             profile_path = self.create_profile(workspace, expected)
-            write_tsv(
-                workspace / "features" / "feature" / "selections.tsv",
-                FEATURE_SELECTION_FIELDS,
-                [],
-            )
-            features = profile_path / "features.tsv"
-            with features.open(encoding="utf-8", newline="") as handle:
+            wrong = workspace / "features" / "feature" / "wrong" / "input.bin"
+            wrong.parent.mkdir()
+            wrong.write_bytes(b"profile input")
+            modules = profile_path / "modules.tsv"
+            with modules.open(encoding="utf-8", newline="") as handle:
                 rows = list(csv.DictReader(handle, delimiter="\t"))
-            rows[0]["expected_sha256"] = feature_content_sha256(
-                workspace / "features" / "feature"
-            )
-            with features.open("w", encoding="utf-8", newline="") as handle:
+            rows[0]["input"] = "features/feature/wrong/input.bin"
+            with modules.open("w", encoding="utf-8", newline="") as handle:
                 writer = csv.DictWriter(
-                    handle, fieldnames=FEATURE_FIELDS, delimiter="\t", lineterminator="\n"
+                    handle, fieldnames=MODULE_FIELDS, delimiter="\t", lineterminator="\n"
                 )
                 writer.writeheader()
                 writer.writerows(rows)
-
-            with self.assertRaisesRegex(ValueError, "Feature feature has no selections"):
+            with self.assertRaisesRegex(ValueError, "first feature subfolder"):
                 load_profile(profile_path, workspace)
 
     def test_disabled_input_hash_mismatch_does_not_block_active_profile(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
             disabled = self.create_profile(workspace, "0" * 64, enabled="0")
-            active_feature = self.create_feature(
-                workspace,
-                "active",
-                [["enabled", "all", "", "active"]],
-            )
+            active_feature = self.create_feature(workspace, "active")
+            active_input = active_feature / "translation_importer" / "input.bin"
+            active_input.parent.mkdir()
+            active_input.write_bytes(b"profile input")
             features = disabled / "features.tsv"
             with features.open(encoding="utf-8", newline="") as handle:
                 feature_rows = list(csv.DictReader(handle, delimiter="\t"))
@@ -224,7 +200,7 @@ class ProfileTests(unittest.TestCase):
                     "module_id": "enabled",
                     "order": "20",
                     "module": "translation_importer",
-                    "input": "source/input.bin",
+                    "input": "features/active/translation_importer/input.bin",
                     "expected_sha256": hashlib.sha256(b"profile input")
                     .hexdigest()
                     .upper(),
@@ -269,22 +245,22 @@ class ProfileTests(unittest.TestCase):
             second = content_sha256(root / "a")
             self.assertNotEqual(first, second)
 
-    def test_feature_hash_includes_only_declarative_inputs(self) -> None:
+    def test_feature_hash_includes_only_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
-            package = self.create_feature(
-                workspace,
-                "feature",
-                [["one", "all", "", "test"]],
-            )
+            package = self.create_feature(workspace, "feature")
             (package / "README.md").write_text("first\n", encoding="utf-8")
+            module_input = package / "binary_patcher" / "data.tsv"
+            module_input.parent.mkdir()
+            module_input.write_text("first\n", encoding="utf-8")
             first = feature_content_sha256(package)
             (package / "README.md").write_text("second\n", encoding="utf-8")
+            module_input.write_text("second\n", encoding="utf-8")
             self.assertEqual(first, feature_content_sha256(package))
-            with (package / "selections.tsv").open(
+            with (package / "manifest.tsv").open(
                 "a", encoding="utf-8", newline=""
             ) as handle:
-                handle.write("one\tall\t\tsecond\n")
+                handle.write("changed\tvalue\n")
             self.assertNotEqual(first, feature_content_sha256(package))
 
     def test_binary_patcher_hash_excludes_documentation(self) -> None:
@@ -457,10 +433,15 @@ class ProfileTests(unittest.TestCase):
                 module.module_id,
             )
 
-    def test_current_profile_contains_no_selection_table(self) -> None:
+    def test_current_profile_contains_no_selection_tables(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         profile_directory = repository / "na2_patcher" / "profiles" / "current"
         self.assertFalse((profile_directory / "feature_selections.tsv").exists())
+        features = repository / "na2_patcher" / "features"
+        self.assertFalse(any(features.glob("*/selections.tsv")))
+        self.assertFalse(
+            (features / "schemas" / "v1" / "selections.schema.tsv").exists()
+        )
 
     def test_each_feature_has_one_root_readme_and_no_nested_markdown(self) -> None:
         repository = Path(__file__).resolve().parents[2]
@@ -472,24 +453,18 @@ class ProfileTests(unittest.TestCase):
                 markdown = sorted(feature.rglob("*.md"))
                 self.assertEqual(markdown, [feature / "README.md"])
 
-    def test_current_binary_backed_patcher_selections_are_group_only(self) -> None:
+    def test_current_modules_are_owned_by_matching_feature_subfolders(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         profile = load_profile(
             repository / "na2_patcher" / "profiles" / "current",
             repository,
         )
-        module_types = {module.module_id: module.module for module in profile.modules}
-        binary_selections = [
-            selection
-            for selection in profile.selections
-            if module_types[selection.module_id]
-            in {"binary_patcher", "string_patcher"}
-        ]
-        self.assertTrue(binary_selections)
-        self.assertEqual(
-            {selection.selection_kind for selection in binary_selections},
-            {"group"},
-        )
+        features = {feature.feature_id: feature for feature in profile.features}
+        for module in profile.modules:
+            relative = module.input_path.relative_to(
+                features[module.feature_id].input_path
+            )
+            self.assertEqual(relative.parts[0], module.module)
 
 
 if __name__ == "__main__":

@@ -47,14 +47,11 @@ class StringPatcherTests(unittest.TestCase):
         expected = bytes.fromhex(self.package.edits[0].expected_hex)
         start = self.package.edits[0].destination_offset
         baseline[start : start + len(expected)] = expected
-        selected = binary_patcher.resolve_patch_selections(
-            self.package,
-            [("translation", "group", "identity")],
+        selected = binary_patcher.selected_patch_ids(
+            self.package, [], defaults=True
         )
-        edits = binary_patcher.validate_patch_selections(
-            self.package,
-            selected,
-            for_apply=True,
+        edits = binary_patcher.validate_selection(
+            self.package, selected, for_apply=True
         )
         buffers, rows, _ = binary_patcher.compose_edits(
             self.package,
@@ -69,7 +66,7 @@ class StringPatcherTests(unittest.TestCase):
         self.assertEqual(rows[0]["outcome"], "applied")
         self.assertEqual(rows[0]["package_id"], "string_patcher")
 
-    def test_compiles_imported_strings_into_selectable_binary_groups(self) -> None:
+    def test_compiles_imported_strings_as_default_binary_patches(self) -> None:
         package = string_patcher.build_binary_package(
             self.package_directory,
             imported_rows=(
@@ -95,16 +92,12 @@ class StringPatcherTests(unittest.TestCase):
 
         self.assertIn("BTL", package.groups)
         self.assertEqual(package.patches["BTL-I0001"].source_mapping_id, "BTL-M001")
-        selected = binary_patcher.resolve_patch_selections(
-            package,
-            [("translation", "group", "BTL")],
+        self.assertTrue(package.patches["BTL-I0001"].default_enabled)
+        selected = ["BTL-I0001"]
+        edits = binary_patcher.validate_selection(
+            package, selected, for_apply=True
         )
-        edits = binary_patcher.validate_patch_selections(
-            package,
-            selected,
-            for_apply=True,
-        )
-        imported_edit = edits[0].edit
+        imported_edit = edits[0]
         target_id = imported_edit.destination_target_id
         baseline = b"\0\0JP\0\0\0\0"
         buffers, rows, _ = binary_patcher.compose_edits(

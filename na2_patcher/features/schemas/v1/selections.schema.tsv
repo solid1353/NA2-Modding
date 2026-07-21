@@ -1,5 +1,0 @@
-field	required	description
-module_id	1	Stable module instance required from the consuming profile.
-selection_kind	1	all or native for existing engines; group or patch for binary-patcher modules.
-selection_id	conditional	One module-owned selection identifier; empty only for all.
-reason	1	Purpose and provenance of this selection edge.

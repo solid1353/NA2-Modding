@@ -20,7 +20,7 @@ class UiTextureTests(unittest.TestCase):
         data_root = (
             Path(__file__).resolve().parents[1]
             / "features"
-            / "translation"
+            / "localization"
             / "texture_patcher"
         )
         required = (
@@ -169,7 +169,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/features/translation/binary_patcher"
+            / "na2_patcher/features/localization/binary_patcher"
         )
         vertical = next(
             item for item in package.edits if item.edit_id == "UI-BTL-002-02"
@@ -217,7 +217,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/features/translation/binary_patcher"
+            / "na2_patcher/features/localization/binary_patcher"
         )
         edit = next(item for item in package.edits if item.edit_id == "UI-ELF-001-01")
         self.assertEqual(edit.source_target_id, "nun5_elf")
@@ -255,7 +255,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/features/translation/binary_patcher"
+            / "na2_patcher/features/localization/binary_patcher"
         )
         table = next(item for item in package.edits if item.edit_id == "UI-ELF-004-01")
         helper = next(item for item in package.edits if item.edit_id == "UI-BTL-003-01")
@@ -294,7 +294,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/features/translation/binary_patcher"
+            / "na2_patcher/features/localization/binary_patcher"
         )
         edit = next(item for item in package.edits if item.edit_id == "UI-ELF-003-01")
 
@@ -316,7 +316,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/features/translation/binary_patcher"
+            / "na2_patcher/features/localization/binary_patcher"
         )
         anchor = next(item for item in package.edits if item.edit_id == "UI-BTL-004-01")
         rectangle = next(
@@ -343,7 +343,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/features/translation/binary_patcher"
+            / "na2_patcher/features/localization/binary_patcher"
         )
         rectangle = next(
             item for item in package.edits if item.edit_id == "UI-ELF-005-01"
@@ -369,7 +369,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/features/translation/binary_patcher"
+            / "na2_patcher/features/localization/binary_patcher"
         )
         edits = [item for item in package.edits if item.patch_id == "UI-ETC-001"]
 
@@ -384,7 +384,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/features/translation/binary_patcher"
+            / "na2_patcher/features/localization/binary_patcher"
         )
         edits = [item for item in package.edits if item.patch_id == "UI-BTL-005"]
         patch = package.patches["UI-BTL-005"]
@@ -403,7 +403,7 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/features/translation/binary_patcher"
+            / "na2_patcher/features/localization/binary_patcher"
         )
         rectangle = next(
             item for item in package.edits if item.edit_id == "UI-ELF-006-01"
@@ -423,26 +423,27 @@ class UiTextureTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
-            / "na2_patcher/features/translation/binary_patcher"
+            / "na2_patcher/features/localization/binary_patcher"
         )
-        operations = Counter(edit.operation for edit in package.edits)
+        ui_edits = [edit for edit in package.edits if edit.patch_id.startswith("UI-")]
+        operations = Counter(edit.operation for edit in ui_edits)
         copy_sources = Counter(
             edit.source_target_id
-            for edit in package.edits
+            for edit in ui_edits
             if edit.operation == "copy"
         )
         stage_scales = [
             edit
-            for edit in package.edits
+            for edit in ui_edits
             if edit.edit_id.startswith("UI-BTL-002-S")
         ]
         adaptations = [
             edit
-            for edit in package.edits
+            for edit in ui_edits
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(package.edits), 86)
+        self.assertEqual(len(ui_edits), 86)
         self.assertEqual(operations, {"copy": 47, "replace": 39})
         self.assertEqual(
             copy_sources,

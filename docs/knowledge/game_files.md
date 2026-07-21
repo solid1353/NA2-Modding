@@ -68,7 +68,7 @@ Those directories are extraction views, not additional disc files.
 
 | Path | Role | Evidence and limits |
 | --- | --- | --- |
-| `DATA/GF4.BIN` | Main glyph atlas and font data | **Confirmed.** Font experiments and the current font feature identify its cell bitmap data and descriptors. NA2 is much larger than NUN5 because the two games use different font layouts. |
+| `DATA/GF4.BIN` | Main glyph atlas and font data | **Confirmed.** Font experiments and the current Localization font patches identify its cell bitmap data and descriptors. NA2 is much larger than NUN5 because the two games use different font layouts. |
 | `DATA/GF4C.BIN` | GF4 companion color/palette table | **Supported.** The 104-byte structured companion changes how GF4 pixels are interpreted; unsafe palette-swap tests confirm that it is coupled to GF4. Its complete field semantics remain unknown. |
 | `DATA/GRF4.BIN` | GF4-family graphics support resource | **Supported format family; exact function unknown.** Its header follows the same named resource pattern, and it is byte-identical to NUN5. No executable or glyph-table role has been isolated. |
 | `DATA/SF1.BIN` | Secondary font/graphics resource | **Supported format family; exact function unknown.** It uses the same named resource envelope as GF4, is byte-identical to NUN5, and has no executable signature. |

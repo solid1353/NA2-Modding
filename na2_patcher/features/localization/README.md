@@ -1,6 +1,6 @@
-# Translation feature
+# Localization feature
 
-This feature owns all declarative content for the accepted English translation
+This feature owns all declarative content for the accepted English localization
 while reusable executable engines remain under `na2_patcher/modules/`.
 
 - [Translation importer](#na2-translation-importer-mapping-version-35)
@@ -8,9 +8,11 @@ while reusable executable engines remain under `na2_patcher/modules/`.
 - [Texture patcher](#ui-texture-translation-module)
 - [Binary patcher](#ui-translation-binary-patcher-patch-set)
 - [External translation](#external-translation)
+- [Native NUN5-derived font](#native-nun5-derived-font)
+- [Regional menu input](#regional-menu-input)
 
 The feature directory name declares its identity. Its module-named
-subdirectories are the inputs that compose it; enabling Translation enables all
+subdirectories are the inputs that compose it; enabling Localization enables all
 of them, and one aggregate profile pin covers their canonical inputs.
 
 ## NA2 translation importer (mapping version 35)
@@ -496,7 +498,7 @@ PCSX2 application chrome, toolbar text, pause indicators, graphical controller p
   must run immediately before its consuming `string_patcher` instance.
 
 The module has no standalone CLI. Mapping `enabled` flags determine imported
-targets, and enabling the Translation feature invokes the complete importer.
+targets, and enabling the Localization feature invokes the complete importer.
 
 ## String patcher
 
@@ -566,7 +568,7 @@ from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
   NUN5's Cross/OK and Triangle/Back legends wherever the common panel is used.
 - The NUN5 one-part `OUGI.CCS` layout also requires the paired,
   size-preserving `UI-BTL-001` semantic port in
-  `na2_patcher/features/translation/binary_patcher/`.
+  `na2_patcher/features/localization/binary_patcher/`.
 
 The engine searches deterministic zlib encodings first. Five fixed-capacity
 members require Zopfli; `na2_patcher/requirements.txt` pins the verified
@@ -585,14 +587,14 @@ Derive and verify every pinned production replacement from the repository root:
 
 ```powershell
 python -m na2_patcher.modules.texture_patcher.engine verify `
-  --package na2_patcher/features/translation/texture_patcher
+  --package na2_patcher/features/localization/texture_patcher
 ```
 
 Write a review-only generated extraction outside the source roots:
 
 ```powershell
 python -m na2_patcher.modules.texture_patcher.engine preview `
-  --package na2_patcher/features/translation/texture_patcher `
+  --package na2_patcher/features/localization/texture_patcher `
   --output work/temp/ui_texture_preview
 ```
 
@@ -642,11 +644,11 @@ Validate and inspect the planned edit from the repository root:
 
 ```powershell
 python -m na2_patcher.modules.binary_patcher.engine validate `
-  --package na2_patcher/features/translation/binary_patcher `
+  --package na2_patcher/features/localization/binary_patcher `
   --root na2=@source_na2
 
 python -m na2_patcher.modules.binary_patcher.engine plan `
-  --package na2_patcher/features/translation/binary_patcher `
+  --package na2_patcher/features/localization/binary_patcher `
   --root na2=@source_na2 `
   --patch UI-BTL-001
 ```
@@ -883,12 +885,12 @@ Inspect all thirteen UI companion patches together:
 
 ```powershell
 python -m na2_patcher.modules.binary_patcher.engine validate `
-  --package na2_patcher/features/translation/binary_patcher `
+  --package na2_patcher/features/localization/binary_patcher `
   --root na2=@source_na2 `
   --root nun5=@source_nun5
 
 python -m na2_patcher.modules.binary_patcher.engine plan `
-  --package na2_patcher/features/translation/binary_patcher `
+  --package na2_patcher/features/localization/binary_patcher `
   --root na2=@source_na2 `
   --root nun5=@source_nun5 `
   --patch UI-BTL-001 `
@@ -939,8 +941,9 @@ ISO payload is stored in Git.
   pointer word. Three continuation rows deliberately reuse their containing
   full-message pointer.
 
-Only those two TSV files are part of the profile module-content hash. The
-engine and documentation are covered by the repository-wide patcher preflight.
+Only those two TSV files from this module directory are covered by the
+Localization feature's aggregate profile hash. The engine and documentation
+are covered by the repository-wide patcher preflight.
 
 ### Fixed layout
 
@@ -972,3 +975,55 @@ ELF bootstrap calls its documented entry explicitly.
 The Project-owned ISO compositor is responsible for inserting the two paths,
 preserving ISO size, and verifying directory records, extents, payload hashes,
 and the complete final tree.
+
+## Native NUN5-derived font
+
+This package starts from hash-verified clean NA2 and official NUN5 inputs. It
+does not use `font_m01`, v22/v23, the rejected GF4C palette swap, or a whole
+GF4 replacement as an implementation parent. The accepted build changes
+`DATA/GF4.BIN` and `SLPS_258.37` without changing either file's size;
+`DATA/GF4C.BIN` remains byte-identical to clean NA2.
+
+Three components are enabled by default and applied together when Localization
+is enabled:
+
+- `font_nun5_glyphs` installs native 14x20 NUN5 raster geometry and metrics
+  for same-semantic English cells. Unsupported printable punctuation is
+  reconstructed from clean NA2, preserving 95/95 printable-ASCII coverage.
+  The shortened 123-cell secondary atlas is locally guarded. Its metric rows
+  are packed into the value words of empty primary-map slots and decoded only
+  by the secondary draw and measurement hooks.
+- `font_controls_auto_fit` reproduces NUN5's shrink-only Controls behavior.
+  It keeps `Linked Attack` full width, fits the official
+  `Ultimate Jutsu Prep` label, leaves `OFF` on the ordinary renderer, and
+  shifts only the left and right labels for visible-ink centering. Its local
+  scale is restored immediately after every fitted call.
+- `font_modal_alignment` loads independently measured X positions for the
+  five character-select `Back to Game Mode Screen` rows while retaining the
+  accepted local Y behavior. Its selected-path compensation prevents the
+  shadow draw from shifting visible ink.
+
+Both layout components require `font_nun5_glyphs` because their positions and
+fit decisions are tuned to its metrics. They otherwise remain independent.
+The disabled `font_vertical_quad_height` component remains exact negative
+evidence and conflicts with the native glyph component.
+
+Matched Controls, Practice, Save/Load, and character-modal captures were
+runtime-reviewed. The user accepted this iteration's alignment and overflow
+result. The remaining known defect is that halfwidth Latin glyphs are visibly
+bolder than NUN5; weight refinement is deliberately deferred to the next
+iteration. Fullwidth Shift-JIS Save/Load digits use a different glyph path and
+are not a Latin-weight parity target.
+
+`generate_nun5_donor.py` deterministically regenerates and verifies the four
+referenced blobs from configured `@source_na2/` and `@source_nun5/` inputs.
+Exact offsets, guards, replacement bytes, and reasons are recorded in
+`edits.tsv`; confirmed evidence and negative results are recorded in
+`docs/knowledge/font/README.md`.
+
+## Regional menu input
+
+The Localization feature owns these declarative `binary_patcher` patches for
+the accepted menu, overlay, setup, stage, pause, result-tally, and audio input behavior.
+`binary_patcher/` contains the guarded targets, default-enabled patches, edits,
+evidence, and runtime classifications.

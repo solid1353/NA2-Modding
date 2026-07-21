@@ -1,6 +1,6 @@
 # Menu Input Runtime Knowledge
 
-This record preserves runtime behavior that was previously available only in dated binary-patcher logs. The canonical per-screen results are in `na2_patcher/features/menu_input/binary_patcher/runtime_tests.tsv`.
+This record preserves runtime behavior that was previously available only in dated binary-patcher logs. The canonical per-screen results are in `na2_patcher/features/localization/binary_patcher/runtime_tests.tsv`.
 
 ## Save/load handler family
 

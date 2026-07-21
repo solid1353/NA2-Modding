@@ -22,7 +22,7 @@ class ExternalTranslationTests(unittest.TestCase):
             cls.repository
             / "na2_patcher"
             / "features"
-            / "translation"
+            / "localization"
             / "external_translation"
         )
         cls.plan = engine.build_external_translation_plan(
@@ -150,7 +150,7 @@ class ExternalTranslationTests(unittest.TestCase):
                 self.repository
                 / "na2_patcher"
                 / "features"
-                / "translation"
+                / "localization"
                 / "translation_importer"
             ),
             apply="BTL,ETC,SLPS",
@@ -174,7 +174,7 @@ class ExternalTranslationTests(unittest.TestCase):
                 self.repository
                 / "na2_patcher"
                 / "features"
-                / "translation"
+                / "localization"
                 / "translation_importer"
                 / "mappings.tsv"
             )

@@ -32,7 +32,7 @@ Every reusable package under `@features/<feature_id>/` owns one root
 `README.md` and module-named subdirectories containing declarative inputs.
 Reusable executable engines remain under `na2_patcher/modules/`.
 
-The directories themselves define ownership. Every profile module input must
+The directories themselves define ownership. Every enabled module input must
 be beneath exactly one feature directory, and its first subdirectory must equal
 the module engine type. Enabling a feature enables all module inputs it owns.
 The feature row order and fixed engine registry derive stable module IDs,
@@ -87,19 +87,18 @@ from overlapping ranges or separate dependency metadata. Overlap itself is legal
 The feature packages enabled by the current profile default-enable patches in
 these binary-patcher groups:
 
-- Font: `glyph_data`, `auto_fit`, `alignment`
-- Menu input: `battle_ui`, `front_end`, `etc_ui`, `battle_results`
+- Localization: `glyph_data`, `auto_fit`, `alignment`, `battle_ui`,
+  `front_end`, `etc_ui`, `battle_results`, `shop`
 - QoL: `startup`, `practice`, `mode_select`
 - Battle logic: `combat_rules`
 - String patcher (delegated to `binary_patcher`): `identity`, `BTL`, `ETC`, `SLPS`
-- UI translation code: `battle_ui`, `front_end`, `shop`
 
 Testing remains a disabled feature with its `substitution` group available for
 controlled use. Rendering is a disabled, completely empty reserved package. It
-contains no aspect-ratio placeholder and no font content; Font remains a
-separate feature and package. Retired `font_m01` and `font_elf_history` active
-package directories are not recreated, while their useful historical evidence
-remains under `docs/knowledge/font/history/`.
+contains no aspect-ratio placeholder and no font content; font patches belong
+to Localization. Retired `font_m01` and `font_elf_history` active package
+directories are not recreated, while their useful historical evidence remains
+under `docs/knowledge/font/history/`.
 
 QoL's former bundle rows are split into independent atomic patches while
 preserving their exact edits:

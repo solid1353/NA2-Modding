@@ -13,7 +13,7 @@ class StringPatcherTests(unittest.TestCase):
         cls.package_directory = (
             Path(__file__).resolve().parents[1]
             / "features"
-            / "translation"
+            / "localization"
             / "string_patcher"
         )
         cls.package = string_patcher.build_binary_package(cls.package_directory)
@@ -64,7 +64,7 @@ class StringPatcherTests(unittest.TestCase):
             replacement,
         )
         self.assertEqual(rows[0]["outcome"], "applied")
-        self.assertEqual(rows[0]["package_id"], "translation.string_patcher")
+        self.assertEqual(rows[0]["package_id"], "localization.string_patcher")
 
     def test_compiles_imported_strings_as_default_binary_patches(self) -> None:
         package = string_patcher.build_binary_package(

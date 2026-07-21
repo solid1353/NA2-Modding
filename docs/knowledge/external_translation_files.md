@@ -53,7 +53,7 @@ Methods and tools:
 - `scripts/research/menu_input/find_mips_address_refs.py` and
   `scripts/research/menu_input/disassemble_mips32_range.py`;
 - quote-aware parsing of
-  `na2_patcher/features/translation/translation_importer/mappings.tsv`;
+  `na2_patcher/features/localization/translation_importer/mappings.tsv`;
 - aligned little-endian pointer scans plus PowerShell size, hash, ISO-layout,
   and byte inspection.
 
@@ -218,7 +218,7 @@ parent M0818, and M0825 through parent M0823. M0823 is an enabled `slot` row,
 not an `[S]` row, but the external pool must emit its complete official message
 to make the M0825 continuation reachable through that one parent pointer. The
 complete reusable inventory is now canonical module data in
-`na2_patcher/features/translation/external_translation/pointer_refs.tsv`.
+`na2_patcher/features/localization/external_translation/pointer_refs.tsv`.
 
 BTL and ETC themselves contain the applicable pointer words. A static patch to
 those files is therefore restored whenever the overlay loads; no post-load

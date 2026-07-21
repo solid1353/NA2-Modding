@@ -170,12 +170,12 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 
 ## Production artifacts and validation
 
-- `na2_patcher/features/translation/texture_patcher/` contains 34 source-derived fixed-size
+- `na2_patcher/features/localization/texture_patcher/` contains 34 source-derived fixed-size
   recipes, 76 reviewed mappings, pinned source/donor/replacement/payload hashes,
   and the deterministic verifier. The generated replacement ranges total
   5,274,398 bytes, but no replacement CCS blobs are stored in the repository.
   Static parity regenerated all 34 former production files byte-for-byte.
-- `na2_patcher/features/translation/binary_patcher/` contains 13 atomic
+- `na2_patcher/features/localization/binary_patcher/` contains 13 atomic
   companion patches and 86 guarded edits across BTL, ETC, and the boot ELF.
   Forty-seven rows copy canonical NUN5 bytes directly (39 ELF, seven BTL, one
   ETC), 24 store values computed from NUN5's stage-width formula in NA2's
@@ -186,7 +186,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   exact official NUN5 source strings with no authored line breaks. A
   clean-source full in-memory plan produced 2,437 fixed-size patch rows with
   all three targets selected.
-- The Translation feature's aggregate current-profile pin covers both canonical
+- The Localization feature's aggregate current-profile pin covers both canonical
   module inputs and their feature-relative paths.
 - The binary-patcher patch set validates as 6 targets, 13 patches, and 86 edits. The UI
   texture plan derives all 34 members with 33 whole donors and MODE2KDV as the

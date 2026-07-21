@@ -9,6 +9,6 @@ and the current profile does not consume them.
 - `font_elf_history/` records the retired m01/m02 and v22/v23 ELF experiments,
   including negative runtime results that must not be repeated blindly.
 
-The active implementation is `na2_patcher/features/font/binary_patcher/`.
+The active implementation is `na2_patcher/features/localization/binary_patcher/`.
 Retain these records only as compact knowledge inputs; generated binaries,
 candidate ISOs, screenshots, and apply logs do not belong here.

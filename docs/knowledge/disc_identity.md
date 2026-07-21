@@ -16,8 +16,9 @@ The serial alternatives considered on 2026-07-18 were rejected as follows:
 
 ## Reproducible implementation
 
-The hash-pinned `disc_identity_v1` profile module performs two guarded,
-equal-length edits after every file-backed module has been composed:
+The profile's hash-pinned `disc_identity` feature invokes the derived
+`disc_identity.disc_identity` module to perform two guarded, equal-length edits
+after every file-backed module has been composed:
 
 1. `SYSTEM.CNF` changes `SLPS_258.37` to `SLPS_222.28`.
 2. The ISO9660 root directory record changes `SLPS_258.37;1` to

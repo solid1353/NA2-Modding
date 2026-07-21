@@ -93,7 +93,7 @@ actionable leads.
 Status: generated module implemented and initial ISO runtime passed. Confirmed
 layout, loader, donor, FLIST, and ISO findings are recorded in
 `docs/knowledge/external_translation_files.md`; the canonical pointer inventory
-is `na2_patcher/features/translation/external_translation/pointer_refs.tsv`.
+is `na2_patcher/features/localization/external_translation/pointer_refs.tsv`.
 
 - Candidate resident cave: ELF file `0x00507414-0x0050747F` / runtime
   `0x00607314-0x0060737F` is zero-filled and has no aligned exact pointer found

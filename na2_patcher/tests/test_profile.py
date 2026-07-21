@@ -103,9 +103,9 @@ class ProfileTests(unittest.TestCase):
             root = Path(temporary)
             features, source, profiles = self.create_workspace(root)
             alpha = self.create_feature(features, "alpha", "binary_patcher")
-            translation = self.create_feature(
+            localization = self.create_feature(
                 features,
-                "translation",
+                "localization",
                 "translation_importer",
                 "string_patcher",
                 "binary_patcher",
@@ -115,19 +115,19 @@ class ProfileTests(unittest.TestCase):
                 source,
                 [
                     {"feature_id": "alpha", "expected_sha256": feature_content_sha256(alpha)},
-                    {"feature_id": "translation", "expected_sha256": feature_content_sha256(translation)},
+                    {"feature_id": "localization", "expected_sha256": feature_content_sha256(localization)},
                 ],
             )
             profile = load_profile(profile_path, root)
             self.assertEqual(profile.profile_id, "test")
-            self.assertEqual([item.feature_id for item in profile.features], ["alpha", "translation"])
+            self.assertEqual([item.feature_id for item in profile.features], ["alpha", "localization"])
             self.assertEqual(
                 [item.module_id for item in profile.modules],
                 [
                     "alpha.binary_patcher",
-                    "translation.translation_importer",
-                    "translation.string_patcher",
-                    "translation.binary_patcher",
+                    "localization.translation_importer",
+                    "localization.string_patcher",
+                    "localization.binary_patcher",
                 ],
             )
             self.assertEqual([item.order for item in profile.modules], [1, 2, 3, 4])
@@ -193,11 +193,11 @@ class ProfileTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             features, source, profiles = self.create_workspace(root)
-            feature = self.create_feature(features, "translation", "translation_importer")
+            feature = self.create_feature(features, "localization", "translation_importer")
             profile = self.create_profile(
                 profiles,
                 source,
-                [{"feature_id": "translation", "expected_sha256": feature_content_sha256(feature)}],
+                [{"feature_id": "localization", "expected_sha256": feature_content_sha256(feature)}],
             )
             with self.assertRaisesRegex(ValueError, "requires string_patcher"):
                 load_profile(profile, root)
@@ -243,15 +243,13 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(
             [module.module_id for module in profile.modules],
             [
-                "font.binary_patcher",
-                "menu_input.binary_patcher",
+                "localization.translation_importer",
+                "localization.string_patcher",
+                "localization.texture_patcher",
+                "localization.binary_patcher",
+                "localization.external_translation",
                 "qol.binary_patcher",
                 "battle_logic.binary_patcher",
-                "translation.translation_importer",
-                "translation.string_patcher",
-                "translation.texture_patcher",
-                "translation.binary_patcher",
-                "translation.external_translation",
                 "disc_identity.disc_identity",
             ],
         )

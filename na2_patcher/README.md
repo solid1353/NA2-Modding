@@ -57,13 +57,12 @@ inputs only.
 
 The current profile enables, in order:
 
-1. Font: accepted native 14x20 NUN5-derived glyphs and local fit/alignment.
-2. Menu input: accepted front-end and overlay input behavior.
-3. QoL: accepted startup, Practice, and mode-selection behavior.
-4. Battle logic: accepted battle-rule behavior.
-5. Translation: importer, string patcher, texture patcher, UI binary patches,
-   and external `MOD.BIN`/`TEXTENG.BIN` support.
-6. Disc identity: the equal-length `SLPS_258.37` to `SLPS_222.28` boot rename.
+1. Localization: importer, string patcher, texture patcher, native NUN5-derived
+   font, regional menu input, UI binary patches, and external
+   `MOD.BIN`/`TEXTENG.BIN` support.
+2. QoL: accepted startup, Practice, and mode-selection behavior.
+3. Battle logic: accepted battle-rule behavior.
+4. Disc identity: the equal-length `SLPS_258.37` to `SLPS_222.28` boot rename.
 
 Testing and Rendering remain available feature folders but are omitted from
 the current profile.

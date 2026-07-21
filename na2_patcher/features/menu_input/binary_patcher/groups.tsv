@@ -1,5 +1,0 @@
-group_id	name	description	review_notes
-battle_ui	Battle UI	Battle-owned menu and overlay input handlers.	
-front_end	Front end	Boot-ELF front-end, setup, save, and modal input handlers.	
-etc_ui	ETC UI	ETC-owned front-end and submenu input handlers.	
-battle_results	Battle results	Battle-results input behavior.	

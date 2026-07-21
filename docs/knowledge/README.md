@@ -44,4 +44,4 @@ Operational logs remain disposable after their durable findings are promoted. Gi
 - `external_translation_files.md`: two-file `MOD.BIN` + `TEXTENG.BIN`
   feasibility and loader/memory/ISO constraints. The complete enabled `[S]`
   pointer inventory is canonical module data at
-  `na2_patcher/features/translation/external_translation/pointer_refs.tsv`.
+  `na2_patcher/features/localization/external_translation/pointer_refs.tsv`.

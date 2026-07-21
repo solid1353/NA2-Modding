@@ -6,6 +6,10 @@ tasks. It is based on the preserved outer-ISO, `DATA.CVM`, and AFS inventories,
 artifact signatures inspected on 2026-07-18, existing module evidence, and the
 preserved NA2 Ghidra materials.
 
+Use [`game_files.md`](game_files.md) as the canonical human-readable reference
+for file roles and the game-media hierarchy. This document remains authoritative
+for analysis level, disassembly scope, and executable cohorts.
+
 The machine-readable classification is in
 `docs/knowledge/binary_analysis_inventory.tsv`. A classification is the default
 starting point, not a claim that every byte in an artifact has the same role.

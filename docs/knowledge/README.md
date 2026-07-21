@@ -32,6 +32,9 @@ Operational logs remain disposable after their durable findings are promoted. Gi
 
 ## Current records
 
+- `game_files.md`: canonical human-readable map of the outer disc and major
+  nested file families, including roles, evidence strength, and unresolved
+  meanings. Exact path/offset inventories remain under `media/`.
 - `binary_analysis.md` and `binary_analysis_inventory.tsv`: minimum analysis
   levels for known NA2 artifacts and the reusable escalation workflow.
 - `menu_input.md`: save/load input-handler runtime findings and their canonical evidence.

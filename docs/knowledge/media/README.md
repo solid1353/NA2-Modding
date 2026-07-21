@@ -2,6 +2,10 @@
 
 These exact inventories were promoted from the 2026-07-03/04 extraction logs so the game-media structure can be searched without repeating ISO, encrypted-CVM, or nested-AFS extraction.
 
+For a human-readable explanation of what the files and major nested families
+do, use [`../game_files.md`](../game_files.md). This directory remains the
+canonical exact structural inventory rather than duplicating semantic notes.
+
 | Durable file | Contents | Entries |
 | --- | --- | ---: |
 | `na2_iso9660.tsv` | Outer `na2_iso` project-file ISO9660 layout: path, object type, extent, byte offset, and size | 36: 32 files, 4 directories |

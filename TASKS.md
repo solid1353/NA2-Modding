@@ -3,9 +3,6 @@
 ## In Progress
 
 ### Project
-- Regroup features.
-- Decide on TEXTENG.BIN usage policy.
-- Consider retiring cheats.
 - [Develop a release process (deferred indefinitely)](docs/RELEASE_PROCESS.md).
 - Investigate cross-platform development/deployment possibilities.
 - Work folder cleanup?

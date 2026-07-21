@@ -1,5 +1,9 @@
 # Release process
 
+> **Status: frozen until the release-process feature is finished.** Do not update
+> this document incrementally or for unrelated work. The task that finishes the
+> feature must finalize this document and remove this notice.
+
 This document is the canonical context and resumption plan for the self-contained
 Windows release builder. The implementation is currently work in progress and
 is preserved in a Git stash; it is not a validated public release.

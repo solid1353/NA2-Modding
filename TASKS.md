@@ -43,6 +43,6 @@
 
 ## Archive
 
-### Code Injection Architecture
+### Code Injection
 
 ### Game Decompilation

@@ -1,0 +1,2 @@
+// [EE map capture: Restore Adventure mode]
+// patch=1,EE,005D51D0,word,00000004

@@ -45,4 +45,4 @@
 
 ### Code Injection
 
-### Game Decompilation
+### Decompilation

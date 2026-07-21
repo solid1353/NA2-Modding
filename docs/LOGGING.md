@@ -49,8 +49,9 @@ the complete verified build and recreates the receipt only after success.
 
 Persistent command logs must be normalized after transcript capture. They omit
 PowerShell transcript boilerplate, replace configured roots with aliases, and
-record command mode, start/end time, duration, outcome, ISO result/rotation when
-applicable, profile record, PNACH actualization status, and enabled cheats.
+record command mode, start/end time, duration, outcome, ISO result/rotation and
+profile record when applicable. An on-demand `na2 act` run records PNACH
+actualization status and enabled cheats.
 
 ## Other task logs
 

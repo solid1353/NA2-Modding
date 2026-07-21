@@ -24,18 +24,6 @@ try {
     New-Item -ItemType Directory -Force -Path $scriptRoot, $libRoot | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'build.ps1') -Destination $scriptRoot
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'process.ps1') -Destination $scriptRoot
-    [IO.File]::WriteAllText(
-        (Join-Path $scriptRoot 'actualize_pnach.ps1'),
-        @'
-[pscustomobject]@{
-    PCSX2ElfCRC = ''
-    CheatsPnach = ''
-    PnachStatus = 'test'
-    RemovedPnachSymlinks = @()
-    EnabledCheats = @()
-}
-'@
-    )
     foreach ($name in 'project_paths.ps1', 'run_log.ps1', 'build_log.ps1') {
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot "..\lib\$name") -Destination $libRoot
     }

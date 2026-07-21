@@ -4,42 +4,8 @@ param()
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 . (Join-Path $PSScriptRoot '..\lib\build_log.ps1')
-. (Join-Path $PSScriptRoot '..\lib\run_log.ps1')
 . (Join-Path $PSScriptRoot 'process.ps1')
 $projectPaths = Get-Na2ProjectPaths
-
-function Sync-Na2BuildPnach {
-    param(
-        [Parameter(Mandatory = $true)][string]$CurrentIso,
-        [Parameter(Mandatory = $true)][string]$PreviousIso
-    )
-
-    $arguments = @{ IsoPath = $CurrentIso }
-    if (Test-Path -LiteralPath $PreviousIso -PathType Leaf) {
-        $arguments.PreserveIsoPath = @($PreviousIso)
-    }
-    $actualizeOutput = @(
-        & (Join-Path $PSScriptRoot 'actualize_pnach.ps1') @arguments
-    )
-    if ($actualizeOutput.Count -ne 1) {
-        throw "PNACH actualization returned $($actualizeOutput.Count) results; expected one."
-    }
-    $actualizeResult = $actualizeOutput[0]
-    Write-Host (
-        Format-Na2ActualizeStatus `
-            -Result $actualizeResult `
-            -ProjectPaths $projectPaths
-    ) -ForegroundColor Cyan
-
-    $enabledCheatNames = @($actualizeResult.EnabledCheats)
-    $enabledCheats = if ($enabledCheatNames.Count -eq 0) {
-        'none'
-    }
-    else {
-        $enabledCheatNames -join ', '
-    }
-    Write-Host "[na2] Enabled cheats: $enabledCheats" -ForegroundColor Cyan
-}
 
 function Test-FileContentEqual {
     param(
@@ -212,9 +178,6 @@ if ($preflight.status -eq 'hit') {
         ) -ForegroundColor Cyan
         Write-Host '[na2] ISO result: unchanged; preflight cache hit; rotation: no.' -ForegroundColor Cyan
         Write-Host "[na2] Build record: reused $buildRecord." -ForegroundColor Cyan
-        Sync-Na2BuildPnach `
-            -CurrentIso $resolvedOutputIso `
-            -PreviousIso $resolvedPreviousIso
         return [pscustomobject]@{
             Status = 'unchanged'
             CurrentIso = $resolvedOutputIso
@@ -289,9 +252,6 @@ try {
         -CurrentIso $resolvedOutputIso `
         -PreviousIso $resolvedPreviousIso
     $promotionCompleted = $true
-    Sync-Na2BuildPnach `
-        -CurrentIso $resolvedOutputIso `
-        -PreviousIso $resolvedPreviousIso
     $buildRecord = Complete-Na2BuildRecord `
         -LogDirectory $logDirectory `
         -BuildId $buildId `

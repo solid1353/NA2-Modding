@@ -213,16 +213,9 @@ The following are transferred notes/hypotheses from earlier ChatGPT work. Treat 
 
 Original observed PCSX2 CRC from prior notes: `C0659AD1`
 
-File role hypotheses:
-
-- `SLPS_258.37`: main PS2 ELF/executable. May contain code and embedded strings. Replacing it can change PCSX2 Game CRC.
-- `BTL.BIN`: battle/practice data. Claimed to contain battle UI/practice/settings strings.
-- `ETC.bin`: misc/extras/collection/shop-ish data. Claimed to contain collection/shop/extras strings, item names, some jutsu/location/name/title strings.
-- `ADV.bin`: adventure/master/story-ish data. Prior translated ADV reportedly crashed; do not include or modify unless explicitly requested.
-- `GF4.BIN`, `GF4C.BIN`, `GRF4.BIN`, `SF1.BIN`, `SF1C.BIN`: likely graphics/font/resource containers; not confirmed safe string targets.
-- `logo.ccs`: likely startup/logo texture/animation data, not normal string translation.
-- PSS files: movie/video files. Do not delete/rename blindly.
-- AFS files: archives, not directly playable audio streams. Extract first, then inspect contained files.
+The former file-role handoff notes have been researched and consolidated into
+the canonical [`knowledge/game_files.md`](knowledge/game_files.md) reference.
+Use its evidence labels instead of reviving these older unqualified guesses.
 
 Prior known PNACH patch notes:
 

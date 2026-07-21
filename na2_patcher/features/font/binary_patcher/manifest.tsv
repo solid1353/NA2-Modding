@@ -1,2 +1,0 @@
-schema_version	package_id	package_version	game	description	evidence_path
-2	font	5	NA2	Runtime-proven native 14x20 NUN5-derived secondary font with call-local alignment and shrink-only fitting; residual weight refinement remains documented.	docs/knowledge/font/README.md

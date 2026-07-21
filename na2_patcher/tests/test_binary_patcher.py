@@ -35,18 +35,6 @@ class BinaryPatcherTests(unittest.TestCase):
         (nun5 / "source.bin").write_bytes(source)
 
         write_tsv(
-            package_dir / "manifest.tsv",
-            patcher.MANIFEST_FIELDS,
-            [{
-                "schema_version": 2,
-                "package_id": "fixture",
-                "package_version": 1,
-                "game": "NA2",
-                "description": "test fixture",
-                "evidence_path": "evidence/source.zip",
-            }],
-        )
-        write_tsv(
             package_dir / "targets.tsv",
             patcher.TARGET_FIELDS,
             [
@@ -230,16 +218,14 @@ class BinaryPatcherTests(unittest.TestCase):
                     {"destination": staged},
                 )
 
-    def test_v1_package_is_rejected(self) -> None:
+    def test_obsolete_manifest_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             package, _, _ = self.make_fixture(root)
-            manifest = package.directory / "manifest.tsv"
-            manifest.write_text(
-                manifest.read_text(encoding="utf-8").replace("\n2\t", "\n1\t"),
-                encoding="utf-8",
+            (package.directory / "manifest.tsv").write_text(
+                "schema_version\tpackage_id\n2\tfixture\n", encoding="utf-8"
             )
-            with self.assertRaisesRegex(patcher.PatchError, "schema_version"):
+            with self.assertRaisesRegex(patcher.PatchError, "obsolete"):
                 patcher.load_package(package.directory)
 
     def test_patch_must_reference_declared_group(self) -> None:
@@ -284,18 +270,6 @@ class BinaryPatcherTests(unittest.TestCase):
     def test_empty_v2_package_is_valid(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary) / "empty"
-            write_tsv(
-                directory / "manifest.tsv",
-                patcher.MANIFEST_FIELDS,
-                [{
-                    "schema_version": 2,
-                    "package_id": "empty",
-                    "package_version": 1,
-                    "game": "NA2",
-                    "description": "Reserved empty package.",
-                    "evidence_path": "",
-                }],
-            )
             write_tsv(directory / "targets.tsv", patcher.TARGET_FIELDS, [])
             write_tsv(directory / "groups.tsv", patcher.GROUP_FIELDS, [])
             write_tsv(directory / "patches.tsv", patcher.PATCH_FIELDS, [])

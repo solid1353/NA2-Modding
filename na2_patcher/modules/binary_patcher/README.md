@@ -69,8 +69,10 @@ profile composition is itself a verified test path for accepted integrated work.
 ## Schema
 
 Schema v2 is described by the column tables under `schemas/v2/`. Every package has
-`manifest.tsv`, `targets.tsv`, `groups.tsv`, `patches.tsv`, and `edits.tsv`.
-Headers are strict and must match exactly. Groups organize patches; patches own one
-or more exact edits. A completely empty reserved package is valid, but declared
-groups without patches and patches without edits are rejected. Schema v1 is not
-accepted by the live engine and remains available only through Git history.
+exactly four canonical control tables: `targets.tsv`, `groups.tsv`, `patches.tsv`,
+and `edits.tsv`, plus any blobs referenced by edit rows. Package identity is
+derived from its feature/module path; identity manifests and package-version
+metadata are not accepted. Headers are strict and must match exactly. Groups
+organize patches; patches own one or more exact edits. A completely empty reserved
+package is valid, but declared groups without patches and patches without edits are
+rejected. Schema v1 is available only through Git history.

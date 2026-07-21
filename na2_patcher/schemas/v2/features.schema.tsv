@@ -1,6 +1,0 @@
-field	required	description
-feature_id	1	Stable user-facing feature identifier matching the feature package manifest.
-enabled	1	1 enables every module input owned by the feature directory; 0 retains the feature without execution.
-input	1	Repository-relative feature package directory.
-expected_sha256	1	Exact hash of the feature package manifest.
-reason	1	Purpose for including this feature in the profile.

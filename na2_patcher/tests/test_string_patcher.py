@@ -64,7 +64,7 @@ class StringPatcherTests(unittest.TestCase):
             replacement,
         )
         self.assertEqual(rows[0]["outcome"], "applied")
-        self.assertEqual(rows[0]["package_id"], "string_patcher")
+        self.assertEqual(rows[0]["package_id"], "translation.string_patcher")
 
     def test_compiles_imported_strings_as_default_binary_patches(self) -> None:
         package = string_patcher.build_binary_package(

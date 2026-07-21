@@ -1,3 +1,0 @@
-field	required	description
-key	1	Unique manifest metadata key.
-value	1	Metadata value; schema_version must be 2.

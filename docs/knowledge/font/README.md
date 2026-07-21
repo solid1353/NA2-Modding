@@ -5,8 +5,10 @@ evidence, including accepted implementations and rejected historical tests.
 
 ## 2026-07-20 accepted native 14x20 integration baseline
 
-The current patch set is version 5 with module hash
-`9FC3C4905DFF6D14BAAA848C56E6C17D1DE4E79EEFAB2E1A7A74FAD6A25013F8`.
+The current patch set is version 5. Its former standalone profile module pin was
+`9FC3C4905DFF6D14BAAA848C56E6C17D1DE4E79EEFAB2E1A7A74FAD6A25013F8`;
+the manifest-free profile now pins the complete Font feature as
+`23A2CFDD285FF00A40F35AC42D0656580E4D9DE5884F2CF568453A20E93AA3A7`.
 It is a new, deterministic donor built from hash-verified clean NA2 and
 official NUN5 inputs; it is not based on m01, v22/v23, the rejected semantic
 palette swap, the 10x22 resample, or a whole-file GF4 replacement.

@@ -1,18 +1,19 @@
 # Feature packages
 
-Feature packages define reusable declarative capabilities independently of
-profiles. Each package contains:
+Feature packages own reproducible declarative capability data independently of
+profiles and reusable engines.
 
-- `manifest.tsv`: feature identity, name, and description.
-- one root `README.md`: all feature and module-specific documentation.
-- module-named subdirectories: canonical declarative inputs interpreted by the
-  reusable engines under `na2_patcher/modules/`.
+Each feature contains exactly:
 
-Profiles enable and hash-pin feature packages while separately defining and
-hash-pinning their module instances. A module belongs to the one feature whose
-directory contains its input, and the first subdirectory must match the module
-engine type. Enabling a feature enables every module input it owns.
+- one root `README.md` containing all feature and module-specific documentation;
+- one or more direct module directories named for registered engines under
+  `na2_patcher/modules/`.
 
-Feature hashes cover only `manifest.tsv`. Each active module input is pinned
-separately by the profile, so feature-owned declarations remain reproducible
-without making documentation executable input.
+The feature folder name is its identity. There is no feature manifest, module
+catalog, or selection table. A profile row enables every module directory the
+feature owns; omission disables the feature.
+
+The profile pins one deterministic aggregate hash covering every canonical
+module input in the feature. Documentation, engine code, and non-input helpers
+are excluded. Paths, derived module IDs, and module order are not repeated in
+profile metadata.

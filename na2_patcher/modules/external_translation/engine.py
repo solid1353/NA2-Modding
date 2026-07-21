@@ -95,14 +95,13 @@ def _parse_int(value: str, label: str) -> int:
     return result
 
 
-def _load_manifest(package_directory: Path) -> dict[str, str]:
-    rows = _read_tsv(package_directory / "manifest.tsv", MANIFEST_FIELDS)
+def _load_config(package_directory: Path) -> dict[str, str]:
+    rows = _read_tsv(package_directory / "config.tsv", MANIFEST_FIELDS)
     manifest = {row["key"]: row["value"] for row in rows}
     if len(manifest) != len(rows):
-        raise ValueError("external translation manifest contains duplicate keys")
+        raise ValueError("external translation config contains duplicate keys")
     required = {
         "schema_version",
-        "module_id",
         "mapping_sha256",
         "shortening_count",
         "direct_reference_count",
@@ -137,7 +136,7 @@ def _load_manifest(package_directory: Path) -> dict[str, str]:
     extra = sorted(manifest.keys() - required)
     if missing or extra:
         raise ValueError(
-            "external translation manifest key mismatch; "
+            "external translation config key mismatch; "
             f"missing={missing}, extra={extra}"
         )
     if manifest["schema_version"] != "1":
@@ -153,7 +152,7 @@ def _load_manifest(package_directory: Path) -> dict[str, str]:
     ):
         value = manifest[key].upper()
         if len(value) != 64 or any(char not in "0123456789ABCDEF" for char in value):
-            raise ValueError(f"manifest {key} must be 64 hexadecimal digits")
+            raise ValueError(f"config {key} must be 64 hexadecimal digits")
         manifest[key] = value
     return manifest
 
@@ -269,7 +268,7 @@ def _translation_inputs(
         apply="BTL,ETC,SLPS",
     )
     if translation_plan.packaged_mappings_sha256.upper() != manifest["mapping_sha256"]:
-        raise RuntimeError("translation metadata hash disagrees with external manifest")
+        raise RuntimeError("translation metadata hash disagrees with external config")
 
     clean_targets = {
         target: _read_source(
@@ -854,7 +853,7 @@ def build_external_translation_plan(
     roots: dict[str, Path],
 ) -> ExternalTranslationPlan:
     package_directory = package_directory.resolve()
-    manifest = _load_manifest(package_directory)
+    manifest = _load_config(package_directory)
     references = _load_references(package_directory)
     text_by_id, translation_rows, clean_targets, official_sources = _translation_inputs(
         package_directory, roots, manifest
@@ -893,7 +892,6 @@ def build_external_translation_plan(
     )
     summary: dict[str, object] = {
         "schema_version": 1,
-        "module_id": manifest["module_id"],
         "mapping_sha256": manifest["mapping_sha256"],
         "edit_count": len(edits),
         "edits_by_kind": dict(sorted(counts.items())),

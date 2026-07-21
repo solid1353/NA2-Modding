@@ -1,470 +1,271 @@
 from __future__ import annotations
 
 import csv
-import hashlib
+import json
 import tempfile
 import unittest
 from pathlib import Path
 
+from na2_patcher.modules.binary_patcher import engine as binary_patcher
 from na2_patcher.profile import (
     FEATURE_FIELDS,
-    MODULE_FIELDS,
-    content_sha256,
     feature_content_sha256,
     load_profile,
     module_content_sha256,
 )
 
 
-def write_tsv(path: Path, fields: list[str], rows: list[list[str]]) -> None:
+def write_tsv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
-        writer.writerow(fields)
+        writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t", lineterminator="\n")
+        writer.writeheader()
         writer.writerows(rows)
 
 
 class ProfileTests(unittest.TestCase):
-    def create_feature(
-        self,
-        workspace: Path,
-        feature_id: str,
-    ) -> Path:
-        package = workspace / "features" / feature_id
-        write_tsv(
-            package / "manifest.tsv",
-            ["key", "value"],
-            [
-                ["schema_version", "1"],
-                ["feature_id", feature_id],
-                ["name", feature_id.title()],
-                ["description", "Test feature."],
-            ],
+    def create_workspace(self, root: Path) -> tuple[Path, Path, Path]:
+        features = root / "features"
+        source = root / "source"
+        profiles = root / "profiles"
+        features.mkdir()
+        source.mkdir()
+        profiles.mkdir()
+        (root / "project-paths.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "roots": {
+                        "repository": ".",
+                        "features": "features",
+                        "source": "source",
+                    },
+                    "files": {"placeholder": "placeholder"},
+                }
+            ),
+            encoding="utf-8",
         )
-        return package
+        return features, source, profiles
+
+    def create_module(self, feature: Path, module_type: str) -> Path:
+        module = feature / module_type
+        module.mkdir(parents=True)
+        if module_type == "binary_patcher":
+            write_tsv(module / "targets.tsv", binary_patcher.TARGET_FIELDS, [])
+            write_tsv(module / "groups.tsv", binary_patcher.GROUP_FIELDS, [])
+            write_tsv(module / "patches.tsv", binary_patcher.PATCH_FIELDS, [])
+            write_tsv(module / "edits.tsv", binary_patcher.EDIT_FIELDS, [])
+        elif module_type == "string_patcher":
+            (module / "strings.tsv").write_text("string_id\n", encoding="utf-8")
+        elif module_type == "translation_importer":
+            (module / "config.tsv").write_text(
+                "key\tvalue\nschema_version\t1\nmapping_version\t1\n"
+                "mappings_sha256\t" + "0" * 64 + "\n",
+                encoding="utf-8",
+            )
+            (module / "mappings.tsv").write_text("id\n", encoding="utf-8")
+        elif module_type == "texture_patcher":
+            for name in ("containers.tsv", "mappings.tsv", "strategies.tsv"):
+                (module / name).write_text("id\n", encoding="utf-8")
+        elif module_type == "external_translation":
+            (module / "config.tsv").write_text("key\tvalue\n", encoding="utf-8")
+            (module / "pointer_refs.tsv").write_text("id\n", encoding="utf-8")
+        elif module_type == "disc_identity":
+            (module / "identity.tsv").write_text("key\tvalue\n", encoding="utf-8")
+        else:
+            self.fail(f"unsupported test module {module_type}")
+        return module
+
+    def create_feature(self, features: Path, feature_id: str, *module_types: str) -> Path:
+        feature = features / feature_id
+        feature.mkdir()
+        (feature / "README.md").write_text(f"# {feature_id}\n", encoding="utf-8")
+        for module_type in module_types:
+            self.create_module(feature, module_type)
+        return feature
 
     def create_profile(
         self,
-        workspace: Path,
-        expected_hash: str,
+        profiles: Path,
+        source: Path,
+        rows: list[dict[str, object]],
         *,
-        enabled: str = "1",
+        profile_id: str = "test",
     ) -> Path:
-        source = workspace / "source"
-        source.mkdir(parents=True)
-        feature = self.create_feature(workspace, "feature")
-        module_input = feature / "translation_importer" / "input.bin"
-        module_input.parent.mkdir()
-        module_input.write_bytes(b"profile input")
-        profile = workspace / "profiles" / "test"
-        write_tsv(
-            profile / "manifest.tsv",
-            ["key", "value"],
-            [["schema_version", "2"], ["profile_id", "test"]],
-        )
-        write_tsv(
-            profile / "roots.tsv",
-            ["root_id", "path"],
-            [["na2", "source"]],
-        )
-        write_tsv(
-            profile / "features.tsv",
-            FEATURE_FIELDS,
-            [
-                [
-                    "feature",
-                    enabled,
-                    "features/feature",
-                    feature_content_sha256(feature),
-                    "test",
-                ]
-            ],
-        )
-        write_tsv(
-            profile / "modules.tsv",
-            MODULE_FIELDS,
-            [
-                [
-                    "one",
-                    "10",
-                    "translation_importer",
-                    "features/feature/translation_importer/input.bin",
-                    expected_hash,
-                    "test",
-                ]
-            ],
-        )
+        profile = profiles / profile_id
+        profile.mkdir()
+        write_tsv(profile / "roots.tsv", ["root_id", "path"], [{"root_id": "na2", "path": "source"}])
+        write_tsv(profile / "features.tsv", FEATURE_FIELDS, rows)
         return profile
 
-    def test_loads_hash_pinned_relative_profile(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            workspace = Path(directory)
-            expected = hashlib.sha256(b"profile input").hexdigest().upper()
-            profile = load_profile(self.create_profile(workspace, expected), workspace)
-            self.assertEqual(profile.manifest["profile_id"], "test")
-            self.assertEqual(profile.modules[0].module_id, "one")
+    def test_profile_derives_identity_modules_and_order(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features, source, profiles = self.create_workspace(root)
+            alpha = self.create_feature(features, "alpha", "binary_patcher")
+            translation = self.create_feature(
+                features,
+                "translation",
+                "translation_importer",
+                "string_patcher",
+                "binary_patcher",
+            )
+            profile_path = self.create_profile(
+                profiles,
+                source,
+                [
+                    {"feature_id": "alpha", "expected_sha256": feature_content_sha256(alpha)},
+                    {"feature_id": "translation", "expected_sha256": feature_content_sha256(translation)},
+                ],
+            )
+            profile = load_profile(profile_path, root)
+            self.assertEqual(profile.profile_id, "test")
+            self.assertEqual([item.feature_id for item in profile.features], ["alpha", "translation"])
+            self.assertEqual(
+                [item.module_id for item in profile.modules],
+                [
+                    "alpha.binary_patcher",
+                    "translation.translation_importer",
+                    "translation.string_patcher",
+                    "translation.binary_patcher",
+                ],
+            )
+            self.assertEqual([item.order for item in profile.modules], [1, 2, 3, 4])
 
-    def test_rejects_enabled_input_hash_mismatch(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            workspace = Path(directory)
-            profile_path = self.create_profile(workspace, "0" * 64)
+    def test_rejects_feature_hash_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features, source, profiles = self.create_workspace(root)
+            self.create_feature(features, "alpha", "binary_patcher")
+            profile = self.create_profile(
+                profiles,
+                source,
+                [{"feature_id": "alpha", "expected_sha256": "0" * 64}],
+            )
             with self.assertRaisesRegex(ValueError, "does not match"):
-                load_profile(profile_path, workspace)
+                load_profile(profile, root)
 
-    def test_rejects_enabled_feature_hash_mismatch(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            workspace = Path(directory)
-            expected = hashlib.sha256(b"profile input").hexdigest().upper()
-            profile_path = self.create_profile(workspace, expected)
-            with (workspace / "features" / "feature" / "manifest.tsv").open(
-                "a", encoding="utf-8", newline=""
-            ) as handle:
-                handle.write("changed\twithout repinning\n")
+    def test_rejects_duplicate_feature(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features, source, profiles = self.create_workspace(root)
+            alpha = self.create_feature(features, "alpha", "binary_patcher")
+            row = {"feature_id": "alpha", "expected_sha256": feature_content_sha256(alpha)}
+            profile = self.create_profile(profiles, source, [row, row])
+            with self.assertRaisesRegex(ValueError, "Duplicate or invalid feature_id"):
+                load_profile(profile, root)
 
-            with self.assertRaisesRegex(ValueError, "Feature feature: input SHA-256"):
-                load_profile(profile_path, workspace)
-
-    def test_rejects_module_outside_feature_directory(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            workspace = Path(directory)
-            expected = hashlib.sha256(b"profile input").hexdigest().upper()
-            profile_path = self.create_profile(workspace, expected)
-            outside = workspace / "outside" / "input.bin"
-            outside.parent.mkdir()
-            outside.write_bytes(b"profile input")
-            modules = profile_path / "modules.tsv"
-            with modules.open(encoding="utf-8", newline="") as handle:
-                rows = list(csv.DictReader(handle, delimiter="\t"))
-            rows[0]["input"] = "outside/input.bin"
-            with modules.open("w", encoding="utf-8", newline="") as handle:
-                writer = csv.DictWriter(
-                    handle, fieldnames=MODULE_FIELDS, delimiter="\t", lineterminator="\n"
-                )
-                writer.writeheader()
-                writer.writerows(rows)
-            with self.assertRaisesRegex(ValueError, "exactly one feature directory"):
-                load_profile(profile_path, workspace)
-
-    def test_rejects_module_subfolder_that_does_not_match_engine(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            workspace = Path(directory)
-            expected = hashlib.sha256(b"profile input").hexdigest().upper()
-            profile_path = self.create_profile(workspace, expected)
-            wrong = workspace / "features" / "feature" / "wrong" / "input.bin"
-            wrong.parent.mkdir()
-            wrong.write_bytes(b"profile input")
-            modules = profile_path / "modules.tsv"
-            with modules.open(encoding="utf-8", newline="") as handle:
-                rows = list(csv.DictReader(handle, delimiter="\t"))
-            rows[0]["input"] = "features/feature/wrong/input.bin"
-            with modules.open("w", encoding="utf-8", newline="") as handle:
-                writer = csv.DictWriter(
-                    handle, fieldnames=MODULE_FIELDS, delimiter="\t", lineterminator="\n"
-                )
-                writer.writeheader()
-                writer.writerows(rows)
-            with self.assertRaisesRegex(ValueError, "first feature subfolder"):
-                load_profile(profile_path, workspace)
-
-    def test_disabled_input_hash_mismatch_does_not_block_active_profile(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            workspace = Path(directory)
-            disabled = self.create_profile(workspace, "0" * 64, enabled="0")
-            active_feature = self.create_feature(workspace, "active")
-            active_input = active_feature / "translation_importer" / "input.bin"
-            active_input.parent.mkdir()
-            active_input.write_bytes(b"profile input")
-            features = disabled / "features.tsv"
-            with features.open(encoding="utf-8", newline="") as handle:
-                feature_rows = list(csv.DictReader(handle, delimiter="\t"))
-            feature_rows.append(
-                {
-                    "feature_id": "active",
-                    "enabled": "1",
-                    "input": "features/active",
-                    "expected_sha256": feature_content_sha256(active_feature),
-                    "reason": "active",
-                }
+    def test_omitted_feature_is_disabled(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features, source, profiles = self.create_workspace(root)
+            active = self.create_feature(features, "active", "binary_patcher")
+            self.create_feature(features, "inactive", "binary_patcher")
+            profile = self.create_profile(
+                profiles,
+                source,
+                [{"feature_id": "active", "expected_sha256": feature_content_sha256(active)}],
             )
-            with features.open("w", encoding="utf-8", newline="") as handle:
-                writer = csv.DictWriter(
-                    handle, fieldnames=FEATURE_FIELDS, delimiter="\t", lineterminator="\n"
-                )
-                writer.writeheader()
-                writer.writerows(feature_rows)
-            modules = disabled / "modules.tsv"
-            with modules.open(encoding="utf-8", newline="") as handle:
-                rows = list(csv.DictReader(handle, delimiter="\t"))
-            rows.append(
-                {
-                    "module_id": "enabled",
-                    "order": "20",
-                    "module": "translation_importer",
-                    "input": "features/active/translation_importer/input.bin",
-                    "expected_sha256": hashlib.sha256(b"profile input")
-                    .hexdigest()
-                    .upper(),
-                    "reason": "active",
-                }
-            )
-            with modules.open("w", encoding="utf-8", newline="") as handle:
-                writer = csv.DictWriter(
-                    handle, fieldnames=MODULE_FIELDS, delimiter="\t", lineterminator="\n"
-                )
-                writer.writeheader()
-                writer.writerows(rows)
-            with (workspace / "features" / "feature" / "manifest.tsv").open(
-                "a", encoding="utf-8", newline=""
-            ) as handle:
-                handle.write("changed\twithout repinning\n")
-            profile = load_profile(disabled, workspace)
-            self.assertFalse(profile.modules[0].enabled)
-            self.assertTrue(profile.modules[1].enabled)
+            loaded = load_profile(profile, root)
+            self.assertEqual([item.feature_id for item in loaded.features], ["active"])
 
-    def test_rejects_retired_zip_overlay_module(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            workspace = Path(directory)
-            expected = hashlib.sha256(b"profile input").hexdigest().upper()
-            profile_path = self.create_profile(workspace, expected)
-            modules = profile_path / "modules.tsv"
-            text = modules.read_text(encoding="utf-8")
-            modules.write_text(
-                text.replace("\ttranslation_importer\t", "\tzip_overlay\t"),
+    def test_rejects_unknown_module_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features, _, _ = self.create_workspace(root)
+            feature = features / "alpha"
+            feature.mkdir()
+            (feature / "README.md").write_text("# alpha\n", encoding="utf-8")
+            (feature / "unknown").mkdir()
+            with self.assertRaisesRegex(ValueError, "unknown module"):
+                feature_content_sha256(feature)
+
+    def test_rejects_feature_root_metadata_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features, _, _ = self.create_workspace(root)
+            feature = self.create_feature(features, "alpha", "binary_patcher")
+            (feature / "manifest.tsv").write_text("key\tvalue\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "unsupported files"):
+                feature_content_sha256(feature)
+
+    def test_importer_requires_string_patcher_in_same_feature(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features, source, profiles = self.create_workspace(root)
+            feature = self.create_feature(features, "translation", "translation_importer")
+            profile = self.create_profile(
+                profiles,
+                source,
+                [{"feature_id": "translation", "expected_sha256": feature_content_sha256(feature)}],
+            )
+            with self.assertRaisesRegex(ValueError, "requires string_patcher"):
+                load_profile(profile, root)
+
+    def test_disc_identity_must_be_final(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features, source, profiles = self.create_workspace(root)
+            identity = self.create_feature(features, "identity", "disc_identity")
+            alpha = self.create_feature(features, "alpha", "binary_patcher")
+            profile = self.create_profile(
+                profiles,
+                source,
+                [
+                    {"feature_id": "identity", "expected_sha256": feature_content_sha256(identity)},
+                    {"feature_id": "alpha", "expected_sha256": feature_content_sha256(alpha)},
+                ],
+            )
+            with self.assertRaisesRegex(ValueError, "must be the final"):
+                load_profile(profile, root)
+
+    def test_binary_hash_ignores_helpers_but_includes_referenced_blobs(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            feature = root / "feature"
+            feature.mkdir()
+            module = self.create_module(feature, "binary_patcher")
+            first = module_content_sha256(module, "binary_patcher")
+            (module / "helper.py").write_text("print('one')\n", encoding="utf-8")
+            self.assertEqual(first, module_content_sha256(module, "binary_patcher"))
+            (module / "groups.tsv").write_text(
+                "group_id\tname\tdescription\treview_notes\n"
+                "g\tGroup\tChanged canonical input.\t\n",
                 encoding="utf-8",
             )
-            with self.assertRaisesRegex(ValueError, "unsupported module 'zip_overlay'"):
-                load_profile(profile_path, workspace)
+            self.assertNotEqual(first, module_content_sha256(module, "binary_patcher"))
 
-    def test_directory_hash_is_path_and_content_sensitive(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            (root / "a").mkdir()
-            (root / "a" / "one.txt").write_text("one", encoding="utf-8")
-            first = content_sha256(root / "a")
-            (root / "a" / "one.txt").write_text("two", encoding="utf-8")
-            second = content_sha256(root / "a")
-            self.assertNotEqual(first, second)
-
-    def test_feature_hash_includes_only_manifest(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            workspace = Path(directory)
-            package = self.create_feature(workspace, "feature")
-            (package / "README.md").write_text("first\n", encoding="utf-8")
-            module_input = package / "binary_patcher" / "data.tsv"
-            module_input.parent.mkdir()
-            module_input.write_text("first\n", encoding="utf-8")
-            first = feature_content_sha256(package)
-            (package / "README.md").write_text("second\n", encoding="utf-8")
-            module_input.write_text("second\n", encoding="utf-8")
-            self.assertEqual(first, feature_content_sha256(package))
-            with (package / "manifest.tsv").open(
-                "a", encoding="utf-8", newline=""
-            ) as handle:
-                handle.write("changed\tvalue\n")
-            self.assertNotEqual(first, feature_content_sha256(package))
-
-    def test_binary_patcher_hash_excludes_documentation(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            package = Path(directory) / "package"
-            package.mkdir()
-            for name in (
-                "manifest.tsv",
-                "targets.tsv",
-                "groups.tsv",
-                "patches.tsv",
-            ):
-                (package / name).write_text(f"{name}\n", encoding="utf-8")
-            (package / "edits.tsv").write_text("blob_path\n", encoding="utf-8")
-            (package / "README.md").write_text("first\n", encoding="utf-8")
-
-            first = module_content_sha256(package, "binary_patcher")
-            (package / "README.md").write_text("second\n", encoding="utf-8")
-            second = module_content_sha256(package, "binary_patcher")
-            self.assertEqual(first, second)
-
-            (package / "patches.tsv").write_text("changed\n", encoding="utf-8")
-            third = module_content_sha256(package, "binary_patcher")
-            self.assertNotEqual(second, third)
-
-    def test_binary_patcher_hash_includes_referenced_blobs(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            package = Path(directory) / "package"
-            package.mkdir()
-            for name in (
-                "manifest.tsv",
-                "targets.tsv",
-                "groups.tsv",
-                "patches.tsv",
-            ):
-                (package / name).write_text(f"{name}\n", encoding="utf-8")
-            (package / "payload.bin").write_bytes(b"one")
-            (package / "edits.tsv").write_text(
-                "blob_path\npayload.bin\n", encoding="utf-8"
-            )
-
-            first = module_content_sha256(package, "binary_patcher")
-            (package / "groups.tsv").write_text("changed\n", encoding="utf-8")
-            groups_changed = module_content_sha256(package, "binary_patcher")
-            self.assertNotEqual(first, groups_changed)
-            (package / "groups.tsv").write_text("groups.tsv\n", encoding="utf-8")
-            (package / "payload.bin").write_bytes(b"two")
-            second = module_content_sha256(package, "binary_patcher")
-            self.assertNotEqual(first, second)
-
-    def test_string_patcher_hash_includes_only_string_declarations(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            package = Path(directory) / "string_patcher"
-            package.mkdir()
-            (package / "strings.tsv").write_text("string_id\none\n", encoding="utf-8")
-            (package / "README.md").write_text("first\n", encoding="utf-8")
-            (package / "engine.py").write_text("first\n", encoding="utf-8")
-
-            first = module_content_sha256(package, "string_patcher")
-            (package / "README.md").write_text("second\n", encoding="utf-8")
-            (package / "engine.py").write_text("second\n", encoding="utf-8")
-            self.assertEqual(first, module_content_sha256(package, "string_patcher"))
-
-            (package / "strings.tsv").write_text("string_id\ntwo\n", encoding="utf-8")
-            self.assertNotEqual(
-                first,
-                module_content_sha256(package, "string_patcher"),
-            )
-
-    def test_translation_importer_hash_includes_only_declarative_inputs(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            package = Path(directory) / "translation_importer"
-            package.mkdir()
-            (package / "manifest.tsv").write_text(
-                "key\tvalue\nschema_version\t1\nmapping_version\t1\n"
-                f"mappings_sha256\t{'0' * 64}\n",
-                encoding="utf-8",
-            )
-            (package / "mappings.tsv").write_text("mapping\n", encoding="utf-8")
-            (package / "README.md").write_text("first\n", encoding="utf-8")
-            first = module_content_sha256(package, "translation_importer")
-            (package / "README.md").write_text("second\n", encoding="utf-8")
-            self.assertEqual(
-                first,
-                module_content_sha256(package, "translation_importer"),
-            )
-            (package / "manifest.tsv").write_text(
-                "key\tvalue\nschema_version\t1\nmapping_version\t2\n"
-                f"mappings_sha256\t{'0' * 64}\n",
-                encoding="utf-8",
-            )
-            self.assertNotEqual(
-                first,
-                module_content_sha256(package, "translation_importer"),
-            )
-
-    def test_ui_texture_hash_includes_only_declarative_inputs(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            package = Path(directory) / "package"
-            package.mkdir()
-            (package / "containers.tsv").write_text(
-                "container_id\nexample\n", encoding="utf-8"
-            )
-            (package / "mappings.tsv").write_text("mapping_id\none\n", encoding="utf-8")
-            (package / "strategies.tsv").write_text(
-                "container_id\tstrategy\nexample\twhole\n",
-                encoding="utf-8",
-            )
-            (package / "generated.ccs").write_bytes(b"one")
-            (package / "README.md").write_text("first\n", encoding="utf-8")
-            (package / "engine.py").write_text("first\n", encoding="utf-8")
-
-            first = module_content_sha256(package, "texture_patcher")
-            (package / "README.md").write_text("second\n", encoding="utf-8")
-            (package / "engine.py").write_text("second\n", encoding="utf-8")
-            (package / "generated.ccs").write_bytes(b"two")
-            self.assertEqual(first, module_content_sha256(package, "texture_patcher"))
-
-            (package / "mappings.tsv").write_text(
-                "mapping_id\ntwo\n", encoding="utf-8"
-            )
-            second = module_content_sha256(package, "texture_patcher")
-            self.assertNotEqual(first, second)
-
-            (package / "strategies.tsv").write_text(
-                "container_id\tstrategy\nexample\tmapped\n", encoding="utf-8"
-            )
-            third = module_content_sha256(package, "texture_patcher")
-            self.assertNotEqual(second, third)
-
-    def test_external_translation_hash_includes_only_control_files(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            package = Path(directory) / "external_translation"
-            package.mkdir()
-            (package / "manifest.tsv").write_text(
-                "key\tvalue\nschema_version\t1\n", encoding="utf-8"
-            )
-            (package / "pointer_refs.tsv").write_text(
-                "mapping_id\toffset\none\t0x10\n", encoding="utf-8"
-            )
-            (package / "README.md").write_text("first\n", encoding="utf-8")
-            (package / "engine.py").write_text("first\n", encoding="utf-8")
-
-            first = module_content_sha256(package, "external_translation")
-            (package / "README.md").write_text("second\n", encoding="utf-8")
-            (package / "engine.py").write_text("second\n", encoding="utf-8")
-            self.assertEqual(
-                first, module_content_sha256(package, "external_translation")
-            )
-
-            (package / "pointer_refs.tsv").write_text(
-                "mapping_id\toffset\none\t0x20\n", encoding="utf-8"
-            )
-            self.assertNotEqual(
-                first, module_content_sha256(package, "external_translation")
-            )
-
-    def test_current_enabled_module_hashes_match(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        profile = load_profile(
-            repository / "na2_patcher" / "profiles" / "current",
-            repository,
-        )
-        for module in profile.modules:
-            if not module.enabled:
-                continue
-            self.assertEqual(
-                module_content_sha256(module.input_path, module.module),
-                module.expected_sha256,
-                module.module_id,
-            )
-
-    def test_current_profile_contains_no_selection_tables(self) -> None:
+    def test_current_profile_and_feature_layout(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         profile_directory = repository / "na2_patcher" / "profiles" / "current"
-        self.assertFalse((profile_directory / "feature_selections.tsv").exists())
-        features = repository / "na2_patcher" / "features"
-        self.assertFalse(any(features.glob("*/selections.tsv")))
-        self.assertFalse(
-            (features / "schemas" / "v1" / "selections.schema.tsv").exists()
+        profile = load_profile(profile_directory, repository)
+        self.assertEqual(profile.profile_id, "current")
+        self.assertEqual(
+            [module.module_id for module in profile.modules],
+            [
+                "font.binary_patcher",
+                "menu_input.binary_patcher",
+                "qol.binary_patcher",
+                "battle_logic.binary_patcher",
+                "translation.translation_importer",
+                "translation.string_patcher",
+                "translation.texture_patcher",
+                "translation.binary_patcher",
+                "translation.external_translation",
+                "disc_identity.disc_identity",
+            ],
         )
-
-    def test_each_feature_has_one_root_readme_and_no_nested_markdown(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        features = repository / "na2_patcher" / "features"
-        for feature in sorted(features.iterdir()):
-            if not feature.is_dir() or not (feature / "manifest.tsv").is_file():
+        self.assertFalse((profile_directory / "manifest.tsv").exists())
+        self.assertFalse((profile_directory / "modules.tsv").exists())
+        features_root = repository / "na2_patcher" / "features"
+        for feature in features_root.iterdir():
+            if not feature.is_dir() or feature.name == "schemas":
                 continue
-            with self.subTest(feature=feature.name):
-                markdown = sorted(feature.rglob("*.md"))
-                self.assertEqual(markdown, [feature / "README.md"])
-
-    def test_current_modules_are_owned_by_matching_feature_subfolders(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        profile = load_profile(
-            repository / "na2_patcher" / "profiles" / "current",
-            repository,
-        )
-        features = {feature.feature_id: feature for feature in profile.features}
-        for module in profile.modules:
-            relative = module.input_path.relative_to(
-                features[module.feature_id].input_path
-            )
-            self.assertEqual(relative.parts[0], module.module)
+            self.assertTrue((feature / "README.md").is_file(), feature.name)
+            self.assertEqual(list(feature.glob("manifest.tsv")), [], feature.name)
+            nested_markdown = [path for path in feature.rglob("*.md") if path.parent != feature]
+            self.assertEqual(nested_markdown, [], feature.name)
+        self.assertEqual(list(features_root.rglob("binary_patcher/manifest.tsv")), [])
 
 
 if __name__ == "__main__":

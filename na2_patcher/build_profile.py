@@ -117,7 +117,7 @@ def apply_binary_patch_set(
     for target_id, data in buffers.items():
         path = target_paths[target_id]
         payloads[path] = data
-        owners[path] = package.manifest["package_id"]
+        owners[path] = package.package_id
         after_hashes[target_id] = binary_patcher_module.data_sha256(data)
         patched_paths.append(path)
 
@@ -353,15 +353,14 @@ def write_binary_patch_log(
     binary_patcher_module.write_tsv(
         log_directory / "run_summary.tsv",
         [
-            "timestamp_utc", "schema_version", "package_id", "package_version",
+            "timestamp_utc", "schema_version", "package_id",
             "output_iso", "log_directory", "group_count", "patch_count",
             "unique_patch_count", "edit_count",
         ],
         [{
             "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "schema_version": package.manifest["schema_version"],
-            "package_id": package.manifest["package_id"],
-            "package_version": package.manifest["package_version"],
+            "schema_version": binary_patcher_module.BINARY_PATCHER_SCHEMA_VERSION,
+            "package_id": package.package_id,
             "output_iso": output_iso_text.replace("\\", "/"),
             "log_directory": log_directory_text.replace("\\", "/"),
             "group_count": len(
@@ -537,12 +536,12 @@ def apply_profile_modules(
     results: list[dict[str, object]] = []
     pending_import_plan: translation_importer_module.TranslationImportPlan | None = None
     for module in profile.modules:
-        if not module.enabled:
-            continue
         if module.module == "disc_identity":
             if any("disc_identity" in item for item in results):
                 raise ValueError("Profile may enable only one disc_identity module")
-            identity = disc_identity_module.load_identity(module.input_path)
+            identity = disc_identity_module.load_identity(
+                module.input_path / "identity.tsv"
+            )
             system_path = "SYSTEM.CNF"
             record = source.by_path.get(system_path)
             if record is None or record.is_dir:
@@ -708,7 +707,7 @@ def write_profile_log(
                 "order": module.order,
                 "module": module.module,
                 "input": module.input_path.relative_to(workspace).as_posix(),
-                "input_sha256": module.expected_sha256,
+                "input_sha256": module.input_sha256,
                 "feature_id": module.feature_id,
                 "patched_paths": ",".join(sorted(str(path) for path in paths)),
             }
@@ -781,25 +780,18 @@ def write_profile_log(
             )
     binary_patcher_module.write_tsv(
         log_directory / "features.tsv",
-        [
-            "feature_id", "enabled", "name", "description", "input",
-            "input_sha256", "reason",
-        ],
+        ["feature_id", "input", "input_sha256"],
         [
             {
                 "feature_id": feature.feature_id,
-                "enabled": int(feature.enabled),
-                "name": feature.name,
-                "description": feature.description,
                 "input": feature.input_path.relative_to(workspace).as_posix(),
                 "input_sha256": feature.expected_sha256,
-                "reason": feature.reason,
             }
             for feature in profile.features
         ],
     )
     binary_patcher_module.write_tsv(
-        log_directory / "modules.tsv",
+        log_directory / "module_results.tsv",
         [
             "module_id",
             "order",
@@ -815,15 +807,14 @@ def write_profile_log(
         log_directory / "run_summary.tsv",
         [
             "timestamp_utc", "profile_id", "output_iso", "feature_count",
-            "enabled_feature_count", "module_count",
+            "module_count",
         ],
         [
             {
                 "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "profile_id": profile.manifest["profile_id"],
+                "profile_id": profile.profile_id,
                 "output_iso": output_iso_text.replace("\\", "/"),
                 "feature_count": len(profile.features),
-                "enabled_feature_count": len(enabled_features),
                 "module_count": len(results),
             }
         ],
@@ -1015,7 +1006,7 @@ def main() -> int:
 
     green = "\033[32m"
     reset = "\033[0m"
-    print(f"Applied profile: {profile.manifest['profile_id']}")
+    print(f"Applied profile: {profile.profile_id}")
     for item in profile_results:
         module = item["module"]
         assert isinstance(module, ProfileModule)

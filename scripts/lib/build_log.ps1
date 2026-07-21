@@ -215,23 +215,15 @@ function Complete-Na2BuildRecord {
     $currentBuildId = $buildMap.CurrentBuildId
     $previousBuildId = $buildMap.PreviousBuildId
 
-    $reused = $false
-    if ($Result -eq 'unchanged' -and -not [string]::IsNullOrWhiteSpace($currentBuildId)) {
-        Remove-Item -LiteralPath $recordDirectory -Recurse -Force
-        $effectiveCurrentBuildId = $currentBuildId
-        $reused = $true
-    }
-    else {
-        Write-Na2BuildResult `
-            -RecordDirectory $recordDirectory `
-            -Result $Result `
-            -Rotated $Rotated `
-            -CurrentIso $CurrentIso `
-            -PreviousIso $PreviousIso `
-            -Profile $Profile `
-            -ProjectPaths $ProjectPaths
-        $effectiveCurrentBuildId = $BuildId
-    }
+    Write-Na2BuildResult `
+        -RecordDirectory $recordDirectory `
+        -Result $Result `
+        -Rotated $Rotated `
+        -CurrentIso $CurrentIso `
+        -PreviousIso $PreviousIso `
+        -Profile $Profile `
+        -ProjectPaths $ProjectPaths
+    $effectiveCurrentBuildId = $BuildId
 
     $previousExists = -not [string]::IsNullOrWhiteSpace($PreviousIso) -and
         (Test-Path -LiteralPath $PreviousIso -PathType Leaf)
@@ -258,6 +250,5 @@ function Complete-Na2BuildRecord {
     return [pscustomobject]@{
         BuildId = $effectiveCurrentBuildId
         BuildRecord = "@logs/na2/builds/$effectiveCurrentBuildId"
-        Reused = $reused
     }
 }

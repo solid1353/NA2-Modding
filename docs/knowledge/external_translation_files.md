@@ -229,7 +229,7 @@ outside the BTL/ETC overwrite region.
 
 This is a separate project-side `external_translation` module, not a change to
 the translation importer, mapping schema, mapping values, defaults, migration
-behavior, or enabled-state behavior. Its manifest pins the exact current
+behavior, or enabled-state behavior. Its `config.tsv` pins the exact current
 `mappings.tsv` hash and all source/output hashes; source artifacts are resolved
 through the shared project-path loader.
 

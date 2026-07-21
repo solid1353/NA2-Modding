@@ -1,7 +1,0 @@
-column	required	type	description
-schema_version	1	literal:2	Repository-owned binary-patcher package schema version.
-package_id	1	identifier	Stable patch-set identifier.
-package_version	1	string	Patch-set data version.
-game	1	string	Target game identifier.
-description	1	string	Human-readable scope.
-evidence_path	0	relative_path	Source analytical archive or report.

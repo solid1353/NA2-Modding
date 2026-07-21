@@ -296,7 +296,7 @@ needed by that same engine.
    the release files selectively. The current document supersedes the stashed
    copy; do not overwrite it with the shorter version.
 5. Reconcile shared files instead of taking either side wholesale. Preserve the
-   committed `na2_patcher/profiles/current/modules.tsv`, current source-derived
+   committed `na2_patcher/profiles/current/features.tsv`, current source-derived
    UI engine, and tests. Update packaging resource lists to include recipes and
    Zopfli and to reject UI blobs.
 6. Keep `[S]` display text intact, keep ordinary extracted-root builds working,
@@ -310,7 +310,8 @@ needed by that same engine.
 
 ### Source and unit validation
 
-- Validate every enabled `na2_patcher/profiles/current/` module and hash pin.
+- Validate every enabled feature pin and every folder-derived module in
+  `na2_patcher/profiles/current/`.
 - Run the entire `na2_patcher/tests` suite.
 - Run focused app tests for non-recursive discovery, case-insensitive `.iso`
   handling, hash rejection, duplicates, collisions, input preservation,

@@ -9,63 +9,39 @@ from pathlib import Path
 from .project_paths import ProjectPaths, load_project_paths, resolve_alias
 
 
-MANIFEST_FIELDS = ["key", "value"]
 ROOT_FIELDS = ["root_id", "path"]
-FEATURE_FIELDS = [
-    "feature_id",
-    "enabled",
-    "input",
-    "expected_sha256",
-    "reason",
-]
-MODULE_FIELDS = [
-    "module_id",
-    "order",
-    "module",
-    "input",
-    "expected_sha256",
-    "reason",
-]
-MODULE_TYPES = {
-    "disc_identity",
-    "external_translation",
-    "binary_patcher",
-    "string_patcher",
+FEATURE_FIELDS = ["feature_id", "expected_sha256"]
+MODULE_TYPE_ORDER = (
     "translation_importer",
+    "string_patcher",
     "texture_patcher",
-}
+    "binary_patcher",
+    "external_translation",
+    "disc_identity",
+)
+MODULE_TYPES = frozenset(MODULE_TYPE_ORDER)
 BINARY_PATCHER_CONTROL_FILES = (
-    "manifest.tsv",
     "targets.tsv",
     "groups.tsv",
     "patches.tsv",
     "edits.tsv",
 )
 STRING_PATCHER_CONTROL_FILES = ("strings.tsv",)
-TRANSLATION_IMPORTER_CONTROL_FILES = ("manifest.tsv", "mappings.tsv")
+TRANSLATION_IMPORTER_CONTROL_FILES = ("config.tsv", "mappings.tsv")
 TEXTURE_PATCHER_CONTROL_FILES = (
     "containers.tsv",
     "mappings.tsv",
     "strategies.tsv",
 )
-EXTERNAL_TRANSLATION_CONTROL_FILES = (
-    "manifest.tsv",
-    "pointer_refs.tsv",
-)
-FEATURE_CONTROL_FILES = (
-    "manifest.tsv",
-)
+EXTERNAL_TRANSLATION_CONTROL_FILES = ("config.tsv", "pointer_refs.tsv")
+DISC_IDENTITY_CONTROL_FILES = ("identity.tsv",)
 
 
 @dataclass(frozen=True)
 class ProfileFeature:
     feature_id: str
-    enabled: bool
     input_path: Path
     expected_sha256: str
-    name: str
-    description: str
-    reason: str
     module_ids: tuple[str, ...]
 
 
@@ -75,16 +51,14 @@ class ProfileModule:
     order: int
     module: str
     input_path: Path
-    expected_sha256: str
-    reason: str
+    input_sha256: str
     feature_id: str
-    enabled: bool
 
 
 @dataclass(frozen=True)
 class Profile:
     directory: Path
-    manifest: dict[str, str]
+    profile_id: str
     roots: dict[str, Path]
     features: tuple[ProfileFeature, ...]
     modules: tuple[ProfileModule, ...]
@@ -94,9 +68,7 @@ def _read_tsv(path: Path, fields: list[str]) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
         if reader.fieldnames != fields:
-            raise ValueError(
-                f"{path}: expected columns " + "\t".join(fields)
-            )
+            raise ValueError(f"{path}: expected columns " + "\t".join(fields))
         return [
             {key: (value or "").strip() for key, value in row.items()}
             for row in reader
@@ -123,7 +95,9 @@ def _profile_root_path(
         try:
             resolved = resolve_alias(value, project_paths)
         except (KeyError, ValueError) as exc:
-            raise ValueError(f"{label} has an invalid project-root alias: {value!r}") from exc
+            raise ValueError(
+                f"{label} has an invalid project-root alias: {value!r}"
+            ) from exc
         if not resolved.exists():
             raise FileNotFoundError(resolved)
         return resolved
@@ -154,17 +128,19 @@ def content_sha256(path: Path) -> str:
     return _tree_digest(path, files)
 
 
-def _binary_patcher_content_files(path: Path) -> list[Path]:
-    # Normalize once so Windows short/long path aliases cannot make blob paths
-    # appear to sit outside the same package during digest calculation.
-    path = path.resolve()
-    files = [path / name for name in BINARY_PATCHER_CONTROL_FILES]
+def _required_files(path: Path, names: tuple[str, ...], label: str) -> list[Path]:
+    files = [path / name for name in names]
     missing = [item.name for item in files if not item.is_file()]
     if missing:
-        raise FileNotFoundError(
-            f"Binary-patcher module is missing canonical input files: {', '.join(missing)}"
-        )
+        raise FileNotFoundError(f"{label} is missing canonical inputs: {', '.join(missing)}")
+    return files
 
+
+def _binary_patcher_content_files(path: Path) -> list[Path]:
+    path = path.resolve()
+    files = _required_files(
+        path, BINARY_PATCHER_CONTROL_FILES, "Binary-patcher module"
+    )
     edits_path = path / "edits.tsv"
     with edits_path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
@@ -176,8 +152,6 @@ def _binary_patcher_content_files(path: Path) -> list[Path]:
             for row in reader
             if (row.get("blob_path") or "").strip()
         }
-
-    root = path
     for value in sorted(blob_paths):
         candidate = Path(value.replace("\\", "/"))
         if candidate.is_absolute() or ".." in candidate.parts:
@@ -186,7 +160,7 @@ def _binary_patcher_content_files(path: Path) -> list[Path]:
             )
         blob = (path / candidate).resolve()
         try:
-            blob.relative_to(root)
+            blob.relative_to(path)
         except ValueError as exc:
             raise ValueError(f"{edits_path}: blob_path escapes package: {value!r}") from exc
         if not blob.is_file():
@@ -195,86 +169,65 @@ def _binary_patcher_content_files(path: Path) -> list[Path]:
     return files
 
 
-def _texture_patcher_content_files(path: Path) -> list[Path]:
+def _module_content_files(path: Path, module_type: str) -> list[Path]:
     path = path.resolve()
-    files = [path / name for name in TEXTURE_PATCHER_CONTROL_FILES]
-    missing = [item.name for item in files if not item.is_file()]
-    if missing:
-        raise FileNotFoundError(
-            f"Texture-patcher module is missing canonical input files: {', '.join(missing)}"
-        )
-    return files
+    if module_type == "binary_patcher":
+        return _binary_patcher_content_files(path)
+    names = {
+        "string_patcher": STRING_PATCHER_CONTROL_FILES,
+        "translation_importer": TRANSLATION_IMPORTER_CONTROL_FILES,
+        "texture_patcher": TEXTURE_PATCHER_CONTROL_FILES,
+        "external_translation": EXTERNAL_TRANSLATION_CONTROL_FILES,
+        "disc_identity": DISC_IDENTITY_CONTROL_FILES,
+    }[module_type]
+    return _required_files(path, names, f"{module_type} module")
 
 
-def _string_patcher_content_files(path: Path) -> list[Path]:
-    path = path.resolve()
-    files = [path / name for name in STRING_PATCHER_CONTROL_FILES]
-    missing = [item.name for item in files if not item.is_file()]
-    if missing:
-        raise FileNotFoundError(
-            f"String-patcher module is missing canonical input files: {', '.join(missing)}"
-        )
-    return files
-
-
-def _translation_importer_content_files(path: Path) -> list[Path]:
-    path = path.resolve()
-    files = [path / name for name in TRANSLATION_IMPORTER_CONTROL_FILES]
-    missing = [item.name for item in files if not item.is_file()]
-    if missing:
-        raise FileNotFoundError(
-            "Translation-importer package is missing canonical input files: "
-            + ", ".join(missing)
-        )
-    return files
-
-
-def _external_translation_content_files(path: Path) -> list[Path]:
-    path = path.resolve()
-    files = [path / name for name in EXTERNAL_TRANSLATION_CONTROL_FILES]
-    missing = [item.name for item in files if not item.is_file()]
-    if missing:
-        raise FileNotFoundError(
-            "External-translation module is missing canonical input files: "
-            + ", ".join(missing)
-        )
-    return files
-
-
-def feature_content_sha256(path: Path) -> str:
-    """Hash one reusable feature package's declarative inputs."""
+def _discover_module_directories(path: Path) -> list[tuple[str, Path]]:
     path = path.resolve()
     if not path.is_dir():
         raise FileNotFoundError(path)
-    files = [path / name for name in FEATURE_CONTROL_FILES]
-    missing = [item.name for item in files if not item.is_file()]
-    if missing:
-        raise FileNotFoundError(
-            f"Feature package is missing canonical input files: {', '.join(missing)}"
+    readme = path / "README.md"
+    if not readme.is_file():
+        raise FileNotFoundError(f"Feature package is missing README.md: {path}")
+    unexpected_files = sorted(
+        item.name for item in path.iterdir() if item.is_file() and item.name != "README.md"
+    )
+    if unexpected_files:
+        raise ValueError(
+            f"Feature root contains unsupported files: {', '.join(unexpected_files)}"
         )
-    return _tree_digest(path, files)
+    directories = {item.name: item for item in path.iterdir() if item.is_dir()}
+    unknown = sorted(directories.keys() - MODULE_TYPES)
+    if unknown:
+        raise ValueError(f"Feature contains unknown module directories: {', '.join(unknown)}")
+    result = [
+        (module_type, directories[module_type])
+        for module_type in MODULE_TYPE_ORDER
+        if module_type in directories
+    ]
+    if not result:
+        raise ValueError(f"Feature owns no module directories: {path}")
+    return result
 
 
 def module_content_sha256(path: Path, module_type: str) -> str:
-    """Hash only executable module inputs, excluding adjacent documentation."""
+    """Hash one module's canonical executable inputs."""
     path = path.resolve()
     if module_type not in MODULE_TYPES:
         raise ValueError(f"Unsupported module type: {module_type!r}")
-    if path.is_file():
-        return content_sha256(path)
     if not path.is_dir():
         raise FileNotFoundError(path)
-    if module_type == "binary_patcher":
-        return _tree_digest(path, _binary_patcher_content_files(path))
-    if module_type == "string_patcher":
-        return _tree_digest(path, _string_patcher_content_files(path))
-    if module_type == "translation_importer":
-        return _tree_digest(path, _translation_importer_content_files(path))
-    if module_type == "external_translation":
-        return _tree_digest(path, _external_translation_content_files(path))
-    if module_type == "texture_patcher":
-        return _tree_digest(path, _texture_patcher_content_files(path))
-    return content_sha256(path)
+    return _tree_digest(path, _module_content_files(path, module_type))
+
+
+def feature_content_sha256(path: Path) -> str:
+    """Hash every canonical executable input owned by one feature."""
+    path = path.resolve()
+    files: list[Path] = []
+    for module_type, module_path in _discover_module_directories(path):
+        files.extend(_module_content_files(module_path, module_type))
+    return _tree_digest(path, files)
 
 
 def load_profile(directory: Path, workspace: Path) -> Profile:
@@ -284,211 +237,90 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
         directory.relative_to(workspace)
     except ValueError as exc:
         raise ValueError(f"Profile must be inside the repository: {directory}") from exc
+    profile_id = directory.name
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", profile_id):
+        raise ValueError(f"Invalid profile directory name: {profile_id!r}")
 
-    manifest_rows = _read_tsv(directory / "manifest.tsv", MANIFEST_FIELDS)
-    profile_manifest = {row["key"]: row["value"] for row in manifest_rows}
-    if len(profile_manifest) != len(manifest_rows):
-        raise ValueError("manifest.tsv contains duplicate keys")
-    if profile_manifest.get("schema_version") != "2":
-        raise ValueError("Profile schema_version must be 2")
-    if not profile_manifest.get("profile_id"):
-        raise ValueError("Profile manifest requires profile_id")
-
-    root_rows = _read_tsv(directory / "roots.tsv", ROOT_FIELDS)
+    project_paths = load_project_paths(workspace)
     roots: dict[str, Path] = {}
-    project_paths: ProjectPaths | None = None
-    for row in root_rows:
+    for row in _read_tsv(directory / "roots.tsv", ROOT_FIELDS):
         root_id = row["root_id"]
         if not root_id or root_id in roots:
             raise ValueError(f"Duplicate or empty profile root_id: {root_id!r}")
-        if row["path"].startswith("@"):
-            if project_paths is None:
-                project_paths = load_project_paths(workspace)
-            root = _profile_root_path(
-                row["path"], f"root {root_id}", workspace, project_paths
-            )
-        else:
-            root = _workspace_path(row["path"], f"root {root_id}", workspace)
+        root = _profile_root_path(
+            row["path"], f"root {root_id}", workspace, project_paths
+        )
         if not root.exists():
             raise FileNotFoundError(root)
         roots[root_id] = root
 
     feature_rows = _read_tsv(directory / "features.tsv", FEATURE_FIELDS)
-    feature_definitions: list[dict[str, object]] = []
-    feature_ids: set[str] = set()
+    if not feature_rows:
+        raise ValueError("Profile has no enabled features")
+    features_root = project_paths.path("features").resolve()
+    features: list[ProfileFeature] = []
+    modules: list[ProfileModule] = []
+    seen_features: set[str] = set()
     for row in feature_rows:
         feature_id = row["feature_id"]
         if (
             not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", feature_id)
-            or feature_id in feature_ids
+            or feature_id in seen_features
         ):
             raise ValueError(f"Duplicate or invalid feature_id: {feature_id!r}")
-        feature_ids.add(feature_id)
-        if row["enabled"] not in {"0", "1"}:
-            raise ValueError(f"Feature {feature_id}: enabled must be 0 or 1")
-        input_path = _workspace_path(
-            row["input"], f"feature {feature_id} input", workspace
-        )
-        if not input_path.is_dir():
-            raise FileNotFoundError(input_path)
-        expected = row["expected_sha256"].upper()
-        if len(expected) != 64 or any(char not in "0123456789ABCDEF" for char in expected):
-            raise ValueError(
-                f"Feature {feature_id}: expected_sha256 must be 64 hex digits"
-            )
-        feature_definitions.append(
-            {
-                "feature_id": feature_id,
-                "enabled": row["enabled"] == "1",
-                "input_path": input_path,
-                "expected_sha256": expected,
-                "reason": row["reason"],
-            }
-        )
-    if not feature_definitions:
-        raise ValueError("Profile has no features")
-    if not any(bool(feature["enabled"]) for feature in feature_definitions):
-        raise ValueError("Profile has no enabled features")
-
-    module_rows = _read_tsv(directory / "modules.tsv", MODULE_FIELDS)
-    module_definitions: dict[str, dict[str, object]] = {}
-    seen_ids: set[str] = set()
-    seen_orders: set[int] = set()
-    for row in module_rows:
-        module_id = row["module_id"]
-        if not module_id or module_id in seen_ids:
-            raise ValueError(f"Duplicate or empty module_id: {module_id!r}")
-        seen_ids.add(module_id)
+        seen_features.add(feature_id)
+        feature_path = (features_root / feature_id).resolve()
         try:
-            order = int(row["order"], 10)
+            feature_path.relative_to(features_root)
         except ValueError as exc:
-            raise ValueError(f"Module {module_id}: invalid order") from exc
-        if order < 0 or order in seen_orders:
-            raise ValueError(f"Module {module_id}: order must be unique and nonnegative")
-        seen_orders.add(order)
-        module_type = row["module"]
-        if module_type not in MODULE_TYPES:
-            raise ValueError(f"Module {module_id}: unsupported module {module_type!r}")
-        input_path = _workspace_path(
-            row["input"], f"module {module_id} input", workspace
-        )
-        if not input_path.exists():
-            raise FileNotFoundError(input_path)
+            raise ValueError(f"Feature path escapes configured root: {feature_id}") from exc
         expected = row["expected_sha256"].upper()
         if len(expected) != 64 or any(char not in "0123456789ABCDEF" for char in expected):
-            raise ValueError(f"Module {module_id}: expected_sha256 must be 64 hex digits")
-        module_definitions[module_id] = {
-            "module_id": module_id,
-            "order": order,
-            "module": module_type,
-            "input_path": input_path,
-            "expected_sha256": expected,
-            "reason": row["reason"],
-        }
-
-    feature_packages: dict[str, dict[str, object]] = {}
-    for definition in feature_definitions:
-        feature_id = str(definition["feature_id"])
-        input_path = definition["input_path"]
-        assert isinstance(input_path, Path)
-        manifest_rows = _read_tsv(input_path / "manifest.tsv", MANIFEST_FIELDS)
-        feature_manifest = {row["key"]: row["value"] for row in manifest_rows}
-        if len(feature_manifest) != len(manifest_rows):
-            raise ValueError(f"Feature {feature_id}: manifest.tsv has duplicate keys")
-        if feature_manifest.get("schema_version") != "1":
-            raise ValueError(f"Feature {feature_id}: schema_version must be 1")
-        if feature_manifest.get("feature_id") != feature_id:
+            raise ValueError(f"Feature {feature_id}: expected_sha256 must be 64 hex digits")
+        actual = feature_content_sha256(feature_path)
+        if actual != expected:
             raise ValueError(
-                f"Feature package ID {feature_manifest.get('feature_id')!r} does not match "
-                f"profile feature {feature_id!r}"
+                f"Feature {feature_id}: input SHA-256 {actual} does not match {expected}"
             )
-        if not feature_manifest.get("name"):
-            raise ValueError(f"Feature {feature_id}: name is empty")
-        if bool(definition["enabled"]):
-            actual = feature_content_sha256(input_path)
-            expected = str(definition["expected_sha256"])
-            if actual != expected:
-                raise ValueError(
-                    f"Feature {feature_id}: input SHA-256 {actual} does not match {expected}"
+
+        module_ids: list[str] = []
+        module_types: set[str] = set()
+        for module_type, module_path in _discover_module_directories(feature_path):
+            module_types.add(module_type)
+            module_id = f"{feature_id}.{module_type}"
+            module_ids.append(module_id)
+            modules.append(
+                ProfileModule(
+                    module_id=module_id,
+                    order=len(modules) + 1,
+                    module=module_type,
+                    input_path=module_path,
+                    input_sha256=module_content_sha256(module_path, module_type),
+                    feature_id=feature_id,
                 )
-        feature_packages[feature_id] = {
-            **definition,
-            "name": feature_manifest["name"],
-            "description": feature_manifest.get("description", ""),
-        }
-
-    modules: list[ProfileModule] = []
-    module_ids_by_feature: dict[str, list[str]] = {
-        feature_id: [] for feature_id in feature_packages
-    }
-    for module_id, definition in module_definitions.items():
-        module_input = definition["input_path"]
-        assert isinstance(module_input, Path)
-        owners: list[tuple[str, Path]] = []
-        for feature_id, feature in feature_packages.items():
-            feature_input = feature["input_path"]
-            assert isinstance(feature_input, Path)
-            try:
-                relative = module_input.relative_to(feature_input)
-            except ValueError:
-                continue
-            if relative.parts:
-                owners.append((feature_id, relative))
-        if len(owners) != 1:
+            )
+        if "translation_importer" in module_types and "string_patcher" not in module_types:
             raise ValueError(
-                f"Module {module_id}: input must belong to exactly one feature directory"
+                f"Feature {feature_id}: translation_importer requires string_patcher"
             )
-        feature_id, relative = owners[0]
-        module_type = str(definition["module"])
-        if relative.parts[0] != module_type:
-            raise ValueError(
-                f"Module {module_id}: first feature subfolder must match module type "
-                f"{module_type!r}, found {relative.parts[0]!r}"
-            )
-        enabled = bool(feature_packages[feature_id]["enabled"])
-        if enabled:
-            actual = module_content_sha256(
-                definition["input_path"],  # type: ignore[arg-type]
-                module_type,
-            )
-            expected = str(definition["expected_sha256"])
-            if actual != expected:
-                raise ValueError(
-                    f"Module {module_id}: input SHA-256 {actual} does not match {expected}"
-                )
-        module_ids_by_feature[feature_id].append(module_id)
-        modules.append(
-            ProfileModule(
-                **definition,  # type: ignore[arg-type]
-                feature_id=feature_id,
-                enabled=enabled,
-            )
-        )
-
-    features: list[ProfileFeature] = []
-    for feature_id, definition in feature_packages.items():
-        module_ids = tuple(module_ids_by_feature[feature_id])
-        if not module_ids:
-            raise ValueError(f"Feature {feature_id} owns no profile modules")
         features.append(
             ProfileFeature(
                 feature_id=feature_id,
-                enabled=bool(definition["enabled"]),
-                input_path=definition["input_path"],  # type: ignore[arg-type]
-                expected_sha256=str(definition["expected_sha256"]),
-                name=str(definition["name"]),
-                description=str(definition["description"]),
-                reason=str(definition["reason"]),
-                module_ids=module_ids,
+                input_path=feature_path,
+                expected_sha256=expected,
+                module_ids=tuple(module_ids),
             )
         )
 
-    if not any(module.enabled for module in modules):
-        raise ValueError("Profile has no enabled modules")
+    identity_modules = [module for module in modules if module.module == "disc_identity"]
+    if len(identity_modules) > 1:
+        raise ValueError("Profile may enable only one disc_identity module")
+    if identity_modules and modules[-1] is not identity_modules[0]:
+        raise ValueError("disc_identity must be the final enabled profile module")
     return Profile(
         directory=directory,
-        manifest=profile_manifest,
+        profile_id=profile_id,
         roots=roots,
         features=tuple(features),
-        modules=tuple(sorted(modules, key=lambda item: item.order)),
+        modules=tuple(modules),
     )

@@ -301,8 +301,7 @@ try {
         -PreviousIso $promotion.PreviousIso `
         -Profile $profile `
         -ProjectPaths $projectPaths
-    $recordAction = if ($buildRecord.Reused) { 'reused' } else { 'retained' }
-    Write-Host "[na2] Build record: $recordAction $($buildRecord.BuildRecord)." -ForegroundColor Cyan
+    Write-Host "[na2] Build record: retained $($buildRecord.BuildRecord)." -ForegroundColor Cyan
     $promotion | Add-Member -NotePropertyName BuildId -NotePropertyValue $buildRecord.BuildId
     $promotion | Add-Member -NotePropertyName ProfileLogDirectory -NotePropertyValue $buildRecord.BuildRecord
     $promotion | Add-Member -NotePropertyName PreflightCacheHit -NotePropertyValue $false

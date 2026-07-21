@@ -9,9 +9,9 @@ while reusable executable engines remain under `na2_patcher/modules/`.
 - [Binary patcher](#ui-translation-binary-patcher-patch-set)
 - [External translation](#external-translation)
 
-`manifest.tsv` declares the feature. Its module-named subdirectories are the
-module inputs that compose it; enabling Translation enables all of them, and
-the profile supplies their global order and hash pins.
+The feature directory name declares its identity. Its module-named
+subdirectories are the inputs that compose it; enabling Translation enables all
+of them, and one aggregate profile pin covers their canonical inputs.
 
 ## NA2 translation importer (mapping version 35)
 
@@ -27,7 +27,7 @@ inter-stage handoff.
 - Version: `35`
 - Packaged `mappings.tsv` SHA-256: `c4f317c0a86c2be3fb07512652ce5e50d9b73ae485ebaa502c4ed1fabc9c28a5`
 
-`translation_importer/manifest.tsv` is the canonical machine-readable home for
+`translation_importer/config.tsv` is the canonical machine-readable home for
 both values. Documentation is not an executable input, and the importer verifies
 that the declared hash matches `translation_importer/mappings.tsv`.
 
@@ -933,7 +933,7 @@ ISO payload is stored in Git.
 
 ### Canonical inputs
 
-- `manifest.tsv` pins source, mapping, and generated-payload hashes plus the
+- `config.tsv` pins source, mapping, and generated-payload hashes plus the
   fixed memory/file layout.
 - `pointer_refs.tsv` inventories all 33 shortened mappings and every verified
   pointer word. Three continuation rows deliberately reuse their containing

@@ -124,8 +124,8 @@ Save/Load and Practice remain outside the Controls fit decision.
 - `na2_patcher/features/font/binary_patcher/` contains the active
   runtime-proven native secondary font, alignment, and fit components. It
   targets clean `SLPS_258.37` and `DATA/GF4.BIN`, preserves clean GF4C, and
-  has module hash
-  `9FC3C4905DFF6D14BAAA848C56E6C17D1DE4E79EEFAB2E1A7A74FAD6A25013F8`.
+  is covered by the current Font aggregate feature pin
+  `23A2CFDD285FF00A40F35AC42D0656580E4D9DE5884F2CF568453A20E93AA3A7`.
 - `docs/knowledge/font/history/font_m01/` is historical evidence, deliberately
   kept outside active patch-set discovery.
   Its semantic NUN5 appearance patch is disabled and `runtime_failed`.

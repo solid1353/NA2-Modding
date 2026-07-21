@@ -275,13 +275,13 @@ def read_rows(path: Path) -> list[dict[str, str]]:
 
 
 def read_mapping_metadata(data_root: Path) -> tuple[int, str]:
-    """Read canonical mapping metadata from the feature-owned manifest."""
-    manifest_path = data_root / "manifest.tsv"
-    with manifest_path.open("r", encoding="utf-8-sig", newline="") as handle:
+    """Read canonical mapping metadata from the feature-owned config."""
+    config_path = data_root / "config.tsv"
+    with config_path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
         if reader.fieldnames != METADATA_FIELDS:
             raise ValueError(
-                "translation importer manifest.tsv must contain exactly: "
+                "translation importer config.tsv must contain exactly: "
                 + "\t".join(METADATA_FIELDS)
             )
         rows = [
@@ -291,11 +291,11 @@ def read_mapping_metadata(data_root: Path) -> tuple[int, str]:
         ]
     metadata = {row["key"]: row["value"] for row in rows}
     if len(metadata) != len(rows):
-        raise ValueError("translation importer manifest.tsv contains duplicate keys")
+        raise ValueError("translation importer config.tsv contains duplicate keys")
     expected_keys = {"schema_version", "mapping_version", "mappings_sha256"}
     if set(metadata) != expected_keys:
         raise ValueError(
-            "translation importer manifest.tsv keys must be exactly: "
+            "translation importer config.tsv keys must be exactly: "
             + ", ".join(sorted(expected_keys))
         )
     if metadata["schema_version"] != "1":
@@ -726,7 +726,7 @@ def build_translation_import_plan(
     actual_mapping_hash = hashlib.sha256(mapping_path.read_bytes()).hexdigest()
     if actual_mapping_hash != packaged_hash:
         raise ValueError(
-            "translation importer mappings.tsv SHA-256 does not match manifest.tsv: "
+            "translation importer mappings.tsv SHA-256 does not match config.tsv: "
             f"{actual_mapping_hash} != {packaged_hash}"
         )
     rows_raw = read_rows(mapping_path)

@@ -186,8 +186,8 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   exact official NUN5 source strings with no authored line breaks. A
   clean-source full in-memory plan produced 2,437 fixed-size patch rows with
   all three targets selected.
-- `na2_patcher/profiles/current/modules.tsv` enables both modules by canonical
-  executable-input hash.
+- The Translation feature's aggregate current-profile pin covers both canonical
+  module inputs and their feature-relative paths.
 - The binary-patcher patch set validates as 6 targets, 13 patches, and 86 edits. The UI
   texture plan derives all 34 members with 33 whole donors and MODE2KDV as the
   only mapped exception. The historical runtime harness remains available;

@@ -21,14 +21,7 @@ from na2_patcher.project_paths import load_project_paths, resolve_alias
 
 PROJECT_PATHS = load_project_paths(REPOSITORY_ROOT)
 
-MANIFEST_FIELDS = [
-    "schema_version",
-    "package_id",
-    "package_version",
-    "game",
-    "description",
-    "evidence_path",
-]
+BINARY_PATCHER_SCHEMA_VERSION = 2
 TARGET_FIELDS = [
     "target_id",
     "root_id",
@@ -152,7 +145,7 @@ class Edit:
 @dataclass
 class Package:
     directory: Path
-    manifest: dict[str, str]
+    package_id: str
     targets: dict[str, Target]
     groups: dict[str, Group]
     patches: dict[str, Patch]
@@ -263,15 +256,15 @@ def unique_id(value: str, label: str, seen: set[str]) -> str:
 
 
 def load_package(directory: Path) -> Package:
-    manifest_rows = read_tsv(directory / "manifest.tsv", MANIFEST_FIELDS)
-    if len(manifest_rows) != 1:
-        raise PatchError("manifest.tsv must contain exactly one data row")
-    manifest = manifest_rows[0]
-    if manifest["schema_version"] != "2":
-        raise PatchError(f"Unsupported schema_version: {manifest['schema_version']}")
-    unique_id(manifest["package_id"], "package_id", set())
-    if manifest["evidence_path"]:
-        relative_posix(manifest["evidence_path"], "manifest evidence_path")
+    directory = directory.resolve()
+    if (directory / "manifest.tsv").exists():
+        raise PatchError("binary_patcher manifest.tsv is obsolete and must be removed")
+    package_id = (
+        f"{directory.parent.name}.{directory.name}"
+        if directory.name == "binary_patcher"
+        else directory.name
+    )
+    unique_id(package_id, "package_id", set())
 
     targets: dict[str, Target] = {}
     seen: set[str] = set()
@@ -520,7 +513,7 @@ def load_package(directory: Path) -> Package:
         if count == 0:
             raise PatchError(f"group {group_id} has no patches")
 
-    return Package(directory, manifest, targets, groups, patches, edits)
+    return Package(directory, package_id, targets, groups, patches, edits)
 
 
 def parse_roots(values: list[str], workspace: Path) -> dict[str, Path]:
@@ -781,7 +774,7 @@ def compose_edits(
         group = package.groups[patch.group_id]
         patch_rows.append(
             {
-                "package_id": package.manifest["package_id"],
+                "package_id": package.package_id,
                 "feature_id": feature_id,
                 "group_id": group.group_id,
                 "group_name": group.name,
@@ -904,7 +897,6 @@ def apply_package(
                 "timestamp_utc",
                 "schema_version",
                 "package_id",
-                "package_version",
                 "output_root",
                 "log_directory",
                 "group_count",
@@ -914,9 +906,8 @@ def apply_package(
             [
                 {
                     "timestamp_utc": timestamp,
-                    "schema_version": package.manifest["schema_version"],
-                    "package_id": package.manifest["package_id"],
-                    "package_version": package.manifest["package_version"],
+                    "schema_version": BINARY_PATCHER_SCHEMA_VERSION,
+                    "package_id": package.package_id,
                     "output_root": output_root_text.replace("\\", "/"),
                     "log_directory": log_directory_text.replace("\\", "/"),
                     "group_count": len(
@@ -969,7 +960,7 @@ def main() -> int:
 
     if args.command == "validate":
         print(
-            f"Validated {package.manifest['package_id']}: "
+            f"Validated {package.package_id}: "
             f"{len(package.targets)} targets, {len(package.groups)} groups, "
             f"{len(package.patches)} patches, "
             f"{len(package.edits)} edits"

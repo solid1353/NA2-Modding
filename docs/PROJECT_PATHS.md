@@ -27,6 +27,8 @@ The manifest currently defines these stable logical names:
 - `utils`: shared utilities, including Ghidra and the untrusted historical dump.
 - `build`, `logs`, `patcher`, `releases`, `scripts`, and `work`:
   their corresponding project areas.
+- `features`: the canonical feature-package root beneath `@patcher/`; profile
+  module discovery resolves this root instead of hardcoding its repository path.
 - `pcsx2_files`: project-owned PCSX2-related files: the canonical PNACH,
   screenshots, and input recordings.
 - `pcsx2`: the portable, self-contained PCSX2 installation. Its support folders
@@ -35,8 +37,8 @@ The manifest currently defines these stable logical names:
 
 Documentation uses `@root/child` notation, such as `@source_na2/PRG/BTL.BIN`.
 This is a logical reference, not a literal filesystem path. Profile `roots.tsv`
-files accept the same syntax. Other profile inputs remain repository-relative
-and hash-pinned.
+files accept the same syntax. Enabled feature folders are resolved through
+`@features/` and pinned by aggregate canonical-input hash.
 
 ## Named files
 

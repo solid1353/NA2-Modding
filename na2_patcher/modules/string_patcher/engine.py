@@ -409,23 +409,13 @@ def build_binary_package(
             )
         )
 
-    try:
-        evidence_path = (directory / "README.md").relative_to(
-            binary_patcher.PROJECT_PATHS.repository
-        ).as_posix()
-    except ValueError:
-        evidence_path = ""
-
     return binary_patcher.Package(
         directory=directory,
-        manifest={
-            "schema_version": "2",
-            "package_id": "string_patcher",
-            "package_version": "1",
-            "game": "NA2",
-            "description": "String declarations compiled through binary_patcher.",
-            "evidence_path": evidence_path,
-        },
+        package_id=(
+            f"{directory.parent.name}.{directory.name}"
+            if directory.name == "string_patcher"
+            else directory.name
+        ),
         targets=targets,
         groups=groups,
         patches=patches,

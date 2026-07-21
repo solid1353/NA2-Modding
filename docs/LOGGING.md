@@ -36,9 +36,11 @@ knowledge.
   used for no-op detection. It records only portable logical labels, the
   deterministic input fingerprint, and the Current ISO size and SHA-256.
 
-Help output is not logged. A verified candidate identical to
-`NA2.28 - Current.iso` records `ISO result: unchanged` in the command log and
-does not retain another full structured profile record. A changed candidate records
+Help output is not logged. A preflight cache hit reuses the Current ISO's
+structured record. A full verified build always retains its new structured
+record as the Current ISO's latest provenance, even when the candidate is
+identical and records `ISO result: unchanged`; the superseded record is then
+pruned, so this does not increase retained history. A changed candidate records
 `ISO result: updated`; its structured record becomes current and the previous
 current record rotates with the outgoing ISO. Unreferenced structured records
 are deleted only after the complete two-ISO mapping has been replaced.

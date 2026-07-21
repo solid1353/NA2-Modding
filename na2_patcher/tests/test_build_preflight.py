@@ -31,8 +31,12 @@ class BuildPreflightTests(unittest.TestCase):
         profile.mkdir(parents=True)
         (patcher / "engine.py").write_text("ENGINE = 1\n", encoding="utf-8")
         (patcher / "schema.tsv").write_text("schema\t1\n", encoding="utf-8")
-        (profile / "manifest.tsv").write_text(
-            "key\tvalue\nschema_version\t1\nprofile_id\tcurrent\n",
+        (profile / "features.tsv").write_text(
+            "feature_id\texpected_sha256\nfeature\t" + "0" * 64 + "\n",
+            encoding="utf-8",
+        )
+        (profile / "roots.tsv").write_text(
+            "root_id\tpath\nna2\t@source_na2\n",
             encoding="utf-8",
         )
         na2_iso = root / "source" / "NA2.iso"

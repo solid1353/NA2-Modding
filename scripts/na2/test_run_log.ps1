@@ -233,10 +233,15 @@ Write-Host '[na2] ISO result: unchanged; rotation: no.'
         -PreviousIso $paths.files.previous_iso `
         -Profile 'na2_patcher/profiles/current' `
         -ProjectPaths $paths
-    Assert-Na2Test -Condition $unchanged.Reused -Message 'Unchanged build did not reuse the current record.'
     Assert-Na2Test `
-        -Condition (-not (Test-Path -LiteralPath (Join-Path $buildRecords 'duplicate'))) `
-        -Message 'Duplicate unchanged build record was retained.'
+        -Condition ($unchanged.BuildId -eq 'duplicate') `
+        -Message 'Unchanged full build did not become the current provenance record.'
+    Assert-Na2Test `
+        -Condition (Test-Path -LiteralPath (Join-Path $buildRecords 'duplicate')) `
+        -Message 'Unchanged full build record was not retained.'
+    Assert-Na2Test `
+        -Condition (-not (Test-Path -LiteralPath (Join-Path $buildRecords 'new-current'))) `
+        -Message 'Superseded current build record was not pruned.'
 
     $freshStructuredLog = Join-Path $logs 'fresh-na2'
     $firstBuildId = 'first-unchanged'
@@ -251,7 +256,9 @@ Write-Host '[na2] ISO result: unchanged; rotation: no.'
         -PreviousIso $null `
         -Profile 'na2_patcher/profiles/current' `
         -ProjectPaths $paths
-    Assert-Na2Test -Condition (-not $firstUnchanged.Reused) -Message 'First unchanged build was incorrectly discarded.'
+    Assert-Na2Test `
+        -Condition ($firstUnchanged.BuildId -eq $firstBuildId) `
+        -Message 'First unchanged build was incorrectly discarded.'
     $firstBuildMap = Read-Na2BuildMap `
         -LogDirectory $freshStructuredLog `
         -ProjectPaths $paths

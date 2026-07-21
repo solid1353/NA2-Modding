@@ -2,20 +2,16 @@
 from __future__ import annotations
 
 import argparse
-import os
-import shutil
-from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .iso9660 import (
-    Iso9660,
-    IsoInsertion,
-    compose_filesystems,
-    normalize_iso_path,
+from .composer import compose_assembly_plan, resolve_module_order
+from .image_assembler.assembler import (
+    assemble_image,
+    building_image_path,
 )
+from .image_assembler.iso9660 import Iso9660, IsoInsertion, normalize_iso_path
 from .modules import translation_importer as translation_importer_module
-from .modules.disc_identity import engine as disc_identity_module
 from .modules.binary_patcher import engine as binary_patcher_module
 from .modules.string_patcher import engine as string_patcher_module
 from .modules.texture_patcher import engine as texture_patcher_module
@@ -32,42 +28,6 @@ EXTERNAL_TRANSLATION_INSERTION_PATHS = (
 
 def normalize(path: str) -> str:
     return normalize_iso_path(path)
-
-
-def building_iso_path(output_iso: Path) -> Path:
-    return output_iso.with_name(output_iso.name + ".building")
-
-
-@contextmanager
-def staged_output_iso(source_iso: Path, output_iso: Path):
-    """Build beside the final ISO and leave the verified candidate for promotion."""
-    output_iso.parent.mkdir(parents=True, exist_ok=True)
-    building_iso = building_iso_path(output_iso)
-    if source_iso == building_iso:
-        raise ValueError("Source ISO cannot use the reserved .building output path")
-    if building_iso.exists() or building_iso.is_symlink():
-        if not building_iso.is_file() and not building_iso.is_symlink():
-            raise RuntimeError(f"Temporary build path is not a file: {building_iso}")
-        building_iso.unlink()
-
-    print(f"Initializing temporary output: {building_iso.name}")
-    try:
-        shutil.copyfile(source_iso, building_iso)
-        yield building_iso
-    except BaseException:
-        if building_iso.exists() or building_iso.is_symlink():
-            building_iso.unlink()
-        raise
-
-
-def payload_size_changes(
-    source: Iso9660, payloads: dict[str, bytearray]
-) -> list[tuple[str, int, int]]:
-    return [
-        (path, source.by_path[path].size, len(data))
-        for path, data in payloads.items()
-        if len(data) != source.by_path[path].size
-    ]
 
 
 def apply_binary_patch_set(
@@ -535,36 +495,7 @@ def apply_profile_modules(
 ) -> list[dict[str, object]]:
     results: list[dict[str, object]] = []
     pending_import_plan: translation_importer_module.TranslationImportPlan | None = None
-    for module in profile.modules:
-        if module.module == "disc_identity":
-            if any("disc_identity" in item for item in results):
-                raise ValueError("Profile may enable only one disc_identity module")
-            identity = disc_identity_module.load_identity(
-                module.input_path / "identity.tsv"
-            )
-            system_path = "SYSTEM.CNF"
-            record = source.by_path.get(system_path)
-            if record is None or record.is_dir:
-                raise RuntimeError("Disc identity requires SYSTEM.CNF in the source ISO")
-            initial = payloads.get(system_path, bytearray(source.read_file(record)))
-            updated, system_edit = disc_identity_module.apply_system_cnf(
-                identity,
-                initial,
-            )
-            payloads[system_path] = updated
-            owners[system_path] = module.module_id
-            results.append(
-                {
-                    "module": module,
-                    "disc_identity": identity,
-                    "identity_edits": [system_edit],
-                    "paths": [
-                        system_path,
-                        f"{identity.source_boot_path} -> {identity.replacement_boot_path}",
-                    ],
-                }
-            )
-            continue
+    for module in resolve_module_order(profile.modules):
         if module.module in {"binary_patcher", "string_patcher"}:
             compiled_package = (
                 string_patcher_module.build_binary_package(
@@ -693,6 +624,7 @@ def write_profile_log(
     *,
     workspace: Path,
     output_iso_text: str,
+    image_edits: tuple[dict[str, object], ...],
 ) -> None:
     log_directory.mkdir(parents=True, exist_ok=False)
     module_rows: list[dict[str, object]] = []
@@ -750,34 +682,6 @@ def write_profile_log(
                 insertion_results,
                 module_log,
             )
-        if "disc_identity" in item:
-            identity = item["disc_identity"]
-            assert isinstance(identity, disc_identity_module.DiscIdentity)
-            edits = item["identity_edits"]
-            assert isinstance(edits, list)
-            binary_patcher_module.write_tsv(
-                module_log / "patch_log.tsv",
-                [
-                    "target",
-                    "offset",
-                    "length",
-                    "original_hex",
-                    "new_hex",
-                    "reason",
-                ],
-                edits,
-            )
-            binary_patcher_module.write_tsv(
-                module_log / "run_summary.tsv",
-                ["source_serial", "replacement_serial", "edit_count"],
-                [
-                    {
-                        "source_serial": identity.source_serial,
-                        "replacement_serial": identity.replacement_serial,
-                        "edit_count": len(edits),
-                    }
-                ],
-            )
     binary_patcher_module.write_tsv(
         log_directory / "features.tsv",
         ["feature_id", "input", "input_sha256"],
@@ -788,6 +692,32 @@ def write_profile_log(
                 "input_sha256": feature.expected_sha256,
             }
             for feature in profile.features
+        ],
+    )
+    image_log = log_directory / "image"
+    binary_patcher_module.write_tsv(
+        image_log / "patch_log.tsv",
+        [
+            "target",
+            "offset",
+            "length",
+            "original_hex",
+            "new_hex",
+            "reason",
+            "owner",
+        ],
+        image_edits,
+    )
+    binary_patcher_module.write_tsv(
+        image_log / "run_summary.tsv",
+        ["source_boot_path", "output_boot_path", "system_cnf_path", "edit_count"],
+        [
+            {
+                "source_boot_path": profile.image.source_boot_path,
+                "output_boot_path": profile.image.output_boot_path,
+                "system_cnf_path": profile.image.system_cnf_path,
+                "edit_count": len(image_edits),
+            }
         ],
     )
     binary_patcher_module.write_tsv(
@@ -861,137 +791,41 @@ def main() -> int:
         insertion_owners=insertion_owners,
     )
 
-    if not payloads and not insertions:
-        raise RuntimeError("The profile selected no file changes")
+    composition = compose_assembly_plan(
+        source=source,
+        image=profile.image,
+        payloads=payloads,
+        owners=owners,
+        insertions=insertions,
+        insertion_owners=insertion_owners,
+    )
+    assembly = assemble_image(source_iso, output_iso, composition.plan)
+    results_by_owner: dict[str, list[IsoInsertion]] = {}
+    for insertion in assembly.insertions:
+        owner = insertion_owners[insertion.path]
+        results_by_owner.setdefault(owner, []).append(insertion)
+    for item in profile_results:
+        module = item["module"]
+        assert isinstance(module, ProfileModule)
+        owned = results_by_owner.get(module.module_id)
+        if owned:
+            item["insertion_results"] = tuple(owned)
 
-    size_changes = payload_size_changes(source, payloads)
-    if size_changes:
-        details = ", ".join(
-            f"{path} ({old_size} -> {new_size})"
-            for path, old_size, new_size in size_changes
-        )
-        raise RuntimeError(
-            f"Profile payloads must preserve ISO file sizes: {details}"
-        )
-
-    with staged_output_iso(source_iso, output_iso) as working_iso:
-        current = Iso9660(working_iso)
-        with working_iso.open("r+b") as output:
-            for path, data in payloads.items():
-                record = current.by_path[path]
-                payload = bytes(data)
-                output.seek(record.byte_offset)
-                output.write(payload)
-            output.flush()
-            os.fsync(output.fileno())
-
-        identity_items = [
-            item for item in profile_results if "disc_identity" in item
-        ]
-        if identity_items:
-            identity_item = identity_items[0]
-            identity = identity_item["disc_identity"]
-            assert isinstance(identity, disc_identity_module.DiscIdentity)
-            iso_edit = disc_identity_module.apply_iso_directory_identifier(
-                identity,
-                Iso9660(working_iso),
-            )
-            identity_item["identity_edits"].append(iso_edit)
-
-        udf_renames = {}
-        if identity_items:
-            identity = identity_items[0]["disc_identity"]
-            assert isinstance(identity, disc_identity_module.DiscIdentity)
-            udf_renames[identity.source_boot_path] = identity.replacement_boot_path
-        composition = compose_filesystems(
-            working_iso,
-            insertions,
-            udf_renames=udf_renames,
-        )
-        insertion_results = composition.insertions
-        if identity_items:
-            for rename in composition.udf_renames:
-                identity_items[0]["identity_edits"].append(
-                    {
-                        "target": "<UDF root directory>",
-                        "offset": f"0x{rename.identifier_offset:X}",
-                        "length": len(rename.original_identifier),
-                        "original_hex": rename.original_identifier.hex().upper(),
-                        "new_hex": rename.replacement_identifier.hex().upper(),
-                        "reason": "Mirror boot executable identifier in UDF tree",
-                    }
-                )
-        if working_iso.stat().st_size != source.file_size:
-            raise RuntimeError("Profile composition changed the ISO image size")
-        results_by_owner: dict[str, list[IsoInsertion]] = {}
-        for insertion in insertion_results:
-            owner = insertion_owners[insertion.path]
-            results_by_owner.setdefault(owner, []).append(insertion)
-        for item in profile_results:
-            module = item["module"]
-            assert isinstance(module, ProfileModule)
-            owned = results_by_owner.get(module.module_id)
-            if owned:
-                item["insertion_results"] = tuple(owned)
-
-        result = Iso9660(working_iso)
-        identity = (
-            identity_items[0]["disc_identity"] if identity_items else None
-        )
-        source_tree = set()
-        for record in source.records:
-            path = record.path
-            if (
-                isinstance(identity, disc_identity_module.DiscIdentity)
-                and path == identity.source_boot_path
-            ):
-                path = identity.replacement_boot_path
-            source_tree.add((path, record.is_dir))
-        source_tree.update((path, False) for path in insertions)
-        result_tree = {(record.path, record.is_dir) for record in result.records}
-        if result_tree != source_tree:
-            raise RuntimeError(
-                "Final ISO file tree differs from the source tree plus its declared "
-                "identity rename and insertions"
-            )
-
-        for source_record in source.records:
-            if source_record.is_dir:
-                continue
-            result_path = source_record.path
-            if (
-                isinstance(identity, disc_identity_module.DiscIdentity)
-                and result_path == identity.source_boot_path
-            ):
-                result_path = identity.replacement_boot_path
-            result_record = result.by_path.get(result_path)
-            if result_record is None or result_record.is_dir:
-                raise RuntimeError(f"Final ISO is missing source file: {source_record.path}")
-            expected = (
-                bytes(payloads[source_record.path])
-                if source_record.path in payloads
-                else source.read_file(source_record)
-            )
-            if result.read_file(result_record) != expected:
-                raise RuntimeError(
-                    f"Final ISO file verification failed: {source_record.path}"
-                )
-
-        insertion_by_path = {item.path: item for item in insertion_results}
-        if set(insertion_by_path) != set(insertions):
-            raise RuntimeError("Final ISO insertion result set is incomplete")
-        for path, payload in insertions.items():
-            result_record = result.by_path.get(path)
-            insertion = insertion_by_path[path]
-            if (
-                result_record is None
-                or result_record.is_dir
-                or result_record.extent != insertion.extent
-                or result_record.size != len(payload)
-                or result.read_file(result_record) != payload
-            ):
-                raise RuntimeError(f"Final ISO insertion verification failed: {path}")
-
+    image_edits = list(composition.image_edits)
+    image_edits.extend(assembly.iso9660_renames)
+    image_edits.extend(
+        {
+            "target": "<UDF directory>",
+            "offset": f"0x{rename.identifier_offset:X}",
+            "length": len(rename.original_identifier),
+            "original_hex": rename.original_identifier.hex().upper(),
+            "new_hex": rename.replacement_identifier.hex().upper(),
+            "reason": "Mirror the profile image rename in the UDF tree",
+            "owner": "profile.image",
+        }
+        for rename in assembly.udf_renames
+    )
+    try:
         try:
             output_iso_text = output_iso.relative_to(workspace).as_posix()
         except ValueError:
@@ -1002,7 +836,13 @@ def main() -> int:
             profile_log_directory,
             workspace=workspace,
             output_iso_text=output_iso_text,
+            image_edits=tuple(image_edits),
         )
+    except BaseException:
+        building = building_image_path(output_iso)
+        if building.exists() or building.is_symlink():
+            building.unlink()
+        raise
 
     green = "\033[32m"
     reset = "\033[0m"
@@ -1024,12 +864,11 @@ def main() -> int:
                 f", {item['external_translation_edits']} edits, "
                 f"{len(item.get('insertion_results', ()))} insertions"
             )
-        elif "disc_identity" in item:
-            detail = f", {len(item['identity_edits'])} edits"
         print(f"  {module.order:03d} {module.module_id} ({module.module}{detail})")
         for path in sorted(str(value) for value in item.get("paths", [])):
             print(f"    {green}{path}{reset}")
-    print(f"Verified staged ISO: {building_iso_path(output_iso).name}")
+    print(f"  image ({len(image_edits)} edits)")
+    print(f"Verified staged ISO: {building_image_path(output_iso).name}")
     return 0
 
 

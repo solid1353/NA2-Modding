@@ -13,7 +13,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
-from ...iso9660 import Iso9660
+from ...image_assembler.iso9660 import Iso9660
 from ...project_paths import load_project_paths, resolve_alias
 
 try:

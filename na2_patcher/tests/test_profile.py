@@ -7,8 +7,10 @@ import unittest
 from pathlib import Path
 
 from na2_patcher.modules.binary_patcher import engine as binary_patcher
+from na2_patcher.composer import resolve_module_order
 from na2_patcher.profile import (
     FEATURE_FIELDS,
+    IMAGE_FIELDS,
     feature_content_sha256,
     load_profile,
     module_content_sha256,
@@ -70,8 +72,6 @@ class ProfileTests(unittest.TestCase):
         elif module_type == "external_translation":
             (module / "config.tsv").write_text("key\tvalue\n", encoding="utf-8")
             (module / "pointer_refs.tsv").write_text("id\n", encoding="utf-8")
-        elif module_type == "disc_identity":
-            (module / "identity.tsv").write_text("key\tvalue\n", encoding="utf-8")
         else:
             self.fail(f"unsupported test module {module_type}")
         return module
@@ -96,6 +96,17 @@ class ProfileTests(unittest.TestCase):
         profile.mkdir()
         write_tsv(profile / "roots.tsv", ["root_id", "path"], [{"root_id": "na2", "path": "source"}])
         write_tsv(profile / "features.tsv", FEATURE_FIELDS, rows)
+        write_tsv(
+            profile / "image.tsv",
+            IMAGE_FIELDS,
+            [
+                {
+                    "source_boot_path": "SLPS_258.37",
+                    "output_boot_path": "SLPS_222.28",
+                    "system_cnf_path": "SYSTEM.CNF",
+                }
+            ],
+        )
         return profile
 
     def test_profile_derives_identity_modules_and_order(self) -> None:
@@ -199,24 +210,34 @@ class ProfileTests(unittest.TestCase):
                 source,
                 [{"feature_id": "localization", "expected_sha256": feature_content_sha256(feature)}],
             )
-            with self.assertRaisesRegex(ValueError, "requires string_patcher"):
-                load_profile(profile, root)
+            loaded = load_profile(profile, root)
+            with self.assertRaisesRegex(ValueError, "no string_patcher consumes"):
+                resolve_module_order(loaded.modules)
 
-    def test_disc_identity_must_be_final(self) -> None:
+    def test_profile_image_identity_requires_equal_length_boot_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             features, source, profiles = self.create_workspace(root)
-            identity = self.create_feature(features, "identity", "disc_identity")
             alpha = self.create_feature(features, "alpha", "binary_patcher")
             profile = self.create_profile(
                 profiles,
                 source,
                 [
-                    {"feature_id": "identity", "expected_sha256": feature_content_sha256(identity)},
                     {"feature_id": "alpha", "expected_sha256": feature_content_sha256(alpha)},
                 ],
             )
-            with self.assertRaisesRegex(ValueError, "must be the final"):
+            write_tsv(
+                profile / "image.tsv",
+                IMAGE_FIELDS,
+                [
+                    {
+                        "source_boot_path": "SLPS_258.37",
+                        "output_boot_path": "BOOT.ELF",
+                        "system_cnf_path": "SYSTEM.CNF",
+                    }
+                ],
+            )
+            with self.assertRaisesRegex(ValueError, "equal byte lengths"):
                 load_profile(profile, root)
 
     def test_binary_hash_ignores_helpers_but_includes_referenced_blobs(self) -> None:
@@ -250,9 +271,10 @@ class ProfileTests(unittest.TestCase):
                 "localization.external_translation",
                 "qol.binary_patcher",
                 "battle_logic.binary_patcher",
-                "disc_identity.disc_identity",
             ],
         )
+        self.assertEqual(profile.image.source_boot_path, "SLPS_258.37")
+        self.assertEqual(profile.image.output_boot_path, "SLPS_222.28")
         self.assertFalse((profile_directory / "manifest.tsv").exists())
         self.assertFalse((profile_directory / "modules.tsv").exists())
         features_root = repository / "na2_patcher" / "features"

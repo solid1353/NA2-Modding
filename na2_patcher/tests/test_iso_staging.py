@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import tempfile
 import unittest
-from types import SimpleNamespace
 from pathlib import Path
 
-from na2_patcher.build_profile import (
-    building_iso_path,
-    payload_size_changes,
-    staged_output_iso,
+from na2_patcher.image_assembler.assembler import (
+    building_image_path,
+    staged_output_image,
 )
 
 
@@ -23,14 +21,14 @@ class IsoStagingTests(unittest.TestCase):
             output.write_bytes(b"known good")
 
             with self.assertRaisesRegex(RuntimeError, "synthetic failure"):
-                with staged_output_iso(source, output) as temporary:
+                with staged_output_image(source, output) as temporary:
                     self.assertEqual(temporary, output.parent / "NA2.28 - Current.iso.building")
                     self.assertEqual(temporary.read_bytes(), b"new source")
                     self.assertEqual(output.read_bytes(), b"known good")
                     raise RuntimeError("synthetic failure")
 
             self.assertEqual(output.read_bytes(), b"known good")
-            self.assertFalse(building_iso_path(output).exists())
+            self.assertFalse(building_image_path(output).exists())
 
     def test_success_leaves_verified_candidate_for_promotion(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -41,28 +39,12 @@ class IsoStagingTests(unittest.TestCase):
             output.parent.mkdir()
             output.write_bytes(b"known good")
 
-            with staged_output_iso(source, output) as temporary:
+            with staged_output_image(source, output) as temporary:
                 temporary.write_bytes(b"verified build")
                 self.assertEqual(output.read_bytes(), b"known good")
 
             self.assertEqual(output.read_bytes(), b"known good")
-            self.assertEqual(building_iso_path(output).read_bytes(), b"verified build")
-
-    def test_payload_size_changes_reports_only_changed_files(self) -> None:
-        source = SimpleNamespace(
-            by_path={
-                "SAME.BIN": SimpleNamespace(size=4),
-                "GROWN.BIN": SimpleNamespace(size=4),
-            }
-        )
-        changes = payload_size_changes(
-            source,
-            {
-                "SAME.BIN": bytearray(b"same"),
-                "GROWN.BIN": bytearray(b"larger"),
-            },
-        )
-        self.assertEqual(changes, [("GROWN.BIN", 4, 6)])
+            self.assertEqual(building_image_path(output).read_bytes(), b"verified build")
 
 
 if __name__ == "__main__":

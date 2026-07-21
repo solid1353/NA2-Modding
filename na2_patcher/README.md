@@ -3,11 +3,13 @@
 The patcher builds the active reproducible image from enabled features rather
 than independently configured module instances.
 
-Each profile directory contains only:
+Each profile directory contains:
 
 - `roots.tsv`: repository-relative source bindings or `@root/...` aliases.
 - `features.tsv`: enabled feature IDs in composition order and each feature's
   exact aggregate canonical-input SHA-256.
+- `image.tsv`: the clean and output boot paths plus the `SYSTEM.CNF` path that
+  define the final image identity.
 
 The profile ID is its directory name. Omission disables a feature. Profiles do
 not contain manifests, module tables, module paths, module IDs, module orders,
@@ -28,11 +30,11 @@ this deterministic order:
 3. `texture_patcher`
 4. `binary_patcher`
 5. `external_translation`
-6. `disc_identity`
 
-Derived module IDs use `<feature_id>.<module_type>`. `disc_identity`, when
-present, must be the final derived module. A feature that owns a
-`translation_importer` must also own a following `string_patcher`.
+Derived module IDs use `<feature_id>.<module_type>`. The composer resolves
+declared module-artifact dependencies while retaining stable feature/module
+order for independent peers. A feature that owns a `translation_importer` must
+also own the `string_patcher` that consumes its imported-string artifact.
 
 ## Hashing
 
@@ -46,7 +48,6 @@ READMEs, engine code, and non-input authoring helpers are excluded.
 - `translation_importer`: `config.tsv` and `mappings.tsv`.
 - `texture_patcher`: `containers.tsv`, `mappings.tsv`, and `strategies.tsv`.
 - `external_translation`: `config.tsv` and `pointer_refs.tsv`.
-- `disc_identity`: `identity.tsv`.
 
 Binary package identity is derived from its feature/module path. Binary
 packages have no `manifest.tsv`; normal composition applies their
@@ -62,7 +63,10 @@ The current profile enables, in order:
    `MOD.BIN`/`TEXTENG.BIN` support.
 2. QoL: accepted startup, Practice, and mode-selection behavior.
 3. Battle logic: accepted battle-rule behavior.
-4. Disc identity: the equal-length `SLPS_258.37` to `SLPS_222.28` boot rename.
+
+The profile's `image.tsv` separately declares the equal-length
+`SLPS_258.37` to `SLPS_222.28` boot rename. It is build identity, not a feature
+or module.
 
 Testing and Rendering remain available feature folders but are omitted from
 the current profile.
@@ -80,7 +84,9 @@ selected profile path, and active Python/Zlib/Zopfli versions. A valid receipt
 and matching Current ISO produces the normal unchanged/no-rotation result
 without module derivation or a `.building` file.
 
-On a miss, `na2_patcher/build_profile.py` composes and verifies
+On a miss, `na2_patcher/build_profile.py` orchestrates feature modules and asks
+`na2_patcher/composer.py` to close their results plus the profile image identity
+into typed operations. `na2_patcher/image_assembler/` alone stages and verifies
 `build/NA2.28 - Current.iso.building`. `scripts/na2/build.ps1` discards an
 identical candidate without rotation or atomically promotes a changed one.
 File sizes remain fixed except for the separately approved filesystem insertion

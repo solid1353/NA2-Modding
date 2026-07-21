@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from datetime import datetime, timedelta, timezone
 
-from na2_patcher.iso9660 import Iso9660
+from na2_patcher.image_assembler.iso9660 import Iso9660
 
 
 def directory_record(recorded_at: bytes) -> bytes:

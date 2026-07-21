@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na2_patcher.iso9660 import Iso9660, SECTOR, compose_filesystems
-from na2_patcher.udf import Udf
+from na2_patcher.image_assembler.iso9660 import Iso9660, SECTOR, compose_filesystems
+from na2_patcher.image_assembler.udf import Udf
 
 
 SECTORS = 400

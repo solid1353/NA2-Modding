@@ -45,7 +45,7 @@ replaced with a copied machine-specific absolute path.
 - `na2_patcher/modules/translation_importer/`: the reusable official-string importer engine. Localization-owned mappings live under `na2_patcher/features/localization/translation_importer/`.
 - `na2_patcher/modules/string_patcher/`: the reusable semantic fixed-size string engine. Localization-owned declarations live under `na2_patcher/features/localization/string_patcher/`; the engine merges them with runtime imports, compiles one in-memory binary-patcher package, and delegates byte guards, conflict validation, composition, and logging to `binary_patcher`.
 - `na2_patcher/modules/texture_patcher/`: the reusable fixed-size texture derivation engine. The Localization feature owns its 34 source-derived NUN5 UI recipes under `na2_patcher/features/localization/texture_patcher/`; no replacement blobs are stored.
-- `na2_patcher/`: manifest-free profiles, reusable aggregate-hash-pinned feature packages, folder-derived ordered module orchestration, and the translation-importer/binary-patcher/string-patcher/Texture-patcher/external-translation/disc-identity implementations. `na2_patcher/profiles/current/` contains only source-root bindings and enabled feature IDs/pins. Feature rows define feature order; module directories define ownership and engine type; the registry derives module IDs and intra-feature order. Binary packages apply their default-enabled patches and contain four canonical control tables plus referenced blobs. Adjacent READMEs, engine code, and non-input helpers are excluded from feature pins. The disc-identity module runs last and performs the declared equal-length `SLPS_258.37` to `SLPS_222.28` boot-path rename.
+- `na2_patcher/`: manifest-free profiles, reusable aggregate-hash-pinned feature packages, folder-derived module orchestration, artifact dependency composition, and reusable transformation engines. `na2_patcher/profiles/current/` contains source-root bindings, enabled feature IDs/pins, and final image identity. Feature rows define stable peer order; module directories define ownership and engine type; the composer resolves declared artifacts and closes typed operations. `image_assembler/` alone performs ISO9660/UDF mutation and complete staged-image verification. Binary packages apply their default-enabled patches and contain four canonical control tables plus referenced blobs. Adjacent READMEs, engine code, and non-input helpers are excluded from feature pins.
 - `.agents/`: dated human-readable handoffs exchanged between separate Windows installations and Codex instances. They may contain machine-specific paths as historical context, are non-authoritative, and must be reviewed rather than deleted as clutter.
 - `docs/`: repository-wide context, confirmed knowledge, active plans, hypotheses, and release documentation. Component-specific READMEs remain beside their components.
 - `docs/knowledge/`: confirmed findings, reusable negative results, and supporting evidence promoted out of disposable logs. Module-owned structured evidence remains beside its module.
@@ -147,7 +147,7 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 
 - Root `_na2.ps1` is the only routine user-facing entrypoint. Bare `na2` builds the pinned current profile, rotates only when the verified candidate differs, and launches `NA2.28 - Current.iso`. `na2 -c` and `na2 -p` are pure project-ISO launch selectors: they do not rebuild, terminate an existing PCSX2 instance, or change PNACH aliases. Source-game launch shortcuts are user-profile commands, not part of `_na2.ps1`. `na2 act` performs on-demand Current/Previous PNACH alias maintenance without building or launching.
 - `scripts/na2/` contains build/promotion, on-demand PNACH actualization, PCSX2 process/launch handling, CRC diagnostics, and the agent-only hidden/muted launch test. Build transcripts explicitly report `ISO result: unchanged` or `ISO result: updated` and the rotation result.
-- `na2_patcher/build_profile.py` is the profile-only ISO compositor. It applies one explicit hash-pinned profile, rejects all file-size changes, verifies the complete staged ISO, writes the profile log, and leaves `NA2.28 - Current.iso.building` for PowerShell promotion.
+- `na2_patcher/build_profile.py` orchestrates one explicit hash-pinned profile and writes its run log. `na2_patcher/composer.py` resolves module artifacts and closes typed image operations. `na2_patcher/image_assembler/` alone stages, mutates, and verifies `NA2.28 - Current.iso.building` for PowerShell promotion.
 - `scripts/media/` contains the recursive source extractor, its byte-parity
   verifier, and focused ISO, AFS, and CVM building blocks. Direct same-size ISO
   replacement survives only as an unsupported reference under
@@ -203,7 +203,7 @@ Original-source historical pattern:
 
 `ELF Loading: cdrom0:\SLPS_258.37;1, Game CRC = 870F8722, EntryPoint = 0x00100008`
 
-Modified-project pattern after the disc-identity module:
+Modified-project pattern after the profile image identity is assembled:
 
 `ELF Loading: cdrom0:\SLPS_222.28;1, Game CRC = <crc>, EntryPoint = 0x00100008`
 

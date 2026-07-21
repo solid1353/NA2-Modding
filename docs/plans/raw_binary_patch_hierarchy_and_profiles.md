@@ -18,11 +18,13 @@ repeat them.
 
 ## Manifest-free profile format
 
-Profiles contain exactly two tables:
+Profiles contain exactly three tables:
 
 - `features.tsv` lists enabled feature IDs in composition order and pins each
   feature's aggregate canonical-input hash.
 - `roots.tsv` binds logical clean/donor source IDs.
+- `image.tsv` declares clean/output boot paths and the `SYSTEM.CNF` path for the
+  final image identity.
 
 The profile ID is its directory name. There is no profile manifest, module
 table, enabled flag, module path, module ID, module order, separate module pin,
@@ -38,6 +40,13 @@ the module engine type. Enabling a feature enables all module inputs it owns.
 The feature row order and fixed engine registry derive stable module IDs,
 global order, paths, and module hashes. There is no feature-selection table or
 duplicated feature-level module catalog.
+
+The composer resolves declared module-artifact dependencies before it closes
+all module results into typed file replacements and insertions. It also derives
+the guarded `SYSTEM.CNF` edit and boot-file rename from `image.tsv`. The image
+assembler then performs the only physical ISO mutation, mirrors file-tree
+changes across ISO9660/UDF, and verifies the complete staged image. There are no
+patch-to-patch dependencies.
 
 Binary-patcher packages declare their normal composition through
 `default_enabled` on each patch. Disabled experimental, failed, or unrelated

@@ -16,18 +16,18 @@ The serial alternatives considered on 2026-07-18 were rejected as follows:
 
 ## Reproducible implementation
 
-The profile's hash-pinned `disc_identity` feature invokes the derived
-`disc_identity.disc_identity` module to perform two guarded, equal-length edits
-after every file-backed module has been composed:
+The active profile's `image.tsv` declares the clean boot path, output boot path,
+and `SYSTEM.CNF` path. After feature modules have been composed, the profile
+composer emits one guarded replacement and one equal-length file rename:
 
 1. `SYSTEM.CNF` changes `SLPS_258.37` to `SLPS_222.28`.
 2. The ISO9660 root directory record changes `SLPS_258.37;1` to
    `SLPS_222.28;1`.
 
-The second edit is ISO filesystem metadata, not an ELF string replacement, so
-it deliberately does not belong to the `string_patcher` module. The
-composer logs both original and replacement bytes and verifies the one declared
-tree rename. No file extent, file size, or ISO size changes.
+The second operation is ISO filesystem metadata, not an ELF string replacement,
+so it deliberately does not belong to a feature module. The mandatory image
+assembler applies it to both ISO9660 and UDF, logs all three physical edits, and
+verifies the declared final tree. No file extent, file size, or ISO size changes.
 
 The internal save-data directory `BISLPS-25837NARUTO5` remains unchanged. This
 preserves compatibility with existing saves. The separate ELF save-title patch

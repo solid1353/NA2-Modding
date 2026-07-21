@@ -11,13 +11,13 @@ from .project_paths import ProjectPaths, load_project_paths, resolve_alias
 
 ROOT_FIELDS = ["root_id", "path"]
 FEATURE_FIELDS = ["feature_id", "expected_sha256"]
+IMAGE_FIELDS = ["source_boot_path", "output_boot_path", "system_cnf_path"]
 MODULE_TYPE_ORDER = (
     "translation_importer",
     "string_patcher",
     "texture_patcher",
     "binary_patcher",
     "external_translation",
-    "disc_identity",
 )
 MODULE_TYPES = frozenset(MODULE_TYPE_ORDER)
 BINARY_PATCHER_CONTROL_FILES = (
@@ -34,7 +34,13 @@ TEXTURE_PATCHER_CONTROL_FILES = (
     "strategies.tsv",
 )
 EXTERNAL_TRANSLATION_CONTROL_FILES = ("config.tsv", "pointer_refs.tsv")
-DISC_IDENTITY_CONTROL_FILES = ("identity.tsv",)
+
+
+@dataclass(frozen=True)
+class ProfileImage:
+    source_boot_path: str
+    output_boot_path: str
+    system_cnf_path: str
 
 
 @dataclass(frozen=True)
@@ -60,6 +66,7 @@ class Profile:
     directory: Path
     profile_id: str
     roots: dict[str, Path]
+    image: ProfileImage
     features: tuple[ProfileFeature, ...]
     modules: tuple[ProfileModule, ...]
 
@@ -178,7 +185,6 @@ def _module_content_files(path: Path, module_type: str) -> list[Path]:
         "translation_importer": TRANSLATION_IMPORTER_CONTROL_FILES,
         "texture_patcher": TEXTURE_PATCHER_CONTROL_FILES,
         "external_translation": EXTERNAL_TRANSLATION_CONTROL_FILES,
-        "disc_identity": DISC_IDENTITY_CONTROL_FILES,
     }[module_type]
     return _required_files(path, names, f"{module_type} module")
 
@@ -242,6 +248,31 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
         raise ValueError(f"Invalid profile directory name: {profile_id!r}")
 
     project_paths = load_project_paths(workspace)
+    image_rows = _read_tsv(directory / "image.tsv", IMAGE_FIELDS)
+    if len(image_rows) != 1:
+        raise ValueError("Profile image.tsv must contain exactly one image row")
+    image_row = image_rows[0]
+    image = ProfileImage(
+        source_boot_path=image_row["source_boot_path"],
+        output_boot_path=image_row["output_boot_path"],
+        system_cnf_path=image_row["system_cnf_path"],
+    )
+    from .image_assembler.iso9660 import normalize_iso_path
+
+    for label, value in (
+        ("source_boot_path", image.source_boot_path),
+        ("output_boot_path", image.output_boot_path),
+        ("system_cnf_path", image.system_cnf_path),
+    ):
+        if normalize_iso_path(value) != value:
+            raise ValueError(f"Profile image {label} must be normalized: {value!r}")
+    if image.source_boot_path == image.output_boot_path:
+        raise ValueError("Profile image boot paths must differ")
+    if len(image.source_boot_path.encode("ascii")) != len(
+        image.output_boot_path.encode("ascii")
+    ):
+        raise ValueError("Profile image boot paths must have equal byte lengths")
+
     roots: dict[str, Path] = {}
     for row in _read_tsv(directory / "roots.tsv", ROOT_FIELDS):
         root_id = row["root_id"]
@@ -284,9 +315,7 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
             )
 
         module_ids: list[str] = []
-        module_types: set[str] = set()
         for module_type, module_path in _discover_module_directories(feature_path):
-            module_types.add(module_type)
             module_id = f"{feature_id}.{module_type}"
             module_ids.append(module_id)
             modules.append(
@@ -299,10 +328,6 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
                     feature_id=feature_id,
                 )
             )
-        if "translation_importer" in module_types and "string_patcher" not in module_types:
-            raise ValueError(
-                f"Feature {feature_id}: translation_importer requires string_patcher"
-            )
         features.append(
             ProfileFeature(
                 feature_id=feature_id,
@@ -312,15 +337,11 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
             )
         )
 
-    identity_modules = [module for module in modules if module.module == "disc_identity"]
-    if len(identity_modules) > 1:
-        raise ValueError("Profile may enable only one disc_identity module")
-    if identity_modules and modules[-1] is not identity_modules[0]:
-        raise ValueError("disc_identity must be the final enabled profile module")
     return Profile(
         directory=directory,
         profile_id=profile_id,
         roots=roots,
+        image=image,
         features=tuple(features),
         modules=tuple(modules),
     )

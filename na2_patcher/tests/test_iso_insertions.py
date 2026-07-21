@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from na2_patcher.build_profile import apply_external_translation_package
-from na2_patcher.iso9660 import SECTOR, Iso9660, insert_files
+from na2_patcher.image_assembler.iso9660 import SECTOR, Iso9660, insert_files
 
 
 RECORDED_AT = bytes((126, 7, 19, 12, 0, 0, 12))

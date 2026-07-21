@@ -99,7 +99,7 @@ these binary-patcher groups:
 - Localization: `glyph_data`, `auto_fit`, `alignment`, `battle_ui`,
   `front_end`, `etc_ui`, `battle_results`, `shop`
 - QoL: `startup`, `practice`, `mode_select`
-- Battle logic: `combat_rules`
+- Battle logic: `battle_logic`
 - String patcher (delegated to `binary_patcher`): `identity`, `BTL`, `ETC`, `SLPS`
 
 Testing remains a disabled feature with its `substitution` group available for

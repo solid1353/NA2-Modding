@@ -1,3 +1,2 @@
 group_id	name	description	review_notes
-combat_rules	Combat rules	Runtime-proven battle behavior changes.	
-substitution	Substitution	Substitution cost and behavior settings.	
+battle_logic	Battle logic	Runtime-proven battle behavior and substitution settings.	All Battle Logic patches share one organizational group.

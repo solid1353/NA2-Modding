@@ -1,2 +1,0 @@
-patch_id	group_id	default_enabled	status	confidence	name	description	source_mapping_id	runtime_classification	review_notes
-ELF-H001	substitution	0	pending	medium	Substitution reliability hypothesis	Substitution reliability experiment.	pnach_substitution_reliability	Unverified; not applicable until separately approved.	Preserved from disabled PNACH data.

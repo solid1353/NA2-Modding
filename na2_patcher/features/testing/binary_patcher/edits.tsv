@@ -1,5 +1,0 @@
-edit_id	patch_id	order	destination_target_id	destination_offset	operation	length	expected_hex	expected_sha256	replacement_hex	source_target_id	source_offset	source_expected_hex	source_expected_sha256	blob_path	blob_offset	blob_sha256	fill_hex	reason
-ELF-H001-01	ELF-H001	10	slps_258_37	0x918A8	replace	4	07004010		00000000									Bypass the first 0x800 action-flag skip.
-ELF-H001-02	ELF-H001	20	slps_258_37	0x91D80	replace	4	07004010		00000000									Bypass the second 0x800 action-flag skip.
-ELF-H001-03	ELF-H001	30	slps_258_37	0x910EC	replace	4	02000145		00000000									Ignore the tiny impact threshold.
-ELF-H001-04	ELF-H001	40	slps_258_37	0x910D4	replace	4	09008354		00000000									Allow the primary action outside mode bits == 3.

@@ -68,8 +68,12 @@ The profile's `image.tsv` separately declares the equal-length
 `SLPS_258.37` to `SLPS_222.28` boot rename. It is build identity, not a feature
 or module.
 
-Testing and Rendering remain available feature folders but are omitted from
-the current profile.
+Rendering remains an available feature folder but is omitted from the current
+profile. The former generic Testing feature was retired: feature IDs express
+ownership or a coherent capability, while patch `status` and `confidence`
+express maturity and certainty. Experimental patches belong to their owning
+feature; contextless leads belong in `docs/HYPOTHESES.md` until ownership and
+an executable hypothesis are clear.
 
 ## Build
 

@@ -102,12 +102,16 @@ these binary-patcher groups:
 - Battle logic: `battle_logic`
 - String patcher (delegated to `binary_patcher`): `identity`, `BTL`, `ETC`, `SLPS`
 
-Testing remains a disabled feature with its `substitution` group available for
-controlled use. Rendering is a disabled, completely empty reserved package. It
-contains no aspect-ratio placeholder and no font content; font patches belong
-to Localization. Retired `font_m01` and `font_elf_history` active package
-directories are not recreated, while their useful historical evidence remains
-under `docs/knowledge/font/history/`.
+The generic Testing feature is retired. Its substitution edits produced no
+improvement or a black screen, and their durable results remain in
+`docs/knowledge/substitution.md`. Future experimental patches belong to their
+owning feature, using patch `status` and `confidence` to express maturity and
+certainty; a new feature is created only for a coherent capability. Rendering
+is a disabled, completely empty reserved package. It contains no aspect-ratio
+placeholder and no font content; font patches belong to Localization. Retired
+`font_m01` and `font_elf_history` active package directories are not recreated,
+while their useful historical evidence remains under
+`docs/knowledge/font/history/`.
 
 QoL's former bundle rows are split into independent atomic patches while
 preserving their exact edits:

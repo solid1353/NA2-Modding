@@ -18,10 +18,10 @@
 ### String translation
 - Polish, using the audit.
 
-## Backlog
-
 ### EE Runtime Memory Map
 - Establish and document the game-wide EE runtime memory map across representative states: resident and dynamically loaded binaries/modules, heaps, stacks, static data, overlays, allocator behavior, lifetimes, persistent and phase-specific free regions, and safe capacity/address ranges for injected code/data. Quantify worst-observed headroom and the capacity impact of the current whole-TEXTENG.BIN reservation versus direct inline patches, a compact external string pool, and a shared code/data reservation; provide evidence and constraints for the separate TEXTENG.BIN policy and Code Injection Architecture decisions.
+
+## Backlog
 
 ### Bugs
 - Practice menu entries (like Damage) flicker again (unstable).

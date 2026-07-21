@@ -23,6 +23,15 @@
 
 ## Backlog
 
+### Game Decompilation
+- Reconstruct materially analyzed game functions and types as curated C/C++-style knowledge, preserving game/binary identity, address, meaningful names, low/medium/high confidence, callers/callees, side effects, evidence, cross-game equivalents, and unresolved hypotheses. Raw Ghidra projects/exports remain under @analysis; canonical tracked reconstructions and an index belong under docs/knowledge/. Every chat doing substantive disassembly must contribute to this shared knowledge instead of leaving findings only in chat/logs.
+
+### EE Runtime Memory Map
+- Map the game-wide EE address space across relevant states: resident and dynamically loaded binaries/modules, heaps, stacks, static data, overlays, allocator behavior, lifetimes, persistent and phase-specific free regions, and safe capacity/address ranges for injected code/data. TEXTENG.BIN is one investigated allocation, not the workstream's defining subject.
+
+### Code Injection Architecture
+- Design reusable injection across any suitable game binary: target selection, hooks, trampolines, relocations, ABI/calling conventions, linker layout, symbols, code/data lifetime, feature coexistence, scripted integration, and verification. MOD.BIN is one possible target, not the defining constraint. Consume confirmed Game Decompilation and EE Runtime Memory Map findings.
+
 ### Bugs
 - Practice menu entries (like Damage) flicker again (unstable).
 

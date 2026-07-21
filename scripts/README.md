@@ -40,6 +40,9 @@ Before that call, `na2/build.ps1` checks the deterministic successful-build
 receipt through `na2_patcher.build_preflight`; an exact hit returns the normal
 unchanged result without staging an ISO. `na2/test_build_preflight.ps1` covers
 the cache-hit and safe full-build-fallback dispatch paths.
+`na2 -b` calls the same builder in candidate-only mode: it always composes a
+fresh verified `@build/NA2.28 - Candidate.iso`, bypasses Current preflight and
+promotion state, and does not probe or close PCSX2.
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 

@@ -1,5 +1,7 @@
 [CmdletBinding()]
-param()
+param(
+    [switch]$CandidateOnly
+)
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
@@ -135,6 +137,7 @@ $inputIso = $projectPaths.files.na2_iso
 $nun5Iso = $projectPaths.files.nun5_iso
 $resolvedOutputIso = [IO.Path]::GetFullPath($projectPaths.files.current_iso)
 $resolvedPreviousIso = [IO.Path]::GetFullPath($projectPaths.files.previous_iso)
+$resolvedCandidateIso = [IO.Path]::GetFullPath($projectPaths.files.candidate_iso)
 $profile = [IO.Path]::GetRelativePath(
     $projectPaths.repository,
     (Join-Path $projectPaths.patcher 'profiles\current')
@@ -144,6 +147,122 @@ $buildLogRoot = Join-Path $logDirectory 'builds'
 New-Item -ItemType Directory -Path $buildLogRoot -Force | Out-Null
 $receiptPath = Join-Path $logDirectory 'preflight\current.json'
 $candidateIso = "$resolvedOutputIso.building"
+
+if ($CandidateOnly) {
+    $candidateBuildId = (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
+    $candidateLogRoot = Join-Path $logDirectory 'candidates'
+    $candidateProfileLog = Join-Path $candidateLogRoot $candidateBuildId
+    $candidateProfileLogDirectory = [IO.Path]::GetRelativePath(
+        $projectPaths.repository,
+        $candidateProfileLog
+    )
+    $candidateBuildingIso = "$resolvedCandidateIso.building"
+    $candidateArguments = @(
+        '-B'
+        '-m', 'na2_patcher.build_profile'
+        '--source', $inputIso
+        '--output', $resolvedCandidateIso
+        '--profile', $profile
+        '--profile-log-directory', $candidateProfileLogDirectory
+    )
+
+    Write-Host (
+        '[na2] Candidate mode: full verified build; preflight, PCSX2 shutdown, ' +
+        'Current/Previous promotion, rotation, and receipt updates are disabled.'
+    ) -ForegroundColor Cyan
+    $candidateCompleted = $false
+    try {
+        Push-Location $projectPaths.repository
+        try {
+            $candidateOutput = & python @candidateArguments
+            $candidateExitCode = $LASTEXITCODE
+        }
+        finally {
+            Pop-Location
+        }
+        $candidateOutput | ForEach-Object { Write-Host $_ }
+        if ($candidateExitCode -ne 0) {
+            throw "NA2 candidate build failed (exit $candidateExitCode)."
+        }
+        if (-not (Test-Path -LiteralPath $candidateProfileLog -PathType Container)) {
+            throw 'Candidate build completed without creating its structured build record.'
+        }
+        if (-not (Test-Path -LiteralPath $candidateBuildingIso -PathType Leaf)) {
+            throw "Verified candidate ISO does not exist: $candidateBuildingIso"
+        }
+
+        $candidateChanged = -not (
+            (Test-Path -LiteralPath $resolvedCandidateIso -PathType Leaf) -and
+            (Test-FileContentEqual `
+                -LeftPath $candidateBuildingIso `
+                -RightPath $resolvedCandidateIso)
+        )
+        $candidateState = if ($candidateChanged) { 'updated' } else { 'unchanged' }
+
+        $profilePortable = ConvertTo-Na2PortableText `
+            -Text $profile `
+            -ProjectPaths $projectPaths
+        $candidatePortable = ConvertTo-Na2PortableText `
+            -Text $resolvedCandidateIso `
+            -ProjectPaths $projectPaths
+        $recordPortable = ConvertTo-Na2PortableText `
+            -Text $candidateProfileLog `
+            -ProjectPaths $projectPaths
+        $resultContent = @(
+            "timestamp_utc`tresult`tcandidate_state`trotation`tpcsx2_closed`tprofile`tcandidate_iso`tbuild_record"
+            (
+                (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" +
+                "candidate`t$candidateState`tno`tno`t$profilePortable`t$candidatePortable`t$recordPortable"
+            )
+        ) -join "`n"
+        $resultContent += "`n"
+        if (Test-Na2WindowsAbsolutePath -Text $resultContent) {
+            throw 'Refusing to write candidate_result.tsv with an absolute path.'
+        }
+        Set-Na2Utf8FileAtomic `
+            -Path (Join-Path $candidateProfileLog 'candidate_result.tsv') `
+            -Content $resultContent
+
+        if ($candidateChanged) {
+            [IO.File]::Move($candidateBuildingIso, $resolvedCandidateIso, $true)
+        }
+        else {
+            Remove-Item -LiteralPath $candidateBuildingIso -Force
+        }
+
+        Get-ChildItem -LiteralPath $candidateLogRoot -Directory |
+            Where-Object FullName -CNE $candidateProfileLog |
+            Remove-Item -Recurse -Force
+        $candidateCompleted = $true
+        $candidateRecord = "@logs/na2/candidates/$candidateBuildId"
+        Write-Host (
+            "[na2] ISO result: candidate ($candidateState); Current/Previous unchanged; " +
+            'rotation: no; PCSX2 left running.'
+        ) -ForegroundColor Cyan
+        Write-Host "[na2] Candidate build record: retained $candidateRecord." -ForegroundColor Cyan
+        return [pscustomobject]@{
+            Status = 'candidate'
+            CandidateState = $candidateState
+            CandidateIso = $resolvedCandidateIso
+            CurrentIso = $resolvedOutputIso
+            PreviousIso = $resolvedPreviousIso
+            Rotated = $false
+            BuildId = $candidateBuildId
+            ProfileLogDirectory = $candidateRecord
+            PreflightCacheHit = $false
+            Pcsx2Closed = $false
+        }
+    }
+    finally {
+        if (Test-Path -LiteralPath $candidateBuildingIso) {
+            Remove-Item -LiteralPath $candidateBuildingIso -Force
+        }
+        if (-not $candidateCompleted -and
+            (Test-Path -LiteralPath $candidateProfileLog -PathType Container)) {
+            Remove-Item -LiteralPath $candidateProfileLog -Recurse -Force
+        }
+    }
+}
 
 try {
     $preflight = Invoke-Na2BuildPreflight `

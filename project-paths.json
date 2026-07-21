@@ -25,6 +25,7 @@
     "nun5_iso": "@source/NUN5.iso",
     "nun6_iso": "@source/NUN6 A35.iso",
     "current_iso": "@build/NA2.28 - Current.iso",
-    "previous_iso": "@build/NA2.28 - Previous.iso"
+    "previous_iso": "@build/NA2.28 - Previous.iso",
+    "candidate_iso": "@build/NA2.28 - Candidate.iso"
   }
 }

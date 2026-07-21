@@ -35,6 +35,9 @@ knowledge.
 - `preflight/current.json`: the atomically replaced successful-build receipt
   used for no-op detection. It records only portable logical labels, the
   deterministic input fingerprint, and the Current ISO size and SHA-256.
+- `candidates/<build-id>/`: the latest candidate-only profile record, including
+  `candidate_result.tsv`. It is independent of `builds.tsv` and the Current
+  receipt; a successful candidate build replaces the previous candidate record.
 
 Help output is not logged. A preflight cache hit reuses the Current ISO's
 structured record. A full verified build always retains its new structured
@@ -46,6 +49,9 @@ current record rotates with the outgoing ISO. Unreferenced structured records
 are deleted only after the complete two-ISO mapping has been replaced.
 Deleting or corrupting the preflight receipt is safe: the next invocation runs
 the complete verified build and recreates the receipt only after success.
+Candidate-only builds always perform complete composition, report whether the
+Candidate ISO changed, and record that rotation and PCSX2 shutdown were both
+disabled.
 
 Persistent command logs must be normalized after transcript capture. They omit
 PowerShell transcript boilerplate, replace configured roots with aliases, and

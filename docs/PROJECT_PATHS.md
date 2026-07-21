@@ -52,6 +52,7 @@ their producing workflow runs. File entries should reference a named root with
 - `nun6_iso`: `@source/NUN6 A35.iso`.
 - `current_iso`: `@build/NA2.28 - Current.iso`.
 - `previous_iso`: `@build/NA2.28 - Previous.iso`.
+- `candidate_iso`: `@build/NA2.28 - Candidate.iso`.
 
 PowerShell accesses these as `$projectPaths.files.na2_iso` and
 `$projectPaths.files.current_iso`. Python accesses them through calls such as

@@ -4,6 +4,8 @@ param(
     [ValidateSet('act')]
     [string]$Mode,
 
+    [Alias('b')]
+    [switch]$Build,
     [Alias('c')]
     [switch]$Current,
     [Alias('p')]
@@ -18,6 +20,7 @@ $ErrorActionPreference = 'Stop'
 $projectPaths = Get-Na2ProjectPaths
 $currentIsoName = [IO.Path]::GetFileName($projectPaths.files.current_iso)
 $previousIsoName = [IO.Path]::GetFileName($projectPaths.files.previous_iso)
+$candidateIsoName = [IO.Path]::GetFileName($projectPaths.files.candidate_iso)
 
 function Write-Na2Stage {
     param([string]$Message)
@@ -27,11 +30,11 @@ function Write-Na2Stage {
 $command = if ($Mode) { $Mode.ToLowerInvariant() } else { '' }
 $runSelected = $Current -or $Previous
 
-if ($Current -and $Previous) {
-    throw '-Current / -c and -Previous / -p cannot be used together.'
+if (@($Build, $Current, $Previous).Where({ $_ }).Count -gt 1) {
+    throw '-Build / -b, -Current / -c, and -Previous / -p are mutually exclusive.'
 }
-if ($command -and $runSelected) {
-    throw 'ISO launch switches cannot be combined with a command mode.'
+if ($command -and ($Build -or $runSelected)) {
+    throw 'Build/launch switches cannot be combined with a command mode.'
 }
 if ($Help) {
     @(
@@ -39,6 +42,7 @@ if ($Help) {
         "  na2       Build the pinned current profile, conditionally rotate, then run $currentIsoName"
         "  na2 -c    Run build/$currentIsoName without rebuilding or closing PCSX2"
         "  na2 -p    Run build/$previousIsoName without rebuilding or closing PCSX2"
+        "  na2 -b    Build build/$candidateIsoName without closing PCSX2 or changing Current/Previous"
         "  na2 act   Maintain Current/Previous PNACH symlinks without building or launching"
         ''
     ) | Write-Output
@@ -47,6 +51,9 @@ if ($Help) {
 
 $runMode = if ($command -eq 'act') {
     'actualize'
+}
+elseif ($Build) {
+    'candidate-build'
 }
 elseif ($Previous) {
     'previous'
@@ -95,6 +102,13 @@ try {
             $enabledCheatNames -join ', '
         }
         Write-Host "[na2] Enabled cheats: $enabledCheats" -ForegroundColor Cyan
+    }
+    elseif ($Build) {
+        Write-Na2Stage "Build $candidateIsoName without closing PCSX2"
+        $buildResult = & (Join-Path $projectPaths.scripts 'na2\build.ps1') -CandidateOnly
+        if (-not $buildResult -or $buildResult.Status -ne 'candidate') {
+            throw 'Candidate build did not return a valid result.'
+        }
     }
     elseif ($runSelected) {
         $isoPath = if ($Previous) {

@@ -46,7 +46,8 @@ try {
     "na2_iso": "@source/NA2.iso",
     "nun5_iso": "@source/NUN5.iso",
     "current_iso": "@build/NA2.28 - Current.iso",
-    "previous_iso": "@build/NA2.28 - Previous.iso"
+    "previous_iso": "@build/NA2.28 - Previous.iso",
+    "candidate_iso": "@build/NA2.28 - Candidate.iso"
   }
 }
 '@
@@ -94,9 +95,16 @@ try {
             }
         }
         if ($arguments -contains 'na2_patcher.build_profile') {
+            $sourceIndex = [Array]::IndexOf($arguments, '--source') + 1
             $outputIndex = [Array]::IndexOf($arguments, '--output') + 1
             $profileLogIndex = [Array]::IndexOf($arguments, '--profile-log-directory') + 1
-            [IO.File]::Copy($arguments[$outputIndex], "$($arguments[$outputIndex]).building", $true)
+            $fixtureSource = if (Test-Path -LiteralPath $arguments[$outputIndex] -PathType Leaf) {
+                $arguments[$outputIndex]
+            }
+            else {
+                $arguments[$sourceIndex]
+            }
+            [IO.File]::Copy($fixtureSource, "$($arguments[$outputIndex]).building", $true)
             New-Item -ItemType Directory -Force `
                 -Path (Join-Path $global:Na2PreflightTestRepository $arguments[$profileLogIndex]) | Out-Null
             $global:LASTEXITCODE = 0
@@ -126,6 +134,39 @@ try {
         -Message 'Full-build fallback did not check, build, and record exactly once.'
     Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$currentIso.building")) `
         -Message 'Full-build fallback left a .building ISO.'
+
+    $global:Na2PreflightTestCalls = @()
+    $candidate = & (Join-Path $scriptRoot 'build.ps1') -CandidateOnly
+    $candidateIso = Join-Path $repository 'build\NA2.28 - Candidate.iso'
+    Assert-Na2PreflightTest -Condition ($candidate.Status -eq 'candidate') `
+        -Message 'Candidate-only build did not return candidate status.'
+    Assert-Na2PreflightTest -Condition (-not $candidate.Pcsx2Closed) `
+        -Message 'Candidate-only build reported that it closed PCSX2.'
+    Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
+        -Message 'Candidate-only build invoked preflight or receipt recording.'
+    Assert-Na2PreflightTest `
+        -Condition ($global:Na2PreflightTestCalls[0] -contains 'na2_patcher.build_profile') `
+        -Message 'Candidate-only build did not run the full profile builder.'
+    Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $candidateIso -PathType Leaf) `
+        -Message 'Candidate-only build did not retain its verified ISO.'
+    Assert-Na2PreflightTest `
+        -Condition ([IO.File]::ReadAllText($currentIso) -ceq 'verified current') `
+        -Message 'Candidate-only build changed the Current ISO.'
+    Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$candidateIso.building")) `
+        -Message 'Candidate-only build left its .building ISO.'
+    Assert-Na2PreflightTest `
+        -Condition (Test-Path -LiteralPath (Join-Path $repository $candidate.ProfileLogDirectory.Replace('@logs/', 'logs/')) -PathType Container) `
+        -Message 'Candidate-only build did not retain its structured record.'
+
+    $global:Na2PreflightTestCalls = @()
+    $unchangedCandidate = & (Join-Path $scriptRoot 'build.ps1') -CandidateOnly
+    Assert-Na2PreflightTest -Condition ($unchangedCandidate.CandidateState -eq 'unchanged') `
+        -Message 'Repeated candidate-only build did not detect unchanged output.'
+    Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
+        -Message 'Repeated candidate-only build invoked anything except profile composition.'
+    Assert-Na2PreflightTest `
+        -Condition (@(Get-ChildItem -LiteralPath (Join-Path $logDirectory 'candidates') -Directory).Count -eq 1) `
+        -Message 'Candidate-only build retained obsolete candidate records.'
 
     Write-Host 'NA2 build preflight PowerShell tests passed.' -ForegroundColor Green
 }

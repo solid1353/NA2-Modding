@@ -108,8 +108,13 @@ Every selected-task plan must include a standalone `Needed from you: <items>`
 line beside `Recommended effort`. Ask specifically for every user-supplied input
 or action that is expected or may materially help execution, such as savestates
 at named screens, screenshots, files, test results, tool access, or an in-game
-action. Explain when each requested item is needed. If the agent needs nothing
-from the user, state `Needed from you: nothing` instead of omitting the line.
+action. Request the ideal decision-quality inputs up front rather than convenient
+low-value proxies; when relevant, specify the exact game state, screen, timing,
+version, configuration, and reproduction conditions that must match. Explain
+when and why each item is needed. Use fallback evidence only when the ideal input
+is unavailable or impractical, and state the resulting limitation and whether
+the conclusion remains provisional. If the agent needs nothing from the user,
+state `Needed from you: nothing` instead of omitting the line.
 
 1. Tasks may be added to `TASKS.md` at any time by the user, or by an agent when the user orders it.
 2. Each workstream subsection is coordinated by a Codex task whose title exactly matches the subsection heading. The coordinator owns that workstream across statuses, so do not add redundant coordinator metadata to `TASKS.md`.

@@ -12,8 +12,9 @@ without expanding the ISO image or adding a renderer hook:
 
 - `MOD.BIN`: resident MWO3 code containing the external-text bootstrap and any
   later translation-specific runtime logic;
-- `TEXTENG.BIN`: resident MWO3 data containing a deterministic CP932 string
-  pool.
+- `TEXTENG.BIN`: resident MWO3 type-4 data containing NUN5's complete English
+  localization image: Western single-byte strings plus internal pointer/index
+  tables, with no executable code.
 
 These files are deliberately not combined. The first implementation
 externalizes only the messages needed to eliminate the 33
@@ -29,6 +30,35 @@ The generator, guarded edit plan, profile module type, and controlled ISO-file
 insertion are implemented and unit-tested. Runtime validation of the new memory
 reservation, boot hook, direct file lookup, and mode transitions is still
 required.
+
+### What `TEXTENG.BIN` contains
+
+The official NUN5 donor is not a flat string pool. It mixes zero-terminated
+English strings with absolute in-image pointer tables that index whole strings
+and, in some cases, interior fragments. The strings cover character and move
+names, mode/menu labels, prompts, battle and Practice help, conditions,
+collection text, story/mission prose, and save/load messages. They use an
+ASCII-compatible Western single-byte encoding with markup such as `<br>` and
+`<color...>`; the importer uses CP1252 for exact selected-string round trips.
+
+The preserved Ghidra import identifies zero functions and zero instructions.
+A separate aligned scan of the clean `0x30D00`-byte donor found 3,697 words in
+the donor's own loaded-address range. Of those, 3,617 point exactly to 2,990
+distinct printable, zero-terminated string starts. This establishes that the
+file is structured localization data with extensive internal indexing, not
+code and not merely concatenated text. The remaining 80 in-range words were not
+classified and may include non-string structures or incidental values.
+
+The generated NA2 file retains the complete donor so every official string and
+internal pointer keeps its original offset, then appends four CP1252 strings.
+The current NA2 integration does not adopt NUN5's language accessor system or
+consume the donor's pointer tables. Its 35 guarded pointer writes address 31
+mapping rows at 30 distinct string locations: 26 existing donor locations and
+four appended locations. Those distinct selected strings occupy 1,572 encoded
+bytes including terminators, less than one percent of the `0x30E00`-byte
+generated file. Most copied donor content is therefore currently unreferenced
+by NA2 and is retained for deterministic offset preservation, not because the
+current externalization needs the complete NUN5 English database.
 
 ## Evidence and provenance
 

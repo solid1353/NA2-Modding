@@ -28,6 +28,7 @@
 
 ### EE Runtime Memory Map
 - Map the game-wide EE address space across relevant states: resident and dynamically loaded binaries/modules, heaps, stacks, static data, overlays, allocator behavior, lifetimes, persistent and phase-specific free regions, and safe capacity/address ranges for injected code/data. TEXTENG.BIN is one investigated allocation, not the workstream's defining subject.
+- Investigate free EE space.
 
 ### Code Injection Architecture
 - Design reusable injection across any suitable game binary: target selection, hooks, trampolines, relocations, ABI/calling conventions, linker layout, symbols, code/data lifetime, feature coexistence, scripted integration, and verification. MOD.BIN is one possible target, not the defining constraint. Consume confirmed Game Decompilation and EE Runtime Memory Map findings.

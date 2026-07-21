@@ -3,7 +3,6 @@
 ## In Progress
 
 ### Project
-- Remove modules in profiles and stuff like this.
 - Regroup features.
 - Decide on TEXTENG.BIN usage policy.
 - Consider retiring cheats.

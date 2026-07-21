@@ -3,7 +3,6 @@
 ## In Progress
 
 ### Project
-- Finish stash@{0}: On master: WIP remove selections.
 - Remove modules in profiles and stuff like this.
 - Regroup features.
 - Decide on TEXTENG.BIN usage policy.

@@ -346,11 +346,13 @@ production writer.
 
 ## Open questions
 
-No static implementation question blocks the eight-screen pass. Runtime visual
-acceptance remains with the user by explicit instruction; the stage fitter,
-Mode Select START, Vibration, and Collection submenu patches stay
-`approved_for_test` until their respective screen passes. `LOGO.CCS`, upscale-pack
-hash mapping, and broader NUN6 comparison remain optional future research.
+No static implementation question blocks the remaining-screen pass. Runtime
+visual acceptance remains with the user by explicit instruction. Slot 3 Stage
+Select passed comparison with NUN5 on 2026-07-22 and `UI-BTL-002` is now
+`runtime_proven`; Mode Select START, Vibration, and Collection submenu patches
+stay `approved_for_test` until their respective screens pass. `LOGO.CCS`,
+upscale-pack hash mapping, and broader NUN6 comparison remain optional future
+research.
 
 ## Current status and next checkpoint
 

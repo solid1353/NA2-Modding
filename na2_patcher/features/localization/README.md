@@ -789,8 +789,9 @@ two rows copy NUN5's prompt-position instructions, and four code rows adapt
 NA2's inline-record topology. A temporary application verified that all 24
 stage keys remain unchanged and match NUN5, every rectangle equals the official
 English table, every scale equals the NUN5 formula, all changed bytes stay
-inside declared ranges, and the 2,237,184-byte BTL size is unchanged. Runtime
-comparison is still required before promotion from `approved_for_test`.
+inside declared ranges, and the 2,237,184-byte BTL size is unchanged. The user
+then compared the integrated Slot 3 result with NUN5 and accepted Stage Select
+as fixed, promoting `UI-BTL-002` to `runtime_proven`.
 
 ### UI-ELF-001: localized character-name atlas rectangles
 

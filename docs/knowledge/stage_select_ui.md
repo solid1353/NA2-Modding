@@ -114,5 +114,6 @@ offsets `0x61F40` and `0x61F64`. The other visible bottom prompts already match.
 - No code cave, absolute jump, file growth, text change, or font change is used.
 
 Confidence is **high** for record topology, file/runtime mapping, both preview
-consumers, stage-name scale behavior, and the two prompt constants. Runtime
-visual acceptance of the final combined patch remains user-owned.
+consumers, stage-name scale behavior, and the two prompt constants. The user
+compared the integrated Slot 3 result with NUN5 and accepted Stage Select as
+fixed on 2026-07-22.

@@ -296,7 +296,7 @@ def write_texture_patch_log(
     )
     binary_patcher_module.write_tsv(
         log_directory / "run_summary.tsv",
-        ["container_count", "mapping_count", "fixed_bytes"],
+        ["container_count", "mapping_count", "fixed_bytes", "worker_count"],
         [
             {
                 "container_count": len(plan.containers),
@@ -304,6 +304,7 @@ def write_texture_patch_log(
                 "fixed_bytes": sum(
                     len(result.replacement) for result in plan.containers
                 ),
+                "worker_count": plan.worker_count,
             }
         ],
     )

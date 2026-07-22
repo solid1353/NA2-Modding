@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import struct
 import unittest
+from unittest.mock import patch
 
 from na2_patcher.modules.texture_patcher import engine
 
@@ -236,6 +237,16 @@ class MappedCopyTests(unittest.TestCase):
                 bytes(donor),
                 [self.mappings[0]],
             )
+
+    def test_derivation_worker_count_is_bounded_and_overridable(self) -> None:
+        with patch.object(engine.os, "cpu_count", return_value=16):
+            self.assertEqual(engine.derivation_worker_count(None, 34), 4)
+        with patch.object(engine.os, "cpu_count", return_value=2):
+            self.assertEqual(engine.derivation_worker_count(None, 34), 2)
+        self.assertEqual(engine.derivation_worker_count(8, 3), 3)
+        self.assertEqual(engine.derivation_worker_count(1, 34), 1)
+        with self.assertRaisesRegex(ValueError, "positive integer"):
+            engine.derivation_worker_count(0, 34)
 
 
 if __name__ == "__main__":

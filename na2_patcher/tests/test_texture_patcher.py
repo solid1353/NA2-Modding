@@ -554,6 +554,7 @@ class UiTextureTests(unittest.TestCase):
             )
             self.assertEqual(summary[0]["container_count"], "34")
             self.assertEqual(summary[0]["mapping_count"], "76")
+            self.assertEqual(summary[0]["worker_count"], str(self.plan.worker_count))
 
 
 if __name__ == "__main__":

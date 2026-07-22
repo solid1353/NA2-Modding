@@ -6,10 +6,12 @@ import csv
 import gzip
 import hashlib
 import json
+import os
 import re
 import struct
 import zlib
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -44,6 +46,7 @@ STRATEGY_FIELDS = [
     "payload_sha256",
     "reason",
 ]
+MAX_DERIVATION_WORKERS = 4
 SECTION_TOC = 0xCCCC0002
 SECTION_TEXTURE = 0xCCCC0300
 SECTION_PALETTE = 0xCCCC0400
@@ -181,6 +184,7 @@ class TexturePatchPlan:
     package: Package
     containers: tuple[ContainerResult, ...]
     target_header: bytes
+    worker_count: int = 1
 
     def apply_to_cvm(self, cvm: bytearray) -> None:
         if bytes(cvm[: len(self.target_header)]) != self.target_header:
@@ -732,12 +736,101 @@ def source_members(
     return target, donor, target_header
 
 
+def derive_container(
+    container_id: str,
+    *,
+    package: Package,
+    target_iso: IsoFileView,
+    donor_iso: IsoFileView,
+    target_header_size: int,
+    mappings_by_container: dict[str, list[Mapping]],
+) -> ContainerResult:
+    spec = package.containers[container_id]
+    strategy = package.strategies[container_id]
+    iso_path = spec.path.upper()
+    target_record = target_iso.by_path.get(iso_path)
+    donor_record = donor_iso.by_path.get(iso_path)
+    if target_record is None or target_record.is_dir:
+        raise FileNotFoundError(f"NA2 DATA.CVM has no file {spec.path}")
+    if donor_record is None or donor_record.is_dir:
+        raise FileNotFoundError(f"NUN5 DATA.CVM has no file {spec.path}")
+    original = target_iso.read_file(target_record)
+    donor = donor_iso.read_file(donor_record)
+    if sha256(original) != spec.target_sha256:
+        raise RuntimeError(
+            f"Unexpected NA2 SHA-256 for {spec.path}: {sha256(original)}"
+        )
+    if sha256(donor) != spec.donor_sha256:
+        raise RuntimeError(
+            f"Unexpected NUN5 SHA-256 for {spec.path}: {sha256(donor)}"
+        )
+    target_payload = gzip.decompress(original)
+    donor_payload = gzip.decompress(donor)
+    target_entries = parse_ccs(target_payload)
+    donor_entries = parse_ccs(donor_payload)
+    mappings = mappings_by_container[container_id]
+    for mapping in mappings:
+        validate_mapping(
+            mapping,
+            target_payload,
+            donor_payload,
+            target_entries,
+            donor_entries,
+        )
+    validate_visual_coverage(
+        strategy,
+        mappings,
+        target_payload,
+        donor_payload,
+        target_entries,
+        donor_entries,
+    )
+    payload = expected_payload(strategy, target_payload, donor_payload, mappings)
+    payload_hash = sha256(payload)
+
+    replacement, stream_size, padding = repack_gzip_exact(original, payload)
+    replacement_hash = sha256(replacement)
+    if payload_hash != strategy.payload_sha256:
+        raise RuntimeError(
+            f"Unexpected derived payload SHA-256 for {spec.path}: {payload_hash}"
+        )
+    if replacement_hash != strategy.replacement_sha256:
+        raise RuntimeError(
+            f"Unexpected derived replacement SHA-256 for {spec.path}: "
+            f"{replacement_hash}"
+        )
+
+    return ContainerResult(
+        spec=spec,
+        strategy=strategy,
+        original=original,
+        donor=donor,
+        replacement=replacement,
+        payload_sha256=payload_hash,
+        compressed_stream_size=stream_size,
+        padding_size=padding,
+        outer_cvm_offset=target_header_size + target_record.byte_offset,
+        mapping_ids=tuple(mapping.mapping_id for mapping in mappings),
+    )
+
+
+def derivation_worker_count(requested: int | None, container_count: int) -> int:
+    if isinstance(requested, bool) or (requested is not None and requested < 1):
+        raise ValueError("Texture derivation workers must be a positive integer")
+    if container_count < 1:
+        return 1
+    if requested is not None:
+        return min(requested, container_count)
+    return min(MAX_DERIVATION_WORKERS, os.cpu_count() or 1, container_count)
+
+
 def build_plan(
     *,
     na2_root: Path,
     nun5_root: Path,
     data_root: Path,
     selection: tuple[str, ...] = (),
+    workers: int | None = None,
 ) -> TexturePatchPlan:
     package = load_package(data_root)
     target_iso, donor_iso, target_header = source_members(na2_root, nun5_root)
@@ -745,68 +838,28 @@ def build_plan(
     for mapping in package.mappings:
         mappings_by_container[mapping.container_id].append(mapping)
 
-    results = []
-    for container_id in selected_container_ids(package, selection):
-        spec = package.containers[container_id]
-        strategy = package.strategies[container_id]
-        iso_path = spec.path.upper()
-        target_record = target_iso.by_path.get(iso_path)
-        donor_record = donor_iso.by_path.get(iso_path)
-        if target_record is None or target_record.is_dir:
-            raise FileNotFoundError(f"NA2 DATA.CVM has no file {spec.path}")
-        if donor_record is None or donor_record.is_dir:
-            raise FileNotFoundError(f"NUN5 DATA.CVM has no file {spec.path}")
-        original = target_iso.read_file(target_record)
-        donor = donor_iso.read_file(donor_record)
-        if sha256(original) != spec.target_sha256:
-            raise RuntimeError(f"Unexpected NA2 SHA-256 for {spec.path}: {sha256(original)}")
-        if sha256(donor) != spec.donor_sha256:
-            raise RuntimeError(f"Unexpected NUN5 SHA-256 for {spec.path}: {sha256(donor)}")
-        target_payload = gzip.decompress(original)
-        donor_payload = gzip.decompress(donor)
-        target_entries = parse_ccs(target_payload)
-        donor_entries = parse_ccs(donor_payload)
-        mappings = mappings_by_container[container_id]
-        for mapping in mappings:
-            validate_mapping(mapping, target_payload, donor_payload, target_entries, donor_entries)
-        validate_visual_coverage(
-            strategy,
-            mappings,
-            target_payload,
-            donor_payload,
-            target_entries,
-            donor_entries,
-        )
-        payload = expected_payload(strategy, target_payload, donor_payload, mappings)
-        payload_hash = sha256(payload)
+    container_ids = selected_container_ids(package, selection)
+    worker_count = derivation_worker_count(workers, len(container_ids))
 
-        replacement, stream_size, padding = repack_gzip_exact(original, payload)
-        replacement_hash = sha256(replacement)
-        if payload_hash != strategy.payload_sha256:
-            raise RuntimeError(
-                f"Unexpected derived payload SHA-256 for {spec.path}: {payload_hash}"
-            )
-        if replacement_hash != strategy.replacement_sha256:
-            raise RuntimeError(
-                f"Unexpected derived replacement SHA-256 for {spec.path}: "
-                f"{replacement_hash}"
-            )
-
-        results.append(
-            ContainerResult(
-                spec=spec,
-                strategy=strategy,
-                original=original,
-                donor=donor,
-                replacement=replacement,
-                payload_sha256=payload_hash,
-                compressed_stream_size=stream_size,
-                padding_size=padding,
-                outer_cvm_offset=len(target_header) + target_record.byte_offset,
-                mapping_ids=tuple(mapping.mapping_id for mapping in mappings),
-            )
+    def derive(container_id: str) -> ContainerResult:
+        return derive_container(
+            container_id,
+            package=package,
+            target_iso=target_iso,
+            donor_iso=donor_iso,
+            target_header_size=len(target_header),
+            mappings_by_container=mappings_by_container,
         )
-    return TexturePatchPlan(package, tuple(results), target_header)
+
+    if worker_count == 1:
+        results = tuple(derive(container_id) for container_id in container_ids)
+    else:
+        with ThreadPoolExecutor(
+            max_workers=worker_count,
+            thread_name_prefix="texture-patcher",
+        ) as executor:
+            results = tuple(executor.map(derive, container_ids))
+    return TexturePatchPlan(package, results, target_header, worker_count)
 
 
 def build_texture_patch_plan(
@@ -815,12 +868,14 @@ def build_texture_patch_plan(
     nun5_root: Path,
     data_root: Path,
     selection: tuple[str, ...] = (),
+    workers: int | None = None,
 ) -> TexturePatchPlan:
     return build_plan(
         na2_root=na2_root,
         nun5_root=nun5_root,
         data_root=data_root,
         selection=selection,
+        workers=workers,
     )
 
 
@@ -911,10 +966,14 @@ def main() -> int:
     )
     verify_parser.add_argument("--package", required=True, type=Path)
     verify_parser.add_argument("--selection", default="")
-    preview_parser = subparsers.add_parser("preview", help="write verified CCS members for review")
+    verify_parser.add_argument("--workers", type=int)
+    preview_parser = subparsers.add_parser(
+        "preview", help="write verified CCS members for review"
+    )
     preview_parser.add_argument("--package", required=True, type=Path)
     preview_parser.add_argument("--output", required=True)
     preview_parser.add_argument("--selection", default="")
+    preview_parser.add_argument("--workers", type=int)
     args = parser.parse_args()
 
     na2_root, nun5_root = default_roots()
@@ -928,6 +987,7 @@ def main() -> int:
         nun5_root=nun5_root,
         data_root=data_root,
         selection=selection,
+        workers=args.workers,
     )
     if args.command == "preview":
         output = Path(args.output)

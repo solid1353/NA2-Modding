@@ -39,9 +39,10 @@ Operational logs remain disposable after their durable findings are promoted. Gi
   levels for known NA2 artifacts and the reusable escalation workflow.
 - `menu_input.md`: save/load input-handler runtime findings and their canonical evidence.
 - `substitution.md`: substitution reliability control flow, failed tests, and next investigation boundary.
-- `collection_ui.md`: paired NA2/NUN5 Collection Characters/Movie/Music draw
-  paths, page and Play prompt tables, category-title rectangles, rejected
-  false leads, and the donor-backed `UI-ETC-002` boundary.
+- `collection_ui.md`: paired NA2/NUN5 Collection Characters/Movie/Music and
+  character-viewer draw paths, page/Play/lower-control tables, category-title
+  rectangles, rejected false leads, and the donor-backed `UI-ETC-002`
+  boundary.
 - `media/`: exact outer-ISO, `DATA.CVM`, and AFS layout inventories.
 - `font/`: durable visual and byte-level evidence from the font v23 negative result.
 - `external_string_payload.md`: compact one-file `228.BIN` string storage,

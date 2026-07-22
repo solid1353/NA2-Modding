@@ -175,9 +175,9 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   and the deterministic verifier. The generated replacement ranges total
   5,274,398 bytes, but no replacement CCS blobs are stored in the repository.
   Static parity regenerated all 34 former production files byte-for-byte.
-- `na2_patcher/features/localization/binary_patcher/` contains 13 atomic
-  companion patches and 86 guarded edits across BTL, ETC, and the boot ELF.
-  Forty-seven rows copy canonical NUN5 bytes directly (39 ELF, seven BTL, one
+- `na2_patcher/features/localization/binary_patcher/` contains 14 atomic
+  companion patches and 94 guarded edits across BTL, ETC, and the boot ELF.
+  Fifty-five rows copy canonical NUN5 bytes directly (43 ELF, seven BTL, five
   ETC), 24 store values computed from NUN5's stage-width formula in NA2's
   different record layout, and 15 are minimal NA2-specific behavior ports.
   The stage-fit correction and Vibration rectangle are statically verified and
@@ -188,7 +188,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   all three targets selected.
 - The Localization feature's aggregate current-profile pin covers both canonical
   module inputs and their feature-relative paths.
-- The binary-patcher patch set validates as 6 targets, 13 patches, and 86 edits. The UI
+- The UI binary-patcher set validates as 6 source/destination targets, 14 patches, and 94 edits. The UI
   texture plan derives all 34 members with 33 whole donors and MODE2KDV as the
   only mapped exception. The historical runtime harness remains available;
   current focused and complete-suite results are refreshed with each build.
@@ -403,13 +403,36 @@ function, address, memory, and negative-result evidence is preserved in
 `docs/knowledge/collection_ui.md`. PCSX2 has not been launched and no ISO has
 been rebuilt for this correction.
 
-The isolated six-edit apply preserves ETC's 200,448-byte size and produces
+The isolated six-edit checkpoint preserved ETC's 200,448-byte size and produced
 SHA-256
 `E83768B6B39264A97146BE384E3D0A245EE5CBBB288848D1A965934C66C28FFA`.
 Exactly 16 destination bytes differ, all within the six declared ranges; the
-adjacent Stop record remains byte-identical. Binary-package validation reports
-86 patches and 250 edits, the 33 focused profile/UI tests pass, and the full
-repository suite passes 127/127. The current Localization feature pin is
+adjacent Stop record remains byte-identical. At that checkpoint,
+binary-package validation reported 86 patches and 250 edits, the 33 focused
+profile/UI tests passed, and the full repository suite passed 127/127. Its
+Localization feature pin was
 `7242AC919B21DD834ECFEB391B3EA35709969EA090779F6687A601858928445E`.
 Runtime acceptance still requires a user-authorized ISO rebuild followed by
 the user's visual review.
+
+### Screen correction pass: Collection character-viewer lower controls
+
+The later paired slot-1 capture isolates only the four lower-left controls.
+NA2 places Rotate, Move, Zoom In, and Zoom Out on one horizontal row at
+Y=`360`; NUN5 places Zoom In/Zoom Out at Y=`339` and Move/Rotate at Y=`364`.
+The NUN5 rectangle table also widens both Zoom records and selects Zoom Out at
+its English-atlas U coordinate. Back, the character model, and all name/jutsu
+text are accepted or out of scope and remain untouched.
+
+`UI-ETC-002` now adds two exact guarded NUN5 ETC copies: the complete 64-byte
+position block from `0x283D0` to NA2 `0x2EB40`, and the complete 32-byte
+rectangle block from `0x29A90` to NA2 `0x30AB0`. No literal replacement or
+stored asset is added. The isolated eight-edit apply preserves the 200,448-byte
+ETC size, produces SHA-256
+`E6054FCD42A3834197AE638D3EF77E10BE86633A997C6CF9F18887FA788A298A`,
+and differs from canonical NA2 in exactly 30 bytes, all inside declared ranges.
+Package validation reports 7 targets, 9 groups, 86 patches, and 252 edits; the
+33 focused UI/profile tests and full 127-test suite pass. The current
+Localization feature pin is
+`CF173194E0BB28DB3CC516B176DB9F90F1103749890F5EE4AF6BD6CCC9CBDB56`.
+PCSX2 has not been launched and no ISO has been rebuilt.

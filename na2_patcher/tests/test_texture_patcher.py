@@ -440,6 +440,8 @@ class UiTextureTests(unittest.TestCase):
                 "UI-ETC-002-04",
                 "UI-ETC-002-05",
                 "UI-ETC-002-06",
+                "UI-ETC-002-07",
+                "UI-ETC-002-08",
             ],
         )
         self.assertTrue(all(item.operation == "copy" for item in edits))
@@ -460,18 +462,56 @@ class UiTextureTests(unittest.TestCase):
                 (0x30498, 8, "nun5_elf", 0x4DDC58),
                 (0x304A0, 8, "nun5_elf", 0x4DDC60),
                 (0x2E790, 8, "nun5_elf", 0x4DDC70),
+                (0x2EB40, 64, "nun5_etc", 0x283D0),
+                (0x30AB0, 32, "nun5_etc", 0x29A90),
             ],
         )
         self.assertEqual(
             [
                 struct.unpack("<hhhh", bytes.fromhex(item.source_expected_hex))
-                for item in edits[2:]
+                for item in edits[2:6]
             ],
             [
                 (0, 0, 192, 28),
                 (0, 28, 96, 28),
                 (0, 56, 96, 28),
                 (144, 24, 72, 24),
+            ],
+        )
+        self.assertEqual(
+            struct.unpack("<16f", bytes.fromhex(edits[6].source_expected_hex)),
+            (
+                206.0,
+                364.0,
+                0.0,
+                0.0,
+                99.0,
+                364.0,
+                0.0,
+                0.0,
+                97.0,
+                339.0,
+                0.0,
+                0.0,
+                207.0,
+                339.0,
+                0.0,
+                0.0,
+            ),
+        )
+        self.assertEqual(
+            [
+                struct.unpack(
+                    "<HHHH",
+                    bytes.fromhex(edits[7].source_expected_hex)[index : index + 8],
+                )
+                for index in range(0, 32, 8)
+            ],
+            [
+                (1, 72, 108, 24),
+                (1, 48, 108, 24),
+                (1, 96, 112, 24),
+                (144, 1, 112, 23),
             ],
         )
         self.assertNotIn(0x2E798, {item.destination_offset for item in edits})
@@ -500,11 +540,11 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 92)
-        self.assertEqual(operations, {"copy": 53, "replace": 39})
+        self.assertEqual(len(ui_edits), 94)
+        self.assertEqual(operations, {"copy": 55, "replace": 39})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 43, "nun5_btl": 7, "nun5_etc": 3},
+            {"nun5_elf": 43, "nun5_btl": 7, "nun5_etc": 5},
         )
         self.assertEqual(len(stage_scales), 24)
         self.assertEqual(len(adaptations), 15)

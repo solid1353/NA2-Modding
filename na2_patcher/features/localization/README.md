@@ -713,8 +713,8 @@ recorded in `docs/plans/ui_translation.md`.
 This patch set holds size-preserving executable changes that are inseparable from
 the NUN5 UI container import but do not belong inside `DATA.CVM`.
 
-Its 86 guarded edits are donor-first: 47 copy bytes directly from canonical
-NUN5 files (39 from the ELF, seven from `BTL.BIN`, and one from `ETC.BIN`).
+Its 94 guarded edits are donor-first: 55 copy bytes directly from canonical
+NUN5 files (43 from the ELF, seven from `BTL.BIN`, and five from `ETC.BIN`).
 Another 24 store the exact values of NUN5's stage-width formula in NA2's
 different inline-record layout. The remaining 15 are documented NA2-specific
 ports where the equivalent NUN5 behavior has a different instruction or data
@@ -981,9 +981,18 @@ localized accessor `FUN_003d4210`. The sixth edit copies that exact record from
 NUN5 ELF offset `0x4DDC70`. The adjacent Stop record remains unchanged because
 it was not visible in the reviewed states.
 
+A later paired character-viewer capture isolates the four lower controls. NA2
+places Rotate, Move, Zoom In, and Zoom Out on one row at Y=`360`; NUN5's exact
+four-record table places Zoom In/Zoom Out at Y=`339` and Move/Rotate at
+Y=`364`. The NUN5 rectangle block also widens both Zoom labels from 108 to 112
+pixels and moves Zoom Out to its English-atlas U coordinate. Edits seven and
+eight copy the complete 64-byte position block and 32-byte rectangle block
+from NUN5 ETC offsets `0x283D0` and `0x29A90` to NA2 ETC offsets `0x2EB40`
+and `0x30AB0`. The separate accepted Back path remains untouched.
+
 Static provenance and the draw-path
 reconstruction and paired Characters/Movie/Music evidence are recorded in
-`docs/knowledge/collection_ui.md`. All six operations derive bytes from
+`docs/knowledge/collection_ui.md`. All eight operations derive bytes from
 canonical NUN5 files and preserve ETC size. Runtime acceptance remains pending.
 
 ### UI-ELF-005: localized Mode Select START layout

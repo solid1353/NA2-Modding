@@ -2,10 +2,11 @@
 
 ## Scope and binary identities
 
-This record covers the Collection -> Characters title and page controls plus
-the Movie/Music titles and their shared Play control. It was established on
-2026-07-22 from paired NA2.28/NUN5 savestates, canonical files, and the
-existing Ghidra exports; no new disassembly was required.
+This record covers the Collection -> Characters title and page controls, the
+Movie/Music titles and their shared Play control, and the four lower viewer
+controls on the character-details screen. It was established on 2026-07-22
+from paired NA2.28/NUN5 savestates, canonical files, and the existing Ghidra
+exports; no new disassembly was required.
 
 | Game | Canonical binary | Size | SHA-256 | MWo3 load base |
 | --- | --- | ---: | --- | ---: |
@@ -138,6 +139,66 @@ record use `(144,24,72,24)`. The 24-pixel U-coordinate mismatch produces the
 captured `Pl...` clipping on both Movie and Music. Only the reviewed Play
 record is copied. The adjacent state-4 Stop record remains unchanged.
 
+## Character viewer lower-control renderer
+
+The new paired slot-1 capture shows only the four lower-left viewer controls as
+defective. NA2 lays `Zoom In`, `Zoom Out`, `Move`, and `Rotate` across one
+bottom row, causing the imported English labels to collide and clip. NUN5 uses
+the same four semantic records in a two-by-two layout. `Back`, the model, and
+all name/jutsu text are separate accepted paths and are outside this edit.
+
+The exact homologous renderer pair is:
+
+| Field | NA2 | NUN5 |
+| --- | ---: | ---: |
+| exported function range | `FUN_006bafc0`, `[0x006BAFC0,0x006BB550)` | `FUN_006ce150`, `[0x006CE150,0x006CE700)` |
+| runtime range | `[0x006BB000,0x006BB590)` | `[0x006CE190,0x006CE740)` |
+| position table | file `0x2EB40`, runtime `0x006E2A40` | file `0x283D0`, runtime `0x006EF0D0` |
+| rectangle table | file `0x30AB0`, runtime `0x006E49B0` | file `0x29A90`, runtime `0x006F0790` |
+| sprite draw callee | `SUB_0037bc40` | `SUB_0038ad00` |
+| finish callee | `SUB_001cc070` | `SUB_001d1180` |
+
+Both functions copy the four 16-byte position records to their stack, iterate
+four times over paired position/rectangle records, submit a sprite, and finish
+the shared renderer. Their observable side effect is renderer submission; they
+do not mutate Collection selection state. A practical reconstruction is:
+
+```c
+typedef struct { float x, y, z, w; } ViewerControlPosition;
+typedef struct { uint16_t u, v, width, height; } ViewerControlRect;
+
+void draw_collection_viewer_controls(CollectionViewerOverlay *self) {
+    for (unsigned i = 0; i < 4; ++i) {
+        draw_sprite(viewer_control_position[i].x,
+                    viewer_control_position[i].y,
+                    self->sprite_renderer,
+                    &viewer_control_rect[i]);
+    }
+    finish_sprite(self->sprite_renderer);
+}
+```
+
+The record order is Rotate, Move, Zoom In, Zoom Out. NA2 uses positions
+`(344,360)`, `(232,360)`, `(66,360)`, `(148,360)`. NUN5 uses
+`(206,364)`, `(99,364)`, `(97,339)`, `(207,339)`, which produces bottom-row
+Move/Rotate and top-row Zoom In/Zoom Out exactly as seen in the paired capture.
+The first two rectangles are already identical. NUN5 widens the two Zoom
+records from 108 to 112 pixels and moves Zoom Out's U coordinate from 120 to
+144 for its English atlas location.
+
+The parent character-viewer class aligns as `ccHomeIspDiorama`: NA2 exported
+class-string address `0x006E2FE0`, exported factory/type reference
+`0x00602820`, captured object candidate `0x00C9A1C0`; NUN5 exported
+class-string address `0x006EF650`, exported reference `0x0060FD40`, and
+candidate `0x00C1C810`. Its main draw pair is NA2
+`FUN_006c11e0` and NUN5 `FUN_006d4530`. The lower-control renderer is reached
+indirectly as a child/virtual overlay draw; no direct JAL cross-reference is
+present in the exports. A second pair, NA2 `FUN_006bdaa0` and NUN5
+`FUN_006d0d10`, consumes the same four rectangle records with a different
+caller-provided position array. That second layout is not patched without its
+own screen evidence. Confidence is high for the table/function semantics and
+medium for the exact indirect parent edge.
+
 ## Exact paired tables
 
 | Table | NA2 file/runtime | NA2 values | NUN5 file/runtime | NUN5 values |
@@ -148,6 +209,8 @@ record is copied. The adjacent state-4 Stop record remains unchanged.
 | Movie rectangle | `0x30498` / `0x006E4398` | `(1,37,136,34)` | NUN5 ELF `0x4DDC58` / `0x005DDAD8` | `(0,28,96,28)` |
 | Music rectangle | `0x304A0` / `0x006E43A0` | `(1,83,80,37)` | NUN5 ELF `0x4DDC60` / `0x005DDAE0` | `(0,56,96,28)` |
 | Play rectangle | `0x2E790` / `0x006E2690` | `(120,24,72,24)` | NUN5 ELF `0x4DDC70` / `0x005DDAF0` | `(144,24,72,24)` |
+| viewer-control positions | `0x2EB40` / `0x006E2A40` | `(344,360)`, `(232,360)`, `(66,360)`, `(148,360)` | `0x283D0` / `0x006EF0D0` | `(206,364)`, `(99,364)`, `(97,339)`, `(207,339)` |
+| viewer-control rectangles | `0x30AB0` / `0x006E49B0` | `(1,72,108,24)`, `(1,48,108,24)`, `(1,96,108,24)`, `(120,1,108,23)` | `0x29A90` / `0x006F0790` | `(1,72,108,24)`, `(1,48,108,24)`, `(1,96,112,24)`, `(144,1,112,23)` |
 
 The whole NUN5 `HOME.CCS` donor supplies 144-pixel English page-prompt art,
 but it cannot change these ETC-owned tables. NA2 therefore clipped the first
@@ -155,9 +218,10 @@ rectangle to 118 pixels, displaying `Previous Pa`. NUN5 widens both entries to
 144 and moves their centers outward by 13 pixels, preserving the paired layout
 without overlap. `UI-ETC-002` consequently copies both complete page-prompt
 tables, all three reviewed category-title records, and the reviewed Play
-record. It contains no authored replacement bytes and changes no text or font
-data. The six guarded copy operations cover 80 bytes; only sixteen bytes
-differ in the destination.
+record. The viewer-control correction copies the complete four-record position
+and rectangle blocks rather than splitting their semantic unit. It contains no
+authored replacement bytes and changes no text or font data. The eight guarded
+copy operations cover 176 bytes; thirty bytes differ in the destination.
 
 The captured sprite renderer corroborates the table trace. After the second
 draw, its width is 118 in NA2 and 144 in NUN5; its derived right-edge value is
@@ -189,13 +253,29 @@ respectively `220 + 118 = 338` and `233 + 144 = 377`.
   and `47226A13B272A6532798F27CC22D0F41290E596A122DD5854F385839F876687E`.
   Their retained copies are under
   `work/UI translation/temp/slots2_3_20260722_0745/` until runtime acceptance.
-- The isolated `UI-ETC-002` apply preserves the 200,448-byte ETC size and
-  produces SHA-256
-  `E83768B6B39264A97146BE384E3D0A245EE5CBBB288848D1A965934C66C28FFA`.
-  Exactly 16 bytes differ from canonical NA2 ETC, all inside the declared
-  ranges. The adjacent Stop record at `0x2E798` remains
-  `(120,48,72,24)`. Package validation, 33 focused profile/UI tests, and the
-  full 127-test suite pass.
+- The later paired character-viewer slot-1 state hashes are
+  `7A90746FC65D62F2027F11AFEB3847FCBEAB92C5FF797C60C33904698814CAD9`
+  (NA2.28) and
+  `9748C0801572E6DE00D03EBF39DC9AE28540EAECE10EC1D52D1ED4C7955FFE3F`
+  (NUN5). Their embedded screenshot hashes are
+  `97451AFCF15483D9D1A7DDA232EFE48F2F2C5697A740D730D12A47556C7F02FB`
+  and `981AC4171CFC7B54D56326616E90EEB8AAE7D03C639CF8A62980E26BB9DFD14B`;
+  extracted EE-memory hashes are
+  `9E8DDA2E5C8511178DAE758606BB13D7FB18117AF16F5119CFDA2EE4F6827532`
+  and `9BC30D17F76EC79E172AC373880742CEB8EFC0BB0ADA04D3016192AD46CA994B`.
+  Working copies remain under
+  `work/UI translation/temp/slot1_20260722_0827_down_labels/` until runtime
+  acceptance; the original PCSX2 states were not modified.
+- The isolated eight-edit `UI-ETC-002` apply preserves the 200,448-byte ETC
+  size and produces SHA-256
+  `E6054FCD42A3834197AE638D3EF77E10BE86633A997C6CF9F18887FA788A298A`.
+  Exactly 30 bytes differ from canonical NA2 ETC, all inside the declared
+  ranges. The adjacent Stop record at `0x2E798` remains `(120,48,72,24)`;
+  Back and every text/font byte remain outside the patch. Package validation
+  reports 7 targets, 9 groups, 86 patches, and 252 edits; the 33 focused
+  UI/profile tests and full 127-test suite pass. The matching Localization
+  feature pin is
+  `CF173194E0BB28DB3CC516B176DB9F90F1103749890F5EE4AF6BD6CCC9CBDB56`.
 - A historical NA2 screenshot from the preserved Previous ISO has the same
   clipping, so this defect predates the current donor conversion.
 - All three title placement records are identical across NA2 and NUN5.
@@ -217,6 +297,11 @@ respectively `220 + 118 = 338` and `233 + 144 = 377`.
 - The adjacent Stop rectangle and the Controls/Display/Hide prompt records
   were not visible in these captures, so copying them would exceed the
   screen-by-screen evidence boundary.
+- The accepted `Back` prompt is drawn by the common action-prompt family, not
+  the four-item viewer-control renderer, and remains untouched.
+- The second four-rectangle consumer `FUN_006bdaa0` / `FUN_006d0d10` uses a
+  different position source. Its positions are deliberately unchanged until a
+  matching screen demonstrates a defect.
 
 ## Confidence
 

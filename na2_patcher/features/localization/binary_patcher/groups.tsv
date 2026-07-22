@@ -7,3 +7,4 @@ front_end	Front end	Localized boot-ELF menus, option layouts, setup, save, modal
 etc_ui	ETC UI	ETC-owned front-end and submenu input handlers.	""
 battle_results	Battle results	Battle-results input behavior.	""
 shop	Shop	Localized Shop label layouts.	""
+collection	Collection	Localized Collection labels and page-control layouts.	""

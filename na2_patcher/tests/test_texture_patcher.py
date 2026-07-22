@@ -423,6 +423,59 @@ class UiTextureTests(unittest.TestCase):
             (64, 88, 64, 20),
         )
 
+    def test_collection_submenu_patch_uses_only_exact_nun5_records(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = binary_patcher.load_package(
+            repository
+            / "na2_patcher/features/localization/binary_patcher"
+        )
+        edits = [item for item in package.edits if item.patch_id == "UI-ETC-002"]
+
+        self.assertEqual(
+            [item.edit_id for item in edits],
+            [
+                "UI-ETC-002-01",
+                "UI-ETC-002-02",
+                "UI-ETC-002-03",
+                "UI-ETC-002-04",
+                "UI-ETC-002-05",
+                "UI-ETC-002-06",
+            ],
+        )
+        self.assertTrue(all(item.operation == "copy" for item in edits))
+        self.assertEqual(
+            [
+                (
+                    item.destination_offset,
+                    item.length,
+                    item.source_target_id,
+                    item.source_offset,
+                )
+                for item in edits
+            ],
+            [
+                (0x2E930, 32, "nun5_etc", 0x281C0),
+                (0x30A80, 16, "nun5_etc", 0x29A60),
+                (0x30490, 8, "nun5_elf", 0x4DDC50),
+                (0x30498, 8, "nun5_elf", 0x4DDC58),
+                (0x304A0, 8, "nun5_elf", 0x4DDC60),
+                (0x2E790, 8, "nun5_elf", 0x4DDC70),
+            ],
+        )
+        self.assertEqual(
+            [
+                struct.unpack("<hhhh", bytes.fromhex(item.source_expected_hex))
+                for item in edits[2:]
+            ],
+            [
+                (0, 0, 192, 28),
+                (0, 28, 96, 28),
+                (0, 56, 96, 28),
+                (144, 24, 72, 24),
+            ],
+        )
+        self.assertNotIn(0x2E798, {item.destination_offset for item in edits})
+
     def test_binary_patch_provenance_is_donor_first(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
@@ -447,11 +500,11 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 86)
-        self.assertEqual(operations, {"copy": 47, "replace": 39})
+        self.assertEqual(len(ui_edits), 92)
+        self.assertEqual(operations, {"copy": 53, "replace": 39})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 39, "nun5_btl": 7, "nun5_etc": 1},
+            {"nun5_elf": 43, "nun5_btl": 7, "nun5_etc": 3},
         )
         self.assertEqual(len(stage_scales), 24)
         self.assertEqual(len(adaptations), 15)

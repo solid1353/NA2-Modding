@@ -942,6 +942,44 @@ are removed. Static comparison shows the complete NUN5 `SHOP.CCS` donor
 already carries the exact Bonus Game model/anchor; the small capture difference
 is normal label pulsation and does not justify another binary edit.
 
+### UI-ETC-002: localized Collection submenu layout
+
+The whole NUN5 `HOME.CCS` import supplies the complete English `Previous Page`
+and `Next Page` artwork. NA2 still draws those pixels through two ETC-owned
+tables sized for its Japanese atlas: centers X=`100` and X=`220` at Y=`360`,
+and two 118x24 source rectangles. NUN5's homologous tables use centers X=`87`
+and X=`233` and two 144x24 rectangles. The narrower NA2 rectangle clips
+`Previous Page` to `Previous Pa`.
+
+`UI-ETC-002` copies both complete tables from NUN5: 32 placement bytes from
+NUN5 ETC offset `0x281C0` to NA2 offset `0x2E930`, then 16 rectangle bytes from
+NUN5 offset `0x29A60` to NA2 offset `0x30A80`. Both page controls remain paired
+exactly as the original draw loop expects; no authored replacement bytes or
+text/font changes are involved.
+
+The imported NUN5 category titles have a separate mismatch. NA2's Characters
+and Movie rectangles are 34 pixels high, crossing into the next 28-pixel NUN5
+atlas row, while NA2's Music rectangle begins below the imported English Music
+row. The NA2 and NUN5 placement vectors are already identical. Three exact
+NUN5 ELF copies therefore replace only the source rectangles:
+
+- Characters: `(1,1,192,34)` -> `(0,0,192,28)` at NA2 ETC `0x30490`;
+- Movie: `(1,37,136,34)` -> `(0,28,96,28)` at NA2 ETC `0x30498`;
+- Music: `(1,83,80,37)` -> `(0,56,96,28)` at NA2 ETC `0x304A0`.
+
+Movie and Music also expose the common `Play` control. NA2 helper
+`FUN_006b44b0` selects `(120,24,72,24)` from ETC offset `0x2E790`; with the
+NUN5 HOME atlas this starts 24 pixels before the English control and displays
+only `Pl...`. NUN5 homolog `FUN_006c7250` obtains `(144,24,72,24)` through
+localized accessor `FUN_003d4210`. The sixth edit copies that exact record from
+NUN5 ELF offset `0x4DDC70`. The adjacent Stop record remains unchanged because
+it was not visible in the reviewed states.
+
+Static provenance and the draw-path
+reconstruction and paired Characters/Movie/Music evidence are recorded in
+`docs/knowledge/collection_ui.md`. All six operations derive bytes from
+canonical NUN5 files and preserve ETC size. Runtime acceptance remains pending.
+
 ### UI-ELF-005: localized Mode Select START layout
 
 The whole NUN5 `MODESEL1.CCS` import supplies the English START artwork, but
@@ -970,7 +1008,7 @@ NA2 table. It changes only the graphical Vibration label selection; surrounding
 OFF/On text and font rendering are outside scope. Both ranges are guarded and
 the ELF size is preserved.
 
-Inspect all thirteen UI companion patches together:
+Inspect all fourteen UI companion patches together:
 
 ```powershell
 python -m na2_patcher.modules.binary_patcher.engine validate `
@@ -989,6 +1027,7 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
   --patch UI-BTL-005 `
   --patch UI-BTL-006 `
   --patch UI-ETC-001 `
+  --patch UI-ETC-002 `
   --patch UI-ELF-001 `
   --patch UI-ELF-002 `
   --patch UI-ELF-003 `

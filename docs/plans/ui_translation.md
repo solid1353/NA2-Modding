@@ -321,12 +321,17 @@ production writer.
   difference is normal pulsation.
 - Slot 4, Collection main: whole NUN5 `HOME.CCS` restores the complete
   graphical chrome.
-- Slot 5, Collection Characters: whole HOME restores the full Characters and
-  Previous Page models/UVs.
+- Slot 5, Collection Characters: whole HOME restores the English Characters
+  and page-control artwork, but NA2's ETC draw tables still clipped the
+  144-pixel `Previous Page` donor to 118 pixels and extended the Characters
+  rectangle into the Movie row. `UI-ETC-002` copies the paired NUN5 page
+  centers/rectangles plus the NUN5 category-title rectangles; runtime
+  acceptance is pending.
 - Slot 6, character details: whole HOME restores the earlier accepted button
   labels and layout that the mapped import regressed.
-- Slot 7, Collection Movie: whole HOME restores Movie and Play graphics;
-  mapping v35 removes the four unauthorized authored `<br>` transforms.
+- Slot 7, Collection Movie: whole HOME supplies Movie and Play graphics;
+  `UI-ETC-002` now supplies their exact NUN5 source rectangles, while mapping
+  v35 removes the four unauthorized authored `<br>` transforms.
 - Slot 8, Controls: `UI-ELF-006` copies the exact NUN5 Vibration-label
   rectangle used by the imported common UI atlas.
 - Visible text overflow/font spacing and OFF/On values are out of scope.
@@ -336,8 +341,8 @@ production writer.
 
 No static implementation question blocks the eight-screen pass. Runtime visual
 acceptance remains with the user by explicit instruction; the stage fitter,
-Mode Select START, and Vibration patches stay `approved_for_test` until that
-pass. `LOGO.CCS`, upscale-pack
+Mode Select START, Vibration, and Collection submenu patches stay
+`approved_for_test` until their respective screen passes. `LOGO.CCS`, upscale-pack
 hash mapping, and broader NUN6 comparison remain optional future research.
 
 ## Current status and next checkpoint
@@ -369,3 +374,42 @@ After user runtime review, either promote the stage-fit and Vibration patches
 to `runtime_proven` or retain a narrowly described defect for another
 iteration.
 `Investigate upscaling.` remains the separate UI Translation workstream item.
+
+### Screen correction pass: Collection Characters, Movie, and Music
+
+The 2026-07-22 paired slot-1 capture isolates two defects: NA2.28 displays
+`Previous Pa` while NUN5 displays the full `Previous Page`, and the NA2
+Characters title includes fragments from the next atlas row. `Next Page` and
+the character grid are otherwise accepted for this pass. The same page-prompt
+clipping exists in the preserved Previous-ISO capture, so it predates the
+latest donor conversion.
+
+The user then supplied paired slot-2 Movie and slot-3 Music states. Movie
+samples the Music row beneath its title, Music has no visible title, and both
+screens clip `Play` to `Pl...`. Their list wording, wrapping, and font spacing
+remain explicitly outside this texture-only pass.
+
+Static tracing identifies exact homologous records rather than authored
+placement guesses. `UI-ETC-002` copies NUN5 centers X=`87`/`233` over NA2
+X=`100`/`220`, then copies the two 144x24 page rectangles over NA2's 118x24
+rectangles. It also replaces the three NA2 category-title records with NUN5's
+exact Characters `(0,0,192,28)`, Movie `(0,28,96,28)`, and Music
+`(0,56,96,28)` records. The common Play helper receives NUN5's exact
+`(144,24,72,24)` record in place of NA2's 24-pixel-left `(120,24,72,24)`
+selection. The neighboring Stop and other unreviewed HOME controls remain
+untouched. The normal workflow derives every byte from canonical NUN5
+`ETC.BIN`/ELF; no stored asset or replacement byte was added. Detailed
+function, address, memory, and negative-result evidence is preserved in
+`docs/knowledge/collection_ui.md`. PCSX2 has not been launched and no ISO has
+been rebuilt for this correction.
+
+The isolated six-edit apply preserves ETC's 200,448-byte size and produces
+SHA-256
+`E83768B6B39264A97146BE384E3D0A245EE5CBBB288848D1A965934C66C28FFA`.
+Exactly 16 destination bytes differ, all within the six declared ranges; the
+adjacent Stop record remains byte-identical. Binary-package validation reports
+86 patches and 250 edits, the 33 focused profile/UI tests pass, and the full
+repository suite passes 127/127. The current Localization feature pin is
+`7242AC919B21DD834ECFEB391B3EA35709969EA090779F6687A601858928445E`.
+Runtime acceptance still requires a user-authorized ISO rebuild followed by
+the user's visual review.

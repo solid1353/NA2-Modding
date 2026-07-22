@@ -79,6 +79,17 @@ handling it in the current chat. Do not duplicate the task across chats. If no
 suitable chat exists, send one setup request to `Task coordinator` and follow
 the chat-creation approval rules below instead of absorbing the work locally.
 
+A `TASKS.md` task becomes selected only when the user explicitly chooses a
+specific listed entry for execution or explicitly instructs the agent to start
+that entry. Do not infer selection from topical overlap, the workstream's status,
+a task mention, inspection depth, or the amount of work needed to answer.
+Questions, explanations, status checks, read-only investigations, coordination
+or handoff messages, and small direct changes are not selected tasks. Handle
+them without the task phase block, `Recommended effort`, `Needed from you`, or
+an approval gate unless the user explicitly sends `eff`. If intent is ambiguous,
+answer or investigate read-only as requested; do not silently convert the
+interaction into selected-task execution.
+
 Read-only inspection for a selected task may begin immediately without plan
 approval. At the start of any inspection that may take more than a brief check,
 the agent must provide this status block before or with its first inspection

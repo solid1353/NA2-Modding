@@ -1,2 +1,2 @@
-source_boot_path	output_boot_path	system_cnf_path	memory_card_title_offset	memory_card_title_capacity	memory_card_title_encoding	source_memory_card_title	output_memory_card_title
-SLPS_258.37	SLPS_222.28	SYSTEM.CNF	0x2FBAE0	64	cp932	ＮＡＲＵＴＯ－ナルト－　疾風伝ナルティメットアクセル２	ＮＡ　ｖ２．２８
+source_boot_path	output_boot_path	system_cnf_path	memory_card_title_offset	memory_card_title_capacity	memory_card_title_encoding	source_memory_card_title	output_memory_card_title	imported_game_title	output_game_title	game_title_mapping_count	game_title_occurrence_count
+SLPS_258.37	SLPS_222.28	SYSTEM.CNF	0x2FBAE0	64	cp932	ＮＡＲＵＴＯ－ナルト－　疾風伝ナルティメットアクセル２	ＮＡ　ｖ２．２８	Naruto Shippuden: Ultimate Ninja 5	Narutimate Accel v2.28	6	7

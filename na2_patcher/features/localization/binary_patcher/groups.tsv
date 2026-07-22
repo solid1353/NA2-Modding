@@ -2,7 +2,6 @@ group_id	name	description	review_notes
 glyph_data	Glyph data	Native font glyph and metric payloads.	""
 auto_fit	Auto-fit	Shrink-only text fitting behavior.	""
 alignment	Alignment	Local screen and modal alignment corrections.	""
-experiments	Experiments	Rejected or retained font-rendering experiments.	Not enabled by the current profile.
 battle_ui	Battle UI	Localized battle HUD, prompts, labels, confirmation layouts, menus, overlays, and regional input handlers.	""
 front_end	Front end	Localized boot-ELF menus, option layouts, setup, save, modal, and regional input handlers.	""
 etc_ui	ETC UI	ETC-owned front-end and submenu input handlers.	""

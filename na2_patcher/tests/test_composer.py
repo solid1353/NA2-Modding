@@ -99,6 +99,10 @@ class ComposerTests(unittest.TestCase):
             memory_card_title_encoding="ascii",
             source_memory_card_title="Original",
             output_memory_card_title="NA 2.28",
+            imported_game_title="Imported Game",
+            output_game_title="Output Game",
+            game_title_mapping_count=1,
+            game_title_occurrence_count=1,
         )
         result = compose_assembly_plan(
             source=source,
@@ -148,6 +152,10 @@ class ComposerTests(unittest.TestCase):
             memory_card_title_encoding="ascii",
             source_memory_card_title="Original",
             output_memory_card_title="NA 2.28",
+            imported_game_title="Imported Game",
+            output_game_title="Output Game",
+            game_title_mapping_count=1,
+            game_title_occurrence_count=1,
         )
         with self.assertRaisesRegex(RuntimeError, "title guard failed"):
             compose_assembly_plan(

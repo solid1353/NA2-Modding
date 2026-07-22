@@ -61,11 +61,6 @@ class ProfileTests(unittest.TestCase):
         elif module_type == "string_patcher":
             (module / "strings.tsv").write_text("string_id\n", encoding="utf-8")
         elif module_type == "translation_importer":
-            (module / "config.tsv").write_text(
-                "key\tvalue\nschema_version\t1\nmapping_version\t1\n"
-                "mappings_sha256\t" + "0" * 64 + "\n",
-                encoding="utf-8",
-            )
             (module / "mappings.tsv").write_text("id\n", encoding="utf-8")
             (module / "references.tsv").write_text(
                 "mapping_id\ttarget\ttarget_file_offset\ttarget_runtime_address\t"
@@ -113,6 +108,10 @@ class ProfileTests(unittest.TestCase):
                     "memory_card_title_encoding": "ascii",
                     "source_memory_card_title": "Original",
                     "output_memory_card_title": "NA 2.28",
+                    "imported_game_title": "Imported Game",
+                    "output_game_title": "Output Game",
+                    "game_title_mapping_count": 1,
+                    "game_title_occurrence_count": 1,
                 }
             ],
         )
@@ -247,6 +246,10 @@ class ProfileTests(unittest.TestCase):
                         "memory_card_title_encoding": "ascii",
                         "source_memory_card_title": "Original",
                         "output_memory_card_title": "NA 2.28",
+                        "imported_game_title": "Imported Game",
+                        "output_game_title": "Output Game",
+                        "game_title_mapping_count": 1,
+                        "game_title_occurrence_count": 1,
                     }
                 ],
             )

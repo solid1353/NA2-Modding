@@ -19,8 +19,9 @@ of them, and one aggregate profile pin covers their canonical inputs.
 
 This first-class `na2_patcher` module imports and validates official strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
-It never writes BIN or ELF payloads. Profile builds pass its in-memory import
-rows directly to `string_patcher`, which compiles them into a shared
+It never writes BIN or ELF payloads and preserves official imported game-title
+text. Profile builds pass its in-memory import rows directly to
+`string_patcher`, which applies profile output identity and compiles them into a shared
 `binary_patcher` package. There is no standalone export command or file-backed
 inter-stage handoff.
 
@@ -29,11 +30,13 @@ inter-stage handoff.
 - Version: `37`
 - Packaged `mappings.tsv` SHA-256: `3e021c1fb1468f2d5c1afc2f298c1f9e589ce0f107a503eb65f24602f7df488e`
 
-`translation_importer/config.tsv` is the canonical machine-readable home for
-both values and the guarded donor-title policy. `translation_importer/references.tsv` is the canonical pointer
-inventory for mappings that require linked external placement. Documentation is
-not an executable input, and the importer verifies the mappings hash plus every
-reference guard and coverage relationship.
+The version and mappings hash above are historical documentation, not a second
+executable manifest. Git history and the aggregate Localization feature pin own
+content identity. `translation_importer/references.tsv` is the canonical pointer
+inventory for mappings that require linked external placement. Profile
+`identity.tsv` owns the imported/output title declaration; `string_patcher`
+applies it with fail-closed coverage. Documentation is not an executable input,
+and the importer verifies every reference guard and coverage relationship.
 
 ### Source and target scope
 
@@ -215,7 +218,7 @@ mappings.
 
 A clean-source full in-memory plan was validated with all three targets:
 
-- mapping version 37, mappings hash, title-policy counts, and reference guards matched;
+- the v37 mappings hash, profile title-policy counts, and reference guards matched;
 - 2,434 generated import rows and 2,172 applied text mappings;
 - all six title-bearing results use `Narutimate Accel v2.28`;
 - `M0566`/`M0799` resolve to `NO`/`YES`;
@@ -1030,8 +1033,8 @@ payload is stored in Git.
 - `translation_importer/references.tsv` inventories all 33 shortened mappings
   and every verified pointer word. Three continuation rows deliberately reuse
   their containing full-message pointer.
-- `translation_importer/config.tsv` pins the mapping version and exact
-  `mappings.tsv` hash.
+- `translation_importer/mappings.tsv` and `references.tsv` are the importer's
+  only canonical feature-owned inputs.
 These files are covered by the Localization feature's aggregate profile hash.
 Payload-builder configuration is executable infrastructure rather than feature
 data; engine code and documentation are excluded from the feature pin.
@@ -1096,8 +1099,9 @@ is enabled:
 
 Both layout components require `font_nun5_glyphs` because their positions and
 fit decisions are tuned to its metrics. They otherwise remain independent.
-The disabled `font_vertical_quad_height` component remains exact negative
-evidence and conflicts with the native glyph component.
+The rejected `font_vertical_quad_height` component was removed from executable
+inputs. Its exact negative result remains in `docs/knowledge/font/README.md`
+and Git history.
 
 Matched Controls, Practice, Save/Load, and character-modal captures were
 runtime-reviewed. The user accepted this iteration's alignment and overflow
@@ -1106,7 +1110,7 @@ bolder than NUN5; weight refinement is deliberately deferred to the next
 iteration. Fullwidth Shift-JIS Save/Load digits use a different glyph path and
 are not a Latin-weight parity target.
 
-`generate_nun5_donor.py` deterministically regenerates and verifies the four
+`scripts/research/localization/generate_font_assets.py` deterministically regenerates and verifies the four
 referenced blobs from configured `@source_na2/` and `@source_nun5/` inputs.
 Exact offsets, guards, replacement bytes, and reasons are recorded in
 `edits.tsv`; confirmed evidence and negative results are recorded in

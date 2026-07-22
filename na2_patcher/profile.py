@@ -21,6 +21,10 @@ IDENTITY_FIELDS = [
     "memory_card_title_encoding",
     "source_memory_card_title",
     "output_memory_card_title",
+    "imported_game_title",
+    "output_game_title",
+    "game_title_mapping_count",
+    "game_title_occurrence_count",
 ]
 MODULE_TYPE_ORDER = (
     "translation_importer",
@@ -36,7 +40,7 @@ BINARY_PATCHER_CONTROL_FILES = (
     "edits.tsv",
 )
 STRING_PATCHER_CONTROL_FILES = ("strings.tsv",)
-TRANSLATION_IMPORTER_CONTROL_FILES = ("config.tsv", "mappings.tsv", "references.tsv")
+TRANSLATION_IMPORTER_CONTROL_FILES = ("mappings.tsv", "references.tsv")
 TEXTURE_PATCHER_CONTROL_FILES = (
     "containers.tsv",
     "mappings.tsv",
@@ -54,6 +58,10 @@ class ProfileIdentity:
     memory_card_title_encoding: str
     source_memory_card_title: str
     output_memory_card_title: str
+    imported_game_title: str
+    output_game_title: str
+    game_title_mapping_count: int
+    game_title_occurrence_count: int
 
 
 @dataclass(frozen=True)
@@ -270,12 +278,19 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
     try:
         memory_card_title_offset = int(identity_row["memory_card_title_offset"], 0)
         memory_card_title_capacity = int(identity_row["memory_card_title_capacity"], 0)
+        game_title_mapping_count = int(identity_row["game_title_mapping_count"], 0)
+        game_title_occurrence_count = int(identity_row["game_title_occurrence_count"], 0)
     except ValueError as exc:
-        raise ValueError("Profile identity title offset/capacity must be integers") from exc
+        raise ValueError("Profile identity numeric fields must be integers") from exc
     if memory_card_title_offset < 0 or memory_card_title_capacity <= 0:
         raise ValueError(
             "Profile identity title offset must be non-negative and capacity positive"
         )
+    if (
+        game_title_mapping_count <= 0
+        or game_title_occurrence_count < game_title_mapping_count
+    ):
+        raise ValueError("Profile identity game-title coverage is invalid")
     try:
         memory_card_title_encoding = codecs.lookup(
             identity_row["memory_card_title_encoding"]
@@ -291,6 +306,10 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
         memory_card_title_encoding=memory_card_title_encoding,
         source_memory_card_title=identity_row["source_memory_card_title"],
         output_memory_card_title=identity_row["output_memory_card_title"],
+        imported_game_title=identity_row["imported_game_title"],
+        output_game_title=identity_row["output_game_title"],
+        game_title_mapping_count=game_title_mapping_count,
+        game_title_occurrence_count=game_title_occurrence_count,
     )
     from .image_assembler.iso9660 import normalize_iso_path
 
@@ -324,6 +343,22 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
             raise ValueError(
                 f"Profile identity {label} does not fit its NUL-padded capacity"
             )
+    if (
+        not identity.imported_game_title
+        or not identity.output_game_title
+        or identity.imported_game_title == identity.output_game_title
+    ):
+        raise ValueError("Profile identity must replace one non-empty game title")
+    for label, text in (
+        ("imported_game_title", identity.imported_game_title),
+        ("output_game_title", identity.output_game_title),
+    ):
+        if "\0" in text:
+            raise ValueError(f"Profile identity {label} contains an embedded NUL")
+        try:
+            text.encode("cp1252")
+        except UnicodeEncodeError as exc:
+            raise ValueError(f"Profile identity {label} must be CP1252") from exc
 
     roots: dict[str, Path] = {}
     for row in _read_tsv(directory / "roots.tsv", ROOT_FIELDS):

@@ -107,6 +107,16 @@ def prepare_module_pipeline(profile: Profile) -> PreparedModulePipeline:
                 draft=string_patcher_module.build_translation_draft(
                     translation_plan=import_plan,
                     owner=owner,
+                    title_policy=string_patcher_module.GameTitlePolicy(
+                        imported_title=profile.identity.imported_game_title,
+                        output_title=profile.identity.output_game_title,
+                        expected_mapping_count=(
+                            profile.identity.game_title_mapping_count
+                        ),
+                        expected_occurrence_count=(
+                            profile.identity.game_title_occurrence_count
+                        ),
+                    ),
                 ),
             )
         )

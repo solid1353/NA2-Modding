@@ -26,7 +26,9 @@ if str(REPOSITORY) not in sys.path:
 from na2_patcher.project_paths import load_project_paths  # noqa: E402
 
 
-PACKAGE = Path(__file__).resolve().parent
+PACKAGE = load_project_paths(REPOSITORY).path(
+    "features", "localization", "binary_patcher"
+)
 ATLAS_OUTPUT = PACKAGE / "assets" / "nun5_semantic_14x20.bin"
 PACKED_MAP_OUTPUT = PACKAGE / "assets" / "nun5_semantic_14x20_packed_map.bin"
 DECODER_OUTPUT = PACKAGE / "assets" / "nun5_semantic_14x20_decoder.bin"

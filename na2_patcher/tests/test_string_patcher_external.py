@@ -29,6 +29,12 @@ class IntegratedExternalStringTests(unittest.TestCase):
         cls.draft = string_patcher.build_translation_draft(
             translation_plan=cls.import_plan,
             owner="localization.string_patcher",
+            title_policy=string_patcher.GameTitlePolicy(
+                imported_title="Naruto Shippuden: Ultimate Ninja 5",
+                output_title="Narutimate Accel v2.28",
+                expected_mapping_count=6,
+                expected_occurrence_count=7,
+            ),
         )
         cls.build = payload_builder.build_resident_payload(
             cls.draft.external_draft.fragments
@@ -104,15 +110,17 @@ class IntegratedExternalStringTests(unittest.TestCase):
         )
         self.assertEqual(
             self.import_plan.resolved_texts["M0823"],
-            "Creating Narutimate Accel v2.28 data",
+            "Creating Naruto Shippuden: Ultimate Ninja 5 data",
         )
         self.assertIn(
-            "Narutimate Accel v2.28",
+            "Naruto Shippuden: Ultimate Ninja 5",
             self.import_plan.resolved_sequences["M0829"][2],
         )
+        transformed = self.draft.translation_plan
+        self.assertIn("Narutimate Accel v2.28", transformed.resolved_texts["M0823"])
         self.assertNotIn(
             "Naruto Shippuden: Ultimate Ninja 5",
-            self.import_plan.materialized_templates["M0823"],
+            transformed.materialized_templates["M0823"],
         )
         payload_text = self.build.payload.decode("cp1252", "ignore")
         self.assertIn("Narutimate Accel v2.28", payload_text)
@@ -121,6 +129,19 @@ class IntegratedExternalStringTests(unittest.TestCase):
     def test_startup_choice_labels_are_uppercase(self) -> None:
         self.assertEqual(self.import_plan.resolved_texts["M0566"], "NO")
         self.assertEqual(self.import_plan.resolved_texts["M0799"], "YES")
+
+    def test_title_policy_fails_closed_in_string_patcher(self) -> None:
+        with self.assertRaisesRegex(ValueError, "policy coverage differs"):
+            string_patcher.build_translation_draft(
+                translation_plan=self.import_plan,
+                owner="localization.string_patcher",
+                title_policy=string_patcher.GameTitlePolicy(
+                    imported_title="missing title",
+                    output_title="Narutimate Accel v2.28",
+                    expected_mapping_count=6,
+                    expected_occurrence_count=7,
+                ),
+            )
 
 
 if __name__ == "__main__":

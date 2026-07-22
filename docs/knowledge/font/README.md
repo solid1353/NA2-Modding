@@ -81,8 +81,8 @@ rejected. Changing `0C 00 20 C6` to `10 00 20 C6` did not make a Y-only
 correction. With the clean descriptor it produced a 28x28 quad instead of the
 untouched 24x24 quad, stretching both axes by 16.7 percent while logical
 measurement stayed unchanged. Runtime captures showed damaged outlines and
-no useful alignment improvement. The exact edit remains disabled as
-`font_vertical_quad_height` with `runtime_failed` status.
+no useful alignment improvement. The rejected edit is retained in Git history
+and is deliberately absent from the executable package.
 
 The accepted patch set has two independent `runtime_proven` components:
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import codecs
 import csv
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path, PurePosixPath
 
 from ..binary_patcher import engine as binary_patcher
@@ -57,7 +57,9 @@ class StringSpec:
 
 @dataclass(frozen=True)
 class StringPatchDraft:
+    translation_plan: translation_importer.TranslationImportPlan
     external_draft: external_strings.ExternalStringDraft
+    game_title_policy: dict[str, object]
 
 
 @dataclass(frozen=True)
@@ -65,6 +67,103 @@ class StringPatchPlan:
     package: binary_patcher.Package
     summary: dict[str, object]
     external_plan: external_strings.ExternalStringPlan
+
+
+@dataclass(frozen=True)
+class GameTitlePolicy:
+    imported_title: str
+    output_title: str
+    expected_mapping_count: int
+    expected_occurrence_count: int
+
+
+def _apply_game_title_policy(
+    plan: translation_importer.TranslationImportPlan,
+    policy: GameTitlePolicy,
+) -> translation_importer.TranslationImportPlan:
+    """Apply output identity after official strings have been imported."""
+    if (
+        not policy.imported_title
+        or not policy.output_title
+        or policy.imported_title == policy.output_title
+    ):
+        raise ValueError("string-patcher game-title policy must replace distinct text")
+
+    hits: dict[str, int] = {}
+    resolved_texts: dict[str, str] = {}
+    for mapping_id, text in plan.resolved_texts.items():
+        occurrences = text.count(policy.imported_title)
+        if occurrences:
+            hits[mapping_id] = occurrences
+        resolved_texts[mapping_id] = text.replace(
+            policy.imported_title, policy.output_title
+        )
+
+    resolved_sequences: dict[str, tuple[str, ...]] = {}
+    for mapping_id, values in plan.resolved_sequences.items():
+        occurrences = sum(value.count(policy.imported_title) for value in values)
+        if occurrences:
+            hits[mapping_id] = occurrences
+        resolved_sequences[mapping_id] = tuple(
+            value.replace(policy.imported_title, policy.output_title)
+            for value in values
+        )
+
+    if (
+        len(hits) != policy.expected_mapping_count
+        or sum(hits.values()) != policy.expected_occurrence_count
+    ):
+        raise ValueError(
+            "string-patcher game-title policy coverage differs from profile identity: "
+            f"{len(hits)} mappings/{sum(hits.values())} occurrences"
+        )
+
+    materialized_templates = {
+        mapping_id: text.replace(policy.imported_title, policy.output_title)
+        for mapping_id, text in plan.materialized_templates.items()
+    }
+    selected_list = [
+        target
+        for target in translation_importer.TARGET_SPECS
+        if target in plan.clean_targets
+    ]
+    selected = set(selected_list)
+    output_targets = {
+        target: bytearray(plan.clean_targets[target]) for target in selected_list
+    }
+    text_annotations, _, _ = translation_importer.apply_text_mappings(
+        plan.text_mappings,
+        selected,
+        plan.clean_targets,
+        output_targets,
+        resolved_texts,
+        resolved_sequences,
+    )
+    byte_annotations, _, _ = translation_importer.apply_byte_mappings(
+        plan.byte_mappings, selected, output_targets
+    )
+    annotations = text_annotations + byte_annotations
+    import_rows: list[dict[str, str]] = []
+    for target in selected_list:
+        path = translation_importer.TARGET_SPECS[target][0]
+        rows = translation_importer.diff_rows(
+            path,
+            plan.clean_targets[target],
+            bytes(output_targets[target]),
+            annotations,
+        )
+        for row in rows:
+            row["import_id"] = f"{target}-I{len(import_rows) + 1:04d}"
+            row["group_id"] = target
+            import_rows.append(row)
+
+    return replace(
+        plan,
+        import_rows=import_rows,
+        resolved_texts=resolved_texts,
+        resolved_sequences=resolved_sequences,
+        materialized_templates=materialized_templates,
+    )
 
 
 def _encode_slot(text: str, spec: StringSpec, label: str) -> bytes:
@@ -446,13 +545,22 @@ def build_translation_draft(
     *,
     translation_plan: translation_importer.TranslationImportPlan,
     owner: str,
+    title_policy: GameTitlePolicy,
 ) -> StringPatchDraft:
     """Declare external text fragments and symbolic pointer writes."""
+    transformed_plan = _apply_game_title_policy(translation_plan, title_policy)
     return StringPatchDraft(
+        translation_plan=transformed_plan,
         external_draft=external_strings.build_external_string_draft(
-            translation_plan=translation_plan,
+            translation_plan=transformed_plan,
             owner=owner,
-        )
+        ),
+        game_title_policy={
+            "imported_title": title_policy.imported_title,
+            "output_title": title_policy.output_title,
+            "mapping_count": title_policy.expected_mapping_count,
+            "occurrence_count": title_policy.expected_occurrence_count,
+        },
     )
 
 
@@ -465,6 +573,7 @@ def finalize_translation_plan(
     resolved_patches: tuple[ResolvedPatch, ...],
 ) -> StringPatchPlan:
     """Compile inline imports and linker-resolved pointer redirects."""
+    translation_plan = draft.translation_plan
     external_plan = external_strings.finalize_external_string_plan(
         draft.external_draft,
         build=build,
@@ -498,6 +607,7 @@ def finalize_translation_plan(
     summary["inline_import_rows"] = len(inline_rows)
     summary["external_binary_edits"] = len(external_plan.resolved_patches)
     summary["compiled_binary_edits"] = len(package.edits)
+    summary["game_title_policy"] = draft.game_title_policy
     return StringPatchPlan(
         package=package,
         summary=summary,

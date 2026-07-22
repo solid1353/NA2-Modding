@@ -15,6 +15,13 @@ Canonical documentation landing page for the `UI Translation` workstream.
   Inspect the entire pair for regressions, not only the targeted defect, and
   explicitly account for every material remaining difference. A corrected NA2
   screenshot by itself is insufficient final evidence.
+- Continue correcting the current screen mismatches until every listed issue is
+  fixed. Maintain the current mismatched-savestate-pair list under
+  `work/UI translation/`, preserve each pair while its entry remains open, and
+  remove both the savestate pair and its entry only after the user confirms that
+  screen is fixed. After substantive work, present every remaining entry with
+  its paired NUN5 and current corrected-NA2 screenshots; question-only replies
+  do not trigger that presentation.
 
 Global source, path, tool-safety, testing, and cleanup rules remain in
 `AGENTS.md` and are not duplicated here.

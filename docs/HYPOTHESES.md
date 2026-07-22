@@ -105,7 +105,7 @@ actionable leads.
 
 Status: compact one-file module implemented; its predecessor passed an initial
 ISO runtime test. Confirmed layout, loader, donor, FLIST, and ISO findings are recorded in
-`docs/knowledge/external_translation_files.md`; the canonical pointer inventory
+`docs/knowledge/external_string_payload.md`; the canonical pointer inventory
 is `na2_patcher/features/localization/translation_importer/references.tsv`.
 
 - Candidate resident cave: ELF file `0x00507414-0x0050747F` / runtime

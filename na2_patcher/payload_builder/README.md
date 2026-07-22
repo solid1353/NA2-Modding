@@ -6,6 +6,9 @@ fragments plus symbolic references. The builder assigns deterministic aligned
 offsets, resolves internal relocations, produces the one resident MWO3
 `PRG/228.BIN`, and records a complete symbol map.
 
+`module_pipeline.py` gathers every contribution before invoking the builder, so
+no individual feature consumer decides when the shared payload is complete.
+
 No feature owns the file, its load address, its entrypoint, or the global loader
 and memory-reservation integration. Modules never declare offsets inside
 `228.BIN` or calculate final runtime addresses. The profile composer resolves

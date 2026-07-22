@@ -9,9 +9,9 @@ import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional, Sequence
+from typing import Optional, Sequence
 
-SECTOR = 2048
+from ...image_assembler.iso9660 import Iso9660
 
 TARGET_SPECS = {
     "BTL": ("PRG/BTL.BIN", ["PRG/BTL.BIN", "BTL.BIN"]),
@@ -73,18 +73,6 @@ NAMED_COLOR_TAG_EQUIVALENTS = {
 
 
 @dataclass(frozen=True)
-class IsoRecord:
-    path: str
-    extent: int
-    size: int
-    flags: int
-
-    @property
-    def is_dir(self) -> bool:
-        return bool(self.flags & 2)
-
-
-@dataclass(frozen=True)
 class TranslationImportPlan:
     mapping_version: int
     packaged_mappings_sha256: str
@@ -124,81 +112,25 @@ class GameTitlePolicy:
     expected_occurrence_count: int
 
 
-class Iso9660:
+class IsoSource:
     def __init__(self, path: Path) -> None:
         self.path = path.resolve()
-        self.data = self.path.read_bytes()
-        self.records: Dict[str, IsoRecord] = {}
-        self._parse()
-
-    @staticmethod
-    def _decode_name(raw: bytes) -> str:
-        if raw in (b"\x00", b"\x01"):
-            return ""
-        return raw.decode("ascii", "replace").split(";", 1)[0].upper()
-
-    @staticmethod
-    def _record(buf: bytes, offset: int):
-        if offset >= len(buf) or buf[offset] == 0:
-            return None, 0
-        length = buf[offset]
-        record = buf[offset:offset + length]
-        if len(record) < 34:
-            raise ValueError(f"Invalid ISO directory record at 0x{offset:X}")
-        extent = int.from_bytes(record[2:6], "little")
-        size = int.from_bytes(record[10:14], "little")
-        flags = record[25]
-        name_length = record[32]
-        return (extent, size, flags, record[33:33 + name_length]), length
-
-    def _walk(self, record: IsoRecord, prefix: str) -> None:
-        directory = self.data[record.extent * SECTOR:record.extent * SECTOR + record.size]
-        offset = 0
-        while offset < len(directory):
-            if directory[offset] == 0:
-                offset = ((offset // SECTOR) + 1) * SECTOR
-                continue
-            parsed, used = self._record(directory, offset)
-            if parsed is None:
-                break
-            offset += used
-            extent, size, flags, raw_name = parsed
-            name = self._decode_name(raw_name)
-            if not name:
-                continue
-            path = f"{prefix}/{name}" if prefix else name
-            child = IsoRecord(path, extent, size, flags)
-            self.records[path] = child
-            if child.is_dir:
-                self._walk(child, path)
-
-    def _parse(self) -> None:
-        pvd = None
-        for sector in range(16, min(128, len(self.data) // SECTOR)):
-            offset = sector * SECTOR
-            if self.data[offset] == 1 and self.data[offset + 1:offset + 6] == b"CD001":
-                pvd = self.data[offset:offset + SECTOR]
-                break
-        if pvd is None:
-            raise ValueError(f"No ISO9660 primary volume descriptor: {self.path}")
-        parsed, _ = self._record(pvd, 156)
-        if parsed is None:
-            raise ValueError("Invalid ISO root record")
-        extent, size, flags, _ = parsed
-        self._walk(IsoRecord("", extent, size, flags), "")
+        self.image = Iso9660(self.path)
 
     def read(self, candidates: Sequence[str], label: str) -> bytes:
         normalized = [normalize_path(value) for value in candidates]
         for candidate in normalized:
-            record = self.records.get(candidate)
+            record = self.image.by_path.get(candidate)
             if record and not record.is_dir:
-                return self.data[record.extent * SECTOR:record.extent * SECTOR + record.size]
+                return self.image.read_file(record)
         basenames = {value.rsplit("/", 1)[-1] for value in normalized}
-        matches = [record for path, record in self.records.items()
-                   if not record.is_dir and path.rsplit("/", 1)[-1] in basenames]
+        matches = [
+            record
+            for path, record in self.image.by_path.items()
+            if not record.is_dir and path.rsplit("/", 1)[-1] in basenames
+        ]
         if len(matches) == 1:
-            record = matches[0]
-            return self.data[record.extent * SECTOR:record.extent * SECTOR + record.size]
+            return self.image.read_file(matches[0])
         raise FileNotFoundError(f"Could not uniquely locate {label} in {self.path}")
 
 
@@ -236,7 +168,7 @@ def source_from(folder: Optional[Path], iso: Optional[Path], label: str):
     if folder is not None and folder.is_dir():
         return FolderSource(folder)
     if iso is not None and iso.is_file():
-        return Iso9660(iso)
+        return IsoSource(iso)
     supplied = []
     if folder is not None:
         supplied.append(f"folder={folder}")

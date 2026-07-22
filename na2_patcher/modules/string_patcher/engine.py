@@ -461,7 +461,7 @@ def finalize_translation_plan(
     *,
     translation_plan: translation_importer.TranslationImportPlan,
     draft: StringPatchDraft,
-    build: ResidentPayloadBuild,
+    build: ResidentPayloadBuild | None,
     resolved_patches: tuple[ResolvedPatch, ...],
 ) -> StringPatchPlan:
     """Compile inline imports and linker-resolved pointer redirects."""

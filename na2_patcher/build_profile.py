@@ -5,17 +5,13 @@ import argparse
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .composer import (
-    MODULE_ARTIFACT_CONTRACTS,
-    compose_assembly_plan,
-    resolve_module_order,
-    resolve_symbolic_patches,
-)
+from .composer import compose_assembly_plan
 from .image_assembler.assembler import (
     assemble_image,
     building_image_path,
 )
 from .image_assembler.iso9660 import Iso9660, IsoInsertion, normalize_iso_path
+from .module_pipeline import prepare_module_pipeline
 from .modules import translation_importer as translation_importer_module
 from .modules.binary_patcher import engine as binary_patcher_module
 from .modules.string_patcher import engine as string_patcher_module
@@ -398,14 +394,6 @@ def write_payload_builder_log(
     )
 
 
-def _translation_source_arguments(root: Path, prefix: str) -> dict[str, Path]:
-    if root.is_dir():
-        return {f"{prefix}_folder": root}
-    if root.is_file():
-        return {f"{prefix}_iso": root}
-    raise FileNotFoundError(root)
-
-
 def apply_profile_modules(
     profile: Profile,
     *,
@@ -415,71 +403,12 @@ def apply_profile_modules(
     insertions: dict[str, bytes],
     insertion_owners: dict[str, str],
 ) -> tuple[list[dict[str, object]], dict[str, object] | None]:
-    ordered_modules = resolve_module_order(profile.modules)
-    import_plans: dict[str, translation_importer_module.TranslationImportPlan] = {}
-    string_plans: dict[str, string_patcher_module.StringPatchPlan] = {}
-    derived_string_plans: dict[str, string_patcher_module.StringPatchPlan] = {}
-    payload_build: ResidentPayloadBuild | None = None
-
-    importer_modules = [
-        module for module in ordered_modules if module.module == "translation_importer"
-    ]
-    if len(importer_modules) > 1:
-        raise ValueError("Profile may enable only one translation_importer module")
-    if importer_modules:
-        importer = importer_modules[0]
-        if "na2" not in profile.roots or "nun5" not in profile.roots:
-            raise ValueError("Translation importer requires na2 and nun5 profile roots")
-        import_plan = translation_importer_module.build_translation_import_plan(
-            **_translation_source_arguments(profile.roots["na2"], "na2"),
-            **_translation_source_arguments(profile.roots["nun5"], "nun5"),
-            data_root=importer.input_path,
-            apply="BTL,ETC,SLPS",
-        )
-        import_plans[importer.module_id] = import_plan
-        consumers = [
-            module
-            for module in ordered_modules
-            if module.feature_id == importer.feature_id
-            and module.module == "string_patcher"
-        ]
-        if len(consumers) > 1:
-            raise ValueError(
-                "translation_importer has multiple same-feature string_patcher consumers"
-            )
-        string_module = consumers[0] if consumers else None
-        if (
-            string_module is None
-            and "string_patcher"
-            not in MODULE_ARTIFACT_CONTRACTS[importer.module].derived_consumers
-        ):
-            raise ValueError("translation_importer has no declared string consumer")
-        string_owner = (
-            string_module.module_id
-            if string_module is not None
-            else f"{importer.feature_id}.string_patcher"
-        )
-        draft = string_patcher_module.build_translation_draft(
-            translation_plan=import_plan,
-            owner=string_owner,
-        )
-        payload_build = payload_builder_module.build_resident_payload(
-            draft.external_draft.fragments
-        )
-        resolved = resolve_symbolic_patches(
-            payload_build, draft.external_draft.symbolic_patches
-        )
-        finalized = string_patcher_module.finalize_translation_plan(
-            string_module.input_path if string_module is not None else None,
-            translation_plan=import_plan,
-            draft=draft,
-            build=payload_build,
-            resolved_patches=resolved,
-        )
-        if string_module is not None:
-            string_plans[string_module.module_id] = finalized
-        else:
-            derived_string_plans[importer.module_id] = finalized
+    pipeline = prepare_module_pipeline(profile)
+    ordered_modules = pipeline.ordered_modules
+    import_plans = pipeline.import_plans
+    string_plans = pipeline.string_plans
+    derived_string_plans = pipeline.derived_string_plans
+    payload_build = pipeline.payload_build
 
     results: list[dict[str, object]] = []
     for module in ordered_modules:

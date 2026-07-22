@@ -41,6 +41,8 @@ def sha256(data: bytes) -> str:
 
 def _materialized_strings(
     translation_plan: translation_importer.TranslationImportPlan,
+    *,
+    owner: str,
 ) -> tuple[
     dict[str, bytes],
     dict[str, str],
@@ -84,7 +86,7 @@ def _materialized_strings(
         encoded = text.encode("cp1252") + b"\0"
         symbol = symbol_by_payload.get(encoded)
         if symbol is None:
-            symbol = f"localization.string.{mapping_id}"
+            symbol = f"{owner}.string.{mapping_id}"
             symbol_by_payload[encoded] = symbol
             encoded_by_symbol[symbol] = encoded
         else:
@@ -159,7 +161,8 @@ def build_external_string_draft(
     owner: str,
 ) -> ExternalStringDraft:
     encoded, symbol_by_mapping, rows, shortening_ids = _materialized_strings(
-        translation_plan
+        translation_plan,
+        owner=owner,
     )
     fragments = tuple(
         PayloadFragment(
@@ -199,12 +202,15 @@ def build_external_string_draft(
 def finalize_external_string_plan(
     draft: ExternalStringDraft,
     *,
-    build: ResidentPayloadBuild,
+    build: ResidentPayloadBuild | None,
     resolved_patches: tuple[ResolvedPatch, ...],
 ) -> ExternalStringPlan:
+    if draft.rows and build is None:
+        raise ValueError("External strings require a linked payload build")
     rows: list[dict[str, object]] = []
     for draft_row in draft.rows:
         row = dict(draft_row)
+        assert build is not None
         symbol = build.symbols[str(row["symbol"])]
         row["file_offset"] = f"0x{symbol.file_offset:X}"
         row["runtime_address"] = f"0x{symbol.runtime_address:X}"

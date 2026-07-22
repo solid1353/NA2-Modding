@@ -1,11 +1,29 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 
 from na2_patcher.modules.translation_importer import engine
 
 
 class TranslationImporterTests(unittest.TestCase):
+    def test_iso_source_delegates_to_the_shared_iso_reader(self) -> None:
+        exact = SimpleNamespace(path="PRG/BTL.BIN", is_dir=False)
+        basename = SimpleNamespace(path="OTHER/ETC.BIN", is_dir=False)
+        image = SimpleNamespace(
+            by_path={"PRG/BTL.BIN": exact, "OTHER/ETC.BIN": basename},
+            read_file=mock.Mock(side_effect=lambda record: record.path.encode("ascii")),
+        )
+        with mock.patch.object(engine, "Iso9660", return_value=image) as iso_type:
+            source = engine.IsoSource(Path("source.iso"))
+        iso_type.assert_called_once()
+        self.assertEqual(
+            source.read(("PRG/BTL.BIN",), "BTL"), b"PRG/BTL.BIN"
+        )
+        self.assertEqual(source.read(("ETC.BIN",), "ETC"), b"OTHER/ETC.BIN")
+
     def test_rejects_unresolved_mode(self) -> None:
         row = {
             "id": "MTEST",

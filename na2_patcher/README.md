@@ -87,9 +87,10 @@ selected profile path, and active Python/Zlib/Zopfli versions. A valid receipt
 and matching Current ISO produces the normal unchanged/no-rotation result
 without module derivation or a `.building` file.
 
-On a miss, `na2_patcher/build_profile.py` orchestrates feature modules and asks
-`na2_patcher/composer.py` to close their results plus the profile identity
-into typed operations. `na2_patcher/payload_builder/` links contributed code
+On a miss, `na2_patcher/module_pipeline.py` prepares feature artifacts, derived
+consumers, and shared payload contributions. `na2_patcher/build_profile.py`
+applies that pipeline and asks `na2_patcher/composer.py` to close its results
+plus the profile identity into typed operations. `na2_patcher/payload_builder/` links contributed code
 and data into the shared resident `PRG/228.BIN`, owns its global loader/memory
 integration, and records its symbol map. `na2_patcher/image_assembler/` alone
 stages and verifies

@@ -41,7 +41,7 @@ Operational logs remain disposable after their durable findings are promoted. Gi
 - `substitution.md`: substitution reliability control flow, failed tests, and next investigation boundary.
 - `media/`: exact outer-ISO, `DATA.CVM`, and AFS layout inventories.
 - `font/`: durable visual and byte-level evidence from the font v23 negative result.
-- `external_translation_files.md`: compact one-file `228.BIN` string storage,
+- `external_string_payload.md`: compact one-file `228.BIN` string storage,
   its two-file prototype, and loader/memory/ISO constraints. The complete
   enabled `[S]` pointer inventory is canonical module data at
   `na2_patcher/features/localization/translation_importer/references.tsv`.

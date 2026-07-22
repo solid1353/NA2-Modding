@@ -1,9 +1,9 @@
-# External Translation Files
+# External String Payload
 
 Status: initial two-file integration and runtime boot confirmed, 2026-07-20;
 compact one-file integration and hidden boot confirmed, 2026-07-22. Broader
-runtime and visual coverage of the compact build remains pending. The canonical
-translation mapping is unchanged.
+runtime and visual coverage of the compact build remains pending. Canonical
+translation mappings remain importer-owned and hash-pinned.
 
 ## Conclusion
 

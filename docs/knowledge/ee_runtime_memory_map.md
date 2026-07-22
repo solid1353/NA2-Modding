@@ -39,7 +39,7 @@ but the 35 guarded pointer edits reach only 30 distinct string locations whose
 encoded strings total 1,512 bytes including terminators. The file is a NUN5
 type-4 MWo3 localization data image, not executable code; most of its strings,
 indexes, and internal pointer tables are unused by the current NA2 design. See
-[`external_translation_files.md`](external_translation_files.md) for the
+[`external_string_payload.md`](external_string_payload.md) for the
 decompilation and integration evidence.
 
 The implemented compact architecture therefore:
@@ -274,7 +274,7 @@ reporting.
 Static allocator, stack, and overlay analysis uses the maintained Ghidra 12.1.2
 NA2 export under `@analysis/disassembly/NA2/exports/SLPS_258.37/`. The whole-
 TEXTENG structure and used-string analysis is canonical in
-[`external_translation_files.md`](external_translation_files.md), updated by
+[`external_string_payload.md`](external_string_payload.md), updated by
 commit `cb7d1d7`. The compact-pool calculation was independently reproduced from
 the active hash-pinned string-patcher plan and its 30 distinct generated
 string locations.

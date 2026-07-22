@@ -194,13 +194,18 @@ sentences; generated logs record the resolved text. Configuration pins the
 exact donor token, output token, and expected coverage so source drift or
 accidental expansion fails the build.
 
-`M0566` and `M0799` now use the declarative `uppercase` transform, producing
-the NUN5-style startup choices `NO` and `YES` without embedding replacement
-literals in the mapping rows. The supplied side-by-side runtime capture also
-confirms that the prompt overflow is separate: NUN5 word-wraps inside donor
-`<br>` parts, while NA2 renders each packed sequence fragment as one clipped
-line. Title shortening reduces that overflow but does not replace the Font
-workstream's renderer/autofit fix.
+`M0566` and `M0799` use the declarative `uppercase` transform and resolve to
+`NO` and `YES` without embedding replacement literals in the mapping rows.
+Runtime testing later confirmed that these two slots do **not** control the
+visible choices on the tested startup no-card prompt: that screen remained
+title-case. The transforms are retained because the distinct slots may serve a
+different branch, but they are not considered a fix for the supplied screen and
+capitalization will not be pursued further for now.
+
+The supplied side-by-side runtime capture also confirms that the prompt overflow
+is separate: NUN5 word-wraps inside donor `<br>` parts, while NA2 renders each
+packed sequence fragment as one clipped line. Title shortening reduces that
+overflow but does not replace the Font workstream's renderer/autofit fix.
 
 The packaged v37 table still contains 2,181 mappings: 2,172 enabled and 9
 disabled. Enabled rows comprise 2,135 `slot`, 4 `sequence`, and 33 `shorten`
@@ -506,6 +511,15 @@ The packaged v30 table contains 854 mappings: 844 enabled and 10 disabled. Activ
 ### Rolling runtime issue log
 
 This log persists unresolved visual/runtime findings across mapping versions. Entries implemented in the current module remain in the verification section until confirmed in-game.
+
+#### Retained v37 transforms with negative tested-screen result
+
+- **Startup no-card choice capitalization:** `M0566` and `M0799` resolve to
+  `NO`/`YES`, but the user confirmed that the visible choices on the tested
+  startup no-card prompt remained `No`/`Yes`. Those offsets therefore do not
+  drive that rendering path, or another source overrides them. Retain the
+  transforms for possible use by a different branch; do not repeat this
+  capitalization attempt or treat it as a verified fix for the supplied screen.
 
 #### Rejected in v34 and rolled back in v35
 

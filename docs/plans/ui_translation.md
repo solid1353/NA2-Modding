@@ -497,9 +497,12 @@ uses a Japanese-atlas rectangle that samples lettering after the NUN5 VS
 import, and never rotates the donor's right-pointing green arrow. NUN5 homolog
 `FUN_006d0850` omits the horizontal draws, uses rectangle
 `(145,385,22,38)`, and applies `+pi/2`/`-pi/2` around the upper/lower draws.
-`UI-BTL-007` expresses that behavior as five exact NUN5 copies and five
-minimal NA2 adaptations. The accepted closed confirmation renderer and all
-text/font bytes remain untouched.
+`UI-BTL-007` expresses that behavior as five exact NUN5 copies and seven
+minimal NA2 adaptations. Full-profile composition caught the initial helper's
+collision with the accepted stage-width helper at BTL `0x40`; the corrected
+layout retains that helper, relocates the unchanged 16-byte Jutsu-label helper
+to `0x30`, and fits a compact 20-byte selector wrapper at `0x6C`. The accepted
+closed confirmation renderer and all text/font bytes remain untouched.
 
 Paired Slots 5 and 6 reuse the same `TEX_xselect` sprite object and the same
 draw record. NA2 `FUN_00878820` and NUN5 `FUN_00894f60` already share the

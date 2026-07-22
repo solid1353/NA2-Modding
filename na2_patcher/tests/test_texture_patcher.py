@@ -422,6 +422,14 @@ class UiTextureTests(unittest.TestCase):
         self.assertNotIn(0x9E44, {item.destination_offset for item in edits})
         self.assertEqual(patch.status, "runtime_proven")
         self.assertEqual(patch.confidence, "verified")
+        self.assertEqual(edits[0].destination_offset, 0x30)
+        self.assertEqual(edits[0].length, 16)
+        self.assertEqual(
+            edits[0].replacement_hex,
+            "D041023C000082440800E00300031546",
+        )
+        self.assertEqual(edits[1].destination_offset, 0x9188)
+        self.assertEqual(edits[1].replacement_hex, "CCCF1A0C")
 
     def test_open_jutsu_selector_matches_the_nun5_arrow_state(self) -> None:
         repository = Path(__file__).resolve().parents[2]
@@ -434,18 +442,17 @@ class UiTextureTests(unittest.TestCase):
 
         self.assertEqual(
             [item.edit_id for item in edits],
-            [f"UI-BTL-007-{index:02d}" for index in range(1, 11)],
+            [f"UI-BTL-007-{index:02d}" for index in range(1, 13)],
         )
         self.assertEqual(patch.status, "approved_for_test")
         self.assertEqual(patch.confidence, "high")
 
         helper = edits[0]
-        self.assertEqual(helper.destination_offset, 0x40)
-        self.assertEqual(helper.length, 44)
+        self.assertEqual(helper.destination_offset, 0x6C)
+        self.assertEqual(helper.length, 20)
         self.assertEqual(
             helper.replacement_hex,
-            "E0FFBD271000BFFF1800A4FF4C0083AC10EF0D0C00000000"
-            "1800A4DF4C0080AC1000BFDF0800E0032000BD27",
+            "2D98E00310EF0D0C2D808000080060024C0000AE",
         )
         self.assertEqual(
             [item.destination_offset for item in edits[1:3]],
@@ -455,7 +462,7 @@ class UiTextureTests(unittest.TestCase):
             all(item.replacement_hex == "00000000" for item in edits[1:3])
         )
 
-        angle_loads = [edits[index] for index in (3, 4, 6, 7)]
+        angle_loads = [edits[index] for index in (3, 4, 7, 8)]
         self.assertEqual(
             [
                 (
@@ -476,12 +483,19 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(
             [
                 (edits[index].destination_offset, edits[index].replacement_hex)
-                for index in (5, 8)
+                for index in (5, 9)
             ],
-            [(0x9BA0, "D0CF1A0C"), (0x9BFC, "D0CF1A0C")],
+            [(0x9BA0, "DBCF1A0C"), (0x9BFC, "DBCF1A0C")],
+        )
+        self.assertEqual(
+            [
+                (edits[index].destination_offset, edits[index].replacement_hex)
+                for index in (6, 10)
+            ],
+            [(0x9BA4, "4C0083AC"), (0x9C00, "4C0083AC")],
         )
 
-        rectangle = edits[9]
+        rectangle = edits[11]
         self.assertEqual(rectangle.destination_offset, 0x20C9E0)
         self.assertEqual(rectangle.source_target_id, "nun5_elf")
         self.assertEqual(rectangle.source_offset, 0x4DE0F0)

@@ -80,14 +80,25 @@ explains why the Japanese renderer did not require rotation. After the whole
 NUN5 `VS.CCS` import, the same coordinate samples lettering instead. A
 rectangle-only transplant is also insufficient because the NUN5 source graphic
 points right and relies on the two explicit rotations. `UI-BTL-007` therefore
-copies the exact NUN5 rectangle and four angle-load instructions, removes only
-the two open-state horizontal draws, and uses a 44-byte NA2 wrapper at file
-offset `0x40` to apply and clear rotation around the unchanged native draw
-routine. The wrapper does not overlap the existing helper at `0x70`, and both
-ranges were zero-filled in the canonical NA2 file.
+copies the exact NUN5 rectangle and four angle-load instructions and removes
+only the two open-state horizontal draws. Each redirected call's delay slot
+writes the loaded angle into the sprite. A compact 20-byte NA2 wrapper at file
+offset `0x6C` calls the unchanged native draw routine and then clears rotation;
+at these call sites, the completed loops leave `s0` and `s3` dead, so the
+wrapper safely uses those callee-saved registers for the sprite pointer and
+return address without a stack frame.
+
+The canonical BTL header contains one aligned 80-byte zero cave at
+`0x30..0x7F`. Full-profile composition exposed that the first implementation's
+44-byte `0x40` wrapper collided with the already accepted stage-width helper.
+The corrected packing keeps that stage helper byte-identical at `0x40..0x6B`,
+moves the byte-identical 16-byte Jutsu-label helper from `0x70` to `0x30`, and
+uses the final `0x6C..0x7F` bytes for the compact selector wrapper. The two
+relocated call targets are adjusted accordingly; all three ranges were
+zero-filled in the canonical NA2 file and are mutually disjoint.
 
 Side effects are confined to the open-selector arrow sprite's rotation and two
-draw calls. The wrapper restores the sprite pointer and clears rotation after
+draw calls. The wrapper preserves the sprite pointer and clears rotation after
 each draw. The closed confirmation screen and its accepted horizontal control
 remain on `FUN_006bd0f0` and are not changed.
 

@@ -889,7 +889,7 @@ the exact English NUN5 rectangles for:
 NUN5's Jutsu helper offsets its 62x26 label by 26 pixels and the three input
 glyphs by 40 pixels. NA2's static draw path lacks those additions. A 16-byte
 NA2 helper is installed in verified loaded zero padding at BTL file offset
-`0x70`, the label path calls it at `0x9188`, and the two structurally equivalent
+`0x30`, the label path calls it at `0x9188`, and the two structurally equivalent
 40-pixel accumulator instructions are copied from NUN5 BTL offsets `0x974C`
 and `0x9750` into `0x91BC..0x91C3`. The localized 160x24 Battle Settings prompt
 is drawn at the official X=`94` through the constant at `0xCFD8`.
@@ -946,13 +946,19 @@ angle-load instructions from BTL offsets `0xA06C`, `0xA070`, `0xA0F4`, and
 `0xA0F8`. Two open-state draw calls are replaced with no-ops, leaving the
 closed-state horizontal control untouched.
 
-NA2's static-record draw path has no equivalent rotation wrapper. A 44-byte
-size-preserving helper at verified zero padding `0x40` applies the requested
-angle, calls the unchanged native draw routine, restores the sprite pointer,
-and resets rotation. The upper and lower draw calls at `0x9BA0` and `0x9BFC`
-are redirected to that helper. It does not overlap the accepted 16-byte
-Jutsu-label helper at `0x70`. No label, command text, font, or gameplay-input
-data is changed. Static confidence is high; runtime acceptance is pending.
+NA2's static-record draw path has no equivalent rotation wrapper. The two call
+delay slots write the loaded angle into the sprite, and a compact 20-byte
+size-preserving helper at verified zero padding `0x6C` calls the unchanged
+native draw routine and then clears rotation. At both call sites, `s0` and `s3`
+are dead after their completed loops, so the helper may preserve the sprite
+pointer and return address in those callee-saved registers without a stack
+frame. The upper and lower draw calls at `0x9BA0` and `0x9BFC` are redirected
+to that helper. To keep all three accepted helpers disjoint inside the complete
+`0x30..0x7F` zero-filled header cave, the byte-identical 16-byte Jutsu-label
+helper was relocated from `0x70` to `0x30`; the runtime-proven stage-width
+helper remains unchanged at `0x40..0x6B`. No label, command text, font, or
+gameplay-input data is changed. Static confidence is high; runtime acceptance
+is pending.
 
 ### UI-BTL-008: localized command-list scroll arrows
 

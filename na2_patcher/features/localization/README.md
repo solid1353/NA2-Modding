@@ -3,7 +3,7 @@
 This feature owns all declarative content for the accepted English localization
 while reusable executable engines remain under `na2_patcher/modules/`.
 
-- [Translation importer](#na2-translation-importer-mapping-version-35)
+- [Translation importer](#na2-translation-importer-mapping-version-36)
 - [String patcher](#string-patcher)
 - [Texture patcher](#ui-texture-translation-module)
 - [Binary patcher](#ui-translation-binary-patcher-patch-set)
@@ -15,7 +15,7 @@ The feature directory name declares its identity. Its module-named
 subdirectories are the inputs that compose it; enabling Localization enables all
 of them, and one aggregate profile pin covers their canonical inputs.
 
-## NA2 translation importer (mapping version 35)
+## NA2 translation importer (mapping version 36)
 
 This first-class `na2_patcher` module imports and validates official strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
@@ -26,8 +26,8 @@ inter-stage handoff.
 
 ### Mapping metadata
 
-- Version: `35`
-- Packaged `mappings.tsv` SHA-256: `c4f317c0a86c2be3fb07512652ce5e50d9b73ae485ebaa502c4ed1fabc9c28a5`
+- Version: `36`
+- Packaged `mappings.tsv` SHA-256: `01cfec3314e76c5cbe297aa1e046a402149a21d94d5d4fde531120ebf256035a`
 
 `translation_importer/config.tsv` is the canonical machine-readable home for
 both values. Documentation is not an executable input, and the importer verifies
@@ -80,7 +80,10 @@ The 12 columns are:
   source reference; the current integrated string patcher externalizes the
   official text instead of writing the fallback inline.
 - `bytes`: fixed-size structural patch represented as `EXPECTED=>REPLACEMENT` in `value`.
-- `unresolved`: retain an investigated but unsafe or unproven mapping without applying it.
+
+Unresolved research does not belong in the executable mapping table. Preserve
+useful leads in `docs/HYPOTHESES.md`; discard contextless inventory and rely on
+Git history for recovery.
 
 There is no `pool` mapping mode. External placement is a `string_patcher`
 policy derived from the existing `shorten` rows and their canonical source
@@ -143,13 +146,13 @@ All ISO target paths inside the TSV remain ISO-root-relative. The profile-level 
 - active mapping coverage grouped by mode and section;
 - source and translated-file hashes.
 
-Disabled and unresolved rows remain solely in `mappings.tsv`.
+Disabled executable rows remain solely in `mappings.tsv`.
 
 ### Safety behavior
 
 Known clean-source SHA-1 values are always checked. Unknown source media is rejected before a plan is produced.
 
-The module rejects malformed flags, duplicate IDs, invalid offsets, invalid source references, malformed transforms, overlapping active mappings, unexpected structural bytes, text exceeding its declared slot or sequence block, malformed target sequences, and invalid named-color conversion. Enabled bad mappings fail the build instead of becoming silent runtime skips.
+The module rejects malformed flags, duplicate IDs, invalid offsets, invalid source references, malformed transforms, overlapping active mappings, unexpected structural bytes, text exceeding its declared slot or sequence block, malformed target sequences, invalid named-color conversion, and placeholder donor text that would overwrite identifier-like NA2 data. Enabled bad mappings fail the build instead of becoming silent runtime skips.
 
 #### Exact slot boundaries
 
@@ -170,6 +173,41 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - NUN5 `<BLACK>` remains `<BLACK>` or becomes `<color000000>` according to the verified target form.
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
+
+### Version 36 changes
+
+#### Executable-table cleanup and semantic guard
+
+Version 36 removes all 59 non-executable `unresolved` rows. Fifty-seven carried
+only `NO_VERIFIED_OFFICIAL_SOURCE_OFFSET`, one retained an obsolete disabled
+dialog fragment, and one recorded the dynamic save-date renderer lead now
+preserved in `docs/HYPOTHESES.md`.
+
+`M1336` is also removed. It would have overwritten the clean identifier-like
+value `pjrvspl0` at `SLPS_258.37 + 0x3C0660` with the literal NUN5 executable
+placeholder `unknown`. No evidence proves that slot is display text, so the
+clean NA2 bytes remain authoritative.
+
+The importer no longer accepts an `unresolved` mode. It also fails closed when
+placeholder donor text such as `unknown`, `placeholder`, or `dummy` would
+replace identifier-like target data. Resolved source and replacement text stay
+in generated logs; `mappings.tsv` continues to store source references and
+transforms rather than duplicated strings.
+
+The packaged v36 table contains 2,181 mappings: 2,172 enabled and 9 disabled.
+Enabled rows comprise 2,135 `slot`, 4 `sequence`, and 33 `shorten` mappings.
+The disabled rows are 5 retained `slot` mappings and 4 structural `bytes` rows.
+
+#### v36 build validation
+
+A clean-source full in-memory plan was validated with all three targets:
+
+- mapping version 36 and its packaged hash matched;
+- 2,436 generated import rows;
+- 2,172 applied and changed text mappings;
+- 33 shortened mappings and zero active structural patches;
+- no `unresolved` rows or active identifier-to-placeholder replacements;
+- unchanged `228.BIN` payload bytes and layout.
 
 ### Version 35 changes
 
@@ -471,7 +509,7 @@ This log persists unresolved visual/runtime findings across mapping versions. En
 - **Collection Movie screen chrome:** graphical title/category and button assets
   are owned by the separate Texture-patcher task and remain outside this text module.
 - **Command Chart chrome:** any remaining Japanese heading or back prompt that is graphical rather than string-backed remains outside current scope pending resource extraction.
-- **Dynamic save date/time numerals:** retained as unresolved mapping `M0833`; the digits are generated by executable code and still require a verified renderer/code mapping.
+- **Dynamic save date/time numerals:** the digits are generated by executable code and still require a verified renderer/code mapping; the lead is retained in `docs/HYPOTHESES.md`, not the executable mapping table.
 
 PCSX2 application chrome, toolbar text, pause indicators, graphical controller prompts, and emulator toasts are not game translation issues and are not logged here.
 

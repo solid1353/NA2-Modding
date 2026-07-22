@@ -38,7 +38,9 @@ EXPECTED_SHA1 = {
     "NUN5_TEXTENG": "77fafba95157e44ccd61783a04aba87c4b98b1fb",
     "NUN5_SLES": "fe54357b016bc579b435a593e330d2d0ff822cdf",
 }
-VALID_MODES = {"slot", "sequence", "shorten", "bytes", "unresolved"}
+VALID_MODES = {"slot", "sequence", "shorten", "bytes"}
+PLACEHOLDER_TEXT = frozenset({"unknown", "placeholder", "dummy", "test", "todo", "temp"})
+IDENTIFIER_TEXT = re.compile(r"[a-z][a-z0-9_./-]{3,}\Z")
 VALID_TRANSFORMS = {
     "", "empty", "format_arg1", "format_args", "format_prefix_arg2",
     "format_suffix_arg2", "between_placeholders", "after_placeholder2",
@@ -492,7 +494,7 @@ def write_slot(output: bytearray, offset: int, capacity: int, replacement: bytes
 
 
 def parse_mappings(rows: list[dict[str, str]]) -> dict[str, list[dict[str, object]]]:
-    result = {"text": [], "bytes": [], "unresolved": [], "inactive": []}
+    result = {"text": [], "bytes": [], "inactive": []}
     for line, row in enumerate(rows, 2):
         label = f"mappings.tsv line {line} ({row['id']})"
         if row["enabled"] not in {"0", "1"}:
@@ -540,10 +542,19 @@ def parse_mappings(rows: list[dict[str, str]]) -> dict[str, list[dict[str, objec
                 raise ValueError(f"{label}: byte patch changes file size")
             result["bytes"].append({**common, "target_offset": parse_int(row["target_offset"], label),
                                     "expected": expected, "replacement": replacement})
-        else:
-            result["unresolved"].append({**common, "target_offset": parse_int(row["target_offset"], label),
-                                         "capacity": parse_int(row["capacity"], label)})
     return result
+
+
+def validate_semantic_replacement(source_text: str, target_text: str, label: str) -> None:
+    """Reject donor sentinels that would overwrite identifier-like NA2 data."""
+    if (
+        IDENTIFIER_TEXT.fullmatch(target_text)
+        and source_text.strip().casefold() in PLACEHOLDER_TEXT
+    ):
+        raise ValueError(
+            f"{label}: refuses placeholder donor text {source_text!r} for "
+            f"identifier-like target {target_text!r}"
+        )
 
 
 def apply_text_mappings(mappings, selected, clean_targets, output_targets, official_sources):
@@ -579,6 +590,7 @@ def apply_text_mappings(mappings, selected, clean_targets, output_targets, offic
         else:
             official = resolve_source_text(row, official_sources, label)
             target_text, _ = read_target_slot(clean_targets[target], offset, capacity, label)
+            validate_semantic_replacement(official, target_text, label)
             if row["mode"] == "shorten":
                 replacement_text = str(row["short_text"])
                 stats["shortened"] += 1

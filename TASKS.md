@@ -39,6 +39,8 @@
 
 ### General
 
+### Scripting
+
 ### Code Injection
 
 ### Decompilation

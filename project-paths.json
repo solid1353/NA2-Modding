@@ -15,7 +15,6 @@
     "patcher": "na2_patcher",
     "features": "@patcher/features",
     "pcsx2_files": "pcsx2_files",
-    "releases": "releases",
     "scripts": "scripts",
     "work": "work",
     "project_work": "@work/Project",

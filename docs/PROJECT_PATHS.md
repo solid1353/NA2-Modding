@@ -25,7 +25,7 @@ The manifest currently defines these stable logical names:
 - `analysis`: shared reverse-engineering projects and disassembly exports for
   related game projects.
 - `utils`: shared utilities, including Ghidra and the untrusted historical dump.
-- `build`, `logs`, `patcher`, `releases`, `scripts`, and `work`:
+- `build`, `logs`, `patcher`, `scripts`, and `work`:
   their corresponding project areas.
 - `features`: the canonical feature-package root beneath `@patcher/`; profile
   module discovery resolves this root instead of hardcoding its repository path.

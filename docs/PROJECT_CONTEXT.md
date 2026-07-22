@@ -36,7 +36,6 @@ replaced with a copied machine-specific absolute path.
 - `build/`: normally contains `build/NA2.28 - Current.iso`, may retain at most `build/NA2.28 - Previous.iso` as rotation history, and may retain `build/NA2.28 - Candidate.iso` while concurrent refactoring/testing needs it. Standard builds use `NA2.28 - Current.iso.building`, then discard an identical candidate or promote and rotate a changed one. `na2 -t` instead uses `NA2.28 - Candidate.iso.building`, atomically updates only Candidate, leaves PCSX2 running, and never changes Current, Previous, their build mapping, or Current's preflight receipt. Staging files are removed on failure.
 - Temporary imported archives live under the active task's `work/<task title>/temp/` folder until normalized or retired. Reproducible data lives as hash-pinned inputs beside its module; complete accepted states are preserved by annotated Git tags, and retired inputs remain available through Git history.
 - `na2_patcher/features/localization/translation_importer/mappings.tsv` is the Localization feature's current hash-pinned v37 importer input and `references.tsv` owns the verified pointer inventory. The importer preserves official source semantics; profile `identity.json` owns the imported/output game titles, and the generic `string_patcher` applies that output policy before choosing inline or linked placement and contributing external fragments plus symbolic pointers. `payload_builder` constructs `PRG/228.BIN` and owns its loader/memory integration; the composer resolves symbols and `binary_patcher` applies concrete guarded writes. No standalone export or source-hash bypass exists.
-- `releases/`: ignored relative link to the frozen release archive outside the repository. It contains binary release artifacts only; never alter existing contents.
 - `logs/`: disposable execution records grouped into task-specific subfolders; no files should be written directly in the `logs/` root. `na2` keeps `logs/na2/latest.log` plus one `rolling.log` capped at the newest 20 completed operational invocations. Structured profile records under `logs/na2/builds/` are retained only for the configured current and previous ISO files; one atomically replaced `logs/na2/builds.tsv` maps both ISO names to their records. See `docs/LOGGING.md`.
 - `scripts/`: repeatable tooling.
 - `@pcsx2_files/`: project-owned PCSX2 artifacts. The canonical PNACH and input recordings are tracked; screenshots remain local and ignored.
@@ -163,25 +162,6 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 
 Observed examples include AFS tools, CCS tools, Ghidra/EmotionEngine material, Kuriimu, PS2Dis, PSS tools, StudioCCS variants, and many unknown `.bin` files. Inspect and select a tool for a specific task before using it.
 
-## Release Folder Rule
-
-`releases/` is for release artifacts only. Existing contents are frozen.
-
-Allowed:
-
-- Create a new uniquely named release file/folder.
-
-Not allowed:
-
-- Modify an existing release file.
-- Overwrite an existing release file.
-- Rename, move, or delete anything under `releases/`.
-- Auto-pick a different name after a collision.
-
-If an intended `releases/` output path already exists, stop immediately and inspect/report manually.
-
-Every release PNACH must match the PCSX2 CRC for the boot ELF inside the paired release ISO. Before calling a release valid, check the ISO/ELF CRC against the PNACH filename suffix. If the CRC does not match, warn. If it cannot be verified, say so explicitly.
-
 ## CRC / PNACH Notes
 
 PCSX2 cheat filenames include the game CRC, for example:
@@ -246,4 +226,4 @@ When asked to actualize, keep the canonical file named `@pcsx2_files/SLPS-25837_
 
 ## Release Workflow
 
-Existing output under the root `releases/` link remains frozen and append-only. The maintained release builder is `scripts/release/build_release.ps1`; it produces a self-contained development or production candidate from the current embedded profile. The exact end-user contract, validation evidence, and GitHub publication sequence are canonical in `docs/RELEASE_PROCESS.md`.
+The maintained release builder is `scripts/release/build_release.ps1`; it produces a self-contained development or production candidate from the current embedded profile. The exact end-user contract, validation evidence, and GitHub publication sequence are canonical in `docs/RELEASE_PROCESS.md`.

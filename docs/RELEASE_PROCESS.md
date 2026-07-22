@@ -49,8 +49,8 @@ the configured candidate path. Temporary packaging state is removed afterward.
 
 Development candidates are placed under
 `@release_candidates/development/`; clean production candidates use
-`@release_candidates/`. Neither path is the append-only external
-`releases/` archive.
+`@release_candidates/`. Published binaries are created by the GitHub release
+workflow from a tagged commit.
 
 ## Release manifest
 

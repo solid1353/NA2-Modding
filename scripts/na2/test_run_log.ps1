@@ -112,7 +112,6 @@ try {
     "patcher": "na2_patcher",
     "pcsx2": "pcsx2",
     "pcsx2_files": "pcsx2_files",
-    "releases": "releases",
     "scripts": "scripts",
     "work": "work"
   },
@@ -126,7 +125,7 @@ try {
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'project-paths.json') -Content $manifest
     foreach ($directory in @(
         'source', 'utils', 'build', 'logs', 'na2_patcher', 'pcsx2',
-        'pcsx2_files', 'releases', 'scripts', 'work'
+        'pcsx2_files', 'scripts', 'work'
     )) {
         New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository $directory) | Out-Null
     }

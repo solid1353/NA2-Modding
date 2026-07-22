@@ -20,8 +20,8 @@ The project combines four related areas:
   tables and fixed-size source-derived official donor-container imports.
 - GF4/GF4C font-resource and renderer reverse engineering.
 - Gameplay and default-setting changes through named binary-patcher modules, with PNACH retained for stable resident-ELF/runtime behavior and carefully bounded temporary hypotheses. On-demand overlays such as `BTL.BIN` and `ETC.BIN` are tested through file patches and ISO rebuilds, not unguarded fixed-address cheats.
-- Scripted profile composition, ISO verification, on-demand PNACH CRC aliasing, annotated
-  reproducible checkpoints, and frozen releases.
+- Scripted profile composition, ISO verification, on-demand PNACH CRC aliasing,
+  annotated reproducible checkpoints, and GitHub releases.
 
 Work is organized as reproducible, versioned artifacts. The detailed lifecycle
 and directory boundaries are defined in the agent instructions and project

@@ -32,10 +32,10 @@ research utility.
 - `research/ee_memory_map/`: PCSX2 savestate extraction, allocator-chain
   validation, overlay identification, and EE-region reporting for injection
   capacity research.
-- `research/ui_translation/`: paired Current/NUN5 PCSX2 launch, PINE identity
-  checks, controlled savestate and embedded-screenshot capture, rendering
-  preflight, and read-only runtime memory inspection for NUN5-to-NA2 UI
-  comparisons.
+- `research/ui_translation/`: selectable multi-game PCSX2 launch and tiling,
+  PINE identity checks, controlled savestate and embedded-screenshot capture,
+  rendering preflight, and read-only runtime memory inspection for NUN5-to-NA2
+  UI comparisons.
 - `research/translation/`: retained translation-table length validator. It is
   not part of normal profile builds.
 

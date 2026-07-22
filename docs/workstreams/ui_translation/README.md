@@ -26,6 +26,9 @@ Canonical documentation landing page for the `UI Translation` workstream.
   the matching NUN5 and current corrected-NA2 screenshot pair while continuing
   the work. If the user is available, incorporate their visual feedback into
   the next iteration; do not block progress waiting for that feedback.
+- Format each paired presentation as a compact `Current visual checkpoint`:
+  show the current corrected NA2 result first and the NUN5 reference second,
+  then state what is accepted and every material difference that remains.
 
 Global source, path, tool-safety, testing, and cleanup rules remain in
 `AGENTS.md` and are not duplicated here.

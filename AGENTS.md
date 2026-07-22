@@ -214,7 +214,9 @@ Use `na2 act` only when preparing a non-empty PNACH for runtime testing, after a
 
 Before a standard rebuild or launching a test ISO, unconditionally issue the close command for the configured `@pcsx2/pcsx2-qt.exe`. Do not probe first to see whether PCSX2 is running; closing an absent process should be treated as a harmless no-op. `na2 -t` is the deliberate exception: it builds only the separate Candidate ISO and must neither probe nor close PCSX2.
 
-If an agent launches PCSX2 for testing, it must use `scripts/na2/test_launch.ps1`. The wrapper temporarily mutes PCSX2, starts it hidden without intentionally activating it, re-hides any exposed window, restores the previous foreground window if PCSX2 took focus, closes the test instance after the validation window, and restores the original audio setting even when testing fails. Normal user launches remain unchanged.
+Agents may share the PCSX2 executable, BIOS, and other confirmed read-only emulator resources. Memory-card images are mutable and must never be shared between agents or tasks; each testing agent/task uses its own private card derived from the target game's effective card.
+
+If an agent launches PCSX2 for testing, it must use `scripts/na2/test_launch.ps1`. The wrapper temporarily mutes PCSX2, starts it hidden without intentionally activating it, re-hides any exposed window, restores the previous foreground window if PCSX2 took focus, and closes the test instance after the validation window. It derives the target game's effective Slot 1 card, creates or reuses a private card named from the base card, agent, and stable task/thread identity, and restores the exact original audio and per-game memory-card settings even when testing fails. Each agent/task owns its private card and must never select or modify another task's card. Reuse the card for the life of the task; during task cleanup, delete it if disposable or copy a useful retained state into the task-owned work directory, document it, and remove the live PCSX2 copy. Normal user launches and cards remain unchanged.
 
 ## Task report format
 

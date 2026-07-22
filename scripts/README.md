@@ -52,6 +52,13 @@ does not launch PCSX2. Bare `na2` keeps the build-then-launch workflow.
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 
+Agent runtime checks use `na2/test_launch.ps1`. It derives the PCSX2 serial and
+ELF CRC through the shared `na2/iso_identity.ps1` helper, clones the game's
+effective Slot 1 card into a stable agent/task-specific card on first use,
+reuses that card for later launches in the same task, and restores the exact
+original per-game and audio settings after PCSX2 closes. The shared ISO identity
+helper is also used by PNACH actualization.
+
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`
 and is composed before the image assembler runs rather than owned by a feature.

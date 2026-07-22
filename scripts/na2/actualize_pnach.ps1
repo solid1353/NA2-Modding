@@ -7,12 +7,10 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 . (Join-Path $PSScriptRoot 'pnach_state.ps1')
-. (Join-Path $PSScriptRoot 'pcsx2_elf_crc.ps1')
+. (Join-Path $PSScriptRoot 'iso_identity.ps1')
 $projectPaths = Get-Na2ProjectPaths
 $CanonicalPnach = Join-Path $projectPaths.pcsx2_files 'SLPS-25837_C0659AD1.pnach'
 $ManagedSerials = @('SLPS-25837', 'SLPS-22228')
-
-$sectorSize = 2048
 
 function Get-SymbolicLinkDestinationPath {
     param([IO.FileSystemInfo]$Item)
@@ -50,16 +48,6 @@ function Test-CanonicalPnachSymlink {
     }
 }
 
-function Get-DiscSerialFromBootPath {
-    param([Parameter(Mandatory = $true)][string]$BootPath)
-
-    $name = [IO.Path]::GetFileName($BootPath)
-    if ($name -notmatch '^(?<prefix>[A-Za-z]{4})_(?<first>[0-9]{3})\.(?<last>[0-9]{2})$') {
-        throw "Could not derive a PS2 serial from boot executable: $BootPath"
-    }
-    return ("{0}-{1}{2}" -f $Matches.prefix, $Matches.first, $Matches.last).ToUpperInvariant()
-}
-
 function Get-ManagedPnachSymlinks {
     param(
         [Parameter(Mandatory = $true)][string]$CheatsDirectory,
@@ -73,140 +61,6 @@ function Get-ManagedPnachSymlinks {
             $_.Name -match $serialPattern -and
             (Test-CanonicalPnachSymlink -Item $_ -CanonicalPnach $CanonicalPnach)
         }
-}
-
-function Read-UInt32LE {
-    param([byte[]]$Data, [int]$Offset)
-    return [BitConverter]::ToUInt32($Data, $Offset)
-}
-
-function Read-DirectoryRecord {
-    param([byte[]]$Data, [int]$Offset)
-
-    $length = [int]$Data[$Offset]
-    if ($length -eq 0) { return $null }
-
-    $nameLength = [int]$Data[$Offset + 32]
-    $nameBytes = [byte[]]::new($nameLength)
-    [Array]::Copy($Data, $Offset + 33, $nameBytes, 0, $nameLength)
-
-    if ($nameLength -eq 1 -and $nameBytes[0] -eq 0) {
-        $name = "."
-    }
-    elseif ($nameLength -eq 1 -and $nameBytes[0] -eq 1) {
-        $name = ".."
-    }
-    else {
-        $name = [Text.Encoding]::ASCII.GetString($nameBytes)
-        $name = ($name -replace ';[0-9]+$', '')
-    }
-
-    [pscustomobject]@{
-        Length = $length
-        Extent = [uint32](Read-UInt32LE -Data $Data -Offset ($Offset + 2))
-        Size = [uint32](Read-UInt32LE -Data $Data -Offset ($Offset + 10))
-        Flags = [int]$Data[$Offset + 25]
-        Name = $name
-        IsDirectory = ((([int]$Data[$Offset + 25]) -band 0x02) -ne 0)
-    }
-}
-
-function Read-IsoExtent {
-    param([IO.FileStream]$IsoStream, [uint32]$Extent, [uint32]$Size)
-
-    $data = [byte[]]::new([int]$Size)
-    $IsoStream.Position = [int64]$Extent * $sectorSize
-    $readTotal = 0
-    while ($readTotal -lt $data.Length) {
-        $read = $IsoStream.Read($data, $readTotal, $data.Length - $readTotal)
-        if ($read -le 0) { throw "Unexpected EOF while reading ISO extent $Extent." }
-        $readTotal += $read
-    }
-    return $data
-}
-
-function Get-IsoChildren {
-    param([IO.FileStream]$IsoStream, [object]$DirRecord)
-
-    $dirData = Read-IsoExtent -IsoStream $IsoStream -Extent $DirRecord.Extent -Size $DirRecord.Size
-    $children = @()
-    $offset = 0
-    while ($offset -lt $dirData.Length) {
-        $length = [int]$dirData[$offset]
-        if ($length -eq 0) { $offset++; continue }
-
-        $record = Read-DirectoryRecord -Data $dirData -Offset $offset
-        $offset += $length
-        if ($null -ne $record -and $record.Name -ne "." -and $record.Name -ne "..") {
-            $children += $record
-        }
-    }
-    return $children
-}
-
-function Find-IsoPath {
-    param([IO.FileStream]$IsoStream, [object]$RootRecord, [string]$Path)
-
-    $parts = @($Path -split '[\/]' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-    $current = $RootRecord
-    foreach ($part in $parts) {
-        if (-not $current.IsDirectory) { return $null }
-        $next = Get-IsoChildren -IsoStream $IsoStream -DirRecord $current |
-            Where-Object { $_.Name -ieq $part } |
-            Select-Object -First 1
-        if ($null -eq $next) { return $null }
-        $current = $next
-    }
-    return $current
-}
-
-function Get-IsoPnachIdentity {
-    param([Parameter(Mandatory = $true)][string]$Path)
-
-    $resolvedPath = (Resolve-Path -LiteralPath $Path).Path
-    $iso = [IO.File]::OpenRead($resolvedPath)
-    try {
-        $pvd = [byte[]]::new($sectorSize)
-        $iso.Position = 16 * $sectorSize
-        [void]$iso.Read($pvd, 0, $pvd.Length)
-
-        $magic = [Text.Encoding]::ASCII.GetString($pvd, 1, 5)
-        if ($pvd[0] -ne 1 -or $magic -ne "CD001") {
-            throw "Primary Volume Descriptor not found at sector 16."
-        }
-
-        $rootRecord = Read-DirectoryRecord -Data $pvd -Offset 156
-        $systemRecord = Find-IsoPath -IsoStream $iso -RootRecord $rootRecord -Path "SYSTEM.CNF"
-        if ($null -eq $systemRecord) { throw "SYSTEM.CNF not found in ISO." }
-
-        $systemText = [Text.Encoding]::ASCII.GetString((Read-IsoExtent -IsoStream $iso -Extent $systemRecord.Extent -Size $systemRecord.Size))
-        $bootLine = ($systemText -split "`r?`n" | Where-Object { $_ -match '^\s*BOOT2?\s*=' } | Select-Object -First 1)
-        if ([string]::IsNullOrWhiteSpace($bootLine)) { throw "Boot line not found in SYSTEM.CNF." }
-
-        $bootPath = (($bootLine -replace '^\s*BOOT2?\s*=\s*', '') -replace '^\s*cdrom0?:\\?', '' -replace ';[0-9]+\s*$', '').Trim()
-        $bootPath = $bootPath -replace '\\', '/'
-        $serial = Get-DiscSerialFromBootPath -BootPath $bootPath
-        if ($serial -notin $ManagedSerials) {
-            throw "Boot serial is not managed by this project: $serial"
-        }
-
-        $elfRecord = Find-IsoPath -IsoStream $iso -RootRecord $rootRecord -Path $bootPath
-        if ($null -eq $elfRecord) { throw "Boot ELF not found in ISO: $bootPath" }
-
-        $elfBytes = Read-IsoExtent -IsoStream $iso -Extent $elfRecord.Extent -Size $elfRecord.Size
-        $crc = Get-Pcsx2ElfCrc -Bytes $elfBytes
-    }
-    finally {
-        $iso.Dispose()
-    }
-
-    [pscustomobject]@{
-        Iso = $resolvedPath
-        BootElf = $bootPath
-        Serial = $serial
-        CRC = $crc
-        PnachName = "${serial}_${crc}.pnach"
-    }
 }
 
 $CanonicalPnach = (Resolve-Path -LiteralPath $CanonicalPnach).Path
@@ -249,11 +103,20 @@ if ([string]::IsNullOrWhiteSpace($IsoPath)) {
         throw "Default build ISO does not exist: $IsoPath. Pass -IsoPath explicitly."
     }
 }
-$identity = Get-IsoPnachIdentity -Path $IsoPath
+$identity = Get-Na2IsoPcsx2Identity -Path $IsoPath
+if ($identity.Serial -notin $ManagedSerials) {
+    throw "Boot serial is not managed by this project: $($identity.Serial)"
+}
 $preservedIdentities = @(
     $PreserveIsoPath |
         Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
-        ForEach-Object { Get-IsoPnachIdentity -Path $_ }
+        ForEach-Object {
+            $preservedIdentity = Get-Na2IsoPcsx2Identity -Path $_
+            if ($preservedIdentity.Serial -notin $ManagedSerials) {
+                throw "Boot serial is not managed by this project: $($preservedIdentity.Serial)"
+            }
+            $preservedIdentity
+        }
 )
 $desiredPnachNames = @($identity.PnachName) + @($preservedIdentities.PnachName) |
     Select-Object -Unique

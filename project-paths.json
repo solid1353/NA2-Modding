@@ -10,6 +10,8 @@
     "analysis": "../__analysis",
     "utils": "../__utils",
     "pcsx2": "../__pcsx2",
+    "pcsx2_gamesettings": "@pcsx2/gamesettings",
+    "pcsx2_memcards": "@pcsx2/memcards",
     "build": "build",
     "logs": "logs",
     "patcher": "na2_patcher",
@@ -23,6 +25,7 @@
   },
   "files": {
     "pcsx2_exe": "@pcsx2/pcsx2-qt.exe",
+    "pcsx2_ini": "@pcsx2/inis/PCSX2.ini",
     "na2_command": "@repository/_na2.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1",
     "na2_iso": "@source/NA2.iso",

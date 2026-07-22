@@ -5,10 +5,6 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import patch
-
-from na2_patcher.build_profile import apply_external_translation_package
 from na2_patcher.image_assembler.iso9660 import SECTOR, Iso9660, insert_files
 
 
@@ -261,102 +257,6 @@ class IsoInsertionTests(unittest.TestCase):
             image.write_bytes(raw)
             with self.assertRaisesRegex(RuntimeError, "both-endian"):
                 insert_files(image, {"PRG/MOD.BIN": b"data"})
-
-
-class ExternalTranslationCompositionTests(unittest.TestCase):
-    def test_applies_guarded_edits_to_current_payload_and_declares_insertions(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            package = Path(directory)
-            image = package / "image.iso"
-            make_iso(image)
-            source = Iso9660(image)
-            plan = SimpleNamespace(
-                edits=(
-                    SimpleNamespace(
-                        path="PRG/ETC.BIN",
-                        offset=0,
-                        expected=b"OLD?",
-                        replacement=b"NEW!",
-                    ),
-                ),
-                insertions={
-                    "PRG/MOD.BIN": b"mod",
-                    "PRG/TEXTENG.BIN": b"text",
-                },
-                summary={},
-            )
-            payloads = {"PRG/ETC.BIN": bytearray(b"OLD?")}
-            owners = {"PRG/ETC.BIN": "earlier-module"}
-            insertions: dict[str, bytes] = {}
-            insertion_owners: dict[str, str] = {}
-
-            with patch(
-                "na2_patcher.modules.external_translation."
-                "build_external_translation_plan",
-                return_value=plan,
-            ):
-                _, returned_plan, edit_count, paths = apply_external_translation_package(
-                    package,
-                    module_id="external",
-                    roots={},
-                    source=source,
-                    payloads=payloads,
-                    owners=owners,
-                    insertions=insertions,
-                    insertion_owners=insertion_owners,
-                )
-
-            self.assertIs(returned_plan, plan)
-            self.assertEqual(edit_count, 1)
-            self.assertEqual(payloads["PRG/ETC.BIN"], b"NEW!")
-            self.assertEqual(owners["PRG/ETC.BIN"], "external")
-            self.assertEqual(
-                insertions,
-                {"PRG/MOD.BIN": b"mod", "PRG/TEXTENG.BIN": b"text"},
-            )
-            self.assertEqual(
-                insertion_owners,
-                {"PRG/MOD.BIN": "external", "PRG/TEXTENG.BIN": "external"},
-            )
-            self.assertEqual(
-                paths,
-                ["PRG/ETC.BIN", "PRG/MOD.BIN", "PRG/TEXTENG.BIN"],
-            )
-
-    def test_rejects_incomplete_external_insertion_contract(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            package = Path(directory)
-            image = package / "image.iso"
-            make_iso(image)
-            source = Iso9660(image)
-            plan = SimpleNamespace(
-                edits=(
-                    SimpleNamespace(
-                        path="PRG/ETC.BIN",
-                        offset=0,
-                        expected=b"ETC!",
-                        replacement=b"NEW!",
-                    ),
-                ),
-                insertions={"PRG/MOD.BIN": b"mod"},
-                summary={},
-            )
-            with patch(
-                "na2_patcher.modules.external_translation."
-                "build_external_translation_plan",
-                return_value=plan,
-            ):
-                with self.assertRaisesRegex(RuntimeError, "must insert exactly"):
-                    apply_external_translation_package(
-                        package,
-                        module_id="external",
-                        roots={},
-                        source=source,
-                        payloads={},
-                        owners={},
-                        insertions={},
-                        insertion_owners={},
-                    )
 
 
 if __name__ == "__main__":

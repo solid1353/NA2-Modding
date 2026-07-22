@@ -70,6 +70,9 @@ class TranslationImportPlan:
     packaged_mappings_sha256: str
     import_rows: list[dict[str, str]]
     targets: dict[str, dict[str, object]]
+    text_mappings: tuple[dict[str, object], ...]
+    clean_targets: dict[str, bytes]
+    official_sources: dict[str, bytes]
     summary: dict[str, object]
 
 
@@ -797,5 +800,8 @@ def build_translation_import_plan(
         packaged_mappings_sha256=packaged_hash,
         import_rows=import_rows,
         targets=import_targets,
+        text_mappings=tuple(mappings["text"]),
+        clean_targets=clean_targets,
+        official_sources=official_sources,
         summary=summary,
     )

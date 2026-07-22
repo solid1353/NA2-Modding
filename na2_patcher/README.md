@@ -29,7 +29,6 @@ this deterministic order:
 2. `string_patcher`
 3. `texture_patcher`
 4. `binary_patcher`
-5. `external_translation`
 
 Derived module IDs use `<feature_id>.<module_type>`. The composer resolves
 declared module-artifact dependencies while retaining stable feature/module
@@ -44,10 +43,10 @@ READMEs, engine code, and non-input authoring helpers are excluded.
 
 - `binary_patcher`: `targets.tsv`, `groups.tsv`, `patches.tsv`, `edits.tsv`,
   and every blob referenced by `blob_path`.
-- `string_patcher`: `strings.tsv`.
+- `string_patcher`: required `strings.tsv`; when external placement is declared,
+  paired `config.tsv` and `pointer_refs.tsv`.
 - `translation_importer`: `config.tsv` and `mappings.tsv`.
 - `texture_patcher`: `containers.tsv`, `mappings.tsv`, and `strategies.tsv`.
-- `external_translation`: `config.tsv` and `pointer_refs.tsv`.
 
 Binary package identity is derived from its feature/module path. Binary
 packages have no `manifest.tsv`; normal composition applies their
@@ -59,8 +58,8 @@ inputs only.
 The current profile enables, in order:
 
 1. Localization: importer, string patcher, texture patcher, native NUN5-derived
-   font, regional menu input, UI binary patches, and external
-   `MOD.BIN`/`TEXTENG.BIN` support.
+   font, regional menu input, UI binary patches, and integrated compact
+   `228.BIN` string storage.
 2. QoL: accepted startup, Practice, and mode-selection behavior.
 3. Battle logic: accepted battle-rule behavior.
 
@@ -94,7 +93,7 @@ into typed operations. `na2_patcher/image_assembler/` alone stages and verifies
 `build/NA2.28 - Current.iso.building`. `scripts/na2/build.ps1` discards an
 identical candidate without rotation or atomically promotes a changed one.
 File sizes remain fixed except for the separately approved filesystem insertion
-support used by external translation, which preserves total ISO size and
+support used by compact external strings, which preserves total ISO size and
 validates both ISO9660 and UDF trees.
 
 The ordinary `na2` command builds and launches PCSX2 without changing PNACH

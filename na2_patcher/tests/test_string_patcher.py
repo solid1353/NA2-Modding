@@ -18,8 +18,9 @@ class StringPatcherTests(unittest.TestCase):
         )
         cls.package = string_patcher.build_binary_package(cls.package_directory)
 
-    def test_stores_only_string_declarations(self) -> None:
-        self.assertTrue((self.package_directory / "strings.tsv").is_file())
+    def test_stores_semantic_string_and_external_placement_declarations(self) -> None:
+        for name in ("strings.tsv", "config.tsv", "pointer_refs.tsv"):
+            self.assertTrue((self.package_directory / name).is_file(), name)
         for name in ("manifest.tsv", "targets.tsv", "groups.tsv", "patches.tsv", "edits.tsv"):
             self.assertFalse((self.package_directory / name).exists(), name)
 

@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 from ..binary_patcher import engine as binary_patcher
+from ..translation_importer import engine as translation_importer
+from . import external as external_strings
 
 
 STRING_FIELDS = [
@@ -50,6 +52,14 @@ class StringSpec:
     replacement_text: str
     reason: str
     review_notes: str
+
+
+@dataclass(frozen=True)
+class StringPatchPlan:
+    package: binary_patcher.Package
+    insertions: dict[str, bytes]
+    summary: dict[str, object]
+    external_plan: external_strings.ExternalStringPlan
 
 
 def _encode_slot(text: str, spec: StringSpec, label: str) -> bytes:
@@ -306,6 +316,7 @@ def build_binary_package(
 
     for row_number, row in enumerate(imported_rows, 1):
         label = f"translation import row {row_number}"
+        source_mapping_id = str(row.get("source_mapping_id", "")).strip()
         import_id = str(row.get("import_id", "")).strip()
         group_id = str(row.get("group_id", "")).strip()
         path = binary_patcher.relative_posix(
@@ -381,7 +392,7 @@ def build_binary_package(
             confidence="verified",
             name=import_id,
             description=reason,
-            source_mapping_id=str(row.get("source_mapping_id", "")).strip(),
+            source_mapping_id=source_mapping_id,
             runtime_classification="",
             review_notes="",
         )
@@ -421,3 +432,54 @@ def build_binary_package(
         patches=patches,
         edits=edits,
     )
+
+
+def build_translation_plan(
+    directory: Path,
+    *,
+    translation_plan: translation_importer.TranslationImportPlan,
+) -> StringPatchPlan:
+    """Compile inline imports, external redirects, and one compact module payload."""
+    directory = directory.resolve()
+    external_plan = external_strings.build_external_string_plan(
+        package_directory=directory,
+        translation_plan=translation_plan,
+    )
+    external_rows = tuple(
+        {
+            "import_id": f"XT-I{index:04d}",
+            "group_id": "external_strings",
+            "path": edit.path,
+            "offset": f"0x{edit.offset:X}",
+            "expected_hex": edit.expected.hex().upper(),
+            "replacement_hex": edit.replacement.hex().upper(),
+            "source_mapping_id": edit.mapping_id,
+            "reason": edit.reason,
+        }
+        for index, edit in enumerate(external_plan.edits, 1)
+    )
+    inline_rows = tuple(
+        row
+        for row in translation_plan.import_rows
+        if str(row.get("source_mapping_id", "")).strip()
+        not in external_plan.excluded_mapping_ids
+    )
+    package = build_binary_package(
+        directory,
+        imported_rows=inline_rows + external_rows,
+        imported_targets=translation_plan.targets,
+    )
+    summary = dict(external_plan.summary)
+    summary["inline_import_rows"] = len(inline_rows)
+    summary["external_binary_edits"] = len(external_plan.edits)
+    summary["compiled_binary_edits"] = len(package.edits)
+    return StringPatchPlan(
+        package=package,
+        insertions=external_plan.insertions,
+        summary=summary,
+        external_plan=external_plan,
+    )
+
+
+def external_patch_log_rows(plan: StringPatchPlan) -> list[dict[str, object]]:
+    return external_strings.patch_log_rows(plan.external_plan)

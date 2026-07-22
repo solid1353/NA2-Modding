@@ -20,10 +20,7 @@ from .project_paths import load_project_paths
 
 
 PROJECT_PATHS = load_project_paths(Path(__file__).resolve())
-EXTERNAL_TRANSLATION_INSERTION_PATHS = (
-    "PRG/MOD.BIN",
-    "PRG/TEXTENG.BIN",
-)
+STRING_PATCHER_INSERTION_PATHS = ("PRG/228.BIN",)
 
 
 def normalize(path: str) -> str:
@@ -127,122 +124,6 @@ def apply_texture_patch_package(
     payloads[path] = data
     owners[path] = module_id
     return plan, path
-
-
-def apply_external_translation_package(
-    package_directory: Path,
-    *,
-    module_id: str,
-    roots: dict[str, Path],
-    source: Iso9660,
-    payloads: dict[str, bytearray],
-    owners: dict[str, str],
-    insertions: dict[str, bytes],
-    insertion_owners: dict[str, str],
-) -> tuple[object, object, int, list[str]]:
-    if not package_directory.is_dir():
-        raise ValueError(
-            f"External-translation module input must be a directory: {package_directory}"
-        )
-
-    # Kept lazy so profiles without this module do not require its package.
-    from .modules import external_translation as external_translation_module
-
-    plan = external_translation_module.build_external_translation_plan(
-        package_directory=package_directory,
-        roots=roots,
-    )
-    edits = tuple(plan.edits)
-    if not edits:
-        raise RuntimeError(f"External-translation module contains no edits: {module_id}")
-
-    patched_paths: list[str] = []
-    patched_set: set[str] = set()
-    for edit_number, edit in enumerate(edits, 1):
-        path = normalize(edit.path)
-        if path != edit.path:
-            raise ValueError(
-                f"External-translation edit {edit_number} path is not normalized: "
-                f"{edit.path!r}"
-            )
-        record = source.by_path.get(path)
-        if record is None or record.is_dir:
-            raise RuntimeError(
-                f"External-translation edit {edit_number} path is not in the clean "
-                f"source ISO: {path}"
-            )
-        expected = bytes(edit.expected)
-        replacement = bytes(edit.replacement)
-        if not expected:
-            raise ValueError(
-                f"External-translation edit {edit_number} has an empty guarded range"
-            )
-        if len(expected) != len(replacement):
-            raise ValueError(
-                f"External-translation edit {edit_number} must preserve length "
-                f"({len(expected)} != {len(replacement)})"
-            )
-        offset = edit.offset
-        if not isinstance(offset, int):
-            raise TypeError(
-                f"External-translation edit {edit_number} offset must be an integer"
-            )
-        data = payloads.get(path)
-        if data is None:
-            data = bytearray(source.read_file(record))
-            payloads[path] = data
-        end = offset + len(expected)
-        if offset < 0 or end > len(data):
-            raise ValueError(
-                f"External-translation edit {edit_number} range "
-                f"0x{offset:X}-0x{end:X} is outside {path} ({len(data)} bytes)"
-            )
-        actual = bytes(data[offset:end])
-        if actual != expected:
-            raise RuntimeError(
-                f"External-translation conflict in {module_id}, edit {edit_number}, "
-                f"{path} at 0x{offset:X}: expected {expected.hex().upper()}, "
-                f"found {actual.hex().upper()}"
-            )
-        data[offset:end] = replacement
-        owners[path] = module_id
-        if path not in patched_set:
-            patched_set.add(path)
-            patched_paths.append(path)
-
-    planned_insertions: dict[str, bytes] = {}
-    for supplied_path, supplied_data in plan.insertions.items():
-        path = normalize(supplied_path)
-        if path != supplied_path:
-            raise ValueError(
-                f"External-translation insertion path is not normalized: {supplied_path!r}"
-            )
-        if path in planned_insertions:
-            raise ValueError(f"Duplicate external-translation insertion path: {path}")
-        if not isinstance(supplied_data, (bytes, bytearray, memoryview)):
-            raise TypeError(
-                f"External-translation insertion payload must be bytes: {path}"
-            )
-        planned_insertions[path] = bytes(supplied_data)
-    if tuple(sorted(planned_insertions)) != EXTERNAL_TRANSLATION_INSERTION_PATHS:
-        raise RuntimeError(
-            "External-translation module must insert exactly "
-            + ", ".join(EXTERNAL_TRANSLATION_INSERTION_PATHS)
-        )
-    for path in EXTERNAL_TRANSLATION_INSERTION_PATHS:
-        if path in insertions:
-            raise RuntimeError(f"Multiple modules declare ISO insertion path: {path}")
-        if not planned_insertions[path]:
-            raise ValueError(f"External-translation insertion payload is empty: {path}")
-        insertions[path] = planned_insertions[path]
-        insertion_owners[path] = module_id
-
-    return (
-        external_translation_module,
-        plan,
-        len(edits),
-        patched_paths + list(EXTERNAL_TRANSLATION_INSERTION_PATHS),
-    )
 
 
 def write_binary_patch_log(
@@ -415,15 +296,13 @@ def write_texture_patch_log(
     )
 
 
-def write_external_translation_log(
-    external_translation_module: object,
-    plan: object,
+def write_string_patch_plan_log(
+    plan: string_patcher_module.StringPatchPlan,
     insertion_results: tuple[IsoInsertion, ...],
     log_directory: Path,
 ) -> None:
-    log_directory.mkdir(parents=True, exist_ok=True)
     binary_patcher_module.write_tsv(
-        log_directory / "patch_log.tsv",
+        log_directory / "external_strings.tsv",
         [
             "target",
             "offset",
@@ -434,7 +313,7 @@ def write_external_translation_log(
             "kind",
             "reason",
         ],
-        external_translation_module.patch_log_rows(plan),
+        string_patcher_module.external_patch_log_rows(plan),
     )
     binary_patcher_module.write_tsv(
         log_directory / "insertions.tsv",
@@ -471,7 +350,7 @@ def write_external_translation_log(
         ],
     )
     translation_importer_module.write_json(
-        log_directory / "external_translation_summary.json",
+        log_directory / "string_patch_summary.json",
         plan.summary,
     )
 
@@ -496,27 +375,64 @@ def apply_profile_modules(
     results: list[dict[str, object]] = []
     pending_import_plan: translation_importer_module.TranslationImportPlan | None = None
     for module in resolve_module_order(profile.modules):
-        if module.module in {"binary_patcher", "string_patcher"}:
-            compiled_package = (
-                string_patcher_module.build_binary_package(
+        if module.module == "string_patcher":
+            string_plan = (
+                string_patcher_module.build_translation_plan(
                     module.input_path,
-                    imported_rows=(
-                        pending_import_plan.import_rows
-                        if pending_import_plan is not None
-                        else ()
-                    ),
-                    imported_targets=(
-                        pending_import_plan.targets
-                        if pending_import_plan is not None
-                        else None
-                    ),
+                    translation_plan=pending_import_plan,
                 )
-                if module.module == "string_patcher"
+                if pending_import_plan is not None
                 else None
+            )
+            compiled_package = (
+                string_plan.package
+                if string_plan is not None
+                else string_patcher_module.build_binary_package(module.input_path)
             )
             result = apply_binary_patch_set(
                 module.input_path,
                 package=compiled_package,
+                roots=profile.roots,
+                feature_id=module.feature_id,
+                source=source,
+                payloads=payloads,
+                owners=owners,
+            )
+            paths = list(result["patched_paths"])
+            if string_plan is not None:
+                planned_insertions = {
+                    normalize(path): bytes(payload)
+                    for path, payload in string_plan.insertions.items()
+                }
+                if tuple(sorted(planned_insertions)) != STRING_PATCHER_INSERTION_PATHS:
+                    raise RuntimeError(
+                        "Integrated string patcher must insert exactly "
+                        + ", ".join(STRING_PATCHER_INSERTION_PATHS)
+                    )
+                for path in STRING_PATCHER_INSERTION_PATHS:
+                    if path in insertions:
+                        raise RuntimeError(
+                            f"Multiple modules declare ISO insertion path: {path}"
+                        )
+                    payload = planned_insertions[path]
+                    if not payload:
+                        raise ValueError(f"String-patcher insertion is empty: {path}")
+                    insertions[path] = payload
+                    insertion_owners[path] = module.module_id
+                    paths.append(path)
+            results.append(
+                {
+                    "module": module,
+                    "binary_patch_result": result,
+                    "string_patch_plan": string_plan,
+                    "paths": paths,
+                }
+            )
+            pending_import_plan = None
+            continue
+        if module.module == "binary_patcher":
+            result = apply_binary_patch_set(
+                module.input_path,
                 roots=profile.roots,
                 feature_id=module.feature_id,
                 source=source,
@@ -530,8 +446,6 @@ def apply_profile_modules(
                     "paths": result["patched_paths"],
                 }
             )
-            if module.module == "string_patcher":
-                pending_import_plan = None
             continue
         if module.module == "translation_importer":
             if pending_import_plan is not None or any(
@@ -576,36 +490,6 @@ def apply_profile_modules(
                     "module": module,
                     "texture_patch_plan": plan,
                     "paths": [path],
-                }
-            )
-            continue
-        if module.module == "external_translation":
-            if any("external_translation_plan" in item for item in results):
-                raise ValueError(
-                    "Profile may enable only one external_translation module"
-                )
-            (
-                external_translation_module,
-                plan,
-                edit_count,
-                paths,
-            ) = apply_external_translation_package(
-                module.input_path,
-                module_id=module.module_id,
-                roots=profile.roots,
-                source=source,
-                payloads=payloads,
-                owners=owners,
-                insertions=insertions,
-                insertion_owners=insertion_owners,
-            )
-            results.append(
-                {
-                    "module": module,
-                    "external_translation_module": external_translation_module,
-                    "external_translation_plan": plan,
-                    "external_translation_edits": edit_count,
-                    "paths": paths,
                 }
             )
             continue
@@ -668,7 +552,9 @@ def write_profile_log(
             plan = item["texture_patch_plan"]
             assert isinstance(plan, texture_patcher_module.TexturePatchPlan)
             write_texture_patch_log(plan, module_log)
-        if "external_translation_plan" in item:
+        if item.get("string_patch_plan") is not None:
+            plan = item["string_patch_plan"]
+            assert isinstance(plan, string_patcher_module.StringPatchPlan)
             insertion_results = item.get("insertion_results")
             if not isinstance(insertion_results, tuple) or not all(
                 isinstance(result, IsoInsertion) for result in insertion_results
@@ -676,9 +562,8 @@ def write_profile_log(
                 raise RuntimeError(
                     f"Missing verified insertion results for {module.module_id}"
                 )
-            write_external_translation_log(
-                item["external_translation_module"],
-                item["external_translation_plan"],
+            write_string_patch_plan_log(
+                plan,
                 insertion_results,
                 module_log,
             )
@@ -859,11 +744,8 @@ def main() -> int:
             plan = item["texture_patch_plan"]
             assert isinstance(plan, texture_patcher_module.TexturePatchPlan)
             detail = f", {len(plan.containers)} containers, {plan.mapping_count} mappings"
-        elif "external_translation_plan" in item:
-            detail = (
-                f", {item['external_translation_edits']} edits, "
-                f"{len(item.get('insertion_results', ()))} insertions"
-            )
+        if item.get("string_patch_plan") is not None:
+            detail += f", {len(item.get('insertion_results', ()))} insertion"
         print(f"  {module.order:03d} {module.module_id} ({module.module}{detail})")
         for path in sorted(str(value) for value in item.get("paths", [])):
             print(f"    {green}{path}{reset}")

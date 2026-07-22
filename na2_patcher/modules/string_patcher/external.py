@@ -48,10 +48,11 @@ class PatchEdit:
 
 
 @dataclass(frozen=True)
-class ExternalTranslationPlan:
+class ExternalStringPlan:
     edits: tuple[PatchEdit, ...]
     insertions: dict[str, bytes]
     summary: dict[str, object]
+    excluded_mapping_ids: frozenset[str]
 
 
 @dataclass(frozen=True)
@@ -99,7 +100,7 @@ def _load_config(package_directory: Path) -> dict[str, str]:
     rows = _read_tsv(package_directory / "config.tsv", MANIFEST_FIELDS)
     manifest = {row["key"]: row["value"] for row in rows}
     if len(manifest) != len(rows):
-        raise ValueError("external translation config contains duplicate keys")
+        raise ValueError("string patcher config contains duplicate keys")
     required = {
         "schema_version",
         "mapping_sha256",
@@ -109,18 +110,16 @@ def _load_config(package_directory: Path) -> dict[str, str]:
         "external_string_count",
         "derived_string_count",
         "pointer_edit_count",
-        "restore_edit_count",
+        "distinct_string_count",
+        "encoded_string_bytes",
         "na2_slps_sha256",
         "na2_btl_sha256",
         "na2_etc_sha256",
         "nun5_texteng_sha256",
-        "nun5_texteng_size",
-        "text_load_base",
-        "text_reserved_size",
-        "text_output_size",
-        "text_output_sha256",
+        "output_path",
         "mod_load_base",
         "mod_entry_offset",
+        "mod_strings_offset",
         "mod_output_size",
         "mod_output_sha256",
         "reservation_end",
@@ -136,18 +135,17 @@ def _load_config(package_directory: Path) -> dict[str, str]:
     extra = sorted(manifest.keys() - required)
     if missing or extra:
         raise ValueError(
-            "external translation config key mismatch; "
+            "string patcher config key mismatch; "
             f"missing={missing}, extra={extra}"
         )
-    if manifest["schema_version"] != "1":
-        raise ValueError("external translation schema_version must be 1")
+    if manifest["schema_version"] != "2":
+        raise ValueError("string patcher schema_version must be 2")
     for key in (
         "mapping_sha256",
         "na2_slps_sha256",
         "na2_btl_sha256",
         "na2_etc_sha256",
         "nun5_texteng_sha256",
-        "text_output_sha256",
         "mod_output_sha256",
     ):
         value = manifest[key].upper()
@@ -215,23 +213,6 @@ def _load_references(package_directory: Path) -> tuple[Reference, ...]:
     return tuple(references)
 
 
-def _source_arguments(root: Path, prefix: str) -> dict[str, Path]:
-    if root.is_dir():
-        return {f"{prefix}_folder": root}
-    if root.is_file():
-        return {f"{prefix}_iso": root}
-    raise FileNotFoundError(root)
-
-
-def _read_source(root: Path, candidates: list[str], label: str) -> bytes:
-    source = translation_importer.source_from(
-        root if root.is_dir() else None,
-        root if root.is_file() else None,
-        label,
-    )
-    return source.read(candidates, label)
-
-
 def _require_hash(data: bytes, expected: str, label: str) -> None:
     actual = sha256(data)
     if actual != expected:
@@ -239,45 +220,19 @@ def _require_hash(data: bytes, expected: str, label: str) -> None:
 
 
 def _translation_inputs(
-    package_directory: Path,
-    roots: dict[str, Path],
+    translation_plan: translation_importer.TranslationImportPlan,
     manifest: dict[str, str],
 ) -> tuple[
     dict[str, dict[str, object]],
-    list[dict[str, str]],
     dict[str, bytes],
     dict[str, bytes],
 ]:
-    if "na2" not in roots or "nun5" not in roots:
-        raise ValueError("external translation requires na2 and nun5 roots")
-    translation_directory = package_directory.parent / "translation_importer"
-    mappings_path = translation_directory / "mappings.tsv"
-    _require_hash(mappings_path.read_bytes(), manifest["mapping_sha256"], "mappings.tsv")
-
-    parsed = translation_importer.parse_mappings(
-        translation_importer.read_rows(mappings_path)
-    )
-    text_by_id = {str(row["id"]): row for row in parsed["text"]}
-    if len(text_by_id) != len(parsed["text"]):
-        raise ValueError("canonical translation mappings contain duplicate enabled text IDs")
-
-    translation_plan = translation_importer.build_translation_import_plan(
-        **_source_arguments(roots["na2"], "na2"),
-        **_source_arguments(roots["nun5"], "nun5"),
-        data_root=translation_directory,
-        apply="BTL,ETC,SLPS",
-    )
     if translation_plan.packaged_mappings_sha256.upper() != manifest["mapping_sha256"]:
-        raise RuntimeError("translation metadata hash disagrees with external config")
-
-    clean_targets = {
-        target: _read_source(
-            roots["na2"],
-            translation_importer.TARGET_SPECS[target][1],
-            f"NA2 {target}",
-        )
-        for target in TARGET_PATHS
-    }
+        raise RuntimeError("translation metadata hash disagrees with string-patcher config")
+    text_by_id = {str(row["id"]): row for row in translation_plan.text_mappings}
+    if len(text_by_id) != len(translation_plan.text_mappings):
+        raise ValueError("canonical translation mappings contain duplicate enabled text IDs")
+    clean_targets = translation_plan.clean_targets
     expected_hashes = {
         "SLPS": manifest["na2_slps_sha256"],
         "BTL": manifest["na2_btl_sha256"],
@@ -286,16 +241,13 @@ def _translation_inputs(
     for target, data in clean_targets.items():
         _require_hash(data, expected_hashes[target], f"NA2 {target}")
 
-    official_sources = {
-        source_id: _read_source(roots["nun5"], candidates, source_id)
-        for source_id, candidates in translation_importer.SOURCE_SPECS.items()
-    }
+    official_sources = translation_plan.official_sources
     _require_hash(
         official_sources["NUN5_TEXTENG"],
         manifest["nun5_texteng_sha256"],
         "NUN5 TEXTENG.BIN",
     )
-    return text_by_id, translation_plan.import_rows, clean_targets, official_sources
+    return text_by_id, clean_targets, official_sources
 
 
 def _validate_reference_coverage(
@@ -360,32 +312,25 @@ def _align(value: int, alignment: int) -> int:
     return (value + alignment - 1) & -alignment
 
 
-def _build_texteng(
+def _build_compact_mod(
     references: tuple[Reference, ...],
     text_by_id: dict[str, dict[str, object]],
     official_sources: dict[str, bytes],
     manifest: dict[str, str],
 ) -> tuple[bytes, dict[str, int], list[dict[str, object]]]:
-    donor = official_sources["NUN5_TEXTENG"]
-    donor_size = _parse_int(manifest["nun5_texteng_size"], "nun5_texteng_size")
-    output_size = _parse_int(manifest["text_output_size"], "text_output_size")
-    load_base = _parse_int(manifest["text_load_base"], "text_load_base")
-    reserved_size = _parse_int(manifest["text_reserved_size"], "text_reserved_size")
-    if len(donor) != donor_size:
-        raise RuntimeError(f"Unexpected donor TEXTENG size: {len(donor)}")
-    header = struct.unpack_from("<4s7I", donor, 0)
-    expected_header = (
-        b"MWo3",
-        4,
-        load_base,
-        0xC0,
-        donor_size - 0x100,
-        0,
-        load_base + donor_size,
-        load_base + donor_size,
-    )
-    if header != expected_header:
-        raise RuntimeError(f"Unexpected donor TEXTENG MWO3 header: {header!r}")
+    output_size = _parse_int(manifest["mod_output_size"], "mod_output_size")
+    load_base = _parse_int(manifest["mod_load_base"], "mod_load_base")
+    entry_offset = _parse_int(manifest["mod_entry_offset"], "mod_entry_offset")
+    strings_offset = _parse_int(manifest["mod_strings_offset"], "mod_strings_offset")
+    output_path = manifest["output_path"]
+    output_name = Path(output_path).name
+    if output_path != f"PRG/{output_name}" or output_name != output_name.upper():
+        raise ValueError("output_path must be an uppercase file directly under PRG")
+    internal_name = output_name.lower().encode("ascii") + b"\0"
+    if len(internal_name) != 8:
+        raise ValueError("compact module filename must encode to seven ASCII bytes")
+    if entry_offset != 0x40 or strings_offset < entry_offset + 8:
+        raise RuntimeError("compact MOD code/string layout is invalid")
 
     parent_ids = {
         row.parent_mapping_id
@@ -403,9 +348,27 @@ def _build_texteng(
     ):
         raise RuntimeError("unexpected external string count")
 
-    result = bytearray(donor)
+    result = bytearray(output_size)
+    struct.pack_into(
+        "<4s7I",
+        result,
+        0,
+        b"MWo3",
+        8,
+        load_base,
+        entry_offset,
+        output_size - 0x50,
+        0,
+        load_base + output_size,
+        load_base + output_size,
+    )
+    result[0x20:0x28] = internal_name
+    struct.pack_into("<II", result, entry_offset, 0x03E00008, 0)
+
     addresses: dict[str, int] = {}
     string_rows: list[dict[str, object]] = []
+    locations: dict[bytes, int] = {}
+    cursor = strings_offset
     for mapping_id in sorted(str(value) for value in effective_ids):
         mapping = text_by_id[mapping_id]
         source_id = str(mapping["source"])
@@ -413,24 +376,31 @@ def _build_texteng(
         if source_id != "NUN5_TEXTENG":
             raise RuntimeError(f"{mapping_id}: external source must be NUN5_TEXTENG")
 
-        raw_source = mapping_id in parent_ids or not str(mapping["transform"])
-        if raw_source:
+        if mapping_id in parent_ids or not str(mapping["transform"]):
             text = translation_importer.read_official_z(
                 official_sources[source_id], source_offset, mapping_id
             )
-            address = load_base + source_offset
-            materialization = "donor"
-            file_offset = source_offset
+            materialization = "packed_donor"
         else:
             text = translation_importer.resolve_source_text(
                 mapping, official_sources, mapping_id
             )
-            encoded = text.encode("cp1252") + b"\0"
-            file_offset = _align(len(result), 4)
-            result.extend(b"\0" * (file_offset - len(result)))
-            address = load_base + file_offset
-            result.extend(encoded)
-            materialization = "derived"
+            materialization = "packed_derived"
+        encoded = text.encode("cp1252") + b"\0"
+        file_offset = locations.get(encoded)
+        if file_offset is None:
+            file_offset = _align(cursor, 4)
+            end = file_offset + len(encoded)
+            if end > output_size:
+                raise RuntimeError(
+                    f"compact MOD string pool exceeds 0x{output_size:X} bytes"
+                )
+            result[file_offset:end] = encoded
+            locations[encoded] = file_offset
+            cursor = end
+        else:
+            materialization = "deduplicated"
+        address = load_base + file_offset
         addresses[mapping_id] = address
         string_rows.append(
             {
@@ -438,23 +408,26 @@ def _build_texteng(
                 "materialization": materialization,
                 "file_offset": f"0x{file_offset:X}",
                 "runtime_address": f"0x{address:X}",
-                "encoded_bytes": len(text.encode("cp1252")) + 1,
-                "text_sha256": sha256(text.encode("cp1252")),
+                "encoded_bytes": len(encoded),
+                "text_sha256": sha256(encoded[:-1]),
             }
         )
 
-    derived_count = sum(row["materialization"] == "derived" for row in string_rows)
+    derived_count = sum(row["materialization"] == "packed_derived" for row in string_rows)
     if derived_count != _parse_int(manifest["derived_string_count"], "derived_string_count"):
         raise RuntimeError("unexpected derived-string count")
-    if len(result) > output_size:
+    if len(locations) != _parse_int(
+        manifest["distinct_string_count"], "distinct_string_count"
+    ):
+        raise RuntimeError("unexpected distinct external-string count")
+    if sum(len(value) for value in locations) != _parse_int(
+        manifest["encoded_string_bytes"], "encoded_string_bytes"
+    ):
+        raise RuntimeError("unexpected compact external-string byte count")
+    if _align(cursor, 0x10) != output_size:
         raise RuntimeError(
-            f"generated TEXTENG payload is 0x{len(result):X}, exceeds 0x{output_size:X}"
+            f"compact MOD payload ends at 0x{cursor:X}, not the declared 0x{output_size:X} envelope"
         )
-    result.extend(b"\0" * (output_size - len(result)))
-    struct.pack_into("<I", result, 0x10, output_size - 0x100)
-    struct.pack_into("<II", result, 0x18, load_base + output_size, load_base + output_size)
-    if len(result) > reserved_size:
-        raise RuntimeError("generated TEXTENG exceeds its reserved memory envelope")
     return bytes(result), addresses, string_rows
 
 
@@ -488,106 +461,6 @@ def _jal(address: int) -> int:
 
 def _words(values: list[int]) -> bytes:
     return struct.pack("<" + "I" * len(values), *values)
-
-
-def _build_mod(manifest: dict[str, str]) -> bytes:
-    size = _parse_int(manifest["mod_output_size"], "mod_output_size")
-    load_base = _parse_int(manifest["mod_load_base"], "mod_load_base")
-    entry_offset = _parse_int(manifest["mod_entry_offset"], "mod_entry_offset")
-    loader = _parse_int(manifest["loader_function"], "loader_function")
-    filename_offset = 0x70
-    filename = b"TEXTENG.BIN\0"
-    code = _words(
-        [
-            _addiu(29, 29, -0x20),
-            _sd(31, 29, 0x10),
-            _addiu(4, 0, 3),
-            _lui(5, load_base >> 16),
-            _addiu(5, 5, filename_offset),
-            _jal(loader),
-            0,
-            _ld(31, 29, 0x10),
-            _addiu(29, 29, 0x20),
-            0x03E00008,
-            0,
-        ]
-    )
-    if entry_offset != 0x40 or entry_offset + len(code) > filename_offset:
-        raise RuntimeError("MOD code/string layout no longer fits the fixed envelope")
-    result = bytearray(size)
-    struct.pack_into(
-        "<4s7I",
-        result,
-        0,
-        b"MWo3",
-        8,
-        load_base,
-        0x40,
-        size - 0x50,
-        0,
-        load_base + size,
-        load_base + size,
-    )
-    result[0x20:0x28] = b"Mod.bin\0"
-    result[entry_offset : entry_offset + len(code)] = code
-    result[filename_offset : filename_offset + len(filename)] = filename
-    return bytes(result)
-
-
-def _restore_edits(
-    patch_rows: list[dict[str, str]],
-    text_by_id: dict[str, dict[str, object]],
-    clean_targets: dict[str, bytes],
-    manifest: dict[str, str],
-) -> list[PatchEdit]:
-    shortening = [row for row in text_by_id.values() if row["mode"] == "shorten"]
-    edits: list[PatchEdit] = []
-    restored_ids: set[str] = set()
-    for row in patch_rows:
-        if not row["replacement_text"].startswith("[S]"):
-            continue
-        path = row["path"].upper()
-        offset = int(row["offset"], 0)
-        expected = bytes.fromhex(row["replacement_hex"])
-        replacement = bytes.fromhex(row["expected_hex"])
-        matches = [
-            mapping
-            for mapping in shortening
-            if TARGET_PATHS[str(mapping["target"])] == path
-            and int(mapping["target_offset"]) <= offset
-            and offset + len(expected)
-            <= int(mapping["target_offset"]) + int(mapping["capacity"])
-        ]
-        if len(matches) != 1:
-            raise RuntimeError(
-                f"cannot associate shortened translation patch {path} 0x{offset:X}"
-            )
-        mapping_id = str(matches[0]["id"])
-        target = str(matches[0]["target"])
-        clean = clean_targets[target]
-        if clean[offset : offset + len(replacement)] != replacement:
-            raise RuntimeError(f"{mapping_id}: clean restoration bytes disagree")
-        edits.append(
-            PatchEdit(
-                path=path,
-                offset=offset,
-                expected=expected,
-                replacement=replacement,
-                mapping_id=mapping_id,
-                kind="restore_inline",
-                reason="Restore the clean NA2 slot after redirecting its display pointer to official external text.",
-            )
-        )
-        restored_ids.add(mapping_id)
-
-    expected_count = _parse_int(manifest["restore_edit_count"], "restore_edit_count")
-    shortening_ids = {str(row["id"]) for row in shortening}
-    if len(edits) != expected_count or restored_ids != shortening_ids:
-        raise RuntimeError(
-            f"unexpected inline restoration coverage: edits={len(edits)}, "
-            f"missing={sorted(shortening_ids - restored_ids)}"
-        )
-    return edits
 
 
 def _pointer_edits(
@@ -681,17 +554,15 @@ def _structural_edits(clean: bytes, manifest: dict[str, str]) -> list[PatchEdit]
     destination_offset = _parse_int(
         manifest["destination_table_file_offset"], "destination_table_file_offset"
     )
-    text_base = _parse_int(manifest["text_load_base"], "text_load_base")
     mod_base = _parse_int(manifest["mod_load_base"], "mod_load_base")
     mod_entry = mod_base + _parse_int(manifest["mod_entry_offset"], "mod_entry_offset")
     old_boundary = _parse_int(manifest["old_memory_boundary"], "old_memory_boundary")
     new_boundary = _parse_int(manifest["reservation_end"], "reservation_end")
+    filename = Path(manifest["output_path"]).name.encode("ascii") + b"\0"
+    if len(filename) != 8:
+        raise ValueError("compact module loader filename must be seven ASCII bytes")
     if new_boundary != mod_base + _parse_int(manifest["mod_output_size"], "mod_output_size"):
         raise RuntimeError("reservation_end does not match the fixed MOD envelope")
-    if mod_base - text_base != _parse_int(
-        manifest["text_reserved_size"], "text_reserved_size"
-    ):
-        raise RuntimeError("text reservation does not end at the MOD base")
 
     edits: list[PatchEdit] = []
     edits.append(
@@ -712,10 +583,10 @@ def _structural_edits(clean: bytes, manifest: dict[str, str]) -> list[PatchEdit]
         "<8I",
         1,
         0x507480,
-        text_base,
-        text_base,
+        mod_base,
+        mod_base,
         0,
-        new_boundary - text_base,
+        new_boundary - mod_base,
         7,
         0x80,
     )
@@ -730,19 +601,19 @@ def _structural_edits(clean: bytes, manifest: dict[str, str]) -> list[PatchEdit]
             replacement=reservation + new_final,
             mapping_id="ELF-XT-PHEADERS",
             kind="memory_layout",
-            reason="Reserve resident TEXTENG/MOD memory and retain a final zero-size marker.",
+            reason="Reserve the compact resident MOD code/data envelope and retain a final zero-size marker.",
         )
     )
 
     boundary_words = (
-        (0x220, 0x3C03008E, 0x3C030094, "ELF-XT-BOUNDARY-1H"),
-        (0x228, 0x2463D080, 0x24630100, "ELF-XT-BOUNDARY-1L"),
-        (0x2D0, 0x3C04008E, 0x3C040094, "ELF-XT-BOUNDARY-2H"),
-        (0x2D8, 0x2484D080, 0x24840100, "ELF-XT-BOUNDARY-2L"),
-        (0x1885C, 0x3C17008E, 0x3C170094, "ELF-XT-BOUNDARY-3H"),
-        (0x18860, 0x26F7D080, 0x26F70100, "ELF-XT-BOUNDARY-3L"),
-        (0x4D6908, 0x3C03008E, 0x3C030094, "ELF-XT-BOUNDARY-4H"),
-        (0x4D690C, 0x2463D080, 0x24630100, "ELF-XT-BOUNDARY-4L"),
+        (0x220, 0x3C03008E, 0x3C03008F, "ELF-XT-BOUNDARY-1H"),
+        (0x228, 0x2463D080, 0x24634460, "ELF-XT-BOUNDARY-1L"),
+        (0x2D0, 0x3C04008E, 0x3C04008F, "ELF-XT-BOUNDARY-2H"),
+        (0x2D8, 0x2484D080, 0x24844460, "ELF-XT-BOUNDARY-2L"),
+        (0x1885C, 0x3C17008E, 0x3C17008F, "ELF-XT-BOUNDARY-3H"),
+        (0x18860, 0x26F7D080, 0x26F74460, "ELF-XT-BOUNDARY-3L"),
+        (0x4D6908, 0x3C03008E, 0x3C03008F, "ELF-XT-BOUNDARY-4H"),
+        (0x4D690C, 0x2463D080, 0x24634460, "ELF-XT-BOUNDARY-4L"),
     )
     for offset, expected_word, replacement_word, mapping_id in boundary_words:
         edits.append(
@@ -753,7 +624,7 @@ def _structural_edits(clean: bytes, manifest: dict[str, str]) -> list[PatchEdit]
                 replacement=struct.pack("<I", replacement_word),
                 mapping_id=mapping_id,
                 kind="memory_layout",
-                reason="Move a hardcoded resident-memory boundary to 0x00940100.",
+                reason="Move a hardcoded resident-memory boundary to the compact MOD end.",
             )
         )
     for offset, mapping_id, reason in (
@@ -776,11 +647,11 @@ def _structural_edits(clean: bytes, manifest: dict[str, str]) -> list[PatchEdit]
         _guarded_edit(
             clean,
             offset=destination_offset + 8,
-            expected=b"\0" * 8,
-            replacement=struct.pack("<II", mod_base, text_base),
+            expected=b"\0" * 4,
+            replacement=struct.pack("<I", mod_base),
             mapping_id="ELF-XT-LOAD-SLOTS",
             kind="loader",
-            reason="Assign generic PRG loader slots 2 and 3 to MOD.BIN and TEXTENG.BIN.",
+            reason="Assign generic PRG loader slot 2 to the compact translation module.",
         )
     )
 
@@ -806,7 +677,7 @@ def _structural_edits(clean: bytes, manifest: dict[str, str]) -> list[PatchEdit]
             0,
         ]
     )
-    cave_payload = cave_code + b"MOD.BIN\0"
+    cave_payload = cave_code + filename
     edits.append(
         _guarded_edit(
             clean,
@@ -815,7 +686,7 @@ def _structural_edits(clean: bytes, manifest: dict[str, str]) -> list[PatchEdit]
             replacement=cave_payload,
             mapping_id="ELF-XT-BOOTSTRAP",
             kind="loader",
-            reason="Load MOD.BIN once during the existing constructor path, invoke its bootstrap, then preserve the original call.",
+            reason=f"Load {filename[:-1].decode('ascii')} once during the existing constructor path, invoke its entry, then preserve the original call.",
         )
     )
     edits.append(
@@ -847,51 +718,43 @@ def _validate_nonoverlap(edits: list[PatchEdit]) -> tuple[PatchEdit, ...]:
     return tuple(ordered)
 
 
-def build_external_translation_plan(
+def build_external_string_plan(
     *,
     package_directory: Path,
-    roots: dict[str, Path],
-) -> ExternalTranslationPlan:
+    translation_plan: translation_importer.TranslationImportPlan,
+) -> ExternalStringPlan:
     package_directory = package_directory.resolve()
     manifest = _load_config(package_directory)
     references = _load_references(package_directory)
-    text_by_id, translation_rows, clean_targets, official_sources = _translation_inputs(
-        package_directory, roots, manifest
+    text_by_id, clean_targets, official_sources = _translation_inputs(
+        translation_plan, manifest
     )
-    _validate_reference_coverage(references, text_by_id, manifest)
+    shortening_ids = _validate_reference_coverage(references, text_by_id, manifest)
 
-    texteng, addresses, string_rows = _build_texteng(
+    mod, addresses, string_rows = _build_compact_mod(
         references, text_by_id, official_sources, manifest
     )
-    mod = _build_mod(manifest)
-    actual_text_hash = sha256(texteng)
     actual_mod_hash = sha256(mod)
-    if (
-        actual_text_hash != manifest["text_output_sha256"]
-        or actual_mod_hash != manifest["mod_output_sha256"]
-    ):
+    if actual_mod_hash != manifest["mod_output_sha256"]:
         raise RuntimeError(
-            "generated external payload hash mismatch: "
-            f"TEXTENG={actual_text_hash} expected={manifest['text_output_sha256']}; "
-            f"MOD={actual_mod_hash} expected={manifest['mod_output_sha256']}"
+            "generated compact MOD hash mismatch: "
+            f"{actual_mod_hash} expected={manifest['mod_output_sha256']}"
         )
 
     edits = _validate_nonoverlap(
-        _restore_edits(translation_rows, text_by_id, clean_targets, manifest)
-        + _pointer_edits(references, addresses, clean_targets, manifest)
+        _pointer_edits(references, addresses, clean_targets, manifest)
         + _structural_edits(clean_targets["SLPS"], manifest)
     )
     counts = Counter(edit.kind for edit in edits)
     insertions = dict(
         sorted(
             {
-                "PRG/MOD.BIN": mod,
-                "PRG/TEXTENG.BIN": texteng,
+                manifest["output_path"]: mod,
             }.items()
         )
     )
     summary: dict[str, object] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "mapping_sha256": manifest["mapping_sha256"],
         "edit_count": len(edits),
         "edits_by_kind": dict(sorted(counts.items())),
@@ -902,15 +765,26 @@ def build_external_translation_plan(
         },
         "external_strings": {
             "count": len(string_rows),
-            "donor": sum(row["materialization"] == "donor" for row in string_rows),
-            "derived": sum(row["materialization"] == "derived" for row in string_rows),
+            "distinct": len({row["runtime_address"] for row in string_rows}),
+            "encoded_bytes": _parse_int(
+                manifest["encoded_string_bytes"], "encoded_string_bytes"
+            ),
+            "derived": sum(
+                row["materialization"] == "packed_derived" for row in string_rows
+            ),
             "rows": string_rows,
         },
+        "inline_shortening_imports_omitted": len(shortening_ids),
     }
-    return ExternalTranslationPlan(edits, insertions, summary)
+    return ExternalStringPlan(
+        edits,
+        insertions,
+        summary,
+        frozenset(shortening_ids),
+    )
 
 
-def patch_log_rows(plan: ExternalTranslationPlan) -> list[dict[str, object]]:
+def patch_log_rows(plan: ExternalStringPlan) -> list[dict[str, object]]:
     return [
         {
             "target": edit.path,

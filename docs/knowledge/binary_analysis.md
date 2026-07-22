@@ -114,8 +114,8 @@ NA2 and NUN5 have byte-identical 124-byte lists. NUN6 A35 adds
 resident code module rather than declaring every required file. On 2026-07-20,
 the user confirmed that the integrated NA2 ISO works in-game while loading the
 new `PRG/MOD.BIN` and `PRG/TEXTENG.BIN` through explicit paths with the original
-NA2 `FLIST.DIR` unchanged. External translation therefore intentionally omits a
-FLIST edit.
+NA2 `FLIST.DIR` unchanged. The compact successor loads only `PRG/228.BIN`
+through the same path and therefore also intentionally omits a FLIST edit.
 
 ## Analysis levels
 

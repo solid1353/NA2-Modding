@@ -69,9 +69,6 @@ class ProfileTests(unittest.TestCase):
         elif module_type == "texture_patcher":
             for name in ("containers.tsv", "mappings.tsv", "strategies.tsv"):
                 (module / name).write_text("id\n", encoding="utf-8")
-        elif module_type == "external_translation":
-            (module / "config.tsv").write_text("key\tvalue\n", encoding="utf-8")
-            (module / "pointer_refs.tsv").write_text("id\n", encoding="utf-8")
         else:
             self.fail(f"unsupported test module {module_type}")
         return module
@@ -268,7 +265,6 @@ class ProfileTests(unittest.TestCase):
                 "localization.string_patcher",
                 "localization.texture_patcher",
                 "localization.binary_patcher",
-                "localization.external_translation",
                 "qol.binary_patcher",
                 "battle_logic.binary_patcher",
             ],

@@ -25,8 +25,8 @@ Exact inputs and observations are preserved in:
 
 ## Decision summary
 
-Loading the whole current `TEXTENG.BIN` is **not a severe near-term handicap**
-to code injection in the sampled states. The structural reservation reduces the
+The captured two-file `TEXTENG.BIN` build was **not a severe near-term handicap**
+to code injection in the sampled states. Its structural reservation reduces the
 game heap by exactly `0x63080` bytes (405,632 bytes, 396.125 KiB), while the
 tightest Current capture still has:
 
@@ -42,19 +42,21 @@ indexes, and internal pointer tables are unused by the current NA2 design. See
 [`external_translation_files.md`](external_translation_files.md) for the
 decompilation and integration evidence.
 
-The recommended architecture is therefore:
+The implemented compact architecture therefore:
 
-1. The full donor may remain during translation and injection prototyping when
-   stable donor offsets are more valuable than 396 KiB of heap.
-2. Treat `0x008DD080-0x00940100` as one shared, explicitly allocated resident
-   code/data reservation. Do not let TEXT, MOD, and later injections grow into
-   one another independently.
-3. Before freezing the injection ABI, or when resident code/data needs more
-   than the current 109.25 KiB largest fixed zero run, replace the whole donor
-   with a compact external string pool.
-4. Retain the whole donor long-term only if NA2 will actually adopt its broader
-   localization database/index behavior. The current direct-pointer design does
-   not use that structure.
+1. replaces the whole donor and separate bootstrap with one `0x760`-byte
+   `228.BIN` at `0x008F3D00`;
+2. moves the structural boundary down from `0x00940100` to `0x008F4460`,
+   recovering `0x4BCA0` bytes for the heap;
+3. retains the donor only as read-only source provenance, not as an emitted
+   runtime file;
+4. keeps later resident code/data expansion explicit rather than silently
+   growing into the heap or overlay window.
+
+The compact layout is structurally and unit validated but had not yet received
+matched runtime captures when this map was updated. The table below therefore
+continues to describe the measured two-file Current build, not the new compact
+one-file reservation.
 
 Direct inline patching alone is not an equivalent full-string alternative.
 The selected inline NA2 slots are the reason shortening fallbacks exist; the
@@ -217,7 +219,7 @@ rows and three continuation rows resolved through parent messages. That produces
 there are 30 distinct addressed strings: 26 donor strings and four derived
 strings. Their exact encoded payload is 1,572 bytes including terminators.
 
-A conservative compact-pool model keeps a `0x100`-byte MWo3-compatible header
+The implemented compact MOD keeps a `0x100`-byte MWo3-compatible header/code
 area, packs the 30 distinct strings in stable mapping-ID order with each start
 aligned to four bytes, and rounds the final image to 16 bytes. It yields:
 
@@ -225,16 +227,15 @@ aligned to four bytes, and rounds the final image to 16 bytes. It yields:
 | --- | ---: |
 | Current generated whole donor | `0x30E00` (200,192) |
 | Current reserved TEXT envelope | `0x4C300` (312,064) |
-| Compact selected-string pool | `0x760` (1,888) |
+| Compact MOD including selected-string pool | `0x760` (1,888) |
 | Reclaimed versus current file bytes | `0x306A0` (198,304) |
 | Reclaimed inside the TEXT envelope | `0x4BBA0` (310,176) |
 
-With the existing `0x008F3D00` text base and `0x00940000` MOD base, the compact
-pool would end at `0x008F4460`. That leaves one contiguous
-`0x008F4460-0x00940000` region of `0x4BBA0` bytes (302.906 KiB), plus the
-separate `0x16C80` pre-gap. After retaining the `0x760` pool and current
-`0x100` MOD, the whole fixed reservation would contain `0x62820` bytes
-(403,488 bytes, 394.031 KiB) available for explicitly assigned code/data.
+At the existing `0x008F3D00` base, the compact MOD ends at `0x008F4460`.
+Moving the structural boundary to that exact end recovers `0x4BCA0` bytes
+(310,432 bytes, 303.156 KiB) relative to the measured two-file boundary at
+`0x00940100`. The earlier `0x16C80` safety gap remains reserved between the
+largest overlay and the compact MOD.
 
 The current whole-donor layout already contains `0x32180` zero bytes
 (205,184 bytes, 200.375 KiB), but they are split into `0x16C80` and `0x1B500`
@@ -275,7 +276,7 @@ NA2 export under `@analysis/disassembly/NA2/exports/SLPS_258.37/`. The whole-
 TEXTENG structure and used-string analysis is canonical in
 [`external_translation_files.md`](external_translation_files.md), updated by
 commit `cb7d1d7`. The compact-pool calculation was independently reproduced from
-the active hash-pinned external-translation plan and its 30 distinct generated
+the active hash-pinned string-patcher plan and its 30 distinct generated
 string locations.
 
 No original source media was modified. No ISO or binary was rebuilt for this

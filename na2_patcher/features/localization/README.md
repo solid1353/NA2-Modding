@@ -7,7 +7,7 @@ while reusable executable engines remain under `na2_patcher/modules/`.
 - [String patcher](#string-patcher)
 - [Texture patcher](#ui-texture-translation-module)
 - [Binary patcher](#ui-translation-binary-patcher-patch-set)
-- [External translation](#external-translation)
+- [Compact external strings](#compact-external-strings)
 - [Native NUN5-derived font](#native-nun5-derived-font)
 - [Regional menu input](#regional-menu-input)
 
@@ -48,7 +48,11 @@ Official NUN5 sources:
 - `PRG/TEXTENG.BIN`
 - `SLES_556.05`
 
-`slot` and `sequence` mappings read their English bytes from exact NUN5 offsets at build time. The only manual English permitted is in `shorten` rows, where the replacement begins with `[S]` because the official NUN5 text cannot fit the original NA2 slot. No translation is relocated into spare space and no text pointer is rewritten.
+`slot` and `sequence` mappings read their English bytes from exact NUN5 offsets
+at build time. `shorten` rows retain an `[S]` fallback/debt marker because the
+official NUN5 text cannot fit the original NA2 slot. The current integrated
+`string_patcher` omits those fallback writes and places their exact official
+strings in its compact resident MOD pool instead.
 
 ### Canonical `mappings.tsv`
 
@@ -72,11 +76,15 @@ The 12 columns are:
 
 - `slot`: copy one exact official NUN5 text value into one original NA2 slot.
 - `sequence`: pack selected exact `<br>` parts from one official NUN5 string into one verified NA2 multi-string block using NUL separators.
-- `shorten`: use the `[S]` replacement in `value`, retaining the exact NUN5 source reference for traceability.
+- `shorten`: retain an `[S]` fallback/debt marker in `value` and an exact NUN5
+  source reference; the current integrated string patcher externalizes the
+  official text instead of writing the fallback inline.
 - `bytes`: fixed-size structural patch represented as `EXPECTED=>REPLACEMENT` in `value`.
 - `unresolved`: retain an investigated but unsafe or unproven mapping without applying it.
 
-There is no `pool` mode. Text stays in its original target slot.
+There is no `pool` mapping mode. External placement is a `string_patcher`
+policy derived from the existing `shorten` rows and their canonical source
+references.
 
 #### Source references and transforms
 
@@ -502,13 +510,14 @@ targets, and enabling the Localization feature invokes the complete importer.
 
 ## String patcher
 
-This module owns application of fixed-size embedded-string replacements. Its
-sole persisted executable input is `strings.tsv`, which contains local semantic
-declarations such as encoding, storage mode, expected text, replacement text,
-capacity, and target location. At profile composition time it also accepts
-validated in-memory rows from `translation_importer`. It compiles both sources
-into one in-memory binary-patcher package with organizational groups and
-default-enabled patches, then delegates
+This module owns all string placement. Its persisted executable inputs are
+`strings.tsv` for local semantic declarations, `config.tsv` for the compact
+resident layout and source/output guards, and `pointer_refs.tsv` for every
+verified external reference. At profile composition time it accepts validated
+in-memory rows and source data from `translation_importer`. It compiles inline
+imports, external pointer/loader edits, and local declarations into one
+in-memory binary-patcher package with organizational groups and default-enabled
+patches, then delegates
 byte guards, conflict handling, replacement, and logging to
 `na2_patcher.modules.binary_patcher.engine`. Imported mapping data is not copied
 into this module, and no binary-patcher tables or duplicate patch engine are
@@ -908,27 +917,28 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
   --patch UI-ELF-006
 ```
 
-## External translation
+## Compact external strings
 
-This module externalizes only the official NUN5 text needed by the 33 enabled
+The integrated `string_patcher` externalizes only the official NUN5 text needed by the 33 enabled
 `[S]` shortening mappings. It does not change the canonical translation table,
 its defaults, its migration behavior, or its enabled state, and it never reads
 or patches `ADV.bin`.
 
-The module deterministically generates exactly two ISO insertions:
+It deterministically generates exactly one ISO insertion:
 
-- `PRG/TEXTENG.BIN`: the exact official NUN5 file plus four source-derived
-  strings that the existing mapping transforms construct from official text;
-- `PRG/MOD.BIN`: a minimal resident MWO3 bootstrap that asks NA2's existing PRG
-  loader to load `TEXTENG.BIN`.
+- `PRG/228.BIN`: a `0x760`-byte resident MWO3 code/data image containing a
+  return-only entry stub and the 30 distinct official strings actually
+  referenced by the current 31 logical external messages.
 
-The translation importer and consuming string patcher still run first. This module then:
+The translation importer resolves and validates the canonical mapping data once.
+The consuming string patcher then:
 
-1. redirects every inventoried use of a shortened slot to its official external
+1. omits all imported edits belonging to the 33 `shorten` mappings, so the clean
+   NA2 slots are never overwritten and no restoration pass is needed;
+2. redirects every inventoried use of those slots to its official MOD-resident
    string;
-2. restores the now-dead inline `[S]` bytes to the exact clean NA2 bytes;
-3. adds the guarded ELF loader hook, load destinations, and resident-memory
-   reservation needed by the two generated files.
+3. adds the guarded ELF loader hook, one load destination, and compact
+   resident-memory reservation needed by `228.BIN`.
 
 All binary output is generated in memory by `engine.py`. No patched ELF, BIN, or
 ISO payload is stored in Git.
@@ -941,25 +951,25 @@ ISO payload is stored in Git.
   pointer word. Three continuation rows deliberately reuse their containing
   full-message pointer.
 
-Only those two TSV files from this module directory are covered by the
-Localization feature's aggregate profile hash. The engine and documentation
-are covered by the repository-wide patcher preflight.
+These files live beside `strings.tsv` under the one `string_patcher` module and
+are covered by the Localization feature's aggregate profile hash. The engine
+and documentation are excluded from that data pin.
 
 ### Fixed layout
 
 | Item | Value |
 | --- | ---: |
-| `TEXTENG.BIN` load base | `0x008F3D00` |
-| `TEXTENG.BIN` generated bytes | `0x30E00` |
-| Text reservation end / MOD base | `0x00940000` |
-| `MOD.BIN` generated bytes | `0x100` |
-| MOD bootstrap entry | `0x00940040` |
-| Final resident boundary | `0x00940100` |
+| `228.BIN` load base | `0x008F3D00` |
+| MOD entry | `0x008F3D40` |
+| String pool start | `0x008F3E00` |
+| `228.BIN` generated bytes | `0x760` |
+| Final resident boundary | `0x008F4460` |
 
-The generated text file retains every unchanged official donor string at its
-original raw offset. Four transformed strings are appended in mapping-ID order
-at four-byte-aligned offsets. The generated MOD has no constructor range; the
-ELF bootstrap calls its documented entry explicitly.
+Strings are resolved through the importer, encoded as CP1252 plus a terminator,
+deduplicated by exact encoded bytes, and packed in stable mapping-ID order at
+four-byte-aligned offsets. They occupy 1,572 bytes; M2003 and M2065 deliberately
+share one identical packed value. The generated MOD has no constructor range;
+the ELF bootstrap loads it once and calls its documented return-only entry.
 
 ### Safety properties
 
@@ -972,7 +982,7 @@ ELF bootstrap calls its documented entry explicitly.
 - no `FLIST` edit unless runtime testing later proves direct `cdrom0:\\PRG\\...`
   lookup insufficient.
 
-The Project-owned ISO compositor is responsible for inserting the two paths,
+The Project-owned ISO compositor is responsible for inserting the one path,
 preserving ISO size, and verifying directory records, extents, payload hashes,
 and the complete final tree.
 

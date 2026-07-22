@@ -90,15 +90,15 @@ actionable leads.
 
 ## External Translation Files
 
-Status: generated module implemented and initial ISO runtime passed. Confirmed
-layout, loader, donor, FLIST, and ISO findings are recorded in
+Status: compact one-file module implemented; its predecessor passed an initial
+ISO runtime test. Confirmed layout, loader, donor, FLIST, and ISO findings are recorded in
 `docs/knowledge/external_translation_files.md`; the canonical pointer inventory
-is `na2_patcher/features/localization/external_translation/pointer_refs.tsv`.
+is `na2_patcher/features/localization/string_patcher/pointer_refs.tsv`.
 
 - Candidate resident cave: ELF file `0x00507414-0x0050747F` / runtime
   `0x00607314-0x0060737F` is zero-filled and has no aligned exact pointer found
   in SLPS, BTL, or ETC. Absence of a pointer is not proof that the range is safe.
-- Candidate memory envelope: reserve `TEXTENG.BIN` at `0x008F3D00`,
-  `MOD.BIN` at `0x00940000`, and move the final marker only to `0x00940100`.
-  Broader NA2 runtime stability after reducing the heap by `0x63080` bytes is
-  still unknown beyond the confirmed initial in-game run.
+- Compact memory envelope pending broader runtime/visual acceptance: load
+  `228.BIN` at `0x008F3D00` and move the final marker to `0x008F4460`. A hidden
+  boot passed; the earlier two-file envelope through `0x00940100` also passed
+  initial in-game testing and matched eight representative memory captures.

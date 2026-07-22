@@ -41,10 +41,10 @@ Operational logs remain disposable after their durable findings are promoted. Gi
 - `substitution.md`: substitution reliability control flow, failed tests, and next investigation boundary.
 - `media/`: exact outer-ISO, `DATA.CVM`, and AFS layout inventories.
 - `font/`: durable visual and byte-level evidence from the font v23 negative result.
-- `external_translation_files.md`: two-file `MOD.BIN` + `TEXTENG.BIN`
-  feasibility and loader/memory/ISO constraints. The complete enabled `[S]`
-  pointer inventory is canonical module data at
-  `na2_patcher/features/localization/external_translation/pointer_refs.tsv`.
+- `external_translation_files.md`: compact one-file `228.BIN` string storage,
+  its two-file prototype, and loader/memory/ISO constraints. The complete
+  enabled `[S]` pointer inventory is canonical module data at
+  `na2_patcher/features/localization/string_patcher/pointer_refs.tsv`.
 - `ee_runtime_memory_map.md` and `ee_runtime_memory_map/`: the matched
   vanilla/Current EE address-space map, allocator and overlay lifetimes,
   worst-observed injection headroom, and whole-TEXTENG versus compact-pool

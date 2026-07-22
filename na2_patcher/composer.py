@@ -38,7 +38,6 @@ MODULE_ARTIFACT_CONTRACTS = {
     ),
     "texture_patcher": ModuleArtifactContract(),
     "binary_patcher": ModuleArtifactContract(),
-    "external_translation": ModuleArtifactContract(),
 }
 
 

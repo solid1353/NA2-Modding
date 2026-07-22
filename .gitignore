@@ -7,6 +7,3 @@ Desktop.ini
 /logs/
 /work/
 __pycache__/
-
-# Temporary releases symlink
-/releases

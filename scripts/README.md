@@ -50,8 +50,8 @@ Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
-Texture-patcher modules. Final image identity comes from profile `image.tsv`
-and is applied by the image assembler rather than a feature module.
+Texture-patcher modules. Final output identity comes from profile `identity.tsv`
+and is composed before the image assembler runs rather than owned by a feature.
 
 When adding a script, place it beside the workflow it supports. Do not add new
 files directly under `scripts/`; the root is reserved for this index and

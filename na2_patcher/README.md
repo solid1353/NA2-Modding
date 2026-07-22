@@ -8,8 +8,8 @@ Each profile directory contains:
 - `roots.tsv`: repository-relative source bindings or `@root/...` aliases.
 - `features.tsv`: enabled feature IDs in composition order and each feature's
   exact aggregate canonical-input SHA-256.
-- `image.tsv`: the clean and output boot paths plus the `SYSTEM.CNF` path that
-  define the final image identity.
+- `identity.tsv`: the clean/output boot paths, `SYSTEM.CNF` path, and guarded
+  memory-card title that define the final output identity.
 
 The profile ID is its directory name. Omission disables a feature. Profiles do
 not contain manifests, module tables, module paths, module IDs, module orders,
@@ -63,9 +63,9 @@ The current profile enables, in order:
 2. QoL: accepted startup, Practice, and mode-selection behavior.
 3. Battle logic: accepted battle-rule behavior.
 
-The profile's `image.tsv` separately declares the equal-length
-`SLPS_258.37` to `SLPS_222.28` boot rename. It is build identity, not a feature
-or module.
+The profile's `identity.tsv` separately declares the equal-length
+`SLPS_258.37` to `SLPS_222.28` boot rename and the CP932 memory-card title.
+Output identity is profile configuration, not a feature or module.
 
 Rendering remains an available feature folder but is omitted from the current
 profile. The former generic Testing feature was retired: feature IDs express
@@ -88,7 +88,7 @@ and matching Current ISO produces the normal unchanged/no-rotation result
 without module derivation or a `.building` file.
 
 On a miss, `na2_patcher/build_profile.py` orchestrates feature modules and asks
-`na2_patcher/composer.py` to close their results plus the profile image identity
+`na2_patcher/composer.py` to close their results plus the profile identity
 into typed operations. `na2_patcher/image_assembler/` alone stages and verifies
 `build/NA2.28 - Current.iso.building`. `scripts/na2/build.ps1` discards an
 identical candidate without rotation or atomically promotes a changed one.

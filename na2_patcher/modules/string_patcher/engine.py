@@ -100,9 +100,6 @@ def load_specs(directory: Path) -> tuple[StringSpec, ...]:
                 f"{path}: expected columns {STRING_FIELDS}, found {reader.fieldnames}"
             )
         rows = list(reader)
-    if not rows:
-        raise binary_patcher.PatchError(f"{path}: contains no string patches")
-
     specs: list[StringSpec] = []
     seen: set[str] = set()
     for row_number, row in enumerate(rows, 2):

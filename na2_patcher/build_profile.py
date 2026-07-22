@@ -508,7 +508,7 @@ def write_profile_log(
     *,
     workspace: Path,
     output_iso_text: str,
-    image_edits: tuple[dict[str, object], ...],
+    identity_edits: tuple[dict[str, object], ...],
 ) -> None:
     log_directory.mkdir(parents=True, exist_ok=False)
     module_rows: list[dict[str, object]] = []
@@ -579,9 +579,9 @@ def write_profile_log(
             for feature in profile.features
         ],
     )
-    image_log = log_directory / "image"
+    identity_log = log_directory / "identity"
     binary_patcher_module.write_tsv(
-        image_log / "patch_log.tsv",
+        identity_log / "patch_log.tsv",
         [
             "target",
             "offset",
@@ -591,17 +591,38 @@ def write_profile_log(
             "reason",
             "owner",
         ],
-        image_edits,
+        identity_edits,
     )
     binary_patcher_module.write_tsv(
-        image_log / "run_summary.tsv",
-        ["source_boot_path", "output_boot_path", "system_cnf_path", "edit_count"],
+        identity_log / "run_summary.tsv",
+        [
+            "source_boot_path",
+            "output_boot_path",
+            "system_cnf_path",
+            "memory_card_title_offset",
+            "memory_card_title_capacity",
+            "memory_card_title_encoding",
+            "output_memory_card_title",
+            "edit_count",
+        ],
         [
             {
-                "source_boot_path": profile.image.source_boot_path,
-                "output_boot_path": profile.image.output_boot_path,
-                "system_cnf_path": profile.image.system_cnf_path,
-                "edit_count": len(image_edits),
+                "source_boot_path": profile.identity.source_boot_path,
+                "output_boot_path": profile.identity.output_boot_path,
+                "system_cnf_path": profile.identity.system_cnf_path,
+                "memory_card_title_offset": (
+                    f"0x{profile.identity.memory_card_title_offset:X}"
+                ),
+                "memory_card_title_capacity": (
+                    profile.identity.memory_card_title_capacity
+                ),
+                "memory_card_title_encoding": (
+                    profile.identity.memory_card_title_encoding
+                ),
+                "output_memory_card_title": (
+                    profile.identity.output_memory_card_title
+                ),
+                "edit_count": len(identity_edits),
             }
         ],
     )
@@ -678,7 +699,7 @@ def main() -> int:
 
     composition = compose_assembly_plan(
         source=source,
-        image=profile.image,
+        identity=profile.identity,
         payloads=payloads,
         owners=owners,
         insertions=insertions,
@@ -696,17 +717,17 @@ def main() -> int:
         if owned:
             item["insertion_results"] = tuple(owned)
 
-    image_edits = list(composition.image_edits)
-    image_edits.extend(assembly.iso9660_renames)
-    image_edits.extend(
+    identity_edits = list(composition.identity_edits)
+    identity_edits.extend(assembly.iso9660_renames)
+    identity_edits.extend(
         {
             "target": "<UDF directory>",
             "offset": f"0x{rename.identifier_offset:X}",
             "length": len(rename.original_identifier),
             "original_hex": rename.original_identifier.hex().upper(),
             "new_hex": rename.replacement_identifier.hex().upper(),
-            "reason": "Mirror the profile image rename in the UDF tree",
-            "owner": "profile.image",
+            "reason": "Mirror the profile identity rename in the UDF tree",
+            "owner": "profile.identity",
         }
         for rename in assembly.udf_renames
     )
@@ -721,7 +742,7 @@ def main() -> int:
             profile_log_directory,
             workspace=workspace,
             output_iso_text=output_iso_text,
-            image_edits=tuple(image_edits),
+            identity_edits=tuple(identity_edits),
         )
     except BaseException:
         building = building_image_path(output_iso)
@@ -749,7 +770,7 @@ def main() -> int:
         print(f"  {module.order:03d} {module.module_id} ({module.module}{detail})")
         for path in sorted(str(value) for value in item.get("paths", [])):
             print(f"    {green}{path}{reset}")
-    print(f"  image ({len(image_edits)} edits)")
+    print(f"  identity ({len(identity_edits)} edits)")
     print(f"Verified staged ISO: {building_image_path(output_iso).name}")
     return 0
 

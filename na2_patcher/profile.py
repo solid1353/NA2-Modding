@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import codecs
 import csv
 import hashlib
 import re
@@ -11,7 +12,16 @@ from .project_paths import ProjectPaths, load_project_paths, resolve_alias
 
 ROOT_FIELDS = ["root_id", "path"]
 FEATURE_FIELDS = ["feature_id", "expected_sha256"]
-IMAGE_FIELDS = ["source_boot_path", "output_boot_path", "system_cnf_path"]
+IDENTITY_FIELDS = [
+    "source_boot_path",
+    "output_boot_path",
+    "system_cnf_path",
+    "memory_card_title_offset",
+    "memory_card_title_capacity",
+    "memory_card_title_encoding",
+    "source_memory_card_title",
+    "output_memory_card_title",
+]
 MODULE_TYPE_ORDER = (
     "translation_importer",
     "string_patcher",
@@ -36,10 +46,15 @@ TEXTURE_PATCHER_CONTROL_FILES = (
 
 
 @dataclass(frozen=True)
-class ProfileImage:
+class ProfileIdentity:
     source_boot_path: str
     output_boot_path: str
     system_cnf_path: str
+    memory_card_title_offset: int
+    memory_card_title_capacity: int
+    memory_card_title_encoding: str
+    source_memory_card_title: str
+    output_memory_card_title: str
 
 
 @dataclass(frozen=True)
@@ -65,7 +80,7 @@ class Profile:
     directory: Path
     profile_id: str
     roots: dict[str, Path]
-    image: ProfileImage
+    identity: ProfileIdentity
     features: tuple[ProfileFeature, ...]
     modules: tuple[ProfileModule, ...]
 
@@ -259,30 +274,67 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
         raise ValueError(f"Invalid profile directory name: {profile_id!r}")
 
     project_paths = load_project_paths(workspace)
-    image_rows = _read_tsv(directory / "image.tsv", IMAGE_FIELDS)
-    if len(image_rows) != 1:
-        raise ValueError("Profile image.tsv must contain exactly one image row")
-    image_row = image_rows[0]
-    image = ProfileImage(
-        source_boot_path=image_row["source_boot_path"],
-        output_boot_path=image_row["output_boot_path"],
-        system_cnf_path=image_row["system_cnf_path"],
+    identity_rows = _read_tsv(directory / "identity.tsv", IDENTITY_FIELDS)
+    if len(identity_rows) != 1:
+        raise ValueError("Profile identity.tsv must contain exactly one identity row")
+    identity_row = identity_rows[0]
+    try:
+        memory_card_title_offset = int(identity_row["memory_card_title_offset"], 0)
+        memory_card_title_capacity = int(identity_row["memory_card_title_capacity"], 0)
+    except ValueError as exc:
+        raise ValueError("Profile identity title offset/capacity must be integers") from exc
+    if memory_card_title_offset < 0 or memory_card_title_capacity <= 0:
+        raise ValueError(
+            "Profile identity title offset must be non-negative and capacity positive"
+        )
+    try:
+        memory_card_title_encoding = codecs.lookup(
+            identity_row["memory_card_title_encoding"]
+        ).name
+    except LookupError as exc:
+        raise ValueError("Profile identity has an unknown title encoding") from exc
+    identity = ProfileIdentity(
+        source_boot_path=identity_row["source_boot_path"],
+        output_boot_path=identity_row["output_boot_path"],
+        system_cnf_path=identity_row["system_cnf_path"],
+        memory_card_title_offset=memory_card_title_offset,
+        memory_card_title_capacity=memory_card_title_capacity,
+        memory_card_title_encoding=memory_card_title_encoding,
+        source_memory_card_title=identity_row["source_memory_card_title"],
+        output_memory_card_title=identity_row["output_memory_card_title"],
     )
     from .image_assembler.iso9660 import normalize_iso_path
 
     for label, value in (
-        ("source_boot_path", image.source_boot_path),
-        ("output_boot_path", image.output_boot_path),
-        ("system_cnf_path", image.system_cnf_path),
+        ("source_boot_path", identity.source_boot_path),
+        ("output_boot_path", identity.output_boot_path),
+        ("system_cnf_path", identity.system_cnf_path),
     ):
         if normalize_iso_path(value) != value:
-            raise ValueError(f"Profile image {label} must be normalized: {value!r}")
-    if image.source_boot_path == image.output_boot_path:
-        raise ValueError("Profile image boot paths must differ")
-    if len(image.source_boot_path.encode("ascii")) != len(
-        image.output_boot_path.encode("ascii")
+            raise ValueError(f"Profile identity {label} must be normalized: {value!r}")
+    if identity.source_boot_path == identity.output_boot_path:
+        raise ValueError("Profile identity boot paths must differ")
+    if len(identity.source_boot_path.encode("ascii")) != len(
+        identity.output_boot_path.encode("ascii")
     ):
-        raise ValueError("Profile image boot paths must have equal byte lengths")
+        raise ValueError("Profile identity boot paths must have equal byte lengths")
+    for label, text in (
+        ("source_memory_card_title", identity.source_memory_card_title),
+        ("output_memory_card_title", identity.output_memory_card_title),
+    ):
+        if "\0" in text:
+            raise ValueError(f"Profile identity {label} contains an embedded NUL")
+        try:
+            encoded = text.encode(identity.memory_card_title_encoding)
+        except UnicodeEncodeError as exc:
+            raise ValueError(
+                f"Profile identity {label} is not encodable as "
+                f"{identity.memory_card_title_encoding}"
+            ) from exc
+        if len(encoded) >= identity.memory_card_title_capacity:
+            raise ValueError(
+                f"Profile identity {label} does not fit its NUL-padded capacity"
+            )
 
     roots: dict[str, Path] = {}
     for row in _read_tsv(directory / "roots.tsv", ROOT_FIELDS):
@@ -352,7 +404,7 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
         directory=directory,
         profile_id=profile_id,
         roots=roots,
-        image=image,
+        identity=identity,
         features=tuple(features),
         modules=tuple(modules),
     )

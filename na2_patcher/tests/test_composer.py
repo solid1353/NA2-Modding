@@ -12,7 +12,7 @@ from na2_patcher.composer import (
     resolve_source_ref,
 )
 from na2_patcher.image_assembler.operations import IsoFileRef, IsoRangeRef
-from na2_patcher.profile import ProfileImage, ProfileModule
+from na2_patcher.profile import ProfileIdentity, ProfileModule
 
 
 def module(module_id: str, order: int, module_type: str) -> ProfileModule:
@@ -69,27 +69,91 @@ class ComposerTests(unittest.TestCase):
                 b"3456",
             )
 
-    def test_profile_image_becomes_guarded_system_edit_and_rename(self) -> None:
+    def test_profile_identity_becomes_guarded_edits_and_rename(self) -> None:
         system = b"BOOT2 = cdrom0:\\SLPS_258.37;1\r\n"
-        record = SimpleNamespace(path="SYSTEM.CNF", is_dir=False, size=len(system))
+        source_title = b"Original" + bytes(8)
+        boot = b"HEAD" + source_title + b"TAIL"
+        records = {
+            "SYSTEM.CNF": SimpleNamespace(
+                path="SYSTEM.CNF", is_dir=False, size=len(system)
+            ),
+            "SLPS_258.37": SimpleNamespace(
+                path="SLPS_258.37", is_dir=False, size=len(boot)
+            ),
+        }
+        payloads = {"SYSTEM.CNF": system, "SLPS_258.37": boot}
         source = SimpleNamespace(
-            by_path={"SYSTEM.CNF": record},
-            read_file=lambda supplied: system,
+            by_path=records,
+            read_file=lambda supplied: payloads[supplied.path],
+        )
+        identity = ProfileIdentity(
+            source_boot_path="SLPS_258.37",
+            output_boot_path="SLPS_222.28",
+            system_cnf_path="SYSTEM.CNF",
+            memory_card_title_offset=4,
+            memory_card_title_capacity=16,
+            memory_card_title_encoding="ascii",
+            source_memory_card_title="Original",
+            output_memory_card_title="NA 2.28",
         )
         result = compose_assembly_plan(
             source=source,
-            image=ProfileImage("SLPS_258.37", "SLPS_222.28", "SYSTEM.CNF"),
+            identity=identity,
             payloads={},
             owners={},
             insertions={},
             insertion_owners={},
         )
-        self.assertEqual(len(result.plan.replacements), 1)
-        self.assertEqual(result.plan.replacements[0].expected, system)
-        self.assertIn(b"SLPS_222.28", result.plan.replacements[0].replacement)
+        self.assertEqual(len(result.plan.replacements), 2)
+        replacements = {item.path: item for item in result.plan.replacements}
+        self.assertEqual(replacements["SYSTEM.CNF"].expected, system)
+        self.assertIn(b"SLPS_222.28", replacements["SYSTEM.CNF"].replacement)
+        self.assertEqual(
+            replacements["SLPS_258.37"].replacement[4:20],
+            b"NA 2.28" + bytes(9),
+        )
         self.assertEqual(result.plan.renames[0].source_path, "SLPS_258.37")
         self.assertEqual(result.plan.renames[0].replacement_path, "SLPS_222.28")
-        self.assertEqual(result.image_edits[0]["target"], "SYSTEM.CNF")
+        self.assertEqual(
+            [row["target"] for row in result.identity_edits],
+            ["SYSTEM.CNF", "SLPS_258.37"],
+        )
+
+    def test_profile_identity_rejects_title_guard_mismatch(self) -> None:
+        system = b"BOOT2 = cdrom0:\\SLPS_258.37;1\r\n"
+        boot = b"HEAD" + b"Unexpected" + bytes(6) + b"TAIL"
+        records = {
+            "SYSTEM.CNF": SimpleNamespace(
+                path="SYSTEM.CNF", is_dir=False, size=len(system)
+            ),
+            "SLPS_258.37": SimpleNamespace(
+                path="SLPS_258.37", is_dir=False, size=len(boot)
+            ),
+        }
+        payloads = {"SYSTEM.CNF": system, "SLPS_258.37": boot}
+        source = SimpleNamespace(
+            by_path=records,
+            read_file=lambda supplied: payloads[supplied.path],
+        )
+        identity = ProfileIdentity(
+            source_boot_path="SLPS_258.37",
+            output_boot_path="SLPS_222.28",
+            system_cnf_path="SYSTEM.CNF",
+            memory_card_title_offset=4,
+            memory_card_title_capacity=16,
+            memory_card_title_encoding="ascii",
+            source_memory_card_title="Original",
+            output_memory_card_title="NA 2.28",
+        )
+        with self.assertRaisesRegex(RuntimeError, "title guard failed"):
+            compose_assembly_plan(
+                source=source,
+                identity=identity,
+                payloads={},
+                owners={},
+                insertions={},
+                insertion_owners={},
+            )
 
 
 if __name__ == "__main__":

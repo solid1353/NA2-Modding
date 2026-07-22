@@ -10,7 +10,7 @@ from na2_patcher.modules.binary_patcher import engine as binary_patcher
 from na2_patcher.composer import resolve_module_order
 from na2_patcher.profile import (
     FEATURE_FIELDS,
-    IMAGE_FIELDS,
+    IDENTITY_FIELDS,
     feature_content_sha256,
     load_profile,
     module_content_sha256,
@@ -94,13 +94,18 @@ class ProfileTests(unittest.TestCase):
         write_tsv(profile / "roots.tsv", ["root_id", "path"], [{"root_id": "na2", "path": "source"}])
         write_tsv(profile / "features.tsv", FEATURE_FIELDS, rows)
         write_tsv(
-            profile / "image.tsv",
-            IMAGE_FIELDS,
+            profile / "identity.tsv",
+            IDENTITY_FIELDS,
             [
                 {
                     "source_boot_path": "SLPS_258.37",
                     "output_boot_path": "SLPS_222.28",
                     "system_cnf_path": "SYSTEM.CNF",
+                    "memory_card_title_offset": "0x4",
+                    "memory_card_title_capacity": 16,
+                    "memory_card_title_encoding": "ascii",
+                    "source_memory_card_title": "Original",
+                    "output_memory_card_title": "NA 2.28",
                 }
             ],
         )
@@ -211,7 +216,7 @@ class ProfileTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "no string_patcher consumes"):
                 resolve_module_order(loaded.modules)
 
-    def test_profile_image_identity_requires_equal_length_boot_paths(self) -> None:
+    def test_profile_identity_requires_equal_length_boot_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             features, source, profiles = self.create_workspace(root)
@@ -224,13 +229,18 @@ class ProfileTests(unittest.TestCase):
                 ],
             )
             write_tsv(
-                profile / "image.tsv",
-                IMAGE_FIELDS,
+                profile / "identity.tsv",
+                IDENTITY_FIELDS,
                 [
                     {
                         "source_boot_path": "SLPS_258.37",
                         "output_boot_path": "BOOT.ELF",
                         "system_cnf_path": "SYSTEM.CNF",
+                        "memory_card_title_offset": "0x4",
+                        "memory_card_title_capacity": 16,
+                        "memory_card_title_encoding": "ascii",
+                        "source_memory_card_title": "Original",
+                        "output_memory_card_title": "NA 2.28",
                     }
                 ],
             )
@@ -269,8 +279,11 @@ class ProfileTests(unittest.TestCase):
                 "battle_logic.binary_patcher",
             ],
         )
-        self.assertEqual(profile.image.source_boot_path, "SLPS_258.37")
-        self.assertEqual(profile.image.output_boot_path, "SLPS_222.28")
+        self.assertEqual(profile.identity.source_boot_path, "SLPS_258.37")
+        self.assertEqual(profile.identity.output_boot_path, "SLPS_222.28")
+        self.assertEqual(profile.identity.memory_card_title_offset, 0x2FBAE0)
+        self.assertEqual(profile.identity.output_memory_card_title, "ＮＡ　ｖ２．２８")
+        self.assertFalse((profile_directory / "image.tsv").exists())
         self.assertFalse((profile_directory / "manifest.tsv").exists())
         self.assertFalse((profile_directory / "modules.tsv").exists())
         features_root = repository / "na2_patcher" / "features"

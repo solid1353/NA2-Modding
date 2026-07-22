@@ -16,22 +16,33 @@ The serial alternatives considered on 2026-07-18 were rejected as follows:
 
 ## Reproducible implementation
 
-The active profile's `image.tsv` declares the clean boot path, output boot path,
-and `SYSTEM.CNF` path. After feature modules have been composed, the profile
-composer emits one guarded replacement and one equal-length file rename:
+The active profile's `identity.tsv` declares the clean boot path, output boot
+path, `SYSTEM.CNF` path, and guarded CP932 memory-card title. After feature
+modules have been composed, the profile composer emits two guarded replacements
+and one equal-length file rename:
 
 1. `SYSTEM.CNF` changes `SLPS_258.37` to `SLPS_222.28`.
-2. The ISO9660 root directory record changes `SLPS_258.37;1` to
+2. The clean boot ELF's 64-byte title slot at `0x2FBAE0` changes from
+   `ＮＡＲＵＴＯ－ナルト－　疾風伝ナルティメットアクセル２` to `ＮＡ　ｖ２．２８`.
+3. The ISO9660 root directory record changes `SLPS_258.37;1` to
    `SLPS_222.28;1`.
 
-The second operation is ISO filesystem metadata, not an ELF string replacement,
+The third operation is ISO filesystem metadata, not an ELF string replacement,
 so it deliberately does not belong to a feature module. The mandatory image
-assembler applies it to both ISO9660 and UDF, logs all three physical edits, and
+assembler applies it to both ISO9660 and UDF, logs all four identity edits, and
 verifies the declared final tree. No file extent, file size, or ISO size changes.
 
 The internal save-data directory `BISLPS-25837NARUTO5` remains unchanged. This
-preserves compatibility with existing saves. The separate ELF save-title patch
-uses the full-width CP932 title `ＮＡ　ｖ２．２８`.
+preserves compatibility with existing saves.
+
+The full-width title form follows the official NUN5 memory-card convention. A
+half-width ASCII test copied into a new save correctly but rendered as a blank
+title in the USA PS2 BIOS. A longer full-width
+`Ｎａｒｕｔｉｍａｔｅ　Ａｃｃｅｌ　ｖ２．２８` test rendered but wrapped at an unattractive
+position, so the profile uses the shorter full-width title. Its 16 encoded bytes
+are followed by a NUL and 47 zero-padding bytes through the original slot.
+The shorter final title still requires acceptance in the PS2 memory-card
+browser; this does not weaken the exact static guard or size-preservation proof.
 
 ## PCSX2 behavior and accepted consequences
 

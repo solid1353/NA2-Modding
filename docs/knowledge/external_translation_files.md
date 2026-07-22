@@ -196,8 +196,11 @@ The corresponding structural occurrences also include program-header words at
 file offsets `0xBC` and `0xC0`, a literal pointer at `0x2F79F4`, and a section
 header address at `0x50763C`. NUN6 changes the equivalent four instruction
 pairs and final marker together; the module follows that structural precedent
-but moves only to its actual fixed end at `0x00940100`. Runtime safety in NA2 is
-still unproved; the implemented change reduces the heap by `0x63080` bytes.
+but moves only to its actual fixed end at `0x00940100`. Matched runtime captures
+now confirm the exact `0x63080` heap reduction and preserve substantial
+allocator headroom in eight representative states; see
+[`ee_runtime_memory_map.md`](ee_runtime_memory_map.md). This is representative
+capacity evidence, not proof of every result/save/transition peak.
 
 ## Fixed two-file bootstrap
 
@@ -331,10 +334,16 @@ Confirmed at runtime:
 
 1. The integrated ISO loads both external PRG files and works in-game without
    adding either path to `FLIST.DIR`.
+2. Eight matched vanilla/Current captures cover title, mode select, active
+   Adventure, character select, active battle, Shop, Collection, and Options.
+   The Current heap remains valid in all eight; active Adventure is the tightest
+   observed state at `0x759260` total free and `0x52B4C0` largest contiguous.
+   The full evidence is in
+   [`ee_runtime_memory_map.md`](ee_runtime_memory_map.md).
 
 Still required at runtime:
 
-1. Exercise frontend, battle, result, save/load, and repeated mode transitions
-   to test the smaller heap and resident-memory boundary.
+1. Exercise result, save/load, and repeated mode transitions to extend the
+   smaller-heap stress coverage beyond the representative capture set.
 2. Visit representative shortened-string screens and confirm the full official
    strings render from external memory.

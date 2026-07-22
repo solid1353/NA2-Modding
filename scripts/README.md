@@ -29,6 +29,9 @@ research utility.
   game cohorts.
 - `research/menu_input/`: preserved MIPS and Ghidra analysis helpers from the
   menu-input investigation.
+- `research/ee_memory_map/`: PCSX2 savestate extraction, allocator-chain
+  validation, overlay identification, and EE-region reporting for injection
+  capacity research.
 - `research/ui_translation/`: PINE identity checks, controlled savestate and
   embedded-screenshot capture, rendering preflight, and read-only runtime
   memory inspection for NUN5-to-NA2 UI comparisons.

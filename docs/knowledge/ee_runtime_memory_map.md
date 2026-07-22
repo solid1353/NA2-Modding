@@ -36,7 +36,7 @@ tightest Current capture still has:
 The whole donor is nevertheless architecturally wasteful for the current
 direct-pointer integration. `TEXTENG.BIN` consumes `0x30E00` bytes (200,192),
 but the 35 guarded pointer edits reach only 30 distinct string locations whose
-encoded strings total 1,572 bytes including terminators. The file is a NUN5
+encoded strings total 1,512 bytes including terminators. The file is a NUN5
 type-4 MWo3 localization data image, not executable code; most of its strings,
 indexes, and internal pointer tables are unused by the current NA2 design. See
 [`external_translation_files.md`](external_translation_files.md) for the
@@ -44,10 +44,10 @@ decompilation and integration evidence.
 
 The implemented compact architecture therefore:
 
-1. replaces the whole donor and separate bootstrap with one `0x760`-byte
+1. replaces the whole donor and separate bootstrap with one `0x720`-byte
    `228.BIN` at `0x008F3D00`;
-2. moves the structural boundary down from `0x00940100` to `0x008F4460`,
-   recovering `0x4BCA0` bytes for the heap;
+2. moves the structural boundary down from `0x00940100` to `0x008F4420`,
+   recovering `0x4BCE0` bytes for the heap;
 3. retains the donor only as read-only source provenance, not as an emitted
    runtime file;
 4. keeps later resident code/data expansion explicit rather than silently
@@ -217,7 +217,7 @@ The current external-translation plan selects 33 shortened mappings: 30 direct
 rows and three continuation rows resolved through parent messages. That produces
 31 effective string entries, but two entries share the same donor location, so
 there are 30 distinct addressed strings: 26 donor strings and four derived
-strings. Their exact encoded payload is 1,572 bytes including terminators.
+strings. Their exact encoded payload is 1,512 bytes including terminators.
 
 The implemented compact MOD keeps a `0x100`-byte MWo3-compatible header/code
 area, packs the 30 distinct strings in stable mapping-ID order with each start
@@ -227,13 +227,13 @@ aligned to four bytes, and rounds the final image to 16 bytes. It yields:
 | --- | ---: |
 | Current generated whole donor | `0x30E00` (200,192) |
 | Current reserved TEXT envelope | `0x4C300` (312,064) |
-| Compact MOD including selected-string pool | `0x760` (1,888) |
-| Reclaimed versus current file bytes | `0x306A0` (198,304) |
-| Reclaimed inside the TEXT envelope | `0x4BBA0` (310,176) |
+| Compact MOD including selected-string pool | `0x720` (1,824) |
+| Reclaimed versus current file bytes | `0x306E0` (198,368) |
+| Reclaimed inside the TEXT envelope | `0x4BBE0` (310,240) |
 
-At the existing `0x008F3D00` base, the compact MOD ends at `0x008F4460`.
-Moving the structural boundary to that exact end recovers `0x4BCA0` bytes
-(310,432 bytes, 303.156 KiB) relative to the measured two-file boundary at
+At the existing `0x008F3D00` base, the compact MOD ends at `0x008F4420`.
+Moving the structural boundary to that exact end recovers `0x4BCE0` bytes
+(310,496 bytes, 303.219 KiB) relative to the measured two-file boundary at
 `0x00940100`. The earlier `0x16C80` safety gap remains reserved between the
 largest overlay and the compact MOD.
 

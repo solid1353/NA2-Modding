@@ -23,8 +23,8 @@ rewrite.
 The original two-file prototype copied the complete NUN5 `TEXTENG.BIN` and
 loaded a separate 256-byte MOD bootstrap. That proved the loader, ISO insertion,
 and resident-address strategy, but more than 99 percent of the copied text file
-was unused. The compact design keeps only 1,572 encoded bytes plus alignment and
-one small MWO3 envelope, for a deterministic `0x760`-byte MOD.
+was unused. The compact design keeps only 1,512 encoded bytes plus alignment and
+one small MWO3 envelope, for a deterministic `0x720`-byte `228.BIN`.
 
 ### What `TEXTENG.BIN` contains
 
@@ -167,7 +167,7 @@ The implemented minimal reservation is:
 | --- | ---: | ---: | ---: |
 | Existing NA2 overlays | `0x006B3F00` | `0x229180` | `0x008DD080` |
 | Safety gap | `0x008DD080` | `0x16C80` | `0x008F3D00` |
-| Compact `228.BIN` envelope | `0x008F3D00` | `0x760` | `0x008F4460` |
+| Compact `228.BIN` envelope | `0x008F3D00` | `0x720` | `0x008F4420` |
 
 Moving the final marker is a structural patch, not merely a program-header
 edit. Four NA2 instruction pairs construct the current `0x008DD080` boundary:
@@ -183,8 +183,8 @@ The corresponding structural occurrences also include program-header words at
 file offsets `0xBC` and `0xC0`, a literal pointer at `0x2F79F4`, and a section
 header address at `0x50763C`. NUN6 changes the equivalent four instruction
 pairs and final marker together; the module follows that structural precedent
-but now moves only to the compact file's fixed end at `0x008F4460`. Compared
-with the proven two-file boundary at `0x00940100`, this recovers `0x4BCA0`
+but now moves only to the compact file's fixed end at `0x008F4420`. Compared
+with the proven two-file boundary at `0x00940100`, this recovers `0x4BCE0`
 bytes. Matched captures of the two-file build confirmed its exact `0x63080`
 heap reduction and substantial allocator headroom in eight representative
 states; see
@@ -228,11 +228,10 @@ The generated output is:
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `PRG/228.BIN` | 1,888 | `FE1032F45EF3645D3971B9225718470FA6BF2C4303FC7F964CCAD74D51DB90FC` |
+| `PRG/228.BIN` | 1,824 | `AD94B66F2916C0014A87D110F5807DC0F0F5D7E91615AE3F04EC970CFBA00E9F` |
 
 The pool starts at file offset `0x100`. Thirty distinct terminated strings use
-1,572 bytes before alignment; the last occupied byte is below `0x757`, and the
-fixed output rounds to `0x760`.
+1,512 bytes before alignment, and the linked output rounds to `0x720`.
 
 The three continuation mappings are M0812 through parent M0810, M0820 through
 parent M0818, and M0825 through parent M0823. M0823 is an enabled `slot` row,
@@ -310,7 +309,7 @@ Implemented and covered by focused tests:
 1. A dependency-free MIPS encoder generates the payload-builder ELF bootstrap; exact
    instruction-word tests verify its loader, MOD-entry, constructor calls, and
    return.
-2. `228.BIN` is exactly `0x760` bytes, has a pinned hash, and every emitted
+2. `228.BIN` is exactly `0x720` bytes, has a pinned hash, and every emitted
    pointer lies within its declared compact string image.
 3. Generation resolves all 33 selected mappings as 30 direct rows and three
    parent-message continuations, produces 35 distinct pointer writes, omits all

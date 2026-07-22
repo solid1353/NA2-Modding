@@ -57,7 +57,7 @@ VALID_TRANSFORMS = {
     "", "empty", "format_arg1", "format_args", "format_prefix_arg2",
     "format_suffix_arg2", "between_placeholders", "after_placeholder2",
     "split_br", "split_br_sequence", "join_br_parts", "insert_br_after_words",
-    "append_space", "flatten_br_slice",
+    "append_space", "flatten_br_slice", "uppercase",
 }
 TARGET_RUNTIME_BASES = {
     "SLPS": 0x000FFF00,
@@ -95,6 +95,7 @@ class TranslationImportPlan:
     resolved_texts: dict[str, str]
     resolved_sequences: dict[str, tuple[str, ...]]
     source_templates: dict[str, str]
+    materialized_templates: dict[str, str]
     clean_targets: dict[str, bytes]
     official_sources: dict[str, bytes]
     summary: dict[str, object]
@@ -112,6 +113,15 @@ class Reference:
     parent_mapping_id: str | None
     parent_file_offset: int | None
     parent_runtime_address: int | None
+
+
+@dataclass(frozen=True)
+class GameTitlePolicy:
+    donor_title: str
+    output_title: str
+    target: str
+    expected_mapping_count: int
+    expected_occurrence_count: int
 
 
 class Iso9660:
@@ -456,7 +466,7 @@ def validate_references(
     }
 
 
-def read_mapping_metadata(data_root: Path) -> tuple[int, str]:
+def read_mapping_metadata(data_root: Path) -> tuple[int, str, GameTitlePolicy]:
     """Read canonical mapping metadata from the feature-owned config."""
     config_path = data_root / "config.tsv"
     with config_path.open("r", encoding="utf-8-sig", newline="") as handle:
@@ -474,7 +484,16 @@ def read_mapping_metadata(data_root: Path) -> tuple[int, str]:
     metadata = {row["key"]: row["value"] for row in rows}
     if len(metadata) != len(rows):
         raise ValueError("translation importer config.tsv contains duplicate keys")
-    expected_keys = {"schema_version", "mapping_version", "mappings_sha256"}
+    expected_keys = {
+        "schema_version",
+        "mapping_version",
+        "mappings_sha256",
+        "donor_game_title",
+        "output_game_title",
+        "game_title_target",
+        "game_title_mapping_count",
+        "game_title_occurrence_count",
+    }
     if set(metadata) != expected_keys:
         raise ValueError(
             "translation importer config.tsv keys must be exactly: "
@@ -488,7 +507,35 @@ def read_mapping_metadata(data_root: Path) -> tuple[int, str]:
     packaged_hash = metadata["mappings_sha256"].lower()
     if not re.fullmatch(r"[0-9a-f]{64}", packaged_hash):
         raise ValueError("translation importer mappings_sha256 must be SHA-256")
-    return version, packaged_hash
+    donor_title = metadata["donor_game_title"]
+    output_title = metadata["output_game_title"]
+    title_target = metadata["game_title_target"]
+    if not donor_title or not output_title or donor_title == output_title:
+        raise ValueError("translation importer game-title policy must replace distinct text")
+    if "\0" in donor_title or "\0" in output_title:
+        raise ValueError("translation importer game-title policy contains an embedded NUL")
+    try:
+        donor_title.encode("cp1252")
+        output_title.encode("cp1252")
+    except UnicodeEncodeError as exc:
+        raise ValueError("translation importer game-title policy must be CP1252") from exc
+    if title_target not in TARGET_SPECS:
+        raise ValueError("translation importer game-title policy has invalid target")
+    mapping_count = parse_int(
+        metadata["game_title_mapping_count"], "game_title_mapping_count"
+    )
+    occurrence_count = parse_int(
+        metadata["game_title_occurrence_count"], "game_title_occurrence_count"
+    )
+    if mapping_count <= 0 or occurrence_count < mapping_count:
+        raise ValueError("translation importer game-title policy has invalid counts")
+    return version, packaged_hash, GameTitlePolicy(
+        donor_title=donor_title,
+        output_title=output_title,
+        target=title_target,
+        expected_mapping_count=mapping_count,
+        expected_occurrence_count=occurrence_count,
+    )
 
 
 def read_official_z(data: bytes, offset: int, label: str) -> str:
@@ -578,6 +625,8 @@ def resolve_source_text(row: dict[str, object], sources: dict[str, bytes], label
                 f"{label}: slice {start}:{end} is outside flattened text length {len(flattened)}"
             )
         return flattened[start:end]
+    if transform == "uppercase":
+        return template.upper()
     raise ValueError(f"{label}: unsupported transform {transform!r}")
 
 
@@ -738,11 +787,19 @@ def resolve_text_materializations(
     mappings: Sequence[dict[str, object]],
     selected: set[str],
     official_sources: dict[str, bytes],
-) -> tuple[dict[str, str], dict[str, tuple[str, ...]], dict[str, str]]:
+    title_policy: GameTitlePolicy,
+) -> tuple[
+    dict[str, str],
+    dict[str, tuple[str, ...]],
+    dict[str, str],
+    dict[str, str],
+]:
     """Resolve official templates and transforms once for downstream consumers."""
     source_templates: dict[str, str] = {}
     resolved_texts: dict[str, str] = {}
     resolved_sequences: dict[str, tuple[str, ...]] = {}
+    materialized_templates: dict[str, str] = {}
+    policy_hits: dict[str, int] = {}
 
     for row in mappings:
         if str(row["target"]) not in selected:
@@ -754,16 +811,47 @@ def resolve_text_materializations(
             official_sources[source], source_offset, f"{mapping_id} source template"
         )
         source_templates[mapping_id] = template
+        materialized_templates[mapping_id] = template.replace(
+            title_policy.donor_title, title_policy.output_title
+        )
         if row["mode"] == "sequence":
+            sequence = tuple(
+                resolve_source_sequence(row, official_sources, mapping_id)
+            )
+            occurrences = sum(
+                value.count(title_policy.donor_title) for value in sequence
+            )
+            if occurrences:
+                policy_hits[mapping_id] = occurrences
             resolved_sequences[mapping_id] = tuple(
-                value
-                for value in resolve_source_sequence(row, official_sources, mapping_id)
+                value.replace(title_policy.donor_title, title_policy.output_title)
+                for value in sequence
             )
         else:
-            resolved_texts[mapping_id] = resolve_source_text(
+            resolved = resolve_source_text(
                 row, official_sources, mapping_id
             )
-    return resolved_texts, resolved_sequences, source_templates
+            occurrences = resolved.count(title_policy.donor_title)
+            if occurrences:
+                policy_hits[mapping_id] = occurrences
+            resolved_texts[mapping_id] = resolved.replace(
+                title_policy.donor_title, title_policy.output_title
+            )
+
+    if title_policy.target in selected and (
+        len(policy_hits) != title_policy.expected_mapping_count
+        or sum(policy_hits.values()) != title_policy.expected_occurrence_count
+    ):
+        raise ValueError(
+            "translation importer game-title policy coverage differs from config.tsv: "
+            f"{len(policy_hits)} mappings/{sum(policy_hits.values())} occurrences"
+        )
+    return (
+        resolved_texts,
+        resolved_sequences,
+        source_templates,
+        materialized_templates,
+    )
 
 
 def apply_text_mappings(
@@ -952,7 +1040,7 @@ def build_translation_import_plan(
             raise ValueError(f"Unexpected {key} SHA-1: {actual}; expected {expected}")
 
     data_root = data_root.resolve()
-    mapping_version, packaged_hash = read_mapping_metadata(data_root)
+    mapping_version, packaged_hash, title_policy = read_mapping_metadata(data_root)
     mapping_path = data_root / "mappings.tsv"
     actual_mapping_hash = hashlib.sha256(mapping_path.read_bytes()).hexdigest()
     if actual_mapping_hash != packaged_hash:
@@ -966,9 +1054,9 @@ def build_translation_import_plan(
     reference_counts = validate_references(
         references, mappings["text"], clean_targets
     )
-    resolved_texts, resolved_sequences, source_templates = (
+    resolved_texts, resolved_sequences, source_templates, materialized_templates = (
         resolve_text_materializations(
-            mappings["text"], selected, official_sources
+            mappings["text"], selected, official_sources, title_policy
         )
     )
     output_targets = {
@@ -1037,6 +1125,13 @@ def build_translation_import_plan(
         "source_hashes": actual_hashes,
         "translated_file_hashes": translated_hashes,
         "reference_inventory": reference_counts,
+        "game_title_policy": {
+            "donor_title": title_policy.donor_title,
+            "output_title": title_policy.output_title,
+            "target": title_policy.target,
+            "mapping_count": title_policy.expected_mapping_count,
+            "occurrence_count": title_policy.expected_occurrence_count,
+        },
     }
     return TranslationImportPlan(
         mapping_version=mapping_version,
@@ -1048,6 +1143,7 @@ def build_translation_import_plan(
         resolved_texts=resolved_texts,
         resolved_sequences=resolved_sequences,
         source_templates=source_templates,
+        materialized_templates=materialized_templates,
         clean_targets=clean_targets,
         official_sources=official_sources,
         summary=summary,

@@ -43,6 +43,86 @@ class TranslationImporterTests(unittest.TestCase):
             "",
         )
 
+    def test_uppercase_transform_preserves_official_source_authority(self) -> None:
+        row = {
+            "source": "NUN5_SLES",
+            "source_offset": 0,
+            "transform": "uppercase",
+            "arguments": {},
+        }
+        self.assertEqual(
+            engine.resolve_source_text(row, {"NUN5_SLES": b"Yes\x00"}, "M0799"),
+            "YES",
+        )
+
+    def test_game_title_policy_preserves_raw_template_and_changes_materialization(self) -> None:
+        mappings = [
+            {
+                "id": "MTEST",
+                "target": "SLPS",
+                "mode": "slot",
+                "source": "NUN5_TEXTENG",
+                "source_offset": 0,
+                "transform": "",
+                "arguments": {},
+            }
+        ]
+        policy = engine.GameTitlePolicy(
+            donor_title="Naruto Shippuden: Ultimate Ninja 5",
+            output_title="Narutimate Accel v2.28",
+            target="SLPS",
+            expected_mapping_count=1,
+            expected_occurrence_count=1,
+        )
+        resolved, sequences, templates, materialized = (
+            engine.resolve_text_materializations(
+                mappings,
+                {"SLPS"},
+                {
+                    "NUN5_TEXTENG": (
+                        b"Create Naruto Shippuden: Ultimate Ninja 5 data?\x00"
+                    )
+                },
+                policy,
+            )
+        )
+        self.assertEqual(sequences, {})
+        self.assertEqual(
+            templates["MTEST"],
+            "Create Naruto Shippuden: Ultimate Ninja 5 data?",
+        )
+        self.assertEqual(
+            resolved["MTEST"], "Create Narutimate Accel v2.28 data?"
+        )
+        self.assertEqual(materialized["MTEST"], resolved["MTEST"])
+
+    def test_game_title_policy_fails_closed_when_expected_target_loses_token(self) -> None:
+        mappings = [
+            {
+                "id": "MTEST",
+                "target": "SLPS",
+                "mode": "slot",
+                "source": "NUN5_TEXTENG",
+                "source_offset": 0,
+                "transform": "",
+                "arguments": {},
+            }
+        ]
+        policy = engine.GameTitlePolicy(
+            donor_title="Naruto Shippuden: Ultimate Ninja 5",
+            output_title="Narutimate Accel v2.28",
+            target="SLPS",
+            expected_mapping_count=1,
+            expected_occurrence_count=1,
+        )
+        with self.assertRaisesRegex(ValueError, "policy coverage differs"):
+            engine.resolve_text_materializations(
+                mappings,
+                {"SLPS"},
+                {"NUN5_TEXTENG": b"Create data?\x00"},
+                policy,
+            )
+
     def test_insert_br_after_words_preserves_official_text(self) -> None:
         source = b"Sealing Jutsu: Nine Phantom Dragons\x00"
         row = {

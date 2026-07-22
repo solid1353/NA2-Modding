@@ -50,17 +50,17 @@ class IntegratedExternalStringTests(unittest.TestCase):
             clean_boot=cls.import_plan.clean_targets["SLPS"],
         )
 
-    def test_shared_builder_preserves_the_exact_current_228_binary(self) -> None:
+    def test_shared_builder_produces_the_exact_v37_228_binary(self) -> None:
         mod = self.build.payload
         self.assertEqual(self.build.output_path, "PRG/228.BIN")
-        self.assertEqual(len(mod), 0x760)
+        self.assertEqual(len(mod), 0x720)
         self.assertEqual(
             binary_patcher.data_sha256(mod),
-            "FE1032F45EF3645D3971B9225718470FA6BF2C4303FC7F964CCAD74D51DB90FC",
+            "AD94B66F2916C0014A87D110F5807DC0F0F5D7E91615AE3F04EC970CFBA00E9F",
         )
         self.assertEqual(
             struct.unpack_from("<4s7I", mod, 0),
-            (b"MWo3", 8, 0x008F3D00, 0x40, 0x710, 0, 0x008F4460, 0x008F4460),
+            (b"MWo3", 8, 0x008F3D00, 0x40, 0x6D0, 0, 0x008F4420, 0x008F4420),
         )
         self.assertEqual(mod[0x20:0x28], b"228.bin\0")
         self.assertEqual(struct.unpack_from("<II", mod, 0x40), (0x03E00008, 0))
@@ -72,13 +72,13 @@ class IntegratedExternalStringTests(unittest.TestCase):
         self.assertTrue(all(patch.kind == "redirect_pointer" for patch in self.resolved))
         self.assertEqual(self.plan.summary["inline_shortening_imports_omitted"], 33)
         self.assertEqual(self.plan.summary["external_binary_edits"], 35)
-        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2436)
+        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2434)
 
     def test_pool_contains_only_referenced_strings_and_deduplicates_one_pair(self) -> None:
         summary = self.plan.summary["external_strings"]
         self.assertEqual(summary["count"], 31)
         self.assertEqual(summary["distinct"], 30)
-        self.assertEqual(summary["encoded_bytes"], 1572)
+        self.assertEqual(summary["encoded_bytes"], 1512)
         self.assertEqual(summary["derived"], 4)
         rows = {row["mapping_id"]: row for row in summary["rows"]}
         self.assertEqual(rows["M2003"]["runtime_address"], rows["M2065"]["runtime_address"])
@@ -97,12 +97,30 @@ class IntegratedExternalStringTests(unittest.TestCase):
         self.assertEqual(by_id["ELF-RP-BOOTSTRAP"].replacement[-8:], b"228.BIN\0")
         self.assertEqual(by_id["ELF-RP-LOAD-SLOT"].replacement, struct.pack("<I", 0x008F3D00))
 
-    def test_structural_refactor_does_not_change_translation_semantics(self) -> None:
+    def test_project_title_policy_reaches_inline_sequence_and_parent_materializations(self) -> None:
         self.assertIn(
             "Naruto Shippuden: Ultimate Ninja 5",
             self.import_plan.source_templates["M0823"],
         )
-        self.assertNotIn("Narutimate Accel v2.28", self.build.payload.decode("cp1252", "ignore"))
+        self.assertEqual(
+            self.import_plan.resolved_texts["M0823"],
+            "Creating Narutimate Accel v2.28 data",
+        )
+        self.assertIn(
+            "Narutimate Accel v2.28",
+            self.import_plan.resolved_sequences["M0829"][2],
+        )
+        self.assertNotIn(
+            "Naruto Shippuden: Ultimate Ninja 5",
+            self.import_plan.materialized_templates["M0823"],
+        )
+        payload_text = self.build.payload.decode("cp1252", "ignore")
+        self.assertIn("Narutimate Accel v2.28", payload_text)
+        self.assertNotIn("Naruto Shippuden: Ultimate Ninja 5", payload_text)
+
+    def test_startup_choice_labels_are_uppercase(self) -> None:
+        self.assertEqual(self.import_plan.resolved_texts["M0566"], "NO")
+        self.assertEqual(self.import_plan.resolved_texts["M0799"], "YES")
 
 
 if __name__ == "__main__":

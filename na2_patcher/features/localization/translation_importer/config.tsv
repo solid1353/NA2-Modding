@@ -1,4 +1,9 @@
 key	value
 schema_version	1
-mapping_version	36
-mappings_sha256	01CFEC3314E76C5CBE297AA1E046A402149A21D94D5D4FDE531120EBF256035A
+mapping_version	37
+mappings_sha256	3E021C1FB1468F2D5C1AFC2F298C1F9E589CE0F107A503EB65F24602F7DF488E
+donor_game_title	Naruto Shippuden: Ultimate Ninja 5
+output_game_title	Narutimate Accel v2.28
+game_title_target	SLPS
+game_title_mapping_count	6
+game_title_occurrence_count	7

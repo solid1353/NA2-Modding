@@ -74,8 +74,8 @@ def _materialized_strings(
     for mapping_id in sorted(effective_ids):
         mapping = text_by_id[mapping_id]
         if mapping_id in parent_ids:
-            text = translation_plan.source_templates[mapping_id]
-            materialization = "packed_donor"
+            text = translation_plan.materialized_templates[mapping_id]
+            materialization = "packed_policy_template"
         else:
             text = translation_plan.resolved_texts[mapping_id]
             materialization = (

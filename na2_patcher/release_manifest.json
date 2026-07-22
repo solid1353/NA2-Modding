@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "product_name": "Narutimate Accel v2.28",
-  "product_version": "0.1.0-dev",
-  "executable_name": "NA2.28_v0.1.0-dev.exe",
+  "product_version": "0.1.0",
+  "executable_name": "NA2.28_v0.1.0.exe",
   "output_name": "NA2.28.iso",
   "profile": "na2_patcher/profiles/current",
   "images": [

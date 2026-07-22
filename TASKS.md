@@ -5,7 +5,7 @@
 ### Project
 - [Develop a release process (deferred indefinitely)](docs/RELEASE_PROCESS.md).
 - Investigate cross-platform development/deployment possibilities.
-- Work folder cleanup?
+- Global cleanup.
 
 ### [Font](docs/plans/font.md)
 - Make font identical to UN5.

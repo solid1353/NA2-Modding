@@ -4,6 +4,11 @@ This component applies repository-owned declarative TSV patch sets to verified c
 binaries. GPT-generated mapping archives are evidence inputs, not executable patch
 sets.
 
+## Invokes
+
+None. `binary_patcher` is the terminal module-level executor for concrete
+guarded file edits.
+
 ## Safety model
 
 - All persisted paths are relative.

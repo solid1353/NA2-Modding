@@ -216,13 +216,13 @@ Compact MOD generation is deterministic and reproducible:
 - obtain the exact official string through each mapping's existing
   `source_ref` and transform metadata;
 - keep the current mapping table unchanged; the importer passes its validated
-  semantic data directly to `string_patcher`;
+  semantic data and pointer inventory directly to `string_patcher`;
 - emit one full official message for each continuation group, rather than
   separately addressing the continuation fragments;
 - deduplicate byte-identical strings only when every affected pointer is
   deliberately recorded;
 - emit a guarded patch plan that records each pointer's original bytes and new
-  address.
+  symbolic target; the composer resolves the address after payload linking.
 
 The generated output is:
 
@@ -239,7 +239,7 @@ parent M0818, and M0825 through parent M0823. M0823 is an enabled `slot` row,
 not an `[S]` row, but the external pool must emit its complete official message
 to make the M0825 continuation reachable through that one parent pointer. The
 complete reusable inventory is now canonical module data in
-`na2_patcher/features/localization/string_patcher/pointer_refs.tsv`.
+`na2_patcher/features/localization/translation_importer/references.tsv`.
 
 BTL and ETC themselves contain the applicable pointer words. A static patch to
 those files is therefore restored whenever the overlay loads; no post-load
@@ -248,26 +248,27 @@ outside the BTL/ETC overwrite region.
 
 ## Module boundary
 
-External placement is integrated into the project-side `string_patcher`; there
-is no separate `external_translation` module. The importer remains the source
-resolver and provenance validator. The mapping schema, values, defaults,
-migration behavior, and enabled state remain unchanged. `string_patcher`'s
-`config.tsv` pins the exact current `mappings.tsv` hash and all source/output
-hashes.
+External placement is integrated across the existing importer/string-patcher
+pipeline; there is no separate `external_translation` module. The importer owns
+source resolution, provenance validation, and pointer references. The mapping
+schema, values, defaults, migration behavior, and enabled state remain
+unchanged. The shared payload builder owns final layout and global integration.
 
-The module owns:
+The resulting pipeline owns:
 
-- deterministic generation and validation of compact `228.BIN`;
-- guarded SLPS/BTL/ETC pointer edits and the loader/memory structural edits;
+- deterministic linking and validation of compact `228.BIN` by `payload_builder`;
+- symbolic SLPS/BTL/ETC pointer edits from `string_patcher`, resolved by the
+  composer, plus infrastructure-owned loader/memory structural edits;
 - a machine-readable patch log for every binary write;
 - one insertion request through the general compositor interface.
 
-The translation importer produces validated rows plus its resolved mapping and
-source data. `string_patcher` filters the 33 `shorten` import rows before they
-ever become binary edits, adds 35 redirects and 15 loader/layout edits, and
-delegates the complete guarded package to `binary_patcher`. Therefore there is
-no write-then-restore pass. The `[S]` values remain canonical fallback/debt
-markers. `ADV.bin` remains excluded.
+The translation importer produces validated rows, resolved mapping/source data,
+and the reference inventory. `string_patcher` filters the 33 `shorten` import
+rows before they become binary edits, contributes 30 unique string fragments,
+and declares 35 symbolic redirects. `payload_builder` links those fragments and
+owns the 15 loader/layout edits; all concrete writes are delegated to
+`binary_patcher`. Therefore there is no write-then-restore pass. The `[S]`
+values remain canonical fallback/debt markers. `ADV.bin` remains excluded.
 
 ## ISO integration constraint
 
@@ -306,7 +307,7 @@ edit.
 
 Implemented and covered by focused tests:
 
-1. A dependency-free MIPS encoder generates the fixed ELF bootstrap; exact
+1. A dependency-free MIPS encoder generates the payload-builder ELF bootstrap; exact
    instruction-word tests verify its loader, MOD-entry, constructor calls, and
    return.
 2. `228.BIN` is exactly `0x760` bytes, has a pinned hash, and every emitted
@@ -314,8 +315,8 @@ Implemented and covered by focused tests:
 3. Generation resolves all 33 selected mappings as 30 direct rows and three
    parent-message continuations, produces 35 distinct pointer writes, omits all
    33 inline fallback mappings, and refuses any count or original-byte mismatch.
-4. The final marker and every hardcoded boundary site change together in one
-   guarded 50-edit plan.
+4. The 35 string redirects and 15 infrastructure edits remain separately owned;
+   the final marker and every hardcoded boundary site still change together.
 5. The Project-owned compositor validates the ISO9660/UDF insertion, its record,
    extent, bytes, hash, fixed image size, original files, and final
    mirrored tree.

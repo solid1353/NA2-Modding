@@ -30,8 +30,10 @@ inter-stage handoff.
 - Packaged `mappings.tsv` SHA-256: `01cfec3314e76c5cbe297aa1e046a402149a21d94d5d4fde531120ebf256035a`
 
 `translation_importer/config.tsv` is the canonical machine-readable home for
-both values. Documentation is not an executable input, and the importer verifies
-that the declared hash matches `translation_importer/mappings.tsv`.
+both values. `translation_importer/references.tsv` is the canonical pointer
+inventory for mappings that require linked external placement. Documentation is
+not an executable input, and the importer verifies the mappings hash plus every
+reference guard and coverage relationship.
 
 ### Source and target scope
 
@@ -51,8 +53,8 @@ Official NUN5 sources:
 `slot` and `sequence` mappings read their English bytes from exact NUN5 offsets
 at build time. `shorten` rows retain an `[S]` fallback/debt marker because the
 official NUN5 text cannot fit the original NA2 slot. The current integrated
-`string_patcher` omits those fallback writes and places their exact official
-strings in its compact resident MOD pool instead.
+`string_patcher` omits those fallback writes and contributes their exact official
+strings to the shared payload builder instead.
 
 ### Canonical `mappings.tsv`
 
@@ -548,24 +550,19 @@ targets, and enabling the Localization feature invokes the complete importer.
 
 ## String patcher
 
-This module owns all string placement. Its persisted executable inputs are
-`strings.tsv` for local semantic declarations, `config.tsv` for the compact
-resident layout and source/output guards, and `pointer_refs.tsv` for every
-verified external reference. At profile composition time it accepts validated
-in-memory rows and source data from `translation_importer`. It compiles inline
-imports, external pointer/loader edits, and local declarations into one
-in-memory binary-patcher package with organizational groups and default-enabled
-patches, then delegates
-byte guards, conflict handling, replacement, and logging to
-`na2_patcher.modules.binary_patcher.engine`. Imported mapping data is not copied
-into this module, and no binary-patcher tables or duplicate patch engine are
-stored here.
+The generic module owns string placement policy. Localization has no
+`string_patcher/` feature directory because it owns no local string declarations;
+the importer artifact invokes the engine as a derived consumer. It accepts
+validated in-memory rows, resolved source text, and references, compiles inline
+imports, contributes external strings as named read-only-data fragments, and
+declares symbolic pointer writes. The shared `payload_builder` chooses offsets
+and constructs `PRG/228.BIN`; the composer resolves symbols; `binary_patcher`
+owns byte guards, conflict handling, replacement, and logging. If Localization
+later owns local declarations, it can add `string_patcher/strings.tsv` then.
 
-`strings.tsv` currently contains only its header. The module remains the
-consumer/compiler for imported Localization strings and is ready for future
-local semantic declarations. The memory-card title is output identity and is
-therefore declared by the active profile's `identity.tsv`; its evidence is
-documented in `docs/knowledge/disc_identity.md`.
+The memory-card title is output identity and is therefore declared by the active
+profile's `identity.tsv`; its evidence is documented in
+`docs/knowledge/disc_identity.md`.
 
 ## UI texture translation module
 
@@ -948,38 +945,42 @@ The integrated `string_patcher` externalizes only the official NUN5 text needed 
 its defaults, its migration behavior, or its enabled state, and it never reads
 or patches `ADV.bin`.
 
-It deterministically generates exactly one ISO insertion:
+The shared payload builder deterministically generates exactly one ISO insertion:
 
 - `PRG/228.BIN`: a `0x760`-byte resident MWO3 code/data image containing a
   return-only entry stub and the 30 distinct official strings actually
   referenced by the current 31 logical external messages.
 
-The translation importer resolves and validates the canonical mapping data once.
+The translation importer resolves and validates the canonical mapping data and
+pointer inventory once.
 The consuming string patcher then:
 
 1. omits all imported edits belonging to the 33 `shorten` mappings, so the clean
    NA2 slots are never overwritten and no restoration pass is needed;
-2. redirects every inventoried use of those slots to its official MOD-resident
-   string;
-3. adds the guarded ELF loader hook, one load destination, and compact
-   resident-memory reservation needed by `228.BIN`.
+2. contributes the selected official strings as named payload fragments;
+3. declares symbolic redirects for every inventoried use of those slots.
 
-All binary output is generated in memory by `engine.py`. No patched ELF, BIN, or
-ISO payload is stored in Git.
+The payload builder packs all feature contributions, assigns addresses, emits
+`228.BIN`, and owns the guarded ELF loader hook, load destination, and exact
+linked memory reservation. The composer resolves string symbols before the
+resulting fixed-size writes pass through `binary_patcher`.
+
+All binary output is generated in memory by the importer, string patcher,
+payload builder, composer, and binary patcher. No patched ELF, BIN, or ISO
+payload is stored in Git.
 
 ### Canonical inputs
 
-- `config.tsv` pins source, mapping, and generated-payload hashes plus the
-  fixed memory/file layout.
-- `pointer_refs.tsv` inventories all 33 shortened mappings and every verified
-  pointer word. Three continuation rows deliberately reuse their containing
-  full-message pointer.
+- `translation_importer/references.tsv` inventories all 33 shortened mappings
+  and every verified pointer word. Three continuation rows deliberately reuse
+  their containing full-message pointer.
+- `translation_importer/config.tsv` pins the mapping version and exact
+  `mappings.tsv` hash.
+These files are covered by the Localization feature's aggregate profile hash.
+Payload-builder configuration is executable infrastructure rather than feature
+data; engine code and documentation are excluded from the feature pin.
 
-These files live beside `strings.tsv` under the one `string_patcher` module and
-are covered by the Localization feature's aggregate profile hash. The engine
-and documentation are excluded from that data pin.
-
-### Fixed layout
+### Current linked layout
 
 | Item | Value |
 | --- | ---: |
@@ -990,17 +991,17 @@ and documentation are excluded from that data pin.
 | Final resident boundary | `0x008F4460` |
 
 Strings are resolved through the importer, encoded as CP1252 plus a terminator,
-deduplicated by exact encoded bytes, and packed in stable mapping-ID order at
-four-byte-aligned offsets. They occupy 1,572 bytes; M2003 and M2065 deliberately
-share one identical packed value. The generated MOD has no constructor range;
-the ELF bootstrap loads it once and calls its documented return-only entry.
+deduplicated by exact encoded bytes, contributed by symbol, and currently link in
+stable mapping-ID order at four-byte-aligned offsets. No feature owns these
+offsets. The strings occupy 1,572 bytes; M2003 and M2065 deliberately share one
+identical symbol. The generated payload has no constructor range; the
+infrastructure bootstrap loads it once and calls its documented return-only entry.
 
 ### Safety properties
 
-- exact source and generated-output hashes;
 - exact mapping/ref counts and complete `[S]` coverage;
 - fixed-length guarded edits only;
-- deterministic payloads and pointer order;
+- deterministic fragment linking, symbol resolution, payloads, and pointer order;
 - rejection of overlaps, stale original bytes, unexpected mappings, malformed
   references, changed source binaries, or memory-envelope overflow;
 - no `FLIST` edit unless runtime testing later proves direct `cdrom0:\\PRG\\...`

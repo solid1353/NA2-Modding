@@ -1,10 +1,24 @@
 # String patcher engine
 
 This reusable engine validates feature-owned semantic string declarations and
-translation imports, chooses inline or compact external placement, compiles all
-file-backed edits into one in-memory binary-patcher package, and delegates
-guarded writes and conflict validation to `binary_patcher`. It may also return
-generated image insertions to the profile compositor. Current feature-owned
-configuration lives under `na2_patcher/features/localization/string_patcher/`;
-its local `strings.tsv` is intentionally header-only until a genuine
-Localization-owned string declaration is needed.
+translation imports, chooses inline or linked external placement, and compiles
+all concrete file-backed edits into one in-memory binary-patcher package.
+External strings are contributed as named read-only-data fragments with
+symbolic pointer writes; `payload_builder` assigns their offsets and constructs
+`PRG/228.BIN`, the composer resolves the pointers, and `binary_patcher` performs
+guarded writes and conflict validation. The engine never owns the shared file,
+loader, memory reservation, or final runtime addresses.
+
+Localization owns no `string_patcher/` feature directory because it currently
+has no local string declarations. Its importer artifact invokes this generic
+consumer as a derived stage. A feature creates `string_patcher/strings.tsv` only
+when it owns actual local declarations.
+
+## Invokes
+
+- `binary_patcher` for concrete guarded inline and resolved-pointer writes.
+
+## Uses infrastructure
+
+- `payload_builder` for contributed code/data fragments. It is mandatory build
+  infrastructure, not a downstream module invocation.

@@ -11,6 +11,7 @@ from na2_patcher.composer import resolve_module_order
 from na2_patcher.profile import (
     FEATURE_FIELDS,
     IDENTITY_FIELDS,
+    MODULE_TYPE_ORDER,
     feature_content_sha256,
     load_profile,
     module_content_sha256,
@@ -66,6 +67,12 @@ class ProfileTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (module / "mappings.tsv").write_text("id\n", encoding="utf-8")
+            (module / "references.tsv").write_text(
+                "mapping_id\ttarget\ttarget_file_offset\ttarget_runtime_address\t"
+                "resolution\treference_binary\treference_file_offsets\t"
+                "parent_mapping_id\tparent_file_offset\tparent_runtime_address\n",
+                encoding="utf-8",
+            )
         elif module_type == "texture_patcher":
             for name in ("containers.tsv", "mappings.tsv", "strategies.tsv"):
                 (module / name).write_text("id\n", encoding="utf-8")
@@ -202,7 +209,7 @@ class ProfileTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "unsupported files"):
                 feature_content_sha256(feature)
 
-    def test_importer_requires_string_patcher_in_same_feature(self) -> None:
+    def test_importer_uses_derived_string_consumer_without_feature_directory(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             features, source, profiles = self.create_workspace(root)
@@ -213,8 +220,7 @@ class ProfileTests(unittest.TestCase):
                 [{"feature_id": "localization", "expected_sha256": feature_content_sha256(feature)}],
             )
             loaded = load_profile(profile, root)
-            with self.assertRaisesRegex(ValueError, "no string_patcher consumes"):
-                resolve_module_order(loaded.modules)
+            self.assertEqual(resolve_module_order(loaded.modules), loaded.modules)
 
     def test_profile_identity_requires_equal_length_boot_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -272,7 +278,6 @@ class ProfileTests(unittest.TestCase):
             [module.module_id for module in profile.modules],
             [
                 "localization.translation_importer",
-                "localization.string_patcher",
                 "localization.texture_patcher",
                 "localization.binary_patcher",
                 "qol.binary_patcher",
@@ -295,6 +300,16 @@ class ProfileTests(unittest.TestCase):
             nested_markdown = [path for path in feature.rglob("*.md") if path.parent != feature]
             self.assertEqual(nested_markdown, [], feature.name)
         self.assertEqual(list(features_root.rglob("binary_patcher/manifest.tsv")), [])
+
+    def test_registered_module_readmes_declare_downstream_invocations(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        modules_root = repository / "na2_patcher" / "modules"
+        for module_type in MODULE_TYPE_ORDER:
+            readme = modules_root / module_type / "README.md"
+            text = readme.read_text(encoding="utf-8")
+            self.assertIn("## Invokes\n", text, module_type)
+            declaration = text.split("## Invokes\n", 1)[1].split("\n## ", 1)[0].strip()
+            self.assertTrue(declaration, module_type)
 
 
 if __name__ == "__main__":

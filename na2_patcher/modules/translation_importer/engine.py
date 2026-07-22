@@ -28,6 +28,18 @@ MAPPING_FIELDS = [
     "id", "enabled", "section", "mode", "target", "target_offset", "capacity",
     "source_ref", "transform", "arguments", "value", "reason",
 ]
+REFERENCE_FIELDS = [
+    "mapping_id",
+    "target",
+    "target_file_offset",
+    "target_runtime_address",
+    "resolution",
+    "reference_binary",
+    "reference_file_offsets",
+    "parent_mapping_id",
+    "parent_file_offset",
+    "parent_runtime_address",
+]
 METADATA_FIELDS = ["key", "value"]
 EXPECTED_SHA1 = {
     "NA2_BTL": "bf7fc7331a2a4f34fc90b84b45772ae1f6bcab03",
@@ -47,6 +59,12 @@ VALID_TRANSFORMS = {
     "split_br", "split_br_sequence", "join_br_parts", "insert_br_after_words",
     "append_space", "flatten_br_slice",
 }
+TARGET_RUNTIME_BASES = {
+    "SLPS": 0x000FFF00,
+    "BTL": 0x006B3F00,
+    "ETC": 0x006B3F00,
+}
+VALID_REFERENCE_RESOLUTIONS = frozenset({"direct", "parent_message"})
 NAMED_COLOR_TAG_EQUIVALENTS = {
     "<WHITE>": ("<WHITE>", "<colorFFFFFF>"),
     "<BLACK>": ("<BLACK>", "<color000000>"),
@@ -73,9 +91,27 @@ class TranslationImportPlan:
     import_rows: list[dict[str, str]]
     targets: dict[str, dict[str, object]]
     text_mappings: tuple[dict[str, object], ...]
+    references: tuple["Reference", ...]
+    resolved_texts: dict[str, str]
+    resolved_sequences: dict[str, tuple[str, ...]]
+    source_templates: dict[str, str]
     clean_targets: dict[str, bytes]
     official_sources: dict[str, bytes]
     summary: dict[str, object]
+
+
+@dataclass(frozen=True)
+class Reference:
+    mapping_id: str
+    target: str
+    target_file_offset: int
+    target_runtime_address: int
+    resolution: str
+    reference_binary: str
+    reference_file_offsets: tuple[int, ...]
+    parent_mapping_id: str | None
+    parent_file_offset: int | None
+    parent_runtime_address: int | None
 
 
 class Iso9660:
@@ -277,6 +313,147 @@ def read_rows(path: Path) -> list[dict[str, str]]:
     if any(not value for value in ids) or len(ids) != len(set(ids)):
         raise ValueError("mappings.tsv contains empty or duplicate ids")
     return rows
+
+
+def read_references(path: Path) -> tuple[Reference, ...]:
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        if reader.fieldnames != REFERENCE_FIELDS:
+            raise ValueError(
+                f"{path}: expected columns " + "\t".join(REFERENCE_FIELDS)
+            )
+        rows = [
+            {key: (value or "").strip() for key, value in row.items()}
+            for row in reader
+            if any((value or "").strip() for value in row.values())
+        ]
+    references: list[Reference] = []
+    seen: set[str] = set()
+    for line, row in enumerate(rows, 2):
+        mapping_id = row["mapping_id"]
+        label = f"{path.name} line {line} ({mapping_id})"
+        if not mapping_id or mapping_id in seen:
+            raise ValueError(f"{label}: duplicate or empty mapping_id")
+        seen.add(mapping_id)
+        target = row["target"].upper()
+        reference_binary = row["reference_binary"].upper()
+        if target not in TARGET_SPECS or reference_binary not in TARGET_SPECS:
+            raise ValueError(f"{label}: unsupported target/reference binary")
+        resolution = row["resolution"]
+        if resolution not in VALID_REFERENCE_RESOLUTIONS:
+            raise ValueError(f"{label}: unsupported resolution {resolution!r}")
+        reference_offsets = tuple(
+            parse_int(value.strip(), label)
+            for value in row["reference_file_offsets"].split(",")
+            if value.strip()
+        )
+        if not reference_offsets or len(set(reference_offsets)) != len(reference_offsets):
+            raise ValueError(f"{label}: empty or duplicate reference offsets")
+        parent_id = row["parent_mapping_id"]
+        parent_offset = row["parent_file_offset"]
+        parent_runtime = row["parent_runtime_address"]
+        if resolution == "direct":
+            if (parent_id, parent_offset, parent_runtime) != ("-", "-", "-"):
+                raise ValueError(f"{label}: direct rows must not declare a parent")
+            parent_id_value = None
+            parent_offset_value = None
+            parent_runtime_value = None
+        else:
+            if not parent_id or "-" in (parent_id, parent_offset, parent_runtime):
+                raise ValueError(f"{label}: parent_message row requires a complete parent")
+            parent_id_value = parent_id
+            parent_offset_value = parse_int(parent_offset, label)
+            parent_runtime_value = parse_int(parent_runtime, label)
+        references.append(
+            Reference(
+                mapping_id=mapping_id,
+                target=target,
+                target_file_offset=parse_int(row["target_file_offset"], label),
+                target_runtime_address=parse_int(row["target_runtime_address"], label),
+                resolution=resolution,
+                reference_binary=reference_binary,
+                reference_file_offsets=reference_offsets,
+                parent_mapping_id=parent_id_value,
+                parent_file_offset=parent_offset_value,
+                parent_runtime_address=parent_runtime_value,
+            )
+        )
+    return tuple(references)
+
+
+def validate_references(
+    references: tuple[Reference, ...],
+    mappings: Sequence[dict[str, object]],
+    clean_targets: dict[str, bytes],
+) -> dict[str, int]:
+    text_by_id = {str(row["id"]): row for row in mappings}
+    shortening_ids = {
+        mapping_id
+        for mapping_id, row in text_by_id.items()
+        if row["mode"] == "shorten"
+    }
+    reference_ids = {row.mapping_id for row in references}
+    if reference_ids != shortening_ids:
+        raise ValueError(
+            "reference coverage differs from enabled shortening mappings: "
+            f"missing={sorted(shortening_ids - reference_ids)}, "
+            f"extra={sorted(reference_ids - shortening_ids)}"
+        )
+    pointer_sites: set[tuple[str, int]] = set()
+    for row in references:
+        mapping = text_by_id[row.mapping_id]
+        if mapping["target"] != row.target:
+            raise ValueError(f"{row.mapping_id}: target differs from reference inventory")
+        if int(mapping["target_offset"]) != row.target_file_offset:
+            raise ValueError(
+                f"{row.mapping_id}: target offset differs from reference inventory"
+            )
+        expected_runtime = TARGET_RUNTIME_BASES[row.target] + row.target_file_offset
+        if expected_runtime != row.target_runtime_address:
+            raise ValueError(f"{row.mapping_id}: target runtime address is inconsistent")
+        expected_pointer = row.parent_runtime_address or row.target_runtime_address
+        if row.resolution == "parent_message":
+            assert row.parent_mapping_id is not None
+            assert row.parent_file_offset is not None
+            assert row.parent_runtime_address is not None
+            parent = text_by_id.get(row.parent_mapping_id)
+            if parent is None:
+                raise ValueError(
+                    f"{row.mapping_id}: missing parent {row.parent_mapping_id}"
+                )
+            if parent["target"] != row.target:
+                raise ValueError(f"{row.mapping_id}: parent target differs")
+            if int(parent["target_offset"]) != row.parent_file_offset:
+                raise ValueError(f"{row.mapping_id}: parent offset differs")
+            if (
+                TARGET_RUNTIME_BASES[row.target] + row.parent_file_offset
+                != row.parent_runtime_address
+            ):
+                raise ValueError(
+                    f"{row.mapping_id}: parent runtime address is inconsistent"
+                )
+        clean = clean_targets[row.reference_binary]
+        for offset in row.reference_file_offsets:
+            if offset + 4 > len(clean):
+                raise ValueError(
+                    f"{row.mapping_id}: pointer offset is outside "
+                    f"{TARGET_SPECS[row.reference_binary][0]}"
+                )
+            actual = int.from_bytes(clean[offset:offset + 4], "little")
+            if actual != expected_pointer:
+                raise ValueError(
+                    f"{row.mapping_id}: pointer at 0x{offset:X} is 0x{actual:X}, "
+                    f"expected 0x{expected_pointer:X}"
+                )
+            pointer_sites.add((row.reference_binary, offset))
+    counts = Counter(row.resolution for row in references)
+    return {
+        "rows": len(references),
+        "direct": counts["direct"],
+        "parent_message": counts["parent_message"],
+        "pointer_sites": sum(len(row.reference_file_offsets) for row in references),
+        "redirect_edits": len(pointer_sites),
+    }
 
 
 def read_mapping_metadata(data_root: Path) -> tuple[int, str]:
@@ -557,7 +734,46 @@ def validate_semantic_replacement(source_text: str, target_text: str, label: str
         )
 
 
-def apply_text_mappings(mappings, selected, clean_targets, output_targets, official_sources):
+def resolve_text_materializations(
+    mappings: Sequence[dict[str, object]],
+    selected: set[str],
+    official_sources: dict[str, bytes],
+) -> tuple[dict[str, str], dict[str, tuple[str, ...]], dict[str, str]]:
+    """Resolve official templates and transforms once for downstream consumers."""
+    source_templates: dict[str, str] = {}
+    resolved_texts: dict[str, str] = {}
+    resolved_sequences: dict[str, tuple[str, ...]] = {}
+
+    for row in mappings:
+        if str(row["target"]) not in selected:
+            continue
+        mapping_id = str(row["id"])
+        source = str(row["source"])
+        source_offset = int(row["source_offset"])
+        template = read_official_z(
+            official_sources[source], source_offset, f"{mapping_id} source template"
+        )
+        source_templates[mapping_id] = template
+        if row["mode"] == "sequence":
+            resolved_sequences[mapping_id] = tuple(
+                value
+                for value in resolve_source_sequence(row, official_sources, mapping_id)
+            )
+        else:
+            resolved_texts[mapping_id] = resolve_source_text(
+                row, official_sources, mapping_id
+            )
+    return resolved_texts, resolved_sequences, source_templates
+
+
+def apply_text_mappings(
+    mappings,
+    selected,
+    clean_targets,
+    output_targets,
+    resolved_texts,
+    resolved_sequences,
+):
     annotations = []
     occupied: dict[str, list[tuple[int, int, str]]] = defaultdict(list)
     stats = Counter()
@@ -574,7 +790,7 @@ def apply_text_mappings(mappings, selected, clean_targets, output_targets, offic
                 raise ValueError(f"{label}: overlaps {prior} at 0x{start:X}-0x{end:X}")
         if row["mode"] == "sequence":
             target_fragments, _ = read_target_sequence(clean_targets[target], offset, capacity, label)
-            official_fragments = resolve_source_sequence(row, official_sources, label)
+            official_fragments = resolved_sequences[str(row["id"])]
             target_context = "<NUL>".join(target_fragments)
             replacement_fragments = [
                 adapt_source_markup(fragment, target_context, label) for fragment in official_fragments
@@ -588,7 +804,7 @@ def apply_text_mappings(mappings, selected, clean_targets, output_targets, offic
             target_text = target_context
             replacement_text = "<NUL>".join(replacement_fragments)
         else:
-            official = resolve_source_text(row, official_sources, label)
+            official = resolved_texts[str(row["id"])]
             target_text, _ = read_target_slot(clean_targets[target], offset, capacity, label)
             validate_semantic_replacement(official, target_text, label)
             if row["mode"] == "shorten":
@@ -746,12 +962,26 @@ def build_translation_import_plan(
         )
     rows_raw = read_rows(mapping_path)
     mappings = parse_mappings(rows_raw)
+    references = read_references(data_root / "references.tsv")
+    reference_counts = validate_references(
+        references, mappings["text"], clean_targets
+    )
+    resolved_texts, resolved_sequences, source_templates = (
+        resolve_text_materializations(
+            mappings["text"], selected, official_sources
+        )
+    )
     output_targets = {
         target: bytearray(clean_targets[target]) for target in selected_list
     }
 
     text_annotations, text_stats, text_sections = apply_text_mappings(
-        mappings["text"], selected, clean_targets, output_targets, official_sources
+        mappings["text"],
+        selected,
+        clean_targets,
+        output_targets,
+        resolved_texts,
+        resolved_sequences,
     )
     byte_annotations, byte_stats, byte_sections = apply_byte_mappings(
         mappings["bytes"], selected, output_targets
@@ -806,6 +1036,7 @@ def build_translation_import_plan(
         },
         "source_hashes": actual_hashes,
         "translated_file_hashes": translated_hashes,
+        "reference_inventory": reference_counts,
     }
     return TranslationImportPlan(
         mapping_version=mapping_version,
@@ -813,6 +1044,10 @@ def build_translation_import_plan(
         import_rows=import_rows,
         targets=import_targets,
         text_mappings=tuple(mappings["text"]),
+        references=references,
+        resolved_texts=resolved_texts,
+        resolved_sequences=resolved_sequences,
+        source_templates=source_templates,
         clean_targets=clean_targets,
         official_sources=official_sources,
         summary=summary,

@@ -8,6 +8,7 @@ from pathlib import Path, PurePosixPath
 
 from ..binary_patcher import engine as binary_patcher
 from ..translation_importer import engine as translation_importer
+from ...payload_builder.operations import ResidentPayloadBuild, ResolvedPatch
 from . import external as external_strings
 
 
@@ -55,9 +56,13 @@ class StringSpec:
 
 
 @dataclass(frozen=True)
+class StringPatchDraft:
+    external_draft: external_strings.ExternalStringDraft
+
+
+@dataclass(frozen=True)
 class StringPatchPlan:
     package: binary_patcher.Package
-    insertions: dict[str, bytes]
     summary: dict[str, object]
     external_plan: external_strings.ExternalStringPlan
 
@@ -204,13 +209,15 @@ def load_specs(directory: Path) -> tuple[StringSpec, ...]:
 
 
 def build_binary_package(
-    directory: Path,
+    directory: Path | None,
     *,
     imported_rows: Sequence[Mapping[str, str]] = (),
     imported_targets: Mapping[str, Mapping[str, object]] | None = None,
 ) -> binary_patcher.Package:
-    directory = directory.resolve()
-    specs = load_specs(directory)
+    package_directory = (
+        directory.resolve() if directory is not None else Path(__file__).resolve().parent
+    )
+    specs = load_specs(package_directory) if directory is not None else ()
     imported_targets = imported_targets or {}
     targets: dict[str, binary_patcher.Target] = {}
     target_ids: dict[tuple[str, str], str] = {}
@@ -418,11 +425,15 @@ def build_binary_package(
         )
 
     return binary_patcher.Package(
-        directory=directory,
+        directory=package_directory,
         package_id=(
-            f"{directory.parent.name}.{directory.name}"
-            if directory.name == "string_patcher"
-            else directory.name
+            f"{package_directory.parent.name}.{package_directory.name}"
+            if directory is not None and package_directory.name == "string_patcher"
+            else (
+                package_directory.name
+                if directory is not None
+                else "derived.string_patcher"
+            )
         ),
         targets=targets,
         groups=groups,
@@ -431,16 +442,33 @@ def build_binary_package(
     )
 
 
-def build_translation_plan(
-    directory: Path,
+def build_translation_draft(
     *,
     translation_plan: translation_importer.TranslationImportPlan,
+    owner: str,
+) -> StringPatchDraft:
+    """Declare external text fragments and symbolic pointer writes."""
+    return StringPatchDraft(
+        external_draft=external_strings.build_external_string_draft(
+            translation_plan=translation_plan,
+            owner=owner,
+        )
+    )
+
+
+def finalize_translation_plan(
+    directory: Path | None,
+    *,
+    translation_plan: translation_importer.TranslationImportPlan,
+    draft: StringPatchDraft,
+    build: ResidentPayloadBuild,
+    resolved_patches: tuple[ResolvedPatch, ...],
 ) -> StringPatchPlan:
-    """Compile inline imports, external redirects, and one compact module payload."""
-    directory = directory.resolve()
-    external_plan = external_strings.build_external_string_plan(
-        package_directory=directory,
-        translation_plan=translation_plan,
+    """Compile inline imports and linker-resolved pointer redirects."""
+    external_plan = external_strings.finalize_external_string_plan(
+        draft.external_draft,
+        build=build,
+        resolved_patches=resolved_patches,
     )
     external_rows = tuple(
         {
@@ -453,7 +481,7 @@ def build_translation_plan(
             "source_mapping_id": edit.mapping_id,
             "reason": edit.reason,
         }
-        for index, edit in enumerate(external_plan.edits, 1)
+        for index, edit in enumerate(external_plan.resolved_patches, 1)
     )
     inline_rows = tuple(
         row
@@ -468,11 +496,10 @@ def build_translation_plan(
     )
     summary = dict(external_plan.summary)
     summary["inline_import_rows"] = len(inline_rows)
-    summary["external_binary_edits"] = len(external_plan.edits)
+    summary["external_binary_edits"] = len(external_plan.resolved_patches)
     summary["compiled_binary_edits"] = len(package.edits)
     return StringPatchPlan(
         package=package,
-        insertions=external_plan.insertions,
         summary=summary,
         external_plan=external_plan,
     )

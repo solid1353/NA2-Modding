@@ -36,8 +36,7 @@ BINARY_PATCHER_CONTROL_FILES = (
     "edits.tsv",
 )
 STRING_PATCHER_CONTROL_FILES = ("strings.tsv",)
-STRING_PATCHER_EXTERNAL_FILES = ("config.tsv", "pointer_refs.tsv")
-TRANSLATION_IMPORTER_CONTROL_FILES = ("config.tsv", "mappings.tsv")
+TRANSLATION_IMPORTER_CONTROL_FILES = ("config.tsv", "mappings.tsv", "references.tsv")
 TEXTURE_PATCHER_CONTROL_FILES = (
     "containers.tsv",
     "mappings.tsv",
@@ -195,19 +194,9 @@ def _module_content_files(path: Path, module_type: str) -> list[Path]:
     if module_type == "binary_patcher":
         return _binary_patcher_content_files(path)
     if module_type == "string_patcher":
-        files = _required_files(
+        return _required_files(
             path, STRING_PATCHER_CONTROL_FILES, "string_patcher module"
         )
-        external = [path / name for name in STRING_PATCHER_EXTERNAL_FILES]
-        if any(item.exists() for item in external):
-            missing = [item.name for item in external if not item.is_file()]
-            if missing:
-                raise FileNotFoundError(
-                    "string_patcher module has an incomplete external-string "
-                    f"declaration: {', '.join(missing)}"
-                )
-            files.extend(external)
-        return files
     names = {
         "translation_importer": TRANSLATION_IMPORTER_CONTROL_FILES,
         "texture_patcher": TEXTURE_PATCHER_CONTROL_FILES,

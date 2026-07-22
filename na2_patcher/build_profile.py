@@ -5,7 +5,12 @@ import argparse
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .composer import compose_assembly_plan, resolve_module_order
+from .composer import (
+    MODULE_ARTIFACT_CONTRACTS,
+    compose_assembly_plan,
+    resolve_module_order,
+    resolve_symbolic_patches,
+)
 from .image_assembler.assembler import (
     assemble_image,
     building_image_path,
@@ -15,12 +20,14 @@ from .modules import translation_importer as translation_importer_module
 from .modules.binary_patcher import engine as binary_patcher_module
 from .modules.string_patcher import engine as string_patcher_module
 from .modules.texture_patcher import engine as texture_patcher_module
+from .payload_builder import builder as payload_builder_module
+from .payload_builder import integration as payload_integration_module
+from .payload_builder.operations import ResidentPayloadBuild
 from .profile import Profile, ProfileModule, load_profile
 from .project_paths import load_project_paths
 
 
 PROJECT_PATHS = load_project_paths(Path(__file__).resolve())
-STRING_PATCHER_INSERTION_PATHS = ("PRG/228.BIN",)
 
 
 def normalize(path: str) -> str:
@@ -298,7 +305,6 @@ def write_texture_patch_log(
 
 def write_string_patch_plan_log(
     plan: string_patcher_module.StringPatchPlan,
-    insertion_results: tuple[IsoInsertion, ...],
     log_directory: Path,
 ) -> None:
     binary_patcher_module.write_tsv(
@@ -315,8 +321,54 @@ def write_string_patch_plan_log(
         ],
         string_patcher_module.external_patch_log_rows(plan),
     )
+    translation_importer_module.write_json(
+        log_directory / "string_patch_summary.json",
+        plan.summary,
+    )
+
+
+def write_payload_builder_log(
+    result: dict[str, object],
+    log_directory: Path,
+    *,
+    output_iso_text: str,
+    workspace: Path,
+) -> None:
+    build = result["build"]
+    assert isinstance(build, ResidentPayloadBuild)
+    integration = result["binary_patch_result"]
+    assert isinstance(integration, dict)
+    write_binary_patch_log(
+        integration,
+        log_directory,
+        output_iso_text=output_iso_text,
+        log_directory_text=log_directory.relative_to(workspace).as_posix(),
+    )
     binary_patcher_module.write_tsv(
-        log_directory / "insertions.tsv",
+        log_directory / "symbol_map.tsv",
+        [
+            "owner",
+            "symbol",
+            "kind",
+            "file_offset",
+            "runtime_address",
+            "size",
+            "sha256",
+            "init",
+        ],
+        build.map_rows,
+    )
+    translation_importer_module.write_json(
+        log_directory / "payload_summary.json", build.summary
+    )
+    insertion_results = result.get("insertion_results")
+    if not isinstance(insertion_results, tuple) or len(insertion_results) != 1:
+        raise RuntimeError("Payload builder is missing its verified image insertion")
+    insertion = insertion_results[0]
+    if not isinstance(insertion, IsoInsertion):
+        raise RuntimeError("Payload builder insertion result has an invalid type")
+    binary_patcher_module.write_tsv(
+        log_directory / "insertion.tsv",
         [
             "path",
             "extent",
@@ -327,31 +379,22 @@ def write_string_patch_plan_log(
             "udf_file_entry_offset",
             "udf_directory_record_offset",
         ],
-        [
-            {
-                "path": result.path,
-                "extent": result.extent,
-                "byte_offset": f"0x{result.byte_offset:X}",
-                "size": result.size,
-                "sha256": result.sha256,
-                "directory_record_offset": f"0x{result.directory_record_offset:X}",
-                "udf_file_entry_offset": (
-                    f"0x{result.udf_file_entry_offset:X}"
-                    if result.udf_file_entry_offset is not None
-                    else ""
-                ),
-                "udf_directory_record_offset": (
-                    f"0x{result.udf_directory_record_offset:X}"
-                    if result.udf_directory_record_offset is not None
-                    else ""
-                ),
-            }
-            for result in insertion_results
-        ],
-    )
-    translation_importer_module.write_json(
-        log_directory / "string_patch_summary.json",
-        plan.summary,
+        [{
+            "path": insertion.path,
+            "extent": insertion.extent,
+            "byte_offset": f"0x{insertion.byte_offset:X}",
+            "size": insertion.size,
+            "sha256": insertion.sha256,
+            "directory_record_offset": f"0x{insertion.directory_record_offset:X}",
+            "udf_file_entry_offset": (
+                f"0x{insertion.udf_file_entry_offset:X}"
+                if insertion.udf_file_entry_offset is not None else ""
+            ),
+            "udf_directory_record_offset": (
+                f"0x{insertion.udf_directory_record_offset:X}"
+                if insertion.udf_directory_record_offset is not None else ""
+            ),
+        }],
     )
 
 
@@ -371,19 +414,77 @@ def apply_profile_modules(
     owners: dict[str, str],
     insertions: dict[str, bytes],
     insertion_owners: dict[str, str],
-) -> list[dict[str, object]]:
-    results: list[dict[str, object]] = []
-    pending_import_plan: translation_importer_module.TranslationImportPlan | None = None
-    for module in resolve_module_order(profile.modules):
-        if module.module == "string_patcher":
-            string_plan = (
-                string_patcher_module.build_translation_plan(
-                    module.input_path,
-                    translation_plan=pending_import_plan,
-                )
-                if pending_import_plan is not None
-                else None
+) -> tuple[list[dict[str, object]], dict[str, object] | None]:
+    ordered_modules = resolve_module_order(profile.modules)
+    import_plans: dict[str, translation_importer_module.TranslationImportPlan] = {}
+    string_plans: dict[str, string_patcher_module.StringPatchPlan] = {}
+    derived_string_plans: dict[str, string_patcher_module.StringPatchPlan] = {}
+    payload_build: ResidentPayloadBuild | None = None
+
+    importer_modules = [
+        module for module in ordered_modules if module.module == "translation_importer"
+    ]
+    if len(importer_modules) > 1:
+        raise ValueError("Profile may enable only one translation_importer module")
+    if importer_modules:
+        importer = importer_modules[0]
+        if "na2" not in profile.roots or "nun5" not in profile.roots:
+            raise ValueError("Translation importer requires na2 and nun5 profile roots")
+        import_plan = translation_importer_module.build_translation_import_plan(
+            **_translation_source_arguments(profile.roots["na2"], "na2"),
+            **_translation_source_arguments(profile.roots["nun5"], "nun5"),
+            data_root=importer.input_path,
+            apply="BTL,ETC,SLPS",
+        )
+        import_plans[importer.module_id] = import_plan
+        consumers = [
+            module
+            for module in ordered_modules
+            if module.feature_id == importer.feature_id
+            and module.module == "string_patcher"
+        ]
+        if len(consumers) > 1:
+            raise ValueError(
+                "translation_importer has multiple same-feature string_patcher consumers"
             )
+        string_module = consumers[0] if consumers else None
+        if (
+            string_module is None
+            and "string_patcher"
+            not in MODULE_ARTIFACT_CONTRACTS[importer.module].derived_consumers
+        ):
+            raise ValueError("translation_importer has no declared string consumer")
+        string_owner = (
+            string_module.module_id
+            if string_module is not None
+            else f"{importer.feature_id}.string_patcher"
+        )
+        draft = string_patcher_module.build_translation_draft(
+            translation_plan=import_plan,
+            owner=string_owner,
+        )
+        payload_build = payload_builder_module.build_resident_payload(
+            draft.external_draft.fragments
+        )
+        resolved = resolve_symbolic_patches(
+            payload_build, draft.external_draft.symbolic_patches
+        )
+        finalized = string_patcher_module.finalize_translation_plan(
+            string_module.input_path if string_module is not None else None,
+            translation_plan=import_plan,
+            draft=draft,
+            build=payload_build,
+            resolved_patches=resolved,
+        )
+        if string_module is not None:
+            string_plans[string_module.module_id] = finalized
+        else:
+            derived_string_plans[importer.module_id] = finalized
+
+    results: list[dict[str, object]] = []
+    for module in ordered_modules:
+        if module.module == "string_patcher":
+            string_plan = string_plans.get(module.module_id)
             compiled_package = (
                 string_plan.package
                 if string_plan is not None
@@ -399,27 +500,6 @@ def apply_profile_modules(
                 owners=owners,
             )
             paths = list(result["patched_paths"])
-            if string_plan is not None:
-                planned_insertions = {
-                    normalize(path): bytes(payload)
-                    for path, payload in string_plan.insertions.items()
-                }
-                if tuple(sorted(planned_insertions)) != STRING_PATCHER_INSERTION_PATHS:
-                    raise RuntimeError(
-                        "Integrated string patcher must insert exactly "
-                        + ", ".join(STRING_PATCHER_INSERTION_PATHS)
-                    )
-                for path in STRING_PATCHER_INSERTION_PATHS:
-                    if path in insertions:
-                        raise RuntimeError(
-                            f"Multiple modules declare ISO insertion path: {path}"
-                        )
-                    payload = planned_insertions[path]
-                    if not payload:
-                        raise ValueError(f"String-patcher insertion is empty: {path}")
-                    insertions[path] = payload
-                    insertion_owners[path] = module.module_id
-                    paths.append(path)
             results.append(
                 {
                     "module": module,
@@ -428,7 +508,6 @@ def apply_profile_modules(
                     "paths": paths,
                 }
             )
-            pending_import_plan = None
             continue
         if module.module == "binary_patcher":
             result = apply_binary_patch_set(
@@ -448,33 +527,28 @@ def apply_profile_modules(
             )
             continue
         if module.module == "translation_importer":
-            if pending_import_plan is not None or any(
-                "translation_import_plan" in item for item in results
-            ):
-                raise ValueError("Profile may enable only one translation_importer module")
-            if not module.input_path.is_dir():
-                raise ValueError(
-                    f"Translation importer {module.module_id} input must be a package directory"
+            plan = import_plans[module.module_id]
+            item: dict[str, object] = {
+                "module": module,
+                "translation_import_plan": plan,
+                "translation_import_rows": len(plan.import_rows),
+                "paths": [],
+            }
+            derived = derived_string_plans.get(module.module_id)
+            if derived is not None:
+                derived_result = apply_binary_patch_set(
+                    Path(string_patcher_module.__file__).resolve().parent,
+                    package=derived.package,
+                    roots=profile.roots,
+                    feature_id=module.feature_id,
+                    source=source,
+                    payloads=payloads,
+                    owners=owners,
                 )
-            if "na2" not in profile.roots or "nun5" not in profile.roots:
-                raise ValueError(
-                    "Translation importer requires na2 and nun5 profile roots"
-                )
-            plan = translation_importer_module.build_translation_import_plan(
-                **_translation_source_arguments(profile.roots["na2"], "na2"),
-                **_translation_source_arguments(profile.roots["nun5"], "nun5"),
-                data_root=module.input_path,
-                apply="BTL,ETC,SLPS",
-            )
-            pending_import_plan = plan
-            results.append(
-                {
-                    "module": module,
-                    "translation_import_plan": plan,
-                    "translation_import_rows": len(plan.import_rows),
-                    "paths": [],
-                }
-            )
+                item["derived_string_patch_result"] = derived_result
+                item["string_patch_plan"] = derived
+                item["paths"] = list(derived_result["patched_paths"])
+            results.append(item)
             continue
         if module.module == "texture_patcher":
             plan, path = apply_texture_patch_package(
@@ -494,16 +568,52 @@ def apply_profile_modules(
             )
             continue
         raise AssertionError(module.module)
-    if pending_import_plan is not None:
-        raise ValueError(
-            "translation_importer requires a following enabled string_patcher module"
+
+    payload_result: dict[str, object] | None = None
+    if payload_build is not None:
+        config = payload_builder_module.load_config()
+        boot_path = normalize(profile.identity.source_boot_path)
+        boot_record = source.by_path.get(boot_path)
+        if boot_record is None or boot_record.is_dir:
+            raise RuntimeError(f"Payload integration requires source boot ELF: {boot_path}")
+        clean_boot = source.read_file(boot_record)
+        integration_patches = payload_integration_module.build_integration_patches(
+            payload_build,
+            config=config,
+            boot_path=boot_path,
+            clean_boot=clean_boot,
         )
-    return results
+        integration_package = payload_integration_module.build_integration_package(
+            integration_patches,
+            boot_path=boot_path,
+            clean_boot=clean_boot,
+        )
+        integration_result = apply_binary_patch_set(
+            Path(payload_builder_module.__file__).resolve().parent,
+            package=integration_package,
+            roots=profile.roots,
+            feature_id="payload_builder",
+            source=source,
+            payloads=payloads,
+            owners=owners,
+        )
+        path = normalize(payload_build.output_path)
+        if path in insertions:
+            raise RuntimeError(f"Multiple producers declare image insertion path: {path}")
+        insertions[path] = payload_build.payload
+        insertion_owners[path] = "payload_builder"
+        payload_result = {
+            "build": payload_build,
+            "binary_patch_result": integration_result,
+            "paths": list(integration_result["patched_paths"]) + [path],
+        }
+    return results, payload_result
 
 
 def write_profile_log(
     profile: Profile,
     results: list[dict[str, object]],
+    payload_result: dict[str, object] | None,
     log_directory: Path,
     *,
     workspace: Path,
@@ -536,6 +646,14 @@ def write_profile_log(
                 output_iso_text=output_iso_text,
                 log_directory_text=module_log.relative_to(workspace).as_posix(),
             )
+        if "derived_string_patch_result" in item:
+            derived_log = module_log / "string_patcher"
+            write_binary_patch_log(
+                item["derived_string_patch_result"],
+                derived_log,
+                output_iso_text=output_iso_text,
+                log_directory_text=derived_log.relative_to(workspace).as_posix(),
+            )
         if "translation_import_plan" in item:
             plan = item["translation_import_plan"]
             assert isinstance(
@@ -555,18 +673,19 @@ def write_profile_log(
         if item.get("string_patch_plan") is not None:
             plan = item["string_patch_plan"]
             assert isinstance(plan, string_patcher_module.StringPatchPlan)
-            insertion_results = item.get("insertion_results")
-            if not isinstance(insertion_results, tuple) or not all(
-                isinstance(result, IsoInsertion) for result in insertion_results
-            ):
-                raise RuntimeError(
-                    f"Missing verified insertion results for {module.module_id}"
-                )
-            write_string_patch_plan_log(
-                plan,
-                insertion_results,
-                module_log,
+            string_log = (
+                module_log / "string_patcher"
+                if "derived_string_patch_result" in item
+                else module_log
             )
+            write_string_patch_plan_log(plan, string_log)
+    if payload_result is not None:
+        write_payload_builder_log(
+            payload_result,
+            log_directory / "payload_builder",
+            output_iso_text=output_iso_text,
+            workspace=workspace,
+        )
     binary_patcher_module.write_tsv(
         log_directory / "features.tsv",
         ["feature_id", "input", "input_sha256"],
@@ -688,7 +807,7 @@ def main() -> int:
     owners: dict[str, str] = {}
     insertions: dict[str, bytes] = {}
     insertion_owners: dict[str, str] = {}
-    profile_results = apply_profile_modules(
+    profile_results, payload_result = apply_profile_modules(
         profile,
         source=source,
         payloads=payloads,
@@ -716,6 +835,10 @@ def main() -> int:
         owned = results_by_owner.get(module.module_id)
         if owned:
             item["insertion_results"] = tuple(owned)
+    if payload_result is not None:
+        payload_result["insertion_results"] = tuple(
+            results_by_owner.get("payload_builder", ())
+        )
 
     identity_edits = list(composition.identity_edits)
     identity_edits.extend(assembly.iso9660_renames)
@@ -739,6 +862,7 @@ def main() -> int:
         write_profile_log(
             profile,
             profile_results,
+            payload_result,
             profile_log_directory,
             workspace=workspace,
             output_iso_text=output_iso_text,
@@ -765,10 +889,22 @@ def main() -> int:
             plan = item["texture_patch_plan"]
             assert isinstance(plan, texture_patcher_module.TexturePatchPlan)
             detail = f", {len(plan.containers)} containers, {plan.mapping_count} mappings"
-        if item.get("string_patch_plan") is not None:
-            detail += f", {len(item.get('insertion_results', ()))} insertion"
+        if "derived_string_patch_result" in item:
+            detail += (
+                f", {len(item['derived_string_patch_result']['edits'])} "
+                "derived string edits"
+            )
         print(f"  {module.order:03d} {module.module_id} ({module.module}{detail})")
         for path in sorted(str(value) for value in item.get("paths", [])):
+            print(f"    {green}{path}{reset}")
+    if payload_result is not None:
+        build = payload_result["build"]
+        assert isinstance(build, ResidentPayloadBuild)
+        print(
+            "  payload_builder "
+            f"({len(build.symbols)} symbols, {len(build.payload)} bytes)"
+        )
+        for path in sorted(str(value) for value in payload_result.get("paths", [])):
             print(f"    {green}{path}{reset}")
     print(f"  identity ({len(identity_edits)} edits)")
     print(f"Verified staged ISO: {building_image_path(output_iso).name}")

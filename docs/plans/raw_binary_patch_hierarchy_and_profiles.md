@@ -124,10 +124,11 @@ preserving their exact edits:
 
 The profile pins each enabled feature by one deterministic aggregate hash over
 all canonical module inputs. Binary-patcher inputs cover four control tables
-plus referenced blobs. String-patcher inputs always cover `strings.tsv`; when
-external placement is declared, they also require and cover paired `config.tsv`
-and `pointer_refs.tsv`. Adjacent documentation, engine code, and non-input
-helpers are excluded.
+plus referenced blobs. String-patcher inputs cover `strings.tsv` only when a
+feature owns local declarations. Imported-string consumption is a derived stage
+and creates no placeholder directory or file. Translation-importer inputs cover
+`config.tsv`, `mappings.tsv`, and `references.tsv`. Adjacent documentation,
+engine code, and non-input helpers are excluded.
 
 Profile-run logs record enabled features plus derived module ownership,
 identity, order, input hash, patched paths, applied default patch/edit

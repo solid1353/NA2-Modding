@@ -10,22 +10,18 @@ from na2_patcher.modules.string_patcher import engine as string_patcher
 class StringPatcherTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.package_directory = (
-            Path(__file__).resolve().parents[1]
-            / "features"
-            / "localization"
-            / "string_patcher"
+        cls.localization = Path(__file__).resolve().parents[1] / "features" / "localization"
+        cls.package = string_patcher.build_binary_package(None)
+
+    def test_import_consumer_needs_no_placeholder_feature_directory(self) -> None:
+        self.assertFalse((self.localization / "string_patcher").exists())
+        self.assertTrue(
+            (self.localization / "translation_importer" / "references.tsv").is_file()
         )
-        cls.package = string_patcher.build_binary_package(cls.package_directory)
 
-    def test_stores_semantic_string_and_external_placement_declarations(self) -> None:
-        for name in ("strings.tsv", "config.tsv", "pointer_refs.tsv"):
-            self.assertTrue((self.package_directory / name).is_file(), name)
-        for name in ("manifest.tsv", "targets.tsv", "groups.tsv", "patches.tsv", "edits.tsv"):
-            self.assertFalse((self.package_directory / name).exists(), name)
-
-    def test_allows_header_only_local_declarations(self) -> None:
+    def test_allows_import_only_derived_consumer(self) -> None:
         self.assertIsInstance(self.package, binary_patcher.Package)
+        self.assertEqual(self.package.package_id, "derived.string_patcher")
         self.assertEqual(list(self.package.targets), [])
         self.assertEqual(list(self.package.groups), [])
         self.assertEqual(list(self.package.patches), [])
@@ -33,7 +29,7 @@ class StringPatcherTests(unittest.TestCase):
 
     def test_compiles_imported_strings_as_default_binary_patches(self) -> None:
         package = string_patcher.build_binary_package(
-            self.package_directory,
+            None,
             imported_rows=(
                 {
                     "import_id": "BTL-I0001",

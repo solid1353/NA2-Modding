@@ -15,6 +15,12 @@ from .image_assembler.operations import (
     IsoRangeRef,
 )
 from .profile import ProfileIdentity, ProfileModule
+from .payload_builder.operations import (
+    ResidentPayloadBuild,
+    ResolvedPatch,
+    SymbolicPatch,
+    encode_symbol_reference,
+)
 
 
 TRANSLATION_IMPORT_ARTIFACT = "translation_imports"
@@ -25,13 +31,13 @@ class ModuleArtifactContract:
     provides: tuple[str, ...] = ()
     requires: tuple[str, ...] = ()
     consumes_if_available: tuple[str, ...] = ()
-    require_consumers: tuple[str, ...] = ()
+    derived_consumers: tuple[str, ...] = ()
 
 
 MODULE_ARTIFACT_CONTRACTS = {
     "translation_importer": ModuleArtifactContract(
         provides=(TRANSLATION_IMPORT_ARTIFACT,),
-        require_consumers=(TRANSLATION_IMPORT_ARTIFACT,),
+        derived_consumers=("string_patcher",),
     ),
     "string_patcher": ModuleArtifactContract(
         consumes_if_available=(TRANSLATION_IMPORT_ARTIFACT,),
@@ -45,6 +51,42 @@ MODULE_ARTIFACT_CONTRACTS = {
 class CompositionResult:
     plan: AssemblyPlan
     identity_edits: tuple[dict[str, object], ...]
+
+
+def resolve_symbolic_patches(
+    build: ResidentPayloadBuild,
+    patches: Sequence[SymbolicPatch],
+) -> tuple[ResolvedPatch, ...]:
+    """Materialize module-declared game-file writes after payload linking."""
+    result: list[ResolvedPatch] = []
+    for patch in patches:
+        symbol = build.symbols.get(patch.symbol)
+        if symbol is None:
+            raise ValueError(
+                f"{patch.mapping_id}: unknown resident-payload symbol {patch.symbol!r}"
+            )
+        replacement = encode_symbol_reference(
+            patch.encoding, symbol.runtime_address + patch.addend
+        )
+        if not patch.expected or len(patch.expected) != len(replacement):
+            raise ValueError(
+                f"{patch.mapping_id}: symbolic patch width differs from its guard"
+            )
+        result.append(
+            ResolvedPatch(
+                owner=patch.owner,
+                path=patch.path,
+                offset=patch.offset,
+                expected=patch.expected,
+                replacement=replacement,
+                mapping_id=patch.mapping_id,
+                kind=patch.kind,
+                reason=patch.reason,
+            )
+        )
+    return tuple(
+        sorted(result, key=lambda item: (item.owner, item.path, item.offset, item.mapping_id))
+    )
 
 
 def resolve_module_order(
@@ -84,13 +126,6 @@ def resolve_module_order(
                         f"Feature {feature_id}: {module.module_id} requires missing "
                         f"artifact {artifact}"
                     )
-            for artifact in contract.require_consumers:
-                if not consumers.get(artifact):
-                    raise ValueError(
-                        f"Feature {feature_id}: {module.module} provides {artifact} "
-                        "but no string_patcher consumes it"
-                    )
-
         for artifact, provider in providers.items():
             for consumer in consumers.get(artifact, ()):
                 if consumer.module_id == provider.module_id:

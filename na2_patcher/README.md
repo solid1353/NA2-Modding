@@ -32,8 +32,9 @@ this deterministic order:
 
 Derived module IDs use `<feature_id>.<module_type>`. The composer resolves
 declared module-artifact dependencies while retaining stable feature/module
-order for independent peers. A feature that owns a `translation_importer` must
-also own the `string_patcher` that consumes its imported-string artifact.
+order for independent peers. A translation importer invokes the generic
+string-patcher consumer as a derived stage; no placeholder feature directory or
+file is created when the feature owns no local strings.
 
 ## Hashing
 
@@ -43,9 +44,9 @@ READMEs, engine code, and non-input authoring helpers are excluded.
 
 - `binary_patcher`: `targets.tsv`, `groups.tsv`, `patches.tsv`, `edits.tsv`,
   and every blob referenced by `blob_path`.
-- `string_patcher`: required `strings.tsv`; when external placement is declared,
-  paired `config.tsv` and `pointer_refs.tsv`.
-- `translation_importer`: `config.tsv` and `mappings.tsv`.
+- `string_patcher`: `strings.tsv`, only for a feature that owns local string
+  declarations.
+- `translation_importer`: `config.tsv`, `mappings.tsv`, and `references.tsv`.
 - `texture_patcher`: `containers.tsv`, `mappings.tsv`, and `strategies.tsv`.
 
 Binary package identity is derived from its feature/module path. Binary
@@ -57,9 +58,8 @@ inputs only.
 
 The current profile enables, in order:
 
-1. Localization: importer, string patcher, texture patcher, native NUN5-derived
-   font, regional menu input, UI binary patches, and integrated compact
-   `228.BIN` string storage.
+1. Localization: importer with a derived string-patcher consumer, texture
+   patcher, native NUN5-derived font, regional menu input, and UI binary patches.
 2. QoL: accepted startup, Practice, and mode-selection behavior.
 3. Battle logic: accepted battle-rule behavior.
 
@@ -89,7 +89,10 @@ without module derivation or a `.building` file.
 
 On a miss, `na2_patcher/build_profile.py` orchestrates feature modules and asks
 `na2_patcher/composer.py` to close their results plus the profile identity
-into typed operations. `na2_patcher/image_assembler/` alone stages and verifies
+into typed operations. `na2_patcher/payload_builder/` links contributed code
+and data into the shared resident `PRG/228.BIN`, owns its global loader/memory
+integration, and records its symbol map. `na2_patcher/image_assembler/` alone
+stages and verifies
 `build/NA2.28 - Current.iso.building`. `scripts/na2/build.ps1` discards an
 identical candidate without rotation or atomically promotes a changed one.
 File sizes remain fixed except for the separately approved filesystem insertion

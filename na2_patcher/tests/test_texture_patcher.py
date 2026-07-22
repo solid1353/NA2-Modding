@@ -522,8 +522,8 @@ class UiTextureTests(unittest.TestCase):
             struct.unpack("<hhhh", bytes.fromhex(rectangle.source_expected_hex)),
             (1, 225, 20, 22),
         )
-        self.assertEqual(patch.status, "approved_for_test")
-        self.assertEqual(patch.confidence, "high")
+        self.assertEqual(patch.status, "runtime_proven")
+        self.assertEqual(patch.confidence, "verified")
 
     def test_controls_vibration_rectangle_is_an_exact_nun5_copy(self) -> None:
         repository = Path(__file__).resolve().parents[2]

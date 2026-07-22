@@ -32,7 +32,8 @@
 - Integrate save into the game, simplify the entry menu and replace old slps references in the ELF.
 
 ### Testing
-- Basically everything.
+- Isolate and promote runtime-proven patches.
+- Test translation thoroughout the whole game.
 
 ## Archive
 

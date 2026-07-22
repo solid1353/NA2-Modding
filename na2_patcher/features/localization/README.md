@@ -972,8 +972,9 @@ NA2 BTL offset `0x21D648` selects `(194,195,20,20)`, which samples green text
 fragments from the imported NUN5 atlas. `UI-BTL-008` copies the exact NUN5 BTL
 record `(1,225,20,22)` from `0x2214D8`, selecting the orange vertical-scroll
 triangle. The existing positions and pulse are retained; small capture-to-
-capture Y differences remain normal animation. Static confidence is high;
-runtime acceptance is pending.
+capture Y differences remain normal animation. The user verified the integrated
+Current build on both Command Menu and Command Chart and accepted both screens
+as good, promoting the shared correction to runtime-proven/verified.
 
 Detailed function, address, side-effect, and negative-result evidence for both
 patches is preserved in `docs/knowledge/battle_ui.md`.

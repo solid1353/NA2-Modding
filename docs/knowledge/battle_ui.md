@@ -150,5 +150,6 @@ No code, position, pulse, command text, or font data is changed.
 Evidence: paired Slots 5 and 6 screenshots and EE memory, identical live object
 identity across both views, unique rectangle-byte searches in both canonical
 BTL files, decoded `TEX_xselect` crops, and complete-function comparison.
-Confidence is **high** for the shared static correction; runtime acceptance
-remains pending.
+The user then verified the integrated Current build on both Command Menu and
+Command Chart and accepted both screens as good. Confidence is **verified** and
+the shared correction is **runtime-proven**.

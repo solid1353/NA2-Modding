@@ -481,9 +481,10 @@ slot files, and the original PCSX2 states remain untouched. Savestate age is
 irrelevant for these visual screen references and must not be used to date a
 regression. Cases may be handled individually or grouped only after static
 analysis demonstrates a shared renderer or table root cause. Slot 3 Stage
-Select is runtime-proven. Slots 4-6 now have the statically verified
-`UI-BTL-007` and `UI-BTL-008` corrections described below; the other slots
-remain untouched by this iteration.
+Select is runtime-proven. The integrated visual pass accepted Slots 5 and 6,
+promoting their shared `UI-BTL-008` correction to runtime-proven, while Slot 4
+rejected the first `UI-BTL-007` result and remains under active correction. The
+other slots remain untouched by this iteration.
 
 With the user's authorization, global PCSX2 texture replacement loading was
 disabled before archiving (`LoadTextureReplacements = false`); asynchronous
@@ -509,17 +510,16 @@ draw record. NA2 `FUN_00878820` and NUN5 `FUN_00894f60` already share the
 two-draw/one-rotation behavior; only their source rectangles differ.
 `UI-BTL-008` therefore copies one exact NUN5 record `(1,225,20,22)` over
 NA2's imported-atlas garbage selection `(194,195,20,20)`. Pulse-dependent
-placement is preserved.
+placement is preserved. The user verified both integrated screens and accepted
+Command Menu and Command Chart as good.
 
 Canonical binary-package validation reports 7 targets, 9 groups, 88 patches,
-and 266 edits. An isolated two-patch apply preserves BTL's 2,237,184-byte size,
-changes 69 bytes only inside the 11 declared ranges, and produces SHA-256
-`ADA3779E1E64133372493160A02BB9A49314869BAD6B4FD49D5B3E09FB7E9DE1`.
-The Localization feature pin is
-`6FF9FC3F0C365F2132430316EEFF396A991A0A64B4D361E28FC67E7D43917425`.
-Detailed function and address evidence is preserved in
-`docs/knowledge/battle_ui.md`. No ISO was rebuilt and PCSX2 was not launched;
-Slots 4-6 remain `approved_for_test` until the user's visual pass.
+and 268 edits. The full pinned profile composed all 268 localization binary
+edits, verified and promoted Current, retained Previous, and launched Current
+for the user's visual pass. Detailed function and address evidence is preserved
+in `docs/knowledge/battle_ui.md`. Slots 5 and 6 are runtime-proven; Slot 4 is
+not accepted and its exact remaining visual failure is being captured before
+the next revision.
 
 The 24 binary-patcher/profile regressions and the three focused UI binary
 assertions pass. The complete suite reports 105 passing tests and one

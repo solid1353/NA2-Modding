@@ -52,23 +52,32 @@ Development candidates are placed under
 `@release_candidates/`. Neither path is the append-only external
 `releases/` archive.
 
-## Pinned development product
+## Release manifest
 
-`na2_patcher/release_manifest.json` currently declares:
+`na2_patcher/release_manifest.json` is authoritative for the product name,
+version, executable name, output name, embedded profile, and supported source
+identities. The pinned source identities are:
 
-- product: `Narutimate Accel v2.28`
-- version: `0.1.0-dev`
-- executable: `NA2.28_v0.1.0-dev.exe`
-- output: `NA2.28.iso`
-- profile: `na2_patcher/profiles/current`
 - NA2: 1,928,429,568 bytes,
   SHA-256 `CA105F7BDBEEAA3275F871C9702B9C77ED985CE140FAE8EAC28CB153E263D0C3`
 - NUN5: 1,926,234,112 bytes,
   SHA-256 `2E1B9A885F4E94E6B8C4204F139C53ABD568FE49D6521D4D8921FE9460C07BFF`
 
-Advance `product_version` and `executable_name` together before a public
-release. The profile's `identity.json` output game title must equal the release
-product name.
+The profile's `identity.json` output game title must equal the manifest product
+name.
+
+The maintained publication command performs the version update and complete
+Git/tag sequence:
+
+```powershell
+na2 release 0.1.0
+```
+
+Omitting the argument publishes the version already declared by the manifest.
+The command requires a clean tree, refuses an existing remote version tag,
+updates and commits the manifest when necessary, runs the production builder,
+pushes the current branch, creates an annotated `v<product_version>` tag, and
+pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
 
 ## Architecture
 
@@ -120,7 +129,7 @@ pipeline.
 A tag must be annotated and exactly equal `v<product_version>`; tagged runs
 publish a GitHub Release and mark SemVer suffixes as prereleases.
 
-A production publication sequence is:
+A production publication sequence, automated by `na2 release [version]`, is:
 
 1. update and validate the current profile and release manifest;
 2. run the production builder from a clean committed tree;

@@ -1,8 +1,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('act')]
+    [ValidateSet('act', 'release')]
     [string]$Mode,
+
+    [Parameter(Position = 1)]
+    [string]$Version,
 
     [Alias('b')]
     [switch]$Build,
@@ -38,6 +41,9 @@ if (@($Build, $Test, $Current, $Previous).Where({ $_ }).Count -gt 1) {
 if ($command -and ($Build -or $Test -or $runSelected)) {
     throw 'Build/launch switches cannot be combined with a command mode.'
 }
+if ($Version -and $command -ne 'release') {
+    throw 'A version argument is accepted only by na2 release.'
+}
 if ($Help) {
     @(
         'NA2 commands:'
@@ -47,8 +53,18 @@ if ($Help) {
         "  na2 -c    Run build/$currentIsoName without rebuilding or closing PCSX2"
         "  na2 -p    Run build/$previousIsoName without rebuilding or closing PCSX2"
         "  na2 act   Maintain Current/Previous PNACH symlinks without building or launching"
+        '  na2 release [version]  Validate, commit, tag, and publish a GitHub release'
         ''
     ) | Write-Output
+    return
+}
+
+if ($command -eq 'release') {
+    $releaseArguments = @{}
+    if ($Version) {
+        $releaseArguments.Version = $Version
+    }
+    & $projectPaths.files.release_publish_command @releaseArguments
     return
 }
 

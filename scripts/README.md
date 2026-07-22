@@ -59,6 +59,10 @@ and is composed before the image assembler runs rather than owned by a feature.
 `release/build_release.ps1` builds the self-contained Windows release EXE from
 the pinned toolchain and current profile. See `docs/RELEASE_PROCESS.md`.
 
+`release/publish_release.ps1` is the guarded publication backend for
+`na2 release [version]`; it validates the production package before pushing an
+annotated version tag that triggers GitHub Release publication.
+
 When adding a script, place it beside the workflow it supports. Do not add new
 files directly under `scripts/`; the root is reserved for this index and
 responsibility directories.

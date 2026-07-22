@@ -25,6 +25,7 @@
   "files": {
     "pcsx2_exe": "@pcsx2/pcsx2-qt.exe",
     "na2_command": "@repository/_na2.ps1",
+    "release_publish_command": "@scripts/release/publish_release.ps1",
     "na2_iso": "@source/NA2.iso",
     "nun3_iso": "@source/NUN3.iso",
     "nun5_iso": "@source/NUN5.iso",

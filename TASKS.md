@@ -2,10 +2,6 @@
 
 ## In Progress
 
-### Project
-- Investigate cross-platform development/deployment possibilities.
-- Global cleanup.
-
 ### [Font](docs/plans/font.md)
 - Make font identical to UN5.
 - Implement proper autofit/positions everywhere.
@@ -15,6 +11,10 @@
 - Investigate upscaling.
 
 ## Backlog
+
+### Project
+- Investigate cross-platform development/deployment possibilities.
+- Global cleanup.
 
 ### Bugs
 - Practice menu entries (like Damage) flicker again (unstable).

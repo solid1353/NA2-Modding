@@ -706,7 +706,7 @@ decoder; gzip/zlib and Zopfli 0.4.3; and CCSFileExplorerMSF 3.0.0.0 for
 independent visual inspection. StudioCCS material under `@utils/old/` was used
 as format evidence only; no untrusted historical utility was executed. The
 reasoning, inventory, layout comparisons, and historical runtime evidence are
-recorded in `docs/plans/ui_translation.md`.
+recorded in `docs/workstreams/ui_translation/plan.md`.
 
 ## UI translation binary-patcher patch set
 
@@ -749,7 +749,7 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
 ```
 
 Evidence and the broader container/layout analysis are recorded in
-`docs/plans/ui_translation.md`.
+`docs/workstreams/ui_translation/plan.md`.
 
 ### UI-BTL-002: localized stage-name rectangles and width fitting
 

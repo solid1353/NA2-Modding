@@ -8,8 +8,8 @@ Each profile directory contains:
 - `roots.tsv`: repository-relative source bindings or `@root/...` aliases.
 - `features.tsv`: enabled feature IDs in composition order and each feature's
   exact aggregate canonical-input SHA-256.
-- `identity.tsv`: the clean/output boot paths, `SYSTEM.CNF` path, and guarded
-  memory-card title that define the final output identity.
+- `identity.json`: structured image, memory-card, and game-title policy for the
+  final output identity.
 
 The profile ID is its directory name. Omission disables a feature. Profiles do
 not contain manifests, module tables, module paths, module IDs, module orders,
@@ -46,7 +46,7 @@ READMEs, engine code, and non-input authoring helpers are excluded.
   and every blob referenced by `blob_path`.
 - `string_patcher`: `strings.tsv`, only for a feature that owns local string
   declarations.
-- `translation_importer`: `config.tsv`, `mappings.tsv`, and `references.tsv`.
+- `translation_importer`: `mappings.tsv` and `references.tsv`.
 - `texture_patcher`: `containers.tsv`, `mappings.tsv`, and `strategies.tsv`.
 
 Binary package identity is derived from its feature/module path. Binary
@@ -63,7 +63,7 @@ The current profile enables, in order:
 2. QoL: accepted startup, Practice, and mode-selection behavior.
 3. Battle logic: accepted battle-rule behavior.
 
-The profile's `identity.tsv` separately declares the equal-length
+The profile's `identity.json` separately declares the equal-length
 `SLPS_258.37` to `SLPS_222.28` boot rename and the CP932 memory-card title.
 Output identity is profile configuration, not a feature or module.
 

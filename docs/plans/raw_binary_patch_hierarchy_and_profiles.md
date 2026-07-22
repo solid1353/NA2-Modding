@@ -23,8 +23,8 @@ Profiles contain exactly three tables:
 - `features.tsv` lists enabled feature IDs in composition order and pins each
   feature's aggregate canonical-input hash.
 - `roots.tsv` binds logical clean/donor source IDs.
-- `identity.tsv` declares clean/output boot paths, the `SYSTEM.CNF` path, and
-  the guarded memory-card title for the final output identity.
+- `identity.json` declares structured image, memory-card, and game-title policy
+  for the final output identity.
 
 The profile ID is its directory name. There is no profile manifest, module
 table, enabled flag, module path, module ID, module order, separate module pin,
@@ -44,7 +44,7 @@ duplicated feature-level module catalog.
 The composer resolves declared module-artifact dependencies before it closes
 all module results into typed file replacements and insertions. It also derives
 the guarded `SYSTEM.CNF` and boot-ELF title edits plus the boot-file rename from
-`identity.tsv`. The image assembler then performs the only physical ISO
+`identity.json`. The image assembler then performs the only physical ISO
 mutation, mirrors file-tree changes across ISO9660/UDF, and verifies the
 complete staged image. There are no patch-to-patch dependencies.
 
@@ -127,7 +127,7 @@ all canonical module inputs. Binary-patcher inputs cover four control tables
 plus referenced blobs. String-patcher inputs cover `strings.tsv` only when a
 feature owns local declarations. Imported-string consumption is a derived stage
 and creates no placeholder directory or file. Translation-importer inputs cover
-`config.tsv`, `mappings.tsv`, and `references.tsv`. Adjacent documentation,
+`mappings.tsv` and `references.tsv`. Adjacent documentation,
 engine code, and non-input helpers are excluded.
 
 Profile-run logs record enabled features plus derived module ownership,

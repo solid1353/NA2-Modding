@@ -34,7 +34,7 @@ The version and mappings hash above are historical documentation, not a second
 executable manifest. Git history and the aggregate Localization feature pin own
 content identity. `translation_importer/references.tsv` is the canonical pointer
 inventory for mappings that require linked external placement. Profile
-`identity.tsv` owns the imported/output title declaration; `string_patcher`
+`identity.json` owns the imported/output title declaration; `string_patcher`
 applies it with fail-closed coverage. Documentation is not an executable input,
 and the importer verifies every reference guard and coverage relationship.
 
@@ -620,7 +620,7 @@ owns byte guards, conflict handling, replacement, and logging. If Localization
 later owns local declarations, it can add `string_patcher/strings.tsv` then.
 
 The memory-card title is output identity and is therefore declared by the active
-profile's `identity.tsv`; its evidence is documented in
+profile's `identity.json`; its evidence is documented in
 `docs/knowledge/disc_identity.md`.
 
 ## UI texture translation module

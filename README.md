@@ -42,6 +42,8 @@ context rather than repeated here.
 - [Tasks](TASKS.md) contains concrete active plans and queued work.
 - [Hypotheses](docs/HYPOTHESES.md) preserves rejected experiments and unresolved
   reverse-engineering leads.
+- [Release process](docs/RELEASE_PROCESS.md) defines the self-contained Windows
+  EXE, its validation gates, and GitHub publication workflow.
 
 Component-specific documentation stays with its component, including the
 [translation importer](na2_patcher/modules/translation_importer/README.md) and the

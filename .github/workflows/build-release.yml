@@ -1,0 +1,111 @@
+name: Build release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Windows EXE
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out the tagged source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Read the pinned Python toolchain
+        id: toolchain
+        shell: pwsh
+        run: |
+          $toolchain = Get-Content -Raw scripts/release/toolchain.json | ConvertFrom-Json
+          "python_version=$($toolchain.python_version)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Install the pinned Python runtime
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: ${{ steps.toolchain.outputs.python_version }}
+          architecture: x64
+
+      - name: Build and validate the release candidate
+        shell: pwsh
+        run: ./scripts/release/build_release.ps1
+
+      - name: Verify release identity and write checksum
+        id: release
+        shell: pwsh
+        run: |
+          $manifest = Get-Content -Raw na2_patcher/release_manifest.json | ConvertFrom-Json
+          . ./scripts/lib/project_paths.ps1
+          $paths = Get-Na2ProjectPaths -AllowMissing
+          $candidate = Join-Path $paths.release_candidates $manifest.executable_name
+          if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+              throw "Release candidate is missing: $candidate"
+          }
+
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+              $expectedTag = "v$($manifest.product_version)"
+              if ($env:GITHUB_REF_NAME -cne $expectedTag) {
+                  throw "Tag $env:GITHUB_REF_NAME does not match release version $expectedTag"
+              }
+              $tagType = (& git cat-file -t $env:GITHUB_REF_NAME).Trim()
+              if ($LASTEXITCODE -ne 0 -or $tagType -cne 'tag') {
+                  throw "Release tag must be an existing annotated tag: $env:GITHUB_REF_NAME"
+              }
+          }
+
+          $candidate = (Resolve-Path -LiteralPath $candidate).Path
+          $checksum = "$candidate.sha256"
+          $hash = (Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash.ToLowerInvariant()
+          $checksumLine = "$hash  $([IO.Path]::GetFileName($candidate))`n"
+          [IO.File]::WriteAllText($checksum, $checksumLine, [Text.UTF8Encoding]::new($false))
+          "executable=$candidate" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "checksum=$checksum" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "artifact_name=$([IO.Path]::GetFileNameWithoutExtension($candidate))" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "version=$($manifest.product_version)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ steps.release.outputs.artifact_name }}
+          path: |
+            ${{ steps.release.outputs.executable }}
+            ${{ steps.release.outputs.checksum }}
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+      - name: Publish the tagged GitHub Release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_EXE: ${{ steps.release.outputs.executable }}
+          RELEASE_CHECKSUM: ${{ steps.release.outputs.checksum }}
+        run: |
+          $arguments = @(
+              'release', 'create', $env:RELEASE_TAG,
+              $env:RELEASE_EXE, $env:RELEASE_CHECKSUM,
+              '--verify-tag', '--notes-from-tag'
+          )
+          if ($env:RELEASE_VERSION.Contains('-')) {
+              $arguments += '--prerelease'
+          }
+          & gh @arguments
+          if ($LASTEXITCODE -ne 0) {
+              throw "GitHub Release publication failed (exit $LASTEXITCODE)."
+          }

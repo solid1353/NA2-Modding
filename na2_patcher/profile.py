@@ -3,8 +3,10 @@ from __future__ import annotations
 import codecs
 import csv
 import hashlib
+import json
 import re
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from .project_paths import ProjectPaths, load_project_paths, resolve_alias
@@ -12,20 +14,6 @@ from .project_paths import ProjectPaths, load_project_paths, resolve_alias
 
 ROOT_FIELDS = ["root_id", "path"]
 FEATURE_FIELDS = ["feature_id", "expected_sha256"]
-IDENTITY_FIELDS = [
-    "source_boot_path",
-    "output_boot_path",
-    "system_cnf_path",
-    "memory_card_title_offset",
-    "memory_card_title_capacity",
-    "memory_card_title_encoding",
-    "source_memory_card_title",
-    "output_memory_card_title",
-    "imported_game_title",
-    "output_game_title",
-    "game_title_mapping_count",
-    "game_title_occurrence_count",
-]
 MODULE_TYPE_ORDER = (
     "translation_importer",
     "string_patcher",
@@ -102,6 +90,80 @@ def _read_tsv(path: Path, fields: list[str]) -> list[dict[str, str]]:
             for row in reader
             if any((value or "").strip() for value in row.values())
         ]
+
+
+def _identity_object(value: object, keys: set[str], label: str) -> dict[str, object]:
+    if not isinstance(value, dict) or set(value) != keys:
+        expected = ", ".join(sorted(keys))
+        raise ValueError(f"Profile identity {label} keys must be: {expected}")
+    return value
+
+
+def _identity_text(value: object, label: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"Profile identity {label} must be non-empty text")
+    return value
+
+
+def _identity_int(value: object, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"Profile identity {label} must be an integer")
+    return value
+
+
+def _read_identity(path: Path) -> ProfileIdentity:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Profile identity is not valid JSON: {path}") from exc
+    root = _identity_object(
+        data, {"schema_version", "image", "memory_card", "game_title"}, "root"
+    )
+    if root["schema_version"] != 1:
+        raise ValueError("Unsupported profile identity schema_version")
+    image = _identity_object(
+        root["image"],
+        {"source_boot_path", "output_boot_path", "system_cnf_path"},
+        "image",
+    )
+    memory = _identity_object(
+        root["memory_card"],
+        {"title_offset", "title_capacity", "title_encoding", "source_title", "output_title"},
+        "memory_card",
+    )
+    title = _identity_object(
+        root["game_title"],
+        {"imported", "output", "expected_mapping_count", "expected_occurrence_count"},
+        "game_title",
+    )
+    return ProfileIdentity(
+        source_boot_path=_identity_text(image["source_boot_path"], "image.source_boot_path"),
+        output_boot_path=_identity_text(image["output_boot_path"], "image.output_boot_path"),
+        system_cnf_path=_identity_text(image["system_cnf_path"], "image.system_cnf_path"),
+        memory_card_title_offset=_identity_int(
+            memory["title_offset"], "memory_card.title_offset"
+        ),
+        memory_card_title_capacity=_identity_int(
+            memory["title_capacity"], "memory_card.title_capacity"
+        ),
+        memory_card_title_encoding=_identity_text(
+            memory["title_encoding"], "memory_card.title_encoding"
+        ),
+        source_memory_card_title=_identity_text(
+            memory["source_title"], "memory_card.source_title"
+        ),
+        output_memory_card_title=_identity_text(
+            memory["output_title"], "memory_card.output_title"
+        ),
+        imported_game_title=_identity_text(title["imported"], "game_title.imported"),
+        output_game_title=_identity_text(title["output"], "game_title.output"),
+        game_title_mapping_count=_identity_int(
+            title["expected_mapping_count"], "game_title.expected_mapping_count"
+        ),
+        game_title_occurrence_count=_identity_int(
+            title["expected_occurrence_count"], "game_title.expected_occurrence_count"
+        ),
+    )
 
 
 def _workspace_path(value: str, label: str, workspace: Path) -> Path:
@@ -259,7 +321,38 @@ def feature_content_sha256(path: Path) -> str:
     return _tree_digest(path, files)
 
 
-def load_profile(directory: Path, workspace: Path) -> Profile:
+def profile_resource_files(profile: Profile) -> tuple[Path, ...]:
+    """Return the exact structural and hash-covered files needed to load a profile."""
+    files = [
+        profile.directory / "roots.tsv",
+        profile.directory / "features.tsv",
+        profile.directory / "identity.json",
+    ]
+    files.extend(feature.input_path / "README.md" for feature in profile.features)
+    for module in profile.modules:
+        files.extend(_module_content_files(module.input_path, module.module))
+    return tuple(sorted(set(files), key=lambda path: path.as_posix()))
+
+
+def profile_resource_files(profile: Profile) -> tuple[Path, ...]:
+    """Return the exact structural and hash-covered files needed to load a profile."""
+    files = [
+        profile.directory / "roots.tsv",
+        profile.directory / "features.tsv",
+        profile.directory / "identity.json",
+    ]
+    files.extend(feature.input_path / "README.md" for feature in profile.features)
+    for module in profile.modules:
+        files.extend(_module_content_files(module.input_path, module.module))
+    return tuple(sorted(set(files), key=lambda path: path.as_posix()))
+
+
+def load_profile(
+    directory: Path,
+    workspace: Path,
+    *,
+    root_overrides: Mapping[str, Path] | None = None,
+) -> Profile:
     workspace = workspace.resolve()
     directory = directory.resolve()
     try:
@@ -270,18 +363,12 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", profile_id):
         raise ValueError(f"Invalid profile directory name: {profile_id!r}")
 
-    project_paths = load_project_paths(workspace)
-    identity_rows = _read_tsv(directory / "identity.tsv", IDENTITY_FIELDS)
-    if len(identity_rows) != 1:
-        raise ValueError("Profile identity.tsv must contain exactly one identity row")
-    identity_row = identity_rows[0]
-    try:
-        memory_card_title_offset = int(identity_row["memory_card_title_offset"], 0)
-        memory_card_title_capacity = int(identity_row["memory_card_title_capacity"], 0)
-        game_title_mapping_count = int(identity_row["game_title_mapping_count"], 0)
-        game_title_occurrence_count = int(identity_row["game_title_occurrence_count"], 0)
-    except ValueError as exc:
-        raise ValueError("Profile identity numeric fields must be integers") from exc
+    project_paths = load_project_paths(workspace, allow_missing=True)
+    identity = _read_identity(directory / "identity.json")
+    memory_card_title_offset = identity.memory_card_title_offset
+    memory_card_title_capacity = identity.memory_card_title_capacity
+    game_title_mapping_count = identity.game_title_mapping_count
+    game_title_occurrence_count = identity.game_title_occurrence_count
     if memory_card_title_offset < 0 or memory_card_title_capacity <= 0:
         raise ValueError(
             "Profile identity title offset must be non-negative and capacity positive"
@@ -292,24 +379,12 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
     ):
         raise ValueError("Profile identity game-title coverage is invalid")
     try:
-        memory_card_title_encoding = codecs.lookup(
-            identity_row["memory_card_title_encoding"]
-        ).name
+        memory_card_title_encoding = codecs.lookup(identity.memory_card_title_encoding).name
     except LookupError as exc:
         raise ValueError("Profile identity has an unknown title encoding") from exc
-    identity = ProfileIdentity(
-        source_boot_path=identity_row["source_boot_path"],
-        output_boot_path=identity_row["output_boot_path"],
-        system_cnf_path=identity_row["system_cnf_path"],
-        memory_card_title_offset=memory_card_title_offset,
-        memory_card_title_capacity=memory_card_title_capacity,
+    identity = replace(
+        identity,
         memory_card_title_encoding=memory_card_title_encoding,
-        source_memory_card_title=identity_row["source_memory_card_title"],
-        output_memory_card_title=identity_row["output_memory_card_title"],
-        imported_game_title=identity_row["imported_game_title"],
-        output_game_title=identity_row["output_game_title"],
-        game_title_mapping_count=game_title_mapping_count,
-        game_title_occurrence_count=game_title_occurrence_count,
     )
     from .image_assembler.iso9660 import normalize_iso_path
 
@@ -361,16 +436,27 @@ def load_profile(directory: Path, workspace: Path) -> Profile:
             raise ValueError(f"Profile identity {label} must be CP1252") from exc
 
     roots: dict[str, Path] = {}
+    overrides = {
+        key: Path(value).resolve() for key, value in (root_overrides or {}).items()
+    }
     for row in _read_tsv(directory / "roots.tsv", ROOT_FIELDS):
         root_id = row["root_id"]
         if not root_id or root_id in roots:
             raise ValueError(f"Duplicate or empty profile root_id: {root_id!r}")
-        root = _profile_root_path(
-            row["path"], f"root {root_id}", workspace, project_paths
-        )
+        root = overrides.get(root_id)
+        if root is None:
+            root = _profile_root_path(
+                row["path"], f"root {root_id}", workspace, project_paths
+            )
         if not root.exists():
             raise FileNotFoundError(root)
         roots[root_id] = root
+    unknown_overrides = sorted(overrides.keys() - roots.keys())
+    if unknown_overrides:
+        raise ValueError(
+            "Profile root overrides contain unknown IDs: "
+            + ", ".join(unknown_overrides)
+        )
 
     feature_rows = _read_tsv(directory / "features.tsv", FEATURE_FIELDS)
     if not feature_rows:

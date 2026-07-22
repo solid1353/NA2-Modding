@@ -18,8 +18,9 @@ if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
 from na2_patcher.project_paths import load_project_paths, resolve_alias
+from na2_patcher.source_media import read_root_file
 
-PROJECT_PATHS = load_project_paths(REPOSITORY_ROOT)
+PROJECT_PATHS = load_project_paths(REPOSITORY_ROOT, allow_missing=True)
 
 BINARY_PATCHER_SCHEMA_VERSION = 2
 TARGET_FIELDS = [
@@ -533,8 +534,8 @@ def parse_roots(values: list[str], workspace: Path) -> dict[str, Path]:
                 ) from exc
         else:
             path = command_relative_path(path_text, f"root {root_id}", workspace)
-        if not path.is_dir():
-            raise PatchError(f"Root is not a directory: {path_text}")
+        if not (path.is_dir() or path.is_file()):
+            raise PatchError(f"Root is not an extraction or ISO: {path_text}")
         roots[root_id] = path
     return roots
 
@@ -549,8 +550,14 @@ def target_file(target: Target, roots: dict[str, Path]) -> Path:
 
 
 def verify_target(target: Target, roots: dict[str, Path]) -> bytes:
-    path = target_file(target, roots)
-    data = path.read_bytes()
+    if target.root_id not in roots:
+        raise PatchError(f"Missing root binding for {target.root_id}")
+    try:
+        data = read_root_file(roots[target.root_id], target.path)
+    except FileNotFoundError as exc:
+        raise PatchError(
+            f"Target file is missing: {target.root_id}/{target.path}"
+        ) from exc
     if len(data) != target.expected_size:
         raise PatchError(
             f"Target size mismatch for {target.target_id}: "

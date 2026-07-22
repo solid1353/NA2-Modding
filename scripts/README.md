@@ -53,8 +53,11 @@ Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
-Texture-patcher modules. Final output identity comes from profile `identity.tsv`
+texture-patcher modules. Final output identity comes from profile `identity.json`
 and is composed before the image assembler runs rather than owned by a feature.
+
+`release/build_release.ps1` builds the self-contained Windows release EXE from
+the pinned toolchain and current profile. See `docs/RELEASE_PROCESS.md`.
 
 When adding a script, place it beside the workflow it supports. Do not add new
 files directly under `scripts/`; the root is reserved for this index and

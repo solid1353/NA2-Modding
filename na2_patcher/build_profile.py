@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -23,7 +24,15 @@ from .profile import Profile, ProfileModule, load_profile
 from .project_paths import load_project_paths
 
 
-PROJECT_PATHS = load_project_paths(Path(__file__).resolve())
+PROJECT_PATHS = load_project_paths(Path(__file__).resolve(), allow_missing=True)
+
+
+@dataclass(frozen=True)
+class ProfileBuildResult:
+    results: tuple[dict[str, object], ...]
+    payload_result: dict[str, object] | None
+    identity_edits: tuple[dict[str, object], ...]
+    staged_iso: Path
 
 
 def normalize(path: str) -> str:
@@ -103,10 +112,11 @@ def apply_texture_patch_package(
 ) -> tuple[texture_patcher_module.TexturePatchPlan, str]:
     if "na2" not in roots or "nun5" not in roots:
         raise ValueError("Texture-patcher module requires na2 and nun5 profile roots")
-    if not roots["na2"].is_dir() or not roots["nun5"].is_dir():
-        raise ValueError(
-            "Texture-patcher module requires extracted na2 and nun5 profile roots"
-        )
+    if not all(
+        root.is_dir() or root.is_file()
+        for root in (roots["na2"], roots["nun5"])
+    ):
+        raise ValueError("Texture-patcher module roots must be extractions or ISOs")
     if not package_directory.is_dir():
         raise ValueError(f"Texture-patcher module input must be a directory: {package_directory}")
 
@@ -705,30 +715,23 @@ def write_profile_log(
     )
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Build a verified staged NA2 ISO from one hash-pinned profile."
-    )
-    parser.add_argument("--source", required=True, type=Path)
-    parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument("--profile", required=True, type=Path)
-    parser.add_argument("--profile-log-directory", required=True, type=Path)
-    args = parser.parse_args()
-
-    workspace = PROJECT_PATHS.repository
-    source_iso = args.source.resolve()
-    output_iso = args.output.resolve()
+def build_profile_candidate(
+    *,
+    source_iso: Path,
+    output_iso: Path,
+    profile: Profile,
+    workspace: Path,
+    profile_log_directory: Path | None,
+) -> ProfileBuildResult:
+    """Compose and verify one staged profile image without promoting it."""
+    source_iso = source_iso.resolve()
+    output_iso = output_iso.resolve()
+    workspace = workspace.resolve()
     if not source_iso.is_file():
         raise FileNotFoundError(source_iso)
     if source_iso == output_iso:
         raise ValueError("Source and output ISO paths must differ")
-
-    profile_directory = args.profile if args.profile.is_absolute() else workspace / args.profile
-    profile = load_profile(profile_directory, workspace)
-    profile_log_directory = binary_patcher_module.command_relative_path(
-        str(args.profile_log_directory), "--profile-log-directory", workspace
-    )
-    if profile_log_directory.exists():
+    if profile_log_directory is not None and profile_log_directory.exists():
         raise FileExistsError(profile_log_directory)
 
     source = Iso9660(source_iso)
@@ -784,24 +787,69 @@ def main() -> int:
         for rename in assembly.udf_renames
     )
     try:
-        try:
-            output_iso_text = output_iso.relative_to(workspace).as_posix()
-        except ValueError:
-            output_iso_text = output_iso.name
-        write_profile_log(
-            profile,
-            profile_results,
-            payload_result,
-            profile_log_directory,
-            workspace=workspace,
-            output_iso_text=output_iso_text,
-            identity_edits=tuple(identity_edits),
-        )
+        if profile_log_directory is not None:
+            try:
+                output_iso_text = output_iso.relative_to(workspace).as_posix()
+            except ValueError:
+                output_iso_text = output_iso.name
+            write_profile_log(
+                profile,
+                profile_results,
+                payload_result,
+                profile_log_directory,
+                workspace=workspace,
+                output_iso_text=output_iso_text,
+                identity_edits=tuple(identity_edits),
+            )
     except BaseException:
-        building = building_image_path(output_iso)
-        if building.exists() or building.is_symlink():
-            building.unlink()
+        staged = building_image_path(output_iso)
+        if staged.exists() or staged.is_symlink():
+            staged.unlink()
         raise
+
+    return ProfileBuildResult(
+        results=tuple(profile_results),
+        payload_result=payload_result,
+        identity_edits=tuple(identity_edits),
+        staged_iso=building_image_path(output_iso),
+    )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Build a verified staged NA2 ISO from one hash-pinned profile."
+    )
+    parser.add_argument("--source", required=True, type=Path)
+    parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--profile", required=True, type=Path)
+    parser.add_argument("--profile-log-directory", required=True, type=Path)
+    args = parser.parse_args()
+
+    workspace = PROJECT_PATHS.repository
+    source_iso = args.source.resolve()
+    output_iso = args.output.resolve()
+    if not source_iso.is_file():
+        raise FileNotFoundError(source_iso)
+    if source_iso == output_iso:
+        raise ValueError("Source and output ISO paths must differ")
+
+    profile_directory = args.profile if args.profile.is_absolute() else workspace / args.profile
+    profile = load_profile(profile_directory, workspace)
+    profile_log_directory = binary_patcher_module.command_relative_path(
+        str(args.profile_log_directory), "--profile-log-directory", workspace
+    )
+    if profile_log_directory.exists():
+        raise FileExistsError(profile_log_directory)
+
+    build = build_profile_candidate(
+        source_iso=source_iso,
+        output_iso=output_iso,
+        profile=profile,
+        workspace=workspace,
+        profile_log_directory=profile_log_directory,
+    )
+    profile_results = build.results
+    payload_result = build.payload_result
 
     green = "\033[32m"
     reset = "\033[0m"
@@ -835,8 +883,8 @@ def main() -> int:
         )
         for path in sorted(str(value) for value in payload_result.get("paths", [])):
             print(f"    {green}{path}{reset}")
-    print(f"  identity ({len(identity_edits)} edits)")
-    print(f"Verified staged ISO: {building_image_path(output_iso).name}")
+    print(f"  identity ({len(build.identity_edits)} edits)")
+    print(f"Verified staged ISO: {build.staged_iso.name}")
     return 0
 
 

@@ -17,7 +17,10 @@
     "pcsx2_files": "pcsx2_files",
     "releases": "releases",
     "scripts": "scripts",
-    "work": "work"
+    "work": "work",
+    "project_work": "@work/Project",
+    "release_work": "@project_work/release",
+    "release_candidates": "@release_work/candidates"
   },
   "files": {
     "pcsx2_exe": "@pcsx2/pcsx2-qt.exe",

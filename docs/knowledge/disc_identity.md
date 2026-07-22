@@ -16,7 +16,7 @@ The serial alternatives considered on 2026-07-18 were rejected as follows:
 
 ## Reproducible implementation
 
-The active profile's `identity.tsv` declares the clean boot path, output boot
+The active profile's `identity.json` declares the clean boot path, output boot
 path, `SYSTEM.CNF` path, and guarded CP932 memory-card title. After feature
 modules have been composed, the profile composer emits two guarded replacements
 and one equal-length file rename:

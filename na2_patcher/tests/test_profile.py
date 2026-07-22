@@ -10,11 +10,11 @@ from na2_patcher.modules.binary_patcher import engine as binary_patcher
 from na2_patcher.composer import resolve_module_order
 from na2_patcher.profile import (
     FEATURE_FIELDS,
-    IDENTITY_FIELDS,
     MODULE_TYPE_ORDER,
     feature_content_sha256,
     load_profile,
     module_content_sha256,
+    profile_resource_files,
 )
 
 
@@ -95,25 +95,33 @@ class ProfileTests(unittest.TestCase):
         profile.mkdir()
         write_tsv(profile / "roots.tsv", ["root_id", "path"], [{"root_id": "na2", "path": "source"}])
         write_tsv(profile / "features.tsv", FEATURE_FIELDS, rows)
-        write_tsv(
-            profile / "identity.tsv",
-            IDENTITY_FIELDS,
-            [
+        (profile / "identity.json").write_text(
+            json.dumps(
                 {
-                    "source_boot_path": "SLPS_258.37",
-                    "output_boot_path": "SLPS_222.28",
-                    "system_cnf_path": "SYSTEM.CNF",
-                    "memory_card_title_offset": "0x4",
-                    "memory_card_title_capacity": 16,
-                    "memory_card_title_encoding": "ascii",
-                    "source_memory_card_title": "Original",
-                    "output_memory_card_title": "NA 2.28",
-                    "imported_game_title": "Imported Game",
-                    "output_game_title": "Output Game",
-                    "game_title_mapping_count": 1,
-                    "game_title_occurrence_count": 1,
-                }
-            ],
+                    "schema_version": 1,
+                    "image": {
+                        "source_boot_path": "SLPS_258.37",
+                        "output_boot_path": "SLPS_222.28",
+                        "system_cnf_path": "SYSTEM.CNF",
+                    },
+                    "memory_card": {
+                        "title_offset": 4,
+                        "title_capacity": 16,
+                        "title_encoding": "ascii",
+                        "source_title": "Original",
+                        "output_title": "NA 2.28",
+                    },
+                    "game_title": {
+                        "imported": "Imported Game",
+                        "output": "Output Game",
+                        "expected_mapping_count": 1,
+                        "expected_occurrence_count": 1,
+                    },
+                },
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
         )
         return profile
 
@@ -188,6 +196,27 @@ class ProfileTests(unittest.TestCase):
             loaded = load_profile(profile, root)
             self.assertEqual([item.feature_id for item in loaded.features], ["active"])
 
+    def test_release_resources_include_structure_and_only_canonical_module_inputs(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features, source, profiles = self.create_workspace(root)
+            feature = self.create_feature(features, "alpha", "binary_patcher")
+            helper = feature / "binary_patcher" / "helper.py"
+            helper.write_text("raise SystemExit\n", encoding="utf-8")
+            profile_path = self.create_profile(
+                profiles,
+                source,
+                [{"feature_id": "alpha", "expected_sha256": feature_content_sha256(feature)}],
+            )
+            loaded = load_profile(profile_path, root)
+            resources = set(profile_resource_files(loaded))
+            self.assertIn((profile_path / "identity.json").resolve(), resources)
+            self.assertIn((feature / "README.md").resolve(), resources)
+            self.assertIn(
+                (feature / "binary_patcher" / "edits.tsv").resolve(), resources
+            )
+            self.assertNotIn(helper.resolve(), resources)
+
     def test_rejects_unknown_module_directory(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -233,26 +262,10 @@ class ProfileTests(unittest.TestCase):
                     {"feature_id": "alpha", "expected_sha256": feature_content_sha256(alpha)},
                 ],
             )
-            write_tsv(
-                profile / "identity.tsv",
-                IDENTITY_FIELDS,
-                [
-                    {
-                        "source_boot_path": "SLPS_258.37",
-                        "output_boot_path": "BOOT.ELF",
-                        "system_cnf_path": "SYSTEM.CNF",
-                        "memory_card_title_offset": "0x4",
-                        "memory_card_title_capacity": 16,
-                        "memory_card_title_encoding": "ascii",
-                        "source_memory_card_title": "Original",
-                        "output_memory_card_title": "NA 2.28",
-                        "imported_game_title": "Imported Game",
-                        "output_game_title": "Output Game",
-                        "game_title_mapping_count": 1,
-                        "game_title_occurrence_count": 1,
-                    }
-                ],
-            )
+            identity_path = profile / "identity.json"
+            identity = json.loads(identity_path.read_text(encoding="utf-8"))
+            identity["image"]["output_boot_path"] = "BOOT.ELF"
+            identity_path.write_text(json.dumps(identity, indent=2) + "\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "equal byte lengths"):
                 load_profile(profile, root)
 

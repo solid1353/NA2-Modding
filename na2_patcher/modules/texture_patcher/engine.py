@@ -13,8 +13,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
-from ...image_assembler.iso9660 import Iso9660
 from ...project_paths import load_project_paths, resolve_alias
+from ...source_media import IsoFileView, cvm_members
 
 try:
     import zopfli.gzip as zopfli_gzip
@@ -726,14 +726,10 @@ def expected_payload(
 def source_members(
     na2_root: Path,
     nun5_root: Path,
-) -> tuple[Iso9660, Iso9660, bytes]:
-    target_cvm_root = na2_root / "DATA" / "DATA.CVM.files"
-    donor_cvm_root = nun5_root / "DATA" / "DATA.CVM.files"
-    return (
-        Iso9660(target_cvm_root / "DATA.CVM.iso"),
-        Iso9660(donor_cvm_root / "DATA.CVM.iso"),
-        (target_cvm_root / "DATA.CVM.hdr").read_bytes(),
-    )
+) -> tuple[IsoFileView, IsoFileView, bytes]:
+    target, target_header = cvm_members(na2_root)
+    donor, _ = cvm_members(nun5_root)
+    return target, donor, target_header
 
 
 def build_plan(

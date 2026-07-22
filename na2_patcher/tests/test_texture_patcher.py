@@ -404,7 +404,7 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(rectangle.source_target_id, "nun5_etc")
         self.assertEqual(rectangle.source_offset, 0x292F8)
 
-    def test_jutsu_patch_retains_the_fourteen_runtime_proven_edits(self) -> None:
+    def test_jutsu_patch_retains_the_nineteen_runtime_proven_edits(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
@@ -413,10 +413,10 @@ class UiTextureTests(unittest.TestCase):
         edits = [item for item in package.edits if item.patch_id == "UI-BTL-005"]
         patch = package.patches["UI-BTL-005"]
 
-        self.assertEqual(len(edits), 14)
+        self.assertEqual(len(edits), 19)
         self.assertEqual(
             {item.edit_id for item in edits},
-            {f"UI-BTL-005-{index:02d}" for index in range(1, 15)},
+            {f"UI-BTL-005-{index:02d}" for index in range(1, 20)},
         )
         self.assertNotIn(0xA0, {item.destination_offset for item in edits})
         self.assertNotIn(0x9E44, {item.destination_offset for item in edits})
@@ -431,6 +431,44 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(edits[1].destination_offset, 0x9188)
         self.assertEqual(edits[1].replacement_hex, "CCCF1A0C")
 
+        customize_anchor = next(
+            item for item in edits if item.edit_id == "UI-BTL-005-05"
+        )
+        self.assertEqual(customize_anchor.destination_offset, 0xCF70)
+        self.assertEqual(customize_anchor.operation, "copy")
+        self.assertEqual(customize_anchor.length, 2)
+        self.assertEqual(customize_anchor.expected_hex, "6643")
+        self.assertEqual(customize_anchor.source_target_id, "nun5_btl")
+        self.assertEqual(customize_anchor.source_offset, 0xD6A8)
+        self.assertEqual(customize_anchor.source_expected_hex, "8243")
+
+        prompt_records = next(
+            item for item in edits if item.edit_id == "UI-BTL-005-15"
+        )
+        self.assertEqual(prompt_records.destination_target_id, "na2_elf")
+        self.assertEqual(prompt_records.destination_offset, 0x4D4790)
+        self.assertEqual(prompt_records.source_target_id, "nun5_elf")
+        self.assertEqual(prompt_records.source_offset, 0x4DE9F0)
+        self.assertEqual(
+            struct.unpack("<hhhhhhhh", bytes.fromhex(prompt_records.source_expected_hex)),
+            (1, 1, 56, 22, 1, 25, 64, 22),
+        )
+
+        one_draw = [
+            item for item in edits if item.edit_id in {"UI-BTL-005-16", "UI-BTL-005-17"}
+        ]
+        self.assertEqual(
+            [(item.destination_offset, item.replacement_hex) for item in one_draw],
+            [(0xD014, "2D300000"), (0xD038, "2D300000")],
+        )
+        anchors = [
+            item for item in edits if item.edit_id in {"UI-BTL-005-18", "UI-BTL-005-19"}
+        ]
+        self.assertEqual(
+            [(item.destination_offset, item.replacement_hex) for item in anchors],
+            [(0xCFFC, "C243023C"), (0xD020, "E743023C")],
+        )
+
     def test_open_jutsu_selector_matches_the_nun5_arrow_state(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
@@ -442,27 +480,20 @@ class UiTextureTests(unittest.TestCase):
 
         self.assertEqual(
             [item.edit_id for item in edits],
-            [f"UI-BTL-007-{index:02d}" for index in range(1, 13)],
+            [f"UI-BTL-007-{index:02d}" for index in range(1, 11)],
         )
-        self.assertEqual(patch.status, "approved_for_test")
-        self.assertEqual(patch.confidence, "high")
+        self.assertEqual(patch.status, "runtime_proven")
+        self.assertEqual(patch.confidence, "verified")
 
         helper = edits[0]
-        self.assertEqual(helper.destination_offset, 0x6C)
-        self.assertEqual(helper.length, 20)
-        self.assertEqual(
-            helper.replacement_hex,
-            "2D98E00310EF0D0C2D808000080060024C0000AE",
-        )
-        self.assertEqual(
-            [item.destination_offset for item in edits[1:3]],
-            [0x9AE4, 0x9B1C],
-        )
-        self.assertTrue(
-            all(item.replacement_hex == "00000000" for item in edits[1:3])
-        )
+        self.assertEqual(helper.destination_offset, 0x9ABC)
+        self.assertEqual(helper.length, 104)
+        self.assertEqual(len(bytes.fromhex(helper.expected_hex)), 104)
+        self.assertEqual(len(bytes.fromhex(helper.replacement_hex)), 104)
+        self.assertTrue(helper.replacement_hex.startswith("1E00001000000000"))
+        self.assertNotIn(0x6C, {item.destination_offset for item in edits})
 
-        angle_loads = [edits[index] for index in (3, 4, 7, 8)]
+        angle_loads = [edits[index] for index in (1, 2, 5, 6)]
         self.assertEqual(
             [
                 (
@@ -481,21 +512,15 @@ class UiTextureTests(unittest.TestCase):
             ],
         )
         self.assertEqual(
-            [
-                (edits[index].destination_offset, edits[index].replacement_hex)
-                for index in (5, 9)
-            ],
-            [(0x9BA0, "DBCF1A0C"), (0x9BFC, "DBCF1A0C")],
+            [(edits[index].destination_offset, edits[index].replacement_hex) for index in (3, 7)],
+            [(0x9BA0, "71F61A0C"), (0x9BFC, "71F61A0C")],
         )
         self.assertEqual(
-            [
-                (edits[index].destination_offset, edits[index].replacement_hex)
-                for index in (6, 10)
-            ],
+            [(edits[index].destination_offset, edits[index].replacement_hex) for index in (4, 8)],
             [(0x9BA4, "4C0083AC"), (0x9C00, "4C0083AC")],
         )
 
-        rectangle = edits[11]
+        rectangle = edits[9]
         self.assertEqual(rectangle.destination_offset, 0x20C9E0)
         self.assertEqual(rectangle.source_target_id, "nun5_elf")
         self.assertEqual(rectangle.source_offset, 0x4DE0F0)
@@ -662,14 +687,14 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 108)
-        self.assertEqual(operations, {"copy": 63, "replace": 45})
+        self.assertEqual(len(ui_edits), 113)
+        self.assertEqual(operations, {"copy": 65, "replace": 48})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 44, "nun5_btl": 14, "nun5_etc": 5},
+            {"nun5_elf": 45, "nun5_btl": 15, "nun5_etc": 5},
         )
         self.assertEqual(len(stage_scales), 24)
-        self.assertEqual(len(adaptations), 21)
+        self.assertEqual(len(adaptations), 24)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")

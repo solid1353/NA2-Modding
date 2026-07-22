@@ -480,12 +480,15 @@ uses a Japanese-atlas rectangle that samples lettering after the NUN5 VS
 import, and never rotates the donor's right-pointing green arrow. NUN5 homolog
 `FUN_006d0850` omits the horizontal draws, uses rectangle
 `(145,385,22,38)`, and applies `+pi/2`/`-pi/2` around the upper/lower draws.
-`UI-BTL-007` expresses that behavior as five exact NUN5 copies and seven
-minimal NA2 adaptations. Full-profile composition caught the initial helper's
-collision with the accepted stage-width helper at BTL `0x40`; the corrected
-layout retains that helper, relocates the unchanged 16-byte Jutsu-label helper
-to `0x30`, and fits a compact 20-byte selector wrapper at `0x6C`. The accepted
-closed confirmation renderer and all text/font bytes remain untouched.
+The accepted `UI-BTL-007` replaces only the dead horizontal-arrow draw region
+with a draw-scoped helper, copies both NUN5 rotation constants and the complete
+NUN5 arrow record, and redirects the two existing vertical-arrow calls through
+that helper. The helper enables sprite mode 1 only around the rotated draw and
+flush, restores mode 0 afterward, and conditionally flips the lower arrow.
+This avoids both the rejected unscoped sprite-mode transplant and the rejected
+native-texture graft while retaining the complete official NUN5 `VS.CCS`.
+Detailed negative and accepted-path evidence is preserved in
+`docs/knowledge/battle_ui.md`.
 
 Paired Slots 5 and 6 reuse the same `TEX_xselect` sprite object and the same
 draw record. NA2 `FUN_00878820` and NUN5 `FUN_00894f60` already share the
@@ -496,18 +499,14 @@ placement is preserved. The user verified both integrated screens and accepted
 Command Menu and Command Chart as good.
 
 Canonical binary-package validation reports 7 targets, 9 groups, 88 patches,
-and 268 edits. The full pinned profile composed all 268 localization binary
-edits, verified and promoted Current, retained Previous, and launched Current
-for the user's visual pass. Detailed function and address evidence is preserved
-in `docs/knowledge/battle_ui.md`. Slots 5 and 6 are runtime-proven; Slot 4 is
-not accepted and its exact remaining visual failure is being captured before
-the next revision.
+and 271 edits. The accepted isolated runtime result additionally copies the
+complete NUN5 OK/Back records, suppresses NA2's redundant separate glyph draws,
+and calibrates their NA2 anchors so both prompts match the NUN5 reference.
+The user's final paired visual inspection accepted Slot 4 as perfect on
+2026-07-22; Slots 5 and 6 remain runtime-proven. The accepted Slot 4 savestate
+pair and active mismatch-list entry were then removed under workstream policy.
 
-The 24 binary-patcher/profile regressions and the three focused UI binary
-assertions pass. The complete suite reports 105 passing tests and one
-pre-assertion `UiTextureTests` setup error: `BATTLEGAUGE.CCS` currently derives
-SHA-256 `9BFE496E6E34C67DC086CC2AA364B68352E1E228E858B763669E57D233F2B87F`
-instead of its independently pinned replacement hash. This iteration does not
-change that container, its mapping, or any texture derivation input; the error
-therefore remains a separate validation issue rather than a failure of either
-new BTL patch.
+The remaining maintained mismatch list contains Shop Money/Bonus Game,
+Character Select Select Color/Random, Options Cancel, and Music Options Select.
+The complete repository regression suite passes 129/129 tests with this
+canonical patch and its updated Localization feature pin.

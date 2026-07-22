@@ -11,13 +11,16 @@ outside this boundary.
 | --- | --- | ---: | --- | ---: |
 | NA2 v2.28 | `@source/NA2.iso.files/PRG/BTL.BIN` | 2,237,184 | `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C` | `0x006B3F00` |
 | NUN5 SLES-55605 | `@source/NUN5.iso.files/PRG/BTL.BIN` | 2,253,184 | `7E8518DA7BD4957AF18CB0ABABE67F0E9B37C42C6551375201B15997F0A3DFE3` | `0x006C6D00` |
+| NA2 v2.28 | `@source/NA2.iso.files/SLPS_258.37` | 5,273,256 | `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF` | `0x00100000` |
+| NUN5 SLES-55605 | `@source/NUN5.iso.files/SLES_556.05` | 5,340,912 | `20A43677397731A2A20899336D1165ACE5B436906B9B89BE90FB10F4558DD19D` | `0x00100000` |
 
 The focused exports are under
 `@analysis/disassembly/NA2/exports/BTL.BIN/` and
 `@analysis/disassembly/NUN5/exports/BTL.BIN/`. Those projects omit the
 40-byte BTL file header when mapping code, so a Ghidra address is the archived
 live address minus `0x40`. File offsets below always refer to the complete
-source file.
+source file. For the boot ELFs, the relevant `PT_LOAD` mappings place NA2 file
+offset `0x100` and NUN5 file offset `0x180` at runtime `0x00100000`.
 
 ## Open VS Jutsu selector
 
@@ -36,7 +39,7 @@ regional row compositor (`FUN_006bcb70` / `FUN_006cfe70`), the animation pulse
 helper (`func_0x0016f2e8` / `func_0x001700a8`), and the native sprite draw
 routine (`func_0x0037bc40` / `func_0x0038ad00`).
 
-The stable behavior is equivalent to:
+NUN5's stable behavior is equivalent to:
 
 ```cpp
 void drawOpenJutsuSelector(Selector *self) {
@@ -75,37 +78,109 @@ NA2 differs in three related ways:
    localized accessor `FUN_003d4760(0)` resolves to the official English ELF
    record `(145,385,22,38)` at file offset `0x4DE0F0`.
 
-The original NA2 atlas coordinate contains a downward green triangle, which
-explains why the Japanese renderer did not require rotation. After the whole
-NUN5 `VS.CCS` import, the same coordinate samples lettering instead. A
-rectangle-only transplant is also insufficient because the NUN5 source graphic
-points right and relies on the two explicit rotations. `UI-BTL-007` therefore
-copies the exact NUN5 rectangle and four angle-load instructions and removes
-only the two open-state horizontal draws. Each redirected call's delay slot
-writes the loaded angle into the sprite. A compact 20-byte NA2 wrapper at file
-offset `0x6C` calls the unchanged native draw routine and then clears rotation;
-at these call sites, the completed loops leave `s0` and `s3` dead, so the
-wrapper safely uses those callee-saved registers for the sprite pointer and
-return address without a stack frame.
+The original NA2 atlas coordinate contains a vertical green triangle. After
+the complete official NUN5 `VS.CCS` import, that coordinate samples lettering;
+NUN5's replacement record points right and relies on opposite rotations.
 
-The canonical BTL header contains one aligned 80-byte zero cave at
-`0x30..0x7F`. Full-profile composition exposed that the first implementation's
-44-byte `0x40` wrapper collided with the already accepted stage-width helper.
-The corrected packing keeps that stage helper byte-identical at `0x40..0x6B`,
-moves the byte-identical 16-byte Jutsu-label helper from `0x70` to `0x30`, and
-uses the final `0x6C..0x7F` bytes for the compact selector wrapper. The two
-relocated call targets are adjusted accordingly; all three ranges were
-zero-filled in the canonical NA2 file and are mutually disjoint.
+### Rejected unscoped ports
 
-Side effects are confined to the open-selector arrow sprite's rotation and two
-draw calls. The wrapper preserves the sprite pointer and clears rotation after
-each draw. The closed confirmation screen and its accepted horizontal control
-remain on `FUN_006bd0f0` and are not changed.
+The first port copied the NUN5 rectangle and angle loads, redirected both draws
+through a reset wrapper, and wrote the angle in each call delay slot. Guarded
+live-memory reconstruction proved why that was insufficient:
 
-Evidence: paired Slot 4 screenshots and extracted EE memory, exact Ghidra
-structural comparison, canonical file-byte verification, decoded
-`TEX_vs_t01` atlas crops, and live sprite-object reconstruction. Confidence is
-**high** for the static correction; runtime acceptance remains pending.
+- NA2's active arrow sprite was at `0x00C7B820`; its rotation field at
+  `+0x4C` (`0x00C7B86C`) read back the exact `-pi/2` bit pattern after the
+  lower draw, yet the captured arrow still pointed right;
+- NUN5's corresponding object was at `0x00BFC420` and consumed the rotation;
+- cloning the NUN5 object control fields persistently suppressed unrelated UI;
+  partial draw-scoped field tests either had no effect or produced malformed
+  sampling;
+- disabling the rotation reset did not change the rendered direction.
+
+These are useful negative results: writing a valid rotation float is not enough
+to enable rotation while the NA2 sprite remains in mode 0, and NUN5's mode
+fields cannot safely remain enabled across the shared object lifetime. A
+temporary texture graft that restored NA2's old vertical pixels rendered the
+arrows but deliberately diverged from the canonical NUN5 asset, so it was also
+rejected rather than retained as a special texture-engine transform.
+
+### Accepted draw-scoped compatibility port
+
+`UI-VS-001` remains a byte-for-byte whole NUN5 donor. `UI-BTL-007` replaces the
+now-unwanted horizontal blocks at file `0x9ABC..0x9B23` with a branch over a
+compact helper stored inside those same dead blocks. The main path resumes at
+file `0x9B38`; no shared BTL-header cave is used. The upper and lower paths copy
+NUN5's exact angle loads from `0xA06C/0xA070` and `0xA0F4/0xA0F8`, store the
+angle in the sprite, and call the helper from `0x9BA0` and `0x9BFC`. The exact
+NUN5 record `(145,385,22,38)` is copied from ELF `0x4DE0F0` to BTL `0x20C9E0`.
+
+The helper's practical reconstruction is:
+
+```cpp
+void drawLocalizedSelectorArrow(Sprite *sprite) {
+    configureSpriteMode(sprite, 10, 1);       // NA2 FUN_001cbe40
+    if (bit_cast<int>(sprite->rotation) < 0)
+        sprite->flags |= 0x40;                // lower-arrow flip
+    drawSpriteRecord(sprite, (Rect *)0x008C08E0); // FUN_0037bc40
+    flushSprite(sprite);                      // FUN_001cc070
+    configureSpriteMode(sprite, 10, 0);
+}
+```
+
+The crucial behavior is the flush while mode 1 is still active; restoring mode
+0 before flushing loses or corrupts the queued rotated primitive. The helper
+uses only `s0` and `s3`, which are dead at both completed loop call sites, to
+preserve the sprite and return address without a stack frame. Its only lasting
+state change is the existing lower-arrow flip expected by the surrounding
+method. The closed sibling `FUN_006bd0f0` and every other VS object remain
+untouched.
+
+The final hidden, muted isolated run produced correct upper and lower arrows,
+no horizontal arrows, and no bottom fragment. The user accepted the paired
+screen as perfect. The NUN5 screenshot SHA-256 is
+`46A1A578B45019A0A59FD00DA559AD666637A7BAFB288D5D652FC78CDB7A3FFD`;
+the corrected NA2 screenshot SHA-256 is
+`230102B88B21B3AFB9CB9BF75E0D6BD017F64B56F4756427E204DA7C051962A8`.
+Evidence also includes paired EE memory, exact Ghidra structural comparison,
+canonical file-byte guards, decoded atlases, and guarded PINE readback.
+Confidence and runtime acceptance are **verified**.
+
+## VS confirmation prompts and bottom legends
+
+NA2 `FUN_006c0cc0` and NUN5 `FUN_006d4130` are the homologous confirmation
+draw methods. Both draw the selection prompts and then reuse one sprite for the
+bottom OK and Back legends. Their practical ending is:
+
+```cpp
+drawOk(anchorOk, 356.0f, promptSprite, 0);
+drawBack(anchorBack, 356.0f, promptSprite, 1);
+```
+
+NUN5's boot-ELF table at file `0x4DE9F0` (runtime `0x005DE870`) contains the
+complete Cross/OK `(1,1,56,22)` and Triangle/Back `(1,25,64,22)` records. NA2's
+homologous table at file `0x4D4790` (runtime `0x005D4690`) instead contains two
+70x22 regional records and `FUN_0037c980` optionally draws a separate input
+glyph before each label. `UI-BTL-005` copies the complete 16-byte NUN5 table and
+sets the two call-site glyph arguments to zero at BTL `0xD014` and `0xD038`.
+
+The wrapper implementations are not byte-equivalent: their queued-sprite
+advancement makes NUN5's nominal anchors `400/470` render differently when
+inserted unchanged into NA2. Two measured NA2 calibrations established the
+exact compatible anchors. `400/470` rendered the imported records 15/10 pixels
+right of the reference; `384/460` rendered them 5/3 pixels left. The converged
+NA2 constants `388/462`, at BTL `0xCFFC` and `0xD020`, match both NUN5 legends
+at `dx=0, dy=0`.
+
+The same patch now copies only the X-immediate halfword of NUN5's X=`260`
+Customize Jutsu instruction from BTL `0xD6A8` into NA2 `0xCF70`, retaining
+NA2's destination register. Contrary to the earlier provisional conclusion,
+X=`260` does not wrap once the selector state is corrected; it places the full
+Circle prompt exactly like NUN5. Text and font rendering are not modified.
+
+Evidence: complete-function comparison, boot-ELF `PT_LOAD` mapping, guarded
+live records and instructions, v19/v20/v21 paired raster calibration, and the
+same accepted screenshot hashes above. Confidence and runtime acceptance are
+**verified**.
 
 ## Command Menu and Command Chart scroll indicators
 

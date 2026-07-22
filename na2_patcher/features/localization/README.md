@@ -894,23 +894,33 @@ NA2 helper is installed in verified loaded zero padding at BTL file offset
 and `0x9750` into `0x91BC..0x91C3`. The localized 160x24 Battle Settings prompt
 is drawn at the official X=`94` through the constant at `0xCFD8`.
 
-The NUN5 renderer passes X=`260` for `Customize Jutsu`, but guarded testing
-showed that transplanting this constant into NA2's different draw path wraps
-the prompt around the left edge. X=`255`, encoded at BTL file offset `0xCF70`,
-is the closest non-wrapping NA2 equivalent. Together with NUN5's exact
-`(0,232,168,24)` rectangle, it fully exposes the Circle icon and places the
-complete prompt like the paired NUN5 capture. The rejected X=`260` write is not
-retained.
+NUN5 passes X=`260` for `Customize Jutsu`. The final guarded test proves that
+this exact value is valid once the open-selector state is corrected: the full
+Circle prompt remains on-screen and matches NUN5. `UI-BTL-005` therefore copies
+only the X-immediate halfword from NUN5 BTL `0xD6A8` into NA2 `0xCF70`, keeping
+NA2's required `v0` destination register rather than copying an incompatible
+whole instruction.
 
-All 14 edits were matched against their original bytes, written through
-PINE, read back exactly, and captured from user-provided slot 7. They restored
-both Jutsu labels, the two arrows and Circle input graphics, and both bottom
-prompts.
+The bottom legends use a separate boot-ELF table. NUN5 ELF `0x4DE9F0` contains
+complete Cross/OK `(1,1,56,22)` and Triangle/Back `(1,25,64,22)` records; NA2
+ELF `0x4D4790` contains two 70x22 regional records and its BTL wrapper draws an
+additional glyph. The patch copies the complete 16-byte NUN5 table and disables
+the redundant NA2 glyph arguments at BTL `0xD014` and `0xD038`.
 
-The later submenu-suppression wrapper was rejected: the NUN5 reference retains
-the Jutsu1/Jutsu2 graphics beneath the open selector, while the wrapper removed
-them and left unrelated garbage visible. Its code-cave write and call hook are
-removed; the runtime-proven 14 texture/placement edits remain unchanged.
+Because NA2 and NUN5 advance that shared sprite differently, identical nominal
+anchors do not produce identical raster positions. Two paired calibration runs
+located the exact NA2-compatible constants: `400/470` rendered 15/10 pixels
+right of NUN5, while `384/460` rendered 5/3 pixels left. NA2 `388/462`, written
+at `0xCFFC` and `0xD020`, aligns both legends at `dx=0,dy=0`.
+
+All 19 edits are byte-guarded. The final hidden, muted isolated run preserved
+both Jutsu labels, the two-arrow and Circle controls, the full bottom prompts,
+and the accepted open-selector arrows. The user accepted the NUN5-first paired
+screen as perfect.
+
+The earlier submenu-suppression wrapper remains rejected: NUN5 retains the
+Jutsu1/Jutsu2 graphics beneath the open selector, while suppression removed
+them and exposed unrelated atlas data. No such hook is retained.
 
 This patch changes texture selection, placement, and submenu visibility only.
 It does not change or evaluate command-name text or font rendering.
@@ -940,25 +950,29 @@ sprite rotation after each draw.
 
 The whole NUN5 VS texture import makes NA2's old `(139,257,38,22)` source
 rectangle invalid: it samples lettering rather than the Japanese atlas's
-downward triangle. `UI-BTL-007` copies NUN5's official `(145,385,22,38)`
-green-arrow rectangle from ELF offset `0x4DE0F0` and copies the four exact NUN5
-angle-load instructions from BTL offsets `0xA06C`, `0xA070`, `0xA0F4`, and
-`0xA0F8`. Two open-state draw calls are replaced with no-ops, leaving the
-closed-state horizontal control untouched.
+downward triangle. Guarded live testing first copied NUN5's official
+`(145,385,22,38)` right-facing source and wrote the exact NUN5 `+pi/2` and
+`-pi/2` values into NA2's live sprite object. The rotation field read back
+exactly, but both rendered arrows still pointed right. Persistent and
+draw-scoped control-field transplants either had no effect or corrupted the
+sprite, proving that this NA2 draw path does not consume NUN5's rotation mode.
 
-NA2's static-record draw path has no equivalent rotation wrapper. The two call
-delay slots write the loaded angle into the sprite, and a compact 20-byte
-size-preserving helper at verified zero padding `0x6C` calls the unchanged
-native draw routine and then clears rotation. At both call sites, `s0` and `s3`
-are dead after their completed loops, so the helper may preserve the sprite
-pointer and return address in those callee-saved registers without a stack
-frame. The upper and lower draw calls at `0x9BA0` and `0x9BFC` are redirected
-to that helper. To keep all three accepted helpers disjoint inside the complete
-`0x30..0x7F` zero-filled header cave, the byte-identical 16-byte Jutsu-label
-helper was relocated from `0x70` to `0x30`; the runtime-proven stage-width
-helper remains unchanged at `0x40..0x6B`. No label, command text, font, or
-gameplay-input data is changed. Static confidence is high; runtime acceptance
-is pending.
+The accepted correction keeps `VS.CCS` as a byte-for-byte whole NUN5 donor and
+scopes the compatibility state to each arrow draw. BTL `0x9ABC..0x9B23`, which
+held the unwanted horizontal blocks, now contains a branch plus a compact
+helper; normal execution resumes at `0x9B38`, so the helper consumes no shared
+header cave. The helper enables NA2 sprite mode 1, applies the lower flip when
+the copied NUN5 angle is negative, draws the localized record, flushes while
+mode 1 remains active, and then restores mode 0.
+
+The four angle words and `(145,385,22,38)` rectangle are exact NUN5 copies.
+Only the helper and its two call redirects are authored NA2-specific glue,
+because leaving NUN5 mode state active damages unrelated objects and restoring
+it before the flush discards the queued primitive. The final isolated capture
+has matching upper/lower arrows, no horizontal arrows, no bottom fragment, and
+no collateral label changes. The user accepted the paired result as perfect;
+confidence and runtime status are verified. No label text, command text, font,
+or gameplay-input data is changed.
 
 ### UI-BTL-008: localized command-list scroll arrows
 
@@ -1081,7 +1095,7 @@ NA2 table. It changes only the graphical Vibration label selection; surrounding
 OFF/On text and font rendering are outside scope. Both ranges are guarded and
 the ELF size is preserved.
 
-Inspect all fourteen UI companion patches together:
+Inspect all sixteen UI companion patches together:
 
 ```powershell
 python -m na2_patcher.modules.binary_patcher.engine validate `
@@ -1099,6 +1113,8 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
   --patch UI-BTL-004 `
   --patch UI-BTL-005 `
   --patch UI-BTL-006 `
+  --patch UI-BTL-007 `
+  --patch UI-BTL-008 `
   --patch UI-ETC-001 `
   --patch UI-ETC-002 `
   --patch UI-ELF-001 `

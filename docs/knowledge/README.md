@@ -43,6 +43,9 @@ Operational logs remain disposable after their durable findings are promoted. Gi
   character-viewer draw paths, page/Play/lower-control tables, category-title
   rectangles, rejected false leads, and the donor-backed `UI-ETC-002`
   boundary.
+- `stage_select_ui.md`: paired NA2/NUN5 Stage Select record topology, preview
+  indexing, localized name fitting, prompt placement, address mapping, and the
+  donor-backed `UI-BTL-002` correction boundary.
 - `media/`: exact outer-ISO, `DATA.CVM`, and AFS layout inventories.
 - `font/`: durable visual and byte-level evidence from the font v23 negative result.
 - `external_string_payload.md`: compact one-file `228.BIN` string storage,

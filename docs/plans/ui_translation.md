@@ -118,8 +118,10 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   English rectangles from ELF file offset `0x4DDB90` and horizontally fits any
   source wider than 214 pixels. `UI-BTL-002` copies all 24 official rectangles
   and stores the exact single-precision `min(1, 214/width)` result in NA2's
-  redundant index word. The one other index consumer now uses the already
-  matched loop index, and the draw path loads the stored scale. No code cave or
+  redundant index word. The selected-preview consumer uses the already matched
+  loop index; the thumbnail consumer recovers that index from its `row * 16`
+  byte offset instead of reading the repurposed word. The draw path loads the
+  stored horizontal scale while retaining vertical scale `1.0`. No code cave or
   absolute jump is used.
 - The Options root renderer uses five menu-label and six difficulty-label
   rectangles from the boot ELF even when the complete NUN5 `OPTION.CCS` is
@@ -153,7 +155,11 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   NA2's retained CCS structure associates and positions them incorrectly.
   `MAPSEL1.CCS` therefore uses the complete NUN5 donor so pictures, ordering,
   models, UVs, and labels remain coupled. The stage-name fitter now leaves
-  vertical scale at `1.0` and applies the 214-pixel cap only horizontally.
+  vertical scale at `1.0` and applies the 214-pixel cap only horizontally. The
+  fresh Slot 3 pair then exposed the missed thumbnail-index read and NA2's
+  X=`300` Random prompt; the corrected patch derives indices `0..23` from the
+  matched row and copies NUN5's exact X=`260` instructions for both prompt
+  sprites.
 - Paired slot 2 proves NUN5 retains the Jutsu1/Jutsu2 graphics beneath the open
   selector. The later suppression wrapper and hook caused the regression and
   are removed; the original 14 runtime-proven rectangle/placement edits remain.
@@ -176,10 +182,10 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   5,274,398 bytes, but no replacement CCS blobs are stored in the repository.
   Static parity regenerated all 34 former production files byte-for-byte.
 - `na2_patcher/features/localization/binary_patcher/` contains 14 atomic
-  companion patches and 94 guarded edits across BTL, ETC, and the boot ELF.
-  Fifty-five rows copy canonical NUN5 bytes directly (43 ELF, seven BTL, five
+  companion patches and 97 guarded edits across BTL, ETC, and the boot ELF.
+  Fifty-seven rows copy canonical NUN5 bytes directly (43 ELF, nine BTL, five
   ETC), 24 store values computed from NUN5's stage-width formula in NA2's
-  different record layout, and 15 are minimal NA2-specific behavior ports.
+  different record layout, and 16 are minimal NA2-specific behavior ports.
   The stage-fit correction and Vibration rectangle are statically verified and
   intentionally await the user's runtime pass.
 - Translation mapping version 35 restores the four Collection Movie rows to

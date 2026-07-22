@@ -713,10 +713,10 @@ recorded in `docs/plans/ui_translation.md`.
 This patch set holds size-preserving executable changes that are inseparable from
 the NUN5 UI container import but do not belong inside `DATA.CVM`.
 
-Its 94 guarded edits are donor-first: 55 copy bytes directly from canonical
-NUN5 files (43 from the ELF, seven from `BTL.BIN`, and five from `ETC.BIN`).
+Its 97 guarded edits are donor-first: 57 copy bytes directly from canonical
+NUN5 files (43 from the ELF, nine from `BTL.BIN`, and five from `ETC.BIN`).
 Another 24 store the exact values of NUN5's stage-width formula in NA2's
-different inline-record layout. The remaining 15 are documented NA2-specific
+different inline-record layout. The remaining 16 are documented NA2-specific
 ports where the equivalent NUN5 behavior has a different instruction or data
 topology, or where NA2 intentionally needs a different value.
 
@@ -766,24 +766,31 @@ English language table is the 24-entry rectangle range at NUN5 ELF file offset
 `min(1.0, 214.0 / width)`; copying only the rectangles would therefore preserve
 the clipping visible in NA2.
 
-`UI-BTL-002` reproduces both parts without adding a jump or overwriting a code
-cave. In the NA2 table, every second key word is exactly the matched loop index.
-The only other code consumer at BTL file offset `0x606BC` is changed from loading
-that redundant word to `move s0,s1`. The freed word in each record stores the
-precomputed single-precision NUN5 scale. The original code initialized both
-axes to `1.0` by loading `f14` and copying it to `f15`. At BTL file offset
-`0x61570`, the `mtc1` destination changes from `f14` to `f15` so vertical
-scale stays at `1.0`; at `0x6157C`, the former `mov.s f15,f14` becomes
-`lwc1 f14,4(v1)` so only horizontal scale receives the precomputed fit. The
-remaining 24 rectangle fields are copied from the hash-pinned NUN5 ELF table.
+`UI-BTL-002` reproduces the localized behavior without adding a jump or
+overwriting a code cave. In the NA2 table, every second key word is exactly the
+matched loop index. The selected-preview consumer at BTL file offset `0x606BC`
+changes from loading that redundant word to `move s0,s1`. The small-thumbnail
+consumer at `0x603B8` instead recovers the same index from the existing
+`row * 16` byte offset with `srl a0,v1,4`. The freed word in each record stores
+the precomputed single-precision NUN5 scale.
 
-The patch is 51 individually guarded edits: 24 rectangle rows copy NUN5's
+The original stage-name code initialized both axes to `1.0` by loading `f14`
+and copying it to `f15`. At BTL file offset `0x61570`, the `mtc1` destination
+changes from `f14` to `f15` so vertical scale stays at `1.0`; at `0x6157C`,
+the former `mov.s f15,f14` becomes `lwc1 f14,4(v1)` so only horizontal scale
+receives the precomputed fit. The remaining 24 rectangle fields are copied from
+the hash-pinned NUN5 ELF table. Finally, the Random prompt and its companion
+sprite at `0x61F40` and `0x61F64` copy NUN5's exact X=`260` instructions in
+place of NA2's X=`300` instructions.
+
+The patch is 54 individually guarded edits: 24 rectangle rows copy NUN5's
 English ELF table, 24 scale rows store the exact result of NUN5's width formula,
-and three code rows adapt NA2's inline-record topology. A temporary application verified
-that all 24 stage keys remain unchanged and match NUN5, every rectangle equals
-the official English table, every scale equals the NUN5 formula, all changed
-bytes stay inside declared ranges, and the 2,237,184-byte BTL size is unchanged.
-Runtime comparison is still required before promotion from `approved_for_test`.
+two rows copy NUN5's prompt-position instructions, and four code rows adapt
+NA2's inline-record topology. A temporary application verified that all 24
+stage keys remain unchanged and match NUN5, every rectangle equals the official
+English table, every scale equals the NUN5 formula, all changed bytes stay
+inside declared ranges, and the 2,237,184-byte BTL size is unchanged. Runtime
+comparison is still required before promotion from `approved_for_test`.
 
 ### UI-ELF-001: localized character-name atlas rectangles
 

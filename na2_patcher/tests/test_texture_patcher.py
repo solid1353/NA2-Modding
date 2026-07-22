@@ -169,7 +169,7 @@ class UiTextureTests(unittest.TestCase):
             gzip.decompress(result.original),
         )
 
-    def test_stage_fitter_scales_only_the_horizontal_axis(self) -> None:
+    def test_stage_layout_ports_both_index_consumers_and_nun5_prompt_x(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
@@ -181,6 +181,15 @@ class UiTextureTests(unittest.TestCase):
         horizontal = next(
             item for item in package.edits if item.edit_id == "UI-BTL-002-03"
         )
+        thumbnail = next(
+            item for item in package.edits if item.edit_id == "UI-BTL-002-04"
+        )
+        random_prompt = next(
+            item for item in package.edits if item.edit_id == "UI-BTL-002-05"
+        )
+        random_companion = next(
+            item for item in package.edits if item.edit_id == "UI-BTL-002-06"
+        )
 
         self.assertEqual(vertical.destination_offset, 0x61570)
         self.assertEqual(vertical.expected_hex, "00708244")
@@ -188,6 +197,17 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(horizontal.destination_offset, 0x6157C)
         self.assertEqual(horizontal.expected_hex, "C6730046")
         self.assertEqual(horizontal.replacement_hex, "04006EC4")
+        self.assertEqual(thumbnail.destination_offset, 0x603B8)
+        self.assertEqual(thumbnail.expected_hex, "0000448C")
+        self.assertEqual(thumbnail.replacement_hex, "02210300")
+        self.assertEqual(random_prompt.destination_offset, 0x61F40)
+        self.assertEqual(random_prompt.source_target_id, "nun5_btl")
+        self.assertEqual(random_prompt.source_offset, 0x64C50)
+        self.assertEqual(random_prompt.source_expected_hex, "8243023C")
+        self.assertEqual(random_companion.destination_offset, 0x61F64)
+        self.assertEqual(random_companion.source_target_id, "nun5_btl")
+        self.assertEqual(random_companion.source_offset, 0x64C78)
+        self.assertEqual(random_companion.source_expected_hex, "8243023C")
 
     def test_ougi_import_replaces_two_part_layout_with_nun5_one_part_layout(self) -> None:
         result = self.result("ougi")
@@ -540,14 +560,14 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 94)
-        self.assertEqual(operations, {"copy": 55, "replace": 39})
+        self.assertEqual(len(ui_edits), 97)
+        self.assertEqual(operations, {"copy": 57, "replace": 40})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 43, "nun5_btl": 7, "nun5_etc": 5},
+            {"nun5_elf": 43, "nun5_btl": 9, "nun5_etc": 5},
         )
         self.assertEqual(len(stage_scales), 24)
-        self.assertEqual(len(adaptations), 15)
+        self.assertEqual(len(adaptations), 16)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")

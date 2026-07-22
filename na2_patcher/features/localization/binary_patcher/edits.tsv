@@ -161,6 +161,9 @@ UI-BTL-001-01	UI-BTL-001	10	na2_btl	0xB5E80	replace	4	0200422A		0100422A								
 UI-BTL-002-01	UI-BTL-002	10	na2_btl	0x606BC	replace	4	0000508C		2D802002									Use the matched loop index directly so the redundant per-record index word can hold the stage-name scale.
 UI-BTL-002-02	UI-BTL-002	20	na2_btl	0x61570	replace	4	00708244		00788244									Preserve the original 1.0 vertical stage-name scale in f15 instead of copying the horizontal fit into both axes.
 UI-BTL-002-03	UI-BTL-002	30	na2_btl	0x6157C	replace	4	C6730046		04006EC4									Load the precomputed NUN5-equivalent horizontal fit from the selected 16-byte stage record into f14.
+UI-BTL-002-04	UI-BTL-002	40	na2_btl	0x603B8	replace	4	0000448C		02210300									Recover the preview index as row_offset >> 4 instead of interpreting the repurposed scale word as an atlas index.
+UI-BTL-002-05	UI-BTL-002	50	na2_btl	0x61F40	copy	4	9643023C			nun5_btl	0x64C50	8243023C						Copy the exact NUN5 X=260 instruction for the Random prompt item.
+UI-BTL-002-06	UI-BTL-002	60	na2_btl	0x61F64	copy	4	9643023C			nun5_btl	0x64C78	8243023C						Copy the exact NUN5 X=260 instruction for the Random prompt companion sprite.
 UI-BTL-002-S00	UI-BTL-002	100	na2_btl	0x20FC14	replace	4	00000000		4F236C3F									Store the NUN5-equivalent horizontal scale for stage row 0 (232px source width).
 UI-BTL-002-S01	UI-BTL-002	101	na2_btl	0x20FC24	replace	4	01000000		4F236C3F									Store the NUN5-equivalent horizontal scale for stage row 1 (232px source width).
 UI-BTL-002-S02	UI-BTL-002	102	na2_btl	0x20FC34	replace	4	02000000		6969493F									Store the NUN5-equivalent horizontal scale for stage row 2 (272px source width).

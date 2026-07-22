@@ -1,4 +1,4 @@
-# Font Workstream
+# Font Workstream Plan
 
 ## Objective
 

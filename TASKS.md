@@ -2,11 +2,11 @@
 
 ## In Progress
 
-### [Font](docs/plans/font.md)
+### [Font](docs/workstreams/font/README.md)
 - Make font identical to UN5.
 - Implement proper autofit/positions everywhere.
 
-### [UI Translation](docs/plans/ui_translation.md)
+### [UI Translation](docs/workstreams/ui_translation/README.md)
 - Deal with remaining issues/regressions.
 - Investigate upscaling.
 

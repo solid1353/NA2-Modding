@@ -1,4 +1,4 @@
-# UI Translation Working Context
+# UI Translation Workstream Plan
 
 Last refreshed: 2026-07-20
 
@@ -8,27 +8,9 @@ This is the living handoff for the `TASKS.md` **UI Translation** task. Keep it c
 
 Import appropriate official NUN5 English UI textures into NA2, correct the offsets for the selected entries, and investigate how the NUN5 PCSX2 upscale pack can help the UI-translation workflow.
 
-## User direction and boundaries
+## Workstream policy
 
-- The user will follow the agent's technical lead for this task.
-- Talk through consequential decisions; keep the approach reproducible and evidence-driven.
-- Convert user-supplied absolute paths to repository/configured-root-relative notation in project materials.
-- `@source/` is read-only reference material. The two explicitly authorized
-  auxiliary cleanups were completed after their recorded conditions were met.
-- `work/UI translation/` is the mutable task workspace. Its contents may be inspected, reorganized, modified, regenerated, or deleted as needed.
-- This task changes UI textures and the binary rectangle/placement logic required
-  to display them. Text content and font spacing are entirely out of scope; no
-  text mapping is added or modified here.
-- `@utils/old/` is an untrusted tool/archive dump. Inspect before selecting or executing anything from it.
-- Useful inspected utilities may be promoted into the maintained `@utils/` area with provenance and usage notes.
-- A separate **Scripts** task was running concurrently. Its changes were
-  preserved and committed independently while this task was active. At the
-  start of this task they were:
-  - `scripts/project/set_analysis_readonly.ps1`
-  - `scripts/research/ghidra/export_project.ps1`
-  - `scripts/research/ghidra/import_targets.ps1`
-  - `scripts/research/ghidra/targets.tsv`
-  - `scripts/research/ghidra/build_manifest.ps1` (appeared while this handoff was being created)
+See the canonical [UI Translation workstream policy](README.md#workstream-policy).
 
 ## Asset inventory
 

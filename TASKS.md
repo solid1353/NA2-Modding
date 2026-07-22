@@ -12,6 +12,9 @@
 
 ## Backlog
 
+### General
+- Create notifications.
+
 ### Project
 - Investigate cross-platform development/deployment possibilities.
 - Global cleanup.
@@ -36,8 +39,6 @@
 - Test translation thoroughout the whole game.
 
 ## Archive
-
-### General
 
 ### Scripting
 

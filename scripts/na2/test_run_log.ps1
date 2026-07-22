@@ -164,6 +164,7 @@ else {
     & (Join-Path $fakeRepository '_na2.ps1') act
     & (Join-Path $fakeRepository '_na2.ps1') -Current
     & (Join-Path $fakeRepository '_na2.ps1') -Previous
+    & (Join-Path $fakeRepository '_na2.ps1') -t
     & (Join-Path $fakeRepository '_na2.ps1') -b
     & (Join-Path $fakeRepository '_na2.ps1')
     $fakeLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na2\latest.log'))
@@ -175,7 +176,7 @@ else {
             -Message "Root $mode dispatch was not logged."
     }
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 5) `
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 6) `
         -Message 'Root dispatch test produced the wrong rolling-log section count.'
     Assert-Na2Test `
         -Condition (-not (Test-Na2WindowsAbsolutePath -Text $fakeRolling)) `
@@ -186,6 +187,12 @@ else {
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, 'keep-existing=False').Count -eq 1) `
         -Message 'Build-and-launch dispatch unexpectedly preserved an existing PCSX2 instance.'
+    Assert-Na2Test `
+        -Condition ([regex]::Matches($fakeRolling, 'ISO result: candidate').Count -eq 1) `
+        -Message 'Test build did not dispatch exactly once to Candidate.'
+    Assert-Na2Test `
+        -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 2) `
+        -Message 'Build-only and build-and-launch did not both use the standard build pipeline.'
     $structuredLog = Join-Path $logs 'na2'
     $buildRecords = Join-Path $structuredLog 'builds'
     foreach ($buildId in 'old-previous', 'old-current', 'new-current', 'orphan') {

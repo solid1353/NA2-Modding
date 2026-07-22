@@ -6,6 +6,8 @@ param(
 
     [Alias('b')]
     [switch]$Build,
+    [Alias('t')]
+    [switch]$Test,
     [Alias('c')]
     [switch]$Current,
     [Alias('p')]
@@ -30,19 +32,20 @@ function Write-Na2Stage {
 $command = if ($Mode) { $Mode.ToLowerInvariant() } else { '' }
 $runSelected = $Current -or $Previous
 
-if (@($Build, $Current, $Previous).Where({ $_ }).Count -gt 1) {
-    throw '-Build / -b, -Current / -c, and -Previous / -p are mutually exclusive.'
+if (@($Build, $Test, $Current, $Previous).Where({ $_ }).Count -gt 1) {
+    throw '-Build / -b, -Test / -t, -Current / -c, and -Previous / -p are mutually exclusive.'
 }
-if ($command -and ($Build -or $runSelected)) {
+if ($command -and ($Build -or $Test -or $runSelected)) {
     throw 'Build/launch switches cannot be combined with a command mode.'
 }
 if ($Help) {
     @(
         'NA2 commands:'
         "  na2       Build the pinned current profile, conditionally rotate, then run $currentIsoName"
+        "  na2 -b    Build and conditionally rotate $currentIsoName without launching PCSX2"
+        "  na2 -t    Build build/$candidateIsoName without closing PCSX2 or changing Current/Previous"
         "  na2 -c    Run build/$currentIsoName without rebuilding or closing PCSX2"
         "  na2 -p    Run build/$previousIsoName without rebuilding or closing PCSX2"
-        "  na2 -b    Build build/$candidateIsoName without closing PCSX2 or changing Current/Previous"
         "  na2 act   Maintain Current/Previous PNACH symlinks without building or launching"
         ''
     ) | Write-Output
@@ -52,7 +55,7 @@ if ($Help) {
 $runMode = if ($command -eq 'act') {
     'actualize'
 }
-elseif ($Build) {
+elseif ($Test) {
     'candidate-build'
 }
 elseif ($Previous) {
@@ -103,11 +106,18 @@ try {
         }
         Write-Host "[na2] Enabled cheats: $enabledCheats" -ForegroundColor Cyan
     }
-    elseif ($Build) {
+    elseif ($Test) {
         Write-Na2Stage "Build $candidateIsoName without closing PCSX2"
         $buildResult = & (Join-Path $projectPaths.scripts 'na2\build.ps1') -CandidateOnly
         if (-not $buildResult -or $buildResult.Status -ne 'candidate') {
             throw 'Candidate build did not return a valid result.'
+        }
+    }
+    elseif ($Build) {
+        Write-Na2Stage "Build $currentIsoName without launching PCSX2"
+        $buildResult = & (Join-Path $projectPaths.scripts 'na2\build.ps1')
+        if (-not $buildResult -or $buildResult.Status -notin @('unchanged', 'updated')) {
+            throw 'Profile build did not return a valid promotion result.'
         }
     }
     elseif ($runSelected) {

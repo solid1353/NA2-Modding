@@ -43,6 +43,7 @@ try {
     "scripts": "scripts"
   },
   "files": {
+    "pcsx2_exe": "@pcsx2/pcsx2-qt.exe",
     "na2_iso": "@source/NA2.iso",
     "nun5_iso": "@source/NUN5.iso",
     "current_iso": "@build/NA2.28 - Current.iso",

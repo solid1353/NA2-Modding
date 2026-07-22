@@ -19,7 +19,7 @@ $resolvedIso = if ([IO.Path]::IsPathRooted($IsoPath)) {
 else {
     [IO.Path]::GetFullPath((Join-Path $projectPaths.repository $IsoPath))
 }
-$resolvedPcsx2Exe = [IO.Path]::GetFullPath((Join-Path $projectPaths.pcsx2 'pcsx2-qt.exe'))
+$resolvedPcsx2Exe = [IO.Path]::GetFullPath($projectPaths.files.pcsx2_exe)
 
 if (-not $KeepExistingInstance) {
     Stop-Na2Pcsx2 -Executable $resolvedPcsx2Exe

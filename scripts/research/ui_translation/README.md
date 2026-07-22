@@ -42,6 +42,19 @@ cannot be explained from NUN5 and Current plus the unpacked static sources.
 
 ## Workflow
 
+Launch Current NA2 through `na2 -c` and NUN5 together for paired manual
+screenshots and F1 savestates:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/research/ui_translation/launch_pair.ps1
+```
+
+The launcher closes existing instances of the configured PCSX2 executable,
+starts Current on the left and NUN5 on the right of the primary working area,
+and prints the target-to-process mapping. Focus the intended window before
+using PCSX2 screenshot or savestate hotkeys. The shared PowerShell profile may
+expose this launcher as the shorter `na` command.
+
 Check both targets before starting:
 
 ```powershell

@@ -46,6 +46,8 @@ The manifest also defines canonical file paths which may not exist yet before
 their producing workflow runs. File entries should reference a named root with
 `@root/child` syntax so the root path is not duplicated:
 
+- `pcsx2_exe`: `@pcsx2/pcsx2-qt.exe`.
+- `na2_command`: `@repository/_na2.ps1`.
 - `na2_iso`: `@source/NA2.iso`.
 - `nun3_iso`: `@source/NUN3.iso`.
 - `nun5_iso`: `@source/NUN5.iso`.

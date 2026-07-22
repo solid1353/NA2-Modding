@@ -32,9 +32,10 @@ research utility.
 - `research/ee_memory_map/`: PCSX2 savestate extraction, allocator-chain
   validation, overlay identification, and EE-region reporting for injection
   capacity research.
-- `research/ui_translation/`: PINE identity checks, controlled savestate and
-  embedded-screenshot capture, rendering preflight, and read-only runtime
-  memory inspection for NUN5-to-NA2 UI comparisons.
+- `research/ui_translation/`: paired Current/NUN5 PCSX2 launch, PINE identity
+  checks, controlled savestate and embedded-screenshot capture, rendering
+  preflight, and read-only runtime memory inspection for NUN5-to-NA2 UI
+  comparisons.
 - `research/translation/`: retained translation-table length validator. It is
   not part of normal profile builds.
 
@@ -43,9 +44,11 @@ Before that call, `na2/build.ps1` checks the deterministic successful-build
 receipt through `na2_patcher.build_preflight`; an exact hit returns the normal
 unchanged result without staging an ISO. `na2/test_build_preflight.ps1` covers
 the cache-hit and safe full-build-fallback dispatch paths.
-`na2 -b` calls the same builder in candidate-only mode: it always composes a
+`na2 -t` calls the same builder in candidate-only mode: it always composes a
 fresh verified `@build/NA2.28 - Candidate.iso`, bypasses Current preflight and
 promotion state, and does not probe or close PCSX2.
+`na2 -b` runs the standard Current build and conditional promotion pipeline but
+does not launch PCSX2. Bare `na2` keeps the build-then-launch workflow.
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 

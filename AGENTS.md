@@ -116,6 +116,14 @@ every stop, pause, dependency, safety, or relaunch boundary. Stating the level
 only in commentary or an earlier response does not satisfy this requirement; if
 the recommendation changes, explain why.
 
+Reporting the selected task complete ends its selected-task state immediately;
+this does not depend on the user later removing its entry from `TASKS.md`.
+Subsequent questions, explanations, status checks, and small direct changes use
+the normal non-task response format without `Recommended effort`, `Needed from
+you`, or an approval gate unless the user selects another task or sends `eff`.
+Never carry task-phase boilerplate forward merely because the completed entry
+still exists in `TASKS.md`.
+
 Every selected-task plan must include a standalone `Needed from you: <items>`
 line beside `Recommended effort`. Ask specifically for every user-supplied input
 or action that is expected or may materially help execution, such as savestates

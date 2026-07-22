@@ -181,23 +181,26 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   and the deterministic verifier. The generated replacement ranges total
   5,274,398 bytes, but no replacement CCS blobs are stored in the repository.
   Static parity regenerated all 34 former production files byte-for-byte.
-- `na2_patcher/features/localization/binary_patcher/` contains 14 atomic
-  companion patches and 97 guarded edits across BTL, ETC, and the boot ELF.
-  Fifty-seven rows copy canonical NUN5 bytes directly (43 ELF, nine BTL, five
-  ETC), 24 store values computed from NUN5's stage-width formula in NA2's
-  different record layout, and 16 are minimal NA2-specific behavior ports.
-  The stage-fit correction and Vibration rectangle are statically verified and
-  intentionally await the user's runtime pass.
+- `na2_patcher/features/localization/binary_patcher/` contains 16 atomic UI
+  companion patches and 108 guarded UI edits across BTL, ETC, and the boot
+  ELF. Sixty-three rows copy canonical NUN5 bytes directly (44 ELF, 14 BTL,
+  five ETC), 24 store values computed from NUN5's stage-width formula in
+  NA2's different record layout, and 21 are minimal NA2-specific behavior
+  ports. Stage Select is runtime-proven; the later open Jutsu selector,
+  command-scroll, Mode Select, Vibration, and Collection corrections await the
+  user's runtime pass.
 - Translation mapping version 35 restores the four Collection Movie rows to
   exact official NUN5 source strings with no authored line breaks. A
   clean-source full in-memory plan produced 2,437 fixed-size patch rows with
   all three targets selected.
 - The Localization feature's aggregate current-profile pin covers both canonical
   module inputs and their feature-relative paths.
-- The UI binary-patcher set validates as 6 source/destination targets, 14 patches, and 94 edits. The UI
-  texture plan derives all 34 members with 33 whole donors and MODE2KDV as the
-  only mapped exception. The historical runtime harness remains available;
-  current focused and complete-suite results are refreshed with each build.
+- The complete Localization binary-patcher package validates as 7 targets, 9
+  groups, 88 patches, and 266 edits; its UI subset is the 16 patches and 108
+  edits counted above. The UI texture plan derives all 34 members with 33 whole
+  donors and MODE2KDV as the only mapped exception. The historical runtime
+  harness remains available; current focused and complete-suite results are
+  refreshed with each build.
 - The 2026-07-19 non-launching normal profile build derived all 34 replacements
   through 76 texture mappings, applied all 88 companion edits, and reported
   `ISO result: updated` with rotation. Build record
@@ -477,9 +480,49 @@ All 16 archived state hashes and all 16 screenshot hashes match the supplied
 slot files, and the original PCSX2 states remain untouched. Savestate age is
 irrelevant for these visual screen references and must not be used to date a
 regression. Cases may be handled individually or grouped only after static
-analysis demonstrates a shared renderer or table root cause. No correction has
-yet been attributed to this batch.
+analysis demonstrates a shared renderer or table root cause. Slot 3 Stage
+Select is runtime-proven. Slots 4-6 now have the statically verified
+`UI-BTL-007` and `UI-BTL-008` corrections described below; the other slots
+remain untouched by this iteration.
 
 With the user's authorization, global PCSX2 texture replacement loading was
 disabled before archiving (`LoadTextureReplacements = false`); asynchronous
 replacement support remains configured but inactive. PCSX2 was not launched.
+
+### Screen correction pass: Jutsu selector and command scroll arrows
+
+Paired Slot 4 proves that the open Jutsu selector is not a rectangle-only
+problem. NA2 `FUN_006bd4d0` retains two closed-state horizontal-arrow draws,
+uses a Japanese-atlas rectangle that samples lettering after the NUN5 VS
+import, and never rotates the donor's right-pointing green arrow. NUN5 homolog
+`FUN_006d0850` omits the horizontal draws, uses rectangle
+`(145,385,22,38)`, and applies `+pi/2`/`-pi/2` around the upper/lower draws.
+`UI-BTL-007` expresses that behavior as five exact NUN5 copies and five
+minimal NA2 adaptations. The accepted closed confirmation renderer and all
+text/font bytes remain untouched.
+
+Paired Slots 5 and 6 reuse the same `TEX_xselect` sprite object and the same
+draw record. NA2 `FUN_00878820` and NUN5 `FUN_00894f60` already share the
+two-draw/one-rotation behavior; only their source rectangles differ.
+`UI-BTL-008` therefore copies one exact NUN5 record `(1,225,20,22)` over
+NA2's imported-atlas garbage selection `(194,195,20,20)`. Pulse-dependent
+placement is preserved.
+
+Canonical binary-package validation reports 7 targets, 9 groups, 88 patches,
+and 266 edits. An isolated two-patch apply preserves BTL's 2,237,184-byte size,
+changes 69 bytes only inside the 11 declared ranges, and produces SHA-256
+`ADA3779E1E64133372493160A02BB9A49314869BAD6B4FD49D5B3E09FB7E9DE1`.
+The Localization feature pin is
+`6FF9FC3F0C365F2132430316EEFF396A991A0A64B4D361E28FC67E7D43917425`.
+Detailed function and address evidence is preserved in
+`docs/knowledge/battle_ui.md`. No ISO was rebuilt and PCSX2 was not launched;
+Slots 4-6 remain `approved_for_test` until the user's visual pass.
+
+The 24 binary-patcher/profile regressions and the three focused UI binary
+assertions pass. The complete suite reports 105 passing tests and one
+pre-assertion `UiTextureTests` setup error: `BATTLEGAUGE.CCS` currently derives
+SHA-256 `9BFE496E6E34C67DC086CC2AA364B68352E1E228E858B763669E57D233F2B87F`
+instead of its independently pinned replacement hash. This iteration does not
+change that container, its mapping, or any texture derivation input; the error
+therefore remains a separate validation issue rather than a failure of either
+new BTL patch.

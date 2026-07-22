@@ -423,6 +423,94 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(patch.status, "runtime_proven")
         self.assertEqual(patch.confidence, "verified")
 
+    def test_open_jutsu_selector_matches_the_nun5_arrow_state(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = binary_patcher.load_package(
+            repository
+            / "na2_patcher/features/localization/binary_patcher"
+        )
+        edits = [item for item in package.edits if item.patch_id == "UI-BTL-007"]
+        patch = package.patches["UI-BTL-007"]
+
+        self.assertEqual(
+            [item.edit_id for item in edits],
+            [f"UI-BTL-007-{index:02d}" for index in range(1, 11)],
+        )
+        self.assertEqual(patch.status, "approved_for_test")
+        self.assertEqual(patch.confidence, "high")
+
+        helper = edits[0]
+        self.assertEqual(helper.destination_offset, 0x40)
+        self.assertEqual(helper.length, 44)
+        self.assertEqual(
+            helper.replacement_hex,
+            "E0FFBD271000BFFF1800A4FF4C0083AC10EF0D0C00000000"
+            "1800A4DF4C0080AC1000BFDF0800E0032000BD27",
+        )
+        self.assertEqual(
+            [item.destination_offset for item in edits[1:3]],
+            [0x9AE4, 0x9B1C],
+        )
+        self.assertTrue(
+            all(item.replacement_hex == "00000000" for item in edits[1:3])
+        )
+
+        angle_loads = [edits[index] for index in (3, 4, 6, 7)]
+        self.assertEqual(
+            [
+                (
+                    item.destination_offset,
+                    item.source_target_id,
+                    item.source_offset,
+                    item.source_expected_hex,
+                )
+                for item in angle_loads
+            ],
+            [
+                (0x9B78, "nun5_btl", 0xA06C, "C93F023C"),
+                (0x9B84, "nun5_btl", 0xA070, "DB0F4334"),
+                (0x9BD4, "nun5_btl", 0xA0F4, "C9BF023C"),
+                (0x9BE0, "nun5_btl", 0xA0F8, "DB0F4334"),
+            ],
+        )
+        self.assertEqual(
+            [
+                (edits[index].destination_offset, edits[index].replacement_hex)
+                for index in (5, 8)
+            ],
+            [(0x9BA0, "D0CF1A0C"), (0x9BFC, "D0CF1A0C")],
+        )
+
+        rectangle = edits[9]
+        self.assertEqual(rectangle.destination_offset, 0x20C9E0)
+        self.assertEqual(rectangle.source_target_id, "nun5_elf")
+        self.assertEqual(rectangle.source_offset, 0x4DE0F0)
+        self.assertEqual(
+            struct.unpack("<hhhh", bytes.fromhex(rectangle.source_expected_hex)),
+            (145, 385, 22, 38),
+        )
+
+    def test_command_views_share_one_exact_nun5_scroll_arrow_record(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = binary_patcher.load_package(
+            repository
+            / "na2_patcher/features/localization/binary_patcher"
+        )
+        edits = [item for item in package.edits if item.patch_id == "UI-BTL-008"]
+        patch = package.patches["UI-BTL-008"]
+
+        self.assertEqual(len(edits), 1)
+        rectangle = edits[0]
+        self.assertEqual(rectangle.destination_offset, 0x21D648)
+        self.assertEqual(rectangle.source_target_id, "nun5_btl")
+        self.assertEqual(rectangle.source_offset, 0x2214D8)
+        self.assertEqual(
+            struct.unpack("<hhhh", bytes.fromhex(rectangle.source_expected_hex)),
+            (1, 225, 20, 22),
+        )
+        self.assertEqual(patch.status, "approved_for_test")
+        self.assertEqual(patch.confidence, "high")
+
     def test_controls_vibration_rectangle_is_an_exact_nun5_copy(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
@@ -560,14 +648,14 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 97)
-        self.assertEqual(operations, {"copy": 57, "replace": 40})
+        self.assertEqual(len(ui_edits), 108)
+        self.assertEqual(operations, {"copy": 63, "replace": 45})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 43, "nun5_btl": 9, "nun5_etc": 5},
+            {"nun5_elf": 44, "nun5_btl": 14, "nun5_etc": 5},
         )
         self.assertEqual(len(stage_scales), 24)
-        self.assertEqual(len(adaptations), 16)
+        self.assertEqual(len(adaptations), 21)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")

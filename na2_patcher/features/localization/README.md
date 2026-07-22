@@ -713,10 +713,10 @@ recorded in `docs/plans/ui_translation.md`.
 This patch set holds size-preserving executable changes that are inseparable from
 the NUN5 UI container import but do not belong inside `DATA.CVM`.
 
-Its 97 guarded edits are donor-first: 57 copy bytes directly from canonical
-NUN5 files (43 from the ELF, nine from `BTL.BIN`, and five from `ETC.BIN`).
+Its 108 guarded edits are donor-first: 63 copy bytes directly from canonical
+NUN5 files (44 from the ELF, 14 from `BTL.BIN`, and five from `ETC.BIN`).
 Another 24 store the exact values of NUN5's stage-width formula in NA2's
-different inline-record layout. The remaining 16 are documented NA2-specific
+different inline-record layout. The remaining 21 are documented NA2-specific
 ports where the equivalent NUN5 behavior has a different instruction or data
 topology, or where NA2 intentionally needs a different value.
 
@@ -928,6 +928,49 @@ from NUN5 BTL into NA2 offsets `0xCCB4`, `0xCD5C`, `0xCD64`, and `0xCDA4`.
 Eight guarded live writes were read back exactly. The resulting one-part label
 matches the paired NUN5 capture; small frame-to-frame outline differences are
 the screen's normal pulsation.
+
+### UI-BTL-007: localized open Jutsu-selector arrows
+
+The open Jutsu selector is a separate state from the accepted closed
+confirmation screen. NA2 `FUN_006bd4d0` incorrectly retains the two horizontal
+draw calls used by its closed-state sibling and draws its green-arrow record
+without rotation. NUN5 homolog `FUN_006d0850` omits both horizontal draws,
+loads `+pi/2` and `-pi/2` for the upper and lower indicators, and clears the
+sprite rotation after each draw.
+
+The whole NUN5 VS texture import makes NA2's old `(139,257,38,22)` source
+rectangle invalid: it samples lettering rather than the Japanese atlas's
+downward triangle. `UI-BTL-007` copies NUN5's official `(145,385,22,38)`
+green-arrow rectangle from ELF offset `0x4DE0F0` and copies the four exact NUN5
+angle-load instructions from BTL offsets `0xA06C`, `0xA070`, `0xA0F4`, and
+`0xA0F8`. Two open-state draw calls are replaced with no-ops, leaving the
+closed-state horizontal control untouched.
+
+NA2's static-record draw path has no equivalent rotation wrapper. A 44-byte
+size-preserving helper at verified zero padding `0x40` applies the requested
+angle, calls the unchanged native draw routine, restores the sprite pointer,
+and resets rotation. The upper and lower draw calls at `0x9BA0` and `0x9BFC`
+are redirected to that helper. It does not overlap the accepted 16-byte
+Jutsu-label helper at `0x70`. No label, command text, font, or gameplay-input
+data is changed. Static confidence is high; runtime acceptance is pending.
+
+### UI-BTL-008: localized command-list scroll arrows
+
+Command Menu and Command Chart share the same scroll-indicator draw method:
+NA2 `FUN_00878820` and NUN5 `FUN_00894f60`. Both render one `TEX_xselect`
+record twice, rotating the first draw by pi for the opposite direction. Paired
+Slots 5 and 6 reuse the same sprite object, so their green-garbage defect has
+one data root rather than two independent layouts.
+
+NA2 BTL offset `0x21D648` selects `(194,195,20,20)`, which samples green text
+fragments from the imported NUN5 atlas. `UI-BTL-008` copies the exact NUN5 BTL
+record `(1,225,20,22)` from `0x2214D8`, selecting the orange vertical-scroll
+triangle. The existing positions and pulse are retained; small capture-to-
+capture Y differences remain normal animation. Static confidence is high;
+runtime acceptance is pending.
+
+Detailed function, address, side-effect, and negative-result evidence for both
+patches is preserved in `docs/knowledge/battle_ui.md`.
 
 ### UI-ETC-001: localized Shop currency-label layout
 

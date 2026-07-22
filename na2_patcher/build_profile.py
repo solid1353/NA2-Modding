@@ -875,11 +875,11 @@ def main() -> int:
         for path in sorted(str(value) for value in item.get("paths", [])):
             print(f"    {green}{path}{reset}")
     if payload_result is not None:
-        build = payload_result["build"]
-        assert isinstance(build, ResidentPayloadBuild)
+        payload_build = payload_result["build"]
+        assert isinstance(payload_build, ResidentPayloadBuild)
         print(
             "  payload_builder "
-            f"({len(build.symbols)} symbols, {len(build.payload)} bytes)"
+            f"({len(payload_build.symbols)} symbols, {len(payload_build.payload)} bytes)"
         )
         for path in sorted(str(value) for value in payload_result.get("paths", [])):
             print(f"    {green}{path}{reset}")

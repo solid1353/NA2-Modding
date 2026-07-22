@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import io
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -21,7 +23,22 @@ class BuildProfileCliTests(unittest.TestCase):
             profile_log_directory = workspace / "logs" / "profile"
             profile = SimpleNamespace(profile_id="current", features=(), modules=())
             staged_iso = build_profile.building_image_path(output_iso)
-            result = build_profile.ProfileBuildResult((), None, (), staged_iso)
+            payload_build = build_profile.ResidentPayloadBuild(
+                output_path="PRG/228.BIN",
+                payload=b"payload",
+                load_base=0,
+                entrypoint=0,
+                memory_end=7,
+                symbols={},
+                map_rows=(),
+                summary={},
+            )
+            result = build_profile.ProfileBuildResult(
+                (),
+                {"build": payload_build, "paths": ["PRG/228.BIN"]},
+                ({"target": "SYSTEM.CNF"},),
+                staged_iso,
+            )
             arguments = [
                 "build_profile",
                 "--source",
@@ -34,6 +51,7 @@ class BuildProfileCliTests(unittest.TestCase):
                 "logs/profile",
             ]
 
+            output = io.StringIO()
             with (
                 patch.object(sys, "argv", arguments),
                 patch.object(
@@ -52,12 +70,19 @@ class BuildProfileCliTests(unittest.TestCase):
                     "build_profile_candidate",
                     return_value=result,
                 ) as compose,
+                redirect_stdout(output),
             ):
                 self.assertEqual(build_profile.main(), 0)
 
             kwargs = compose.call_args.kwargs
             self.assertEqual(kwargs["output_iso"], output_iso)
             self.assertEqual(kwargs["profile_log_directory"], profile_log_directory)
+            self.assertIn("payload_builder (0 symbols, 7 bytes)", output.getvalue())
+            self.assertIn("identity (1 edits)", output.getvalue())
+            self.assertIn(
+                "Verified staged ISO: NA2.28 - Current.iso.building",
+                output.getvalue(),
+            )
 
 
 if __name__ == "__main__":

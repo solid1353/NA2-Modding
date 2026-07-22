@@ -200,8 +200,9 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   `1AAE44B09BA9DA02F5AEBAF45F1605CEFB5B39B5C34E88D47745F8F613370369`;
   the previous accepted image rotated to Previous with SHA-256
   `C90B6B51AF8D4FB7DAC327DF144D1017653BDF8CC398CD1C837AAB53BC538A4C`.
-  The Current boot ELF has independently verified PCSX2 CRC `273C80F3`;
-  `targets.json` and its neutral per-game settings filename match that CRC.
+  That historical Current boot ELF has independently verified PCSX2 CRC
+  `273C80F3`. The runtime target has since been refreshed to the live Current
+  identity, CRC `6D94D558`, with matching neutral per-game settings.
 - Build record `@logs/na2/builds/20260718_061234_625_pid41880/` fully verified
   and promoted a changed 1,928,429,568-byte image. It is now
   `NA2.28 - Previous.iso`. An independent on-disc check found all 33 member ranges exact and the
@@ -436,3 +437,41 @@ Package validation reports 7 targets, 9 groups, 86 patches, and 252 edits; the
 Localization feature pin is
 `CF173194E0BB28DB3CC516B176DB9F90F1103749890F5EE4AF6BD6CCC9CBDB56`.
 PCSX2 has not been launched and no ISO has been rebuilt.
+
+### Remaining paired screen-reference batch
+
+The user supplied eight paired NA2.28/NUN5 savestate references for the next
+screen-by-screen correction pass:
+
+1. Shop: `Money` and `Bonus Game` are misplaced.
+2. Character Select: `Select Color` and `Random` should move left.
+3. Stage Select: total layout mismatch.
+4. Jutsu Selection: horizontal arrows must be hidden and vertical arrows must
+   be shown.
+5. Command Menu: green garbage appears where vertical arrows should be.
+6. Command Chart: the same vertical-arrow/green-garbage defect appears.
+7. Options: `Cancel` placement is wrong.
+8. Music Options: `Select` should move right.
+
+The maintained capture importer archived both games' state, embedded 640x480
+screenshot, and repository-relative manifest for each pair under:
+
+- `@work/UI translation/runtime_cases/remaining_01_shop_money_bonus_game/`
+- `@work/UI translation/runtime_cases/remaining_02_character_select_color_random/`
+- `@work/UI translation/runtime_cases/remaining_03_stage_select_total_mismatch/`
+- `@work/UI translation/runtime_cases/remaining_04_jutsu_selection_arrows/`
+- `@work/UI translation/runtime_cases/remaining_05_command_menu_vertical_arrows/`
+- `@work/UI translation/runtime_cases/remaining_06_command_chart_vertical_arrows/`
+- `@work/UI translation/runtime_cases/remaining_07_options_cancel_placement/`
+- `@work/UI translation/runtime_cases/remaining_08_music_options_select_placement/`
+
+All 16 archived state hashes and all 16 screenshot hashes match the supplied
+slot files, and the original PCSX2 states remain untouched. Savestate age is
+irrelevant for these visual screen references and must not be used to date a
+regression. Cases may be handled individually or grouped only after static
+analysis demonstrates a shared renderer or table root cause. No correction has
+yet been attributed to this batch.
+
+With the user's authorization, global PCSX2 texture replacement loading was
+disabled before archiving (`LoadTextureReplacements = false`); asynchronous
+replacement support remains configured but inactive. PCSX2 was not launched.

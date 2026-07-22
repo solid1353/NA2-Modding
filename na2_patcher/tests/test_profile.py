@@ -288,7 +288,12 @@ class ProfileTests(unittest.TestCase):
     def test_current_profile_and_feature_layout(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         profile_directory = repository / "na2_patcher" / "profiles" / "current"
-        profile = load_profile(profile_directory, repository)
+        marker = repository / "na2_patcher" / "release_manifest.json"
+        profile = load_profile(
+            profile_directory,
+            repository,
+            root_overrides={"na2": marker, "nun5": marker},
+        )
         self.assertEqual(profile.profile_id, "current")
         self.assertEqual(
             [module.module_id for module in profile.modules],

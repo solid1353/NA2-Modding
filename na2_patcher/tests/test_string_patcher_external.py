@@ -17,8 +17,12 @@ class IntegratedExternalStringTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.repository = Path(__file__).resolve().parents[2]
-        paths = load_project_paths(cls.repository)
+        paths = load_project_paths(cls.repository, allow_missing=True)
         cls.roots = {"na2": paths.path("source_na2"), "nun5": paths.path("source_nun5")}
+        if not all(root.is_dir() for root in cls.roots.values()):
+            raise unittest.SkipTest(
+                "External string verification requires extracted NA2 and NUN5 sources"
+            )
         cls.localization = cls.repository / "na2_patcher/features/localization"
         cls.import_plan = translation_importer.build_translation_import_plan(
             na2_folder=cls.roots["na2"],

@@ -11,12 +11,16 @@ from pathlib import Path
 from na2_patcher.build_profile import write_texture_patch_log
 from na2_patcher.modules.binary_patcher import engine as binary_patcher
 from na2_patcher.modules.texture_patcher import engine
+from na2_patcher.project_paths import load_project_paths
 
 
 class UiTextureTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        na2_root, nun5_root = engine.default_roots()
+        repository = Path(__file__).resolve().parents[2]
+        paths = load_project_paths(repository, allow_missing=True)
+        na2_root = paths.path("source_na2")
+        nun5_root = paths.path("source_nun5")
         data_root = (
             Path(__file__).resolve().parents[1]
             / "features"

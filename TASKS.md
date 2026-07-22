@@ -3,7 +3,6 @@
 ## In Progress
 
 ### Project
-- [Develop a release process (deferred indefinitely)](docs/RELEASE_PROCESS.md).
 - Investigate cross-platform development/deployment possibilities.
 - Global cleanup.
 

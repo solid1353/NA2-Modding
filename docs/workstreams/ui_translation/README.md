@@ -22,6 +22,10 @@ Canonical documentation landing page for the `UI Translation` workstream.
   screen is fixed. After substantive work, present every remaining entry with
   its paired NUN5 and current corrected-NA2 screenshots; question-only replies
   do not trigger that presentation.
+- Whenever visual validation would help during an active correction, present
+  the matching NUN5 and current corrected-NA2 screenshot pair while continuing
+  the work. If the user is available, incorporate their visual feedback into
+  the next iteration; do not block progress waiting for that feedback.
 
 Global source, path, tool-safety, testing, and cleanup rules remain in
 `AGENTS.md` and are not duplicated here.

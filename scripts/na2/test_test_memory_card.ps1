@@ -24,14 +24,15 @@ $testRoot = Join-Path ([IO.Path]::GetTempPath()) "na2-test-card-$PID-$([guid]::N
 try {
     $inis = Join-Path $testRoot 'inis'
     $gameSettings = Join-Path $testRoot 'gamesettings'
-    $memcards = Join-Path $testRoot 'memcards'
-    New-Item -ItemType Directory -Force -Path $inis, $gameSettings, $memcards | Out-Null
+    $sourceMemcards = Join-Path $testRoot 'source-memcards'
+    $taskMemcards = Join-Path $testRoot 'task-memcards'
+    New-Item -ItemType Directory -Force -Path $inis, $gameSettings, $sourceMemcards | Out-Null
 
     $globalIni = Join-Path $inis 'PCSX2.ini'
     $globalText = "[MemoryCards]`r`nSlot1_Enable = true`r`nSlot1_Filename = Mcd001.ps2`r`n"
     [IO.File]::WriteAllText($globalIni, $globalText)
-    [IO.File]::WriteAllBytes((Join-Path $memcards 'Mcd001.ps2'), [byte[]](1, 2, 3))
-    [IO.File]::WriteAllBytes((Join-Path $memcards 'Mcd001_NA2.ps2'), [byte[]](4, 5, 6))
+    [IO.File]::WriteAllBytes((Join-Path $sourceMemcards 'Mcd001.ps2'), [byte[]](1, 2, 3))
+    [IO.File]::WriteAllBytes((Join-Path $sourceMemcards 'Mcd001_NA2.ps2'), [byte[]](4, 5, 6))
 
     $gameIni = Join-Path $gameSettings 'SLPS-22228_12345678.ini'
     $originalGameText = "[EmuCore/GS]`r`nAspectRatio = 4:3`r`n`r`n[MemoryCards]`r`nSlot1_Enable = true`r`nSlot1_Filename = Mcd001_NA2.ps2`r`n"
@@ -41,7 +42,8 @@ try {
     $context = Enter-Na2TestMemoryCard `
         -GlobalIniPath $globalIni `
         -GameSettingsDirectory $gameSettings `
-        -MemoryCardsDirectory $memcards `
+        -SourceMemoryCardsDirectory $sourceMemcards `
+        -TaskMemoryCardsDirectory $taskMemcards `
         -Serial 'SLPS-22228' `
         -CRC '12345678' `
         -AgentName 'Codex' `
@@ -57,7 +59,7 @@ try {
     Assert-Na2TestMemoryCard `
         -Condition ($temporaryGameText -match 'Slot1_Filename = Mcd001_NA2_Codex_019f-test\.ps2') `
         -Message 'Temporary per-game selection does not point to the private card.'
-    Exit-Na2TestMemoryCard -Context $context
+    Exit-Na2TestMemoryCard -Context $context | Out-Null
     Assert-Na2TestMemoryCard `
         -Condition (Test-Na2BytesEqual -Left ([IO.File]::ReadAllBytes($gameIni)) -Right $originalGameBytes) `
         -Message 'Existing per-game settings were not restored byte-for-byte.'
@@ -66,7 +68,8 @@ try {
     $reused = Enter-Na2TestMemoryCard `
         -GlobalIniPath $globalIni `
         -GameSettingsDirectory $gameSettings `
-        -MemoryCardsDirectory $memcards `
+        -SourceMemoryCardsDirectory $sourceMemcards `
+        -TaskMemoryCardsDirectory $taskMemcards `
         -Serial 'SLPS-22228' `
         -CRC '12345678' `
         -AgentName 'Codex' `
@@ -75,12 +78,13 @@ try {
     Assert-Na2TestMemoryCard `
         -Condition (Test-Na2BytesEqual -Left ([IO.File]::ReadAllBytes($reused.TaskCardPath)) -Right ([byte[]](7, 8, 9))) `
         -Message 'Reusing a private card overwrote its task progress.'
-    Exit-Na2TestMemoryCard -Context $reused
+    Exit-Na2TestMemoryCard -Context $reused | Out-Null
 
     $fallback = Enter-Na2TestMemoryCard `
         -GlobalIniPath $globalIni `
         -GameSettingsDirectory $gameSettings `
-        -MemoryCardsDirectory $memcards `
+        -SourceMemoryCardsDirectory $sourceMemcards `
+        -TaskMemoryCardsDirectory $taskMemcards `
         -Serial 'SLPS-25837' `
         -CRC '87654321' `
         -AgentName 'Agent:One' `
@@ -91,7 +95,7 @@ try {
     Assert-Na2TestMemoryCard `
         -Condition ($fallback.TaskCardName -ceq 'Mcd001_Agent_One_fallback_task.ps2') `
         -Message "Unsafe filename components were not sanitized: $($fallback.TaskCardName)"
-    Exit-Na2TestMemoryCard -Context $fallback
+    Exit-Na2TestMemoryCard -Context $fallback | Out-Null
     Assert-Na2TestMemoryCard `
         -Condition (-not (Test-Path -LiteralPath $fallback.GameSettingsPath)) `
         -Message 'Synthetic per-game settings were not removed during restoration.'

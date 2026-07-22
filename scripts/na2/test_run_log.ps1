@@ -100,6 +100,10 @@ try {
         -Destination (Join-Path $fakeRepository 'scripts\lib')
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\lib\run_log.ps1') `
         -Destination (Join-Path $fakeRepository 'scripts\lib')
+    $fakeNa2Scripts = Join-Path $fakeRepository 'scripts\na2'
+    New-Item -ItemType Directory -Force -Path $fakeNa2Scripts | Out-Null
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'worker_paths.ps1') `
+        -Destination $fakeNa2Scripts
     $manifest = @'
 {
   "schema_version": 1,
@@ -134,8 +138,6 @@ try {
         -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'logs\na2'))) `
         -Message 'Help invocation created run logs.'
 
-    $fakeNa2Scripts = Join-Path $fakeRepository 'scripts\na2'
-    New-Item -ItemType Directory -Force -Path $fakeNa2Scripts | Out-Null
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'actualize_pnach.ps1') -Content @'
 [pscustomobject]@{
     PCSX2ElfCRC = $null
@@ -150,8 +152,12 @@ param([string]$IsoPath, [switch]$KeepExistingInstance)
 Write-Host "[fake] launch $IsoPath keep-existing=$KeepExistingInstance"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'build.ps1') -Content @'
-param([switch]$CandidateOnly)
-if ($CandidateOnly) {
+param([switch]$CandidateOnly, [string]$WorkerOutputIso)
+if ($WorkerOutputIso) {
+    Write-Host '[na2] ISO result: worker; rotation: no; PCSX2 left running.'
+    [pscustomobject]@{ Status = 'worker' }
+}
+elseif ($CandidateOnly) {
     Write-Host '[na2] ISO result: candidate; rotation: no; PCSX2 left running.'
     [pscustomobject]@{ Status = 'candidate' }
 }
@@ -164,6 +170,7 @@ else {
     & (Join-Path $fakeRepository '_na2.ps1') -Current
     & (Join-Path $fakeRepository '_na2.ps1') -Previous
     & (Join-Path $fakeRepository '_na2.ps1') -t
+    & (Join-Path $fakeRepository '_na2.ps1') -t 'work\General\build\agent.iso'
     & (Join-Path $fakeRepository '_na2.ps1') -b
     & (Join-Path $fakeRepository '_na2.ps1')
     $fakeLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na2\latest.log'))
@@ -189,6 +196,13 @@ else {
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: candidate').Count -eq 1) `
         -Message 'Test build did not dispatch exactly once to Candidate.'
+    $workerLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'work\General\logs\latest.log'))
+    Assert-Na2Test `
+        -Condition ($workerLatest -match '(?m)^mode: worker-build$') `
+        -Message 'Explicit worker build was not logged under the worker root.'
+    Assert-Na2Test `
+        -Condition ($workerLatest -match 'ISO result: worker') `
+        -Message 'Explicit worker build did not dispatch to worker-output mode.'
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 2) `
         -Message 'Build-only and build-and-launch did not both use the standard build pipeline.'

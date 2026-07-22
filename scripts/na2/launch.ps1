@@ -4,7 +4,8 @@ param(
     [string]$IsoPath,
     [ValidateSet('Normal', 'Minimized', 'Hidden')]
     [string]$WindowStyle = 'Normal',
-    [switch]$KeepExistingInstance
+    [switch]$KeepExistingInstance,
+    [switch]$PassThru
 )
 
 $ErrorActionPreference = 'Stop'
@@ -38,5 +39,8 @@ $startArguments = @{
 }
 if ($WindowStyle -ne 'Normal') {
     $startArguments.WindowStyle = $WindowStyle
+}
+if ($PassThru) {
+    $startArguments.PassThru = $true
 }
 Start-Process @startArguments

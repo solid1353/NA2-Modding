@@ -1,7 +1,6 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('act', 'release')]
     [string]$Mode,
 
     [Parameter(Position = 1)]
@@ -22,6 +21,7 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'scripts\lib\project_paths.ps1')
 . (Join-Path $PSScriptRoot 'scripts\lib\run_log.ps1')
+. (Join-Path $PSScriptRoot 'scripts\na2\worker_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 $currentIsoName = [IO.Path]::GetFileName($projectPaths.files.current_iso)
 $previousIsoName = [IO.Path]::GetFileName($projectPaths.files.previous_iso)
@@ -32,7 +32,16 @@ function Write-Na2Stage {
     Write-Host "[na2] $Message" -ForegroundColor Cyan
 }
 
-$command = if ($Mode) { $Mode.ToLowerInvariant() } else { '' }
+$workerBuild = if ($Test -and -not [string]::IsNullOrWhiteSpace($Mode)) {
+    Get-Na2WorkerBuildContext `
+        -OutputPath $Mode `
+        -ProjectPaths $projectPaths `
+        -RequireRelative
+}
+else {
+    $null
+}
+$command = if ($Mode -and -not $Test) { $Mode.ToLowerInvariant() } else { '' }
 $runSelected = $Current -or $Previous
 
 if (@($Build, $Test, $Current, $Previous).Where({ $_ }).Count -gt 1) {
@@ -40,6 +49,9 @@ if (@($Build, $Test, $Current, $Previous).Where({ $_ }).Count -gt 1) {
 }
 if ($command -and ($Build -or $Test -or $runSelected)) {
     throw 'Build/launch switches cannot be combined with a command mode.'
+}
+if ($command -and $command -notin @('act', 'release')) {
+    throw "Unknown NA2 command: $Mode"
 }
 if ($Version -and $command -ne 'release') {
     throw 'A version argument is accepted only by na2 release.'
@@ -50,6 +62,7 @@ if ($Help) {
         "  na2       Build the pinned current profile, conditionally rotate, then run $currentIsoName"
         "  na2 -b    Build and conditionally rotate $currentIsoName without launching PCSX2"
         "  na2 -t    Build build/$candidateIsoName without closing PCSX2 or changing Current/Previous"
+        '  na2 -t work/<worker>/build/<name>.iso  Build an isolated worker ISO and worker-owned logs'
         "  na2 -c    Run build/$currentIsoName without rebuilding or closing PCSX2"
         "  na2 -p    Run build/$previousIsoName without rebuilding or closing PCSX2"
         "  na2 act   Maintain Current/Previous PNACH symlinks without building or launching"
@@ -72,7 +85,7 @@ $runMode = if ($command -eq 'act') {
     'actualize'
 }
 elseif ($Test) {
-    'candidate-build'
+    if ($null -ne $workerBuild) { 'worker-build' } else { 'candidate-build' }
 }
 elseif ($Previous) {
     'previous'
@@ -85,7 +98,14 @@ else {
 }
 $runLog = $null
 try {
-    $runLog = Start-Na2RunLog -Mode $runMode -ProjectPaths $projectPaths
+    $runLogArguments = @{
+        Mode = $runMode
+        ProjectPaths = $projectPaths
+    }
+    if ($null -ne $workerBuild) {
+        $runLogArguments.LogDirectory = $workerBuild.Logs
+    }
+    $runLog = Start-Na2RunLog @runLogArguments
 }
 catch {
     Write-Warning "Could not start NA2 log: $($_.Exception.Message)"
@@ -123,10 +143,23 @@ try {
         Write-Host "[na2] Enabled cheats: $enabledCheats" -ForegroundColor Cyan
     }
     elseif ($Test) {
-        Write-Na2Stage "Build $candidateIsoName without closing PCSX2"
-        $buildResult = & (Join-Path $projectPaths.scripts 'na2\build.ps1') -CandidateOnly
-        if (-not $buildResult -or $buildResult.Status -ne 'candidate') {
-            throw 'Candidate build did not return a valid result.'
+        if ($null -ne $workerBuild) {
+            $portableOutput = ConvertTo-Na2ProjectPath `
+                -Path $workerBuild.OutputIso `
+                -ProjectPaths $projectPaths
+            Write-Na2Stage "Build isolated worker ISO $portableOutput"
+            $buildResult = & (Join-Path $projectPaths.scripts 'na2\build.ps1') `
+                -WorkerOutputIso $workerBuild.OutputIso
+            if (-not $buildResult -or $buildResult.Status -ne 'worker') {
+                throw 'Worker build did not return a valid result.'
+            }
+        }
+        else {
+            Write-Na2Stage "Build $candidateIsoName without closing PCSX2"
+            $buildResult = & (Join-Path $projectPaths.scripts 'na2\build.ps1') -CandidateOnly
+            if (-not $buildResult -or $buildResult.Status -ne 'candidate') {
+                throw 'Candidate build did not return a valid result.'
+            }
         }
     }
     elseif ($Build) {

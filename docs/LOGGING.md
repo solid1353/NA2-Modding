@@ -6,8 +6,9 @@ knowledge.
 
 ## General rules
 
-- Write logs only below `@logs/`, grouped by workflow or task. Do not write
-  files directly in the log root.
+- Write shared workflow logs below `@logs/`, grouped by workflow or task, and
+  worker build/runtime logs below `work/<task title>/logs/`. Do not write files
+  directly in the shared log root.
 - Persist only repository-relative paths or configured `@root/...` aliases.
   Machine-specific absolute paths are forbidden.
 - Keep enough detail to reproduce or diagnose the operation: inputs, selected
@@ -52,6 +53,21 @@ the complete verified build and recreates the receipt only after success.
 Candidate-only builds always perform complete composition, report whether the
 Candidate ISO changed, and record that rotation and PCSX2 shutdown were both
 disabled.
+
+## Worker build and runtime logs
+
+`na2 -t work/<task title>/build/<name>.iso` keeps its operational
+`latest.log`/`rolling.log` and structured `builds/<build-id>/` records under
+that task's `work/<task title>/logs/`. Worker records never participate in or
+prune shared Candidate/Current/Previous records. Completed structured worker
+records are capped at 20 per task; task cleanup may delete them sooner after
+promoting reusable findings.
+
+Each agent PCSX2 launch uses a unique run directory under the same worker log
+root. PCSX2's file log is redirected there. A portable `pcsx2-instance.json`
+exists only while its recorded PID is active and is removed after targeted
+shutdown; it records the PID/start time, validated window handle, ISO identity,
+task-owned card and paths, and unique PINE port without absolute paths.
 
 Persistent command logs must be normalized after transcript capture. They omit
 PowerShell transcript boilerplate, replace configured roots with aliases, and

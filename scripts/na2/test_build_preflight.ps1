@@ -24,6 +24,7 @@ try {
     New-Item -ItemType Directory -Force -Path $scriptRoot, $libRoot | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'build.ps1') -Destination $scriptRoot
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'process.ps1') -Destination $scriptRoot
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'worker_paths.ps1') -Destination $scriptRoot
     foreach ($name in 'project_paths.ps1', 'run_log.ps1', 'build_log.ps1') {
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot "..\lib\$name") -Destination $libRoot
     }
@@ -40,7 +41,8 @@ try {
     "logs": "logs",
     "patcher": "na2_patcher",
     "pcsx2": "pcsx2",
-    "scripts": "scripts"
+    "scripts": "scripts",
+    "work": "work"
   },
   "files": {
     "pcsx2_exe": "@pcsx2/pcsx2-qt.exe",
@@ -53,7 +55,7 @@ try {
 }
 '@
     [IO.File]::WriteAllText((Join-Path $repository 'project-paths.json'), $manifest)
-    foreach ($directory in 'source\NA2.iso.files', 'source\NUN5.iso.files', 'build', 'logs', 'na2_patcher', 'pcsx2') {
+    foreach ($directory in 'source\NA2.iso.files', 'source\NUN5.iso.files', 'build', 'logs', 'na2_patcher', 'pcsx2', 'work') {
         New-Item -ItemType Directory -Force -Path (Join-Path $repository $directory) | Out-Null
     }
     New-Item -ItemType Directory -Force `
@@ -105,6 +107,8 @@ try {
             else {
                 $arguments[$sourceIndex]
             }
+            New-Item -ItemType Directory -Force `
+                -Path ([IO.Path]::GetDirectoryName($arguments[$outputIndex])) | Out-Null
             [IO.File]::Copy($fixtureSource, "$($arguments[$outputIndex]).building", $true)
             New-Item -ItemType Directory -Force `
                 -Path (Join-Path $global:Na2PreflightTestRepository $arguments[$profileLogIndex]) | Out-Null
@@ -168,6 +172,61 @@ try {
     Assert-Na2PreflightTest `
         -Condition (@(Get-ChildItem -LiteralPath (Join-Path $logDirectory 'candidates') -Directory).Count -eq 1) `
         -Message 'Candidate-only build retained obsolete candidate records.'
+
+    $currentBeforeWorkers = [IO.File]::ReadAllText($currentIso)
+    $candidateBeforeWorkers = [IO.File]::ReadAllText($candidateIso)
+    $global:Na2PreflightTestCalls = @()
+    $generalOutput = 'work\General\build\general-test.iso'
+    $general = & (Join-Path $scriptRoot 'build.ps1') -WorkerOutputIso $generalOutput
+    Assert-Na2PreflightTest -Condition ($general.Status -eq 'worker') `
+        -Message 'Worker build did not return worker status.'
+    Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
+        -Message 'Worker build invoked preflight or another shared pipeline.'
+    Assert-Na2PreflightTest `
+        -Condition (Test-Path -LiteralPath (Join-Path $repository $generalOutput) -PathType Leaf) `
+        -Message 'Worker build did not retain its requested ISO.'
+    Assert-Na2PreflightTest `
+        -Condition (-not (Test-Path -LiteralPath ((Join-Path $repository $generalOutput) + '.building'))) `
+        -Message 'Worker build left its .building ISO.'
+    $generalRecord = Join-Path $repository ($general.ProfileLogDirectory.Replace('@work/', 'work/'))
+    Assert-Na2PreflightTest `
+        -Condition (Test-Path -LiteralPath (Join-Path $generalRecord 'build_result.tsv') -PathType Leaf) `
+        -Message 'Worker build record was not retained under the worker logs.'
+
+    $global:Na2PreflightTestCalls = @()
+    $uiOutput = 'work\UI Translation\build\ui-test.iso'
+    $ui = & (Join-Path $scriptRoot 'build.ps1') -WorkerOutputIso $uiOutput
+    Assert-Na2PreflightTest -Condition ($ui.Status -eq 'worker') `
+        -Message 'Second worker build did not return worker status.'
+    Assert-Na2PreflightTest `
+        -Condition (Test-Path -LiteralPath (Join-Path $repository $generalOutput) -PathType Leaf) `
+        -Message 'Second worker build overwrote the first worker output.'
+    Assert-Na2PreflightTest `
+        -Condition (Test-Path -LiteralPath $generalRecord -PathType Container) `
+        -Message 'Second worker build pruned the first worker record.'
+    Assert-Na2PreflightTest `
+        -Condition ([IO.File]::ReadAllText($currentIso) -ceq $currentBeforeWorkers) `
+        -Message 'Worker build changed Current.'
+    Assert-Na2PreflightTest `
+        -Condition ([IO.File]::ReadAllText($candidateIso) -ceq $candidateBeforeWorkers) `
+        -Message 'Worker build changed Candidate.'
+
+    foreach ($invalidOutput in @(
+        'build\agent.iso',
+        'work\General\agent.iso',
+        'work\General\build\agent.bin',
+        'work\General\nested\build\agent.iso'
+    )) {
+        $failed = $false
+        try {
+            & (Join-Path $scriptRoot 'build.ps1') -WorkerOutputIso $invalidOutput | Out-Null
+        }
+        catch {
+            $failed = $true
+        }
+        Assert-Na2PreflightTest -Condition $failed `
+            -Message "Invalid worker output was accepted: $invalidOutput"
+    }
 
     Write-Host 'NA2 build preflight PowerShell tests passed.' -ForegroundColor Green
 }

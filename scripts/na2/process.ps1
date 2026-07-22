@@ -29,3 +29,31 @@ function Stop-Na2Pcsx2 {
         }
     }
 }
+
+function Stop-Na2Pcsx2Process {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][string]$Executable,
+        [Parameter(Mandatory = $true)][int]$ProcessId,
+        [Parameter(Mandatory = $true)][datetime]$ExpectedStartTime
+    )
+
+    $process = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue
+    if ($null -eq $process) { return }
+    try {
+        if (-not [IO.Path]::Equals(
+            [IO.Path]::GetFullPath($process.Path),
+            [IO.Path]::GetFullPath($Executable)
+        )) {
+            throw "Process $ProcessId is not the recorded PCSX2 executable."
+        }
+        if ([math]::Abs(($process.StartTime - $ExpectedStartTime).TotalSeconds) -gt 1) {
+            throw "Process $ProcessId no longer has the recorded start time."
+        }
+        Stop-Process -Id $ProcessId -Force
+        $process.WaitForExit(5000) | Out-Null
+    }
+    finally {
+        $process.Dispose()
+    }
+}

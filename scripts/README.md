@@ -47,17 +47,29 @@ the cache-hit and safe full-build-fallback dispatch paths.
 `na2 -t` calls the same builder in candidate-only mode: it always composes a
 fresh verified `@build/NA2.28 - Candidate.iso`, bypasses Current preflight and
 promotion state, and does not probe or close PCSX2.
+`na2 -t work/<task title>/build/<name>.iso` instead builds an isolated
+worker-owned ISO, stages beside it, and keeps both operational and structured
+records under `work/<task title>/logs/`. The path is caller-supplied and
+validated; worker mode cannot address shared build outputs or mutate shared
+preflight, promotion, PNACH, log, or emulator state. Agents must use this form
+rather than bare `na2`, `na2 -b`, or bare `na2 -t`.
 `na2 -b` runs the standard Current build and conditional promotion pipeline but
 does not launch PCSX2. Bare `na2` keeps the build-then-launch workflow.
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 
-Agent runtime checks use `na2/test_launch.ps1`. It derives the PCSX2 serial and
-ELF CRC through the shared `na2/iso_identity.ps1` helper, clones the game's
-effective Slot 1 card into a stable agent/task-specific card on first use,
-reuses that card for later launches in the same task, and restores the exact
-original per-game and audio settings after PCSX2 closes. The shared ISO identity
-helper is also used by PNACH actualization.
+Agent runtime checks use `na2/test_launch.ps1 -WorkerRoot
+work/<task title>`. A short named lock protects shared configuration while the
+wrapper redirects writable folders, copies/reuses the game's effective Slot 1
+card under the worker, chooses a free PINE port, and launches hidden/muted.
+After PINE reports the expected serial/CRC, shared settings are restored
+immediately and the lock is released. The wrapper records and validates the
+specific PID, start time, top-level window handle, and PINE endpoint, then
+closes only that process. Runtime logs are unique per launch; savestates,
+screenshots, recordings, cards, cache, and dump paths remain task-owned.
+`na2/test_test_runtime.ps1` covers path injection/restoration and guards against
+overwriting unrelated settings; `na2/test_test_memory_card.ps1` covers private
+card reuse. The shared ISO identity helper is also used by PNACH actualization.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`

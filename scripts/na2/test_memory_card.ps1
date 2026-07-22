@@ -26,81 +26,27 @@ function ConvertTo-Na2TestCardComponent {
     return $clean.Substring(0, $MaxLength - 9).TrimEnd() + '_' + $hash
 }
 
-function Get-Na2IniValue {
-    param(
-        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text,
-        [Parameter(Mandatory = $true)][string]$Section,
-        [Parameter(Mandatory = $true)][string]$Key
-    )
-
-    $sectionPattern = '(?ms)^\s*\[' + [regex]::Escape($Section) + '\]\s*\r?\n(?<body>.*?)(?=^\s*\[|\z)'
-    $sectionMatch = [regex]::Match($Text, $sectionPattern)
-    if (-not $sectionMatch.Success) { return $null }
-
-    $keyPattern = '(?m)^[ \t]*' + [regex]::Escape($Key) + '[ \t]*=[ \t]*(?<value>[^\r\n]*)'
-    $matches = [regex]::Matches($sectionMatch.Groups['body'].Value, $keyPattern)
-    if ($matches.Count -gt 1) {
-        throw "INI section [$Section] contains duplicate $Key settings."
-    }
-    if ($matches.Count -eq 0) { return $null }
-    return $matches[0].Groups['value'].Value.Trim()
-}
-
-function Set-Na2IniValue {
-    param(
-        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text,
-        [Parameter(Mandatory = $true)][string]$Section,
-        [Parameter(Mandatory = $true)][string]$Key,
-        [Parameter(Mandatory = $true)][string]$Value
-    )
-
-    $newline = if ($Text.Contains("`r`n")) { "`r`n" } else { "`n" }
-    $sectionPattern = '(?ms)^\s*\[' + [regex]::Escape($Section) + '\]\s*\r?\n(?<body>.*?)(?=^\s*\[|\z)'
-    $sectionMatch = [regex]::Match($Text, $sectionPattern)
-    if (-not $sectionMatch.Success) {
-        $prefix = $Text
-        if ($prefix.Length -gt 0 -and -not $prefix.EndsWith("`n")) { $prefix += $newline }
-        if ($prefix.Length -gt 0 -and -not $prefix.EndsWith($newline + $newline)) { $prefix += $newline }
-        return $prefix + "[$Section]$newline$Key = $Value$newline"
-    }
-
-    $bodyGroup = $sectionMatch.Groups['body']
-    $body = $bodyGroup.Value
-    $keyPattern = '(?m)^(?<prefix>[ \t]*' + [regex]::Escape($Key) + '[ \t]*=[ \t]*)[^\r\n]*(?<cr>\r?)$'
-    $keyMatches = [regex]::Matches($body, $keyPattern)
-    if ($keyMatches.Count -gt 1) {
-        throw "INI section [$Section] contains duplicate $Key settings."
-    }
-    if ($keyMatches.Count -eq 1) {
-        $keyMatch = $keyMatches[0]
-        $replacement = $keyMatch.Groups['prefix'].Value + $Value + $keyMatch.Groups['cr'].Value
-        $newBody = $body.Substring(0, $keyMatch.Index) + $replacement + $body.Substring($keyMatch.Index + $keyMatch.Length)
-    }
-    else {
-        $newBody = $body
-        if ($newBody.Length -gt 0 -and -not $newBody.EndsWith("`n")) { $newBody += $newline }
-        $newBody += "$Key = $Value$newline"
-    }
-    return $Text.Substring(0, $bodyGroup.Index) + $newBody + $Text.Substring($bodyGroup.Index + $bodyGroup.Length)
-}
+. (Join-Path $PSScriptRoot 'ini.ps1')
 
 function Enter-Na2TestMemoryCard {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$GlobalIniPath,
         [Parameter(Mandatory = $true)][string]$GameSettingsDirectory,
-        [Parameter(Mandatory = $true)][string]$MemoryCardsDirectory,
+        [Parameter(Mandatory = $true)][string]$SourceMemoryCardsDirectory,
+        [Parameter(Mandatory = $true)][string]$TaskMemoryCardsDirectory,
         [Parameter(Mandatory = $true)][string]$Serial,
         [Parameter(Mandatory = $true)][string]$CRC,
         [Parameter(Mandatory = $true)][string]$AgentName,
         [Parameter(Mandatory = $true)][string]$TaskIdentity
     )
 
-    foreach ($directory in $GameSettingsDirectory, $MemoryCardsDirectory) {
+    foreach ($directory in $GameSettingsDirectory, $SourceMemoryCardsDirectory) {
         if (-not (Test-Path -LiteralPath $directory -PathType Container)) {
             throw "Required PCSX2 directory does not exist: $directory"
         }
     }
+    New-Item -ItemType Directory -Force -Path $TaskMemoryCardsDirectory | Out-Null
     if (-not (Test-Path -LiteralPath $GlobalIniPath -PathType Leaf)) {
         throw "PCSX2 configuration does not exist: $GlobalIniPath"
     }
@@ -132,7 +78,7 @@ function Enter-Na2TestMemoryCard {
         throw "The configured Slot 1 memory card must be a file directly under the PCSX2 memcards directory: $baseCardName"
     }
 
-    $baseCardPath = Join-Path $MemoryCardsDirectory $baseCardName
+    $baseCardPath = Join-Path $SourceMemoryCardsDirectory $baseCardName
     if (-not (Test-Path -LiteralPath $baseCardPath -PathType Leaf)) {
         throw "Configured Slot 1 memory card does not exist: $baseCardPath"
     }
@@ -142,7 +88,7 @@ function Enter-Na2TestMemoryCard {
     $baseStem = [IO.Path]::GetFileNameWithoutExtension($baseCardName)
     $extension = [IO.Path]::GetExtension($baseCardName)
     $taskCardName = "${baseStem}_${agentComponent}_${taskComponent}${extension}"
-    $taskCardPath = Join-Path $MemoryCardsDirectory $taskCardName
+    $taskCardPath = Join-Path $TaskMemoryCardsDirectory $taskCardName
     $taskCardCreated = $false
 
     try {
@@ -170,12 +116,36 @@ function Enter-Na2TestMemoryCard {
         GameSettingsPath = $gameSettingsPath
         GameSettingsExisted = $gameSettingsExisted
         OriginalGameSettingsBytes = $originalGameSettingsBytes
+        InjectedSlot1Enable = 'true'
+        InjectedSlot1Filename = $taskCardName
     }
 }
 
 function Exit-Na2TestMemoryCard {
     [CmdletBinding()]
-    param([Parameter(Mandatory = $true)][object]$Context)
+    param(
+        [Parameter(Mandatory = $true)][object]$Context,
+        [switch]$OnlyIfInjected
+    )
+
+    if ($OnlyIfInjected) {
+        if (-not (Test-Path -LiteralPath $Context.GameSettingsPath -PathType Leaf)) {
+            return $false
+        }
+        $current = [IO.File]::ReadAllText($Context.GameSettingsPath)
+        $currentEnable = Get-Na2IniValue `
+            -Text $current `
+            -Section 'MemoryCards' `
+            -Key 'Slot1_Enable'
+        $currentFilename = Get-Na2IniValue `
+            -Text $current `
+            -Section 'MemoryCards' `
+            -Key 'Slot1_Filename'
+        if ($currentEnable -cne $Context.InjectedSlot1Enable -or
+            $currentFilename -cne $Context.InjectedSlot1Filename) {
+            return $false
+        }
+    }
 
     if ($Context.GameSettingsExisted) {
         [IO.File]::WriteAllBytes($Context.GameSettingsPath, $Context.OriginalGameSettingsBytes)
@@ -183,4 +153,5 @@ function Exit-Na2TestMemoryCard {
     elseif (Test-Path -LiteralPath $Context.GameSettingsPath) {
         Remove-Item -LiteralPath $Context.GameSettingsPath -Force
     }
+    return $true
 }

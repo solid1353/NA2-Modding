@@ -133,10 +133,16 @@ function Start-Na2RunLog {
     param(
         [Parameter(Mandatory = $true)][string]$Mode,
         [Parameter(Mandatory = $true)][psobject]$ProjectPaths,
+        [string]$LogDirectory,
         [ValidateRange(1, 1000)][int]$MaxRollingSections = 20
     )
 
-    $logDirectory = Join-Path $ProjectPaths.logs 'na2'
+    $logDirectory = if ([string]::IsNullOrWhiteSpace($LogDirectory)) {
+        Join-Path $ProjectPaths.logs 'na2'
+    }
+    else {
+        [IO.Path]::GetFullPath($LogDirectory)
+    }
     New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
     $temporaryTranscript = Join-Path (
         [IO.Path]::GetTempPath()

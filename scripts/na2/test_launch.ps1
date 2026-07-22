@@ -1,18 +1,26 @@
 [CmdletBinding()]
 param(
     [string]$IsoPath,
-    [ValidateRange(1, 300)]
-    [int]$WaitSeconds = 5,
+    [Parameter(Mandatory = $true)][string]$WorkerRoot,
+    [ValidateRange(1, 300)][int]$WaitSeconds = 5,
+    [ValidateRange(1, 300)][int]$ReadyTimeoutSeconds = 60,
     [string]$AgentName = 'Codex',
     [string]$TaskIdentity
 )
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\lib\run_log.ps1')
 . (Join-Path $PSScriptRoot 'process.ps1')
 . (Join-Path $PSScriptRoot 'iso_identity.ps1')
-. (Join-Path $PSScriptRoot 'test_memory_card.ps1')
+. (Join-Path $PSScriptRoot 'worker_paths.ps1')
+. (Join-Path $PSScriptRoot 'pine.ps1')
+. (Join-Path $PSScriptRoot 'test_runtime.ps1')
 $projectPaths = Get-Na2ProjectPaths
+$worker = Get-Na2WorkerContext `
+    -WorkerRoot $WorkerRoot `
+    -ProjectPaths $projectPaths `
+    -RequireRelative
 
 if ([string]::IsNullOrWhiteSpace($IsoPath)) {
     $IsoPath = $projectPaths.files.current_iso
@@ -31,15 +39,20 @@ if ([string]::IsNullOrWhiteSpace($TaskIdentity)) {
         $env:CODEX_THREAD_ID
     }
     else {
-        [guid]::NewGuid().ToString()
+        $worker.WorkerName
     }
 }
 
 $resolvedPcsx2Exe = [IO.Path]::GetFullPath($projectPaths.files.pcsx2_exe)
 $pcsx2Ini = $projectPaths.files.pcsx2_ini
 $launchScript = Join-Path $PSScriptRoot 'launch.ps1'
-$originalIniBytes = $null
-$memoryCardContext = $null
+$runtimeLayout = $null
+$runtimeContext = $null
+$configurationLock = $null
+$testProcess = $null
+$processStartTime = $null
+$descriptorPath = $null
+$settingsRestoredAfterLaunch = $false
 
 if (-not ('Na2TestWindow' -as [type])) {
     Add-Type -TypeDefinition @'
@@ -47,6 +60,8 @@ using System;
 using System.Runtime.InteropServices;
 
 public static class Na2TestWindow {
+    public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 
@@ -57,8 +72,69 @@ public static class Na2TestWindow {
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+    [DllImport("user32.dll")]
+    public static extern bool EnumWindows(EnumWindowsProc callback, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    public static extern int GetWindowTextLength(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetWindow(IntPtr hWnd, uint command);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool IsWindowVisible(IntPtr hWnd);
+
+    public static IntPtr FindTopLevelWindow(uint wantedProcessId) {
+        IntPtr best = IntPtr.Zero;
+        int bestScore = -1;
+        EnumWindows(delegate(IntPtr window, IntPtr state) {
+            uint ownerProcessId;
+            GetWindowThreadProcessId(window, out ownerProcessId);
+            if (ownerProcessId != wantedProcessId)
+                return true;
+            int score = GetWindowTextLength(window);
+            if (GetWindow(window, 4) == IntPtr.Zero)
+                score += 10000;
+            if (IsWindowVisible(window))
+                score += 1000;
+            if (score > bestScore) {
+                best = window;
+                bestScore = score;
+            }
+            return true;
+        }, IntPtr.Zero);
+        return best;
+    }
 }
 '@
+}
+
+function Test-Na2OwnedWindow {
+    param(
+        [Parameter(Mandatory = $true)][IntPtr]$Window,
+        [Parameter(Mandatory = $true)][int]$ProcessId
+    )
+
+    if ($Window -eq [IntPtr]::Zero) { return $false }
+    [uint32]$owner = 0
+    [void][Na2TestWindow]::GetWindowThreadProcessId($Window, [ref]$owner)
+    return $owner -eq [uint32]$ProcessId
+}
+
+function Get-Na2OwnedWindow {
+    param([Parameter(Mandatory = $true)][Diagnostics.Process]$Process)
+
+    $Process.Refresh()
+    $window = $Process.MainWindowHandle
+    if (Test-Na2OwnedWindow -Window $window -ProcessId $Process.Id) {
+        return $window
+    }
+    return [Na2TestWindow]::FindTopLevelWindow([uint32]$Process.Id)
 }
 
 try {
@@ -67,63 +143,94 @@ try {
     }
 
     $isoIdentity = Get-Na2IsoPcsx2Identity -Path $resolvedIsoPath
-    $memoryCardContext = Enter-Na2TestMemoryCard `
-        -GlobalIniPath $pcsx2Ini `
-        -GameSettingsDirectory $projectPaths.pcsx2_gamesettings `
-        -MemoryCardsDirectory $projectPaths.pcsx2_memcards `
-        -Serial $isoIdentity.Serial `
-        -CRC $isoIdentity.CRC `
+    $runtimeLayout = New-Na2TestRuntimeLayout -Worker $worker
+    $configurationLock = Enter-Na2Pcsx2ConfigurationLock -IniPath $pcsx2Ini
+    $runtimeContext = Enter-Na2TestRuntimeConfiguration `
+        -ProjectPaths $projectPaths `
+        -Layout $runtimeLayout `
+        -IsoIdentity $isoIdentity `
         -AgentName $AgentName `
         -TaskIdentity $TaskIdentity
 
-    $originalIniBytes = [IO.File]::ReadAllBytes($pcsx2Ini)
-    $iniText = [IO.File]::ReadAllText($pcsx2Ini)
-    $mutePattern = '(?m)^([ \t]*OutputMuted[ \t]*=[ \t]*)[^\r\n]*(\r?)$'
-    $muteMatches = [regex]::Matches($iniText, $mutePattern)
-    if ($muteMatches.Count -ne 1) {
-        throw "Expected exactly one OutputMuted setting in: $pcsx2Ini"
-    }
-
-    $mutedIniText = [regex]::Replace(
-        $iniText,
-        $mutePattern,
-        { param($match) $match.Groups[1].Value + 'true' + $match.Groups[2].Value }
-    )
-    [IO.File]::WriteAllText($pcsx2Ini, $mutedIniText, [Text.UTF8Encoding]::new($false))
     $foregroundBeforeLaunch = [Na2TestWindow]::GetForegroundWindow()
-    $cardAction = if ($memoryCardContext.TaskCardCreated) { 'created' } else { 'reused' }
+    $cardAction = if ($runtimeContext.MemoryCard.TaskCardCreated) { 'created' } else { 'reused' }
     Write-Host (
         "[na2] Agent test launch: hidden, muted, non-activating; " +
-        "$cardAction private card $($memoryCardContext.TaskCardName)"
+        "$cardAction worker card $($runtimeContext.MemoryCard.TaskCardName); " +
+        "PINE $($runtimeContext.PinePort)"
     ) -ForegroundColor Cyan
 
-    & $launchScript -IsoPath $resolvedIsoPath -WindowStyle Hidden
+    $testProcess = & $launchScript `
+        -IsoPath $resolvedIsoPath `
+        -WindowStyle Hidden `
+        -KeepExistingInstance `
+        -PassThru
+    if ($null -eq $testProcess) { throw 'PCSX2 launch did not return a process.' }
+    $testProcess.Refresh()
+    $processStartTime = $testProcess.StartTime
 
-    $deadline = [DateTime]::UtcNow.AddSeconds(10)
+    $pineIdentity = Wait-Na2PineIdentity `
+        -Port $runtimeContext.PinePort `
+        -Serial $isoIdentity.Serial `
+        -CRC $isoIdentity.CRC `
+        -ProcessId $testProcess.Id `
+        -TimeoutSeconds $ReadyTimeoutSeconds
+
+    $windowDeadline = [DateTime]::UtcNow.AddSeconds(10)
     do {
-        $testProcesses = @(Get-Na2Pcsx2Process -Executable $resolvedPcsx2Exe)
-        if ($testProcesses.Count -gt 0) {
-            break
-        }
+        $window = Get-Na2OwnedWindow -Process $testProcess
+        if (Test-Na2OwnedWindow -Window $window -ProcessId $testProcess.Id) { break }
         Start-Sleep -Milliseconds 100
-    } while ([DateTime]::UtcNow -lt $deadline)
-
-    if ($testProcesses.Count -eq 0) {
-        throw 'PCSX2 did not remain running after launch.'
+    } while ([DateTime]::UtcNow -lt $windowDeadline)
+    if (-not (Test-Na2OwnedWindow -Window $window -ProcessId $testProcess.Id)) {
+        throw "PCSX2 process $($testProcess.Id) did not create an owned window."
     }
 
-    Write-Host "[na2] PCSX2 test process started; closing after $WaitSeconds second(s)" -ForegroundColor Cyan
+    Restore-Na2TestRuntimeConfiguration -Context $runtimeContext
+    $settingsRestoredAfterLaunch = $true
+    Exit-Na2Pcsx2ConfigurationLock -Mutex $configurationLock
+    $configurationLock = $null
+
+    $descriptorPath = Join-Path $runtimeLayout.LogDirectory 'pcsx2-instance.json'
+    $descriptor = [ordered]@{
+        schema_version = 1
+        worker = $worker.WorkerName
+        iso = ConvertTo-Na2ProjectPath -Path $resolvedIsoPath -ProjectPaths $projectPaths
+        serial = $isoIdentity.Serial
+        crc = $isoIdentity.CRC
+        process_id = $testProcess.Id
+        process_start_utc = $processStartTime.ToUniversalTime().ToString('o')
+        window_handle = ('0x{0:X}' -f $window.ToInt64())
+        pine_port = $runtimeContext.PinePort
+        memory_card = ConvertTo-Na2ProjectPath `
+            -Path $runtimeContext.MemoryCard.TaskCardPath `
+            -ProjectPaths $projectPaths
+        log_directory = ConvertTo-Na2ProjectPath `
+            -Path $runtimeLayout.LogDirectory `
+            -ProjectPaths $projectPaths
+        settings_restored_after_game_load = $true
+    }
+    Set-Na2Utf8FileAtomic `
+        -Path $descriptorPath `
+        -Content (($descriptor | ConvertTo-Json -Depth 4) + "`n")
+
+    Write-Host (
+        "[na2] PCSX2 instance ready: PID $($testProcess.Id), " +
+        "window $('0x{0:X}' -f $window.ToInt64()), " +
+        "$($pineIdentity.Serial)/$($pineIdentity.CRC); shared settings restored; " +
+        "closing after $WaitSeconds second(s)."
+    ) -ForegroundColor Cyan
+
     $closeDeadline = [DateTime]::UtcNow.AddSeconds($WaitSeconds)
     do {
+        $testProcess.Refresh()
+        if ($testProcess.HasExited) { break }
         $foregroundWindow = [Na2TestWindow]::GetForegroundWindow()
-        foreach ($process in @(Get-Na2Pcsx2Process -Executable $resolvedPcsx2Exe)) {
-            $process.Refresh()
-            $window = $process.MainWindowHandle
-            if ($window -ne [IntPtr]::Zero) {
-                [Na2TestWindow]::ShowWindowAsync($window, 0) | Out-Null
-                if ($window -eq $foregroundWindow -and $foregroundBeforeLaunch -ne [IntPtr]::Zero) {
-                    [Na2TestWindow]::SetForegroundWindow($foregroundBeforeLaunch) | Out-Null
-                }
+        $window = Get-Na2OwnedWindow -Process $testProcess
+        if (Test-Na2OwnedWindow -Window $window -ProcessId $testProcess.Id) {
+            [Na2TestWindow]::ShowWindowAsync($window, 0) | Out-Null
+            if ($window -eq $foregroundWindow -and $foregroundBeforeLaunch -ne [IntPtr]::Zero) {
+                [Na2TestWindow]::SetForegroundWindow($foregroundBeforeLaunch) | Out-Null
             }
         }
         Start-Sleep -Milliseconds 100
@@ -132,31 +239,51 @@ try {
 finally {
     $cleanupErrors = [Collections.Generic.List[object]]::new()
     try {
-        Stop-Na2Pcsx2 -Executable $resolvedPcsx2Exe
-    }
-    catch {
-        $cleanupErrors.Add($_)
-    }
-    try {
-        if ($null -ne $originalIniBytes) {
-            [IO.File]::WriteAllBytes($pcsx2Ini, $originalIniBytes)
+        if ($null -ne $testProcess -and $null -ne $processStartTime) {
+            Stop-Na2Pcsx2Process `
+                -Executable $resolvedPcsx2Exe `
+                -ProcessId $testProcess.Id `
+                -ExpectedStartTime $processStartTime
         }
     }
-    catch {
-        $cleanupErrors.Add($_)
-    }
+    catch { $cleanupErrors.Add($_) }
+
     try {
-        if ($null -ne $memoryCardContext) {
-            Exit-Na2TestMemoryCard -Context $memoryCardContext
+        if ($null -ne $runtimeContext) {
+            if ($null -eq $configurationLock) {
+                $configurationLock = Enter-Na2Pcsx2ConfigurationLock -IniPath $pcsx2Ini
+            }
+            Restore-Na2TestRuntimeConfiguration `
+                -Context $runtimeContext `
+                -OnlyIfInjected:$settingsRestoredAfterLaunch
         }
     }
-    catch {
-        $cleanupErrors.Add($_)
+    catch { $cleanupErrors.Add($_) }
+    finally {
+        if ($null -ne $configurationLock) {
+            try { Exit-Na2Pcsx2ConfigurationLock -Mutex $configurationLock } catch { $cleanupErrors.Add($_) }
+            $configurationLock = $null
+        }
     }
+
+    try {
+        if ($null -ne $descriptorPath -and (Test-Path -LiteralPath $descriptorPath)) {
+            Remove-Item -LiteralPath $descriptorPath -Force
+        }
+        if ($null -ne $runtimeLayout) {
+            Remove-Na2TestRuntimeLayout `
+                -Layout $runtimeLayout `
+                -Worker $worker `
+                -WorkRoot $projectPaths.work
+        }
+    }
+    catch { $cleanupErrors.Add($_) }
+
+    if ($null -ne $testProcess) { $testProcess.Dispose() }
     if ($cleanupErrors.Count -gt 0) {
         throw "PCSX2 test cleanup failed: $($cleanupErrors[0].Exception.Message)"
     }
-    if ($null -ne $originalIniBytes -or $null -ne $memoryCardContext) {
-        Write-Host '[na2] PCSX2 closed; original audio and memory-card settings restored' -ForegroundColor Cyan
+    if ($null -ne $runtimeContext) {
+        Write-Host '[na2] Owned PCSX2 instance closed; shared settings verified; worker artifacts retained' -ForegroundColor Cyan
     }
 }

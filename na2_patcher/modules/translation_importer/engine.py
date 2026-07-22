@@ -56,7 +56,7 @@ VALID_TRANSFORMS = {
     "", "empty", "format_arg1", "format_args", "format_prefix_arg2",
     "format_suffix_arg2", "between_placeholders", "after_placeholder2",
     "split_br", "split_br_sequence", "join_br_parts", "insert_br_after_words",
-    "append_space", "flatten_br_slice", "uppercase",
+    "append_space", "flatten_br_slice",
 }
 TARGET_RUNTIME_BASES = {
     "SLPS": 0x000FFF00,
@@ -474,8 +474,6 @@ def resolve_source_text(row: dict[str, object], sources: dict[str, bytes], label
                 f"{label}: slice {start}:{end} is outside flattened text length {len(flattened)}"
             )
         return flattened[start:end]
-    if transform == "uppercase":
-        return template.upper()
     raise ValueError(f"{label}: unsupported transform {transform!r}")
 
 

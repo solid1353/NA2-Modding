@@ -130,9 +130,9 @@ class IntegratedExternalStringTests(unittest.TestCase):
         self.assertIn("Narutimate Accel v2.28", payload_text)
         self.assertNotIn("Naruto Shippuden: Ultimate Ninja 5", payload_text)
 
-    def test_startup_choice_labels_are_uppercase(self) -> None:
-        self.assertEqual(self.import_plan.resolved_texts["M0566"], "NO")
-        self.assertEqual(self.import_plan.resolved_texts["M0799"], "YES")
+    def test_generic_choice_labels_preserve_official_case(self) -> None:
+        self.assertEqual(self.import_plan.resolved_texts["M0566"], "No")
+        self.assertEqual(self.import_plan.resolved_texts["M0799"], "Yes")
 
     def test_title_policy_fails_closed_in_string_patcher(self) -> None:
         with self.assertRaisesRegex(ValueError, "policy coverage differs"):

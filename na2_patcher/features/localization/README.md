@@ -15,7 +15,7 @@ The feature directory name declares its identity. Its module-named
 subdirectories are the inputs that compose it; enabling Localization enables all
 of them, and one aggregate profile pin covers their canonical inputs.
 
-## NA2 translation importer (mapping version 37)
+## NA2 translation importer (mapping version 38)
 
 This first-class `na2_patcher` module imports and validates official strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
@@ -179,9 +179,26 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
 
+### Version 38 changes
+
+#### Restore shared modal-label capitalization
+
+Version 38 restores `M0566` and `M0799` to the exact official NUN5 donor text,
+`No` and `Yes`. Runtime testing showed that the attempted uppercase forms did
+not control the supplied startup prompt, and these slots are generic modal
+labels rather than startup-specific presentation. Applying a global uppercase
+transform here would therefore alter unrelated dialogs. The unused `uppercase`
+transform is removed from the importer.
+
+The v37 project-title policy remains unchanged: the six guarded title-bearing
+mapping results still materialize `Narutimate Accel v2.28`.
+
+The packaged v38 table contains 2,181 mappings: 2,172 enabled and 9 disabled.
+Enabled rows comprise 2,135 `slot`, 4 `sequence`, and 33 `shorten` mappings.
+
 ### Version 37 changes
 
-#### Project title and startup-choice presentation
+#### Project title presentation
 
 Version 37 applies one exact, hash-pinned semantic policy after official-source
 transforms and before inline or linked placement: the donor token
@@ -196,14 +213,6 @@ store source references and transforms rather than duplicated source/result
 sentences; generated logs record the resolved text. Configuration pins the
 exact donor token, output token, and expected coverage so source drift or
 accidental expansion fails the build.
-
-`M0566` and `M0799` use the declarative `uppercase` transform and resolve to
-`NO` and `YES` without embedding replacement literals in the mapping rows.
-Runtime testing later confirmed that these two slots do **not** control the
-visible choices on the tested startup no-card prompt: that screen remained
-title-case. The transforms are retained because the distinct slots may serve a
-different branch, but they are not considered a fix for the supplied screen and
-capitalization will not be pursued further for now.
 
 The supplied side-by-side runtime capture also confirms that the prompt overflow
 is separate: NUN5 word-wraps inside donor `<br>` parts, while NA2 renders each
@@ -221,7 +230,7 @@ A clean-source full in-memory plan was validated with all three targets:
 - the v37 mappings hash, profile title-policy counts, and reference guards matched;
 - 2,434 generated import rows and 2,172 applied text mappings;
 - all six title-bearing results use `Narutimate Accel v2.28`;
-- `M0566`/`M0799` resolve to `NO`/`YES`;
+- `M0566`/`M0799` resolved to `NO`/`YES` in v37 (reverted in v38);
 - 31 logical external messages occupy 1,512 encoded bytes at 30 distinct symbols;
 - generated `PRG/228.BIN` is `0x720` bytes with SHA-256
   `AD94B66F2916C0014A87D110F5807DC0F0F5D7E91615AE3F04EC970CFBA00E9F`.
@@ -515,14 +524,12 @@ The packaged v30 table contains 854 mappings: 844 enabled and 10 disabled. Activ
 
 This log persists unresolved visual/runtime findings across mapping versions. Entries implemented in the current module remain in the verification section until confirmed in-game.
 
-#### Retained v37 transforms with negative tested-screen result
+#### Reverted in v38
 
-- **Startup no-card choice capitalization:** `M0566` and `M0799` resolve to
-  `NO`/`YES`, but the user confirmed that the visible choices on the tested
-  startup no-card prompt remained `No`/`Yes`. Those offsets therefore do not
-  drive that rendering path, or another source overrides them. Retain the
-  transforms for possible use by a different branch; do not repeat this
-  capitalization attempt or treat it as a verified fix for the supplied screen.
+- **Generic modal choice capitalization:** the v37 uppercase transforms on
+  `M0566` and `M0799` did not affect the supplied startup prompt and were
+  semantically wrong because the slots are shared modal labels. Version 38
+  restores exact official NUN5 `No`/`Yes`; do not repeat the global transform.
 
 #### Rejected in v34 and rolled back in v35
 
@@ -564,7 +571,6 @@ This log persists unresolved visual/runtime findings across mapping versions. En
 
 #### Open
 
-- **Startup no-card choice capitalization:** later replace the visible `Yes` and `No` labels with uppercase `YES` and `NO`; intentionally not included yet.
 - **Options main-screen graphical labels:** owned by the separate Texture-patcher and
   layout task; they remain outside this text module.
 - **Collection Movie screen chrome:** graphical title/category and button assets

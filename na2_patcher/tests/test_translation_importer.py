@@ -61,18 +61,6 @@ class TranslationImporterTests(unittest.TestCase):
             "",
         )
 
-    def test_uppercase_transform_preserves_official_source_authority(self) -> None:
-        row = {
-            "source": "NUN5_SLES",
-            "source_offset": 0,
-            "transform": "uppercase",
-            "arguments": {},
-        }
-        self.assertEqual(
-            engine.resolve_source_text(row, {"NUN5_SLES": b"Yes\x00"}, "M0799"),
-            "YES",
-        )
-
     def test_importer_preserves_official_game_title(self) -> None:
         mappings = [
             {

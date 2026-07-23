@@ -8,23 +8,24 @@
 - NA Command: add na2 act for select images, supply Comparison.ini input profile.
 
 ### [Font](docs/workstreams/font/README.md)
-- Investigate work\__sstates\translation\font.
+- [Investigate](work/__sstates/translation/font).
 - Make font identical to UN5.
 - Implement proper autofit/positions everywhere.
 
 ### [UI Translation](docs/workstreams/ui_translation/README.md)
-- Investigate work\__sstates\translation\UI.
+- [Investigate](work/__sstates/translation/UI).
 - Deal with remaining issues (items, awakenings, etc.).
 - Create an upscaled texture pack for pcsx2.
+
+### String translation
+- [Investigate](work/__sstates/translation/strings).
+- Redo the translation from scratch, using existing data as a reference. Not everything is translated currently (MAX Damage label, etc.).
 
 ## Backlog
 
 ### Project
 - Investigate cross-platform development/deployment possibilities.
 - Global cleanup.
-
-### String translation
-- Redo the translation from scratch, using existing data as a reference. Not everything is translated currently (MAX Damage label, etc.).
 
 ### Bugs
 - Practice menu entries (like Damage) flicker again (unstable).

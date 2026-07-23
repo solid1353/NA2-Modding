@@ -8,18 +8,19 @@
 - Return actualization workflow + actualize gamesettings as well, must run for any user-initiated build and delete stale files. Files are at pcsx2_files. Each user-initiated build method should use a different memcard copy that is named accordingly, Mcd001_NA228.ps2 is the base that exists just for copying.
 
 ### [Font](docs/workstreams/font/README.md)
-- [Investigate](work/__sstates/translation/font).
-- Make font identical to UN5.
-- Implement proper autofit/positions everywhere.
+- [Investigate](work/__sstates/translation/font)
+    * Make font identical to UN5.
+    * Implement proper autofit/positions everywhere.
 
 ### [UI Translation](docs/workstreams/ui_translation/README.md)
-- [Investigate](work/__sstates/translation/UI).
-- Deal with remaining issues (items, awakenings, etc.).
-- Create an upscaled texture pack for pcsx2.
+- [Investigate](work/__sstates/translation/UI)
+    * Deal with remaining issues (items, awakenings, etc.).
 
 ### String translation
-- [Investigate](work/__sstates/translation/strings).
-- Redo the translation from scratch, using existing data as a reference. Not everything is translated currently (MAX Damage label, etc.).
+- Create and link a dedicated workflow readme.
+- [Investigate](work/__sstates/translation/strings)
+    * Consolidate mappings and references under one file, add source, donor, replacement and prefix fields, the need for externalization should be decided at build/link time by something. Source and donor fields should be purely informational.
+    * Redo the translation from scratch, using existing data as a reference, touching only what is displayed with the help of savestates. Not everything is translated currently (MAX Damage label, etc.).
 
 ## Backlog
 
@@ -45,6 +46,10 @@
 - Replace support selector with Team J/UJ selector.
 - Move support bar upwards.
 - Integrate save into the game, simplify the entry menu and replace old slps references in the ELF.
+
+### Graphics
+- Create a proper widescreen patch.
+- Create an upscaled texture pack for pcsx2 (currently blocked by UI translation).
 
 ### Testing
 - Isolate and promote runtime-proven patches.

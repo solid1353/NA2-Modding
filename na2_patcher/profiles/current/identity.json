@@ -2,7 +2,7 @@
   "schema_version": 1,
   "image": {
     "source_boot_path": "SLPS_258.37",
-    "output_boot_path": "SLPS_222.28",
+    "output_boot_path": "SLOP_NA2.28",
     "system_cnf_path": "SYSTEM.CNF"
   },
   "memory_card": {

@@ -34,12 +34,15 @@
 - Make knj cost selective.
 - Make xDash cost 1 chakra.
 - Add damage scaling?
-- Replace support selector with J/UJ selector.
 - [Improve substitution reliability](docs/knowledge/substitution.md).
 - Add substitution bar.
 - Fix extra hit floating animation (or maybe not?).
 
 ### QoL
+- Disable UJ overlay and inputs.
+- Replace selected character with no support on character select screen.
+- Replace support selector with Team J/UJ selector.
+- Move support bar upwards.
 - Integrate save into the game, simplify the entry menu and replace old slps references in the ELF.
 
 ### Testing

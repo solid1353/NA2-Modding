@@ -39,6 +39,7 @@
     "na228_candidate_memcard": "@pcsx2_memcards/Mcd001_NA228_Candidate.ps2",
     "comparison_input_profile": "@pcsx2_files/input_profiles/Comparison.ini",
     "comparison_na2_input_profile": "@pcsx2_files/input_profiles/Comparison_NA2.ini",
+    "notification_state": "@repository/.agents/notifications.json",
     "na2_command": "@repository/_na2.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1",
     "na2_iso": "@source/NA2.iso",

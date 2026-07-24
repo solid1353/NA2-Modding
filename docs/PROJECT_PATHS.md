@@ -62,6 +62,8 @@ their producing workflow runs. File entries should reference a named root with
   `@pcsx2_files/input_profiles/Comparison.ini`.
 - `comparison_na2_input_profile`:
   `@pcsx2_files/input_profiles/Comparison_NA2.ini`.
+- `notification_state`: the shared mute state for the dedicated Notifications
+  task at `@repository/.agents/notifications.json`.
 - `na2_command`: `@repository/_na2.ps1`.
 - `na2_iso`: `@source/NA2.iso`.
 - `nun3_iso`: `@source/NUN3.iso`.

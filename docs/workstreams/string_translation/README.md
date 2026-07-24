@@ -10,9 +10,10 @@ Canonical documentation landing page for the `String translation` workstream.
 - Character-specific strings may be translated systematically without
   individual runtime encounters because their structure is predictable and
   exhaustive testing is disproportionately time-consuming.
-- Keep `[S]` on authorized shortened mappings that do not fit their original
-  slots. The marker is intentional visible debt so fit exceptions can be
-  reviewed collectively later.
+- Keep complete replacement text in canonical mappings. Inline versus external
+  placement is derived at build time from the final encoded length, the
+  guarded slot capacity, and available pointer references; do not retain
+  shortened fallbacks or placement markers.
 - Do not replace identifiers, placeholders, or other data of uncertain display
   purpose with arbitrary text.
 - This workstream owns game text and its mapping/reference data. Font fitting

@@ -3,7 +3,7 @@
 This feature owns all declarative content for the accepted English localization
 while reusable executable engines remain under `na2_patcher/modules/`.
 
-- [Translation importer](#na2-translation-importer-mapping-version-37)
+- [Translation importer](#na2-translation-importer-mapping-version-39)
 - [String patcher](#string-patcher)
 - [Texture patcher](#ui-texture-translation-module)
 - [Binary patcher](#ui-translation-binary-patcher-patch-set)
@@ -15,28 +15,28 @@ The feature directory name declares its identity. Its module-named
 subdirectories are the inputs that compose it; enabling Localization enables all
 of them, and one aggregate profile pin covers their canonical inputs.
 
-## NA2 translation importer (mapping version 38)
+## NA2 translation importer (mapping version 39)
 
-This first-class `na2_patcher` module imports and validates official strings for
+This first-class `na2_patcher` module imports and validates strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
-It never writes BIN or ELF payloads and preserves official imported game-title
-text. Profile builds pass its in-memory import rows directly to
-`string_patcher`, which applies profile output identity and compiles them into a shared
-`binary_patcher` package. There is no standalone export command or file-backed
-inter-stage handoff.
+It never writes BIN or ELF payloads. Profile builds pass its canonical in-memory
+artifact to `string_patcher`, which applies profile output identity, derives
+inline versus linked placement from encoded fit and pointer availability, and
+compiles one shared `binary_patcher` package. There is no standalone export
+command or file-backed inter-stage handoff.
 
 ### Mapping metadata
 
-- Version: `37`
-- Packaged `mappings.tsv` SHA-256: `3e021c1fb1468f2d5c1afc2f298c1f9e589ce0f107a503eb65f24602f7df488e`
+- Version: `39`
+- Packaged `mappings.tsv` SHA-256: `82AC0E76409677705215F09AC1FAC45F0FF729374E5AC24657E6D5F6D4B3DA8B`
 
 The version and mappings hash above are historical documentation, not a second
 executable manifest. Git history and the aggregate Localization feature pin own
-content identity. `translation_importer/references.tsv` is the canonical pointer
-inventory for mappings that require linked external placement. Profile
-`identity.json` owns the imported/output title declaration; `string_patcher`
-applies it with fail-closed coverage. Documentation is not an executable input,
-and the importer verifies every reference guard and coverage relationship.
+content identity. `mappings.tsv` also owns the optional pointer inventory for
+rows that can be linked externally. Profile `identity.json` owns the
+imported/output title declaration; `string_patcher` applies it with fail-closed
+coverage. Documentation is not an executable input, and the importer verifies
+every declared reference guard.
 
 ### Source and target scope
 
@@ -46,26 +46,20 @@ Clean NA2 targets:
 - `PRG/ETC.BIN`
 - `SLPS_258.37`
 
-Official NUN5 sources:
-
-- `PRG/BTL.BIN`
-- `PRG/ETC.BIN`
-- `PRG/TEXTENG.BIN`
-- `SLES_556.05`
-
-`slot` and `sequence` mappings read their English bytes from exact NUN5 offsets
-at build time. `shorten` rows retain an `[S]` fallback/debt marker because the
-official NUN5 text cannot fit the original NA2 slot. The current integrated
-`string_patcher` omits those fallback writes and contributes their exact official
-strings to the shared payload builder instead.
+NUN5 donor references and donor text are retained in the table for review and
+provenance, but normal builds do not read donor binaries. `replacement` is the
+only executable text. Every replacement is complete: no shortened fallback or
+placement marker exists in the current table.
 
 ### Canonical `mappings.tsv`
 
 `mappings.tsv` is the single canonical mapping table. TSV has no worksheet tabs, so `section` is the page/filter key for grouping mappings by screen or mode.
 
-The 12 columns are:
+The 17 columns are:
 
-`id`, `enabled`, `section`, `mode`, `target`, `target_offset`, `capacity`, `source_ref`, `transform`, `arguments`, `value`, `reason`
+`id`, `enabled`, `section`, `mode`, `target`, `target_offset`, `capacity`,
+`source`, `donor_ref`, `donor`, `replacement`, `transform`, `arguments`,
+`reference_binary`, `reference_file_offsets`, `parent_mapping_id`, `reason`
 
 #### Stable IDs and enabled state
 
@@ -79,52 +73,29 @@ The 12 columns are:
 
 #### Modes
 
-- `slot`: copy one exact official NUN5 text value into one original NA2 slot.
-- `sequence`: pack selected exact `<br>` parts from one official NUN5 string into one verified NA2 multi-string block using NUL separators.
-- `shorten`: retain an `[S]` fallback/debt marker in `value` and an exact NUN5
-  source reference; the current integrated string patcher externalizes the
-  official text instead of writing the fallback inline.
-- `bytes`: fixed-size structural patch represented as `EXPECTED=>REPLACEMENT` in `value`.
+- `slot`: compile one replacement as a NUL-terminated string, inline when it
+  fits or externally when it overflows and has validated pointer references.
+- `sequence`: pack the `<NUL>`-delimited replacement fragments into one
+  verified NA2 multi-string block. Sequences must fit inline.
 
 Unresolved research does not belong in the executable mapping table. Preserve
 useful leads in `docs/HYPOTHESES.md`; discard contextless inventory and rely on
 Git history for recovery.
 
-There is no `pool` mapping mode. External placement is a `string_patcher`
-policy derived from the existing `shorten` rows and their canonical source
-references.
+There is no `shorten` or `pool` mapping mode. External placement is a
+`string_patcher` build decision, not canonical mapping state.
 
-#### Source references and transforms
+#### Informational provenance and transforms
 
-`source_ref` uses `SOURCE@OFFSET`, for example `NUN5_TEXTENG@0x29430`.
+`source` records the clean NA2 text. `donor_ref` uses `SOURCE@OFFSET`, for
+example `NUN5_TEXTENG@0x29430`, and `donor` records the corresponding donor
+text. These three fields are informational and never generate output bytes.
 
-Supported source-derived transforms:
-
-- `format_arg1`, `format_args`
-- `format_prefix_arg2`, `format_suffix_arg2`
-- `between_placeholders`, `after_placeholder2`
-- `split_br`, `split_br_sequence`, `join_br_parts`
-- `insert_br_after_words`
-- `flatten_br_slice`
-- `append_space`
-- `empty`
-
-Arguments use compact key/value syntax, for example:
-
-- `arg1=NUN5_TEXTENG@0x708`
-- `part=1`
-- `parts=2,3;join=<br>`
-- `words=3`
-- `start=13;end=83`
-
-`split_br_sequence` selects official NUN5 `<br>` parts listed by `parts=...` and writes them as consecutive NUL-terminated NA2 fragments.
-
-`insert_br_after_words` retains every word from one exact official NUN5 source
-string and inserts one `<br>` after the declared word count. The transform
-remains supported by the engine, but no current mapping uses it. The v34
-Collection Movie use was rejected and rolled back in v35.
-
-`flatten_br_slice` replaces each official NUN5 `<br>` with one space and selects a verified character range. It is used to distribute one official loading sentence across NA2's three original fixed slots without embedding manual prose.
+`replacement` contains the complete executable text. Most rows require no
+transform. `split_br` with `part=<index>` remains only for parent-message rows
+whose original inline slot contains one fragment while an external continuation
+must retain the complete replacement template. Sequence rows express their
+already-materialized fragments with `<NUL>`.
 
 ### Output
 
@@ -178,6 +149,40 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - NUN5 `<BLACK>` remains `<BLACK>` or becomes `<color000000>` according to the verified target form.
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
+
+### Version 39 changes
+
+#### Canonical-table and placement refactor
+
+Version 39 consolidates mapping semantics, provenance, and pointer references
+into one `mappings.tsv`. It removes the separate `references.tsv`, the four
+disabled structural-byte rows, the `shorten` mode, and every `[S]` fallback.
+The table now contains 2,177 mappings: 2,172 enabled and five disabled. Enabled
+rows comprise 2,168 `slot` and four `sequence` mappings.
+
+Every row stores its observed NA2 `source`, exact NUN5 `donor_ref` and `donor`,
+and complete executable `replacement`. Source and donor fields are
+informational. Historical donor transforms were materialized into replacement
+text; only three parent-message `split_br` views remain.
+
+After profile title policy is applied, `string_patcher` encodes each final
+replacement. A slot that fits is compiled inline. An overflowing slot is linked
+externally only when that same row declares validated pointer references;
+otherwise the build fails. Sequences must fit inline. This makes placement a
+deterministic build result rather than stored mapping state.
+
+The current clean build derives 32 external mapping rows, 34 pointer edits, and
+30 logical external messages at 29 distinct symbols. The one formerly
+externalized mapping whose full replacement fits (`M0743`) is now inline.
+Generated `PRG/228.BIN` is `0x700` bytes with SHA-256
+`36CFF1341AC14A5AC6DCE5D6640F4F082676CF576851E0BEAF393207C3EE16FB`.
+The compiled package remains 2,434 edits.
+
+A committed-HEAD versus refactored byte-parity reconstruction confirmed that
+no translated output changed. Target-file differences are limited to the new
+inline `M0743` slot, removal of its old redirect, and shifted external pointer
+addresses after that string left the compact pool. All other inline replacement
+bytes match the preceding pipeline.
 
 ### Version 38 changes
 
@@ -1127,24 +1132,25 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
 
 ## Compact external strings
 
-The integrated `string_patcher` externalizes only the official NUN5 text needed by the 33 enabled
-`[S]` shortening mappings. It does not change the canonical translation table,
-its defaults, its migration behavior, or its enabled state, and it never reads
-or patches `ADV.bin`.
+The integrated `string_patcher` externalizes only complete replacements whose
+final encoded text exceeds the original slot and whose mapping declares
+validated pointer references. Placement is recomputed at build time; the
+canonical translation table contains neither shortened fallbacks nor placement
+markers. The pipeline never reads or patches `ADV.bin`.
 
 The shared payload builder deterministically generates exactly one ISO insertion:
 
-- `PRG/228.BIN`: a `0x720`-byte resident MWO3 code/data image containing a
-  return-only entry stub and the 30 distinct official strings actually
-  referenced by the current 31 logical external messages.
+- `PRG/228.BIN`: a `0x700`-byte resident MWO3 code/data image containing a
+  return-only entry stub and the 29 distinct strings actually referenced by the
+  current 30 logical external messages.
 
 The translation importer resolves and validates the canonical mapping data and
 pointer inventory once.
 The consuming string patcher then:
 
-1. omits all imported edits belonging to the 33 `shorten` mappings, so the clean
-   NA2 slots are never overwritten and no restoration pass is needed;
-2. contributes the selected official strings as named payload fragments;
+1. encodes every final replacement and assigns the 32 overflowing mappings to
+   external storage while compiling every fitting mapping inline;
+2. contributes the selected complete replacements as named payload fragments;
 3. declares symbolic redirects for every inventoried use of those slots.
 
 The payload builder packs all feature contributions, assigns addresses, emits
@@ -1158,12 +1164,11 @@ payload is stored in Git.
 
 ### Canonical inputs
 
-- `translation_importer/references.tsv` inventories all 33 shortened mappings
-  and every verified pointer word. Three continuation rows deliberately reuse
-  their containing full-message pointer.
-- `translation_importer/mappings.tsv` and `references.tsv` are the importer's
-  only canonical feature-owned inputs.
-These files are covered by the Localization feature's aggregate profile hash.
+- `translation_importer/mappings.tsv` contains executable replacement text,
+  informational source/donor fields, and every optional pointer reference.
+  Three continuation rows deliberately reuse their containing full-message
+  pointer.
+This file is covered by the Localization feature's aggregate profile hash.
 Payload-builder configuration is executable infrastructure rather than feature
 data; engine code and documentation are excluded from the feature pin.
 
@@ -1174,19 +1179,19 @@ data; engine code and documentation are excluded from the feature pin.
 | `228.BIN` load base | `0x008F3D00` |
 | MOD entry | `0x008F3D40` |
 | String pool start | `0x008F3E00` |
-| `228.BIN` generated bytes | `0x720` |
-| Final resident boundary | `0x008F4420` |
+| `228.BIN` generated bytes | `0x700` |
+| Final resident boundary | `0x008F4400` |
 
 Strings are resolved through the importer, encoded as CP1252 plus a terminator,
 deduplicated by exact encoded bytes, contributed by symbol, and currently link in
 stable mapping-ID order at four-byte-aligned offsets. No feature owns these
-offsets. The strings occupy 1,512 bytes; M2003 and M2065 deliberately share one
+offsets. The strings occupy 1,479 bytes; M2003 and M2065 deliberately share one
 identical symbol. The generated payload has no constructor range; the
 infrastructure bootstrap loads it once and calls its documented return-only entry.
 
 ### Safety properties
 
-- exact mapping/ref counts and complete `[S]` coverage;
+- exact mapping/ref counts and fit-derived placement coverage;
 - fixed-length guarded edits only;
 - deterministic fragment linking, symbol resolution, payloads, and pointer order;
 - rejection of overlaps, stale original bytes, unexpected mappings, malformed

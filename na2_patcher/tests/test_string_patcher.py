@@ -15,8 +15,8 @@ class StringPatcherTests(unittest.TestCase):
 
     def test_import_consumer_needs_no_placeholder_feature_directory(self) -> None:
         self.assertFalse((self.localization / "string_patcher").exists())
-        self.assertTrue(
-            (self.localization / "translation_importer" / "references.tsv").is_file()
+        self.assertFalse(
+            (self.localization / "translation_importer" / "references.tsv").exists()
         )
 
     def test_allows_import_only_derived_consumer(self) -> None:

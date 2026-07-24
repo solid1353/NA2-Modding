@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import struct
 import unittest
+from dataclasses import replace
 from pathlib import Path
 
 from na2_patcher.composer import resolve_symbolic_patches
@@ -18,15 +19,14 @@ class IntegratedExternalStringTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.repository = Path(__file__).resolve().parents[2]
         paths = load_project_paths(cls.repository, allow_missing=True)
-        cls.roots = {"na2": paths.path("source_na2"), "nun5": paths.path("source_nun5")}
+        cls.roots = {"na2": paths.path("source_na2")}
         if not all(root.is_dir() for root in cls.roots.values()):
             raise unittest.SkipTest(
-                "External string verification requires extracted NA2 and NUN5 sources"
+                "External string verification requires the extracted NA2 source"
             )
         cls.localization = cls.repository / "na2_patcher/features/localization"
         cls.import_plan = translation_importer.build_translation_import_plan(
             na2_folder=cls.roots["na2"],
-            nun5_folder=cls.roots["nun5"],
             data_root=cls.localization / "translation_importer",
             apply="BTL,ETC,SLPS",
         )
@@ -48,7 +48,6 @@ class IntegratedExternalStringTests(unittest.TestCase):
         )
         cls.plan = string_patcher.finalize_translation_plan(
             None,
-            translation_plan=cls.import_plan,
             draft=cls.draft,
             build=cls.build,
             resolved_patches=cls.resolved,
@@ -60,36 +59,36 @@ class IntegratedExternalStringTests(unittest.TestCase):
             clean_boot=cls.import_plan.clean_targets["SLPS"],
         )
 
-    def test_shared_builder_produces_the_exact_v37_228_binary(self) -> None:
+    def test_shared_builder_produces_the_exact_fit_derived_228_binary(self) -> None:
         mod = self.build.payload
         self.assertEqual(self.build.output_path, "PRG/228.BIN")
-        self.assertEqual(len(mod), 0x720)
+        self.assertEqual(len(mod), 0x700)
         self.assertEqual(
             binary_patcher.data_sha256(mod),
-            "AD94B66F2916C0014A87D110F5807DC0F0F5D7E91615AE3F04EC970CFBA00E9F",
+            "36CFF1341AC14A5AC6DCE5D6640F4F082676CF576851E0BEAF393207C3EE16FB",
         )
         self.assertEqual(
             struct.unpack_from("<4s7I", mod, 0),
-            (b"MWo3", 8, 0x008F3D00, 0x40, 0x6D0, 0, 0x008F4420, 0x008F4420),
+            (b"MWo3", 8, 0x008F3D00, 0x40, 0x6B0, 0, 0x008F4400, 0x008F4400),
         )
         self.assertEqual(mod[0x20:0x28], b"228.bin\0")
         self.assertEqual(struct.unpack_from("<II", mod, 0x40), (0x03E00008, 0))
 
     def test_string_patcher_declares_fragments_and_symbolic_pointers_only(self) -> None:
-        self.assertEqual(len(self.draft.external_draft.fragments), 30)
-        self.assertEqual(len(self.draft.external_draft.symbolic_patches), 35)
-        self.assertEqual(len(self.plan.external_plan.resolved_patches), 35)
+        self.assertEqual(len(self.draft.external_draft.fragments), 29)
+        self.assertEqual(len(self.draft.external_draft.symbolic_patches), 34)
+        self.assertEqual(len(self.plan.external_plan.resolved_patches), 34)
         self.assertTrue(all(patch.kind == "redirect_pointer" for patch in self.resolved))
-        self.assertEqual(self.plan.summary["inline_shortening_imports_omitted"], 33)
-        self.assertEqual(self.plan.summary["external_binary_edits"], 35)
+        self.assertEqual(self.plan.summary["external_mappings"], 32)
+        self.assertEqual(self.plan.summary["external_binary_edits"], 34)
         self.assertEqual(self.plan.summary["compiled_binary_edits"], 2434)
 
     def test_pool_contains_only_referenced_strings_and_deduplicates_one_pair(self) -> None:
         summary = self.plan.summary["external_strings"]
-        self.assertEqual(summary["count"], 31)
-        self.assertEqual(summary["distinct"], 30)
-        self.assertEqual(summary["encoded_bytes"], 1512)
-        self.assertEqual(summary["derived"], 4)
+        self.assertEqual(summary["count"], 30)
+        self.assertEqual(summary["distinct"], 29)
+        self.assertEqual(summary["encoded_bytes"], 1479)
+        self.assertEqual(summary["derived"], 0)
         rows = {row["mapping_id"]: row for row in summary["rows"]}
         self.assertEqual(rows["M2003"]["runtime_address"], rows["M2065"]["runtime_address"])
         self.assertGreaterEqual(min(int(row["file_offset"], 0) for row in rows.values()), 0x100)
@@ -110,7 +109,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
     def test_project_title_policy_reaches_inline_sequence_and_parent_materializations(self) -> None:
         self.assertIn(
             "Naruto Shippuden: Ultimate Ninja 5",
-            self.import_plan.source_templates["M0823"],
+            self.import_plan.materialized_templates["M0823"],
         )
         self.assertEqual(
             self.import_plan.resolved_texts["M0823"],
@@ -129,6 +128,57 @@ class IntegratedExternalStringTests(unittest.TestCase):
         payload_text = self.build.payload.decode("cp1252", "ignore")
         self.assertIn("Narutimate Accel v2.28", payload_text)
         self.assertNotIn("Naruto Shippuden: Ultimate Ninja 5", payload_text)
+
+    def test_full_replacement_is_inline_when_it_fits_despite_reference_inventory(self) -> None:
+        self.assertNotIn("M0743", self.draft.external_draft.excluded_mapping_ids)
+        mapping = next(
+            row
+            for row in self.draft.translation_plan.text_mappings
+            if row["id"] == "M0743"
+        )
+        self.assertLess(
+            len(self.draft.translation_plan.resolved_texts["M0743"].encode("cp1252")),
+            int(mapping["capacity"]),
+        )
+        self.assertTrue(
+            any(
+                row["source_mapping_id"] == "M0743"
+                for row in self.draft.translation_plan.import_rows
+            )
+        )
+
+    def test_overflow_without_reference_fails_closed(self) -> None:
+        resolved = dict(self.draft.translation_plan.resolved_texts)
+        resolved["M0743"] = "X" * 200
+        plan = replace(
+            self.draft.translation_plan,
+            resolved_texts=resolved,
+            references=tuple(
+                row
+                for row in self.draft.translation_plan.references
+                if row.mapping_id != "M0743"
+            ),
+        )
+        with self.assertRaisesRegex(ValueError, "no pointer reference"):
+            string_patcher.build_translation_draft(
+                translation_plan=plan,
+                owner="localization.string_patcher",
+                title_policy=string_patcher.GameTitlePolicy(
+                    imported_title="missing title",
+                    output_title="different title",
+                    expected_mapping_count=0,
+                    expected_occurrence_count=0,
+                ),
+            )
+
+    def test_canonical_rows_have_complete_replacements_without_placement_state(self) -> None:
+        self.assertTrue(
+            all(row["mode"] in {"slot", "sequence"} for row in self.import_plan.text_mappings)
+        )
+        self.assertTrue(
+            all(not str(row["replacement"]).startswith("[S]") for row in self.import_plan.text_mappings)
+        )
+        self.assertEqual(len(self.import_plan.references), 33)
 
     def test_generic_choice_labels_preserve_official_case(self) -> None:
         self.assertEqual(self.import_plan.resolved_texts["M0566"], "No")

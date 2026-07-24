@@ -31,7 +31,6 @@ class _StringPreparation:
     provider: ProfileModule
     consumer: ProfileModule | None
     owner: str
-    import_plan: translation_importer_module.TranslationImportPlan
     draft: string_patcher_module.StringPatchDraft
 
 
@@ -71,8 +70,8 @@ def prepare_module_pipeline(profile: Profile) -> PreparedModulePipeline:
     """Prepare artifacts and link all shared payload contributions once."""
     ordered_modules = resolve_module_order(profile.modules)
     if any(module.module == "translation_importer" for module in ordered_modules):
-        if "na2" not in profile.roots or "nun5" not in profile.roots:
-            raise ValueError("Translation importer requires na2 and nun5 profile roots")
+        if "na2" not in profile.roots:
+            raise ValueError("Translation importer requires the na2 profile root")
 
     import_plans: dict[
         str, translation_importer_module.TranslationImportPlan
@@ -84,11 +83,9 @@ def prepare_module_pipeline(profile: Profile) -> PreparedModulePipeline:
             continue
         import_plan = translation_importer_module.build_translation_import_plan(
             **_translation_source_arguments(profile.roots["na2"], "na2"),
-            **_translation_source_arguments(profile.roots["nun5"], "nun5"),
             data_root=provider.input_path,
             apply="BTL,ETC,SLPS",
         )
-        import_plans[provider.module_id] = import_plan
         consumer = _bind_string_consumer(provider, ordered_modules)
         owner = (
             consumer.module_id
@@ -98,26 +95,27 @@ def prepare_module_pipeline(profile: Profile) -> PreparedModulePipeline:
         if owner in owners:
             raise ValueError(f"Duplicate prepared string-patcher owner: {owner}")
         owners.add(owner)
+        draft = string_patcher_module.build_translation_draft(
+            translation_plan=import_plan,
+            owner=owner,
+            title_policy=string_patcher_module.GameTitlePolicy(
+                imported_title=profile.identity.imported_game_title,
+                output_title=profile.identity.output_game_title,
+                expected_mapping_count=(
+                    profile.identity.game_title_mapping_count
+                ),
+                expected_occurrence_count=(
+                    profile.identity.game_title_occurrence_count
+                ),
+            ),
+        )
+        import_plans[provider.module_id] = draft.translation_plan
         preparations.append(
             _StringPreparation(
                 provider=provider,
                 consumer=consumer,
                 owner=owner,
-                import_plan=import_plan,
-                draft=string_patcher_module.build_translation_draft(
-                    translation_plan=import_plan,
-                    owner=owner,
-                    title_policy=string_patcher_module.GameTitlePolicy(
-                        imported_title=profile.identity.imported_game_title,
-                        output_title=profile.identity.output_game_title,
-                        expected_mapping_count=(
-                            profile.identity.game_title_mapping_count
-                        ),
-                        expected_occurrence_count=(
-                            profile.identity.game_title_occurrence_count
-                        ),
-                    ),
-                ),
+                draft=draft,
             )
         )
 
@@ -155,7 +153,6 @@ def prepare_module_pipeline(profile: Profile) -> PreparedModulePipeline:
                 if preparation.consumer is not None
                 else None
             ),
-            translation_plan=preparation.import_plan,
             draft=preparation.draft,
             build=payload_build,
             resolved_patches=resolved_by_owner.get(preparation.owner, ()),

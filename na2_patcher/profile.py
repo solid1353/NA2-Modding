@@ -28,7 +28,7 @@ BINARY_PATCHER_CONTROL_FILES = (
     "edits.tsv",
 )
 STRING_PATCHER_CONTROL_FILES = ("strings.tsv",)
-TRANSLATION_IMPORTER_CONTROL_FILES = ("mappings.tsv", "references.tsv")
+TRANSLATION_IMPORTER_CONTROL_FILES = ("mappings.tsv",)
 TEXTURE_PATCHER_CONTROL_FILES = (
     "containers.tsv",
     "mappings.tsv",

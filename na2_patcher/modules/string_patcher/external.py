@@ -39,6 +39,67 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest().upper()
 
 
+def _external_mapping_ids(
+    translation_plan: translation_importer.TranslationImportPlan,
+) -> frozenset[str]:
+    reference_ids = {row.mapping_id for row in translation_plan.references}
+    external: set[str] = set()
+    for row in translation_plan.text_mappings:
+        mapping_id = str(row["id"])
+        target = str(row["target"])
+        capacity = int(row["capacity"])
+        label = f"{mapping_id} {target} 0x{int(row['target_offset']):X}"
+        if row["mode"] == "sequence":
+            fragments = translation_plan.resolved_sequences[mapping_id]
+            target_fragments, _ = translation_importer.read_target_sequence(
+                translation_plan.clean_targets[target],
+                int(row["target_offset"]),
+                capacity,
+                label,
+            )
+            target_context = "<NUL>".join(target_fragments)
+            fragments = tuple(
+                translation_importer.adapt_source_markup(
+                    fragment, target_context, label
+                )
+                for fragment in fragments
+            )
+            encoded_size = (
+                sum(len(fragment.encode("cp1252")) + 1 for fragment in fragments)
+                + 1
+            )
+            if encoded_size > capacity:
+                raise ValueError(
+                    f"{label}: replacement sequence is {encoded_size} bytes "
+                    f"but inline block allows {capacity}; sequences cannot be externalized"
+                )
+            continue
+        target_text, _ = translation_importer.read_target_slot(
+            translation_plan.clean_targets[target],
+            int(row["target_offset"]),
+            capacity,
+            label,
+        )
+        replacement = translation_importer.adapt_source_markup(
+            translation_plan.resolved_texts[mapping_id],
+            target_text,
+            label,
+        )
+        translation_importer.validate_semantic_replacement(
+            replacement, target_text, label
+        )
+        encoded_size = len(replacement.encode("cp1252"))
+        if encoded_size <= capacity - 1:
+            continue
+        if mapping_id not in reference_ids:
+            raise ValueError(
+                f"{label}: replacement is {encoded_size} bytes but slot allows "
+                f"{capacity - 1}, and no pointer reference is declared"
+            )
+        external.add(mapping_id)
+    return frozenset(external)
+
+
 def _materialized_strings(
     translation_plan: translation_importer.TranslationImportPlan,
     *,
@@ -50,23 +111,19 @@ def _materialized_strings(
     frozenset[str],
 ]:
     text_by_id = {str(row["id"]): row for row in translation_plan.text_mappings}
-    shortening_ids = frozenset(
-        mapping_id
-        for mapping_id, row in text_by_id.items()
-        if row["mode"] == "shorten"
+    external_ids = _external_mapping_ids(translation_plan)
+    active_references = tuple(
+        row
+        for row in translation_plan.references
+        if row.mapping_id in external_ids
     )
-    reference_ids = frozenset(row.mapping_id for row in translation_plan.references)
-    if reference_ids != shortening_ids:
-        raise ValueError(
-            "external string reference coverage differs from shortening mappings"
-        )
     parent_ids = {
         row.parent_mapping_id
-        for row in translation_plan.references
+        for row in active_references
         if row.parent_mapping_id is not None
     }
     effective_ids = {
-        row.parent_mapping_id or row.mapping_id for row in translation_plan.references
+        row.parent_mapping_id or row.mapping_id for row in active_references
     }
 
     encoded_by_symbol: dict[str, bytes] = {}
@@ -81,8 +138,18 @@ def _materialized_strings(
         else:
             text = translation_plan.resolved_texts[mapping_id]
             materialization = (
-                "packed_derived" if str(mapping["transform"]) else "packed_donor"
+                "packed_derived" if str(mapping["transform"]) else "packed_replacement"
             )
+        target = str(mapping["target"])
+        target_text, _ = translation_importer.read_target_slot(
+            translation_plan.clean_targets[target],
+            int(mapping["target_offset"]),
+            int(mapping["capacity"]),
+            mapping_id,
+        )
+        text = translation_importer.adapt_source_markup(
+            text, target_text, mapping_id
+        )
         encoded = text.encode("cp1252") + b"\0"
         symbol = symbol_by_payload.get(encoded)
         if symbol is None:
@@ -101,7 +168,7 @@ def _materialized_strings(
                 "text_sha256": sha256(encoded[:-1]),
             }
         )
-    return encoded_by_symbol, symbol_by_mapping, rows, shortening_ids
+    return encoded_by_symbol, symbol_by_mapping, rows, external_ids
 
 
 def _symbolic_pointer_patches(
@@ -109,9 +176,12 @@ def _symbolic_pointer_patches(
     symbol_by_mapping: dict[str, str],
     *,
     owner: str,
+    external_mapping_ids: frozenset[str],
 ) -> tuple[SymbolicPatch, ...]:
     patches: dict[tuple[str, int], SymbolicPatch] = {}
     for reference in translation_plan.references:
+        if reference.mapping_id not in external_mapping_ids:
+            continue
         effective_id = reference.parent_mapping_id or reference.mapping_id
         symbol = symbol_by_mapping[effective_id]
         expected_address = (
@@ -160,7 +230,7 @@ def build_external_string_draft(
     translation_plan: translation_importer.TranslationImportPlan,
     owner: str,
 ) -> ExternalStringDraft:
-    encoded, symbol_by_mapping, rows, shortening_ids = _materialized_strings(
+    encoded, symbol_by_mapping, rows, external_ids = _materialized_strings(
         translation_plan,
         owner=owner,
     )
@@ -175,7 +245,10 @@ def build_external_string_draft(
         for symbol, payload in sorted(encoded.items())
     )
     symbolic_patches = _symbolic_pointer_patches(
-        translation_plan, symbol_by_mapping, owner=owner
+        translation_plan,
+        symbol_by_mapping,
+        owner=owner,
+        external_mapping_ids=external_ids,
     )
     counts = Counter(
         row["materialization"] for row in rows
@@ -188,14 +261,14 @@ def build_external_string_draft(
             "derived": counts["packed_derived"],
         },
         "symbolic_pointer_edits": len(symbolic_patches),
-        "inline_shortening_imports_omitted": len(shortening_ids),
+        "external_mappings": len(external_ids),
     }
     return ExternalStringDraft(
         fragments=fragments,
         symbolic_patches=symbolic_patches,
         rows=tuple(rows),
         summary=summary,
-        excluded_mapping_ids=shortening_ids,
+        excluded_mapping_ids=external_ids,
     )
 
 

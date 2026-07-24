@@ -62,12 +62,6 @@ class ProfileTests(unittest.TestCase):
             (module / "strings.tsv").write_text("string_id\n", encoding="utf-8")
         elif module_type == "translation_importer":
             (module / "mappings.tsv").write_text("id\n", encoding="utf-8")
-            (module / "references.tsv").write_text(
-                "mapping_id\ttarget\ttarget_file_offset\ttarget_runtime_address\t"
-                "resolution\treference_binary\treference_file_offsets\t"
-                "parent_mapping_id\tparent_file_offset\tparent_runtime_address\n",
-                encoding="utf-8",
-            )
         elif module_type == "texture_patcher":
             for name in ("containers.tsv", "mappings.tsv", "strategies.tsv"):
                 (module / name).write_text("id\n", encoding="utf-8")

@@ -12,19 +12,19 @@ expanding the ISO image or adding a renderer hook. `228.BIN` is a resident MWO3
 type-8 code/data image: it has a return-only entry stub followed by the compact
 official string pool.
 
-It externalizes only the messages needed to eliminate the 33 enabled `[S]`
-`shorten` fallbacks. All 33 are statically addressable: 30 rows have direct
-address references and three continuation rows are covered through their
-containing full-message pointer. The inventory resolves to 35 distinct pointer
-words and 31 logical external messages at 30 distinct encoded locations.
+It externalizes only complete replacements whose final encoded text does not
+fit its original slot. Thirty-two current rows overflow: 29 have direct address
+references and three continuation rows are covered through their containing
+full-message pointer. The inventory resolves to 34 distinct pointer words and
+30 logical external messages at 29 distinct encoded locations.
 Consequently, the design does not need a renderer hook or post-load pointer
 rewrite.
 
 The original two-file prototype copied the complete NUN5 `TEXTENG.BIN` and
 loaded a separate 256-byte MOD bootstrap. That proved the loader, ISO insertion,
 and resident-address strategy, but more than 99 percent of the copied text file
-was unused. The compact design keeps only 1,512 encoded bytes plus alignment and
-one small MWO3 envelope, for a deterministic `0x720`-byte `228.BIN`.
+was unused. The compact design keeps only 1,479 encoded bytes plus alignment and
+one small MWO3 envelope, for a deterministic `0x700`-byte `228.BIN`.
 
 ### What `TEXTENG.BIN` contains
 
@@ -45,9 +45,9 @@ code and not merely concatenated text. The remaining 80 in-range words were not
 classified and may include non-string structures or incidental values.
 
 The current NA2 integration does not adopt NUN5's language accessor system or
-consume the donor's pointer tables. The importer resolves the same 31 logical
-messages from canonical mapping provenance, applies four existing transforms,
-encodes them as CP1252 plus terminators, and packs the 30 distinct byte strings
+consume the donor's pointer tables. The importer resolves the same 30 logical
+messages from canonical replacement text, applies profile title policy,
+encodes them as CP1252 plus terminators, and packs the 29 distinct byte strings
 at four-byte-aligned offsets. M2003 and M2065 share one byte-identical value.
 
 ## Evidence and provenance
@@ -167,7 +167,7 @@ The implemented minimal reservation is:
 | --- | ---: | ---: | ---: |
 | Existing NA2 overlays | `0x006B3F00` | `0x229180` | `0x008DD080` |
 | Safety gap | `0x008DD080` | `0x16C80` | `0x008F3D00` |
-| Compact `228.BIN` envelope | `0x008F3D00` | `0x720` | `0x008F4420` |
+| Compact `228.BIN` envelope | `0x008F3D00` | `0x700` | `0x008F4400` |
 
 Moving the final marker is a structural patch, not merely a program-header
 edit. Four NA2 instruction pairs construct the current `0x008DD080` boundary:
@@ -214,9 +214,10 @@ Compact MOD generation is deterministic and reproducible:
 
 - use a stable mapping-ID order and CP1252 encoding;
 - obtain the exact official string through each mapping's existing
-  `source_ref` and transform metadata;
-- keep the current mapping table unchanged; the importer passes its validated
-  semantic data and pointer inventory directly to `string_patcher`;
+  complete canonical replacement and optional transform metadata;
+- keep provenance and executable replacement text in the same mapping row; the
+  importer passes its validated semantic data and pointer inventory directly
+  to `string_patcher`;
 - emit one full official message for each continuation group, rather than
   separately addressing the continuation fragments;
 - deduplicate byte-identical strings only when every affected pointer is
@@ -228,17 +229,17 @@ The generated output is:
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `PRG/228.BIN` | 1,824 | `AD94B66F2916C0014A87D110F5807DC0F0F5D7E91615AE3F04EC970CFBA00E9F` |
+| `PRG/228.BIN` | 1,792 | `36CFF1341AC14A5AC6DCE5D6640F4F082676CF576851E0BEAF393207C3EE16FB` |
 
-The pool starts at file offset `0x100`. Thirty distinct terminated strings use
-1,512 bytes before alignment, and the linked output rounds to `0x720`.
+The pool starts at file offset `0x100`. Twenty-nine distinct terminated strings
+use 1,479 bytes before alignment, and the linked output rounds to `0x700`.
 
 The three continuation mappings are M0812 through parent M0810, M0820 through
 parent M0818, and M0825 through parent M0823. M0823 is an enabled `slot` row,
-not an `[S]` row, but the external pool must emit its complete official message
+not itself an overflowing row, but the external pool must emit its complete message
 to make the M0825 continuation reachable through that one parent pointer. The
-complete reusable inventory is now canonical module data in
-`na2_patcher/features/localization/translation_importer/references.tsv`.
+complete reusable inventory is folded into the applicable rows in
+`na2_patcher/features/localization/translation_importer/mappings.tsv`.
 
 BTL and ETC themselves contain the applicable pointer words. A static patch to
 those files is therefore restored whenever the overlay loads; no post-load
@@ -249,9 +250,9 @@ outside the BTL/ETC overwrite region.
 
 External placement is integrated across the existing importer/string-patcher
 pipeline; there is no separate `external_translation` module. The importer owns
-source resolution, provenance validation, and pointer references. The mapping
-schema, values, defaults, migration behavior, and enabled state remain
-unchanged. The shared payload builder owns final layout and global integration.
+canonical replacement/provenance data and pointer references. The string
+patcher owns the deterministic encoded-fit decision. The shared payload builder
+owns final layout and global integration.
 
 The resulting pipeline owns:
 
@@ -261,13 +262,13 @@ The resulting pipeline owns:
 - a machine-readable patch log for every binary write;
 - one insertion request through the general compositor interface.
 
-The translation importer produces validated rows, resolved mapping/source data,
-and the reference inventory. `string_patcher` filters the 33 `shorten` import
-rows before they become binary edits, contributes 30 unique string fragments,
-and declares 35 symbolic redirects. `payload_builder` links those fragments and
+The translation importer produces validated rows, resolved replacement/source
+data, and the reference inventory. `string_patcher` derives 32 external rows,
+contributes 29 unique string fragments, and declares 34 symbolic redirects.
+`payload_builder` links those fragments and
 owns the 15 loader/layout edits; all concrete writes are delegated to
-`binary_patcher`. Therefore there is no write-then-restore pass. The `[S]`
-values remain canonical fallback/debt markers. `ADV.bin` remains excluded.
+`binary_patcher`. Therefore there is no write-then-restore pass and no
+shortened fallback state. `ADV.bin` remains excluded.
 
 ## ISO integration constraint
 
@@ -309,12 +310,12 @@ Implemented and covered by focused tests:
 1. A dependency-free MIPS encoder generates the payload-builder ELF bootstrap; exact
    instruction-word tests verify its loader, MOD-entry, constructor calls, and
    return.
-2. `228.BIN` is exactly `0x720` bytes, has a pinned hash, and every emitted
+2. `228.BIN` is exactly `0x700` bytes, has a pinned hash, and every emitted
    pointer lies within its declared compact string image.
-3. Generation resolves all 33 selected mappings as 30 direct rows and three
-   parent-message continuations, produces 35 distinct pointer writes, omits all
-   33 inline fallback mappings, and refuses any count or original-byte mismatch.
-4. The 35 string redirects and 15 infrastructure edits remain separately owned;
+3. Generation derives 32 external mappings as 29 direct rows and three
+   parent-message continuations, produces 34 distinct pointer writes, compiles
+   every fitting replacement inline, and refuses any original-byte mismatch.
+4. The 34 string redirects and 15 infrastructure edits remain separately owned;
    the final marker and every hardcoded boundary site still change together.
 5. The Project-owned compositor validates the ISO9660/UDF insertion, its record,
    extent, bytes, hash, fixed image size, original files, and final
@@ -325,7 +326,7 @@ Confirmed at runtime:
 1. The preceding two-file ISO loaded both external PRG files and worked in-game
    without adding either path to `FLIST.DIR`. The compact one-file Candidate
    completed a hidden 15-second PCSX2 boot with CRC `18BBBDC0`; representative
-   visible shortened-string screens remain untested.
+   visible external-string screens remain untested.
 2. Eight matched vanilla/Current captures cover title, mode select, active
    Adventure, character select, active battle, Shop, Collection, and Options.
    The Current heap remains valid in all eight; active Adventure is the tightest
@@ -337,5 +338,5 @@ Still required at runtime:
 
 1. Exercise result, save/load, and repeated mode transitions to extend the
    smaller-heap stress coverage beyond the representative capture set.
-2. Visit representative shortened-string screens and confirm the full official
+2. Visit representative external-string screens and confirm the full
    strings render from external memory.

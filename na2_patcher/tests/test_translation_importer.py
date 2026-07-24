@@ -33,10 +33,15 @@ class TranslationImporterTests(unittest.TestCase):
             "target": "SLPS",
             "target_offset": "0",
             "capacity": "8",
-            "source_ref": "",
+            "source": "",
+            "donor_ref": "",
+            "donor": "",
+            "replacement": "",
             "transform": "",
             "arguments": "",
-            "value": "",
+            "reference_binary": "",
+            "reference_file_offsets": "",
+            "parent_mapping_id": "",
             "reason": "research does not belong in executable mappings",
         }
         with self.assertRaisesRegex(ValueError, "unsupported mode"):
@@ -49,77 +54,61 @@ class TranslationImporterTests(unittest.TestCase):
     def test_allows_placeholder_word_for_visible_target(self) -> None:
         engine.validate_semantic_replacement("Unknown", "<r不明|ふめい>", "visible")
 
-    def test_empty_transform_is_explicit(self) -> None:
+    def test_empty_replacement_is_explicit(self) -> None:
         row = {
-            "source": "NUN5_TEXTENG",
-            "source_offset": 0,
-            "transform": "empty",
+            "replacement": "",
+            "transform": "",
             "arguments": {},
         }
-        self.assertEqual(
-            engine.resolve_source_text(row, {"NUN5_TEXTENG": b"Finished\x00"}, "M0822"),
-            "",
-        )
+        self.assertEqual(engine.resolve_replacement_text(row, "M0822"), "")
 
-    def test_importer_preserves_official_game_title(self) -> None:
+    def test_importer_preserves_canonical_game_title_replacement(self) -> None:
         mappings = [
             {
                 "id": "MTEST",
                 "target": "SLPS",
                 "mode": "slot",
-                "source": "NUN5_TEXTENG",
-                "source_offset": 0,
+                "source": "clean Japanese title",
+                "donor": "Create Naruto Shippuden: Ultimate Ninja 5 data?",
+                "replacement": "Create Naruto Shippuden: Ultimate Ninja 5 data?",
                 "transform": "",
                 "arguments": {},
             }
         ]
-        resolved, sequences, templates, materialized = (
+        resolved, sequences, sources, donors, materialized = (
             engine.resolve_text_materializations(
                 mappings,
                 {"SLPS"},
-                {
-                    "NUN5_TEXTENG": (
-                        b"Create Naruto Shippuden: Ultimate Ninja 5 data?\x00"
-                    )
-                },
             )
         )
         self.assertEqual(sequences, {})
+        self.assertEqual(sources["MTEST"], "clean Japanese title")
         self.assertEqual(
-            templates["MTEST"],
+            donors["MTEST"],
             "Create Naruto Shippuden: Ultimate Ninja 5 data?",
         )
-        self.assertEqual(resolved["MTEST"], templates["MTEST"])
+        self.assertEqual(resolved["MTEST"], donors["MTEST"])
         self.assertEqual(materialized["MTEST"], resolved["MTEST"])
 
-    def test_insert_br_after_words_preserves_official_text(self) -> None:
-        source = b"Sealing Jutsu: Nine Phantom Dragons\x00"
+    def test_split_br_is_a_view_of_the_complete_replacement(self) -> None:
         row = {
-            "source": "NUN5_TEXTENG",
-            "source_offset": 0,
-            "transform": "insert_br_after_words",
-            "arguments": {"words": "3"},
+            "replacement": "First line<br>Second line",
+            "transform": "split_br",
+            "arguments": {"part": "0"},
         }
-
         self.assertEqual(
-            engine.resolve_source_text(row, {"NUN5_TEXTENG": source}, "movie"),
-            "Sealing Jutsu: Nine<br>Phantom Dragons",
+            engine.resolve_replacement_text(row, "parent"),
+            "First line",
         )
 
-    def test_insert_br_after_words_rejects_non_boundary_counts(self) -> None:
-        source = b"Fourth Awakened Mode\x00"
-        for count in ("0", "3"):
-            with self.subTest(count=count):
-                row = {
-                    "source": "NUN5_TEXTENG",
-                    "source_offset": 0,
-                    "transform": "insert_br_after_words",
-                    "arguments": {"words": count},
-                }
-                with self.assertRaisesRegex(ValueError, "word break"):
-                    engine.resolve_source_text(
-                        row, {"NUN5_TEXTENG": source}, "movie"
-                    )
+    def test_split_br_rejects_out_of_range_part(self) -> None:
+        row = {
+            "replacement": "First line<br>Second line",
+            "transform": "split_br",
+            "arguments": {"part": "2"},
+        }
+        with self.assertRaisesRegex(ValueError, "outside 2 parts"):
+            engine.resolve_replacement_text(row, "parent")
 
 
 if __name__ == "__main__":

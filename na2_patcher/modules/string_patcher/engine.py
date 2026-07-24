@@ -122,44 +122,8 @@ def _apply_game_title_policy(
         mapping_id: text.replace(policy.imported_title, policy.output_title)
         for mapping_id, text in plan.materialized_templates.items()
     }
-    selected_list = [
-        target
-        for target in translation_importer.TARGET_SPECS
-        if target in plan.clean_targets
-    ]
-    selected = set(selected_list)
-    output_targets = {
-        target: bytearray(plan.clean_targets[target]) for target in selected_list
-    }
-    text_annotations, _, _ = translation_importer.apply_text_mappings(
-        plan.text_mappings,
-        selected,
-        plan.clean_targets,
-        output_targets,
-        resolved_texts,
-        resolved_sequences,
-    )
-    byte_annotations, _, _ = translation_importer.apply_byte_mappings(
-        plan.byte_mappings, selected, output_targets
-    )
-    annotations = text_annotations + byte_annotations
-    import_rows: list[dict[str, str]] = []
-    for target in selected_list:
-        path = translation_importer.TARGET_SPECS[target][0]
-        rows = translation_importer.diff_rows(
-            path,
-            plan.clean_targets[target],
-            bytes(output_targets[target]),
-            annotations,
-        )
-        for row in rows:
-            row["import_id"] = f"{target}-I{len(import_rows) + 1:04d}"
-            row["group_id"] = target
-            import_rows.append(row)
-
     return replace(
         plan,
-        import_rows=import_rows,
         resolved_texts=resolved_texts,
         resolved_sequences=resolved_sequences,
         materialized_templates=materialized_templates,
@@ -549,12 +513,17 @@ def build_translation_draft(
 ) -> StringPatchDraft:
     """Declare external text fragments and symbolic pointer writes."""
     transformed_plan = _apply_game_title_policy(translation_plan, title_policy)
+    external_draft = external_strings.build_external_string_draft(
+        translation_plan=transformed_plan,
+        owner=owner,
+    )
+    transformed_plan = translation_importer.compile_inline_imports(
+        transformed_plan,
+        excluded_mapping_ids=external_draft.excluded_mapping_ids,
+    )
     return StringPatchDraft(
         translation_plan=transformed_plan,
-        external_draft=external_strings.build_external_string_draft(
-            translation_plan=transformed_plan,
-            owner=owner,
-        ),
+        external_draft=external_draft,
         game_title_policy={
             "imported_title": title_policy.imported_title,
             "output_title": title_policy.output_title,
@@ -567,7 +536,6 @@ def build_translation_draft(
 def finalize_translation_plan(
     directory: Path | None,
     *,
-    translation_plan: translation_importer.TranslationImportPlan,
     draft: StringPatchDraft,
     build: ResidentPayloadBuild | None,
     resolved_patches: tuple[ResolvedPatch, ...],
@@ -592,12 +560,7 @@ def finalize_translation_plan(
         }
         for index, edit in enumerate(external_plan.resolved_patches, 1)
     )
-    inline_rows = tuple(
-        row
-        for row in translation_plan.import_rows
-        if str(row.get("source_mapping_id", "")).strip()
-        not in external_plan.excluded_mapping_ids
-    )
+    inline_rows = tuple(translation_plan.import_rows)
     package = build_binary_package(
         directory,
         imported_rows=inline_rows + external_rows,

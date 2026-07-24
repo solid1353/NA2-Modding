@@ -1,4 +1,0 @@
-patch_id	relation	related_patch_id
-font_m02_elf_aligned_metrics	requires	font_m01_elf_coverage
-font_m01_elf_coverage	conflicts	font_v22_elf_ascii_cell_width
-font_v23_elf_zero_tracking	requires	font_v22_elf_ascii_cell_width

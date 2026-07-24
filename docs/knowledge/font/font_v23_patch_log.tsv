@@ -1,2 +1,0 @@
-file	offset	original_hex	new_hex	reason
-SLPS_258.37	0x866E0	80BF023C	0000023C	Match NUN5 ASCII-mode horizontal tracking: 0.0 instead of NA2 -1.0

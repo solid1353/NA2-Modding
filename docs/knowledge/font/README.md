@@ -1,7 +1,11 @@
 # Font renderer and asset findings
 
 This directory preserves confirmed visual, structural, and byte-level Font
-evidence, including accepted implementations and rejected historical tests.
+evidence in this file and the focused matched-savestate report. Raw schema-v1
+replicas of retired m01/v22/v23 packages and the rejected palette experiment
+were removed after their reusable conclusions were consolidated here. They
+remain recoverable from Git commit `69da715`; they are not implementation
+parents or active patch inputs.
 
 ## Current savestate comparison
 
@@ -19,7 +23,7 @@ The current patch set is version 5. Its former standalone profile module pin was
 and its former standalone feature pin was
 `23A2CFDD285FF00A40F35AC42D0656580E4D9DE5884F2CF568453A20E93AA3A7`.
 The current profile now covers it through the complete Localization feature pin
-`2DDBDFF59F6C1984064138A261612D49EEF0E301E7C05AA3CFC0F29716B15FAD`.
+`8C0E68716AC2C26491551CB48478202FCB386BB673E95737DACAB9563FAA3431`.
 It is a new, deterministic donor built from hash-verified clean NA2 and
 official NUN5 inputs; it is not based on m01, v22/v23, the rejected semantic
 palette swap, the 10x22 resample, or a whole-file GF4 replacement.
@@ -37,7 +41,7 @@ these referenced blobs:
 - packed map: 1,736 bytes, SHA-256
   `6F691015E5BA54EA87B2976970D828863E274BB543CC3D531D93800018EB7A5E`;
 - decoder: 316 bytes, SHA-256
-  `06406ABC5E10AD85A13ECFA4396064354CC0FD85EE090FA5AEEA4040EE62D8F7`;
+  `C65B283CCBF7A8CCFF59DB7D96CC2A87731B6AD2BE142E37A088BEE6BFF9D70F`;
 - measurement hook: 24 bytes, SHA-256
   `8B7A75C0FDFD2F055ACFC1FCF90996E298CE363E112659579513A89606FE7C1C`.
 
@@ -409,22 +413,29 @@ A controlled clean boot reported `SLPS-22228`, CRC `F3F4C52B`; read-only PINE
 verification matched all 78 changed Font words and confirmed the rejected
 quad-height word was absent.
 
-## Experiment
+## Historical v23 zero-tracking negative result
 
-The test changed `SLPS_258.37` at file offset `0x866E0` from `80 BF 02 3C` to `00 00 02 3C`. The intended effect was to match the NUN5 ASCII-mode horizontal-tracking initialization (`0.0` instead of NA2's `-1.0`). The exact operation is retained in `font_v23_patch_log.tsv` and canonically normalized as `font_v23_elf_zero_tracking` in `docs/knowledge/font/history/font_elf_history/`.
+The test changed `SLPS_258.37` at file offset `0x866E0` from
+`80 BF 02 3C` to `00 00 02 3C`. The intended effect was to match the NUN5
+ASCII-mode horizontal-tracking initialization (`0.0` instead of NA2's
+`-1.0`). The user observed no meaningful visual improvement over the preceding
+v22 state: English text remained oversized/chunky, spacing remained
+inconsistent, and long Controls-menu entries remained clipped.
 
-## Observed result
+Do not repeat this single-field tracking patch as a standalone fix. It does
+not prove that tracking or `FUN_00186510` is irrelevant; later analysis showed
+that tracking zero must be paired with the correct ordinary-space and boxed
+measurement behavior. The deleted one-row patch log and comparison screenshot
+remain recoverable from commit `69da715`.
 
-The user observed no meaningful visual improvement over the preceding v22 state. English text remained oversized/chunky, spacing remained inconsistent, and long Controls-menu entries remained clipped. `font_v23_no_visible_change.png` is the final comparison screenshot.
-
-This is a useful negative result: do not repeat this single-field tracking patch as a new proposed fix. It does not prove that tracking or `FUN_00186510` is irrelevant, only that changing this one initialization value did not solve the visible problems in the tested build.
-
-## Surrounding confirmed observations
+Surrounding confirmed observations:
 
 - NA2 and NUN5 `GF4C.BIN` are both 104 bytes but diverge from offset `0x28`; the v22 and v23 experiments used the NUN5 variant. Its independent functional significance remains unproven.
 - Replacing NA2 GF4 with the exact NUN5 GF4, padded or unpadded, produced broad spacing but patchy glyph rendering and could disrupt PNACH behavior. Do not repeat that direct swap as a new hypothesis.
 - The v22 state was clean and closer to NUN5, but glyphs could touch or overlap and long text still clipped.
-- `docs/knowledge/font/history/font_m01/` preserves the declarative reconstruction of the accepted clean-coverage font state. Historical ELF experiments, including v23, are normalized under `docs/knowledge/font/history/font_elf_history/`. Neither directory is an active patch set.
+- The retired declarative m01, m02, v22, v23, and semantic-palette records are
+  recoverable from commit `69da715`. Their useful conclusions are consolidated
+  in this document; none is an active patch set or implementation parent.
 
 The remaining font work still separates into glyph appearance, positioning/advance behavior, and missing NUN5-style auto-fit/squish. Reuse applicable historical evidence from Git history and maintain current analysis under `@analysis/disassembly/NA2/` and `@analysis/disassembly/NUN5/`, never under `@source/`.
 

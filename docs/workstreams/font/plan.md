@@ -125,14 +125,11 @@ Save/Load and Practice remain outside the Controls fit decision.
   runtime-proven native secondary font, alignment, and fit components. It
   targets clean `SLPS_258.37` and `DATA/GF4.BIN`, preserves clean GF4C, and
   is covered by the current Localization aggregate feature pin
-  `2DDBDFF59F6C1984064138A261612D49EEF0E301E7C05AA3CFC0F29716B15FAD`.
-- `docs/knowledge/font/history/font_m01/` is historical evidence, deliberately
-  kept outside active patch-set discovery.
-  Its semantic NUN5 appearance patch is disabled and `runtime_failed`.
-- `docs/knowledge/font/history/font_elf_history/` preserves historical ELF
-  experiments outside active patch-set discovery.
-- `docs/knowledge/font/README.md` records the v23 and 2026-07-19 auto-fit
-  negative results.
+  `8C0E68716AC2C26491551CB48478202FCB386BB673E95737DACAB9563FAA3431`.
+- `docs/knowledge/font/README.md` consolidates the v23, semantic-palette, and
+  2026-07-19 auto-fit negative results. The retired raw declarative records
+  are recoverable from Git commit `69da715` and are not retained in the
+  working tree.
 - Reuse the preserved NA2 and NUN5 analysis under
   `@analysis/disassembly/NA2/` and `@analysis/disassembly/NUN5/`.
 

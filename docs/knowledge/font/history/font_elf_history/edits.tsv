@@ -1,8 +1,0 @@
-edit_id	patch_id	order	destination_target_id	destination_offset	operation	length	expected_hex	expected_sha256	replacement_hex	source_target_id	source_offset	source_expected_hex	source_expected_sha256	blob_path	blob_offset	blob_sha256	fill_hex	reason
-font_m01_e01	font_m01_elf_coverage	10	na2_elf	0x8736C	replace	4	50006010		00000000									Disable the original coverage branch as frozen in font milestone m01.
-font_m01_e02	font_m01_elf_coverage	20	na2_elf	0x87374	replace	4	6800638E		6400638E									Use the accepted coverage bound from font milestone m01.
-font_m01_e03	font_m01_elf_coverage	30	na2_elf	0x5074B0	replace	4	4D495053		11493043									Preserve the exact accepted m01 ELF output marker/check value.
-font_m02_e01	font_m02_elf_aligned_metrics	10	na2_elf	0x85548	replace	4	17006010		00000000									Disable the first original metric branch as frozen in milestone m02.
-font_m02_e02	font_m02_elf_aligned_metrics	20	na2_elf	0x857E8	replace	4	17006010		00000000									Disable the second original metric branch as frozen in milestone m02.
-font_v22_e01	font_v22_elf_ascii_cell_width	10	na2_elf	0x88064	replace	4	0C0020C6		100020C6									Use the tested v22 ASCII cell-width constant.
-font_v23_e01	font_v23_elf_zero_tracking	10	na2_elf	0x866E0	replace	4	80BF023C		0000023C									Test NUN5-style zero ASCII tracking; retained only as a failed historical hypothesis.

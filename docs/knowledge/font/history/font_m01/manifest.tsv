@@ -1,2 +1,0 @@
-schema_version	package_id	package_version	game	description	evidence_path
-1	font_m01	4	NA2	Historical font_m01 baseline plus a disabled runtime-failed semantic NUN5 palette and glyph experiment.	docs/knowledge/font/README.md

@@ -7,7 +7,6 @@
 
 ### [Font](docs/workstreams/font/README.md)
 - [Investigate](work/__sstates/translation/font)
-    * Make font identical to UN5.
     * Implement proper autofit/positions everywhere.
 
 ### [UI Translation](docs/workstreams/ui_translation/README.md)

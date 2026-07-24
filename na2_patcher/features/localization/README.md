@@ -643,12 +643,12 @@ from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
 ### Safety and reproducibility
 
 - `containers.tsv` pins every clean NA2 target and official NUN5 donor member.
-- `mappings.tsv` records 76 reviewed texture relationships.
+- `mappings.tsv` records 148 reviewed texture relationships.
 - `strategies.tsv` pins each derived fixed-size replacement hash and its
   decompressed CCS payload hash.
-- All 34 derived replacements preserve their original NA2 member size and
+- All 95 derived replacements preserve their original NA2 member size and
   therefore do not move a `DATA.CVM` member or ISO extent. Their fixed ranges
-  total 5,274,398 bytes.
+  total 6,222,874 bytes.
 - Thirty-three `whole` strategies import the complete NUN5 CCS payload so pixels,
   models, UVs, layout, and animation data remain coupled.
 - `HOME.CCS` is a whole donor because its official collection headers,
@@ -657,9 +657,13 @@ from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
 - `MAPSEL1.CCS` is a whole donor because its stage-picture association/order,
   object layout, models, UVs, and labels must match NUN5 together. The stage
   picture pixels already matched; retaining NA2's structure caused the defect.
-- Mapped `copy` support remains available for future reviewed exceptions and
-  retains the first container-local TEX palette reference, but no production
-  strategy currently uses that transform.
+- Sixty-one character `3EYE/3???3PCT.CCS` containers use 72 mapped `copy`
+  relationships to import the complete official NUN5 ordinary-awakening label
+  set. Each mapping copies only its paired TEX/CLT component ranges, retaining
+  the target CCS structure and every unrelated NA2 visual. No awakening texture
+  blobs or executable placement patches are stored.
+- Mapped `copy` retains the first container-local TEX palette reference and
+  validates paired component signatures before changing the target.
 - `MODE2KDV.CCS` is a mapped capacity exception: it retains the NA2 portrait,
   palette, and lower 192 visual rows, then imports the donor's top 64 label rows
   through deterministic nearest-palette-index remapping.
@@ -695,7 +699,7 @@ Write a review-only generated extraction outside the source roots:
 ```powershell
 python -m na2_patcher.modules.texture_patcher.engine preview `
   --package na2_patcher/features/localization/texture_patcher `
-  --output work/temp/ui_texture_preview
+  --output "work/UI translation/temp/ui_texture_preview"
 ```
 
 Changing a mapping, strategy, compressor version, or canonical source must

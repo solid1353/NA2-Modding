@@ -161,7 +161,7 @@ inferences until a resource is opened or referenced by code.
 | Directory | Shallow role |
 | --- | --- |
 | `3BSC/` | **Unknown character-coded family.** Nine `3*3BSC.CCS` resources; exact acronym and use unresolved. |
-| `3EYE/` | **Filename inference:** character-specific eye/portrait resources. Files occur in paired `3EYE` and `3PCT` names; exact object use unresolved. |
+| `3EYE/` | **Confirmed in part:** character-specific battle resources. The 61 `3???3PCT.CCS` containers supply all 72 ordinary awakening-name textures selected by the resident ELF's mode-1 panel compositor. Files also occur in paired `3EYE` names whose exact object use remains unresolved. |
 | `ADV/` | **Supported:** adventure-mode resources. Subfolders separate `CHAR`, `EVENT`, `PLAYER`, `SKILL`, and `STAGE`. |
 | `BUDDY/` | **Filename inference:** support/buddy character resources. |
 | `CMN/` | **Supported:** shared/common battle resources including body data, effects, gauge, particles, and shading. |

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import gzip
+import re
 import struct
 import tempfile
 import unittest
@@ -21,6 +22,8 @@ class UiTextureTests(unittest.TestCase):
         paths = load_project_paths(repository, allow_missing=True)
         na2_root = paths.path("source_na2")
         nun5_root = paths.path("source_nun5")
+        cls.na2_root = na2_root
+        cls.nun5_root = nun5_root
         data_root = (
             Path(__file__).resolve().parents[1]
             / "features"
@@ -53,8 +56,8 @@ class UiTextureTests(unittest.TestCase):
         )
 
     def test_complete_package_is_source_derived_pinned_and_fixed_size(self) -> None:
-        self.assertEqual(len(self.plan.containers), 34)
-        self.assertEqual(self.plan.mapping_count, 76)
+        self.assertEqual(len(self.plan.containers), 95)
+        self.assertEqual(self.plan.mapping_count, 148)
         for result in self.plan.containers:
             self.assertEqual(
                 len(result.replacement), len(result.original), result.spec.path
@@ -136,6 +139,94 @@ class UiTextureTests(unittest.TestCase):
         allowed_end = target_texture.data_offset + target_texture.data_size
         self.assertTrue(changed)
         self.assertTrue(all(allowed_start <= index < allowed_end for index in changed))
+
+    def test_all_ordinary_awakening_labels_are_exact_mapped_nun5_visuals(self) -> None:
+        target_iso, donor_iso, _ = engine.source_members(
+            self.na2_root,
+            self.nun5_root,
+        )
+        expected_paths = set()
+        expected_texture_count = 0
+        for path, record in target_iso.by_path.items():
+            if record.is_dir or re.fullmatch(r"3EYE/3[A-Z0-9]{3}3PCT\.CCS", path) is None:
+                continue
+            payload = gzip.decompress(target_iso.read_file(record))
+            mode_entries = [
+                name
+                for name in engine.parse_ccs(payload)
+                if re.search(r"mode1name[1-3]\.bmp$", name, re.IGNORECASE)
+            ]
+            if mode_entries:
+                expected_paths.add(path)
+                expected_texture_count += len(mode_entries)
+
+        results = [
+            result
+            for result in self.plan.containers
+            if result.spec.container_id.startswith("mode1_")
+        ]
+        mappings = [
+            mapping
+            for mapping in self.plan.package.mappings
+            if mapping.mapping_id.startswith("UI-MODE1-")
+        ]
+        self.assertEqual(len(results), 61)
+        self.assertEqual(len(mappings), 72)
+        self.assertEqual(expected_texture_count, 72)
+        self.assertEqual(
+            {result.spec.path for result in results},
+            expected_paths,
+        )
+        self.assertEqual(
+            {mapping.container_id for mapping in mappings},
+            {result.spec.container_id for result in results},
+        )
+
+        mappings_by_container = {}
+        for mapping in mappings:
+            mappings_by_container.setdefault(mapping.container_id, []).append(mapping)
+
+        for result in results:
+            self.assertEqual(result.strategy.strategy, "mapped")
+            target_payload = gzip.decompress(result.original)
+            donor_payload = gzip.decompress(result.donor)
+            output_payload = gzip.decompress(result.replacement)
+            target_entries = engine.parse_ccs(target_payload)
+            donor_entries = engine.parse_ccs(donor_payload)
+            output_entries = engine.parse_ccs(output_payload)
+            self.assertEqual(len(output_payload), len(target_payload))
+            self.assertEqual(output_entries.keys(), target_entries.keys())
+
+            allowed_offsets = set()
+            for mapping in mappings_by_container[result.spec.container_id]:
+                target_entry = target_entries[mapping.target_texture.casefold()]
+                donor_entry = donor_entries[mapping.donor_texture.casefold()]
+                output_entry = output_entries[mapping.target_texture.casefold()]
+                self.assertEqual(
+                    engine.decoded_rgba(output_payload, output_entry),
+                    engine.decoded_rgba(donor_payload, donor_entry),
+                    mapping.mapping_id,
+                )
+                for section in (*target_entry.textures, *target_entry.palettes):
+                    allowed_offsets.update(
+                        range(
+                            section.data_offset,
+                            section.data_offset + section.data_size,
+                        )
+                    )
+
+            changed_offsets = {
+                index
+                for index, (before, after) in enumerate(
+                    zip(target_payload, output_payload)
+                )
+                if before != after
+            }
+            self.assertTrue(changed_offsets, result.spec.path)
+            self.assertTrue(
+                changed_offsets <= allowed_offsets,
+                result.spec.path,
+            )
 
     def test_home_uses_the_complete_nun5_collection_container(self) -> None:
         result = self.result("home")
@@ -732,15 +823,15 @@ class UiTextureTests(unittest.TestCase):
             ) as handle:
                 summary = list(csv.DictReader(handle, delimiter="\t"))
 
-            self.assertEqual(len(patches), 34)
+            self.assertEqual(len(patches), 95)
             self.assertTrue(all(row["file"] == "DATA/DATA.CVM" for row in patches))
             self.assertTrue(all(row["original_sha256"] for row in patches))
             self.assertTrue(all(row["new_sha256"] for row in patches))
             self.assertTrue(
                 all(row["derivation"].startswith("canonical_nun5_") for row in patches)
             )
-            self.assertEqual(summary[0]["container_count"], "34")
-            self.assertEqual(summary[0]["mapping_count"], "76")
+            self.assertEqual(summary[0]["container_count"], "95")
+            self.assertEqual(summary[0]["mapping_count"], "148")
             self.assertEqual(summary[0]["worker_count"], str(self.plan.worker_count))
 
 

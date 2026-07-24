@@ -22,6 +22,84 @@ live address minus `0x40`. File offsets below always refer to the complete
 source file. For the boot ELFs, the relevant `PT_LOAD` mappings place NA2 file
 offset `0x100` and NUN5 file offset `0x180` at runtime `0x00100000`.
 
+## Ordinary awakening-label composition
+
+| Game | Method | ELF file range | Runtime range |
+| --- | --- | --- | --- |
+| NA2 | `FUN_00303aa0` | `0x203BA0..0x203E3F` | `0x00303AA0..0x00303D3F` |
+| NUN5 | `FUN_0030e250` | `0x20E3D0..0x20E68F` | `0x0030E250..0x0030E50F` |
+
+These boot-ELF homologues build the ordinary awakening-name panel. Their
+practical behavior is:
+
+```cpp
+void buildOrdinaryAwakeningLabel(
+    AwakeningPanel *panel,
+    int characterIndex,
+    int playerSide,
+    int activationType
+) {
+    int textureSlot = lookupTextureSlot(activationType); // 13-entry table
+    if (textureSlot < 0) {
+        panel->state = 10;
+        return;
+    }
+
+    panel->playerSide = playerSide;
+    panel->activationType = activationType;
+    Resource *common = loadMode1CommonResource();
+    panel->labelObject = instantiateCharacterLabel(common, characterIndex);
+    panel->animationObject =
+        instantiate(common, "ANM_mode1name_ca");
+
+    Resource *character = loadCharacterResource(characterIndex + 1, 4);
+    Model *panelModel = findModel(panel->labelObject, "MDL_mn_panel");
+    Material *material = findMaterial(panelModel, "MAT_joutai");
+    Texture *label = findTexture(
+        character,
+        {"TEX_mode1name1", "TEX_mode1name2", "TEX_mode1name3"}[textureSlot]
+    );
+    replaceMaterialTexture(material, label);
+}
+```
+
+The direct callers are NA2 `FUN_00305c30` and NUN5 `FUN_00310580`, through
+their character-state construction paths. Important homologous callees include
+the common-resource accessors `FUN_001e9220` / `FUN_001ef130`, character
+resource lookups `FUN_001e8920` / `FUN_001ee750`, texture lookups
+`FUN_001a8f00` / `FUN_001ac950`, and the final texture-copy helpers
+`FUN_001988d0` / `FUN_0019be20`.
+
+The complete canonical CVM inventory contains 61 character
+`3EYE/3???3PCT.CCS` containers with 72 ordinary awakening textures: 50
+containers have one `TEX_mode1name` texture and 11 have two. No third texture
+is present in the current inventory, although both executables support
+`TEX_mode1name3`. Every used NA2/NUN5 TEX/CLT component signature is compatible.
+Three equivalent donor entries use different internal path names:
+
+- NA2 `x\mode1\tex\hnt\mode1name1.bmp` maps to NUN5
+  `x\mode1\tex\hnw\mode1name1.bmp`;
+- NA2 `x\mode1\tex\row\mode1name1.bmp` maps to NUN5
+  `x\mode1\tex\roc\mode1name1.bmp`;
+- NA2 `x\mode1\tex\tnd\mode1name2.bmp` maps to NUN5
+  `x\mode1\tex\tnw\mode1name2.bmp`.
+
+`MODENAME/MODE1CMN.CCS` supplies the shared animation, model, and placeholder
+material. Its NA2 and NUN5 non-texture sections are byte-identical; only the
+placeholder TEX/CLT data differs. The game already substitutes the
+character-specific texture at runtime, so the localized implementation imports
+only the 72 official NUN5 TEX/CLT component ranges into their 61 fixed-size NA2
+containers. No stored texture blobs, whole-container replacement, executable
+layout patch, or `MODE1CMN.CCS` replacement is required.
+
+Evidence: the exact boot-ELF identities above, the preserved C/TXT exports at
+`@analysis/disassembly/NA2/exports/SLPS_258.37/` and
+`@analysis/disassembly/NUN5/exports/SLES_556.05/`, a complete canonical CVM
+inventory, decoded RGBA equality for all 72 mappings, component-range diff
+containment, and exact fixed-size recompression of all 61 targets. The
+compositor interpretation and donor coverage have **high confidence**;
+in-game runtime acceptance remains pending.
+
 ## Open VS Jutsu selector
 
 ### Homologous methods

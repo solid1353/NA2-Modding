@@ -132,6 +132,12 @@ The implementation order supported by this evidence is:
 5. rerun all ten pairs and add a dedicated Save/Load pair only for regression
    coverage, not as a Latin-weight target.
 
+Follow-up on 2026-07-24 completed step 1: the canonical secondary-only
+descriptor-height path restored the intended 24x28 presentation while
+retaining the accepted NUN5-derived raster, metrics, spacing, bearings, and
+Controls fit. The user accepted the font itself as almost pixel-for-pixel.
+The remaining steps are per-caller positioning, wrapping, and auto-fit work.
+
 Confidence is high for the visual bounds, repeated modal coordinates, and
 presence or absence of wrapping. Confidence is medium for the exact internal
 ownership of the seven caller families until the corresponding call sites are

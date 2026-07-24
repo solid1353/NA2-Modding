@@ -16,14 +16,15 @@ the only boxed-fit path proven correct by this sample and that multiple other
 callers require layout behavior that a font-asset refinement alone cannot
 provide.
 
-## 2026-07-20 accepted native 14x20 integration baseline
+## Accepted native 14x20 integration
 
-The current patch set is version 5. Its former standalone profile module pin was
+The current patch set builds on the accepted version 5 baseline. Its former
+standalone profile module pin was
 `9FC3C4905DFF6D14BAAA848C56E6C17D1DE4E79EEFAB2E1A7A74FAD6A25013F8`,
 and its former standalone feature pin was
 `23A2CFDD285FF00A40F35AC42D0656580E4D9DE5884F2CF568453A20E93AA3A7`.
 The current profile now covers it through the complete Localization feature pin
-`8C0E68716AC2C26491551CB48478202FCB386BB673E95737DACAB9563FAA3431`.
+`086AFCB43EAD509FB87C7755BF54758838AD434A1A565B72B75C781F65D5B1E7`.
 It is a new, deterministic donor built from hash-verified clean NA2 and
 official NUN5 inputs; it is not based on m01, v22/v23, the rejected semantic
 palette swap, the 10x22 resample, or a whole-file GF4 replacement.
@@ -33,8 +34,11 @@ same-semantic English cells. Unsupported punctuation is reconstructed from
 clean NA2, retaining 95/95 printable-ASCII coverage. The 123-cell secondary
 atlas is locally bounded; packed metric rows occupy only value words of empty
 primary-map slots and are decoded by secondary-only draw and measurement
-hooks. Clean NA2 GF4C remains untouched. The deterministic generator verifies
-these referenced blobs:
+hooks. A glyph-owned normal-path helper keeps descriptor width for
+primary/fullwidth glyphs and selects descriptor height only for the secondary
+quad, restoring its intended 24x28 presentation without changing horizontal
+geometry. Clean NA2 GF4C remains untouched. The deterministic generator
+verifies these referenced blobs:
 
 - atlas: 17,220 bytes, SHA-256
   `6E4B988E512568F0A91E0226A8A4046362C1A4EF078E50BBF630BEEF90333736`;
@@ -45,16 +49,15 @@ these referenced blobs:
 - measurement hook: 24 bytes, SHA-256
   `8B7A75C0FDFD2F055ACFC1FCF90996E298CE363E112659579513A89606FE7C1C`.
 
-The runtime-reviewed `native_final_v2` result contains exactly 19 edits: seven
-glyph edits, nine Controls fit/alignment edits, and three character-modal
-alignment edits. All four preserved NA2 savestates contain the same payload.
-The canonical patch set was recovered byte-for-byte from those states before
-closeout; a later unreviewed modal-scaling experiment was removed. Matched
+The final runtime-reviewed result contains exactly 22 edits: ten glyph edits,
+nine Controls fit/alignment edits, and three character-modal alignment edits.
+The original 19-edit `native_final_v2` state established the atlas, metrics,
+fit, and modal baseline; the later bearing and secondary-height work promoted
+the remaining proven behavior into canonical guarded locations. Matched
 Controls, Practice, Save/Load, and character-modal comparisons were presented
-to the user, who accepted the result as good while noting that halfwidth Latin
-glyphs remain noticeably bolder than NUN5. That weight difference is the next
-refinement target. Fullwidth Shift-JIS Save/Load digits use a different glyph
-path and are excluded from Latin-weight comparison.
+to the user. After the final secondary-height capture, the user accepted the
+font itself as almost pixel-for-pixel. Fullwidth Shift-JIS Save/Load digits use
+a different glyph path and are excluded from halfwidth-Latin comparison.
 
 Controls retains full-width `Linked Attack`, fits the official 19-byte
 `Ultimate Jutsu Prep` probe, leaves `OFF` on the ordinary renderer, and
@@ -68,16 +71,15 @@ A clean file-backed apply preserved both file sizes and produced:
 - `DATA/GF4.BIN`: 906,678 bytes, SHA-256
   `79BA614746E667A70A068A0A889085D028D8019884182E78041026A77971AA25`;
 - `SLPS_258.37`: 5,273,256 bytes, SHA-256
-  `EF0A61F163C22D25B4C4C28E6D9AC543EC6E3B93BC66E1087C33C7F1A0F791E6`.
+  `B569E54EA6965BCF1B264862DEB094E1649461093FD58EE99D7E814DE33CE28B`.
 
-The verification output and complete patch log are retained under
-`work/Font/verification/font_package_v5_reviewed/` and
-`work/Font/verification/font_package_v5_reviewed_log/`. The integrated profile
-gate at `@logs/na2/builds/20260720_011314_550_pid31820/` passed the full 80-test
-suite, selected the same three Font patches and 19 edits, reproduced both
-documented file hashes, updated Current, and rotated Previous. The final ISO's
-boot ELF CRC is `1852E63F`; a controlled hidden 15-second PCSX2 boot reported
-the same CRC. The build left no `.building` ISO or PCSX2 process behind.
+The final isolated output is retained under
+`work/Font/verification/font_height_candidate_v1/`. The task-owned worker build
+at `work/Font/logs/builds/20260724_210517_779_pid29304/` selected all three Font
+patches and the complete 274-edit Localization binary package without touching
+Current, Previous, or Candidate. Its guarded PCSX2 run identified worker ISO
+CRC `9B7C20AE`, read back the exact helper and hook, captured the matched
+Controls result, and closed only its authenticated task-owned instance.
 
 ## 2026-07-24 weight and spacing refinement
 
@@ -157,21 +159,35 @@ continues using the original width field on the primary/fullwidth path.
 Confidence is **high** for the function ranges, field use, and cross-game
 difference.
 
-The guarded task-local Y-only state is
+The guarded task-local Y-only precursor is
 `work/Font/artifacts/font_match_v1/renderer_geometry_v1_secondary_24x28.p2s`
 (SHA-256
 `629180D28C75881CF7D7E5149AE38B935BD3F322160AB9D706DF94B06A7168F2`).
 It changes only copied savestate memory through
-`work/Font/analysis/font_match_v1/prepare_renderer_geometry_state.py`; it is
-not a canonical patch.
+`work/Font/analysis/font_match_v1/prepare_renderer_geometry_state.py`. Its
+accepted behavior is now canonical in two guarded ELF edits:
 
-Guarded runtime validation on the matched Control Settings state confirms the
-Y-only result. Exact reads matched the secondary-only hook and helper before
-capture. Across the six unscaled ordinary labels `Attack`, `Item Use`, `Jump`,
-`Guard`, `Item Select`, and `Linked Attack`, the median NUN5-minus-candidate
-height and center-Y deltas are both zero. Median width remains two pixels
-short, so the test corrects the vertical presentation without silently
-widening the text. The fresh capture and structured operation result are
+- file offset `0x2F8840`, original 32 zero bytes, installs
+  `08006330020060100C0021C6100021C660088046000D0046E01F06086CCA848F`;
+- file offset `0x88078`, original `000D00466CCA848F`, installs
+  `D0E10F0870002392`.
+
+The helper reads the existing secondary-font mode bit, selects descriptor
+`+0x10` height only for secondary glyphs or `+0x0C` width otherwise, computes
+the normal quad bottom edge, and rejoins the untouched path at runtime
+`0x00187F80`. It leaves X geometry, primary/fullwidth glyphs, spaces, logical
+measurement, and row positions unchanged.
+
+Final guarded runtime validation on the matched Control Settings state confirms
+the canonical result. Exact reads matched the secondary-only hook and helper,
+the accepted bearing helper, the Controls fit helper, the ordinary-space hook,
+and the restored `1.0` local scale before capture. Across `Attack`, `Ultimate
+Jutsu Prep`, `Item Use`, `Jump`, `Guard`, `Item Select`, and `Linked Attack`,
+the median width, height, and center-Y deltas against NUN5 are all zero; median
+center-X delta remains the accepted -1.5 pixels. Three labels are one native
+raster pixel shorter, so no speculative per-row or per-glyph positioning was
+added. The user accepted the font itself as almost pixel-for-pixel. The fresh
+capture, structured operation result, and nearest-neighbor comparison are
 retained under
 `work/Font/artifacts/font_match_v1/renderer_runtime_v1/`.
 

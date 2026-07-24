@@ -1319,7 +1319,10 @@ is enabled:
   reconstructed from clean NA2, preserving 95/95 printable-ASCII coverage.
   The shortened 123-cell secondary atlas is locally guarded. Its metric rows
   are packed into the value words of empty primary-map slots and decoded only
-  by the secondary draw and measurement hooks.
+  by the secondary draw and measurement hooks. The normal glyph emitter keeps
+  descriptor width on the primary/fullwidth path and uses descriptor height
+  only for the secondary quad, restoring its intended 24x28 presentation
+  without widening it.
 - `font_controls_auto_fit` reproduces NUN5's shrink-only Controls behavior.
   It keeps `Linked Attack` full width, fits the official
   `Ultimate Jutsu Prep` label, leaves `OFF` on the ordinary renderer, and
@@ -1332,16 +1335,19 @@ is enabled:
 
 Both layout components require `font_nun5_glyphs` because their positions and
 fit decisions are tuned to its metrics. They otherwise remain independent.
-The rejected `font_vertical_quad_height` component was removed from executable
-inputs. Its exact negative result remains in `docs/knowledge/localization/font/README.md`
-and Git history.
+The rejected shared `font_vertical_quad_height` component was removed from
+executable inputs because it stretched both axes to 28x28. Its exact negative
+result remains in `docs/knowledge/localization/font/README.md` and Git history;
+the accepted secondary-only height helper is part of `font_nun5_glyphs`.
 
 Matched Controls, Practice, Save/Load, and character-modal captures were
-runtime-reviewed. The user accepted this iteration's alignment and overflow
-result. The remaining known defect is that halfwidth Latin glyphs are visibly
-bolder than NUN5; weight refinement is deliberately deferred to the next
-iteration. Fullwidth Shift-JIS Save/Load digits use a different glyph path and
-are not a Latin-weight parity target.
+runtime-reviewed. The final guarded Controls capture retained the accepted
+horizontal metrics, spacing, bearings, and shrink-only fit while reducing the
+median height and center-Y deltas against NUN5 to zero. The user accepted the
+font itself as almost pixel-for-pixel. Fullwidth Shift-JIS Save/Load digits use
+a different glyph path and are not a halfwidth-Latin parity target. Remaining
+overflow and positioning work belongs to the separate per-caller auto-fit
+task, not another raster-weight pass.
 
 `scripts/research/localization/generate_font_assets.py` deterministically regenerates and verifies the four
 referenced blobs from configured `@source_na2/` and `@source_nun5/` inputs.

@@ -17,12 +17,13 @@ execution order.
 
 The implementation preserves clean NA2 GF4C and file sizes while installing a
 guarded native 14x20 secondary atlas in GF4. Matched captures show a good
-accepted result for Controls, Practice, Save/Load, and the character modal:
-overflowing Controls text fits, `Linked Attack` stays full width, and reviewed
-rows align closely with NUN5. The remaining visible defect is that halfwidth
-Latin glyphs are noticeably bolder than NUN5. The user accepted this iteration
-and deferred weight refinement to the next one. Fullwidth Shift-JIS Save/Load
-digits are not a Latin-weight parity target. The rejected 28x28 quad experiment
+accepted result for Controls, Practice, Save/Load, and the character modal.
+The final secondary-only height helper restores the intended 24x28 quad while
+leaving width, spacing, fit, and row positions unchanged. `Ultimate Jutsu
+Prep` fits, `Linked Attack` stays full width, and the matched Controls sample
+has median height and center-Y deltas of zero against NUN5. The user accepted
+the font itself as almost pixel-for-pixel. Fullwidth Shift-JIS Save/Load digits
+are not a halfwidth-Latin parity target. The rejected shared 28x28 experiment
 remains disabled as negative evidence.
 
 ## Required execution order
@@ -33,18 +34,19 @@ remains disabled as negative evidence.
    with call-local edits.
 3. Completed for the reviewed Controls call sites: reproduce NUN5's
    shrink-only fit decision and restore renderer state after every draw.
-4. Next iteration: refine the accepted native donor's halfwidth Latin weight
-   against matched NUN5 captures without moving rows pixel-by-pixel unless the
-   refined metrics genuinely change their measured centers.
+4. Completed: promote the proven secondary-only descriptor-height path into
+   the canonical glyph component and obtain final matched visual acceptance.
+5. Next task: implement proper auto-fit and positioning for the remaining
+   caller families identified by the ten-pair savestate analysis.
 
 Auto-adjust is downstream of horizontal metrics. A scaling test is not valid
 until logical width, visible glyph bounds, advances, and centering are measured
 for the same strings. The historical m01 and semantic-palette experiments are
 negative evidence, not implementation parents.
 
-## Active task
+## Accepted font implementation
 
-### Make font identical to UN5
+### Make font identical to UN5 — accepted
 
 The accepted integration baseline uses a new donor generated independently of
 the rejected historical candidates:
@@ -56,16 +58,18 @@ the rejected historical candidates:
 - Preserve clean NA2 GF4C palette semantics and both target file sizes.
 - Bound the shortened 123-cell secondary atlas locally and keep the primary
   font parser unchanged.
+- Use descriptor height only for the secondary glyph quad while preserving the
+  primary/fullwidth 24-pixel path and all accepted horizontal behavior.
 - Treat `font_m01`, `font_nun5_appearance`, the 10x22 resample, and the global
   parser experiment as negative or comparison evidence, not implementation
   parents.
-- Refine the remaining heavier Latin weight in the next iteration using
-  matched captures; do not use fullwidth Shift-JIS digits as a weight target.
 
-Final parity still requires matched NA2/NUN5 captures at the same presentation
-scale, with representative short and long strings and no missing, touching,
-overlapping, or palette-damaged glyphs. The current result is the accepted
-integration baseline, not the final weight match.
+The final guarded capture uses matched native-scale NA2/NUN5 Controls screens
+with representative short and long strings. It preserves complete printable
+ASCII coverage, contains no missing, touching, overlapping, or palette-damaged
+glyphs, and reproduces the accepted width, spacing, bearing, fit, and vertical
+presentation together. The user accepted the font itself as almost
+pixel-for-pixel.
 
 ## Completed implementation baseline
 
@@ -95,7 +99,11 @@ right text labels one local X unit for native visible-ink centering without
 moving selection markers. The character modal uses independently measured X
 values `81.75, 73.375, 72.375, 63.5, 3.5` and retains its accepted local Y
 behavior. Reviewed ordinary-row centers are within one pixel of NUN5, and the
-long fifth row fits within the modal.
+long fifth row fits within the modal. Independently, the glyph-owned helper at
+ELF file offset `0x2F8840`, reached from the guarded hook at `0x88078`, uses
+descriptor height only when the existing secondary-font mode bit is set. This
+restores the intended 24x28 secondary quad without changing X geometry or the
+primary/fullwidth path.
 
 ### Research and implement NUN5 auto-adjust behavior
 
@@ -125,7 +133,7 @@ Save/Load and Practice remain outside the Controls fit decision.
   runtime-proven native secondary font, alignment, and fit components. It
   targets clean `SLPS_258.37` and `DATA/GF4.BIN`, preserves clean GF4C, and
   is covered by the current Localization aggregate feature pin
-  `8C0E68716AC2C26491551CB48478202FCB386BB673E95737DACAB9563FAA3431`.
+  `086AFCB43EAD509FB87C7755BF54758838AD434A1A565B72B75C781F65D5B1E7`.
 - `docs/knowledge/localization/font/README.md` consolidates the v23, semantic-palette, and
   2026-07-19 auto-fit negative results. The retired raw declarative records
   are recoverable from Git commit `69da715` and are not retained in the

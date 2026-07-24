@@ -27,9 +27,9 @@ SOURCE_IDS = {
     "NA2_SLPS": "SLPS",
 }
 MAPPING_FIELDS = [
-    "id", "enabled", "section", "display_context", "display_basis", "mode",
-    "source_ref", "donor_ref", "capacity", "source", "donor", "prefix",
-    "replacement", "transform", "arguments", "reference_refs",
+    "id", "enabled", "display_context", "source", "donor", "prefix",
+    "replacement", "display_basis", "source_ref", "donor_ref", "mode",
+    "capacity", "transform", "arguments", "reference_refs",
     "parent_mapping_id",
 ]
 EXPECTED_SHA1 = {
@@ -710,7 +710,6 @@ def parse_mappings(rows: list[dict[str, str]]) -> dict[str, list[dict[str, objec
         reference_refs = parse_reference_refs(row["reference_refs"], label)
         parsed = {
             "id": row["id"],
-            "section": row["section"] or "unclassified",
             "display_context": row["display_context"],
             "display_basis": row["display_basis"],
             "mode": mode,
@@ -831,7 +830,7 @@ def apply_text_mappings(
     annotations = []
     occupied: dict[str, list[tuple[int, int, str]]] = defaultdict(list)
     stats = Counter()
-    sections = Counter()
+    display_contexts = Counter()
     for row in mappings:
         target = str(row["target"])
         mapping_id = str(row["id"])
@@ -885,8 +884,8 @@ def apply_text_mappings(
         stats["mapped"] += 1
         if clean_targets[target][offset:offset + capacity] != bytes(output_targets[target][offset:offset + capacity]):
             stats["changed"] += 1
-        sections[str(row["section"])] += 1
-    return annotations, dict(stats), dict(sorted(sections.items()))
+        display_contexts[str(row["display_context"])] += 1
+    return annotations, dict(stats), dict(sorted(display_contexts.items()))
 
 
 def diff_rows(path: str, clean: bytes, output: bytes, annotations) -> list[dict[str, str]]:
@@ -1012,8 +1011,8 @@ def build_translation_import_plan(
     active_by_mode = Counter(
         row["mode"] for row in mappings["text"] if row["target"] in selected
     )
-    active_sections = Counter(
-        str(row["section"])
+    active_display_contexts = Counter(
+        str(row["display_context"])
         for row in mappings["text"]
         if row["target"] in selected
     )
@@ -1033,7 +1032,7 @@ def build_translation_import_plan(
         },
         "active_mapping_coverage": {
             "by_mode": dict(sorted(active_by_mode.items())),
-            "by_section": dict(sorted(active_sections.items())),
+            "by_display_context": dict(sorted(active_display_contexts.items())),
             "by_display_basis": dict(sorted(active_display_bases.items())),
         },
         "source_hashes": actual_hashes,
@@ -1074,7 +1073,7 @@ def compile_inline_imports(
     output_targets = {
         target: bytearray(plan.clean_targets[target]) for target in selected_list
     }
-    annotations, text_stats, text_sections = apply_text_mappings(
+    annotations, text_stats, text_contexts = apply_text_mappings(
         plan.text_mappings,
         selected,
         plan.clean_targets,
@@ -1109,7 +1108,7 @@ def compile_inline_imports(
         "external_mappings_omitted": len(excluded_mapping_ids),
     }
     coverage = dict(summary["active_mapping_coverage"])
-    coverage["inline_by_section"] = text_sections
+    coverage["inline_by_display_context"] = text_contexts
     summary["active_mapping_coverage"] = coverage
     summary["translated_file_hashes"] = translated_hashes
     return replace(plan, import_rows=import_rows, summary=summary)

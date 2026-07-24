@@ -137,7 +137,7 @@ row against clean NA2, and exact donor validation passes for every row against
 the referenced NUN5 bytes after fullwidth-ASCII normalization.
 
 Canonical v41 `mappings.tsv` SHA-256:
-`22A6EBAC810FDD0FF5AD1DCEB1B62D6123D55AAFBB328E6656E87129042EE6F8`.
+`7DCAEAA7FF0E12A6A39CAD408FE0F5F3EF5874D981A05F4CC6D5C3C06B244ADD`.
 
 ## Validation
 

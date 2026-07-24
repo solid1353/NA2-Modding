@@ -28,7 +28,7 @@ command or file-backed inter-stage handoff.
 ### Mapping metadata
 
 - Version: `41`
-- Packaged `mappings.tsv` SHA-256: `22A6EBAC810FDD0FF5AD1DCEB1B62D6123D55AAFBB328E6656E87129042EE6F8`
+- Packaged `mappings.tsv` SHA-256: `7DCAEAA7FF0E12A6A39CAD408FE0F5F3EF5874D981A05F4CC6D5C3C06B244ADD`
 
 The version and mappings hash above are historical documentation, not a second
 executable manifest. Git history and the aggregate Localization feature pin own
@@ -56,14 +56,15 @@ current table.
 
 ### Canonical `mappings.tsv`
 
-`mappings.tsv` is the single canonical mapping table. TSV has no worksheet tabs, so `section` is the page/filter key for grouping mappings by screen or mode.
+`mappings.tsv` is the single canonical mapping table. `display_context` is its
+human-readable page/filter key; no separate technical section bucket is stored.
+Rows are sorted by `display_context`, then by stable `id` within each context.
 
-The 17 columns are:
+The 16 columns are:
 
-`id`, `enabled`, `section`, `display_context`, `display_basis`, `mode`,
-`source_ref`, `donor_ref`, `capacity`, `source`, `donor`, `prefix`,
-`replacement`, `transform`, `arguments`, `reference_refs`,
-`parent_mapping_id`
+`id`, `enabled`, `display_context`, `source`, `donor`, `prefix`,
+`replacement`, `display_basis`, `source_ref`, `donor_ref`, `mode`,
+`capacity`, `transform`, `arguments`, `reference_refs`, `parent_mapping_id`
 
 #### Stable IDs and enabled state
 
@@ -137,7 +138,7 @@ All ISO target paths inside the TSV remain ISO-root-relative. The profile-level 
 
 - mapping version and selected targets;
 - patch and mapping totals;
-- active mapping coverage grouped by mode and section;
+- active mapping coverage grouped by mode and display context;
 - source and translated-file hashes.
 
 The current table contains no disabled rows.

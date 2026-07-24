@@ -28,7 +28,6 @@ class TranslationImporterTests(unittest.TestCase):
         row = {
             "id": "MTEST",
             "enabled": "1",
-            "section": "test",
             "display_context": "Test screen > value",
             "display_basis": "seen:test-fixture",
             "mode": "unresolved",
@@ -51,7 +50,6 @@ class TranslationImporterTests(unittest.TestCase):
         row = {
             "id": "MTEST",
             "enabled": "1",
-            "section": "test",
             "display_context": "",
             "display_basis": "",
             "mode": "slot",

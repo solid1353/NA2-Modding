@@ -12,8 +12,8 @@ only under one of these bases:
 1. `seen`: its diagnostic mapping identifier appears in a supplied PCSX2
    screenshot;
 2. `inferred`: an observed screen proves the containing selector or running-help
-   table, and the archived NA2/NUN5 reference proves the unshown siblings'
-   ordering and correspondence;
+   table, and the pre-rebuild NA2/NUN5 table retained in Git history proves the
+   unshown siblings' ordering and correspondence;
 3. `character`: it belongs to a structurally proven character-specific family
    for which individual runtime encounters would be disproportionately
    expensive.
@@ -35,8 +35,11 @@ their clean Japanese bytes remain untouched.
 
 ## Reference boundary
 
-The pre-rebuild v40 table belongs under
-`@archive/string_translation/v40/mappings.tsv` with its exact size and hash.
+The pre-rebuild v40 table is retained only in Git at commit
+`14083adac9c24c533a33876a23596c6a92d301ec`, path
+`na2_patcher/features/localization/translation_importer/mappings.tsv`. It has
+2,177 rows, size 315,221 bytes, and SHA-256
+`60DB92F792502AD308B8D821BC4B963B060A113044A420DBAF288A6AB4A940A4`.
 It may supply candidate offsets, capacities, official donor references,
 transforms, pointer sites, and family patterns. None of those rows is copied
 into the fresh table automatically.

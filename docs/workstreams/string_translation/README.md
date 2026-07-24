@@ -16,8 +16,8 @@ Canonical documentation landing page for the `String translation` workstream.
   individual runtime encounters because their structure is predictable and
   exhaustive testing is disproportionately time-consuming.
 - Hidden selector values and running help text are reconstructed from verified
-  NUN5/NA2 table structure and the archived reference. The user is not required
-  to capture every value separately.
+  NUN5/NA2 table structure and the pre-rebuild v40 table retained in Git
+  history. The user is not required to capture every value separately.
 - Keep complete official donor text and complete user-authored overrides in
   canonical mappings. A blank `replacement` uses `donor`; `prefix` is
   prepended to the selected text. Inline versus external placement is derived

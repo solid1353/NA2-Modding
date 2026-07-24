@@ -337,6 +337,19 @@ research.
 
 ## Current status and next checkpoint
 
+### Active mismatch priority
+
+1. Items.
+2. Mash prompt.
+3. Victory.
+4. The remaining grouped screens.
+5. Combat prompts.
+
+The Mash Prompt pair is a separate task-owned evidence category under
+`@work/UI translation/inputs/sstates/library/Mash Prompt/`, immediately below
+Items in this queue. It is now part of the general remaining-issues pass rather
+than a separate `TASKS.md` subtask.
+
 All eight preserved cases now have declarative implementations. The normal
 workflow still derives all 34 fixed-size CCS replacements directly from
 canonical NA2/NUN5 inputs with no stored replacement blobs. The source trees

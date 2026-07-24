@@ -10,7 +10,7 @@ remain separate from raster-weight refinement so an appearance change cannot
 silently invalidate the accepted layout.
 
 Confirmed findings and negative results remain canonical in
-`docs/knowledge/font/README.md`. This document defines the active work and its
+`docs/knowledge/localization/font/README.md`. This document defines the active work and its
 execution order.
 
 ## Current result for review
@@ -126,7 +126,7 @@ Save/Load and Practice remain outside the Controls fit decision.
   targets clean `SLPS_258.37` and `DATA/GF4.BIN`, preserves clean GF4C, and
   is covered by the current Localization aggregate feature pin
   `8C0E68716AC2C26491551CB48478202FCB386BB673E95737DACAB9563FAA3431`.
-- `docs/knowledge/font/README.md` consolidates the v23, semantic-palette, and
+- `docs/knowledge/localization/font/README.md` consolidates the v23, semantic-palette, and
   2026-07-19 auto-fit negative results. The retired raw declarative records
   are recoverable from Git commit `69da715` and are not retained in the
   working tree.
@@ -158,5 +158,5 @@ Save/Load and Practice remain outside the Controls fit decision.
 - Test glyph appearance and alignment before auto-adjust, then test all three
   together for regressions.
 - Compare matched screenshots and record useful negative results under
-  `docs/knowledge/font/`.
+  `docs/knowledge/localization/font/`.
 - Keep experimental patches separately selectable until runtime-proven.

@@ -5,9 +5,9 @@ Canonical documentation landing page for the `UI Translation` workstream.
 ## Documents
 
 - [Active plan and working context](plan.md)
-- [Battle UI knowledge](../../knowledge/battle_ui.md)
-- [Collection UI knowledge](../../knowledge/collection_ui.md)
-- [Stage-select UI knowledge](../../knowledge/stage_select_ui.md)
+- [Battle UI knowledge](../../knowledge/localization/ui/battle.md)
+- [Collection UI knowledge](../../knowledge/localization/ui/collection.md)
+- [Stage-select UI knowledge](../../knowledge/localization/ui/stage_select.md)
 
 ## Workstream policy
 

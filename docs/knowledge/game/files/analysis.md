@@ -1,4 +1,4 @@
-# NA2 Binary Analysis Scope
+# NA2 Game File Analysis Scope
 
 This record classifies the known NA2 disc artifacts by the minimum useful
 analysis level and defines the reusable workflow for later reverse-engineering
@@ -6,12 +6,12 @@ tasks. It is based on the preserved outer-ISO, `DATA.CVM`, and AFS inventories,
 artifact signatures inspected on 2026-07-18, existing module evidence, and the
 preserved NA2 Ghidra materials.
 
-Use [`game_files.md`](game_files.md) as the canonical human-readable reference
+Use [`README.md`](README.md) as the canonical human-readable reference
 for file roles and the game-media hierarchy. This document remains authoritative
 for analysis level, disassembly scope, and executable cohorts.
 
 The machine-readable classification is in
-`docs/knowledge/binary_analysis_inventory.tsv`. A classification is the default
+`docs/knowledge/game/files/analysis_inventory.tsv`. A classification is the default
 starting point, not a claim that every byte in an artifact has the same role.
 For example, a string-only change in the boot ELF can remain data-oriented even
 though the boot ELF warrants a full-program analysis project.
@@ -242,10 +242,12 @@ component separately.
   helpers for targeted EE work.
 - `na2_patcher/features/localization/binary_patcher/`: reusable overlay and
   boot-ELF function maps, exact edits, provenance, and runtime tests.
-- `docs/knowledge/substitution.md`, `docs/knowledge/menu_input.md`, and
-  `docs/knowledge/font/`: established analysis boundaries and negative results
+- `docs/knowledge/localization/substitution.md`,
+  `docs/knowledge/runtime/menu_input.md`, and
+  `docs/knowledge/localization/font/`:
+  established analysis boundaries and negative results
   that should not be rediscovered.
-- `docs/knowledge/media/`: canonical outer-ISO, CVM, and AFS inventories for
+- `docs/knowledge/game/files/media/`: canonical outer-ISO, CVM, and AFS inventories for
   data/layout work.
 
 ## Limits of the baseline

@@ -12,7 +12,7 @@ inventories:
 - [`media/data_cvm_iso9660.tsv`](media/data_cvm_iso9660.tsv): every path in the
   decrypted `DATA.CVM` ISO payload;
 - [`media/afs_members.tsv`](media/afs_members.tsv): every extracted AFS member;
-- [`binary_analysis_inventory.tsv`](binary_analysis_inventory.tsv): analysis
+- [`analysis_inventory.tsv`](analysis_inventory.tsv): analysis
   level, size, evidence source, and confidence for important artifacts.
 
 ## Evidence labels
@@ -95,7 +95,7 @@ container, index, offset, and size records.
 
 All four files are byte-identical between NA2 and NUN5. The three executable
 IRX inputs already have maintained shared Ghidra baselines; see
-[`binary_analysis.md`](binary_analysis.md).
+[`game-file analysis workflow`](analysis.md).
 
 ## `PRG/`: on-demand Emotion Engine overlays
 
@@ -199,7 +199,7 @@ When new evidence appears:
 1. Update the relevant role and evidence label here.
 2. Keep exact paths, offsets, and sizes in the media TSV inventories.
 3. Keep disassembly scope and cohort metadata in
-   `binary_analysis_inventory.tsv` and `binary_analysis.md`.
+   `analysis_inventory.tsv` and `analysis.md`.
 4. Put an unresolved interpretation in `docs/HYPOTHESES.md`; promote it here
    only when the evidence supports the stated confidence.
 5. Link detailed subsystem findings rather than duplicating their complete

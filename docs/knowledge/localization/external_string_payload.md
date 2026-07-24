@@ -188,7 +188,7 @@ with the proven two-file boundary at `0x00940100`, this recovers `0x4BCE0`
 bytes. Matched captures of the two-file build confirmed its exact `0x63080`
 heap reduction and substantial allocator headroom in eight representative
 states; see
-[`ee_runtime_memory_map.md`](ee_runtime_memory_map.md). This is representative
+[`ee_memory_map.md`](../runtime/ee_memory_map.md). This is representative
 capacity evidence, not proof of every result/save/transition peak.
 
 ## Compact one-file bootstrap
@@ -332,7 +332,7 @@ Confirmed at runtime:
    The Current heap remains valid in all eight; active Adventure is the tightest
    observed state at `0x759260` total free and `0x52B4C0` largest contiguous.
    The full evidence is in
-   [`ee_runtime_memory_map.md`](ee_runtime_memory_map.md).
+   [`ee_memory_map.md`](../runtime/ee_memory_map.md).
 
 Still required at runtime:
 

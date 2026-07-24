@@ -32,7 +32,7 @@
 - Make knj cost selective.
 - Make xDash cost 1 chakra.
 - Add damage scaling?
-- [Improve substitution reliability](docs/knowledge/substitution.md).
+- [Improve substitution reliability](docs/knowledge/localization/substitution.md).
 - Add substitution bar.
 - Fix extra hit floating animation (or maybe not?).
 

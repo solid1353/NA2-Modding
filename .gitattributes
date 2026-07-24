@@ -24,5 +24,5 @@
 *.zip binary
 
 # Promoted evidence snapshots retain their original bytes.
-docs/knowledge/font/*.tsv -text -eol whitespace=cr-at-eol
-docs/knowledge/media/*.tsv -text -eol whitespace=cr-at-eol
+docs/knowledge/localization/font/*.tsv -text -eol whitespace=cr-at-eol
+docs/knowledge/game/files/media/*.tsv -text -eol whitespace=cr-at-eol

@@ -6,7 +6,7 @@ Use this file for old patch candidates, failed experiments, unverified addresses
 
 Status: resolved for the reviewed screens on 2026-07-19. Confirmed behavior,
 matched measurements, exact patch records, and negative results are preserved
-in `docs/knowledge/font/README.md`; canonical accepted patch data remain under
+in `docs/knowledge/localization/font/README.md`; canonical accepted patch data remain under
 their owning `na2_patcher/features/<feature>/binary_patcher/` package. Retired
 raw historical records are recoverable from Git commit `69da715`.
 
@@ -35,7 +35,7 @@ captures before changing its established layout.
   `work/Font/artifacts/font_match_v1/` confirmed NUN5's horizontal
   `leading_bearing * scale_x` subtraction while preserving the decoder's live
   `v0` return. The accepted implementation occupies the decoder's own formerly
-  unused tail and is documented in `docs/knowledge/font/README.md`. The
+  unused tail and is documented in `docs/knowledge/localization/font/README.md`. The
   preceding register-unsafe v3 helper remains negative evidence.
 - If matched review still finds a weight difference, the next bounded asset
   hypothesis is selective palette refinement rather than another atlas or
@@ -119,7 +119,7 @@ actionable leads.
 
 Status: compact one-file module implemented; its predecessor passed an initial
 ISO runtime test. Confirmed layout, loader, donor, FLIST, and ISO findings are recorded in
-`docs/knowledge/external_string_payload.md`; the canonical pointer inventory is
+`docs/knowledge/localization/external_string_payload.md`; the canonical pointer inventory is
 folded into each applicable row's `reference_refs` field in
 `na2_patcher/features/localization/translation_importer/mappings.tsv`.
 

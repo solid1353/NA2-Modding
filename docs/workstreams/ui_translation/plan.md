@@ -403,7 +403,7 @@ selection. The neighboring Stop and other unreviewed HOME controls remain
 untouched. The normal workflow derives every byte from canonical NUN5
 `ETC.BIN`/ELF; no stored asset or replacement byte was added. Detailed
 function, address, memory, and negative-result evidence is preserved in
-`docs/knowledge/collection_ui.md`. PCSX2 has not been launched and no ISO has
+`docs/knowledge/localization/ui/collection.md`. PCSX2 has not been launched and no ISO has
 been rebuilt for this correction.
 
 The isolated six-edit checkpoint preserved ETC's 200,448-byte size and produced
@@ -497,7 +497,7 @@ flush, restores mode 0 afterward, and conditionally flips the lower arrow.
 This avoids both the rejected unscoped sprite-mode transplant and the rejected
 native-texture graft while retaining the complete official NUN5 `VS.CCS`.
 Detailed negative and accepted-path evidence is preserved in
-`docs/knowledge/battle_ui.md`.
+`docs/knowledge/localization/ui/battle.md`.
 
 Paired Slots 5 and 6 reuse the same `TEX_xselect` sprite object and the same
 draw record. NA2 `FUN_00878820` and NUN5 `FUN_00894f60` already share the

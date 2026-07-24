@@ -30,32 +30,18 @@ Use configured-root notation such as `@source/...`, `@logs/...`, and `@pcsx2_fil
 
 Operational logs remain disposable after their durable findings are promoted. Git history can recover retired tracked artifacts, but ignored operational logs are gone once deleted.
 
-## Current records
+## Current domains
 
-- `game_files.md`: canonical human-readable map of the outer disc and major
-  nested file families, including roles, evidence strength, and unresolved
-  meanings. Exact path/offset inventories remain under `media/`.
-- `binary_analysis.md` and `binary_analysis_inventory.tsv`: minimum analysis
-  levels for known NA2 artifacts and the reusable escalation workflow.
-- `menu_input.md`: save/load input-handler runtime findings and their canonical evidence.
-- `substitution.md`: substitution reliability control flow, failed tests, and next investigation boundary.
-- `collection_ui.md`: paired NA2/NUN5 Collection Characters/Movie/Music and
-  character-viewer draw paths, page/Play/lower-control tables, category-title
-  rectangles, rejected false leads, and the donor-backed `UI-ETC-002`
-  boundary.
-- `stage_select_ui.md`: paired NA2/NUN5 Stage Select record topology, preview
-  indexing, localized name fitting, prompt placement, address mapping, and the
-  donor-backed `UI-BTL-002` correction boundary.
-- `battle_ui.md`: paired NA2/NUN5 open Jutsu-selector and shared Command
-  Menu/Command Chart draw paths, atlas records, rotation state, address mapping,
-  and the `UI-BTL-007`/`UI-BTL-008` correction boundaries.
-- `media/`: exact outer-ISO, `DATA.CVM`, and AFS layout inventories.
-- `font/`: durable visual and byte-level evidence from the font v23 negative result.
-- `external_string_payload.md`: compact one-file `228.BIN` string storage,
-  its two-file prototype, and loader/memory/ISO constraints. The complete
-  pointer inventory is folded into the applicable rows of
-  `na2_patcher/features/localization/translation_importer/mappings.tsv`.
-- `ee_runtime_memory_map.md` and `ee_runtime_memory_map/`: the matched
-  vanilla/Current EE address-space map, allocator and overlay lifetimes,
-  worst-observed injection headroom, and whole-TEXTENG versus compact-pool
-  capacity evidence.
+- `game/`: disc identity and the `game/files/` collection, which contains the
+  canonical human-readable game-file map, minimum useful analysis levels, the
+  reusable escalation workflow, and exact outer-ISO, `DATA.CVM`, and AFS layout
+  inventories.
+- `runtime/`: EE address-space, allocator, overlay-lifetime, injection-capacity,
+  and menu-input runtime findings.
+- `localization/`: string placement, substitution, binary evidence, function
+  maps, runtime tests, UI draw-path findings, and font research.
+
+Keep this index shallow. Add a subdirectory when a technical domain has several
+related records; do not organize records by the workstream that happened to
+discover them. Workstream landing pages may link here, but the knowledge remains
+canonical and topic-owned.

@@ -18,7 +18,7 @@ Current PCSX2 actualization:
 - The actualizer derives each retained Current, Previous, and Candidate
   identity from its ISO and maintains the matching CRC-named PNACH and
   GameSettings symlinks under `@pcsx2/`.
-- Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v2 organizes each package as groups, atomic patches, and exact edits; `default_enabled` preserves historical state. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/substitution.md`. Rendering is currently an empty feature folder omitted from the active profile.
+- Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v2 organizes each package as groups, atomic patches, and exact edits; `default_enabled` preserves historical state. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`. Rendering is currently an empty feature folder omitted from the active profile.
 - Actualization runs after every user-owned build and before every user-owned
   Current, Previous, or Candidate launch. Isolated worker builds never mutate
   shared PCSX2 state. `na2 act` refreshes the same state without building or
@@ -229,7 +229,7 @@ The following are transferred notes/hypotheses from earlier ChatGPT work. Treat 
 Original observed PCSX2 CRC from prior notes: `C0659AD1`
 
 The former file-role handoff notes have been researched and consolidated into
-the canonical [`knowledge/game_files.md`](knowledge/game_files.md) reference.
+the canonical [`knowledge/game/files/README.md`](knowledge/game/files/README.md) reference.
 Use its evidence labels instead of reviving these older unqualified guesses.
 
 Prior known PNACH patch notes:

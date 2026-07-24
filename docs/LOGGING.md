@@ -119,11 +119,12 @@ rediscovery. Size alone is not a reason to split or delete a useful record.
 
 ## Knowledge routing
 
-- Confirmed cross-cutting findings: `docs/knowledge/<topic>.md`.
+- Confirmed cross-cutting findings:
+  `docs/knowledge/<domain>/<topic>.md`.
 - Structured data owned by one module: beside that module, referenced from the
   knowledge index.
 - Durable supporting inventories or visual evidence:
-  `docs/knowledge/<topic>/`.
+  `docs/knowledge/<domain>/<topic>/`.
 - Unconfirmed interpretations and future experiments: `docs/HYPOTHESES.md`.
 
 When evidence changes a conclusion, update the durable knowledge entry and its

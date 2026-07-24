@@ -43,4 +43,4 @@ Global source, binary-safety, profile, testing, and cleanup rules remain in
 
 - [From-scratch translation rebuild and validation plan](rebuild.md)
 - [Localization feature and mapping history](../../../na2_patcher/features/localization/README.md)
-- [External string-payload architecture](../../knowledge/external_string_payload.md)
+- [External string-payload architecture](../../knowledge/localization/external_string_payload.md)

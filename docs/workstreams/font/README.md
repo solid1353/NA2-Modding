@@ -11,4 +11,4 @@ in the shared knowledge base rather than being duplicated here.
 ## Documents
 
 - [Active plan and working context](plan.md)
-- [Confirmed font knowledge and preserved evidence](../../knowledge/font/README.md)
+- [Confirmed font knowledge and preserved evidence](../../knowledge/localization/font/README.md)

@@ -727,7 +727,7 @@ later owns local declarations, it can add `string_patcher/strings.tsv` then.
 
 The memory-card title is output identity and is therefore declared by the active
 profile's `identity.json`; its evidence is documented in
-`docs/knowledge/disc_identity.md`.
+`docs/knowledge/game/disc_identity.md`.
 
 ## UI texture translation module
 
@@ -1095,7 +1095,7 @@ Current build on both Command Menu and Command Chart and accepted both screens
 as good, promoting the shared correction to runtime-proven/verified.
 
 Detailed function, address, side-effect, and negative-result evidence for both
-patches is preserved in `docs/knowledge/battle_ui.md`.
+patches is preserved in `docs/knowledge/localization/ui/battle.md`.
 
 ### UI-ETC-001: localized Shop currency-label layout
 
@@ -1168,7 +1168,7 @@ and `0x30AB0`. The separate accepted Back path remains untouched.
 
 Static provenance and the draw-path
 reconstruction and paired Characters/Movie/Music evidence are recorded in
-`docs/knowledge/collection_ui.md`. All eight operations derive bytes from
+`docs/knowledge/localization/ui/collection.md`. All eight operations derive bytes from
 canonical NUN5 files and preserve ETC size. Runtime acceptance remains pending.
 
 ### UI-ELF-005: localized Mode Select START layout
@@ -1333,7 +1333,7 @@ is enabled:
 Both layout components require `font_nun5_glyphs` because their positions and
 fit decisions are tuned to its metrics. They otherwise remain independent.
 The rejected `font_vertical_quad_height` component was removed from executable
-inputs. Its exact negative result remains in `docs/knowledge/font/README.md`
+inputs. Its exact negative result remains in `docs/knowledge/localization/font/README.md`
 and Git history.
 
 Matched Controls, Practice, Save/Load, and character-modal captures were
@@ -1347,7 +1347,7 @@ are not a Latin-weight parity target.
 referenced blobs from configured `@source_na2/` and `@source_nun5/` inputs.
 Exact offsets, guards, replacement bytes, and reasons are recorded in
 `edits.tsv`; confirmed evidence and negative results are recorded in
-`docs/knowledge/font/README.md`.
+`docs/knowledge/localization/font/README.md`.
 
 ## Regional menu input
 

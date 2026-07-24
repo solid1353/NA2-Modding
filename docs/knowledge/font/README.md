@@ -75,6 +75,44 @@ documented file hashes, updated Current, and rotated Previous. The final ISO's
 boot ELF CRC is `1852E63F`; a controlled hidden 15-second PCSX2 boot reported
 the same CRC. The build left no `.building` ISO or PCSX2 process behind.
 
+## 2026-07-24 weight and spacing refinement
+
+The accepted native baseline remains canonical while a task-local refinement
+is under visual review. On the matched Control Settings savestate, vertically
+presenting the halfwidth-Latin cells at `1.20` around the established
+15-pixel baseline and applying alpha gamma `1.65` improves median visible
+height from two pixels short of NUN5 to one pixel short. Median density changes
+from `1.042106` times NUN5 to `0.984921`; median visible width remains two
+pixels short. This is the current best review candidate, not a canonical patch.
+Fullwidth Shift-JIS Save/Load digits remain outside this comparison.
+
+Several task-local spacing tests are rejected:
+
+- increasing every printable glyph's integer metric advance by one unit is too
+  coarse. It moves the median width from two pixels short to three pixels wide;
+  `Item Select` and `Linked Attack` overshoot by 12 and 13 pixels;
+- reducing the packed metric row for the blank cell by 6, 10, or 12 units
+  changes centered placement but does not reduce the drawn inter-word gap by
+  the corresponding amount. The current secondary measurement and draw paths
+  therefore do not share a usable blank-advance control through that row;
+- live-verified context tracking values `0.5`, `1.0`, and `1.5` persist in the
+  active Slot 2 font context, but the matched visible glyph measurements remain
+  byte-for-byte equivalent to tracking `0.0`. The historical initialization
+  field is not an effective spacing control for this patched secondary path.
+
+Focused decoding of the installed 316-byte helper gives reusable boundaries.
+Runtime `0x00187274..0x00187330` walks the packed metric payload for the current
+secondary cell, subtracts the selected leading bearing from the active draw
+coordinate, and stores the trailing trim in the font context. Runtime
+`0x00187330..0x00187390` bounds a plain secondary byte to cells `0..122`,
+retrieves the same packed row, and returns its expanded measurement pair.
+These results explain why integer glyph metrics affect both placement and
+measurement strongly, while the blank-cell and legacy tracking experiments do
+not provide the required fractional letter-spacing correction. Any future
+spacing refinement must treat ordinary glyph advance and the actual space
+advance as separate renderer behaviors; do not approximate it with another
+global metric shift.
+
 ## 2026-07-19 superseded clean-font baseline
 
 This earlier baseline started from clean NA2, not from m01, v22, v23, or the

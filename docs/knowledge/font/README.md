@@ -324,9 +324,11 @@ The register-safe task-local v4 candidate is retained at
 `work/Font/artifacts/font_match_v1/renderer_geometry_spacing_fit_v4_nun5.p2s`.
 It scales only the semantic decoder's horizontal leading-bearing path and
 preserves the decoder's live `v0` return value. It is not a canonical patch and
-has not yet received runtime acceptance. The preceding v3 helper is rejected:
-it clobbered that return register, and its guarded run produced no usable
-capture.
+has not yet received runtime acceptance. A deterministic replay of every
+accepted metric row predicts total advance `128.719070` versus NUN5
+`128.719072`, with maximum per-glyph origin error `0.000002`; this is arithmetic
+validation, not runtime acceptance. The preceding v3 helper is rejected: it
+clobbered that return register, and its guarded run produced no usable capture.
 
 ## 2026-07-19 superseded clean-font baseline
 

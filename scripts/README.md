@@ -58,6 +58,10 @@ does not launch PCSX2. Bare `na2` keeps the build-then-launch workflow.
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 
+`na2/sync_input_profiles.ps1` regenerates the NA2 comparison input profile from
+the canonical base profile while changing only the four configured `[Pad1]`
+face-button bindings. The shared PowerShell profile exposes it as `na2inputs`.
+
 Agent runtime checks use `na2/test_launch.ps1 -WorkerRoot
 work/<task title>`. A short named lock protects shared configuration while the
 wrapper redirects writable folders, copies/reuses the game's effective Slot 1

@@ -48,6 +48,9 @@ SWDumpDirectory =
 [SPU2/Output]
 OutputMuted = false
 
+[UI]
+StartPaused = false
+
 [MemoryCards]
 Slot1_Enable = true
 Slot1_Filename = Mcd001.ps2
@@ -72,7 +75,8 @@ Slot1_Filename = Mcd001.ps2
             -Layout $layout `
             -IsoIdentity $identity `
             -AgentName 'Codex' `
-            -TaskIdentity 'runtime-test'
+            -TaskIdentity 'runtime-test' `
+            -StartPaused $true
         $injected = [IO.File]::ReadAllText($iniPath)
         Assert-Na2RuntimeTest `
             -Condition ((Get-Na2IniValue -Text $injected -Section 'Folders' -Key 'Logs') -ceq $layout.LogDirectory) `
@@ -83,6 +87,9 @@ Slot1_Filename = Mcd001.ps2
         Assert-Na2RuntimeTest `
             -Condition ((Get-Na2IniValue -Text $injected -Section 'SPU2/Output' -Key 'OutputMuted') -ceq 'true') `
             -Message 'Runtime audio was not muted.'
+        Assert-Na2RuntimeTest `
+            -Condition ((Get-Na2IniValue -Text $injected -Section 'UI' -Key 'StartPaused') -ceq 'true') `
+            -Message 'Requested paused-start state was not isolated under the worker runtime.'
         Assert-Na2RuntimeTest `
             -Condition (Test-Path -LiteralPath $context.MemoryCard.TaskCardPath -PathType Leaf) `
             -Message 'Worker memory card was not created under the worker root.'

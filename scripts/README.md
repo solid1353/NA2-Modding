@@ -61,7 +61,10 @@ translation-export command or non-strict source-hash mode.
 Agent runtime checks use `na2/test_launch.ps1 -WorkerRoot
 work/<task title>`. A short named lock protects shared configuration while the
 wrapper redirects writable folders, copies/reuses the game's effective Slot 1
-card under the worker, chooses a free PINE port, and launches hidden/muted.
+card under the worker, chooses a free PINE port, and launches hidden/muted and
+running by default. Pass `-StartPaused` only when the test requires a paused
+initial state; it is part of the same guarded settings snapshot rather than a
+separate shared-INI edit.
 After PINE reports the expected serial/CRC, shared settings are restored
 immediately and the lock is released. The wrapper records and validates the
 specific PID, start time, top-level window handle, and PINE endpoint, then

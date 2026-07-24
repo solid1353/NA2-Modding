@@ -5,7 +5,8 @@ param(
     [ValidateRange(1, 300)][int]$WaitSeconds = 5,
     [ValidateRange(1, 300)][int]$ReadyTimeoutSeconds = 60,
     [string]$AgentName = 'Codex',
-    [string]$TaskIdentity
+    [string]$TaskIdentity,
+    [switch]$StartPaused
 )
 
 $ErrorActionPreference = 'Stop'
@@ -150,7 +151,8 @@ try {
         -Layout $runtimeLayout `
         -IsoIdentity $isoIdentity `
         -AgentName $AgentName `
-        -TaskIdentity $TaskIdentity
+        -TaskIdentity $TaskIdentity `
+        -StartPaused:$StartPaused
 
     $foregroundBeforeLaunch = [Na2TestWindow]::GetForegroundWindow()
     $cardAction = if ($runtimeContext.MemoryCard.TaskCardCreated) { 'created' } else { 'reused' }

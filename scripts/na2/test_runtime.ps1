@@ -99,7 +99,8 @@ function Enter-Na2TestRuntimeConfiguration {
         [Parameter(Mandatory = $true)][psobject]$Layout,
         [Parameter(Mandatory = $true)][psobject]$IsoIdentity,
         [Parameter(Mandatory = $true)][string]$AgentName,
-        [Parameter(Mandatory = $true)][string]$TaskIdentity
+        [Parameter(Mandatory = $true)][string]$TaskIdentity,
+        [bool]$StartPaused = $false
     )
 
     $iniPath = $ProjectPaths.files.pcsx2_ini
@@ -140,6 +141,7 @@ function Enter-Na2TestRuntimeConfiguration {
             [pscustomobject]@{ Section = 'EmuCore/GS'; Key = 'HWDumpDirectory'; Value = $Layout.GsDumps }
             [pscustomobject]@{ Section = 'EmuCore/GS'; Key = 'SWDumpDirectory'; Value = $Layout.GsDumps }
             [pscustomobject]@{ Section = 'SPU2/Output'; Key = 'OutputMuted'; Value = 'true' }
+            [pscustomobject]@{ Section = 'UI'; Key = 'StartPaused'; Value = $StartPaused.ToString().ToLowerInvariant() }
         )
         $snapshot = Get-Na2IniSettingSnapshot -Text $iniText -Settings $settings
         $injected = Set-Na2IniSettings -Text $iniText -Settings $settings

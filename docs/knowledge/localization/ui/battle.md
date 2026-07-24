@@ -306,3 +306,58 @@ BTL files, decoded `TEX_xselect` crops, and complete-function comparison.
 The user then verified the integrated Current build on both Command Menu and
 Command Chart and accepted both screens as good. Confidence is **verified** and
 the shared correction is **runtime-proven**.
+
+## Paired item-status labels
+
+### Identity and address map
+
+| Role | NA2 | NUN5 |
+| --- | --- | --- |
+| Binary identity | `PRG/BTL.BIN`, SHA-256 `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C` | `PRG/BTL.BIN`, SHA-256 `7E8518DA7BD4957AF18CB0ABABE67F0E9B37C42C6551375201B15997F0A3DFE3` |
+| Pair factory | file `0x596F0`, Ghidra `FUN_0070D5B0`, archived live `0x0070D5F0` | file `0x5B940`, archived live `0x00722640` |
+| Shared update | file `0x59EA0`, Ghidra `FUN_0070DD60`, archived live `0x0070DDA0` | file `0x5C110`, archived live `0x00722E10` |
+| Pair draw | file `0x5ADC0`, Ghidra `FUN_0070EC80`, archived live `0x0070ECC0` | file `0x5D3F0`, archived live `0x007240F0` |
+| Rank offsets | file `0x1E4C90`, archived live `0x00898B90` | file `0x1ED870`, archived live `0x008B4570` |
+
+The boot-ELF table records are copied from NUN5 `SLES_556.05`
+`0x4B86F8..0x4B874B` and `0x4B8794..0x4B87AB` into the homologous NA2
+`SLPS_258.37` ranges `0x4B1208..0x4B125B` and
+`0x4B12A4..0x4B12BB`. These are item codes `0x8E..0x94` and
+`0x9B..0x9C`. The BTL rank table is copied as one 24-byte donor range.
+
+### Reconstructed behavior
+
+The paired path can be summarized as:
+
+```cpp
+float widthScale = normalizeDonorWidth(itemCode);
+Vec2 origin = {-33.0f, -33.0f};
+PairLayout layout = pairLayout(rank, row, widthScale);
+drawBubble(origin, widthScale, 1.0f, layout.rotation);
+drawPairForeground(layout.x, layout.y, widthScale, 1.0f, layout.rotation);
+```
+
+NUN5 carries independent horizontal and vertical scale values through its
+sprite call. NA2's homolog originally reused one value and its object offset
+`+0x40` is a next pointer rather than NUN5's scale field. Copying the NUN5
+implementation wholesale would corrupt the NA2 object chain. `UI-BTL-009`
+therefore ports the anisotropic renderer contract into NA2's resident renderer
+and uses verified zero padding at BTL file `0x2119E4..0x211C1F` for ABI-safe
+helpers and constants. Callers pass derived values without changing the NA2
+object layout. Numeric and fixed callers explicitly clear the added rotation
+argument until their own class-specific layouts are imported.
+
+The common origin is changed from NA2 `(-33,-42)` to NUN5 `(-33,-33)`.
+The complete NUN5 rank offsets are `(20,-30)`, `(-64,-63)`, and `(0,-96)`;
+NA2 had `(50,-20)`, `(-16,-62)`, and `(30,-104)`.
+
+### Evidence and limits
+
+Evidence consists of paired BTL/ELF disassembly, unique guarded byte ranges in
+the canonical binaries, archived Slot 7 live-memory reconstruction, and the
+accepted paired raster checkpoint. The final controller, both foreground
+labels, and white-bubble bounds match NUN5; a one-pixel bubble-top difference
+tracks normal pulse timing. A generalized transplant into numeric, single, and
+fixed-status classes was rejected because those classes use different
+constructors and geometry. Confidence in the paired-class mapping and patch is
+**verified**; applicability to those other classes is explicitly unproven.

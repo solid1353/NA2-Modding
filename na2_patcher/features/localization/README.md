@@ -1176,6 +1176,21 @@ as good, promoting the shared correction to runtime-proven/verified.
 Detailed function, address, side-effect, and negative-result evidence for both
 patches is preserved in `docs/knowledge/localization/ui/battle.md`.
 
+### UI-BTL-009: localized paired item-status labels
+
+Paired item effects use two foreground rows, a shared bubble, and a three-rank
+offset table. `UI-BTL-009` copies the official NUN5 records `0x8E..0x94` and
+`0x9B..0x9C` plus the complete rank table. The remaining writes are an
+NA2-specific ABI port: they add anisotropic sprite scaling, preserve NA2's
+object layout, and reproduce the donor width normalization, centering, row
+spacing, rotation, clamp, and common origin.
+
+The patch was reconstructed from homologous boot-ELF and BTL functions and
+validated against the accepted paired item checkpoint. Controller, foreground
+labels, and white-bubble bounds match NUN5; a one-pixel top-edge difference is
+normal pulse timing. Numeric, single, and fixed-status layouts are separate
+classes and are intentionally not changed by this patch.
+
 ### UI-ETC-001: localized Shop currency-label layout
 
 Importing the complete NUN5 `SHOP.CCS` supplies the correct English atlas, but

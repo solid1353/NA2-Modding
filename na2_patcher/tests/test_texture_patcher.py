@@ -641,6 +641,36 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(patch.status, "runtime_proven")
         self.assertEqual(patch.confidence, "verified")
 
+    def test_paired_item_status_layout_uses_exact_nun5_donors(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = binary_patcher.load_package(
+            repository
+            / "na2_patcher/features/localization/binary_patcher"
+        )
+        edits = [item for item in package.edits if item.patch_id == "UI-BTL-009"]
+        patch = package.patches["UI-BTL-009"]
+        donors = [item for item in edits if item.operation == "copy"]
+
+        self.assertEqual(len(edits), 29)
+        self.assertEqual(
+            [
+                (
+                    item.destination_offset,
+                    item.length,
+                    item.source_target_id,
+                    item.source_offset,
+                )
+                for item in donors
+            ],
+            [
+                (0x4B1208, 84, "nun5_elf", 0x4B86F8),
+                (0x4B12A4, 24, "nun5_elf", 0x4B8794),
+                (0x1E4C90, 24, "nun5_btl", 0x1ED870),
+            ],
+        )
+        self.assertEqual(patch.status, "runtime_proven")
+        self.assertEqual(patch.confidence, "verified")
+
     def test_controls_vibration_rectangle_is_an_exact_nun5_copy(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
@@ -778,14 +808,14 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 113)
-        self.assertEqual(operations, {"copy": 65, "replace": 48})
+        self.assertEqual(len(ui_edits), 142)
+        self.assertEqual(operations, {"copy": 68, "replace": 74})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 45, "nun5_btl": 15, "nun5_etc": 5},
+            {"nun5_elf": 47, "nun5_btl": 16, "nun5_etc": 5},
         )
         self.assertEqual(len(stage_scales), 24)
-        self.assertEqual(len(adaptations), 24)
+        self.assertEqual(len(adaptations), 50)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")

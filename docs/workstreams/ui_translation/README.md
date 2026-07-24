@@ -6,6 +6,8 @@ Canonical documentation landing page for the `UI Translation` workstream.
 
 - The user delegates the technical approach to this workstream, while
   consequential decisions must be discussed.
+- The savestate-driven correction of remaining UI defects is this workstream's
+  ongoing epic until the user changes it.
 - Keep the approach reproducible and evidence-driven.
 - The workstream owns UI textures and the binary rectangle or placement logic
   needed to display them. Text content and font spacing are out of scope.

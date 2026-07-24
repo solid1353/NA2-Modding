@@ -29,7 +29,7 @@ Every executable row must contain:
   `Practice Settings > Damage label`;
 - `display_basis`: a stable `seen:`, `inferred:`, or `character:` reference.
 
-The importer will reject missing display metadata after the fresh schema lands.
+The importer rejects missing display metadata.
 Rows with uncertain display purpose are absent from the executable table and
 their clean Japanese bytes remain untouched.
 
@@ -117,6 +117,28 @@ screen-for-screen. Each flow is ordered independently, then paired only where
 the prompt's meaning and action agree. Debug or placeholder donor text such as
 `TestSaveLoadMsgEng5` is not imported as user-facing translation.
 
+## Implemented v41 rebuild
+
+The first diagnostic pass admitted 2,049 executable rows:
+
+- 2,048 evidence-supported rows retained from archived v40;
+- one new `M2247` row for the confirmed Battle HUD `MAX` label;
+- 124 previously active v40 rows omitted because they have no confirmed display
+  location.
+
+Every row has a concrete display location and one `seen:`, `inferred:`, or
+`character:` basis. There are no disabled, unresolved, shortened, prefixed, or
+user-override rows. The table has 2,045 slots and four sequences.
+
+The character-family audit corrected plain Kankuro and the shifted
+`Provocation` / `Contrasting Pair` voice titles. The unmatched `通告` voice
+title is absent rather than guessed. Exact source validation passes for every
+row against clean NA2, and exact donor validation passes for every row against
+the referenced NUN5 bytes after fullwidth-ASCII normalization.
+
+Canonical v41 `mappings.tsv` SHA-256:
+`22A6EBAC810FDD0FF5AD1DCEB1B62D6123D55AAFBB328E6656E87129042EE6F8`.
+
 ## Validation
 
 Static validation must prove:
@@ -131,12 +153,23 @@ Static validation must prove:
 - deterministic profile composition with normal and mapping-ID display modes;
 - normal-mode parity when diagnostic display is not requested.
 
-Runtime validation uses two passes:
+Static validation completed on 2026-07-24:
 
-1. the diagnostic ISO identifies which source rows render on every supplied
-   screen;
-2. the rebuilt English ISO is captured again for every supplied semantic screen
-   group.
+- all 2,049 canonical rows passed exact clean-source and official-donor checks;
+- all 2,055 resolved slot/sequence fragments contain no fullwidth
+  ASCII-compatible output;
+- normal current-profile composition produced 2,286 binary edits and the
+  1,776-byte `PRG/228.BIN` documented above;
+- mapping-ID composition produced 2,059 inline binary edits and no resident
+  payload, because every diagnostic identifier fits its guarded slot;
+- the full repository test suite passed 146/146.
+
+Runtime acceptance uses two passes:
+
+1. complete: the diagnostic ISO identified which source rows render on the
+   supplied screens;
+2. pending final acceptance: the rebuilt English ISO is captured again for
+   every supplied semantic screen group.
 
 Final reports use readable grouped grids with NUN5 on the left and rebuilt
 Current on the right. Selector/help siblings and character families receive

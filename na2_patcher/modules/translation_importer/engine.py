@@ -27,9 +27,10 @@ SOURCE_IDS = {
     "NA2_SLPS": "SLPS",
 }
 MAPPING_FIELDS = [
-    "id", "enabled", "section", "mode", "source_ref", "donor_ref", "capacity",
-    "source", "donor", "prefix", "replacement", "transform", "arguments",
-    "reference_refs", "parent_mapping_id",
+    "id", "enabled", "section", "display_context", "display_basis", "mode",
+    "source_ref", "donor_ref", "capacity", "source", "donor", "prefix",
+    "replacement", "transform", "arguments", "reference_refs",
+    "parent_mapping_id",
 ]
 EXPECTED_SHA1 = {
     "NA2_BTL": "bf7fc7331a2a4f34fc90b84b45772ae1f6bcab03",
@@ -37,6 +38,7 @@ EXPECTED_SHA1 = {
     "NA2_SLPS": "bbe206bbf4da0ee815b437226ceb6a533c95833e",
 }
 VALID_MODES = {"slot", "sequence"}
+DISPLAY_BASIS_PREFIXES = ("seen:", "inferred:", "character:")
 PLACEHOLDER_TEXT = frozenset({"unknown", "placeholder", "dummy", "test", "todo", "temp"})
 IDENTIFIER_TEXT = re.compile(r"[a-z][a-z0-9_./-]{3,}\Z")
 VALID_TRANSFORMS = {
@@ -44,6 +46,8 @@ VALID_TRANSFORMS = {
     "empty",
     "format_arg1",
     "format_args",
+    "format_literal_arg1",
+    "format_literal_prefix_arg2",
     "format_prefix_arg2",
     "format_suffix_arg2",
     "between_placeholders",
@@ -147,6 +151,20 @@ def normalize_path(value: str) -> str:
 
 def sha1(data: bytes) -> str:
     return hashlib.sha1(data).hexdigest()
+
+
+def normalize_fullwidth_ascii(text: str) -> str:
+    """Normalize fullwidth ASCII-compatible characters in translated output."""
+    result: list[str] = []
+    for character in text:
+        codepoint = ord(character)
+        if character == "\u3000":
+            result.append(" ")
+        elif 0xFF01 <= codepoint <= 0xFF5E:
+            result.append(chr(codepoint - 0xFEE0))
+        else:
+            result.append(character)
+    return "".join(result)
 
 
 def source_from(folder: Optional[Path], iso: Optional[Path], label: str):
@@ -398,7 +416,10 @@ def resolve_replacement_text(
     donor_by_ref: dict[str, str] | None = None,
 ) -> str:
     override = str(row["replacement"])
-    template = override if override else str(row["donor"])
+    template = normalize_fullwidth_ascii(
+        override if override else str(row["donor"])
+    )
+    prefix = normalize_fullwidth_ascii(str(row.get("prefix", "")))
     transform = str(row.get("transform", ""))
     arguments = dict(row.get("arguments", {}))
 
@@ -431,6 +452,20 @@ def resolve_replacement_text(
             template.replace("%1", argument("arg1"))
             .replace("%2", argument("arg2"))
         )
+    elif transform == "format_literal_arg1":
+        if "%1" not in template:
+            raise ValueError(f"{label}: template has no %1")
+        resolved = template.replace(
+            "%1",
+            normalize_fullwidth_ascii(arguments.get("arg1", "")),
+        )
+    elif transform == "format_literal_prefix_arg2":
+        if "%1" not in template or "%2" not in template:
+            raise ValueError(f"{label}: template lacks placeholders")
+        resolved = template.replace(
+            "%1",
+            normalize_fullwidth_ascii(arguments.get("arg1", "")),
+        ).split("%2", 1)[0]
     elif transform == "format_prefix_arg2":
         if "%1" not in template or "%2" not in template:
             raise ValueError(f"{label}: template lacks placeholders")
@@ -487,7 +522,7 @@ def resolve_replacement_text(
         resolved = flattened[start:end]
     else:
         raise ValueError(f"{label}: unsupported transform {transform!r}")
-    return str(row.get("prefix", "")) + resolved
+    return normalize_fullwidth_ascii(prefix + resolved)
 
 
 def read_target_sequence(data: bytes, offset: int, capacity: int, label: str) -> tuple[list[str], bytes]:
@@ -556,6 +591,18 @@ def adapt_source_markup(source_text: str, target_text: str, label: str) -> str:
     return adapted
 
 
+def validate_declared_source(
+    declared_text: str,
+    actual_text: str,
+    label: str,
+) -> None:
+    if declared_text != actual_text:
+        raise ValueError(
+            f"{label}: declared source text {declared_text!r} does not match "
+            f"clean target text {actual_text!r}"
+        )
+
+
 def write_slot(output: bytearray, offset: int, capacity: int, replacement: bytes) -> None:
     if len(replacement) > capacity - 1:
         raise ValueError(f"replacement is {len(replacement)} bytes but slot allows {capacity - 1}")
@@ -568,6 +615,13 @@ def parse_mappings(rows: list[dict[str, str]]) -> dict[str, list[dict[str, objec
         label = f"mappings.tsv line {line} ({row['id']})"
         if row["enabled"] not in {"0", "1"}:
             raise ValueError(f"{label}: enabled must be 0 or 1")
+        if not row["display_context"]:
+            raise ValueError(f"{label}: display_context is required")
+        if not row["display_basis"].startswith(DISPLAY_BASIS_PREFIXES):
+            raise ValueError(
+                f"{label}: display_basis must begin with "
+                + ", ".join(DISPLAY_BASIS_PREFIXES)
+            )
         mode = row["mode"].lower()
         if mode not in VALID_MODES:
             raise ValueError(f"{label}: unsupported mode {mode!r}")
@@ -598,6 +652,14 @@ def parse_mappings(rows: list[dict[str, str]]) -> dict[str, list[dict[str, objec
         elif transform == "empty":
             if arguments:
                 raise ValueError(f"{label}: empty does not accept arguments")
+        elif transform in {
+            "format_literal_arg1",
+            "format_literal_prefix_arg2",
+        }:
+            if set(arguments) != {"arg1"} or not arguments["arg1"]:
+                raise ValueError(
+                    f"{label}: {transform} requires only nonempty arg1=<text>"
+                )
         elif transform in {"format_arg1", "format_prefix_arg2"}:
             if set(arguments) != {"arg1"}:
                 raise ValueError(f"{label}: {transform} requires only arg1=<ref>")
@@ -649,6 +711,8 @@ def parse_mappings(rows: list[dict[str, str]]) -> dict[str, list[dict[str, objec
         parsed = {
             "id": row["id"],
             "section": row["section"] or "unclassified",
+            "display_context": row["display_context"],
+            "display_basis": row["display_basis"],
             "mode": mode,
             "target": target,
             "target_offset": target_offset,
@@ -713,8 +777,11 @@ def resolve_text_materializations(
             continue
         mapping_id = str(row["id"])
         override = str(row["replacement"])
-        template = override if override else str(row["donor"])
-        materialized = str(row["prefix"]) + template
+        template = normalize_fullwidth_ascii(
+            override if override else str(row["donor"])
+        )
+        prefix = normalize_fullwidth_ascii(str(row["prefix"]))
+        materialized = prefix + template
         source_texts[mapping_id] = str(row["source"])
         donor_texts[mapping_id] = str(row["donor"])
         materialized_templates[mapping_id] = materialized
@@ -733,7 +800,7 @@ def resolve_text_materializations(
                     )
                 sequence = tuple(pieces[index] for index in parts)
                 if sequence:
-                    sequence = (str(row["prefix"]) + sequence[0], *sequence[1:])
+                    sequence = (prefix + sequence[0], *sequence[1:])
             else:
                 sequence = tuple(materialized.split("<NUL>"))
             if not sequence or any(not value for value in sequence):
@@ -780,6 +847,7 @@ def apply_text_mappings(
             target_fragments, _ = read_target_sequence(clean_targets[target], offset, capacity, label)
             official_fragments = resolved_sequences[mapping_id]
             target_context = "<NUL>".join(target_fragments)
+            validate_declared_source(str(row["source"]), target_context, label)
             replacement_fragments = [
                 adapt_source_markup(fragment, target_context, label) for fragment in official_fragments
             ]
@@ -794,6 +862,7 @@ def apply_text_mappings(
         else:
             official = resolved_texts[mapping_id]
             target_text, _ = read_target_slot(clean_targets[target], offset, capacity, label)
+            validate_declared_source(str(row["source"]), target_text, label)
             validate_semantic_replacement(official, target_text, label)
             replacement_text = adapt_source_markup(official, target_text, label)
             replacement = replacement_text.encode("cp1252")
@@ -948,6 +1017,11 @@ def build_translation_import_plan(
         for row in mappings["text"]
         if row["target"] in selected
     )
+    active_display_bases = Counter(
+        str(row["display_basis"])
+        for row in mappings["text"]
+        if row["target"] in selected
+    )
     summary: dict[str, object] = {
         "mode": "canonical translation declarations",
         "mappings_sha256": actual_mapping_hash,
@@ -960,6 +1034,7 @@ def build_translation_import_plan(
         "active_mapping_coverage": {
             "by_mode": dict(sorted(active_by_mode.items())),
             "by_section": dict(sorted(active_sections.items())),
+            "by_display_basis": dict(sorted(active_display_bases.items())),
         },
         "source_hashes": actual_hashes,
         "reference_inventory": reference_counts,

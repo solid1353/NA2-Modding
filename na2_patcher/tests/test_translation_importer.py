@@ -29,6 +29,8 @@ class TranslationImporterTests(unittest.TestCase):
             "id": "MTEST",
             "enabled": "1",
             "section": "test",
+            "display_context": "Test screen > value",
+            "display_basis": "seen:test-fixture",
             "mode": "unresolved",
             "source_ref": "NA2_SLPS@0",
             "donor_ref": "NUN5_SLES@0",
@@ -43,6 +45,32 @@ class TranslationImporterTests(unittest.TestCase):
             "parent_mapping_id": "",
         }
         with self.assertRaisesRegex(ValueError, "unsupported mode"):
+            engine.parse_mappings([row])
+
+    def test_rejects_missing_display_metadata(self) -> None:
+        row = {
+            "id": "MTEST",
+            "enabled": "1",
+            "section": "test",
+            "display_context": "",
+            "display_basis": "",
+            "mode": "slot",
+            "source_ref": "NA2_SLPS@0",
+            "donor_ref": "NUN5_SLES@0",
+            "capacity": "8",
+            "source": "source",
+            "donor": "donor",
+            "prefix": "",
+            "replacement": "",
+            "transform": "",
+            "arguments": "",
+            "reference_refs": "",
+            "parent_mapping_id": "",
+        }
+        with self.assertRaisesRegex(ValueError, "display_context is required"):
+            engine.parse_mappings([row])
+        row["display_context"] = "Test screen > value"
+        with self.assertRaisesRegex(ValueError, "display_basis must begin"):
             engine.parse_mappings([row])
 
     def test_rejects_placeholder_donor_for_identifier_target(self) -> None:
@@ -108,6 +136,67 @@ class TranslationImporterTests(unittest.TestCase):
             engine.resolve_replacement_text(row, "transformed"),
             "[P] Second line",
         )
+
+    def test_literal_format_argument_keeps_replacement_field_empty(self) -> None:
+        row = {
+            "donor": "Quit %1?",
+            "prefix": "",
+            "replacement": "",
+            "transform": "format_literal_arg1",
+            "arguments": {"arg1": "Collection"},
+        }
+        self.assertEqual(
+            engine.resolve_replacement_text(row, "formatted"),
+            "Quit Collection?",
+        )
+
+    def test_literal_format_argument_can_materialize_dialog_prefix(self) -> None:
+        row = {
+            "donor": "Quit %1 and return to %2?",
+            "prefix": "",
+            "replacement": "",
+            "transform": "format_literal_prefix_arg2",
+            "arguments": {"arg1": "Free Battle"},
+        }
+        self.assertEqual(
+            engine.resolve_replacement_text(row, "formatted-prefix"),
+            "Quit Free Battle and return to ",
+        )
+
+    def test_fullwidth_ascii_is_normalized_only_in_resolved_output(self) -> None:
+        row = {
+            "donor": "ＭＡＸ　Ｄａｍａｇｅ！",
+            "prefix": "［P］ ",
+            "replacement": "",
+            "transform": "",
+            "arguments": {},
+        }
+        self.assertEqual(
+            engine.resolve_replacement_text(row, "normalized"),
+            "[P] MAX Damage!",
+        )
+
+    def test_fullwidth_ascii_is_normalized_in_donor_reference_arguments(self) -> None:
+        row = {
+            "donor": "Quit %1?",
+            "prefix": "",
+            "replacement": "",
+            "transform": "format_arg1",
+            "arguments": {"arg1": "NUN5_TEXTENG@0x10"},
+        }
+        self.assertEqual(
+            engine.resolve_replacement_text(
+                row,
+                "normalized-reference",
+                {"NUN5_TEXTENG@0x10": "Ｃｏｌｌｅｃｔｉｏｎ"},
+            ),
+            "Quit Collection?",
+        )
+
+    def test_declared_source_must_match_clean_target_text(self) -> None:
+        engine.validate_declared_source("最大", "最大", "M2247")
+        with self.assertRaisesRegex(ValueError, "does not match clean target"):
+            engine.validate_declared_source("最大", "最小", "M2247")
 
     def test_combined_source_and_pointer_references_are_parsed(self) -> None:
         self.assertEqual(

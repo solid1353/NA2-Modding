@@ -3,7 +3,7 @@
 This feature owns all declarative content for the accepted English localization
 while reusable executable engines remain under `na2_patcher/modules/`.
 
-- [Translation importer](#na2-translation-importer-mapping-version-40)
+- [Translation importer](#na2-translation-importer-mapping-version-41)
 - [String patcher](#string-patcher)
 - [Texture patcher](#ui-texture-translation-module)
 - [Binary patcher](#ui-translation-binary-patcher-patch-set)
@@ -15,7 +15,7 @@ The feature directory name declares its identity. Its module-named
 subdirectories are the inputs that compose it; enabling Localization enables all
 of them, and one aggregate profile pin covers their canonical inputs.
 
-## NA2 translation importer (mapping version 40)
+## NA2 translation importer (mapping version 41)
 
 This first-class `na2_patcher` module imports and validates strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
@@ -27,8 +27,8 @@ command or file-backed inter-stage handoff.
 
 ### Mapping metadata
 
-- Version: `40`
-- Packaged `mappings.tsv` SHA-256: `60DB92F792502AD308B8D821BC4B963B060A113044A420DBAF288A6AB4A940A4`
+- Version: `41`
+- Packaged `mappings.tsv` SHA-256: `22A6EBAC810FDD0FF5AD1DCEB1B62D6123D55AAFBB328E6656E87129042EE6F8`
 
 The version and mappings hash above are historical documentation, not a second
 executable manifest. Git history and the aggregate Localization feature pin own
@@ -58,11 +58,12 @@ current table.
 
 `mappings.tsv` is the single canonical mapping table. TSV has no worksheet tabs, so `section` is the page/filter key for grouping mappings by screen or mode.
 
-The 15 columns are:
+The 17 columns are:
 
-`id`, `enabled`, `section`, `mode`, `source_ref`, `donor_ref`, `capacity`,
-`source`, `donor`, `prefix`, `replacement`, `transform`, `arguments`,
-`reference_refs`, `parent_mapping_id`
+`id`, `enabled`, `section`, `display_context`, `display_basis`, `mode`,
+`source_ref`, `donor_ref`, `capacity`, `source`, `donor`, `prefix`,
+`replacement`, `transform`, `arguments`, `reference_refs`,
+`parent_mapping_id`
 
 #### Stable IDs and enabled state
 
@@ -73,6 +74,9 @@ The 15 columns are:
   or inherit flags from external state.
 - Changing an enabled flag changes the canonical module input and therefore
   requires an explicit profile hash update.
+- The current evidence-scoped table contains only executable rows, so all
+  current rows are enabled. Unconfirmed rows are absent instead of retained as
+  disabled inventory.
 
 #### Modes
 
@@ -93,8 +97,11 @@ There is no `shorten` or `pool` mapping mode. External placement is a
 `source_ref` and `donor_ref` are adjacent provenance fields using
 `SOURCE@OFFSET`, for example `NA2_BTL@0x1E2130` and
 `NUN5_TEXTENG@0x29430`. `source` and `donor` are adjacent text fields: `source`
-records the guarded clean NA2 text, while `donor` records the verified official
-translation and is executable by default.
+records the exact guarded clean NA2 text, while `donor` records the verified
+official translation and is executable by default. `display_context` names the
+screen and field where the row appears. `display_basis` begins with `seen:`,
+`inferred:`, or `character:` and records why that row is admitted to the
+executable table.
 
 `replacement` is a user-editable override field and is normally blank. The
 importer selects nonempty `replacement` or otherwise `donor`, applies the
@@ -133,13 +140,22 @@ All ISO target paths inside the TSV remain ISO-root-relative. The profile-level 
 - active mapping coverage grouped by mode and section;
 - source and translated-file hashes.
 
-Disabled executable rows remain solely in `mappings.tsv`.
+The current table contains no disabled rows.
 
 ### Safety behavior
 
 Known clean-source SHA-1 values are always checked. Unknown source media is rejected before a plan is produced.
 
-The module rejects malformed flags, duplicate IDs, invalid offsets, invalid source or donor references, malformed pointer-reference lists, malformed transforms, overlapping active mappings, unexpected structural bytes, text exceeding its declared slot or sequence block, malformed target sequences, invalid named-color conversion, and placeholder donor text that would overwrite identifier-like NA2 data. Enabled bad mappings fail the build instead of becoming silent runtime skips.
+The module rejects malformed flags, duplicate IDs, missing or invalid display
+metadata, invalid offsets, invalid source or donor references, source text that
+does not exactly match the clean target, malformed pointer-reference lists,
+malformed transforms, overlapping active mappings, unexpected structural
+bytes, text exceeding its declared slot or sequence block, malformed target
+sequences, invalid named-color conversion, and placeholder donor text that
+would overwrite identifier-like NA2 data. Enabled bad mappings fail the build
+instead of becoming silent runtime skips. Fullwidth ASCII-compatible donor,
+prefix, override, and transform output is normalized to ASCII before encoding;
+CP932 source guards are not normalized.
 
 #### Exact slot boundaries
 
@@ -160,6 +176,50 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - NUN5 `<BLACK>` remains `<BLACK>` or becomes `<color000000>` according to the verified target form.
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
+
+### Version 41 changes
+
+#### Evidence-scoped from-scratch rebuild
+
+Version 41 rebuilds the executable table from zero using the diagnostic
+mapping-ID screenshots, the paired savestate library, exact clean NA2 bytes,
+and the archived v40 table as reference rather than presumed coverage. Every
+one of the 2,049 executable rows now declares a concrete `display_context` and
+one stable evidence basis:
+
+- `seen:` for strings visible in the diagnostic screenshots or paired
+  savestates;
+- `inferred:` for hidden members of a proven selector, running-help, or shared
+  screen table;
+- `character:` for structurally proven character names, Ultimate Jutsu names,
+  Command Chart moves, figure-animation titles, and voice titles.
+
+The rebuild retains 2,048 v40 rows, adds `M2247` for the confirmed Battle HUD
+`MAX` label, and removes 124 previously active rows that had no confirmed
+display location. Removed content includes the unvisited Ultimate Battle and
+inventory blocks, unvisited alternate mode/shop branches, unused generic
+choice slots, and the unmatched voice title `M0523`; those clean Japanese bytes
+remain untouched.
+
+Three incorrect character-family matches are corrected:
+
+- plain Kankuro `M0246` now uses exact NUN5 `Kankuro` from
+  `NUN5_SLES@0x513D88`, not `Kankuro (Classic)`;
+- `M0521` now uses `Provocation` from `NUN5_TEXTENG@0x2B18`;
+- `M0522` now uses `Contrasting Pair` from `NUN5_TEXTENG@0x2B30`.
+
+All 2,049 source declarations exactly match the clean NA2 targets. All 2,049
+donor declarations were independently checked against their NUL-terminated
+NUN5 bytes after the specified fullwidth-ASCII normalization, with zero
+mismatches. The table has 2,045 slots, four sequences, 32 pointer-inventory
+rows, three parent-message rows, no prefixes, and no user overrides.
+
+After project-title policy, 31 mappings are linked externally through 33
+guarded pointer edits. The payload contains 29 logical rows at 28 distinct
+strings, uses 1,470 encoded bytes, and produces a `0x6F0`-byte `PRG/228.BIN`
+with SHA-256
+`84DD5C72F4B7D7A472EE2E3C69FBB92621A806E04116D281ED734AE61F5D02EF`.
+The compiled translation package contains 2,286 binary edits.
 
 ### Version 40 changes
 

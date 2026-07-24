@@ -58,6 +58,11 @@ def _external_mapping_ids(
                 label,
             )
             target_context = "<NUL>".join(target_fragments)
+            translation_importer.validate_declared_source(
+                str(row["source"]),
+                target_context,
+                label,
+            )
             fragments = tuple(
                 translation_importer.adapt_source_markup(
                     fragment, target_context, label
@@ -78,6 +83,11 @@ def _external_mapping_ids(
             translation_plan.clean_targets[target],
             int(row["target_offset"]),
             capacity,
+            label,
+        )
+        translation_importer.validate_declared_source(
+            str(row["source"]),
+            target_text,
             label,
         )
         replacement = translation_importer.adapt_source_markup(

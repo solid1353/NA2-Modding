@@ -62,32 +62,32 @@ class IntegratedExternalStringTests(unittest.TestCase):
     def test_shared_builder_produces_the_exact_fit_derived_228_binary(self) -> None:
         mod = self.build.payload
         self.assertEqual(self.build.output_path, "PRG/228.BIN")
-        self.assertEqual(len(mod), 0x700)
+        self.assertEqual(len(mod), 0x6F0)
         self.assertEqual(
             binary_patcher.data_sha256(mod),
-            "36CFF1341AC14A5AC6DCE5D6640F4F082676CF576851E0BEAF393207C3EE16FB",
+            "84DD5C72F4B7D7A472EE2E3C69FBB92621A806E04116D281ED734AE61F5D02EF",
         )
         self.assertEqual(
             struct.unpack_from("<4s7I", mod, 0),
-            (b"MWo3", 8, 0x008F3D00, 0x40, 0x6B0, 0, 0x008F4400, 0x008F4400),
+            (b"MWo3", 8, 0x008F3D00, 0x40, 0x6A0, 0, 0x008F43F0, 0x008F43F0),
         )
         self.assertEqual(mod[0x20:0x28], b"228.bin\0")
         self.assertEqual(struct.unpack_from("<II", mod, 0x40), (0x03E00008, 0))
 
     def test_string_patcher_declares_fragments_and_symbolic_pointers_only(self) -> None:
-        self.assertEqual(len(self.draft.external_draft.fragments), 29)
-        self.assertEqual(len(self.draft.external_draft.symbolic_patches), 34)
-        self.assertEqual(len(self.plan.external_plan.resolved_patches), 34)
+        self.assertEqual(len(self.draft.external_draft.fragments), 28)
+        self.assertEqual(len(self.draft.external_draft.symbolic_patches), 33)
+        self.assertEqual(len(self.plan.external_plan.resolved_patches), 33)
         self.assertTrue(all(patch.kind == "redirect_pointer" for patch in self.resolved))
-        self.assertEqual(self.plan.summary["external_mappings"], 32)
-        self.assertEqual(self.plan.summary["external_binary_edits"], 34)
-        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2434)
+        self.assertEqual(self.plan.summary["external_mappings"], 31)
+        self.assertEqual(self.plan.summary["external_binary_edits"], 33)
+        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2286)
 
     def test_pool_contains_only_referenced_strings_and_deduplicates_one_pair(self) -> None:
         summary = self.plan.summary["external_strings"]
-        self.assertEqual(summary["count"], 30)
-        self.assertEqual(summary["distinct"], 29)
-        self.assertEqual(summary["encoded_bytes"], 1479)
+        self.assertEqual(summary["count"], 29)
+        self.assertEqual(summary["distinct"], 28)
+        self.assertEqual(summary["encoded_bytes"], 1470)
         self.assertEqual(summary["derived"], 3)
         rows = {row["mapping_id"]: row for row in summary["rows"]}
         self.assertEqual(rows["M2003"]["runtime_address"], rows["M2065"]["runtime_address"])
@@ -172,6 +172,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
             )
 
     def test_canonical_rows_derive_translation_and_placement_state(self) -> None:
+        self.assertEqual(len(self.import_plan.text_mappings), 2049)
         self.assertTrue(
             all(row["mode"] in {"slot", "sequence"} for row in self.import_plan.text_mappings)
         )
@@ -180,9 +181,33 @@ class IntegratedExternalStringTests(unittest.TestCase):
         )
         self.assertEqual(
             sum(bool(str(row["replacement"])) for row in self.import_plan.text_mappings),
-            1,
+            0,
         )
-        self.assertEqual(len(self.import_plan.references), 33)
+        self.assertEqual(len(self.import_plan.references), 32)
+        self.assertTrue(
+            all(str(row["display_context"]) for row in self.import_plan.text_mappings)
+        )
+        self.assertTrue(
+            all(
+                str(row["display_basis"]).startswith(
+                    ("seen:", "inferred:", "character:")
+                )
+                for row in self.import_plan.text_mappings
+            )
+        )
+
+    def test_rebuild_fixes_confirmed_mapping_defects(self) -> None:
+        self.assertEqual(self.import_plan.resolved_texts["M0246"], "Kankuro")
+        self.assertEqual(self.import_plan.resolved_texts["M0521"], "Provocation")
+        self.assertEqual(
+            self.import_plan.resolved_texts["M0522"],
+            "Contrasting Pair",
+        )
+        self.assertNotIn(
+            "M0523",
+            {str(row["id"]) for row in self.import_plan.text_mappings},
+        )
+        self.assertEqual(self.import_plan.resolved_texts["M2247"], "MAX")
 
     def test_generic_choice_labels_preserve_official_case(self) -> None:
         self.assertEqual(self.import_plan.resolved_texts["M0566"], "No")

@@ -95,7 +95,7 @@ class ProfileTests(unittest.TestCase):
                     "schema_version": 1,
                     "image": {
                         "source_boot_path": "SLPS_258.37",
-                        "output_boot_path": "SLPS_222.28",
+                        "output_boot_path": "SLOP_NA2.28",
                         "system_cnf_path": "SYSTEM.CNF",
                     },
                     "memory_card": {
@@ -300,7 +300,7 @@ class ProfileTests(unittest.TestCase):
             ],
         )
         self.assertEqual(profile.identity.source_boot_path, "SLPS_258.37")
-        self.assertEqual(profile.identity.output_boot_path, "SLPS_222.28")
+        self.assertEqual(profile.identity.output_boot_path, "SLOP_NA2.28")
         self.assertEqual(profile.identity.memory_card_title_offset, 0x2FBAE0)
         self.assertEqual(profile.identity.output_memory_card_title, "ＮＡ　ｖ２．２８")
         self.assertFalse((profile_directory / "image.tsv").exists())

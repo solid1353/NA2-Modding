@@ -411,7 +411,7 @@ def _variant_for(path: Path, identity: StateIdentity) -> str:
         return parent
     if identity.serial == "SLPS-25837" and identity.crc == "C0659AD1":
         return "vanilla"
-    if identity.serial == "SLPS-22228":
+    if identity.serial in {"SLOP-NA228", "SLPS-22228"}:
         return "current"
     return "unknown"
 

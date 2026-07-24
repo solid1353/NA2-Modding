@@ -189,7 +189,7 @@ Observed examples include AFS tools, CCS tools, Ghidra/EmotionEngine material, K
 
 PCSX2 cheat filenames include the game CRC, for example:
 
-`SLPS-22228_BCB73695.pnach`
+`SLOP-NA228_<crc>.pnach`
 
 If the boot ELF inside an ISO changes, PCSX2 may report a different CRC.
 Actualize derives the alphanumeric serial from the ISO boot path and creates a

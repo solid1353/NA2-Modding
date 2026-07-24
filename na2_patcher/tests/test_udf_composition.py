@@ -421,7 +421,7 @@ def rename_iso_boot(path: Path) -> None:
     record = iso.by_path["SLPS_258.37"]
     assert record.directory_record_offset is not None
     old_identifier = b"SLPS_258.37;1"
-    new_identifier = b"SLPS_222.28;1"
+    new_identifier = b"SLOP_NA2.28;1"
     with path.open("r+b") as handle:
         handle.seek(record.directory_record_offset + 33)
         if handle.read(len(old_identifier)) != old_identifier:
@@ -450,12 +450,12 @@ class UdfCompositionTests(unittest.TestCase):
             first_result = compose_filesystems(
                 first,
                 payloads,
-                udf_renames={"SLPS_258.37": "SLPS_222.28"},
+                udf_renames={"SLPS_258.37": "SLOP_NA2.28"},
             )
             second_result = compose_filesystems(
                 second,
                 payloads,
-                udf_renames={"SLPS_258.37": "SLPS_222.28"},
+                udf_renames={"SLPS_258.37": "SLOP_NA2.28"},
             )
 
             self.assertEqual(source.read_bytes(), source_data)
@@ -473,7 +473,7 @@ class UdfCompositionTests(unittest.TestCase):
                 {(record.path, record.is_dir) for record in udf.records},
             )
             self.assertNotIn("SLPS_258.37", udf.by_path)
-            self.assertIn("SLPS_222.28", udf.by_path)
+            self.assertIn("SLOP_NA2.28", udf.by_path)
             self.assertEqual(udf.recorded_file_count, 5)
             for path, payload in payloads.items():
                 record = udf.by_path[path]

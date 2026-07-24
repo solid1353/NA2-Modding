@@ -64,7 +64,7 @@ The current profile enables, in order:
 3. Battle logic: accepted battle-rule behavior.
 
 The profile's `identity.json` separately declares the equal-length
-`SLPS_258.37` to `SLPS_222.28` boot rename and the CP932 memory-card title.
+`SLPS_258.37` to `SLOP_NA2.28` boot rename and the CP932 memory-card title.
 Output identity is profile configuration, not a feature or module.
 
 Rendering remains an available feature folder but is omitted from the current

@@ -7,8 +7,8 @@ PC port.
 
 | | |
 |---|---|
-| Project serial | `SLPS-22228` |
-| Project boot ELF | `SLPS_222.28` |
+| Project serial | `SLOP-NA228` |
+| Project boot ELF | `SLOP_NA2.28` |
 | Source serial | `SLPS-25837` |
 | Platform | PlayStation 2 |
 

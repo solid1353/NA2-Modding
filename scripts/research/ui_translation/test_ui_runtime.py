@@ -69,7 +69,7 @@ class PineClientTests(unittest.TestCase):
                 pine_reply(struct.pack("<I", 1)),
                 pine_reply(pine_string("PCSX2 v2.6.3")),
                 pine_reply(pine_string("Naruto")),
-                pine_reply(pine_string("SLPS-22228")),
+                pine_reply(pine_string("SLOP-NA228")),
                 pine_reply(pine_string("71ade583")),
                 pine_reply(pine_string("1.00")),
             ]
@@ -79,7 +79,7 @@ class PineClientTests(unittest.TestCase):
         identity = client.identity()
 
         self.assertEqual(identity.status, "paused")
-        self.assertEqual(identity.serial, "SLPS-22228")
+        self.assertEqual(identity.serial, "SLOP-NA228")
         self.assertEqual(identity.crc, "71ADE583")
 
     def test_read32(self) -> None:
@@ -217,7 +217,7 @@ class StateArchiveTests(unittest.TestCase):
         screenshot = minimal_png()
         target = ui_runtime.Target(
             target_id="test",
-            serial="SLPS-22228",
+            serial="SLOP-NA228",
             crc="71ADE583",
             image_kind="project_file",
             image_value="current_iso",
@@ -225,7 +225,7 @@ class StateArchiveTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as raw_temp:
             root = Path(raw_temp)
-            state = root / "SLPS-22228 (71ADE583).09.p2s"
+            state = root / "SLOP-NA228 (71ADE583).09.p2s"
 
             def create_state() -> None:
                 time.sleep(0.05)
@@ -263,7 +263,7 @@ class StateArchiveTests(unittest.TestCase):
             (pcsx2 / "inis" / "PCSX2.ini").write_text(
                 RenderingTests.GLOBAL, encoding="utf-8"
             )
-            (pcsx2 / "gamesettings" / "SLPS-22228_71ADE583.ini").write_text(
+            (pcsx2 / "gamesettings" / "SLOP-NA228_71ADE583.ini").write_text(
                 "[MemoryCards]\nSlot1_Enable = true\n", encoding="utf-8"
             )
             image = build / "Current.iso"
@@ -282,11 +282,11 @@ class StateArchiveTests(unittest.TestCase):
             )
             target = ui_runtime.Target(
                 target_id="current",
-                serial="SLPS-22228",
+                serial="SLOP-NA228",
                 crc="71ADE583",
                 image_kind="project_file",
                 image_value="current_iso",
-                settings_file="SLPS-22228_71ADE583.ini",
+                settings_file="SLOP-NA228_71ADE583.ini",
             )
 
             class FakeClient:
@@ -437,7 +437,7 @@ class IdentityTests(unittest.TestCase):
     def test_mismatch_is_rejected(self) -> None:
         target = ui_runtime.Target(
             target_id="current",
-            serial="SLPS-22228",
+            serial="SLOP-NA228",
             crc="71ADE583",
             image_kind="project_file",
             image_value="current_iso",

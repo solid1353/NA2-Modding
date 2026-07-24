@@ -66,7 +66,7 @@ Slot1_Filename = Mcd001.ps2
     }
     $worker = Get-Na2WorkerContext -WorkerRoot $workerRoot -ProjectPaths $projectPaths
     $layout = New-Na2TestRuntimeLayout -Worker $worker
-    $identity = [pscustomobject]@{ Serial = 'SLPS-22228'; CRC = '12345678' }
+    $identity = [pscustomobject]@{ Serial = 'SLOP-NA228'; CRC = '12345678' }
 
     $mutex = Enter-Na2Pcsx2ConfigurationLock -IniPath $iniPath
     try {

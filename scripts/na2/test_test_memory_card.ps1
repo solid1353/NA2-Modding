@@ -34,7 +34,7 @@ try {
     [IO.File]::WriteAllBytes((Join-Path $sourceMemcards 'Mcd001.ps2'), [byte[]](1, 2, 3))
     [IO.File]::WriteAllBytes((Join-Path $sourceMemcards 'Mcd001_NA2.ps2'), [byte[]](4, 5, 6))
 
-    $gameIni = Join-Path $gameSettings 'SLPS-22228_12345678.ini'
+    $gameIni = Join-Path $gameSettings 'SLOP-NA228_12345678.ini'
     $originalGameText = "[EmuCore/GS]`r`nAspectRatio = 4:3`r`n`r`n[MemoryCards]`r`nSlot1_Enable = true`r`nSlot1_Filename = Mcd001_NA2.ps2`r`n"
     $originalGameBytes = [Text.UTF8Encoding]::new($false).GetBytes($originalGameText)
     [IO.File]::WriteAllBytes($gameIni, $originalGameBytes)
@@ -44,7 +44,7 @@ try {
         -GameSettingsDirectory $gameSettings `
         -SourceMemoryCardsDirectory $sourceMemcards `
         -TaskMemoryCardsDirectory $taskMemcards `
-        -Serial 'SLPS-22228' `
+        -Serial 'SLOP-NA228' `
         -CRC '12345678' `
         -AgentName 'Codex' `
         -TaskIdentity '019f-test'
@@ -70,7 +70,7 @@ try {
         -GameSettingsDirectory $gameSettings `
         -SourceMemoryCardsDirectory $sourceMemcards `
         -TaskMemoryCardsDirectory $taskMemcards `
-        -Serial 'SLPS-22228' `
+        -Serial 'SLOP-NA228' `
         -CRC '12345678' `
         -AgentName 'Codex' `
         -TaskIdentity '019f-test'

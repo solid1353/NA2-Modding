@@ -11,8 +11,8 @@ The serial alternatives considered on 2026-07-18 were rejected as follows:
   Shutsugeki su* in the installed PCSX2 GameDB.
 - `SLPS-00228` is the PlayStation release *Policenauts: Private Collection*.
 - `SLPS-22228` was absent from the installed PCSX2 PS2 GameDB and no issued-disc
-  match was found during the investigation. The project treats it as a
-  synthetic identifier; this is not a claim that Sony formally reserved it.
+  match was found during the investigation. The project previously used it as
+  a synthetic identifier; this is not a claim that Sony formally reserved it.
 
 ## Reproducible implementation
 

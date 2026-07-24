@@ -92,7 +92,7 @@ class ComposerTests(unittest.TestCase):
         )
         identity = ProfileIdentity(
             source_boot_path="SLPS_258.37",
-            output_boot_path="SLPS_222.28",
+            output_boot_path="SLOP_NA2.28",
             system_cnf_path="SYSTEM.CNF",
             memory_card_title_offset=4,
             memory_card_title_capacity=16,
@@ -115,13 +115,13 @@ class ComposerTests(unittest.TestCase):
         self.assertEqual(len(result.plan.replacements), 2)
         replacements = {item.path: item for item in result.plan.replacements}
         self.assertEqual(replacements["SYSTEM.CNF"].expected, system)
-        self.assertIn(b"SLPS_222.28", replacements["SYSTEM.CNF"].replacement)
+        self.assertIn(b"SLOP_NA2.28", replacements["SYSTEM.CNF"].replacement)
         self.assertEqual(
             replacements["SLPS_258.37"].replacement[4:20],
             b"NA 2.28" + bytes(9),
         )
         self.assertEqual(result.plan.renames[0].source_path, "SLPS_258.37")
-        self.assertEqual(result.plan.renames[0].replacement_path, "SLPS_222.28")
+        self.assertEqual(result.plan.renames[0].replacement_path, "SLOP_NA2.28")
         self.assertEqual(
             [row["target"] for row in result.identity_edits],
             ["SYSTEM.CNF", "SLPS_258.37"],
@@ -145,7 +145,7 @@ class ComposerTests(unittest.TestCase):
         )
         identity = ProfileIdentity(
             source_boot_path="SLPS_258.37",
-            output_boot_path="SLPS_222.28",
+            output_boot_path="SLOP_NA2.28",
             system_cnf_path="SYSTEM.CNF",
             memory_card_title_offset=4,
             memory_card_title_capacity=16,

@@ -116,6 +116,17 @@ inspection is still needed. If the evidence changes the recommendation, explain
 the change in the plan. Progress updates during a long inspection must keep the
 current phase and required next response clear.
 
+Assess effort independently for the current work instead of inheriting the
+chat's previous level, copying historical recommendations, or defaulting to the
+highest available level. Consider the actual reasoning depth, uncertainty,
+reverse-engineering breadth, cross-component coupling, consequence of error,
+reversibility, and validation burden, then recommend the lowest level likely to
+produce a reliable result. The brief justification must name the decisive
+task-specific factors. Repeating a prior level is correct only when this
+assessment supports it; changing levels merely for variety is also incorrect.
+Reassess when inspection materially changes those factors, not at every status
+update.
+
 Until a selected task is completed, every final response that hands control
 back to the user must include a standalone `Recommended effort: <level>` line.
 This applies after inspection, at approval gates, in execution handoffs, and at

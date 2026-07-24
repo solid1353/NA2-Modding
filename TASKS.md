@@ -47,7 +47,7 @@
 - Move support bar upwards.
 - Integrate save into the game, simplify the entry menu and replace old slps references in the ELF.
 
-### Graphics
+### Visuals
 - Create a proper widescreen patch.
 - Create an upscaled texture pack for pcsx2 (currently blocked by UI translation).
 

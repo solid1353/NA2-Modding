@@ -120,7 +120,7 @@ screen-for-screen. Each flow is ordered independently, then paired only where
 the prompt's meaning and action agree. Debug or placeholder donor text such as
 `TestSaveLoadMsgEng5` is not imported as user-facing translation.
 
-## Implemented v43 table
+## Implemented v44 table
 
 The first diagnostic pass admitted 2,049 executable rows:
 
@@ -145,10 +145,17 @@ runtime-proven NA2 Shop control map where Cross accepts. The unobserved
 alternate Shop row `M0530` and the unclassified standalone ELF Circle token
 remain untouched.
 
+The matched final-acceptance slot-1 pair then exposed one more omitted
+displayed field. Version 44 adds `M0550` for the Collection -> Characters
+selector at `NA2_ETC@0x2EE50`, using the exact official `Opponent` donor at
+`NUN5_TEXTENG@0x778`. The same pair shows the accepted official
+`Flying Thunder God Jutsu` text overflowing Current's panel; that is a
+separate per-caller wrapping/auto-fit issue, so `M0720` remains unchanged.
+
 Every row has a concrete display location and one `seen:`, `inferred:`, or
 `character:` basis. There are no disabled, unresolved, shortened, prefixed, or
 arbitrary override rows. `M0537` is the single evidence-backed user override.
-The table has 2,046 slots and four sequences.
+The table has 2,047 slots and four sequences.
 
 The character-family audit corrected plain Kankuro and the shifted
 `Provocation` / `Contrasting Pair` voice titles. The unmatched `通告` voice
@@ -156,8 +163,8 @@ title is absent rather than guessed. Exact source validation passes for every
 row against clean NA2, and exact donor validation passes for every row against
 the referenced NUN5 bytes after fullwidth-ASCII normalization.
 
-Canonical v43 `mappings.tsv` SHA-256:
-`46241AC03690FE253E33E4F20B9AB7BA81A5268D738681782D830119F608A2D4`.
+Canonical v44 `mappings.tsv` SHA-256:
+`7FB7B6F0BCD46203574DC8CA5509DDD3F6AEB8E5D45C3B3DC24C080008E2DAAF`.
 
 ## Validation
 
@@ -175,12 +182,12 @@ Static validation must prove:
 
 Static validation completed on 2026-07-24:
 
-- all 2,050 canonical rows passed exact clean-source and official-donor checks;
-- all 2,056 resolved slot/sequence fragments contain no fullwidth
+- all 2,051 canonical rows passed exact clean-source and official-donor checks;
+- all 2,057 resolved slot/sequence fragments contain no fullwidth
   ASCII-compatible output;
-- normal current-profile composition produced 2,287 binary edits and the
+- normal current-profile composition produced 2,288 binary edits and the
   1,776-byte `PRG/228.BIN` documented above;
-- mapping-ID composition produced 2,060 inline binary edits and no resident
+- mapping-ID composition produced 2,061 inline binary edits and no resident
   payload, because every diagnostic identifier fits its guarded slot;
 - the full repository test suite passed 148/148.
 

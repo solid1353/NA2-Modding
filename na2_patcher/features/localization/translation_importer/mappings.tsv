@@ -524,6 +524,7 @@ M0852	1	Character selectors > character or variant name	ナルト	Naruto			chara
 M0853	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x5063A8	NUN5_SLES@0x513D18	slot	8				
 M0854	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x506B10	NUN5_SLES@0x513D18	slot	8				
 M0528	1	Collection > category label	シミュレーション	Simulation			seen:diagnostic-collection-pages	NA2_ETC@0x2DDA0	NUN5_TEXTENG@0x3E78	slot	24				
+M0550	1	Collection > Characters > selector label	<r対戦相手|たいせんあいて>	Opponent			seen:final-acceptance-slot-001	NA2_ETC@0x2EE50	NUN5_TEXTENG@0x778	slot	32				""
 M0297	1	Collection > Figures > character animation title	ジオラマ	Diorama			character:figure-animation-identifier	NA2_ETC@0x25928	NUN5_ETC@0x28959	slot	28				
 M0298	1	Collection > Figures > character animation title	<r影分身|かげぶんしん>の<r術|じゅつ>	Shadow Clone Jutsu			character:figure-animation-identifier	NA2_ETC@0x25D00	NUN5_TEXTENG@0x3030	slot	40				
 M0299	1	Collection > Figures > character animation title	<r暴走|ぼうそう>	Running Wild			character:figure-animation-identifier	NA2_ETC@0x25D40	NUN5_TEXTENG@0x3058	slot	24				

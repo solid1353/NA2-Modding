@@ -3,7 +3,7 @@
 This feature owns all declarative content for the accepted English localization
 while reusable executable engines remain under `na2_patcher/modules/`.
 
-- [Translation importer](#na2-translation-importer-mapping-version-43)
+- [Translation importer](#na2-translation-importer-mapping-version-44)
 - [String patcher](#string-patcher)
 - [Texture patcher](#ui-texture-translation-module)
 - [Binary patcher](#ui-translation-binary-patcher-patch-set)
@@ -15,7 +15,7 @@ The feature directory name declares its identity. Its module-named
 subdirectories are the inputs that compose it; enabling Localization enables all
 of them, and one aggregate profile pin covers their canonical inputs.
 
-## NA2 translation importer (mapping version 43)
+## NA2 translation importer (mapping version 44)
 
 This first-class `na2_patcher` module imports and validates strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
@@ -27,8 +27,8 @@ command or file-backed inter-stage handoff.
 
 ### Mapping metadata
 
-- Version: `43`
-- Packaged `mappings.tsv` SHA-256: `46241AC03690FE253E33E4F20B9AB7BA81A5268D738681782D830119F608A2D4`
+- Version: `44`
+- Packaged `mappings.tsv` SHA-256: `7FB7B6F0BCD46203574DC8CA5509DDD3F6AEB8E5D45C3B3DC24C080008E2DAAF`
 
 The version and mappings hash above are historical documentation, not a second
 executable manifest. Git history and the aggregate Localization feature pin own
@@ -178,6 +178,29 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
 
+### Version 44 changes
+
+#### Final-acceptance Collection selector
+
+The matched final-acceptance slot-1 savestates show the Collection ->
+Characters screen with the official NUN5 `Opponent` selector label and the
+same field still Japanese in Current. Version 44 adds `M0550` for the exact
+clean source `<r対戦相手|たいせんあいて>` at `NA2_ETC@0x2EE50`, using the
+exact official `Opponent` donor at `NUN5_TEXTENG@0x778` and the concrete
+`Collection > Characters > selector label` display context.
+
+The paired Current screen also shows `Flying Thunder God Jutsu` overflowing
+the right panel while NUN5 wraps the same official text. `M0720` remains
+unchanged: the translation itself is correct, and per-caller wrapping or
+auto-fit belongs to the separate layout path rather than canonical string
+content.
+
+Version 44 contains 2,051 enabled mappings: 2,047 slots and four sequences.
+`M0550` fits inline, so external placement remains 31 mappings and 33 pointer
+edits, the generated `PRG/228.BIN` remains 1,776 bytes, and the compiled
+translation package contains 2,288 binary edits. `M0537` remains the sole user
+override; there are no shortened, unresolved, or prefixed rows.
+
 ### Version 43 changes
 
 #### Cross-confirm Shop prompt
@@ -206,11 +229,11 @@ both untouched:
   `ELF-M022` confirm handler. Its displayed action is not proven, so changing
   it globally could make another prompt inaccurate.
 
-The current table still contains 2,050 enabled mappings: 2,046 slots and four
-sequences. `M0537` is the sole user override; there are no shortened,
-unresolved, or prefixed rows. External placement remains 31 mappings and 33
-pointer edits, the generated `PRG/228.BIN` remains 1,776 bytes, and the
-compiled translation package remains 2,287 binary edits.
+Version 43 contained 2,050 enabled mappings: 2,046 slots and four sequences.
+`M0537` was the sole user override; there were no shortened, unresolved, or
+prefixed rows. External placement remained 31 mappings and 33 pointer edits,
+the generated `PRG/228.BIN` remained 1,776 bytes, and the compiled translation
+package contained 2,287 binary edits.
 
 ### Version 42 changes
 

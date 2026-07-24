@@ -320,15 +320,27 @@ palette, ordinary tracking, or the now-exact width calculation. Confidence is
 **high** because the static instruction difference predicts the exact guarded
 telemetry deltas.
 
-The register-safe task-local v4 candidate is retained at
+The register-safe v4 state is retained at
 `work/Font/artifacts/font_match_v1/renderer_geometry_spacing_fit_v4_nun5.p2s`.
-It scales only the semantic decoder's horizontal leading-bearing path and
-preserves the decoder's live `v0` return value. It is not a canonical patch and
-has not yet received runtime acceptance. A deterministic replay of every
-accepted metric row predicts total advance `128.719070` versus NUN5
-`128.719072`, with maximum per-glyph origin error `0.000002`; this is arithmetic
-validation, not runtime acceptance. The preceding v3 helper is rejected: it
-clobbered that return register, and its guarded run produced no usable capture.
+Its guarded runtime run loaded the state, matched every expected code byte,
+captured slot 95, and closed only the authenticated task-owned PCSX2 instance.
+`Ultimate Jutsu Prep` then matched NUN5's visible `157x17` bounds and center
+exactly. A deterministic replay of every accepted metric row predicts total
+advance `128.719070` versus NUN5 `128.719072`, with maximum per-glyph origin
+error `0.000002`.
+
+The runtime-proven correction now lives inside the deterministic 316-byte
+semantic metric decoder. Its formerly unused final 32 bytes hold the
+register-safe helper, so no temporary runtime gap or separately placed payload
+is retained. The helper scales only the decoder's horizontal leading-bearing
+path through the existing local renderer factor, preserves the vertical path
+and live `v0` return value, and leaves the factor at `1.0` outside fitted calls.
+The follow-up guarded v5 run on worker ISO CRC `6FD5D698` read back the exact
+hook at runtime `0x0018731C`, the exact helper at `0x00187390`, a zeroed former
+task-local gap at `0x008DD1D0`, and the initialized `1.0` scale word at
+`0x0060737C`; its matched Controls measurements were identical to v4.
+The preceding v3 helper remains rejected because it clobbered that return
+register and produced no usable capture.
 
 ## 2026-07-19 superseded clean-font baseline
 

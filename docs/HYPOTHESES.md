@@ -30,13 +30,19 @@ captures before changing its established layout.
 - NUN5 boxed auto-fit reference: `FUN_00389df0` and `FUN_0018b1b0`.
 - NA2 Controls path: `FUN_003885b0`, with the first eight calls locally fitted
   before the original `FUN_00379240` draw and the ninth call left ordinary.
-- Pending runtime candidate: the guarded task-local v4 state under
-  `work/Font/artifacts/font_match_v1/` ports NUN5's horizontal
-  `leading_bearing * scale_x` subtraction into the imported NA2 semantic metric
-  decoder while preserving its live `v0` return. Static analysis and telemetry
-  predict the correction. The preceding, register-unsafe v3 launch lost
-  authenticated PINE ownership before a usable capture; v4 has not been
-  launched. Do not promote it without a clean guarded run.
+- The guarded task-local v4 state under
+  `work/Font/artifacts/font_match_v1/` confirmed NUN5's horizontal
+  `leading_bearing * scale_x` subtraction while preserving the decoder's live
+  `v0` return. The accepted implementation occupies the decoder's own formerly
+  unused tail and is documented in `docs/knowledge/font/README.md`. The
+  preceding register-unsafe v3 helper remains negative evidence.
+- If matched review still finds a weight difference, the next bounded asset
+  hypothesis is selective palette refinement rather than another atlas or
+  renderer-size change. Clean NA2's primary GF4 raster and the accepted
+  secondary raster both use palette indices 13 and 14 zero times, so those two
+  GF4C entries may be candidates for exact NUN5 white-alpha levels without
+  changing any currently referenced primary pixel. This is static inventory
+  only; no palette bytes or raster indices have been changed or runtime-tested.
 - A full NUN5 text-renderer transplant remains unsafe. Any future work must use
   small, call-local, script-generated patches.
 

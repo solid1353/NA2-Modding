@@ -3,7 +3,7 @@
 This feature owns all declarative content for the accepted English localization
 while reusable executable engines remain under `na2_patcher/modules/`.
 
-- [Translation importer](#na2-translation-importer-mapping-version-41)
+- [Translation importer](#na2-translation-importer-mapping-version-42)
 - [String patcher](#string-patcher)
 - [Texture patcher](#ui-texture-translation-module)
 - [Binary patcher](#ui-translation-binary-patcher-patch-set)
@@ -15,7 +15,7 @@ The feature directory name declares its identity. Its module-named
 subdirectories are the inputs that compose it; enabling Localization enables all
 of them, and one aggregate profile pin covers their canonical inputs.
 
-## NA2 translation importer (mapping version 41)
+## NA2 translation importer (mapping version 42)
 
 This first-class `na2_patcher` module imports and validates strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
@@ -27,8 +27,8 @@ command or file-backed inter-stage handoff.
 
 ### Mapping metadata
 
-- Version: `41`
-- Packaged `mappings.tsv` SHA-256: `7DCAEAA7FF0E12A6A39CAD408FE0F5F3EF5874D981A05F4CC6D5C3C06B244ADD`
+- Version: `42`
+- Packaged `mappings.tsv` SHA-256: `16B83BE80190A9E7DA297003BFED5FF8974B424DB7513795834358BDA001F1AD`
 
 The version and mappings hash above are historical documentation, not a second
 executable manifest. Git history and the aggregate Localization feature pin own
@@ -177,6 +177,28 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - NUN5 `<BLACK>` remains `<BLACK>` or becomes `<color000000>` according to the verified target form.
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
+
+### Version 42 changes
+
+#### Final-acceptance Mode Select confirmation
+
+The matched final-acceptance slot-2 savestates prove that the Mode Select
+return confirmation uses the previously omitted `M0549` source at
+`NA2_SLPS@0x4B1E00`. Version 42 restores that one row with the exact official
+`NUN5_TEXTENG@0x1C90` donor, `Return to Title Screen?`, and the concrete
+`Game Mode Select > return confirmation` display context.
+
+This is deliberately separate from `M0804`, the Save/Load prompt whose
+official donor uses lowercase `title screen`, and `M0557`, the shorter
+Character Select source. The slot-2 Current capture translated the shared
+`Yes` / `No` choices but retained this prompt in Japanese, which confirmed that
+the missing source row—not the generic modal choices—was the defect.
+
+The current table contains 2,050 enabled mappings: 2,046 slots and four
+sequences. Every row has display metadata; there are no shortened, unresolved,
+prefixed, or user-override rows. `M0549` fits inline, so the existing 31
+external mappings, 33 pointer edits, and 1,776-byte `PRG/228.BIN` remain
+unchanged. The compiled translation package now contains 2,287 binary edits.
 
 ### Version 41 changes
 

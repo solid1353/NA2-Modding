@@ -120,7 +120,7 @@ screen-for-screen. Each flow is ordered independently, then paired only where
 the prompt's meaning and action agree. Debug or placeholder donor text such as
 `TestSaveLoadMsgEng5` is not imported as user-facing translation.
 
-## Implemented v41 rebuild
+## Implemented v42 table
 
 The first diagnostic pass admitted 2,049 executable rows:
 
@@ -129,9 +129,16 @@ The first diagnostic pass admitted 2,049 executable rows:
 - 124 previously active v40 rows omitted because they have no confirmed display
   location.
 
+The final-acceptance slot-2 pair then proved one of those omissions to be
+visible: the Mode Select return confirmation uses `M0549` at
+`NA2_SLPS@0x4B1E00`. Version 42 restores only that row with the exact
+`NUN5_TEXTENG@0x1C90` donor, `Return to Title Screen?`. It remains distinct
+from the lowercase Save/Load `M0804` prompt and the shorter Character Select
+`M0557` source.
+
 Every row has a concrete display location and one `seen:`, `inferred:`, or
 `character:` basis. There are no disabled, unresolved, shortened, prefixed, or
-user-override rows. The table has 2,045 slots and four sequences.
+user-override rows. The table has 2,046 slots and four sequences.
 
 The character-family audit corrected plain Kankuro and the shifted
 `Provocation` / `Contrasting Pair` voice titles. The unmatched `通告` voice
@@ -139,8 +146,8 @@ title is absent rather than guessed. Exact source validation passes for every
 row against clean NA2, and exact donor validation passes for every row against
 the referenced NUN5 bytes after fullwidth-ASCII normalization.
 
-Canonical v41 `mappings.tsv` SHA-256:
-`7DCAEAA7FF0E12A6A39CAD408FE0F5F3EF5874D981A05F4CC6D5C3C06B244ADD`.
+Canonical v42 `mappings.tsv` SHA-256:
+`16B83BE80190A9E7DA297003BFED5FF8974B424DB7513795834358BDA001F1AD`.
 
 ## Validation
 
@@ -158,12 +165,12 @@ Static validation must prove:
 
 Static validation completed on 2026-07-24:
 
-- all 2,049 canonical rows passed exact clean-source and official-donor checks;
-- all 2,055 resolved slot/sequence fragments contain no fullwidth
+- all 2,050 canonical rows passed exact clean-source and official-donor checks;
+- all 2,056 resolved slot/sequence fragments contain no fullwidth
   ASCII-compatible output;
-- normal current-profile composition produced 2,286 binary edits and the
+- normal current-profile composition produced 2,287 binary edits and the
   1,776-byte `PRG/228.BIN` documented above;
-- mapping-ID composition produced 2,059 inline binary edits and no resident
+- mapping-ID composition produced 2,060 inline binary edits and no resident
   payload, because every diagnostic identifier fits its guarded slot;
 - the full repository test suite passed 146/146.
 

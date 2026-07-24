@@ -4,7 +4,7 @@ This document promotes the durable findings from the 2026-07-05 substitution-rel
 
 ## Stable references
 
-- Canonical PNACH: `@pcsx2_files/SLPS-25837_C0659AD1.pnach`.
+- Canonical PNACH: `@pcsx2_files/cheats.pnach`.
 - Historical CRC alias during the investigation: `@pcsx2_files/SLPS-25837_E0F064C5.pnach`. CRC aliases are managed links and are not canonical.
 - Historical NA2 decompiler/Ghidra evidence remains available through Git
   history. Restore reusable analysis only under `@analysis/disassembly/NA2/`.

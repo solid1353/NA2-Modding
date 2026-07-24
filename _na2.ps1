@@ -32,6 +32,37 @@ function Write-Na2Stage {
     Write-Host "[na2] $Message" -ForegroundColor Cyan
 }
 
+function Invoke-Na2Actualization {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('Current', 'Previous', 'Candidate')]
+        [string]$Role
+    )
+
+    $actualizeOutput = @(
+        & (Join-Path $projectPaths.scripts 'na2\actualize.ps1') `
+            -ActiveRole $Role
+    )
+    if ($actualizeOutput.Count -ne 1) {
+        throw "PCSX2 actualization returned $($actualizeOutput.Count) results; expected one."
+    }
+    $result = $actualizeOutput[0]
+    Write-Host (
+        Format-Na2ActualizeStatus `
+            -Result $result `
+            -ProjectPaths $projectPaths
+    ) -ForegroundColor Cyan
+    $enabledCheatNames = @($result.EnabledCheats)
+    $enabledCheats = if ($enabledCheatNames.Count -eq 0) {
+        'none'
+    }
+    else {
+        $enabledCheatNames -join ', '
+    }
+    Write-Host "[na2] Enabled cheats: $enabledCheats" -ForegroundColor Cyan
+    return $result
+}
+
 $workerBuild = if ($Test -and -not [string]::IsNullOrWhiteSpace($Mode)) {
     Get-Na2WorkerBuildContext `
         -OutputPath $Mode `
@@ -65,7 +96,7 @@ if ($Help) {
         '  na2 -t work/<worker>/build/<name>.iso  Build an isolated worker ISO and worker-owned logs'
         "  na2 -c    Run build/$currentIsoName without rebuilding or closing PCSX2"
         "  na2 -p    Run build/$previousIsoName without rebuilding or closing PCSX2"
-        "  na2 act   Maintain Current/Previous PNACH symlinks without building or launching"
+        '  na2 act   Actualize Current/Previous/Candidate PCSX2 cheats, settings, and memory cards'
         '  na2 release [version]  Validate, commit, tag, and publish a GitHub release'
         ''
     ) | Write-Output
@@ -115,32 +146,8 @@ $runOutcome = 'failed'
 $runFailure = ''
 try {
     if ($command -eq 'act') {
-        Write-Na2Stage "Actualize PNACH symlink for $currentIsoName CRC"
-        $actualizeArguments = @{
-            IsoPath = $projectPaths.files.current_iso
-        }
-        if (Test-Path -LiteralPath $projectPaths.files.previous_iso -PathType Leaf) {
-            $actualizeArguments.PreserveIsoPath = @($projectPaths.files.previous_iso)
-        }
-        $actualizeOutput = @(
-            & (Join-Path $projectPaths.scripts 'na2\actualize_pnach.ps1') @actualizeArguments
-        )
-        if ($actualizeOutput.Count -ne 1) {
-            throw "PNACH actualization returned $($actualizeOutput.Count) results; expected one."
-        }
-        Write-Host (
-            Format-Na2ActualizeStatus `
-                -Result $actualizeOutput[0] `
-                -ProjectPaths $projectPaths
-        ) -ForegroundColor Cyan
-        $enabledCheatNames = @($actualizeOutput[0].EnabledCheats)
-        $enabledCheats = if ($enabledCheatNames.Count -eq 0) {
-            'none'
-        }
-        else {
-            $enabledCheatNames -join ', '
-        }
-        Write-Host "[na2] Enabled cheats: $enabledCheats" -ForegroundColor Cyan
+        Write-Na2Stage 'Actualize shared PCSX2 state with Current active'
+        $null = Invoke-Na2Actualization -Role Current
     }
     elseif ($Test) {
         if ($null -ne $workerBuild) {
@@ -160,6 +167,7 @@ try {
             if (-not $buildResult -or $buildResult.Status -ne 'candidate') {
                 throw 'Candidate build did not return a valid result.'
             }
+            $null = Invoke-Na2Actualization -Role Candidate
         }
     }
     elseif ($Build) {
@@ -168,6 +176,7 @@ try {
         if (-not $buildResult -or $buildResult.Status -notin @('unchanged', 'updated')) {
             throw 'Profile build did not return a valid promotion result.'
         }
+        $null = Invoke-Na2Actualization -Role Current
     }
     elseif ($runSelected) {
         $isoPath = if ($Previous) {
@@ -178,6 +187,8 @@ try {
         }
         $isoName = [IO.Path]::GetFileName($isoPath)
         Write-Na2Stage "Run $isoName without rebuilding"
+        $role = if ($Previous) { 'Previous' } else { 'Current' }
+        $null = Invoke-Na2Actualization -Role $role
         $launchArguments = @{
             IsoPath = $isoPath
             KeepExistingInstance = $true
@@ -190,6 +201,7 @@ try {
         if (-not $buildResult -or $buildResult.Status -notin @('unchanged', 'updated')) {
             throw 'Profile build did not return a valid promotion result.'
         }
+        $null = Invoke-Na2Actualization -Role Current
 
         Write-Na2Stage "2/2 Launch $currentIsoName"
         & (Join-Path $projectPaths.scripts 'na2\launch.ps1') `

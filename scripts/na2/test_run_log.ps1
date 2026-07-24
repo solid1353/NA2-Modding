@@ -138,12 +138,21 @@ try {
         -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'logs\na2'))) `
         -Message 'Help invocation created run logs.'
 
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'actualize_pnach.ps1') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'actualize.ps1') -Content @'
+param([string]$ActiveRole)
+Write-Host "[fake] actualize $ActiveRole"
 [pscustomobject]@{
-    PCSX2ElfCRC = $null
-    CheatsPnach = $null
-    PnachStatus = 'skipped empty canonical PNACH'
+    ActiveRole = $ActiveRole
+    PCSX2Serial = 'SLOP-NA228'
+    PCSX2ElfCRC = '12345678'
+    CheatsPnach = 'pcsx2/cheats/SLOP-NA228_12345678.pnach'
+    PnachStatus = 'verified symlink'
     RemovedPnachSymlinks = @()
+    GameSettings = 'pcsx2/gamesettings/SLOP-NA228_12345678.ini'
+    GameSettingsStatus = 'verified symlink'
+    RemovedGameSettingsSymlinks = @()
+    MemoryCard = 'pcsx2/memcards/Mcd001_NA228_Current.ps2'
+    MemoryCardStatus = 'preserved'
     EnabledCheats = @()
 }
 '@
@@ -206,6 +215,15 @@ else {
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 2) `
         -Message 'Build-only and build-and-launch did not both use the standard build pipeline.'
+    Assert-Na2Test `
+        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize Current').Count -eq 4) `
+        -Message 'Current actualization did not cover act, launch, and both standard build paths.'
+    Assert-Na2Test `
+        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize Previous').Count -eq 1) `
+        -Message 'Previous launch did not actualize Previous PCSX2 state.'
+    Assert-Na2Test `
+        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize Candidate').Count -eq 1) `
+        -Message 'Candidate build did not actualize Candidate PCSX2 state.'
     $structuredLog = Join-Path $logs 'na2'
     $buildRecords = Join-Path $structuredLog 'builds'
     foreach ($buildId in 'old-previous', 'old-current', 'new-current', 'orphan') {
@@ -310,14 +328,23 @@ else {
 
     $status = Format-Na2ActualizeStatus `
         -Result ([pscustomobject]@{
+            ActiveRole = 'Current'
+            PCSX2Serial = 'SLOP-NA228'
             PCSX2ElfCRC = 'C0659AD1'
-            CheatsPnach = Join-Path $paths.pcsx2 'cheats\SLPS-22228_C0659AD1.pnach'
+            CheatsPnach = Join-Path $paths.pcsx2 'cheats\SLOP-NA228_C0659AD1.pnach'
             PnachStatus = 'verified symlink'
             RemovedPnachSymlinks = @('old-link')
+            GameSettings = Join-Path $paths.pcsx2 'gamesettings\SLOP-NA228_C0659AD1.ini'
+            GameSettingsStatus = 'verified symlink'
+            RemovedGameSettingsSymlinks = @('old-settings')
+            MemoryCard = Join-Path $paths.pcsx2 'memcards\Mcd001_NA228_Current.ps2'
+            MemoryCardStatus = 'preserved'
         }) `
         -ProjectPaths $paths
     Assert-Na2Test -Condition ($status -match '@pcsx2/cheats/') -Message 'Actualize status path is not portable.'
     Assert-Na2Test -Condition ($status -match 'CRC=C0659AD1') -Message 'Actualize status omitted the CRC.'
+    Assert-Na2Test -Condition ($status -match 'GameSettings') -Message 'Actualize status omitted GameSettings.'
+    Assert-Na2Test -Condition ($status -match 'memory card') -Message 'Actualize status omitted the memory card.'
 
     Write-Host 'NA2 run-log tests passed.' -ForegroundColor Green
 }

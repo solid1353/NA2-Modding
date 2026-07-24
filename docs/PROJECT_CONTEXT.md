@@ -11,14 +11,28 @@ project files. NUN6 A35 is a Brazilian mod of NUN5, not an official successor.
 It is retained as a feature donor because it contains many modifications that
 may later be ported to NA2.
 
-Current PNACH:
+Current PCSX2 actualization:
 
-- Canonical editable PNACH base: `@pcsx2_files/SLPS-25837_C0659AD1.pnach`
-- The modified project image uses `SLPS-22228`; its actualized PNACH symlinks live in `@pcsx2/cheats/SLPS-22228_<crc>.pnach` and point to `@pcsx2_files/SLPS-25837_C0659AD1.pnach`. The canonical PNACH keeps its historical source-game name.
+- Canonical editable inputs are `@pcsx2_files/cheats.pnach` and
+  `@pcsx2_files/gamesettings.ini`.
+- The actualizer derives each retained Current, Previous, and Candidate
+  identity from its ISO and maintains the matching CRC-named PNACH and
+  GameSettings symlinks under `@pcsx2/`.
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v2 organizes each package as groups, atomic patches, and exact edits; `default_enabled` preserves historical state. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/substitution.md`. Rendering is currently an empty feature folder omitted from the active profile.
-- PNACH actualization is an on-demand runtime-testing step, not part of routine builds or launches. Run `na2 act` when preparing a non-empty PNACH, after an ISO change may have changed the boot ELF CRC, or after emptying the canonical PNACH to remove its managed aliases.
-- A zero-byte canonical PNACH removes its managed PCSX2 CRC aliases and skips ISO/CRC inspection. Managed aliases are matching-serial symlinks that resolve to this canonical file; other games, real PNACH files, and unrelated symlinks are preserved.
-- `@pcsx2_files/` contains the Git-tracked canonical PNACH, project input recordings, and ignored local screenshots. The actualizer manages CRC-named relative symlinks under `@pcsx2/cheats/`.
+- Actualization runs after every user-owned build and before every user-owned
+  Current, Previous, or Candidate launch. Isolated worker builds never mutate
+  shared PCSX2 state. `na2 act` refreshes the same state without building or
+  launching.
+- A zero-byte canonical PNACH removes its managed PCSX2 CRC aliases. Managed
+  aliases are symlinks targeting the canonical project files or the
+  actualizer's generated role settings; other games, real files, and unrelated
+  symlinks are preserved.
+- `Mcd001_NA228.ps2` is a copy-only base. Current, Previous, and Candidate each
+  receive a separately named copy when absent, and later actualizations never
+  overwrite those working cards.
+- `@pcsx2_files/` contains the Git-tracked canonical PNACH, GameSettings
+  template, input profiles, project input recordings, and ignored local
+  screenshots.
 - `na2 act` reports enabled named cheats from uncommented `patch=` or setting lines, or `none` when no cheats are enabled.
 - PNACH labels such as `// [Skip CC2 intro]` are comments only. A cheat is enabled only when its executable `patch=`/setting line is uncommented. Disabled proven cheats and disabled hypotheses must keep their executable lines commented out. Temporary PNACH hypothesis patches go at the top as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 - Fixed-address PNACH hypotheses are safe by default only for the boot ELF or another region proven to remain resident and stable for the entire write lifetime.
@@ -147,7 +161,14 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 ## Current Scripts
 
 - Root `_na2.ps1` is the only routine user-facing entrypoint. Bare `na2`, `na2 -b`, bare `na2 -t`, `na2 -c`, `na2 -p`, and `na2 act` retain their Current/Previous/Candidate behavior. A standard bare `na2` launch clears a stale shared `StartPaused` setting after closing PCSX2 so the game starts running; pure `-c`/`-p` selectors do not rewrite settings around existing instances. `na2 -t work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
-- `scripts/na2/` contains build/promotion, PNACH maintenance, ISO identity, worker-path validation, PCSX2 launch/process control, PINE identity checks, and agent runtime isolation. `test_launch.ps1` briefly injects worker folders/card/PINE settings, waits for the expected ELF identity, restores shared settings immediately, and thereafter controls only its recorded PID/window/port. Live two-instance validation on PCSX2 2.6.3 confirmed independent ports, windows, cards, settings restoration, and targeted shutdown.
+- `scripts/na2/` contains build/promotion, PCSX2 actualization, ISO identity,
+  worker-path validation, PCSX2 launch/process control, PINE identity checks,
+  and agent runtime isolation. `test_launch.ps1` briefly injects worker
+  folders/card/PINE settings, waits for the expected ELF identity, restores
+  shared settings immediately, and thereafter controls only its recorded
+  PID/window/port. Live two-instance validation on PCSX2 2.6.3 confirmed
+  independent ports, windows, cards, settings restoration, and targeted
+  shutdown.
 - `na2_patcher/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na2_patcher/build_profile.py` applies that prepared pipeline and writes its run log. `na2_patcher/composer.py` resolves module artifacts and closes typed image operations. `na2_patcher/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Candidate, or worker-owned output.
 - `scripts/media/` contains the recursive source extractor, its byte-parity
   verifier, and focused ISO, AFS, and CVM building blocks. Direct same-size ISO
@@ -170,14 +191,18 @@ PCSX2 cheat filenames include the game CRC, for example:
 
 `SLPS-22228_BCB73695.pnach`
 
-If the boot ELF inside the ISO changes, PCSX2 may report a different CRC. Actualize derives the serial from the ISO boot path and creates a matching `@pcsx2/cheats/SLPS-22228_<crc>.pnach` link to `@pcsx2_files/SLPS-25837_C0659AD1.pnach` for the modified project image.
+If the boot ELF inside an ISO changes, PCSX2 may report a different CRC.
+Actualize derives the alphanumeric serial from the ISO boot path and creates a
+matching `@pcsx2/cheats/<serial>_<crc>.pnach` link to
+`@pcsx2_files/cheats.pnach`.
 
 PCSX2 uses its internal `@pcsx2/cheats/` folder. Only the canonical PNACH is tracked in the project; actualized CRC aliases are relative symlinks in the portable installation.
 
 Known PCSX2 paths from prior notes:
 
 - Log: `@pcsx2/logs/emulog.txt`
-- Cheats: CRC aliases in `@pcsx2/cheats/`, targeting the canonical `@pcsx2_files/SLPS-25837_C0659AD1.pnach`
+- Cheats: CRC aliases in `@pcsx2/cheats/`, targeting
+  `@pcsx2_files/cheats.pnach`
 
 Known log pattern:
 
@@ -187,7 +212,7 @@ Original-source historical pattern:
 
 Modified-project pattern after the profile identity is assembled:
 
-`ELF Loading: cdrom0:\SLPS_222.28;1, Game CRC = <crc>, EntryPoint = 0x00100008`
+`ELF Loading: cdrom0:\SLOP_NA2.28;1, Game CRC = <crc>, EntryPoint = 0x00100008`
 
 ## Prior GPT Handoff Notes
 
@@ -224,7 +249,13 @@ DATA.CVM passwords: `cc2fuku` for NA2, NUN3, and NUN5; `Iruka` for NUN6 A35.
 
 ## Actualize Workflow
 
-When asked to actualize, keep the canonical file named `@pcsx2_files/SLPS-25837_C0659AD1.pnach`. Managed aliases use the serial derived from the selected ISO boot path: normally `SLPS-22228` for the modified project image, or legacy `SLPS-25837` for an older/source-identity image. Preserve other games, real PNACH files, and unrelated symlinks. If the canonical file is zero bytes, delete managed aliases for both project serials directly and skip ISO/CRC inspection. Otherwise, use the ISO in `@build/` by default, calculate the PCSX2-style ELF CRC from its boot ELF, delete obsolete managed aliases, and create the current relative `@pcsx2/cheats/<serial>_<crc>.pnach` symlink targeting the canonical PNACH if missing. Refuse an occupied target filename instead of overwriting it.
+`scripts/na2/actualize.ps1` owns this workflow. It derives identities for every
+retained Current, Previous, and Candidate ISO, deletes stale managed symlinks,
+and creates relative PNACH and GameSettings aliases. It generates role
+GameSettings from `@pcsx2_files/gamesettings.ini`, changing only the memory-card
+filename, and copies the configured base card only when a role card is absent.
+An active role wins if two retained ISOs share one PCSX2 identity. The
+actualizer refuses occupied unmanaged alias paths instead of overwriting them.
 
 ## Release Workflow
 

@@ -6,7 +6,7 @@ function Get-Na2DiscSerialFromBootPath {
     param([Parameter(Mandatory = $true)][string]$BootPath)
 
     $name = [IO.Path]::GetFileName($BootPath)
-    if ($name -notmatch '^(?<prefix>[A-Za-z]{4})_(?<first>[0-9]{3})\.(?<last>[0-9]{2})$') {
+    if ($name -notmatch '^(?<prefix>[A-Za-z0-9]{4})_(?<first>[A-Za-z0-9]{3})\.(?<last>[A-Za-z0-9]{2})$') {
         throw "Could not derive a PS2 serial from boot executable: $BootPath"
     }
     return ("{0}-{1}{2}" -f $Matches.prefix, $Matches.first, $Matches.last).ToUpperInvariant()

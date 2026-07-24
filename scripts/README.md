@@ -54,13 +54,19 @@ validated; worker mode cannot address shared build outputs or mutate shared
 preflight, promotion, PNACH, log, or emulator state. Agents must use this form
 rather than bare `na2`, `na2 -b`, or bare `na2 -t`.
 `na2 -b` runs the standard Current build and conditional promotion pipeline but
-does not launch PCSX2. Bare `na2` keeps the build-then-launch workflow.
+does not launch PCSX2. Bare `na2` keeps the build-then-launch workflow. Every
+user-owned Current, Previous, or Candidate build/launch path runs the unified
+PCSX2 actualizer; isolated worker builds never do.
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 
 `na2/sync_input_profiles.ps1` regenerates the NA2 comparison input profile from
 the canonical base profile while changing only the four configured `[Pad1]`
 face-button bindings. The shared PowerShell profile exposes it as `na2inputs`.
+
+`na2/actualize.ps1` derives every retained role's serial and ELF CRC, maintains
+the canonical PNACH and GameSettings aliases, and creates each role's memory
+card from the copy-only base only when absent. Existing role cards are preserved.
 
 Agent runtime checks use `na2/test_launch.ps1 -WorkerRoot
 work/<task title>`. A short named lock protects shared configuration while the

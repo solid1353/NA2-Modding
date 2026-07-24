@@ -266,16 +266,28 @@ function Format-Na2ActualizeStatus {
         [Parameter(Mandatory = $true)][psobject]$ProjectPaths
     )
 
-    $removedCount = @($Result.RemovedPnachSymlinks).Count
-    if ([string]::IsNullOrWhiteSpace([string]$Result.PCSX2ElfCRC)) {
-        return "[na2] PNACH: skipped (canonical file is empty); managed aliases removed: $removedCount."
-    }
-
-    $alias = ConvertTo-Na2PortableText `
-        -Text ([string]$Result.CheatsPnach) `
+    $removedPnachCount = @($Result.RemovedPnachSymlinks).Count
+    $removedSettingsCount = @($Result.RemovedGameSettingsSymlinks).Count
+    $settings = ConvertTo-Na2PortableText `
+        -Text ([string]$Result.GameSettings) `
         -ProjectPaths $ProjectPaths
+    $card = ConvertTo-Na2PortableText `
+        -Text ([string]$Result.MemoryCard) `
+        -ProjectPaths $ProjectPaths
+    $pnach = if ([string]::IsNullOrWhiteSpace([string]$Result.CheatsPnach)) {
+        'skipped (canonical file is empty)'
+    }
+    else {
+        $alias = ConvertTo-Na2PortableText `
+            -Text ([string]$Result.CheatsPnach) `
+            -ProjectPaths $ProjectPaths
+        "$($Result.PnachStatus), alias=$alias"
+    }
     return (
-        "[na2] PNACH: $($Result.PnachStatus); " +
-        "CRC=$($Result.PCSX2ElfCRC); alias=$alias; obsolete aliases removed: $removedCount."
+        "[na2] PCSX2 $($Result.ActiveRole): serial=$($Result.PCSX2Serial); " +
+        "CRC=$($Result.PCSX2ElfCRC); PNACH: $pnach; " +
+        "GameSettings: $($Result.GameSettingsStatus), alias=$settings; " +
+        "memory card: $($Result.MemoryCardStatus), file=$card; " +
+        "stale aliases removed: PNACH=$removedPnachCount, GameSettings=$removedSettingsCount."
     )
 }

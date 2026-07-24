@@ -49,6 +49,15 @@ their producing workflow runs. File entries should reference a named root with
 `@root/child` syntax so the root path is not duplicated:
 
 - `pcsx2_exe`: `@pcsx2/pcsx2-qt.exe`.
+- `canonical_cheats`: `@pcsx2_files/cheats.pnach`.
+- `canonical_gamesettings`: `@pcsx2_files/gamesettings.ini`.
+- `current_gamesettings`, `previous_gamesettings`, and
+  `candidate_gamesettings`: generated role settings under
+  `@pcsx2_gamesettings/.na2/`.
+- `na228_base_memcard`: the copy-only
+  `@pcsx2_memcards/Mcd001_NA228.ps2` base.
+- `na228_current_memcard`, `na228_previous_memcard`, and
+  `na228_candidate_memcard`: persistent role-specific working cards.
 - `comparison_input_profile`:
   `@pcsx2_files/input_profiles/Comparison.ini`.
 - `comparison_na2_input_profile`:

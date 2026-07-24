@@ -2,8 +2,8 @@
 
 ## Decision
 
-The modified project image uses the synthetic serial `SLPS-22228`. The clean
-NA2 source remains `SLPS-25837` and is never modified.
+The active modified project profile uses the synthetic alphanumeric serial
+`SLOP-NA228`. The clean NA2 source remains `SLPS-25837` and is never modified.
 
 The serial alternatives considered on 2026-07-18 were rejected as follows:
 
@@ -21,11 +21,11 @@ path, `SYSTEM.CNF` path, and guarded CP932 memory-card title. After feature
 modules have been composed, the profile composer emits two guarded replacements
 and one equal-length file rename:
 
-1. `SYSTEM.CNF` changes `SLPS_258.37` to `SLPS_222.28`.
+1. `SYSTEM.CNF` changes `SLPS_258.37` to `SLOP_NA2.28`.
 2. The clean boot ELF's 64-byte title slot at `0x2FBAE0` changes from
    `ＮＡＲＵＴＯ－ナルト－　疾風伝ナルティメットアクセル２` to `ＮＡ　ｖ２．２８`.
 3. The ISO9660 root directory record changes `SLPS_258.37;1` to
-   `SLPS_222.28;1`.
+   `SLOP_NA2.28;1`.
 
 The third operation is ISO filesystem metadata, not an ELF string replacement,
 so it deliberately does not belong to a feature module. The mandatory image
@@ -50,7 +50,7 @@ PCSX2 uses its GameDB title for known serials. For a serial absent from the
 GameDB, the Game List falls back to the scanned image filename. The local cache
 confirmed this for the unknown `SLUS-55606`: `NUN6 A35.iso` appears as
 `NUN6 A35`. Because normal project images are intentionally named
-`NA2.28 - Current.iso` and `NA2.28 - Previous.iso`, `SLPS-22228` appears in the
+`NA2.28 - Current.iso` and `NA2.28 - Previous.iso`, `SLOP-NA228` appears in the
 Game List as `NA2.28 - Current` or `NA2.28 - Previous` rather than
 `Narutimate Accel v2.28`.
 
@@ -60,11 +60,13 @@ can retain `NA2.28 - Current` or `NUN6 A35`. A direct command-line/`-batch`
 launch has no
 scanned-entry title available during boot. PCSX2 2.6.3 then deliberately formats
 an unknown serial as `<serial> [?]`. This was runtime-confirmed as
-`SLUS-55606 [?]` for NUN6 A35 and `SLPS-22228 [?]` for the modified project
-image. The marker means PCSX2 found no GameDB or
-per-path title for that boot path; it is not an ISO or serial-detection error.
+`SLUS-55606 [?]` for NUN6 A35 and `SLPS-22228 [?]` for an earlier modified
+project identity. The active `SLOP-NA228` identity has not been separately
+runtime-checked for this title behavior. The marker means PCSX2 found no GameDB
+or per-path title for that boot path; it is not an ISO or serial-detection
+error.
 
-`SLPS-22228` is also a separate PCSX2 identity for playtime, covers, save states,
+`SLOP-NA228` is also a separate PCSX2 identity for playtime, covers, save states,
 per-game settings, compatibility metadata, and PNACH lookup. The stock
 `SLPS-25837` GameDB entry includes compatibility settings that will not be
 inherited automatically by the synthetic serial.
@@ -74,7 +76,10 @@ entry** to override this title or copy the stock compatibility entry. Directly
 editing `@pcsx2/cache/gamelist.cache` is likewise rejected because it is
 generated, machine-local state.
 
-The canonical PNACH remains
-`@pcsx2_files/SLPS-25837_C0659AD1.pnach`. Actualization derives the active serial
-from `SYSTEM.CNF`, creates `@pcsx2/cheats/SLPS-22228_<crc>.pnach` for the modified
-image, and removes obsolete managed aliases without touching unrelated files.
+The canonical PNACH is `@pcsx2_files/cheats.pnach`. Actualization derives each
+retained image's alphanumeric serial from `SYSTEM.CNF`, creates matching
+`@pcsx2/cheats/<serial>_<crc>.pnach` aliases, and removes obsolete managed
+aliases without touching unrelated files. On 2026-07-24 the retained Current,
+Previous, and Candidate images resolved respectively as `SLOP-NA228`,
+`SLUS-NA228`, and `SLPS-22228`, all with CRC `6D94D520`; these identities are
+derived state rather than hardcoded workflow configuration.

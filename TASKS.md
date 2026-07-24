@@ -16,7 +16,6 @@
 
 ### [String translation](docs/workstreams/string_translation/README.md)
 - [Investigate](work/__sstates/translation/strings)
-    * Consolidate mappings and references under one file, add source, donor and replacement fields, and decide the need for externalization at build/link time. Source and donor fields should be purely informational; do not retain shortened fallbacks or placement markers.
     * Redo the translation from scratch, using existing data as a reference, touching only what is displayed with the help of savestates. Not everything is translated currently (MAX Damage label, etc.).
 
 ## Backlog

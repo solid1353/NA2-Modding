@@ -88,7 +88,11 @@ class ProfileTests(unittest.TestCase):
         profile = profiles / profile_id
         profile.mkdir()
         write_tsv(profile / "roots.tsv", ["root_id", "path"], [{"root_id": "na2", "path": "source"}])
-        write_tsv(profile / "features.tsv", FEATURE_FIELDS, rows)
+        write_tsv(
+            profile / "features.tsv",
+            FEATURE_FIELDS,
+            [{"bypass_check": "0", **row} for row in rows],
+        )
         (profile / "identity.json").write_text(
             json.dumps(
                 {
@@ -164,6 +168,50 @@ class ProfileTests(unittest.TestCase):
                 [{"feature_id": "alpha", "expected_sha256": "0" * 64}],
             )
             with self.assertRaisesRegex(ValueError, "does not match"):
+                load_profile(profile, root)
+
+    def test_allows_explicit_feature_hash_bypass_and_records_actual_hash(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features, source, profiles = self.create_workspace(root)
+            alpha = self.create_feature(features, "alpha", "binary_patcher")
+            profile = self.create_profile(
+                profiles,
+                source,
+                [
+                    {
+                        "feature_id": "alpha",
+                        "expected_sha256": "0" * 64,
+                        "bypass_check": "1",
+                    }
+                ],
+            )
+
+            loaded = load_profile(profile, root)
+
+            feature = loaded.features[0]
+            self.assertTrue(feature.hash_check_bypassed)
+            self.assertEqual(feature.expected_sha256, "0" * 64)
+            self.assertEqual(feature.actual_sha256, feature_content_sha256(alpha))
+
+    def test_rejects_unknown_feature_hash_bypass_marker(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features, source, profiles = self.create_workspace(root)
+            self.create_feature(features, "alpha", "binary_patcher")
+            profile = self.create_profile(
+                profiles,
+                source,
+                [
+                    {
+                        "feature_id": "alpha",
+                        "expected_sha256": "0" * 64,
+                        "bypass_check": "x",
+                    }
+                ],
+            )
+
+            with self.assertRaisesRegex(ValueError, "bypass_check must be 0 or 1"):
                 load_profile(profile, root)
 
     def test_rejects_duplicate_feature(self) -> None:

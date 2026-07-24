@@ -7,7 +7,8 @@ Each profile directory contains:
 
 - `roots.tsv`: repository-relative source bindings or `@root/...` aliases.
 - `features.tsv`: enabled feature IDs in composition order and each feature's
-  exact aggregate canonical-input SHA-256.
+  exact aggregate canonical-input SHA-256, plus a separate per-feature
+  `bypass_check` development switch.
 - `identity.json`: structured image, memory-card, and game-title policy for the
   final output identity.
 
@@ -41,6 +42,13 @@ file is created when the feature owns no local strings.
 One feature pin covers the union of all canonical executable inputs owned by
 that feature, including each canonical file's feature-relative path. Root
 READMEs, engine code, and non-input authoring helpers are excluded.
+
+For a temporary manually edited feature, set only that row's `bypass_check` to
+`1`; `0` enforces the stored hash. The loader still calculates the aggregate
+hash, and the build log records both the expected and actual hashes with
+`hash_check` set to `bypassed`. Set the row back to `0` and update its expected
+hash once the edit is ready to pin. Do not use bypassed checks for an accepted
+reproducible checkpoint.
 
 - `binary_patcher`: `targets.tsv`, `groups.tsv`, `patches.tsv`, `edits.tsv`,
   and every blob referenced by `blob_path`.

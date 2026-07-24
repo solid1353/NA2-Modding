@@ -632,12 +632,22 @@ def write_profile_log(
         )
     binary_patcher_module.write_tsv(
         log_directory / "features.tsv",
-        ["feature_id", "input", "input_sha256"],
+        [
+            "feature_id",
+            "input",
+            "expected_sha256",
+            "actual_sha256",
+            "hash_check",
+        ],
         [
             {
                 "feature_id": feature.feature_id,
                 "input": feature.input_path.relative_to(workspace).as_posix(),
-                "input_sha256": feature.expected_sha256,
+                "expected_sha256": feature.expected_sha256,
+                "actual_sha256": feature.actual_sha256,
+                "hash_check": (
+                    "bypassed" if feature.hash_check_bypassed else "verified"
+                ),
             }
             for feature in profile.features
         ],
@@ -871,6 +881,14 @@ def main() -> int:
     green = "\033[32m"
     reset = "\033[0m"
     print(f"Applied profile: {profile.profile_id}")
+    bypassed_features = [
+        feature for feature in profile.features if feature.hash_check_bypassed
+    ]
+    for feature in bypassed_features:
+        print(
+            "Feature hash check bypassed: "
+            f"{feature.feature_id} (actual SHA-256 {feature.actual_sha256})"
+        )
     if args.translation_display != "translation":
         print(f"Translation display: {args.translation_display} (diagnostic)")
     for item in profile_results:

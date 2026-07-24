@@ -13,7 +13,7 @@ from .project_paths import ProjectPaths, load_project_paths, resolve_alias
 
 
 ROOT_FIELDS = ["root_id", "path"]
-FEATURE_FIELDS = ["feature_id", "expected_sha256"]
+FEATURE_FIELDS = ["feature_id", "expected_sha256", "bypass_check"]
 MODULE_TYPE_ORDER = (
     "translation_importer",
     "string_patcher",
@@ -57,7 +57,13 @@ class ProfileFeature:
     feature_id: str
     input_path: Path
     expected_sha256: str
+    actual_sha256: str
+    bypass_check: bool
     module_ids: tuple[str, ...]
+
+    @property
+    def hash_check_bypassed(self) -> bool:
+        return self.bypass_check
 
 
 @dataclass(frozen=True)
@@ -479,10 +485,20 @@ def load_profile(
         except ValueError as exc:
             raise ValueError(f"Feature path escapes configured root: {feature_id}") from exc
         expected = row["expected_sha256"].upper()
-        if len(expected) != 64 or any(char not in "0123456789ABCDEF" for char in expected):
-            raise ValueError(f"Feature {feature_id}: expected_sha256 must be 64 hex digits")
+        bypass_value = row["bypass_check"]
+        if bypass_value not in ("0", "1"):
+            raise ValueError(
+                f"Feature {feature_id}: bypass_check must be 0 or 1"
+            )
+        bypass_check = bypass_value == "1"
         actual = feature_content_sha256(feature_path)
-        if actual != expected:
+        if len(expected) != 64 or any(
+            char not in "0123456789ABCDEF" for char in expected
+        ):
+            raise ValueError(
+                f"Feature {feature_id}: expected_sha256 must be 64 hex digits"
+            )
+        if not bypass_check and actual != expected:
             raise ValueError(
                 f"Feature {feature_id}: input SHA-256 {actual} does not match {expected}"
             )
@@ -506,6 +522,8 @@ def load_profile(
                 feature_id=feature_id,
                 input_path=feature_path,
                 expected_sha256=expected,
+                actual_sha256=actual,
+                bypass_check=bypass_check,
                 module_ids=tuple(module_ids),
             )
         )

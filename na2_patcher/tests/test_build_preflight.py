@@ -32,7 +32,8 @@ class BuildPreflightTests(unittest.TestCase):
         (patcher / "engine.py").write_text("ENGINE = 1\n", encoding="utf-8")
         (patcher / "schema.tsv").write_text("schema\t1\n", encoding="utf-8")
         (profile / "features.tsv").write_text(
-            "feature_id\texpected_sha256\nfeature\t" + "0" * 64 + "\n",
+            "feature_id\texpected_sha256\tbypass_check\n"
+            "feature\t" + "0" * 64 + "\t0\n",
             encoding="utf-8",
         )
         (profile / "roots.tsv").write_text(

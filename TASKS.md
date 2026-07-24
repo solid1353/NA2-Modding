@@ -5,7 +5,7 @@
 ### General
 - Create notifications.
 
-### Scripting
+### [Scripting](docs/workstreams/scripting/README.md)
 - Return actualization workflow + actualize gamesettings as well, must run for any user-initiated build and delete stale files. Files are at pcsx2_files. Each user-initiated build method should use a different memcard copy that is named accordingly, Mcd001_NA228.ps2 is the base that exists just for copying.
 
 ### [Font](docs/workstreams/font/README.md)

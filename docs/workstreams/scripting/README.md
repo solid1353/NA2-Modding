@@ -1,0 +1,13 @@
+# Scripting
+
+Canonical documentation landing page for the `Scripting` workstream.
+
+## Workstream policy
+
+- `@pcsx2_files/input_profiles/Comparison.ini` is the only manually edited
+  comparison input profile. Regenerate
+  `@pcsx2_files/input_profiles/Comparison_NA2.ini` with the maintained
+  synchronization command; do not edit the generated profile directly.
+
+Global path, source, testing, and cleanup rules remain in `AGENTS.md` and are
+not duplicated here.

@@ -8,10 +8,6 @@ This is the living handoff for the `TASKS.md` **UI Translation** task. Keep it c
 
 Import appropriate official NUN5 English UI textures into NA2, correct the offsets for the selected entries, and investigate how the NUN5 PCSX2 upscale pack can help the UI-translation workflow.
 
-## Workstream policy
-
-See the canonical [UI Translation workstream policy](README.md#workstream-policy).
-
 ## Asset inventory
 
 ### Game sources and donors

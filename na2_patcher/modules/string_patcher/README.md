@@ -14,6 +14,12 @@ has no local string declarations. Its importer artifact invokes this generic
 consumer as a derived stage. A feature creates `string_patcher/strings.tsv` only
 when it owns actual local declarations.
 
+An explicit `mapping_ids` diagnostic display mode replaces resolved text in
+memory with compact mapping identifiers before placement. It exists only for
+verified worker builds used to identify visible source rows; normal builds
+always use the canonical donor/override text. The diagnostic mode never edits
+the mapping table or active profile.
+
 ## Invokes
 
 - `binary_patcher` for concrete guarded inline and resolved-pointer writes.

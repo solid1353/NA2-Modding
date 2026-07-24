@@ -49,6 +49,8 @@ class BuildProfileCliTests(unittest.TestCase):
                 str(profile_directory),
                 "--profile-log-directory",
                 "logs/profile",
+                "--translation-display",
+                "mapping_ids",
             ]
 
             output = io.StringIO()
@@ -77,7 +79,12 @@ class BuildProfileCliTests(unittest.TestCase):
             kwargs = compose.call_args.kwargs
             self.assertEqual(kwargs["output_iso"], output_iso)
             self.assertEqual(kwargs["profile_log_directory"], profile_log_directory)
+            self.assertEqual(kwargs["translation_display"], "mapping_ids")
             self.assertIn("payload_builder (0 symbols, 7 bytes)", output.getvalue())
+            self.assertIn(
+                "Translation display: mapping_ids (diagnostic)",
+                output.getvalue(),
+            )
             self.assertIn("identity (1 edits)", output.getvalue())
             self.assertIn(
                 "Verified staged ISO: NA2.28 - Current.iso.building",

@@ -66,7 +66,11 @@ def _bind_string_consumer(
     return None
 
 
-def prepare_module_pipeline(profile: Profile) -> PreparedModulePipeline:
+def prepare_module_pipeline(
+    profile: Profile,
+    *,
+    translation_display: str = "translation",
+) -> PreparedModulePipeline:
     """Prepare artifacts and link all shared payload contributions once."""
     ordered_modules = resolve_module_order(profile.modules)
     if any(module.module == "translation_importer" for module in ordered_modules):
@@ -98,6 +102,7 @@ def prepare_module_pipeline(profile: Profile) -> PreparedModulePipeline:
         draft = string_patcher_module.build_translation_draft(
             translation_plan=import_plan,
             owner=owner,
+            translation_display=translation_display,
             title_policy=string_patcher_module.GameTitlePolicy(
                 imported_title=profile.identity.imported_game_title,
                 output_title=profile.identity.output_game_title,

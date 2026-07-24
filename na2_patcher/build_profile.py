@@ -413,8 +413,12 @@ def apply_profile_modules(
     owners: dict[str, str],
     insertions: dict[str, bytes],
     insertion_owners: dict[str, str],
+    translation_display: str = "translation",
 ) -> tuple[list[dict[str, object]], dict[str, object] | None]:
-    pipeline = prepare_module_pipeline(profile)
+    pipeline = prepare_module_pipeline(
+        profile,
+        translation_display=translation_display,
+    )
     ordered_modules = pipeline.ordered_modules
     import_plans = pipeline.import_plans
     string_plans = pipeline.string_plans
@@ -723,6 +727,7 @@ def build_profile_candidate(
     profile: Profile,
     workspace: Path,
     profile_log_directory: Path | None,
+    translation_display: str = "translation",
 ) -> ProfileBuildResult:
     """Compose and verify one staged profile image without promoting it."""
     source_iso = source_iso.resolve()
@@ -747,6 +752,7 @@ def build_profile_candidate(
         owners=owners,
         insertions=insertions,
         insertion_owners=insertion_owners,
+        translation_display=translation_display,
     )
 
     composition = compose_assembly_plan(
@@ -824,6 +830,15 @@ def main() -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--profile", required=True, type=Path)
     parser.add_argument("--profile-log-directory", required=True, type=Path)
+    parser.add_argument(
+        "--translation-display",
+        choices=sorted(string_patcher_module.TRANSLATION_DISPLAY_MODES),
+        default="translation",
+        help=(
+            "Resolve canonical strings normally, or render mapping identifiers "
+            "for a diagnostic worker build."
+        ),
+    )
     args = parser.parse_args()
 
     workspace = PROJECT_PATHS.repository
@@ -848,6 +863,7 @@ def main() -> int:
         profile=profile,
         workspace=workspace,
         profile_log_directory=profile_log_directory,
+        translation_display=args.translation_display,
     )
     profile_results = build.results
     payload_result = build.payload_result
@@ -855,6 +871,8 @@ def main() -> int:
     green = "\033[32m"
     reset = "\033[0m"
     print(f"Applied profile: {profile.profile_id}")
+    if args.translation_display != "translation":
+        print(f"Translation display: {args.translation_display} (diagnostic)")
     for item in profile_results:
         module = item["module"]
         assert isinstance(module, ProfileModule)

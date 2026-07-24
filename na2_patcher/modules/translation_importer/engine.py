@@ -80,6 +80,7 @@ class TranslationImportPlan:
     materialized_templates: dict[str, str]
     clean_targets: dict[str, bytes]
     summary: dict[str, object]
+    display_mode: str = "translation"
 
 
 @dataclass(frozen=True)
@@ -758,6 +759,7 @@ def apply_text_mappings(
     resolved_texts,
     resolved_sequences,
     excluded_mapping_ids: frozenset[str] = frozenset(),
+    display_mode: str = "translation",
 ):
     annotations = []
     occupied: dict[str, list[tuple[int, int, str]]] = defaultdict(list)
@@ -797,13 +799,16 @@ def apply_text_mappings(
             replacement = replacement_text.encode("cp1252")
             write_slot(output_targets[target], offset, capacity, replacement)
         occupied[target].append((offset, offset + capacity, str(row["id"])))
-        mapping_kind = (
-            "override"
-            if str(row["replacement"])
-            else "official donor translation"
-        )
-        if str(row["prefix"]):
-            mapping_kind = f"prefixed {mapping_kind}"
+        if display_mode == "mapping_ids":
+            mapping_kind = "diagnostic mapping identifier"
+        else:
+            mapping_kind = (
+                "override"
+                if str(row["replacement"])
+                else "official donor translation"
+            )
+            if str(row["prefix"]):
+                mapping_kind = f"prefixed {mapping_kind}"
         annotations.append({"path": TARGET_SPECS[target][0], "start": offset, "end": offset + capacity,
                             "source_text": target_text, "replacement_text": replacement_text,
                             "mapping_id": str(row["id"]),
@@ -1002,6 +1007,7 @@ def compile_inline_imports(
         plan.resolved_texts,
         plan.resolved_sequences,
         excluded_mapping_ids,
+        plan.display_mode,
     )
     import_rows: list[dict[str, str]] = []
     translated_hashes: dict[str, dict[str, object]] = {}

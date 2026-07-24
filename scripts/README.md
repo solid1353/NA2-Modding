@@ -36,8 +36,9 @@ research utility.
   PINE identity checks, controlled savestate and embedded-screenshot capture,
   rendering preflight, and read-only runtime memory inspection for NUN5-to-NA2
   UI comparisons.
-- `research/translation/`: retained translation-table length validator. It is
-  not part of normal profile builds.
+- `research/translation/`: retained translation-table length validator and the
+  worker-only mapping-ID diagnostic builder used to identify visible strings.
+  Neither changes normal profile behavior.
 
 Normal builds call `na2_patcher.build_profile` through `na2/build.ps1`.
 Before that call, `na2/build.ps1` checks the deterministic successful-build

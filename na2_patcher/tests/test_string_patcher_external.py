@@ -188,6 +188,49 @@ class IntegratedExternalStringTests(unittest.TestCase):
         self.assertEqual(self.import_plan.resolved_texts["M0566"], "No")
         self.assertEqual(self.import_plan.resolved_texts["M0799"], "Yes")
 
+    def test_mapping_id_display_uses_readable_ids_and_fits_small_slots(self) -> None:
+        draft = string_patcher.build_translation_draft(
+            translation_plan=self.import_plan,
+            owner="localization.string_patcher",
+            title_policy=string_patcher.GameTitlePolicy(
+                imported_title="Naruto Shippuden: Ultimate Ninja 5",
+                output_title="Narutimate Accel v2.28",
+                expected_mapping_count=6,
+                expected_occurrence_count=7,
+            ),
+            translation_display="mapping_ids",
+        )
+        plan = draft.translation_plan
+        self.assertEqual(plan.display_mode, "mapping_ids")
+        self.assertEqual(plan.resolved_texts["M0562"], "0562")
+        self.assertEqual(plan.resolved_texts["M0563"], "M0563")
+        self.assertEqual(
+            plan.resolved_sequences["M0813"],
+            ("M0813.1", "M0813.2"),
+        )
+        self.assertEqual(draft.external_draft.fragments, ())
+        self.assertEqual(draft.external_draft.symbolic_patches, ())
+        diagnostic = plan.summary["diagnostic_display"]
+        self.assertEqual(diagnostic["mode"], "mapping_ids")
+        self.assertEqual(
+            diagnostic["mapping_count"],
+            len(plan.resolved_texts) + len(plan.resolved_sequences),
+        )
+
+    def test_mapping_id_display_rejects_unknown_mode(self) -> None:
+        with self.assertRaisesRegex(ValueError, "unsupported translation display"):
+            string_patcher.build_translation_draft(
+                translation_plan=self.import_plan,
+                owner="localization.string_patcher",
+                title_policy=string_patcher.GameTitlePolicy(
+                    imported_title="Naruto Shippuden: Ultimate Ninja 5",
+                    output_title="Narutimate Accel v2.28",
+                    expected_mapping_count=6,
+                    expected_occurrence_count=7,
+                ),
+                translation_display="guess",
+            )
+
     def test_title_policy_fails_closed_in_string_patcher(self) -> None:
         with self.assertRaisesRegex(ValueError, "policy coverage differs"):
             string_patcher.build_translation_draft(

@@ -37,7 +37,7 @@ replaced with a copied machine-specific absolute path.
 - `work/<task title>/build/`: isolated agent ISOs produced by `na2 -t work/<task title>/build/<name>.iso`. Staging remains beside the requested output, build records remain under that task's `logs/`, and the mode never touches shared build, preflight, promotion, PNACH, or PCSX2 state.
 - Temporary imported archives live under the active task's `work/<task title>/temp/` folder until normalized or retired. Reproducible data lives as hash-pinned inputs beside its module; complete accepted states are preserved by annotated Git tags, and retired inputs remain available through Git history.
 - `na2_patcher/features/localization/translation_importer/mappings.tsv` is the Localization feature's current hash-pinned v37 importer input and `references.tsv` owns the verified pointer inventory. The importer preserves official source semantics; profile `identity.json` owns the imported/output game titles, and the generic `string_patcher` applies that output policy before choosing inline or linked placement and contributing external fragments plus symbolic pointers. `payload_builder` constructs `PRG/228.BIN` and owns its loader/memory integration; the composer resolves symbols and `binary_patcher` applies concrete guarded writes. No standalone export or source-hash bypass exists.
-- `logs/`: disposable shared-workflow records grouped into task-specific subfolders; no files should be written directly in the root. `na2` keeps shared Current/Previous/Candidate records under `logs/na2/`. Agent ISO and PCSX2 records instead stay under `work/<task title>/logs/`. See `docs/LOGGING.md`.
+- `@logs/`: disposable shared-workflow records; no files should be written directly in the root. `na2` keeps bounded Current/Previous/Candidate provenance under `@logs/na2/`, and shared generated workstream evidence belongs under `@workstream_logs/<exact task title>/`. Agent ISO and PCSX2 records instead stay under `work/<task title>/logs/`. See `docs/LOGGING.md`.
 - `scripts/`: repeatable tooling.
 - `@pcsx2_files/`: project-owned PCSX2 artifacts. The canonical PNACH and input recordings are tracked; screenshots remain local and ignored.
 - `@pcsx2/`: portable PCSX2 installation and user-owned emulator state. Agent launches share its read-only executable, BIOS, resources, profiles, and replacement textures, but temporarily redirect mutable folders into their own `work/<task title>/` tree. Its game-list media paths may point to `@build/` and `@source/`; its CRC-named cheat symlinks target the canonical PNACH under `@pcsx2_files/`.
@@ -111,7 +111,7 @@ original/
       ETC.BIN
 ```
 
-For edited/build versions, do not edit anything under `@source/` in place. Copy the needed file or archive into a task/build folder first, then patch that copy through scripts and log the source path and output path. If extraction or inspection needs metadata, write it under `@logs/` using source-relative paths instead of placing files in `@source/`.
+For edited/build versions, do not edit anything under `@source/` in place. Copy the needed file or archive into a task/build folder first, then patch that copy through scripts and log the source path and output path. If extraction or inspection needs shared metadata, write it under the owning `@workstream_logs/<exact task title>/` folder using source-relative paths instead of placing files in `@source/`.
 
 Use `scripts/media/extract_source_iso.ps1 -IsoPath <path> -TaskTitle <exact task
 title>` for a new canonical extraction. It stages under the invoking task's

@@ -281,7 +281,7 @@ finally {
 
 $logPath = ""
 if (-not $NoLog) {
-    $logDir = Join-Path $projectPaths.logs "extraction"
+    $logDir = Join-Path $projectPaths.workstream_logs "Scripting\extraction"
     New-Item -ItemType Directory -Force -Path $logDir | Out-Null
     $stamp = Get-Date -Format "yyyyMMdd_HHmmss_fff"
     $logPath = Join-Path $logDir ("extract_iso9660_" + $stamp + "_pid" + $PID + ".tsv")

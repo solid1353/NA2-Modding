@@ -27,6 +27,8 @@ The manifest currently defines these stable logical names:
 - `utils`: shared utilities, including Ghidra and the untrusted historical dump.
 - `build`, `logs`, `patcher`, `scripts`, and `work`:
   their corresponding project areas.
+- `workstream_logs`: shared generated evidence grouped below
+  `@logs/workstreams/<exact task title>/`; see `docs/LOGGING.md`.
 - `features`: the canonical feature-package root beneath `@patcher/`; profile
   module discovery resolves this root instead of hardcoding its repository path.
 - `pcsx2_files`: project-owned PCSX2-related files: the canonical PNACH,

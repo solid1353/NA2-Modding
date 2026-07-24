@@ -6,11 +6,11 @@ MWo3 overlay, and records the task's fixed reservation and upper-memory regions.
 It accepts either filesystem paths or configured `@root/...` paths.
 
 Run the preserved matched capture set and write disposable reports below the
-configured log root:
+owning workstream's shared log root:
 
 ```powershell
 python scripts/research/ee_memory_map/analyze_savestates.py `
-  --output-dir '@logs/ee_runtime_memory_map/2026-07-22'
+  --output-dir '@workstream_logs/EE Runtime Memory Map/<run-id>'
 ```
 
 Run the focused unit tests with:

@@ -18,10 +18,12 @@ Exact inputs and observations are preserved in:
   savestate identities, sizes, and SHA-256 hashes;
 - [`runtime_observations.tsv`](ee_runtime_memory_map/runtime_observations.tsv):
   validated allocator, overlay, and capacity readings for all 16 captures;
-- `@logs/ee_runtime_memory_map/2026-07-22/region_observations.tsv`: disposable
-  per-state hashes for the mapped EE regions;
 - `@work/EE Runtime Memory Map/savestates/2026-07-22/`: preserved task-owned
   copies of the 16 user captures used by the maintained analyzer.
+
+The analyzer's larger JSON output and per-state region-hash report were
+disposable derivations. They were pruned after the reusable observations and
+conclusions above were promoted.
 
 ## Decision summary
 

@@ -6,9 +6,10 @@ knowledge.
 
 ## General rules
 
-- Write shared workflow logs below `@logs/`, grouped by workflow or task, and
-  worker build/runtime logs below `work/<task title>/logs/`. Do not write files
-  directly in the shared log root.
+- Write bounded shared workflow logs below `@logs/`, shared generated
+  workstream records below `@workstream_logs/<exact task title>/`, and worker
+  build/runtime logs below `work/<task title>/logs/`. Do not write files
+  directly in `@logs/` or `@workstream_logs/`.
 - Persist only repository-relative paths or configured `@root/...` aliases.
   Machine-specific absolute paths are forbidden.
 - Keep enough detail to reproduce or diagnose the operation: inputs, selected
@@ -18,6 +19,23 @@ knowledge.
 - Before deleting logs, inspect them for confirmed reusable findings and useful
   negative results. Promote those findings into `docs/knowledge/` or canonical
   module-local TSV/README data first.
+
+## Shared workstream logs
+
+`@workstream_logs/<exact task title>/` contains generated evidence that is
+shared across tasks in one workstream but is not canonical project knowledge.
+Examples include expensive media inventories and reproducible analyzer reports.
+The exact workstream-title directory makes ownership explicit; producers must
+not create anonymous folders directly below `@workstream_logs/`.
+
+A task cleans the records it produced or consumed before reporting completion.
+It first promotes every reusable conclusion and useful negative result into
+tracked knowledge or canonical module data, then deletes redundant reports and
+removes empty directories. A generated record may survive task completion only
+when canonical documentation names its concrete future use and it remains
+expensive or impractical to regenerate. Retention is never a substitute for
+knowledge promotion, and another task's concurrently active records are left
+untouched.
 
 ## Routine `na2` logs
 
@@ -78,7 +96,7 @@ actualization status and enabled cheats.
 ## Other task logs
 
 Task-specific analysis, extraction, and patch logs may remain while they support
-active work or immediate review. At task completion:
+active work or immediate review. Before reporting task completion:
 
 1. Identify records that are exact generated copies of canonical mappings,
    patch sets, or build plans.
@@ -87,7 +105,10 @@ active work or immediate review. At task completion:
    and important negative tests into tracked knowledge.
 3. Verify that every required binary edit is represented by canonical patch data
    with its original bytes, replacement bytes, offset, and reason.
-4. Delete redundant generated logs directly.
+4. Delete every disposable generated log directly and remove resulting empty
+   directories.
+5. Retain a log only for a named concrete future use recorded in canonical
+   documentation; never retain it merely as history.
 
 Large inventories are allowed when their structured contents avoid expensive
 rediscovery. Size alone is not a reason to split or delete a useful record.

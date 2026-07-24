@@ -3,6 +3,15 @@
 This directory preserves confirmed visual, structural, and byte-level Font
 evidence, including accepted implementations and rejected historical tests.
 
+## Current savestate comparison
+
+The [2026-07-24 matched savestate analysis](savestate_analysis_2026-07-24.md)
+compares ten NUN5/NA2 pairs and separates raster/metric, call-local position,
+generic-modal, and missing-wrap defects. It confirms that Control Settings is
+the only boxed-fit path proven correct by this sample and that multiple other
+callers require layout behavior that a font-asset refinement alone cannot
+provide.
+
 ## 2026-07-20 accepted native 14x20 integration baseline
 
 The current patch set is version 5. Its former standalone profile module pin was

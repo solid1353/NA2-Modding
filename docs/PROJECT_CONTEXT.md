@@ -171,10 +171,13 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   shared settings immediately, and thereafter controls its recorded
   PID/window/port only while an unchanged live descriptor and launch-local
   ownership capability both validate. Descriptor/capability loss is fail-closed:
-  the process and potentially live task runtime data are left untouched. Live
-  two-instance validation on PCSX2 2.6.3 confirmed
-  independent ports, windows, cards, settings restoration, and targeted
-  shutdown.
+  the process and potentially live task runtime data are left untouched. A
+  task-owned declarative operation plan may load/capture savestates and perform
+  exact-byte guarded PINE reads/writes through an in-process interpreter that
+  revalidates ownership and same-connection serial/CRC identity without
+  exposing the port or capability. Live two-instance validation on PCSX2 2.6.3
+  confirmed independent ports, windows, cards, settings restoration, and
+  targeted shutdown.
 - `na2_patcher/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na2_patcher/build_profile.py` applies that prepared pipeline and writes its run log. `na2_patcher/composer.py` resolves module artifacts and closes typed image operations. `na2_patcher/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Candidate, or worker-owned output.
 - `scripts/media/` contains the recursive source extractor, its byte-parity
   verifier, and focused ISO, AFS, and CVM building blocks. Direct same-size ISO

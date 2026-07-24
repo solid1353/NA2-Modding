@@ -88,8 +88,68 @@ task-owned.
 `na2/test_test_runtime.ps1` covers path injection/restoration and guards against
 overwriting unrelated settings; `na2/test_test_memory_card.ps1` covers private
 card reuse; `na2/test_process_ownership.ps1` proves missing, mismatched, and
-modified ownership records cannot terminate a process. The shared ISO identity
-helper is also used by PNACH actualization.
+modified ownership records cannot terminate a process;
+`na2/test_test_pine.ps1` covers exact-byte guarded reads/writes; and
+`na2/test_test_operation.ps1` covers task-root confinement plus state/screenshot
+handling. The shared ISO identity helper is also used by PNACH actualization.
+
+Tasks that need runtime control pass a repository-relative JSON plan below their
+own worker root with `-OperationPlan`; the launcher interprets it after PINE
+identity is ready and shared settings are restored, but before guarded cleanup:
+
+```powershell
+& .\scripts\na2\test_launch.ps1 `
+  -WorkerRoot 'work/Font' `
+  -IsoPath 'work/Font/build/font-test.iso' `
+  -OperationPlan 'work/Font/runtime-operation.json'
+```
+
+`work/Font/runtime-operation.json`:
+
+```json
+{
+  "schema_version": 1,
+  "result_path": "work/Font/artifacts/runtime/font-case.json",
+  "actions": [
+    {
+      "action": "load_state",
+      "state_path": "work/Font/inputs/sstates/font-case.p2s",
+      "slot": 0
+    },
+    {
+      "action": "read_memory",
+      "address": "0x00123450",
+      "expected_hex": "00112233"
+    },
+    {
+      "action": "wait",
+      "milliseconds": 500
+    },
+    {
+      "action": "capture_state",
+      "slot": 1,
+      "screenshot_path": "work/Font/artifacts/screenshots/font-case.png",
+      "timeout_seconds": 30
+    }
+  ]
+}
+```
+
+Supported action objects are `identity`; `load_state` with `state_path` and
+optional `slot`; exact-byte `read_memory` with `address` and `expected_hex`;
+exact-byte guarded `patch_memory` with `address`, `expected_hex`, and
+`replacement_hex`; `save_state`; `capture_state` with a task-owned
+`screenshot_path`; and bounded `wait` with `milliseconds`. State inputs, plans,
+result files, and screenshot outputs must stay below the same
+`work/<task title>/` root. Addresses accept JSON integers or `0x` strings;
+byte strings are non-empty, even-length hexadecimal.
+
+Every PINE action revalidates the authenticated live descriptor and verifies
+the recorded serial/CRC over the same private PINE connection used for that
+action. The plan interpreter exposes and persists no PINE port, descriptor, or
+ownership capability. `capture_state` records both task-owned state and
+screenshot paths, optional `result_path` receives the complete portable JSON
+result, and `WaitSeconds` starts only after all plan actions finish.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`

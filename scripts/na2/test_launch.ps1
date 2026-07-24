@@ -6,6 +6,7 @@ param(
     [ValidateRange(1, 300)][int]$ReadyTimeoutSeconds = 60,
     [string]$AgentName = 'Codex',
     [string]$TaskIdentity,
+    [string]$OperationPlan,
     [switch]$StartPaused
 )
 
@@ -17,6 +18,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'worker_paths.ps1')
 . (Join-Path $PSScriptRoot 'pine.ps1')
 . (Join-Path $PSScriptRoot 'test_runtime.ps1')
+. (Join-Path $PSScriptRoot 'test_operation.ps1')
 $projectPaths = Get-Na2ProjectPaths
 $worker = Get-Na2WorkerContext `
     -WorkerRoot $WorkerRoot `
@@ -60,6 +62,25 @@ $ownershipCapability = $null
 $stopResult = $null
 $ownershipLossReason = $null
 $settingsRestoredAfterLaunch = $false
+$resolvedOperationPlan = $null
+$parsedOperationPlan = $null
+if (-not [string]::IsNullOrWhiteSpace($OperationPlan)) {
+    $resolvedOperationPlan = Resolve-Na2TaskOwnedFile `
+        -Path $OperationPlan `
+        -Worker $worker `
+        -Repository $projectPaths.repository `
+        -RequiredExtension '.json'
+    $parsedOperationPlan = Get-Na2TestOperationPlan -Path $resolvedOperationPlan
+    if (-not [string]::IsNullOrWhiteSpace($parsedOperationPlan.ResultPath)) {
+        $parsedOperationPlan | Add-Member `
+            -NotePropertyName ResolvedResultPath `
+            -NotePropertyValue (Resolve-Na2TaskOwnedOutputPath `
+                -Path $parsedOperationPlan.ResultPath `
+                -Worker $worker `
+                -Repository $projectPaths.repository `
+                -RequiredExtension '.json')
+    }
+}
 
 if (-not ('Na2TestWindow' -as [type])) {
     Add-Type -TypeDefinition @'
@@ -242,6 +263,353 @@ try {
         -Path $descriptorPath `
         -Descriptor $descriptor `
         -OwnershipCapability $ownershipCapability
+
+    $invokeOwnedPine = {
+        [CmdletBinding()]
+        param(
+            [Parameter(Mandatory = $true)]
+            [ValidateSet(
+                'Identity',
+                'LoadState',
+                'SaveState',
+                'CaptureState',
+                'ReadMemory',
+                'PatchMemory',
+                'Wait'
+            )]
+            [string]$Action,
+            [string]$StatePath,
+            [string]$ScreenshotPath,
+            [ValidateRange(0, 99)][int]$Slot = 0,
+            [uint32]$Address = 0,
+            [byte[]]$Expected,
+            [byte[]]$Replacement,
+            [ValidateRange(0, 300000)][int]$Milliseconds = 0,
+            [ValidateRange(1, 300)][int]$TimeoutSeconds = 30
+        )
+
+        $ownedState = Get-Na2Pcsx2OwnershipState `
+            -DescriptorPath $descriptorPath `
+            -OwnershipCapability $ownershipCapability `
+            -KeepDescriptorOpen
+        if (-not $ownedState.Valid) {
+            $script:ownershipLossReason = $ownedState.Reason
+            throw "PCSX2 ownership lost before ${Action}: $($ownedState.Reason)."
+        }
+
+        try {
+            $slotPath = $null
+            $previousSignature = $null
+            if ($Action -ceq 'LoadState') {
+                if ([string]::IsNullOrWhiteSpace($StatePath)) {
+                    throw 'LoadState requires -StatePath.'
+                }
+                $sourceState = Resolve-Na2TaskOwnedFile `
+                    -Path $StatePath `
+                    -Worker $worker `
+                    -Repository $projectPaths.repository
+                $slotPath = Get-Na2Pcsx2StateSlotPath `
+                    -StateDirectory $runtimeLayout.SaveStates `
+                    -Serial $isoIdentity.Serial `
+                    -CRC $isoIdentity.CRC `
+                    -Slot $Slot
+                Copy-Na2Pcsx2StateToSlot `
+                    -SourcePath $sourceState `
+                    -DestinationPath $slotPath | Out-Null
+            }
+            elseif ($Action -in @('SaveState', 'CaptureState')) {
+                $slotPath = Get-Na2Pcsx2StateSlotPath `
+                    -StateDirectory $runtimeLayout.SaveStates `
+                    -Serial $isoIdentity.Serial `
+                    -CRC $isoIdentity.CRC `
+                    -Slot $Slot
+                $previousSignature = Get-Na2Pcsx2StateSignature -Path $slotPath
+                if ($Action -ceq 'CaptureState') {
+                    if ([string]::IsNullOrWhiteSpace($ScreenshotPath)) {
+                        throw 'CaptureState requires -ScreenshotPath.'
+                    }
+                    $resolvedScreenshot = Resolve-Na2TaskOwnedOutputPath `
+                        -Path $ScreenshotPath `
+                        -Worker $worker `
+                        -Repository $projectPaths.repository `
+                        -RequiredExtension '.png'
+                }
+            }
+            elseif ($Action -ceq 'Wait') {
+                Start-Sleep -Milliseconds $Milliseconds
+                return [pscustomobject]@{
+                    Milliseconds = $Milliseconds
+                }
+            }
+
+            $pineAction = {
+                param([IO.Stream]$Stream, [psobject]$Identity)
+                switch ($Action) {
+                    'Identity' {
+                        return $Identity
+                    }
+                    'LoadState' {
+                        Invoke-Na2PineStateCommand `
+                            -Stream $Stream `
+                            -Command Load `
+                            -Slot $Slot
+                        return $slotPath
+                    }
+                    { $_ -in @('SaveState', 'CaptureState') } {
+                        Invoke-Na2PineStateCommand `
+                            -Stream $Stream `
+                            -Command Save `
+                            -Slot $Slot
+                        return
+                    }
+                    'ReadMemory' {
+                        if ($null -eq $Expected -or $Expected.Length -eq 0) {
+                            throw 'ReadMemory requires a non-empty -Expected byte array.'
+                        }
+                        $live = Read-Na2PineMemoryRange `
+                            -Stream $Stream `
+                            -Address $Address `
+                            -Length $Expected.Length
+                        if (-not (Test-Na2ByteArrayEquality -Left $live -Right $Expected)) {
+                            throw (
+                                "Guarded PINE read rejected at 0x$($Address.ToString('X8')): " +
+                                "live $([Convert]::ToHexString($live)) != expected " +
+                                "$([Convert]::ToHexString($Expected))."
+                            )
+                        }
+                        return $live
+                    }
+                    'PatchMemory' {
+                        if ($null -eq $Expected -or $null -eq $Replacement) {
+                            throw 'PatchMemory requires -Expected and -Replacement byte arrays.'
+                        }
+                        return Invoke-Na2PineGuardedMemoryPatch `
+                            -Stream $Stream `
+                            -Address $Address `
+                            -Expected $Expected `
+                            -Replacement $Replacement
+                    }
+                }
+            }
+            try {
+                $result = Invoke-Na2PineOwnedSession `
+                    -Port ([int]$ownedState.Descriptor.pine_port) `
+                    -Serial ([string]$ownedState.Descriptor.serial) `
+                    -CRC ([string]$ownedState.Descriptor.crc) `
+                    -Action $pineAction
+            }
+            catch {
+                if ($_.Exception.Data['Na2OwnershipLost'] -eq $true) {
+                    $script:ownershipLossReason = $_.Exception.Message
+                }
+                throw
+            }
+
+            if ($Action -in @('SaveState', 'CaptureState')) {
+                $capturedState = Wait-Na2Pcsx2StateCapture `
+                    -Path $slotPath `
+                    -PreviousSignature $previousSignature `
+                    -TimeoutSeconds $TimeoutSeconds
+                if ($Action -ceq 'CaptureState') {
+                    $capturedScreenshot = Export-Na2Pcsx2StateScreenshot `
+                        -StatePath $capturedState `
+                        -OutputPath $resolvedScreenshot
+                    return [pscustomobject]@{
+                        StatePath = $capturedState
+                        ScreenshotPath = $capturedScreenshot
+                    }
+                }
+                return $capturedState
+            }
+            return $result
+        }
+        finally {
+            $ownedState.DescriptorHandle.Dispose()
+        }
+    }
+
+    if ($null -ne $resolvedOperationPlan) {
+        Write-Host (
+            "[na2] Running task-owned operation plan " +
+            "$(ConvertTo-Na2ProjectPath -Path $resolvedOperationPlan -ProjectPaths $projectPaths)."
+        ) -ForegroundColor Cyan
+
+        $operationResults = [Collections.Generic.List[object]]::new()
+        $actionIndex = 0
+        foreach ($plannedAction in $parsedOperationPlan.Actions) {
+            $actionIndex += 1
+            $actionName = ([string]$plannedAction.action).Trim()
+            $normalizedAction = $actionName.ToLowerInvariant()
+            $actionResult = switch ($normalizedAction) {
+                'identity' {
+                    $identity = & $invokeOwnedPine -Action Identity
+                    [ordered]@{
+                        status = $identity.Status
+                        version = $identity.Version
+                        title = $identity.Title
+                        serial = $identity.Serial
+                        crc = $identity.CRC
+                        game_version = $identity.GameVersion
+                    }
+                    break
+                }
+                'load_state' {
+                    $statePath = [string](Get-Na2OperationProperty `
+                        -Object $plannedAction `
+                        -Name 'state_path')
+                    $slot = Get-Na2OperationInteger `
+                        -Value (Get-Na2OperationProperty -Object $plannedAction -Name 'slot') `
+                        -FieldName 'slot' `
+                        -Minimum 0 `
+                        -Maximum 99 `
+                        -Default 0
+                    $loaded = & $invokeOwnedPine `
+                        -Action LoadState `
+                        -StatePath $statePath `
+                        -Slot $slot
+                    [ordered]@{
+                        slot = $slot
+                        state_path = ConvertTo-Na2ProjectPath `
+                            -Path $loaded `
+                            -ProjectPaths $projectPaths
+                    }
+                    break
+                }
+                'read_memory' {
+                    $address = ConvertTo-Na2OperationAddress `
+                        -Value (Get-Na2OperationProperty -Object $plannedAction -Name 'address') `
+                        -FieldName 'address'
+                    $expected = ConvertFrom-Na2OperationHexBytes `
+                        -Value ([string](Get-Na2OperationProperty `
+                            -Object $plannedAction `
+                            -Name 'expected_hex')) `
+                        -FieldName 'expected_hex'
+                    $live = & $invokeOwnedPine `
+                        -Action ReadMemory `
+                        -Address $address `
+                        -Expected $expected
+                    [ordered]@{
+                        address = ('0x{0:X8}' -f $address)
+                        bytes = [Convert]::ToHexString($live)
+                        exact_match = $true
+                    }
+                    break
+                }
+                'patch_memory' {
+                    $address = ConvertTo-Na2OperationAddress `
+                        -Value (Get-Na2OperationProperty -Object $plannedAction -Name 'address') `
+                        -FieldName 'address'
+                    $expected = ConvertFrom-Na2OperationHexBytes `
+                        -Value ([string](Get-Na2OperationProperty `
+                            -Object $plannedAction `
+                            -Name 'expected_hex')) `
+                        -FieldName 'expected_hex'
+                    $replacement = ConvertFrom-Na2OperationHexBytes `
+                        -Value ([string](Get-Na2OperationProperty `
+                            -Object $plannedAction `
+                            -Name 'replacement_hex')) `
+                        -FieldName 'replacement_hex'
+                    & $invokeOwnedPine `
+                        -Action PatchMemory `
+                        -Address $address `
+                        -Expected $expected `
+                        -Replacement $replacement
+                    break
+                }
+                'save_state' {
+                    $slot = Get-Na2OperationInteger `
+                        -Value (Get-Na2OperationProperty -Object $plannedAction -Name 'slot') `
+                        -FieldName 'slot' `
+                        -Minimum 0 `
+                        -Maximum 99 `
+                        -Default 0
+                    $timeout = Get-Na2OperationInteger `
+                        -Value (Get-Na2OperationProperty -Object $plannedAction -Name 'timeout_seconds') `
+                        -FieldName 'timeout_seconds' `
+                        -Minimum 1 `
+                        -Maximum 300 `
+                        -Default 30
+                    $saved = & $invokeOwnedPine `
+                        -Action SaveState `
+                        -Slot $slot `
+                        -TimeoutSeconds $timeout
+                    [ordered]@{
+                        slot = $slot
+                        state_path = ConvertTo-Na2ProjectPath `
+                            -Path $saved `
+                            -ProjectPaths $projectPaths
+                    }
+                    break
+                }
+                'capture_state' {
+                    $slot = Get-Na2OperationInteger `
+                        -Value (Get-Na2OperationProperty -Object $plannedAction -Name 'slot') `
+                        -FieldName 'slot' `
+                        -Minimum 0 `
+                        -Maximum 99 `
+                        -Default 0
+                    $timeout = Get-Na2OperationInteger `
+                        -Value (Get-Na2OperationProperty -Object $plannedAction -Name 'timeout_seconds') `
+                        -FieldName 'timeout_seconds' `
+                        -Minimum 1 `
+                        -Maximum 300 `
+                        -Default 30
+                    $screenshotPath = [string](Get-Na2OperationProperty `
+                        -Object $plannedAction `
+                        -Name 'screenshot_path')
+                    $captured = & $invokeOwnedPine `
+                        -Action CaptureState `
+                        -Slot $slot `
+                        -ScreenshotPath $screenshotPath `
+                        -TimeoutSeconds $timeout
+                    [ordered]@{
+                        slot = $slot
+                        state_path = ConvertTo-Na2ProjectPath `
+                            -Path $captured.StatePath `
+                            -ProjectPaths $projectPaths
+                        screenshot_path = ConvertTo-Na2ProjectPath `
+                            -Path $captured.ScreenshotPath `
+                            -ProjectPaths $projectPaths
+                    }
+                    break
+                }
+                'wait' {
+                    $milliseconds = Get-Na2OperationInteger `
+                        -Value (Get-Na2OperationProperty -Object $plannedAction -Name 'milliseconds') `
+                        -FieldName 'milliseconds' `
+                        -Minimum 0 `
+                        -Maximum 300000 `
+                        -Default 0
+                    & $invokeOwnedPine -Action Wait -Milliseconds $milliseconds
+                    break
+                }
+                default {
+                    throw "Unsupported task operation action at index ${actionIndex}: $actionName"
+                }
+            }
+            $operationResults.Add([ordered]@{
+                index = $actionIndex
+                action = $normalizedAction
+                result = $actionResult
+            })
+        }
+
+        $operationResult = [ordered]@{
+            schema_version = 1
+            operation_plan = ConvertTo-Na2ProjectPath `
+                -Path $resolvedOperationPlan `
+                -ProjectPaths $projectPaths
+            serial = $isoIdentity.Serial
+            crc = $isoIdentity.CRC
+            actions = $operationResults
+        }
+        if ($null -ne $parsedOperationPlan.PSObject.Properties['ResolvedResultPath']) {
+            Write-Na2TestOperationResult `
+                -Path $parsedOperationPlan.ResolvedResultPath `
+                -Value $operationResult
+        }
+        Write-Output $operationResult
+    }
 
     Write-Host (
         "[na2] PCSX2 instance ready: PID $($testProcess.Id), " +

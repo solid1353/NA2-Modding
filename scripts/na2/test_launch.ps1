@@ -45,6 +45,9 @@ if ([string]::IsNullOrWhiteSpace($TaskIdentity)) {
 }
 
 $resolvedPcsx2Exe = [IO.Path]::GetFullPath($projectPaths.files.pcsx2_exe)
+$portablePcsx2Exe = ConvertTo-Na2ProjectPath `
+    -Path $resolvedPcsx2Exe `
+    -ProjectPaths $projectPaths
 $pcsx2Ini = $projectPaths.files.pcsx2_ini
 $launchScript = Join-Path $PSScriptRoot 'launch.ps1'
 $runtimeLayout = $null
@@ -53,6 +56,9 @@ $configurationLock = $null
 $testProcess = $null
 $processStartTime = $null
 $descriptorPath = $null
+$ownershipCapability = $null
+$stopResult = $null
+$ownershipLossReason = $null
 $settingsRestoredAfterLaunch = $false
 
 if (-not ('Na2TestWindow' -as [type])) {
@@ -170,16 +176,52 @@ try {
     if ($null -eq $testProcess) { throw 'PCSX2 launch did not return a process.' }
     $testProcess.Refresh()
     $processStartTime = $testProcess.StartTime
+    $descriptorPath = Join-Path $runtimeLayout.LogDirectory 'pcsx2-instance.json'
+    $ownershipCapability = New-Na2Pcsx2OwnershipCapability
+    $descriptor = [ordered]@{
+        schema_version = 2
+        state = 'launching'
+        worker = $worker.WorkerName
+        iso = ConvertTo-Na2ProjectPath -Path $resolvedIsoPath -ProjectPaths $projectPaths
+        serial = $isoIdentity.Serial
+        crc = $isoIdentity.CRC
+        executable = $portablePcsx2Exe
+        process_id = $testProcess.Id
+        process_start_utc = $processStartTime.ToUniversalTime().ToString('o')
+        window_handle = $null
+        pine_port = $runtimeContext.PinePort
+        memory_card = ConvertTo-Na2ProjectPath `
+            -Path $runtimeContext.MemoryCard.TaskCardPath `
+            -ProjectPaths $projectPaths
+        log_directory = ConvertTo-Na2ProjectPath `
+            -Path $runtimeLayout.LogDirectory `
+            -ProjectPaths $projectPaths
+        settings_restored_after_game_load = $false
+    }
+    Write-Na2Pcsx2OwnershipDescriptor `
+        -Path $descriptorPath `
+        -Descriptor $descriptor `
+        -OwnershipCapability $ownershipCapability
+    $getOwnership = {
+        Get-Na2Pcsx2OwnershipState `
+            -DescriptorPath $descriptorPath `
+            -OwnershipCapability $ownershipCapability
+    }
 
     $pineIdentity = Wait-Na2PineIdentity `
         -Port $runtimeContext.PinePort `
         -Serial $isoIdentity.Serial `
         -CRC $isoIdentity.CRC `
         -ProcessId $testProcess.Id `
+        -OwnershipValidator $getOwnership `
         -TimeoutSeconds $ReadyTimeoutSeconds
 
     $windowDeadline = [DateTime]::UtcNow.AddSeconds(10)
     do {
+        $ownership = & $getOwnership
+        if (-not $ownership.Valid) {
+            throw "PCSX2 ownership lost while discovering its window: $($ownership.Reason)."
+        }
         $window = Get-Na2OwnedWindow -Process $testProcess
         if (Test-Na2OwnedWindow -Window $window -ProcessId $testProcess.Id) { break }
         Start-Sleep -Milliseconds 100
@@ -193,28 +235,13 @@ try {
     Exit-Na2Pcsx2ConfigurationLock -Mutex $configurationLock
     $configurationLock = $null
 
-    $descriptorPath = Join-Path $runtimeLayout.LogDirectory 'pcsx2-instance.json'
-    $descriptor = [ordered]@{
-        schema_version = 1
-        worker = $worker.WorkerName
-        iso = ConvertTo-Na2ProjectPath -Path $resolvedIsoPath -ProjectPaths $projectPaths
-        serial = $isoIdentity.Serial
-        crc = $isoIdentity.CRC
-        process_id = $testProcess.Id
-        process_start_utc = $processStartTime.ToUniversalTime().ToString('o')
-        window_handle = ('0x{0:X}' -f $window.ToInt64())
-        pine_port = $runtimeContext.PinePort
-        memory_card = ConvertTo-Na2ProjectPath `
-            -Path $runtimeContext.MemoryCard.TaskCardPath `
-            -ProjectPaths $projectPaths
-        log_directory = ConvertTo-Na2ProjectPath `
-            -Path $runtimeLayout.LogDirectory `
-            -ProjectPaths $projectPaths
-        settings_restored_after_game_load = $true
-    }
-    Set-Na2Utf8FileAtomic `
+    $descriptor['state'] = 'ready'
+    $descriptor['window_handle'] = ('0x{0:X}' -f $window.ToInt64())
+    $descriptor['settings_restored_after_game_load'] = $true
+    Write-Na2Pcsx2OwnershipDescriptor `
         -Path $descriptorPath `
-        -Content (($descriptor | ConvertTo-Json -Depth 4) + "`n")
+        -Descriptor $descriptor `
+        -OwnershipCapability $ownershipCapability
 
     Write-Host (
         "[na2] PCSX2 instance ready: PID $($testProcess.Id), " +
@@ -225,15 +252,27 @@ try {
 
     $closeDeadline = [DateTime]::UtcNow.AddSeconds($WaitSeconds)
     do {
+        $ownership = & $getOwnership
+        if (-not $ownership.Valid) {
+            $ownershipLossReason = $ownership.Reason
+            break
+        }
         $testProcess.Refresh()
         if ($testProcess.HasExited) { break }
         $foregroundWindow = [Na2TestWindow]::GetForegroundWindow()
-        $window = Get-Na2OwnedWindow -Process $testProcess
+        $window = [IntPtr]([Convert]::ToInt64(
+            ([string]$ownership.Descriptor.window_handle).Substring(2),
+            16
+        ))
         if (Test-Na2OwnedWindow -Window $window -ProcessId $testProcess.Id) {
             [Na2TestWindow]::ShowWindowAsync($window, 0) | Out-Null
             if ($window -eq $foregroundWindow -and $foregroundBeforeLaunch -ne [IntPtr]::Zero) {
                 [Na2TestWindow]::SetForegroundWindow($foregroundBeforeLaunch) | Out-Null
             }
+        }
+        else {
+            $ownershipLossReason = 'the recorded PCSX2 window no longer belongs to the recorded process'
+            break
         }
         Start-Sleep -Milliseconds 100
     } while ([DateTime]::UtcNow -lt $closeDeadline)
@@ -241,11 +280,31 @@ try {
 finally {
     $cleanupErrors = [Collections.Generic.List[object]]::new()
     try {
-        if ($null -ne $testProcess -and $null -ne $processStartTime) {
-            Stop-Na2Pcsx2Process `
-                -Executable $resolvedPcsx2Exe `
-                -ProcessId $testProcess.Id `
-                -ExpectedStartTime $processStartTime
+        if ($null -ne $testProcess) {
+            if (-not [string]::IsNullOrWhiteSpace($ownershipLossReason)) {
+                $stopResult = [pscustomobject]@{
+                    Status = 'LostOwnership'
+                    Reason = $ownershipLossReason
+                }
+            }
+            elseif ($null -eq $descriptorPath -or $null -eq $ownershipCapability) {
+                $stopResult = [pscustomobject]@{
+                    Status = 'LostOwnership'
+                    Reason = 'the launch did not establish a descriptor and ownership capability'
+                }
+            }
+            else {
+                $stopResult = Stop-Na2Pcsx2Process `
+                    -DescriptorPath $descriptorPath `
+                    -OwnershipCapability $ownershipCapability `
+                    -Executable $resolvedPcsx2Exe `
+                    -ExecutableIdentity $portablePcsx2Exe
+            }
+            if ($stopResult.Status -eq 'LostOwnership') {
+                if ([string]::IsNullOrWhiteSpace($ownershipLossReason)) {
+                    $ownershipLossReason = $stopResult.Reason
+                }
+            }
         }
     }
     catch { $cleanupErrors.Add($_) }
@@ -269,10 +328,19 @@ finally {
     }
 
     try {
-        if ($null -ne $descriptorPath -and (Test-Path -LiteralPath $descriptorPath)) {
+        $safeToRemoveRuntime = (
+            $null -eq $testProcess -or
+            (
+                $null -ne $stopResult -and
+                $stopResult.Status -in @('Stopped', 'AlreadyExited')
+            )
+        )
+        if ($safeToRemoveRuntime -and
+            $null -ne $descriptorPath -and
+            (Test-Path -LiteralPath $descriptorPath)) {
             Remove-Item -LiteralPath $descriptorPath -Force
         }
-        if ($null -ne $runtimeLayout) {
+        if ($safeToRemoveRuntime -and $null -ne $runtimeLayout) {
             Remove-Na2TestRuntimeLayout `
                 -Layout $runtimeLayout `
                 -Worker $worker `
@@ -281,9 +349,27 @@ finally {
     }
     catch { $cleanupErrors.Add($_) }
 
+    if ($null -ne $ownershipCapability) {
+        $ownershipCapability.Token = $null
+        $ownershipCapability.DescriptorMac = $null
+    }
     if ($null -ne $testProcess) { $testProcess.Dispose() }
     if ($cleanupErrors.Count -gt 0) {
         throw "PCSX2 test cleanup failed: $($cleanupErrors[0].Exception.Message)"
+    }
+    if (-not [string]::IsNullOrWhiteSpace($ownershipLossReason)) {
+        $retainedRuntime = if ($null -ne $runtimeLayout) {
+            ConvertTo-Na2ProjectPath `
+                -Path $runtimeLayout.LogDirectory `
+                -ProjectPaths $projectPaths
+        }
+        else {
+            'no runtime path was established'
+        }
+        throw (
+            "PCSX2 ownership lost; the process was left running and its runtime files were retained " +
+            "at ${retainedRuntime}: $ownershipLossReason."
+        )
     }
     if ($null -ne $runtimeContext) {
         Write-Host '[na2] Owned PCSX2 instance closed; shared settings verified; worker artifacts retained' -ForegroundColor Cyan

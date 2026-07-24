@@ -168,8 +168,11 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   worker-path validation, PCSX2 launch/process control, PINE identity checks,
   and agent runtime isolation. `test_launch.ps1` briefly injects worker
   folders/card/PINE settings, waits for the expected ELF identity, restores
-  shared settings immediately, and thereafter controls only its recorded
-  PID/window/port. Live two-instance validation on PCSX2 2.6.3 confirmed
+  shared settings immediately, and thereafter controls its recorded
+  PID/window/port only while an unchanged live descriptor and launch-local
+  ownership capability both validate. Descriptor/capability loss is fail-closed:
+  the process and potentially live task runtime data are left untouched. Live
+  two-instance validation on PCSX2 2.6.3 confirmed
   independent ports, windows, cards, settings restoration, and targeted
   shutdown.
 - `na2_patcher/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na2_patcher/build_profile.py` applies that prepared pipeline and writes its run log. `na2_patcher/composer.py` resolves module artifacts and closes typed image operations. `na2_patcher/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Candidate, or worker-owned output.

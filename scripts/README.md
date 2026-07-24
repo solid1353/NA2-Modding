@@ -78,12 +78,18 @@ initial state; it is part of the same guarded settings snapshot rather than a
 separate shared-INI edit.
 After PINE reports the expected serial/CRC, shared settings are restored
 immediately and the lock is released. The wrapper records and validates the
-specific PID, start time, top-level window handle, and PINE endpoint, then
-closes only that process. Runtime logs are unique per launch; savestates,
-screenshots, recordings, cards, cache, and dump paths remain task-owned.
+specific PID, start time, top-level window handle, and PINE endpoint. Process
+control additionally requires the unchanged live descriptor and its
+launch-local ownership capability; identity checks alone never authorize a
+stop. Descriptor or capability loss leaves the process and potentially live
+runtime files untouched and reports lost ownership. Runtime logs are unique per
+launch; savestates, screenshots, recordings, cards, cache, and dump paths remain
+task-owned.
 `na2/test_test_runtime.ps1` covers path injection/restoration and guards against
 overwriting unrelated settings; `na2/test_test_memory_card.ps1` covers private
-card reuse. The shared ISO identity helper is also used by PNACH actualization.
+card reuse; `na2/test_process_ownership.ps1` proves missing, mismatched, and
+modified ownership records cannot terminate a process. The shared ISO identity
+helper is also used by PNACH actualization.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`

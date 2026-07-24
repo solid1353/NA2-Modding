@@ -83,9 +83,13 @@ promoting reusable findings.
 
 Each agent PCSX2 launch uses a unique run directory under the same worker log
 root. PCSX2's file log is redirected there. A portable `pcsx2-instance.json`
-exists only while its recorded PID is active and is removed after targeted
-shutdown; it records the PID/start time, validated window handle, ISO identity,
-task-owned card and paths, and unique PINE port without absolute paths.
+is created immediately after launch and normally removed after targeted
+shutdown. It records the PID/start time, validated window handle, ISO identity,
+task-owned card and paths, unique PINE port, and the hash of a launch-local
+ownership capability without persisting that capability or absolute paths. If
+ownership is lost, the wrapper leaves the process and runtime directory
+untouched and reports the retained runtime location. A descriptor left there is
+diagnostic only because the capability is gone.
 
 Persistent command logs must be normalized after transcript capture. They omit
 PowerShell transcript boilerplate, replace configured roots with aliases, and

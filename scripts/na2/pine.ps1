@@ -98,12 +98,25 @@ function Wait-Na2PineIdentity {
         [Parameter(Mandatory = $true)][string]$Serial,
         [Parameter(Mandatory = $true)][string]$CRC,
         [Parameter(Mandatory = $true)][int]$ProcessId,
+        [scriptblock]$OwnershipValidator,
         [ValidateRange(1, 300)][int]$TimeoutSeconds = 60
     )
 
     $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
     $lastError = 'PINE did not become ready.'
     do {
+        if ($null -ne $OwnershipValidator) {
+            $ownership = & $OwnershipValidator
+            if ($null -eq $ownership -or -not $ownership.Valid) {
+                $reason = if ($null -ne $ownership) {
+                    [string]$ownership.Reason
+                }
+                else {
+                    'the ownership validator returned no result'
+                }
+                throw "PCSX2 ownership lost while waiting for PINE: $reason."
+            }
+        }
         $process = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue
         if ($null -eq $process) { throw "PCSX2 process $ProcessId exited before PINE became ready." }
         try {

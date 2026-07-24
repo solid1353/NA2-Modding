@@ -13,6 +13,7 @@
 ### [UI Translation](docs/workstreams/ui_translation/README.md)
 - [Investigate](work/__sstates/translation/UI)
     * Deal with remaining issues (items, awakenings, etc.).
+    * Fix the mash prompt.
 
 ### [String translation](docs/workstreams/string_translation/README.md)
 - [Investigate](work/__sstates/translation/strings)

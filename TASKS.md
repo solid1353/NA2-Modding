@@ -16,7 +16,7 @@
 - [Investigate](work/__sstates/translation/UI)
     * Deal with remaining issues (items, awakenings, etc.).
 
-### String translation
+### [String translation](docs/workstreams/string_translation/README.md)
 - Create and link a dedicated workflow readme.
 - [Investigate](work/__sstates/translation/strings)
     * Consolidate mappings and references under one file, add source, donor, replacement and prefix fields, the need for externalization should be decided at build/link time by something. Source and donor fields should be purely informational.

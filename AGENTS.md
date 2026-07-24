@@ -20,7 +20,7 @@ PS2 modding/reverse-engineering workspace for Narutimate Accel v2.28, based on N
 - An unambiguous `ag` means re-read the live `AGENTS.md` completely and immediately apply its current instructions. It does not select a task, approve a plan, change effort, or otherwise alter task state.
 - A `q:` prefix means the accompanying user message is queued. Preserve queued messages in arrival order and handle each after the current in-flight step reaches a safe boundary; a queued message supplements rather than silently replaces the current request unless its text explicitly says otherwise. The prefix itself does not select a task, approve a plan, change effort, or authorize execution.
 - An unambiguous `con` means continue the current work from its present state. Preserve its scope, selected effort, decisions, progress, and approval state; refresh live state and resume from the next incomplete step. `con` does not approve an unapproved plan or bypass a genuine blocker; if no work is resumable, say so.
-- An unambiguous `eff` asks for the currently recommended effort level for the active or proposed work. Reply with the level and a brief reason without changing the selected level, scope, approval state, or execution state; if work is already approved and running, continue it afterward.
+- An unambiguous `eff` asks for the currently recommended effort level for the active or proposed work. Reply with the level and a brief reason without changing the selected level, scope, approval state, or execution state; if no agent work is currently required and the task is waiting solely for the user or an external dependency, reply `Recommended effort: none while waiting`. If work is already approved and running, continue it afterward.
 - An unambiguous `sw` means the user saw the latest recommended effort level, stopped the preceding turn only to switch the current chat to that level, and now wants the same work resumed. Preserve the task's scope, decisions, progress, and prior approval state; refresh live state and continue from the safe interruption point without restarting completed work. `sw` is not plan approval.
 - An unambiguous `zxc` command means checkpoint and stop gracefully for a Codex/app restart, machine reboot, or other interruption. It overrides the normal continue-working rule: start no new substantive work, reach the next safe boundary without interrupting an atomic write or promotion, preserve restart-critical context and artifacts under the graceful-stop procedure below, release exclusive resources safely, disable pending wakeups unless the user explicitly wants monitoring to continue, and hand control back only when the task is safe to resume later.
 - For every agent-authored Git commit, prefix the subject with the exact current Codex task/chat title in square brackets, followed by a concise imperative summary: `[<task title>] <summary>`, for example `[General] Expand automatic Git policy`. Override the author for that commit only. An agent may use only the `.agents/git-authors.tsv` entry whose `agent_name` exactly matches its own normal name; if no matching entry exists, use the agent's normal name and a normalized `<agent-name>@agent.invalid` address. Never use another agent's registered identity. Do not change repository or global Git identity, rewrite existing commit subjects, or alter user-authored commits.
@@ -131,11 +131,16 @@ Reassess when inspection materially changes those factors, not at every status
 update.
 
 Until a selected task is completed, every final response that hands control
-back to the user must include a standalone `Recommended effort: <level>` line.
-This applies after inspection, at approval gates, in execution handoffs, and at
-every stop, pause, dependency, safety, or relaunch boundary. Stating the level
-only in commentary or an earlier response does not satisfy this requirement; if
-the recommendation changes, explain why.
+back while further agent work is currently actionable must include a standalone
+`Recommended effort: <level>` line. This applies after inspection, at approval
+gates, in execution handoffs, and at stop, pause, safety, or relaunch boundaries
+where the agent still has work to perform. At a pure waiting boundary where no
+agent work is currently required and progress depends solely on user review,
+user action, or an external dependency, omit the effort line rather than repeat
+an active level; the selected-task state remains intact. If the user explicitly
+sends `eff` while waiting, answer `Recommended effort: none while waiting`.
+Stating an applicable level only in commentary or an earlier response does not
+satisfy this requirement; if the recommendation changes, explain why.
 
 Reporting the selected task complete ends its selected-task state immediately;
 this does not depend on the user later removing its entry from `TASKS.md`.

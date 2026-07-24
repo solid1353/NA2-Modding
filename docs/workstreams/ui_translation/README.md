@@ -31,6 +31,18 @@ Canonical documentation landing page for the `UI Translation` workstream.
 - Format each paired presentation as a compact `Current visual checkpoint`:
   show the NUN5 reference first and the current corrected NA2 result second,
   then state what is accepted and every material difference that remains.
+- Every request to report, list, summarize, or review savestates or remaining
+  mismatch entries must use that same visual-checkpoint format for every
+  reported pair, even when no correction work was performed in the current
+  turn. For each entry, show the actual NUN5 screenshot first and the matching
+  NA2 screenshot second in one paired two-column presentation, then give its
+  slot or case information, current issue/status, and any questions. Never
+  substitute a prose-only inventory, counts, filenames, paths, or unpaired
+  images for this presentation. If a retained savestate lacks a screenshot,
+  render the screenshot before reporting it; if savestates are impossible,
+  use the retained screenshot evidence in the same paired structure. Preserve
+  the tracker order unless the user explicitly requests another order, and do
+  not change the established structure between reports.
 
 Global source, path, tool-safety, testing, and cleanup rules remain in
 `AGENTS.md` and are not duplicated here.

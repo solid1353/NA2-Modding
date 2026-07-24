@@ -120,11 +120,24 @@ Assert-Na2PineTest `
 
 $stateStream = [Na2ScriptedDuplexStream]::new()
 Add-Na2PineTestReply -Stream $stateStream
-Invoke-Na2PineStateCommand -Stream $stateStream -Command Load -Slot 7
+$stateIdentity = [pscustomobject]@{
+    Status = 'running'
+    Serial = 'SLPS-25837'
+    CRC = 'C0659AD1'
+}
+$loadResult = Invoke-Na2PineControlledAction `
+    -Stream $stateStream `
+    -Identity $stateIdentity `
+    -Operation LoadState `
+    -Slot 7
 Assert-Na2PineTest `
     -Condition (
+        $null -eq $loadResult -and
         [Convert]::ToHexString($stateStream.Written) -ceq '060000000A07'
     ) `
-    -Message 'The maintained PINE load-state command packet is incorrect.'
+    -Message (
+        'The maintained controlled load-state action returned unexpected data ' +
+        'or emitted the wrong PINE packet.'
+    )
 
 Write-Host 'NA2 PINE guarded-memory tests passed.' -ForegroundColor Green

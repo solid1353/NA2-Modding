@@ -342,61 +342,16 @@ try {
                 }
             }
 
-            $pineAction = {
-                param([IO.Stream]$Stream, [psobject]$Identity)
-                switch ($Action) {
-                    'Identity' {
-                        return $Identity
-                    }
-                    'LoadState' {
-                        Invoke-Na2PineStateCommand `
-                            -Stream $Stream `
-                            -Command Load `
-                            -Slot $Slot
-                        return $slotPath
-                    }
-                    { $_ -in @('SaveState', 'CaptureState') } {
-                        Invoke-Na2PineStateCommand `
-                            -Stream $Stream `
-                            -Command Save `
-                            -Slot $Slot
-                        return
-                    }
-                    'ReadMemory' {
-                        if ($null -eq $Expected -or $Expected.Length -eq 0) {
-                            throw 'ReadMemory requires a non-empty -Expected byte array.'
-                        }
-                        $live = Read-Na2PineMemoryRange `
-                            -Stream $Stream `
-                            -Address $Address `
-                            -Length $Expected.Length
-                        if (-not (Test-Na2ByteArrayEquality -Left $live -Right $Expected)) {
-                            throw (
-                                "Guarded PINE read rejected at 0x$($Address.ToString('X8')): " +
-                                "live $([Convert]::ToHexString($live)) != expected " +
-                                "$([Convert]::ToHexString($Expected))."
-                            )
-                        }
-                        return $live
-                    }
-                    'PatchMemory' {
-                        if ($null -eq $Expected -or $null -eq $Replacement) {
-                            throw 'PatchMemory requires -Expected and -Replacement byte arrays.'
-                        }
-                        return Invoke-Na2PineGuardedMemoryPatch `
-                            -Stream $Stream `
-                            -Address $Address `
-                            -Expected $Expected `
-                            -Replacement $Replacement
-                    }
-                }
-            }
             try {
                 $result = Invoke-Na2PineOwnedSession `
                     -Port ([int]$ownedState.Descriptor.pine_port) `
                     -Serial ([string]$ownedState.Descriptor.serial) `
                     -CRC ([string]$ownedState.Descriptor.crc) `
-                    -Action $pineAction
+                    -Operation $Action `
+                    -Slot $Slot `
+                    -Address $Address `
+                    -Expected $Expected `
+                    -Replacement $Replacement
             }
             catch {
                 if ($_.Exception.Data['Na2OwnershipLost'] -eq $true) {
@@ -405,6 +360,9 @@ try {
                 throw
             }
 
+            if ($Action -ceq 'LoadState') {
+                return $slotPath
+            }
             if ($Action -in @('SaveState', 'CaptureState')) {
                 $capturedState = Wait-Na2Pcsx2StateCapture `
                     -Path $slotPath `

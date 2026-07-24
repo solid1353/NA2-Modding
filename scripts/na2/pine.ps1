@@ -104,7 +104,20 @@ function Invoke-Na2PineOwnedSession {
         [Parameter(Mandatory = $true)][ValidateRange(1, 65535)][int]$Port,
         [Parameter(Mandatory = $true)][string]$Serial,
         [Parameter(Mandatory = $true)][string]$CRC,
-        [Parameter(Mandatory = $true)][scriptblock]$Action,
+        [Parameter(Mandatory = $true)]
+        [ValidateSet(
+            'Identity',
+            'LoadState',
+            'SaveState',
+            'CaptureState',
+            'ReadMemory',
+            'PatchMemory'
+        )]
+        [string]$Operation,
+        [ValidateRange(0, 99)][int]$Slot = 0,
+        [uint32]$Address = 0,
+        [byte[]]$Expected,
+        [byte[]]$Replacement,
         [ValidateRange(100, 10000)][int]$TimeoutMilliseconds = 3000
     )
 
@@ -129,7 +142,14 @@ function Invoke-Na2PineOwnedSession {
             )
         }
         $actionStarted = $true
-        return & $Action $stream $identity
+        return Invoke-Na2PineControlledAction `
+            -Stream $stream `
+            -Identity $identity `
+            -Operation $Operation `
+            -Slot $Slot `
+            -Address $Address `
+            -Expected $Expected `
+            -Replacement $Replacement
     }
     catch {
         if (-not $actionStarted) {
@@ -144,6 +164,75 @@ function Invoke-Na2PineOwnedSession {
     }
     finally {
         $client.Dispose()
+    }
+}
+
+function Invoke-Na2PineControlledAction {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][IO.Stream]$Stream,
+        [Parameter(Mandatory = $true)][psobject]$Identity,
+        [Parameter(Mandatory = $true)]
+        [ValidateSet(
+            'Identity',
+            'LoadState',
+            'SaveState',
+            'CaptureState',
+            'ReadMemory',
+            'PatchMemory'
+        )]
+        [string]$Operation,
+        [ValidateRange(0, 99)][int]$Slot = 0,
+        [uint32]$Address = 0,
+        [byte[]]$Expected,
+        [byte[]]$Replacement
+    )
+
+    switch ($Operation) {
+        'Identity' {
+            return $Identity
+        }
+        'LoadState' {
+            Invoke-Na2PineStateCommand `
+                -Stream $Stream `
+                -Command Load `
+                -Slot $Slot
+            return
+        }
+        { $_ -in @('SaveState', 'CaptureState') } {
+            Invoke-Na2PineStateCommand `
+                -Stream $Stream `
+                -Command Save `
+                -Slot $Slot
+            return
+        }
+        'ReadMemory' {
+            if ($null -eq $Expected -or $Expected.Length -eq 0) {
+                throw 'ReadMemory requires a non-empty -Expected byte array.'
+            }
+            $live = Read-Na2PineMemoryRange `
+                -Stream $Stream `
+                -Address $Address `
+                -Length $Expected.Length
+            if (-not (Test-Na2ByteArrayEquality -Left $live -Right $Expected)) {
+                throw (
+                    "Guarded PINE read rejected at 0x$($Address.ToString('X8')): " +
+                    "live $([Convert]::ToHexString($live)) != expected " +
+                    "$([Convert]::ToHexString($Expected))."
+                )
+            }
+            return $live
+        }
+        'PatchMemory' {
+            if ($null -eq $Expected -or $null -eq $Replacement) {
+                throw 'PatchMemory requires -Expected and -Replacement byte arrays.'
+            }
+            return Invoke-Na2PineGuardedMemoryPatch `
+                -Stream $Stream `
+                -Address $Address `
+                -Expected $Expected `
+                -Replacement $Replacement
+        }
     }
 }
 

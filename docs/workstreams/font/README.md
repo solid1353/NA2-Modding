@@ -8,6 +8,10 @@ This workstream owns font appearance, measurement, fitting, positioning, and
 comparison with the official NUN5 reference. Confirmed reusable findings remain
 in the shared knowledge base rather than being duplicated here.
 
+## Workstream policy
+
+Prefer broad font-renderer logic ports over selective screen-specific patches.
+
 ## Documents
 
 - [Active plan and working context](plan.md)

@@ -36,8 +36,10 @@ remains disabled as negative evidence.
    shrink-only fit decision and restore renderer state after every draw.
 4. Completed: promote the proven secondary-only descriptor-height path into
    the canonical glyph component and obtain final matched visual acceptance.
-5. Next task: implement proper auto-fit and positioning for the remaining
-   caller families identified by the ten-pair savestate analysis.
+5. In progress: the shared NUN5 renderer metric, Controls denominator,
+   Practice pause-list box, confirmation-choice positions, confirmation-body
+   placement, and character-return box are implemented. Continue through the
+   remaining caller families identified by the ten-pair savestate analysis.
 
 Auto-adjust is downstream of horizontal metrics. A scaling test is not valid
 until logical width, visible glyph bounds, advances, and centering are measured
@@ -120,12 +122,13 @@ scaling, without redirecting NA2 to a layout-incompatible NUN5 function:
 - Verify both the threshold decision and final visual bounds; do not accept a
   result merely because clipping disappears.
 
-The local helper measures through the accepted native secondary-font metrics,
-keeps non-overflowing text at scale `1.0`, and applies the box ratio only to
-overflow. `Linked Attack` remains full width, while the official 19-byte
-`Ultimate Jutsu Prep` probe fits and centers closely to NUN5. Scale returns to
-`1.0` before the next call. `OFF` remains on the ordinary renderer, and
-Save/Load and Practice remain outside the Controls fit decision.
+The shared renderer helper measures through the accepted native
+secondary-font metrics and corrects ordinary ASCII spaces once for every boxed
+caller. The Controls wrapper keeps non-overflowing text at scale `1.0` and
+applies its 128-unit box ratio only to overflow. `Linked Attack` remains full
+width, while the official 19-byte `Ultimate Jutsu Prep` probe matches NUN5's
+157-pixel visible width and X center. Scale returns to `1.0` before the next
+call. `OFF` remains on the ordinary renderer.
 
 ## Preserved baseline and evidence
 
@@ -133,7 +136,7 @@ Save/Load and Practice remain outside the Controls fit decision.
   runtime-proven native secondary font, alignment, and fit components. It
   targets clean `SLPS_258.37` and `DATA/GF4.BIN`, preserves clean GF4C, and
   is covered by the current Localization aggregate feature pin
-  `086AFCB43EAD509FB87C7755BF54758838AD434A1A565B72B75C781F65D5B1E7`.
+  `1C6115C20D99BD053CCF44E7C2C4605AA826BEBE3A0079443EDE22EEA43206EF`.
 - `docs/knowledge/localization/font/README.md` consolidates the v23, semantic-palette, and
   2026-07-19 auto-fit negative results. The retired raw declarative records
   are recoverable from Git commit `69da715` and are not retained in the
@@ -153,8 +156,10 @@ Save/Load and Practice remain outside the Controls fit decision.
   its clean 28x28 result stretched both axes and damaged outlines.
 - Do not repeat the threshold-only Controls wrapper. It incorrectly narrowed
   `Linked Attack` because NA2 and NUN5 made different width decisions.
-- Do not transplant the complete NUN5 renderer. Continue with small,
-  evidence-backed, size-preserving comparisons.
+- Do not transplant the complete NUN5 renderer blindly. Prefer broad,
+  evidence-backed renderer-logic ports when the homologous behavior is proven;
+  retain caller wrappers only for genuinely container-specific bounds and
+  alignment.
 
 ## Validation requirements
 

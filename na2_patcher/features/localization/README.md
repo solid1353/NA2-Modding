@@ -1405,7 +1405,7 @@ GF4 replacement as an implementation parent. The accepted build changes
 `DATA/GF4.BIN` and `SLPS_258.37` without changing either file's size;
 `DATA/GF4C.BIN` remains byte-identical to clean NA2.
 
-Three components are enabled by default and applied together when Localization
+Five components are enabled by default and applied together when Localization
 is enabled:
 
 - `font_nun5_glyphs` installs native 14x20 NUN5 raster geometry and metrics
@@ -1417,18 +1417,28 @@ is enabled:
   descriptor width on the primary/fullwidth path and uses descriptor height
   only for the secondary quad, restoring its intended 24x28 presentation
   without widening it.
+- `font_renderer_metrics` ports the shared NUN5 secondary tracking, ordinary
+  ASCII-space, newline-advance, and logical-width behavior. Boxed callers use
+  the same corrected denominator instead of reconstructing it independently.
 - `font_controls_auto_fit` reproduces NUN5's shrink-only Controls behavior.
   It keeps `Linked Attack` full width, fits the official
   `Ultimate Jutsu Prep` label, leaves `OFF` on the ordinary renderer, and
-  shifts only the left and right labels for visible-ink centering. Its local
-  scale is restored immediately after every fitted call.
+  shifts only the left and right labels for visible-ink centering. Its
+  128-unit wrapper delegates measurement to `font_renderer_metrics`, and its
+  local scale is restored immediately after every fitted call.
 - `font_modal_alignment` loads independently measured X positions for the
   five character-select `Back to Game Mode Screen` rows while retaining the
   accepted local Y behavior. Its selected-path compensation prevents the
   shadow draw from shifting visible ink.
+- `font_layout_wrappers` ports shared selected/unselected confirmation-choice
+  placement, the 216-unit Practice pause-list fit and Y origin, Practice and
+  Collection confirmation-body alignment, and the character-return body's
+  centered 368-unit box. Exact caller guards leave unrelated shared-wrapper
+  users untouched.
 
-Both layout components require `font_nun5_glyphs` because their positions and
-fit decisions are tuned to its metrics. They otherwise remain independent.
+The auto-fit and layout components require `font_nun5_glyphs` because their
+positions and fit decisions are tuned to its metrics. They otherwise remain
+independent.
 The rejected shared `font_vertical_quad_height` component was removed from
 executable inputs because it stretched both axes to 28x28. Its exact negative
 result remains in `docs/knowledge/localization/font/README.md` and Git history;
@@ -1443,7 +1453,7 @@ a different glyph path and are not a halfwidth-Latin parity target. Remaining
 overflow and positioning work belongs to the separate per-caller auto-fit
 task, not another raster-weight pass.
 
-`scripts/research/localization/generate_font_assets.py` deterministically regenerates and verifies the four
+`scripts/research/localization/generate_font_assets.py` deterministically regenerates and verifies the eight
 referenced blobs from configured `@source_na2/` and `@source_nun5/` inputs.
 Exact offsets, guards, replacement bytes, and reasons are recorded in
 `edits.tsv`; confirmed evidence and negative results are recorded in

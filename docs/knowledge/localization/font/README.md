@@ -24,7 +24,7 @@ standalone profile module pin was
 and its former standalone feature pin was
 `23A2CFDD285FF00A40F35AC42D0656580E4D9DE5884F2CF568453A20E93AA3A7`.
 The current profile now covers it through the complete Localization feature pin
-`086AFCB43EAD509FB87C7755BF54758838AD434A1A565B72B75C781F65D5B1E7`.
+`1C6115C20D99BD053CCF44E7C2C4605AA826BEBE3A0079443EDE22EEA43206EF`.
 It is a new, deterministic donor built from hash-verified clean NA2 and
 official NUN5 inputs; it is not based on m01, v22/v23, the rejected semantic
 palette swap, the 10x22 resample, or a whole-file GF4 replacement.
@@ -48,9 +48,18 @@ verifies these referenced blobs:
   `C65B283CCBF7A8CCFF59DB7D96CC2A87731B6AD2BE142E37A088BEE6BFF9D70F`;
 - measurement hook: 24 bytes, SHA-256
   `8B7A75C0FDFD2F055ACFC1FCF90996E298CE363E112659579513A89606FE7C1C`.
+- shared text-metrics helpers: 200 bytes, SHA-256
+  `2F851BC0F28A0CE3F55AA12574D637D3D0F2DB75B9B63C5BF6EAF2E0D37DB057`;
+- Controls fit helper: 148 bytes, SHA-256
+  `AE5ECAB1ECD21C0ECC486C6FC9E42C338A26CC1289B97460941006555140747A`;
+- selected-layout helper: 96 bytes, SHA-256
+  `FCC5EF3B7F976B000F65818A69A50F20A2E079873448AC83A14D290E7E37167E`;
+- shared UI-layout helper: 888 bytes, SHA-256
+  `6F6218D8E4A8E61C835A0B1F3F035A204587F845D407A3103C6DF6B1BA963EE7`.
 
-The final runtime-reviewed result contains exactly 22 edits: ten glyph edits,
-nine Controls fit/alignment edits, and three character-modal alignment edits.
+The current runtime-reviewed result contains exactly 33 Font edits: ten glyph
+edits, four shared renderer-metric edits, ten Controls fit/alignment edits,
+three character-modal alignment edits, and six shared layout-wrapper edits.
 The original 19-edit `native_final_v2` state established the atlas, metrics,
 fit, and modal baseline; the later bearing and secondary-height work promoted
 the remaining proven behavior into canonical guarded locations. Matched
@@ -60,10 +69,13 @@ font itself as almost pixel-for-pixel. Fullwidth Shift-JIS Save/Load digits use
 a different glyph path and are excluded from halfwidth-Latin comparison.
 
 Controls retains full-width `Linked Attack`, fits the official 19-byte
-`Ultimate Jutsu Prep` probe, leaves `OFF` on the ordinary renderer, and
-restores local scale immediately after a fitted draw. Its labels move one
-local X unit without moving selection markers. The character modal uses local
-X values `81.75, 73.375, 72.375, 63.5, 3.5`; reviewed ordinary-row centers are
+`Ultimate Jutsu Prep` probe through the shared NUN5 logical-width helper,
+leaves `OFF` on the ordinary renderer, and restores local scale immediately
+after a fitted draw. Its labels move one local X unit without moving selection
+markers. Shared layout wrappers also reproduce the reviewed confirmation
+choices, Practice pause-list box and Y origin, confirmation-body placement,
+and character-return box. The character modal keeps its independent local X
+values `81.75, 73.375, 72.375, 63.5, 3.5`; reviewed ordinary-row centers are
 within one pixel of NUN5 and the long fifth row fits inside the modal.
 
 A clean file-backed apply preserved both file sizes and produced:
@@ -361,6 +373,67 @@ task-local gap at `0x008DD1D0`, and the initialized `1.0` scale word at
 `0x0060737C`; its matched Controls measurements were identical to v4.
 The preceding v3 helper remains rejected because it clobbered that return
 register and produced no usable capture.
+
+### Shared renderer-metric and layout-wrapper port
+
+The exact boxed result is now implemented as shared renderer behavior rather
+than another screen-local denominator. The canonical port makes these guarded
+boot-ELF changes:
+
+- secondary initializer runtime `0x001865E0` (file `0x866E0`) now stores NUN5
+  tracking `0.0` instead of NA2 `-1.0`;
+- ordinary ASCII-space runtime `0x001892EC` (file `0x893EC`) routes through
+  helper runtime `0x003D42C0` (file `0x2D43C0`) and evaluates
+  `(cell_width + tracking - 6) * scale_x`;
+- newline runtime `0x00188604` (file `0x88704`) routes through helper runtime
+  `0x003D4300` (file `0x2D4400`), retaining NA2 descriptor height and line
+  spacing while removing its four-unit excess and skipping the second
+  alternate-font height;
+- shared logical measurement at runtime `0x003D4330` (file `0x2D4430`) calls
+  the accepted NA2 metric path once, returns the corrected NUN5 denominator in
+  `v0`, and preserves the untouched legacy NA2 width in `v1`. Its correction
+  is `NA2_width_at_tracking_zero - 6 * ordinary_ASCII_space_count`.
+
+The Controls wrapper remains a distinct 128-unit container, but its helper at
+runtime `0x003D4200` (file `0x2D4300`) now consumes that shared denominator.
+The old cave at file `0x2BDDFC` contains only an ABI-safe jump plus zero
+padding; the superseded `9.5 * byte_count + 1` approximation is no longer
+executable. On the matched `Ultimate Jutsu Prep` crop, NUN5 is `157x16` with
+center X `154.0` and the current result is `157x17` with center X `154.0`.
+The one-pixel vertical raster difference is outside the horizontal fit
+decision.
+
+Shared layout behavior is ported once behind exact caller guards. The selected
+choice primitive at runtime `0x00379150` routes to `0x003D41A0`; the UI
+wrapper at `0x00379A20` routes to `0x003D3E00`. They map the reviewed
+confirmation positions. The same UI helper applies the 216-unit shrink-only
+box and four-unit Y correction to the Practice pause list, aligns Practice and
+Collection confirmation bodies, and routes the character-return body through
+a centered 368-unit box after selecting the accepted secondary renderer.
+Unrelated callers resume through displaced-instruction trampolines at
+`0x003D4180` and `0x003D42A0`.
+
+The complete canonical helper block occupies runtime
+`0x003D3E00..0x003D4388` (file `0x2D3F00..0x2D4488`) inside the larger
+common-zero interval `0x003D3DB6..0x003D5D30`. That interval is zero in the
+clean ELF and all 16 preserved runtime states. A disposable ISO marker audit
+then proved that markers at its start, middle, and end all survive after a
+fixed five-second boot settle. PINE becomes ready while the large boot ELF is
+still being copied, so immediate reads of high file-offset caves can
+transiently return zero and are not valid placement evidence. Runtime scratch
+remains in the independently state-zero range
+`0x003FAD18..0x003FAE44`. The canonical blobs occupy only the bounded
+subranges recorded in `edits.tsv`; no file is expanded.
+
+A full ten-state guarded regression covered Practice pause, Controls, Command
+Chart, command explanation, Practice settings, Practice quit, character
+return, Collection quit, Collection movie, and the no-memory-card prompt.
+Controls and the wrapper-owned Practice/confirmation families retained their
+matched results. Command explanation, Collection movie, and no-memory-card
+overflow remain separate unresolved caller families; their unchanged defects
+are not regressions from this port. Confidence is **high** for the shared
+measurement formula, hook boundaries, caller guards, and matched horizontal
+result.
 
 ## 2026-07-19 superseded clean-font baseline
 

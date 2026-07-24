@@ -168,7 +168,7 @@ inferences until a resource is opened or referenced by code.
 | `CUTIN/` | **Supported by names:** character-specific cut-in resources. |
 | `HOME/` | **Confirmed subsystem:** Home/hub resources used by the ETC overlay. |
 | `LOADING/` | **Supported by names:** numbered loading-screen resources. |
-| `MODENAME/` | **Supported by names:** mode-name graphics/resources. |
+| `MODENAME/` | **Confirmed:** mode-name graphics/resources. `MODE1CMN.CCS` supplies the shared mode-1 panel and fallback `Dummy Mode` texture; the `MODE2*.CCS` family supplies special-awakening labels and related visuals. |
 | `PL/` | **Supported:** playable-character body/resources; `PL/MODEL/` contains a parallel model family. |
 | `PUPPET/` | **Supported by names:** puppet-character resources. |
 | `SCENE/` | **Supported by names:** scene/cutscene resources, including many character-coded entries. |

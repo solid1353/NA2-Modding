@@ -54,6 +54,10 @@ SECTION_MODEL = 0xCCCC0800
 VALID_STRATEGIES = {"whole", "mapped"}
 VALID_TRANSFORMS = {"copy", "split_left", "split_right", "indexed_top_rows_64"}
 INDEXED_TOP_ROWS = re.compile(r"indexed_top_rows_([1-9][0-9]*)")
+INDEXED_REGION_INSET_RIGHT = re.compile(
+    r"indexed_region_inset_right_"
+    r"([0-9]+)_([0-9]+)_([1-9][0-9]*)_([1-9][0-9]*)_([1-9][0-9]*)"
+)
 KNOWN_SECTION_TYPES = {
     0xCCCC0001, 0xCCCC0002, 0xCCCC0003, 0xCCCC0005,
     0xCCCC0100, 0xCCCC0102, 0xCCCC0108, 0xCCCC0200,
@@ -104,6 +108,13 @@ def checked_hash(value: str, label: str) -> str:
     if len(result) != 64 or any(char not in "0123456789ABCDEF" for char in result):
         raise ValueError(f"{label} must be 64 hexadecimal digits")
     return result
+
+
+def valid_transform(value: str) -> bool:
+    return (
+        value in VALID_TRANSFORMS
+        or INDEXED_REGION_INSET_RIGHT.fullmatch(value) is not None
+    )
 
 
 @dataclass(frozen=True)
@@ -268,7 +279,7 @@ def load_package(directory: Path) -> Package:
         if container_id not in containers:
             raise ValueError(f"{label}: unknown container_id {container_id!r}")
         transform = row["transform"]
-        if transform not in VALID_TRANSFORMS:
+        if not valid_transform(transform):
             raise ValueError(f"{label}: unsupported transform {transform!r}")
         target_key = (container_id, row["target_texture"].casefold())
         if target_key in targets:
@@ -412,7 +423,10 @@ def validate_mapping(
         raise ValueError(f"{mapping.mapping_id}: target texture not found: {mapping.target_texture}")
     if donor is None:
         raise ValueError(f"{mapping.mapping_id}: donor texture not found: {mapping.donor_texture}")
-    if mapping.transform in {"copy", "indexed_top_rows_64"}:
+    if (
+        mapping.transform in {"copy", "indexed_top_rows_64"}
+        or INDEXED_REGION_INSET_RIGHT.fullmatch(mapping.transform) is not None
+    ):
         if component_signature(target_payload, target) != component_signature(donor_payload, donor):
             raise ValueError(f"{mapping.mapping_id}: target and donor component layouts differ")
         return
@@ -531,8 +545,32 @@ def indexed_top_rows_payload(
     donor_width, donor_height = 1 << donor_tex[0xC], 1 << donor_tex[0xD]
     if (width, height) != (donor_width, donor_height) or not (0 < top_rows <= height):
         raise ValueError(f"{mapping.mapping_id}: incompatible indexed-row dimensions")
-    if len(target_tex) - 0x18 != width * height or len(donor_tex) - 0x18 != width * height:
-        raise ValueError(f"{mapping.mapping_id}: indexed-row import requires 8-bit textures")
+    target_encoded = target_tex[0x18:]
+    donor_encoded = donor_tex[0x18:]
+    if len(target_encoded) * 2 == width * height:
+        bits_per_pixel = 4
+        if len(donor_encoded) * 2 != width * height:
+            raise ValueError(f"{mapping.mapping_id}: indexed-row bit depths differ")
+        target_indices = [
+            index
+            for value in target_encoded
+            for index in (value & 0x0F, value >> 4)
+        ]
+        donor_indices = [
+            index
+            for value in donor_encoded
+            for index in (value & 0x0F, value >> 4)
+        ]
+    elif len(target_encoded) == width * height:
+        bits_per_pixel = 8
+        if len(donor_encoded) != width * height:
+            raise ValueError(f"{mapping.mapping_id}: indexed-row bit depths differ")
+        target_indices = list(target_encoded)
+        donor_indices = list(donor_encoded)
+    else:
+        raise ValueError(
+            f"{mapping.mapping_id}: indexed-row import requires a 4-bit or 8-bit texture"
+        )
     if len(target_clt) != len(donor_clt) or (len(target_clt) - 0x10) % 4:
         raise ValueError(f"{mapping.mapping_id}: incompatible palettes")
 
@@ -553,9 +591,17 @@ def indexed_top_rows_payload(
     ]
     first_raw_row = height - top_rows  # CCS TEX rows are stored bottom-to-top.
     for row in range(first_raw_row, height):
-        start = 0x18 + row * width
+        start = row * width
         for index in range(start, start + width):
-            target_tex[index] = palette_map[donor_tex[index]]
+            target_indices[index] = palette_map[donor_indices[index]]
+
+    if bits_per_pixel == 4:
+        target_tex[0x18:] = bytes(
+            target_indices[index] | (target_indices[index + 1] << 4)
+            for index in range(0, len(target_indices), 2)
+        )
+    else:
+        target_tex[0x18:] = bytes(target_indices)
 
     result = bytearray(target_payload)
     result[
@@ -568,6 +614,8 @@ def copy_mapping_payload(
     target_payload: bytes,
     donor_payload: bytes,
     mapping: Mapping,
+    *,
+    allow_region_transform: bool = False,
 ) -> bytes:
     """Copy one mapped texture's pixels/palette into the target CCS layout.
 
@@ -575,7 +623,10 @@ def copy_mapping_payload(
     IDs are container-local, so mapped imports must retain the target word even
     when the donor TEX/CLT component signatures otherwise match exactly.
     """
-    if mapping.transform != "copy":
+    if mapping.transform != "copy" and not (
+        allow_region_transform
+        and INDEXED_REGION_INSET_RIGHT.fullmatch(mapping.transform) is not None
+    ):
         raise ValueError(f"{mapping.mapping_id}: copy payload requires transform=copy")
 
     target_entries = parse_ccs(target_payload)
@@ -614,6 +665,103 @@ def copy_mapping_payload(
         result[target_start:target_end] = donor_payload[donor_start:donor_end]
     if len(result) != len(target_payload):
         raise AssertionError(f"{mapping.mapping_id}: mapped copy changed CCS size")
+    return bytes(result)
+
+
+def indexed_region_inset_right_payload(
+    target_payload: bytes,
+    donor_payload: bytes,
+    mapping: Mapping,
+) -> bytes:
+    """Copy a donor texture, then inset one indexed atlas region on its right.
+
+    Coordinates use raw TEX row order. CCS TEX rows are stored bottom-to-top,
+    so declarative regions intentionally describe the encoded component rather
+    than an assumed display orientation.
+    """
+    match = INDEXED_REGION_INSET_RIGHT.fullmatch(mapping.transform)
+    if match is None:
+        raise ValueError(f"{mapping.mapping_id}: invalid indexed-region transform")
+    left, top, region_width, region_height, inset = map(int, match.groups())
+    if inset >= region_width:
+        raise ValueError(f"{mapping.mapping_id}: inset must be smaller than region width")
+
+    copied = copy_mapping_payload(
+        target_payload,
+        donor_payload,
+        mapping,
+        allow_region_transform=True,
+    )
+    entries = parse_ccs(copied)
+    entry = entries[mapping.target_texture.casefold()]
+    if len(entry.textures) != 1 or len(entry.palettes) != 1:
+        raise ValueError(f"{mapping.mapping_id}: target requires one TEX and one CLT")
+
+    texture = entry.textures[0]
+    palette = entry.palettes[0]
+    tex = bytearray(copied[texture.data_offset : texture.data_offset + texture.data_size])
+    clt = copied[palette.data_offset : palette.data_offset + palette.data_size]
+    width, height = texture_dimensions(copied, texture)
+    if left + region_width > width or top + region_height > height:
+        raise ValueError(f"{mapping.mapping_id}: indexed region exceeds texture bounds")
+    if len(clt) < 0x14 or (len(clt) - 0x10) % 4:
+        raise ValueError(f"{mapping.mapping_id}: invalid indexed palette")
+
+    encoded = tex[0x18:]
+    if len(encoded) * 2 == width * height:
+        bits_per_pixel = 4
+        indices = [
+            index
+            for value in encoded
+            for index in (value & 0x0F, value >> 4)
+        ]
+    elif len(encoded) == width * height:
+        bits_per_pixel = 8
+        indices = list(encoded)
+    else:
+        raise ValueError(f"{mapping.mapping_id}: transform requires a 4-bit or 8-bit texture")
+
+    transparent = next(
+        (
+            index
+            for index, offset in enumerate(range(0x10, len(clt), 4))
+            if clt[offset + 3] == 0
+        ),
+        None,
+    )
+    if transparent is None:
+        raise ValueError(f"{mapping.mapping_id}: palette has no transparent entry")
+
+    source = indices.copy()
+    output_width = region_width - inset
+    for row in range(top, top + region_height):
+        row_start = row * width + left
+        for destination_x in range(output_width):
+            if output_width == 1:
+                source_x = 0
+            else:
+                source_x = (
+                    destination_x * (region_width - 1) + (output_width - 1) // 2
+                ) // (output_width - 1)
+            indices[row_start + destination_x] = source[row_start + source_x]
+        for destination_x in range(output_width, region_width):
+            indices[row_start + destination_x] = transparent
+
+    if bits_per_pixel == 4:
+        if len(indices) % 2:
+            raise AssertionError(f"{mapping.mapping_id}: odd 4-bit pixel count")
+        encoded_result = bytes(
+            indices[index] | (indices[index + 1] << 4)
+            for index in range(0, len(indices), 2)
+        )
+    else:
+        encoded_result = bytes(indices)
+
+    tex[0x18:] = encoded_result
+    result = bytearray(copied)
+    result[texture.data_offset : texture.data_offset + texture.data_size] = tex
+    if len(result) != len(target_payload):
+        raise AssertionError(f"{mapping.mapping_id}: indexed inset changed CCS size")
     return bytes(result)
 
 
@@ -704,8 +852,14 @@ def expected_payload(
     mappings: list[Mapping],
 ) -> bytes:
     if strategy.strategy == "whole":
-        if any(INDEXED_TOP_ROWS.fullmatch(mapping.transform) for mapping in mappings):
-            raise ValueError(f"{strategy.container_id}: whole strategy cannot use indexed-row transforms")
+        if any(
+            INDEXED_TOP_ROWS.fullmatch(mapping.transform)
+            or INDEXED_REGION_INSET_RIGHT.fullmatch(mapping.transform)
+            for mapping in mappings
+        ):
+            raise ValueError(
+                f"{strategy.container_id}: whole strategy cannot use indexed transforms"
+            )
         return donor_payload
     indexed = [mapping for mapping in mappings if INDEXED_TOP_ROWS.fullmatch(mapping.transform)]
     if indexed:
@@ -715,15 +869,27 @@ def expected_payload(
             )
         return indexed_top_rows_payload(target_payload, donor_payload, indexed[0])
 
-    copied = [mapping for mapping in mappings if mapping.transform == "copy"]
+    copied = [
+        mapping
+        for mapping in mappings
+        if mapping.transform == "copy"
+        or INDEXED_REGION_INSET_RIGHT.fullmatch(mapping.transform)
+    ]
     if not copied or len(copied) != len(mappings):
         raise ValueError(
             f"{strategy.container_id}: mapped strategy requires one indexed-row mapping "
-            "or one or more copy mappings"
+            "or one or more copy/indexed-region mappings"
         )
     payload = target_payload
     for mapping in copied:
-        payload = copy_mapping_payload(payload, donor_payload, mapping)
+        if mapping.transform == "copy":
+            payload = copy_mapping_payload(payload, donor_payload, mapping)
+        else:
+            payload = indexed_region_inset_right_payload(
+                payload,
+                donor_payload,
+                mapping,
+            )
     return payload
 
 

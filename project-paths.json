@@ -19,6 +19,7 @@
     "pcsx2_files": "pcsx2_files",
     "scripts": "scripts",
     "work": "work",
+    "user_savestates": "@work/__sstates",
     "project_work": "@work/Project",
     "release_work": "@project_work/release",
     "release_candidates": "@release_work/candidates"

@@ -52,6 +52,7 @@ replaced with a copied machine-specific absolute path.
 - `docs/LOGGING.md`: log contents, bounded retention, cleanup, and knowledge-promotion policy.
 - `docs/HYPOTHESES.md`: archived patch candidates, failed experiments, unverified addresses, and speculative leads.
 - `TASKS.md`: concrete active tasks, test plans, and queued investigations only; no general workflow rules.
+- `@user_savestates/`: ignored, user-managed, read-only library of savestates, screenshots, and related task inputs. Its subject folders may be linked from `TASKS.md`; agents inspect them only to choose inputs, copy selected files into their own `work/<task title>/inputs/sstates/` tree with provenance, and never modify or clean the library itself.
 - `work/<task title>/`: ignored workspace owned by that exact Codex task. `build/` and `logs/` contain isolated agent build/runtime records, supplied savestates are copied into `inputs/sstates/`, created savestates and captures belong under `artifacts/`, and `temp/` holds disposable caches. The shared top-level `work/temp/` directory is forbidden.
 
 Scratch/intermediate folders should be created only when needed under the active task's `work/<task title>/temp/` folder. Extractions of original source archives stay beside the source archive under `@source/`.

@@ -3,7 +3,7 @@
 This feature owns all declarative content for the accepted English localization
 while reusable executable engines remain under `na2_patcher/modules/`.
 
-- [Translation importer](#na2-translation-importer-mapping-version-42)
+- [Translation importer](#na2-translation-importer-mapping-version-43)
 - [String patcher](#string-patcher)
 - [Texture patcher](#ui-texture-translation-module)
 - [Binary patcher](#ui-translation-binary-patcher-patch-set)
@@ -15,7 +15,7 @@ The feature directory name declares its identity. Its module-named
 subdirectories are the inputs that compose it; enabling Localization enables all
 of them, and one aggregate profile pin covers their canonical inputs.
 
-## NA2 translation importer (mapping version 42)
+## NA2 translation importer (mapping version 43)
 
 This first-class `na2_patcher` module imports and validates strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
@@ -27,8 +27,8 @@ command or file-backed inter-stage handoff.
 
 ### Mapping metadata
 
-- Version: `42`
-- Packaged `mappings.tsv` SHA-256: `16B83BE80190A9E7DA297003BFED5FF8974B424DB7513795834358BDA001F1AD`
+- Version: `43`
+- Packaged `mappings.tsv` SHA-256: `46241AC03690FE253E33E4F20B9AB7BA81A5268D738681782D830119F608A2D4`
 
 The version and mappings hash above are historical documentation, not a second
 executable manifest. Git history and the aggregate Localization feature pin own
@@ -178,6 +178,40 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
 
+### Version 43 changes
+
+#### Cross-confirm Shop prompt
+
+The paired Shop captures at checkpoints 046 through 049 show the official
+NUN5 help line with a Cross glyph and clean NA2 with a Circle glyph. The
+runtime-proven Shop input patches make Cross accept and Triangle cancel, so
+retaining the literal `<iconCIRCLE>` donor markup in the rebuilt NA2 text would
+describe the wrong control.
+
+`M0537` keeps its exact clean source and official
+`NUN5_TEXTENG@0x1550` donor, but now uses the explicit user override
+`Select an item and press <iconCROSS> to buy.` Clean NA2 `PRG/ADV.BIN`
+contains working `<iconCROSS>` markup, confirming that the target renderer
+supports the requested token. The replacement is shorter than the official
+donor and remains inline in the existing 112-byte slot.
+
+The audit found two other clean NA2 `<iconCIRCLE>` cases and deliberately left
+both untouched:
+
+- `NA2_ETC@0x2F230` (`M0530`) is an alternate Shop instruction that did not
+  appear in the supplied Shop captures and therefore remains outside the
+  evidence-scoped executable table.
+- `NA2_SLPS@0x4B31E0` is a standalone token used by `FUN_00390540` in an
+  unclassified prompt renderer associated with the still-unclassified
+  `ELF-M022` confirm handler. Its displayed action is not proven, so changing
+  it globally could make another prompt inaccurate.
+
+The current table still contains 2,050 enabled mappings: 2,046 slots and four
+sequences. `M0537` is the sole user override; there are no shortened,
+unresolved, or prefixed rows. External placement remains 31 mappings and 33
+pointer edits, the generated `PRG/228.BIN` remains 1,776 bytes, and the
+compiled translation package remains 2,287 binary edits.
+
 ### Version 42 changes
 
 #### Final-acceptance Mode Select confirmation
@@ -194,11 +228,11 @@ Character Select source. The slot-2 Current capture translated the shared
 `Yes` / `No` choices but retained this prompt in Japanese, which confirmed that
 the missing source row—not the generic modal choices—was the defect.
 
-The current table contains 2,050 enabled mappings: 2,046 slots and four
-sequences. Every row has display metadata; there are no shortened, unresolved,
-prefixed, or user-override rows. `M0549` fits inline, so the existing 31
-external mappings, 33 pointer edits, and 1,776-byte `PRG/228.BIN` remain
-unchanged. The compiled translation package now contains 2,287 binary edits.
+Version 42 contained 2,050 enabled mappings: 2,046 slots and four sequences.
+Every row had display metadata and no shortened, unresolved, prefixed, or
+user-override rows. `M0549` fits inline, so the existing 31 external mappings,
+33 pointer edits, and 1,776-byte `PRG/228.BIN` remained unchanged. The
+compiled translation package contained 2,287 binary edits.
 
 ### Version 41 changes
 

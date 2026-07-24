@@ -120,7 +120,7 @@ screen-for-screen. Each flow is ordered independently, then paired only where
 the prompt's meaning and action agree. Debug or placeholder donor text such as
 `TestSaveLoadMsgEng5` is not imported as user-facing translation.
 
-## Implemented v42 table
+## Implemented v43 table
 
 The first diagnostic pass admitted 2,049 executable rows:
 
@@ -136,9 +136,19 @@ visible: the Mode Select return confirmation uses `M0549` at
 from the lowercase Save/Load `M0804` prompt and the shorter Character Select
 `M0557` source.
 
+The paired Shop captures at checkpoints 046 through 049 then exposed one
+regional-control mismatch in the admitted table. `M0537` retains its exact
+source and official donor, but version 43 places
+`Select an item and press <iconCROSS> to buy.` in the user-editable
+`replacement` field. This matches the displayed NUN5 Cross glyph and the
+runtime-proven NA2 Shop control map where Cross accepts. The unobserved
+alternate Shop row `M0530` and the unclassified standalone ELF Circle token
+remain untouched.
+
 Every row has a concrete display location and one `seen:`, `inferred:`, or
 `character:` basis. There are no disabled, unresolved, shortened, prefixed, or
-user-override rows. The table has 2,046 slots and four sequences.
+arbitrary override rows. `M0537` is the single evidence-backed user override.
+The table has 2,046 slots and four sequences.
 
 The character-family audit corrected plain Kankuro and the shifted
 `Provocation` / `Contrasting Pair` voice titles. The unmatched `通告` voice
@@ -146,8 +156,8 @@ title is absent rather than guessed. Exact source validation passes for every
 row against clean NA2, and exact donor validation passes for every row against
 the referenced NUN5 bytes after fullwidth-ASCII normalization.
 
-Canonical v42 `mappings.tsv` SHA-256:
-`16B83BE80190A9E7DA297003BFED5FF8974B424DB7513795834358BDA001F1AD`.
+Canonical v43 `mappings.tsv` SHA-256:
+`46241AC03690FE253E33E4F20B9AB7BA81A5268D738681782D830119F608A2D4`.
 
 ## Validation
 
@@ -172,7 +182,7 @@ Static validation completed on 2026-07-24:
   1,776-byte `PRG/228.BIN` documented above;
 - mapping-ID composition produced 2,060 inline binary edits and no resident
   payload, because every diagnostic identifier fits its guarded slot;
-- the full repository test suite passed 146/146.
+- the full repository test suite passed 148/148.
 
 Runtime acceptance uses two passes:
 

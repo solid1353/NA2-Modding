@@ -179,9 +179,13 @@ class IntegratedExternalStringTests(unittest.TestCase):
         self.assertTrue(
             all(not str(row["replacement"]).startswith("[S]") for row in self.import_plan.text_mappings)
         )
+        override_rows = [
+            row for row in self.import_plan.text_mappings if str(row["replacement"])
+        ]
+        self.assertEqual([str(row["id"]) for row in override_rows], ["M0537"])
         self.assertEqual(
-            sum(bool(str(row["replacement"])) for row in self.import_plan.text_mappings),
-            0,
+            self.import_plan.resolved_texts["M0537"],
+            "Select an item and press <iconCROSS> to buy.",
         )
         self.assertEqual(len(self.import_plan.references), 32)
         self.assertTrue(

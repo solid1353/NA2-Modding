@@ -4,6 +4,7 @@
 
 ### General
 - Create notifications.
+- Collapse font, UI/string translation into localization workstream.
 
 ### [Font](docs/workstreams/font/README.md)
 - [Investigate](work/__sstates/translation/font)

@@ -274,6 +274,60 @@ for the runtime widths, scales, tracking values, and fit-denominator
 discrepancy; the exact per-character reconstruction of NUN5 measurement remains
 under analysis.
 
+### Exact boxed measurement and missing leading-bearing scale
+
+Static reconstruction now removes the approximate denominator. With secondary
+tracking zero, patched NA2 measurement already returns the same trimmed visible
+glyph widths as NUN5. Its remaining difference is ordinary ASCII space:
+the legacy path counts the full 14-unit cell, whereas NUN5 advances eight
+units. The equivalent NUN5 logical width is therefore:
+
+```text
+patched_NA2_width_at_tracking_zero - 6 * ordinary_ASCII_space_count
+```
+
+For `Ultimate Jutsu Prep`, patched NA2 returns 190 and the two spaces subtract
+12, producing the exact NUN5 width 178 and scale `128 / 178 =
+0.7191011236`. A guarded v2 state used that scale and kept every ordinary label
+at scale 1.0.
+
+Per-glyph telemetry then isolated a second, independent renderer omission. The
+v2 and NUN5 fitted calls have the same scale (`0.719101`) and the same sum of
+scaled visible-glyph advances (`145.977525`). Nevertheless, v2 begins at local
+X `59.0` instead of `59.280899`, and its recorded span is `117.483110`
+instead of NUN5's `128.719072`. Each origin-step deficit is an integer glyph
+bearing multiplied by `1 - scale`, proving that the glyph widths are correct
+but the leading-bearing displacement remains unscaled.
+
+The disassembly agrees exactly. The imported NA2 semantic metric decoder at
+runtime `0x0018731C` subtracts the decoded bearing directly:
+
+```c
+coordinate -= leading_bearing;
+```
+
+NUN5's ordinary secondary loader `FUN_00188270`, at
+`0x001887B0..0x001887D8`, instead performs the horizontal operation:
+
+```c
+x -= leading_bearing * scale_x;
+```
+
+Its vertical and alternate-glyph paths remain separate. This missing
+horizontal multiply explains both the `0.280899` first-origin difference and
+the accumulated fitted-label narrowing without implicating the donor raster,
+palette, ordinary tracking, or the now-exact width calculation. Confidence is
+**high** because the static instruction difference predicts the exact guarded
+telemetry deltas.
+
+The register-safe task-local v4 candidate is retained at
+`work/Font/artifacts/font_match_v1/renderer_geometry_spacing_fit_v4_nun5.p2s`.
+It scales only the semantic decoder's horizontal leading-bearing path and
+preserves the decoder's live `v0` return value. It is not a canonical patch and
+has not yet received runtime acceptance. The preceding v3 helper is rejected:
+it clobbered that return register, and its guarded run produced no usable
+capture.
+
 ## 2026-07-19 superseded clean-font baseline
 
 This earlier baseline started from clean NA2, not from m01, v22, v23, or the

@@ -98,9 +98,8 @@ UI-MODE1-067	1	mode1_tnw	x\mode1\tex\tnd\mode1name2.bmp	x\mode1\tex\tnw\mode1nam
 UI-MODE1-068	1	mode1_tyo	x\mode1\tex\tyo\mode1name1.bmp	x\mode1\tex\tyo\mode1name1.bmp	copy	Official English ordinary-awakening label.
 UI-MODE1-069	1	mode1_tyw	x\mode1\tex\tyw\mode1name1.bmp	x\mode1\tex\tyw\mode1name1.bmp	copy	Official English ordinary-awakening label.
 UI-MODE1-070	1	mode1_tyy	x\mode1\tex\tyy\mode1name1.bmp	x\mode1\tex\tyy\mode1name1.bmp	copy	Official English ordinary-awakening label.
-UI-MODE1-071	1	mode1_ymt	x\mode1\tex\ymt\mode1name1.bmp	x\mode1\tex\ymt\mode1name1.bmp	indexed_region_inset_right_45_32_19_32_1	Official English Ultimate Mode label with a one-texel inset for its donor-clipped final atlas fragment.
+UI-MODE1-071	1	mode1_ymt	x\mode1\tex\ymt\mode1name1.bmp	x\mode1\tex\ymt\mode1name1.bmp	copy	Official English ordinary-awakening label.
 UI-MODE1-072	1	mode1_zbz	x\mode1\tex\zbz\mode1name1.bmp	x\mode1\tex\zbz\mode1name1.bmp	copy	Official English ordinary-awakening label.
-UI-MODE-COMMON-001	1	mode1cmn	x\mode1\tex\mode1name1.bmp	x\mode1\tex\mode1name1.bmp	indexed_top_rows_64	Official English Dummy Mode label remapped into the fixed-capacity NA2 palette.
 UI-MODE-002	1	mode2cmn	x\mode2\tex\mode2name.bmp	x\mode2\tex\mode2name.bmp	copy	Official English mode label.
 UI-MODE-003	1	mode2gav	x\mode2\tex\gav\mode2gav.bmp	x\mode2\tex\gav\mode2gav.bmp	copy	English Possession Mode label.
 UI-MODE-004	1	mode2jrv	x\mode2\tex\jrv\mode2jrv.bmp	x\mode2\tex\jrv\mode2jrv.bmp	copy	English Curse Mark Mode Stage 2 label.

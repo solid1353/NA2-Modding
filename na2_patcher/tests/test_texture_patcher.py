@@ -56,8 +56,8 @@ class UiTextureTests(unittest.TestCase):
         )
 
     def test_complete_package_is_source_derived_pinned_and_fixed_size(self) -> None:
-        self.assertEqual(len(self.plan.containers), 96)
-        self.assertEqual(self.plan.mapping_count, 149)
+        self.assertEqual(len(self.plan.containers), 95)
+        self.assertEqual(self.plan.mapping_count, 148)
         for result in self.plan.containers:
             self.assertEqual(
                 len(result.replacement), len(result.original), result.spec.path
@@ -202,18 +202,11 @@ class UiTextureTests(unittest.TestCase):
                 target_entry = target_entries[mapping.target_texture.casefold()]
                 donor_entry = donor_entries[mapping.donor_texture.casefold()]
                 output_entry = output_entries[mapping.target_texture.casefold()]
-                if mapping.transform == "copy":
-                    self.assertEqual(
-                        engine.decoded_rgba(output_payload, output_entry),
-                        engine.decoded_rgba(donor_payload, donor_entry),
-                        mapping.mapping_id,
-                    )
-                else:
-                    self.assertEqual(mapping.mapping_id, "UI-MODE1-071")
-                    self.assertEqual(
-                        mapping.transform,
-                        "indexed_region_inset_right_45_32_19_32_1",
-                    )
+                self.assertEqual(
+                    engine.decoded_rgba(output_payload, output_entry),
+                    engine.decoded_rgba(donor_payload, donor_entry),
+                    mapping.mapping_id,
+                )
                 for section in (*target_entry.textures, *target_entry.palettes):
                     allowed_offsets.update(
                         range(
@@ -234,92 +227,6 @@ class UiTextureTests(unittest.TestCase):
                 changed_offsets <= allowed_offsets,
                 result.spec.path,
             )
-
-    def test_ultimate_mode_insets_only_the_donor_clipped_final_fragment(self) -> None:
-        result = self.result("mode1_ymt")
-        mapping = next(
-            item
-            for item in self.plan.package.mappings
-            if item.mapping_id == "UI-MODE1-071"
-        )
-        donor_payload = gzip.decompress(result.donor)
-        output_payload = gzip.decompress(result.replacement)
-        donor_entry = engine.parse_ccs(donor_payload)[
-            mapping.donor_texture.casefold()
-        ]
-        output_entry = engine.parse_ccs(output_payload)[
-            mapping.target_texture.casefold()
-        ]
-        donor_visual = engine.decoded_rgba(donor_payload, donor_entry)
-        output_visual = engine.decoded_rgba(output_payload, output_entry)
-        self.assertIsNotNone(donor_visual)
-        self.assertIsNotNone(output_visual)
-        donor_width, donor_height, donor_rgba = donor_visual
-        output_width, output_height, output_rgba = output_visual
-        self.assertEqual((donor_width, donor_height), (64, 64))
-        self.assertEqual((output_width, output_height), (64, 64))
-
-        changed_pixels = set()
-        for y in range(64):
-            for x in range(64):
-                offset = (y * 64 + x) * 4
-                donor_pixel = donor_rgba[offset : offset + 4]
-                output_pixel = output_rgba[offset : offset + 4]
-                if donor_pixel != output_pixel:
-                    changed_pixels.add((x, y))
-        self.assertTrue(changed_pixels)
-        self.assertTrue(
-            all(45 <= x < 64 and 32 <= y < 64 for x, y in changed_pixels)
-        )
-        self.assertTrue(
-            all(output_rgba[(y * 64 + 63) * 4 + 3] == 0 for y in range(32, 64))
-        )
-
-    def test_mode1_common_imports_dummy_mode_with_the_na2_palette(self) -> None:
-        result = self.result("mode1cmn")
-        mapping = next(
-            item
-            for item in self.plan.package.mappings
-            if item.mapping_id == "UI-MODE-COMMON-001"
-        )
-        target_payload = gzip.decompress(result.original)
-        donor_payload = gzip.decompress(result.donor)
-        output_payload = gzip.decompress(result.replacement)
-        target_entry = engine.parse_ccs(target_payload)[
-            mapping.target_texture.casefold()
-        ]
-        donor_entry = engine.parse_ccs(donor_payload)[
-            mapping.donor_texture.casefold()
-        ]
-        output_entry = engine.parse_ccs(output_payload)[
-            mapping.target_texture.casefold()
-        ]
-        target_palette = target_entry.palettes[0]
-        output_palette = output_entry.palettes[0]
-        self.assertEqual(
-            target_payload[
-                target_palette.data_offset :
-                target_palette.data_offset + target_palette.data_size
-            ],
-            output_payload[
-                output_palette.data_offset :
-                output_palette.data_offset + output_palette.data_size
-            ],
-        )
-
-        target_visual = engine.decoded_rgba(target_payload, target_entry)
-        donor_visual = engine.decoded_rgba(donor_payload, donor_entry)
-        output_visual = engine.decoded_rgba(output_payload, output_entry)
-        self.assertIsNotNone(target_visual)
-        self.assertIsNotNone(donor_visual)
-        self.assertIsNotNone(output_visual)
-        self.assertNotEqual(target_visual[2], output_visual[2])
-        donor_alpha = donor_visual[2][3::4]
-        output_alpha = output_visual[2][3::4]
-        self.assertEqual(
-            bytes(alpha != 0 for alpha in donor_alpha),
-            bytes(alpha != 0 for alpha in output_alpha),
-        )
 
     def test_home_uses_the_complete_nun5_collection_container(self) -> None:
         result = self.result("home")
@@ -916,15 +823,15 @@ class UiTextureTests(unittest.TestCase):
             ) as handle:
                 summary = list(csv.DictReader(handle, delimiter="\t"))
 
-            self.assertEqual(len(patches), 96)
+            self.assertEqual(len(patches), 95)
             self.assertTrue(all(row["file"] == "DATA/DATA.CVM" for row in patches))
             self.assertTrue(all(row["original_sha256"] for row in patches))
             self.assertTrue(all(row["new_sha256"] for row in patches))
             self.assertTrue(
                 all(row["derivation"].startswith("canonical_nun5_") for row in patches)
             )
-            self.assertEqual(summary[0]["container_count"], "96")
-            self.assertEqual(summary[0]["mapping_count"], "149")
+            self.assertEqual(summary[0]["container_count"], "95")
+            self.assertEqual(summary[0]["mapping_count"], "148")
             self.assertEqual(summary[0]["worker_count"], str(self.plan.worker_count))
 
 

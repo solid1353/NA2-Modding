@@ -86,56 +86,19 @@ Three equivalent donor entries use different internal path names:
 
 `MODENAME/MODE1CMN.CCS` supplies the shared animation, model, and placeholder
 material. Its NA2 and NUN5 non-texture sections are byte-identical; only the
-placeholder TEX/CLT data differs. The game normally substitutes the
+placeholder TEX/CLT data differs. The game already substitutes the
 character-specific texture at runtime, so the localized implementation imports
-the 72 official NUN5 character TEX/CLT component ranges into their 61 fixed-size
-NA2 containers. It also imports the common `Dummy Mode` texture for the fallback
-path described below. No stored texture blobs, whole-container replacement, or
-executable layout patch is required.
+only the 72 official NUN5 TEX/CLT component ranges into their 61 fixed-size NA2
+containers. No stored texture blobs, whole-container replacement, executable
+layout patch, or `MODE1CMN.CCS` replacement is required.
 
 Evidence: the exact boot-ELF identities above, the preserved C/TXT exports at
 `@analysis/disassembly/NA2/exports/SLPS_258.37/` and
 `@analysis/disassembly/NUN5/exports/SLES_556.05/`, a complete canonical CVM
-inventory, decoded RGBA equality for 71 direct mappings, the one reviewed
-`Ultimate Mode` atlas correction below, component-range diff containment, and
-exact fixed-size recompression of all 61 character targets. The compositor
-interpretation and donor coverage have **high confidence**; full in-game runtime
-acceptance remains pending.
-
-### Ultimate Mode donor-edge correction
-
-The paired Slot 1 runtime screenshots show the same flat cutoff on the final
-`e` in both NUN5 and the first derived NA2 build. Static decoding confirms why:
-the NUN5 `3EYE/3YMT3PCT.CCS` atlas uses a 64x64 four-bit texture, and its third
-`Ultimate` fragment occupies raw TEX rectangle `(45,32,19,32)` through column
-63. The donor artwork itself reaches that boundary; the mapped import did not
-introduce the cutoff.
-
-`UI-MODE1-071` remains donor-derived but deliberately differs from NUN5. It
-resamples only that final 19x32 fragment into 18 columns and clears the last
-column to the donor palette's transparent index. Every pixel outside that
-rectangle remains the exact NUN5 visual, the CCS structure and palette remain
-unchanged, and the fixed 12,829-byte member retains 533 bytes of recompression
-padding. This is an intentional NA2 output improvement over the canonical
-donor, not an inferred NUN5 behavior port. Static confidence is **high**;
-corrected runtime acceptance is pending.
-
-### Common Dummy Mode capacity exception
-
-`MODENAME/MODE1CMN.CCS` contains the fallback `Dummy Mode` label in
-`x\mode1\tex\mode1name1.bmp`. Copying its exact NUN5 TEX and CLT components
-cannot preserve NA2's 1,720-byte member capacity: even the deterministic Zopfli
-path is 76 bytes too large. The accepted derivation therefore retains NA2's
-16-color palette and remaps all 64 donor rows to the closest target palette
-indices, using the same deterministic indexed-import principle as the existing
-`MODE2KDV.CCS` exception.
-
-The result preserves the donor's complete transparent/nontransparent pixel
-mask, changes only the TEX component, keeps the 6,480-byte payload and
-1,720-byte compressed member sizes unchanged, and leaves 51 bytes of
-recompression padding. The exact-donor capacity failure is a useful negative
-result; no container expansion or executable patch is required. Static
-confidence is **high**; runtime acceptance is pending.
+inventory, decoded RGBA equality for all 72 mappings, component-range diff
+containment, and exact fixed-size recompression of all 61 targets. The
+compositor interpretation and donor coverage have **high confidence**;
+in-game runtime acceptance remains pending.
 
 ## Open VS Jutsu selector
 

@@ -4,12 +4,13 @@
 is an internal workflow helper, a focused maintenance tool, or a preserved
 research utility.
 
+Superseded implementations are removed and remain recoverable through Git
+history; do not recreate an archive directory for dead scripts.
+
 ## Directories
 
 - `lib/`: shared PowerShell bootstrap, portable run-log, and structured
   build-record helpers.
-- `archive/`: unsupported reference-only implementations. Read the directory
-  warning before considering one for a task.
 - `na2/`: build, promotion, PNACH, PCSX2 launch, CRC diagnostics, and isolated
   agent tests for hidden launch and run logging.
 - `media/`: ISO, AFS, and CVM inspection/extraction tools. Use
@@ -33,12 +34,11 @@ research utility.
   validation, overlay identification, and EE-region reporting for injection
   capacity research.
 - `research/ui_translation/`: selectable multi-game PCSX2 launch and tiling,
-  PINE identity checks, controlled savestate and embedded-screenshot capture,
-  rendering preflight, and read-only runtime memory inspection for NUN5-to-NA2
-  UI comparisons.
-- `research/translation/`: retained translation-table length validator and the
-  worker-only mapping-ID diagnostic builder used to identify visible strings.
-  Neither changes normal profile behavior.
+  offline paired-savestate import and screenshot extraction, rendering
+  preflight, and user-directed runtime research for NUN5-to-NA2 UI comparisons.
+  Agent-owned runtime control uses `na2/test_launch.ps1 -OperationPlan`.
+- `research/translation/`: the worker-only mapping-ID diagnostic builder used
+  to identify visible strings. It does not change normal profile behavior.
 
 Normal builds call `na2_patcher.build_profile` through `na2/build.ps1`.
 Before that call, `na2/build.ps1` checks the deterministic successful-build
@@ -165,3 +165,23 @@ annotated version tag that triggers GitHub Release publication.
 When adding a script, place it beside the workflow it supports. Do not add new
 files directly under `scripts/`; the root is reserved for this index and
 responsibility directories.
+
+## Retired scripts
+
+These implementations are intentionally absent from the working tree. Recover
+one into `work/<task title>/temp/` for historical inspection with its indexed
+commit and former path. Review it before use, then selectively port any needed
+logic into the appropriate maintained directory; never execute the recovered
+file blindly or recreate `scripts/archive/`. Normal work uses the maintained
+replacement.
+
+```powershell
+git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
+```
+
+| Former path | Recovery commit | Retirement and maintained replacement |
+| --- | --- | --- |
+| `scripts/archive/replace_iso_file_same_size.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na2_patcher.image_assembler`. |
+| `scripts/na2/check_log_crc.ps1` | `804c2df8d16019a3b55f6acb10a023c435faaafc` | Manual log/PNACH comparison was superseded by `na2/iso_identity.ps1` and automatic `na2/actualize.ps1`. |
+| `scripts/na2/get_elf_crc.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | The redundant command wrapper was removed; `na2/pcsx2_elf_crc.ps1` remains the shared tested implementation. |
+| `scripts/research/translation/check_translation_lengths.ps1` | `91a7dabbbe8ac957b4c04d3abe7aec721757b839` | Its fixed-slot `old`/`new` assumptions are obsolete; translation importer and string patcher validation now enforce encoding and capacity rules. |

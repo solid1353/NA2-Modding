@@ -181,10 +181,9 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 - `na2_patcher/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na2_patcher/build_profile.py` applies that prepared pipeline and writes its run log. `na2_patcher/composer.py` resolves module artifacts and closes typed image operations. `na2_patcher/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Candidate, or worker-owned output.
 - `scripts/media/` contains the recursive source extractor, its byte-parity
   verifier, and focused ISO, AFS, and CVM building blocks. Direct same-size ISO
-  replacement survives only as an unsupported reference under
-  `scripts/archive/`.
+  replacement is retired; guarded replacements belong to the hash-pinned
+  `na2_patcher.image_assembler` workflow.
 - `scripts/project/` contains configured-source read-only maintenance. There is currently no maintained release-creation script; the release workflow will be redesigned before new automation is added.
-- `scripts/archive/` contains unsupported historical reference implementations. Inspect and explicitly select one before use; archived scripts are never part of the normal workflow.
 - `scripts/research/menu_input/` and `scripts/research/translation/` retain useful one-off analysis tools outside the normal build path. Their lack of runtime callers does not make them disposable.
 - See `scripts/README.md` for the maintained directory contract and individual responsibilities.
 

@@ -47,9 +47,6 @@ replaced with a copied machine-specific absolute path.
 
 - `@source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
 - `@source/*.files/`: extracted views of original source archives. Treat as read-only reference.
-- `@archive/`: explicitly retained, non-executable historical reference data
-  requested outside active feature inputs. Each archived item documents its
-  provenance, identity, and permitted reference use.
 - `build/`: normally contains `build/NA2.28 - Current.iso`, may retain at most `build/NA2.28 - Previous.iso` as rotation history, and may retain `build/NA2.28 - Candidate.iso` while concurrent refactoring/testing needs it. Standard builds use `NA2.28 - Current.iso.building`, then discard an identical candidate or promote and rotate a changed one. `na2 -t` instead uses `NA2.28 - Candidate.iso.building`, atomically updates only Candidate, leaves PCSX2 running, and never changes Current, Previous, their build mapping, or Current's preflight receipt. Staging files are removed on failure.
 - `work/<task title>/build/`: isolated agent ISOs produced by `na2 -t work/<task title>/build/<name>.iso`. Staging remains beside the requested output, build records remain under that task's `logs/`, and the mode never touches shared build, preflight, promotion, PNACH, or PCSX2 state.
 - Temporary imported archives live under the active task's `work/<task title>/temp/` folder until normalized or retired. Reproducible data lives as hash-pinned inputs beside its module; complete accepted states are preserved by annotated Git tags, and retired inputs remain available through Git history.

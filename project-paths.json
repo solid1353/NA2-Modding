@@ -2,7 +2,6 @@
   "schema_version": 1,
   "roots": {
     "repository": ".",
-    "archive": "archive",
     "source": "../__source",
     "source_na2": "@source/NA2.iso.files",
     "source_nun3": "@source/NUN3.iso.files",

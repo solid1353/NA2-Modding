@@ -46,7 +46,8 @@ READMEs, engine code, and non-input authoring helpers are excluded.
   and every blob referenced by `blob_path`.
 - `string_patcher`: `strings.tsv`, only for a feature that owns local string
   declarations.
-- `translation_importer`: `mappings.tsv` and `references.tsv`.
+- `translation_importer`: `mappings.tsv`, including its folded pointer
+  inventory.
 - `texture_patcher`: `containers.tsv`, `mappings.tsv`, and `strategies.tsv`.
 
 Binary package identity is derived from its feature/module path. Binary

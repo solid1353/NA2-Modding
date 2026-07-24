@@ -21,12 +21,15 @@ TARGET_SPECS = {
 DONOR_IDS = frozenset(
     {"NUN5_BTL", "NUN5_ETC", "NUN5_TEXTENG", "NUN5_SLES"}
 )
+SOURCE_IDS = {
+    "NA2_BTL": "BTL",
+    "NA2_ETC": "ETC",
+    "NA2_SLPS": "SLPS",
+}
 MAPPING_FIELDS = [
-    "id", "enabled", "section", "mode", "target", "target_offset", "capacity",
-    "source", "donor_ref", "donor", "replacement", "transform",
-    "arguments", "reference_binary", "reference_file_offsets",
-    "parent_mapping_id",
-    "reason",
+    "id", "enabled", "section", "mode", "source_ref", "donor_ref", "capacity",
+    "source", "donor", "prefix", "replacement", "transform", "arguments",
+    "reference_refs", "parent_mapping_id",
 ]
 EXPECTED_SHA1 = {
     "NA2_BTL": "bf7fc7331a2a4f34fc90b84b45772ae1f6bcab03",
@@ -36,7 +39,22 @@ EXPECTED_SHA1 = {
 VALID_MODES = {"slot", "sequence"}
 PLACEHOLDER_TEXT = frozenset({"unknown", "placeholder", "dummy", "test", "todo", "temp"})
 IDENTIFIER_TEXT = re.compile(r"[a-z][a-z0-9_./-]{3,}\Z")
-VALID_TRANSFORMS = {"", "split_br"}
+VALID_TRANSFORMS = {
+    "",
+    "empty",
+    "format_arg1",
+    "format_args",
+    "format_prefix_arg2",
+    "format_suffix_arg2",
+    "between_placeholders",
+    "after_placeholder2",
+    "split_br",
+    "split_br_sequence",
+    "join_br_parts",
+    "insert_br_after_words",
+    "append_space",
+    "flatten_br_slice",
+}
 TARGET_RUNTIME_BASES = {
     "SLPS": 0x000FFF00,
     "BTL": 0x006B3F00,
@@ -191,14 +209,46 @@ def parse_arguments(value: str, label: str) -> dict[str, str]:
     return result
 
 
-def parse_source_ref(value: str, label: str) -> tuple[str, int]:
+def parse_ref(
+    value: str,
+    label: str,
+    *,
+    allowed: frozenset[str] | set[str],
+) -> tuple[str, int]:
     match = re.fullmatch(r"([A-Za-z0-9_]+)@(0[xX][0-9A-Fa-f]+|[0-9]+)", value.strip())
     if not match:
-        raise ValueError(f"{label}: malformed source reference {value!r}")
+        raise ValueError(f"{label}: malformed reference {value!r}")
     source = match.group(1).upper()
-    if source not in DONOR_IDS:
-        raise ValueError(f"{label}: unsupported source {source!r}")
+    if source not in allowed:
+        raise ValueError(f"{label}: unsupported reference source {source!r}")
     return source, int(match.group(2), 0)
+
+
+def parse_source_ref(value: str, label: str) -> tuple[str, int]:
+    source, offset = parse_ref(
+        value,
+        label,
+        allowed=frozenset(SOURCE_IDS),
+    )
+    return SOURCE_IDS[source], offset
+
+
+def parse_donor_ref(value: str, label: str) -> tuple[str, int]:
+    return parse_ref(value, label, allowed=DONOR_IDS)
+
+
+def parse_reference_refs(
+    value: str,
+    label: str,
+) -> tuple[tuple[str, int], ...]:
+    refs = tuple(
+        parse_source_ref(item.strip(), label)
+        for item in value.split(",")
+        if item.strip()
+    )
+    if len(refs) != len(set(refs)):
+        raise ValueError(f"{label}: duplicate pointer references")
+    return refs
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
@@ -206,7 +256,7 @@ def read_rows(path: Path) -> list[dict[str, str]]:
         reader = csv.DictReader(handle, delimiter="\t")
         if reader.fieldnames != MAPPING_FIELDS:
             raise ValueError("mappings.tsv must contain exactly these columns in this order: " + "\t".join(MAPPING_FIELDS))
-        verbatim_fields = {"source", "donor", "replacement"}
+        verbatim_fields = {"source", "donor", "prefix", "replacement"}
         rows = [
             {
                 key: (
@@ -231,17 +281,13 @@ def references_from_mappings(
     references: list[Reference] = []
     for row in mappings:
         mapping_id = str(row["id"])
-        reference_binary = str(row["reference_binary"])
-        reference_offsets = tuple(row["reference_file_offsets"])
+        reference_refs = tuple(row["reference_refs"])
         parent_id_value = str(row["parent_mapping_id"]) or None
-        if not reference_binary and not reference_offsets and parent_id_value is None:
+        if not reference_refs and parent_id_value is None:
             continue
         label = f"{mapping_id} reference inventory"
-        if not reference_binary or not reference_offsets:
-            raise ValueError(
-                f"{label}: reference_binary and reference_file_offsets "
-                "must be declared together"
-            )
+        if not reference_refs:
+            raise ValueError(f"{label}: parent mappings require reference_refs")
         parent_offset_value: int | None = None
         parent_runtime_value: int | None = None
         if parent_id_value is not None:
@@ -254,27 +300,31 @@ def references_from_mappings(
             parent_runtime_value = (
                 TARGET_RUNTIME_BASES[str(row["target"])] + parent_offset_value
             )
-        references.append(
-            Reference(
-                mapping_id=mapping_id,
-                target=str(row["target"]),
-                target_file_offset=int(row["target_offset"]),
-                target_runtime_address=(
-                    TARGET_RUNTIME_BASES[str(row["target"])]
-                    + int(row["target_offset"])
-                ),
-                resolution=(
-                    "parent_message"
-                    if parent_id_value is not None
-                    else "direct"
-                ),
-                reference_binary=reference_binary,
-                reference_file_offsets=reference_offsets,
-                parent_mapping_id=parent_id_value,
-                parent_file_offset=parent_offset_value,
-                parent_runtime_address=parent_runtime_value,
+        grouped: dict[str, list[int]] = defaultdict(list)
+        for reference_binary, reference_offset in reference_refs:
+            grouped[reference_binary].append(reference_offset)
+        for reference_binary in sorted(grouped):
+            references.append(
+                Reference(
+                    mapping_id=mapping_id,
+                    target=str(row["target"]),
+                    target_file_offset=int(row["target_offset"]),
+                    target_runtime_address=(
+                        TARGET_RUNTIME_BASES[str(row["target"])]
+                        + int(row["target_offset"])
+                    ),
+                    resolution=(
+                        "parent_message"
+                        if parent_id_value is not None
+                        else "direct"
+                    ),
+                    reference_binary=reference_binary,
+                    reference_file_offsets=tuple(grouped[reference_binary]),
+                    parent_mapping_id=parent_id_value,
+                    parent_file_offset=parent_offset_value,
+                    parent_runtime_address=parent_runtime_value,
+                )
             )
-        )
     return tuple(references)
 
 
@@ -341,20 +391,102 @@ def validate_references(
     }
 
 
-def resolve_replacement_text(row: dict[str, object], label: str) -> str:
-    template = str(row["replacement"])
+def resolve_replacement_text(
+    row: dict[str, object],
+    label: str,
+    donor_by_ref: dict[str, str] | None = None,
+) -> str:
+    override = str(row["replacement"])
+    template = override if override else str(row["donor"])
     transform = str(row.get("transform", ""))
     arguments = dict(row.get("arguments", {}))
 
+    def argument(name: str) -> str:
+        value = arguments.get(name, "")
+        if not value:
+            raise ValueError(f"{label}: transform {transform!r} requires {name}")
+        if donor_by_ref is None:
+            raise ValueError(f"{label}: donor reference lookup is unavailable")
+        parse_donor_ref(value, label)
+        try:
+            return donor_by_ref[value]
+        except KeyError as exc:
+            raise ValueError(
+                f"{label}: donor reference {value!r} has no canonical donor text"
+            ) from exc
+
     if transform == "":
-        return template
-    if transform == "split_br":
+        resolved = template
+    elif transform == "empty":
+        resolved = ""
+    elif transform == "format_arg1":
+        if "%1" not in template:
+            raise ValueError(f"{label}: template has no %1")
+        resolved = template.replace("%1", argument("arg1"))
+    elif transform == "format_args":
+        if "%1" not in template or "%2" not in template:
+            raise ValueError(f"{label}: template lacks placeholders")
+        resolved = (
+            template.replace("%1", argument("arg1"))
+            .replace("%2", argument("arg2"))
+        )
+    elif transform == "format_prefix_arg2":
+        if "%1" not in template or "%2" not in template:
+            raise ValueError(f"{label}: template lacks placeholders")
+        resolved = template.replace("%1", argument("arg1")).split("%2", 1)[0]
+    elif transform in {"format_suffix_arg2", "after_placeholder2"}:
+        if "%2" not in template:
+            raise ValueError(f"{label}: template has no %2")
+        resolved = template.split("%2", 1)[1]
+    elif transform == "between_placeholders":
+        if "%1" not in template or "%2" not in template:
+            raise ValueError(f"{label}: template lacks placeholders")
+        resolved = template.split("%1", 1)[1].split("%2", 1)[0]
+    elif transform == "split_br":
         part = parse_int(arguments.get("part", ""), label)
         pieces = template.split("<br>")
         if part >= len(pieces):
             raise ValueError(f"{label}: split part {part} is outside {len(pieces)} parts")
-        return pieces[part]
-    raise ValueError(f"{label}: unsupported transform {transform!r}")
+        resolved = pieces[part]
+    elif transform == "join_br_parts":
+        parts = [
+            parse_int(value, label)
+            for value in arguments.get("parts", "").split(",")
+            if value.strip()
+        ]
+        if not parts:
+            raise ValueError(f"{label}: join_br_parts has no parts")
+        pieces = template.split("<br>")
+        if max(parts) >= len(pieces):
+            raise ValueError(f"{label}: join part is outside {len(pieces)} parts")
+        resolved = arguments.get("join", "<br>").join(pieces[index] for index in parts)
+    elif transform == "insert_br_after_words":
+        count = parse_int(arguments.get("words", ""), label)
+        words = template.split(" ")
+        if any(not word for word in words):
+            raise ValueError(
+                f"{label}: donor text does not use single-space word boundaries"
+            )
+        if count <= 0 or count >= len(words):
+            raise ValueError(
+                f"{label}: word break {count} is outside 1..{len(words) - 1}"
+            )
+        resolved = " ".join(words[:count]) + "<br>" + " ".join(words[count:])
+    elif transform == "append_space":
+        resolved = template + " "
+    elif transform == "flatten_br_slice":
+        flattened = template.replace("<br>", " ")
+        start = parse_int(arguments.get("start", ""), label)
+        end = parse_int(arguments.get("end", ""), label)
+        if start > end or end > len(flattened):
+            raise ValueError(
+                f"{label}: slice {start}:{end} is outside flattened text length "
+                f"{len(flattened)}"
+            )
+        resolved = flattened[start:end]
+    else:
+        raise ValueError(f"{label}: unsupported transform {transform!r}")
+    return str(row.get("prefix", "")) + resolved
 
 
 def read_target_sequence(data: bytes, offset: int, capacity: int, label: str) -> tuple[list[str], bytes]:
@@ -438,12 +570,7 @@ def parse_mappings(rows: list[dict[str, str]]) -> dict[str, list[dict[str, objec
         mode = row["mode"].lower()
         if mode not in VALID_MODES:
             raise ValueError(f"{label}: unsupported mode {mode!r}")
-        target = row["target"].upper()
-        if target not in TARGET_SPECS:
-            raise ValueError(f"{label}: unsupported target {target!r}")
-        if row["enabled"] == "0":
-            result["inactive"].append(row)
-            continue
+        target, target_offset = parse_source_ref(row["source_ref"], label)
         transform = row["transform"].lower()
         if transform not in VALID_TRANSFORMS:
             raise ValueError(f"{label}: unsupported transform {transform!r}")
@@ -455,44 +582,88 @@ def parse_mappings(rows: list[dict[str, str]]) -> dict[str, list[dict[str, objec
             if set(arguments) != {"part"}:
                 raise ValueError(f"{label}: split_br requires only part=<index>")
             parse_int(arguments["part"], label)
-        if mode == "sequence" and (transform or arguments):
-            raise ValueError(f"{label}: sequence replacements must be materialized")
+        elif transform == "split_br_sequence":
+            if set(arguments) != {"parts"}:
+                raise ValueError(
+                    f"{label}: split_br_sequence requires only parts=<indexes>"
+                )
+            parts = [
+                parse_int(value, label)
+                for value in arguments["parts"].split(",")
+                if value.strip()
+            ]
+            if not parts:
+                raise ValueError(f"{label}: split_br_sequence has no parts")
+        elif transform == "empty":
+            if arguments:
+                raise ValueError(f"{label}: empty does not accept arguments")
+        elif transform in {"format_arg1", "format_prefix_arg2"}:
+            if set(arguments) != {"arg1"}:
+                raise ValueError(f"{label}: {transform} requires only arg1=<ref>")
+            parse_donor_ref(arguments["arg1"], label)
+        elif transform == "format_args":
+            if set(arguments) != {"arg1", "arg2"}:
+                raise ValueError(
+                    f"{label}: format_args requires arg1=<ref>;arg2=<ref>"
+                )
+            parse_donor_ref(arguments["arg1"], label)
+            parse_donor_ref(arguments["arg2"], label)
+        elif transform in {
+            "format_suffix_arg2",
+            "between_placeholders",
+            "after_placeholder2",
+            "append_space",
+        }:
+            if arguments:
+                raise ValueError(f"{label}: {transform} does not accept arguments")
+        elif transform == "join_br_parts":
+            if not set(arguments).issubset({"parts", "join"}) or "parts" not in arguments:
+                raise ValueError(
+                    f"{label}: join_br_parts requires parts=<indexes> and optional join"
+                )
+            for value in arguments["parts"].split(","):
+                if value.strip():
+                    parse_int(value, label)
+        elif transform == "insert_br_after_words":
+            if set(arguments) != {"words"}:
+                raise ValueError(
+                    f"{label}: insert_br_after_words requires only words=<count>"
+                )
+            parse_int(arguments["words"], label)
+        elif transform == "flatten_br_slice":
+            if set(arguments) != {"start", "end"}:
+                raise ValueError(
+                    f"{label}: flatten_br_slice requires start=<index>;end=<index>"
+                )
+            parse_int(arguments["start"], label)
+            parse_int(arguments["end"], label)
+        if mode == "sequence" and transform not in {"", "split_br_sequence"}:
+            raise ValueError(
+                f"{label}: sequence mappings require blank or split_br_sequence transform"
+            )
         donor_ref = row["donor_ref"]
         if donor_ref:
-            parse_source_ref(donor_ref, label)
-        reference_binary = row["reference_binary"].upper()
-        reference_offsets = tuple(
-            parse_int(value.strip(), label)
-            for value in row["reference_file_offsets"].split(",")
-            if value.strip()
-        )
-        if len(reference_offsets) != len(set(reference_offsets)):
-            raise ValueError(f"{label}: duplicate reference offsets")
-        if bool(reference_binary) != bool(reference_offsets):
-            raise ValueError(
-                f"{label}: reference_binary and reference_file_offsets "
-                "must be declared together"
-            )
-        if reference_binary and reference_binary not in TARGET_SPECS:
-            raise ValueError(f"{label}: unsupported reference binary")
-        result["text"].append({
+            parse_donor_ref(donor_ref, label)
+        reference_refs = parse_reference_refs(row["reference_refs"], label)
+        parsed = {
             "id": row["id"],
             "section": row["section"] or "unclassified",
             "mode": mode,
             "target": target,
-            "target_offset": parse_int(row["target_offset"], label),
+            "target_offset": target_offset,
+            "source_ref": row["source_ref"],
             "capacity": parse_int(row["capacity"], label),
             "source": row["source"],
             "donor_ref": donor_ref,
             "donor": row["donor"],
+            "prefix": row["prefix"],
             "replacement": row["replacement"],
             "transform": transform,
             "arguments": arguments,
-            "reference_binary": reference_binary,
-            "reference_file_offsets": reference_offsets,
+            "reference_refs": reference_refs,
             "parent_mapping_id": row["parent_mapping_id"],
-            "reason": row["reason"],
-        })
+        }
+        result["inactive" if row["enabled"] == "0" else "text"].append(parsed)
     return result
 
 
@@ -511,6 +682,7 @@ def validate_semantic_replacement(source_text: str, target_text: str, label: str
 def resolve_text_materializations(
     mappings: Sequence[dict[str, object]],
     selected: set[str],
+    donor_catalog: Sequence[dict[str, object]] | None = None,
 ) -> tuple[
     dict[str, str],
     dict[str, tuple[str, ...]],
@@ -519,6 +691,17 @@ def resolve_text_materializations(
     dict[str, str],
 ]:
     """Resolve canonical replacement templates for downstream consumers."""
+    donor_by_ref: dict[str, str] = {}
+    for row in donor_catalog if donor_catalog is not None else mappings:
+        donor_ref = str(row["donor_ref"])
+        donor = str(row["donor"])
+        if not donor_ref:
+            continue
+        prior = donor_by_ref.setdefault(donor_ref, donor)
+        if prior != donor:
+            raise ValueError(
+                f"{row['id']}: donor reference {donor_ref!r} has conflicting text"
+            )
     source_texts: dict[str, str] = {}
     donor_texts: dict[str, str] = {}
     resolved_texts: dict[str, str] = {}
@@ -528,17 +711,35 @@ def resolve_text_materializations(
         if str(row["target"]) not in selected:
             continue
         mapping_id = str(row["id"])
-        template = str(row["replacement"])
+        override = str(row["replacement"])
+        template = override if override else str(row["donor"])
+        materialized = str(row["prefix"]) + template
         source_texts[mapping_id] = str(row["source"])
         donor_texts[mapping_id] = str(row["donor"])
-        materialized_templates[mapping_id] = template
+        materialized_templates[mapping_id] = materialized
         if row["mode"] == "sequence":
-            sequence = tuple(template.split("<NUL>"))
+            if row["transform"] == "split_br_sequence":
+                arguments = dict(row["arguments"])
+                parts = [
+                    parse_int(value, mapping_id)
+                    for value in arguments["parts"].split(",")
+                    if value.strip()
+                ]
+                pieces = template.split("<br>")
+                if max(parts) >= len(pieces):
+                    raise ValueError(
+                        f"{mapping_id}: sequence part is outside {len(pieces)} parts"
+                    )
+                sequence = tuple(pieces[index] for index in parts)
+                if sequence:
+                    sequence = (str(row["prefix"]) + sequence[0], *sequence[1:])
+            else:
+                sequence = tuple(materialized.split("<NUL>"))
             if not sequence or any(not value for value in sequence):
                 raise ValueError(f"{mapping_id}: sequence contains an empty fragment")
             resolved_sequences[mapping_id] = sequence
         else:
-            resolved = resolve_replacement_text(row, mapping_id)
+            resolved = resolve_replacement_text(row, mapping_id, donor_by_ref)
             resolved_texts[mapping_id] = resolved
     return (
         resolved_texts,
@@ -596,9 +797,17 @@ def apply_text_mappings(
             replacement = replacement_text.encode("cp1252")
             write_slot(output_targets[target], offset, capacity, replacement)
         occupied[target].append((offset, offset + capacity, str(row["id"])))
+        mapping_kind = (
+            "override"
+            if str(row["replacement"])
+            else "official donor translation"
+        )
+        if str(row["prefix"]):
+            mapping_kind = f"prefixed {mapping_kind}"
         annotations.append({"path": TARGET_SPECS[target][0], "start": offset, "end": offset + capacity,
                             "source_text": target_text, "replacement_text": replacement_text,
-                            "mapping_id": str(row["id"]), "reason": str(row["reason"])})
+                            "mapping_id": str(row["id"]),
+                            "reason": f"Apply {mapping_kind} for {row['id']}."})
         stats["mapped"] += 1
         if clean_targets[target][offset:offset + capacity] != bytes(output_targets[target][offset:offset + capacity]):
             stats["changed"] += 1
@@ -712,7 +921,9 @@ def build_translation_import_plan(
         donor_texts,
         materialized_templates,
     ) = resolve_text_materializations(
-        mappings["text"], selected
+        mappings["text"],
+        selected,
+        donor_catalog=tuple(mappings["text"]) + tuple(mappings["inactive"]),
     )
     import_targets: dict[str, dict[str, object]] = {}
     for target in selected_list:

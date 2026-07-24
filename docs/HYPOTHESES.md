@@ -105,8 +105,9 @@ actionable leads.
 
 Status: compact one-file module implemented; its predecessor passed an initial
 ISO runtime test. Confirmed layout, loader, donor, FLIST, and ISO findings are recorded in
-`docs/knowledge/external_string_payload.md`; the canonical pointer inventory
-is `na2_patcher/features/localization/translation_importer/references.tsv`.
+`docs/knowledge/external_string_payload.md`; the canonical pointer inventory is
+folded into each applicable row's `reference_refs` field in
+`na2_patcher/features/localization/translation_importer/mappings.tsv`.
 
 - Candidate resident cave: ELF file `0x00507414-0x0050747F` / runtime
   `0x00607314-0x0060737F` is zero-filled and has no aligned exact pointer found

@@ -88,7 +88,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
         self.assertEqual(summary["count"], 30)
         self.assertEqual(summary["distinct"], 29)
         self.assertEqual(summary["encoded_bytes"], 1479)
-        self.assertEqual(summary["derived"], 0)
+        self.assertEqual(summary["derived"], 3)
         rows = {row["mapping_id"]: row for row in summary["rows"]}
         self.assertEqual(rows["M2003"]["runtime_address"], rows["M2065"]["runtime_address"])
         self.assertGreaterEqual(min(int(row["file_offset"], 0) for row in rows.values()), 0x100)
@@ -171,12 +171,16 @@ class IntegratedExternalStringTests(unittest.TestCase):
                 ),
             )
 
-    def test_canonical_rows_have_complete_replacements_without_placement_state(self) -> None:
+    def test_canonical_rows_derive_translation_and_placement_state(self) -> None:
         self.assertTrue(
             all(row["mode"] in {"slot", "sequence"} for row in self.import_plan.text_mappings)
         )
         self.assertTrue(
             all(not str(row["replacement"]).startswith("[S]") for row in self.import_plan.text_mappings)
+        )
+        self.assertEqual(
+            sum(bool(str(row["replacement"])) for row in self.import_plan.text_mappings),
+            1,
         )
         self.assertEqual(len(self.import_plan.references), 33)
 

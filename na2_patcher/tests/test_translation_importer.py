@@ -30,19 +30,17 @@ class TranslationImporterTests(unittest.TestCase):
             "enabled": "1",
             "section": "test",
             "mode": "unresolved",
-            "target": "SLPS",
-            "target_offset": "0",
+            "source_ref": "NA2_SLPS@0",
+            "donor_ref": "NUN5_SLES@0",
             "capacity": "8",
             "source": "",
-            "donor_ref": "",
             "donor": "",
+            "prefix": "",
             "replacement": "",
             "transform": "",
             "arguments": "",
-            "reference_binary": "",
-            "reference_file_offsets": "",
+            "reference_refs": "",
             "parent_mapping_id": "",
-            "reason": "research does not belong in executable mappings",
         }
         with self.assertRaisesRegex(ValueError, "unsupported mode"):
             engine.parse_mappings([row])
@@ -54,23 +52,87 @@ class TranslationImporterTests(unittest.TestCase):
     def test_allows_placeholder_word_for_visible_target(self) -> None:
         engine.validate_semantic_replacement("Unknown", "<r不明|ふめい>", "visible")
 
-    def test_empty_replacement_is_explicit(self) -> None:
+    def test_empty_replacement_uses_the_imported_donor(self) -> None:
         row = {
+            "donor": "Official translation",
+            "prefix": "",
             "replacement": "",
             "transform": "",
             "arguments": {},
         }
+        self.assertEqual(
+            engine.resolve_replacement_text(row, "MTEST"),
+            "Official translation",
+        )
+
+    def test_empty_transform_materializes_an_intentionally_empty_string(self) -> None:
+        row = {
+            "donor": "Unused official fragment",
+            "prefix": "",
+            "replacement": "",
+            "transform": "empty",
+            "arguments": {},
+        }
         self.assertEqual(engine.resolve_replacement_text(row, "M0822"), "")
 
-    def test_importer_preserves_canonical_game_title_replacement(self) -> None:
+    def test_user_prefix_is_prepended_to_the_selected_translation(self) -> None:
+        imported = {
+            "donor": "Official translation",
+            "prefix": "[P] ",
+            "replacement": "",
+            "transform": "",
+            "arguments": {},
+        }
+        overridden = {
+            **imported,
+            "replacement": "User override",
+        }
+        self.assertEqual(
+            engine.resolve_replacement_text(imported, "imported"),
+            "[P] Official translation",
+        )
+        self.assertEqual(
+            engine.resolve_replacement_text(overridden, "overridden"),
+            "[P] User override",
+        )
+
+    def test_user_prefix_is_applied_after_the_transform(self) -> None:
+        row = {
+            "donor": "First line<br>Second line",
+            "prefix": "[P] ",
+            "replacement": "",
+            "transform": "split_br",
+            "arguments": {"part": "1"},
+        }
+        self.assertEqual(
+            engine.resolve_replacement_text(row, "transformed"),
+            "[P] Second line",
+        )
+
+    def test_combined_source_and_pointer_references_are_parsed(self) -> None:
+        self.assertEqual(
+            engine.parse_source_ref("NA2_BTL@0x1234", "source"),
+            ("BTL", 0x1234),
+        )
+        self.assertEqual(
+            engine.parse_reference_refs(
+                "NA2_BTL@0x10,NA2_SLPS@0x20",
+                "pointers",
+            ),
+            (("BTL", 0x10), ("SLPS", 0x20)),
+        )
+
+    def test_importer_preserves_canonical_game_title_donor(self) -> None:
         mappings = [
             {
                 "id": "MTEST",
                 "target": "SLPS",
                 "mode": "slot",
+                "donor_ref": "NUN5_TEXTENG@0x10",
                 "source": "clean Japanese title",
                 "donor": "Create Naruto Shippuden: Ultimate Ninja 5 data?",
-                "replacement": "Create Naruto Shippuden: Ultimate Ninja 5 data?",
+                "prefix": "",
+                "replacement": "",
                 "transform": "",
                 "arguments": {},
             }
@@ -92,7 +154,9 @@ class TranslationImporterTests(unittest.TestCase):
 
     def test_split_br_is_a_view_of_the_complete_replacement(self) -> None:
         row = {
-            "replacement": "First line<br>Second line",
+            "donor": "First line<br>Second line",
+            "prefix": "",
+            "replacement": "",
             "transform": "split_br",
             "arguments": {"part": "0"},
         }
@@ -103,7 +167,9 @@ class TranslationImporterTests(unittest.TestCase):
 
     def test_split_br_rejects_out_of_range_part(self) -> None:
         row = {
-            "replacement": "First line<br>Second line",
+            "donor": "First line<br>Second line",
+            "prefix": "",
+            "replacement": "",
             "transform": "split_br",
             "arguments": {"part": "2"},
         }

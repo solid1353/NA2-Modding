@@ -10,10 +10,12 @@ Canonical documentation landing page for the `String translation` workstream.
 - Character-specific strings may be translated systematically without
   individual runtime encounters because their structure is predictable and
   exhaustive testing is disproportionately time-consuming.
-- Keep complete replacement text in canonical mappings. Inline versus external
-  placement is derived at build time from the final encoded length, the
-  guarded slot capacity, and available pointer references; do not retain
-  shortened fallbacks or placement markers.
+- Keep complete official donor text and complete user-authored overrides in
+  canonical mappings. A blank `replacement` uses `donor`; `prefix` is
+  prepended to the selected text. Inline versus external placement is derived
+  at build time from the final encoded length, guarded slot capacity, and
+  available pointer references; do not retain shortened fallbacks or placement
+  markers.
 - Do not replace identifiers, placeholders, or other data of uncertain display
   purpose with arbitrary text.
 - This workstream owns game text and its mapping/reference data. Font fitting

@@ -3,7 +3,7 @@
 This feature owns all declarative content for the accepted English localization
 while reusable executable engines remain under `na2_patcher/modules/`.
 
-- [Translation importer](#na2-translation-importer-mapping-version-39)
+- [Translation importer](#na2-translation-importer-mapping-version-40)
 - [String patcher](#string-patcher)
 - [Texture patcher](#ui-texture-translation-module)
 - [Binary patcher](#ui-translation-binary-patcher-patch-set)
@@ -15,7 +15,7 @@ The feature directory name declares its identity. Its module-named
 subdirectories are the inputs that compose it; enabling Localization enables all
 of them, and one aggregate profile pin covers their canonical inputs.
 
-## NA2 translation importer (mapping version 39)
+## NA2 translation importer (mapping version 40)
 
 This first-class `na2_patcher` module imports and validates strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
@@ -27,8 +27,8 @@ command or file-backed inter-stage handoff.
 
 ### Mapping metadata
 
-- Version: `39`
-- Packaged `mappings.tsv` SHA-256: `82AC0E76409677705215F09AC1FAC45F0FF729374E5AC24657E6D5F6D4B3DA8B`
+- Version: `40`
+- Packaged `mappings.tsv` SHA-256: `60DB92F792502AD308B8D821BC4B963B060A113044A420DBAF288A6AB4A940A4`
 
 The version and mappings hash above are historical documentation, not a second
 executable manifest. Git history and the aggregate Localization feature pin own
@@ -46,20 +46,23 @@ Clean NA2 targets:
 - `PRG/ETC.BIN`
 - `SLPS_258.37`
 
-NUN5 donor references and donor text are retained in the table for review and
-provenance, but normal builds do not read donor binaries. `replacement` is the
-only executable text. Every replacement is complete: no shortened fallback or
-placement marker exists in the current table.
+NUN5 donor references and donor text are retained in the table for review,
+provenance, and executable translation. Normal builds do not read donor
+binaries: the verified `donor` text in the table is the default translation.
+A nonempty `replacement` is a user-editable override, and `prefix` is a
+user-editable string prepended to the selected translation. Every donor and
+override is complete: no shortened fallback or placement marker exists in the
+current table.
 
 ### Canonical `mappings.tsv`
 
 `mappings.tsv` is the single canonical mapping table. TSV has no worksheet tabs, so `section` is the page/filter key for grouping mappings by screen or mode.
 
-The 17 columns are:
+The 15 columns are:
 
-`id`, `enabled`, `section`, `mode`, `target`, `target_offset`, `capacity`,
-`source`, `donor_ref`, `donor`, `replacement`, `transform`, `arguments`,
-`reference_binary`, `reference_file_offsets`, `parent_mapping_id`, `reason`
+`id`, `enabled`, `section`, `mode`, `source_ref`, `donor_ref`, `capacity`,
+`source`, `donor`, `prefix`, `replacement`, `transform`, `arguments`,
+`reference_refs`, `parent_mapping_id`
 
 #### Stable IDs and enabled state
 
@@ -85,17 +88,25 @@ Git history for recovery.
 There is no `shorten` or `pool` mapping mode. External placement is a
 `string_patcher` build decision, not canonical mapping state.
 
-#### Informational provenance and transforms
+#### References, text, overrides, and transforms
 
-`source` records the clean NA2 text. `donor_ref` uses `SOURCE@OFFSET`, for
-example `NUN5_TEXTENG@0x29430`, and `donor` records the corresponding donor
-text. These three fields are informational and never generate output bytes.
+`source_ref` and `donor_ref` are adjacent provenance fields using
+`SOURCE@OFFSET`, for example `NA2_BTL@0x1E2130` and
+`NUN5_TEXTENG@0x29430`. `source` and `donor` are adjacent text fields: `source`
+records the guarded clean NA2 text, while `donor` records the verified official
+translation and is executable by default.
 
-`replacement` contains the complete executable text. Most rows require no
-transform. `split_br` with `part=<index>` remains only for parent-message rows
-whose original inline slot contains one fragment while an external continuation
-must retain the complete replacement template. Sequence rows express their
-already-materialized fragments with `<NUL>`.
+`replacement` is a user-editable override field and is normally blank. The
+importer selects nonempty `replacement` or otherwise `donor`, applies the
+declared transform, then prepends the user-editable `prefix`. For sequence rows,
+the prefix is applied to the first resulting fragment. Most rows require no
+transform.
+
+`reference_refs` stores optional comma-separated pointer sites in the same
+`SOURCE@OFFSET` form. `parent_mapping_id` lets a continuation row reuse its
+containing mapping's pointer inventory. Canonical mappings do not carry log
+reasons; generated patch records derive a concrete reason from the mapping ID
+and whether the row used the official donor, an override, or a prefix.
 
 ### Output
 
@@ -128,7 +139,7 @@ Disabled executable rows remain solely in `mappings.tsv`.
 
 Known clean-source SHA-1 values are always checked. Unknown source media is rejected before a plan is produced.
 
-The module rejects malformed flags, duplicate IDs, invalid offsets, invalid source references, malformed transforms, overlapping active mappings, unexpected structural bytes, text exceeding its declared slot or sequence block, malformed target sequences, invalid named-color conversion, and placeholder donor text that would overwrite identifier-like NA2 data. Enabled bad mappings fail the build instead of becoming silent runtime skips.
+The module rejects malformed flags, duplicate IDs, invalid offsets, invalid source or donor references, malformed pointer-reference lists, malformed transforms, overlapping active mappings, unexpected structural bytes, text exceeding its declared slot or sequence block, malformed target sequences, invalid named-color conversion, and placeholder donor text that would overwrite identifier-like NA2 data. Enabled bad mappings fail the build instead of becoming silent runtime skips.
 
 #### Exact slot boundaries
 
@@ -149,6 +160,29 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - NUN5 `<BLACK>` remains `<BLACK>` or becomes `<color000000>` according to the verified target form.
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
+
+### Version 40 changes
+
+#### User-editable translation schema
+
+Version 40 makes the mapping table describe translation ownership directly.
+The clean NA2 location is one `source_ref`; optional pointer sites are one
+`reference_refs` list. Source and donor references are adjacent, as are source
+and donor text. Historical per-row `reason` labels were removed because they
+did not define executable mapping policy; generated patch logs now synthesize
+specific reasons from stable mapping IDs.
+
+The official donor is executable by default. `replacement` is blank unless the
+user intentionally overrides that donor, and `prefix` is a separate
+user-editable field prepended to the transformed result. The current 2,177-row
+table keeps the same 2,172 enabled and five disabled mappings while using 2,176
+blank replacements, one explicit override, 27 declared transforms, and no
+current prefixes.
+
+Focused importer and string-patcher validation reproduced the preceding
+composition exactly: generated `PRG/228.BIN` remains `0x700` bytes with SHA-256
+`36CFF1341AC14A5AC6DCE5D6640F4F082676CF576851E0BEAF393207C3EE16FB`,
+and the compiled package remains 2,434 edits.
 
 ### Version 39 changes
 
@@ -1168,8 +1202,9 @@ payload is stored in Git.
 
 ### Canonical inputs
 
-- `translation_importer/mappings.tsv` contains executable replacement text,
-  informational source/donor fields, and every optional pointer reference.
+- `translation_importer/mappings.tsv` contains guarded source locations and
+  text, executable official donor translations, optional user prefixes and
+  overrides, and every optional pointer reference.
   Three continuation rows deliberately reuse their containing full-message
   pointer.
 This file is covered by the Localization feature's aggregate profile hash.

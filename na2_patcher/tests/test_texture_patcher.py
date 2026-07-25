@@ -641,6 +641,54 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(patch.status, "runtime_proven")
         self.assertEqual(patch.confidence, "verified")
 
+    def test_mash_prompt_uses_complete_nun5_regional_rectangle_table(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = binary_patcher.load_package(
+            repository
+            / "na2_patcher/features/localization/binary_patcher"
+        )
+        edits = [item for item in package.edits if item.patch_id == "UI-BTL-013"]
+        patch = package.patches["UI-BTL-013"]
+
+        self.assertEqual(len(edits), 1)
+        table = edits[0]
+        self.assertEqual(table.operation, "copy")
+        self.assertEqual(table.destination_target_id, "na2_btl")
+        self.assertEqual(table.destination_offset, 0x1DB730)
+        self.assertEqual(table.length, 7 * 8)
+        self.assertEqual(table.source_target_id, "nun5_elf")
+        self.assertEqual(table.source_offset, 0x4DE630)
+        self.assertEqual(
+            list(struct.iter_unpack("<HHHH", bytes.fromhex(table.expected_hex))),
+            [
+                (0, 24, 48, 24),
+                (48, 0, 48, 24),
+                (0, 0, 48, 24),
+                (48, 24, 64, 24),
+                (0, 72, 94, 24),
+                (0, 48, 112, 24),
+                (0, 96, 48, 24),
+            ],
+        )
+        self.assertEqual(
+            list(
+                struct.iter_unpack(
+                    "<HHHH", bytes.fromhex(table.source_expected_hex)
+                )
+            ),
+            [
+                (0, 84, 64, 20),
+                (64, 64, 64, 20),
+                (0, 64, 64, 20),
+                (0, 104, 64, 20),
+                (0, 32, 128, 32),
+                (0, 0, 128, 32),
+                (64, 84, 64, 20),
+            ],
+        )
+        self.assertEqual(patch.status, "runtime_proven")
+        self.assertEqual(patch.confidence, "verified")
+
     def test_paired_item_status_layout_uses_exact_nun5_donors(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
@@ -981,11 +1029,11 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 163)
-        self.assertEqual(operations, {"copy": 72, "replace": 91})
+        self.assertEqual(len(ui_edits), 164)
+        self.assertEqual(operations, {"copy": 73, "replace": 91})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 51, "nun5_btl": 16, "nun5_etc": 5},
+            {"nun5_elf": 52, "nun5_btl": 16, "nun5_etc": 5},
         )
         self.assertEqual(len(stage_scales), 24)
         self.assertEqual(len(adaptations), 67)

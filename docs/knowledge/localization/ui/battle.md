@@ -620,3 +620,72 @@ code cave or data overwrite remains.
 The fixed draw geometry is **runtime-proven** with **high confidence**. It is
 not marked verified because the checkpoint transformed a live paired object
 rather than capturing a naturally spawned fixed-class notification.
+
+## Battle Mash prompt rectangles
+
+### Identity and address map
+
+This section uses the exact binary identities and address conventions recorded
+above. The active paired Mash objects are at NA2 live addresses `0x00E4F3D0`
+and `0x00E4F950`, and NUN5 live addresses `0x00DCE550` and `0x00DCEAD0`.
+Their `0x580`-byte stride, player-side field at `+0x28`, main prompt ID at
+`+0x2F`, and supplemental prompt list beginning at `+0x30` agree across both
+games. In the paired state, main prompt ID `0` means Mash and supplemental ID
+`0x0C` selects the Cross glyph.
+
+| Role | NA2 | NUN5 |
+| --- | --- | --- |
+| Main-label renderer | BTL file `0x25C0`, Ghidra `FUN_006b6480`, live `0x006B64C0` | BTL file `0x27E0`, Ghidra `FUN_006c94a0`, live `0x006C94E0` |
+| Complete main-prompt rectangle table | BTL file `0x1DB730`, live `0x0088F630` | English regional table in boot ELF file `0x4DE630`, live `0x005DE4B0` |
+| NUN5 regional accessor | absent; NA2 directly addresses its BTL table | boot ELF file `0x2D4FC0`, runtime `FUN_003d4e40` |
+| Adjacent controller-glyph table | BTL file `0x1DB770`, live `0x0088F670` | separate from the regional main-prompt table |
+
+NUN5 `FUN_003d4e40` obtains the active language index and returns
+`regionalTable[language] + promptId * 8`. `FUN_006c94a0` uses it for main
+prompt IDs below seven; the NUN5 draw path also uses the returned width and
+height. NA2's homolog has no regional accessor and directly indexes the
+Japanese table embedded in BTL.
+
+The seven records are ordinary four-field little-endian rectangles:
+
+```cpp
+struct PromptRect {
+    uint16_t u;
+    uint16_t v;
+    uint16_t width;
+    uint16_t height;
+};
+
+const PromptRect *mainPromptRect(uint8_t promptId) {
+    return promptId < 7 ? &englishPromptRects[promptId]
+                        : &battleStaticPromptRects[promptId];
+}
+```
+
+For prompt ID zero, NA2 selected `(0,24,48,24)`, which samples the imported
+English Mash artwork vertically and clips it. The official NUN5 English record
+is `(0,84,64,20)`. `UI-BTL-013` copies all seven contiguous English records
+from the canonical NUN5 boot ELF to NA2's complete BTL table. This preserves
+the existing renderer and object ABI while covering every prompt handled by
+the NUN5 regional accessor.
+
+### Evidence, negative result, and confidence
+
+A guarded savestate write replaced only live range
+`0x0088F630..0x0088F667`. Both Mash labels then rendered horizontally with
+the NUN5 source dimensions and screen placement; the Cross panels and their
+supplemental record remained independently controlled. The canonical donor
+copy has the same 56-byte source and destination ranges and preserves BTL size.
+
+An earlier hypothesis wrote the donor records to adjacent live range
+`0x0088F670..0x0088F6A7`. Mash remained vertical while the Cross panels became
+rows of incorrect controller glyphs. Runtime instruction bytes in
+`FUN_006b6480` then proved its absolute main-table address is `0x0088F630`;
+the rejected address is the separate controller-glyph table and must remain
+untouched.
+
+Evidence consists of both complete BTL draw paths, NUN5 boot-ELF accessor
+`FUN_003d4e40`, the paired live object inventory, exact canonical file bytes,
+the guarded negative test, and the corrected 640x480 paired checkpoint.
+The table identity, donor mapping, and visible result are **runtime-proven**
+with **verified confidence**.

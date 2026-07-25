@@ -1259,6 +1259,27 @@ object delta is the expected one-frame pulse/update difference. Because the
 checkpoint uses a transformed live object rather than a naturally spawned
 fixed notification, the runtime-proven patch retains high confidence.
 
+### UI-BTL-013: localized battle Mash prompt rectangles
+
+The battle prompt object stores its main label ID at `+0x2F` and supplemental
+controller-glyph IDs from `+0x30`. NUN5 routes main IDs below seven through a
+regional boot-ELF accessor; NA2 directly indexes a Japanese seven-record table
+inside `BTL.BIN`. With the NUN5 battle texture already imported, NA2's first
+record samples the English Mash artwork vertically and clips it.
+
+`UI-BTL-013` copies the complete 56-byte official NUN5 English table from boot
+ELF offset `0x4DE630` to NA2 BTL offset `0x1DB730`. It is one exact guarded
+donor edit: no literal replacement, code hook, object-layout change, or stored
+asset is required. A paired guarded savestate test rendered both Mash labels
+horizontally at the NUN5 positions.
+
+The adjacent NA2 BTL range at `0x1DB770` is the controller-glyph table, not a
+second copy of the main-label table. A rejected live test against that range
+left Mash unchanged and corrupted the Cross panels, proving the semantic
+boundary. Exact renderer functions, address mappings, object fields, records,
+and negative evidence are preserved in
+`docs/knowledge/localization/ui/battle.md`.
+
 ### UI-ETC-001: localized Shop currency-label layout
 
 Importing the complete NUN5 `SHOP.CCS` supplies the correct English atlas, but

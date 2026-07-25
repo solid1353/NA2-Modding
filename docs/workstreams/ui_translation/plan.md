@@ -340,7 +340,8 @@ research.
 ### Active mismatch priority
 
 1. Items.
-2. Mash prompt.
+2. Mash prompt. Complete: `UI-BTL-013` imports the complete official NUN5
+   seven-record regional main-prompt table; the paired Mash checkpoint matches.
 3. Victory.
 4. The remaining grouped screens.
 5. Combat prompts.

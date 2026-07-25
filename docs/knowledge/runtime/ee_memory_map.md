@@ -88,6 +88,26 @@ The final Current heap user base is `0x00940120`; the end sentinel begins at
 `0x01FF5FF0`. The clean/vanilla user base is `0x008DD0A0`, so the heap-start
 movement is exactly the `0x63080` fixed reservation.
 
+### Widescreen heap target
+
+The official clean-NA2 widescreen write targets `0x00AF3694`, the first
+`1.0f` field in the stable structure context
+`0000BF01 00000000 00000045 FFFFFF44 0000803F 0000803F 00008043 00004043`.
+This structure is allocated at a fixed offset from the game heap boundary, so
+its absolute address moves when the resident-payload reservation changes.
+
+The earlier two-file Current captures moved the boundary by `0x63080` and
+contained the exact structure at `0x00B56714` in every checked paired state.
+The compact `SLOP-NA228` build with ELF CRC `F9FF71C8` ends its resident
+reservation at `0x008F43F0`, `0x17370` bytes above vanilla's `0x008DD080`.
+Accordingly, the working target is `0x00B0AA04`; three current savestates
+(slots 01, 09, and 10) contained the exact structure there with the target
+field still equal to `1.0f`, while the old address was empty.
+
+Confidence is **high for this exact build identity**. The address is not a
+permanent game constant: recalculate and validate it whenever the linked
+resident-payload end changes.
+
 The clean ELF's first `PT_LOAD` begins at file offset `0x100`, maps at
 `0x00100000`, has file size `0x507380`, and has memory size `0x5B3F00`.
 Consequently the file-backed resident image ends exactly at `0x00607380` and

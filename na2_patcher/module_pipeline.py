@@ -153,7 +153,7 @@ def prepare_module_pipeline(
     ) + tuple(
         fragment
         for declaration in resident_declarations.values()
-        for fragment in declaration.fragments
+        for fragment in declaration.payload_fragments
     )
     symbolic_patches = tuple(
         patch

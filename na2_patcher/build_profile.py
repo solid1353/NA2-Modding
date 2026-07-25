@@ -48,10 +48,26 @@ def apply_binary_patch_set(
     source: Iso9660,
     payloads: dict[str, bytearray],
     owners: dict[str, str],
+    allow_empty_defaults: bool = False,
 ) -> dict[str, object]:
     if package is None:
         package = binary_patcher_module.load_package(package_directory)
     target_data = binary_patcher_module.verify_package_data(package, roots)
+    default_patch_ids = [
+        patch.patch_id
+        for patch in package.patches.values()
+        if patch.default_enabled
+    ]
+    if not default_patch_ids and allow_empty_defaults:
+        return {
+            "package": package,
+            "selected": [],
+            "edits": [],
+            "patch_rows": [],
+            "before_hashes": {},
+            "after_hashes": {},
+            "patched_paths": [],
+        }
     selected = binary_patcher_module.selected_patch_ids(
         package, [], defaults=True
     )
@@ -482,6 +498,7 @@ def apply_profile_modules(
                 source=source,
                 payloads=payloads,
                 owners=owners,
+                allow_empty_defaults=True,
             )
             results.append(
                 {

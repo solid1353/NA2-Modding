@@ -11,6 +11,7 @@ in the shared knowledge base rather than being duplicated here.
 ## Documents
 
 - [Active plan and working context](plan.md)
+- [Autofit and positions reimplementation epic](epics/autofit_positions/README.md)
 - [Confirmed font knowledge and preserved evidence](../../knowledge/localization/font/README.md)
 
 ## Workstream policy

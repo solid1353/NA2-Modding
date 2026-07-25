@@ -16,6 +16,58 @@ the only boxed-fit path proven correct by this sample and that multiple other
 callers require layout behavior that a font-asset refinement alone cannot
 provide.
 
+## 2026-07-25 stage-by-stage autofit reset
+
+The user retained the accepted native font and generic resident-patcher
+infrastructure but rejected the combined July 24-25 autofit/layout selection as
+unstable. The implementation remains recoverable in place; only its default
+selection changed. These five module/patch rows are now disabled:
+
+- binary `font_renderer_metrics`;
+- binary `font_controls_auto_fit`;
+- resident `font_renderer_metrics`;
+- resident `font_controls_auto_fit`;
+- resident `font_layout_wrappers`.
+
+`font_nun5_glyphs` remains enabled. Binary `font_modal_alignment` also remains
+enabled because it is the independently reviewed Character Select `Back to
+Game Mode Screen` row alignment, not the Save/Load lower modal described
+below. The resident fragments, metric table, relocations, hook declarations,
+and generated blobs were not deleted. Their confirmed formulas and rejected
+integration behavior remain evidence for selective reimplementation rather
+than an enabled baseline.
+
+The user identified `ss9` as the current broken Save/Load modal. Its protected
+state was copied read-only from
+`@pcsx2_user/sstates/SLOP-NA228 (D61F4C01).09.p2s` to the Font-owned input
+tree. The state SHA-256 is
+`5EE0E06A4B31EDD2F81F77A10B447C504620864DD1D5D9A8D410A940B65E1335`;
+the embedded screenshot SHA-256 is
+`BAED2975F367ABF0D0C36272159FA94E64F794BD2492B37E109CE232F64BFCD4`.
+No matching NUN5 slot-9 state was supplied, so the comparison uses the retained
+640x480 NUN5 Save/Load capture with SHA-256
+`55626DB58BB0316F2502A20B2B825AABD25C94D343A427242F15C12A3343B2DC`.
+Exact task-owned paths and source provenance are recorded in
+`work/Font/inputs/sstates/autofit_positions/modal/provenance.json`; the
+canonical comparison grid is in
+`docs/workstreams/font/epics/autofit_positions/`.
+
+At 640x480, NUN5's lower-panel orange borders occupy `y=289..293` and
+`y=460..464`; current NA2 uses `y=296..299` and `y=449..452`. NUN5's
+instruction ink bounds are `(41,318)-(341,331)`, while current NA2 uses
+`(61,332)-(361,345)`: 20 pixels farther right and 14 pixels lower. NUN5's
+action row occupies `(422,421)-(590,444)`, while current NA2 uses
+`(405,407)-(572,433)`, about 13 pixels higher. The panel is therefore shorter
+and vertically compressed, with its two text regions moving in opposite
+directions.
+
+This is a user-reported broken baseline, not yet a proven causal attribution.
+An earlier retained NA2 capture shows the same panel geometry, so a post-reset
+capture is required before deciding whether any newest wrapper caused it or
+whether it is a pre-existing unresolved caller mismatch. Reimplementation now
+proceeds sequentially, one proven caller family per accepted commit, while
+shared behavior is ported only once when cross-screen evidence supports it.
+
 ## Accepted native 14x20 integration
 
 The current patch set builds on the accepted version 5 baseline. Its former

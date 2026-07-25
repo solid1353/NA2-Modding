@@ -15,39 +15,33 @@ execution order.
 
 ## Current result for review
 
-The implementation preserves clean NA2 GF4C and file sizes while installing a
-guarded native 14x20 secondary atlas in GF4. Matched captures show a good
-accepted result for Controls, Practice, Save/Load, and the character modal.
-The final secondary-only height helper restores the intended 24x28 quad while
-leaving width, spacing, fit, and row positions unchanged. `Ultimate Jutsu
-Prep` fits, `Linked Attack` stays full width, and the matched Controls sample
-has median height and center-Y deltas of zero against NUN5. The user accepted
-the font itself as almost pixel-for-pixel. Fullwidth Shift-JIS Save/Load digits
-are not a halfwidth-Latin parity target. The rejected shared 28x28 experiment
-remains disabled as negative evidence. Executable Font helpers now live in the
-shared resident `PRG/228.BIN`; a fresh worker build survives the Load transition
-that erased the former boot-ELF padding helpers. Command Chart and Practice
-title rows now use their distinct NUN5 containers with one shared proportional
-denominator. The long Petal Shower title is complete and unclipped, and the
-reviewed short-title origins match NUN5 within accepted one-pixel raster
-residue.
+The accepted native 14x20 NUN5-derived font remains enabled and unchanged.
+The generic resident patcher and all Font code/data declarations also remain.
+The user rejected the combined July 24-25 autofit/layout result as unstable,
+so its five logical selections are retained but default-disabled before the
+stage-by-stage rebuild. The independently reviewed Character Select modal
+alignment remains enabled.
+
+The reset baseline is documented in the
+[autofit and positions epic](epics/autofit_positions/README.md). User slot 9
+records the currently broken Save/Load lower modal: its panel is vertically
+compressed, the instruction starts 20 pixels farther right and 14 pixels
+lower than the retained NUN5 reference, and the action row is about 13 pixels
+higher. A fresh post-reset capture is required before assigning causation or
+reintroducing any old wrapper.
 
 ## Required execution order
 
-1. Completed: establish the clean NA2 GF4/GF4C baseline and isolate vertical
-   geometry.
-2. Completed for the reviewed screens: fix horizontal and vertical alignment
-   with call-local edits.
-3. Completed for the reviewed Controls call sites: reproduce NUN5's
-   shrink-only fit decision and restore renderer state after every draw.
-4. Completed: promote the proven secondary-only descriptor-height path into
-   the canonical glyph component and obtain final matched visual acceptance.
-5. In progress: the shared NUN5 renderer metric, Controls denominator,
-   Command Chart and Practice title boxes, Practice pause-list box,
-   confirmation-choice positions, confirmation-body placement, and
-   character-return box are implemented. Continue with the distinct Practice
-   command-explanation family, then the remaining caller families identified
-   by the ten-pair savestate analysis.
+1. Completed and retained: establish and accept the native NUN5-derived font.
+2. Current stage: default-disable the rejected July 24-25 autofit/layout stack
+   without deleting its code, assets, declarations, or evidence.
+3. Capture and accept the post-reset baseline, including the Save/Load lower
+   modal from slot 9.
+4. Reimplement one proven caller family at a time. Commit, push, and obtain
+   visual acceptance before beginning the next family.
+5. Prefer one shared denominator or wrapper when cross-screen evidence proves
+   it; never duplicate shared behavior merely because it appears in several
+   screens.
 
 Auto-adjust is downstream of horizontal metrics. A scaling test is not valid
 until logical width, visible glyph bounds, advances, and centering are measured
@@ -115,10 +109,12 @@ descriptor height only when the existing secondary-font mode bit is set. This
 restores the intended 24x28 secondary quad without changing X geometry or the
 primary/fullwidth path.
 
-### Research and implement NUN5 auto-adjust behavior
+### Research and implement NUN5 auto-adjust behavior - preserved, disabled
 
-The accepted implementation reproduces NUN5's fit decision as well as its
-scaling, without redirecting NA2 to a layout-incompatible NUN5 function:
+The July 24-25 implementation reproduced NUN5's fit decision as well as its
+scaling, without redirecting NA2 to a layout-incompatible NUN5 function.
+Its findings remain useful, but its combined executable selection is now
+default-disabled pending the stage-by-stage rebuild:
 
 - Compare NUN5's boxed path
   `FUN_00399df0 -> FUN_00389df0 -> FUN_0018b1b0 -> FUN_0018ca40` with the
@@ -140,13 +136,13 @@ call. `OFF` remains on the ordinary renderer.
 
 ## Preserved baseline and evidence
 
-- `na2_patcher/features/localization/binary_patcher/` contains the active
-  runtime-proven native secondary font plus static alignment and renderer
-  state. `na2_patcher/features/localization/resident_patcher/` contains the
-  linked executable metric, fit, scale, and layout helpers. Together they
-  target clean `SLPS_258.37` and `DATA/GF4.BIN`, preserve clean GF4C, and are
-  covered by the current Localization aggregate feature pin
-  `F68B5DB40A78F46CFCEB429F09E434CA4A106BD731420E76A7324415CD817BD8`.
+- `na2_patcher/features/localization/binary_patcher/` contains the enabled
+  native secondary font and independent Character Select modal alignment plus
+  the retained, disabled static autofit state.
+  `na2_patcher/features/localization/resident_patcher/` retains the linked
+  metric, fit, scale, and layout helpers with their default selections
+  disabled. All remain covered by the current Localization aggregate feature
+  pin.
 - `docs/knowledge/localization/font/README.md` consolidates the v23, semantic-palette, and
   2026-07-19 auto-fit negative results. The retired raw declarative records
   are recoverable from Git commit `69da715` and are not retained in the

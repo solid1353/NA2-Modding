@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import csv
+from dataclasses import replace
 import hashlib
 import tempfile
 import unittest
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
+from na2_patcher.build_profile import apply_binary_patch_set
 from na2_patcher.composer import resolve_symbolic_patches
+from na2_patcher.modules.binary_patcher import engine as binary_engine
 from na2_patcher.modules.resident_patcher import engine
 from na2_patcher.payload_builder.builder import (
     build_resident_payload,
@@ -27,6 +30,70 @@ def write_tsv(
 
 
 class ResidentPatcherTests(unittest.TestCase):
+    def test_all_disabled_resident_package_composes_as_noop(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            root = directory / "na2"
+            root.mkdir()
+            target_data = bytes(range(16))
+            (root / "SLPS_258.37").write_bytes(target_data)
+            package = binary_engine.Package(
+                directory=directory,
+                package_id="feature.resident_patcher",
+                targets={
+                    "boot": binary_engine.Target(
+                        target_id="boot",
+                        root_id="na2",
+                        role="destination",
+                        path=PurePosixPath("SLPS_258.37"),
+                        expected_size=len(target_data),
+                        expected_sha256=hashlib.sha256(target_data).hexdigest().upper(),
+                    )
+                },
+                groups={
+                    "layout": binary_engine.Group(
+                        group_id="layout",
+                        name="Layout",
+                        description="Retained disabled layout.",
+                        review_notes="",
+                    )
+                },
+                patches={
+                    "layout_hook": binary_engine.Patch(
+                        patch_id="layout_hook",
+                        group_id="layout",
+                        default_enabled=False,
+                        status="runtime_proven",
+                        confidence="high",
+                        name="Layout hook",
+                        description="Retained disabled hook.",
+                        source_mapping_id="TEST-LAYOUT",
+                        runtime_classification="resident",
+                        review_notes="",
+                    )
+                },
+                edits=[],
+            )
+            payloads: dict[str, bytearray] = {}
+            owners: dict[str, str] = {}
+
+            result = apply_binary_patch_set(
+                directory,
+                package=package,
+                roots={"na2": root},
+                feature_id="feature",
+                source=object(),  # The no-op branch never reads the image.
+                payloads=payloads,
+                owners=owners,
+                allow_empty_defaults=True,
+            )
+
+            self.assertEqual(result["selected"], [])
+            self.assertEqual(result["edits"], [])
+            self.assertEqual(result["patched_paths"], [])
+            self.assertEqual(payloads, {})
+            self.assertEqual(owners, {})
+
     def test_canonical_font_helpers_use_only_resident_payload_storage(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         directory = (
@@ -38,6 +105,21 @@ class ResidentPatcherTests(unittest.TestCase):
         )
         declaration = engine.load_package(
             directory, owner="localization.resident_patcher"
+        )
+        self.assertFalse(
+            any(patch.default_enabled for patch in declaration.patches.values())
+        )
+        self.assertEqual(declaration.payload_fragments, ())
+        self.assertEqual(declaration.symbolic_patches, ())
+        disabled_package = engine.build_binary_package(declaration, ())
+        self.assertEqual(disabled_package.edits, [])
+
+        declaration = replace(
+            declaration,
+            patches={
+                patch_id: replace(patch, default_enabled=True)
+                for patch_id, patch in declaration.patches.items()
+            },
         )
         build = build_resident_payload(declaration.fragments)
         resolved = resolve_symbolic_patches(

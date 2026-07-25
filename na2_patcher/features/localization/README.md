@@ -1630,8 +1630,10 @@ GF4 replacement as an implementation parent. The accepted build changes
 `DATA/GF4.BIN` and `SLPS_258.37` without changing either file's size;
 `DATA/GF4C.BIN` remains byte-identical to clean NA2.
 
-Five components are enabled by default and applied together when Localization
-is enabled:
+Two Font components remain enabled by default when Localization is enabled:
+the accepted native glyph component and the independent Character Select modal
+alignment. Three autofit/layout components are retained in place but
+default-disabled for a user-directed stage-by-stage reimplementation:
 
 - `font_nun5_glyphs` installs native 14x20 NUN5 raster geometry and metrics
   for same-semantic English cells. Unsupported printable punctuation is
@@ -1642,13 +1644,13 @@ is enabled:
   descriptor width on the primary/fullwidth path and uses descriptor height
   only for the secondary quad, restoring its intended 24x28 presentation
   without widening it.
-- `font_renderer_metrics` ports the shared NUN5 secondary tracking, ordinary
+- Retained, default-disabled `font_renderer_metrics` ports the shared NUN5 secondary tracking, ordinary
   ASCII-space, newline-advance, and logical-width behavior. Boxed callers use
   the same corrected denominator instead of reconstructing it independently.
   Pure printable ASCII uses the linked 95-entry proportional-width table;
   retained NUN5 runtime probes confirm Command Chart denominators `142`, `115`,
   and `440`.
-- `font_controls_auto_fit` reproduces NUN5's shrink-only Controls behavior.
+- Retained, default-disabled `font_controls_auto_fit` reproduces NUN5's shrink-only Controls behavior.
   It keeps `Linked Attack` full width, fits the official
   `Ultimate Jutsu Prep` label, leaves `OFF` on the ordinary renderer, and
   shifts only the left and right labels for visible-ink centering. Its
@@ -1658,7 +1660,7 @@ is enabled:
   five character-select `Back to Game Mode Screen` rows while retaining the
   accepted local Y behavior. Its selected-path compensation prevents the
   shadow draw from shifting visible ink.
-- `font_layout_wrappers` ports shared selected/unselected confirmation-choice
+- Retained, default-disabled `font_layout_wrappers` ports shared selected/unselected confirmation-choice
   placement, the 216-unit Practice pause-list fit and Y origin, Practice and
   Collection confirmation-body alignment, and the character-return body's
   centered 368-unit box. It also distinguishes the Command Chart 288-unit and
@@ -1674,21 +1676,29 @@ alignment edits; it no longer installs executable code into ELF zero padding.
 The shared UI wrapper keeps transient coordinates and saved renderer fields in
 its own stack frame rather than the former global scratch record.
 
-The auto-fit and layout components require `font_nun5_glyphs` because their
-positions and fit decisions are tuned to its metrics. They otherwise remain
-independent.
+The retained auto-fit and layout components require `font_nun5_glyphs` because
+their positions and fit decisions are tuned to its metrics. They otherwise
+remain independent. Their fragments, relocations, hook declarations, generated
+assets, and historical validation evidence remain canonical; setting
+`default_enabled=0` removes them from normal composition without deleting the
+implementation. With every resident Font row disabled, the resident engine
+validates the retained package but contributes no Font fragments or hooks to
+the shared payload.
 The rejected shared `font_vertical_quad_height` component was removed from
 executable inputs because it stretched both axes to 28x28. Its exact negative
 result remains in `docs/knowledge/localization/font/README.md` and Git history;
 the accepted secondary-only height helper is part of `font_nun5_glyphs`.
 
 Matched Controls, Practice, Save/Load, and character-modal captures established
-the accepted rendering behavior before its resident relocation. The final
+the historical rendering behavior before its resident relocation. The final
 guarded Controls capture retained the accepted horizontal metrics, spacing,
 bearings, and shrink-only fit while reducing the median height and center-Y
 deltas against NUN5 to zero. The user accepted the font itself as almost
 pixel-for-pixel. Fullwidth Shift-JIS Save/Load digits use a different glyph path
-and are not a halfwidth-Latin parity target.
+and are not a halfwidth-Latin parity target. The user later rejected the
+combined autofit/layout selection as unstable; only the font itself and the
+independent Character Select modal alignment remain enabled while layout is
+rebuilt sequentially.
 
 `scripts/research/localization/generate_font_assets.py` deterministically
 regenerates and verifies the four native glyph/metric/decoder blobs from

@@ -40,6 +40,8 @@ history; do not recreate an archive directory for dead scripts.
 - `research/ee_memory_map/`: PCSX2 savestate extraction, allocator-chain
   validation, overlay identification, and EE-region reporting for injection
   capacity research.
+- `research/localization/`: deterministic native Font asset and resident
+  renderer generation plus canonical NUN5-left/NA2-right Font report grids.
 - `research/ui_translation/`: offline paired-savestate import and screenshot
   extraction, rendering preflight, deterministic Victory texture and layout
   generation, and user-directed runtime research for NUN5-to-NA2 UI

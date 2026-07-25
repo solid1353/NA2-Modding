@@ -84,8 +84,22 @@ class ResidentPatchPackage:
     edits: tuple[ResidentSymbolicEdit, ...]
 
     @property
+    def active_edits(self) -> tuple[ResidentSymbolicEdit, ...]:
+        return tuple(
+            edit
+            for edit in self.edits
+            if self.patches[edit.patch_id].default_enabled
+        )
+
+    @property
     def symbolic_patches(self) -> tuple[SymbolicPatch, ...]:
-        return tuple(edit.symbolic_patch for edit in self.edits)
+        return tuple(edit.symbolic_patch for edit in self.active_edits)
+
+    @property
+    def payload_fragments(self) -> tuple[PayloadFragment, ...]:
+        # Fragments have package-wide symbolic dependencies. Retain and validate
+        # every declaration, but contribute none when every owning patch is off.
+        return self.fragments if self.active_edits else ()
 
 
 def _read_tsv(path: Path, fields: list[str]) -> list[dict[str, str]]:
@@ -212,9 +226,14 @@ def _load_patches(
         )
         status = row["status"]
         confidence = row["confidence"]
-        if not default_enabled or status not in binary_patcher.APPLICABLE_STATUSES:
+        if status not in binary_patcher.PATCH_STATUSES:
             raise ValueError(
-                f"patches.tsv:{line}: resident patches must be enabled and applicable"
+                f"patches.tsv:{line}: invalid status {status!r}"
+            )
+        if default_enabled and status not in binary_patcher.APPLICABLE_STATUSES:
+            raise ValueError(
+                f"patches.tsv:{line}: default-enabled resident patches "
+                "must be applicable"
             )
         if confidence not in binary_patcher.CONFIDENCE_VALUES:
             raise ValueError(f"patches.tsv:{line}: invalid confidence {confidence!r}")
@@ -226,7 +245,7 @@ def _load_patches(
         patches[patch_id] = binary_patcher.Patch(
             patch_id=patch_id,
             group_id=group_id,
-            default_enabled=True,
+            default_enabled=default_enabled,
             status=status,
             confidence=confidence,
             name=row["name"],
@@ -474,7 +493,8 @@ def build_binary_package(
     resolved_by_id = {patch.mapping_id: patch for patch in resolved_patches}
     if len(resolved_by_id) != len(resolved_patches):
         raise ValueError("resolved resident patches contain duplicate mapping IDs")
-    expected_ids = {edit.edit_id for edit in package.edits}
+    active_edits = package.active_edits
+    expected_ids = {edit.edit_id for edit in active_edits}
     if set(resolved_by_id) != expected_ids:
         raise ValueError(
             "resolved resident patch set differs from its declarations; "
@@ -482,7 +502,7 @@ def build_binary_package(
             f"extra={sorted(resolved_by_id.keys() - expected_ids)}"
         )
     edits: list[binary_patcher.Edit] = []
-    for declaration in package.edits:
+    for declaration in active_edits:
         resolved = resolved_by_id[declaration.edit_id]
         target = package.targets[declaration.target_id]
         if resolved.owner != package.owner or resolved.path != target.path.as_posix():

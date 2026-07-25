@@ -15,6 +15,13 @@ Relocations may target any exported symbol in the complete linked payload.
 Symbolic edit templates preserve surrounding instructions such as branch or
 jump delay slots while replacing only the declared relocation field.
 
+Resident patches use the same `default_enabled` selection contract as ordinary
+binary patches. Disabled rows, their symbolic edits, and all fragment/blob
+declarations remain validated and hash-covered, but they contribute no hooks.
+When every resident patch in a feature is disabled, that feature contributes
+no resident fragments and composes as a no-op resident module without deleting
+its retained implementation.
+
 ## Invokes
 
 - `binary_patcher` for the resolved concrete guarded writes.

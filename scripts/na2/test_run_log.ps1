@@ -151,6 +151,25 @@ try {
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na2 act\b') `
         -Message 'Root help still exposes the retired na2 act command.'
+    $actHelpText = (
+        & (Join-Path $fakeActualizationScripts 'act.ps1') help
+    ) -join "`n"
+    $actShortHelpText = (
+        & (Join-Path $fakeActualizationScripts 'act.ps1') -h
+    ) -join "`n"
+    foreach ($expectedCommand in 'act na2', 'act input', 'act links') {
+        Assert-Na2Test `
+            -Condition ($actHelpText.Contains($expectedCommand)) `
+            -Message "Actualization help omitted $expectedCommand."
+    }
+    Assert-Na2Test `
+        -Condition ($actShortHelpText -ceq $actHelpText) `
+        -Message 'act -h does not match act help.'
+    Assert-Na2Test `
+        -Condition (-not (Test-Path -LiteralPath (
+            Join-Path $fakeRepository 'logs\na2'
+        ))) `
+        -Message 'Actualization help created run logs.'
 
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'na2.ps1') -Content @'
 Write-Host '[fake] actualize na2'

@@ -81,6 +81,7 @@ Current, and deduplicates shared serial/CRC identities with Current taking
 precedence. It never creates or modifies memory cards.
 `actualization/links.ps1` creates or verifies the configured project-to-user
 hardlinks and refuses differing occupied counterparts.
+Run `act help` or `act -h` for the standalone command summary.
 
 `pcsx2/test_launch.ps1` is the minimal agent-side PCSX2 launcher. It launches an
 already-existing `work/<task title>/pcsx2/pcsx2-qt.exe` copy hidden with a

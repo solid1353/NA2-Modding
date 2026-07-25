@@ -1,8 +1,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('na2', 'input', 'links')]
+    [ValidateSet('na2', 'input', 'links', 'help')]
     [string]$Mode,
+
+    [Alias('h')]
+    [switch]$Help,
 
     [Parameter(DontShow)]
     [switch]$NoRunLog
@@ -10,6 +13,21 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+if ($Help -or $Mode -ceq 'help') {
+    @(
+        'Actualization commands:'
+        '  act        Run na2, input, then links'
+        '  act na2    Actualize built NA2.28 GameSettings and cheat aliases'
+        '  act input  Regenerate the Comparison_NA2 input profile'
+        '  act links  Create or verify project-to-PCSX2 hardlinks'
+        '  act help   Show this help'
+        '  act -h     Show this help'
+        ''
+    ) | Write-Output
+    return
+}
+
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 . (Join-Path $PSScriptRoot '..\lib\run_log.ps1')
 

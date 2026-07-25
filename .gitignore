@@ -3,9 +3,9 @@ Thumbs.db
 Desktop.ini
 
 # Heavy/generated workspace folders
-/build/
-/logs/
-/work/
+/build
+/logs
+/work
 /source
 /pcsx2
 /utils

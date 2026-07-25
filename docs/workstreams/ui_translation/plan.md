@@ -151,22 +151,27 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 - Slot 5 Controls and slot 7 Customize are complete. The accepted Customize
   screenshot is the corrected NA2 result produced by this task, not a NUN5
   donor reference. Its X=`255` placement remains the live-proven NA2 correction.
+- Generic Slot 1 isolates the Victory defects to the shared `WINNER` artwork in
+  `3EYE/ENDDEMO.CCS` and one `TEX_name` visual in each of the 61
+  `3EYE/3???3PCT.CCS` character resources. Fifty-nine complete character donors
+  fit. Haku and Shikamaru use bounded NUN5-palette capacity adaptations; their
+  exact evidence and negative results are in
+  `docs/knowledge/localization/ui/victory.md`.
 
 ## Production artifacts and validation
 
-- `na2_patcher/features/localization/texture_patcher/` contains 34 source-derived fixed-size
-  recipes, 76 reviewed mappings, pinned source/donor/replacement/payload hashes,
+- `na2_patcher/features/localization/texture_patcher/` contains 96 source-derived fixed-size
+  recipes, 210 reviewed mappings, pinned source/donor/replacement/payload hashes,
   and the deterministic verifier. The generated replacement ranges total
-  5,274,398 bytes, but no replacement CCS blobs are stored in the repository.
-  Static parity regenerated all 34 former production files byte-for-byte.
-- `na2_patcher/features/localization/binary_patcher/` contains 16 atomic UI
-  companion patches and 108 guarded UI edits across BTL, ETC, and the boot
-  ELF. Sixty-three rows copy canonical NUN5 bytes directly (44 ELF, 14 BTL,
-  five ETC), 24 store values computed from NUN5's stage-width formula in
-  NA2's different record layout, and 21 are minimal NA2-specific behavior
-  ports. Stage Select is runtime-proven; the later open Jutsu selector,
-  command-scroll, Mode Select, Vibration, and Collection corrections await the
-  user's runtime pass.
+  6,297,394 bytes, but no replacement CCS blobs are stored in the repository.
+- `na2_patcher/features/localization/binary_patcher/` contains the canonical UI
+  companion patches across BTL, ETC, and the boot ELF. The current UI subset
+  has 22 patches and 242 guarded edits: 73 exact NUN5 copies, 24 values
+  derived from NUN5's stage-width formula, 78 complete Victory descriptors
+  derived from NUN5's frame templates and English widths, and 67 remaining
+  NA2-ABI adaptations. Stage Select, Jutsu, command-scroll, Items, and Mash are
+  runtime-proven; Mode Select, Vibration, Collection, and Victory still await
+  their respective normal runtime acceptance.
 - Translation mapping version 35 restores the four Collection Movie rows to
   exact official NUN5 source strings with no authored line breaks. A
   clean-source full in-memory plan produced 2,437 fixed-size patch rows with
@@ -174,9 +179,10 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 - The Localization feature's aggregate current-profile pin covers both canonical
   module inputs and their feature-relative paths.
 - The complete Localization binary-patcher package validates as 7 targets, 9
-  groups, 88 patches, and 266 edits; its UI subset is the 16 patches and 108
-  edits counted above. The UI texture plan derives all 34 members with 33 whole
-  donors and MODE2KDV as the only mapped exception. The historical runtime
+  groups, 95 patches, and 398 edits; its UI subset is the 22 patches and 242
+  edits counted above. The UI texture plan derives all 96 members with 92 whole
+  donors and four mapped exceptions: MODE2KDV, ENDDEMO, Haku, and Shikamaru.
+  The historical runtime
   harness remains available; current focused and complete-suite results are
   refreshed with each build.
 - The 2026-07-19 non-launching normal profile build derived all 34 replacements
@@ -248,8 +254,11 @@ CCSFileExplorerMSF as an inspector and independent validator, not as the
 production writer.
 
 1. Keep a declarative repository-relative inventory of the intentionally translated textures, including structural relationships such as the paired NA2 OUGI labels.
-2. For normal containers, verify both source hashes, decompress the complete official NUN5 CCS payload, recompress it deterministically into the unchanged NA2 member capacity, and pad only after the valid gzip stream. The normal profile performs this derivation directly; zlib is tried first and the five tighter members use pinned Zopfli 0.4.3. This carries the donor's matching models, UVs, and animations together with its translated pixels without storing replacement blobs.
-3. Treat `MODE2KDV` as the single declared indexed-row exception: preserve the NA2 payload and palette and import only the donor's top 64 visual rows through a deterministic palette remap.
+2. For normal containers, verify both source hashes, decompress the complete official NUN5 CCS payload, recompress it deterministically into the unchanged NA2 member capacity, and pad only after the valid gzip stream. The normal profile performs this derivation directly; zlib is tried first and 28 tighter members use pinned Zopfli 0.4.3. This carries the donor's matching models, UVs, and animations together with its translated pixels without storing replacement blobs.
+3. Treat `MODE2KDV`, ENDDEMO, Haku, and Shikamaru as the four mapped
+   fixed-capacity/target-preservation exceptions. Every approximation uses only
+   canonical donor pixels/palettes and records why a complete donor is
+   unsuitable.
 4. Keep the outer DATA.CVM member size, ISO record size, and all source files unchanged. Refuse any output that cannot fit the original fixed capacity.
 5. Represent the OUGI one-part loop as a separate binary-patcher BTL semantic port.
    NUN5 proves the one-part behavior, but the exact NA2 replacement instruction
@@ -339,20 +348,19 @@ research.
 
 ### Active mismatch priority
 
-1. Items.
-2. Mash prompt. Complete: `UI-BTL-013` imports the complete official NUN5
-   seven-record regional main-prompt table; the paired Mash checkpoint matches.
-3. Victory.
-4. The remaining grouped screens.
-5. Combat prompts.
+1. Victory. The complete source-derived texture and rectangle implementation
+   is integrated; normal-entry runtime acceptance remains.
+2. The remaining grouped screens.
+3. Combat prompts.
 
-The Mash Prompt pair is a separate task-owned evidence category under
+Items and Mash Prompt are complete. The Mash Prompt pair is a separate
+task-owned evidence category under
 `@work/UI translation/inputs/sstates/library/Mash Prompt/`, immediately below
 Items in this queue. It is now part of the general remaining-issues pass rather
 than a separate `TASKS.md` subtask.
 
 All eight preserved cases now have declarative implementations. The normal
-workflow still derives all 34 fixed-size CCS replacements directly from
+workflow derives all 96 fixed-size CCS replacements directly from
 canonical NA2/NUN5 inputs with no stored replacement blobs. The source trees
 and original savestates remain untouched. The unique historical
 `NA2.28 - Previous.iso`, paired NA2.28/NUN5 states 1-8, and the minimal

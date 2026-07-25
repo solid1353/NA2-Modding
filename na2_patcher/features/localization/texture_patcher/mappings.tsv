@@ -147,3 +147,65 @@ UI-TITLE-001	1	title	m\t\tex\mtttl02.bmp	m\t\tex\mtttl02.bmp	copy	Official Engli
 UI-VS-001	1	vs	m\vs\tex\vs_t01.bmp	m\vs\tex\vs_t01.bmp	copy	English versus-screen labels.
 UI-VS-002	1	vs	m\vs\tex\vs_t02.bmp	m\vs\tex\vs_t02.bmp	copy	English versus settings labels.
 UI-NINKA-001	1	xninka	m\ninka\tex\xninka.bmp	m\ninka\tex\xninka.bmp	copy	English ninja-card result labels.
+UI-VICTORY-001	1	enddemo	x\enddemo\tex\enddemo01.bmp	x\enddemo\tex\enddemo01.bmp	copy	Official English Winner emblem; preserve the unrelated NA2 background textures and CCS structure.
+UI-VICTORY-002	1	mode1_ank	x\name\ank\name.bmp	x\name\ank\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-003	1	mode1_asw	x\name\asm\name.bmp	x\name\asw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-004	1	mode1_chy	x\name\chy\name.bmp	x\name\chy\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-005	1	mode1_cyb	x\name\chy\name.bmp	x\name\cyb\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-006	1	mode1_ddr	x\name\ddr\name.bmp	x\name\ddr\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-007	1	mode1_fir	x\name\01hkg\name.bmp	x\name\fir\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-008	1	mode1_fou	x\name\fou\name.bmp	x\name\fou\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-009	1	mode1_gaw	x\name\gaw\name.bmp	x\name\gaw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-010	1	mode1_guw	x\name\guy\name.bmp	x\name\guw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-011	1	mode1_hak	x\name\hak\name.bmp	x\name\hak\name.bmp	indexed_crop_transparent_top_left_128x64_nearest_palette_0-1-2-3-4-7-14	Official English Haku victory-name artwork; discard only transparent canvas and use the nearest seven colors from the same donor palette to fit the fixed member.
+UI-VICTORY-012	1	mode1_hkg	x\name\hkg\name.bmp	x\name\hkg\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-013	1	mode1_hnb	x\name\hnb\name.bmp	x\name\hnb\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-014	1	mode1_hnt	x\name\hnt\name.bmp	x\name\hnt\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-015	1	mode1_hnw	x\name\hnt\name.bmp	x\name\hnw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-016	1	mode1_ino	x\name\ino\name.bmp	x\name\ino\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-017	1	mode1_inw	x\name\ino\name.bmp	x\name\inw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-018	1	mode1_itw	x\name\itc\name.bmp	x\name\itw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-019	1	mode1_jrb	x\name\jrb\name.bmp	x\name\jrb\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-020	1	mode1_jrw	x\name\jry\name.bmp	x\name\jrw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-021	1	mode1_kbw	x\name\kbt\name.bmp	x\name\kbw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-022	1	mode1_kdm	x\name\kdm\name.bmp	x\name\kdm\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-023	1	mode1_khm	x\name\khm\name.bmp	x\name\khm\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-024	1	mode1_kib	x\name\kib\name.bmp	x\name\kib\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-025	1	mode1_kiw	x\name\kib\name.bmp	x\name\kiw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-026	1	mode1_kkw	x\name\kks\name.bmp	x\name\kkw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-027	1	mode1_kmm	x\name\kmm\name.bmp	x\name\kmm\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-028	1	mode1_knk	x\name\knk\name.bmp	x\name\knk\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-029	1	mode1_knw	x\name\knk\name.bmp	x\name\knw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-030	1	mode1_krw	x\name\krn\name.bmp	x\name\krw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-031	1	mode1_ksw	x\name\ksm\name.bmp	x\name\ksw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-032	1	mode1_nej	x\name\nej\name.bmp	x\name\nej\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-033	1	mode1_new	x\name\nej\name.bmp	x\name\new\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-034	1	mode1_nrt	x\name\nrt\name.bmp	x\name\nrt\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-035	1	mode1_nrw	x\name\nrw\name.bmp	x\name\nrw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-036	1	mode1_orw	x\name\orc\name.bmp	x\name\orw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-037	1	mode1_roc	x\name\roc\name.bmp	x\name\roc\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-038	1	mode1_row	x\name\roc\name.bmp	x\name\row\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-039	1	mode1_sai	x\battle\name\sai\name.bmp	x\name\sai\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-040	1	mode1_sch	x\name\sco\name.bmp	x\name\sch\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-041	1	mode1_sco	x\name\sco\name.bmp	x\name\sco\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-042	1	mode1_sec	x\name\02hkg\name.bmp	x\name\sec\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-043	1	mode1_sik	x\name\sik\name.bmp	x\name\sik\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-044	1	mode1_sin	x\name\sin\name.bmp	x\name\sin\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-045	1	mode1_siw	x\name\sik\name.bmp	x\name\siw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-046	1	mode1_skn	x\name\skn\name.bmp	x\name\skn\name.bmp	indexed_crop_transparent_top_left_256x128_nearest_palette_0-1-2-3-4-5-6-7-9-10-11-12-13-14	Official English Shikamaru victory-name artwork; retain the compatible NA2 CCS structure and omit only the faintest donor antialias shade to fit the fixed member.
+UI-VICTORY-047	1	mode1_skr	x\name\skr\name.bmp	x\name\skr\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-048	1	mode1_skw	x\name\skw\name.bmp	x\name\skw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-049	1	mode1_snw	x\name\sin\name.bmp	x\name\snw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-050	1	mode1_ssk	x\name\ssk\name.bmp	x\name\ssk\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-051	1	mode1_ssw	x\name\ssk\name.bmp	x\name\ssw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-052	1	mode1_szw	x\name\szn\name.bmp	x\name\szw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-053	1	mode1_ten	x\name\ten\name.bmp	x\name\ten\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-054	1	mode1_tew	x\name\ten\name.bmp	x\name\tew\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-055	1	mode1_tmr	x\name\tmr\name.bmp	x\name\tmr\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-056	1	mode1_tmw	x\name\tmr\name.bmp	x\name\tmw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-057	1	mode1_tnw	x\name\tnd\name.bmp	x\name\tnw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-058	1	mode1_tyo	x\name\tyo\name.bmp	x\name\tyo\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-059	1	mode1_tyw	x\name\tyo\name.bmp	x\name\tyw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-060	1	mode1_tyy	x\name\tyy\name.bmp	x\name\tyy\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-061	1	mode1_ymt	x\battle\name\ymt\name.bmp	x\name\ymt\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
+UI-VICTORY-062	1	mode1_zbz	x\name\zbz\name.bmp	x\name\zbz\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.

@@ -56,8 +56,8 @@ class UiTextureTests(unittest.TestCase):
         )
 
     def test_complete_package_is_source_derived_pinned_and_fixed_size(self) -> None:
-        self.assertEqual(len(self.plan.containers), 95)
-        self.assertEqual(self.plan.mapping_count, 148)
+        self.assertEqual(len(self.plan.containers), 96)
+        self.assertEqual(self.plan.mapping_count, 210)
         for result in self.plan.containers:
             self.assertEqual(
                 len(result.replacement), len(result.original), result.spec.path
@@ -74,7 +74,7 @@ class UiTextureTests(unittest.TestCase):
             for result in self.plan.containers
             if result.strategy.strategy == "whole"
         ]
-        self.assertEqual(len(whole), 33)
+        self.assertEqual(len(whole), 92)
         for result in whole:
             self.assertEqual(
                 gzip.decompress(result.replacement),
@@ -140,7 +140,7 @@ class UiTextureTests(unittest.TestCase):
         self.assertTrue(changed)
         self.assertTrue(all(allowed_start <= index < allowed_end for index in changed))
 
-    def test_all_ordinary_awakening_labels_are_exact_mapped_nun5_visuals(self) -> None:
+    def test_all_ordinary_awakening_labels_are_exact_nun5_visuals(self) -> None:
         target_iso, donor_iso, _ = engine.source_members(
             self.na2_root,
             self.nun5_root,
@@ -187,46 +187,198 @@ class UiTextureTests(unittest.TestCase):
             mappings_by_container.setdefault(mapping.container_id, []).append(mapping)
 
         for result in results:
-            self.assertEqual(result.strategy.strategy, "mapped")
             target_payload = gzip.decompress(result.original)
             donor_payload = gzip.decompress(result.donor)
             output_payload = gzip.decompress(result.replacement)
             target_entries = engine.parse_ccs(target_payload)
             donor_entries = engine.parse_ccs(donor_payload)
             output_entries = engine.parse_ccs(output_payload)
-            self.assertEqual(len(output_payload), len(target_payload))
-            self.assertEqual(output_entries.keys(), target_entries.keys())
+            if result.strategy.strategy == "whole":
+                self.assertEqual(output_entries.keys(), donor_entries.keys())
+            else:
+                self.assertEqual(output_entries.keys(), target_entries.keys())
 
-            allowed_offsets = set()
             for mapping in mappings_by_container[result.spec.container_id]:
                 target_entry = target_entries[mapping.target_texture.casefold()]
                 donor_entry = donor_entries[mapping.donor_texture.casefold()]
-                output_entry = output_entries[mapping.target_texture.casefold()]
+                output_key = (
+                    mapping.donor_texture.casefold()
+                    if result.strategy.strategy == "whole"
+                    else mapping.target_texture.casefold()
+                )
+                output_entry = output_entries[output_key]
                 self.assertEqual(
                     engine.decoded_rgba(output_payload, output_entry),
                     engine.decoded_rgba(donor_payload, donor_entry),
                     mapping.mapping_id,
                 )
-                for section in (*target_entry.textures, *target_entry.palettes):
-                    allowed_offsets.update(
-                        range(
-                            section.data_offset,
-                            section.data_offset + section.data_size,
-                        )
-                    )
 
-            changed_offsets = {
-                index
-                for index, (before, after) in enumerate(
-                    zip(target_payload, output_payload)
-                )
-                if before != after
-            }
-            self.assertTrue(changed_offsets, result.spec.path)
-            self.assertTrue(
-                changed_offsets <= allowed_offsets,
-                result.spec.path,
+    def test_all_victory_names_are_derived_from_official_nun5_artwork(self) -> None:
+        results = [
+            result
+            for result in self.plan.containers
+            if result.spec.container_id.startswith("mode1_")
+        ]
+        mappings = [
+            mapping
+            for mapping in self.plan.package.mappings
+            if mapping.mapping_id.startswith("UI-VICTORY-")
+            and mapping.container_id.startswith("mode1_")
+        ]
+        self.assertEqual(len(results), 61)
+        self.assertEqual(len(mappings), 61)
+        self.assertEqual(
+            Counter(result.strategy.strategy for result in results),
+            {"whole": 59, "mapped": 2},
+        )
+        mappings_by_container = {mapping.container_id: mapping for mapping in mappings}
+        self.assertEqual(
+            mappings_by_container.keys(),
+            {result.spec.container_id for result in results},
+        )
+
+        def by_object(
+            entries: dict[str, engine.TextureEntry],
+            object_name: str,
+        ) -> engine.TextureEntry:
+            matches = [
+                entry
+                for entry in entries.values()
+                if any(part.object_name == object_name for part in entry.textures)
+            ]
+            self.assertEqual(len(matches), 1)
+            return matches[0]
+
+        def visible_bbox(
+            payload: bytes,
+            entry: engine.TextureEntry,
+        ) -> tuple[int, int, int, int]:
+            width, height, rgba = engine.decoded_rgba(payload, entry)
+            points = [
+                (x, height - 1 - raw_y)
+                for raw_y in range(height)
+                for x in range(width)
+                if rgba[(raw_y * width + x) * 4 + 3]
+            ]
+            return (
+                min(x for x, _ in points),
+                min(y for _, y in points),
+                max(x for x, _ in points) + 1,
+                max(y for _, y in points) + 1,
             )
+
+        for result in results:
+            mapping = mappings_by_container[result.spec.container_id]
+            target_payload = gzip.decompress(result.original)
+            donor_payload = gzip.decompress(result.donor)
+            output_payload = gzip.decompress(result.replacement)
+            target_name = by_object(engine.parse_ccs(target_payload), "TEX_name")
+            donor_name = by_object(engine.parse_ccs(donor_payload), "TEX_name")
+            output_name = by_object(engine.parse_ccs(output_payload), "TEX_name")
+            self.assertEqual(mapping.target_texture, target_name.name)
+            self.assertEqual(mapping.donor_texture, donor_name.name)
+
+            if result.strategy.strategy == "whole":
+                self.assertEqual(mapping.transform, "whole")
+                self.assertEqual(output_payload, donor_payload)
+                self.assertEqual(
+                    engine.decoded_rgba(output_payload, output_name),
+                    engine.decoded_rgba(donor_payload, donor_name),
+                )
+                continue
+
+            output_texture = output_name.textures[0]
+            tex = output_payload[
+                output_texture.data_offset :
+                output_texture.data_offset + output_texture.data_size
+            ]
+            used_indexes = {
+                index
+                for value in tex[0x18:]
+                for index in (value & 0x0F, value >> 4)
+            }
+            if result.spec.container_id == "mode1_hak":
+                self.assertEqual(
+                    mapping.transform,
+                    (
+                        "indexed_crop_transparent_top_left_128x64_nearest_palette_"
+                        "0-1-2-3-4-7-14"
+                    ),
+                )
+                self.assertEqual(
+                    engine.texture_dimensions(output_payload, output_texture),
+                    (128, 64),
+                )
+                self.assertEqual(used_indexes, {0, 1, 2, 3, 4, 7, 14})
+                self.assertEqual(visible_bbox(donor_payload, donor_name), (4, 4, 116, 51))
+                self.assertEqual(visible_bbox(output_payload, output_name), (5, 5, 116, 50))
+                self.assertEqual(result.padding_size, 0)
+            elif result.spec.container_id == "mode1_skn":
+                self.assertEqual(
+                    mapping.transform,
+                    (
+                        "indexed_crop_transparent_top_left_256x128_nearest_palette_"
+                        "0-1-2-3-4-5-6-7-9-10-11-12-13-14"
+                    ),
+                )
+                self.assertEqual(
+                    engine.texture_dimensions(output_payload, output_texture),
+                    (256, 128),
+                )
+                self.assertEqual(
+                    used_indexes,
+                    {0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14},
+                )
+                self.assertEqual(
+                    visible_bbox(output_payload, output_name),
+                    visible_bbox(donor_payload, donor_name),
+                )
+                self.assertEqual(result.padding_size, 9)
+            else:
+                self.fail(f"Unexpected mapped Victory exception {result.spec.container_id}")
+
+    def test_victory_emblem_import_preserves_other_enddemo_textures(self) -> None:
+        result = self.result("enddemo")
+        self.assertEqual(result.strategy.strategy, "mapped")
+        mapping = next(
+            item
+            for item in self.plan.package.mappings
+            if item.mapping_id == "UI-VICTORY-001"
+        )
+        target_payload = gzip.decompress(result.original)
+        donor_payload = gzip.decompress(result.donor)
+        output_payload = gzip.decompress(result.replacement)
+        target_entries = engine.parse_ccs(target_payload)
+        donor_entries = engine.parse_ccs(donor_payload)
+        output_entries = engine.parse_ccs(output_payload)
+        selected = mapping.target_texture.casefold()
+        self.assertEqual(
+            engine.decoded_rgba(output_payload, output_entries[selected]),
+            engine.decoded_rgba(
+                donor_payload,
+                donor_entries[mapping.donor_texture.casefold()],
+            ),
+        )
+        for name in (
+            r"x\enddemo\tex\enddemo02.bmp",
+            r"x\enddemo\tex\enddemo03.bmp",
+        ):
+            key = name.casefold()
+            for target_part, output_part in zip(
+                target_entries[key].textures + target_entries[key].palettes,
+                output_entries[key].textures + output_entries[key].palettes,
+                strict=True,
+            ):
+                self.assertEqual(
+                    output_payload[
+                        output_part.data_offset :
+                        output_part.data_offset + output_part.data_size
+                    ],
+                    target_payload[
+                        target_part.data_offset :
+                        target_part.data_offset + target_part.data_size
+                    ],
+                )
 
     def test_home_uses_the_complete_nun5_collection_container(self) -> None:
         result = self.result("home")
@@ -689,6 +841,81 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(patch.status, "runtime_proven")
         self.assertEqual(patch.confidence, "verified")
 
+    def test_victory_name_layouts_are_derived_from_nun5_tables(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = binary_patcher.load_package(
+            repository
+            / "na2_patcher/features/localization/binary_patcher"
+        )
+        edits = [item for item in package.edits if item.patch_id == "UI-BTL-014"]
+        patch = package.patches["UI-BTL-014"]
+        na2_btl = (self.na2_root / "PRG" / "BTL.BIN").read_bytes()
+        nun5_elf = (self.nun5_root / "SLES_556.05").read_bytes()
+        nun5_btl = (self.nun5_root / "PRG" / "BTL.BIN").read_bytes()
+        templates = (
+            nun5_btl[0x21B9C0 : 0x21B9C0 + 24],
+            nun5_btl[0x21B9E0 : 0x21B9E0 + 24],
+        )
+        pointers = struct.unpack_from("<188I", na2_btl, 0x1F1D40)
+        widths_by_pointer: dict[int, set[int]] = {}
+        frames_by_pointer: dict[int, set[int]] = {}
+
+        for character_id in range(94):
+            donor_widths = struct.unpack_from(
+                "<HH",
+                nun5_elf,
+                0x4DE6D0 + character_id * 8,
+            )
+            for frame, donor_width in enumerate(donor_widths):
+                pointer = pointers[character_id * 2 + frame]
+                if pointer != 0:
+                    widths_by_pointer.setdefault(pointer, set()).add(donor_width)
+                    if donor_width != 0:
+                        frames_by_pointer.setdefault(pointer, set()).add(frame)
+
+        expected: dict[int, tuple[bytes, bytes]] = {}
+        for pointer, widths in widths_by_pointer.items():
+            nonzero_widths = widths - {0}
+            self.assertLessEqual(len(nonzero_widths), 1)
+            if not nonzero_widths:
+                continue
+            donor_width = next(iter(nonzero_widths))
+            self.assertEqual(len(frames_by_pointer[pointer]), 1)
+            frame = next(iter(frames_by_pointer[pointer]))
+            destination_offset = pointer - 0x006B3F00
+            original = na2_btl[destination_offset : destination_offset + 24]
+            replacement_record = bytearray(templates[frame])
+            struct.pack_into("<H", replacement_record, 4, donor_width - 2)
+            replacement = bytes(replacement_record)
+            if original != replacement:
+                expected[destination_offset] = (original, replacement)
+
+        self.assertEqual(len(edits), 78)
+        self.assertEqual(
+            {
+                edit.destination_offset: (
+                    bytes.fromhex(edit.expected_hex),
+                    bytes.fromhex(edit.replacement_hex),
+                )
+                for edit in edits
+            },
+            expected,
+        )
+        self.assertEqual(
+            (
+                edits[0].destination_offset,
+                edits[0].expected_hex,
+                edits[0].replacement_hex,
+            ),
+            (
+                0x2161B0,
+                "01000100EC003E00000000000000F8C10000000000000000",
+                "010001009A003E00000000000000F8C10000000000000000",
+            ),
+        )
+        self.assertEqual(patch.status, "approved_for_test")
+        self.assertEqual(patch.confidence, "high")
+
     def test_paired_item_status_layout_uses_exact_nun5_donors(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
@@ -1029,14 +1256,14 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 164)
-        self.assertEqual(operations, {"copy": 73, "replace": 91})
+        self.assertEqual(len(ui_edits), 242)
+        self.assertEqual(operations, {"copy": 73, "replace": 169})
         self.assertEqual(
             copy_sources,
             {"nun5_elf": 52, "nun5_btl": 16, "nun5_etc": 5},
         )
         self.assertEqual(len(stage_scales), 24)
-        self.assertEqual(len(adaptations), 67)
+        self.assertEqual(len(adaptations), 145)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")
@@ -1074,15 +1301,15 @@ class UiTextureTests(unittest.TestCase):
             ) as handle:
                 summary = list(csv.DictReader(handle, delimiter="\t"))
 
-            self.assertEqual(len(patches), 95)
+            self.assertEqual(len(patches), 96)
             self.assertTrue(all(row["file"] == "DATA/DATA.CVM" for row in patches))
             self.assertTrue(all(row["original_sha256"] for row in patches))
             self.assertTrue(all(row["new_sha256"] for row in patches))
             self.assertTrue(
                 all(row["derivation"].startswith("canonical_nun5_") for row in patches)
             )
-            self.assertEqual(summary[0]["container_count"], "95")
-            self.assertEqual(summary[0]["mapping_count"], "148")
+            self.assertEqual(summary[0]["container_count"], "96")
+            self.assertEqual(summary[0]["mapping_count"], "210")
             self.assertEqual(summary[0]["worker_count"], str(self.plan.worker_count))
 
 

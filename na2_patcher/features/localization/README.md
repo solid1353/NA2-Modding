@@ -818,13 +818,13 @@ from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
 ### Safety and reproducibility
 
 - `containers.tsv` pins every clean NA2 target and official NUN5 donor member.
-- `mappings.tsv` records 148 reviewed texture relationships.
+- `mappings.tsv` records 210 reviewed texture relationships.
 - `strategies.tsv` pins each derived fixed-size replacement hash and its
   decompressed CCS payload hash.
-- All 95 derived replacements preserve their original NA2 member size and
+- All 96 derived replacements preserve their original NA2 member size and
   therefore do not move a `DATA.CVM` member or ISO extent. Their fixed ranges
-  total 6,222,874 bytes.
-- Thirty-three `whole` strategies import the complete NUN5 CCS payload so pixels,
+  total 6,297,394 bytes.
+- Ninety-two `whole` strategies import the complete NUN5 CCS payload so pixels,
   models, UVs, layout, and animation data remain coupled.
 - `HOME.CCS` is a whole donor because its official collection headers,
   Previous Page/Play labels, button prompts, models, UVs, and layout must stay
@@ -832,11 +832,18 @@ from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
 - `MAPSEL1.CCS` is a whole donor because its stage-picture association/order,
   object layout, models, UVs, and labels must match NUN5 together. The stage
   picture pixels already matched; retaining NA2's structure caused the defect.
-- Sixty-one character `3EYE/3???3PCT.CCS` containers use 72 mapped `copy`
-  relationships to import the complete official NUN5 ordinary-awakening label
-  set. Each mapping copies only its paired TEX/CLT component ranges, retaining
-  the target CCS structure and every unrelated NA2 visual. No awakening texture
-  blobs or executable placement patches are stored.
+- Sixty-one character `3EYE/3???3PCT.CCS` containers import the complete
+  official NUN5 Victory-name and ordinary-awakening artwork. Fifty-nine use
+  complete donors because those are the only decoded visual changes. Haku and
+  Shikamaru remain mapped fixed-capacity exceptions: Haku discards transparent
+  canvas and uses seven nearest colors from its NUN5 palette; Shikamaru omits
+  only its faintest donor antialias shade. No character texture blobs are
+  stored. `UI-BTL-014` separately derives NA2's prebuilt name rectangles from
+  the official NUN5 frame templates and English width table.
+- `3EYE/ENDDEMO.CCS` is mapped so only the complete NUN5 `enddemo01` TEX/CLT
+  pair, including the English `WINNER` emblem, replaces the corresponding NA2
+  atlas. Its two unrelated background textures and target CCS structure remain
+  unchanged.
 - Mapped `copy` retains the first container-local TEX palette reference and
   validates paired component signatures before changing the target.
 - `MODE2KDV.CCS` is a mapped capacity exception: it retains the NA2 portrait,
@@ -849,7 +856,7 @@ from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
   size-preserving `UI-BTL-001` semantic port in
   `na2_patcher/features/localization/binary_patcher/`.
 
-The engine searches deterministic zlib encodings first. Five fixed-capacity
+The engine searches deterministic zlib encodings first. Twenty-eight fixed-capacity
 members require Zopfli; `na2_patcher/requirements.txt` pins the verified
 `zopfli==0.4.3` implementation. A normal build fails clearly instead of using
 different or unpinned output bytes when that dependency is unavailable.
@@ -867,6 +874,14 @@ Derive and verify every pinned production replacement from the repository root:
 ```powershell
 python -m na2_patcher.modules.texture_patcher.engine verify `
   --package na2_patcher/features/localization/texture_patcher
+```
+
+Regenerate the reviewed Victory rows and hashes after an intentional source or
+strategy change:
+
+```powershell
+python scripts/research/ui_translation/generate_victory_texture_mappings.py --write
+python scripts/research/ui_translation/generate_victory_layout_patch.py --write
 ```
 
 Write a review-only generated extraction outside the source roots:
@@ -1279,6 +1294,32 @@ left Mash unchanged and corrupted the Cross panels, proving the semantic
 boundary. Exact renderer functions, address mappings, object fields, records,
 and negative evidence are preserved in
 `docs/knowledge/localization/ui/battle.md`.
+
+### UI-BTL-014: localized Victory character-name layouts
+
+NA2 and NUN5 use homologous Victory update and draw functions, but their
+rectangle-provider ABIs differ. NA2 BTL returns pointers to 24-byte prebuilt
+Japanese records. NUN5 BTL selects one of two official frame templates and
+fills its width from the localized boot-ELF table. For Naruto, NUN5 atlas
+widths `156, 192` become renderer widths `154, 190`; NA2's records contain
+`236, 173`.
+
+`UI-BTL-014` keeps the NA2 pointer-return ABI and generates all 78 unique
+compatible records from the exact NUN5 templates plus each English width minus
+the renderer's two-pixel border. Zero-only NUN5 aliases remain untouched, and
+all shared-pointer rows agree whenever they provide a nonzero width. Direct
+donor copies cannot represent the synthesized records because they do not
+exist as final data in NUN5. The generator verifies both ELFs and both BTL
+files before updating the guarded replacements; no handwritten placement
+permutation or stored binary asset is used.
+
+The resident update, draw, and two-part centering code is instruction-level
+equivalent across both games. A stale NA2 savestate resumes into a different
+animation phase and texture replacement does not reconstruct its loaded CCS,
+so that route is rejected as runtime acceptance. Exact function ranges,
+file/runtime mappings, reconstruction, alias evidence, and the remaining
+normal-entry runtime requirement are preserved in
+`docs/knowledge/localization/ui/victory.md`.
 
 ### UI-ETC-001: localized Shop currency-label layout
 

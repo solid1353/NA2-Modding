@@ -41,7 +41,8 @@ history; do not recreate an archive directory for dead scripts.
   capacity research.
 - `research/ui_translation/`: selectable multi-game PCSX2 launch and tiling,
   offline paired-savestate import and screenshot extraction, rendering
-  preflight, and user-directed runtime research for NUN5-to-NA2 UI comparisons.
+  preflight, deterministic Victory texture and layout generation, and
+  user-directed runtime research for NUN5-to-NA2 UI comparisons.
 - `research/translation/`: the worker-only mapping-ID diagnostic builder used
   to identify visible strings. It does not change normal profile behavior.
 

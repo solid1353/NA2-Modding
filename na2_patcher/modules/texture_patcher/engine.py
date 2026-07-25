@@ -52,7 +52,26 @@ SECTION_TEXTURE = 0xCCCC0300
 SECTION_PALETTE = 0xCCCC0400
 SECTION_MODEL = 0xCCCC0800
 VALID_STRATEGIES = {"whole", "mapped"}
-VALID_TRANSFORMS = {"copy", "split_left", "split_right", "indexed_top_rows_64"}
+TRANSPARENT_TOP_LEFT_CROP = re.compile(
+    r"indexed_crop_transparent_top_left_([1-9][0-9]*)x([1-9][0-9]*)"
+    r"(?:_nearest_palette_([0-9]+(?:-[0-9]+)*))?"
+)
+VALID_TRANSFORMS = {
+    "copy",
+    "whole",
+    "split_left",
+    "split_right",
+    "indexed_top_rows_64",
+    "indexed_crop_transparent_top_left_128x64",
+    (
+        "indexed_crop_transparent_top_left_128x64_nearest_palette_"
+        "0-1-2-3-4-7-14"
+    ),
+    (
+        "indexed_crop_transparent_top_left_256x128_nearest_palette_"
+        "0-1-2-3-4-5-6-7-9-10-11-12-13-14"
+    ),
+}
 INDEXED_TOP_ROWS = re.compile(r"indexed_top_rows_([1-9][0-9]*)")
 KNOWN_SECTION_TYPES = {
     0xCCCC0001, 0xCCCC0002, 0xCCCC0003, 0xCCCC0005,
@@ -412,9 +431,50 @@ def validate_mapping(
         raise ValueError(f"{mapping.mapping_id}: target texture not found: {mapping.target_texture}")
     if donor is None:
         raise ValueError(f"{mapping.mapping_id}: donor texture not found: {mapping.donor_texture}")
+    if mapping.transform == "whole":
+        return
     if mapping.transform in {"copy", "indexed_top_rows_64"}:
         if component_signature(target_payload, target) != component_signature(donor_payload, donor):
             raise ValueError(f"{mapping.mapping_id}: target and donor component layouts differ")
+        return
+    crop = TRANSPARENT_TOP_LEFT_CROP.fullmatch(mapping.transform)
+    if crop is not None:
+        if len(target.textures) != 1 or len(target.palettes) != 1:
+            raise ValueError(f"{mapping.mapping_id}: target requires one TEX and one CLT")
+        if len(donor.textures) != 1 or len(donor.palettes) != 1:
+            raise ValueError(f"{mapping.mapping_id}: donor requires one TEX and one CLT")
+        if target.palettes[0].data_size != donor.palettes[0].data_size:
+            raise ValueError(f"{mapping.mapping_id}: target and donor palettes differ in size")
+        width, height = (int(value) for value in crop.groups()[:2])
+        if width & (width - 1) or height & (height - 1):
+            raise ValueError(f"{mapping.mapping_id}: crop dimensions must be powers of two")
+        donor_width, donor_height = texture_dimensions(donor_payload, donor.textures[0])
+        if width > donor_width or height > donor_height:
+            raise ValueError(f"{mapping.mapping_id}: crop exceeds donor texture dimensions")
+        decoded = decoded_rgba(donor_payload, donor)
+        if decoded is None:
+            raise ValueError(f"{mapping.mapping_id}: crop requires one indexed donor texture")
+        if crop.group(3) is not None:
+            palette_indexes = tuple(
+                int(value) for value in crop.group(3).split("-")
+            )
+            palette_size = (donor.palettes[0].data_size - 0x10) // 4
+            if (
+                not palette_indexes
+                or tuple(sorted(set(palette_indexes))) != palette_indexes
+                or palette_indexes[-1] >= palette_size
+            ):
+                raise ValueError(f"{mapping.mapping_id}: invalid nearest-palette subset")
+        _, _, rgba = decoded
+        first_raw_row = donor_height - height
+        for raw_y in range(donor_height):
+            for x in range(donor_width):
+                if raw_y >= first_raw_row and x < width:
+                    continue
+                if rgba[(raw_y * donor_width + x) * 4 + 3] != 0:
+                    raise ValueError(
+                        f"{mapping.mapping_id}: crop would discard visible donor pixels"
+                    )
         return
     if len(target.textures) != 1 or len(donor.textures) != 1:
         raise ValueError(f"{mapping.mapping_id}: split relationship requires one TEX section")
@@ -617,6 +677,117 @@ def copy_mapping_payload(
     return bytes(result)
 
 
+def transparent_top_left_crop_payload(
+    target_payload: bytes,
+    donor_payload: bytes,
+    mapping: Mapping,
+) -> bytes:
+    """Import a losslessly cropped indexed donor texture into the target CCS.
+
+    CCS TEX rows are stored bottom-to-top.  The transform therefore retains the
+    donor's final raw rows and their leftmost pixels, after validation proves
+    every discarded pixel is fully transparent.
+    """
+    crop = TRANSPARENT_TOP_LEFT_CROP.fullmatch(mapping.transform)
+    if crop is None:
+        raise ValueError(f"{mapping.mapping_id}: invalid transparent-crop transform")
+    target_entries = parse_ccs(target_payload)
+    donor_entries = parse_ccs(donor_payload)
+    validate_mapping(
+        mapping,
+        target_payload,
+        donor_payload,
+        target_entries,
+        donor_entries,
+    )
+    target = target_entries[mapping.target_texture.casefold()]
+    donor = donor_entries[mapping.donor_texture.casefold()]
+    target_texture = target.textures[0]
+    donor_texture = donor.textures[0]
+    width, height = (int(value) for value in crop.groups()[:2])
+    donor_width, donor_height = texture_dimensions(donor_payload, donor_texture)
+    donor_tex = donor_payload[
+        donor_texture.data_offset : donor_texture.data_offset + donor_texture.data_size
+    ]
+    encoded = donor_tex[0x18:]
+    pixels_per_byte: int
+    if len(encoded) * 2 == donor_width * donor_height:
+        pixels_per_byte = 2
+    elif len(encoded) == donor_width * donor_height:
+        pixels_per_byte = 1
+    else:
+        raise ValueError(f"{mapping.mapping_id}: unsupported indexed donor payload")
+    if width % pixels_per_byte:
+        raise ValueError(f"{mapping.mapping_id}: crop width is not byte-aligned")
+    donor_stride = donor_width // pixels_per_byte
+    crop_stride = width // pixels_per_byte
+    first_raw_row = donor_height - height
+    cropped = b"".join(
+        encoded[row * donor_stride : row * donor_stride + crop_stride]
+        for row in range(first_raw_row, donor_height)
+    )
+    if crop.group(3) is not None:
+        palette_indexes = tuple(int(value) for value in crop.group(3).split("-"))
+        donor_palette = donor.palettes[0]
+        clt = donor_payload[
+            donor_palette.data_offset : donor_palette.data_offset + donor_palette.data_size
+        ]
+        colors = [
+            tuple(clt[offset : offset + 4])
+            for offset in range(0x10, len(clt), 4)
+        ]
+        palette_map = [
+            min(
+                palette_indexes,
+                key=lambda candidate: sum(
+                    (colors[index][channel] - colors[candidate][channel]) ** 2
+                    for channel in range(4)
+                ),
+            )
+            for index in range(len(colors))
+        ]
+        if pixels_per_byte == 2:
+            cropped = bytes(
+                palette_map[value & 0x0F] | (palette_map[value >> 4] << 4)
+                for value in cropped
+            )
+        else:
+            cropped = bytes(palette_map[value] for value in cropped)
+
+    tex_data = bytearray(donor_tex[:0x18])
+    tex_data[:4] = target_payload[
+        target_texture.data_offset : target_texture.data_offset + 4
+    ]
+    tex_data[0xC] = width.bit_length() - 1
+    tex_data[0xD] = height.bit_length() - 1
+    struct.pack_into("<I", tex_data, 0x14, len(cropped) // 4)
+    tex_data.extend(cropped)
+    replacement_section = (
+        struct.pack(
+            "<III",
+            SECTION_TEXTURE,
+            51 + len(tex_data) // 4,
+            target_texture.object_id,
+        )
+        + tex_data
+    )
+    result = bytearray(
+        target_payload[: target_texture.offset]
+        + replacement_section
+        + target_payload[target_texture.offset + target_texture.total_size :]
+    )
+
+    output_entry = parse_ccs(result)[mapping.target_texture.casefold()]
+    output_palette = output_entry.palettes[0]
+    donor_palette = donor.palettes[0]
+    result[
+        output_palette.data_offset : output_palette.data_offset + output_palette.data_size
+    ] = donor_payload[
+        donor_palette.data_offset : donor_palette.data_offset + donor_palette.data_size
+    ]
+    return bytes(result)
+
+
 def gzip_header_end(data: bytes) -> int:
     if len(data) < 18 or data[:3] != b"\x1f\x8b\x08":
         raise ValueError("CCS is not a gzip stream")
@@ -704,8 +875,14 @@ def expected_payload(
     mappings: list[Mapping],
 ) -> bytes:
     if strategy.strategy == "whole":
-        if any(INDEXED_TOP_ROWS.fullmatch(mapping.transform) for mapping in mappings):
-            raise ValueError(f"{strategy.container_id}: whole strategy cannot use indexed-row transforms")
+        if any(
+            INDEXED_TOP_ROWS.fullmatch(mapping.transform)
+            or TRANSPARENT_TOP_LEFT_CROP.fullmatch(mapping.transform)
+            for mapping in mappings
+        ):
+            raise ValueError(
+                f"{strategy.container_id}: whole strategy cannot use indexed transforms"
+            )
         return donor_payload
     indexed = [mapping for mapping in mappings if INDEXED_TOP_ROWS.fullmatch(mapping.transform)]
     if indexed:
@@ -715,15 +892,23 @@ def expected_payload(
             )
         return indexed_top_rows_payload(target_payload, donor_payload, indexed[0])
 
-    copied = [mapping for mapping in mappings if mapping.transform == "copy"]
-    if not copied or len(copied) != len(mappings):
+    supported = [
+        mapping
+        for mapping in mappings
+        if mapping.transform == "copy"
+        or TRANSPARENT_TOP_LEFT_CROP.fullmatch(mapping.transform)
+    ]
+    if not supported or len(supported) != len(mappings):
         raise ValueError(
             f"{strategy.container_id}: mapped strategy requires one indexed-row mapping "
-            "or one or more copy mappings"
+            "or one or more copy/transparent-crop mappings"
         )
     payload = target_payload
-    for mapping in copied:
-        payload = copy_mapping_payload(payload, donor_payload, mapping)
+    for mapping in supported:
+        if mapping.transform == "copy":
+            payload = copy_mapping_payload(payload, donor_payload, mapping)
+        else:
+            payload = transparent_top_left_crop_payload(payload, donor_payload, mapping)
     return payload
 
 

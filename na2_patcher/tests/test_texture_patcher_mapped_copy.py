@@ -76,6 +76,72 @@ def synthetic_ccs(
     return bytes(result)
 
 
+def synthetic_indexed_ccs(
+    name: str,
+    width: int,
+    height: int,
+    *,
+    palette_reference: int,
+    opaque_outside_top_left_crop: bool = False,
+) -> bytes:
+    """Create one 4-bit indexed texture whose visual rows are bottom-to-top."""
+    toc_data = bytearray(0x20 + 0x20 + 0x20 + 2 * 0x20)
+    _write_name(toc_data, 0x20, name, 0x20)
+    object_cursor = 0x20 + 0x20 + 0x20
+    for suffix in ("tex", "clt"):
+        _write_name(toc_data, object_cursor, f"{name}.{suffix}", 0x1E)
+        struct.pack_into("<H", toc_data, object_cursor + 0x1E, 1)
+        object_cursor += 0x20
+
+    result = bytearray(
+        struct.pack(
+            "<IIII",
+            engine.SECTION_TOC,
+            len(toc_data) // 4,
+            2,
+            3,
+        )
+    )
+    result.extend(toc_data)
+
+    pixels = [0] * (width * height)
+    pixels[(height - 1) * width] = 1
+    if opaque_outside_top_left_crop:
+        pixels[width - 1] = 1
+    encoded = bytes(
+        pixels[index] | (pixels[index + 1] << 4)
+        for index in range(0, len(pixels), 2)
+    )
+    tex_data = bytearray(0x18)
+    struct.pack_into("<I", tex_data, 0, palette_reference)
+    tex_data[0xC] = width.bit_length() - 1
+    tex_data[0xD] = height.bit_length() - 1
+    struct.pack_into("<I", tex_data, 0x14, len(encoded) // 4)
+    tex_data.extend(encoded)
+    result.extend(
+        struct.pack(
+            "<III",
+            engine.SECTION_TEXTURE,
+            51 + len(tex_data) // 4,
+            1,
+        )
+    )
+    result.extend(tex_data)
+
+    clt_data = bytearray(0x10 + 16 * 4)
+    clt_data[0x14:0x18] = bytes((0x20, 0x40, 0x60, 0x80))
+    result.extend(
+        struct.pack(
+            "<III",
+            engine.SECTION_PALETTE,
+            (12 + len(clt_data) - 8) // 4,
+            2,
+        )
+    )
+    result.extend(clt_data)
+    return bytes(result)
+
+
 def mapping(mapping_id: str, texture: str) -> engine.Mapping:
     return engine.Mapping(
         mapping_id=mapping_id,
@@ -237,6 +303,131 @@ class MappedCopyTests(unittest.TestCase):
                 bytes(donor),
                 [self.mappings[0]],
             )
+
+    def test_transparent_top_left_crop_preserves_all_visible_donor_pixels(self) -> None:
+        name = "cropped.bmp"
+        target = synthetic_indexed_ccs(
+            name,
+            64,
+            64,
+            palette_reference=0x100,
+        )
+        donor = synthetic_indexed_ccs(
+            name,
+            256,
+            128,
+            palette_reference=0x200,
+        )
+        crop = engine.Mapping(
+            mapping_id="crop",
+            container_id="mapped",
+            target_texture=name,
+            donor_texture=name,
+            transform="indexed_crop_transparent_top_left_128x64",
+            reason="test",
+        )
+        output = engine.expected_payload(
+            strategy("mapped"),
+            target,
+            donor,
+            [crop],
+        )
+        target_entry = engine.parse_ccs(target)[name]
+        donor_entry = engine.parse_ccs(donor)[name]
+        output_entry = engine.parse_ccs(output)[name]
+        self.assertEqual(
+            engine.texture_dimensions(output, output_entry.textures[0]),
+            (128, 64),
+        )
+        self.assertEqual(
+            output[
+                output_entry.textures[0].data_offset :
+                output_entry.textures[0].data_offset + 4
+            ],
+            target[
+                target_entry.textures[0].data_offset :
+                target_entry.textures[0].data_offset + 4
+            ],
+        )
+        donor_width, donor_height, donor_rgba = engine.decoded_rgba(
+            donor,
+            donor_entry,
+        )
+        output_width, output_height, output_rgba = engine.decoded_rgba(
+            output,
+            output_entry,
+        )
+        expected = b"".join(
+            donor_rgba[
+                (row * donor_width) * 4 :
+                (row * donor_width + output_width) * 4
+            ]
+            for row in range(donor_height - output_height, donor_height)
+        )
+        self.assertEqual(output_rgba, expected)
+
+    def test_transparent_top_left_crop_rejects_visible_discarded_pixels(self) -> None:
+        name = "cropped.bmp"
+        target = synthetic_indexed_ccs(
+            name,
+            64,
+            64,
+            palette_reference=0x100,
+        )
+        donor = synthetic_indexed_ccs(
+            name,
+            256,
+            128,
+            palette_reference=0x200,
+            opaque_outside_top_left_crop=True,
+        )
+        crop = engine.Mapping(
+            mapping_id="crop",
+            container_id="mapped",
+            target_texture=name,
+            donor_texture=name,
+            transform="indexed_crop_transparent_top_left_128x64",
+            reason="test",
+        )
+        with self.assertRaisesRegex(ValueError, "discard visible donor pixels"):
+            engine.expected_payload(
+                strategy("mapped"),
+                target,
+                donor,
+                [crop],
+            )
+
+    def test_whole_mapping_declares_dimension_changing_donor_visual(self) -> None:
+        name = "whole.bmp"
+        target = synthetic_indexed_ccs(
+            name,
+            64,
+            64,
+            palette_reference=0x100,
+        )
+        donor = synthetic_indexed_ccs(
+            name,
+            256,
+            128,
+            palette_reference=0x200,
+        )
+        whole = engine.Mapping(
+            mapping_id="whole",
+            container_id="mapped",
+            target_texture=name,
+            donor_texture=name,
+            transform="whole",
+            reason="test",
+        )
+        self.assertEqual(
+            engine.expected_payload(strategy("whole"), target, donor, [whole]),
+            donor,
+        )
+        with self.assertRaisesRegex(
+            ValueError,
+            "copy/transparent-crop mappings",
+        ):
+            engine.expected_payload(strategy("mapped"), target, donor, [whole])
 
     def test_derivation_worker_count_is_bounded_and_overridable(self) -> None:
         with patch.object(engine.os, "cpu_count", return_value=16):

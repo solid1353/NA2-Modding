@@ -8,6 +8,7 @@ Canonical documentation landing page for the `UI Translation` workstream.
 - [Battle UI knowledge](../../knowledge/localization/ui/battle.md)
 - [Collection UI knowledge](../../knowledge/localization/ui/collection.md)
 - [Stage-select UI knowledge](../../knowledge/localization/ui/stage_select.md)
+- [Victory UI knowledge](../../knowledge/localization/ui/victory.md)
 
 ## Workstream policy
 

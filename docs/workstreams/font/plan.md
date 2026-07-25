@@ -26,7 +26,11 @@ the font itself as almost pixel-for-pixel. Fullwidth Shift-JIS Save/Load digits
 are not a halfwidth-Latin parity target. The rejected shared 28x28 experiment
 remains disabled as negative evidence. Executable Font helpers now live in the
 shared resident `PRG/228.BIN`; a fresh worker build survives the Load transition
-that erased the former boot-ELF padding helpers.
+that erased the former boot-ELF padding helpers. Command Chart and Practice
+title rows now use their distinct NUN5 containers with one shared proportional
+denominator. The long Petal Shower title is complete and unclipped, and the
+reviewed short-title origins match NUN5 within accepted one-pixel raster
+residue.
 
 ## Required execution order
 
@@ -39,9 +43,11 @@ that erased the former boot-ELF padding helpers.
 4. Completed: promote the proven secondary-only descriptor-height path into
    the canonical glyph component and obtain final matched visual acceptance.
 5. In progress: the shared NUN5 renderer metric, Controls denominator,
-   Practice pause-list box, confirmation-choice positions, confirmation-body
-   placement, and character-return box are implemented. Continue through the
-   remaining caller families identified by the ten-pair savestate analysis.
+   Command Chart and Practice title boxes, Practice pause-list box,
+   confirmation-choice positions, confirmation-body placement, and
+   character-return box are implemented. Continue with the distinct Practice
+   command-explanation family, then the remaining caller families identified
+   by the ten-pair savestate analysis.
 
 Auto-adjust is downstream of horizontal metrics. A scaling test is not valid
 until logical width, visible glyph bounds, advances, and centering are measured

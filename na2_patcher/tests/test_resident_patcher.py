@@ -68,7 +68,26 @@ class ResidentPatcherTests(unittest.TestCase):
         ui = build.symbols["localization.font.ui_helper"]
         ui_payload = build.payload[ui.file_offset:ui.file_offset + ui.size]
         self.assertNotIn((0x003FAD20).to_bytes(4, "little"), ui_payload)
+        widths = build.symbols["localization.font.ascii_widths"]
+        width_payload = build.payload[
+            widths.file_offset:widths.file_offset + widths.size
+        ]
+        self.assertEqual(len(width_payload), 95)
+        for text, expected in (
+            ("Susanoo's Blade", 142),
+            ("Reverse Halo", 115),
+            (
+                "Fire Style: Phoenix Flower Jutsu @Petal Shower@",
+                440,
+            ),
+        ):
+            self.assertEqual(
+                sum(width_payload[ord(character) - 0x20] for character in text),
+                expected,
+            )
         for fragment in declaration.fragments:
+            if fragment.kind != "code":
+                continue
             linked = build.symbols[fragment.symbol]
             payload = build.payload[
                 linked.file_offset:linked.file_offset + linked.size

@@ -1554,6 +1554,9 @@ is enabled:
 - `font_renderer_metrics` ports the shared NUN5 secondary tracking, ordinary
   ASCII-space, newline-advance, and logical-width behavior. Boxed callers use
   the same corrected denominator instead of reconstructing it independently.
+  Pure printable ASCII uses the linked 95-entry proportional-width table;
+  retained NUN5 runtime probes confirm Command Chart denominators `142`, `115`,
+  and `440`.
 - `font_controls_auto_fit` reproduces NUN5's shrink-only Controls behavior.
   It keeps `Linked Attack` full width, fits the official
   `Ultimate Jutsu Prep` label, leaves `OFF` on the ordinary renderer, and
@@ -1567,16 +1570,18 @@ is enabled:
 - `font_layout_wrappers` ports shared selected/unselected confirmation-choice
   placement, the 216-unit Practice pause-list fit and Y origin, Practice and
   Collection confirmation-body alignment, and the character-return body's
-  centered 368-unit box. Exact caller guards leave unrelated shared-wrapper
-  users untouched.
+  centered 368-unit box. It also distinguishes the Command Chart 288-unit and
+  Practice-title 352-unit containers while sharing their shrink-only fit
+  implementation. Exact caller guards leave unrelated shared-wrapper users
+  untouched.
 
-Executable metric, fit, scale, and layout helpers are nine relocatable
-`resident_patcher` fragments linked into `PRG/228.BIN`. Their eight guarded ELF
-hook sites are resolved only after final payload placement. The binary-patcher
-module retains only static renderer data, tracking, and local alignment edits;
-it no longer installs executable code into ELF zero padding. The shared UI
-wrapper keeps transient coordinates and saved renderer fields in its own stack
-frame rather than the former global scratch record.
+Executable metric, fit, scale, and layout helpers are nine relocatable code
+fragments plus one linked read-only metric table in `PRG/228.BIN`. Their eight
+guarded ELF hook sites are resolved only after final payload placement. The
+binary-patcher module retains only static renderer data, tracking, and local
+alignment edits; it no longer installs executable code into ELF zero padding.
+The shared UI wrapper keeps transient coordinates and saved renderer fields in
+its own stack frame rather than the former global scratch record.
 
 The auto-fit and layout components require `font_nun5_glyphs` because their
 positions and fit decisions are tuned to its metrics. They otherwise remain

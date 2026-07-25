@@ -381,9 +381,10 @@ boot-ELF changes:
   spacing while removing its four-unit excess and skipping the second
   alternate-font height;
 - resident symbol `localization.font.measure` calls the accepted NA2 metric
-  path once, returns the corrected NUN5 denominator in `v0`, and preserves the
-  untouched legacy NA2 width in `v1`. Its correction is
-  `NA2_width_at_tracking_zero - 6 * ordinary_ASCII_space_count`.
+  path once and preserves that legacy result in `v1`. Pure printable ASCII is
+  measured in `v0` through the 95-entry NUN5-derived proportional-width table
+  packed beside the resident code. Tagged, multiline, or non-ASCII input keeps
+  the legacy path with the proven six-unit ordinary-space correction.
 
 The Controls wrapper remains a distinct 128-unit container, but its helper at
 resident symbol `localization.font.controls_fit` consumes that shared
@@ -403,6 +404,61 @@ correction to the Practice pause list, aligns Practice and Collection
 confirmation bodies, and routes the character-return body through a centered
 368-unit box after selecting the accepted secondary renderer. Unrelated
 callers resume through the resident displaced-code trampolines.
+
+### Command Chart and Practice title boxes
+
+The Command Chart and Practice command-title rows share the same boxed-fit
+logic but not the same container geometry. NUN5 wrapper telemetry at caller
+`0x003882D0` establishes these separate records:
+
+- Command Chart titles: X `28`, Y `17/117/217`, width `288`, height `20`;
+- Practice titles: X `32`, Y `14/114/214`, width `352`, height `20`;
+- Practice explanations remain a separate caller family at X `40`, Y
+  `42/142/242`, width `364`, height `48`, vertical alignment `1`.
+
+A guarded task-owned NUN5 state probe recorded `FUN_0018ca40`'s live horizontal
+denominators before scaling. `Susanoo's Blade` is `142`, `Reverse Halo` is
+`115`, and `Fire Style: Phoenix Flower Jutsu @Petal Shower@` is `440`.
+Those values exactly equal the sums from the 95-entry packed metric table.
+This runtime result rejects both the legacy NA2 results (`135`, `110`, `417`)
+and the temporary constant-eight interpretation. The resident helper now
+validates plain ASCII once, consumes the shared table, applies the caller's
+`box_width / measured_width` factor only on overflow, and restores scale after
+the draw.
+
+NA2 reaches the shared UI wrapper at return address `0x00382454`; exact outer
+return-address guards distinguish Command Chart `0x0087A930`, Practice title
+`0x00878AA0`, and the pre-existing character-body caller. The final current
+origins use a common `-0.8` logical-unit visible-ink compensation:
+Command Chart X `27.2` with Y offset `-3.8`, and Practice X `31.2` with Y
+offset `-6.8`. The width constants remain the exact NUN5 `288` and `352`.
+
+Matched 640x480 captures on worker CRC `D64F4D9F` show:
+
+| Title row | NUN5 ink bounds | Current ink bounds |
+| --- | --- | --- |
+| Command Chart: `Susanoo's Blade` | `(141,87)-(314,100)` | `(141,87)-(314,99)` |
+| Command Chart: `Reverse Halo` | `(141,212)-(279,225)` | `(140,212)-(279,224)` |
+| Command Chart: long Petal Shower title | `(141,337)-(488,353)` | `(141,337)-(496,353)` |
+| Practice: `Shadowbur Extra Hit` | `(96,83)-(326,96)` | `(96,83)-(325,96)` |
+| Practice: `Guard` | `(96,208)-(153,221)` | `(96,208)-(153,221)` |
+| Practice: `Linked Attack` | `(96,333)-(245,346)` | `(96,333)-(245,346)` |
+
+The long current title is complete and unclipped. Its eight-pixel right-edge
+difference is not a fit error: official NUN5 bytes `0x40` render quote-shaped
+glyphs, while the accepted NA2 atlas deliberately preserves literal at-signs.
+The occasional one-pixel short-title height or leading-bearing difference is
+likewise accepted raster/metric residue, not a container offset. The NUN5
+reference screenshot hashes are
+`E602195AF1CC4EFD122735DD7F7D08A15ECCC38B88DB1FCF85C5CD966E70E9DE`
+and
+`983AC7C636C3F5CF47492E87795899592C2B4B50EFA1EE556AC4095052F4CF2E`;
+the matched current hashes are
+`FE37ABB125396BA6786230A6B580DE4C59EEF20527A4FD5B49B52D98BCC15598`
+and
+`D10643D42B96D0135C4E25F636EB517042C6ABE28822BEB56DFFD0AE5D084C8F`.
+Confidence is **high** for the denominators, caller guards, fit thresholds,
+origins, and separation from the unresolved Practice explanation family.
 
 Commit `3d52a14` placed the complete helper block at runtime
 `0x003D3E00..0x003D4388` (file `0x2D3F00..0x2D4488`) inside the larger

@@ -25,10 +25,11 @@ Current PCSX2 actualization:
   automatically, while worker builds never actualize.
 - A zero-byte canonical PNACH removes its managed PCSX2 CRC aliases. Other
   games, real files, and unrelated symlinks are preserved.
-- The base memory-card filename comes from `gamesettings.ini`. Current,
-  Previous, and Candidate receive missing copies suffixed ` - Current`,
-  ` - Previous`, and ` - Candidate`; later actualizations never overwrite or
-  delete those working cards.
+- Current keeps the `[MemoryCards]` section and exact `Slot1_Filename` from
+  `gamesettings.ini`. Previous and Candidate omit the entire section. When
+  multiple images share one PCSX2 serial/CRC identity, the single GameSettings
+  file is deduplicated with Current taking precedence. Actualization never
+  creates, copies, or modifies memory cards.
 - `@pcsx2_files/` contains the Git-tracked canonical PNACH, GameSettings
   template, input profiles, project input recordings, and ignored local
   screenshots.
@@ -252,8 +253,10 @@ DATA.CVM passwords: `cc2fuku` for NA2, NUN3, and NUN5; `Iruka` for NUN6 A35.
 its transcript and status reporting. Bare `act` dispatches `na2`, `input`, then
 `links`. `na2.ps1` derives identities for every retained Current, Previous, and
 Candidate ISO, deletes stale managed cheat symlinks and NA2.28 GameSettings,
-creates the required cheat aliases and real role GameSettings, and copies the
-template-selected base card only when a role card is absent. `input.ps1`
+creates the required cheat aliases and real role GameSettings, and keeps the
+template's `[MemoryCards]` section only in Current's GameSettings.
+Previous and Candidate omit that section, and memory cards are never copied.
+`input.ps1`
 regenerates `Comparison_NA2.ini`; `links.ps1` creates or verifies the configured
 project-to-user hardlinks. Occupied unmanaged destinations are refused.
 

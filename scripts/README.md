@@ -76,8 +76,9 @@ helper delegates to that mode.
 `actualization/act.ps1` owns standalone actualization logging and dispatch.
 Bare `act` runs `na2`, `input`, then `links`. `actualization/na2.ps1` derives
 every retained role's serial and ELF CRC, maintains canonical PNACH aliases,
-writes real role GameSettings, and creates missing role memory cards from the
-template-selected base. Existing role cards are preserved.
+writes real GameSettings, keeps the template `[MemoryCards]` section only for
+Current, and deduplicates shared serial/CRC identities with Current taking
+precedence. It never creates or modifies memory cards.
 `actualization/links.ps1` creates or verifies the configured project-to-user
 hardlinks and refuses differing occupied counterparts.
 

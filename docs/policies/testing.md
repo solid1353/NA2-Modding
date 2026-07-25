@@ -50,8 +50,10 @@ drift-prone implementation details here.
 - User-owned Current/Previous/Candidate workflows may run the maintained
   actualization pipeline automatically; worker builds never actualize.
 - `act na2` manages only the configured NA2.28 Current/Previous/Candidate
-  identities, CRC cheat links, GameSettings, and role memory-card copies. It
-  preserves occupied unmanaged destinations and existing role cards.
+  identities, CRC cheat links, and GameSettings. Current keeps the template's
+  `[MemoryCards]` section; Previous and Candidate omit it. Identity collisions
+  are deduplicated with Current taking precedence. The configured memory card
+  is never copied or modified.
 - `act input` regenerates the configured NA2 comparison input profile.
 - `act links` creates/verifies only configured project-to-user-PCSX2 file
   hardlinks and refuses differing occupied counterparts without deleting

@@ -287,8 +287,6 @@ function Format-Na2ActualizeStatus {
         "GameSettings created=$(@($Result.CreatedGameSettings).Count), " +
         "updated=$(@($Result.UpdatedGameSettings).Count), " +
         "preserved=$(@($Result.PreservedGameSettings).Count), " +
-        "removed=$(@($Result.RemovedGameSettings).Count); " +
-        "memory cards created=$(@($Result.CreatedMemoryCards).Count), " +
-        "preserved=$(@($Result.PreservedMemoryCards).Count)."
+        "removed=$(@($Result.RemovedGameSettings).Count)."
     )
 }

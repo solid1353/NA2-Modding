@@ -82,6 +82,25 @@ function Remove-Na2IniValue {
     return $Text.Substring(0, $bodyGroup.Index) + $newBody + $Text.Substring($bodyGroup.Index + $bodyGroup.Length)
 }
 
+function Remove-Na2IniSection {
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text,
+        [Parameter(Mandatory = $true)][string]$Section
+    )
+
+    $sectionPattern = (
+        '(?ms)^[ \t]*\[' +
+        [regex]::Escape($Section) +
+        '\][ \t]*(?:\r?\n|$).*?(?=^[ \t]*\[|\z)'
+    )
+    $matches = [regex]::Matches($Text, $sectionPattern)
+    if ($matches.Count -gt 1) {
+        throw "INI contains duplicate [$Section] sections."
+    }
+    if ($matches.Count -eq 0) { return $Text }
+    return $Text.Remove($matches[0].Index, $matches[0].Length)
+}
+
 function Set-Na2IniSettings {
     param(
         [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text,

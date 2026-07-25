@@ -86,7 +86,7 @@ PowerShell transcript boilerplate, replace configured roots with aliases, and
 record command mode, start/end time, duration, outcome, ISO result/rotation and
 profile record when applicable. `act` records the selected mode or full
 three-mode dispatch; NA2 actualization reports roles, aliases, GameSettings,
-memory cards, and enabled cheats.
+and enabled cheats.
 
 ## Other task logs
 

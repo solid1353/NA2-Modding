@@ -169,8 +169,6 @@ Write-Host '[fake] actualize na2'
     UpdatedGameSettings = @()
     PreservedGameSettings = @('SLOP-NA228_12345678.ini')
     RemovedGameSettings = @()
-    CreatedMemoryCards = @()
-    PreservedMemoryCards = @('Base - Current.ps2')
 }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'input.ps1') -Content @'
@@ -381,14 +379,11 @@ else {
             UpdatedGameSettings = @()
             PreservedGameSettings = @('SLOP-NA228_C0659AD1.ini')
             RemovedGameSettings = @('old-settings')
-            CreatedMemoryCards = @()
-            PreservedMemoryCards = @('Base - Current.ps2')
         }) `
         -ProjectPaths $paths
     Assert-Na2Test -Condition ($status -match 'Current=SLOP-NA228_C0659AD1') -Message 'Actualize status omitted the role identity.'
     Assert-Na2Test -Condition ($status -match 'Intro skips') -Message 'Actualize status omitted enabled cheats.'
     Assert-Na2Test -Condition ($status -match 'GameSettings') -Message 'Actualize status omitted GameSettings.'
-    Assert-Na2Test -Condition ($status -match 'memory card') -Message 'Actualize status omitted the memory card.'
 
     Write-Host 'NA2 run-log tests passed.' -ForegroundColor Green
 }

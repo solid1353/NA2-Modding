@@ -240,6 +240,9 @@ $baseCard = Join-Path $memoryCardsDirectory $baseCardName
 if (-not (Test-Path -LiteralPath $baseCard -PathType Leaf)) {
     throw "Base memory card referenced by gamesettings.ini was not found: $baseCard"
 }
+$settingsWithoutMemoryCard = Remove-Na2IniSection `
+    -Text $gameSettingsTemplate `
+    -Section 'MemoryCards'
 
 $definitions = @(
     [pscustomobject]@{ Role = 'Current'; Iso = $files.current_iso }
@@ -247,8 +250,6 @@ $definitions = @(
     [pscustomobject]@{ Role = 'Candidate'; Iso = $files.candidate_iso }
 )
 
-$baseCardStem = [IO.Path]::GetFileNameWithoutExtension($baseCardName)
-$baseCardExtension = [IO.Path]::GetExtension($baseCardName)
 $roles = @(
     foreach ($definition in $definitions) {
         $isoPath = [IO.Path]::GetFullPath([string]$definition.Iso)
@@ -264,16 +265,13 @@ $roles = @(
         }
         $serial = ([string]$identity.Serial).ToUpperInvariant()
         $crc = ([string]$identity.CRC).ToUpperInvariant()
-        $roleCardName = '{0} - {1}{2}' -f (
-            $baseCardStem,
-            [string]$definition.Role,
-            $baseCardExtension
-        )
-        $settingsText = Set-Na2IniValue `
-            -Text $gameSettingsTemplate `
-            -Section 'MemoryCards' `
-            -Key 'Slot1_Filename' `
-            -Value $roleCardName
+        $isCurrent = [string]$definition.Role -ceq 'Current'
+        $settingsText = if ($isCurrent) {
+            $gameSettingsTemplate
+        }
+        else {
+            $settingsWithoutMemoryCard
+        }
 
         [pscustomobject]@{
             Role = [string]$definition.Role
@@ -283,8 +281,6 @@ $roles = @(
             PnachName = "${serial}_${crc}.pnach"
             GameSettingsName = "${serial}_${crc}.ini"
             GameSettingsText = $settingsText
-            MemoryCardName = $roleCardName
-            MemoryCard = Join-Path $memoryCardsDirectory $roleCardName
         }
     }
 )
@@ -292,36 +288,11 @@ if ($roles.Count -eq 0) {
     throw 'No built NA2.28 image is available for actualization.'
 }
 
-$duplicateSettings = @(
+$settingsRoles = @(
     $roles |
         Group-Object GameSettingsName |
-        Where-Object Count -gt 1
+        ForEach-Object { $_.Group | Select-Object -First 1 }
 )
-if ($duplicateSettings.Count -gt 0) {
-    throw (
-        'Built NA2.28 images share a GameSettings identity: ' +
-        (($duplicateSettings.Name | Sort-Object) -join ', ')
-    )
-}
-
-$createdMemoryCards = [Collections.Generic.List[string]]::new()
-$preservedMemoryCards = [Collections.Generic.List[string]]::new()
-foreach ($role in $roles) {
-    if (Test-Path -LiteralPath $role.MemoryCard -PathType Leaf) {
-        $preservedMemoryCards.Add($role.MemoryCardName)
-        continue
-    }
-    if (Test-Path -LiteralPath $role.MemoryCard) {
-        throw "Memory-card destination is not a file: $($role.MemoryCard)"
-    }
-    Copy-Item -LiteralPath $baseCard -Destination $role.MemoryCard
-    if (-not (Test-Na2ActualizeBytesEqual `
-        -Left ([IO.File]::ReadAllBytes($baseCard)) `
-        -Right ([IO.File]::ReadAllBytes($role.MemoryCard)))) {
-        throw "New memory-card copy failed verification: $($role.MemoryCard)"
-    }
-    $createdMemoryCards.Add($role.MemoryCardName)
-}
 
 $legacyGameSettingsDirectory = Join-Path $gameSettingsDirectory '.na2'
 $managedLegacySettingsLink = {
@@ -350,7 +321,7 @@ $removedLegacySettingsSymlinks = @(
         }
 )
 
-$desiredSettingsNames = @($roles.GameSettingsName)
+$desiredSettingsNames = @($settingsRoles.GameSettingsName)
 $managedGameSettingsPattern = (
     '^(?:SLOP-NA228|SLUS-NA228|SLPS-22228)_[0-9A-F]{8}\.ini$'
 )
@@ -368,7 +339,7 @@ Get-ChildItem -LiteralPath $gameSettingsDirectory -Filter '*.ini' -File -Force |
 $createdGameSettings = [Collections.Generic.List[string]]::new()
 $updatedGameSettings = [Collections.Generic.List[string]]::new()
 $preservedGameSettings = [Collections.Generic.List[string]]::new()
-foreach ($role in $roles) {
+foreach ($role in $settingsRoles) {
     $path = Join-Path $gameSettingsDirectory $role.GameSettingsName
     $expectedBytes = [Text.UTF8Encoding]::new($false).GetBytes(
         $role.GameSettingsText
@@ -490,6 +461,4 @@ else {
         @($removedGameSettings) |
             Select-Object -Unique
     )
-    CreatedMemoryCards = @($createdMemoryCards)
-    PreservedMemoryCards = @($preservedMemoryCards)
 }

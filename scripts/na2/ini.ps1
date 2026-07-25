@@ -58,29 +58,6 @@ function Set-Na2IniValue {
     return $Text.Substring(0, $bodyGroup.Index) + $newBody + $Text.Substring($bodyGroup.Index + $bodyGroup.Length)
 }
 
-function Remove-Na2IniValue {
-    param(
-        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text,
-        [Parameter(Mandatory = $true)][string]$Section,
-        [Parameter(Mandatory = $true)][string]$Key
-    )
-
-    $sectionPattern = '(?ms)^\s*\[' + [regex]::Escape($Section) + '\]\s*\r?\n(?<body>.*?)(?=^\s*\[|\z)'
-    $sectionMatch = [regex]::Match($Text, $sectionPattern)
-    if (-not $sectionMatch.Success) { return $Text }
-    $bodyGroup = $sectionMatch.Groups['body']
-    $body = $bodyGroup.Value
-    $keyPattern = '(?m)^[ \t]*' + [regex]::Escape($Key) + '[ \t]*=[^\r\n]*(?:\r?\n|$)'
-    $matches = [regex]::Matches($body, $keyPattern)
-    if ($matches.Count -gt 1) {
-        throw "INI section [$Section] contains duplicate $Key settings."
-    }
-    if ($matches.Count -eq 0) { return $Text }
-    $match = $matches[0]
-    $newBody = $body.Remove($match.Index, $match.Length)
-    return $Text.Substring(0, $bodyGroup.Index) + $newBody + $Text.Substring($bodyGroup.Index + $bodyGroup.Length)
-}
-
 function Set-Na2IniSettings {
     param(
         [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text,
@@ -94,52 +71,6 @@ function Set-Na2IniSettings {
             -Section ([string]$setting.Section) `
             -Key ([string]$setting.Key) `
             -Value ([string]$setting.Value)
-    }
-    return $result
-}
-
-function Get-Na2IniSettingSnapshot {
-    param(
-        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text,
-        [Parameter(Mandatory = $true)][object[]]$Settings
-    )
-
-    @($Settings | ForEach-Object {
-        $value = Get-Na2IniValue -Text $Text -Section $_.Section -Key $_.Key
-        [pscustomobject]@{
-            Section = [string]$_.Section
-            Key = [string]$_.Key
-            Exists = $null -ne $value
-            Value = if ($null -eq $value) { '' } else { [string]$value }
-            InjectedValue = [string]$_.Value
-        }
-    })
-}
-
-function Restore-Na2IniSettings {
-    param(
-        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text,
-        [Parameter(Mandatory = $true)][object[]]$Snapshot,
-        [switch]$OnlyIfInjected
-    )
-
-    $result = $Text
-    foreach ($setting in $Snapshot) {
-        $current = Get-Na2IniValue -Text $result -Section $setting.Section -Key $setting.Key
-        if ($OnlyIfInjected -and $current -cne $setting.InjectedValue) { continue }
-        if ($setting.Exists) {
-            $result = Set-Na2IniValue `
-                -Text $result `
-                -Section $setting.Section `
-                -Key $setting.Key `
-                -Value $setting.Value
-        }
-        else {
-            $result = Remove-Na2IniValue `
-                -Text $result `
-                -Section $setting.Section `
-                -Key $setting.Key
-        }
     }
     return $result
 }

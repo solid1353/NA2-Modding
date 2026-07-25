@@ -52,7 +52,6 @@ try {
         pine_port = 28011
         memory_card = '@test/Mcd001.ps2'
         log_directory = '@test/logs'
-        settings_restored_after_game_load = $true
     }
 
     Write-Na2Pcsx2OwnershipDescriptor `

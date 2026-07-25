@@ -164,17 +164,19 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 - Root `_na2.ps1` is the routine build/launch entrypoint. Bare `na2`, `na2 -b`, bare `na2 -t`, `na2 -c`, and `na2 -p` retain their Current/Previous/Candidate behavior. The standalone `act` command performs actualization without building or launching. User-owned shared-image modes run `act na2` automatically; the launcher does not read or rewrite the user's `PCSX2.ini`. `na2 -t work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
 - `scripts/na2/` contains build/promotion, ISO identity,
   worker-path validation, PCSX2 launch/process control, PINE identity checks,
-  and agent runtime isolation. `test_launch.ps1` briefly injects worker
-  folders/card/PINE settings, waits for the expected ELF identity, restores
-  shared settings immediately, and thereafter controls its recorded
+  and agent runtime isolation. `test_launch.ps1` persistently configures only
+  the workstream's complete PCSX2 clone, uses that clone's already-configured
+  card directly, waits for the expected ELF identity, and thereafter controls its recorded
   PID/window/port only while an unchanged live descriptor and launch-local
   ownership capability both validate. Descriptor/capability loss is fail-closed:
   the process and potentially live task runtime data are left untouched. A
   task-owned declarative operation plan may load/capture savestates and perform
   exact-byte guarded PINE reads/writes through an in-process interpreter that
   revalidates ownership and same-connection serial/CRC identity without
-  exposing the port or capability. Live two-instance validation on PCSX2 2.6.3
-  confirmed independent ports, windows, cards, settings restoration, and
+  exposing the port or capability. Runtime folders remain within the
+  workstream root; there is no per-run card copy, synthetic GameSettings file,
+  second configuration lock, or INI snapshot/restore. Live two-instance
+  validation on PCSX2 2.6.3 confirmed independent ports, windows, cards, and
   targeted shutdown.
 - `na2_patcher/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na2_patcher/build_profile.py` applies that prepared pipeline and writes its run log. `na2_patcher/composer.py` resolves module artifacts and closes typed image operations. `na2_patcher/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Candidate, or worker-owned output.
 - `scripts/media/` contains the recursive source extractor, its byte-parity

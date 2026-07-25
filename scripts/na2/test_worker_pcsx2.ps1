@@ -105,6 +105,16 @@ try {
         -Condition (Test-Path -LiteralPath (Join-Path $reused.Root 'clone-only.txt')) `
         -Message 'Existing worker clone was overwritten instead of reused.'
 
+    $cloneIni = Join-Path $context.Root 'inis\PCSX2.ini'
+    $cloneText = [IO.File]::ReadAllText($cloneIni).Replace(
+        'Logs = logs',
+        "Logs = $($worker.Logs)"
+    )
+    [IO.File]::WriteAllText($cloneIni, $cloneText)
+    Assert-Na2Pcsx2PortableTree `
+        -Root $context.Root `
+        -AllowedRoot $worker.Root
+
     Set-Na2WorkerPcsx2Blocked `
         -Context $context `
         -Reason 'synthetic lost ownership' `
@@ -131,14 +141,16 @@ try {
     [IO.File]::WriteAllText($invalidIni, $invalidText)
     $rejected = $false
     try {
-        Assert-Na2Pcsx2PortableTree -Root $invalidRoot
+        Assert-Na2Pcsx2PortableTree `
+            -Root $invalidRoot `
+            -AllowedRoot $invalidRoot
     }
     catch {
-        $rejected = $_.Exception.Message -match "folder 'Logs' must be relative"
+        $rejected = $_.Exception.Message -match "folder 'Logs' escapes its workstream root"
     }
     Assert-Na2WorkerPcsx2Test `
         -Condition $rejected `
-        -Message 'Portable-tree validation accepted an absolute mutable folder.'
+        -Message 'Portable-tree validation accepted a folder outside the workstream root.'
 
     Write-Host 'NA2 workstream PCSX2 provisioning tests passed.' -ForegroundColor Green
 }

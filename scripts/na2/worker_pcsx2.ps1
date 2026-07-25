@@ -96,10 +96,17 @@ function Assert-Na2Pcsx2PortableTree {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$Root,
+        [string]$AllowedRoot,
         [switch]$CleanTemplate
     )
 
     $resolvedRoot = [IO.Path]::GetFullPath($Root)
+    $resolvedAllowedRoot = if ([string]::IsNullOrWhiteSpace($AllowedRoot)) {
+        $resolvedRoot
+    }
+    else {
+        [IO.Path]::GetFullPath($AllowedRoot)
+    }
     $rootItem = Get-Item -LiteralPath $resolvedRoot -Force -ErrorAction Stop
     if (($rootItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
         throw "PCSX2 portable root must not be a symlink or junction: $resolvedRoot"
@@ -136,12 +143,16 @@ function Assert-Na2Pcsx2PortableTree {
     )) {
         $folderValue = Get-Na2IniValue -Text $iniText -Section 'Folders' -Key $folderKey
         if ([string]::IsNullOrWhiteSpace($folderValue)) { continue }
-        if ([IO.Path]::IsPathRooted($folderValue)) {
-            throw "PCSX2 folder '$folderKey' must be relative inside the portable tree."
+        $folderPath = if ([IO.Path]::IsPathRooted($folderValue)) {
+            [IO.Path]::GetFullPath($folderValue)
         }
-        $folderPath = [IO.Path]::GetFullPath((Join-Path $resolvedRoot $folderValue))
-        if (-not (Test-Na2PathWithinRoot -Path $folderPath -Root $resolvedRoot)) {
-            throw "PCSX2 folder '$folderKey' escapes the portable tree."
+        else {
+            [IO.Path]::GetFullPath((Join-Path $resolvedRoot $folderValue))
+        }
+        if (-not (Test-Na2PathWithinRoot `
+            -Path $folderPath `
+            -Root $resolvedAllowedRoot)) {
+            throw "PCSX2 folder '$folderKey' escapes its workstream root."
         }
     }
 
@@ -180,7 +191,9 @@ function Initialize-Na2WorkerPcsx2 {
         if (-not (Test-Path -LiteralPath $context.Root -PathType Container)) {
             throw "Worker PCSX2 clone path is not a directory: $($context.Root)"
         }
-        Assert-Na2Pcsx2PortableTree -Root $context.Root
+        Assert-Na2Pcsx2PortableTree `
+            -Root $context.Root `
+            -AllowedRoot $Worker.Root
         return $context
     }
 

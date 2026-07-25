@@ -83,25 +83,28 @@ work/<task title>`. `na2/provision_test_pcsx2.ps1` atomically copies the
 protected `@pcsx2_clean` template into that workstream's private `pcsx2/`
 directory when absent; existing clones are validated and reused, never
 overwritten. A full-session lock prevents two launches from sharing one clone.
-The wrapper redirects writable folders within the worker, copies/reuses the
-clone's effective Slot 1 card, chooses a free PINE port, and launches the clone
-hidden/muted and running by default. Pass `-StartPaused` only when required.
-After PINE reports the expected serial/CRC, injected clone settings are
-restored. The wrapper records and validates the specific PID, start time,
-top-level window handle, and PINE endpoint. Process
+The wrapper keeps the clone's effective Slot 1 card in place, redirects
+per-run logs and artifacts within the same workstream root, chooses a free PINE
+port, and launches the clone hidden/muted and running by default. Pass
+`-StartPaused` only when required. Clone-local runtime settings persist for the
+next run to validate and update; there is no second configuration lock,
+temporary card copy, synthetic GameSettings file, or settings snapshot/restore.
+The wrapper records and validates the specific PID, start time, top-level
+window handle, and PINE endpoint. Process
 control additionally requires the unchanged live descriptor and its
 launch-local ownership capability; identity checks alone never authorize a
 stop. Descriptor/capability loss or a stop timeout leaves the process and live
 runtime files untouched, quarantines that workstream clone against later
 launches, and reports failure. The user installation and every other PCSX2
 process are never inspected or controlled. Runtime logs are unique per launch;
-savestates, screenshots, recordings, cards, cache, and dump paths remain
-task-owned.
+savestates, screenshots, recordings, cache, and dump paths remain task-owned,
+while the clone's own configured memory card remains persistent inside the
+clone.
 `na2/test_worker_pcsx2.ps1` covers atomic provisioning, template immutability,
-clone reuse, and portable-folder validation.
-`na2/test_test_runtime.ps1` covers path injection/restoration and guards against
-overwriting unrelated settings; `na2/test_test_memory_card.ps1` covers private
-card reuse; `na2/test_process_ownership.ps1` proves missing, mismatched, and
+clone reuse, and workstream-root folder validation.
+`na2/test_test_runtime.ps1` covers persistent clone configuration, direct card
+selection, and the absence of obsolete card copies or synthetic settings;
+`na2/test_process_ownership.ps1` proves missing, mismatched, and
 modified ownership records cannot terminate a process;
 `na2/test_test_pine.ps1` covers exact-byte guarded reads/writes; and
 `na2/test_test_operation.ps1` covers task-root confinement plus state/screenshot
@@ -109,7 +112,7 @@ handling. The shared ISO identity helper is also used by PNACH actualization.
 
 Tasks that need runtime control pass a repository-relative JSON plan below their
 own worker root with `-OperationPlan`; the launcher interprets it after PINE
-identity is ready and shared settings are restored, but before guarded cleanup:
+identity is ready, but before guarded cleanup:
 
 ```powershell
 & .\scripts\na2\test_launch.ps1 `
@@ -198,4 +201,6 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 | `scripts/archive/replace_iso_file_same_size.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na2_patcher.image_assembler`. |
 | `scripts/na2/check_log_crc.ps1` | `804c2df8d16019a3b55f6acb10a023c435faaafc` | Manual log/PNACH comparison was superseded by `na2/iso_identity.ps1` and the maintained standalone actualization workflow. |
 | `scripts/na2/get_elf_crc.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | The redundant command wrapper was removed; `na2/pcsx2_elf_crc.ps1` remains the shared tested implementation. |
+| `scripts/na2/test_memory_card.ps1` | `70a81a36ecf119b6330b19984c9c8104d54bcc61` | Full persistent workstream clones made per-run memory-card copying and synthetic per-game selection unnecessary; `na2/test_runtime.ps1` now validates and uses the clone's configured card directly. |
+| `scripts/na2/test_test_memory_card.ps1` | `70a81a36ecf119b6330b19984c9c8104d54bcc61` | The isolated-card-copy tests were retired with their implementation; direct clone-card selection is covered by `na2/test_test_runtime.ps1`. |
 | `scripts/research/translation/check_translation_lengths.ps1` | `91a7dabbbe8ac957b4c04d3abe7aec721757b839` | Its fixed-slot `old`/`new` assumptions are obsolete; translation importer and string patcher validation now enforce encoding and capacity rules. |

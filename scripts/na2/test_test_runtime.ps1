@@ -13,17 +13,25 @@ function Assert-Na2RuntimeTest {
     if (-not $Condition) { throw $Message }
 }
 
-$testRoot = Join-Path ([IO.Path]::GetTempPath()) "na2-runtime-tests-$PID-$([guid]::NewGuid().ToString('N'))"
+$testRoot = Join-Path ([IO.Path]::GetTempPath()) (
+    "na2-runtime-tests-$PID-$([guid]::NewGuid().ToString('N'))"
+)
 try {
     $repository = Join-Path $testRoot 'repository'
     $workRoot = Join-Path $repository 'work'
     $workerRoot = Join-Path $workRoot 'General'
-    $pcsx2 = Join-Path $testRoot 'pcsx2'
+    $pcsx2 = Join-Path $workerRoot 'pcsx2'
     $inis = Join-Path $pcsx2 'inis'
     $gameSettings = Join-Path $pcsx2 'gamesettings'
-    $sourceMemcards = Join-Path $pcsx2 'memcards'
+    $memoryCards = Join-Path $pcsx2 'memcards'
     New-Item -ItemType Directory -Force -Path @(
-        $repository, $workRoot, $inis, $gameSettings, $sourceMemcards
+        $repository
+        $workRoot
+        $workerRoot
+        $pcsx2
+        $inis
+        $gameSettings
+        $memoryCards
     ) | Out-Null
 
     $iniPath = Join-Path $inis 'PCSX2.ini'
@@ -56,73 +64,105 @@ Slot1_Enable = true
 Slot1_Filename = Mcd001.ps2
 '@
     [IO.File]::WriteAllText($iniPath, $originalIni)
-    [IO.File]::WriteAllBytes((Join-Path $sourceMemcards 'Mcd001.ps2'), [byte[]](1, 2, 3))
+    [IO.File]::WriteAllBytes(
+        (Join-Path $memoryCards 'Mcd001.ps2'),
+        [byte[]](1, 2, 3)
+    )
+    [IO.File]::WriteAllBytes(
+        (Join-Path $memoryCards 'Mcd001_NA2.ps2'),
+        [byte[]](4, 5, 6)
+    )
+    $identity = [pscustomobject]@{
+        Serial = 'SLOP-NA228'
+        CRC = '12345678'
+    }
+    $gameSettingsPath = Join-Path (
+        $gameSettings
+    ) "$($identity.Serial)_$($identity.CRC).ini"
+    $gameSettingsText = @'
+[MemoryCards]
+Slot1_Filename = Mcd001_NA2.ps2
+
+[EmuCore/GS]
+VsyncEnable = 1
+'@
+    [IO.File]::WriteAllText($gameSettingsPath, $gameSettingsText)
+
     $projectPaths = [pscustomobject]@{
         repository = $repository
         work = $workRoot
     }
     $pcsx2Context = [pscustomobject]@{
+        Root = $pcsx2
         Ini = $iniPath
         GameSettings = $gameSettings
-        MemoryCards = $sourceMemcards
+        MemoryCards = $memoryCards
     }
-    $worker = Get-Na2WorkerContext -WorkerRoot $workerRoot -ProjectPaths $projectPaths
+    $worker = Get-Na2WorkerContext `
+        -WorkerRoot $workerRoot `
+        -ProjectPaths $projectPaths
     $layout = New-Na2TestRuntimeLayout -Worker $worker
-    $identity = [pscustomobject]@{ Serial = 'SLOP-NA228'; CRC = '12345678' }
+    $context = Set-Na2TestRuntimeConfiguration `
+        -Pcsx2 $pcsx2Context `
+        -Layout $layout `
+        -IsoIdentity $identity `
+        -StartPaused $true
+    $configured = [IO.File]::ReadAllText($iniPath)
 
-    $mutex = Enter-Na2Pcsx2ConfigurationLock -IniPath $iniPath
-    try {
-        $context = Enter-Na2TestRuntimeConfiguration `
-            -Pcsx2 $pcsx2Context `
-            -Layout $layout `
-            -IsoIdentity $identity `
-            -AgentName 'Codex' `
-            -TaskIdentity 'runtime-test' `
-            -StartPaused $true
-        $injected = [IO.File]::ReadAllText($iniPath)
-        Assert-Na2RuntimeTest `
-            -Condition ((Get-Na2IniValue -Text $injected -Section 'Folders' -Key 'Logs') -ceq $layout.LogDirectory) `
-            -Message 'Runtime logs were not redirected to the worker.'
-        Assert-Na2RuntimeTest `
-            -Condition ((Get-Na2IniValue -Text $injected -Section 'Folders' -Key 'SaveStates') -ceq $layout.SaveStates) `
-            -Message 'Runtime savestates were not redirected to the worker.'
-        Assert-Na2RuntimeTest `
-            -Condition ((Get-Na2IniValue -Text $injected -Section 'SPU2/Output' -Key 'OutputMuted') -ceq 'true') `
-            -Message 'Runtime audio was not muted.'
-        Assert-Na2RuntimeTest `
-            -Condition ((Get-Na2IniValue -Text $injected -Section 'UI' -Key 'StartPaused') -ceq 'true') `
-            -Message 'Requested paused-start state was not isolated under the worker runtime.'
-        Assert-Na2RuntimeTest `
-            -Condition (Test-Path -LiteralPath $context.MemoryCard.TaskCardPath -PathType Leaf) `
-            -Message 'Worker memory card was not created under the worker root.'
-        Assert-Na2RuntimeTest `
-            -Condition ($context.MemoryCard.TaskCardPath.StartsWith($workerRoot, [StringComparison]::OrdinalIgnoreCase)) `
-            -Message 'Worker memory card escaped the worker root.'
+    Assert-Na2RuntimeTest `
+        -Condition ((Get-Na2IniValue -Text $configured -Section 'Folders' -Key 'Logs') -ceq $layout.LogDirectory) `
+        -Message 'Runtime logs were not redirected to the worker.'
+    Assert-Na2RuntimeTest `
+        -Condition ((Get-Na2IniValue -Text $configured -Section 'Folders' -Key 'SaveStates') -ceq $layout.SaveStates) `
+        -Message 'Runtime savestates were not redirected to the worker.'
+    Assert-Na2RuntimeTest `
+        -Condition ((Get-Na2IniValue -Text $configured -Section 'Folders' -Key 'MemoryCards') -ceq 'memcards') `
+        -Message 'Runtime configuration rewrote the clone memory-card directory.'
+    Assert-Na2RuntimeTest `
+        -Condition ((Get-Na2IniValue -Text $configured -Section 'SPU2/Output' -Key 'OutputMuted') -ceq 'true') `
+        -Message 'Runtime audio was not muted.'
+    Assert-Na2RuntimeTest `
+        -Condition ((Get-Na2IniValue -Text $configured -Section 'UI' -Key 'StartPaused') -ceq 'true') `
+        -Message 'Requested paused-start state was not retained in the clone.'
+    Assert-Na2RuntimeTest `
+        -Condition ($context.MemoryCardName -ceq 'Mcd001_NA2.ps2') `
+        -Message 'Runtime configuration did not honor the clone per-game card selection.'
+    Assert-Na2RuntimeTest `
+        -Condition ($context.MemoryCardPath -ceq (Join-Path $memoryCards 'Mcd001_NA2.ps2')) `
+        -Message 'Runtime configuration did not resolve the clone card in place.'
+    Assert-Na2RuntimeTest `
+        -Condition ([IO.File]::ReadAllText($gameSettingsPath) -ceq $gameSettingsText) `
+        -Message 'Runtime configuration rewrote the clone per-game settings.'
+    Assert-Na2RuntimeTest `
+        -Condition (-not (Test-Path -LiteralPath (Join-Path $worker.Artifacts 'memcards'))) `
+        -Message 'Runtime configuration created an obsolete task memory-card copy.'
 
-        Restore-Na2TestRuntimeConfiguration -Context $context
-        Assert-Na2RuntimeTest `
-            -Condition ([IO.File]::ReadAllText($iniPath) -ceq $originalIni) `
-            -Message 'Shared PCSX2 settings were not restored immediately.'
-        Assert-Na2RuntimeTest `
-            -Condition (-not (Test-Path -LiteralPath $context.MemoryCard.GameSettingsPath)) `
-            -Message 'Synthetic per-game memory-card settings were not restored.'
-
-        $guarded = [IO.File]::ReadAllText($iniPath)
-        $guarded = Set-Na2IniValue -Text $guarded -Section 'Folders' -Key 'Logs' -Value 'user-change'
-        [IO.File]::WriteAllText($iniPath, $guarded)
-        Restore-Na2TestRuntimeConfiguration -Context $context -OnlyIfInjected
-        Assert-Na2RuntimeTest `
-            -Condition ((Get-Na2IniValue -Text ([IO.File]::ReadAllText($iniPath)) -Section 'Folders' -Key 'Logs') -ceq 'user-change') `
-            -Message 'Exit-time safety restoration overwrote a non-agent setting change.'
+    $fallbackIdentity = [pscustomobject]@{
+        Serial = 'SLOP-NA228'
+        CRC = '87654321'
     }
-    finally {
-        Exit-Na2Pcsx2ConfigurationLock -Mutex $mutex
-    }
+    $fallback = Set-Na2TestRuntimeConfiguration `
+        -Pcsx2 $pcsx2Context `
+        -Layout $layout `
+        -IsoIdentity $fallbackIdentity
+    Assert-Na2RuntimeTest `
+        -Condition ($fallback.MemoryCardName -ceq 'Mcd001.ps2') `
+        -Message 'Runtime configuration did not fall back to the clone global card selection.'
 
-    Remove-Na2TestRuntimeLayout -Layout $layout -Worker $worker -WorkRoot $workRoot
+    Remove-Na2TestRuntimeLayout `
+        -Layout $layout `
+        -Worker $worker `
+        -WorkRoot $workRoot
     Assert-Na2RuntimeTest `
         -Condition (-not (Test-Path -LiteralPath $layout.TempRoot)) `
         -Message 'Runtime cleanup retained disposable cache directories.'
+    Assert-Na2RuntimeTest `
+        -Condition (Test-Path -LiteralPath $context.MemoryCardPath -PathType Leaf) `
+        -Message 'Runtime cleanup removed the persistent clone memory card.'
+    Assert-Na2RuntimeTest `
+        -Condition ((Get-Na2IniValue -Text ([IO.File]::ReadAllText($iniPath)) -Section 'Folders' -Key 'Logs') -ceq $layout.LogDirectory) `
+        -Message 'Runtime cleanup unexpectedly restored persistent clone settings.'
+
     Write-Host 'NA2 isolated PCSX2 runtime tests passed.' -ForegroundColor Green
 }
 finally {

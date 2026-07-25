@@ -4,8 +4,6 @@ param(
     [Parameter(Mandatory = $true)][string]$WorkerRoot,
     [ValidateRange(1, 300)][int]$WaitSeconds = 5,
     [ValidateRange(1, 300)][int]$ReadyTimeoutSeconds = 60,
-    [string]$AgentName = 'Codex',
-    [string]$TaskIdentity,
     [string]$OperationPlan,
     [switch]$StartPaused
 )
@@ -38,15 +36,6 @@ else {
 if (-not (Test-Path -LiteralPath $resolvedIsoPath -PathType Leaf)) {
     throw "ISO does not exist: $resolvedIsoPath"
 }
-if ([string]::IsNullOrWhiteSpace($TaskIdentity)) {
-    $TaskIdentity = if (-not [string]::IsNullOrWhiteSpace($env:CODEX_THREAD_ID)) {
-        $env:CODEX_THREAD_ID
-    }
-    else {
-        $worker.WorkerName
-    }
-}
-
 $pcsx2Context = Get-Na2WorkerPcsx2Context `
     -Worker $worker `
     -ProjectPaths $projectPaths
@@ -59,7 +48,6 @@ $launchScript = Join-Path $PSScriptRoot 'launch.ps1'
 $runtimeLayout = $null
 $runtimeContext = $null
 $workerPcsx2Lock = $null
-$configurationLock = $null
 $testProcess = $null
 $processStartTime = $null
 $descriptorPath = $null
@@ -68,7 +56,6 @@ $stopResult = $null
 $ownershipLossReason = $null
 $stopFailureReason = $null
 $safeToRemoveRuntime = $false
-$settingsRestoredAfterLaunch = $false
 $resolvedOperationPlan = $null
 $parsedOperationPlan = $null
 if (-not [string]::IsNullOrWhiteSpace($OperationPlan)) {
@@ -185,20 +172,16 @@ try {
 
     $isoIdentity = Get-Na2IsoPcsx2Identity -Path $resolvedIsoPath
     $runtimeLayout = New-Na2TestRuntimeLayout -Worker $worker
-    $configurationLock = Enter-Na2Pcsx2ConfigurationLock -IniPath $pcsx2Ini
-    $runtimeContext = Enter-Na2TestRuntimeConfiguration `
+    $runtimeContext = Set-Na2TestRuntimeConfiguration `
         -Pcsx2 $pcsx2Context `
         -Layout $runtimeLayout `
         -IsoIdentity $isoIdentity `
-        -AgentName $AgentName `
-        -TaskIdentity $TaskIdentity `
         -StartPaused:$StartPaused
 
     $foregroundBeforeLaunch = [Na2TestWindow]::GetForegroundWindow()
-    $cardAction = if ($runtimeContext.MemoryCard.TaskCardCreated) { 'created' } else { 'reused' }
     Write-Host (
         "[na2] Agent test launch: hidden, muted, non-activating; " +
-        "$cardAction worker card $($runtimeContext.MemoryCard.TaskCardName); " +
+        "clone card $($runtimeContext.MemoryCardName); " +
         "PINE $($runtimeContext.PinePort)"
     ) -ForegroundColor Cyan
 
@@ -226,12 +209,11 @@ try {
         window_handle = $null
         pine_port = $runtimeContext.PinePort
         memory_card = ConvertTo-Na2ProjectPath `
-            -Path $runtimeContext.MemoryCard.TaskCardPath `
+            -Path $runtimeContext.MemoryCardPath `
             -ProjectPaths $projectPaths
         log_directory = ConvertTo-Na2ProjectPath `
             -Path $runtimeLayout.LogDirectory `
             -ProjectPaths $projectPaths
-        settings_restored_after_game_load = $false
     }
     Write-Na2Pcsx2OwnershipDescriptor `
         -Path $descriptorPath `
@@ -265,14 +247,8 @@ try {
         throw "PCSX2 process $($testProcess.Id) did not create an owned window."
     }
 
-    Restore-Na2TestRuntimeConfiguration -Context $runtimeContext
-    $settingsRestoredAfterLaunch = $true
-    Exit-Na2Pcsx2ConfigurationLock -Mutex $configurationLock
-    $configurationLock = $null
-
     $descriptor['state'] = 'ready'
     $descriptor['window_handle'] = ('0x{0:X}' -f $window.ToInt64())
-    $descriptor['settings_restored_after_game_load'] = $true
     Write-Na2Pcsx2OwnershipDescriptor `
         -Path $descriptorPath `
         -Descriptor $descriptor `
@@ -586,7 +562,7 @@ try {
     Write-Host (
         "[na2] PCSX2 instance ready: PID $($testProcess.Id), " +
         "window $('0x{0:X}' -f $window.ToInt64()), " +
-        "$($pineIdentity.Serial)/$($pineIdentity.CRC); clone settings restored; " +
+        "$($pineIdentity.Serial)/$($pineIdentity.CRC); clone runtime configured; " +
         "closing after $WaitSeconds second(s)."
     ) -ForegroundColor Cyan
 
@@ -651,24 +627,6 @@ finally {
         }
     }
     catch { $cleanupErrors.Add($_) }
-
-    try {
-        if ($null -ne $runtimeContext) {
-            if ($null -eq $configurationLock) {
-                $configurationLock = Enter-Na2Pcsx2ConfigurationLock -IniPath $pcsx2Ini
-            }
-            Restore-Na2TestRuntimeConfiguration `
-                -Context $runtimeContext `
-                -OnlyIfInjected:$settingsRestoredAfterLaunch
-        }
-    }
-    catch { $cleanupErrors.Add($_) }
-    finally {
-        if ($null -ne $configurationLock) {
-            try { Exit-Na2Pcsx2ConfigurationLock -Mutex $configurationLock } catch { $cleanupErrors.Add($_) }
-            $configurationLock = $null
-        }
-    }
 
     try {
         $safeToRemoveRuntime = (
@@ -763,6 +721,6 @@ finally {
         )
     }
     if ($null -ne $runtimeContext) {
-        Write-Host '[na2] Owned PCSX2 instance closed; clone settings verified; worker artifacts retained' -ForegroundColor Cyan
+        Write-Host '[na2] Owned PCSX2 instance closed; clone runtime retained; worker artifacts retained' -ForegroundColor Cyan
     }
 }

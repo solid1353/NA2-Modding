@@ -9,6 +9,7 @@
 ### [Font](docs/workstreams/font/README.md)
 - [Investigate](work/__sstates/translation/font)
     * Implement proper autofit/positions everywhere.
+    * Change SJIS numbers to ASCII.
 
 ### [UI Translation](docs/workstreams/ui_translation/README.md)
 - [Investigate](work/__sstates/translation/UI)

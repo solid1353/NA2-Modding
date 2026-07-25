@@ -73,6 +73,14 @@ does not launch PCSX2. Bare `na2` keeps the build-then-launch workflow.
 User-owned shared-image builds and launches run `act na2` automatically;
 worker-output builds never actualize. The standalone `act` command can run all
 actualization modes without building or launching.
+
+During the active String translation rebuild, the user-facing `na` pair
+launcher accepts `na rebuild nun5`. The `rebuild` selector addresses the
+verified worker artifact at `work/String translation/build/mapping-ids.iso`.
+`na` continues accepting any ordered combination of registered ISO selectors;
+its existing selectors and zero-argument behavior remain unchanged. A missing
+rebuild ISO fails before any PCSX2 process is changed.
+
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 

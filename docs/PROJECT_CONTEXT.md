@@ -171,9 +171,14 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   `game_commands.ps1` defines the manifest-driven `na2s`, `nun3`, `nun5`, and
   `nun6` commands; `move_na2_savestates.ps1` files user savestates under
   `@user_savestates`; and `launch_pair.ps1` is the multi-game launch-and-tile
-  backend used by `na`. `test_launch.ps1` starts an already-existing workstream
-  PCSX2 copy hidden; it performs no cloning, configuration, process inspection,
-  PINE operation, savestate handling, capture, cleanup, or termination.
+  backend used by `na`, which accepts any ordered combination of its registered
+  ISO selectors. During the active String translation rebuild, its temporary
+  `rebuild` selector addresses `work/String translation/build/mapping-ids.iso`;
+  invoke it explicitly as `na rebuild nun5`. Existing selectors and
+  zero-argument behavior remain unchanged.
+  `test_launch.ps1` starts an already-existing workstream PCSX2 copy hidden; it
+  performs no cloning, configuration, process inspection, PINE operation,
+  savestate handling, capture, cleanup, or termination.
 - `na2_patcher/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na2_patcher/build_profile.py` applies that prepared pipeline and writes its run log. `na2_patcher/composer.py` resolves module artifacts and closes typed image operations. `na2_patcher/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Candidate, or worker-owned output.
 - `scripts/media/` contains the recursive source extractor, its byte-parity
   verifier, and focused ISO, AFS, and CVM building blocks. Direct same-size ISO

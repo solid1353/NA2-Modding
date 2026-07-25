@@ -91,6 +91,18 @@ Build the diagnostic ISO with:
 The output is a verified worker ISO. It never promotes or rotates Current,
 Previous, or Candidate.
 
+During this rebuild pass, the user-facing `na` pair launcher accepts the
+diagnostic `rebuild` image:
+
+```powershell
+na rebuild nun5
+```
+
+`na` continues accepting any ordered combination of its registered ISO
+selectors; existing selectors and zero-argument behavior remain unchanged.
+`rebuild` resolves to `work/String translation/build/mapping-ids.iso` and fails
+closed when that worker artifact does not exist.
+
 The user navigates the diagnostic build and stores ordinary PCSX2 screenshots
 in the emulator screenshots directory. No new savestates are required for the
 ID pass. When invoked after capture, the String translation task copies only

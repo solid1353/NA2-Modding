@@ -12,7 +12,16 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'process.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
-$supportedGames = @('current', 'previous', 'candidate', 'na2s', 'nun3', 'nun5', 'nun6')
+$supportedGames = @(
+    'rebuild',
+    'current',
+    'previous',
+    'candidate',
+    'na2s',
+    'nun3',
+    'nun5',
+    'nun6'
+)
 $selectedGames = @(
     if ($null -eq $Games -or $Games.Count -eq 0) {
         'current', 'nun5'
@@ -39,6 +48,9 @@ if ($duplicateGames.Count -gt 0) {
 
 $pcsx2Exe = [IO.Path]::GetFullPath($projectPaths.files.pcsx2_user_exe)
 $na2Command = [IO.Path]::GetFullPath($projectPaths.files.na2_command)
+$translationRebuildIso = [IO.Path]::GetFullPath(
+    (Join-Path $projectPaths.work 'String translation\build\mapping-ids.iso')
+)
 $directIsoFiles = @{
     candidate = 'candidate_iso'
     na2s = 'na2_iso'
@@ -48,12 +60,16 @@ $directIsoFiles = @{
 }
 $selectedIsoPaths = @{}
 foreach ($game in $selectedGames) {
-    $fileName = switch ($game) {
-        'current' { 'current_iso' }
-        'previous' { 'previous_iso' }
-        default { $directIsoFiles[$game] }
+    $selectedIsoPaths[$game] = switch ($game) {
+        'rebuild' { $translationRebuildIso }
+        'current' { [IO.Path]::GetFullPath($projectPaths.files.current_iso) }
+        'previous' { [IO.Path]::GetFullPath($projectPaths.files.previous_iso) }
+        default {
+            [IO.Path]::GetFullPath(
+                $projectPaths.files.($directIsoFiles[$game])
+            )
+        }
     }
-    $selectedIsoPaths[$game] = [IO.Path]::GetFullPath($projectPaths.files.$fileName)
 }
 
 $requiredFiles = @($pcsx2Exe)

@@ -58,15 +58,21 @@ cannot be explained from NUN5 and Current plus the unpacked static sources.
 
 ## Workflow
 
-Launch Current NA2 through `na2 -c` and NUN5 together for paired manual
-screenshots and F1 savestates. The shared PowerShell profile exposes this
-default pair as `na`:
+The shared PowerShell profile exposes `na` as the general multi-game launcher.
+Pass any ordered combination of registered ISO selectors:
 
 ```powershell
-na
+na current nun5
 ```
 
-List a different set in launch order when needed:
+During the active String translation T-ID pass, launch the diagnostic rebuild
+and NUN5 explicitly:
+
+```powershell
+na rebuild nun5
+```
+
+Other examples:
 
 ```powershell
 na current nun3
@@ -74,12 +80,14 @@ na candidate nun5
 na na2s nun5 nun6
 ```
 
-Supported names are `current`, `previous`, `candidate`, `na2s`, `nun3`,
-`nun5`, and `nun6`. Current and Previous use `na2 -c` and `na2 -p`; the others
-launch their configured ISO directly. The launcher closes existing instances
-of the configured PCSX2 executable, uses equal columns for up to three games
-and a grid for larger lists, and prints the game-to-process mapping. Focus the
-intended window before using PCSX2 screenshot or savestate hotkeys.
+Supported names are `rebuild`, `current`, `previous`, `candidate`, `na2s`,
+`nun3`, `nun5`, and `nun6`. Current and Previous use `na2 -c` and `na2 -p`;
+the others launch their configured ISO directly. `rebuild` is the verified
+worker artifact at `work/String translation/build/mapping-ids.iso` and fails
+closed when absent. The launcher closes existing instances of the configured
+PCSX2 executable, uses equal columns for up to three games and a grid for
+larger lists, and prints the game-to-process mapping. Focus the intended window
+before using PCSX2 screenshot or savestate hotkeys.
 
 Check both targets before starting:
 

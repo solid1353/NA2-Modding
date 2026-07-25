@@ -77,7 +77,10 @@ References:
 
 ## Runtime state and exact next action
 
-No PCSX2 process was running at this checkpoint. Only the protected clone
+No UI-owned PCSX2 clone process was running at this checkpoint. During the
+final post-push verification, an external protected PCSX2 process appeared as
+PID `32760` under `@pcsx2_user`. It is not owned by UI Translation: leave it
+running and do not inspect, control, or terminate it. Only the protected clone
 workflow may be used; do not access or control `@pcsx2_user`,
 `@pcsx2_clean`, or another PCSX2 process.
 
@@ -134,12 +137,13 @@ match. The direct screenshots are the acceptance evidence.
 
 ## Git and concurrent state
 
-- HEAD at stop: `7f64dc5` (`[Scripting] Repair clone runtime captures`).
-- Branch: `master`, aligned with `origin/master` before this handoff commit.
+- Implementation HEAD before the handoff: `7f64dc5`
+  (`[Scripting] Repair clone runtime captures`).
+- General concurrently committed the Scripting-wait policy as `b30224d`
+  before the first handoff commit `d65a763`.
 - Uncommitted concurrent file at stop: `AGENTS.md`.
-- Its current diff is not UI-owned. It updates clone-concurrency language and
-  adds a rule requiring a workstream to sleep after asking Scripting until
-  Scripting responds. Preserve it exactly; do not stage it in the UI handoff
+- Its current remaining diff is not UI-owned and updates only the
+  clone-concurrency language. Preserve it exactly; do not stage it in a UI
   commit.
 - Stage and commit only this handoff file.
 - `.agents/notifications.json` contains `"muted": true`; therefore no
@@ -156,4 +160,3 @@ match. The direct screenshots are the acceptance evidence.
 4. Run the exact guarded `capture_frame` plan above.
 5. Present/inspect the paired checkpoints and continue the already-approved
    numeric item-status subtask from the next incomplete step.
-

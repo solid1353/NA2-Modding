@@ -13,3 +13,4 @@ Canonical documentation landing page for the `UI Translation` workstream.
 
 - Solve one subtask at a time; commit and push it after completion before
   moving to another subtask.
+- Prefer broad changes over selective fixes.

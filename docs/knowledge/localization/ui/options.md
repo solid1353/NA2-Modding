@@ -13,6 +13,10 @@ screen-position caller are:
 | NUN5 | shared common-prompt compositor | `FUN_0038bb10` | `0x0038BB10..0x0038C08C` |
 | NA2 | screen-position draw | `FUN_0038adb0` | `0x0038ADB0..0x0038AFAC` |
 | NUN5 | screen-position draw | `FUN_0039c730` | `0x0039C730..0x0039C94C` |
+| NA2 | Controls footer draw | `FUN_00388b90` | `0x00388B90..0x00388D4C` |
+| NUN5 | Controls footer draw | `FUN_0039a450` | `0x0039A450..0x0039A63C` |
+| NA2 | Music Options footer draw | `FUN_0038a1f0` | `0x0038A1F0..0x0038A55C` |
+| NUN5 | Music Options footer draw | `FUN_0039bb00` | `0x0039BB00..0x0039BE8C` |
 
 NA2's single loadable segment maps the three destination records from ELF file
 offsets `0x4D47B0`, `0x4D47B8`, and `0x4D47C0` to runtime addresses
@@ -63,6 +67,40 @@ NUN5's localized records total 80 logical pixels:
 static slots. This preserves NA2's object ABI and compositor code while making
 every shared case-4 caller use the same geometry as NUN5.
 
+## Shared Controls and Music Select legend
+
+The Controls and Music Options footer functions have the same regional
+structure. Each draws the normal OK and Back prompts, then draws the Select
+button icon and the adjacent legend texture through two separate calls at one
+shared X anchor:
+
+```cpp
+void draw_options_footer(FooterSprites &sprites) {
+    draw_common_prompt(400.0f, 356.0f, sprites.prompts, OK, true);
+    draw_common_prompt(470.0f, 356.0f, sprites.prompts, BACK, true);
+
+    constexpr float select_x = 200.0f; // NUN5; clean NA2 used 230.0f
+    draw_common_prompt(select_x, 356.0f, sprites.prompts, SELECT, false);
+    draw_rect(select_x, 356.0f, sprites.legend, select_legend_rect);
+}
+```
+
+NA2 loads `230.0f` with `lui v0,0x4366` for both calls in each function.
+NUN5 uses the same register and instruction positions but loads `200.0f` with
+`lui v0,0x4348`. The four exact instruction mappings are:
+
+| Screen / call | NA2 runtime / file offset | NUN5 runtime / file offset |
+| --- | --- | --- |
+| Controls Select icon | `0x00388CA4` / `0x288DA4` | `0x0039A584` / `0x29A704` |
+| Controls legend | `0x00388CC8` / `0x288DC8` | `0x0039A5AC` / `0x29A72C` |
+| Music Select icon | `0x0038A4B8` / `0x28A5B8` | `0x0039BDE8` / `0x29BF68` |
+| Music legend | `0x0038A4DC` / `0x28A5DC` | `0x0039BE10` / `0x29BF90` |
+
+`UI-ELF-009` copies all four NUN5 `4843023C` instructions over NA2's guarded
+`6643023C` instructions. This moves the two complete Select groups together by
+30 logical pixels while preserving their internal spacing and every unrelated
+footer prompt.
+
 ## Relationships and evidence
 
 - The complete NUN5 `CMN/GAUGE.CCS` donor already supplies the localized
@@ -82,7 +120,19 @@ every shared case-4 caller use the same geometry as NUN5.
   difference is normal prompt pulsation.
 - The unrelated X/Y text spacing and the separate OK prompt were deliberately
   untouched.
+- A first guarded Music Options probe copied NUN5 common-prompt records 0 and
+  1 into the NA2 table. It did not move the reported legend because these
+  screens use common-prompt case 3 plus a dedicated legend record, not the
+  case-5 two-record compositor. That probe was discarded and is not canonical.
+- The preserved Music Options pair showed NA2's static
+  `SELECT button: Return to Defaults` legend 30 logical pixels to the right of
+  NUN5. A guarded state containing all four instruction copies moved the
+  complete legend to the NUN5 X position; vertical placement, internal spacing,
+  OK, and Back remained unchanged.
+- The overflowing Music Options help sentence is emitted through the text/font
+  renderer and is outside this texture-layout correction.
 
 Confidence is **verified**: complete-function comparison establishes the shared
-algorithm and caller anchors, all six file/runtime ranges match the clean
-binaries, and the exact donor records reproduce the NUN5 geometry at runtime.
+algorithms and caller anchors, all destination and donor ranges match the clean
+binaries, and the exact donor records and instructions reproduce the NUN5
+geometry at runtime.

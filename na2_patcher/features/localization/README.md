@@ -1461,7 +1461,25 @@ separate OK prompt and text/font rendering remain untouched. Exact mappings,
 reconstruction, side effects, and runtime evidence are preserved in
 `docs/knowledge/localization/ui/options.md`.
 
-Inspect all eighteen UI companion patches together:
+### UI-ELF-009: shared Controls and Music Select anchors
+
+The complete NUN5 common-UI import supplies the localized Select footer
+artwork, but both NA2 Options renderers place the paired Select icon and legend
+at X=`230`. Their NUN5 homologs place both calls at X=`200`:
+
+- NA2 Controls `FUN_00388b90` / NUN5 `FUN_0039a450`;
+- NA2 Music Options `FUN_0038a1f0` / NUN5 `FUN_0039bb00`.
+
+`UI-ELF-009` copies all four exact NUN5 `lui v0,0x4348` anchor instructions
+over the corresponding guarded NA2 `lui v0,0x4366` instructions. The broad
+correction keeps each icon and legend paired, applies consistently to both
+screens, and leaves OK, Back, vertical placement, and internal spacing
+unchanged. A guarded task-owned Music Options state reproduces the NUN5
+placement. The complete homolog mappings, reconstruction, runtime evidence,
+and rejected wrong-table probe are preserved in
+`docs/knowledge/localization/ui/options.md`.
+
+Inspect all nineteen UI companion patches together:
 
 ```powershell
 python -m na2_patcher.modules.binary_patcher.engine validate `
@@ -1490,7 +1508,8 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
   --patch UI-ELF-005 `
   --patch UI-ELF-006 `
   --patch UI-ELF-007 `
-  --patch UI-ELF-008
+  --patch UI-ELF-008 `
+  --patch UI-ELF-009
 ```
 
 ## Compact external strings

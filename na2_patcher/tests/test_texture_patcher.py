@@ -1215,6 +1215,45 @@ class UiTextureTests(unittest.TestCase):
             ],
         )
 
+    def test_shared_options_select_anchors_are_exact_nun5_copies(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = binary_patcher.load_package(
+            repository
+            / "na2_patcher/features/localization/binary_patcher"
+        )
+        edits = [item for item in package.edits if item.patch_id == "UI-ELF-009"]
+
+        self.assertEqual(
+            [item.edit_id for item in edits],
+            [
+                "UI-ELF-009-01",
+                "UI-ELF-009-02",
+                "UI-ELF-009-03",
+                "UI-ELF-009-04",
+            ],
+        )
+        self.assertTrue(all(item.operation == "copy" for item in edits))
+        self.assertEqual(
+            [item.destination_offset for item in edits],
+            [0x288DA4, 0x288DC8, 0x28A5B8, 0x28A5DC],
+        )
+        self.assertEqual(
+            [item.expected_hex for item in edits],
+            ["6643023C", "6643023C", "6643023C", "6643023C"],
+        )
+        self.assertEqual(
+            [item.source_target_id for item in edits],
+            ["nun5_elf", "nun5_elf", "nun5_elf", "nun5_elf"],
+        )
+        self.assertEqual(
+            [item.source_offset for item in edits],
+            [0x29A704, 0x29A72C, 0x29BF68, 0x29BF90],
+        )
+        self.assertEqual(
+            [item.source_expected_hex for item in edits],
+            ["4843023C", "4843023C", "4843023C", "4843023C"],
+        )
+
     def test_collection_submenu_patch_uses_only_exact_nun5_records(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
@@ -1332,11 +1371,11 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 247)
-        self.assertEqual(operations, {"copy": 78, "replace": 169})
+        self.assertEqual(len(ui_edits), 251)
+        self.assertEqual(operations, {"copy": 82, "replace": 169})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 57, "nun5_btl": 16, "nun5_etc": 5},
+            {"nun5_elf": 61, "nun5_btl": 16, "nun5_etc": 5},
         )
         self.assertEqual(len(stage_scales), 24)
         self.assertEqual(len(adaptations), 145)

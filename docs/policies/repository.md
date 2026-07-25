@@ -77,6 +77,13 @@
 
 ## Logs and scripts
 
+- "The PowerShell profile" means the shared profile at
+  `$env:USERPROFILE\Documents\PowerShell\profile.ps1`; never hardcode the
+  user's account name when locating it.
+- Unless the user explicitly requests embedded profile code, profile changes
+  are limited to thin dot-source imports and aliases that expose project-owned
+  entrypoint scripts. Keep all functions and reusable implementation under the
+  project's maintained `scripts/` tree.
 - Use purpose-specific subfolders under `@logs/`, workstream records under
   `@workstream_logs/<exact task title>/`, and worker records under the task's
   `logs/`; never write directly in shared log roots.

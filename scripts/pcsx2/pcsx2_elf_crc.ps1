@@ -1,3 +1,4 @@
+# Implements PCSX2's boot-ELF CRC calculation.
 function Get-Pcsx2ElfCrc {
     [CmdletBinding()]
     param(

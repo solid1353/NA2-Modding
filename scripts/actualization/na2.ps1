@@ -7,7 +7,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
-. (Join-Path $PSScriptRoot '..\na2\ini.ps1')
+. (Join-Path $PSScriptRoot '..\pcsx2\ini.ps1')
 . (Join-Path $PSScriptRoot 'pnach_state.ps1')
 . (Join-Path $PSScriptRoot '..\na2\iso_identity.ps1')
 

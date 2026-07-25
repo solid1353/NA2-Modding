@@ -1,4 +1,4 @@
-. (Join-Path $PSScriptRoot 'pcsx2_elf_crc.ps1')
+. (Join-Path $PSScriptRoot '..\pcsx2\pcsx2_elf_crc.ps1')
 
 $script:Na2IsoSectorSize = 2048
 

@@ -163,8 +163,9 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 
 - Root `_na2.ps1` is the routine build/launch entrypoint. Bare `na2`, `na2 -b`, bare `na2 -t`, `na2 -c`, and `na2 -p` retain their Current/Previous/Candidate behavior. The standalone `act` command performs actualization without building or launching. User-owned shared-image modes run `act na2` automatically; the launcher does not read or rewrite the user's `PCSX2.ini`. `na2 -t work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
 - `scripts/na2/` contains build/promotion, ISO identity, worker-path validation,
-  ordinary user PCSX2 launch/process helpers, and one minimal agent-side hidden
-  launcher. `test_launch.ps1` starts an already-existing workstream PCSX2 copy
+  and focused tests.
+- `@pcsx2_scripts/` contains PCSX2 launch, process, configuration, and CRC
+  helpers. `test_launch.ps1` starts an already-existing workstream PCSX2 copy
   hidden; it performs no cloning, configuration, process inspection, PINE
   operation, savestate handling, capture, cleanup, or termination.
 - `na2_patcher/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na2_patcher/build_profile.py` applies that prepared pipeline and writes its run log. `na2_patcher/composer.py` resolves module artifacts and closes typed image operations. `na2_patcher/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Candidate, or worker-owned output.

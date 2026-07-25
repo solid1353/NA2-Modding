@@ -14,8 +14,10 @@ history; do not recreate an archive directory for dead scripts.
   build-record helpers.
 - `actualization/`: standalone dispatch, PCSX2 state actualization, PNACH-state
   parsing, and focused tests.
-- `na2/`: build, promotion, PCSX2 launch, CRC diagnostics, a minimal hidden
-  workstream-copy launcher, and focused build/run-log tests.
+- `na2/`: build, promotion, ISO identity, worker-path validation, and focused
+  build/run-log tests.
+- `pcsx2/`: PCSX2 launch, process, configuration, CRC helpers, and the minimal
+  hidden workstream-copy launcher.
 - `media/`: ISO, AFS, and CVM inspection/extraction tools. Use
   `extract_source_iso.ps1 -IsoPath <path> -TaskTitle <exact task title>` for
   canonical recursive source extraction: it stages under
@@ -77,7 +79,7 @@ template-selected base. Existing role cards are preserved.
 `actualization/links.ps1` creates or verifies the configured project-to-user
 hardlinks and refuses differing occupied counterparts.
 
-`na2/test_launch.ps1` is the only agent-side PCSX2 script. It launches an
+`pcsx2/test_launch.ps1` is the minimal agent-side PCSX2 launcher. It launches an
 already-existing `work/<task title>/pcsx2/pcsx2-qt.exe` copy hidden with a
 repository-relative ISO path. It does not copy or configure PCSX2, inspect or
 stop processes, use PINE, load savestates, capture output, or perform cleanup.
@@ -114,7 +116,7 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 | --- | --- | --- |
 | `scripts/archive/replace_iso_file_same_size.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na2_patcher.image_assembler`. |
 | `scripts/na2/check_log_crc.ps1` | `804c2df8d16019a3b55f6acb10a023c435faaafc` | Manual log/PNACH comparison was superseded by `na2/iso_identity.ps1` and the maintained standalone actualization workflow. |
-| `scripts/na2/get_elf_crc.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | The redundant command wrapper was removed; `na2/pcsx2_elf_crc.ps1` remains the shared tested implementation. |
+| `scripts/na2/get_elf_crc.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | The redundant command wrapper was removed; `pcsx2/pcsx2_elf_crc.ps1` remains the shared tested implementation. |
 | `scripts/na2/test_memory_card.ps1` | `70a81a36ecf119b6330b19984c9c8104d54bcc61` | Retired with the later agent PCSX2 runtime framework; there is no maintained replacement. |
 | `scripts/na2/test_test_memory_card.ps1` | `70a81a36ecf119b6330b19984c9c8104d54bcc61` | Retired with the later agent PCSX2 runtime framework; there is no maintained replacement. |
 | `scripts/na2/pine.ps1`, `provision_test_pcsx2.ps1`, `test_operation.ps1`, `test_process_ownership.ps1`, `test_runtime.ps1`, `test_test_operation.ps1`, `test_test_pine.ps1`, `test_test_runtime.ps1`, `test_worker_pcsx2.ps1`, and `worker_pcsx2.ps1` | `4f6578e7d131fca9905aff8358371ed6eb8d9791` | The unsolicited agent PCSX2 ownership, PINE-operation, provisioning, and runtime framework was removed. Only the minimal hidden launcher remains. |

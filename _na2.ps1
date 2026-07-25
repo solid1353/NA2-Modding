@@ -157,7 +157,7 @@ try {
             IsoPath = $isoPath
             KeepExistingInstance = $true
         }
-        & (Join-Path $projectPaths.scripts 'na2\launch.ps1') @launchArguments
+        & (Join-Path $projectPaths.pcsx2_scripts 'launch.ps1') @launchArguments
     }
     else {
         Write-Na2Stage '1/2 Build pinned current profile'
@@ -167,7 +167,7 @@ try {
         }
         Invoke-Na2Actualization
         Write-Na2Stage "2/2 Launch $currentIsoName"
-        & (Join-Path $projectPaths.scripts 'na2\launch.ps1') `
+        & (Join-Path $projectPaths.pcsx2_scripts 'launch.ps1') `
             -IsoPath $projectPaths.files.current_iso
     }
     $runOutcome = 'succeeded'

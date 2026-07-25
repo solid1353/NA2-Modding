@@ -8,7 +8,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
-. (Join-Path $PSScriptRoot 'worker_paths.ps1')
+. (Join-Path $PSScriptRoot '..\na2\worker_paths.ps1')
 
 $projectPaths = Get-Na2ProjectPaths
 $worker = Get-Na2WorkerContext `

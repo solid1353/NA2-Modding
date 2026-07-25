@@ -1,3 +1,4 @@
+# Shared PCSX2 INI helpers.
 Set-StrictMode -Version Latest
 
 function Get-Na2IniValue {

@@ -9,7 +9,7 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 . (Join-Path $PSScriptRoot '..\lib\build_log.ps1')
-. (Join-Path $PSScriptRoot 'process.ps1')
+. (Join-Path $PSScriptRoot '..\pcsx2\process.ps1')
 . (Join-Path $PSScriptRoot 'worker_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 

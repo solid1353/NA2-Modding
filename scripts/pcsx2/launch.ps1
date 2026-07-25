@@ -1,3 +1,4 @@
+# Launches the configured user PCSX2 instance.
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]

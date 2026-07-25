@@ -102,6 +102,8 @@ try {
         -Destination (Join-Path $fakeRepository 'scripts\lib')
     $fakeNa2Scripts = Join-Path $fakeRepository 'scripts\na2'
     New-Item -ItemType Directory -Force -Path $fakeNa2Scripts | Out-Null
+    $fakePcsx2Scripts = Join-Path $fakeRepository 'scripts\pcsx2'
+    New-Item -ItemType Directory -Force -Path $fakePcsx2Scripts | Out-Null
     $fakeActualizationScripts = Join-Path $fakeRepository 'scripts\actualization'
     New-Item -ItemType Directory -Force -Path $fakeActualizationScripts | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\actualization\act.ps1') `
@@ -121,6 +123,7 @@ try {
     "pcsx2_user": "pcsx2_user",
     "pcsx2_files": "pcsx2_files",
     "scripts": "scripts",
+    "pcsx2_scripts": "@scripts/pcsx2",
     "work": "work"
   },
   "files": {
@@ -180,7 +183,7 @@ param([switch]$PassThru)
 $result = [pscustomobject]@{ Created = @(); Verified = @() }
 if ($PassThru) { $result }
 '@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'launch.ps1') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch.ps1') -Content @'
 param([string]$IsoPath, [switch]$KeepExistingInstance)
 Write-Host "[fake] launch $IsoPath keep-existing=$KeepExistingInstance"
 '@

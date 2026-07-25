@@ -1,3 +1,4 @@
+# User-PCSX2 process helpers used by standard NA2 workflows.
 function Get-Na2Pcsx2Process {
     param([Parameter(Mandatory = $true)][string]$Executable)
 

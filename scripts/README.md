@@ -16,8 +16,9 @@ history; do not recreate an archive directory for dead scripts.
   parsing, and focused tests.
 - `na2/`: build, promotion, ISO identity, worker-path validation, and focused
   build/run-log tests.
-- `pcsx2/`: PCSX2 launch, process, configuration, CRC helpers, and the minimal
-  hidden workstream-copy launcher.
+- `pcsx2/`: PCSX2 launch, process, configuration, CRC helpers, the minimal
+  hidden workstream-copy launcher, and task-owned PINE savestate screenshot
+  extraction.
 - `media/`: ISO, AFS, and CVM inspection/extraction tools. Use
   `extract_source_iso.ps1 -IsoPath <path> -TaskTitle <exact task title>` for
   canonical recursive source extraction: it stages under
@@ -83,6 +84,14 @@ hardlinks and refuses differing occupied counterparts.
 already-existing `work/<task title>/pcsx2/pcsx2-qt.exe` copy hidden with a
 repository-relative ISO path. It does not copy or configure PCSX2, inspect or
 stop processes, use PINE, load savestates, capture output, or perform cleanup.
+
+`pcsx2/capture_state_screenshot.ps1` handles the narrower screenshot workflow
+for an already-existing task-owned PCSX2 copy. It validates that its ISO,
+savestate, and screenshot paths remain under the supplied workstream root,
+loads the input through a private slot, asks that clone's configured PINE port
+to save a distinct fresh slot, and extracts the embedded `Screenshot.png`.
+It launches hidden, never reads or controls protected shared PCSX2 trees or
+unrelated processes, and closes only the exact process it started.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`

@@ -24,7 +24,9 @@ Prep` fits, `Linked Attack` stays full width, and the matched Controls sample
 has median height and center-Y deltas of zero against NUN5. The user accepted
 the font itself as almost pixel-for-pixel. Fullwidth Shift-JIS Save/Load digits
 are not a halfwidth-Latin parity target. The rejected shared 28x28 experiment
-remains disabled as negative evidence.
+remains disabled as negative evidence. Executable Font helpers now live in the
+shared resident `PRG/228.BIN`; a fresh worker build survives the Load transition
+that erased the former boot-ELF padding helpers.
 
 ## Required execution order
 
@@ -133,10 +135,12 @@ call. `OFF` remains on the ordinary renderer.
 ## Preserved baseline and evidence
 
 - `na2_patcher/features/localization/binary_patcher/` contains the active
-  runtime-proven native secondary font, alignment, and fit components. It
-  targets clean `SLPS_258.37` and `DATA/GF4.BIN`, preserves clean GF4C, and
-  is covered by the current Localization aggregate feature pin
-  `1C6115C20D99BD053CCF44E7C2C4605AA826BEBE3A0079443EDE22EEA43206EF`.
+  runtime-proven native secondary font plus static alignment and renderer
+  state. `na2_patcher/features/localization/resident_patcher/` contains the
+  linked executable metric, fit, scale, and layout helpers. Together they
+  target clean `SLPS_258.37` and `DATA/GF4.BIN`, preserve clean GF4C, and are
+  covered by the current Localization aggregate feature pin
+  `F68B5DB40A78F46CFCEB429F09E434CA4A106BD731420E76A7324415CD817BD8`.
 - `docs/knowledge/localization/font/README.md` consolidates the v23, semantic-palette, and
   2026-07-19 auto-fit negative results. The retired raw declarative records
   are recoverable from Git commit `69da715` and are not retained in the

@@ -42,6 +42,7 @@ MODULE_ARTIFACT_CONTRACTS = {
     "string_patcher": ModuleArtifactContract(
         consumes_if_available=(TRANSLATION_IMPORT_ARTIFACT,),
     ),
+    "resident_patcher": ModuleArtifactContract(),
     "texture_patcher": ModuleArtifactContract(),
     "binary_patcher": ModuleArtifactContract(),
 }
@@ -68,7 +69,27 @@ def resolve_symbolic_patches(
         replacement = encode_symbol_reference(
             patch.encoding, symbol.runtime_address + patch.addend
         )
-        if not patch.expected or len(patch.expected) != len(replacement):
+        if patch.replacement_template:
+            if (
+                not patch.expected
+                or len(patch.expected) != len(patch.replacement_template)
+                or patch.relocation_offset < 0
+                or patch.relocation_offset + len(replacement)
+                > len(patch.replacement_template)
+            ):
+                raise ValueError(
+                    f"{patch.mapping_id}: symbolic patch template or guard width "
+                    "is invalid"
+                )
+            materialized = bytearray(patch.replacement_template)
+            start = patch.relocation_offset
+            materialized[start:start + len(replacement)] = replacement
+            replacement = bytes(materialized)
+        elif (
+            patch.relocation_offset != 0
+            or not patch.expected
+            or len(patch.expected) != len(replacement)
+        ):
             raise ValueError(
                 f"{patch.mapping_id}: symbolic patch width differs from its guard"
             )

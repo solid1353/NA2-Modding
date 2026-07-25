@@ -28,8 +28,9 @@ this deterministic order:
 
 1. `translation_importer`
 2. `string_patcher`
-3. `texture_patcher`
-4. `binary_patcher`
+3. `resident_patcher`
+4. `texture_patcher`
+5. `binary_patcher`
 
 Derived module IDs use `<feature_id>.<module_type>`. The composer resolves
 declared module-artifact dependencies while retaining stable feature/module
@@ -52,6 +53,9 @@ reproducible checkpoint.
 
 - `binary_patcher`: `targets.tsv`, `groups.tsv`, `patches.tsv`, `edits.tsv`,
   and every blob referenced by `blob_path`.
+- `resident_patcher`: `targets.tsv`, `groups.tsv`, `patches.tsv`,
+  `fragments.tsv`, `relocations.tsv`, `edits.tsv`, and every fragment blob
+  referenced by `blob_path`.
 - `string_patcher`: `strings.tsv`, only for a feature that owns local string
   declarations.
 - `translation_importer`: `mappings.tsv`, including its folded pointer
@@ -67,8 +71,9 @@ inputs only.
 
 The current profile enables, in order:
 
-1. Localization: importer with a derived string-patcher consumer, texture
-   patcher, native NUN5-derived font, regional menu input, and UI binary patches.
+1. Localization: importer with a derived string-patcher consumer, resident
+   font-renderer logic, texture patcher, native NUN5-derived font, regional menu
+   input, and UI binary patches.
 2. QoL: accepted startup, Practice, and mode-selection behavior.
 3. Battle logic: accepted battle-rule behavior.
 

@@ -17,6 +17,7 @@ FEATURE_FIELDS = ["feature_id", "expected_sha256", "bypass_check"]
 MODULE_TYPE_ORDER = (
     "translation_importer",
     "string_patcher",
+    "resident_patcher",
     "texture_patcher",
     "binary_patcher",
 )
@@ -28,6 +29,14 @@ BINARY_PATCHER_CONTROL_FILES = (
     "edits.tsv",
 )
 STRING_PATCHER_CONTROL_FILES = ("strings.tsv",)
+RESIDENT_PATCHER_CONTROL_FILES = (
+    "targets.tsv",
+    "groups.tsv",
+    "patches.tsv",
+    "fragments.tsv",
+    "relocations.tsv",
+    "edits.tsv",
+)
 TRANSLATION_IMPORTER_CONTROL_FILES = ("mappings.tsv",)
 TEXTURE_PATCHER_CONTROL_FILES = (
     "containers.tsv",
@@ -265,10 +274,47 @@ def _binary_patcher_content_files(path: Path) -> list[Path]:
     return files
 
 
+def _resident_patcher_content_files(path: Path) -> list[Path]:
+    path = path.resolve()
+    files = _required_files(
+        path, RESIDENT_PATCHER_CONTROL_FILES, "resident_patcher module"
+    )
+    fragments_path = path / "fragments.tsv"
+    with fragments_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        fields = reader.fieldnames or []
+        if "blob_path" not in fields:
+            raise ValueError(f"{fragments_path}: missing blob_path column")
+        blob_paths = {
+            (row.get("blob_path") or "").strip()
+            for row in reader
+            if (row.get("blob_path") or "").strip()
+        }
+    for value in sorted(blob_paths):
+        candidate = Path(value.replace("\\", "/"))
+        if candidate.is_absolute() or ".." in candidate.parts:
+            raise ValueError(
+                f"{fragments_path}: blob_path must be module-relative: {value!r}"
+            )
+        blob = (path / candidate).resolve()
+        try:
+            blob.relative_to(path)
+        except ValueError as exc:
+            raise ValueError(
+                f"{fragments_path}: blob_path escapes module: {value!r}"
+            ) from exc
+        if not blob.is_file():
+            raise FileNotFoundError(blob)
+        files.append(blob)
+    return files
+
+
 def _module_content_files(path: Path, module_type: str) -> list[Path]:
     path = path.resolve()
     if module_type == "binary_patcher":
         return _binary_patcher_content_files(path)
+    if module_type == "resident_patcher":
+        return _resident_patcher_content_files(path)
     if module_type == "string_patcher":
         return _required_files(
             path, STRING_PATCHER_CONTROL_FILES, "string_patcher module"

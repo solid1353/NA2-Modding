@@ -57,6 +57,28 @@ class PayloadBuilderTests(unittest.TestCase):
             build.symbols["shared.text"].runtime_address.to_bytes(4, "little"),
         )
 
+    def test_resolves_jump_template_without_losing_delay_slot(self) -> None:
+        build = build_resident_payload(
+            (PayloadFragment("feature.code", "shared.helper", "code", 4, b"\0" * 4),)
+        )
+        patch = SymbolicPatch(
+            owner="feature.code",
+            path="SLPS_258.37",
+            offset=0x20,
+            expected=b"\x11" * 8,
+            symbol="shared.helper",
+            encoding="j26",
+            mapping_id="TEST-JUMP",
+            kind="redirect_code",
+            reason="Test a symbolic jump plus an explicit delay slot.",
+            replacement_template=b"\0" * 8,
+        )
+        resolved = resolve_symbolic_patches(build, (patch,))[0]
+        expected_jump = (
+            0x08000000 | (build.symbols["shared.helper"].runtime_address >> 2)
+        ).to_bytes(4, "little")
+        self.assertEqual(resolved.replacement, expected_jump + b"\0" * 4)
+
     def test_rejects_duplicate_and_unresolved_symbols(self) -> None:
         duplicate = PayloadFragment("a", "same", "data", 4, b"a")
         with self.assertRaisesRegex(ValueError, "duplicate symbols"):

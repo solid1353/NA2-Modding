@@ -1,0 +1,7 @@
+relocation_id	fragment_id	order	offset	kind	symbol	addend
+FR-R001	localization.font.controls_fit	10	0x1C	jal26	localization.font.measure	0
+FR-R002	localization.font.selected_helper	10	0x58	j26	localization.font.selected_trampoline	0
+FR-R003	localization.font.ui_helper	10	0xEC	jal26	localization.font.measure	0
+FR-R004	localization.font.ui_helper	20	0x130	jal26	localization.font.ui_trampoline	0
+FR-R005	localization.font.ui_helper	30	0x270	jal26	localization.font.measure	0
+FR-R006	localization.font.ui_helper	40	0x2F4	jal26	localization.font.ui_trampoline	0

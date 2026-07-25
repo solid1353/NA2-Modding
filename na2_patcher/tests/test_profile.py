@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import tempfile
 import unittest
 from pathlib import Path
 
 from na2_patcher.modules.binary_patcher import engine as binary_patcher
+from na2_patcher.modules.resident_patcher import engine as resident_patcher
 from na2_patcher.composer import resolve_module_order
 from na2_patcher.profile import (
     FEATURE_FIELDS,
@@ -58,6 +60,16 @@ class ProfileTests(unittest.TestCase):
             write_tsv(module / "groups.tsv", binary_patcher.GROUP_FIELDS, [])
             write_tsv(module / "patches.tsv", binary_patcher.PATCH_FIELDS, [])
             write_tsv(module / "edits.tsv", binary_patcher.EDIT_FIELDS, [])
+        elif module_type == "resident_patcher":
+            for name, fields in (
+                ("targets.tsv", resident_patcher.TARGET_FIELDS),
+                ("groups.tsv", resident_patcher.GROUP_FIELDS),
+                ("patches.tsv", resident_patcher.PATCH_FIELDS),
+                ("fragments.tsv", resident_patcher.FRAGMENT_FIELDS),
+                ("relocations.tsv", resident_patcher.RELOCATION_FIELDS),
+                ("edits.tsv", resident_patcher.EDIT_FIELDS),
+            ):
+                write_tsv(module / name, fields, [])
         elif module_type == "string_patcher":
             (module / "strings.tsv").write_text("string_id\n", encoding="utf-8")
         elif module_type == "translation_importer":
@@ -327,6 +339,43 @@ class ProfileTests(unittest.TestCase):
             )
             self.assertNotEqual(first, module_content_sha256(module, "binary_patcher"))
 
+    def test_resident_hash_ignores_helpers_but_includes_fragment_blobs(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            feature = root / "feature"
+            feature.mkdir()
+            module = self.create_module(feature, "resident_patcher")
+            blob = module / "assets" / "resident.bin"
+            blob.parent.mkdir()
+            blob.write_bytes(b"\0\0\0\0")
+            write_tsv(
+                module / "fragments.tsv",
+                resident_patcher.FRAGMENT_FIELDS,
+                [{
+                    "fragment_id": "test.code",
+                    "kind": "code",
+                    "alignment": 4,
+                    "blob_path": "assets/resident.bin",
+                    "blob_offset": 0,
+                    "length": 4,
+                    "blob_sha256": hashlib.sha256(
+                        blob.read_bytes()
+                    ).hexdigest().upper(),
+                    "init": 0,
+                }],
+            )
+            first = module_content_sha256(module, "resident_patcher")
+            (module / "helper.py").write_text(
+                "print('one')\n", encoding="utf-8"
+            )
+            self.assertEqual(
+                first, module_content_sha256(module, "resident_patcher")
+            )
+            blob.write_bytes(b"\1\0\0\0")
+            self.assertNotEqual(
+                first, module_content_sha256(module, "resident_patcher")
+            )
+
     def test_current_profile_and_feature_layout(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         profile_directory = repository / "na2_patcher" / "profiles" / "current"
@@ -341,6 +390,7 @@ class ProfileTests(unittest.TestCase):
             [module.module_id for module in profile.modules],
             [
                 "localization.translation_importer",
+                "localization.resident_patcher",
                 "localization.texture_patcher",
                 "localization.binary_patcher",
                 "qol.binary_patcher",

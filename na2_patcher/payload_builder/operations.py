@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
-RELOCATION_KINDS = frozenset({"abs32", "hi16", "lo16", "jal26"})
+RELOCATION_KINDS = frozenset({"abs32", "hi16", "lo16", "j26", "jal26"})
 FRAGMENT_KINDS = frozenset({"code", "rodata", "data"})
 
 
@@ -38,6 +38,8 @@ class SymbolicPatch:
     kind: str
     reason: str
     addend: int = 0
+    replacement_template: bytes = b""
+    relocation_offset: int = 0
 
 
 @dataclass(frozen=True)
@@ -87,5 +89,6 @@ def encode_symbol_reference(kind: str, address: int) -> bytes:
     if kind == "lo16":
         return (address & 0xFFFF).to_bytes(2, "little")
     if address & 3 or address >= 0x10000000:
-        raise ValueError(f"MIPS JAL target is not encodable: 0x{address:X}")
-    return (0x0C000000 | (address >> 2)).to_bytes(4, "little")
+        raise ValueError(f"MIPS jump target is not encodable: 0x{address:X}")
+    opcode = 0x08000000 if kind == "j26" else 0x0C000000
+    return (opcode | (address >> 2)).to_bytes(4, "little")

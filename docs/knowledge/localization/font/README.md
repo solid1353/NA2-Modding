@@ -24,7 +24,7 @@ standalone profile module pin was
 and its former standalone feature pin was
 `23A2CFDD285FF00A40F35AC42D0656580E4D9DE5884F2CF568453A20E93AA3A7`.
 The current profile now covers it through the complete Localization feature pin
-`1C6115C20D99BD053CCF44E7C2C4605AA826BEBE3A0079443EDE22EEA43206EF`.
+`F68B5DB40A78F46CFCEB429F09E434CA4A106BD731420E76A7324415CD817BD8`.
 It is a new, deterministic donor built from hash-verified clean NA2 and
 official NUN5 inputs; it is not based on m01, v22/v23, the rejected semantic
 palette swap, the 10x22 resample, or a whole-file GF4 replacement.
@@ -37,8 +37,8 @@ primary-map slots and are decoded by secondary-only draw and measurement
 hooks. A glyph-owned normal-path helper keeps descriptor width for
 primary/fullwidth glyphs and selects descriptor height only for the secondary
 quad, restoring its intended 24x28 presentation without changing horizontal
-geometry. Clean NA2 GF4C remains untouched. The deterministic generator
-verifies these referenced blobs:
+geometry. Clean NA2 GF4C remains untouched. The two deterministic generators
+verify these referenced blobs:
 
 - atlas: 17,220 bytes, SHA-256
   `6E4B988E512568F0A91E0226A8A4046362C1A4EF078E50BBF630BEEF90333736`;
@@ -47,19 +47,15 @@ verifies these referenced blobs:
 - decoder: 316 bytes, SHA-256
   `C65B283CCBF7A8CCFF59DB7D96CC2A87731B6AD2BE142E37A088BEE6BFF9D70F`;
 - measurement hook: 24 bytes, SHA-256
-  `8B7A75C0FDFD2F055ACFC1FCF90996E298CE363E112659579513A89606FE7C1C`.
-- shared text-metrics helpers: 200 bytes, SHA-256
-  `2F851BC0F28A0CE3F55AA12574D637D3D0F2DB75B9B63C5BF6EAF2E0D37DB057`;
-- Controls fit helper: 148 bytes, SHA-256
-  `AE5ECAB1ECD21C0ECC486C6FC9E42C338A26CC1289B97460941006555140747A`;
-- selected-layout helper: 96 bytes, SHA-256
-  `FCC5EF3B7F976B000F65818A69A50F20A2E079873448AC83A14D290E7E37167E`;
-- shared UI-layout helper: 888 bytes, SHA-256
-  `6F6218D8E4A8E61C835A0B1F3F035A204587F845D407A3103C6DF6B1BA963EE7`.
+  `8B7A75C0FDFD2F055ACFC1FCF90996E298CE363E112659579513A89606FE7C1C`;
+- resident renderer blob: 1,360 bytes, SHA-256
+  `BD2889358F17B8FFF732842CD701D0F4C48F9CCB8A84A766E2710D4D56B3F2D6`.
 
-The current runtime-reviewed result contains exactly 33 Font edits: ten glyph
-edits, four shared renderer-metric edits, ten Controls fit/alignment edits,
-three character-modal alignment edits, and six shared layout-wrapper edits.
+The current runtime-reviewed result contains 17 static binary-patcher Font
+declarations and eight linked resident-patcher hooks. The resident blob exports
+nine code fragments for shared metrics, Controls fitting and horizontal
+scaling, selected-choice layout, shared UI layout, and the two displaced-code
+trampolines.
 The original 19-edit `native_final_v2` state established the atlas, metrics,
 fit, and modal baseline; the later bearing and secondary-height work promoted
 the remaining proven behavior into canonical guarded locations. Matched
@@ -78,20 +74,15 @@ and character-return box. The character modal keeps its independent local X
 values `81.75, 73.375, 72.375, 63.5, 3.5`; reviewed ordinary-row centers are
 within one pixel of NUN5 and the long fifth row fits inside the modal.
 
-A clean file-backed apply preserved both file sizes and produced:
+A clean glyph derivation preserves the GF4 and GF4C file sizes and produces:
 
 - `DATA/GF4.BIN`: 906,678 bytes, SHA-256
-  `79BA614746E667A70A068A0A889085D028D8019884182E78041026A77971AA25`;
-- `SLPS_258.37`: 5,273,256 bytes, SHA-256
-  `B569E54EA6965BCF1B264862DEB094E1649461093FD58EE99D7E814DE33CE28B`.
+  `79BA614746E667A70A068A0A889085D028D8019884182E78041026A77971AA25`.
 
-The final isolated output is retained under
-`work/Font/verification/font_height_candidate_v1/`. The task-owned worker build
-at `work/Font/logs/builds/20260724_210517_779_pid29304/` selected all three Font
-patches and the complete 274-edit Localization binary package without touching
-Current, Previous, or Candidate. Its guarded PCSX2 run identified worker ISO
-CRC `9B7C20AE`, read back the exact helper and hook, captured the matched
-Controls result, and closed only its authenticated task-owned instance.
+Executable Font output no longer has an independent final ELF hash: the shared
+payload builder assigns its runtime addresses together with every other
+resident contribution, then materializes its guarded boot-ELF hooks. The
+resident-relocation gate below records the integrated worker result.
 
 ## 2026-07-24 weight and spacing refinement
 
@@ -383,35 +374,35 @@ boot-ELF changes:
 - secondary initializer runtime `0x001865E0` (file `0x866E0`) now stores NUN5
   tracking `0.0` instead of NA2 `-1.0`;
 - ordinary ASCII-space runtime `0x001892EC` (file `0x893EC`) routes through
-  helper runtime `0x003D42C0` (file `0x2D43C0`) and evaluates
+  resident symbol `localization.font.plain_space` and evaluates
   `(cell_width + tracking - 6) * scale_x`;
-- newline runtime `0x00188604` (file `0x88704`) routes through helper runtime
-  `0x003D4300` (file `0x2D4400`), retaining NA2 descriptor height and line
+- newline runtime `0x00188604` (file `0x88704`) routes through resident symbol
+  `localization.font.newline_advance`, retaining NA2 descriptor height and line
   spacing while removing its four-unit excess and skipping the second
   alternate-font height;
-- shared logical measurement at runtime `0x003D4330` (file `0x2D4430`) calls
-  the accepted NA2 metric path once, returns the corrected NUN5 denominator in
-  `v0`, and preserves the untouched legacy NA2 width in `v1`. Its correction
-  is `NA2_width_at_tracking_zero - 6 * ordinary_ASCII_space_count`.
+- resident symbol `localization.font.measure` calls the accepted NA2 metric
+  path once, returns the corrected NUN5 denominator in `v0`, and preserves the
+  untouched legacy NA2 width in `v1`. Its correction is
+  `NA2_width_at_tracking_zero - 6 * ordinary_ASCII_space_count`.
 
 The Controls wrapper remains a distinct 128-unit container, but its helper at
-runtime `0x003D4200` (file `0x2D4300`) now consumes that shared denominator.
-The old cave at file `0x2BDDFC` contains only an ABI-safe jump plus zero
-padding; the superseded `9.5 * byte_count + 1` approximation is no longer
-executable. On the matched `Ultimate Jutsu Prep` crop, NUN5 is `157x16` with
-center X `154.0` and the current result is `157x17` with center X `154.0`.
-The one-pixel vertical raster difference is outside the horizontal fit
-decision.
+resident symbol `localization.font.controls_fit` consumes that shared
+denominator.
+The old cave at file `0x2BDDFC` is no longer patched; the superseded
+`9.5 * byte_count + 1` approximation is no longer executable. On the matched
+`Ultimate Jutsu Prep` crop, NUN5 is `157x16` with center X `154.0` and the
+current result is `157x17` with center X `154.0`. The one-pixel vertical raster
+difference is outside the horizontal fit decision.
 
 Shared layout behavior is ported once behind exact caller guards. The selected
-choice primitive at runtime `0x00379150` routes to `0x003D41A0`; the UI
-wrapper at `0x00379A20` routes to `0x003D3E00`. They map the reviewed
-confirmation positions. The same UI helper applies the 216-unit shrink-only
-box and four-unit Y correction to the Practice pause list, aligns Practice and
-Collection confirmation bodies, and routes the character-return body through
-a centered 368-unit box after selecting the accepted secondary renderer.
-Unrelated callers resume through displaced-instruction trampolines at
-`0x003D4180` and `0x003D42A0`.
+choice primitive at runtime `0x00379150` routes to resident symbol
+`localization.font.selected_helper`; the UI wrapper at `0x00379A20` routes to
+`localization.font.ui_helper`. They map the reviewed confirmation positions.
+The same UI helper applies the 216-unit shrink-only box and four-unit Y
+correction to the Practice pause list, aligns Practice and Collection
+confirmation bodies, and routes the character-return body through a centered
+368-unit box after selecting the accepted secondary renderer. Unrelated
+callers resume through the resident displaced-code trampolines.
 
 Commit `3d52a14` placed the complete helper block at runtime
 `0x003D3E00..0x003D4388` (file `0x2D3F00..0x2D4488`) inside the larger
@@ -476,10 +467,80 @@ that never contained the blobs.
 
 This rejects the helper interval as persistent executable storage. Do not
 reuse it or select another boot-settled zero cave by sampling alone. The
-matched renderer formulas and layout decisions remain useful, but any
-replacement implementation must relocate all helpers and trampolines into a
-project-owned persistent code region and rerun both the prior ten-state
-regression and an explicit Save/Load-entry test.
+matched renderer formulas and layout decisions remained valid and were
+relocated through the shared resident payload as described below.
+
+### 2026-07-25 resident relocation and regression
+
+All executable Font helpers and trampolines are now feature-owned
+`resident_patcher` fragments linked by the shared payload builder into
+`PRG/228.BIN`. The feature declares symbols and relocations but no payload
+offsets or final runtime addresses. The UI helper also replaces the former
+global scratch record with a 64-byte call-local stack frame, so neither code
+nor transient wrapper state depends on the erased ELF interval.
+
+The canonical resident-only link at load base `0x008F3D00` places the nine
+Font fragments in `0x008F3D50..0x008F42A0`. The complete profile then appends
+its external-string fragments in the same shared image. Eight guarded boot-ELF
+hooks target these symbols:
+
+- ordinary space and newline at file offsets `0x893EC` and `0x88704`;
+- normal right-edge, inline-markup half-space, and ordinary glyph advance at
+  `0x88070`, `0x88B7C`, and `0x897D8`;
+- the Controls wrapper at `0x288848`;
+- selected-choice and shared-UI wrappers at `0x279250` and `0x279B20`.
+
+The horizontal-scale fragment has three intentional entrypoints. The normal
+right-edge hook targets the fragment start, the inline-markup half-space hook
+targets `+0x18`, and ordinary glyph advance targets `+0x2C`. An initial
+resident link incorrectly sent all three hooks to the fragment start. Runtime
+bisection proved the first two hook families independently safe and isolated
+the third as the crash trigger. Restoring addends `0x18` and `0x2C` fixed the
+failure; canonical tests decode all three linked jump targets so this mistake
+cannot recur.
+
+Historical accepted states contain the old complete payload and cannot safely
+receive a newly built whole-profile image at the same address: doing so
+overwrites live external strings and unrelated state. For the relocation
+regression, a Font-only 1,440-byte test image was linked after the old payload
+at runtime `0x008F4500`, and only the eight exact Font hooks were converted.
+This preserved every old string address while exercising the new helpers. A
+broader state conversion was rejected after proving that nominal ELF file
+offset `0x2F79F4` contains mutable live data in a running state and therefore
+must not be treated as an immutable boot constant.
+
+All ten matched Font states then loaded and rendered without a guest pause or
+crash. The accepted Practice, Controls, character-return, and Collection
+layouts were retained. Three apparent capture differences were reproduced by
+loading the untouched original states under the same task clone: the blank 2P
+Controls label column, the one-line Practice confirmation-body rerender, and
+the no-memory-card state advancing to the Japanese safety screen. They are
+state-resume behavior, not resident-code regressions.
+
+A fresh canonical worker ISO independently survived entry from a current-build
+title state into the real Load menu with the actual integrated `PRG/228.BIN`.
+The final isolated ISO has SHA-256
+`1390892232BFB3F90F4F069F6CB268271ED553FFE016608652ED989256F05DF5`
+and boot CRC `D64F4AC7`; its 2,960-byte resident payload has SHA-256
+`3874853A22B597E8B035041BB439EC6AB0F1A53B8808C9A4FC2C9522B11A2693`
+and spans runtime `0x008F3D00..0x008F4890`. Five seconds after a recorded
+Cross confirmation, the captured Load screen contains all three save rows,
+dates, play times, and the instruction panel. PCSX2 reported no TLB miss,
+guest crash, or unexpected pause before the recording reached its configured
+frame limit. This proves that the replacement code remains resident across the
+transition that erased the old ELF cave.
+
+The integrated build record is
+`work/Font/logs/builds/20260725_090026_130_pid29660/`; the fresh title state,
+Cross recording, and Load capture are under
+`work/Font/artifacts/load_freeze/resident_relocation/final_runtime/`. A state
+captured after the old hook had already entered erased code cannot be repaired
+by applying the new hooks after load; execution must start before that
+transition.
+
+The ten converted captures and the untouched-state controls are retained under
+`work/Font/artifacts/load_freeze/resident_regression/` for comparison while the
+remaining caller families are implemented.
 
 ## 2026-07-19 superseded clean-font baseline
 

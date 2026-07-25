@@ -423,6 +423,8 @@ def apply_profile_modules(
     import_plans = pipeline.import_plans
     string_plans = pipeline.string_plans
     derived_string_plans = pipeline.derived_string_plans
+    resident_declarations = pipeline.resident_declarations
+    resident_packages = pipeline.resident_packages
     payload_build = pipeline.payload_build
 
     results: list[dict[str, object]] = []
@@ -465,6 +467,26 @@ def apply_profile_modules(
             results.append(
                 {
                     "module": module,
+                    "binary_patch_result": result,
+                    "paths": result["patched_paths"],
+                }
+            )
+            continue
+        if module.module == "resident_patcher":
+            declaration = resident_declarations[module.module_id]
+            result = apply_binary_patch_set(
+                module.input_path,
+                package=resident_packages[module.module_id],
+                roots=profile.roots,
+                feature_id=module.feature_id,
+                source=source,
+                payloads=payloads,
+                owners=owners,
+            )
+            results.append(
+                {
+                    "module": module,
+                    "resident_patch_declaration": declaration,
                     "binary_patch_result": result,
                     "paths": result["patched_paths"],
                 }

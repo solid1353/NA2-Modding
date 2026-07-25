@@ -14,8 +14,8 @@ history; do not recreate an archive directory for dead scripts.
   build-record helpers.
 - `actualization/`: standalone dispatch, PCSX2 state actualization, PNACH-state
   parsing, and focused tests.
-- `na2/`: build, promotion, PCSX2 launch, CRC diagnostics, and isolated agent
-  tests for hidden launch and run logging.
+- `na2/`: build, promotion, PCSX2 launch, CRC diagnostics, a minimal hidden
+  workstream-copy launcher, and focused build/run-log tests.
 - `media/`: ISO, AFS, and CVM inspection/extraction tools. Use
   `extract_source_iso.ps1 -IsoPath <path> -TaskTitle <exact task title>` for
   canonical recursive source extraction: it stages under
@@ -39,7 +39,6 @@ history; do not recreate an archive directory for dead scripts.
 - `research/ui_translation/`: selectable multi-game PCSX2 launch and tiling,
   offline paired-savestate import and screenshot extraction, rendering
   preflight, and user-directed runtime research for NUN5-to-NA2 UI comparisons.
-  Agent-owned runtime control uses `na2/test_launch.ps1 -OperationPlan`.
 - `research/translation/`: the worker-only mapping-ID diagnostic builder used
   to identify visible strings. It does not change normal profile behavior.
 
@@ -78,108 +77,10 @@ template-selected base. Existing role cards are preserved.
 `actualization/links.ps1` creates or verifies the configured project-to-user
 hardlinks and refuses differing occupied counterparts.
 
-Agent runtime checks use `na2/test_launch.ps1 -WorkerRoot
-work/<task title>`. `na2/provision_test_pcsx2.ps1` atomically copies the
-protected `@pcsx2_clean` template into that workstream's private `pcsx2/`
-directory when absent; existing clones are validated and reused, never
-overwritten. A full-session lock prevents two launches from sharing one clone.
-The wrapper keeps the clone's effective Slot 1 card in place, redirects
-per-run logs and artifacts within the same workstream root, chooses a free PINE
-port, and launches the clone hidden/muted and running by default. Pass
-`-StartPaused` only when required. Clone-local runtime settings persist for the
-next run to validate and update; there is no second configuration lock,
-temporary card copy, synthetic GameSettings file, or settings snapshot/restore.
-Savestate slot operations use the clone's persistent `sstates/` directory and
-direct frame capture uses its persistent `snaps/` directory; requested output
-files are still constrained to that same workstream root.
-The wrapper records and validates the specific PID, start time, top-level
-window handle, and PINE endpoint. Process
-control additionally requires the unchanged live descriptor and its
-launch-local ownership capability; identity checks alone never authorize a
-stop. Descriptor/capability loss or a stop timeout leaves the process and live
-runtime files untouched, quarantines that workstream clone against later
-launches, and reports failure. The user installation and every other PCSX2
-process are never inspected or controlled. Runtime logs are unique per launch;
-savestates, screenshots, recordings, cache, and dump paths remain task-owned,
-while the clone's own configured memory card remains persistent inside the
-clone.
-`na2/test_worker_pcsx2.ps1` covers atomic provisioning, template immutability,
-clone reuse, and workstream-root folder validation.
-`na2/test_test_runtime.ps1` covers persistent clone configuration, direct card
-selection, and the absence of obsolete card copies or synthetic settings;
-`na2/test_process_ownership.ps1` proves missing, mismatched, and
-modified ownership records cannot terminate a process;
-`na2/test_test_pine.ps1` covers exact-byte guarded reads/writes; and
-`na2/test_test_operation.ps1` covers task-root confinement plus state/screenshot
-handling. The shared ISO identity helper is also used by PNACH actualization.
-
-Tasks that need runtime control pass a repository-relative JSON plan below their
-own worker root with `-OperationPlan`; the launcher interprets it after PINE
-identity is ready, but before guarded cleanup:
-
-```powershell
-& .\scripts\na2\test_launch.ps1 `
-  -WorkerRoot 'work/Font' `
-  -IsoPath 'work/Font/build/font-test.iso' `
-  -OperationPlan 'work/Font/runtime-operation.json'
-```
-
-`work/Font/runtime-operation.json`:
-
-```json
-{
-  "schema_version": 1,
-  "result_path": "work/Font/artifacts/runtime/font-case.json",
-  "actions": [
-    {
-      "action": "load_state",
-      "state_path": "work/Font/inputs/sstates/font-case.p2s",
-      "slot": 0
-    },
-    {
-      "action": "read_memory",
-      "address": "0x00123450",
-      "expected_hex": "00112233"
-    },
-    {
-      "action": "wait",
-      "milliseconds": 500
-    },
-    {
-      "action": "capture_state",
-      "slot": 1,
-      "screenshot_path": "work/Font/artifacts/screenshots/font-case.png",
-      "timeout_seconds": 30
-    },
-    {
-      "action": "capture_frame",
-      "screenshot_path": "work/Font/artifacts/screenshots/current-frame.png",
-      "timeout_seconds": 30
-    }
-  ]
-}
-```
-
-Supported action objects are `identity`; `load_state` with `state_path` and
-optional `slot`; exact-byte `read_memory` with `address` and `expected_hex`;
-exact-byte guarded `patch_memory` with `address`, `expected_hex`, and
-`replacement_hex`; `save_state`; `capture_state` with a task-owned
-`screenshot_path`; direct `capture_frame` with a task-owned `screenshot_path`;
-and bounded `wait` with `milliseconds`. State inputs, plans, result files, and
-screenshot outputs must stay below the same
-`work/<task title>/` root. Addresses accept JSON integers or `0x` strings;
-byte strings are non-empty, even-length hexadecimal.
-
-Every PINE action revalidates the authenticated live descriptor and verifies
-the recorded serial/CRC over the same private PINE connection used for that
-action. The plan interpreter exposes and persists no PINE port, descriptor, or
-ownership capability. `capture_state` records both task-owned state and
-screenshot paths when the savestate embeds `Screenshot.png`. `capture_frame`
-instead asks the owned clone's recorded window to invoke its configured
-screenshot hotkey, validates the new PNG in that clone's task-owned snapshot
-directory, and does not activate the window or depend on savestate metadata.
-Optional `result_path` receives the complete portable JSON result, and
-`WaitSeconds` starts only after all plan actions finish.
+`na2/test_launch.ps1` is the only agent-side PCSX2 script. It launches an
+already-existing `work/<task title>/pcsx2/pcsx2-qt.exe` copy hidden with a
+repository-relative ISO path. It does not copy or configure PCSX2, inspect or
+stop processes, use PINE, load savestates, capture output, or perform cleanup.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`
@@ -214,6 +115,7 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 | `scripts/archive/replace_iso_file_same_size.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na2_patcher.image_assembler`. |
 | `scripts/na2/check_log_crc.ps1` | `804c2df8d16019a3b55f6acb10a023c435faaafc` | Manual log/PNACH comparison was superseded by `na2/iso_identity.ps1` and the maintained standalone actualization workflow. |
 | `scripts/na2/get_elf_crc.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | The redundant command wrapper was removed; `na2/pcsx2_elf_crc.ps1` remains the shared tested implementation. |
-| `scripts/na2/test_memory_card.ps1` | `70a81a36ecf119b6330b19984c9c8104d54bcc61` | Full persistent workstream clones made per-run memory-card copying and synthetic per-game selection unnecessary; `na2/test_runtime.ps1` now validates and uses the clone's configured card directly. |
-| `scripts/na2/test_test_memory_card.ps1` | `70a81a36ecf119b6330b19984c9c8104d54bcc61` | The isolated-card-copy tests were retired with their implementation; direct clone-card selection is covered by `na2/test_test_runtime.ps1`. |
+| `scripts/na2/test_memory_card.ps1` | `70a81a36ecf119b6330b19984c9c8104d54bcc61` | Retired with the later agent PCSX2 runtime framework; there is no maintained replacement. |
+| `scripts/na2/test_test_memory_card.ps1` | `70a81a36ecf119b6330b19984c9c8104d54bcc61` | Retired with the later agent PCSX2 runtime framework; there is no maintained replacement. |
+| `scripts/na2/pine.ps1`, `provision_test_pcsx2.ps1`, `test_operation.ps1`, `test_process_ownership.ps1`, `test_runtime.ps1`, `test_test_operation.ps1`, `test_test_pine.ps1`, `test_test_runtime.ps1`, `test_worker_pcsx2.ps1`, and `worker_pcsx2.ps1` | `4f6578e7d131fca9905aff8358371ed6eb8d9791` | The unsolicited agent PCSX2 ownership, PINE-operation, provisioning, and runtime framework was removed. Only the minimal hidden launcher remains. |
 | `scripts/research/translation/check_translation_lengths.ps1` | `91a7dabbbe8ac957b4c04d3abe7aec721757b839` | Its fixed-slot `old`/`new` assumptions are obsolete; translation importer and string patcher validation now enforce encoding and capacity rules. |

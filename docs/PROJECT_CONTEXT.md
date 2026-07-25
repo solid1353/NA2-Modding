@@ -50,12 +50,12 @@ replaced with a copied machine-specific absolute path.
 - `work/<task title>/build/`: isolated agent ISOs produced by `na2 -t work/<task title>/build/<name>.iso`. Staging remains beside the requested output, build records remain under that task's `logs/`, and the mode never touches shared build, preflight, promotion, PNACH, or PCSX2 state.
 - Temporary imported archives live under the active task's `work/<task title>/temp/` folder until normalized or retired. Reproducible data lives as hash-pinned inputs beside its module; complete accepted states are preserved by annotated Git tags, and retired inputs remain available through Git history.
 - `na2_patcher/features/localization/translation_importer/mappings.tsv` is the Localization feature's current hash-pinned importer input and folds the verified pointer inventory into each applicable mapping row. `source_ref` and `source` retain the guarded NA2 origin; `donor_ref` and `donor` retain the official translation and make it executable by default. A nonempty user-authored `replacement` overrides the donor, and `prefix` is prepended to the selected text. Profile `identity.json` owns the imported/output game titles, and the generic `string_patcher` applies that output policy before deriving inline or linked placement from encoded fit and available references. `payload_builder` constructs `PRG/228.BIN` and owns its loader/memory integration; the composer resolves symbols and `binary_patcher` applies concrete guarded writes. No standalone export or source-hash bypass exists.
-- `@logs/`: disposable shared-workflow records; no files should be written directly in the root. `na2` keeps bounded Current/Previous/Candidate provenance under `@logs/na2/`, and shared generated workstream evidence belongs under `@workstream_logs/<exact task title>/`. Agent ISO and PCSX2 records instead stay under `work/<task title>/logs/`. See `docs/LOGGING.md`.
+- `@logs/`: disposable shared-workflow records; no files should be written directly in the root. `na2` keeps bounded Current/Previous/Candidate provenance under `@logs/na2/`, and shared generated workstream evidence belongs under `@workstream_logs/<exact task title>/`. Agent ISO records instead stay under `work/<task title>/logs/`. See `docs/LOGGING.md`.
 - `scripts/`: repeatable tooling.
 - `@pcsx2_files/`: project-owned PCSX2 artifacts. The canonical PNACH and input recordings are tracked; screenshots remain local and ignored.
 - `@pcsx2_user/`: protected user-owned portable PCSX2 installation and state. User launch/actualization workflows address it; agents never inspect, launch, or modify it.
-- `@pcsx2_clean/`: protected immutable worker template stored at `@utils/pcsx2_clean/`. The maintained provisioner copies its complete tree to `work/<task title>/pcsx2/` and never launches or mutates the template.
-- `work/<task title>/pcsx2/`: the exact workstream's private PCSX2 clone. Agent runtime testing uses only this tree and never controls another PCSX2 process.
+- `@pcsx2_clean/`: protected immutable worker template stored at `@utils/pcsx2_clean/`. Agents copy its complete tree to `work/<task title>/pcsx2/` before use and never launch or mutate the template.
+- `work/<task title>/pcsx2/`: the exact workstream's private PCSX2 copy. The minimal hidden launcher starts only this copy; other PCSX2 processes are off-limits.
 - `na2_patcher/modules/binary_patcher/`: repository-owned schema v2 and reusable CLI validator/patcher for canonical group/patch/edit packages owned by features. The schema has no relations table; default-enabled edits are simulated in deterministic order so compatible overlaps and already-satisfied replacements are retained while real guard conflicts fail before ISO staging. It never applies `pending`, `runtime_failed`, or `deprecated` patches and writes only new same-size outputs with complete logs.
 - `na2_patcher/modules/translation_importer/`: the reusable official-string importer engine. Localization-owned mappings and their pointer-reference inventory live under `na2_patcher/features/localization/translation_importer/`.
 - `na2_patcher/modules/string_patcher/`: the reusable semantic string-placement engine. Localization has no feature-owned string-patcher directory or local declarations; its importer artifact invokes the engine as a derived consumer. The engine compiles inline imports and contributes external fragments/symbolic pointers without owning `228.BIN` layout. The memory-card title belongs to profile `identity.json`, not Localization.
@@ -162,28 +162,11 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 ## Current Scripts
 
 - Root `_na2.ps1` is the routine build/launch entrypoint. Bare `na2`, `na2 -b`, bare `na2 -t`, `na2 -c`, and `na2 -p` retain their Current/Previous/Candidate behavior. The standalone `act` command performs actualization without building or launching. User-owned shared-image modes run `act na2` automatically; the launcher does not read or rewrite the user's `PCSX2.ini`. `na2 -t work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
-- `scripts/na2/` contains build/promotion, ISO identity,
-  worker-path validation, PCSX2 launch/process control, PINE identity checks,
-  and agent runtime isolation. `test_launch.ps1` persistently configures only
-  the workstream's complete PCSX2 clone, uses that clone's already-configured
-  card directly, waits for the expected ELF identity, and thereafter controls its recorded
-  PID/window/port only while an unchanged live descriptor and launch-local
-  ownership capability both validate. Descriptor/capability loss is fail-closed:
-  the process and potentially live task runtime data are left untouched. A
-  task-owned declarative operation plan may load/capture savestates and perform
-  exact-byte guarded PINE reads/writes through an in-process interpreter that
-  revalidates ownership and same-connection serial/CRC identity without
-  exposing the port or capability. Its direct frame-capture action posts the
-  configured screenshot hotkey only to the PID-validated owned window and
-  accepts output only from that clone's task-owned snapshot directory, avoiding
-  any dependency on savestates embedding `Screenshot.png`. Savestate slot
-  operations and raw frame captures use the workstream clone's persistent
-  `sstates/` and `snaps/` directories; requested output files remain confined
-  to the same workstream root. There is no per-run card copy, synthetic
-  GameSettings file,
-  second configuration lock, or INI snapshot/restore. Live two-instance
-  validation on PCSX2 2.6.3 confirmed independent ports, windows, cards, and
-  targeted shutdown.
+- `scripts/na2/` contains build/promotion, ISO identity, worker-path validation,
+  ordinary user PCSX2 launch/process helpers, and one minimal agent-side hidden
+  launcher. `test_launch.ps1` starts an already-existing workstream PCSX2 copy
+  hidden; it performs no cloning, configuration, process inspection, PINE
+  operation, savestate handling, capture, cleanup, or termination.
 - `na2_patcher/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na2_patcher/build_profile.py` applies that prepared pipeline and writes its run log. `na2_patcher/composer.py` resolves module artifacts and closes typed image operations. `na2_patcher/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Candidate, or worker-owned output.
 - `scripts/media/` contains the recursive source extractor, its byte-parity
   verifier, and focused ISO, AFS, and CVM building blocks. Direct same-size ISO

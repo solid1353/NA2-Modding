@@ -44,9 +44,9 @@ The manifest currently defines these stable logical names:
 - `pcsx2_user`: the user's protected portable PCSX2 installation. User launch,
   build-promotion, and actualization commands address it; agents do not.
 - `pcsx2_clean`: the protected immutable worker template under
-  `@utils/pcsx2_clean/`. The maintained provisioner may only validate and copy
-  its complete tree into `work/<task title>/pcsx2/`; it is never launched or
-  modified directly.
+  `@utils/pcsx2_clean/`. Agents copy its complete tree into
+  `work/<task title>/pcsx2/` before use; it is never launched or modified
+  directly.
 - `pcsx2_user_gamesettings`, `pcsx2_user_inputprofiles`,
   `pcsx2_user_inputrecordings`, and `pcsx2_user_memcards`: the corresponding
   user-state children used only by user-owned actualization. The PCSX2 INI is

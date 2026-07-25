@@ -6,14 +6,9 @@ touching a running emulator, or connect to PCSX2's local PINE server for a new
 single capture or targeted read-only memory inspection. It does not launch
 PCSX2 or automate controller input.
 
-Codex agents must use `scripts/na2/test_launch.ps1 -OperationPlan` for live
-runtime observation or control because that workflow retains the required
-launch-local ownership capability and operates only on the workstream's private
-clone. `ui_runtime.py` remains necessary for
-offline `import-pairs`, settings inspection, embedded-screenshot extraction,
-and explicitly user-directed work against a user-owned paused PCSX2 session;
-its direct PINE commands do not establish agent process ownership. Agents must
-not run it against `@pcsx2_user`.
+`ui_runtime.py` supports offline `import-pairs`, settings inspection,
+embedded-screenshot extraction, and explicitly user-directed work against a
+user-owned paused PCSX2 session.
 
 `match_assembly_function.py` compares one preserved Ghidra assembly function
 against another build by normalized instruction structure. It accepts both the

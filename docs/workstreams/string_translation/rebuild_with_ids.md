@@ -162,6 +162,13 @@ Screenshots are grouped by game section and screen semantics. Each visible
 one ID are retained as useful renderer/screen coverage but refer to one source
 row.
 
+For every diagnostic NA2 screen that has a corresponding NUN5 screen, capture
+both games in the same semantic state. The captures need not be simultaneous:
+the NA2 image proves which `T#` rows are displayed, while the matched NUN5
+image proves the official English wording, capitalization, line structure, and
+control-icon wording. If the games use genuinely different flows, capture each
+flow independently and pair only screens whose meaning and action agree.
+
 The user is not required to capture every hidden selector choice or every
 running-help variant. Siblings may be inferred only when:
 

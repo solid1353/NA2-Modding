@@ -413,17 +413,18 @@ a centered 368-unit box after selecting the accepted secondary renderer.
 Unrelated callers resume through displaced-instruction trampolines at
 `0x003D4180` and `0x003D42A0`.
 
-The complete canonical helper block occupies runtime
+Commit `3d52a14` placed the complete helper block at runtime
 `0x003D3E00..0x003D4388` (file `0x2D3F00..0x2D4488`) inside the larger
 common-zero interval `0x003D3DB6..0x003D5D30`. That interval is zero in the
-clean ELF and all 16 preserved runtime states. A disposable ISO marker audit
-then proved that markers at its start, middle, and end all survive after a
+clean ELF and was zero in all 16 states then sampled. A disposable ISO marker
+audit also proved that markers at its start, middle, and end survive after a
 fixed five-second boot settle. PINE becomes ready while the large boot ELF is
 still being copied, so immediate reads of high file-offset caves can
-transiently return zero and are not valid placement evidence. Runtime scratch
-remains in the independently state-zero range
-`0x003FAD18..0x003FAE44`. The canonical blobs occupy only the bounded
-subranges recorded in `edits.tsv`; no file is expanded.
+transiently return zero and are not valid placement evidence. The later
+Load-screen evidence below proves that boot-settle and sampled-screen survival
+were nevertheless insufficient: the game clears this whole interval during a
+transition that the original regression did not cover. Runtime scratch was
+placed in the independently state-zero range `0x003FAD18..0x003FAE44`.
 
 A full ten-state guarded regression covered Practice pause, Controls, Command
 Chart, command explanation, Practice settings, Practice quit, character
@@ -433,7 +434,52 @@ matched results. Command explanation, Collection movie, and no-memory-card
 overflow remain separate unresolved caller families; their unchanged defects
 are not regressions from this port. Confidence is **high** for the shared
 measurement formula, hook boundaries, caller guards, and matched horizontal
-result.
+result. That regression did not cover entry into Save/Load and therefore did
+not establish persistent ownership of the helper interval.
+
+### 2026-07-25 confirmed Load-screen helper erasure
+
+The user captured a state after the game froze while entering the Load screen.
+The source was read from
+`@pcsx2_user/sstates/SLOP-NA228 (682CC5FB).01.p2s`, copied without modifying
+the user library to
+`work/Font/inputs/sstates/load_freeze/user/SLOP-NA228 (682CC5FB).01.p2s`,
+and has SHA-256
+`67B9329411667E32211B4FAA319ADCF3EF255362FD26C8DF70AFA475D8937644`.
+Its embedded screenshot shows the two Load-screen panels before any text was
+drawn.
+
+Offline comparison against the same-CRC pre-Load state
+`work/Font/artifacts/load_freeze/crash_state/pre_load_same_crc.p2s`, SHA-256
+`B20EF54A12952C0A30BD2907E2FD9B6B1B98961620E72658A62B2B2BC7001E0F`,
+establishes the failure:
+
+- the pre-Load state matches 19 of the 20 exact canonical Font ELF edits; its
+  only mismatch is the separately initialized scale word at runtime
+  `0x0060737C`;
+- the frozen state still matches all permanent hooks and ordinary ELF edits,
+  but all six injected helper/trampoline edits are entirely zero:
+  `font_layout_wrappers_01..04`, `font_controls_auto_fit_10`, and
+  `font_renderer_metrics_01`;
+- the frozen state's zero run is exactly
+  `0x003D3DB6..0x003D5D30`, 8,058 bytes, which is the whole clean-file
+  common-zero interval containing every new helper;
+- the UI scratch record at `0x003FAD20..0x003FAD60` is also zero, but no
+  scratch corruption is needed to explain the freeze.
+
+The permanent UI, selected-choice, ordinary-space, and newline hooks therefore
+survive while their destinations at `0x003D3E00..0x003D4388` disappear. A
+hook entering that range executes zeros instead of a returning helper, which
+explains the blank Load screen and hang. Confidence is **high**: the
+same-CRC before/after states distinguish transition-time erasure from an ISO
+that never contained the blobs.
+
+This rejects the helper interval as persistent executable storage. Do not
+reuse it or select another boot-settled zero cave by sampling alone. The
+matched renderer formulas and layout decisions remain useful, but any
+replacement implementation must relocate all helpers and trampolines into a
+project-owned persistent code region and rerun both the prior ten-state
+regression and an explicit Save/Load-entry test.
 
 ## 2026-07-19 superseded clean-font baseline
 

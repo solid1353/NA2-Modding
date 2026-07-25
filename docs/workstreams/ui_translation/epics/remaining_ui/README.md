@@ -7,7 +7,8 @@ the right.
 
 ## Remaining subtasks
 
-1. Shop: confirm the patched Money, Ryo, and Bonus Game placements.
+1. Shop, slot 7: match the remaining Bonus Game placement. Money and Ryo are
+   fixed.
 2. Battle Results screen 2: repair the garbled and mislaid result UI.
 3. Character Items transition: replace the NA2.28 slide with the NUN5/base-NA2
    fade behavior.
@@ -17,7 +18,7 @@ the right.
 
 ### Shop
 
-![Shop: Money, Ryo, and Bonus Game](01-shop.png)
+![Shop: Bonus Game placement, slot 7](01-shop.png)
 
 ### Battle results
 

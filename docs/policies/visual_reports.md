@@ -17,6 +17,10 @@
   group remain under one shared heading; never present the report as an
   unsectioned image sequence. Emit the composed grids as actual conversation
   images visible to the user.
+- When newer user evidence changes a case's slot, status, or remaining defect,
+  regenerate the canonical grid from the retained task-owned inputs before
+  reporting the update. Stale grid imagery or metadata is not an updated
+  report.
 
 ## Completed selected-task report
 

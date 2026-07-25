@@ -54,3 +54,18 @@ canonical epic record.
 
 A grid may contain one row, but never only one screenshot; every row shows NUN5
 on the left and NA2.28 on the right.
+
+## Savestate updates
+
+When the user provides or identifies a new savestate pair for an epic case,
+immediately:
+
+1. Copy both reference and current states from the protected user library into
+   the owning workstream's `inputs/sstates/` directory and record provenance.
+2. Refresh the retained mismatch entry and its source screenshots from those
+   task-owned copies.
+3. Update the canonical epic README and composed report grid to show the new
+   slot, status, and remaining defect.
+
+A chat-only acknowledgment is not an update. Do not report the savestate as
+recorded until the task-owned copies and canonical epic artifacts reflect it.

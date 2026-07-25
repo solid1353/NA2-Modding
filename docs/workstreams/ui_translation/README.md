@@ -2,6 +2,14 @@
 
 Canonical documentation landing page for the `UI Translation` workstream.
 
+## Scope
+
+This workstream owns UI artwork, texture translation, asset selection, atlas
+slicing, visibility, ordering, animation, and placement data required to match
+the official NUN5 reference. Text content and font rendering, measurement,
+fitting, and spacing belong to their respective workstreams. Confirmed reusable
+findings remain in the shared knowledge base rather than being duplicated here.
+
 ## Documents
 
 - [Active plan and working context](plan.md)
@@ -11,11 +19,3 @@ Canonical documentation landing page for the `UI Translation` workstream.
 - [Shop UI knowledge](../../knowledge/localization/ui/shop.md)
 - [Stage-select UI knowledge](../../knowledge/localization/ui/stage_select.md)
 - [Victory UI knowledge](../../knowledge/localization/ui/victory.md)
-
-## Workstream policy
-
-- Present the remaining subtasks before execution and wait for the user to
-  select exactly one. Complete only that selected subtask, commit and push it,
-  then report both its result and the remaining subtasks before another
-  selection.
-- Prefer broad changes over selective fixes.

@@ -107,7 +107,12 @@ def prepare_module_pipeline(
     for provider in ordered_modules:
         if provider.module != "translation_importer":
             continue
-        import_plan = translation_importer_module.build_translation_import_plan(
+        import_builder = (
+            translation_importer_module.build_mapping_id_import_plan
+            if translation_display == "mapping_ids"
+            else translation_importer_module.build_translation_import_plan
+        )
+        import_plan = import_builder(
             **_translation_source_arguments(profile.roots["na2"], "na2"),
             data_root=provider.input_path,
             apply="BTL,ETC,SLPS",

@@ -30,6 +30,13 @@ class IntegratedExternalStringTests(unittest.TestCase):
             data_root=cls.localization / "translation_importer",
             apply="BTL,ETC,SLPS",
         )
+        cls.diagnostic_import_plan = (
+            translation_importer.build_mapping_id_import_plan(
+                na2_folder=cls.roots["na2"],
+                data_root=cls.localization / "translation_importer",
+                apply="BTL,ETC,SLPS",
+            )
+        )
         cls.draft = string_patcher.build_translation_draft(
             translation_plan=cls.import_plan,
             owner="localization.string_patcher",
@@ -225,30 +232,51 @@ class IntegratedExternalStringTests(unittest.TestCase):
         self.assertEqual(self.import_plan.resolved_texts["M0566"], "No")
         self.assertEqual(self.import_plan.resolved_texts["M0799"], "Yes")
 
+    def test_rebuild_inventory_is_adjacent_and_translation_free(self) -> None:
+        self.assertEqual(len(self.diagnostic_import_plan.text_mappings), 2173)
+        self.assertEqual(
+            self.import_plan.summary["mappings_sha256"],
+            "7601F834646C374F3E89087724726AAE78E9A87A46A5F936CC5C776C4E60C0B6",
+        )
+        self.assertEqual(
+            self.diagnostic_import_plan.summary["rebuild_sha256"],
+            "EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C",
+        )
+        self.assertEqual(self.diagnostic_import_plan.donor_texts, {})
+        self.assertTrue(
+            all(
+                not str(row["donor"])
+                and not str(row["donor_ref"])
+                and tuple(row["legacy_ids"])
+                for row in self.diagnostic_import_plan.text_mappings
+            )
+        )
+
     def test_mapping_id_display_uses_readable_ids_and_fits_small_slots(self) -> None:
         draft = string_patcher.build_translation_draft(
-            translation_plan=self.import_plan,
+            translation_plan=self.diagnostic_import_plan,
             owner="localization.string_patcher",
             title_policy=string_patcher.GameTitlePolicy(
-                imported_title="Naruto Shippuden: Ultimate Ninja 5",
-                output_title="Narutimate Accel v2.28",
-                expected_mapping_count=6,
-                expected_occurrence_count=7,
+                imported_title="unused in diagnostic mode",
+                output_title="also unused in diagnostic mode",
+                expected_mapping_count=0,
+                expected_occurrence_count=0,
             ),
             translation_display="mapping_ids",
         )
         plan = draft.translation_plan
         self.assertEqual(plan.display_mode, "mapping_ids")
-        self.assertEqual(plan.resolved_texts["M0562"], "0562")
-        self.assertEqual(plan.resolved_texts["M0563"], "M0563")
+        self.assertEqual(plan.resolved_texts["T1"], "T1")
+        self.assertEqual(plan.resolved_texts["T5"], "T5")
         self.assertEqual(
-            plan.resolved_sequences["M0813"],
-            ("M0813.1", "M0813.2"),
+            plan.resolved_sequences["T2036"],
+            ("T2036.1", "T2036.2", "T2036.3"),
         )
         self.assertEqual(draft.external_draft.fragments, ())
         self.assertEqual(draft.external_draft.symbolic_patches, ())
         diagnostic = plan.summary["diagnostic_display"]
         self.assertEqual(diagnostic["mode"], "mapping_ids")
+        self.assertEqual(diagnostic["mapping_count"], 2173)
         self.assertEqual(
             diagnostic["mapping_count"],
             len(plan.resolved_texts) + len(plan.resolved_sequences),

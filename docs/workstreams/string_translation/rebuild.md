@@ -1,8 +1,9 @@
-# From-scratch string-translation rebuild
+# Historical v45 string-translation rebuild
 
-This is the approved execution and validation policy for rebuilding the
-Localization translation table. The existing table is historical reference
-material, not presumed executable coverage.
+This document records the superseded first rebuild that produced accepted
+`mappings.tsv` v45. It is retained only as historical reference. The current
+parallel `T#` rebuild and validation policy is
+[T-ID from-scratch string-translation rebuild](rebuild_with_ids.md).
 
 ## Selection rule
 

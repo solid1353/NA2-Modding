@@ -4,20 +4,22 @@ Canonical documentation landing page for the `String translation` workstream.
 
 ## Workstream policy
 
-- Translate only strings confirmed to be displayed through savestate-driven
-  inspection. Existing translations and mappings are reference material rather
-  than presumed required coverage.
-- The rebuilt executable table admits a row only when it has a concrete
-  `display_context` and a `display_basis`: directly seen in an ID screenshot,
-  inferred from a proven selector/help-text family, or covered by the explicit
-  character-family exception. Rows without a display location remain untouched
-  Japanese data.
+- Keep accepted `mappings.tsv` and normal build behavior unchanged while the
+  replacement is built in adjacent `rebuild.tsv`. Existing translations,
+  mappings, and legacy donor links are reference material rather than presumed
+  correct coverage.
+- Translate only strings confirmed to be displayed through the `T#`
+  screenshot pass. The rebuilt executable table admits a row only when it has
+  a concrete `display_context` and a `display_basis`: directly seen in an ID
+  screenshot, inferred from a proven selector/help-text family, or covered by
+  the explicit character-family exception. Rows without a display location
+  remain untouched Japanese data after final cutover.
 - Character-specific strings may be translated systematically without
   individual runtime encounters because their structure is predictable and
   exhaustive testing is disproportionately time-consuming.
 - Hidden selector values and running help text are reconstructed from verified
-  NUN5/NA2 table structure and the pre-rebuild v40 table retained in Git
-  history. The user is not required to capture every value separately.
+  NUN5/NA2 table structure and legacy tables used strictly as reference. The
+  user is not required to capture every value separately.
 - Keep complete official donor text and complete user-authored overrides in
   canonical mappings. A blank `replacement` uses `donor`; `prefix` is
   prepended to the selected text. Inline versus external placement is derived
@@ -41,6 +43,7 @@ Global source, binary-safety, profile, testing, and cleanup rules remain in
 
 ## Documents
 
-- [From-scratch translation rebuild and validation plan](rebuild.md)
+- [Current T-ID from-scratch rebuild and validation plan](rebuild_with_ids.md)
+- [Historical v45 rebuild record](rebuild.md)
 - [Localization feature and mapping history](../../../na2_patcher/features/localization/README.md)
 - [External string-payload architecture](../../knowledge/localization/external_string_payload.md)

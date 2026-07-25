@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import codecs
 import csv
-import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path, PurePosixPath
@@ -89,9 +88,6 @@ def _mapping_id_token(mapping_id: str, capacity: int) -> str:
         ) from exc
     if len(encoded) < capacity:
         return mapping_id
-    match = re.fullmatch(r"[A-Za-z](\d{4})", mapping_id)
-    if match and len(match.group(1).encode("ascii")) < capacity:
-        return match.group(1)
     raise ValueError(
         f"{mapping_id}: cannot fit a diagnostic identifier in "
         f"{capacity - 1} display bytes"
@@ -603,9 +599,13 @@ def build_translation_draft(
             "unsupported translation display mode: "
             f"{translation_display!r}"
         )
-    transformed_plan = _apply_game_title_policy(translation_plan, title_policy)
     if translation_display == "mapping_ids":
-        transformed_plan = _apply_mapping_id_display(transformed_plan)
+        transformed_plan = _apply_mapping_id_display(translation_plan)
+    else:
+        transformed_plan = _apply_game_title_policy(
+            translation_plan,
+            title_policy,
+        )
     external_draft = external_strings.build_external_string_draft(
         translation_plan=transformed_plan,
         owner=owner,

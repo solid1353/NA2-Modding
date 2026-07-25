@@ -32,6 +32,12 @@ MAPPING_FIELDS = [
     "capacity", "transform", "arguments", "reference_refs",
     "parent_mapping_id",
 ]
+REBUILD_FIELDS = [
+    "id", "display_context", "source", "donor", "prefix", "replacement",
+    "display_basis", "source_ref", "donor_ref", "mode", "capacity",
+    "transform", "arguments", "reference_refs", "parent_mapping_id",
+    "legacy_ids",
+]
 EXPECTED_SHA1 = {
     "NA2_BTL": "bf7fc7331a2a4f34fc90b84b45772ae1f6bcab03",
     "NA2_ETC": "dcfffd7eb14e484a4c0fbc195599a0b45a9a11c1",
@@ -291,6 +297,111 @@ def read_rows(path: Path) -> list[dict[str, str]]:
     if any(not value for value in ids) or len(ids) != len(set(ids)):
         raise ValueError("mappings.tsv contains empty or duplicate ids")
     return rows
+
+
+def read_rebuild_rows(path: Path) -> list[dict[str, str]]:
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        if reader.fieldnames != REBUILD_FIELDS:
+            raise ValueError(
+                "rebuild.tsv must contain exactly these columns in this order: "
+                + "\t".join(REBUILD_FIELDS)
+            )
+        verbatim_fields = {"source", "donor", "prefix", "replacement"}
+        rows = [
+            {
+                key: (
+                    value or ""
+                    if key in verbatim_fields
+                    else (value or "").strip()
+                )
+                for key, value in raw.items()
+            }
+            for raw in reader
+        ]
+    ids = [row["id"] for row in rows]
+    numbers = []
+    for value in ids:
+        match = re.fullmatch(r"T([1-9][0-9]*)", value)
+        if match is None:
+            raise ValueError(
+                f"rebuild.tsv contains malformed diagnostic id {value!r}"
+            )
+        numbers.append(int(match.group(1)))
+    if numbers != list(range(1, len(rows) + 1)):
+        raise ValueError(
+            "rebuild.tsv ids must be T1..T<count> in physical row order"
+        )
+    source_refs = [row["source_ref"] for row in rows]
+    if len(source_refs) != len(set(source_refs)):
+        raise ValueError("rebuild.tsv contains duplicate source_ref values")
+    return rows
+
+
+def parse_rebuild_mappings(
+    rows: list[dict[str, str]],
+) -> list[dict[str, object]]:
+    result: list[dict[str, object]] = []
+    for line, row in enumerate(rows, 2):
+        label = f"rebuild.tsv line {line} ({row['id']})"
+        if not row["display_context"]:
+            raise ValueError(f"{label}: display_context is required")
+        if not row["source"]:
+            raise ValueError(f"{label}: source is required")
+        if (
+            row["display_basis"]
+            and not row["display_basis"].startswith(DISPLAY_BASIS_PREFIXES)
+        ):
+            raise ValueError(
+                f"{label}: nonempty display_basis must begin with "
+                + ", ".join(DISPLAY_BASIS_PREFIXES)
+            )
+        mode = row["mode"].lower()
+        if mode not in VALID_MODES:
+            raise ValueError(f"{label}: unsupported mode {mode!r}")
+        target, target_offset = parse_source_ref(row["source_ref"], label)
+        capacity = parse_int(row["capacity"], label)
+        if mode == "sequence":
+            fragments = row["source"].split("<NUL>")
+            if len(fragments) < 2 or any(not fragment for fragment in fragments):
+                raise ValueError(
+                    f"{label}: sequence source must contain nonempty "
+                    "<NUL>-separated fragments"
+                )
+        elif "<NUL>" in row["source"]:
+            raise ValueError(f"{label}: slot source contains <NUL>")
+        legacy_ids = tuple(
+            value.strip()
+            for value in row["legacy_ids"].split(",")
+            if value.strip()
+        )
+        if any(
+            re.fullmatch(r"M[0-9]+", value) is None for value in legacy_ids
+        ):
+            raise ValueError(f"{label}: legacy_ids must contain only M<number> ids")
+        result.append(
+            {
+                "id": row["id"],
+                "display_context": row["display_context"],
+                "display_basis": row["display_basis"],
+                "mode": mode,
+                "target": target,
+                "target_offset": target_offset,
+                "source_ref": row["source_ref"],
+                "capacity": capacity,
+                "source": row["source"],
+                "donor_ref": "",
+                "donor": "",
+                "prefix": "",
+                "replacement": "",
+                "transform": "",
+                "arguments": {},
+                "reference_refs": (),
+                "parent_mapping_id": "",
+                "legacy_ids": legacy_ids,
+            }
+        )
+    return result
 
 
 def references_from_mappings(
@@ -949,6 +1060,123 @@ def write_import_tsv(path: Path, rows: list[dict[str, str]]) -> None:
 
 def write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def build_mapping_id_import_plan(
+    *,
+    na2_iso: Optional[Path] = None,
+    na2_folder: Optional[Path] = None,
+    data_root: Path,
+    apply: str = "BTL,ETC,SLPS",
+) -> TranslationImportPlan:
+    """Load the adjacent from-scratch candidate inventory for ID display."""
+    selected_list = parse_apply(apply)
+    selected = set(selected_list)
+    na2 = source_from(na2_folder, na2_iso, "NA2")
+    clean_targets = {
+        target: na2.read(
+            TARGET_SPECS[target][1],
+            f"NA2 {TARGET_SPECS[target][0]}",
+        )
+        for target in selected_list
+    }
+    actual_hashes = {
+        f"NA2_{target}": sha1(data)
+        for target, data in clean_targets.items()
+    }
+    for key, expected in EXPECTED_SHA1.items():
+        actual = actual_hashes.get(key)
+        if actual is not None and actual != expected:
+            raise ValueError(
+                f"Unexpected {key} SHA-1: {actual}; expected {expected}"
+            )
+
+    data_root = data_root.resolve()
+    rebuild_path = data_root / "rebuild.tsv"
+    rebuild_hash = hashlib.sha256(rebuild_path.read_bytes()).hexdigest().upper()
+    mappings = [
+        row
+        for row in parse_rebuild_mappings(read_rebuild_rows(rebuild_path))
+        if str(row["target"]) in selected
+    ]
+    resolved_texts: dict[str, str] = {}
+    resolved_sequences: dict[str, tuple[str, ...]] = {}
+    source_texts: dict[str, str] = {}
+    materialized_templates: dict[str, str] = {}
+    for row in mappings:
+        mapping_id = str(row["id"])
+        source = str(row["source"])
+        source_texts[mapping_id] = source
+        materialized_templates[mapping_id] = source
+        if row["mode"] == "sequence":
+            resolved_sequences[mapping_id] = tuple(source.split("<NUL>"))
+        else:
+            resolved_texts[mapping_id] = source
+
+    import_targets: dict[str, dict[str, object]] = {}
+    for target in selected_list:
+        path = TARGET_SPECS[target][0]
+        import_targets[path] = {
+            "root_id": "na2",
+            "path": path,
+            "expected_size": len(clean_targets[target]),
+            "expected_sha256": hashlib.sha256(
+                clean_targets[target]
+            ).hexdigest().upper(),
+        }
+    contexts = Counter(str(row["display_context"]) for row in mappings)
+    modes = Counter(str(row["mode"]) for row in mappings)
+    display_bases = Counter(
+        str(row["display_basis"])
+        for row in mappings
+        if str(row["display_basis"])
+    )
+    legacy_ids = {
+        legacy_id
+        for row in mappings
+        for legacy_id in tuple(row["legacy_ids"])
+    }
+    summary: dict[str, object] = {
+        "mode": "from-scratch diagnostic candidate declarations",
+        "rebuild_sha256": rebuild_hash,
+        "targets": selected_list,
+        "output": {
+            "import_rows": 0,
+            "text_mappings_applied": 0,
+            "text_mappings_changed": 0,
+        },
+        "diagnostic_candidates": {
+            "mappings": len(mappings),
+            "legacy_ids": len(legacy_ids),
+            "by_display_context": dict(sorted(contexts.items())),
+        },
+        "active_mapping_coverage": {
+            "by_mode": dict(sorted(modes.items())),
+            "by_display_context": dict(sorted(contexts.items())),
+            "by_display_basis": dict(sorted(display_bases.items())),
+        },
+        "source_hashes": actual_hashes,
+        "reference_inventory": {
+            "rows": 0,
+            "direct": 0,
+            "parent_message": 0,
+            "pointer_sites": 0,
+            "redirect_edits": 0,
+        },
+    }
+    return TranslationImportPlan(
+        import_rows=[],
+        targets=import_targets,
+        text_mappings=tuple(mappings),
+        references=(),
+        resolved_texts=resolved_texts,
+        resolved_sequences=resolved_sequences,
+        source_texts=source_texts,
+        donor_texts={},
+        materialized_templates=materialized_templates,
+        clean_targets=clean_targets,
+        summary=summary,
+    )
 
 
 def build_translation_import_plan(

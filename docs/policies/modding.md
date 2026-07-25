@@ -22,9 +22,11 @@
   contribute fragments and symbols but do not choose final `PRG/228.BIN`
   offsets, own global loader/memory integration, or construct the final file.
 - Translation checkpoints tag the complete project state; do not duplicate
-  mappings into snapshots. The Localization importer input remains
-  `na2_patcher/features/localization/translation_importer/mappings.tsv` and is
-  covered by the Localization feature hash.
+  mappings into snapshots. Accepted normal builds continue using
+  `na2_patcher/features/localization/translation_importer/mappings.tsv`.
+  During the approved from-scratch rebuild, adjacent `rebuild.tsv` is the
+  hash-covered worker-diagnostic/replacement input; it does not change normal
+  translation behavior before final cutover.
 
 ## Binary and donor changes
 

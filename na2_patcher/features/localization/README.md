@@ -3,7 +3,7 @@
 This feature owns all declarative content for the accepted English localization
 while reusable executable engines remain under `na2_patcher/modules/`.
 
-- [Translation importer](#na2-translation-importer-mapping-version-45)
+- [Translation importer](#na2-translation-importer-accepted-mapping-version-45-plus-t-id-rebuild)
 - [String patcher](#string-patcher)
 - [Resident Font renderer](#native-nun5-derived-font)
 - [Texture patcher](#ui-texture-translation-module)
@@ -16,7 +16,7 @@ The feature directory name declares its identity. Its module-named
 subdirectories are the inputs that compose it; enabling Localization enables all
 of them, and one aggregate profile pin covers their canonical inputs.
 
-## NA2 translation importer (mapping version 45)
+## NA2 translation importer (accepted mapping version 45 plus T-ID rebuild)
 
 This first-class `na2_patcher` module imports and validates strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
@@ -30,14 +30,18 @@ command or file-backed inter-stage handoff.
 
 - Version: `45`
 - Packaged `mappings.tsv` SHA-256: `7601F834646C374F3E89087724726AAE78E9A87A46A5F936CC5C776C4E60C0B6`
+- Initial parallel `rebuild.tsv` rows: `2,173` (`T1` through `T2173`)
+- Initial `rebuild.tsv` SHA-256: `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`
 
-The version and mappings hash above are historical documentation, not a second
-executable manifest. Git history and the aggregate Localization feature pin own
-content identity. `mappings.tsv` also owns the optional pointer inventory for
-rows that can be linked externally. Profile `identity.json` owns the
+The hashes above are documentation, not a second executable manifest. Git
+history and the aggregate Localization feature pin own content identity.
+`mappings.tsv` continues to own the accepted executable donor translations and
+optional pointer inventory. Adjacent `rebuild.tsv` is a translation-free
+candidate/replacement table whose rows are imported and executed only by
+worker mapping-ID builds. Normal builds hash it as canonical feature data but
+continue importing only `mappings.tsv`. Profile `identity.json` owns the
 imported/output title declaration; `string_patcher` applies it with fail-closed
-coverage. Documentation is not an executable input, and the importer verifies
-every declared reference guard.
+coverage only to the normal translation path.
 
 ### Source and target scope
 
@@ -55,11 +59,12 @@ user-editable string prepended to the selected translation. Every donor and
 override is complete: no shortened fallback or placement marker exists in the
 current table.
 
-### Canonical `mappings.tsv`
+### Accepted `mappings.tsv` and parallel `rebuild.tsv`
 
-`mappings.tsv` is the single canonical mapping table. `display_context` is its
-human-readable page/filter key; no separate technical section bucket is stored.
-Rows are sorted by `display_context`, then by stable `id` within each context.
+`mappings.tsv` remains the accepted canonical mapping table used by normal
+builds. It is unchanged by the parallel rebuild. `display_context` is its
+human-readable page/filter key; rows are sorted by that context, then by stable
+`id`.
 
 The 16 columns are:
 
@@ -80,6 +85,22 @@ The 16 columns are:
   current rows are enabled. Unconfirmed rows are absent instead of retained as
   disabled inventory.
 
+`rebuild.tsv` is the adjacent clean replacement under construction. Its
+human-readable columns come first:
+
+`id`, `display_context`, `source`, `donor`, `prefix`, `replacement`,
+`display_basis`, `source_ref`, `donor_ref`, `mode`, `capacity`, `transform`,
+`arguments`, `reference_refs`, `parent_mapping_id`, `legacy_ids`
+
+The initial table contains one row per distinct known clean source slot.
+`donor`, `donor_ref`, `prefix`, `replacement`, `display_basis`, transforms,
+and pointer fields begin empty; optional legacy `M` IDs are lookup aids only. Permanent
+diagnostic IDs use unpadded `T1`, `T2`, ... and are never recycled or
+renumbered. IDs increase in physical row order. The four 5-byte slots occupy
+rows `T1` through `T4` so their complete tokens fit; the remaining initial rows
+are sorted by `display_context`, then source location. Future candidates append
+with the next permanent ID.
+
 #### Modes
 
 - `slot`: compile one replacement as a NUL-terminated string, inline when it
@@ -87,9 +108,10 @@ The 16 columns are:
 - `sequence`: pack the `<NUL>`-delimited replacement fragments into one
   verified NA2 multi-string block. Sequences must fit inline.
 
-Unresolved research does not belong in the executable mapping table. Preserve
-useful leads in `docs/HYPOTHESES.md`; discard contextless inventory and rely on
-Git history for recovery.
+Unresolved research does not belong in accepted executable `mappings.tsv`.
+The bounded `rebuild.tsv` candidate inventory is the explicit exception during
+the approved screenshot-driven reconstruction; it contains guarded source
+slots, not executable translations or speculative donor claims.
 
 There is no `shorten` or `pool` mapping mode. External placement is a
 `string_patcher` build decision, not canonical mapping state.
@@ -1610,7 +1632,10 @@ payload is stored in Git.
   overrides, and every optional pointer reference.
   Three continuation rows deliberately reuse their containing full-message
   pointer.
-This file is covered by the Localization feature's aggregate profile hash.
+- `translation_importer/rebuild.tsv` contains the adjacent stable `T#`
+  candidate/replacement inventory. It drives only explicit worker mapping-ID
+  builds until final cutover.
+Both files are covered by the Localization feature's aggregate profile hash.
 Payload-builder configuration is executable infrastructure rather than feature
 data; engine code and documentation are excluded from the feature pin.
 

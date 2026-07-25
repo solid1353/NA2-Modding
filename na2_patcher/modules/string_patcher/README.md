@@ -14,11 +14,13 @@ has no local string declarations. Its importer artifact invokes this generic
 consumer as a derived stage. A feature creates `string_patcher/strings.tsv` only
 when it owns actual local declarations.
 
-An explicit `mapping_ids` diagnostic display mode replaces resolved text in
-memory with compact mapping identifiers before placement. It exists only for
-verified worker builds used to identify visible source rows; normal builds
-always use the canonical donor/override text. The diagnostic mode never edits
-the mapping table or active profile.
+An explicit `mapping_ids` diagnostic display mode consumes the importer's
+adjacent rebuild inventory and replaces every candidate with its complete
+permanent `T#` identifier before placement. Sequence fragments use `.1`, `.2`,
+and so on. IDs are never shortened by dropping the `T` prefix. It exists only
+for verified worker builds used to identify visible source rows; normal builds
+continue consuming the accepted `mappings.tsv` donor/override text. The
+diagnostic mode never rewrites either table or the active profile.
 
 ## Invokes
 

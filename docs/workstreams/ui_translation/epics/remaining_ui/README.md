@@ -15,12 +15,20 @@ the right.
 
 ## Report grids
 
+### Shop
+
 ![Shop: Money, Ryo, and Bonus Game](01-shop.png)
 
+### Battle results
+
 ![Battle Results screen 2](02-battle-results-2.png)
+
+### Character items
 
 ![Character Items transition, slots 1-3](03-items-slots-1-3.png)
 
 ![Character Items transition, slots 4-5](04-items-slots-4-5.png)
+
+### Select-label placement
 
 ![Select label, slot 6](05-select-slot-6.png)

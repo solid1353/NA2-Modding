@@ -36,11 +36,14 @@ and ask the user to decide.
 ## Epic reporting and storage
 
 When the user asks for the epic, present all remaining work using the accepted
-composed-grid format. In sequential mode, present the remaining epic after the
-completed subtask is accepted.
+composed-grid format, split under visible semantic-group headings. Keep every
+grid with its group; when one group needs multiple grids, chunk it under the
+same heading instead of presenting those grids as separate groups. In
+sequential mode, present the remaining epic after the completed subtask is
+accepted.
 
 Commentary or tool output does not prove delivery. The final response itself
-must visibly contain every composed grid.
+must visibly contain every semantic-group heading and every composed grid.
 
 Preserve each epic and its report grids together under
 `docs/workstreams/<workstream>/epics/<epic-id>/`. Each epic directory contains

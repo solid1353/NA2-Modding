@@ -12,9 +12,11 @@
 - Use a dark, low-glare background with light text for the report frame,
   headers, and metadata. Do not tint or otherwise alter the source screenshots.
 - A grid may contain one row, but never only one screenshot.
-- Larger reports group grids by game section and screen semantics and state the
-  covered slots. Emit the composed grids as actual conversation images visible
-  to the user.
+- Larger reports split grids under visible game-section and screen-semantic
+  headings and state the covered slots. Multiple chunks of the same semantic
+  group remain under one shared heading; never present the report as an
+  unsectioned image sequence. Emit the composed grids as actual conversation
+  images visible to the user.
 
 ## Completed selected-task report
 

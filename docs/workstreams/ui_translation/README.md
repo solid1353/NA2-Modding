@@ -14,6 +14,8 @@ Canonical documentation landing page for the `UI Translation` workstream.
 
 ## Workstream policy
 
-- Solve one subtask at a time; commit and push it after completion before
-  moving to another subtask.
+- Present the remaining subtasks before execution and wait for the user to
+  select exactly one. Complete only that selected subtask, commit and push it,
+  then report both its result and the remaining subtasks before another
+  selection.
 - Prefer broad changes over selective fixes.

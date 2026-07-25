@@ -1321,7 +1321,7 @@ file/runtime mappings, reconstruction, alias evidence, and the remaining
 normal-entry runtime requirement are preserved in
 `docs/knowledge/localization/ui/victory.md`.
 
-### UI-ETC-001: localized Shop currency-label layout
+### UI-ETC-001: localized Shop label layout
 
 Importing the complete NUN5 `SHOP.CCS` supplies the correct English atlas, but
 NA2's Shop renderer still copies its Japanese currency rectangles from
@@ -1336,17 +1336,17 @@ only the remaining 16 bytes, replacing `(169,385,42,26)` and
 `(169,385,62,26)` and `Ryo` rectangle `(321,449,30,22)`. It does not change the
 money value or its formatting logic.
 
-The exact range was written through PINE at EE `0x006E4208` and read back
-successfully. After a hidden redraw of preserved slot 3, both labels rendered
-in full and the existing seven-digit `9999999` value remained visible. The
-source and destination `ETC.BIN` files are size/hash pinned and remain
-untouched.
+The rectangle range previously rendered both labels in full while preserving
+the existing seven-digit `9999999` value. A later paired review established
+that the three English labels still did not match NUN5 placement. Complete
+homologous-function comparison now copies NUN5's exact Money X=`254`, Ryo
+Y=`50`, and Bonus Game X=`105` instructions over NA2's X=`250`, Y=`48`, and
+X=`100` constants. The money-value origin remains NA2-specific so its
+seven-digit layout is not clipped.
 
-The later Money-X and Ryo-Y anchor copies were unrelated to the reported
-`Bonus Game` label and changed a screen the user had already accepted. They
-are removed. Static comparison shows the complete NUN5 `SHOP.CCS` donor
-already carries the exact Bonus Game model/anchor; the small capture difference
-is normal label pulsation and does not justify another binary edit.
+The full file/runtime mapping, practical reconstruction, call relationships,
+side effects, evidence, and rejected pulse-only interpretation are recorded in
+`docs/knowledge/localization/ui/shop.md`.
 
 ### UI-ETC-002: localized Collection submenu layout
 

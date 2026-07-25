@@ -632,20 +632,62 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(anchor.expected_hex, "0243023C")
         self.assertEqual(anchor.replacement_hex, "1643023C")
 
-    def test_shop_patch_retains_only_the_proven_nun5_currency_rectangles(self) -> None:
+    def test_shop_patch_uses_nun5_rectangles_and_label_anchors(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
             / "na2_patcher/features/localization/binary_patcher"
         )
         edits = [item for item in package.edits if item.patch_id == "UI-ETC-001"]
+        patch = package.patches["UI-ETC-001"]
 
-        self.assertEqual(len(edits), 1)
+        self.assertEqual(len(edits), 4)
+        self.assertEqual(patch.status, "runtime_proven")
+        self.assertEqual(patch.confidence, "verified")
         rectangle = edits[0]
         self.assertEqual(rectangle.edit_id, "UI-ETC-001-01")
         self.assertEqual(rectangle.destination_offset, 0x30308)
         self.assertEqual(rectangle.source_target_id, "nun5_etc")
         self.assertEqual(rectangle.source_offset, 0x292F8)
+        self.assertEqual(
+            [
+                (
+                    item.edit_id,
+                    item.destination_offset,
+                    item.expected_hex,
+                    item.source_target_id,
+                    item.source_offset,
+                    item.source_expected_hex,
+                )
+                for item in edits[1:]
+            ],
+            [
+                (
+                    "UI-ETC-001-02",
+                    0x249A4,
+                    "7A43023C",
+                    "nun5_etc",
+                    0x25E88,
+                    "7E43023C",
+                ),
+                (
+                    "UI-ETC-001-03",
+                    0x249CC,
+                    "4042023C",
+                    "nun5_etc",
+                    0x25EB0,
+                    "4842023C",
+                ),
+                (
+                    "UI-ETC-001-04",
+                    0x24BB0,
+                    "C842023C",
+                    "nun5_etc",
+                    0x26094,
+                    "D242023C",
+                ),
+            ],
+        )
 
     def test_jutsu_patch_retains_the_nineteen_runtime_proven_edits(self) -> None:
         repository = Path(__file__).resolve().parents[2]
@@ -1371,11 +1413,11 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 251)
-        self.assertEqual(operations, {"copy": 82, "replace": 169})
+        self.assertEqual(len(ui_edits), 254)
+        self.assertEqual(operations, {"copy": 85, "replace": 169})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 61, "nun5_btl": 16, "nun5_etc": 5},
+            {"nun5_elf": 61, "nun5_btl": 16, "nun5_etc": 8},
         )
         self.assertEqual(len(stage_scales), 24)
         self.assertEqual(len(adaptations), 145)

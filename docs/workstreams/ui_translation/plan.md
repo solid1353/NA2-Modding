@@ -118,11 +118,13 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   loads at EE `0x006E4200`; NUN5's homolog is file offset `0x292F0`. Copying
   only the 16 differing bytes at NA2 `0x30308` selects NUN5's full
   `(169,385,62,26)` `Money` and `(321,449,30,22)` `Ryo` rectangles.
-- A guarded live write at EE `0x006E4208` matched the expected NA2 bytes and
-  read back exactly. Preserved slot 3 then rendered both labels completely with
-  the existing seven-digit `9999999` value visible. The later Money-X and
-  Ryo-Y anchor additions were unrelated to the reported Bonus Game pulse and
-  changed an accepted screen, so they are removed.
+- Preserved Shop evidence rendered both labels completely with the existing
+  seven-digit `9999999` value visible, but later close review showed Money,
+  Ryo, and Bonus Game still misplaced. Complete NA2/NUN5 Shop-render-function
+  comparison isolates three exact donor constants: Money X `250->254`, Ryo Y
+  `48->50`, and Bonus Game X `100->105`. `UI-ETC-001` now imports all three
+  instructions while keeping NA2's seven-digit value origin. A guarded
+  task-owned Shop state and worker ISO then reproduced all three NUN5 anchors.
 - Preserved slot 1 showed that the imported Mode Select START art was clipped by
   NA2's static `(1,397,206,22)` rectangle and X=`130` anchor. NUN5 localized
   accessor `FUN_003d4bc0` supplies `(1,393,254,26)` and renderer
@@ -313,9 +315,8 @@ production writer.
 - Slot 2, battle confirmation with selector open: remove the rejected
   Jutsu-label suppression wrapper/hook and retain the 14 runtime-proven texture
   rectangle, glyph, arrow, and prompt edits.
-- Slot 3, Shop: retain only the proven full-width Money/Ryo rectangle copy.
-  `Bonus Game` already has the exact donor model/anchor; its small screenshot
-  difference is normal pulsation.
+- Slot 3, Shop: retain the proven full-width Money/Ryo rectangle copy and use
+  the exact homologous NUN5 Money, Ryo, and Bonus Game anchor instructions.
 - Slot 4, Collection main: whole NUN5 `HOME.CCS` restores the complete
   graphical chrome.
 - Slot 5, Collection Characters: whole HOME restores the English Characters

@@ -11,4 +11,5 @@ Canonical documentation landing page for the `UI Translation` workstream.
 
 ## Workstream policy
 
-- Commit and push each finished screen fix separately.
+- Solve one subtask at a time; commit and push it after completion before
+  moving to another subtask.

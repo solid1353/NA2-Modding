@@ -174,12 +174,13 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   6,297,394 bytes, but no replacement CCS blobs are stored in the repository.
 - `na2_patcher/features/localization/binary_patcher/` contains the canonical UI
   companion patches across BTL, ETC, and the boot ELF. The current UI subset
-  has 22 patches and 242 guarded edits: 73 exact NUN5 copies, 24 values
+  has 26 patches and 259 guarded edits: 88 exact NUN5 copies, 24 values
   derived from NUN5's stage-width formula, 78 complete Victory descriptors
-  derived from NUN5's frame templates and English widths, and 67 remaining
-  NA2-ABI adaptations. Stage Select, Jutsu, command-scroll, Items, and Mash are
-  runtime-proven; Mode Select, Vibration, Collection, and Victory still await
-  their respective normal runtime acceptance.
+  derived from NUN5's frame templates and English widths, and 69 remaining
+  NA2-ABI adaptations. Stage Select, Jutsu, command-scroll, Items, Mash, and
+  the Practice Settings footer are runtime-proven; Mode Select, Vibration,
+  Collection, and Victory still await their respective normal runtime
+  acceptance.
 - Translation mapping version 35 restores the four Collection Movie rows to
   exact official NUN5 source strings with no authored line breaks. A
   clean-source full in-memory plan produced 2,437 fixed-size patch rows with
@@ -187,7 +188,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 - The Localization feature's aggregate current-profile pin covers both canonical
   module inputs and their feature-relative paths.
 - The complete Localization binary-patcher package validates as 7 targets, 9
-  groups, 95 patches, and 398 edits; its UI subset is the 22 patches and 242
+  groups, 99 patches, and 415 edits; its UI subset is the 26 patches and 259
   edits counted above. The UI texture plan derives all 96 members with 92 whole
   donors and four mapped exceptions: MODE2KDV, ENDDEMO, Haku, and Shikamaru.
   The historical runtime

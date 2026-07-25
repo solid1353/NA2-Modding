@@ -966,6 +966,57 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(patch.status, "approved_for_test")
         self.assertEqual(patch.confidence, "high")
 
+    def test_practice_footer_uses_nun5_select_and_effective_ok_back_anchors(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = binary_patcher.load_package(
+            repository
+            / "na2_patcher/features/localization/binary_patcher"
+        )
+        edits = [item for item in package.edits if item.patch_id == "UI-BTL-015"]
+        self.assertEqual(
+            [
+                (
+                    item.edit_id,
+                    item.operation,
+                    item.destination_offset,
+                    item.expected_hex,
+                    item.replacement_hex
+                    if item.operation == "replace"
+                    else (
+                        item.source_target_id,
+                        item.source_offset,
+                        item.source_expected_hex,
+                    ),
+                )
+                for item in edits
+            ],
+            [
+                ("UI-BTL-015-01", "replace", 0x1CE634, "C843023C", "C243023C"),
+                ("UI-BTL-015-02", "replace", 0x1CE658, "EB43023C", "E743023C"),
+                (
+                    "UI-BTL-015-03",
+                    "copy",
+                    0x1CE67C,
+                    "6643023C",
+                    ("nun5_btl", 0x1D866C, "4843023C"),
+                ),
+                (
+                    "UI-BTL-015-04",
+                    "copy",
+                    0x1CE6A0,
+                    "6643023C",
+                    ("nun5_btl", 0x1D8694, "4843023C"),
+                ),
+            ],
+        )
+        self.assertEqual(
+            (
+                package.patches["UI-BTL-015"].status,
+                package.patches["UI-BTL-015"].confidence,
+            ),
+            ("runtime_proven", "verified"),
+        )
+
     def test_paired_item_status_layout_uses_exact_nun5_donors(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
@@ -1421,14 +1472,14 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 255)
-        self.assertEqual(operations, {"copy": 86, "replace": 169})
+        self.assertEqual(len(ui_edits), 259)
+        self.assertEqual(operations, {"copy": 88, "replace": 171})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 61, "nun5_btl": 16, "nun5_etc": 9},
+            {"nun5_elf": 61, "nun5_btl": 18, "nun5_etc": 9},
         )
         self.assertEqual(len(stage_scales), 24)
-        self.assertEqual(len(adaptations), 145)
+        self.assertEqual(len(adaptations), 147)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")

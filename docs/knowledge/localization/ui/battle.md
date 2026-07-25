@@ -689,3 +689,76 @@ Evidence consists of both complete BTL draw paths, NUN5 boot-ELF accessor
 the guarded negative test, and the corrected 640x480 paired checkpoint.
 The table identity, donor mapping, and visible result are **runtime-proven**
 with **verified confidence**.
+
+## Practice Settings footer legends
+
+### Function and address map
+
+This finding uses the BTL identities and `+0x40` Ghidra/live convention recorded
+at the top of this document.
+
+| Role | NA2 v2.28 | NUN5 |
+| --- | --- | --- |
+| Practice Settings draw | file `0x1CE390..0x1CE70F`, Ghidra `FUN_00882250` (`0x00882250..0x008825CF`), live `0x00882290..0x0088260F` | file `0x1D8470..0x1D8703`, Ghidra `FUN_0089f130` (`0x0089F130..0x0089F3C3`), live `0x0089F170..0x0089F403` |
+| Known callers | Ghidra `0x006C1210`, `0x00875B1C` | Ghidra `0x006D46D0`, `0x00891AEC` |
+| Common OK/Back/Select compositor | `SUB_0037c980` | `SUB_0038bb10` |
+| Select companion renderer | `SUB_0037bc40` | `SUB_0038ad00` |
+
+The four footer X-coordinate instructions map as follows:
+
+| Legend | NA2 file / live | Original NA2 | NUN5 file / Ghidra | Required NA2 result |
+| --- | --- | ---: | --- | ---: |
+| OK | `0x1CE634` / `0x00882534` | 400 | `0x1D8604` / `0x0089F2C4` | 388 |
+| Back | `0x1CE658` / `0x00882558` | 470 | `0x1D8638` / `0x0089F2F8` | 462 |
+| Select compositor | `0x1CE67C` / `0x0088257C` | 230 | `0x1D866C` / `0x0089F32C` | 200 |
+| Select companion | `0x1CE6A0` / `0x008825A0` | 230 | `0x1D8694` / `0x0089F354` | 200 |
+
+### Reconstructed behavior and cross-game difference
+
+The footer portion reduces to:
+
+```cpp
+void drawPracticeFooter(PracticeSettings *screen) {
+    drawCommonPrompt(screen->common, effectiveOkX(), 356.0f, OK, true);
+    drawCommonPrompt(screen->common, effectiveBackX(), 356.0f, BACK, true);
+    drawCommonPrompt(screen->common, selectX(), 356.0f, SELECT, false);
+    drawSelectCompanion(screen->selectCompanion, selectX(), 356.0f);
+}
+
+// NA2 original:             400, 470, 230
+// NUN5 effective anchors:   388, 462, 200
+```
+
+Both NUN5 Select calls load X=`200` directly, with the same destination register
+as the NA2 X=`230` instructions. Those two instructions are safe exact donor
+copies. NUN5 instead loads nominal OK/Back values X=`400` and X=`470`, converts
+two signed per-call global values to floats, and adds `-12` and `-8` before
+calling its common compositor. NA2 calls its compositor immediately after the
+nominal loads and has no equivalent additions. Copying the nominal NUN5
+instructions would therefore preserve the visible NA2 mismatch.
+
+`UI-BTL-015` expresses the equivalent behavior with NA2-specific effective
+constants X=`388` and X=`462`, plus the two exact X=`200` NUN5 donor copies.
+The same effective OK/Back constants are independently runtime-proven in
+`UI-BTL-005`, but this patch changes only the distinct Practice Settings
+function.
+
+### State behavior, evidence, and confidence
+
+The draw function updates menu animation and invokes existing sprite/compositor
+objects; the four edits change only call-site X coordinates. They do not change
+menu input, selected setting, texture identity, prompt records, object layout,
+animation timing, font rendering, or the accepted VS confirmation /
+Customize Jutsu path.
+
+Evidence consists of both complete homologous functions, their callers and
+callees, exact source bytes, paired slot-6 `eeMemory` images, active sprite
+objects, and a guarded task-owned savestate in which all four live instructions
+were changed together. The resulting 640x480 capture aligns Select, OK, and
+Back with NUN5; remaining one-pixel differences are normal pulse-frame
+variation.
+
+An earlier candidate at NA2 BTL file offset `0xCF70` belongs to the separate
+VS confirmation Customize Jutsu call and is not part of this screen. It was
+rejected for this defect and remains untouched. The mapping and visible result
+are **runtime-proven** with **verified confidence**.

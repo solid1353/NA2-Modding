@@ -1345,6 +1345,25 @@ file/runtime mappings, reconstruction, alias evidence, and the remaining
 normal-entry runtime requirement are preserved in
 `docs/knowledge/localization/ui/victory.md`.
 
+### UI-BTL-015: localized Practice Settings footer anchors
+
+The Practice Settings footer is rendered inside BTL rather than by the shared
+resident Options functions. NA2 `FUN_00882250` draws Select at X=`230`, while
+the homologous NUN5 `FUN_0089f130` draws both Select components at X=`200`.
+`UI-BTL-015` therefore copies those two exact same-register NUN5 instructions.
+
+NUN5 loads nominal X=`400`/`470` for OK/Back and then adds per-call runtime
+offsets `-12`/`-8`. NA2 has no equivalent additions. Copying only the nominal
+NUN5 instructions would leave the legends visibly too far right, so the two
+NA2 call sites use authored effective anchors X=`388`/`462`. These are the same
+NA2-compatible anchors already proven for the analogous confirmation footer.
+
+All four writes are confined to the Practice Settings draw function. A guarded
+task-owned slot-6 state rendered Select, OK, and Back at the NUN5 positions
+without changing the accepted Customize Jutsu footer. Exact function ranges,
+file/runtime mappings, reconstructed behavior, and evidence are preserved in
+`docs/knowledge/localization/ui/battle.md`.
+
 ### UI-ETC-001: localized Shop label layout
 
 Importing the complete NUN5 `SHOP.CCS` supplies the correct English atlas, but
@@ -1511,7 +1530,7 @@ placement. The complete homolog mappings, reconstruction, runtime evidence,
 and rejected wrong-table probe are preserved in
 `docs/knowledge/localization/ui/options.md`.
 
-Inspect all nineteen UI companion patches together:
+Inspect all 26 UI companion patches together:
 
 ```powershell
 python -m na2_patcher.modules.binary_patcher.engine validate `
@@ -1531,6 +1550,13 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
   --patch UI-BTL-006 `
   --patch UI-BTL-007 `
   --patch UI-BTL-008 `
+  --patch UI-BTL-009 `
+  --patch UI-BTL-010 `
+  --patch UI-BTL-011 `
+  --patch UI-BTL-012 `
+  --patch UI-BTL-013 `
+  --patch UI-BTL-014 `
+  --patch UI-BTL-015 `
   --patch UI-ETC-001 `
   --patch UI-ETC-002 `
   --patch UI-ELF-001 `

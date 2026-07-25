@@ -10,7 +10,8 @@ the right.
 1. Battle Results screen 2: repair the garbled and mislaid result UI.
 2. Character Items transition: replace the NA2.28 slide with the NUN5/base-NA2
    fade behavior.
-3. Select label, slot 6: match the NUN5 placement.
+3. Practice Settings footer, slot 6: Select, OK, and Back are fixed and ready
+   for acceptance.
 
 ## Report grids
 

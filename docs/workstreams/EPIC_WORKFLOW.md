@@ -1,5 +1,19 @@
 # Epic workflow
 
+## Activation and ownership
+
+- This workflow applies only after the user explicitly declares the exact work
+  an epic. A workstream linking this file does not classify all of its tasks,
+  stages, screenshots, comparisons, or other artifacts as epic content.
+- Only the user chooses what belongs in an epic and what is promoted into
+  `docs/workstreams/<workstream>/epics/<epic-id>/`. Never create an epic
+  directory, epic README, epic entry, or epic report artifact without that
+  explicit choice.
+- Ordinary screenshots, comparison grids, and runtime outputs remain under
+  `work/<exact task title>/artifacts/`. Confirmed reusable findings belong in
+  existing knowledge files, and active execution state belongs in the existing
+  workstream plan, unless the user explicitly promotes them into an epic.
+
 ## Modes
 
 - **Sequential** is the default. Complete one subtask, report it, and stop.
@@ -57,8 +71,8 @@ on the left and NA2.28 on the right.
 
 ## Savestate updates
 
-When the user provides or identifies a new savestate pair for an epic case,
-immediately:
+When the user provides or identifies a new savestate pair for a
+user-declared epic case, immediately:
 
 1. Copy both reference and current states from the protected user library into
    the owning workstream's `inputs/sstates/` directory and record provenance.

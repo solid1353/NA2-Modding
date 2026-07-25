@@ -22,13 +22,14 @@ so its five logical selections are retained but default-disabled before the
 stage-by-stage rebuild. The independently reviewed Character Select modal
 alignment remains enabled.
 
-The reset baseline is documented in the
-[autofit and positions epic](epics/autofit_positions/README.md). User slot 9
-records the currently broken Save/Load lower modal: its panel is vertically
-compressed, the instruction starts 20 pixels farther right and 14 pixels
-lower than the retained NUN5 reference, and the action row is about 13 pixels
-higher. A fresh post-reset capture is required before assigning causation or
-reintroducing any old wrapper.
+The reset baseline is documented in the existing
+[Font knowledge record](../../knowledge/localization/font/README.md). User
+slot 9 records the currently broken Save/Load lower modal: its panel is
+vertically compressed, the instruction starts 20 pixels farther right and 14
+pixels lower than the retained NUN5 reference, and the action row is about 13
+pixels higher. Its comparison grid remains a task-owned artifact under
+`work/Font/artifacts/`. A fresh post-reset capture is required before assigning
+causation or reintroducing any old wrapper.
 
 ## Required execution order
 

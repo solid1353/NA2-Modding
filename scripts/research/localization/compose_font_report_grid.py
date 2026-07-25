@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compose one canonical NUN5-left / Current-NA2-right Font report row."""
+"""Compose one NUN5-left / Current-NA2-right Font comparison artifact."""
 
 from __future__ import annotations
 

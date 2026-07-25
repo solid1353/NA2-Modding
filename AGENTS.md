@@ -94,5 +94,7 @@ Read the matching policy before acting:
   stored workstream rules; this file remains universally applicable.
 - Shared sequential/continuous epic behavior is defined in
   [`docs/workstreams/EPIC_WORKFLOW.md`](docs/workstreams/EPIC_WORKFLOW.md) and
-  applies only to workstreams that link it.
+  applies only to exact work that the user explicitly declares an epic inside
+  a workstream that links it. A workflow link never classifies tasks, stages,
+  screenshots, comparisons, or other artifacts as epic content.
 - `docs/workstreams/README.md` defines the workstream-policy storage boundary.

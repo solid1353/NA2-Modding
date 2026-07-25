@@ -49,8 +49,8 @@ No matching NUN5 slot-9 state was supplied, so the comparison uses the retained
 `55626DB58BB0316F2502A20B2B825AABD25C94D343A427242F15C12A3343B2DC`.
 Exact task-owned paths and source provenance are recorded in
 `work/Font/inputs/sstates/autofit_positions/modal/provenance.json`; the
-canonical comparison grid is in
-`docs/workstreams/font/epics/autofit_positions/`.
+comparison grid is retained as the task artifact
+`work/Font/artifacts/autofit_positions/save_load/pre_reset-slot-09.png`.
 
 At 640x480, NUN5's lower-panel orange borders occupy `y=289..293` and
 `y=460..464`; current NA2 uses `y=296..299` and `y=449..452`. NUN5's

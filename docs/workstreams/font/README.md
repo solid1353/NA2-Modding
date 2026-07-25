@@ -12,3 +12,10 @@ in the shared knowledge base rather than being duplicated here.
 
 - [Active plan and working context](plan.md)
 - [Confirmed font knowledge and preserved evidence](../../knowledge/localization/font/README.md)
+
+## Workstream policy
+
+- Follow the [shared epic workflow](../EPIC_WORKFLOW.md).
+- Broad epic analysis is complete. Proceed from the existing findings and
+  repeat epic-wide analysis only when new evidence proves them insufficient or
+  indicates that a broad fix may be better than separate subtask fixes.

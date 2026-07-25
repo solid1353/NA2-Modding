@@ -19,3 +19,10 @@ findings remain in the shared knowledge base rather than being duplicated here.
 - [Shop UI knowledge](../../knowledge/localization/ui/shop.md)
 - [Stage-select UI knowledge](../../knowledge/localization/ui/stage_select.md)
 - [Victory UI knowledge](../../knowledge/localization/ui/victory.md)
+
+## Workstream policy
+
+- Follow the [shared epic workflow](../EPIC_WORKFLOW.md).
+- Broad epic analysis is complete. Proceed from the existing findings and
+  repeat epic-wide analysis only when new evidence proves them insufficient or
+  indicates that a broad fix may be better than separate subtask fixes.

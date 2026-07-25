@@ -16,9 +16,9 @@ history; do not recreate an archive directory for dead scripts.
   parsing, and focused tests.
 - `na2/`: build, promotion, ISO identity, worker-path validation, and focused
   build/run-log tests.
-- `pcsx2/`: PCSX2 launch, process, configuration, CRC helpers, the minimal
-  hidden workstream-copy launcher, and task-owned PINE savestate screenshot
-  extraction.
+- `pcsx2/`: PCSX2 launch, process, configuration, CRC helpers, the user-facing
+  multi-game launch-and-tile command, the minimal hidden workstream-copy
+  launcher, and task-owned PINE savestate screenshot extraction.
 - `media/`: ISO, AFS, and CVM inspection/extraction tools. Use
   `extract_source_iso.ps1 -IsoPath <path> -TaskTitle <exact task title>` for
   canonical recursive source extraction: it stages under
@@ -39,10 +39,10 @@ history; do not recreate an archive directory for dead scripts.
 - `research/ee_memory_map/`: PCSX2 savestate extraction, allocator-chain
   validation, overlay identification, and EE-region reporting for injection
   capacity research.
-- `research/ui_translation/`: selectable multi-game PCSX2 launch and tiling,
-  offline paired-savestate import and screenshot extraction, rendering
-  preflight, deterministic Victory texture and layout generation, and
-  user-directed runtime research for NUN5-to-NA2 UI comparisons.
+- `research/ui_translation/`: offline paired-savestate import and screenshot
+  extraction, rendering preflight, deterministic Victory texture and layout
+  generation, and user-directed runtime research for NUN5-to-NA2 UI
+  comparisons.
 - `research/translation/`: the worker-only mapping-ID diagnostic builder used
   to identify visible strings. It does not change normal profile behavior.
 

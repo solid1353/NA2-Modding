@@ -76,6 +76,7 @@ their producing workflow runs. File entries should reference a named root with
 - `notification_state`: the shared mute state for the dedicated Notifications
   task at `@repository/.agents/notifications.json`.
 - `na2_command`: `@repository/_na2.ps1`.
+- `pcsx2_pair_launch_command`: `@pcsx2_scripts/launch_pair.ps1`.
 - `actualize_command`: `@scripts/actualization/act.ps1`.
 - `actualize_na2_command`, `actualize_input_command`, and
   `actualize_links_command`: the three standalone actualization modes.

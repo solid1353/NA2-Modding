@@ -84,9 +84,13 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   Queued instructions remain in the same changeset unless the user says
   otherwise.
 - `con` resumes current work with scope, effort, progress, and approval intact.
+- `ep` means `epic`.
 - `eff` asks for the current recommended effort and does not change it.
 - `sw` resumes after the user stopped only to switch to the recommended effort;
   it preserves prior approval and does not approve an unapproved plan.
+- `ss` means savestate. `ss<number>` refers to that numbered savestate slot in
+  the user's protected PCSX2, for example `ss7`. The shorthand identifies the
+  input; the surrounding request determines what action, if any, is authorized.
 - `zxc` invokes the graceful-stop procedure below.
 - `task done` accepts the uniquely identifiable current task as complete and
   orders its owning coordinator to remove the exact entry. Ask when the task is

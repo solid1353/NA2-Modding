@@ -36,8 +36,11 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - `ag`: reread live `AGENTS.md` and apply it immediately.
 - `q:`: queue the message in arrival order behind the current safe boundary.
 - `con`: resume the current work without changing its scope or approval state.
+- `ep`: epic.
 - `eff`: report the current recommended effort without changing it.
 - `sw`: resume after the user changed the chat to the recommended effort.
+- `ss`: savestate; `ss<number>`: that numbered savestate slot in the user's
+  PCSX2, for example `ss7`.
 - `zxc`: checkpoint and stop gracefully for restart or reboot.
 - `task done`: remove the uniquely identifiable current task through its owning
   coordinator and push the task-management update.

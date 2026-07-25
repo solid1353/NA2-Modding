@@ -1443,7 +1443,25 @@ X and Y, consistent with normal pulse timing. Exact boundaries, mappings,
 reconstruction, and runtime evidence are preserved in
 `docs/knowledge/localization/ui/character_select.md`.
 
-Inspect all seventeen UI companion patches together:
+### UI-ELF-008: localized shared Cancel prompt
+
+The complete NUN5 `CMN/GAUGE.CCS` import supplies the English common-prompt
+artwork, but NA2 `FUN_0037c980` still centers its case-4 Cancel prompt using
+three Japanese rectangle widths totaling 182 logical pixels. NUN5 homolog
+`FUN_0038bb10` uses localized records 6, 4, and 5 totaling 80 pixels around
+the same caller anchor.
+
+`UI-ELF-008` copies those three exact NUN5 records into the corresponding NA2
+static slots: the localized Triangle icon, 56-pixel Cancel label, and empty
+tail. The shared correction therefore applies to every case-4 common-prompt
+caller rather than compensating only the Options screen. A guarded patched
+copy of the preserved Options state rendered the final Cancel bounds within
+one pixel of NUN5 in both axes, consistent with normal pulse timing. The
+separate OK prompt and text/font rendering remain untouched. Exact mappings,
+reconstruction, side effects, and runtime evidence are preserved in
+`docs/knowledge/localization/ui/options.md`.
+
+Inspect all eighteen UI companion patches together:
 
 ```powershell
 python -m na2_patcher.modules.binary_patcher.engine validate `
@@ -1471,7 +1489,8 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
   --patch UI-ELF-004 `
   --patch UI-ELF-005 `
   --patch UI-ELF-006 `
-  --patch UI-ELF-007
+  --patch UI-ELF-007 `
+  --patch UI-ELF-008
 ```
 
 ## Compact external strings

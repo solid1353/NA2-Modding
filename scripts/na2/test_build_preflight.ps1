@@ -40,12 +40,12 @@ try {
     "build": "build",
     "logs": "logs",
     "patcher": "na2_patcher",
-    "pcsx2": "pcsx2",
+    "pcsx2_user": "pcsx2_user",
     "scripts": "scripts",
     "work": "work"
   },
   "files": {
-    "pcsx2_exe": "@pcsx2/pcsx2-qt.exe",
+    "pcsx2_user_exe": "@pcsx2_user/pcsx2-qt.exe",
     "na2_iso": "@source/NA2.iso",
     "nun5_iso": "@source/NUN5.iso",
     "current_iso": "@build/NA2.28 - Current.iso",
@@ -55,7 +55,7 @@ try {
 }
 '@
     [IO.File]::WriteAllText((Join-Path $repository 'project-paths.json'), $manifest)
-    foreach ($directory in 'source\NA2.iso.files', 'source\NUN5.iso.files', 'build', 'logs', 'na2_patcher', 'pcsx2', 'work') {
+    foreach ($directory in 'source\NA2.iso.files', 'source\NUN5.iso.files', 'build', 'logs', 'na2_patcher', 'pcsx2_user', 'work') {
         New-Item -ItemType Directory -Force -Path (Join-Path $repository $directory) | Out-Null
     }
     New-Item -ItemType Directory -Force `

@@ -25,6 +25,19 @@ function Get-Na2ProjectPaths {
     if ($names.Count -eq 0) {
         throw 'Project path manifest has no roots.'
     }
+    $deferredRoots = [Collections.Generic.HashSet[string]]::new(
+        [StringComparer]::Ordinal
+    )
+    if ($null -ne $manifest.PSObject.Properties['existence_deferred_roots']) {
+        foreach ($name in @($manifest.existence_deferred_roots)) {
+            if ($name -isnot [string] -or
+                [string]::IsNullOrWhiteSpace($name) -or
+                $name -notin $names) {
+                throw "Invalid existence-deferred project root: $name"
+            }
+            [void]$deferredRoots.Add($name)
+        }
+    }
 
     $pending = [Collections.Generic.List[string]]::new()
     foreach ($name in $names) { $pending.Add($name) }
@@ -48,6 +61,9 @@ function Get-Na2ProjectPaths {
                     throw "Project root '$name' references unknown project root '$parentName': $value"
                 }
                 if (-not $resolved.Contains($parentName)) { continue }
+                if ($deferredRoots.Contains($parentName)) {
+                    [void]$deferredRoots.Add($name)
+                }
                 $basePath = [string]$resolved[$parentName]
                 $relativePath = $aliasMatch.Groups['child'].Value
             }
@@ -67,7 +83,9 @@ function Get-Na2ProjectPaths {
                 -not $path.StartsWith($basePrefix, [StringComparison]::OrdinalIgnoreCase)) {
                 throw "Project root '$name' must remain within '$parentName': $value"
             }
-            if (-not $AllowMissing -and -not (Test-Path -LiteralPath $path)) {
+            if (-not $AllowMissing -and
+                -not $deferredRoots.Contains($name) -and
+                -not (Test-Path -LiteralPath $path)) {
                 throw "Configured project root '$name' does not exist: $path"
             }
             $resolved[$name] = $path

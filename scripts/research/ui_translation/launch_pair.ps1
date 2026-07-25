@@ -38,7 +38,7 @@ if ($duplicateGames.Count -gt 0) {
     throw "Each game may be listed only once: $($duplicateGames -join ', ')."
 }
 
-$pcsx2Exe = [IO.Path]::GetFullPath($projectPaths.files.pcsx2_exe)
+$pcsx2Exe = [IO.Path]::GetFullPath($projectPaths.files.pcsx2_user_exe)
 $na2Command = [IO.Path]::GetFullPath($projectPaths.files.na2_command)
 $directIsoFiles = @{
     candidate = 'candidate_iso'
@@ -163,7 +163,7 @@ try {
                 ) -ForegroundColor Cyan
             }
             Start-Process -FilePath $pcsx2Exe `
-                -WorkingDirectory $projectPaths.pcsx2 `
+                -WorkingDirectory $projectPaths.pcsx2_user `
                 -ArgumentList @('-batch', "`"$($selectedIsoPaths[$game])`"") `
                 -PassThru
         }

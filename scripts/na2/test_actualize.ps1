@@ -62,9 +62,9 @@ try {
 
     $managedSettings = Join-Path $gameSettings '.na2'
     $paths = [pscustomobject]@{
-        pcsx2 = $pcsx2
+        pcsx2_user = $pcsx2
         pcsx2_files = $canonical
-        pcsx2_gamesettings = $gameSettings
+        pcsx2_user_gamesettings = $gameSettings
         files = [pscustomobject]@{
             canonical_cheats = $canonicalCheats
             canonical_gamesettings = $canonicalSettings

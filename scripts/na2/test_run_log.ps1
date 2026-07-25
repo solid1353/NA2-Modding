@@ -28,7 +28,7 @@ try {
         build = $build
         logs = $logs
         patcher = Join-Path $repository 'na2_patcher'
-        pcsx2 = Join-Path $testRoot 'pcsx2'
+        pcsx2_user = Join-Path $testRoot 'pcsx2_user'
         scripts = Join-Path $repository 'scripts'
         files = [pscustomobject]@{
             current_iso = Join-Path $build 'NA2.28 - Current.iso'
@@ -114,7 +114,7 @@ try {
     "build": "build",
     "logs": "logs",
     "patcher": "na2_patcher",
-    "pcsx2": "pcsx2",
+    "pcsx2_user": "pcsx2_user",
     "pcsx2_files": "pcsx2_files",
     "scripts": "scripts",
     "work": "work"
@@ -128,7 +128,7 @@ try {
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'project-paths.json') -Content $manifest
     foreach ($directory in @(
-        'source', 'utils', 'build', 'logs', 'na2_patcher', 'pcsx2',
+        'source', 'utils', 'build', 'logs', 'na2_patcher', 'pcsx2_user',
         'pcsx2_files', 'scripts', 'work'
     )) {
         New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository $directory) | Out-Null
@@ -145,13 +145,13 @@ Write-Host "[fake] actualize $ActiveRole"
     ActiveRole = $ActiveRole
     PCSX2Serial = 'SLOP-NA228'
     PCSX2ElfCRC = '12345678'
-    CheatsPnach = 'pcsx2/cheats/SLOP-NA228_12345678.pnach'
+    CheatsPnach = 'pcsx2_user/cheats/SLOP-NA228_12345678.pnach'
     PnachStatus = 'verified symlink'
     RemovedPnachSymlinks = @()
-    GameSettings = 'pcsx2/gamesettings/SLOP-NA228_12345678.ini'
+    GameSettings = 'pcsx2_user/gamesettings/SLOP-NA228_12345678.ini'
     GameSettingsStatus = 'verified symlink'
     RemovedGameSettingsSymlinks = @()
-    MemoryCard = 'pcsx2/memcards/Mcd001_NA228_Current.ps2'
+    MemoryCard = 'pcsx2_user/memcards/Mcd001_NA228_Current.ps2'
     MemoryCardStatus = 'preserved'
     EnabledCheats = @()
 }
@@ -331,17 +331,17 @@ else {
             ActiveRole = 'Current'
             PCSX2Serial = 'SLOP-NA228'
             PCSX2ElfCRC = 'C0659AD1'
-            CheatsPnach = Join-Path $paths.pcsx2 'cheats\SLOP-NA228_C0659AD1.pnach'
+            CheatsPnach = Join-Path $paths.pcsx2_user 'cheats\SLOP-NA228_C0659AD1.pnach'
             PnachStatus = 'verified symlink'
             RemovedPnachSymlinks = @('old-link')
-            GameSettings = Join-Path $paths.pcsx2 'gamesettings\SLOP-NA228_C0659AD1.ini'
+            GameSettings = Join-Path $paths.pcsx2_user 'gamesettings\SLOP-NA228_C0659AD1.ini'
             GameSettingsStatus = 'verified symlink'
             RemovedGameSettingsSymlinks = @('old-settings')
-            MemoryCard = Join-Path $paths.pcsx2 'memcards\Mcd001_NA228_Current.ps2'
+            MemoryCard = Join-Path $paths.pcsx2_user 'memcards\Mcd001_NA228_Current.ps2'
             MemoryCardStatus = 'preserved'
         }) `
         -ProjectPaths $paths
-    Assert-Na2Test -Condition ($status -match '@pcsx2/cheats/') -Message 'Actualize status path is not portable.'
+    Assert-Na2Test -Condition ($status -match '@pcsx2_user/cheats/') -Message 'Actualize status path is not portable.'
     Assert-Na2Test -Condition ($status -match 'CRC=C0659AD1') -Message 'Actualize status omitted the CRC.'
     Assert-Na2Test -Condition ($status -match 'GameSettings') -Message 'Actualize status omitted GameSettings.'
     Assert-Na2Test -Condition ($status -match 'memory card') -Message 'Actualize status omitted the memory card.'

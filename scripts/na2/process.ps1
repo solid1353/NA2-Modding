@@ -17,16 +17,24 @@ function Stop-Na2Pcsx2 {
     param([Parameter(Mandatory = $true)][string]$Executable)
 
     $processes = @(Get-Na2Pcsx2Process -Executable $Executable)
+    $notStopped = [Collections.Generic.List[int]]::new()
     foreach ($process in $processes) {
         Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
     }
     foreach ($process in $processes) {
         try {
-            $process.WaitForExit(5000) | Out-Null
+            if (-not $process.WaitForExit(5000)) {
+                $notStopped.Add($process.Id)
+            }
         }
         catch {
-            # A process that already exited needs no further cleanup.
+            if ($null -ne (Get-Process -Id $process.Id -ErrorAction SilentlyContinue)) {
+                $notStopped.Add($process.Id)
+            }
         }
+    }
+    if ($notStopped.Count -gt 0) {
+        throw "PCSX2 did not stop within 5 seconds: PID(s) $($notStopped -join ', ')."
     }
 }
 
@@ -279,7 +287,12 @@ function Stop-Na2Pcsx2Process {
             }
         }
         Stop-Process -Id $processId -Force
-        $process.WaitForExit(5000) | Out-Null
+        if (-not $process.WaitForExit(5000)) {
+            return [pscustomobject]@{
+                Status = 'StopTimedOut'
+                Reason = "owned process $processId did not exit within 5 seconds"
+            }
+        }
         return [pscustomobject]@{
             Status = 'Stopped'
             Reason = $null

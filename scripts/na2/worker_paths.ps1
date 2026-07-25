@@ -38,6 +38,7 @@ function Get-Na2WorkerContext {
         Inputs = Join-Path $resolved 'inputs'
         Artifacts = Join-Path $resolved 'artifacts'
         Temp = Join-Path $resolved 'temp'
+        Pcsx2 = Join-Path $resolved 'pcsx2'
     }
 }
 

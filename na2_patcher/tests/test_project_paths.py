@@ -110,6 +110,48 @@ class ProjectPathTests(unittest.TestCase):
 
             self.assertEqual(paths.path("source_na2"), extracted.resolve())
 
+    def test_defers_existence_checks_for_protected_root_and_children(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = {
+                "schema_version": 1,
+                "existence_deferred_roots": ["pcsx2_user"],
+                "roots": {
+                    "repository": ".",
+                    "pcsx2_user": "missing-user-pcsx2",
+                    "pcsx2_user_memcards": "@pcsx2_user/memcards",
+                },
+                "files": {
+                    "pcsx2_user_exe": "@pcsx2_user/pcsx2-qt.exe",
+                },
+            }
+            manifest_path = root / "project-paths.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            paths = load_project_paths(manifest_path)
+
+            self.assertEqual(
+                paths.path("pcsx2_user_memcards"),
+                root.resolve() / "missing-user-pcsx2" / "memcards",
+            )
+
+    def test_rejects_unknown_existence_deferred_root(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = {
+                "schema_version": 1,
+                "existence_deferred_roots": ["missing"],
+                "roots": {"repository": "."},
+                "files": {"current_iso": "Current.iso"},
+            }
+            manifest_path = root / "project-paths.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            with self.assertRaisesRegex(
+                ValueError, "Invalid existence-deferred project root"
+            ):
+                load_project_paths(manifest_path)
+
     def test_rejects_root_alias_cycle(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

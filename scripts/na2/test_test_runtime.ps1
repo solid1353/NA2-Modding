@@ -60,9 +60,11 @@ Slot1_Filename = Mcd001.ps2
     $projectPaths = [pscustomobject]@{
         repository = $repository
         work = $workRoot
-        pcsx2_gamesettings = $gameSettings
-        pcsx2_memcards = $sourceMemcards
-        files = [pscustomobject]@{ pcsx2_ini = $iniPath }
+    }
+    $pcsx2Context = [pscustomobject]@{
+        Ini = $iniPath
+        GameSettings = $gameSettings
+        MemoryCards = $sourceMemcards
     }
     $worker = Get-Na2WorkerContext -WorkerRoot $workerRoot -ProjectPaths $projectPaths
     $layout = New-Na2TestRuntimeLayout -Worker $worker
@@ -71,7 +73,7 @@ Slot1_Filename = Mcd001.ps2
     $mutex = Enter-Na2Pcsx2ConfigurationLock -IniPath $iniPath
     try {
         $context = Enter-Na2TestRuntimeConfiguration `
-            -ProjectPaths $projectPaths `
+            -Pcsx2 $pcsx2Context `
             -Layout $layout `
             -IsoIdentity $identity `
             -AgentName 'Codex' `

@@ -16,6 +16,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'process.ps1')
 . (Join-Path $PSScriptRoot 'iso_identity.ps1')
 . (Join-Path $PSScriptRoot 'worker_paths.ps1')
+. (Join-Path $PSScriptRoot 'worker_pcsx2.ps1')
 . (Join-Path $PSScriptRoot 'pine.ps1')
 . (Join-Path $PSScriptRoot 'test_runtime.ps1')
 . (Join-Path $PSScriptRoot 'test_operation.ps1')
@@ -46,14 +47,18 @@ if ([string]::IsNullOrWhiteSpace($TaskIdentity)) {
     }
 }
 
-$resolvedPcsx2Exe = [IO.Path]::GetFullPath($projectPaths.files.pcsx2_exe)
+$pcsx2Context = Get-Na2WorkerPcsx2Context `
+    -Worker $worker `
+    -ProjectPaths $projectPaths
+$resolvedPcsx2Exe = [IO.Path]::GetFullPath($pcsx2Context.Executable)
 $portablePcsx2Exe = ConvertTo-Na2ProjectPath `
     -Path $resolvedPcsx2Exe `
     -ProjectPaths $projectPaths
-$pcsx2Ini = $projectPaths.files.pcsx2_ini
+$pcsx2Ini = $pcsx2Context.Ini
 $launchScript = Join-Path $PSScriptRoot 'launch.ps1'
 $runtimeLayout = $null
 $runtimeContext = $null
+$workerPcsx2Lock = $null
 $configurationLock = $null
 $testProcess = $null
 $processStartTime = $null
@@ -61,6 +66,8 @@ $descriptorPath = $null
 $ownershipCapability = $null
 $stopResult = $null
 $ownershipLossReason = $null
+$stopFailureReason = $null
+$safeToRemoveRuntime = $false
 $settingsRestoredAfterLaunch = $false
 $resolvedOperationPlan = $null
 $parsedOperationPlan = $null
@@ -166,6 +173,12 @@ function Get-Na2OwnedWindow {
 }
 
 try {
+    $workerPcsx2Lock = Enter-Na2WorkerPcsx2Lock `
+        -CloneRoot $pcsx2Context.Root
+    $pcsx2Context = Initialize-Na2WorkerPcsx2 `
+        -Worker $worker `
+        -ProjectPaths $projectPaths
+    Assert-Na2WorkerPcsx2NotBlocked -Context $pcsx2Context
     if (-not (Test-Path -LiteralPath $pcsx2Ini -PathType Leaf)) {
         throw "PCSX2 configuration does not exist: $pcsx2Ini"
     }
@@ -174,7 +187,7 @@ try {
     $runtimeLayout = New-Na2TestRuntimeLayout -Worker $worker
     $configurationLock = Enter-Na2Pcsx2ConfigurationLock -IniPath $pcsx2Ini
     $runtimeContext = Enter-Na2TestRuntimeConfiguration `
-        -ProjectPaths $projectPaths `
+        -Pcsx2 $pcsx2Context `
         -Layout $runtimeLayout `
         -IsoIdentity $isoIdentity `
         -AgentName $AgentName `
@@ -191,6 +204,7 @@ try {
 
     $testProcess = & $launchScript `
         -IsoPath $resolvedIsoPath `
+        -WorkerPcsx2Executable $resolvedPcsx2Exe `
         -WindowStyle Hidden `
         -KeepExistingInstance `
         -PassThru
@@ -572,7 +586,7 @@ try {
     Write-Host (
         "[na2] PCSX2 instance ready: PID $($testProcess.Id), " +
         "window $('0x{0:X}' -f $window.ToInt64()), " +
-        "$($pineIdentity.Serial)/$($pineIdentity.CRC); shared settings restored; " +
+        "$($pineIdentity.Serial)/$($pineIdentity.CRC); clone settings restored; " +
         "closing after $WaitSeconds second(s)."
     ) -ForegroundColor Cyan
 
@@ -631,6 +645,9 @@ finally {
                     $ownershipLossReason = $stopResult.Reason
                 }
             }
+            elseif ($stopResult.Status -notin @('Stopped', 'AlreadyExited')) {
+                $stopFailureReason = $stopResult.Reason
+            }
         }
     }
     catch { $cleanupErrors.Add($_) }
@@ -675,11 +692,45 @@ finally {
     }
     catch { $cleanupErrors.Add($_) }
 
+    if ($null -ne $testProcess -and -not $safeToRemoveRuntime) {
+        $blockReason = if (-not [string]::IsNullOrWhiteSpace($ownershipLossReason)) {
+            $ownershipLossReason
+        }
+        elseif (-not [string]::IsNullOrWhiteSpace($stopFailureReason)) {
+            $stopFailureReason
+        }
+        elseif ($cleanupErrors.Count -gt 0) {
+            $cleanupErrors[0].Exception.Message
+        }
+        else {
+            'the owned runtime could not be verified stopped'
+        }
+        $runtimePath = if ($null -ne $runtimeLayout) {
+            ConvertTo-Na2ProjectPath `
+                -Path $runtimeLayout.LogDirectory `
+                -ProjectPaths $projectPaths
+        }
+        else {
+            '@work/' + $worker.WorkerName
+        }
+        try {
+            Set-Na2WorkerPcsx2Blocked `
+                -Context $pcsx2Context `
+                -Reason $blockReason `
+                -RuntimePath $runtimePath
+        }
+        catch { $cleanupErrors.Add($_) }
+    }
+
     if ($null -ne $ownershipCapability) {
         $ownershipCapability.Token = $null
         $ownershipCapability.DescriptorMac = $null
     }
     if ($null -ne $testProcess) { $testProcess.Dispose() }
+    if ($null -ne $workerPcsx2Lock) {
+        try { Exit-Na2WorkerPcsx2Lock -Mutex $workerPcsx2Lock } catch { $cleanupErrors.Add($_) }
+        $workerPcsx2Lock = $null
+    }
     if ($cleanupErrors.Count -gt 0) {
         throw "PCSX2 test cleanup failed: $($cleanupErrors[0].Exception.Message)"
     }
@@ -697,7 +748,21 @@ finally {
             "at ${retainedRuntime}: $ownershipLossReason."
         )
     }
+    if (-not [string]::IsNullOrWhiteSpace($stopFailureReason)) {
+        $retainedRuntime = if ($null -ne $runtimeLayout) {
+            ConvertTo-Na2ProjectPath `
+                -Path $runtimeLayout.LogDirectory `
+                -ProjectPaths $projectPaths
+        }
+        else {
+            'no runtime path was established'
+        }
+        throw (
+            "Owned PCSX2 did not stop; its descriptor and runtime files were retained " +
+            "at ${retainedRuntime}: $stopFailureReason."
+        )
+    }
     if ($null -ne $runtimeContext) {
-        Write-Host '[na2] Owned PCSX2 instance closed; shared settings verified; worker artifacts retained' -ForegroundColor Cyan
+        Write-Host '[na2] Owned PCSX2 instance closed; clone settings verified; worker artifacts retained' -ForegroundColor Cyan
     }
 }

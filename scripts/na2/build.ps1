@@ -413,7 +413,7 @@ else {
 $buildId = (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
 $profileLog = Join-Path $buildLogRoot $buildId
 $profileLogDirectory = [IO.Path]::GetRelativePath($projectPaths.repository, $profileLog)
-$pcsx2Exe = $projectPaths.files.pcsx2_exe
+$pcsx2Exe = $projectPaths.files.pcsx2_user_exe
 $arguments = @(
     '-B'
     '-m', 'na2_patcher.build_profile'

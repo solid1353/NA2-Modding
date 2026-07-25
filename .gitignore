@@ -6,4 +6,7 @@ Desktop.ini
 /build/
 /logs/
 /work/
+/source
+/pcsx2
+/utils
 __pycache__/

@@ -150,8 +150,8 @@ $files = $ProjectPaths.files
 $canonicalCheats = [IO.Path]::GetFullPath($files.canonical_cheats)
 $canonicalGameSettings = [IO.Path]::GetFullPath($files.canonical_gamesettings)
 $baseCard = [IO.Path]::GetFullPath($files.na228_base_memcard)
-$cheatsDirectory = Join-Path $ProjectPaths.pcsx2 'cheats'
-$gameSettingsDirectory = [IO.Path]::GetFullPath($ProjectPaths.pcsx2_gamesettings)
+$cheatsDirectory = Join-Path $ProjectPaths.pcsx2_user 'cheats'
+$gameSettingsDirectory = [IO.Path]::GetFullPath($ProjectPaths.pcsx2_user_gamesettings)
 $managedGameSettingsDirectory = [IO.Path]::GetDirectoryName(
     [IO.Path]::GetFullPath($files.current_gamesettings)
 )

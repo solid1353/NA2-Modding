@@ -81,8 +81,9 @@ prune shared Candidate/Current/Previous records. Completed structured worker
 records are capped at 20 per task; task cleanup may delete them sooner after
 promoting reusable findings.
 
-Each agent PCSX2 launch uses a unique run directory under the same worker log
-root. PCSX2's file log is redirected there. A portable `pcsx2-instance.json`
+Each agent PCSX2 launch exclusively uses the workstream's private
+`work/<task title>/pcsx2/` clone and a unique run directory under the same
+worker log root. PCSX2's file log is redirected there. A portable `pcsx2-instance.json`
 is created immediately after launch and normally removed after targeted
 shutdown. It records the PID/start time, validated window handle, ISO identity,
 task-owned card and paths, unique PINE port, and the hash of a launch-local

@@ -60,10 +60,22 @@ def load_project_paths(
     configured = data.get("roots")
     if not isinstance(configured, dict) or not configured:
         raise ValueError("Project path manifest has no roots")
+    configured_deferred = data.get("existence_deferred_roots", [])
+    if (
+        not isinstance(configured_deferred, list)
+        or any(
+            not isinstance(name, str)
+            or not name
+            or name not in configured
+            for name in configured_deferred
+        )
+    ):
+        raise ValueError("Invalid existence-deferred project root")
 
     repository = manifest_path.parent.resolve()
     roots: dict[str, Path] = {}
     resolving: set[str] = set()
+    deferred_roots = set(configured_deferred)
 
     def resolve_root(name: str) -> Path:
         if name in roots:
@@ -98,6 +110,8 @@ def load_project_paths(
                     f"Project root {name!r} has an invalid root alias: {raw_value!r}"
                 )
             base_path = resolve_root(parent_name)
+            if parent_name in deferred_roots:
+                deferred_roots.add(name)
             configured_path = Path(os.path.abspath(base_path / child_path))
             if (
                 configured_path != base_path
@@ -116,6 +130,7 @@ def load_project_paths(
             configured_path = Path(os.path.abspath(repository / value))
         if (
             not allow_missing
+            and name not in deferred_roots
             and not configured_path.exists()
             and not configured_path.is_symlink()
         ):

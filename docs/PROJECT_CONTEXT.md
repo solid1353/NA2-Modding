@@ -17,7 +17,7 @@ Current PCSX2 actualization:
   `@pcsx2_files/gamesettings.ini`.
 - The actualizer derives each retained Current, Previous, and Candidate
   identity from its ISO and maintains the matching CRC-named PNACH and
-  GameSettings symlinks under `@pcsx2/`.
+  GameSettings symlinks under `@pcsx2_user/`.
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v2 organizes each package as groups, atomic patches, and exact edits; `default_enabled` preserves historical state. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`. Rendering is currently an empty feature folder omitted from the active profile.
 - Actualization runs after every user-owned build and before every user-owned
   Current, Previous, or Candidate launch. Isolated worker builds never mutate
@@ -54,7 +54,9 @@ replaced with a copied machine-specific absolute path.
 - `@logs/`: disposable shared-workflow records; no files should be written directly in the root. `na2` keeps bounded Current/Previous/Candidate provenance under `@logs/na2/`, and shared generated workstream evidence belongs under `@workstream_logs/<exact task title>/`. Agent ISO and PCSX2 records instead stay under `work/<task title>/logs/`. See `docs/LOGGING.md`.
 - `scripts/`: repeatable tooling.
 - `@pcsx2_files/`: project-owned PCSX2 artifacts. The canonical PNACH and input recordings are tracked; screenshots remain local and ignored.
-- `@pcsx2/`: portable PCSX2 installation and user-owned emulator state. Agent launches share its read-only executable, BIOS, resources, profiles, and replacement textures, but temporarily redirect mutable folders into their own `work/<task title>/` tree. Its game-list media paths may point to `@build/` and `@source/`; its CRC-named cheat symlinks target the canonical PNACH under `@pcsx2_files/`.
+- `@pcsx2_user/`: protected user-owned portable PCSX2 installation and state. User launch/actualization workflows address it; agents never inspect, launch, or modify it.
+- `@pcsx2_clean/`: protected immutable worker template stored at `@utils/pcsx2_clean/`. The maintained provisioner copies its complete tree to `work/<task title>/pcsx2/` and never launches or mutates the template.
+- `work/<task title>/pcsx2/`: the exact workstream's private PCSX2 clone. Agent runtime testing uses only this tree and never controls another PCSX2 process.
 - `na2_patcher/modules/binary_patcher/`: repository-owned schema v2 and reusable CLI validator/patcher for canonical group/patch/edit packages owned by features. The schema has no relations table; default-enabled edits are simulated in deterministic order so compatible overlaps and already-satisfied replacements are retained while real guard conflicts fail before ISO staging. It never applies `pending`, `runtime_failed`, or `deprecated` patches and writes only new same-size outputs with complete logs.
 - `na2_patcher/modules/translation_importer/`: the reusable official-string importer engine. Localization-owned mappings and their pointer-reference inventory live under `na2_patcher/features/localization/translation_importer/`.
 - `na2_patcher/modules/string_patcher/`: the reusable semantic string-placement engine. Localization has no feature-owned string-patcher directory or local declarations; its importer artifact invokes the engine as a derived consumer. The engine compiles inline imports and contributes external fragments/symbolic pointers without owning `228.BIN` layout. The memory-card title belongs to profile `identity.json`, not Localization.
@@ -198,15 +200,15 @@ PCSX2 cheat filenames include the game CRC, for example:
 
 If the boot ELF inside an ISO changes, PCSX2 may report a different CRC.
 Actualize derives the alphanumeric serial from the ISO boot path and creates a
-matching `@pcsx2/cheats/<serial>_<crc>.pnach` link to
+matching `@pcsx2_user/cheats/<serial>_<crc>.pnach` link to
 `@pcsx2_files/cheats.pnach`.
 
-PCSX2 uses its internal `@pcsx2/cheats/` folder. Only the canonical PNACH is tracked in the project; actualized CRC aliases are relative symlinks in the portable installation.
+The user installation uses its internal `@pcsx2_user/cheats/` folder. Only the canonical PNACH is tracked in the project; actualized CRC aliases are relative symlinks in the user installation.
 
 Known PCSX2 paths from prior notes:
 
-- Log: `@pcsx2/logs/emulog.txt`
-- Cheats: CRC aliases in `@pcsx2/cheats/`, targeting
+- Log: `@pcsx2_user/logs/emulog.txt`
+- Cheats: CRC aliases in `@pcsx2_user/cheats/`, targeting
   `@pcsx2_files/cheats.pnach`
 
 Known log pattern:

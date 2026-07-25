@@ -70,21 +70,26 @@ the canonical PNACH and GameSettings aliases, and creates each role's memory
 card from the copy-only base only when absent. Existing role cards are preserved.
 
 Agent runtime checks use `na2/test_launch.ps1 -WorkerRoot
-work/<task title>`. A short named lock protects shared configuration while the
-wrapper redirects writable folders, copies/reuses the game's effective Slot 1
-card under the worker, chooses a free PINE port, and launches hidden/muted and
-running by default. Pass `-StartPaused` only when the test requires a paused
-initial state; it is part of the same guarded settings snapshot rather than a
-separate shared-INI edit.
-After PINE reports the expected serial/CRC, shared settings are restored
-immediately and the lock is released. The wrapper records and validates the
-specific PID, start time, top-level window handle, and PINE endpoint. Process
+work/<task title>`. `na2/provision_test_pcsx2.ps1` atomically copies the
+protected `@pcsx2_clean` template into that workstream's private `pcsx2/`
+directory when absent; existing clones are validated and reused, never
+overwritten. A full-session lock prevents two launches from sharing one clone.
+The wrapper redirects writable folders within the worker, copies/reuses the
+clone's effective Slot 1 card, chooses a free PINE port, and launches the clone
+hidden/muted and running by default. Pass `-StartPaused` only when required.
+After PINE reports the expected serial/CRC, injected clone settings are
+restored. The wrapper records and validates the specific PID, start time,
+top-level window handle, and PINE endpoint. Process
 control additionally requires the unchanged live descriptor and its
 launch-local ownership capability; identity checks alone never authorize a
-stop. Descriptor or capability loss leaves the process and potentially live
-runtime files untouched and reports lost ownership. Runtime logs are unique per
-launch; savestates, screenshots, recordings, cards, cache, and dump paths remain
+stop. Descriptor/capability loss or a stop timeout leaves the process and live
+runtime files untouched, quarantines that workstream clone against later
+launches, and reports failure. The user installation and every other PCSX2
+process are never inspected or controlled. Runtime logs are unique per launch;
+savestates, screenshots, recordings, cards, cache, and dump paths remain
 task-owned.
+`na2/test_worker_pcsx2.ps1` covers atomic provisioning, template immutability,
+clone reuse, and portable-folder validation.
 `na2/test_test_runtime.ps1` covers path injection/restoration and guards against
 overwriting unrelated settings; `na2/test_test_memory_card.ps1` covers private
 card reuse; `na2/test_process_ownership.ps1` proves missing, mismatched, and

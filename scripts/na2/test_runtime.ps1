@@ -27,7 +27,7 @@ function Enter-Na2Pcsx2ConfigurationLock {
         catch [Threading.AbandonedMutexException] {
             $acquired = $true
         }
-        if (-not $acquired) { throw 'Timed out waiting for the shared PCSX2 configuration lock.' }
+        if (-not $acquired) { throw 'Timed out waiting for the workstream PCSX2 configuration lock.' }
         return $mutex
     }
     catch {
@@ -95,7 +95,7 @@ function New-Na2TestRuntimeLayout {
 function Enter-Na2TestRuntimeConfiguration {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)][psobject]$ProjectPaths,
+        [Parameter(Mandatory = $true)][psobject]$Pcsx2,
         [Parameter(Mandatory = $true)][psobject]$Layout,
         [Parameter(Mandatory = $true)][psobject]$IsoIdentity,
         [Parameter(Mandatory = $true)][string]$AgentName,
@@ -103,14 +103,14 @@ function Enter-Na2TestRuntimeConfiguration {
         [bool]$StartPaused = $false
     )
 
-    $iniPath = $ProjectPaths.files.pcsx2_ini
+    $iniPath = $Pcsx2.Ini
     $memory = $null
     $snapshot = $null
     try {
         $memory = Enter-Na2TestMemoryCard `
             -GlobalIniPath $iniPath `
-            -GameSettingsDirectory $ProjectPaths.pcsx2_gamesettings `
-            -SourceMemoryCardsDirectory $ProjectPaths.pcsx2_memcards `
+            -GameSettingsDirectory $Pcsx2.GameSettings `
+            -SourceMemoryCardsDirectory $Pcsx2.MemoryCards `
             -TaskMemoryCardsDirectory $Layout.MemoryCards `
             -Serial $IsoIdentity.Serial `
             -CRC $IsoIdentity.CRC `

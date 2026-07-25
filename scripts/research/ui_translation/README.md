@@ -8,10 +8,12 @@ PCSX2 or automate controller input.
 
 Codex agents must use `scripts/na2/test_launch.ps1 -OperationPlan` for live
 runtime observation or control because that workflow retains the required
-launch-local ownership capability. `ui_runtime.py` remains necessary for
+launch-local ownership capability and operates only on the workstream's private
+clone. `ui_runtime.py` remains necessary for
 offline `import-pairs`, settings inspection, embedded-screenshot extraction,
 and explicitly user-directed work against a user-owned paused PCSX2 session;
-its direct PINE commands do not establish agent process ownership.
+its direct PINE commands do not establish agent process ownership. Agents must
+not run it against `@pcsx2_user`.
 
 `match_assembly_function.py` compares one preserved Ghidra assembly function
 against another build by normalized instruction structure. It accepts both the
@@ -41,7 +43,7 @@ cannot be explained from NUN5 and Current plus the unpacked static sources.
   claiming a live PINE identity. `--consume-states` is explicit and destructive.
 - A capture is first copied and verified under
   `@work/UI translation/runtime_cases/`. Only after that succeeds is the newly
-  generated slot state removed from `@pcsx2/sstates/`; pass
+  generated slot state removed from `@pcsx2_user/sstates/`; pass
   `--keep-slot-state` to retain it there.
 - Runtime writes require an exact serial/CRC match, neutral rendering settings,
   paused PCSX2, an exact expected-byte range, and complete readback. A failed

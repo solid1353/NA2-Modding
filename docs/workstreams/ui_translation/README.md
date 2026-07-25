@@ -13,6 +13,7 @@ findings remain in the shared knowledge base rather than being duplicated here.
 ## Documents
 
 - [Active plan and working context](plan.md)
+- [Remaining UI epic](epics/remaining_ui/README.md)
 - [Battle UI knowledge](../../knowledge/localization/ui/battle.md)
 - [Collection UI knowledge](../../knowledge/localization/ui/collection.md)
 - [Options UI knowledge](../../knowledge/localization/ui/options.md)

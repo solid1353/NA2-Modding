@@ -9,6 +9,8 @@
   right.
 - Every case occupies one row. Above the paired screenshots, show the game
   section, slot/case, status, and a concise finding or question.
+- Use a dark, low-glare background with light text for the report frame,
+  headers, and metadata. Do not tint or otherwise alter the source screenshots.
 - A grid may contain one row, but never only one screenshot.
 - Larger reports group grids by game section and screen semantics and state the
   covered slots. Emit the composed grids as actual conversation images visible

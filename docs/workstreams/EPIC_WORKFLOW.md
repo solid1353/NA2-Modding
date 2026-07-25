@@ -42,6 +42,12 @@ completed subtask is accepted.
 Commentary or tool output does not prove delivery. The final response itself
 must visibly contain every composed grid.
 
-Preserve each epic and its report grids together in its owning workstream
-directory. A grid may contain one row, but never only one screenshot; every row
-shows NUN5 on the left and NA2.28 on the right.
+Preserve each epic and its report grids together under
+`docs/workstreams/<workstream>/epics/<epic-id>/`. Each epic directory contains
+a README describing its current subtasks and report grids, and the owning
+workstream README links every active epic. Task-local source screenshots and
+intermediate files remain under `work/<exact task title>/`; they are not the
+canonical epic record.
+
+A grid may contain one row, but never only one screenshot; every row shows NUN5
+on the left and NA2.28 on the right.

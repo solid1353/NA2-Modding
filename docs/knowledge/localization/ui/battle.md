@@ -547,3 +547,76 @@ Record `0x99` was absent from the captured set, so its quarter-turn remains a
 high-confidence static result rather than a runtime-verified one. The exact
 fixed-class scale is likewise statically traced until a fixed-class state is
 captured.
+
+## Fixed two-label item status
+
+### Identity and address map
+
+This section uses the same exact NA2/NUN5 boot-ELF and BTL identities recorded
+above. Complete-file BTL offsets map to live code at `load_base + file_offset`;
+the preserved Ghidra labels remain `0x40` below the live addresses.
+
+| Role | NA2 | NUN5 |
+| --- | --- | --- |
+| Fixed constructor | file `0x5B080`, Ghidra `FUN_0070ef40`, live `0x0070EF80` | file `0x5D840`, Ghidra `FUN_00724500`, live `0x00724540` |
+| Fixed draw | file `0x5B0F0`, Ghidra `FUN_0070efb0`, live `0x0070EFF0` | file `0x5D8B0`, Ghidra `FUN_00724570`, live `0x007245B0` |
+| Fixed width update | absent from the NA2 object ABI | file `0x5DB20`, Ghidra `FUN_007247e0`, live `0x00724820` |
+| Fixed-class vtable | live `0x005DDE80` | live `0x005EB370` |
+| Shared NA2 width helper | BTL file `0x211B54`, live `0x008C5A54` | not applicable |
+| First adapted draw block | BTL file `0x5B128`, live `0x0070F028` | behavior inside `FUN_00724570` |
+| Second adapted draw block | BTL file `0x5B1F0`, live `0x0070F0F0` | behavior inside `FUN_00724570` |
+
+The class always draws record `0x8E` followed by record `0x8D`. Their complete
+official NUN5 rectangles are already imported by `UI-BTL-009` and
+`UI-BTL-010`; `UI-BTL-012` therefore contains only two NA2 ABI adaptations and
+no new texture or table donor.
+
+### Reconstructed behavior
+
+The homologous draw paths reduce to:
+
+```cpp
+void drawFixedStatus(FixedItemObject *object, Vec4 input) {
+    for (const Row row : {{0x8E, 20}, {0x8D, 37}}) {
+        Vec4 position = input;
+        position.x -= itemRecord(row.record).width / 2;
+        position.y += row.yOffset;
+        drawUniformItem(1.0f, object->renderParameter, row.record,
+                        &position, selectVariant(object, row.record));
+    }
+}
+```
+
+NA2 originally used `(+38,+11)` for record `0x8E` and `(+18,+25)` for record
+`0x8D`. NUN5 obtains each live donor width, halves it with signed integer
+rounding, subtracts that value from X, then applies `+20` or `+37` to Y. The
+NUN5 whole-function body cannot be copied safely because its fixed object owns
+a scale at `+0x40`, where NA2 stores the next-object pointer, and it calls a
+NUN5-only width-query helper.
+
+The NA2 port instead reuses the runtime-proven `UI-BTL-009` width helper. Both
+call sites pass zero X bias. The first selects the helper's 18-unit top row and
+adds two units; the second selects its 20-unit lower row and adds 17 units. The
+fixed renderer does not consume the helper's angle output, so its original
+uniform wrapper and rotation behavior remain unchanged. The exact fixed bubble
+scale `102/64 = 1.59375` is already selected by the shared common helper.
+
+### Side effects, evidence, and confidence
+
+A controlled synthetic checkpoint changed the sole paired object in matched
+Slot 7 to each game's real fixed-class vtable. Both retained identical
+positions and NUN5 offsets; the NUN5 object also received the fixed class's
+traced `1.59375` scale. This caused the real fixed draw functions to render
+`Status Effect` and `Recovery`. At 640x480, each label has the same center
+relative to the white bubble in NUN5 and Current NA2. A four-pixel whole-object
+screen delta accompanies a one-frame update/pulse difference and does not
+change internal placement.
+
+An earlier experimental v32 helper was rejected before canonical promotion
+because its proposed runtime address overlapped live BTL data. V33 reuses the
+existing proven helper and changes only the two guarded draw blocks; no new
+code cave or data overwrite remains.
+
+The fixed draw geometry is **runtime-proven** with **high confidence**. It is
+not marked verified because the checkpoint transformed a live paired object
+rather than capturing a naturally spawned fixed-class notification.

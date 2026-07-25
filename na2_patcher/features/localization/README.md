@@ -1236,6 +1236,28 @@ captured set, so its branch is statically verified from both complete draw
 functions and the patch is runtime-proven with high confidence rather than
 marked verified.
 
+### UI-BTL-012: localized fixed item-status labels
+
+The fixed two-label item class always draws records `0x8E` and `0x8D`. Those
+official rectangles are already supplied by the donor-backed paired and numeric
+item patches, so this patch adds no texture data or duplicate table copy.
+
+NA2 placed the two records with fixed regional offsets `(+38,+11)` and
+`(+18,+25)`. NUN5 centers each record from its live rectangle width and uses Y
+offsets `+20` and `+37`. `UI-BTL-012` routes both NA2 draw sites through the
+existing runtime-proven shared item-width helper, with zero X bias and local Y
+biases `+2` and `+17` over that helper's established `+18/+20` row bases. The
+fixed renderer ignores the helper's angle output, preserving its original
+uniform draw path.
+
+A controlled synthetic checkpoint changed the sole paired object in matched
+Slot 7 to each game's real fixed-class vtable; the NUN5 object also received its
+traced fixed scale. The resulting `Status Effect` / `Recovery` labels have the
+same center relative to the white bubble in both games. The remaining whole
+object delta is the expected one-frame pulse/update difference. Because the
+checkpoint uses a transformed live object rather than a naturally spawned
+fixed notification, the runtime-proven patch retains high confidence.
+
 ### UI-ETC-001: localized Shop currency-label layout
 
 Importing the complete NUN5 `SHOP.CCS` supplies the correct English atlas, but

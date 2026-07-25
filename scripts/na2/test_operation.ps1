@@ -70,6 +70,7 @@ function Get-Na2TestOperationPlan {
         'patch_memory',
         'save_state',
         'capture_state',
+        'capture_frame',
         'wait'
     )
     foreach ($action in $actions) {
@@ -394,6 +395,141 @@ function Export-Na2Pcsx2StateScreenshot {
             $header[6] -ne 0x1A -or
             $header[7] -ne 0x0A) {
             throw 'The embedded savestate screenshot is not a PNG.'
+        }
+        [IO.File]::Move($temporary, $OutputPath, $true)
+    }
+    finally {
+        if (Test-Path -LiteralPath $temporary) {
+            Remove-Item -LiteralPath $temporary -Force
+        }
+    }
+    return [IO.Path]::GetFullPath($OutputPath)
+}
+
+function Test-Na2PngFile {
+    [CmdletBinding()]
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $false }
+    $stream = [IO.File]::Open(
+        $Path,
+        [IO.FileMode]::Open,
+        [IO.FileAccess]::Read,
+        [IO.FileShare]::ReadWrite
+    )
+    try {
+        if ($stream.Length -lt 8) { return $false }
+        $header = [byte[]]::new(8)
+        if ($stream.Read($header, 0, $header.Length) -ne $header.Length) {
+            return $false
+        }
+        return (
+            $header[0] -eq 0x89 -and
+            $header[1] -eq 0x50 -and
+            $header[2] -eq 0x4E -and
+            $header[3] -eq 0x47 -and
+            $header[4] -eq 0x0D -and
+            $header[5] -eq 0x0A -and
+            $header[6] -eq 0x1A -and
+            $header[7] -eq 0x0A
+        )
+    }
+    finally {
+        $stream.Dispose()
+    }
+}
+
+function Get-Na2Pcsx2FrameScreenshotSignatures {
+    [CmdletBinding()]
+    param([Parameter(Mandatory = $true)][string]$Directory)
+
+    $signatures = [ordered]@{}
+    if (-not (Test-Path -LiteralPath $Directory -PathType Container)) {
+        return $signatures
+    }
+    foreach ($file in Get-ChildItem `
+        -LiteralPath $Directory `
+        -File `
+        -Filter '*.png' `
+        -Recurse) {
+        $signatures[$file.FullName] = "$($file.Length):$($file.LastWriteTimeUtc.Ticks)"
+    }
+    return $signatures
+}
+
+function Wait-Na2Pcsx2FrameScreenshot {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][string]$Directory,
+        [Parameter(Mandatory = $true)][Collections.IDictionary]$PreviousSignatures,
+        [ValidateRange(1, 300)][int]$TimeoutSeconds = 30,
+        [scriptblock]$TargetValidator
+    )
+
+    $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+    $lastPath = $null
+    $lastSignature = $null
+    $stableSamples = 0
+    do {
+        if ($null -ne $TargetValidator) {
+            [void](& $TargetValidator)
+        }
+        $candidates = @(
+            Get-ChildItem `
+                -LiteralPath $Directory `
+                -File `
+                -Filter '*.png' `
+                -Recurse `
+                -ErrorAction SilentlyContinue |
+                Where-Object {
+                    $signature = "$($_.Length):$($_.LastWriteTimeUtc.Ticks)"
+                    -not $PreviousSignatures.Contains($_.FullName) -or
+                    $PreviousSignatures[$_.FullName] -cne $signature
+                } |
+                Sort-Object LastWriteTimeUtc -Descending
+        )
+        if ($candidates.Count -gt 0) {
+            $candidate = $candidates[0]
+            $signature = "$($candidate.Length):$($candidate.LastWriteTimeUtc.Ticks)"
+            if ($candidate.FullName -ceq $lastPath -and
+                $signature -ceq $lastSignature) {
+                $stableSamples += 1
+            }
+            else {
+                $lastPath = $candidate.FullName
+                $lastSignature = $signature
+                $stableSamples = 1
+            }
+            if ($stableSamples -ge 3 -and
+                (Test-Na2PngFile -Path $candidate.FullName)) {
+                return $candidate.FullName
+            }
+        }
+        Start-Sleep -Milliseconds 200
+    } while ([DateTime]::UtcNow -lt $deadline)
+
+    throw "PCSX2 did not produce a stable frame screenshot within $TimeoutSeconds seconds."
+}
+
+function Copy-Na2Pcsx2FrameScreenshot {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][string]$SourcePath,
+        [Parameter(Mandatory = $true)][string]$OutputPath
+    )
+
+    if (-not (Test-Na2PngFile -Path $SourcePath)) {
+        throw 'The captured PCSX2 frame screenshot is not a PNG.'
+    }
+    New-Item `
+        -ItemType Directory `
+        -Force `
+        -Path ([IO.Path]::GetDirectoryName($OutputPath)) | Out-Null
+    $temporary = "$OutputPath.$PID.$([guid]::NewGuid().ToString('N')).tmp"
+    try {
+        [IO.File]::Copy($SourcePath, $temporary, $true)
+        if (-not (Test-Na2PngFile -Path $temporary)) {
+            throw 'The copied PCSX2 frame screenshot is not a PNG.'
         }
         [IO.File]::Move($temporary, $OutputPath, $true)
     }

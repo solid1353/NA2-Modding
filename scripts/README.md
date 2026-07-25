@@ -89,6 +89,9 @@ port, and launches the clone hidden/muted and running by default. Pass
 `-StartPaused` only when required. Clone-local runtime settings persist for the
 next run to validate and update; there is no second configuration lock,
 temporary card copy, synthetic GameSettings file, or settings snapshot/restore.
+Savestate slot operations use the clone's persistent `sstates/` directory and
+direct frame capture uses its persistent `snaps/` directory; requested output
+files are still constrained to that same workstream root.
 The wrapper records and validates the specific PID, start time, top-level
 window handle, and PINE endpoint. Process
 control additionally requires the unchanged live descriptor and its
@@ -147,6 +150,11 @@ identity is ready, but before guarded cleanup:
       "slot": 1,
       "screenshot_path": "work/Font/artifacts/screenshots/font-case.png",
       "timeout_seconds": 30
+    },
+    {
+      "action": "capture_frame",
+      "screenshot_path": "work/Font/artifacts/screenshots/current-frame.png",
+      "timeout_seconds": 30
     }
   ]
 }
@@ -156,8 +164,9 @@ Supported action objects are `identity`; `load_state` with `state_path` and
 optional `slot`; exact-byte `read_memory` with `address` and `expected_hex`;
 exact-byte guarded `patch_memory` with `address`, `expected_hex`, and
 `replacement_hex`; `save_state`; `capture_state` with a task-owned
-`screenshot_path`; and bounded `wait` with `milliseconds`. State inputs, plans,
-result files, and screenshot outputs must stay below the same
+`screenshot_path`; direct `capture_frame` with a task-owned `screenshot_path`;
+and bounded `wait` with `milliseconds`. State inputs, plans, result files, and
+screenshot outputs must stay below the same
 `work/<task title>/` root. Addresses accept JSON integers or `0x` strings;
 byte strings are non-empty, even-length hexadecimal.
 
@@ -165,8 +174,12 @@ Every PINE action revalidates the authenticated live descriptor and verifies
 the recorded serial/CRC over the same private PINE connection used for that
 action. The plan interpreter exposes and persists no PINE port, descriptor, or
 ownership capability. `capture_state` records both task-owned state and
-screenshot paths, optional `result_path` receives the complete portable JSON
-result, and `WaitSeconds` starts only after all plan actions finish.
+screenshot paths when the savestate embeds `Screenshot.png`. `capture_frame`
+instead asks the owned clone's recorded window to invoke its configured
+screenshot hotkey, validates the new PNG in that clone's task-owned snapshot
+directory, and does not activate the window or depend on savestate metadata.
+Optional `result_path` receives the complete portable JSON result, and
+`WaitSeconds` starts only after all plan actions finish.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`

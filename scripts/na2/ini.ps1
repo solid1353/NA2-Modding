@@ -58,6 +58,29 @@ function Set-Na2IniValue {
     return $Text.Substring(0, $bodyGroup.Index) + $newBody + $Text.Substring($bodyGroup.Index + $bodyGroup.Length)
 }
 
+function Remove-Na2IniValue {
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text,
+        [Parameter(Mandatory = $true)][string]$Section,
+        [Parameter(Mandatory = $true)][string]$Key
+    )
+
+    $sectionPattern = '(?ms)^\s*\[' + [regex]::Escape($Section) + '\]\s*\r?\n(?<body>.*?)(?=^\s*\[|\z)'
+    $sectionMatch = [regex]::Match($Text, $sectionPattern)
+    if (-not $sectionMatch.Success) { return $Text }
+    $bodyGroup = $sectionMatch.Groups['body']
+    $body = $bodyGroup.Value
+    $keyPattern = '(?m)^[ \t]*' + [regex]::Escape($Key) + '[ \t]*=[^\r\n]*(?:\r?\n|$)'
+    $matches = [regex]::Matches($body, $keyPattern)
+    if ($matches.Count -gt 1) {
+        throw "INI section [$Section] contains duplicate $Key settings."
+    }
+    if ($matches.Count -eq 0) { return $Text }
+    $match = $matches[0]
+    $newBody = $body.Remove($match.Index, $match.Length)
+    return $Text.Substring(0, $bodyGroup.Index) + $newBody + $Text.Substring($bodyGroup.Index + $bodyGroup.Length)
+}
+
 function Set-Na2IniSettings {
     param(
         [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text,

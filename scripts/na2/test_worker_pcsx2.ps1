@@ -43,7 +43,7 @@ function New-Na2WorkerPcsx2Fixture {
 [Folders]
 Bios = bios
 Snapshots = snaps
-SaveStates = sstates
+Savestates = sstates
 MemoryCards = memcards
 Logs = logs
 Cheats = cheats

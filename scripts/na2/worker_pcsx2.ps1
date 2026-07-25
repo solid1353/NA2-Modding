@@ -44,6 +44,8 @@ function Get-Na2WorkerPcsx2Context {
         GameSettings = Join-Path $root 'gamesettings'
         MemoryCards = Join-Path $root 'memcards'
         Cheats = Join-Path $root 'cheats'
+        SaveStates = Join-Path $root 'sstates'
+        Snapshots = Join-Path $root 'snaps'
         BlockMarker = Join-Path $Worker.Root 'pcsx2.runtime-blocked.json'
     }
 }
@@ -132,7 +134,7 @@ function Assert-Na2Pcsx2PortableTree {
     foreach ($folderKey in @(
         'Bios',
         'Snapshots',
-        'SaveStates',
+        'Savestates',
         'MemoryCards',
         'Logs',
         'Cheats',

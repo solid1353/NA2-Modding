@@ -136,6 +136,24 @@ public static class Na2TestWindow {
 '@
 }
 
+if (-not ('Na2TestInput' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+public static class Na2TestInput {
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool PostMessage(
+        IntPtr window,
+        uint message,
+        UIntPtr wParam,
+        IntPtr lParam
+    );
+}
+'@
+}
+
 function Test-Na2OwnedWindow {
     param(
         [Parameter(Mandatory = $true)][IntPtr]$Window,
@@ -299,7 +317,7 @@ try {
                     -Worker $worker `
                     -Repository $projectPaths.repository
                 $slotPath = Get-Na2Pcsx2StateSlotPath `
-                    -StateDirectory $runtimeLayout.SaveStates `
+                    -StateDirectory $runtimeContext.SaveStates `
                     -Serial $isoIdentity.Serial `
                     -CRC $isoIdentity.CRC `
                     -Slot $Slot
@@ -309,7 +327,7 @@ try {
             }
             elseif ($Action -in @('SaveState', 'CaptureState')) {
                 $slotPath = Get-Na2Pcsx2StateSlotPath `
-                    -StateDirectory $runtimeLayout.SaveStates `
+                    -StateDirectory $runtimeContext.SaveStates `
                     -Serial $isoIdentity.Serial `
                     -CRC $isoIdentity.CRC `
                     -Slot $Slot
@@ -370,6 +388,144 @@ try {
                 return $capturedState
             }
             return $result
+        }
+        finally {
+            $ownedState.DescriptorHandle.Dispose()
+        }
+    }
+
+    $invokeOwnedFrameScreenshot = {
+        [CmdletBinding()]
+        param(
+            [Parameter(Mandatory = $true)][string]$ScreenshotPath,
+            [ValidateRange(1, 300)][int]$TimeoutSeconds = 30
+        )
+
+        $resolvedScreenshot = Resolve-Na2TaskOwnedOutputPath `
+            -Path $ScreenshotPath `
+            -Worker $worker `
+            -Repository $projectPaths.repository `
+            -RequiredExtension '.png'
+        $ownedState = Get-Na2Pcsx2OwnershipState `
+            -DescriptorPath $descriptorPath `
+            -OwnershipCapability $ownershipCapability `
+            -KeepDescriptorOpen
+        if (-not $ownedState.Valid) {
+            $script:ownershipLossReason = $ownedState.Reason
+            throw "PCSX2 ownership lost before CaptureFrame: $($ownedState.Reason)."
+        }
+
+        $assertTarget = {
+            $descriptor = $ownedState.Descriptor
+            $reason = $null
+            if ([string]$descriptor.state -cne 'ready') {
+                $reason = 'the instance descriptor is not ready'
+            }
+            elseif ([string]$descriptor.executable -cne $portablePcsx2Exe) {
+                $reason = "the descriptor's executable identity is inconsistent"
+            }
+            elseif ([int]$descriptor.process_id -ne $testProcess.Id) {
+                $reason = 'the descriptor no longer identifies the launched process'
+            }
+            else {
+                $testProcess.Refresh()
+                if ($testProcess.HasExited) {
+                    $reason = "process $($testProcess.Id) has exited"
+                }
+                elseif (-not [IO.Path]::Equals(
+                    [IO.Path]::GetFullPath($testProcess.Path),
+                    $resolvedPcsx2Exe
+                )) {
+                    $reason = "process $($testProcess.Id) is not the owned executable"
+                }
+                else {
+                    $expectedStart = [datetime]::Parse(
+                        [string]$descriptor.process_start_utc,
+                        [Globalization.CultureInfo]::InvariantCulture,
+                        [Globalization.DateTimeStyles]::RoundtripKind
+                    )
+                    $startDelta = [math]::Abs((
+                        $testProcess.StartTime.ToUniversalTime() -
+                        $expectedStart.ToUniversalTime()
+                    ).TotalSeconds)
+                    if ($startDelta -gt 1) {
+                        $reason = "process $($testProcess.Id) start time changed"
+                    }
+                }
+            }
+            $windowText = [string]$descriptor.window_handle
+            if ($null -eq $reason -and $windowText -notmatch '^0x[0-9A-Fa-f]+$') {
+                $reason = 'the descriptor has no valid owned window'
+            }
+            $targetWindow = [IntPtr]::Zero
+            if ($null -eq $reason) {
+                $targetWindow = [IntPtr]([Convert]::ToInt64(
+                    $windowText.Substring(2),
+                    16
+                ))
+                if (-not (Test-Na2OwnedWindow `
+                    -Window $targetWindow `
+                    -ProcessId $testProcess.Id)) {
+                    $reason = 'the recorded window no longer belongs to the owned process'
+                }
+            }
+            if ($null -ne $reason) {
+                $script:ownershipLossReason = $reason
+                throw "PCSX2 ownership lost during CaptureFrame: $reason."
+            }
+            return $targetWindow
+        }
+
+        try {
+            try {
+                [void](Invoke-Na2PineOwnedSession `
+                    -Port ([int]$ownedState.Descriptor.pine_port) `
+                    -Serial ([string]$ownedState.Descriptor.serial) `
+                    -CRC ([string]$ownedState.Descriptor.crc) `
+                    -Operation Identity)
+            }
+            catch {
+                if ($_.Exception.Data['Na2OwnershipLost'] -eq $true) {
+                    $script:ownershipLossReason = $_.Exception.Message
+                }
+                throw
+            }
+
+            $previousSignatures = Get-Na2Pcsx2FrameScreenshotSignatures `
+                -Directory $runtimeContext.Snapshots
+            $targetWindow = & $assertTarget
+            $keyDown = [Na2TestInput]::PostMessage(
+                $targetWindow,
+                0x0100,
+                [UIntPtr]0x77,
+                [IntPtr]0x00420001
+            )
+            if (-not $keyDown) {
+                throw 'PCSX2 rejected the frame-screenshot key-down message.'
+            }
+            Start-Sleep -Milliseconds 25
+            $targetWindow = & $assertTarget
+            $keyUp = [Na2TestInput]::PostMessage(
+                $targetWindow,
+                0x0101,
+                [UIntPtr]0x77,
+                [IntPtr]0xC0420001
+            )
+            if (-not $keyUp) {
+                throw 'PCSX2 rejected the frame-screenshot key-up message.'
+            }
+
+            $capturedFrame = Wait-Na2Pcsx2FrameScreenshot `
+                -Directory $runtimeContext.Snapshots `
+                -PreviousSignatures $previousSignatures `
+                -TimeoutSeconds $TimeoutSeconds `
+                -TargetValidator $assertTarget
+            [void](& $assertTarget)
+            $copiedFrame = Copy-Na2Pcsx2FrameScreenshot `
+                -SourcePath $capturedFrame `
+                -OutputPath $resolvedScreenshot
+            Remove-Item -LiteralPath $capturedFrame -Force
+            return $copiedFrame
         }
         finally {
             $ownedState.DescriptorHandle.Dispose()
@@ -517,6 +673,26 @@ try {
                             -ProjectPaths $projectPaths
                         screenshot_path = ConvertTo-Na2ProjectPath `
                             -Path $captured.ScreenshotPath `
+                            -ProjectPaths $projectPaths
+                    }
+                    break
+                }
+                'capture_frame' {
+                    $timeout = Get-Na2OperationInteger `
+                        -Value (Get-Na2OperationProperty -Object $plannedAction -Name 'timeout_seconds') `
+                        -FieldName 'timeout_seconds' `
+                        -Minimum 1 `
+                        -Maximum 300 `
+                        -Default 30
+                    $screenshotPath = [string](Get-Na2OperationProperty `
+                        -Object $plannedAction `
+                        -Name 'screenshot_path')
+                    $capturedFrame = & $invokeOwnedFrameScreenshot `
+                        -ScreenshotPath $screenshotPath `
+                        -TimeoutSeconds $timeout
+                    [ordered]@{
+                        screenshot_path = ConvertTo-Na2ProjectPath `
+                            -Path $capturedFrame `
                             -ProjectPaths $projectPaths
                     }
                     break

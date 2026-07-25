@@ -173,8 +173,14 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   task-owned declarative operation plan may load/capture savestates and perform
   exact-byte guarded PINE reads/writes through an in-process interpreter that
   revalidates ownership and same-connection serial/CRC identity without
-  exposing the port or capability. Runtime folders remain within the
-  workstream root; there is no per-run card copy, synthetic GameSettings file,
+  exposing the port or capability. Its direct frame-capture action posts the
+  configured screenshot hotkey only to the PID-validated owned window and
+  accepts output only from that clone's task-owned snapshot directory, avoiding
+  any dependency on savestates embedding `Screenshot.png`. Savestate slot
+  operations and raw frame captures use the workstream clone's persistent
+  `sstates/` and `snaps/` directories; requested output files remain confined
+  to the same workstream root. There is no per-run card copy, synthetic
+  GameSettings file,
   second configuration lock, or INI snapshot/restore. Live two-instance
   validation on PCSX2 2.6.3 confirmed independent ports, windows, cards, and
   targeted shutdown.

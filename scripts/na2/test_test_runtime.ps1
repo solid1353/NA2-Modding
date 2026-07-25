@@ -38,7 +38,8 @@ try {
     $originalIni = @'
 [Folders]
 Snapshots = snaps
-SaveStates = sstates
+Savestates = sstates
+SaveStates = obsolete-artifact-path
 MemoryCards = memcards
 Logs = logs
 Cache = cache
@@ -97,6 +98,8 @@ VsyncEnable = 1
         Ini = $iniPath
         GameSettings = $gameSettings
         MemoryCards = $memoryCards
+        SaveStates = Join-Path $pcsx2 'sstates'
+        Snapshots = Join-Path $pcsx2 'snaps'
     }
     $worker = Get-Na2WorkerContext `
         -WorkerRoot $workerRoot `
@@ -113,8 +116,14 @@ VsyncEnable = 1
         -Condition ((Get-Na2IniValue -Text $configured -Section 'Folders' -Key 'Logs') -ceq $layout.LogDirectory) `
         -Message 'Runtime logs were not redirected to the worker.'
     Assert-Na2RuntimeTest `
-        -Condition ((Get-Na2IniValue -Text $configured -Section 'Folders' -Key 'SaveStates') -ceq $layout.SaveStates) `
-        -Message 'Runtime savestates were not redirected to the worker.'
+        -Condition ((Get-Na2IniValue -Text $configured -Section 'Folders' -Key 'Savestates') -ceq 'sstates') `
+        -Message 'Runtime savestates do not use the clone persistent directory.'
+    Assert-Na2RuntimeTest `
+        -Condition ($null -eq (Get-Na2IniValue -Text $configured -Section 'Folders' -Key 'SaveStates')) `
+        -Message 'The obsolete incorrectly-cased SaveStates setting was retained.'
+    Assert-Na2RuntimeTest `
+        -Condition ((Get-Na2IniValue -Text $configured -Section 'Folders' -Key 'Snapshots') -ceq 'snaps') `
+        -Message 'Runtime screenshots do not use the clone persistent directory.'
     Assert-Na2RuntimeTest `
         -Condition ((Get-Na2IniValue -Text $configured -Section 'Folders' -Key 'MemoryCards') -ceq 'memcards') `
         -Message 'Runtime configuration rewrote the clone memory-card directory.'
@@ -125,11 +134,26 @@ VsyncEnable = 1
         -Condition ((Get-Na2IniValue -Text $configured -Section 'UI' -Key 'StartPaused') -ceq 'true') `
         -Message 'Requested paused-start state was not retained in the clone.'
     Assert-Na2RuntimeTest `
+        -Condition ((Get-Na2IniValue -Text $configured -Section 'Hotkeys' -Key 'Screenshot') -ceq 'Keyboard/F8') `
+        -Message 'The maintained frame-screenshot hotkey was not configured.'
+    Assert-Na2RuntimeTest `
+        -Condition ((Get-Na2IniValue -Text $configured -Section 'EmuCore/GS' -Key 'ScreenshotFormat') -ceq '0') `
+        -Message 'The maintained frame-screenshot format was not configured as PNG.'
+    Assert-Na2RuntimeTest `
+        -Condition ((Get-Na2IniValue -Text $configured -Section 'EmuCore/GS' -Key 'OrganizeScreenshotsByGame') -ceq 'false') `
+        -Message 'The maintained frame-screenshot output was not kept in the clone snapshot directory.'
+    Assert-Na2RuntimeTest `
         -Condition ($context.MemoryCardName -ceq 'Mcd001_NA2.ps2') `
         -Message 'Runtime configuration did not honor the clone per-game card selection.'
     Assert-Na2RuntimeTest `
         -Condition ($context.MemoryCardPath -ceq (Join-Path $memoryCards 'Mcd001_NA2.ps2')) `
         -Message 'Runtime configuration did not resolve the clone card in place.'
+    Assert-Na2RuntimeTest `
+        -Condition ($context.SaveStates -ceq (Join-Path $pcsx2 'sstates')) `
+        -Message 'Runtime operations do not target the clone persistent savestate directory.'
+    Assert-Na2RuntimeTest `
+        -Condition ($context.Snapshots -ceq (Join-Path $pcsx2 'snaps')) `
+        -Message 'Runtime operations do not target the clone persistent screenshot directory.'
     Assert-Na2RuntimeTest `
         -Condition ([IO.File]::ReadAllText($gameSettingsPath) -ceq $gameSettingsText) `
         -Message 'Runtime configuration rewrote the clone per-game settings.'

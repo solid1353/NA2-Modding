@@ -41,6 +41,11 @@ try {
       "action": "read_memory",
       "address": "0x00123450",
       "expected_hex": "00112233"
+    },
+    {
+      "action": "capture_frame",
+      "screenshot_path": "work/Font/artifacts/screenshots/frame.png",
+      "timeout_seconds": 15
     }
   ]
 }
@@ -57,8 +62,9 @@ try {
     $operation = Get-Na2TestOperationPlan -Path $resolvedOperation
     Assert-Na2OperationTest `
         -Condition (
-            $operation.Actions.Count -eq 1 -and
+            $operation.Actions.Count -eq 2 -and
             $operation.Actions[0].action -ceq 'read_memory' -and
+            $operation.Actions[1].action -ceq 'capture_frame' -and
             $operation.ResultPath -ceq 'work/Font/artifacts/runtime/result.json'
         ) `
         -Message 'The maintained JSON operation plan contract did not parse.'
@@ -178,6 +184,35 @@ try {
             (Get-Item -LiteralPath $screenshotPath).Length -eq 8
         ) `
         -Message 'The embedded screenshot was not exported to the task-owned output.'
+
+    $frameDirectory = Join-Path $workerRoot 'artifacts\frame-capture'
+    New-Item -ItemType Directory -Force -Path $frameDirectory | Out-Null
+    $previousFrames = Get-Na2Pcsx2FrameScreenshotSignatures `
+        -Directory $frameDirectory
+    $sourceFrame = Join-Path $frameDirectory 'pcsx2-frame.png'
+    [IO.File]::WriteAllBytes($sourceFrame, $pngMarker)
+    $validationCount = 0
+    $capturedFrame = Wait-Na2Pcsx2FrameScreenshot `
+        -Directory $frameDirectory `
+        -PreviousSignatures $previousFrames `
+        -TimeoutSeconds 3 `
+        -TargetValidator { $script:validationCount += 1 }
+    $frameOutput = Resolve-Na2TaskOwnedOutputPath `
+        -Path 'work\Font\artifacts\screenshots\frame.png' `
+        -Worker $worker `
+        -Repository $repository `
+        -RequiredExtension '.png'
+    $copiedFrame = Copy-Na2Pcsx2FrameScreenshot `
+        -SourcePath $capturedFrame `
+        -OutputPath $frameOutput
+    Assert-Na2OperationTest `
+        -Condition (
+            [IO.Path]::Equals($capturedFrame, $sourceFrame) -and
+            [IO.Path]::Equals($copiedFrame, $frameOutput) -and
+            (Test-Na2PngFile -Path $frameOutput) -and
+            $validationCount -ge 3
+        ) `
+        -Message 'Direct frame-screenshot discovery, validation, or copy failed.'
 
     Write-Host 'NA2 in-process test-operation helper tests passed.' -ForegroundColor Green
 }

@@ -30,8 +30,6 @@ function New-Na2TestRuntimeLayout {
     $layout = [pscustomobject]@{
         RunId = $runId
         LogDirectory = Join-Path $Worker.Logs $runId
-        SaveStates = Join-Path (Join-Path $Worker.Artifacts 'sstates') $runId
-        Snapshots = Join-Path (Join-Path $Worker.Artifacts 'screenshots') $runId
         Videos = Join-Path (Join-Path $Worker.Artifacts 'recordings') $runId
         Cache = Join-Path (Join-Path $Worker.Temp 'pcsx2') "$runId\cache"
         BlockDumps = Join-Path (Join-Path $Worker.Temp 'pcsx2') "$runId\block-dumps"
@@ -40,8 +38,6 @@ function New-Na2TestRuntimeLayout {
     }
     New-Item -ItemType Directory -Force -Path @(
         $layout.LogDirectory
-        $layout.SaveStates
-        $layout.Snapshots
         $layout.Videos
         $layout.Cache
         $layout.BlockDumps
@@ -61,6 +57,10 @@ function Set-Na2TestRuntimeConfiguration {
 
     $iniPath = $Pcsx2.Ini
     $iniText = [IO.File]::ReadAllText($iniPath)
+    $iniText = Remove-Na2IniValue `
+        -Text $iniText `
+        -Section 'Folders' `
+        -Key 'SaveStates'
     $configuredPort = Get-Na2IniValue `
         -Text $iniText `
         -Section 'EmuCore' `
@@ -104,20 +104,27 @@ function Set-Na2TestRuntimeConfiguration {
     if (-not (Test-Path -LiteralPath $memoryCardPath -PathType Leaf)) {
         throw "The cloned PCSX2 Slot 1 memory card is missing: $memoryCardPath"
     }
+    New-Item -ItemType Directory -Force -Path @(
+        $Pcsx2.SaveStates
+        $Pcsx2.Snapshots
+    ) | Out-Null
 
     $settings = @(
-        [pscustomobject]@{ Section = 'Folders'; Key = 'Snapshots'; Value = $Layout.Snapshots }
-        [pscustomobject]@{ Section = 'Folders'; Key = 'SaveStates'; Value = $Layout.SaveStates }
+        [pscustomobject]@{ Section = 'Folders'; Key = 'Snapshots'; Value = 'snaps' }
+        [pscustomobject]@{ Section = 'Folders'; Key = 'Savestates'; Value = 'sstates' }
         [pscustomobject]@{ Section = 'Folders'; Key = 'Logs'; Value = $Layout.LogDirectory }
         [pscustomobject]@{ Section = 'Folders'; Key = 'Cache'; Value = $Layout.Cache }
         [pscustomobject]@{ Section = 'Folders'; Key = 'Videos'; Value = $Layout.Videos }
         [pscustomobject]@{ Section = 'EmuCore'; Key = 'EnablePINE'; Value = 'true' }
         [pscustomobject]@{ Section = 'EmuCore'; Key = 'PINESlot'; Value = [string]$pinePort }
         [pscustomobject]@{ Section = 'EmuCore'; Key = 'BlockDumpSaveDirectory'; Value = $Layout.BlockDumps }
+        [pscustomobject]@{ Section = 'EmuCore/GS'; Key = 'ScreenshotFormat'; Value = '0' }
+        [pscustomobject]@{ Section = 'EmuCore/GS'; Key = 'OrganizeScreenshotsByGame'; Value = 'false' }
         [pscustomobject]@{ Section = 'EmuCore/GS'; Key = 'HWDumpDirectory'; Value = $Layout.GsDumps }
         [pscustomobject]@{ Section = 'EmuCore/GS'; Key = 'SWDumpDirectory'; Value = $Layout.GsDumps }
         [pscustomobject]@{ Section = 'SPU2/Output'; Key = 'OutputMuted'; Value = 'true' }
         [pscustomobject]@{ Section = 'UI'; Key = 'StartPaused'; Value = $StartPaused.ToString().ToLowerInvariant() }
+        [pscustomobject]@{ Section = 'Hotkeys'; Key = 'Screenshot'; Value = 'Keyboard/F8' }
     )
     $configured = Set-Na2IniSettings -Text $iniText -Settings $settings
     [IO.File]::WriteAllText(
@@ -130,6 +137,8 @@ function Set-Na2TestRuntimeConfiguration {
         IniPath = $iniPath
         MemoryCardName = $memoryCardName
         MemoryCardPath = $memoryCardPath
+        SaveStates = $Pcsx2.SaveStates
+        Snapshots = $Pcsx2.Snapshots
         PinePort = $pinePort
         Layout = $Layout
     }
@@ -148,8 +157,6 @@ function Remove-Na2TestRuntimeLayout {
     }
     foreach ($path in @(
         $Layout.LogDirectory
-        $Layout.SaveStates
-        $Layout.Snapshots
         $Layout.Videos
         ([IO.Path]::GetDirectoryName($Layout.TempRoot))
     )) {

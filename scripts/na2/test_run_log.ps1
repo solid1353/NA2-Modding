@@ -102,6 +102,10 @@ try {
         -Destination (Join-Path $fakeRepository 'scripts\lib')
     $fakeNa2Scripts = Join-Path $fakeRepository 'scripts\na2'
     New-Item -ItemType Directory -Force -Path $fakeNa2Scripts | Out-Null
+    $fakeActualizationScripts = Join-Path $fakeRepository 'scripts\actualization'
+    New-Item -ItemType Directory -Force -Path $fakeActualizationScripts | Out-Null
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\actualization\act.ps1') `
+        -Destination $fakeActualizationScripts
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'worker_paths.ps1') `
         -Destination $fakeNa2Scripts
     $manifest = @'
@@ -120,6 +124,10 @@ try {
     "work": "work"
   },
   "files": {
+    "actualize_command": "@scripts/actualization/act.ps1",
+    "actualize_na2_command": "@scripts/actualization/na2.ps1",
+    "actualize_input_command": "@scripts/actualization/input.ps1",
+    "actualize_links_command": "@scripts/actualization/links.ps1",
     "current_iso": "@build/NA2.28 - Current.iso",
     "previous_iso": "@build/NA2.28 - Previous.iso",
     "candidate_iso": "@build/NA2.28 - Candidate.iso"
@@ -133,28 +141,44 @@ try {
     )) {
         New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository $directory) | Out-Null
     }
-    & (Join-Path $fakeRepository '_na2.ps1') -Help | Out-Null
+    $helpText = (& (Join-Path $fakeRepository '_na2.ps1') -Help) -join "`n"
     Assert-Na2Test `
         -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'logs\na2'))) `
         -Message 'Help invocation created run logs.'
+    Assert-Na2Test `
+        -Condition ($helpText -notmatch '(?m)^\s*na2 act\b') `
+        -Message 'Root help still exposes the retired na2 act command.'
 
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'actualize.ps1') -Content @'
-param([string]$ActiveRole)
-Write-Host "[fake] actualize $ActiveRole"
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'na2.ps1') -Content @'
+Write-Host '[fake] actualize na2'
 [pscustomobject]@{
-    ActiveRole = $ActiveRole
-    PCSX2Serial = 'SLOP-NA228'
-    PCSX2ElfCRC = '12345678'
-    CheatsPnach = 'pcsx2_user/cheats/SLOP-NA228_12345678.pnach'
-    PnachStatus = 'verified symlink'
-    RemovedPnachSymlinks = @()
-    GameSettings = 'pcsx2_user/gamesettings/SLOP-NA228_12345678.ini'
-    GameSettingsStatus = 'verified symlink'
-    RemovedGameSettingsSymlinks = @()
-    MemoryCard = 'pcsx2_user/memcards/Mcd001_NA228_Current.ps2'
-    MemoryCardStatus = 'preserved'
+    Roles = @(
+        [pscustomobject]@{
+            Role = 'Current'
+            Serial = 'SLOP-NA228'
+            CRC = '12345678'
+        }
+    )
+    CheatAliases = @('pcsx2_user/cheats/SLOP-NA228_12345678.pnach')
+    RemovedCheatSymlinks = @()
     EnabledCheats = @()
+    CreatedGameSettings = @()
+    UpdatedGameSettings = @()
+    PreservedGameSettings = @('SLOP-NA228_12345678.ini')
+    RemovedGameSettings = @()
+    CreatedMemoryCards = @()
+    PreservedMemoryCards = @('Base - Current.ps2')
 }
+'@
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'input.ps1') -Content @'
+param([switch]$PassThru)
+$result = [pscustomobject]@{ Changed = $false }
+if ($PassThru) { $result }
+'@
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'links.ps1') -Content @'
+param([switch]$PassThru)
+$result = [pscustomobject]@{ Created = @(); Verified = @() }
+if ($PassThru) { $result }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'launch.ps1') -Content @'
 param([string]$IsoPath, [switch]$KeepExistingInstance)
@@ -175,7 +199,17 @@ else {
     [pscustomobject]@{ Status = 'unchanged' }
 }
 '@
-    & (Join-Path $fakeRepository '_na2.ps1') act
+    & (Join-Path $fakeActualizationScripts 'act.ps1')
+    $na2ActRejected = $false
+    try {
+        & (Join-Path $fakeRepository '_na2.ps1') act
+    }
+    catch {
+        $na2ActRejected = $_.Exception.Message -match 'Unknown NA2 command: act'
+    }
+    Assert-Na2Test `
+        -Condition $na2ActRejected `
+        -Message 'The retired na2 act route was not rejected.'
     & (Join-Path $fakeRepository '_na2.ps1') -Current
     & (Join-Path $fakeRepository '_na2.ps1') -Previous
     & (Join-Path $fakeRepository '_na2.ps1') -t
@@ -188,7 +222,7 @@ else {
     foreach ($mode in 'actualize', 'current', 'previous', 'candidate-build', 'build') {
         Assert-Na2Test `
             -Condition ($fakeRolling -match "(?m)^mode: $mode$") `
-            -Message "Root $mode dispatch was not logged."
+            -Message "$mode dispatch was not logged."
     }
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 6) `
@@ -216,14 +250,8 @@ else {
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 2) `
         -Message 'Build-only and build-and-launch did not both use the standard build pipeline.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize Current').Count -eq 4) `
-        -Message 'Current actualization did not cover act, launch, and both standard build paths.'
-    Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize Previous').Count -eq 1) `
-        -Message 'Previous launch did not actualize Previous PCSX2 state.'
-    Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize Candidate').Count -eq 1) `
-        -Message 'Candidate build did not actualize Candidate PCSX2 state.'
+        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize na2').Count -eq 6) `
+        -Message 'Standalone and user-owned workflows did not preserve NA2 actualization.'
     $structuredLog = Join-Path $logs 'na2'
     $buildRecords = Join-Path $structuredLog 'builds'
     foreach ($buildId in 'old-previous', 'old-current', 'new-current', 'orphan') {
@@ -328,21 +356,26 @@ else {
 
     $status = Format-Na2ActualizeStatus `
         -Result ([pscustomobject]@{
-            ActiveRole = 'Current'
-            PCSX2Serial = 'SLOP-NA228'
-            PCSX2ElfCRC = 'C0659AD1'
-            CheatsPnach = Join-Path $paths.pcsx2_user 'cheats\SLOP-NA228_C0659AD1.pnach'
-            PnachStatus = 'verified symlink'
-            RemovedPnachSymlinks = @('old-link')
-            GameSettings = Join-Path $paths.pcsx2_user 'gamesettings\SLOP-NA228_C0659AD1.ini'
-            GameSettingsStatus = 'verified symlink'
-            RemovedGameSettingsSymlinks = @('old-settings')
-            MemoryCard = Join-Path $paths.pcsx2_user 'memcards\Mcd001_NA228_Current.ps2'
-            MemoryCardStatus = 'preserved'
+            Roles = @(
+                [pscustomobject]@{
+                    Role = 'Current'
+                    Serial = 'SLOP-NA228'
+                    CRC = 'C0659AD1'
+                }
+            )
+            CheatAliases = @('alias')
+            RemovedCheatSymlinks = @('old-link')
+            EnabledCheats = @('Intro skips')
+            CreatedGameSettings = @()
+            UpdatedGameSettings = @()
+            PreservedGameSettings = @('SLOP-NA228_C0659AD1.ini')
+            RemovedGameSettings = @('old-settings')
+            CreatedMemoryCards = @()
+            PreservedMemoryCards = @('Base - Current.ps2')
         }) `
         -ProjectPaths $paths
-    Assert-Na2Test -Condition ($status -match '@pcsx2_user/cheats/') -Message 'Actualize status path is not portable.'
-    Assert-Na2Test -Condition ($status -match 'CRC=C0659AD1') -Message 'Actualize status omitted the CRC.'
+    Assert-Na2Test -Condition ($status -match 'Current=SLOP-NA228_C0659AD1') -Message 'Actualize status omitted the role identity.'
+    Assert-Na2Test -Condition ($status -match 'Intro skips') -Message 'Actualize status omitted enabled cheats.'
     Assert-Na2Test -Condition ($status -match 'GameSettings') -Message 'Actualize status omitted GameSettings.'
     Assert-Na2Test -Condition ($status -match 'memory card') -Message 'Actualize status omitted the memory card.'
 

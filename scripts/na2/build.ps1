@@ -414,6 +414,10 @@ $buildId = (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
 $profileLog = Join-Path $buildLogRoot $buildId
 $profileLogDirectory = [IO.Path]::GetRelativePath($projectPaths.repository, $profileLog)
 $pcsx2Exe = $projectPaths.files.pcsx2_user_exe
+$stopGeneralPcsx2 = (
+    [string]::IsNullOrWhiteSpace($WorkerOutputIso) -and
+    -not $CandidateOnly
+)
 $arguments = @(
     '-B'
     '-m', 'na2_patcher.build_profile'
@@ -423,7 +427,9 @@ $arguments = @(
     '--profile-log-directory', $profileLogDirectory
 )
 
-Stop-Na2Pcsx2 -Executable $pcsx2Exe
+if ($stopGeneralPcsx2) {
+    Stop-Na2Pcsx2 -Executable $pcsx2Exe
+}
 $promotionCompleted = $false
 try {
     Push-Location $projectPaths.repository
@@ -442,7 +448,9 @@ try {
         throw 'Profile build completed without creating its structured build record.'
     }
 
-    Stop-Na2Pcsx2 -Executable $pcsx2Exe
+    if ($stopGeneralPcsx2) {
+        Stop-Na2Pcsx2 -Executable $pcsx2Exe
+    }
     $promotion = Promote-VerifiedIso `
         -CurrentIso $resolvedOutputIso `
         -PreviousIso $resolvedPreviousIso

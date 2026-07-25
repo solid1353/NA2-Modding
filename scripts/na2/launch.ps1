@@ -11,8 +11,6 @@ param(
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
-. (Join-Path $PSScriptRoot '..\lib\run_log.ps1')
-. (Join-Path $PSScriptRoot 'ini.ps1')
 . (Join-Path $PSScriptRoot 'process.ps1')
 . (Join-Path $PSScriptRoot 'worker_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
@@ -51,23 +49,6 @@ else {
 
 if (-not $KeepExistingInstance) {
     Stop-Na2Pcsx2 -Executable $resolvedPcsx2Exe
-    $pcsx2Ini = [IO.Path]::GetFullPath($projectPaths.files.pcsx2_user_ini)
-    if (-not (Test-Path -LiteralPath $pcsx2Ini -PathType Leaf)) {
-        throw "PCSX2 configuration does not exist: $pcsx2Ini"
-    }
-    $iniText = [IO.File]::ReadAllText($pcsx2Ini)
-    $runningIniText = Set-Na2IniValue `
-        -Text $iniText `
-        -Section 'UI' `
-        -Key 'StartPaused' `
-        -Value 'false'
-    if ($runningIniText -cne $iniText) {
-        [IO.File]::WriteAllText(
-            $pcsx2Ini,
-            $runningIniText,
-            [Text.UTF8Encoding]::new($false)
-        )
-    }
 }
 
 if (-not (Test-Path -LiteralPath $resolvedIso -PathType Leaf)) {

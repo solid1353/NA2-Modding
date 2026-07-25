@@ -1,0 +1,123 @@
+[CmdletBinding()]
+param(
+    [Parameter(Position = 0)]
+    [ValidateSet('na2', 'input', 'links')]
+    [string]$Mode,
+
+    [Parameter(DontShow)]
+    [switch]$NoRunLog
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\lib\run_log.ps1')
+
+$projectPaths = Get-Na2ProjectPaths
+$selectedModes = if ([string]::IsNullOrWhiteSpace($Mode)) {
+    @('na2', 'input', 'links')
+}
+else {
+    @($Mode)
+}
+$runLog = $null
+if (-not $NoRunLog) {
+    try {
+        $logMode = if ($selectedModes.Count -eq 1) {
+            "actualize-$($selectedModes[0])"
+        }
+        else {
+            'actualize'
+        }
+        $runLog = Start-Na2RunLog `
+            -Mode $logMode `
+            -ProjectPaths $projectPaths
+    }
+    catch {
+        Write-Warning "Could not start actualization log: $($_.Exception.Message)"
+    }
+}
+
+$runOutcome = 'failed'
+$runFailure = ''
+try {
+    foreach ($selectedMode in $selectedModes) {
+        switch ($selectedMode) {
+            'na2' {
+                Write-Host '[act] Actualize built NA2.28 images' `
+                    -ForegroundColor Cyan
+                $output = @(
+                    & $projectPaths.files.actualize_na2_command
+                )
+                if ($output.Count -ne 1) {
+                    throw (
+                        'NA2 actualization returned {0} results; expected one.' -f
+                        $output.Count
+                    )
+                }
+                Write-Host (
+                    Format-Na2ActualizeStatus `
+                        -Result $output[0] `
+                        -ProjectPaths $projectPaths
+                ) -ForegroundColor Cyan
+            }
+            'input' {
+                Write-Host '[act] Actualize Comparison_NA2 input profile' `
+                    -ForegroundColor Cyan
+                $output = @(
+                    & $projectPaths.files.actualize_input_command -PassThru
+                )
+                if ($output.Count -ne 1) {
+                    throw (
+                        'Input actualization returned {0} results; expected one.' -f
+                        $output.Count
+                    )
+                }
+                $state = if ($output[0].Changed) {
+                    'updated'
+                }
+                else {
+                    'already current'
+                }
+                Write-Host "[act] Comparison_NA2: $state." `
+                    -ForegroundColor Cyan
+            }
+            'links' {
+                Write-Host '[act] Actualize project-to-PCSX2 hardlinks' `
+                    -ForegroundColor Cyan
+                $output = @(
+                    & $projectPaths.files.actualize_links_command -PassThru
+                )
+                if ($output.Count -ne 1) {
+                    throw (
+                        'Hardlink actualization returned {0} results; expected one.' -f
+                        $output.Count
+                    )
+                }
+                Write-Host (
+                    '[act] Hardlinks: created={0}; verified={1}.' -f
+                    @($output[0].Created).Count,
+                    @($output[0].Verified).Count
+                ) -ForegroundColor Cyan
+            }
+        }
+    }
+    $runOutcome = 'succeeded'
+}
+catch {
+    $runFailure = $_.Exception.Message
+    throw
+}
+finally {
+    if ($null -ne $runLog) {
+        try {
+            Complete-Na2RunLog `
+                -Context $runLog `
+                -Outcome $runOutcome `
+                -FailureMessage $runFailure
+        }
+        catch {
+            Write-Warning "Could not finalize actualization logs: $($_.Exception.Message)"
+        }
+    }
+}

@@ -9,7 +9,6 @@ param(
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\..\lib\project_paths.ps1')
-. (Join-Path $PSScriptRoot '..\..\lib\run_log.ps1')
 . (Join-Path $PSScriptRoot '..\..\na2\process.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
@@ -125,6 +124,7 @@ if (-not $PSCmdlet.ShouldProcess($pcsx2Exe, $action)) {
 
 $launchedGames = [Collections.Generic.List[object]]::new()
 try {
+    & $projectPaths.files.actualize_command na2
     Stop-Na2Pcsx2 -Executable $pcsx2Exe
 
     foreach ($game in $selectedGames) {
@@ -142,26 +142,6 @@ try {
                 -Deadline ([DateTime]::UtcNow.AddSeconds($WindowWaitSeconds))
         }
         else {
-            if ($game -eq 'candidate') {
-                $actualizeResult = & (
-                    Join-Path $projectPaths.scripts 'na2\actualize.ps1'
-                ) -ActiveRole Candidate
-                Write-Host (
-                    Format-Na2ActualizeStatus `
-                        -Result $actualizeResult `
-                        -ProjectPaths $projectPaths
-                ) -ForegroundColor Cyan
-                $enabledCheats = @($actualizeResult.EnabledCheats)
-                Write-Host (
-                    '[na2] Enabled cheats: ' +
-                    $(if ($enabledCheats.Count -eq 0) {
-                        'none'
-                    }
-                    else {
-                        $enabledCheats -join ', '
-                    })
-                ) -ForegroundColor Cyan
-            }
             Start-Process -FilePath $pcsx2Exe `
                 -WorkingDirectory $projectPaths.pcsx2_user `
                 -ArgumentList @('-batch', "`"$($selectedIsoPaths[$game])`"") `

@@ -33,34 +33,7 @@ function Write-Na2Stage {
 }
 
 function Invoke-Na2Actualization {
-    param(
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Current', 'Previous', 'Candidate')]
-        [string]$Role
-    )
-
-    $actualizeOutput = @(
-        & (Join-Path $projectPaths.scripts 'na2\actualize.ps1') `
-            -ActiveRole $Role
-    )
-    if ($actualizeOutput.Count -ne 1) {
-        throw "PCSX2 actualization returned $($actualizeOutput.Count) results; expected one."
-    }
-    $result = $actualizeOutput[0]
-    Write-Host (
-        Format-Na2ActualizeStatus `
-            -Result $result `
-            -ProjectPaths $projectPaths
-    ) -ForegroundColor Cyan
-    $enabledCheatNames = @($result.EnabledCheats)
-    $enabledCheats = if ($enabledCheatNames.Count -eq 0) {
-        'none'
-    }
-    else {
-        $enabledCheatNames -join ', '
-    }
-    Write-Host "[na2] Enabled cheats: $enabledCheats" -ForegroundColor Cyan
-    return $result
+    & $projectPaths.files.actualize_command na2 -NoRunLog
 }
 
 $workerBuild = if ($Test -and -not [string]::IsNullOrWhiteSpace($Mode)) {
@@ -81,7 +54,7 @@ if (@($Build, $Test, $Current, $Previous).Where({ $_ }).Count -gt 1) {
 if ($command -and ($Build -or $Test -or $runSelected)) {
     throw 'Build/launch switches cannot be combined with a command mode.'
 }
-if ($command -and $command -notin @('act', 'release')) {
+if ($command -and $command -ne 'release') {
     throw "Unknown NA2 command: $Mode"
 }
 if ($Version -and $command -ne 'release') {
@@ -96,7 +69,6 @@ if ($Help) {
         '  na2 -t work/<worker>/build/<name>.iso  Build an isolated worker ISO and worker-owned logs'
         "  na2 -c    Run build/$currentIsoName without rebuilding or closing PCSX2"
         "  na2 -p    Run build/$previousIsoName without rebuilding or closing PCSX2"
-        '  na2 act   Actualize Current/Previous/Candidate PCSX2 cheats, settings, and memory cards'
         '  na2 release [version]  Validate, commit, tag, and publish a GitHub release'
         ''
     ) | Write-Output
@@ -112,10 +84,7 @@ if ($command -eq 'release') {
     return
 }
 
-$runMode = if ($command -eq 'act') {
-    'actualize'
-}
-elseif ($Test) {
+$runMode = if ($Test) {
     if ($null -ne $workerBuild) { 'worker-build' } else { 'candidate-build' }
 }
 elseif ($Previous) {
@@ -145,11 +114,7 @@ catch {
 $runOutcome = 'failed'
 $runFailure = ''
 try {
-    if ($command -eq 'act') {
-        Write-Na2Stage 'Actualize shared PCSX2 state with Current active'
-        $null = Invoke-Na2Actualization -Role Current
-    }
-    elseif ($Test) {
+    if ($Test) {
         if ($null -ne $workerBuild) {
             $portableOutput = ConvertTo-Na2ProjectPath `
                 -Path $workerBuild.OutputIso `
@@ -167,7 +132,7 @@ try {
             if (-not $buildResult -or $buildResult.Status -ne 'candidate') {
                 throw 'Candidate build did not return a valid result.'
             }
-            $null = Invoke-Na2Actualization -Role Candidate
+            Invoke-Na2Actualization
         }
     }
     elseif ($Build) {
@@ -176,7 +141,7 @@ try {
         if (-not $buildResult -or $buildResult.Status -notin @('unchanged', 'updated')) {
             throw 'Profile build did not return a valid promotion result.'
         }
-        $null = Invoke-Na2Actualization -Role Current
+        Invoke-Na2Actualization
     }
     elseif ($runSelected) {
         $isoPath = if ($Previous) {
@@ -187,8 +152,7 @@ try {
         }
         $isoName = [IO.Path]::GetFileName($isoPath)
         Write-Na2Stage "Run $isoName without rebuilding"
-        $role = if ($Previous) { 'Previous' } else { 'Current' }
-        $null = Invoke-Na2Actualization -Role $role
+        Invoke-Na2Actualization
         $launchArguments = @{
             IsoPath = $isoPath
             KeepExistingInstance = $true
@@ -201,8 +165,7 @@ try {
         if (-not $buildResult -or $buildResult.Status -notin @('unchanged', 'updated')) {
             throw 'Profile build did not return a valid promotion result.'
         }
-        $null = Invoke-Na2Actualization -Role Current
-
+        Invoke-Na2Actualization
         Write-Na2Stage "2/2 Launch $currentIsoName"
         & (Join-Path $projectPaths.scripts 'na2\launch.ps1') `
             -IsoPath $projectPaths.files.current_iso

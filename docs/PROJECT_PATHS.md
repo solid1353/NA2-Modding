@@ -37,16 +37,20 @@ The manifest currently defines these stable logical names:
   `@logs/workstreams/<exact task title>/`; see `docs/LOGGING.md`.
 - `features`: the canonical feature-package root beneath `@patcher/`; profile
   module discovery resolves this root instead of hardcoding its repository path.
-- `pcsx2_files`: project-owned PCSX2-related files: the canonical PNACH,
-  screenshots, and input recordings.
+- `pcsx2_files`: project-owned PCSX2-related files.
+- `pcsx2_game_settings`, `pcsx2_input_profiles`, and
+  `pcsx2_input_recordings`: the three project trees maintained by
+  `act links`.
 - `pcsx2_user`: the user's protected portable PCSX2 installation. User launch,
   build-promotion, and actualization commands address it; agents do not.
 - `pcsx2_clean`: the protected immutable worker template under
   `@utils/pcsx2_clean/`. The maintained provisioner may only validate and copy
   its complete tree into `work/<task title>/pcsx2/`; it is never launched or
   modified directly.
-- `pcsx2_user_gamesettings` and `pcsx2_user_memcards`: user-state children of
-  `@pcsx2_user/` used only by user-owned actualization.
+- `pcsx2_user_gamesettings`, `pcsx2_user_inputprofiles`,
+  `pcsx2_user_inputrecordings`, and `pcsx2_user_memcards`: the corresponding
+  user-state children used only by user-owned actualization. The PCSX2 INI is
+  not a separate manifest entry.
 
 Documentation uses `@root/child` notation, such as `@source_na2/PRG/BTL.BIN`.
 This is a logical reference, not a literal filesystem path. Profile `roots.tsv`
@@ -59,17 +63,10 @@ The manifest also defines canonical file paths which may not exist yet before
 their producing workflow runs. File entries should reference a named root with
 `@root/child` syntax so the root path is not duplicated:
 
-- `pcsx2_user_exe`: `@pcsx2_user/pcsx2-qt.exe`.
-- `pcsx2_user_ini`: `@pcsx2_user/inis/PCSX2.ini`.
+- `pcsx2_user_exe`: `@pcsx2_user/pcsx2-qt.exe`, used by user-owned launch and
+  standard-build process control.
 - `canonical_cheats`: `@pcsx2_files/cheats.pnach`.
 - `canonical_gamesettings`: `@pcsx2_files/gamesettings.ini`.
-- `current_gamesettings`, `previous_gamesettings`, and
-  `candidate_gamesettings`: generated role settings under
-  `@pcsx2_user_gamesettings/.na2/`.
-- `na228_base_memcard`: the copy-only
-  `@pcsx2_user_memcards/Mcd001_NA228.ps2` base.
-- `na228_current_memcard`, `na228_previous_memcard`, and
-  `na228_candidate_memcard`: persistent role-specific working cards.
 - `comparison_input_profile`:
   `@pcsx2_files/input_profiles/Comparison.ini`.
 - `comparison_na2_input_profile`:
@@ -77,6 +74,9 @@ their producing workflow runs. File entries should reference a named root with
 - `notification_state`: the shared mute state for the dedicated Notifications
   task at `@repository/.agents/notifications.json`.
 - `na2_command`: `@repository/_na2.ps1`.
+- `actualize_command`: `@scripts/actualization/act.ps1`.
+- `actualize_na2_command`, `actualize_input_command`, and
+  `actualize_links_command`: the three standalone actualization modes.
 - `na2_iso`: `@source/NA2.iso`.
 - `nun3_iso`: `@source/NUN3.iso`.
 - `nun5_iso`: `@source/NUN5.iso`.

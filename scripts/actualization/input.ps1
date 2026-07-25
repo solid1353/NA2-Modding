@@ -127,20 +127,23 @@ if (Test-Path -LiteralPath $outputFullPath -PathType Leaf) {
 }
 
 if ($changed) {
-    $temporaryPath = Join-Path $outputDirectory (
-        '.{0}.{1}.tmp' -f (
-            [IO.Path]::GetFileName($outputFullPath),
-            [guid]::NewGuid().ToString('N')
+    if (Test-Path -LiteralPath $outputFullPath -PathType Leaf) {
+        $stream = [IO.File]::Open(
+            $outputFullPath,
+            [IO.FileMode]::Create,
+            [IO.FileAccess]::Write,
+            [IO.FileShare]::Read
         )
-    )
-    try {
-        [IO.File]::WriteAllBytes($temporaryPath, $generatedBytes)
-        [IO.File]::Move($temporaryPath, $outputFullPath, $true)
-    }
-    finally {
-        if (Test-Path -LiteralPath $temporaryPath) {
-            Remove-Item -LiteralPath $temporaryPath -Force
+        try {
+            $stream.Write($generatedBytes, 0, $generatedBytes.Length)
+            $stream.Flush($true)
         }
+        finally {
+            $stream.Dispose()
+        }
+    }
+    else {
+        [IO.File]::WriteAllBytes($outputFullPath, $generatedBytes)
     }
 }
 

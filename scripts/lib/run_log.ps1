@@ -266,28 +266,29 @@ function Format-Na2ActualizeStatus {
         [Parameter(Mandatory = $true)][psobject]$ProjectPaths
     )
 
-    $removedPnachCount = @($Result.RemovedPnachSymlinks).Count
-    $removedSettingsCount = @($Result.RemovedGameSettingsSymlinks).Count
-    $settings = ConvertTo-Na2PortableText `
-        -Text ([string]$Result.GameSettings) `
-        -ProjectPaths $ProjectPaths
-    $card = ConvertTo-Na2PortableText `
-        -Text ([string]$Result.MemoryCard) `
-        -ProjectPaths $ProjectPaths
-    $pnach = if ([string]::IsNullOrWhiteSpace([string]$Result.CheatsPnach)) {
-        'skipped (canonical file is empty)'
+    $roles = @(
+        $Result.Roles |
+            ForEach-Object {
+                "$($_.Role)=$($_.Serial)_$($_.CRC)"
+            }
+    ) -join ', '
+    $enabledCheatNames = @($Result.EnabledCheats)
+    $enabledCheats = if ($enabledCheatNames.Count -eq 0) {
+        'none'
     }
     else {
-        $alias = ConvertTo-Na2PortableText `
-            -Text ([string]$Result.CheatsPnach) `
-            -ProjectPaths $ProjectPaths
-        "$($Result.PnachStatus), alias=$alias"
+        $enabledCheatNames -join ', '
     }
     return (
-        "[na2] PCSX2 $($Result.ActiveRole): serial=$($Result.PCSX2Serial); " +
-        "CRC=$($Result.PCSX2ElfCRC); PNACH: $pnach; " +
-        "GameSettings: $($Result.GameSettingsStatus), alias=$settings; " +
-        "memory card: $($Result.MemoryCardStatus), file=$card; " +
-        "stale aliases removed: PNACH=$removedPnachCount, GameSettings=$removedSettingsCount."
+        "[act] NA2 roles: $roles; " +
+        "cheat aliases=$(@($Result.CheatAliases).Count), " +
+        "removed=$(@($Result.RemovedCheatSymlinks).Count), " +
+        "enabled=$enabledCheats; " +
+        "GameSettings created=$(@($Result.CreatedGameSettings).Count), " +
+        "updated=$(@($Result.UpdatedGameSettings).Count), " +
+        "preserved=$(@($Result.PreservedGameSettings).Count), " +
+        "removed=$(@($Result.RemovedGameSettings).Count); " +
+        "memory cards created=$(@($Result.CreatedMemoryCards).Count), " +
+        "preserved=$(@($Result.PreservedMemoryCards).Count)."
     )
 }

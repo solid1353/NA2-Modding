@@ -95,8 +95,9 @@ diagnostic only because the capability is gone.
 Persistent command logs must be normalized after transcript capture. They omit
 PowerShell transcript boilerplate, replace configured roots with aliases, and
 record command mode, start/end time, duration, outcome, ISO result/rotation and
-profile record when applicable. An on-demand `na2 act` run records PNACH
-actualization status and enabled cheats.
+profile record when applicable. `act` records the selected mode or full
+three-mode dispatch; NA2 actualization reports roles, aliases, GameSettings,
+memory cards, and enabled cheats.
 
 ## Other task logs
 

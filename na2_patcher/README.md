@@ -109,8 +109,9 @@ File sizes remain fixed except for the separately approved filesystem insertion
 support used by compact external strings, which preserves total ISO size and
 validates both ISO9660 and UDF trees.
 
-The ordinary `na2` command builds and launches PCSX2 without changing PNACH
-aliases. `na2 -c` launches Current without rebuilding; `na2 -p` launches
-Previous; `na2 act` performs on-demand PNACH alias maintenance for runtime tests.
+The ordinary `na2` command builds and launches PCSX2. `na2 -c` launches Current
+without rebuilding; `na2 -p` launches Previous. User-owned shared-image
+workflows automatically run `act na2`; the standalone `act` command also
+provides `na2`, `input`, and `links` modes.
 Profile-run logs record the enabled feature pins and the complete derived module
 result inventory.

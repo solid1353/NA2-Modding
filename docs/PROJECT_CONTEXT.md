@@ -15,25 +15,24 @@ Current PCSX2 actualization:
 
 - Canonical editable inputs are `@pcsx2_files/cheats.pnach` and
   `@pcsx2_files/gamesettings.ini`.
-- The actualizer derives each retained Current, Previous, and Candidate
-  identity from its ISO and maintains the matching CRC-named PNACH and
-  GameSettings symlinks under `@pcsx2_user/`.
+- `act na2` derives each retained Current, Previous, and Candidate identity
+  from its ISO, maintains matching CRC-named PNACH symlinks, and writes distinct
+  real GameSettings files under `@pcsx2_user/`.
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v2 organizes each package as groups, atomic patches, and exact edits; `default_enabled` preserves historical state. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`. Rendering is currently an empty feature folder omitted from the active profile.
-- Actualization runs after every user-owned build and before every user-owned
-  Current, Previous, or Candidate launch. Isolated worker builds never mutate
-  shared PCSX2 state. `na2 act` refreshes the same state without building or
-  launching.
-- A zero-byte canonical PNACH removes its managed PCSX2 CRC aliases. Managed
-  aliases are symlinks targeting the canonical project files or the
-  actualizer's generated role settings; other games, real files, and unrelated
-  symlinks are preserved.
-- `Mcd001_NA228.ps2` is a copy-only base. Current, Previous, and Candidate each
-  receive a separately named copy when absent, and later actualizations never
-  overwrite those working cards.
+- Actualization is an explicit standalone workflow with `na2`, `input`, and
+  `links` modes; bare `act` runs all three in that order. User-owned
+  Current/Previous/Candidate builds and launches also run `act na2`
+  automatically, while worker builds never actualize.
+- A zero-byte canonical PNACH removes its managed PCSX2 CRC aliases. Other
+  games, real files, and unrelated symlinks are preserved.
+- The base memory-card filename comes from `gamesettings.ini`. Current,
+  Previous, and Candidate receive missing copies suffixed ` - Current`,
+  ` - Previous`, and ` - Candidate`; later actualizations never overwrite or
+  delete those working cards.
 - `@pcsx2_files/` contains the Git-tracked canonical PNACH, GameSettings
   template, input profiles, project input recordings, and ignored local
   screenshots.
-- `na2 act` reports enabled named cheats from uncommented `patch=` or setting lines, or `none` when no cheats are enabled.
+- `act` reports enabled named cheats from uncommented `patch=` or setting lines, or `none` when no cheats are enabled.
 - PNACH labels such as `// [Skip CC2 intro]` are comments only. A cheat is enabled only when its executable `patch=`/setting line is uncommented. Disabled proven cheats and disabled hypotheses must keep their executable lines commented out. Temporary PNACH hypothesis patches go at the top as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 - Fixed-address PNACH hypotheses are safe by default only for the boot ELF or another region proven to remain resident and stable for the entire write lifetime.
 - `BTL.BIN`, `ETC.BIN`, and other on-demand modules are loaded and unloaded into reusable EE memory. Never test them with unguarded fixed-address PNACH writes: patch the file through the binary-patcher module, rebuild the ISO, and test that build instead.
@@ -162,8 +161,8 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 
 ## Current Scripts
 
-- Root `_na2.ps1` is the only routine user-facing entrypoint. Bare `na2`, `na2 -b`, bare `na2 -t`, `na2 -c`, `na2 -p`, and `na2 act` retain their Current/Previous/Candidate behavior. A standard bare `na2` launch clears a stale shared `StartPaused` setting after closing PCSX2 so the game starts running; pure `-c`/`-p` selectors do not rewrite settings around existing instances. `na2 -t work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
-- `scripts/na2/` contains build/promotion, PCSX2 actualization, ISO identity,
+- Root `_na2.ps1` is the routine build/launch entrypoint. Bare `na2`, `na2 -b`, bare `na2 -t`, `na2 -c`, and `na2 -p` retain their Current/Previous/Candidate behavior. The standalone `act` command performs actualization without building or launching. User-owned shared-image modes run `act na2` automatically; the launcher does not read or rewrite the user's `PCSX2.ini`. `na2 -t work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
+- `scripts/na2/` contains build/promotion, ISO identity,
   worker-path validation, PCSX2 launch/process control, PINE identity checks,
   and agent runtime isolation. `test_launch.ps1` briefly injects worker
   folders/card/PINE settings, waits for the expected ELF identity, restores
@@ -256,13 +255,14 @@ DATA.CVM passwords: `cc2fuku` for NA2, NUN3, and NUN5; `Iruka` for NUN6 A35.
 
 ## Actualize Workflow
 
-`scripts/na2/actualize.ps1` owns this workflow. It derives identities for every
-retained Current, Previous, and Candidate ISO, deletes stale managed symlinks,
-and creates relative PNACH and GameSettings aliases. It generates role
-GameSettings from `@pcsx2_files/gamesettings.ini`, changing only the memory-card
-filename, and copies the configured base card only when a role card is absent.
-An active role wins if two retained ISOs share one PCSX2 identity. The
-actualizer refuses occupied unmanaged alias paths instead of overwriting them.
+`scripts/actualization/act.ps1` is the standalone command entrypoint and owns
+its transcript and status reporting. Bare `act` dispatches `na2`, `input`, then
+`links`. `na2.ps1` derives identities for every retained Current, Previous, and
+Candidate ISO, deletes stale managed cheat symlinks and NA2.28 GameSettings,
+creates the required cheat aliases and real role GameSettings, and copies the
+template-selected base card only when a role card is absent. `input.ps1`
+regenerates `Comparison_NA2.ini`; `links.ps1` creates or verifies the configured
+project-to-user hardlinks. Occupied unmanaged destinations are refused.
 
 ## Release Workflow
 

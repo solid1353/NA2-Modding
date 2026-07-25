@@ -1,8 +1,9 @@
 # Script layout
 
-`_na2.ps1` is the only routine user-facing command. Everything below `scripts/`
-is an internal workflow helper, a focused maintenance tool, or a preserved
-research utility.
+`_na2.ps1` is the routine user-facing build/launch command.
+`actualization/act.ps1` is the standalone user-facing actualization command.
+Everything else below `scripts/` is an internal workflow helper, a focused
+maintenance tool, or a preserved research utility.
 
 Superseded implementations are removed and remain recoverable through Git
 history; do not recreate an archive directory for dead scripts.
@@ -11,8 +12,10 @@ history; do not recreate an archive directory for dead scripts.
 
 - `lib/`: shared PowerShell bootstrap, portable run-log, and structured
   build-record helpers.
-- `na2/`: build, promotion, PNACH, PCSX2 launch, CRC diagnostics, and isolated
-  agent tests for hidden launch and run logging.
+- `actualization/`: standalone dispatch, PCSX2 state actualization, PNACH-state
+  parsing, and focused tests.
+- `na2/`: build, promotion, PCSX2 launch, CRC diagnostics, and isolated agent
+  tests for hidden launch and run logging.
 - `media/`: ISO, AFS, and CVM inspection/extraction tools. Use
   `extract_source_iso.ps1 -IsoPath <path> -TaskTitle <exact task title>` for
   canonical recursive source extraction: it stages under
@@ -55,19 +58,25 @@ validated; worker mode cannot address shared build outputs or mutate shared
 preflight, promotion, PNACH, log, or emulator state. Agents must use this form
 rather than bare `na2`, `na2 -b`, or bare `na2 -t`.
 `na2 -b` runs the standard Current build and conditional promotion pipeline but
-does not launch PCSX2. Bare `na2` keeps the build-then-launch workflow. Every
-user-owned Current, Previous, or Candidate build/launch path runs the unified
-PCSX2 actualizer; isolated worker builds never do.
+does not launch PCSX2. Bare `na2` keeps the build-then-launch workflow.
+User-owned shared-image builds and launches run `act na2` automatically;
+worker-output builds never actualize. The standalone `act` command can run all
+actualization modes without building or launching.
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 
-`na2/sync_input_profiles.ps1` regenerates the NA2 comparison input profile from
-the canonical base profile while changing only the four configured `[Pad1]`
-face-button bindings. The shared PowerShell profile exposes it as `na2inputs`.
+`actualization/input.ps1` regenerates the NA2 comparison input profile from the
+canonical base profile while changing only the four configured `[Pad1]`
+face-button bindings. Run it as `act input`; the legacy `na2inputs` profile
+helper delegates to that mode.
 
-`na2/actualize.ps1` derives every retained role's serial and ELF CRC, maintains
-the canonical PNACH and GameSettings aliases, and creates each role's memory
-card from the copy-only base only when absent. Existing role cards are preserved.
+`actualization/act.ps1` owns standalone actualization logging and dispatch.
+Bare `act` runs `na2`, `input`, then `links`. `actualization/na2.ps1` derives
+every retained role's serial and ELF CRC, maintains canonical PNACH aliases,
+writes real role GameSettings, and creates missing role memory cards from the
+template-selected base. Existing role cards are preserved.
+`actualization/links.ps1` creates or verifies the configured project-to-user
+hardlinks and refuses differing occupied counterparts.
 
 Agent runtime checks use `na2/test_launch.ps1 -WorkerRoot
 work/<task title>`. `na2/provision_test_pcsx2.ps1` atomically copies the
@@ -187,6 +196,6 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 | Former path | Recovery commit | Retirement and maintained replacement |
 | --- | --- | --- |
 | `scripts/archive/replace_iso_file_same_size.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na2_patcher.image_assembler`. |
-| `scripts/na2/check_log_crc.ps1` | `804c2df8d16019a3b55f6acb10a023c435faaafc` | Manual log/PNACH comparison was superseded by `na2/iso_identity.ps1` and automatic `na2/actualize.ps1`. |
+| `scripts/na2/check_log_crc.ps1` | `804c2df8d16019a3b55f6acb10a023c435faaafc` | Manual log/PNACH comparison was superseded by `na2/iso_identity.ps1` and the maintained standalone actualization workflow. |
 | `scripts/na2/get_elf_crc.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | The redundant command wrapper was removed; `na2/pcsx2_elf_crc.ps1` remains the shared tested implementation. |
 | `scripts/research/translation/check_translation_lengths.ps1` | `91a7dabbbe8ac957b4c04d3abe7aec721757b839` | Its fixed-slot `old`/`new` assumptions are obsolete; translation importer and string patcher validation now enforce encoding and capacity rules. |

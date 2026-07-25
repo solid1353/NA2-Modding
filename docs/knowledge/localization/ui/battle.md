@@ -690,7 +690,7 @@ the guarded negative test, and the corrected 640x480 paired checkpoint.
 The table identity, donor mapping, and visible result are **runtime-proven**
 with **verified confidence**.
 
-## Practice Settings footer legends
+## Battle and Practice Settings footer legends
 
 ### Function and address map
 
@@ -699,26 +699,32 @@ at the top of this document.
 
 | Role | NA2 v2.28 | NUN5 |
 | --- | --- | --- |
+| Battle Settings draw | file `0x1CC8E0..0x1CCAC7`, Ghidra `FUN_008807a0` (`0x008807A0..0x00880987`), live `0x008807E0..0x008809C7` | file `0x1D65C0..0x1D67CF`, Ghidra `FUN_0089d280` (`0x0089D280..0x0089D48F`), live `0x0089D2C0..0x0089D4CF` |
 | Practice Settings draw | file `0x1CE390..0x1CE70F`, Ghidra `FUN_00882250` (`0x00882250..0x008825CF`), live `0x00882290..0x0088260F` | file `0x1D8470..0x1D8703`, Ghidra `FUN_0089f130` (`0x0089F130..0x0089F3C3`), live `0x0089F170..0x0089F403` |
-| Known callers | Ghidra `0x006C1210`, `0x00875B1C` | Ghidra `0x006D46D0`, `0x00891AEC` |
+| Battle Settings caller | Ghidra `0x006C11FC` | Ghidra `0x006D46BC` |
+| Practice Settings callers | Ghidra `0x006C1210`, `0x00875B1C` | Ghidra `0x006D46D0`, `0x00891AEC` |
 | Common OK/Back/Select compositor | `SUB_0037c980` | `SUB_0038bb10` |
 | Select companion renderer | `SUB_0037bc40` | `SUB_0038ad00` |
 
-The four footer X-coordinate instructions map as follows:
+The eight footer X-coordinate instructions map as follows:
 
-| Legend | NA2 file / live | Original NA2 | NUN5 file / Ghidra | Required NA2 result |
+| Screen / legend | NA2 file / live | Original NA2 | NUN5 file / Ghidra | Required NA2 result |
 | --- | --- | ---: | --- | ---: |
-| OK | `0x1CE634` / `0x00882534` | 400 | `0x1D8604` / `0x0089F2C4` | 388 |
-| Back | `0x1CE658` / `0x00882558` | 470 | `0x1D8638` / `0x0089F2F8` | 462 |
-| Select compositor | `0x1CE67C` / `0x0088257C` | 230 | `0x1D866C` / `0x0089F32C` | 200 |
-| Select companion | `0x1CE6A0` / `0x008825A0` | 230 | `0x1D8694` / `0x0089F354` | 200 |
+| Battle / OK | `0x1CCA04` / `0x00880904` | 400 | `0x1D66E8` / `0x0089D3A8` | 388 |
+| Battle / Back | `0x1CCA28` / `0x00880928` | 470 | `0x1D671C` / `0x0089D3DC` | 462 |
+| Battle / Select compositor | `0x1CCA4C` / `0x0088094C` | 230 | `0x1D6750` / `0x0089D410` | 200 |
+| Battle / Select companion | `0x1CCA70` / `0x00880970` | 230 | `0x1D6778` / `0x0089D438` | 200 |
+| Practice / OK | `0x1CE634` / `0x00882534` | 400 | `0x1D8604` / `0x0089F2C4` | 388 |
+| Practice / Back | `0x1CE658` / `0x00882558` | 470 | `0x1D8638` / `0x0089F2F8` | 462 |
+| Practice / Select compositor | `0x1CE67C` / `0x0088257C` | 230 | `0x1D866C` / `0x0089F32C` | 200 |
+| Practice / Select companion | `0x1CE6A0` / `0x008825A0` | 230 | `0x1D8694` / `0x0089F354` | 200 |
 
 ### Reconstructed behavior and cross-game difference
 
 The footer portion reduces to:
 
 ```cpp
-void drawPracticeFooter(PracticeSettings *screen) {
+void drawSettingsFooter(SettingsScreen *screen) {
     drawCommonPrompt(screen->common, effectiveOkX(), 356.0f, OK, true);
     drawCommonPrompt(screen->common, effectiveBackX(), 356.0f, BACK, true);
     drawCommonPrompt(screen->common, selectX(), 356.0f, SELECT, false);
@@ -738,10 +744,10 @@ nominal loads and has no equivalent additions. Copying the nominal NUN5
 instructions would therefore preserve the visible NA2 mismatch.
 
 `UI-BTL-015` expresses the equivalent behavior with NA2-specific effective
-constants X=`388` and X=`462`, plus the two exact X=`200` NUN5 donor copies.
-The same effective OK/Back constants are independently runtime-proven in
-`UI-BTL-005`, but this patch changes only the distinct Practice Settings
-function.
+constants X=`388` and X=`462`, plus four exact X=`200` NUN5 donor copies. The
+same effective OK/Back constants are independently runtime-proven in
+`UI-BTL-005`; this patch changes only the distinct Battle and Practice Settings
+functions.
 
 ### State behavior, evidence, and confidence
 
@@ -751,12 +757,13 @@ menu input, selected setting, texture identity, prompt records, object layout,
 animation timing, font rendering, or the accepted VS confirmation /
 Customize Jutsu path.
 
-Evidence consists of both complete homologous functions, their callers and
-callees, exact source bytes, paired slot-6 `eeMemory` images, active sprite
-objects, and a guarded task-owned savestate in which all four live instructions
-were changed together. The resulting 640x480 capture aligns Select, OK, and
-Back with NUN5; remaining one-pixel differences are normal pulse-frame
-variation.
+Evidence consists of both pairs of complete homologous functions, their callers
+and callees, exact source bytes, paired slot-6 and slot-10 `eeMemory` images,
+active sprite objects, and guarded task-owned savestates in which each screen's
+four live instructions were changed together. The resulting 640x480 captures
+align Select, OK, and Back with NUN5; remaining one-pixel differences are normal
+pulse-frame variation. The user accepted the Practice Settings slot-6 result;
+Battle Settings slot 10 remains at the final visual-acceptance boundary.
 
 An earlier candidate at NA2 BTL file offset `0xCF70` belongs to the separate
 VS confirmation Customize Jutsu call and is not part of this screen. It was

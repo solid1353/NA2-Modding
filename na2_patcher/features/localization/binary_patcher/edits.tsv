@@ -414,3 +414,7 @@ UI-BTL-015-01	UI-BTL-015	10	na2_btl	0x1CE634	replace	4	C843023C		C243023C							
 UI-BTL-015-02	UI-BTL-015	20	na2_btl	0x1CE658	replace	4	EB43023C		E743023C									Use X=462 for Practice Settings Back because NA2 lacks the NUN5 homolog's runtime -8 offset after its nominal X=470 load.
 UI-BTL-015-03	UI-BTL-015	30	na2_btl	0x1CE67C	copy	4	6643023C			nun5_btl	0x1D866C	4843023C						Copy NUN5's exact X=200 instruction for the Practice Settings Select-icon call over NA2 X=230.
 UI-BTL-015-04	UI-BTL-015	40	na2_btl	0x1CE6A0	copy	4	6643023C			nun5_btl	0x1D8694	4843023C						Copy NUN5's exact X=200 instruction for the paired Practice Settings Select-label call over NA2 X=230.
+UI-BTL-015-05	UI-BTL-015	50	na2_btl	0x1CCA04	replace	4	C843023C		C243023C									Use X=388 for Battle Settings OK because NA2 lacks the NUN5 homolog's runtime -12 offset after its nominal X=400 load.
+UI-BTL-015-06	UI-BTL-015	60	na2_btl	0x1CCA28	replace	4	EB43023C		E743023C									Use X=462 for Battle Settings Back because NA2 lacks the NUN5 homolog's runtime -8 offset after its nominal X=470 load.
+UI-BTL-015-07	UI-BTL-015	70	na2_btl	0x1CCA4C	copy	4	6643023C			nun5_btl	0x1D6750	4843023C						Copy NUN5's exact X=200 instruction for the Battle Settings Select-icon call over NA2 X=230.
+UI-BTL-015-08	UI-BTL-015	80	na2_btl	0x1CCA70	copy	4	6643023C			nun5_btl	0x1D6778	4843023C						Copy NUN5's exact X=200 instruction for the paired Battle Settings Select-label call over NA2 X=230.

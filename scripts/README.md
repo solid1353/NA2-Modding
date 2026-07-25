@@ -19,7 +19,9 @@ history; do not recreate an archive directory for dead scripts.
 - `pcsx2/`: PCSX2 launch, process, configuration, CRC helpers, the user-facing
   single-instance and multi-game launch commands, the dot-sourced source-game
   command set, user savestate filing, the minimal hidden workstream-copy
-  launcher, and task-owned PINE savestate screenshot extraction.
+  launcher, task-owned PINE savestate screenshot extraction, and
+  `patch_savestate_memory.py` for exact-byte-guarded EE-memory patches in copied
+  task-owned savestates.
 - `media/`: ISO, AFS, and CVM inspection/extraction tools. Use
   `extract_source_iso.ps1 -IsoPath <path> -TaskTitle <exact task title>` for
   canonical recursive source extraction: it stages under

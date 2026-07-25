@@ -77,17 +77,17 @@ The current profile enables, in order:
    input, and UI binary patches.
 2. QoL: accepted startup, Practice, and mode-selection behavior.
 3. Battle logic: accepted battle-rule behavior.
+4. Rendering: native 16:9 game rendering without a heap-address PNACH write.
 
 The profile's `identity.json` separately declares the equal-length
 `SLPS_258.37` to `SLOP_NA2.28` boot rename and the CP932 memory-card title.
 Output identity is profile configuration, not a feature or module.
 
-Rendering remains an available feature folder but is omitted from the current
-profile. The former generic Testing feature was retired: feature IDs express
-ownership or a coherent capability, while patch `status` and `confidence`
-express maturity and certainty. Experimental patches belong to their owning
-feature; contextless leads belong in `docs/HYPOTHESES.md` until ownership and
-an executable hypothesis are clear.
+The former generic Testing feature was retired: feature IDs express ownership
+or a coherent capability, while patch `status` and `confidence` express
+maturity and certainty. Experimental patches belong to their owning feature;
+contextless leads belong in `docs/HYPOTHESES.md` until ownership and an
+executable hypothesis are clear.
 
 ## Build
 

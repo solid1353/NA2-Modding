@@ -1,1 +1,2 @@
 edit_id	patch_id	order	destination_target_id	destination_offset	operation	length	expected_hex	expected_sha256	replacement_hex	source_target_id	source_offset	source_expected_hex	source_expected_sha256	blob_path	blob_offset	blob_sha256	fill_hex	reason
+ELF-R001-01	ELF-R001	10	slps_258_37	0xF4E8	replace	4	803F023C		403F023C									Load 0.75f instead of 1.0f for the renderer's persistent horizontal-scale field.

@@ -39,6 +39,9 @@ When the user asks for the epic, present all remaining work using the accepted
 composed-grid format. In sequential mode, present the remaining epic after the
 completed subtask is accepted.
 
+Commentary or tool output does not prove delivery. The final response itself
+must visibly contain every composed grid.
+
 Preserve each epic and its report grids together in its owning workstream
 directory. A grid may contain one row, but never only one screenshot; every row
 shows NUN5 on the left and NA2.28 on the right.

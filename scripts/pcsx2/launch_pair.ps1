@@ -24,7 +24,7 @@ $supportedGames = @(
 )
 $selectedGames = @(
     if ($null -eq $Games -or $Games.Count -eq 0) {
-        'current', 'nun5'
+        'nun5', 'current'
     }
     else {
         $Games | ForEach-Object { $_.Trim().ToLowerInvariant() }

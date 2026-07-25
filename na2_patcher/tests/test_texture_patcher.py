@@ -1139,6 +1139,40 @@ class UiTextureTests(unittest.TestCase):
             (64, 88, 64, 20),
         )
 
+    def test_character_select_footer_anchors_are_exact_nun5_copies(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = binary_patcher.load_package(
+            repository
+            / "na2_patcher/features/localization/binary_patcher"
+        )
+        edits = [item for item in package.edits if item.patch_id == "UI-ELF-007"]
+
+        self.assertEqual(
+            [item.edit_id for item in edits],
+            ["UI-ELF-007-01", "UI-ELF-007-02"],
+        )
+        self.assertTrue(all(item.operation == "copy" for item in edits))
+        self.assertEqual(
+            [item.destination_offset for item in edits],
+            [0x2BC600, 0x2BC624],
+        )
+        self.assertEqual(
+            [item.expected_hex for item in edits],
+            ["9643023C", "2043023C"],
+        )
+        self.assertEqual(
+            [item.source_target_id for item in edits],
+            ["nun5_elf", "nun5_elf"],
+        )
+        self.assertEqual(
+            [item.source_offset for item in edits],
+            [0x2CF300, 0x2CF324],
+        )
+        self.assertEqual(
+            [item.source_expected_hex for item in edits],
+            ["8243023C", "C842023C"],
+        )
+
     def test_collection_submenu_patch_uses_only_exact_nun5_records(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
@@ -1256,11 +1290,11 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 242)
-        self.assertEqual(operations, {"copy": 73, "replace": 169})
+        self.assertEqual(len(ui_edits), 244)
+        self.assertEqual(operations, {"copy": 75, "replace": 169})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 52, "nun5_btl": 16, "nun5_etc": 5},
+            {"nun5_elf": 54, "nun5_btl": 16, "nun5_etc": 5},
         )
         self.assertEqual(len(stage_scales), 24)
         self.assertEqual(len(adaptations), 145)

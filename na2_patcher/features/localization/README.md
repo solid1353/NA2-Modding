@@ -1423,7 +1423,27 @@ NA2 table. It changes only the graphical Vibration label selection; surrounding
 OFF/On text and font rendering are outside scope. Both ranges are guarded and
 the ELF size is preserved.
 
-Inspect all sixteen UI companion patches together:
+### UI-ELF-007: localized Character Select footer anchors
+
+The complete NUN5 `CHARSEL1.CCS` import already supplies the English
+`Select Color` and `Random` artwork. Their screen positions come from the
+boot-ELF Character Select footer compositor:
+
+- NA2 `FUN_003bc470` draws `Random` at X=`300` and `Select Color` at X=`160`;
+- NUN5 homolog `FUN_003cf0d0` draws the same two records at X=`260` and
+  X=`100`.
+
+`UI-ELF-007` copies the two exact NUN5 `lui v0` instructions into NA2 ELF
+offsets `0x2BC600` and `0x2BC624`. Both homologs use `v0` for these calls, so
+no register adaptation or authored literal is needed. The neighboring OK and
+Back controls are issued by separate renderer calls and remain byte-identical
+to clean NA2. A guarded patched copy of the preserved state was rendered by the
+task-owned hidden clone: both target groups landed within one pixel of NUN5 in
+X and Y, consistent with normal pulse timing. Exact boundaries, mappings,
+reconstruction, and runtime evidence are preserved in
+`docs/knowledge/localization/ui/character_select.md`.
+
+Inspect all seventeen UI companion patches together:
 
 ```powershell
 python -m na2_patcher.modules.binary_patcher.engine validate `
@@ -1450,7 +1470,8 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
   --patch UI-ELF-003 `
   --patch UI-ELF-004 `
   --patch UI-ELF-005 `
-  --patch UI-ELF-006
+  --patch UI-ELF-006 `
+  --patch UI-ELF-007
 ```
 
 ## Compact external strings

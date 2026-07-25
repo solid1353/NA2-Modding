@@ -7,8 +7,8 @@ the right.
 
 ## Remaining subtasks
 
-1. Shop, slot 7: match the remaining Bonus Game placement. Money and Ryo are
-   fixed.
+1. Shop, slot 7: the Bonus Game right-edge correction is implemented and
+   rendered from the task-owned NA2.28 clone; user confirmation is pending.
 2. Battle Results screen 2: repair the garbled and mislaid result UI.
 3. Character Items transition: replace the NA2.28 slide with the NUN5/base-NA2
    fade behavior.

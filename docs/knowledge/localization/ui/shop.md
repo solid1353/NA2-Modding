@@ -33,7 +33,7 @@ tables, and paired runtime captures.
 ## Localized label path
 
 The complete NUN5 `SHOP.CCS` donor already supplies the English artwork. NA2
-still selects two Japanese-size atlas rectangles and three regional placement
+still selects Japanese-size atlas rectangles and three regional placement
 constants from `ETC.BIN`.
 
 The draw path can be reconstructed as:
@@ -50,8 +50,8 @@ void draw_shop_labels(ShopScreen *screen) {
     // Keep NA2's seven-digit money-value formatting and placement.
     draw_money_value(screen->currency_sprite, screen->money);
 
-    Rect bonus_target = screen->bonus_target_rect;
-    Rect bonus_shot = screen->bonus_shot_rect;
+    Rect bonus_target = shop_bonus_rects.label;
+    Rect bonus_shot = shop_bonus_rects.icon;
     set_sprite_position(screen->bonus_sprite, 105.0f, 310.0f, bonus_target);
     set_sprite_position(screen->bonus_sprite, 30.0f, 310.0f, bonus_shot);
 }
@@ -63,7 +63,7 @@ and `105.0f`.
 
 ## Canonical donor imports
 
-`UI-ETC-001` uses four guarded NUN5 imports:
+`UI-ETC-001` uses five guarded NUN5 imports:
 
 | Semantic data | NA2 file / Ghidra / live EE | NUN5 file / Ghidra / live EE | Change |
 | --- | --- | --- | --- |
@@ -71,6 +71,7 @@ and `105.0f`.
 | Money X instruction | `0x249A4` / `0x006D8864` / `0x006D88A4` | `0x25E88` / `0x006ECB48` / `0x006ECB88` | `250.0f` to `254.0f` |
 | Ryo Y instruction | `0x249CC` / `0x006D888C` / `0x006D88CC` | `0x25EB0` / `0x006ECB70` / `0x006ECBB0` | `48.0f` to `50.0f` |
 | Bonus Game X instruction | `0x24BB0` / `0x006D8A70` / `0x006D8AB0` | `0x26094` / `0x006ECD54` / `0x006ECD94` | `100.0f` to `105.0f` |
+| Bonus Game rectangles | `0x30340` / `0x006E4200` / `0x006E4240` | `0x29330` / `0x006EFFF0` / `0x006F0030` | Copy 16 bytes; label width `122` to `126` |
 
 The label-position callee is `func_0x0037BC40` in NA2 and
 `func_0x0038AD00` in NUN5. The money-value callees are `FUN_006CB360` and
@@ -88,15 +89,21 @@ state.
   phases. Treating the difference as pulse-only was not sufficient evidence:
   complete-function comparison proves a separate five-pixel X-anchor
   difference at the exact homologous instruction.
+- The newer slot-7 review confirms that anchor but shows the rightmost four
+  label pixels clipped. The two functions copy homologous 16-byte rectangle
+  tables immediately before the Bonus Game draws. Their icon records are
+  identical; the only difference is NA2 width `122` versus NUN5 width `126`.
 - Copying `SHOP.CCS` alone cannot fix any of these constants because they are
   loaded by `ETC.BIN`.
 - The money-value origin differs regionally because NUN5 formats fewer digits.
   Copying that origin would conflict with NA2's intended seven-digit layout, so
   it remains intentionally NA2-specific.
-- The worker ISO and a guarded copy of the preserved Shop savestate applied all
-  three live instructions together. Enlarged final crops place Money, Ryo, and
-  Bonus Game at the NUN5 anchors; the seven-digit value remains complete.
+- The earlier worker ISO and guarded Shop state prove the three anchor imports
+  and seven-digit value behavior. A fresh hidden task-clone render used a
+  guarded task-owned state with the exact `0x006E4240` table replacement and
+  reproduced NUN5's complete Bonus Game right edge without moving its left
+  anchor. User acceptance remains pending.
 
-Confidence is **verified**: complete homologous-function comparison,
-clean-binary guards, exact live-state readback, the worker ISO, and the paired
-enlarged visual comparison all agree.
+Confidence is **high** pending user acceptance. The address mapping,
+clean-binary guards, homologous copy loops, exact donor-table difference, and
+task-owned runtime render are verified.

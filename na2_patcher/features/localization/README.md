@@ -1368,6 +1368,14 @@ Y=`50`, and Bonus Game X=`105` instructions over NA2's X=`250`, Y=`48`, and
 X=`100` constants. The money-value origin remains NA2-specific so its
 seven-digit layout is not clipped.
 
+The newer slot-7 comparison confirms the Bonus Game left anchor but exposes a
+four-pixel right-edge crop. Both homologous renderers copy a second 16-byte
+rectangle table: NA2 ETC `0x30340` contains icon `(129,137,22,22)` and label
+`(129,161,122,22)`, while NUN5 ETC `0x29330` retains the identical icon and
+widens the label to `(129,161,126,22)`. A fifth guarded NUN5 import copies that
+complete table, preserving the anchor and extending only the missing right
+edge.
+
 The full file/runtime mapping, practical reconstruction, call relationships,
 side effects, evidence, and rejected pulse-only interpretation are recorded in
 `docs/knowledge/localization/ui/shop.md`.

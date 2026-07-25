@@ -641,9 +641,9 @@ class UiTextureTests(unittest.TestCase):
         edits = [item for item in package.edits if item.patch_id == "UI-ETC-001"]
         patch = package.patches["UI-ETC-001"]
 
-        self.assertEqual(len(edits), 4)
-        self.assertEqual(patch.status, "runtime_proven")
-        self.assertEqual(patch.confidence, "verified")
+        self.assertEqual(len(edits), 5)
+        self.assertEqual(patch.status, "approved_for_test")
+        self.assertEqual(patch.confidence, "high")
         rectangle = edits[0]
         self.assertEqual(rectangle.edit_id, "UI-ETC-001-01")
         self.assertEqual(rectangle.destination_offset, 0x30308)
@@ -685,6 +685,14 @@ class UiTextureTests(unittest.TestCase):
                     "nun5_etc",
                     0x26094,
                     "D242023C",
+                ),
+                (
+                    "UI-ETC-001-05",
+                    0x30340,
+                    "81008900160016008100A1007A001600",
+                    "nun5_etc",
+                    0x29330,
+                    "81008900160016008100A1007E001600",
                 ),
             ],
         )
@@ -1413,11 +1421,11 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 254)
-        self.assertEqual(operations, {"copy": 85, "replace": 169})
+        self.assertEqual(len(ui_edits), 255)
+        self.assertEqual(operations, {"copy": 86, "replace": 169})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 61, "nun5_btl": 16, "nun5_etc": 8},
+            {"nun5_elf": 61, "nun5_btl": 16, "nun5_etc": 9},
         )
         self.assertEqual(len(stage_scales), 24)
         self.assertEqual(len(adaptations), 145)

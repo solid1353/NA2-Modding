@@ -125,6 +125,12 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   `48->50`, and Bonus Game X `100->105`. `UI-ETC-001` now imports all three
   instructions while keeping NA2's seven-digit value origin. A guarded
   task-owned Shop state and worker ISO then reproduced all three NUN5 anchors.
+  The newer slot-7 review found a separate four-pixel right-edge crop:
+  NA2's Bonus Game rectangle is 122 pixels wide while the homologous NUN5
+  record is 126. The fifth donor import copies that complete 16-byte rectangle
+  table without moving the established left anchor. A guarded task-owned
+  savestate render of that exact table now reproduces the complete NUN5 label
+  extent; user acceptance remains pending.
 - Preserved slot 1 showed that the imported Mode Select START art was clipped by
   NA2's static `(1,397,206,22)` rectangle and X=`130` anchor. NUN5 localized
   accessor `FUN_003d4bc0` supplies `(1,393,254,26)` and renderer

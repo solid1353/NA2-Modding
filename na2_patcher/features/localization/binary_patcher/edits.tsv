@@ -260,6 +260,7 @@ UI-ETC-001-01	UI-ETC-001	10	na2_etc	0x30308	copy	16	A90081012A001A00D50081011200
 UI-ETC-001-02	UI-ETC-001	20	na2_etc	0x249A4	copy	4	7A43023C			nun5_etc	0x25E88	7E43023C						Copy the homologous official NUN5 Money X=254 instruction over NA2 X=250.
 UI-ETC-001-03	UI-ETC-001	30	na2_etc	0x249CC	copy	4	4042023C			nun5_etc	0x25EB0	4842023C						Copy the homologous official NUN5 Ryo Y=50 instruction over NA2 Y=48.
 UI-ETC-001-04	UI-ETC-001	40	na2_etc	0x24BB0	copy	4	C842023C			nun5_etc	0x26094	D242023C						Copy the homologous official NUN5 Bonus Game X=105 instruction over NA2 X=100.
+UI-ETC-001-05	UI-ETC-001	50	na2_etc	0x30340	copy	16	81008900160016008100A1007A001600			nun5_etc	0x29330	81008900160016008100A1007E001600						Copy the official NUN5 Bonus Game icon and label rectangles, widening only the label from 122 to 126 pixels so its right edge is not clipped.
 UI-ELF-005-01	UI-ELF-005	10	na2_elf	0x504710	copy	8	01008D01CE001600			nun5_elf	0x4DE318	01008901FE001A00						Copy the official NUN5 English Mode Select START-label rectangle (1,393,254,26).
 UI-ELF-005-02	UI-ELF-005	20	na2_elf	0x285F28	replace	4	0243023C		1643023C									Move the START label from X=130 to NUN5's X=150 while retaining NA2's v0 destination register required by the following instruction.
 UI-ELF-006-01	UI-ELF-006	10	na2_elf	0x4D53C0	copy	8	010045002A001600			nun5_elf	0x4DEA28	4000580040001400						Copy the official NUN5 English Vibration-label rectangle (64, 88, 64, 20) used by the imported common UI atlas.

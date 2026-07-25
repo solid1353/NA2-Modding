@@ -2026,6 +2026,7 @@ M0562	1	Shared game modal > Yes or No choice	はい	Yes			seen:diagnostic-modal-
 M0563	1	Shared game modal > Yes or No choice	いいえ	No			seen:diagnostic-modal-choices	NA2_SLPS@0x503118	NUN5_SLES@0x513E4C	slot	7				
 M0566	1	Shared game modal > Yes or No choice	いいえ	No			seen:diagnostic-modal-choices	NA2_SLPS@0x504668	NUN5_SLES@0x513E4C	slot	7				
 M0799	1	Shared game modal > Yes or No choice	は　い	Yes			seen:diagnostic-modal-choices	NA2_SLPS@0x504670	NUN5_SLES@0x513E50	slot	8				
+M0530	1	Shop > category or item-selection help	<r購入|こうにゅう>する<r商品|しょうひん>を<r選|えら>び、<iconCIRCLE>ボタンを<r押|お>してください。	Press <iconCIRCLE> to choose item.		Press <iconCROSS> to choose item.	seen:final-acceptance-slot-008	NA2_ETC@0x2F230	NUN5_TEXTENG@0x1490	slot	112				
 M0531	1	Shop > category or item-selection help	<r人形|にんぎょう>を<r購入|こうにゅう>します。	Buy Figures.			seen:diagnostic-shop-pages	NA2_ETC@0x2F2A0	NUN5_TEXTENG@0x14B8	slot	48				
 M0532	1	Shop > category or item-selection help	<r奥義|おうぎ>を<r購入|こうにゅう>します。	Buy Ultimate Jutsu.			seen:diagnostic-shop-pages	NA2_ETC@0x2F2D0	NUN5_TEXTENG@0x14D0	slot	48				
 M0533	1	Shop > category or item-selection help	<r音楽|おんがく>を<r購入|こうにゅう>します。	Buy Music.			seen:diagnostic-shop-pages	NA2_ETC@0x2F300	NUN5_TEXTENG@0x14E8	slot	48				

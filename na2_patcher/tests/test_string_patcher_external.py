@@ -81,7 +81,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
         self.assertTrue(all(patch.kind == "redirect_pointer" for patch in self.resolved))
         self.assertEqual(self.plan.summary["external_mappings"], 31)
         self.assertEqual(self.plan.summary["external_binary_edits"], 33)
-        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2288)
+        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2290)
 
     def test_pool_contains_only_referenced_strings_and_deduplicates_one_pair(self) -> None:
         summary = self.plan.summary["external_strings"]
@@ -172,7 +172,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
             )
 
     def test_canonical_rows_derive_translation_and_placement_state(self) -> None:
-        self.assertEqual(len(self.import_plan.text_mappings), 2051)
+        self.assertEqual(len(self.import_plan.text_mappings), 2052)
         self.assertTrue(
             all(row["mode"] in {"slot", "sequence"} for row in self.import_plan.text_mappings)
         )
@@ -182,7 +182,14 @@ class IntegratedExternalStringTests(unittest.TestCase):
         override_rows = [
             row for row in self.import_plan.text_mappings if str(row["replacement"])
         ]
-        self.assertEqual([str(row["id"]) for row in override_rows], ["M0537"])
+        self.assertEqual(
+            [str(row["id"]) for row in override_rows],
+            ["M0530", "M0537"],
+        )
+        self.assertEqual(
+            self.import_plan.resolved_texts["M0530"],
+            "Press <iconCROSS> to choose item.",
+        )
         self.assertEqual(
             self.import_plan.resolved_texts["M0537"],
             "Select an item and press <iconCROSS> to buy.",

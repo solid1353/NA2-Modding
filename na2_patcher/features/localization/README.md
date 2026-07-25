@@ -3,7 +3,7 @@
 This feature owns all declarative content for the accepted English localization
 while reusable executable engines remain under `na2_patcher/modules/`.
 
-- [Translation importer](#na2-translation-importer-mapping-version-44)
+- [Translation importer](#na2-translation-importer-mapping-version-45)
 - [String patcher](#string-patcher)
 - [Resident Font renderer](#native-nun5-derived-font)
 - [Texture patcher](#ui-texture-translation-module)
@@ -16,7 +16,7 @@ The feature directory name declares its identity. Its module-named
 subdirectories are the inputs that compose it; enabling Localization enables all
 of them, and one aggregate profile pin covers their canonical inputs.
 
-## NA2 translation importer (mapping version 44)
+## NA2 translation importer (mapping version 45)
 
 This first-class `na2_patcher` module imports and validates strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
@@ -28,8 +28,8 @@ command or file-backed inter-stage handoff.
 
 ### Mapping metadata
 
-- Version: `44`
-- Packaged `mappings.tsv` SHA-256: `7FB7B6F0BCD46203574DC8CA5509DDD3F6AEB8E5D45C3B3DC24C080008E2DAAF`
+- Version: `45`
+- Packaged `mappings.tsv` SHA-256: `7601F834646C374F3E89087724726AAE78E9A87A46A5F936CC5C776C4E60C0B6`
 
 The version and mappings hash above are historical documentation, not a second
 executable manifest. Git history and the aggregate Localization feature pin own
@@ -178,6 +178,30 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - NUN5 `<BLACK>` remains `<BLACK>` or becomes `<color000000>` according to the verified target form.
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
+
+### Version 45 changes
+
+#### Final-acceptance Shop category help
+
+The matched final-acceptance slot-8 savestates show the Shop category screen
+with the official NUN5 `Press <iconCROSS> to choose item.` help line and the
+corresponding Current line still Japanese with a Circle-confirm glyph. Version
+45 adds `M0530` for the exact clean source at `NA2_ETC@0x2F230` and retains the
+exact official `Press <iconCIRCLE> to choose item.` donor at
+`NUN5_TEXTENG@0x1490`.
+
+The accepted regional Shop input map uses Cross to confirm, so the
+user-editable `replacement` changes only that control token to
+`<iconCROSS>`. This is the same evidence-backed policy already applied to the
+separate Shop item-list row `M0537`; neither unobserved generic prompts nor
+other Circle tokens are changed.
+
+Version 45 contains 2,052 enabled mappings: 2,048 slots and four sequences.
+`M0530` fits inline, so external placement remains 31 mappings and 33 pointer
+edits, the generated string-only `PRG/228.BIN` remains 1,776 bytes, and the
+compiled translation package contains 2,290 binary edits. `M0530` and `M0537`
+are the two evidence-backed user overrides; there are no shortened, unresolved,
+or prefixed rows.
 
 ### Version 44 changes
 

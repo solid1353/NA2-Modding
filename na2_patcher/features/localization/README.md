@@ -1189,7 +1189,29 @@ The patch was reconstructed from homologous boot-ELF and BTL functions and
 validated against the accepted paired item checkpoint. Controller, foreground
 labels, and white-bubble bounds match NUN5; a one-pixel top-edge difference is
 normal pulse timing. Numeric, single, and fixed-status layouts are separate
-classes and are intentionally not changed by this patch.
+classes. The pair helper now exposes explicit caller-owned anchor, row, and
+angle-output arguments so the bounded numeric port can reuse it without
+changing the pair result.
+
+### UI-BTL-010: localized numeric item-status labels
+
+Numeric item effects share one class for Health, Chakra, Recovery, and their
+one-, two-, and three-digit values. `UI-BTL-010` copies the complete official
+NUN5 records `0x81`, `0x82`, and `0x8D`, then routes the NA2 numeric top and
+lower label callers through the ABI-safe item helper with the donor anchors and
+rotation behavior.
+
+The six digit-position writes are an NA2-specific coordinate port, not literal
+donor copies. NUN5 establishes a negative-50 X origin and adds
+`14/23/32`, `18/28`, or `24`; the NA2 helper already represents that origin,
+so the equivalent local constants are `-36/-27/-18`, `-32/-22`, and `-26`.
+Literal NUN5 instructions would apply the origin twice. The final numeric Slot
+3 checkpoint matches Health, Chakra, and Recovery against NUN5, while the
+settled paired Slot 7 regression remains intact.
+
+Detailed function boundaries, file/runtime mappings, reconstructed behavior,
+side effects, evidence, and the rejected whole-function donor transplant are
+preserved in `docs/knowledge/localization/ui/battle.md`.
 
 ### UI-ETC-001: localized Shop currency-label layout
 

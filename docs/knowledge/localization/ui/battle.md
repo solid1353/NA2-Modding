@@ -344,8 +344,11 @@ implementation wholesale would corrupt the NA2 object chain. `UI-BTL-009`
 therefore ports the anisotropic renderer contract into NA2's resident renderer
 and uses verified zero padding at BTL file `0x2119E4..0x211C1F` for ABI-safe
 helpers and constants. Callers pass derived values without changing the NA2
-object layout. Numeric and fixed callers explicitly clear the added rotation
-argument until their own class-specific layouts are imported.
+object layout. The foreground helper takes explicit caller-owned X adjustment,
+Y adjustment, row selector, and angle-output storage. Paired callers pass
+neutral adjustments; the numeric class supplies its separate donor-derived
+layout through the same ABI-safe helper. Fixed callers still explicitly clear
+the added rotation argument.
 
 The common origin is changed from NA2 `(-33,-42)` to NUN5 `(-33,-33)`.
 The complete NUN5 rank offsets are `(20,-30)`, `(-64,-63)`, and `(0,-96)`;
@@ -357,7 +360,91 @@ Evidence consists of paired BTL/ELF disassembly, unique guarded byte ranges in
 the canonical binaries, archived Slot 7 live-memory reconstruction, and the
 accepted paired raster checkpoint. The final controller, both foreground
 labels, and white-bubble bounds match NUN5; a one-pixel bubble-top difference
-tracks normal pulse timing. A generalized transplant into numeric, single, and
-fixed-status classes was rejected because those classes use different
-constructors and geometry. Confidence in the paired-class mapping and patch is
-**verified**; applicability to those other classes is explicitly unproven.
+tracks normal pulse timing. A wholesale transplant into other item classes
+remains invalid because those classes use different constructors and geometry;
+the numeric class instead has the bounded port documented below. Confidence in
+the paired-class mapping and patch is **verified**.
+
+## Numeric item-status labels and recovery values
+
+### Identity and address map
+
+The binary identities and loaded overlay bases are the same as in the paired
+section: NA2 BTL file offset `x` maps to EE `0x006B3F00 + x`; NUN5 BTL file
+offset `x` maps to EE `0x006C6D00 + x`.
+
+| Role | NA2 | NUN5 |
+| --- | --- | --- |
+| Numeric factory | file `0x5A1D0`, Ghidra `FUN_0070E0D0` | file `0x5C530`, Ghidra `FUN_00723230` |
+| Numeric draw dispatcher | file `0x5A250`, Ghidra `FUN_0070E150` | file `0x5C5B0`, Ghidra `FUN_007232B0` |
+| Top localized label | file `0x5A300`, Ghidra `FUN_0070E200` | file `0x5C660`, Ghidra `FUN_00723360` |
+| Lower Recovery label | file `0x5A450`, Ghidra `FUN_0070E350` | file `0x5C870`, Ghidra `FUN_00723570` |
+| Numeric value draw | file `0x5A760`, Ghidra `FUN_0070E660` | file `0x5CC30`, Ghidra `FUN_00723930` |
+
+The three complete boot-ELF item records are exact official donor copies:
+
+| Record | NA2 `SLPS_258.37` destination | NUN5 `SLES_556.05` source |
+| --- | ---: | ---: |
+| Health `0x81` | `0x4B116C` | `0x4B865C` |
+| Chakra `0x82` | `0x4B1178` | `0x4B8668` |
+| Recovery `0x8D` | `0x4B11FC` | `0x4B86EC` |
+
+### Reconstructed behavior
+
+NUN5's numeric dispatcher calls its localized top and lower label paths with
+different constants than NA2:
+
+```cpp
+void drawNumericItem(ItemObject *item, Vec4 position) {
+    drawTopLabel(item, position, 22, 20);
+    drawRecoveryLabel(item, position, 37, 37);
+    drawRecoveryDigits(item, position);
+}
+
+void drawTopLabel(ItemObject *item, Vec4 position, int x, int y) {
+    ItemRecord record = officialItemRecord(item->code);
+    position.x -= record.width / 2;
+    position.x += x;
+    position.y += y;
+    float angle = 0.0f;
+    if (record.code == 0x82 || record.code == 0x99) {
+        position.x -= 14.0f;
+        position.y -= 14.0f;
+        angle = PI / 2;
+    }
+    drawLocalizedRecord(record, position, angle);
+}
+```
+
+The NUN5 digit path first establishes a negative-50 X origin and then adds
+`14/23/32`, `18/28`, or `24` for three-, two-, or one-digit values. NA2's
+object layout and renderer call ABI differ, so copying the complete NUN5
+functions is unsafe. `UI-BTL-010` instead:
+
+- imports the three exact NUN5 records;
+- calls the existing NA2-compatible item helper with the NUN5 `22/20` and
+  `37/37` anchor contract and caller-owned angle storage;
+- ports the six digit positions into NA2's already-corrected coordinate frame
+  as `-36/-27/-18`, `-32/-22`, and `-26`.
+
+The transformed digit constants are intentionally authored binary-patcher
+replacements rather than byte copies: they equal the donor additions minus the
+donor negative-50 origin, which is represented elsewhere in the NA2 port.
+Copying the donor instructions literally would apply the origin twice.
+
+### Side effects, evidence, and confidence
+
+The patch changes only record selection and geometry passed to the item sprite
+renderer. It does not change item values, recovery arithmetic, effect timing,
+object allocation, object links, or the atlas itself. The shared helper writes
+its angle only to caller-owned stack storage; it never uses NUN5's incompatible
+object `+0x40` scale field.
+
+Evidence includes complete NA2/NUN5 BTL decompilation and instruction exports,
+exact boot-ELF record bytes, the preserved numeric Slot 3 object inventory, a
+fresh PINE savestate screenshot containing simultaneous Health and Chakra
+labels plus Recovery values, and a settled paired Slot 7 regression capture.
+The numeric and paired foregrounds and white-bubble geometry match their NUN5
+references at 640x480; remaining subpixel/pulse differences are animation
+timing. Confidence is **verified** and the correction is
+**runtime-proven**.

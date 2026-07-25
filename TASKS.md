@@ -14,7 +14,7 @@
 - [Investigate](work/__sstates/translation/UI)
     * Deal with remaining issues (items, awakenings, etc.).
 
-### [String translation](docs/workstreams/string_translation/README.md)
+### [String Translation](docs/workstreams/string_translation/README.md)
 - [Investigate](work/__sstates/translation/strings)
     * Redo the translation from scratch, using existing data as a reference, touching only what is displayed with the help of savestates. Not everything is translated currently (MAX Damage label, etc.).
 

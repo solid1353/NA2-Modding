@@ -46,6 +46,15 @@
   files; preserve irreplaceable untracked inputs deliberately outside the repo
   before deletion.
 
+## Access failures and escalation
+
+- Use scoped elevation freely for filesystem mutations and other operations
+  likely to hit access restrictions; avoiding a failed attempt is preferred.
+- After an access failure, retry only the failed operation; do not repeat work
+  that already succeeded.
+- When a new recurring access failure and its solution are confirmed, add one
+  short rule here so later agents avoid it.
+
 ## Work ownership and external inputs
 
 - A file-working task owns `work/<exact task title>/`. It may read another

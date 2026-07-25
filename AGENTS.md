@@ -67,7 +67,8 @@ Read the matching policy before acting:
 - User interaction, selected tasks, effort, approvals, standing commands, and
   graceful stops:
   [`docs/policies/interaction.md`](docs/policies/interaction.md)
-- Git, paths, filesystem links, work ownership, scripts, logs, and cleanup:
+- Git, tool access, paths, filesystem links, work ownership, scripts, logs, and
+  cleanup:
   [`docs/policies/repository.md`](docs/policies/repository.md)
 - Cross-chat routing, concurrency, Notifications, Task coordinator, and
   `.agents/` handoffs:

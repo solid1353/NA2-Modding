@@ -200,6 +200,7 @@ else {
 }
 '@
     & (Join-Path $fakeActualizationScripts 'act.ps1')
+    & (Join-Path $fakeActualizationScripts 'act.ps1') na2
     $na2ActRejected = $false
     try {
         & (Join-Path $fakeRepository '_na2.ps1') act
@@ -219,13 +220,20 @@ else {
     $fakeLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na2\latest.log'))
     $fakeRolling = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na2\rolling.log'))
     Assert-Na2Test -Condition ($fakeLatest -match '(?m)^mode: build$') -Message 'Root build mode was not logged.'
-    foreach ($mode in 'actualize', 'current', 'previous', 'candidate-build', 'build') {
+    foreach ($mode in (
+        'actualize',
+        'actualize-na2',
+        'current',
+        'previous',
+        'candidate-build',
+        'build'
+    )) {
         Assert-Na2Test `
             -Condition ($fakeRolling -match "(?m)^mode: $mode$") `
             -Message "$mode dispatch was not logged."
     }
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 6) `
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 7) `
         -Message 'Root dispatch test produced the wrong rolling-log section count.'
     Assert-Na2Test `
         -Condition (-not (Test-Na2WindowsAbsolutePath -Text $fakeRolling)) `
@@ -250,7 +258,7 @@ else {
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 2) `
         -Message 'Build-only and build-and-launch did not both use the standard build pipeline.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize na2').Count -eq 6) `
+        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize na2').Count -eq 7) `
         -Message 'Standalone and user-owned workflows did not preserve NA2 actualization.'
     $structuredLog = Join-Path $logs 'na2'
     $buildRecords = Join-Path $structuredLog 'builds'

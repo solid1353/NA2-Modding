@@ -64,20 +64,62 @@ function Set-Na2ActualizeTextAtomic {
     }
 }
 
+function Resolve-Na2ActualizePhysicalPath {
+    param([Parameter(Mandatory)][string]$Path)
+
+    $fullPath = [IO.Path]::GetFullPath($Path)
+    $root = [IO.Path]::GetPathRoot($fullPath)
+    $current = $root
+    $relative = $fullPath.Substring($root.Length)
+    foreach ($component in $relative.Split(
+        [char[]]@(
+            [IO.Path]::DirectorySeparatorChar,
+            [IO.Path]::AltDirectorySeparatorChar
+        ),
+        [StringSplitOptions]::RemoveEmptyEntries
+    )) {
+        $next = Join-Path $current $component
+        $item = Get-Item -LiteralPath $next -Force -ErrorAction SilentlyContinue
+        if ($null -eq $item) {
+            $current = $next
+            continue
+        }
+
+        if ($item.LinkType -in @('SymbolicLink', 'Junction')) {
+            $resolved = $item.ResolveLinkTarget($true)
+            if ($null -ne $resolved) {
+                $current = $resolved.FullName
+                continue
+            }
+        }
+        $current = $item.FullName
+    }
+
+    return [IO.Path]::GetFullPath($current)
+}
+
 function Get-Na2ActualizeLinkDestination {
     param([Parameter(Mandatory)][IO.FileSystemInfo]$Item)
 
     if ($Item.LinkType -ne 'SymbolicLink') {
         return $null
     }
+
+    $resolved = $Item.ResolveLinkTarget($true)
+    if ($null -ne $resolved) {
+        return Resolve-Na2ActualizePhysicalPath -Path $resolved.FullName
+    }
+
     $target = [string]$Item.LinkTarget
     if ([string]::IsNullOrWhiteSpace($target)) {
         return $null
     }
     if (-not [IO.Path]::IsPathRooted($target)) {
-        $target = Join-Path $Item.DirectoryName $target
+        $physicalParent = Resolve-Na2ActualizePhysicalPath `
+            -Path $Item.DirectoryName
+        $target = Join-Path $physicalParent $target
     }
-    return [IO.Path]::GetFullPath($target)
+    return Resolve-Na2ActualizePhysicalPath -Path $target
 }
 
 function Test-Na2ActualizePathWithin {
@@ -105,8 +147,18 @@ function Set-Na2ActualizeSymlink {
     )
 
     $fullPath = [IO.Path]::GetFullPath($Path)
-    $fullTarget = [IO.Path]::GetFullPath($Target)
+    $fullTarget = Resolve-Na2ActualizePhysicalPath -Path $Target
+    $logicalParent = [IO.Path]::GetDirectoryName($fullPath)
+    $physicalParent = Resolve-Na2ActualizePhysicalPath -Path $logicalParent
+    $physicalPath = Join-Path $physicalParent (
+        [IO.Path]::GetFileName($fullPath)
+    )
     $item = Get-Item -LiteralPath $fullPath -Force -ErrorAction SilentlyContinue
+    if ($null -eq $item) {
+        $item = Get-ChildItem -LiteralPath $logicalParent -Force |
+            Where-Object Name -CEQ ([IO.Path]::GetFileName($fullPath)) |
+            Select-Object -First 1
+    }
     $status = 'verified'
     if ($null -ne $item) {
         $destination = Get-Na2ActualizeLinkDestination -Item $item
@@ -114,19 +166,19 @@ function Set-Na2ActualizeSymlink {
             throw "Refusing to replace an unmanaged file at alias path: $fullPath"
         }
         if (-not [IO.Path]::Equals($destination, $fullTarget)) {
-            Remove-Item -LiteralPath $fullPath -Force
+            Remove-Item -LiteralPath $physicalPath -Force
             $item = $null
             $status = 'updated'
         }
     }
     if ($null -eq $item) {
         $relativeTarget = [IO.Path]::GetRelativePath(
-            [IO.Path]::GetDirectoryName($fullPath),
+            $physicalParent,
             $fullTarget
         )
         New-Item `
             -ItemType SymbolicLink `
-            -Path $fullPath `
+            -Path $physicalPath `
             -Target $relativeTarget |
             Out-Null
         if ($status -ne 'updated') {
@@ -134,7 +186,7 @@ function Set-Na2ActualizeSymlink {
         }
     }
 
-    $verified = Get-Item -LiteralPath $fullPath -Force
+    $verified = Get-Item -LiteralPath $physicalPath -Force
     $verifiedTarget = Get-Na2ActualizeLinkDestination -Item $verified
     if ($null -eq $verifiedTarget -or
         -not [IO.Path]::Equals($verifiedTarget, $fullTarget)) {
@@ -144,13 +196,19 @@ function Set-Na2ActualizeSymlink {
 }
 
 $files = $ProjectPaths.files
-$canonicalCheats = [IO.Path]::GetFullPath($files.canonical_cheats)
-$canonicalGameSettings = [IO.Path]::GetFullPath($files.canonical_gamesettings)
-$cheatsDirectory = Join-Path $ProjectPaths.pcsx2_user 'cheats'
-$gameSettingsDirectory = [IO.Path]::GetFullPath(
+$canonicalCheats = Resolve-Na2ActualizePhysicalPath `
+    -Path $files.canonical_cheats
+$canonicalGameSettings = Resolve-Na2ActualizePhysicalPath `
+    -Path $files.canonical_gamesettings
+$pcsx2FilesDirectory = Resolve-Na2ActualizePhysicalPath `
+    -Path $ProjectPaths.pcsx2_files
+$cheatsDirectory = Resolve-Na2ActualizePhysicalPath -Path (
+    Join-Path $ProjectPaths.pcsx2_user 'cheats'
+)
+$gameSettingsDirectory = Resolve-Na2ActualizePhysicalPath -Path (
     $ProjectPaths.pcsx2_user_gamesettings
 )
-$memoryCardsDirectory = [IO.Path]::GetFullPath(
+$memoryCardsDirectory = Resolve-Na2ActualizePhysicalPath -Path (
     $ProjectPaths.pcsx2_user_memcards
 )
 
@@ -368,7 +426,7 @@ $managedPnachLink = {
         (
             [IO.Path]::Equals(
                 [IO.Path]::GetDirectoryName($destination),
-                [IO.Path]::GetFullPath($ProjectPaths.pcsx2_files)
+                $pcsx2FilesDirectory
             ) -and
             [IO.Path]::GetExtension($destination) -ieq '.pnach'
         )

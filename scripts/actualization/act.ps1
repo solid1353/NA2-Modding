@@ -14,12 +14,16 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\run_log.ps1')
 
 $projectPaths = Get-Na2ProjectPaths
-$selectedModes = if ([string]::IsNullOrWhiteSpace($Mode)) {
-    @('na2', 'input', 'links')
-}
-else {
-    @($Mode)
-}
+$selectedModes = @(
+    if ([string]::IsNullOrWhiteSpace($Mode)) {
+        'na2'
+        'input'
+        'links'
+    }
+    else {
+        $Mode
+    }
+)
 $runLog = $null
 if (-not $NoRunLog) {
     try {

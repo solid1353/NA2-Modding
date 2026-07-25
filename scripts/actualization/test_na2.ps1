@@ -14,30 +14,32 @@ function Assert-Na2ActualizeTest {
     }
 }
 
-function Get-Na2TestLinkTarget {
-    param([Parameter(Mandatory)][string]$Path)
-
-    $item = Get-Item -LiteralPath $Path -Force
-    $target = [string]$item.LinkTarget
-    if (-not [IO.Path]::IsPathRooted($target)) {
-        $target = Join-Path $item.DirectoryName $target
-    }
-    return [IO.Path]::GetFullPath($target)
-}
-
 $testRoot = Join-Path (
     [IO.Path]::GetTempPath()
 ) ('na2-actualization-test-{0}' -f [guid]::NewGuid().ToString('N'))
 
 try {
-    $build = Join-Path $testRoot 'build'
-    $pcsx2Files = Join-Path $testRoot 'pcsx2_files'
-    $pcsx2 = Join-Path $testRoot 'pcsx2'
+    $repository = Join-Path $testRoot 'repository'
+    $build = Join-Path $repository 'build'
+    $pcsx2Files = Join-Path $repository 'pcsx2_files'
+    $pcsx2Physical = Join-Path $testRoot 'pcsx2-user'
+    $pcsx2 = Join-Path $repository 'pcsx2'
     $cheats = Join-Path $pcsx2 'cheats'
     $gameSettings = Join-Path $pcsx2 'gamesettings'
     $memoryCards = Join-Path $pcsx2 'memcards'
     New-Item -ItemType Directory -Force `
-        -Path $build, $pcsx2Files, $cheats, $gameSettings, $memoryCards |
+        -Path (
+            $build,
+            $pcsx2Files,
+            (Join-Path $pcsx2Physical 'cheats'),
+            (Join-Path $pcsx2Physical 'gamesettings'),
+            (Join-Path $pcsx2Physical 'memcards')
+        ) |
+        Out-Null
+    New-Item `
+        -ItemType SymbolicLink `
+        -Path $pcsx2 `
+        -Target $pcsx2Physical |
         Out-Null
 
     $canonicalCheats = Join-Path $pcsx2Files 'cheats.pnach'
@@ -125,14 +127,32 @@ try {
             ) `
             -Message "GameSettings has the wrong memory card: $($role.Role)"
         Assert-Na2ActualizeTest `
-            -Condition ([IO.Path]::Equals(
-                (Get-Na2TestLinkTarget -Path $cheatPath),
-                $canonicalCheats
-            )) `
+            -Condition (Test-Path -LiteralPath $cheatPath -PathType Leaf) `
+            -Message "Cheat symlink is broken: $($role.PnachName)"
+        Assert-Na2ActualizeTest `
+            -Condition (
+                [IO.File]::ReadAllText($cheatPath) -ceq
+                [IO.File]::ReadAllText($canonicalCheats)
+            ) `
             -Message "Cheat symlink target is wrong: $($role.PnachName)"
         Assert-Na2ActualizeTest `
             -Condition (Test-Path -LiteralPath $role.MemoryCard -PathType Leaf) `
             -Message "Missing role memory card: $($role.MemoryCardName)"
+    }
+
+    [IO.File]::AppendAllText(
+        $canonicalCheats,
+        "// link identity probe`n",
+        [Text.UTF8Encoding]::new($false)
+    )
+    foreach ($role in $first.Roles) {
+        $cheatPath = Join-Path $cheats $role.PnachName
+        Assert-Na2ActualizeTest `
+            -Condition (
+                [IO.File]::ReadAllText($cheatPath) -ceq
+                [IO.File]::ReadAllText($canonicalCheats)
+            ) `
+            -Message "Cheat symlink does not track its canonical PNACH: $($role.PnachName)"
     }
 
     $currentCard = Join-Path $memoryCards 'Base - Current.ps2'

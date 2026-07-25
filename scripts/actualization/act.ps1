@@ -22,7 +22,6 @@ if ($Help -or $Mode -ceq 'help') {
         '  act input  Regenerate the Comparison_NA2 input profile'
         '  act links  Create or verify project-to-PCSX2 hardlinks'
         '  act help   Show this help'
-        '  act -h     Show this help'
         ''
     ) | Write-Output
     return

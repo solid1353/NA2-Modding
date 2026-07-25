@@ -1213,6 +1213,29 @@ Detailed function boundaries, file/runtime mappings, reconstructed behavior,
 side effects, evidence, and the rejected whole-function donor transplant are
 preserved in `docs/knowledge/localization/ui/battle.md`.
 
+### UI-BTL-011: localized single item-status labels
+
+Single item effects use one foreground label and the same common bubble
+controller as the paired and numeric classes. `UI-BTL-011` copies the complete
+official NUN5 records `0x96..0x9A`. The object-code-to-record tables are already
+identical in NA2 and NUN5, so no mapping data is authored or duplicated.
+
+The remaining changes are a bounded NA2 ABI port. They replace NA2's regional
+`(+33,+42)` foreground origin with NUN5's `(0,+33)` origin and set the
+quarter-turn after resource lookup only for donor records `0x82` and `0x99`.
+The homologous NA2 wrapper is retained; calling its lower renderer directly was
+rejected because that uses a different argument contract. The shared scale
+helper retains the accepted pair path while assigning the traced NUN5 single
+scales: `1.90625` for code `0x09` and `1.0` for every other single label.
+
+Paired Slot 10 proves simultaneous `Invisible` and `Substitution Jutsu`
+placement. Slot 12 proves the same implementation for poison/status effects.
+Both match NUN5 bubble bounds, label centers, and clipping at 640x480; remaining
+differences are battle animation timing. Record `0x99` was not present in the
+captured set, so its branch is statically verified from both complete draw
+functions and the patch is runtime-proven with high confidence rather than
+marked verified.
+
 ### UI-ETC-001: localized Shop currency-label layout
 
 Importing the complete NUN5 `SHOP.CCS` supplies the correct English atlas, but

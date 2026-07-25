@@ -448,3 +448,102 @@ The numeric and paired foregrounds and white-bubble geometry match their NUN5
 references at 640x480; remaining subpixel/pulse differences are animation
 timing. Confidence is **verified** and the correction is
 **runtime-proven**.
+
+## Single item-status labels
+
+### Identity and address map
+
+This section uses the same exact NA2/NUN5 BTL and boot-ELF identities listed
+above. Complete-file BTL offsets map to live EE addresses as
+`load_base + file_offset`; preserved Ghidra code labels remain `0x40` below
+live code addresses because their imports omit the MWo3 header.
+
+| Role | NA2 | NUN5 |
+| --- | --- | --- |
+| Single constructor | file `0x5AB20`, Ghidra `FUN_0070e9e0` | file `0x5D030`, Ghidra `FUN_00723cf0` |
+| Single draw | file `0x5AB90`, live `0x0070EA90`, Ghidra `FUN_0070ea50` | file `0x5D0A0`, live `0x00723DA0`, Ghidra `FUN_00723d60` |
+| Single width update | shared NA2 update at file `0x59EA0` | file `0x5D230`, Ghidra `FUN_00723ef0` |
+| Object-code map | file/live `0x1E4CD0` / `0x00898BD0` | file/live `0x1ED8B0` / `0x008B45B0` |
+| Single-class vtable | live `0x005DDEC0` | live `0x005EB3D0` |
+| Uniform sprite wrapper | boot ELF `FUN_00377720` | boot ELF `FUN_00384800` |
+| Added rotation helper | BTL file `0x211C20`, live `0x008C5B20` | not applicable |
+| Existing pi/2 constant | BTL file `0x1EE630`, live `0x008A2530` | inline in the donor draw function |
+
+The five object-code maps are byte-identical:
+
+| Object code | Item record |
+| ---: | ---: |
+| `0x09` | `0x9A` |
+| `0x0C` | `0x98` |
+| `0x0D` | `0x99` |
+| `0x13` | `0x97` |
+| `0x12` | `0x96` |
+
+`UI-BTL-011` therefore copies only the complete official NUN5 record range
+`0x96..0x9A`, from NUN5 ELF file `0x4B8758..0x4B8793` to NA2 ELF file
+`0x4B1268..0x4B12A3`. No authored texture rectangle or mapping row is needed.
+
+### Reconstructed behavior
+
+The homologous draw paths reduce to:
+
+```cpp
+void drawSingleStatus(SingleItemObject *object, Vec4 input) {
+    uint32_t record = singleRecordForObjectCode(object->code);
+    Vec4 position = input;
+    position.x += 0.0f;       // NA2 originally added 33
+    position.y += 33.0f;      // NA2 originally added 42
+
+    float angle = 0.0f;
+    if (record == 0x82 || record == 0x99) {
+        angle = 1.5707964f;
+    }
+
+    uint32_t resource = lookupItemResource(record);
+    uint32_t variant = selectItemRenderVariant(resource, object->state);
+    drawUniformItem(variant, record, &position, 1.0f,
+                    object->renderParameter, angle);
+}
+
+float singleBubbleScale(const SingleItemObject *object) {
+    return object->code == 0x09 ? 122.0f / 64.0f : 1.0f;
+}
+```
+
+The NUN5 `+0x40` scale field cannot be copied into NA2 because the homologous
+NA2 field is a next-object pointer. The existing NA2-compatible common helper
+instead derives `1.90625` for object code `0x09` and `1.0` for every other
+single record. The same bounded edit replaces the fixed class's approximate
+`1.6` with its exact donor width scale `102/64 = 1.59375`; the accepted pair
+path and shared store remain at their previous addresses.
+
+The rotation helper runs after resource lookup because that call may clobber
+caller-saved floating-point registers. Its call delay clears `f14`; the helper
+loads pi/2 only for records `0x82` and `0x99`, preserves the renderer variant in
+`v0`, and restores `a0` in the return delay slot. The original uniform wrapper
+is retained. An experimental direct call to the lower anisotropic renderer
+produced no foreground because it bypassed the wrapper's distinct argument
+shuffle; that approach was rejected and is not an implementation parent.
+
+### Side effects, evidence, and confidence
+
+The patch changes only localized record data, foreground origin, bubble width
+scale, and record-specific rotation. It does not change effect selection,
+duration, gameplay status, damage, object allocation, object links, resource
+identity, or the imported atlas.
+
+Evidence consists of both complete BTL functions, the identical mapping tables,
+the unique boot-ELF record ranges, live vtable/object inventories, and fresh
+640x480 v31 captures. Paired Slot 10 contains simultaneous `Invisible` and
+`Substitution Jutsu`; paired Slot 12 represents the shared poison/status path.
+Both current captures match NUN5 bubble bounds, label centers, clipping, and
+row placement. The numeric regression remains matched. The valid paired-class
+execution slice and shared store are unchanged from its accepted helper; a
+fresh-process capture can outlive that short notification and is not used as
+placement evidence.
+
+Visible single/status behavior is **runtime-proven** with **high confidence**.
+Record `0x99` was absent from the captured set, so its quarter-turn remains a
+high-confidence static result rather than a runtime-verified one. The exact
+fixed-class scale is likewise statically traced until a fixed-class state is
+captured.

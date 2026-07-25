@@ -23,10 +23,11 @@ preferred or prohibited approaches, and cleanup or artifact-retention rules.
 Preserve the user's scope and omissions; do not turn agent interpretations into
 policy.
 
-Keep universal rules in `AGENTS.md`, confirmed technical findings in
-`docs/knowledge/` or canonical module data, current execution status in plans or
-handoffs, and one-off instructions in the active conversation only. Avoid
-duplicating those sources in a workstream policy.
+Keep universal rules in `AGENTS.md` and the shared policies it routes under
+`docs/policies/`, confirmed technical findings in `docs/knowledge/` or
+canonical module data, current execution status in plans or handoffs, and
+one-off instructions in the active conversation only. Avoid duplicating those
+sources in a workstream policy.
 
 ## Maintenance and authority
 

@@ -167,10 +167,12 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 - `scripts/na2/` contains build/promotion, ISO identity, worker-path validation,
   and focused tests.
 - `@pcsx2_scripts/` contains PCSX2 launch, process, configuration, and CRC
-  helpers. `launch_pair.ps1` is the user-facing multi-game launch-and-tile
-  backend used by `na`. `test_launch.ps1` starts an already-existing workstream
-  PCSX2 copy hidden; it performs no cloning, configuration, process inspection,
-  PINE operation, savestate handling, capture, cleanup, or termination.
+  helpers. `launch_user.ps1` preserves the user PCSX2 working directory;
+  `move_na2_savestates.ps1` files user savestates under `@user_savestates`;
+  and `launch_pair.ps1` is the multi-game launch-and-tile backend used by `na`.
+  `test_launch.ps1` starts an already-existing workstream PCSX2 copy hidden; it
+  performs no cloning, configuration, process inspection, PINE operation,
+  savestate handling, capture, cleanup, or termination.
 - `na2_patcher/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na2_patcher/build_profile.py` applies that prepared pipeline and writes its run log. `na2_patcher/composer.py` resolves module artifacts and closes typed image operations. `na2_patcher/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Candidate, or worker-owned output.
 - `scripts/media/` contains the recursive source extractor, its byte-parity
   verifier, and focused ISO, AFS, and CVM building blocks. Direct same-size ISO

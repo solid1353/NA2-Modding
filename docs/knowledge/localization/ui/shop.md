@@ -102,8 +102,8 @@ state.
   and seven-digit value behavior. A fresh hidden task-clone render used a
   guarded task-owned state with the exact `0x006E4240` table replacement and
   reproduced NUN5's complete Bonus Game right edge without moving its left
-  anchor. User acceptance remains pending.
+  anchor. The user accepted that final paired result on 2026-07-26.
 
-Confidence is **high** pending user acceptance. The address mapping,
-clean-binary guards, homologous copy loops, exact donor-table difference, and
-task-owned runtime render are verified.
+Confidence is **verified**. The address mapping, clean-binary guards,
+homologous copy loops, exact donor-table difference, task-owned runtime render,
+and final user acceptance all agree.

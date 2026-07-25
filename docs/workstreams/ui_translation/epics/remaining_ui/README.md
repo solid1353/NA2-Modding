@@ -7,18 +7,12 @@ the right.
 
 ## Remaining subtasks
 
-1. Shop, slot 7: the Bonus Game right-edge correction is implemented and
-   rendered from the task-owned NA2.28 clone; user confirmation is pending.
-2. Battle Results screen 2: repair the garbled and mislaid result UI.
-3. Character Items transition: replace the NA2.28 slide with the NUN5/base-NA2
+1. Battle Results screen 2: repair the garbled and mislaid result UI.
+2. Character Items transition: replace the NA2.28 slide with the NUN5/base-NA2
    fade behavior.
-4. Select label, slot 6: match the NUN5 placement.
+3. Select label, slot 6: match the NUN5 placement.
 
 ## Report grids
-
-### Shop
-
-![Shop: Bonus Game placement, slot 7](01-shop.png)
 
 ### Battle results
 

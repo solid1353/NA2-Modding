@@ -1374,7 +1374,7 @@ rectangle table: NA2 ETC `0x30340` contains icon `(129,137,22,22)` and label
 `(129,161,122,22)`, while NUN5 ETC `0x29330` retains the identical icon and
 widens the label to `(129,161,126,22)`. A fifth guarded NUN5 import copies that
 complete table, preserving the anchor and extending only the missing right
-edge.
+edge. The user accepted the final paired Shop result on 2026-07-26.
 
 The full file/runtime mapping, practical reconstruction, call relationships,
 side effects, evidence, and rejected pulse-only interpretation are recorded in

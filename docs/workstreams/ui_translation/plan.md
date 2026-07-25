@@ -130,7 +130,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   record is 126. The fifth donor import copies that complete 16-byte rectangle
   table without moving the established left anchor. A guarded task-owned
   savestate render of that exact table now reproduces the complete NUN5 label
-  extent; user acceptance remains pending.
+  extent; the user accepted the final paired Shop result on 2026-07-26.
 - Preserved slot 1 showed that the imported Mode Select START art was clipped by
   NA2's static `(1,397,206,22)` rectangle and X=`130` anchor. NUN5 localized
   accessor `FUN_003d4bc0` supplies `(1,393,254,26)` and renderer
@@ -531,7 +531,7 @@ The user's final paired visual inspection accepted Slot 4 as perfect on
 2026-07-22; Slots 5 and 6 remain runtime-proven. The accepted Slot 4 savestate
 pair and active mismatch-list entry were then removed under workstream policy.
 
-The remaining maintained mismatch list contains Shop Money/Bonus Game,
-Character Select Select Color/Random, Options Cancel, and Music Options Select.
+The remaining maintained mismatch list contains Battle Results screen 2,
+Character Items transition behavior, and Select-label placement.
 The complete repository regression suite passes 129/129 tests with this
 canonical patch and its updated Localization feature pin.

@@ -23,7 +23,7 @@ plus the explicit character-family exception. Its cumulative first two passes
 contribute 752 rows, the verified 74-table Command Chart family contributes
 another 1,041, the missing-row audit adds 260 policy-supported rows—53 directly
 seen, 10 structurally inferred, and 197 character-family rows—and the paired
-Ninja Song ss1–4 pass adds 18 displayed numeric/status fields, for 2,071
+Ninja Song ss1–5 pass adds 20 displayed numeric/status fields, for 2,073
 enabled rows. T2042, T2045, and T2050 use parents in the canonical `T#`
 namespace. Paired screenshots independently correct T1956 to `Off`, T1957 to
 `On`, T2158 to `Warning`, T637 to `Hidden Leaf Village`, T638 to `Hidden Leaf

@@ -8,6 +8,11 @@
   action request such as `do it`, `implement it`, or `change it`.
 - A clearly agent-directed request such as `can you add` authorizes that stated
   action only; never infer extra work.
+- A question about current agent behavior asks for an exact answer, not a
+  behavioral change. Angry, skeptical, or rhetorical wording does not
+  authorize starting, stopping, exposing, hiding, relaunching, or otherwise
+  changing the operation. Answer in commentary and continue approved work
+  unchanged unless the same message explicitly orders a change.
 - During explicit discussion, design, planning, or brainstorming mode, every
   later message updates the proposed specification only, even when phrased as
   an imperative. Only the user can exit that mode through explicit execution

@@ -42,6 +42,11 @@ drift-prone implementation details here.
   `work/<task title>/pcsx2/`, assign a PINE port unique among live agent
   instances, and operate only that copy. Other workstream copies/processes are
   off-limits.
+- Agent-only PCSX2 testing stays hidden; use PINE, maintained operation plans,
+  or background window messages. A worker instance may be visible only when
+  the user must personally inspect or interact with it. Before that launch,
+  state exactly what is required from the user. Never expose, restore,
+  activate, or foreground an instance merely for agent automation.
 - Builds and single-ISO launch commands never probe or close any PCSX2 process.
 - Bare `na2`, launch selectors, standalone `act`, `na`, and UI pair-launch
   commands are user-only.

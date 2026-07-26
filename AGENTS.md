@@ -12,6 +12,10 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   `TASKS.md` work. Perform small, direct, low-risk changes immediately.
 - Feasibility, preference, and design questions request discussion only.
   Read-only inspection is allowed; mutation requires an explicit action request.
+- A question about current behavior, including angry or rhetorical wording,
+  requests an explanation only. Never convert it into an instruction to start,
+  stop, expose, hide, relaunch, or otherwise change the work. Answer it and
+  continue approved work unchanged unless the user explicitly orders a change.
 - When the user declares discussion, design, planning, or brainstorming mode,
   later requirements remain discussion until the user explicitly authorizes
   execution. If authorization is ambiguous, ask.

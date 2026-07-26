@@ -1358,7 +1358,7 @@ class UiTextureTests(unittest.TestCase):
         )
         self.assertEqual(
             [item.destination_offset for item in edits],
-            [0x2BC600, 0x2BC624, 0x2BC4B8, 0x2BC4DC],
+            [0x2BC600, 0x2BC624, 0x2BC5B8, 0x2BC5DC],
         )
         self.assertEqual(
             [item.expected_hex for item in edits],

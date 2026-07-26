@@ -9,8 +9,8 @@ runtime-to-file mapping within the functions below:
 
 | Game | Function | Runtime range | Relevant file offsets |
 | --- | --- | --- | --- |
-| NA2 | `FUN_003bc470` | `0x003BC470..0x003BC63C` | `0x2BC4B8`, `0x2BC4DC`, `0x2BC600`, `0x2BC624` |
-| NUN5 | `FUN_003cf0d0` | `0x003CF0D0..0x003CF290` | `0x2CF118`, `0x2CF14C`, `0x2CF300`, `0x2CF324` |
+| NA2 | `FUN_003bc470` | `0x003BC470..0x003BC63C` | `0x2BC5B8`, `0x2BC5DC`, `0x2BC600`, `0x2BC624` |
+| NUN5 | `FUN_003cf0d0` | `0x003CF0D0..0x003CF290` | `0x2CF218`, `0x2CF24C`, `0x2CF300`, `0x2CF324` |
 
 The complete `CHARSEL1.CCS` payload is already imported from NUN5. Its
 localized artwork and model data are therefore not the remaining cause.
@@ -51,8 +51,8 @@ same-register ports instead encode the official effective anchors:
 
 | Control | NA2 offset / original | Replacement | NUN5 behavior |
 | --- | --- | --- | --- |
-| OK | `0x2BC4B8` / `C843023C` | `C243023C` (X=`388`) | `400 + (-12)` |
-| Back | `0x2BC4DC` / `EB43023C` | `E743023C` (X=`462`) | `470 + (-8)` |
+| OK | `0x2BC5B8` / `C843023C` | `C243023C` (X=`388`) | `400 + (-12)` |
+| Back | `0x2BC5DC` / `EB43023C` | `E743023C` (X=`462`) | `470 + (-8)` |
 
 ## Relationships and evidence
 

@@ -93,16 +93,29 @@ then restores that state and the callback result through one cleanup path.
 Nested callbacks use distinct caller records and restore the prior active
 session.
 
-The `font_v2_layout_core` selection remains default-disabled and no caller
-family targets the adapter yet. Every hook therefore observes a null session
-in normal composition, restores its temporary `v0`/`v1` use, executes the exact
-displaced NA2 operations and resumes the original path. Static linked-package
-validation confirms the five hook targets, adapter ABI/state restoration,
+The first family-specific fragments are now
+`localization.font.v2.controls_adapter` and
+`localization.font.v2.controls_callback`. The guarded call at NA2 runtime
+`0x00388748` / ELF file `0x288848` is shared by only the first eight Controls
+action labels. The separate ninth `OFF` call is not redirected. The adapter
+constructs one stack-local session with NUN5's 128-unit width, scale `1` for
+fitting labels, `128 / 178` for `Ultimate Jutsu Prep`, and the proven
+labels-only one-unit-left correction. Its callback converts the prepared left
+edge back to the exact center argument expected by NA2's native
+`FUN_00379240`, so NA2's internal legacy measurement cancels without replacing
+the v2 box position.
+
+Both `font_v2_layout_core` and `font_v2_controls` remain default-disabled
+pending the matched Controls runtime review. Every core hook therefore observes
+a null session in normal composition, restores its temporary `v0`/`v1` use,
+executes the exact displaced NA2 operations and resumes the original path.
+Static linked-package validation confirms the five core hook targets, the
+single eight-byte Controls redirect, both adapter ABIs, state restoration,
 internal branch bounds, the `Ultimate Jutsu Prep` denominator of 178, and the
-unchanged retained-v1 blob. The separate v2 asset is 1,508 bytes with SHA-256
-`745C90608C414B3C32C0E7BD08D18C026C3919EBA92E41A49B009C66C25C0569`.
-Automatic word wrapping and caller-native coordinate records remain later
-family work; these two foundations change no screen.
+unchanged retained-v1 blob. The separate v2 asset is 1,760 bytes with SHA-256
+`46250D70430836A6788DEC14ECDE962598D7127491ABD7EFCC90F0A0DFFE5CE2`.
+Automatic word wrapping and remaining caller-native coordinate records remain
+later family work; the disabled implementation changes no screen.
 
 ## Accepted native 14x20 integration
 

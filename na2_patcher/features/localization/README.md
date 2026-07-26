@@ -1837,7 +1837,7 @@ GF4 replacement as an implementation parent. The accepted build changes
 
 Three Font components remain enabled by default when Localization is enabled:
 the accepted native glyph component, the independent Character Select modal
-alignment, and the call-local Save/Load ASCII numeric formatter. Three
+alignment, and the call-local Save/Load ASCII numeric formatter. The historical
 autofit/layout components are retained in place but default-disabled for a
 user-directed stage-by-stage reimplementation:
 
@@ -1891,7 +1891,7 @@ alignment edits; it no longer installs executable code into ELF zero padding.
 The shared UI wrapper keeps transient coordinates and saved renderer fields in
 its own stack frame rather than the former global scratch record.
 
-An independent `localization.font.v2.*` foundation is also retained
+An independent `localization.font.v2.*` implementation is also retained
 default-disabled and does not target any symbol above. Its separate generated
 resident asset contains the accepted 95-entry width table, exact
 printable-ASCII measurement with explicit `<br>`/newline recognition,
@@ -1902,7 +1902,15 @@ displaced NA2 instructions before resuming, so selecting the core alone cannot
 alter a screen. Its generic call adapter prepares one caller-owned 104-byte
 session, publishes it only around one native callback, and restores the prior
 session pointer, renderer tracking, horizontal scale and callback result
-through one cleanup path. No caller-family call site is redirected yet.
+through one cleanup path.
+
+The first thin caller layer, `font_v2_controls`, redirects only the shared
+first-eight-label call in `FUN_003885b0`. It builds NUN5's 128-unit box, keeps
+fitting labels at scale `1`, applies `128 / 178` to `Ultimate Jutsu Prep`,
+uses the proven labels-only one-unit-left correction, and converts the prepared
+left edge back to NA2's centered-renderer ABI. The separate `OFF` call is
+untouched. Both the Controls layer and its required v2 core remain
+default-disabled until the matched runtime review.
 
 The retained auto-fit and layout components require `font_nun5_glyphs` because
 their positions and fit decisions are tuned to its metrics. They otherwise

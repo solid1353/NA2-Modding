@@ -394,6 +394,139 @@ class ResidentPatcherTests(unittest.TestCase):
                 )
             )
 
+        controls_declaration = replace(
+            disabled_declaration,
+            patches={
+                patch_id: replace(
+                    patch,
+                    default_enabled=patch_id
+                    in {"font_v2_layout_core", "font_v2_controls"},
+                )
+                for patch_id, patch in disabled_declaration.patches.items()
+            },
+        )
+        controls_build = build_resident_payload(
+            controls_declaration.fragments
+        )
+        controls_resolved = resolve_symbolic_patches(
+            controls_build, controls_declaration.symbolic_patches
+        )
+        controls_package = engine.build_binary_package(
+            controls_declaration, controls_resolved
+        )
+        self.assertEqual(
+            {edit.edit_id for edit in controls_package.edits},
+            {
+                "font_v2_layout_core_01",
+                "font_v2_layout_core_02",
+                "font_v2_layout_core_03",
+                "font_v2_layout_core_04",
+                "font_v2_layout_core_05",
+                "font_v2_controls_01",
+            },
+        )
+        controls_edit = next(
+            edit
+            for edit in controls_package.edits
+            if edit.edit_id == "font_v2_controls_01"
+        )
+        self.assertEqual(controls_edit.destination_offset, 0x288848)
+        self.assertEqual(
+            bytes.fromhex(controls_edit.expected_hex),
+            bytes.fromhex("90E40D0C00000000"),
+        )
+        controls_adapter = controls_build.symbols[
+            "localization.font.v2.controls_adapter"
+        ]
+        controls_hook = bytes.fromhex(controls_edit.replacement_hex)
+        self.assertEqual(len(controls_hook), 8)
+        controls_jump = int.from_bytes(controls_hook[:4], "little")
+        self.assertEqual(controls_jump >> 26, 0x03)
+        self.assertEqual(
+            (controls_jump & 0x03FFFFFF) << 2,
+            controls_adapter.runtime_address,
+        )
+        self.assertEqual(controls_hook[4:], b"\0" * 4)
+
+        controls_adapter_fragment = next(
+            fragment
+            for fragment in controls_declaration.fragments
+            if fragment.symbol
+            == "localization.font.v2.controls_adapter"
+        )
+        self.assertEqual(
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation in controls_adapter_fragment.relocations
+            },
+            {
+                (
+                    "hi16",
+                    "localization.font.v2.controls_callback",
+                ),
+                (
+                    "lo16",
+                    "localization.font.v2.controls_callback",
+                ),
+                (
+                    "jal26",
+                    "localization.font.v2.adapter_call",
+                ),
+            },
+        )
+        controls_adapter_payload = controls_build.payload[
+            controls_adapter.file_offset:
+            controls_adapter.file_offset + controls_adapter.size
+        ]
+        controls_adapter_words = {
+            int.from_bytes(
+                controls_adapter_payload[offset:offset + 4], "little"
+            )
+            for offset in range(0, len(controls_adapter_payload), 4)
+        }
+        generic_adapter = controls_build.symbols[
+            "localization.font.v2.adapter_call"
+        ]
+        self.assertIn(
+            mips.jump(0x03, generic_adapter.runtime_address),
+            controls_adapter_words,
+        )
+        self.assertIn(
+            mips.i_type(0x0F, 0, 8, 0x4282),
+            controls_adapter_words,
+        )
+        for expected_word in (
+            mips.i_type(0x2B, 29, 8, 0x10),
+            mips.i_type(0x2B, 29, 8, 0x14),
+            mips.i_type(0x2B, 29, 8, 0x18),
+            mips.i_type(0x2B, 29, 8, 0x20),
+            mips.i_type(0x2B, 29, 8, 0x24),
+            mips.i_type(0x2B, 29, 9, 0x58),
+        ):
+            self.assertIn(expected_word, controls_adapter_words)
+
+        controls_callback = controls_build.symbols[
+            "localization.font.v2.controls_callback"
+        ]
+        controls_callback_payload = controls_build.payload[
+            controls_callback.file_offset:
+            controls_callback.file_offset + controls_callback.size
+        ]
+        controls_callback_words = {
+            int.from_bytes(
+                controls_callback_payload[offset:offset + 4], "little"
+            )
+            for offset in range(0, len(controls_callback_payload), 4)
+        }
+        for expected_word in (
+            mips.jump(0x03, 0x003798E0),
+            mips.jump(0x03, 0x00379240),
+            mips.r_type(0, 2, 8, 0x03, shift=1),
+            mips.i_type(0x31, 18, 12, 0x48),
+            mips.i_type(0x31, 18, 13, 0x4C),
+        ):
+            self.assertIn(expected_word, controls_callback_words)
+
     def test_loads_fragments_and_compiles_symbolic_hooks(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)

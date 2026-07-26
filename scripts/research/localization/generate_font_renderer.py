@@ -66,6 +66,8 @@ V2_ASCII_WIDTHS = f"{V2_PREFIX}.ascii_widths"
 V2_MEASURE = f"{V2_PREFIX}.measure"
 V2_PREPARE = f"{V2_PREFIX}.prepare"
 V2_ADAPTER_CALL = f"{V2_PREFIX}.adapter_call"
+V2_CONTROLS_ADAPTER = f"{V2_PREFIX}.controls_adapter"
+V2_CONTROLS_CALLBACK = f"{V2_PREFIX}.controls_callback"
 V2_PLAIN_SPACE = f"{V2_PREFIX}.plain_space"
 V2_NEWLINE_ADVANCE = f"{V2_PREFIX}.newline_advance"
 V2_RIGHT_EDGE = f"{V2_PREFIX}.right_edge"
@@ -162,6 +164,11 @@ V2_SESSION_SIZE = 0x68
 V2_FLAG_SHRINK_X = 0x01
 V2_FLAG_BR_TAGS = 0x02
 V2_FLAG_NEWLINE_BYTES = 0x04
+
+CONTROLS_BOX_WIDTH = 128
+CONTROLS_BOX_HEIGHT = 20
+CONTROLS_LINE_HEIGHT = 20.0
+CONTROLS_LABEL_X_CORRECTION = -1.0
 
 TEXT_METRICS_HELPERS = bytes.fromhex(
     "040060C640000146C0C0033C0000834400000000400001466000033C7C7362C4"
@@ -748,6 +755,123 @@ def build_v2_adapter_call() -> Fragment:
     return Fragment(V2_ADAPTER_CALL, payload, relocations)
 
 
+def build_v2_controls_callback() -> Fragment:
+    """Draw one prepared Controls label through NA2's centered renderer."""
+
+    zero, v0, a0, a1, a2 = 0, 2, 4, 5, 6
+    t0 = 8
+    s0, s1, s2 = 16, 17, 18
+    sp, ra = 29, 31
+    frame_size = 0x20
+    saved_s2 = 0x10
+    saved_s1 = 0x14
+    saved_s0 = 0x18
+    saved_ra = 0x1C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    assembler.emit(mips.i_type(0x2B, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x2B, sp, s1, saved_s1))
+    assembler.emit(mips.i_type(0x2B, sp, s2, saved_s2))
+    assembler.emit(mips.r_type(a0, zero, s0, 0x21))
+    assembler.emit(mips.r_type(a1, zero, s1, 0x21))
+    assembler.emit(mips.r_type(a2, zero, s2, 0x21))
+
+    assembler.emit(mips.r_type(zero, zero, a1, 0x21))
+    assembler.emit(mips.jump(0x03, FONT_MEASURE))
+    assembler.emit(0)
+    assembler.emit(mips.r_type(zero, v0, t0, 0x03, shift=1))
+    assembler.emit(mips.mtc1(t0, 0))
+    assembler.emit(mips.cop1(0x20, 0, 0, fmt=20))
+    assembler.emit(mips.i_type(0x31, s2, 12, V2_SESSION_DRAW_X))
+    assembler.emit(mips.cop1(0x00, 12, 12, 0))
+    assembler.emit(mips.i_type(0x31, s2, 13, V2_SESSION_DRAW_Y))
+    assembler.emit(mips.r_type(s0, zero, a0, 0x21))
+    assembler.emit(mips.r_type(s1, zero, a1, 0x21))
+    assembler.emit(mips.jump(0x03, FONT_CENTER))
+    assembler.emit(0)
+
+    assembler.emit(mips.i_type(0x23, sp, s2, saved_s2))
+    assembler.emit(mips.i_type(0x23, sp, s1, saved_s1))
+    assembler.emit(mips.i_type(0x23, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_CONTROLS_CALLBACK, payload, relocations)
+
+
+def build_v2_controls_adapter() -> Fragment:
+    """Prepare the first eight Controls labels in NUN5's 128-unit box."""
+
+    zero, a0, a1 = 0, 4, 5
+    t0, t1 = 8, 9
+    sp, ra = 29, 31
+    frame_size = 0x80
+    saved_ra = 0x7C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    assembler.emit(mips.i_type(0x2B, sp, a0, V2_SESSION_TEXT))
+    assembler.emit(mips.i_type(0x2B, sp, a0, V2_SESSION_CALLBACK_ARG0))
+    assembler.emit(mips.i_type(0x2B, sp, a1, V2_SESSION_CALLBACK_ARG1))
+
+    emit_load_float(
+        assembler,
+        t0,
+        0,
+        CONTROLS_BOX_WIDTH / 2.0 - CONTROLS_LABEL_X_CORRECTION,
+    )
+    assembler.emit(mips.cop1(0x01, 0, 12, 0))
+    assembler.emit(mips.i_type(0x39, sp, 0, V2_SESSION_BOX_X))
+    assembler.emit(mips.i_type(0x39, sp, 13, V2_SESSION_BOX_Y))
+    mips.load_u32(assembler, t0, CONTROLS_BOX_WIDTH)
+    assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_WIDTH))
+    mips.load_u32(assembler, t0, CONTROLS_BOX_HEIGHT)
+    assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_HEIGHT))
+    assembler.emit(mips.i_type(0x09, zero, t0, 1))
+    assembler.emit(
+        mips.i_type(
+            0x2B,
+            sp,
+            t0,
+            V2_SESSION_HORIZONTAL_ALIGNMENT,
+        )
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, zero, V2_SESSION_VERTICAL_ALIGNMENT)
+    )
+    assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_FLAGS))
+    assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_LINE_LIMIT))
+    emit_load_float(assembler, t0, 0, CONTROLS_LINE_HEIGHT)
+    assembler.emit(mips.i_type(0x39, sp, 0, V2_SESSION_LINE_HEIGHT))
+    assembler.load_symbol_word(
+        t0,
+        t0,
+        0x09,
+        V2_CONTROLS_CALLBACK,
+    )
+    assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_CALLBACK))
+    assembler.emit(mips.r_type(sp, zero, t1, 0x21))
+    assembler.emit(
+        mips.i_type(0x2B, sp, t1, V2_SESSION_CALLBACK_ARG2)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, zero, V2_SESSION_CALLBACK_ARG3)
+    )
+
+    assembler.emit(mips.r_type(sp, zero, a0, 0x21))
+    assembler.jump_symbol(0x03, V2_ADAPTER_CALL)
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_CONTROLS_ADAPTER, payload, relocations)
+
+
 def load_v2_session(
     assembler: mips.Assembler,
     address_register: int,
@@ -1326,6 +1450,8 @@ def v2_fragments() -> tuple[Fragment, ...]:
         build_v2_measure(),
         build_v2_prepare(),
         build_v2_adapter_call(),
+        build_v2_controls_callback(),
+        build_v2_controls_adapter(),
         build_v2_plain_space(),
         build_v2_newline_advance(),
         build_v2_right_edge(),

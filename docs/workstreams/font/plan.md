@@ -277,7 +277,8 @@ Recommended effort: **max**, due to cross-function MIPS ABI preservation,
 renderer-state restoration, symbolic resident linking and multi-screen runtime
 regression risk.
 
-**Plan approved; foundational stages 1-2 implemented and caller-neutral**
+**Plan approved; foundations complete; Controls adapter implemented
+default-disabled pending matched runtime review**
 
 ## Accepted font implementation
 

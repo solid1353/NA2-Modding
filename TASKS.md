@@ -7,20 +7,17 @@
 - Collapse font, UI/string translation into localization workstream.
 
 ### [Font](docs/workstreams/font/README.md)
-- [Investigate](work/__sstates/translation/font)
-    * Implement proper autofit/positions everywhere.
-    * Ninja Song: convert all dynamically generated output still selecting Shift-JIS digits or symbols to ASCII equivalents, including the renderer-table multiplication glyph if it remains reachable after static string changes.
-    * Special Controls / Practice Settings ON/OFF: split the shared T37/T38 presentation so ss1 retains compact uppercase ON/OFF while ss8 uses title-case Off/On, matching NUN5 letter spacing in both contexts.
-    * Load/Save Modal: change datetime format to EU.
+- [Investigate](work/__sstates/translation/font) and implement proper autofit/positions everywhere.
+- Ninja Song: convert all dynamically generated output still selecting Shift-JIS digits or symbols to ASCII equivalents, including the renderer-table multiplication glyph if it remains reachable after static string changes.
+- Special Controls / Practice Settings ON/OFF: split the shared T37/T38 presentation so ss1 retains compact uppercase ON/OFF while ss8 uses title-case Off/On, matching NUN5 letter spacing in both contexts.
+- Load/Save Modal: change datetime format to EU.
 
 ### [UI Translation](docs/workstreams/ui_translation/README.md)
-- [Investigate](work/__sstates/translation/UI)
-    * Deal with remaining issues (items, awakenings, etc.).
-    * Document shop minigame and UJ prompts as intentionally not fixed.
+- Document shop minigame and UJ prompts as intentionally not fixed.
+- [Cleanup](work/__sstates/translation/UI) - preserve what is needed, delete the rest.
 
 ### [String Translation](docs/workstreams/string_translation/README.md)
-- [Investigate](work/__sstates/translation/strings)
-    * Redo the translation from scratch, using existing data as a reference, touching only what is displayed with the help of savestates. Not everything is translated currently (MAX Damage label, etc.).
+- [Cleanup](work/__sstates/translation/strings) - preserve what is needed, delete the rest.
 
 ## Backlog
 

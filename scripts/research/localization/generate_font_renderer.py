@@ -72,6 +72,15 @@ V2_TITLE_ADAPTER = f"{V2_PREFIX}.title_adapter"
 V2_TITLE_CALLBACK = f"{V2_PREFIX}.title_callback"
 V2_COMMAND_TITLE_ENTRY = f"{V2_PREFIX}.command_title_entry"
 V2_PRACTICE_TITLE_ENTRY = f"{V2_PREFIX}.practice_title_entry"
+V2_NATIVE_MEASURE = f"{V2_PREFIX}.native_measure"
+V2_WRAP_NATIVE = f"{V2_PREFIX}.wrap_native"
+V2_PRACTICE_TOKENS = f"{V2_PREFIX}.practice_tokens"
+V2_PRACTICE_APPEND = f"{V2_PREFIX}.practice_append"
+V2_PRACTICE_ICON_MAP = f"{V2_PREFIX}.practice_icon_map"
+V2_PRACTICE_ICON_METRIC = f"{V2_PREFIX}.practice_icon_metric"
+V2_PRACTICE_ICON_DRAW = f"{V2_PREFIX}.practice_icon_draw"
+V2_PRACTICE_CALLBACK = f"{V2_PREFIX}.practice_callback"
+V2_PRACTICE_ADAPTER = f"{V2_PREFIX}.practice_adapter"
 V2_PLAIN_SPACE = f"{V2_PREFIX}.plain_space"
 V2_NEWLINE_ADVANCE = f"{V2_PREFIX}.newline_advance"
 V2_RIGHT_EDGE = f"{V2_PREFIX}.right_edge"
@@ -85,6 +94,9 @@ FONT_SET_CONTEXT = 0x001866D0
 FONT_MEASURE = 0x003798E0
 FONT_CENTER = 0x00379240
 FONT_BOX_DRAW = 0x00382310
+FONT_ICON_DRAW = 0x0037BB40
+PRACTICE_ICON_TABLE = 0x008D14C0
+PRACTICE_EXPLANATION_TEXT_TABLE = 0x008BD510
 PACKED_METRICS_SHA256 = (
     "6F691015E5BA54EA87B2976970D828863E274BB543CC3D531D93800018EB7A5E"
 )
@@ -169,14 +181,34 @@ V2_SESSION_CALLBACK_ARG3 = 0x5C
 V2_SESSION_SAVED_TRACKING = 0x60
 V2_SESSION_SAVED_SCALE = 0x64
 V2_SESSION_SIZE = 0x68
+V2_SESSION_GLYPH_HEIGHT = 0x68
+
+V2_PRACTICE_OBJECT_PRIMARY = 0x6C
+V2_PRACTICE_OBJECT_SECONDARY = 0x70
+V2_PRACTICE_SAVED_METRIC_CALLBACK = 0x74
+V2_PRACTICE_SAVED_DRAW_CALLBACK = 0x78
+V2_PRACTICE_BUFFER = 0x80
+V2_PRACTICE_BUFFER_SIZE = 0x200
 
 V2_FLAG_SHRINK_X = 0x01
 V2_FLAG_BR_TAGS = 0x02
 V2_FLAG_NEWLINE_BYTES = 0x04
+V2_FLAG_SEPARATE_LINE_ADVANCE = 0x08
+V2_FLAG_PREMEASURED = 0x10
 
 CONTROLS_BOX_WIDTH = 128
 CONTROLS_BOX_HEIGHT = 20
 CONTROLS_LINE_HEIGHT = 20.0
+
+PRACTICE_EXPLANATION_BOX_X = 39.2
+PRACTICE_EXPLANATION_BOX_Y_OFFSET = 21.2
+PRACTICE_EXPLANATION_BOX_WIDTH = 364
+PRACTICE_EXPLANATION_BOX_HEIGHT = 48
+PRACTICE_EXPLANATION_GLYPH_HEIGHT = 28.0
+PRACTICE_EXPLANATION_LINE_ADVANCE = 14.0
+PRACTICE_EXPLANATION_LINE_LIMIT = 2
+PRACTICE_EXPLANATION_TOKEN_COUNT = 13
+PRACTICE_EXPLANATION_TOKEN_STRIDE = 16
 
 TEXT_METRICS_HELPERS = bytes.fromhex(
     "040060C640000146C0C0033C0000834400000000400001466000033C7C7362C4"
@@ -508,6 +540,19 @@ def build_v2_prepare() -> Fragment:
     assembler.emit(mips.i_type(0x23, s0, a0, V2_SESSION_TEXT))
     assembler.branch(0x04, a0, zero, "error")
     assembler.emit(mips.i_type(0x23, s0, a1, V2_SESSION_FLAGS))
+    assembler.emit(
+        mips.i_type(0x0C, a1, t0, V2_FLAG_PREMEASURED)
+    )
+    assembler.branch(0x04, t0, zero, "measure")
+    assembler.emit(0)
+    assembler.emit(
+        mips.i_type(0x23, s0, v0, V2_SESSION_MEASURED_WIDTH)
+    )
+    assembler.emit(mips.i_type(0x23, s0, v1, V2_SESSION_LINE_COUNT))
+    assembler.branch(0x04, zero, zero, "measurement_ready")
+    assembler.emit(0)
+
+    assembler.label("measure")
     assembler.jump_symbol(0x03, V2_MEASURE)
     assembler.emit(0)
     assembler.branch(0x01, v0, zero, "error")
@@ -517,6 +562,11 @@ def build_v2_prepare() -> Fragment:
         mips.i_type(0x2B, s0, v0, V2_SESSION_MEASURED_WIDTH)
     )
     assembler.emit(mips.i_type(0x2B, s0, v1, V2_SESSION_LINE_COUNT))
+    assembler.label("measurement_ready")
+    assembler.branch(0x01, v0, zero, "error")
+    assembler.emit(0)
+    assembler.branch(0x04, v1, zero, "error")
+    assembler.emit(0)
     assembler.emit(mips.i_type(0x23, s0, t0, V2_SESSION_LINE_LIMIT))
     assembler.branch(0x04, t0, zero, "line_limit_ok")
     assembler.emit(mips.r_type(t0, v1, t1, 0x2B))
@@ -557,12 +607,38 @@ def build_v2_prepare() -> Fragment:
     assembler.emit(
         mips.i_type(0x39, s0, 3, V2_SESSION_RENDERED_WIDTH)
     )
+    assembler.emit(mips.i_type(0x23, s0, t2, V2_SESSION_FLAGS))
+    assembler.emit(
+        mips.i_type(
+            0x0C,
+            t2,
+            t2,
+            V2_FLAG_SEPARATE_LINE_ADVANCE,
+        )
+    )
+    assembler.branch(0x04, t2, zero, "uniform_line_height")
+    assembler.emit(mips.i_type(0x09, v1, t3, -1))
+    assembler.emit(mips.mtc1(t3, 4))
+    assembler.emit(mips.cop1(0x20, 4, 4, fmt=20))
+    assembler.emit(
+        mips.i_type(0x31, s0, 5, V2_SESSION_LINE_HEIGHT)
+    )
+    assembler.emit(mips.cop1(0x02, 4, 4, 5))
+    assembler.emit(
+        mips.i_type(0x31, s0, 5, V2_SESSION_GLYPH_HEIGHT)
+    )
+    assembler.emit(mips.cop1(0x00, 4, 4, 5))
+    assembler.branch(0x04, zero, zero, "store_rendered_height")
+    assembler.emit(0)
+
+    assembler.label("uniform_line_height")
     assembler.emit(mips.mtc1(v1, 4))
     assembler.emit(mips.cop1(0x20, 4, 4, fmt=20))
     assembler.emit(
         mips.i_type(0x31, s0, 5, V2_SESSION_LINE_HEIGHT)
     )
     assembler.emit(mips.cop1(0x02, 4, 4, 5))
+    assembler.label("store_rendered_height")
     assembler.emit(
         mips.i_type(0x39, s0, 4, V2_SESSION_RENDERED_HEIGHT)
     )
@@ -1036,6 +1112,764 @@ def build_v2_title_entry(symbol: str, mode: int) -> Fragment:
     assembler.emit(0)
     payload, relocations = assembler.build()
     return Fragment(symbol, payload, relocations)
+
+
+def build_v2_native_measure() -> Fragment:
+    """Measure tagged native text with the shared NUN5 space correction."""
+
+    zero, v0, a0 = 0, 2, 4
+    t0, t1, t2 = 8, 9, 10
+    s0, s1 = 16, 17
+    sp, ra = 29, 31
+    frame_size = 0x20
+    saved_s0 = 0x10
+    saved_s1 = 0x14
+    saved_ra = 0x1C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    assembler.emit(mips.i_type(0x2B, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x2B, sp, s1, saved_s1))
+    assembler.emit(mips.r_type(a0, zero, s0, 0x21))
+    assembler.emit(mips.jump(0x03, FONT_MEASURE))
+    assembler.emit(mips.r_type(zero, zero, 5, 0x21))
+    assembler.emit(mips.r_type(v0, zero, s1, 0x21))
+    assembler.emit(mips.r_type(s0, zero, t0, 0x21))
+
+    assembler.label("scan")
+    assembler.emit(mips.i_type(0x24, t0, t1, 0))
+    assembler.branch(0x04, t1, zero, "return")
+    assembler.emit(mips.i_type(0x09, t0, t0, 1))
+    assembler.emit(mips.i_type(0x09, zero, t2, ASCII_FIRST))
+    assembler.branch(0x05, t1, t2, "scan")
+    assembler.emit(0)
+    assembler.emit(
+        mips.i_type(0x09, s1, s1, -NUN5_SPACE_CORRECTION)
+    )
+    assembler.branch(0x04, zero, zero, "scan")
+    assembler.emit(0)
+
+    assembler.label("return")
+    assembler.emit(mips.r_type(s1, zero, v0, 0x21))
+    assembler.emit(mips.i_type(0x23, sp, s1, saved_s1))
+    assembler.emit(mips.i_type(0x23, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_NATIVE_MEASURE, payload, relocations)
+
+
+def build_v2_wrap_native() -> Fragment:
+    """Greedily wrap one mutable tagged string and return max width/lines."""
+
+    zero, v0, v1, a0, a1, a2 = 0, 2, 3, 4, 5, 6
+    t0, t1, t2, t3 = 8, 9, 10, 11
+    s0, s1, s2, s3 = 16, 17, 18, 19
+    s4, s5, s6, s7 = 20, 21, 22, 23
+    sp, ra = 29, 31
+    frame_size = 0x60
+    saved_registers = (
+        (s0, 0x00),
+        (s1, 0x04),
+        (s2, 0x08),
+        (s3, 0x0C),
+        (s4, 0x10),
+        (s5, 0x14),
+        (s6, 0x18),
+        (s7, 0x1C),
+    )
+    saved_manager = 0x40
+    saved_tracking = 0x44
+    saved_ra = 0x5C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    for register, offset in saved_registers:
+        assembler.emit(mips.i_type(0x2B, sp, register, offset))
+    assembler.emit(mips.r_type(a0, zero, s0, 0x21))
+    assembler.emit(mips.r_type(a1, zero, s1, 0x21))
+    assembler.emit(mips.r_type(a2, zero, s2, 0x21))
+
+    mips.load_u32(assembler, t0, FONT_RENDERER_POINTER)
+    assembler.emit(mips.i_type(0x23, t0, t0, 0))
+    assembler.emit(mips.i_type(0x2B, sp, t0, saved_manager))
+    assembler.branch(0x04, t0, zero, "tracking_ready")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x23, t0, t1, 0x3C))
+    assembler.emit(mips.i_type(0x2B, sp, t1, saved_tracking))
+    assembler.emit(mips.i_type(0x2B, t0, zero, 0x3C))
+    assembler.label("tracking_ready")
+
+    assembler.emit(mips.r_type(s0, zero, s3, 0x21))
+    assembler.emit(mips.r_type(s0, zero, s4, 0x21))
+    assembler.emit(mips.r_type(zero, zero, s5, 0x21))
+    assembler.emit(mips.i_type(0x09, zero, s6, 1))
+
+    assembler.label("wrap_scan")
+    assembler.emit(mips.i_type(0x24, s3, t0, 0))
+    assembler.branch(0x04, t0, zero, "wrap_end")
+    assembler.emit(mips.i_type(0x09, zero, t1, 0x0A))
+    assembler.branch(0x04, t0, t1, "existing_newline")
+    assembler.emit(mips.i_type(0x09, zero, t1, ASCII_FIRST))
+    assembler.branch(0x05, t0, t1, "wrap_next")
+    assembler.emit(0)
+
+    assembler.emit(mips.i_type(0x28, s3, zero, 0))
+    assembler.emit(mips.r_type(s4, zero, a0, 0x21))
+    assembler.jump_symbol(0x03, V2_NATIVE_MEASURE)
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x09, zero, t0, ASCII_FIRST))
+    assembler.emit(mips.i_type(0x28, s3, t0, 0))
+    assembler.emit(mips.r_type(s1, v0, t1, 0x2B))
+    assembler.branch(0x04, t1, zero, "space_candidate")
+    assembler.emit(0)
+    assembler.emit(mips.r_type(s6, s2, t1, 0x2B))
+    assembler.branch(0x04, t1, zero, "space_candidate")
+    assembler.emit(0)
+    assembler.branch(0x04, s5, zero, "use_current_space")
+    assembler.emit(0)
+    assembler.emit(mips.r_type(s5, zero, t2, 0x21))
+    assembler.branch(0x04, zero, zero, "wrap_at_space")
+    assembler.emit(0)
+    assembler.label("use_current_space")
+    assembler.emit(mips.r_type(s3, zero, t2, 0x21))
+    assembler.label("wrap_at_space")
+    assembler.emit(mips.i_type(0x09, zero, t0, 0x0A))
+    assembler.emit(mips.i_type(0x28, t2, t0, 0))
+    assembler.emit(mips.i_type(0x09, t2, s4, 1))
+    assembler.emit(mips.i_type(0x09, s6, s6, 1))
+
+    assembler.label("space_candidate")
+    assembler.emit(mips.r_type(s3, zero, s5, 0x21))
+    assembler.branch(0x04, zero, zero, "wrap_next")
+    assembler.emit(0)
+
+    assembler.label("existing_newline")
+    assembler.emit(mips.i_type(0x09, s3, s4, 1))
+    assembler.emit(mips.r_type(zero, zero, s5, 0x21))
+    assembler.emit(mips.i_type(0x09, s6, s6, 1))
+
+    assembler.label("wrap_next")
+    assembler.emit(mips.i_type(0x09, s3, s3, 1))
+    assembler.branch(0x04, zero, zero, "wrap_scan")
+    assembler.emit(0)
+
+    assembler.label("wrap_end")
+    assembler.emit(mips.r_type(s4, zero, a0, 0x21))
+    assembler.jump_symbol(0x03, V2_NATIVE_MEASURE)
+    assembler.emit(0)
+    assembler.emit(mips.r_type(s1, v0, t0, 0x2B))
+    assembler.branch(0x04, t0, zero, "measure_lines")
+    assembler.emit(0)
+    assembler.branch(0x04, s5, zero, "measure_lines")
+    assembler.emit(0)
+    assembler.emit(mips.r_type(s6, s2, t0, 0x2B))
+    assembler.branch(0x04, t0, zero, "measure_lines")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x09, zero, t0, 0x0A))
+    assembler.emit(mips.i_type(0x28, s5, t0, 0))
+    assembler.emit(mips.i_type(0x09, s6, s6, 1))
+
+    assembler.label("measure_lines")
+    assembler.emit(mips.r_type(s6, zero, s2, 0x21))
+    assembler.emit(mips.r_type(s0, zero, s3, 0x21))
+    assembler.emit(mips.r_type(s0, zero, s4, 0x21))
+    assembler.emit(mips.r_type(zero, zero, s7, 0x21))
+
+    assembler.label("measure_scan")
+    assembler.emit(mips.i_type(0x24, s3, t0, 0))
+    assembler.branch(0x04, t0, zero, "measure_segment")
+    assembler.emit(mips.i_type(0x09, zero, t1, 0x0A))
+    assembler.branch(0x04, t0, t1, "measure_segment")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x09, s3, s3, 1))
+    assembler.branch(0x04, zero, zero, "measure_scan")
+    assembler.emit(0)
+
+    assembler.label("measure_segment")
+    assembler.emit(mips.r_type(t0, zero, s5, 0x21))
+    assembler.emit(mips.i_type(0x28, s3, zero, 0))
+    assembler.emit(mips.r_type(s4, zero, a0, 0x21))
+    assembler.jump_symbol(0x03, V2_NATIVE_MEASURE)
+    assembler.emit(0)
+    assembler.emit(mips.r_type(s7, v0, t3, 0x2B))
+    assembler.branch(0x04, t3, zero, "max_ready")
+    assembler.emit(0)
+    assembler.emit(mips.r_type(v0, zero, s7, 0x21))
+    assembler.label("max_ready")
+    assembler.branch(0x04, s5, zero, "finish")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x09, zero, t0, 0x0A))
+    assembler.emit(mips.i_type(0x28, s3, t0, 0))
+    assembler.emit(mips.i_type(0x09, s3, s3, 1))
+    assembler.emit(mips.r_type(s3, zero, s4, 0x21))
+    assembler.branch(0x04, zero, zero, "measure_scan")
+    assembler.emit(0)
+
+    assembler.label("finish")
+    assembler.emit(mips.i_type(0x23, sp, t0, saved_manager))
+    assembler.branch(0x04, t0, zero, "return")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x23, sp, t1, saved_tracking))
+    assembler.emit(mips.i_type(0x2B, t0, t1, 0x3C))
+
+    assembler.label("return")
+    assembler.emit(mips.r_type(s7, zero, v0, 0x21))
+    assembler.emit(mips.r_type(s2, zero, v1, 0x21))
+    for register, offset in saved_registers:
+        assembler.emit(mips.i_type(0x23, sp, register, offset))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_WRAP_NATIVE, payload, relocations)
+
+
+def build_v2_practice_tokens() -> bytes:
+    tokens = (
+        "<iconUP>",
+        "<iconDOWN>",
+        "<iconRIGHT>",
+        "<iconLEFT>",
+        "<iconCIRCLE>",
+        "<iconTRIANGLE>",
+        "<iconSQUARE>",
+        "<iconCROSS>",
+        "<iconETC0>",
+        "<iconL1>",
+        "<iconR1>",
+        "<iconL2>",
+        "<iconR2>",
+    )
+    if len(tokens) != PRACTICE_EXPLANATION_TOKEN_COUNT:
+        raise ValueError("Practice token table has the wrong entry count")
+    result = bytearray()
+    for token in tokens:
+        encoded = token.encode("ascii") + b"\0"
+        if len(encoded) > PRACTICE_EXPLANATION_TOKEN_STRIDE:
+            raise ValueError(f"Practice token is too long: {token}")
+        result.extend(
+            encoded.ljust(PRACTICE_EXPLANATION_TOKEN_STRIDE, b"\0")
+        )
+    result.extend(b" \0")
+    return bytes(result)
+
+
+def build_v2_practice_icon_map() -> bytes:
+    return bytes(
+        (
+            5,
+            4,
+            7,
+            6,
+            9,
+            11,
+            10,
+            12,
+            0xFF,
+            0xFF,
+            0xFF,
+            0,
+            1,
+            3,
+            2,
+            0xFF,
+            0xFF,
+            8,
+        )
+    )
+
+
+def build_v2_practice_append() -> Fragment:
+    zero, v0, a0, a1, a2 = 0, 2, 4, 5, 6
+    t0, t1 = 8, 9
+    ra = 31
+
+    assembler = mips.Assembler()
+    assembler.label("copy")
+    assembler.emit(mips.i_type(0x24, a1, t0, 0))
+    assembler.branch(0x04, t0, zero, "finish")
+    assembler.emit(0)
+    assembler.emit(mips.r_type(a0, a2, t1, 0x2B))
+    assembler.branch(0x04, t1, zero, "finish")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x28, a0, t0, 0))
+    assembler.emit(mips.i_type(0x09, a1, a1, 1))
+    assembler.emit(mips.i_type(0x09, a0, a0, 1))
+    assembler.branch(0x04, zero, zero, "copy")
+    assembler.emit(0)
+    assembler.label("finish")
+    assembler.emit(mips.i_type(0x28, a0, zero, 0))
+    assembler.emit(mips.r_type(a0, zero, v0, 0x21))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(V2_PRACTICE_APPEND, payload, relocations)
+
+
+def build_v2_practice_icon_metric() -> Fragment:
+    zero, a0, a1, a2 = 0, 4, 5, 6
+    t0, t1, t2 = 8, 9, 10
+    ra = 31
+
+    assembler = mips.Assembler()
+    assembler.emit(
+        mips.i_type(0x0B, a2, t0, PRACTICE_EXPLANATION_TOKEN_COUNT + 5)
+    )
+    assembler.branch(0x04, t0, zero, "return")
+    assembler.emit(0)
+    assembler.load_symbol_word(t0, t0, 0x09, V2_PRACTICE_ICON_MAP)
+    assembler.emit(mips.r_type(t0, a2, t0, 0x21))
+    assembler.emit(mips.i_type(0x24, t0, t0, 0))
+    assembler.emit(mips.i_type(0x09, zero, t1, 0xFF))
+    assembler.branch(0x04, t0, t1, "return")
+    assembler.emit(mips.r_type(zero, t0, t0, 0x00, shift=3))
+    mips.load_u32(assembler, t1, PRACTICE_ICON_TABLE)
+    assembler.emit(mips.r_type(t1, t0, t1, 0x21))
+    assembler.emit(mips.i_type(0x21, t1, t2, 4))
+    assembler.emit(mips.mtc1(t2, 0))
+    assembler.emit(mips.cop1(0x20, 0, 0, fmt=20))
+    assembler.emit(mips.i_type(0x39, a0, 0, 0))
+    assembler.emit(mips.i_type(0x21, t1, t2, 6))
+    assembler.emit(mips.mtc1(t2, 0))
+    assembler.emit(mips.cop1(0x20, 0, 0, fmt=20))
+    assembler.emit(mips.i_type(0x39, a1, 0, 0))
+    assembler.label("return")
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(V2_PRACTICE_ICON_METRIC, payload, relocations)
+
+
+def build_v2_practice_icon_draw() -> Fragment:
+    zero, a0, a1, a2 = 0, 4, 5, 6
+    t0, t1, t2, t3 = 8, 9, 10, 11
+    s0, s1, s2, s3 = 16, 17, 18, 19
+    sp, ra = 29, 31
+    frame_size = 0x50
+    saved_registers = (
+        (s0, 0x00),
+        (s1, 0x04),
+        (s2, 0x08),
+        (s3, 0x0C),
+    )
+    saved_ra = 0x4C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    for register, offset in saved_registers:
+        assembler.emit(mips.i_type(0x2B, sp, register, offset))
+    assembler.emit(mips.r_type(a0, zero, s0, 0x21))
+    assembler.emit(mips.r_type(a1, zero, s1, 0x21))
+    assembler.emit(mips.r_type(a2, zero, s2, 0x21))
+    assembler.emit(mips.i_type(0x0B, s2, t0, 18))
+    assembler.branch(0x04, t0, zero, "restore")
+    assembler.emit(0)
+    assembler.load_symbol_word(t0, t0, 0x09, V2_PRACTICE_ICON_MAP)
+    assembler.emit(mips.r_type(t0, s2, t0, 0x21))
+    assembler.emit(mips.i_type(0x24, t0, t0, 0))
+    assembler.emit(mips.i_type(0x09, zero, t1, 0xFF))
+    assembler.branch(0x04, t0, t1, "restore")
+    assembler.emit(mips.r_type(zero, t0, t0, 0x00, shift=3))
+    mips.load_u32(assembler, t1, PRACTICE_ICON_TABLE)
+    assembler.emit(mips.r_type(t1, t0, s3, 0x21))
+
+    assembler.load_symbol_word(
+        t0,
+        t0,
+        0x23,
+        V2_SESSION_POINTER,
+    )
+    assembler.branch(0x04, t0, zero, "restore")
+    assembler.emit(0)
+    assembler.emit(
+        mips.i_type(0x23, t0, a0, V2_PRACTICE_OBJECT_PRIMARY)
+    )
+    assembler.emit(mips.i_type(0x0B, s2, t1, 4))
+    assembler.branch(0x05, t1, zero, "object_ready")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x0B, s2, t1, 8))
+    assembler.branch(0x04, t1, zero, "object_ready")
+    assembler.emit(0)
+    assembler.emit(
+        mips.i_type(0x23, t0, a0, V2_PRACTICE_OBJECT_SECONDARY)
+    )
+    assembler.label("object_ready")
+    assembler.emit(mips.r_type(s3, zero, a1, 0x21))
+    assembler.emit(mips.i_type(0x31, s0, 12, 0))
+    assembler.emit(mips.i_type(0x31, s1, 13, 0))
+    assembler.emit(mips.i_type(0x0B, s2, t1, 11))
+    assembler.branch(0x05, t1, zero, "check_direction_end")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x0B, s2, t1, 15))
+    assembler.branch(0x04, t1, zero, "check_etc")
+    emit_load_float(assembler, t2, 0, -3.0)
+    assembler.emit(mips.cop1(0x00, 13, 13, 0))
+    assembler.branch(0x04, zero, zero, "draw")
+    assembler.emit(0)
+    assembler.label("check_direction_end")
+    assembler.label("check_etc")
+    assembler.emit(mips.i_type(0x09, zero, t1, 17))
+    assembler.branch(0x05, s2, t1, "draw")
+    assembler.emit(0)
+    emit_load_float(assembler, t2, 0, 1.0)
+    assembler.emit(mips.cop1(0x00, 13, 13, 0))
+
+    assembler.label("draw")
+    assembler.emit(mips.jump(0x03, FONT_ICON_DRAW))
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x21, s3, t0, 4))
+    assembler.emit(mips.mtc1(t0, 0))
+    assembler.emit(mips.cop1(0x20, 0, 0, fmt=20))
+    assembler.emit(mips.i_type(0x31, s0, 1, 0))
+    assembler.emit(mips.cop1(0x00, 1, 1, 0))
+    assembler.emit(mips.i_type(0x39, s0, 1, 0))
+
+    assembler.label("restore")
+    for register, offset in saved_registers:
+        assembler.emit(mips.i_type(0x23, sp, register, offset))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_PRACTICE_ICON_DRAW, payload, relocations)
+
+
+def build_v2_practice_callback() -> Fragment:
+    a3 = 7
+    assembler = mips.Assembler()
+    assembler.emit(
+        mips.i_type(0x31, a3, 12, V2_SESSION_DRAW_X)
+    )
+    assembler.emit(
+        mips.i_type(0x31, a3, 13, V2_SESSION_DRAW_Y)
+    )
+    assembler.emit(mips.jump(0x02, FONT_BOX_DRAW))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(V2_PRACTICE_CALLBACK, payload, relocations)
+
+
+def build_v2_practice_adapter() -> Fragment:
+    zero, v0, v1, a0, a1, a2 = 0, 2, 3, 4, 5, 6
+    t0, t1, t2, t3 = 8, 9, 10, 11
+    s0, s1, s2, s3 = 16, 17, 18, 19
+    s4, s5, s6, s7 = 20, 21, 22, 23
+    sp, ra = 29, 31
+    frame_size = 0x300
+    saved_registers = (
+        (s0, 0x2C0),
+        (s1, 0x2C4),
+        (s2, 0x2C8),
+        (s3, 0x2CC),
+        (s4, 0x2D0),
+        (s5, 0x2D4),
+        (s6, 0x2D8),
+        (s7, 0x2DC),
+    )
+    saved_y = 0x2E0
+    saved_ra = 0x2FC
+    buffer_limit = V2_PRACTICE_BUFFER_SIZE - 1
+    space_offset = (
+        PRACTICE_EXPLANATION_TOKEN_COUNT
+        * PRACTICE_EXPLANATION_TOKEN_STRIDE
+    )
+
+    assembler = mips.Assembler()
+
+    def emit_append() -> None:
+        assembler.emit(mips.r_type(s4, zero, a0, 0x21))
+        assembler.emit(mips.i_type(0x09, s3, a2, buffer_limit))
+        assembler.jump_symbol(0x03, V2_PRACTICE_APPEND)
+        assembler.emit(0)
+        assembler.emit(mips.r_type(v0, zero, s4, 0x21))
+
+    def emit_append_space() -> None:
+        assembler.load_symbol_word(
+            a1,
+            a1,
+            0x09,
+            V2_PRACTICE_TOKENS,
+            addend=space_offset,
+        )
+        emit_append()
+
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    for register, offset in saved_registers:
+        assembler.emit(mips.i_type(0x2B, sp, register, offset))
+    assembler.emit(mips.i_type(0x39, sp, 12, saved_y))
+    assembler.emit(
+        mips.i_type(0x2B, sp, s3, V2_PRACTICE_OBJECT_PRIMARY)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, s2, V2_PRACTICE_OBJECT_SECONDARY)
+    )
+    assembler.emit(mips.r_type(a0, zero, s0, 0x21))
+    assembler.emit(mips.r_type(a1, zero, s1, 0x21))
+    assembler.emit(mips.r_type(a2, zero, s2, 0x21))
+    assembler.emit(mips.i_type(0x09, sp, s3, V2_PRACTICE_BUFFER))
+    assembler.emit(mips.r_type(s3, zero, s4, 0x21))
+    assembler.emit(mips.i_type(0x28, s4, zero, 0))
+    assembler.emit(mips.r_type(zero, zero, s5, 0x21))
+    assembler.emit(mips.r_type(zero, zero, s6, 0x21))
+    assembler.emit(mips.r_type(s0, s1, t0, 0x21))
+    assembler.emit(mips.i_type(0x23, t0, s7, 0x68))
+
+    assembler.label("token_loop")
+    assembler.emit(mips.r_type(s5, s7, t0, 0x2A))
+    assembler.branch(0x04, t0, zero, "install_callbacks")
+    assembler.emit(0)
+    assembler.emit(mips.r_type(zero, s5, t0, 0x00, shift=2))
+    assembler.emit(mips.r_type(s0, s1, t1, 0x21))
+    assembler.emit(mips.i_type(0x09, t1, t1, 0x40))
+    assembler.emit(mips.r_type(t1, t0, t1, 0x21))
+    assembler.emit(mips.i_type(0x23, t1, t2, 0))
+    assembler.branch(0x01, t2, zero, "token_next")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x0A, t2, t3, 26))
+    assembler.branch(0x04, t3, zero, "token_next")
+    assembler.emit(0)
+    assembler.emit(
+        mips.i_type(
+            0x0A,
+            t2,
+            t3,
+            PRACTICE_EXPLANATION_TOKEN_COUNT,
+        )
+    )
+    assembler.branch(0x05, t3, zero, "icon_token")
+    assembler.emit(0)
+
+    assembler.branch(0x04, s5, zero, "text_payload")
+    assembler.emit(0)
+    emit_append_space()
+    assembler.label("text_payload")
+    assembler.emit(
+        mips.i_type(
+            0x09,
+            t2,
+            t2,
+            -PRACTICE_EXPLANATION_TOKEN_COUNT,
+        )
+    )
+    assembler.emit(mips.r_type(zero, t2, t2, 0x00, shift=2))
+    mips.load_u32(assembler, t0, PRACTICE_EXPLANATION_TEXT_TABLE)
+    assembler.emit(mips.r_type(t0, t2, t0, 0x21))
+    assembler.emit(mips.i_type(0x23, t0, a1, 0))
+    emit_append()
+    assembler.emit(mips.i_type(0x09, zero, s6, 1))
+    assembler.branch(0x04, zero, zero, "token_next")
+    assembler.emit(0)
+
+    assembler.label("icon_token")
+    assembler.branch(0x04, s5, zero, "icon_payload")
+    assembler.emit(0)
+    assembler.branch(0x04, s6, zero, "icon_payload")
+    assembler.emit(0)
+    emit_append_space()
+    assembler.label("icon_payload")
+    assembler.load_symbol_word(
+        t0,
+        t0,
+        0x09,
+        V2_PRACTICE_TOKENS,
+    )
+    assembler.emit(mips.r_type(zero, t2, t1, 0x00, shift=4))
+    assembler.emit(mips.r_type(t0, t1, a1, 0x21))
+    emit_append()
+    assembler.emit(mips.r_type(zero, zero, s6, 0x21))
+
+    assembler.label("token_next")
+    assembler.emit(mips.i_type(0x09, s5, s5, 1))
+    assembler.branch(0x04, zero, zero, "token_loop")
+    assembler.emit(0)
+
+    assembler.label("install_callbacks")
+    mips.load_u32(assembler, t0, FONT_RENDERER_POINTER)
+    assembler.emit(mips.i_type(0x23, t0, t0, 0))
+    assembler.branch(0x04, t0, zero, "restore")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x23, t0, t1, 0x7C))
+    assembler.emit(
+        mips.i_type(
+            0x2B,
+            sp,
+            t1,
+            V2_PRACTICE_SAVED_METRIC_CALLBACK,
+        )
+    )
+    assembler.emit(mips.i_type(0x23, t0, t1, 0x78))
+    assembler.emit(
+        mips.i_type(
+            0x2B,
+            sp,
+            t1,
+            V2_PRACTICE_SAVED_DRAW_CALLBACK,
+        )
+    )
+    assembler.load_symbol_word(
+        t1,
+        t1,
+        0x09,
+        V2_PRACTICE_ICON_METRIC,
+    )
+    assembler.emit(mips.i_type(0x2B, t0, t1, 0x7C))
+    assembler.load_symbol_word(
+        t1,
+        t1,
+        0x09,
+        V2_PRACTICE_ICON_DRAW,
+    )
+    assembler.emit(mips.i_type(0x2B, t0, t1, 0x78))
+
+    assembler.emit(mips.r_type(s3, zero, a0, 0x21))
+    mips.load_u32(assembler, a1, PRACTICE_EXPLANATION_BOX_WIDTH)
+    mips.load_u32(assembler, a2, PRACTICE_EXPLANATION_LINE_LIMIT)
+    assembler.jump_symbol(0x03, V2_WRAP_NATIVE)
+    assembler.emit(0)
+    assembler.emit(
+        mips.i_type(0x2B, sp, v0, V2_SESSION_MEASURED_WIDTH)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, v1, V2_SESSION_LINE_COUNT)
+    )
+
+    assembler.emit(mips.i_type(0x2B, sp, s3, V2_SESSION_TEXT))
+    emit_load_float(
+        assembler,
+        t0,
+        0,
+        PRACTICE_EXPLANATION_BOX_X,
+    )
+    assembler.emit(mips.i_type(0x39, sp, 0, V2_SESSION_BOX_X))
+    assembler.emit(mips.i_type(0x31, sp, 0, saved_y))
+    emit_load_float(
+        assembler,
+        t0,
+        1,
+        PRACTICE_EXPLANATION_BOX_Y_OFFSET,
+    )
+    assembler.emit(mips.cop1(0x00, 0, 0, 1))
+    assembler.emit(mips.i_type(0x39, sp, 0, V2_SESSION_BOX_Y))
+    mips.load_u32(assembler, t0, PRACTICE_EXPLANATION_BOX_WIDTH)
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_WIDTH)
+    )
+    mips.load_u32(assembler, t0, PRACTICE_EXPLANATION_BOX_HEIGHT)
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_HEIGHT)
+    )
+    assembler.emit(
+        mips.i_type(
+            0x2B,
+            sp,
+            zero,
+            V2_SESSION_HORIZONTAL_ALIGNMENT,
+        )
+    )
+    assembler.emit(mips.i_type(0x09, zero, t0, 1))
+    assembler.emit(
+        mips.i_type(
+            0x2B,
+            sp,
+            t0,
+            V2_SESSION_VERTICAL_ALIGNMENT,
+        )
+    )
+    mips.load_u32(
+        assembler,
+        t0,
+        V2_FLAG_SHRINK_X
+        | V2_FLAG_NEWLINE_BYTES
+        | V2_FLAG_SEPARATE_LINE_ADVANCE
+        | V2_FLAG_PREMEASURED,
+    )
+    assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_FLAGS))
+    mips.load_u32(assembler, t0, PRACTICE_EXPLANATION_LINE_LIMIT)
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_LINE_LIMIT)
+    )
+    emit_load_float(
+        assembler,
+        t0,
+        0,
+        PRACTICE_EXPLANATION_LINE_ADVANCE,
+    )
+    assembler.emit(
+        mips.i_type(0x39, sp, 0, V2_SESSION_LINE_HEIGHT)
+    )
+    emit_load_float(
+        assembler,
+        t0,
+        0,
+        PRACTICE_EXPLANATION_GLYPH_HEIGHT,
+    )
+    assembler.emit(
+        mips.i_type(0x39, sp, 0, V2_SESSION_GLYPH_HEIGHT)
+    )
+    assembler.load_symbol_word(
+        t0,
+        t0,
+        0x09,
+        V2_PRACTICE_CALLBACK,
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_CALLBACK)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, s2, V2_SESSION_CALLBACK_ARG0)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, s3, V2_SESSION_CALLBACK_ARG1)
+    )
+    assembler.emit(mips.i_type(0x09, zero, t0, 0x0F))
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_CALLBACK_ARG2)
+    )
+    assembler.emit(mips.r_type(sp, zero, t0, 0x21))
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_CALLBACK_ARG3)
+    )
+    assembler.emit(mips.r_type(sp, zero, a0, 0x21))
+    assembler.jump_symbol(0x03, V2_ADAPTER_CALL)
+    assembler.emit(0)
+
+    mips.load_u32(assembler, t0, FONT_RENDERER_POINTER)
+    assembler.emit(mips.i_type(0x23, t0, t0, 0))
+    assembler.branch(0x04, t0, zero, "restore")
+    assembler.emit(0)
+    assembler.emit(
+        mips.i_type(
+            0x23,
+            sp,
+            t1,
+            V2_PRACTICE_SAVED_METRIC_CALLBACK,
+        )
+    )
+    assembler.emit(mips.i_type(0x2B, t0, t1, 0x7C))
+    assembler.emit(
+        mips.i_type(
+            0x23,
+            sp,
+            t1,
+            V2_PRACTICE_SAVED_DRAW_CALLBACK,
+        )
+    )
+    assembler.emit(mips.i_type(0x2B, t0, t1, 0x78))
+
+    assembler.label("restore")
+    for register, offset in saved_registers:
+        assembler.emit(mips.i_type(0x23, sp, register, offset))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_PRACTICE_ADAPTER, payload, relocations)
 
 
 def load_v2_session(
@@ -1613,6 +2447,18 @@ def v2_fragments() -> tuple[Fragment, ...]:
             kind="rodata",
             alignment=1,
         ),
+        Fragment(
+            V2_PRACTICE_TOKENS,
+            build_v2_practice_tokens(),
+            kind="rodata",
+            alignment=1,
+        ),
+        Fragment(
+            V2_PRACTICE_ICON_MAP,
+            build_v2_practice_icon_map(),
+            kind="rodata",
+            alignment=1,
+        ),
         build_v2_measure(),
         build_v2_prepare(),
         build_v2_adapter_call(),
@@ -1628,6 +2474,13 @@ def v2_fragments() -> tuple[Fragment, ...]:
             V2_PRACTICE_TITLE_ENTRY,
             PRACTICE_TITLE_MODE,
         ),
+        build_v2_native_measure(),
+        build_v2_wrap_native(),
+        build_v2_practice_append(),
+        build_v2_practice_icon_metric(),
+        build_v2_practice_icon_draw(),
+        build_v2_practice_callback(),
+        build_v2_practice_adapter(),
         build_v2_plain_space(),
         build_v2_newline_advance(),
         build_v2_right_edge(),

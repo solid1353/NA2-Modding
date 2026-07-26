@@ -118,6 +118,7 @@ class ResidentPatcherTests(unittest.TestCase):
                 "font_v2_layout_core",
                 "font_v2_controls",
                 "font_v2_titles",
+                "font_v2_practice_explanations",
             },
         )
         canonical_build = build_resident_payload(
@@ -140,6 +141,7 @@ class ResidentPatcherTests(unittest.TestCase):
                 "font_v2_controls_01",
                 "font_v2_titles_01",
                 "font_v2_titles_02",
+                "font_v2_practice_explanations_01",
             },
         )
 
@@ -183,6 +185,7 @@ class ResidentPatcherTests(unittest.TestCase):
                 0x279B20,
                 0x288848,
                 0x1C4B98,
+                0x1C4BA0,
                 0x1C6A28,
             },
         )
@@ -746,6 +749,292 @@ class ResidentPatcherTests(unittest.TestCase):
                     0,
                 ],
             )
+
+        practice_declaration = replace(
+            disabled_declaration,
+            patches={
+                patch_id: replace(
+                    patch,
+                    default_enabled=patch_id
+                    in {
+                        "font_v2_layout_core",
+                        "font_v2_practice_explanations",
+                    },
+                )
+                for patch_id, patch in disabled_declaration.patches.items()
+            },
+        )
+        practice_build = build_resident_payload(
+            practice_declaration.fragments
+        )
+        practice_resolved = resolve_symbolic_patches(
+            practice_build, practice_declaration.symbolic_patches
+        )
+        practice_package = engine.build_binary_package(
+            practice_declaration, practice_resolved
+        )
+        self.assertEqual(
+            {edit.edit_id for edit in practice_package.edits},
+            {
+                "font_v2_layout_core_01",
+                "font_v2_layout_core_02",
+                "font_v2_layout_core_03",
+                "font_v2_layout_core_04",
+                "font_v2_layout_core_05",
+                "font_v2_practice_explanations_01",
+            },
+        )
+        practice_edit = next(
+            edit
+            for edit in practice_package.edits
+            if edit.edit_id == "font_v2_practice_explanations_01"
+        )
+        self.assertEqual(practice_edit.destination_offset, 0x1C4BA0)
+        self.assertEqual(
+            bytes.fromhex(practice_edit.expected_hex),
+            bytes.fromhex(
+                "0042023C00A882440000000000AD16462D"
+                "8800008400001000000000"
+            ),
+        )
+        practice_hook = bytes.fromhex(practice_edit.replacement_hex)
+        self.assertEqual(len(practice_hook), 28)
+        self.assertEqual(
+            practice_hook[:12],
+            bytes.fromhex("2128000206B300464804868E"),
+        )
+        practice_jump = int.from_bytes(practice_hook[12:16], "little")
+        self.assertEqual(practice_jump >> 26, 0x03)
+        self.assertEqual(
+            (practice_jump & 0x03FFFFFF) << 2,
+            practice_build.symbols[
+                "localization.font.v2.practice_adapter"
+            ].runtime_address,
+        )
+        self.assertEqual(
+            practice_hook[16:],
+            bytes.fromhex("212080028900001000000000"),
+        )
+
+        practice_tokens = practice_build.symbols[
+            "localization.font.v2.practice_tokens"
+        ]
+        practice_token_payload = practice_build.payload[
+            practice_tokens.file_offset:
+            practice_tokens.file_offset + practice_tokens.size
+        ]
+        expected_tokens = (
+            "<iconUP>",
+            "<iconDOWN>",
+            "<iconRIGHT>",
+            "<iconLEFT>",
+            "<iconCIRCLE>",
+            "<iconTRIANGLE>",
+            "<iconSQUARE>",
+            "<iconCROSS>",
+            "<iconETC0>",
+            "<iconL1>",
+            "<iconR1>",
+            "<iconL2>",
+            "<iconR2>",
+        )
+        expected_token_payload = b"".join(
+            (token.encode("ascii") + b"\0").ljust(16, b"\0")
+            for token in expected_tokens
+        ) + b" \0"
+        self.assertEqual(practice_token_payload, expected_token_payload)
+
+        practice_icon_map = practice_build.symbols[
+            "localization.font.v2.practice_icon_map"
+        ]
+        self.assertEqual(
+            practice_build.payload[
+                practice_icon_map.file_offset:
+                practice_icon_map.file_offset + practice_icon_map.size
+            ],
+            bytes(
+                (
+                    5,
+                    4,
+                    7,
+                    6,
+                    9,
+                    11,
+                    10,
+                    12,
+                    0xFF,
+                    0xFF,
+                    0xFF,
+                    0,
+                    1,
+                    3,
+                    2,
+                    0xFF,
+                    0xFF,
+                    8,
+                )
+            ),
+        )
+
+        practice_fragments = {
+            fragment.symbol: fragment
+            for fragment in practice_declaration.fragments
+        }
+        self.assertEqual(
+            [
+                (relocation.kind, relocation.symbol)
+                for relocation in practice_fragments[
+                    "localization.font.v2.wrap_native"
+                ].relocations
+            ],
+            [
+                ("jal26", "localization.font.v2.native_measure"),
+                ("jal26", "localization.font.v2.native_measure"),
+                ("jal26", "localization.font.v2.native_measure"),
+            ],
+        )
+        self.assertEqual(
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation in practice_fragments[
+                    "localization.font.v2.practice_adapter"
+                ].relocations
+            },
+            {
+                ("hi16", "localization.font.v2.practice_tokens"),
+                ("lo16", "localization.font.v2.practice_tokens"),
+                ("jal26", "localization.font.v2.practice_append"),
+                (
+                    "hi16",
+                    "localization.font.v2.practice_icon_metric",
+                ),
+                (
+                    "lo16",
+                    "localization.font.v2.practice_icon_metric",
+                ),
+                (
+                    "hi16",
+                    "localization.font.v2.practice_icon_draw",
+                ),
+                (
+                    "lo16",
+                    "localization.font.v2.practice_icon_draw",
+                ),
+                ("jal26", "localization.font.v2.wrap_native"),
+                (
+                    "hi16",
+                    "localization.font.v2.practice_callback",
+                ),
+                (
+                    "lo16",
+                    "localization.font.v2.practice_callback",
+                ),
+                ("jal26", "localization.font.v2.adapter_call"),
+            },
+        )
+
+        practice_adapter = practice_build.symbols[
+            "localization.font.v2.practice_adapter"
+        ]
+        practice_adapter_payload = practice_build.payload[
+            practice_adapter.file_offset:
+            practice_adapter.file_offset + practice_adapter.size
+        ]
+        practice_adapter_words = {
+            int.from_bytes(
+                practice_adapter_payload[offset:offset + 4], "little"
+            )
+            for offset in range(0, len(practice_adapter_payload), 4)
+        }
+        for value in (39.2, 21.2, 28.0, 14.0):
+            bits = struct.unpack("<I", struct.pack("<f", value))[0]
+            self.assertIn(
+                mips.i_type(0x0F, 0, 8, bits >> 16),
+                practice_adapter_words,
+            )
+            if bits & 0xFFFF:
+                self.assertIn(
+                    mips.i_type(0x0D, 8, 8, bits & 0xFFFF),
+                    practice_adapter_words,
+                )
+        for expected_word in (
+            mips.i_type(0x0D, 8, 8, 364),
+            mips.i_type(0x0D, 8, 8, 48),
+            mips.i_type(0x0D, 8, 8, 2),
+            mips.i_type(0x0D, 8, 8, 0x1D),
+            mips.i_type(0x2B, 29, 19, 0x6C),
+            mips.i_type(0x2B, 29, 18, 0x70),
+            mips.i_type(0x23, 8, 9, 0x7C),
+            mips.i_type(0x23, 8, 9, 0x78),
+            mips.i_type(0x2B, 8, 9, 0x7C),
+            mips.i_type(0x2B, 8, 9, 0x78),
+        ):
+            self.assertIn(expected_word, practice_adapter_words)
+
+        practice_icon_draw = practice_build.symbols[
+            "localization.font.v2.practice_icon_draw"
+        ]
+        practice_icon_draw_payload = practice_build.payload[
+            practice_icon_draw.file_offset:
+            practice_icon_draw.file_offset + practice_icon_draw.size
+        ]
+        practice_icon_draw_words = {
+            int.from_bytes(
+                practice_icon_draw_payload[offset:offset + 4], "little"
+            )
+            for offset in range(0, len(practice_icon_draw_payload), 4)
+        }
+        for expected_word in (
+            mips.jump(0x03, 0x0037BB40),
+            mips.i_type(0x23, 8, 4, 0x6C),
+            mips.i_type(0x23, 8, 4, 0x70),
+            mips.i_type(0x0F, 0, 9, 0x008D),
+            mips.i_type(0x0D, 9, 9, 0x14C0),
+        ):
+            self.assertIn(expected_word, practice_icon_draw_words)
+
+        practice_callback = practice_build.symbols[
+            "localization.font.v2.practice_callback"
+        ]
+        practice_callback_payload = practice_build.payload[
+            practice_callback.file_offset:
+            practice_callback.file_offset + practice_callback.size
+        ]
+        self.assertEqual(
+            {
+                int.from_bytes(
+                    practice_callback_payload[offset:offset + 4],
+                    "little",
+                )
+                for offset in range(0, len(practice_callback_payload), 4)
+            },
+            {
+                mips.i_type(0x31, 7, 12, 0x48),
+                mips.i_type(0x31, 7, 13, 0x4C),
+                mips.jump(0x02, 0x00382310),
+                0,
+            },
+        )
+
+        practice_prepare = practice_build.symbols[
+            "localization.font.v2.prepare"
+        ]
+        practice_prepare_payload = practice_build.payload[
+            practice_prepare.file_offset:
+            practice_prepare.file_offset + practice_prepare.size
+        ]
+        practice_prepare_words = {
+            int.from_bytes(
+                practice_prepare_payload[offset:offset + 4], "little"
+            )
+            for offset in range(0, len(practice_prepare_payload), 4)
+        }
+        for expected_word in (
+            mips.i_type(0x0C, 5, 8, 0x10),
+            mips.i_type(0x0C, 10, 10, 0x08),
+            mips.i_type(0x31, 16, 5, 0x68),
+        ):
+            self.assertIn(expected_word, practice_prepare_words)
 
     def test_loads_fragments_and_compiles_symbolic_hooks(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -1560,7 +1560,7 @@ class UiTextureTests(unittest.TestCase):
             ],
         )
 
-    def test_shared_options_select_anchors_are_exact_nun5_copies(self) -> None:
+    def test_shared_options_footer_anchors_match_nun5_geometry(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
@@ -1575,28 +1575,44 @@ class UiTextureTests(unittest.TestCase):
                 "UI-ELF-009-02",
                 "UI-ELF-009-03",
                 "UI-ELF-009-04",
+                "UI-ELF-009-05",
+                "UI-ELF-009-06",
             ],
         )
-        self.assertTrue(all(item.operation == "copy" for item in edits))
+        self.assertEqual(
+            [item.operation for item in edits],
+            ["copy", "copy", "copy", "copy", "replace", "replace"],
+        )
         self.assertEqual(
             [item.destination_offset for item in edits],
-            [0x288DA4, 0x288DC8, 0x28A5B8, 0x28A5DC],
+            [0x288DA4, 0x288DC8, 0x28A5B8, 0x28A5DC, 0x28A568, 0x28A58C],
         )
         self.assertEqual(
             [item.expected_hex for item in edits],
-            ["6643023C", "6643023C", "6643023C", "6643023C"],
+            [
+                "6643023C",
+                "6643023C",
+                "6643023C",
+                "6643023C",
+                "C843023C",
+                "EB43023C",
+            ],
         )
         self.assertEqual(
             [item.source_target_id for item in edits],
-            ["nun5_elf", "nun5_elf", "nun5_elf", "nun5_elf"],
+            ["nun5_elf", "nun5_elf", "nun5_elf", "nun5_elf", "", ""],
         )
         self.assertEqual(
             [item.source_offset for item in edits],
-            [0x29A704, 0x29A72C, 0x29BF68, 0x29BF90],
+            [0x29A704, 0x29A72C, 0x29BF68, 0x29BF90, None, None],
         )
         self.assertEqual(
             [item.source_expected_hex for item in edits],
-            ["4843023C", "4843023C", "4843023C", "4843023C"],
+            ["4843023C", "4843023C", "4843023C", "4843023C", "", ""],
+        )
+        self.assertEqual(
+            [item.replacement_hex for item in edits],
+            ["", "", "", "", "C243023C", "E743023C"],
         )
 
     def test_collection_submenu_patch_uses_only_exact_nun5_records(self) -> None:
@@ -1716,14 +1732,14 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 290)
-        self.assertEqual(operations, {"copy": 99, "replace": 191})
+        self.assertEqual(len(ui_edits), 292)
+        self.assertEqual(operations, {"copy": 99, "replace": 193})
         self.assertEqual(
             copy_sources,
             {"nun5_elf": 64, "nun5_btl": 26, "nun5_etc": 9},
         )
         self.assertEqual(len(stage_scales), 24)
-        self.assertEqual(len(adaptations), 167)
+        self.assertEqual(len(adaptations), 169)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")

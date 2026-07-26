@@ -22,9 +22,11 @@ the right.
    effective NUN5 OK/Back anchors and matches the guarded runtime proof. Slot 5
    Stage Select applies the same effective anchors at its separate BTL call
    sites and now matches the guarded NUN5 proof. The original paired slots 1-5
-   are complete. Newer paired slot 1 and slot 2 cases add further Collection
-   footers after the current cases. Correct only the Cross and Triangle labels
-   across the preserved screens as one shared subtask.
+   are complete. Newer paired slot 1 Music Settings extends the existing
+   resident Music footer patch with effective NUN5 OK/Back anchors and now
+   matches its guarded proof. Newer paired slot 2 Collection Characters remains
+   open. Correct only the Cross and Triangle labels across the preserved
+   screens as one shared subtask.
 
 ## Report grids
 
@@ -44,4 +46,6 @@ the right.
 
 ![Cross/Triangle labels, slots 4-5](08-cross-triangle-labels-slots4-5.png)
 
-![Cross/Triangle labels, queued Collection Characters slot 2](09-cross-triangle-labels-new-slot2.png)
+![Cross/Triangle labels, newer Music Settings slot 1](09-cross-triangle-labels-new-slot1.png)
+
+![Cross/Triangle labels, queued Collection Characters slot 2](10-cross-triangle-labels-new-slot2.png)

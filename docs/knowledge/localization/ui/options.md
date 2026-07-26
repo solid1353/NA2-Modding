@@ -92,7 +92,7 @@ patched with only those two words rendered the complete Cross/OK and
 Triangle/Back groups at the NUN5 positions. The existing Cancel records,
 option values, input handling, and text/font rendering were unchanged.
 
-## Shared Controls and Music Select legend
+## Shared Controls and Music footer anchors
 
 The Controls and Music Options footer functions have the same regional
 structure. Each draws the normal OK and Back prompts, then draws the Select
@@ -123,8 +123,22 @@ NUN5 uses the same register and instruction positions but loads `200.0f` with
 
 `UI-ELF-009` copies all four NUN5 `4843023C` instructions over NA2's guarded
 `6643023C` instructions. This moves the two complete Select groups together by
-30 logical pixels while preserving their internal spacing and every unrelated
-footer prompt.
+30 logical pixels while preserving their internal spacing.
+
+The later paired Music Settings state exposes the same function's OK and Back
+groups. NA2 loads nominal X=`400` and X=`470` directly at runtime/file
+addresses `0x0038A468`/`0x28A568` and
+`0x0038A48C`/`0x28A58C`. NUN5 loads the same nominal values at
+`0x0039BD78`/`0x29BEF8` and `0x0039BDAC`/`0x29BF2C`, then converts two signed
+regional globals and adds `-12` and `-8`. Its effective anchors are therefore
+X=`388` and X=`462`.
+
+The NUN5 GP-relative loads are not ABI-compatible with NA2. `UI-ELF-009`
+extends the already-owning Music footer patch with two authored same-register
+constants (`C243023C` and `E743023C`) rather than duplicating the renderer or
+copying unsafe global accesses. A guarded task-owned state changed only those
+two words and aligned the complete Cross/OK and Triangle/Back groups with the
+NUN5 reference.
 
 ## Mode Select footer
 
@@ -205,12 +219,16 @@ footer on 2026-07-26. Confidence is **verified**.
 - The preserved Music Options pair showed NA2's static
   `SELECT button: Return to Defaults` legend 30 logical pixels to the right of
   NUN5. A guarded state containing all four instruction copies moved the
-  complete legend to the NUN5 X position; vertical placement, internal spacing,
-  OK, and Back remained unchanged.
+  complete legend to the NUN5 X position; vertical placement and internal
+  spacing remained unchanged.
+- A newer paired Music Settings state then isolated the remaining OK/Back
+  mismatch in the same renderer. Guarded X=`388`/`462` writes aligned both
+  groups; this is an extension of the existing `UI-ELF-009` ownership, not a
+  second implementation.
 - The overflowing Music Options help sentence is emitted through the text/font
   renderer and is outside this texture-layout correction.
 
 Confidence is **verified**: complete-function comparison establishes the shared
 algorithms and caller anchors, all destination and donor ranges match the clean
-binaries, and the exact donor records and instructions reproduce the NUN5
-geometry at runtime.
+binaries, and the exact donor Select instructions plus the bounded effective
+Music constants reproduce the NUN5 geometry at runtime.

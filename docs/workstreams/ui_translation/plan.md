@@ -535,7 +535,7 @@ placement is preserved. The user verified both integrated screens and accepted
 Command Menu and Command Chart as good.
 
 Canonical binary-package validation reports 7 targets, 9 groups, 101 patches,
-and 453 edits. The accepted isolated runtime result additionally copies the
+and 455 edits. The accepted isolated runtime result additionally copies the
 complete NUN5 OK/Back records, suppresses NA2's redundant separate glyph draws,
 and calibrates their NA2 anchors so both prompts match the NUN5 reference.
 The user's final paired visual inspection accepted Slot 4 as perfect on
@@ -557,9 +557,10 @@ effective NUN5 OK/Back anchors X=`388`/`462`; its task-owned render also
 matches the reference. Stage Select Slot 5 extends `UI-BTL-002` with the same
 effective anchors at its separate overlay call sites; its guarded task-owned
 render matches the reference. Current Slots 1-5 are complete. New paired
-slot-1 and slot-2
-Collection footer cases are preserved under UI Translation inputs and queued
-after the current slots. The
+slot-1 Music Settings extends the existing `UI-ELF-009` renderer patch with
+effective NUN5 OK/Back anchors X=`388`/`462`; its guarded task-owned render
+matches the reference. The newer paired slot-2 Collection Characters footer
+remains queued. The
 earlier Slot 2 failure of the `0x2E7E0` table/HOME helper remains evidence only
 that Collection root uses a separate renderer. The rejected
 rank-label Y-compensation trial and exact pixel/object evidence are preserved

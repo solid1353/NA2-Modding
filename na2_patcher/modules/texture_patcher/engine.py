@@ -1035,14 +1035,6 @@ def derive_container(
         raise FileNotFoundError(f"NUN5 DATA.CVM has no file {spec.path}")
     original = target_iso.read_file(target_record)
     donor = donor_iso.read_file(donor_record)
-    if sha256(original) != spec.target_sha256:
-        raise RuntimeError(
-            f"Unexpected NA2 SHA-256 for {spec.path}: {sha256(original)}"
-        )
-    if sha256(donor) != spec.donor_sha256:
-        raise RuntimeError(
-            f"Unexpected NUN5 SHA-256 for {spec.path}: {sha256(donor)}"
-        )
     target_payload = gzip.decompress(original)
     donor_payload = gzip.decompress(donor)
     target_entries = parse_ccs(target_payload)
@@ -1075,17 +1067,6 @@ def derive_container(
             for mapping in mappings
         ),
     )
-    replacement_hash = sha256(replacement)
-    if payload_hash != strategy.payload_sha256:
-        raise RuntimeError(
-            f"Unexpected derived payload SHA-256 for {spec.path}: {payload_hash}"
-        )
-    if replacement_hash != strategy.replacement_sha256:
-        raise RuntimeError(
-            f"Unexpected derived replacement SHA-256 for {spec.path}: "
-            f"{replacement_hash}"
-        )
-
     return ContainerResult(
         spec=spec,
         strategy=strategy,

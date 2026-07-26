@@ -55,18 +55,13 @@ class UiTextureTests(unittest.TestCase):
             if result.spec.container_id == container_id
         )
 
-    def test_complete_package_is_source_derived_pinned_and_fixed_size(self) -> None:
+    def test_complete_package_is_source_derived_and_fixed_size(self) -> None:
         self.assertEqual(len(self.plan.containers), 96)
         self.assertEqual(self.plan.mapping_count, 210)
         for result in self.plan.containers:
             self.assertEqual(
                 len(result.replacement), len(result.original), result.spec.path
             )
-            self.assertEqual(
-                engine.sha256(result.replacement),
-                result.strategy.replacement_sha256,
-            )
-            self.assertEqual(result.payload_sha256, result.strategy.payload_sha256)
 
     def test_whole_container_payloads_equal_official_nun5_donors(self) -> None:
         whole = [

@@ -12,9 +12,10 @@ copy one or more compatible TEX/CLT pairs, import a bounded indexed-row region,
 or replace an indexed texture with a guarded top-left crop after proving every
 discarded donor pixel is transparent. A crop may optionally remap pixels to a
 declared subset of the donor's own palette by nearest raw RGBA distance. Every
-result preserves the original compressed member capacity and is accepted only
-when its source, decompressed payload, and fixed-size replacement hashes match
-the feature-owned tables. Indexed-region translations use the pinned Zopfli
+result preserves the original compressed member capacity. Source,
+decompressed-payload, and fixed-size replacement hashes remain recorded in the
+feature-owned tables as provenance and diagnostics, but they do not gate
+derivation or ISO builds. Indexed-region translations use the pinned Zopfli
 encoder so their replacement bytes do not vary with the host zlib version.
 
 ## Invokes

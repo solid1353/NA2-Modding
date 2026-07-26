@@ -48,6 +48,12 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   matching conditions; use fallbacks only when necessary and state limitations.
 - `approved`, `qwe`, or the same physical keys under another keyboard layout
   authorizes the plan, including inside a longer message.
+- Record a result as user-verified, user-accepted, or equivalent only when the
+  user explicitly confirms that exact result. Plan approval authorizes work but
+  does not accept its result. Agent testing, runtime evidence, automated or
+  visual comparison, implementation, commit/push, silence, moving to another
+  case, or an unrelated continuation command never implies user acceptance.
+  Keep agent validation and pending user acceptance as separate statuses.
 - Execute freely within the approved scope. If the task becomes unclear or the
   whole approach is wrong, stop and clarify; a replacement plan needs approval.
 - During approved work, questions, corrections, objections, status requests,

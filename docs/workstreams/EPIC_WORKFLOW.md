@@ -31,6 +31,15 @@ For each subtask:
 3. Commit and push.
 4. Report the result using the accepted composed-grid format.
 
+Track implementation, agent validation, delivery to the user, and explicit
+user acceptance as separate states in epic READMEs and reports. Only an
+explicit user confirmation referring to the exact result may set
+`user-verified`, `accepted`, `confirmed complete`, or an equivalent final
+status. Tests, runtime proof, a matching grid, commit/push, silence, beginning
+the next subtask, or unrelated continuation instructions cannot do so.
+Continuous mode permits progress without acceptance; it does not manufacture
+acceptance for earlier subtasks.
+
 ## Epic-wide analysis and broad fixes
 
 Epic-wide analysis is exceptional. It is allowed only when the epic is new and

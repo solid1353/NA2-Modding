@@ -8,6 +8,10 @@
   right.
 - Every case occupies one row. Above the paired screenshots, show the game
   section, slot/case, status, and a concise finding or question.
+- A grid may label a case `user verified` or `user accepted` only after the
+  user explicitly confirms that exact displayed result. Until then, use a
+  distinct factual status such as `implemented`, `agent validated`, or
+  `awaiting user verification`; a matching comparison does not accept itself.
 - Use a dark, low-glare background with light text for the report frame,
   headers, and metadata. Do not tint or otherwise alter the source screenshots.
 - A grid may contain one row, but never only one screenshot.

@@ -188,6 +188,33 @@ Save/Load date and Play Time fields render correctly as ASCII. The patch is
 therefore proven for its original ASCII-conversion stage; no date-order,
 width, timer, or positioning change was included in that acceptance.
 
+## Battle Settings ASCII time value
+
+The matched slot-1 pair copied read-only from the user's PCSX2 is preserved
+under
+`work/Font/inputs/sstates/sjis_digits/slot-01-20260726_115913/` with source
+timestamps and SHA-256 provenance. Both embedded screenshots show Battle
+Settings with `Time 99`; NA2 emits the value through its fullwidth numeric
+path, producing visibly wider digit spacing than NUN5's ordinary ASCII value.
+
+NA2 `FUN_008801e0` is the Battle Settings row sub-renderer called by
+`FUN_008807a0`. For the Time row, value `100` takes a separate infinity-symbol
+branch. Every other value reaches the fullwidth formatter through the guarded
+24-byte BTL call block at file offset `0x1CC3D8` (Ghidra `0x00880298`,
+runtime `0x008802D8`). The NUN5 homolog is `FUN_0089cbd0`, called by
+`FUN_0089d280`.
+
+`font_battle_settings_ascii_digits` changes only that ordinary-value block to
+call NA2's existing ASCII `sprintf` at runtime `0x0017BCA0` with the immutable
+`%d` format at `0x006042D3`. The adjacent 40-byte branch ending at the edit
+site is independently guarded, so value `100` continues to render the native
+infinity symbol. Selector state, the stored timer value, the other five
+settings rows, and every other fullwidth formatter caller remain unchanged.
+The deterministic generator is
+`scripts/research/localization/generate_battle_settings_ascii_digits.py`.
+The patch remains `approved_for_test` until a worker ISO reproduces the
+slot-1 screen.
+
 Controls retains full-width `Linked Attack`, fits the official 19-byte
 `Ultimate Jutsu Prep` probe through the shared NUN5 logical-width helper,
 leaves `OFF` on the ordinary renderer, and restores local scale immediately

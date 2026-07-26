@@ -1856,6 +1856,10 @@ user-directed stage-by-stage reimplementation:
   changes its two time separators to ASCII colon. It preserves NA2's current
   date order, timer math, and all unrelated numeric callers while matching
   NUN5's two-digit hour display and 99-hour cap.
+- `font_battle_settings_ascii_digits` replaces only the ordinary numeric branch
+  of the Battle Settings Time row with NA2's existing ASCII `sprintf`. Its
+  adjacent exact guard preserves the separate value-100 infinity path and
+  leaves the other five rows and every unrelated numeric caller unchanged.
 - Retained, default-disabled `font_layout_wrappers` ports shared selected/unselected confirmation-choice
   placement, the 216-unit Practice pause-list fit and Y origin, Practice and
   Collection confirmation-body alignment, and the character-return body's
@@ -1918,6 +1922,9 @@ regenerates the resident renderer blob plus its fragment and relocation tables.
 `scripts/research/localization/generate_save_load_ascii_digits.py`
 deterministically generates and verifies the six Save/Load call replacements
 and their local punctuation edit.
+`scripts/research/localization/generate_battle_settings_ascii_digits.py`
+deterministically generates and verifies the single Battle Settings Time call
+replacement plus the untouched adjacent infinity branch.
 Exact static and symbolic hooks, guards, replacement templates, and reasons are
 recorded in the two module-owned `edits.tsv` files; confirmed evidence and
 negative results are recorded in

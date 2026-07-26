@@ -19,8 +19,12 @@ the right.
    character variants, including Sasuke's exact `3SSV3PCT.CCS`; all 13 now use
    complete official NUN5 donors. The retained Current screenshot predates
    this correction.
-3. Ninja Song details footer, ss8: X/Next and Triangle/Back are both shifted
-   right in Current NA2.28 relative to NUN5.
+3. Ninja Song details footer, ss8: implemented and statically verified,
+   awaiting the next normal pipeline runtime and user verification. The
+   separate details renderer omitted NUN5's regional `-20` X/Next and `-8`
+   Triangle/Back offsets; `UI-BTL-016` now uses effective X=`375`/`462`
+   without changing the already-proven summary footer. The retained Current
+   screenshot predates this correction.
 
 ## User-accepted completed cases
 

@@ -183,15 +183,16 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   blobs are stored in the repository.
 - `na2_patcher/features/localization/binary_patcher/` contains the canonical UI
   companion patches across BTL, ETC, and the boot ELF. The current UI subset
-  has 27 patches and 277 guarded edits: 99 exact NUN5 copies, 24 values
+  has 27 patches and 297 guarded edits: 100 exact NUN5 copies, 24 values
   derived from NUN5's stage-width formula, 78 complete Victory descriptors
-  derived from NUN5's frame templates and English widths, and 76 remaining
+  derived from NUN5's frame templates and English widths, and 95 remaining
   NA2-ABI adaptations. Stage Select, Jutsu, command-scroll, Items, Mash, and
   Mode Select and both Settings footers are runtime-proven; Vibration,
-  Collection, Victory, and the Battle Results screen-2 rank label still await
-  their respective normal runtime acceptance. The Battle Results labels,
-  title, footer, and moving clouds are proven, but the red rank text remains
-  vertically misregistered inside its stamp and remains in the epic.
+  Collection, Victory, the Battle Results screen-2 rank label, and the Ninja
+  Song details footer still await their respective normal runtime acceptance.
+  The Battle Results labels, title, summary footer, and moving clouds are
+  proven; the rank transform and details-footer anchors are implemented for the
+  next normal pipeline run.
 - Translation mapping version 35 restores the four Collection Movie rows to
   exact official NUN5 source strings with no authored line breaks. A
   clean-source full in-memory plan produced 2,437 fixed-size patch rows with
@@ -199,13 +200,12 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 - The Localization feature's aggregate current-profile pin covers both canonical
   module inputs and their feature-relative paths.
 - The complete Localization binary-patcher package validates as 7 targets, 9
-  groups, 101 patches, and 440 edits; its UI subset is the 27 patches and 277
+  groups, 102 patches, and 461 edits; its UI subset is the 27 patches and 297
   edits counted above. The UI texture plan derives all 109 members with 105 whole
   donors and four mapped exceptions: MODE2KDV, ENDDEMO, Haku, and Shikamaru.
   The historical runtime harness remains available. Current binary-patcher
-  validation passes; the texture test setup is independently blocked by the
-  existing `BATTLEGAUGE.CCS` derived-replacement hash mismatch and is reported
-  separately rather than attributed to this BTL/ELF-only patch.
+  validation and the focused UI texture provenance tests pass. No full-suite
+  run or ISO build was performed for the latest BTL-only footer change.
 - The 2026-07-19 non-launching normal profile build derived all 34 replacements
   through 76 texture mappings, applied all 88 companion edits, and reported
   `ISO result: updated` with rotation. Build record
@@ -537,17 +537,20 @@ NA2's imported-atlas garbage selection `(194,195,20,20)`. Pulse-dependent
 placement is preserved. The user verified both integrated screens and accepted
 Command Menu and Command Chart as good.
 
-Canonical binary-package validation reports 7 targets, 9 groups, 101 patches,
-and 455 edits. The accepted isolated runtime result additionally copies the
+Canonical binary-package validation reports 7 targets, 9 groups, 102 patches,
+and 461 edits. The accepted isolated runtime result additionally copies the
 complete NUN5 OK/Back records, suppresses NA2's redundant separate glyph draws,
 and calibrates their NA2 anchors so both prompts match the NUN5 reference.
 The user's final paired visual inspection accepted Slot 4 as perfect on
 2026-07-22; Slots 5 and 6 remain runtime-proven. The accepted Slot 4 savestate
 pair and active mismatch-list entry were then removed under workstream policy.
 
-The remaining maintained mismatch list contains only Battle Results screen 2
-(red rank text vertically misregistered inside the stamp). Character Items
-transition behavior and the Cross/Triangle-label batch are user-accepted.
+The remaining maintained mismatch list contains Battle Results screen 2
+(rank transform implemented, awaiting normal runtime and user verification),
+Victory ss7 (all 13 omitted character-name donors implemented, awaiting normal
+runtime and user verification), and Ninja Song details ss8 (separate footer
+anchors implemented, awaiting normal runtime and user verification). Character
+Items transition behavior and the Cross/Triangle-label batch are user-accepted.
 Within the accepted Cross/Triangle batch,
 the Options-root Slot 1 caller now uses the proven effective NUN5 OK/Back
 anchors X=`388`/`462`. Collection-root Slot 2 uses its separate ETC position
@@ -575,5 +578,5 @@ rank-label Y-compensation trial and exact pixel/object evidence are preserved
 in `docs/knowledge/localization/ui/battle.md`; resume from texture/CLUT binding
 or cached GS-packet evidence rather than retrying screen-space constants. The
 standalone binary-patcher package validates with the otherwise canonical
-patch; the full repository suite remains blocked by the independent
-`BATTLEGAUGE.CCS` expected-hash mismatch described above.
+patch. Focused UI texture provenance tests pass; the latest footer change has
+not received a full-suite run or ISO build.

@@ -992,3 +992,42 @@ identity, hidden-object negative result, and `Outstanding!` state-only trial
 are **runtime-proven** with **high confidence**. The full five-value production
 result remains **awaiting normal-build runtime validation** and is not
 user-accepted.
+
+### 2026-07-26 Ninja Song details-footer regional anchors
+
+The Ninja Song details screen has its own footer renderer; it is not the
+already-correct Battle Results summary footer:
+
+| Game | Function | Runtime range | BTL file range |
+| --- | --- | --- | --- |
+| NA2 | `FUN_007182E0` | `0x007182E0..0x00718920` | `0x64420..0x64A60` |
+| NUN5 | `FUN_0072DEA0` | `0x0072DEA0..0x0072E5B0` | `0x671E0..0x678F0` |
+
+Both functions draw the same two semantic prompt groups at Y=`348`. NA2 loads
+literal X=`395` and X=`470`. NUN5 loads the same nominal values, then adds its
+resident regional globals before calling the homologous common compositor:
+
+```cpp
+draw_common_prompt(395.0f - 20.0f, 348.0f, prompts, NEXT, true);
+draw_common_prompt(470.0f - 8.0f, 348.0f, prompts, BACK, true);
+```
+
+The paired task-owned ss8 screenshots independently measure the NA2 groups
+`+25` and `+10` output pixels right of NUN5. At the games' 512-logical-pixel
+width rendered to 640 pixels, those are exactly `+20` and `+8` game units.
+The complete paired functions provide the same result: NUN5 reads
+`iGpffff9a7c` before the nominal 395 call and the already-established
+`iGpffff9a78=-8` before the nominal 470 call. NA2 has neither addition.
+
+`UI-BTL-016-12` replaces the NA2 instruction pair at file `0x649CC`
+(`0x0071888C`) with X=`375` (`BB43023C00804234`).
+`UI-BTL-016-13` replaces the word at file `0x649F4` (`0x007188B4`) with
+X=`462` (`E743023C`). These are authored same-register ports because NUN5's
+GP-relative globals are not ABI-compatible with NA2. The proven summary-footer
+call sites at `0x62B24..0x62B5B` remain untouched.
+
+A useful negative result is that the ss8 state already contained the complete
+earlier `UI-BTL-016` summary-footer bytes, including X=`287`, Y=`356`, and the
+localized record-2 geometry. Reapplying or changing those rows would target
+the wrong screen. The two new rows are **statically verified with high
+confidence** and remain **awaiting normal-build runtime and user validation**.

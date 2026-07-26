@@ -201,8 +201,8 @@ $result = [pscustomobject]@{ Created = @(); Verified = @() }
 if ($PassThru) { $result }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch.ps1') -Content @'
-param([string]$IsoPath, [switch]$KeepExistingInstance)
-Write-Host "[fake] launch $IsoPath keep-existing=$KeepExistingInstance"
+param([string]$IsoPath)
+Write-Host "[fake] launch $IsoPath"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'build.ps1') -Content @'
 param([switch]$CandidateOnly, [string]$WorkerOutputIso)
@@ -259,11 +259,8 @@ else {
         -Condition (-not (Test-Na2WindowsAbsolutePath -Text $fakeRolling)) `
         -Message 'Root dispatch persisted an absolute path.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, 'keep-existing=True').Count -eq 2) `
-        -Message 'Current/Previous dispatch did not preserve an existing PCSX2 instance.'
-    Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, 'keep-existing=False').Count -eq 1) `
-        -Message 'Build-and-launch dispatch unexpectedly preserved an existing PCSX2 instance.'
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch .+$').Count -eq 3) `
+        -Message 'Root dispatch did not launch Current, Previous, and build output exactly once each.'
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: candidate').Count -eq 1) `
         -Message 'Test build did not dispatch exactly once to Candidate.'

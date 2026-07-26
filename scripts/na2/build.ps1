@@ -9,7 +9,6 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 . (Join-Path $PSScriptRoot '..\lib\build_log.ps1')
-. (Join-Path $PSScriptRoot '..\pcsx2\process.ps1')
 . (Join-Path $PSScriptRoot 'worker_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
@@ -205,7 +204,7 @@ if ($CandidateOnly -or $null -ne $workerBuild) {
         'Candidate mode'
     }
     Write-Host (
-        "[na2] ${isolatedLabel}: full verified build; preflight, PCSX2 shutdown, " +
+        "[na2] ${isolatedLabel}: full verified build; preflight, " +
         'Current/Previous promotion, rotation, and receipt updates are disabled.'
     ) -ForegroundColor Cyan
     if ($TranslationDisplay -ne 'translation') {
@@ -316,7 +315,6 @@ if ($CandidateOnly -or $null -ne $workerBuild) {
             BuildId = $candidateBuildId
             ProfileLogDirectory = $candidateRecord
             PreflightCacheHit = $false
-            Pcsx2Closed = $false
         }
     }
     finally {
@@ -413,11 +411,6 @@ else {
 $buildId = (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
 $profileLog = Join-Path $buildLogRoot $buildId
 $profileLogDirectory = [IO.Path]::GetRelativePath($projectPaths.repository, $profileLog)
-$pcsx2Exe = $projectPaths.files.pcsx2_user_exe
-$stopGeneralPcsx2 = (
-    [string]::IsNullOrWhiteSpace($WorkerOutputIso) -and
-    -not $CandidateOnly
-)
 $arguments = @(
     '-B'
     '-m', 'na2_patcher.build_profile'
@@ -427,9 +420,6 @@ $arguments = @(
     '--profile-log-directory', $profileLogDirectory
 )
 
-if ($stopGeneralPcsx2) {
-    Stop-Na2Pcsx2 -Executable $pcsx2Exe
-}
 $promotionCompleted = $false
 try {
     Push-Location $projectPaths.repository
@@ -448,9 +438,6 @@ try {
         throw 'Profile build completed without creating its structured build record.'
     }
 
-    if ($stopGeneralPcsx2) {
-        Stop-Na2Pcsx2 -Executable $pcsx2Exe
-    }
     $promotion = Promote-VerifiedIso `
         -CurrentIso $resolvedOutputIso `
         -PreviousIso $resolvedPreviousIso

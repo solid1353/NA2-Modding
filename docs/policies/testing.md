@@ -42,9 +42,7 @@ drift-prone implementation details here.
   `work/<task title>/pcsx2/`, assign a PINE port unique among live agent
   instances, and operate only that copy. Other workstream copies/processes are
   off-limits.
-- User-owned shared builds may close only the configured user PCSX2 process
-  when required for promotion. Candidate and worker builds never probe or close
-  PCSX2.
+- Builds and single-ISO launch commands never probe or close any PCSX2 process.
 - Bare `na2`, launch selectors, standalone `act`, `na`, and UI pair-launch
   commands are user-only.
 

@@ -65,10 +65,10 @@ if ($Help) {
         'NA2 commands:'
         "  na2       Build the pinned current profile, conditionally rotate, then run $currentIsoName"
         "  na2 -b    Build and conditionally rotate $currentIsoName without launching PCSX2"
-        "  na2 -t    Build build/$candidateIsoName without closing PCSX2 or changing Current/Previous"
+        "  na2 -t    Build build/$candidateIsoName without changing Current/Previous"
         '  na2 -t work/<worker>/build/<name>.iso  Build an isolated worker ISO and worker-owned logs'
-        "  na2 -c    Run build/$currentIsoName without rebuilding or closing PCSX2"
-        "  na2 -p    Run build/$previousIsoName without rebuilding or closing PCSX2"
+        "  na2 -c    Run build/$currentIsoName without rebuilding"
+        "  na2 -p    Run build/$previousIsoName without rebuilding"
         '  na2 release [version]  Validate, commit, tag, and publish a GitHub release'
         ''
     ) | Write-Output
@@ -127,7 +127,7 @@ try {
             }
         }
         else {
-            Write-Na2Stage "Build $candidateIsoName without closing PCSX2"
+            Write-Na2Stage "Build $candidateIsoName"
             $buildResult = & (Join-Path $projectPaths.scripts 'na2\build.ps1') -CandidateOnly
             if (-not $buildResult -or $buildResult.Status -ne 'candidate') {
                 throw 'Candidate build did not return a valid result.'
@@ -153,11 +153,7 @@ try {
         $isoName = [IO.Path]::GetFileName($isoPath)
         Write-Na2Stage "Run $isoName without rebuilding"
         Invoke-Na2Actualization
-        $launchArguments = @{
-            IsoPath = $isoPath
-            KeepExistingInstance = $true
-        }
-        & (Join-Path $projectPaths.pcsx2_scripts 'launch.ps1') @launchArguments
+        & (Join-Path $projectPaths.pcsx2_scripts 'launch.ps1') -IsoPath $isoPath
     }
     else {
         Write-Na2Stage '1/2 Build pinned current profile'

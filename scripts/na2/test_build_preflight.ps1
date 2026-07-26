@@ -150,8 +150,6 @@ try {
     $candidateIso = Join-Path $repository 'build\NA2.28 - Candidate.iso'
     Assert-Na2PreflightTest -Condition ($candidate.Status -eq 'candidate') `
         -Message 'Candidate-only build did not return candidate status.'
-    Assert-Na2PreflightTest -Condition (-not $candidate.Pcsx2Closed) `
-        -Message 'Candidate-only build reported that it closed PCSX2.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
         -Message 'Candidate-only build invoked preflight or receipt recording.'
     Assert-Na2PreflightTest `

@@ -69,8 +69,8 @@ are deleted only after the complete two-ISO mapping has been replaced.
 Deleting or corrupting the preflight receipt is safe: the next invocation runs
 the complete verified build and recreates the receipt only after success.
 Candidate-only builds always perform complete composition, report whether the
-Candidate ISO changed, and record that rotation and PCSX2 shutdown were both
-disabled.
+Candidate ISO changed, and record that rotation is disabled and PCSX2 is left
+running.
 
 ## Worker build and runtime logs
 

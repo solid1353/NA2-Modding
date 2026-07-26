@@ -4,24 +4,27 @@ File-backed changes to NA2's rendering behavior.
 
 ## ELF-R001: Native 16:9 horizontal scale
 
-Clean NA2 writes the horizontal and vertical scale fields of its persistent
-rendering state through `FUN_0010ECC0`. The original four-instruction routine
-stores caller-provided `f12` and `f13` at object offsets `0x274` and `0x278`.
+Clean NA2 constructs its primary renderer through the global wrapper at
+`0x00609160`. `FUN_0010A1D0` stores the resulting renderer pointer at wrapper
+offset `0x3C`, or `0x0060919C`. In the current build that pointer resolves to
+heap object `0x00B0A790`, making its horizontal-scale field
+`0x00B0A790 + 0x274 = 0x00B0AA04`.
 
 The official PCSX2 widescreen cheat overwrites that same field after allocation
 with `0.75f`. Its absolute heap address changes whenever the resident-payload
-reservation changes. The earlier attempt to change one constructor input was
-insufficient because later rendering-state updates can supply the original
-scale again.
+reservation changes.
 
-`ELF-R001` instead replaces `FUN_0010ECC0` at runtime address `0x0010ECC0`
-(ELF offset `0xEDC0`). It loads `0x3F400000`, stores it at `object + 0x274`,
-and preserves the caller-provided vertical scale at `object + 0x278` in the
-return instruction's delay slot. Every write therefore uses the live object
-pointer without depending on heap placement.
+`ELF-R001` patches the primary-wrapper initialization sequence at runtime
+address `0x001060D4` (ELF offset `0x61D4`). Immediately after
+`FUN_0010A1D0` returns, the sequence loads the renderer from the stable wrapper
+pointer and stores `0x3F400000` at renderer offset `0x274`. It leaves every
+secondary rendering state and the vertical scale at `0x278` untouched.
 
-The emulator output aspect remains a separate PCSX2 setting. The canonical
-PNACH contains no widescreen memory write or aspect directive.
+The previous replacement of the shared rendering-state writer was too broad:
+it forced `0.75f` into secondary viewports as well as the primary renderer.
+
+The emulator output aspect remains a separate PCSX2 setting. The file-backed
+patch does not depend on a PNACH memory write.
 
 ## Binary patcher
 

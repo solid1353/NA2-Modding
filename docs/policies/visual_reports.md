@@ -15,6 +15,12 @@
 - Use a dark, low-glare background with light text for the report frame,
   headers, and metadata. Do not tint or otherwise alter the source screenshots.
 - A grid may contain one row, but never only one screenshot.
+- Result grids use only actual post-change output evidence for the reported
+  implementation. Never place source, donor, baseline, pre-fix, preserved
+  input, or expected-reference screenshots in a result position or attach
+  their grid beneath a result report in a way that represents them as output.
+  If no post-change output exists, state that validation remains pending and
+  do not attach an input grid as the result.
 - Larger reports split grids under visible game-section and screen-semantic
   headings and state the covered slots. Multiple chunks of the same semantic
   group remain under one shared heading; never present the report as an

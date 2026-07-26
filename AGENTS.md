@@ -54,7 +54,9 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   delivery, perform only work strictly required to compose or refresh those
   grids; do not send status text or continue investigation or implementation.
   If required inputs are missing, report the exact missing input immediately
-  instead of continuing other work.
+  instead of continuing other work. Result imagery must be actual post-change
+  output; never present source, donor, baseline, pre-fix, or other input
+  screenshots as results.
 - `sw`: resume after the user changed the chat to the recommended effort.
 - `ss`: savestate; `ss<number>`: that numbered savestate slot in the user's
   PCSX2, for example `ss7`.

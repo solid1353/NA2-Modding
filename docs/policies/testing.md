@@ -37,16 +37,21 @@ drift-prone implementation details here.
   authorizes only the requested launch, not other user-PCSX2 changes or control.
 - `@pcsx2_user/sstates/` and `snaps/` are user read-only libraries. Copy chosen
   inputs with provenance into the task's `inputs/sstates/` or
-  `inputs/screenshots/`. Agent-created states belong under task artifacts.
+  `inputs/screenshots/`. When a workstream needs a savestate that the user has
+  not supplied, stop and ask the user for that exact state; do not create or
+  navigate to a substitute state.
 - When PCSX2 is needed, copy the complete read-only `@pcsx2_clean` template to
   `work/<task title>/pcsx2/`, assign a PINE port unique among live agent
   instances, and operate only that copy. Other workstream copies/processes are
   off-limits.
-- Agent-only PCSX2 testing stays hidden; use PINE, maintained operation plans,
-  or background window messages. A worker instance may be visible only when
-  the user must personally inspect or interact with it. Before that launch,
-  state exactly what is required from the user. Never expose, restore,
-  activate, or foreground an instance merely for agent automation.
+- Agent-only PCSX2 testing stays hidden. PINE and maintained operation plans
+  may load a user-supplied state, capture output, or perform bounded memory
+  operations, but never navigate emulator or game menus. Do not inject window
+  messages or keystrokes to manufacture a required game position. A worker
+  instance may be visible only when the user must personally inspect or
+  interact with it; before launch, state exactly what is required from the
+  user. Never expose, restore, activate, or foreground an instance merely for
+  agent automation.
 - Builds and single-ISO launch commands never probe or close any PCSX2 process.
 - Bare `na2`, launch selectors, standalone `act`, `na`, and UI pair-launch
   commands are user-only.

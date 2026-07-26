@@ -50,6 +50,7 @@
 
 - Use scoped elevation from the first attempt for every filesystem operation,
   including reads, listings, searches, hashes, link checks, and mutations.
+- Invoke every script with scoped elevation from the first attempt.
 - If any operation fails because of permissions, always retry that same
   operation with elevation.
 - After an access failure, retry only the failed operation; do not repeat work

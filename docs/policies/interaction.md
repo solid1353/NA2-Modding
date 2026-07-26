@@ -58,8 +58,13 @@ Next response: short plan + effort recommendation + needed user inputs + approva
 - A correction or stop directed at one mistaken action cancels only that
   action. Isolate or undo the detour and continue the parent task unless the
   user stops or replaces it.
-- When asked for an already-produced result or evidence, deliver it immediately
-  in commentary at the next safe boundary before unrelated work, then resume.
+- When asked for an already-produced result or evidence, deliver the actual
+  requested content immediately in commentary at the next safe boundary before
+  any unrelated work. A visual report is not delivered by acknowledgment,
+  description, path, link, tool output, or a statement that it exists: the
+  composed grid images themselves must be visibly attached. During Continuous
+  work, resume the active subtask in the same turn after delivery; never use a
+  final response for this intermediate handoff.
 - When completed, refresh Git, commit/push the intended work, report the result,
   and do not offer task removal. Completion ends selected-task state even if
   the entry remains in `TASKS.md`.

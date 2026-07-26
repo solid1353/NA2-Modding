@@ -56,8 +56,12 @@ same heading instead of presenting those grids as separate groups. In
 sequential mode, present the remaining epic after the completed subtask is
 accepted.
 
-Commentary or tool output does not prove delivery. The final response itself
-must visibly contain every semantic-group heading and every composed grid.
+Internal tool output, paths, links, or claims of delivery do not prove
+delivery. The user-facing response appropriate to the current task state must
+visibly contain every semantic-group heading and every composed grid:
+commentary while actionable Continuous work remains, or the final response
+only at a permitted handoff. After an intermediate Continuous-mode report,
+resume the active subtask in the same turn.
 
 Preserve each epic and its report grids together under
 `docs/workstreams/<workstream>/epics/<epic-id>/`. Each epic directory contains

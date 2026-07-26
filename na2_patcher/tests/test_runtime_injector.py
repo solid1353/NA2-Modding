@@ -140,6 +140,7 @@ class RuntimeInjectorTests(unittest.TestCase):
                 "font_v2_layout_core_04",
                 "font_v2_layout_core_05",
                 "font_v2_controls_01",
+                "font_v2_controls_02",
                 "font_v2_titles_01",
                 "font_v2_titles_02",
                 "font_v2_practice_explanations_01",
@@ -195,6 +196,7 @@ class RuntimeInjectorTests(unittest.TestCase):
                 0x279250,
                 0x279B20,
                 0x288848,
+                0x2888D4,
                 0x1C4B98,
                 0x1C4BA0,
                 0x1C6A28,
@@ -476,30 +478,47 @@ class RuntimeInjectorTests(unittest.TestCase):
                 "font_v2_layout_core_04",
                 "font_v2_layout_core_05",
                 "font_v2_controls_01",
+                "font_v2_controls_02",
             },
         )
-        controls_edit = next(
-            edit
+        controls_edits = {
+            edit.edit_id: edit
             for edit in controls_package.edits
-            if edit.edit_id == "font_v2_controls_01"
+            if edit.patch_id == "font_v2_controls"
+        }
+        self.assertEqual(
+            {
+                edit_id: edit.destination_offset
+                for edit_id, edit in controls_edits.items()
+            },
+            {
+                "font_v2_controls_01": 0x288848,
+                "font_v2_controls_02": 0x2888D4,
+            },
         )
-        self.assertEqual(controls_edit.destination_offset, 0x288848)
+        controls_edit = controls_edits["font_v2_controls_01"]
         self.assertEqual(
             bytes.fromhex(controls_edit.expected_hex),
+            bytes.fromhex("90E40D0C00000000"),
+        )
+        value_edit = controls_edits["font_v2_controls_02"]
+        self.assertEqual(
+            bytes.fromhex(value_edit.expected_hex),
             bytes.fromhex("90E40D0C00000000"),
         )
         controls_adapter = controls_build.symbols[
             "localization.font.v2.controls_adapter"
         ]
-        controls_hook = bytes.fromhex(controls_edit.replacement_hex)
-        self.assertEqual(len(controls_hook), 8)
-        controls_jump = int.from_bytes(controls_hook[:4], "little")
-        self.assertEqual(controls_jump >> 26, 0x03)
-        self.assertEqual(
-            (controls_jump & 0x03FFFFFF) << 2,
-            controls_adapter.runtime_address,
-        )
-        self.assertEqual(controls_hook[4:], b"\0" * 4)
+        for edit in (controls_edit, value_edit):
+            controls_hook = bytes.fromhex(edit.replacement_hex)
+            self.assertEqual(len(controls_hook), 8)
+            controls_jump = int.from_bytes(controls_hook[:4], "little")
+            self.assertEqual(controls_jump >> 26, 0x03)
+            self.assertEqual(
+                (controls_jump & 0x03FFFFFF) << 2,
+                controls_adapter.runtime_address,
+            )
+            self.assertEqual(controls_hook[4:], b"\0" * 4)
 
         controls_adapter_fragment = next(
             fragment

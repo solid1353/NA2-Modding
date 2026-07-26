@@ -97,7 +97,8 @@ The first family-specific fragments are now
 `localization.font.v2.controls_adapter` and
 `localization.font.v2.controls_callback`. The guarded call at NA2 runtime
 `0x00388748` / ELF file `0x288848` is shared by only the first eight Controls
-action labels. The separate ninth `OFF` call is not redirected. The adapter
+action labels. The separate ninth ON/OFF call at runtime `0x003887D4` / ELF
+file `0x2888D4` now uses the same adapter. The adapter
 constructs one stack-local session with NUN5's 128-unit width, scale `1` for
 fitting labels, `128 / 178` for `Ultimate Jutsu Prep`, and the proven
 caller-native origin formula. NUN5 `FUN_00399df0` passes box-left `60` for 1P
@@ -110,12 +111,50 @@ the sign before rejection. Its callback converts the prepared left edge back
 to the exact center argument expected by NA2's native `FUN_00379240`, so NA2's
 internal legacy measurement cancels without replacing the v2 box position.
 
-Both `font_v2_layout_core` and `font_v2_controls` are runtime-proven and
-enabled after the matched Controls review. The final 640x480 pair
-matches the eight NUN5 label bounds and centers, keeps `Linked Attack` full
-width, fits `Ultimate Jutsu Prep` with the exact 178-unit denominator, and
-leaves `OFF` on the ordinary renderer. The user explicitly accepted this
-result on 2026-07-26.
+The core and first-eight-label path are runtime-proven from the matched
+Controls review. The final 640x480 pair matches those eight NUN5 label bounds
+and centers, keeps `Linked Attack` full width, and fits
+`Ultimate Jutsu Prep` with the exact 178-unit denominator. The user explicitly
+accepted that result on 2026-07-26. The later ninth-call extension reuses the
+same accepted adapter but remains `approved_for_test` pending the supplied ss1
+runtime check.
+
+## Contextual Special Controls / Practice Settings ON/OFF
+
+The supplied paired states are retained under
+`work/Localization/inputs/sstates/2026-07-26-ss1-8-on-off-split/`. Their
+embedded frames show two distinct NUN5 presentations: ss1 Special Controls
+looks like compact uppercase `ON`/`OFF`, while ss8 Practice Settings visibly
+uses title-case `Off`/`On`.
+
+The NUN5 Special result is not sourced from uppercase literals. Homolog
+`FUN_00399DF0` resolves the ninth selector through `FUN_003D12B0`; the English
+language table at runtime `0x00613D80` returns physical SLES strings
+`Off`/`On` at files `0x513EF8`/`0x513EFC`. It then calls ordinary
+`FUN_00385DF0` at runtime `0x0039A06C` with width `0x80` and mode `0`.
+The separate uppercase NUN5 literals at files `0x513E68`/`0x513E6C` are not
+used by this call.
+
+NA2 `FUN_003885B0` already reads the same title-case semantics from the
+two-pointer table at runtime `0x00604658` / ELF file `0x504758`, pointing to
+T1956/T1957 `Off`/`On` at `0x00604648`/`0x00604650`. Its ninth call at runtime
+`0x003887D4` instead used ordinary `FUN_00379240` without the accepted compact
+v2 metric session. The bounded port leaves the selector table unchanged and
+routes only this call through the existing 128-unit Controls adapter. The
+short value does not shrink, so scale remains `1`; native Y and selection
+color remain caller-owned.
+
+Practice Settings has three independent uppercase `[OFF, ON]` arrays at
+runtime `0x00605AC0`, `0x00605AD0`, and `0x00605AD8`. The BTL row table points
+to those arrays from files `0x20B498`, `0x20B49C`, and `0x20B4A0` for Commands,
+Damage, and Guide Ninja Sound. Each row pointer is redirected to the existing
+title-case table `0x00604658`, preserving the original Off-then-On index order
+and leaving T37/T38 available to every other consumer. No string bytes, global
+glyph metrics, or unrelated renderer calls change. The deterministic guard
+generator is
+`scripts/research/localization/generate_on_off_context_split.py`; the combined
+pointer and call-site patch remains `approved_for_test` until the user checks
+the paired ss1/ss8 contexts.
 
 The supplied title-to-Load `ss1` has boot CRC `A8A3C694`, state SHA-256
 `B35AFFF69FDCDDF5478B6AE86DC9BF909469512F52E5268471FC9CF524EF1AF4`,
@@ -127,7 +166,7 @@ helper-erasure freeze. Exact provenance is retained under
 `work/Font/inputs/sstates/autofit_v2/controls/load-transition/`.
 
 Static linked-package validation confirms the five core hook targets, the
-single eight-byte Controls redirect, both adapter ABIs, state restoration,
+two eight-byte Controls redirects, both adapter ABIs, state restoration,
 internal branch bounds, the `Ultimate Jutsu Prep` denominator of 178, and the
 unchanged retained-v1 blob. The separate v2 asset is 1,760 bytes with SHA-256
 `AA56FE2A0D6BCB6FFEC7715D69D8CA17BFB76CE5CCB16A0597BF68F60BC645B8`.

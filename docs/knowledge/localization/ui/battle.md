@@ -1085,10 +1085,11 @@ copies exactly the five NUN5 records from SLES file `0x4DDCE0` to NA2 BTL file
 delta calculation stays coherent. The edit changes no result value, selector
 index, animation, position, rotation, timing, input, or model code.
 
-The table identity, controller/index sequence, function homologs, and
-guarded donor bytes are **statically verified with high confidence**. The
-canonical correction is **implemented and awaiting normal-build runtime
-verification**; it is not yet user-accepted.
+The table identity, controller/index sequence, function homologs, and guarded
+donor bytes are **statically verified with high confidence**. The user
+explicitly verified the normal-pipeline result for all five rank stamps on
+2026-07-26, so the canonical correction is **runtime-proven and
+user-accepted**.
 
 ### 2026-07-26 Ninja Song details-footer regional anchors
 

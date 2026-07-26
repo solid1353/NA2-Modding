@@ -1178,7 +1178,7 @@ class UiTextureTests(unittest.TestCase):
         )
         self.assertEqual(
             (patch.status, patch.confidence),
-            ("approved_for_test", "verified"),
+            ("runtime_proven", "verified"),
         )
         self.assertEqual(
             [

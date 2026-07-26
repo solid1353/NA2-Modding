@@ -542,9 +542,10 @@ The user's final paired visual inspection accepted Slot 4 as perfect on
 2026-07-22; Slots 5 and 6 remain runtime-proven. The accepted Slot 4 savestate
 pair and active mismatch-list entry were then removed under workstream policy.
 
-The remaining maintained mismatch list contains Battle Results screen 2
-(red rank text vertically misregistered inside the stamp), Character Items
-transition behavior, and the Cross/Triangle-label batch. Within that batch,
+The remaining maintained mismatch list contains only Battle Results screen 2
+(red rank text vertically misregistered inside the stamp). Character Items
+transition behavior and the Cross/Triangle-label batch are user-accepted.
+Within the accepted Cross/Triangle batch,
 the Options-root Slot 1 caller now uses the proven effective NUN5 OK/Back
 anchors X=`388`/`462`. Collection-root Slot 2 uses its separate ETC position
 table with effective NUN5 anchors X=`368`/`452`; a guarded task-owned render

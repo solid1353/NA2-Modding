@@ -1676,12 +1676,13 @@ at X=`230`. Their NUN5 homologs place both calls at X=`200`:
 `UI-ELF-009` copies all four exact NUN5 `lui v0,0x4348` anchor instructions
 over the corresponding guarded NA2 `lui v0,0x4366` instructions. The broad
 correction keeps each icon and legend paired, applies consistently to both
-screens, and leaves vertical placement and internal spacing unchanged. The
-Music renderer also loads nominal OK/Back X=`400`/`470` directly while its
-NUN5 homolog applies regional `-12`/`-8` offsets. Two authored same-register
-constants at `0x28A568`/`0x28A58C` reproduce the effective donor anchors
+screens, and leaves vertical placement and internal spacing unchanged. Both
+renderers also load nominal OK/Back X=`400`/`470` directly while their NUN5
+homologs apply the same regional `-12`/`-8` offsets. Two authored
+same-register constants in each renderer reproduce the effective donor anchors
 X=`388`/`462` without copying ABI-incompatible GP-relative loads. Guarded
-task-owned Music Options states reproduce the complete NUN5 footer placement.
+task-owned Music and Control Settings states reproduce both complete NUN5
+footer placements.
 The complete homolog mappings, reconstruction, runtime evidence, and rejected
 wrong-table probe are preserved in
 `docs/knowledge/localization/ui/options.md`.

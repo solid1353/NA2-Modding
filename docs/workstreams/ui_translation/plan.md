@@ -562,7 +562,9 @@ effective NUN5 OK/Back anchors X=`388`/`462`; its guarded task-owned render
 matches the reference. Newer paired slot-2 Collection Characters is a true
 reuse of the already-canonical `UI-ELF-008` HOME helper: the existing five
 guarded rows align its OK/Back groups with no new binary edit. Newer paired
-slot-3 Control Settings remains queued. The
+slot-3 Control Settings extends the same `UI-ELF-009` ownership at its separate
+renderer call sites with the same effective NUN5 anchors; its guarded
+task-owned render matches the reference. The
 earlier original Slot 2 failure of the `0x2E7E0` table/HOME helper remains
 evidence only that Collection root uses a separate renderer. The rejected
 rank-label Y-compensation trial and exact pixel/object evidence are preserved

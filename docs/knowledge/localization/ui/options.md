@@ -125,20 +125,23 @@ NUN5 uses the same register and instruction positions but loads `200.0f` with
 `6643023C` instructions. This moves the two complete Select groups together by
 30 logical pixels while preserving their internal spacing.
 
-The later paired Music Settings state exposes the same function's OK and Back
-groups. NA2 loads nominal X=`400` and X=`470` directly at runtime/file
-addresses `0x0038A468`/`0x28A568` and
-`0x0038A48C`/`0x28A58C`. NUN5 loads the same nominal values at
-`0x0039BD78`/`0x29BEF8` and `0x0039BDAC`/`0x29BF2C`, then converts two signed
-regional globals and adds `-12` and `-8`. Its effective anchors are therefore
-X=`388` and X=`462`.
+Later paired Music Settings and Control Settings states expose the OK and Back
+groups in both homologous functions. NA2 loads nominal X=`400` and X=`470`
+directly at Music runtime/file addresses `0x0038A468`/`0x28A568` and
+`0x0038A48C`/`0x28A58C`, and at Controls addresses
+`0x00388C5C`/`0x288D5C` and `0x00388C80`/`0x288D80`. NUN5 loads the same
+nominal values in both homologs, then converts the same two signed regional
+globals and adds `-12` and `-8`. Its effective anchors are therefore X=`388`
+and X=`462` on both screens.
 
 The NUN5 GP-relative loads are not ABI-compatible with NA2. `UI-ELF-009`
-extends the already-owning Music footer patch with two authored same-register
-constants (`C243023C` and `E743023C`) rather than duplicating the renderer or
-copying unsafe global accesses. A guarded task-owned state changed only those
-two words and aligned the complete Cross/OK and Triangle/Back groups with the
-NUN5 reference.
+extends the already-owning shared footer patch with two authored same-register
+constants per function (`C243023C` and `E743023C`) rather than duplicating
+logic or copying unsafe global accesses. Each guarded task-owned state changed
+only its two function-local words and aligned the complete Cross/OK and
+Triangle/Back groups with the NUN5 reference. This proves shared geometry but
+separate call sites: the implementation belongs to one patch, while each
+resident renderer still needs its own guarded pair of constants.
 
 ## Mode Select footer
 

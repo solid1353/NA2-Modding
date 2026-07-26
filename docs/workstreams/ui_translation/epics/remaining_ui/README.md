@@ -26,9 +26,10 @@ the right.
    resident Music footer patch with effective NUN5 OK/Back anchors and now
    matches its guarded proof. Newer paired slot 2 Collection Characters is
    confirmed fixed by the already-canonical shared HOME helper, with no new
-   binary edit. Newer paired slot 3 Control Settings still has right-shifted
-   OK/Back groups. Correct only the Cross and Triangle labels across the
-   preserved screens as one shared subtask.
+   binary edit. Newer paired slot 3 Control Settings extends the same
+   `UI-ELF-009` ownership at separate Controls call sites and matches the
+   guarded NUN5 proof. The Cross/Triangle-label batch is implemented across
+   every preserved pair and awaits user acceptance of the newest slot.
 
 ## Report grids
 
@@ -52,4 +53,4 @@ the right.
 
 ![Cross/Triangle labels, queued Collection Characters slot 2](10-cross-triangle-labels-new-slot2.png)
 
-![Cross/Triangle labels, queued Control Settings slot 3](11-cross-triangle-labels-new-slot3.png)
+![Cross/Triangle labels, fixed Control Settings slot 3](11-cross-triangle-labels-new-slot3.png)

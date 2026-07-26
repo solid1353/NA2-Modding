@@ -1577,15 +1577,35 @@ class UiTextureTests(unittest.TestCase):
                 "UI-ELF-009-04",
                 "UI-ELF-009-05",
                 "UI-ELF-009-06",
+                "UI-ELF-009-07",
+                "UI-ELF-009-08",
             ],
         )
         self.assertEqual(
             [item.operation for item in edits],
-            ["copy", "copy", "copy", "copy", "replace", "replace"],
+            [
+                "copy",
+                "copy",
+                "copy",
+                "copy",
+                "replace",
+                "replace",
+                "replace",
+                "replace",
+            ],
         )
         self.assertEqual(
             [item.destination_offset for item in edits],
-            [0x288DA4, 0x288DC8, 0x28A5B8, 0x28A5DC, 0x28A568, 0x28A58C],
+            [
+                0x288DA4,
+                0x288DC8,
+                0x28A5B8,
+                0x28A5DC,
+                0x28A568,
+                0x28A58C,
+                0x288D5C,
+                0x288D80,
+            ],
         )
         self.assertEqual(
             [item.expected_hex for item in edits],
@@ -1596,23 +1616,52 @@ class UiTextureTests(unittest.TestCase):
                 "6643023C",
                 "C843023C",
                 "EB43023C",
+                "C843023C",
+                "EB43023C",
             ],
         )
         self.assertEqual(
             [item.source_target_id for item in edits],
-            ["nun5_elf", "nun5_elf", "nun5_elf", "nun5_elf", "", ""],
+            ["nun5_elf", "nun5_elf", "nun5_elf", "nun5_elf", "", "", "", ""],
         )
         self.assertEqual(
             [item.source_offset for item in edits],
-            [0x29A704, 0x29A72C, 0x29BF68, 0x29BF90, None, None],
+            [
+                0x29A704,
+                0x29A72C,
+                0x29BF68,
+                0x29BF90,
+                None,
+                None,
+                None,
+                None,
+            ],
         )
         self.assertEqual(
             [item.source_expected_hex for item in edits],
-            ["4843023C", "4843023C", "4843023C", "4843023C", "", ""],
+            [
+                "4843023C",
+                "4843023C",
+                "4843023C",
+                "4843023C",
+                "",
+                "",
+                "",
+                "",
+            ],
         )
         self.assertEqual(
             [item.replacement_hex for item in edits],
-            ["", "", "", "", "C243023C", "E743023C"],
+            [
+                "",
+                "",
+                "",
+                "",
+                "C243023C",
+                "E743023C",
+                "C243023C",
+                "E743023C",
+            ],
         )
 
     def test_collection_submenu_patch_uses_only_exact_nun5_records(self) -> None:

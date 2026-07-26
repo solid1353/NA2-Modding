@@ -28,7 +28,7 @@ this deterministic order:
 
 1. `translation_importer`
 2. `string_patcher`
-3. `resident_patcher`
+3. `runtime_injector`
 4. `texture_patcher`
 5. `binary_patcher`
 
@@ -53,7 +53,7 @@ reproducible checkpoint.
 
 - `binary_patcher`: `targets.tsv`, `groups.tsv`, `patches.tsv`, `edits.tsv`,
   and every blob referenced by `blob_path`.
-- `resident_patcher`: `targets.tsv`, `groups.tsv`, `patches.tsv`,
+- `runtime_injector`: `targets.tsv`, `groups.tsv`, `patches.tsv`,
   `fragments.tsv`, `relocations.tsv`, `edits.tsv`, and every fragment blob
   referenced by `blob_path`.
 - `string_patcher`: `strings.tsv`, only for a feature that owns local string
@@ -64,9 +64,9 @@ reproducible checkpoint.
 - `texture_patcher`: `containers.tsv`, `mappings.tsv`, and `strategies.tsv`.
 
 Binary package identity is derived from its feature/module path. Binary
-packages have no `manifest.tsv`; normal composition applies their
-`default_enabled` patches. Explicit patch IDs remain focused CLI/research
-inputs only.
+packages have no `manifest.tsv`; normal composition applies patches whose
+group and patch `enabled` switches are both `1`. Explicit patch IDs remain
+focused CLI/research inputs only and override those switches.
 
 ## Current composition
 

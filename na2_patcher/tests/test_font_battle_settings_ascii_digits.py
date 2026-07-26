@@ -20,7 +20,7 @@ class BattleSettingsAsciiDigitsTests(unittest.TestCase):
         patch = package.patches[
             generate_battle_settings_ascii_digits.PATCH_ID
         ]
-        self.assertTrue(patch.default_enabled)
+        self.assertTrue(patch.enabled)
         self.assertEqual(patch.status, "approved_for_test")
         self.assertEqual(patch.confidence, "verified")
         self.assertEqual(patch.group_id, "battle_ui")

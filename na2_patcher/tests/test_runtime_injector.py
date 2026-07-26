@@ -11,7 +11,7 @@ from pathlib import Path, PurePosixPath
 from na2_patcher.build_profile import apply_binary_patch_set
 from na2_patcher.composer import resolve_symbolic_patches
 from na2_patcher.modules.binary_patcher import engine as binary_engine
-from na2_patcher.modules.resident_patcher import engine
+from na2_patcher.modules.runtime_injector import engine
 from na2_patcher.payload_builder.builder import (
     build_resident_payload,
     load_config,
@@ -31,7 +31,7 @@ def write_tsv(
         writer.writerows(rows)
 
 
-class ResidentPatcherTests(unittest.TestCase):
+class RuntimeInjectorTests(unittest.TestCase):
     def test_all_disabled_resident_package_composes_as_noop(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
@@ -41,7 +41,7 @@ class ResidentPatcherTests(unittest.TestCase):
             (root / "SLPS_258.37").write_bytes(target_data)
             package = binary_engine.Package(
                 directory=directory,
-                package_id="feature.resident_patcher",
+                package_id="feature.runtime_injector",
                 targets={
                     "boot": binary_engine.Target(
                         target_id="boot",
@@ -55,6 +55,7 @@ class ResidentPatcherTests(unittest.TestCase):
                 groups={
                     "layout": binary_engine.Group(
                         group_id="layout",
+                        enabled=True,
                         name="Layout",
                         description="Retained disabled layout.",
                         review_notes="",
@@ -64,7 +65,7 @@ class ResidentPatcherTests(unittest.TestCase):
                     "layout_hook": binary_engine.Patch(
                         patch_id="layout_hook",
                         group_id="layout",
-                        default_enabled=False,
+                        enabled=False,
                         status="runtime_proven",
                         confidence="high",
                         name="Layout hook",
@@ -87,7 +88,7 @@ class ResidentPatcherTests(unittest.TestCase):
                 source=object(),  # The no-op branch never reads the image.
                 payloads=payloads,
                 owners=owners,
-                allow_empty_defaults=True,
+                allow_empty_enabled=True,
             )
 
             self.assertEqual(result["selected"], [])
@@ -103,16 +104,16 @@ class ResidentPatcherTests(unittest.TestCase):
             / "na2_patcher"
             / "features"
             / "localization"
-            / "resident_patcher"
+            / "runtime_injector"
         )
         canonical_declaration = engine.load_package(
-            directory, owner="localization.resident_patcher"
+            directory, owner="localization.runtime_injector"
         )
         self.assertEqual(
             {
                 patch_id
                 for patch_id, patch in canonical_declaration.patches.items()
-                if patch.default_enabled
+                if patch.enabled
             },
             {
                 "font_v2_layout_core",
@@ -148,7 +149,7 @@ class ResidentPatcherTests(unittest.TestCase):
         disabled_declaration = replace(
             canonical_declaration,
             patches={
-                patch_id: replace(patch, default_enabled=False)
+                patch_id: replace(patch, enabled=False)
                 for patch_id, patch in canonical_declaration.patches.items()
             },
         )
@@ -159,10 +160,20 @@ class ResidentPatcherTests(unittest.TestCase):
         )
         self.assertEqual(disabled_package.edits, [])
 
+        group_disabled_declaration = replace(
+            canonical_declaration,
+            groups={
+                group_id: replace(group, enabled=False)
+                for group_id, group in canonical_declaration.groups.items()
+            },
+        )
+        self.assertEqual(group_disabled_declaration.payload_fragments, ())
+        self.assertEqual(group_disabled_declaration.symbolic_patches, ())
+
         declaration = replace(
             disabled_declaration,
             patches={
-                patch_id: replace(patch, default_enabled=True)
+                patch_id: replace(patch, enabled=True)
                 for patch_id, patch in disabled_declaration.patches.items()
             },
         )
@@ -262,7 +273,7 @@ class ResidentPatcherTests(unittest.TestCase):
             patches={
                 patch_id: replace(
                     patch,
-                    default_enabled=patch_id == "font_v2_layout_core",
+                    enabled=patch_id == "font_v2_layout_core",
                 )
                 for patch_id, patch in disabled_declaration.patches.items()
             },
@@ -441,7 +452,7 @@ class ResidentPatcherTests(unittest.TestCase):
             patches={
                 patch_id: replace(
                     patch,
-                    default_enabled=patch_id
+                    enabled=patch_id
                     in {"font_v2_layout_core", "font_v2_controls"},
                 )
                 for patch_id, patch in disabled_declaration.patches.items()
@@ -574,7 +585,7 @@ class ResidentPatcherTests(unittest.TestCase):
             patches={
                 patch_id: replace(
                     patch,
-                    default_enabled=patch_id
+                    enabled=patch_id
                     in {"font_v2_layout_core", "font_v2_titles"},
                 )
                 for patch_id, patch in disabled_declaration.patches.items()
@@ -755,7 +766,7 @@ class ResidentPatcherTests(unittest.TestCase):
             patches={
                 patch_id: replace(
                     patch,
-                    default_enabled=patch_id
+                    enabled=patch_id
                     in {
                         "font_v2_layout_core",
                         "font_v2_practice_explanations",
@@ -1069,6 +1080,7 @@ class ResidentPatcherTests(unittest.TestCase):
                 engine.GROUP_FIELDS,
                 [{
                     "group_id": "layout",
+                    "enabled": 1,
                     "name": "Layout",
                     "description": "Resident layout test.",
                     "review_notes": "",
@@ -1080,7 +1092,7 @@ class ResidentPatcherTests(unittest.TestCase):
                 [{
                     "patch_id": "layout_hook",
                     "group_id": "layout",
-                    "default_enabled": 1,
+                    "enabled": 1,
                     "status": "approved_for_test",
                     "confidence": "high",
                     "name": "Layout hook",
@@ -1149,7 +1161,7 @@ class ResidentPatcherTests(unittest.TestCase):
             )
 
             declaration = engine.load_package(
-                directory, owner="feature.resident_patcher"
+                directory, owner="feature.runtime_injector"
             )
             build = build_resident_payload(declaration.fragments)
             resolved = resolve_symbolic_patches(

@@ -48,20 +48,21 @@ def apply_binary_patch_set(
     source: Iso9660,
     payloads: dict[str, bytearray],
     owners: dict[str, str],
-    allow_empty_defaults: bool = False,
+    allow_empty_enabled: bool = False,
 ) -> dict[str, object]:
     if package is None:
         package = binary_patcher_module.load_package(package_directory)
     target_data = binary_patcher_module.verify_package_data(package, roots)
-    default_patch_ids = [
+    enabled_patch_ids = [
         patch.patch_id
         for patch in package.patches.values()
-        if patch.default_enabled
+        if binary_patcher_module.patch_is_enabled(package, patch)
     ]
-    if not default_patch_ids and allow_empty_defaults:
+    if not enabled_patch_ids and allow_empty_enabled:
         return {
             "package": package,
             "selected": [],
+            "selection_mode": "enabled",
             "edits": [],
             "patch_rows": [],
             "before_hashes": {},
@@ -69,7 +70,7 @@ def apply_binary_patch_set(
             "patched_paths": [],
         }
     selected = binary_patcher_module.selected_patch_ids(
-        package, [], defaults=True
+        package, [], enabled=True
     )
     edits = binary_patcher_module.validate_selection(
         package, selected, for_apply=True
@@ -109,6 +110,7 @@ def apply_binary_patch_set(
     return {
         "package": package,
         "selected": selected,
+        "selection_mode": "enabled",
         "edits": edits,
         "patch_rows": patch_rows,
         "before_hashes": before_hashes,
@@ -184,27 +186,17 @@ def write_binary_patch_log(
         result["patch_rows"],
     )
     binary_patcher_module.write_tsv(
-        log_directory / "selected_patches.tsv",
+        log_directory / "patch_selection.tsv",
         [
-            "group_id", "group_name", "patch_id", "source_mapping_id", "status",
-            "confidence", "name",
+            "group_id", "group_name", "group_enabled", "patch_id",
+            "patch_enabled", "effective_selected", "selection_mode",
+            "source_mapping_id", "status", "confidence", "name",
         ],
-        [
-            {
-                "group_id": package.patches[patch_id].group_id,
-                "group_name": package.groups[
-                    package.patches[patch_id].group_id
-                ].name,
-                "patch_id": patch_id,
-                "source_mapping_id": package.patches[
-                    patch_id
-                ].source_mapping_id,
-                "status": package.patches[patch_id].status,
-                "confidence": package.patches[patch_id].confidence,
-                "name": package.patches[patch_id].name,
-            }
-            for patch_id in selected
-        ],
+        binary_patcher_module.patch_selection_rows(
+            package,
+            selected,
+            selection_mode=str(result["selection_mode"]),
+        ),
     )
     binary_patcher_module.write_tsv(
         log_directory / "staged_file_hashes.tsv",
@@ -441,8 +433,8 @@ def apply_profile_modules(
     import_plans = pipeline.import_plans
     string_plans = pipeline.string_plans
     derived_string_plans = pipeline.derived_string_plans
-    resident_declarations = pipeline.resident_declarations
-    resident_packages = pipeline.resident_packages
+    runtime_injection_declarations = pipeline.runtime_injection_declarations
+    runtime_injection_packages = pipeline.runtime_injection_packages
     payload_build = pipeline.payload_build
 
     results: list[dict[str, object]] = []
@@ -481,7 +473,7 @@ def apply_profile_modules(
                 source=source,
                 payloads=payloads,
                 owners=owners,
-                allow_empty_defaults=True,
+                allow_empty_enabled=True,
             )
             results.append(
                 {
@@ -491,22 +483,22 @@ def apply_profile_modules(
                 }
             )
             continue
-        if module.module == "resident_patcher":
-            declaration = resident_declarations[module.module_id]
+        if module.module == "runtime_injector":
+            declaration = runtime_injection_declarations[module.module_id]
             result = apply_binary_patch_set(
                 module.input_path,
-                package=resident_packages[module.module_id],
+                package=runtime_injection_packages[module.module_id],
                 roots=profile.roots,
                 feature_id=module.feature_id,
                 source=source,
                 payloads=payloads,
                 owners=owners,
-                allow_empty_defaults=True,
+                allow_empty_enabled=True,
             )
             results.append(
                 {
                     "module": module,
-                    "resident_patch_declaration": declaration,
+                    "runtime_injection_declaration": declaration,
                     "binary_patch_result": result,
                     "paths": result["patched_paths"],
                 }
@@ -530,7 +522,7 @@ def apply_profile_modules(
                     source=source,
                     payloads=payloads,
                     owners=owners,
-                    allow_empty_defaults=False,
+                    allow_empty_enabled=False,
                 )
                 item["derived_string_patch_result"] = derived_result
                 item["string_patch_plan"] = derived

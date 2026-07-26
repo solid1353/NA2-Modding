@@ -20,7 +20,7 @@ class SaveLoadAsciiDigitsTests(unittest.TestCase):
         patch = package.patches[
             generate_save_load_ascii_digits.PATCH_ID
         ]
-        self.assertTrue(patch.default_enabled)
+        self.assertTrue(patch.enabled)
         self.assertEqual(patch.status, "runtime_proven")
         self.assertEqual(patch.confidence, "verified")
         self.assertEqual(patch.group_id, "front_end")

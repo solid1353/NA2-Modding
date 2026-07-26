@@ -22,7 +22,7 @@ from na2_patcher.source_media import read_root_file
 
 PROJECT_PATHS = load_project_paths(REPOSITORY_ROOT, allow_missing=True)
 
-BINARY_PATCHER_SCHEMA_VERSION = 2
+BINARY_PATCHER_SCHEMA_VERSION = 3
 TARGET_FIELDS = [
     "target_id",
     "root_id",
@@ -33,6 +33,7 @@ TARGET_FIELDS = [
 ]
 GROUP_FIELDS = [
     "group_id",
+    "enabled",
     "name",
     "description",
     "review_notes",
@@ -40,7 +41,7 @@ GROUP_FIELDS = [
 PATCH_FIELDS = [
     "patch_id",
     "group_id",
-    "default_enabled",
+    "enabled",
     "status",
     "confidence",
     "name",
@@ -101,6 +102,7 @@ class Target:
 @dataclass(frozen=True)
 class Group:
     group_id: str
+    enabled: bool
     name: str
     description: str
     review_notes: str
@@ -110,7 +112,7 @@ class Group:
 class Patch:
     patch_id: str
     group_id: str
-    default_enabled: bool
+    enabled: bool
     status: str
     confidence: str
     name: str
@@ -241,6 +243,8 @@ def read_tsv(path: Path, expected_fields: list[str]) -> list[dict[str, str]]:
         for row_number, row in enumerate(reader, 2):
             if None in row:
                 raise PatchError(f"{path.name} row {row_number} has extra columns")
+            if any(value is None for value in row.values()):
+                raise PatchError(f"{path.name} row {row_number} has missing columns")
             if not any(value.strip() for value in row.values()):
                 continue
             rows.append({key: value.strip() for key, value in row.items()})
@@ -304,6 +308,9 @@ def load_package(directory: Path) -> Package:
             raise PatchError(f"groups.tsv row {row_number}: name is empty")
         groups[group_id] = Group(
             group_id=group_id,
+            enabled=parse_bool(
+                row["enabled"], f"groups.tsv row {row_number} enabled"
+            ),
             name=row["name"],
             description=row["description"],
             review_notes=row["review_notes"],
@@ -328,18 +335,18 @@ def load_package(directory: Path) -> Package:
             raise PatchError(
                 f"patches.tsv row {row_number}: invalid confidence {confidence!r}"
             )
-        default_enabled = parse_bool(
-            row["default_enabled"],
-            f"patches.tsv row {row_number} default_enabled",
+        enabled = parse_bool(
+            row["enabled"],
+            f"patches.tsv row {row_number} enabled",
         )
-        if default_enabled and status not in APPLICABLE_STATUSES:
+        if enabled and status not in APPLICABLE_STATUSES:
             raise PatchError(
-                f"patch {patch_id}: default-enabled patches must be applicable"
+                f"patch {patch_id}: enabled patches must be applicable"
             )
         patches[patch_id] = Patch(
             patch_id=patch_id,
             group_id=group_id,
-            default_enabled=default_enabled,
+            enabled=enabled,
             status=status,
             confidence=confidence,
             name=row["name"],
@@ -650,18 +657,26 @@ def verify_package_data(package: Package, roots: dict[str, Path]) -> dict[str, b
     return target_data
 
 
-def selected_patch_ids(package: Package, requested: list[str], defaults: bool) -> list[str]:
-    if requested and defaults:
-        raise PatchError("Use explicit --patch selections or --defaults, not both")
-    if defaults:
-        selected = [p.patch_id for p in package.patches.values() if p.default_enabled]
+def patch_is_enabled(package: Package, patch: Patch) -> bool:
+    return package.groups[patch.group_id].enabled and patch.enabled
+
+
+def selected_patch_ids(package: Package, requested: list[str], enabled: bool) -> list[str]:
+    if requested and enabled:
+        raise PatchError("Use explicit --patch selections or --enabled, not both")
+    if enabled:
+        selected = [
+            patch.patch_id
+            for patch in package.patches.values()
+            if patch_is_enabled(package, patch)
+        ]
     else:
         selected = []
         for patch_id in requested:
             if patch_id not in package.patches:
                 raise PatchError(f"Unknown patch ID: {patch_id}")
             selected.append(patch_id)
-    if not selected:
+    if not selected and not enabled:
         raise PatchError("No patches selected")
     return selected
 
@@ -714,6 +729,31 @@ def write_tsv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> N
         writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t", lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
+
+
+def patch_selection_rows(
+    package: Package,
+    selected: list[str],
+    *,
+    selection_mode: str,
+) -> list[dict[str, object]]:
+    selected_ids = set(selected)
+    return [
+        {
+            "group_id": patch.group_id,
+            "group_name": package.groups[patch.group_id].name,
+            "group_enabled": int(package.groups[patch.group_id].enabled),
+            "patch_id": patch.patch_id,
+            "patch_enabled": int(patch.enabled),
+            "effective_selected": int(patch.patch_id in selected_ids),
+            "selection_mode": selection_mode,
+            "source_mapping_id": patch.source_mapping_id,
+            "status": patch.status,
+            "confidence": patch.confidence,
+            "name": patch.name,
+        }
+        for patch in package.patches.values()
+    ]
 
 
 def compose_edits(
@@ -812,6 +852,8 @@ def apply_package(
     output_root_text: str,
     log_directory: Path,
     log_directory_text: str,
+    *,
+    selection_mode: str,
 ) -> None:
     if output_root.exists():
         raise PatchError(f"Output root already exists: {output_root_text}")
@@ -876,21 +918,25 @@ def apply_package(
             patch_rows,
         )
         write_tsv(
-            log_stage / "selected_patches.tsv",
-            ["group_id", "group_name", "patch_id", "status", "confidence", "name"],
+            log_stage / "patch_selection.tsv",
             [
-                {
-                    "group_id": package.patches[patch_id].group_id,
-                    "group_name": package.groups[
-                        package.patches[patch_id].group_id
-                    ].name,
-                    "patch_id": patch_id,
-                    "status": package.patches[patch_id].status,
-                    "confidence": package.patches[patch_id].confidence,
-                    "name": package.patches[patch_id].name,
-                }
-                for patch_id in selected
+                "group_id",
+                "group_name",
+                "group_enabled",
+                "patch_id",
+                "patch_enabled",
+                "effective_selected",
+                "selection_mode",
+                "source_mapping_id",
+                "status",
+                "confidence",
+                "name",
             ],
+            patch_selection_rows(
+                package,
+                selected,
+                selection_mode=selection_mode,
+            ),
         )
         write_tsv(
             log_stage / "file_hashes.tsv",
@@ -948,7 +994,7 @@ def build_parser() -> argparse.ArgumentParser:
         sub.add_argument("--root", action="append", default=[], metavar="ID=PATH")
         if command in {"plan", "apply"}:
             sub.add_argument("--patch", action="append", default=[])
-            sub.add_argument("--defaults", action="store_true")
+            sub.add_argument("--enabled", action="store_true")
         if command == "apply":
             sub.add_argument("--output-root", required=True)
             sub.add_argument("--log-directory")
@@ -974,17 +1020,21 @@ def main() -> int:
         )
         return 0
 
-    selected = selected_patch_ids(package, args.patch, args.defaults)
+    selected = selected_patch_ids(package, args.patch, args.enabled)
     edits = validate_selection(package, selected, for_apply=args.command == "apply")
     if args.command == "plan":
         compose_edits(package, target_data, edits)
-        for patch_id in selected:
-            patch = package.patches[patch_id]
-            group = package.groups[patch.group_id]
-            count = sum(edit.patch_id == patch_id for edit in edits)
+        for row in patch_selection_rows(
+            package,
+            selected,
+            selection_mode="enabled" if args.enabled else "explicit",
+        ):
             print(
-                f"{group.group_id}\t{group.name}\t{patch_id}\t{patch.status}\t"
-                f"{patch.confidence}\t{count}\t{patch.name}"
+                f"{row['group_id']}\t{row['patch_id']}\t"
+                f"group_enabled={row['group_enabled']}\t"
+                f"patch_enabled={row['patch_enabled']}\t"
+                f"effective_selected={row['effective_selected']}\t"
+                f"{row['status']}\t{row['confidence']}\t{row['name']}"
             )
         print(f"Plan: {len(selected)} atomic patches, {len(edits)} edits; no files written")
         return 0
@@ -1007,6 +1057,7 @@ def main() -> int:
         args.output_root,
         log_directory,
         log_text,
+        selection_mode="enabled" if args.enabled else "explicit",
     )
     print(f"Applied {len(selected)} atomic patches ({len(edits)} edits)")
     print(f"Output: {args.output_root}")

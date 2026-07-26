@@ -18,7 +18,7 @@ provide.
 
 ## 2026-07-25 stage-by-stage autofit reset
 
-The user retained the accepted native font and generic resident-patcher
+The user retained the accepted native font and generic runtime-injector
 infrastructure but rejected the combined July 24-25 autofit/layout selection as
 unstable. The implementation remains recoverable in place; only its default
 selection changed. These five module/patch rows are now disabled:
@@ -111,7 +111,7 @@ to the exact center argument expected by NA2's native `FUN_00379240`, so NA2's
 internal legacy measurement cancels without replacing the v2 box position.
 
 Both `font_v2_layout_core` and `font_v2_controls` are runtime-proven and
-default-enabled after the matched Controls review. The final 640x480 pair
+enabled after the matched Controls review. The final 640x480 pair
 matches the eight NUN5 label bounds and centers, keeps `Linked Attack` full
 width, fits `Ultimate Jutsu Prep` with the exact 178-unit denominator, and
 leaves `OFF` on the ordinary renderer. The user explicitly accepted this
@@ -170,7 +170,7 @@ verify these referenced blobs:
   `BD2889358F17B8FFF732842CD701D0F4C48F9CCB8A84A766E2710D4D56B3F2D6`.
 
 The current runtime-reviewed result contains 24 static binary-patcher Font
-declarations and eight linked resident-patcher hooks. The resident blob exports
+declarations and eight linked runtime-injector hooks. The resident blob exports
 nine code fragments for shared metrics, Controls fitting and horizontal
 scaling, selected-choice layout, shared UI layout, and the two displaced-code
 trampolines.
@@ -762,7 +762,7 @@ The grouped comparison sheets are
 `work/Font/artifacts/autofit_v2/practice_explanations/report/practice-explanations-02-04.png`
 and
 `work/Font/artifacts/autofit_v2/practice_explanations/report/practice-explanations-05-07.png`.
-The family is runtime-proven and default-enabled; the grids still await user
+The family is runtime-proven and enabled; the grids still await user
 acceptance before work begins on another caller family.
 
 Commit `3d52a14` placed the complete helper block at runtime
@@ -834,7 +834,7 @@ relocated through the shared resident payload as described below.
 ### 2026-07-25 resident relocation and regression
 
 All executable Font helpers and trampolines are now feature-owned
-`resident_patcher` fragments linked by the shared payload builder into
+`runtime_injector` fragments linked by the shared payload builder into
 `PRG/228.BIN`. The feature declares symbols and relocations but no payload
 offsets or final runtime addresses. The UI helper also replaces the former
 global scratch record with a 64-byte call-local stack frame, so neither code

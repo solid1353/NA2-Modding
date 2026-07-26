@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 from na2_patcher.modules.binary_patcher import engine as binary_patcher
-from na2_patcher.modules.resident_patcher import engine as resident_patcher
+from na2_patcher.modules.runtime_injector import engine as runtime_injector
 from na2_patcher.composer import resolve_module_order
 from na2_patcher.profile import (
     FEATURE_FIELDS,
@@ -60,14 +60,14 @@ class ProfileTests(unittest.TestCase):
             write_tsv(module / "groups.tsv", binary_patcher.GROUP_FIELDS, [])
             write_tsv(module / "patches.tsv", binary_patcher.PATCH_FIELDS, [])
             write_tsv(module / "edits.tsv", binary_patcher.EDIT_FIELDS, [])
-        elif module_type == "resident_patcher":
+        elif module_type == "runtime_injector":
             for name, fields in (
-                ("targets.tsv", resident_patcher.TARGET_FIELDS),
-                ("groups.tsv", resident_patcher.GROUP_FIELDS),
-                ("patches.tsv", resident_patcher.PATCH_FIELDS),
-                ("fragments.tsv", resident_patcher.FRAGMENT_FIELDS),
-                ("relocations.tsv", resident_patcher.RELOCATION_FIELDS),
-                ("edits.tsv", resident_patcher.EDIT_FIELDS),
+                ("targets.tsv", runtime_injector.TARGET_FIELDS),
+                ("groups.tsv", runtime_injector.GROUP_FIELDS),
+                ("patches.tsv", runtime_injector.PATCH_FIELDS),
+                ("fragments.tsv", runtime_injector.FRAGMENT_FIELDS),
+                ("relocations.tsv", runtime_injector.RELOCATION_FIELDS),
+                ("edits.tsv", runtime_injector.EDIT_FIELDS),
             ):
                 write_tsv(module / name, fields, [])
         elif module_type == "string_patcher":
@@ -344,13 +344,13 @@ class ProfileTests(unittest.TestCase):
             root = Path(temporary)
             feature = root / "feature"
             feature.mkdir()
-            module = self.create_module(feature, "resident_patcher")
+            module = self.create_module(feature, "runtime_injector")
             blob = module / "assets" / "resident.bin"
             blob.parent.mkdir()
             blob.write_bytes(b"\0\0\0\0")
             write_tsv(
                 module / "fragments.tsv",
-                resident_patcher.FRAGMENT_FIELDS,
+                runtime_injector.FRAGMENT_FIELDS,
                 [{
                     "fragment_id": "test.code",
                     "kind": "code",
@@ -364,16 +364,16 @@ class ProfileTests(unittest.TestCase):
                     "init": 0,
                 }],
             )
-            first = module_content_sha256(module, "resident_patcher")
+            first = module_content_sha256(module, "runtime_injector")
             (module / "helper.py").write_text(
                 "print('one')\n", encoding="utf-8"
             )
             self.assertEqual(
-                first, module_content_sha256(module, "resident_patcher")
+                first, module_content_sha256(module, "runtime_injector")
             )
             blob.write_bytes(b"\1\0\0\0")
             self.assertNotEqual(
-                first, module_content_sha256(module, "resident_patcher")
+                first, module_content_sha256(module, "runtime_injector")
             )
 
     def test_current_profile_and_feature_layout(self) -> None:
@@ -390,7 +390,7 @@ class ProfileTests(unittest.TestCase):
             [module.module_id for module in profile.modules],
             [
                 "localization.translation_importer",
-                "localization.resident_patcher",
+                "localization.runtime_injector",
                 "localization.texture_patcher",
                 "localization.binary_patcher",
                 "qol.binary_patcher",

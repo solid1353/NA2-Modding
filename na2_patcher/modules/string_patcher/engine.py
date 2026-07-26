@@ -15,7 +15,7 @@ from . import external as external_strings
 STRING_FIELDS = [
     "string_id",
     "group_id",
-    "default_enabled",
+    "enabled",
     "status",
     "confidence",
     "root_id",
@@ -39,7 +39,7 @@ TRANSLATION_DISPLAY_MODES = {"translation", "mapping_ids"}
 class StringSpec:
     string_id: str
     group_id: str
-    default_enabled: bool
+    enabled: bool
     status: str
     confidence: str
     root_id: str
@@ -313,9 +313,9 @@ def load_specs(directory: Path) -> tuple[StringSpec, ...]:
         spec = StringSpec(
             string_id=string_id,
             group_id=group_id,
-            default_enabled=binary_patcher.parse_bool(
-                row["default_enabled"],
-                f"{path} row {row_number} default_enabled",
+            enabled=binary_patcher.parse_bool(
+                row["enabled"],
+                f"{path} row {row_number} enabled",
             ),
             status=status,
             confidence=confidence,
@@ -336,11 +336,11 @@ def load_specs(directory: Path) -> tuple[StringSpec, ...]:
             review_notes=row["review_notes"].strip(),
         )
         if (
-            spec.default_enabled
+            spec.enabled
             and spec.status not in binary_patcher.APPLICABLE_STATUSES
         ):
             raise binary_patcher.PatchError(
-                f"{path} row {row_number}: default-enabled strings must be applicable"
+                f"{path} row {row_number}: enabled strings must be applicable"
             )
         if not spec.reason:
             raise binary_patcher.PatchError(
@@ -417,6 +417,7 @@ def build_binary_package(
             spec.group_id,
             binary_patcher.Group(
                 group_id=spec.group_id,
+                enabled=True,
                 name=spec.group_id.replace("_", " ").title(),
                 description="String patch selection group.",
                 review_notes="",
@@ -425,7 +426,7 @@ def build_binary_package(
         patches[spec.string_id] = binary_patcher.Patch(
             patch_id=spec.string_id,
             group_id=spec.group_id,
-            default_enabled=spec.default_enabled,
+            enabled=spec.enabled,
             status=spec.status,
             confidence=spec.confidence,
             name=spec.string_id,
@@ -527,6 +528,7 @@ def build_binary_package(
             group_id,
             binary_patcher.Group(
                 group_id=group_id,
+                enabled=True,
                 name=group_id,
                 description="Imported string patch selection group.",
                 review_notes="",
@@ -535,7 +537,7 @@ def build_binary_package(
         patches[import_id] = binary_patcher.Patch(
             patch_id=import_id,
             group_id=group_id,
-            default_enabled=True,
+            enabled=True,
             status="approved_for_test",
             confidence="verified",
             name=import_id,

@@ -1,3 +1,0 @@
-group_id	name	description	review_notes
-auto_fit	Auto-fit	Resident shrink-only text fitting and shared metric behavior.	Generated code is linked into the shared payload; only guarded hooks remain in the boot ELF.
-alignment	Alignment	Resident shared screen and modal positioning behavior.	Generated code is linked into the shared payload and uses stack-local transient state.

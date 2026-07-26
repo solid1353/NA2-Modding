@@ -270,6 +270,7 @@ def build_integration_package(
             group_id,
             binary_patcher.Group(
                 group_id=group_id,
+                enabled=True,
                 name=group_id.replace("_", " ").title(),
                 description="Shared resident-payload integration.",
                 review_notes="",
@@ -279,7 +280,7 @@ def build_integration_package(
         package_patches[patch_id] = binary_patcher.Patch(
             patch_id=patch_id,
             group_id=group_id,
-            default_enabled=True,
+            enabled=True,
             status="runtime_proven",
             confidence="verified",
             name=patch_id,

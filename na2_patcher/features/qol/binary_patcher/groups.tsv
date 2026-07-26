@@ -1,4 +1,4 @@
-group_id	name	description	review_notes
-startup	Startup	Independent startup-sequence skips.	
-practice	Practice	Independent Practice-mode default settings.	
-mode_select	Mode Select	Mode availability and selection behavior.	
+group_id	enabled	name	description	review_notes
+startup	1	Startup	Independent startup-sequence skips.	""
+practice	1	Practice	Independent Practice-mode default settings.	""
+mode_select	1	Mode Select	Mode availability and selection behavior.	""

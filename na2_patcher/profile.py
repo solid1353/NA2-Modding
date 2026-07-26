@@ -17,7 +17,7 @@ FEATURE_FIELDS = ["feature_id", "expected_sha256", "bypass_check"]
 MODULE_TYPE_ORDER = (
     "translation_importer",
     "string_patcher",
-    "resident_patcher",
+    "runtime_injector",
     "texture_patcher",
     "binary_patcher",
 )
@@ -29,7 +29,7 @@ BINARY_PATCHER_CONTROL_FILES = (
     "edits.tsv",
 )
 STRING_PATCHER_CONTROL_FILES = ("strings.tsv",)
-RESIDENT_PATCHER_CONTROL_FILES = (
+RUNTIME_INJECTOR_CONTROL_FILES = (
     "targets.tsv",
     "groups.tsv",
     "patches.tsv",
@@ -276,10 +276,10 @@ def _binary_patcher_content_files(path: Path) -> list[Path]:
     return files
 
 
-def _resident_patcher_content_files(path: Path) -> list[Path]:
+def _runtime_injector_content_files(path: Path) -> list[Path]:
     path = path.resolve()
     files = _required_files(
-        path, RESIDENT_PATCHER_CONTROL_FILES, "resident_patcher module"
+        path, RUNTIME_INJECTOR_CONTROL_FILES, "runtime_injector module"
     )
     fragments_path = path / "fragments.tsv"
     with fragments_path.open("r", encoding="utf-8-sig", newline="") as handle:
@@ -315,8 +315,8 @@ def _module_content_files(path: Path, module_type: str) -> list[Path]:
     path = path.resolve()
     if module_type == "binary_patcher":
         return _binary_patcher_content_files(path)
-    if module_type == "resident_patcher":
-        return _resident_patcher_content_files(path)
+    if module_type == "runtime_injector":
+        return _runtime_injector_content_files(path)
     if module_type == "string_patcher":
         return _required_files(
             path, STRING_PATCHER_CONTROL_FILES, "string_patcher module"

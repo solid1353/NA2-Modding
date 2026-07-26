@@ -3,7 +3,7 @@
 `payload_builder` is mandatory build infrastructure, not a feature module.
 Feature modules contribute named code, read-only-data, or writable-data
 fragments plus symbolic references. External strings contribute read-only data;
-the generic `resident_patcher` contributes feature-owned custom logic and
+the generic `runtime_injector` contributes feature-owned custom logic and
 guarded hooks. The builder assigns deterministic aligned offsets, resolves
 internal relocations, produces the one resident MWO3 `PRG/228.BIN`, and records
 a complete symbol map.

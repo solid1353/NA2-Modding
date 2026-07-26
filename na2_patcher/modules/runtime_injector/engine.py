@@ -65,7 +65,7 @@ IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
 
 
 @dataclass(frozen=True)
-class ResidentSymbolicEdit:
+class RuntimeSymbolicEdit:
     edit_id: str
     patch_id: str
     order: int
@@ -74,21 +74,22 @@ class ResidentSymbolicEdit:
 
 
 @dataclass(frozen=True)
-class ResidentPatchPackage:
+class RuntimeInjectionPackage:
     directory: Path
     owner: str
     targets: dict[str, binary_patcher.Target]
     groups: dict[str, binary_patcher.Group]
     patches: dict[str, binary_patcher.Patch]
     fragments: tuple[PayloadFragment, ...]
-    edits: tuple[ResidentSymbolicEdit, ...]
+    edits: tuple[RuntimeSymbolicEdit, ...]
 
     @property
-    def active_edits(self) -> tuple[ResidentSymbolicEdit, ...]:
+    def active_edits(self) -> tuple[RuntimeSymbolicEdit, ...]:
         return tuple(
             edit
             for edit in self.edits
-            if self.patches[edit.patch_id].default_enabled
+            if self.patches[edit.patch_id].enabled
+            and self.groups[self.patches[edit.patch_id].group_id].enabled
         )
 
     @property
@@ -165,7 +166,7 @@ def _load_targets(directory: Path) -> dict[str, binary_patcher.Target]:
         role = row["role"]
         if role != "destination":
             raise ValueError(
-                f"targets.tsv:{line}: resident symbolic targets must be destinations"
+                f"targets.tsv:{line}: runtime-injector symbolic targets must be destinations"
             )
         path = _relative_path(row["path"], f"targets.tsv:{line} path")
         targets[target_id] = binary_patcher.Target(
@@ -183,7 +184,7 @@ def _load_targets(directory: Path) -> dict[str, binary_patcher.Target]:
             ),
         )
     if not targets:
-        raise ValueError("resident_patcher requires at least one target")
+        raise ValueError("runtime_injector requires at least one target")
     return targets
 
 
@@ -199,12 +200,15 @@ def _load_groups(directory: Path) -> dict[str, binary_patcher.Group]:
             raise ValueError(f"groups.tsv:{line}: name and description are required")
         groups[group_id] = binary_patcher.Group(
             group_id=group_id,
+            enabled=binary_patcher.parse_bool(
+                row["enabled"], f"groups.tsv:{line} enabled"
+            ),
             name=row["name"],
             description=row["description"],
             review_notes=row["review_notes"],
         )
     if not groups:
-        raise ValueError("resident_patcher requires at least one group")
+        raise ValueError("runtime_injector requires at least one group")
     return groups
 
 
@@ -221,8 +225,8 @@ def _load_patches(
         group_id = row["group_id"]
         if group_id not in groups:
             raise ValueError(f"patches.tsv:{line}: unknown group {group_id!r}")
-        default_enabled = binary_patcher.parse_bool(
-            row["default_enabled"], f"patches.tsv:{line} default_enabled"
+        enabled = binary_patcher.parse_bool(
+            row["enabled"], f"patches.tsv:{line} enabled"
         )
         status = row["status"]
         confidence = row["confidence"]
@@ -230,9 +234,9 @@ def _load_patches(
             raise ValueError(
                 f"patches.tsv:{line}: invalid status {status!r}"
             )
-        if default_enabled and status not in binary_patcher.APPLICABLE_STATUSES:
+        if enabled and status not in binary_patcher.APPLICABLE_STATUSES:
             raise ValueError(
-                f"patches.tsv:{line}: default-enabled resident patches "
+                f"patches.tsv:{line}: enabled runtime-injector patches "
                 "must be applicable"
             )
         if confidence not in binary_patcher.CONFIDENCE_VALUES:
@@ -245,7 +249,7 @@ def _load_patches(
         patches[patch_id] = binary_patcher.Patch(
             patch_id=patch_id,
             group_id=group_id,
-            default_enabled=default_enabled,
+            enabled=enabled,
             status=status,
             confidence=confidence,
             name=row["name"],
@@ -255,7 +259,7 @@ def _load_patches(
             review_notes=row["review_notes"],
         )
     if not patches:
-        raise ValueError("resident_patcher requires at least one patch")
+        raise ValueError("runtime_injector requires at least one patch")
     return patches
 
 
@@ -275,7 +279,7 @@ def _load_fragments(
             raise ValueError(f"fragments.tsv:{line}: duplicate fragment {fragment_id}")
         rows_by_id[fragment_id] = (line, row)
     if not rows_by_id:
-        raise ValueError("resident_patcher requires at least one fragment")
+        raise ValueError("runtime_injector requires at least one fragment")
 
     relocations: dict[str, list[tuple[int, int, PayloadRelocation]]] = {
         fragment_id: [] for fragment_id in rows_by_id
@@ -385,8 +389,8 @@ def _load_edits(
     owner: str,
     targets: dict[str, binary_patcher.Target],
     patches: dict[str, binary_patcher.Patch],
-) -> tuple[ResidentSymbolicEdit, ...]:
-    edits: list[ResidentSymbolicEdit] = []
+) -> tuple[RuntimeSymbolicEdit, ...]:
+    edits: list[RuntimeSymbolicEdit] = []
     edit_ids: set[str] = set()
     patch_orders: dict[str, set[int]] = {patch_id: set() for patch_id in patches}
     for line, row in enumerate(
@@ -418,7 +422,7 @@ def _load_edits(
         if encoding not in RELOCATION_KINDS:
             raise ValueError(f"edits.tsv:{line}: invalid encoding {encoding!r}")
         edits.append(
-            ResidentSymbolicEdit(
+            RuntimeSymbolicEdit(
                 edit_id=edit_id,
                 patch_id=patch_id,
                 order=order,
@@ -453,29 +457,29 @@ def _load_edits(
     )
     if missing:
         raise ValueError(
-            "resident patches without symbolic edits: " + ", ".join(missing)
+            "runtime-injector patches without symbolic edits: " + ", ".join(missing)
         )
     return tuple(
         sorted(edits, key=lambda item: (item.patch_id, item.order, item.edit_id))
     )
 
 
-def load_package(directory: Path, *, owner: str) -> ResidentPatchPackage:
+def load_package(directory: Path, *, owner: str) -> RuntimeInjectionPackage:
     directory = directory.resolve()
     if not directory.is_dir():
         raise FileNotFoundError(directory)
-    _identifier(owner, "resident-patcher owner")
+    _identifier(owner, "runtime-injector owner")
     missing = [name for name in CONTROL_FILES if not (directory / name).is_file()]
     if missing:
         raise FileNotFoundError(
-            f"resident_patcher is missing canonical inputs: {', '.join(missing)}"
+            f"runtime_injector is missing canonical inputs: {', '.join(missing)}"
         )
     targets = _load_targets(directory)
     groups = _load_groups(directory)
     patches = _load_patches(directory, groups)
     fragments = _load_fragments(directory, owner)
     edits = _load_edits(directory, owner, targets, patches)
-    return ResidentPatchPackage(
+    return RuntimeInjectionPackage(
         directory=directory,
         owner=owner,
         targets=targets,
@@ -487,17 +491,19 @@ def load_package(directory: Path, *, owner: str) -> ResidentPatchPackage:
 
 
 def build_binary_package(
-    package: ResidentPatchPackage,
+    package: RuntimeInjectionPackage,
     resolved_patches: tuple[ResolvedPatch, ...],
 ) -> binary_patcher.Package:
     resolved_by_id = {patch.mapping_id: patch for patch in resolved_patches}
     if len(resolved_by_id) != len(resolved_patches):
-        raise ValueError("resolved resident patches contain duplicate mapping IDs")
+        raise ValueError(
+            "resolved runtime-injector patches contain duplicate mapping IDs"
+        )
     active_edits = package.active_edits
     expected_ids = {edit.edit_id for edit in active_edits}
     if set(resolved_by_id) != expected_ids:
         raise ValueError(
-            "resolved resident patch set differs from its declarations; "
+            "resolved runtime-injector patch set differs from its declarations; "
             f"missing={sorted(expected_ids - resolved_by_id.keys())}, "
             f"extra={sorted(resolved_by_id.keys() - expected_ids)}"
         )

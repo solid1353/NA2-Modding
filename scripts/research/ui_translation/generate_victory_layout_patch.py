@@ -210,7 +210,7 @@ def build_patch_rows() -> tuple[dict[str, str], list[dict[str, str]]]:
     patch = {
         "patch_id": PATCH_ID,
         "group_id": "battle_ui",
-        "default_enabled": "1",
+        "enabled": "1",
         "status": "approved_for_test",
         "confidence": "high",
         "name": "Use localized Victory character-name layouts",

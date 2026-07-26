@@ -1,2 +1,2 @@
-group_id	name	description	review_notes
-battle_logic	Battle logic	Runtime-proven battle behavior and substitution settings.	All Battle Logic patches share one organizational group.
+group_id	enabled	name	description	review_notes
+battle_logic	1	Battle logic	Runtime-proven battle behavior and substitution settings.	All Battle Logic patches share one organizational group.

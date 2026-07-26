@@ -9,7 +9,7 @@ from .composer import (
     resolve_symbolic_patches,
 )
 from .modules import translation_importer as translation_importer_module
-from .modules import resident_patcher as resident_patcher_module
+from .modules import runtime_injector as runtime_injector_module
 from .modules.binary_patcher import engine as binary_patcher_module
 from .modules.string_patcher import engine as string_patcher_module
 from .payload_builder import builder as payload_builder_module
@@ -25,10 +25,10 @@ class PreparedModulePipeline:
     ]
     string_plans: dict[str, string_patcher_module.StringPatchPlan]
     derived_string_plans: dict[str, string_patcher_module.StringPatchPlan]
-    resident_declarations: dict[
-        str, resident_patcher_module.ResidentPatchPackage
+    runtime_injection_declarations: dict[
+        str, runtime_injector_module.RuntimeInjectionPackage
     ]
-    resident_packages: dict[str, binary_patcher_module.Package]
+    runtime_injection_packages: dict[str, binary_patcher_module.Package]
     payload_build: ResidentPayloadBuild | None
 
 
@@ -89,13 +89,13 @@ def prepare_module_pipeline(
     ] = {}
     preparations: list[_StringPreparation] = []
     owners: set[str] = set()
-    resident_declarations: dict[
-        str, resident_patcher_module.ResidentPatchPackage
+    runtime_injection_declarations: dict[
+        str, runtime_injector_module.RuntimeInjectionPackage
     ] = {}
     for module in ordered_modules:
-        if module.module != "resident_patcher":
+        if module.module != "runtime_injector":
             continue
-        declaration = resident_patcher_module.load_package(
+        declaration = runtime_injector_module.load_package(
             module.input_path, owner=module.module_id
         )
         if module.module_id in owners:
@@ -103,7 +103,7 @@ def prepare_module_pipeline(
                 f"Duplicate resident-payload owner: {module.module_id}"
             )
         owners.add(module.module_id)
-        resident_declarations[module.module_id] = declaration
+        runtime_injection_declarations[module.module_id] = declaration
 
     for provider in ordered_modules:
         if provider.module != "translation_importer":
@@ -177,7 +177,7 @@ def prepare_module_pipeline(
         for fragment in preparation.draft.external_draft.fragments
     ) + tuple(
         fragment
-        for declaration in resident_declarations.values()
+        for declaration in runtime_injection_declarations.values()
         for fragment in declaration.payload_fragments
     )
     symbolic_patches = tuple(
@@ -186,7 +186,7 @@ def prepare_module_pipeline(
         for patch in preparation.draft.external_draft.symbolic_patches
     ) + tuple(
         patch
-        for declaration in resident_declarations.values()
+        for declaration in runtime_injection_declarations.values()
         for patch in declaration.symbolic_patches
     )
     payload_build = (
@@ -222,18 +222,18 @@ def prepare_module_pipeline(
         else:
             derived_string_plans[preparation.provider.module_id] = plan
 
-    resident_packages = {
-        module_id: resident_patcher_module.build_binary_package(
+    runtime_injection_packages = {
+        module_id: runtime_injector_module.build_binary_package(
             declaration, resolved_by_owner.get(module_id, ())
         )
-        for module_id, declaration in resident_declarations.items()
+        for module_id, declaration in runtime_injection_declarations.items()
     }
     return PreparedModulePipeline(
         ordered_modules=ordered_modules,
         import_plans=import_plans,
         string_plans=string_plans,
         derived_string_plans=derived_string_plans,
-        resident_declarations=resident_declarations,
-        resident_packages=resident_packages,
+        runtime_injection_declarations=runtime_injection_declarations,
+        runtime_injection_packages=runtime_injection_packages,
         payload_build=payload_build,
     )

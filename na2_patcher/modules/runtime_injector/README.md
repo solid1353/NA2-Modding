@@ -1,4 +1,4 @@
-# Resident patcher engine
+# Runtime injector module
 
 This reusable engine validates feature-owned resident code/data fragments,
 their internal symbolic relocations, and guarded symbolic game-file hooks.
@@ -15,12 +15,13 @@ Relocations may target any exported symbol in the complete linked payload.
 Symbolic edit templates preserve surrounding instructions such as branch or
 jump delay slots while replacing only the declared relocation field.
 
-Resident patches use the same `default_enabled` selection contract as ordinary
-binary patches. Disabled rows, their symbolic edits, and all fragment/blob
-declarations remain validated and hash-covered, but they contribute no hooks.
-When every resident patch in a feature is disabled, that feature contributes
-no resident fragments and composes as a no-op resident module without deleting
-its retained implementation.
+Runtime-injection patches use the same hierarchical `enabled` selection contract as
+ordinary binary patches. A disabled group masks every member patch without
+changing the member switches. Disabled rows, their symbolic edits, and all
+fragment/blob declarations remain validated and hash-covered, but they
+contribute no hooks. When every runtime-injection patch in a feature is effectively
+disabled, that feature contributes no resident fragments and composes as a
+no-op `runtime_injector` module without deleting its retained implementation.
 
 ## Invokes
 

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import csv
+from contextlib import redirect_stderr
 import hashlib
+import io
 import tempfile
 import unittest
 from dataclasses import replace
@@ -61,6 +63,7 @@ class BinaryPatcherTests(unittest.TestCase):
             patcher.GROUP_FIELDS,
             [{
                 "group_id": "fixture_group",
+                "enabled": 1,
                 "name": "Fixture group",
                 "description": "Fixture patches.",
                 "review_notes": "",
@@ -72,7 +75,7 @@ class BinaryPatcherTests(unittest.TestCase):
             [{
                 "patch_id": "test_patch",
                 "group_id": "fixture_group",
-                "default_enabled": 0,
+                "enabled": 0,
                 "status": "approved_for_test",
                 "confidence": "verified",
                 "name": "test patch",
@@ -151,18 +154,23 @@ class BinaryPatcherTests(unittest.TestCase):
                 "work/temp/output",
                 logs,
                 "logs/na2_patcher/binary_patcher/test",
+                selection_mode="explicit",
             )
             result = (output / "target.bin").read_bytes()
             self.assertEqual(len(result), 16)
             self.assertEqual(result[4:8], bytes.fromhex("10203040"))
             self.assertEqual(result[12:16], bytes.fromhex("AABBCCDD"))
             self.assertTrue((logs / "patch_log.tsv").is_file())
-            with (logs / "selected_patches.tsv").open(
+            with (logs / "patch_selection.tsv").open(
                 encoding="utf-8", newline=""
             ) as handle:
                 row = next(csv.DictReader(handle, delimiter="\t"))
             self.assertEqual(row["group_id"], "fixture_group")
             self.assertEqual(row["group_name"], "Fixture group")
+            self.assertEqual(row["group_enabled"], "1")
+            self.assertEqual(row["patch_enabled"], "0")
+            self.assertEqual(row["effective_selected"], "1")
+            self.assertEqual(row["selection_mode"], "explicit")
             self.assertEqual((roots["na2"] / "target.bin").read_bytes(), bytes(range(16)))
 
     def test_pending_patch_cannot_apply(self) -> None:
@@ -249,25 +257,80 @@ class BinaryPatcherTests(unittest.TestCase):
             package, _, _ = self.make_fixture(root)
             groups = package.directory / "groups.tsv"
             with groups.open("a", encoding="utf-8", newline="") as handle:
-                handle.write("unused\tUnused\tNo patches.\t\n")
+                handle.write("unused\t1\tUnused\tNo patches.\t\n")
             with self.assertRaisesRegex(patcher.PatchError, "group unused has no patches"):
                 patcher.load_package(package.directory)
 
-    def test_default_patch_selection_applies_once(self) -> None:
+    def test_hierarchical_enabled_selection_and_explicit_override(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             package, _, target_data = self.make_fixture(Path(temporary))
             package.patches["test_patch"] = replace(
-                package.patches["test_patch"], default_enabled=True
+                package.patches["test_patch"], enabled=True
             )
-            selected = patcher.selected_patch_ids(package, [], defaults=True)
+            selected = patcher.selected_patch_ids(package, [], enabled=True)
             self.assertEqual(selected, ["test_patch"])
+
+            package.groups["fixture_group"] = replace(
+                package.groups["fixture_group"], enabled=False
+            )
+            self.assertEqual(
+                patcher.selected_patch_ids(package, [], enabled=True),
+                [],
+            )
+            self.assertEqual(
+                patcher.selected_patch_ids(
+                    package, ["test_patch"], enabled=False
+                ),
+                ["test_patch"],
+            )
+
+            package.groups["fixture_group"] = replace(
+                package.groups["fixture_group"], enabled=True
+            )
+            self.assertEqual(
+                patcher.selected_patch_ids(package, [], enabled=True),
+                ["test_patch"],
+            )
             edits = patcher.validate_selection(package, selected, for_apply=True)
             buffers, rows, _ = patcher.compose_edits(package, target_data, edits)
             self.assertEqual(len(edits), 2)
             self.assertEqual([row["outcome"] for row in rows], ["applied", "applied"])
             self.assertEqual(buffers["destination"][4:8], bytes.fromhex("10203040"))
 
-    def test_empty_v2_package_is_valid(self) -> None:
+    def test_enabled_non_applicable_patch_is_rejected_under_disabled_group(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            package, _, _ = self.make_fixture(root)
+            groups = package.directory / "groups.tsv"
+            groups.write_text(
+                groups.read_text(encoding="utf-8").replace(
+                    "fixture_group\t1\t",
+                    "fixture_group\t0\t",
+                ),
+                encoding="utf-8",
+            )
+            patches = package.directory / "patches.tsv"
+            patches.write_text(
+                patches.read_text(encoding="utf-8")
+                .replace("test_patch\tfixture_group\t0\t", "test_patch\tfixture_group\t1\t")
+                .replace("approved_for_test", "pending"),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(
+                patcher.PatchError, "enabled patches must be applicable"
+            ):
+                patcher.load_package(package.directory)
+
+    def test_cli_exposes_enabled_selection_without_defaults_alias(self) -> None:
+        parser = patcher.build_parser()
+        enabled_args = parser.parse_args(
+            ["plan", "--package", "fixture", "--enabled"]
+        )
+        self.assertTrue(enabled_args.enabled)
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            parser.parse_args(["plan", "--package", "fixture", "--defaults"])
+
+    def test_empty_v3_package_is_valid(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary) / "empty"
             write_tsv(directory / "targets.tsv", patcher.TARGET_FIELDS, [])
@@ -282,7 +345,7 @@ class BinaryPatcherTests(unittest.TestCase):
     def test_incompatible_overlapping_patches_fail_during_composition(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             package, _, target_data = self.make_fixture(Path(temporary))
-            second_group = patcher.Group("second_group", "Second", "", "")
+            second_group = patcher.Group("second_group", True, "Second", "", "")
             second_patch = replace(
                 package.patches["test_patch"],
                 patch_id="second_patch",
@@ -308,7 +371,7 @@ class BinaryPatcherTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             package, _, target_data = self.make_fixture(Path(temporary))
             package.groups["second_group"] = patcher.Group(
-                "second_group", "Second", "", ""
+                "second_group", True, "Second", "", ""
             )
             package.patches["second_patch"] = replace(
                 package.patches["test_patch"],

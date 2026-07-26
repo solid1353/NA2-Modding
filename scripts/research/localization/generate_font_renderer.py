@@ -26,13 +26,13 @@ REPOSITORY = find_repository(Path(__file__))
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
-from na2_patcher.modules.resident_patcher import engine  # noqa: E402
+from na2_patcher.modules.runtime_injector import engine  # noqa: E402
 from na2_patcher.project_paths import load_project_paths  # noqa: E402
 from scripts.research.localization import mips  # noqa: E402
 
 
 MODULE = load_project_paths(REPOSITORY).path(
-    "features", "localization", "resident_patcher"
+    "features", "localization", "runtime_injector"
 )
 LEGACY_BLOB_RELATIVE = Path("assets") / "font_renderer_resident.bin"
 LEGACY_BLOB_OUTPUT = MODULE / LEGACY_BLOB_RELATIVE

@@ -42,7 +42,7 @@ MODULE_ARTIFACT_CONTRACTS = {
     "string_patcher": ModuleArtifactContract(
         consumes_if_available=(TRANSLATION_IMPORT_ARTIFACT,),
     ),
-    "resident_patcher": ModuleArtifactContract(),
+    "runtime_injector": ModuleArtifactContract(),
     "texture_patcher": ModuleArtifactContract(),
     "binary_patcher": ModuleArtifactContract(),
 }

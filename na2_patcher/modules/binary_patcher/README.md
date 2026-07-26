@@ -16,12 +16,13 @@ guarded file edits.
 - Every destination range is checked by exact bytes or a range SHA-256.
 - Copy operations also verify the exact source range.
 - Patch sets contain organizational groups and independently applicable atomic patches.
-- Normal profile composition applies every `default_enabled` patch in package order.
+- Normal profile composition applies a patch when both its group and patch
+  `enabled` switches are `1`.
 - Focused CLI commands may request explicit patch IDs without changing feature composition.
 - Patch ranges may overlap; ordered composition accepts compatible chains and rejects guard conflicts.
 - Concrete edits are simulated in deterministic order before output creation. Already-satisfied
   writes and guarded chains are allowed; incompatible staged bytes are rejected as conflicts.
-- Binary-patcher v2 has no patch dependency or declarative relation mechanism.
+- Binary-patcher v3 has no patch dependency or declarative relation mechanism.
 - Only `approved_for_test` and `runtime_proven` patches can be applied.
 - Pending candidates can be inspected with `plan` but cannot be applied.
 - Outputs must be new, stay outside input roots, and preserve target sizes.
@@ -67,17 +68,20 @@ module directory.
 
 `pending` -> `approved_for_test` -> `runtime_proven` or `runtime_failed`
 
-`deprecated` keeps historical data without permitting application. A patch may be
-enabled by default while it is `approved_for_test` or `runtime_proven`; normal
-profile composition is itself a verified test path for accepted integrated work.
+`deprecated` keeps historical data without permitting application. A patch may
+have `enabled=1` only while it is `approved_for_test` or `runtime_proven`;
+normal profile composition is itself a verified test path for accepted
+integrated work. A disabled group masks its members without changing their
+individual switches. Explicit `--patch` selection overrides both switches but
+does not bypass status, guard, overlap, or conflict validation.
 
 ## Schema
 
-Schema v2 is described by the column tables under `schemas/v2/`. Every package has
+Schema v3 is described by the column tables under `schemas/v3/`. Every package has
 exactly four canonical control tables: `targets.tsv`, `groups.tsv`, `patches.tsv`,
 and `edits.tsv`, plus any blobs referenced by edit rows. Package identity is
 derived from its feature/module path; identity manifests and package-version
 metadata are not accepted. Headers are strict and must match exactly. Groups
 organize patches; patches own one or more exact edits. A completely empty reserved
 package is valid, but declared groups without patches and patches without edits are
-rejected. Schema v1 is available only through Git history.
+rejected. Earlier schemas are available only through Git history.

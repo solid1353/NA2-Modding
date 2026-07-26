@@ -811,7 +811,7 @@ PCSX2 application chrome, toolbar text, pause indicators, graphical controller p
 - Do not replace the integrated module by extracting a legacy builder archive over the project.
 - Do not copy generated profile-log plans back into the module.
 - Do not add patched `BTL.BIN`, `ETC.BIN`, or `SLPS_258.37` payloads to the importer or checkpoint commits; binary deliverables belong only in the frozen release archive.
-- `string_patcher` owns conversion of imported rows into default-enabled BTL,
+- `string_patcher` owns conversion of imported rows into enabled BTL,
   ETC, and SLPS patches; `binary_patcher` owns guards, conflicts, writes, and logs.
 - The profile orchestrator owns composition and ISO application. The importer
   must run immediately before its consuming `string_patcher` instance.
@@ -1709,7 +1709,7 @@ data; engine code and documentation are excluded from the feature pin.
 Strings are resolved through the importer, encoded as CP1252 plus a terminator,
 deduplicated by exact encoded bytes, contributed by symbol, and currently link
 in stable mapping-ID order at four-byte-aligned offsets. Font functions are
-contributed through `resident_patcher` and sort before the string pool. No
+contributed through `runtime_injector` and sort before the string pool. No
 feature owns either set of offsets. The selected external strings contain 1,475
 encoded bytes; T364 and T117 deliberately share one identical symbol.
 Structured save-progress families preserve their original consecutive
@@ -1819,7 +1819,7 @@ fitting labels at scale `1`, applies `128 / 178` to `Ultimate Jutsu Prep`,
 derives NUN5's exact box left as the native NA2 caller center minus `64`, and
 converts the prepared left edge back to NA2's centered-renderer ABI. The
 separate `OFF` call is untouched. Both the Controls layer and its required v2
-core are runtime-proven and default-enabled after the matched eight-row review
+core are runtime-proven and enabled after the matched eight-row review
 and the supplied real title-to-Load transition state.
 
 The second thin caller layer, `font_v2_titles`, replaces only two guarded BTL
@@ -1830,7 +1830,7 @@ measurement, shrink-only scale and restoration to the same v2 core. The
 adapter returns through NA2's native `0x00382310` draw ABI. This title layer
 does not select Practice explanations or either subsequent Command Chart
 auxiliary-string call; each remains a separate caller family. The title layer
-is default-enabled and runtime-proven in isolated matched Command Chart and
+is enabled and runtime-proven in isolated matched Command Chart and
 Practice captures. The user accepted the Command Chart result on 2026-07-27;
 the Practice title result remains agent-validated and awaiting acceptance.
 
@@ -1841,15 +1841,16 @@ the proven 364-by-48 box, and installs call-local metric and draw callbacks for
 the native 13-token controller-icon table. Matched supplied slots 2-7 prove
 NUN5-equivalent one-, two-, and three-line wrapping, line spacing, placement,
 and D-pad, face, plus, and shoulder icons. Controls and Command Chart
-regressions remain intact. This layer is default-enabled and runtime-proven;
+regressions remain intact. This layer is enabled and runtime-proven;
 the grouped Practice grids still await user acceptance.
 
 The retained auto-fit and layout components require `font_nun5_glyphs` because
 their positions and fit decisions are tuned to its metrics. They otherwise
 remain independent. Their fragments, relocations, hook declarations, generated
-assets, and historical validation evidence remain canonical; setting
-`default_enabled=0` removes them from normal composition without deleting the
-implementation. With every resident Font row disabled, the resident engine
+assets, and historical validation evidence remain canonical. Setting a
+resident patch's `enabled=0`, or setting its owning group's `enabled=0`, removes
+it from normal composition without deleting the implementation. With every
+resident Font row effectively disabled, the resident engine
 validates the retained package but contributes no Font fragments or hooks to
 the shared payload.
 The rejected shared `font_vertical_quad_height` component was removed from
@@ -1893,5 +1894,5 @@ negative results are recorded in
 
 The Localization feature owns these declarative `binary_patcher` patches for
 the accepted menu, overlay, setup, stage, pause, result-tally, and audio input behavior.
-`binary_patcher/` contains the guarded targets, default-enabled patches, edits,
+`binary_patcher/` contains the guarded targets, enabled patches, edits,
 evidence, and runtime classifications.

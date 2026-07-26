@@ -1,6 +1,6 @@
 column	required	type	description
 edit_id	1	identifier	Unique edit identifier.
-patch_id	1	identifier	Owning atomic patch.
+patch_id	1	identifier	Owning atomic patch identifier.
 order	1	integer	Stable order within the patch.
 destination_target_id	1	identifier	Target to modify.
 destination_offset	1	integer	File offset; hexadecimal is permitted.

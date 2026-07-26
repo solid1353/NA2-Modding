@@ -1,4 +1,4 @@
-patch_id	group_id	default_enabled	status	confidence	name	description	source_mapping_id	runtime_classification	review_notes
+patch_id	group_id	enabled	status	confidence	name	description	source_mapping_id	runtime_classification	review_notes
 ELF-Q001	startup	1	runtime_proven	verified	Skip CC2 intro	Skip the CyberConnect2 intro.	pnach_intro_skips	Runtime-proven in PNACH and confirmed after static migration.	Exact file-backed conversion.
 ELF-Q005	startup	1	runtime_proven	verified	Skip opening	Skip the opening sequence.	pnach_intro_skips	Runtime-proven in PNACH and confirmed after static migration.	Exact file-backed conversion.
 ELF-Q002	practice	1	runtime_proven	verified	Voice off by default	Start Practice with voice disabled.	pnach_practice_qol	Runtime-proven in PNACH and confirmed after static migration.	Exact file-backed conversion.

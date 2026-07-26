@@ -23,12 +23,12 @@ stage-by-stage rebuild. The independently reviewed Character Select modal
 alignment remains enabled.
 
 The replacement v2 shared core and Controls family are now runtime-proven and
-default-enabled. The user accepted the exact matched Controls result on
+enabled. The user accepted the exact matched Controls result on
 2026-07-26, and supplied slot 1 proves the same worker ISO completes a real
 title-to-Load transition without freezing.
 
 The isolated Command Chart and Practice title layer remains runtime-proven and
-default-enabled. The user explicitly accepted the Command Chart result on
+enabled. The user explicitly accepted the Command Chart result on
 2026-07-27; the Practice title result remains agent-validated and awaiting
 acceptance. The next Practice explanation family is also agent-validated
 across supplied slots 2-7: wrapping, line spacing, placement, and native inline
@@ -263,7 +263,7 @@ renderer. The user explicitly accepted that result on 2026-07-26. Supplied
 `work/Font/inputs/sstates/autofit_v2/controls/load-transition/`, has boot CRC
 `A8A3C694` and shows the same exact worker ISO fully rendering the Load screen
 after a real title transition. The accepted core and Controls rows are
-therefore runtime-proven and default-enabled.
+therefore runtime-proven and enabled.
 
 ### Second caller family: Command Chart and Practice titles
 
@@ -324,7 +324,7 @@ and boot CRC `A85C52F7`. Its 7,536-byte resident payload has SHA-256
 the 4,084-byte generated v2 asset has SHA-256
 `382AD202C1225326B59832BECE7A8AE61A2A69870B18B17D1F606B6C5152BE90`.
 The Controls and Command Chart regression captures remain intact. The family
-is runtime-proven and default-enabled, with user acceptance of the composed
+is runtime-proven and enabled, with user acceptance of the composed
 Practice grids still pending.
 
 ### Static and automated validation
@@ -490,7 +490,7 @@ call. `OFF` remains on the ordinary renderer.
 - `na2_patcher/features/localization/binary_patcher/` contains the enabled
   native secondary font and independent Character Select modal alignment plus
   the retained, disabled static autofit state.
-  `na2_patcher/features/localization/resident_patcher/` retains the linked
+  `na2_patcher/features/localization/runtime_injector/` retains the linked
   metric, fit, scale, and layout helpers with their default selections
   disabled. All remain covered by the current Localization aggregate feature
   pin.

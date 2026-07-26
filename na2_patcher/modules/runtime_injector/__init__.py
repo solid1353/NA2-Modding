@@ -1,13 +1,13 @@
-"""Declarative resident-payload fragment and symbolic-patch engine."""
+"""Declarative runtime-code/data injection engine."""
 
 from .engine import (
-    ResidentPatchPackage,
+    RuntimeInjectionPackage,
     build_binary_package,
     load_package,
 )
 
 __all__ = [
-    "ResidentPatchPackage",
+    "RuntimeInjectionPackage",
     "build_binary_package",
     "load_package",
 ]

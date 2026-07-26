@@ -1,5 +1,6 @@
 column	required	type	description
 group_id	1	identifier	Organizational group within one patch set.
+enabled	1	boolean:0|1	Normal-composition group switch; disabled groups mask all member patches.
 name	1	string	Short human-readable group name.
 description	0	string	Functional scope shared by the group's patches.
 review_notes	0	string	Non-executable review or migration notes.

@@ -3,7 +3,6 @@
 from .engine import (
     TranslationImportPlan,
     build_mapping_id_import_plan,
-    build_replacement_import_plan,
     build_translation_import_plan,
     write_json,
     write_import_tsv,
@@ -12,7 +11,6 @@ from .engine import (
 __all__ = [
     "TranslationImportPlan",
     "build_mapping_id_import_plan",
-    "build_replacement_import_plan",
     "build_translation_import_plan",
     "write_json",
     "write_import_tsv",

@@ -37,13 +37,6 @@ class IntegratedExternalStringTests(unittest.TestCase):
                 apply="BTL,ETC,SLPS",
             )
         )
-        cls.replacement_import_plan = (
-            translation_importer.build_replacement_import_plan(
-                na2_folder=cls.roots["na2"],
-                data_root=cls.localization / "translation_importer",
-                apply="BTL,ETC,SLPS",
-            )
-        )
         cls.draft = string_patcher.build_translation_draft(
             translation_plan=cls.import_plan,
             owner="localization.string_patcher",
@@ -76,35 +69,35 @@ class IntegratedExternalStringTests(unittest.TestCase):
     def test_shared_builder_produces_the_exact_fit_derived_228_binary(self) -> None:
         mod = self.build.payload
         self.assertEqual(self.build.output_path, "PRG/228.BIN")
-        self.assertEqual(len(mod), 0x6F0)
+        self.assertEqual(len(mod), 0x710)
         self.assertEqual(
             binary_patcher.data_sha256(mod),
-            "84DD5C72F4B7D7A472EE2E3C69FBB92621A806E04116D281ED734AE61F5D02EF",
+            "C3087793BD470941BC8371C758116A88D14B87E22F7AA0EB56B6EA02181C4C85",
         )
         self.assertEqual(
             struct.unpack_from("<4s7I", mod, 0),
-            (b"MWo3", 8, 0x008F3D00, 0x40, 0x6A0, 0, 0x008F43F0, 0x008F43F0),
+            (b"MWo3", 8, 0x008F3D00, 0x40, 0x6C0, 0, 0x008F4410, 0x008F4410),
         )
         self.assertEqual(mod[0x20:0x28], b"228.bin\0")
         self.assertEqual(struct.unpack_from("<II", mod, 0x40), (0x03E00008, 0))
 
     def test_string_patcher_declares_fragments_and_symbolic_pointers_only(self) -> None:
-        self.assertEqual(len(self.draft.external_draft.fragments), 28)
-        self.assertEqual(len(self.draft.external_draft.symbolic_patches), 33)
-        self.assertEqual(len(self.plan.external_plan.resolved_patches), 33)
+        self.assertEqual(len(self.draft.external_draft.fragments), 30)
+        self.assertEqual(len(self.draft.external_draft.symbolic_patches), 35)
+        self.assertEqual(len(self.plan.external_plan.resolved_patches), 35)
         self.assertTrue(all(patch.kind == "redirect_pointer" for patch in self.resolved))
-        self.assertEqual(self.plan.summary["external_mappings"], 31)
-        self.assertEqual(self.plan.summary["external_binary_edits"], 33)
-        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2290)
+        self.assertEqual(self.plan.summary["external_mappings"], 33)
+        self.assertEqual(self.plan.summary["external_binary_edits"], 35)
+        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2291)
 
     def test_pool_contains_only_referenced_strings_and_deduplicates_one_pair(self) -> None:
         summary = self.plan.summary["external_strings"]
-        self.assertEqual(summary["count"], 29)
-        self.assertEqual(summary["distinct"], 28)
-        self.assertEqual(summary["encoded_bytes"], 1470)
+        self.assertEqual(summary["count"], 31)
+        self.assertEqual(summary["distinct"], 30)
+        self.assertEqual(summary["encoded_bytes"], 1490)
         self.assertEqual(summary["derived"], 3)
         rows = {row["mapping_id"]: row for row in summary["rows"]}
-        self.assertEqual(rows["M2003"]["runtime_address"], rows["M2065"]["runtime_address"])
+        self.assertEqual(rows["T364"]["runtime_address"], rows["T117"]["runtime_address"])
         self.assertGreaterEqual(min(int(row["file_offset"], 0) for row in rows.values()), 0x100)
 
     def test_structural_loader_edits_are_owned_by_payload_builder(self) -> None:
@@ -123,54 +116,54 @@ class IntegratedExternalStringTests(unittest.TestCase):
     def test_project_title_policy_reaches_inline_sequence_and_parent_materializations(self) -> None:
         self.assertIn(
             "Naruto Shippuden: Ultimate Ninja 5",
-            self.import_plan.materialized_templates["M0823"],
+            self.import_plan.materialized_templates["T2048"],
         )
         self.assertEqual(
-            self.import_plan.resolved_texts["M0823"],
+            self.import_plan.resolved_texts["T2048"],
             "Creating Naruto Shippuden: Ultimate Ninja 5 data",
         )
         self.assertIn(
             "Naruto Shippuden: Ultimate Ninja 5",
-            self.import_plan.resolved_sequences["M0829"][2],
+            self.import_plan.resolved_sequences["T2055"][2],
         )
         transformed = self.draft.translation_plan
-        self.assertIn("Narutimate Accel v2.28", transformed.resolved_texts["M0823"])
+        self.assertIn("Narutimate Accel v2.28", transformed.resolved_texts["T2048"])
         self.assertNotIn(
             "Naruto Shippuden: Ultimate Ninja 5",
-            transformed.materialized_templates["M0823"],
+            transformed.materialized_templates["T2048"],
         )
         payload_text = self.build.payload.decode("cp1252", "ignore")
         self.assertIn("Narutimate Accel v2.28", payload_text)
         self.assertNotIn("Naruto Shippuden: Ultimate Ninja 5", payload_text)
 
     def test_full_replacement_is_inline_when_it_fits_despite_reference_inventory(self) -> None:
-        self.assertNotIn("M0743", self.draft.external_draft.excluded_mapping_ids)
+        self.assertNotIn("T65", self.draft.external_draft.excluded_mapping_ids)
         mapping = next(
             row
             for row in self.draft.translation_plan.text_mappings
-            if row["id"] == "M0743"
+            if row["id"] == "T65"
         )
         self.assertLess(
-            len(self.draft.translation_plan.resolved_texts["M0743"].encode("cp1252")),
+            len(self.draft.translation_plan.resolved_texts["T65"].encode("cp1252")),
             int(mapping["capacity"]),
         )
         self.assertTrue(
             any(
-                row["source_mapping_id"] == "M0743"
+                row["source_mapping_id"] == "T65"
                 for row in self.draft.translation_plan.import_rows
             )
         )
 
     def test_overflow_without_reference_fails_closed(self) -> None:
         resolved = dict(self.draft.translation_plan.resolved_texts)
-        resolved["M0743"] = "X" * 200
+        resolved["T65"] = "X" * 200
         plan = replace(
             self.draft.translation_plan,
             resolved_texts=resolved,
             references=tuple(
                 row
                 for row in self.draft.translation_plan.references
-                if row.mapping_id != "M0743"
+                if row.mapping_id != "T65"
             ),
         )
         with self.assertRaisesRegex(ValueError, "no pointer reference"):
@@ -198,14 +191,14 @@ class IntegratedExternalStringTests(unittest.TestCase):
         ]
         self.assertEqual(
             [str(row["id"]) for row in override_rows],
-            ["M0530", "M0537"],
+            ["T2027", "T2033"],
         )
         self.assertEqual(
-            self.import_plan.resolved_texts["M0530"],
+            self.import_plan.resolved_texts["T2027"],
             "Press <iconCROSS> to choose item.",
         )
         self.assertEqual(
-            self.import_plan.resolved_texts["M0537"],
+            self.import_plan.resolved_texts["T2033"],
             "Select an item and press <iconCROSS> to buy.",
         )
         self.assertEqual(len(self.import_plan.references), 32)
@@ -222,22 +215,22 @@ class IntegratedExternalStringTests(unittest.TestCase):
         )
 
     def test_rebuild_fixes_confirmed_mapping_defects(self) -> None:
-        self.assertEqual(self.import_plan.resolved_texts["M0246"], "Kankuro")
-        self.assertEqual(self.import_plan.resolved_texts["M0521"], "Provocation")
+        self.assertEqual(self.import_plan.resolved_texts["T443"], "Kankuro")
+        self.assertEqual(self.import_plan.resolved_texts["T812"], "Provocation")
         self.assertEqual(
-            self.import_plan.resolved_texts["M0522"],
+            self.import_plan.resolved_texts["T813"],
             "Contrasting Pair",
         )
         self.assertNotIn(
-            "M0523",
+            "T2158",
             {str(row["id"]) for row in self.import_plan.text_mappings},
         )
-        self.assertEqual(self.import_plan.resolved_texts["M2247"], "MAX")
-        self.assertEqual(self.import_plan.resolved_texts["M0550"], "Opponent")
+        self.assertEqual(self.import_plan.resolved_texts["T5"], "MAX")
+        self.assertEqual(self.import_plan.resolved_texts["T528"], "Opponent")
 
     def test_generic_choice_labels_preserve_official_case(self) -> None:
-        self.assertEqual(self.import_plan.resolved_texts["M0566"], "No")
-        self.assertEqual(self.import_plan.resolved_texts["M0799"], "Yes")
+        self.assertEqual(self.import_plan.resolved_texts["T2025"], "No")
+        self.assertEqual(self.import_plan.resolved_texts["T2026"], "Yes")
 
     def test_rebuild_inventory_is_adjacent_and_translation_free(self) -> None:
         self.assertEqual(len(self.diagnostic_import_plan.text_mappings), 2173)
@@ -302,83 +295,6 @@ class IntegratedExternalStringTests(unittest.TestCase):
                 ),
                 translation_display="guess",
             )
-
-    def test_replacement_display_uses_only_enabled_replacement_rows(self) -> None:
-        draft = string_patcher.build_translation_draft(
-            translation_plan=self.replacement_import_plan,
-            owner="localization.string_patcher",
-            title_policy=string_patcher.GameTitlePolicy(
-                imported_title="not applied to a partial replacement",
-                output_title="also not applied",
-                expected_mapping_count=99,
-                expected_occurrence_count=99,
-            ),
-            translation_display="replacement",
-        )
-        self.assertEqual(draft.translation_plan.display_mode, "replacement")
-        self.assertEqual(len(draft.translation_plan.text_mappings), 1793)
-        self.assertEqual(len(draft.translation_plan.import_rows), 1971)
-        self.assertEqual(len(draft.external_draft.fragments), 24)
-        self.assertEqual(len(draft.external_draft.symbolic_patches), 28)
-        self.assertEqual(
-            self.replacement_import_plan.summary["table_rows"],
-            1793,
-        )
-        self.assertEqual(
-            self.replacement_import_plan.summary["inactive_rows"],
-            0,
-        )
-        self.assertEqual(
-            self.replacement_import_plan.summary["reference_inventory"][
-                "parent_message"
-            ],
-            1,
-        )
-        self.assertTrue(
-            {"T50", "T2011", "T2042"}.issubset(
-                draft.external_draft.excluded_mapping_ids
-            )
-        )
-        self.assertEqual(
-            self.replacement_import_plan.resolved_texts["T50"],
-            "Difficulty",
-        )
-        donorless_replacements = {
-            "T24": (
-                "T24 You can set the opponent's state. During Double Jump, "
-                "the opponent performs the action selected below while double-jumping."
-            ),
-            "T30": "T30 Ult",
-            "T744": "T744 Faint Relief",
-            "T767": "T767 An Older Sister's Joy",
-        }
-        for donorless_id, replacement in donorless_replacements.items():
-            self.assertEqual(
-                self.replacement_import_plan.resolved_texts[donorless_id],
-                replacement,
-            )
-        save_progress = (
-            "Saving to memory card (PS2) in <br>MEMORY CARD slot 1."
-            "<br>Please do not remove memory card (PS2), "
-            "<br>controller, or reset/switch off the console."
-        )
-        self.assertEqual(
-            self.replacement_import_plan.materialized_templates["T2011"],
-            save_progress,
-        )
-        self.assertEqual(
-            self.replacement_import_plan.materialized_templates["T2042"],
-            save_progress,
-        )
-        self.assertEqual(
-            self.replacement_import_plan.resolved_texts["T2041"],
-            "MEMORY CARD slot 1.",
-        )
-        self.assertEqual(
-            self.replacement_import_plan.resolved_texts["T2015"],
-            "Overwrite?",
-        )
-        self.assertFalse(draft.game_title_policy["applied"])
 
     def test_title_policy_fails_closed_in_string_patcher(self) -> None:
         with self.assertRaisesRegex(ValueError, "policy coverage differs"):

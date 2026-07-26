@@ -1,20 +1,19 @@
 # T-ID from-scratch string-translation rebuild
 
-This is the current execution and validation policy for rebuilding the
-Localization translation table. The accepted `mappings.tsv` remains unchanged
-and continues to drive normal builds while the replacement is built beside it.
-Its rows, translations, and donor claims are reference material, not presumed
-correct coverage.
+This is the current execution and validation policy for the rebuilt
+Localization translation table. The screenshot-confirmed T-ID table has been
+promoted to canonical `mappings.tsv` and now drives normal builds. Legacy
+translations and donor claims remain reference material, not presumed correct
+coverage.
 
-## Parallel-table boundary
+## Two-table boundary
 
-The translation importer owns three adjacent inputs:
+The translation importer owns two adjacent inputs:
 
-- `mappings.tsv`: the unchanged accepted table used by normal builds;
+- `mappings.tsv`: the canonical screenshot-confirmed translation table used by
+  normal builds;
 - `rebuild.tsv`: the complete stable-`T#` candidate inventory and sole input
-  used by worker-only mapping-ID builds;
-- `replacement.tsv`: the encountered-only translation replacement under
-  construction.
+  used by worker-only mapping-ID builds.
 
 `rebuild.tsv` does not inherit executable translations. Its rows retain only
 exact clean NA2 source text/location, mode/capacity, a provisional screen
@@ -33,30 +32,28 @@ The 16 columns keep human-editable text first and engine details afterward:
 filled from the new evidence pass. A blank basis therefore means candidate,
 not validated. `legacy_ids` is an optional comma-separated lookup field.
 
-`replacement.tsv` uses the exact 16-column `mappings.tsv` schema:
+`mappings.tsv` uses this 16-column schema:
 
 `id`, `enabled`, `display_context`, `source`, `donor`, `prefix`,
 `replacement`, `display_basis`, `source_ref`, `donor_ref`, `mode`,
 `capacity`, `transform`, `arguments`, `reference_refs`, `parent_mapping_id`
 
-Only encountered `T#` rows and structurally proven character-family rows are
+Only encountered `T#` rows and structurally proven character-family rows were
 admitted. The first screenshot pass contributed 567 enabled rows and the
 second contributed 185. The character-specific exception then admitted the
 remaining 1,041 Command Chart move-name rows from the verified 74-table
 command-record family. A subsequent missing-row audit admitted another 260
 policy-supported rows: 53 directly seen rows, 10 structurally inferred
-siblings, and 197 character-family rows. The cumulative replacement therefore
-contains 2,053 unique enabled rows. Exact guarded source fields come from
+siblings, and 197 character-family rows. Canonical mappings therefore contain
+2,053 unique enabled rows. Exact guarded source fields come from
 `rebuild.tsv`, while concrete display metadata records whether each row was
 seen directly, inferred from a captured selector/help family, or admitted
 under the character-specific exception. The first-pass corpus contains 172
 hash-verified paired captures; the second contains 93.
 
-Of the 2,053 rows, 2,040 retain the unique accepted-table row with the same
-exact `source_ref` as their donor/transform starting point. T2042 additionally
-rewrites its accepted parent ID from `M0810` to replacement-table ID `T2011`.
-T2045 and T2050 likewise rewrite their accepted parent IDs into the
-replacement-table namespace as `T2043` and `T2048`.
+Of the 2,053 rows, 2,040 began from the unique legacy row with the same exact
+`source_ref`. T2042 uses canonical parent `T2011`; T2045 and T2050 likewise use
+canonical parents `T2043` and `T2048`.
 Three paired-screen corrections override incorrect reference relationships:
 T1956 uses `Off` at `NUN5_SLES@0x513EF8`, T1957 uses `On` at
 `NUN5_SLES@0x513EFC`, and T2158 uses `Warning` at
@@ -76,17 +73,13 @@ the exact five-string NUN5 block at `0x514218` through `0x514238`; T50 uses
 exact pointer at `NA2_BTL@0x20A264`. NA2's extra `Ultimate` difficulty has no
 NUN5 counterpart.
 
-Exactly four rows currently have no trustworthy NUN5 donor: T24, T30, T744,
-and T767. Their user-editable `replacement` fields contain the stable `T#`
-followed by a literal English translation so runtime captures remain directly
-traceable to the table. T30 deliberately uses the user-requested `T30 Ult`
-fit text for its seven-byte inline text capacity. Donor-backed rows otherwise
-leave `replacement` blank and execute the independently validated official
-donor text. T2027 and T2033 are the only donor-backed exceptions and retain
-the established Cross-confirm Shop overrides. These relationships are the
-reference-derived starting point for English runtime validation, not a claim
-that later uncaptured screens are covered. The diagnostic inventory and normal
-build behavior remain unchanged.
+T24 reuses the official Jump-mode help text. Paired screens correct T637 to
+`Hidden Leaf Village`, T638 to `Hidden Leaf Gate`, T744 to `Faint Unease`, and
+T767 to `Silent Confidence`. T30 is the sole row without a trustworthy NUN5
+donor: its user-authored `Ultimate` replacement is externalized through
+`NA2_BTL@0x209CB4`. Donor-backed rows otherwise leave `replacement` blank and
+execute independently validated official donor text. T1958, T2027, and T2033
+retain the established Cross-confirm overrides.
 
 Rows that split one `<br>`-delimited renderer message are admitted as a
 complete structural family even when only one line supplied the visible ID.
@@ -109,8 +102,8 @@ data row is `T1`, the second is `T2`, and so on.
 Canonical initial `rebuild.tsv` SHA-256:
 `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`.
 
-The accepted `mappings.tsv` remains 2,052 rows and SHA-256
-`7601F834646C374F3E89087724726AAE78E9A87A46A5F936CC5C776C4E60C0B6`.
+Canonical `mappings.tsv` contains 2,053 rows and SHA-256
+`3351BF0F2F18135FD621506442E86014E00FA0BCE20B80D0759E6BBD690991E8`.
 
 ## Stable diagnostic IDs
 
@@ -157,26 +150,11 @@ Build the diagnostic ISO with:
 The output is a verified worker ISO. It never promotes or rotates Current,
 Previous, or Candidate.
 
-## Cumulative replacement build
+## Canonical English build
 
-Build the separate cumulative translation ISO with:
-
-```powershell
-& scripts/research/translation/build_replacement.ps1 `
-  -OutputIso 'work/String translation/build/replacement.iso'
-```
-
-Launch that cumulative ISO beside NUN5 with:
-
-```powershell
-na replacement nun5
-```
-
-This is also a verified worker build. It imports only enabled rows from
-`replacement.tsv`; it never falls back to accepted `mappings.tsv`, never
-changes the complete diagnostic inventory, and never promotes or rotates
-Current, Previous, or Candidate. Each completed translation pass therefore
-accumulates in one independently testable image.
+Normal profile builds import only enabled rows from canonical `mappings.tsv`.
+There is no separate replacement table or replacement-only display mode.
+`rebuild.tsv` remains independent and is read only by mapping-ID diagnostics.
 
 During this rebuild pass, the user-facing `na` pair launcher accepts the
 diagnostic `rebuild` image:
@@ -198,12 +176,12 @@ provenance.
 
 If a visible Japanese string has no `T#`, it is a newly discovered candidate.
 Add it with the next permanent ID in `rebuild.tsv`; do not renumber the
-existing inventory. Add it to `replacement.tsv` only after its diagnostic ID
-is visibly confirmed.
+existing inventory. Add it to `mappings.tsv` only after its diagnostic ID is
+visibly confirmed.
 
 ## Admission rule
 
-A diagnostic row enters `replacement.tsv` only under one of
+A diagnostic row enters canonical `mappings.tsv` only under one of
 these bases:
 
 1. `seen`: its diagnostic `T#` appears in a supplied PCSX2 screenshot;
@@ -218,8 +196,8 @@ names, Ultimate Jutsu names, command-chart move names, figures, and voice
 entries. Adjacency alone is insufficient.
 
 Rows never confirmed to display remain candidates only and are not copied into
-`replacement.tsv`. Diagnostic replacement is evidence
-collection, not permission to translate every binary string.
+`mappings.tsv`. Diagnostic display is evidence collection, not permission to
+translate every binary string.
 
 Every admitted row must contain:
 
@@ -254,8 +232,8 @@ translation path.
 `prefix` and `replacement` remain readable user-editable fields. A blank
 replacement uses the independently validated donor. Inline versus external
 placement remains a build-time decision; do not author shortened alternatives
-or placement markers except for the explicitly requested T30 `T30 Ult`
-inline-fit exception.
+or placement markers. T30 demonstrates this rule: full `Ultimate` is linked
+externally because it does not fit the original slot.
 
 ## Screenshot and inference workflow
 
@@ -299,7 +277,7 @@ The rebuild is accepted only after:
    are uniquely readable, no resident payload is introduced, and normal
    composition remains byte-for-byte unchanged;
 3. ID capture: every reachable semantic screen group is exercised and visible
-   IDs are entered into `replacement.tsv` with exact display context;
+   IDs are entered into `mappings.tsv` with exact display context;
 4. inference audit: selector/help and character-family expansions are checked
    against clean NA2 structure and NUN5 reference ordering;
 5. donor audit: every admitted donor begins at a real NUN5 string boundary,
@@ -310,6 +288,5 @@ The rebuild is accepted only after:
 7. runtime acceptance: every supplied semantic screen group is captured again
    in English and reported as grouped NUN5-left/rebuilt-NA2-right comparisons.
 
-The accepted `mappings.tsv` is not removed or changed during this process.
-Replacing it is a separate final cutover after the new table has passed the
-complete validation plan.
+The canonical cutover is complete. Remaining work is English runtime acceptance
+and evidence-backed correction of any displayed mismatch.

@@ -54,10 +54,8 @@ history; do not recreate an archive directory for dead scripts.
 - `research/translation/`: the worker-only mapping-ID diagnostic builder used
   to identify visible strings, plus `sync_rebuild.py`, which initializes and
   verifies the permanent `T#` candidate inventory from the retained v40 and
-  accepted-table references without copying donor translations.
-  `build_replacement.ps1` builds the separate cumulative worker ISO from only
-  enabled `replacement.tsv` rows. None of these tools changes normal profile
-  behavior or shared ISO state.
+  canonical-table references without copying donor translations. These tools
+  do not change normal profile behavior or shared ISO state.
 
 Normal builds call `na2_patcher.build_profile` through `na2/build.ps1`.
 Before that call, `na2/build.ps1` checks the deterministic successful-build
@@ -79,12 +77,12 @@ User-owned shared-image builds and launches run `act na2` automatically;
 worker-output builds never actualize. The standalone `act` command can run all
 actualization modes without building or launching.
 
-During the active String translation rebuild, the user-facing `na` pair
-launcher accepts `na rebuild nun5` and `na replacement nun5`. The `rebuild`
-selector addresses the verified worker artifact at
-`work/String translation/build/mapping-ids.iso`; `replacement` addresses the
-cumulative worker artifact at
-`work/String translation/build/replacement.iso`.
+During String translation diagnostics, the user-facing `na` pair launcher
+accepts `na rebuild nun5`. The `rebuild` selector addresses the verified worker
+artifact at `work/String translation/build/mapping-ids.iso`. The retained
+`na replacement nun5` selector can still open the last cumulative worker ISO
+for historical visual comparison, but no build mode or canonical table
+produces that snapshot after the final cutover.
 `na` continues accepting any ordered combination of registered ISO selectors;
 its existing selectors and zero-argument behavior remain unchanged. A missing
 selected ISO fails before any PCSX2 process is changed.

@@ -3,7 +3,7 @@
 This feature owns all declarative content for the accepted English localization
 while reusable executable engines remain under `na2_patcher/modules/`.
 
-- [Translation importer](#na2-translation-importer-accepted-v45-plus-t-id-replacement-rebuild)
+- [Translation importer](#na2-translation-importer-canonical-t-id-rebuild)
 - [String patcher](#string-patcher)
 - [Resident Font renderer](#native-nun5-derived-font)
 - [Texture patcher](#ui-texture-translation-module)
@@ -16,7 +16,7 @@ The feature directory name declares its identity. Its module-named
 subdirectories are the inputs that compose it; enabling Localization enables all
 of them, and one aggregate profile pin covers their canonical inputs.
 
-## NA2 translation importer (accepted v45 plus T-ID replacement rebuild)
+## NA2 translation importer (canonical T-ID rebuild)
 
 This first-class `na2_patcher` module imports and validates strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
@@ -28,24 +28,19 @@ command or file-backed inter-stage handoff.
 
 ### Mapping metadata
 
-- Version: `45`
-- Packaged `mappings.tsv` SHA-256: `7601F834646C374F3E89087724726AAE78E9A87A46A5F936CC5C776C4E60C0B6`
+- Canonical `mappings.tsv` rows: `2,053`
+- Canonical `mappings.tsv` SHA-256: `3351BF0F2F18135FD621506442E86014E00FA0BCE20B80D0759E6BBD690991E8`
 - Initial parallel `rebuild.tsv` rows: `2,173` (`T1` through `T2173`)
 - Initial `rebuild.tsv` SHA-256: `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`
-- Cumulative `replacement.tsv` rows: `2,053`
-- Cumulative `replacement.tsv` SHA-256: `4829FD2AF95AF0F6FE194D59AEC96C1FABF11E36203A6C331659C9D77AD28370`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the aggregate Localization feature pin own content identity.
-`mappings.tsv` continues to own the accepted executable donor translations and
-optional pointer inventory. Adjacent `rebuild.tsv` is the translation-free
+`mappings.tsv` owns the canonical executable donor translations, overrides,
+and optional pointer inventory. Adjacent `rebuild.tsv` is the translation-free
 complete candidate inventory whose rows are imported and executed only by
-worker mapping-ID builds. Adjacent `replacement.tsv` is the encountered-only
-translation rebuild and is imported only by its explicit cumulative worker
-build. Normal builds hash both adjacent tables as canonical feature data but
-continue importing only `mappings.tsv`. Profile `identity.json` owns the
-imported/output title declaration; `string_patcher` applies its fixed coverage
-only to the accepted normal translation path.
+worker mapping-ID builds. Normal builds import only `mappings.tsv`. Profile
+`identity.json` owns the imported/output title declaration; `string_patcher`
+applies its fixed coverage to the normal translation path.
 
 ### Source and target scope
 
@@ -60,16 +55,15 @@ provenance, and executable translation. Normal builds do not read donor
 binaries: the verified `donor` text in the table is the default translation.
 A nonempty `replacement` is a user-editable override, and `prefix` is a
 user-editable string prepended to the selected translation. Official donor text
-and ordinary overrides remain complete. T30 is the sole explicit
-user-authored fit exception and uses `T30 Ult` in its seven-byte inline text
-capacity; no placement marker is stored in the table.
+and ordinary overrides remain complete. T30 uses the complete user-authored
+`Ultimate` translation and the validated pointer at `NA2_BTL@0x209CB4`; encoded
+fit therefore externalizes it automatically.
 
-### Accepted, diagnostic, and replacement tables
+### Canonical and diagnostic tables
 
-`mappings.tsv` remains the accepted canonical mapping table used by normal
-builds. It is unchanged by the parallel rebuild. `display_context` is its
-human-readable page/filter key; rows are sorted by that context, then by stable
-`id`.
+`mappings.tsv` is the canonical mapping table used by normal builds.
+`display_context` is its human-readable page/filter key; rows are sorted by
+that context, then by stable `id`.
 
 The 16 columns are:
 
@@ -106,37 +100,34 @@ rows `T1` through `T4` so their complete tokens fit; the remaining initial rows
 are sorted by `display_context`, then source location. Future candidates append
 with the next permanent ID.
 
-`replacement.tsv` uses the exact 16-column accepted `mappings.tsv` schema. It
-contains `T#` rows confirmed visible by the paired screenshot pass plus the
-explicit character-family exception, sorted by `display_context` and numeric
-ID. Its cumulative first two passes have 752 unique enabled rows: 567 from the
+Canonical `mappings.tsv` contains `T#` rows confirmed visible by the paired
+screenshot pass plus the explicit character-family exception, sorted by
+`display_context` and numeric ID. Its cumulative first two passes have 752
+unique enabled rows: 567 from the
 hash-verified first-pass corpus and 185 from the second. The verified 74-table
 Command Chart family adds 1,041 rows, including Naruto moves absent from the
 captured 14-row subset. A subsequent missing-row audit adds another 260
 policy-supported rows: 53 directly seen rows, 10 structurally inferred
 siblings, and 197 character-family rows, for 2,053 total rows. Exact source,
-source reference, mode, and capacity come from `rebuild.tsv`. Donor and
-transform relationships for 2,040 rows retain the unique accepted row with the
-same exact `source_ref`; T2042, T2045, and T2050 rewrite accepted parent
-references into replacement IDs `T2011`, `T2043`, and `T2048`.
+source reference, mode, and capacity come from `rebuild.tsv`. T2042, T2045,
+and T2050 use canonical parent IDs `T2011`, `T2043`, and `T2048`.
 Paired screenshots correct three reference-table errors: T1956 uses `Off` at
 `NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses
 `Warning` at `NUN5_SLES@0x513F38`.
 
 Six Difficulty-family rows are matched by meaning: T27 `Simple`, T1983 `Easy`,
 T28 `Normal`, T1984 `Hard`, T29 `Insane`, and T50 `Difficulty`. The full T50
-label links through the exact pointer at `NA2_BTL@0x20A264`. Exactly four rows
-have no trustworthy NUN5 donor—T24, T30, T744, and T767—and put an
-ID-prefixed literal translation in the user-editable `replacement` field. T30
-uses the explicit `T30 Ult` inline-fit exception. Donor-backed rows otherwise
-leave `replacement` blank and execute the independently validated official
-donor text. T2027 and T2033 are the only donor-backed exceptions and retain the
-established Cross-confirm Shop overrides. This is a reference-derived English
-validation pass, not a claim that uncaptured screens are covered. The explicit
-replacement worker build imports all 2,053 rows without falling back to
-accepted `mappings.tsv`.
+label links through the exact pointer at `NA2_BTL@0x20A264`. T24 reuses the
+official Jump-mode help text. Paired screens correct T637 to `Hidden Leaf
+Village`, T638 to `Hidden Leaf Gate`, T744 to `Faint Unease`, and T767 to
+`Silent Confidence`. T30 is the sole donorless row and uses user-authored
+`Ultimate`, externalized through `NA2_BTL@0x209CB4`. Donor-backed rows otherwise
+leave `replacement` blank and execute independently validated official donor
+text. T1958, T2027, and T2033 retain the established Cross-confirm overrides.
+This is an evidence-scoped English table, not a claim that uncaptured screens
+are covered.
 
-The replacement table closes every admitted multi-slot `<br>` message family.
+The canonical table closes every admitted multi-slot `<br>` message family.
 T2011/T2041/T2042 cover all four save-progress message parts, while
 T2014/T2015 cover both overwrite-confirmation parts. Import fails closed on
 missing, duplicate, out-of-range, or inconsistent structured parts so a linked
@@ -1733,16 +1724,16 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
 The integrated `string_patcher` externalizes only complete replacements whose
 final encoded text exceeds the original slot and whose mapping declares
 validated pointer references. Placement is recomputed at build time; the
-canonical translation table contains no placement markers. The sole
-user-directed inline fit exception is T30 `T30 Ult`. The pipeline never reads
-or patches `ADV.bin`.
+canonical translation table contains no placement markers. T30's complete
+`Ultimate` text is externalized through `NA2_BTL@0x209CB4`. The pipeline never
+reads or patches `ADV.bin`.
 
 The shared payload builder deterministically generates exactly one ISO
 insertion:
 
 - `PRG/228.BIN`: the resident MWO3 code/data image containing a return-only
-  entry stub, nine Font renderer code fragments, and the 28 distinct external
-  string fragments selected by the current translation.
+  entry stub and the 30 distinct external string fragments selected by the
+  current translation.
 
 The translation importer resolves and validates the canonical mapping data and
 pointer inventory once.
@@ -1771,10 +1762,7 @@ payload is stored in Git.
   pointer.
 - `translation_importer/rebuild.tsv` contains the adjacent stable `T#`
   candidate inventory. It drives only explicit worker mapping-ID builds.
-- `translation_importer/replacement.tsv` contains the encountered-only
-  translation rebuild and drives only the explicit cumulative replacement
-  worker build.
-All three files are covered by the Localization feature's aggregate profile hash.
+Both files are covered by the Localization feature's aggregate profile hash.
 Payload-builder configuration is executable infrastructure rather than feature
 data; engine code and documentation are excluded from the feature pin.
 
@@ -1784,17 +1772,17 @@ data; engine code and documentation are excluded from the feature pin.
 | --- | ---: |
 | `228.BIN` load base | `0x008F3D00` |
 | MOD entry | `0x008F3D40` |
-| Font code start | `0x008F3D50` |
-| Font code end / string pool start | `0x008F42A0` |
-| `228.BIN` generated bytes | `0xB90` |
-| Final resident boundary | `0x008F4890` |
+| String pool start | `0x008F3E00` |
+| `228.BIN` generated bytes | `0x710` |
+| `228.BIN` SHA-256 | `C3087793BD470941BC8371C758116A88D14B87E22F7AA0EB56B6EA02181C4C85` |
+| Final resident boundary | `0x008F4410` |
 
 Strings are resolved through the importer, encoded as CP1252 plus a terminator,
 deduplicated by exact encoded bytes, contributed by symbol, and currently link
 in stable mapping-ID order at four-byte-aligned offsets. Font functions are
 contributed through `resident_patcher` and sort before the string pool. No
-feature owns either set of offsets. The selected external strings contain 1,470
-encoded bytes; M2003 and M2065 deliberately share one identical symbol. The
+feature owns either set of offsets. The selected external strings contain 1,490
+encoded bytes; T364 and T117 deliberately share one identical symbol. The
 generated payload has no constructor range; the infrastructure bootstrap loads
 it once and calls its documented return-only entry.
 

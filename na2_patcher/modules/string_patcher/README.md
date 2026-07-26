@@ -22,13 +22,6 @@ for verified worker builds used to identify visible source rows; normal builds
 continue consuming the accepted `mappings.tsv` donor/override text. The
 diagnostic mode never rewrites either table or the active profile.
 
-An explicit `replacement` worker mode consumes only enabled rows from adjacent
-`replacement.tsv` and applies ordinary translation placement without importing
-accepted `mappings.tsv`. It skips the accepted table's fixed-coverage game-title
-policy because the replacement is deliberately partial while passes accumulate.
-Profile identity still applies the disc and memory-card identity independently.
-Normal and mapping-ID builds remain unchanged.
-
 The importer supplies replacement message families only after proving complete
 `<br>`-part coverage. When a family member overflows, the patcher materializes
 the complete parent template once and redirects the validated parent/message

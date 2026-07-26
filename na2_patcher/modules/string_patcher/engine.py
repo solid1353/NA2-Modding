@@ -32,7 +32,7 @@ STRING_FIELDS = [
     "review_notes",
 ]
 STORAGE_MODES = {"fixed", "nul_padded"}
-TRANSLATION_DISPLAY_MODES = {"translation", "mapping_ids", "replacement"}
+TRANSLATION_DISPLAY_MODES = {"translation", "mapping_ids"}
 
 
 @dataclass(frozen=True)
@@ -601,11 +601,6 @@ def build_translation_draft(
         )
     if translation_display == "mapping_ids":
         transformed_plan = _apply_mapping_id_display(translation_plan)
-    elif translation_display == "replacement":
-        transformed_plan = replace(
-            translation_plan,
-            display_mode="replacement",
-        )
     else:
         transformed_plan = _apply_game_title_policy(
             translation_plan,
@@ -622,20 +617,13 @@ def build_translation_draft(
     return StringPatchDraft(
         translation_plan=transformed_plan,
         external_draft=external_draft,
-        game_title_policy=(
-            {
-                "applied": False,
-                "reason": "replacement table has independent partial coverage",
-            }
-            if translation_display == "replacement"
-            else {
-                "applied": translation_display == "translation",
-                "imported_title": title_policy.imported_title,
-                "output_title": title_policy.output_title,
-                "mapping_count": title_policy.expected_mapping_count,
-                "occurrence_count": title_policy.expected_occurrence_count,
-            }
-        ),
+        game_title_policy={
+            "applied": translation_display == "translation",
+            "imported_title": title_policy.imported_title,
+            "output_title": title_policy.output_title,
+            "mapping_count": title_policy.expected_mapping_count,
+            "occurrence_count": title_policy.expected_occurrence_count,
+        },
     )
 
 

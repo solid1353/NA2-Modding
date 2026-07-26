@@ -52,12 +52,8 @@ class TranslationImporterTests(unittest.TestCase):
             translation_importer.build_mapping_id_import_plan,
             engine.build_mapping_id_import_plan,
         )
-        self.assertIs(
-            translation_importer.build_replacement_import_plan,
-            engine.build_replacement_import_plan,
-        )
 
-    def test_encountered_replacement_uses_mapping_schema_and_rebuild_guards(
+    def test_canonical_mappings_use_t_ids_and_rebuild_guards(
         self,
     ) -> None:
         repository = Path(__file__).resolve().parents[2]
@@ -65,23 +61,27 @@ class TranslationImporterTests(unittest.TestCase):
             repository
             / "na2_patcher/features/localization/translation_importer"
         )
-        replacement_raw = engine.read_rows(data_root / "replacement.tsv")
-        replacement = engine.parse_mappings(
-            replacement_raw,
-            table_name="replacement.tsv",
+        mappings_raw = engine.read_rows(data_root / "mappings.tsv")
+        mappings = engine.parse_mappings(
+            mappings_raw,
+            table_name="mappings.tsv",
         )
         rebuild = {
             row["id"]: row
             for row in engine.read_rebuild_rows(data_root / "rebuild.tsv")
         }
-        accepted = {
-            row["source_ref"]: row
-            for row in engine.read_rows(data_root / "mappings.tsv")
-        }
         verified_corrections = {
             "T1956": ("Off", "NUN5_SLES@0x513EF8"),
             "T1957": ("On", "NUN5_SLES@0x513EFC"),
             "T2158": ("Warning", "NUN5_SLES@0x513F38"),
+            "T24": (
+                "COM will make the following standing movements when in Jump mode.",
+                "NUN5_TEXTENG@0x10070",
+            ),
+            "T637": ("Hidden Leaf Village", "NUN5_TEXTENG@0x2C40"),
+            "T638": ("Hidden Leaf Gate", "NUN5_TEXTENG@0x2C60"),
+            "T744": ("Faint Unease", "NUN5_TEXTENG@0x24C8"),
+            "T767": ("Silent Confidence", "NUN5_TEXTENG@0x24B0"),
         }
         semantic_donor_corrections = {
             "T27": ("Simple", "NUN5_SLES@0x514218", ""),
@@ -95,17 +95,13 @@ class TranslationImporterTests(unittest.TestCase):
                 "NA2_BTL@0x20A264",
             ),
         }
-        donorless_replacements = {
-            "T24": (
-                "T24 You can set the opponent's state. During Double Jump, "
-                "the opponent performs the action selected below while double-jumping."
+        direct_replacements = {
+            "T30": "Ultimate",
+            "T1958": (
+                "Press <iconCROSS> to select the button/item to change. "
+                "Press the left directional button or right directional "
+                "button to change controls."
             ),
-            "T30": "T30 Ult",
-            "T744": "T744 Faint Relief",
-            "T767": "T767 An Older Sister's Joy",
-        }
-        donorless_ids = set(donorless_replacements)
-        donor_backed_overrides = {
             "T2027": "Press <iconCROSS> to choose item.",
             "T2033": "Select an item and press <iconCROSS> to buy.",
         }
@@ -132,24 +128,24 @@ class TranslationImporterTests(unittest.TestCase):
             ),
         }
 
-        self.assertEqual(len(replacement_raw), 2053)
-        self.assertEqual(len(replacement["text"]), 2053)
-        self.assertEqual(replacement["inactive"], [])
+        self.assertEqual(len(mappings_raw), 2053)
+        self.assertEqual(len(mappings["text"]), 2053)
+        self.assertEqual(mappings["inactive"], [])
         self.assertEqual(
-            len({row["id"] for row in replacement_raw}),
-            len(replacement_raw),
+            len({row["id"] for row in mappings_raw}),
+            len(mappings_raw),
         )
         self.assertEqual(
-            replacement_raw,
+            mappings_raw,
             sorted(
-                replacement_raw,
+                mappings_raw,
                 key=lambda row: (
                     row["display_context"].casefold(),
                     int(row["id"][1:]),
                 ),
             ),
         )
-        for row in replacement_raw:
+        for row in mappings_raw:
             self.assertIn(row["id"], rebuild)
             candidate = rebuild[row["id"]]
             self.assertEqual(row["enabled"], "1")
@@ -165,6 +161,7 @@ class TranslationImporterTests(unittest.TestCase):
                 donor, donor_ref = verified_corrections[row["id"]]
                 self.assertEqual(row["donor"], donor)
                 self.assertEqual(row["donor_ref"], donor_ref)
+                self.assertEqual(row["replacement"], "")
                 continue
             if row["id"] in semantic_donor_corrections:
                 donor, donor_ref, reference_refs = semantic_donor_corrections[
@@ -175,72 +172,30 @@ class TranslationImporterTests(unittest.TestCase):
                 self.assertEqual(row["reference_refs"], reference_refs)
                 self.assertEqual(row["replacement"], "")
                 continue
-            if row["id"] in donorless_ids:
+            if row["id"] == "T30":
                 self.assertEqual(row["donor"], "")
                 self.assertEqual(row["donor_ref"], "")
-                self.assertEqual(
-                    row["replacement"],
-                    donorless_replacements[row["id"]],
-                )
-                self.assertEqual(row["reference_refs"], "")
+                self.assertEqual(row["replacement"], "Ultimate")
+                self.assertEqual(row["reference_refs"], "NA2_BTL@0x209CB4")
                 continue
-            self.assertIn(row["source_ref"], accepted)
-            reference = accepted[row["source_ref"]]
-            for field in (
-                "donor",
-                "prefix",
-                "replacement",
-                "donor_ref",
-                "transform",
-                "arguments",
-                "reference_refs",
-                "parent_mapping_id",
-            ):
-                if (
-                    row["id"] in {"T2042", "T2045", "T2050"}
-                    and field == "parent_mapping_id"
-                ):
-                    continue
-                if (
-                    row["id"] in donor_backed_overrides
-                    and field == "replacement"
-                ):
-                    self.assertEqual(
-                        row["replacement"],
-                        donor_backed_overrides[row["id"]],
-                    )
-                    continue
-                self.assertEqual(row[field], reference[field])
 
-        self.assertEqual(
-            sum(
-                row["id"]
-                not in (
-                    set(verified_corrections)
-                    | set(semantic_donor_corrections)
-                    | donorless_ids
-                )
-                for row in replacement_raw
-            ),
-            2040,
-        )
         self.assertEqual(
             {
                 row["id"]
-                for row in replacement_raw
+                for row in mappings_raw
                 if not row["donor"] and not row["donor_ref"]
             },
-            donorless_ids,
+            {"T30"},
         )
         self.assertEqual(
             {
                 row["id"]: row["replacement"]
-                for row in replacement_raw
-                if row["replacement"] and row["id"] not in donorless_ids
+                for row in mappings_raw
+                if row["replacement"]
             },
-            donor_backed_overrides,
+            direct_replacements,
         )
-        by_id = {row["id"]: row for row in replacement_raw}
+        by_id = {row["id"]: row for row in mappings_raw}
         for mapping_id, (display_context, display_basis) in structural_rows.items():
             self.assertEqual(by_id[mapping_id]["display_context"], display_context)
             self.assertEqual(by_id[mapping_id]["display_basis"], display_basis)
@@ -249,8 +204,8 @@ class TranslationImporterTests(unittest.TestCase):
         self.assertEqual(by_id["T2050"]["parent_mapping_id"], "T2048")
 
         engine.validate_structured_message_families(
-            replacement["text"],
-            table_name="replacement.tsv",
+            mappings["text"],
+            table_name="mappings.tsv",
         )
         for missing_id in ("T2041", "T2042", "T2015"):
             with self.subTest(missing_id=missing_id):
@@ -261,10 +216,10 @@ class TranslationImporterTests(unittest.TestCase):
                     engine.validate_structured_message_families(
                         [
                             row
-                            for row in replacement["text"]
+                            for row in mappings["text"]
                             if row["id"] != missing_id
                         ],
-                        table_name="replacement.tsv",
+                        table_name="mappings.tsv",
                     )
 
     def test_iso_source_delegates_to_the_shared_iso_reader(self) -> None:

@@ -111,9 +111,6 @@ def prepare_module_pipeline(
             "mapping_ids": (
                 translation_importer_module.build_mapping_id_import_plan
             ),
-            "replacement": (
-                translation_importer_module.build_replacement_import_plan
-            ),
             "translation": (
                 translation_importer_module.build_translation_import_plan
             ),

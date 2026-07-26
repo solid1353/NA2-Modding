@@ -854,7 +854,7 @@ def validate_structured_message_families(
     *,
     table_name: str,
 ) -> None:
-    """Require replacement-table line transforms to cover complete messages."""
+    """Require canonical line transforms to cover complete messages."""
     families: dict[str, list[dict[str, object]]] = defaultdict(list)
     for row in mappings:
         if row["transform"] not in {"split_br", "join_br_parts"}:
@@ -1300,11 +1300,10 @@ def _build_translation_import_plan(
     actual_mapping_hash = hashlib.sha256(mapping_path.read_bytes()).hexdigest().upper()
     rows_raw = read_rows(mapping_path)
     mappings = parse_mappings(rows_raw, table_name=mapping_filename)
-    if mapping_filename == "replacement.tsv":
-        validate_structured_message_families(
-            mappings["text"],
-            table_name=mapping_filename,
-        )
+    validate_structured_message_families(
+        mappings["text"],
+        table_name=mapping_filename,
+    )
     references = tuple(
         reference
         for reference in references_from_mappings(mappings["text"])
@@ -1396,24 +1395,6 @@ def build_translation_import_plan(
         apply=apply,
         mapping_filename="mappings.tsv",
         summary_mode="canonical translation declarations",
-    )
-
-
-def build_replacement_import_plan(
-    *,
-    na2_iso: Optional[Path] = None,
-    na2_folder: Optional[Path] = None,
-    data_root: Path,
-    apply: str = "BTL,ETC,SLPS",
-) -> TranslationImportPlan:
-    """Load the encountered-only replacement table for a worker build."""
-    return _build_translation_import_plan(
-        na2_iso=na2_iso,
-        na2_folder=na2_folder,
-        data_root=data_root,
-        apply=apply,
-        mapping_filename="replacement.tsv",
-        summary_mode="encountered-only replacement declarations",
     )
 
 

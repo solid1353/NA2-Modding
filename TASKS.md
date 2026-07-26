@@ -9,7 +9,6 @@
 - [Investigate](work/__sstates/translation/font) and implement proper autofit/positions everywhere.
 - Ninja Song: convert all dynamically generated output still selecting Shift-JIS digits or symbols to ASCII equivalents, including the renderer-table multiplication glyph if it remains reachable after static string changes.
 - Special Controls / Practice Settings ON/OFF: use the paired files `ss01_NA2.p2s` + `ss01_NUN5.p2s` and `ss08_NA2.p2s` + `ss08_NUN5.p2s` under `work/String translation/inputs/sstates/2026-07-26-ss1-7-8-sjis-pass-2/`; split the shared T37/T38 presentation so ss1 Special Controls retains compact uppercase `ON`/`OFF` while ss8 Practice Settings uses title-case `Off`/`On`, matching NUN5 letter spacing in each context.
-- Load/Save Modal: change datetime format to EU.
 
 ### Project
 - Rename default_enabled, add enable switch for groups and patches. Rename resident_patcher to something as well.

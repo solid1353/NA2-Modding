@@ -93,6 +93,8 @@ Detailed command and task behavior is in
 - Preserve substantive disassembly, decompilation, and live-memory findings in
   canonical knowledge with identities, ranges, reconstructed behavior,
   evidence, useful negative results, and confidence.
+- `@utils/CCSFileExplorerMSF` is the project's main and best available CCS
+  explorer; use it by default for CCS exploration.
 - Relay user instructions verbatim without inferred requirements. A worker
   that reports its own mistake to `General` triggers immediate narrow policy
   refinement, commit/push, and notification back to that worker.

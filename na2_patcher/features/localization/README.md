@@ -32,8 +32,8 @@ command or file-backed inter-stage handoff.
 - Packaged `mappings.tsv` SHA-256: `7601F834646C374F3E89087724726AAE78E9A87A46A5F936CC5C776C4E60C0B6`
 - Initial parallel `rebuild.tsv` rows: `2,173` (`T1` through `T2173`)
 - Initial `rebuild.tsv` SHA-256: `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`
-- First-pass `replacement.tsv` rows: `564`
-- First-pass `replacement.tsv` SHA-256: `A2038264AB274B9A4FFB6B661AFF2D392BD1E5AB942EA17776EDAE64D99AC7A1`
+- First-pass `replacement.tsv` rows: `567`
+- First-pass `replacement.tsv` SHA-256: `8A90B4E80A6910024CD777A10C3ACFF4148209ABA8CFC42A90153B3323088711`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the aggregate Localization feature pin own content identity.
@@ -107,16 +107,22 @@ with the next permanent ID.
 
 `replacement.tsv` uses the exact 16-column accepted `mappings.tsv` schema. It
 contains only `T#` rows confirmed visible by the paired screenshot pass, sorted
-by `display_context` and numeric ID. Its first executable pass has 564 unique
+by `display_context` and numeric ID. Its first executable pass has 567 unique
 enabled rows. Exact source, source reference, mode, and capacity come from
-`rebuild.tsv`. Complete donor, transform, argument, pointer, and parent fields
-for 561 rows are seeded from the unique accepted row with the same exact
-`source_ref`. Paired screenshots correct three reference-table errors: T1956
-uses `Off` at `NUN5_SLES@0x513EF8`, T1957 uses `On` at
-`NUN5_SLES@0x513EFC`, and T2158 uses `Warning` at
-`NUN5_SLES@0x513F38`. This is a reference-derived English validation pass, not
-the final donor audit. The explicit replacement worker build imports all 564
-rows without falling back to accepted `mappings.tsv`.
+`rebuild.tsv`. Donor and transform relationships for 564 rows are seeded from
+the unique accepted row with the same exact `source_ref`; T2042 rewrites its
+accepted `M0810` parent reference to replacement ID `T2011`. Paired screenshots
+correct three reference-table errors: T1956 uses `Off` at
+`NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses
+`Warning` at `NUN5_SLES@0x513F38`. This is a reference-derived English
+validation pass, not the final donor audit. The explicit replacement worker
+build imports all 567 rows without falling back to accepted `mappings.tsv`.
+
+The replacement table closes every admitted multi-slot `<br>` message family.
+T2011/T2041/T2042 cover all four save-progress message parts, while
+T2014/T2015 cover both overwrite-confirmation parts. Import fails closed on
+missing, duplicate, out-of-range, or inconsistent structured parts so a linked
+first line cannot continue into an unrelated resident-payload string.
 
 #### Modes
 

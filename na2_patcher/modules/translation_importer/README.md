@@ -23,7 +23,7 @@ plus the explicit character-family exception. Its cumulative first two passes
 contribute 752 rows, the verified 74-table Command Chart family contributes
 another 1,041, the missing-row audit adds 260 policy-supported rows—53 directly
 seen, 10 structurally inferred, and 197 character-family rows—and the paired
-Ninja Song ss1–5 pass adds 20 displayed numeric/status fields, for 2,073
+Ninja Song passes add 21 displayed numeric/status/bonus fields, for 2,074
 enabled rows. T2042, T2045, and T2050 use parents in the canonical `T#`
 namespace. Paired screenshots independently correct T1956 to `Off`, T1957 to
 `On`, T2158 to `Warning`, T637 to `Hidden Leaf Village`, T638 to `Hidden Leaf
@@ -31,10 +31,13 @@ Gate`, T744 to `Faint Unease`, and T767 to `Silent Confidence`. Six
 Difficulty-family rows are matched by meaning rather than table position.
 T24 deliberately reuses the official Jump-mode help text. T30 is the sole
 donorless row: its user-authored `Ultimate` replacement is externalized through
-the validated pointer at `NA2_BTL@0x209CB4`. Donor-backed rows otherwise leave
-`replacement` blank and execute official donor text; T1958, T2027, and T2033
-retain the established Cross-confirm overrides. Normal builds import this
-canonical table directly.
+the validated pointer at `NA2_BTL@0x209CB4`. T2191–T2193 use explicit compact
+`hit`, `hit`, and `pcs` overrides because the NA2 Ninja Song result renderer
+reserves only one Japanese-counter field before its fixed equals sign. T2194
+adds the ss10-confirmed `100% Health bonus` donor row. Other donor-backed rows
+leave `replacement` blank and execute official donor text;
+T1958, T2027, and T2033 retain the established Cross-confirm overrides. Normal
+builds import this canonical table directly.
 
 Canonical imports validate complete structured message families. Active
 `split_br` and `join_br_parts` rows sharing a donor reference must use one

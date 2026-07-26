@@ -106,11 +106,12 @@ field still equal to `1.0f`, while the old address was empty.
 
 The address mapping is **high-confidence evidence for this exact build
 identity**, but it is not used as a permanent patch. Rendering patch
-`ELF-R001` changes the guarded initializer instruction at boot-ELF offset
-`0xF4E8` from a `1.0f` load to `0.75f`. The value therefore reaches rendering
-state offset `0x274` through the normal object pointer and remains independent
-of heap placement. The canonical PNACH contains no widescreen entry; PCSX2
-output aspect remains a separate emulator setting.
+`ELF-R001` replaces the rendering-state write routine at boot-ELF offset
+`0xEDC0`, forcing `0.75f` at object offset `0x274` through the live object
+pointer while preserving the caller-provided vertical scale at `0x278`. This
+remains independent of heap placement and avoids the insufficient earlier
+approach of changing only one constructor input. The canonical PNACH contains
+no widescreen entry; PCSX2 output aspect remains a separate emulator setting.
 
 The clean ELF's first `PT_LOAD` begins at file offset `0x100`, maps at
 `0x00100000`, has file size `0x507380`, and has memory size `0x5B3F00`.

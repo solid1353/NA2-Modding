@@ -5,6 +5,12 @@ texture-only UI correction pass. It covers executable layout and atlas-selection
 behavior; command-name text, font metrics, and gameplay input semantics are
 outside this boundary.
 
+## Intentional exclusion
+
+The Ultimate Jutsu interface prompts are intentionally not fixed. The complete
+Ultimate Jutsu interface is planned for exclusion as part of the QoL work, so
+localizing those prompts separately would be superseded by that change.
+
 ## Binary identities and address convention
 
 | Game | Binary | Size | SHA-256 | Archived live base |

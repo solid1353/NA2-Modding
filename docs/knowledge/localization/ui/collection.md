@@ -247,15 +247,19 @@ language accessors and reads build-specific GP-relative regional globals.
 The wrapper is therefore an authored ABI-preserving port of the verified NUN5
 arithmetic. The pristine zero range, all three call guards, and the data guard
 were confirmed in both the clean source and task-owned state. The guarded Slot
-3 render aligns Play and Back with the official NUN5 capture. Confidence is
-high for Slot 3 and the shared helper behavior; other retained screens that
-call it remain individually validated before acceptance.
+3 Music render aligns Play and Back with the official NUN5 capture. A newer
+paired Slot 2 Collection Characters state independently passed the same five
+guards; applying the already-canonical helper rows aligned its OK/Back groups
+with NUN5 without any new binary edit. Confidence is high for both screens and
+the shared helper behavior; other retained screens that call it remain
+individually validated before acceptance.
 
 Useful negative result: changing only the nominal `0x2E7E0` table cannot
 express the helper's three distinct `-12`, `-24`, and `-8` state deltas. The
-earlier Slot 2 failure of this path proved only that Slot 2 uses
-`FUN_006c8290` and the separate `0x2F010` table; it did not disprove the HOME
-helper for its actual consumers.
+earlier original Slot 2 Collection-root failure of this path proved only that
+that screen uses `FUN_006c8290` and the separate `0x2F010` table; it did not
+disprove the HOME helper for actual consumers such as Collection Music and
+Collection Characters.
 
 ## Character viewer lower-control renderer
 

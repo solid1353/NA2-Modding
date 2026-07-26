@@ -559,10 +559,12 @@ effective anchors at its separate overlay call sites; its guarded task-owned
 render matches the reference. Current Slots 1-5 are complete. New paired
 slot-1 Music Settings extends the existing `UI-ELF-009` renderer patch with
 effective NUN5 OK/Back anchors X=`388`/`462`; its guarded task-owned render
-matches the reference. The newer paired slot-2 Collection Characters footer
-remains queued. The
-earlier Slot 2 failure of the `0x2E7E0` table/HOME helper remains evidence only
-that Collection root uses a separate renderer. The rejected
+matches the reference. Newer paired slot-2 Collection Characters is a true
+reuse of the already-canonical `UI-ELF-008` HOME helper: the existing five
+guarded rows align its OK/Back groups with no new binary edit. Newer paired
+slot-3 Control Settings remains queued. The
+earlier original Slot 2 failure of the `0x2E7E0` table/HOME helper remains
+evidence only that Collection root uses a separate renderer. The rejected
 rank-label Y-compensation trial and exact pixel/object evidence are preserved
 in `docs/knowledge/localization/ui/battle.md`; resume from texture/CLUT binding
 or cached GS-packet evidence rather than retrying screen-space constants. The

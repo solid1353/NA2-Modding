@@ -137,15 +137,6 @@ visible: the Mode Select return confirmation uses `M0549` at
 from the lowercase Save/Load `M0804` prompt and the shorter Character Select
 `M0557` source.
 
-The paired Shop captures at checkpoints 046 through 049 then exposed one
-regional-control mismatch in the admitted table. `M0537` retains its exact
-source and official donor, but version 43 places
-`Select an item and press <iconCROSS> to buy.` in the user-editable
-`replacement` field. This matches the displayed NUN5 Cross glyph and the
-runtime-proven NA2 Shop control map where Cross accepts. The unobserved
-alternate Shop row `M0530` and the unclassified standalone ELF Circle token
-remain untouched.
-
 The matched final-acceptance slot-1 pair then exposed one more omitted
 displayed field. Version 44 adds `M0550` for the Collection -> Characters
 selector at `NA2_ETC@0x2EE50`, using the exact official `Opponent` donor at
@@ -153,18 +144,9 @@ selector at `NA2_ETC@0x2EE50`, using the exact official `Opponent` donor at
 `Flying Thunder God Jutsu` text overflowing Current's panel; that is a
 separate per-caller wrapping/auto-fit issue, so `M0720` remains unchanged.
 
-The matched final-acceptance slot-8 pair then exposes the omitted Shop category
-help row `M0530` at `NA2_ETC@0x2F230`. Version 45 retains the exact official
-`Press <iconCIRCLE> to choose item.` donor at `NUN5_TEXTENG@0x1490` and uses
-the user-editable override `Press <iconCROSS> to choose item.` because the
-accepted regional Shop input map confirms with Cross. This mirrors the
-already-proven `M0537` Shop item-list policy without changing any unobserved
-Circle token.
-
 Every row has a concrete display location and one `seen:`, `inferred:`, or
 `character:` basis. There are no disabled, unresolved, shortened, prefixed, or
-arbitrary override rows. `M0530` and `M0537` are the two evidence-backed user
-overrides. The table has 2,048 slots and four sequences.
+arbitrary override rows.
 
 The character-family audit corrected plain Kankuro and the shifted
 `Provocation` / `Contrasting Pair` voice titles. The unmatched `通告` voice

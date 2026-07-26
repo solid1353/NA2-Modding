@@ -98,8 +98,6 @@ class TranslationImporterTests(unittest.TestCase):
                 "Press the left directional button or right directional "
                 "button to change controls."
             ),
-            "T2027": "Press <iconCROSS> to choose item.",
-            "T2033": "Select an item and press <iconCROSS> to buy.",
         }
         structural_rows = {
             "T2011": (
@@ -124,11 +122,19 @@ class TranslationImporterTests(unittest.TestCase):
             ),
         }
 
-        self.assertEqual(len(mappings_raw), 2053)
-        self.assertEqual(len(mappings["text"]), 2053)
+        self.assertEqual(len(mappings_raw), 2071)
+        self.assertEqual(len(mappings["text"]), 2071)
         self.assertEqual(mappings["inactive"], [])
+        mapping_ids = {row["id"] for row in mappings_raw}
+        self.assertTrue({"T1937", "T1938"} <= mapping_ids)
+        self.assertFalse(
+            any(
+                str(row["display_context"]).startswith("Shop >")
+                for row in mappings_raw
+            )
+        )
         self.assertEqual(
-            len({row["id"] for row in mappings_raw}),
+            len(mapping_ids),
             len(mappings_raw),
         )
         self.assertEqual(

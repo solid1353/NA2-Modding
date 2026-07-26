@@ -6,5 +6,4 @@ battle_ui	Battle UI	Localized battle HUD, prompts, labels, confirmation layouts,
 front_end	Front end	Localized boot-ELF menus, option layouts, setup, save, modal, and regional input handlers.	""
 etc_ui	ETC UI	ETC-owned front-end and submenu input handlers.	""
 battle_results	Battle results	Battle-results input behavior.	""
-shop	Shop	Localized Shop label layouts.	""
 collection	Collection	Localized Collection labels and page-control layouts.	""

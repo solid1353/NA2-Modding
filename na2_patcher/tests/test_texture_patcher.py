@@ -56,8 +56,12 @@ class UiTextureTests(unittest.TestCase):
         )
 
     def test_complete_package_is_source_derived_and_fixed_size(self) -> None:
-        self.assertEqual(len(self.plan.containers), 109)
-        self.assertEqual(self.plan.mapping_count, 223)
+        self.assertEqual(len(self.plan.containers), 108)
+        self.assertEqual(self.plan.mapping_count, 218)
+        self.assertNotIn(
+            "shop",
+            {result.spec.container_id for result in self.plan.containers},
+        )
         for result in self.plan.containers:
             self.assertEqual(
                 len(result.replacement), len(result.original), result.spec.path
@@ -69,13 +73,22 @@ class UiTextureTests(unittest.TestCase):
             for result in self.plan.containers
             if result.strategy.strategy == "whole"
         ]
-        self.assertEqual(len(whole), 105)
+        self.assertEqual(len(whole), 104)
         for result in whole:
             self.assertEqual(
                 gzip.decompress(result.replacement),
                 gzip.decompress(result.donor),
                 result.spec.path,
             )
+
+    def test_shop_owned_binary_layout_patch_is_archived(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = binary_patcher.load_package(
+            repository
+            / "na2_patcher/features/localization/binary_patcher"
+        )
+        self.assertNotIn("shop", package.groups)
+        self.assertNotIn("UI-ETC-001", package.patches)
 
     def test_xninka_uses_unmodified_donor_atlas_for_rank_baselines(self) -> None:
         result = self.result("xninka")
@@ -715,71 +728,6 @@ class UiTextureTests(unittest.TestCase):
             [
                 ("UI-ELF-005-03", 0x285EE0, "C843023C", "C243023C"),
                 ("UI-ELF-005-04", 0x285F04, "EB43023C", "E743023C"),
-            ],
-        )
-
-    def test_shop_patch_uses_nun5_rectangles_and_label_anchors(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        package = binary_patcher.load_package(
-            repository
-            / "na2_patcher/features/localization/binary_patcher"
-        )
-        edits = [item for item in package.edits if item.patch_id == "UI-ETC-001"]
-        patch = package.patches["UI-ETC-001"]
-
-        self.assertEqual(len(edits), 5)
-        self.assertEqual(patch.status, "runtime_proven")
-        self.assertEqual(patch.confidence, "verified")
-        rectangle = edits[0]
-        self.assertEqual(rectangle.edit_id, "UI-ETC-001-01")
-        self.assertEqual(rectangle.destination_offset, 0x30308)
-        self.assertEqual(rectangle.source_target_id, "nun5_etc")
-        self.assertEqual(rectangle.source_offset, 0x292F8)
-        self.assertEqual(
-            [
-                (
-                    item.edit_id,
-                    item.destination_offset,
-                    item.expected_hex,
-                    item.source_target_id,
-                    item.source_offset,
-                    item.source_expected_hex,
-                )
-                for item in edits[1:]
-            ],
-            [
-                (
-                    "UI-ETC-001-02",
-                    0x249A4,
-                    "7A43023C",
-                    "nun5_etc",
-                    0x25E88,
-                    "7E43023C",
-                ),
-                (
-                    "UI-ETC-001-03",
-                    0x249CC,
-                    "4042023C",
-                    "nun5_etc",
-                    0x25EB0,
-                    "4842023C",
-                ),
-                (
-                    "UI-ETC-001-04",
-                    0x24BB0,
-                    "C842023C",
-                    "nun5_etc",
-                    0x26094,
-                    "D242023C",
-                ),
-                (
-                    "UI-ETC-001-05",
-                    0x30340,
-                    "81008900160016008100A1007A001600",
-                    "nun5_etc",
-                    0x29330,
-                    "81008900160016008100A1007E001600",
-                ),
             ],
         )
 
@@ -1881,14 +1829,14 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 297)
-        self.assertEqual(operations, {"copy": 101, "replace": 196})
+        self.assertEqual(len(ui_edits), 295)
+        self.assertEqual(operations, {"copy": 97, "replace": 198})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 66, "nun5_btl": 26, "nun5_etc": 9},
+            {"nun5_elf": 67, "nun5_btl": 26, "nun5_etc": 4},
         )
         self.assertEqual(len(stage_scales), 24)
-        self.assertEqual(len(adaptations), 172)
+        self.assertEqual(len(adaptations), 174)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")
@@ -1926,15 +1874,15 @@ class UiTextureTests(unittest.TestCase):
             ) as handle:
                 summary = list(csv.DictReader(handle, delimiter="\t"))
 
-            self.assertEqual(len(patches), 109)
+            self.assertEqual(len(patches), 108)
             self.assertTrue(all(row["file"] == "DATA/DATA.CVM" for row in patches))
             self.assertTrue(all(row["original_sha256"] for row in patches))
             self.assertTrue(all(row["new_sha256"] for row in patches))
             self.assertTrue(
                 all(row["derivation"].startswith("canonical_nun5_") for row in patches)
             )
-            self.assertEqual(summary[0]["container_count"], "109")
-            self.assertEqual(summary[0]["mapping_count"], "223")
+            self.assertEqual(summary[0]["container_count"], "108")
+            self.assertEqual(summary[0]["mapping_count"], "218")
             self.assertEqual(summary[0]["worker_count"], str(self.plan.worker_count))
 
 

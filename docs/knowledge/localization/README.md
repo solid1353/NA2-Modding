@@ -7,11 +7,12 @@ specialized area belong here.
 
 ### Shop
 
-The Shop is **partially localized**, but it is not fixed as a whole. Individual
-completed corrections remain valid, while font rendering, UI, and other
-localization gaps remain unresolved.
+Shop is intentionally omitted from Mode Select and is not a maintained
+localization target. Shop-owned translations, texture imports, layout patches,
+tests, and detailed maintenance documentation were removed together in the
+Git commit carrying this policy. Git history is the recovery archive.
 
-The normal patched game omits Shop from Mode Select because completing its
-localization would waste time better spent elsewhere. No further Shop
-localization work is intended. The canonical `Restore Shop` cheat re-enables
-the original menu entry when access is needed.
+The QoL `Remove Shop` patch remains the shipped default. The disabled
+`Restore Shop` cheat remains available for deliberate inspection. Strings
+owned by Game Mode Select or Collection remain maintained even when their text
+mentions Shop.

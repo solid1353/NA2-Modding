@@ -18,7 +18,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 - `@analysis/disassembly/NA2/exports/SLPS_258.37/`: existing searchable NA2 boot-ELF C/TXT export.
 - `@analysis/disassembly/NUN5/exports/SLES_556.05/`: existing searchable NUN5 boot-ELF C/TXT export. Check it by its exact `SLES` name; a prior `BTL|SLPS`-filtered inventory accidentally excluded it and caused a redundant temporary export attempt.
 - `@analysis/disassembly/NA2/exports/ETC.BIN/` and
-  `@analysis/disassembly/NUN5/exports/ETC.BIN/`: existing searchable Shop/Collection
+  `@analysis/disassembly/NUN5/exports/ETC.BIN/`: existing searchable Collection
   overlay exports; reuse them instead of generating another disassembly.
 - The former `@source/__old/NUN5 DATA.CVM unpacked and stripped/` tree was
   analyzed, proven redundant, documented, and deleted as requested.
@@ -112,25 +112,6 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   not part of texture translation and were rejected during runtime review.
   Mapping version 35 restores `M0771` through `M0774` to their exact prior NUN5
   source copies with no inserted `<br>`; text/font fit remains out of scope.
-- The imported `SHOP.CCS` is already the exact complete NUN5 donor payload. The
-  clipped `Money` and wrong unit therefore came from NA2's static Shop rectangle
-  table in `ETC.BIN`, not from the CCS container. NA2 file offset `0x30300`
-  loads at EE `0x006E4200`; NUN5's homolog is file offset `0x292F0`. Copying
-  only the 16 differing bytes at NA2 `0x30308` selects NUN5's full
-  `(169,385,62,26)` `Money` and `(321,449,30,22)` `Ryo` rectangles.
-- Preserved Shop evidence rendered both labels completely with the existing
-  seven-digit `9999999` value visible, but later close review showed Money,
-  Ryo, and Bonus Game still misplaced. Complete NA2/NUN5 Shop-render-function
-  comparison isolates three exact donor constants: Money X `250->254`, Ryo Y
-  `48->50`, and Bonus Game X `100->105`. `UI-ETC-001` now imports all three
-  instructions while keeping NA2's seven-digit value origin. A guarded
-  task-owned Shop state and worker ISO then reproduced all three NUN5 anchors.
-  The newer slot-7 review found a separate four-pixel right-edge crop:
-  NA2's Bonus Game rectangle is 122 pixels wide while the homologous NUN5
-  record is 126. The fifth donor import copies that complete 16-byte rectangle
-  table without moving the established left anchor. A guarded task-owned
-  savestate render of that exact table now reproduces the complete NUN5 label
-  extent; the user accepted the final paired Shop result on 2026-07-26.
 - Preserved slot 1 showed that the imported Mode Select START art was clipped by
   NA2's static `(1,397,206,22)` rectangle and X=`130` anchor. NUN5 localized
   accessor `FUN_003d4bc0` supplies `(1,393,254,26)` and renderer
@@ -251,8 +232,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   promoted the prior accepted profile as a 1,928,429,568-byte Current ISO. That
   image is now Previous; its SHA-256 is
   `C90B6B51AF8D4FB7DAC327DF144D1017653BDF8CC398CD1C837AAB53BC538A4C`.
-  The on-disc `PRG/ETC.BIN` remains 200,448 bytes and contains exact Shop bytes
-  `A90081013E001A004101C1011E001600` at file offset `0x30308`.
+  The on-disc `PRG/ETC.BIN` remains 200,448 bytes.
 
 ## Completed cleanup
 
@@ -325,7 +305,7 @@ production writer.
   preserving the dedicated NUN5 memory-card selection.
 - Recommended capture priority is CHARSEL1 first, then BATTLEGAUGE, OUGI,
   TITLE, MODESEL1/MAPSEL1, CONTINUE, SPBATTLE, and the hybrid MODE2KDV banner.
-  Shop, HOME/Collection, options/practice, clash prompts, and result screens
+  HOME/Collection, options/practice, clash prompts, and result screens
   are secondary coverage rather than prerequisites for the pilot.
 
 ### Paired savestate 1-8 correction matrix
@@ -336,8 +316,6 @@ production writer.
 - Slot 2, battle confirmation with selector open: remove the rejected
   Jutsu-label suppression wrapper/hook and retain the 14 runtime-proven texture
   rectangle, glyph, arrow, and prompt edits.
-- Slot 3, Shop: retain the proven full-width Money/Ryo rectangle copy and use
-  the exact homologous NUN5 Money, Ryo, and Bonus Game anchor instructions.
 - Slot 4, Collection main: whole NUN5 `HOME.CCS` restores the complete
   graphical chrome.
 - Slot 5, Collection Characters: whole HOME restores the English Characters
@@ -477,20 +455,18 @@ PCSX2 has not been launched and no ISO has been rebuilt.
 The user supplied eight paired NA2.28/NUN5 savestate references for the next
 screen-by-screen correction pass:
 
-1. Shop: `Money` and `Bonus Game` are misplaced.
-2. Character Select: `Select Color` and `Random` should move left.
-3. Stage Select: total layout mismatch.
-4. Jutsu Selection: horizontal arrows must be hidden and vertical arrows must
+1. Character Select: `Select Color` and `Random` should move left.
+2. Stage Select: total layout mismatch.
+3. Jutsu Selection: horizontal arrows must be hidden and vertical arrows must
    be shown.
-5. Command Menu: green garbage appears where vertical arrows should be.
-6. Command Chart: the same vertical-arrow/green-garbage defect appears.
-7. Options: `Cancel` placement is wrong.
-8. Music Options: `Select` should move right.
+4. Command Menu: green garbage appears where vertical arrows should be.
+5. Command Chart: the same vertical-arrow/green-garbage defect appears.
+6. Options: `Cancel` placement is wrong.
+7. Music Options: `Select` should move right.
 
 The maintained capture importer archived both games' state, embedded 640x480
 screenshot, and repository-relative manifest for each pair under:
 
-- `@work/UI translation/runtime_cases/remaining_01_shop_money_bonus_game/`
 - `@work/UI translation/runtime_cases/remaining_02_character_select_color_random/`
 - `@work/UI translation/runtime_cases/remaining_03_stage_select_total_mismatch/`
 - `@work/UI translation/runtime_cases/remaining_04_jutsu_selection_arrows/`

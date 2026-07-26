@@ -49,8 +49,7 @@ contained 2,053 unique enabled rows. Exact guarded source fields came from the r
 diagnostic inventory, while concrete display metadata records whether each row was
 seen directly, inferred from a captured selector/help family, or admitted
 under the character-specific exception. Subsequent paired acceptance added 25
-Ninja Song fields, the Figure Items / Dioramas Shop tutorial, and the locked
-Movie-title placeholder, bringing the current table to 2,080 enabled rows.
+Ninja Song fields and the locked Movie-title placeholder.
 The first-pass corpus contains 172
 hash-verified paired captures; the second contains 93.
 
@@ -84,8 +83,8 @@ donor is only `Charge`, the complete title is stored as an override. T30 is the
 sole row without a trustworthy NUN5 donor: its user-authored `Ultimate`
 replacement is externalized through
 `NA2_BTL@0x209CB4`. Donor-backed rows otherwise leave `replacement` blank and
-execute independently validated official donor text. T1958, T2027, and T2033
-retain the established Cross-confirm overrides.
+execute independently validated official donor text. T1958 retains the
+established Cross-confirm override.
 
 Rows that split one `<br>`-delimited renderer message are admitted as a
 complete structural family even when only one line supplied the visible ID.
@@ -109,7 +108,7 @@ Retained diagnostic `rebuild.tsv` SHA-256:
 `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`.
 
 Canonical `mappings.tsv` contains 2,080 rows and SHA-256
-`607622129FAD96E919E6CC7542F2FCEA69006D45A203A1867473AA1EBDF68073`.
+`4EB76C285C2D3EC522E5FE2E1102FC51B90D0C47275CCEB0414CBC3B7AE81531`.
 
 ## Stable diagnostic IDs
 

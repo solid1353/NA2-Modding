@@ -135,11 +135,6 @@ UI-OUGI-012	1	ougi	m\ougi\tex\ougi_spgau2.bmp	m\ougi\tex\ougi_spgau2.bmp	copy	En
 UI-PRAC-001	1	prac	m\prac\tex\p_wind1.bmp	m\prac\tex\p_wind1.bmp	copy	Official English OK marker.
 UI-PRAC-002	1	prac	m\prac\tex\prac_t01.bmp	m\prac\tex\prac_t01.bmp	copy	English Practice Settings label.
 UI-SET-001	1	setting	m\setting\tex\s_menu.bmp	m\setting\tex\s_menu.bmp	copy	English Battle Settings label.
-UI-SHOP-001	1	shop	m\shop\tex\buybg.bmp	m\shop\tex\buybg.bmp	copy	English shop background labels.
-UI-SHOP-002	1	shop	m\shop\tex\shop_mg.bmp	m\shop\tex\shop_mg.bmp	copy	English shop interaction labels.
-UI-SHOP-003	1	shop	m\shop\tex\shop_mg02.bmp	m\shop\tex\shop_mg02.bmp	copy	English shop result labels.
-UI-SHOP-004	1	shop	m\shop\tex\shop_t01.bmp	m\shop\tex\shop_t01.bmp	copy	English shop cabinet labels.
-UI-SHOP-005	1	shop	m\shop\tex\shop_t02.bmp	m\shop\tex\shop_t02.bmp	copy	English shop category labels.
 UI-SPB-001	1	spbattle	x\spbattle\tex\spbattle01.bmp	x\spbattle\tex\spbattle01.bmp	copy	English special-battle menu labels.
 UI-SPB-002	1	spbattle	x\spbattle\tex\spbattle02.bmp	x\spbattle\tex\spbattle02.bmp	copy	English special-battle labels and counters.
 UI-SPB-003	1	spbattle	x\spbattle\tex\spbattle03.bmp	x\spbattle\tex\spbattle03.bmp	copy	English special-battle result labels.

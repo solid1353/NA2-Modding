@@ -17,7 +17,6 @@ findings remain in the shared knowledge base rather than being duplicated here.
 - [Battle UI knowledge](../../knowledge/localization/ui/battle.md)
 - [Collection UI knowledge](../../knowledge/localization/ui/collection.md)
 - [Options UI knowledge](../../knowledge/localization/ui/options.md)
-- [Shop UI knowledge](../../knowledge/localization/ui/shop.md)
 - [Stage-select UI knowledge](../../knowledge/localization/ui/stage_select.md)
 - [Victory UI knowledge](../../knowledge/localization/ui/victory.md)
 

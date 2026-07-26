@@ -28,8 +28,8 @@ command or file-backed inter-stage handoff.
 
 ### Mapping metadata
 
-- Canonical `mappings.tsv` rows: `2,080`
-- Canonical `mappings.tsv` SHA-256: `607622129FAD96E919E6CC7542F2FCEA69006D45A203A1867473AA1EBDF68073`
+- Canonical `mappings.tsv` rows: `2,071`
+- Canonical `mappings.tsv` SHA-256: `4EB76C285C2D3EC522E5FE2E1102FC51B90D0C47275CCEB0414CBC3B7AE81531`
 - Retained task-local `rebuild.tsv` rows: `2,173` (`T1` through `T2173`)
 - Retained `rebuild.tsv` SHA-256: `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`
 
@@ -128,10 +128,9 @@ for this NA2 slot, so the complete visible title is stored as its override.
 T30 is the sole donorless row and uses user-authored
 `Ultimate`, externalized through `NA2_BTL@0x209CB4`. Donor-backed rows otherwise
 leave `replacement` blank and execute independently validated official donor
-text. T1958, T2027, and T2033 retain the established Cross-confirm overrides.
-The paired Ninja Song passes add 25 displayed numeric/status/bonus fields, the
-paired ss1 Shop pass adds the Figure Items / Dioramas tutorial, and the paired
-ss7 Movie pass adds the locked-title placeholder, for 2,080 total rows. This
+text. T1958 retains the established Cross-confirm override.
+The paired Ninja Song passes add 25 displayed numeric/status/bonus fields, and
+the paired ss7 Movie pass adds the locked-title placeholder. This
 is an evidence-scoped English table, not a claim that uncaptured screens are
 covered.
 
@@ -240,30 +239,6 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
 
-### Version 45 changes
-
-#### Final-acceptance Shop category help
-
-The matched final-acceptance slot-8 savestates show the Shop category screen
-with the official NUN5 `Press <iconCROSS> to choose item.` help line and the
-corresponding Current line still Japanese with a Circle-confirm glyph. Version
-45 adds `M0530` for the exact clean source at `NA2_ETC@0x2F230` and retains the
-exact official `Press <iconCIRCLE> to choose item.` donor at
-`NUN5_TEXTENG@0x1490`.
-
-The accepted regional Shop input map uses Cross to confirm, so the
-user-editable `replacement` changes only that control token to
-`<iconCROSS>`. This is the same evidence-backed policy already applied to the
-separate Shop item-list row `M0537`; neither unobserved generic prompts nor
-other Circle tokens are changed.
-
-Version 45 contains 2,052 enabled mappings: 2,048 slots and four sequences.
-`M0530` fits inline, so external placement remains 31 mappings and 33 pointer
-edits, the generated string-only `PRG/228.BIN` remains 1,776 bytes, and the
-compiled translation package contains 2,290 binary edits. `M0530` and `M0537`
-are the two evidence-backed user overrides; there are no shortened, unresolved,
-or prefixed rows.
-
 ### Version 44 changes
 
 #### Final-acceptance Collection selector
@@ -286,40 +261,6 @@ Version 44 contains 2,051 enabled mappings: 2,047 slots and four sequences.
 edits, the generated `PRG/228.BIN` remains 1,776 bytes, and the compiled
 translation package contains 2,288 binary edits. `M0537` remains the sole user
 override; there are no shortened, unresolved, or prefixed rows.
-
-### Version 43 changes
-
-#### Cross-confirm Shop prompt
-
-The paired Shop captures at checkpoints 046 through 049 show the official
-NUN5 help line with a Cross glyph and clean NA2 with a Circle glyph. The
-runtime-proven Shop input patches make Cross accept and Triangle cancel, so
-retaining the literal `<iconCIRCLE>` donor markup in the rebuilt NA2 text would
-describe the wrong control.
-
-`M0537` keeps its exact clean source and official
-`NUN5_TEXTENG@0x1550` donor, but now uses the explicit user override
-`Select an item and press <iconCROSS> to buy.` Clean NA2 `PRG/ADV.BIN`
-contains working `<iconCROSS>` markup, confirming that the target renderer
-supports the requested token. The replacement is shorter than the official
-donor and remains inline in the existing 112-byte slot.
-
-The audit found two other clean NA2 `<iconCIRCLE>` cases and deliberately left
-both untouched:
-
-- `NA2_ETC@0x2F230` (`M0530`) is an alternate Shop instruction that did not
-  appear in the supplied Shop captures and therefore remains outside the
-  evidence-scoped executable table.
-- `NA2_SLPS@0x4B31E0` is a standalone token used by `FUN_00390540` in an
-  unclassified prompt renderer associated with the still-unclassified
-  `ELF-M022` confirm handler. Its displayed action is not proven, so changing
-  it globally could make another prompt inaccurate.
-
-Version 43 contained 2,050 enabled mappings: 2,046 slots and four sequences.
-`M0537` was the sole user override; there were no shortened, unresolved, or
-prefixed rows. External placement remained 31 mappings and 33 pointer edits,
-the generated `PRG/228.BIN` remained 1,776 bytes, and the compiled translation
-package contained 2,287 binary edits.
 
 ### Version 42 changes
 
@@ -363,7 +304,7 @@ one stable evidence basis:
 The rebuild retains 2,048 v40 rows, adds `M2247` for the confirmed Battle HUD
 `MAX` label, and removes 124 previously active rows that had no confirmed
 display location. Removed content includes the unvisited Ultimate Battle and
-inventory blocks, unvisited alternate mode/shop branches, unused generic
+inventory blocks, unvisited alternate mode branches, unused generic
 choice slots, and the unmatched voice title `M0523`; those clean Japanese bytes
 remain untouched.
 
@@ -1474,41 +1415,6 @@ ranges, file/runtime mappings, reconstruction, live object fields, side
 effects, and negative evidence are preserved in
 `docs/knowledge/localization/ui/battle.md`.
 
-### UI-ETC-001: localized Shop label layout
-
-Importing the complete NUN5 `SHOP.CCS` supplies the correct English atlas, but
-NA2's Shop renderer still copies its Japanese currency rectangles from
-`ETC.BIN`. The corresponding 24-byte tables are:
-
-- NA2 ETC file offset `0x30300`, loaded at EE `0x006E4200`;
-- NUN5 ETC file offset `0x292F0`, loaded at EE `0x006EFFF0` in NUN5.
-
-The first eight-byte panel record is already identical. `UI-ETC-001` copies
-only the remaining 16 bytes, replacing `(169,385,42,26)` and
-`(213,385,18,26)` with NUN5's official full `Money` rectangle
-`(169,385,62,26)` and `Ryo` rectangle `(321,449,30,22)`. It does not change the
-money value or its formatting logic.
-
-The rectangle range previously rendered both labels in full while preserving
-the existing seven-digit `9999999` value. A later paired review established
-that the three English labels still did not match NUN5 placement. Complete
-homologous-function comparison now copies NUN5's exact Money X=`254`, Ryo
-Y=`50`, and Bonus Game X=`105` instructions over NA2's X=`250`, Y=`48`, and
-X=`100` constants. The money-value origin remains NA2-specific so its
-seven-digit layout is not clipped.
-
-The newer slot-7 comparison confirms the Bonus Game left anchor but exposes a
-four-pixel right-edge crop. Both homologous renderers copy a second 16-byte
-rectangle table: NA2 ETC `0x30340` contains icon `(129,137,22,22)` and label
-`(129,161,122,22)`, while NUN5 ETC `0x29330` retains the identical icon and
-widens the label to `(129,161,126,22)`. A fifth guarded NUN5 import copies that
-complete table, preserving the anchor and extending only the missing right
-edge. The user accepted the final paired Shop result on 2026-07-26.
-
-The full file/runtime mapping, practical reconstruction, call relationships,
-side effects, evidence, and rejected pulse-only interpretation are recorded in
-`docs/knowledge/localization/ui/shop.md`.
-
 ### UI-ETC-002: localized Collection submenu layout
 
 The whole NUN5 `HOME.CCS` import supplies the complete English `Previous Page`
@@ -1729,7 +1635,6 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
   --patch UI-BTL-014 `
   --patch UI-BTL-015 `
   --patch UI-BTL-016 `
-  --patch UI-ETC-001 `
   --patch UI-ETC-002 `
   --patch UI-ELF-001 `
   --patch UI-ELF-002 `

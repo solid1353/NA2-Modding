@@ -1891,8 +1891,9 @@ alignment edits; it no longer installs executable code into ELF zero padding.
 The shared UI wrapper keeps transient coordinates and saved renderer fields in
 its own stack frame rather than the former global scratch record.
 
-An independent `localization.font.v2.*` implementation is also retained
-default-disabled and does not target any symbol above. Its separate generated
+An independent `localization.font.v2.*` implementation is enabled for the
+accepted Controls family and does not target any retained symbol above. Its
+separate generated
 resident asset contains the accepted 95-entry width table, exact
 printable-ASCII measurement with explicit `<br>`/newline recognition,
 shrink-only scale preparation, horizontal/vertical box positioning, and five
@@ -1910,7 +1911,8 @@ fitting labels at scale `1`, applies `128 / 178` to `Ultimate Jutsu Prep`,
 derives NUN5's exact box left as the native NA2 caller center minus `64`, and
 converts the prepared left edge back to NA2's centered-renderer ABI. The
 separate `OFF` call is untouched. Both the Controls layer and its required v2
-core remain default-disabled until the matched runtime review.
+core are runtime-proven and default-enabled after the matched eight-row review
+and the supplied real title-to-Load transition state.
 
 The retained auto-fit and layout components require `font_nun5_glyphs` because
 their positions and fit decisions are tuned to its metrics. They otherwise
@@ -1930,12 +1932,14 @@ the historical rendering behavior before its resident relocation. The final
 guarded Controls capture retained the accepted horizontal metrics, spacing,
 bearings, and shrink-only fit while reducing the median height and center-Y
 deltas against NUN5 to zero. The user accepted the font itself as almost
-pixel-for-pixel. Fullwidth Shift-JIS Save/Load digits use a different glyph path
+pixel-for-pixel. The user also accepted the exact v2 Controls family after its
+matched comparison and title-to-Load regression. Fullwidth Shift-JIS Save/Load digits use a different glyph path
 and were not a halfwidth-Latin parity target; the independent Save/Load
 formatter patch now emits those six fields as ASCII instead. The user later
-rejected the combined autofit/layout selection as unstable; only the font
-itself, the independent Character Select modal alignment, and this call-local
-formatter remain enabled while layout is rebuilt sequentially.
+rejected the combined autofit/layout selection as unstable. The font itself,
+independent Character Select modal alignment, call-local numeric formatters,
+and the accepted v2 Controls/core pair are now enabled while the remaining
+layout families are rebuilt sequentially.
 
 `scripts/research/localization/generate_font_assets.py` deterministically
 regenerates and verifies the four native glyph/metric/decoder blobs from

@@ -110,17 +110,29 @@ the sign before rejection. Its callback converts the prepared left edge back
 to the exact center argument expected by NA2's native `FUN_00379240`, so NA2's
 internal legacy measurement cancels without replacing the v2 box position.
 
-Both `font_v2_layout_core` and `font_v2_controls` remain default-disabled
-pending the matched Controls runtime review. Every core hook therefore observes
-a null session in normal composition, restores its temporary `v0`/`v1` use,
-executes the exact displaced NA2 operations and resumes the original path.
+Both `font_v2_layout_core` and `font_v2_controls` are runtime-proven and
+default-enabled after the matched Controls review. The final 640x480 pair
+matches the eight NUN5 label bounds and centers, keeps `Linked Attack` full
+width, fits `Ultimate Jutsu Prep` with the exact 178-unit denominator, and
+leaves `OFF` on the ordinary renderer. The user explicitly accepted this
+result on 2026-07-26.
+
+The supplied title-to-Load `ss1` has boot CRC `A8A3C694`, state SHA-256
+`B35AFFF69FDCDDF5478B6AE86DC9BF909469512F52E5268471FC9CF524EF1AF4`,
+and an embedded 640x480 frame SHA-256
+`16B7D32AB84C3B6CCECD60474CFF8E625C1224DC053AC9EE397DDE68F3947721`.
+It shows all three Load rows plus the complete instruction/action panel, proving
+that the accepted worker ISO survives the real transition without the former
+helper-erasure freeze. Exact provenance is retained under
+`work/Font/inputs/sstates/autofit_v2/controls/load-transition/`.
+
 Static linked-package validation confirms the five core hook targets, the
 single eight-byte Controls redirect, both adapter ABIs, state restoration,
 internal branch bounds, the `Ultimate Jutsu Prep` denominator of 178, and the
 unchanged retained-v1 blob. The separate v2 asset is 1,760 bytes with SHA-256
-`46250D70430836A6788DEC14ECDE962598D7127491ABD7EFCC90F0A0DFFE5CE2`.
+`AA56FE2A0D6BCB6FFEC7715D69D8CA17BFB76CE5CCB16A0597BF68F60BC645B8`.
 Automatic word wrapping and remaining caller-native coordinate records remain
-later family work; the disabled implementation changes no screen.
+later family work.
 
 ## Accepted native 14x20 integration
 
@@ -130,7 +142,7 @@ standalone profile module pin was
 and its former standalone feature pin was
 `23A2CFDD285FF00A40F35AC42D0656580E4D9DE5884F2CF568453A20E93AA3A7`.
 The current profile now covers it through the complete Localization feature pin
-`F68B5DB40A78F46CFCEB429F09E434CA4A106BD731420E76A7324415CD817BD8`.
+`175401CC76981D5E5AD8A3B07E526DB9AB4DE0903144C78E4CFDFB9A96AA30F4`.
 It is a new, deterministic donor built from hash-verified clean NA2 and
 official NUN5 inputs; it is not based on m01, v22/v23, the rejected semantic
 palette swap, the 10x22 resample, or a whole-file GF4 replacement.

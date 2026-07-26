@@ -104,14 +104,44 @@ class ResidentPatcherTests(unittest.TestCase):
             / "localization"
             / "resident_patcher"
         )
-        disabled_declaration = engine.load_package(
+        canonical_declaration = engine.load_package(
             directory, owner="localization.resident_patcher"
         )
-        self.assertFalse(
-            any(
-                patch.default_enabled
-                for patch in disabled_declaration.patches.values()
-            )
+        self.assertEqual(
+            {
+                patch_id
+                for patch_id, patch in canonical_declaration.patches.items()
+                if patch.default_enabled
+            },
+            {"font_v2_layout_core", "font_v2_controls"},
+        )
+        canonical_build = build_resident_payload(
+            canonical_declaration.fragments
+        )
+        canonical_resolved = resolve_symbolic_patches(
+            canonical_build, canonical_declaration.symbolic_patches
+        )
+        canonical_package = engine.build_binary_package(
+            canonical_declaration, canonical_resolved
+        )
+        self.assertEqual(
+            {edit.edit_id for edit in canonical_package.edits},
+            {
+                "font_v2_layout_core_01",
+                "font_v2_layout_core_02",
+                "font_v2_layout_core_03",
+                "font_v2_layout_core_04",
+                "font_v2_layout_core_05",
+                "font_v2_controls_01",
+            },
+        )
+
+        disabled_declaration = replace(
+            canonical_declaration,
+            patches={
+                patch_id: replace(patch, default_enabled=False)
+                for patch_id, patch in canonical_declaration.patches.items()
+            },
         )
         self.assertEqual(disabled_declaration.payload_fragments, ())
         self.assertEqual(disabled_declaration.symbolic_patches, ())

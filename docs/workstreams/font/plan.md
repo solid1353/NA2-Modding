@@ -22,6 +22,11 @@ so its five logical selections are retained but default-disabled before the
 stage-by-stage rebuild. The independently reviewed Character Select modal
 alignment remains enabled.
 
+The replacement v2 shared core and Controls family are now runtime-proven and
+default-enabled. The user accepted the exact matched Controls result on
+2026-07-26, and supplied slot 1 proves the same worker ISO completes a real
+title-to-Load transition without freezing.
+
 The reset baseline is documented in the existing
 [Font knowledge record](../../knowledge/localization/font/README.md). User
 slot 9 records the currently broken Save/Load lower modal: its panel is
@@ -175,7 +180,7 @@ may change that value.
 The user directed the shared core and adapter/session layer to be completed
 before caller-family behavior:
 
-1. `font_v2_layout_core` is a default-disabled resident patch with a separate
+1. `font_v2_layout_core` was introduced as a default-disabled resident patch with a separate
    generated v2 asset. It exports the accepted 95-entry width table, guarded
    printable-ASCII and explicit-line measurement, shrink-only preparation,
    horizontal and vertical box positioning, one zero-initialized active-session
@@ -217,6 +222,15 @@ prove the replacement formula directly: NUN5 uses box-left `60`/`324`, while
 NA2 supplies native centers `124`/`388`, so the exact family rule is
 `box_left = caller_center - 64`. No shared metric, scale, row, or `OFF`
 behavior changes.
+
+The final matched 640x480 comparison reproduces all eight NUN5 label bounds
+and centers, keeps `Linked Attack` full width, and leaves `OFF` on the ordinary
+renderer. The user explicitly accepted that result on 2026-07-26. Supplied
+`ss1`, copied with provenance under
+`work/Font/inputs/sstates/autofit_v2/controls/load-transition/`, has boot CRC
+`A8A3C694` and shows the same exact worker ISO fully rendering the Load screen
+after a real title transition. The accepted core and Controls rows are
+therefore runtime-proven and default-enabled.
 
 ### Static and automated validation
 
@@ -272,22 +286,20 @@ visually accepted.
 
 Needed from the user:
 
-- now: approve this replacement plan with `qwe`;
-- after reset: accept the clean post-reset baseline;
 - after each family: accept the comparison or identify the remaining defect;
 - later only when requested: provide a matched NUN5/NA2 savestate pair for a
   caller not covered by existing evidence.
 
 The agent owns analysis, generation, worker builds, task PCSX2 operation,
-validation, commits and pushes. Existing states are sufficient to begin
-Controls.
+validation, commits and pushes. Existing states are sufficient to implement
+and review the Command Chart and Practice title family.
 
 Recommended effort: **max**, due to cross-function MIPS ABI preservation,
 renderer-state restoration, symbolic resident linking and multi-screen runtime
 regression risk.
 
-**Plan approved; foundations complete; Controls adapter implemented
-default-disabled pending matched runtime review**
+**Plan approved; foundations complete; Controls accepted; Command Chart and
+Practice titles in progress**
 
 ## Accepted font implementation
 

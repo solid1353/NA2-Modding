@@ -1720,10 +1720,11 @@ GF4 replacement as an implementation parent. The accepted build changes
 `DATA/GF4.BIN` and `SLPS_258.37` without changing either file's size;
 `DATA/GF4C.BIN` remains byte-identical to clean NA2.
 
-Two Font components remain enabled by default when Localization is enabled:
-the accepted native glyph component and the independent Character Select modal
-alignment. Three autofit/layout components are retained in place but
-default-disabled for a user-directed stage-by-stage reimplementation:
+Three Font components remain enabled by default when Localization is enabled:
+the accepted native glyph component, the independent Character Select modal
+alignment, and the call-local Save/Load ASCII numeric formatter. Three
+autofit/layout components are retained in place but default-disabled for a
+user-directed stage-by-stage reimplementation:
 
 - `font_nun5_glyphs` installs native 14x20 NUN5 raster geometry and metrics
   for same-semantic English cells. Unsupported printable punctuation is
@@ -1750,6 +1751,10 @@ default-disabled for a user-directed stage-by-stage reimplementation:
   five character-select `Back to Game Mode Screen` rows while retaining the
   accepted local Y behavior. Its selected-path compensation prevents the
   shadow draw from shifting visible ink.
+- `font_save_load_ascii_digits` replaces only the six fullwidth numeric-format
+  calls in the Save/Load row renderer with NA2's existing ASCII `sprintf` and
+  changes its two time separators to ASCII colon. It preserves NA2's current
+  date order, field widths, timer math, and all unrelated numeric callers.
 - Retained, default-disabled `font_layout_wrappers` ports shared selected/unselected confirmation-choice
   placement, the 216-unit Practice pause-list fit and Y origin, Practice and
   Collection confirmation-body alignment, and the character-return body's
@@ -1785,16 +1790,20 @@ guarded Controls capture retained the accepted horizontal metrics, spacing,
 bearings, and shrink-only fit while reducing the median height and center-Y
 deltas against NUN5 to zero. The user accepted the font itself as almost
 pixel-for-pixel. Fullwidth Shift-JIS Save/Load digits use a different glyph path
-and are not a halfwidth-Latin parity target. The user later rejected the
-combined autofit/layout selection as unstable; only the font itself and the
-independent Character Select modal alignment remain enabled while layout is
-rebuilt sequentially.
+and were not a halfwidth-Latin parity target; the independent Save/Load
+formatter patch now emits those six fields as ASCII instead. The user later
+rejected the combined autofit/layout selection as unstable; only the font
+itself, the independent Character Select modal alignment, and this call-local
+formatter remain enabled while layout is rebuilt sequentially.
 
 `scripts/research/localization/generate_font_assets.py` deterministically
 regenerates and verifies the four native glyph/metric/decoder blobs from
 configured `@source_na2/` and `@source_nun5/` inputs.
 `scripts/research/localization/generate_font_renderer.py` deterministically
 regenerates the resident renderer blob plus its fragment and relocation tables.
+`scripts/research/localization/generate_save_load_ascii_digits.py`
+deterministically generates and verifies the six Save/Load call replacements
+and their local punctuation edit.
 Exact static and symbolic hooks, guards, replacement templates, and reasons are
 recorded in the two module-owned `edits.tsv` files; confirmed evidence and
 negative results are recorded in

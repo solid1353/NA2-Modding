@@ -29,7 +29,9 @@ ss7 Movie pass adds the locked-title placeholder, for 2,080 enabled rows.
 T2042, T2045, and T2050 use parents in the canonical `T#`
 namespace. Paired screenshots independently correct T1956 to `Off`, T1957 to
 `On`, T2158 to `Warning`, T637 to `Hidden Leaf Village`, T638 to `Hidden Leaf
-Gate`, T744 to `Faint Unease`, and T767 to `Silent Confidence`. Six
+Gate`, T744 to `Faint Unease`, T767 to `Silent Confidence`, and T1920 to the
+complete visible title `Charge Chakra`. T1920 retains the incomplete official
+`Charge` donor and uses the paired-screen result as its override. Six
 Difficulty-family rows are matched by meaning rather than table position.
 T24 deliberately reuses the official Jump-mode help text. T30 is the sole
 donorless row: its user-authored `Ultimate` replacement is externalized through

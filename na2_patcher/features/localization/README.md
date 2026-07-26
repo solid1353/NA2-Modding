@@ -29,7 +29,7 @@ command or file-backed inter-stage handoff.
 ### Mapping metadata
 
 - Canonical `mappings.tsv` rows: `2,080`
-- Canonical `mappings.tsv` SHA-256: `C695D7E2D4DDE60C891C516213E7D8B2CBC967F849E29D82C5D56A8003038849`
+- Canonical `mappings.tsv` SHA-256: `607622129FAD96E919E6CC7542F2FCEA69006D45A203A1867473AA1EBDF68073`
 - Retained task-local `rebuild.tsv` rows: `2,173` (`T1` through `T2173`)
 - Retained `rebuild.tsv` SHA-256: `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`
 
@@ -122,7 +122,10 @@ T28 `Normal`, T1984 `Hard`, T29 `Insane`, and T50 `Difficulty`. The full T50
 label links through the exact pointer at `NA2_BTL@0x20A264`. T24 reuses the
 official Jump-mode help text. Paired screens correct T637 to `Hidden Leaf
 Village`, T638 to `Hidden Leaf Gate`, T744 to `Faint Unease`, and T767 to
-`Silent Confidence`. T30 is the sole donorless row and uses user-authored
+`Silent Confidence`. The paired Practice ss5 comparison corrects T1920's
+displayed title to `Charge Chakra`; the retained `Charge` donor is incomplete
+for this NA2 slot, so the complete visible title is stored as its override.
+T30 is the sole donorless row and uses user-authored
 `Ultimate`, externalized through `NA2_BTL@0x209CB4`. Donor-backed rows otherwise
 leave `replacement` blank and execute independently validated official donor
 text. T1958, T2027, and T2033 retain the established Cross-confirm overrides.

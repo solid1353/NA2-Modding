@@ -231,8 +231,9 @@ class IntegratedExternalStringTests(unittest.TestCase):
         ]
         self.assertEqual(
             {str(row["id"]) for row in override_rows},
-            {"T30", "T2194", "T2197", "T1958", "T2027", "T2033"},
+            {"T30", "T1920", "T1958", "T2027", "T2033", "T2194", "T2197"},
         )
+        self.assertEqual(self.import_plan.resolved_texts["T1920"], "Charge Chakra")
         self.assertEqual(
             self.import_plan.resolved_texts["T2027"],
             "Press <iconCROSS> to choose item.",

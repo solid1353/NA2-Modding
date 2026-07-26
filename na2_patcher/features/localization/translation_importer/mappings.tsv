@@ -1945,7 +1945,7 @@ T1916	1	Command Chart > shared control name or help text	<r変|か>わり<r身|�
 T1917	1	Command Chart > shared control name or help text	<r受|う>け<r身|み>	Rebound			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209760	NUN5_SLES@0x513EE0	slot	32				
 T1918	1	Command Chart > shared control name or help text	<r追|お>い<r討|う>ち	Extra Hit			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209780	NUN5_TEXTENG@0xF88	slot	32				
 T1919	1	Command Chart > shared control name or help text	<r追|お>い<r討|う>ち<r返|がえ>し	Extra Hit Counter			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2097A0	NUN5_TEXTENG@0xFA0	slot	48				
-T1920	1	Command Chart > shared control name or help text	チャクラをためる	Charge			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2097D0	NUN5_SLES@0x513EB0	slot	32				
+T1920	1	Command Chart and Practice explanations > shared control title	チャクラをためる	Charge		Charge Chakra	seen:Font paired Practice ss5, 2026-07-27; inferred:Command Chart shared control family	NA2_BTL@0x2097D0	NUN5_SLES@0x513EB0	slot	32				
 T1921	1	Command Chart > shared control name or help text	<r奥|おく>へ<r軸移動|じくいどう>	Side-jump Back			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209810	NUN5_TEXTENG@0xFC8	slot	48				
 T1922	1	Command Chart > shared control name or help text	<r手前|てまえ>へ<r軸移動|じくいどう>	Side-jump Forward			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209840	NUN5_TEXTENG@0xFE0	slot	48				
 T1923	1	Command Chart > shared control name or help text	ガード<r崩|くず>し	Guard Break			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209870	NUN5_TEXTENG@0xFF8	slot	32				

@@ -1,2 +1,6 @@
 // [EE map capture: Restore Adventure mode]
 patch=1,EE,005D51D0,word,00000004
+
+// [Widescreen 16:9]
+// gsaspectratio=16:9
+// patch=1,EE,20b0aa04,extended,3f400000

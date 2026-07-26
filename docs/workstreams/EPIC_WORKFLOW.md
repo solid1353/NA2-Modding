@@ -79,6 +79,13 @@ workstream README links every active epic. Task-local source screenshots and
 intermediate files remain under `work/<exact task title>/`; they are not the
 canonical epic record.
 
+When an explicitly accepted case is removed from a remaining-epic report,
+remove its README references and generated canonical grid files in the same
+update unless the user explicitly designates them as retained history. Before
+committing, enumerate the epic directory and verify that every report image is
+referenced by the README and every README image reference resolves; do not
+leave stale or missing report artifacts.
+
 A grid may contain one row, but never only one screenshot; every row shows NUN5
 on the left and NA2.28 on the right.
 

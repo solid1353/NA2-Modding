@@ -206,7 +206,7 @@ PRACTICE_EXPLANATION_BOX_WIDTH = 364
 PRACTICE_EXPLANATION_BOX_HEIGHT = 48
 PRACTICE_EXPLANATION_GLYPH_HEIGHT = 28.0
 PRACTICE_EXPLANATION_LINE_ADVANCE = 14.0
-PRACTICE_EXPLANATION_LINE_LIMIT = 2
+PRACTICE_EXPLANATION_LINE_LIMIT = 0
 PRACTICE_EXPLANATION_TOKEN_COUNT = 13
 PRACTICE_EXPLANATION_TOKEN_STRIDE = 16
 
@@ -1226,9 +1226,12 @@ def build_v2_wrap_native() -> Fragment:
     assembler.emit(mips.r_type(s1, v0, t1, 0x2B))
     assembler.branch(0x04, t1, zero, "space_candidate")
     assembler.emit(0)
+    assembler.branch(0x04, s2, zero, "line_room")
+    assembler.emit(0)
     assembler.emit(mips.r_type(s6, s2, t1, 0x2B))
     assembler.branch(0x04, t1, zero, "space_candidate")
     assembler.emit(0)
+    assembler.label("line_room")
     assembler.branch(0x04, s5, zero, "use_current_space")
     assembler.emit(0)
     assembler.emit(mips.r_type(s5, zero, t2, 0x21))
@@ -1266,9 +1269,12 @@ def build_v2_wrap_native() -> Fragment:
     assembler.emit(0)
     assembler.branch(0x04, s5, zero, "measure_lines")
     assembler.emit(0)
+    assembler.branch(0x04, s2, zero, "final_line_room")
+    assembler.emit(0)
     assembler.emit(mips.r_type(s6, s2, t0, 0x2B))
     assembler.branch(0x04, t0, zero, "measure_lines")
     assembler.emit(0)
+    assembler.label("final_line_room")
     assembler.emit(mips.i_type(0x09, zero, t0, 0x0A))
     assembler.emit(mips.i_type(0x28, s5, t0, 0))
     assembler.emit(mips.i_type(0x09, s6, s6, 1))

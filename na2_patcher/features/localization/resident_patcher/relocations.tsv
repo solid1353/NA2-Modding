@@ -24,8 +24,8 @@ FR-V2-R012	localization.font.v2.title_adapter	30	0xC8	jal26	localization.font.v2
 FR-V2-R013	localization.font.v2.command_title_entry	10	0x4	j26	localization.font.v2.title_adapter	0
 FR-V2-R014	localization.font.v2.practice_title_entry	10	0x4	j26	localization.font.v2.title_adapter	0
 FR-V2-R015	localization.font.v2.wrap_native	10	0x8C	jal26	localization.font.v2.native_measure	0
-FR-V2-R016	localization.font.v2.wrap_native	20	0x104	jal26	localization.font.v2.native_measure	0
-FR-V2-R017	localization.font.v2.wrap_native	30	0x174	jal26	localization.font.v2.native_measure	0
+FR-V2-R016	localization.font.v2.wrap_native	20	0x10C	jal26	localization.font.v2.native_measure	0
+FR-V2-R017	localization.font.v2.wrap_native	30	0x184	jal26	localization.font.v2.native_measure	0
 FR-V2-R018	localization.font.v2.practice_icon_metric	10	0xC	hi16	localization.font.v2.practice_icon_map	0
 FR-V2-R019	localization.font.v2.practice_icon_metric	20	0x10	lo16	localization.font.v2.practice_icon_map	0
 FR-V2-R020	localization.font.v2.practice_icon_draw	10	0x30	hi16	localization.font.v2.practice_icon_map	0
@@ -46,10 +46,10 @@ FR-V2-R034	localization.font.v2.practice_adapter	110	0x17C	hi16	localization.fon
 FR-V2-R035	localization.font.v2.practice_adapter	120	0x180	lo16	localization.font.v2.practice_icon_metric	0
 FR-V2-R036	localization.font.v2.practice_adapter	130	0x188	hi16	localization.font.v2.practice_icon_draw	0
 FR-V2-R037	localization.font.v2.practice_adapter	140	0x18C	lo16	localization.font.v2.practice_icon_draw	0
-FR-V2-R038	localization.font.v2.practice_adapter	150	0x1A8	jal26	localization.font.v2.wrap_native	0
-FR-V2-R039	localization.font.v2.practice_adapter	160	0x238	hi16	localization.font.v2.practice_callback	0
-FR-V2-R040	localization.font.v2.practice_adapter	170	0x23C	lo16	localization.font.v2.practice_callback	0
-FR-V2-R041	localization.font.v2.practice_adapter	180	0x260	jal26	localization.font.v2.adapter_call	0
+FR-V2-R038	localization.font.v2.practice_adapter	150	0x1A4	jal26	localization.font.v2.wrap_native	0
+FR-V2-R039	localization.font.v2.practice_adapter	160	0x230	hi16	localization.font.v2.practice_callback	0
+FR-V2-R040	localization.font.v2.practice_adapter	170	0x234	lo16	localization.font.v2.practice_callback	0
+FR-V2-R041	localization.font.v2.practice_adapter	180	0x258	jal26	localization.font.v2.adapter_call	0
 FR-V2-R042	localization.font.v2.plain_space	10	0xC	hi16	localization.font.v2.session_pointer	0
 FR-V2-R043	localization.font.v2.plain_space	20	0x10	lo16	localization.font.v2.session_pointer	0
 FR-V2-R044	localization.font.v2.newline_advance	10	0xC	hi16	localization.font.v2.session_pointer	0

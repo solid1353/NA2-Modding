@@ -1916,10 +1916,21 @@ draw calls: Command Chart file `0x1C6A28` and Practice file `0x1C4B98`.
 Two explicit mode entrypoints tail-call one configurable title adapter, which
 uses the proven 288-by-20 and 352-by-20 boxes respectively and delegates
 measurement, shrink-only scale and restoration to the same v2 core. The
-adapter returns through NA2's native `0x00382310` draw ABI. Practice
-explanations and both subsequent Command Chart auxiliary-string calls remain
-native. This layer is default-enabled and runtime-proven in isolated matched
-Command Chart and Practice captures; user acceptance remains pending.
+adapter returns through NA2's native `0x00382310` draw ABI. This title layer
+does not select Practice explanations or either subsequent Command Chart
+auxiliary-string call; each remains a separate caller family. The title layer
+is default-enabled and runtime-proven in isolated matched Command Chart and
+Practice captures; user acceptance remains pending.
+
+The third thin caller layer, `font_v2_practice_explanations`, replaces only the
+Practice per-token explanation loop at BTL file `0x1C4BA0`. It assembles one
+bounded 512-byte mixed text/tag buffer, applies unlimited word wrapping inside
+the proven 364-by-48 box, and installs call-local metric and draw callbacks for
+the native 13-token controller-icon table. Matched supplied slots 2-7 prove
+NUN5-equivalent one-, two-, and three-line wrapping, line spacing, placement,
+and D-pad, face, plus, and shoulder icons. Controls and Command Chart
+regressions remain intact. This layer is default-enabled and runtime-proven;
+the grouped Practice grids still await user acceptance.
 
 The retained auto-fit and layout components require `font_nun5_glyphs` because
 their positions and fit decisions are tuned to its metrics. They otherwise

@@ -960,16 +960,24 @@ class ResidentPatcherTests(unittest.TestCase):
         for expected_word in (
             mips.i_type(0x0D, 8, 8, 364),
             mips.i_type(0x0D, 8, 8, 48),
-            mips.i_type(0x0D, 8, 8, 2),
             mips.i_type(0x0D, 8, 8, 0x1D),
             mips.i_type(0x2B, 29, 19, 0x6C),
             mips.i_type(0x2B, 29, 18, 0x70),
+            mips.i_type(0x2B, 29, 8, 0x24),
             mips.i_type(0x23, 8, 9, 0x7C),
             mips.i_type(0x23, 8, 9, 0x78),
             mips.i_type(0x2B, 8, 9, 0x7C),
             mips.i_type(0x2B, 8, 9, 0x78),
         ):
             self.assertIn(expected_word, practice_adapter_words)
+        self.assertIn(
+            struct.pack(
+                "<2I",
+                mips.i_type(0x0F, 0, 8, 0),
+                mips.i_type(0x2B, 29, 8, 0x24),
+            ),
+            practice_adapter_payload,
+        )
 
         practice_icon_draw = practice_build.symbols[
             "localization.font.v2.practice_icon_draw"

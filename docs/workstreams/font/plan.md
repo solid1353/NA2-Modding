@@ -27,6 +27,12 @@ default-enabled. The user accepted the exact matched Controls result on
 2026-07-26, and supplied slot 1 proves the same worker ISO completes a real
 title-to-Load transition without freezing.
 
+The isolated Command Chart and Practice title layer remains runtime-proven and
+default-enabled. The next Practice explanation family is now agent-validated
+across supplied slots 2-7: wrapping, line spacing, placement, and native inline
+icons match NUN5. Its composed comparison grids await user acceptance before
+the next caller family begins.
+
 The reset baseline is documented in the existing
 [Font knowledge record](../../knowledge/localization/font/README.md). User
 slot 9 records the currently broken Save/Load lower modal: its panel is
@@ -243,8 +249,8 @@ adapter, with two thin explicit BTL entrypoints:
   352-by-20 box at X `31.2` with caller Y minus `6.8`;
 - both modes are left-aligned, single-line, shrink-only, and call NA2's native
   `0x00382310` draw entry after v2 preparation;
-- the Practice explanation loop and the two Command Chart auxiliary-string
-  calls remain native and are outside this family.
+- the title layer does not select the Practice explanation loop or the two
+  Command Chart auxiliary-string calls; each remains a separate caller family.
 
 Both hook guards are the original `jal 0x00382310` plus its NOP delay slot.
 The shared adapter preserves the original render object, string and style,
@@ -258,6 +264,39 @@ the 288-unit long-title shrink, the 352-unit Practice title origins, unchanged
 short-title scale, and unchanged later Practice explanation rows. The supplied
 states also correct the live BTL mapping to `0x006B3F00 + file offset`; using
 the `0x006B3EC0` Ghidra mapping as a live base writes `0x40` bytes too early.
+
+### Third caller family: Practice explanations
+
+The Practice explanation family replaces only the per-token draw loop reached
+from BTL file `0x1C4BA0` / runtime `0x00878AA0`. Its adapter builds one bounded
+512-byte mixed text/tag buffer, installs call-local native metric and draw
+callbacks, and routes the result through the shared v2 measurement and
+positioning primitives:
+
+- the box is 364 by 48 at X `39.2`, with caller Y plus `21.2`;
+- glyph height is 28 and line advance is 14;
+- wrapping is shrink-free and word-based, with no artificial two-line cap;
+- the exact 13-record token map preserves D-pad, face, plus, and shoulder
+  glyphs through NA2's native icon table and renderer;
+- callback pointers, renderer state, tracking, scale, and both icon objects are
+  restored after every call.
+
+The unlimited line count is required by the supplied `ss3` Flee explanation,
+which uses three lines in NUN5. Supplied slots 2-7 also cover one- and two-line
+rows and every supported icon class. Their matched 640x480 captures reproduce
+NUN5 wrapping, line spacing, X/Y placement, and inline-icon alignment. The
+`ss5` title remains `Charge` in Current versus `Charge Chakra` in NUN5; that is
+a separate text mapping difference and not a Font layout defect.
+
+The isolated worker ISO has SHA-256
+`D624C39F0132FF5ED3BA4D60E99B78113AF85805D3870B072643B9400CC2B10B`
+and boot CRC `A85C52F7`. Its 7,536-byte resident payload has SHA-256
+`47EF54100642B25366FADF4A0D5C12B7255D3CF89456BD3F3DB5ACB056ED1101`;
+the 4,084-byte generated v2 asset has SHA-256
+`382AD202C1225326B59832BECE7A8AE61A2A69870B18B17D1F606B6C5152BE90`.
+The Controls and Command Chart regression captures remain intact. The family
+is runtime-proven and default-enabled, with user acceptance of the composed
+Practice grids still pending.
 
 ### Static and automated validation
 
@@ -295,12 +334,12 @@ For each family:
 
 After accepted Controls:
 
-1. Command Chart and Practice titles through one configurable title adapter,
-   retaining their distinct 288- and 352-unit containers.
+1. Completed: Command Chart and Practice titles through one configurable title
+   adapter, retaining their distinct 288- and 352-unit containers.
 2. Shared confirmation choices and confirmation bodies.
-3. Practice explanations through a 364-by-48 wrapping container. Treat markup
-   and controller icons as atomic tokens and preserve NA2's native icon
-   callback; do not promote this family until that callback is proven.
+3. Agent-validated, awaiting user acceptance: Practice explanations through a
+   364-by-48 wrapping container, with markup and controller icons preserved as
+   atomic native tokens.
 4. Save/Load instruction and action-row layout, with panel geometry handled
    separately from text placement.
 5. Remaining proven caller families identified through matched evidence.
@@ -318,15 +357,15 @@ Needed from the user:
   caller not covered by existing evidence.
 
 The agent owns analysis, generation, worker builds, task PCSX2 operation,
-validation, commits and pushes. Existing states are sufficient to implement
-and review the Command Chart and Practice title family.
+validation, commits and pushes. Existing states were sufficient to implement
+and review the Practice explanation family.
 
 Recommended effort: **max**, due to cross-function MIPS ABI preservation,
 renderer-state restoration, symbolic resident linking and multi-screen runtime
 regression risk.
 
-**Plan approved; foundations complete; Controls accepted; Command Chart and
-Practice titles agent-validated and awaiting user acceptance**
+**Plan approved; foundations complete; Controls accepted; titles retained;
+Practice explanations agent-validated and awaiting user acceptance**
 
 ## Accepted font implementation
 

@@ -30,3 +30,19 @@ NUN6 variant. The source ELF remains untouched and the output size is preserved.
 Runtime testing of the integrated Current ISO confirmed that Adventure is absent
 and the remaining Mode Select entries work normally. `ELF-Q004` is therefore
 enabled by default with status `runtime_proven`.
+
+## ELF-Q008: Remove Shop
+
+`ELF-Q008` applies the same filtered-carousel mechanism to Shop. Shop is entry
+4 of the same seven-entry boot-ELF table, at virtual address `0x005D51E0` and
+ELF offset `0x4D52E0`, where its clean value is `5`.
+
+The patch changes only that entry from `05 00 00 00` to `FF FF FF FF`. The
+menu setup loop therefore omits Shop while leaving Adventure, Free Battle,
+Practice, Collection, Options, and the existing unused entry unchanged. The
+source ELF remains untouched and the output size is preserved.
+
+The canonical `Restore Shop` cheat writes value `5` back to `0x005D51E0`,
+re-enabling Shop without changing the file-backed default. The table mapping
+and patch guards are statically verified; integrated runtime validation remains
+pending, so `ELF-Q008` is enabled by default with status `approved_for_test`.

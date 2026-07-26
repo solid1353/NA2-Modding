@@ -11,6 +11,7 @@ The Shop is **partially localized**, but it is not fixed as a whole. Individual
 completed corrections remain valid, while font rendering, UI, and other
 localization gaps remain unresolved.
 
-The Shop is planned for eventual removal from the game because completing its
+The normal patched game omits Shop from Mode Select because completing its
 localization would waste time better spent elsewhere. No further Shop
-localization work is intended.
+localization work is intended. The canonical `Restore Shop` cheat re-enables
+the original menu entry when access is needed.

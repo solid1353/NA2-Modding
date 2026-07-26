@@ -69,9 +69,10 @@
   commit and push completed work. That authorization does not approve a task
   plan or start task execution.
 - Actualization unpins project chats, then pins `General`, `Scripting`,
-  `Notifications`, and `Task coordinator` in that order, followed by each
-  `In Progress` workstream coordinator and its unarchived dedicated task chats
-  in task order. It never unarchives archived dedicated chats.
+  `Notifications`, `Task coordinator`, and `Localization` in that order,
+  followed by each `In Progress` workstream coordinator and its unarchived
+  dedicated task chats in task order. It never unarchives archived dedicated
+  chats.
 - Actualization does not select work. It updates scope/rules only when stale and
   reports reused, renamed, created, or signaled coordinators.
 - Creating, renaming, moving, or deleting a whole workstream subsection

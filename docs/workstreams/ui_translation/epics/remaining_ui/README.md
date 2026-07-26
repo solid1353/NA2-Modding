@@ -13,6 +13,12 @@ the right.
    donor-atlas column upward by 11 source rows. The canonical donor-derived
    transform is implemented without an ISO build by user instruction; validate
    all five values through the next normal pipeline run.
+2. Victory winner character name, ss7: NUN5 renders `Sasuke Uchiha`, while
+   Current NA2.28 still renders the Japanese name. The user reports that the
+   same defect probably affects other characters, so treat this as a likely
+   shared character-name path rather than a Sasuke-only exception.
+3. Ninja Song details footer, ss8: X/Next and Triangle/Back are both shifted
+   right in Current NA2.28 relative to NUN5.
 
 ## User-accepted completed cases
 
@@ -26,3 +32,11 @@ the right.
 ### Battle results
 
 ![Battle Results screen 2](02-battle-results-2.png)
+
+### Victory
+
+![Winner character name, ss7](03-victory-winner-name.png)
+
+### Common UI
+
+![Ninja Song details footer, ss8](04-ninja-song-footer.png)

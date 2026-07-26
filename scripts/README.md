@@ -77,11 +77,14 @@ worker-output builds never actualize. The standalone `act` command can run all
 actualization modes without building or launching.
 
 During the active String translation rebuild, the user-facing `na` pair
-launcher accepts `na rebuild nun5`. The `rebuild` selector addresses the
-verified worker artifact at `work/String translation/build/mapping-ids.iso`.
+launcher accepts `na rebuild nun5` and `na replacement nun5`. The `rebuild`
+selector addresses the verified worker artifact at
+`work/String translation/build/mapping-ids.iso`; `replacement` addresses the
+cumulative worker artifact at
+`work/String translation/build/replacement.iso`.
 `na` continues accepting any ordered combination of registered ISO selectors;
 its existing selectors and zero-argument behavior remain unchanged. A missing
-rebuild ISO fails before any PCSX2 process is changed.
+selected ISO fails before any PCSX2 process is changed.
 
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.

@@ -114,6 +114,12 @@ Build the separate cumulative translation ISO with:
   -OutputIso 'work/String translation/build/replacement.iso'
 ```
 
+Launch that cumulative ISO beside NUN5 with:
+
+```powershell
+na replacement nun5
+```
+
 This is also a verified worker build. It imports only enabled rows from
 `replacement.tsv`; it never falls back to accepted `mappings.tsv`, never
 changes the complete diagnostic inventory, and never promotes or rotates

@@ -10,6 +10,8 @@ the right.
 1. Battle Results screen 2: repair the garbled and mislaid result UI.
 2. Character Items transition: replace the NA2.28 slide with the NUN5/base-NA2
    fade behavior.
+3. Mode Select footer, slot 1: OK and Back are aligned with NUN5 and ready for
+   acceptance.
 
 ## Report grids
 
@@ -22,3 +24,7 @@ the right.
 ![Character Items transition, slots 1-3](03-items-slots-1-3.png)
 
 ![Character Items transition, slots 4-5](04-items-slots-4-5.png)
+
+### Mode Select footer
+
+![Mode Select footer, slot 1](06-mode-select-footer-slot1.png)

@@ -1481,7 +1481,7 @@ reconstruction and paired Characters/Movie/Music evidence are recorded in
 `docs/knowledge/localization/ui/collection.md`. All eight operations derive bytes from
 canonical NUN5 files and preserve ETC size. Runtime acceptance remains pending.
 
-### UI-ELF-005: localized Mode Select START layout
+### UI-ELF-005: localized Mode Select layout
 
 The whole NUN5 `MODESEL1.CCS` import supplies the English START artwork, but
 NA2's static rectangle still selected only `(1,397,206,22)` and drew it at
@@ -1494,8 +1494,20 @@ X=`150`.
 `0x504710`. The X constant at NA2 offset `0x285F28` is an authored
 same-register port from `130` to `150`: the corresponding NUN5 instruction
 writes `v1`, while NA2's following instruction consumes `v0`, so copying the
-four instruction bytes verbatim would be incorrect. Both edits preserve ELF
-size and are statically verified for the user-requested runtime pass.
+four instruction bytes verbatim would be incorrect.
+
+The same paired slot showed OK and Back shifted right. NUN5 loads nominal
+X=`400`/`470` and then applies signed regional offsets `-12`/`-8` before
+calling its shared compositor. NA2 has no equivalent additions, so exact donor
+loads would preserve the defect. Two additional guarded NA2 constants at ELF
+offsets `0x285EE0` and `0x285F04` express the official effective anchors
+X=`388`/`462` while retaining NA2's ABI.
+
+All four edits preserve ELF size. A guarded task-owned slot-1 render placed
+both prompts within +1 pixel X/Y of NUN5, the normal pulse-phase variance.
+The complete function mapping, behavior reconstruction, side effects, and
+donor-copy limitation are preserved in
+`docs/knowledge/localization/ui/options.md`.
 
 ### UI-ELF-006: localized Controls Vibration-label rectangle
 

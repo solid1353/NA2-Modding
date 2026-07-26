@@ -1,4 +1,4 @@
-# Options UI layout
+# Shared frontend prompt layout
 
 ## Binary identity and mapping
 
@@ -17,6 +17,8 @@ screen-position caller are:
 | NUN5 | Controls footer draw | `FUN_0039a450` | `0x0039A450..0x0039A63C` |
 | NA2 | Music Options footer draw | `FUN_0038a1f0` | `0x0038A1F0..0x0038A55C` |
 | NUN5 | Music Options footer draw | `FUN_0039bb00` | `0x0039BB00..0x0039BE8C` |
+| NA2 | Mode Select draw | `FUN_00385c00` | `0x00385C00..0x00385EB0` |
+| NUN5 | Mode Select draw | `FUN_003972e0` | `0x003972E0..0x003975C0` |
 
 NA2's single loadable segment maps the three destination records from ELF file
 offsets `0x4D47B0`, `0x4D47B8`, and `0x4D47C0` to runtime addresses
@@ -100,6 +102,54 @@ NUN5 uses the same register and instruction positions but loads `200.0f` with
 `6643023C` instructions. This moves the two complete Select groups together by
 30 logical pixels while preserving their internal spacing and every unrelated
 footer prompt.
+
+## Mode Select footer
+
+The Mode Select functions are homologous full-screen draws. Their half-open
+runtime/file ranges are:
+
+| Game | Runtime range | ELF file range | Only direct caller |
+| --- | --- | --- | --- |
+| NA2 | `0x00385C00..0x00385EB0` | `0x285D00..0x285FB0` | `0x001EA59C` |
+| NUN5 | `0x003972E0..0x003975C0` | `0x297460..0x297740` | `0x001F04C8` |
+
+The footer portion reduces to:
+
+```cpp
+void draw_mode_select_footer(ModeSelectScreen *screen) {
+    draw_common_prompt(effective_ok_x(), 362.0f, screen->common, OK, true);
+    draw_common_prompt(effective_back_x(), 362.0f, screen->common, BACK, true);
+    draw_start_label(150.0f, 362.0f, screen->labels, localized_start_rect());
+}
+
+// NA2 original:           OK=400, Back=470, START=130
+// NUN5 effective result:  OK=388, Back=462, START=150
+```
+
+NA2 calls `FUN_0037c980` directly with literal X=`400` and X=`470` at
+runtime/file addresses `0x00385DE0`/`0x285EE0` and
+`0x00385E04`/`0x285F04`. NUN5 calls homolog `FUN_0038bb10` with nominal
+X=`400` and X=`470`, but converts two signed regional globals to floats and
+adds `-12` and `-8` first. Those additions are absent from NA2, so copying
+NUN5's nominal load instructions would leave the visible mismatch unchanged.
+
+`UI-ELF-005` therefore writes the equivalent effective NA2 constants
+X=`388` (`C243023C`) and X=`462` (`E743023C`). These are authored behavior
+ports rather than literal donor copies. They reproduce the official NUN5
+result while retaining NA2's register flow and shared compositor ABI. The
+existing two edits in the same patch copy NUN5's exact START rectangle and
+port its X anchor to `150`; no duplicate footer patch is introduced.
+
+The draw functions call the shared prompt compositor, submit the START
+companion through `FUN_0037bc40`/`FUN_0038ad00`, and finally commit the prompt
+sprite objects through `FUN_001cc070`/`FUN_001d1180`. They update transient
+sprite geometry and draw queues only; the selected mode, input state, and menu
+controller transitions are untouched.
+
+A guarded copy of paired slot 1 changed only the two NA2 instruction words.
+The hidden, muted task-owned clone rendered both OK and Back at
+`dx=+1,dy=+1` versus NUN5. The shared one-pixel delta is normal prompt pulse
+timing, and neither legend is clipped. Confidence is **verified**.
 
 ## Relationships and evidence
 

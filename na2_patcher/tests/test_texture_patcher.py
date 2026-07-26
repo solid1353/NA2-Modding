@@ -606,12 +606,14 @@ class UiTextureTests(unittest.TestCase):
             (0, 280, 176, 24),
         )
 
-    def test_mode_select_start_patch_uses_nun5_rectangle_and_na2_register(self) -> None:
+    def test_mode_select_patch_uses_nun5_geometry_and_effective_prompt_anchors(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
             / "na2_patcher/features/localization/binary_patcher"
         )
+        patch = package.patches["UI-ELF-005"]
+        edits = [item for item in package.edits if item.patch_id == "UI-ELF-005"]
         rectangle = next(
             item for item in package.edits if item.edit_id == "UI-ELF-005-01"
         )
@@ -619,6 +621,9 @@ class UiTextureTests(unittest.TestCase):
             item for item in package.edits if item.edit_id == "UI-ELF-005-02"
         )
 
+        self.assertEqual(len(edits), 4)
+        self.assertEqual(patch.status, "runtime_proven")
+        self.assertEqual(patch.confidence, "verified")
         self.assertEqual(rectangle.destination_offset, 0x504710)
         self.assertEqual(rectangle.expected_hex, "01008D01CE001600")
         self.assertEqual(rectangle.source_target_id, "nun5_elf")
@@ -631,6 +636,21 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(anchor.destination_offset, 0x285F28)
         self.assertEqual(anchor.expected_hex, "0243023C")
         self.assertEqual(anchor.replacement_hex, "1643023C")
+        self.assertEqual(
+            [
+                (
+                    item.edit_id,
+                    item.destination_offset,
+                    item.expected_hex,
+                    item.replacement_hex,
+                )
+                for item in edits[2:]
+            ],
+            [
+                ("UI-ELF-005-03", 0x285EE0, "C843023C", "C243023C"),
+                ("UI-ELF-005-04", 0x285F04, "EB43023C", "E743023C"),
+            ],
+        )
 
     def test_shop_patch_uses_nun5_rectangles_and_label_anchors(self) -> None:
         repository = Path(__file__).resolve().parents[2]
@@ -1488,14 +1508,14 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 263)
-        self.assertEqual(operations, {"copy": 90, "replace": 173})
+        self.assertEqual(len(ui_edits), 265)
+        self.assertEqual(operations, {"copy": 90, "replace": 175})
         self.assertEqual(
             copy_sources,
             {"nun5_elf": 61, "nun5_btl": 20, "nun5_etc": 9},
         )
         self.assertEqual(len(stage_scales), 24)
-        self.assertEqual(len(adaptations), 149)
+        self.assertEqual(len(adaptations), 151)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")

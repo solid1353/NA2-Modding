@@ -136,7 +136,12 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   accessor `FUN_003d4bc0` supplies `(1,393,254,26)` and renderer
   `FUN_003972e0` uses X=`150`. `UI-ELF-005` copies the exact rectangle and uses
   an authored same-register immediate port for X because the two compiled
-  renderers use different destination registers.
+  renderers use different destination registers. A later slot-1 pair showed
+  the same screen's OK/Back anchors still right of NUN5. NUN5 applies regional
+  offsets `-12/-8` after nominal X=`400/470`; NA2 has no equivalent additions.
+  The same patch now uses authored effective anchors X=`388/462`. A guarded
+  task-owned render places both prompts within +1 pixel X/Y of NUN5, consistent
+  with their normal pulse phase.
 - Paired slot 1 proves the stage-picture pixels themselves already match while
   NA2's retained CCS structure associates and positions them incorrectly.
   `MAPSEL1.CCS` therefore uses the complete NUN5 donor so pictures, ordering,
@@ -174,12 +179,13 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   6,297,394 bytes, but no replacement CCS blobs are stored in the repository.
 - `na2_patcher/features/localization/binary_patcher/` contains the canonical UI
   companion patches across BTL, ETC, and the boot ELF. The current UI subset
-  has 26 patches and 263 guarded edits: 90 exact NUN5 copies, 24 values
+  has 26 patches and 265 guarded edits: 90 exact NUN5 copies, 24 values
   derived from NUN5's stage-width formula, 78 complete Victory descriptors
-  derived from NUN5's frame templates and English widths, and 71 remaining
+  derived from NUN5's frame templates and English widths, and 73 remaining
   NA2-ABI adaptations. Stage Select, Jutsu, command-scroll, Items, Mash, and
-  both Settings footers are runtime-proven; Mode Select, Vibration, Collection,
-  and Victory still await their respective normal runtime acceptance.
+  Mode Select and both Settings footers are runtime-proven; Vibration,
+  Collection, and Victory still await their respective normal runtime
+  acceptance.
 - Translation mapping version 35 restores the four Collection Movie rows to
   exact official NUN5 source strings with no authored line breaks. A
   clean-source full in-memory plan produced 2,437 fixed-size patch rows with
@@ -187,7 +193,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 - The Localization feature's aggregate current-profile pin covers both canonical
   module inputs and their feature-relative paths.
 - The complete Localization binary-patcher package validates as 7 targets, 9
-  groups, 99 patches, and 419 edits; its UI subset is the 26 patches and 263
+  groups, 99 patches, and 421 edits; its UI subset is the 26 patches and 265
   edits counted above. The UI texture plan derives all 96 members with 92 whole
   donors and four mapped exceptions: MODE2KDV, ENDDEMO, Haku, and Shikamaru.
   The historical runtime
@@ -346,7 +352,8 @@ production writer.
 No static implementation question blocks the remaining-screen pass. Runtime
 visual acceptance remains with the user by explicit instruction. Slot 3 Stage
 Select passed comparison with NUN5 on 2026-07-22 and `UI-BTL-002` is now
-`runtime_proven`; Mode Select START, Vibration, and Collection submenu patches
+`runtime_proven`; the guarded Mode Select slot-1 comparison likewise promotes
+`UI-ELF-005` to `runtime_proven`. Vibration and Collection submenu patches
 stay `approved_for_test` until their respective screens pass. `LOGO.CCS`,
 upscale-pack hash mapping, and broader NUN6 comparison remain optional future
 research.

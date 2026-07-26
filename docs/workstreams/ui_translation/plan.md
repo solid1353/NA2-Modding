@@ -545,12 +545,11 @@ The user's final paired visual inspection accepted Slot 4 as perfect on
 2026-07-22; Slots 5 and 6 remain runtime-proven. The accepted Slot 4 savestate
 pair and active mismatch-list entry were then removed under workstream policy.
 
-The remaining maintained mismatch list contains Battle Results screen 2
-(rank transform implemented, awaiting normal runtime and user verification),
-and Ninja Song details ss8 (separate footer anchors implemented, awaiting
-normal runtime and user verification). Victory ss7 all-character donor
-coverage, Character Items transition behavior, and the Cross/Triangle-label
-batch are user-accepted.
+The remaining maintained mismatch list contains only Battle Results screen 2
+(rank transform implemented, awaiting normal runtime and user verification).
+Ninja Song details ss8, Victory ss7 all-character donor coverage, Character
+Items transition behavior, and the Cross/Triangle-label batch are
+user-accepted.
 Within the accepted Cross/Triangle batch,
 the Options-root Slot 1 caller now uses the proven effective NUN5 OK/Back
 anchors X=`388`/`462`. Collection-root Slot 2 uses its separate ETC position

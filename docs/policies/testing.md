@@ -31,7 +31,10 @@ drift-prone implementation details here.
 - `@pcsx2_user` and the repository-root `pcsx2` convenience link are the user's
   protected installation. Agents may read and copy from it but never create,
   modify, move, delete, link, launch, control, or write through hardlinks into
-  it.
+  it, except for an ISO launch explicitly requested by the user.
+- When the user explicitly asks to launch an ISO, launch that ISO through
+  `@pcsx2_user`; do not substitute an isolated worker PCSX2. That request
+  authorizes only the requested launch, not other user-PCSX2 changes or control.
 - `@pcsx2_user/sstates/` and `snaps/` are user read-only libraries. Copy chosen
   inputs with provenance into the task's `inputs/sstates/` or
   `inputs/screenshots/`. Agent-created states belong under task artifacts.

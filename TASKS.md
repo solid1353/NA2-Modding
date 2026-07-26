@@ -22,6 +22,7 @@
 ## Backlog
 
 ### Project
+- Rename default_enabled, add enable switch for groups and patches.
 - Investigate cross-platform development/deployment possibilities.
 - Global cleanup.
 

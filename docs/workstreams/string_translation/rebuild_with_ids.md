@@ -39,11 +39,15 @@ not validated. `legacy_ids` is an optional comma-separated lookup field.
 `replacement`, `display_basis`, `source_ref`, `donor_ref`, `mode`,
 `capacity`, `transform`, `arguments`, `reference_refs`, `parent_mapping_id`
 
-Only encountered `T#` rows are admitted. The initial evidence pass copies the
-exact guarded source fields from `rebuild.tsv`, records concrete display
-metadata, leaves every translation/pointer field empty, and keeps every row
-disabled. Later donor validation may complete and enable rows without changing
-the diagnostic inventory or normal build behavior.
+Only encountered `T#` rows are admitted. The initial evidence pass copied the
+exact guarded source fields from `rebuild.tsv` and recorded concrete display
+metadata. The first executable pass then enabled all 564 admitted rows and
+filled their complete donor/pointer fields: 563 use the unique accepted-table
+row with the same exact `source_ref`, while T2158 uses the separately
+screen-verified `Warning` donor at `NUN5_SLES@0x513F38`. These relationships
+are the reference-derived starting point for English runtime validation, not a
+claim that the final donor audit is complete. The diagnostic inventory and
+normal build behavior remain unchanged.
 
 The initial inventory combines the pre-rebuild v40 reference with the accepted
 table, deduplicates aliases that point to the same clean source slot, and adds

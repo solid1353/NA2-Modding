@@ -316,17 +316,17 @@ class IntegratedExternalStringTests(unittest.TestCase):
             translation_display="replacement",
         )
         self.assertEqual(draft.translation_plan.display_mode, "replacement")
-        self.assertEqual(draft.translation_plan.text_mappings, ())
-        self.assertEqual(draft.translation_plan.import_rows, [])
-        self.assertEqual(draft.external_draft.fragments, ())
-        self.assertEqual(draft.external_draft.symbolic_patches, ())
+        self.assertEqual(len(draft.translation_plan.text_mappings), 564)
+        self.assertEqual(len(draft.translation_plan.import_rows), 627)
+        self.assertEqual(len(draft.external_draft.fragments), 8)
+        self.assertEqual(len(draft.external_draft.symbolic_patches), 8)
         self.assertEqual(
             self.replacement_import_plan.summary["table_rows"],
             564,
         )
         self.assertEqual(
             self.replacement_import_plan.summary["inactive_rows"],
-            564,
+            0,
         )
         self.assertFalse(draft.game_title_policy["applied"])
 

@@ -22,10 +22,13 @@ replacement table is reconstructed from screenshots.
 
 Adjacent `replacement.tsv` uses the exact accepted `mappings.tsv` schema. It
 contains only diagnostic IDs confirmed visible in the supplied screenshot
-pass. During evidence collection its rows remain disabled and its donor fields
-remain blank; normal and diagnostic builds do not import or execute it.
-Profile integrity checking hash-covers it so the in-progress replacement
-inventory cannot drift outside the reproducible project state.
+pass. Its first executable pass contains 564 enabled rows with complete donor
+and donor-reference fields: 563 are seeded from the unique accepted row at the
+same exact `source_ref`, and T2158 uses the separately screen-verified
+`Warning` donor. Only explicit replacement worker builds import these rows;
+normal and diagnostic builds do not. Profile integrity checking hash-covers
+the table so the in-progress replacement cannot drift outside the reproducible
+project state.
 
 The official `donor` is the default executable translation. User-authored
 `prefix` is prepended to the resolved text, while a nonempty user-authored

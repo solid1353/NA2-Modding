@@ -74,10 +74,14 @@ class TranslationImporterTests(unittest.TestCase):
             row["id"]: row
             for row in engine.read_rebuild_rows(data_root / "rebuild.tsv")
         }
+        accepted = {
+            row["source_ref"]: row
+            for row in engine.read_rows(data_root / "mappings.tsv")
+        }
 
         self.assertEqual(len(replacement_raw), 564)
-        self.assertEqual(replacement["text"], [])
-        self.assertEqual(len(replacement["inactive"]), 564)
+        self.assertEqual(len(replacement["text"]), 564)
+        self.assertEqual(replacement["inactive"], [])
         self.assertEqual(
             len({row["id"] for row in replacement_raw}),
             len(replacement_raw),
@@ -85,13 +89,19 @@ class TranslationImporterTests(unittest.TestCase):
         for row in replacement_raw:
             self.assertIn(row["id"], rebuild)
             candidate = rebuild[row["id"]]
-            self.assertEqual(row["enabled"], "0")
+            self.assertEqual(row["enabled"], "1")
             self.assertTrue(row["display_context"])
             self.assertTrue(row["display_basis"].startswith("seen:"))
             self.assertEqual(row["source"], candidate["source"])
             self.assertEqual(row["source_ref"], candidate["source_ref"])
             self.assertEqual(row["mode"], candidate["mode"])
             self.assertEqual(row["capacity"], candidate["capacity"])
+            if row["id"] == "T2158":
+                self.assertEqual(row["donor"], "Warning")
+                self.assertEqual(row["donor_ref"], "NUN5_SLES@0x513F38")
+                continue
+            self.assertIn(row["source_ref"], accepted)
+            reference = accepted[row["source_ref"]]
             for field in (
                 "donor",
                 "prefix",
@@ -102,7 +112,12 @@ class TranslationImporterTests(unittest.TestCase):
                 "reference_refs",
                 "parent_mapping_id",
             ):
-                self.assertEqual(row[field], "")
+                self.assertEqual(row[field], reference[field])
+
+        self.assertEqual(
+            sum(row["id"] != "T2158" for row in replacement_raw),
+            563,
+        )
     def test_iso_source_delegates_to_the_shared_iso_reader(self) -> None:
         exact = SimpleNamespace(path="PRG/BTL.BIN", is_dir=False)
         basename = SimpleNamespace(path="OTHER/ETC.BIN", is_dir=False)

@@ -16,8 +16,10 @@ the right.
 3. Cross/Triangle labels, paired slots 1-5: Slot 1 Options is implemented and
    matches the guarded NUN5 runtime proof. Slot 2 Collection root is also
    implemented through its distinct shared position table and matches the
-   guarded NUN5 proof; Slots 3-5 remain. Correct only the Cross and Triangle
-   labels across the preserved screens as one shared subtask.
+   guarded NUN5 proof; Slots 3-5 remain. A newer paired slot 2 adds the
+   Collection Characters OK/Back footer after the current cases. Correct only
+   the Cross and Triangle labels across the preserved screens as one shared
+   subtask.
 
 ## Report grids
 
@@ -36,3 +38,5 @@ the right.
 ![Cross/Triangle labels, slots 1-3](07-cross-triangle-labels-slots1-3.png)
 
 ![Cross/Triangle labels, slots 4-5](08-cross-triangle-labels-slots4-5.png)
+
+![Cross/Triangle labels, queued Collection Characters slot 2](09-cross-triangle-labels-new-slot2.png)

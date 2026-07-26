@@ -168,7 +168,6 @@ V2_FLAG_NEWLINE_BYTES = 0x04
 CONTROLS_BOX_WIDTH = 128
 CONTROLS_BOX_HEIGHT = 20
 CONTROLS_LINE_HEIGHT = 20.0
-CONTROLS_LABEL_X_CORRECTION = -2.0
 
 TEXT_METRICS_HELPERS = bytes.fromhex(
     "040060C640000146C0C0033C0000834400000000400001466000033C7C7362C4"
@@ -822,7 +821,7 @@ def build_v2_controls_adapter() -> Fragment:
         assembler,
         t0,
         0,
-        CONTROLS_BOX_WIDTH / 2.0 - CONTROLS_LABEL_X_CORRECTION,
+        CONTROLS_BOX_WIDTH / 2.0,
     )
     assembler.emit(mips.cop1(0x01, 0, 12, 0))
     assembler.emit(mips.i_type(0x39, sp, 0, V2_SESSION_BOX_X))

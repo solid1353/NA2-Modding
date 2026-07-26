@@ -210,10 +210,13 @@ spacing, the complete long label, an unchanged `OFF` path and a successful real
 title-to-Load transition.
 
 The first fully normalized capture restored all eight row advances and matched
-their vertical bounds, but every NA2 text bound remained one output pixel left
-of NUN5. The next isolated candidate advances only the Controls box center by
-one additional local unit; no shared metric, scale, row, or `OFF` behavior
-changes.
+their vertical bounds, but its empirical box-left `59` placed every NA2 text
+bound one output pixel left of NUN5. A pushed box-left `58` candidate moved the
+bounds another one to two pixels left and is rejected. The preserved callers
+prove the replacement formula directly: NUN5 uses box-left `60`/`324`, while
+NA2 supplies native centers `124`/`388`, so the exact family rule is
+`box_left = caller_center - 64`. No shared metric, scale, row, or `OFF`
+behavior changes.
 
 ### Static and automated validation
 

@@ -100,13 +100,15 @@ The first family-specific fragments are now
 action labels. The separate ninth `OFF` call is not redirected. The adapter
 constructs one stack-local session with NUN5's 128-unit width, scale `1` for
 fitting labels, `128 / 178` for `Ultimate Jutsu Prep`, and the proven
-labels-only caller-local X correction. The first fully normalized runtime
-capture placed all eight NA2 bounds one output pixel left of NUN5; the current
-candidate therefore advances the prepared box center by one additional local
-unit, for a two-unit caller-local correction. Its callback converts the
-prepared left edge back to the exact center argument expected by NA2's native
-`FUN_00379240`, so NA2's internal legacy measurement cancels without replacing
-the v2 box position.
+caller-native origin formula. NUN5 `FUN_00399df0` passes box-left `60` for 1P
+and `324` for 2P, while NA2 `FUN_003885b0` passes native centers `124` and
+`388`; both pairs prove `box_left = caller_center - 64` with no empirical
+correction. The first normalized candidate used box-left `59` and placed all
+eight NA2 bounds one output pixel left of NUN5. The pushed follow-up candidate
+used box-left `58` and moved them another one to two pixels left, confirming
+the sign before rejection. Its callback converts the prepared left edge back
+to the exact center argument expected by NA2's native `FUN_00379240`, so NA2's
+internal legacy measurement cancels without replacing the v2 box position.
 
 Both `font_v2_layout_core` and `font_v2_controls` remain default-disabled
 pending the matched Controls runtime review. Every core hook therefore observes

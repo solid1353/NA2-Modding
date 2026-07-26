@@ -11,7 +11,6 @@
 - Special Controls / Practice Settings ON/OFF: use the paired files `ss01_NA2.p2s` + `ss01_NUN5.p2s` and `ss08_NA2.p2s` + `ss08_NUN5.p2s` under `work/String translation/inputs/sstates/2026-07-26-ss1-7-8-sjis-pass-2/`; split the shared T37/T38 presentation so ss1 Special Controls retains compact uppercase `ON`/`OFF` while ss8 Practice Settings uses title-case `Off`/`On`, matching NUN5 letter spacing in each context.
 
 ### Project
-- Archive shop changes.
 - Release: add feature/group/patch config + instructions + default release config.
 - Investigate cross-platform development/deployment possibilities.
 - Global cleanup - preserve what is needed, delete the rest. Project should ask corresponding chats for specifics. Includes, but not limited to:

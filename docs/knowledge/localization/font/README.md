@@ -100,8 +100,11 @@ The first family-specific fragments are now
 action labels. The separate ninth `OFF` call is not redirected. The adapter
 constructs one stack-local session with NUN5's 128-unit width, scale `1` for
 fitting labels, `128 / 178` for `Ultimate Jutsu Prep`, and the proven
-labels-only one-unit-left correction. Its callback converts the prepared left
-edge back to the exact center argument expected by NA2's native
+labels-only caller-local X correction. The first fully normalized runtime
+capture placed all eight NA2 bounds one output pixel left of NUN5; the current
+candidate therefore advances the prepared box center by one additional local
+unit, for a two-unit caller-local correction. Its callback converts the
+prepared left edge back to the exact center argument expected by NA2's native
 `FUN_00379240`, so NA2's internal legacy measurement cancels without replacing
 the v2 box position.
 

@@ -209,6 +209,12 @@ Acceptance requires matched NUN5/Current bounds and centers, correct short-label
 spacing, the complete long label, an unchanged `OFF` path and a successful real
 title-to-Load transition.
 
+The first fully normalized capture restored all eight row advances and matched
+their vertical bounds, but every NA2 text bound remained one output pixel left
+of NUN5. The next isolated candidate advances only the Controls box center by
+one additional local unit; no shared metric, scale, row, or `OFF` behavior
+changes.
+
 ### Static and automated validation
 
 Before the Controls commit:

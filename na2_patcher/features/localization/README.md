@@ -1907,9 +1907,9 @@ through one cleanup path.
 The first thin caller layer, `font_v2_controls`, redirects only the shared
 first-eight-label call in `FUN_003885b0`. It builds NUN5's 128-unit box, keeps
 fitting labels at scale `1`, applies `128 / 178` to `Ultimate Jutsu Prep`,
-uses the proven labels-only one-unit-left correction, and converts the prepared
-left edge back to NA2's centered-renderer ABI. The separate `OFF` call is
-untouched. Both the Controls layer and its required v2 core remain
+uses the matched labels-only two-unit caller-local X correction, and converts
+the prepared left edge back to NA2's centered-renderer ABI. The separate `OFF`
+call is untouched. Both the Controls layer and its required v2 core remain
 default-disabled until the matched runtime review.
 
 The retained auto-fit and layout components require `font_nun5_glyphs` because

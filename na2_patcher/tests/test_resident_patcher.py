@@ -492,7 +492,7 @@ class ResidentPatcherTests(unittest.TestCase):
             controls_adapter_words,
         )
         self.assertIn(
-            mips.i_type(0x0F, 0, 8, 0x4282),
+            mips.i_type(0x0F, 0, 8, 0x4284),
             controls_adapter_words,
         )
         for expected_word in (

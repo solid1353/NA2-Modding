@@ -13,23 +13,11 @@ the right.
    texture/CLUT binding or cached GS packet.
 2. Character Items transition: replace the NA2.28 slide with the NUN5/base-NA2
    fade behavior.
-3. Cross/Triangle labels, paired slots 1-5: Slot 1 Options is implemented and
-   matches the guarded NUN5 runtime proof. Slot 2 Collection root is also
-   implemented through its distinct shared position table and matches the
-   guarded NUN5 proof. Slot 3 Collection Music is implemented once in its
-   shared HOME action helper and matches the guarded NUN5 proof. Slot 4
-   Character Select extends its existing shared footer patch with the same
-   effective NUN5 OK/Back anchors and matches the guarded runtime proof. Slot 5
-   Stage Select applies the same effective anchors at its separate BTL call
-   sites and now matches the guarded NUN5 proof. The original paired slots 1-5
-   are complete. Newer paired slot 1 Music Settings extends the existing
-   resident Music footer patch with effective NUN5 OK/Back anchors and now
-   matches its guarded proof. Newer paired slot 2 Collection Characters is
-   confirmed fixed by the already-canonical shared HOME helper, with no new
-   binary edit. Newer paired slot 3 Control Settings extends the same
-   `UI-ELF-009` ownership at separate Controls call sites and matches the
-   guarded NUN5 proof. The Cross/Triangle-label batch is implemented across
-   every preserved pair and awaits user acceptance of the newest slot.
+
+## User-accepted completed cases
+
+- Cross/Triangle labels: every preserved pair (original slots 1-5 and newer
+  slots 1-3) was explicitly confirmed fixed by the user on 2026-07-26.
 
 ## Report grids
 
@@ -42,15 +30,3 @@ the right.
 ![Character Items transition, slots 1-3](03-items-slots-1-3.png)
 
 ![Character Items transition, slots 4-5](04-items-slots-4-5.png)
-
-### Cross/Triangle labels
-
-![Cross/Triangle labels, slots 1-3](07-cross-triangle-labels-slots1-3.png)
-
-![Cross/Triangle labels, slots 4-5](08-cross-triangle-labels-slots4-5.png)
-
-![Cross/Triangle labels, newer Music Settings slot 1](09-cross-triangle-labels-new-slot1.png)
-
-![Cross/Triangle labels, queued Collection Characters slot 2](10-cross-triangle-labels-new-slot2.png)
-
-![Cross/Triangle labels, fixed Control Settings slot 3](11-cross-triangle-labels-new-slot3.png)

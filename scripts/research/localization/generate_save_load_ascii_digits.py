@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate and verify the call-local Save/Load ASCII-number patch."""
+"""Generate and verify the call-local Save/Load EU datetime patch."""
 
 from __future__ import annotations
 
@@ -58,6 +58,7 @@ class CallSite:
     format_address: int
     label: str
     maximum: int | None = None
+    setup_word: int | None = None
 
 
 CALL_SITES = (
@@ -66,9 +67,10 @@ CALL_SITES = (
         10,
         0x0E660C,
         "0E0065942D200000040006249000A7270100082444E10D0C00000000",
-        mips.i_type(0x25, V1, A2, 0x0E),
-        FORMAT_D,
-        "year",
+        mips.r_type(S5, ZERO, A2, 0x2D),
+        FORMAT_02D,
+        "day",
+        setup_word=mips.i_type(0x25, V1, S6, 0x0E),
     ),
     CallSite(
         "font_save_load_ascii_digits_02",
@@ -84,9 +86,9 @@ CALL_SITES = (
         30,
         0x0E6694,
         "2D2000002D28A002020006249000A7272D40C00044E10D0C00000000",
-        mips.r_type(S5, ZERO, A2, 0x2D),
-        FORMAT_02D,
-        "day",
+        mips.r_type(S6, ZERO, A2, 0x2D),
+        FORMAT_D,
+        "year",
     ),
     CallSite(
         "font_save_load_ascii_digits_04",
@@ -124,11 +126,14 @@ def build_call(site: CallSite) -> bytes:
     low = site.format_address & 0xFFFF
     assembler = mips.Assembler()
     if site.maximum is None:
+        if site.setup_word is not None:
+            assembler.emit(site.setup_word)
         assembler.emit(site.value_word)
         assembler.emit(mips.i_type(0x09, SP, A0, BUFFER_OFFSET))
         assembler.emit(mips.i_type(0x0F, ZERO, A1, high))
         assembler.emit(mips.i_type(0x09, A1, A1, low))
-        assembler.emit(0)
+        if site.setup_word is None:
+            assembler.emit(0)
         assembler.emit(mips.jump(0x03, SPRINTF))
         assembler.emit(0)
     else:
@@ -168,6 +173,12 @@ def generated_edits() -> list[dict[str, object]]:
                     "preserving field order and timer math."
                 )
                 if site.maximum is not None
+                else (
+                    f"Format the Save/Load {site.label} through NA2's existing "
+                    "ASCII sprintf with EU DD/MM/YYYY date ordering while "
+                    "preserving the field value."
+                )
+                if site.order <= 30
                 else (
                     f"Format the Save/Load {site.label} through NA2's existing "
                     "ASCII sprintf while preserving the original field width, "

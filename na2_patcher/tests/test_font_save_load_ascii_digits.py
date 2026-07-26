@@ -21,7 +21,7 @@ class SaveLoadAsciiDigitsTests(unittest.TestCase):
             generate_save_load_ascii_digits.PATCH_ID
         ]
         self.assertTrue(patch.default_enabled)
-        self.assertEqual(patch.status, "approved_for_test")
+        self.assertEqual(patch.status, "runtime_proven")
         self.assertEqual(patch.confidence, "verified")
         self.assertEqual(patch.group_id, "front_end")
 
@@ -102,6 +102,64 @@ class SaveLoadAsciiDigitsTests(unittest.TestCase):
                 ),
             ],
         )
+
+    def test_date_calls_use_eu_day_month_year_order(self) -> None:
+        date_sites = generate_save_load_ascii_digits.CALL_SITES[:3]
+        self.assertEqual(
+            [site.label for site in date_sites],
+            ["day", "month", "year"],
+        )
+        self.assertEqual(
+            [site.format_address for site in date_sites],
+            [
+                generate_save_load_ascii_digits.FORMAT_02D,
+                generate_save_load_ascii_digits.FORMAT_02D,
+                generate_save_load_ascii_digits.FORMAT_D,
+            ],
+        )
+        self.assertEqual(
+            [site.value_word for site in date_sites],
+            [
+                generate_save_load_ascii_digits.mips.r_type(
+                    generate_save_load_ascii_digits.S5,
+                    generate_save_load_ascii_digits.ZERO,
+                    generate_save_load_ascii_digits.A2,
+                    0x2D,
+                ),
+                generate_save_load_ascii_digits.mips.r_type(
+                    generate_save_load_ascii_digits.S1,
+                    generate_save_load_ascii_digits.ZERO,
+                    generate_save_load_ascii_digits.A2,
+                    0x2D,
+                ),
+                generate_save_load_ascii_digits.mips.r_type(
+                    generate_save_load_ascii_digits.S6,
+                    generate_save_load_ascii_digits.ZERO,
+                    generate_save_load_ascii_digits.A2,
+                    0x2D,
+                ),
+            ],
+        )
+        first_words = [
+            int.from_bytes(
+                generate_save_load_ascii_digits.build_call(date_sites[0])[
+                    index : index + 4
+                ],
+                "little",
+            )
+            for index in range(0, 28, 4)
+        ]
+        self.assertEqual(
+            first_words[0],
+            generate_save_load_ascii_digits.mips.i_type(
+                0x25,
+                generate_save_load_ascii_digits.V1,
+                generate_save_load_ascii_digits.S6,
+                0x0E,
+            ),
+        )
+        self.assertEqual(first_words[1], date_sites[0].value_word)
+        self.assertEqual(first_words[-1], 0)
 
 
 if __name__ == "__main__":

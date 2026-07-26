@@ -1868,9 +1868,12 @@ user-directed stage-by-stage reimplementation:
   shadow draw from shifting visible ink.
 - `font_save_load_ascii_digits` replaces only the six fullwidth numeric-format
   calls in the Save/Load row renderer with NA2's existing ASCII `sprintf` and
-  changes its two time separators to ASCII colon. It preserves NA2's current
-  date order, timer math, and all unrelated numeric callers while matching
-  NUN5's two-digit hour display and 99-hour cap.
+  changes its two time separators to ASCII colon. The first three call sites
+  emit EU `DD/MM/YYYY` order. The first site preserves the loaded year in
+  callee-saved `s6` while rendering the day; the third site reuses that year
+  after the intervening calls. It preserves timer math and all unrelated
+  numeric callers while matching NUN5's two-digit hour display and 99-hour
+  cap.
 - `font_battle_settings_ascii_digits` replaces only the ordinary numeric branch
   of the Battle Settings Time row with NA2's existing ASCII `sprintf`. Its
   adjacent exact guard preserves the separate value-100 infinity path and

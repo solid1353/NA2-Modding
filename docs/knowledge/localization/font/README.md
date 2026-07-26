@@ -203,20 +203,26 @@ the same guarded 28-byte call block. The
 Save/Load-only fullwidth colon at ELF file offset `0x503134` becomes ASCII
 colon.
 
-This call-local stage deliberately preserves `YYYY/MM/DD`, timer divisors
-`108000`, `1800`, and `30`, and every formatter caller outside
-`FUN_001e6370`. The ASCII conversion is runtime-proven; the later NUN5
-two-digit hour and 99-hour cap are statically verified and await runtime
-confirmation. Date reordering and visual positioning remain separate
-reviewable stages. The deterministic generator is
+The current call-local patch emits EU `DD/MM/YYYY` by loading the year into
+callee-saved `s6` and rendering the day with `%02d` at `0xE660C`, retaining
+month and `%02d` at `0xE6650`, and rendering the preserved year with `%d` at
+`0xE6694`. Canonical liveness shows `s6` is saved in the prologue and otherwise
+unused until the later seconds calculation, so it safely survives both
+intervening `sprintf` calls. Timer divisors `108000`, `1800`, and `30`, the six
+guarded block sizes, and every formatter caller outside `FUN_001e6370` remain
+unchanged. The original ASCII conversion is runtime-proven, and the user
+confirmed correct `DD/MM/YYYY` output—including the four-digit year—on Current
+CRC `55739D20`. The NUN5-derived two-digit hour/99-hour cap remains statically
+verified. Visual positioning remains a separate reviewable stage. The
+deterministic generator is
 `scripts/research/localization/generate_save_load_ascii_digits.py`.
 
 The isolated worker build retained at
 `work/Font/build/save-load-ascii-digits.iso` has boot CRC `F9FC3002`. After a
 clean manual launch in the Font-owned PCSX2 copy, the user confirmed that the
 Save/Load date and Play Time fields render correctly as ASCII. The patch is
-therefore proven for its original ASCII-conversion stage; no date-order,
-width, timer, or positioning change was included in that acceptance.
+therefore proven for its original ASCII-conversion stage. The later EU date
+ordering is separately user-confirmed on Current CRC `55739D20`.
 
 ## Battle Settings ASCII time value
 

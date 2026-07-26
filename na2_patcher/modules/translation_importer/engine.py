@@ -849,6 +849,85 @@ def parse_mappings(
     return result
 
 
+def validate_structured_message_families(
+    mappings: Sequence[dict[str, object]],
+    *,
+    table_name: str,
+) -> None:
+    """Require replacement-table line transforms to cover complete messages."""
+    families: dict[str, list[dict[str, object]]] = defaultdict(list)
+    for row in mappings:
+        if row["transform"] not in {"split_br", "join_br_parts"}:
+            continue
+        donor_ref = str(row["donor_ref"])
+        if not donor_ref:
+            raise ValueError(
+                f"{table_name} ({row['id']}): structured message transform "
+                "requires donor_ref"
+            )
+        families[donor_ref].append(row)
+
+    for donor_ref, rows in families.items():
+        templates = {
+            normalize_fullwidth_ascii(
+                str(row["replacement"]) or str(row["donor"])
+            )
+            for row in rows
+        }
+        if len(templates) != 1:
+            mapping_ids = ", ".join(str(row["id"]) for row in rows)
+            raise ValueError(
+                f"{table_name}: structured message family {donor_ref} has "
+                f"inconsistent templates across {mapping_ids}"
+            )
+        template = next(iter(templates))
+        part_count = len(template.split("<br>"))
+        owners: dict[int, list[str]] = defaultdict(list)
+        for row in rows:
+            mapping_id = str(row["id"])
+            arguments = dict(row["arguments"])
+            if row["transform"] == "split_br":
+                indexes = [parse_int(arguments["part"], mapping_id)]
+            else:
+                indexes = [
+                    parse_int(value, mapping_id)
+                    for value in arguments["parts"].split(",")
+                    if value.strip()
+                ]
+            for index in indexes:
+                owners[index].append(mapping_id)
+
+        required = set(range(part_count))
+        actual = set(owners)
+        missing = sorted(required - actual)
+        outside = sorted(actual - required)
+        duplicates = {
+            index: mapping_ids
+            for index, mapping_ids in sorted(owners.items())
+            if len(mapping_ids) > 1
+        }
+        if missing or outside or duplicates:
+            details: list[str] = []
+            if missing:
+                details.append("missing parts " + ", ".join(map(str, missing)))
+            if outside:
+                details.append(
+                    "out-of-range parts " + ", ".join(map(str, outside))
+                )
+            if duplicates:
+                details.append(
+                    "duplicate parts "
+                    + ", ".join(
+                        f"{index} ({'/'.join(mapping_ids)})"
+                        for index, mapping_ids in duplicates.items()
+                    )
+                )
+            raise ValueError(
+                f"{table_name}: incomplete structured message family "
+                f"{donor_ref}: " + "; ".join(details)
+            )
+
+
 def validate_semantic_replacement(source_text: str, target_text: str, label: str) -> None:
     """Reject donor sentinels that would overwrite identifier-like NA2 data."""
     if (
@@ -1221,6 +1300,11 @@ def _build_translation_import_plan(
     actual_mapping_hash = hashlib.sha256(mapping_path.read_bytes()).hexdigest().upper()
     rows_raw = read_rows(mapping_path)
     mappings = parse_mappings(rows_raw, table_name=mapping_filename)
+    if mapping_filename == "replacement.tsv":
+        validate_structured_message_families(
+            mappings["text"],
+            table_name=mapping_filename,
+        )
     references = tuple(
         reference
         for reference in references_from_mappings(mappings["text"])

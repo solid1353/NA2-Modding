@@ -41,15 +41,25 @@ not validated. `legacy_ids` is an optional comma-separated lookup field.
 
 Only encountered `T#` rows are admitted. The initial evidence pass copied the
 exact guarded source fields from `rebuild.tsv` and recorded concrete display
-metadata. The first executable pass then enabled all 564 admitted rows and
-filled their complete donor/pointer fields. Of those, 561 use the unique
-accepted-table row with the same exact `source_ref`. Three paired-screen
-corrections override incorrect reference relationships: T1956 uses `Off` at
+metadata. The first executable pass now contains 567 enabled rows. Of those,
+564 use the unique accepted-table row with the same exact `source_ref` as the
+donor/transform starting point. T2042 rewrites its accepted parent ID from
+`M0810` to the replacement-table ID `T2011`. Three paired-screen corrections
+override incorrect reference relationships: T1956 uses `Off` at
 `NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses
 `Warning` at `NUN5_SLES@0x513F38`. These relationships are the
 reference-derived starting point for English runtime validation, not a claim
 that the final donor audit is complete. The diagnostic inventory and normal
 build behavior remain unchanged.
+
+Rows that split one `<br>`-delimited renderer message are admitted as a
+complete structural family even when only one line supplied the visible ID.
+The save-progress family therefore contains T2011, T2041, and T2042, covering
+all four message parts; the overwrite-confirmation family contains T2014 and
+T2015. Replacement composition fails closed when any active `split_br` or
+`join_br_parts` family has missing, duplicate, out-of-range, or inconsistent
+parts. This prevents an externalized first line from falling through to the
+next unrelated resident-payload string.
 
 The initial inventory combines the pre-rebuild v40 reference with the accepted
 table, deduplicates aliases that point to the same clean source slot, and adds

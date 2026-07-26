@@ -316,17 +316,49 @@ class IntegratedExternalStringTests(unittest.TestCase):
             translation_display="replacement",
         )
         self.assertEqual(draft.translation_plan.display_mode, "replacement")
-        self.assertEqual(len(draft.translation_plan.text_mappings), 564)
-        self.assertEqual(len(draft.translation_plan.import_rows), 627)
+        self.assertEqual(len(draft.translation_plan.text_mappings), 567)
+        self.assertEqual(len(draft.translation_plan.import_rows), 629)
         self.assertEqual(len(draft.external_draft.fragments), 8)
         self.assertEqual(len(draft.external_draft.symbolic_patches), 8)
         self.assertEqual(
             self.replacement_import_plan.summary["table_rows"],
-            564,
+            567,
         )
         self.assertEqual(
             self.replacement_import_plan.summary["inactive_rows"],
             0,
+        )
+        self.assertEqual(
+            self.replacement_import_plan.summary["reference_inventory"][
+                "parent_message"
+            ],
+            1,
+        )
+        self.assertTrue(
+            {"T2011", "T2042"}.issubset(
+                draft.external_draft.excluded_mapping_ids
+            )
+        )
+        save_progress = (
+            "Saving to memory card (PS2) in <br>MEMORY CARD slot 1."
+            "<br>Please do not remove memory card (PS2), "
+            "<br>controller, or reset/switch off the console."
+        )
+        self.assertEqual(
+            self.replacement_import_plan.materialized_templates["T2011"],
+            save_progress,
+        )
+        self.assertEqual(
+            self.replacement_import_plan.materialized_templates["T2042"],
+            save_progress,
+        )
+        self.assertEqual(
+            self.replacement_import_plan.resolved_texts["T2041"],
+            "MEMORY CARD slot 1.",
+        )
+        self.assertEqual(
+            self.replacement_import_plan.resolved_texts["T2015"],
+            "Overwrite?",
         )
         self.assertFalse(draft.game_title_policy["applied"])
 

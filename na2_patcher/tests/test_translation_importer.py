@@ -83,9 +83,31 @@ class TranslationImporterTests(unittest.TestCase):
             "T1957": ("On", "NUN5_SLES@0x513EFC"),
             "T2158": ("Warning", "NUN5_SLES@0x513F38"),
         }
+        structural_rows = {
+            "T2011": (
+                "Save or Load menu > saving-progress message",
+                "seen:replacement-validation-save-progress-corruption",
+            ),
+            "T2041": (
+                "Save or Load menu > saving-progress message",
+                "inferred:complete-save-progress-message-family-from-paired-screen",
+            ),
+            "T2042": (
+                "Save or Load menu > saving-progress message",
+                "inferred:complete-save-progress-message-family-from-paired-screen",
+            ),
+            "T2014": (
+                "Save or Load menu > overwrite confirmation",
+                "seen:tid-pass-2026-07-26 paired screenshot",
+            ),
+            "T2015": (
+                "Save or Load menu > overwrite confirmation",
+                "inferred:complete-overwrite-message-family",
+            ),
+        }
 
-        self.assertEqual(len(replacement_raw), 564)
-        self.assertEqual(len(replacement["text"]), 564)
+        self.assertEqual(len(replacement_raw), 567)
+        self.assertEqual(len(replacement["text"]), 567)
         self.assertEqual(replacement["inactive"], [])
         self.assertEqual(
             len({row["id"] for row in replacement_raw}),
@@ -96,7 +118,9 @@ class TranslationImporterTests(unittest.TestCase):
             candidate = rebuild[row["id"]]
             self.assertEqual(row["enabled"], "1")
             self.assertTrue(row["display_context"])
-            self.assertTrue(row["display_basis"].startswith("seen:"))
+            self.assertTrue(
+                row["display_basis"].startswith(engine.DISPLAY_BASIS_PREFIXES)
+            )
             self.assertEqual(row["source"], candidate["source"])
             self.assertEqual(row["source_ref"], candidate["source_ref"])
             self.assertEqual(row["mode"], candidate["mode"])
@@ -118,12 +142,39 @@ class TranslationImporterTests(unittest.TestCase):
                 "reference_refs",
                 "parent_mapping_id",
             ):
+                if row["id"] == "T2042" and field == "parent_mapping_id":
+                    continue
                 self.assertEqual(row[field], reference[field])
 
         self.assertEqual(
             sum(row["id"] not in verified_corrections for row in replacement_raw),
-            561,
+            564,
         )
+        by_id = {row["id"]: row for row in replacement_raw}
+        for mapping_id, (display_context, display_basis) in structural_rows.items():
+            self.assertEqual(by_id[mapping_id]["display_context"], display_context)
+            self.assertEqual(by_id[mapping_id]["display_basis"], display_basis)
+        self.assertEqual(by_id["T2042"]["parent_mapping_id"], "T2011")
+
+        engine.validate_structured_message_families(
+            replacement["text"],
+            table_name="replacement.tsv",
+        )
+        for missing_id in ("T2041", "T2042", "T2015"):
+            with self.subTest(missing_id=missing_id):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "incomplete structured message family.*missing parts",
+                ):
+                    engine.validate_structured_message_families(
+                        [
+                            row
+                            for row in replacement["text"]
+                            if row["id"] != missing_id
+                        ],
+                        table_name="replacement.tsv",
+                    )
+
     def test_iso_source_delegates_to_the_shared_iso_reader(self) -> None:
         exact = SimpleNamespace(path="PRG/BTL.BIN", is_dir=False)
         basename = SimpleNamespace(path="OTHER/ETC.BIN", is_dir=False)

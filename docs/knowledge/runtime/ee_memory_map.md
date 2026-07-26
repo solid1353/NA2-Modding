@@ -104,13 +104,15 @@ Accordingly, the working target is `0x00B0AA04`; three current savestates
 (slots 01, 09, and 10) contained the exact structure there with the target
 field still equal to `1.0f`, while the old address was empty.
 
-The address mapping is **high-confidence evidence for this exact build
-identity**, but it is not used as a permanent patch. Rendering patch
-`ELF-R001` changes the guarded initializer instruction at boot-ELF offset
-`0xF4E8` from a `1.0f` load to `0.75f`. The value therefore reaches rendering
-state offset `0x274` through the normal object pointer and remains independent
-of heap placement. The file-backed patch does not depend on a PNACH memory
-write; PCSX2 output aspect remains a separate emulator setting.
+Confidence is **high for this exact build identity**. The address is not a
+permanent game constant: recalculate and validate it whenever the linked
+resident-payload end changes.
+
+Verified rendering patch `ELF-R001` reproduces the same write without fixing
+the heap address in the patch. It modifies the primary-wrapper initialization
+sequence at boot-ELF offset `0x61D4`, follows the renderer pointer stored at
+`0x0060919C`, and writes `0.75f` to renderer offset `0x274`. It remains
+disabled by default.
 
 The clean ELF's first `PT_LOAD` begins at file offset `0x100`, maps at
 `0x00100000`, has file size `0x507380`, and has memory size `0x5B3F00`.

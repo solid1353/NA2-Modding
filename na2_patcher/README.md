@@ -77,7 +77,8 @@ The current profile enables, in order:
    input, and UI binary patches.
 2. QoL: accepted startup, Practice, and mode-selection behavior.
 3. Battle logic: accepted battle-rule behavior.
-4. Rendering: native 16:9 game rendering without a heap-address PNACH write.
+4. Rendering: a disabled primary-renderer 16:9 candidate retained for explicit
+   selection.
 
 The profile's `identity.json` separately declares the equal-length
 `SLPS_258.37` to `SLOP_NA2.28` boot rename and the CP932 memory-card title.

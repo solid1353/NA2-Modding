@@ -22,6 +22,12 @@
 - Cross-workstream reports, findings, failures, suggestions, and hints are
   informational only. They do not authorize the recipient to investigate,
   test, implement, or interrupt its current work.
+- A worker's report to `General` of its own policy or workflow mistake is a
+  standing policy-maintenance trigger, even if the report requests no action.
+  `General` must inspect the relevant live rule, make a narrow durable
+  correction or strengthen an existing rule's placement or wording, commit
+  and push it, and notify the reporting worker. Do not expand this into
+  implementation work without separate authorization.
 - The recipient may act only when the user explicitly authorized that action
   in the receiving chat, in another chat, or through a standing instruction.
   Authorization from another chat must be relayed as the user's exact quoted

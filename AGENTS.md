@@ -16,6 +16,9 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   requests an explanation only. Never convert it into an instruction to start,
   stop, expose, hide, relaunch, or otherwise change the work. Answer it and
   continue approved work unchanged unless the user explicitly orders a change.
+- While approved work remains actionable, answer every question in commentary
+  and resume the work immediately. A question never permits ending the turn
+  with a final response.
 - When the user declares discussion, design, planning, or brainstorming mode,
   later requirements remain discussion until the user explicitly authorizes
   execution. If authorization is ambiguous, ask.
@@ -32,7 +35,8 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   task, unless the user explicitly stops or replaces the task.
 - Cross-workstream reports and hints are information, not authorization. Act
   on them only when the user explicitly authorized the action locally, in
-  another chat, or through a standing instruction.
+  another chat, or through a standing instruction. Worker mistake reports to
+  `General` are the sole exception defined by the coordination policy.
 - The `General` task follows only explicit, simple commands. It must not infer
   extra actions, redesigns, routing, or repository changes.
 - If uncertain, inspect and report instead of acting.
@@ -75,6 +79,23 @@ Detailed command and task behavior is in
   the user explicitly authorizes a specific source change. Agents never launch
   or control the user PCSX2 process.
 - Never change binary files manually; all binary changes go through scripts.
+- Run every shell, filesystem, script, and Git command elevated from the first
+  attempt. On permission failure, retry the exact operation elevated.
+- File-working tasks own `work/<exact task title>/`. Keep inputs, experiments,
+  builds, logs, and runtime files there; reusable scripts belong under
+  `scripts/`. At completion, promote useful findings and remove disposable
+  artifacts, logs, and every empty directory.
+- Agent PCSX2 uses only a task-owned clone of `@pcsx2_clean` with a unique PINE
+  port. Agent-only runs stay hidden. Never navigate emulator or game menus
+  through PINE or injected input. If a required savestate was not supplied,
+  stop and ask the user for that exact state.
+- Only the user may change profile `bypass_check`; agents preserve it exactly.
+- Preserve substantive disassembly, decompilation, and live-memory findings in
+  canonical knowledge with identities, ranges, reconstructed behavior,
+  evidence, useful negative results, and confidence.
+- Relay user instructions verbatim without inferred requirements. A worker
+  that reports its own mistake to `General` triggers immediate narrow policy
+  refinement, commit/push, and notification back to that worker.
 
 ## Policy routing
 

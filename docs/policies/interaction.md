@@ -63,9 +63,10 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   whole approach is wrong, stop and clarify; a replacement plan needs approval.
 - During approved work, questions, corrections, objections, status requests,
   and rhetorical questions are not stop signals. Answer in commentary and
-  continue. A final response while work remains actionable is allowed only for
-  explicit stop/pause/wait, missing required input, unsafe or materially
-  unclear work, an unresolved dependency with nothing else in scope, or `zxc`.
+  continue immediately; a question alone never permits a final response. A
+  final response while work remains actionable is allowed only for explicit
+  stop/pause/wait, missing required input, unsafe or materially unclear work,
+  an unresolved dependency with nothing else in scope, or `zxc`.
 - A correction or stop directed at one mistaken action cancels only that
   action. Isolate or undo the detour and continue the parent task unless the
   user stops or replaces it.

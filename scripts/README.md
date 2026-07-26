@@ -21,7 +21,9 @@ history; do not recreate an archive directory for dead scripts.
   command set, user savestate filing, the minimal hidden workstream-copy
   launcher, task-owned PINE savestate screenshot extraction, and
   `patch_savestate_memory.py` for exact-byte-guarded EE-memory patches in copied
-  task-owned savestates.
+  task-owned savestates. Unsupported Zstandard ZIP members are bulk-extracted
+  once through 7-Zip when available, with `tar` as the portable fallback,
+  instead of rescanning the whole archive for every member.
 - `media/`: ISO, AFS, and CVM inspection/extraction tools. Use
   `extract_source_iso.ps1 -IsoPath <path> -TaskTitle <exact task title>` for
   canonical recursive source extraction: it stages under

@@ -546,7 +546,11 @@ The remaining maintained mismatch list contains Battle Results screen 2
 (red rank text vertically misregistered inside the stamp), Character Items
 transition behavior, and the Cross/Triangle-label batch. Within that batch,
 the Options-root Slot 1 caller now uses the proven effective NUN5 OK/Back
-anchors X=`388`/`462`; Slots 2-5 remain open. The rejected
+anchors X=`388`/`462`. Collection-root Slot 2 uses its separate ETC position
+table with effective NUN5 anchors X=`368`/`452`; a guarded task-owned render
+matches the reference, while the byte-identical table at `0x2E7E0` and the
+HOME-helper wrapper were both runtime-disproved for this screen. Slots 3-5
+remain open. The rejected
 rank-label Y-compensation trial and exact pixel/object evidence are preserved
 in `docs/knowledge/localization/ui/battle.md`; resume from texture/CLUT binding
 or cached GS-packet evidence rather than retrying screen-space constants. The

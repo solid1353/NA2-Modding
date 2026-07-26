@@ -1628,8 +1628,20 @@ ELF offsets `0x28C878` and `0x28C89C`. A guarded task-owned slot-1 render
 matches the NUN5 prompt positions without changing the accepted Cancel
 geometry or any text/font behavior.
 
+The Collection state renderer is a separate consumer with a second nominal
+Cross/Triangle position table. NA2 `FUN_006c8290` reads X=`380`/`460` from ETC
+offsets `0x2F010`/`0x2F018`; NUN5 homolog `FUN_006dbaa0` reads the same nominal
+values and applies the same regional `-12`/`-8` offsets before drawing.
+Because the donor table itself is byte-identical, two authored ETC adaptations
+store the equivalent effective X=`368`/`452` values in NA2. A guarded
+task-owned Slot 2 render matches the NUN5 Collection-root footer. The
+byte-identical table at NA2 ETC `0x2E7E0` belongs to a different HOME helper;
+patching it and redirecting that helper left Slot 2 unchanged, so neither
+disproved path is part of the canonical implementation.
+
 Exact mappings, reconstruction, side effects, and runtime evidence are
-preserved in `docs/knowledge/localization/ui/options.md` and
+preserved in `docs/knowledge/localization/ui/options.md`,
+`docs/knowledge/localization/ui/collection.md`, and
 `docs/knowledge/localization/ui/battle.md`.
 
 ### UI-ELF-009: shared Controls and Music Select anchors

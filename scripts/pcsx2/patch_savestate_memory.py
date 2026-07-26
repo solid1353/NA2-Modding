@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import shutil
 import subprocess
 import tempfile
 import zipfile
@@ -34,6 +36,66 @@ def consolidated_patches(plan_path: Path) -> list[tuple[int, bytes, bytes]]:
     ]
 
 
+def archive_destination(root: Path, name: str) -> Path:
+    relative = Path(name)
+    if relative.is_absolute() or ".." in relative.parts:
+        raise ValueError(f"unsafe savestate member path: {name!r}")
+    destination = (root / relative).resolve()
+    if destination != root and root not in destination.parents:
+        raise ValueError(f"savestate member escapes extraction root: {name!r}")
+    return destination
+
+
+def bulk_extract_unsupported_archive(
+    source: Path,
+    extracted: Path,
+    infos: list[zipfile.ZipInfo],
+) -> None:
+    for info in infos:
+        archive_destination(extracted, info.filename)
+    seven_zip = shutil.which("7z")
+    if seven_zip is None:
+        program_files = os.environ.get("ProgramFiles")
+        if program_files:
+            candidate = Path(program_files) / "7-Zip" / "7z.exe"
+            if candidate.is_file():
+                seven_zip = str(candidate)
+    if seven_zip is not None:
+        result = subprocess.run(
+            [seven_zip, "x", str(source), f"-o{extracted}", "-y"],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    else:
+        tar = shutil.which("tar")
+        if tar is None:
+            raise RuntimeError(
+                "savestate compression is unsupported by Python and neither "
+                "7-Zip nor tar is available"
+            )
+        result = subprocess.run(
+            [tar, "-xf", str(source), "-C", str(extracted)],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    missing_or_wrong: list[str] = []
+    for info in infos:
+        destination = archive_destination(extracted, info.filename)
+        if info.is_dir():
+            if not destination.is_dir():
+                missing_or_wrong.append(info.filename)
+        elif not destination.is_file() or destination.stat().st_size != info.file_size:
+            missing_or_wrong.append(info.filename)
+    if missing_or_wrong:
+        detail = result.stderr.decode(errors="replace").strip()
+        raise RuntimeError(
+            "bulk savestate extraction was incomplete for "
+            f"{missing_or_wrong!r}: {detail}"
+        )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("source", type=Path)
@@ -58,32 +120,27 @@ def main() -> int:
     temp_parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=temp_parent) as temporary:
         extracted = Path(temporary)
-        with zipfile.ZipFile(source) as source_archive:
-            for info in infos:
-                name = info.filename
-                try:
+        supported_types = {
+            zipfile.ZIP_STORED,
+            zipfile.ZIP_DEFLATED,
+            zipfile.ZIP_BZIP2,
+            zipfile.ZIP_LZMA,
+        }
+        if any(info.compress_type not in supported_types for info in infos):
+            bulk_extract_unsupported_archive(source, extracted, infos)
+        else:
+            with zipfile.ZipFile(source) as source_archive:
+                for info in infos:
+                    name = info.filename
                     entry = source_archive.read(info)
-                except (NotImplementedError, RuntimeError):
-                    result = subprocess.run(
-                        ["tar", "-xOf", str(source), name],
-                        check=False,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                    )
-                    entry = result.stdout
-                    if result.returncode != 0 and len(entry) != info.file_size:
-                        detail = result.stderr.decode(errors="replace").strip()
-                        raise RuntimeError(
-                            f"could not extract {name}: {detail}"
+                    if len(entry) != info.file_size:
+                        raise ValueError(
+                            f"unexpected size for {name}: "
+                            f"{len(entry)} != {info.file_size}"
                         )
-                if len(entry) != info.file_size:
-                    raise ValueError(
-                        f"unexpected size for {name}: "
-                        f"{len(entry)} != {info.file_size}"
-                    )
-                destination = extracted / name
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                destination.write_bytes(entry)
+                    destination = archive_destination(extracted, name)
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    destination.write_bytes(entry)
         memory_path = extracted / "eeMemory.bin"
         memory = bytearray(memory_path.read_bytes())
         if len(memory) != 32 * 1024 * 1024:

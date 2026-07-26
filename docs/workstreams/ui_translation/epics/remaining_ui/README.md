@@ -14,9 +14,10 @@ the right.
 2. Character Items transition: replace the NA2.28 slide with the NUN5/base-NA2
    fade behavior.
 3. Cross/Triangle labels, paired slots 1-5: Slot 1 Options is implemented and
-   matches the guarded NUN5 runtime proof; Slots 2-5 remain. Correct only the
-   Cross and Triangle labels across the preserved screens as one shared
-   subtask.
+   matches the guarded NUN5 runtime proof. Slot 2 Collection root is also
+   implemented through its distinct shared position table and matches the
+   guarded NUN5 proof; Slots 3-5 remain. Correct only the Cross and Triangle
+   labels across the preserved screens as one shared subtask.
 
 ## Report grids
 

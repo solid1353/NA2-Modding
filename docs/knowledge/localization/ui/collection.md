@@ -139,6 +139,53 @@ record use `(144,24,72,24)`. The 24-pixel U-coordinate mismatch produces the
 captured `Pl...` clipping on both Movie and Music. Only the reviewed Play
 record is copied. The adjacent state-4 Stop record remains unchanged.
 
+## Collection state footer positions
+
+The Collection state renderer owns another pair of Cross/Triangle prompt
+positions. It is separate from the HOME action-prompt helper above:
+
+| Field | NA2 | NUN5 |
+| --- | --- | --- |
+| exported function range | `FUN_006c8290`, `[0x006C8290,0x006C8900)` | `FUN_006dbaa0`, `[0x006DBAA0,0x006DC200)` |
+| file range | `[0x14390,0x14A00)` | `[0x14DA0,0x15500)` |
+| position table file/live | `0x2F010` / `0x006E2F10` | `0x28860` / `0x006EF560` |
+| nominal positions | `(380,360)`, `(460,360)` | `(380,360)`, `(460,360)` |
+| effective X | `380`, `460` | `380-12=368`, `460-8=452` |
+| sprite compositor | `SUB_0037c980` | `SUB_0038bb10` |
+
+Both state switches copy the same two nominal position records to the stack
+and submit one or both prompts according to the active Collection state. NUN5
+then converts two signed regional globals and adds `-12` to the first X and
+`-8` to the second X before the compositor calls. NA2 has neither addition.
+A practical reconstruction of the localized behavior is:
+
+```cpp
+void draw_collection_state_footer(CollectionState *state) {
+    PromptPosition first = collection_footer_position[0];
+    PromptPosition second = collection_footer_position[1];
+    first.x += regional_cross_offset;     // NUN5 English locale: -12
+    second.x += regional_triangle_offset; // NUN5 English locale: -8
+    draw_state_prompts(state, first, second);
+}
+```
+
+The NUN5 table is byte-identical to NA2, so copying donor bytes cannot port the
+behavior. `UI-ELF-008` instead stores the equivalent effective X values
+`368` (`0000B843`) and `452` (`0000E243`) at NA2 ETC offsets `0x2F010` and
+`0x2F018`; the Y values and every other state field remain unchanged. A
+guarded task-owned Slot 2 savestate and hidden worker render moved both
+Collection-root prompt groups to the NUN5 positions. Image correlation found
+only a one-pixel X/Y difference, consistent with the known pulse timing.
+
+The byte-identical NA2 table at `0x2E7E0` is a genuine structural duplicate
+owned by `FUN_006b44b0`, but it is not the Slot 2 consumer. Patching only that
+table left the screen unchanged. Redirecting `FUN_006b44b0` through a
+draw-time offset wrapper also left Slot 2 unchanged under both recompiler and
+interpreter execution. Those two runtime-disproved paths are deliberately
+absent from the canonical patch. Whether later retained Collection cases
+consume the now-corrected `0x2F010` table is verified screen by screen rather
+than inferred from matching artwork.
+
 ## Character viewer lower-control renderer
 
 The new paired slot-1 capture shows only the four lower-left viewer controls as

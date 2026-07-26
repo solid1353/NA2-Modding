@@ -3,8 +3,7 @@
 ## Accepted screenshot grid
 
 - Screenshot comparisons are delivered as composed report-grid images, not as
-  separate screenshots, local-path Markdown, file links, or internal tool
-  previews.
+  separate screenshots, file links, or internal tool previews.
 - Every grid has `NUN5 reference` on the left and `Current NA2`/NA2.28 on the
   right.
 - Every case occupies one row. Above the paired screenshots, show the game
@@ -22,6 +21,14 @@
   and internal previews do not satisfy the request. Attach an existing current
   grid immediately; regenerate it first only when its imagery or metadata is
   stale.
+- `view_image`, `Viewed an image`, and similar inspection-tool calls are
+  internal inspection only and never deliver an image to the user. Deliver
+  each grid in a user-facing commentary or permitted final message as an actual
+  image attachment or an image embed using its absolute path, for example
+  `![Grid](<D:\absolute path\grid.png>)`. Do not claim delivery or continue
+  work until that message containing the visible grid has been sent. If it
+  fails to render, retry the image delivery rather than performing more
+  internal image views.
 - When newer user evidence changes a case's slot, status, or remaining defect,
   regenerate the canonical grid from the retained task-owned inputs before
   reporting the update. Stale grid imagery or metadata is not an updated

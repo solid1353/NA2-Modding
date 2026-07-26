@@ -52,6 +52,11 @@
   likely to hit access restrictions; avoiding a failed attempt is preferred.
 - After an access failure, retry only the failed operation; do not repeat work
   that already succeeded.
+- An access or elevation denial never silently changes an authorized cleanup
+  into preservation. Revalidate the exact target, retry the still-pending
+  operation with the narrowest valid elevation, and verify its result. If the
+  scoped retry is also denied, stop and report the exact unfinished target;
+  never continue or claim completion while leaving it behind.
 - When a new recurring access failure and its solution are confirmed, add one
   short rule here so later agents avoid it.
 

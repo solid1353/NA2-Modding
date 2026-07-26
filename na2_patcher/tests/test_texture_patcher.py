@@ -1335,7 +1335,7 @@ class UiTextureTests(unittest.TestCase):
             (64, 88, 64, 20),
         )
 
-    def test_character_select_footer_anchors_are_exact_nun5_copies(self) -> None:
+    def test_character_select_footer_anchors_match_nun5_geometry(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
@@ -1345,28 +1345,40 @@ class UiTextureTests(unittest.TestCase):
 
         self.assertEqual(
             [item.edit_id for item in edits],
-            ["UI-ELF-007-01", "UI-ELF-007-02"],
+            [
+                "UI-ELF-007-01",
+                "UI-ELF-007-02",
+                "UI-ELF-007-03",
+                "UI-ELF-007-04",
+            ],
         )
-        self.assertTrue(all(item.operation == "copy" for item in edits))
+        self.assertEqual(
+            [item.operation for item in edits],
+            ["copy", "copy", "replace", "replace"],
+        )
         self.assertEqual(
             [item.destination_offset for item in edits],
-            [0x2BC600, 0x2BC624],
+            [0x2BC600, 0x2BC624, 0x2BC4B8, 0x2BC4DC],
         )
         self.assertEqual(
             [item.expected_hex for item in edits],
-            ["9643023C", "2043023C"],
+            ["9643023C", "2043023C", "C843023C", "EB43023C"],
         )
         self.assertEqual(
             [item.source_target_id for item in edits],
-            ["nun5_elf", "nun5_elf"],
+            ["nun5_elf", "nun5_elf", "", ""],
         )
         self.assertEqual(
             [item.source_offset for item in edits],
-            [0x2CF300, 0x2CF324],
+            [0x2CF300, 0x2CF324, None, None],
         )
         self.assertEqual(
             [item.source_expected_hex for item in edits],
-            ["8243023C", "C842023C"],
+            ["8243023C", "C842023C", "", ""],
+        )
+        self.assertEqual(
+            [item.replacement_hex for item in edits],
+            ["", "", "C243023C", "E743023C"],
         )
 
     def test_shared_common_prompt_data_and_options_anchors(self) -> None:

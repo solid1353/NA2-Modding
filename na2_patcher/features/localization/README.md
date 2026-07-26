@@ -1594,12 +1594,14 @@ boot-ELF Character Select footer compositor:
 
 `UI-ELF-007` copies the two exact NUN5 `lui v0` instructions into NA2 ELF
 offsets `0x2BC600` and `0x2BC624`. Both homologs use `v0` for these calls, so
-no register adaptation or authored literal is needed. The neighboring OK and
-Back controls are issued by separate renderer calls and remain byte-identical
-to clean NA2. A guarded patched copy of the preserved state was rendered by the
-task-owned hidden clone: both target groups landed within one pixel of NUN5 in
-X and Y, consistent with normal pulse timing. Exact boundaries, mappings,
-reconstruction, and runtime evidence are preserved in
+no register adaptation or authored literal is needed. NUN5 also adds regional
+offsets `-12`/`-8` to nominal OK/Back X=`400`/`470`; NA2 issues those separate
+calls without the additions. Two authored same-register constants at NA2 ELF
+offsets `0x2BC4B8` and `0x2BC4DC` therefore encode the equivalent effective
+anchors X=`388`/`462`. Guarded patched copies of the preserved state were
+rendered by the task-owned hidden clone: all four footer groups land at the
+NUN5 positions within normal one-pixel pulse variance. Exact boundaries,
+mappings, reconstruction, and runtime evidence are preserved in
 `docs/knowledge/localization/ui/character_select.md`.
 
 ### UI-ELF-008: localized shared common prompts

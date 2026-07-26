@@ -54,6 +54,8 @@
 
 ## Archive
 
+### [Localization](docs/workstreams/localization/README.md)
+
 ### [Scripting](docs/workstreams/scripting/README.md)
 
 ### Code Injection

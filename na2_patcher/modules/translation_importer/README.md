@@ -23,7 +23,7 @@ plus the explicit character-family exception. Its cumulative first two passes
 contribute 752 rows, the verified 74-table Command Chart family contributes
 another 1,041, the missing-row audit adds 260 policy-supported rows—53 directly
 seen, 10 structurally inferred, and 197 character-family rows—and the paired
-Ninja Song passes add 21 displayed numeric/status/bonus fields, for 2,074
+Ninja Song passes add 25 displayed numeric/status/bonus fields, for 2,078
 enabled rows. T2042, T2045, and T2050 use parents in the canonical `T#`
 namespace. Paired screenshots independently correct T1956 to `Off`, T1957 to
 `On`, T2158 to `Warning`, T637 to `Hidden Leaf Village`, T638 to `Hidden Leaf
@@ -34,8 +34,10 @@ donorless row: its user-authored `Ultimate` replacement is externalized through
 the validated pointer at `NA2_BTL@0x209CB4`. T2191–T2193 use the explicit
 `empty` transform because the NA2 Ninja Song result renderer reserves only one
 Japanese-counter field before its fixed equals sign and even compact Latin
-counters overlap that symbol. T2194 adds the ss10-confirmed
-`100% Health bonus` donor row. Other donor-backed rows
+counters overlap that symbol. T2194 escapes its literal percent as
+`100%% Health bonus` for NA2's printf-style path. T2195–T2198 replace the
+ss7–9-confirmed static Shift-JIS formula symbols with ASCII `*`, `=`, `.`, and
+`%`. Other donor-backed rows
 leave `replacement` blank and execute official donor text;
 T1958, T2027, and T2033 retain the established Cross-confirm overrides. Normal
 builds import this canonical table directly.

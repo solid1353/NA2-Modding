@@ -114,7 +114,11 @@ T2190	1	Battle Results > Ninja Song objective or bonus	なし	N/A			seen:ss1-5-p
 T2191	1	Battle Results > Ninja Song objective or bonus	<r発|はつ>	times			seen:ss1-5-paired-Ninja-Song	NA2_BTL@0x1E5BB0	NUN5_SLES@0x514310	slot	16	empty			
 T2192	1	Battle Results > Ninja Song objective or bonus	<r回|かい>	hits			seen:ss1-5-paired-Ninja-Song	NA2_BTL@0x1E5BA0	NUN5_SLES@0x514318	slot	16	empty			
 T2193	1	Battle Results > Ninja Song objective or bonus	<r個|こ>	Destroy breakable objects			seen:ss1-5-paired-Ninja-Song	NA2_BTL@0x1E5BD0	NUN5_TEXTENG@0x102F0	slot	16	empty			
-T2194	1	Battle Results > Ninja Song objective or bonus	<r体力|たいりょく>１００％ボーナス	100% Health bonus			seen:ss10-paired-Ninja-Song	NA2_BTL@0x1E5A90	NUN5_TEXTENG@0x10480	slot	48				
+T2194	1	Battle Results > Ninja Song objective or bonus	<r体力|たいりょく>１００％ボーナス	100% Health bonus		100%% Health bonus	seen:ss10-paired-Ninja-Song	NA2_BTL@0x1E5A90	NUN5_TEXTENG@0x10480	slot	48				
+T2195	1	Battle Results > Ninja Song objective or bonus	" × "	" * "			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DA0	NUN5_SLES@0x514300	slot	8				
+T2196	1	Battle Results > Ninja Song objective or bonus	" ＝ "	" = "			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DA8	NUN5_SLES@0x514304	slot	8				
+T2197	1	Battle Results > Ninja Song objective or bonus	･	·		.	seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DB8	NUN5_SLES@0x51430C	slot	8				
+T2198	1	Battle Results > Ninja Song objective or bonus	％	%			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DC0	NUN5_SLES@0x514320	slot	4				
 T98	1	Character menus > Ultimate Jutsu name	<r朝孔雀|あさくじゃく>	Morning Peacock			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26180	NUN5_TEXTENG@0x33B0	slot	24				
 T99	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r影縫|かげぬ>い	Ninja Art: Shadow Sew			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26210	NUN5_TEXTENG@0x3410	slot	40				
 T100	1	Character menus > Ultimate Jutsu name	<r部分倍化|ぶぶんばいか>の<r術|じゅつ>	Partial Expansion Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x262C0	NUN5_TEXTENG@0x3490	slot	40				

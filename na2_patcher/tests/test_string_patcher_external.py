@@ -219,7 +219,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
             )
 
     def test_canonical_rows_derive_translation_and_placement_state(self) -> None:
-        self.assertEqual(len(self.import_plan.text_mappings), 2074)
+        self.assertEqual(len(self.import_plan.text_mappings), 2078)
         self.assertTrue(
             all(row["mode"] in {"slot", "sequence"} for row in self.import_plan.text_mappings)
         )
@@ -231,7 +231,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
         ]
         self.assertEqual(
             {str(row["id"]) for row in override_rows},
-            {"T30", "T1958", "T2027", "T2033"},
+            {"T30", "T2194", "T2197", "T1958", "T2027", "T2033"},
         )
         self.assertEqual(
             self.import_plan.resolved_texts["T2027"],

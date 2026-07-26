@@ -53,8 +53,9 @@ negative evidence, not implementation parents.
 
 Status: approved for implementation. Keep the accepted font and the retained
 July autofit/layout implementation unchanged, with the old implementation
-remaining disabled. The shared v2 core and its adapter/session ABI are separate
-foundational commit boundaries before any caller-family behavior is enabled.
+remaining disabled. The shared v2 core and its adapter/session ABI are now
+separate completed foundations; no caller-family behavior is enabled by either
+boundary.
 
 ### Architecture
 
@@ -183,16 +184,17 @@ before caller-family behavior:
 2. The adapter/session ABI is a separate resident fragment that prepares one
    caller-owned stack record, publishes it only around one native callback,
    and restores the previous session, renderer tracking, horizontal scale and
-   callback result through one cleanup path. It likewise has no caller-family
-   hook by itself.
+   callback result through one cleanup path. Its record carries four native
+   callback arguments and keeps nested calls safe by restoring the prior active
+   session. It likewise has no caller-family hook by itself.
 
 Only after both foundations are committed does Controls receive the first
 family-specific wrapper and runtime comparison.
 
 ### First caller family: Controls
 
-The first implementation and commit contains the v2 core plus the Controls
-adapter:
+The first caller-specific implementation and commit adds the Controls adapter
+on top of the completed foundations:
 
 - use the proven 128-unit container for the first eight action labels;
 - keep non-overflowing labels at scale `1`;
@@ -275,7 +277,7 @@ Recommended effort: **max**, due to cross-function MIPS ABI preservation,
 renderer-state restoration, symbolic resident linking and multi-screen runtime
 regression risk.
 
-**Plan approved; foundational stages 1-2 in progress**
+**Plan approved; foundational stages 1-2 implemented and caller-neutral**
 
 ## Accepted font implementation
 

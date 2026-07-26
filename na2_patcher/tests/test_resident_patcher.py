@@ -15,6 +15,7 @@ from na2_patcher.payload_builder.builder import (
     build_resident_payload,
     load_config,
 )
+from scripts.research.localization import mips
 
 
 def write_tsv(
@@ -269,6 +270,60 @@ class ResidentPatcherTests(unittest.TestCase):
             min(1.0, 128.0 / 178.0),
             128.0 / 178.0,
         )
+        adapter_fragment = next(
+            fragment
+            for fragment in v2_declaration.fragments
+            if fragment.symbol == "localization.font.v2.adapter_call"
+        )
+        self.assertEqual(
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation in adapter_fragment.relocations
+            },
+            {
+                ("jal26", "localization.font.v2.prepare"),
+                ("hi16", "localization.font.v2.session_pointer"),
+                ("lo16", "localization.font.v2.session_pointer"),
+            },
+        )
+        adapter = v2_build.symbols["localization.font.v2.adapter_call"]
+        adapter_payload = v2_build.payload[
+            adapter.file_offset:adapter.file_offset + adapter.size
+        ]
+        adapter_words = [
+            int.from_bytes(adapter_payload[offset:offset + 4], "little")
+            for offset in range(0, len(adapter_payload), 4)
+        ]
+        prepare = v2_build.symbols["localization.font.v2.prepare"]
+        self.assertIn(
+            mips.jump(0x03, prepare.runtime_address),
+            adapter_words,
+        )
+        self.assertIn(mips.r_type(25, 0, 31, 0x09), adapter_words)
+        for argument_register, offset in (
+            (4, 0x50),
+            (5, 0x54),
+            (6, 0x58),
+            (7, 0x5C),
+        ):
+            self.assertIn(
+                mips.i_type(0x23, 16, argument_register, offset),
+                adapter_words,
+            )
+        for expected_word in (
+            mips.i_type(0x2B, 16, 9, 0x00),
+            mips.i_type(0x2B, 16, 9, 0x60),
+            mips.i_type(0x2B, 16, 9, 0x64),
+            mips.i_type(0x2B, 18, 0, 0x3C),
+            mips.i_type(0x23, 16, 9, 0x38),
+            mips.i_type(0x2B, 17, 16, 0x00),
+            mips.i_type(0x2B, 17, 9, 0x00),
+            mips.i_type(0x23, 16, 9, 0x60),
+            mips.i_type(0x23, 16, 9, 0x64),
+            mips.r_type(2, 0, 19, 0x21),
+            mips.r_type(19, 0, 2, 0x21),
+        ):
+            self.assertIn(expected_word, adapter_words)
         v2_symbols = {
             "font_v2_layout_core_01": "localization.font.v2.plain_space",
             "font_v2_layout_core_02": (

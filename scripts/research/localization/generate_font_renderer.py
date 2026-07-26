@@ -65,6 +65,7 @@ V2_SESSION_POINTER = f"{V2_PREFIX}.session_pointer"
 V2_ASCII_WIDTHS = f"{V2_PREFIX}.ascii_widths"
 V2_MEASURE = f"{V2_PREFIX}.measure"
 V2_PREPARE = f"{V2_PREFIX}.prepare"
+V2_ADAPTER_CALL = f"{V2_PREFIX}.adapter_call"
 V2_PLAIN_SPACE = f"{V2_PREFIX}.plain_space"
 V2_NEWLINE_ADVANCE = f"{V2_PREFIX}.newline_advance"
 V2_RIGHT_EDGE = f"{V2_PREFIX}.right_edge"
@@ -150,6 +151,13 @@ V2_SESSION_RENDERED_WIDTH = 0x40
 V2_SESSION_RENDERED_HEIGHT = 0x44
 V2_SESSION_DRAW_X = 0x48
 V2_SESSION_DRAW_Y = 0x4C
+V2_SESSION_CALLBACK_ARG0 = 0x50
+V2_SESSION_CALLBACK_ARG1 = 0x54
+V2_SESSION_CALLBACK_ARG2 = 0x58
+V2_SESSION_CALLBACK_ARG3 = 0x5C
+V2_SESSION_SAVED_TRACKING = 0x60
+V2_SESSION_SAVED_SCALE = 0x64
+V2_SESSION_SIZE = 0x68
 
 V2_FLAG_SHRINK_X = 0x01
 V2_FLAG_BR_TAGS = 0x02
@@ -628,6 +636,116 @@ def build_v2_prepare() -> Fragment:
     assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
     payload, relocations = assembler.build()
     return Fragment(V2_PREPARE, payload, relocations)
+
+
+def build_v2_adapter_call() -> Fragment:
+    """Prepare and publish one layout session around an existing draw call."""
+
+    zero, v0, a0, a1, a2, a3 = 0, 2, 4, 5, 6, 7
+    t0, t1, t9 = 8, 9, 25
+    s0, s1, s2, s3 = 16, 17, 18, 19
+    sp, ra = 29, 31
+    frame_size = 0x30
+    saved_s3 = 0x1C
+    saved_s2 = 0x20
+    saved_s1 = 0x24
+    saved_s0 = 0x28
+    saved_ra = 0x2C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    assembler.emit(mips.i_type(0x2B, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x2B, sp, s1, saved_s1))
+    assembler.emit(mips.i_type(0x2B, sp, s2, saved_s2))
+    assembler.emit(mips.i_type(0x2B, sp, s3, saved_s3))
+    assembler.branch(0x04, a0, zero, "error")
+    assembler.emit(mips.r_type(a0, zero, s0, 0x21))
+    assembler.emit(mips.i_type(0x23, s0, t0, V2_SESSION_CALLBACK))
+    assembler.branch(0x04, t0, zero, "error")
+    assembler.emit(mips.r_type(s0, zero, a0, 0x21))
+    assembler.jump_symbol(0x03, V2_PREPARE)
+    assembler.emit(0)
+    assembler.branch(0x05, v0, zero, "error")
+    assembler.emit(0)
+
+    mips.load_u32(assembler, t0, FONT_RENDERER_POINTER)
+    assembler.emit(mips.i_type(0x23, t0, s2, 0))
+    assembler.branch(0x04, s2, zero, "error")
+    assembler.emit(0)
+    assembler.load_symbol_word(
+        t0,
+        s1,
+        0x09,
+        V2_SESSION_POINTER,
+    )
+    assembler.emit(mips.i_type(0x23, s1, t1, 0))
+    assembler.emit(
+        mips.i_type(0x2B, s0, t1, V2_SESSION_PREVIOUS)
+    )
+    assembler.emit(mips.i_type(0x23, s2, t1, 0x3C))
+    assembler.emit(
+        mips.i_type(0x2B, s0, t1, V2_SESSION_SAVED_TRACKING)
+    )
+    mips.load_u32(assembler, t0, SCALE_ADDRESS)
+    assembler.emit(mips.i_type(0x23, t0, t1, 0))
+    assembler.emit(
+        mips.i_type(0x2B, s0, t1, V2_SESSION_SAVED_SCALE)
+    )
+
+    assembler.emit(mips.i_type(0x2B, s2, zero, 0x3C))
+    assembler.emit(
+        mips.i_type(0x23, s0, t1, V2_SESSION_SCALE_X)
+    )
+    assembler.emit(mips.i_type(0x2B, t0, t1, 0))
+    assembler.emit(mips.i_type(0x2B, s1, s0, 0))
+
+    assembler.emit(
+        mips.i_type(0x23, s0, a0, V2_SESSION_CALLBACK_ARG0)
+    )
+    assembler.emit(
+        mips.i_type(0x23, s0, a1, V2_SESSION_CALLBACK_ARG1)
+    )
+    assembler.emit(
+        mips.i_type(0x23, s0, a2, V2_SESSION_CALLBACK_ARG2)
+    )
+    assembler.emit(
+        mips.i_type(0x23, s0, a3, V2_SESSION_CALLBACK_ARG3)
+    )
+    assembler.emit(mips.i_type(0x23, s0, t9, V2_SESSION_CALLBACK))
+    assembler.emit(mips.r_type(t9, zero, ra, 0x09))
+    assembler.emit(0)
+    assembler.emit(mips.r_type(v0, zero, s3, 0x21))
+
+    mips.load_u32(assembler, t0, SCALE_ADDRESS)
+    assembler.emit(
+        mips.i_type(0x23, s0, t1, V2_SESSION_SAVED_SCALE)
+    )
+    assembler.emit(mips.i_type(0x2B, t0, t1, 0))
+    assembler.emit(
+        mips.i_type(0x23, s0, t1, V2_SESSION_SAVED_TRACKING)
+    )
+    assembler.emit(mips.i_type(0x2B, s2, t1, 0x3C))
+    assembler.emit(
+        mips.i_type(0x23, s0, t1, V2_SESSION_PREVIOUS)
+    )
+    assembler.emit(mips.i_type(0x2B, s1, t1, 0))
+    assembler.emit(mips.r_type(s3, zero, v0, 0x21))
+    assembler.branch(0x04, zero, zero, "restore")
+    assembler.emit(0)
+
+    assembler.label("error")
+    assembler.emit(mips.i_type(0x09, zero, v0, -1))
+    assembler.label("restore")
+    assembler.emit(mips.i_type(0x23, sp, s3, saved_s3))
+    assembler.emit(mips.i_type(0x23, sp, s2, saved_s2))
+    assembler.emit(mips.i_type(0x23, sp, s1, saved_s1))
+    assembler.emit(mips.i_type(0x23, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_ADAPTER_CALL, payload, relocations)
 
 
 def load_v2_session(
@@ -1207,6 +1325,7 @@ def v2_fragments() -> tuple[Fragment, ...]:
         ),
         build_v2_measure(),
         build_v2_prepare(),
+        build_v2_adapter_call(),
         build_v2_plain_space(),
         build_v2_newline_advance(),
         build_v2_right_edge(),

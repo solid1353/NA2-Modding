@@ -1816,7 +1816,10 @@ shrink-only scale preparation, horizontal/vertical box positioning, and five
 renderer hooks guarded by one zero-initialized active-session pointer. Every
 null-session branch restores the temporary `v0`/`v1` use and executes the
 displaced NA2 instructions before resuming, so selecting the core alone cannot
-alter a screen. No caller-family call site is redirected yet.
+alter a screen. Its generic call adapter prepares one caller-owned 104-byte
+session, publishes it only around one native callback, and restores the prior
+session pointer, renderer tracking, horizontal scale and callback result
+through one cleanup path. No caller-family call site is redirected yet.
 
 The retained auto-fit and layout components require `font_nun5_glyphs` because
 their positions and fit decisions are tuned to its metrics. They otherwise

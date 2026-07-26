@@ -68,7 +68,7 @@ whether it is a pre-existing unresolved caller mismatch. Reimplementation now
 proceeds sequentially, one proven caller family per accepted commit, while
 shared behavior is ported only once when cross-screen evidence supports it.
 
-### 2026-07-26 independent v2 layout-core foundation
+### 2026-07-26 independent v2 layout foundations
 
 The replacement architecture begins with a separate generated resident asset
 and unique `localization.font.v2.*` symbols; it does not reuse the retained
@@ -84,16 +84,25 @@ foundation exports:
 - separate ordinary-space, newline, right-edge, inline-half-space and
   glyph-advance hooks.
 
+The second foundation adds `localization.font.v2.adapter_call`. A caller-owned
+104-byte record carries the text, container, requested alignment, four native
+callback arguments and calculated scale/origin. The adapter validates and
+prepares the request before publishing it, saves the previous session pointer,
+renderer tracking and horizontal scale, invokes exactly one native callback,
+then restores that state and the callback result through one cleanup path.
+Nested callbacks use distinct caller records and restore the prior active
+session.
+
 The `font_v2_layout_core` selection remains default-disabled and no caller
-family targets it yet. When selected without an adapter, every hook observes a
-null session, restores its temporary `v0`/`v1` use, executes the exact
+family targets the adapter yet. Every hook therefore observes a null session
+in normal composition, restores its temporary `v0`/`v1` use, executes the exact
 displaced NA2 operations and resumes the original path. Static linked-package
-validation confirms the five hook targets, internal branch bounds, the
-`Ultimate Jutsu Prep` denominator of 178, and the unchanged retained-v1 blob.
-The separate v2 asset is 1,264 bytes with SHA-256
-`9D9D6E94ED83D2133B3A704968537824B7BB26F0879EF8A8433601256A5112F4`.
-Automatic word wrapping and caller-native record changes remain later
-adapter/family work; this boundary changes no screen.
+validation confirms the five hook targets, adapter ABI/state restoration,
+internal branch bounds, the `Ultimate Jutsu Prep` denominator of 178, and the
+unchanged retained-v1 blob. The separate v2 asset is 1,508 bytes with SHA-256
+`745C90608C414B3C32C0E7BD08D18C026C3919EBA92E41A49B009C66C25C0569`.
+Automatic word wrapping and caller-native coordinate records remain later
+family work; these two foundations change no screen.
 
 ## Accepted native 14x20 integration
 

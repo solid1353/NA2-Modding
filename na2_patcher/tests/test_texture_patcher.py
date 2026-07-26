@@ -1053,6 +1053,65 @@ class UiTextureTests(unittest.TestCase):
             ("runtime_proven", "verified"),
         )
 
+    def test_battle_results_uses_nun5_data_and_shared_rank_renderer(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        package = binary_patcher.load_package(
+            repository
+            / "na2_patcher/features/localization/binary_patcher"
+        )
+        edits = [item for item in package.edits if item.patch_id == "UI-BTL-016"]
+        patch = package.patches["UI-BTL-016"]
+
+        self.assertEqual(
+            [item.edit_id for item in edits],
+            [f"UI-BTL-016-{index:02d}" for index in range(1, 12)],
+        )
+        self.assertEqual(
+            Counter(item.operation for item in edits),
+            {"copy": 8, "replace": 3},
+        )
+        self.assertEqual(
+            [
+                (
+                    item.destination_offset,
+                    item.length,
+                    item.source_target_id,
+                    item.source_offset,
+                )
+                for item in edits
+                if item.operation == "copy"
+            ],
+            [
+                (0x210030, 48, "nun5_elf", 0x4DDCA0),
+                (0x2100D8, 16, "nun5_btl", 0x2158E0),
+                (0x2100F8, 8, "nun5_elf", 0x4DDCD0),
+                (0x1E5CC0, 100, "nun5_btl", 0x1EE1F0),
+                (0x65ECC, 4, "nun5_btl", 0x68F4C),
+                (0x62B24, 2, "nun5_btl", 0x65878),
+                (0x62B48, 8, "nun5_btl", 0x6589C),
+                (0x62B54, 4, "nun5_btl", 0x658A8),
+            ],
+        )
+
+        rank = edits[-1]
+        replacement = bytes.fromhex(rank.replacement_hex)
+        self.assertEqual(
+            (rank.operation, rank.destination_offset, rank.length),
+            ("replace", 0x634E8, 0xD0),
+        )
+        self.assertEqual(
+            replacement[:92].hex().upper(),
+            "6001628EFFFF4224C01802005B00023CA0134224212843004C01648E"
+            "0C43023C0000824400000000000316469341023C1D85423400008244"
+            "0000000040031446AC3F023CCDCC42340070824400000000C6730046"
+            "40EF0D0C00000000",
+        )
+        self.assertEqual(replacement[92:], bytes(0xD0 - 92))
+        self.assertEqual(
+            (patch.status, patch.confidence),
+            ("runtime_proven", "verified"),
+        )
+
     def test_paired_item_status_layout_uses_exact_nun5_donors(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
@@ -1310,7 +1369,7 @@ class UiTextureTests(unittest.TestCase):
             ["8243023C", "C842023C"],
         )
 
-    def test_common_cancel_prompt_records_are_exact_nun5_copies(self) -> None:
+    def test_common_prompt_records_are_exact_nun5_copies(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
@@ -1320,12 +1379,17 @@ class UiTextureTests(unittest.TestCase):
 
         self.assertEqual(
             [item.edit_id for item in edits],
-            ["UI-ELF-008-01", "UI-ELF-008-02", "UI-ELF-008-03"],
+            [
+                "UI-ELF-008-01",
+                "UI-ELF-008-02",
+                "UI-ELF-008-03",
+                "UI-ELF-008-04",
+            ],
         )
         self.assertTrue(all(item.operation == "copy" for item in edits))
         self.assertEqual(
             [item.destination_offset for item in edits],
-            [0x4D47C0, 0x4D47B0, 0x4D47B8],
+            [0x4D47C0, 0x4D47B0, 0x4D47B8, 0x4D47A0],
         )
         self.assertEqual(
             [item.expected_hex for item in edits],
@@ -1333,15 +1397,16 @@ class UiTextureTests(unittest.TestCase):
                 "030019001A001600",
                 "0100310072001600",
                 "010049002A001600",
+                "2D00490046001600",
             ],
         )
         self.assertEqual(
             [item.source_target_id for item in edits],
-            ["nun5_elf", "nun5_elf", "nun5_elf"],
+            ["nun5_elf", "nun5_elf", "nun5_elf", "nun5_elf"],
         )
         self.assertEqual(
             [item.source_offset for item in edits],
-            [0x4DEA20, 0x4DEA10, 0x4DEA18],
+            [0x4DEA20, 0x4DEA10, 0x4DEA18, 0x4DEA00],
         )
         self.assertEqual(
             [item.source_expected_hex for item in edits],
@@ -1349,6 +1414,7 @@ class UiTextureTests(unittest.TestCase):
                 "0200180018001800",
                 "0100310038001600",
                 "0000000000000000",
+                "2D00490042001600",
             ],
         )
 
@@ -1508,14 +1574,14 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 265)
-        self.assertEqual(operations, {"copy": 90, "replace": 175})
+        self.assertEqual(len(ui_edits), 277)
+        self.assertEqual(operations, {"copy": 99, "replace": 178})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 61, "nun5_btl": 20, "nun5_etc": 9},
+            {"nun5_elf": 64, "nun5_btl": 26, "nun5_etc": 9},
         )
         self.assertEqual(len(stage_scales), 24)
-        self.assertEqual(len(adaptations), 151)
+        self.assertEqual(len(adaptations), 154)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")

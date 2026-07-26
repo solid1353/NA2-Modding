@@ -7,7 +7,8 @@ the right.
 
 ## Remaining subtasks
 
-1. Battle Results screen 2: repair the garbled and mislaid result UI.
+1. Battle Results screen 2: implemented and runtime-proven; awaiting user
+   acceptance of the refreshed NUN5/Current NA2.28 grid.
 2. Character Items transition: replace the NA2.28 slide with the NUN5/base-NA2
    fade behavior.
 3. Cross/Triangle labels, paired slots 1-5: correct only the Cross and Triangle

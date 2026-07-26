@@ -769,3 +769,125 @@ An earlier candidate at NA2 BTL file offset `0xCF70` belongs to the separate
 VS confirmation Customize Jutsu call and is not part of this screen. It was
 rejected for this defect and remains untouched. The mapping and visible result
 are **runtime-proven** with **verified confidence**.
+
+## Battle Results summary, moving clouds, and rank stamps
+
+### Function and address map
+
+This finding uses the BTL identities and `+0x40` Ghidra/live convention recorded
+at the top of this document.
+
+| Role | NA2 v2.28 | NUN5 |
+| --- | --- | --- |
+| Results frame/layout | file `0x62A30..0x62CFF`, Ghidra `FUN_007168F0` (`0x007168F0..0x00716BBF`), live `0x00716930..0x00716BFF` | file `0x65780..0x65A6F`, Ghidra `FUN_0072C440` (`0x0072C440..0x0072C72F`), live `0x0072C480..0x0072C76F` |
+| Results reveal/row animation | file `0x62FD0..0x636AF`, Ghidra `FUN_00716E90` (`0x00716E90..0x0071756F`), live `0x00716ED0..0x007175AF` | file `0x65D40..0x6641F`, Ghidra `FUN_0072CA00` (`0x0072CA00..0x0072D0DF`), live `0x0072CA40..0x0072D11F` |
+| Title controller | Ghidra `FUN_00719D40`, live start `0x00719D80` | Ghidra `FUN_0072FBC0`, live start `0x0072FC00` |
+| Centered scaled-sprite helper | resident `FUN_0037BD00` | resident `FUN_0038ADC0` |
+| Rank rectangle accessor | direct boot-ELF table at file `0x4B14A0`, live `0x005B13A0` | localized `FUN_003D5160` |
+| Rank width-fit helper | absent on this path | `FUN_003D5700` |
+| Result label table | BTL file `0x210030`, live `0x008C3F30` | boot ELF file `0x4DDCA0` |
+| Title/cloud rectangles | BTL file `0x2100D8`, live `0x008C3FD8` | BTL file `0x2158E0` |
+| Moving-cloud table | BTL file `0x1E5CC0`, live `0x00899BC0` | BTL file `0x1EE1F0`, live `0x008B4EF0` |
+| Shared rank call site | BTL file `0x634E8`, Ghidra `0x007173A8`, live `0x007173E8` | equivalent block inside `FUN_0072CA00` |
+
+`UI-ELF-004` already copies the complete official 95-entry NUN5 English
+battle-HUD rectangle table from NUN5 ELF file `0x4DEA30` to NA2 file
+`0x4B14A0`. Its first five entries are the shared rank values:
+
+| Value | Rectangle `(u,v,w,h)` |
+| --- | --- |
+| `Outstanding!` | `(0,48,80,24)` |
+| `Nicely done!` | `(80,48,80,24)` |
+| `Good job!` | `(200,168,48,24)` |
+| `Keep trying` | `(160,48,72,24)` |
+| `Try harder!` | `(128,120,112,24)` |
+
+The selector remains `result_rank - 1`; no value-specific code or authored
+texture is required.
+
+### Reconstructed behavior and cross-game difference
+
+The moving background loop is structurally identical in both games:
+
+```cpp
+for (int i = 0; i != 5; ++i) {
+    cloud[i].x += cloud[i].speed;
+    if (cloud[i].x >= 512.0f)
+        cloud[i].x = -cloud[i].width;
+    draw(sharedCloudSprite,
+         cloud[i].x, cloud[i].y, cloud[i].width, cloud[i].height);
+}
+```
+
+The X/Y/speed/height fields already match. NA2's five widths are
+`156.4, 102, 136, 102, 136`; NUN5 uses
+`293.25, 191.25, 255, 191.25, 255`. With the whole NUN5 `XNINKA.CCS`
+atlas imported, the NA2 widths traverse the neighboring `Ninja Song` letters,
+so animated `g` fragments appear where moving clouds belong. Copying the
+complete NUN5 table restores cloud artwork without changing motion.
+
+The shared five-value rank path differs more substantially:
+
+```cpp
+Rect rank = englishRankRects[resultRank - 1];
+float scale = 1.35f;
+
+// NA2 original: uncentered sprite at animatedX + 90, rowY - 1.
+// NUN5 behavior:
+drawCenteredScaled(
+    rankSprite,
+    animatedX + 140.0f,
+    rowY - 1.0f + rank.h * scale * 0.6f,
+    scale,
+    scale,
+    rank
+);
+```
+
+NUN5 reaches that behavior through localized accessor `FUN_003D5160`, width-fit
+helper `FUN_003D5700`, and centered renderer `FUN_0038ADC0`. Those functions
+and their call ABI do not exist on the NA2 path. All five English records are
+at most 112 pixels wide, so their scaled widths are already below NUN5's
+220-pixel fit ceiling. `UI-BTL-016` therefore retains NA2's imported donor
+table and selector, but replaces the 208-byte inline uncentered block with a
+call to existing NA2 centered renderer `FUN_0037BD00`. The port supplies the
+NUN5 effective X/Y anchors and the same 1.35 anisotropic arguments; unused
+bytes in the replaced block are explicit `nop`s.
+
+For `Outstanding!`, the pre-fix live NA2 object was:
+
+```text
+pivot=(0, 0), anchor=(358, 64), display=(108, 32.399998)
+```
+
+The NUN5 object and the guarded NA2 port are bit-identical:
+
+```text
+pivot=(-54, -16.199999), anchor=(408, 83.439995),
+display=(108, 32.399998)
+```
+
+Because the other four values use the same call and differ only by the selected
+donor rectangle, the correction applies to all five rank values.
+
+### State behavior, evidence, and confidence
+
+`FUN_007168F0` updates the five cloud positions every frame and draws the common
+footer. `FUN_00716E90` owns the row reveal and rank-stamp sprite state. The
+patch changes atlas geometry, anchors, and the rank sprite pivot only; it does
+not change result values, rank selection, tally timing, input, sound, stamp
+rotation, texture identity, or the common title pulse. NA2 and NUN5 title
+controllers call the same pulse algorithm, so static title-size differences
+between independently timed screenshots are expected phase differences.
+
+Evidence consists of the complete paired BTL functions, the NUN5 boot-ELF
+helpers, exact canonical bytes, task-owned slot-1-to-screen-2 transitions, and
+live sprite-object fields. A useful negative result is that patching the static
+tables into an already-constructed screen-2 savestate leaves the old cloud
+sprite geometry resident; the visual proof must enter screen 2 fresh from slot
+1. The fresh transition removes every animated `Ninja Song` fragment. A second
+guarded transition during the rank reveal proves all six rank object fields
+match NUN5 bit-for-bit.
+
+The donor tables, cross-game mapping, cloud behavior, and shared five-value rank
+renderer are **runtime-proven** with **verified confidence**.

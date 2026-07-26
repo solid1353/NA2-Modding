@@ -1410,6 +1410,37 @@ positions without changing the accepted Customize Jutsu footer. Exact function
 ranges, file/runtime mappings, reconstructed behavior, and evidence are
 preserved in `docs/knowledge/localization/ui/battle.md`.
 
+### UI-BTL-016: localized Battle Results summary layout
+
+The whole NUN5 `XNINKA.CCS` import supplies the English Battle Results artwork,
+but NA2 retained Japanese result-label rectangles, moving-cloud widths, footer
+records, title offset, and rank-stamp geometry. `UI-BTL-016` imports the
+complete six-record NUN5 result table, paired title/cloud rectangles, Display
+Details rectangle, and complete five-cloud motion/geometry table. The five
+cloud positions, speeds, and heights were already equal; the NUN5 widths keep
+each moving object inside the localized cloud strip instead of traversing
+animated `Ninja Song` letters.
+
+The shared five-value rank selector already reads the complete NUN5 English
+rectangle table installed by `UI-ELF-004`. NA2 nevertheless drew the selected
+record without a pivot at anchor `(animatedX + 90, rowY - 1)`. NUN5 centers the
+same 1.35-scaled record and applies its effective X/Y compensation. NUN5's
+localized accessors and helper are not ABI-compatible with NA2, so one authored
+NA2 call-site port delegates the selected donor rectangle to resident helper
+`FUN_0037BD00`. The resulting pivot, anchor, width, and height fields match
+NUN5 bit-for-bit for the shared renderer used by `Outstanding!`, `Nicely
+done!`, `Good job!`, `Keep trying`, and `Try harder!`.
+
+The remaining code edits use exact same-register NUN5 instructions where
+possible. Display Details Y uses a compact NA2 sequence because the NUN5
+language-accessor call cannot be copied, and the shared Next low half is
+cleared after importing NUN5's integral anchor. A fresh hidden transition from
+task-owned slot 1 proves the moving clouds, labels, footer, and rank stamp
+without relying on an already-constructed stale screen. Complete function
+ranges, file/runtime mappings, reconstruction, live object fields, side
+effects, and negative evidence are preserved in
+`docs/knowledge/localization/ui/battle.md`.
+
 ### UI-ETC-001: localized Shop label layout
 
 Importing the complete NUN5 `SHOP.CCS` supplies the correct English atlas, but
@@ -1553,7 +1584,7 @@ X and Y, consistent with normal pulse timing. Exact boundaries, mappings,
 reconstruction, and runtime evidence are preserved in
 `docs/knowledge/localization/ui/character_select.md`.
 
-### UI-ELF-008: localized shared Cancel prompt
+### UI-ELF-008: localized shared common prompts
 
 The complete NUN5 `CMN/GAUGE.CCS` import supplies the English common-prompt
 artwork, but NA2 `FUN_0037c980` still centers its case-4 Cancel prompt using
@@ -1566,10 +1597,15 @@ static slots: the localized Triangle icon, 56-pixel Cancel label, and empty
 tail. The shared correction therefore applies to every case-4 common-prompt
 caller rather than compensating only the Options screen. A guarded patched
 copy of the preserved Options state rendered the final Cancel bounds within
-one pixel of NUN5 in both axes, consistent with normal pulse timing. The
-separate OK prompt and text/font rendering remain untouched. Exact mappings,
-reconstruction, side effects, and runtime evidence are preserved in
-`docs/knowledge/localization/ui/options.md`.
+one pixel of NUN5 in both axes, consistent with normal pulse timing.
+
+Battle Results exposed the same shared compositor's record 2: NA2 retained a
+70-pixel Next label while NUN5 uses the complete 66-pixel English record.
+The fourth edit copies that exact NUN5 record; `UI-BTL-016` supplies its NUN5
+screen anchor. The separate OK prompt and text/font rendering remain untouched.
+Exact mappings, reconstruction, side effects, and runtime evidence are
+preserved in `docs/knowledge/localization/ui/options.md` and
+`docs/knowledge/localization/ui/battle.md`.
 
 ### UI-ELF-009: shared Controls and Music Select anchors
 
@@ -1589,7 +1625,7 @@ placement. The complete homolog mappings, reconstruction, runtime evidence,
 and rejected wrong-table probe are preserved in
 `docs/knowledge/localization/ui/options.md`.
 
-Inspect all 26 UI companion patches together:
+Inspect all 27 UI companion patches together:
 
 ```powershell
 python -m na2_patcher.modules.binary_patcher.engine validate `
@@ -1616,6 +1652,7 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
   --patch UI-BTL-013 `
   --patch UI-BTL-014 `
   --patch UI-BTL-015 `
+  --patch UI-BTL-016 `
   --patch UI-ETC-001 `
   --patch UI-ETC-002 `
   --patch UI-ELF-001 `

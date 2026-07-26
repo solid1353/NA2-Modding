@@ -180,13 +180,14 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   6,297,394 bytes, but no replacement CCS blobs are stored in the repository.
 - `na2_patcher/features/localization/binary_patcher/` contains the canonical UI
   companion patches across BTL, ETC, and the boot ELF. The current UI subset
-  has 26 patches and 265 guarded edits: 90 exact NUN5 copies, 24 values
+  has 27 patches and 277 guarded edits: 99 exact NUN5 copies, 24 values
   derived from NUN5's stage-width formula, 78 complete Victory descriptors
-  derived from NUN5's frame templates and English widths, and 73 remaining
+  derived from NUN5's frame templates and English widths, and 76 remaining
   NA2-ABI adaptations. Stage Select, Jutsu, command-scroll, Items, Mash, and
-  Mode Select and both Settings footers are runtime-proven; Vibration,
-  Collection, and Victory still await their respective normal runtime
-  acceptance.
+  Mode Select, both Settings footers, and Battle Results screen 2 are
+  runtime-proven; Vibration, Collection, and Victory still await their
+  respective normal runtime acceptance. Battle Results remains in the epic
+  until user acceptance.
 - Translation mapping version 35 restores the four Collection Movie rows to
   exact official NUN5 source strings with no authored line breaks. A
   clean-source full in-memory plan produced 2,437 fixed-size patch rows with
@@ -194,12 +195,13 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 - The Localization feature's aggregate current-profile pin covers both canonical
   module inputs and their feature-relative paths.
 - The complete Localization binary-patcher package validates as 7 targets, 9
-  groups, 99 patches, and 421 edits; its UI subset is the 26 patches and 265
+  groups, 101 patches, and 440 edits; its UI subset is the 27 patches and 277
   edits counted above. The UI texture plan derives all 96 members with 92 whole
   donors and four mapped exceptions: MODE2KDV, ENDDEMO, Haku, and Shikamaru.
-  The historical runtime
-  harness remains available; current focused and complete-suite results are
-  refreshed with each build.
+  The historical runtime harness remains available. Current binary-patcher
+  validation passes; the texture test setup is independently blocked by the
+  existing `BATTLEGAUGE.CCS` derived-replacement hash mismatch and is reported
+  separately rather than attributed to this BTL/ELF-only patch.
 - The 2026-07-19 non-launching normal profile build derived all 34 replacements
   through 76 texture mappings, applied all 88 companion edits, and reported
   `ISO result: updated` with rotation. Build record
@@ -539,7 +541,9 @@ The user's final paired visual inspection accepted Slot 4 as perfect on
 2026-07-22; Slots 5 and 6 remain runtime-proven. The accepted Slot 4 savestate
 pair and active mismatch-list entry were then removed under workstream policy.
 
-The remaining maintained mismatch list contains Battle Results screen 2,
-Character Items transition behavior, and Select-label placement.
-The complete repository regression suite passes 129/129 tests with this
-canonical patch and its updated Localization feature pin.
+The remaining maintained mismatch list contains Battle Results screen 2
+(implemented and awaiting user acceptance), Character Items transition
+behavior, and the Cross/Triangle-label batch. The standalone binary-patcher
+package validates with this canonical patch; the full repository suite remains
+blocked by the independent `BATTLEGAUGE.CCS` expected-hash mismatch described
+above.

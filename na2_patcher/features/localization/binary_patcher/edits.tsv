@@ -335,6 +335,7 @@ UI-BTL-009-26	UI-BTL-009	260	na2_btl	0x5AF34	replace	48	6000A1C79041023C00008244
 UI-BTL-009-27	UI-BTL-009	270	na2_btl	0x5AFE4	replace	4	00000000		0800AEC7									Load the helper-produced paired-row 2 rotation in the renderer delay slot.
 UI-BTL-009-28	UI-BTL-009	280	na2_btl	0x5B1E0	replace	4	00000000		00708044									Clear the new rotation argument for the first fixed-status foreground caller.
 UI-BTL-009-29	UI-BTL-009	290	na2_btl	0x5B2A0	replace	4	00000000		00708044									Clear the new rotation argument for the second fixed-status foreground caller.
+UI-BTL-009-30	UI-BTL-009	300	na2_elf	0x2772F4	copy	4	87A80046			nun5_elf	0x284418	87B00046						Copy NUN5's scale-register centering instruction so item foregrounds fade in place instead of moving with alpha.
 UI-BTL-010-01	UI-BTL-010	10	na2_elf	0x4B116C	copy	12	0100790001000F0021000000			nun5_elf	0x4B865C	01003100610046000E000000						Copy the complete official NUN5 Health item record, including its localized rectangle and flags.
 UI-BTL-010-02	UI-BTL-010	20	na2_elf	0x4B1178	copy	12	01008A00010010003A000000			nun5_elf	0x4B8668	0100F10055000E002A000000						Copy the complete official NUN5 Chakra item record, including its localized rectangle and flags.
 UI-BTL-010-03	UI-BTL-010	30	na2_elf	0x4B11FC	copy	12	0100A100E1000E001E000200			nun5_elf	0x4B86EC	0100A100D10032000A000200						Copy the complete official NUN5 Recovery item record, including its localized rectangle and flags.

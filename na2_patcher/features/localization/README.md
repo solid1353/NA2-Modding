@@ -1293,6 +1293,15 @@ classes. The pair helper now exposes explicit caller-owned anchor, row, and
 angle-output arguments so the bounded numeric port can reuse it without
 changing the pair result.
 
+The same resident sprite renderer also owns the transition geometry used by
+all four item classes. Its first NA2 port correctly preserved the NUN5 scale in
+`f22` and alpha in `f21`, but the final centered-offset calculation still
+negated `f21`. At partial alpha, that scaled each local half-width/half-height
+offset and made the foreground appear to slide into and out of a stationary
+bubble. `UI-BTL-009-30` copies NUN5's exact `neg.s f2,f22` instruction from
+ELF file `0x284418` to NA2 file `0x2772F4`. Alpha continues to fade normally,
+while local geometry remains constant; fully visible placement is unchanged.
+
 ### UI-BTL-010: localized numeric item-status labels
 
 Numeric item effects share one class for Health, Chakra, Recovery, and their

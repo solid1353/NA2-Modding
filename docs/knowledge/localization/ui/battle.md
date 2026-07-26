@@ -354,6 +354,53 @@ The common origin is changed from NA2 `(-33,-42)` to NUN5 `(-33,-33)`.
 The complete NUN5 rank offsets are `(20,-30)`, `(-64,-63)`, and `(0,-96)`;
 NA2 had `(50,-20)`, `(-16,-62)`, and `(30,-104)`.
 
+### Shared foreground fade correction
+
+The Character Items transition uses the same resident anisotropic sprite
+renderer for paired, numeric, single, and fixed foregrounds. The relevant boot
+ELF mappings are:
+
+| Role | NA2 | NUN5 |
+| --- | --- | --- |
+| Resident renderer | `SLPS_258.37` file `0x277160`, runtime `FUN_00377060` | `SLES_556.05` file `0x284280`, runtime `FUN_00384100` |
+| Centered-offset instruction | file `0x2772F4`, runtime `0x003771F4`, `87A80046` / `neg.s f2,f21` | file `0x284418`, runtime `0x00384298`, `87B00046` / `neg.s f2,f22` |
+
+Both homologs receive horizontal scale, alpha, and rotation separately. The
+ported NA2 prologue places scale in `f22`, alpha in `f21`, and rotation in
+`f20`, matching NUN5. The renderer scales the sprite dimensions with `f22` and
+stores `f21` at sprite offset `+0x40` as alpha. Its remaining NA2 instruction
+then incorrectly rebuilt the centered local offsets from `f21`:
+
+```cpp
+sprite->localX = -(alpha * sprite->width) / 2.0f;
+sprite->localY = -(alpha * sprite->height) / 2.0f;
+sprite->alpha = alpha;
+```
+
+NUN5 instead uses `f22`, yielding:
+
+```cpp
+sprite->localX = -(scale * sprite->width) / 2.0f;
+sprite->localY = -(scale * sprite->height) / 2.0f;
+sprite->alpha = alpha;
+```
+
+This explains why Current NA2.28 looked like the foreground slid into and out
+of the bubbles while NUN5 and clean NA2 faded in place. In the paired fade-in
+state, the three representative local offsets were `-4.2`, `-13.8`, and
+`-3.0`: exactly the intended `-7`, `-23`, and `-5` offsets multiplied by
+alpha `0.6`. After copying NUN5's single instruction, a fresh rendered state
+at alpha `0.7` retained the full `-7`, `-23`, and `-5` offsets. A fade-out
+state retained those offsets through alpha `0.0`.
+
+The earlier hypothesis that the BTL wrapper passed its anisotropic arguments
+in the wrong order was disproven: changing that order moved the bubbles and
+did not correct the foreground transition. No wrapper, object field, timing,
+atlas, or item-effect change is needed. `UI-BTL-009-30` therefore copies only
+the exact four-byte NUN5 instruction. Confidence is **verified** from both
+preserved ELF exports, exact clean-file bytes, paired saved-memory fields, and
+fresh isolated runtime captures.
+
 ### Evidence and limits
 
 Evidence consists of paired BTL/ELF disassembly, unique guarded byte ranges in

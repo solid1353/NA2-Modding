@@ -11,8 +11,9 @@ the right.
    the red rank text remains vertically misregistered inside the stamp. A
    screen-space Y trial was disproven and reverted; resume at the loaded
    texture/CLUT binding or cached GS packet.
-2. Character Items transition: replace the NA2.28 slide with the NUN5/base-NA2
-   fade behavior.
+2. Character Items transition: the shared resident-renderer correction is
+   implemented and agent-validated across the five paired phases; explicit
+   user verification remains pending.
 
 ## User-accepted completed cases
 

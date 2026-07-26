@@ -1134,7 +1134,7 @@ class UiTextureTests(unittest.TestCase):
         patch = package.patches["UI-BTL-009"]
         donors = [item for item in edits if item.operation == "copy"]
 
-        self.assertEqual(len(edits), 26)
+        self.assertEqual(len(edits), 27)
         self.assertEqual(
             [
                 (
@@ -1149,6 +1149,7 @@ class UiTextureTests(unittest.TestCase):
                 (0x4B1208, 84, "nun5_elf", 0x4B86F8),
                 (0x4B12A4, 24, "nun5_elf", 0x4B8794),
                 (0x1E4C90, 24, "nun5_btl", 0x1ED870),
+                (0x2772F4, 4, "nun5_elf", 0x284418),
             ],
         )
         self.assertEqual(patch.status, "runtime_proven")
@@ -1781,14 +1782,14 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 292)
-        self.assertEqual(operations, {"copy": 99, "replace": 193})
+        self.assertEqual(len(ui_edits), 295)
+        self.assertEqual(operations, {"copy": 100, "replace": 195})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 64, "nun5_btl": 26, "nun5_etc": 9},
+            {"nun5_elf": 65, "nun5_btl": 26, "nun5_etc": 9},
         )
         self.assertEqual(len(stage_scales), 24)
-        self.assertEqual(len(adaptations), 169)
+        self.assertEqual(len(adaptations), 171)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")

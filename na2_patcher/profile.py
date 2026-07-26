@@ -39,7 +39,6 @@ RESIDENT_PATCHER_CONTROL_FILES = (
 )
 TRANSLATION_IMPORTER_CONTROL_FILES = (
     "mappings.tsv",
-    "rebuild.tsv",
 )
 TEXTURE_PATCHER_CONTROL_FILES = (
     "containers.tsv",

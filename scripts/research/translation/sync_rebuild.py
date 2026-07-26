@@ -14,8 +14,8 @@ ARCHIVED_COMMIT = "14083adac9c24c533a33876a23596c6a92d301ec"
 MAPPINGS_REPOSITORY_PATH = (
     "na2_patcher/features/localization/translation_importer/mappings.tsv"
 )
-REBUILD_REPOSITORY_PATH = (
-    "na2_patcher/features/localization/translation_importer/rebuild.tsv"
+REBUILD_WORK_PATH = (
+    "work/String translation/artifacts/diagnostic-rebuild/rebuild.tsv"
 )
 REBUILD_FIELDS = [
     "id",
@@ -188,7 +188,11 @@ def _candidate_rows(
                 f"Unconfirmed > {section.replace('_', ' ').title()}",
             )
         legacy_ids = sorted(
-            {row["id"] for row in rows},
+            {
+                row["id"]
+                for row in rows
+                if LEGACY_ID.fullmatch(row["id"]) is not None
+            },
             key=_legacy_key,
         )
         candidates.append(
@@ -260,7 +264,11 @@ def synchronize(
             for value in existing_row["legacy_ids"].split(",")
             if value
         }
-        legacy_ids.update(candidate["legacy_ids"].split(","))
+        legacy_ids.update(
+            value
+            for value in candidate["legacy_ids"].split(",")
+            if value
+        )
         existing_row["legacy_ids"] = ",".join(
             sorted(legacy_ids, key=_legacy_key)
         )
@@ -333,6 +341,7 @@ def _serialize(rows: list[dict[str, str]]) -> bytes:
 
 
 def _write_atomic(path: Path, data: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     try:
         temporary.write_bytes(data)
@@ -357,13 +366,13 @@ def main() -> int:
     parser.add_argument(
         "--check",
         action="store_true",
-        help="Fail if the committed rebuild table is not synchronized.",
+        help="Fail if the retained task-local rebuild table is not synchronized.",
     )
     args = parser.parse_args()
 
     repository = args.repository.resolve()
     current_path = repository / MAPPINGS_REPOSITORY_PATH
-    rebuild_path = repository / REBUILD_REPOSITORY_PATH
+    rebuild_path = repository / REBUILD_WORK_PATH
     archived = _archived_rows(repository)
     current = _read_tsv(current_path)
     existing = _read_tsv(rebuild_path) if rebuild_path.is_file() else []
@@ -373,7 +382,7 @@ def main() -> int:
     if args.check:
         if not rebuild_path.is_file() or rebuild_path.read_bytes() != serialized:
             raise SystemExit(
-                f"{REBUILD_REPOSITORY_PATH} is not synchronized"
+                f"{REBUILD_WORK_PATH} is not synchronized"
             )
         print(f"Verified {len(rows)} stable rebuild candidates.")
         return 0

@@ -5,9 +5,11 @@ Canonical documentation landing page for the `String translation` workstream.
 ## Workstream policy
 
 - `mappings.tsv` is the single canonical normal-build translation table.
-  `rebuild.tsv` remains the complete stable-`T#` diagnostic candidate
-  inventory and is never executed by normal builds. Existing legacy mappings
-  and donor links are reference material rather than presumed correct coverage.
+  The completed stable-`T#` diagnostic inventory is retained only at
+  `work/String translation/artifacts/diagnostic-rebuild/rebuild.tsv`; it is
+  not a feature input and is never executed by normal builds. Existing legacy
+  mappings and donor links are reference material rather than presumed correct
+  coverage.
 - Translate only strings confirmed to be displayed through the `T#`
   screenshot pass. The rebuilt executable table admits a row only when it has
   a concrete `display_context` and a `display_basis`: directly seen in an ID

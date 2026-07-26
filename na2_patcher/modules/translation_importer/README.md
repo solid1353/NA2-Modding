@@ -9,14 +9,14 @@ decoded text together. Every executable row also declares a concrete
 or `character:`. The engine rejects rows without that evidence metadata and
 rejects a declared `source` that differs from the clean target bytes.
 
-The same module input also owns adjacent `rebuild.tsv`. It remains a separate,
-translation-free candidate inventory for worker-only mapping-ID builds:
+The completed translation-free candidate inventory is retained at
+`work/String translation/artifacts/diagnostic-rebuild/rebuild.tsv` for
+worker-only mapping-ID builds:
 permanent `T1`, `T2`, ... identifiers, exact clean source text and location,
 capacity/mode, provisional screen context, and optional legacy `M` IDs for
-lookup. Normal importer paths do not import or execute its rows; profile
-integrity checking still hash-covers the file. Diagnostic builds import every
-rebuild row and validate the exact clean source bytes, but ignore all
-donor/translation fields.
+lookup. It is not module content and is not profile-hashed. The explicit
+diagnostic wrapper supplies its path; diagnostic builds import every row and
+validate the exact clean source bytes, but ignore all donor/translation fields.
 
 Canonical `mappings.tsv` contains the completed screenshot-confirmed rebuild
 plus the explicit character-family exception. Its cumulative first two passes

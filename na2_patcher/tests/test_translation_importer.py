@@ -53,7 +53,7 @@ class TranslationImporterTests(unittest.TestCase):
             engine.build_mapping_id_import_plan,
         )
 
-    def test_canonical_mappings_use_t_ids_and_rebuild_guards(
+    def test_canonical_mappings_use_t_ids_and_evidence_guards(
         self,
     ) -> None:
         repository = Path(__file__).resolve().parents[2]
@@ -66,10 +66,6 @@ class TranslationImporterTests(unittest.TestCase):
             mappings_raw,
             table_name="mappings.tsv",
         )
-        rebuild = {
-            row["id"]: row
-            for row in engine.read_rebuild_rows(data_root / "rebuild.tsv")
-        }
         verified_corrections = {
             "T1956": ("Off", "NUN5_SLES@0x513EF8"),
             "T1957": ("On", "NUN5_SLES@0x513EFC"),
@@ -146,17 +142,11 @@ class TranslationImporterTests(unittest.TestCase):
             ),
         )
         for row in mappings_raw:
-            self.assertIn(row["id"], rebuild)
-            candidate = rebuild[row["id"]]
             self.assertEqual(row["enabled"], "1")
             self.assertTrue(row["display_context"])
             self.assertTrue(
                 row["display_basis"].startswith(engine.DISPLAY_BASIS_PREFIXES)
             )
-            self.assertEqual(row["source"], candidate["source"])
-            self.assertEqual(row["source_ref"], candidate["source_ref"])
-            self.assertEqual(row["mode"], candidate["mode"])
-            self.assertEqual(row["capacity"], candidate["capacity"])
             if row["id"] in verified_corrections:
                 donor, donor_ref = verified_corrections[row["id"]]
                 self.assertEqual(row["donor"], donor)

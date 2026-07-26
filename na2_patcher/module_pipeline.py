@@ -76,6 +76,7 @@ def prepare_module_pipeline(
     profile: Profile,
     *,
     translation_display: str = "translation",
+    translation_rebuild_path: Path | None = None,
 ) -> PreparedModulePipeline:
     """Prepare artifacts and link all shared payload contributions once."""
     ordered_modules = resolve_module_order(profile.modules)
@@ -107,19 +108,35 @@ def prepare_module_pipeline(
     for provider in ordered_modules:
         if provider.module != "translation_importer":
             continue
-        import_builder = {
-            "mapping_ids": (
-                translation_importer_module.build_mapping_id_import_plan
-            ),
-            "translation": (
-                translation_importer_module.build_translation_import_plan
-            ),
-        }[translation_display]
-        import_plan = import_builder(
-            **_translation_source_arguments(profile.roots["na2"], "na2"),
-            data_root=provider.input_path,
-            apply="BTL,ETC,SLPS",
+        source_arguments = _translation_source_arguments(
+            profile.roots["na2"], "na2"
         )
+        if translation_display == "mapping_ids":
+            if translation_rebuild_path is None:
+                raise ValueError(
+                    "mapping_ids display requires an explicit rebuild table"
+                )
+            import_plan = (
+                translation_importer_module.build_mapping_id_import_plan(
+                    **source_arguments,
+                    rebuild_path=translation_rebuild_path,
+                    apply="BTL,ETC,SLPS",
+                )
+            )
+        elif translation_display == "translation":
+            if translation_rebuild_path is not None:
+                raise ValueError(
+                    "normal translation display does not accept a rebuild table"
+                )
+            import_plan = translation_importer_module.build_translation_import_plan(
+                **source_arguments,
+                data_root=provider.input_path,
+                apply="BTL,ETC,SLPS",
+            )
+        else:
+            raise ValueError(
+                f"Unsupported translation display mode: {translation_display!r}"
+            )
         consumer = _bind_string_consumer(provider, ordered_modules)
         owner = (
             consumer.module_id

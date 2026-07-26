@@ -30,15 +30,16 @@ command or file-backed inter-stage handoff.
 
 - Canonical `mappings.tsv` rows: `2,053`
 - Canonical `mappings.tsv` SHA-256: `3351BF0F2F18135FD621506442E86014E00FA0BCE20B80D0759E6BBD690991E8`
-- Initial parallel `rebuild.tsv` rows: `2,173` (`T1` through `T2173`)
-- Initial `rebuild.tsv` SHA-256: `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`
+- Retained task-local `rebuild.tsv` rows: `2,173` (`T1` through `T2173`)
+- Retained `rebuild.tsv` SHA-256: `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the aggregate Localization feature pin own content identity.
 `mappings.tsv` owns the canonical executable donor translations, overrides,
-and optional pointer inventory. Adjacent `rebuild.tsv` is the translation-free
-complete candidate inventory whose rows are imported and executed only by
-worker mapping-ID builds. Normal builds import only `mappings.tsv`. Profile
+and optional pointer inventory. The translation-free candidate inventory is
+retained at `work/String translation/artifacts/diagnostic-rebuild/rebuild.tsv`
+and supplied explicitly only to worker mapping-ID builds. It is not feature
+content or profile-hashed. Normal builds import only `mappings.tsv`. Profile
 `identity.json` owns the imported/output title declaration; `string_patcher`
 applies its fixed coverage to the normal translation path.
 
@@ -84,8 +85,8 @@ The 16 columns are:
   current rows are enabled. Unconfirmed rows are absent instead of retained as
   disabled inventory.
 
-`rebuild.tsv` is the complete adjacent diagnostic inventory. Its human-readable
-columns come first:
+The task-local `rebuild.tsv` is the complete retained diagnostic inventory. Its
+human-readable columns come first:
 
 `id`, `display_context`, `source`, `donor`, `prefix`, `replacement`,
 `display_basis`, `source_ref`, `donor_ref`, `mode`, `capacity`, `transform`,
@@ -109,7 +110,8 @@ Command Chart family adds 1,041 rows, including Naruto moves absent from the
 captured 14-row subset. A subsequent missing-row audit adds another 260
 policy-supported rows: 53 directly seen rows, 10 structurally inferred
 siblings, and 197 character-family rows, for 2,053 total rows. Exact source,
-source reference, mode, and capacity come from `rebuild.tsv`. T2042, T2045,
+source reference, mode, and capacity came from the retained diagnostic
+inventory. T2042, T2045,
 and T2050 use canonical parent IDs `T2011`, `T2043`, and `T2048`.
 Paired screenshots correct three reference-table errors: T1956 uses `Off` at
 `NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses
@@ -141,9 +143,8 @@ first line cannot continue into an unrelated resident-payload string.
   verified NA2 multi-string block. Sequences must fit inline.
 
 Unresolved research does not belong in accepted executable `mappings.tsv`.
-The bounded `rebuild.tsv` candidate inventory is the explicit exception during
-the approved screenshot-driven reconstruction; it contains guarded source
-slots, not executable translations or speculative donor claims.
+The retained task-local `rebuild.tsv` contains guarded source slots, not
+executable translations or speculative donor claims.
 
 There is no `shorten` or `pool` mapping mode. External placement is a
 `string_patcher` build decision, not canonical mapping state.
@@ -1769,9 +1770,10 @@ payload is stored in Git.
   overrides, and every optional pointer reference.
   Three continuation rows deliberately reuse their containing full-message
   pointer.
-- `translation_importer/rebuild.tsv` contains the adjacent stable `T#`
-  candidate inventory. It drives only explicit worker mapping-ID builds.
-Both files are covered by the Localization feature's aggregate profile hash.
+The retained task-local diagnostic inventory is outside this feature and is
+supplied explicitly only to mapping-ID worker builds. Only `mappings.tsv` is
+covered by the translation importer's contribution to the Localization
+feature hash.
 Payload-builder configuration is executable infrastructure rather than feature
 data; engine code and documentation are excluded from the feature pin.
 

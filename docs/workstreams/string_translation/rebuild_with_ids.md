@@ -6,16 +6,16 @@ promoted to canonical `mappings.tsv` and now drives normal builds. Legacy
 translations and donor claims remain reference material, not presumed correct
 coverage.
 
-## Two-table boundary
+## Canonical and retained-work boundary
 
-The translation importer owns two adjacent inputs:
+The translation importer owns one canonical input:
 
 - `mappings.tsv`: the canonical screenshot-confirmed translation table used by
-  normal builds;
-- `rebuild.tsv`: the complete stable-`T#` candidate inventory and sole input
-  used by worker-only mapping-ID builds.
+  normal builds.
 
-`rebuild.tsv` does not inherit executable translations. Its rows retain only
+The completed diagnostic inventory is retained outside the feature at
+`work/String translation/artifacts/diagnostic-rebuild/rebuild.tsv`. It does
+not participate in profile hashing or normal composition. Its rows retain only
 exact clean NA2 source text/location, mode/capacity, a provisional screen
 context, and optional legacy `M` IDs for lookup. `donor`, `donor_ref`, `prefix`,
 `replacement`, `display_basis`, transforms, pointer references, and parent
@@ -45,8 +45,8 @@ remaining 1,041 Command Chart move-name rows from the verified 74-table
 command-record family. A subsequent missing-row audit admitted another 260
 policy-supported rows: 53 directly seen rows, 10 structurally inferred
 siblings, and 197 character-family rows. Canonical mappings therefore contain
-2,053 unique enabled rows. Exact guarded source fields come from
-`rebuild.tsv`, while concrete display metadata records whether each row was
+2,053 unique enabled rows. Exact guarded source fields came from the retained
+diagnostic inventory, while concrete display metadata records whether each row was
 seen directly, inferred from a captured selector/help family, or admitted
 under the character-specific exception. The first-pass corpus contains 172
 hash-verified paired captures; the second contains 93.
@@ -99,7 +99,7 @@ source slots with permanent IDs `T1` through `T2173`. The table is sorted by
 fit. The physical row number and identifier number are identical: the first
 data row is `T1`, the second is `T2`, and so on.
 
-Canonical initial `rebuild.tsv` SHA-256:
+Retained diagnostic `rebuild.tsv` SHA-256:
 `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`.
 
 Canonical `mappings.tsv` contains 2,053 rows and SHA-256
@@ -132,13 +132,13 @@ only legacy-ID lookup metadata, and appends missing known candidates.
 
 ## Diagnostic mapping-ID build
 
-Normal translation composition imports and executes only accepted
-`mappings.tsv` rows and remains behaviorally unchanged. The feature integrity
-hash still covers both adjacent tables. An explicit worker-only diagnostic
-build imports every row from `rebuild.tsv`, validates its exact source bytes
-against clean NA2, and replaces the source with its `T#` identifier. It does
-not resolve donor text, apply the game-title translation policy, externalize
-strings, or edit either table.
+Normal translation composition imports and executes only canonical
+`mappings.tsv` rows. The feature integrity hash covers that table, not the
+retained diagnostic inventory. An explicit worker-only diagnostic build is
+still available: its wrapper passes the task-local `rebuild.tsv` path
+explicitly, validates every exact source byte against clean NA2, and replaces
+the source with its `T#` identifier. It does not resolve donor text, apply the
+game-title translation policy, externalize strings, or edit either table.
 
 Build the diagnostic ISO with:
 
@@ -154,7 +154,8 @@ Previous, or Candidate.
 
 Normal profile builds import only enabled rows from canonical `mappings.tsv`.
 There is no separate replacement table or replacement-only display mode.
-`rebuild.tsv` remains independent and is read only by mapping-ID diagnostics.
+The task-local `rebuild.tsv` remains independent and is read only when the
+explicit mapping-ID worker wrapper supplies its path.
 
 During this rebuild pass, the user-facing `na` pair launcher accepts the
 diagnostic `rebuild` image:
@@ -175,9 +176,9 @@ the needed screenshots into its work directory with repository-relative
 provenance.
 
 If a visible Japanese string has no `T#`, it is a newly discovered candidate.
-Add it with the next permanent ID in `rebuild.tsv`; do not renumber the
-existing inventory. Add it to `mappings.tsv` only after its diagnostic ID is
-visibly confirmed.
+Add it with the next permanent ID in the retained task-local `rebuild.tsv`; do
+not renumber the existing inventory. Add it to `mappings.tsv` only after its
+diagnostic ID is visibly confirmed.
 
 ## Admission rule
 

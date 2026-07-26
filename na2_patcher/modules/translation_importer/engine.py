@@ -1157,10 +1157,11 @@ def build_mapping_id_import_plan(
     *,
     na2_iso: Optional[Path] = None,
     na2_folder: Optional[Path] = None,
-    data_root: Path,
+    data_root: Optional[Path] = None,
+    rebuild_path: Optional[Path] = None,
     apply: str = "BTL,ETC,SLPS",
 ) -> TranslationImportPlan:
-    """Load the adjacent from-scratch candidate inventory for ID display."""
+    """Load one explicit from-scratch candidate inventory for ID display."""
     selected_list = parse_apply(apply)
     selected = set(selected_list)
     na2 = source_from(na2_folder, na2_iso, "NA2")
@@ -1182,8 +1183,17 @@ def build_mapping_id_import_plan(
                 f"Unexpected {key} SHA-1: {actual}; expected {expected}"
             )
 
-    data_root = data_root.resolve()
-    rebuild_path = data_root / "rebuild.tsv"
+    if rebuild_path is None:
+        if data_root is None:
+            raise ValueError(
+                "Mapping-ID import requires data_root or rebuild_path"
+            )
+        rebuild_path = data_root.resolve() / "rebuild.tsv"
+    elif data_root is not None:
+        raise ValueError(
+            "Mapping-ID import accepts data_root or rebuild_path, not both"
+        )
+    rebuild_path = rebuild_path.resolve()
     rebuild_hash = hashlib.sha256(rebuild_path.read_bytes()).hexdigest().upper()
     mappings = [
         row

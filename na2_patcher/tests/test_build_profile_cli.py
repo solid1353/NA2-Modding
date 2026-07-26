@@ -21,6 +21,11 @@ class BuildProfileCliTests(unittest.TestCase):
             output_iso = workspace / "build" / "NA2.28 - Current.iso"
             profile_directory = workspace / "profiles" / "current"
             profile_log_directory = workspace / "logs" / "profile"
+            rebuild_table = (
+                workspace / "work" / "String translation" / "rebuild.tsv"
+            )
+            rebuild_table.parent.mkdir(parents=True)
+            rebuild_table.write_text("id\n", encoding="utf-8")
             profile = SimpleNamespace(profile_id="current", features=(), modules=())
             staged_iso = build_profile.building_image_path(output_iso)
             payload_build = build_profile.ResidentPayloadBuild(
@@ -51,6 +56,8 @@ class BuildProfileCliTests(unittest.TestCase):
                 "logs/profile",
                 "--translation-display",
                 "mapping_ids",
+                "--translation-rebuild-table",
+                str(rebuild_table),
             ]
 
             output = io.StringIO()
@@ -80,6 +87,10 @@ class BuildProfileCliTests(unittest.TestCase):
             self.assertEqual(kwargs["output_iso"], output_iso)
             self.assertEqual(kwargs["profile_log_directory"], profile_log_directory)
             self.assertEqual(kwargs["translation_display"], "mapping_ids")
+            self.assertEqual(
+                kwargs["translation_rebuild_path"],
+                rebuild_table,
+            )
             self.assertIn("payload_builder (0 symbols, 7 bytes)", output.getvalue())
             self.assertIn(
                 "Translation display: mapping_ids (diagnostic)",

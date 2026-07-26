@@ -53,9 +53,11 @@ history; do not recreate an archive directory for dead scripts.
   comparisons.
 - `research/translation/`: the worker-only mapping-ID diagnostic builder used
   to identify visible strings, plus `sync_rebuild.py`, which initializes and
-  verifies the permanent `T#` candidate inventory from the retained v40 and
-  canonical-table references without copying donor translations. These tools
-  do not change normal profile behavior or shared ISO state.
+  verifies the task-local permanent `T#` candidate inventory from the retained
+  v40 and canonical-table references without copying donor translations. The
+  wrapper supplies that work-artifact path explicitly; it is not a canonical
+  feature input. These tools do not change normal profile behavior or shared
+  ISO state.
 
 Normal builds call `na2_patcher.build_profile` through `na2/build.ps1`.
 Before that call, `na2/build.ps1` checks the deterministic successful-build

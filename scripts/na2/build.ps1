@@ -3,7 +3,8 @@ param(
     [switch]$CandidateOnly,
     [string]$WorkerOutputIso,
     [ValidateSet('translation', 'mapping_ids')]
-    [string]$TranslationDisplay = 'translation'
+    [string]$TranslationDisplay = 'translation',
+    [string]$TranslationRebuildTable
 )
 
 $ErrorActionPreference = 'Stop'
@@ -18,6 +19,14 @@ if ($CandidateOnly -and -not [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
 if ($TranslationDisplay -ne 'translation' -and
     [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
     throw 'Diagnostic translation display is allowed only for worker-output builds.'
+}
+if ($TranslationDisplay -eq 'mapping_ids' -and
+    [string]::IsNullOrWhiteSpace($TranslationRebuildTable)) {
+    throw 'Mapping-ID display requires -TranslationRebuildTable.'
+}
+if ($TranslationDisplay -eq 'translation' -and
+    -not [string]::IsNullOrWhiteSpace($TranslationRebuildTable)) {
+    throw '-TranslationRebuildTable is valid only for mapping-ID display.'
 }
 $workerBuild = if (-not [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
     Get-Na2WorkerBuildContext `
@@ -196,6 +205,11 @@ if ($CandidateOnly -or $null -ne $workerBuild) {
         '--profile-log-directory', $candidateProfileLogDirectory
         '--translation-display', $TranslationDisplay
     )
+    if (-not [string]::IsNullOrWhiteSpace($TranslationRebuildTable)) {
+        $candidateArguments += @(
+            '--translation-rebuild-table', $TranslationRebuildTable
+        )
+    }
 
     $isolatedLabel = if ($isolatedKind -eq 'worker') {
         'Worker-output mode'

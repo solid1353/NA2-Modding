@@ -74,7 +74,6 @@ class ProfileTests(unittest.TestCase):
             (module / "strings.tsv").write_text("string_id\n", encoding="utf-8")
         elif module_type == "translation_importer":
             (module / "mappings.tsv").write_text("id\n", encoding="utf-8")
-            (module / "rebuild.tsv").write_text("id\n", encoding="utf-8")
         elif module_type == "texture_patcher":
             for name in ("containers.tsv", "mappings.tsv", "strategies.tsv"):
                 (module / name).write_text("id\n", encoding="utf-8")

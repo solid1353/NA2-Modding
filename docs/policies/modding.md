@@ -27,9 +27,9 @@
 - Translation checkpoints tag the complete project state; do not duplicate
   mappings into snapshots. Accepted normal builds continue using
   `na2_patcher/features/localization/translation_importer/mappings.tsv`.
-  During the approved from-scratch rebuild, adjacent `rebuild.tsv` is the
-  hash-covered worker-diagnostic/replacement input; it does not change normal
-  translation behavior before final cutover.
+  The completed diagnostic inventory is retained only in the String
+  Translation work directory and is supplied explicitly to worker diagnostics;
+  it is not a hash-covered feature input after final cutover.
 
 ## Binary and donor changes
 

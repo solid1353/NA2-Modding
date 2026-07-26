@@ -105,14 +105,12 @@ Accordingly, the working target is `0x00B0AA04`; three current savestates
 field still equal to `1.0f`, while the old address was empty.
 
 The address mapping is **high-confidence evidence for this exact build
-identity**, but it is not used as a permanent patch. Savestate pointer scans
-identify this object as the primary renderer owned by the fixed wrapper at
-`0x00609160`, whose renderer pointer is stored at `0x0060919C`. Rendering
-patch `ELF-R001` modifies the wrapper initialization sequence at boot-ELF
-offset `0x61D4`: after construction, it follows that stable pointer and stores
-`0.75f` at renderer offset `0x274`. Secondary rendering states and the vertical
-scale at `0x278` remain unchanged. The file-backed patch does not depend on a
-PNACH memory write; PCSX2 output aspect remains a separate emulator setting.
+identity**, but it is not used as a permanent patch. Rendering patch
+`ELF-R001` changes the guarded initializer instruction at boot-ELF offset
+`0xF4E8` from a `1.0f` load to `0.75f`. The value therefore reaches rendering
+state offset `0x274` through the normal object pointer and remains independent
+of heap placement. The file-backed patch does not depend on a PNACH memory
+write; PCSX2 output aspect remains a separate emulator setting.
 
 The clean ELF's first `PT_LOAD` begins at file offset `0x100`, maps at
 `0x00100000`, has file size `0x507380`, and has memory size `0x5B3F00`.

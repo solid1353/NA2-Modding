@@ -232,9 +232,36 @@ renderer. The user explicitly accepted that result on 2026-07-26. Supplied
 after a real title transition. The accepted core and Controls rows are
 therefore runtime-proven and default-enabled.
 
+### Second caller family: Command Chart and Practice titles
+
+The title family reuses the accepted v2 core through one configurable
+adapter, with two thin explicit BTL entrypoints:
+
+- Command Chart replaces only the title call at BTL file `0x1C6A28` and uses
+  the 288-by-20 box at X `27.2` with caller Y minus `3.8`;
+- Practice replaces only the title call at BTL file `0x1C4B98` and uses the
+  352-by-20 box at X `31.2` with caller Y minus `6.8`;
+- both modes are left-aligned, single-line, shrink-only, and call NA2's native
+  `0x00382310` draw entry after v2 preparation;
+- the Practice explanation loop and the two Command Chart auxiliary-string
+  calls remain native and are outside this family.
+
+Both hook guards are the original `jal 0x00382310` plus its NOP delay slot.
+The shared adapter preserves the original render object, string and style,
+selects geometry through the explicit entrypoint mode, and delegates all
+measurement, scale publication and restoration to the already accepted v2
+session core.
+
+Hidden worker captures on the final isolated ISO cover Command Chart slot 3,
+Practice command slots 2-7, and the accepted Controls regression. They prove
+the 288-unit long-title shrink, the 352-unit Practice title origins, unchanged
+short-title scale, and unchanged later Practice explanation rows. The supplied
+states also correct the live BTL mapping to `0x006B3F00 + file offset`; using
+the `0x006B3EC0` Ghidra mapping as a live base writes `0x40` bytes too early.
+
 ### Static and automated validation
 
-Before the Controls commit:
+Before each caller-family commit:
 
 1. Verify deterministic regeneration of the old and v2 resident assets and
    tables.
@@ -299,7 +326,7 @@ renderer-state restoration, symbolic resident linking and multi-screen runtime
 regression risk.
 
 **Plan approved; foundations complete; Controls accepted; Command Chart and
-Practice titles in progress**
+Practice titles agent-validated and awaiting user acceptance**
 
 ## Accepted font implementation
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 from dataclasses import replace
 import hashlib
+import struct
 import tempfile
 import unittest
 from pathlib import Path, PurePosixPath
@@ -113,7 +114,11 @@ class ResidentPatcherTests(unittest.TestCase):
                 for patch_id, patch in canonical_declaration.patches.items()
                 if patch.default_enabled
             },
-            {"font_v2_layout_core", "font_v2_controls"},
+            {
+                "font_v2_layout_core",
+                "font_v2_controls",
+                "font_v2_titles",
+            },
         )
         canonical_build = build_resident_payload(
             canonical_declaration.fragments
@@ -133,6 +138,8 @@ class ResidentPatcherTests(unittest.TestCase):
                 "font_v2_layout_core_04",
                 "font_v2_layout_core_05",
                 "font_v2_controls_01",
+                "font_v2_titles_01",
+                "font_v2_titles_02",
             },
         )
 
@@ -175,6 +182,8 @@ class ResidentPatcherTests(unittest.TestCase):
                 0x279250,
                 0x279B20,
                 0x288848,
+                0x1C4B98,
+                0x1C6A28,
             },
         )
         self.assertTrue(
@@ -556,6 +565,187 @@ class ResidentPatcherTests(unittest.TestCase):
             mips.i_type(0x31, 18, 13, 0x4C),
         ):
             self.assertIn(expected_word, controls_callback_words)
+
+        titles_declaration = replace(
+            disabled_declaration,
+            patches={
+                patch_id: replace(
+                    patch,
+                    default_enabled=patch_id
+                    in {"font_v2_layout_core", "font_v2_titles"},
+                )
+                for patch_id, patch in disabled_declaration.patches.items()
+            },
+        )
+        titles_build = build_resident_payload(
+            titles_declaration.fragments
+        )
+        titles_resolved = resolve_symbolic_patches(
+            titles_build, titles_declaration.symbolic_patches
+        )
+        titles_package = engine.build_binary_package(
+            titles_declaration, titles_resolved
+        )
+        self.assertEqual(
+            {edit.edit_id for edit in titles_package.edits},
+            {
+                "font_v2_layout_core_01",
+                "font_v2_layout_core_02",
+                "font_v2_layout_core_03",
+                "font_v2_layout_core_04",
+                "font_v2_layout_core_05",
+                "font_v2_titles_01",
+                "font_v2_titles_02",
+            },
+        )
+        title_edits = {
+            edit.edit_id: edit
+            for edit in titles_package.edits
+            if edit.edit_id.startswith("font_v2_titles_")
+        }
+        self.assertEqual(
+            {
+                edit_id: edit.destination_offset
+                for edit_id, edit in title_edits.items()
+            },
+            {
+                "font_v2_titles_01": 0x1C6A28,
+                "font_v2_titles_02": 0x1C4B98,
+            },
+        )
+        title_symbols = {
+            "font_v2_titles_01": (
+                "localization.font.v2.command_title_entry"
+            ),
+            "font_v2_titles_02": (
+                "localization.font.v2.practice_title_entry"
+            ),
+        }
+        for edit_id, edit in title_edits.items():
+            self.assertEqual(
+                bytes.fromhex(edit.expected_hex),
+                bytes.fromhex("C4080E0C00000000"),
+            )
+            hook = bytes.fromhex(edit.replacement_hex)
+            self.assertEqual(len(hook), 8)
+            jump = int.from_bytes(hook[:4], "little")
+            self.assertEqual(jump >> 26, 0x03)
+            self.assertEqual(
+                (jump & 0x03FFFFFF) << 2,
+                titles_build.symbols[
+                    title_symbols[edit_id]
+                ].runtime_address,
+            )
+            self.assertEqual(hook[4:], b"\0" * 4)
+
+        title_adapter_fragment = next(
+            fragment
+            for fragment in titles_declaration.fragments
+            if fragment.symbol == "localization.font.v2.title_adapter"
+        )
+        self.assertEqual(
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation in title_adapter_fragment.relocations
+            },
+            {
+                ("hi16", "localization.font.v2.title_callback"),
+                ("lo16", "localization.font.v2.title_callback"),
+                ("jal26", "localization.font.v2.adapter_call"),
+            },
+        )
+        title_adapter = titles_build.symbols[
+            "localization.font.v2.title_adapter"
+        ]
+        title_adapter_payload = titles_build.payload[
+            title_adapter.file_offset:
+            title_adapter.file_offset + title_adapter.size
+        ]
+        title_adapter_words = {
+            int.from_bytes(
+                title_adapter_payload[offset:offset + 4], "little"
+            )
+            for offset in range(0, len(title_adapter_payload), 4)
+        }
+        for value in (27.2, 31.2, -3.8, -6.8, 20.0):
+            bits = struct.unpack("<I", struct.pack("<f", value))[0]
+            self.assertIn(
+                mips.i_type(0x0F, 0, 8, bits >> 16),
+                title_adapter_words,
+            )
+            if bits & 0xFFFF:
+                self.assertIn(
+                    mips.i_type(0x0D, 8, 8, bits & 0xFFFF),
+                    title_adapter_words,
+                )
+        for width in (288, 352):
+            self.assertIn(
+                mips.i_type(0x0D, 8, 8, width),
+                title_adapter_words,
+            )
+        for expected_word in (
+            mips.i_type(0x2B, 29, 8, 0x10),
+            mips.i_type(0x2B, 29, 8, 0x14),
+            mips.i_type(0x2B, 29, 0, 0x18),
+            mips.i_type(0x2B, 29, 0, 0x1C),
+            mips.i_type(0x2B, 29, 8, 0x20),
+            mips.i_type(0x2B, 29, 8, 0x24),
+            mips.i_type(0x2B, 29, 9, 0x5C),
+            mips.jump(
+                0x03,
+                titles_build.symbols[
+                    "localization.font.v2.adapter_call"
+                ].runtime_address,
+            ),
+        ):
+            self.assertIn(expected_word, title_adapter_words)
+
+        title_callback = titles_build.symbols[
+            "localization.font.v2.title_callback"
+        ]
+        title_callback_payload = titles_build.payload[
+            title_callback.file_offset:
+            title_callback.file_offset + title_callback.size
+        ]
+        title_callback_words = {
+            int.from_bytes(
+                title_callback_payload[offset:offset + 4], "little"
+            )
+            for offset in range(0, len(title_callback_payload), 4)
+        }
+        self.assertEqual(
+            title_callback_words,
+            {
+                mips.i_type(0x31, 7, 12, 0x48),
+                mips.i_type(0x31, 7, 13, 0x4C),
+                mips.jump(0x02, 0x00382310),
+                0,
+            },
+        )
+
+        title_adapter_address = title_adapter.runtime_address
+        for symbol, mode in (
+            ("localization.font.v2.command_title_entry", 0),
+            ("localization.font.v2.practice_title_entry", 1),
+        ):
+            entry = titles_build.symbols[symbol]
+            entry_payload = titles_build.payload[
+                entry.file_offset:entry.file_offset + entry.size
+            ]
+            entry_words = [
+                int.from_bytes(
+                    entry_payload[offset:offset + 4], "little"
+                )
+                for offset in range(0, len(entry_payload), 4)
+            ]
+            self.assertEqual(
+                entry_words,
+                [
+                    mips.i_type(0x09, 0, 7, mode),
+                    mips.jump(0x02, title_adapter_address),
+                    0,
+                ],
+            )
 
     def test_loads_fragments_and_compiles_symbolic_hooks(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -1903,6 +1903,16 @@ separate `OFF` call is untouched. Both the Controls layer and its required v2
 core are runtime-proven and default-enabled after the matched eight-row review
 and the supplied real title-to-Load transition state.
 
+The second thin caller layer, `font_v2_titles`, replaces only two guarded BTL
+draw calls: Command Chart file `0x1C6A28` and Practice file `0x1C4B98`.
+Two explicit mode entrypoints tail-call one configurable title adapter, which
+uses the proven 288-by-20 and 352-by-20 boxes respectively and delegates
+measurement, shrink-only scale and restoration to the same v2 core. The
+adapter returns through NA2's native `0x00382310` draw ABI. Practice
+explanations and both subsequent Command Chart auxiliary-string calls remain
+native. This layer is default-enabled and runtime-proven in isolated matched
+Command Chart and Practice captures; user acceptance remains pending.
+
 The retained auto-fit and layout components require `font_nun5_glyphs` because
 their positions and fit decisions are tuned to its metrics. They otherwise
 remain independent. Their fragments, relocations, hook declarations, generated
@@ -1928,7 +1938,8 @@ formatter patch now emits those six fields as ASCII instead. The user later
 rejected the combined autofit/layout selection as unstable. The font itself,
 independent Character Select modal alignment, call-local numeric formatters,
 and the accepted v2 Controls/core pair are now enabled while the remaining
-layout families are rebuilt sequentially.
+layout families are rebuilt sequentially. The isolated v2 title layer is also
+enabled and agent-validated for its current matched review.
 
 `scripts/research/localization/generate_font_assets.py` deterministically
 regenerates and verifies the four native glyph/metric/decoder blobs from

@@ -68,6 +68,10 @@ V2_PREPARE = f"{V2_PREFIX}.prepare"
 V2_ADAPTER_CALL = f"{V2_PREFIX}.adapter_call"
 V2_CONTROLS_ADAPTER = f"{V2_PREFIX}.controls_adapter"
 V2_CONTROLS_CALLBACK = f"{V2_PREFIX}.controls_callback"
+V2_TITLE_ADAPTER = f"{V2_PREFIX}.title_adapter"
+V2_TITLE_CALLBACK = f"{V2_PREFIX}.title_callback"
+V2_COMMAND_TITLE_ENTRY = f"{V2_PREFIX}.command_title_entry"
+V2_PRACTICE_TITLE_ENTRY = f"{V2_PREFIX}.practice_title_entry"
 V2_PLAIN_SPACE = f"{V2_PREFIX}.plain_space"
 V2_NEWLINE_ADVANCE = f"{V2_PREFIX}.newline_advance"
 V2_RIGHT_EDGE = f"{V2_PREFIX}.right_edge"
@@ -80,6 +84,7 @@ FONT_INITIALIZE = 0x00186510
 FONT_SET_CONTEXT = 0x001866D0
 FONT_MEASURE = 0x003798E0
 FONT_CENTER = 0x00379240
+FONT_BOX_DRAW = 0x00382310
 PACKED_METRICS_SHA256 = (
     "6F691015E5BA54EA87B2976970D828863E274BB543CC3D531D93800018EB7A5E"
 )
@@ -132,6 +137,10 @@ COMMAND_CHART_TITLE_Y_OFFSET = -3.8
 PRACTICE_COMMAND_TITLE_BOX_X = 31.2
 PRACTICE_COMMAND_TITLE_BOX_WIDTH = 352
 PRACTICE_COMMAND_TITLE_Y_OFFSET = -6.8
+COMMAND_TITLE_MODE = 0
+PRACTICE_TITLE_MODE = 1
+TITLE_BOX_HEIGHT = 20
+TITLE_LINE_HEIGHT = 20.0
 
 V2_SESSION_PREVIOUS = 0x00
 V2_SESSION_TEXT = 0x04
@@ -871,6 +880,164 @@ def build_v2_controls_adapter() -> Fragment:
     return Fragment(V2_CONTROLS_ADAPTER, payload, relocations)
 
 
+def build_v2_title_callback() -> Fragment:
+    """Draw one prepared title through NA2's boxed UI entrypoint."""
+
+    a3 = 7
+    assembler = mips.Assembler()
+    assembler.emit(
+        mips.i_type(0x31, a3, 12, V2_SESSION_DRAW_X)
+    )
+    assembler.emit(
+        mips.i_type(0x31, a3, 13, V2_SESSION_DRAW_Y)
+    )
+    assembler.emit(mips.jump(0x02, FONT_BOX_DRAW))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(V2_TITLE_CALLBACK, payload, relocations)
+
+
+def build_v2_title_adapter() -> Fragment:
+    """Fit one Command Chart or Practice title in its NUN5 box."""
+
+    zero, a0, a1, a2, a3 = 0, 4, 5, 6, 7
+    t0, t1 = 8, 9
+    sp, ra = 29, 31
+    frame_size = 0x80
+    saved_ra = 0x7C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    assembler.emit(mips.i_type(0x2B, sp, a1, V2_SESSION_TEXT))
+    assembler.emit(
+        mips.i_type(0x2B, sp, a0, V2_SESSION_CALLBACK_ARG0)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, a1, V2_SESSION_CALLBACK_ARG1)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, a2, V2_SESSION_CALLBACK_ARG2)
+    )
+
+    assembler.branch(0x04, a3, zero, "command_chart")
+    assembler.emit(0)
+    emit_load_float(
+        assembler,
+        t0,
+        0,
+        PRACTICE_COMMAND_TITLE_BOX_X,
+    )
+    assembler.emit(mips.i_type(0x39, sp, 0, V2_SESSION_BOX_X))
+    emit_load_float(
+        assembler,
+        t0,
+        0,
+        PRACTICE_COMMAND_TITLE_Y_OFFSET,
+    )
+    assembler.emit(mips.cop1(0x00, 0, 13, 0))
+    assembler.emit(mips.i_type(0x39, sp, 0, V2_SESSION_BOX_Y))
+    mips.load_u32(
+        assembler,
+        t0,
+        PRACTICE_COMMAND_TITLE_BOX_WIDTH,
+    )
+    assembler.branch(0x04, zero, zero, "configure")
+    assembler.emit(0)
+
+    assembler.label("command_chart")
+    emit_load_float(
+        assembler,
+        t0,
+        0,
+        COMMAND_CHART_TITLE_BOX_X,
+    )
+    assembler.emit(mips.i_type(0x39, sp, 0, V2_SESSION_BOX_X))
+    emit_load_float(
+        assembler,
+        t0,
+        0,
+        COMMAND_CHART_TITLE_Y_OFFSET,
+    )
+    assembler.emit(mips.cop1(0x00, 0, 13, 0))
+    assembler.emit(mips.i_type(0x39, sp, 0, V2_SESSION_BOX_Y))
+    mips.load_u32(
+        assembler,
+        t0,
+        COMMAND_CHART_TITLE_BOX_WIDTH,
+    )
+
+    assembler.label("configure")
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_WIDTH)
+    )
+    mips.load_u32(assembler, t0, TITLE_BOX_HEIGHT)
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_HEIGHT)
+    )
+    assembler.emit(
+        mips.i_type(
+            0x2B,
+            sp,
+            zero,
+            V2_SESSION_HORIZONTAL_ALIGNMENT,
+        )
+    )
+    assembler.emit(
+        mips.i_type(
+            0x2B,
+            sp,
+            zero,
+            V2_SESSION_VERTICAL_ALIGNMENT,
+        )
+    )
+    assembler.emit(mips.i_type(0x09, zero, t0, V2_FLAG_SHRINK_X))
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_FLAGS)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_LINE_LIMIT)
+    )
+    emit_load_float(assembler, t0, 0, TITLE_LINE_HEIGHT)
+    assembler.emit(
+        mips.i_type(0x39, sp, 0, V2_SESSION_LINE_HEIGHT)
+    )
+    assembler.load_symbol_word(
+        t0,
+        t0,
+        0x09,
+        V2_TITLE_CALLBACK,
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_CALLBACK)
+    )
+    assembler.emit(mips.r_type(sp, zero, t1, 0x21))
+    assembler.emit(
+        mips.i_type(0x2B, sp, t1, V2_SESSION_CALLBACK_ARG3)
+    )
+
+    assembler.emit(mips.r_type(sp, zero, a0, 0x21))
+    assembler.jump_symbol(0x03, V2_ADAPTER_CALL)
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_TITLE_ADAPTER, payload, relocations)
+
+
+def build_v2_title_entry(symbol: str, mode: int) -> Fragment:
+    """Tail-call the shared title adapter with one explicit geometry mode."""
+
+    zero, a3 = 0, 7
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, zero, a3, mode))
+    assembler.jump_symbol(0x02, V2_TITLE_ADAPTER)
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(symbol, payload, relocations)
+
+
 def load_v2_session(
     assembler: mips.Assembler,
     address_register: int,
@@ -1451,6 +1618,16 @@ def v2_fragments() -> tuple[Fragment, ...]:
         build_v2_adapter_call(),
         build_v2_controls_callback(),
         build_v2_controls_adapter(),
+        build_v2_title_callback(),
+        build_v2_title_adapter(),
+        build_v2_title_entry(
+            V2_COMMAND_TITLE_ENTRY,
+            COMMAND_TITLE_MODE,
+        ),
+        build_v2_title_entry(
+            V2_PRACTICE_TITLE_ENTRY,
+            PRACTICE_TITLE_MODE,
+        ),
         build_v2_plain_space(),
         build_v2_newline_advance(),
         build_v2_right_edge(),

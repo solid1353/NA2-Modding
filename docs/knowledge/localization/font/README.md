@@ -641,6 +641,56 @@ and
 Confidence is **high** for the denominators, caller guards, fit thresholds,
 origins, and separation from the unresolved Practice explanation family.
 
+The stage-by-stage v2 reimplementation no longer depends on those retained
+outer-return guards. Bounded BTL inspection identifies the actual title-only
+draw calls directly. The supplied states independently confirm that the live
+MWo3 image begins at `0x006B3F00`, so these file offsets map without the
+`-0x40` Ghidra-header adjustment:
+
+- Practice runtime `0x00878A98`, BTL file `0x1C4B98`;
+- Command Chart runtime `0x0087A928`, BTL file `0x1C6A28`.
+
+Both sites contain guarded bytes `C4080E0C00000000`, a `jal 0x00382310`
+followed by its NOP delay slot. The Practice call occurs before its separate
+explanation loop; the Command Chart call precedes two independently guarded
+auxiliary-string draws. The v2 implementation therefore redirects only those
+two calls to explicit mode entrypoints. Each entrypoint tail-calls one shared
+title adapter, which selects the proven geometry above, creates one
+single-line shrink-only v2 session, and invokes native `0x00382310` through a
+common callback. No Practice explanation or auxiliary Command Chart call is
+selected.
+
+The generated v2 resident asset with this adapter is 2,020 bytes and has
+SHA-256
+`9561B62AAD1E0139B920AED058B2ECB066A9EB7D64092992ECAD60BC1581C8F6`.
+Static tests decode both linked BTL hooks, both mode entrypoints, every title
+constant, the callback ABI, and the shared-adapter relocations.
+
+The first converted-state capture used the ELF/Ghidra mapping base
+`0x006B3EC0` as though it were the live MWo3 base. It therefore wrote each BTL
+edit `0x40` bytes too early and produced the hybrid Command word `0x4423D147`
+instead of the linked `jal` word `0x0C23D147`. Exact clean context around both
+supplied call sites proved that the complete live BTL image begins at
+`0x006B3F00`. Corrected guarded states contain `jal 0x008F451C` at
+`0x0087A928` and `jal 0x008F48B0` at `0x00878A98`; the failed capture was a
+state-conversion error, not a rejected renderer hypothesis.
+
+Hidden task-owned PCSX2 captures on boot CRC `A8A3C4FF` then covered preserved
+Command Chart slot 3, all six Practice command slots 2-7, and the accepted
+Controls regression. The worker ISO SHA-256 is
+`0396D02B559EFC964B05520CC539F074432A57C3796BC1CA3063C3533E32FF1F`;
+its 5,488-byte resident payload ends at `0x008F5270` and has SHA-256
+`4BD20BE93EA0D0A217A790774C4813863F1F8303FA49117889A6D59D664D097D`.
+The corrected Command capture reproduces the prior matched title bounds and
+has SHA-256
+`FE37ABB125396BA6786230A6B580DE4C59EEF20527A4FD5B49B52D98BCC15598`.
+Every Practice page retains the NUN5 title origins while its later explanation
+rows remain intentionally unchanged for their separate wrapping family.
+Confidence is **high** for the direct hooks, shared adapter, shrink-only
+behavior, distinct geometries, state restoration, and separation between
+titles and explanations. User acceptance of this v2 title family remains
+pending.
+
 Commit `3d52a14` placed the complete helper block at runtime
 `0x003D3E00..0x003D4388` (file `0x2D3F00..0x2D4488`) inside the larger
 common-zero interval `0x003D3DB6..0x003D5D30`. That interval is zero in the

@@ -9,7 +9,7 @@
 ### [Font](docs/workstreams/font/README.md)
 - [Investigate](work/__sstates/translation/font)
     * Implement proper autofit/positions everywhere.
-    * Ninja Song: change SJIS numbers to ASCII.
+    * Ninja Song: convert all dynamically generated output still selecting Shift-JIS digits or symbols to ASCII equivalents, including the renderer-table multiplication glyph if it remains reachable after static string changes.
     * Load/Save Modal: change datetime format to EU.
 
 ### [UI Translation](docs/workstreams/ui_translation/README.md)

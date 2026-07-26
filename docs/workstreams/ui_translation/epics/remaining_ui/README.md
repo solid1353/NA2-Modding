@@ -8,9 +8,11 @@ the right.
 ## Remaining subtasks
 
 1. Battle Results screen 2: labels, title, footer, and moving clouds are fixed;
-   the red rank text remains vertically misregistered inside the stamp. A
-   screen-space Y trial was disproven and reverted; resume at the loaded
-   texture/CLUT binding or cached GS packet.
+   the red rank text remains pending runtime validation. A guarded
+   `Outstanding!` trial matches NUN5 after shifting the complete five-label
+   donor-atlas column upward by 11 source rows. The canonical donor-derived
+   transform is implemented without an ISO build by user instruction; validate
+   all five values through the next normal pipeline run.
 
 ## User-accepted completed cases
 

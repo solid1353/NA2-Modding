@@ -914,8 +914,10 @@ pivot=(-54, -16.199999), anchor=(408, 83.439995),
 display=(108, 32.399998)
 ```
 
-Because the other four values use the same call and differ only by the selected
-donor rectangle, the correction applies to all five rank values.
+The other four table-driven candidates use the same call and differ only by the
+selected donor rectangle. Later guarded runtime probes proved that this object
+is not the visible rank-label layer, so its matching fields do not establish
+the placement of any of the five visible labels.
 
 ### State behavior, evidence, and confidence
 
@@ -938,13 +940,13 @@ The donor tables, result-label geometry, title, footer, and cloud behavior are
 **runtime-proven** with **verified confidence**. The rank-label placement is
 still unresolved and must not be described as accepted or fully runtime-proven.
 
-### 2026-07-26 rank-label correction and rejected Y trial
+### 2026-07-26 visible rank layer and donor-column adaptation
 
-A zoomed user runtime capture proved that the red rank text remains too low
-inside the rotated stamp. `Outstanding!` is only one value exercising the
-shared five-value path; this is not a value-dependent defect.
+A zoomed user runtime capture proved that the red rank text remains about 11
+source rows too low inside the rotated stamp. `Outstanding!` is only one value;
+the official atlas packs all five values into a shared 96-by-220 column.
 
-The paired settled objects were located by the exact
+The paired settled candidate objects were located by the exact
 `display=(108,32.399998), rect=(0,48,80,24)` signature:
 
 | Game | Object | Pivot | Anchor | Display |
@@ -952,23 +954,41 @@ The paired settled objects were located by the exact
 | NUN5 `SLES-55605 (C071D4C1).02.p2s` | `0x00BED7B0` | `(-54,-16.199999)` | `(408,83.439995)` | `(108,32.399998)` |
 | Current `SLOP-NA228 (D61F4C01).09.p2s` | `0x00C6E140` | `(-54,-16.199999)` | `(408,83.439995)` | `(108,32.399998)` |
 
-Their scalar object fields are byte-identical. The only differences in the
-first `0x180` bytes are relocated pointers; the corresponding parent object's
-scalar fields are also identical. Both select the official English
-`(0,48,80,24)` donor rectangle.
+Their scalar fields and corresponding parent scalar fields match. Two guarded
+task-clone trials then disproved the assumption that this object controls the
+visible label:
 
-Changing the authored `UI-BTL-016-11` center compensation from approximately
-`18.44` to `2.44` (`-16` screen pixels) was tested and rejected. The baseline
-and changed task-owned renders have exactly the same red-mask bounding box,
-`(458,226)..(632,370)`, the same 4,379 selected pixels, and zero XOR pixels.
-The trial was reverted; it must not be repeated.
+- changing both the `UI-BTL-016-11` live Y constant at `0x007173E8` and the
+  object's anchor Y at `0x00C6E194` by `-16` pixels persisted in a fresh state
+  but changed zero visible rank pixels;
+- changing the first donor rectangle U at `0x005B13A0` from `0` to `80` and
+  the object's U field at `0x00C6E1A8` from `0` to `80 << 4` still displayed
+  `Outstanding!` unchanged.
 
-This rules out the exposed rank object's anchor, pivot, display dimensions,
-rectangle, and the attempted call-site Y compensation as the source of the
-visible discrepancy. The next investigation must trace the actual texture/CLUT
-binding and generated GS packet or cached secondary transform used by the
-visible red rank text. The deterministic build log proves `XNINKA.CCS` was
-derived from the complete NUN5 payload, but the loaded texture page and binding
-have not yet been proven equivalent at draw time. Confidence in this negative
-result is **verified**; confidence in the unresolved texture/binding hypothesis
-is **candidate**.
+The task clone produced different 750-millisecond and 3-second frames, proving
+that these were fresh renders rather than stale embedded screenshots. The
+object is therefore a hidden, occluded, or secondary layer and must not be used
+as placement evidence.
+
+The current state contains the exact official NUN5 indexed TEX body at
+`0x01C59200`; the paired NUN5 state contains the same body at `0x01C69400`.
+The clean NA2 TEX body is absent. The visible mismatch is therefore not a
+failed donor import. Decoding the 512-by-256 donor atlas locates the five red
+labels in visual top-left region X=`416..511`, Y=`0..219`. Its first 11 rows
+are fully transparent.
+
+A guarded state-only trial moved that complete donor region upward by 11 rows
+and cleared the vacated bottom rows with the donor's transparent palette
+index. `Outstanding!` then matches the NUN5 stamp placement. The production
+mapping `UI-NINKA-001` expresses the same operation as
+`indexed_shift_region_up_11_416_0_96_220`: it begins with the complete official
+NUN5 `XNINKA.CCS`, rejects non-indexed layouts or out-of-bounds regions, and
+rejects any source whose discarded top rows contain visible pixels. No stored
+replacement asset is used.
+
+Per user instruction, this canonical change was left for the normal pipeline
+and no ISO was built in this iteration. The donor identity, loaded texture
+identity, hidden-object negative result, and `Outstanding!` state-only trial
+are **runtime-proven** with **high confidence**. The full five-value production
+result remains **awaiting normal-build runtime validation** and is not
+user-accepted.

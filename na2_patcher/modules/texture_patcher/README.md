@@ -5,14 +5,17 @@ tables and derives fixed-size texture replacements from canonical sources. The
 active UI translation package lives under
 `na2_patcher/features/localization/texture_patcher/`.
 
-`whole` strategies use the complete donor payload. `mapped` strategies can copy
-one or more compatible TEX/CLT pairs, import a bounded indexed-row region, or
-replace an indexed texture with a guarded top-left crop after proving every
+`whole` strategies use the complete donor payload and may apply a guarded
+upward translation to one bounded region of an 8-bit indexed donor texture
+after proving that the discarded rows are transparent. `mapped` strategies can
+copy one or more compatible TEX/CLT pairs, import a bounded indexed-row region,
+or replace an indexed texture with a guarded top-left crop after proving every
 discarded donor pixel is transparent. A crop may optionally remap pixels to a
 declared subset of the donor's own palette by nearest raw RGBA distance. Every
 result preserves the original compressed member capacity and is accepted only
 when its source, decompressed payload, and fixed-size replacement hashes match
-the feature-owned tables.
+the feature-owned tables. Indexed-region translations use the pinned Zopfli
+encoder so their replacement bytes do not vary with the host zlib version.
 
 ## Invokes
 

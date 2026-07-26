@@ -73,6 +73,10 @@ VALID_TRANSFORMS = {
     ),
 }
 INDEXED_TOP_ROWS = re.compile(r"indexed_top_rows_([1-9][0-9]*)")
+INDEXED_SHIFT_REGION_UP = re.compile(
+    r"indexed_shift_region_up_([1-9][0-9]*)_"
+    r"([0-9]+)_([0-9]+)_([1-9][0-9]*)_([1-9][0-9]*)"
+)
 KNOWN_SECTION_TYPES = {
     0xCCCC0001, 0xCCCC0002, 0xCCCC0003, 0xCCCC0005,
     0xCCCC0100, 0xCCCC0102, 0xCCCC0108, 0xCCCC0200,
@@ -287,7 +291,10 @@ def load_package(directory: Path) -> Package:
         if container_id not in containers:
             raise ValueError(f"{label}: unknown container_id {container_id!r}")
         transform = row["transform"]
-        if transform not in VALID_TRANSFORMS:
+        if (
+            transform not in VALID_TRANSFORMS
+            and INDEXED_SHIFT_REGION_UP.fullmatch(transform) is None
+        ):
             raise ValueError(f"{label}: unsupported transform {transform!r}")
         target_key = (container_id, row["target_texture"].casefold())
         if target_key in targets:
@@ -437,6 +444,9 @@ def validate_mapping(
         if component_signature(target_payload, target) != component_signature(donor_payload, donor):
             raise ValueError(f"{mapping.mapping_id}: target and donor component layouts differ")
         return
+    if INDEXED_SHIFT_REGION_UP.fullmatch(mapping.transform):
+        indexed_shift_region_up_payload(donor_payload, mapping)
+        return
     crop = TRANSPARENT_TOP_LEFT_CROP.fullmatch(mapping.transform)
     if crop is not None:
         if len(target.textures) != 1 or len(target.palettes) != 1:
@@ -513,6 +523,73 @@ def decoded_rgba(payload: bytes, entry: TextureEntry) -> tuple[int, int, bytes] 
         return None
     rgba = bytes(channel for index in indices for channel in colors[index])
     return width, height, rgba
+
+
+def indexed_shift_region_up_payload(payload: bytes, mapping: Mapping) -> bytes:
+    match = INDEXED_SHIFT_REGION_UP.fullmatch(mapping.transform)
+    if match is None:
+        raise ValueError(f"{mapping.mapping_id}: invalid indexed-region shift")
+    shift, x, y, region_width, region_height = (
+        int(value) for value in match.groups()
+    )
+    entries = parse_ccs(payload)
+    entry = entries[mapping.donor_texture.casefold()]
+    if len(entry.textures) != 1 or len(entry.palettes) != 1:
+        raise ValueError(f"{mapping.mapping_id}: shift requires one TEX and one CLT")
+    texture = entry.textures[0]
+    palette = entry.palettes[0]
+    width, height = texture_dimensions(payload, texture)
+    if (
+        x + region_width > width
+        or y + region_height > height
+        or shift >= region_height
+    ):
+        raise ValueError(f"{mapping.mapping_id}: shifted region exceeds donor texture")
+
+    tex_start = texture.data_offset
+    tex = payload[tex_start : tex_start + texture.data_size]
+    encoded = tex[0x18:]
+    if len(encoded) != width * height:
+        raise ValueError(f"{mapping.mapping_id}: shift requires an 8-bit indexed texture")
+    clt = payload[palette.data_offset : palette.data_offset + palette.data_size]
+    if len(clt) < 0x14 or (len(clt) - 0x10) % 4:
+        raise ValueError(f"{mapping.mapping_id}: invalid indexed palette")
+    palette_size = (len(clt) - 0x10) // 4
+    if encoded and max(encoded) >= palette_size:
+        raise ValueError(f"{mapping.mapping_id}: indexed pixels exceed the palette")
+
+    def raw_offset(visual_y: int, visual_x: int) -> int:
+        return (height - 1 - visual_y) * width + visual_x
+
+    clear_index = encoded[raw_offset(y, x)]
+    clear_alpha = clt[0x10 + clear_index * 4 + 3]
+    if clear_alpha != 0:
+        raise ValueError(f"{mapping.mapping_id}: region corner is not transparent")
+    for visual_y in range(y, y + shift):
+        row_start = raw_offset(visual_y, x)
+        for index in encoded[row_start : row_start + region_width]:
+            if clt[0x10 + index * 4 + 3] != 0:
+                raise ValueError(
+                    f"{mapping.mapping_id}: shift would discard visible donor pixels"
+                )
+
+    source = bytes(encoded)
+    replacement = bytearray(encoded)
+    clear_row = bytes([clear_index]) * region_width
+    for visual_y in range(y, y + region_height):
+        destination = raw_offset(visual_y, x)
+        replacement[destination : destination + region_width] = clear_row
+    for visual_y in range(y, y + region_height - shift):
+        destination = raw_offset(visual_y, x)
+        source_offset = raw_offset(visual_y + shift, x)
+        replacement[destination : destination + region_width] = source[
+            source_offset : source_offset + region_width
+        ]
+
+    result = bytearray(payload)
+    body_start = tex_start + 0x18
+    result[body_start : body_start + len(replacement)] = replacement
+    return bytes(result)
 
 
 def validate_visual_coverage(
@@ -813,7 +890,12 @@ def gzip_header_end(data: bytes) -> int:
     return cursor
 
 
-def repack_gzip_exact(original: bytes, payload: bytes) -> tuple[bytes, int, int]:
+def repack_gzip_exact(
+    original: bytes,
+    payload: bytes,
+    *,
+    deterministic_zopfli: bool = False,
+) -> tuple[bytes, int, int]:
     header_end = gzip_header_end(original)
     candidates = []
     for strategy in (zlib.Z_DEFAULT_STRATEGY, zlib.Z_FILTERED, zlib.Z_RLE):
@@ -835,15 +917,23 @@ def repack_gzip_exact(original: bytes, payload: bytes) -> tuple[bytes, int, int]
     if len(stream) > len(original) and len(header) > 10:
         header = original[:3] + b"\0" + original[4:10]
         stream = header + deflate + trailer
-    if len(stream) > len(original) and zopfli_gzip is not None:
+    if (deterministic_zopfli or len(stream) > len(original)) and zopfli_gzip is not None:
+        optimized_candidates = []
         for iterations, split_last in ((15, 0), (15, 1), (50, 0), (50, 1)):
             optimized = zopfli_gzip.compress(
                 payload,
                 numiterations=iterations,
                 blocksplittinglast=split_last,
             )
-            if len(optimized) < len(stream):
-                stream = optimized
+            optimized_candidates.append(optimized)
+        optimized = min(optimized_candidates, key=lambda candidate: (len(candidate), candidate))
+        if deterministic_zopfli or len(optimized) < len(stream):
+            stream = optimized
+    if deterministic_zopfli and zopfli_gzip is None:
+        raise RuntimeError(
+            "Indexed-region shifts require zopfli==0.4.3 for cross-runtime "
+            "deterministic compression"
+        )
     if len(stream) > len(original):
         if zopfli_gzip is None:
             raise RuntimeError(
@@ -883,7 +973,11 @@ def expected_payload(
             raise ValueError(
                 f"{strategy.container_id}: whole strategy cannot use indexed transforms"
             )
-        return donor_payload
+        result = donor_payload
+        for mapping in mappings:
+            if INDEXED_SHIFT_REGION_UP.fullmatch(mapping.transform):
+                result = indexed_shift_region_up_payload(result, mapping)
+        return result
     indexed = [mapping for mapping in mappings if INDEXED_TOP_ROWS.fullmatch(mapping.transform)]
     if indexed:
         if len(indexed) != 1 or len(mappings) != 1:
@@ -973,7 +1067,14 @@ def derive_container(
     payload = expected_payload(strategy, target_payload, donor_payload, mappings)
     payload_hash = sha256(payload)
 
-    replacement, stream_size, padding = repack_gzip_exact(original, payload)
+    replacement, stream_size, padding = repack_gzip_exact(
+        original,
+        payload,
+        deterministic_zopfli=any(
+            INDEXED_SHIFT_REGION_UP.fullmatch(mapping.transform)
+            for mapping in mappings
+        ),
+    )
     replacement_hash = sha256(replacement)
     if payload_hash != strategy.payload_sha256:
         raise RuntimeError(

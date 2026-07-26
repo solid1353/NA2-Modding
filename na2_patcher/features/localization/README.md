@@ -935,10 +935,12 @@ from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
   size-preserving `UI-BTL-001` semantic port in
   `na2_patcher/features/localization/binary_patcher/`.
 
-The engine searches deterministic zlib encodings first. Twenty-eight fixed-capacity
-members require Zopfli; `na2_patcher/requirements.txt` pins the verified
-`zopfli==0.4.3` implementation. A normal build fails clearly instead of using
-different or unpinned output bytes when that dependency is unavailable.
+The engine searches deterministic zlib encodings first. Twenty-eight
+fixed-capacity members require Zopfli, and indexed-region translations use it
+to avoid zlib-version-dependent replacement bytes;
+`na2_patcher/requirements.txt` pins the verified `zopfli==0.4.3`
+implementation. A normal build fails clearly instead of using different or
+unpinned output bytes when that dependency is unavailable.
 
 ### Commands
 
@@ -1452,15 +1454,26 @@ record without a pivot at anchor `(animatedX + 90, rowY - 1)`. NUN5 centers the
 same 1.35-scaled record and applies its effective X/Y compensation. NUN5's
 localized accessors and helper are not ABI-compatible with NA2, so one authored
 NA2 call-site port delegates the selected donor rectangle to resident helper
-`FUN_0037BD00`. The resulting pivot, anchor, width, and height fields match
-NUN5 bit-for-bit for the shared renderer used by `Outstanding!`, `Nicely
-done!`, `Good job!`, `Keep trying`, and `Try harder!`.
+`FUN_0037BD00`. The resulting candidate sprite object's pivot, anchor, width,
+and height fields match NUN5 bit-for-bit, but guarded Y and UV trials proved
+that object is not the visible rank-label layer.
+
+The visible layer samples the packed five-label column at X=`416..511`,
+Y=`0..219` from the official NUN5 `XNINKA.CCS` atlas. NA2 renders that column
+11 source rows too low. `UI-NINKA-001` therefore keeps the complete donor
+container and applies `indexed_shift_region_up_11_416_0_96_220`. The transform
+copies the complete region upward, clears only its vacated bottom rows, and
+rejects the derivation unless every discarded top-row donor pixel is
+transparent. A guarded task-owned `Outstanding!` texture-memory trial matches
+the NUN5 placement. Per user instruction, no ISO was built for this canonical
+change; all five rank values remain pending the next normal pipeline run and
+user validation.
 
 The remaining code edits use exact same-register NUN5 instructions where
 possible. Display Details Y uses a compact NA2 sequence because the NUN5
 language-accessor call cannot be copied, and the shared Next low half is
 cleared after importing NUN5's integral anchor. A fresh hidden transition from
-task-owned slot 1 proves the moving clouds, labels, footer, and rank stamp
+task-owned slot 1 proves the moving clouds, labels, footer, and stamp frame
 without relying on an already-constructed stale screen. Complete function
 ranges, file/runtime mappings, reconstruction, live object fields, side
 effects, and negative evidence are preserved in

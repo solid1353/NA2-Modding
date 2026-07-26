@@ -73,14 +73,72 @@ class UiTextureTests(unittest.TestCase):
             result
             for result in self.plan.containers
             if result.strategy.strategy == "whole"
+            and result.spec.container_id != "xninka"
         ]
-        self.assertEqual(len(whole), 92)
+        self.assertEqual(len(whole), 91)
         for result in whole:
             self.assertEqual(
                 gzip.decompress(result.replacement),
                 gzip.decompress(result.donor),
                 result.spec.path,
             )
+
+    def test_xninka_shifts_only_the_packed_rank_label_column(self) -> None:
+        result = self.result("xninka")
+        mapping = next(
+            item
+            for item in self.plan.package.mappings
+            if item.container_id == "xninka"
+        )
+        self.assertEqual(
+            mapping.transform,
+            "indexed_shift_region_up_11_416_0_96_220",
+        )
+        donor_payload = gzip.decompress(result.donor)
+        output_payload = gzip.decompress(result.replacement)
+        donor_entry = engine.parse_ccs(donor_payload)[
+            mapping.donor_texture.casefold()
+        ]
+        output_entry = engine.parse_ccs(output_payload)[
+            mapping.donor_texture.casefold()
+        ]
+        donor_texture = donor_entry.textures[0]
+        output_texture = output_entry.textures[0]
+        width, height = engine.texture_dimensions(donor_payload, donor_texture)
+        self.assertEqual((width, height), (512, 256))
+        donor = donor_payload[
+            donor_texture.data_offset + 0x18 :
+            donor_texture.data_offset + donor_texture.data_size
+        ]
+        output = output_payload[
+            output_texture.data_offset + 0x18 :
+            output_texture.data_offset + output_texture.data_size
+        ]
+        self.assertEqual(len(donor), width * height)
+        self.assertEqual(len(output), width * height)
+
+        def row(data: bytes, visual_y: int) -> bytes:
+            raw_y = height - 1 - visual_y
+            return data[raw_y * width : (raw_y + 1) * width]
+
+        for visual_y in range(height):
+            donor_row = row(donor, visual_y)
+            output_row = row(output, visual_y)
+            self.assertEqual(donor_row[:416], output_row[:416])
+            self.assertEqual(donor_row[512:], output_row[512:])
+        for visual_y in range(209):
+            self.assertEqual(
+                row(output, visual_y)[416:512],
+                row(donor, visual_y + 11)[416:512],
+            )
+        clear_index = row(donor, 0)[416]
+        for visual_y in range(209, 220):
+            self.assertEqual(
+                row(output, visual_y)[416:512],
+                bytes([clear_index]) * 96,
+            )
+        for visual_y in range(220, height):
+            self.assertEqual(row(output, visual_y), row(donor, visual_y))
 
     def test_mode2kdv_keeps_na2_palette_and_lower_visual_rows(self) -> None:
         result = self.result("mode2kdv")

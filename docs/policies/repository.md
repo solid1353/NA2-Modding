@@ -48,11 +48,12 @@
 
 ## Access failures and escalation
 
-- Use scoped elevation from the first attempt for every filesystem operation,
-  including reads, listings, searches, hashes, link checks, and mutations.
-- Invoke every script with scoped elevation from the first attempt.
-- If any operation fails because of permissions, always retry that same
-  operation with elevation.
+- Run every shell command elevated from the first attempt, without judging
+  whether elevation appears necessary. This includes every script invocation
+  and every read-only or mutating filesystem and Git command.
+- If a non-command tool fails because of permissions, retry the exact intended
+  operation through an elevated command when possible. Never evade an access
+  failure by changing tools, paths, destinations, or methods.
 - After an access failure, retry only the failed operation; do not repeat work
   that already succeeded.
 - An access or elevation denial never silently changes an authorized cleanup

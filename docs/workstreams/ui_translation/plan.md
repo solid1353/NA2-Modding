@@ -547,10 +547,10 @@ pair and active mismatch-list entry were then removed under workstream policy.
 
 The remaining maintained mismatch list contains Battle Results screen 2
 (rank transform implemented, awaiting normal runtime and user verification),
-Victory ss7 (all 13 omitted character-name donors implemented, awaiting normal
-runtime and user verification), and Ninja Song details ss8 (separate footer
-anchors implemented, awaiting normal runtime and user verification). Character
-Items transition behavior and the Cross/Triangle-label batch are user-accepted.
+and Ninja Song details ss8 (separate footer anchors implemented, awaiting
+normal runtime and user verification). Victory ss7 all-character donor
+coverage, Character Items transition behavior, and the Cross/Triangle-label
+batch are user-accepted.
 Within the accepted Cross/Triangle batch,
 the Options-root Slot 1 caller now uses the proven effective NUN5 OK/Back
 anchors X=`388`/`462`. Collection-root Slot 2 uses its separate ETC position

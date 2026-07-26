@@ -23,9 +23,11 @@ replacement table is reconstructed from screenshots.
 Adjacent `replacement.tsv` uses the exact accepted `mappings.tsv` schema. It
 contains screenshot-confirmed rows plus the explicit character-family
 exception. Its cumulative first two passes contribute 752 rows, and the
-verified 74-table Command Chart family contributes another 1,041, for 1,793
-enabled rows. Of those, 1,780 retain the unique accepted row at the same exact
-`source_ref` as their donor/transform starting point, with T2042's parent
+verified 74-table Command Chart family contributes another 1,041. A subsequent
+missing-row audit adds 260 policy-supported rows—53 directly seen, 10
+structurally inferred, and 197 character-family rows—for 2,053 enabled rows. Of
+those, 2,040 retain the unique accepted row at the same exact `source_ref` as
+their donor/transform starting point, with T2042, T2045, and T2050 parents
 rewritten into the replacement `T#` namespace. Paired screenshots
 independently correct T1956 to `Off`, T1957 to `On`, and T2158 to `Warning`.
 Six Difficulty-family rows are matched by meaning against the exact NUN5

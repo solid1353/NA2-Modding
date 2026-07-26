@@ -32,8 +32,8 @@ command or file-backed inter-stage handoff.
 - Packaged `mappings.tsv` SHA-256: `7601F834646C374F3E89087724726AAE78E9A87A46A5F936CC5C776C4E60C0B6`
 - Initial parallel `rebuild.tsv` rows: `2,173` (`T1` through `T2173`)
 - Initial `rebuild.tsv` SHA-256: `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`
-- Cumulative `replacement.tsv` rows: `1,793`
-- Cumulative `replacement.tsv` SHA-256: `9ADB9BD361762F41E5E1EDE39FC9241F95FD63597C54939140472E5B844AF410`
+- Cumulative `replacement.tsv` rows: `2,053`
+- Cumulative `replacement.tsv` SHA-256: `4829FD2AF95AF0F6FE194D59AEC96C1FABF11E36203A6C331659C9D77AD28370`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the aggregate Localization feature pin own content identity.
@@ -112,10 +112,13 @@ explicit character-family exception, sorted by `display_context` and numeric
 ID. Its cumulative first two passes have 752 unique enabled rows: 567 from the
 hash-verified first-pass corpus and 185 from the second. The verified 74-table
 Command Chart family adds 1,041 rows, including Naruto moves absent from the
-captured 14-row subset, for 1,793 total rows. Exact source, source reference,
-mode, and capacity come from `rebuild.tsv`. Donor and transform relationships
-for 1,780 rows retain the unique accepted row with the same exact `source_ref`;
-T2042 rewrites its accepted `M0810` parent reference to replacement ID `T2011`.
+captured 14-row subset. A subsequent missing-row audit adds another 260
+policy-supported rows: 53 directly seen rows, 10 structurally inferred
+siblings, and 197 character-family rows, for 2,053 total rows. Exact source,
+source reference, mode, and capacity come from `rebuild.tsv`. Donor and
+transform relationships for 2,040 rows retain the unique accepted row with the
+same exact `source_ref`; T2042, T2045, and T2050 rewrite accepted parent
+references into replacement IDs `T2011`, `T2043`, and `T2048`.
 Paired screenshots correct three reference-table errors: T1956 uses `Off` at
 `NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses
 `Warning` at `NUN5_SLES@0x513F38`.
@@ -130,7 +133,7 @@ leave `replacement` blank and execute the independently validated official
 donor text. T2027 and T2033 are the only donor-backed exceptions and retain the
 established Cross-confirm Shop overrides. This is a reference-derived English
 validation pass, not a claim that uncaptured screens are covered. The explicit
-replacement worker build imports all 1,793 rows without falling back to
+replacement worker build imports all 2,053 rows without falling back to
 accepted `mappings.tsv`.
 
 The replacement table closes every admitted multi-slot `<br>` message family.

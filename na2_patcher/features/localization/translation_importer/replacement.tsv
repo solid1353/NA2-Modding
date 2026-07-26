@@ -66,6 +66,34 @@ T67	1	Battle pause menu > quit or return confirmation	"に<r戻|もど>ります
 よろしいですか？　　　　<iconCANCEL>キャンセル"	Are you sure you want to quit %1 and return to %2?			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208DF0	NUN5_TEXTENG@0xA20	slot	80	after_placeholder2			
 T68	1	Battle pause menu > return destination	ゲームモード<r選択|せんたく>に<r戻|もど>る	Back to Game Mode Screen			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208BB0	NUN5_TEXTENG@0x900	slot	48				
 T69	1	Battle pause menu > return destination	キャラクター<r選択|せんたく>に<r戻|もど>る	Back to Character Select			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208BE0	NUN5_TEXTENG@0x920	slot	48				
+T70	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r忍術|にんじゅつ>にて<r攻|せ>めるべし	Attack the enemy with Ninjutsu			seen:savestates-091-099	NA2_BTL@0x1E5550	NUN5_TEXTENG@0x10120	slot	64				
+T71	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r奥義|おうぎ>にて<r攻|せ>めるべし	Attack the enemy with Ultimate Jutsu			seen:savestates-091-099	NA2_BTL@0x1E5590	NUN5_TEXTENG@0x10140	slot	48				
+T72	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r連係攻撃|れんけいこうげき>にて<r攻|せ>めるべし	Attack the enemy with Linked attacks			seen:savestates-091-099	NA2_BTL@0x1E55C0	NUN5_TEXTENG@0x10170	slot	64				
+T73	1	Battle Results > Ninja Song objective or bonus	<r変|か>わり<r身|み>にて<r敵|てき>を<r欺|あざむ>くべし	Deceive the enemy using Substitution Jutsu			seen:savestates-091-099	NA2_BTL@0x1E5600	NUN5_TEXTENG@0x101A0	slot	64				
+T74	1	Battle Results > Ninja Song objective or bonus	<r追|お>い<r討|う>ちにて<r敵|てき>を<r追撃|ついげき>すべし	Pursue the enemy with Extra Hit attacks 			seen:savestates-091-099	NA2_BTL@0x1E5640	NUN5_TEXTENG@0x101D0	slot	64				
+T75	1	Battle Results > Ninja Song objective or bonus	<r連続|れんぞく><r攻撃|こうげき>にて<r敵|てき>を<r圧倒|あっとう>するべし	Overwhelm the enemy with consecutive attacks			seen:savestates-091-099	NA2_BTL@0x1E5680	NUN5_TEXTENG@0x10200	slot	80				
+T76	1	Battle Results > Ninja Song objective or bonus	<r特殊忍具|とくしゅにんぐ>を<r用|もち>いて<r攻|せ>めるべし	Attack with Special Ninja Tool			seen:savestates-091-099	NA2_BTL@0x1E56D0	NUN5_TEXTENG@0x10230	slot	64				
+T77	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r素早|すばや>く<r排除|はいじょ>すべし	Defeat the enemy quickly			seen:savestates-091-099	NA2_BTL@0x1E5710	NUN5_TEXTENG@0x10250	slot	64				
+T78	1	Battle Results > Ninja Song objective or bonus	<r己|おのれ>の<r体力|たいりょく>は<r温存|おんぞん>すべし	Conserve your health			seen:savestates-091-099	NA2_BTL@0x1E5750	NUN5_TEXTENG@0x10270	slot	64				
+T79	1	Battle Results > Ninja Song objective or bonus	<r強者|つわもの>を<r打|う>ち<r破|やぶ>るべし	Defeat a powerful enemy			seen:savestates-091-099	NA2_BTL@0x1E5790	NUN5_TEXTENG@0x10290	slot	48				
+T80	1	Battle Results > Ninja Song objective or bonus	<r秘|ひ>めたる<r力|ちから>を<r解|と>き<r放|はな>つべし	Release your hidden power			seen:savestates-091-099	NA2_BTL@0x1E57C0	NUN5_TEXTENG@0x102B0	slot	64				
+T81	1	Battle Results > Ninja Song objective or bonus	<r挑発|ちょうはつ>を<r以|も>って<r敵|てき>を<r刺激|しげき>すべし	Taunt the enemy into action			seen:savestates-091-099	NA2_BTL@0x1E5800	NUN5_TEXTENG@0x102D0	slot	80				
+T82	1	Battle Results > Ninja Song objective or bonus	<r壊|こわ>れ<r物|もの>を<r破壊|はかい>すべし	Destroy breakable objects			seen:savestates-091-099	NA2_BTL@0x1E5850	NUN5_TEXTENG@0x102F0	slot	48				
+T83	1	Battle Results > Ninja Song objective or bonus	<r特殊|とくしゅ><r条件|じょうけん>を<r完遂|かんすい>すべし	Fulfill special objectives			seen:savestates-091-099	NA2_BTL@0x1E5880	NUN5_TEXTENG@0x10310	slot	64				
+T84	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>の<r奥義|おうぎ>を<r打|う>ち<r破|やぶ>るべし	Defeat the enemy's Ultimate Jutsu			seen:savestates-091-099	NA2_BTL@0x1E58C0	NUN5_TEXTENG@0x10330	slot	64				
+T85	1	Battle Results > Ninja Song objective or bonus	<r術|じゅつ>の<r競|せ>り<r合|あ>いにて<r勝利|しょうり>すべし	Win in a battle of Ninjutsu			seen:savestates-091-099	NA2_BTL@0x1E5900	NUN5_TEXTENG@0x10360	slot	64				
+T86	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>に<r残影|ざんえい>をもって<r挑|いど>むべし	Use Shadowblur against the enemy			seen:savestates-091-099	NA2_BTL@0x1E5940	NUN5_TEXTENG@0x10380	slot	64				
+T87	1	Battle Results > Ninja Song objective or bonus	コンボ<r数|すう>%sHitボーナス	%1 hit combo bonus			seen:savestates-091-099	NA2_BTL@0x1E5980	NUN5_TEXTENG@0x103B0	slot	32				
+T88	1	Battle Results > Ninja Song objective or bonus	<r所持|しょじ>アイテム%s<r個|こ>ボーナス	%1 items carried bonus			seen:savestates-091-099	NA2_BTL@0x1E59A0	NUN5_TEXTENG@0x103D0	slot	48				
+T89	1	Battle Results > Ninja Song objective or bonus	<r背景破壊|はいけいはかい>ボーナス	Environment destruction bonus			seen:savestates-091-099	NA2_BTL@0x1E59D0	NUN5_TEXTENG@0x103F0	slot	48				
+T90	1	Battle Results > Ninja Song objective or bonus	<r残影勝利|ざんえいしょうり>ボーナス	Shadowblur victory bonus			seen:savestates-091-099	NA2_BTL@0x1E5A00	NUN5_TEXTENG@0x10410	slot	48				
+T91	1	Battle Results > Ninja Song objective or bonus	<r奥義|おうぎ>ボーナス	Ultimate Jutsu bonus			seen:savestates-091-099	NA2_BTL@0x1E5A30	NUN5_TEXTENG@0x10430	slot	32				
+T92	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>%sカウント<r以内撃破|いないげきは>ボーナス	Enemy defeated within %1 timer counts bonus			seen:savestates-091-099	NA2_BTL@0x1E5A50	NUN5_TEXTENG@0x10450	slot	64				
+T93	1	Battle Results > Ninja Song objective or bonus	キャラクター<r組|く>み<r合|あ>わせボーナス	Character combination bonus			seen:savestates-091-099	NA2_BTL@0x1E5AC0	NUN5_TEXTENG@0x104A0	slot	48				
+T94	1	Battle Results > Ninja Song objective or bonus	<r特殊連係攻撃|とくしゅれんけいこうげき>%sHitボーナス	%1 hit special linked attack bonus			seen:savestates-091-099	NA2_BTL@0x1E5AF0	NUN5_TEXTENG@0x104C0	slot	64				
+T95	1	Battle Results > Ninja Song objective or bonus	<r連係忍術|れんけいにんじゅつ>%sHitボーナス	%1 hit linked Jutsu bonus			seen:savestates-091-099	NA2_BTL@0x1E5B30	NUN5_TEXTENG@0x104F0	slot	48				
+T96	1	Battle Results > Ninja Song objective or bonus	<r連係奥義|れんけいおうぎ>%sHitボーナス	%1 hit linked Ultimate Jutsu bonus			seen:savestates-091-099	NA2_BTL@0x1E5B60	NUN5_TEXTENG@0x10510	slot	48				
+T97	1	Battle Results > Ninja Song objective or bonus	カウント	timer counts			seen:savestates-091-099	NA2_BTL@0x1E5BC0	NUN5_TEXTENG@0x10538	slot	16				
 T98	1	Character menus > Ultimate Jutsu name	<r朝孔雀|あさくじゃく>	Morning Peacock			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26180	NUN5_TEXTENG@0x33B0	slot	24				
 T99	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r影縫|かげぬ>い	Ninja Art: Shadow Sew			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26210	NUN5_TEXTENG@0x3410	slot	40				
 T100	1	Character menus > Ultimate Jutsu name	<r部分倍化|ぶぶんばいか>の<r術|じゅつ>	Partial Expansion Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x262C0	NUN5_TEXTENG@0x3490	slot	40				
@@ -227,9 +255,174 @@ T255	1	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r水龍�
 T256	1	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r大瀑布|だいばくふ>の<r術|じゅつ>	Water Style: Giant Vortex Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29EE0	NUN5_TEXTENG@0x5160	slot	64				
 T257	1	Character menus > Ultimate Jutsu name	<r千殺水翔|せんさつすいしょう>	A Thousand Needles of Death			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29F20	NUN5_TEXTENG@0x5180	slot	32				
 T258	1	Character menus > Ultimate Jutsu name	<r魔鏡氷晶|まきょうひょうしょう>	Crystal Ice Mirrors			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29F40	NUN5_TEXTENG@0x51A0	slot	52				
+T259	1	Character menus > Ultimate Jutsu name	<r鹿蝶封結|かちょうふうげつ>	Kachofuketsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x49D690	NUN5_TEXTENG@0x78F0	slot	32				
+T260	1	Character menus > Ultimate Jutsu name	<r涅槃精舎|ねはんしょうじゃ>の<r術|じゅつ>	Temple of Nirvana Technique			character:ultimate-jutsu-metadata	NA2_SLPS@0x49DE80	NUN5_TEXTENG@0x7960	slot	48				
+T261	1	Character menus > Ultimate Jutsu name	うずまきナルト<r連弾|れんだん>	Naruto Uzumaki Barrage			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD240	NUN5_TEXTENG@0x4960	slot	32				
+T262	1	Character menus > Ultimate Jutsu name	うずまきナルト<r忍法帳|にんぽうちょう>	Naruto's Ninja Handbook			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD260	NUN5_TEXTENG@0x4980	slot	48				
+T263	1	Character menus > Ultimate Jutsu name	ハヤブサ<r落|お>とし	Falcon Drop			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD290	NUN5_TEXTENG@0x49C0	slot	32				
+T264	1	Character menus > Ultimate Jutsu name	<r忌|い>まわしき<r千鳥|ちどり>	Ominous Chidori			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD2B0	NUN5_TEXTENG@0x49D0	slot	32				
+T265	1	Character menus > Ultimate Jutsu name	すい<r拳|けん>	Loopy Fist			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD2D0	NUN5_TEXTENG@0x4A78	slot	16				
+T266	1	Character menus > Ultimate Jutsu name	<r裏蓮華|うられんげ>	Hidden Lotus			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD2E0	NUN5_TEXTENG@0x4A88	slot	32				
+T267	1	Character menus > Ultimate Jutsu name	<r砂瀑大葬|さばくたいそう>	Giant Sand Burial			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD300	NUN5_TEXTENG@0x4E80	slot	32				
+T268	1	Character menus > Ultimate Jutsu name	<r砂手裏剣|すなしゅりけん>	Sand Shuriken			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD320	NUN5_TEXTENG@0x4E98	slot	32				
+T269	1	Character menus > Ultimate Jutsu name	<r影真似|かげまね>の<r術|じゅつ>	Shadow Possession Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD340	NUN5_TEXTENG@0x4B30	slot	48				
+T270	1	Character menus > Ultimate Jutsu name	<r影圧掌|かげあっしょう>の<r術|じゅつ>	Shadow Crushing Palm Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD370	NUN5_TEXTENG@0x4B50	slot	48				
+T271	1	Character menus > Ultimate Jutsu name	<r影首縛|かげくびしば>りの<r術|じゅつ>	Shadow Strangle Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD3A0	NUN5_TEXTENG@0x4B70	slot	48				
+T272	1	Character menus > Ultimate Jutsu name	<r八卦六十四掌|はっけろくじゅうよんしょう>	8 Trigrams 64 Palms			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD3D0	NUN5_TEXTENG@0x40F0	slot	48				
+T273	1	Character menus > Ultimate Jutsu name	<r八卦三百六十一式|はっけさんびゃくろくじゅういっしき>	8 Trigrams 361 Style			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD400	NUN5_TEXTENG@0x4A30	slot	64				
+T274	1	Character menus > Ultimate Jutsu name	<r絶招八門崩撃|ぜっしょうはちもんほうげき>	Last Resort: Eight Gates Assault			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD440	NUN5_TEXTENG@0x4A50	slot	48				
+T275	1	Character menus > Ultimate Jutsu name	<r負|ま>けるもんですか！	I Won't Lose!			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD470	NUN5_TEXTENG@0x49F0	slot	32				
+T276	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r雪桜|ゆきざくら>の<r舞|まい>	Ninja Art: Snow Cherry Blossom Dance			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD490	NUN5_TEXTENG@0x4A00	slot	64				
+T277	1	Character menus > Ultimate Jutsu name	<r禁術|きんじゅつ>・<r穢土封滅|えどふうめつ>	Forbidden Jutsu: Seal Destruction			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD4D0	NUN5_TEXTENG@0x4870	slot	48				
+T278	1	Character menus > Ultimate Jutsu name	<r潜影多蛇手|せんえいたじゃしゅ>	Multiple Hidden Shadow Snake Hands			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD500	NUN5_TEXTENG@0x3C70	slot	48				
+T279	1	Character menus > Ultimate Jutsu name	<r千殺水翔|せんさつすいしょう>	A Thousand Needles of Death			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD530	NUN5_TEXTENG@0x5180	slot	32				
+T280	1	Character menus > Ultimate Jutsu name	チャクラ<r開放|かいほう>	Chakra Release			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD550	NUN5_TEXTENG@0x11230	slot	32				
+T281	1	Character menus > Ultimate Jutsu name	<r魔鏡氷晶|まきょうひょうしょう>	Crystal Ice Mirrors			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD570	NUN5_TEXTENG@0x51A0	slot	48				
+T282	1	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r水龍弾|すいりゅうだん>の<r術|じゅつ>	Water Style: Water Dragon Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD5A0	NUN5_TEXTENG@0x5140	slot	64				
+T283	1	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r大瀑布|だいばくふ>の<r術|じゅつ>	Water Style: Giant Vortex Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD5E0	NUN5_TEXTENG@0x5160	slot	64				
+T284	1	Character menus > Ultimate Jutsu name	<r白眼|びゃくがん>	Byakugan			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD620	NUN5_TEXTENG@0x4CC0	slot	32				
+T285	1	Character menus > Ultimate Jutsu name	<r百烈掌|ひゃくれつしょう>	Hundred Power Palms			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD640	NUN5_TEXTENG@0x4CD0	slot	32				
+T286	1	Character menus > Ultimate Jutsu name	<r白朧天舞|はくろうてんぶ>	Heaven's Dance of Hazy White			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD660	NUN5_TEXTENG@0x4CF0	slot	32				
+T287	1	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r死球撃|しきゅうげき>	Ninja Tool: Death Sphere Strike			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD680	NUN5_TEXTENG@0x4AC0	slot	48				
+T288	1	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r襲千刃|しゅうせんじん>	Ninja Tool: Blade of 1000 Strikes			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD6B0	NUN5_TEXTENG@0x4AE0	slot	48				
+T289	1	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r浮刃壁|ふじんへき>	Ninja Tool: Floating Blade Wall			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD6E0	NUN5_TEXTENG@0x4B10	slot	48				
+T290	1	Character menus > Ultimate Jutsu name	<r部分倍化|ぶぶんばいか>の<r術|じゅつ>	Partial Expansion Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD710	NUN5_TEXTENG@0x3490	slot	48				
+T291	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r百花繚乱|ひゃっかりょうらん>	Ninja Art: Covered With Flowers			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD740	NUN5_TEXTENG@0x4BC0	slot	64				
+T292	1	Character menus > Ultimate Jutsu name	<r心乱身|しんらんしん>の<r術|じゅつ>	Mind Distraction Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD780	NUN5_TEXTENG@0x4BE0	slot	48				
+T293	1	Character menus > Ultimate Jutsu name	<r供花送|くげおく>り	Memorial Flower Sending			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD7B0	NUN5_TEXTENG@0x4C00	slot	32				
+T294	1	Character menus > Ultimate Jutsu name	<r牙通牙|がつうが>	Fang Over Fang			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD7D0	NUN5_TEXTENG@0x4C18	slot	32				
+T295	1	Character menus > Ultimate Jutsu name	<r双頭狼|そうとうろう>	Two-Headed Wolf			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD7F0	NUN5_TEXTENG@0x4C50	slot	32				
+T296	1	Character menus > Ultimate Jutsu name	<r牙狼牙|がろうが>	Wolf Fang Over Fang 			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD810	NUN5_TEXTENG@0x11240	slot	32				
+T297	1	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r颶|つむじ>	Parasitic Insects: Typhoon			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD830	NUN5_TEXTENG@0x4C60	slot	48				
+T298	1	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r簇|やじり>	Parasitic Insects: Swarm			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD860	NUN5_TEXTENG@0x4C80	slot	48				
+T299	1	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r霰|あられ>	Parasitic Insect: Hailstorm			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD890	NUN5_TEXTENG@0x11260	slot	48				
+T300	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r影役者|かげやくしゃ>	Puppet: Shadow Actor			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD8C0	NUN5_TEXTENG@0x4EB0	slot	48				
+T301	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r廻刃天穿|かいじんてんせん>	Spinning Blade Drill of Underworld			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD8F0	NUN5_TEXTENG@0x4ED0	slot	48				
+T302	1	Character menus > Ultimate Jutsu name	<r黒秘技機々一発|くろひぎききいっぱつ>	Secret Black Move: Iron Maiden			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD920	NUN5_TEXTENG@0x4F00	slot	48				
+T303	1	Character menus > Ultimate Jutsu name	<r乱|みだ>れ<r扇舞|せんぶ>	Mad Fan Dance			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD950	NUN5_TEXTENG@0x4F20	slot	32				
+T304	1	Character menus > Ultimate Jutsu name	<r大|だい>カマイタチの<r術|じゅつ>	Cyclone Scythe Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD970	NUN5_TEXTENG@0x4F30	slot	48				
+T305	1	Character menus > Ultimate Jutsu name	<r口寄|くちよ>せ・<r斬|き>り<r斬|き>り<r舞|まい>	Summoning: Blade Dance			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD9A0	NUN5_TEXTENG@0x4F50	slot	64				
+T306	1	Character menus > Ultimate Jutsu name	<r火遁|かとん>・<r豪炎螺旋丸|ごうえんらせんがん>	Fire Style: Flame Rasengan			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD9E0	NUN5_TEXTENG@0x4760	slot	64				
+T307	1	Character menus > Ultimate Jutsu name	<r双迅螺旋丸|そうじんらせんがん>	Double Rapid Rasengan			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADA20	NUN5_TEXTENG@0x4780	slot	48				
+T308	1	Character menus > Ultimate Jutsu name	<r金剛牢壁|こんごうろうへき>	Adamantine Nyoi Prison			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADA50	NUN5_TEXTENG@0x4DF0	slot	32				
+T309	1	Character menus > Ultimate Jutsu name	<r封印術|ふういんじゅつ>・<r屍鬼封尽|しきふうじん>	Sealing Jutsu: Reaper Death Seal			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADA70	NUN5_TEXTENG@0x4E10	slot	64				
+T310	1	Character menus > Ultimate Jutsu name	<r封印術|ふういんじゅつ>・<r三方封印|さんぽうふういん>	Sealing Jutsu: Triangle Seal			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADAB0	NUN5_TEXTENG@0x4E40	slot	64				
+T311	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r創造再生|そうぞうさいせい>	Ninja Art: Mitotic Regeneration			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADAF0	NUN5_TEXTENG@0x47C0	slot	48				
+T312	1	Character menus > Ultimate Jutsu name	<r火影|ほかげ>の<r力|ちから>	Hokage's Power			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADB20	NUN5_TEXTENG@0x47E0	slot	32				
+T313	1	Character menus > Ultimate Jutsu name	トントンコンビ	Tonton Duo			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADB40	NUN5_TEXTENG@0x4818	slot	16				
+T314	1	Character menus > Ultimate Jutsu name	<r大交衝|だいこうしょう>	Great Cross Slash			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADB50	NUN5_TEXTENG@0x112B0	slot	32				
+T315	1	Character menus > Ultimate Jutsu name	<r死魂|しこん>の<r術|じゅつ>	Dead Soul Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADB70	NUN5_TEXTENG@0x48B0	slot	32				
+T316	1	Character menus > Ultimate Jutsu name	チャクラ<r解剖刀|メス>・<r壊|カイ>	Chakra Dissection Blade: Destroy			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADB90	NUN5_TEXTENG@0x48C0	slot	48				
+T317	1	Character menus > Ultimate Jutsu name	<r土遁|どとん>・<r土陸返|どろくがえ>し	Earth Style: Terra Shield			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADBC0	NUN5_TEXTENG@0x50F0	slot	48				
+T318	1	Character menus > Ultimate Jutsu name	<r雨蜘蛛|あまグモ>	Raining Spider			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADBF0	NUN5_TEXTENG@0x50A0	slot	32				
+T319	1	Character menus > Ultimate Jutsu name	<r毒舌|どくぜつ>コンボ	Tongue-Lash Combo			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADC10	NUN5_TEXTENG@0x5040	slot	32				
+T320	1	Character menus > Ultimate Jutsu name	<r口寄|くちよ>せ・<r羅生門|ラショウモン>　<r奈落|ならく>	Summoning: Rashomon, Abyss			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADC30	NUN5_TEXTENG@0x4FD0	slot	64				
+T321	1	Character menus > Ultimate Jutsu name	<r八重葎|やえむぐら>の<r舞|まい>	Galium Spurium Dance			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADC70	NUN5_TEXTENG@0x4F70	slot	48				
+T322	1	Character menus > Ultimate Jutsu name	<r飛雷神|ひらいしん>の<r術|じゅつ>	Flying Thunder God Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADCA0	NUN5_TEXTENG@0x4E60	slot	48				
+T323	1	Character menus > Ultimate Jutsu name	<r突撃|とつげき>！　<r木|こ>ノ<r葉丸|はまる><r軍団|ぐんだん>！	Charge! Konohamaru Ninja Squad!			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADCD0	NUN5_TEXTENG@0x4D30	slot	64				
+T324	1	Character menus > Ultimate Jutsu name	<r柔拳指南|じゅうけんしなん>	Gentle Fist Instruction			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADD10	NUN5_TEXTENG@0x4D10	slot	32				
+T325	1	Character menus > Ultimate Jutsu name	<r金剛力|こんごうりき>・<r不動|ふどう>	Adamantine Power, Acala			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADD30	NUN5_TEXTENG@0x11310	slot	48				
+T326	1	Character menus > Ultimate Jutsu name	<r木遁秘術|もくとんひじゅつ>・<r樹界降誕|じゅかいこうたん>	Secret Wood Style Jutsu: Deep Forest Emergence			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADD60	NUN5_TEXTENG@0x4D90	slot	64				
+T327	1	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r硬渦水刃|こうかすいじん>	Water Style: Hardened Water Drill			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADDA0	NUN5_TEXTENG@0x4DC0	slot	48				
+T328	1	Character menus > Ultimate Jutsu name	<r飛燕|ひえん>	Flying Swallow			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADDD0	NUN5_TEXTENG@0x42F8	slot	16				
+T329	1	Character menus > Ultimate Jutsu name	<r魔幻|まげん>・<r樹縛殺|じゅばくさつ>	Evil Illusion: Tree Capture Death			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADDE0	NUN5_TEXTENG@0x43A0	slot	48				
+T330	1	Character menus > Ultimate Jutsu name	<r双蛇相殺|そうじゃそうさい>の<r術|じゅつ>	Twin Snake Sacrifice Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADE10	NUN5_TEXTENG@0x4D50	slot	48				
+T331	1	Character menus > Ultimate Jutsu name	<r九尾螺旋丸|きゅうびらせんがん>	The Nine-Tailed Rasengan			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADE40	NUN5_TEXTENG@0x49A0	slot	48				
+T332	1	Character menus > Ultimate Jutsu name	<r呪|のろ>われし<r力|ちから>	Cursed Power			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADE70	NUN5_TEXTENG@0x49E0	slot	32				
+T333	1	Character menus > Ultimate Jutsu name	<r突|つ>き<r抜|ぬ>ける<r熱|あつ>き<r思|おも>い	Smashing Passion			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADE90	NUN5_TEXTENG@0x4AA0	slot	48				
+T334	1	Character menus > Ultimate Jutsu name	<r蝶弾爆撃|ちょうだんばくげき>	Butterfly Bomb			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADEC0	NUN5_TEXTENG@0x4BB0	slot	32				
+T335	1	Character menus > Ultimate Jutsu name	<r羅漢拳|らかんけん>	Arhat Fist			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADEE0	NUN5_TEXTENG@0x5130	slot	32				
+T336	1	Character menus > Ultimate Jutsu name	<r蜘蛛戦弓|クモせんきゅう>・<r凄裂|スザク>	Spider Bow: Fierce Rip			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADF00	NUN5_TEXTENG@0x50D0	slot	48				
+T337	1	Character menus > Ultimate Jutsu name	<r魔笛|まてき>・<r三従葬曲|さんじゅうそうきょく>	Demon Flute: Trio Requiem			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADF30	NUN5_TEXTENG@0x5080	slot	64				
+T338	1	Character menus > Ultimate Jutsu name	<r左塵掌|さじんしょう>・<r右裂脚|うれつきゃく>	Left Dust Strike, Right Severing Kick			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADF70	NUN5_TEXTENG@0x11330	slot	48				
+T339	1	Character menus > Ultimate Jutsu name	<r鉄線花|てっせんか>の<r舞|まい>・<r花|はな>	Clematis Dance: Flower			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADFA0	NUN5_TEXTENG@0x4FB0	slot	48				
+T340	1	Character menus > Ultimate Jutsu name	<r大玉螺旋丸|おおだまらせんがん>	Great Ball Rasengan			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADFD0	NUN5_TEXTENG@0x3F00	slot	48				
+T341	1	Character menus > Ultimate Jutsu name	<r漏|も>れ<r出|だ>す<r力|ちから>	Overflowing Power			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE000	NUN5_TEXTENG@0x3F20	slot	48				
+T342	1	Character menus > Ultimate Jutsu name	<r変|か>わらない<r関係|かんけい>	Unchanging Relationship			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE030	NUN5_TEXTENG@0x3F60	slot	48				
+T343	1	Character menus > Ultimate Jutsu name	<r春|はる>の<r蹴来|しゅうらい>	Coming of Spring Kick 			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE060	NUN5_TEXTENG@0x11360	slot	32				
+T344	1	Character menus > Ultimate Jutsu name	キラキラ<r乙女心|おとめごころ>	Twinkling Maiden's Heart			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE080	NUN5_TEXTENG@0x3FA0	slot	32				
+T345	1	Character menus > Ultimate Jutsu name	<r大地割|だいちわ>り	Earth Chop			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE0A0	NUN5_TEXTENG@0x3FC0	slot	32				
+T346	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r桜舞|サクラマイ>	Puppet: Cherry Blossom Dance			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE0C0	NUN5_TEXTENG@0x3FD0	slot	48				
+T347	1	Character menus > Ultimate Jutsu name	<r砂縛牢|さばくろう>	Sand Prison			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE0F0	NUN5_TEXTENG@0x43C8	slot	32				
+T348	1	Character menus > Ultimate Jutsu name	<r最硬絶対攻撃|さいこうぜったいこうげき>・<r砂瀑槍葬|さばくそうそう>	Hardest Ultimate Attack: Sand Spear Funeral			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE110	NUN5_TEXTENG@0x11380	slot	80				
+T349	1	Character menus > Ultimate Jutsu name	<r滅砂瀑葬|めっさばくそう>	Destructive Sand Burial			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE160	NUN5_TEXTENG@0x4400	slot	32				
+T350	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r骸烏|ムクロガラス>	Puppet: Crow Corpse			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE180	NUN5_TEXTENG@0x4420	slot	48				
+T351	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r鬼城|きじょう>の<r面|めん>	Puppet: Mask of Demon Castle			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE1B0	NUN5_TEXTENG@0x4440	slot	48				
+T352	1	Character menus > Ultimate Jutsu name	<r黒秘技三大狂言|くろひぎさんだいきょうげん>	Secret Black Move: Three Major Plays			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE1E0	NUN5_TEXTENG@0x113B0	slot	48				
+T353	1	Character menus > Ultimate Jutsu name	<r豪風暴壁|ごうふうぼうへき>	Gale Raging Wall			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE210	NUN5_TEXTENG@0x4480	slot	32				
+T354	1	Character menus > Ultimate Jutsu name	<r練空踊扇|れんくうようせん>	Air Polish Dancing Fan			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE230	NUN5_TEXTENG@0x44A0	slot	32				
+T355	1	Character menus > Ultimate Jutsu name	<r口寄|くちよ>せ・<r扇舞降|せんまいお>ろし	Summoning: Fan Dance Drop			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE250	NUN5_TEXTENG@0x44C0	slot	48				
+T356	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r父|ちち>と<r母|はは>	Puppet: Father and Mother			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE280	NUN5_TEXTENG@0x44F0	slot	48				
+T357	1	Character menus > Ultimate Jutsu name	<r十機近松|じっきちかまつ>の<r集|しゅう>・<r三宝吸潰|さんぼうきゅうかい>	Ten Puppet Collection: Three Treasures Vacuum			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE2B0	NUN5_TEXTENG@0x113E0	slot	80				
+T358	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r砂鉄獄塊|さてつごっかい>	Puppet: Iron Sand Cluster			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE300	NUN5_TEXTENG@0x46E0	slot	48				
+T359	1	Character menus > Ultimate Jutsu name	<r合殺芸術|がっさいげいじゅつ>	Combined Killing Art			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE330	NUN5_TEXTENG@0x4640	slot	32				
+T360	1	Character menus > Ultimate Jutsu name	<r芸術|げいじゅつ>	Art			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE350	NUN5_SLES@0x5140F0	slot	32				
+T361	1	Character menus > Ultimate Jutsu name	<r自爆分身|じばくぶんしん>	Exploding Clone			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE370	NUN5_TEXTENG@0x4620	slot	32				
+T362	1	Character menus > Ultimate Jutsu name	<r十八番|オハコ>・<rＣ３|シースリー>	Sure-Fire: C3			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE390	NUN5_TEXTENG@0x4630	slot	48				
+T363	1	Character menus > Ultimate Jutsu name	<r八卦四天空掌|はっけしてんくうしょう>	8 Trigrams 4 Sky Palms 			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE3C0	NUN5_TEXTENG@0x11410	slot	48				
+T364	1	Character menus > Ultimate Jutsu name	<r八卦破山撃|はっけはざんげき>	8 Trigrams Mountain Break Attack			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE3F0	NUN5_TEXTENG@0x11430	slot	32			NA2_SLPS@0x4AF844	
+T365	1	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r廻燕劇|かいえんげき>	Ninja Tool: Spinning Swallow Show			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE410	NUN5_TEXTENG@0x4190	slot	48				
+T366	1	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r大鉄塊|だいてっかい>	Ninja Tool: Giant Iron Lump			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE440	NUN5_TEXTENG@0x41C0	slot	48				
+T367	1	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r天鋼災|てんこうさい>	Ninja Tool: Heavenly Metal Disaster			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE470	NUN5_TEXTENG@0x41E0	slot	48				
+T368	1	Character menus > Ultimate Jutsu name	<r木|こ>ノ<r葉旋光|はせんこう>	Leaf Spiral Light			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE4A0	NUN5_TEXTENG@0x4130	slot	32				
+T369	1	Character menus > Ultimate Jutsu name	<r青春|せいしゅん>フルパワー！！	Full Power of Youth!! 			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE4C0	NUN5_TEXTENG@0x11460	slot	48				
+T370	1	Character menus > Ultimate Jutsu name	<r裏蓮華|うられんげ>・あの<r夕日|ゆうひ>に<r向|む>かって	Hidden Lotus: Facing the Sunset			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE4F0	NUN5_TEXTENG@0x11480	slot	64				
+T371	1	Character menus > Ultimate Jutsu name	ＩＱ２００	IQ 200			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE530	NUN5_SLES@0x5140E8	slot	16				
+T372	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r影煙幕|かげえんまく>の<r術|じゅつ>	Ninja Art: Shadow Smoke Screen Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE540	NUN5_TEXTENG@0x114A0	slot	64				
+T373	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r影縫|かげぬ>い	Ninja Art: Shadow Sew			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE580	NUN5_TEXTENG@0x3410	slot	48				
+T374	1	Character menus > Ultimate Jutsu name	<r自分|じぶん>ルール・じゃんけん<r編|へん>　	Self-Rule, Episode of Scissors-Paper-Rock			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE5B0	NUN5_TEXTENG@0x114D0	slot	48				
+T375	1	Character menus > Ultimate Jutsu name	<r自分|じぶん>ルール・<r青春編|せいしゅんへん>	Self-Rule, Episode of Youth			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE5E0	NUN5_TEXTENG@0x11500	slot	48				
+T376	1	Character menus > Ultimate Jutsu name	<r朝孔雀|あさくじゃく>	Morning Peacock			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE610	NUN5_TEXTENG@0x33B0	slot	32				
+T377	1	Character menus > Ultimate Jutsu name	<r雷切|らいきり>・<r一尖|いっせん>	Lightning Blade, Single Sharpness 			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE630	NUN5_TEXTENG@0x11520	slot	48				
+T378	1	Character menus > Ultimate Jutsu name	<r土遁|どとん>・<r裂穿牙|れっせんが>	Earth Style: Ripping Drill Fang			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE660	NUN5_TEXTENG@0x4090	slot	48				
+T379	1	Character menus > Ultimate Jutsu name	コピー<r忍術|にんじゅつ>	Ninja Art: Copy Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE690	NUN5_TEXTENG@0x40B0	slot	32				
+T380	1	Character menus > Ultimate Jutsu name	<r火遁|かとん>・<r豪焔球|ごうえんきゅう>	Fire Style: Blaze Ball 			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE6B0	NUN5_TEXTENG@0x11550	slot	48				
+T381	1	Character menus > Ultimate Jutsu name	<r幻術|げんじゅつ>・<r泡沫|うたかた>	Genjutsu: Bubbles			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE6E0	NUN5_TEXTENG@0x4550	slot	48				
+T382	1	Character menus > Ultimate Jutsu name	<r瞳術|どうじゅつ>・<r威凪|いさなぎ>	Visual Jutsu: Powerful Calm			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE710	NUN5_TEXTENG@0x4570	slot	48				
+T383	1	Character menus > Ultimate Jutsu name	<r最凶|さいきょう>の<r刺客|しかく>	The Baddest Assassins			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE740	NUN5_TEXTENG@0x4590	slot	48				
+T384	1	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r五食鮫|ごしょくざめ>	Water Style: Five Hungry Sharks			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE770	NUN5_TEXTENG@0x45B0	slot	48				
+T385	1	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r無限鮫|むげんざめ>	Water Style: Infinite Shark			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE7A0	NUN5_TEXTENG@0x45D0	slot	48				
+T386	1	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r爆水衝波|ばくすいしょうは>	Water Style: Exploding Water Shock Wave			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE7D0	NUN5_TEXTENG@0x45F0	slot	48				
+T387	1	Character menus > Ultimate Jutsu name	<r妖狐|ようこ>の<r衣|ころも>	Nine-Tail's Cloak			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE800	NUN5_TEXTENG@0x3F40	slot	32				
+T388	1	Character menus > Ultimate Jutsu name	<r赤秘技|あかひぎ>・<r百機|ひゃっき>の<r操演|そうえん>	Red Secret Technique: Performance of a Hundred Puppets			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE820	NUN5_TEXTENG@0x4720	slot	64				
+T389	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>の<r術|じゅつ>・<r尾沙悶|びしゃもん>	Puppet Jutsu: Tail Crash Blow			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE860	NUN5_TEXTENG@0x4660	slot	64				
+T390	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>の<r術|じゅつ>・<r義手千本|ぎしゅせんぼん>	Puppet Jutsu: 1000 Mechanical Arms 			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE8A0	NUN5_TEXTENG@0x11570	slot	64				
+T391	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>の<r術|じゅつ>・<r重刃庫|じゅうばこ>	Puppet Jutsu: Multiple Blade Box			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE8E0	NUN5_TEXTENG@0x46B0	slot	64				
+T392	1	Character menus > Ultimate Jutsu name	<r息子|むすこ>の<r仇|かたき>！？	Son's Revenge!?			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE920	NUN5_TEXTENG@0x115A0	slot	48				
+T393	1	Character menus > Ultimate Jutsu name	<r爪迅狼牙|そうじんろうが>	Swift Claw Wolf Fang			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE950	NUN5_TEXTENG@0x4330	slot	32				
+T394	1	Character menus > Ultimate Jutsu name	<r天双牙|てんそうが>	Dual Wolf Fangs			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE970	NUN5_TEXTENG@0x4350	slot	32				
+T395	1	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r蝕|しょく>	Parasitic Insects: Digest			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE990	NUN5_TEXTENG@0x4360	slot	48				
+T396	1	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r虚|うつろ>	Parasitic Insects: Deception			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE9C0	NUN5_TEXTENG@0x4380	slot	48				
+T397	1	Character menus > Ultimate Jutsu name	<r八卦掌空天|はっけしょうくうてん>	8 Trigrams Sky Palm			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AE9F0	NUN5_TEXTENG@0x3230	slot	48				
+T398	1	Character menus > Ultimate Jutsu name	<r部分超倍化|ぶぶんちょうばいか>の<r術|じゅつ>	Super Expansion Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEA20	NUN5_TEXTENG@0x4260	slot	48				
+T399	1	Character menus > Ultimate Jutsu name	<r超|ちょう>・<r肉弾戦車|にくだんせんしゃ>	Super Human Boulder			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEA50	NUN5_TEXTENG@0x4280	slot	48				
+T400	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r月下美人|げっかびじん>	Ninja Art: Queen of the Night			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEA80	NUN5_TEXTENG@0x42C0	slot	48				
+T401	1	Character menus > Ultimate Jutsu name	<r蝶針火|ちょうしんか>	Butterfly Needle Flame			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEAB0	NUN5_TEXTENG@0x42E0	slot	32				
+T402	1	Character menus > Ultimate Jutsu name	<r火遁|かとん>・<r消|け>し<r幕|まく>が<r原|はら>	Fire Style: Vanishing Attack			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEAD0	NUN5_TEXTENG@0x47A0	slot	64				
+T403	1	Character menus > Ultimate Jutsu name	<r地流|じながれ>	Mudslide			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEB10	NUN5_TEXTENG@0x47F0	slot	32				
+T404	1	Character menus > Ultimate Jutsu name	<r渦旋風火|かせんふうか>の<r術|じゅつ>	Fire Whirlwind Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEB30	NUN5_TEXTENG@0x4310	slot	48				
+T405	1	Character menus > Ultimate Jutsu name	<r蟒蛇|うわばみ>	Uwabami			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEB60	NUN5_SLES@0x5140F8	slot	32				
+T406	1	Character menus > Ultimate Jutsu name	<r二凪|ふたなぎ>ノ<r草薙|くさなぎ>	Double Kusanagi			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEB80	NUN5_TEXTENG@0x48A0	slot	48				
+T407	1	Character menus > Ultimate Jutsu name	<r死術|しじゅつ>・<r帰魂遊戯|きこんゆうぎ>	Death Technique: Soul Return			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEBB0	NUN5_TEXTENG@0x48F0	slot	48				
+T408	1	Character menus > Ultimate Jutsu name	<r木遁|もくとん>・<r飛乃木|ひのき>	Wood Style: Flying Tree			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEBE0	NUN5_TEXTENG@0x4830	slot	48				
+T409	1	Character menus > Ultimate Jutsu name	<r木遁|もくとん>・<r梁木|やなぎ>	Wood Style: Tree Columns			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEC10	NUN5_TEXTENG@0x4850	slot	48				
+T410	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r白描|はくびょう>	Ninja Art: Beast Scroll Replicas @White Picture@			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEC40	NUN5_TEXTENG@0x3FF0	slot	80				
+T411	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r龍|りゅう>	Ninja Art: Beast Scroll Replicas @Dragon@			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEC90	NUN5_TEXTENG@0x4030	slot	64				
+T412	1	Character menus > Ultimate Jutsu name	<r草薙|くさなぎ>の<r舞|まい>	Dance of Kusanagi			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AECD0	NUN5_TEXTENG@0x4910	slot	32				
+T413	1	Character menus > Ultimate Jutsu name	<r翔|か>け<r鳥崩|どりくず>し	Darting Bird Crusher			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AECF0	NUN5_TEXTENG@0x4930	slot	32				
+T414	1	Character menus > Ultimate Jutsu name	<r千鳥|ちどり>・<r雷鳴|らいめい>	Chidori Thunder			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AED10	NUN5_TEXTENG@0x4950	slot	48				
 T415	1	Character Select > Linked Mode selector value	<r連係|れんけい>モード	Linked Mode			seen:replacement-pass-2-2026-07-26 paired screenshot	NA2_SLPS@0x4B4310	NUN5_TEXTENG@0x1E60	slot	24				
 T416	1	Character Select > Linked Mode selector value	マニュアル	Manual			seen:replacement-pass-2-2026-07-26 paired screenshot	NA2_SLPS@0x4B4328	NUN5_SLES@0x513F10	slot	16				
 T417	1	Character Select > Linked Mode selector value	オート	Auto			seen:replacement-pass-2-2026-07-26 paired screenshot	NA2_SLPS@0x504908	NUN5_SLES@0x513F18	slot	8				
+T418	1	Character Select > player-control mode or return item	 １Ｐ　ｖｓ　２Ｐ	1P vs. 2P			inferred:character-select-control-mode-table	NA2_SLPS@0x4B4150	NUN5_TEXTENG@0x1D88	slot	32				
+T419	1	Character Select > player-control mode or return item	 １Ｐ　ｖｓ ＣＯＭ	1P vs. COM			inferred:character-select-control-mode-table	NA2_SLPS@0x4B4170	NUN5_TEXTENG@0x1D98	slot	32				
+T420	1	Character Select > player-control mode or return item	ＣＯＭ ｖｓ　２Ｐ	COM vs. 2P			inferred:character-select-control-mode-table	NA2_SLPS@0x4B4190	NUN5_TEXTENG@0x1DA8	slot	32				
+T421	1	Character Select > player-control mode or return item	ＣＯＭ ｖｓ ＣＯＭ	COM vs. COM			inferred:character-select-control-mode-table	NA2_SLPS@0x4B41B0	NUN5_TEXTENG@0x1DB8	slot	32				
+T422	1	Character Select > player-control mode or return item	ゲームモード<r選択|せんたく>に<r戻|もど>る	Back to Game Mode Screen			inferred:character-select-control-mode-table	NA2_SLPS@0x4B41D0	NUN5_TEXTENG@0x900	slot	48				
+T423	1	Character Select > return confirmation	ゲームモード<r選択|せんたく>に<r戻|もど>りますか？	Return to Game Mode Screen?			inferred:character-select-return-table	NA2_SLPS@0x4B4220	NUN5_TEXTENG@0x1DF0	slot	64				
+T424	1	Character Select > return confirmation	タイトルに<r戻|もど>りますか？	Return to Title Screen?			inferred:character-select-return-table	NA2_SLPS@0x4B4260	NUN5_TEXTENG@0x1C90	slot	32				
+T425	1	Character Select > return confirmation	<r任務|にんむ><r選択|せんたく>に<r戻|もど>りますか？	Return to Mission Select?			inferred:character-select-return-table	NA2_SLPS@0x4B4280	NUN5_TEXTENG@0x1E10	slot	64				
+T426	1	Character Select > return confirmation	<r種目選択|しゅもくせんたく>に<r戻|もど>りますか？	Return to Event Select?			inferred:character-select-return-table	NA2_SLPS@0x4B42C0	NUN5_TEXTENG@0x1E30	slot	64				
 T427	1	Character selectors > character or variant name	うずまきナルト	Naruto Uzumaki			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24F98	NUN5_TEXTENG@0x4D8	slot	24				
 T428	1	Character selectors > character or variant name	<r春野|はるの>サクラ	Sakura Haruno			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24FB0	NUN5_TEXTENG@0x4E8	slot	24				
 T429	1	Character selectors > character or variant name	はたけカカシ	Kakashi Hatake			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24FC8	NUN5_TEXTENG@0x568	slot	24				
@@ -247,15 +440,19 @@ T440	1	Character selectors > character or variant name	<r日向|ひゅうが>ヒ
 T441	1	Character selectors > character or variant name	<r夕日|ゆうひ><r紅|くれない>	Kurenai Yuhi			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25110	NUN5_TEXTENG@0x678	slot	32				
 T442	1	Character selectors > character or variant name	<r風影|かぜかげ>・<r我愛羅|ガアラ>	Kazekage Gaara			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25130	NUN5_TEXTENG@0x4F8	slot	40				
 T443	1	Character selectors > character or variant name	カンクロウ	Kankuro			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25158	NUN5_SLES@0x513D88	slot	24				
+T444	1	Character selectors > character or variant name	チヨバア（<r体術|たいじゅつ>）	Granny Chiyo (Taijutsu)			character:roster-name-table	NA2_ETC@0x25170	NUN5_TEXTENG@0x600	slot	32				
 T445	1	Character selectors > character or variant name	うちはイタチ	Itachi Uchiha			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25190	NUN5_TEXTENG@0x578	slot	16				
 T446	1	Character selectors > character or variant name	<r干柿鬼鮫|ほしがきキサメ>	Kisame Hoshigaki			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x251A0	NUN5_TEXTENG@0x590	slot	32				
 T447	1	Character selectors > character or variant name	デイダラ	Deidara			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x251C0	NUN5_TEXTENG@0x254F8	slot	16				
+T448	1	Character selectors > character or variant name	サソリ・ヒルコ	Sasori (Hiruko)			character:roster-name-table	NA2_ETC@0x251D0	NUN5_TEXTENG@0x5F0	slot	16				
 T449	1	Character selectors > character or variant name	チヨバア	Granny Chiyo			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x251E0	NUN5_TEXTENG@0x508	slot	16				
 T450	1	Character selectors > character or variant name	<r自来也|じらいや>	Jiraiya			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x251f0	NUN5_SLES@0x513df0	slot	24				
 T451	1	Character selectors > character or variant name	<r綱手|ツナデ>	Tsunade			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25208	NUN5_TEXTENG@0x29DE	slot	24				
 T452	1	Character selectors > character or variant name	<r大蛇丸|オロチまる>	Orochimaru			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25220	NUN5_TEXTENG@0x688	slot	32				
 T453	1	Character selectors > character or variant name	<r薬師|やくし>カブト	Kabuto Yakushi			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25240	NUN5_TEXTENG@0x698	slot	24				
 T454	1	Character selectors > character or variant name	うちはサスケ	Sasuke Uchiha			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25258	NUN5_TEXTENG@0x6A8	slot	24				
+T455	1	Character selectors > character or variant name	<r九尾第四覚醒状態|きゅうびだいよんかくせいじょうたい>	Nine-Tailed Fourth Awakened State			character:roster-name-table	NA2_ETC@0x25270	NUN5_TEXTENG@0x5B0	slot	64				
+T456	1	Character selectors > character or variant name	サソリ（<r自分傀儡|じぶんくぐつ>）	Sasori (Puppet)			character:roster-name-table	NA2_ETC@0x252B0	NUN5_TEXTENG@0x5E0	slot	48				
 T457	1	Character selectors > character or variant name	うずまきナルト（<r旧章|きゅうしょう>）	N. Uzumaki (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x252E0	NUN5_TEXTENG@0x100	slot	48				
 T458	1	Character selectors > character or variant name	うちはサスケ（<r旧章|きゅうしょう>）	S. Uchiha (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25310	NUN5_TEXTENG@0x120	slot	48				
 T459	1	Character selectors > character or variant name	<r春野|はるの>サクラ（<r旧章|きゅうしょう>）	S. Haruno (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25340	NUN5_TEXTENG@0x1C0	slot	48				
@@ -285,12 +482,50 @@ T482	1	Character selectors > character or variant name	<r鬼童丸|キドウマ�
 T483	1	Character selectors > character or variant name	<r次郎坊|ジロウボウ>	Jirobo			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25720	NUN5_TEXTENG@0x44D	slot	32				
 T484	1	Character selectors > character or variant name	<r桃地|ももち><r再不斬|ザブザ>	Zabuza Momochi			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25740	NUN5_TEXTENG@0x1D8	slot	32				
 T485	1	Character selectors > character or variant name	<r白|ハク>	Haku			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25760	NUN5_SLES@0x513d48	slot	16				
+T486	1	Character selectors > character or variant name	うずまきナルト（<r九尾|きゅうび>）	Naruto Uzumaki (Nine-Tailed)			character:roster-name-table	NA2_ETC@0x25770	NUN5_TEXTENG@0x3D0	slot	48				
+T487	1	Character selectors > character or variant name	うちはサスケ<r状態|じょうたい>２	Second Stage Sasuke Uchiha			character:roster-name-table	NA2_ETC@0x257A0	NUN5_TEXTENG@0x3F0	slot	48				
+T488	1	Character selectors > character or variant name	すい<r拳|けん>リー	Loopy Fist Lee			character:roster-name-table	NA2_ETC@0x257D0	NUN5_TEXTENG@0x410	slot	32				
+T489	1	Character selectors > character or variant name	<r憑依体我愛羅|ひょういたいガアラ>	Possessed Gaara			character:roster-name-table	NA2_ETC@0x257F0	NUN5_TEXTENG@0x420	slot	48				
+T490	1	Character selectors > character or variant name	<r超|ちょう>チョウジ	Super Choji			character:roster-name-table	NA2_ETC@0x25820	NUN5_TEXTENG@0x430	slot	32				
+T491	1	Character selectors > character or variant name	<r次郎坊|ジロウボウ><r状態|じょうたい>２	Second Stage Jirobo			character:roster-name-table	NA2_ETC@0x25840	NUN5_TEXTENG@0x440	slot	48				
+T492	1	Character selectors > character or variant name	<r鬼童丸|キドウマル><r状態|じょうたい>２	Second Stage Kidomaru			character:roster-name-table	NA2_ETC@0x25870	NUN5_TEXTENG@0x460	slot	48				
+T493	1	Character selectors > character or variant name	<r多由也|タユヤ><r状態|じょうたい>２	Second Stage Tayuya			character:roster-name-table	NA2_ETC@0x258A0	NUN5_TEXTENG@0x480	slot	48				
+T494	1	Character selectors > character or variant name	<r左近|サコン><r状態|じょうたい>２	Second Stage Sakon			character:roster-name-table	NA2_ETC@0x258D0	NUN5_TEXTENG@0x4A0	slot	48				
+T495	1	Character selectors > character or variant name	<r君麻呂|キミマロ><r状態|じょうたい>２	Second Stage Kimimaro			character:roster-name-table	NA2_ETC@0x25900	NUN5_TEXTENG@0x4C0	slot	40				
+T496	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x502DF0	NUN5_SLES@0x513D18	slot	8				
+T497	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x5032F8	NUN5_SLES@0x513D18	slot	8				
+T498	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x505F48	NUN5_SLES@0x513D18	slot	8				
+T499	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x5063A8	NUN5_SLES@0x513D18	slot	8				
+T500	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x506450	NUN5_SLES@0x513D18	slot	8				
+T501	1	Character selectors > character or variant name	サクラ	Sakura			character:roster-name-table	NA2_SLPS@0x506458	NUN5_SLES@0x4AFEDC	slot	8				
+T502	1	Character selectors > character or variant name	カカシ	Kakashi			character:roster-name-table	NA2_SLPS@0x506460	NUN5_SLES@0x513DD8	slot	8				
+T503	1	Character selectors > character or variant name	ネジ	Neji			character:roster-name-table	NA2_SLPS@0x506468	NUN5_SLES@0x513D38	slot	8				
+T504	1	Character selectors > character or variant name	サイ	Sai			character:roster-name-table	NA2_SLPS@0x506470	NUN5_SLES@0x513E28	slot	8				
+T505	1	Character selectors > character or variant name	サスケ	Sasuke			character:roster-name-table	NA2_SLPS@0x506478	NUN5_SLES@0x513D20	slot	8				
+T506	1	Character selectors > character or variant name	シズネ	Shizune			character:roster-name-table	NA2_SLPS@0x506480	NUN5_SLES@0x513E00	slot	8				
+T507	1	Character selectors > character or variant name	アスマ	Asuma			character:roster-name-table	NA2_SLPS@0x506488	NUN5_SLES@0x513E08	slot	8				
+T508	1	Character selectors > character or variant name	テマリ	Temari			character:roster-name-table	NA2_SLPS@0x506490	NUN5_SLES@0x513D90	slot	8				
+T509	1	Character selectors > character or variant name	ヤマト	Yamato			character:roster-name-table	NA2_SLPS@0x506498	NUN5_SLES@0x513E20	slot	8				
+T510	1	Character selectors > character or variant name	リー	Lee			character:roster-name-table	NA2_SLPS@0x5064A0	NUN5_SLES@0x513D28	slot	8				
+T511	1	Character selectors > character or variant name	ガイ	Guy			character:roster-name-table	NA2_SLPS@0x5064A8	NUN5_SLES@0x513DD0	slot	8				
+T512	1	Character selectors > character or variant name	いの	Ino			character:roster-name-table	NA2_SLPS@0x5064B0	NUN5_SLES@0x513D70	slot	8				
+T513	1	Character selectors > character or variant name	キバ	Kiba			character:roster-name-table	NA2_SLPS@0x5064B8	NUN5_SLES@0x513D78	slot	8				
+T514	1	Character selectors > character or variant name	シノ	Shino			character:roster-name-table	NA2_SLPS@0x5064C0	NUN5_SLES@0x513D80	slot	8				
+T515	1	Character selectors > character or variant name	ヒナタ	Hinata			character:roster-name-table	NA2_SLPS@0x5064C8	NUN5_SLES@0x513D58	slot	8				
+T516	1	Character selectors > character or variant name	サイ	Sai			character:roster-name-table	NA2_SLPS@0x506650	NUN5_SLES@0x513E28	slot	8				
+T517	1	Character selectors > character or variant name	テマリ	Temari			character:roster-name-table	NA2_SLPS@0x506658	NUN5_SLES@0x513D90	slot	8				
+T518	1	Character selectors > character or variant name	サソリ	Sasori			character:roster-name-table	NA2_SLPS@0x506660	NUN5_SLES@0x513DC0	slot	8				
+T519	1	Character selectors > character or variant name	シズネ	Shizune			character:roster-name-table	NA2_SLPS@0x506668	NUN5_SLES@0x513E00	slot	8				
+T520	1	Character selectors > character or variant name	ヤマト	Yamato			character:roster-name-table	NA2_SLPS@0x506670	NUN5_SLES@0x513E20	slot	8				
+T521	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x506B10	NUN5_SLES@0x513D18	slot	8				
 T522	1	Character selectors > character or variant name	サイ	Sai			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x506fe0	NUN5_SLES@0x513e28	slot	8				
 T523	1	Character selectors > character or variant name	テマリ	Temari			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x506fe8	NUN5_SLES@0x513d90	slot	8				
 T524	1	Character selectors > character or variant name	サソリ	Sasori			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x506ff0	NUN5_SLES@0x513dc0	slot	8				
 T525	1	Character selectors > character or variant name	シズネ	Shizune			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x506ff8	NUN5_SLES@0x513e00	slot	8				
 T526	1	Character selectors > character or variant name	ヤマト	Yamato			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x507000	NUN5_SLES@0x513e20	slot	8				
 T527	1	Collection > category label	シミュレーション	Simulation			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2DDA0	NUN5_TEXTENG@0x3E78	slot	24				
+T528	1	Collection > Characters > selector label	<r対戦相手|たいせんあいて>	Opponent			seen:final-acceptance-slot-001	NA2_ETC@0x2EE50	NUN5_TEXTENG@0x778	slot	32				
+T529	1	Collection > Figures > character animation title	ジオラマ	Diorama			character:figure-animation-identifier	NA2_ETC@0x25928	NUN5_ETC@0x28959	slot	28				
 T530	1	Collection > Figures > character animation title	オッス！	Right!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25CD8	NUN5_SLES@0x513F60	slot	16				
 T531	1	Collection > Figures > character animation title	<r影分身|かげぶんしん>の<r術|じゅつ>	Shadow Clone Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25D00	NUN5_TEXTENG@0x3030	slot	40				
 T532	1	Collection > Figures > character animation title	<r暴走|ぼうそう>	Running Wild			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25D40	NUN5_TEXTENG@0x3058	slot	24				
@@ -1707,6 +1942,7 @@ T1939	1	Game Mode Select > running help	<color00FFFF>オプション<colorFFFFFF
 T1940	1	Options > Audio or Difficulty Settings > help or reset result	ＢＧＭ、ＳＥ、<r音声|おんせい>を<r含|ふく>む<r音量全体|おんりょうぜんたい>を<r変更|へんこう>します。	Change the music, SFX and voice volume.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2860	NUN5_TEXTENG@0x1030	slot	112				
 T1941	1	Options > Audio or Difficulty Settings > help or reset result	<r方向|ほうこう>キー<r左右|さゆう>で<r出力|しゅつりょく>モードをステレオ・モノラルのいずれかに<r設定|せってい>します。	Press the left directional button or right directional button to set to stereo or mono.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B28D0	NUN5_TEXTENG@0x1060	slot	128				
 T1942	1	Options > Audio or Difficulty Settings > help or reset result	<r音響設定|おんきょうせってい>をデフォルトに<r戻|もど>しました。	Reset audio settings to default.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2950	NUN5_TEXTENG@0x10C0	slot	72				
+T1943	1	Options > Audio or Difficulty Settings > help or reset result	<r難易度|なんいど>をデフォルトに<r戻|もど>しました。	Difficulty set to default.			seen:savestates-015-024	NA2_SLPS@0x4B2BB0	NUN5_TEXTENG@0x1200	slot	64				
 T1944	1	Options > category help or reset result	<color00FFFF>フリーバトル<colorFFFFFF>と<color00FFFF>プラクティス<colorFFFFFF>でのＣＯＭの<r強|つよ>さを<r設定|せってい>できます。	<WHITE>Set the Com strength for when in the<color00FFFF> Free Battle <WHITE>and <color00FFFF>Practice.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4b2a10	NUN5_TEXTENG@0x1100	slot	144				
 T1945	1	Options > category help or reset result	ボタン<r操作|そうさ>の<r割|わ>り<r振|ふ>りができます。	Assign button controls.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4b2aa0	NUN5_TEXTENG@0x1170	slot	64				
 T1946	1	Options > category help or reset result	<r音量|おんりょう>や<r音|おと>の<r出力設定|しゅつりょくせってい>ができます。	Change volume and audio output settings.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4b2ae0	NUN5_TEXTENG@0x1190	slot	80				
@@ -1723,6 +1959,7 @@ T1956	1	Options > Control Settings > assigned action or toggle	オフ	Off			seen
 T1957	1	Options > Control Settings > assigned action or toggle	オン	On			seen:replacement-validation-control-settings-vibration-case	NA2_SLPS@0x504750	NUN5_SLES@0x513EFC	slot	8				
 T1958	1	Options > Control Settings > instructions or reset result	<r変更|へんこう>したいボタン・<r項目|こうもく>を<iconOK>ボタンで<r選択|せんたく>し、<r方向|ほうこう>キー<r左右|さゆう>で<r操作|そうさ>を<r変更|へんこう>してください。	Press <iconOK> to select the button/item to change. Press the left directional button or right directional button to change controls.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2230	NUN5_TEXTENG@0x1240	slot	176				
 T1959	1	Options > Control Settings > instructions or reset result	１Ｐの<r操作設定|そうさせってい>をデフォルトに<r戻|もど>しました。	1P controls restored to defaults.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B22E0	NUN5_TEXTENG@0x12D0	slot	80				
+T1960	1	Options > Control Settings > instructions or reset result	２Ｐの<r操作設定|そうさせってい>をデフォルトに<r戻|もど>しました。	2P controls restored to defaults.			inferred:control-settings-sibling-table	NA2_SLPS@0x4B2330	NUN5_TEXTENG@0x1300	slot	80				
 T1961	1	Practice Settings > label or running help	案内忍音声	Guide Ninja Sound			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A788	NUN5_TEXTENG@0xF8D0	slot	16			NA2_BTL@0x20A7E0	
 T1962	1	Practice Settings > label or running help	変わり身の術	Substitution Jutsu			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A798	NUN5_TEXTENG@0xF900	slot	16			NA2_BTL@0x20A7F8	
 T1963	1	Practice Settings > label or running help	追い討ち返し	Extra Hit Counter			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A7A8	NUN5_TEXTENG@0xFA0	slot	24				
@@ -1774,11 +2011,15 @@ T2008	1	Save or Load menu > data prompt or status	このデータをロードし
 T2009	1	Save or Load menu > data prompt or status	データのロードが<ruby終了|しゅうりょう>しました。	Load completed.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x303e90	NUN5_TEXTENG@0x29310	slot	64				
 T2010	1	Save or Load menu > data prompt or status	セーブする<ruby場所|ばしょ>を<ruby選|えら>んでください。	Please select where to save.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x303f10	NUN5_TEXTENG@0x29330	slot	64				
 T2012	1	Save or Load menu > data prompt or status	データのセーブが<ruby終了|しゅうりょう>しました。	Save completed.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x303FD0	NUN5_TEXTENG@0x293F0	slot	64				
+T2013	1	Save or Load menu > data prompt or status	<ruby新|あたら>しいデータを<ruby作成|さくせい>しますか？	Create new data?			seen:savestates-001-004	NA2_SLPS@0x304050	NUN5_TEXTENG@0x29410	slot	64				
 T2016	1	Save or Load menu > data prompt or status	データをセーブしますか？	Save data?			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x304970	NUN5_TEXTENG@0x28fe0	slot	32				
+T2017	1	Save or Load menu > data prompt or status	タイトル<ruby画面|がめん>に<ruby戻|もど>りますか？	Return to title screen?			seen:savestates-001-004	NA2_SLPS@0x304990	NUN5_TEXTENG@0x28FF0	slot	64				
+T2018	1	Save or Load menu > data prompt or status	ロードできるデータがありません。	There is no data that can be loaded.			seen:savestates-001-004	NA2_SLPS@0x3049D0	NUN5_TEXTENG@0x29010	slot	48				
 T2019	1	Save or Load menu > data prompt or status	<ruby壱|いち>・	1			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x304A00	NUN5_SLES@0x514980	slot	16				
 T2020	1	Save or Load menu > data prompt or status	<ruby弐|に>・	2			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x304A10	NUN5_SLES@0x514984	slot	16				
 T2021	1	Save or Load menu > data prompt or status	<ruby参|さん>・	3			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x304A20	NUN5_SLES@0x514988	slot	16				
 T2022	1	Save or Load menu > data prompt or status	プレイ<ruby時間|じかん> 	Play Time			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x304a40	NUN5_TEXTENG@0x29038	slot	32	append_space			
+T2023	1	Save or Load menu > data prompt or status	<ruby未使用|みしよう>	Empty			seen:savestates-001-004	NA2_SLPS@0x304A60	NUN5_SLES@0x514970	slot	24				
 T2014	1	Save or Load menu > overwrite confirmation	<ruby上書|うわが>きすると<ruby以前|いぜん>のデータは<ruby失|うしな>われてしまいます。	Previous data will be lost if you overwrite.<br>Overwrite?			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x304090	NUN5_TEXTENG@0x29430	slot	86	split_br	part=0		
 T2015	1	Save or Load menu > overwrite confirmation	<ruby上書|うわが>きしますか？	Previous data will be lost if you overwrite.<br>Overwrite?			inferred:complete-overwrite-message-family	NA2_SLPS@0x3040E6	NUN5_TEXTENG@0x29430	slot	42	split_br	part=1		
 T2011	1	Save or Load menu > saving-progress message	セーブしています。	Saving to memory card (PS2) in <br>MEMORY CARD slot 1.<br>Please do not remove memory card (PS2), <br>controller, or reset/switch off the console.			seen:replacement-validation-save-progress-corruption	NA2_SLPS@0x303F50	NUN5_TEXTENG@0x29350	slot	19	split_br	part=0	NA2_SLPS@0x5030B4	
@@ -1796,3 +2037,22 @@ T2031	1	Shop > category or item-selection help	<r音声|おんせい>を<r購入
 T2032	1	Shop > category or item-selection help	<r購入|こうにゅう>するキャラクターを<r選択|せんたく>してください。	Select character to buy.			seen:replacement-pass-2-2026-07-26 paired screenshot	NA2_ETC@0x2F3A0	NUN5_TEXTENG@0x1530	slot	80				
 T2033	1	Shop > category or item-selection help	<r購入|こうにゅう>する<r商品|しょうひん>にカーソルを<r合|あ>わせ、<iconCIRCLE>ボタンを<r押|お>してください。	Select an item and press <iconCIRCLE> to buy.		Select an item and press <iconCROSS> to buy.	seen:replacement-pass-2-2026-07-26 paired screenshot	NA2_ETC@0x2F3F0	NUN5_TEXTENG@0x1550	slot	112				
 T2034	1	Shop > quit confirmation	<color080860>ショップ<color000000>を<r終了|しゅうりょう>しますか？	<BLACK>Quit <color080860>shopping<BLACK>?			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2F500	NUN5_TEXTENG@0x17D0	slot	80				
+T2035	1	Startup and save flow > memory-card prompt or status	ＭＥＭＯＲＹ ＣＡＲＤ<ruby差込口|さしこみぐち>１に<NUL>”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）が<NUL><ruby差|さ>されていません。	No memory card (PS2) is inserted in <br>MEMORY CARD slot 1.<br>Please insert a memory card (PS2) in<br>MEMORY CARD slot 1.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x3039E0	NUN5_TEXTENG@0x29060	sequence	160	split_br_sequence	parts=0,1,2,3		
+T2036	1	Startup and save flow > memory-card prompt or status	ＭＥＭＯＲＹ ＣＡＲＤ<ruby差込口|さしこみぐち>１の<NUL>”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）が<NUL>フォーマットされていません。	The memory card (PS2) in <br>MEMORY CARD slot 1 is unformatted.<br>Format memory card (PS2)?			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x303C40	NUN5_TEXTENG@0x291D0	sequence	160	split_br_sequence	parts=0,1		
+T2037	1	Startup and save flow > memory-card prompt or status	”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）<NUL>をフォーマットしますか？	The memory card (PS2) in <br>MEMORY CARD slot 1 is unformatted.<br>Format memory card (PS2)?			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x303CE0	NUN5_TEXTENG@0x291D0	sequence	112	split_br_sequence	parts=2		
+T2038	1	Startup and save flow > memory-card prompt or status	ロードしています。	Loading from memory card (PS2).<br>Please do not remove memory card (PS2), controller, or reset/switch off the console.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x303E10	NUN5_TEXTENG@0x29290	slot	19	flatten_br_slice	start=0;end=12		
+T2039	1	Startup and save flow > memory-card prompt or status	”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）	Loading from memory card (PS2).<br>Please do not remove memory card (PS2), controller, or reset/switch off the console.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x303E23	NUN5_TEXTENG@0x29290	slot	73	flatten_br_slice	start=13;end=83		
+T2040	1	Startup and save flow > memory-card prompt or status	を<ruby抜|ぬ>かないでください。	Loading from memory card (PS2).<br>Please do not remove memory card (PS2), controller, or reset/switch off the console.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x303E6C	NUN5_TEXTENG@0x29290	slot	36	flatten_br_slice	start=84;end=116		
+T2043	1	Startup and save flow > memory-card prompt or status	フォーマットしています。	Formatting memory card (PS2) in <br>MEMORY CARD slot 1.<br>Please do not remove memory card (PS2), <br>controller, or reset/switch off the console.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x304110	NUN5_TEXTENG@0x29470	slot	25	split_br	part=0	NA2_SLPS@0x5030C8	
+T2044	1	Startup and save flow > memory-card prompt or status	”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）	Formatting memory card (PS2) in <br>MEMORY CARD slot 1.<br>Please do not remove memory card (PS2), <br>controller, or reset/switch off the console.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x304129	NUN5_TEXTENG@0x29470	slot	73	split_br	part=1		
+T2045	1	Startup and save flow > memory-card prompt or status	を<ruby抜|ぬ>かないでください。	Formatting memory card (PS2) in <br>MEMORY CARD slot 1.<br>Please do not remove memory card (PS2), <br>controller, or reset/switch off the console.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x304172	NUN5_TEXTENG@0x29470	slot	46	join_br_parts	parts=2,3;join=<br>	NA2_SLPS@0x5030C8	T2043
+T2046	1	Startup and save flow > memory-card prompt or status	”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）	Format completed.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x3041A0	NUN5_TEXTENG@0x29510	slot	73				
+T2047	1	Startup and save flow > memory-card prompt or status	のフォーマットが<ruby終了|しゅうりょう>しました。	Format completed.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x3041E9	NUN5_TEXTENG@0x29510	slot	55	empty			
+T2048	1	Startup and save flow > memory-card prompt or status	セーブ<ruby領域|りょういき>を<ruby作成|さくせい>しています。	Creating Naruto Shippuden: Ultimate Ninja 5 data<br>on memory card (PS2) in MEMORY CARD slot 1.<br>Please do not remove memory card (PS2),<br>controller, or reset/switch off the console.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x304250	NUN5_TEXTENG@0x29540	slot	61	split_br	part=0		
+T2049	1	Startup and save flow > memory-card prompt or status	”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）	Creating Naruto Shippuden: Ultimate Ninja 5 data<br>on memory card (PS2) in MEMORY CARD slot 1.<br>Please do not remove memory card (PS2),<br>controller, or reset/switch off the console.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x30428D	NUN5_TEXTENG@0x29540	slot	73	split_br	part=1		
+T2050	1	Startup and save flow > memory-card prompt or status	を<ruby抜|ぬ>かないでください。	Creating Naruto Shippuden: Ultimate Ninja 5 data<br>on memory card (PS2) in MEMORY CARD slot 1.<br>Please do not remove memory card (PS2),<br>controller, or reset/switch off the console.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x3042D6	NUN5_TEXTENG@0x29540	slot	42	join_br_parts	parts=2,3;join=<br>	NA2_SLPS@0x5030D4	T2048
+T2051	1	Startup and save flow > memory-card prompt or status	セーブ<ruby領域|りょういき>の<ruby作成|さくせい>が<ruby終了|しゅうりょう>しました。	Naruto Shippuden: Ultimate Ninja 5 data has <br>been created on memory card (PS2) in <br>MEMORY CARD slot 1.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x304300	NUN5_TEXTENG@0x29600	slot	96			NA2_SLPS@0x5030D8	
+T2052	1	Startup and save flow > memory-card prompt or status	このゲームのセーブ<ruby領域|りょういき>が<ruby作|つく>られていません。	No Naruto Shippuden: Ultimate Ninja 5 data found <br>on memory card (PS2) in MEMORY CARD slot 1. <br>Create new Naruto Shippuden: Ultimate Ninja 5 data?			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x3043C0	NUN5_TEXTENG@0x296A0	slot	71	join_br_parts	parts=0,1;join=<br>	NA2_SLPS@0x5030E0	
+T2053	1	Startup and save flow > memory-card prompt or status	セーブ<ruby領域|りょういき>を<ruby作|つく>りますか？	No Naruto Shippuden: Ultimate Ninja 5 data found <br>on memory card (PS2) in MEMORY CARD slot 1. <br>Create new Naruto Shippuden: Ultimate Ninja 5 data?			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x304407	NUN5_TEXTENG@0x296A0	slot	57	split_br	part=2		
+T2054	1	Startup and save flow > memory-card prompt or status	このゲームのデータがありません。	No Naruto Shippuden: Ultimate Ninja 5 data <br>found on memory card (PS2) in <br>MEMORY CARD slot 1. Please insert <br>memory card (PS2) with <br>Naruto Shippuden: Ultimate Ninja 5 data.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x304440	NUN5_TEXTENG@0x29740	slot	48			NA2_SLPS@0x5030E4	
+T2055	1	Startup and save flow > memory-card prompt or status	ＭＥＭＯＲＹ ＣＡＲＤ<ruby差込口|さしこみぐち>１に<NUL>”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）が<NUL><ruby差|さ>されていません。<NUL>このゲームのデータをセーブするには<NUL>１０３ＫＢ<ruby以上|いじょう>の<ruby空|あ>き<ruby容量|ようりょう>が<ruby必要|ひつよう>です。<NUL>このままで<ruby開始|かいし>しますか？	No memory card (PS2) is inserted.<br>Please insert a memory card (PS2) in MEMORY CARD slot 1.<br>At least 102 KB of free space is necessary to save Naruto Shippuden: Ultimate Ninja 5 data. Start the game anyway?			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x3046A0	NUN5_TEXTENG@0x29A10	sequence	336	split_br_sequence	parts=0,1,2		

@@ -41,17 +41,22 @@ not validated. `legacy_ids` is an optional comma-separated lookup field.
 
 Only encountered `T#` rows and structurally proven character-family rows are
 admitted. The first screenshot pass contributed 567 enabled rows and the
-second contributed 185. The character-specific exception then admits the
+second contributed 185. The character-specific exception then admitted the
 remaining 1,041 Command Chart move-name rows from the verified 74-table
-command-record family, producing 1,793 unique enabled rows. Exact guarded
-source fields come from `rebuild.tsv`, while concrete display metadata records
-whether each row was seen directly, inferred from a captured selector/help
-family, or admitted under the character-specific exception. The first-pass
-corpus contains 172 hash-verified paired captures; the second contains 93.
+command-record family. A subsequent missing-row audit admitted another 260
+policy-supported rows: 53 directly seen rows, 10 structurally inferred
+siblings, and 197 character-family rows. The cumulative replacement therefore
+contains 2,053 unique enabled rows. Exact guarded source fields come from
+`rebuild.tsv`, while concrete display metadata records whether each row was
+seen directly, inferred from a captured selector/help family, or admitted
+under the character-specific exception. The first-pass corpus contains 172
+hash-verified paired captures; the second contains 93.
 
-Of the 1,793 rows, 1,780 retain the unique accepted-table row with the same
+Of the 2,053 rows, 2,040 retain the unique accepted-table row with the same
 exact `source_ref` as their donor/transform starting point. T2042 additionally
 rewrites its accepted parent ID from `M0810` to replacement-table ID `T2011`.
+T2045 and T2050 likewise rewrite their accepted parent IDs into the
+replacement-table namespace as `T2043` and `T2048`.
 Three paired-screen corrections override incorrect reference relationships:
 T1956 uses `Off` at `NUN5_SLES@0x513EF8`, T1957 uses `On` at
 `NUN5_SLES@0x513EFC`, and T2158 uses `Warning` at

@@ -132,8 +132,8 @@ class TranslationImporterTests(unittest.TestCase):
             ),
         }
 
-        self.assertEqual(len(replacement_raw), 1793)
-        self.assertEqual(len(replacement["text"]), 1793)
+        self.assertEqual(len(replacement_raw), 2053)
+        self.assertEqual(len(replacement["text"]), 2053)
         self.assertEqual(replacement["inactive"], [])
         self.assertEqual(
             len({row["id"] for row in replacement_raw}),
@@ -196,7 +196,10 @@ class TranslationImporterTests(unittest.TestCase):
                 "reference_refs",
                 "parent_mapping_id",
             ):
-                if row["id"] == "T2042" and field == "parent_mapping_id":
+                if (
+                    row["id"] in {"T2042", "T2045", "T2050"}
+                    and field == "parent_mapping_id"
+                ):
                     continue
                 if (
                     row["id"] in donor_backed_overrides
@@ -219,7 +222,7 @@ class TranslationImporterTests(unittest.TestCase):
                 )
                 for row in replacement_raw
             ),
-            1780,
+            2040,
         )
         self.assertEqual(
             {
@@ -242,6 +245,8 @@ class TranslationImporterTests(unittest.TestCase):
             self.assertEqual(by_id[mapping_id]["display_context"], display_context)
             self.assertEqual(by_id[mapping_id]["display_basis"], display_basis)
         self.assertEqual(by_id["T2042"]["parent_mapping_id"], "T2011")
+        self.assertEqual(by_id["T2045"]["parent_mapping_id"], "T2043")
+        self.assertEqual(by_id["T2050"]["parent_mapping_id"], "T2048")
 
         engine.validate_structured_message_families(
             replacement["text"],

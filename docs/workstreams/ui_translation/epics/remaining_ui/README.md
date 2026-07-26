@@ -8,10 +8,16 @@ the right.
 ## Remaining subtasks
 
 1. Battle Results screen 2: labels, title, footer, and moving clouds are fixed;
-   the red rank text remains unresolved. The prior renderer replacement and
-   whole-column atlas shift are disabled while retaining the unmodified
-   official NUN5 container, so the next normal pipeline build provides a clean
-   baseline for five matched NUN5/NA2.28 savestate pairs.
+   the red rank text remains unresolved. Matched ss2-ss6 now preserve all five
+   values with the prior renderer replacement and whole-column atlas shift
+   disabled while retaining the unmodified official NUN5 container:
+   ss2 `Outstanding!`, ss3 `Try harder!`, ss4 `Keep trying`, ss5 `Good job!`,
+   and ss6 `Nicely done!`. Current ss3-ss5 sample mixed neighboring atlas
+   cells; ss2 and ss6 retain the correct identity as untouched placement
+   baselines. The task-owned states and extracted screenshots are under
+   `@work/UI translation/inputs/sstates/battle_results_rank_baseline_ss02_06_20260726/`
+   and
+   `@work/UI translation/inputs/screenshots/battle_results_rank_baseline_ss02_06_20260726/`.
 ## User-accepted completed cases
 
 - Cross/Triangle labels: every preserved pair (original slots 1-5 and newer

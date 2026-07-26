@@ -547,7 +547,7 @@ The user's final paired visual inspection accepted Slot 4 as perfect on
 pair and active mismatch-list entry were then removed under workstream policy.
 
 The remaining maintained mismatch list contains only Battle Results screen 2
-(rank corrections disabled for matched five-value baseline capture).
+(rank corrections disabled; matched ss2-ss6 now cover all five rank values).
 Ninja Song details ss8, Victory ss7 all-character donor coverage, Character
 Items transition behavior, and the Cross/Triangle-label batch are
 user-accepted.

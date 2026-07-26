@@ -1008,6 +1008,22 @@ matched NUN5/NA2.28 savestate pairs can establish the per-value geometry. The
 previous whole-column production claim is superseded; its `Outstanding!`
 single-value trial remains useful historical evidence only.
 
+The resulting normal-pipeline baseline was captured as matched ss2-ss6:
+
+| Slot | Rank artwork | Current baseline |
+| --- | --- | --- |
+| 2 | `Outstanding!` | correct label identity; untouched placement |
+| 3 | `Try harder!` | mixed neighboring atlas area |
+| 4 | `Keep trying` | mixed neighboring label cells |
+| 5 | `Good job!` | mixed `Good job!` / `Keep` artwork |
+| 6 | `Nicely done!` | correct label identity; untouched placement |
+
+The source/copy hashes are recorded under
+`@work/UI translation/inputs/sstates/battle_results_rank_baseline_ss02_06_20260726/`.
+All ten protected-library copies verified byte-identical. This five-value
+baseline is **user-supplied runtime evidence** with **high confidence**; the
+replacement geometry remains unresolved.
+
 ### 2026-07-26 Ninja Song details-footer regional anchors
 
 The Ninja Song details screen has its own footer renderer; it is not the

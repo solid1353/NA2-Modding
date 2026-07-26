@@ -32,8 +32,8 @@ command or file-backed inter-stage handoff.
 - Packaged `mappings.tsv` SHA-256: `7601F834646C374F3E89087724726AAE78E9A87A46A5F936CC5C776C4E60C0B6`
 - Initial parallel `rebuild.tsv` rows: `2,173` (`T1` through `T2173`)
 - Initial `rebuild.tsv` SHA-256: `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`
-- Cumulative `replacement.tsv` rows: `752`
-- Cumulative `replacement.tsv` SHA-256: `CD35EAF59019968B3C149721F631F48FCF146A39916FC8D0C6CD72217471B2DD`
+- Cumulative `replacement.tsv` rows: `1,793`
+- Cumulative `replacement.tsv` SHA-256: `9ADB9BD361762F41E5E1EDE39FC9241F95FD63597C54939140472E5B844AF410`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the aggregate Localization feature pin own content identity.
@@ -59,9 +59,10 @@ NUN5 donor references and donor text are retained in the table for review,
 provenance, and executable translation. Normal builds do not read donor
 binaries: the verified `donor` text in the table is the default translation.
 A nonempty `replacement` is a user-editable override, and `prefix` is a
-user-editable string prepended to the selected translation. Every donor and
-override is complete: no shortened fallback or placement marker exists in the
-current table.
+user-editable string prepended to the selected translation. Official donor text
+and ordinary overrides remain complete. T30 is the sole explicit
+user-authored fit exception and uses `T30 Ult` in its seven-byte inline text
+capacity; no placement marker is stored in the table.
 
 ### Accepted, diagnostic, and replacement tables
 
@@ -106,28 +107,31 @@ are sorted by `display_context`, then source location. Future candidates append
 with the next permanent ID.
 
 `replacement.tsv` uses the exact 16-column accepted `mappings.tsv` schema. It
-contains only `T#` rows confirmed visible by the paired screenshot pass, sorted
-by `display_context` and numeric ID. Its cumulative first two passes have 752
-unique enabled rows: 567 from the hash-verified first-pass corpus and 185 from
-the second. Exact source, source reference, mode, and capacity come from
-`rebuild.tsv`. Donor and transform relationships for 739 rows retain the unique
-accepted row with the same exact `source_ref`; T2042 rewrites its accepted
-`M0810` parent reference to replacement ID `T2011`. Paired screenshots correct
-three reference-table errors: T1956 uses `Off` at
+contains `T#` rows confirmed visible by the paired screenshot pass plus the
+explicit character-family exception, sorted by `display_context` and numeric
+ID. Its cumulative first two passes have 752 unique enabled rows: 567 from the
+hash-verified first-pass corpus and 185 from the second. The verified 74-table
+Command Chart family adds 1,041 rows, including Naruto moves absent from the
+captured 14-row subset, for 1,793 total rows. Exact source, source reference,
+mode, and capacity come from `rebuild.tsv`. Donor and transform relationships
+for 1,780 rows retain the unique accepted row with the same exact `source_ref`;
+T2042 rewrites its accepted `M0810` parent reference to replacement ID `T2011`.
+Paired screenshots correct three reference-table errors: T1956 uses `Off` at
 `NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses
 `Warning` at `NUN5_SLES@0x513F38`.
 
 Six Difficulty-family rows are matched by meaning: T27 `Simple`, T1983 `Easy`,
 T28 `Normal`, T1984 `Hard`, T29 `Insane`, and T50 `Difficulty`. The full T50
 label links through the exact pointer at `NA2_BTL@0x20A264`. Exactly four rows
-have no trustworthy NUN5 donor—T24, T30, T744, and T767—and put their own ID
-in the user-editable `replacement` field. Donor-backed rows otherwise leave
-`replacement` blank and execute the independently validated official donor
-text. T2027 and T2033 are the only donor-backed exceptions and retain the
+have no trustworthy NUN5 donor—T24, T30, T744, and T767—and put an
+ID-prefixed literal translation in the user-editable `replacement` field. T30
+uses the explicit `T30 Ult` inline-fit exception. Donor-backed rows otherwise
+leave `replacement` blank and execute the independently validated official
+donor text. T2027 and T2033 are the only donor-backed exceptions and retain the
 established Cross-confirm Shop overrides. This is a reference-derived English
 validation pass, not a claim that uncaptured screens are covered. The explicit
-replacement worker build imports all 752 rows without falling back to accepted
-`mappings.tsv`.
+replacement worker build imports all 1,793 rows without falling back to
+accepted `mappings.tsv`.
 
 The replacement table closes every admitted multi-slot `<br>` message family.
 T2011/T2041/T2042 cover all four save-progress message parts, while
@@ -1682,8 +1686,9 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
 The integrated `string_patcher` externalizes only complete replacements whose
 final encoded text exceeds the original slot and whose mapping declares
 validated pointer references. Placement is recomputed at build time; the
-canonical translation table contains neither shortened fallbacks nor placement
-markers. The pipeline never reads or patches `ADV.bin`.
+canonical translation table contains no placement markers. The sole
+user-directed inline fit exception is T30 `T30 Ult`. The pipeline never reads
+or patches `ADV.bin`.
 
 The shared payload builder deterministically generates exactly one ISO
 insertion:

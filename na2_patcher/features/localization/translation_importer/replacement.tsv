@@ -18,13 +18,13 @@ T20	1	Battle or Practice Settings > label or running help	ダメージ量表示	
 T21	1	Battle or Practice Settings > label or running help	<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。ＣＯＭでは、コンピュータと<r対戦|たいせん>する<r事|こと>ができます。	You can battle against the computer when in COM mode.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20B170	NUN5_TEXTENG@0xFFE0	slot	160				
 T22	1	Battle or Practice Settings > label or running help	<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。<r立|た>ちでは、<r立|た>った<r状態|じょうたい>で<r下記|かき>で<r指定|してい>した<r行動|こうどう>をします。	COM will make the following standing movements when in Stand mode.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20B210	NUN5_TEXTENG@0x10020	slot	192				
 T23	1	Battle or Practice Settings > label or running help	<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。ジャンプでは、ジャンプしながら<r下記|かき>で<r指定|してい>した<r行動|こうどう>をします。	COM will make the following standing movements when in Jump mode.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20B2D0	NUN5_TEXTENG@0x10070	slot	176				
-T24	1	Battle or Practice Settings > label or running help	<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。<r二段|にだん>ジャンプでは、<r二段|にだん>ジャンプしながら<r下記|かき>で<r指定|してい>した<r行動|こうどう>をします。			T24	inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20B380		slot	208				
+T24	1	Battle or Practice Settings > label or running help	<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。<r二段|にだん>ジャンプでは、<r二段|にだん>ジャンプしながら<r下記|かき>で<r指定|してい>した<r行動|こうどう>をします。			T24 You can set the opponent's state. During Double Jump, the opponent performs the action selected below while double-jumping.	inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20B380		slot	208				
 T25	1	Battle or Practice Settings > label or running help	対戦相手の設定	Opponent Settings			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20B468	NUN5_TEXTENG@0xF920	slot	24				
 T26	1	Battle or Practice Settings > label or running help	<r練習設定|れんしゅうせってい>をデフォルトに<r戻|もど>しました。	Practice settings returned to defaults.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20B4D0	NUN5_TEXTENG@0xF940	slot	72				
 T27	1	Battle or Practice Settings > selector value	楽々	Simple			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B48	NUN5_SLES@0x514218	slot	8				
 T28	1	Battle or Practice Settings > selector value	ふつう	Normal			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B50	NUN5_SLES@0x514228	slot	8				
 T29	1	Battle or Practice Settings > selector value	激むず	Insane			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B58	NUN5_SLES@0x514238	slot	8				
-T30	1	Battle or Practice Settings > selector value	究極			T30	inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B60		slot	8				
+T30	1	Battle or Practice Settings > selector value	究極			T30 Ult	inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B60		slot	8				
 T31	1	Battle or Practice Settings > selector value	なし	None			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B68	NUN5_SLES@0x514240	slot	8				
 T32	1	Battle or Practice Settings > selector value	少なめ	Less			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B70	NUN5_SLES@0x514248	slot	8				
 T33	1	Battle or Practice Settings > selector value	多め	More			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B78	NUN5_SLES@0x514250	slot	8				
@@ -505,7 +505,7 @@ T740	1	Collection > Voice > character voice title	シノとナルト	Shino and N
 T741	1	Collection > Voice > character voice title	<r拗|す>ねるシノ・<r壱|いち>	Cynical Shino: 1			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C3D0	NUN5_TEXTENG@0x2470	slot	32				
 T742	1	Collection > Voice > character voice title	<r拗|す>ねるシノ・<r弐|に>	Cynical Shino: 2			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C3F0	NUN5_TEXTENG@0x2490	slot	32				
 T743	1	Collection > Voice > character voice title	<r静|しず>かなる<r自信|じしん>	Silent Confidence			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C410	NUN5_TEXTENG@0x24B0	slot	32				
-T744	1	Collection > Voice > character voice title	<r微|かす>かな<r安心|あんしん>			T744	seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C430		slot	32				
+T744	1	Collection > Voice > character voice title	<r微|かす>かな<r安心|あんしん>			T744 Faint Relief	seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C430		slot	32				
 T745	1	Collection > Voice > character voice title	ナルトを<r見|み>かけて	Naruto Spotting			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C450	NUN5_TEXTENG@0x24E0	slot	32				
 T746	1	Collection > Voice > character voice title	<r戦闘前|せんとうまえ>	Before Battle			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C470	NUN5_TEXTENG@0x24F0	slot	32				
 T747	1	Collection > Voice > character voice title	つのる<r心配|しんぱい>	Growing Worry			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C490	NUN5_TEXTENG@0x2500	slot	32				
@@ -528,7 +528,7 @@ T763	1	Collection > Voice > character voice title	<r姉|あね>と<r共|とも>�
 T764	1	Collection > Voice > character voice title	<r風|かぜ>の<r使|つか>い<r手|て>	Wielder of the Wind			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C6E0	NUN5_TEXTENG@0x2680	slot	48				
 T765	1	Collection > Voice > character voice title	<r我愛羅|ガアラ>の<r前|まえ>で	Before Gaara			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C710	NUN5_TEXTENG@0x2698	slot	32				
 T766	1	Collection > Voice > character voice title	<r手加減|てかげん>	Going Easy			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C730	NUN5_TEXTENG@0x26A8	slot	32				
-T767	1	Collection > Voice > character voice title	<r姉|あね>の<r喜|よろこ>び			T767	seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C750		slot	32				
+T767	1	Collection > Voice > character voice title	<r姉|あね>の<r喜|よろこ>び			T767 An Older Sister's Joy	seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C750		slot	32				
 T768	1	Collection > Voice > character voice title	<r邂逅|かいこう>	Chance Meeting			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C770	NUN5_TEXTENG@0x26B8	slot	32				
 T769	1	Collection > Voice > character voice title	<r忠告|ちゅうこく>	Warning			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C790	NUN5_SLES@0x513F38	slot	24				
 T770	1	Collection > Voice > character voice title	<r余裕|よゆう>	A Cinch			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C7A8	NUN5_SLES@0x513F40	slot	24				
@@ -587,6 +587,545 @@ T822	1	Collection > Voice > character voice title	<r兄|あに>との<r繋|つ�
 T823	1	Collection > Voice > character voice title	<r目障|めざわ>りな<r存在|そんざい>	An Unpleasant Sight			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CED0	NUN5_TEXTENG@0x2C20	slot	52				
 T824	1	Collection > Voice > character voice title	ノルマ	Assignment			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x507160	NUN5_TEXTENG@0x2868	slot	8			NA2_ETC@0x2D46C	
 T2158	1	Collection > Voice > Orochimaru voice title	<r通告|つうこく>	Warning			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CDA0	NUN5_SLES@0x513F38	slot	32				
+T825	1	Command Chart > character move name	<r多重影分身|たじゅうかげぶんしん>の<r術|じゅつ>	Multi Shadow Clone Jutsu			character:command-record-index	NA2_SLPS@0x30CA80	NUN5_TEXTENG@0x51C0	slot	64				
+T826	1	Command Chart > character move name	<r螺旋丸|らせんがん>	Rasengan			character:command-record-index	NA2_SLPS@0x30CAC0	NUN5_TEXTENG@0x51E0	slot	32				
+T827	1	Command Chart > character move name	<r特攻蹴撃|とっこうしゅうげき>	Charging Kick			character:command-record-index	NA2_SLPS@0x30CAE0	NUN5_TEXTENG@0x51F0	slot	32				
+T828	1	Command Chart > character move name	<r跳爆激|ちょうばくげき>	Jumping Explosion			character:command-record-index	NA2_SLPS@0x30CB00	NUN5_TEXTENG@0x5200	slot	32				
+T829	1	Command Chart > character move name	<r分身脳天割|ぶんしんのうてんわ>り	Clone Jutsu: Crown of the Head Cut 			character:command-record-index	NA2_SLPS@0x30CB20	NUN5_TEXTENG@0x5220	slot	48				
+T830	1	Command Chart > character move name	<r跳影撃|ちょうえいげき>	Jumping Shadow Strike			character:command-record-index	NA2_SLPS@0x30CB50	NUN5_TEXTENG@0x5250	slot	32				
+T831	1	Command Chart > character move name	うずまき<r大回転|だいかいてん>	Uzumaki Spin			character:command-record-index	NA2_SLPS@0x30CB70	NUN5_TEXTENG@0x5268	slot	32				
+T832	1	Command Chart > character move name	<r分身旋回蹴|ぶんしんせんかいげ>り	Clone Jutsu: Whirling Kick			character:command-record-index	NA2_SLPS@0x30CB90	NUN5_TEXTENG@0x5280	slot	48				
+T833	1	Command Chart > character move name	<r分身特攻弾|ぶんしんとっこうだん>	Clone Jutsu: Charging Bullet			character:command-record-index	NA2_SLPS@0x30CBC0	NUN5_TEXTENG@0x52A0	slot	48				
+T834	1	Command Chart > character move name	<r分身|ぶんしん>うずまき<r昇竜|しょうりゅう>	Clone Jutsu: Naruto Rising Dragon			character:command-record-index	NA2_SLPS@0x30CBF0	NUN5_TEXTENG@0x52C0	slot	48				
+T835	1	Command Chart > character move name	<r大車輪|だいしゃりん>	Giant Swing			character:command-record-index	NA2_SLPS@0x30CC20	NUN5_TEXTENG@0x52E8	slot	32				
+T836	1	Command Chart > character move name	<r大風車|だいふうしゃ>	Giant Windmill			character:command-record-index	NA2_SLPS@0x30CC40	NUN5_TEXTENG@0x52F8	slot	32				
+T837	1	Command Chart > character move name	<r大蹴激|だいしゅうげき>	Giant Kick Fury			character:command-record-index	NA2_SLPS@0x30CC60	NUN5_TEXTENG@0x5310	slot	32				
+T838	1	Command Chart > character move name	<r竹蜻蛉|たけとんぼ>	Bamboo Helicopter			character:command-record-index	NA2_SLPS@0x30CC80	NUN5_TEXTENG@0x5320	slot	32				
+T839	1	Command Chart > character move name	<r無双豪炎弾|むそうごうえんだん>	Ultra Fire Bullet 			character:command-record-index	NA2_SLPS@0x312200	NUN5_TEXTENG@0x5400	slot	40				
+T840	1	Command Chart > character move name	<r千鳥|ちどり>	Chidori			character:command-record-index	NA2_SLPS@0x312228	NUN5_SLES@0x5140E0	slot	24				
+T841	1	Command Chart > character move name	<r潜鉄爪|せんてっそう>	Hidden Iron Claw			character:command-record-index	NA2_SLPS@0x312240	NUN5_TEXTENG@0x5420	slot	32				
+T842	1	Command Chart > character move name	<r火砕突|かさいとつ>	Fire Smash Thrust			character:command-record-index	NA2_SLPS@0x312260	NUN5_TEXTENG@0x5440	slot	32				
+T843	1	Command Chart > character move name	<r疾風脚|しっぷうきゃく>	Gale Force Kick			character:command-record-index	NA2_SLPS@0x312280	NUN5_TEXTENG@0x5460	slot	32				
+T844	1	Command Chart > character move name	<r炎上羽|えんじょうばね>	Flame Wing			character:command-record-index	NA2_SLPS@0x3122A0	NUN5_TEXTENG@0x5470	slot	32				
+T845	1	Command Chart > character move name	<r炎華脚|えんがきゃく>	Flaming Flower Kick			character:command-record-index	NA2_SLPS@0x3122C0	NUN5_TEXTENG@0x5480	slot	32				
+T846	1	Command Chart > character move name	<r直華脚|ちょっかきゃく>	Direct Kick			character:command-record-index	NA2_SLPS@0x3122E0	NUN5_TEXTENG@0x5498	slot	32				
+T847	1	Command Chart > character move name	<r旋炎撃|せんえんげき>	Whirl Flame Attack/Strike			character:command-record-index	NA2_SLPS@0x312300	NUN5_TEXTENG@0x54B0	slot	32				
+T848	1	Command Chart > character move name	<r背負|せお>い<r投|な>げ	Shoulder Throw			character:command-record-index	NA2_SLPS@0x312320	NUN5_TEXTENG@0x54D0	slot	32				
+T849	1	Command Chart > character move name	<r火塵乱舞|かじんらんぶ>	Wild Dance of Fire Dust			character:command-record-index	NA2_SLPS@0x312340	NUN5_TEXTENG@0x54E0	slot	32				
+T850	1	Command Chart > character move name	<r火円落脚|かえんらくきゃく>	Flame Circle Drop Kick			character:command-record-index	NA2_SLPS@0x312360	NUN5_TEXTENG@0x5500	slot	32				
+T851	1	Command Chart > character move name	<r隼落|はやぶさお>とし	Falcon Drop			character:command-record-index	NA2_SLPS@0x312380	NUN5_TEXTENG@0x49C0	slot	32				
+T852	1	Command Chart > character move name	<r迸火乱舞|へいからんぶ>	Wild Dance of Spouting Fire			character:command-record-index	NA2_SLPS@0x3123A0	NUN5_TEXTENG@0x5520	slot	32				
+T853	1	Command Chart > character move name	<r木|こ>ノ<r葉烈風|はれっぷう>	Leaf Whirlwind			character:command-record-index	NA2_SLPS@0x317940	NUN5_TEXTENG@0x5600	slot	32				
+T854	1	Command Chart > character move name	<r木|こ>ノ<r葉大旋風|はだいせんぷう>	Leaf Great Hurricane			character:command-record-index	NA2_SLPS@0x317960	NUN5_TEXTENG@0x5610	slot	48				
+T855	1	Command Chart > character move name	<r碧|あお>い<r閃光|せんこう>	Green Flash			character:command-record-index	NA2_SLPS@0x317990	NUN5_TEXTENG@0x5628	slot	32				
+T856	1	Command Chart > character move name	<r剛肩突破|ごうけんとっぱ>	Ferocious Shoulder Breakthrough			character:command-record-index	NA2_SLPS@0x3179B0	NUN5_TEXTENG@0x5640	slot	32				
+T857	1	Command Chart > character move name	<r三連剛脚|さんれんごうきゃく>	Triple Ferocious Kick			character:command-record-index	NA2_SLPS@0x3179D0	NUN5_TEXTENG@0x5660	slot	32				
+T858	1	Command Chart > character move name	<r碧|あお>い<r衝撃|しょうげき>	Green Impact			character:command-record-index	NA2_SLPS@0x3179F0	NUN5_TEXTENG@0x5678	slot	32				
+T859	1	Command Chart > character move name	<r落葉天舞|らくようてんぶ>	Heavenly Dance of Falling Leaf 			character:command-record-index	NA2_SLPS@0x317A10	NUN5_TEXTENG@0x5690	slot	32				
+T860	1	Command Chart > character move name	<r旋風烈破|せんぷうれっぱ>	Hurricane Destruction			character:command-record-index	NA2_SLPS@0x317A30	NUN5_TEXTENG@0x56B0	slot	32				
+T861	1	Command Chart > character move name	<r練気拳|れんきけん>	Energy Fist			character:command-record-index	NA2_SLPS@0x317A50	NUN5_TEXTENG@0x56C8	slot	32				
+T862	1	Command Chart > character move name	<r碧|あお>い<r咆哮|ほうこう>	Green Roar			character:command-record-index	NA2_SLPS@0x317A70	NUN5_TEXTENG@0x56D8	slot	32				
+T863	1	Command Chart > character move name	<r碧|あお>い<r突風|とっぷう>	Green Gust			character:command-record-index	NA2_SLPS@0x317A90	NUN5_TEXTENG@0x56E8	slot	32				
+T864	1	Command Chart > character move name	<r碧|あお>い<r烈風|れっぷう>	Green Storm			character:command-record-index	NA2_SLPS@0x317AB0	NUN5_TEXTENG@0x56F8	slot	32				
+T865	1	Command Chart > character move name	<r碧|あお>い<r旋風|せんぷう>	Green Tornado			character:command-record-index	NA2_SLPS@0x317AD0	NUN5_TEXTENG@0x5708	slot	32				
+T866	1	Command Chart > character move name	<r碧|あお>い<r疾風|しっぷう>	Green Gale			character:command-record-index	NA2_SLPS@0x317AF0	NUN5_TEXTENG@0x5718	slot	32				
+T867	1	Command Chart > character move name	<r砂瀑送葬|さばくそうそう>	Sand Burial			character:command-record-index	NA2_SLPS@0x31CAB0	NUN5_TEXTENG@0x57F0	slot	32				
+T868	1	Command Chart > character move name	<r砂時雨|すなしぐれ>	Sand Shower 			character:command-record-index	NA2_SLPS@0x31CAD0	NUN5_TEXTENG@0x5800	slot	32				
+T869	1	Command Chart > character move name	<r翔陣砂|しょうじんさ>	Soaring Sand Formation			character:command-record-index	NA2_SLPS@0x31CAF0	NUN5_TEXTENG@0x5810	slot	32				
+T870	1	Command Chart > character move name	<r波追砂|はついさ>	Sand Wave Pursuit			character:command-record-index	NA2_SLPS@0x31CB10	NUN5_TEXTENG@0x5830	slot	32				
+T871	1	Command Chart > character move name	<r流壁砂|りゅうへきさ>	Flowing Wall of Sand			character:command-record-index	NA2_SLPS@0x31CB30	NUN5_TEXTENG@0x5850	slot	32				
+T872	1	Command Chart > character move name	<r縛落砂|ばくらくさ>	Falling Sand Paralysis			character:command-record-index	NA2_SLPS@0x31CB50	NUN5_TEXTENG@0x5870	slot	32				
+T873	1	Command Chart > character move name	<r噴塵砂|ふんじんさ>	Erupting Sandstorm			character:command-record-index	NA2_SLPS@0x31CB70	NUN5_TEXTENG@0x5890	slot	24				
+T874	1	Command Chart > character move name	<r握砂|あくさ>	Sand Clutch			character:command-record-index	NA2_SLPS@0x31CB88	NUN5_TEXTENG@0x58A8	slot	24				
+T875	1	Command Chart > character move name	<r瀑流砂|ばくりゅうさ>	Sandfall Flow			character:command-record-index	NA2_SLPS@0x31CBA0	NUN5_TEXTENG@0x58B8	slot	32				
+T876	1	Command Chart > character move name	<r瀑縛砂|ばくばくさ>	Sandfall Bind			character:command-record-index	NA2_SLPS@0x31CBC0	NUN5_TEXTENG@0x58C8	slot	32				
+T877	1	Command Chart > character move name	<r昇瀑砂|しょうばくさ>	Rising Sandfall			character:command-record-index	NA2_SLPS@0x31CBE0	NUN5_TEXTENG@0x58E0	slot	32				
+T878	1	Command Chart > character move name	<r落瀑砂|らくばくさ>	Falling Sandfall			character:command-record-index	NA2_SLPS@0x31CC00	NUN5_TEXTENG@0x58F0	slot	32				
+T879	1	Command Chart > character move name	<r縛跳砂|ばくちょうさ>	Splashing Sand Paralysis			character:command-record-index	NA2_SLPS@0x31CC20	NUN5_TEXTENG@0x5910	slot	32				
+T880	1	Command Chart > character move name	<r空瀑砂|くうばくさ>	Flying Sandfall			character:command-record-index	NA2_SLPS@0x31CC40	NUN5_TEXTENG@0x5930	slot	32				
+T881	1	Command Chart > character move name	<r影真似|かげまね>の<r術|じゅつ>	Shadow Possession Jutsu			character:command-record-index	NA2_SLPS@0x321FA0	NUN5_TEXTENG@0x4B30	slot	48				
+T882	1	Command Chart > character move name	<r爆式影潜|ばくしきえいせん>	Explosive Style Shadow Conceal			character:command-record-index	NA2_SLPS@0x321FD0	NUN5_TEXTENG@0x59F0	slot	32				
+T883	1	Command Chart > character move name	<r子鹿返|こじかがえ>り	Fawn Return			character:command-record-index	NA2_SLPS@0x321FF0	NUN5_TEXTENG@0x5A10	slot	24				
+T884	1	Command Chart > character move name	<r鹿旋|かせん>	Deer Spin			character:command-record-index	NA2_SLPS@0x322008	NUN5_TEXTENG@0x5A20	slot	16				
+T885	1	Command Chart > character move name	<r鹿落|からく>	Deer Drop			character:command-record-index	NA2_SLPS@0x322018	NUN5_TEXTENG@0x5A30	slot	24				
+T886	1	Command Chart > character move name	<r無影潜|むえいせん>	Shadowless Conceal 			character:command-record-index	NA2_SLPS@0x322030	NUN5_TEXTENG@0x5A40	slot	32				
+T887	1	Command Chart > character move name	<r待影払|まちかげはら>い	Waiting Shadow Sweep 			character:command-record-index	NA2_SLPS@0x322050	NUN5_TEXTENG@0x5A60	slot	32				
+T888	1	Command Chart > character move name	<r影放刺|かげぼうし>	Released Shadow Pierce			character:command-record-index	NA2_SLPS@0x322070	NUN5_TEXTENG@0x5A80	slot	32				
+T889	1	Command Chart > character move name	<r影渫|かげざら>い	Shadow Eradication			character:command-record-index	NA2_SLPS@0x322090	NUN5_TEXTENG@0x5AA0	slot	24				
+T890	1	Command Chart > character move name	<r鹿突|かとつ>	Deer Lunge			character:command-record-index	NA2_SLPS@0x3220A8	NUN5_TEXTENG@0x5AB8	slot	24				
+T891	1	Command Chart > character move name	<r後影|ごかげ>すくい	Rear Shadow Scoop			character:command-record-index	NA2_SLPS@0x3220C0	NUN5_TEXTENG@0x5AD0	slot	32				
+T892	1	Command Chart > character move name	<r昇影|しょうえい>	Rising Shadow			character:command-record-index	NA2_SLPS@0x3220E0	NUN5_TEXTENG@0x5AE8	slot	32				
+T893	1	Command Chart > character move name	<r落影|らくえい>	Falling Shadow			character:command-record-index	NA2_SLPS@0x322100	NUN5_TEXTENG@0x5AF8	slot	32				
+T894	1	Command Chart > character move name	<r後影落|ごかげお>とし	Rear Shadow Drop			character:command-record-index	NA2_SLPS@0x322120	NUN5_TEXTENG@0x5B10	slot	24				
+T895	1	Command Chart > character move name	<r飛影|ひえい>	Flying Shadow			character:command-record-index	NA2_SLPS@0x322138	NUN5_TEXTENG@0x5B28	slot	24				
+T896	1	Command Chart > character move name	<r八卦掌嵐舞|はっけしょうらんぶ>	8 Trigrams Palm Storm Dance			character:command-record-index	NA2_SLPS@0x327540	NUN5_TEXTENG@0x5C00	slot	48				
+T897	1	Command Chart > character move name	<r回天|かいてん>	Rotation			character:command-record-index	NA2_SLPS@0x327570	NUN5_TEXTENG@0x5C20	slot	32				
+T898	1	Command Chart > character move name	<r蒼空昇華脚|そうくうしょうかきゃく>	Rising Blue Sky Kick			character:command-record-index	NA2_SLPS@0x327590	NUN5_TEXTENG@0x5C30	slot	48				
+T899	1	Command Chart > character move name	<r破経三連撃|はけいさんれんげき>	Chakra Network Triple Attack			character:command-record-index	NA2_SLPS@0x3275C0	NUN5_TEXTENG@0x5C50	slot	48				
+T900	1	Command Chart > character move name	<r蒼葬襲連撃|そうそうしゅうれんげき>	Blue Burial Attack			character:command-record-index	NA2_SLPS@0x3275F0	NUN5_TEXTENG@0x5C70	slot	48				
+T901	1	Command Chart > character move name	<r白気開放|びゃっきかいほう>	White Power Release			character:command-record-index	NA2_SLPS@0x327620	NUN5_TEXTENG@0x5C90	slot	32				
+T902	1	Command Chart > character move name	<r無限経突|むげんけいとつ>	Eternal Chakra Network Thrust 			character:command-record-index	NA2_SLPS@0x327640	NUN5_TEXTENG@0x5CB0	slot	32				
+T903	1	Command Chart > character move name	<r襲天崩撃|しゅうてんほうげき>	Collapsing Heaven Attack			character:command-record-index	NA2_SLPS@0x327660	NUN5_TEXTENG@0x5CD0	slot	32				
+T904	1	Command Chart > character move name	<r旋落脚|せんらくきゃく>	Downward Spiral Kick			character:command-record-index	NA2_SLPS@0x327680	NUN5_TEXTENG@0x5CF0	slot	32				
+T905	1	Command Chart > character move name	<r瞬経連突|しゅんけいれんとつ>	Instant Chakra Network Barrage 			character:command-record-index	NA2_SLPS@0x3276A0	NUN5_TEXTENG@0x5D10	slot	32				
+T906	1	Command Chart > character move name	<r経烈撃|けいれつげき>	Chakra Network Sever Strike			character:command-record-index	NA2_SLPS@0x3276C0	NUN5_TEXTENG@0x5D30	slot	32				
+T907	1	Command Chart > character move name	<r天蹴乱舞|てんしゅうらんぶ>	Heaven's Wild Dance Kick			character:command-record-index	NA2_SLPS@0x3276E0	NUN5_TEXTENG@0x5D50	slot	32				
+T908	1	Command Chart > character move name	<r天拳乱舞|てんけんらんぶ>	Heaven's Wild Dance Fist			character:command-record-index	NA2_SLPS@0x327700	NUN5_TEXTENG@0x5D70	slot	32				
+T909	1	Command Chart > character move name	<r衝背双脚|しょうはいそうきゃく>	Double Back Kick			character:command-record-index	NA2_SLPS@0x327720	NUN5_TEXTENG@0x5D90	slot	48				
+T910	1	Command Chart > character move name	<r天掌乱舞|てんしょうらんぶ>	Wild Dance of Heaven's Palm			character:command-record-index	NA2_SLPS@0x327750	NUN5_TEXTENG@0x5DB0	slot	32				
+T911	1	Command Chart > character move name	メルヘンゲット	This Fairy Tale is for Real!!			character:command-record-index	NA2_SLPS@0x32C938	NUN5_TEXTENG@0x5E90	slot	24			NA2_SLPS@0x32CBBC	
+T912	1	Command Chart > character move name	<r分身|ぶんしん>コンボ	Clone Combo			character:command-record-index	NA2_SLPS@0x32C950	NUN5_TEXTENG@0x5EB0	slot	32				
+T913	1	Command Chart > character move name	<r痴漢撃退|ちかんげきたい>コンボ	Repulsion Combo			character:command-record-index	NA2_SLPS@0x32C970	NUN5_TEXTENG@0x5EC0	slot	48				
+T914	1	Command Chart > character move name	<r折檻|せっかん>コンボ	Punishment Combo			character:command-record-index	NA2_SLPS@0x32C9A0	NUN5_TEXTENG@0x5ED0	slot	32				
+T915	1	Command Chart > character move name	<r断裂|だんれつ>コンボ	Rupture Combo			character:command-record-index	NA2_SLPS@0x32C9C0	NUN5_TEXTENG@0x5EE8	slot	32				
+T916	1	Command Chart > character move name	<r乙女|おとめ>の<r怒|いか>り	Maiden's Anger			character:command-record-index	NA2_SLPS@0x32C9E0	NUN5_TEXTENG@0x5EF8	slot	32				
+T917	1	Command Chart > character move name	<r乙女|おとめ>の<r底力|そこぢから>	Maiden's Power			character:command-record-index	NA2_SLPS@0x32CA00	NUN5_TEXTENG@0x5F08	slot	48				
+T918	1	Command Chart > character move name	<r足蹴|あしげ>コンボ	Leg Kick Combo			character:command-record-index	NA2_SLPS@0x32CA30	NUN5_TEXTENG@0x5F18	slot	32				
+T919	1	Command Chart > character move name	ウザイ<r奴撲殺術|やつぼくさつじゅつ>	Beating Up Annoying Guys Jutsu			character:command-record-index	NA2_SLPS@0x32CA50	NUN5_TEXTENG@0x5F30	slot	48				
+T920	1	Command Chart > character move name	<r悪漢撃退術|あっかんげきたいじゅつ>	Thug Repulsion Jutsu			character:command-record-index	NA2_SLPS@0x32CA80	NUN5_TEXTENG@0x5F50	slot	48				
+T921	1	Command Chart > character move name	<r空中殺法|くうちゅうさっぽう>　<r上|じょう>	Midair Strike Top			character:command-record-index	NA2_SLPS@0x32CAB0	NUN5_TEXTENG@0x5F70	slot	48				
+T922	1	Command Chart > character move name	<r空中殺法|くうちゅうさっぽう>　<r下|げ>	Midair Strike Bottom			character:command-record-index	NA2_SLPS@0x32CAE0	NUN5_TEXTENG@0x5F90	slot	48				
+T923	1	Command Chart > character move name	<r回転殺法|かいてんさっぽう>	Rotating Strike			character:command-record-index	NA2_SLPS@0x32CB10	NUN5_TEXTENG@0x5FB0	slot	32				
+T924	1	Command Chart > character move name	<r空中殺法|くうちゅうさっぽう>　<r中|ちゅう>	Midair Strike Middle			character:command-record-index	NA2_SLPS@0x32CB30	NUN5_TEXTENG@0x5FC0	slot	48				
+T925	1	Command Chart > character move name	<r千殺水翔|せんさつすいしょう>	A Thousand Needles of Death			character:command-record-index	NA2_SLPS@0x331AD0	NUN5_TEXTENG@0x5180	slot	32				
+T926	1	Command Chart > character move name	<r魔鏡薄氷|まきょうはくひょう>	Crystal Ice Mirrors			character:command-record-index	NA2_SLPS@0x331AF0	NUN5_TEXTENG@0x51A0	slot	32				
+T927	1	Command Chart > character move name	<r穿弓腿|せんきゅうたい>	Handstand Kick			character:command-record-index	NA2_SLPS@0x331B10	NUN5_TEXTENG@0x60A0	slot	32				
+T928	1	Command Chart > character move name	<r鏡割|かがみわ>り	Mirror Breaker			character:command-record-index	NA2_SLPS@0x331B30	NUN5_TEXTENG@0x60B0	slot	32				
+T929	1	Command Chart > character move name	<r氷演舞|ひょうえんぶ>	Theater of Ice			character:command-record-index	NA2_SLPS@0x331B50	NUN5_TEXTENG@0x60C0	slot	32				
+T930	1	Command Chart > character move name	<r翔旋千本|しょうせんせんぼん>	Soaring Turn Senbon			character:command-record-index	NA2_SLPS@0x331B70	NUN5_TEXTENG@0x60D0	slot	32				
+T931	1	Command Chart > character move name	<r天駆脚|てんくきゃく>	Running Heaven Kick			character:command-record-index	NA2_SLPS@0x331B90	NUN5_TEXTENG@0x60F0	slot	32				
+T932	1	Command Chart > character move name	<r閃回脚|せんかいきゃく>	Turning Flash Kick			character:command-record-index	NA2_SLPS@0x331BB0	NUN5_TEXTENG@0x6110	slot	32				
+T933	1	Command Chart > character move name	<r旋抉斬|せんかいざん>	Rotating Piercing Slash			character:command-record-index	NA2_SLPS@0x331BD0	NUN5_TEXTENG@0x6130	slot	32				
+T934	1	Command Chart > character move name	<r廻天斬|かいてんざん>	Spinning Slash			character:command-record-index	NA2_SLPS@0x331BF0	NUN5_TEXTENG@0x6148	slot	32				
+T935	1	Command Chart > character move name	<r昇閃舞|しょうせんぶ>	Dance of the Rising Flash			character:command-record-index	NA2_SLPS@0x331C10	NUN5_TEXTENG@0x6160	slot	32				
+T936	1	Command Chart > character move name	<r落爪舞|らくそうぶ>	Dance of the Falling Claw			character:command-record-index	NA2_SLPS@0x331C30	NUN5_TEXTENG@0x6180	slot	32				
+T937	1	Command Chart > character move name	<r翔飛脚|しょうひきゃく>	Soaring Kick			character:command-record-index	NA2_SLPS@0x331C50	NUN5_TEXTENG@0x61A0	slot	32				
+T938	1	Command Chart > character move name	<r空旋舞|くうせんぶ>	Dance of the Flying Rotation			character:command-record-index	NA2_SLPS@0x331C70	NUN5_TEXTENG@0x61B0	slot	32				
+T939	1	Command Chart > character move name	<r水遁|すいとん>・<r水龍弾|すいりゅうだん>の<r術|じゅつ>	Water Style: Water Dragon Jutsu			character:command-record-index	NA2_SLPS@0x337080	NUN5_TEXTENG@0x5140	slot	64				
+T940	1	Command Chart > character move name	<r鬼來|きらい>	Demon Slash			character:command-record-index	NA2_SLPS@0x3370C0	NUN5_TEXTENG@0x6280	slot	16				
+T941	1	Command Chart > character move name	<r骨抉剣|こっけつけん>	Bone Piercing Sword			character:command-record-index	NA2_SLPS@0x3370D0	NUN5_TEXTENG@0x6290	slot	32				
+T942	1	Command Chart > character move name	<r転背斬|てんはいざん>	Spinning Back Slash			character:command-record-index	NA2_SLPS@0x3370F0	NUN5_TEXTENG@0x62B0	slot	32				
+T943	1	Command Chart > character move name	<r散裂斬|さんれつざん>	Scatter Burst Slash			character:command-record-index	NA2_SLPS@0x337110	NUN5_TEXTENG@0x62D0	slot	32				
+T944	1	Command Chart > character move name	<r飛旋剣|ひせんけん>	Flying Turn Slash			character:command-record-index	NA2_SLPS@0x337130	NUN5_TEXTENG@0x62F0	slot	32				
+T945	1	Command Chart > character move name	<r波烈斬|はれつざん>	Wave Blast Slash			character:command-record-index	NA2_SLPS@0x337150	NUN5_TEXTENG@0x6310	slot	32				
+T946	1	Command Chart > character move name	<r鞭腕撃|べんわんげき>	Arm Whip Strike			character:command-record-index	NA2_SLPS@0x337170	NUN5_TEXTENG@0x6330	slot	32				
+T947	1	Command Chart > character move name	<r龍尾脚|りゅうびきゃく>	Dragon Tail Kick			character:command-record-index	NA2_SLPS@0x337190	NUN5_TEXTENG@0x6340	slot	32				
+T948	1	Command Chart > character move name	<r投捨|とうしゃ>	Throw			character:command-record-index	NA2_SLPS@0x3371B0	NUN5_SLES@0x514100	slot	32				
+T949	1	Command Chart > character move name	<r霞連撃|かすみれんげき>	Mist Combo Attack			character:command-record-index	NA2_SLPS@0x3371D0	NUN5_TEXTENG@0x6360	slot	32				
+T950	1	Command Chart > character move name	<r頭蓋穿|ずがいせん>	Skull-Crusher			character:command-record-index	NA2_SLPS@0x3371F0	NUN5_TEXTENG@0x6378	slot	32				
+T951	1	Command Chart > character move name	<r斬捨|ざんしゃ>	Slashing Discard			character:command-record-index	NA2_SLPS@0x337210	NUN5_TEXTENG@0x6390	slot	32				
+T952	1	Command Chart > character move name	<r霧隱連撃|きりがくれれんげき>	Mist-Shrouded Pummeling			character:command-record-index	NA2_SLPS@0x337230	NUN5_TEXTENG@0x63B0	slot	32				
+T953	1	Command Chart > character move name	<r守護八卦六十四掌|しゅごはっけろくじゅうよんしょう>	8 Trigrams 64 Palms Guard			character:command-record-index	NA2_SLPS@0x33C0A0	NUN5_TEXTENG@0x6490	slot	64				
+T954	1	Command Chart > character move name	<r超回復薬|ちょうかいふくやく>	Super Healing Medicine			character:command-record-index	NA2_SLPS@0x33C0E0	NUN5_TEXTENG@0x64B0	slot	32				
+T955	1	Command Chart > character move name	<r旋掌撃|せんしょうげき>	Turning Palm Strike			character:command-record-index	NA2_SLPS@0x33C100	NUN5_TEXTENG@0x64D0	slot	32				
+T956	1	Command Chart > character move name	<r両突撃|りょうとつげき>	Double Thrust Strike			character:command-record-index	NA2_SLPS@0x33C120	NUN5_TEXTENG@0x64F0	slot	32				
+T957	1	Command Chart > character move name	<r掌双打|しょうそうだ>	Double Palm Hit			character:command-record-index	NA2_SLPS@0x33C140	NUN5_TEXTENG@0x6510	slot	32				
+T958	1	Command Chart > character move name	<r旋掌連舞|せんしょうれんぶ>	Turning Palm Dance Barrage			character:command-record-index	NA2_SLPS@0x33C160	NUN5_TEXTENG@0x6520	slot	32				
+T959	1	Command Chart > character move name	<r天掌|てんしょう>	Heaven's Palm			character:command-record-index	NA2_SLPS@0x33C180	NUN5_TEXTENG@0x6540	slot	32				
+T960	1	Command Chart > character move name	<r旋落掌|せんらくしょう>	Downward Spiral Palm			character:command-record-index	NA2_SLPS@0x33C1A0	NUN5_TEXTENG@0x6550	slot	32				
+T961	1	Command Chart > character move name	<r旋通背掌|せんつうはいしょう>	Turning Back-Through Palm			character:command-record-index	NA2_SLPS@0x33C1C0	NUN5_TEXTENG@0x6570	slot	32				
+T962	1	Command Chart > character move name	<r旋膝撃|せんしつげき>	Turning Knee Strike			character:command-record-index	NA2_SLPS@0x33C1E0	NUN5_TEXTENG@0x6590	slot	32				
+T963	1	Command Chart > character move name	<r跳昇突|ちょうしょうとつ>	Jumping Rising Thrust			character:command-record-index	NA2_SLPS@0x33C200	NUN5_TEXTENG@0x65B0	slot	32				
+T964	1	Command Chart > character move name	<r踏空脚|しゅうくうきゃく>	Stepping on Air Kick			character:command-record-index	NA2_SLPS@0x33C220	NUN5_TEXTENG@0x65D0	slot	32				
+T965	1	Command Chart > character move name	<r転背掌|てんはいしょう>	Rolling Back Palm			character:command-record-index	NA2_SLPS@0x33C240	NUN5_TEXTENG@0x65F0	slot	32				
+T966	1	Command Chart > character move name	<r双掌空撃|そうしょうくうげき>	Double Palm Air Strike			character:command-record-index	NA2_SLPS@0x33C260	NUN5_TEXTENG@0x6610	slot	32				
+T967	1	Command Chart > character move name	<r双燕刈|そうえんか>	Twin Swallow Cut			character:command-record-index	NA2_SLPS@0x341380	NUN5_TEXTENG@0x66E0	slot	32				
+T968	1	Command Chart > character move name	<r神楽手裏剣|かぐらしゅりけん>	Sacred Dance Shuriken			character:command-record-index	NA2_SLPS@0x3413A0	NUN5_TEXTENG@0x6700	slot	32				
+T969	1	Command Chart > character move name	<r暗器術|あんきじゅつ>　<r翔斬|しょうざん>	Concealed Jutsu: Soaring Slash			character:command-record-index	NA2_SLPS@0x3413C0	NUN5_TEXTENG@0x6720	slot	48				
+T970	1	Command Chart > character move name	<r暗器術|あんきじゅつ>　<r通弾|つうだん>	Concealed Jutsu: Piercing Shot			character:command-record-index	NA2_SLPS@0x3413F0	NUN5_TEXTENG@0x6740	slot	48				
+T971	1	Command Chart > character move name	<r暗器術|あんきじゅつ>　<r衝鋼|しょうこう>	Concealed Jutsu: Steel Impact			character:command-record-index	NA2_SLPS@0x341420	NUN5_TEXTENG@0x6760	slot	48				
+T972	1	Command Chart > character move name	<r暗器術|あんきじゅつ>　<r荊|いばら>	Concealed Jutsu: Thorn			character:command-record-index	NA2_SLPS@0x341450	NUN5_TEXTENG@0x6780	slot	48				
+T973	1	Command Chart > character move name	<r暗器術|あんきじゅつ>　<r飛翔|ひしょう>	Concealed Jutsu: Soaring			character:command-record-index	NA2_SLPS@0x341480	NUN5_TEXTENG@0x67A0	slot	48				
+T974	1	Command Chart > character move name	<r降砕脚|こうさいきゃく>	Falling Smash Kick			character:command-record-index	NA2_SLPS@0x3414B0	NUN5_TEXTENG@0x67C0	slot	32				
+T975	1	Command Chart > character move name	<r暗器術|あんきじゅつ>　<r斬突|ざんとつ>	Concealed Jutsu: Slash Thrust			character:command-record-index	NA2_SLPS@0x3414D0	NUN5_TEXTENG@0x67E0	slot	48				
+T976	1	Command Chart > character move name	<r延髄撃|えんずいげき>	Medullary Strike			character:command-record-index	NA2_SLPS@0x341500	NUN5_TEXTENG@0x6800	slot	32				
+T977	1	Command Chart > character move name	<r暗器術|あんきじゅつ>　<r斬空|ざんくう>	Concealed Jutsu: Air Slash			character:command-record-index	NA2_SLPS@0x341520	NUN5_TEXTENG@0x6820	slot	48				
+T978	1	Command Chart > character move name	<r暗器術|あんきじゅつ>　<r鋼振|こうしん>	Concealed Jutsu: Steel Swing			character:command-record-index	NA2_SLPS@0x341550	NUN5_TEXTENG@0x6840	slot	48				
+T979	1	Command Chart > character move name	<r暗器術|あんきじゅつ>　<r風縛|かぜしばり>	Concealed Jutsu: Wind Paralysis			character:command-record-index	NA2_SLPS@0x341580	NUN5_TEXTENG@0x6860	slot	48				
+T980	1	Command Chart > character move name	<r暗器術|あんきじゅつ>　<r直鋼|ちょっこう>	Concealed Jutsu: Direct Steel			character:command-record-index	NA2_SLPS@0x3415B0	NUN5_TEXTENG@0x6880	slot	48				
+T981	1	Command Chart > character move name	<r曇撫離投|どんぶりな>げ	Donburi Throw			character:command-record-index	NA2_SLPS@0x346690	NUN5_TEXTENG@0x6960	slot	32				
+T982	1	Command Chart > character move name	<r肉弾針戦車|にくだんはりせんしゃ>	Spiky Human Boulder			character:command-record-index	NA2_SLPS@0x3466B0	NUN5_TEXTENG@0x6970	slot	40				
+T983	1	Command Chart > character move name	<r反姿|かえし>	Warped Figure			character:command-record-index	NA2_SLPS@0x3466D8	NUN5_TEXTENG@0x6988	slot	16				
+T984	1	Command Chart > character move name	<r刺身|さしみ>	Sashimi 			character:command-record-index	NA2_SLPS@0x3466E8	NUN5_TEXTENG@0x6998	slot	16				
+T985	1	Command Chart > character move name	<r叩軌|たたき>	Track Strike 			character:command-record-index	NA2_SLPS@0x3466F8	NUN5_TEXTENG@0x69A8	slot	16				
+T986	1	Command Chart > character move name	<r開軌|ひらき>	Track Open			character:command-record-index	NA2_SLPS@0x346708	NUN5_TEXTENG@0x69B8	slot	16				
+T987	1	Command Chart > character move name	<r弾子|だんご>	Bullet Kid			character:command-record-index	NA2_SLPS@0x346718	NUN5_TEXTENG@0x69C8	slot	16				
+T988	1	Command Chart > character move name	<r浮来|ふらい>	Floating Arrival			character:command-record-index	NA2_SLPS@0x346728	NUN5_TEXTENG@0x69E0	slot	24				
+T989	1	Command Chart > character move name	<r空揚|からあげ>	Deep Fry			character:command-record-index	NA2_SLPS@0x346740	NUN5_TEXTENG@0x69F8	slot	32				
+T990	1	Command Chart > character move name	<r天怖羅|てんぷら>	Tempura			character:command-record-index	NA2_SLPS@0x346760	NUN5_SLES@0x514108	slot	32				
+T991	1	Command Chart > character move name	<r海老天|えびてん>	Shrimp Spin			character:command-record-index	NA2_SLPS@0x346780	NUN5_TEXTENG@0x6A08	slot	32				
+T992	1	Command Chart > character move name	<r大棍|だいこん>	Daikon			character:command-record-index	NA2_SLPS@0x3467A0	NUN5_SLES@0x514110	slot	32				
+T993	1	Command Chart > character move name	<r落下星|らっかせい>	Falling Star			character:command-record-index	NA2_SLPS@0x3467C0	NUN5_TEXTENG@0x6A18	slot	32				
+T994	1	Command Chart > character move name	<r米胡麻|べいごま>	Rice Sesame 			character:command-record-index	NA2_SLPS@0x3467E0	NUN5_TEXTENG@0x6A28	slot	32				
+T995	1	Command Chart > character move name	１６<r連|れん>コンボ	16-hit Combo			character:command-record-index	NA2_SLPS@0x34B9D0	NUN5_TEXTENG@0x6AE8	slot	32				
+T996	1	Command Chart > character move name	<r忍花鳥兜|しのびばなとりかぶと>	Ninja Wolfsbane			character:command-record-index	NA2_SLPS@0x34B9F0	NUN5_TEXTENG@0x6B00	slot	48				
+T997	1	Command Chart > character move name	<r風|かぜ>に<r舞|ま>うカトレア	Cattleya Dancing in the Wind			character:command-record-index	NA2_SLPS@0x34BA20	NUN5_TEXTENG@0x6B10	slot	32				
+T998	1	Command Chart > character move name	ユーカリの<r風|かぜ>	Eucalyptus Wind			character:command-record-index	NA2_SLPS@0x34BA40	NUN5_TEXTENG@0x6B30	slot	32				
+T999	1	Command Chart > character move name	アマリリスの<r踊|おど>り	Amaryllus Dance			character:command-record-index	NA2_SLPS@0x34BA60	NUN5_TEXTENG@0x6B40	slot	32				
+T1000	1	Command Chart > character move name	アキレアのステップ	Achillea Step			character:command-record-index	NA2_SLPS@0x34BA80	NUN5_TEXTENG@0x6B50	slot	32				
+T1001	1	Command Chart > character move name	ホウセンカの<r拒絶|きょぜつ>	Impatiens Rejection			character:command-record-index	NA2_SLPS@0x34BAA0	NUN5_TEXTENG@0x6B60	slot	32				
+T1002	1	Command Chart > character move name	リアトリスの<r想|おも>い	Feelings of the Liatris			character:command-record-index	NA2_SLPS@0x34BAC0	NUN5_TEXTENG@0x6B80	slot	32				
+T1003	1	Command Chart > character move name	<r踊|おど>るヒメユリ	Dancing Lily			character:command-record-index	NA2_SLPS@0x34BAE0	NUN5_TEXTENG@0x6B98	slot	32				
+T1004	1	Command Chart > character move name	バラの<r一撃|いちげき>	Rose Strike			character:command-record-index	NA2_SLPS@0x34BB00	NUN5_TEXTENG@0x6BA8	slot	32				
+T1005	1	Command Chart > character move name	クローバーの<r約束|やくそく>	Promise of the Clover			character:command-record-index	NA2_SLPS@0x34BB20	NUN5_TEXTENG@0x6BC0	slot	32				
+T1006	1	Command Chart > character move name	カスミソウの<r飛翔|ひしょう>	Flight of the Soaproot			character:command-record-index	NA2_SLPS@0x34BB40	NUN5_TEXTENG@0x6BE0	slot	32				
+T1007	1	Command Chart > character move name	<r悲|かな>しみのキンセンカ	Sadness of the Marigold			character:command-record-index	NA2_SLPS@0x34BB60	NUN5_TEXTENG@0x6C00	slot	32				
+T1008	1	Command Chart > character move name	シクラメンの<r香|かお>り	Cyclamen Fragrance			character:command-record-index	NA2_SLPS@0x34BB80	NUN5_TEXTENG@0x6C20	slot	32				
+T1009	1	Command Chart > character move name	<r風|かぜ>に<r乗|の>るネリネ	Nerine Riding the Wind			character:command-record-index	NA2_SLPS@0x34BBA0	NUN5_TEXTENG@0x6C40	slot	32				
+T1010	1	Command Chart > character move name	<r獣人分身|じゅうじんぶんしん>	Man Beast Clone			character:command-record-index	NA2_SLPS@0x3510E0	NUN5_TEXTENG@0x6D20	slot	32				
+T1011	1	Command Chart > character move name	<r通牙|つうが>	Tunneling Fang 			character:command-record-index	NA2_SLPS@0x351100	NUN5_TEXTENG@0x6D30	slot	16				
+T1012	1	Command Chart > character move name	<r昇牙|しょうが>	Rising Fang			character:command-record-index	NA2_SLPS@0x351110	NUN5_TEXTENG@0x6D40	slot	32				
+T1013	1	Command Chart > character move name	<r旋風牙|せんぷうが>	Whirlwind Fang			character:command-record-index	NA2_SLPS@0x351130	NUN5_TEXTENG@0x6D50	slot	32				
+T1014	1	Command Chart > character move name	<r台風爪|たいふうそう>	Typhoon Claw			character:command-record-index	NA2_SLPS@0x351150	NUN5_TEXTENG@0x6D60	slot	32				
+T1015	1	Command Chart > character move name	<r赤丸連撃|あかまるれんげき>	Akamaru Combo			character:command-record-index	NA2_SLPS@0x351170	NUN5_TEXTENG@0x6D70	slot	32				
+T1016	1	Command Chart > character move name	<r百獣爪襲|ひゃくじゅうそうしゅう>	100 Animal Claw Attack			character:command-record-index	NA2_SLPS@0x351190	NUN5_TEXTENG@0x6D80	slot	48				
+T1017	1	Command Chart > character move name	<r疾爪|しっそう>	Swift Fang			character:command-record-index	NA2_SLPS@0x3511C0	NUN5_TEXTENG@0x6D98	slot	24				
+T1018	1	Command Chart > character move name	<r爪牙|そうが>	Tooth and Claw			character:command-record-index	NA2_SLPS@0x3511D8	NUN5_TEXTENG@0x6DA8	slot	24				
+T1019	1	Command Chart > character move name	<r獣電|じゅうでん>	Beast Lightning			character:command-record-index	NA2_SLPS@0x3511F0	NUN5_TEXTENG@0x6DC0	slot	32				
+T1020	1	Command Chart > character move name	<r昇双脚|しょうそうきゃく>	Rising Double Kick			character:command-record-index	NA2_SLPS@0x351210	NUN5_TEXTENG@0x6DD0	slot	32				
+T1021	1	Command Chart > character move name	<r天裂爪|てんれつそう>	Slicing Fang of Sky			character:command-record-index	NA2_SLPS@0x351230	NUN5_TEXTENG@0x6DF0	slot	32				
+T1022	1	Command Chart > character move name	<r戯獣脚|ぎじゅうきゃく>	Transient Beast Kick			character:command-record-index	NA2_SLPS@0x351250	NUN5_TEXTENG@0x6E10	slot	32				
+T1023	1	Command Chart > character move name	<r転双脚|てんそうきゃく>	Rolling Double Kick			character:command-record-index	NA2_SLPS@0x351270	NUN5_TEXTENG@0x6E30	slot	32				
+T1024	1	Command Chart > character move name	<r獣蹴激|じゅうしゅうげき>	Beast Crush Kick 			character:command-record-index	NA2_SLPS@0x351290	NUN5_TEXTENG@0x6E50	slot	32				
+T1025	1	Command Chart > character move name	<r蟲縛|むししば>りの<r術|じゅつ>	Insect Paralysis Jutsu			character:command-record-index	NA2_SLPS@0x356600	NUN5_TEXTENG@0x6F30	slot	48				
+T1026	1	Command Chart > character move name	<r蟲柱|むしばしら>の<r術|じゅつ>	Insect Pillar Jutsu			character:command-record-index	NA2_SLPS@0x356630	NUN5_TEXTENG@0x6F50	slot	48				
+T1027	1	Command Chart > character move name	<r旋円蟲|せんえんちゅう>	Turning Circle of Insects			character:command-record-index	NA2_SLPS@0x356660	NUN5_TEXTENG@0x6F70	slot	32				
+T1028	1	Command Chart > character move name	<r衝突蟲|しょうとっちゅう>	Impact Insects			character:command-record-index	NA2_SLPS@0x356680	NUN5_TEXTENG@0x6F90	slot	32				
+T1029	1	Command Chart > character move name	<r蟲旋脚|ちゅうせんきゃく>	Insect Spiral Kick			character:command-record-index	NA2_SLPS@0x3566A0	NUN5_TEXTENG@0x6FA0	slot	32				
+T1030	1	Command Chart > character move name	<r蟲波拳|ちゅうはけん>	Insect Wave Fist			character:command-record-index	NA2_SLPS@0x3566C0	NUN5_TEXTENG@0x6FC0	slot	32				
+T1031	1	Command Chart > character move name	<r天蟲殺|てんちゅうさつ>	Sky Insect Death			character:command-record-index	NA2_SLPS@0x3566E0	NUN5_TEXTENG@0x6FE0	slot	32				
+T1032	1	Command Chart > character move name	<r這面蟲|はいめんちゅう>	Crawling Insects			character:command-record-index	NA2_SLPS@0x356700	NUN5_TEXTENG@0x7000	slot	32				
+T1033	1	Command Chart > character move name	<r蟲拳打|ちゅうけんだ>	Insect Fist Hit			character:command-record-index	NA2_SLPS@0x356720	NUN5_TEXTENG@0x7020	slot	32				
+T1034	1	Command Chart > character move name	<r瞬蟲撃|しゅんちゅうげき>	Instant Insect Strike			character:command-record-index	NA2_SLPS@0x356740	NUN5_TEXTENG@0x7030	slot	32				
+T1035	1	Command Chart > character move name	<r天翔蟲|てんしょうちゅう>	Soaring Insects of Sky			character:command-record-index	NA2_SLPS@0x356760	NUN5_TEXTENG@0x7050	slot	32				
+T1036	1	Command Chart > character move name	<r蟲降脚|ちゅうこうきゃく>	Insect Drop Kick			character:command-record-index	NA2_SLPS@0x356780	NUN5_TEXTENG@0x7070	slot	32				
+T1037	1	Command Chart > character move name	<r襲降蟲|しゅうこうちゅう>	Raid of Insects			character:command-record-index	NA2_SLPS@0x3567A0	NUN5_TEXTENG@0x7090	slot	32				
+T1038	1	Command Chart > character move name	<r震振蟲|しんしんちゅう>	Throbbing Insects			character:command-record-index	NA2_SLPS@0x3567C0	NUN5_TEXTENG@0x70A0	slot	32				
+T1039	1	Command Chart > character move name	<r傀儡|くぐつ>　<r卍砲|まんじほう>	Puppet: Manji Shot			character:command-record-index	NA2_SLPS@0x35BFB0	NUN5_TEXTENG@0x7180	slot	48				
+T1040	1	Command Chart > character move name	<r一対|いっつい>の<r処女|しょじょ>	Pair of Maidens			character:command-record-index	NA2_SLPS@0x35BFE0	NUN5_TEXTENG@0x71A0	slot	48				
+T1041	1	Command Chart > character move name	<r傀儡|くぐつ>　<r風穴|かざあな>	Puppet: Wind Hole			character:command-record-index	NA2_SLPS@0x35C010	NUN5_TEXTENG@0x71B0	slot	48				
+T1042	1	Command Chart > character move name	<r傀儡|くぐつ>　<r噴弾|ふんだん>	Puppet: Spewing Shot			character:command-record-index	NA2_SLPS@0x35C040	NUN5_TEXTENG@0x71D0	slot	48				
+T1043	1	Command Chart > character move name	<r傀儡|くぐつ>　<r朧独楽|おぼろごま>	Puppet: Hazy Spin			character:command-record-index	NA2_SLPS@0x35C070	NUN5_TEXTENG@0x71F0	slot	48				
+T1044	1	Command Chart > character move name	<r傀儡|くぐつ>　<r懺悔|ざんげ>	Puppet: Confession			character:command-record-index	NA2_SLPS@0x35C0A0	NUN5_TEXTENG@0x7210	slot	32				
+T1045	1	Command Chart > character move name	<r傀儡|くぐつ>　<r霞独楽|かすみごま>	Puppet: Misty Spin			character:command-record-index	NA2_SLPS@0x35C0C0	NUN5_TEXTENG@0x7230	slot	48				
+T1046	1	Command Chart > character move name	<r傀儡|くぐつ>　<r裁|さばき>	Puppet: Judgment			character:command-record-index	NA2_SLPS@0x35C0F0	NUN5_TEXTENG@0x7250	slot	32				
+T1047	1	Command Chart > character move name	<r傀儡|くぐつ>　<r流刃|りゅうじん>	Puppet: Flowing Blade			character:command-record-index	NA2_SLPS@0x35C110	NUN5_TEXTENG@0x7270	slot	48				
+T1048	1	Command Chart > character move name	<r傀儡|くぐつ>　<r逆手車|さかてぐるま>	Puppet: Reverse Pushcart			character:command-record-index	NA2_SLPS@0x35C140	NUN5_TEXTENG@0x7290	slot	48				
+T1049	1	Command Chart > character move name	<r傀儡|くぐつ>　<r無斬|むざん>	Puppet: Slash of Nothingness			character:command-record-index	NA2_SLPS@0x35C170	NUN5_TEXTENG@0x72B0	slot	32				
+T1050	1	Command Chart > character move name	<r傀儡|くぐつ>　<r堕羅繰|だらく>	Puppet: Degeneration			character:command-record-index	NA2_SLPS@0x35C190	NUN5_TEXTENG@0x72D0	slot	48				
+T1051	1	Command Chart > character move name	<r傀儡|くぐつ>　<r逆手飛車|さかてひしゃ>	Puppet: Flying Reverse Pushcart			character:command-record-index	NA2_SLPS@0x35C1C0	NUN5_TEXTENG@0x72F0	slot	48				
+T1052	1	Command Chart > character move name	<r傀儡|くぐつ>　<r双哭|そうこく>	Puppet: Double Scream			character:command-record-index	NA2_SLPS@0x35C1F0	NUN5_TEXTENG@0x7310	slot	48				
+T1053	1	Command Chart > character move name	<r大扇風轟壁|だいせんぷうごうへき>	Giant Rumbling Fan Wind Wall			character:command-record-index	NA2_SLPS@0x361900	NUN5_TEXTENG@0x73E0	slot	48				
+T1054	1	Command Chart > character move name	カマイタチの<r術|じゅつ>	Wind Scythe Jutsu			character:command-record-index	NA2_SLPS@0x361930	NUN5_TEXTENG@0x7400	slot	32				
+T1055	1	Command Chart > character move name	<r風神|ふうじん>の<r舞|まい>	Fujin's Dance			character:command-record-index	NA2_SLPS@0x361950	NUN5_TEXTENG@0x7418	slot	32				
+T1056	1	Command Chart > character move name	<r扇旋風|せんせんぷう>	Fan Tornado			character:command-record-index	NA2_SLPS@0x361970	NUN5_TEXTENG@0x7428	slot	32				
+T1057	1	Command Chart > character move name	<r地龍|ちりゅう>の<r息|いき>	Breath of the Earth Dragon			character:command-record-index	NA2_SLPS@0x361990	NUN5_TEXTENG@0x7440	slot	32				
+T1058	1	Command Chart > character move name	<r回扇刃|かいせんじん>	Spinning Fan Blade			character:command-record-index	NA2_SLPS@0x3619B0	NUN5_TEXTENG@0x7460	slot	32				
+T1059	1	Command Chart > character move name	<r暴風昇壁|ぼうふうしょうへき>	Rising Tempest Wall			character:command-record-index	NA2_SLPS@0x3619D0	NUN5_TEXTENG@0x7480	slot	32				
+T1060	1	Command Chart > character move name	<r斧扇降|ふせんこう>	Falling Fan Axe			character:command-record-index	NA2_SLPS@0x3619F0	NUN5_TEXTENG@0x74A0	slot	32				
+T1061	1	Command Chart > character move name	<r疾風刃|しっぷうじん>	Gale Blade			character:command-record-index	NA2_SLPS@0x361A10	NUN5_TEXTENG@0x74B0	slot	32				
+T1062	1	Command Chart > character move name	<r夢扇舞|むせんまい>	Dance of the Dream Fan			character:command-record-index	NA2_SLPS@0x361A30	NUN5_TEXTENG@0x74C0	slot	32				
+T1063	1	Command Chart > character move name	<r転身扇刃|てんしんせんじん>	Rotating Fan Blade			character:command-record-index	NA2_SLPS@0x361A50	NUN5_TEXTENG@0x74E0	slot	32				
+T1064	1	Command Chart > character move name	<r斧扇兜割|ふせんとうかつ>	Axe Fan Helmet Break			character:command-record-index	NA2_SLPS@0x361A70	NUN5_TEXTENG@0x7500	slot	32				
+T1065	1	Command Chart > character move name	<r幻扇舞|げんせんまい>	Dance of the Phantasm Fan			character:command-record-index	NA2_SLPS@0x361A90	NUN5_TEXTENG@0x7520	slot	32				
+T1066	1	Command Chart > character move name	<r扇一閃|おおぎいっせん>　	Fan Flash			character:command-record-index	NA2_SLPS@0x361AB0	NUN5_TEXTENG@0x7540	slot	32				
+T1067	1	Command Chart > character move name	<r火遁|かとん>・<r火龍炎弾|かりゅうえんだん>	Fire Style: Dragon Flame Bombs			character:command-record-index	NA2_SLPS@0x366FC0	NUN5_TEXTENG@0x7610	slot	48				
+T1068	1	Command Chart > character move name	<r土遁|どとん>・<r土流壁|どりゅうへき>	Earth Style: Mud Wall			character:command-record-index	NA2_SLPS@0x366FF0	NUN5_TEXTENG@0x7630	slot	48				
+T1069	1	Command Chart > character move name	<r金剛術|こんごうじゅつ>　<r乱|みだ>れ<r打|う>ち	Adamantine Jutsu: Wild Strike			character:command-record-index	NA2_SLPS@0x367020	NUN5_TEXTENG@0x7650	slot	64				
+T1070	1	Command Chart > character move name	<r伸身如意|しんしんにょい>	Elastic Nyoi			character:command-record-index	NA2_SLPS@0x367060	NUN5_TEXTENG@0x7670	slot	32				
+T1071	1	Command Chart > character move name	<r遊猿脚|ゆうえんきゃく>	Playful Monkey Kick			character:command-record-index	NA2_SLPS@0x367080	NUN5_TEXTENG@0x7680	slot	32				
+T1072	1	Command Chart > character move name	<r旋猿脚|せんえんきゃく>	Turning Monkey Kick			character:command-record-index	NA2_SLPS@0x3670A0	NUN5_TEXTENG@0x76A0	slot	32				
+T1073	1	Command Chart > character move name	<r顎割|あぎとわ>り	Jawbreaker			character:command-record-index	NA2_SLPS@0x3670C0	NUN5_TEXTENG@0x76B8	slot	32				
+T1074	1	Command Chart > character move name	<r金剛術|こんごうじゅつ>　<r大地割|だいちわ>り	Adamantine Jutsu: Earthbreaker			character:command-record-index	NA2_SLPS@0x3670E0	NUN5_TEXTENG@0x76D0	slot	48				
+T1075	1	Command Chart > character move name	<r猿王|えんおう>の<r牙|きば>	Fangs of the Monkey King			character:command-record-index	NA2_SLPS@0x367110	NUN5_TEXTENG@0x76F0	slot	32				
+T1076	1	Command Chart > character move name	<r金剛術|こんごうじゅつ>　<r一本釣|いっぽんづ>り	Adamantine Jutsu: Single-Rod Fishing			character:command-record-index	NA2_SLPS@0x367130	NUN5_TEXTENG@0x7710	slot	64				
+T1077	1	Command Chart > character move name	<r金剛術|こんごうじゅつ>　<r大打上|おおうちあ>げ	Adamantine Jutsu: Great Launch			character:command-record-index	NA2_SLPS@0x367170	NUN5_TEXTENG@0x7740	slot	64				
+T1078	1	Command Chart > character move name	<r金剛術|こんごうじゅつ>　<r頭蓋砕|ずがいくだ>き	Adamantine Jutsu: Cranium Smash			character:command-record-index	NA2_SLPS@0x3671B0	NUN5_TEXTENG@0x7760	slot	64				
+T1079	1	Command Chart > character move name	<r金剛術|こんごうじゅつ>　<r大打降|おおうちおろ>し	Adamantine Jutsu: Great Prang			character:command-record-index	NA2_SLPS@0x3671F0	NUN5_TEXTENG@0x7780	slot	64				
+T1080	1	Command Chart > character move name	<r金剛術|こんごうじゅつ>　<r裏突|うらづ>き	Adamantine Jutsu: Under-Thrust			character:command-record-index	NA2_SLPS@0x367230	NUN5_TEXTENG@0x77A0	slot	48				
+T1081	1	Command Chart > character move name	<r土遁結界|どとんけっかい>　<r土牢堂無|どろうどうむ>	Earth Style Barrier: Earth Dome Prison			character:command-record-index	NA2_SLPS@0x36C1E0	NUN5_TEXTENG@0x7990	slot	64				
+T1082	1	Command Chart > character move name	<r土遁|どとん>・<r土陵団子|どりょうだんご>	Earth Style: Sphere of Graves			character:command-record-index	NA2_SLPS@0x36C220	NUN5_TEXTENG@0x79C0	slot	48				
+T1083	1	Command Chart > character move name	<r山顔|ざんがん>	Mountain Face			character:command-record-index	NA2_SLPS@0x36C250	NUN5_TEXTENG@0x79E0	slot	32				
+T1084	1	Command Chart > character move name	<r崩掌|ほうしょう>	Shatter Palm			character:command-record-index	NA2_SLPS@0x36C270	NUN5_TEXTENG@0x79F0	slot	32				
+T1085	1	Command Chart > character move name	<r岩投|がんとう>	Stone Throw			character:command-record-index	NA2_SLPS@0x36C290	NUN5_TEXTENG@0x7A00	slot	24				
+T1086	1	Command Chart > character move name	<r放打|ほうだ>	Releasing Strike			character:command-record-index	NA2_SLPS@0x36C2A8	NUN5_TEXTENG@0x7A10	slot	24				
+T1087	1	Command Chart > character move name	<r雷豪|らいごう>	Thunderbolt Roar			character:command-record-index	NA2_SLPS@0x36C2C0	NUN5_TEXTENG@0x7A30	slot	32				
+T1088	1	Command Chart > character move name	<r伐掌|ばっしょう>	Cutting Palm			character:command-record-index	NA2_SLPS@0x36C2E0	NUN5_TEXTENG@0x7A48	slot	32				
+T1089	1	Command Chart > character move name	<r剛突|ごうとつ>	Heavy Thrust			character:command-record-index	NA2_SLPS@0x36C300	NUN5_TEXTENG@0x7A58	slot	32				
+T1090	1	Command Chart > character move name	<r暴砲|ぼうほう>	Violent Cannonball			character:command-record-index	NA2_SLPS@0x36C320	NUN5_TEXTENG@0x7A70	slot	32				
+T1091	1	Command Chart > character move name	<r昇雷|しょうらい>	Rising Thunder			character:command-record-index	NA2_SLPS@0x36C340	NUN5_TEXTENG@0x7A88	slot	32				
+T1092	1	Command Chart > character move name	<r落体|らくてい>	Body Drop			character:command-record-index	NA2_SLPS@0x36C360	NUN5_TEXTENG@0x7A98	slot	32				
+T1093	1	Command Chart > character move name	<r落撃|らくげき>	Drop Attack			character:command-record-index	NA2_SLPS@0x36C380	NUN5_TEXTENG@0x7AA8	slot	32				
+T1094	1	Command Chart > character move name	<r突肩|とっけん>	Shoulder Charge			character:command-record-index	NA2_SLPS@0x36C3A0	NUN5_TEXTENG@0x7AC0	slot	32				
+T1095	1	Command Chart > character move name	<r蜘蛛巣開|クモソウカイ>	Spiral Spider Web			character:command-record-index	NA2_SLPS@0x3711E0	NUN5_TEXTENG@0x7B80	slot	32				
+T1096	1	Command Chart > character move name	<r大蜘蛛落|おおグモお>とし	Giant Spider Drop			character:command-record-index	NA2_SLPS@0x371200	NUN5_TEXTENG@0x7BA0	slot	32				
+T1097	1	Command Chart > character move name	<r蜘蛛足返|クモあしがえ>し	Spider Leg Counter			character:command-record-index	NA2_SLPS@0x371220	NUN5_TEXTENG@0x7BC0	slot	32				
+T1098	1	Command Chart > character move name	<r粘金棘刺|ねんきんきょくし>	Malleable Metal Stab			character:command-record-index	NA2_SLPS@0x371240	NUN5_TEXTENG@0x7BE0	slot	32				
+T1099	1	Command Chart > character move name	<r粘金咬顎|ねんきんこうがく>	Malleable Metal Jaw Bite			character:command-record-index	NA2_SLPS@0x371260	NUN5_TEXTENG@0x7C00	slot	32				
+T1100	1	Command Chart > character move name	<r蜘蛛足爪裁|クモあしそうさい>	Spider Foot Claw Cut 			character:command-record-index	NA2_SLPS@0x371280	NUN5_TEXTENG@0x7C20	slot	32				
+T1101	1	Command Chart > character move name	<r蜘蛛粘吐|クモねんど>　<r舞鳥捕獲|まいどりほかく>	Spider Gum: Dancing Bird Capture			character:command-record-index	NA2_SLPS@0x3712A0	NUN5_TEXTENG@0x7C40	slot	64				
+T1102	1	Command Chart > character move name	<r蜘蛛旋斧|クモせんぷ>	Spider Spiral Axe			character:command-record-index	NA2_SLPS@0x3712E0	NUN5_TEXTENG@0x7C70	slot	32				
+T1103	1	Command Chart > character move name	<r蜘蛛粘吐|クモねんど>　<r這虫捕獲|はいむしほかく>	Spider Gum: Crawling Insect Capture			character:command-record-index	NA2_SLPS@0x371300	NUN5_TEXTENG@0x7C90	slot	64				
+T1104	1	Command Chart > character move name	<r蜘蛛粘吐|クモねんど>　<r天下半周|てんげはんしゅう>	Spider Gum: Halfway Around the Earth			character:command-record-index	NA2_SLPS@0x371340	NUN5_TEXTENG@0x7CC0	slot	64				
+T1105	1	Command Chart > character move name	<r蜘蛛昇槍|クモしょうそう>	Spider Rising Spear 			character:command-record-index	NA2_SLPS@0x371380	NUN5_TEXTENG@0x7CF0	slot	32				
+T1106	1	Command Chart > character move name	<r天井這落|てんじょうしゃらく>	Ceiling Crawl Drop			character:command-record-index	NA2_SLPS@0x3713A0	NUN5_TEXTENG@0x7D10	slot	32				
+T1107	1	Command Chart > character move name	<r蜘蛛粘吐|クモねんど>　<r纏糸|てんし>	Spider Gum: Clad String			character:command-record-index	NA2_SLPS@0x3713C0	NUN5_TEXTENG@0x7D30	slot	48				
+T1108	1	Command Chart > character move name	<r八艘蜘蛛足|はっそうクモあし>	8 Ship Spider Leg 			character:command-record-index	NA2_SLPS@0x3713F0	NUN5_TEXTENG@0x7D50	slot	32				
+T1109	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r絆狂|はんきょう>	Musical Manipulation: Tied Madness			character:command-record-index	NA2_SLPS@0x375DF0	NUN5_TEXTENG@0x7E20	slot	64				
+T1110	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r独葬|どくそう>	Musical Manipulation: Single Burial 			character:command-record-index	NA2_SLPS@0x375E30	NUN5_TEXTENG@0x7E50	slot	48				
+T1111	1	Command Chart > character move name	<r魔笛|まてき>　<r鎖音|さいん>	Demon Flute: Chain Sound			character:command-record-index	NA2_SLPS@0x375E60	NUN5_TEXTENG@0x7E80	slot	32				
+T1112	1	Command Chart > character move name	<r魔笛|まてき>　<r音羽|おとは>	Demon Flute: Sound Wings			character:command-record-index	NA2_SLPS@0x375E80	NUN5_TEXTENG@0x7EA0	slot	32				
+T1113	1	Command Chart > character move name	<r魔笛|まてき>　<r滴音|てきいん>	Demon Flute: Drop Sound			character:command-record-index	NA2_SLPS@0x375EA0	NUN5_TEXTENG@0x7EC0	slot	48				
+T1114	1	Command Chart > character move name	<r魔笛|まてき>　<r円音|えんいん>	Demon Flute: Circle Sound			character:command-record-index	NA2_SLPS@0x375ED0	NUN5_TEXTENG@0x7EE0	slot	48				
+T1115	1	Command Chart > character move name	<r魔笛|まてき>　<r月音|げついん>	Demon Flute: Moon Sound			character:command-record-index	NA2_SLPS@0x375F00	NUN5_TEXTENG@0x7F00	slot	48				
+T1116	1	Command Chart > character move name	<r魔笛|まてき>　<r跫音|きょうおん>	Demon Flute: Footstep Sound			character:command-record-index	NA2_SLPS@0x375F30	NUN5_TEXTENG@0x7F20	slot	48				
+T1117	1	Command Chart > character move name	<r魔笛|まてき>　<r波音|はいん>	Demon Flute: Wave Sound			character:command-record-index	NA2_SLPS@0x375F60	NUN5_TEXTENG@0x7F40	slot	32				
+T1118	1	Command Chart > character move name	<r無音|ぶいん>	Silence			character:command-record-index	NA2_SLPS@0x375F80	NUN5_SLES@0x514118	slot	16				
+T1119	1	Command Chart > character move name	<r魔笛|まてき>　<r環音|かんいん>	Demon Flute: Ring Sound			character:command-record-index	NA2_SLPS@0x375F90	NUN5_TEXTENG@0x7F60	slot	48				
+T1120	1	Command Chart > character move name	<r魔笛|まてき>　<r凛音|りんおん>	Demon Flute: Clear Sound			character:command-record-index	NA2_SLPS@0x375FC0	NUN5_TEXTENG@0x7F80	slot	40				
+T1121	1	Command Chart > character move name	<r無笛|むてき>	No Flute 			character:command-record-index	NA2_SLPS@0x375FE8	NUN5_TEXTENG@0x7FA0	slot	24				
+T1122	1	Command Chart > character move name	<r魔笛|まてき>　<r虚音|きょいん>	Demon Flute: Hollow Sound			character:command-record-index	NA2_SLPS@0x376000	NUN5_TEXTENG@0x7FB0	slot	48				
+T1123	1	Command Chart > character move name	<r多連拳|たれんけん>	Multiple Fists Barrage			character:command-record-index	NA2_SLPS@0x37B3A0	NUN5_TEXTENG@0x8070	slot	32				
+T1124	1	Command Chart > character move name	<r爆滅法陣|ばくめつほうじん>	Explosive Destruction Formation			character:command-record-index	NA2_SLPS@0x37B3C0	NUN5_TEXTENG@0x8090	slot	32				
+T1125	1	Command Chart > character move name	<r多連伸角脚|たれんしんかくきゃく>	Multi Growing Horn Kick			character:command-record-index	NA2_SLPS@0x37B3E0	NUN5_TEXTENG@0x80B0	slot	48				
+T1126	1	Command Chart > character move name	<r多連暗生拳|たれんあんしょうけん>	Multi Dark Life Fist			character:command-record-index	NA2_SLPS@0x37B410	NUN5_TEXTENG@0x80D0	slot	48				
+T1127	1	Command Chart > character move name	<r多連鬼爪脚|たれんきそうきゃく>	Multi Demon Claw Kick			character:command-record-index	NA2_SLPS@0x37B440	NUN5_TEXTENG@0x80F0	slot	48				
+T1128	1	Command Chart > character move name	<r多連惨風脚|たれんざんぷうきゃく>	Multi Cruel Wind Kick			character:command-record-index	NA2_SLPS@0x37B470	NUN5_TEXTENG@0x8110	slot	48				
+T1129	1	Command Chart > character move name	<r多連哭龍脚|たれんこくりゅうきゃく>	Multi Howling Dragon Kick			character:command-record-index	NA2_SLPS@0x37B4A0	NUN5_TEXTENG@0x8130	slot	48				
+T1130	1	Command Chart > character move name	<r多連獄刺脚|たれんごくしきゃく>	Multi Imprisoning Stabbing Kick			character:command-record-index	NA2_SLPS@0x37B4D0	NUN5_TEXTENG@0x8150	slot	48				
+T1131	1	Command Chart > character move name	<r多連亡手拳|たれんぼうしゅけん>	Multi Dead Hand Fist			character:command-record-index	NA2_SLPS@0x37B500	NUN5_TEXTENG@0x8170	slot	48				
+T1132	1	Command Chart > character move name	<r多連閻鳴拳|たれんえんめいけん>	Multi Diabolical Shouting Fist			character:command-record-index	NA2_SLPS@0x37B530	NUN5_TEXTENG@0x8190	slot	48				
+T1133	1	Command Chart > character move name	<r多連追般脚|たれんついはんきゃく>	Multi Pursuing Kick			character:command-record-index	NA2_SLPS@0x37B560	NUN5_TEXTENG@0x81B0	slot	48				
+T1134	1	Command Chart > character move name	<r多連鬼招脚|たれんきしょうきゃく>	Multi Demon Calling Kick			character:command-record-index	NA2_SLPS@0x37B590	NUN5_TEXTENG@0x81D0	slot	48				
+T1135	1	Command Chart > character move name	<r多連投獄脚|たれんとうごくきゃく>	Multi Imprisoning Kick			character:command-record-index	NA2_SLPS@0x37B5C0	NUN5_TEXTENG@0x81F0	slot	48				
+T1136	1	Command Chart > character move name	<r多連魔走拳|たれんまそうけん>	Multi Evil Dash Fist			character:command-record-index	NA2_SLPS@0x37B5F0	NUN5_TEXTENG@0x8210	slot	32				
+T1137	1	Command Chart > character move name	<r茨|いばら>	Thorn			character:command-record-index	NA2_SLPS@0x380BB8	NUN5_SLES@0x514120	slot	24				
+T1138	1	Command Chart > character move name	<r唐松|からまつ>の<r舞|まい>	Larch Dance 			character:command-record-index	NA2_SLPS@0x380BD0	NUN5_TEXTENG@0x82F0	slot	32				
+T1139	1	Command Chart > character move name	<r椿|つばき>	Camellia 			character:command-record-index	NA2_SLPS@0x380BF0	NUN5_TEXTENG@0x8300	slot	16				
+T1140	1	Command Chart > character move name	<r槻|けやき>	Zelkova			character:command-record-index	NA2_SLPS@0x380C00	NUN5_SLES@0x514128	slot	16				
+T1141	1	Command Chart > character move name	<r風車|かざぐるま>	Windmill			character:command-record-index	NA2_SLPS@0x380C10	NUN5_TEXTENG@0x8310	slot	32				
+T1142	1	Command Chart > character move name	<r骨飛礫|ほねつぶて>	Flying Bone Pellet			character:command-record-index	NA2_SLPS@0x380C30	NUN5_TEXTENG@0x8320	slot	24				
+T1143	1	Command Chart > character move name	<r芒|すすき>	Pampas			character:command-record-index	NA2_SLPS@0x380C48	NUN5_SLES@0x514130	slot	16				
+T1144	1	Command Chart > character move name	<r薊|あざみ>	Thistle			character:command-record-index	NA2_SLPS@0x380C58	NUN5_SLES@0x514138	slot	24				
+T1145	1	Command Chart > character move name	<r令法|りょうぶ>	Clethra			character:command-record-index	NA2_SLPS@0x380C70	NUN5_SLES@0x514140	slot	24				
+T1146	1	Command Chart > character move name	<r柊|ひいらぎ>	Holly			character:command-record-index	NA2_SLPS@0x380C88	NUN5_SLES@0x514148	slot	16				
+T1147	1	Command Chart > character move name	<r空木|うつぎ>	Deutzia			character:command-record-index	NA2_SLPS@0x380C98	NUN5_SLES@0x514150	slot	24				
+T1148	1	Command Chart > character move name	<r吸葛|すいかずら>	Honeysuckle			character:command-record-index	NA2_SLPS@0x380CB0	NUN5_TEXTENG@0x8338	slot	24				
+T1149	1	Command Chart > character move name	<r柳|やなぎ>	Willow			character:command-record-index	NA2_SLPS@0x380CC8	NUN5_SLES@0x514158	slot	24				
+T1150	1	Command Chart > character move name	<r夜叉五倍子|やしゃぶし>	Alder 			character:command-record-index	NA2_SLPS@0x380CE0	NUN5_SLES@0x514160	slot	32				
+T1151	1	Command Chart > character move name	<r椹|さわら>	Cypress			character:command-record-index	NA2_SLPS@0x380D00	NUN5_SLES@0x514168	slot	16				
+T1152	1	Command Chart > character move name	<r瞬光|しゅんこう>	Instant Light 			character:command-record-index	NA2_SLPS@0x386690	NUN5_TEXTENG@0x8410	slot	32				
+T1153	1	Command Chart > character move name	<r瞬転昇蹴|しゅんてんしょうしゅう>	Instant Rising Kick			character:command-record-index	NA2_SLPS@0x3866B0	NUN5_TEXTENG@0x8420	slot	48				
+T1154	1	Command Chart > character move name	<r射光閃|しゃこうせん>	Shooting Flash			character:command-record-index	NA2_SLPS@0x3866E0	NUN5_TEXTENG@0x8438	slot	32				
+T1155	1	Command Chart > character move name	<r輝刃閃|きじんせん>	Shining Blade Flash			character:command-record-index	NA2_SLPS@0x386700	NUN5_TEXTENG@0x8450	slot	32				
+T1156	1	Command Chart > character move name	<r三光閃|さんこうせん>	Triple Flash			character:command-record-index	NA2_SLPS@0x386720	NUN5_TEXTENG@0x8468	slot	32				
+T1157	1	Command Chart > character move name	<r昇雷閃|しょうらいせん>	Rising Thunder Flash			character:command-record-index	NA2_SLPS@0x386740	NUN5_TEXTENG@0x8480	slot	32				
+T1158	1	Command Chart > character move name	<r超光脚|ちょうこうきゃく>	Super Light beam Kick			character:command-record-index	NA2_SLPS@0x386760	NUN5_TEXTENG@0x84A0	slot	32				
+T1159	1	Command Chart > character move name	<r瞬雷刃|しゅんらいじん>	Instant Thunder Blade			character:command-record-index	NA2_SLPS@0x386780	NUN5_TEXTENG@0x84C0	slot	32				
+T1160	1	Command Chart > character move name	<r粒光脚|りゅうこうきゃく>	Light Particle Kick			character:command-record-index	NA2_SLPS@0x3867A0	NUN5_TEXTENG@0x84E0	slot	32				
+T1161	1	Command Chart > character move name	<r帰光閃|きこうせん>	Returning Light Flash			character:command-record-index	NA2_SLPS@0x3867C0	NUN5_TEXTENG@0x8500	slot	32				
+T1162	1	Command Chart > character move name	<r降雷刃|こうらいじん>	Falling Thunder Blade			character:command-record-index	NA2_SLPS@0x3867E0	NUN5_TEXTENG@0x8520	slot	32				
+T1163	1	Command Chart > character move name	<r疾光弾|しっこうだん>	Lightning Bullet			character:command-record-index	NA2_SLPS@0x386800	NUN5_TEXTENG@0x8540	slot	32				
+T1164	1	Command Chart > character move name	<r迅雷閃|じんらいせん>	Lightning Flash 			character:command-record-index	NA2_SLPS@0x386820	NUN5_TEXTENG@0x8560	slot	32				
+T1165	1	Command Chart > character move name	おいろけの<r術|じゅつ>	Sexy Jutsu			character:command-record-index	NA2_SLPS@0x38B6D0	NUN5_TEXTENG@0x8648	slot	32				
+T1166	1	Command Chart > character move name	<r忍具|にんぐ>ぽいぽいっ！	Ninja Tools Toss!			character:command-record-index	NA2_SLPS@0x38B6F0	NUN5_TEXTENG@0x8660	slot	32				
+T1167	1	Command Chart > character move name	<r木|こ>ノ<r葉丸軍団劇場|はまるぐんだんげきじょう>	Konohamaru Ninja Squad Theater			character:command-record-index	NA2_SLPS@0x38B710	NUN5_TEXTENG@0x8680	slot	64				
+T1168	1	Command Chart > character move name	ぐるぐるどか～ん！	Spin, Spin, Bam!			character:command-record-index	NA2_SLPS@0x38B750	NUN5_TEXTENG@0x86A0	slot	24				
+T1169	1	Command Chart > character move name	かかったな！	I Got You!			character:command-record-index	NA2_SLPS@0x38B768	NUN5_TEXTENG@0x86B8	slot	24				
+T1170	1	Command Chart > character move name	<r見|み>えないだろ！	You Can't See Me!			character:command-record-index	NA2_SLPS@0x38B780	NUN5_TEXTENG@0x86D0	slot	32				
+T1171	1	Command Chart > character move name	<r飛|と>んでけぇ！	Fly Away!			character:command-record-index	NA2_SLPS@0x38B7A0	NUN5_TEXTENG@0x86E8	slot	32				
+T1172	1	Command Chart > character move name	<r飛|と>び<r越|こ>えろっ！	Jump Over!			character:command-record-index	NA2_SLPS@0x38B7C0	NUN5_TEXTENG@0x86F8	slot	32				
+T1173	1	Command Chart > character move name	ごっつんこ！	Thump!			character:command-record-index	NA2_SLPS@0x38B7E0	NUN5_SLES@0x514170	slot	16				
+T1174	1	Command Chart > character move name	びった～ん！	Slam!			character:command-record-index	NA2_SLPS@0x38B7F0	NUN5_SLES@0x514178	slot	16				
+T1175	1	Command Chart > character move name	こっち<r来|く>るなコレ！	Keep Away From Me!			character:command-record-index	NA2_SLPS@0x38B800	NUN5_TEXTENG@0x8710	slot	32				
+T1176	1	Command Chart > character move name	あっち<r行|い>けコレ！	Go Away! 			character:command-record-index	NA2_SLPS@0x38B820	NUN5_TEXTENG@0x8728	slot	32				
+T1177	1	Command Chart > character move name	<r烈華掌|れっかしょう>	Fierce Palm			character:command-record-index	NA2_SLPS@0x390730	NUN5_TEXTENG@0x87E0	slot	32				
+T1178	1	Command Chart > character move name	<r輪昇打|りんしょうだ>	Rising Circle Strike			character:command-record-index	NA2_SLPS@0x390750	NUN5_TEXTENG@0x87F0	slot	32				
+T1179	1	Command Chart > character move name	<r砲突撃|ほうとつげき>	Cannonball Charge			character:command-record-index	NA2_SLPS@0x390770	NUN5_TEXTENG@0x8810	slot	32				
+T1180	1	Command Chart > character move name	<r下天崩撃|げてんほうげき>	Earth Destruction Attack			character:command-record-index	NA2_SLPS@0x390790	NUN5_TEXTENG@0x8830	slot	32				
+T1181	1	Command Chart > character move name	<r旋回掌|せんかいしょう>	Whirling Palm			character:command-record-index	NA2_SLPS@0x3907B0	NUN5_TEXTENG@0x8850	slot	32				
+T1182	1	Command Chart > character move name	<r天突連掌|てんとつれんしょう>	Heaven Thrust Repeating Palm			character:command-record-index	NA2_SLPS@0x3907D0	NUN5_TEXTENG@0x8860	slot	32				
+T1183	1	Command Chart > character move name	<r湖面双脚|こめんそうきゃく>	Lake Surface Twin Kick			character:command-record-index	NA2_SLPS@0x3907F0	NUN5_TEXTENG@0x8880	slot	32				
+T1184	1	Command Chart > character move name	<r白爆経掌|びゃくばくけいしょう>	White Explosive Chakra Palm			character:command-record-index	NA2_SLPS@0x390810	NUN5_TEXTENG@0x88A0	slot	48				
+T1185	1	Command Chart > character move name	<r跳背両脚|ちょうはいりょうきゃく>	Jumping Double Back Kick			character:command-record-index	NA2_SLPS@0x390840	NUN5_TEXTENG@0x88C0	slot	48				
+T1186	1	Command Chart > character move name	<r天掴砲掌|てんかくほうしょう>	Seizing Heaven Cannonball Palm			character:command-record-index	NA2_SLPS@0x390870	NUN5_TEXTENG@0x88E0	slot	32				
+T1187	1	Command Chart > character move name	<r木遁|もくとん>・<r森羅万象|しんらばんしょう>	Wood Style: Universe			character:command-record-index	NA2_SLPS@0x3956E0	NUN5_TEXTENG@0x89B0	slot	48				
+T1188	1	Command Chart > character move name	<r木遁|もくとん>・<r金剛招木|こんごうしょうぼく>	Wood Style: Adamantine Forest Call			character:command-record-index	NA2_SLPS@0x395710	NUN5_TEXTENG@0x89D0	slot	64				
+T1189	1	Command Chart > character move name	<r痛天樹|つうてんじゅ>	Heaven Forest of Pain			character:command-record-index	NA2_SLPS@0x395750	NUN5_TEXTENG@0x8A00	slot	32				
+T1190	1	Command Chart > character move name	<r木|こ>ノ<r葉風陣|はふうじん>	Hidden Leaf Wind Formation			character:command-record-index	NA2_SLPS@0x395770	NUN5_TEXTENG@0x8A20	slot	32				
+T1191	1	Command Chart > character move name	<r無双脚|むそうきゃく>	Ultra Kick			character:command-record-index	NA2_SLPS@0x395790	NUN5_TEXTENG@0x8A40	slot	32				
+T1192	1	Command Chart > character move name	<r金剛拳|こんごうけん>	Adamantine Fist			character:command-record-index	NA2_SLPS@0x3957B0	NUN5_TEXTENG@0x8A50	slot	32				
+T1193	1	Command Chart > character move name	<r縫連樹|ほうれんじゅ>	Lined Forest			character:command-record-index	NA2_SLPS@0x3957D0	NUN5_TEXTENG@0x8A60	slot	32				
+T1194	1	Command Chart > character move name	<r黄金蓮咲|こがねれんそう>	Golden Lotus Blossom			character:command-record-index	NA2_SLPS@0x3957F0	NUN5_TEXTENG@0x8A70	slot	32				
+T1195	1	Command Chart > character move name	<r剛槍樹|ごうそうじゅ>	Spear Forest			character:command-record-index	NA2_SLPS@0x395810	NUN5_TEXTENG@0x8A88	slot	32				
+T1196	1	Command Chart > character move name	<r真肘打|しんちゅうだ>	Elbow Strike			character:command-record-index	NA2_SLPS@0x395830	NUN5_TEXTENG@0x8A98	slot	32				
+T1197	1	Command Chart > character move name	<r天狗返|てんぐがえ>り	Tengu Turn			character:command-record-index	NA2_SLPS@0x395850	NUN5_TEXTENG@0x8AA8	slot	32				
+T1198	1	Command Chart > character move name	<r剛力天誅|ごうりきてんちゅう>	Heaven's Punishment			character:command-record-index	NA2_SLPS@0x395870	NUN5_TEXTENG@0x8AC0	slot	32				
+T1199	1	Command Chart > character move name	<r金剛投|こんごうな>げ	Adamantine Throw			character:command-record-index	NA2_SLPS@0x395890	NUN5_TEXTENG@0x8AE0	slot	32				
+T1200	1	Command Chart > character move name	<r旋風舞|つむじま>い	Whirlwind Dance			character:command-record-index	NA2_SLPS@0x3958B0	NUN5_TEXTENG@0x8B00	slot	32				
+T1201	1	Command Chart > character move name	<r黒暗行|こくあんぎょう>の<r術|じゅつ>	Infinite Darkness Jutsu			character:command-record-index	NA2_SLPS@0x39A950	NUN5_TEXTENG@0x8BC0	slot	48				
+T1202	1	Command Chart > character move name	<r水遁|すいとん>・<r水陣壁|すいじんへき>	Water Style: Water Wall			character:command-record-index	NA2_SLPS@0x39A980	NUN5_TEXTENG@0x8BE0	slot	48				
+T1203	1	Command Chart > character move name	<r昇河穿脚|しょうかせんきゃく>	Rising River Thrust Kick			character:command-record-index	NA2_SLPS@0x39A9B0	NUN5_TEXTENG@0x8C00	slot	32				
+T1204	1	Command Chart > character move name	<r水掌刃|すいしょうじん>	Water Palm Blade			character:command-record-index	NA2_SLPS@0x39A9D0	NUN5_TEXTENG@0x8C20	slot	32				
+T1205	1	Command Chart > character move name	<r抱水|ほうすい>	Water Retain			character:command-record-index	NA2_SLPS@0x39A9F0	NUN5_TEXTENG@0x8C38	slot	32				
+T1206	1	Command Chart > character move name	<r流水斬|りゅうすいざん>	Flowing Water Slash			character:command-record-index	NA2_SLPS@0x39AA10	NUN5_TEXTENG@0x8C50	slot	32				
+T1207	1	Command Chart > character move name	<r水柱突|すいちゅうとつ>	Water Pillar Thrust			character:command-record-index	NA2_SLPS@0x39AA30	NUN5_TEXTENG@0x8C70	slot	32				
+T1208	1	Command Chart > character move name	<r転落踵|てんらくしょう>	Heel Drop			character:command-record-index	NA2_SLPS@0x39AA50	NUN5_TEXTENG@0x8C88	slot	32				
+T1209	1	Command Chart > character move name	<r瞬水|しゅんすい>	Instant Water			character:command-record-index	NA2_SLPS@0x39AA70	NUN5_TEXTENG@0x8C98	slot	32				
+T1210	1	Command Chart > character move name	<r渦流脚激|かりゅうかくげき>	Whirlpool Kick			character:command-record-index	NA2_SLPS@0x39AA90	NUN5_TEXTENG@0x8CA8	slot	32				
+T1211	1	Command Chart > character move name	<r氾水脚|はんすいきゃく>	Flood Kick 			character:command-record-index	NA2_SLPS@0x39AAB0	NUN5_TEXTENG@0x8CB8	slot	32				
+T1212	1	Command Chart > character move name	<r獅水|しすい>	Lion Water			character:command-record-index	NA2_SLPS@0x39AAD0	NUN5_TEXTENG@0x8CC8	slot	16				
+T1213	1	Command Chart > character move name	<r滝壺落|たきつぼお>とし	Water Basin Drop 			character:command-record-index	NA2_SLPS@0x39AAE0	NUN5_TEXTENG@0x8CE0	slot	32				
+T1214	1	Command Chart > character move name	<r飛沫連脚|ひまつれんきゃく>	Spray Kick Barrage			character:command-record-index	NA2_SLPS@0x39AB00	NUN5_TEXTENG@0x8D00	slot	32				
+T1215	1	Command Chart > character move name	<r猛蛇蹂躙|もうじゃじゅうりん>	Snake Stomp			character:command-record-index	NA2_SLPS@0x39FF60	NUN5_TEXTENG@0x8DD8	slot	32				
+T1216	1	Command Chart > character move name	<r撃滅乱蛇|げきめつらんだ>	Marauding Snakes			character:command-record-index	NA2_SLPS@0x39FF80	NUN5_TEXTENG@0x8DF0	slot	32				
+T1217	1	Command Chart > character move name	<r輪蛇転脚|りんじゃてんきゃく>	Ring Snake Kick			character:command-record-index	NA2_SLPS@0x39FFA0	NUN5_TEXTENG@0x8E10	slot	32				
+T1218	1	Command Chart > character move name	<r潜影蛇手|せんえいじゃしゅ>　<r蛇突|じゃとつ>	Striking Shadow Snake: Snake Thrust			character:command-record-index	NA2_SLPS@0x39FFC0	NUN5_TEXTENG@0x8E20	slot	48				
+T1219	1	Command Chart > character move name	<r潜影蛇手|せんえいじゃしゅ>　<r蛇降|じゃこう>	Striking Shadow Snake: Snake Fall			character:command-record-index	NA2_SLPS@0x39FFF0	NUN5_TEXTENG@0x8E50	slot	48				
+T1220	1	Command Chart > character move name	<r刃蛇潜影|はじゃせんえい>	Blade Snake Shadow			character:command-record-index	NA2_SLPS@0x3A0020	NUN5_TEXTENG@0x8E80	slot	32				
+T1221	1	Command Chart > character move name	<r追蛇脚昇|ついじゃきゃくしょう>	Pursuing Snake Rising Kick			character:command-record-index	NA2_SLPS@0x3A0040	NUN5_TEXTENG@0x8EA0	slot	48				
+T1222	1	Command Chart > character move name	<r潜影蛇手|せんえいじゃしゅ>　<r蛇鞭|じゃべん>	Striking Shadow Snake: Snake Whip			character:command-record-index	NA2_SLPS@0x3A0070	NUN5_TEXTENG@0x8EC0	slot	48				
+T1223	1	Command Chart > character move name	<r這蛇穿脚|はじゃせんきゃく>	Slithering Snake Thrust Kick			character:command-record-index	NA2_SLPS@0x3A00A0	NUN5_TEXTENG@0x8EF0	slot	32				
+T1224	1	Command Chart > character move name	<r潜影蛇手|せんえいじゃしゅ>　<r蛇縛|じゃばく>	Striking Shadow Snake: Snake Capture			character:command-record-index	NA2_SLPS@0x3A00C0	NUN5_TEXTENG@0x8F10	slot	48				
+T1225	1	Command Chart > character move name	<r潜影蛇手|せんえいじゃしゅ>　<r蛇仰|じゃぎょう>	Striking Shadow Snake: Snake Cult			character:command-record-index	NA2_SLPS@0x3A00F0	NUN5_TEXTENG@0x8F40	slot	64				
+T1226	1	Command Chart > character move name	<r潜影蛇手|せんせいじゃしゅ>　<r蛇追|じゃつい>	Striking Shadow Snake: Snake Pursuit			character:command-record-index	NA2_SLPS@0x3A0130	NUN5_TEXTENG@0x8F70	slot	48				
+T1227	1	Command Chart > character move name	<r蛇縛転脚|じゃばくてんきゃく>	Snake Capture Rolling Kick			character:command-record-index	NA2_SLPS@0x3A0160	NUN5_TEXTENG@0x8FA0	slot	32				
+T1228	1	Command Chart > character move name	<r旋蛇蹴脚|せんじゃしゅうきゃく>	Spiral Snake Kick			character:command-record-index	NA2_SLPS@0x3A0180	NUN5_TEXTENG@0x8FC0	slot	48				
+T1229	1	Command Chart > character move name	<r九尾|きゅうび>の<r力|ちから>	Nine-Tailed Fox Power			character:command-record-index	NA2_SLPS@0x3A5820	NUN5_TEXTENG@0x90A0	slot	32				
+T1230	1	Command Chart > character move name	<r朱|あか>い<r螺旋丸|らせんがん>	Vermilion Rasengan			character:command-record-index	NA2_SLPS@0x3A5840	NUN5_TEXTENG@0x90C0	slot	48				
+T1231	1	Command Chart > character move name	<r紅蓮旋風|ぐれんせんぷう>	Blazing Whirlwind			character:command-record-index	NA2_SLPS@0x3A5870	NUN5_TEXTENG@0x90E0	slot	32				
+T1232	1	Command Chart > character move name	<r紅蓮爪駆|ぐれんそうか>	Blazing Claw Dash			character:command-record-index	NA2_SLPS@0x3A5890	NUN5_TEXTENG@0x9100	slot	32				
+T1233	1	Command Chart > character move name	<r紅蓮爪舞|ぐれんそうぶ>	Blazing Claw Dance			character:command-record-index	NA2_SLPS@0x3A58B0	NUN5_TEXTENG@0x9120	slot	32				
+T1234	1	Command Chart > character move name	<r紅蓮風塵|ぐれんふうじん>	Blazing Dust			character:command-record-index	NA2_SLPS@0x3A58D0	NUN5_TEXTENG@0x9138	slot	32				
+T1235	1	Command Chart > character move name	<r紅蓮空舞|ぐれんくうぶ>	Blazing Air Dance			character:command-record-index	NA2_SLPS@0x3A58F0	NUN5_TEXTENG@0x9150	slot	32				
+T1236	1	Command Chart > character move name	<r紅蓮震弾|ぐれんしんだん>	Blazing Vibrating Bullet			character:command-record-index	NA2_SLPS@0x3A5910	NUN5_TEXTENG@0x9170	slot	32				
+T1237	1	Command Chart > character move name	<r紅蓮倒落|ぐれんとうらく>	Blazing Drop			character:command-record-index	NA2_SLPS@0x3A5930	NUN5_TEXTENG@0x9190	slot	32				
+T1238	1	Command Chart > character move name	<r紅蓮飛流撃|ぐれんひりゅうげき>	Blazing Flying Strike			character:command-record-index	NA2_SLPS@0x3A5950	NUN5_TEXTENG@0x91A0	slot	48				
+T1239	1	Command Chart > character move name	<r紅蓮震撃|ぐれんしんげき>	Blazing Tremor Attack			character:command-record-index	NA2_SLPS@0x3A5980	NUN5_TEXTENG@0x91C0	slot	32				
+T1240	1	Command Chart > character move name	<r紅蓮爪撃|ぐれんそうげき>	Blazing Claw Strike			character:command-record-index	NA2_SLPS@0x3A59A0	NUN5_TEXTENG@0x91E0	slot	32				
+T1241	1	Command Chart > character move name	<r紅蓮旋風迅|ぐれんせんぷうじん>	Rapid Blazing Whirlwind			character:command-record-index	NA2_SLPS@0x3A59C0	NUN5_TEXTENG@0x9200	slot	48				
+T1242	1	Command Chart > character move name	<r紅蓮旋華|ぐれんせんか>	Blazing Whirling Flower			character:command-record-index	NA2_SLPS@0x3A59F0	NUN5_TEXTENG@0x9220	slot	32				
+T1243	1	Command Chart > character move name	<r無双豪風陣|むそうごうふうじん>	Ultra Gale Formation			character:command-record-index	NA2_SLPS@0x3AB2F0	NUN5_TEXTENG@0x9300	slot	48				
+T1244	1	Command Chart > character move name	<r黒|くろ>い<r千鳥|ちどり>	Black Chidori			character:command-record-index	NA2_SLPS@0x3AB320	NUN5_TEXTENG@0x9318	slot	32				
+T1245	1	Command Chart > character move name	<r飛炎疾風|ひえんしっぷう>	Flying Flame Gale			character:command-record-index	NA2_SLPS@0x3AB340	NUN5_TEXTENG@0x9330	slot	32				
+T1246	1	Command Chart > character move name	<r旋風轟迅|せんぷうごうじん>	Super Speed Whirlwind 			character:command-record-index	NA2_SLPS@0x3AB360	NUN5_TEXTENG@0x9350	slot	32				
+T1247	1	Command Chart > character move name	<r火遁|かとん>・<r飛炎弾|ひえんだん>	Fire Style: Flying Flame Bullet 			character:command-record-index	NA2_SLPS@0x3AB380	NUN5_TEXTENG@0x9370	slot	48				
+T1248	1	Command Chart > character move name	<r後葬炎舞|こうそうえんぶ>	Burial Flame Dance 			character:command-record-index	NA2_SLPS@0x3AB3B0	NUN5_TEXTENG@0x93A0	slot	32				
+T1249	1	Command Chart > character move name	<r疾風炎戯|しっぷうえんぎ>	Gale Flame Prank			character:command-record-index	NA2_SLPS@0x3AB3D0	NUN5_TEXTENG@0x93C0	slot	32				
+T1250	1	Command Chart > character move name	<r旋風炎迅|せんぷうえんじん>	Rapid Flame Whirlwind			character:command-record-index	NA2_SLPS@0x3AB3F0	NUN5_TEXTENG@0x93E0	slot	32				
+T1251	1	Command Chart > character move name	<r轟風炎飛落|ごうふうえんびらく>	Roaring Wind Flame Drop			character:command-record-index	NA2_SLPS@0x3AB410	NUN5_TEXTENG@0x9400	slot	48				
+T1252	1	Command Chart > character move name	<r飛隼奈落|ひしゅんならく>	Flying Falcon Abyss			character:command-record-index	NA2_SLPS@0x3AB440	NUN5_TEXTENG@0x9420	slot	32				
+T1253	1	Command Chart > character move name	<r疾風翔炎迅|しっぷうしょうえんじん>	Flying Gale Flame			character:command-record-index	NA2_SLPS@0x3AB460	NUN5_TEXTENG@0x9440	slot	48				
+T1254	1	Command Chart > character move name	<r双飛天脚|そうひてんきゃく>	Twin Flying Kick			character:command-record-index	NA2_SLPS@0x3AB490	NUN5_TEXTENG@0x9460	slot	32				
+T1255	1	Command Chart > character move name	<r疾走流葬迅|しっそうりゅうそうじん>	Rapid Burial Dash 			character:command-record-index	NA2_SLPS@0x3AB4B0	NUN5_TEXTENG@0x9480	slot	48				
+T1256	1	Command Chart > character move name	<r飛炎流舞|ひえんりゅうぶ>	Flying Flame Dance			character:command-record-index	NA2_SLPS@0x3AB4E0	NUN5_TEXTENG@0x94A0	slot	32				
+T1257	1	Command Chart > character move name	すい<r蓮華|れんげ>	Loopy Lotus			character:command-record-index	NA2_SLPS@0x3B0FB0	NUN5_TEXTENG@0x9580	slot	32				
+T1258	1	Command Chart > character move name	すい<r八旋風|はっせんぷう>	Loopy Eight Whirlwind			character:command-record-index	NA2_SLPS@0x3B0FD0	NUN5_TEXTENG@0x9590	slot	32				
+T1259	1	Command Chart > character move name	<r旋転仰飲蹴|せんてんぎょういんしゅう>	Whirling Kick			character:command-record-index	NA2_SLPS@0x3B0FF0	NUN5_TEXTENG@0x95A8	slot	48				
+T1260	1	Command Chart > character move name	<r三連双撃|さんれんそうげき>　<r鬼殺|おにごろ>し	Triple Twin-Attack: Demon Killer			character:command-record-index	NA2_SLPS@0x3B1020	NUN5_TEXTENG@0x95C0	slot	64				
+T1261	1	Command Chart > character move name	<r旋転地盃|せんてんちはい>	Whirling Earth Goblet			character:command-record-index	NA2_SLPS@0x3B1060	NUN5_TEXTENG@0x95F0	slot	32				
+T1262	1	Command Chart > character move name	<r逆樽回|さかだるまわ>し	Reverse Barrel Spin			character:command-record-index	NA2_SLPS@0x3B1080	NUN5_TEXTENG@0x9610	slot	32				
+T1263	1	Command Chart > character move name	<r月牙跳撃|げつがちょうげき>	Moon Fang Strike			character:command-record-index	NA2_SLPS@0x3B10A0	NUN5_TEXTENG@0x9630	slot	32				
+T1264	1	Command Chart > character move name	<r二本蹴|にほんしゅう>	Double Kick			character:command-record-index	NA2_SLPS@0x3B10C0	NUN5_TEXTENG@0x9648	slot	32				
+T1265	1	Command Chart > character move name	<r常流蹴|じょうりゅうしゅう>	Ever-Flow Kick			character:command-record-index	NA2_SLPS@0x3B10E0	NUN5_TEXTENG@0x9658	slot	32				
+T1266	1	Command Chart > character move name	<r騰空飛天砲|とうくうひてんほう>	Boiling Air Flying Cannonball			character:command-record-index	NA2_SLPS@0x3B1100	NUN5_TEXTENG@0x9670	slot	48				
+T1267	1	Command Chart > character move name	<r舞投蹴|ぶとうしゅう>	Dancing Throw Kick			character:command-record-index	NA2_SLPS@0x3B1130	NUN5_TEXTENG@0x9690	slot	32				
+T1268	1	Command Chart > character move name	<r翔宙脚|しょうちゅうきゃく>	Flying Kick			character:command-record-index	NA2_SLPS@0x3B1150	NUN5_TEXTENG@0x96A8	slot	32				
+T1269	1	Command Chart > character move name	<r杯落|さかずきお>とし	Goblet Drop			character:command-record-index	NA2_SLPS@0x3B1170	NUN5_TEXTENG@0x96B8	slot	32				
+T1270	1	Command Chart > character move name	<r陽鳴蹴|ようめいしゅう>	Chirping Kick			character:command-record-index	NA2_SLPS@0x3B1190	NUN5_TEXTENG@0x96C8	slot	32				
+T1271	1	Command Chart > character move name	<r突|つ>き<r出|だ>し	Shove			character:command-record-index	NA2_SLPS@0x3B11B0	NUN5_SLES@0x514180	slot	32				
+T1272	1	Command Chart > character move name	<r熱砂瀑葬|ねっさばくそう>	Hot Sand Burial 			character:command-record-index	NA2_SLPS@0x3B62D0	NUN5_TEXTENG@0x97B0	slot	32				
+T1273	1	Command Chart > character move name	<r砂手裏剣|すなしゅりけん>	Sand Shuriken			character:command-record-index	NA2_SLPS@0x3B62F0	NUN5_TEXTENG@0x4E98	slot	32				
+T1274	1	Command Chart > character move name	<r砂天|さてん>	Sand Sky			character:command-record-index	NA2_SLPS@0x3B6310	NUN5_TEXTENG@0x97C8	slot	16				
+T1275	1	Command Chart > character move name	<r砂腕撃|さわんげき>	Sand Arm Blow			character:command-record-index	NA2_SLPS@0x3B6320	NUN5_TEXTENG@0x97D8	slot	32				
+T1276	1	Command Chart > character move name	<r砂重|さじゅう>の<r尾|お>	Sand Tail			character:command-record-index	NA2_SLPS@0x3B6340	NUN5_TEXTENG@0x97E8	slot	32				
+T1277	1	Command Chart > character move name	<r烈砂|れっさ>	Fierce Sand			character:command-record-index	NA2_SLPS@0x3B6360	NUN5_TEXTENG@0x97F8	slot	16				
+T1278	1	Command Chart > character move name	<r砂狸躯砲|さりくほう>	Sand Cannonball			character:command-record-index	NA2_SLPS@0x3B6370	NUN5_TEXTENG@0x9810	slot	32				
+T1279	1	Command Chart > character move name	<r暴砂墳塵|ぼうさふんじん>	Sand Erupting Dust			character:command-record-index	NA2_SLPS@0x3B6390	NUN5_TEXTENG@0x9820	slot	32				
+T1280	1	Command Chart > character move name	<r轢砂噛弾|れきさごうだん>	Sand Bullet			character:command-record-index	NA2_SLPS@0x3B63B0	NUN5_TEXTENG@0x9838	slot	32				
+T1281	1	Command Chart > character move name	<r流砂削激|りゅうささくげき>	Sand Blast			character:command-record-index	NA2_SLPS@0x3B63D0	NUN5_TEXTENG@0x9848	slot	32				
+T1282	1	Command Chart > character move name	<r放天|ほうてん>	Heaven Release 			character:command-record-index	NA2_SLPS@0x3B63F0	NUN5_TEXTENG@0x9860	slot	24				
+T1283	1	Command Chart > character move name	<r怒砂|どしゃ>	Raging Sand			character:command-record-index	NA2_SLPS@0x3B6408	NUN5_TEXTENG@0x9870	slot	24				
+T1284	1	Command Chart > character move name	<r墳砂瀑弾|ふんさばくだん>	Erupting Sand Bullet			character:command-record-index	NA2_SLPS@0x3B6420	NUN5_TEXTENG@0x9880	slot	32				
+T1285	1	Command Chart > character move name	<r瀑流禍礫|ばくりゅうかれき>	Pellet Stream 			character:command-record-index	NA2_SLPS@0x3B6440	NUN5_TEXTENG@0x9898	slot	32				
+T1286	1	Command Chart > character move name	<r蝶抜怒投|ちょうばつどとう>	Butterfly Rage Throw			character:command-record-index	NA2_SLPS@0x3BB580	NUN5_TEXTENG@0x9960	slot	32				
+T1287	1	Command Chart > character move name	<r蝶弾爆裂|ちょうだんばくれつ>	Butterfly Bomb Sever			character:command-record-index	NA2_SLPS@0x3BB5A0	NUN5_TEXTENG@0x9980	slot	32				
+T1288	1	Command Chart > character move name	<r蒼天舞|そうてんぶ>	Blue Sky Dance			character:command-record-index	NA2_SLPS@0x3BB5C0	NUN5_TEXTENG@0x9998	slot	32				
+T1289	1	Command Chart > character move name	<r空填砲|くうてんほう>	Empty Cannonball 			character:command-record-index	NA2_SLPS@0x3BB5E0	NUN5_TEXTENG@0x99B0	slot	32				
+T1290	1	Command Chart > character move name	<r捻転斧|ねんてんふ>	Twisting Axe 			character:command-record-index	NA2_SLPS@0x3BB600	NUN5_TEXTENG@0x99C8	slot	32				
+T1291	1	Command Chart > character move name	<r瞬身叩|しゅんしんこう>	Instant Smash			character:command-record-index	NA2_SLPS@0x3BB620	NUN5_TEXTENG@0x99D8	slot	32				
+T1292	1	Command Chart > character move name	<r空天翔|くうてんしょう>	Flying Heaven			character:command-record-index	NA2_SLPS@0x3BB640	NUN5_TEXTENG@0x99E8	slot	32				
+T1293	1	Command Chart > character move name	<r降竜槍|こうりゅうそう>	Falling Dragon Spear 			character:command-record-index	NA2_SLPS@0x3BB660	NUN5_TEXTENG@0x9A00	slot	32				
+T1294	1	Command Chart > character move name	<r彗星突|すいせいとつ>	Shooting Star Thrust			character:command-record-index	NA2_SLPS@0x3BB680	NUN5_TEXTENG@0x9A20	slot	32				
+T1295	1	Command Chart > character move name	<r空圧閃|くうあつせん>	Air Pressure Slash			character:command-record-index	NA2_SLPS@0x3BB6A0	NUN5_TEXTENG@0x9A40	slot	32				
+T1296	1	Command Chart > character move name	<r裂空昇|れっくうしょう>	Rising Air Slice			character:command-record-index	NA2_SLPS@0x3BB6C0	NUN5_TEXTENG@0x9A60	slot	32				
+T1297	1	Command Chart > character move name	<r閃天斧|せんてんふ>	Slashing Heaven Axe			character:command-record-index	NA2_SLPS@0x3BB6E0	NUN5_TEXTENG@0x9A80	slot	32				
+T1298	1	Command Chart > character move name	<r飛転脚|ひてんきゃく>	Flying Spin Kick			character:command-record-index	NA2_SLPS@0x3BB700	NUN5_TEXTENG@0x9AA0	slot	32				
+T1299	1	Command Chart > character move name	<r天駆羽|てんくう>	Pegasus Wing			character:command-record-index	NA2_SLPS@0x3BB720	NUN5_TEXTENG@0x9AB8	slot	32				
+T1300	1	Command Chart > character move name	チャクラ<r吸引|きゅういん>	Chakra Inhale			character:command-record-index	NA2_SLPS@0x3C0610	NUN5_TEXTENG@0x9B88	slot	32				
+T1301	1	Command Chart > character move name	<r土遁|どとん>・<r噴岩砲岱|ふんがんほうたい>	Earth Style: Gushing Rock Mountain Cannonball			character:command-record-index	NA2_SLPS@0x3C0630	NUN5_TEXTENG@0x9BA0	slot	48				
+T1302	1	Command Chart > character move name	<r昇撃掌|しょうげきしょう>	Slamming Palm			character:command-record-index	NA2_SLPS@0x3C0670	NUN5_TEXTENG@0x9BD0	slot	32				
+T1303	1	Command Chart > character move name	<r豪肘撃|ごうちゅうげき>	Elbow Strike 			character:command-record-index	NA2_SLPS@0x3C0690	NUN5_TEXTENG@0x9BE0	slot	32				
+T1304	1	Command Chart > character move name	<r地断堕|じだんだ>	Severing Earth			character:command-record-index	NA2_SLPS@0x3C06B0	NUN5_TEXTENG@0x9BF0	slot	32				
+T1305	1	Command Chart > character move name	<r土天砲|どってんぽう>	Earth and Heaven Cannonball			character:command-record-index	NA2_SLPS@0x3C06D0	NUN5_TEXTENG@0x9C00	slot	32				
+T1306	1	Command Chart > character move name	<r昇膝|しょうしつ>	Knee Slam			character:command-record-index	NA2_SLPS@0x3C06F0	NUN5_TEXTENG@0x9C20	slot	32				
+T1307	1	Command Chart > character move name	<r踏圧|とうあつ>	Stomp Pressure			character:command-record-index	NA2_SLPS@0x3C0710	NUN5_TEXTENG@0x9C30	slot	32				
+T1308	1	Command Chart > character move name	<r岩撃|がんげき>	Boulder Blow			character:command-record-index	NA2_SLPS@0x3C0730	NUN5_TEXTENG@0x9C40	slot	32				
+T1309	1	Command Chart > character move name	<r天撃|てんげき>	Heaven Attack			character:command-record-index	NA2_SLPS@0x3C0750	NUN5_TEXTENG@0x9C50	slot	32				
+T1310	1	Command Chart > character move name	<r天蜘蛛縛|あまグモしば>り	Heaven Spider Web Net			character:command-record-index	NA2_SLPS@0x3C4F70	NUN5_TEXTENG@0x9D10	slot	32				
+T1311	1	Command Chart > character move name	<r滅殺強弓|めっさつごうきゅう>	Destruction Power Bow			character:command-record-index	NA2_SLPS@0x3C4F90	NUN5_TEXTENG@0x9D30	slot	32				
+T1312	1	Command Chart > character move name	<r蜘蛛戦弓|クモせんきゅう>　<r放射|ほうしゃ>	Spider Bow: Shot			character:command-record-index	NA2_SLPS@0x3C4FB0	NUN5_TEXTENG@0x9D50	slot	48				
+T1313	1	Command Chart > character move name	<r蜘蛛戦弓|クモせんきゅう>　<r降射|こうしゃ>	Spider Bow: Dropping Shot			character:command-record-index	NA2_SLPS@0x3C4FE0	NUN5_TEXTENG@0x9D70	slot	48				
+T1314	1	Command Chart > character move name	<r蜘蛛戦弓|クモせんきゅう>　<r鶺鴒|せきれい>	Spider Bow: Wagtail			character:command-record-index	NA2_SLPS@0x3C5010	NUN5_TEXTENG@0x9D90	slot	48				
+T1315	1	Command Chart > character move name	<r蜘蛛戦弓|クモせんきゅう>　<r雲龍射猟|うんりゅうしゃりょう>	Spider Bow: Cloud Dragon Bow Hunt 			character:command-record-index	NA2_SLPS@0x3C5040	NUN5_TEXTENG@0x9DB0	slot	64				
+T1316	1	Command Chart > character move name	<r蜘蛛戦弓|クモせんきゅう>　<r無双放射|むそうほうしゃ>	Spider Bow: Ultra Shot			character:command-record-index	NA2_SLPS@0x3C5080	NUN5_TEXTENG@0x9DE0	slot	64				
+T1317	1	Command Chart > character move name	<r蜘蛛戦弓|クモせんきゅう>　<r海面割射|かいめんかっしゃ>	Spider Bow: Sea Parting Shot			character:command-record-index	NA2_SLPS@0x3C50C0	NUN5_TEXTENG@0x9E00	slot	64				
+T1318	1	Command Chart > character move name	<r蜘蛛戦弓|クモせんきゅう>　<r一点放射|いってんほうしゃ>	Spider Bow: One Point Shot			character:command-record-index	NA2_SLPS@0x3C5100	NUN5_TEXTENG@0x9E20	slot	64				
+T1319	1	Command Chart > character move name	<r蜘蛛戦弓|クモせんきゅう>　<r常経狙射|じょうけいそしゃ>	Spider Bow: Chakra Shot			character:command-record-index	NA2_SLPS@0x3C5140	NUN5_TEXTENG@0x9E40	slot	64				
+T1320	1	Command Chart > character move name	<r魔笛|まてき>・<r夢幻音鎖|むげんおんさ>	Demon Flute: Chains of Fantasia			character:command-record-index	NA2_SLPS@0x3C98F0	NUN5_TEXTENG@0x9F00	slot	48				
+T1321	1	Command Chart > character move name	<r魔笛|まてき>・<r幻霊波|げんれいは>	Demon Flute: Phantom Wave			character:command-record-index	NA2_SLPS@0x3C9920	NUN5_TEXTENG@0x9F20	slot	48				
+T1322	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r爪旋斬|そうせんざん>	Musical Manipulation: Claw Turning Slash			character:command-record-index	NA2_SLPS@0x3C9950	NUN5_TEXTENG@0x9F40	slot	64				
+T1323	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r爪穿突|そうがとつ>	Musical Manipulation: Claw Thrust			character:command-record-index	NA2_SLPS@0x3C9990	NUN5_TEXTENG@0x9F70	slot	64				
+T1324	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r爪双突|そうそうとつ>	Musical Manipulation: Twin Claw Thrust			character:command-record-index	NA2_SLPS@0x3C99D0	NUN5_TEXTENG@0x9FA0	slot	64				
+T1325	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r爪砕|そうさい>	Musical Manipulation: Claw Crush			character:command-record-index	NA2_SLPS@0x3C9A10	NUN5_TEXTENG@0x9FD0	slot	48				
+T1326	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r棍剛打|こんごうだ>	Musical Manipulation: Heavy Club Strike			character:command-record-index	NA2_SLPS@0x3C9A40	NUN5_TEXTENG@0xA000	slot	64				
+T1327	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r爪昇斬|そうしょうざん>	Musical Manipulation: Claw Rising Slash			character:command-record-index	NA2_SLPS@0x3C9A80	NUN5_TEXTENG@0xA030	slot	64				
+T1328	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r爪斬撃|そうざんげき>	Musical Manipulation: Claw Slash Attack			character:command-record-index	NA2_SLPS@0x3C9AC0	NUN5_TEXTENG@0xA060	slot	64				
+T1329	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r爪重撃|そうじゅうげき>	Musical Manipulation: Heavy Claw Attack			character:command-record-index	NA2_SLPS@0x3C9B00	NUN5_TEXTENG@0xA090	slot	64				
+T1330	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r棍瞬打|こんしゅんだ>	Musical Manipulation: Instant Club Strike			character:command-record-index	NA2_SLPS@0x3C9B40	NUN5_TEXTENG@0xA0C0	slot	64				
+T1331	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r蹴昇旋|しゅうしょうせん>	Musical Manipulation: Rising Kick Spiral			character:command-record-index	NA2_SLPS@0x3C9B80	NUN5_TEXTENG@0xA0F0	slot	64				
+T1332	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r蹴追撃|しゅうついげき>	Musical Manipulation: Pursuing Kick Attack			character:command-record-index	NA2_SLPS@0x3C9BC0	NUN5_TEXTENG@0xA120	slot	64				
+T1333	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r棍穿打|こんせんだ>	Musical Manipulation: Club Thrust Strike			character:command-record-index	NA2_SLPS@0x3C9C00	NUN5_TEXTENG@0xA150	slot	64				
+T1334	1	Command Chart > character move name	<r幻武操曲|げんぶそうきょく>　<r蹴輪旋|しゅうりんせん>	Musical Manipulation: Ring Kick Spiral			character:command-record-index	NA2_SLPS@0x3C9C40	NUN5_TEXTENG@0xA180	slot	64				
+T1335	1	Command Chart > character move name	<r双極落天|そうごくらくてん>	Twin Pole Drop			character:command-record-index	NA2_SLPS@0x3CEBF0	NUN5_TEXTENG@0xA250	slot	32				
+T1336	1	Command Chart > character move name	<r口寄|くちよ>せ　<r羅生門|ラショウモン>	Summoning: Rashomon			character:command-record-index	NA2_SLPS@0x3CEC10	NUN5_TEXTENG@0xA260	slot	48				
+T1337	1	Command Chart > character move name	<r阿吽追昇撃|あうんついしょうげき>	Alpha Omega Rising Pursuit Attack			character:command-record-index	NA2_SLPS@0x3CEC40	NUN5_TEXTENG@0xA280	slot	48				
+T1338	1	Command Chart > character move name	<r阿吽対衝打|あうんついしょうだ>	Alpha Omega Collision Strike			character:command-record-index	NA2_SLPS@0x3CEC70	NUN5_TEXTENG@0xA2B0	slot	48				
+T1339	1	Command Chart > character move name	<r阿吽天地同砕|あうんてんちどうさい>	Alpha Omega Heaven & Earth Crush			character:command-record-index	NA2_SLPS@0x3CECA0	NUN5_TEXTENG@0xA2D0	slot	48				
+T1340	1	Command Chart > character move name	<r阿吽猛強襲|あうんもうきょうしゅう>	Alpha Omega Fierce Attack			character:command-record-index	NA2_SLPS@0x3CECD0	NUN5_TEXTENG@0xA300	slot	48				
+T1341	1	Command Chart > character move name	<r阿吽双打大砲|あうんそうだたいほう>	Alpha Omega Twin Cannonball			character:command-record-index	NA2_SLPS@0x3CED00	NUN5_TEXTENG@0xA320	slot	48				
+T1342	1	Command Chart > character move name	<r多連昇拳|たれんしょうけん>	Multiple Rising Fists			character:command-record-index	NA2_SLPS@0x3CED30	NUN5_TEXTENG@0xA340	slot	32				
+T1343	1	Command Chart > character move name	<r阿吽対鏡打|あうんついきょうだ>	Alpha Omega Mirror Strike			character:command-record-index	NA2_SLPS@0x3CED50	NUN5_TEXTENG@0xA360	slot	48				
+T1344	1	Command Chart > character move name	<r阿吽連追打|あうんれんついだ>	Alpha Omega Pursuing Barrage			character:command-record-index	NA2_SLPS@0x3CED80	NUN5_TEXTENG@0xA380	slot	32				
+T1345	1	Command Chart > character move name	<r阿吽鬼手玉|あうんおにてだま>	Alpha Omega Demon Beanbag			character:command-record-index	NA2_SLPS@0x3CEDA0	NUN5_TEXTENG@0xA3A0	slot	32				
+T1346	1	Command Chart > character move name	<r多連集束拳|たれんしゅうそくけん>	Multiple Bundle Fist			character:command-record-index	NA2_SLPS@0x3CEDC0	NUN5_TEXTENG@0xA3C0	slot	48				
+T1347	1	Command Chart > character move name	<r多連獄送拳|たれんごくそうけん>	Multiple Hell Imprisoning Fist			character:command-record-index	NA2_SLPS@0x3CEDF0	NUN5_TEXTENG@0xA3E0	slot	48				
+T1348	1	Command Chart > character move name	<r阿吽空裂爪|あうんくうれつそう>	Alpha Omega Air Severing Claw			character:command-record-index	NA2_SLPS@0x3CEE20	NUN5_TEXTENG@0xA400	slot	48				
+T1349	1	Command Chart > character move name	<r多連彗翔脚|たれんすいしょうきゃく>	Multiple Shooting Kick			character:command-record-index	NA2_SLPS@0x3CEE50	NUN5_TEXTENG@0xA420	slot	48				
+T1350	1	Command Chart > character move name	<r蔓|つる>と<r花|はな>	Vine and Flower			character:command-record-index	NA2_SLPS@0x3D4360	NUN5_TEXTENG@0xA500	slot	32				
+T1351	1	Command Chart > character move name	<r早蕨|さわらび>の<r舞|まい>	Bracken Dance 			character:command-record-index	NA2_SLPS@0x3D4380	NUN5_TEXTENG@0xA510	slot	32				
+T1352	1	Command Chart > character move name	<r鬼百合|おにゆり>	Tiger Lily			character:command-record-index	NA2_SLPS@0x3D43A0	NUN5_TEXTENG@0xA520	slot	32				
+T1353	1	Command Chart > character move name	<r捻花|ねじりばな>	Spiranthes			character:command-record-index	NA2_SLPS@0x3D43C0	NUN5_TEXTENG@0xA530	slot	32				
+T1354	1	Command Chart > character move name	<r垂花|しだればな>	Hanging Flower			character:command-record-index	NA2_SLPS@0x3D43E0	NUN5_TEXTENG@0xA540	slot	32				
+T1355	1	Command Chart > character move name	<r枸橘|からたち>	Trifoliate Orange			character:command-record-index	NA2_SLPS@0x3D4400	NUN5_TEXTENG@0xA550	slot	32				
+T1356	1	Command Chart > character move name	<r深山半鐘|みやまはんしょう>	Alpine Clematis 			character:command-record-index	NA2_SLPS@0x3D4420	NUN5_TEXTENG@0xA570	slot	32				
+T1357	1	Command Chart > character move name	<r鬼野芥子|おにのげし>	Sonchus Oleraceus			character:command-record-index	NA2_SLPS@0x3D4440	NUN5_TEXTENG@0xA590	slot	32				
+T1358	1	Command Chart > character move name	<r鉤葛|かぎかずら>	Uncaria			character:command-record-index	NA2_SLPS@0x3D4460	NUN5_SLES@0x514190	slot	24				
+T1359	1	Command Chart > character move name	<r蔓|つる>	Creeper			character:command-record-index	NA2_SLPS@0x3D4478	NUN5_SLES@0x514198	slot	16				
+T1360	1	Command Chart > character move name	<r天花|てんか>	Heavenly Flower			character:command-record-index	NA2_SLPS@0x3D4488	NUN5_TEXTENG@0xA5B0	slot	16				
+T1361	1	Command Chart > character move name	<r立花|りっか>	Standing Flower 			character:command-record-index	NA2_SLPS@0x3D4498	NUN5_TEXTENG@0xA5C0	slot	24				
+T1362	1	Command Chart > character move name	<r剣山|けんざん>	Frog			character:command-record-index	NA2_SLPS@0x3D44B0	NUN5_SLES@0x5141A0	slot	32				
+T1363	1	Command Chart > character move name	<r彗花|ほうきばな>	Shooting Flower			character:command-record-index	NA2_SLPS@0x3D44D0	NUN5_TEXTENG@0xA5E0	slot	32				
 T1364	1	Command Chart > character move name	うずまきナルト<r連撃|れんげき>	Naruto Uzumaki Combo Attack			character:replacement-pass-2-2026-07-26 Naruto command-chart family	NA2_SLPS@0x3D9C40	NUN5_TEXTENG@0xA6B0	slot	32				
 T1365	1	Command Chart > character move name	<r大玉螺旋丸|おおだまらせんがん>	Great Ball Rasengan			character:replacement-pass-2-2026-07-26 Naruto command-chart family	NA2_SLPS@0x3D9C60	NUN5_TEXTENG@0x3F00	slot	48				
 T1366	1	Command Chart > character move name	<r飛影昇撃|ひえんしょうげき>	Flying Shadow Rising Attack			character:replacement-pass-2-2026-07-26 Naruto command-chart family	NA2_SLPS@0x3D9C90	NUN5_TEXTENG@0xA6D0	slot	32				
@@ -601,6 +1140,509 @@ T1374	1	Command Chart > character move name	<r昇|のぼ>り<r風車|ふうし�
 T1375	1	Command Chart > character move name	<r飛影撃|ひえんげき>	Flying Shadow Attack			character:replacement-pass-2-2026-07-26 Naruto command-chart family	NA2_SLPS@0x3D9DE0	NUN5_TEXTENG@0xA7C0	slot	32				
 T1376	1	Command Chart > character move name	<r瞬手弾|しゅんてだん>	Instant Hand Bullet			character:replacement-pass-2-2026-07-26 Naruto command-chart family	NA2_SLPS@0x3D9E00	NUN5_TEXTENG@0xA7E0	slot	32				
 T1377	1	Command Chart > character move name	<r分身跳爆打|ぶんしんちょうばくだ>	Clone Jumping Explosion Hit 			character:replacement-pass-2-2026-07-26 Naruto command-chart family	NA2_SLPS@0x3D9E20	NUN5_TEXTENG@0xA800	slot	48				
+T1378	1	Command Chart > character move name	<r医療忍術|いりょうにんじゅつ>　<r剛閃|ごうせん>	Medical Ninjutsu: Ferocious Flash			character:command-record-index	NA2_SLPS@0x3DF180	NUN5_TEXTENG@0xA8F0	slot	64				
+T1379	1	Command Chart > character move name	<r春誅打|しゅんちゅうだ>	Killer Spring			character:command-record-index	NA2_SLPS@0x3DF1C0	NUN5_TEXTENG@0xA918	slot	32				
+T1380	1	Command Chart > character move name	<r撲殺|ぼくさつ>コンボ	Fatal Beating Combo			character:command-record-index	NA2_SLPS@0x3DF1E0	NUN5_TEXTENG@0xA930	slot	32				
+T1381	1	Command Chart > character move name	<r怪力|かいりき>パンチ	Herculean Power Punch			character:command-record-index	NA2_SLPS@0x3DF200	NUN5_TEXTENG@0xA950	slot	32				
+T1382	1	Command Chart > character move name	<r落華星|らっかせい>	Shooting Flower Star			character:command-record-index	NA2_SLPS@0x3DF220	NUN5_TEXTENG@0xA970	slot	32				
+T1383	1	Command Chart > character move name	<r蠍針|さそりばり>	Scorpion Needle			character:command-record-index	NA2_SLPS@0x3DF240	NUN5_TEXTENG@0xA990	slot	32				
+T1384	1	Command Chart > character move name	<r滅殺|めっさつ>コンボ	Destruction Combo			character:command-record-index	NA2_SLPS@0x3DF260	NUN5_TEXTENG@0xA9A0	slot	32				
+T1385	1	Command Chart > character move name	<r阿修羅落|あしゅらお>とし	Asura Drop			character:command-record-index	NA2_SLPS@0x3DF280	NUN5_TEXTENG@0xA9B8	slot	32				
+T1386	1	Command Chart > character move name	<r乙女|おとめ>の<r牙|きば>	Maiden's Fang			character:command-record-index	NA2_SLPS@0x3DF2A0	NUN5_TEXTENG@0xA9C8	slot	32				
+T1387	1	Command Chart > character move name	<r彗星弾|すいせいだん>	Comet Bullet			character:command-record-index	NA2_SLPS@0x3DF2C0	NUN5_TEXTENG@0xA9D8	slot	32				
+T1388	1	Command Chart > character move name	<r昇天|しょうてん>コンボ	Rising Heaven Combo			character:command-record-index	NA2_SLPS@0x3DF2E0	NUN5_TEXTENG@0xA9F0	slot	32				
+T1389	1	Command Chart > character move name	<r乙女|おとめ>の<r剛拳|ごうけん>	Maiden's Ferocious Fist			character:command-record-index	NA2_SLPS@0x3DF300	NUN5_TEXTENG@0xAA10	slot	48				
+T1390	1	Command Chart > character move name	<r爆砕拳打|ばくさいけんだ>	Explosive Smashing Fist			character:command-record-index	NA2_SLPS@0x3DF330	NUN5_TEXTENG@0xAA30	slot	32				
+T1391	1	Command Chart > character move name	<r乙女|おとめ>の<r本心|ほんしん>	Maiden's True Heart			character:command-record-index	NA2_SLPS@0x3DF350	NUN5_TEXTENG@0xAA50	slot	48				
+T1392	1	Command Chart > character move name	<r砂爆砂塊|さばくさかい>	Sand Cluster			character:command-record-index	NA2_SLPS@0x3E4B10	NUN5_TEXTENG@0xAB28	slot	32				
+T1393	1	Command Chart > character move name	<r流砂瀑流|りゅうさばくりゅう>	Sand Tsunami			character:command-record-index	NA2_SLPS@0x3E4B30	NUN5_TEXTENG@0xAB38	slot	32				
+T1394	1	Command Chart > character move name	<r砂爆噴突|さばくふんとつ>	Sand Fountain Thrust			character:command-record-index	NA2_SLPS@0x3E4B50	NUN5_TEXTENG@0xAB50	slot	32				
+T1395	1	Command Chart > character move name	<r小流砂瀑流|こりゅうさばくりゅう>	Little Sand Tsunami			character:command-record-index	NA2_SLPS@0x3E4B70	NUN5_TEXTENG@0xAB70	slot	48				
+T1396	1	Command Chart > character move name	<r砂塵円|さじんえん>	Sand Dust Circle			character:command-record-index	NA2_SLPS@0x3E4BA0	NUN5_TEXTENG@0xAB90	slot	32				
+T1397	1	Command Chart > character move name	<r噴葬塵|ふんそうじん>	Fountain Burial Dust			character:command-record-index	NA2_SLPS@0x3E4BC0	NUN5_TEXTENG@0xABB0	slot	32				
+T1398	1	Command Chart > character move name	<r砂瀑域葬|さばくえいそう>	Sand Area Burial			character:command-record-index	NA2_SLPS@0x3E4BE0	NUN5_TEXTENG@0xABD0	slot	32				
+T1399	1	Command Chart > character move name	<r砂惨追葬|さざんついそう>	Sand Pursuit Burial			character:command-record-index	NA2_SLPS@0x3E4C00	NUN5_TEXTENG@0xABF0	slot	32				
+T1400	1	Command Chart > character move name	<r圧砂塵|あっさじん>	Sandstorm Pressure			character:command-record-index	NA2_SLPS@0x3E4C20	NUN5_TEXTENG@0xAC10	slot	32				
+T1401	1	Command Chart > character move name	<r落渦葬|らっかそう>	Maelstrom Burial			character:command-record-index	NA2_SLPS@0x3E4C40	NUN5_TEXTENG@0xAC30	slot	32				
+T1402	1	Command Chart > character move name	<r砂漠球|さばくきゅう>・<r狭|へい>	Sand Coffin: Narrow			character:command-record-index	NA2_SLPS@0x3E4C60	NUN5_TEXTENG@0xAC50	slot	48				
+T1403	1	Command Chart > character move name	<r羅惨塵|らさんじん>	Cruel Dust			character:command-record-index	NA2_SLPS@0x3E4C90	NUN5_TEXTENG@0xAC68	slot	32				
+T1404	1	Command Chart > character move name	<r漠撃|ばくげき>・<r圧葬|あっそう>	Sand Attack: Crush Burial			character:command-record-index	NA2_SLPS@0x3E4CB0	NUN5_TEXTENG@0xAC80	slot	48				
+T1405	1	Command Chart > character move name	<r漠撃|ばくげき>・<r滅葬|めっそう>	Sand Attack: Ruin Burial			character:command-record-index	NA2_SLPS@0x3E4CE0	NUN5_TEXTENG@0xACA0	slot	48				
+T1406	1	Command Chart > character move name	<r漠撃|ばくげき>・<r天葬|てんそう>	Sand Attack: Heaven Burial			character:command-record-index	NA2_SLPS@0x3E4D10	NUN5_TEXTENG@0xACC0	slot	48				
+T1407	1	Command Chart > character move name	<r豪砂甚雨|ごうさじんう>	Fierce Sand Downpour			character:command-record-index	NA2_SLPS@0x3E4D40	NUN5_TEXTENG@0xACE0	slot	32				
+T1408	1	Command Chart > character move name	<r黒秘技機々一発|くろひぎききいっぱつ>	Secret Black Move: Iron Maiden			character:command-record-index	NA2_SLPS@0x3EA3E0	NUN5_TEXTENG@0x4F00	slot	48				
+T1409	1	Command Chart > character move name	<r黒秘技炎填華|くろひぎえんてんか>	Secret Black Move: Fire Flower			character:command-record-index	NA2_SLPS@0x3EA410	NUN5_TEXTENG@0xADC0	slot	48				
+T1410	1	Command Chart > character move name	<r傀儡|くぐつ>　<r怠慢|たいまん>	Puppet: Neglect			character:command-record-index	NA2_SLPS@0x3EA440	NUN5_TEXTENG@0xADE0	slot	48				
+T1411	1	Command Chart > character move name	<r傀儡|くぐつ>　<r散斬|さんざん>	Puppet: Scattered Slash			character:command-record-index	NA2_SLPS@0x3EA470	NUN5_TEXTENG@0xADF0	slot	48				
+T1412	1	Command Chart > character move name	<r傀儡|くぐつ>　<r妖独楽|あやかしごま>	Puppet: Demonic Spin			character:command-record-index	NA2_SLPS@0x3EA4A0	NUN5_TEXTENG@0xAE10	slot	48				
+T1413	1	Command Chart > character move name	<r傀儡|くぐつ>　<r剥刺錆|むささび>	Puppet: Piercing Rust			character:command-record-index	NA2_SLPS@0x3EA4D0	NUN5_TEXTENG@0xAE30	slot	48				
+T1414	1	Command Chart > character move name	<r傀儡|くぐつ>　<r惨懺波|さざなみ>	Puppet: Cruel Wave			character:command-record-index	NA2_SLPS@0x3EA500	NUN5_TEXTENG@0xAE50	slot	48				
+T1415	1	Command Chart > character move name	<r傀儡|くぐつ>　<r六本峠|ろっぽんとうげ>	Puppet: Six Mountain Pass			character:command-record-index	NA2_SLPS@0x3EA530	NUN5_TEXTENG@0xAE70	slot	48				
+T1416	1	Command Chart > character move name	<r傀儡|くぐつ>　<r研斬|けんざん>	Puppet: Grinding Slash			character:command-record-index	NA2_SLPS@0x3EA560	NUN5_TEXTENG@0xAE90	slot	48				
+T1417	1	Command Chart > character move name	<r傀儡|くぐつ>　<r鳶疾風|とびはやて>	Puppet: Black Kite Gale			character:command-record-index	NA2_SLPS@0x3EA590	NUN5_TEXTENG@0xAEB0	slot	48				
+T1418	1	Command Chart > character move name	<r傀儡|くぐつ>　<r仇車|かたぐるま>	Puppet: Enemy Wheels			character:command-record-index	NA2_SLPS@0x3EA5C0	NUN5_TEXTENG@0xAED0	slot	48				
+T1419	1	Command Chart > character move name	<r斬|き>り<r斬|き>り<r舞|まい>	Slicing Blade Dance			character:command-record-index	NA2_SLPS@0x3EFA00	NUN5_TEXTENG@0xAFA0	slot	32				
+T1420	1	Command Chart > character move name	<r真|しん>・カマイタチの<r術|じゅつ>	True Wind Scythe Jutsu			character:command-record-index	NA2_SLPS@0x3EFA20	NUN5_TEXTENG@0xAFC0	slot	48				
+T1421	1	Command Chart > character move name	<r蓮流扇|はすりゅうせん>	Lotus Flowing Fan			character:command-record-index	NA2_SLPS@0x3EFA50	NUN5_TEXTENG@0xAFE0	slot	32				
+T1422	1	Command Chart > character move name	<r疾風扇舞|しっぷうせんぶ>	Gale Force Fan Dance			character:command-record-index	NA2_SLPS@0x3EFA70	NUN5_TEXTENG@0xB000	slot	32				
+T1423	1	Command Chart > character move name	<r真空|しんくう>の<r風|かぜ>	Vacuum Wind			character:command-record-index	NA2_SLPS@0x3EFA90	NUN5_TEXTENG@0xB018	slot	32				
+T1424	1	Command Chart > character move name	<r扇嵐撃|せんらんげき>	Fan Storm Attack			character:command-record-index	NA2_SLPS@0x3EFAB0	NUN5_TEXTENG@0xB030	slot	32				
+T1425	1	Command Chart > character move name	<r燕返|つばめがえ>し	Swallow Counter 			character:command-record-index	NA2_SLPS@0x3EFAD0	NUN5_TEXTENG@0xB050	slot	32				
+T1426	1	Command Chart > character move name	<r大扇壊|だいせんかい>	Giant Fan Destruction			character:command-record-index	NA2_SLPS@0x3EFAF0	NUN5_TEXTENG@0xB070	slot	32				
+T1427	1	Command Chart > character move name	<r空龍扇|くうろんせん>	Sky Dragon Fan			character:command-record-index	NA2_SLPS@0x3EFB10	NUN5_TEXTENG@0xB088	slot	24				
+T1428	1	Command Chart > character move name	<r華踊|かよう>	Spectacular Dance			character:command-record-index	NA2_SLPS@0x3EFB28	NUN5_TEXTENG@0xB0A0	slot	24				
+T1429	1	Command Chart > character move name	<r修羅|しゅら>の<r舞|まい>	Carnage Dance			character:command-record-index	NA2_SLPS@0x3EFB40	NUN5_TEXTENG@0xB0B8	slot	32				
+T1430	1	Command Chart > character move name	<r扇襲洛|せんしゅうらく>	Fan Raid			character:command-record-index	NA2_SLPS@0x3EFB60	NUN5_TEXTENG@0xB0C8	slot	32				
+T1431	1	Command Chart > character move name	<r乱|みだ>れ<r舞踊|ぶよう>	Dance of Chaos			character:command-record-index	NA2_SLPS@0x3EFB80	NUN5_TEXTENG@0xB0D8	slot	32				
+T1432	1	Command Chart > character move name	<r烈風扇華|れっぷうせんか>	Whirlwind Fan Flower			character:command-record-index	NA2_SLPS@0x3EFBA0	NUN5_TEXTENG@0xB0F0	slot	32				
+T1433	1	Command Chart > character move name	<r二親按包|にしんあんぽう>	Parental Love			character:command-record-index	NA2_SLPS@0x3F5C10	NUN5_TEXTENG@0xB1C8	slot	32				
+T1434	1	Command Chart > character move name	<r千与時雨|ちよしぐれ>	1000 Autumn Shower			character:command-record-index	NA2_SLPS@0x3F5C30	NUN5_TEXTENG@0xB1E0	slot	32				
+T1435	1	Command Chart > character move name	<r帰母昇刃父|きばしょうじんふ>	Returning Upper Blade			character:command-record-index	NA2_SLPS@0x3F5C50	NUN5_TEXTENG@0xB200	slot	32				
+T1436	1	Command Chart > character move name	<r帰母進刃父|きばしんじんふ>	Returning Thrust Blade			character:command-record-index	NA2_SLPS@0x3F5C70	NUN5_TEXTENG@0xB220	slot	32				
+T1437	1	Command Chart > character move name	<r二連傘刃|にれんさんじん>	Double Umbrella Blade			character:command-record-index	NA2_SLPS@0x3F5C90	NUN5_TEXTENG@0xB240	slot	32				
+T1438	1	Command Chart > character move name	<r支父流刃母|しふりゅうじんば>	Flowing Blade			character:command-record-index	NA2_SLPS@0x3F5CB0	NUN5_TEXTENG@0xB258	slot	32				
+T1439	1	Command Chart > character move name	<r演劇|えんげき>　<r八方対刃|はっぽうついじん>	Performance Multi-Directional Blade			character:command-record-index	NA2_SLPS@0x3F5CD0	NUN5_TEXTENG@0xB270	slot	48				
+T1440	1	Command Chart > character move name	<r燕刃母獅刃父|えんじんばしじんふ>	Swallow Lion Blade			character:command-record-index	NA2_SLPS@0x3F5D00	NUN5_TEXTENG@0xB2A0	slot	48				
+T1441	1	Command Chart > character move name	<r二連墜刃|にれんついじん>	Double Drop			character:command-record-index	NA2_SLPS@0x3F5D30	NUN5_TEXTENG@0xB2B8	slot	32				
+T1442	1	Command Chart > character move name	<r二連進刃|にれんしんじん>	Double Thrust			character:command-record-index	NA2_SLPS@0x3F5D50	NUN5_TEXTENG@0xB2C8	slot	32				
+T1443	1	Command Chart > character move name	<r支母流刃父|しばりゅうじんふ>	Flowing Blade Reverse			character:command-record-index	NA2_SLPS@0x3F5D70	NUN5_TEXTENG@0xB2E0	slot	32				
+T1444	1	Command Chart > character move name	<r二連昇刃|にれんしょうじん>	Double Back Kick			character:command-record-index	NA2_SLPS@0x3F5D90	NUN5_TEXTENG@0x5D90	slot	32				
+T1445	1	Command Chart > character move name	<r氏族一点|しぞくいってん>	Ancestry			character:command-record-index	NA2_SLPS@0x3F5DB0	NUN5_TEXTENG@0xB2F8	slot	32				
+T1446	1	Command Chart > character move name	<r流投母怠父|りゅうとうばたいふ>	Slack Throw			character:command-record-index	NA2_SLPS@0x3F5DD0	NUN5_TEXTENG@0xB308	slot	48				
+T1447	1	Command Chart > character move name	<r二連転刃|にれんてんじん>	Double Spin			character:command-record-index	NA2_SLPS@0x3F5E00	NUN5_TEXTENG@0xB318	slot	32				
+T1448	1	Command Chart > character move name	<r砂鉄界法|さてつかいほう>	Iron Sand World Order			character:command-record-index	NA2_SLPS@0x3FB470	NUN5_TEXTENG@0xB3E0	slot	32				
+T1449	1	Command Chart > character move name	<r砂鉄時雨|さてつしぐれ>	Iron Sand Drizzle			character:command-record-index	NA2_SLPS@0x3FB490	NUN5_TEXTENG@0xB400	slot	32				
+T1450	1	Command Chart > character move name	<r奇刃隠臥|きじんいんが>	Mysterious Hidden Blade 			character:command-record-index	NA2_SLPS@0x3FB4B0	NUN5_TEXTENG@0xB420	slot	32				
+T1451	1	Command Chart > character move name	<r浮刃隠臥|ふじんいんが>	Floating Hidden Blade			character:command-record-index	NA2_SLPS@0x3FB4D0	NUN5_TEXTENG@0xB440	slot	32				
+T1452	1	Command Chart > character move name	<r偽人千手|ぎじんせんじゅ>・<r地|ち>	Thousand Handed Marionette: Earth			character:command-record-index	NA2_SLPS@0x3FB4F0	NUN5_TEXTENG@0xB460	slot	48				
+T1453	1	Command Chart > character move name	<r紫煙隠臥|しえんいんが>	Purple Hidden Smoke			character:command-record-index	NA2_SLPS@0x3FB520	NUN5_TEXTENG@0xB490	slot	32				
+T1454	1	Command Chart > character move name	<r砂鉄鎖界|さてつさかい>	Iron Sand Chain			character:command-record-index	NA2_SLPS@0x3FB540	NUN5_TEXTENG@0xB4B0	slot	32				
+T1455	1	Command Chart > character move name	<r砂鉄塊|さてつかい>	Iron Sand Mass			character:command-record-index	NA2_SLPS@0x3FB560	NUN5_TEXTENG@0xB4C0	slot	32				
+T1456	1	Command Chart > character move name	<r砂鉄槍|さてつそう>	Iron Sand Spear			character:command-record-index	NA2_SLPS@0x3FB580	NUN5_TEXTENG@0xB4D0	slot	32				
+T1457	1	Command Chart > character move name	<r砂鉄送葬|さてつそうそう>	Iron Sand Funeral			character:command-record-index	NA2_SLPS@0x3FB5A0	NUN5_TEXTENG@0xB4E0	slot	32				
+T1458	1	Command Chart > character move name	<r砂鉄刺散|さてつしさん>	Iron Sand Spray			character:command-record-index	NA2_SLPS@0x3FB5C0	NUN5_TEXTENG@0xB500	slot	32				
+T1459	1	Command Chart > character move name	<r偽人千手|ぎじんせんじゅ>・<r天|てん>	Thousand Handed Marionette: Sky			character:command-record-index	NA2_SLPS@0x3FB5E0	NUN5_TEXTENG@0xB510	slot	48				
+T1460	1	Command Chart > character move name	<r弄玩操戯|ろうがんそうぎ>	Puppet Play			character:command-record-index	NA2_SLPS@0x3FB610	NUN5_TEXTENG@0xB530	slot	32				
+T1461	1	Command Chart > character move name	<r舞振操戯|ぶしんそうぎ>	Puppet Dance			character:command-record-index	NA2_SLPS@0x3FB630	NUN5_TEXTENG@0xB540	slot	32				
+T1462	1	Command Chart > character move name	<r造形|ぞうけい>の<r美|び>	Beauty of Figurative Arts			character:command-record-index	NA2_SLPS@0x4008C0	NUN5_TEXTENG@0xB5F0	slot	32				
+T1463	1	Command Chart > character move name	<r破壊|はかい>の<r美|び>	Beauty of Destruction			character:command-record-index	NA2_SLPS@0x4008E0	NUN5_TEXTENG@0xB610	slot	32				
+T1464	1	Command Chart > character move name	<r爆破芸術|ばくはげいじゅつ>・<r昇|しょう>～<r連作|れんさく>～	Explosive Art Sequences: Rise			character:command-record-index	NA2_SLPS@0x400900	NUN5_TEXTENG@0xB630	slot	64				
+T1465	1	Command Chart > character move name	<r爆破芸術|ばくはげいじゅつ>・<r撃|げき>～<r連作|れんさく>～	Explosive Art Sequences: Attack			character:command-record-index	NA2_SLPS@0x400940	NUN5_TEXTENG@0xB650	slot	64				
+T1466	1	Command Chart > character move name	<r爆破芸術|ばくはげいじゅつ>・<r揚|よう>～<r連作|れんさく>～	Explosive Art Sequences: Lift			character:command-record-index	NA2_SLPS@0x400980	NUN5_TEXTENG@0xB670	slot	64				
+T1467	1	Command Chart > character move name	<r爆破芸術|ばくはげいじゅつ>・<r退|たい>～<r連作|れんさく>～	Explosive Art Sequences: Withdraw			character:command-record-index	NA2_SLPS@0x4009C0	NUN5_TEXTENG@0xB690	slot	64				
+T1468	1	Command Chart > character move name	<r起爆粘土|きばくねんど>・<r鳥|とり>	Detonating Clay: Bird			character:command-record-index	NA2_SLPS@0x400A00	NUN5_TEXTENG@0xB6C0	slot	48				
+T1469	1	Command Chart > character move name	<r起爆粘土|きばくねんど>・<r蜘蛛|くも>	Detonating Clay: Spider			character:command-record-index	NA2_SLPS@0x400A30	NUN5_TEXTENG@0xB6E0	slot	48				
+T1470	1	Command Chart > character move name	<r起爆粘土|きばくねんど>・<r鳥|とり>～<r翻|ほん>～	Detonating Clay: Bird Flap			character:command-record-index	NA2_SLPS@0x400A60	NUN5_TEXTENG@0xB700	slot	64				
+T1471	1	Command Chart > character move name	<r爆葬|ばくそう>	Explosive Burial 			character:command-record-index	NA2_SLPS@0x400AA0	NUN5_TEXTENG@0xB720	slot	32				
+T1472	1	Command Chart > character move name	<r空中爆破芸術|くうちゅうばくはげいじゅつ>・<r天|てん>	Midair Explosive Art: Heaven			character:command-record-index	NA2_SLPS@0x400AC0	NUN5_TEXTENG@0xB740	slot	64				
+T1473	1	Command Chart > character move name	<r空中爆破芸術|くうちゅうばくはげいじゅつ>・<r双|そう>	Midair Explosive Art: Duplex			character:command-record-index	NA2_SLPS@0x400B00	NUN5_TEXTENG@0xB760	slot	64				
+T1474	1	Command Chart > character move name	<r爆葬|ばくそう>～<r空|くう>～	Explosive Burial Sky			character:command-record-index	NA2_SLPS@0x400B40	NUN5_TEXTENG@0xB780	slot	32				
+T1475	1	Command Chart > character move name	<r空中爆破芸術三部作|くうちゅうばくはげいじゅつさんぶさく>	Midair Explosive Art Trilogy			character:command-record-index	NA2_SLPS@0x400B60	NUN5_TEXTENG@0xB7A0	slot	64				
+T1476	1	Command Chart > character move name	<r大型鳥粘土|おおがたとりねんど>・<r翔|しょう>	Giant Bird Clay: Fly			character:command-record-index	NA2_SLPS@0x400BA0	NUN5_TEXTENG@0xB7C0	slot	48				
+T1477	1	Command Chart > character move name	<r大型鳥粘土|おおがたとりねんど>・<r襲|しゅう>	Giant Bird Clay: Attack			character:command-record-index	NA2_SLPS@0x400BD0	NUN5_TEXTENG@0xB7E0	slot	48				
+T1478	1	Command Chart > character move name	<r大型鳥粘土|おおがたとりねんど>・<r突|とつ>	Giant Bird Clay: Thrust			character:command-record-index	NA2_SLPS@0x400C00	NUN5_TEXTENG@0xB800	slot	48				
+T1479	1	Command Chart > character move name	<r八卦掌回天|はっけしょうかいてん>	8 Trigrams Palms Rotation			character:command-record-index	NA2_SLPS@0x406B40	NUN5_TEXTENG@0xB8E0	slot	48				
+T1480	1	Command Chart > character move name	<r八卦空掌|はっけくうしょう>	8 Trigrams Sky Palm			character:command-record-index	NA2_SLPS@0x406B70	NUN5_TEXTENG@0x3230	slot	32				
+T1481	1	Command Chart > character move name	<r柔閃突|じゅうせんとつ>	Gentle Flash Thrust			character:command-record-index	NA2_SLPS@0x406B90	NUN5_TEXTENG@0xB900	slot	32				
+T1482	1	Command Chart > character move name	<r斜天掌|しゃてんしょう>	Slanted Heaven Palm			character:command-record-index	NA2_SLPS@0x406BB0	NUN5_TEXTENG@0xB920	slot	32				
+T1483	1	Command Chart > character move name	<r飛連突|ひれんとつ>	Flying Thrust Barrage 			character:command-record-index	NA2_SLPS@0x406BD0	NUN5_TEXTENG@0xB940	slot	32				
+T1484	1	Command Chart > character move name	<r跳舞掌|ちょうぶしょう>	Hopping Dance Palm			character:command-record-index	NA2_SLPS@0x406BF0	NUN5_TEXTENG@0xB960	slot	32				
+T1485	1	Command Chart > character move name	<r崩撃閃|ほうげきせん>	Demolition Attack Flash			character:command-record-index	NA2_SLPS@0x406C10	NUN5_TEXTENG@0xB980	slot	32				
+T1486	1	Command Chart > character move name	<r空撃掌|くうげきしょう>	"Air Strike Palm
+"			character:command-record-index	NA2_SLPS@0x406C30	NUN5_TEXTENG@0xB9A0	slot	32				
+T1487	1	Command Chart > character move name	<r空砕掌|くうさいしょう>	Sky Smash Palm			character:command-record-index	NA2_SLPS@0x406C50	NUN5_TEXTENG@0xB9B8	slot	32				
+T1488	1	Command Chart > character move name	<r背撃崩|はいげきほう>	Back Attack Collapse			character:command-record-index	NA2_SLPS@0x406C70	NUN5_TEXTENG@0xB9D0	slot	32				
+T1489	1	Command Chart > character move name	<r天昇脚|てんしょうきゃく>	Heavenly Rising Kick			character:command-record-index	NA2_SLPS@0x406C90	NUN5_TEXTENG@0xB9F0	slot	32				
+T1490	1	Command Chart > character move name	<r掌撃墜|しょうげきつい>	Palm Attack Fall			character:command-record-index	NA2_SLPS@0x406CB0	NUN5_TEXTENG@0xBA10	slot	32				
+T1491	1	Command Chart > character move name	<r穿冽掌|せんれっしょう>	Dignified Drill Palm			character:command-record-index	NA2_SLPS@0x406CD0	NUN5_TEXTENG@0xBA30	slot	32				
+T1492	1	Command Chart > character move name	<r操具襲千刃|そうぐしゅうせんじん>	Ninja Tool: Blade of 1000 Strikes			character:command-record-index	NA2_SLPS@0x40C620	NUN5_TEXTENG@0x4AE0	slot	48				
+T1493	1	Command Chart > character move name	<r暗器|あんき>・<r爆閃|ばくせん>クナイ<r玉|だま>	Concealed Kunai Blast			character:command-record-index	NA2_SLPS@0x40C650	NUN5_TEXTENG@0xBB20	slot	64				
+T1494	1	Command Chart > character move name	<r暗器口寄|あんきくちよ>せ・<r全弾発射|ぜんだんはっしゃ>	Concealed Summoning: Bullet Launch			character:command-record-index	NA2_SLPS@0x40C690	NUN5_TEXTENG@0xBB40	slot	64				
+T1495	1	Command Chart > character move name	トンファーコンボ	Tonfa Combo			character:command-record-index	NA2_SLPS@0x40C6D0	NUN5_TEXTENG@0xBB68	slot	32				
+T1496	1	Command Chart > character move name	<r双金棒打|そうかなぼうう>ち<r落|お>とし	Twin Golden Rod Drop			character:command-record-index	NA2_SLPS@0x40C6F0	NUN5_TEXTENG@0xBB80	slot	48				
+T1497	1	Command Chart > character move name	<r暗器術|あんきじゅつ>・<r操具死球撃|そうぐしきゅうげき>	Ninja Tool: Death Sphere Strike			character:command-record-index	NA2_SLPS@0x40C720	NUN5_TEXTENG@0x4AC0	slot	64				
+T1498	1	Command Chart > character move name	<r暗器口寄|あんきくちよ>せ・<r刃突|はとつ>	Concealed Summoning: Blade Thrust			character:command-record-index	NA2_SLPS@0x40C760	NUN5_TEXTENG@0xBBA0	slot	48				
+T1499	1	Command Chart > character move name	<r棒術|ぼうじゅつ>・<r三節棍|さんせつこん>	Cudgel Art: Three-Sectional Staff 			character:command-record-index	NA2_SLPS@0x40C790	NUN5_TEXTENG@0xBBD0	slot	48				
+T1500	1	Command Chart > character move name	<r暗器術|あんきじゅつ>・<r飛歩|とんぼ>	Concealed Jutsu: Flying Walk			character:command-record-index	NA2_SLPS@0x40C7C0	NUN5_TEXTENG@0xBC00	slot	48				
+T1501	1	Command Chart > character move name	<r暗器術|あんきじゅつ>・<r鎮砕|ふんさい>	Concealed Jutsu: Subside Clash			character:command-record-index	NA2_SLPS@0x40C7F0	NUN5_TEXTENG@0xBC20	slot	48				
+T1502	1	Command Chart > character move name	<r暗器術|あんきじゅつ>・<r鎖鎌|くさりがま>	Concealed Jutsu: Chain-sickle 			character:command-record-index	NA2_SLPS@0x40C820	NUN5_TEXTENG@0xBC40	slot	48				
+T1503	1	Command Chart > character move name	<r暗器術|あんきじゅつ>・<r鉄球噴芯|てっきゅうふんしん>	Concealed Jutsu: Iron Ball Core			character:command-record-index	NA2_SLPS@0x40C850	NUN5_TEXTENG@0xBC60	slot	64				
+T1504	1	Command Chart > character move name	<r暗器術|あんきじゅつ>・<r風縛|かぜしばり>	Concealed Jutsu: Wind Paralysis 			character:command-record-index	NA2_SLPS@0x40C890	NUN5_TEXTENG@0xBC80	slot	48				
+T1505	1	Command Chart > character move name	<r暗器術|あんきじゅつ>・<r快刀乱麻|かいとうらんま>	Concealed Jutsu: Gordian Knot Cut			character:command-record-index	NA2_SLPS@0x40C8C0	NUN5_TEXTENG@0xBCB0	slot	64				
+T1506	1	Command Chart > character move name	<r表蓮華|おもてれんげ>	Primary Lotus			character:command-record-index	NA2_SLPS@0x412D30	NUN5_TEXTENG@0xBDA8	slot	32				
+T1507	1	Command Chart > character move name	ダイナミック・エントリー	Dynamic Entry			character:command-record-index	NA2_SLPS@0x412D50	NUN5_TEXTENG@0xBDB8	slot	32				
+T1508	1	Command Chart > character move name	<r猛連蹴|もうれんしゅう>	Fierce Kick Combo			character:command-record-index	NA2_SLPS@0x412D70	NUN5_TEXTENG@0xBDD0	slot	32				
+T1509	1	Command Chart > character move name	<r大爆踵|だいばくしょう>	Explosive Heel			character:command-record-index	NA2_SLPS@0x412D90	NUN5_TEXTENG@0xBDE8	slot	32				
+T1510	1	Command Chart > character move name	<r双回打|そうかいだ>	Double Spin Strike			character:command-record-index	NA2_SLPS@0x412DB0	NUN5_TEXTENG@0xBE00	slot	32				
+T1511	1	Command Chart > character move name	<r下撃蹴|かげきしゅう>	Down Attack Kick			character:command-record-index	NA2_SLPS@0x412DD0	NUN5_TEXTENG@0xBE20	slot	32				
+T1512	1	Command Chart > character move name	<r連撃浮足|れんげきふそく>	Floating Leg Barrage			character:command-record-index	NA2_SLPS@0x412DF0	NUN5_TEXTENG@0xBE40	slot	32				
+T1513	1	Command Chart > character move name	<r連撃昇華|れんげきしょうか>	Rising Flower Barrage			character:command-record-index	NA2_SLPS@0x412E10	NUN5_TEXTENG@0xBE60	slot	32				
+T1514	1	Command Chart > character move name	<r昇風瞬脚|しょうふうしゅんきゃく>	Rising Wind Kick			character:command-record-index	NA2_SLPS@0x412E30	NUN5_TEXTENG@0xBE80	slot	48				
+T1515	1	Command Chart > character move name	<r降風瞬脚|こうふうしゅんきゃく>	Downward Wind Kick			character:command-record-index	NA2_SLPS@0x412E60	NUN5_TEXTENG@0xBEA0	slot	48				
+T1516	1	Command Chart > character move name	<r四撃蹴|しげきしゅう>	Quadruple Kick Attack			character:command-record-index	NA2_SLPS@0x412E90	NUN5_TEXTENG@0xBEC0	slot	32				
+T1517	1	Command Chart > character move name	<r剛猛突破|ごうもうとっぱ>	Doughty Run Through			character:command-record-index	NA2_SLPS@0x412EB0	NUN5_TEXTENG@0xBEE0	slot	32				
+T1518	1	Command Chart > character move name	<r咆哮転漢|ほうこうてんかん>	Howling Conversion			character:command-record-index	NA2_SLPS@0x412ED0	NUN5_TEXTENG@0xBF00	slot	32				
+T1519	1	Command Chart > character move name	<r天井破|てんじょうやぶ>り	Ceiling Break			character:command-record-index	NA2_SLPS@0x412EF0	NUN5_TEXTENG@0xBF18	slot	32				
+T1520	1	Command Chart > character move name	<r烈下弾|れっかだん>	Fierce Drop Bullet			character:command-record-index	NA2_SLPS@0x412F10	NUN5_TEXTENG@0xBF30	slot	32				
+T1521	1	Command Chart > character move name	<r三連打落|さんれんだらく>	Triple Flurry Drop			character:command-record-index	NA2_SLPS@0x412F30	NUN5_TEXTENG@0xBF50	slot	32				
+T1522	1	Command Chart > character move name	<r蹴旋華|しゅうせんか>	Flower Spin Kick			character:command-record-index	NA2_SLPS@0x412F50	NUN5_TEXTENG@0xBF70	slot	32				
+T1523	1	Command Chart > character move name	<r爆式影潜|ばくしきえいせん>・<r改|かい>	Explosive Style Shadow Conceal: Improvement			character:command-record-index	NA2_SLPS@0x418A00	NUN5_TEXTENG@0xC070	slot	48				
+T1524	1	Command Chart > character move name	<r鹿脚|かきゃく>	Deer Leg			character:command-record-index	NA2_SLPS@0x418A30	NUN5_TEXTENG@0xC0A0	slot	32				
+T1525	1	Command Chart > character move name	<r鹿肘|かちゅう>	Deer Elbow			character:command-record-index	NA2_SLPS@0x418A50	NUN5_TEXTENG@0xC0B0	slot	32				
+T1526	1	Command Chart > character move name	<r散影|さんえい>	Scattered Shadow			character:command-record-index	NA2_SLPS@0x418A70	NUN5_TEXTENG@0xC0C0	slot	32				
+T1527	1	Command Chart > character move name	<r影枕|かげまくら>	Shadow Pillow			character:command-record-index	NA2_SLPS@0x418A90	NUN5_TEXTENG@0xC0D8	slot	32				
+T1528	1	Command Chart > character move name	<r影縫|かげぬ>い・<r袋帯|ふくろおび>	Shadow Sewing: Belt			character:command-record-index	NA2_SLPS@0x418AB0	NUN5_TEXTENG@0xC0F0	slot	48				
+T1529	1	Command Chart > character move name	<r影縫|かげぬ>い・<r糸裏|いとづつみ>	Shadow Sewing: String			character:command-record-index	NA2_SLPS@0x418AE0	NUN5_TEXTENG@0xC110	slot	48				
+T1530	1	Command Chart > character move name	<r影縫|かげぬ>い・<r糸巾着|いとぎんちゃく>	Shadow Sewing: Pouch			character:command-record-index	NA2_SLPS@0x418B10	NUN5_TEXTENG@0xC130	slot	48				
+T1531	1	Command Chart > character move name	<r刺影|しえい>	Piercing Shadow			character:command-record-index	NA2_SLPS@0x418B40	NUN5_TEXTENG@0xC150	slot	16				
+T1532	1	Command Chart > character move name	マキシマム・エントリー	Maximum Entry			character:command-record-index	NA2_SLPS@0x41F0C0	NUN5_TEXTENG@0xC228	slot	32				
+T1533	1	Command Chart > character move name	<r夜鳳凰|よるほうおう>	Night Phoenix			character:command-record-index	NA2_SLPS@0x41F0E0	NUN5_TEXTENG@0xC238	slot	32				
+T1534	1	Command Chart > character move name	<r特訓|とっくん>キック	Special Training Kick			character:command-record-index	NA2_SLPS@0x41F100	NUN5_TEXTENG@0xC250	slot	32				
+T1535	1	Command Chart > character move name	<r熱血|ねっけつ>ストレート	Hot-Blooded Straight Right			character:command-record-index	NA2_SLPS@0x41F120	NUN5_TEXTENG@0xC270	slot	32				
+T1536	1	Command Chart > character move name	<r愛情|あいじょう>カカト	Affectionate Heel 			character:command-record-index	NA2_SLPS@0x41F140	NUN5_TEXTENG@0xC290	slot	32				
+T1537	1	Command Chart > character move name	<r無敵|むてき>チョップ	Invincible Chop			character:command-record-index	NA2_SLPS@0x41F160	NUN5_TEXTENG@0xC2B0	slot	32				
+T1538	1	Command Chart > character move name	<r激怒|げきど>ヌンチャク	Raging Nunchaku			character:command-record-index	NA2_SLPS@0x41F180	NUN5_TEXTENG@0xC2C0	slot	32				
+T1539	1	Command Chart > character move name	<r魂|たましい>ラッシュ	Soul Rush			character:command-record-index	NA2_SLPS@0x41F1A0	NUN5_TEXTENG@0xC2D0	slot	32				
+T1540	1	Command Chart > character move name	<r情熱|じょうねつ>キック	Passionate Kick			character:command-record-index	NA2_SLPS@0x41F1C0	NUN5_TEXTENG@0xC2E0	slot	32				
+T1541	1	Command Chart > character move name	<r青春|せいしゅん>アッパー	Youthful Uppercut 			character:command-record-index	NA2_SLPS@0x41F1E0	NUN5_TEXTENG@0xC2F0	slot	32				
+T1542	1	Command Chart > character move name	<r斬鉄|ざんてつ>チョップ	Iron Chop			character:command-record-index	NA2_SLPS@0x41F200	NUN5_TEXTENG@0xC308	slot	32				
+T1543	1	Command Chart > character move name	<r気合|きあい>アタック	Fighting Spirit Attack			character:command-record-index	NA2_SLPS@0x41F220	NUN5_TEXTENG@0xC320	slot	32				
+T1544	1	Command Chart > character move name	<r必殺|ひっさつ>キック	Deadly Kick			character:command-record-index	NA2_SLPS@0x41F240	NUN5_TEXTENG@0xC338	slot	32				
+T1545	1	Command Chart > character move name	<r友情|ゆうじょう>ラリアット	Friendship Lasso			character:command-record-index	NA2_SLPS@0x41F260	NUN5_TEXTENG@0xC350	slot	32				
+T1546	1	Command Chart > character move name	<r熱愛|ねつあい>スロー	Ardent Love Throw			character:command-record-index	NA2_SLPS@0x41F280	NUN5_TEXTENG@0xC370	slot	32				
+T1547	1	Command Chart > character move name	<r根性|こんじょう>キック	Guts Kick			character:command-record-index	NA2_SLPS@0x41F2A0	NUN5_TEXTENG@0xC388	slot	32				
+T1548	1	Command Chart > character move name	<r努力|どりょく>スマッシュ	Endeavor Smash			character:command-record-index	NA2_SLPS@0x41F2C0	NUN5_TEXTENG@0xC398	slot	32				
+T1549	1	Command Chart > character move name	<r漢|おとこ>コンボ	Masculine Combo			character:command-record-index	NA2_SLPS@0x41F2E0	NUN5_TEXTENG@0xC3B0	slot	32				
+T1550	1	Command Chart > character move name	<r雷切墜|らいきりお>とし	Lightning Blade Drop			character:command-record-index	NA2_SLPS@0x424B20	NUN5_TEXTENG@0xC4A0	slot	32				
+T1551	1	Command Chart > character move name	<r雷切|らいきり>	Lightning Blade			character:command-record-index	NA2_SLPS@0x424B40	NUN5_TEXTENG@0xC4C0	slot	32				
+T1552	1	Command Chart > character move name	<r万華鏡写輪眼|まんげきょうしゃりんがん>	Mangekyo Sharingan			character:command-record-index	NA2_SLPS@0x424B60	NUN5_TEXTENG@0xC4D0	slot	48				
+T1553	1	Command Chart > character move name	<r翔燕|しょうえん>	Flying Swallow			character:command-record-index	NA2_SLPS@0x424B90	NUN5_TEXTENG@0x42F8	slot	24				
+T1554	1	Command Chart > character move name	<r転牙|てんが>	Rolling Fang			character:command-record-index	NA2_SLPS@0x424BA8	NUN5_TEXTENG@0xC4E8	slot	24				
+T1555	1	Command Chart > character move name	<r曲穿|きょくせん>	Bending Drill 			character:command-record-index	NA2_SLPS@0x424BC0	NUN5_TEXTENG@0xC4F8	slot	32				
+T1556	1	Command Chart > character move name	<r這脚|はいきゃく>	Crawl Kick			character:command-record-index	NA2_SLPS@0x424BE0	NUN5_TEXTENG@0xC508	slot	32				
+T1557	1	Command Chart > character move name	<r槌尖|ついせん>	Sharp Hammer 			character:command-record-index	NA2_SLPS@0x424C00	NUN5_TEXTENG@0xC518	slot	24				
+T1558	1	Command Chart > character move name	<r閃払|せんぷ>	Flash Sweep			character:command-record-index	NA2_SLPS@0x424C18	NUN5_TEXTENG@0xC528	slot	24				
+T1559	1	Command Chart > character move name	<r旋咬|せんこう>	Spiral Bite 			character:command-record-index	NA2_SLPS@0x424C30	NUN5_TEXTENG@0xC538	slot	32				
+T1560	1	Command Chart > character move name	<r瞬転|しゅんてん>	Instant Conversion			character:command-record-index	NA2_SLPS@0x424C50	NUN5_TEXTENG@0xC550	slot	32				
+T1561	1	Command Chart > character move name	<r尖蹴|せんしゅう>	Sharp Kick			character:command-record-index	NA2_SLPS@0x424C70	NUN5_TEXTENG@0xC568	slot	32				
+T1562	1	Command Chart > character move name	<r穿心|さいしん>	Heart Drill			character:command-record-index	NA2_SLPS@0x424C90	NUN5_TEXTENG@0xC578	slot	32				
+T1563	1	Command Chart > character move name	<r背脚|はいきゃく>	Back Kick			character:command-record-index	NA2_SLPS@0x424CB0	NUN5_TEXTENG@0xC588	slot	32				
+T1564	1	Command Chart > character move name	<r跳牙|ちょうが>	Hopping Fang			character:command-record-index	NA2_SLPS@0x424CD0	NUN5_TEXTENG@0xC598	slot	32				
+T1565	1	Command Chart > character move name	<r幻術|げんじゅつ>　<r不知火|しらぬい>	Genjutsu: Shiranui			character:command-record-index	NA2_SLPS@0x42A0C0	NUN5_TEXTENG@0xC670	slot	48				
+T1566	1	Command Chart > character move name	<r火遁|かとん>・<r豪火球|ごうかきゅう>の<r術|じゅつ>	Fire Style: Fire Ball Jutsu			character:command-record-index	NA2_SLPS@0x42A0F0	NUN5_TEXTENG@0xC690	slot	64				
+T1567	1	Command Chart > character move name	<r閃影|せんえい>	Flash Shadow			character:command-record-index	NA2_SLPS@0x42A130	NUN5_TEXTENG@0xC6B0	slot	32				
+T1568	1	Command Chart > character move name	<r瞬斬|しゅんざん>	Instant Slash			character:command-record-index	NA2_SLPS@0x42A150	NUN5_TEXTENG@0xC6C0	slot	24				
+T1569	1	Command Chart > character move name	<r双舞|そうぶ>	Double Dance			character:command-record-index	NA2_SLPS@0x42A168	NUN5_TEXTENG@0xC6D0	slot	24				
+T1570	1	Command Chart > character move name	<r分身大爆破|ぶんしんだいばくは>	Clone Jutsu: Super Explosion			character:command-record-index	NA2_SLPS@0x42A180	NUN5_TEXTENG@0xC6E0	slot	48				
+T1571	1	Command Chart > character move name	<r翔斬|しょうざん>	Soaring Slash 			character:command-record-index	NA2_SLPS@0x42A1B0	NUN5_TEXTENG@0xC700	slot	32				
+T1572	1	Command Chart > character move name	<r穿蹴|せんしゅう>	Drill Kick			character:command-record-index	NA2_SLPS@0x42A1D0	NUN5_TEXTENG@0xC710	slot	32				
+T1573	1	Command Chart > character move name	<r禍炎|かえん>　<r火照|ほでり>	Flame of Disaster: Fire Shine			character:command-record-index	NA2_SLPS@0x42A1F0	NUN5_TEXTENG@0xC720	slot	32				
+T1574	1	Command Chart > character move name	<r天舞|てんぶ>	Heavenly Dance			character:command-record-index	NA2_SLPS@0x42A210	NUN5_TEXTENG@0xC740	slot	16				
+T1575	1	Command Chart > character move name	<r昇旋|しょうせん>	Rising Spin			character:command-record-index	NA2_SLPS@0x42A220	NUN5_TEXTENG@0xC750	slot	32				
+T1576	1	Command Chart > character move name	<r斬隼|ざんしゅん>	Slashing Peregrine			character:command-record-index	NA2_SLPS@0x42A240	NUN5_TEXTENG@0xC760	slot	32				
+T1577	1	Command Chart > character move name	<r飛隼|ひしゅん>	Flying Peregrine			character:command-record-index	NA2_SLPS@0x42A260	NUN5_TEXTENG@0xC780	slot	32				
+T1578	1	Command Chart > character move name	<r墜蹴|ついしゅう>	Falling Kick			character:command-record-index	NA2_SLPS@0x42A280	NUN5_TEXTENG@0xC798	slot	32				
+T1579	1	Command Chart > character move name	<r水遁|すいとん>・<r潜鮫削滅|せんこうさくめつ>	Water Style: Shark Attack			character:command-record-index	NA2_SLPS@0x42F5A0	NUN5_TEXTENG@0xC870	slot	48				
+T1580	1	Command Chart > character move name	<r水遁|すいとん>・<r水鮫散弾|すいこうさんだん>の<r術|じゅつ>	Water Style: Water Shark Shotgun Jutsu			character:command-record-index	NA2_SLPS@0x42F5D0	NUN5_TEXTENG@0xC890	slot	64				
+T1581	1	Command Chart > character move name	<r水遁|すいとん>・<r渦纏|うずまと>い	Water Style: Clinging Whirlpool			character:command-record-index	NA2_SLPS@0x42F610	NUN5_TEXTENG@0xC8C0	slot	48				
+T1582	1	Command Chart > character move name	おろし<r回旋|かいせん>	Grating Spin			character:command-record-index	NA2_SLPS@0x42F640	NUN5_TEXTENG@0xC8E0	slot	32				
+T1583	1	Command Chart > character move name	<r大壊崩|だいかいくず>し	Grand Destruction			character:command-record-index	NA2_SLPS@0x42F660	NUN5_TEXTENG@0xC8F0	slot	32				
+T1584	1	Command Chart > character move name	<r鮫肌蹂躙|サメハダじゅうりん>	Shark Skin Infringe			character:command-record-index	NA2_SLPS@0x42F680	NUN5_TEXTENG@0xC910	slot	32				
+T1585	1	Command Chart > character move name	<r鮫肌回旋|サメハダかいせん>	Shark Skin Spin			character:command-record-index	NA2_SLPS@0x42F6A0	NUN5_TEXTENG@0xC930	slot	32				
+T1586	1	Command Chart > character move name	<r背討削|せうちけず>り	Back Attack Shave			character:command-record-index	NA2_SLPS@0x42F6C0	NUN5_TEXTENG@0xC940	slot	32				
+T1587	1	Command Chart > character move name	<r波剃突破|はせいとっぱ>	Wave Break			character:command-record-index	NA2_SLPS@0x42F6E0	NUN5_TEXTENG@0xC958	slot	32				
+T1588	1	Command Chart > character move name	<r水遁|すいとん>・<r水牢|すいろう>の<r術|じゅつ>	Water Style: Water Prison Jutsu			character:command-record-index	NA2_SLPS@0x42F700	NUN5_TEXTENG@0xC970	slot	64				
+T1589	1	Command Chart > character move name	<r鮫肌壊上|サメハダかいじょう>	Shark Skin Upper			character:command-record-index	NA2_SLPS@0x42F740	NUN5_TEXTENG@0xC990	slot	32				
+T1590	1	Command Chart > character move name	<r鮫餓落下|こうじんらっか>	Hungry Shark Drop			character:command-record-index	NA2_SLPS@0x42F760	NUN5_TEXTENG@0xC9B0	slot	32				
+T1591	1	Command Chart > character move name	<r捨打|すてう>ち	Dump Hit			character:command-record-index	NA2_SLPS@0x42F780	NUN5_TEXTENG@0xC9C8	slot	32				
+T1592	1	Command Chart > character move name	<r大開斬|だいかいき>り	Wide Open Slash			character:command-record-index	NA2_SLPS@0x42F7A0	NUN5_TEXTENG@0xC9E0	slot	32				
+T1593	1	Command Chart > character move name	<r緋染絣|ひぞめがすり>	Crimson Splash			character:command-record-index	NA2_SLPS@0x434D60	NUN5_TEXTENG@0xCAA0	slot	32				
+T1594	1	Command Chart > character move name	<r虚狗砲|こくほう>	Fake Fox Blast			character:command-record-index	NA2_SLPS@0x434D80	NUN5_TEXTENG@0xCAB0	slot	32				
+T1595	1	Command Chart > character move name	<r猛爪手|もうそうしゅ>	Raging Claw			character:command-record-index	NA2_SLPS@0x434DA0	NUN5_TEXTENG@0xCAC0	slot	32				
+T1596	1	Command Chart > character move name	<r緋色槍|ひしょくそう>	Crimson Spear			character:command-record-index	NA2_SLPS@0x434DC0	NUN5_TEXTENG@0xCAD0	slot	32				
+T1597	1	Command Chart > character move name	<r不知火打|しらぬいうち>	Unknowing Flame			character:command-record-index	NA2_SLPS@0x434DE0	NUN5_TEXTENG@0xCAE0	slot	32				
+T1598	1	Command Chart > character move name	<r朱露|あけのつゆ>	Ibis			character:command-record-index	NA2_SLPS@0x434E00	NUN5_SLES@0x5141A8	slot	32				
+T1599	1	Command Chart > character move name	<r射鳴爪|いなりづめ>	Crying Claw			character:command-record-index	NA2_SLPS@0x434E20	NUN5_TEXTENG@0xCAF0	slot	32				
+T1600	1	Command Chart > character move name	<r付喪薙|つくもなぎ>	Mow Down			character:command-record-index	NA2_SLPS@0x434E40	NUN5_TEXTENG@0xCB00	slot	32				
+T1601	1	Command Chart > character move name	<r白面砲撃|はくめんほうげき>	White Mask Cannon			character:command-record-index	NA2_SLPS@0x434E60	NUN5_TEXTENG@0xCB10	slot	32				
+T1602	1	Command Chart > character move name	<r裂尾荒|れつびこう>	Tearing Tail			character:command-record-index	NA2_SLPS@0x434E80	NUN5_TEXTENG@0xCB28	slot	32				
+T1603	1	Command Chart > character move name	<r玉藻前|たまものまえ>	Fox Witch			character:command-record-index	NA2_SLPS@0x434EA0	NUN5_TEXTENG@0xCB38	slot	32				
+T1604	1	Command Chart > character move name	<r降纏突|こうてんつき>	Dropping Thrust			character:command-record-index	NA2_SLPS@0x434EC0	NUN5_TEXTENG@0xCB50	slot	32				
+T1605	1	Command Chart > character move name	<r飯綱束|いづなづか>	Rope Bind			character:command-record-index	NA2_SLPS@0x434EE0	NUN5_TEXTENG@0xCB60	slot	32				
+T1606	1	Command Chart > character move name	<r空孤繰|くうこくり>	Fox Manipulation			character:command-record-index	NA2_SLPS@0x434F00	NUN5_TEXTENG@0xCB70	slot	32				
+T1607	1	Command Chart > character move name	<r強襲裂刃|きょうしゅうれっぱ>	Powerful Blade			character:command-record-index	NA2_SLPS@0x43A690	NUN5_TEXTENG@0xCC48	slot	32				
+T1608	1	Command Chart > character move name	<r赤秘技|あかひぎ>・<r百機|ひゃっき>の<r操演|そうえん>	Red Secret Technique: Performance of a Hundred Puppets			character:command-record-index	NA2_SLPS@0x43A6B0	NUN5_TEXTENG@0x4720	slot	64				
+T1609	1	Command Chart > character move name	<r操己昇脚|そうこしょうきゃく>	Self Manipulate: Raise Leg			character:command-record-index	NA2_SLPS@0x43A6F0	NUN5_TEXTENG@0xCC60	slot	32				
+T1610	1	Command Chart > character move name	<r操己深進|そうこしんしん>	Self Manipulate: Deep Thrust			character:command-record-index	NA2_SLPS@0x43A710	NUN5_TEXTENG@0xCC80	slot	32				
+T1611	1	Command Chart > character move name	<r操己翻刃|そうこほんじん>	Self Manipulate: Blade Wave			character:command-record-index	NA2_SLPS@0x43A730	NUN5_TEXTENG@0xCCA0	slot	32				
+T1612	1	Command Chart > character move name	<r操己炎憮|そうこえんぶ>	Self Manipulate: Blaze			character:command-record-index	NA2_SLPS@0x43A750	NUN5_TEXTENG@0xCCC0	slot	32				
+T1613	1	Command Chart > character move name	<r炎龍昇刃|えんりゅうしょうじん>	Rising Dragon Blade			character:command-record-index	NA2_SLPS@0x43A770	NUN5_TEXTENG@0xCCE0	slot	48				
+T1614	1	Command Chart > character move name	<r炎獄憮陣|えんごくぶじん>	Flaming Inferno Ring			character:command-record-index	NA2_SLPS@0x43A7A0	NUN5_TEXTENG@0xCD00	slot	32				
+T1615	1	Command Chart > character move name	<r強襲浮刃|きょうしゅうふじん>	Strong Floating Blade			character:command-record-index	NA2_SLPS@0x43A7C0	NUN5_TEXTENG@0xCD20	slot	32				
+T1616	1	Command Chart > character move name	<r寄人背蹴|きじんせしゅう>	Close Back Kick			character:command-record-index	NA2_SLPS@0x43A7E0	NUN5_TEXTENG@0xCD40	slot	32				
+T1617	1	Command Chart > character move name	<r強襲昇刃|きょうしゅうしょうじん>	Powerful Rising Blade			character:command-record-index	NA2_SLPS@0x43A800	NUN5_TEXTENG@0xCD50	slot	48				
+T1618	1	Command Chart > character move name	<r強襲墜劇|きょうしゅうついげき>	Strong Drop			character:command-record-index	NA2_SLPS@0x43A830	NUN5_TEXTENG@0xCD68	slot	48				
+T1619	1	Command Chart > character move name	<r行自背蹴|あんじせしゅう>	Self Back Kick			character:command-record-index	NA2_SLPS@0x43A860	NUN5_TEXTENG@0xCD78	slot	32				
+T1620	1	Command Chart > character move name	<r強襲刺刃|きょうしゅうしじん>	Strong Stab			character:command-record-index	NA2_SLPS@0x43A880	NUN5_TEXTENG@0xCD88	slot	32				
+T1621	1	Command Chart > character move name	<r尾道魯|おどろ>	Tail Road Lu			character:command-record-index	NA2_SLPS@0x43F5C0	NUN5_TEXTENG@0xCE50	slot	32				
+T1622	1	Command Chart > character move name	<r仕込|しこ>み<r傀儡|くぐつ>・<r針々八波|しんしんはっぱ>	Mechanical Puppet: Octo Needle Waves			character:command-record-index	NA2_SLPS@0x43F5E0	NUN5_TEXTENG@0xCE60	slot	64				
+T1623	1	Command Chart > character move name	<r天幻|てんげん>	Heavenly Illusion			character:command-record-index	NA2_SLPS@0x43F620	NUN5_TEXTENG@0xCE90	slot	24				
+T1624	1	Command Chart > character move name	<r羅刹|らせつ>	Rakshasa			character:command-record-index	NA2_SLPS@0x43F638	NUN5_TEXTENG@0xCEA8	slot	16				
+T1625	1	Command Chart > character move name	<r百済|くだら>	Baekje			character:command-record-index	NA2_SLPS@0x43F648	NUN5_SLES@0x5141B0	slot	16				
+T1626	1	Command Chart > character move name	<r虚無|きょむ>	Nothingness			character:command-record-index	NA2_SLPS@0x43F658	NUN5_TEXTENG@0xCEB8	slot	16				
+T1627	1	Command Chart > character move name	<r無頼|ぶらい>	Ruffian			character:command-record-index	NA2_SLPS@0x43F668	NUN5_SLES@0x5141B8	slot	24				
+T1628	1	Command Chart > character move name	<r有情|うじょう>	Existing Sentiment			character:command-record-index	NA2_SLPS@0x43F680	NUN5_TEXTENG@0xCED0	slot	32				
+T1629	1	Command Chart > character move name	<r潜手|せんしゅ>	Submerged Hand			character:command-record-index	NA2_SLPS@0x43F6A0	NUN5_TEXTENG@0xCEE8	slot	24				
+T1630	1	Command Chart > character move name	<r新羅|しらぎ>	Silla			character:command-record-index	NA2_SLPS@0x43F6B8	NUN5_SLES@0x5141C0	slot	24				
+T1631	1	Command Chart > character move name	<r天涯|てんがい>	Heaven's End			character:command-record-index	NA2_SLPS@0x43F6D0	NUN5_TEXTENG@0xCEF8	slot	32				
+T1632	1	Command Chart > character move name	<r高麗|こうらい>	Goryeo			character:command-record-index	NA2_SLPS@0x43F6F0	NUN5_SLES@0x5141C8	slot	32				
+T1633	1	Command Chart > character move name	<r如来|にょらい>	Tathagata			character:command-record-index	NA2_SLPS@0x43F710	NUN5_TEXTENG@0xCF08	slot	32				
+T1634	1	Command Chart > character move name	<r白衣|びゃくえ>	White Robe			character:command-record-index	NA2_SLPS@0x43F730	NUN5_TEXTENG@0xCF18	slot	32				
+T1635	1	Command Chart > character move name	<r双云|そううん>	Double Saying			character:command-record-index	NA2_SLPS@0x43F750	NUN5_TEXTENG@0xCF28	slot	32				
+T1636	1	Command Chart > character move name	<r熟練作法|じゅくれんさほう>	Skillful Manner			character:command-record-index	NA2_SLPS@0x445EB0	NUN5_TEXTENG@0xCFE0	slot	32				
+T1637	1	Command Chart > character move name	<r二兎天秤|にとてんびん>	Two Hare Balance			character:command-record-index	NA2_SLPS@0x445ED0	NUN5_TEXTENG@0xCFF0	slot	32				
+T1638	1	Command Chart > character move name	<r起進踏破|きじんとうは>	Advance Traverse			character:command-record-index	NA2_SLPS@0x445EF0	NUN5_TEXTENG@0xD010	slot	32				
+T1639	1	Command Chart > character move name	<r下肢盛焔|かしせいえん>	Lower Limbs Blaze			character:command-record-index	NA2_SLPS@0x445F10	NUN5_TEXTENG@0xD030	slot	32				
+T1640	1	Command Chart > character move name	<r跳乗体躯|ちょうじょうたいく>	Hopping Mount			character:command-record-index	NA2_SLPS@0x445F30	NUN5_TEXTENG@0xD048	slot	32				
+T1641	1	Command Chart > character move name	<r無我自遜|むがじそん>	Selflessness			character:command-record-index	NA2_SLPS@0x445F50	NUN5_TEXTENG@0xD058	slot	32				
+T1642	1	Command Chart > character move name	<r不意手|ふいしゅ>	Sudden Hand			character:command-record-index	NA2_SLPS@0x445F70	NUN5_TEXTENG@0xD068	slot	32				
+T1643	1	Command Chart > character move name	<r双昇脚|そうしょうきゃく>	Double Rising Kick			character:command-record-index	NA2_SLPS@0x445F90	NUN5_TEXTENG@0xD080	slot	32				
+T1644	1	Command Chart > character move name	<r輪転掌|りんてんしょう>	Rotary Palm			character:command-record-index	NA2_SLPS@0x445FB0	NUN5_TEXTENG@0xD098	slot	32				
+T1645	1	Command Chart > character move name	<r潜進脚|せんしんきゃく>	Submerged Advance Kick			character:command-record-index	NA2_SLPS@0x445FD0	NUN5_TEXTENG@0xD0B0	slot	32				
+T1646	1	Command Chart > character move name	<r肩硬突|けんこうとつ>	Shoulder Thrust			character:command-record-index	NA2_SLPS@0x445FF0	NUN5_TEXTENG@0xD0D0	slot	32				
+T1647	1	Command Chart > character move name	<r北砕|ほくさい>	North Clash			character:command-record-index	NA2_SLPS@0x446010	NUN5_TEXTENG@0xD0E0	slot	32				
+T1648	1	Command Chart > character move name	<r底閃|ていせん>	Bottom Flash			character:command-record-index	NA2_SLPS@0x446030	NUN5_TEXTENG@0xD0F0	slot	32				
+T1649	1	Command Chart > character move name	<r斜落|しゃらく>	Slant Drop			character:command-record-index	NA2_SLPS@0x446050	NUN5_TEXTENG@0xD100	slot	24				
+T1650	1	Command Chart > character move name	<r風刺|ふうし>	Wind Pierce			character:command-record-index	NA2_SLPS@0x446068	NUN5_TEXTENG@0xD110	slot	24				
+T1651	1	Command Chart > character move name	<r仰|あお>ぐ<r大気|そら>	Looking Up at the Air			character:command-record-index	NA2_SLPS@0x446080	NUN5_TEXTENG@0xD120	slot	32				
+T1652	1	Command Chart > character move name	<r過|す>ぐ<r歳月|ながれ>	Passed Years			character:command-record-index	NA2_SLPS@0x4460A0	NUN5_TEXTENG@0xD138	slot	32				
+T1653	1	Command Chart > character move name	<r降|ふ>り<r作礼|さらい>	Falling Bow			character:command-record-index	NA2_SLPS@0x4460C0	NUN5_TEXTENG@0xD148	slot	32				
+T1654	1	Command Chart > character move name	<r絶|た>ち<r終焉|わかれ>	Cut Off End			character:command-record-index	NA2_SLPS@0x4460E0	NUN5_TEXTENG@0xD158	slot	32				
+T1655	1	Command Chart > character move name	<r天|てん>の<r構|かま>え・<r刹|せつ>	Heaven Stance: Pillar			character:command-record-index	NA2_SLPS@0x446100	NUN5_TEXTENG@0xD170	slot	48				
+T1656	1	Command Chart > character move name	<r舞|ま>い<r飛鳥|あすか>	Flying Bird Dance			character:command-record-index	NA2_SLPS@0x446130	NUN5_TEXTENG@0xD190	slot	32				
+T1657	1	Command Chart > character move name	<r地|ち>の<r構|かま>え・<r掩|えん>	Earth Stance: Conceal			character:command-record-index	NA2_SLPS@0x446150	NUN5_TEXTENG@0xD1B0	slot	48				
+T1658	1	Command Chart > character move name	<r這|は>い<r土竜|もぐら>	Crawling Mole			character:command-record-index	NA2_SLPS@0x446180	NUN5_TEXTENG@0xD1C8	slot	32				
+T1659	1	Command Chart > character move name	<r人|じん>の<r構|かま>え・<r斥|せき>	Human Stance: Avoid			character:command-record-index	NA2_SLPS@0x4461A0	NUN5_TEXTENG@0xD1E0	slot	48				
+T1660	1	Command Chart > character move name	<r刺|さ>し<r朱音|あかね>	Scarlet Sonic Pierce			character:command-record-index	NA2_SLPS@0x4461D0	NUN5_TEXTENG@0xD200	slot	32				
+T1661	1	Command Chart > character move name	<r暴双砕牙|ばくそうさいが>	Dual Raging Fangs			character:command-record-index	NA2_SLPS@0x44BF90	NUN5_TEXTENG@0xD320	slot	32				
+T1662	1	Command Chart > character move name	<r牙通牙|がつうが>	Fang Over Fang			character:command-record-index	NA2_SLPS@0x44BFB0	NUN5_TEXTENG@0x4C18	slot	32				
+T1663	1	Command Chart > character move name	<r円月爪|えんげつそう>	Circle Claws			character:command-record-index	NA2_SLPS@0x44BFD0	NUN5_TEXTENG@0xD338	slot	32				
+T1664	1	Command Chart > character move name	<r双狼閃|そうろうせん>	Dual Shining Wolves			character:command-record-index	NA2_SLPS@0x44BFF0	NUN5_TEXTENG@0xD350	slot	32				
+T1665	1	Command Chart > character move name	<r虚狼貫|ころうかん>	False Tiger Tear			character:command-record-index	NA2_SLPS@0x44C010	NUN5_TEXTENG@0xD370	slot	32				
+T1666	1	Command Chart > character move name	<r群狼鞭|ぐんろうべん> 	Wolf Whip			character:command-record-index	NA2_SLPS@0x44C030	NUN5_TEXTENG@0xD388	slot	32				
+T1667	1	Command Chart > character move name	<r抗牙刀|こうがとう>	Resisting Fang			character:command-record-index	NA2_SLPS@0x44C050	NUN5_TEXTENG@0xD398	slot	32				
+T1668	1	Command Chart > character move name	<r駆狼双戟|かろうそうげき>	Dual Wolf Spear			character:command-record-index	NA2_SLPS@0x44C070	NUN5_TEXTENG@0xD3B0	slot	32				
+T1669	1	Command Chart > character move name	<r単騎閃走|たんきせんそう>	Speed Dash			character:command-record-index	NA2_SLPS@0x44C090	NUN5_TEXTENG@0xD3C0	slot	32				
+T1670	1	Command Chart > character move name	<r拘狼顎|こうろうがく>	Wolf Brow			character:command-record-index	NA2_SLPS@0x44C0B0	NUN5_TEXTENG@0xD3D0	slot	32				
+T1671	1	Command Chart > character move name	<r天狼流|てんろうりゅう>	Sky Wolf Style			character:command-record-index	NA2_SLPS@0x44C0D0	NUN5_TEXTENG@0xD3E0	slot	32				
+T1672	1	Command Chart > character move name	<r皇狼落|こうろうらく>	Lord Wolf Drop			character:command-record-index	NA2_SLPS@0x44C0F0	NUN5_TEXTENG@0xD3F0	slot	32				
+T1673	1	Command Chart > character move name	<r飛刃狼牙|ひじんろうが>	Flying Wolf Fang			character:command-record-index	NA2_SLPS@0x44C110	NUN5_TEXTENG@0xD400	slot	32				
+T1674	1	Command Chart > character move name	<r迅狼天走|じんろうてんそう>	Sky Speeding Wolf			character:command-record-index	NA2_SLPS@0x44C130	NUN5_TEXTENG@0xD420	slot	32				
+T1675	1	Command Chart > character move name	<r一騎搭穿|いっきとうせん>	Wolf Rider Pierce			character:command-record-index	NA2_SLPS@0x44C150	NUN5_TEXTENG@0xD440	slot	32				
+T1676	1	Command Chart > character move name	<r投狼刃|とうろうじん>	Wolf Fang Throw			character:command-record-index	NA2_SLPS@0x44C170	NUN5_TEXTENG@0xD460	slot	32				
+T1677	1	Command Chart > character move name	<r騎乗伐爪|きじょうばっそう>	Riding Fang			character:command-record-index	NA2_SLPS@0x44C190	NUN5_TEXTENG@0xD470	slot	32				
+T1678	1	Command Chart > character move name	<r寄壊蟲|きかいちゅう>・<r芭句|ばく>	Parasitic Insects: Bind			character:command-record-index	NA2_SLPS@0x451B90	NUN5_TEXTENG@0xD560	slot	48				
+T1679	1	Command Chart > character move name	<r寄壊蟲|きかいちゅう>・<r円塊|えんかい>	Parasitic Insects: Feast			character:command-record-index	NA2_SLPS@0x451BC0	NUN5_TEXTENG@0xD580	slot	48				
+T1680	1	Command Chart > character move name	<r沫泡蟲|まっぽうちゅう>	Parasitic Bugs			character:command-record-index	NA2_SLPS@0x451BF0	NUN5_TEXTENG@0xD5A0	slot	32				
+T1681	1	Command Chart > character move name	<r擬態蟲|ぎたいちゅう>・<r這|しゃ>	Mimic Bugs: Crawl			character:command-record-index	NA2_SLPS@0x451C10	NUN5_TEXTENG@0xD5B0	slot	48				
+T1682	1	Command Chart > character move name	<r拡散蟲|かくさんちゅう>	Falling Bugs			character:command-record-index	NA2_SLPS@0x451C40	NUN5_TEXTENG@0xD5C8	slot	32				
+T1683	1	Command Chart > character move name	<r昇渦蟲|しょうかちゅう>	Whirling Bugs			character:command-record-index	NA2_SLPS@0x451C60	NUN5_TEXTENG@0xD5D8	slot	32				
+T1684	1	Command Chart > character move name	<r分散蟲|ぶんさんちゅう>	Spreading Bugs			character:command-record-index	NA2_SLPS@0x451C80	NUN5_TEXTENG@0x3628	slot	32				
+T1685	1	Command Chart > character move name	<r捕縛蟲|ほばくちゅう>	Catch Bugs			character:command-record-index	NA2_SLPS@0x451CA0	NUN5_TEXTENG@0xD608	slot	32				
+T1686	1	Command Chart > character move name	<r擬態蟲|ぎたいちゅう>・<r飛|ひ>	Mimic Bugs: Fly			character:command-record-index	NA2_SLPS@0x451CC0	NUN5_TEXTENG@0xD620	slot	48				
+T1687	1	Command Chart > character move name	<r包容蟲|ほうようちゅう>	Encircling Bugs			character:command-record-index	NA2_SLPS@0x451CF0	NUN5_TEXTENG@0xD630	slot	32				
+T1688	1	Command Chart > character move name	<r落叩蟲|らっこうちゅう>	Pounding Bugs			character:command-record-index	NA2_SLPS@0x451D10	NUN5_TEXTENG@0xD640	slot	32				
+T1689	1	Command Chart > character move name	<r寄集蟲|きしゅうちゅう>	Gathering Bugs			character:command-record-index	NA2_SLPS@0x451D30	NUN5_TEXTENG@0xD650	slot	32				
+T1690	1	Command Chart > character move name	<r八卦掌双手通背|はっけしょうそうしゅつうはい>	8 Trigrams Twin Back Pierce			character:command-record-index	NA2_SLPS@0x457A80	NUN5_TEXTENG@0xD710	slot	48				
+T1691	1	Command Chart > character move name	<r通背掌|つうはいしょう>	Back Piercing Palm			character:command-record-index	NA2_SLPS@0x457AB0	NUN5_TEXTENG@0xD730	slot	32				
+T1692	1	Command Chart > character move name	<r開崩掌|かいほうしょう>	Open Crushing Palm			character:command-record-index	NA2_SLPS@0x457AD0	NUN5_TEXTENG@0xD750	slot	32				
+T1693	1	Command Chart > character move name	<r天崩連破|てんほうれんは>	Sky Crushing Rapid Attack			character:command-record-index	NA2_SLPS@0x457AF0	NUN5_TEXTENG@0xD770	slot	32				
+T1694	1	Command Chart > character move name	<r投扇掌|とうせんしょう>	Fan Throw Palm			character:command-record-index	NA2_SLPS@0x457B10	NUN5_TEXTENG@0xD790	slot	32				
+T1695	1	Command Chart > character move name	<r旋天掌|せんてんしょう>	Sky Spin Palm			character:command-record-index	NA2_SLPS@0x457B30	NUN5_TEXTENG@0xD7A0	slot	32				
+T1696	1	Command Chart > character move name	<r三舞|みつまい>	Sambu			character:command-record-index	NA2_SLPS@0x457B50	NUN5_SLES@0x5141D0	slot	24				
+T1697	1	Command Chart > character move name	<r瓦砲|がほう>	Tile Cannon			character:command-record-index	NA2_SLPS@0x457B68	NUN5_TEXTENG@0xD7B0	slot	24				
+T1698	1	Command Chart > character move name	<r天背掌|てんはいしょう>	Sky Bearing Palm			character:command-record-index	NA2_SLPS@0x457B80	NUN5_TEXTENG@0xD7C0	slot	32				
+T1699	1	Command Chart > character move name	<r大鵬|だいほう>	Taiho			character:command-record-index	NA2_SLPS@0x457BA0	NUN5_SLES@0x5141D8	slot	32				
+T1700	1	Command Chart > character move name	<r旋風|せんぷう>	Whirlwind			character:command-record-index	NA2_SLPS@0x457BC0	NUN5_TEXTENG@0xD7D8	slot	32				
+T1701	1	Command Chart > character move name	<r遥流掌|ようりゅうしょう>	Distant Flowing Palm			character:command-record-index	NA2_SLPS@0x457BE0	NUN5_TEXTENG@0xD7F0	slot	32				
+T1702	1	Command Chart > character move name	<r白宝輪|はくほうりん>	White Treasure Ring			character:command-record-index	NA2_SLPS@0x457C00	NUN5_TEXTENG@0xD810	slot	32				
+T1703	1	Command Chart > character move name	<r発輝連突|はっきれんとつ>	Shining Thrust			character:command-record-index	NA2_SLPS@0x457C20	NUN5_TEXTENG@0xD828	slot	32				
+T1704	1	Command Chart > character move name	<r倍化怒涛|ばいかどとう>	Rage Explosion			character:command-record-index	NA2_SLPS@0x45DBF0	NUN5_TEXTENG@0xD910	slot	32				
+T1705	1	Command Chart > character move name	<r超張|ちょうは>り<r手|て>	Super Slap			character:command-record-index	NA2_SLPS@0x45DC10	NUN5_TEXTENG@0xD920	slot	32				
+T1706	1	Command Chart > character move name	<r大跳脚|だいちょうきゃく>	Huge Jump			character:command-record-index	NA2_SLPS@0x45DC30	NUN5_TEXTENG@0xD930	slot	32				
+T1707	1	Command Chart > character move name	<r大行拳|だいこうけん>	Huge Strike			character:command-record-index	NA2_SLPS@0x45DC50	NUN5_TEXTENG@0xD940	slot	32				
+T1708	1	Command Chart > character move name	<r大厳乞|だいげんこつ>	Huge Wish			character:command-record-index	NA2_SLPS@0x45DC70	NUN5_TEXTENG@0xD950	slot	32				
+T1709	1	Command Chart > character move name	<r大挟掌|だいきょうしょう>	Huge Clap			character:command-record-index	NA2_SLPS@0x45DC90	NUN5_TEXTENG@0xD960	slot	32				
+T1710	1	Command Chart > character move name	<r大昇脚|だいしょうきゃく>	Huge Kick			character:command-record-index	NA2_SLPS@0x45DCB0	NUN5_TEXTENG@0xD970	slot	32				
+T1711	1	Command Chart > character move name	<r大叩槌|だいこうつい>	Huge Hammer			character:command-record-index	NA2_SLPS@0x45DCD0	NUN5_TEXTENG@0xD980	slot	32				
+T1712	1	Command Chart > character move name	<r怒来武|どらいぶ>	Raging Attack			character:command-record-index	NA2_SLPS@0x45DCF0	NUN5_TEXTENG@0xD990	slot	32				
+T1713	1	Command Chart > character move name	かつぎ<r発放|ほっぽう>	Carrying Burst			character:command-record-index	NA2_SLPS@0x45DD10	NUN5_TEXTENG@0xD9A0	slot	32				
+T1714	1	Command Chart > character move name	<r大回脚|だいかいきゃく>	Huge Spin Kick			character:command-record-index	NA2_SLPS@0x45DD30	NUN5_TEXTENG@0xD9B0	slot	32				
+T1715	1	Command Chart > character move name	<r急球弾|きゅうきゅうだん>	Quick Shot			character:command-record-index	NA2_SLPS@0x45DD50	NUN5_TEXTENG@0xD9C0	slot	32				
+T1716	1	Command Chart > character move name	まわし<r発放|ほっぽう>	Spinning Burst			character:command-record-index	NA2_SLPS@0x45DD70	NUN5_TEXTENG@0xD9D0	slot	32				
+T1717	1	Command Chart > character move name	<r大双脚|だいそうきゃく>	Huge Dual Kick			character:command-record-index	NA2_SLPS@0x45DD90	NUN5_TEXTENG@0xD9E0	slot	32				
+T1718	1	Command Chart > character move name	<r超|ちょう>ラッシュ	Super Rush			character:command-record-index	NA2_SLPS@0x45DDB0	NUN5_TEXTENG@0xD9F0	slot	32				
+T1719	1	Command Chart > character move name	<r超|ちょう>スパイク	Super Spike			character:command-record-index	NA2_SLPS@0x45DDD0	NUN5_TEXTENG@0xDA00	slot	32				
+T1720	1	Command Chart > character move name	<r超|ちょう>スタンプ	Super Stomp			character:command-record-index	NA2_SLPS@0x45DDF0	NUN5_TEXTENG@0xDA10	slot	32				
+T1721	1	Command Chart > character move name	<r超|ちょう>シュート	Super Shot			character:command-record-index	NA2_SLPS@0x45DE10	NUN5_TEXTENG@0xDA20	slot	32				
+T1722	1	Command Chart > character move name	<r超|ちょう>スロー	Super Throw			character:command-record-index	NA2_SLPS@0x45DE30	NUN5_TEXTENG@0xDA30	slot	32				
+T1723	1	Command Chart > character move name	<r超|ちょう>アッパー	Super Uppercut			character:command-record-index	NA2_SLPS@0x45DE50	NUN5_TEXTENG@0xDA40	slot	32				
+T1724	1	Command Chart > character move name	<r超|ちょう>ダイビング	Super Dive			character:command-record-index	NA2_SLPS@0x45DE70	NUN5_TEXTENG@0xDA50	slot	32				
+T1725	1	Command Chart > character move name	<r超|ちょう>ブレスト	Super Chest			character:command-record-index	NA2_SLPS@0x45DE90	NUN5_TEXTENG@0xDA60	slot	32				
+T1726	1	Command Chart > character move name	<r心乱身|しんらんしん>の<r術|じゅつ>	Mind Distraction Jutsu			character:command-record-index	NA2_SLPS@0x463CD0	NUN5_TEXTENG@0x4BE0	slot	48				
+T1727	1	Command Chart > character move name	<r華憐四季彩|かれんしきさい>	Beautiful Seasons			character:command-record-index	NA2_SLPS@0x463D00	NUN5_TEXTENG@0xDB50	slot	32				
+T1728	1	Command Chart > character move name	<r彩|いろどり>のラベンダー	Colorful Lavender			character:command-record-index	NA2_SLPS@0x463D20	NUN5_TEXTENG@0xDB70	slot	32				
+T1729	1	Command Chart > character move name	<r胸|むね>を<r刺|さ>すアロエ	Aloe Chest Stab			character:command-record-index	NA2_SLPS@0x463D40	NUN5_TEXTENG@0xDB90	slot	32				
+T1730	1	Command Chart > character move name	ベゴニアの<r重圧|じゅうあつ>	Begonia Crush			character:command-record-index	NA2_SLPS@0x463D60	NUN5_TEXTENG@0xDBA0	slot	32				
+T1731	1	Command Chart > character move name	<r嘆|なげ>きのライラック	Weeping Lilac			character:command-record-index	NA2_SLPS@0x463D80	NUN5_TEXTENG@0xDBB0	slot	32				
+T1732	1	Command Chart > character move name	<r喜|よろこ>びのクレマチス	Joyful Clematis			character:command-record-index	NA2_SLPS@0x463DA0	NUN5_TEXTENG@0xDBC0	slot	32				
+T1733	1	Command Chart > character move name	<r心浮|こころう>くポピー	Excited Poppy			character:command-record-index	NA2_SLPS@0x463DC0	NUN5_TEXTENG@0xDBD0	slot	32				
+T1734	1	Command Chart > character move name	スターチスの<r一突|ひとつ>き	Statice Strike			character:command-record-index	NA2_SLPS@0x463DE0	NUN5_TEXTENG@0xDBE0	slot	32				
+T1735	1	Command Chart > character move name	<r空|そら>に<r舞|ま>うナデシコ	Sky Dancing Dianthus			character:command-record-index	NA2_SLPS@0x463E00	NUN5_TEXTENG@0xDBF0	slot	32				
+T1736	1	Command Chart > character move name	<r蝦蟇|ガマ>ドス<r斬|ざん>	Toad Blade Cut			character:command-record-index	NA2_SLPS@0x469000	NUN5_TEXTENG@0xDCD8	slot	32				
+T1737	1	Command Chart > character move name	<r幕之討|まくのう>ち	Act Break			character:command-record-index	NA2_SLPS@0x469020	NUN5_TEXTENG@0xDCE8	slot	32				
+T1738	1	Command Chart > character move name	<r足拍子|あしびょうし>	Beat Stomp			character:command-record-index	NA2_SLPS@0x469040	NUN5_TEXTENG@0xDCF8	slot	32				
+T1739	1	Command Chart > character move name	<r壱番大誇|いちばんだいこ>	Act Call			character:command-record-index	NA2_SLPS@0x469060	NUN5_TEXTENG@0xDD08	slot	32				
+T1740	1	Command Chart > character move name	<r針地蔵|はりじぞう>	Needle Jizo			character:command-record-index	NA2_SLPS@0x469080	NUN5_TEXTENG@0xDD18	slot	32				
+T1741	1	Command Chart > character move name	<r飛拿弾|ひなだん>	Flying Palm Strike			character:command-record-index	NA2_SLPS@0x4690A0	NUN5_TEXTENG@0xDD30	slot	32				
+T1742	1	Command Chart > character move name	<r口寄|くちよ>せ <r屋台落|やたいお>とし	Summoning: Body Slam			character:command-record-index	NA2_SLPS@0x4690C0	NUN5_TEXTENG@0xDD50	slot	48				
+T1743	1	Command Chart > character move name	<r火遁|かとん>の<r術|じゅつ>	Fire Style Jutsu			character:command-record-index	NA2_SLPS@0x4690F0	NUN5_TEXTENG@0xDD70	slot	32				
+T1744	1	Command Chart > character move name	<r彗叩|すいこう>	Comet Strike			character:command-record-index	NA2_SLPS@0x469110	NUN5_TEXTENG@0xDD88	slot	32				
+T1745	1	Command Chart > character move name	<r筍掻突|しゅんそうとつ>	Scratch Thrust of the Bamboo Shoot			character:command-record-index	NA2_SLPS@0x469130	NUN5_TEXTENG@0xDDA0	slot	32			NA2_SLPS@0x469D88	
+T1746	1	Command Chart > character move name	<r落葉槌|らくようつい>	Hammer of Falling Leaves			character:command-record-index	NA2_SLPS@0x469150	NUN5_TEXTENG@0xDDD0	slot	32				
+T1747	1	Command Chart > character move name	<r雷底|らいてい>	The Depths of Lightning			character:command-record-index	NA2_SLPS@0x469170	NUN5_TEXTENG@0xDDF0	slot	32				
+T1748	1	Command Chart > character move name	<r歳流掌|さいりゅうしょう>	Palm of the Passing Years			character:command-record-index	NA2_SLPS@0x469190	NUN5_TEXTENG@0xDE10	slot	32				
+T1749	1	Command Chart > character move name	<r痛天脚|つうてんきゃく>・<r天帝|てんてい>	Heaven Kick of Pain: Lord of Hosts			character:command-record-index	NA2_SLPS@0x46E6A0	NUN5_TEXTENG@0xDEF0	slot	48				
+T1750	1	Command Chart > character move name	<r天守脚|てんしゅきゃく>	Heaven Defending Kick			character:command-record-index	NA2_SLPS@0x46E6D0	NUN5_TEXTENG@0xDF20	slot	32				
+T1751	1	Command Chart > character move name	<r萩猪|はぎい>	Bush Clover Boar			character:command-record-index	NA2_SLPS@0x46E6F0	NUN5_TEXTENG@0xDF40	slot	16			NA2_SLPS@0x46F098	
+T1752	1	Command Chart > character move name	<r雁金|かりがね>	Golden Goose			character:command-record-index	NA2_SLPS@0x46E700	NUN5_TEXTENG@0xDF58	slot	32				
+T1753	1	Command Chart > character move name	<r薄月|うすづき>	Pampas Moon			character:command-record-index	NA2_SLPS@0x46E720	NUN5_TEXTENG@0xDF68	slot	32				
+T1754	1	Command Chart > character move name	<r紅葉鹿|こうようか>	Deer of the Autumn Leaves			character:command-record-index	NA2_SLPS@0x46E740	NUN5_TEXTENG@0xDF80	slot	32				
+T1755	1	Command Chart > character move name	<r杜若|とじゃく>	Iris			character:command-record-index	NA2_SLPS@0x46E760	NUN5_SLES@0x5141E0	slot	32				
+T1756	1	Command Chart > character move name	<r鳳桐|ほうとう>	Paulownia Phoenix			character:command-record-index	NA2_SLPS@0x46E780	NUN5_TEXTENG@0xDFA0	slot	32				
+T1757	1	Command Chart > character move name	<r竹雀|ちくしゃく>	Bamboo Sparrow			character:command-record-index	NA2_SLPS@0x46E7A0	NUN5_TEXTENG@0xDFB8	slot	32				
+T1758	1	Command Chart > character move name	<r菊盃|きくさかずき>	Chrysanthemum Goblet			character:command-record-index	NA2_SLPS@0x46E7C0	NUN5_TEXTENG@0xDFD0	slot	32				
+T1759	1	Command Chart > character move name	<r暴猪|あばれしし>	Unruly Boar			character:command-record-index	NA2_SLPS@0x46E7E0	NUN5_TEXTENG@0xDFE8	slot	32				
+T1760	1	Command Chart > character move name	<r花柳|はなやなぎ>	Flower Willow			character:command-record-index	NA2_SLPS@0x46E800	NUN5_TEXTENG@0xDFF8	slot	24				
+T1761	1	Command Chart > character move name	<r月鹿|げっか>	Deer of the Moon			character:command-record-index	NA2_SLPS@0x46E818	NUN5_TEXTENG@0xE010	slot	24				
+T1762	1	Command Chart > character move name	<r梅鶯|おうよう>	Plum Warbler			character:command-record-index	NA2_SLPS@0x46E830	NUN5_TEXTENG@0xE028	slot	32				
+T1763	1	Command Chart > character move name	<r痛天脚|つうてんきゃく>	Heaven Kick of Pain			character:command-record-index	NA2_SLPS@0x46E850	NUN5_TEXTENG@0x3B90	slot	32				
+T1764	1	Command Chart > character move name	<r藤杜鵑|とうとけん>	Wisteria Cuckoo			character:command-record-index	NA2_SLPS@0x46E870	NUN5_TEXTENG@0xE040	slot	32				
+T1765	1	Command Chart > character move name	<r桜幕|さくらまく>	Curtain of Cherry Blossoms			character:command-record-index	NA2_SLPS@0x46E890	NUN5_TEXTENG@0xE050	slot	32				
+T1766	1	Command Chart > character move name	<r仕込|しこ>み<r千本|せんぼん>・<r刺散|しさん>	Hidden Senbon Spray			character:command-record-index	NA2_SLPS@0x474110	NUN5_TEXTENG@0xE140	slot	48				
+T1767	1	Command Chart > character move name	<r忍法|にんぽう>・<r毒霧|どくきり>	Ninja Art: Poison Fog			character:command-record-index	NA2_SLPS@0x474140	NUN5_TEXTENG@0xE160	slot	48				
+T1768	1	Command Chart > character move name	<r掌波|しょうは>	Palm Wave			character:command-record-index	NA2_SLPS@0x474170	NUN5_TEXTENG@0xE178	slot	24				
+T1769	1	Command Chart > character move name	<r連刃|れんば>	Combo Blade			character:command-record-index	NA2_SLPS@0x474188	NUN5_TEXTENG@0xE188	slot	24				
+T1770	1	Command Chart > character move name	<r刺脚|しきゃく>	Stabbing Kick			character:command-record-index	NA2_SLPS@0x4741A0	NUN5_TEXTENG@0xE198	slot	32				
+T1771	1	Command Chart > character move name	<r凛針|りんしん>	Piercing Needles			character:command-record-index	NA2_SLPS@0x4741C0	NUN5_TEXTENG@0xE1B0	slot	32				
+T1772	1	Command Chart > character move name	<r千本|せんぼん>	Senbon			character:command-record-index	NA2_SLPS@0x4741E0	NUN5_SLES@0x5141E8	slot	32				
+T1773	1	Command Chart > character move name	<r受劈|じゅへき>	Cleaving			character:command-record-index	NA2_SLPS@0x474200	NUN5_TEXTENG@0xE1C8	slot	32				
+T1774	1	Command Chart > character move name	<r突針|とっしん>	Thrusting Needles			character:command-record-index	NA2_SLPS@0x474220	NUN5_TEXTENG@0xE1E0	slot	32				
+T1775	1	Command Chart > character move name	<r流刃|りゅうば>	Flowing Blade			character:command-record-index	NA2_SLPS@0x474240	NUN5_TEXTENG@0xB258	slot	32				
+T1776	1	Command Chart > character move name	<r昇刃|しょうば>	Rising Blade			character:command-record-index	NA2_SLPS@0x474260	NUN5_TEXTENG@0xE1F8	slot	32				
+T1777	1	Command Chart > character move name	<r旋刃|せんじん>	Kunai Combo			character:command-record-index	NA2_SLPS@0x474280	NUN5_TEXTENG@0xE208	slot	32				
+T1778	1	Command Chart > character move name	<r掌尖|しょうせん>	Sharp Palm			character:command-record-index	NA2_SLPS@0x4742A0	NUN5_TEXTENG@0xE218	slot	32				
+T1779	1	Command Chart > character move name	<r輪落|りんらく>	Wheel Drop			character:command-record-index	NA2_SLPS@0x4742C0	NUN5_TEXTENG@0xE228	slot	24				
+T1780	1	Command Chart > character move name	<r浮刃|ふじん>	Floating Blade			character:command-record-index	NA2_SLPS@0x4742D8	NUN5_TEXTENG@0xE238	slot	24				
+T1781	1	Command Chart > character move name	<r転斬|てんざん>	Rolling Slash			character:command-record-index	NA2_SLPS@0x4742F0	NUN5_TEXTENG@0xE248	slot	32				
+T1782	1	Command Chart > character move name	<r狼牙伐錐|ろうがばっすい>	Wolf Fang Drill			character:command-record-index	NA2_SLPS@0x479A10	NUN5_TEXTENG@0xE330	slot	32				
+T1783	1	Command Chart > character move name	<r飛燕|ひえん>・<r空穿|くうせん>	Flying Swallow Thrust			character:command-record-index	NA2_SLPS@0x479A30	NUN5_TEXTENG@0xE340	slot	48				
+T1784	1	Command Chart > character move name	<r暴風粋|ぼうふういき>	Wild Wind			character:command-record-index	NA2_SLPS@0x479A60	NUN5_TEXTENG@0xE358	slot	32				
+T1785	1	Command Chart > character move name	<r青嵐|あおあらし>	Blue Storm			character:command-record-index	NA2_SLPS@0x479A80	NUN5_TEXTENG@0xE368	slot	24				
+T1786	1	Command Chart > character move name	<r東風|こち>	Eastern Storm			character:command-record-index	NA2_SLPS@0x479A98	NUN5_TEXTENG@0xE378	slot	16				
+T1787	1	Command Chart > character move name	<r颪|おろし>	Fall Wind			character:command-record-index	NA2_SLPS@0x479AA8	NUN5_TEXTENG@0xE388	slot	24				
+T1788	1	Command Chart > character move name	<r韋駄天台風|いだてんたいふう>	Skanda Typhoon			character:command-record-index	NA2_SLPS@0x479AC0	NUN5_TEXTENG@0xE398	slot	32				
+T1789	1	Command Chart > character move name	<r雁渡|かりわたし>	Migrating Goose			character:command-record-index	NA2_SLPS@0x479AE0	NUN5_TEXTENG@0xE3B0	slot	24				
+T1790	1	Command Chart > character move name	<r山背|やませ>	Yamashiro			character:command-record-index	NA2_SLPS@0x479AF8	NUN5_TEXTENG@0xE3C0	slot	24				
+T1791	1	Command Chart > character move name	<r木枯|こがら>し	Autumn Wind			character:command-record-index	NA2_SLPS@0x479B10	NUN5_TEXTENG@0xE3D0	slot	32				
+T1792	1	Command Chart > character move name	<r黒南風|くろはえ>	Black Southern Wind			character:command-record-index	NA2_SLPS@0x479B30	NUN5_TEXTENG@0xE3E0	slot	32				
+T1793	1	Command Chart > character move name	<r小夜嵐|さよあらし>	Little Night Storm			character:command-record-index	NA2_SLPS@0x479B50	NUN5_TEXTENG@0xE400	slot	24				
+T1794	1	Command Chart > character move name	<r風巻|しまき>	Rolling Wind			character:command-record-index	NA2_SLPS@0x479B68	NUN5_TEXTENG@0xE418	slot	24				
+T1795	1	Command Chart > character move name	<r天狗風|てんぐかぜ>	Tengu Wind			character:command-record-index	NA2_SLPS@0x479B80	NUN5_TEXTENG@0xE428	slot	24				
+T1796	1	Command Chart > character move name	<r比良|ひら>	Hira			character:command-record-index	NA2_SLPS@0x479B98	NUN5_SLES@0x5141F0	slot	24				
+T1797	1	Command Chart > character move name	<r幻術|げんじゅつ>　<r蜃気楼|しんきろう>	Genjutsu: Mirage			character:command-record-index	NA2_SLPS@0x47ED10	NUN5_TEXTENG@0xE500	slot	48				
+T1798	1	Command Chart > character move name	<r幻術|げんじゅつ>　<r霞|かすみ>	Genjutsu: Haze			character:command-record-index	NA2_SLPS@0x47ED40	NUN5_TEXTENG@0xE518	slot	48				
+T1799	1	Command Chart > character move name	<r誘紅寿|そうこうじゅ>	Scarlet Invitation			character:command-record-index	NA2_SLPS@0x47ED70	NUN5_TEXTENG@0xE530	slot	32				
+T1800	1	Command Chart > character move name	<r杏咲垂|あんしょうすい>	Drooping Apricot Bloom			character:command-record-index	NA2_SLPS@0x47ED90	NUN5_TEXTENG@0xE550	slot	32				
+T1801	1	Command Chart > character move name	<r枝垂|しだ>れ<r華|ばな>	Drooping Flower			character:command-record-index	NA2_SLPS@0x47EDB0	NUN5_TEXTENG@0xE570	slot	32				
+T1802	1	Command Chart > character move name	<r紅葉夢|こうようむ>	Red Leaf Dream			character:command-record-index	NA2_SLPS@0x47EDD0	NUN5_TEXTENG@0xE580	slot	32				
+T1803	1	Command Chart > character move name	<r花卉舞踊|かきぶよう>	Flower Dance			character:command-record-index	NA2_SLPS@0x47EDF0	NUN5_TEXTENG@0xE590	slot	32				
+T1804	1	Command Chart > character move name	<r三彩|さんさい>	Triple Brilliance 			character:command-record-index	NA2_SLPS@0x47EE10	NUN5_TEXTENG@0xE5A0	slot	32				
+T1805	1	Command Chart > character move name	<r香咲彩|かしょうさい>	Blooming Scent Brilliance			character:command-record-index	NA2_SLPS@0x47EE30	NUN5_TEXTENG@0xE5C0	slot	32				
+T1806	1	Command Chart > character move name	<r延髄切|えんずいぎ>り	Medullary Cut			character:command-record-index	NA2_SLPS@0x47EE50	NUN5_TEXTENG@0xE5E0	slot	32				
+T1807	1	Command Chart > character move name	<r符彩脚|ふさいきゃく>	Plate Coloring Kick			character:command-record-index	NA2_SLPS@0x47EE70	NUN5_TEXTENG@0xE5F0	slot	32				
+T1808	1	Command Chart > character move name	<r枯秋葉|かれあきば>	Withered Fall Leaves			character:command-record-index	NA2_SLPS@0x47EE90	NUN5_TEXTENG@0xE610	slot	32				
+T1809	1	Command Chart > character move name	<r牡丹雪|ぼたんゆき>	Peony Snowflakes			character:command-record-index	NA2_SLPS@0x47EEB0	NUN5_TEXTENG@0xE630	slot	32				
+T1810	1	Command Chart > character move name	<r華天頂|かてんちょう>	Floral Peek			character:command-record-index	NA2_SLPS@0x47EED0	NUN5_TEXTENG@0xE648	slot	32				
+T1811	1	Command Chart > character move name	<r陀演呂迦|だえんろか>	Daenroka			character:command-record-index	NA2_SLPS@0x484730	NUN5_TEXTENG@0xE718	slot	32				
+T1812	1	Command Chart > character move name	<r邪蛇蜿蜒|じゃじゃえんえん>	Slithering Snakes			character:command-record-index	NA2_SLPS@0x484750	NUN5_TEXTENG@0xE730	slot	32				
+T1813	1	Command Chart > character move name	<r襲蛇|しゅうだ>	Snake Attack			character:command-record-index	NA2_SLPS@0x484770	NUN5_TEXTENG@0xE748	slot	24				
+T1814	1	Command Chart > character move name	<r筋緒|すじお>	Beauty Snake			character:command-record-index	NA2_SLPS@0x484788	NUN5_TEXTENG@0xE758	slot	24				
+T1815	1	Command Chart > character move name	<r蒼大傷|あおだいしょう>	Rat Snake			character:command-record-index	NA2_SLPS@0x4847A0	NUN5_TEXTENG@0xE768	slot	32				
+T1816	1	Command Chart > character move name	<r平朽|ひらくち>	Pit Viper			character:command-record-index	NA2_SLPS@0x4847C0	NUN5_TEXTENG@0xE778	slot	32				
+T1817	1	Command Chart > character move name	<r赤斑|あかまだら>	Red Banded Snake			character:command-record-index	NA2_SLPS@0x4847E0	NUN5_TEXTENG@0xE790	slot	32				
+T1818	1	Command Chart > character move name	<r山渦牙肢|やまかがし>	Tiger Keelback			character:command-record-index	NA2_SLPS@0x484800	NUN5_TEXTENG@0xE7A8	slot	32				
+T1819	1	Command Chart > character move name	<r地潜|じむぐり>	Burrow			character:command-record-index	NA2_SLPS@0x484820	NUN5_SLES@0x5141F8	slot	32				
+T1820	1	Command Chart > character move name	<r鎌首|かまくび>	Sickle Neck			character:command-record-index	NA2_SLPS@0x484840	NUN5_TEXTENG@0xE7B8	slot	32				
+T1821	1	Command Chart > character move name	<r潜影多蛇手|せんえいたじゃしゅ>・<r仰|ぎょう>	Multiple Hidden Shadow Snake Hands: Sky			character:command-record-index	NA2_SLPS@0x484860	NUN5_TEXTENG@0xE7D0	slot	48				
+T1822	1	Command Chart > character move name	<r覇畏|はい>	Cobra			character:command-record-index	NA2_SLPS@0x484890	NUN5_SLES@0x514200	slot	16				
+T1823	1	Command Chart > character move name	<r刃舞|はぶ>	Sword Dance			character:command-record-index	NA2_SLPS@0x4848A0	NUN5_TEXTENG@0xE7F8	slot	16				
+T1824	1	Command Chart > character move name	<r飛刃狩|ひばかり>	Flying Hunter			character:command-record-index	NA2_SLPS@0x4848B0	NUN5_TEXTENG@0xE808	slot	32				
+T1825	1	Command Chart > character move name	チャクラ<r解剖刀|メス>・<r惨|ざん>	Chakra Dissection: Three			character:command-record-index	NA2_SLPS@0x489C60	NUN5_TEXTENG@0xE8E0	slot	48				
+T1826	1	Command Chart > character move name	<r死魂|しこん>の<r術|じゅつ>	Dead Soul Jutsu			character:command-record-index	NA2_SLPS@0x489C90	NUN5_TEXTENG@0x48B0	slot	32				
+T1827	1	Command Chart > character move name	<r痲錘|ますい>	Anesthesia Weight			character:command-record-index	NA2_SLPS@0x489CB0	NUN5_TEXTENG@0xE900	slot	16			NA2_SLPS@0x48A5B8	
+T1828	1	Command Chart > character move name	<r穿刺|せんし>	Puncture			character:command-record-index	NA2_SLPS@0x489CC0	NUN5_TEXTENG@0xE918	slot	16				
+T1829	1	Command Chart > character move name	<r臨蹴|りんじゅう>	Critical Kick			character:command-record-index	NA2_SLPS@0x489CD0	NUN5_TEXTENG@0xE928	slot	32				
+T1830	1	Command Chart > character move name	<r心刹|しんさつ>	Instant Soul			character:command-record-index	NA2_SLPS@0x489CF0	NUN5_TEXTENG@0xE938	slot	24				
+T1831	1	Command Chart > character move name	<r冴侵|ごしん>	Incursion of Clarity			character:command-record-index	NA2_SLPS@0x489D08	NUN5_TEXTENG@0xE950	slot	16			NA2_SLPS@0x48A75C	
+T1832	1	Command Chart > character move name	<r陀撲|だぼく>	Fierce Blow			character:command-record-index	NA2_SLPS@0x489D18	NUN5_TEXTENG@0xE968	slot	24				
+T1833	1	Command Chart > character move name	<r骨刹|こっせつ>	Instant Bone			character:command-record-index	NA2_SLPS@0x489D30	NUN5_TEXTENG@0xE978	slot	24				
+T1834	1	Command Chart > character move name	<r棄涜|きとく>	Abandoned Dishonor			character:command-record-index	NA2_SLPS@0x489D48	NUN5_TEXTENG@0xE990	slot	24				
+T1835	1	Command Chart > character move name	<r回亡|かいぼう>	Reformed Death			character:command-record-index	NA2_SLPS@0x489D60	NUN5_TEXTENG@0xE9A8	slot	24				
+T1836	1	Command Chart > character move name	<r葬戯|そうぎ>	Burial Game			character:command-record-index	NA2_SLPS@0x489D78	NUN5_TEXTENG@0xE9B8	slot	24				
+T1837	1	Command Chart > character move name	<r決刹|けっさつ>	Decisive Instant			character:command-record-index	NA2_SLPS@0x489D90	NUN5_TEXTENG@0xE9D0	slot	32				
+T1838	1	Command Chart > character move name	<r切葬|けっそう>	Cutting Burial			character:command-record-index	NA2_SLPS@0x489DB0	NUN5_TEXTENG@0xE9E8	slot	32				
+T1839	1	Command Chart > character move name	<r木遁|もくとん>・<r完拿|かんな>	Wood Style: Total Capture 			character:command-record-index	NA2_SLPS@0x48F290	NUN5_TEXTENG@0xEAB0	slot	48				
+T1840	1	Command Chart > character move name	<r木遁|もくとん>・<r木鎚|こづち>	Wood Style: Wooden Hammer			character:command-record-index	NA2_SLPS@0x48F2C0	NUN5_TEXTENG@0xEAD0	slot	48				
+T1841	1	Command Chart > character move name	<r三連巨木柱|さんれんきょぼくちゅう>	Three Giant Pillars			character:command-record-index	NA2_SLPS@0x48F2F0	NUN5_TEXTENG@0xEAF0	slot	48				
+T1842	1	Command Chart > character move name	<r木連撃柱|もくれんげきちゅう>	Repeating Wooden Pillars			character:command-record-index	NA2_SLPS@0x48F320	NUN5_TEXTENG@0xEB10	slot	32				
+T1843	1	Command Chart > character move name	<r木遁|もくとん>・<r木錠壁|もくじょうへき>	Wood Style: Domed Wall			character:command-record-index	NA2_SLPS@0x48F340	NUN5_TEXTENG@0x3C20	slot	48				
+T1844	1	Command Chart > character move name	<r閃裂斬|せんれつざん>	Bright Cutter			character:command-record-index	NA2_SLPS@0x48F370	NUN5_TEXTENG@0xEB30	slot	32				
+T1845	1	Command Chart > character move name	<r木柱昇壁|もくちゅうしょうへき>	Climbing Pillar			character:command-record-index	NA2_SLPS@0x48F390	NUN5_TEXTENG@0xEB40	slot	48				
+T1846	1	Command Chart > character move name	<r針連木柱|しれんもくちゅう>	Wooden Needle Pillar			character:command-record-index	NA2_SLPS@0x48F3C0	NUN5_TEXTENG@0xEB50	slot	32				
+T1847	1	Command Chart > character move name	<r木分身|もくぶんしん>・<r蹴|しゅう>	Wood Clone: Kick			character:command-record-index	NA2_SLPS@0x48F3E0	NUN5_TEXTENG@0xEB70	slot	48				
+T1848	1	Command Chart > character move name	<r四柱牢|しちゅうろう>の<r術|じゅつ>	Four-Pillars Prison Jutsu			character:command-record-index	NA2_SLPS@0x48F410	NUN5_TEXTENG@0xEB90	slot	48				
+T1849	1	Command Chart > character move name	<r木突昇掌|もくとつしょうしょう>	Climbing Thrust Fist			character:command-record-index	NA2_SLPS@0x48F440	NUN5_TEXTENG@0xEBB0	slot	48				
+T1850	1	Command Chart > character move name	<r落裂斬|らくれつざん>	Falling Cutter			character:command-record-index	NA2_SLPS@0x48F470	NUN5_TEXTENG@0xEBC8	slot	32				
+T1851	1	Command Chart > character move name	<r激裂斬|げきれつざん>	Fierce Cutter			character:command-record-index	NA2_SLPS@0x48F490	NUN5_TEXTENG@0xEBD8	slot	32				
+T1852	1	Command Chart > character move name	<r木突横掌|もくとつおうしょう>	Side Thrust Fist			character:command-record-index	NA2_SLPS@0x48F4B0	NUN5_TEXTENG@0xEBF0	slot	32				
+T1853	1	Command Chart > character move name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>	Ninja Art: Beast Scroll Replicas			character:command-record-index	NA2_SLPS@0x494C20	NUN5_TEXTENG@0x3100	slot	48				
+T1854	1	Command Chart > character move name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r狛犬|こまいぬ>	Ninja Art: Beast Scroll Replicas @Wild Dog@ 			character:command-record-index	NA2_SLPS@0x494C50	NUN5_TEXTENG@0xECD0	slot	80				
+T1855	1	Command Chart > character move name	<r見返龍|みかえりりゅう>	Returning Dragon			character:command-record-index	NA2_SLPS@0x494CA0	NUN5_TEXTENG@0xED00	slot	32				
+T1856	1	Command Chart > character move name	<r燕雀|えんじゃく>	Swallow			character:command-record-index	NA2_SLPS@0x494CC0	NUN5_SLES@0x514208	slot	32				
+T1857	1	Command Chart > character move name	<r巴獅子|ともえじし>	Unyielding Lion			character:command-record-index	NA2_SLPS@0x494CE0	NUN5_TEXTENG@0xED20	slot	32				
+T1858	1	Command Chart > character move name	<r開鳳凰|ひらきほうおう>	Open Phoenix			character:command-record-index	NA2_SLPS@0x494D00	NUN5_TEXTENG@0xED30	slot	32				
+T1859	1	Command Chart > character move name	<r登燕雀|とうえんじゃく>	Climbing Sparrow			character:command-record-index	NA2_SLPS@0x494D20	NUN5_TEXTENG@0xED40	slot	32				
+T1860	1	Command Chart > character move name	<r連獅子連鼠|れんじしれんそ>	Lions and Rats			character:command-record-index	NA2_SLPS@0x494D40	NUN5_TEXTENG@0xED58	slot	32				
+T1861	1	Command Chart > character move name	<r連燕雀|れんえんじゃく>	Repeating Sparrows			character:command-record-index	NA2_SLPS@0x494D60	NUN5_TEXTENG@0xED70	slot	32				
+T1862	1	Command Chart > character move name	<r破根|はね>	Root Breaker			character:command-record-index	NA2_SLPS@0x494D80	NUN5_TEXTENG@0xED88	slot	16				
+T1863	1	Command Chart > character move name	<r飛鳳凰|ひほうおう>	Flying Phoenix			character:command-record-index	NA2_SLPS@0x494D90	NUN5_TEXTENG@0xED98	slot	24				
+T1864	1	Command Chart > character move name	<r百舌|もず>	Hundred Tongues			character:command-record-index	NA2_SLPS@0x494DA8	NUN5_TEXTENG@0xEDB0	slot	16				
+T1865	1	Command Chart > character move name	<r祓衣|はらい>	Mourning Garb			character:command-record-index	NA2_SLPS@0x494DB8	NUN5_TEXTENG@0xEDC0	slot	16				
+T1866	1	Command Chart > character move name	<r雲雀|ひばり>	Skylark			character:command-record-index	NA2_SLPS@0x494DC8	NUN5_SLES@0x514210	slot	24				
+T1867	1	Command Chart > character move name	<r刹那|せつな>	Instantaneous Blade			character:command-record-index	NA2_SLPS@0x49AC60	NUN5_TEXTENG@0xEE80	slot	16			NA2_SLPS@0x49AECC	
+T1868	1	Command Chart > character move name	<r彩雲|さいうん>	Colorful Clouds			character:command-record-index	NA2_SLPS@0x49AC70	NUN5_TEXTENG@0xEEA0	slot	32				
+T1869	1	Command Chart > character move name	<r御来迎|ごらいごう>	Solar Glory			character:command-record-index	NA2_SLPS@0x49AC90	NUN5_TEXTENG@0xEEB0	slot	32				
+T1870	1	Command Chart > character move name	<r千鳥|ちどり>・<r落|らく>	Chidori Drop			character:command-record-index	NA2_SLPS@0x49ACB0	NUN5_TEXTENG@0xEEC0	slot	32				
+T1871	1	Command Chart > character move name	<r獅子連弾|ししれんだん>・<r鳴動|めいどう>	Lion's Barrage: Rumble			character:command-record-index	NA2_SLPS@0x49ACD0	NUN5_TEXTENG@0xEED0	slot	48				
+T1872	1	Command Chart > character move name	<r天叢雲|あまのむらくも>	Susanoo's Blade			character:command-record-index	NA2_SLPS@0x49AD00	NUN5_TEXTENG@0xEEF0	slot	32				
+T1873	1	Command Chart > character move name	<r裏御光|うらごこう>	Reverse Halo			character:command-record-index	NA2_SLPS@0x49AD20	NUN5_TEXTENG@0xEF00	slot	32				
+T1874	1	Command Chart > character move name	<r火遁|かとん>・<r鳳仙火|ほうせんか>の<r術|じゅつ>・<r落花散|らっかさん>	Fire Style: Phoenix Flower Jutsu @Petal Shower@			character:command-record-index	NA2_SLPS@0x49AD40	NUN5_TEXTENG@0xEF10	slot	80				
+T1875	1	Command Chart > character move name	<r幻日|げんじつ>	False Sun			character:command-record-index	NA2_SLPS@0x49AD90	NUN5_TEXTENG@0xEF40	slot	32				
+T1876	1	Command Chart > character move name	<r東雲|しののめ>	Dawnbreak			character:command-record-index	NA2_SLPS@0x49ADB0	NUN5_TEXTENG@0xEF50	slot	32				
+T1877	1	Command Chart > character move name	<r火遁|かとん>・<r豪火球|ごうかきゅう>の<r術|じゅつ>・<r天来|てんらい>	Fire Style: Fireball Jutsu @Divinity@			character:command-record-index	NA2_SLPS@0x49ADD0	NUN5_TEXTENG@0xEF60	slot	80				
+T1878	1	Command Chart > character move name	<r莢雲|さやぐも>	Heavenly Cloud			character:command-record-index	NA2_SLPS@0x49AE20	NUN5_TEXTENG@0xEF88	slot	32				
+T1879	1	Command Chart > character move name	<r千鳥|ちどり>・<r迅雷|じんらい>	Chidori: Thunderclap			character:command-record-index	NA2_SLPS@0x49AE40	NUN5_TEXTENG@0xEFA0	slot	48				
 T1880	1	Command Chart > shared control name or help text	"ナルティメットアクセル<r独特|どくとく>の<r操作|そうさ>を
 <r分|わ>かりやすく<r表示|ひょうじ>する<r為|ため>の<r機能|きのう>です。"	A feature to display the special controls for the game.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208E60	NUN5_TEXTENG@0xAC0	slot	128				
 T1881	1	Command Chart > shared control name or help text	チャクラゲージ<r壱以上|いちいじょう>	Chakra Gauge 1+			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208F70	NUN5_TEXTENG@0xB20	slot	48				

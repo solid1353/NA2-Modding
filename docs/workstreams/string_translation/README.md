@@ -26,7 +26,7 @@ Canonical documentation landing page for the `String translation` workstream.
   prepended to the selected text. Inline versus external placement is derived
   at build time from the final encoded length, guarded slot capacity, and
   available pointer references; do not retain shortened fallbacks or placement
-  markers.
+  markers unless the user explicitly orders a specific inline fit exception.
 - Do not replace identifiers, placeholders, or other data of uncertain display
   purpose with arbitrary text.
 - Match the case used by the displayed official NUN5 text. Normalize fullwidth

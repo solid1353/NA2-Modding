@@ -21,21 +21,23 @@ fields. This keeps the accepted `mappings.tsv` behavior unchanged while the
 replacement table is reconstructed from screenshots.
 
 Adjacent `replacement.tsv` uses the exact accepted `mappings.tsv` schema. It
-contains only diagnostic IDs confirmed visible in the supplied screenshot
-pass. Its cumulative first two passes contain 752 enabled rows: 739 retain the
-unique accepted row at the same exact `source_ref` as their donor/transform
-starting point, with T2042's parent rewritten into the replacement `T#`
-namespace. Paired screenshots independently correct T1956 to `Off`, T1957 to
-`On`, and T2158 to `Warning`. Six Difficulty-family rows are matched by meaning
-against the exact NUN5 strings rather than by table position. Exactly four
-rows—T24, T30, T744, and T767—have no trustworthy NUN5 donor and therefore
-store their own diagnostic ID in `replacement`. Donor-backed rows otherwise
-leave `replacement` blank and execute the official donor text; T2027 and T2033
-are the only donor-backed exceptions and retain the established Cross-confirm
-Shop overrides. Only explicit replacement worker builds import these rows;
-normal and diagnostic builds do not. Profile integrity checking hash-covers
-the table so the in-progress replacement cannot drift outside the
-reproducible project state.
+contains screenshot-confirmed rows plus the explicit character-family
+exception. Its cumulative first two passes contribute 752 rows, and the
+verified 74-table Command Chart family contributes another 1,041, for 1,793
+enabled rows. Of those, 1,780 retain the unique accepted row at the same exact
+`source_ref` as their donor/transform starting point, with T2042's parent
+rewritten into the replacement `T#` namespace. Paired screenshots
+independently correct T1956 to `Off`, T1957 to `On`, and T2158 to `Warning`.
+Six Difficulty-family rows are matched by meaning against the exact NUN5
+strings rather than by table position. Exactly four rows—T24, T30, T744, and
+T767—have no trustworthy NUN5 donor and therefore store an ID-prefixed literal
+translation in `replacement`; T30 uses the explicit `T30 Ult` inline-fit
+exception. Donor-backed rows otherwise leave `replacement` blank and execute
+the official donor text; T2027 and T2033 are the only donor-backed exceptions
+and retain the established Cross-confirm Shop overrides. Only explicit
+replacement worker builds import these rows; normal and diagnostic builds do
+not. Profile integrity checking hash-covers the table so the in-progress
+replacement cannot drift outside the reproducible project state.
 
 Replacement imports also validate complete structured message families.
 Active `split_br` and `join_br_parts` rows sharing a donor reference must use

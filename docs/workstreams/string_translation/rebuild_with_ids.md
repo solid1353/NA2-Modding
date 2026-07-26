@@ -39,21 +39,30 @@ not validated. `legacy_ids` is an optional comma-separated lookup field.
 `replacement`, `display_basis`, `source_ref`, `donor_ref`, `mode`,
 `capacity`, `transform`, `arguments`, `reference_refs`, `parent_mapping_id`
 
-Only encountered `T#` rows are admitted. The first screenshot pass contributed
-567 enabled rows; the second contributed 185, producing 752 unique enabled
-rows. Exact guarded source fields come from `rebuild.tsv`, while concrete
-display metadata records whether each row was seen directly, inferred from a
-captured selector/help family, or admitted under the character-specific
-exception. The first-pass corpus contains 172 hash-verified paired captures;
-the second contains 93.
+Only encountered `T#` rows and structurally proven character-family rows are
+admitted. The first screenshot pass contributed 567 enabled rows and the
+second contributed 185. The character-specific exception then admits the
+remaining 1,041 Command Chart move-name rows from the verified 74-table
+command-record family, producing 1,793 unique enabled rows. Exact guarded
+source fields come from `rebuild.tsv`, while concrete display metadata records
+whether each row was seen directly, inferred from a captured selector/help
+family, or admitted under the character-specific exception. The first-pass
+corpus contains 172 hash-verified paired captures; the second contains 93.
 
-Of the 752 rows, 739 retain the unique accepted-table row with the same exact
-`source_ref` as their donor/transform starting point. T2042 additionally
+Of the 1,793 rows, 1,780 retain the unique accepted-table row with the same
+exact `source_ref` as their donor/transform starting point. T2042 additionally
 rewrites its accepted parent ID from `M0810` to replacement-table ID `T2011`.
 Three paired-screen corrections override incorrect reference relationships:
 T1956 uses `Off` at `NUN5_SLES@0x513EF8`, T1957 uses `On` at
 `NUN5_SLES@0x513EFC`, and T2158 uses `Warning` at
 `NUN5_SLES@0x513F38`.
+
+The complete Command Chart move-name family contains 1,055 rows: the 14
+previously captured Naruto rows plus 1,041 additional rows that include
+Naruto's missing moves and the rest of the roster. Every move retains its
+complete official donor and a blank user `replacement`. Of the complete
+family, 1,049 fit inline and six use their existing guarded pointer references
+for build-time external placement; no move is shortened.
 
 Six Difficulty-family rows are matched by meaning rather than row position:
 T27 `Simple`, T1983 `Easy`, T28 `Normal`, T1984 `Hard`, and T29 `Insane` use
@@ -63,14 +72,16 @@ exact pointer at `NA2_BTL@0x20A264`. NA2's extra `Ultimate` difficulty has no
 NUN5 counterpart.
 
 Exactly four rows currently have no trustworthy NUN5 donor: T24, T30, T744,
-and T767. Each deliberately stores its own ID in `replacement` so a worker
-build exposes unresolved coverage instead of executing an invented
-translation. Donor-backed rows otherwise leave `replacement` blank and execute
-the independently validated official donor text. T2027 and T2033 are the only
-donor-backed exceptions and retain the established Cross-confirm Shop
-overrides. These relationships are the reference-derived starting point for
-English runtime validation, not a claim that later uncaptured screens are
-covered. The diagnostic inventory and normal build behavior remain unchanged.
+and T767. Their user-editable `replacement` fields contain the stable `T#`
+followed by a literal English translation so runtime captures remain directly
+traceable to the table. T30 deliberately uses the user-requested `T30 Ult`
+fit text for its seven-byte inline text capacity. Donor-backed rows otherwise
+leave `replacement` blank and execute the independently validated official
+donor text. T2027 and T2033 are the only donor-backed exceptions and retain
+the established Cross-confirm Shop overrides. These relationships are the
+reference-derived starting point for English runtime validation, not a claim
+that later uncaptured screens are covered. The diagnostic inventory and normal
+build behavior remain unchanged.
 
 Rows that split one `<br>`-delimited renderer message are admitted as a
 complete structural family even when only one line supplied the visible ID.
@@ -238,7 +249,8 @@ translation path.
 `prefix` and `replacement` remain readable user-editable fields. A blank
 replacement uses the independently validated donor. Inline versus external
 placement remains a build-time decision; do not author shortened alternatives
-or placement markers.
+or placement markers except for the explicitly requested T30 `T30 Ult`
+inline-fit exception.
 
 ## Screenshot and inference workflow
 

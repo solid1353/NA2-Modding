@@ -316,13 +316,13 @@ class IntegratedExternalStringTests(unittest.TestCase):
             translation_display="replacement",
         )
         self.assertEqual(draft.translation_plan.display_mode, "replacement")
-        self.assertEqual(len(draft.translation_plan.text_mappings), 752)
-        self.assertEqual(len(draft.translation_plan.import_rows), 839)
-        self.assertEqual(len(draft.external_draft.fragments), 18)
-        self.assertEqual(len(draft.external_draft.symbolic_patches), 22)
+        self.assertEqual(len(draft.translation_plan.text_mappings), 1793)
+        self.assertEqual(len(draft.translation_plan.import_rows), 1971)
+        self.assertEqual(len(draft.external_draft.fragments), 24)
+        self.assertEqual(len(draft.external_draft.symbolic_patches), 28)
         self.assertEqual(
             self.replacement_import_plan.summary["table_rows"],
-            752,
+            1793,
         )
         self.assertEqual(
             self.replacement_import_plan.summary["inactive_rows"],
@@ -343,10 +343,19 @@ class IntegratedExternalStringTests(unittest.TestCase):
             self.replacement_import_plan.resolved_texts["T50"],
             "Difficulty",
         )
-        for donorless_id in ("T24", "T30", "T744", "T767"):
+        donorless_replacements = {
+            "T24": (
+                "T24 You can set the opponent's state. During Double Jump, "
+                "the opponent performs the action selected below while double-jumping."
+            ),
+            "T30": "T30 Ult",
+            "T744": "T744 Faint Relief",
+            "T767": "T767 An Older Sister's Joy",
+        }
+        for donorless_id, replacement in donorless_replacements.items():
             self.assertEqual(
                 self.replacement_import_plan.resolved_texts[donorless_id],
-                donorless_id,
+                replacement,
             )
         save_progress = (
             "Saving to memory card (PS2) in <br>MEMORY CARD slot 1."

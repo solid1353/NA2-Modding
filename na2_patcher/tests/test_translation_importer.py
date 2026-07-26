@@ -95,7 +95,16 @@ class TranslationImporterTests(unittest.TestCase):
                 "NA2_BTL@0x20A264",
             ),
         }
-        donorless_ids = {"T24", "T30", "T744", "T767"}
+        donorless_replacements = {
+            "T24": (
+                "T24 You can set the opponent's state. During Double Jump, "
+                "the opponent performs the action selected below while double-jumping."
+            ),
+            "T30": "T30 Ult",
+            "T744": "T744 Faint Relief",
+            "T767": "T767 An Older Sister's Joy",
+        }
+        donorless_ids = set(donorless_replacements)
         donor_backed_overrides = {
             "T2027": "Press <iconCROSS> to choose item.",
             "T2033": "Select an item and press <iconCROSS> to buy.",
@@ -123,8 +132,8 @@ class TranslationImporterTests(unittest.TestCase):
             ),
         }
 
-        self.assertEqual(len(replacement_raw), 752)
-        self.assertEqual(len(replacement["text"]), 752)
+        self.assertEqual(len(replacement_raw), 1793)
+        self.assertEqual(len(replacement["text"]), 1793)
         self.assertEqual(replacement["inactive"], [])
         self.assertEqual(
             len({row["id"] for row in replacement_raw}),
@@ -169,7 +178,10 @@ class TranslationImporterTests(unittest.TestCase):
             if row["id"] in donorless_ids:
                 self.assertEqual(row["donor"], "")
                 self.assertEqual(row["donor_ref"], "")
-                self.assertEqual(row["replacement"], row["id"])
+                self.assertEqual(
+                    row["replacement"],
+                    donorless_replacements[row["id"]],
+                )
                 self.assertEqual(row["reference_refs"], "")
                 continue
             self.assertIn(row["source_ref"], accepted)
@@ -207,7 +219,7 @@ class TranslationImporterTests(unittest.TestCase):
                 )
                 for row in replacement_raw
             ),
-            739,
+            1780,
         )
         self.assertEqual(
             {

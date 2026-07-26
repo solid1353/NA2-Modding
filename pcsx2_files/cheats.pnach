@@ -1,8 +1,6 @@
-// [EE map capture: Restore Adventure mode]
-patch=1,EE,005D51D0,word,00000004
-
-// [Restore Shop]
-patch=1,EE,005D51E0,word,00000005
+// [Restore modes]
+patch=1,EE,005D51D0,word,00000004 // Master mode
+patch=1,EE,005D51E0,word,00000005 // Shop
 
 // [Widescreen 16:9]
 // gsaspectratio=16:9

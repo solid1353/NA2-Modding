@@ -544,7 +544,9 @@ pair and active mismatch-list entry were then removed under workstream policy.
 
 The remaining maintained mismatch list contains Battle Results screen 2
 (red rank text vertically misregistered inside the stamp), Character Items
-transition behavior, and the Cross/Triangle-label batch. The rejected
+transition behavior, and the Cross/Triangle-label batch. Within that batch,
+the Options-root Slot 1 caller now uses the proven effective NUN5 OK/Back
+anchors X=`388`/`462`; Slots 2-5 remain open. The rejected
 rank-label Y-compensation trial and exact pixel/object evidence are preserved
 in `docs/knowledge/localization/ui/battle.md`; resume from texture/CLUT binding
 or cached GS-packet evidence rather than retrying screen-space constants. The

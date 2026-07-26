@@ -1617,7 +1617,17 @@ one pixel of NUN5 in both axes, consistent with normal pulse timing.
 Battle Results exposed the same shared compositor's record 2: NA2 retained a
 70-pixel Next label while NUN5 uses the complete 66-pixel English record.
 The fourth edit copies that exact NUN5 record; `UI-BTL-016` supplies its NUN5
-screen anchor. The separate OK prompt and text/font rendering remain untouched.
+screen anchor.
+
+The Options-root caller also exposes the same regional footer-anchor difference
+already proven on Mode Select and the two Settings screens. NUN5 loads nominal
+OK/Back X=`400`/`470` and applies `-12`/`-8` before calling the shared
+compositor; NA2 calls it with the unadjusted values. Two authored
+same-register ports use the equivalent effective X=`388`/`462` values at NA2
+ELF offsets `0x28C878` and `0x28C89C`. A guarded task-owned slot-1 render
+matches the NUN5 prompt positions without changing the accepted Cancel
+geometry or any text/font behavior.
+
 Exact mappings, reconstruction, side effects, and runtime evidence are
 preserved in `docs/knowledge/localization/ui/options.md` and
 `docs/knowledge/localization/ui/battle.md`.

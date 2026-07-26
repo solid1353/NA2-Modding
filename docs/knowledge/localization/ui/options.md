@@ -69,6 +69,29 @@ NUN5's localized records total 80 logical pixels:
 static slots. This preserves NA2's object ABI and compositor code while making
 every shared case-4 caller use the same geometry as NUN5.
 
+## Options-root OK and Back anchors
+
+The Options-root draw uses the same common-prompt compositor but supplies its
+OK and Back anchors from `FUN_0038c5f0`:
+
+| Prompt | NA2 runtime / file offset | NUN5 runtime / file offset | Effective NUN5 X |
+| --- | --- | --- | ---: |
+| OK | `0x0038C778` / `0x28C878` | `0x0039E18C` / `0x29E30C` | `400 - 12 = 388` |
+| Back | `0x0038C79C` / `0x28C89C` | `0x0039E1C0` / `0x29E340` | `470 - 8 = 462` |
+
+NA2 loads X=`400` and X=`470` directly with `C843023C` and `EB43023C`.
+The NUN5 homolog loads the same nominal values, converts its shared signed
+regional globals, and adds `-12` for OK and `-8` for Back before calling
+`FUN_0038bb10`. Those additions do not exist in the NA2 caller, so copying the
+nominal donor loads would not move either prompt.
+
+`UI-ELF-008` therefore stores the equivalent NA2 values X=`388`
+(`C243023C`) and X=`462` (`E743023C`) at the two guarded call sites. These are
+authored ABI ports, not literal donor copies. A task-owned slot-1 savestate
+patched with only those two words rendered the complete Cross/OK and
+Triangle/Back groups at the NUN5 positions. The existing Cancel records,
+option values, input handling, and text/font rendering were unchanged.
+
 ## Shared Controls and Music Select legend
 
 The Controls and Music Options footer functions have the same regional
@@ -169,6 +192,10 @@ footer on 2026-07-26. Confidence is **verified**.
   resident records. The hidden task-owned clone rendered Current NA2 bounds
   `165..259,412..438`, versus NUN5 `164..258,411..437`. The one-pixel phase
   difference is normal prompt pulsation.
+- A separate guarded slot-1 proof changed only the Options-root OK/Back load
+  words to their effective NUN5 anchors. Both groups match the reference; this
+  is the same regional-offset family as Mode Select and Settings, but a
+  distinct caller pair rather than a duplicate write.
 - The unrelated X/Y text spacing and the separate OK prompt were deliberately
   untouched.
 - A first guarded Music Options probe copied NUN5 common-prompt records 0 and

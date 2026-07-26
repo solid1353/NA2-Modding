@@ -13,8 +13,10 @@ the right.
    texture/CLUT binding or cached GS packet.
 2. Character Items transition: replace the NA2.28 slide with the NUN5/base-NA2
    fade behavior.
-3. Cross/Triangle labels, paired slots 1-5: correct only the Cross and Triangle
-   labels across the five preserved screens as one shared subtask.
+3. Cross/Triangle labels, paired slots 1-5: Slot 1 Options is implemented and
+   matches the guarded NUN5 runtime proof; Slots 2-5 remain. Correct only the
+   Cross and Triangle labels across the preserved screens as one shared
+   subtask.
 
 ## Report grids
 

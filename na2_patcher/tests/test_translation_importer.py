@@ -83,6 +83,106 @@ class TranslationImporterTests(unittest.TestCase):
             "T1957": ("On", "NUN5_SLES@0x513EFC"),
             "T2158": ("Warning", "NUN5_SLES@0x513F38"),
         }
+        semantic_donor_corrections = {
+            "T27": ("Simple", "NUN5_SLES@0x514218", ""),
+            "T1983": ("Easy", "NUN5_SLES@0x514220", ""),
+            "T28": ("Normal", "NUN5_SLES@0x514228", ""),
+            "T1984": ("Hard", "NUN5_SLES@0x514230", ""),
+            "T29": ("Insane", "NUN5_SLES@0x514238", ""),
+            "T50": (
+                "Difficulty",
+                "NUN5_TEXTENG@0xF880",
+                "NA2_BTL@0x20A264",
+            ),
+        }
+        donorless_ids = {"T24", "T30", "T744", "T767"}
+        quality_overrides = {
+            "T13": (
+                "Press the left directional button or right directional button "
+                "to choose whether Chakra decreases when using Jutsu."
+            ),
+            "T15": (
+                "Press the left directional button or right directional button "
+                "to change the handicap. More red marks favor 1P; more blue "
+                "marks favor 2P."
+            ),
+            "T22": (
+                "Stand: The opponent performs the action selected below while "
+                "standing."
+            ),
+            "T23": (
+                "Jump: The opponent performs the action selected below while "
+                "jumping."
+            ),
+            "T26": "Practice Settings returned to defaults.",
+            "T1377": "Clone Jumping Explosion Hit",
+            "T1894": "Charge (Weak)",
+            "T1895": "Charge (Strong)",
+            "T1905": (
+                "(directional button in the direction the opponent was launched)"
+            ),
+            "T1908": "(during a High Speed Move or attack clash)",
+            "T1909": "(Manual: press again after appearing to attack)",
+            "T1916": "Substitution Jutsu (Consumes Chakra)",
+            "T1920": "Charge Chakra",
+            "T1927": (
+                "directional button opposite the direction you are facing"
+            ),
+            "T1964": (
+                "Press the left directional button or right directional button "
+                "to set the player's Health."
+            ),
+            "T1966": (
+                "Press the left directional button or right directional button "
+                "to set how the player's Link Gauge charges."
+            ),
+            "T1967": (
+                "Press the left directional button or right directional button "
+                "to set how Linked Attacks are activated."
+            ),
+            "T1970": (
+                "Press the left directional button or right directional button "
+                "to set whether damage dealt to the opponent is displayed."
+            ),
+            "T1971": (
+                "Press the left directional button or right directional button "
+                "to set the Guide Ninja Sound during Practice."
+            ),
+            "T1973": (
+                "Set the attack pattern used in Stand, Jump, or Double-jump "
+                "status."
+            ),
+            "T1974": (
+                "Set the guard pattern used in Stand, Jump, or Double-jump "
+                "status."
+            ),
+            "T1975": (
+                "Set the movement pattern used in Stand, Jump, or Double-jump "
+                "status."
+            ),
+            "T1976": "Set Substitution Jutsu frequency in COM mode.",
+            "T1977": "Set Linked Attack frequency when not in Manual mode.",
+            "T1978": (
+                "Set Extra Hit Counter frequency when not in Manual mode."
+            ),
+            "T1981": (
+                "In Manual mode, use another controller to control the opponent."
+            ),
+            "T1998": "No Use: Ultimate Jutsu is disabled.",
+            "T1999": "Random: The input contest changes each time.",
+            "T2000": "Command: Compete by pressing the displayed buttons.",
+            "T2001": (
+                "Timing: Compete by pressing the buttons with the correct timing."
+            ),
+            "T2002": "Turn: Compete by rotating either analog stick.",
+            "T2003": "Combo: Compete by rapidly pressing the buttons.",
+            "T2004": "Normal: Health fully recovers after a set time.",
+            "T2005": "Half: Health recovers to half after a set time.",
+            "T2006": "Almost: Health remains near 0.",
+            "T2027": "Press <iconCROSS> to choose item.",
+            "T2032": "Select a character to buy.",
+            "T2033": "Select an item and press <iconCROSS> to buy.",
+        }
         structural_rows = {
             "T2011": (
                 "Save or Load menu > saving-progress message",
@@ -106,12 +206,22 @@ class TranslationImporterTests(unittest.TestCase):
             ),
         }
 
-        self.assertEqual(len(replacement_raw), 567)
-        self.assertEqual(len(replacement["text"]), 567)
+        self.assertEqual(len(replacement_raw), 752)
+        self.assertEqual(len(replacement["text"]), 752)
         self.assertEqual(replacement["inactive"], [])
         self.assertEqual(
             len({row["id"] for row in replacement_raw}),
             len(replacement_raw),
+        )
+        self.assertEqual(
+            replacement_raw,
+            sorted(
+                replacement_raw,
+                key=lambda row: (
+                    row["display_context"].casefold(),
+                    int(row["id"][1:]),
+                ),
+            ),
         )
         for row in replacement_raw:
             self.assertIn(row["id"], rebuild)
@@ -130,6 +240,21 @@ class TranslationImporterTests(unittest.TestCase):
                 self.assertEqual(row["donor"], donor)
                 self.assertEqual(row["donor_ref"], donor_ref)
                 continue
+            if row["id"] in semantic_donor_corrections:
+                donor, donor_ref, reference_refs = semantic_donor_corrections[
+                    row["id"]
+                ]
+                self.assertEqual(row["donor"], donor)
+                self.assertEqual(row["donor_ref"], donor_ref)
+                self.assertEqual(row["reference_refs"], reference_refs)
+                self.assertEqual(row["replacement"], "")
+                continue
+            if row["id"] in donorless_ids:
+                self.assertEqual(row["donor"], "")
+                self.assertEqual(row["donor_ref"], "")
+                self.assertEqual(row["replacement"], row["id"])
+                self.assertEqual(row["reference_refs"], "")
+                continue
             self.assertIn(row["source_ref"], accepted)
             reference = accepted[row["source_ref"]]
             for field in (
@@ -144,11 +269,41 @@ class TranslationImporterTests(unittest.TestCase):
             ):
                 if row["id"] == "T2042" and field == "parent_mapping_id":
                     continue
+                if row["id"] in quality_overrides and field == "replacement":
+                    self.assertEqual(
+                        row["replacement"],
+                        quality_overrides[row["id"]],
+                    )
+                    continue
                 self.assertEqual(row[field], reference[field])
 
         self.assertEqual(
-            sum(row["id"] not in verified_corrections for row in replacement_raw),
-            564,
+            sum(
+                row["id"]
+                not in (
+                    set(verified_corrections)
+                    | set(semantic_donor_corrections)
+                    | donorless_ids
+                )
+                for row in replacement_raw
+            ),
+            739,
+        )
+        self.assertEqual(
+            {
+                row["id"]
+                for row in replacement_raw
+                if not row["donor"] and not row["donor_ref"]
+            },
+            donorless_ids,
+        )
+        self.assertEqual(
+            {
+                row["id"]: row["replacement"]
+                for row in replacement_raw
+                if row["replacement"] and row["id"] not in donorless_ids
+            },
+            quality_overrides,
         )
         by_id = {row["id"]: row for row in replacement_raw}
         for mapping_id, (display_context, display_basis) in structural_rows.items():

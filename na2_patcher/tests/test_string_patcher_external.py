@@ -316,13 +316,13 @@ class IntegratedExternalStringTests(unittest.TestCase):
             translation_display="replacement",
         )
         self.assertEqual(draft.translation_plan.display_mode, "replacement")
-        self.assertEqual(len(draft.translation_plan.text_mappings), 567)
-        self.assertEqual(len(draft.translation_plan.import_rows), 629)
-        self.assertEqual(len(draft.external_draft.fragments), 8)
-        self.assertEqual(len(draft.external_draft.symbolic_patches), 8)
+        self.assertEqual(len(draft.translation_plan.text_mappings), 752)
+        self.assertEqual(len(draft.translation_plan.import_rows), 845)
+        self.assertEqual(len(draft.external_draft.fragments), 18)
+        self.assertEqual(len(draft.external_draft.symbolic_patches), 22)
         self.assertEqual(
             self.replacement_import_plan.summary["table_rows"],
-            567,
+            752,
         )
         self.assertEqual(
             self.replacement_import_plan.summary["inactive_rows"],
@@ -335,10 +335,19 @@ class IntegratedExternalStringTests(unittest.TestCase):
             1,
         )
         self.assertTrue(
-            {"T2011", "T2042"}.issubset(
+            {"T50", "T2011", "T2042"}.issubset(
                 draft.external_draft.excluded_mapping_ids
             )
         )
+        self.assertEqual(
+            self.replacement_import_plan.resolved_texts["T50"],
+            "Difficulty",
+        )
+        for donorless_id in ("T24", "T30", "T744", "T767"):
+            self.assertEqual(
+                self.replacement_import_plan.resolved_texts[donorless_id],
+                donorless_id,
+            )
         save_progress = (
             "Saving to memory card (PS2) in <br>MEMORY CARD slot 1."
             "<br>Please do not remove memory card (PS2), "

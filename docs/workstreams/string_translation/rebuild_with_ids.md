@@ -39,18 +39,39 @@ not validated. `legacy_ids` is an optional comma-separated lookup field.
 `replacement`, `display_basis`, `source_ref`, `donor_ref`, `mode`,
 `capacity`, `transform`, `arguments`, `reference_refs`, `parent_mapping_id`
 
-Only encountered `T#` rows are admitted. The initial evidence pass copied the
-exact guarded source fields from `rebuild.tsv` and recorded concrete display
-metadata. The first executable pass now contains 567 enabled rows. Of those,
-564 use the unique accepted-table row with the same exact `source_ref` as the
-donor/transform starting point. T2042 rewrites its accepted parent ID from
-`M0810` to the replacement-table ID `T2011`. Three paired-screen corrections
-override incorrect reference relationships: T1956 uses `Off` at
-`NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses
-`Warning` at `NUN5_SLES@0x513F38`. These relationships are the
-reference-derived starting point for English runtime validation, not a claim
-that the final donor audit is complete. The diagnostic inventory and normal
-build behavior remain unchanged.
+Only encountered `T#` rows are admitted. The first screenshot pass contributed
+567 enabled rows; the second contributed 185, producing 752 unique enabled
+rows. Exact guarded source fields come from `rebuild.tsv`, while concrete
+display metadata records whether each row was seen directly, inferred from a
+captured selector/help family, or admitted under the character-specific
+exception. The first-pass corpus contains 172 hash-verified paired captures;
+the second contains 93.
+
+Of the 752 rows, 739 retain the unique accepted-table row with the same exact
+`source_ref` as their donor/transform starting point. T2042 additionally
+rewrites its accepted parent ID from `M0810` to replacement-table ID `T2011`.
+Three paired-screen corrections override incorrect reference relationships:
+T1956 uses `Off` at `NUN5_SLES@0x513EF8`, T1957 uses `On` at
+`NUN5_SLES@0x513EFC`, and T2158 uses `Warning` at
+`NUN5_SLES@0x513F38`.
+
+Six Difficulty-family rows are matched by meaning rather than row position:
+T27 `Simple`, T1983 `Easy`, T28 `Normal`, T1984 `Hard`, and T29 `Insane` use
+the exact five-string NUN5 block at `0x514218` through `0x514238`; T50 uses
+`Difficulty` at `NUN5_TEXTENG@0xF880`. T50's full label is linked through the
+exact pointer at `NA2_BTL@0x20A264`. NA2's extra `Ultimate` difficulty has no
+NUN5 counterpart.
+
+Exactly four rows currently have no trustworthy NUN5 donor: T24, T30, T744,
+and T767. Each deliberately stores its own ID in `replacement` so a worker
+build exposes unresolved coverage instead of executing an invented
+translation. Thirty-six donor-backed rows use reviewed `replacement` overrides
+where the official donor English is grammatically defective, semantically
+wrong, or contains stray whitespace; the donor fields remain unchanged as
+provenance. T2027 and T2033 separately retain the established Cross-confirm
+Shop overrides. These relationships are the reference-derived starting point
+for English runtime validation, not a claim that later uncaptured screens are
+covered. The diagnostic inventory and normal build behavior remain unchanged.
 
 Rows that split one `<br>`-delimited renderer message are admitted as a
 complete structural family even when only one line supplied the visible ID.

@@ -22,14 +22,19 @@ replacement table is reconstructed from screenshots.
 
 Adjacent `replacement.tsv` uses the exact accepted `mappings.tsv` schema. It
 contains only diagnostic IDs confirmed visible in the supplied screenshot
-pass. Its first executable pass contains 567 enabled rows: 564 use the unique
-accepted row at the same exact `source_ref` as their donor/transform starting
-point, with T2042's parent rewritten into the replacement `T#` namespace.
-Paired screenshots independently correct T1956 to `Off`, T1957 to `On`, and
-T2158 to `Warning`, using their matching official NUN5 strings. Only explicit
-replacement worker builds import these rows; normal and diagnostic builds do
-not. Profile integrity checking hash-covers the table so the in-progress
-replacement cannot drift outside the reproducible project state.
+pass. Its cumulative first two passes contain 752 enabled rows: 739 retain the
+unique accepted row at the same exact `source_ref` as their donor/transform
+starting point, with T2042's parent rewritten into the replacement `T#`
+namespace. Paired screenshots independently correct T1956 to `Off`, T1957 to
+`On`, and T2158 to `Warning`. Six Difficulty-family rows are matched by meaning
+against the exact NUN5 strings rather than by table position. Exactly four
+rows—T24, T30, T744, and T767—have no trustworthy NUN5 donor and therefore
+store their own diagnostic ID in `replacement`. Thirty-six donor-backed rows
+use reviewed English overrides where the official donor is grammatically or
+semantically defective, while retaining the donor fields as provenance. Only
+explicit replacement worker builds import these rows; normal and diagnostic
+builds do not. Profile integrity checking hash-covers the table so the
+in-progress replacement cannot drift outside the reproducible project state.
 
 Replacement imports also validate complete structured message families.
 Active `split_br` and `join_br_parts` rows sharing a donor reference must use

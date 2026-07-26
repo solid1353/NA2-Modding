@@ -32,8 +32,8 @@ command or file-backed inter-stage handoff.
 - Packaged `mappings.tsv` SHA-256: `7601F834646C374F3E89087724726AAE78E9A87A46A5F936CC5C776C4E60C0B6`
 - Initial parallel `rebuild.tsv` rows: `2,173` (`T1` through `T2173`)
 - Initial `rebuild.tsv` SHA-256: `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`
-- First-pass `replacement.tsv` rows: `567`
-- First-pass `replacement.tsv` SHA-256: `8A90B4E80A6910024CD777A10C3ACFF4148209ABA8CFC42A90153B3323088711`
+- Cumulative `replacement.tsv` rows: `752`
+- Cumulative `replacement.tsv` SHA-256: `A4D51B2B37047DFA1A69EEA390EF1D30EB101557D035AEE23B7D6DF985836DCA`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the aggregate Localization feature pin own content identity.
@@ -107,16 +107,27 @@ with the next permanent ID.
 
 `replacement.tsv` uses the exact 16-column accepted `mappings.tsv` schema. It
 contains only `T#` rows confirmed visible by the paired screenshot pass, sorted
-by `display_context` and numeric ID. Its first executable pass has 567 unique
-enabled rows. Exact source, source reference, mode, and capacity come from
-`rebuild.tsv`. Donor and transform relationships for 564 rows are seeded from
-the unique accepted row with the same exact `source_ref`; T2042 rewrites its
-accepted `M0810` parent reference to replacement ID `T2011`. Paired screenshots
-correct three reference-table errors: T1956 uses `Off` at
+by `display_context` and numeric ID. Its cumulative first two passes have 752
+unique enabled rows: 567 from the hash-verified first-pass corpus and 185 from
+the second. Exact source, source reference, mode, and capacity come from
+`rebuild.tsv`. Donor and transform relationships for 739 rows retain the unique
+accepted row with the same exact `source_ref`; T2042 rewrites its accepted
+`M0810` parent reference to replacement ID `T2011`. Paired screenshots correct
+three reference-table errors: T1956 uses `Off` at
 `NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses
-`Warning` at `NUN5_SLES@0x513F38`. This is a reference-derived English
-validation pass, not the final donor audit. The explicit replacement worker
-build imports all 567 rows without falling back to accepted `mappings.tsv`.
+`Warning` at `NUN5_SLES@0x513F38`.
+
+Six Difficulty-family rows are matched by meaning: T27 `Simple`, T1983 `Easy`,
+T28 `Normal`, T1984 `Hard`, T29 `Insane`, and T50 `Difficulty`. The full T50
+label links through the exact pointer at `NA2_BTL@0x20A264`. Exactly four rows
+have no trustworthy NUN5 donor—T24, T30, T744, and T767—and put their own ID
+in the user-editable `replacement` field. Thirty-six donor-backed rows use
+reviewed English overrides for clear grammar, meaning, or trailing-whitespace
+defects while preserving the exact donor fields as provenance. T2027 and T2033
+separately retain the established Cross-confirm Shop overrides. This is a
+reference-derived English validation pass, not a claim that uncaptured screens
+are covered. The explicit replacement worker build imports all 752 rows
+without falling back to accepted `mappings.tsv`.
 
 The replacement table closes every admitted multi-slot `<br>` message family.
 T2011/T2041/T2042 cover all four save-progress message parts, while

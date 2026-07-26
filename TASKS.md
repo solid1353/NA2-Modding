@@ -10,14 +10,14 @@
 - Ninja Song: convert all dynamically generated output still selecting Shift-JIS digits or symbols to ASCII equivalents, including the renderer-table multiplication glyph if it remains reachable after static string changes.
 - Special Controls ON/OFF: use the paired `ss01_NA2.p2s` + `ss01_NUN5.p2s` files under `work/String translation/inputs/sstates/2026-07-26-ss1-7-8-sjis-pass-2/`; Practice Settings ss8 is user-verified fixed with title-case `Off`/`On`, but ss1 Special Controls still does not match NUN5's compact uppercase-looking `ON`/`OFF` letter spacing and the current ninth-call v2 adapter has no visible effect.
 
+## Backlog
+
 ### Project
 - Release: add feature/group/patch config + instructions + default release config.
 - Investigate cross-platform development/deployment possibilities.
 - Global cleanup - preserve what is needed, delete the rest. Project should ask corresponding chats for specifics. Includes, but not limited to:
     * [UI Translation](work/__sstates/translation/UI).
     * [String Translation](work/__sstates/translation/strings).
-
-## Backlog
 
 ### Bugs
 - Practice menu entries (like Damage) flicker again (unstable).

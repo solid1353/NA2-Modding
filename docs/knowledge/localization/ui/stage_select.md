@@ -96,14 +96,32 @@ stage-name draw routines, then submit the bottom prompt objects.
 NA2 uses X=`300.0f` for prompt item 3 and its companion sprite. NUN5 uses
 X=`260.0f` for both. `UI-BTL-002` copies the exact NUN5 `lui v0,0x4382`
 instructions from NUN5 BTL file offsets `0x64C50` and `0x64C78` into NA2 file
-offsets `0x61F40` and `0x61F64`. The other visible bottom prompts already match.
+offsets `0x61F40` and `0x61F64`.
+
+The same dispatcher builds the OK and Back objects from nominal X anchors
+`400.0f` and `470.0f`. NUN5 then applies regional offsets `-12.0f` and `-8.0f`,
+so its effective screen anchors are X=`388.0f` and X=`462.0f`. NA2 omits those
+regional additions. The corresponding NUN5 global-offset loads are not safe
+donor instructions for NA2 because the two executables use different global
+pointer layouts. `UI-BTL-002` therefore uses two authored, same-register
+constant adaptations at NA2 BTL file offsets `0x61EF8` and `0x61F1C`:
+
+```cpp
+ok_x = 388.0f;   // NUN5 400.0f - 12.0f
+back_x = 462.0f; // NUN5 470.0f - 8.0f
+```
+
+Their loaded-overlay runtime addresses are `0x00715DF8` and `0x00715E1C`.
+Guarded live-memory writes against the paired Slot 5 state moved only the two
+labels; the retained Current screenshot then matched the NUN5 footer.
 
 ## Side effects, callers, and negative results
 
 - The preview constructors create/configure the selected preview and carousel
   sprites from `MAPSEL1.CCS`; the patch changes only their atlas index source.
 - The draw dispatcher updates presentation objects and submits prompt sprites;
-  the patch changes only two X constants.
+  the patch changes four X constants: two exact donor copies for Random and
+  two effective-anchor adaptations for OK/Back.
 - Whole NUN5 `MAPSEL1.CCS` is necessary because picture association, models,
   UVs, and layout are coupled, but it is not sufficient: BTL still controls the
   preview index and bottom-prompt position.
@@ -111,9 +129,13 @@ offsets `0x61F40` and `0x61F64`. The other visible bottom prompts already match.
   reference and receive no additional edit.
 - A NUN5-only extra argument found near a generic position setter lies on a
   failure path, not the successful stage draw path, and is unrelated.
+- Copying the NUN5 regional-offset loads was rejected because their global
+  pointers are not ABI-compatible with NA2. The two effective constants are
+  the bounded equivalent and do not alter control flow.
 - No code cave, absolute jump, file growth, text change, or font change is used.
 
 Confidence is **high** for record topology, file/runtime mapping, both preview
-consumers, stage-name scale behavior, and the two prompt constants. The user
-compared the integrated Slot 3 result with NUN5 and accepted Stage Select as
-fixed on 2026-07-22.
+consumers, stage-name scale behavior, the Random constants, and the effective
+OK/Back anchors. The user compared the integrated stage layout with NUN5 and
+accepted it on 2026-07-22; the later paired Slot 5 footer proof independently
+verifies the two added anchor adaptations.

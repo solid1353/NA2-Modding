@@ -19,9 +19,11 @@ the right.
    guarded NUN5 proof. Slot 3 Collection Music is implemented once in its
    shared HOME action helper and matches the guarded NUN5 proof. Slot 4
    Character Select extends its existing shared footer patch with the same
-   effective NUN5 OK/Back anchors and matches the guarded runtime proof; Slot 5
-   remains. A newer paired slot 2 adds the Collection Characters OK/Back
-   footer after the current cases. Correct only the Cross and Triangle labels
+   effective NUN5 OK/Back anchors and matches the guarded runtime proof. Slot 5
+   Stage Select applies the same effective anchors at its separate BTL call
+   sites and now matches the guarded NUN5 proof. The original paired slots 1-5
+   are complete. Newer paired slot 1 and slot 2 cases add further Collection
+   footers after the current cases. Correct only the Cross and Triangle labels
    across the preserved screens as one shared subtask.
 
 ## Report grids

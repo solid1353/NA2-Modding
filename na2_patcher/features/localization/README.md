@@ -1067,17 +1067,23 @@ the former `mov.s f15,f14` becomes `lwc1 f14,4(v1)` so only horizontal scale
 receives the precomputed fit. The remaining 24 rectangle fields are copied from
 the hash-pinned NUN5 ELF table. Finally, the Random prompt and its companion
 sprite at `0x61F40` and `0x61F64` copy NUN5's exact X=`260` instructions in
-place of NA2's X=`300` instructions.
+place of NA2's X=`300` instructions. NUN5 positions OK and Back at effective
+X=`388`/`462` by applying regional `-12`/`-8` offsets to nominal
+X=`400`/`470`. NA2 lacks those additions, and the NUN5 global loads are not
+ABI-compatible with NA2, so two guarded same-register constants at
+`0x61EF8`/`0x61F1C` reproduce the effective donor behavior.
 
-The patch is 54 individually guarded edits: 24 rectangle rows copy NUN5's
+The patch is 56 individually guarded edits: 24 rectangle rows copy NUN5's
 English ELF table, 24 scale rows store the exact result of NUN5's width formula,
-two rows copy NUN5's prompt-position instructions, and four code rows adapt
-NA2's inline-record topology. A temporary application verified that all 24
+two rows copy NUN5's Random-position instructions, two rows adapt the effective
+NUN5 OK/Back anchors, and four code rows adapt NA2's inline-record topology. A
+temporary application verified that all 24
 stage keys remain unchanged and match NUN5, every rectangle equals the official
 English table, every scale equals the NUN5 formula, all changed bytes stay
 inside declared ranges, and the 2,237,184-byte BTL size is unchanged. The user
 then compared the integrated Slot 3 result with NUN5 and accepted Stage Select
-as fixed, promoting `UI-BTL-002` to `runtime_proven`.
+as fixed, promoting `UI-BTL-002` to `runtime_proven`. A later guarded paired
+Slot 5 capture proves the added OK/Back anchors match the NUN5 footer.
 
 ### UI-ELF-001: localized character-name atlas rectangles
 

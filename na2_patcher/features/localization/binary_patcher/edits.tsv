@@ -180,6 +180,8 @@ UI-BTL-002-03	UI-BTL-002	30	na2_btl	0x6157C	replace	4	C6730046		04006EC4								
 UI-BTL-002-04	UI-BTL-002	40	na2_btl	0x603B8	replace	4	0000448C		02210300									Recover the preview index as row_offset >> 4 instead of interpreting the repurposed scale word as an atlas index.
 UI-BTL-002-05	UI-BTL-002	50	na2_btl	0x61F40	copy	4	9643023C			nun5_btl	0x64C50	8243023C						Copy the exact NUN5 X=260 instruction for the Random prompt item.
 UI-BTL-002-06	UI-BTL-002	60	na2_btl	0x61F64	copy	4	9643023C			nun5_btl	0x64C78	8243023C						Copy the exact NUN5 X=260 instruction for the Random prompt companion sprite.
+UI-BTL-002-07	UI-BTL-002	70	na2_btl	0x61EF8	replace	4	C843023C		C243023C									Use X=388 for the Stage Select OK prompt, reproducing NUN5's effective 400-12 anchor where NA2 lacks the regional offset addition.
+UI-BTL-002-08	UI-BTL-002	80	na2_btl	0x61F1C	replace	4	EB43023C		E743023C									Use X=462 for the Stage Select Back prompt, reproducing NUN5's effective 470-8 anchor where NA2 lacks the regional offset addition.
 UI-BTL-002-S00	UI-BTL-002	100	na2_btl	0x20FC14	replace	4	00000000		4F236C3F									Store the NUN5-equivalent horizontal scale for stage row 0 (232px source width).
 UI-BTL-002-S01	UI-BTL-002	101	na2_btl	0x20FC24	replace	4	01000000		4F236C3F									Store the NUN5-equivalent horizontal scale for stage row 1 (232px source width).
 UI-BTL-002-S02	UI-BTL-002	102	na2_btl	0x20FC34	replace	4	02000000		6969493F									Store the NUN5-equivalent horizontal scale for stage row 2 (272px source width).

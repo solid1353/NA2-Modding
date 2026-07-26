@@ -412,7 +412,7 @@ class UiTextureTests(unittest.TestCase):
             gzip.decompress(result.original),
         )
 
-    def test_stage_layout_ports_both_index_consumers_and_nun5_prompt_x(self) -> None:
+    def test_stage_layout_ports_indices_and_nun5_prompt_anchors(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
@@ -433,6 +433,12 @@ class UiTextureTests(unittest.TestCase):
         random_companion = next(
             item for item in package.edits if item.edit_id == "UI-BTL-002-06"
         )
+        ok_prompt = next(
+            item for item in package.edits if item.edit_id == "UI-BTL-002-07"
+        )
+        back_prompt = next(
+            item for item in package.edits if item.edit_id == "UI-BTL-002-08"
+        )
 
         self.assertEqual(vertical.destination_offset, 0x61570)
         self.assertEqual(vertical.expected_hex, "00708244")
@@ -451,6 +457,12 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(random_companion.source_target_id, "nun5_btl")
         self.assertEqual(random_companion.source_offset, 0x64C78)
         self.assertEqual(random_companion.source_expected_hex, "8243023C")
+        self.assertEqual(ok_prompt.destination_offset, 0x61EF8)
+        self.assertEqual(ok_prompt.expected_hex, "C843023C")
+        self.assertEqual(ok_prompt.replacement_hex, "C243023C")
+        self.assertEqual(back_prompt.destination_offset, 0x61F1C)
+        self.assertEqual(back_prompt.expected_hex, "EB43023C")
+        self.assertEqual(back_prompt.replacement_hex, "E743023C")
 
     def test_ougi_import_replaces_two_part_layout_with_nun5_one_part_layout(self) -> None:
         result = self.result("ougi")
@@ -1704,14 +1716,14 @@ class UiTextureTests(unittest.TestCase):
             if edit.operation == "replace" and edit not in stage_scales
         ]
 
-        self.assertEqual(len(ui_edits), 281)
-        self.assertEqual(operations, {"copy": 99, "replace": 182})
+        self.assertEqual(len(ui_edits), 290)
+        self.assertEqual(operations, {"copy": 99, "replace": 191})
         self.assertEqual(
             copy_sources,
             {"nun5_elf": 64, "nun5_btl": 26, "nun5_etc": 9},
         )
         self.assertEqual(len(stage_scales), 24)
-        self.assertEqual(len(adaptations), 158)
+        self.assertEqual(len(adaptations), 167)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")

@@ -56,6 +56,9 @@
 
 - `Task coordinator` maintains the mapping between `TASKS.md` workstreams and
   Codex coordinator tasks. It does not select or execute workstream tasks.
+- Contact `Task coordinator` only for `actualize` or `actualize chats`
+  requests. Do not send it task-list edits, reports, implementation or policy
+  work, or ordinary coordination.
 - `actualize` or `actualize chats` means synchronize chats with live
   `AGENTS.md` and `TASKS.md`; it is unrelated to ISO/PNACH actualization.
 - Actualization may create missing coordinators without separate approval,

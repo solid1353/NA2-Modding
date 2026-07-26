@@ -4,20 +4,24 @@ File-backed changes to NA2's rendering behavior.
 
 ## ELF-R001: Native 16:9 horizontal scale
 
-The known-working PCSX2 widescreen patch for the current build writes
-`0x3F400000` (`0.75f`) to `0x00B0AA04`. Savestate pointer scans identify that
-address as offset `0x274` of the primary renderer reached through the global
-wrapper at `0x00609160`; its renderer pointer is stored at `0x0060919C`.
+Clean NA2 writes the horizontal and vertical scale fields of its persistent
+rendering state through `FUN_0010ECC0`. The original four-instruction routine
+stores caller-provided `f12` and `f13` at object offsets `0x274` and `0x278`.
 
-The absolute heap address changes whenever the resident-payload reservation
-changes. `ELF-R001` therefore patches the primary-wrapper initialization
-sequence at runtime address `0x001060D4` (ELF offset `0x61D4`). Immediately
-after `FUN_0010A1D0` returns, it loads the renderer from the stable wrapper
-pointer and stores `0x3F400000` at renderer offset `0x274`. Secondary rendering
-states and the vertical scale at `0x278` remain unchanged.
+The known-working PCSX2 widescreen patch overwrites the horizontal field after
+allocation with `0.75f`. Its absolute heap address changes whenever the
+resident-payload reservation changes. Changing only one constructor input was
+insufficient because later rendering-state updates can supply the original
+scale again.
 
-`ELF-R001` is runtime-proven and disabled by default. The emulator output
-aspect remains a separate PCSX2 setting.
+`ELF-R001` instead replaces `FUN_0010ECC0` at runtime address `0x0010ECC0`
+(ELF offset `0xEDC0`). It loads `0x3F400000`, stores it at `object + 0x274`,
+and preserves the caller-provided vertical scale at `object + 0x278` in the
+return instruction's delay slot. Every write therefore uses the live object
+pointer without depending on heap placement.
+
+This is the verified good-enough file-backed implementation. It affects every
+call through the shared rendering-state writer.
 
 ## Binary patcher
 

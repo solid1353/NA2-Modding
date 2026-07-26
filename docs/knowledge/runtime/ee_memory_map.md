@@ -108,11 +108,11 @@ Confidence is **high for this exact build identity**. The address is not a
 permanent game constant: recalculate and validate it whenever the linked
 resident-payload end changes.
 
-Verified rendering patch `ELF-R001` reproduces the same write without fixing
-the heap address in the patch. It modifies the primary-wrapper initialization
-sequence at boot-ELF offset `0x61D4`, follows the renderer pointer stored at
-`0x0060919C`, and writes `0.75f` to renderer offset `0x274`. It remains
-disabled by default.
+Rendering patch `ELF-R001` replaces the shared rendering-state writer at
+boot-ELF offset `0xEDC0`. It forces `0.75f` at object offset `0x274` through
+the live object pointer while preserving the caller-provided vertical scale at
+`0x278`. This is the verified good-enough file-backed implementation and
+affects every call through that writer.
 
 The clean ELF's first `PT_LOAD` begins at file offset `0x100`, maps at
 `0x00100000`, has file size `0x507380`, and has memory size `0x5B3F00`.

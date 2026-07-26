@@ -77,8 +77,8 @@ The current profile enables, in order:
    input, and UI binary patches.
 2. QoL: accepted startup, Practice, and mode-selection behavior.
 3. Battle logic: accepted battle-rule behavior.
-4. Rendering: a disabled primary-renderer 16:9 candidate retained for explicit
-   selection.
+4. Rendering: verified native 16:9 horizontal scaling through the shared
+   rendering-state writer.
 
 The profile's `identity.json` separately declares the equal-length
 `SLPS_258.37` to `SLOP_NA2.28` boot rename and the CP932 memory-card title.

@@ -49,6 +49,30 @@ until logical width, visible glyph bounds, advances, and centering are measured
 for the same strings. The historical m01 and semantic-palette experiments are
 negative evidence, not implementation parents.
 
+## Proposed replacement architecture — awaiting approval
+
+Keep the accepted font and the retained July autofit/layout implementation
+unchanged, with the old implementation remaining disabled. Add a new
+`localization.font.v2.*` path linked into `PRG/228.BIN`:
+
+1. One shared core owns NUN5-compatible measurement, spacing, shrink-only
+   fitting, wrapping, positioning, and renderer-state restoration.
+2. Guarded renderer hooks use that behavior only during an active call-local
+   layout session; unrelated text retains original NA2 behavior.
+3. Thin caller-family adapters supply their box dimensions and alignment while
+   NA2 continues drawing glyphs, tags, shadows, and icons.
+4. Original `SLPS`, `BTL`, and `ETC` files receive only guarded call-site hooks
+   and genuinely local static coordinates.
+5. Implement Controls first, then titles, confirmations, explanations/wrapping,
+   Save/Load, and the remaining proven caller families.
+6. Validate, commit, push, and obtain visual acceptance for each family before
+   beginning the next.
+
+User input is required only to approve this replacement plan, accept the clean
+post-reset baseline, and review each NUN5-left/Current-NA2-right result. Existing
+states are sufficient for Controls; request a new matched savestate pair only
+when a later family lacks adequate evidence.
+
 ## Accepted font implementation
 
 ### Make font identical to UN5 — accepted

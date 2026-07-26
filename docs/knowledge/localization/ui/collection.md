@@ -177,14 +177,85 @@ guarded task-owned Slot 2 savestate and hidden worker render moved both
 Collection-root prompt groups to the NUN5 positions. Image correlation found
 only a one-pixel X/Y difference, consistent with the known pulse timing.
 
-The byte-identical NA2 table at `0x2E7E0` is a genuine structural duplicate
-owned by `FUN_006b44b0`, but it is not the Slot 2 consumer. Patching only that
-table left the screen unchanged. Redirecting `FUN_006b44b0` through a
-draw-time offset wrapper also left Slot 2 unchanged under both recompiler and
-interpreter execution. Those two runtime-disproved paths are deliberately
-absent from the canonical patch. Whether later retained Collection cases
-consume the now-corrected `0x2F010` table is verified screen by screen rather
-than inferred from matching artwork.
+The byte-identical NA2 table at `0x2E7E0` is not the Slot 2 consumer. Patching
+it or redirecting its owner `FUN_006b44b0` therefore left Slot 2 unchanged
+under both recompiler and interpreter execution. That negative result is
+screen-specific: the later Slot 3 Music capture proves that the same HOME
+helper and table own a different shared action footer, documented below.
+
+## HOME action footer and localized state geometry
+
+Collection Music exposes a second shared footer implementation whose nominal
+table matches the Collection-root values but whose state behavior differs.
+The evidence uses clean, hash-pinned NA2 `ETC.BIN`
+`8FF3C6E1...02375C74`, official NUN5 `ETC.BIN`
+`BDB6BDA1...C5EA0778`, their maintained Ghidra exports, and guarded writes to
+the task-owned paired Slot 3 state.
+
+| Field | NA2 | NUN5 |
+| --- | --- | --- |
+| preserved helper | `FUN_006b44b0`, `[0x006B44B0,0x006B46B0)` | `FUN_006c7250`, `[0x006C7250,0x006C75E0)` |
+| prompt table file/load address | `0x2E7E0` / `0x006E26E0` | `0x28070` / `0x006EED70` |
+| nominal positions | `(380,360)`, `(460,360)` | `(380,360)`, `(460,360)` |
+| common compositor | `SUB_0037c980` | `SUB_0038bb10` |
+| state 1 effective X | `380` | `380-12=368` |
+| state 2 effective X | `380` | `380-44+56-(72/2)=356` |
+| state 3 effective X | `460` | `460-8=452` |
+
+The official NUN5 helper reads signed regional globals for states 1 and 3.
+State 2 instead asks the localized rectangle accessor for its 72-pixel width
+and centers the pair with `(x - 44 + 56) - width/2`. Its paired label position
+uses the same calculation plus the existing `-35` local offset, yielding
+`321`. NA2 has no language globals or rectangle accessors in this helper and
+calls its compositor at the unadjusted anchors; its label therefore starts at
+`380-35=345`.
+
+A practical reconstruction of the port is:
+
+```cpp
+void draw_home_action_prompt(HomePromptState state) {
+    float icon_x = state == CROSS ? 380.0f - 12.0f
+                 : state == PLAY  ? 380.0f - 24.0f
+                 : state == BACK  ? 460.0f - 8.0f
+                 : /* STOP */       original_x;
+    draw_common_prompt(icon_x, original_y, state);
+
+    if (state == PLAY) {
+        draw_label_at(380.0f - 59.0f, original_label_y);
+    }
+}
+```
+
+`UI-ELF-008` implements this once for every caller of the NA2 helper:
+
+- ETC file `0x30`, load address `0x006B3F30`: replace 16 zero padding bytes
+  retained in the loaded MWO3 image with a four-instruction wrapper. It moves
+  a caller-supplied float delta from `v1` to `f0`, adds it to `f12`, and
+  tail-calls NA2's existing compositor.
+- ETC file/load `0x6B0` / `0x006B45B0`: state 1 redirects through the wrapper
+  with `-12.0`.
+- ETC file/load `0x6D4` / `0x006B45D4`: state 2 redirects through the wrapper
+  with `-24.0`.
+- ETC file/load `0x738` / `0x006B4638`: state 3 redirects through the wrapper
+  with `-8.0`.
+- ETC file/load `0x2E7F0` / `0x006E26F0`: state 2 changes only its first
+  label-local X offset from `-35.0` to `-59.0`. The adjacent state-4 Stop
+  offset remains unchanged.
+
+The NUN5 helper code itself is not a safe byte donor: it calls different
+language accessors and reads build-specific GP-relative regional globals.
+The wrapper is therefore an authored ABI-preserving port of the verified NUN5
+arithmetic. The pristine zero range, all three call guards, and the data guard
+were confirmed in both the clean source and task-owned state. The guarded Slot
+3 render aligns Play and Back with the official NUN5 capture. Confidence is
+high for Slot 3 and the shared helper behavior; other retained screens that
+call it remain individually validated before acceptance.
+
+Useful negative result: changing only the nominal `0x2E7E0` table cannot
+express the helper's three distinct `-12`, `-24`, and `-8` state deltas. The
+earlier Slot 2 failure of this path proved only that Slot 2 uses
+`FUN_006c8290` and the separate `0x2F010` table; it did not disprove the HOME
+helper for its actual consumers.
 
 ## Character viewer lower-control renderer
 

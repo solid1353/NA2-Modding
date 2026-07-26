@@ -534,8 +534,8 @@ NA2's imported-atlas garbage selection `(194,195,20,20)`. Pulse-dependent
 placement is preserved. The user verified both integrated screens and accepted
 Command Menu and Command Chart as good.
 
-Canonical binary-package validation reports 7 targets, 9 groups, 88 patches,
-and 271 edits. The accepted isolated runtime result additionally copies the
+Canonical binary-package validation reports 7 targets, 9 groups, 101 patches,
+and 449 edits. The accepted isolated runtime result additionally copies the
 complete NUN5 OK/Back records, suppresses NA2's redundant separate glyph draws,
 and calibrates their NA2 anchors so both prompts match the NUN5 reference.
 The user's final paired visual inspection accepted Slot 4 as perfect on
@@ -548,9 +548,14 @@ transition behavior, and the Cross/Triangle-label batch. Within that batch,
 the Options-root Slot 1 caller now uses the proven effective NUN5 OK/Back
 anchors X=`388`/`462`. Collection-root Slot 2 uses its separate ETC position
 table with effective NUN5 anchors X=`368`/`452`; a guarded task-owned render
-matches the reference, while the byte-identical table at `0x2E7E0` and the
-HOME-helper wrapper were both runtime-disproved for this screen. Slots 3-5
-remain open. The rejected
+matches the reference. Collection Music Slot 3 uses the different shared HOME
+action helper: one guarded wrapper applies NUN5's state-specific Cross
+`-12`, Play `-24`, and Triangle `-8` geometry, and the Play label receives the
+same localized centering shift. Its task-owned render matches the reference.
+Slots 4-5 remain open. New paired slot-1 and slot-2 Collection footer cases are
+preserved under UI Translation inputs and queued after the current slots. The
+earlier Slot 2 failure of the `0x2E7E0` table/HOME helper remains evidence only
+that Collection root uses a separate renderer. The rejected
 rank-label Y-compensation trial and exact pixel/object evidence are preserved
 in `docs/knowledge/localization/ui/battle.md`; resume from texture/CLUT binding
 or cached GS-packet evidence rather than retrying screen-space constants. The

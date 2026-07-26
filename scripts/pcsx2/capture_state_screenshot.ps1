@@ -203,7 +203,7 @@ try {
             throw "Owned PCSX2 exited with code $($process.ExitCode)."
         }
         if (Test-Path -LiteralPath $log -PathType Leaf) {
-            $logText = Get-Content -Raw -LiteralPath $log
+            $logText = [string](Get-Content -Raw -LiteralPath $log)
             $stateLoaded = (
                 $logText.Contains('Loading SPU2') -and
                 $logText.Contains('Loading GS')

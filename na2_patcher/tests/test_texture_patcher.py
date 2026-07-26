@@ -1388,6 +1388,11 @@ class UiTextureTests(unittest.TestCase):
                 "UI-ELF-008-06",
                 "UI-ELF-008-07",
                 "UI-ELF-008-08",
+                "UI-ELF-008-09",
+                "UI-ELF-008-10",
+                "UI-ELF-008-11",
+                "UI-ELF-008-12",
+                "UI-ELF-008-13",
             ],
         )
         self.assertEqual(
@@ -1397,6 +1402,11 @@ class UiTextureTests(unittest.TestCase):
                 "copy",
                 "copy",
                 "copy",
+                "replace",
+                "replace",
+                "replace",
+                "replace",
+                "replace",
                 "replace",
                 "replace",
                 "replace",
@@ -1414,6 +1424,11 @@ class UiTextureTests(unittest.TestCase):
                 "na2_elf",
                 "na2_etc",
                 "na2_etc",
+                "na2_etc",
+                "na2_etc",
+                "na2_etc",
+                "na2_etc",
+                "na2_etc",
             ],
         )
         self.assertEqual(
@@ -1427,6 +1442,11 @@ class UiTextureTests(unittest.TestCase):
                 0x28C89C,
                 0x2F010,
                 0x2F018,
+                0x30,
+                0x6B0,
+                0x6D4,
+                0x738,
+                0x2E7F0,
             ],
         )
         self.assertEqual(
@@ -1440,15 +1460,48 @@ class UiTextureTests(unittest.TestCase):
                 "EB43023C",
                 "0000BE43",
                 "0000E643",
+                "00000000000000000000000000000000",
+                "60F20D0C00000000",
+                "60F20D0C00000000",
+                "60F20D0C00000000",
+                "00000CC2",
             ],
         )
         self.assertEqual(
             [item.source_target_id for item in edits],
-            ["nun5_elf", "nun5_elf", "nun5_elf", "nun5_elf", "", "", "", ""],
+            [
+                "nun5_elf",
+                "nun5_elf",
+                "nun5_elf",
+                "nun5_elf",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+            ],
         )
         self.assertEqual(
             [item.source_offset for item in edits],
-            [0x4DEA20, 0x4DEA10, 0x4DEA18, 0x4DEA00, None, None, None, None],
+            [
+                0x4DEA20,
+                0x4DEA10,
+                0x4DEA18,
+                0x4DEA00,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            ],
         )
         self.assertEqual(
             [item.source_expected_hex for item in edits],
@@ -1461,11 +1514,26 @@ class UiTextureTests(unittest.TestCase):
                 "",
                 "",
                 "",
+                "",
+                "",
+                "",
+                "",
+                "",
             ],
         )
         self.assertEqual(
-            [item.replacement_hex for item in edits[-4:]],
-            ["C243023C", "E743023C", "0000B843", "0000E243"],
+            [item.replacement_hex for item in edits[-9:]],
+            [
+                "C243023C",
+                "E743023C",
+                "0000B843",
+                "0000E243",
+                "000083440063004660F20D0800000000",
+                "CCCF1A0C40C1033C",
+                "CCCF1A0CC0C1033C",
+                "CCCF1A0C00C1033C",
+                "00006CC2",
+            ],
         )
 
     def test_shared_options_select_anchors_are_exact_nun5_copies(self) -> None:

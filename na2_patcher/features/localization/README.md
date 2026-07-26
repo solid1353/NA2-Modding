@@ -1637,10 +1637,19 @@ offsets `0x2F010`/`0x2F018`; NUN5 homolog `FUN_006dbaa0` reads the same nominal
 values and applies the same regional `-12`/`-8` offsets before drawing.
 Because the donor table itself is byte-identical, two authored ETC adaptations
 store the equivalent effective X=`368`/`452` values in NA2. A guarded
-task-owned Slot 2 render matches the NUN5 Collection-root footer. The
-byte-identical table at NA2 ETC `0x2E7E0` belongs to a different HOME helper;
-patching it and redirecting that helper left Slot 2 unchanged, so neither
-disproved path is part of the canonical implementation.
+task-owned Slot 2 render matches the NUN5 Collection-root footer.
+
+Collection Music uses the different HOME action helper `FUN_006b44b0` and the
+nominal table at ETC `0x2E7E0`. NUN5 homolog `FUN_006c7250` applies
+state-specific localized geometry: Cross `-12`, width-derived Play `-24`, and
+Triangle `-8`. Its GP-relative regional globals and language accessors are not
+ABI-compatible with NA2, so `UI-ELF-008` ports the arithmetic through one
+four-instruction tail-call wrapper in load-preserved MWO3 header padding,
+redirects the helper's three compositor calls, and changes only the Play
+label's local X offset from `-35` to `-59`. A guarded task-owned Slot 3 render
+matches the NUN5 Play/Back anchors. The earlier Slot 2 failure of this helper
+remains useful evidence that the two Collection footer families are distinct,
+not evidence against the helper's actual HOME consumers.
 
 Exact mappings, reconstruction, side effects, and runtime evidence are
 preserved in `docs/knowledge/localization/ui/options.md`,

@@ -108,9 +108,5 @@ Confidence is **verified**. The address mapping, clean-binary guards,
 homologous copy loops, exact donor-table difference, task-owned runtime render,
 and final user acceptance all agree.
 
-## Intentional exclusion
-
-Remaining UI differences inside the Shop minigame are intentionally not fixed.
-The minigame is a rare, arbitrary side feature and does not justify further
-localization work. This exclusion does not apply to the localized Shop-screen
-labels and placement corrections documented above.
+The Shop's cross-workstream completion status is recorded in the
+[Localization knowledge overview](../README.md).

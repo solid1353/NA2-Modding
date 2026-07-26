@@ -2,6 +2,10 @@
 
 Umbrella workstream for tasks from Font, UI Translation, and String Translation.
 
+## Documents
+
+- [Cross-workstream localization knowledge](../../knowledge/localization/README.md)
+
 ## Workstream policy
 
 - The Localization coordinator may take any user-selected task from the Font, UI Translation, or String Translation workstreams.

@@ -62,14 +62,14 @@ class IntegratedExternalStringTests(unittest.TestCase):
     def test_shared_builder_produces_the_exact_fit_derived_228_binary(self) -> None:
         mod = self.build.payload
         self.assertEqual(self.build.output_path, "PRG/228.BIN")
-        self.assertEqual(len(mod), 0x710)
+        self.assertEqual(len(mod), 0x700)
         self.assertEqual(
             binary_patcher.data_sha256(mod),
-            "C3087793BD470941BC8371C758116A88D14B87E22F7AA0EB56B6EA02181C4C85",
+            "02EB721CEBAA169B2FD7AEA9F8EFF60594EAE09F6347A3BF79E4FFE420237988",
         )
         self.assertEqual(
             struct.unpack_from("<4s7I", mod, 0),
-            (b"MWo3", 8, 0x008F3D00, 0x40, 0x6C0, 0, 0x008F4410, 0x008F4410),
+            (b"MWo3", 8, 0x008F3D00, 0x40, 0x6B0, 0, 0x008F4400, 0x008F4400),
         )
         self.assertEqual(mod[0x20:0x28], b"228.bin\0")
         self.assertEqual(struct.unpack_from("<II", mod, 0x40), (0x03E00008, 0))
@@ -81,13 +81,13 @@ class IntegratedExternalStringTests(unittest.TestCase):
         self.assertTrue(all(patch.kind == "redirect_pointer" for patch in self.resolved))
         self.assertEqual(self.plan.summary["external_mappings"], 33)
         self.assertEqual(self.plan.summary["external_binary_edits"], 35)
-        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2291)
+        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2309)
 
     def test_pool_contains_only_referenced_strings_and_deduplicates_one_pair(self) -> None:
         summary = self.plan.summary["external_strings"]
         self.assertEqual(summary["count"], 31)
         self.assertEqual(summary["distinct"], 30)
-        self.assertEqual(summary["encoded_bytes"], 1490)
+        self.assertEqual(summary["encoded_bytes"], 1475)
         self.assertEqual(summary["derived"], 3)
         rows = {row["mapping_id"]: row for row in summary["rows"]}
         self.assertEqual(rows["T364"]["runtime_address"], rows["T117"]["runtime_address"])
@@ -128,6 +128,53 @@ class IntegratedExternalStringTests(unittest.TestCase):
         payload_text = self.build.payload.decode("cp1252", "ignore")
         self.assertIn("Narutimate Accel v2.28", payload_text)
         self.assertNotIn("Naruto Shippuden: Ultimate Ninja 5", payload_text)
+
+    def test_parent_messages_preserve_the_original_nul_fragment_layout(self) -> None:
+        payload_by_symbol = {
+            fragment.symbol: fragment.payload
+            for fragment in self.draft.external_draft.fragments
+        }
+        rows = {
+            str(row["mapping_id"]): row
+            for row in self.draft.external_draft.rows
+        }
+        families = {
+            "T2011": ("T2011", "T2041", "T2042"),
+            "T2043": ("T2043", "T2044", "T2045"),
+            "T2048": ("T2048", "T2049", "T2050"),
+        }
+        for parent_id, member_ids in families.items():
+            expected = (
+                b"".join(
+                    self.draft.translation_plan.resolved_texts[mapping_id].encode(
+                        "cp1252"
+                    )
+                    + b"\0"
+                    for mapping_id in member_ids
+                )
+                + b"\0"
+            )
+            symbol = f"localization.string_patcher.string.{parent_id}"
+            self.assertEqual(payload_by_symbol[symbol], expected)
+            self.assertEqual(expected.count(b"\0"), 4)
+            self.assertEqual(
+                rows[parent_id]["materialization"],
+                "packed_structured_family",
+            )
+
+    def test_ninja_song_positional_donors_preserve_printf_slots(self) -> None:
+        mappings = {
+            str(row["id"]): row for row in self.draft.translation_plan.text_mappings
+        }
+        for mapping_id in ("T87", "T88", "T92", "T94", "T95", "T96"):
+            row = mappings[mapping_id]
+            adapted = translation_importer.adapt_source_markup(
+                self.draft.translation_plan.resolved_texts[mapping_id],
+                str(row["source"]),
+                mapping_id,
+            )
+            self.assertNotIn("%1", adapted)
+            self.assertEqual(adapted.count("%s"), 1)
 
     def test_full_replacement_is_inline_when_it_fits_despite_reference_inventory(self) -> None:
         self.assertNotIn("T65", self.draft.external_draft.excluded_mapping_ids)
@@ -172,7 +219,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
             )
 
     def test_canonical_rows_derive_translation_and_placement_state(self) -> None:
-        self.assertEqual(len(self.import_plan.text_mappings), 2052)
+        self.assertEqual(len(self.import_plan.text_mappings), 2071)
         self.assertTrue(
             all(row["mode"] in {"slot", "sequence"} for row in self.import_plan.text_mappings)
         )
@@ -184,7 +231,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
         ]
         self.assertEqual(
             [str(row["id"]) for row in override_rows],
-            ["T2027", "T2033"],
+            ["T30", "T1958", "T2027", "T2033"],
         )
         self.assertEqual(
             self.import_plan.resolved_texts["T2027"],

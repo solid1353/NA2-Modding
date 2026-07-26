@@ -94,6 +94,24 @@ T94	1	Battle Results > Ninja Song objective or bonus	<r特殊連係攻撃|とく
 T95	1	Battle Results > Ninja Song objective or bonus	<r連係忍術|れんけいにんじゅつ>%sHitボーナス	%1 hit linked Jutsu bonus			seen:savestates-091-099	NA2_BTL@0x1E5B30	NUN5_TEXTENG@0x104F0	slot	48				
 T96	1	Battle Results > Ninja Song objective or bonus	<r連係奥義|れんけいおうぎ>%sHitボーナス	%1 hit linked Ultimate Jutsu bonus			seen:savestates-091-099	NA2_BTL@0x1E5B60	NUN5_TEXTENG@0x10510	slot	48				
 T97	1	Battle Results > Ninja Song objective or bonus	カウント	timer counts			seen:savestates-091-099	NA2_BTL@0x1E5BC0	NUN5_TEXTENG@0x10538	slot	16				
+T2174	1	Battle Results > Ninja Song objective or bonus	　　壱	 1			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504CC0	NUN5_SLES@0x512070	slot	8				
+T2175	1	Battle Results > Ninja Song objective or bonus	　　弐	 2			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504CC8	NUN5_SLES@0x512074	slot	8				
+T2176	1	Battle Results > Ninja Song objective or bonus	　　参	 3			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504CD0	NUN5_SLES@0x512078	slot	8				
+T2177	1	Battle Results > Ninja Song objective or bonus	　　四	 4			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504CD8	NUN5_SLES@0x51207C	slot	8				
+T2178	1	Battle Results > Ninja Song objective or bonus	　　五	 5			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504CE0	NUN5_SLES@0x512080	slot	8				
+T2179	1	Battle Results > Ninja Song objective or bonus	　　六	 6			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504CE8	NUN5_SLES@0x512084	slot	8				
+T2180	1	Battle Results > Ninja Song objective or bonus	　　七	 7			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504CF0	NUN5_SLES@0x512088	slot	8				
+T2181	1	Battle Results > Ninja Song objective or bonus	　　八	 8			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504CF8	NUN5_SLES@0x51208C	slot	8				
+T2182	1	Battle Results > Ninja Song objective or bonus	　　九	 9			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504D00	NUN5_SLES@0x512090	slot	8				
+T2183	1	Battle Results > Ninja Song objective or bonus	　　十	10			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504D08	NUN5_SLES@0x512094	slot	8				
+T2184	1	Battle Results > Ninja Song objective or bonus	　十一	11			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504D10	NUN5_SLES@0x512098	slot	8				
+T2185	1	Battle Results > Ninja Song objective or bonus	　十二	12			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504D18	NUN5_SLES@0x51209C	slot	8				
+T2186	1	Battle Results > Ninja Song objective or bonus	　十三	13			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504D20	NUN5_SLES@0x5120A0	slot	8				
+T2187	1	Battle Results > Ninja Song objective or bonus	　十四	14			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504D28	NUN5_SLES@0x5120A4	slot	8				
+T2188	1	Battle Results > Ninja Song objective or bonus	　十五	15			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504D30	NUN5_SLES@0x5120A8	slot	8				
+T2189	1	Battle Results > Ninja Song objective or bonus	　十六	16			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504D38	NUN5_SLES@0x5120AC	slot	8				
+T2190	1	Battle Results > Ninja Song objective or bonus	なし	N/A			seen:ss1-4-paired-Ninja-Song	NA2_SLPS@0x504DB0	NUN5_SLES@0x514308	slot	8				
+T2191	1	Battle Results > Ninja Song objective or bonus	<r発|はつ>	times			seen:ss2-paired-Ninja-Song	NA2_BTL@0x1E5BB0	NUN5_SLES@0x514310	slot	16				
 T98	1	Character menus > Ultimate Jutsu name	<r朝孔雀|あさくじゃく>	Morning Peacock			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26180	NUN5_TEXTENG@0x33B0	slot	24				
 T99	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r影縫|かげぬ>い	Ninja Art: Shadow Sew			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26210	NUN5_TEXTENG@0x3410	slot	40				
 T100	1	Character menus > Ultimate Jutsu name	<r部分倍化|ぶぶんばいか>の<r術|じゅつ>	Partial Expansion Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x262C0	NUN5_TEXTENG@0x3490	slot	40				

@@ -136,6 +136,55 @@ def _materialized_strings(
         row.parent_mapping_id or row.mapping_id for row in active_references
     }
 
+    def structured_family_payload(parent_id: str) -> bytes:
+        parent = text_by_id[parent_id]
+        donor_ref = str(parent["donor_ref"])
+        target = str(parent["target"])
+        family = sorted(
+            (
+                row
+                for row in translation_plan.text_mappings
+                if str(row["donor_ref"]) == donor_ref
+                and str(row["target"]) == target
+                and str(row["transform"]) in {"split_br", "join_br_parts"}
+            ),
+            key=lambda row: int(row["target_offset"]),
+        )
+        if not family or str(family[0]["id"]) != parent_id:
+            raise ValueError(
+                f"{parent_id}: parent must be the first structured-message slot"
+            )
+        expected_offset = int(parent["target_offset"])
+        fragments: list[bytes] = []
+        for member in family:
+            member_id = str(member["id"])
+            offset = int(member["target_offset"])
+            capacity = int(member["capacity"])
+            if offset != expected_offset:
+                raise ValueError(
+                    f"{parent_id}: structured-message slots are not contiguous "
+                    f"at {member_id}"
+                )
+            target_text, _ = translation_importer.read_target_slot(
+                translation_plan.clean_targets[target],
+                offset,
+                capacity,
+                member_id,
+            )
+            translation_importer.validate_declared_source(
+                str(member["source"]),
+                target_text,
+                member_id,
+            )
+            text = translation_importer.adapt_source_markup(
+                translation_plan.resolved_texts[member_id],
+                target_text,
+                member_id,
+            )
+            fragments.append(text.encode("cp1252"))
+            expected_offset = offset + capacity
+        return b"".join(fragment + b"\0" for fragment in fragments) + b"\0"
+
     encoded_by_symbol: dict[str, bytes] = {}
     symbol_by_mapping: dict[str, str] = {}
     symbol_by_payload: dict[bytes, str] = {}
@@ -143,24 +192,24 @@ def _materialized_strings(
     for mapping_id in sorted(effective_ids):
         mapping = text_by_id[mapping_id]
         if mapping_id in parent_ids:
-            text = translation_plan.materialized_templates[mapping_id]
-            materialization = "packed_policy_template"
+            encoded = structured_family_payload(mapping_id)
+            materialization = "packed_structured_family"
         else:
             text = translation_plan.resolved_texts[mapping_id]
             materialization = (
                 "packed_derived" if str(mapping["transform"]) else "packed_replacement"
             )
-        target = str(mapping["target"])
-        target_text, _ = translation_importer.read_target_slot(
-            translation_plan.clean_targets[target],
-            int(mapping["target_offset"]),
-            int(mapping["capacity"]),
-            mapping_id,
-        )
-        text = translation_importer.adapt_source_markup(
-            text, target_text, mapping_id
-        )
-        encoded = text.encode("cp1252") + b"\0"
+            target = str(mapping["target"])
+            target_text, _ = translation_importer.read_target_slot(
+                translation_plan.clean_targets[target],
+                int(mapping["target_offset"]),
+                int(mapping["capacity"]),
+                mapping_id,
+            )
+            text = translation_importer.adapt_source_markup(
+                text, target_text, mapping_id
+            )
+            encoded = text.encode("cp1252") + b"\0"
         symbol = symbol_by_payload.get(encoded)
         if symbol is None:
             symbol = f"{owner}.string.{mapping_id}"

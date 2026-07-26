@@ -25,8 +25,13 @@ active profile.
 
 The importer supplies replacement message families only after proving complete
 `<br>`-part coverage. When a family member overflows, the patcher materializes
-the complete parent template once and redirects the validated parent/message
+the complete parent family once and redirects the validated parent/message
 pointer rather than linking an isolated line beside unrelated payload data.
+Each transformed source slot remains a separate NUL-terminated fragment in
+original offset order, followed by an empty terminator; only line breaks that
+belong inside one source slot remain `<br>`. This preserves NA2's multi-slot
+message traversal and prevents it from falling through into the next payload
+fragment.
 
 ## Invokes
 

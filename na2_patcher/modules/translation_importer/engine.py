@@ -47,6 +47,11 @@ VALID_MODES = {"slot", "sequence"}
 DISPLAY_BASIS_PREFIXES = ("seen:", "inferred:", "character:")
 PLACEHOLDER_TEXT = frozenset({"unknown", "placeholder", "dummy", "test", "todo", "temp"})
 IDENTIFIER_TEXT = re.compile(r"[a-z][a-z0-9_./-]{3,}\Z")
+POSITIONAL_FORMAT_TOKEN = re.compile(r"%([1-9][0-9]*)")
+PRINTF_FORMAT_TOKEN = re.compile(
+    r"%(?!%)(?:[-+ #0]*)(?:[0-9]+|\*)?(?:\.(?:[0-9]+|\*))?"
+    r"(?:hh|h|ll|l|j|z|t|L)?[diuoxXfFeEgGaAcspn]"
+)
 VALID_TRANSFORMS = {
     "",
     "empty",
@@ -695,6 +700,24 @@ def read_target_slot(data: bytes, offset: int, capacity: int, label: str) -> tup
 
 def adapt_source_markup(source_text: str, target_text: str, label: str) -> str:
     adapted = source_text
+    positional_tokens = tuple(POSITIONAL_FORMAT_TOKEN.finditer(adapted))
+    if positional_tokens:
+        printf_tokens = tuple(
+            match.group(0) for match in PRINTF_FORMAT_TOKEN.finditer(target_text)
+        )
+        indexes = tuple(int(match.group(1)) for match in positional_tokens)
+        if (
+            sorted(set(indexes)) != list(range(1, len(printf_tokens) + 1))
+            or len(indexes) != len(printf_tokens)
+        ):
+            raise ValueError(
+                f"{label}: donor positional placeholders do not match "
+                f"the target printf placeholders"
+            )
+        adapted = POSITIONAL_FORMAT_TOKEN.sub(
+            lambda match: printf_tokens[int(match.group(1)) - 1],
+            adapted,
+        )
     for source_tag, candidates in NAMED_COLOR_TAG_EQUIVALENTS.items():
         if source_tag not in adapted:
             continue

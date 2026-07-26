@@ -21,9 +21,10 @@ validate the exact clean source bytes, but ignore all donor/translation fields.
 Canonical `mappings.tsv` contains the completed screenshot-confirmed rebuild
 plus the explicit character-family exception. Its cumulative first two passes
 contribute 752 rows, the verified 74-table Command Chart family contributes
-another 1,041, and the missing-row audit adds 260 policy-supported rows—53
-directly seen, 10 structurally inferred, and 197 character-family rows—for
-2,053 enabled rows. T2042, T2045, and T2050 use parents in the canonical `T#`
+another 1,041, the missing-row audit adds 260 policy-supported rows—53 directly
+seen, 10 structurally inferred, and 197 character-family rows—and the paired
+Ninja Song ss1–4 pass adds 18 displayed numeric/status fields, for 2,071
+enabled rows. T2042, T2045, and T2050 use parents in the canonical `T#`
 namespace. Paired screenshots independently correct T1956 to `Off`, T1957 to
 `On`, T2158 to `Warning`, T637 to `Hidden Leaf Village`, T638 to `Hidden Leaf
 Gate`, T744 to `Faint Unease`, and T767 to `Silent Confidence`. Six
@@ -44,7 +45,10 @@ The official `donor` is the default executable translation. User-authored
 `prefix` is prepended to the resolved text, while a nonempty user-authored
 `replacement` overrides the donor before transforms are applied. The importer
 normalizes fullwidth ASCII-compatible characters in resolved output while
-preserving exact CP932 source guards.
+preserving exact CP932 source guards. When an official donor uses positional
+tokens such as `%1` for a clean NA2 runtime-format string, the importer
+preserves the corresponding guarded `printf` token such as `%s`; captured
+runtime values are never embedded into the translation.
 
 It does not choose inline versus external placement and does not write game
 payloads. Canonical rows store pointer sites as combined `reference_refs` and

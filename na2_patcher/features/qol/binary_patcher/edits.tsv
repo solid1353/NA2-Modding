@@ -2,7 +2,7 @@ edit_id	patch_id	order	destination_target_id	destination_offset	operation	length
 ELF-Q001-01	ELF-Q001	10	slps_258_37	0xDE868	replace	4	DCCB83A7		DCCB84A7									Skip CC2 intro.
 ELF-Q001-02	ELF-Q005	20	slps_258_37	0xDE8C4	replace	4	02000424		07000010									Skip opening.
 ELF-Q002-01	ELF-Q002	10	slps_258_37	0xE7C30	replace	4	2530C700		00000000									Voice off by default.
-ELF-Q002-02	ELF-Q006	20	slps_258_37	0xE7C7C	replace	4	0B0085A0		00000000									Support off by default.
-ELF-Q002-03	ELF-Q007	30	slps_258_37	0xE7B9C	replace	4	00008790		00000000									Command display off by default.
+ELF-Q002-02	ELF-Q006	20	slps_258_37	0xE7C7C	replace	4	0B0085A0		0B0080A0									Force support off instead of leaving the previous settings-block value unchanged.
+ELF-Q002-03	ELF-Q007	30	slps_258_37	0xE7B94	replace	4	25186600		00000000									Force command display off while preserving the following settings-field reload.
 ELF-Q003-01	ELF-Q003	10	slps_258_37	0xE7BAC	replace	4	25186600		00000000									Simple display off by default.
 ELF-Q004-01	ELF-Q004	10	slps_258_37	0x4D52D0	replace	4	04000000		FFFFFFFF									Mark only the Adventure Mode Select entry unavailable, matching NUN6's filtered-carousel behavior.

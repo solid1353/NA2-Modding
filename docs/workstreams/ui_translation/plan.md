@@ -547,12 +547,11 @@ The user's final paired visual inspection accepted Slot 4 as perfect on
 2026-07-22; Slots 5 and 6 remain runtime-proven. The accepted Slot 4 savestate
 pair and active mismatch-list entry were then removed under workstream policy.
 
-The remaining maintained mismatch list contains only Collection Music ss10.
-Its Triangle/Stop correction is implemented and agent-validated, but remains
-awaiting explicit user verification. The patch copies NUN5's exact
-`(144,48,76,24)` Stop record, applies the homologous state-4 compositor delta
-`-2`, and changes the Stop-label local X offset from `-35` to `-40`;
-Cross/Play remains unchanged and matched. Battle Results
+No maintained mismatch remains in the declared remaining-UI epic. The user
+accepted Collection Music ss10 on 2026-07-27 after its patch copied NUN5's
+exact `(144,48,76,24)` Stop record, applied the homologous state-4 compositor
+delta `-2`, and changed the Stop-label local X offset from `-35` to `-40`;
+Cross/Play remained unchanged and matched. Battle Results
 screen 2, Ninja Song details ss8, Victory ss7 all-character donor coverage,
 Character Items transition behavior, and the Cross/Triangle-label batch are
 user-accepted.

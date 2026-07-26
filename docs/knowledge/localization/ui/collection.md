@@ -267,9 +267,9 @@ verified from the owned paired state, live NUN5 English regional offsets
 `-12`/`-8`, live 64-pixel Triangle and 76-pixel Stop records, and the bounded
 homologous helper disassembly. A guarded task-owned runtime state with the
 three exact canonical edits renders the complete Triangle/Stop group at the
-NUN5 footer anchor while leaving Cross/Play unchanged. It remains awaiting
-explicit user verification. Confidence is high for the shared helper
-arithmetic.
+NUN5 footer anchor while leaving Cross/Play unchanged. The user explicitly
+accepted that final ss10 comparison on 2026-07-27. Confidence is high for the
+shared helper arithmetic.
 
 Useful negative result: changing only the nominal `0x2E7E0` table cannot
 express the helper's three distinct `-12`, `-24`, and `-8` state deltas. The

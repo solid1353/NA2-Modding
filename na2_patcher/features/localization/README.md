@@ -1664,8 +1664,8 @@ calls use exact deltas `-12`, `-24`, `-8`, and `-2`; the Play and Stop labels
 use local X offsets `-59` and `-40`. State 4 also copies the exact NUN5
 `(144,48,76,24)` Stop rectangle. A guarded task-owned Slot 3 render matches
 the NUN5 Play/Back anchors. A guarded task-owned ss10 render also matches the
-NUN5 Triangle/Stop anchor and preserves the matched Cross/Play group; explicit
-user verification remains. The earlier
+NUN5 Triangle/Stop anchor and preserves the matched Cross/Play group; the user
+explicitly accepted that final comparison on 2026-07-27. The earlier
 Slot 2 failure of this helper remains useful evidence that the two Collection
 footer families are distinct, not evidence against the helper's actual HOME
 consumers.

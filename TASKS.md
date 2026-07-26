@@ -9,11 +9,13 @@
 ### [Font](docs/workstreams/font/README.md)
 - [Investigate](work/__sstates/translation/font)
     * Implement proper autofit/positions everywhere.
-    * Change SJIS numbers to ASCII.
+    * Ninja Song: change SJIS numbers to ASCII.
+    * Load/Save Modal: change datetime format to EU.
 
 ### [UI Translation](docs/workstreams/ui_translation/README.md)
 - [Investigate](work/__sstates/translation/UI)
     * Deal with remaining issues (items, awakenings, etc.).
+    * Document shop minigame and UJ prompts as intentionally not fixed.
 
 ### [String Translation](docs/workstreams/string_translation/README.md)
 - [Investigate](work/__sstates/translation/strings)

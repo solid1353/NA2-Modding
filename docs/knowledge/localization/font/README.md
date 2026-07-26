@@ -167,22 +167,26 @@ through ASCII formatted output. The first implementation stage therefore
 changes only the six guarded call blocks at ELF file offsets `0xE660C`,
 `0xE6650`, `0xE6694`, `0xE67A4`, `0xE67E8`, and `0xE682C` to call NA2's
 existing `sprintf` at runtime `0x0017BCA0`. Existing immutable format strings
-`%d`, `%02d`, and `%03d` preserve NA2's current field widths. The
+`%d` and `%02d` preserve the date, minute, and second widths. The hour call
+uses `%02d` and reproduces NUN5's signed `hour < 100 ? hour : 99` cap inside
+the same guarded 28-byte call block. The
 Save/Load-only fullwidth colon at ELF file offset `0x503134` becomes ASCII
 colon.
 
-This call-local stage deliberately preserves `YYYY/MM/DD`, the three-digit
-hour field, timer divisors `108000`, `1800`, and `30`, and every formatter
-caller outside `FUN_001e6370`. Date reordering, hour-width changes, and visual
-positioning remain separate reviewable stages. The deterministic generator is
+This call-local stage deliberately preserves `YYYY/MM/DD`, timer divisors
+`108000`, `1800`, and `30`, and every formatter caller outside
+`FUN_001e6370`. The ASCII conversion is runtime-proven; the later NUN5
+two-digit hour and 99-hour cap are statically verified and await runtime
+confirmation. Date reordering and visual positioning remain separate
+reviewable stages. The deterministic generator is
 `scripts/research/localization/generate_save_load_ascii_digits.py`.
 
 The isolated worker build retained at
 `work/Font/build/save-load-ascii-digits.iso` has boot CRC `F9FC3002`. After a
 clean manual launch in the Font-owned PCSX2 copy, the user confirmed that the
 Save/Load date and Play Time fields render correctly as ASCII. The patch is
-therefore `runtime_proven`; no date-order, width, timer, or positioning change
-was included in that acceptance.
+therefore proven for its original ASCII-conversion stage; no date-order,
+width, timer, or positioning change was included in that acceptance.
 
 Controls retains full-width `Linked Attack`, fits the official 19-byte
 `Ultimate Jutsu Prep` probe through the shared NUN5 logical-width helper,

@@ -33,6 +33,7 @@ SPRINTF = 0x0017BCA0
 BUFFER_OFFSET = 0x90
 
 ZERO = 0
+AT = 1
 V1 = 3
 A0 = 4
 A1 = 5
@@ -44,7 +45,7 @@ SP = 29
 
 FORMAT_D = 0x006042D3
 FORMAT_02D = 0x00605C20
-FORMAT_03D = 0x00605DA0
+NUN5_MAX_HOURS = 99
 
 
 @dataclass(frozen=True)
@@ -56,6 +57,7 @@ class CallSite:
     value_word: int
     format_address: int
     label: str
+    maximum: int | None = None
 
 
 CALL_SITES = (
@@ -92,8 +94,9 @@ CALL_SITES = (
         0x0E67A4,
         "2D2000002D28A002030006249000A7270200082444E10D0C00000000",
         mips.r_type(S5, ZERO, A2, 0x2D),
-        FORMAT_03D,
+        FORMAT_02D,
         "hour",
+        NUN5_MAX_HOURS,
     ),
     CallSite(
         "font_save_load_ascii_digits_05",
@@ -120,13 +123,26 @@ def build_call(site: CallSite) -> bytes:
     high = site.format_address >> 16
     low = site.format_address & 0xFFFF
     assembler = mips.Assembler()
-    assembler.emit(site.value_word)
-    assembler.emit(mips.i_type(0x09, SP, A0, BUFFER_OFFSET))
-    assembler.emit(mips.i_type(0x0F, ZERO, A1, high))
-    assembler.emit(mips.i_type(0x09, A1, A1, low))
-    assembler.emit(0)
-    assembler.emit(mips.jump(0x03, SPRINTF))
-    assembler.emit(0)
+    if site.maximum is None:
+        assembler.emit(site.value_word)
+        assembler.emit(mips.i_type(0x09, SP, A0, BUFFER_OFFSET))
+        assembler.emit(mips.i_type(0x0F, ZERO, A1, high))
+        assembler.emit(mips.i_type(0x09, A1, A1, low))
+        assembler.emit(0)
+        assembler.emit(mips.jump(0x03, SPRINTF))
+        assembler.emit(0)
+    else:
+        if site.maximum != NUN5_MAX_HOURS:
+            raise AssertionError(f"unsupported Save/Load cap: {site.maximum}")
+        # Match NUN5's signed `hour < 100 ? hour : 99` behavior without
+        # growing the guarded 28-byte call block.
+        assembler.emit(mips.i_type(0x0A, S5, AT, site.maximum + 1))
+        assembler.emit(mips.i_type(0x09, ZERO, A2, site.maximum))
+        assembler.emit(mips.r_type(S5, AT, A2, 0x0B))
+        assembler.emit(mips.i_type(0x09, SP, A0, BUFFER_OFFSET))
+        assembler.emit(mips.i_type(0x0F, ZERO, A1, high))
+        assembler.emit(mips.jump(0x03, SPRINTF))
+        assembler.emit(mips.i_type(0x09, A1, A1, low))
     payload, relocations = assembler.build()
     if relocations:
         raise AssertionError("fixed-address Save/Load call emitted relocations")
@@ -146,9 +162,17 @@ def generated_edits() -> list[dict[str, object]]:
             "expected_hex": site.expected_hex,
             "replacement_hex": build_call(site).hex().upper(),
             "reason": (
-                f"Format the Save/Load {site.label} through NA2's existing "
-                "ASCII sprintf while preserving the original field width, "
-                "value, order, and timer math."
+                (
+                    "Format the Save/Load hour through NA2's existing ASCII "
+                    "sprintf with NUN5's two-digit field and 99-hour cap while "
+                    "preserving field order and timer math."
+                )
+                if site.maximum is not None
+                else (
+                    f"Format the Save/Load {site.label} through NA2's existing "
+                    "ASCII sprintf while preserving the original field width, "
+                    "value, order, and timer math."
+                )
             ),
         }
         for site in CALL_SITES
@@ -189,7 +213,6 @@ def verify_source() -> Path:
     for address, expected in (
         (FORMAT_D, b"%d\0"),
         (FORMAT_02D, b"%02d\0"),
-        (FORMAT_03D, b"%03d\0"),
     ):
         offset = address - 0x000FFF00
         actual = data[offset : offset + len(expected)]

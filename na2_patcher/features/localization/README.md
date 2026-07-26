@@ -1854,7 +1854,8 @@ user-directed stage-by-stage reimplementation:
 - `font_save_load_ascii_digits` replaces only the six fullwidth numeric-format
   calls in the Save/Load row renderer with NA2's existing ASCII `sprintf` and
   changes its two time separators to ASCII colon. It preserves NA2's current
-  date order, field widths, timer math, and all unrelated numeric callers.
+  date order, timer math, and all unrelated numeric callers while matching
+  NUN5's two-digit hour display and 99-hour cap.
 - Retained, default-disabled `font_layout_wrappers` ports shared selected/unselected confirmation-choice
   placement, the 216-unit Practice pause-list fit and Y origin, Practice and
   Collection confirmation-body alignment, and the character-return body's

@@ -21,7 +21,7 @@ class SaveLoadAsciiDigitsTests(unittest.TestCase):
             generate_save_load_ascii_digits.PATCH_ID
         ]
         self.assertTrue(patch.default_enabled)
-        self.assertEqual(patch.status, "runtime_proven")
+        self.assertEqual(patch.status, "approved_for_test")
         self.assertEqual(patch.confidence, "verified")
         self.assertEqual(patch.group_id, "front_end")
 
@@ -65,6 +65,43 @@ class SaveLoadAsciiDigitsTests(unittest.TestCase):
                     generate_save_load_ascii_digits.SPRINTF,
                 ),
             )
+
+    def test_hour_call_matches_nun5_width_and_cap(self) -> None:
+        hour = next(
+            site
+            for site in generate_save_load_ascii_digits.CALL_SITES
+            if site.label == "hour"
+        )
+        replacement = generate_save_load_ascii_digits.build_call(hour)
+        words = [
+            int.from_bytes(replacement[index : index + 4], "little")
+            for index in range(0, len(replacement), 4)
+        ]
+        self.assertEqual(hour.format_address, generate_save_load_ascii_digits.FORMAT_02D)
+        self.assertEqual(hour.maximum, 99)
+        self.assertEqual(
+            words[:3],
+            [
+                generate_save_load_ascii_digits.mips.i_type(
+                    0x0A,
+                    generate_save_load_ascii_digits.S5,
+                    generate_save_load_ascii_digits.AT,
+                    100,
+                ),
+                generate_save_load_ascii_digits.mips.i_type(
+                    0x09,
+                    generate_save_load_ascii_digits.ZERO,
+                    generate_save_load_ascii_digits.A2,
+                    99,
+                ),
+                generate_save_load_ascii_digits.mips.r_type(
+                    generate_save_load_ascii_digits.S5,
+                    generate_save_load_ascii_digits.AT,
+                    generate_save_load_ascii_digits.A2,
+                    0x0B,
+                ),
+            ],
+        )
 
 
 if __name__ == "__main__":

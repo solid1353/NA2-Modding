@@ -44,6 +44,31 @@ pixels higher. Its comparison grid remains a task-owned artifact under
 `work/Font/artifacts/`. A fresh post-reset capture is required before assigning
 causation or reintroducing any old wrapper.
 
+## Active ss2–ss6 epic priorities
+
+The user directed Font to work only on the
+[ss2–ss6 layout-parity epic](epics/ss2-6-layout/README.md) for now. Its
+efficiency-prioritized sequential order supersedes the generic remaining-family
+order below while the epic is active:
+
+1. **ss3 — Pause Controls list.** Rebuild the retained 216-unit shrink-only
+   list behavior and Y correction through a dedicated v2 entrypoint. This
+   establishes the shared UI plumbing needed by ss4 without enabling ss4 yet.
+2. **ss4 — Quit confirmation.** Reuse the ss3 shared UI plumbing, then add only
+   the guarded confirmation-body and Yes/No positioning behavior. Commit and
+   review it independently.
+3. **ss2 — Command Chart body.** Adapt the accepted v2 multiline primitives to
+   the separate command-description caller; do not reopen the accepted title.
+4. **ss5 — Character model move list.** Add bounded wrapping and positioning
+   for the right-side move-name column.
+5. **ss6 — Movie list.** Implement the variable-height wrapped-row behavior
+   last because it has the largest caller-specific layout and row-advance
+   burden.
+
+Complete, commit, push, report, and obtain explicit acceptance for each item
+before beginning the next. Shared primitives are implemented once, but each
+slot keeps its own guarded caller and acceptance boundary.
+
 ## Required execution order
 
 1. Completed and retained: establish and accept the native NUN5-derived font.

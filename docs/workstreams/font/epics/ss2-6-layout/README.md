@@ -1,9 +1,10 @@
 # ss2–ss6 layout parity
 
 User-declared Font epic covering only the matched NUN5/NA2.28 savestate pairs
-in slots 2 through 6. The epic runs in the default sequential mode: implement
-one slot, commit and push it, present its NUN5-left/Current-NA2-right result,
-then wait for explicit user acceptance before beginning the next slot.
+in slots 2 through 6. The epic runs in an efficiency-prioritized sequential
+mode: implement one slot, commit and push it, present its
+NUN5-left/Current-NA2-right result, then wait for explicit user acceptance
+before beginning the next slot.
 
 ## Scope and evidence
 
@@ -67,14 +68,22 @@ then wait for explicit user acceptance before beginning the next slot.
 
 ![ss6 Movie list baseline](collection-movie-list-ss6.png)
 
-## Sequential order
+## Efficiency-prioritized sequential plan
 
-1. ss2 — Command Chart body.
-2. ss3 — Pause Controls list.
-3. ss4 — Quit confirmation.
-4. ss5 — Character model move list.
-5. ss6 — Movie list.
+1. **ss3 — Pause Controls list.** The retained disabled shared UI helper
+   already proves the 216-unit shrink-only box and Y correction. Rebuild that
+   behavior through the v2 architecture first because it establishes reusable
+   plumbing for ss4 with the least new logic.
+2. **ss4 — Quit confirmation.** Reuse the ss3 plumbing and add only the
+   separately guarded confirmation-body and Yes/No positioning behavior.
+3. **ss2 — Command Chart body.** Reuse the accepted multiline primitives, but
+   treat the command-description loop as its own caller family and leave the
+   accepted title untouched.
+4. **ss5 — Character model move list.** Add bounded wrapping and positioning
+   for the right-side move-name column.
+5. **ss6 — Movie list.** Implement variable-height wrapped rows last because
+   this case has the greatest caller-specific row-advance and layout burden.
 
-Before adding a separate wrapper, inspect whether the active case shares the
-same NUN5/NA2 caller family with a later epic case. Reuse proven shared behavior
-without treating acceptance of one slot as acceptance of another.
+Shared primitives are implemented only once. Each slot still receives its own
+guarded caller, commit/push boundary, result grid, and explicit acceptance; a
+shared implementation does not merge the five review decisions.

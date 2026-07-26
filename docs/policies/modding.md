@@ -9,6 +9,9 @@
 - `na2_patcher/profiles/current/` is the active reproducible build definition.
   `bypass_check=1` is temporary local development only; accepted reproducible
   checkpoints require the actual pin and `bypass_check=0`.
+- Only the user may change profile `bypass_check` values. Agents preserve every
+  existing value exactly and never toggle, reset, normalize, or otherwise edit
+  that field.
 - Use annotated Git tags for accepted reproducible checkpoints whose profile
   pins, canonical inputs, and documentation agree.
 - Reusable engines/schemas/tools belong under `na2_patcher/modules/`;

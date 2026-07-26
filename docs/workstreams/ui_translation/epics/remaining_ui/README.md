@@ -23,6 +23,14 @@ the right.
    `@work/UI translation/inputs/sstates/battle_results_rank_baseline_ss02_06_20260726/`
    and
    `@work/UI translation/inputs/screenshots/battle_results_rank_baseline_ss02_06_20260726/`.
+2. Collection Music ss10: the Triangle/Stop footer group is approximately
+   36 pixels too far right in Current NA2.28, clipping `Stop` at the right
+   edge. The Cross/Play group already matches and is not part of this subtask.
+   The copied pair, hashes, and provenance are under
+   `@work/UI translation/inputs/sstates/triangle_placement_ss10_20260726/`;
+   screenshots extracted from those owned copies are under
+   `@work/UI translation/inputs/screenshots/triangle_placement_ss10_20260726/`.
+
 ## User-accepted completed cases
 
 - Cross/Triangle labels: every preserved pair (original slots 1-5 and newer
@@ -39,3 +47,7 @@ the right.
 ### Battle results
 
 ![Battle Results screen 2](02-battle-results-2.png)
+
+### Collection
+
+![Collection Music ss10 Triangle placement](03-collection-music-triangle.png)

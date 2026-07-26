@@ -547,9 +547,11 @@ The user's final paired visual inspection accepted Slot 4 as perfect on
 2026-07-22; Slots 5 and 6 remain runtime-proven. The accepted Slot 4 savestate
 pair and active mismatch-list entry were then removed under workstream policy.
 
-The remaining maintained mismatch list contains only Battle Results screen 2
-(the five-record donor-table correction is implemented; matched ss2-ss6 retain
-the complete pre-fix baseline for normal-pipeline verification).
+The remaining maintained mismatch list contains Battle Results screen 2 (the
+five-record donor-table correction is implemented; matched ss2-ss6 retain the
+complete pre-fix baseline for normal-pipeline verification) and Collection
+Music ss10, where the Triangle/Stop footer group is approximately 36 pixels too
+far right and clips at the screen edge while Cross/Play already matches.
 Ninja Song details ss8, Victory ss7 all-character donor coverage, Character
 Items transition behavior, and the Cross/Triangle-label batch are
 user-accepted.

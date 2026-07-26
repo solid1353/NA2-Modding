@@ -479,6 +479,7 @@ def apply_profile_modules(
                 source=source,
                 payloads=payloads,
                 owners=owners,
+                allow_empty_defaults=True,
             )
             results.append(
                 {

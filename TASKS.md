@@ -11,19 +11,14 @@
 - Special Controls / Practice Settings ON/OFF: use the paired files `ss01_NA2.p2s` + `ss01_NUN5.p2s` and `ss08_NA2.p2s` + `ss08_NUN5.p2s` under `work/String translation/inputs/sstates/2026-07-26-ss1-7-8-sjis-pass-2/`; split the shared T37/T38 presentation so ss1 Special Controls retains compact uppercase `ON`/`OFF` while ss8 Practice Settings uses title-case `Off`/`On`, matching NUN5 letter spacing in each context.
 - Load/Save Modal: change datetime format to EU.
 
-### [UI Translation](docs/workstreams/ui_translation/README.md)
-- Document shop minigame and UJ prompts as intentionally not fixed.
-- [Cleanup](work/__sstates/translation/UI) - preserve what is needed, delete the rest.
-
-### [String Translation](docs/workstreams/string_translation/README.md)
-- [Cleanup](work/__sstates/translation/strings) - preserve what is needed, delete the rest.
-
-## Backlog
-
 ### Project
 - Rename default_enabled, add enable switch for groups and patches.
 - Investigate cross-platform development/deployment possibilities.
-- Global cleanup.
+- Global cleanup - preserve what is needed, delete the rest. Project should ask corresponding chats for specifics. Includes, but not limited to:
+    * [UI Translation](work/__sstates/translation/UI).
+    * [String Translation](work/__sstates/translation/strings).
+
+## Backlog
 
 ### Bugs
 - Practice menu entries (like Damage) flicker again (unstable).
@@ -57,6 +52,10 @@
 ### [Localization](docs/workstreams/localization/README.md)
 
 ### [Scripting](docs/workstreams/scripting/README.md)
+
+### [UI Translation](docs/workstreams/ui_translation/README.md)
+
+### [String Translation](docs/workstreams/string_translation/README.md)
 
 ### Code Injection
 

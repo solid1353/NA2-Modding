@@ -56,8 +56,8 @@ class UiTextureTests(unittest.TestCase):
         )
 
     def test_complete_package_is_source_derived_and_fixed_size(self) -> None:
-        self.assertEqual(len(self.plan.containers), 96)
-        self.assertEqual(self.plan.mapping_count, 210)
+        self.assertEqual(len(self.plan.containers), 109)
+        self.assertEqual(self.plan.mapping_count, 223)
         for result in self.plan.containers:
             self.assertEqual(
                 len(result.replacement), len(result.original), result.spec.path
@@ -70,7 +70,7 @@ class UiTextureTests(unittest.TestCase):
             if result.strategy.strategy == "whole"
             and result.spec.container_id != "xninka"
         ]
-        self.assertEqual(len(whole), 91)
+        self.assertEqual(len(whole), 104)
         for result in whole:
             self.assertEqual(
                 gzip.decompress(result.replacement),
@@ -213,15 +213,16 @@ class UiTextureTests(unittest.TestCase):
                 expected_paths.add(path)
                 expected_texture_count += len(mode_entries)
 
-        results = [
-            result
-            for result in self.plan.containers
-            if result.spec.container_id.startswith("mode1_")
-        ]
         mappings = [
             mapping
             for mapping in self.plan.package.mappings
             if mapping.mapping_id.startswith("UI-MODE1-")
+        ]
+        mapped_container_ids = {mapping.container_id for mapping in mappings}
+        results = [
+            result
+            for result in self.plan.containers
+            if result.spec.container_id in mapped_container_ids
         ]
         self.assertEqual(len(results), 61)
         self.assertEqual(len(mappings), 72)
@@ -267,6 +268,46 @@ class UiTextureTests(unittest.TestCase):
                 )
 
     def test_all_victory_names_are_derived_from_official_nun5_artwork(self) -> None:
+        target_iso, donor_iso, _ = engine.source_members(
+            self.na2_root,
+            self.nun5_root,
+        )
+        pattern = re.compile(r"3EYE/3[A-Z0-9]{3}3PCT\.CCS")
+        target_family_paths = {
+            path
+            for path, record in target_iso.by_path.items()
+            if not record.is_dir and pattern.fullmatch(path) is not None
+        }
+        donor_family_paths = {
+            path
+            for path, record in donor_iso.by_path.items()
+            if not record.is_dir and pattern.fullmatch(path) is not None
+        }
+        self.assertEqual(target_family_paths, donor_family_paths)
+        self.assertEqual(len(target_family_paths), 78)
+
+        expected_name_paths = set()
+        for path in target_family_paths:
+            target_entries = engine.parse_ccs(
+                gzip.decompress(target_iso.read_file(target_iso.by_path[path]))
+            )
+            donor_entries = engine.parse_ccs(
+                gzip.decompress(donor_iso.read_file(donor_iso.by_path[path]))
+            )
+            target_has_name = any(
+                part.object_name == "TEX_name"
+                for entry in target_entries.values()
+                for part in entry.textures
+            )
+            donor_has_name = any(
+                part.object_name == "TEX_name"
+                for entry in donor_entries.values()
+                for part in entry.textures
+            )
+            self.assertEqual(target_has_name, donor_has_name, path)
+            if target_has_name:
+                expected_name_paths.add(path)
+
         results = [
             result
             for result in self.plan.containers
@@ -278,11 +319,16 @@ class UiTextureTests(unittest.TestCase):
             if mapping.mapping_id.startswith("UI-VICTORY-")
             and mapping.container_id.startswith("mode1_")
         ]
-        self.assertEqual(len(results), 61)
-        self.assertEqual(len(mappings), 61)
+        self.assertEqual(len(expected_name_paths), 74)
+        self.assertEqual(len(results), 74)
+        self.assertEqual(len(mappings), 74)
+        self.assertEqual(
+            {result.spec.path for result in results},
+            expected_name_paths,
+        )
         self.assertEqual(
             Counter(result.strategy.strategy for result in results),
-            {"whole": 59, "mapped": 2},
+            {"whole": 72, "mapped": 2},
         )
         mappings_by_container = {mapping.container_id: mapping for mapping in mappings}
         self.assertEqual(
@@ -1880,15 +1926,15 @@ class UiTextureTests(unittest.TestCase):
             ) as handle:
                 summary = list(csv.DictReader(handle, delimiter="\t"))
 
-            self.assertEqual(len(patches), 96)
+            self.assertEqual(len(patches), 109)
             self.assertTrue(all(row["file"] == "DATA/DATA.CVM" for row in patches))
             self.assertTrue(all(row["original_sha256"] for row in patches))
             self.assertTrue(all(row["new_sha256"] for row in patches))
             self.assertTrue(
                 all(row["derivation"].startswith("canonical_nun5_") for row in patches)
             )
-            self.assertEqual(summary[0]["container_count"], "96")
-            self.assertEqual(summary[0]["mapping_count"], "210")
+            self.assertEqual(summary[0]["container_count"], "109")
+            self.assertEqual(summary[0]["mapping_count"], "223")
             self.assertEqual(summary[0]["worker_count"], str(self.plan.worker_count))
 
 

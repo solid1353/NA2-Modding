@@ -166,18 +166,21 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   screenshot is the corrected NA2 result produced by this task, not a NUN5
   donor reference. Its X=`255` placement remains the live-proven NA2 correction.
 - Generic Slot 1 isolates the Victory defects to the shared `WINNER` artwork in
-  `3EYE/ENDDEMO.CCS` and one `TEX_name` visual in each of the 61
-  `3EYE/3???3PCT.CCS` character resources. Fifty-nine complete character donors
-  fit. Haku and Shikamaru use bounded NUN5-palette capacity adaptations; their
-  exact evidence and negative results are in
+  `3EYE/ENDDEMO.CCS` and one `TEX_name` visual in each of 74 name-bearing
+  `3EYE/3???3PCT.CCS` character resources. The former package-derived
+  inventory covered only 61 and omitted 13 valid variants, including Sasuke's
+  runtime-proven `3SSV3PCT.CCS`. Seventy-two complete character donors fit.
+  Haku and Shikamaru use bounded NUN5-palette capacity adaptations; their exact
+  evidence and negative results are in
   `docs/knowledge/localization/ui/victory.md`.
 
 ## Production artifacts and validation
 
-- `na2_patcher/features/localization/texture_patcher/` contains 96 source-derived fixed-size
-  recipes, 210 reviewed mappings, pinned source/donor/replacement/payload hashes,
-  and the deterministic verifier. The generated replacement ranges total
-  6,297,394 bytes, but no replacement CCS blobs are stored in the repository.
+- `na2_patcher/features/localization/texture_patcher/` contains 109
+  source-derived fixed-size recipes, 223 reviewed mappings, recorded
+  source/donor/replacement/payload identities, and the deterministic verifier.
+  Every replacement retains its target member size, and no replacement CCS
+  blobs are stored in the repository.
 - `na2_patcher/features/localization/binary_patcher/` contains the canonical UI
   companion patches across BTL, ETC, and the boot ELF. The current UI subset
   has 27 patches and 277 guarded edits: 99 exact NUN5 copies, 24 values
@@ -197,7 +200,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   module inputs and their feature-relative paths.
 - The complete Localization binary-patcher package validates as 7 targets, 9
   groups, 101 patches, and 440 edits; its UI subset is the 27 patches and 277
-  edits counted above. The UI texture plan derives all 96 members with 92 whole
+  edits counted above. The UI texture plan derives all 109 members with 105 whole
   donors and four mapped exceptions: MODE2KDV, ENDDEMO, Haku, and Shikamaru.
   The historical runtime harness remains available. Current binary-patcher
   validation passes; the texture test setup is independently blocked by the
@@ -378,7 +381,7 @@ Items in this queue. It is now part of the general remaining-issues pass rather
 than a separate `TASKS.md` subtask.
 
 All eight preserved cases now have declarative implementations. The normal
-workflow derives all 96 fixed-size CCS replacements directly from
+workflow derives all 109 fixed-size CCS replacements directly from
 canonical NA2/NUN5 inputs with no stored replacement blobs. The source trees
 and original savestates remain untouched. The unique historical
 `NA2.28 - Previous.iso`, paired NA2.28/NUN5 states 1-8, and the minimal

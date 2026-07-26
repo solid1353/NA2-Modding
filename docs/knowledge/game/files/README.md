@@ -161,7 +161,7 @@ inferences until a resource is opened or referenced by code.
 | Directory | Shallow role |
 | --- | --- |
 | `3BSC/` | **Unknown character-coded family.** Nine `3*3BSC.CCS` resources; exact acronym and use unresolved. |
-| `3EYE/` | **Confirmed in part:** character-specific battle and Victory resources. The 61 `3???3PCT.CCS` containers supply all 72 ordinary awakening-name textures plus one `TEX_name` Victory visual per character. `ENDDEMO.CCS` supplies the shared Victory background atlas and `WINNER` emblem. Files also occur in paired `3EYE` names whose exact object use remains unresolved. |
+| `3EYE/` | **Confirmed in part:** character-specific battle and Victory resources. NA2 and NUN5 contain the same 78 `3???3PCT.CCS` family members; 74 contain one `TEX_name` Victory visual, while four contain no name visual in either game. A 61-member subset also supplies all 72 ordinary awakening-name textures. `ENDDEMO.CCS` supplies the shared Victory background atlas and `WINNER` emblem. Files also occur in paired `3EYE` names whose exact object use remains unresolved. |
 | `ADV/` | **Supported:** adventure-mode resources. Subfolders separate `CHAR`, `EVENT`, `PLAYER`, `SKILL`, and `STAGE`. |
 | `BUDDY/` | **Filename inference:** support/buddy character resources. |
 | `CMN/` | **Supported:** shared/common battle resources including body data, effects, gauge, particles, and shading. |

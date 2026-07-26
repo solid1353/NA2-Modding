@@ -18,7 +18,17 @@ from na2_patcher.modules.texture_patcher import engine  # noqa: E402
 from na2_patcher.project_paths import load_project_paths  # noqa: E402
 
 
-MODE1_PATH = re.compile(r"3EYE/3[A-Z0-9]{3}3PCT\.CCS")
+MODE1_PATH = re.compile(r"3EYE/3([A-Z0-9]{3})3PCT\.CCS")
+EXPECTED_FAMILY_COUNT = 78
+EXPECTED_MODE1_COUNT = 74
+EXPECTED_NO_NAME_PATHS = {
+    "3EYE/3GUY3PCT.CCS",
+    "3EYE/3ITC3PCT.CCS",
+    "3EYE/3KKS3PCT.CCS",
+    "3EYE/3KSM3PCT.CCS",
+}
+EXPECTED_CONTAINER_COUNT = 109
+EXPECTED_MAPPING_COUNT = 223
 VICTORY_PREFIX = "UI-VICTORY-"
 ENDDEMO_ID = "enddemo"
 ENDDEMO_PATH = "3EYE/ENDDEMO.CCS"
@@ -118,29 +128,140 @@ def build_rows() -> tuple[
     mapping_path = data_root / "mappings.tsv"
     strategy_path = data_root / "strategies.tsv"
     containers = read_rows(container_path)
+    all_mappings = read_rows(mapping_path)
+    existing_victory_ids = {
+        row["container_id"]: row["mapping_id"]
+        for row in all_mappings
+        if row["mapping_id"].startswith(VICTORY_PREFIX)
+    }
+    if len(existing_victory_ids) != sum(
+        row["mapping_id"].startswith(VICTORY_PREFIX) for row in all_mappings
+    ):
+        raise RuntimeError("Duplicate Victory mapping container")
+    victory_numbers = [
+        int(row["mapping_id"].removeprefix(VICTORY_PREFIX))
+        for row in all_mappings
+        if row["mapping_id"].startswith(VICTORY_PREFIX)
+    ]
+    next_victory_number = max(victory_numbers, default=0) + 1
+
+    def victory_mapping_id(container_id: str) -> str:
+        nonlocal next_victory_number
+        existing = existing_victory_ids.get(container_id)
+        if existing is not None:
+            return existing
+        mapping_id = f"{VICTORY_PREFIX}{next_victory_number:03d}"
+        next_victory_number += 1
+        return mapping_id
+
     mappings = [
         row
-        for row in read_rows(mapping_path)
+        for row in all_mappings
         if not row["mapping_id"].startswith(VICTORY_PREFIX)
     ]
     strategies = read_rows(strategy_path)
 
     container_by_id = {row["container_id"]: row for row in containers}
     strategy_by_id = {row["container_id"]: row for row in strategies}
-    mode1 = [
-        row
-        for row in containers
-        if row["container_id"].startswith("mode1_")
-    ]
-    if len(mode1) != 61:
-        raise RuntimeError(f"Expected 61 mode1 containers, found {len(mode1)}")
-    if any(MODE1_PATH.fullmatch(row["path"]) is None for row in mode1):
-        raise RuntimeError("Unexpected mode1 container path")
 
     target_iso, donor_iso, _ = engine.source_members(
         paths.path("source_na2"),
         paths.path("source_nun5"),
     )
+    target_mode1_paths = {
+        path
+        for path, record in target_iso.by_path.items()
+        if not record.is_dir and MODE1_PATH.fullmatch(path) is not None
+    }
+    donor_mode1_paths = {
+        path
+        for path, record in donor_iso.by_path.items()
+        if not record.is_dir and MODE1_PATH.fullmatch(path) is not None
+    }
+    if target_mode1_paths != donor_mode1_paths:
+        raise RuntimeError(
+            "Target and donor Victory character-resource inventories differ"
+        )
+    if len(target_mode1_paths) != EXPECTED_FAMILY_COUNT:
+        raise RuntimeError(
+            f"Expected {EXPECTED_FAMILY_COUNT} Victory-family resources, "
+            f"found {len(target_mode1_paths)}"
+        )
+
+    mode1: list[dict[str, str]] = []
+    no_name_paths: set[str] = set()
+    for path in sorted(target_mode1_paths):
+        match = MODE1_PATH.fullmatch(path)
+        if match is None:
+            raise RuntimeError(f"Unexpected Victory character path {path}")
+        container_id = f"mode1_{match.group(1).lower()}"
+        target_raw = target_iso.read_file(target_iso.by_path[path])
+        donor_raw = donor_iso.read_file(donor_iso.by_path[path])
+        target_entries = engine.parse_ccs(gzip.decompress(target_raw))
+        donor_entries = engine.parse_ccs(gzip.decompress(donor_raw))
+        target_name_count = sum(
+            part.object_name == "TEX_name"
+            for entry in target_entries.values()
+            for part in entry.textures
+        )
+        donor_name_count = sum(
+            part.object_name == "TEX_name"
+            for entry in donor_entries.values()
+            for part in entry.textures
+        )
+        if target_name_count != donor_name_count or target_name_count not in {0, 1}:
+            raise RuntimeError(
+                f"{path}: target/donor TEX_name ownership differs or is ambiguous"
+            )
+        if target_name_count == 0:
+            no_name_paths.add(path)
+            continue
+        row = container_by_id.get(container_id)
+        if row is not None and row["path"].upper() != path:
+            raise RuntimeError(
+                f"{container_id}: existing path {row['path']} conflicts with {path}"
+            )
+        row = {
+            "container_id": container_id,
+            "path": path,
+            "target_sha256": engine.sha256(target_raw),
+            "donor_sha256": engine.sha256(donor_raw),
+        }
+        container_by_id[container_id] = row
+        strategy_by_id.setdefault(
+            container_id,
+            {
+                "container_id": container_id,
+                "strategy": "whole",
+                "replacement_sha256": "0" * 64,
+                "payload_sha256": "0" * 64,
+                "reason": "",
+            },
+        )
+        mode1.append(row)
+
+    if no_name_paths != EXPECTED_NO_NAME_PATHS:
+        raise RuntimeError(
+            "Unexpected Victory-family resources without TEX_name: "
+            + ", ".join(sorted(no_name_paths))
+        )
+    if len(mode1) != EXPECTED_MODE1_COUNT:
+        raise RuntimeError(
+            f"Expected {EXPECTED_MODE1_COUNT} Victory name resources, "
+            f"found {len(mode1)}"
+        )
+
+    expected_victory_ids = {
+        ENDDEMO_ID,
+        *(row["container_id"] for row in mode1),
+    }
+    unexpected_victory_ids = set(existing_victory_ids) - expected_victory_ids
+    if unexpected_victory_ids:
+        raise RuntimeError(
+            "Unexpected existing Victory mappings for "
+            + ", ".join(sorted(unexpected_victory_ids))
+        )
+
     enddemo_target = target_iso.read_file(target_iso.by_path[ENDDEMO_PATH])
     enddemo_donor = donor_iso.read_file(donor_iso.by_path[ENDDEMO_PATH])
     container_by_id[ENDDEMO_ID] = {
@@ -152,7 +273,7 @@ def build_rows() -> tuple[
 
     new_mappings: list[dict[str, str]] = [
         {
-            "mapping_id": f"{VICTORY_PREFIX}001",
+            "mapping_id": victory_mapping_id(ENDDEMO_ID),
             "enabled": "1",
             "container_id": ENDDEMO_ID,
             "target_texture": r"x\enddemo\tex\enddemo01.bmp",
@@ -171,7 +292,7 @@ def build_rows() -> tuple[
         )
     }
 
-    for number, row in enumerate(sorted(mode1, key=lambda item: item["container_id"]), 2):
+    for row in sorted(mode1, key=lambda item: item["container_id"]):
         container_id = row["container_id"]
         path = row["path"].upper()
         target_raw = target_iso.read_file(target_iso.by_path[path])
@@ -180,8 +301,11 @@ def build_rows() -> tuple[
         donor_payload = gzip.decompress(donor_raw)
         target_entries = engine.parse_ccs(target_payload)
         donor_entries = engine.parse_ccs(donor_payload)
-        target_name = texture_by_object(target_entries, "TEX_name")
-        donor_name = texture_by_object(donor_entries, "TEX_name")
+        try:
+            target_name = texture_by_object(target_entries, "TEX_name")
+            donor_name = texture_by_object(donor_entries, "TEX_name")
+        except RuntimeError as error:
+            raise RuntimeError(f"{container_id}: {error}") from error
         differences = visual_differences_by_object(target_payload, donor_payload)
         allowed = {
             "TEX_name",
@@ -238,7 +362,7 @@ def build_rows() -> tuple[
 
         new_mappings.append(
             {
-                "mapping_id": f"{VICTORY_PREFIX}{number:03d}",
+                "mapping_id": victory_mapping_id(container_id),
                 "enabled": "1",
                 "container_id": container_id,
                 "target_texture": target_name.name,
@@ -261,6 +385,9 @@ def build_rows() -> tuple[
             "unrelated NA2 background textures and target CCS structure."
         ),
     }
+    new_mappings.sort(
+        key=lambda row: int(row["mapping_id"].removeprefix(VICTORY_PREFIX))
+    )
     mappings.extend(new_mappings)
     mappings_by_container: dict[str, list[engine.Mapping]] = defaultdict(list)
     for row in mappings:
@@ -324,11 +451,15 @@ def build_rows() -> tuple[
 
     final_containers = sorted(container_by_id.values(), key=lambda row: row["container_id"])
     final_strategies = sorted(strategy_by_id.values(), key=lambda row: row["container_id"])
-    if len(final_containers) != 96 or len(final_strategies) != 96:
+    if (
+        len(final_containers) != EXPECTED_CONTAINER_COUNT
+        or len(final_strategies) != EXPECTED_CONTAINER_COUNT
+    ):
         raise RuntimeError("Victory generation produced an unexpected container inventory")
-    if len(mappings) != 210:
+    if len(mappings) != EXPECTED_MAPPING_COUNT:
         raise RuntimeError(
-            f"Victory generation expected 210 mappings, found {len(mappings)}"
+            f"Victory generation expected {EXPECTED_MAPPING_COUNT} mappings, "
+            f"found {len(mappings)}"
         )
     return final_containers, mappings, final_strategies, sorted(capacities)
 

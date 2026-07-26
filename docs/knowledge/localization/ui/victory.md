@@ -30,14 +30,28 @@ signatures are identical. `UI-VICTORY-001` therefore copies only the complete
 NUN5 `enddemo01` TEX/CLT data into NA2's existing CCS structure. The other two
 textures and every nonselected target byte remain unchanged.
 
-Every one of the 61 `3EYE/3???3PCT.CCS` character resources has one
-`TEX_name` visual. Pairing textures by object identity rather than internal
-filename proves that the only decoded NA2/NUN5 visual differences in each
-resource are `TEX_name` and its one or two already-reviewed
-`TEX_mode1name*` ordinary-awakening labels. Fifty-nine complete NUN5 payloads
-fit their unchanged NA2 member capacities, with 13 to 1,523 bytes of verified
-gzip padding. Those containers now use complete donors so the English name,
-awakening label, internal names, and texture dimensions remain coupled.
+The canonical NA2 and NUN5 filesystems both contain 78 matching
+`3EYE/3???3PCT.CCS` resources. Seventy-four contain exactly one `TEX_name`
+visual in both games; the four structural variants `3GUY3PCT`, `3ITC3PCT`,
+`3KKS3PCT`, and `3KSM3PCT` contain no `TEX_name` in either game and are
+excluded from the Victory import. Pairing textures by object identity rather
+than internal filename proves that the only decoded NA2/NUN5 visual
+differences in each selected resource are `TEX_name` and any already-reviewed
+`TEX_mode1name*` ordinary-awakening labels.
+
+The former generator selected only the 61 resources already present in its
+package inventory. It therefore silently omitted 13 valid name-bearing
+variants. Paired ss7 memory contains the Japanese `TEX_name` body at EE
+`0x01607140`; its exact 16,384-byte body SHA-256
+`1DB17B6335F272F42F7B965742D195C01351900FE831D5BC981C3F2FBFD6DAA0`
+matches on-disc `3EYE/3SSV3PCT.CCS`, proving the missed Sasuke resource rather
+than a stale-state or renderer defect. The corrected generator enumerates the
+canonical source filesystems and admits all 74 name-bearing resources.
+
+Seventy-two complete NUN5 payloads fit their unchanged NA2 member capacities,
+with 13 to 2,253 bytes of verified gzip padding. Those containers now use
+complete donors so the English name, awakening label where present, internal
+names, and texture dimensions remain coupled.
 
 Two members require deterministic mapped exceptions:
 
@@ -59,9 +73,11 @@ Two members require deterministic mapped exceptions:
 No replacement CCS blob or authored raster asset is stored. The maintained
 generator
 `scripts/research/ui_translation/generate_victory_texture_mappings.py`
-enumerates the 61 resources, rejects any unclassified decoded visual
-difference, derives the three exceptional mappings, and pins every resulting
-payload and replacement hash.
+enumerates all 78 family members from both canonical source filesystems,
+requires their inventories to match, structurally excludes only the four
+members without `TEX_name`, rejects any unclassified decoded visual
+difference in the remaining 74, derives the three exceptional mappings, and
+records every resulting payload and replacement identity.
 
 ## Victory-name rectangle construction
 

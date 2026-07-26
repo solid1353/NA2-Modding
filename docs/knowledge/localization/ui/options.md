@@ -149,7 +149,8 @@ controller transitions are untouched.
 A guarded copy of paired slot 1 changed only the two NA2 instruction words.
 The hidden, muted task-owned clone rendered both OK and Back at
 `dx=+1,dy=+1` versus NUN5. The shared one-pixel delta is normal prompt pulse
-timing, and neither legend is clipped. Confidence is **verified**.
+timing, and neither legend is clipped. The user accepted the final Mode Select
+footer on 2026-07-26. Confidence is **verified**.
 
 ## Relationships and evidence
 

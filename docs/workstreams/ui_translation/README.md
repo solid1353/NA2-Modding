@@ -27,3 +27,6 @@ findings remain in the shared knowledge base rather than being duplicated here.
 - Broad epic analysis is complete. Proceed from the existing findings and
   repeat epic-wide analysis only when new evidence proves them insufficient or
   indicates that a broad fix may be better than separate subtask fixes.
+- The user has standing authorization for exact-target deletion of confirmed
+  disposable UI Translation artifacts. Verify every target and keep protected
+  sources, the user PCSX2 tree, and unrelated workstreams out of scope.

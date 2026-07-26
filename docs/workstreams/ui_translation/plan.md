@@ -141,7 +141,8 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   offsets `-12/-8` after nominal X=`400/470`; NA2 has no equivalent additions.
   The same patch now uses authored effective anchors X=`388/462`. A guarded
   task-owned render places both prompts within +1 pixel X/Y of NUN5, consistent
-  with their normal pulse phase.
+  with their normal pulse phase. The user accepted the final Mode Select footer
+  on 2026-07-26.
 - Paired slot 1 proves the stage-picture pixels themselves already match while
   NA2's retained CCS structure associates and positions them incorrectly.
   `MAPSEL1.CCS` therefore uses the complete NUN5 donor so pictures, ordering,

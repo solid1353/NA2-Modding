@@ -1505,6 +1505,7 @@ X=`388`/`462` while retaining NA2's ABI.
 
 All four edits preserve ELF size. A guarded task-owned slot-1 render placed
 both prompts within +1 pixel X/Y of NUN5, the normal pulse-phase variance.
+The user accepted the final Mode Select footer on 2026-07-26.
 The complete function mapping, behavior reconstruction, side effects, and
 donor-copy limitation are preserved in
 `docs/knowledge/localization/ui/options.md`.

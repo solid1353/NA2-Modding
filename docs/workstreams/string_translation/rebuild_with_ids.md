@@ -44,14 +44,17 @@ second contributed 185. The character-specific exception then admitted the
 remaining 1,041 Command Chart move-name rows from the verified 74-table
 command-record family. A subsequent missing-row audit admitted another 260
 policy-supported rows: 53 directly seen rows, 10 structurally inferred
-siblings, and 197 character-family rows. Canonical mappings therefore contain
-2,053 unique enabled rows. Exact guarded source fields came from the retained
+siblings, and 197 character-family rows. Canonical mappings therefore initially
+contained 2,053 unique enabled rows. Exact guarded source fields came from the retained
 diagnostic inventory, while concrete display metadata records whether each row was
 seen directly, inferred from a captured selector/help family, or admitted
-under the character-specific exception. The first-pass corpus contains 172
+under the character-specific exception. Subsequent paired acceptance added 25
+Ninja Song fields, the Figure Items / Dioramas Shop tutorial, and the locked
+Movie-title placeholder, bringing the current table to 2,080 enabled rows.
+The first-pass corpus contains 172
 hash-verified paired captures; the second contains 93.
 
-Of the 2,053 rows, 2,040 began from the unique legacy row with the same exact
+Of the initial 2,053 rows, 2,040 began from the unique legacy row with the same exact
 `source_ref`. T2042 uses canonical parent `T2011`; T2045 and T2050 likewise use
 canonical parents `T2043` and `T2048`.
 Three paired-screen corrections override incorrect reference relationships:
@@ -102,8 +105,8 @@ data row is `T1`, the second is `T2`, and so on.
 Retained diagnostic `rebuild.tsv` SHA-256:
 `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`.
 
-Canonical `mappings.tsv` contains 2,053 rows and SHA-256
-`3351BF0F2F18135FD621506442E86014E00FA0BCE20B80D0759E6BBD690991E8`.
+Canonical `mappings.tsv` contains 2,080 rows and SHA-256
+`C695D7E2D4DDE60C891C516213E7D8B2CBC967F849E29D82C5D56A8003038849`.
 
 ## Stable diagnostic IDs
 

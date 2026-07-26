@@ -28,8 +28,8 @@ command or file-backed inter-stage handoff.
 
 ### Mapping metadata
 
-- Canonical `mappings.tsv` rows: `2,053`
-- Canonical `mappings.tsv` SHA-256: `3351BF0F2F18135FD621506442E86014E00FA0BCE20B80D0759E6BBD690991E8`
+- Canonical `mappings.tsv` rows: `2,080`
+- Canonical `mappings.tsv` SHA-256: `C695D7E2D4DDE60C891C516213E7D8B2CBC967F849E29D82C5D56A8003038849`
 - Retained task-local `rebuild.tsv` rows: `2,173` (`T1` through `T2173`)
 - Retained `rebuild.tsv` SHA-256: `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`
 
@@ -126,8 +126,11 @@ Village`, T638 to `Hidden Leaf Gate`, T744 to `Faint Unease`, and T767 to
 `Ultimate`, externalized through `NA2_BTL@0x209CB4`. Donor-backed rows otherwise
 leave `replacement` blank and execute independently validated official donor
 text. T1958, T2027, and T2033 retain the established Cross-confirm overrides.
-This is an evidence-scoped English table, not a claim that uncaptured screens
-are covered.
+The paired Ninja Song passes add 25 displayed numeric/status/bonus fields, the
+paired ss1 Shop pass adds the Figure Items / Dioramas tutorial, and the paired
+ss7 Movie pass adds the locked-title placeholder, for 2,080 total rows. This
+is an evidence-scoped English table, not a claim that uncaptured screens are
+covered.
 
 The canonical table closes every admitted multi-slot `<br>` message family.
 T2011/T2041/T2042 cover all four save-progress message parts, while

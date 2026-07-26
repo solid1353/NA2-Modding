@@ -96,91 +96,8 @@ class TranslationImporterTests(unittest.TestCase):
             ),
         }
         donorless_ids = {"T24", "T30", "T744", "T767"}
-        quality_overrides = {
-            "T13": (
-                "Press the left directional button or right directional button "
-                "to choose whether Chakra decreases when using Jutsu."
-            ),
-            "T15": (
-                "Press the left directional button or right directional button "
-                "to change the handicap. More red marks favor 1P; more blue "
-                "marks favor 2P."
-            ),
-            "T22": (
-                "Stand: The opponent performs the action selected below while "
-                "standing."
-            ),
-            "T23": (
-                "Jump: The opponent performs the action selected below while "
-                "jumping."
-            ),
-            "T26": "Practice Settings returned to defaults.",
-            "T1377": "Clone Jumping Explosion Hit",
-            "T1894": "Charge (Weak)",
-            "T1895": "Charge (Strong)",
-            "T1905": (
-                "(directional button in the direction the opponent was launched)"
-            ),
-            "T1908": "(during a High Speed Move or attack clash)",
-            "T1909": "(Manual: press again after appearing to attack)",
-            "T1916": "Substitution Jutsu (Consumes Chakra)",
-            "T1920": "Charge Chakra",
-            "T1927": (
-                "directional button opposite the direction you are facing"
-            ),
-            "T1964": (
-                "Press the left directional button or right directional button "
-                "to set the player's Health."
-            ),
-            "T1966": (
-                "Press the left directional button or right directional button "
-                "to set how the player's Link Gauge charges."
-            ),
-            "T1967": (
-                "Press the left directional button or right directional button "
-                "to set how Linked Attacks are activated."
-            ),
-            "T1970": (
-                "Press the left directional button or right directional button "
-                "to set whether damage dealt to the opponent is displayed."
-            ),
-            "T1971": (
-                "Press the left directional button or right directional button "
-                "to set the Guide Ninja Sound during Practice."
-            ),
-            "T1973": (
-                "Set the attack pattern used in Stand, Jump, or Double-jump "
-                "status."
-            ),
-            "T1974": (
-                "Set the guard pattern used in Stand, Jump, or Double-jump "
-                "status."
-            ),
-            "T1975": (
-                "Set the movement pattern used in Stand, Jump, or Double-jump "
-                "status."
-            ),
-            "T1976": "Set Substitution Jutsu frequency in COM mode.",
-            "T1977": "Set Linked Attack frequency when not in Manual mode.",
-            "T1978": (
-                "Set Extra Hit Counter frequency when not in Manual mode."
-            ),
-            "T1981": (
-                "In Manual mode, use another controller to control the opponent."
-            ),
-            "T1998": "No Use: Ultimate Jutsu is disabled.",
-            "T1999": "Random: The input contest changes each time.",
-            "T2000": "Command: Compete by pressing the displayed buttons.",
-            "T2001": (
-                "Timing: Compete by pressing the buttons with the correct timing."
-            ),
-            "T2002": "Turn: Compete by rotating either analog stick.",
-            "T2003": "Combo: Compete by rapidly pressing the buttons.",
-            "T2004": "Normal: Health fully recovers after a set time.",
-            "T2005": "Half: Health recovers to half after a set time.",
-            "T2006": "Almost: Health remains near 0.",
+        donor_backed_overrides = {
             "T2027": "Press <iconCROSS> to choose item.",
-            "T2032": "Select a character to buy.",
             "T2033": "Select an item and press <iconCROSS> to buy.",
         }
         structural_rows = {
@@ -269,10 +186,13 @@ class TranslationImporterTests(unittest.TestCase):
             ):
                 if row["id"] == "T2042" and field == "parent_mapping_id":
                     continue
-                if row["id"] in quality_overrides and field == "replacement":
+                if (
+                    row["id"] in donor_backed_overrides
+                    and field == "replacement"
+                ):
                     self.assertEqual(
                         row["replacement"],
-                        quality_overrides[row["id"]],
+                        donor_backed_overrides[row["id"]],
                     )
                     continue
                 self.assertEqual(row[field], reference[field])
@@ -303,7 +223,7 @@ class TranslationImporterTests(unittest.TestCase):
                 for row in replacement_raw
                 if row["replacement"] and row["id"] not in donorless_ids
             },
-            quality_overrides,
+            donor_backed_overrides,
         )
         by_id = {row["id"]: row for row in replacement_raw}
         for mapping_id, (display_context, display_basis) in structural_rows.items():

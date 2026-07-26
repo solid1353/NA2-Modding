@@ -33,7 +33,7 @@ command or file-backed inter-stage handoff.
 - Initial parallel `rebuild.tsv` rows: `2,173` (`T1` through `T2173`)
 - Initial `rebuild.tsv` SHA-256: `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`
 - Cumulative `replacement.tsv` rows: `752`
-- Cumulative `replacement.tsv` SHA-256: `A4D51B2B37047DFA1A69EEA390EF1D30EB101557D035AEE23B7D6DF985836DCA`
+- Cumulative `replacement.tsv` SHA-256: `CD35EAF59019968B3C149721F631F48FCF146A39916FC8D0C6CD72217471B2DD`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the aggregate Localization feature pin own content identity.
@@ -121,13 +121,13 @@ Six Difficulty-family rows are matched by meaning: T27 `Simple`, T1983 `Easy`,
 T28 `Normal`, T1984 `Hard`, T29 `Insane`, and T50 `Difficulty`. The full T50
 label links through the exact pointer at `NA2_BTL@0x20A264`. Exactly four rows
 have no trustworthy NUN5 donor—T24, T30, T744, and T767—and put their own ID
-in the user-editable `replacement` field. Thirty-six donor-backed rows use
-reviewed English overrides for clear grammar, meaning, or trailing-whitespace
-defects while preserving the exact donor fields as provenance. T2027 and T2033
-separately retain the established Cross-confirm Shop overrides. This is a
-reference-derived English validation pass, not a claim that uncaptured screens
-are covered. The explicit replacement worker build imports all 752 rows
-without falling back to accepted `mappings.tsv`.
+in the user-editable `replacement` field. Donor-backed rows otherwise leave
+`replacement` blank and execute the independently validated official donor
+text. T2027 and T2033 are the only donor-backed exceptions and retain the
+established Cross-confirm Shop overrides. This is a reference-derived English
+validation pass, not a claim that uncaptured screens are covered. The explicit
+replacement worker build imports all 752 rows without falling back to accepted
+`mappings.tsv`.
 
 The replacement table closes every admitted multi-slot `<br>` message family.
 T2011/T2041/T2042 cover all four save-progress message parts, while

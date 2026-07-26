@@ -65,12 +65,11 @@ NUN5 counterpart.
 Exactly four rows currently have no trustworthy NUN5 donor: T24, T30, T744,
 and T767. Each deliberately stores its own ID in `replacement` so a worker
 build exposes unresolved coverage instead of executing an invented
-translation. Thirty-six donor-backed rows use reviewed `replacement` overrides
-where the official donor English is grammatically defective, semantically
-wrong, or contains stray whitespace; the donor fields remain unchanged as
-provenance. T2027 and T2033 separately retain the established Cross-confirm
-Shop overrides. These relationships are the reference-derived starting point
-for English runtime validation, not a claim that later uncaptured screens are
+translation. Donor-backed rows otherwise leave `replacement` blank and execute
+the independently validated official donor text. T2027 and T2033 are the only
+donor-backed exceptions and retain the established Cross-confirm Shop
+overrides. These relationships are the reference-derived starting point for
+English runtime validation, not a claim that later uncaptured screens are
 covered. The diagnostic inventory and normal build behavior remain unchanged.
 
 Rows that split one `<br>`-delimited renderer message are admitted as a

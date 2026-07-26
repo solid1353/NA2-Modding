@@ -317,7 +317,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
         )
         self.assertEqual(draft.translation_plan.display_mode, "replacement")
         self.assertEqual(len(draft.translation_plan.text_mappings), 752)
-        self.assertEqual(len(draft.translation_plan.import_rows), 845)
+        self.assertEqual(len(draft.translation_plan.import_rows), 839)
         self.assertEqual(len(draft.external_draft.fragments), 18)
         self.assertEqual(len(draft.external_draft.symbolic_patches), 22)
         self.assertEqual(

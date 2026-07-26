@@ -1920,7 +1920,8 @@ adapter returns through NA2's native `0x00382310` draw ABI. This title layer
 does not select Practice explanations or either subsequent Command Chart
 auxiliary-string call; each remains a separate caller family. The title layer
 is default-enabled and runtime-proven in isolated matched Command Chart and
-Practice captures; user acceptance remains pending.
+Practice captures. The user accepted the Command Chart result on 2026-07-27;
+the Practice title result remains agent-validated and awaiting acceptance.
 
 The third thin caller layer, `font_v2_practice_explanations`, replaces only the
 Practice per-token explanation loop at BTL file `0x1C4BA0`. It assembles one
@@ -1958,7 +1959,8 @@ rejected the combined autofit/layout selection as unstable. The font itself,
 independent Character Select modal alignment, call-local numeric formatters,
 and the accepted v2 Controls/core pair are now enabled while the remaining
 layout families are rebuilt sequentially. The isolated v2 title layer is also
-enabled and agent-validated for its current matched review.
+enabled and runtime-proven: Command Chart is user-accepted, while Practice
+title acceptance remains pending.
 
 `scripts/research/localization/generate_font_assets.py` deterministically
 regenerates and verifies the four native glyph/metric/decoder blobs from

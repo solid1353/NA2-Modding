@@ -688,8 +688,9 @@ Every Practice page retains the NUN5 title origins while its later explanation
 rows remain intentionally unchanged for their separate wrapping family.
 Confidence is **high** for the direct hooks, shared adapter, shrink-only
 behavior, distinct geometries, state restoration, and separation between
-titles and explanations. User acceptance of this v2 title family remains
-pending.
+titles and explanations. The user explicitly accepted the Command Chart result
+on 2026-07-27. The Practice title result remains agent-validated and awaiting
+user acceptance.
 
 ### Practice explanation mixed-text wrapping
 

@@ -28,7 +28,9 @@ default-enabled. The user accepted the exact matched Controls result on
 title-to-Load transition without freezing.
 
 The isolated Command Chart and Practice title layer remains runtime-proven and
-default-enabled. The next Practice explanation family is now agent-validated
+default-enabled. The user explicitly accepted the Command Chart result on
+2026-07-27; the Practice title result remains agent-validated and awaiting
+acceptance. The next Practice explanation family is also agent-validated
 across supplied slots 2-7: wrapping, line spacing, placement, and native inline
 icons match NUN5. Its composed comparison grids await user acceptance before
 the next caller family begins.
@@ -264,6 +266,8 @@ the 288-unit long-title shrink, the 352-unit Practice title origins, unchanged
 short-title scale, and unchanged later Practice explanation rows. The supplied
 states also correct the live BTL mapping to `0x006B3F00 + file offset`; using
 the `0x006B3EC0` Ghidra mapping as a live base writes `0x40` bytes too early.
+The user explicitly accepted the Command Chart result on 2026-07-27. Practice
+title acceptance remains pending.
 
 ### Third caller family: Practice explanations
 
@@ -334,8 +338,10 @@ For each family:
 
 After accepted Controls:
 
-1. Completed: Command Chart and Practice titles through one configurable title
-   adapter, retaining their distinct 288- and 352-unit containers.
+1. Implemented and runtime-proven: Command Chart and Practice titles through
+   one configurable title adapter, retaining their distinct 288- and 352-unit
+   containers. Command Chart is user-accepted; Practice title acceptance
+   remains pending.
 2. Shared confirmation choices and confirmation bodies.
 3. Agent-validated, awaiting user acceptance: Practice explanations through a
    364-by-48 wrapping container, with markup and controller icons preserved as
@@ -364,8 +370,9 @@ Recommended effort: **max**, due to cross-function MIPS ABI preservation,
 renderer-state restoration, symbolic resident linking and multi-screen runtime
 regression risk.
 
-**Plan approved; foundations complete; Controls accepted; titles retained;
-Practice explanations agent-validated and awaiting user acceptance**
+**Plan approved; foundations complete; Controls and Command Chart accepted;
+Practice title and Practice explanations agent-validated and awaiting user
+acceptance**
 
 ## Accepted font implementation
 

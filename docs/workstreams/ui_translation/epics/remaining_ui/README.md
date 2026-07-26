@@ -10,8 +10,6 @@ the right.
 1. Battle Results screen 2: repair the garbled and mislaid result UI.
 2. Character Items transition: replace the NA2.28 slide with the NUN5/base-NA2
    fade behavior.
-3. Battle Settings footer, slot 10: Select, OK, and Back are fixed and ready
-   for acceptance.
 
 ## Report grids
 
@@ -24,7 +22,3 @@ the right.
 ![Character Items transition, slots 1-3](03-items-slots-1-3.png)
 
 ![Character Items transition, slots 4-5](04-items-slots-4-5.png)
-
-### Battle Settings footer
-
-![Battle Settings footer, slot 10](05-battle-settings-footer-slot10.png)

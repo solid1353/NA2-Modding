@@ -762,8 +762,8 @@ and callees, exact source bytes, paired slot-6 and slot-10 `eeMemory` images,
 active sprite objects, and guarded task-owned savestates in which each screen's
 four live instructions were changed together. The resulting 640x480 captures
 align Select, OK, and Back with NUN5; remaining one-pixel differences are normal
-pulse-frame variation. The user accepted the Practice Settings slot-6 result;
-Battle Settings slot 10 remains at the final visual-acceptance boundary.
+pulse-frame variation. The user accepted both the Practice Settings slot-6 and
+Battle Settings slot-10 results.
 
 An earlier candidate at NA2 BTL file offset `0xCF70` belongs to the separate
 VS confirmation Customize Jutsu call and is not part of this screen. It was

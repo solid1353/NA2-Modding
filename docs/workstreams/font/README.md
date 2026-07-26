@@ -13,6 +13,10 @@ in the shared knowledge base rather than being duplicated here.
 - [Active plan and working context](plan.md)
 - [Confirmed font knowledge and preserved evidence](../../knowledge/localization/font/README.md)
 
+## Active epics
+
+- [ss2–ss6 layout parity](epics/ss2-6-layout/README.md)
+
 ## Workstream policy
 
 - Apply the [shared epic workflow](../EPIC_WORKFLOW.md) only to Font work that

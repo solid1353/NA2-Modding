@@ -7,8 +7,10 @@ the right.
 
 ## Remaining subtasks
 
-1. Battle Results screen 2: implemented and runtime-proven; awaiting user
-   acceptance of the refreshed NUN5/Current NA2.28 grid.
+1. Battle Results screen 2: labels, title, footer, and moving clouds are fixed;
+   the red rank text remains vertically misregistered inside the stamp. A
+   screen-space Y trial was disproven and reverted; resume at the loaded
+   texture/CLUT binding or cached GS packet.
 2. Character Items transition: replace the NA2.28 slide with the NUN5/base-NA2
    fade behavior.
 3. Cross/Triangle labels, paired slots 1-5: correct only the Cross and Triangle

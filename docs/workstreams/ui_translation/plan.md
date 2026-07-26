@@ -184,10 +184,11 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   derived from NUN5's stage-width formula, 78 complete Victory descriptors
   derived from NUN5's frame templates and English widths, and 76 remaining
   NA2-ABI adaptations. Stage Select, Jutsu, command-scroll, Items, Mash, and
-  Mode Select, both Settings footers, and Battle Results screen 2 are
-  runtime-proven; Vibration, Collection, and Victory still await their
-  respective normal runtime acceptance. Battle Results remains in the epic
-  until user acceptance.
+  Mode Select and both Settings footers are runtime-proven; Vibration,
+  Collection, Victory, and the Battle Results screen-2 rank label still await
+  their respective normal runtime acceptance. The Battle Results labels,
+  title, footer, and moving clouds are proven, but the red rank text remains
+  vertically misregistered inside its stamp and remains in the epic.
 - Translation mapping version 35 restores the four Collection Movie rows to
   exact official NUN5 source strings with no authored line breaks. A
   clean-source full in-memory plan produced 2,437 fixed-size patch rows with
@@ -542,8 +543,11 @@ The user's final paired visual inspection accepted Slot 4 as perfect on
 pair and active mismatch-list entry were then removed under workstream policy.
 
 The remaining maintained mismatch list contains Battle Results screen 2
-(implemented and awaiting user acceptance), Character Items transition
-behavior, and the Cross/Triangle-label batch. The standalone binary-patcher
-package validates with this canonical patch; the full repository suite remains
-blocked by the independent `BATTLEGAUGE.CCS` expected-hash mismatch described
-above.
+(red rank text vertically misregistered inside the stamp), Character Items
+transition behavior, and the Cross/Triangle-label batch. The rejected
+rank-label Y-compensation trial and exact pixel/object evidence are preserved
+in `docs/knowledge/localization/ui/battle.md`; resume from texture/CLUT binding
+or cached GS-packet evidence rather than retrying screen-space constants. The
+standalone binary-patcher package validates with the otherwise canonical
+patch; the full repository suite remains blocked by the independent
+`BATTLEGAUGE.CCS` expected-hash mismatch described above.

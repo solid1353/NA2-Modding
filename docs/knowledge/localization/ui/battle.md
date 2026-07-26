@@ -885,9 +885,43 @@ helpers, exact canonical bytes, task-owned slot-1-to-screen-2 transitions, and
 live sprite-object fields. A useful negative result is that patching the static
 tables into an already-constructed screen-2 savestate leaves the old cloud
 sprite geometry resident; the visual proof must enter screen 2 fresh from slot
-1. The fresh transition removes every animated `Ninja Song` fragment. A second
-guarded transition during the rank reveal proves all six rank object fields
-match NUN5 bit-for-bit.
+1. The fresh transition removes every animated `Ninja Song` fragment.
 
-The donor tables, cross-game mapping, cloud behavior, and shared five-value rank
-renderer are **runtime-proven** with **verified confidence**.
+The donor tables, result-label geometry, title, footer, and cloud behavior are
+**runtime-proven** with **verified confidence**. The rank-label placement is
+still unresolved and must not be described as accepted or fully runtime-proven.
+
+### 2026-07-26 rank-label correction and rejected Y trial
+
+A zoomed user runtime capture proved that the red rank text remains too low
+inside the rotated stamp. `Outstanding!` is only one value exercising the
+shared five-value path; this is not a value-dependent defect.
+
+The paired settled objects were located by the exact
+`display=(108,32.399998), rect=(0,48,80,24)` signature:
+
+| Game | Object | Pivot | Anchor | Display |
+| --- | --- | --- | --- | --- |
+| NUN5 `SLES-55605 (C071D4C1).02.p2s` | `0x00BED7B0` | `(-54,-16.199999)` | `(408,83.439995)` | `(108,32.399998)` |
+| Current `SLOP-NA228 (D61F4C01).09.p2s` | `0x00C6E140` | `(-54,-16.199999)` | `(408,83.439995)` | `(108,32.399998)` |
+
+Their scalar object fields are byte-identical. The only differences in the
+first `0x180` bytes are relocated pointers; the corresponding parent object's
+scalar fields are also identical. Both select the official English
+`(0,48,80,24)` donor rectangle.
+
+Changing the authored `UI-BTL-016-11` center compensation from approximately
+`18.44` to `2.44` (`-16` screen pixels) was tested and rejected. The baseline
+and changed task-owned renders have exactly the same red-mask bounding box,
+`(458,226)..(632,370)`, the same 4,379 selected pixels, and zero XOR pixels.
+The trial was reverted; it must not be repeated.
+
+This rules out the exposed rank object's anchor, pivot, display dimensions,
+rectangle, and the attempted call-site Y compensation as the source of the
+visible discrepancy. The next investigation must trace the actual texture/CLUT
+binding and generated GS packet or cached secondary transform used by the
+visible red rank text. The deterministic build log proves `XNINKA.CCS` was
+derived from the complete NUN5 payload, but the loaded texture page and binding
+have not yet been proven equivalent at draw time. Confidence in this negative
+result is **verified**; confidence in the unresolved texture/binding hypothesis
+is **candidate**.

@@ -48,8 +48,8 @@
 
 ## Access failures and escalation
 
-- Use scoped elevation freely for filesystem mutations and other operations
-  likely to hit access restrictions; avoiding a failed attempt is preferred.
+- Use scoped elevation from the first attempt for every filesystem operation,
+  including reads, listings, searches, hashes, link checks, and mutations.
 - After an access failure, retry only the failed operation; do not repeat work
   that already succeeded.
 - An access or elevation denial never silently changes an authorized cleanup

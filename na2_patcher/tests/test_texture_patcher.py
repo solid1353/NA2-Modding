@@ -1119,7 +1119,7 @@ class UiTextureTests(unittest.TestCase):
             ("runtime_proven", "verified"),
         )
 
-    def test_battle_results_keeps_rank_renderer_on_clean_na2_baseline(self) -> None:
+    def test_battle_results_imports_all_five_rank_stamp_rectangles(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         package = binary_patcher.load_package(
             repository
@@ -1130,12 +1130,11 @@ class UiTextureTests(unittest.TestCase):
 
         self.assertEqual(
             [item.edit_id for item in edits],
-            [f"UI-BTL-016-{index:02d}" for index in range(1, 11)]
-            + ["UI-BTL-016-12", "UI-BTL-016-13"],
+            [f"UI-BTL-016-{index:02d}" for index in range(1, 14)],
         )
         self.assertEqual(
             Counter(item.operation for item in edits),
-            {"copy": 8, "replace": 4},
+            {"copy": 9, "replace": 4},
         )
         self.assertEqual(
             [
@@ -1157,10 +1156,26 @@ class UiTextureTests(unittest.TestCase):
                 (0x62B24, 2, "nun5_btl", 0x65878),
                 (0x62B48, 8, "nun5_btl", 0x6589C),
                 (0x62B54, 4, "nun5_btl", 0x658A8),
+                (0x2100B0, 40, "nun5_elf", 0x4DDCE0),
             ],
         )
 
         self.assertNotIn(0x634E8, [item.destination_offset for item in edits])
+        rank_rectangles = next(
+            item for item in edits if item.edit_id == "UI-BTL-016-11"
+        )
+        self.assertEqual(
+            (
+                rank_rectangles.expected_hex,
+                rank_rectangles.source_expected_hex,
+            ),
+            (
+                "6001C80040003800A001A80040003800A001700040003800"
+                "A001380040003800A001000040003800",
+                "A001B00060002C00A001840060002C00A001580060002C00"
+                "A0012C0060002C00A001000060002C00",
+            ),
+        )
         self.assertEqual(
             (patch.status, patch.confidence),
             ("approved_for_test", "verified"),
@@ -1172,7 +1187,8 @@ class UiTextureTests(unittest.TestCase):
                     item.expected_hex,
                     item.replacement_hex,
                 )
-                for item in edits[10:]
+                for item in edits
+                if item.edit_id in {"UI-BTL-016-12", "UI-BTL-016-13"}
             ],
             [
                 (0x649CC, "C543023C00804234", "BB43023C00804234"),
@@ -1839,13 +1855,13 @@ class UiTextureTests(unittest.TestCase):
         ]
 
         self.assertEqual(len(ui_edits), 297)
-        self.assertEqual(operations, {"copy": 100, "replace": 197})
+        self.assertEqual(operations, {"copy": 101, "replace": 196})
         self.assertEqual(
             copy_sources,
-            {"nun5_elf": 65, "nun5_btl": 26, "nun5_etc": 9},
+            {"nun5_elf": 66, "nun5_btl": 26, "nun5_etc": 9},
         )
         self.assertEqual(len(stage_scales), 24)
-        self.assertEqual(len(adaptations), 173)
+        self.assertEqual(len(adaptations), 172)
 
     def test_plan_applies_only_inside_the_selected_cvm_member(self) -> None:
         result = self.result("battlegauge")

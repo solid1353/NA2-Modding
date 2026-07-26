@@ -183,17 +183,18 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   blobs are stored in the repository.
 - `na2_patcher/features/localization/binary_patcher/` contains the canonical UI
   companion patches across BTL, ETC, and the boot ELF. The current UI subset
-  has 27 patches and 297 guarded edits: 100 exact NUN5 copies, 24 values
+  has 27 patches and 297 guarded edits: 101 exact NUN5 copies, 24 values
   derived from NUN5's stage-width formula, 78 complete Victory descriptors
-  derived from NUN5's frame templates and English widths, and 95 remaining
+  derived from NUN5's frame templates and English widths, and 94 remaining
   NA2-ABI adaptations. Stage Select, Jutsu, command-scroll, Items, Mash, and
   Mode Select and both Settings footers are runtime-proven; Vibration,
-  Collection, Victory, the Battle Results screen-2 rank label, and the Ninja
-  Song details footer still await their respective normal runtime acceptance.
+  Collection, Victory, and the Battle Results screen-2 rank label still await
+  their respective normal runtime acceptance.
   The Battle Results labels, title, summary footer, and moving clouds are
-  proven; the details-footer anchors are implemented and the rank-specific
-  renderer/atlas corrections are disabled for matched baseline capture in the
-  next normal pipeline run.
+  proven; the details footer is user-accepted. The prior rank renderer/atlas
+  trials remain disabled, and the replacement is now one exact five-record
+  NUN5 rank-atlas table copied over NA2's incompatible 64x56 records. It awaits
+  the next normal pipeline run.
 - Translation mapping version 35 restores the four Collection Movie rows to
   exact official NUN5 source strings with no authored line breaks. A
   clean-source full in-memory plan produced 2,437 fixed-size patch rows with
@@ -206,7 +207,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   donors and four mapped exceptions: MODE2KDV, ENDDEMO, Haku, and Shikamaru.
   The historical runtime harness remains available. Current binary-patcher
   validation and the focused UI texture provenance tests pass. No full-suite
-  run or ISO build was performed for the latest BTL-only footer change.
+  run or ISO build was performed for the latest BTL rank-table change.
 - The 2026-07-19 non-launching normal profile build derived all 34 replacements
   through 76 texture mappings, applied all 88 companion edits, and reported
   `ISO result: updated` with rotation. Build record
@@ -547,7 +548,8 @@ The user's final paired visual inspection accepted Slot 4 as perfect on
 pair and active mismatch-list entry were then removed under workstream policy.
 
 The remaining maintained mismatch list contains only Battle Results screen 2
-(rank corrections disabled; matched ss2-ss6 now cover all five rank values).
+(the five-record donor-table correction is implemented; matched ss2-ss6 retain
+the complete pre-fix baseline for normal-pipeline verification).
 Ninja Song details ss8, Victory ss7 all-character donor coverage, Character
 Items transition behavior, and the Cross/Triangle-label batch are
 user-accepted.

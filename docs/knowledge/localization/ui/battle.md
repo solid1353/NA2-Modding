@@ -1022,7 +1022,73 @@ The source/copy hashes are recorded under
 `@work/UI translation/inputs/sstates/battle_results_rank_baseline_ss02_06_20260726/`.
 All ten protected-library copies verified byte-identical. This five-value
 baseline is **user-supplied runtime evidence** with **high confidence**; the
-replacement geometry remains unresolved.
+replacement geometry is resolved by the following selector-table finding.
+
+### 2026-07-26 visible rank-stamp selector table
+
+The visible rotated red stamp is a second rank path, separate from the hidden
+table-driven sprite documented above. The matched states identify the complete
+selector sequence and its stable controller:
+
+| Game | Controller | Animation pointer | `rank` byte at `+0x15C` across ss2-ss6 |
+| --- | --- | --- | --- |
+| NUN5 | `0x00BD98A0` | `0x00BEDBA0` | `4,0,1,2,3` |
+| NA2.28 | `0x00C6F2A0` | `0x00C6F0B0` | `4,0,1,2,3` |
+
+Those indices map to `Outstanding!`, `Try harder!`, `Keep trying`,
+`Good job!`, and `Nicely done!` in the supplied slot order. The underlying
+tables are:
+
+| Game/table | Index 0 | Index 1 | Index 2 | Index 3 | Index 4 |
+| --- | --- | --- | --- | --- | --- |
+| NA2 BTL file `0x2100B0`, live `0x008C3FB0` | `(352,200,64,56)` | `(416,168,64,56)` | `(416,112,64,56)` | `(416,56,64,56)` | `(416,0,64,56)` |
+| NUN5 English SLES file `0x4DDCE0`, live `0x005DDB60` | `(416,176,96,44)` | `(416,132,96,44)` | `(416,88,96,44)` | `(416,44,96,44)` | `(416,0,96,44)` |
+
+NUN5's language-pointer table at live `0x005BB390` addresses five copies of
+the same rank records at `0x005DDB60`, `0x005DEE90`, `0x005E14F0`,
+`0x005E01C0`, and `0x005E2820`. The first canonical copy occurs at SLES file
+`0x4DDCE0`. In NA2 ss2, the pointer stored at live `0x00604CF4` is
+`0x008C3FC8`, proving that index 3 is the subtraction baseline.
+
+The exact visible-stamp functions are:
+
+| Role | NA2 v2.28 | NUN5 |
+| --- | --- | --- |
+| Rank-stamp selector/draw | BTL file `0x63B60`, Ghidra `FUN_00717A20` | BTL file `0x668F0`, Ghidra `FUN_0072D5B0` |
+| Rectangle normalization | resident `FUN_0037DA40` | resident `FUN_0038C9C0` |
+| Animation object lookup | resident `FUN_001BAB40` | resident `FUN_001BF290` |
+| Per-model texture offset | resident `FUN_00198840` | resident `FUN_0019BD70` |
+
+Practical reconstruction:
+
+```cpp
+Rect selected = rankRects[result->rank_15c];
+Rect baseline = rankRects[3];
+float u = float(selected.x - baseline.x) / 512.0f;
+float v = 1.0f - float(selected.y - baseline.y) / 256.0f;
+Model *stamp = findAnimationModel(result->stampAnimation_11c);
+setModelTextureOffset(stamp, fixed12(u), fixed12(v), 0, 0);
+```
+
+The NA2 C export ends after `FUN_001BAB40`, but that is an export gap rather
+than missing game code. Raw BTL bytes continue with the same float-to-fixed12
+conversion and call the exact NA2 homolog `FUN_00198840`. A renderer port,
+code cave, or authored call sequence is therefore unnecessary and would
+duplicate existing behavior.
+
+The complete official NUN5 `XNINKA.CCS` remains the internally coherent donor.
+Its stamp animation has 21 frames and no material/UV controller; its stamp
+model uses the same UVs as NA2 but English-aspect geometry. Selection belongs
+to the BTL rectangle table, not the model defaults. `UI-BTL-016-11` therefore
+copies exactly the five NUN5 records from SLES file `0x4DDCE0` to NA2 BTL file
+`0x2100B0`. Because index 3 is copied with the other records, the existing
+delta calculation stays coherent. The edit changes no result value, selector
+index, animation, position, rotation, timing, input, or model code.
+
+The table identity, controller/index sequence, function homologs, and
+guarded donor bytes are **statically verified with high confidence**. The
+canonical correction is **implemented and awaiting normal-build runtime
+verification**; it is not yet user-accepted.
 
 ### 2026-07-26 Ninja Song details-footer regional anchors
 

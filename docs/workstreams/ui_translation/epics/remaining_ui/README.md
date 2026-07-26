@@ -7,14 +7,19 @@ the right.
 
 ## Remaining subtasks
 
-1. Battle Results screen 2: labels, title, footer, and moving clouds are fixed;
-   the red rank text remains unresolved. Matched ss2-ss6 now preserve all five
-   values with the prior renderer replacement and whole-column atlas shift
-   disabled while retaining the unmodified official NUN5 container:
+1. Battle Results screen 2: labels, title, footer, and moving clouds are fixed.
+   The red rank correction is implemented as one exact five-record NUN5 donor
+   table and awaits normal-pipeline runtime verification. Matched ss2-ss6
+   preserve the pre-fix baseline for all five values with the prior renderer
+   replacement and whole-column atlas shift disabled while retaining the
+   unmodified official NUN5 container:
    ss2 `Outstanding!`, ss3 `Try harder!`, ss4 `Keep trying`, ss5 `Good job!`,
    and ss6 `Nicely done!`. Current ss3-ss5 sample mixed neighboring atlas
    cells; ss2 and ss6 retain the correct identity as untouched placement
-   baselines. The task-owned states and extracted screenshots are under
+   baselines. The shared selector is proven to use indices `4,0,1,2,3` across
+   those five pairs; `UI-BTL-016-11` replaces the incompatible NA2 64x56
+   records with NUN5's 96x44 records without changing renderer code. The
+   task-owned states and extracted screenshots are under
    `@work/UI translation/inputs/sstates/battle_results_rank_baseline_ss02_06_20260726/`
    and
    `@work/UI translation/inputs/screenshots/battle_results_rank_baseline_ss02_06_20260726/`.

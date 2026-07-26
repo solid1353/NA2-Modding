@@ -31,10 +31,11 @@ Gate`, T744 to `Faint Unease`, and T767 to `Silent Confidence`. Six
 Difficulty-family rows are matched by meaning rather than table position.
 T24 deliberately reuses the official Jump-mode help text. T30 is the sole
 donorless row: its user-authored `Ultimate` replacement is externalized through
-the validated pointer at `NA2_BTL@0x209CB4`. T2191–T2193 use explicit compact
-`hit`, `hit`, and `pcs` overrides because the NA2 Ninja Song result renderer
-reserves only one Japanese-counter field before its fixed equals sign. T2194
-adds the ss10-confirmed `100% Health bonus` donor row. Other donor-backed rows
+the validated pointer at `NA2_BTL@0x209CB4`. T2191–T2193 use the explicit
+`empty` transform because the NA2 Ninja Song result renderer reserves only one
+Japanese-counter field before its fixed equals sign and even compact Latin
+counters overlap that symbol. T2194 adds the ss10-confirmed
+`100% Health bonus` donor row. Other donor-backed rows
 leave `replacement` blank and execute official donor text;
 T1958, T2027, and T2033 retain the established Cross-confirm overrides. Normal
 builds import this canonical table directly.

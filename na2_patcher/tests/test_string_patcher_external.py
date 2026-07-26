@@ -231,7 +231,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
         ]
         self.assertEqual(
             {str(row["id"]) for row in override_rows},
-            {"T30", "T2191", "T2192", "T2193", "T1958", "T2027", "T2033"},
+            {"T30", "T1958", "T2027", "T2033"},
         )
         self.assertEqual(
             self.import_plan.resolved_texts["T2027"],

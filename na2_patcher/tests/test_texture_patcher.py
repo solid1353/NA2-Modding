@@ -1490,6 +1490,9 @@ class UiTextureTests(unittest.TestCase):
                 "UI-ELF-008-11",
                 "UI-ELF-008-12",
                 "UI-ELF-008-13",
+                "UI-ELF-008-14",
+                "UI-ELF-008-15",
+                "UI-ELF-008-16",
             ],
         )
         self.assertEqual(
@@ -1508,6 +1511,9 @@ class UiTextureTests(unittest.TestCase):
                 "replace",
                 "replace",
                 "replace",
+                "copy",
+                "replace",
+                "replace",
             ],
         )
         self.assertEqual(
@@ -1519,6 +1525,9 @@ class UiTextureTests(unittest.TestCase):
                 "na2_elf",
                 "na2_elf",
                 "na2_elf",
+                "na2_etc",
+                "na2_etc",
+                "na2_etc",
                 "na2_etc",
                 "na2_etc",
                 "na2_etc",
@@ -1544,6 +1553,9 @@ class UiTextureTests(unittest.TestCase):
                 0x6D4,
                 0x738,
                 0x2E7F0,
+                0x2E798,
+                0x764,
+                0x2E7F8,
             ],
         )
         self.assertEqual(
@@ -1560,6 +1572,9 @@ class UiTextureTests(unittest.TestCase):
                 "00000000000000000000000000000000",
                 "60F20D0C00000000",
                 "60F20D0C00000000",
+                "60F20D0C00000000",
+                "00000CC2",
+                "7800300048001800",
                 "60F20D0C00000000",
                 "00000CC2",
             ],
@@ -1580,6 +1595,9 @@ class UiTextureTests(unittest.TestCase):
                 "",
                 "",
                 "",
+                "nun5_elf",
+                "",
+                "",
             ],
         )
         self.assertEqual(
@@ -1596,6 +1614,9 @@ class UiTextureTests(unittest.TestCase):
                 None,
                 None,
                 None,
+                None,
+                None,
+                0x4DDC78,
                 None,
                 None,
             ],
@@ -1616,10 +1637,13 @@ class UiTextureTests(unittest.TestCase):
                 "",
                 "",
                 "",
+                "900030004C001800",
+                "",
+                "",
             ],
         )
         self.assertEqual(
-            [item.replacement_hex for item in edits[-9:]],
+            [item.replacement_hex for item in edits[4:]],
             [
                 "C243023C",
                 "E743023C",
@@ -1630,6 +1654,9 @@ class UiTextureTests(unittest.TestCase):
                 "CCCF1A0CC0C1033C",
                 "CCCF1A0C00C1033C",
                 "00006CC2",
+                "",
+                "CCCF1A0C00C0033C",
+                "000020C2",
             ],
         )
 

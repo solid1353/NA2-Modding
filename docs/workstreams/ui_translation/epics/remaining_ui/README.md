@@ -7,13 +7,14 @@ the right.
 
 ## Remaining subtasks
 
-1. Collection Music ss10: the Triangle/Stop footer group is approximately
-   36 pixels too far right in Current NA2.28, clipping `Stop` at the right
-   edge. The Cross/Play group already matches and is not part of this subtask.
-   The copied pair, hashes, and provenance are under
+1. Collection Music ss10: implemented and agent-validated; explicit user
+   verification remains. The exact NUN5 Stop record plus its homologous
+   state-4 geometry now render the complete Triangle/Stop group at the NUN5
+   footer anchor. Cross/Play remains unchanged and matched. The copied input
+   pair, hashes, and provenance are under
    `@work/UI translation/inputs/sstates/triangle_placement_ss10_20260726/`;
-   screenshots extracted from those owned copies are under
-   `@work/UI translation/inputs/screenshots/triangle_placement_ss10_20260726/`.
+   the actual post-change capture is
+   `@work/UI translation/artifacts/screenshots/collection-music-stop-v1.png`.
 
 ## User-accepted completed cases
 

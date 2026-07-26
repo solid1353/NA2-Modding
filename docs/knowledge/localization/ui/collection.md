@@ -136,8 +136,9 @@ void draw_home_action_prompt(Sprite *icon, Sprite *label, int state) {
 
 NA2's Play record is `(120,24,72,24)`, while the NUN5 HOME atlas and localized
 record use `(144,24,72,24)`. The 24-pixel U-coordinate mismatch produces the
-captured `Pl...` clipping on both Movie and Music. Only the reviewed Play
-record is copied. The adjacent state-4 Stop record remains unchanged.
+captured `Pl...` clipping on both Movie and Music. The later paired ss10 Music
+capture reviews the adjacent state-4 Stop record as well: NA2 uses
+`(120,48,72,24)`, while NUN5 uses `(144,48,76,24)`.
 
 ## Collection state footer positions
 
@@ -201,6 +202,8 @@ the task-owned paired Slot 3 state.
 | state 1 effective X | `380` | `380-12=368` |
 | state 2 effective X | `380` | `380-44+56-(72/2)=356` |
 | state 3 effective X | `460` | `460-8=452` |
+| state 4 prompt X | `460` | `460+(76-64)/2-8=458` |
+| state 4 label X | `460-35=425` | `458-(76/2)=420` |
 
 The official NUN5 helper reads signed regional globals for states 1 and 3.
 State 2 instead asks the localized rectangle accessor for its 72-pixel width
@@ -217,11 +220,13 @@ void draw_home_action_prompt(HomePromptState state) {
     float icon_x = state == CROSS ? 380.0f - 12.0f
                  : state == PLAY  ? 380.0f - 24.0f
                  : state == BACK  ? 460.0f - 8.0f
-                 : /* STOP */       original_x;
+                 : /* STOP */       460.0f - 2.0f;
     draw_common_prompt(icon_x, original_y, state);
 
     if (state == PLAY) {
         draw_label_at(380.0f - 59.0f, original_label_y);
+    } else if (state == STOP) {
+        draw_label_at(460.0f - 40.0f, original_label_y);
     }
 }
 ```
@@ -239,20 +244,32 @@ void draw_home_action_prompt(HomePromptState state) {
 - ETC file/load `0x738` / `0x006B4638`: state 3 redirects through the wrapper
   with `-8.0`.
 - ETC file/load `0x2E7F0` / `0x006E26F0`: state 2 changes only its first
-  label-local X offset from `-35.0` to `-59.0`. The adjacent state-4 Stop
-  offset remains unchanged.
+  label-local X offset from `-35.0` to `-59.0`.
+- ETC file `0x2E798`: copy the exact NUN5 localized Stop rectangle
+  `(144,48,76,24)` from SLES file `0x4DDC78` over NA2's
+  `(120,48,72,24)` rectangle.
+- ETC file/load `0x764` / `0x006B4664`: state 4 redirects through the same
+  wrapper with `-2.0`, the exact result of NUN5's
+  `(76-64)/2-8` centering arithmetic.
+- ETC file/load `0x2E7F8` / `0x006E26F8`: state 4 changes its label-local X
+  offset from `-35.0` to `-40.0`, reproducing NUN5 label X=`420`.
 
 The NUN5 helper code itself is not a safe byte donor: it calls different
 language accessors and reads build-specific GP-relative regional globals.
 The wrapper is therefore an authored ABI-preserving port of the verified NUN5
-arithmetic. The pristine zero range, all three call guards, and the data guard
-were confirmed in both the clean source and task-owned state. The guarded Slot
-3 Music render aligns Play and Back with the official NUN5 capture. A newer
-paired Slot 2 Collection Characters state independently passed the same five
-guards; applying the already-canonical helper rows aligned its OK/Back groups
-with NUN5 without any new binary edit. Confidence is high for both screens and
-the shared helper behavior; other retained screens that call it remain
-individually validated before acceptance.
+arithmetic. The pristine zero range, all four call guards, and both data guards
+were confirmed in the clean source and task-owned states. The guarded Slot 3
+Music render aligns Play and Back with the official NUN5 capture. A newer
+paired Slot 2 Collection Characters state independently passed the five
+earlier guards; applying the already-canonical helper rows aligned its OK/Back
+groups with NUN5 without any new binary edit. The ss10 Stop extension is
+verified from the owned paired state, live NUN5 English regional offsets
+`-12`/`-8`, live 64-pixel Triangle and 76-pixel Stop records, and the bounded
+homologous helper disassembly. A guarded task-owned runtime state with the
+three exact canonical edits renders the complete Triangle/Stop group at the
+NUN5 footer anchor while leaving Cross/Play unchanged. It remains awaiting
+explicit user verification. Confidence is high for the shared helper
+arithmetic.
 
 Useful negative result: changing only the nominal `0x2E7E0` table cannot
 express the helper's three distinct `-12`, `-24`, and `-8` state deltas. The
@@ -331,6 +348,7 @@ medium for the exact indirect parent edge.
 | Movie rectangle | `0x30498` / `0x006E4398` | `(1,37,136,34)` | NUN5 ELF `0x4DDC58` / `0x005DDAD8` | `(0,28,96,28)` |
 | Music rectangle | `0x304A0` / `0x006E43A0` | `(1,83,80,37)` | NUN5 ELF `0x4DDC60` / `0x005DDAE0` | `(0,56,96,28)` |
 | Play rectangle | `0x2E790` / `0x006E2690` | `(120,24,72,24)` | NUN5 ELF `0x4DDC70` / `0x005DDAF0` | `(144,24,72,24)` |
+| Stop rectangle | `0x2E798` / `0x006E2698` | `(120,48,72,24)` | NUN5 ELF `0x4DDC78` / `0x005DDAF8` | `(144,48,76,24)` |
 | viewer-control positions | `0x2EB40` / `0x006E2A40` | `(344,360)`, `(232,360)`, `(66,360)`, `(148,360)` | `0x283D0` / `0x006EF0D0` | `(206,364)`, `(99,364)`, `(97,339)`, `(207,339)` |
 | viewer-control rectangles | `0x30AB0` / `0x006E49B0` | `(1,72,108,24)`, `(1,48,108,24)`, `(1,96,108,24)`, `(120,1,108,23)` | `0x29A90` / `0x006F0790` | `(1,72,108,24)`, `(1,48,108,24)`, `(1,96,112,24)`, `(144,1,112,23)` |
 
@@ -416,9 +434,9 @@ respectively `220 + 118 = 338` and `233 + 144 = 377`.
 - Movie/Music list wording, wrapping, and font spacing differ in the paired
   screenshots, but they are text-rendering behavior rather than HOME texture
   rectangles and remain outside this texture-only correction.
-- The adjacent Stop rectangle and the Controls/Display/Hide prompt records
-  were not visible in these captures, so copying them would exceed the
-  screen-by-screen evidence boundary.
+- The Controls/Display/Hide prompt records were not visible in these captures,
+  so copying them would exceed the screen-by-screen evidence boundary. The
+  later ss10 Music pair separately supplied evidence for Stop.
 - The accepted `Back` prompt is drawn by the common action-prompt family, not
   the four-item viewer-control renderer, and remains untouched.
 - The second four-rectangle consumer `FUN_006bdaa0` / `FUN_006d0d10` uses a

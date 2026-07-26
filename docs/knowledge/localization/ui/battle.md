@@ -993,6 +993,21 @@ are **runtime-proven** with **high confidence**. The full five-value production
 result remains **awaiting normal-build runtime validation** and is not
 user-accepted.
 
+### 2026-07-26 matched five-value baseline reset
+
+The user directed a clean matched capture after the whole-column trial mixed
+neighboring 44-row label cells. The canonical baseline therefore removes only
+rank-specific interventions: `UI-BTL-016-11` no longer replaces the NA2 rank
+renderer, and `UI-NINKA-001` now uses `transform=copy`, preserving the complete
+official NUN5 `XNINKA.CCS` payload and its atlas unchanged. The other twelve
+`UI-BTL-016` edits remain active.
+
+This reset does not reject the donor container or the five one-to-one atlas
+cells. It removes the two corrections that obscured untouched behavior so five
+matched NUN5/NA2.28 savestate pairs can establish the per-value geometry. The
+previous whole-column production claim is superseded; its `Outstanding!`
+single-value trial remains useful historical evidence only.
+
 ### 2026-07-26 Ninja Song details-footer regional anchors
 
 The Ninja Song details screen has its own footer renderer; it is not the

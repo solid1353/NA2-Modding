@@ -191,7 +191,8 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   Collection, Victory, the Battle Results screen-2 rank label, and the Ninja
   Song details footer still await their respective normal runtime acceptance.
   The Battle Results labels, title, summary footer, and moving clouds are
-  proven; the rank transform and details-footer anchors are implemented for the
+  proven; the details-footer anchors are implemented and the rank-specific
+  renderer/atlas corrections are disabled for matched baseline capture in the
   next normal pipeline run.
 - Translation mapping version 35 restores the four Collection Movie rows to
   exact official NUN5 source strings with no authored line breaks. A
@@ -546,7 +547,7 @@ The user's final paired visual inspection accepted Slot 4 as perfect on
 pair and active mismatch-list entry were then removed under workstream policy.
 
 The remaining maintained mismatch list contains only Battle Results screen 2
-(rank transform implemented, awaiting normal runtime and user verification).
+(rank corrections disabled for matched five-value baseline capture).
 Ninja Song details ss8, Victory ss7 all-character donor coverage, Character
 Items transition behavior, and the Cross/Triangle-label batch are
 user-accepted.

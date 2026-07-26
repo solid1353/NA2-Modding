@@ -1448,26 +1448,15 @@ cloud positions, speeds, and heights were already equal; the NUN5 widths keep
 each moving object inside the localized cloud strip instead of traversing
 animated `Ninja Song` letters.
 
-The shared five-value rank selector already reads the complete NUN5 English
-rectangle table installed by `UI-ELF-004`. NA2 nevertheless drew the selected
-record without a pivot at anchor `(animatedX + 90, rowY - 1)`. NUN5 centers the
-same 1.35-scaled record and applies its effective X/Y compensation. NUN5's
-localized accessors and helper are not ABI-compatible with NA2, so one authored
-NA2 call-site port delegates the selected donor rectangle to resident helper
-`FUN_0037BD00`. The resulting candidate sprite object's pivot, anchor, width,
-and height fields match NUN5 bit-for-bit, but guarded Y and UV trials proved
-that object is not the visible rank-label layer.
-
-The visible layer samples the packed five-label column at X=`416..511`,
-Y=`0..219` from the official NUN5 `XNINKA.CCS` atlas. NA2 renders that column
-11 source rows too low. `UI-NINKA-001` therefore keeps the complete donor
-container and applies `indexed_shift_region_up_11_416_0_96_220`. The transform
-copies the complete region upward, clears only its vacated bottom rows, and
-rejects the derivation unless every discarded top-row donor pixel is
-transparent. A guarded task-owned `Outstanding!` texture-memory trial matches
-the NUN5 placement. Per user instruction, no ISO was built for this canonical
-change; all five rank values remain pending the next normal pipeline run and
-user validation.
+The shared five-value rank selector reads the complete NUN5 English rectangle
+table installed by `UI-ELF-004`, while the visible layer samples five
+corresponding 44-row cells in the packed `XNINKA.CCS` label column. The earlier
+authored centered-renderer replacement and whole-column upward translation
+obscured the untouched per-value behavior. At the user's request, both
+rank-specific corrections are disabled for matched baseline capture:
+`UI-BTL-016-11` is absent and `UI-NINKA-001` imports the complete official
+NUN5 container with the unmodified donor atlas. Every other Battle Results
+layout edit remains active.
 
 The remaining code edits use exact same-register NUN5 instructions where
 possible. Display Details Y uses a compact NA2 sequence because the NUN5

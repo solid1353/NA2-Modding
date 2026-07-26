@@ -1,0 +1,565 @@
+id	enabled	display_context	source	donor	prefix	replacement	display_basis	source_ref	donor_ref	mode	capacity	transform	arguments	reference_refs	parent_mapping_id
+T98	0	Character menus > Ultimate Jutsu name	<r朝孔雀|あさくじゃく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26180		slot	24				
+T99	0	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r影縫|かげぬ>い				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26210		slot	40				
+T100	0	Character menus > Ultimate Jutsu name	<r部分倍化|ぶぶんばいか>の<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x262C0		slot	40				
+T101	0	Character menus > Ultimate Jutsu name	<r潜影多蛇手|せんえいたじゃしゅ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26D60		slot	40				
+T102	0	Character menus > Ultimate Jutsu name	<r大玉螺旋丸|おおだまらせんがん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28440		slot	48				
+T103	0	Character menus > Ultimate Jutsu name	<r漏|も>れ<r出|だ>す<r力|ちから>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28470		slot	48				
+T104	0	Character menus > Ultimate Jutsu name	<r妖狐|ようこ>の<r衣|ころも>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x284A0		slot	32				
+T105	0	Character menus > Ultimate Jutsu name	<r変|か>わらない<r関係|かんけい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x284C0		slot	48				
+T106	0	Character menus > Ultimate Jutsu name	<r春|はる>の<r蹴来|しゅうらい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x284F0		slot	32				
+T107	0	Character menus > Ultimate Jutsu name	キラキラ<r乙女心|おとめごころ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28510		slot	32				
+T108	0	Character menus > Ultimate Jutsu name	<r大地割|だいちわ>り				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28530		slot	32				
+T109	0	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r桜舞|サクラマイ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28550		slot	48				
+T110	0	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r白描|はくびょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28580		slot	80				
+T111	0	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r龍|りゅう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x285D0		slot	64				
+T112	0	Character menus > Ultimate Jutsu name	<r雷切|らいきり>・<r一尖|いっせん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28610		slot	48				
+T113	0	Character menus > Ultimate Jutsu name	<r土遁|どとん>・<r裂穿牙|れっせんが>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28640		slot	48				
+T114	0	Character menus > Ultimate Jutsu name	コピー<r忍術|にんじゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28670		slot	32				
+T115	0	Character menus > Ultimate Jutsu name	<r八卦四天空掌|はっけしてんくうしょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28690		slot	48				
+T116	0	Character menus > Ultimate Jutsu name	<r八卦六十四掌|はっけろくじゅうよんしょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x286C0		slot	48				
+T117	0	Character menus > Ultimate Jutsu name	<r八卦破山撃|はっけはざんげき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x286F0		slot	32				
+T118	0	Character menus > Ultimate Jutsu name	<r木|こ>ノ<r葉旋光|はせんこう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28710		slot	32				
+T119	0	Character menus > Ultimate Jutsu name	<r青春|せいしゅん>フルパワー！！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28730		slot	48				
+T120	0	Character menus > Ultimate Jutsu name	あの<r夕日|ゆうひ>に<r向|む>かって				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28760		slot	48				
+T121	0	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r廻燕劇|かいえんげき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28790		slot	48				
+T122	0	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r大鉄塊|だいてっかい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x287C0		slot	48				
+T123	0	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r天鋼災|てんこうさい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x287F0		slot	48				
+T124	0	Character menus > Ultimate Jutsu name	<r自分|じぶん>ルール・<r壱|いち>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28820		slot	48				
+T125	0	Character menus > Ultimate Jutsu name	<r自分|じぶん>ルール・<r弐|に>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28850		slot	32				
+T126	0	Character menus > Ultimate Jutsu name	ＩＱ２００				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28870		slot	16				
+T127	0	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r影煙幕|かげえんまく>の<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28880		slot	64				
+T128	0	Character menus > Ultimate Jutsu name	<r部分超倍化|ぶぶんちょうばいか>の<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x288C0		slot	48				
+T129	0	Character menus > Ultimate Jutsu name	<r超|ちょう>・<r肉弾戦車|にくだんせんしゃ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x288F0		slot	48				
+T130	0	Character menus > Ultimate Jutsu name	<r超|ちょう>・<r肉弾戦車|にくだんせんしゃ>２				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28920		slot	48				
+T131	0	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r月下美人|げっかびじん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28950		slot	48				
+T132	0	Character menus > Ultimate Jutsu name	<r蝶針火|ちょうしんか>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28980		slot	24				
+T133	0	Character menus > Ultimate Jutsu name	<r飛燕|ひえん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28998		slot	24				
+T134	0	Character menus > Ultimate Jutsu name	<r渦旋風火|かせんふうか>の<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x289B0		slot	48				
+T135	0	Character menus > Ultimate Jutsu name	<r爪迅狼牙|そうじんろうが>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x289E0		slot	32				
+T136	0	Character menus > Ultimate Jutsu name	<r天双牙|てんそうが>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28A00		slot	32				
+T137	0	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r蝕|しょく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28A20		slot	48				
+T138	0	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r虚|うつろ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28A50		slot	48				
+T139	0	Character menus > Ultimate Jutsu name	<r八卦掌空天|はっけしょうくうてん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28A80		slot	48				
+T140	0	Character menus > Ultimate Jutsu name	<r魔幻|まげん>・<r樹縛殺|じゅばくさつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28AB0		slot	48				
+T141	0	Character menus > Ultimate Jutsu name	<r砂縛牢|さばくろう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28AE0		slot	32				
+T142	0	Character menus > Ultimate Jutsu name	<r砂瀑槍葬|さばくそうそう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28B00		slot	32				
+T143	0	Character menus > Ultimate Jutsu name	<r滅砂瀑葬|めっさばくそう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28B20		slot	32				
+T144	0	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r骸烏|ムクロガラス>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28B40		slot	48				
+T145	0	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r鬼城|きじょう>の<r面|めん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28B70		slot	48				
+T146	0	Character menus > Ultimate Jutsu name	<r黒秘技三大狂言|くろひぎさんだいきょうげん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28BA0		slot	48				
+T147	0	Character menus > Ultimate Jutsu name	<r豪風暴壁|ごうふうぼうへき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28BD0		slot	32				
+T148	0	Character menus > Ultimate Jutsu name	<r練空踊扇|れんくうようせん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28BF0		slot	32				
+T149	0	Character menus > Ultimate Jutsu name	<r口寄|くちよ>せ・<r扇舞降|せんまいお>ろし				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28C10		slot	48				
+T150	0	Character menus > Ultimate Jutsu name	<r息子|むすこ>の<r仇|かたき>！？				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28C40		slot	48				
+T151	0	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r父|ちち>と<r母|はは>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28C70		slot	48				
+T152	0	Character menus > Ultimate Jutsu name	<r十機近松|じっきちかまつ>の<r集|しゅう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28CA0		slot	48				
+T153	0	Character menus > Ultimate Jutsu name	<r火遁|かとん>・<r豪焔球|ごうえんきゅう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28CD0		slot	48				
+T154	0	Character menus > Ultimate Jutsu name	<r幻術|げんじゅつ>・<r泡沫|うたかた>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28D00		slot	48				
+T155	0	Character menus > Ultimate Jutsu name	<r瞳術|どうじゅつ>・<r威凪|いさなぎ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28D30		slot	48				
+T156	0	Character menus > Ultimate Jutsu name	<r最凶|さいきょう>の<r刺客|しかく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28D60		slot	48				
+T157	0	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r五食鮫|ごしょくざめ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28D90		slot	48				
+T158	0	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r無限鮫|むげんざめ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28DC0		slot	48				
+T159	0	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r爆水衝波|ばくすいしょうは>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28DF0		slot	48				
+T160	0	Character menus > Ultimate Jutsu name	<r芸術|げいじゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28E20		slot	32				
+T161	0	Character menus > Ultimate Jutsu name	<r自爆分身|じばくぶんしん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28E40		slot	32				
+T162	0	Character menus > Ultimate Jutsu name	<r十八番|オハコ>・<rＣ３|シースリー>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28E60		slot	48				
+T163	0	Character menus > Ultimate Jutsu name	<r合殺芸術|がっさいげいじゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28E90		slot	32				
+T164	0	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>の<r術|じゅつ>・<r尾沙悶|びしゃもん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28EB0		slot	64				
+T165	0	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>の<r術|じゅつ>・<r義手千本|ぎしゅせんぼん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28EF0		slot	64				
+T166	0	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>の<r術|じゅつ>・<r重刃庫|じゅうばこ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28F30		slot	64				
+T167	0	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r砂鉄獄塊|さてつごっかい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28F70		slot	48				
+T168	0	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r砂鉄獄塊|さてつごっかい>２				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28FA0		slot	48				
+T169	0	Character menus > Ultimate Jutsu name	<r赤秘技|あかひぎ>・<r百機|ひゃっき>の<r操演|そうえん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28FD0		slot	64				
+T170	0	Character menus > Ultimate Jutsu name	<r火遁|かとん>・<r豪炎螺旋丸|ごうえんらせんがん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29010		slot	64				
+T171	0	Character menus > Ultimate Jutsu name	<r双迅螺旋丸|そうじんらせんがん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29050		slot	48				
+T172	0	Character menus > Ultimate Jutsu name	<r火遁|かとん>・<r消|け>し<r幕|まく>が<r原|はら>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29080		slot	64				
+T173	0	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r創造再生|そうぞうさいせい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x290C0		slot	48				
+T174	0	Character menus > Ultimate Jutsu name	<r火影|ほかげ>の<r力|ちから>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x290F0		slot	32				
+T175	0	Character menus > Ultimate Jutsu name	<r地流|じながれ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29110		slot	32				
+T176	0	Character menus > Ultimate Jutsu name	<r大交衝|だいこうしょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29130		slot	32				
+T177	0	Character menus > Ultimate Jutsu name	トントンコンビ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29150		slot	16				
+T178	0	Character menus > Ultimate Jutsu name	<r木遁|もくとん>・<r飛乃木|ひのき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29160		slot	48				
+T179	0	Character menus > Ultimate Jutsu name	<r木遁|もくとん>・<r梁木|やなぎ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29190		slot	48				
+T180	0	Character menus > Ultimate Jutsu name	<r禁術|きんじゅつ>・<r穢土封滅|えどふうめつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x291C0		slot	48				
+T181	0	Character menus > Ultimate Jutsu name	<r蟒蛇|うわばみ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x291F0		slot	32				
+T182	0	Character menus > Ultimate Jutsu name	<r二凪|ふたなぎ>ノ<r草薙|くさなぎ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29210		slot	48				
+T183	0	Character menus > Ultimate Jutsu name	<r死魂|しこん>の<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29240		slot	32				
+T184	0	Character menus > Ultimate Jutsu name	チャクラ<r解剖刀|メス>・<r壊|かい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29260		slot	48				
+T185	0	Character menus > Ultimate Jutsu name	<r死術|しじゅつ>・<r帰魂遊戯|きこんゆうぎ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29290		slot	48				
+T186	0	Character menus > Ultimate Jutsu name	<r草薙|くさなぎ>の<r舞|まい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x292C0		slot	32				
+T187	0	Character menus > Ultimate Jutsu name	<r翔|か>け<r鳥崩|どりくず>し				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x292E0		slot	32				
+T188	0	Character menus > Ultimate Jutsu name	<r千鳥|ちどり>・<r雷鳴|らいめい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29300		slot	48				
+T189	0	Character menus > Ultimate Jutsu name	うずまきナルト<r連弾|れんだん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29330		slot	32				
+T190	0	Character menus > Ultimate Jutsu name	うずまきナルト<r忍法帳|にんぽうちょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29350		slot	48				
+T191	0	Character menus > Ultimate Jutsu name	<r九尾螺旋丸|きゅうびらせんがん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29380		slot	48				
+T192	0	Character menus > Ultimate Jutsu name	ハヤブサ<r落|お>とし				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x293B0		slot	32				
+T193	0	Character menus > Ultimate Jutsu name	<r忌|い>まわしき<r千鳥|ちどり>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x293D0		slot	32				
+T194	0	Character menus > Ultimate Jutsu name	<r呪|のろ>われし<r力|ちから>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x293F0		slot	32				
+T195	0	Character menus > Ultimate Jutsu name	<r負|ま>けるもんですか！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29410		slot	32				
+T196	0	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r雪桜|ゆきざくら>の<r舞|まい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29430		slot	64				
+T197	0	Character menus > Ultimate Jutsu name	<r八卦三百六十一式|はっけさんびゃくろくじゅういっしき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29470		slot	64				
+T198	0	Character menus > Ultimate Jutsu name	<r絶招八門崩撃|ぜっしょうはちもんほうげき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x294B0		slot	48				
+T199	0	Character menus > Ultimate Jutsu name	すい<r拳|けん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x294E0		slot	16				
+T200	0	Character menus > Ultimate Jutsu name	<r裏蓮華|うられんげ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x294F0		slot	32				
+T201	0	Character menus > Ultimate Jutsu name	<r突|つ>き<r抜|ぬ>ける<r熱|あつ>き<r思|おも>い				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29510		slot	48				
+T202	0	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r死球撃|しきゅうげき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29540		slot	48				
+T203	0	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r襲千刃|しゅうせんじん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29570		slot	48				
+T204	0	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r浮刃壁|ふじんへき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x295A0		slot	48				
+T205	0	Character menus > Ultimate Jutsu name	<r影真似|かげまね>の<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x295D0		slot	48				
+T206	0	Character menus > Ultimate Jutsu name	<r影圧掌|かげあっしょう>の<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29600		slot	48				
+T207	0	Character menus > Ultimate Jutsu name	<r影首縛|かげくびしば>りの<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29630		slot	48				
+T208	0	Character menus > Ultimate Jutsu name	<r部分倍化|ぶぶんばいか>の<r術|じゅつ>２				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29660		slot	48				
+T209	0	Character menus > Ultimate Jutsu name	<r蝶弾爆撃|ちょうだんばくげき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29690		slot	32				
+T210	0	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r百花繚乱|ひゃっかりょうらん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x296B0		slot	64				
+T211	0	Character menus > Ultimate Jutsu name	<r心乱身|しんらんしん>の<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x296F0		slot	48				
+T212	0	Character menus > Ultimate Jutsu name	<r供花送|くげおく>り				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29720		slot	32				
+T213	0	Character menus > Ultimate Jutsu name	<r牙通牙|がつうが>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29740		slot	32				
+T214	0	Character menus > Ultimate Jutsu name	<r牙狼牙|がろうが>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29760		slot	32				
+T215	0	Character menus > Ultimate Jutsu name	<r双頭狼|そうとうろう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29780		slot	32				
+T216	0	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r颶|つむじ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x297A0		slot	48				
+T217	0	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r簇|やじり>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x297D0		slot	48				
+T218	0	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r霰|あられ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29800		slot	48				
+T219	0	Character menus > Ultimate Jutsu name	<r白眼|びゃくがん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29830		slot	32				
+T220	0	Character menus > Ultimate Jutsu name	<r百烈掌|ひゃくれつしょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29850		slot	32				
+T221	0	Character menus > Ultimate Jutsu name	<r白朧天舞|はくろうてんぶ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29870		slot	32				
+T222	0	Character menus > Ultimate Jutsu name	<r柔拳指南|じゅうけんしなん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29890		slot	32				
+T223	0	Character menus > Ultimate Jutsu name	<r突撃|とつげき>！　<r木|こ>ノ<r葉丸|はまる><r軍団|ぐんだん>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x298B0		slot	64				
+T224	0	Character menus > Ultimate Jutsu name	<r双蛇相殺|そうじゃそうさい>の<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x298F0		slot	48				
+T225	0	Character menus > Ultimate Jutsu name	<r金剛力|こんごうりき>・<r不動|ふどう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29920		slot	48				
+T226	0	Character menus > Ultimate Jutsu name	<r木遁秘術|もくとんひじゅつ>・<r樹界降誕|じゅかいこうたん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29950		slot	64				
+T227	0	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r硬渦水刃|こうかすいじん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29990		slot	48				
+T228	0	Character menus > Ultimate Jutsu name	<r金剛牢壁|こんごうろうへき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x299C0		slot	32				
+T229	0	Character menus > Ultimate Jutsu name	<r封印術|ふういんじゅつ>・<r屍鬼封尽|しきふうじん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x299E0		slot	64				
+T230	0	Character menus > Ultimate Jutsu name	<r封印術|ふういんじゅつ>・<r三方封印|さんぽうふういん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29A20		slot	64				
+T231	0	Character menus > Ultimate Jutsu name	<r飛雷神|ひらいしん>の<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29A60		slot	48				
+T232	0	Character menus > Ultimate Jutsu name	<r砂瀑大葬|さばくたいそう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29A90		slot	32				
+T233	0	Character menus > Ultimate Jutsu name	<r砂手裏剣|すなしゅりけん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29AB0		slot	32				
+T234	0	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r影役者|かげやくしゃ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29AD0		slot	48				
+T235	0	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r廻刃天穿|かいじんてんせん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29B00		slot	48				
+T236	0	Character menus > Ultimate Jutsu name	<r黒秘技機々一発|くろひぎききいっぱつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29B30		slot	48				
+T237	0	Character menus > Ultimate Jutsu name	<r乱|みだ>れ<r扇舞|せんぶ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29B60		slot	32				
+T238	0	Character menus > Ultimate Jutsu name	<r大|だい>カマイタチの<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29B80		slot	48				
+T239	0	Character menus > Ultimate Jutsu name	<r口寄|くちよ>せ・<r斬|き>り<r斬|き>り<r舞|まい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29BB0		slot	64				
+T240	0	Character menus > Ultimate Jutsu name	<r八重葎|やえむぐら>の<r舞|まい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29BF0		slot	48				
+T241	0	Character menus > Ultimate Jutsu name	<r八重葎|やえむぐら>の<r舞|まい>２				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29C20		slot	48				
+T242	0	Character menus > Ultimate Jutsu name	<r鉄線花|てっせんか>の<r舞|まい>・<r花|はな>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29C50		slot	48				
+T243	0	Character menus > Ultimate Jutsu name	<r口寄|くちよ>せ・<r羅生門|ラショウモン>　<r奈落|ならく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29C80		slot	64				
+T244	0	Character menus > Ultimate Jutsu name	<r口寄|くちよ>せ・<r羅生門|ラショウモン>　<r奈落|ならく>２				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29CC0		slot	64				
+T245	0	Character menus > Ultimate Jutsu name	<r左塵掌|さじんしょう>・<r右裂脚|うれつきゃく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29D00		slot	48				
+T246	0	Character menus > Ultimate Jutsu name	<r毒舌|どくぜつ>コンボ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29D30		slot	32				
+T247	0	Character menus > Ultimate Jutsu name	<r毒舌|どくぜつ>コンボ２				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29D50		slot	32				
+T248	0	Character menus > Ultimate Jutsu name	<r魔笛|まてき>・<r三従葬曲|さんじゅうそうきょく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29D70		slot	64				
+T249	0	Character menus > Ultimate Jutsu name	<r雨蜘蛛|あまグモ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29DB0		slot	32				
+T250	0	Character menus > Ultimate Jutsu name	<r雨蜘蛛|あまグモ>２				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29DD0		slot	32				
+T251	0	Character menus > Ultimate Jutsu name	<r蜘蛛戦弓|クモせんきゅう>・<r凄裂|スザク>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29DF0		slot	48				
+T252	0	Character menus > Ultimate Jutsu name	<r土遁|どとん>・<r土陸返|どろくがえ>し				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29E20		slot	48				
+T253	0	Character menus > Ultimate Jutsu name	<r土遁|どとん>・<r土陸返|どろくがえ>し２				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29E50		slot	48				
+T254	0	Character menus > Ultimate Jutsu name	<r羅漢拳|らかんけん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29E80		slot	32				
+T255	0	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r水龍弾|すいりゅうだん>の<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29EA0		slot	64				
+T256	0	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r大瀑布|だいばくふ>の<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29EE0		slot	64				
+T257	0	Character menus > Ultimate Jutsu name	<r千殺水翔|せんさつすいしょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29F20		slot	32				
+T258	0	Character menus > Ultimate Jutsu name	<r魔鏡氷晶|まきょうひょうしょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29F40		slot	52				
+T427	0	Character selectors > character or variant name	うずまきナルト				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24F98		slot	24				
+T428	0	Character selectors > character or variant name	<r春野|はるの>サクラ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24FB0		slot	24				
+T429	0	Character selectors > character or variant name	はたけカカシ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24FC8		slot	24				
+T430	0	Character selectors > character or variant name	<r日向|ひゅうが>ネジ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24FE0		slot	24				
+T431	0	Character selectors > character or variant name	ロック・リー				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24FF8		slot	16				
+T432	0	Character selectors > character or variant name	テンテン				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25008		slot	16				
+T433	0	Character selectors > character or variant name	マイト・ガイ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25018		slot	24				
+T434	0	Character selectors > character or variant name	<r奈良|なら>シカマル				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25030		slot	32				
+T435	0	Character selectors > character or variant name	<r秋道|あきみち>チョウジ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25050		slot	32				
+T436	0	Character selectors > character or variant name	<r山中|やまなか>いの				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25070		slot	32				
+T437	0	Character selectors > character or variant name	<r猿飛|さるとび>アスマ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25090		slot	32				
+T438	0	Character selectors > character or variant name	<r犬塚|いぬづか>キバ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x250B0		slot	32				
+T439	0	Character selectors > character or variant name	<r油女|あぶらめ>シノ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x250D0		slot	32				
+T440	0	Character selectors > character or variant name	<r日向|ひゅうが>ヒナタ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x250F0		slot	32				
+T441	0	Character selectors > character or variant name	<r夕日|ゆうひ><r紅|くれない>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25110		slot	32				
+T442	0	Character selectors > character or variant name	<r風影|かぜかげ>・<r我愛羅|ガアラ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25130		slot	40				
+T443	0	Character selectors > character or variant name	カンクロウ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25158		slot	24				
+T445	0	Character selectors > character or variant name	うちはイタチ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25190		slot	16				
+T446	0	Character selectors > character or variant name	<r干柿鬼鮫|ほしがきキサメ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x251A0		slot	32				
+T447	0	Character selectors > character or variant name	デイダラ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x251C0		slot	16				
+T449	0	Character selectors > character or variant name	チヨバア				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x251E0		slot	16				
+T450	0	Character selectors > character or variant name	<r自来也|じらいや>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x251f0		slot	24				
+T451	0	Character selectors > character or variant name	<r綱手|ツナデ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25208		slot	24				
+T452	0	Character selectors > character or variant name	<r大蛇丸|オロチまる>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25220		slot	32				
+T453	0	Character selectors > character or variant name	<r薬師|やくし>カブト				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25240		slot	24				
+T454	0	Character selectors > character or variant name	うちはサスケ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25258		slot	24				
+T457	0	Character selectors > character or variant name	うずまきナルト（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x252E0		slot	48				
+T458	0	Character selectors > character or variant name	うちはサスケ（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25310		slot	48				
+T459	0	Character selectors > character or variant name	<r春野|はるの>サクラ（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25340		slot	48				
+T460	0	Character selectors > character or variant name	<r日向|ひゅうが>ネジ（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25370		slot	48				
+T461	0	Character selectors > character or variant name	ロック・リー（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x253A0		slot	48				
+T462	0	Character selectors > character or variant name	テンテン（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x253D0		slot	48				
+T463	0	Character selectors > character or variant name	<r奈良|なら>シカマル（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25400		slot	48				
+T464	0	Character selectors > character or variant name	<r秋道|あきみち>チョウジ（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25430		slot	64				
+T465	0	Character selectors > character or variant name	<r山中|やまなか>いの（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25470		slot	48				
+T466	0	Character selectors > character or variant name	<r犬塚|いぬづか>キバ（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x254A0		slot	48				
+T467	0	Character selectors > character or variant name	<r油女|あぶらめ>シノ（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x254D0		slot	48				
+T468	0	Character selectors > character or variant name	<r日向|ひゅうが>ヒナタ（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25500		slot	48				
+T469	0	Character selectors > character or variant name	<r日向|ひゅうが>ハナビ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25530		slot	32				
+T470	0	Character selectors > character or variant name	<r木|こ>ノ<r葉丸|はまる><r軍団|ぐんだん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25550		slot	48				
+T471	0	Character selectors > character or variant name	みたらしアンコ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25580		slot	16				
+T472	0	Character selectors > character or variant name	<r初代火影|しょだいほかげ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25590		slot	32				
+T473	0	Character selectors > character or variant name	<r二代目火影|にだいめほかげ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x255B0		slot	32				
+T474	0	Character selectors > character or variant name	<r三代目火影|さんだいめほかげ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x255D0		slot	32				
+T475	0	Character selectors > character or variant name	<r黄色|きいろ>い<r閃光|せんこう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x255F0		slot	48				
+T476	0	Character selectors > character or variant name	<r砂瀑|さばく>の<r我愛羅|ガアラ>（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25620		slot	64				
+T477	0	Character selectors > character or variant name	カンクロウ（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25660		slot	48				
+T478	0	Character selectors > character or variant name	テマリ（<r旧章|きゅうしょう>）				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25690		slot	32				
+T479	0	Character selectors > character or variant name	<r君麻呂|キミマロ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x256B0		slot	24				
+T480	0	Character selectors > character or variant name	<r左近|サコン>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x256C8		slot	24				
+T481	0	Character selectors > character or variant name	<r多由也|タユヤ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x256E0		slot	32				
+T482	0	Character selectors > character or variant name	<r鬼童丸|キドウマル>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25700		slot	32				
+T483	0	Character selectors > character or variant name	<r次郎坊|ジロウボウ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25720		slot	32				
+T484	0	Character selectors > character or variant name	<r桃地|ももち><r再不斬|ザブザ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25740		slot	32				
+T485	0	Character selectors > character or variant name	<r白|ハク>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25760		slot	16				
+T522	0	Character selectors > character or variant name	サイ				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x506fe0		slot	8				
+T523	0	Character selectors > character or variant name	テマリ				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x506fe8		slot	8				
+T524	0	Character selectors > character or variant name	サソリ				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x506ff0		slot	8				
+T525	0	Character selectors > character or variant name	シズネ				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x506ff8		slot	8				
+T526	0	Character selectors > character or variant name	ヤマト				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x507000		slot	8				
+T527	0	Collection > category label	シミュレーション				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2DDA0		slot	24				
+T530	0	Collection > Figures > character animation title	オッス！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25CD8		slot	16				
+T531	0	Collection > Figures > character animation title	<r影分身|かげぶんしん>の<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25D00		slot	40				
+T532	0	Collection > Figures > character animation title	<r暴走|ぼうそう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25D40		slot	24				
+T533	0	Collection > Figures > character animation title	<r気|き>を<r引|ひ>き<r締|し>めて…				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25D70		slot	40				
+T534	0	Collection > Figures > character animation title	<r女|おんな>らしく				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25DB0		slot	24				
+T535	0	Collection > Figures > character animation title	<r拳|こぶし>に<r力|ちから>を！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25DE0		slot	32				
+T536	0	Collection > Figures > character animation title	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25E10		slot	48				
+T537	0	Collection > Figures > character animation title	<r索敵|さくてき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25E50		slot	24				
+T538	0	Collection > Figures > character animation title	<r飛翔|ひしょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25E80		slot	24				
+T539	0	Collection > Figures > character animation title	<r最新作熟読中|さいしんさくじゅくどくちゅう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25EB0		slot	48				
+T540	0	Collection > Figures > character animation title	<r牽制攻撃|けんせいこうげき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25EF0		slot	32				
+T541	0	Collection > Figures > character animation title	<r忍犬口寄|にんけんくちよ>せ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25F20		slot	32				
+T542	0	Collection > Figures > character animation title	<r柔拳|じゅうけん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25F50		slot	24				
+T543	0	Collection > Figures > character animation title	<r八卦空掌|はっけくうしょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25F80		slot	32				
+T544	0	Collection > Figures > character animation title	<r点穴打突|てんけつだとつ>！！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25FB0		slot	32				
+T545	0	Collection > Figures > character animation title	<r戦闘姿勢|せんとうしせい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25FE0		slot	32				
+T546	0	Collection > Figures > character animation title	<r木|こ>ノ<r葉昇風|はしょうふう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26010		slot	40				
+T547	0	Collection > Figures > character animation title	<r限界|げんかい>を<r超|こ>えろ！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26050		slot	40				
+T548	0	Collection > Figures > character animation title	<r忍具|にんぐ>の<r使|つか>い<r手|て>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26090		slot	40				
+T549	0	Collection > Figures > character animation title	<r棒体術|ぼうたいじゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x260D0		slot	32				
+T550	0	Collection > Figures > character animation title	<r仕込|しこ>み<r炸裂|さくれつ>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26100		slot	40				
+T551	0	Collection > Figures > character animation title	<r熱血青春|ねっけつせいしゅん>ポーズ！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26140		slot	40				
+T552	0	Collection > Figures > character animation title	<r開門|かいもん>ッ！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x261B0		slot	24				
+T553	0	Collection > Figures > character animation title	ホラよっ！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x261E8		slot	16				
+T554	0	Collection > Figures > character animation title	<r変|か>わらぬチョウジ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26250		slot	24				
+T555	0	Collection > Figures > character animation title	<r張|は>り<r手|て>の<r構|かま>え				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26280		slot	40				
+T556	0	Collection > Figures > character animation title	おっひさー！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x262F8		slot	16				
+T557	0	Collection > Figures > character animation title	かわいさアピール				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26320		slot	24				
+T558	0	Collection > Figures > character animation title	<r綺麗|きれい>な<r花|はな>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26350		slot	32				
+T559	0	Collection > Figures > character animation title	やれやれ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26380		slot	16				
+T560	0	Collection > Figures > character animation title	<r装着|そうちゃく>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x263A0		slot	24				
+T561	0	Collection > Figures > character animation title	<r一閃|いっせん>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x263D0		slot	24				
+T562	0	Collection > Figures > character animation title	<r登場|とうじょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26400		slot	24				
+T563	0	Collection > Figures > character animation title	いつでもいっしょ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26430		slot	24				
+T564	0	Collection > Figures > character animation title	ダイナミック！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26458		slot	16				
+T565	0	Collection > Figures > character animation title	<r静|しず>かな<r男|おとこ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26480		slot	32				
+T566	0	Collection > Figures > character animation title	<r寄壊蟲|きかいちゅう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x264B0		slot	24				
+T567	0	Collection > Figures > character animation title	<r広|ひろ>がる<r蟲|むし>たち				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x264E0		slot	32				
+T568	0	Collection > Figures > character animation title	<r闘|たたか>う<r決意|けつい>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26510		slot	32				
+T569	0	Collection > Figures > character animation title	<r心|こころ>の<r準備|じゅんび>が…				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26540		slot	40				
+T570	0	Collection > Figures > character animation title	<r掌打|しょうだ>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26580		slot	24				
+T571	0	Collection > Figures > character animation title	ベスト<r着用|ちゃくよう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x265B0		slot	32				
+T572	0	Collection > Figures > character animation title	<r幻術発動|げんじゅつはつどう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x265E0		slot	32				
+T573	0	Collection > Figures > character animation title	こんなものね				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26610		slot	16				
+T574	0	Collection > Figures > character animation title	<r威圧|いあつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26630		slot	16				
+T575	0	Collection > Figures > character animation title	<r砂|すな>の<r殻|から>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26650		slot	24				
+T576	0	Collection > Figures > character animation title	<r逃|に>がさん…				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26680		slot	24				
+T577	0	Collection > Figures > character animation title	<r傀儡|くぐつ>の<r巻物|まきもの>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x266C0		slot	40				
+T578	0	Collection > Figures > character animation title	<r傀儡勢揃|くぐつせいぞろ>い！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26700		slot	32				
+T579	0	Collection > Figures > character animation title	<r巨大扇子|きょだいせんす>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26730		slot	32				
+T580	0	Collection > Figures > character animation title	<r団子|だんご>で<r一息|ひといき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26760		slot	40				
+T581	0	Collection > Figures > character animation title	カマタリと<r一緒|いっしょ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x267A0		slot	32				
+T582	0	Collection > Figures > character animation title	まだまだ<r現役|げんえき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x267D0		slot	32				
+T583	0	Collection > Figures > character animation title	<r父|ちち>と<r母|はは>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26800		slot	24				
+T584	0	Collection > Figures > character animation title	<r仕込|しこ>み				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26828		slot	16				
+T585	0	Collection > Figures > character animation title	<r指一|ゆびひと>つあれば…				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26850		slot	32				
+T586	0	Collection > Figures > character animation title	<r鋭|するど>い<r蹴|け>り				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26880		slot	32				
+T587	0	Collection > Figures > character animation title	<r幻術|げんじゅつ>！？				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x268B0		slot	24				
+T588	0	Collection > Figures > character animation title	<r大刀|だいとう>を<r携|たずさ>えて				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x268E0		slot	40				
+T589	0	Collection > Figures > character animation title	<r大刀|だいとう>・<r鮫肌|サメハダ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26920		slot	40				
+T590	0	Collection > Figures > character animation title	<r襲|おそ>い<r来|く>る<r怪人|かいじん>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26960		slot	48				
+T591	0	Collection > Figures > character animation title	<r楽|たの>しめそうだな				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x269A0		slot	24				
+T592	0	Collection > Figures > character animation title	<r芸術作品|げいじゅつさくひん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x269D0		slot	32				
+T593	0	Collection > Figures > character animation title	<r空|そら>から<r攻|せ>める！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26A00		slot	32				
+T594	0	Collection > Figures > character animation title	<r完璧|かんぺき>なる<r攻守|こうしゅ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26A30		slot	40				
+T595	0	Collection > Figures > character animation title	<r一番|いちばん>のお<r気|き>に<r入|い>り				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26A70		slot	48				
+T596	0	Collection > Figures > character animation title	<r自分自身|じぶんじしん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26AB0		slot	32				
+T597	0	Collection > Figures > character animation title	あいや<r自来也|じらいや>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26AE0		slot	32				
+T598	0	Collection > Figures > character animation title	<r四代目|よんだいめ>が<r遺|のこ>した<r術|じゅつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26B10		slot	56				
+T599	0	Collection > Figures > character animation title	<r蝦蟇仙人|ガマせんにん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26B60		slot	32				
+T600	0	Collection > Figures > character animation title	コレ<r一本|いっぽん>で<r十分|じゅうぶん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26B90		slot	48				
+T601	0	Collection > Figures > character animation title	<r考|かんが>え<r事|ごと>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26BD0		slot	32				
+T602	0	Collection > Figures > character animation title	<r痛天脚|つうてんきゃく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26C00		slot	32				
+T603	0	Collection > Figures > character animation title	お<r世話係|せわかか>り				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26C40		slot	24				
+T604	0	Collection > Figures > character animation title	<r突撃|とつげき>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26C70		slot	24				
+T605	0	Collection > Figures > character animation title	うんうん				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26C98		slot	16				
+T606	0	Collection > Figures > character animation title	<r跳躍|ちょうやく>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26CC0		slot	24				
+T607	0	Collection > Figures > character animation title	<r木遁|もくとん>・<r木錠壁|もくじょうへき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26CF0		slot	48				
+T608	0	Collection > Figures > character animation title	<r不敵|ふてき>な<r笑|え>み				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26D30		slot	32				
+T609	0	Collection > Figures > character animation title	<r脅威|きょうい>の<r存在|そんざい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26DA0		slot	40				
+T610	0	Collection > Figures > character animation title	<r大蛇丸|オロチまる>への<r忠誠|ちゅうせい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26DE0		slot	48				
+T611	0	Collection > Figures > character animation title	あーあ…				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26E20		slot	16				
+T612	0	Collection > Figures > character animation title	ストック				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26E40		slot	16				
+T613	0	Collection > Figures > character animation title	<r冷|つめ>たい<r視線|しせん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26E60		slot	32				
+T614	0	Collection > Figures > character animation title	<r草薙|くさなぎ>の<r剣|つるぎ>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26E90		slot	40				
+T615	0	Collection > Figures > character animation title	<r千鳥|ちどり>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26EC8		slot	28				
+T616	0	Collection > Figures > character animation title	ふー…				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x507058		slot	8				
+T617	0	Collection > Figures > character animation title	さて…				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x5070A8		slot	8				
+T618	0	Collection > Figures > character animation title	エヘヘ				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x507110		slot	8				
+T619	0	Collection > Movie list > scene title	<r紅班勢揃|くれないはんせいぞろ>い				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2d950		slot	40				
+T620	0	Collection > Movie list > scene title	いのシカチョウトリオ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2D9D0		slot	24				
+T621	0	Collection > Movie list > scene title	ナルトの<r帰郷|ききょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2da30		slot	32				
+T622	0	Collection > Movie list > scene title	<r風影|かぜかげ>の<r闘|たたか>い				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2da70		slot	40				
+T623	0	Collection > Movie list > scene title	<r木|こ>ノ<r葉|は>の<r白|しろ>い<r牙|きば>！？				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2dae0		slot	48				
+T624	0	Collection > Movie list > scene title	“<r暁|あかつき>”の<r目的|もくてき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2db80		slot	40				
+T625	0	Collection > Movie list > scene title	<r傀儡師|くぐつし>の<r激闘|げきとう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2dc30		slot	40				
+T626	0	Collection > Movie list > scene title	<r突然|とつぜん>の<r襲撃|しゅうげき>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2dca0		slot	40				
+T627	0	Collection > Movie list > scene title	<r人外|じんがい>の<r闘|たたか>い				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2de70		slot	40				
+T628	0	Collection > Movie list > scene title	<r運命|うんめい>の<r再会|さいかい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2df50		slot	40				
+T629	0	Collection > Movie list > scene title	<r漆黒|しっこく>に<r浮|う>かぶ<r影|かげ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2dff0		slot	48				
+T630	0	Collection > Movies > movie title	<ruby再会|さいかい>の<ruby時|とき>・<ruby壱|いち>				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x2FFBA0		slot	64				
+T631	0	Collection > Movies > movie title	<ruby封印術|ふういんじゅつ>・<ruby幻龍九封尽|げんりゅうきゅうふうじん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x2ffbe0		slot	80				
+T632	0	Collection > Movies > movie title	<ruby常闇|とこやみ>の<ruby者|もの>たち				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x2ffc30		slot	48				
+T633	0	Collection > Movies > movie title	<ruby忍法|にんぽう>・<ruby超獣偽画|ちょうじゅうぎが>				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x2ffc60		slot	64				
+T634	0	Collection > Movies > movie title	<ruby第四|だいよん>の<ruby覚醒|かくせい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x2ffca0		slot	48				
+T635	0	Collection > Movies > movie title	<ruby再会|さいかい>の<ruby時|とき>・<ruby弐|に>				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x2ffcd0		slot	48				
+T636	0	Collection > Movies > movie title	スタッフロール				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x2ffd00		slot	28				
+T637	0	Collection > Music > track title	<r木|こ>ノ<r葉|は><r隠|がく>れの<r里|さと>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B2E0		slot	48				
+T638	0	Collection > Music > track title	<r木|こ>ノ<r葉|は>の<r門|もん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B310		slot	32				
+T639	0	Collection > Music > track title	<r五封結界|ごふうけっかい>の<r崖|がけ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B330		slot	48				
+T640	0	Collection > Music > track title	<r暁|あかつき>のアジト				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B360		slot	32				
+T641	0	Collection > Music > track title	<r根|ね>の<r本部|ほんぶ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B380		slot	32				
+T642	0	Collection > Music > track title	<r天地橋|てんちきょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B3A0		slot	32				
+T643	0	Collection > Music > track title	<r大蛇丸|オロチまる>のアジト				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B3C0		slot	32				
+T644	0	Collection > Music > track title	<r大蛇|だいじゃ>の<r祭壇|さいだん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B3E0		slot	48				
+T645	0	Collection > Music > track title	<r賑|にぎ>わいの<r里|さと>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B410		slot	32				
+T646	0	Collection > Music > track title	<r火影|ほかげ>の<r屋敷|やしき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B430		slot	32				
+T647	0	Collection > Music > track title	<r世界|せかい>を<r駆|か>ける				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B450		slot	32				
+T648	0	Collection > Music > track title	<r砂隠|すながく>れの<r里|さと>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B470		slot	32				
+T649	0	Collection > Music > track title	<r邪傑|じゃけつ>の<r巣穴|すあな>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B490		slot	48				
+T650	0	Collection > Music > track title	<r赤雲|せきうん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B4C0		slot	32				
+T651	0	Collection > Music > track title	<r激戦|げきせん>を<r越|こ>えて				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B4E0		slot	32				
+T652	0	Collection > Music > track title	カカシ<r道場|どうじょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B500		slot	32				
+T653	0	Collection > Music > track title	やすらぎと<r再会|さいかい>と				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B520		slot	32				
+T654	0	Collection > Music > track title	<r暗雲|あんうん><r来|きた>る				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B540		slot	32				
+T655	0	Collection > Music > track title	<r風影|かぜかげ><r襲撃|しゅうげき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B560		slot	48				
+T656	0	Collection > Music > track title	<r緊急指令|きんきゅうしれい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B590		slot	32				
+T657	0	Collection > Music > track title	<r走|はし>る<r緊迫|きんぱく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B5B0		slot	32				
+T658	0	Collection > Music > track title	<r恐|おそ>ろしき<r怪人|かいじん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B5D0		slot	48				
+T659	0	Collection > Music > track title	<r真紅|しんく>の<r激闘|げきとう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B600		slot	48				
+T660	0	Collection > Music > track title	<r闇|やみ>を<r抱|いだ>きし<r者|もの>たち				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B630		slot	48				
+T661	0	Collection > Music > track title	<r虚|うつ>ろ<r消|き>えゆく<r世界|せかい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B660		slot	48				
+T662	0	Collection > Music > track title	<r絆|きずな>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B690		slot	16				
+T663	0	Collection > Music > track title	<r偽|いつわ>りの<r存在|そんざい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B6A0		slot	48				
+T664	0	Collection > Music > track title	<r最凶|さいきょう>の<r傀儡師|くぐつし>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B6D0		slot	48				
+T665	0	Collection > Music > track title	<r決意|けつい><r固|かた>めて				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B700		slot	32				
+T666	0	Collection > Music > track title	サクラ<r舞|ま>う				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B720		slot	32				
+T667	0	Collection > Music > track title	<r猛|た>け<r吼|ほ>ゆる<r者|もの>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B740		slot	48				
+T668	0	Collection > Music > track title	<r願|ねが>い…<r空|そら>に<r舞|ま>いて				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B770		slot	48				
+T669	0	Collection > Music > track title	<r新生|しんせい>の<r一斑|いっぱん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B7A0		slot	48				
+T670	0	Collection > Music > track title	<r碧|あお>き<r背中|せなか>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B7D0		slot	32				
+T671	0	Collection > Music > track title	<r巨悪現|きょあくあらわ>る				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B7F0		slot	32				
+T672	0	Collection > Music > track title	<r荒|あ>れ<r狂|くる>う<r獣|けもの>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B810		slot	48				
+T673	0	Collection > Music > track title	<r切迫|せっぱく>の<r二人|ふたり>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B840		slot	48				
+T674	0	Collection > Music > track title	<r帰|かえ>るべき<r場所|ばしょ>へ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B870		slot	40				
+T675	0	Collection > Music > track title	オルゴール				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B898		slot	28				
+T676	0	Collection > quit confirmation	<color080860>コレクション<color000000>を<r終了|しゅうりょう>しますか？				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24F50		slot	72				
+T677	0	Collection > Voice > character voice title	<r悲|かな>しみと<r怒|いか>り				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BB60		slot	32				
+T678	0	Collection > Voice > character voice title	ナルトの<r決意|けつい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BB80		slot	32				
+T679	0	Collection > Voice > character voice title	<r激情|げきじょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BBA0		slot	32				
+T680	0	Collection > Voice > character voice title	<r二人|ふたり>の<r繋|つな>がり				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BBC0		slot	32				
+T681	0	Collection > Voice > character voice title	<r再会|さいかい>…そして…				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BBE0		slot	32				
+T682	0	Collection > Voice > character voice title	サクラの<r約束|やくそく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BC00		slot	32				
+T683	0	Collection > Voice > character voice title	<r決意|けつい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BC20		slot	16				
+T684	0	Collection > Voice > character voice title	<r負|ま>けん<r気|き>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BC30		slot	24				
+T685	0	Collection > Voice > character voice title	ナルトのために				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BC48		slot	24				
+T686	0	Collection > Voice > character voice title	いつも<r通|どお>り				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BC60		slot	32				
+T687	0	Collection > Voice > character voice title	<r初|はじ>めての<r一言|ひとこと>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BC80		slot	48				
+T688	0	Collection > Voice > character voice title	<r狙|ねら>ったキャラ<r位置|いち>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BCB0		slot	48				
+T689	0	Collection > Voice > character voice title	<r冷|つめ>たい<r言葉|ことば>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BCE0		slot	32				
+T690	0	Collection > Voice > character voice title	<r感情|かんじょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BD00		slot	32				
+T691	0	Collection > Voice > character voice title	<r確|たし>かめたいもの				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BD20		slot	32				
+T692	0	Collection > Voice > character voice title	カカシの<r本気|ほんき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BD40		slot	32				
+T693	0	Collection > Voice > character voice title	<r成長|せいちょう>への<r喜|よろこ>び				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BD60		slot	48				
+T694	0	Collection > Voice > character voice title	ナルトの<r気持|きも>ち・<r壱|いち>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BD90		slot	48				
+T695	0	Collection > Voice > character voice title	ナルトの<r気持|きも>ち・<r弐|に>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BDC0		slot	48				
+T696	0	Collection > Voice > character voice title	<r正|ただ>しき<r道|みち>へ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BDF0		slot	32				
+T697	0	Collection > Voice > character voice title	“<r暁|あかつき>”を<r前|まえ>に				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BE10		slot	48				
+T698	0	Collection > Voice > character voice title	<r偽者|にせもの>との<r遭遇|そうぐう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BE40		slot	48				
+T699	0	Collection > Voice > character voice title	<r勝利|しょうり>の<r確信|かくしん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BE70		slot	48				
+T700	0	Collection > Voice > character voice title	<r近距離戦|きんきょりせん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BEA0		slot	32				
+T701	0	Collection > Voice > character voice title	<r揺|ゆ>るぎない<r自信|じしん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BEC0		slot	32				
+T702	0	Collection > Voice > character voice title	<r修業不足|しゅぎょうぶそく>？				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BEE0		slot	32				
+T703	0	Collection > Voice > character voice title	<r勝利|しょうり>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BF00		slot	32				
+T704	0	Collection > Voice > character voice title	<r真剣勝負|しんけんしょうぶ>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BF20		slot	32				
+T705	0	Collection > Voice > character voice title	<r青春|せいしゅん>とは！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BF40		slot	32				
+T706	0	Collection > Voice > character voice title	<r感激|かんげき>！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BF60		slot	32				
+T707	0	Collection > Voice > character voice title	つっこみ<r役|やく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BF80		slot	32				
+T708	0	Collection > Voice > character voice title	テンテンの<r自信|じしん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BFA0		slot	32				
+T709	0	Collection > Voice > character voice title	<r勝負開始|しょうぶかいし>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BFC0		slot	32				
+T710	0	Collection > Voice > character voice title	ちょっと<r感心|かんしん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BFE0		slot	32				
+T711	0	Collection > Voice > character voice title	<r川|かわ>の<r国|くに>へ！！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C000		slot	32				
+T712	0	Collection > Voice > character voice title	<r獣|けもの>レベル…？				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C020		slot	32				
+T713	0	Collection > Voice > character voice title	<r高揚|こうよう>する<r心|こころ>！！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C040		slot	40				
+T714	0	Collection > Voice > character voice title	さすがオレ！！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C068		slot	24				
+T715	0	Collection > Voice > character voice title	<r謎|なぞ>の<r忍現|しのびあらわ>る				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C080		slot	40				
+T716	0	Collection > Voice > character voice title	やはりシカマル				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C0A8		slot	24				
+T717	0	Collection > Voice > character voice title	<r面倒|めんどう>くささ<r満点|まんてん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C0C0		slot	48				
+T718	0	Collection > Voice > character voice title	<r男|おとこ>の<r意地|いじ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C0F0		slot	32				
+T719	0	Collection > Voice > character voice title	<r明晰|めいせき>な<r頭脳|ずのう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C110		slot	48				
+T720	0	Collection > Voice > character voice title	ポッチャリ<r系|けい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C140		slot	32				
+T721	0	Collection > Voice > character voice title	<r強力|ごうりき>チョウジ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C160		slot	32				
+T722	0	Collection > Voice > character voice title	シカマルとの<r連係|れんけい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C180		slot	32				
+T723	0	Collection > Voice > character voice title	<r準備万端|じゅんびばんたん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C1A0		slot	32				
+T724	0	Collection > Voice > character voice title	<r旧知|きゅうち>の<r仲|なか>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C1C0		slot	32				
+T725	0	Collection > Voice > character voice title	いの<r登場|とうじょう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C1E0		slot	32				
+T726	0	Collection > Voice > character voice title	<r久々|ひさびさ>の<r対面|たいめん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C200		slot	48				
+T727	0	Collection > Voice > character voice title	サクラと<r共闘|きょうとう>？				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C230		slot	32				
+T728	0	Collection > Voice > character voice title	チョウジと<r連係|れんけい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C250		slot	32				
+T729	0	Collection > Voice > character voice title	<r自信満々|じしんまんまん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C270		slot	32				
+T730	0	Collection > Voice > character voice title	<r戦闘|せんとう>へ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C290		slot	32				
+T731	0	Collection > Voice > character voice title	<r優|やさ>しい<r言葉|ことば>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C2B0		slot	32				
+T732	0	Collection > Voice > character voice title	<r感謝|かんしゃ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C2D0		slot	32				
+T733	0	Collection > Voice > character voice title	アスマの<r意地|いじ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C2F0		slot	32				
+T734	0	Collection > Voice > character voice title	<r新|あら>たな<r手|て>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C310		slot	32				
+T735	0	Collection > Voice > character voice title	ナルトとの<r再会|さいかい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C330		slot	32				
+T736	0	Collection > Voice > character voice title	<r大|おお>きくなった？				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C350		slot	32				
+T737	0	Collection > Voice > character voice title	ヒナタが<r倒|たお>れて				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C370		slot	32				
+T738	0	Collection > Voice > character voice title	ヒナタを<r守|まも>って				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C390		slot	24				
+T739	0	Collection > Voice > character voice title	キバとシノ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C3A8		slot	16				
+T740	0	Collection > Voice > character voice title	シノとナルト				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C3B8		slot	24				
+T741	0	Collection > Voice > character voice title	<r拗|す>ねるシノ・<r壱|いち>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C3D0		slot	32				
+T742	0	Collection > Voice > character voice title	<r拗|す>ねるシノ・<r弐|に>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C3F0		slot	32				
+T743	0	Collection > Voice > character voice title	<r静|しず>かなる<r自信|じしん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C410		slot	32				
+T744	0	Collection > Voice > character voice title	<r微|かす>かな<r安心|あんしん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C430		slot	32				
+T745	0	Collection > Voice > character voice title	ナルトを<r見|み>かけて				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C450		slot	32				
+T746	0	Collection > Voice > character voice title	<r戦闘前|せんとうまえ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C470		slot	32				
+T747	0	Collection > Voice > character voice title	つのる<r心配|しんぱい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C490		slot	32				
+T748	0	Collection > Voice > character voice title	ナルトの<r助太刀|すけだち>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C4B0		slot	32				
+T749	0	Collection > Voice > character voice title	<r感謝|かんしゃ>の<r言葉|ことば>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C4D0		slot	48				
+T750	0	Collection > Voice > character voice title	<r幻術使|げんじゅつつか>い				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C500		slot	32				
+T751	0	Collection > Voice > character voice title	アスマと<r共闘|きょうとう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C520		slot	32				
+T752	0	Collection > Voice > character voice title	<r共|とも>に…！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C540		slot	32				
+T753	0	Collection > Voice > character voice title	<r肩透|かたす>かし				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C560		slot	32				
+T754	0	Collection > Voice > character voice title	<r不注意厳禁|ふちゅういげんきん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C580		slot	48				
+T755	0	Collection > Voice > character voice title	<r風影|かぜかげ>として				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C5B0		slot	32				
+T756	0	Collection > Voice > character voice title	<r空虚|くうきょ>な<r世界|せかい>で				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C5D0		slot	48				
+T757	0	Collection > Voice > character voice title	<r存在|そんざい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C600		slot	32				
+T758	0	Collection > Voice > character voice title	<r新|あたら>しい<r自分|じぶん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C620		slot	32				
+T759	0	Collection > Voice > character voice title	<r弟|おとうと>のために				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C640		slot	24				
+T760	0	Collection > Voice > character voice title	<r驚|おどろ>き				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C658		slot	24				
+T761	0	Collection > Voice > character voice title	<r滲|にじ>み<r出|で>る<r悔|くや>しさ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C670		slot	48				
+T762	0	Collection > Voice > character voice title	<r自慢|じまん>の<r傀儡|くぐつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C6A0		slot	32				
+T763	0	Collection > Voice > character voice title	<r姉|あね>と<r共|とも>に				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C6C0		slot	32				
+T764	0	Collection > Voice > character voice title	<r風|かぜ>の<r使|つか>い<r手|て>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C6E0		slot	48				
+T765	0	Collection > Voice > character voice title	<r我愛羅|ガアラ>の<r前|まえ>で				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C710		slot	32				
+T766	0	Collection > Voice > character voice title	<r手加減|てかげん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C730		slot	32				
+T767	0	Collection > Voice > character voice title	<r姉|あね>の<r喜|よろこ>び				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C750		slot	32				
+T768	0	Collection > Voice > character voice title	<r邂逅|かいこう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C770		slot	32				
+T769	0	Collection > Voice > character voice title	<r忠告|ちゅうこく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C790		slot	24				
+T770	0	Collection > Voice > character voice title	<r余裕|よゆう>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C7A8		slot	24				
+T771	0	Collection > Voice > character voice title	<r九尾|きゅうび>の<r人柱力|じんちゅうりき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C7C0		slot	48				
+T772	0	Collection > Voice > character voice title	<r強者|きょうしゃ>の<r男|おとこ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C7F0		slot	48				
+T773	0	Collection > Voice > character voice title	<r珍獣|ちんじゅう>との<r再会|さいかい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C820		slot	48				
+T774	0	Collection > Voice > character voice title	<r獣|けもの>レベル				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C850		slot	32				
+T775	0	Collection > Voice > character voice title	<r襲|おそ>い<r掛|か>かる<r鬼鮫|キサメ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C870		slot	48				
+T776	0	Collection > Voice > character voice title	<r高揚|こうよう>する<r心|こころ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C8A0		slot	48				
+T777	0	Collection > Voice > character voice title	<r苛立|いらだ>ち				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C8D0		slot	32				
+T778	0	Collection > Voice > character voice title	<r一尾|いちび>の<r人柱力|じんちゅうりき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C8F0		slot	48				
+T779	0	Collection > Voice > character voice title	<r刺激|しげき>を<r求|もと>めて				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C920		slot	32				
+T780	0	Collection > Voice > character voice title	<r変|か>わり<r者|もの>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C940		slot	32				
+T781	0	Collection > Voice > character voice title	デイダラの<r挑発|ちょうはつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C960		slot	32				
+T782	0	Collection > Voice > character voice title	<r予告|よこく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C980		slot	16				
+T783	0	Collection > Voice > character voice title	ギャハギャハギャハ！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C990		slot	24				
+T784	0	Collection > Voice > character voice title	できること				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C9A8		slot	24				
+T785	0	Collection > Voice > character voice title	<r最後|さいご>の<r喜|よろこ>び				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C9C0		slot	32				
+T786	0	Collection > Voice > character voice title	<r砂|すな>と<r木|こ>ノ<r葉|は>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C9E0		slot	32				
+T787	0	Collection > Voice > character voice title	<r最後|さいご>のお<r願|ねが>い				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CA00		slot	32				
+T788	0	Collection > Voice > character voice title	サソリの<r性格|せいかく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CA20		slot	32				
+T789	0	Collection > Voice > character voice title	<r三代目風影|さんだいめかぜかげ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CA40		slot	48				
+T790	0	Collection > Voice > character voice title	<r自分傀儡|じぶんくぐつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CA70		slot	32				
+T791	0	Collection > Voice > character voice title	<r止|と>まる<r傀儡|くぐつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CA90		slot	32				
+T792	0	Collection > Voice > character voice title	<r自来也|じらいや>の<r魅力|みりょく>？				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CAB0		slot	48				
+T793	0	Collection > Voice > character voice title	<r取材|しゅざい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CAE0		slot	32				
+T794	0	Collection > Voice > character voice title	<r因縁|いんねん>のケリ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CB00		slot	32				
+T795	0	Collection > Voice > character voice title	<r高笑|たかわら>い				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CB20		slot	32				
+T796	0	Collection > Voice > character voice title	<r三忍|さんにん>の<r実力|じつりょく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CB40		slot	40				
+T797	0	Collection > Voice > character voice title	<r監視|かんし>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CB68		slot	24				
+T798	0	Collection > Voice > character voice title	<r決着|けっちゃく>の<r時|とき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CB80		slot	32				
+T799	0	Collection > Voice > character voice title	<r綱手|ツナデ>の<r性格|せいかく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CBA0		slot	48				
+T800	0	Collection > Voice > character voice title	<r五代目火影|ごだいめほかげ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CBD0		slot	32				
+T801	0	Collection > Voice > character voice title	<r綱手|ツナデ>と<r組手|くみて>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CBF0		slot	32				
+T802	0	Collection > Voice > character voice title	<r本領発揮|ほんりょうはっき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CC10		slot	32				
+T803	0	Collection > Voice > character voice title	<r付|つ>き<r人|びと>シズネ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CC30		slot	32				
+T804	0	Collection > Voice > character voice title	<r医療忍者|いりょうにんじゃ>として				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CC50		slot	40				
+T805	0	Collection > Voice > character voice title	おめでとう！				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CC78		slot	24				
+T806	0	Collection > Voice > character voice title	<r代行|だいこう>の<r男|おとこ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CC90		slot	32				
+T807	0	Collection > Voice > character voice title	チームワーク				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CCB0		slot	16				
+T808	0	Collection > Voice > character voice title	<r共通|きょうつう>の<r目的|もくてき>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CCC0		slot	48				
+T809	0	Collection > Voice > character voice title	<r軽|かる>い<r挑発|ちょうはつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CCF0		slot	32				
+T810	0	Collection > Voice > character voice title	<r行動|こうどう>あるのみ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CD10		slot	32				
+T811	0	Collection > Voice > character voice title	<r大蛇丸|オロチまる><r現|あらわ>る				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CD30		slot	48				
+T812	0	Collection > Voice > character voice title	<r挑発|ちょうはつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CD60		slot	32				
+T813	0	Collection > Voice > character voice title	<r二人|ふたり>の<r対比|たいひ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CD80		slot	32				
+T814	0	Collection > Voice > character voice title	<r五年|ごねん>ぶりの<r再会|さいかい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CDC0		slot	48				
+T815	0	Collection > Voice > character voice title	<r共感|きょうかん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CDF0		slot	32				
+T816	0	Collection > Voice > character voice title	カブトの<r挑発|ちょうはつ>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CE10		slot	32				
+T817	0	Collection > Voice > character voice title	<r感心|かんしん>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CE30		slot	32				
+T818	0	Collection > Voice > character voice title	サスケの<r存在|そんざい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CE50		slot	32				
+T819	0	Collection > Voice > character voice title	ナルトとサスケ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CE70		slot	16				
+T820	0	Collection > Voice > character voice title	<r気|き>まぐれ				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CE80		slot	16				
+T821	0	Collection > Voice > character voice title	<r愚|おろ>かなること				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CE90		slot	32				
+T822	0	Collection > Voice > character voice title	<r兄|あに>との<r繋|つな>がり				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CEB0		slot	32				
+T823	0	Collection > Voice > character voice title	<r目障|めざわ>りな<r存在|そんざい>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CED0		slot	52				
+T824	0	Collection > Voice > character voice title	ノルマ				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x507160		slot	8				
+T2158	0	Collection > Voice > Orochimaru voice title	<r通告|つうこく>				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CDA0		slot	32				
+T1934	0	Game Mode Select > running help	<color00FFFF>マスターモード<colorFFFFFF>では<r広大|こうだい>な<r世界|せかい>を<r舞台|ぶたい>に、<r成長|せいちょう>したうずまきナルトの<r新|あたら>しい<r物語|ものがたり>を<r体験|たいけん>することができます。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B19D0		slot	208				
+T1935	0	Game Mode Select > running help	<color00FFFF>フリーバトル<colorFFFFFF>では<r好|す>きなキャラクターを<r使|つか>って<r自由|じゆう>に<r闘|たたか>うことができます。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B1AA0		slot	144				
+T1936	0	Game Mode Select > running help	<color00FFFF>プラクティス<colorFFFFFF>では<r基本操作|きほんそうさ>など、<r戦闘|せんとう>に<r関|かん>する<r様々|さまざま>な<r練習|れんしゅう>を<r行|おこな>うことができます。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B1B30		slot	176				
+T1937	0	Game Mode Select > running help	<color00FFFF>ショップ<colorFFFFFF>ではお<r金|かね>を<r払|はら>ってコレクション<r用|よう>のアイテムを<r購入|こうにゅう>することができます。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B1C40		slot	144				
+T1938	0	Game Mode Select > running help	<color00FFFF>コレクション<colorFFFFFF>ではショップで<r購入|こうにゅう>したコレクション<r用|よう>アイテムを<r閲覧|えつらん>することができます。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B1CD0		slot	144				
+T1939	0	Game Mode Select > running help	<color00FFFF>オプション<colorFFFFFF>では<r各種|かくしゅ><r設定|せってい>の<r変更|へんこう>を<r行|おこな>うことができます。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B1D60		slot	128				
+T1940	0	Options > Audio or Difficulty Settings > help or reset result	ＢＧＭ、ＳＥ、<r音声|おんせい>を<r含|ふく>む<r音量全体|おんりょうぜんたい>を<r変更|へんこう>します。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2860		slot	112				
+T1941	0	Options > Audio or Difficulty Settings > help or reset result	<r方向|ほうこう>キー<r左右|さゆう>で<r出力|しゅつりょく>モードをステレオ・モノラルのいずれかに<r設定|せってい>します。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B28D0		slot	128				
+T1942	0	Options > Audio or Difficulty Settings > help or reset result	<r音響設定|おんきょうせってい>をデフォルトに<r戻|もど>しました。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2950		slot	72				
+T1944	0	Options > category help or reset result	<color00FFFF>フリーバトル<colorFFFFFF>と<color00FFFF>プラクティス<colorFFFFFF>でのＣＯＭの<r強|つよ>さを<r設定|せってい>できます。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4b2a10		slot	144				
+T1945	0	Options > category help or reset result	ボタン<r操作|そうさ>の<r割|わ>り<r振|ふ>りができます。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4b2aa0		slot	64				
+T1946	0	Options > category help or reset result	<r音量|おんりょう>や<r音|おと>の<r出力設定|しゅつりょくせってい>ができます。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4b2ae0		slot	80				
+T1947	0	Options > category help or reset result	<r画面|がめん>の<r位置|いち>の<r調整|ちょうせい>ができます。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4b2b30		slot	64				
+T1948	0	Options > category help or reset result	<r難易度|なんいど>をデフォルトに<r戻|もど>します。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4b2b70		slot	64				
+T1949	0	Options > Control Settings > action label	奥義準備				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2640		slot	16				
+T1950	0	Options > Control Settings > action label	ジャンプ				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2650		slot	16				
+T1951	0	Options > Control Settings > action label	アイテム使用				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2660		slot	16				
+T1952	0	Options > Control Settings > action label	アイテム選択				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2670		slot	16				
+T1953	0	Options > Control Settings > action label	連係攻撃				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2680		slot	16				
+T1954	0	Options > Control Settings > assigned action or toggle	攻撃				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504738		slot	8				
+T1955	0	Options > Control Settings > assigned action or toggle	ガード				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504740		slot	8				
+T1956	0	Options > Control Settings > assigned action or toggle	オフ				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504748		slot	8				
+T1957	0	Options > Control Settings > assigned action or toggle	オン				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504750		slot	8				
+T1958	0	Options > Control Settings > instructions or reset result	<r変更|へんこう>したいボタン・<r項目|こうもく>を<iconOK>ボタンで<r選択|せんたく>し、<r方向|ほうこう>キー<r左右|さゆう>で<r操作|そうさ>を<r変更|へんこう>してください。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2230		slot	176				
+T1959	0	Options > Control Settings > instructions or reset result	１Ｐの<r操作設定|そうさせってい>をデフォルトに<r戻|もど>しました。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B22E0		slot	80				
+T2007	0	Save or Load menu > data prompt or status	ロードするデータを<ruby選|えら>んでください。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x303da0		slot	64				
+T2008	0	Save or Load menu > data prompt or status	このデータをロードしますか？				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x303de0		slot	48				
+T2009	0	Save or Load menu > data prompt or status	データのロードが<ruby終了|しゅうりょう>しました。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x303e90		slot	64				
+T2010	0	Save or Load menu > data prompt or status	セーブする<ruby場所|ばしょ>を<ruby選|えら>んでください。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x303f10		slot	64				
+T2011	0	Save or Load menu > data prompt or status	セーブしています。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x303F50		slot	19				
+T2012	0	Save or Load menu > data prompt or status	データのセーブが<ruby終了|しゅうりょう>しました。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x303FD0		slot	64				
+T2014	0	Save or Load menu > data prompt or status	<ruby上書|うわが>きすると<ruby以前|いぜん>のデータは<ruby失|うしな>われてしまいます。				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x304090		slot	86				
+T2016	0	Save or Load menu > data prompt or status	データをセーブしますか？				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x304970		slot	32				
+T2019	0	Save or Load menu > data prompt or status	<ruby壱|いち>・				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x304A00		slot	16				
+T2020	0	Save or Load menu > data prompt or status	<ruby弐|に>・				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x304A10		slot	16				
+T2021	0	Save or Load menu > data prompt or status	<ruby参|さん>・				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x304A20		slot	16				
+T2022	0	Save or Load menu > data prompt or status	プレイ<ruby時間|じかん> 				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x304a40		slot	32				
+T1	0	Shared game modal > Yes or No choice	はい				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x503110		slot	5				
+T2024	0	Shared game modal > Yes or No choice	いいえ				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x503118		slot	7				
+T2025	0	Shared game modal > Yes or No choice	いいえ				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504668		slot	7				
+T2026	0	Shared game modal > Yes or No choice	は　い				seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504670		slot	8				
+T2028	0	Shop > category or item-selection help	<r人形|にんぎょう>を<r購入|こうにゅう>します。				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2F2A0		slot	48				
+T2029	0	Shop > category or item-selection help	<r奥義|おうぎ>を<r購入|こうにゅう>します。				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2F2D0		slot	48				
+T2030	0	Shop > category or item-selection help	<r音楽|おんがく>を<r購入|こうにゅう>します。				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2F300		slot	48				
+T2031	0	Shop > category or item-selection help	<r音声|おんせい>を<r購入|こうにゅう>します。				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2F330		slot	48				
+T2034	0	Shop > quit confirmation	<color080860>ショップ<color000000>を<r終了|しゅうりょう>しますか？				seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2F500		slot	80				

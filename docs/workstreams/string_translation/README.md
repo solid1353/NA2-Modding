@@ -4,10 +4,11 @@ Canonical documentation landing page for the `String translation` workstream.
 
 ## Workstream policy
 
-- Keep accepted `mappings.tsv` and normal build behavior unchanged while the
-  replacement is built in adjacent `rebuild.tsv`. Existing translations,
-  mappings, and legacy donor links are reference material rather than presumed
-  correct coverage.
+- Keep accepted `mappings.tsv` and normal build behavior unchanged.
+  `rebuild.tsv` remains the complete stable-`T#` diagnostic candidate
+  inventory; build the encountered-only translation replacement separately in
+  adjacent `replacement.tsv`. Existing translations, mappings, and legacy
+  donor links are reference material rather than presumed correct coverage.
 - Translate only strings confirmed to be displayed through the `T#`
   screenshot pass. The rebuilt executable table admits a row only when it has
   a concrete `display_context` and a `display_basis`: directly seen in an ID

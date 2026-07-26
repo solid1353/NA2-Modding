@@ -52,7 +52,57 @@ class TranslationImporterTests(unittest.TestCase):
             translation_importer.build_mapping_id_import_plan,
             engine.build_mapping_id_import_plan,
         )
+        self.assertIs(
+            translation_importer.build_replacement_import_plan,
+            engine.build_replacement_import_plan,
+        )
 
+    def test_encountered_replacement_uses_mapping_schema_and_rebuild_guards(
+        self,
+    ) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        data_root = (
+            repository
+            / "na2_patcher/features/localization/translation_importer"
+        )
+        replacement_raw = engine.read_rows(data_root / "replacement.tsv")
+        replacement = engine.parse_mappings(
+            replacement_raw,
+            table_name="replacement.tsv",
+        )
+        rebuild = {
+            row["id"]: row
+            for row in engine.read_rebuild_rows(data_root / "rebuild.tsv")
+        }
+
+        self.assertEqual(len(replacement_raw), 564)
+        self.assertEqual(replacement["text"], [])
+        self.assertEqual(len(replacement["inactive"]), 564)
+        self.assertEqual(
+            len({row["id"] for row in replacement_raw}),
+            len(replacement_raw),
+        )
+        for row in replacement_raw:
+            self.assertIn(row["id"], rebuild)
+            candidate = rebuild[row["id"]]
+            self.assertEqual(row["enabled"], "0")
+            self.assertTrue(row["display_context"])
+            self.assertTrue(row["display_basis"].startswith("seen:"))
+            self.assertEqual(row["source"], candidate["source"])
+            self.assertEqual(row["source_ref"], candidate["source_ref"])
+            self.assertEqual(row["mode"], candidate["mode"])
+            self.assertEqual(row["capacity"], candidate["capacity"])
+            for field in (
+                "donor",
+                "prefix",
+                "replacement",
+                "donor_ref",
+                "transform",
+                "arguments",
+                "reference_refs",
+                "parent_mapping_id",
+            ):
+                self.assertEqual(row[field], "")
     def test_iso_source_delegates_to_the_shared_iso_reader(self) -> None:
         exact = SimpleNamespace(path="PRG/BTL.BIN", is_dir=False)
         basename = SimpleNamespace(path="OTHER/ETC.BIN", is_dir=False)
@@ -340,6 +390,32 @@ class TranslationImporterTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(ValueError, "outside 2 parts"):
             engine.resolve_replacement_text(row, "parent")
+
+    def test_empty_import_log_requires_explicit_replacement_mode_opt_in(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "translation_imports.tsv"
+            with self.assertRaisesRegex(
+                ValueError,
+                "No translation imports were generated",
+            ):
+                engine.write_import_tsv(path, [])
+            engine.write_import_tsv(path, [], allow_empty=True)
+            with path.open("r", encoding="utf-8-sig", newline="") as handle:
+                self.assertEqual(
+                    next(csv.reader(handle, delimiter="\t")),
+                    [
+                        "import_id",
+                        "group_id",
+                        "path",
+                        "offset",
+                        "expected_hex",
+                        "replacement_hex",
+                        "source_text",
+                        "replacement_text",
+                        "source_mapping_id",
+                        "reason",
+                    ],
+                )
 
 
 if __name__ == "__main__":

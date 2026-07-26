@@ -528,6 +528,7 @@ def apply_profile_modules(
                     source=source,
                     payloads=payloads,
                     owners=owners,
+                    allow_empty_defaults=(translation_display == "replacement"),
                 )
                 item["derived_string_patch_result"] = derived_result
                 item["string_patch_plan"] = derived
@@ -645,7 +646,9 @@ def write_profile_log(
             )
             module_log.mkdir(parents=True, exist_ok=True)
             translation_importer_module.write_import_tsv(
-                module_log / "translation_imports.tsv", plan.import_rows
+                module_log / "translation_imports.tsv",
+                plan.import_rows,
+                allow_empty=(plan.display_mode == "replacement"),
             )
             translation_importer_module.write_json(
                 module_log / "translation_import_summary.json", plan.summary

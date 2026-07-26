@@ -280,7 +280,10 @@ def read_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
         if reader.fieldnames != MAPPING_FIELDS:
-            raise ValueError("mappings.tsv must contain exactly these columns in this order: " + "\t".join(MAPPING_FIELDS))
+            raise ValueError(
+                f"{path.name} must contain exactly these columns in this order: "
+                + "\t".join(MAPPING_FIELDS)
+            )
         verbatim_fields = {"source", "donor", "prefix", "replacement"}
         rows = [
             {
@@ -295,7 +298,7 @@ def read_rows(path: Path) -> list[dict[str, str]]:
         ]
     ids = [row["id"] for row in rows]
     if any(not value for value in ids) or len(ids) != len(set(ids)):
-        raise ValueError("mappings.tsv contains empty or duplicate ids")
+        raise ValueError(f"{path.name} contains empty or duplicate ids")
     return rows
 
 
@@ -720,10 +723,14 @@ def write_slot(output: bytearray, offset: int, capacity: int, replacement: bytes
     output[offset:offset + capacity] = replacement + b"\x00" + b"\x00" * (capacity - len(replacement) - 1)
 
 
-def parse_mappings(rows: list[dict[str, str]]) -> dict[str, list[dict[str, object]]]:
+def parse_mappings(
+    rows: list[dict[str, str]],
+    *,
+    table_name: str = "mappings.tsv",
+) -> dict[str, list[dict[str, object]]]:
     result = {"text": [], "inactive": []}
     for line, row in enumerate(rows, 2):
-        label = f"mappings.tsv line {line} ({row['id']})"
+        label = f"{table_name} line {line} ({row['id']})"
         if row["enabled"] not in {"0", "1"}:
             raise ValueError(f"{label}: enabled must be 0 or 1")
         if not row["display_context"]:
@@ -1039,8 +1046,13 @@ def diff_rows(path: str, clean: bytes, output: bytes, annotations) -> list[dict[
     return rows
 
 
-def write_import_tsv(path: Path, rows: list[dict[str, str]]) -> None:
-    if not rows:
+def write_import_tsv(
+    path: Path,
+    rows: list[dict[str, str]],
+    *,
+    allow_empty: bool = False,
+) -> None:
+    if not rows and not allow_empty:
         raise ValueError("No translation imports were generated")
     fields = [
         "import_id", "group_id", "path", "offset", "expected_hex",
@@ -1179,14 +1191,16 @@ def build_mapping_id_import_plan(
     )
 
 
-def build_translation_import_plan(
+def _build_translation_import_plan(
     *,
     na2_iso: Optional[Path] = None,
     na2_folder: Optional[Path] = None,
     data_root: Path,
     apply: str = "BTL,ETC,SLPS",
+    mapping_filename: str,
+    summary_mode: str,
 ) -> TranslationImportPlan:
-    """Load canonical translation declarations without choosing placement."""
+    """Load one mappings-schema translation table without choosing placement."""
     selected_list = parse_apply(apply)
     selected = set(selected_list)
     na2 = source_from(na2_folder, na2_iso, "NA2")
@@ -1203,10 +1217,10 @@ def build_translation_import_plan(
             raise ValueError(f"Unexpected {key} SHA-1: {actual}; expected {expected}")
 
     data_root = data_root.resolve()
-    mapping_path = data_root / "mappings.tsv"
+    mapping_path = data_root / mapping_filename
     actual_mapping_hash = hashlib.sha256(mapping_path.read_bytes()).hexdigest().upper()
     rows_raw = read_rows(mapping_path)
-    mappings = parse_mappings(rows_raw)
+    mappings = parse_mappings(rows_raw, table_name=mapping_filename)
     references = tuple(
         reference
         for reference in references_from_mappings(mappings["text"])
@@ -1250,8 +1264,10 @@ def build_translation_import_plan(
         if row["target"] in selected
     )
     summary: dict[str, object] = {
-        "mode": "canonical translation declarations",
-        "mappings_sha256": actual_mapping_hash,
+        "mode": summary_mode,
+        f"{mapping_path.stem}_sha256": actual_mapping_hash,
+        "table_rows": len(rows_raw),
+        "inactive_rows": len(mappings["inactive"]),
         "targets": selected_list,
         "output": {
             "import_rows": 0,
@@ -1278,6 +1294,42 @@ def build_translation_import_plan(
         materialized_templates=materialized_templates,
         clean_targets=clean_targets,
         summary=summary,
+    )
+
+
+def build_translation_import_plan(
+    *,
+    na2_iso: Optional[Path] = None,
+    na2_folder: Optional[Path] = None,
+    data_root: Path,
+    apply: str = "BTL,ETC,SLPS",
+) -> TranslationImportPlan:
+    """Load accepted canonical translations without choosing placement."""
+    return _build_translation_import_plan(
+        na2_iso=na2_iso,
+        na2_folder=na2_folder,
+        data_root=data_root,
+        apply=apply,
+        mapping_filename="mappings.tsv",
+        summary_mode="canonical translation declarations",
+    )
+
+
+def build_replacement_import_plan(
+    *,
+    na2_iso: Optional[Path] = None,
+    na2_folder: Optional[Path] = None,
+    data_root: Path,
+    apply: str = "BTL,ETC,SLPS",
+) -> TranslationImportPlan:
+    """Load the encountered-only replacement table for a worker build."""
+    return _build_translation_import_plan(
+        na2_iso=na2_iso,
+        na2_folder=na2_folder,
+        data_root=data_root,
+        apply=apply,
+        mapping_filename="replacement.tsv",
+        summary_mode="encountered-only replacement declarations",
     )
 
 

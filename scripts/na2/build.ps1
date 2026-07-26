@@ -2,7 +2,7 @@
 param(
     [switch]$CandidateOnly,
     [string]$WorkerOutputIso,
-    [ValidateSet('translation', 'mapping_ids')]
+    [ValidateSet('translation', 'mapping_ids', 'replacement')]
     [string]$TranslationDisplay = 'translation'
 )
 

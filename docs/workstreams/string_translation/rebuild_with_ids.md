@@ -8,14 +8,16 @@ correct coverage.
 
 ## Parallel-table boundary
 
-The translation importer owns two adjacent inputs:
+The translation importer owns three adjacent inputs:
 
 - `mappings.tsv`: the unchanged accepted table used by normal builds;
-- `rebuild.tsv`: the clean replacement under construction and the sole input
-  used by worker-only mapping-ID builds.
+- `rebuild.tsv`: the complete stable-`T#` candidate inventory and sole input
+  used by worker-only mapping-ID builds;
+- `replacement.tsv`: the encountered-only translation replacement under
+  construction.
 
-`rebuild.tsv` does not inherit executable translations. Its initial rows retain
-only exact clean NA2 source text/location, mode/capacity, a provisional screen
+`rebuild.tsv` does not inherit executable translations. Its rows retain only
+exact clean NA2 source text/location, mode/capacity, a provisional screen
 context, and optional legacy `M` IDs for lookup. `donor`, `donor_ref`, `prefix`,
 `replacement`, `display_basis`, transforms, pointer references, and parent
 relationships begin empty. A legacy ID locates reference material; it does not
@@ -30,6 +32,18 @@ The 16 columns keep human-editable text first and engine details afterward:
 `display_context` is a provisional navigation hint until `display_basis` is
 filled from the new evidence pass. A blank basis therefore means candidate,
 not validated. `legacy_ids` is an optional comma-separated lookup field.
+
+`replacement.tsv` uses the exact 16-column `mappings.tsv` schema:
+
+`id`, `enabled`, `display_context`, `source`, `donor`, `prefix`,
+`replacement`, `display_basis`, `source_ref`, `donor_ref`, `mode`,
+`capacity`, `transform`, `arguments`, `reference_refs`, `parent_mapping_id`
+
+Only encountered `T#` rows are admitted. The initial evidence pass copies the
+exact guarded source fields from `rebuild.tsv`, records concrete display
+metadata, leaves every translation/pointer field empty, and keeps every row
+disabled. Later donor validation may complete and enable rows without changing
+the diagnostic inventory or normal build behavior.
 
 The initial inventory combines the pre-rebuild v40 reference with the accepted
 table, deduplicates aliases that point to the same clean source slot, and adds
@@ -91,6 +105,21 @@ Build the diagnostic ISO with:
 The output is a verified worker ISO. It never promotes or rotates Current,
 Previous, or Candidate.
 
+## Cumulative replacement build
+
+Build the separate cumulative translation ISO with:
+
+```powershell
+& scripts/research/translation/build_replacement.ps1 `
+  -OutputIso 'work/String translation/build/replacement.iso'
+```
+
+This is also a verified worker build. It imports only enabled rows from
+`replacement.tsv`; it never falls back to accepted `mappings.tsv`, never
+changes the complete diagnostic inventory, and never promotes or rotates
+Current, Previous, or Candidate. Each completed translation pass therefore
+accumulates in one independently testable image.
+
 During this rebuild pass, the user-facing `na` pair launcher accepts the
 diagnostic `rebuild` image:
 
@@ -110,11 +139,13 @@ the needed screenshots into its work directory with repository-relative
 provenance.
 
 If a visible Japanese string has no `T#`, it is a newly discovered candidate.
-Add it with the next permanent ID; do not renumber the existing inventory.
+Add it with the next permanent ID in `rebuild.tsv`; do not renumber the
+existing inventory. Add it to `replacement.tsv` only after its diagnostic ID
+is visibly confirmed.
 
 ## Admission rule
 
-A rebuild row becomes a proposed executable translation only under one of
+A diagnostic row enters `replacement.tsv` only under one of
 these bases:
 
 1. `seen`: its diagnostic `T#` appears in a supplied PCSX2 screenshot;
@@ -129,7 +160,7 @@ names, Ultimate Jutsu names, command-chart move names, figures, and voice
 entries. Adjacency alone is insufficient.
 
 Rows never confirmed to display remain candidates only and are not copied into
-the eventual executable replacement. Diagnostic replacement is evidence
+`replacement.tsv`. Diagnostic replacement is evidence
 collection, not permission to translate every binary string.
 
 Every admitted row must contain:
@@ -209,7 +240,7 @@ The rebuild is accepted only after:
    are uniquely readable, no resident payload is introduced, and normal
    composition remains byte-for-byte unchanged;
 3. ID capture: every reachable semantic screen group is exercised and visible
-   IDs are entered into the rebuild table with exact display context;
+   IDs are entered into `replacement.tsv` with exact display context;
 4. inference audit: selector/help and character-family expansions are checked
    against clean NA2 structure and NUN5 reference ordering;
 5. donor audit: every admitted donor begins at a real NUN5 string boundary,

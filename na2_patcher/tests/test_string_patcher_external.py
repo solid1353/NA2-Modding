@@ -37,6 +37,13 @@ class IntegratedExternalStringTests(unittest.TestCase):
                 apply="BTL,ETC,SLPS",
             )
         )
+        cls.replacement_import_plan = (
+            translation_importer.build_replacement_import_plan(
+                na2_folder=cls.roots["na2"],
+                data_root=cls.localization / "translation_importer",
+                apply="BTL,ETC,SLPS",
+            )
+        )
         cls.draft = string_patcher.build_translation_draft(
             translation_plan=cls.import_plan,
             owner="localization.string_patcher",
@@ -295,6 +302,33 @@ class IntegratedExternalStringTests(unittest.TestCase):
                 ),
                 translation_display="guess",
             )
+
+    def test_replacement_display_uses_only_enabled_replacement_rows(self) -> None:
+        draft = string_patcher.build_translation_draft(
+            translation_plan=self.replacement_import_plan,
+            owner="localization.string_patcher",
+            title_policy=string_patcher.GameTitlePolicy(
+                imported_title="not applied to a partial replacement",
+                output_title="also not applied",
+                expected_mapping_count=99,
+                expected_occurrence_count=99,
+            ),
+            translation_display="replacement",
+        )
+        self.assertEqual(draft.translation_plan.display_mode, "replacement")
+        self.assertEqual(draft.translation_plan.text_mappings, ())
+        self.assertEqual(draft.translation_plan.import_rows, [])
+        self.assertEqual(draft.external_draft.fragments, ())
+        self.assertEqual(draft.external_draft.symbolic_patches, ())
+        self.assertEqual(
+            self.replacement_import_plan.summary["table_rows"],
+            564,
+        )
+        self.assertEqual(
+            self.replacement_import_plan.summary["inactive_rows"],
+            564,
+        )
+        self.assertFalse(draft.game_title_policy["applied"])
 
     def test_title_policy_fails_closed_in_string_patcher(self) -> None:
         with self.assertRaisesRegex(ValueError, "policy coverage differs"):

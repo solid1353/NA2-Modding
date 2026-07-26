@@ -37,7 +37,11 @@ RESIDENT_PATCHER_CONTROL_FILES = (
     "relocations.tsv",
     "edits.tsv",
 )
-TRANSLATION_IMPORTER_CONTROL_FILES = ("mappings.tsv", "rebuild.tsv")
+TRANSLATION_IMPORTER_CONTROL_FILES = (
+    "mappings.tsv",
+    "rebuild.tsv",
+    "replacement.tsv",
+)
 TEXTURE_PATCHER_CONTROL_FILES = (
     "containers.tsv",
     "mappings.tsv",

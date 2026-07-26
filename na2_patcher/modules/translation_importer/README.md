@@ -20,6 +20,13 @@ and validate the exact clean source bytes, but ignore all donor/translation
 fields. This keeps the accepted `mappings.tsv` behavior unchanged while the
 replacement table is reconstructed from screenshots.
 
+Adjacent `replacement.tsv` uses the exact accepted `mappings.tsv` schema. It
+contains only diagnostic IDs confirmed visible in the supplied screenshot
+pass. During evidence collection its rows remain disabled and its donor fields
+remain blank; normal and diagnostic builds do not import or execute it.
+Profile integrity checking hash-covers it so the in-progress replacement
+inventory cannot drift outside the reproducible project state.
+
 The official `donor` is the default executable translation. User-authored
 `prefix` is prepended to the resolved text, while a nonempty user-authored
 `replacement` overrides the donor before transforms are applied. The importer

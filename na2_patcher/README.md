@@ -59,8 +59,9 @@ reproducible checkpoint.
 - `string_patcher`: `strings.tsv`, only for a feature that owns local string
   declarations.
 - `translation_importer`: accepted `mappings.tsv`, including its folded pointer
-  inventory, plus adjacent `rebuild.tsv` for the worker-only from-scratch
-  mapping-ID diagnostic.
+  inventory; adjacent `rebuild.tsv` for the worker-only mapping-ID diagnostic;
+  and encountered-only `replacement.tsv` for the from-scratch translation
+  rebuild.
 - `texture_patcher`: `containers.tsv`, `mappings.tsv`, and `strategies.tsv`.
 
 Binary package identity is derived from its feature/module path. Binary

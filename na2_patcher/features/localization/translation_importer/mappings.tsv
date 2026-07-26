@@ -2061,6 +2061,13 @@ T2030	1	Shop > category or item-selection help	<r音楽|おんがく>を<r購入
 T2031	1	Shop > category or item-selection help	<r音声|おんせい>を<r購入|こうにゅう>します。	Buy Sound.			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2F330	NUN5_TEXTENG@0x14F8	slot	48				
 T2032	1	Shop > category or item-selection help	<r購入|こうにゅう>するキャラクターを<r選択|せんたく>してください。	Select character to buy.			seen:replacement-pass-2-2026-07-26 paired screenshot	NA2_ETC@0x2F3A0	NUN5_TEXTENG@0x1530	slot	80				
 T2033	1	Shop > category or item-selection help	<r購入|こうにゅう>する<r商品|しょうひん>にカーソルを<r合|あ>わせ、<iconCIRCLE>ボタンを<r押|お>してください。	Select an item and press <iconCIRCLE> to buy.		Select an item and press <iconCROSS> to buy.	seen:replacement-pass-2-2026-07-26 paired screenshot	NA2_ETC@0x2F3F0	NUN5_TEXTENG@0x1550	slot	112				
+T2199	1	Shop > Figure Items / Dioramas tutorial	"　　　　　＜<r閲覧用|えつらんよう>アイテムとジオラマ＞
+
+ここでは「コレクション」で<r閲覧|えつらん>することのできる
+<r閲覧用|えつらんよう>アイテムを<r購入|こうにゅう>することができます。
+また<r特定|とくてい>のキャラクターの「<r人形|にんぎょう>」を<r購入|こうにゅう>すると、
+コレクション<r内|ない>の「ジオラマ」に、<r対応|たいおう>したキャラクターの
+<r人形|にんぎょう>も<r追加|ついか>され、<r少|すこ>しずつジオラマが<r完成|かんせい>していきます。"	<Figure Items / Dioramas><br><br>You can purchase Figure Items here, which can be viewed in Collection Mode. Buying the Figures of characters adds them to the diorama in Collection Mode, allowing you to build the diorama to completion.			seen:ss1-paired-Figure-Items-Dioramas	NA2_ETC@0x30080	NUN5_TEXTENG@0x1930	slot	448				
 T2034	1	Shop > quit confirmation	<color080860>ショップ<color000000>を<r終了|しゅうりょう>しますか？	<BLACK>Quit <color080860>shopping<BLACK>?			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2F500	NUN5_TEXTENG@0x17D0	slot	80				
 T2035	1	Startup and save flow > memory-card prompt or status	ＭＥＭＯＲＹ ＣＡＲＤ<ruby差込口|さしこみぐち>１に<NUL>”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）が<NUL><ruby差|さ>されていません。	No memory card (PS2) is inserted in <br>MEMORY CARD slot 1.<br>Please insert a memory card (PS2) in<br>MEMORY CARD slot 1.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x3039E0	NUN5_TEXTENG@0x29060	sequence	160	split_br_sequence	parts=0,1,2,3		
 T2036	1	Startup and save flow > memory-card prompt or status	ＭＥＭＯＲＹ ＣＡＲＤ<ruby差込口|さしこみぐち>１の<NUL>”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）が<NUL>フォーマットされていません。	The memory card (PS2) in <br>MEMORY CARD slot 1 is unformatted.<br>Format memory card (PS2)?			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x303C40	NUN5_TEXTENG@0x291D0	sequence	160	split_br_sequence	parts=0,1		

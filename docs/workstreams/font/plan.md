@@ -49,11 +49,12 @@ until logical width, visible glyph bounds, advances, and centering are measured
 for the same strings. The historical m01 and semantic-palette experiments are
 negative evidence, not implementation parents.
 
-## Proposed replacement architecture — awaiting approval
+## Approved replacement architecture — implementation active
 
-Status: discussion-only until the user approves this replacement plan. Keep the
-accepted font and the retained July autofit/layout implementation unchanged,
-with the old implementation remaining disabled.
+Status: approved for implementation. Keep the accepted font and the retained
+July autofit/layout implementation unchanged, with the old implementation
+remaining disabled. The shared v2 core and its adapter/session ABI are separate
+foundational commit boundaries before any caller-family behavior is enabled.
 
 ### Architecture
 
@@ -168,6 +169,26 @@ At each coherent boundary, recompute the exact combined Localization feature
 pin while preserving the existing `bypass_check` value exactly. Only the user
 may change that value.
 
+### Foundational implementation boundaries
+
+The user directed the shared core and adapter/session layer to be completed
+before caller-family behavior:
+
+1. `font_v2_layout_core` is a default-disabled resident patch with a separate
+   generated v2 asset. It exports the accepted 95-entry width table, guarded
+   printable-ASCII and explicit-line measurement, shrink-only preparation,
+   horizontal and vertical box positioning, one zero-initialized active-session
+   pointer, and five null-session renderer hooks. It does not target any
+   retained v1 symbol or redirect a screen.
+2. The adapter/session ABI is a separate resident fragment that prepares one
+   caller-owned stack record, publishes it only around one native callback,
+   and restores the previous session, renderer tracking, horizontal scale and
+   callback result through one cleanup path. It likewise has no caller-family
+   hook by itself.
+
+Only after both foundations are committed does Controls receive the first
+family-specific wrapper and runtime comparison.
+
 ### First caller family: Controls
 
 The first implementation and commit contains the v2 core plus the Controls
@@ -254,7 +275,7 @@ Recommended effort: **max**, due to cross-function MIPS ABI preservation,
 renderer-state restoration, symbolic resident linking and multi-screen runtime
 regression risk.
 
-**Awaiting plan approval**
+**Plan approved; foundational stages 1-2 in progress**
 
 ## Accepted font implementation
 

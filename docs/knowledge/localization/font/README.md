@@ -68,6 +68,33 @@ whether it is a pre-existing unresolved caller mismatch. Reimplementation now
 proceeds sequentially, one proven caller family per accepted commit, while
 shared behavior is ported only once when cross-screen evidence supports it.
 
+### 2026-07-26 independent v2 layout-core foundation
+
+The replacement architecture begins with a separate generated resident asset
+and unique `localization.font.v2.*` symbols; it does not reuse the retained
+July helper symbols or monolithic return-address dispatcher. The first
+foundation exports:
+
+- one zero-initialized active-session pointer;
+- the accepted 95-entry proportional-width table;
+- guarded printable-ASCII measurement with optional explicit `<br>` and
+  newline-byte line counting;
+- shrink-only horizontal fit plus left/center/right and
+  top/center/bottom box positioning;
+- separate ordinary-space, newline, right-edge, inline-half-space and
+  glyph-advance hooks.
+
+The `font_v2_layout_core` selection remains default-disabled and no caller
+family targets it yet. When selected without an adapter, every hook observes a
+null session, restores its temporary `v0`/`v1` use, executes the exact
+displaced NA2 operations and resumes the original path. Static linked-package
+validation confirms the five hook targets, internal branch bounds, the
+`Ultimate Jutsu Prep` denominator of 178, and the unchanged retained-v1 blob.
+The separate v2 asset is 1,264 bytes with SHA-256
+`9D9D6E94ED83D2133B3A704968537824B7BB26F0879EF8A8433601256A5112F4`.
+Automatic word wrapping and caller-native record changes remain later
+adapter/family work; this boundary changes no screen.
+
 ## Accepted native 14x20 integration
 
 The current patch set builds on the accepted version 5 baseline. Its former

@@ -103,22 +103,27 @@ class ResidentPatcherTests(unittest.TestCase):
             / "localization"
             / "resident_patcher"
         )
-        declaration = engine.load_package(
+        disabled_declaration = engine.load_package(
             directory, owner="localization.resident_patcher"
         )
         self.assertFalse(
-            any(patch.default_enabled for patch in declaration.patches.values())
+            any(
+                patch.default_enabled
+                for patch in disabled_declaration.patches.values()
+            )
         )
-        self.assertEqual(declaration.payload_fragments, ())
-        self.assertEqual(declaration.symbolic_patches, ())
-        disabled_package = engine.build_binary_package(declaration, ())
+        self.assertEqual(disabled_declaration.payload_fragments, ())
+        self.assertEqual(disabled_declaration.symbolic_patches, ())
+        disabled_package = engine.build_binary_package(
+            disabled_declaration, ()
+        )
         self.assertEqual(disabled_package.edits, [])
 
         declaration = replace(
-            declaration,
+            disabled_declaration,
             patches={
                 patch_id: replace(patch, default_enabled=True)
-                for patch_id, patch in declaration.patches.items()
+                for patch_id, patch in disabled_declaration.patches.items()
             },
         )
         build = build_resident_payload(declaration.fragments)
@@ -207,6 +212,131 @@ class ResidentPatcherTests(unittest.TestCase):
             self.assertEqual(
                 (word & 0x03FFFFFF) << 2,
                 scale.runtime_address + addend,
+            )
+
+        v2_declaration = replace(
+            disabled_declaration,
+            patches={
+                patch_id: replace(
+                    patch,
+                    default_enabled=patch_id == "font_v2_layout_core",
+                )
+                for patch_id, patch in disabled_declaration.patches.items()
+            },
+        )
+        v2_build = build_resident_payload(v2_declaration.fragments)
+        v2_resolved = resolve_symbolic_patches(
+            v2_build, v2_declaration.symbolic_patches
+        )
+        v2_package = engine.build_binary_package(
+            v2_declaration, v2_resolved
+        )
+        self.assertEqual(
+            {edit.edit_id for edit in v2_package.edits},
+            {
+                "font_v2_layout_core_01",
+                "font_v2_layout_core_02",
+                "font_v2_layout_core_03",
+                "font_v2_layout_core_04",
+                "font_v2_layout_core_05",
+            },
+        )
+        self.assertEqual(
+            {edit.destination_offset for edit in v2_package.edits},
+            {0x88070, 0x88704, 0x88B7C, 0x893EC, 0x897D8},
+        )
+        session = v2_build.symbols["localization.font.v2.session_pointer"]
+        self.assertEqual(session.size, 4)
+        self.assertEqual(
+            v2_build.payload[
+                session.file_offset:session.file_offset + session.size
+            ],
+            b"\0" * 4,
+        )
+        v2_widths = v2_build.symbols["localization.font.v2.ascii_widths"]
+        v2_width_payload = v2_build.payload[
+            v2_widths.file_offset:v2_widths.file_offset + v2_widths.size
+        ]
+        self.assertEqual(v2_width_payload, width_payload)
+        self.assertEqual(
+            sum(
+                v2_width_payload[ord(character) - 0x20]
+                for character in "Ultimate Jutsu Prep"
+            ),
+            178,
+        )
+        self.assertEqual(
+            min(1.0, 128.0 / 178.0),
+            128.0 / 178.0,
+        )
+        v2_symbols = {
+            "font_v2_layout_core_01": "localization.font.v2.plain_space",
+            "font_v2_layout_core_02": (
+                "localization.font.v2.newline_advance"
+            ),
+            "font_v2_layout_core_03": "localization.font.v2.right_edge",
+            "font_v2_layout_core_04": "localization.font.v2.half_space",
+            "font_v2_layout_core_05": (
+                "localization.font.v2.glyph_advance"
+            ),
+        }
+        for edit in v2_package.edits:
+            linked = v2_build.symbols[v2_symbols[edit.edit_id]]
+            jump = int.from_bytes(
+                bytes.fromhex(edit.replacement_hex)[:4], "little"
+            )
+            self.assertEqual(jump >> 26, 0x02)
+            self.assertEqual(
+                (jump & 0x03FFFFFF) << 2,
+                linked.runtime_address,
+            )
+            self.assertEqual(
+                bytes.fromhex(edit.replacement_hex)[4:],
+                b"\0" * 4,
+            )
+        inactive_words = {
+            "localization.font.v2.plain_space": {
+                0xC6600004,
+                0x46010040,
+            },
+            "localization.font.v2.newline_advance": {
+                0xC6600040,
+                0x46000840,
+            },
+            "localization.font.v2.right_edge": {
+                0x46000D40,
+                0xC6200020,
+            },
+            "localization.font.v2.half_space": {
+                0x4603101C,
+                0xE660001C,
+            },
+            "localization.font.v2.glyph_advance": {
+                0x46020040,
+                0xC660001C,
+            },
+        }
+        for symbol, expected_words in inactive_words.items():
+            linked = v2_build.symbols[symbol]
+            payload = v2_build.payload[
+                linked.file_offset:linked.file_offset + linked.size
+            ]
+            words = {
+                int.from_bytes(payload[offset:offset + 4], "little")
+                for offset in range(0, len(payload), 4)
+            }
+            self.assertTrue(
+                expected_words.issubset(words),
+                f"{symbol}: missing "
+                f"{sorted(expected_words - words)}",
+            )
+            self.assertTrue(
+                any(
+                    word >> 26 == 0x04
+                    and (word >> 21) & 0x1F == 3
+                    and (word >> 16) & 0x1F == 0
+                    for word in words
+                )
             )
 
     def test_loads_fragments_and_compiles_symbolic_hooks(self) -> None:

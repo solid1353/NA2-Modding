@@ -9,3 +9,16 @@ FR-R007	localization.font.ui_helper	30	0x28C	jal26	localization.font.measure	0
 FR-R008	localization.font.ui_helper	40	0x2D4	jal26	localization.font.ui_trampoline	0
 FR-R009	localization.font.ui_helper	50	0x378	jal26	localization.font.measure	0
 FR-R010	localization.font.ui_helper	60	0x3FC	jal26	localization.font.ui_trampoline	0
+FR-V2-R001	localization.font.v2.measure	10	0x8	hi16	localization.font.v2.ascii_widths	0
+FR-V2-R002	localization.font.v2.measure	20	0xC	lo16	localization.font.v2.ascii_widths	0
+FR-V2-R003	localization.font.v2.prepare	10	0x20	jal26	localization.font.v2.measure	0
+FR-V2-R004	localization.font.v2.plain_space	10	0xC	hi16	localization.font.v2.session_pointer	0
+FR-V2-R005	localization.font.v2.plain_space	20	0x10	lo16	localization.font.v2.session_pointer	0
+FR-V2-R006	localization.font.v2.newline_advance	10	0xC	hi16	localization.font.v2.session_pointer	0
+FR-V2-R007	localization.font.v2.newline_advance	20	0x10	lo16	localization.font.v2.session_pointer	0
+FR-V2-R008	localization.font.v2.right_edge	10	0xC	hi16	localization.font.v2.session_pointer	0
+FR-V2-R009	localization.font.v2.right_edge	20	0x10	lo16	localization.font.v2.session_pointer	0
+FR-V2-R010	localization.font.v2.half_space	10	0xC	hi16	localization.font.v2.session_pointer	0
+FR-V2-R011	localization.font.v2.half_space	20	0x10	lo16	localization.font.v2.session_pointer	0
+FR-V2-R012	localization.font.v2.glyph_advance	10	0xC	hi16	localization.font.v2.session_pointer	0
+FR-V2-R013	localization.font.v2.glyph_advance	20	0x10	lo16	localization.font.v2.session_pointer	0

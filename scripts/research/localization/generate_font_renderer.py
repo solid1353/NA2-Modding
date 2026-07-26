@@ -34,8 +34,10 @@ from scripts.research.localization import mips  # noqa: E402
 MODULE = load_project_paths(REPOSITORY).path(
     "features", "localization", "resident_patcher"
 )
-BLOB_RELATIVE = Path("assets") / "font_renderer_resident.bin"
-BLOB_OUTPUT = MODULE / BLOB_RELATIVE
+LEGACY_BLOB_RELATIVE = Path("assets") / "font_renderer_resident.bin"
+LEGACY_BLOB_OUTPUT = MODULE / LEGACY_BLOB_RELATIVE
+V2_BLOB_RELATIVE = Path("assets") / "font_renderer_v2_resident.bin"
+V2_BLOB_OUTPUT = MODULE / V2_BLOB_RELATIVE
 FRAGMENTS_OUTPUT = MODULE / "fragments.tsv"
 RELOCATIONS_OUTPUT = MODULE / "relocations.tsv"
 PACKED_METRICS_INPUT = load_project_paths(REPOSITORY).path(
@@ -58,6 +60,17 @@ SELECTED_TRAMPOLINE = f"{PREFIX}.selected_trampoline"
 UI_HELPER = f"{PREFIX}.ui_helper"
 UI_TRAMPOLINE = f"{PREFIX}.ui_trampoline"
 
+V2_PREFIX = f"{PREFIX}.v2"
+V2_SESSION_POINTER = f"{V2_PREFIX}.session_pointer"
+V2_ASCII_WIDTHS = f"{V2_PREFIX}.ascii_widths"
+V2_MEASURE = f"{V2_PREFIX}.measure"
+V2_PREPARE = f"{V2_PREFIX}.prepare"
+V2_PLAIN_SPACE = f"{V2_PREFIX}.plain_space"
+V2_NEWLINE_ADVANCE = f"{V2_PREFIX}.newline_advance"
+V2_RIGHT_EDGE = f"{V2_PREFIX}.right_edge"
+V2_HALF_SPACE = f"{V2_PREFIX}.half_space"
+V2_GLYPH_ADVANCE = f"{V2_PREFIX}.glyph_advance"
+
 SCALE_ADDRESS = 0x0060737C
 FONT_RENDERER_POINTER = 0x00607470
 FONT_INITIALIZE = 0x00186510
@@ -78,6 +91,11 @@ NUN5_SPACE_CORRECTION = 6
 
 PLAIN_SPACE_RETURN = 0x00189300
 NEWLINE_ADVANCE_RETURN = 0x00188670
+V2_PLAIN_SPACE_RESUME = 0x001892F4
+V2_NEWLINE_ORIGINAL_RESUME = 0x0018860C
+V2_RIGHT_EDGE_RESUME = 0x00187F78
+V2_HALF_SPACE_RESUME = 0x00188A84
+V2_GLYPH_ADVANCE_RESUME = 0x001896E0
 UI_ORIGINAL_BODY = 0x00379A28
 SELECTED_ORIGINAL_BODY = 0x00379158
 
@@ -111,6 +129,31 @@ COMMAND_CHART_TITLE_Y_OFFSET = -3.8
 PRACTICE_COMMAND_TITLE_BOX_X = 31.2
 PRACTICE_COMMAND_TITLE_BOX_WIDTH = 352
 PRACTICE_COMMAND_TITLE_Y_OFFSET = -6.8
+
+V2_SESSION_PREVIOUS = 0x00
+V2_SESSION_TEXT = 0x04
+V2_SESSION_BOX_X = 0x08
+V2_SESSION_BOX_Y = 0x0C
+V2_SESSION_BOX_WIDTH = 0x10
+V2_SESSION_BOX_HEIGHT = 0x14
+V2_SESSION_HORIZONTAL_ALIGNMENT = 0x18
+V2_SESSION_VERTICAL_ALIGNMENT = 0x1C
+V2_SESSION_FLAGS = 0x20
+V2_SESSION_LINE_LIMIT = 0x24
+V2_SESSION_LINE_HEIGHT = 0x28
+V2_SESSION_CALLBACK = 0x2C
+V2_SESSION_MEASURED_WIDTH = 0x30
+V2_SESSION_LINE_COUNT = 0x34
+V2_SESSION_SCALE_X = 0x38
+V2_SESSION_SCALE_Y = 0x3C
+V2_SESSION_RENDERED_WIDTH = 0x40
+V2_SESSION_RENDERED_HEIGHT = 0x44
+V2_SESSION_DRAW_X = 0x48
+V2_SESSION_DRAW_Y = 0x4C
+
+V2_FLAG_SHRINK_X = 0x01
+V2_FLAG_BR_TAGS = 0x02
+V2_FLAG_NEWLINE_BYTES = 0x04
 
 TEXT_METRICS_HELPERS = bytes.fromhex(
     "040060C640000146C0C0033C0000834400000000400001466000033C7C7362C4"
@@ -330,6 +373,425 @@ def build_measure() -> Fragment:
     assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
     payload, relocations = assembler.build()
     return Fragment(MEASURE, payload, relocations)
+
+
+def build_v2_measure() -> Fragment:
+    zero, v0, v1, a0, a1 = 0, 2, 3, 4, 5
+    t0, t1, t2, t3 = 8, 9, 10, 11
+    t4, t5, t6, t7 = 12, 13, 14, 15
+    ra = 31
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.r_type(a0, zero, t0, 0x21))
+    assembler.emit(mips.r_type(a1, zero, t7, 0x21))
+    assembler.load_symbol_word(t2, t2, 0x09, V2_ASCII_WIDTHS)
+    assembler.emit(mips.r_type(zero, zero, t3, 0x21))
+    assembler.emit(mips.r_type(zero, zero, t4, 0x21))
+    assembler.emit(mips.i_type(0x09, zero, t5, 1))
+
+    assembler.label("loop")
+    assembler.emit(mips.i_type(0x24, t0, t1, 0))
+    assembler.branch(0x04, t1, zero, "finish")
+    assembler.emit(0)
+
+    assembler.emit(mips.i_type(0x0C, t7, t6, V2_FLAG_BR_TAGS))
+    assembler.branch(0x04, t6, zero, "check_newline")
+    assembler.emit(mips.i_type(0x09, zero, t6, ord("<")))
+    assembler.branch(0x05, t1, t6, "check_newline")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x24, t0, t6, 1))
+    assembler.emit(mips.i_type(0x09, zero, v0, ord("b")))
+    assembler.branch(0x05, t6, v0, "check_newline")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x24, t0, t6, 2))
+    assembler.emit(mips.i_type(0x09, zero, v0, ord("r")))
+    assembler.branch(0x05, t6, v0, "check_newline")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x24, t0, t6, 3))
+    assembler.emit(mips.i_type(0x09, zero, v0, ord(">")))
+    assembler.branch(0x05, t6, v0, "check_newline")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x09, t0, t0, 4))
+    assembler.branch(0x04, zero, zero, "line_break")
+    assembler.emit(0)
+
+    assembler.label("check_newline")
+    assembler.emit(mips.i_type(0x0C, t7, t6, V2_FLAG_NEWLINE_BYTES))
+    assembler.branch(0x04, t6, zero, "check_printable")
+    assembler.emit(mips.i_type(0x09, zero, t6, 0x0A))
+    assembler.branch(0x05, t1, t6, "check_printable")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x09, t0, t0, 1))
+
+    assembler.label("line_break")
+    assembler.emit(mips.r_type(t4, t3, t6, 0x2B))
+    assembler.branch(0x04, t6, zero, "line_break_reset")
+    assembler.emit(0)
+    assembler.emit(mips.r_type(t3, zero, t4, 0x21))
+    assembler.label("line_break_reset")
+    assembler.emit(mips.r_type(zero, zero, t3, 0x21))
+    assembler.emit(mips.i_type(0x09, t5, t5, 1))
+    assembler.branch(0x04, zero, zero, "loop")
+    assembler.emit(0)
+
+    assembler.label("check_printable")
+    assembler.emit(mips.i_type(0x0B, t1, t6, ASCII_FIRST))
+    assembler.branch(0x05, t6, zero, "error")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x0B, t1, t6, ASCII_LAST + 1))
+    assembler.branch(0x04, t6, zero, "error")
+    assembler.emit(mips.i_type(0x09, t0, t0, 1))
+    assembler.emit(mips.i_type(0x09, t1, t1, -ASCII_FIRST))
+    assembler.emit(mips.r_type(t2, t1, t6, 0x21))
+    assembler.emit(mips.i_type(0x24, t6, t6, 0))
+    assembler.emit(mips.r_type(t3, t6, t3, 0x21))
+    assembler.branch(0x04, zero, zero, "loop")
+    assembler.emit(0)
+
+    assembler.label("finish")
+    assembler.emit(mips.r_type(t4, t3, t6, 0x2B))
+    assembler.branch(0x04, t6, zero, "return_measurement")
+    assembler.emit(0)
+    assembler.emit(mips.r_type(t3, zero, t4, 0x21))
+    assembler.label("return_measurement")
+    assembler.emit(mips.r_type(t4, zero, v0, 0x21))
+    assembler.emit(mips.r_type(t5, zero, v1, 0x21))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(0)
+
+    assembler.label("error")
+    assembler.emit(mips.i_type(0x09, zero, v0, -1))
+    assembler.emit(mips.r_type(zero, zero, v1, 0x21))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(V2_MEASURE, payload, relocations)
+
+
+def build_v2_prepare() -> Fragment:
+    zero, v0, v1, a0, a1 = 0, 2, 3, 4, 5
+    t0, t1, t2, t3 = 8, 9, 10, 11
+    s0, sp, ra = 16, 29, 31
+    frame_size = 0x20
+    saved_s0 = 0x18
+    saved_ra = 0x1C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    assembler.emit(mips.i_type(0x2B, sp, s0, saved_s0))
+    assembler.branch(0x04, a0, zero, "error")
+    assembler.emit(mips.r_type(a0, zero, s0, 0x21))
+    assembler.emit(mips.i_type(0x23, s0, a0, V2_SESSION_TEXT))
+    assembler.branch(0x04, a0, zero, "error")
+    assembler.emit(mips.i_type(0x23, s0, a1, V2_SESSION_FLAGS))
+    assembler.jump_symbol(0x03, V2_MEASURE)
+    assembler.emit(0)
+    assembler.branch(0x01, v0, zero, "error")
+    assembler.emit(0)
+
+    assembler.emit(
+        mips.i_type(0x2B, s0, v0, V2_SESSION_MEASURED_WIDTH)
+    )
+    assembler.emit(mips.i_type(0x2B, s0, v1, V2_SESSION_LINE_COUNT))
+    assembler.emit(mips.i_type(0x23, s0, t0, V2_SESSION_LINE_LIMIT))
+    assembler.branch(0x04, t0, zero, "line_limit_ok")
+    assembler.emit(mips.r_type(t0, v1, t1, 0x2B))
+    assembler.branch(0x05, t1, zero, "error")
+    assembler.emit(0)
+    assembler.label("line_limit_ok")
+
+    assembler.emit(mips.i_type(0x23, s0, t0, V2_SESSION_BOX_WIDTH))
+    assembler.branch(0x04, t0, zero, "error")
+    assembler.emit(mips.i_type(0x23, s0, t1, V2_SESSION_BOX_HEIGHT))
+    assembler.branch(0x04, t1, zero, "error")
+    assembler.emit(0)
+
+    mips.load_u32(assembler, t2, float_bits(1.0))
+    assembler.emit(mips.mtc1(t2, 2))
+    assembler.emit(
+        mips.i_type(0x39, s0, 2, V2_SESSION_SCALE_X)
+    )
+    assembler.emit(
+        mips.i_type(0x39, s0, 2, V2_SESSION_SCALE_Y)
+    )
+    assembler.emit(mips.mtc1(v0, 0))
+    assembler.emit(mips.cop1(0x20, 0, 0, fmt=20))
+    assembler.emit(mips.i_type(0x23, s0, t2, V2_SESSION_FLAGS))
+    assembler.emit(mips.i_type(0x0C, t2, t2, V2_FLAG_SHRINK_X))
+    assembler.branch(0x04, t2, zero, "scale_ready")
+    assembler.emit(mips.r_type(t0, v0, t3, 0x2B))
+    assembler.branch(0x04, t3, zero, "scale_ready")
+    assembler.emit(mips.mtc1(t0, 1))
+    assembler.emit(mips.cop1(0x20, 1, 1, fmt=20))
+    assembler.emit(mips.cop1(0x03, 2, 1, 0))
+    assembler.emit(
+        mips.i_type(0x39, s0, 2, V2_SESSION_SCALE_X)
+    )
+
+    assembler.label("scale_ready")
+    assembler.emit(mips.cop1(0x02, 3, 0, 2))
+    assembler.emit(
+        mips.i_type(0x39, s0, 3, V2_SESSION_RENDERED_WIDTH)
+    )
+    assembler.emit(mips.mtc1(v1, 4))
+    assembler.emit(mips.cop1(0x20, 4, 4, fmt=20))
+    assembler.emit(
+        mips.i_type(0x31, s0, 5, V2_SESSION_LINE_HEIGHT)
+    )
+    assembler.emit(mips.cop1(0x02, 4, 4, 5))
+    assembler.emit(
+        mips.i_type(0x39, s0, 4, V2_SESSION_RENDERED_HEIGHT)
+    )
+
+    assembler.emit(mips.i_type(0x31, s0, 0, V2_SESSION_BOX_X))
+    assembler.emit(
+        mips.i_type(
+            0x23,
+            s0,
+            t2,
+            V2_SESSION_HORIZONTAL_ALIGNMENT,
+        )
+    )
+    assembler.branch(0x04, t2, zero, "store_x")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x09, zero, t3, 1))
+    assembler.branch(0x04, t2, t3, "center_x")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x09, zero, t3, 2))
+    assembler.branch(0x05, t2, t3, "error")
+    assembler.emit(0)
+    assembler.emit(mips.mtc1(t0, 1))
+    assembler.emit(mips.cop1(0x20, 1, 1, fmt=20))
+    assembler.emit(mips.cop1(0x00, 0, 0, 1))
+    assembler.emit(mips.i_type(0x31, s0, 2, V2_SESSION_RENDERED_WIDTH))
+    assembler.emit(mips.cop1(0x01, 0, 0, 2))
+    assembler.branch(0x04, zero, zero, "store_x")
+    assembler.emit(0)
+
+    assembler.label("center_x")
+    assembler.emit(mips.mtc1(t0, 1))
+    assembler.emit(mips.cop1(0x20, 1, 1, fmt=20))
+    assembler.emit(mips.i_type(0x31, s0, 2, V2_SESSION_RENDERED_WIDTH))
+    assembler.emit(mips.cop1(0x01, 1, 1, 2))
+    emit_load_float(assembler, t3, 3, 0.5)
+    assembler.emit(mips.cop1(0x02, 1, 1, 3))
+    assembler.emit(mips.cop1(0x00, 0, 0, 1))
+    assembler.label("store_x")
+    assembler.emit(mips.i_type(0x39, s0, 0, V2_SESSION_DRAW_X))
+
+    assembler.emit(mips.i_type(0x31, s0, 0, V2_SESSION_BOX_Y))
+    assembler.emit(
+        mips.i_type(
+            0x23,
+            s0,
+            t2,
+            V2_SESSION_VERTICAL_ALIGNMENT,
+        )
+    )
+    assembler.branch(0x04, t2, zero, "store_y")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x09, zero, t3, 1))
+    assembler.branch(0x04, t2, t3, "center_y")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x09, zero, t3, 2))
+    assembler.branch(0x05, t2, t3, "error")
+    assembler.emit(0)
+    assembler.emit(mips.mtc1(t1, 1))
+    assembler.emit(mips.cop1(0x20, 1, 1, fmt=20))
+    assembler.emit(mips.cop1(0x00, 0, 0, 1))
+    assembler.emit(mips.i_type(0x31, s0, 2, V2_SESSION_RENDERED_HEIGHT))
+    assembler.emit(mips.cop1(0x01, 0, 0, 2))
+    assembler.branch(0x04, zero, zero, "store_y")
+    assembler.emit(0)
+
+    assembler.label("center_y")
+    assembler.emit(mips.mtc1(t1, 1))
+    assembler.emit(mips.cop1(0x20, 1, 1, fmt=20))
+    assembler.emit(mips.i_type(0x31, s0, 2, V2_SESSION_RENDERED_HEIGHT))
+    assembler.emit(mips.cop1(0x01, 1, 1, 2))
+    emit_load_float(assembler, t3, 3, 0.5)
+    assembler.emit(mips.cop1(0x02, 1, 1, 3))
+    assembler.emit(mips.cop1(0x00, 0, 0, 1))
+    assembler.label("store_y")
+    assembler.emit(mips.i_type(0x39, s0, 0, V2_SESSION_DRAW_Y))
+    assembler.emit(mips.r_type(zero, zero, v0, 0x21))
+    assembler.branch(0x04, zero, zero, "restore")
+    assembler.emit(0)
+
+    assembler.label("error")
+    assembler.emit(mips.i_type(0x09, zero, v0, -1))
+    assembler.label("restore")
+    assembler.emit(mips.i_type(0x23, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_PREPARE, payload, relocations)
+
+
+def load_v2_session(
+    assembler: mips.Assembler,
+    address_register: int,
+    pointer_register: int,
+) -> None:
+    assembler.load_symbol_word(
+        address_register,
+        pointer_register,
+        0x23,
+        V2_SESSION_POINTER,
+    )
+
+
+def begin_v2_hook(
+    assembler: mips.Assembler,
+    address_register: int,
+    pointer_register: int,
+) -> None:
+    sp = 29
+    assembler.emit(mips.i_type(0x09, sp, sp, -0x10))
+    assembler.emit(mips.i_type(0x2B, sp, address_register, 0))
+    assembler.emit(mips.i_type(0x2B, sp, pointer_register, 4))
+    load_v2_session(assembler, address_register, pointer_register)
+
+
+def finish_v2_hook(
+    assembler: mips.Assembler,
+    address_register: int,
+    pointer_register: int,
+    resume_address: int,
+) -> None:
+    sp = 29
+    assembler.emit(mips.i_type(0x23, sp, address_register, 0))
+    assembler.emit(mips.i_type(0x23, sp, pointer_register, 4))
+    assembler.emit(mips.i_type(0x09, sp, sp, 0x10))
+    assembler.emit(mips.jump(0x02, resume_address))
+    assembler.emit(0)
+
+
+def build_v2_plain_space() -> Fragment:
+    zero, v0, v1, s3 = 0, 2, 3, 19
+    assembler = mips.Assembler()
+    begin_v2_hook(assembler, v0, v1)
+    assembler.branch(0x04, v1, zero, "original")
+    assembler.emit(mips.i_type(0x31, s3, 0, 4))
+    assembler.emit(mips.cop1(0x00, 1, 0, 1))
+    emit_load_float(assembler, v0, 2, -6.0)
+    assembler.emit(mips.cop1(0x00, 1, 1, 2))
+    assembler.emit(
+        mips.i_type(0x31, v1, 2, V2_SESSION_SCALE_X)
+    )
+    assembler.emit(mips.cop1(0x02, 1, 1, 2))
+    finish_v2_hook(
+        assembler, v0, v1, V2_PLAIN_SPACE_RESUME
+    )
+    assembler.label("original")
+    assembler.emit(mips.cop1(0x00, 1, 0, 1))
+    finish_v2_hook(
+        assembler, v0, v1, V2_PLAIN_SPACE_RESUME
+    )
+    payload, relocations = assembler.build()
+    return Fragment(V2_PLAIN_SPACE, payload, relocations)
+
+
+def build_v2_newline_advance() -> Fragment:
+    zero, v0, v1, s3 = 0, 2, 3, 19
+    assembler = mips.Assembler()
+    begin_v2_hook(assembler, v0, v1)
+    assembler.branch(0x04, v1, zero, "original")
+    assembler.emit(mips.i_type(0x31, s3, 0, 0x40))
+    assembler.emit(mips.cop1(0x00, 1, 1, 0))
+    emit_load_float(assembler, v0, 0, -4.0)
+    assembler.emit(mips.cop1(0x00, 1, 1, 0))
+    assembler.emit(
+        mips.i_type(0x31, v1, 2, V2_SESSION_SCALE_Y)
+    )
+    assembler.emit(mips.cop1(0x02, 1, 1, 2))
+    assembler.emit(mips.i_type(0x31, s3, 0, 0x20))
+    assembler.emit(mips.cop1(0x00, 0, 0, 1))
+    assembler.emit(mips.i_type(0x39, s3, 0, 0x20))
+    finish_v2_hook(
+        assembler, v0, v1, NEWLINE_ADVANCE_RETURN
+    )
+    assembler.label("original")
+    assembler.emit(mips.cop1(0x00, 1, 1, 0))
+    finish_v2_hook(
+        assembler, v0, v1, V2_NEWLINE_ORIGINAL_RESUME
+    )
+    payload, relocations = assembler.build()
+    return Fragment(V2_NEWLINE_ADVANCE, payload, relocations)
+
+
+def build_v2_right_edge() -> Fragment:
+    zero, v0, v1, s1 = 0, 2, 3, 17
+    assembler = mips.Assembler()
+    begin_v2_hook(assembler, v0, v1)
+    assembler.branch(0x04, v1, zero, "original")
+    assembler.emit(mips.cop1(0x00, 21, 1, 0))
+    assembler.emit(
+        mips.i_type(0x31, v1, 2, V2_SESSION_SCALE_X)
+    )
+    assembler.emit(mips.cop1(0x02, 2, 1, 2))
+    assembler.emit(mips.cop1(0x00, 21, 2, 0))
+    assembler.emit(mips.i_type(0x31, s1, 0, 0x20))
+    finish_v2_hook(
+        assembler, v0, v1, V2_RIGHT_EDGE_RESUME
+    )
+    assembler.label("original")
+    assembler.emit(mips.i_type(0x31, s1, 0, 0x20))
+    finish_v2_hook(
+        assembler, v0, v1, V2_RIGHT_EDGE_RESUME
+    )
+    payload, relocations = assembler.build()
+    return Fragment(V2_RIGHT_EDGE, payload, relocations)
+
+
+def build_v2_half_space() -> Fragment:
+    zero, v0, v1, s3 = 0, 2, 3, 19
+    assembler = mips.Assembler()
+    begin_v2_hook(assembler, v0, v1)
+    assembler.branch(0x04, v1, zero, "original")
+    assembler.emit(0)
+    assembler.emit(
+        mips.i_type(0x31, v1, 4, V2_SESSION_SCALE_X)
+    )
+    assembler.emit(mips.cop1(0x02, 4, 3, 4))
+    assembler.emit(mips.cop1(0x1C, 0, 2, 4))
+    assembler.emit(mips.i_type(0x39, s3, 0, 0x1C))
+    finish_v2_hook(
+        assembler, v0, v1, V2_HALF_SPACE_RESUME
+    )
+    assembler.label("original")
+    assembler.emit(mips.cop1(0x1C, 0, 2, 3))
+    assembler.emit(mips.i_type(0x39, s3, 0, 0x1C))
+    finish_v2_hook(
+        assembler, v0, v1, V2_HALF_SPACE_RESUME
+    )
+    payload, relocations = assembler.build()
+    return Fragment(V2_HALF_SPACE, payload, relocations)
+
+
+def build_v2_glyph_advance() -> Fragment:
+    zero, v0, v1, s3 = 0, 2, 3, 19
+    assembler = mips.Assembler()
+    begin_v2_hook(assembler, v0, v1)
+    assembler.branch(0x04, v1, zero, "original")
+    assembler.emit(mips.cop1(0x00, 1, 0, 2))
+    assembler.emit(
+        mips.i_type(0x31, v1, 3, V2_SESSION_SCALE_X)
+    )
+    assembler.emit(mips.cop1(0x02, 1, 1, 3))
+    assembler.emit(mips.i_type(0x31, s3, 0, 0x1C))
+    finish_v2_hook(
+        assembler, v0, v1, V2_GLYPH_ADVANCE_RESUME
+    )
+    assembler.label("original")
+    assembler.emit(mips.i_type(0x31, s3, 0, 0x1C))
+    finish_v2_hook(
+        assembler, v0, v1, V2_GLYPH_ADVANCE_RESUME
+    )
+    payload, relocations = assembler.build()
+    return Fragment(V2_GLYPH_ADVANCE, payload, relocations)
 
 
 def build_ui_helper() -> Fragment:
@@ -691,7 +1153,7 @@ def build_ui_helper() -> Fragment:
     return Fragment(UI_HELPER, payload, relocations)
 
 
-def fragments() -> tuple[Fragment, ...]:
+def legacy_fragments() -> tuple[Fragment, ...]:
     selected_trampoline = struct.pack(
         "<4I",
         mips.i_type(0x09, 29, 29, -0x40),
@@ -729,6 +1191,42 @@ def fragments() -> tuple[Fragment, ...]:
     return result
 
 
+def v2_fragments() -> tuple[Fragment, ...]:
+    result = (
+        Fragment(
+            V2_SESSION_POINTER,
+            b"\0" * 4,
+            kind="data",
+            alignment=4,
+        ),
+        Fragment(
+            V2_ASCII_WIDTHS,
+            build_ascii_widths(),
+            kind="rodata",
+            alignment=1,
+        ),
+        build_v2_measure(),
+        build_v2_prepare(),
+        build_v2_plain_space(),
+        build_v2_newline_advance(),
+        build_v2_right_edge(),
+        build_v2_half_space(),
+        build_v2_glyph_advance(),
+    )
+    symbols = [fragment.symbol for fragment in result]
+    if len(symbols) != len(set(symbols)):
+        raise ValueError("generated v2 fragments export duplicate symbols")
+    return result
+
+
+def fragments() -> tuple[Fragment, ...]:
+    result = legacy_fragments() + v2_fragments()
+    symbols = [fragment.symbol for fragment in result]
+    if len(symbols) != len(set(symbols)):
+        raise ValueError("generated resident fragments export duplicate symbols")
+    return result
+
+
 def tsv_bytes(fields: list[str], rows: list[dict[str, object]]) -> bytes:
     from io import StringIO
 
@@ -741,8 +1239,9 @@ def tsv_bytes(fields: list[str], rows: list[dict[str, object]]) -> bytes:
     return stream.getvalue().encode("utf-8")
 
 
-def generated_outputs() -> tuple[bytes, bytes, bytes]:
-    generated = fragments()
+def pack_blob(
+    generated: tuple[Fragment, ...],
+) -> tuple[bytes, dict[str, int]]:
     blob = bytearray()
     offsets: dict[str, int] = {}
     for fragment in generated:
@@ -750,14 +1249,22 @@ def generated_outputs() -> tuple[bytes, bytes, bytes]:
             blob.append(0)
         offsets[fragment.symbol] = len(blob)
         blob.extend(fragment.payload)
-    blob_bytes = bytes(blob)
-    blob_hash = hashlib.sha256(blob_bytes).hexdigest().upper()
-    fragment_rows = [
+    return bytes(blob), offsets
+
+
+def make_fragment_rows(
+    generated: tuple[Fragment, ...],
+    blob_relative: Path,
+    blob: bytes,
+    offsets: dict[str, int],
+) -> list[dict[str, object]]:
+    blob_hash = hashlib.sha256(blob).hexdigest().upper()
+    return [
         {
             "fragment_id": fragment.symbol,
             "kind": fragment.kind,
             "alignment": fragment.alignment,
-            "blob_path": BLOB_RELATIVE.as_posix(),
+            "blob_path": blob_relative.as_posix(),
             "blob_offset": f"0x{offsets[fragment.symbol]:X}",
             "length": len(fragment.payload),
             "blob_sha256": blob_hash,
@@ -765,13 +1272,21 @@ def generated_outputs() -> tuple[bytes, bytes, bytes]:
         }
         for fragment in generated
     ]
-    relocation_rows: list[dict[str, object]] = []
+
+
+def relocation_rows(
+    generated: tuple[Fragment, ...],
+    id_prefix: str,
+) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
     relocation_index = 1
     for fragment in generated:
         for order, relocation in enumerate(fragment.relocations, 1):
-            relocation_rows.append(
+            rows.append(
                 {
-                    "relocation_id": f"FR-R{relocation_index:03d}",
+                    "relocation_id": (
+                        f"{id_prefix}{relocation_index:03d}"
+                    ),
                     "fragment_id": fragment.symbol,
                     "order": order * 10,
                     "offset": f"0x{relocation.offset:X}",
@@ -781,10 +1296,37 @@ def generated_outputs() -> tuple[bytes, bytes, bytes]:
                 }
             )
             relocation_index += 1
+    return rows
+
+
+def generated_outputs() -> tuple[bytes, bytes, bytes, bytes]:
+    legacy = legacy_fragments()
+    v2 = v2_fragments()
+    legacy_blob, legacy_offsets = pack_blob(legacy)
+    v2_blob, v2_offsets = pack_blob(v2)
+    fragment_rows = [
+        *make_fragment_rows(
+            legacy,
+            LEGACY_BLOB_RELATIVE,
+            legacy_blob,
+            legacy_offsets,
+        ),
+        *make_fragment_rows(
+            v2,
+            V2_BLOB_RELATIVE,
+            v2_blob,
+            v2_offsets,
+        ),
+    ]
+    generated_relocations = [
+        *relocation_rows(legacy, "FR-R"),
+        *relocation_rows(v2, "FR-V2-R"),
+    ]
     return (
-        blob_bytes,
+        legacy_blob,
+        v2_blob,
         tsv_bytes(engine.FRAGMENT_FIELDS, fragment_rows),
-        tsv_bytes(engine.RELOCATION_FIELDS, relocation_rows),
+        tsv_bytes(engine.RELOCATION_FIELDS, generated_relocations),
     )
 
 
@@ -797,7 +1339,12 @@ def main() -> None:
     )
     args = parser.parse_args()
     outputs = zip(
-        (BLOB_OUTPUT, FRAGMENTS_OUTPUT, RELOCATIONS_OUTPUT),
+        (
+            LEGACY_BLOB_OUTPUT,
+            V2_BLOB_OUTPUT,
+            FRAGMENTS_OUTPUT,
+            RELOCATIONS_OUTPUT,
+        ),
         generated_outputs(),
         strict=True,
     )

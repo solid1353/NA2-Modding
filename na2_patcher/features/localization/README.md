@@ -1771,6 +1771,16 @@ alignment edits; it no longer installs executable code into ELF zero padding.
 The shared UI wrapper keeps transient coordinates and saved renderer fields in
 its own stack frame rather than the former global scratch record.
 
+An independent `localization.font.v2.*` foundation is also retained
+default-disabled and does not target any symbol above. Its separate generated
+resident asset contains the accepted 95-entry width table, exact
+printable-ASCII measurement with explicit `<br>`/newline recognition,
+shrink-only scale preparation, horizontal/vertical box positioning, and five
+renderer hooks guarded by one zero-initialized active-session pointer. Every
+null-session branch restores the temporary `v0`/`v1` use and executes the
+displaced NA2 instructions before resuming, so selecting the core alone cannot
+alter a screen. No caller-family call site is redirected yet.
+
 The retained auto-fit and layout components require `font_nun5_glyphs` because
 their positions and fit decisions are tuned to its metrics. They otherwise
 remain independent. Their fragments, relocations, hook declarations, generated

@@ -23,9 +23,10 @@ replacement table is reconstructed from screenshots.
 Adjacent `replacement.tsv` uses the exact accepted `mappings.tsv` schema. It
 contains only diagnostic IDs confirmed visible in the supplied screenshot
 pass. Its first executable pass contains 564 enabled rows with complete donor
-and donor-reference fields: 563 are seeded from the unique accepted row at the
-same exact `source_ref`, and T2158 uses the separately screen-verified
-`Warning` donor. Only explicit replacement worker builds import these rows;
+and donor-reference fields: 561 are seeded from the unique accepted row at the
+same exact `source_ref`. Paired screenshots independently correct T1956 to
+`Off`, T1957 to `On`, and T2158 to `Warning`, using their matching official
+NUN5 strings. Only explicit replacement worker builds import these rows;
 normal and diagnostic builds do not. Profile integrity checking hash-covers
 the table so the in-progress replacement cannot drift outside the reproducible
 project state.

@@ -538,8 +538,8 @@ T1952	1	Options > Control Settings > action label	アイテム選択	Item Select
 T1953	1	Options > Control Settings > action label	連係攻撃	Linked Attack			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2680	NUN5_TEXTENG@0xF08	slot	16				
 T1954	1	Options > Control Settings > assigned action or toggle	攻撃	Attack			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504738	NUN5_SLES@0x513EF0	slot	8				
 T1955	1	Options > Control Settings > assigned action or toggle	ガード	Guard			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504740	NUN5_SLES@0x4AFD6D	slot	8				
-T1956	1	Options > Control Settings > assigned action or toggle	オフ	OFF			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504748	NUN5_SLES@0x513E6C	slot	8				
-T1957	1	Options > Control Settings > assigned action or toggle	オン	ON			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504750	NUN5_SLES@0x513E68	slot	8				
+T1956	1	Options > Control Settings > assigned action or toggle	オフ	Off			seen:replacement-validation-control-settings-vibration-case	NA2_SLPS@0x504748	NUN5_SLES@0x513EF8	slot	8				
+T1957	1	Options > Control Settings > assigned action or toggle	オン	On			seen:replacement-validation-control-settings-vibration-case	NA2_SLPS@0x504750	NUN5_SLES@0x513EFC	slot	8				
 T1958	1	Options > Control Settings > instructions or reset result	<r変更|へんこう>したいボタン・<r項目|こうもく>を<iconOK>ボタンで<r選択|せんたく>し、<r方向|ほうこう>キー<r左右|さゆう>で<r操作|そうさ>を<r変更|へんこう>してください。	Press <iconOK> to select the button/item to change. Press the left directional button or right directional button to change controls.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2230	NUN5_TEXTENG@0x1240	slot	176				
 T1959	1	Options > Control Settings > instructions or reset result	１Ｐの<r操作設定|そうさせってい>をデフォルトに<r戻|もど>しました。	1P controls restored to defaults.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B22E0	NUN5_TEXTENG@0x12D0	slot	80				
 T2007	1	Save or Load menu > data prompt or status	ロードするデータを<ruby選|えら>んでください。	Please select data to load.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x303da0	NUN5_TEXTENG@0x29260	slot	64				

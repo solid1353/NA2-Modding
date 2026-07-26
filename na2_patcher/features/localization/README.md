@@ -33,7 +33,7 @@ command or file-backed inter-stage handoff.
 - Initial parallel `rebuild.tsv` rows: `2,173` (`T1` through `T2173`)
 - Initial `rebuild.tsv` SHA-256: `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`
 - First-pass `replacement.tsv` rows: `564`
-- First-pass `replacement.tsv` SHA-256: `ECF1257BA91E381C1FE7CBB6E5DCC9F3425655F04F5782C286A9454457B9885C`
+- First-pass `replacement.tsv` SHA-256: `A2038264AB274B9A4FFB6B661AFF2D392BD1E5AB942EA17776EDAE64D99AC7A1`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the aggregate Localization feature pin own content identity.
@@ -110,8 +110,10 @@ contains only `T#` rows confirmed visible by the paired screenshot pass, sorted
 by `display_context` and numeric ID. Its first executable pass has 564 unique
 enabled rows. Exact source, source reference, mode, and capacity come from
 `rebuild.tsv`. Complete donor, transform, argument, pointer, and parent fields
-for 563 rows are seeded from the unique accepted row with the same exact
-`source_ref`; T2158 uses the independently screen-verified `Warning` donor at
+for 561 rows are seeded from the unique accepted row with the same exact
+`source_ref`. Paired screenshots correct three reference-table errors: T1956
+uses `Off` at `NUN5_SLES@0x513EF8`, T1957 uses `On` at
+`NUN5_SLES@0x513EFC`, and T2158 uses `Warning` at
 `NUN5_SLES@0x513F38`. This is a reference-derived English validation pass, not
 the final donor audit. The explicit replacement worker build imports all 564
 rows without falling back to accepted `mappings.tsv`.

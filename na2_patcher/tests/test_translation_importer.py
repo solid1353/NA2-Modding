@@ -78,6 +78,11 @@ class TranslationImporterTests(unittest.TestCase):
             row["source_ref"]: row
             for row in engine.read_rows(data_root / "mappings.tsv")
         }
+        verified_corrections = {
+            "T1956": ("Off", "NUN5_SLES@0x513EF8"),
+            "T1957": ("On", "NUN5_SLES@0x513EFC"),
+            "T2158": ("Warning", "NUN5_SLES@0x513F38"),
+        }
 
         self.assertEqual(len(replacement_raw), 564)
         self.assertEqual(len(replacement["text"]), 564)
@@ -96,9 +101,10 @@ class TranslationImporterTests(unittest.TestCase):
             self.assertEqual(row["source_ref"], candidate["source_ref"])
             self.assertEqual(row["mode"], candidate["mode"])
             self.assertEqual(row["capacity"], candidate["capacity"])
-            if row["id"] == "T2158":
-                self.assertEqual(row["donor"], "Warning")
-                self.assertEqual(row["donor_ref"], "NUN5_SLES@0x513F38")
+            if row["id"] in verified_corrections:
+                donor, donor_ref = verified_corrections[row["id"]]
+                self.assertEqual(row["donor"], donor)
+                self.assertEqual(row["donor_ref"], donor_ref)
                 continue
             self.assertIn(row["source_ref"], accepted)
             reference = accepted[row["source_ref"]]
@@ -115,8 +121,8 @@ class TranslationImporterTests(unittest.TestCase):
                 self.assertEqual(row[field], reference[field])
 
         self.assertEqual(
-            sum(row["id"] != "T2158" for row in replacement_raw),
-            563,
+            sum(row["id"] not in verified_corrections for row in replacement_raw),
+            561,
         )
     def test_iso_source_delegates_to_the_shared_iso_reader(self) -> None:
         exact = SimpleNamespace(path="PRG/BTL.BIN", is_dir=False)

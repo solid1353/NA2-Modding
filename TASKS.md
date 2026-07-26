@@ -13,6 +13,7 @@
 
 ### Project
 - Rename default_enabled, add enable switch for groups and patches.
+- Archive shop changes.
 - Investigate cross-platform development/deployment possibilities.
 - Global cleanup - preserve what is needed, delete the rest. Project should ask corresponding chats for specifics. Includes, but not limited to:
     * [UI Translation](work/__sstates/translation/UI).

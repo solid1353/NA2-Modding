@@ -1763,7 +1763,9 @@ user-directed stage-by-stage reimplementation:
   ASCII-decimal helper. It preserves NUN5's right-aligned widths 3, 3, 5, and
   4 plus the unpadded inline mode. The reachable multiplication separator
   remains canonical mapping T2195's ASCII `" * "` and is guarded rather than
-  rewritten by this patch.
+  rewritten by this patch. The user built and tested the integrated ss2–ss5
+  result and declared the task done; unseen decimal values use these same
+  guarded calls rather than separate string mappings.
 - Retained, default-disabled `font_layout_wrappers` ports shared selected/unselected confirmation-choice
   placement, the 216-unit Practice pause-list fit and Y origin, Practice and
   Collection confirmation-body alignment, and the character-return body's

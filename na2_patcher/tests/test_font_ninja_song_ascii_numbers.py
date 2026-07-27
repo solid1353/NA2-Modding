@@ -31,8 +31,8 @@ class NinjaSongAsciiNumbersTests(unittest.TestCase):
         patch = self.declaration.patches[patch_id]
         self.assertTrue(patch.enabled)
         self.assertEqual(patch.group_id, "battle_ui")
-        self.assertEqual(patch.status, "approved_for_test")
-        self.assertEqual(patch.confidence, "verified")
+        self.assertEqual(patch.status, "runtime_proven")
+        self.assertEqual(patch.confidence, "high")
 
         canonical = [
             edit

@@ -332,9 +332,13 @@ it; no per-screen duplicate formatter is introduced.
 The multiplication separator remains reachable. In the copied ss2 runtime
 state, its pointer resolves to bytes `20 2A 20` (`" * "`), already supplied by
 canonical translation mapping T2195 from `NA2_SLPS@0x504DA0`. The Font patch
-therefore guards that mapping but does not rewrite the separator. This is
-high-confidence static behavior pending matched worker captures for ss2–ss5.
-The deterministic generators are
+therefore guards that mapping but does not rewrite the separator. On
+2026-07-27, the user built and tested the integrated change across ss2–ss5 and
+declared the task done. Some runtime numeric values were not observed, but
+they are not separate strings: all values pass through the same five guarded
+call sites and width-aware decimal helper. The patch is therefore
+`runtime_proven`; arbitrary unseen decimal values retain the same mode and
+padding behavior. The deterministic generators are
 `scripts/research/localization/generate_font_renderer.py` and
 `scripts/research/localization/generate_ninja_song_ascii_numbers.py`.
 

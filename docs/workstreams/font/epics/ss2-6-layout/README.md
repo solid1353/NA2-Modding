@@ -3,29 +3,34 @@
 User-declared Font epic covering matched NUN5/NA2.28 layout cases. Slots 2–6
 formed the original declaration; the user later added and accepted the remade
 Special Controls slot 1 pair. On 2026-07-27 the user added a distinct new
-matched batch in slots 1–10. The epic runs in efficiency-prioritized sequential
-mode: implement one case or proven shared caller family, commit and push it,
-present its NUN5-left/Current-NA2-right result, then wait for explicit user
-acceptance before beginning the next case.
+matched batch in slots 1–10, then supplied one additional Command Chart ss1
+pair. The epic runs in efficiency-prioritized sequential mode: implement one
+case or proven shared caller family, commit and push it, present its
+NUN5-left/Current-NA2-right result, then wait for explicit user acceptance
+before beginning the next case.
 
 ## Scope and evidence
 
 - Declared: 2026-07-27.
 - Inputs:
   `work/Font/inputs/sstates/epics/ss2-6/` and
-  `work/Font/inputs/sstates/batches/2026-07-27-ss1-10/`.
+  `work/Font/inputs/sstates/batches/2026-07-27-ss1-10/`, plus
+  `work/Font/inputs/sstates/batches/2026-07-27-additional-ss1/`.
 - Extracted source screenshots:
   `work/Font/inputs/screenshots/epics/ss2-6/` and
-  `work/Font/inputs/screenshots/batches/2026-07-27-ss1-10/`.
+  `work/Font/inputs/screenshots/batches/2026-07-27-ss1-10/`, plus
+  `work/Font/inputs/screenshots/batches/2026-07-27-additional-ss1/`.
 - Provenance:
   `work/Font/inputs/sstates/epics/ss2-6/provenance.tsv` and
-  `work/Font/inputs/sstates/batches/2026-07-27-ss1-10/provenance.tsv`.
+  `work/Font/inputs/sstates/batches/2026-07-27-ss1-10/provenance.tsv`, plus
+  `work/Font/inputs/sstates/batches/2026-07-27-additional-ss1/provenance.tsv`.
 - Protected `@pcsx2_user` sources remain untouched.
 - Status: the remade ss2 and ss3 pair records the same Pause Controls modal in
   normal and selected states. Both are user-verified and removed from the
   remaining report. The shared quit-confirmation and ss1 Special Controls cases
   are also user-verified and removed. The original batch retains two cases and
-  the new batch contributes ten baseline cases; twelve cases remain.
+  the new batch contributes ten baseline cases. The additional Command Chart
+  ss1 raises the remaining total to thirteen cases.
 - Existing accepted Font and resident-renderer behavior remains the regression
   baseline. The previously retained Command Chart ss2 image was superseded by
   the remade Pause Controls ss2 state and is no longer an epic input.
@@ -68,13 +73,15 @@ acceptance before beginning the next case.
 
 ## Battle / Command Chart
 
-### New batch ss4 — Great Ball Rasengan command details
+### New batch ss4 and additional ss1 — Command details
 
-- State: baseline captured; not implemented.
-- Remaining defect: Current keeps the relationship explanation on one line and
-  overflows; NUN5 wraps it within the command-details panel.
+- State: two matched baselines captured; not implemented.
+- ss4: Current keeps the relationship explanation on one line and overflows;
+  NUN5 wraps it within the command-details panel.
+- Additional ss1: Current's blue explanation and controller-icon rows sit
+  roughly 8–14 pixels lower than NUN5 within each command entry.
 
-![New batch Command Chart ss4 baseline](batch-20260727-command-chart-ss4.png)
+![Command Chart ss4 and additional ss1 baselines](batch-20260727-command-chart.png)
 
 ## Character Select
 
@@ -110,8 +117,10 @@ acceptance before beginning the next case.
 
 ## Efficiency-prioritized sequential plan
 
-1. **New ss4 — Command Chart details.** Reuse the established command/practice
-   text-flow primitives for the bounded relationship explanation.
+1. **New ss4 plus additional ss1 — Command Chart details.** Reuse the
+   established command/practice text-flow primitives for the bounded
+   relationship explanation, and correct the shared per-entry explanation/icon
+   vertical geometry once for both states.
 2. **New ss7–ss8 — Jutsu-name list.** Resolve the shared selected/list title
    family once, then validate both states.
 3. **New ss5 and ss9 — Character Select modal text.** Address the overflowing

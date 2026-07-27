@@ -1788,25 +1788,24 @@ session, publishes it only around one native callback, and restores the prior
 session pointer, renderer tracking, horizontal scale and callback result
 through one cleanup path.
 
-The first thin caller layer, `font_v2_controls`, redirects the shared
-first-eight-label call in `FUN_003885b0` and its separate ninth Off/On call. It
-builds NUN5's 128-unit box, keeps fitting labels at scale `1`, applies
-`128 / 178` to `Ultimate Jutsu Prep`, derives NUN5's exact box left as the
-native NA2 caller center minus `64`, and converts the prepared left edge back
-to NA2's centered-renderer ABI. The first eight labels and required v2 core are
+The first thin caller layer, `font_v2_controls`, redirects only the shared
+first-eight-label call in `FUN_003885b0`. It builds NUN5's 128-unit box, keeps
+fitting labels at scale `1`, applies `128 / 178` to
+`Ultimate Jutsu Prep`, derives NUN5's exact box left as the native NA2 caller
+center minus `64`, and converts the prepared left edge back to NA2's
+centered-renderer ABI. The first eight labels and required v2 core are
 runtime-proven from the matched review and real title-to-Load transition. The
-ninth call at runtime `0x003887D4` / ELF file `0x2888D4` is guarded separately
-and remains `approved_for_test` until paired ss1 validation.
+separate ninth selector call remains on NA2's ordinary renderer.
 
-`font_on_off_context_split` leaves Special Controls' existing title-case
-two-entry table at runtime `0x00604658` / ELF file `0x504758` intact. Its
-compact uppercase-looking result comes from the ninth call's NUN5-equivalent
-128-unit rendering context, not uppercase source bytes. The three Practice
-Settings BTL row-table pointers at files `0x20B498`, `0x20B49C`, and
-`0x20B4A0` are redirected from their separate uppercase T37/T38 arrays to that
-existing title-case table. This covers Commands, Damage, and Guide Ninja Sound
-without changing T37/T38, either literal family, or the Off-then-On selector
-order. Paired ss1/ss8 runtime validation remains pending.
+`font_on_off_context_split` now contains only the user-verified Practice
+Settings split. Its three BTL row-table pointers at files `0x20B498`,
+`0x20B49C`, and `0x20B4A0` select the existing title-case table at runtime
+`0x00604658`, preserving the original Off-then-On selector order. Special
+Controls already uses this table, whose clean Shift-JIS `オフ`/`オン` slots
+are converted to ASCII `Off`/`On` by canonical mappings T1956/T1957. A trial
+redirect to the separate ASCII `OFF`/`ON` T37/T38 table produced zero changed
+pixels across the complete supplied ss1 modal, so it is not retained. No
+renderer metric, spacing, scale, or ninth-call draw hook changes.
 
 The second thin caller layer, `font_v2_titles`, replaces only two guarded BTL
 draw calls: Command Chart file `0x1C6A28` and Practice file `0x1C4B98`.

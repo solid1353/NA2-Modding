@@ -37,10 +37,6 @@ PRACTICE_ROW_POINTERS = (
     (0x20B4A0, "D85A6000", "Guide Ninja Sound"),
 )
 
-SPECIAL_CALL_OFFSET = 0x2888D4
-SPECIAL_CALL_EXPECTED_HEX = "90E40D0C00000000"
-SPECIAL_CALL_SYMBOL = "localization.font.v2.controls_adapter"
-
 
 def generated_edits() -> list[dict[str, object]]:
     edits: list[dict[str, object]] = []
@@ -72,6 +68,8 @@ def verify_source() -> tuple[Path, Path]:
     paths = load_project_paths(REPOSITORY)
     btl = paths.path("source_na2") / "PRG" / "BTL.BIN"
     btl_data = btl.read_bytes()
+    elf = paths.path("source_na2") / "SLPS_258.37"
+    elf_data = elf.read_bytes()
 
     for edit in generated_edits():
         offset = int(edit["destination_offset"])
@@ -83,17 +81,6 @@ def verify_source() -> tuple[Path, Path]:
                 f"{actual.hex().upper()} != {expected.hex().upper()}"
             )
 
-    elf = paths.path("source_na2") / "SLPS_258.37"
-    elf_data = elf.read_bytes()
-    special_call = bytes.fromhex(SPECIAL_CALL_EXPECTED_HEX)
-    actual_call = elf_data[
-        SPECIAL_CALL_OFFSET : SPECIAL_CALL_OFFSET + len(special_call)
-    ]
-    if actual_call != special_call:
-        raise ValueError(
-            f"Special Controls call mismatch at {SPECIAL_CALL_OFFSET:#x}: "
-            f"{actual_call.hex().upper()} != {special_call.hex().upper()}"
-        )
     expected_titlecase_table = bytes.fromhex("4846600050466000")
     actual_titlecase_table = elf_data[
         TITLECASE_TABLE_OFFSET

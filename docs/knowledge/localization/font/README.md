@@ -97,27 +97,26 @@ The first family-specific fragments are now
 `localization.font.v2.controls_adapter` and
 `localization.font.v2.controls_callback`. The guarded call at NA2 runtime
 `0x00388748` / ELF file `0x288848` is shared by only the first eight Controls
-action labels. The separate ninth ON/OFF call at runtime `0x003887D4` / ELF
-file `0x2888D4` now uses the same adapter. The adapter
-constructs one stack-local session with NUN5's 128-unit width, scale `1` for
-fitting labels, `128 / 178` for `Ultimate Jutsu Prep`, and the proven
-caller-native origin formula. NUN5 `FUN_00399df0` passes box-left `60` for 1P
-and `324` for 2P, while NA2 `FUN_003885b0` passes native centers `124` and
-`388`; both pairs prove `box_left = caller_center - 64` with no empirical
-correction. The first normalized candidate used box-left `59` and placed all
-eight NA2 bounds one output pixel left of NUN5. The pushed follow-up candidate
-used box-left `58` and moved them another one to two pixels left, confirming
-the sign before rejection. Its callback converts the prepared left edge back
-to the exact center argument expected by NA2's native `FUN_00379240`, so NA2's
-internal legacy measurement cancels without replacing the v2 box position.
+action labels. The adapter constructs one stack-local session with NUN5's
+128-unit width, scale `1` for fitting labels, `128 / 178` for
+`Ultimate Jutsu Prep`, and the proven caller-native origin formula. NUN5
+`FUN_00399df0` passes box-left `60` for 1P and `324` for 2P, while NA2
+`FUN_003885b0` passes native centers `124` and `388`; both pairs prove
+`box_left = caller_center - 64` with no empirical correction. The first
+normalized candidate used box-left `59` and placed all eight NA2 bounds one
+output pixel left of NUN5. The pushed follow-up candidate used box-left `58`
+and moved them another one to two pixels left, confirming the sign before
+rejection. Its callback converts the prepared left edge back to the exact
+center argument expected by NA2's native `FUN_00379240`, so NA2's internal
+legacy measurement cancels without replacing the v2 box position.
 
 The core and first-eight-label path are runtime-proven from the matched
 Controls review. The final 640x480 pair matches those eight NUN5 label bounds
 and centers, keeps `Linked Attack` full width, and fits
 `Ultimate Jutsu Prep` with the exact 178-unit denominator. The user explicitly
 accepted that result on 2026-07-26. The later ninth-call extension reuses the
-same accepted adapter but remains `approved_for_test` pending the supplied ss1
-runtime check.
+same accepted adapter but produced no visible improvement in the supplied ss1
+state and is removed. The ninth selector remains on NA2's ordinary renderer.
 
 ## Contextual Special Controls / Practice Settings ON/OFF
 
@@ -135,26 +134,39 @@ language table at runtime `0x00613D80` returns physical SLES strings
 The separate uppercase NUN5 literals at files `0x513E68`/`0x513E6C` are not
 used by this call.
 
-NA2 `FUN_003885B0` already reads the same title-case semantics from the
+NA2 `FUN_003885B0` reads the same title-case semantics from the
 two-pointer table at runtime `0x00604658` / ELF file `0x504758`, pointing to
-T1956/T1957 `Off`/`On` at `0x00604648`/`0x00604650`. Its ninth call at runtime
-`0x003887D4` instead used ordinary `FUN_00379240` without the accepted compact
-v2 metric session. The bounded port leaves the selector table unchanged and
-routes only this call through the existing 128-unit Controls adapter. The
-short value does not shrink, so scale remains `1`; native Y and selection
-color remain caller-owned.
+T1956/T1957 `Off`/`On` at `0x00604648`/`0x00604650`. The later attempt to route
+its ninth call at runtime `0x003887D4` through the v2 Controls adapter had no
+visible effect in the supplied ss1 state. The user then narrowed the requested
+fix to Shift-JIS-to-ASCII source selection and explicitly excluded spacing.
+
+The supplied current state proves source conversion is already complete:
+runtime `0x00604648`/`0x00604650` contains ASCII `Off`/`On`, produced from the
+clean Shift-JIS slots at ELF files `0x504748`/`0x504750` by canonical mappings
+T1956/T1957. A guarded task-owned trial restored the native ninth draw and
+redirected only its table-base load to T37/T38 at `0x00605AC0`, whose mapped
+runtime values are ASCII `OFF`/`ON`. The resulting screenshot changed zero
+pixels across the entire modal relative to the current supplied ss1 capture.
+The two ASCII literal families therefore resolve to the same visible glyphs in
+this context. The redirect is rejected and not retained.
+
+The visible Special Controls mismatch is consequently not Shift-JIS versus
+ASCII. It is the ordinary renderer's glyph-scale and advance behavior, which
+the user deferred to the broader autofit/positioning task. The native ninth
+draw call, selector table, color, scale, spacing, Y position, and renderer
+state remain untouched in this iteration.
 
 Practice Settings has three independent uppercase `[OFF, ON]` arrays at
 runtime `0x00605AC0`, `0x00605AD0`, and `0x00605AD8`. The BTL row table points
 to those arrays from files `0x20B498`, `0x20B49C`, and `0x20B4A0` for Commands,
 Damage, and Guide Ninja Sound. Each row pointer is redirected to the existing
-title-case table `0x00604658`, preserving the original Off-then-On index order
-and leaving T37/T38 available to every other consumer. No string bytes, global
-glyph metrics, or unrelated renderer calls change. The deterministic guard
-generator is
-`scripts/research/localization/generate_on_off_context_split.py`; the combined
-pointer and call-site patch remains `approved_for_test` until the user checks
-the paired ss1/ss8 contexts.
+title-case table `0x00604658`, preserving the original Off-then-On index order.
+The user verified Practice Settings working. No string bytes, global glyph
+metrics, spacing logic, scale, or renderer calls change. The deterministic
+guard generator is
+`scripts/research/localization/generate_on_off_context_split.py`; it now
+generates and verifies only these three runtime-proven Practice pointer edits.
 
 The supplied title-to-Load `ss1` has boot CRC `A8A3C694`, state SHA-256
 `B35AFFF69FDCDDF5478B6AE86DC9BF909469512F52E5268471FC9CF524EF1AF4`,

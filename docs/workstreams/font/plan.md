@@ -44,24 +44,28 @@ pixels higher. Its comparison grid remains a task-owned artifact under
 `work/Font/artifacts/`. A fresh post-reset capture is required before assigning
 causation or reintroducing any old wrapper.
 
-## Active ss2–ss6 epic priorities
+## Active ss1–ss6 epic priorities
 
 The user directed Font to work only on the
-[ss2–ss6 layout-parity epic](epics/ss2-6-layout/README.md) for now. Its
+[ss1–ss6 layout-parity epic](epics/ss2-6-layout/README.md) for now. Its
 efficiency-prioritized sequential order supersedes the generic remaining-family
 order below while the epic is active:
 
-1. **ss3 — Pause Controls list.** Rebuild the retained 216-unit shrink-only
+1. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
+   through a dedicated final-selector adapter that matches NUN5 glyph scale
+   and advance together; preserve the already-correct ASCII `Off`/`On` source
+   and the accepted first-eight Controls result.
+2. **ss3 — Pause Controls list.** Rebuild the retained 216-unit shrink-only
    list behavior and Y correction through a dedicated v2 entrypoint. This
    establishes the shared UI plumbing needed by ss4 without enabling ss4 yet.
-2. **ss4 — Quit confirmation.** Reuse the ss3 shared UI plumbing, then add only
+3. **ss4 — Quit confirmation.** Reuse the ss3 shared UI plumbing, then add only
    the guarded confirmation-body and Yes/No positioning behavior. Commit and
    review it independently.
-3. **ss2 — Command Chart body.** Adapt the accepted v2 multiline primitives to
+4. **ss2 — Command Chart body.** Adapt the accepted v2 multiline primitives to
    the separate command-description caller; do not reopen the accepted title.
-4. **ss5 — Character model move list.** Add bounded wrapping and positioning
+5. **ss5 — Character model move list.** Add bounded wrapping and positioning
    for the right-side move-name column.
-5. **ss6 — Movie list.** Implement the variable-height wrapped-row behavior
+6. **ss6 — Movie list.** Implement the variable-height wrapped-row behavior
    last because it has the largest caller-specific layout and row-advance
    burden.
 
@@ -264,6 +268,18 @@ renderer. The user explicitly accepted that result on 2026-07-26. Supplied
 `A8A3C694` and shows the same exact worker ISO fully rendering the Load screen
 after a real title transition. The accepted core and Controls rows are
 therefore runtime-proven and enabled.
+
+The final Special Controls selector is a deferred Controls/autofit case rather
+than a text-conversion case. The supplied remade `ss1` proves that its live
+table already contains ASCII `Off`/`On` through T1956/T1957. Redirecting that
+table to the separate ASCII `OFF`/`ON` literals changed zero pixels across the
+entire modal, so no literal or table redirect is retained. Its remaining NUN5
+parity defect is the physically larger, wider-spaced presentation: NUN5 routes
+the title-case strings through `FUN_00385df0` with a 128-unit width, while NA2
+uses native `FUN_00379240`. Revisit that caller only with the broader
+autofit/positioning work, preserve the accepted first-eight Controls result,
+and validate glyph scale and advance together instead of patching either
+literal family.
 
 ### Second caller family: Command Chart and Practice titles
 

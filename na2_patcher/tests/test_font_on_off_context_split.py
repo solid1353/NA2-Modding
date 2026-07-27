@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+import csv
 import unittest
 from pathlib import Path
 
 from na2_patcher.modules.binary_patcher import engine as binary_engine
 from na2_patcher.modules.runtime_injector import engine as runtime_engine
-from scripts.research.localization import generate_font_renderer
 from scripts.research.localization import generate_on_off_context_split
 
 
@@ -23,7 +23,7 @@ class OnOffContextSplitTests(unittest.TestCase):
             generate_on_off_context_split.PATCH_ID
         ]
         self.assertTrue(patch.enabled)
-        self.assertEqual(patch.status, "approved_for_test")
+        self.assertEqual(patch.status, "runtime_proven")
         self.assertEqual(patch.confidence, "verified")
         self.assertEqual(patch.group_id, "auto_fit")
 
@@ -58,8 +58,44 @@ class OnOffContextSplitTests(unittest.TestCase):
         self.assertTrue(btl.is_file())
         self.assertTrue(elf.is_file())
 
-    def test_special_controls_uses_the_existing_boxed_adapter(self) -> None:
+    def test_special_controls_is_already_ascii_without_spacing_hook(
+        self,
+    ) -> None:
         repository = Path(__file__).resolve().parents[2]
+        mappings_path = (
+            repository
+            / "na2_patcher"
+            / "features"
+            / "localization"
+            / "translation_importer"
+            / "mappings.tsv"
+        )
+        with mappings_path.open(
+            "r", encoding="utf-8-sig", newline=""
+        ) as handle:
+            mappings = {
+                row["id"]: row
+                for row in csv.DictReader(handle, delimiter="\t")
+                if row["id"] in {"T1956", "T1957"}
+            }
+        self.assertEqual(set(mappings), {"T1956", "T1957"})
+        self.assertEqual(
+            (
+                mappings["T1956"]["source"],
+                mappings["T1956"]["donor"],
+                mappings["T1956"]["source_ref"],
+            ),
+            ("オフ", "Off", "NA2_SLPS@0x504748"),
+        )
+        self.assertEqual(
+            (
+                mappings["T1957"]["source"],
+                mappings["T1957"]["donor"],
+                mappings["T1957"]["source_ref"],
+            ),
+            ("オン", "On", "NA2_SLPS@0x504750"),
+        )
+
         package = runtime_engine.load_package(
             repository
             / "na2_patcher"
@@ -68,44 +104,22 @@ class OnOffContextSplitTests(unittest.TestCase):
             / "runtime_injector",
             owner="localization.runtime_injector",
         )
-        patch = package.patches["font_v2_controls"]
-        self.assertTrue(patch.enabled)
-        self.assertEqual(patch.status, "approved_for_test")
-
-        matching = [
-            edit
-            for edit in package.edits
-            if edit.patch_id == "font_v2_controls"
-            and edit.symbolic_patch.offset
-            == generate_on_off_context_split.SPECIAL_CALL_OFFSET
-        ]
-        self.assertEqual(len(matching), 1)
-        edit = matching[0].symbolic_patch
-        self.assertEqual(
-            edit.expected,
-            bytes.fromhex(
-                generate_on_off_context_split.SPECIAL_CALL_EXPECTED_HEX
-            ),
-        )
-        self.assertEqual(
-            edit.symbol,
-            generate_on_off_context_split.SPECIAL_CALL_SYMBOL,
-        )
-        self.assertEqual(edit.encoding, "jal26")
-
-        widths = generate_font_renderer.build_ascii_widths()
-        for value in ("Off", "On"):
-            measured = sum(
-                widths[ord(character) - generate_font_renderer.ASCII_FIRST]
-                for character in value
+        controls = package.patches["font_v2_controls"]
+        self.assertTrue(controls.enabled)
+        self.assertEqual(controls.status, "runtime_proven")
+        self.assertFalse(
+            any(
+                edit.symbolic_patch.offset == 0x2888D4
+                for edit in package.edits
             )
-            self.assertLess(
-                measured,
-                generate_font_renderer.CONTROLS_BOX_WIDTH,
-            )
+        )
 
     def test_practice_rows_share_the_existing_titlecase_table(self) -> None:
-        edits = generate_on_off_context_split.generated_edits()
+        edits = [
+            edit
+            for edit in generate_on_off_context_split.generated_edits()
+            if edit["destination_target_id"] == "na2_btl"
+        ]
         self.assertEqual(len(edits), 3)
         for edit in edits:
             self.assertEqual(

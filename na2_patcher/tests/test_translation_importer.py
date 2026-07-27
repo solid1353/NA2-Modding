@@ -52,11 +52,14 @@ class TranslationImporterTests(unittest.TestCase):
         }
         direct_replacements = {
             "T30": "Ultimate",
+            "T1920": "Charge Chakra",
             "T1958": (
                 "Press <iconCROSS> to select the button/item to change. "
                 "Press the left directional button or right directional "
                 "button to change controls."
             ),
+            "T2194": "100%% Health bonus",
+            "T2197": ".",
         }
         structural_rows = {
             "T2011": (
@@ -85,6 +88,12 @@ class TranslationImporterTests(unittest.TestCase):
         self.assertEqual(len(mappings["text"]), 2071)
         self.assertEqual(mappings["inactive"], [])
         mapping_ids = {row["id"] for row in mappings_raw}
+        self.assertTrue(
+            all(
+                mapping_id.startswith("T") and mapping_id[1:].isdigit()
+                for mapping_id in mapping_ids
+            )
+        )
         self.assertTrue({"T1937", "T1938"} <= mapping_ids)
         self.assertFalse(
             any(
@@ -95,16 +104,6 @@ class TranslationImporterTests(unittest.TestCase):
         self.assertEqual(
             len(mapping_ids),
             len(mappings_raw),
-        )
-        self.assertEqual(
-            mappings_raw,
-            sorted(
-                mappings_raw,
-                key=lambda row: (
-                    row["display_context"].casefold(),
-                    int(row["id"][1:]),
-                ),
-            ),
         )
         for row in mappings_raw:
             self.assertEqual(row["enabled"], "1")

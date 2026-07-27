@@ -395,6 +395,7 @@ class ProfileTests(unittest.TestCase):
                 "localization.binary_patcher",
                 "qol.binary_patcher",
                 "battle_logic.binary_patcher",
+                "rendering.binary_patcher",
             ],
         )
         self.assertEqual(profile.identity.source_boot_path, "SLPS_258.37")

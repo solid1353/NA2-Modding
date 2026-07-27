@@ -38,6 +38,15 @@
   accidentally included, the commit may be pushed as-is and must be reported.
 - Commit and push every completed change automatically at a coherent boundary.
   Git never requires `qwe` or separate approval.
+- Standing automatic-push authorization includes the configured current branch,
+  remote, and required command elevation. Invoke the push directly through the
+  approval-capable elevated tool path; never ask the user to approve the push,
+  remote, or destination again.
+- An execution-layer rejection does not revoke Git authorization and must not
+  be presented as missing user approval. Retry the exact push through the
+  permitted elevated path. If that path remains unavailable, report the exact
+  tooling blocker and continue any other approved work that does not depend on
+  the push; do not invent an approval gate or repeatedly ask the user.
 - Commit subjects use `[<exact task title>] <imperative summary>`. Override the
   author for that commit only using the matching `.agents/git-authors.tsv`
   entry, or `<agent-name>@agent.invalid` when absent. Never alter repository or

@@ -1758,6 +1758,12 @@ user-directed stage-by-stage reimplementation:
   of the Battle Settings Time row with NA2's existing ASCII `sprintf`. Its
   adjacent exact guard preserves the separate value-100 infinity path and
   leaves the other five rows and every unrelated numeric caller unchanged.
+- `font_ninja_song_ascii_numbers` redirects exactly five guarded BTL formatter
+  calls shared by the supplied ss2–ss5 Ninja Song screens to one resident
+  ASCII-decimal helper. It preserves NUN5's right-aligned widths 3, 3, 5, and
+  4 plus the unpadded inline mode. The reachable multiplication separator
+  remains canonical mapping T2195's ASCII `" * "` and is guarded rather than
+  rewritten by this patch.
 - Retained, default-disabled `font_layout_wrappers` ports shared selected/unselected confirmation-choice
   placement, the 216-unit Practice pause-list fit and Y origin, Practice and
   Collection confirmation-body alignment, and the character-return body's
@@ -1870,6 +1876,11 @@ and their local punctuation edit.
 `scripts/research/localization/generate_battle_settings_ascii_digits.py`
 deterministically generates and verifies the single Battle Settings Time call
 replacement plus the untouched adjacent infinity branch.
+`scripts/research/localization/generate_ninja_song_ascii_numbers.py`
+deterministically verifies the five shared clean-BTL formatter calls, emits
+their symbolic redirects, and guards the canonical ASCII multiplication
+mapping. Its resident helper is emitted by
+`scripts/research/localization/generate_font_renderer.py`.
 Exact static and symbolic hooks, guards, replacement templates, and reasons are
 recorded in the two module-owned `edits.tsv` files; confirmed evidence and
 negative results are recorded in

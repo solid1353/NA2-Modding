@@ -302,6 +302,42 @@ The deterministic generator is
 The patch remains `approved_for_test` until a worker ISO reproduces the
 slot-1 screen.
 
+## Ninja Song ASCII dynamic numbers
+
+The paired ss2–ss5 states are copied read-only under
+`work/Font/inputs/sstates/ninja-song/ss2-5/` with exact source filenames,
+timestamps, sizes, and SHA-256 provenance. Together they cover the dynamically
+generated arithmetic factors, arithmetic total, inline numeric placeholder,
+and detail score used by the Ninja Song screens.
+
+NA2 BTL `FUN_00718920` (file function offset `0x64A60`) renders the arithmetic
+expression, and `FUN_00718C60` renders the later detail fields. Their NUN5
+homologs are `FUN_0072E5B0` and `FUN_0072E9C0`. Five calls in those two NA2
+functions reach the same fullwidth CP932 formatter `FUN_00378510`:
+
+- `0x64B28`: left factor, width 3, mode 0;
+- `0x64BA8`: right factor, width 3, mode 0;
+- `0x64CE4`: total, width 5, mode 0;
+- `0x64E4C`: inline value, width 4, mode 1;
+- `0x64ED4`: detail score, width 4, mode 0.
+
+The NUN5 formatter homolog preserves the caller ABI but emits ASCII decimal.
+Mode 0 left-pads with ASCII spaces to the requested width, mode 1 emits an
+unpadded value, and mode 2 left-pads with ASCII zeroes. The shared
+`localization.font.ninja_song_ascii_number` helper reproduces those modes
+behind NA2's existing ABI and calls the immutable `%d` formatter at runtime
+`0x0017BCA0`. Exactly the five guarded BTL JAL instructions above redirect to
+it; no per-screen duplicate formatter is introduced.
+
+The multiplication separator remains reachable. In the copied ss2 runtime
+state, its pointer resolves to bytes `20 2A 20` (`" * "`), already supplied by
+canonical translation mapping T2195 from `NA2_SLPS@0x504DA0`. The Font patch
+therefore guards that mapping but does not rewrite the separator. This is
+high-confidence static behavior pending matched worker captures for ss2–ss5.
+The deterministic generators are
+`scripts/research/localization/generate_font_renderer.py` and
+`scripts/research/localization/generate_ninja_song_ascii_numbers.py`.
+
 Controls retains full-width `Linked Attack`, fits the official 19-byte
 `Ultimate Jutsu Prep` probe through the shared NUN5 logical-width helper,
 leaves `OFF` on the ordinary renderer, and restores local scale immediately

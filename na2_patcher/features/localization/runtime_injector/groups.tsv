@@ -1,3 +1,4 @@
 group_id	enabled	name	description	review_notes
 auto_fit	1	Auto-fit	Resident shrink-only text fitting and shared metric behavior.	Generated code is linked into the shared payload; only guarded hooks remain in the boot ELF.
 alignment	1	Alignment	Resident shared screen and modal positioning behavior.	Generated code is linked into the shared payload and uses stack-local transient state.
+battle_ui	1	Battle UI	Resident battle-overlay formatting behavior.	Generated code is linked into the shared payload; guarded BTL call sites select only the intended dynamic output.

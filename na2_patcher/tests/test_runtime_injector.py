@@ -120,6 +120,7 @@ class RuntimeInjectorTests(unittest.TestCase):
                 "font_v2_controls",
                 "font_v2_titles",
                 "font_v2_practice_explanations",
+                "font_ninja_song_ascii_numbers",
             },
         )
         canonical_build = build_resident_payload(
@@ -143,6 +144,11 @@ class RuntimeInjectorTests(unittest.TestCase):
                 "font_v2_titles_01",
                 "font_v2_titles_02",
                 "font_v2_practice_explanations_01",
+                "font_ninja_song_ascii_numbers_01",
+                "font_ninja_song_ascii_numbers_02",
+                "font_ninja_song_ascii_numbers_03",
+                "font_ninja_song_ascii_numbers_04",
+                "font_ninja_song_ascii_numbers_05",
             },
         )
 
@@ -198,6 +204,11 @@ class RuntimeInjectorTests(unittest.TestCase):
                 0x1C4B98,
                 0x1C4BA0,
                 0x1C6A28,
+                0x64B28,
+                0x64BA8,
+                0x64CE4,
+                0x64E4C,
+                0x64ED4,
             },
         )
         self.assertTrue(

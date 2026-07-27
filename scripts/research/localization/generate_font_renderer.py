@@ -38,6 +38,8 @@ LEGACY_BLOB_RELATIVE = Path("assets") / "font_renderer_resident.bin"
 LEGACY_BLOB_OUTPUT = MODULE / LEGACY_BLOB_RELATIVE
 V2_BLOB_RELATIVE = Path("assets") / "font_renderer_v2_resident.bin"
 V2_BLOB_OUTPUT = MODULE / V2_BLOB_RELATIVE
+NUMERIC_BLOB_RELATIVE = Path("assets") / "font_numeric_resident.bin"
+NUMERIC_BLOB_OUTPUT = MODULE / NUMERIC_BLOB_RELATIVE
 FRAGMENTS_OUTPUT = MODULE / "fragments.tsv"
 RELOCATIONS_OUTPUT = MODULE / "relocations.tsv"
 PACKED_METRICS_INPUT = load_project_paths(REPOSITORY).path(
@@ -59,6 +61,7 @@ SELECTED_HELPER = f"{PREFIX}.selected_helper"
 SELECTED_TRAMPOLINE = f"{PREFIX}.selected_trampoline"
 UI_HELPER = f"{PREFIX}.ui_helper"
 UI_TRAMPOLINE = f"{PREFIX}.ui_trampoline"
+NINJA_SONG_ASCII_NUMBER = f"{PREFIX}.ninja_song_ascii_number"
 
 V2_PREFIX = f"{PREFIX}.v2"
 V2_SESSION_POINTER = f"{V2_PREFIX}.session_pointer"
@@ -95,6 +98,8 @@ FONT_MEASURE = 0x003798E0
 FONT_CENTER = 0x00379240
 FONT_BOX_DRAW = 0x00382310
 FONT_ICON_DRAW = 0x0037BB40
+SPRINTF = 0x0017BCA0
+FORMAT_D = 0x006042D3
 PRACTICE_ICON_TABLE = 0x008D14C0
 PRACTICE_EXPLANATION_TEXT_TABLE = 0x008BD510
 PACKED_METRICS_SHA256 = (
@@ -2042,6 +2047,81 @@ def build_v2_glyph_advance() -> Fragment:
     return Fragment(V2_GLYPH_ADVANCE, payload, relocations)
 
 
+def build_ninja_song_ascii_number() -> Fragment:
+    """Reproduce NUN5's ASCII decimal padding behind NA2's formatter ABI."""
+
+    zero, v0, a0, a1, a2, a3 = 0, 2, 4, 5, 6, 7
+    t0, t1, t2 = 8, 9, 10
+    s0, s1, s2, s3 = 16, 17, 18, 19
+    sp, ra = 29, 31
+    frame_size = 0x50
+    temporary = 0x00
+    saved_s0 = 0x30
+    saved_s1 = 0x34
+    saved_s2 = 0x38
+    saved_s3 = 0x3C
+    saved_ra = 0x4C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    assembler.emit(mips.i_type(0x2B, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x2B, sp, s1, saved_s1))
+    assembler.emit(mips.i_type(0x2B, sp, s2, saved_s2))
+    assembler.emit(mips.i_type(0x2B, sp, s3, saved_s3))
+    assembler.emit(mips.r_type(a3, zero, s0, 0x21))
+    assembler.emit(mips.r_type(a2, zero, s1, 0x21))
+    assembler.emit(mips.r_type(t0, zero, s2, 0x21))
+    assembler.emit(mips.r_type(a1, zero, s3, 0x21))
+
+    assembler.emit(mips.i_type(0x09, sp, a0, temporary))
+    mips.load_u32(assembler, a1, FORMAT_D)
+    assembler.emit(mips.r_type(s3, zero, a2, 0x21))
+    assembler.emit(mips.jump(0x03, SPRINTF))
+    assembler.emit(0)
+
+    assembler.emit(mips.r_type(zero, zero, t0, 0x21))
+    assembler.emit(mips.i_type(0x09, zero, t1, 0x20))
+    assembler.emit(mips.i_type(0x09, zero, t2, 1))
+    assembler.branch(0x04, s2, t2, "copy")
+    assembler.emit(0)
+    assembler.emit(mips.r_type(s1, v0, t0, 0x23))
+    assembler.branch(0x06, t0, zero, "copy")
+    assembler.emit(mips.i_type(0x09, zero, t2, 2))
+    assembler.branch(0x05, s2, t2, "pad")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x09, zero, t1, 0x30))
+
+    assembler.label("pad")
+    assembler.emit(mips.i_type(0x28, s0, t1, 0))
+    assembler.emit(mips.i_type(0x09, s0, s0, 1))
+    assembler.emit(mips.i_type(0x09, t0, t0, -1))
+    assembler.branch(0x07, t0, zero, "pad")
+    assembler.emit(0)
+
+    assembler.label("copy")
+    assembler.emit(mips.r_type(sp, zero, t0, 0x21))
+    assembler.label("copy_next")
+    assembler.emit(mips.i_type(0x24, t0, t1, 0))
+    assembler.emit(mips.i_type(0x28, s0, t1, 0))
+    assembler.branch(0x04, t1, zero, "restore")
+    assembler.emit(mips.i_type(0x09, t0, t0, 1))
+    assembler.emit(mips.i_type(0x09, s0, s0, 1))
+    assembler.branch(0x04, zero, zero, "copy_next")
+    assembler.emit(0)
+
+    assembler.label("restore")
+    assembler.emit(mips.i_type(0x23, sp, s3, saved_s3))
+    assembler.emit(mips.i_type(0x23, sp, s2, saved_s2))
+    assembler.emit(mips.i_type(0x23, sp, s1, saved_s1))
+    assembler.emit(mips.i_type(0x23, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(NINJA_SONG_ASCII_NUMBER, payload, relocations)
+
+
 def build_ui_helper() -> Fragment:
     zero, v0, a0, a1, a2, a3 = 0, 2, 4, 5, 6, 7
     t0, t1, t2, t3 = 8, 9, 10, 11
@@ -2499,8 +2579,16 @@ def v2_fragments() -> tuple[Fragment, ...]:
     return result
 
 
+def numeric_fragments() -> tuple[Fragment, ...]:
+    result = (build_ninja_song_ascii_number(),)
+    symbols = [fragment.symbol for fragment in result]
+    if len(symbols) != len(set(symbols)):
+        raise ValueError("generated numeric fragments export duplicate symbols")
+    return result
+
+
 def fragments() -> tuple[Fragment, ...]:
-    result = legacy_fragments() + v2_fragments()
+    result = legacy_fragments() + v2_fragments() + numeric_fragments()
     symbols = [fragment.symbol for fragment in result]
     if len(symbols) != len(set(symbols)):
         raise ValueError("generated resident fragments export duplicate symbols")
@@ -2579,11 +2667,13 @@ def relocation_rows(
     return rows
 
 
-def generated_outputs() -> tuple[bytes, bytes, bytes, bytes]:
+def generated_outputs() -> tuple[bytes, bytes, bytes, bytes, bytes]:
     legacy = legacy_fragments()
     v2 = v2_fragments()
+    numeric = numeric_fragments()
     legacy_blob, legacy_offsets = pack_blob(legacy)
     v2_blob, v2_offsets = pack_blob(v2)
+    numeric_blob, numeric_offsets = pack_blob(numeric)
     fragment_rows = [
         *make_fragment_rows(
             legacy,
@@ -2597,14 +2687,22 @@ def generated_outputs() -> tuple[bytes, bytes, bytes, bytes]:
             v2_blob,
             v2_offsets,
         ),
+        *make_fragment_rows(
+            numeric,
+            NUMERIC_BLOB_RELATIVE,
+            numeric_blob,
+            numeric_offsets,
+        ),
     ]
     generated_relocations = [
         *relocation_rows(legacy, "FR-R"),
         *relocation_rows(v2, "FR-V2-R"),
+        *relocation_rows(numeric, "FR-NUM-R"),
     ]
     return (
         legacy_blob,
         v2_blob,
+        numeric_blob,
         tsv_bytes(engine.FRAGMENT_FIELDS, fragment_rows),
         tsv_bytes(engine.RELOCATION_FIELDS, generated_relocations),
     )
@@ -2622,6 +2720,7 @@ def main() -> None:
         (
             LEGACY_BLOB_OUTPUT,
             V2_BLOB_OUTPUT,
+            NUMERIC_BLOB_OUTPUT,
             FRAGMENTS_OUTPUT,
             RELOCATIONS_OUTPUT,
         ),

@@ -114,60 +114,41 @@ The core and first-eight-label path are runtime-proven from the matched
 Controls review. The final 640x480 pair matches those eight NUN5 label bounds
 and centers, keeps `Linked Attack` full width, and fits
 `Ultimate Jutsu Prep` with the exact 178-unit denominator. The user explicitly
-accepted that result on 2026-07-26. The later ninth-call extension reuses the
-same accepted adapter but was reviewed through a stale state that restored
-executable regions, so its zero-difference result did not exercise the hook
-and is not valid negative evidence. The final selector is an independent call
-at runtime `0x003887D4` / ELF file `0x2888D4`; it now reuses the same adapter
-because the bounded homolog comparison below proves NUN5 gives this call the
-same 128-unit centered box. The accepted first-eight hook at `0x288848` is
-unchanged.
+accepted that result on 2026-07-26. The accepted first-eight hook at
+`0x288848` is unchanged. The later call at runtime `0x003887D4` / ELF file
+`0x2888D4` is the separate Control Settings vibration row, not the battle
+Special Controls modal; its provisional adapter hook is removed.
 
 ## Contextual Special Controls / Practice Settings ON/OFF
 
-The supplied paired states are retained under
-`work/Localization/inputs/sstates/2026-07-26-ss1-8-on-off-split/`. Their
-embedded frames show two distinct NUN5 presentations: ss1 Special Controls
-looks like compact uppercase `ON`/`OFF`, while ss8 Practice Settings visibly
-uses title-case `Off`/`On`.
+The remade paired ss1 states are retained under
+`work/Font/inputs/sstates/special-controls-on-off/remade-ss1-20260727/`.
+Their embedded frames show compact uppercase NUN5 `ON`/`OFF` and oversized,
+widely spaced NA2 fullwidth text. Exact-guarded draw telemetry from the copied
+NA2 state is retained under
+`work/Font/artifacts/special-controls-on-off/remade-ss1-20260727/draw-telemetry/`.
 
-The NUN5 Special result is not sourced from uppercase literals. Homolog
-`FUN_00399DF0` resolves the ninth selector through `FUN_003D12B0`; the English
-language table at runtime `0x00613D80` returns physical SLES strings
-`Off`/`On` at files `0x513EF8`/`0x513EFC`. It then calls ordinary
-`FUN_00385DF0` at runtime `0x0039A06C` with width `0x80` and mode `0`.
-The separate uppercase NUN5 literals at files `0x513E68`/`0x513E6C` are not
-used by this call.
+The telemetry proves that the selected row reads runtime string
+`0x006059F0`, bytes `82 6E 81 40 82 6D 00` (`Ｏ　Ｎ`), from callers
+`0x003791B8` and `0x00379214`; the unselected row reads runtime string
+`0x006059F8`, bytes `82 6E 82 65 82 65 00` (`ＯＦＦ`), from caller
+`0x00379BFC`. Clean SLPS file offsets `0x505AF0` and `0x505AF8` contain the
+same guarded slots. The official NUN5 uppercase donors are SLES file
+`0x513E68` (`ON`) and `0x513E6C` (`OFF`).
 
-NA2 `FUN_003885B0` reads the same title-case semantics from the
-two-pointer table at runtime `0x00604658` / ELF file `0x504758`, pointing to
-T1956/T1957 `Off`/`On` at `0x00604648`/`0x00604650`. The later attempt to route
-its ninth call at runtime `0x003887D4` through the v2 Controls adapter was
-reviewed through a stale state that restored executable regions, so its
-zero-difference result did not exercise the new hook and is not valid negative
-evidence for the renderer path.
+Canonical mappings T2203/T2204 therefore convert only those two modal-specific
+Shift-JIS slots to ASCII. This corrects glyph selection and removes the
+fullwidth internal advance without changing the accepted first-eight Control
+Settings hook, Practice Settings pointer split, or any renderer code. A fresh
+mapped-state comparison must measure any remaining centering or vertical
+offset separately; the mapping itself does not claim positioning parity.
 
-The supplied current state proves source conversion is already complete:
-runtime `0x00604648`/`0x00604650` contains ASCII `Off`/`On`, produced from the
-clean Shift-JIS slots at ELF files `0x504748`/`0x504750` by canonical mappings
-T1956/T1957. A guarded task-owned trial restored the native ninth draw and
-redirected only its table-base load to T37/T38 at `0x00605AC0`, whose mapped
-runtime values are ASCII `OFF`/`ON`. The resulting screenshot changed zero
-pixels across the entire modal relative to the current supplied ss1 capture.
-The two ASCII literal families therefore resolve to the same visible glyphs in
-this context. The redirect is rejected and not retained.
-
-The visible Special Controls mismatch is consequently not Shift-JIS versus
-ASCII. It is the ordinary renderer's glyph-scale and advance behavior. Exact
-clean disassembly shows NA2's selector prepares native center X in `f12`,
-row Y in `f13`, text in `a0`, and color in `a1`, then calls
-`FUN_00379240` at `0x003887D4`. The NUN5 homolog prepares box-left X in `f12`,
-the same row Y in `f13`, text in `a0`, color in `a1`, width `0x80` in `a2`,
-and mode `0` in `a3`, then calls boxed `FUN_00385DF0` at `0x0039A1EC`.
-The existing v2 Controls adapter already implements this exact 128-unit
-centered-box conversion and transient metric session, so the bounded fix adds
-only the second guarded call redirect at ELF `0x2888D4`. It changes no text
-bytes, table pointer, color, row Y, or accepted first-eight hook.
+The earlier identification of `FUN_003885B0` and its call at runtime
+`0x003887D4` / ELF file `0x2888D4` as this ss1 modal was incorrect. Retained
+telemetry identifies that path as Control Settings, with the ninth call drawing
+its vibration row. The provisional second `font_v2_controls` hook is removed;
+the runtime evidence is a useful negative result against reusing that call site
+for Special Controls.
 
 Practice Settings has three independent uppercase `[OFF, ON]` arrays at
 runtime `0x00605AC0`, `0x00605AD0`, and `0x00605AD8`. The BTL row table points

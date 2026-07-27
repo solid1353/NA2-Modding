@@ -29,9 +29,11 @@ captures before changing its established layout.
 - NA2 ASCII setup lead: `FUN_00186510`.
 - NUN5 counterpart: `FUN_001878e0`.
 - NUN5 boxed auto-fit reference: `FUN_00389df0` and `FUN_0018b1b0`.
-- NA2 Controls path: `FUN_003885b0`; both the shared first-eight draw and the
-  isolated ninth selector now route through the accepted 128-unit v2 adapter,
-  matching NUN5's distinct but equivalent boxed call.
+- NA2 Control Settings path: `FUN_003885b0`; only its shared first-eight-label
+  draw routes through the accepted 128-unit v2 adapter. Retained ss1 telemetry
+  proves the battle Special Controls modal instead draws separate fullwidth
+  Shift-JIS slots at runtime `0x006059F0`/`0x006059F8`; canonical mappings
+  T2203/T2204 convert those slots to the official NUN5 ASCII `ON`/`OFF`.
 - The guarded task-local v4 state under
   `work/Font/artifacts/font_match_v1/` confirmed NUN5's horizontal
   `leading_bearing * scale_x` subtraction while preserving the decoder's live

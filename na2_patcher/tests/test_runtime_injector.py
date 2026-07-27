@@ -143,7 +143,6 @@ class RuntimeInjectorTests(unittest.TestCase):
                 "font_v2_layout_core_04",
                 "font_v2_layout_core_05",
                 "font_v2_controls_01",
-                "font_v2_controls_02",
                 "font_v2_titles_01",
                 "font_v2_titles_02",
                 "font_v2_pause_controls_list_01",
@@ -210,7 +209,6 @@ class RuntimeInjectorTests(unittest.TestCase):
                 0x279250,
                 0x279B20,
                 0x288848,
-                0x2888D4,
                 0x283914,
                 0x283A60,
                 0x1C4048,
@@ -503,7 +501,6 @@ class RuntimeInjectorTests(unittest.TestCase):
                 "font_v2_layout_core_04",
                 "font_v2_layout_core_05",
                 "font_v2_controls_01",
-                "font_v2_controls_02",
             },
         )
         controls_edits = {
@@ -518,16 +515,12 @@ class RuntimeInjectorTests(unittest.TestCase):
             },
             {
                 "font_v2_controls_01": 0x288848,
-                "font_v2_controls_02": 0x2888D4,
             },
         )
         controls_adapter = controls_build.symbols[
             "localization.font.v2.controls_adapter"
         ]
-        for edit_id in (
-            "font_v2_controls_01",
-            "font_v2_controls_02",
-        ):
+        for edit_id in ("font_v2_controls_01",):
             controls_edit = controls_edits[edit_id]
             self.assertEqual(
                 bytes.fromhex(controls_edit.expected_hex),

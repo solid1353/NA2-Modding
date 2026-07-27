@@ -77,10 +77,11 @@ order below while the epic is active:
 1. **ss4 — Quit confirmation.** Reuse the accepted Pause Controls plumbing, then add only
    the guarded confirmation-body and Yes/No positioning behavior. Commit and
    review it independently.
-2. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
-   through a dedicated final-selector adapter that matches NUN5 glyph scale
-   and advance together; preserve the already-correct ASCII `Off`/`On` source
-   and the accepted first-eight Controls result.
+2. **ss1 — Special Controls final selector.** Convert the two proven
+   modal-specific fullwidth Shift-JIS slots to official NUN5 ASCII `ON`/`OFF`
+   through canonical mappings, then measure the fresh mapped result and add a
+   bounded positioning correction only if it remains necessary. Preserve the
+   accepted first-eight Control Settings result.
 3. **ss5 — Character model move list.** Add bounded wrapping and positioning
    for the right-side move-name column.
 4. **ss6 — Movie list.** Implement the variable-height wrapped-row behavior
@@ -287,17 +288,15 @@ renderer. The user explicitly accepted that result on 2026-07-26. Supplied
 after a real title transition. The accepted core and Controls rows are
 therefore runtime-proven and enabled.
 
-The final Special Controls selector is a deferred Controls/autofit case rather
-than a text-conversion case. The supplied remade `ss1` proves that its live
-table already contains ASCII `Off`/`On` through T1956/T1957. Redirecting that
-table to the separate ASCII `OFF`/`ON` literals changed zero pixels across the
-entire modal, so no literal or table redirect is retained. Its remaining NUN5
-parity defect is the physically larger, wider-spaced presentation: NUN5 routes
-the title-case strings through `FUN_00385df0` with a 128-unit width, while NA2
-uses native `FUN_00379240`. Revisit that caller only with the broader
-autofit/positioning work, preserve the accepted first-eight Controls result,
-and validate glyph scale and advance together instead of patching either
-literal family.
+The remade Special Controls `ss1` and exact-guarded telemetry prove that the
+modal does not use the Control Settings T1956/T1957 table. It draws clean-SLPS
+fullwidth slots `Ｏ　Ｎ` and `ＯＦＦ` from files `0x505AF0` and `0x505AF8`,
+seen at runtime `0x006059F0` and `0x006059F8`. Canonical mappings
+T2203/T2204 replace only those slots with the official NUN5 SLES `ON`/`OFF`
+donors. The previously added ELF `0x2888D4` hook targets the unrelated Control
+Settings vibration row and is removed. After the mapping boundary is committed,
+apply its exact bytes to the task-owned ss1 state and measure remaining
+positioning before authoring any renderer change.
 
 ### Second caller family: Command Chart and Practice titles
 

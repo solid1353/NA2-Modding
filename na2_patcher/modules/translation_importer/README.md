@@ -37,7 +37,9 @@ Battle/Practice quit-confirmation states establish the native assembly as
 T63/T64 mode head + T66 connective + one short destination slot + T67
 terminator. T63 and T64 therefore resolve only through donor placeholder `%1`;
 T2201 and T2202 translate the previously missing short destination slots from
-the official NUN5 `Character Select` and `Game Mode Select` strings. Other
+the official NUN5 `Character Select` and `Game Mode Select` strings.
+T2203/T2204 convert the remade-ss1 Special Controls modal's two fullwidth
+Shift-JIS slots to the official NUN5 ASCII `ON`/`OFF` strings. Other
 donor-backed rows leave `replacement` blank and execute official donor text;
 T1958 retains the established Cross-confirm override. Normal
 builds import this canonical table directly.

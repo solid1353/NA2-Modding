@@ -81,7 +81,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
         self.assertTrue(all(patch.kind == "redirect_pointer" for patch in self.resolved))
         self.assertEqual(self.plan.summary["external_mappings"], 33)
         self.assertEqual(self.plan.summary["external_binary_edits"], 35)
-        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2307)
+        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2309)
 
     def test_pool_contains_only_referenced_strings_and_deduplicates_one_pair(self) -> None:
         summary = self.plan.summary["external_strings"]
@@ -219,7 +219,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
             )
 
     def test_canonical_rows_derive_translation_and_placement_state(self) -> None:
-        self.assertEqual(len(self.import_plan.text_mappings), 2073)
+        self.assertEqual(len(self.import_plan.text_mappings), 2075)
         self.assertTrue(
             all(row["mode"] in {"slot", "sequence"} for row in self.import_plan.text_mappings)
         )
@@ -244,6 +244,8 @@ class IntegratedExternalStringTests(unittest.TestCase):
                     "T67",
                     "T2201",
                     "T2202",
+                    "T2203",
+                    "T2204",
                 )
             },
             {
@@ -253,13 +255,17 @@ class IntegratedExternalStringTests(unittest.TestCase):
                 "T67": "?",
                 "T2201": "Character Select",
                 "T2202": "Game Mode Select",
+                "T2203": "ON",
+                "T2204": "OFF",
             },
         )
         inline_mapping_ids = {
             str(row["source_mapping_id"])
             for row in self.draft.translation_plan.import_rows
         }
-        self.assertTrue({"T2201", "T2202"} <= inline_mapping_ids)
+        self.assertTrue(
+            {"T2201", "T2202", "T2203", "T2204"} <= inline_mapping_ids
+        )
         self.assertTrue(
             {"T63", "T64"}
             <= {

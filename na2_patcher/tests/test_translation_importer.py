@@ -84,8 +84,8 @@ class TranslationImporterTests(unittest.TestCase):
             ),
         }
 
-        self.assertEqual(len(mappings_raw), 2073)
-        self.assertEqual(len(mappings["text"]), 2073)
+        self.assertEqual(len(mappings_raw), 2075)
+        self.assertEqual(len(mappings["text"]), 2075)
         self.assertEqual(mappings["inactive"], [])
         mapping_ids = {row["id"] for row in mappings_raw}
         self.assertTrue(
@@ -167,6 +167,24 @@ class TranslationImporterTests(unittest.TestCase):
         self.assertEqual(
             (by_id["T2202"]["donor"], by_id["T2202"]["donor_ref"]),
             ("Game Mode Select", "NUN5_TEXTENG@0xA80"),
+        )
+        self.assertEqual(
+            (
+                by_id["T2203"]["source"],
+                by_id["T2203"]["donor"],
+                by_id["T2203"]["source_ref"],
+                by_id["T2203"]["donor_ref"],
+            ),
+            ("Ｏ　Ｎ", "ON", "NA2_SLPS@0x505AF0", "NUN5_SLES@0x513E68"),
+        )
+        self.assertEqual(
+            (
+                by_id["T2204"]["source"],
+                by_id["T2204"]["donor"],
+                by_id["T2204"]["source_ref"],
+                by_id["T2204"]["donor_ref"],
+            ),
+            ("ＯＦＦ", "OFF", "NA2_SLPS@0x505AF8", "NUN5_SLES@0x513E6C"),
         )
 
         engine.validate_structured_message_families(

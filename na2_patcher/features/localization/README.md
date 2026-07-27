@@ -28,8 +28,8 @@ command or file-backed inter-stage handoff.
 
 ### Mapping metadata
 
-- Canonical `mappings.tsv` rows: `2,071`
-- Canonical `mappings.tsv` SHA-256: `4EB76C285C2D3EC522E5FE2E1102FC51B90D0C47275CCEB0414CBC3B7AE81531`
+- Canonical `mappings.tsv` rows: `2,075`
+- Canonical `mappings.tsv` SHA-256: `27A137EB4B2D76C132F9DDEC2838B1C54FCE9EB9A295EF06685DB94DD9C4EDE4`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the aggregate Localization feature pin own content identity.
@@ -1797,26 +1797,27 @@ session pointer, renderer tracking, horizontal scale and callback result
 through one cleanup path.
 
 The first thin caller layer, `font_v2_controls`, redirects the shared
-first-eight-label call and isolated final-selector call in `FUN_003885b0`. It builds NUN5's 128-unit box, keeps
+first-eight-label call in Control Settings `FUN_003885b0`. It builds NUN5's 128-unit box, keeps
 fitting labels at scale `1`, applies `128 / 178` to
 `Ultimate Jutsu Prep`, derives NUN5's exact box left as the native NA2 caller
 center minus `64`, and converts the prepared left edge back to NA2's
 centered-renderer ABI. The first eight labels and required v2 core are
-runtime-proven from the matched review and real title-to-Load transition. The
-same adapter now covers the exact ninth call at ELF file `0x2888D4`, matching
-NUN5's homologous 128-unit selector box without changing either source table;
-that isolated extension awaits fresh-build ss1 review.
+runtime-proven from the matched review and real title-to-Load transition. Its
+ninth call at ELF file `0x2888D4` draws the unrelated vibration row and remains
+native.
 
 `font_on_off_context_split` now contains only the user-verified Practice
 Settings split. Its three BTL row-table pointers at files `0x20B498`,
 `0x20B49C`, and `0x20B4A0` select the existing title-case table at runtime
-`0x00604658`, preserving the original Off-then-On selector order. Special
-Controls already uses this table, whose clean Shift-JIS `オフ`/`オン` slots
-are converted to ASCII `Off`/`On` by canonical mappings T1956/T1957. A trial
-redirect to the separate ASCII `OFF`/`ON` T37/T38 table produced zero changed
-pixels across the complete supplied ss1 modal, so it is not retained. The
-string-table result stays unchanged; the separate v2 Controls patch now owns
-the ninth-call renderer behavior.
+`0x00604658`, preserving the original Off-then-On selector order. Canonical
+mappings T1956/T1957 convert that table's clean Shift-JIS `オフ`/`オン` slots
+to ASCII `Off`/`On`.
+
+Special Controls uses distinct fullwidth Shift-JIS slots at SLPS files
+`0x505AF0`/`0x505AF8`, proven by the remade ss1 draw telemetry. Canonical
+mappings T2203/T2204 convert them to official NUN5 ASCII `ON`/`OFF` donors.
+This text correction installs no renderer hook; any remaining placement work
+is evaluated separately after a fresh mapped-state capture.
 
 The second thin caller layer, `font_v2_titles`, replaces only two guarded BTL
 draw calls: Command Chart file `0x1C6A28` and Practice file `0x1C4B98`.

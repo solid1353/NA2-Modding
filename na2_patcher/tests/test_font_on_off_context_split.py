@@ -58,7 +58,7 @@ class OnOffContextSplitTests(unittest.TestCase):
         self.assertTrue(btl.is_file())
         self.assertTrue(elf.is_file())
 
-    def test_special_controls_ascii_uses_isolated_boxed_renderer_hook(
+    def test_special_controls_uses_dedicated_ascii_mappings_without_hook(
         self,
     ) -> None:
         repository = Path(__file__).resolve().parents[2]
@@ -76,24 +76,24 @@ class OnOffContextSplitTests(unittest.TestCase):
             mappings = {
                 row["id"]: row
                 for row in csv.DictReader(handle, delimiter="\t")
-                if row["id"] in {"T1956", "T1957"}
+                if row["id"] in {"T2203", "T2204"}
             }
-        self.assertEqual(set(mappings), {"T1956", "T1957"})
+        self.assertEqual(set(mappings), {"T2203", "T2204"})
         self.assertEqual(
             (
-                mappings["T1956"]["source"],
-                mappings["T1956"]["donor"],
-                mappings["T1956"]["source_ref"],
+                mappings["T2203"]["source"],
+                mappings["T2203"]["donor"],
+                mappings["T2203"]["source_ref"],
             ),
-            ("オフ", "Off", "NA2_SLPS@0x504748"),
+            ("Ｏ　Ｎ", "ON", "NA2_SLPS@0x505AF0"),
         )
         self.assertEqual(
             (
-                mappings["T1957"]["source"],
-                mappings["T1957"]["donor"],
-                mappings["T1957"]["source_ref"],
+                mappings["T2204"]["source"],
+                mappings["T2204"]["donor"],
+                mappings["T2204"]["source_ref"],
             ),
-            ("オン", "On", "NA2_SLPS@0x504750"),
+            ("ＯＦＦ", "OFF", "NA2_SLPS@0x505AF8"),
         )
 
         package = runtime_engine.load_package(
@@ -106,17 +106,13 @@ class OnOffContextSplitTests(unittest.TestCase):
         )
         controls = package.patches["font_v2_controls"]
         self.assertTrue(controls.enabled)
-        self.assertEqual(controls.status, "approved_for_test")
+        self.assertEqual(controls.status, "runtime_proven")
         selector_edits = [
             edit
             for edit in package.edits
             if edit.symbolic_patch.offset == 0x2888D4
         ]
-        self.assertEqual(len(selector_edits), 1)
-        self.assertEqual(
-            selector_edits[0].symbolic_patch.symbol,
-            "localization.font.v2.controls_adapter",
-        )
+        self.assertEqual(selector_edits, [])
 
     def test_practice_rows_share_the_existing_titlecase_table(self) -> None:
         edits = [

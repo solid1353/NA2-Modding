@@ -27,19 +27,22 @@ before beginning the next slot.
 - Existing accepted Font and resident-renderer behavior remains the regression
   baseline. The previously retained Command Chart ss2 image was superseded by
   the remade Pause Controls ss2 state and is no longer an epic input.
-- Text-content differences are routed to the translation workstreams. This
-  epic owns measurement, wrapping, fitting, positioning, and clipping only.
+- Text-content differences are normally routed to the translation workstreams.
+  By explicit user instruction, this Font subtask also owns the two exact
+  modal-specific ss1 mappings that replace fullwidth Shift-JIS `Ｏ　Ｎ`/`ＯＦＦ`
+  with official NUN5 ASCII `ON`/`OFF`.
 
 ## Battle
 
 ### ss1 — Special Controls final selector
 
-- State: isolated renderer hook implemented; fresh-build comparison pending.
-- Baseline defect: Current draws the final `On`/`Off` selector with physically
-  larger glyphs and wider advances than NUN5. Both live tables are already
-  ASCII, and an `Off`/`On` to `OFF`/`ON` redirect changed zero modal pixels, so
-  this case uses the same accepted 128-unit Controls metric session at the
-  exact ninth draw call rather than another string conversion.
+- State: mapping correction implemented; fresh mapped-state comparison pending.
+- Baseline defect: Current draws fullwidth Shift-JIS `Ｏ　Ｎ`/`ＯＦＦ`, producing
+  physically larger glyphs and wide internal advances, while NUN5 draws compact
+  ASCII `ON`/`OFF`. Exact telemetry locates the NA2 slots at SLPS files
+  `0x505AF0`/`0x505AF8`; mappings T2203/T2204 use the official NUN5 SLES donors
+  at `0x513E68`/`0x513E6C`. Any remaining position mismatch is measured only
+  after this conversion.
 
 ![ss1 Special Controls final selector baseline](battle-special-controls-ss1.png)
 
@@ -63,10 +66,10 @@ before beginning the next slot.
 
 ## Efficiency-prioritized sequential plan
 
-1. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
-   through a dedicated final-selector adapter, matching glyph scale and
-   advance together without changing either ASCII literal family or reopening
-   the accepted first-eight Controls rows.
+1. **ss1 — Special Controls final selector.** Commit the two guarded
+   modal-specific ASCII mappings and remove the unrelated provisional Control
+   Settings hook. Apply the exact mapping bytes to the task-owned state, compare
+   placement against NUN5, and add a bounded position correction only if needed.
 2. **ss5 — Character model move list.** Add bounded wrapping and positioning
    for the right-side move-name column.
 3. **ss6 — Movie list.** Implement variable-height wrapped rows last because

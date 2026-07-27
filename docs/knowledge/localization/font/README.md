@@ -824,10 +824,48 @@ Deterministic generation produces separate normal and selected adapter/callback
 fragments. Static tests verify both exact hook guards and targets, both callback
 ABIs, the shared four-unit Y correction, selected two-unit X compensation,
 216-unit width, 20-unit height/line height, preserved red style, and dependency
-only on the accepted v2 core. No ss4 confirmation-body or Yes/No site is
-selected. Confidence is **high** for caller isolation and the reconstructed
-contract. The user verified both the normal ss2 state and corrected selected
-ss3 state on 2026-07-27; selection no longer overflows or moves the row.
+only on the accepted v2 core. At this accepted boundary no ss4
+confirmation-body or Yes/No site was selected. Confidence is **high** for
+caller isolation and the reconstructed contract. The user verified both the
+normal ss2 state and corrected selected ss3 state on 2026-07-27; selection no
+longer overflows or moves the row.
+
+### Battle quit-confirmation ss4 callers
+
+Clean NA2 BTL bytes and the task-owned ss4 state identify two distinct modal
+draw calls. The clean BTL file uses `0x006B3F00 + file offset`:
+
+- file `0x1C4048` / runtime `0x00877F48` is
+  `800D0E0C00000000`, the native `jal 0x00383600` Yes/No list
+  plus NOP;
+- file `0x1C407C` / clean runtime `0x00877F7C` is
+  `6C090E0C00000000`, the native `jal 0x003825B0` body draw
+  plus NOP.
+
+Earlier retained working notes named BTL `0x1C4008`/`0x1C403C` and ELF
+`0x283814`/`0x283960`; direct clean-file guards prove those locations are one
+displaced block early. Inside `0x00383600`, the exact selected and unselected
+calls are instead ELF files `0x283914` and `0x283A60`, guarded by
+`54E40D0C00000000` and `88E60D0C00000000`.
+
+The modal object owns its Yes/No widget at `+0x110` and body widget at
+`+0x114`. The list descriptor starts at X/Y `50/24`, uses row extra `12`, and
+therefore draws its second row at Y `56`. Retained NUN5 measurements map Yes
+to `(64.5,31.5)` and No to `(68.5,49)`. Because either row may be selected,
+the smallest exact design scopes the complete list call, then adapts the two
+shared inner calls only while that scope is active. The active word is saved
+and restored, so nested drawing remains safe; both inner adapters are native
+tail calls for every other screen.
+
+The body helper builds its native record at X/Y `48/20`. NUN5 evidence retains
+Y `12`; the accepted width table measures the Free Battle first line through
+`and` as `420`, while adding `return` reaches `483`. A 420-unit, two-line
+greedy wrapper therefore selects the observed break without changing the
+canonical T63–T67 records. The adapter copies at most 255 source bytes to its
+own stack, inserts newline bytes only into that draw-time copy, publishes the
+v2 session around the native UI draw, and then discards the copy. Confidence
+is **high** for offsets, guards, ABIs, isolation, and mapping neutrality;
+runtime visual parity remains unconfirmed until a fresh user build.
 
 ### Practice explanation mixed-text wrapping
 

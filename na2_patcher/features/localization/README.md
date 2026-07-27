@@ -1840,6 +1840,20 @@ so the layer is `runtime_proven`. It does not enable the retained
 `font_layout_wrappers` multiplexer or select any ss4 confirmation-body or
 Yes/No call.
 
+The dedicated ss4 layer, `font_v2_quit_confirmation`, leaves T63–T67 and every
+translation mapping unchanged. Its exact BTL list call at file `0x1C4048`
+publishes a transient scope only around native `0x00383600`; the selected and
+unselected calls inside that helper are redirected at ELF files `0x283914`
+and `0x283A60`, but tail-call native behavior unless that scope is active.
+This maps Yes and No to their separately measured NUN5 coordinates in either
+selection state without affecting another list. The exact body call at BTL
+file `0x1C407C` copies at most 255 bytes to the adapter stack, greedily wraps
+that copy inside a 420-by-40 two-line box, and draws from X `48`, Y `12`.
+Neither the formatted source buffer nor canonical mappings receive newline
+bytes. The layer is statically guarded and `approved_for_test`; a fresh user
+build is required because the supplied ss4 state restores the modified
+overlay, ELF, and resident regions.
+
 The third thin caller layer, `font_v2_practice_explanations`, replaces only the
 Practice per-token explanation loop at BTL file `0x1C4BA0`. It assembles one
 bounded 512-byte mixed text/tag buffer, applies unlimited word wrapping inside

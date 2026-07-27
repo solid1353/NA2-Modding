@@ -53,6 +53,12 @@ style and applying the proven two-unit selected-helper X compensation. The
 user verified the rebuilt selected state on 2026-07-27, so the whole Pause
 Controls caller family is accepted.
 
+The ss4 Battle quit-confirmation implementation is now statically complete and
+awaiting the user's fresh-build runtime review. It leaves T63–T67 unchanged,
+wraps only a bounded stack copy at the exact body draw call, and scopes the
+shared selected/unselected coordinate adapters only around the exact ss4
+Yes/No list call. No stale savestate can validate this overlay/resident change.
+
 ## Deferred font-appearance refinement — outside the layout epic
 
 A small residual font-appearance mismatch against NUN5 remains after the
@@ -377,6 +383,32 @@ The retained `font_layout_wrappers` patch remains disabled, and no ss4
 confirmation-body or Yes/No call is selected. Generation, relocation, hook,
 ABI, and package tests pass. The normal ss2 state and corrected selected ss3
 state are both user-verified; the Pause Controls caller family is accepted.
+
+### ss4 epic caller family: Battle quit confirmation
+
+The ss4 implementation adds one explicit caller-local layer rather than
+re-enabling the retained global layout multiplexer:
+
+- BTL file `0x1C4048` scopes the native `0x00383600` Yes/No list call;
+- BTL file `0x1C407C` routes the native `0x003825B0` body call through a
+  bounded draw-time wrapper;
+- ELF files `0x283914` and `0x283A60` replace only the selected and unselected
+  calls inside `0x00383600`.
+
+The body wrapper copies at most 255 bytes, greedily wraps the copy inside a
+420-unit two-line box, and draws at the retained NUN5-local X/Y origin. It
+never mutates T63–T67, the source buffer, or any translation mapping. The list
+wrapper publishes one nested-safe transient word only while the exact ss4 list
+is drawing; outside that interval both shared call-site adapters tail-call
+native behavior unchanged. Yes and No retain their independently measured
+NUN5 coordinates in either selection state.
+
+Deterministic generation and focused package tests verify all four clean
+guards, relocation targets, transient-data initialization, native fallback
+tails, two-line geometry, bounded copy, and mapping neutrality. Runtime status
+remains `approved_for_test` until the user builds a fresh ISO and reviews ss4;
+the supplied pre-build state restores changed BTL/ELF/resident bytes and
+cannot validate this patch.
 
 ### Static and automated validation
 

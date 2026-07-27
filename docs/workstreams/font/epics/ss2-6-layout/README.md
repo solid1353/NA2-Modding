@@ -44,10 +44,15 @@ before beginning the next slot.
 
 ### ss4 — Quit confirmation
 
-- State: baseline captured; not implemented.
+- State: caller-local rendering implementation complete for review; awaiting
+  the user's fresh-build runtime capture and acceptance.
 - Remaining defect: Current keeps the confirmation body on one overflowing
   line, while NUN5 wraps it into two lines; the Yes/No row placement also
   differs.
+- Implementation: T63–T67 and every canonical mapping remain unchanged. The
+  exact Battle-modal body call wraps a bounded stack copy into two lines at
+  draw time, while the exact Yes/No list call publishes a transient scope for
+  selected and unselected NUN5-coordinate adapters.
 
 ![ss4 Quit confirmation baseline](battle-quit-confirmation-ss4.png)
 

@@ -83,6 +83,12 @@ V2_PAUSE_LIST_SELECTED_CALLBACK = (
 V2_PAUSE_LIST_SELECTED_ADAPTER = (
     f"{V2_PREFIX}.pause_list_selected_adapter"
 )
+V2_QUIT_ACTIVE = f"{V2_PREFIX}.quit_active"
+V2_QUIT_CHOICES_SCOPE = f"{V2_PREFIX}.quit_choices_scope"
+V2_QUIT_SELECTED_ADAPTER = f"{V2_PREFIX}.quit_selected_adapter"
+V2_QUIT_UNSELECTED_ADAPTER = f"{V2_PREFIX}.quit_unselected_adapter"
+V2_QUIT_BODY_CALLBACK = f"{V2_PREFIX}.quit_body_callback"
+V2_QUIT_BODY_ADAPTER = f"{V2_PREFIX}.quit_body_adapter"
 V2_NATIVE_MEASURE = f"{V2_PREFIX}.native_measure"
 V2_WRAP_NATIVE = f"{V2_PREFIX}.wrap_native"
 V2_PRACTICE_TOKENS = f"{V2_PREFIX}.practice_tokens"
@@ -107,6 +113,9 @@ FONT_CENTER = 0x00379240
 FONT_BOX_DRAW = 0x00382310
 FONT_PAUSE_LIST_DRAW = 0x00382470
 FONT_PAUSE_LIST_SELECTED_DRAW = 0x003827A0
+FONT_UI_DRAW = 0x00379A20
+FONT_SELECTED_DRAW = 0x00379150
+FONT_CHOICE_LIST_DRAW = 0x00383600
 FONT_ICON_DRAW = 0x0037BB40
 SPRINTF = 0x0017BCA0
 FORMAT_D = 0x006042D3
@@ -156,6 +165,14 @@ PRACTICE_PAUSE_LIST_SELECTED_X_OFFSET = 2.0
 PRACTICE_PAUSE_LIST_BOX_WIDTH = 216
 PRACTICE_PAUSE_LIST_BOX_HEIGHT = 20
 PRACTICE_PAUSE_LIST_LINE_HEIGHT = 20.0
+QUIT_BODY_BOX_X = 48.0
+QUIT_BODY_BOX_Y = 12.0
+QUIT_BODY_BOX_WIDTH = 420
+QUIT_BODY_BOX_HEIGHT = 40
+QUIT_BODY_LINE_HEIGHT = 20.0
+QUIT_BODY_LINE_LIMIT = 2
+QUIT_BODY_BUFFER = 0x80
+QUIT_BODY_BUFFER_SIZE = 0x100
 COLLECTION_BODY_TARGET_Y = 12.0
 PRACTICE_BODY_TARGET_Y = 12.0
 CHARACTER_BODY_BOX_X = 8.0
@@ -1385,6 +1402,306 @@ def build_v2_pause_list_selected_adapter() -> Fragment:
         payload,
         relocations,
     )
+
+
+def build_v2_quit_choices_scope() -> Fragment:
+    """Publish ss4 scope only while its native Yes/No list is drawing."""
+
+    zero, a0 = 0, 4
+    t0 = 8
+    s0 = 16
+    sp, ra = 29, 31
+    frame_size = 0x20
+    saved_active = 0x10
+    saved_s0 = 0x18
+    saved_ra = 0x1C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    assembler.emit(mips.i_type(0x2B, sp, s0, saved_s0))
+    assembler.load_symbol_word(t0, s0, 0x09, V2_QUIT_ACTIVE)
+    assembler.emit(mips.i_type(0x23, s0, t0, 0))
+    assembler.emit(mips.i_type(0x2B, sp, t0, saved_active))
+    assembler.emit(mips.i_type(0x09, zero, t0, 1))
+    assembler.emit(mips.i_type(0x2B, s0, t0, 0))
+    assembler.emit(mips.jump(0x03, FONT_CHOICE_LIST_DRAW))
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x23, sp, t0, saved_active))
+    assembler.emit(mips.i_type(0x2B, s0, t0, 0))
+    assembler.emit(mips.i_type(0x23, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_QUIT_CHOICES_SCOPE, payload, relocations)
+
+
+def build_v2_quit_selected_adapter() -> Fragment:
+    """Map only the selected ss4 Yes/No row to its NUN5 coordinates."""
+
+    zero = 0
+    t0, t1 = 8, 9
+    assembler = mips.Assembler()
+    assembler.load_symbol_word(t0, t0, 0x23, V2_QUIT_ACTIVE)
+    assembler.branch(0x04, t0, zero, "original")
+    assembler.emit(mips.mfc1(t1, 13))
+    mips.load_u32(assembler, t0, float_bits(YES_SOURCE[1]))
+    assembler.branch(0x04, t1, t0, "map_yes")
+    assembler.emit(0)
+    mips.load_u32(assembler, t0, float_bits(NO_SOURCE[1]))
+    assembler.branch(0x04, t1, t0, "map_no")
+    assembler.emit(0)
+    assembler.branch(0x04, zero, zero, "original")
+    assembler.emit(0)
+
+    assembler.label("map_yes")
+    emit_load_float(assembler, t0, 12, YES_TARGET[0])
+    emit_load_float(assembler, t0, 13, YES_TARGET[1])
+    assembler.branch(0x04, zero, zero, "original")
+    assembler.emit(0)
+
+    assembler.label("map_no")
+    emit_load_float(assembler, t0, 12, NO_TARGET[0])
+    emit_load_float(assembler, t0, 13, NO_TARGET[1])
+
+    assembler.label("original")
+    assembler.emit(mips.jump(0x02, FONT_SELECTED_DRAW))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(V2_QUIT_SELECTED_ADAPTER, payload, relocations)
+
+
+def build_v2_quit_unselected_adapter() -> Fragment:
+    """Temporarily map one unselected ss4 Yes/No row, then restore it."""
+
+    zero, a1 = 0, 5
+    t0, t1 = 8, 9
+    s0 = 16
+    sp, ra = 29, 31
+    frame_size = 0x30
+    saved_x = 0x10
+    saved_y = 0x14
+    saved_s0 = 0x28
+    saved_ra = 0x2C
+
+    assembler = mips.Assembler()
+    assembler.load_symbol_word(t0, t0, 0x23, V2_QUIT_ACTIVE)
+    assembler.branch(0x04, t0, zero, "original")
+    assembler.emit(mips.i_type(0x23, a1, t1, 4))
+    mips.load_u32(assembler, t0, float_bits(YES_SOURCE[1]))
+    assembler.branch(0x04, t1, t0, "map_yes")
+    assembler.emit(0)
+    mips.load_u32(assembler, t0, float_bits(NO_SOURCE[1]))
+    assembler.branch(0x04, t1, t0, "map_no")
+    assembler.emit(0)
+    assembler.branch(0x04, zero, zero, "original")
+    assembler.emit(0)
+
+    assembler.label("map_yes")
+    mips.load_u32(assembler, t0, float_bits(YES_TARGET[0]))
+    mips.load_u32(assembler, t1, float_bits(YES_TARGET[1]))
+    assembler.branch(0x04, zero, zero, "mapped")
+    assembler.emit(0)
+
+    assembler.label("map_no")
+    mips.load_u32(assembler, t0, float_bits(NO_TARGET[0]))
+    mips.load_u32(assembler, t1, float_bits(NO_TARGET[1]))
+
+    assembler.label("mapped")
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    assembler.emit(mips.i_type(0x2B, sp, s0, saved_s0))
+    assembler.emit(mips.r_type(a1, zero, s0, 0x21))
+    assembler.emit(mips.i_type(0x23, s0, a1, 0))
+    assembler.emit(mips.i_type(0x2B, sp, a1, saved_x))
+    assembler.emit(mips.i_type(0x23, s0, a1, 4))
+    assembler.emit(mips.i_type(0x2B, sp, a1, saved_y))
+    assembler.emit(mips.i_type(0x2B, s0, t0, 0))
+    assembler.emit(mips.i_type(0x2B, s0, t1, 4))
+    assembler.emit(mips.r_type(s0, zero, a1, 0x21))
+    assembler.emit(mips.jump(0x03, FONT_UI_DRAW))
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x23, sp, t0, saved_x))
+    assembler.emit(mips.i_type(0x2B, s0, t0, 0))
+    assembler.emit(mips.i_type(0x23, sp, t0, saved_y))
+    assembler.emit(mips.i_type(0x2B, s0, t0, 4))
+    assembler.emit(mips.i_type(0x23, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+
+    assembler.label("original")
+    assembler.emit(mips.jump(0x02, FONT_UI_DRAW))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(V2_QUIT_UNSELECTED_ADAPTER, payload, relocations)
+
+
+def build_v2_quit_body_callback() -> Fragment:
+    """Draw the wrapped ss4 body with its NUN5-local record coordinates."""
+
+    zero, a0, a1, a2, a3 = 0, 4, 5, 6, 7
+    t0 = 8
+    sp, ra = 29, 31
+    frame_size = 0x30
+    saved_ra = 0x2C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    mips.load_u32(assembler, t0, float_bits(QUIT_BODY_BOX_X))
+    assembler.emit(mips.i_type(0x2B, sp, t0, 0))
+    mips.load_u32(assembler, t0, float_bits(QUIT_BODY_BOX_Y))
+    assembler.emit(mips.i_type(0x2B, sp, t0, 4))
+    assembler.emit(mips.i_type(0x2B, sp, a1, 8))
+    assembler.emit(mips.i_type(0x2B, sp, a2, 12))
+    assembler.emit(mips.i_type(0x24, a0, t0, 0x62))
+    assembler.branch(0x04, t0, zero, "return")
+    assembler.emit(mips.i_type(0x23, a0, a2, 0x74))
+    assembler.emit(mips.i_type(0x23, a0, a0, 0x78))
+    assembler.emit(mips.i_type(0x09, sp, a1, 0))
+    assembler.emit(mips.i_type(0x09, zero, a3, -1))
+    assembler.emit(mips.jump(0x03, FONT_UI_DRAW))
+    assembler.emit(0)
+
+    assembler.label("return")
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_QUIT_BODY_CALLBACK, payload, relocations)
+
+
+def build_v2_quit_body_adapter() -> Fragment:
+    """Copy and greedily wrap the ss4 body only for its exact draw call."""
+
+    zero, v0, v1, a0, a1, a2 = 0, 2, 3, 4, 5, 6
+    t0, t1 = 8, 9
+    s0, s1, s2, s3, s4 = 16, 17, 18, 19, 20
+    sp, ra = 29, 31
+    frame_size = 0x1C0
+    saved_s4 = 0x1A8
+    saved_s3 = 0x1AC
+    saved_s2 = 0x1B0
+    saved_s1 = 0x1B4
+    saved_s0 = 0x1B8
+    saved_ra = 0x1BC
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    assembler.emit(mips.i_type(0x2B, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x2B, sp, s1, saved_s1))
+    assembler.emit(mips.i_type(0x2B, sp, s2, saved_s2))
+    assembler.emit(mips.i_type(0x2B, sp, s3, saved_s3))
+    assembler.emit(mips.i_type(0x2B, sp, s4, saved_s4))
+    assembler.emit(mips.r_type(a0, zero, s0, 0x21))
+    assembler.emit(mips.r_type(a1, zero, s1, 0x21))
+    assembler.emit(mips.r_type(a2, zero, s2, 0x21))
+    assembler.emit(mips.i_type(0x09, sp, s3, QUIT_BODY_BUFFER))
+    assembler.emit(mips.r_type(s3, zero, s4, 0x21))
+    assembler.emit(
+        mips.i_type(0x09, zero, t0, QUIT_BODY_BUFFER_SIZE - 1)
+    )
+
+    assembler.label("copy")
+    assembler.emit(mips.i_type(0x24, s1, t1, 0))
+    assembler.emit(mips.i_type(0x28, s4, t1, 0))
+    assembler.branch(0x04, t1, zero, "copied")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x09, s1, s1, 1))
+    assembler.emit(mips.i_type(0x09, s4, s4, 1))
+    assembler.emit(mips.i_type(0x09, t0, t0, -1))
+    assembler.branch(0x05, t0, zero, "copy")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x28, s4, zero, 0))
+
+    assembler.label("copied")
+    assembler.emit(mips.r_type(s3, zero, a0, 0x21))
+    assembler.emit(
+        mips.i_type(0x09, zero, a1, QUIT_BODY_BOX_WIDTH)
+    )
+    assembler.emit(
+        mips.i_type(0x09, zero, a2, QUIT_BODY_LINE_LIMIT)
+    )
+    assembler.jump_symbol(0x03, V2_WRAP_NATIVE)
+    assembler.emit(0)
+    assembler.emit(
+        mips.i_type(0x2B, sp, v0, V2_SESSION_MEASURED_WIDTH)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, v1, V2_SESSION_LINE_COUNT)
+    )
+    assembler.emit(mips.i_type(0x2B, sp, s3, V2_SESSION_TEXT))
+    mips.load_u32(assembler, t0, float_bits(QUIT_BODY_BOX_X))
+    assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_X))
+    mips.load_u32(assembler, t0, float_bits(QUIT_BODY_BOX_Y))
+    assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_Y))
+    mips.load_u32(assembler, t0, QUIT_BODY_BOX_WIDTH)
+    assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_WIDTH))
+    mips.load_u32(assembler, t0, QUIT_BODY_BOX_HEIGHT)
+    assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_HEIGHT))
+    assembler.emit(
+        mips.i_type(
+            0x2B, sp, zero, V2_SESSION_HORIZONTAL_ALIGNMENT
+        )
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, zero, V2_SESSION_VERTICAL_ALIGNMENT)
+    )
+    assembler.emit(
+        mips.i_type(
+            0x09,
+            zero,
+            t0,
+            V2_FLAG_NEWLINE_BYTES | V2_FLAG_PREMEASURED,
+        )
+    )
+    assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_FLAGS))
+    assembler.emit(
+        mips.i_type(
+            0x09, zero, t0, QUIT_BODY_LINE_LIMIT
+        )
+    )
+    assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_LINE_LIMIT))
+    emit_load_float(
+        assembler, t0, 0, QUIT_BODY_LINE_HEIGHT
+    )
+    assembler.emit(mips.i_type(0x39, sp, 0, V2_SESSION_LINE_HEIGHT))
+    assembler.load_symbol_word(
+        t0, t0, 0x09, V2_QUIT_BODY_CALLBACK
+    )
+    assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_CALLBACK))
+    assembler.emit(
+        mips.i_type(0x2B, sp, s0, V2_SESSION_CALLBACK_ARG0)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, s3, V2_SESSION_CALLBACK_ARG1)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, s2, V2_SESSION_CALLBACK_ARG2)
+    )
+    assembler.emit(
+        mips.r_type(sp, zero, t0, 0x21)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_CALLBACK_ARG3)
+    )
+    assembler.emit(mips.r_type(sp, zero, a0, 0x21))
+    assembler.jump_symbol(0x03, V2_ADAPTER_CALL)
+    assembler.emit(0)
+
+    assembler.emit(mips.i_type(0x23, sp, s4, saved_s4))
+    assembler.emit(mips.i_type(0x23, sp, s3, saved_s3))
+    assembler.emit(mips.i_type(0x23, sp, s2, saved_s2))
+    assembler.emit(mips.i_type(0x23, sp, s1, saved_s1))
+    assembler.emit(mips.i_type(0x23, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_QUIT_BODY_ADAPTER, payload, relocations)
 
 
 def build_v2_native_measure() -> Fragment:
@@ -2796,6 +3113,12 @@ def v2_fragments() -> tuple[Fragment, ...]:
             alignment=4,
         ),
         Fragment(
+            V2_QUIT_ACTIVE,
+            b"\0" * 4,
+            kind="data",
+            alignment=4,
+        ),
+        Fragment(
             V2_ASCII_WIDTHS,
             build_ascii_widths(),
             kind="rodata",
@@ -2832,6 +3155,11 @@ def v2_fragments() -> tuple[Fragment, ...]:
         build_v2_pause_list_adapter(),
         build_v2_pause_list_selected_callback(),
         build_v2_pause_list_selected_adapter(),
+        build_v2_quit_choices_scope(),
+        build_v2_quit_selected_adapter(),
+        build_v2_quit_unselected_adapter(),
+        build_v2_quit_body_callback(),
+        build_v2_quit_body_adapter(),
         build_v2_native_measure(),
         build_v2_wrap_native(),
         build_v2_practice_append(),

@@ -1850,9 +1850,14 @@ selection state without affecting another list. The exact body call at BTL
 file `0x1C407C` copies at most 255 bytes to the adapter stack, greedily wraps
 that copy inside a 420-by-40 two-line box, and draws from X `48`, Y `12`.
 Neither the formatted source buffer nor canonical mappings receive newline
-bytes. The layer is statically guarded and `approved_for_test`; a fresh user
-build is required because the supplied ss4 state restores the modified
-overlay, ELF, and resident regions.
+bytes. Fresh user pairs across all four Battle/Practice and Game
+Mode/Character Select combinations prove that this first X value starts every
+Current body at screenshot X `101`, versus NUN5 X `72`, while Y already
+matches. The shared local X is therefore corrected to `19` with Y `12`
+unchanged. String Translation separately owns the exposed wrong dynamic
+content. The layer remains `approved_for_test`; a fresh user build is required
+because the supplied states restore the modified overlay, ELF, and resident
+regions.
 
 The third thin caller layer, `font_v2_practice_explanations`, replaces only the
 Practice per-token explanation loop at BTL file `0x1C4BA0`. It assembles one

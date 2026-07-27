@@ -1597,7 +1597,7 @@ class RuntimeInjectorTests(unittest.TestCase):
             )
             for offset in range(0, len(callback_payload), 4)
         }
-        for value in (48.0, 12.0):
+        for value in (19.0, 12.0):
             bits = struct.unpack("<I", struct.pack("<f", value))[0]
             self.assertIn(
                 mips.i_type(0x0F, 0, 8, bits >> 16),

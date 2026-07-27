@@ -826,8 +826,8 @@ ABIs, the shared four-unit Y correction, selected two-unit X compensation,
 216-unit width, 20-unit height/line height, preserved red style, and dependency
 only on the accepted v2 core. No ss4 confirmation-body or Yes/No site is
 selected. Confidence is **high** for caller isolation and the reconstructed
-contract. The normal ss2 state is user-accepted; runtime parity for the
-corrected selected ss3 state remains unverified.
+contract. The user verified both the normal ss2 state and corrected selected
+ss3 state on 2026-07-27; selection no longer overflows or moves the row.
 
 ### Practice explanation mixed-text wrapping
 

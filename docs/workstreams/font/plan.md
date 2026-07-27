@@ -49,8 +49,17 @@ The normal ss2 state remains user-accepted. The remade ss3 state proves that
 the selected red path bypassed that fit, overflowed, and shifted relative to
 the same unselected row. A second guarded BTL hook now applies the same
 216-unit shrink-only box and four-unit Y correction while preserving the red
-style and applying the proven two-unit selected-helper X compensation. Runtime
-review of this selected-path correction remains pending.
+style and applying the proven two-unit selected-helper X compensation. The
+user verified the rebuilt selected state on 2026-07-27, so the whole Pause
+Controls caller family is accepted.
+
+## Deferred font-appearance refinement — outside the layout epic
+
+A small residual font-appearance mismatch against NUN5 remains after the
+accepted Pause Controls layout correction. Its exact refinement is not yet
+scoped. It is recorded here as separate Font work and does not reopen the
+accepted fitting, positioning, or clipping behavior in the ss1–ss6 layout
+epic.
 
 ## Active ss1–ss6 epic priorities
 
@@ -59,19 +68,16 @@ The user directed Font to work only on the
 efficiency-prioritized sequential order supersedes the generic remaining-family
 order below while the epic is active:
 
-1. **ss3 selected-state correction — Pause Controls.** Preserve the accepted
-   normal rows and verify that selection changes only style, without overflow
-   or row movement.
-2. **ss4 — Quit confirmation.** Reuse the accepted Pause Controls plumbing, then add only
+1. **ss4 — Quit confirmation.** Reuse the accepted Pause Controls plumbing, then add only
    the guarded confirmation-body and Yes/No positioning behavior. Commit and
    review it independently.
-3. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
+2. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
    through a dedicated final-selector adapter that matches NUN5 glyph scale
    and advance together; preserve the already-correct ASCII `Off`/`On` source
    and the accepted first-eight Controls result.
-4. **ss5 — Character model move list.** Add bounded wrapping and positioning
+3. **ss5 — Character model move list.** Add bounded wrapping and positioning
    for the right-side move-name column.
-5. **ss6 — Movie list.** Implement the variable-height wrapped-row behavior
+4. **ss6 — Movie list.** Implement the variable-height wrapped-row behavior
    last because it has the largest caller-specific layout and row-advance
    burden.
 
@@ -369,8 +375,8 @@ guarded by `jal 0x003827A0` plus NOP. Together they:
 
 The retained `font_layout_wrappers` patch remains disabled, and no ss4
 confirmation-body or Yes/No call is selected. Generation, relocation, hook,
-ABI, and package tests pass. The normal ss2 state is user-accepted; the
-corrected selected ss3 state awaits the user's rebuilt runtime review.
+ABI, and package tests pass. The normal ss2 state and corrected selected ss3
+state are both user-verified; the Pause Controls caller family is accepted.
 
 ### Static and automated validation
 

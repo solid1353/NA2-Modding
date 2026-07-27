@@ -1835,10 +1835,10 @@ shared v2 shrink-only formula inside a 216-by-20 single-line box and move the
 native Y origin upward four units. The selected adapter preserves the native
 red style, bridges the integer-coordinate ABI, and applies the previously
 proven two-unit selected-helper X compensation so selection does not move the
-row. The normal ss2 state is user-accepted; the corrected selected ss3 state
-remains `approved_for_test` pending matched runtime review. The layer does not
-enable the retained `font_layout_wrappers` multiplexer or select any ss4
-confirmation-body or Yes/No call.
+row. The normal ss2 state and corrected selected ss3 state are user-verified,
+so the layer is `runtime_proven`. It does not enable the retained
+`font_layout_wrappers` multiplexer or select any ss4 confirmation-body or
+Yes/No call.
 
 The third thin caller layer, `font_v2_practice_explanations`, replaces only the
 Practice per-token explanation loop at BTL file `0x1C4BA0`. It assembles one

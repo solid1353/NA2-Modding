@@ -49,14 +49,16 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - `con`: resume the current work without changing its scope or approval state.
 - `ep`: epic.
 - `eff`: report the current recommended effort without changing it.
-- `report` or `grid`: immediately preempt current work. The next user-visible
-  message must contain the actual composed report-grid images. Before that
-  delivery, perform only work strictly required to compose or refresh those
-  grids; do not send status text or continue investigation or implementation.
-  If required inputs are missing, report the exact missing input immediately
-  instead of continuing other work. Result imagery must be actual post-change
-  output; never present source, donor, baseline, pre-fix, or other input
-  screenshots as results.
+- `report` or `grid`: immediately preempt everything. The next user-visible
+  response must be exactly one of: (1) the actual composed post-change
+  report-grid images, or (2) `Cannot produce report grid: <exact reason>.
+  Missing: <exact post-change input>.` No status, promise, findings, tool
+  narration, implementation, final answer, or relay to another task may appear
+  first. If post-change imagery is absent, use outcome (2) immediately; do not
+  build, launch, investigate, or substitute source, donor, baseline, pre-fix,
+  savestate-preview, or other input imagery. If the same message also orders a
+  mistake report to `General`, satisfy this task-report response first and send
+  the separate mistake report afterward; neither replaces the other.
 - `sw`: resume after the user changed the chat to the recommended effort.
 - `ss`: savestate; `ss<number>`: that numbered savestate slot in the user's
   PCSX2, for example `ss7`.

@@ -103,6 +103,12 @@ Next response: short plan + effort recommendation + needed user inputs + approva
 - `con` resumes current work with scope, effort, progress, and approval intact.
 - `ep` means `epic`.
 - `eff` asks for the current recommended effort and does not change it.
+- `report` or `grid` is an immediate response command, not a request to begin
+  producing evidence. The next user-visible response is either the actual
+  composed post-change grid or the exact inability statement required by
+  `AGENTS.md`. No other message or action may precede it. When the same message
+  also requests a mistake report to `General`, deliver the task report or
+  inability statement first, then send the independent mistake report.
 - `sw` resumes after the user stopped only to switch to the recommended effort;
   it preserves prior approval and does not approve an unapproved plan.
 - `ss` means savestate. `ss<number>` refers to that numbered savestate slot in

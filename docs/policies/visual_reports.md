@@ -30,7 +30,13 @@
   composed grid images. Text-only status, promises to deliver, paths, links,
   and internal previews do not satisfy the request. Attach an existing current
   grid immediately; regenerate it first only when its imagery or metadata is
-  stale.
+  stale. If actual post-change imagery does not exist, the next response must
+  instead be `Cannot produce report grid: <exact reason>. Missing: <exact
+  post-change input>.` Stop there: do not build, launch, investigate, attach
+  input imagery, or continue other work before that response.
+- A simultaneous request to report a worker mistake to `General` is separate
+  and comes only after the task grid or exact inability response is visible to
+  the user. The General relay never counts as the requested task report.
 - `view_image`, `Viewed an image`, and similar inspection-tool calls are
   internal inspection only and never deliver an image to the user. Deliver
   each grid in a user-facing commentary or permitted final message as an actual

@@ -9,7 +9,7 @@ from pathlib import Path, PurePosixPath
 from ..binary_patcher import engine as binary_patcher
 from ..translation_importer import engine as translation_importer
 from ...payload_builder.operations import ResidentPayloadBuild, ResolvedPatch
-from . import external as external_strings
+from . import linked_strings
 
 
 STRING_FIELDS = [
@@ -58,7 +58,7 @@ class StringSpec:
 @dataclass(frozen=True)
 class StringPatchDraft:
     translation_plan: translation_importer.TranslationImportPlan
-    external_draft: external_strings.ExternalStringDraft
+    external_draft: linked_strings.ExternalStringDraft
     game_title_policy: dict[str, object]
 
 
@@ -66,7 +66,7 @@ class StringPatchDraft:
 class StringPatchPlan:
     package: binary_patcher.Package
     summary: dict[str, object]
-    external_plan: external_strings.ExternalStringPlan
+    external_plan: linked_strings.ExternalStringPlan
 
 
 @dataclass(frozen=True)
@@ -518,7 +518,7 @@ def build_translation_draft(
         translation_plan,
         title_policy,
     )
-    external_draft = external_strings.build_external_string_draft(
+    external_draft = linked_strings.build_external_string_draft(
         translation_plan=transformed_plan,
         owner=owner,
     )
@@ -548,7 +548,7 @@ def finalize_translation_plan(
 ) -> StringPatchPlan:
     """Compile inline imports and linker-resolved pointer redirects."""
     translation_plan = draft.translation_plan
-    external_plan = external_strings.finalize_external_string_plan(
+    external_plan = linked_strings.finalize_external_string_plan(
         draft.external_draft,
         build=build,
         resolved_patches=resolved_patches,
@@ -585,4 +585,4 @@ def finalize_translation_plan(
 
 
 def external_patch_log_rows(plan: StringPatchPlan) -> list[dict[str, object]]:
-    return external_strings.patch_log_rows(plan.external_plan)
+    return linked_strings.patch_log_rows(plan.external_plan)

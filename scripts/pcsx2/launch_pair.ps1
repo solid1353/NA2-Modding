@@ -13,8 +13,6 @@ $ErrorActionPreference = 'Stop'
 $projectPaths = Get-Na2ProjectPaths
 
 $supportedGames = @(
-    'rebuild',
-    'replacement',
     'current',
     'previous',
     'candidate',
@@ -49,12 +47,6 @@ if ($duplicateGames.Count -gt 0) {
 
 $pcsx2Exe = [IO.Path]::GetFullPath($projectPaths.files.pcsx2_user_exe)
 $na2Command = [IO.Path]::GetFullPath($projectPaths.files.na2_command)
-$translationRebuildIso = [IO.Path]::GetFullPath(
-    (Join-Path $projectPaths.work 'String translation\build\mapping-ids.iso')
-)
-$translationReplacementIso = [IO.Path]::GetFullPath(
-    (Join-Path $projectPaths.work 'String translation\build\replacement.iso')
-)
 $directIsoFiles = @{
     candidate = 'candidate_iso'
     na2s = 'na2_iso'
@@ -65,8 +57,6 @@ $directIsoFiles = @{
 $selectedIsoPaths = @{}
 foreach ($game in $selectedGames) {
     $selectedIsoPaths[$game] = switch ($game) {
-        'rebuild' { $translationRebuildIso }
-        'replacement' { $translationReplacementIso }
         'current' { [IO.Path]::GetFullPath($projectPaths.files.current_iso) }
         'previous' { [IO.Path]::GetFullPath($projectPaths.files.previous_iso) }
         default {

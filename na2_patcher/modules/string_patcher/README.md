@@ -14,15 +14,6 @@ has no local string declarations. Its importer artifact invokes this generic
 consumer as a derived stage. A feature creates `string_patcher/strings.tsv` only
 when it owns actual local declarations.
 
-An explicit `mapping_ids` diagnostic display mode consumes the task-local
-rebuild inventory supplied by the worker wrapper and replaces every candidate
-with its complete permanent `T#` identifier before placement. Sequence
-fragments use `.1`, `.2`, and so on. IDs are never shortened by dropping the
-`T` prefix. It exists only for verified worker builds used to identify visible
-source rows; normal builds continue consuming canonical `mappings.tsv`
-donor/override text. The diagnostic mode never rewrites either table or the
-active profile.
-
 The importer supplies replacement message families only after proving complete
 `<br>`-part coverage. When a family member overflows, the patcher materializes
 the complete parent family once and redirects the validated parent/message

@@ -12,47 +12,6 @@ from na2_patcher.modules.translation_importer import engine
 
 
 class TranslationImporterTests(unittest.TestCase):
-    def write_rebuild_rows(
-        self,
-        path: Path,
-        rows: list[dict[str, str]],
-    ) -> None:
-        with path.open("w", encoding="utf-8-sig", newline="") as handle:
-            writer = csv.DictWriter(
-                handle,
-                fieldnames=engine.REBUILD_FIELDS,
-                delimiter="\t",
-                lineterminator="\n",
-            )
-            writer.writeheader()
-            writer.writerows(rows)
-
-    def rebuild_row(self, mapping_id: str, source_ref: str) -> dict[str, str]:
-        return {
-            "id": mapping_id,
-            "display_context": "Unconfirmed > Test",
-            "source": "日本語",
-            "donor": "",
-            "prefix": "",
-            "replacement": "",
-            "display_basis": "",
-            "source_ref": source_ref,
-            "donor_ref": "",
-            "mode": "slot",
-            "capacity": "16",
-            "transform": "",
-            "arguments": "",
-            "reference_refs": "",
-            "parent_mapping_id": "",
-            "legacy_ids": "M0001",
-        }
-
-    def test_package_exports_mapping_id_import_builder(self) -> None:
-        self.assertIs(
-            translation_importer.build_mapping_id_import_plan,
-            engine.build_mapping_id_import_plan,
-        )
-
     def test_canonical_mappings_use_t_ids_and_evidence_guards(
         self,
     ) -> None:
@@ -254,40 +213,6 @@ class TranslationImporterTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(ValueError, "unsupported mode"):
             engine.parse_mappings([row])
-
-    def test_rebuild_ids_follow_physical_row_order_and_sources_are_unique(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            path = Path(temporary) / "rebuild.tsv"
-            rows = [
-                self.rebuild_row("T1", "NA2_SLPS@0x10"),
-                self.rebuild_row("T3", "NA2_SLPS@0x20"),
-            ]
-            self.write_rebuild_rows(path, rows)
-            with self.assertRaisesRegex(ValueError, "physical row order"):
-                engine.read_rebuild_rows(path)
-
-            rows[1]["id"] = "T2"
-            rows[1]["source_ref"] = rows[0]["source_ref"]
-            self.write_rebuild_rows(path, rows)
-            with self.assertRaisesRegex(ValueError, "duplicate source_ref"):
-                engine.read_rebuild_rows(path)
-
-            rows = [
-                self.rebuild_row("T2", "NA2_SLPS@0x10"),
-                self.rebuild_row("T1", "NA2_SLPS@0x20"),
-            ]
-            self.write_rebuild_rows(path, rows)
-            with self.assertRaisesRegex(ValueError, "physical row order"):
-                engine.read_rebuild_rows(path)
-
-    def test_rebuild_rows_do_not_require_or_resolve_donor_text(self) -> None:
-        row = self.rebuild_row("T1", "NA2_SLPS@0x10")
-        row["legacy_ids"] = ""
-        parsed = engine.parse_rebuild_mappings([row])
-        self.assertEqual(parsed[0]["id"], "T1")
-        self.assertEqual(parsed[0]["donor"], "")
-        self.assertEqual(parsed[0]["donor_ref"], "")
-        self.assertEqual(parsed[0]["legacy_ids"], ())
 
     def test_rejects_missing_display_metadata(self) -> None:
         row = {

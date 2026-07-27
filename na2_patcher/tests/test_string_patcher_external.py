@@ -247,37 +247,20 @@ class IntegratedExternalStringTests(unittest.TestCase):
             )
         )
 
-    def test_rebuild_fixes_confirmed_mapping_defects(self) -> None:
+    def test_canonical_mappings_preserve_confirmed_fixes(self) -> None:
         self.assertEqual(self.import_plan.resolved_texts["T443"], "Kankuro")
         self.assertEqual(self.import_plan.resolved_texts["T812"], "Provocation")
         self.assertEqual(
             self.import_plan.resolved_texts["T813"],
             "Contrasting Pair",
         )
-        self.assertNotIn(
-            "T2158",
-            {str(row["id"]) for row in self.import_plan.text_mappings},
-        )
+        self.assertEqual(self.import_plan.resolved_texts["T2158"], "Warning")
         self.assertEqual(self.import_plan.resolved_texts["T5"], "MAX")
         self.assertEqual(self.import_plan.resolved_texts["T528"], "Opponent")
 
     def test_generic_choice_labels_preserve_official_case(self) -> None:
         self.assertEqual(self.import_plan.resolved_texts["T2025"], "No")
         self.assertEqual(self.import_plan.resolved_texts["T2026"], "Yes")
-
-    def test_mapping_id_display_rejects_unknown_mode(self) -> None:
-        with self.assertRaisesRegex(ValueError, "unsupported translation display"):
-            string_patcher.build_translation_draft(
-                translation_plan=self.import_plan,
-                owner="localization.string_patcher",
-                title_policy=string_patcher.GameTitlePolicy(
-                    imported_title="Naruto Shippuden: Ultimate Ninja 5",
-                    output_title="Narutimate Accel v2.28",
-                    expected_mapping_count=6,
-                    expected_occurrence_count=7,
-                ),
-                translation_display="guess",
-            )
 
     def test_title_policy_fails_closed_in_string_patcher(self) -> None:
         with self.assertRaisesRegex(ValueError, "policy coverage differs"):

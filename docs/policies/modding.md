@@ -26,10 +26,8 @@
   offsets, own global loader/memory integration, or construct the final file.
 - Translation checkpoints tag the complete project state; do not duplicate
   mappings into snapshots. Accepted normal builds continue using
-  `na2_patcher/features/localization/translation_importer/mappings.tsv`.
-  The completed diagnostic inventory is retained only in the String
-  Translation work directory and is supplied explicitly to worker diagnostics;
-  it is not a hash-covered feature input after final cutover.
+  `na2_patcher/features/localization/translation_importer/mappings.tsv` as the
+  sole translation source of truth.
 
 ## Binary and donor changes
 

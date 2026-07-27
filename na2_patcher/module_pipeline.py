@@ -74,9 +74,6 @@ def _bind_string_consumer(
 
 def prepare_module_pipeline(
     profile: Profile,
-    *,
-    translation_display: str = "translation",
-    translation_rebuild_path: Path | None = None,
 ) -> PreparedModulePipeline:
     """Prepare artifacts and link all shared payload contributions once."""
     ordered_modules = resolve_module_order(profile.modules)
@@ -111,32 +108,11 @@ def prepare_module_pipeline(
         source_arguments = _translation_source_arguments(
             profile.roots["na2"], "na2"
         )
-        if translation_display == "mapping_ids":
-            if translation_rebuild_path is None:
-                raise ValueError(
-                    "mapping_ids display requires an explicit rebuild table"
-                )
-            import_plan = (
-                translation_importer_module.build_mapping_id_import_plan(
-                    **source_arguments,
-                    rebuild_path=translation_rebuild_path,
-                    apply="BTL,ETC,SLPS",
-                )
-            )
-        elif translation_display == "translation":
-            if translation_rebuild_path is not None:
-                raise ValueError(
-                    "normal translation display does not accept a rebuild table"
-                )
-            import_plan = translation_importer_module.build_translation_import_plan(
-                **source_arguments,
-                data_root=provider.input_path,
-                apply="BTL,ETC,SLPS",
-            )
-        else:
-            raise ValueError(
-                f"Unsupported translation display mode: {translation_display!r}"
-            )
+        import_plan = translation_importer_module.build_translation_import_plan(
+            **source_arguments,
+            data_root=provider.input_path,
+            apply="BTL,ETC,SLPS",
+        )
         consumer = _bind_string_consumer(provider, ordered_modules)
         owner = (
             consumer.module_id
@@ -149,7 +125,6 @@ def prepare_module_pipeline(
         draft = string_patcher_module.build_translation_draft(
             translation_plan=import_plan,
             owner=owner,
-            translation_display=translation_display,
             title_policy=string_patcher_module.GameTitlePolicy(
                 imported_title=profile.identity.imported_game_title,
                 output_title=profile.identity.output_game_title,

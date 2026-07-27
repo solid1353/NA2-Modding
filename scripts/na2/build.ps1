@@ -1,10 +1,7 @@
 [CmdletBinding()]
 param(
     [switch]$CandidateOnly,
-    [string]$WorkerOutputIso,
-    [ValidateSet('translation', 'mapping_ids')]
-    [string]$TranslationDisplay = 'translation',
-    [string]$TranslationRebuildTable
+    [string]$WorkerOutputIso
 )
 
 $ErrorActionPreference = 'Stop'
@@ -15,18 +12,6 @@ $projectPaths = Get-Na2ProjectPaths
 
 if ($CandidateOnly -and -not [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
     throw '-CandidateOnly and -WorkerOutputIso are mutually exclusive.'
-}
-if ($TranslationDisplay -ne 'translation' -and
-    [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
-    throw 'Diagnostic translation display is allowed only for worker-output builds.'
-}
-if ($TranslationDisplay -eq 'mapping_ids' -and
-    [string]::IsNullOrWhiteSpace($TranslationRebuildTable)) {
-    throw 'Mapping-ID display requires -TranslationRebuildTable.'
-}
-if ($TranslationDisplay -eq 'translation' -and
-    -not [string]::IsNullOrWhiteSpace($TranslationRebuildTable)) {
-    throw '-TranslationRebuildTable is valid only for mapping-ID display.'
 }
 $workerBuild = if (-not [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
     Get-Na2WorkerBuildContext `
@@ -203,13 +188,7 @@ if ($CandidateOnly -or $null -ne $workerBuild) {
         '--output', $isolatedOutputIso
         '--profile', $profile
         '--profile-log-directory', $candidateProfileLogDirectory
-        '--translation-display', $TranslationDisplay
     )
-    if (-not [string]::IsNullOrWhiteSpace($TranslationRebuildTable)) {
-        $candidateArguments += @(
-            '--translation-rebuild-table', $TranslationRebuildTable
-        )
-    }
 
     $isolatedLabel = if ($isolatedKind -eq 'worker') {
         'Worker-output mode'
@@ -221,12 +200,6 @@ if ($CandidateOnly -or $null -ne $workerBuild) {
         "[na2] ${isolatedLabel}: full verified build; preflight, " +
         'Current/Previous promotion, rotation, and receipt updates are disabled.'
     ) -ForegroundColor Cyan
-    if ($TranslationDisplay -ne 'translation') {
-        Write-Host (
-            "[na2] Diagnostic translation display: $TranslationDisplay; " +
-            'canonical mappings and the active profile remain unchanged.'
-        ) -ForegroundColor Cyan
-    }
     $candidateCompleted = $false
     try {
         Push-Location $projectPaths.repository

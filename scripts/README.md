@@ -51,13 +51,6 @@ history; do not recreate an archive directory for dead scripts.
   extraction, rendering preflight, deterministic Victory texture and layout
   generation, and user-directed runtime research for NUN5-to-NA2 UI
   comparisons.
-- `research/translation/`: the worker-only mapping-ID diagnostic builder used
-  to identify visible strings, plus `sync_rebuild.py`, which initializes and
-  verifies the task-local permanent `T#` candidate inventory from the retained
-  v40 and canonical-table references without copying donor translations. The
-  wrapper supplies that work-artifact path explicitly; it is not a canonical
-  feature input. These tools do not change normal profile behavior or shared
-  ISO state.
 
 Normal builds call `na2_patcher.build_profile` through `na2/build.ps1`.
 Before that call, `na2/build.ps1` checks the deterministic successful-build
@@ -79,12 +72,6 @@ User-owned shared-image builds and launches run `act na2` automatically;
 worker-output builds never actualize. The standalone `act` command can run all
 actualization modes without building or launching.
 
-During String translation diagnostics, the user-facing `na` pair launcher
-accepts `na rebuild nun5`. The `rebuild` selector addresses the verified worker
-artifact at `work/String translation/build/mapping-ids.iso`. The retained
-`na replacement nun5` selector can still open the last cumulative worker ISO
-for historical visual comparison, but no build mode or canonical table
-produces that snapshot after the final cutover.
 `na` continues accepting any ordered combination of registered ISO selectors;
 its existing selectors and zero-argument behavior remain unchanged. A missing
 selected ISO fails before any PCSX2 process is changed.
@@ -157,3 +144,5 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 | `scripts/na2/test_test_memory_card.ps1` | `70a81a36ecf119b6330b19984c9c8104d54bcc61` | Retired with the later agent PCSX2 runtime framework; there is no maintained replacement. |
 | `scripts/na2/pine.ps1`, `provision_test_pcsx2.ps1`, `test_operation.ps1`, `test_process_ownership.ps1`, `test_runtime.ps1`, `test_test_operation.ps1`, `test_test_pine.ps1`, `test_test_runtime.ps1`, `test_worker_pcsx2.ps1`, and `worker_pcsx2.ps1` | `4f6578e7d131fca9905aff8358371ed6eb8d9791` | The unsolicited agent PCSX2 ownership, PINE-operation, provisioning, and runtime framework was removed. Only the minimal hidden launcher remains. |
 | `scripts/research/translation/check_translation_lengths.ps1` | `91a7dabbbe8ac957b4c04d3abe7aec721757b839` | Its fixed-slot `old`/`new` assumptions are obsolete; translation importer and string patcher validation now enforce encoding and capacity rules. |
+| `scripts/research/translation/build_mapping_ids.ps1` | `9bb1e191a2e523f467f60c63758db2ff1df0b15b` | The temporary mapping-ID worker build was retired after visible rows were promoted; canonical `translation_importer/mappings.tsv` and ordinary profile builds are maintained. |
+| `scripts/research/translation/sync_rebuild.py` | `9bb1e191a2e523f467f60c63758db2ff1df0b15b` | The parallel candidate inventory was retired; edit and validate canonical `translation_importer/mappings.tsv` directly. |

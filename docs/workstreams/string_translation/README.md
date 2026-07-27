@@ -4,12 +4,9 @@ Canonical documentation landing page for the `String translation` workstream.
 
 ## Workstream policy
 
-- `mappings.tsv` is the single canonical normal-build translation table.
-  The completed stable-`T#` diagnostic inventory is retained only at
-  `work/String translation/artifacts/diagnostic-rebuild/rebuild.tsv`; it is
-  not a feature input and is never executed by normal builds. Existing legacy
-  mappings and donor links are reference material rather than presumed correct
-  coverage.
+- `mappings.tsv` is the single canonical translation table and the only
+  translation source consumed by normal builds. Existing legacy mappings and
+  donor links are reference material rather than presumed correct coverage.
 - Translate only strings confirmed to be displayed through the `T#`
   screenshot pass. The rebuilt executable table admits a row only when it has
   a concrete `display_context` and a `display_basis`: directly seen in an ID
@@ -45,7 +42,14 @@ Global source, binary-safety, profile, testing, and cleanup rules remain in
 
 ## Documents
 
-- [Current T-ID from-scratch rebuild and validation plan](rebuild_with_ids.md)
-- [Historical v45 rebuild record](rebuild.md)
 - [Localization feature and mapping history](../../../na2_patcher/features/localization/README.md)
 - [External string-payload architecture](../../knowledge/localization/external_string_payload.md)
+
+## Retired rebuild workflow
+
+The temporary mapping-ID diagnostic build, its stable candidate inventory, the
+cumulative replacement ISO, and their launcher selectors were retired after
+the evidence-backed rows were promoted to canonical `mappings.tsv`. Their last
+complete tracked implementation is recoverable from Git commit
+`9bb1e191a2e523f467f60c63758db2ff1df0b15b`; recover it only into task-owned
+temporary space for historical inspection.

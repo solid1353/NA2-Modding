@@ -32,7 +32,6 @@ STRING_FIELDS = [
     "review_notes",
 ]
 STORAGE_MODES = {"fixed", "nul_padded"}
-TRANSLATION_DISPLAY_MODES = {"translation", "mapping_ids"}
 
 
 @dataclass(frozen=True)
@@ -76,86 +75,6 @@ class GameTitlePolicy:
     output_title: str
     expected_mapping_count: int
     expected_occurrence_count: int
-
-
-def _mapping_id_token(mapping_id: str, capacity: int) -> str:
-    """Return the clearest identifier that fits one NUL-terminated slot."""
-    try:
-        encoded = mapping_id.encode("ascii")
-    except UnicodeEncodeError as exc:
-        raise ValueError(
-            f"{mapping_id}: diagnostic mapping IDs must be ASCII"
-        ) from exc
-    if len(encoded) < capacity:
-        return mapping_id
-    raise ValueError(
-        f"{mapping_id}: cannot fit a diagnostic identifier in "
-        f"{capacity - 1} display bytes"
-    )
-
-
-def _sequence_id_tokens(
-    mapping_id: str,
-    fragment_count: int,
-    capacity: int,
-) -> tuple[str, ...]:
-    tokens = tuple(
-        f"{mapping_id}.{index}" for index in range(1, fragment_count + 1)
-    )
-    encoded_size = sum(len(token.encode("ascii")) + 1 for token in tokens) + 1
-    if encoded_size > capacity:
-        raise ValueError(
-            f"{mapping_id}: diagnostic sequence identifiers require "
-            f"{encoded_size} bytes but the block allows {capacity}"
-        )
-    return tokens
-
-
-def _apply_mapping_id_display(
-    plan: translation_importer.TranslationImportPlan,
-) -> translation_importer.TranslationImportPlan:
-    resolved_texts = dict(plan.resolved_texts)
-    resolved_sequences = dict(plan.resolved_sequences)
-    materialized_templates = dict(plan.materialized_templates)
-    rows: list[dict[str, object]] = []
-    for mapping in plan.text_mappings:
-        mapping_id = str(mapping["id"])
-        capacity = int(mapping["capacity"])
-        if mapping["mode"] == "sequence":
-            current = resolved_sequences.get(mapping_id)
-            if current is None:
-                continue
-            tokens = _sequence_id_tokens(mapping_id, len(current), capacity)
-            resolved_sequences[mapping_id] = tokens
-            materialized_templates[mapping_id] = "<NUL>".join(tokens)
-            rows.append(
-                {
-                    "mapping_id": mapping_id,
-                    "display": "<NUL>".join(tokens),
-                }
-            )
-            continue
-        if mapping_id not in resolved_texts:
-            continue
-        token = _mapping_id_token(mapping_id, capacity)
-        resolved_texts[mapping_id] = token
-        materialized_templates[mapping_id] = token
-        rows.append({"mapping_id": mapping_id, "display": token})
-
-    summary = dict(plan.summary)
-    summary["diagnostic_display"] = {
-        "mode": "mapping_ids",
-        "mapping_count": len(rows),
-        "rows": rows,
-    }
-    return replace(
-        plan,
-        resolved_texts=resolved_texts,
-        resolved_sequences=resolved_sequences,
-        materialized_templates=materialized_templates,
-        summary=summary,
-        display_mode="mapping_ids",
-    )
 
 
 def _apply_game_title_policy(
@@ -593,21 +512,12 @@ def build_translation_draft(
     translation_plan: translation_importer.TranslationImportPlan,
     owner: str,
     title_policy: GameTitlePolicy,
-    translation_display: str = "translation",
 ) -> StringPatchDraft:
     """Declare external text fragments and symbolic pointer writes."""
-    if translation_display not in TRANSLATION_DISPLAY_MODES:
-        raise ValueError(
-            "unsupported translation display mode: "
-            f"{translation_display!r}"
-        )
-    if translation_display == "mapping_ids":
-        transformed_plan = _apply_mapping_id_display(translation_plan)
-    else:
-        transformed_plan = _apply_game_title_policy(
-            translation_plan,
-            title_policy,
-        )
+    transformed_plan = _apply_game_title_policy(
+        translation_plan,
+        title_policy,
+    )
     external_draft = external_strings.build_external_string_draft(
         translation_plan=transformed_plan,
         owner=owner,
@@ -620,7 +530,7 @@ def build_translation_draft(
         translation_plan=transformed_plan,
         external_draft=external_draft,
         game_title_policy={
-            "applied": translation_display == "translation",
+            "applied": True,
             "imported_title": title_policy.imported_title,
             "output_title": title_policy.output_title,
             "mapping_count": title_policy.expected_mapping_count,

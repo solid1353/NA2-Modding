@@ -3,7 +3,7 @@
 This feature owns all declarative content for the accepted English localization
 while reusable executable engines remain under `na2_patcher/modules/`.
 
-- [Translation importer](#na2-translation-importer-canonical-t-id-rebuild)
+- [Translation importer](#na2-translation-importer)
 - [String patcher](#string-patcher)
 - [Resident Font renderer](#native-nun5-derived-font)
 - [Texture patcher](#ui-texture-translation-module)
@@ -16,7 +16,7 @@ The feature directory name declares its identity. Its module-named
 subdirectories are the inputs that compose it; enabling Localization enables all
 of them, and one aggregate profile pin covers their canonical inputs.
 
-## NA2 translation importer (canonical T-ID rebuild)
+## NA2 translation importer
 
 This first-class `na2_patcher` module imports and validates strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
@@ -30,16 +30,11 @@ command or file-backed inter-stage handoff.
 
 - Canonical `mappings.tsv` rows: `2,071`
 - Canonical `mappings.tsv` SHA-256: `4EB76C285C2D3EC522E5FE2E1102FC51B90D0C47275CCEB0414CBC3B7AE81531`
-- Retained task-local `rebuild.tsv` rows: `2,173` (`T1` through `T2173`)
-- Retained `rebuild.tsv` SHA-256: `EA6D79AF9A955180498E93783E0F70AB9439E34B195806991D400686D79BD71C`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the aggregate Localization feature pin own content identity.
 `mappings.tsv` owns the canonical executable donor translations, overrides,
-and optional pointer inventory. The translation-free candidate inventory is
-retained at `work/String translation/artifacts/diagnostic-rebuild/rebuild.tsv`
-and supplied explicitly only to worker mapping-ID builds. It is not feature
-content or profile-hashed. Normal builds import only `mappings.tsv`. Profile
+and optional pointer inventory. Normal builds import only `mappings.tsv`. Profile
 `identity.json` owns the imported/output title declaration; `string_patcher`
 applies its fixed coverage to the normal translation path.
 
@@ -60,7 +55,7 @@ and ordinary overrides remain complete. T30 uses the complete user-authored
 `Ultimate` translation and the validated pointer at `NA2_BTL@0x209CB4`; encoded
 fit therefore externalizes it automatically.
 
-### Canonical and diagnostic tables
+### Canonical mapping table
 
 `mappings.tsv` is the canonical mapping table used by normal builds.
 `display_context` is its human-readable page/filter key; rows are sorted by
@@ -85,22 +80,6 @@ The 16 columns are:
   current rows are enabled. Unconfirmed rows are absent instead of retained as
   disabled inventory.
 
-The task-local `rebuild.tsv` is the complete retained diagnostic inventory. Its
-human-readable columns come first:
-
-`id`, `display_context`, `source`, `donor`, `prefix`, `replacement`,
-`display_basis`, `source_ref`, `donor_ref`, `mode`, `capacity`, `transform`,
-`arguments`, `reference_refs`, `parent_mapping_id`, `legacy_ids`
-
-The initial table contains one row per distinct known clean source slot.
-`donor`, `donor_ref`, `prefix`, `replacement`, `display_basis`, transforms,
-and pointer fields begin empty; optional legacy `M` IDs are lookup aids only. Permanent
-diagnostic IDs use unpadded `T1`, `T2`, ... and are never recycled or
-renumbered. IDs increase in physical row order. The four 5-byte slots occupy
-rows `T1` through `T4` so their complete tokens fit; the remaining initial rows
-are sorted by `display_context`, then source location. Future candidates append
-with the next permanent ID.
-
 Canonical `mappings.tsv` contains `T#` rows confirmed visible by the paired
 screenshot pass plus the explicit character-family exception, sorted by
 `display_context` and numeric ID. Its cumulative first two passes have 752
@@ -110,8 +89,8 @@ Command Chart family adds 1,041 rows, including Naruto moves absent from the
 captured 14-row subset. A subsequent missing-row audit adds another 260
 policy-supported rows: 53 directly seen rows, 10 structurally inferred
 siblings, and 197 character-family rows, for 2,053 total rows. Exact source,
-source reference, mode, and capacity came from the retained diagnostic
-inventory. T2042, T2045,
+source reference, mode, and capacity are guarded by the canonical row
+declarations. T2042, T2045,
 and T2050 use canonical parent IDs `T2011`, `T2043`, and `T2048`.
 Paired screenshots correct three reference-table errors: T1956 uses `Off` at
 `NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses
@@ -148,8 +127,6 @@ first line cannot continue into an unrelated resident-payload string.
   verified NA2 multi-string block. Sequences must fit inline.
 
 Unresolved research does not belong in accepted executable `mappings.tsv`.
-The retained task-local `rebuild.tsv` contains guarded source slots, not
-executable translations or speculative donor claims.
 
 There is no `shorten` or `pool` mapping mode. External placement is a
 `string_patcher` build decision, not canonical mapping state.
@@ -1688,10 +1665,8 @@ payload is stored in Git.
   overrides, and every optional pointer reference.
   Three continuation rows deliberately reuse their containing full-message
   pointer.
-The retained task-local diagnostic inventory is outside this feature and is
-supplied explicitly only to mapping-ID worker builds. Only `mappings.tsv` is
-covered by the translation importer's contribution to the Localization
-feature hash.
+Only `mappings.tsv` is covered by the translation importer's contribution to
+the Localization feature hash.
 Payload-builder configuration is executable infrastructure rather than feature
 data; engine code and documentation are excluded from the feature pin.
 

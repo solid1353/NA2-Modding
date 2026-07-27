@@ -44,11 +44,11 @@ pixels higher. Its comparison grid remains a task-owned artifact under
 `work/Font/artifacts/`. A fresh post-reset capture is required before assigning
 causation or reintroducing any old wrapper.
 
-The ss3 Pause Controls list layer is implemented and statically validated
-through a dedicated v2 BTL hook. It applies the retained 216-unit shrink-only
-box and four-unit Y correction without enabling the retained shared wrapper or
-any ss4 caller. Runtime comparison against the supplied ss3 pair remains
-pending.
+The ss3 Pause Controls list layer is implemented through a dedicated v2 BTL
+hook. It applies the retained 216-unit shrink-only box and four-unit Y
+correction without enabling the retained shared wrapper or any ss4 caller.
+The user confirmed the post-build result fixed on 2026-07-27, so ss3 is
+accepted and removed from the remaining epic report.
 
 ## Active ss1–ss6 epic priorities
 
@@ -57,21 +57,18 @@ The user directed Font to work only on the
 efficiency-prioritized sequential order supersedes the generic remaining-family
 order below while the epic is active:
 
-1. **ss3 — Pause Controls list.** Rebuild the retained 216-unit shrink-only
-   list behavior and Y correction through a dedicated v2 entrypoint. This
-   establishes the shared UI plumbing needed by ss4 without enabling ss4 yet.
-2. **ss4 — Quit confirmation.** Reuse the ss3 shared UI plumbing, then add only
+1. **ss4 — Quit confirmation.** Reuse the accepted ss3 shared UI plumbing, then add only
    the guarded confirmation-body and Yes/No positioning behavior. Commit and
    review it independently.
-3. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
+2. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
    through a dedicated final-selector adapter that matches NUN5 glyph scale
    and advance together; preserve the already-correct ASCII `Off`/`On` source
    and the accepted first-eight Controls result.
-4. **ss2 — Command Chart body.** Adapt the accepted v2 multiline primitives to
+3. **ss2 — Command Chart body.** Adapt the accepted v2 multiline primitives to
    the separate command-description caller; do not reopen the accepted title.
-5. **ss5 — Character model move list.** Add bounded wrapping and positioning
+4. **ss5 — Character model move list.** Add bounded wrapping and positioning
    for the right-side move-name column.
-6. **ss6 — Movie list.** Implement the variable-height wrapped-row behavior
+5. **ss6 — Movie list.** Implement the variable-height wrapped-row behavior
    last because it has the largest caller-specific layout and row-advance
    burden.
 
@@ -364,8 +361,8 @@ The Pause Controls list layer redirects only the list-row call at BTL file
 
 The retained `font_layout_wrappers` patch remains disabled, and no ss4
 confirmation-body or Yes/No call is selected. Generation, relocation, hook,
-ABI, and package tests pass. Runtime comparison against the supplied ss3 pair
-is still required before changing the patch from `approved_for_test`.
+ABI, and package tests pass. The user confirmed the post-build ss3 result
+fixed on 2026-07-27; the caller is user-accepted.
 
 ### Static and automated validation
 

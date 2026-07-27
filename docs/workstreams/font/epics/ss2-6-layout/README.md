@@ -20,8 +20,8 @@ before beginning the next slot.
   `work/Font/inputs/sstates/epics/ss2-6/provenance.tsv` and
   `work/Font/inputs/sstates/special-controls-on-off/remade-ss1-20260727/provenance.tsv`.
 - Protected `@pcsx2_user` sources remain untouched.
-- Status: all six baselines are captured; ss3 is implemented and statically
-  validated, with post-build runtime comparison pending.
+- Status: ss3 is user-accepted and removed from the remaining report; the
+  other five baselines remain captured.
 - Existing accepted Font and resident-renderer behavior remains the regression
   baseline. The accepted Command Chart title is not reopened by ss2; ss2 owns
   only the remaining command-body layout.
@@ -48,15 +48,6 @@ before beginning the next slot.
   while NUN5 wraps it into two lines inside the command panel.
 
 ![ss2 Command Chart body baseline](battle-command-chart-ss2.png)
-
-### ss3 — Pause Controls list
-
-- State: dedicated v2 caller implemented and statically validated; runtime
-  comparison and user acceptance pending.
-- Remaining defect: Current long menu rows run beyond the panel edge, while
-  NUN5 fits them within the list.
-
-![ss3 Pause Controls list baseline](battle-controls-list-ss3.png)
 
 ### ss4 — Quit confirmation
 
@@ -87,22 +78,18 @@ before beginning the next slot.
 
 ## Efficiency-prioritized sequential plan
 
-1. **ss3 — Pause Controls list.** The retained disabled shared UI helper
-   already proves the 216-unit shrink-only box and Y correction. Rebuild that
-   behavior through the v2 architecture first because it establishes reusable
-   plumbing for ss4 with the least new logic.
-2. **ss4 — Quit confirmation.** Reuse the ss3 plumbing and add only the
+1. **ss4 — Quit confirmation.** Reuse the accepted ss3 plumbing and add only the
    separately guarded confirmation-body and Yes/No positioning behavior.
-3. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
+2. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
    through a dedicated final-selector adapter, matching glyph scale and
    advance together without changing either ASCII literal family or reopening
    the accepted first-eight Controls rows.
-4. **ss2 — Command Chart body.** Reuse the accepted multiline primitives, but
+3. **ss2 — Command Chart body.** Reuse the accepted multiline primitives, but
    treat the command-description loop as its own caller family and leave the
    accepted title untouched.
-5. **ss5 — Character model move list.** Add bounded wrapping and positioning
+4. **ss5 — Character model move list.** Add bounded wrapping and positioning
    for the right-side move-name column.
-6. **ss6 — Movie list.** Implement variable-height wrapped rows last because
+5. **ss6 — Movie list.** Implement variable-height wrapped rows last because
    this case has the greatest caller-specific row-advance and layout burden.
 
 Shared primitives are implemented only once. Each slot still receives its own

@@ -6,7 +6,7 @@
 - Create notifications.
 
 ### [Font](docs/workstreams/font/README.md)
-- [Investigate](work/__sstates/translation/font) and implement proper autofit/positions everywhere.
+-  Layout/autofit epic.
 
 ## Backlog
 
@@ -14,8 +14,9 @@
 - Release: add feature/group/patch config + instructions + default release config.
 - Investigate cross-platform development/deployment possibilities.
 - Global cleanup - preserve what is needed, delete the rest. Project should ask corresponding chats for specifics. Includes, but not limited to:
-    * [UI Translation](work/__sstates/translation/UI).
-    * [String Translation](work/__sstates/translation/strings).
+    * [Font](work/__sstates/translation/font)
+    * [UI Translation](work/__sstates/translation/UI)
+    * [String Translation](work/__sstates/translation/strings)
 
 ### Bugs
 - Practice menu entries (like Damage) flicker again (unstable).
@@ -25,7 +26,7 @@
 - Make knj cost selective.
 - Make xDash cost 1 chakra.
 - Add damage scaling?
-- [Improve substitution reliability](docs/knowledge/localization/substitution.md).
+- [Improve substitution reliability](docs/knowledge/localization/substitution.md)
 - Add substitution bar.
 - Fix extra hit floating animation (or maybe not?).
 

@@ -58,7 +58,7 @@ class OnOffContextSplitTests(unittest.TestCase):
         self.assertTrue(btl.is_file())
         self.assertTrue(elf.is_file())
 
-    def test_special_controls_is_already_ascii_without_spacing_hook(
+    def test_special_controls_ascii_uses_isolated_boxed_renderer_hook(
         self,
     ) -> None:
         repository = Path(__file__).resolve().parents[2]
@@ -106,12 +106,16 @@ class OnOffContextSplitTests(unittest.TestCase):
         )
         controls = package.patches["font_v2_controls"]
         self.assertTrue(controls.enabled)
-        self.assertEqual(controls.status, "runtime_proven")
-        self.assertFalse(
-            any(
-                edit.symbolic_patch.offset == 0x2888D4
-                for edit in package.edits
-            )
+        self.assertEqual(controls.status, "approved_for_test")
+        selector_edits = [
+            edit
+            for edit in package.edits
+            if edit.symbolic_patch.offset == 0x2888D4
+        ]
+        self.assertEqual(len(selector_edits), 1)
+        self.assertEqual(
+            selector_edits[0].symbolic_patch.symbol,
+            "localization.font.v2.controls_adapter",
         )
 
     def test_practice_rows_share_the_existing_titlecase_table(self) -> None:

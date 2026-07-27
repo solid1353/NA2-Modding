@@ -1796,14 +1796,16 @@ session, publishes it only around one native callback, and restores the prior
 session pointer, renderer tracking, horizontal scale and callback result
 through one cleanup path.
 
-The first thin caller layer, `font_v2_controls`, redirects only the shared
-first-eight-label call in `FUN_003885b0`. It builds NUN5's 128-unit box, keeps
+The first thin caller layer, `font_v2_controls`, redirects the shared
+first-eight-label call and isolated final-selector call in `FUN_003885b0`. It builds NUN5's 128-unit box, keeps
 fitting labels at scale `1`, applies `128 / 178` to
 `Ultimate Jutsu Prep`, derives NUN5's exact box left as the native NA2 caller
 center minus `64`, and converts the prepared left edge back to NA2's
 centered-renderer ABI. The first eight labels and required v2 core are
 runtime-proven from the matched review and real title-to-Load transition. The
-separate ninth selector call remains on NA2's ordinary renderer.
+same adapter now covers the exact ninth call at ELF file `0x2888D4`, matching
+NUN5's homologous 128-unit selector box without changing either source table;
+that isolated extension awaits fresh-build ss1 review.
 
 `font_on_off_context_split` now contains only the user-verified Practice
 Settings split. Its three BTL row-table pointers at files `0x20B498`,
@@ -1812,8 +1814,9 @@ Settings split. Its three BTL row-table pointers at files `0x20B498`,
 Controls already uses this table, whose clean Shift-JIS `オフ`/`オン` slots
 are converted to ASCII `Off`/`On` by canonical mappings T1956/T1957. A trial
 redirect to the separate ASCII `OFF`/`ON` T37/T38 table produced zero changed
-pixels across the complete supplied ss1 modal, so it is not retained. No
-renderer metric, spacing, scale, or ninth-call draw hook changes.
+pixels across the complete supplied ss1 modal, so it is not retained. The
+string-table result stays unchanged; the separate v2 Controls patch now owns
+the ninth-call renderer behavior.
 
 The second thin caller layer, `font_v2_titles`, replaces only two guarded BTL
 draw calls: Command Chart file `0x1C6A28` and Practice file `0x1C4B98`.

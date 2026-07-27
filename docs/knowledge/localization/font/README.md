@@ -115,8 +115,13 @@ Controls review. The final 640x480 pair matches those eight NUN5 label bounds
 and centers, keeps `Linked Attack` full width, and fits
 `Ultimate Jutsu Prep` with the exact 178-unit denominator. The user explicitly
 accepted that result on 2026-07-26. The later ninth-call extension reuses the
-same accepted adapter but produced no visible improvement in the supplied ss1
-state and is removed. The ninth selector remains on NA2's ordinary renderer.
+same accepted adapter but was reviewed through a stale state that restored
+executable regions, so its zero-difference result did not exercise the hook
+and is not valid negative evidence. The final selector is an independent call
+at runtime `0x003887D4` / ELF file `0x2888D4`; it now reuses the same adapter
+because the bounded homolog comparison below proves NUN5 gives this call the
+same 128-unit centered box. The accepted first-eight hook at `0x288848` is
+unchanged.
 
 ## Contextual Special Controls / Practice Settings ON/OFF
 
@@ -137,9 +142,10 @@ used by this call.
 NA2 `FUN_003885B0` reads the same title-case semantics from the
 two-pointer table at runtime `0x00604658` / ELF file `0x504758`, pointing to
 T1956/T1957 `Off`/`On` at `0x00604648`/`0x00604650`. The later attempt to route
-its ninth call at runtime `0x003887D4` through the v2 Controls adapter had no
-visible effect in the supplied ss1 state. The user then narrowed the requested
-fix to Shift-JIS-to-ASCII source selection and explicitly excluded spacing.
+its ninth call at runtime `0x003887D4` through the v2 Controls adapter was
+reviewed through a stale state that restored executable regions, so its
+zero-difference result did not exercise the new hook and is not valid negative
+evidence for the renderer path.
 
 The supplied current state proves source conversion is already complete:
 runtime `0x00604648`/`0x00604650` contains ASCII `Off`/`On`, produced from the
@@ -152,10 +158,16 @@ The two ASCII literal families therefore resolve to the same visible glyphs in
 this context. The redirect is rejected and not retained.
 
 The visible Special Controls mismatch is consequently not Shift-JIS versus
-ASCII. It is the ordinary renderer's glyph-scale and advance behavior, which
-the user deferred to the broader autofit/positioning task. The native ninth
-draw call, selector table, color, scale, spacing, Y position, and renderer
-state remain untouched in this iteration.
+ASCII. It is the ordinary renderer's glyph-scale and advance behavior. Exact
+clean disassembly shows NA2's selector prepares native center X in `f12`,
+row Y in `f13`, text in `a0`, and color in `a1`, then calls
+`FUN_00379240` at `0x003887D4`. The NUN5 homolog prepares box-left X in `f12`,
+the same row Y in `f13`, text in `a0`, color in `a1`, width `0x80` in `a2`,
+and mode `0` in `a3`, then calls boxed `FUN_00385DF0` at `0x0039A1EC`.
+The existing v2 Controls adapter already implements this exact 128-unit
+centered-box conversion and transient metric session, so the bounded fix adds
+only the second guarded call redirect at ELF `0x2888D4`. It changes no text
+bytes, table pointer, color, row Y, or accepted first-eight hook.
 
 Practice Settings has three independent uppercase `[OFF, ON]` arrays at
 runtime `0x00605AC0`, `0x00605AD0`, and `0x00605AD8`. The BTL row table points

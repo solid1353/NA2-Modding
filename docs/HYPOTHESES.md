@@ -29,8 +29,9 @@ captures before changing its established layout.
 - NA2 ASCII setup lead: `FUN_00186510`.
 - NUN5 counterpart: `FUN_001878e0`.
 - NUN5 boxed auto-fit reference: `FUN_00389df0` and `FUN_0018b1b0`.
-- NA2 Controls path: `FUN_003885b0`, with the first eight calls locally fitted
-  before the original `FUN_00379240` draw and the ninth call left ordinary.
+- NA2 Controls path: `FUN_003885b0`; both the shared first-eight draw and the
+  isolated ninth selector now route through the accepted 128-unit v2 adapter,
+  matching NUN5's distinct but equivalent boxed call.
 - The guarded task-local v4 state under
   `work/Font/artifacts/font_match_v1/` confirmed NUN5's horizontal
   `leading_bearing * scale_x` subtraction while preserving the decoder's live

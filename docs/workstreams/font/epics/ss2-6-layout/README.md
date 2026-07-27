@@ -34,12 +34,12 @@ before beginning the next slot.
 
 ### ss1 — Special Controls final selector
 
-- State: ASCII source confirmed; renderer parity deferred to this epic.
-- Remaining defect: Current draws the final `On`/`Off` selector with physically
+- State: isolated renderer hook implemented; fresh-build comparison pending.
+- Baseline defect: Current draws the final `On`/`Off` selector with physically
   larger glyphs and wider advances than NUN5. Both live tables are already
   ASCII, and an `Off`/`On` to `OFF`/`ON` redirect changed zero modal pixels, so
-  this case requires a renderer-scale/advance fix rather than another string
-  conversion.
+  this case uses the same accepted 128-unit Controls metric session at the
+  exact ninth draw call rather than another string conversion.
 
 ![ss1 Special Controls final selector baseline](battle-special-controls-ss1.png)
 

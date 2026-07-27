@@ -121,6 +121,7 @@ class RuntimeInjectorTests(unittest.TestCase):
                 "font_v2_titles",
                 "font_v2_pause_controls_list",
                 "font_v2_quit_confirmation",
+                "font_v2_special_controls_body",
                 "font_v2_practice_explanations",
                 "font_ninja_song_ascii_numbers",
             },
@@ -151,6 +152,7 @@ class RuntimeInjectorTests(unittest.TestCase):
                 "font_v2_quit_confirmation_02",
                 "font_v2_quit_confirmation_03",
                 "font_v2_quit_confirmation_04",
+                "font_v2_special_controls_body_01",
                 "font_v2_practice_explanations_01",
                 "font_ninja_song_ascii_numbers_01",
                 "font_ninja_song_ascii_numbers_02",
@@ -213,6 +215,7 @@ class RuntimeInjectorTests(unittest.TestCase):
                 0x283A60,
                 0x1C4048,
                 0x1C407C,
+                0x1C3D38,
                 0x1C4B98,
                 0x1C4BA0,
                 0x1C6A28,
@@ -1675,6 +1678,161 @@ class RuntimeInjectorTests(unittest.TestCase):
             )
             self.assertEqual(row["replacement"], "")
             self.assertNotIn("\n", row["donor"])
+
+    def test_v2_special_controls_body_uses_exact_nun5_box(
+        self,
+    ) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        directory = (
+            repository
+            / "na2_patcher"
+            / "features"
+            / "localization"
+            / "runtime_injector"
+        )
+        canonical = engine.load_package(
+            directory, owner="localization.runtime_injector"
+        )
+        declaration = replace(
+            canonical,
+            patches={
+                patch_id: replace(
+                    patch,
+                    enabled=patch_id
+                    in {
+                        "font_v2_layout_core",
+                        "font_v2_special_controls_body",
+                    },
+                )
+                for patch_id, patch in canonical.patches.items()
+            },
+        )
+        build = build_resident_payload(declaration.fragments)
+        resolved = resolve_symbolic_patches(
+            build, declaration.symbolic_patches
+        )
+        package = engine.build_binary_package(declaration, resolved)
+        edits = {edit.edit_id: edit for edit in package.edits}
+        self.assertEqual(
+            set(edits),
+            {
+                "font_v2_layout_core_01",
+                "font_v2_layout_core_02",
+                "font_v2_layout_core_03",
+                "font_v2_layout_core_04",
+                "font_v2_layout_core_05",
+                "font_v2_special_controls_body_01",
+            },
+        )
+
+        hook = edits["font_v2_special_controls_body_01"]
+        self.assertEqual(hook.destination_offset, 0x1C3D38)
+        self.assertEqual(hook.expected_hex, "6C090E0C00000000")
+        replacement = bytes.fromhex(hook.replacement_hex)
+        self.assertEqual(replacement[4:], b"\0" * 4)
+        jump = int.from_bytes(replacement[:4], "little")
+        self.assertEqual(jump >> 26, 0x03)
+        self.assertEqual(
+            (jump & 0x03FFFFFF) << 2,
+            build.symbols[
+                "localization.font.v2.special_controls_body_adapter"
+            ].runtime_address,
+        )
+
+        fragments = {
+            fragment.symbol: fragment
+            for fragment in declaration.fragments
+        }
+        self.assertEqual(
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation in fragments[
+                    "localization.font.v2.special_controls_body_adapter"
+                ].relocations
+            },
+            {
+                ("jal26", "localization.font.v2.wrap_native"),
+                (
+                    "hi16",
+                    "localization.font.v2.special_controls_body_callback",
+                ),
+                (
+                    "lo16",
+                    "localization.font.v2.special_controls_body_callback",
+                ),
+                ("jal26", "localization.font.v2.adapter_call"),
+            },
+        )
+
+        body = build.symbols[
+            "localization.font.v2.special_controls_body_adapter"
+        ]
+        body_payload = build.payload[
+            body.file_offset:body.file_offset + body.size
+        ]
+        body_words = {
+            int.from_bytes(body_payload[offset:offset + 4], "little")
+            for offset in range(0, len(body_payload), 4)
+        }
+        for expected_word in (
+            mips.i_type(0x09, 0, 5, 400),
+            mips.i_type(0x09, 0, 6, 2),
+            mips.i_type(0x09, 0, 8, 0x14),
+            mips.i_type(0x09, 29, 19, 0x80),
+            mips.i_type(0x2B, 29, 2, 0x30),
+            mips.i_type(0x2B, 29, 3, 0x34),
+        ):
+            self.assertIn(expected_word, body_words)
+        self.assertIn(
+            mips.i_type(0x0D, 8, 8, 60),
+            body_words,
+        )
+
+        callback = build.symbols[
+            "localization.font.v2.special_controls_body_callback"
+        ]
+        callback_payload = build.payload[
+            callback.file_offset:callback.file_offset + callback.size
+        ]
+        callback_words = {
+            int.from_bytes(
+                callback_payload[offset:offset + 4], "little"
+            )
+            for offset in range(0, len(callback_payload), 4)
+        }
+        for value in (24.0, 12.0):
+            bits = struct.unpack("<I", struct.pack("<f", value))[0]
+            self.assertIn(
+                mips.i_type(0x0F, 0, 8, bits >> 16),
+                callback_words,
+            )
+        self.assertIn(
+            mips.jump(0x03, 0x00379A20),
+            callback_words,
+        )
+
+        mappings_path = (
+            repository
+            / "na2_patcher"
+            / "features"
+            / "localization"
+            / "translation_importer"
+            / "mappings.tsv"
+        )
+        with mappings_path.open(
+            "r", encoding="utf-8-sig", newline=""
+        ) as handle:
+            row = next(
+                row
+                for row in csv.DictReader(handle, delimiter="\t")
+                if row["id"] == "T1880"
+            )
+        self.assertEqual(
+            row["donor"],
+            "A feature to display the special controls for the game.",
+        )
+        self.assertEqual(row["replacement"], "")
+        self.assertNotIn("\n", row["donor"])
 
     def test_loads_fragments_and_compiles_symbolic_hooks(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

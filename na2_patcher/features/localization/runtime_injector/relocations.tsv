@@ -76,3 +76,7 @@ FR-V2-R064	localization.font.v2.half_space	10	0xC	hi16	localization.font.v2.sess
 FR-V2-R065	localization.font.v2.half_space	20	0x10	lo16	localization.font.v2.session_pointer	0
 FR-V2-R066	localization.font.v2.glyph_advance	10	0xC	hi16	localization.font.v2.session_pointer	0
 FR-V2-R067	localization.font.v2.glyph_advance	20	0x10	lo16	localization.font.v2.session_pointer	0
+FR-V2-SS1-R001	localization.font.v2.special_controls_body_adapter	10	0x68	jal26	localization.font.v2.wrap_native	0
+FR-V2-SS1-R002	localization.font.v2.special_controls_body_adapter	20	0xC8	hi16	localization.font.v2.special_controls_body_callback	0
+FR-V2-SS1-R003	localization.font.v2.special_controls_body_adapter	30	0xCC	lo16	localization.font.v2.special_controls_body_callback	0
+FR-V2-SS1-R004	localization.font.v2.special_controls_body_adapter	40	0xEC	jal26	localization.font.v2.adapter_call	0

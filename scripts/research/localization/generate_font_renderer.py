@@ -89,6 +89,12 @@ V2_QUIT_SELECTED_ADAPTER = f"{V2_PREFIX}.quit_selected_adapter"
 V2_QUIT_UNSELECTED_ADAPTER = f"{V2_PREFIX}.quit_unselected_adapter"
 V2_QUIT_BODY_CALLBACK = f"{V2_PREFIX}.quit_body_callback"
 V2_QUIT_BODY_ADAPTER = f"{V2_PREFIX}.quit_body_adapter"
+V2_SPECIAL_CONTROLS_BODY_CALLBACK = (
+    f"{V2_PREFIX}.special_controls_body_callback"
+)
+V2_SPECIAL_CONTROLS_BODY_ADAPTER = (
+    f"{V2_PREFIX}.special_controls_body_adapter"
+)
 V2_NATIVE_MEASURE = f"{V2_PREFIX}.native_measure"
 V2_WRAP_NATIVE = f"{V2_PREFIX}.wrap_native"
 V2_PRACTICE_TOKENS = f"{V2_PREFIX}.practice_tokens"
@@ -177,6 +183,12 @@ QUIT_BODY_LINE_HEIGHT = 20.0
 QUIT_BODY_LINE_LIMIT = 2
 QUIT_BODY_BUFFER = 0x80
 QUIT_BODY_BUFFER_SIZE = 0x100
+SPECIAL_CONTROLS_BODY_BOX_X = 24.0
+SPECIAL_CONTROLS_BODY_BOX_Y = 12.0
+SPECIAL_CONTROLS_BODY_BOX_WIDTH = 400
+SPECIAL_CONTROLS_BODY_BOX_HEIGHT = 60
+SPECIAL_CONTROLS_BODY_LINE_HEIGHT = 20.0
+SPECIAL_CONTROLS_BODY_LINE_LIMIT = 2
 COLLECTION_BODY_TARGET_Y = 12.0
 PRACTICE_BODY_TARGET_Y = 12.0
 CHARACTER_BODY_BOX_X = 8.0
@@ -1571,8 +1583,12 @@ def build_v2_quit_unselected_adapter() -> Fragment:
     return Fragment(V2_QUIT_UNSELECTED_ADAPTER, payload, relocations)
 
 
-def build_v2_quit_body_callback() -> Fragment:
-    """Draw the wrapped ss4 body with its NUN5-local record coordinates."""
+def build_v2_wrapped_body_callback(
+    symbol: str,
+    box_x: float,
+    box_y: float,
+) -> Fragment:
+    """Draw one wrapped body with caller-specific local coordinates."""
 
     zero, a0, a1, a2, a3 = 0, 4, 5, 6, 7
     t0 = 8
@@ -1583,9 +1599,9 @@ def build_v2_quit_body_callback() -> Fragment:
     assembler = mips.Assembler()
     assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
     assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
-    mips.load_u32(assembler, t0, float_bits(QUIT_BODY_BOX_X))
+    mips.load_u32(assembler, t0, float_bits(box_x))
     assembler.emit(mips.i_type(0x2B, sp, t0, 0))
-    mips.load_u32(assembler, t0, float_bits(QUIT_BODY_BOX_Y))
+    mips.load_u32(assembler, t0, float_bits(box_y))
     assembler.emit(mips.i_type(0x2B, sp, t0, 4))
     assembler.emit(mips.i_type(0x2B, sp, a1, 8))
     assembler.emit(mips.i_type(0x2B, sp, a2, 12))
@@ -1603,11 +1619,20 @@ def build_v2_quit_body_callback() -> Fragment:
     assembler.emit(mips.r_type(ra, zero, zero, 0x08))
     assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
     payload, relocations = assembler.build()
-    return Fragment(V2_QUIT_BODY_CALLBACK, payload, relocations)
+    return Fragment(symbol, payload, relocations)
 
 
-def build_v2_quit_body_adapter() -> Fragment:
-    """Copy and greedily wrap the ss4 body only for its exact draw call."""
+def build_v2_wrapped_body_adapter(
+    symbol: str,
+    callback_symbol: str,
+    box_x: float,
+    box_y: float,
+    box_width: int,
+    box_height: int,
+    line_height: float,
+    line_limit: int,
+) -> Fragment:
+    """Copy and greedily wrap one exact caller's body at draw time."""
 
     zero, v0, v1, a0, a1, a2 = 0, 2, 3, 4, 5, 6
     t0, t1 = 8, 9
@@ -1653,10 +1678,10 @@ def build_v2_quit_body_adapter() -> Fragment:
     assembler.label("copied")
     assembler.emit(mips.r_type(s3, zero, a0, 0x21))
     assembler.emit(
-        mips.i_type(0x09, zero, a1, QUIT_BODY_BOX_WIDTH)
+        mips.i_type(0x09, zero, a1, box_width)
     )
     assembler.emit(
-        mips.i_type(0x09, zero, a2, QUIT_BODY_LINE_LIMIT)
+        mips.i_type(0x09, zero, a2, line_limit)
     )
     assembler.jump_symbol(0x03, V2_WRAP_NATIVE)
     assembler.emit(0)
@@ -1667,13 +1692,13 @@ def build_v2_quit_body_adapter() -> Fragment:
         mips.i_type(0x2B, sp, v1, V2_SESSION_LINE_COUNT)
     )
     assembler.emit(mips.i_type(0x2B, sp, s3, V2_SESSION_TEXT))
-    mips.load_u32(assembler, t0, float_bits(QUIT_BODY_BOX_X))
+    mips.load_u32(assembler, t0, float_bits(box_x))
     assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_X))
-    mips.load_u32(assembler, t0, float_bits(QUIT_BODY_BOX_Y))
+    mips.load_u32(assembler, t0, float_bits(box_y))
     assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_Y))
-    mips.load_u32(assembler, t0, QUIT_BODY_BOX_WIDTH)
+    mips.load_u32(assembler, t0, box_width)
     assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_WIDTH))
-    mips.load_u32(assembler, t0, QUIT_BODY_BOX_HEIGHT)
+    mips.load_u32(assembler, t0, box_height)
     assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_HEIGHT))
     assembler.emit(
         mips.i_type(
@@ -1694,16 +1719,16 @@ def build_v2_quit_body_adapter() -> Fragment:
     assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_FLAGS))
     assembler.emit(
         mips.i_type(
-            0x09, zero, t0, QUIT_BODY_LINE_LIMIT
+            0x09, zero, t0, line_limit
         )
     )
     assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_LINE_LIMIT))
     emit_load_float(
-        assembler, t0, 0, QUIT_BODY_LINE_HEIGHT
+        assembler, t0, 0, line_height
     )
     assembler.emit(mips.i_type(0x39, sp, 0, V2_SESSION_LINE_HEIGHT))
     assembler.load_symbol_word(
-        t0, t0, 0x09, V2_QUIT_BODY_CALLBACK
+        t0, t0, 0x09, callback_symbol
     )
     assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_CALLBACK))
     assembler.emit(
@@ -1734,7 +1759,57 @@ def build_v2_quit_body_adapter() -> Fragment:
     assembler.emit(mips.r_type(ra, zero, zero, 0x08))
     assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
     payload, relocations = assembler.build()
-    return Fragment(V2_QUIT_BODY_ADAPTER, payload, relocations)
+    return Fragment(symbol, payload, relocations)
+
+
+def build_v2_quit_body_callback() -> Fragment:
+    """Draw the wrapped ss4 body with its NUN5-local record coordinates."""
+
+    return build_v2_wrapped_body_callback(
+        V2_QUIT_BODY_CALLBACK,
+        QUIT_BODY_BOX_X,
+        QUIT_BODY_BOX_Y,
+    )
+
+
+def build_v2_quit_body_adapter() -> Fragment:
+    """Copy and greedily wrap the ss4 body only for its exact draw call."""
+
+    return build_v2_wrapped_body_adapter(
+        V2_QUIT_BODY_ADAPTER,
+        V2_QUIT_BODY_CALLBACK,
+        QUIT_BODY_BOX_X,
+        QUIT_BODY_BOX_Y,
+        QUIT_BODY_BOX_WIDTH,
+        QUIT_BODY_BOX_HEIGHT,
+        QUIT_BODY_LINE_HEIGHT,
+        QUIT_BODY_LINE_LIMIT,
+    )
+
+
+def build_v2_special_controls_body_callback() -> Fragment:
+    """Draw the wrapped ss1 body with its NUN5-local record coordinates."""
+
+    return build_v2_wrapped_body_callback(
+        V2_SPECIAL_CONTROLS_BODY_CALLBACK,
+        SPECIAL_CONTROLS_BODY_BOX_X,
+        SPECIAL_CONTROLS_BODY_BOX_Y,
+    )
+
+
+def build_v2_special_controls_body_adapter() -> Fragment:
+    """Copy and wrap only the exact ss1 Special Controls body draw."""
+
+    return build_v2_wrapped_body_adapter(
+        V2_SPECIAL_CONTROLS_BODY_ADAPTER,
+        V2_SPECIAL_CONTROLS_BODY_CALLBACK,
+        SPECIAL_CONTROLS_BODY_BOX_X,
+        SPECIAL_CONTROLS_BODY_BOX_Y,
+        SPECIAL_CONTROLS_BODY_BOX_WIDTH,
+        SPECIAL_CONTROLS_BODY_BOX_HEIGHT,
+        SPECIAL_CONTROLS_BODY_LINE_HEIGHT,
+        SPECIAL_CONTROLS_BODY_LINE_LIMIT,
+    )
 
 
 def build_v2_native_measure() -> Fragment:
@@ -3205,6 +3280,8 @@ def v2_fragments() -> tuple[Fragment, ...]:
         build_v2_right_edge(),
         build_v2_half_space(),
         build_v2_glyph_advance(),
+        build_v2_special_controls_body_callback(),
+        build_v2_special_controls_body_adapter(),
     )
     symbols = [fragment.symbol for fragment in result]
     if len(symbols) != len(set(symbols)):
@@ -3303,6 +3380,8 @@ def relocation_rows(
 def generated_outputs() -> tuple[bytes, bytes, bytes, bytes, bytes]:
     legacy = legacy_fragments()
     v2 = v2_fragments()
+    v2_base = v2[:-2]
+    v2_special_controls = v2[-2:]
     numeric = numeric_fragments()
     legacy_blob, legacy_offsets = pack_blob(legacy)
     v2_blob, v2_offsets = pack_blob(v2)
@@ -3315,7 +3394,7 @@ def generated_outputs() -> tuple[bytes, bytes, bytes, bytes, bytes]:
             legacy_offsets,
         ),
         *make_fragment_rows(
-            v2,
+            v2_base,
             V2_BLOB_RELATIVE,
             v2_blob,
             v2_offsets,
@@ -3326,11 +3405,21 @@ def generated_outputs() -> tuple[bytes, bytes, bytes, bytes, bytes]:
             numeric_blob,
             numeric_offsets,
         ),
+        *make_fragment_rows(
+            v2_special_controls,
+            V2_BLOB_RELATIVE,
+            v2_blob,
+            v2_offsets,
+        ),
     ]
     generated_relocations = [
         *relocation_rows(legacy, "FR-R"),
-        *relocation_rows(v2, "FR-V2-R"),
+        *relocation_rows(v2_base, "FR-V2-R"),
         *relocation_rows(numeric, "FR-NUM-R"),
+        *relocation_rows(
+            v2_special_controls,
+            "FR-V2-SS1-R",
+        ),
     ]
     return (
         legacy_blob,

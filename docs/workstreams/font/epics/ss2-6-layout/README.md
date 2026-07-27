@@ -34,10 +34,11 @@ before beginning the next slot.
 
 ## Battle
 
-### ss1 — Special Controls final selector
+### ss1 — Special Controls selector and explanatory body
 
-- State: mapping and bounded renderer positioning implemented; agent-validated
-  against the remade pair and awaiting user acceptance.
+- State: selector mapping/positioning and bounded explanatory-body wrapping
+  implemented; agent-validated against the remade pair and awaiting user
+  acceptance of the complete screen.
 - Baseline defect: Current draws fullwidth Shift-JIS `Ｏ　Ｎ`/`ＯＦＦ`, producing
   physically larger glyphs and wide internal advances, while NUN5 draws compact
   ASCII `ON`/`OFF`. Exact telemetry locates the NA2 slots at SLPS files
@@ -45,10 +46,13 @@ before beginning the next slot.
   at `0x513E68`/`0x513E6C`. The paired states prove identical modal list
   geometry, so the existing selected/unselected shared adapters use exact
   string-pointer guards and measured local targets `(66,31)` / `(59,49)`.
-  Every unrelated list remains native. The remaining one- to two-pixel ink
-  height difference is the separately tracked small raster mismatch.
+  Every unrelated list remains native. The same pair also proves T1880 must
+  remain one unbroken canonical string while the exact BTL body call at
+  `0x1C3D38` creates a transient two-line copy in NUN5's 400-by-60 box,
+  breaking before `for`. The remaining one- to two-pixel ink-height difference
+  is the separately tracked small raster mismatch.
 
-![ss1 Special Controls final selector baseline](battle-special-controls-ss1.png)
+![ss1 Special Controls post-change comparison](battle-special-controls-ss1.png)
 
 ## Collection
 
@@ -70,10 +74,10 @@ before beginning the next slot.
 
 ## Efficiency-prioritized sequential plan
 
-1. **ss1 — Special Controls final selector.** Commit the two guarded
-   modal-specific ASCII mappings and remove the unrelated provisional Control
-   Settings hook. Apply the exact mapping bytes to the task-owned state, compare
-   placement against NUN5, and add a bounded position correction only if needed.
+1. **ss1 — Special Controls selector and explanatory body.** The two guarded
+   modal-specific ASCII mappings and bounded selector positions are committed.
+   The exact explanatory-body caller now reuses the shared v2 wrapper with
+   NUN5's 400-by-60, two-line parameters; the whole screen awaits acceptance.
 2. **ss5 — Character model move list.** Add bounded wrapping and positioning
    for the right-side move-name column.
 3. **ss6 — Movie list.** Implement variable-height wrapped rows last because

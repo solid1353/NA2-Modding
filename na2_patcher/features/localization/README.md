@@ -1869,6 +1869,19 @@ content and corrected it in `f4f12f6`. The user verified the combined
 fresh-build result across all four Battle/Practice and Game Mode/Character
 Select combinations on 2026-07-27, so the layer is `runtime_proven`.
 
+The separate `font_v2_special_controls_body` layer completes the explanatory
+block on the same ss1 Special Controls screen. Exact telemetry identifies only
+the native UI-body call at BTL file `0x1C3D38` (runtime `0x00877C38`, clean
+guard `jal 0x003825B0` plus NOP). NUN5 retains T1880 as one unbroken source
+string, copies it to a transient buffer, and wraps it before `for` inside a
+400-by-60 box with a two-line limit. The dedicated adapter reproduces that
+draw-time behavior at local X `24`, Y `12`, with 20-unit line height by
+parameterizing the same v2 body builder used by the accepted quit modal. It
+does not hook the shared UI renderer, add a newline to T1880, or alter another
+body caller. An exact-guarded converted ss1 capture matches NUN5's break and
+line origins, so the layer is `runtime_proven`; user acceptance of the whole
+ss1 case remains separate.
+
 The third thin caller layer, `font_v2_practice_explanations`, replaces only the
 Practice per-token explanation loop at BTL file `0x1C4BA0`. It assembles one
 bounded 512-byte mixed text/tag buffer, applies unlimited word wrapping inside

@@ -1331,3 +1331,32 @@ The fresh matched modal captures also give a concrete overflow reference. At
 build, whose right edge is clipped. Because that NA2 capture also contains the
 failed asset/palette state, it is evidence for the screen and overflow symptom,
 not a clean-source renderer acceptance image.
+
+## 2026-07-27 Special Controls explanatory-body wrapper
+
+The remade paired ss1 state proves the selector and lower explanatory block are
+one Special Controls acceptance case. Exact NA2 wrapper telemetry records only
+the lower block at BTL file `0x1C3D38`, runtime `0x00877C38`: caller
+`0x003825F8`, outer caller `0x00877C40`, text pointer `0x008BCD60`, style
+pointer `0x00E5E430`, and native local coordinates X `24`, Y `16`. The clean
+eight-byte guard is `6C090E0C00000000`, native `jal 0x003825B0` plus NOP.
+
+NUN5 does not store a newline in the source string. Its source at
+`0x008F47C0` is `A feature to display the special controls for the game.`,
+while the live transient buffer at `0x00DE82E1` contains
+`A feature to display the special controls\nfor the game.`. The associated
+live record contains scale `1.0`, box width `400`, box height `60`, and line
+limit `2`. The accepted v2 metric table measures the text through `controls`
+as `370` units and through the following `for` as `405`, which independently
+explains the exact NUN5 break before `for`.
+
+The bounded implementation therefore redirects only BTL file `0x1C3D38` to a
+caller-specific adapter generated from the same shared v2 body builder as the
+accepted quit modal. It copies at most 255 bytes to its stack, wraps at draw
+time inside a 400-by-60 two-line box, and draws at local X `24`, Y `12` with
+20-unit line height. T1880 remains canonical and unbroken, and the shared UI
+renderer remains untouched. An exact-guarded task-owned state installed the
+linked trial payload at `0x008F6000`, redirected only the five session-aware
+core hooks plus this body call, and produced the same break and line origins as
+the supplied NUN5 reference. Confidence is high; user acceptance remains a
+separate epic state.

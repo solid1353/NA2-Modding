@@ -38,42 +38,42 @@ before beginning the next case.
 
 ## Collection
 
-### Original ss5 — Character model move list
+### Priority 6 — Original ss5: Character model move list
 
 - State: baseline captured; not implemented.
 - Remaining defect: Current overflows the long move name, while NUN5 wraps it
   inside the right-side column.
 
-![ss5 Character model baseline](collection-character-model-ss5.png)
+![Priority 6 character model baseline](6-character-model-move-list.png)
 
-### Original ss6 — Movie list
+### Priority 7 — Original ss6: Movie list
 
 - State: baseline captured; not implemented.
 - Remaining defect: Current movie titles remain single-line and overflow,
   while NUN5 uses variable-height wrapped rows.
 
-![ss6 Movie list baseline](collection-movie-list-ss6.png)
+![Priority 7 movie list baseline](7-movie-list.png)
 
-### New batch ss1 — Quit Collection confirmation
+### Priority 4 — New batch ss1: Quit Collection confirmation
 
 - State: baseline captured; not implemented.
 - Review target: shared modal selector and body geometry.
 
-![New batch Collection ss1 baseline](batch-20260727-collection-ss1.png)
+![Priority 4 Collection confirmation baseline](4-collection-confirmation.png)
 
 ## Battle / Practice Settings
 
-### New batch ss2–ss3 — Settings rows and explanations
+### Priority 5 — New batch ss2–ss3: Settings rows and explanations
 
 - State: two matched baselines captured; not implemented.
 - Review targets: row-value geometry, selection alignment, and lower
   explanatory-text flow. Content differences remain translation-owned.
 
-![New batch Practice Settings ss2–ss3 baselines](batch-20260727-practice-ss2-3.png)
+![Priority 5 Practice Settings baselines](5-practice-settings.png)
 
 ## Battle / Command Chart
 
-### New batch ss4 and additional ss1 — Command details
+### Priority 1 — New batch ss4 and additional ss1: Command details
 
 - State: two matched baselines captured; not implemented.
 - ss4: Current keeps the relationship explanation on one line and overflows;
@@ -81,11 +81,11 @@ before beginning the next case.
 - Additional ss1: Current's blue explanation and controller-icon rows sit
   roughly 8–14 pixels lower than NUN5 within each command entry.
 
-![Command Chart ss4 and additional ss1 baselines](batch-20260727-command-chart.png)
+![Priority 1 Command Chart baselines](1-command-chart.png)
 
 ## Character Select
 
-### New batch ss5, ss6, and ss9 — Shared selection/modal family
+### Priority 3 — New batch ss5, ss6, and ss9: Shared selection/modal family
 
 - State: three matched baselines captured; not implemented.
 - ss5: Current's final `Back to Game Mode Screen` option overflows the modal.
@@ -94,28 +94,32 @@ before beginning the next case.
 - ss9: Current's return-confirmation body overflows while NUN5 fits it inside
   the footer box.
 
-![New batch Character Select ss5, ss6, and ss9 baselines](batch-20260727-character-select-ss5-6-9.png)
+![Priority 3 Character Select baselines](3-character-select-modals.png)
 
 ## Battle Settings / Customize Jutsu
 
-### New batch ss7–ss8 — Jutsu-name list
+### Priority 2 — New batch ss7–ss8: Jutsu-name list
 
 - State: two matched baselines captured; not implemented.
 - Remaining defect: Current selected and expanded-list titles overflow
   horizontally; NUN5 wraps them inside the left-side list bounds.
 
-![New batch Battle customization ss7–ss8 baselines](batch-20260727-battle-customization-ss7-8.png)
+![Priority 2 Jutsu-name list baselines](2-jutsu-name-list.png)
 
 ## Mode Select
 
-### New batch ss10 — Return to Title Screen confirmation
+### Priority 4 — New batch ss10: Return to Title Screen confirmation
 
 - State: baseline captured; not implemented.
 - Review target: regression coverage for the shared modal geometry.
 
-![New batch Mode Select ss10 baseline](batch-20260727-mode-select-ss10.png)
+![Priority 4 Mode Select confirmation baseline](4-mode-select-confirmation.png)
 
-## Efficiency-prioritized sequential plan
+## Current priorities
+
+Priority is determined by the most efficient implementation order. Priority 4
+is one shared confirmation-regression subtask represented by separate
+Collection and Mode Select grids so each remains under its semantic section.
 
 1. **New ss4 plus additional ss1 — Command Chart details.** Reuse the
    established command/practice text-flow primitives for the bounded
@@ -134,6 +138,7 @@ before beginning the next case.
 7. **Original ss6 — Movie list.** Implement variable-height wrapped rows last
    because this case has the greatest caller-specific row-advance burden.
 
-Shared primitives are implemented only once. Each slot still receives its own
-guarded caller, commit/push boundary, result grid, and explicit acceptance; a
-shared implementation does not merge the six review decisions.
+Shared primitives are implemented only once. Each prioritized caller family
+receives one guarded implementation and commit/push boundary; every case keeps
+its own result evidence and explicit acceptance, so shared code does not merge
+the thirteen review decisions.

@@ -52,7 +52,7 @@ VALID_TRANSFORMS = {
     "format_arg1",
     "format_args",
     "format_literal_arg1",
-    "format_literal_prefix_arg2",
+    "format_literal_through_arg1",
     "format_prefix_arg2",
     "format_suffix_arg2",
     "between_placeholders",
@@ -466,13 +466,12 @@ def resolve_replacement_text(
             "%1",
             normalize_fullwidth_ascii(arguments.get("arg1", "")),
         )
-    elif transform == "format_literal_prefix_arg2":
+    elif transform == "format_literal_through_arg1":
         if "%1" not in template or "%2" not in template:
             raise ValueError(f"{label}: template lacks placeholders")
-        resolved = template.replace(
-            "%1",
-            normalize_fullwidth_ascii(arguments.get("arg1", "")),
-        ).split("%2", 1)[0]
+        resolved = template.split("%1", 1)[0] + normalize_fullwidth_ascii(
+            arguments.get("arg1", "")
+        )
     elif transform == "format_prefix_arg2":
         if "%1" not in template or "%2" not in template:
             raise ValueError(f"{label}: template lacks placeholders")
@@ -683,7 +682,7 @@ def parse_mappings(
                 raise ValueError(f"{label}: empty does not accept arguments")
         elif transform in {
             "format_literal_arg1",
-            "format_literal_prefix_arg2",
+            "format_literal_through_arg1",
         }:
             if set(arguments) != {"arg1"} or not arguments["arg1"]:
                 raise ValueError(

@@ -62,14 +62,14 @@ class IntegratedExternalStringTests(unittest.TestCase):
     def test_shared_builder_produces_the_exact_fit_derived_228_binary(self) -> None:
         mod = self.build.payload
         self.assertEqual(self.build.output_path, "PRG/228.BIN")
-        self.assertEqual(len(mod), 0x700)
+        self.assertEqual(len(mod), 0x6E0)
         self.assertEqual(
             binary_patcher.data_sha256(mod),
-            "02EB721CEBAA169B2FD7AEA9F8EFF60594EAE09F6347A3BF79E4FFE420237988",
+            "A6E4015FE78252234E0A7E121309D642B13EFE5AC167B5B7044B59CA30F03735",
         )
         self.assertEqual(
             struct.unpack_from("<4s7I", mod, 0),
-            (b"MWo3", 8, 0x008F3D00, 0x40, 0x6B0, 0, 0x008F4400, 0x008F4400),
+            (b"MWo3", 8, 0x008F3D00, 0x40, 0x690, 0, 0x008F43E0, 0x008F43E0),
         )
         self.assertEqual(mod[0x20:0x28], b"228.bin\0")
         self.assertEqual(struct.unpack_from("<II", mod, 0x40), (0x03E00008, 0))
@@ -81,13 +81,13 @@ class IntegratedExternalStringTests(unittest.TestCase):
         self.assertTrue(all(patch.kind == "redirect_pointer" for patch in self.resolved))
         self.assertEqual(self.plan.summary["external_mappings"], 33)
         self.assertEqual(self.plan.summary["external_binary_edits"], 35)
-        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2305)
+        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2307)
 
     def test_pool_contains_only_referenced_strings_and_deduplicates_one_pair(self) -> None:
         summary = self.plan.summary["external_strings"]
         self.assertEqual(summary["count"], 31)
         self.assertEqual(summary["distinct"], 30)
-        self.assertEqual(summary["encoded_bytes"], 1475)
+        self.assertEqual(summary["encoded_bytes"], 1440)
         self.assertEqual(summary["derived"], 3)
         rows = {row["mapping_id"]: row for row in summary["rows"]}
         self.assertEqual(rows["T364"]["runtime_address"], rows["T117"]["runtime_address"])
@@ -219,7 +219,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
             )
 
     def test_canonical_rows_derive_translation_and_placement_state(self) -> None:
-        self.assertEqual(len(self.import_plan.text_mappings), 2071)
+        self.assertEqual(len(self.import_plan.text_mappings), 2073)
         self.assertTrue(
             all(row["mode"] in {"slot", "sequence"} for row in self.import_plan.text_mappings)
         )
@@ -234,6 +234,39 @@ class IntegratedExternalStringTests(unittest.TestCase):
             {"T30", "T1920", "T1958", "T2194", "T2197"},
         )
         self.assertEqual(self.import_plan.resolved_texts["T1920"], "Charge Chakra")
+        self.assertEqual(
+            {
+                mapping_id: self.import_plan.resolved_texts[mapping_id]
+                for mapping_id in (
+                    "T63",
+                    "T64",
+                    "T66",
+                    "T67",
+                    "T2201",
+                    "T2202",
+                )
+            },
+            {
+                "T63": "Are you sure you want to quit Battle",
+                "T64": "Are you sure you want to quit Practice",
+                "T66": " and return to ",
+                "T67": "?",
+                "T2201": "Character Select",
+                "T2202": "Game Mode Select",
+            },
+        )
+        inline_mapping_ids = {
+            str(row["source_mapping_id"])
+            for row in self.draft.translation_plan.import_rows
+        }
+        self.assertTrue({"T2201", "T2202"} <= inline_mapping_ids)
+        self.assertTrue(
+            {"T63", "T64"}
+            <= {
+                str(row["mapping_id"])
+                for row in self.draft.external_draft.rows
+            }
+        )
         self.assertEqual(len(self.import_plan.references), 34)
         self.assertTrue(
             all(str(row["display_context"]) for row in self.import_plan.text_mappings)

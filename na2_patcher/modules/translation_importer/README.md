@@ -32,8 +32,13 @@ counters overlap that symbol. T2194 escapes its literal percent as
 `100%% Health bonus` for NA2's printf-style path. T2195–T2198 replace the
 ss7–9-confirmed static Shift-JIS formula symbols with ASCII `*`, `=`, `.`, and
 `%`. T2200 replaces the ss7-confirmed six-fullwidth-question-mark Movie lock
-placeholder with the official three-ASCII-question-mark form. Other donor-backed rows
-leave `replacement` blank and execute official donor text;
+placeholder with the official three-ASCII-question-mark form. The paired
+Battle/Practice quit-confirmation states establish the native assembly as
+T63/T64 mode head + T66 connective + one short destination slot + T67
+terminator. T63 and T64 therefore resolve only through donor placeholder `%1`;
+T2201 and T2202 translate the previously missing short destination slots from
+the official NUN5 `Character Select` and `Game Mode Select` strings. Other
+donor-backed rows leave `replacement` blank and execute official donor text;
 T1958 retains the established Cross-confirm override. Normal
 builds import this canonical table directly.
 

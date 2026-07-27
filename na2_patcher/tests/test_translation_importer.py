@@ -84,8 +84,8 @@ class TranslationImporterTests(unittest.TestCase):
             ),
         }
 
-        self.assertEqual(len(mappings_raw), 2071)
-        self.assertEqual(len(mappings["text"]), 2071)
+        self.assertEqual(len(mappings_raw), 2073)
+        self.assertEqual(len(mappings["text"]), 2073)
         self.assertEqual(mappings["inactive"], [])
         mapping_ids = {row["id"] for row in mappings_raw}
         self.assertTrue(
@@ -156,6 +156,18 @@ class TranslationImporterTests(unittest.TestCase):
         self.assertEqual(by_id["T2042"]["parent_mapping_id"], "T2011")
         self.assertEqual(by_id["T2045"]["parent_mapping_id"], "T2043")
         self.assertEqual(by_id["T2050"]["parent_mapping_id"], "T2048")
+        self.assertEqual(by_id["T63"]["transform"], "format_literal_through_arg1")
+        self.assertEqual(by_id["T63"]["arguments"], "arg1=Battle")
+        self.assertEqual(by_id["T64"]["transform"], "format_literal_through_arg1")
+        self.assertEqual(by_id["T64"]["arguments"], "arg1=Practice")
+        self.assertEqual(
+            (by_id["T2201"]["donor"], by_id["T2201"]["donor_ref"]),
+            ("Character Select", "NUN5_TEXTENG@0xA60"),
+        )
+        self.assertEqual(
+            (by_id["T2202"]["donor"], by_id["T2202"]["donor_ref"]),
+            ("Game Mode Select", "NUN5_TEXTENG@0xA80"),
+        )
 
         engine.validate_structured_message_families(
             mappings["text"],
@@ -315,17 +327,17 @@ class TranslationImporterTests(unittest.TestCase):
             "Quit Collection?",
         )
 
-    def test_literal_format_argument_can_materialize_dialog_prefix(self) -> None:
+    def test_literal_format_argument_can_materialize_through_arg1(self) -> None:
         row = {
             "donor": "Quit %1 and return to %2?",
             "prefix": "",
             "replacement": "",
-            "transform": "format_literal_prefix_arg2",
-            "arguments": {"arg1": "Free Battle"},
+            "transform": "format_literal_through_arg1",
+            "arguments": {"arg1": "Battle"},
         }
         self.assertEqual(
-            engine.resolve_replacement_text(row, "formatted-prefix"),
-            "Quit Free Battle and return to ",
+            engine.resolve_replacement_text(row, "formatted-through-arg1"),
+            "Quit Battle",
         )
 
     def test_fullwidth_ascii_is_normalized_only_in_resolved_output(self) -> None:

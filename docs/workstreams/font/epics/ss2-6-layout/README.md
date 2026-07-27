@@ -12,6 +12,8 @@ before beginning the next slot.
 - Declared: 2026-07-27.
 - Inputs:
   `work/Font/inputs/sstates/epics/ss2-6/`.
+- Fresh four-context quit-confirmation inputs:
+  `work/Font/inputs/sstates/epics/ss2-6/ss4-shared-callers-20260727/`.
 - Additional remade ss1 inputs:
   `work/Font/inputs/sstates/special-controls-on-off/remade-ss1-20260727/`.
 - Extracted source screenshots:
@@ -44,11 +46,22 @@ before beginning the next slot.
 
 ### ss4 — Quit confirmation
 
-- State: caller-local rendering implementation complete for review; awaiting
-  the user's fresh-build runtime capture and acceptance.
-- Remaining defect: Current keeps the confirmation body on one overflowing
-  line, while NUN5 wraps it into two lines; the Yes/No row placement also
-  differs.
+- State: the first caller-local implementation reaches all four supplied
+  Battle/Practice and Game Mode/Character Select combinations, but the user
+  rejected its body placement and exposed a separate text-assembly defect.
+- Fresh evidence: the user remade a four-pair verification batch in slots
+  1–4. The exact copied states, screenshots, hashes, and context labels are
+  recorded under
+  `work/Font/inputs/sstates/epics/ss2-6/ss4-shared-callers-20260727/`.
+- Font defect: all four Current bodies begin at screenshot X `101`, while all
+  four NUN5 bodies begin at X `72`. Their first-line Y origin already matches
+  at `381`, so the next Font correction is one shared 29-pixel left shift
+  without a vertical change.
+- String defect: Battle wrongly says `Free Battle`; all four bodies duplicate
+  connective text and retain their Japanese destination tail. The context
+  selector itself still distinguishes Game Mode from Character Select. String
+  Translation owns that correction; canonical mappings must not gain authored
+  newline bytes.
 - Implementation: T63–T67 and every canonical mapping remain unchanged. The
   exact Battle-modal body call wraps a bounded stack copy into two lines at
   draw time, while the exact Yes/No list call publishes a transient scope for

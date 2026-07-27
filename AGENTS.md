@@ -94,6 +94,11 @@ Detailed command and task behavior is in
   port. Agent-only runs stay hidden. Never navigate emulator or game menus
   through PINE or injected input. If a required savestate was not supplied,
   stop and ask the user for that exact state.
+- `na2 -t` and `_na2.ps1 -t` build ISOs; `-t` never means tests. The full
+  patcher test suite is
+  `python -B -m unittest discover -s na2_patcher/tests -p 'test_*.py'`.
+  Never infer command semantics from a flag name; verify the documented exact
+  command before execution.
 - Only the user may change profile `bypass_check`; agents preserve it exactly.
 - Preserve substantive disassembly, decompilation, and live-memory findings in
   canonical knowledge with identities, ranges, reconstructed behavior,

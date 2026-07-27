@@ -66,6 +66,13 @@ records under `work/<task title>/logs/`. The path is caller-supplied and
 validated; worker mode cannot address shared build outputs or mutate shared
 preflight, promotion, PNACH, log, or emulator state. Agents must use this form
 rather than bare `na2`, `na2 -b`, or bare `na2 -t`.
+Despite its historical `Test` parameter name, `na2 -t` is always an ISO-build
+command and never runs tests. The unambiguous full patcher-suite command is:
+
+```powershell
+python -B -m unittest discover -s na2_patcher/tests -p 'test_*.py'
+```
+
 `na2 -b` runs the standard Current build and conditional promotion pipeline but
 does not launch PCSX2. Bare `na2` keeps the build-then-launch workflow.
 User-owned shared-image builds and launches run `act na2` automatically;

@@ -32,6 +32,13 @@ drift-prone implementation details here.
   `na2 -t work/<task title>/build/<name>.iso`, with staging beside the output
   and structured records under the same task's `logs/`. Agents never invoke
   bare `na2`, `na2 -b`, or bare `na2 -t`.
+- In both `na2 -t` and `_na2.ps1 -t`, `-t` is an ISO-build switch: without an
+  output path it builds and actualizes Candidate; with a worker output path it
+  builds that isolated ISO. It is never a test-suite switch. Run the patcher
+  suite only with
+  `python -B -m unittest discover -s na2_patcher/tests -p 'test_*.py'`.
+  Verify every validation command's documented semantics before running it;
+  never infer behavior from a short flag.
 - Worker-output builds never touch Current, Previous, Candidate, promotion,
   preflight, shared records, PNACH aliases, actualization, or PCSX2.
 - Temporary or hypothesis ISOs remain under the owning task while they have a

@@ -7,7 +7,6 @@
 
 ### [Font](docs/workstreams/font/README.md)
 - [Investigate](work/__sstates/translation/font) and implement proper autofit/positions everywhere.
-- Ninja Song: convert all dynamically generated output still selecting Shift-JIS digits or symbols to ASCII equivalents, including the renderer-table multiplication glyph if it remains reachable after static string changes.
 
 ## Backlog
 

@@ -12,8 +12,6 @@ before beginning the next slot.
 - Declared: 2026-07-27.
 - Inputs:
   `work/Font/inputs/sstates/epics/ss2-6/`.
-- Fresh four-context quit-confirmation inputs:
-  `work/Font/inputs/sstates/epics/ss2-6/ss4-shared-callers-20260727/`.
 - Additional remade ss1 inputs:
   `work/Font/inputs/sstates/special-controls-on-off/remade-ss1-20260727/`.
 - Extracted source screenshots:
@@ -24,7 +22,8 @@ before beginning the next slot.
 - Protected `@pcsx2_user` sources remain untouched.
 - Status: the remade ss2 and ss3 pair records the same Pause Controls modal in
   normal and selected states. Both are user-verified and removed from the
-  remaining report; four epic cases remain.
+  remaining report. The shared quit-confirmation case is also user-verified
+  and removed; three epic cases remain.
 - Existing accepted Font and resident-renderer behavior remains the regression
   baseline. The previously retained Command Chart ss2 image was superseded by
   the remade Pause Controls ss2 state and is no longer an epic input.
@@ -43,32 +42,6 @@ before beginning the next slot.
   conversion.
 
 ![ss1 Special Controls final selector baseline](battle-special-controls-ss1.png)
-
-### ss4 — Quit confirmation
-
-- State: the first caller-local implementation reached all four supplied
-  Battle/Practice and Game Mode/Character Select combinations. Its rejected
-  evidence produced one shared Font X correction, and String Translation
-  repaired the independent four-part text assembly in `f4f12f6`; the combined
-  result now awaits a fresh user build and four-pair review.
-- Fresh evidence: the user remade a four-pair verification batch in slots
-  1–4. The exact copied states, screenshots, hashes, and context labels are
-  recorded under
-  `work/Font/inputs/sstates/epics/ss2-6/ss4-shared-callers-20260727/`.
-- Font defect: all four Current bodies begin at screenshot X `101`, while all
-  four NUN5 bodies begin at X `72`. Their first-line Y origin already matches
-  at `381`; the corrected shared adapter therefore changes local X from `48`
-  to `19` without a vertical change.
-- String correction: Battle now uses `Battle`, T66 supplies the connective
-  exactly once, and new short destination mappings select `Game Mode Select`
-  or `Character Select`. Canonical mappings contain no authored newline bytes.
-- Implementation: the exact Battle-modal body call wraps a bounded stack copy
-  into two lines at draw time, while the exact Yes/No list call publishes a
-  transient scope for selected and unselected NUN5-coordinate adapters.
-  String Translation owns T63/T64/T66/T67 and the new T2201/T2202 destination
-  mappings; none stores a newline.
-
-![ss4 Quit confirmation baseline](battle-quit-confirmation-ss4.png)
 
 ## Collection
 
@@ -90,15 +63,13 @@ before beginning the next slot.
 
 ## Efficiency-prioritized sequential plan
 
-1. **ss4 — Quit confirmation.** Reuse the accepted Pause Controls plumbing and add only the
-   separately guarded confirmation-body and Yes/No positioning behavior.
-2. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
+1. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
    through a dedicated final-selector adapter, matching glyph scale and
    advance together without changing either ASCII literal family or reopening
    the accepted first-eight Controls rows.
-3. **ss5 — Character model move list.** Add bounded wrapping and positioning
+2. **ss5 — Character model move list.** Add bounded wrapping and positioning
    for the right-side move-name column.
-4. **ss6 — Movie list.** Implement variable-height wrapped rows last because
+3. **ss6 — Movie list.** Implement variable-height wrapped rows last because
    this case has the greatest caller-specific row-advance and layout burden.
 
 Shared primitives are implemented only once. Each slot still receives its own

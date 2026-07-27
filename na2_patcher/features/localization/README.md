@@ -1840,8 +1840,8 @@ so the layer is `runtime_proven`. It does not enable the retained
 `font_layout_wrappers` multiplexer or select any ss4 confirmation-body or
 Yes/No call.
 
-The dedicated ss4 layer, `font_v2_quit_confirmation`, leaves T63–T67 and every
-translation mapping unchanged. Its exact BTL list call at file `0x1C4048`
+The dedicated ss4 layer, `font_v2_quit_confirmation`, authors no newline in
+canonical translation mappings. Its exact BTL list call at file `0x1C4048`
 publishes a transient scope only around native `0x00383600`; the selected and
 unselected calls inside that helper are redirected at ELF files `0x283914`
 and `0x283A60`, but tail-call native behavior unless that scope is active.
@@ -1855,9 +1855,9 @@ Mode/Character Select combinations prove that this first X value starts every
 Current body at screenshot X `101`, versus NUN5 X `72`, while Y already
 matches. The shared local X is therefore corrected to `19` with Y `12`
 unchanged. String Translation separately owns the exposed wrong dynamic
-content and corrected it in `f4f12f6`. The layer remains `approved_for_test`; a fresh user build is required
-because the supplied states restore the modified overlay, ELF, and resident
-regions.
+content and corrected it in `f4f12f6`. The user verified the combined
+fresh-build result across all four Battle/Practice and Game Mode/Character
+Select combinations on 2026-07-27, so the layer is `runtime_proven`.
 
 The third thin caller layer, `font_v2_practice_explanations`, replaces only the
 Practice per-token explanation loop at BTL file `0x1C4BA0`. It assembles one

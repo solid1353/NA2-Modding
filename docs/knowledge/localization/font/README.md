@@ -876,8 +876,10 @@ text-assembly defect: Battle says `Free Battle`, connective text is duplicated,
 and the Japanese destination tail remains. String Translation corrected that
 independent assembly in `f4f12f6` by splitting the mode head, connective,
 destination, and terminator; no canonical mapping gained an authored newline.
-Runtime visual parity remains unconfirmed until both corrections are present
-in a fresh user build.
+The user verified the combined fresh-build result across all four
+Battle/Practice and Game Mode/Character Select combinations on 2026-07-27.
+The shared quit-confirmation layer is therefore **runtime-proven** with high
+confidence.
 
 ### Practice explanation mixed-text wrapping
 

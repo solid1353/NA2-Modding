@@ -19,6 +19,12 @@
   C/C++ reconstruction, meaningful names, callers/callees, side effects/state,
   cross-game equivalents, evidence, useful negative results, and explicit
   low/medium/high confidence.
+- No implementation, patch, generator, or test derived from disassembly,
+  decompilation, or live-memory analysis may be committed until its reusable
+  findings are documented in canonical knowledge. Include that knowledge
+  update in the same commit as the first dependent implementation. Do not
+  delete or discard the supporting analysis artifacts until confirming that
+  every reusable finding and useful negative result was promoted.
 - Keep reusable Ghidra projects or focused exports under
   `@analysis/disassembly/<target>/`. Do not dump unfiltered listings or
   transient guesses merely to satisfy documentation.

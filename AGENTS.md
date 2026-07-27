@@ -97,7 +97,10 @@ Detailed command and task behavior is in
 - Only the user may change profile `bypass_check`; agents preserve it exactly.
 - Preserve substantive disassembly, decompilation, and live-memory findings in
   canonical knowledge with identities, ranges, reconstructed behavior,
-  evidence, useful negative results, and confidence.
+  evidence, useful negative results, and confidence. Never commit an
+  implementation derived from such findings unless the canonical knowledge
+  update is included in the same commit; never clean up its analysis artifacts
+  before verifying that promotion.
 - `@utils/CCSFileExplorerMSF` is the project's main and best available CCS
   explorer; use it by default for CCS exploration.
 - Relay user instructions verbatim without inferred requirements. A worker

@@ -14,6 +14,20 @@ drift-prone implementation details here.
   mode updates Candidate only.
 - Agents decide whether a full ISO is necessary from scope, risk, and required
   evidence. Use narrower validation when sufficient.
+- Never build an agent ISO merely because executable inputs changed or for
+  generic validation. Before building, identify the exact runtime fact that
+  only the ISO run can establish, prove that every required input or savestate
+  will exercise the newly built bytes, and confirm that narrower validation
+  cannot establish the same fact. If any condition fails, do not build.
+- An agent ISO build is permitted only when an already available compatible
+  savestate reaches the exact target without navigation, the test concerns
+  boot/startup behavior requiring no navigation, or the user explicitly
+  requests that ISO build. Otherwise, do not build.
+- Before savestate-based validation of file-backed overlay or resident-payload
+  changes, determine whether loading that state restores the modified
+  executable regions. If it does, do not build or launch until an
+  exact-guarded task-owned conversion or a user-supplied post-build state is
+  available. An unconverted stale state cannot validate the patch.
 - Agent builds use only
   `na2 -t work/<task title>/build/<name>.iso`, with staging beside the output
   and structured records under the same task's `logs/`. Agents never invoke

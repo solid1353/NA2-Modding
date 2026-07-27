@@ -145,6 +145,7 @@ class RuntimeInjectorTests(unittest.TestCase):
                 "font_v2_titles_01",
                 "font_v2_titles_02",
                 "font_v2_pause_controls_list_01",
+                "font_v2_pause_controls_list_02",
                 "font_v2_practice_explanations_01",
                 "font_ninja_song_ascii_numbers_01",
                 "font_ninja_song_ascii_numbers_02",
@@ -206,6 +207,7 @@ class RuntimeInjectorTests(unittest.TestCase):
                 0x1C4B98,
                 0x1C4BA0,
                 0x1C6A28,
+                0x1C9794,
                 0x1C97D8,
                 0x64B28,
                 0x64BA8,
@@ -818,6 +820,7 @@ class RuntimeInjectorTests(unittest.TestCase):
                 "font_v2_layout_core_04",
                 "font_v2_layout_core_05",
                 "font_v2_pause_controls_list_01",
+                "font_v2_pause_controls_list_02",
             },
         )
         pause_list_edit = next(
@@ -829,6 +832,19 @@ class RuntimeInjectorTests(unittest.TestCase):
         self.assertEqual(
             bytes.fromhex(pause_list_edit.expected_hex),
             bytes.fromhex("1C090E0C00000000"),
+        )
+        pause_list_selected_edit = next(
+            edit
+            for edit in pause_list_package.edits
+            if edit.edit_id == "font_v2_pause_controls_list_02"
+        )
+        self.assertEqual(
+            pause_list_selected_edit.destination_offset,
+            0x1C9794,
+        )
+        self.assertEqual(
+            bytes.fromhex(pause_list_selected_edit.expected_hex),
+            bytes.fromhex("E8090E0C00000000"),
         )
         for text, expected_width in (
             ("Controls", 77),
@@ -863,6 +879,22 @@ class RuntimeInjectorTests(unittest.TestCase):
             ].runtime_address,
         )
         self.assertEqual(pause_list_hook[4:], b"\0" * 4)
+        pause_list_selected_hook = bytes.fromhex(
+            pause_list_selected_edit.replacement_hex
+        )
+        self.assertEqual(len(pause_list_selected_hook), 8)
+        pause_list_selected_jump = int.from_bytes(
+            pause_list_selected_hook[:4],
+            "little",
+        )
+        self.assertEqual(pause_list_selected_jump >> 26, 0x03)
+        self.assertEqual(
+            (pause_list_selected_jump & 0x03FFFFFF) << 2,
+            pause_list_build.symbols[
+                "localization.font.v2.pause_list_selected_adapter"
+            ].runtime_address,
+        )
+        self.assertEqual(pause_list_selected_hook[4:], b"\0" * 4)
 
         pause_list_adapter_fragment = next(
             fragment
@@ -954,6 +986,110 @@ class RuntimeInjectorTests(unittest.TestCase):
                 mips.i_type(0x31, 7, 12, 0x48),
                 mips.i_type(0x31, 7, 13, 0x4C),
                 mips.jump(0x02, 0x00382470),
+                0,
+            },
+        )
+
+        pause_list_selected_adapter_fragment = next(
+            fragment
+            for fragment in pause_list_declaration.fragments
+            if fragment.symbol
+            == "localization.font.v2.pause_list_selected_adapter"
+        )
+        self.assertEqual(
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation
+                in pause_list_selected_adapter_fragment.relocations
+            },
+            {
+                (
+                    "hi16",
+                    "localization.font.v2.pause_list_selected_callback",
+                ),
+                (
+                    "lo16",
+                    "localization.font.v2.pause_list_selected_callback",
+                ),
+                ("jal26", "localization.font.v2.adapter_call"),
+            },
+        )
+        pause_list_selected_adapter = pause_list_build.symbols[
+            "localization.font.v2.pause_list_selected_adapter"
+        ]
+        pause_list_selected_adapter_payload = pause_list_build.payload[
+            pause_list_selected_adapter.file_offset:
+            pause_list_selected_adapter.file_offset
+            + pause_list_selected_adapter.size
+        ]
+        pause_list_selected_adapter_words = {
+            int.from_bytes(
+                pause_list_selected_adapter_payload[offset:offset + 4],
+                "little",
+            )
+            for offset in range(
+                0,
+                len(pause_list_selected_adapter_payload),
+                4,
+            )
+        }
+        for value in (2.0, 4.0, 20.0):
+            bits = struct.unpack("<I", struct.pack("<f", value))[0]
+            self.assertIn(
+                mips.i_type(0x0F, 0, 8, bits >> 16),
+                pause_list_selected_adapter_words,
+            )
+        for expected_word in (
+            mips.i_type(0x2B, 29, 8, 0x68),
+            mips.mtc1(5, 0),
+            mips.mtc1(6, 0),
+            mips.cop1(0x20, 0, 0, fmt=20),
+            mips.cop1(0x00, 0, 0, 1),
+            mips.cop1(0x01, 0, 0, 1),
+            mips.i_type(0x0D, 8, 8, 216),
+            mips.jump(
+                0x03,
+                pause_list_build.symbols[
+                    "localization.font.v2.adapter_call"
+                ].runtime_address,
+            ),
+        ):
+            self.assertIn(
+                expected_word,
+                pause_list_selected_adapter_words,
+            )
+
+        pause_list_selected_callback = pause_list_build.symbols[
+            "localization.font.v2.pause_list_selected_callback"
+        ]
+        pause_list_selected_callback_payload = pause_list_build.payload[
+            pause_list_selected_callback.file_offset:
+            pause_list_selected_callback.file_offset
+            + pause_list_selected_callback.size
+        ]
+        pause_list_selected_callback_words = {
+            int.from_bytes(
+                pause_list_selected_callback_payload[offset:offset + 4],
+                "little",
+            )
+            for offset in range(
+                0,
+                len(pause_list_selected_callback_payload),
+                4,
+            )
+        }
+        self.assertEqual(
+            pause_list_selected_callback_words,
+            {
+                mips.i_type(0x31, 7, 0, 0x48),
+                mips.cop1(0x24, 0, 0),
+                mips.mfc1(5, 0),
+                mips.i_type(0x31, 7, 1, 0x4C),
+                mips.cop1(0x24, 1, 1),
+                mips.mfc1(6, 1),
+                mips.i_type(0x23, 7, 8, 0x68),
+                mips.i_type(0x23, 7, 7, 0x04),
+                mips.jump(0x02, 0x003827A0),
                 0,
             },
         )

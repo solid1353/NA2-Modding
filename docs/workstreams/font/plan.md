@@ -44,11 +44,13 @@ pixels higher. Its comparison grid remains a task-owned artifact under
 `work/Font/artifacts/`. A fresh post-reset capture is required before assigning
 causation or reintroducing any old wrapper.
 
-The ss3 Pause Controls list layer is implemented through a dedicated v2 BTL
-hook. It applies the retained 216-unit shrink-only box and four-unit Y
-correction without enabling the retained shared wrapper or any ss4 caller.
-The user confirmed the post-build result fixed on 2026-07-27, so ss3 is
-accepted and removed from the remaining epic report.
+The Pause Controls list layer now covers its two distinct native draw paths.
+The normal ss2 state remains user-accepted. The remade ss3 state proves that
+the selected red path bypassed that fit, overflowed, and shifted relative to
+the same unselected row. A second guarded BTL hook now applies the same
+216-unit shrink-only box and four-unit Y correction while preserving the red
+style and applying the proven two-unit selected-helper X compensation. Runtime
+review of this selected-path correction remains pending.
 
 ## Active ss1–ss6 epic priorities
 
@@ -57,15 +59,16 @@ The user directed Font to work only on the
 efficiency-prioritized sequential order supersedes the generic remaining-family
 order below while the epic is active:
 
-1. **ss4 — Quit confirmation.** Reuse the accepted ss3 shared UI plumbing, then add only
+1. **ss3 selected-state correction — Pause Controls.** Preserve the accepted
+   normal rows and verify that selection changes only style, without overflow
+   or row movement.
+2. **ss4 — Quit confirmation.** Reuse the accepted Pause Controls plumbing, then add only
    the guarded confirmation-body and Yes/No positioning behavior. Commit and
    review it independently.
-2. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
+3. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
    through a dedicated final-selector adapter that matches NUN5 glyph scale
    and advance together; preserve the already-correct ASCII `Off`/`On` source
    and the accepted first-eight Controls result.
-3. **ss2 — Command Chart body.** Adapt the accepted v2 multiline primitives to
-   the separate command-description caller; do not reopen the accepted title.
 4. **ss5 — Character model move list.** Add bounded wrapping and positioning
    for the right-side move-name column.
 5. **ss6 — Movie list.** Implement the variable-height wrapped-row behavior
@@ -346,23 +349,28 @@ The Controls and Command Chart regression captures remain intact. The family
 is runtime-proven and enabled, with user acceptance of the composed
 Practice grids still pending.
 
-### ss3 epic caller family: Pause Controls list
+### ss2/ss3 epic caller family: Pause Controls list
 
-The Pause Controls list layer redirects only the list-row call at BTL file
-`0x1C97D8` / runtime `0x0087D6D8`. The clean guard is
-`jal 0x00382470` plus its NOP delay slot. Its dedicated v2 adapter:
+The remade ss2 and ss3 pair are two selection states of the same Pause Controls
+modal. The normal layer redirects BTL file `0x1C97D8` / runtime `0x0087D6D8`,
+guarded by `jal 0x00382470` plus NOP. Its accepted adapter remains unchanged.
+The selected layer redirects BTL file `0x1C9794` / runtime `0x0087D694`,
+guarded by `jal 0x003827A0` plus NOP. Together they:
 
-- preserves the native object, text, style, and X origin;
-- applies the retained NUN5 four-unit upward Y correction;
-- uses one single-line, left-aligned, 216-unit shrink-only box;
-- calls the original NA2 list helper at `0x00382470`;
-- delegates measurement, scaling, session publication, and restoration to the
-  accepted v2 core.
+- use one single-line, left-aligned, 216-unit shrink-only box;
+- apply the retained NUN5 four-unit upward Y correction;
+- preserve the normal float ABI and selected integer/text/color ABI
+  independently;
+- preserve the native red selected style;
+- compensate the selected shadow helper by two local X units so the row does
+  not move when selected;
+- delegate measurement, scaling, session publication, and restoration to the
+  accepted v2 core, then call the original native helper for each path.
 
 The retained `font_layout_wrappers` patch remains disabled, and no ss4
 confirmation-body or Yes/No call is selected. Generation, relocation, hook,
-ABI, and package tests pass. The user confirmed the post-build ss3 result
-fixed on 2026-07-27; the caller is user-accepted.
+ABI, and package tests pass. The normal ss2 state is user-accepted; the
+corrected selected ss3 state awaits the user's rebuilt runtime review.
 
 ### Static and automated validation
 

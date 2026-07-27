@@ -789,34 +789,45 @@ titles and explanations. The user explicitly accepted the Command Chart result
 on 2026-07-27. The Practice title result remains agent-validated and awaiting
 user acceptance.
 
-### Pause Controls list v2 caller
+### Pause Controls list v2 callers
 
-The retained disabled shared UI helper established the intended ss3 behavior:
-a shrink-only 216-unit box and a four-unit upward Y correction. Bounded NA2
-BTL inspection isolates the actual Pause Controls row call at runtime
-`0x0087D6D8`, BTL file `0x1C97D8` using the confirmed live mapping
-`0x006B3F00 + file offset`. Its clean bytes are
-`1C090E0C00000000`, a `jal 0x00382470` followed by a NOP delay slot.
+The retained disabled shared UI helper established the intended Pause Controls
+behavior: a shrink-only 216-unit box and a four-unit upward Y correction.
+Bounded NA2 BTL inspection isolates two adjacent row calls using the confirmed
+live mapping `0x006B3F00 + file offset`:
 
-The v2 implementation hooks that BTL call directly rather than re-enabling the
-retained boot-ELF return-address multiplexer. The adapter preserves the native
-object, text, style, and X origin; uses `caller_y - 4`, a 216-by-20
-single-line left-aligned box, and shrink-only fitting; then tail-calls the
-original `0x00382470` list helper. The shared v2 adapter owns measurement,
-horizontal scale, tracking, active-session publication, and restoration.
+- the normal row at runtime `0x0087D6D8`, BTL file `0x1C97D8`, guarded by
+  `1C090E0C00000000` (`jal 0x00382470` plus NOP);
+- the selected row at runtime `0x0087D694`, BTL file `0x1C9794`, guarded by
+  `E8090E0C00000000` (`jal 0x003827A0` plus NOP).
+
+NA2 passes normal coordinates in `f12/f13`, but selected coordinates as integer
+`a1/a2`, the text in `a3`, and red style `0xFF0000B4` in `t0`. The NUN5
+homolog keeps the same row origin for both paths; selection changes style, not
+position. The earlier accepted modal-alignment analysis independently proved
+that NA2's selected shadow helper needs two local X units of compensation.
+
+The v2 implementation hooks both BTL calls directly rather than re-enabling
+the retained boot-ELF return-address multiplexer. Both adapters use
+`caller_y - 4`, a 216-by-20 single-line left-aligned box, and the same
+shrink-only fitting. The selected adapter also uses `caller_x + 2`, preserves
+the native color, converts the prepared float origin back to the helper's
+integer ABI, and tail-calls `0x003827A0`. The unchanged normal adapter
+tail-calls `0x00382470`. The shared v2 core owns measurement, horizontal scale,
+tracking, active-session publication, and restoration.
 The accepted width table measures the two overflowing visible rows as
 `Back to Game Mode Screen = 245` and `Back to Character Select = 231`, giving
 scales `216/245` and `216/231`. The other four visible rows measure
 `77`, `119`, `140`, and `124`, so they remain at scale `1`.
 
-Deterministic generation produces dedicated
-`localization.font.v2.pause_list_adapter` and
-`localization.font.v2.pause_list_callback` fragments. Static tests verify the
-exact hook guard and target, callback ABI, `f13 - 4.0` instruction, 216-unit
-width, 20-unit height/line height, and dependency only on the accepted v2
-core. No ss4 confirmation-body or Yes/No site is selected. Confidence is
-**high** for caller isolation and the reconstructed contract; runtime parity
-against the supplied ss3 pair remains unverified.
+Deterministic generation produces separate normal and selected adapter/callback
+fragments. Static tests verify both exact hook guards and targets, both callback
+ABIs, the shared four-unit Y correction, selected two-unit X compensation,
+216-unit width, 20-unit height/line height, preserved red style, and dependency
+only on the accepted v2 core. No ss4 confirmation-body or Yes/No site is
+selected. Confidence is **high** for caller isolation and the reconstructed
+contract. The normal ss2 state is user-accepted; runtime parity for the
+corrected selected ss3 state remains unverified.
 
 ### Practice explanation mixed-text wrapping
 

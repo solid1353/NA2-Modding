@@ -20,11 +20,12 @@ before beginning the next slot.
   `work/Font/inputs/sstates/epics/ss2-6/provenance.tsv` and
   `work/Font/inputs/sstates/special-controls-on-off/remade-ss1-20260727/provenance.tsv`.
 - Protected `@pcsx2_user` sources remain untouched.
-- Status: ss3 is user-accepted and removed from the remaining report; the
-  other five baselines remain captured.
+- Status: the remade ss2 and ss3 pair now records the same Pause Controls
+  modal in normal and selected states. The normal ss2 state is accepted; the
+  selected ss3 correction is implemented and awaiting rebuilt runtime review.
 - Existing accepted Font and resident-renderer behavior remains the regression
-  baseline. The accepted Command Chart title is not reopened by ss2; ss2 owns
-  only the remaining command-body layout.
+  baseline. The previously retained Command Chart ss2 image was superseded by
+  the remade Pause Controls ss2 state and is no longer an epic input.
 - Text-content differences are routed to the translation workstreams. This
   epic owns measurement, wrapping, fitting, positioning, and clipping only.
 
@@ -41,13 +42,16 @@ before beginning the next slot.
 
 ![ss1 Special Controls final selector baseline](battle-special-controls-ss1.png)
 
-### ss2 — Command Chart body
+### ss3 — Pause Controls selected row
 
-- State: baseline captured; not implemented.
-- Remaining defect: the third Current description remains on one clipped line,
-  while NUN5 wraps it into two lines inside the command panel.
+- State: selected-path correction implemented; rebuilt runtime review pending.
+- Accepted baseline: the same modal's unselected ss2 rows fit inside the
+  216-unit list box.
+- Remaining review point: selecting `Back to Game Mode Screen` must retain the
+  unselected row's X/Y origin while changing to the red selected style, and
+  both long row labels must remain fitted.
 
-![ss2 Command Chart body baseline](battle-command-chart-ss2.png)
+![ss3 Pause Controls selected-row baseline](battle-pause-controls-ss3.png)
 
 ### ss4 — Quit confirmation
 
@@ -78,15 +82,14 @@ before beginning the next slot.
 
 ## Efficiency-prioritized sequential plan
 
-1. **ss4 — Quit confirmation.** Reuse the accepted ss3 plumbing and add only the
+1. **ss3 selected-state correction — Pause Controls.** Preserve accepted ss2
+   and verify that selection changes only style, without overflow or movement.
+2. **ss4 — Quit confirmation.** Reuse the accepted Pause Controls plumbing and add only the
    separately guarded confirmation-body and Yes/No positioning behavior.
-2. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
+3. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
    through a dedicated final-selector adapter, matching glyph scale and
    advance together without changing either ASCII literal family or reopening
    the accepted first-eight Controls rows.
-3. **ss2 — Command Chart body.** Reuse the accepted multiline primitives, but
-   treat the command-description loop as its own caller family and leave the
-   accepted title untouched.
 4. **ss5 — Character model move list.** Add bounded wrapping and positioning
    for the right-side move-name column.
 5. **ss6 — Movie list.** Implement variable-height wrapped rows last because

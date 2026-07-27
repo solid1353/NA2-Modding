@@ -77,6 +77,12 @@ V2_COMMAND_TITLE_ENTRY = f"{V2_PREFIX}.command_title_entry"
 V2_PRACTICE_TITLE_ENTRY = f"{V2_PREFIX}.practice_title_entry"
 V2_PAUSE_LIST_CALLBACK = f"{V2_PREFIX}.pause_list_callback"
 V2_PAUSE_LIST_ADAPTER = f"{V2_PREFIX}.pause_list_adapter"
+V2_PAUSE_LIST_SELECTED_CALLBACK = (
+    f"{V2_PREFIX}.pause_list_selected_callback"
+)
+V2_PAUSE_LIST_SELECTED_ADAPTER = (
+    f"{V2_PREFIX}.pause_list_selected_adapter"
+)
 V2_NATIVE_MEASURE = f"{V2_PREFIX}.native_measure"
 V2_WRAP_NATIVE = f"{V2_PREFIX}.wrap_native"
 V2_PRACTICE_TOKENS = f"{V2_PREFIX}.practice_tokens"
@@ -100,6 +106,7 @@ FONT_MEASURE = 0x003798E0
 FONT_CENTER = 0x00379240
 FONT_BOX_DRAW = 0x00382310
 FONT_PAUSE_LIST_DRAW = 0x00382470
+FONT_PAUSE_LIST_SELECTED_DRAW = 0x003827A0
 FONT_ICON_DRAW = 0x0037BB40
 SPRINTF = 0x0017BCA0
 FORMAT_D = 0x006042D3
@@ -145,6 +152,7 @@ NO_SOURCE = (50.0, 56.0)
 YES_TARGET = (64.5, 31.5)
 NO_TARGET = (68.5, 49.0)
 PRACTICE_PAUSE_LIST_Y_OFFSET = -4.0
+PRACTICE_PAUSE_LIST_SELECTED_X_OFFSET = 2.0
 PRACTICE_PAUSE_LIST_BOX_WIDTH = 216
 PRACTICE_PAUSE_LIST_BOX_HEIGHT = 20
 PRACTICE_PAUSE_LIST_LINE_HEIGHT = 20.0
@@ -192,6 +200,7 @@ V2_SESSION_SAVED_TRACKING = 0x60
 V2_SESSION_SAVED_SCALE = 0x64
 V2_SESSION_SIZE = 0x68
 V2_SESSION_GLYPH_HEIGHT = 0x68
+V2_PAUSE_LIST_SELECTED_COLOR = V2_SESSION_SIZE
 
 V2_PRACTICE_OBJECT_PRIMARY = 0x6C
 V2_PRACTICE_OBJECT_SECONDARY = 0x70
@@ -1233,6 +1242,149 @@ def build_v2_pause_list_adapter() -> Fragment:
     assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
     payload, relocations = assembler.build()
     return Fragment(V2_PAUSE_LIST_ADAPTER, payload, relocations)
+
+
+def build_v2_pause_list_selected_callback() -> Fragment:
+    """Draw one prepared selected Pause Controls row through its native helper."""
+
+    a1, a2, a3, t0 = 5, 6, 7, 8
+    assembler = mips.Assembler()
+    assembler.emit(
+        mips.i_type(0x31, a3, 0, V2_SESSION_DRAW_X)
+    )
+    assembler.emit(mips.cop1(0x24, 0, 0))
+    assembler.emit(mips.mfc1(a1, 0))
+    assembler.emit(
+        mips.i_type(0x31, a3, 1, V2_SESSION_DRAW_Y)
+    )
+    assembler.emit(mips.cop1(0x24, 1, 1))
+    assembler.emit(mips.mfc1(a2, 1))
+    assembler.emit(
+        mips.i_type(0x23, a3, t0, V2_PAUSE_LIST_SELECTED_COLOR)
+    )
+    assembler.emit(mips.i_type(0x23, a3, a3, V2_SESSION_TEXT))
+    assembler.emit(mips.jump(0x02, FONT_PAUSE_LIST_SELECTED_DRAW))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(
+        V2_PAUSE_LIST_SELECTED_CALLBACK,
+        payload,
+        relocations,
+    )
+
+
+def build_v2_pause_list_selected_adapter() -> Fragment:
+    """Fit a selected Pause Controls row without changing its visual origin."""
+
+    zero, a0, a1, a2, a3 = 0, 4, 5, 6, 7
+    t0, t1 = 8, 9
+    sp, ra = 29, 31
+    frame_size = 0x80
+    saved_ra = 0x7C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    assembler.emit(mips.i_type(0x2B, sp, a3, V2_SESSION_TEXT))
+    assembler.emit(
+        mips.i_type(0x2B, sp, a0, V2_SESSION_CALLBACK_ARG0)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, a1, V2_SESSION_CALLBACK_ARG1)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, a2, V2_SESSION_CALLBACK_ARG2)
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_PAUSE_LIST_SELECTED_COLOR)
+    )
+
+    assembler.emit(mips.mtc1(a1, 0))
+    assembler.emit(mips.cop1(0x20, 0, 0, fmt=20))
+    emit_load_float(
+        assembler,
+        t0,
+        1,
+        PRACTICE_PAUSE_LIST_SELECTED_X_OFFSET,
+    )
+    assembler.emit(mips.cop1(0x00, 0, 0, 1))
+    assembler.emit(mips.i_type(0x39, sp, 0, V2_SESSION_BOX_X))
+
+    assembler.emit(mips.mtc1(a2, 0))
+    assembler.emit(mips.cop1(0x20, 0, 0, fmt=20))
+    emit_load_float(
+        assembler,
+        t0,
+        1,
+        abs(PRACTICE_PAUSE_LIST_Y_OFFSET),
+    )
+    assembler.emit(mips.cop1(0x01, 0, 0, 1))
+    assembler.emit(mips.i_type(0x39, sp, 0, V2_SESSION_BOX_Y))
+
+    mips.load_u32(assembler, t0, PRACTICE_PAUSE_LIST_BOX_WIDTH)
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_WIDTH)
+    )
+    mips.load_u32(assembler, t0, PRACTICE_PAUSE_LIST_BOX_HEIGHT)
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_BOX_HEIGHT)
+    )
+    assembler.emit(
+        mips.i_type(
+            0x2B,
+            sp,
+            zero,
+            V2_SESSION_HORIZONTAL_ALIGNMENT,
+        )
+    )
+    assembler.emit(
+        mips.i_type(
+            0x2B,
+            sp,
+            zero,
+            V2_SESSION_VERTICAL_ALIGNMENT,
+        )
+    )
+    assembler.emit(mips.i_type(0x09, zero, t0, V2_FLAG_SHRINK_X))
+    assembler.emit(mips.i_type(0x2B, sp, t0, V2_SESSION_FLAGS))
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_LINE_LIMIT)
+    )
+    emit_load_float(
+        assembler,
+        t0,
+        0,
+        PRACTICE_PAUSE_LIST_LINE_HEIGHT,
+    )
+    assembler.emit(
+        mips.i_type(0x39, sp, 0, V2_SESSION_LINE_HEIGHT)
+    )
+    assembler.load_symbol_word(
+        t0,
+        t0,
+        0x09,
+        V2_PAUSE_LIST_SELECTED_CALLBACK,
+    )
+    assembler.emit(
+        mips.i_type(0x2B, sp, t0, V2_SESSION_CALLBACK)
+    )
+    assembler.emit(mips.r_type(sp, zero, t1, 0x21))
+    assembler.emit(
+        mips.i_type(0x2B, sp, t1, V2_SESSION_CALLBACK_ARG3)
+    )
+
+    assembler.emit(mips.r_type(sp, zero, a0, 0x21))
+    assembler.jump_symbol(0x03, V2_ADAPTER_CALL)
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(
+        V2_PAUSE_LIST_SELECTED_ADAPTER,
+        payload,
+        relocations,
+    )
 
 
 def build_v2_native_measure() -> Fragment:
@@ -2678,6 +2830,8 @@ def v2_fragments() -> tuple[Fragment, ...]:
         ),
         build_v2_pause_list_callback(),
         build_v2_pause_list_adapter(),
+        build_v2_pause_list_selected_callback(),
+        build_v2_pause_list_selected_adapter(),
         build_v2_native_measure(),
         build_v2_wrap_native(),
         build_v2_practice_append(),

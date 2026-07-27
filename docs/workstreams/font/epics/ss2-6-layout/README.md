@@ -62,10 +62,11 @@ before beginning the next slot.
 - String correction: Battle now uses `Battle`, T66 supplies the connective
   exactly once, and new short destination mappings select `Game Mode Select`
   or `Character Select`. Canonical mappings contain no authored newline bytes.
-- Implementation: T63–T67 and every canonical mapping remain unchanged. The
-  exact Battle-modal body call wraps a bounded stack copy into two lines at
-  draw time, while the exact Yes/No list call publishes a transient scope for
-  selected and unselected NUN5-coordinate adapters.
+- Implementation: the exact Battle-modal body call wraps a bounded stack copy
+  into two lines at draw time, while the exact Yes/No list call publishes a
+  transient scope for selected and unselected NUN5-coordinate adapters.
+  String Translation owns T63/T64/T66/T67 and the new T2201/T2202 destination
+  mappings; none stores a newline.
 
 ![ss4 Quit confirmation baseline](battle-quit-confirmation-ss4.png)
 

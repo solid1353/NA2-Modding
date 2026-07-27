@@ -1855,7 +1855,7 @@ Mode/Character Select combinations prove that this first X value starts every
 Current body at screenshot X `101`, versus NUN5 X `72`, while Y already
 matches. The shared local X is therefore corrected to `19` with Y `12`
 unchanged. String Translation separately owns the exposed wrong dynamic
-content. The layer remains `approved_for_test`; a fresh user build is required
+content and corrected it in `f4f12f6`. The layer remains `approved_for_test`; a fresh user build is required
 because the supplied states restore the modified overlay, ELF, and resident
 regions.
 

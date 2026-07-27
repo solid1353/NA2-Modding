@@ -860,8 +860,8 @@ tail calls for every other screen.
 The body helper builds its native record at X/Y `48/20`. NUN5 evidence retains
 Y `12`; the accepted width table measures the Free Battle first line through
 `and` as `420`, while adding `return` reaches `483`. A 420-unit, two-line
-greedy wrapper therefore selects the observed break without changing the
-canonical T63–T67 records. The adapter copies at most 255 source bytes to its
+greedy wrapper therefore selects the observed break without storing an
+authored newline in any canonical mapping. The adapter copies at most 255 source bytes to its
 own stack, inserts newline bytes only into that draw-time copy, publishes the
 v2 session around the native UI draw, and then discards the copy. Confidence
 is **high** for offsets, guards, ABIs, isolation, and mapping neutrality.
@@ -873,8 +873,9 @@ X `101`, while every NUN5 body starts at X `72`; both first lines start at Y
 modal origin, the shared correction changes its local X from `48` to `19` and
 leaves Y `12` unchanged. The same evidence exposes a separate dynamic
 text-assembly defect: Battle says `Free Battle`, connective text is duplicated,
-and the Japanese destination tail remains. That content correction belongs to
-String Translation and does not justify authored newline bytes in T63–T67.
+and the Japanese destination tail remains. String Translation corrected that
+independent assembly in `f4f12f6` by splitting the mode head, connective,
+destination, and terminator; no canonical mapping gained an authored newline.
 Runtime visual parity remains unconfirmed until both corrections are present
 in a fresh user build.
 

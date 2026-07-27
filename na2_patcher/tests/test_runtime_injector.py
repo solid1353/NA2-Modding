@@ -1538,12 +1538,29 @@ class RuntimeInjectorTests(unittest.TestCase):
             )
             for offset in range(0, len(selected_payload), 4)
         }
-        for value in (24.0, 56.0, 64.5, 31.5, 68.5, 49.0):
+        for value in (
+            24.0,
+            56.0,
+            64.5,
+            31.5,
+            68.5,
+            49.0,
+            66.0,
+            31.0,
+        ):
             bits = struct.unpack("<I", struct.pack("<f", value))[0]
             self.assertIn(
                 mips.i_type(0x0F, 0, 8, bits >> 16),
                 selected_words,
             )
+        self.assertIn(
+            mips.i_type(0x0F, 0, 8, 0x0060),
+            selected_words,
+        )
+        self.assertIn(
+            mips.i_type(0x0D, 8, 8, 0x59F0),
+            selected_words,
+        )
         self.assertIn(
             mips.jump(0x02, 0x00379150),
             selected_words,
@@ -1567,6 +1584,20 @@ class RuntimeInjectorTests(unittest.TestCase):
         )
         self.assertIn(
             mips.jump(0x03, 0x00379A20),
+            unselected_words,
+        )
+        for value, register in ((59.0, 8), (49.0, 9)):
+            bits = struct.unpack("<I", struct.pack("<f", value))[0]
+            self.assertIn(
+                mips.i_type(0x0F, 0, register, bits >> 16),
+                unselected_words,
+            )
+        self.assertIn(
+            mips.i_type(0x0F, 0, 8, 0x0060),
+            unselected_words,
+        )
+        self.assertIn(
+            mips.i_type(0x0D, 8, 8, 0x59F8),
             unselected_words,
         )
 

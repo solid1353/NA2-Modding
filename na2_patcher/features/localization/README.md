@@ -1816,8 +1816,14 @@ to ASCII `Off`/`On`.
 Special Controls uses distinct fullwidth Shift-JIS slots at SLPS files
 `0x505AF0`/`0x505AF8`, proven by the remade ss1 draw telemetry. Canonical
 mappings T2203/T2204 convert them to official NUN5 ASCII `ON`/`OFF` donors.
-This text correction installs no renderer hook; any remaining placement work
-is evaluated separately after a fresh mapped-state capture.
+The fresh mapping-only capture proves the NA2 and NUN5 list records already
+share X/Y, row-step, count, selection, and owner geometry. Placement is
+therefore handled by extending the already-installed selected/unselected
+quit-confirmation adapters at ELF files `0x283914` and `0x283A60`: when the
+quit scope is inactive, exact runtime text pointers `0x006059F0` and
+`0x006059F8` select local coordinates `(66,31)` and `(59,49)`. Every other
+caller remains a native tail call, so this adds no overlapping hook and does
+not alter the accepted quit-confirmation behavior.
 
 The second thin caller layer, `font_v2_titles`, replaces only two guarded BTL
 draw calls: Command Chart file `0x1C6A28` and Practice file `0x1C4B98`.
@@ -1848,11 +1854,11 @@ The dedicated ss4 layer, `font_v2_quit_confirmation`, authors no newline in
 canonical translation mappings. Its exact BTL list call at file `0x1C4048`
 publishes a transient scope only around native `0x00383600`; the selected and
 unselected calls inside that helper are redirected at ELF files `0x283914`
-and `0x283A60`, but tail-call native behavior unless that scope is active.
-This maps Yes and No to their separately measured NUN5 coordinates in either
-selection state without affecting another list. The exact body call at BTL
-file `0x1C407C` copies at most 255 bytes to the adapter stack, greedily wraps
-that copy inside a 420-by-40 two-line box, and draws from X `48`, Y `12`.
+and `0x283A60`. They map Yes and No while that scope is active; outside it,
+only the exact Special Controls ON/OFF pointers use their measured coordinates,
+and all other rows tail-call native behavior. The exact body call at BTL file
+`0x1C407C` copies at most 255 bytes to the adapter stack, greedily wraps that
+copy inside a 420-by-40 two-line box, and draws from X `48`, Y `12`.
 Neither the formatted source buffer nor canonical mappings receive newline
 bytes. Fresh user pairs across all four Battle/Practice and Game
 Mode/Character Select combinations prove that this first X value starts every

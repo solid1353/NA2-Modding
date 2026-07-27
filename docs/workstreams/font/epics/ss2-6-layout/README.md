@@ -36,13 +36,17 @@ before beginning the next slot.
 
 ### ss1 — Special Controls final selector
 
-- State: mapping correction implemented; fresh mapped-state comparison pending.
+- State: mapping and bounded renderer positioning implemented; agent-validated
+  against the remade pair and awaiting user acceptance.
 - Baseline defect: Current draws fullwidth Shift-JIS `Ｏ　Ｎ`/`ＯＦＦ`, producing
   physically larger glyphs and wide internal advances, while NUN5 draws compact
   ASCII `ON`/`OFF`. Exact telemetry locates the NA2 slots at SLPS files
   `0x505AF0`/`0x505AF8`; mappings T2203/T2204 use the official NUN5 SLES donors
-  at `0x513E68`/`0x513E6C`. Any remaining position mismatch is measured only
-  after this conversion.
+  at `0x513E68`/`0x513E6C`. The paired states prove identical modal list
+  geometry, so the existing selected/unselected shared adapters use exact
+  string-pointer guards and measured local targets `(66,31)` / `(59,49)`.
+  Every unrelated list remains native. The remaining one- to two-pixel ink
+  height difference is the separately tracked small raster mismatch.
 
 ![ss1 Special Controls final selector baseline](battle-special-controls-ss1.png)
 

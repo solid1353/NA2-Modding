@@ -139,9 +139,29 @@ same guarded slots. The official NUN5 uppercase donors are SLES file
 Canonical mappings T2203/T2204 therefore convert only those two modal-specific
 Shift-JIS slots to ASCII. This corrects glyph selection and removes the
 fullwidth internal advance without changing the accepted first-eight Control
-Settings hook, Practice Settings pointer split, or any renderer code. A fresh
-mapped-state comparison must measure any remaining centering or vertical
-offset separately; the mapping itself does not claim positioning parity.
+Settings hook or Practice Settings pointer split.
+
+The fresh mapping-only state proved that encoding was not the remaining
+placement cause. NA2 and NUN5 both store list-local X `48`, Y `24`, extra row
+step `12`, count `2`, and selected index `0`; their owning modal transforms
+also match at `168`, `64`, `176`, and `112`. NA2 renders the list through
+`FUN_00383600`, whose selected call is runtime `0x00383814` / ELF file
+`0x283914` and whose unselected call is runtime `0x00383960` / ELF file
+`0x283A60`. NUN5's structurally homologous `FUN_003923A0` uses its distinct
+selected and ordinary renderer paths. The mismatch is therefore in those
+renderer coordinate semantics, not the modal's list geometry.
+
+Those two NA2 call sites are already owned by the accepted quit-confirmation
+adapters. The bounded implementation extends the existing adapters instead of
+installing overlapping hooks: outside the quit scope, selected text pointer
+`0x006059F0` maps to local `(66,31)`, unselected record text pointer
+`0x006059F8` maps to `(59,49)`, and every other caller tail-calls native
+behavior. Exact-guarded task-state trials established those coordinates
+without rebuilding an ISO. At 640x480, the final current ON center matches
+NUN5 exactly; the OFF center differs by half a pixel because the retained
+current glyph ink is two pixels shorter. That small raster mismatch remains a
+separate Font refinement and is not compensated by further layout movement.
+Confidence is **high** for the pointer guards, hook isolation, and placement.
 
 The earlier identification of `FUN_003885B0` and its call at runtime
 `0x003887D4` / ELF file `0x2888D4` as this ss1 modal was incorrect. Retained

@@ -160,6 +160,10 @@ YES_SOURCE = (50.0, 24.0)
 NO_SOURCE = (50.0, 56.0)
 YES_TARGET = (64.5, 31.5)
 NO_TARGET = (68.5, 49.0)
+SPECIAL_CONTROLS_ON_TEXT = 0x006059F0
+SPECIAL_CONTROLS_OFF_TEXT = 0x006059F8
+SPECIAL_CONTROLS_ON_TARGET = (66.0, 31.0)
+SPECIAL_CONTROLS_OFF_TARGET = (59.0, 49.0)
 PRACTICE_PAUSE_LIST_Y_OFFSET = -4.0
 PRACTICE_PAUSE_LIST_SELECTED_X_OFFSET = 2.0
 PRACTICE_PAUSE_LIST_BOX_WIDTH = 216
@@ -1438,13 +1442,27 @@ def build_v2_quit_choices_scope() -> Fragment:
 
 
 def build_v2_quit_selected_adapter() -> Fragment:
-    """Map only the selected ss4 Yes/No row to its NUN5 coordinates."""
+    """Map scoped ss4 or exact ss1 selected rows to NUN5 coordinates."""
 
-    zero = 0
+    zero, a0 = 0, 4
     t0, t1 = 8, 9
     assembler = mips.Assembler()
     assembler.load_symbol_word(t0, t0, 0x23, V2_QUIT_ACTIVE)
-    assembler.branch(0x04, t0, zero, "original")
+    assembler.branch(0x05, t0, zero, "quit_scope")
+    assembler.emit(0)
+    mips.load_u32(assembler, t0, SPECIAL_CONTROLS_ON_TEXT)
+    assembler.branch(0x05, a0, t0, "original")
+    assembler.emit(0)
+    emit_load_float(
+        assembler, t0, 12, SPECIAL_CONTROLS_ON_TARGET[0]
+    )
+    emit_load_float(
+        assembler, t0, 13, SPECIAL_CONTROLS_ON_TARGET[1]
+    )
+    assembler.branch(0x04, zero, zero, "original")
+    assembler.emit(0)
+
+    assembler.label("quit_scope")
     assembler.emit(mips.mfc1(t1, 13))
     mips.load_u32(assembler, t0, float_bits(YES_SOURCE[1]))
     assembler.branch(0x04, t1, t0, "map_yes")
@@ -1473,7 +1491,7 @@ def build_v2_quit_selected_adapter() -> Fragment:
 
 
 def build_v2_quit_unselected_adapter() -> Fragment:
-    """Temporarily map one unselected ss4 Yes/No row, then restore it."""
+    """Temporarily map scoped ss4 or exact ss1 rows, then restore them."""
 
     zero, a1 = 0, 5
     t0, t1 = 8, 9
@@ -1487,7 +1505,22 @@ def build_v2_quit_unselected_adapter() -> Fragment:
 
     assembler = mips.Assembler()
     assembler.load_symbol_word(t0, t0, 0x23, V2_QUIT_ACTIVE)
-    assembler.branch(0x04, t0, zero, "original")
+    assembler.branch(0x05, t0, zero, "quit_scope")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x23, a1, t1, 8))
+    mips.load_u32(assembler, t0, SPECIAL_CONTROLS_OFF_TEXT)
+    assembler.branch(0x05, t1, t0, "original")
+    assembler.emit(0)
+    mips.load_u32(
+        assembler, t0, float_bits(SPECIAL_CONTROLS_OFF_TARGET[0])
+    )
+    mips.load_u32(
+        assembler, t1, float_bits(SPECIAL_CONTROLS_OFF_TARGET[1])
+    )
+    assembler.branch(0x04, zero, zero, "mapped")
+    assembler.emit(0)
+
+    assembler.label("quit_scope")
     assembler.emit(mips.i_type(0x23, a1, t1, 4))
     mips.load_u32(assembler, t0, float_bits(YES_SOURCE[1]))
     assembler.branch(0x04, t1, t0, "map_yes")

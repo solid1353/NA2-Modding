@@ -1905,7 +1905,7 @@ T1873	1	Command Chart > character move name	<r裏御光|うらごこう>	Reverse
 T1874	1	Command Chart > character move name	<r火遁|かとん>・<r鳳仙火|ほうせんか>の<r術|じゅつ>・<r落花散|らっかさん>	Fire Style: Phoenix Flower Jutsu @Petal Shower@			character:command-record-index	NA2_SLPS@0x49AD40	NUN5_TEXTENG@0xEF10	slot	80				
 T1875	1	Command Chart > character move name	<r幻日|げんじつ>	False Sun			character:command-record-index	NA2_SLPS@0x49AD90	NUN5_TEXTENG@0xEF40	slot	32				
 T1876	1	Command Chart > character move name	<r東雲|しののめ>	Dawnbreak			character:command-record-index	NA2_SLPS@0x49ADB0	NUN5_TEXTENG@0xEF50	slot	32				
-T1877	1	Command Chart > character move name	<r火遁|かとん>・<r豪火球|ごうかきゅう>の<r術|じゅつ>・<r天来|てんらい>	Fire Style: Fireball Jutsu @Divinity@			character:command-record-index	NA2_SLPS@0x49ADD0	NUN5_TEXTENG@0xEF60	slot	80				
+T1877	1	Command Chart > character move name	<r火遁|かとん>・<r豪火球|ごうかきゅう>の<r術|じゅつ>・<r天来|てんらい>	Fire Style: Fireball Jutsu @Divinity@		"Fire Style: Fireball Jutsu ""Divinity"""	character:command-record-index	NA2_SLPS@0x49ADD0	NUN5_TEXTENG@0xEF60	slot	80				
 T1878	1	Command Chart > character move name	<r莢雲|さやぐも>	Heavenly Cloud			character:command-record-index	NA2_SLPS@0x49AE20	NUN5_TEXTENG@0xEF88	slot	32				
 T1879	1	Command Chart > character move name	<r千鳥|ちどり>・<r迅雷|じんらい>	Chidori: Thunderclap			character:command-record-index	NA2_SLPS@0x49AE40	NUN5_TEXTENG@0xEFA0	slot	48				
 T1880	1	Command Chart > shared control name or help text	"ナルティメットアクセル<r独特|どくとく>の<r操作|そうさ>を

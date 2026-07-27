@@ -52,6 +52,7 @@ class TranslationImporterTests(unittest.TestCase):
         }
         direct_replacements = {
             "T30": "Ultimate",
+            "T1877": 'Fire Style: Fireball Jutsu "Divinity"',
             "T1920": "Charge Chakra",
             "T1958": (
                 "Press <iconCROSS> to select the button/item to change. "

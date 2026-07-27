@@ -231,7 +231,11 @@ class IntegratedExternalStringTests(unittest.TestCase):
         ]
         self.assertEqual(
             {str(row["id"]) for row in override_rows},
-            {"T30", "T1920", "T1958", "T2194", "T2197"},
+            {"T30", "T1877", "T1920", "T1958", "T2194", "T2197"},
+        )
+        self.assertEqual(
+            self.import_plan.resolved_texts["T1877"],
+            'Fire Style: Fireball Jutsu "Divinity"',
         )
         self.assertEqual(self.import_plan.resolved_texts["T1920"], "Charge Chakra")
         self.assertEqual(

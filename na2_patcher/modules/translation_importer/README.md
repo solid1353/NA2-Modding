@@ -41,7 +41,9 @@ the official NUN5 `Character Select` and `Game Mode Select` strings.
 T2203/T2204 convert the remade-ss1 Special Controls modal's two fullwidth
 Shift-JIS slots to the official NUN5 ASCII `ON`/`OFF` strings. Other
 donor-backed rows leave `replacement` blank and execute official donor text;
-T1958 retains the established Cross-confirm override. Normal
+T1877 overrides NUN5's font-specific `@Divinity@` convention with ASCII
+quotation marks for NA2, and T1958 retains the established Cross-confirm
+override. Normal
 builds import this canonical table directly.
 
 Canonical imports validate complete structured message families. Active

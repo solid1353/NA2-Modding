@@ -29,7 +29,7 @@ command or file-backed inter-stage handoff.
 ### Mapping metadata
 
 - Canonical `mappings.tsv` rows: `2,075`
-- Canonical `mappings.tsv` SHA-256: `27A137EB4B2D76C132F9DDEC2838B1C54FCE9EB9A295EF06685DB94DD9C4EDE4`
+- Canonical `mappings.tsv` SHA-256: `EC7472B47A336425CDF538543B9D5E5599230CDC203CF34581DAA6C9724CC8CA`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the aggregate Localization feature pin own content identity.
@@ -107,7 +107,10 @@ for this NA2 slot, so the complete visible title is stored as its override.
 T30 is the sole donorless row and uses user-authored
 `Ultimate`, externalized through `NA2_BTL@0x209CB4`. Donor-backed rows otherwise
 leave `replacement` blank and execute independently validated official donor
-text. T1958 retains the established Cross-confirm override.
+text. The paired Command Chart capture proves that NUN5's `@Divinity@`
+font convention renders as copyright symbols in NA2, so T1877 retains the
+official donor and overrides it with ASCII quotation marks. T1958 retains the
+established Cross-confirm override.
 The paired Ninja Song passes add 25 displayed numeric/status/bonus fields, and
 the paired ss7 Movie pass adds the locked-title placeholder. This
 is an evidence-scoped English table, not a claim that uncaptured screens are

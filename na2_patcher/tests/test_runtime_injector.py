@@ -1535,12 +1535,13 @@ class RuntimeInjectorTests(unittest.TestCase):
         selected_payload = build.payload[
             selected.file_offset:selected.file_offset + selected.size
         ]
-        selected_words = {
+        selected_word_list = [
             int.from_bytes(
                 selected_payload[offset:offset + 4], "little"
             )
             for offset in range(0, len(selected_payload), 4)
-        }
+        ]
+        selected_words = set(selected_word_list)
         for value in (
             24.0,
             56.0,
@@ -1565,8 +1566,32 @@ class RuntimeInjectorTests(unittest.TestCase):
             selected_words,
         )
         self.assertIn(
+            mips.i_type(0x0D, 8, 8, 0x59F8),
+            selected_words,
+        )
+        self.assertIn(
             mips.jump(0x02, 0x00379150),
             selected_words,
+        )
+        selected_on = selected_word_list.index(
+            mips.i_type(0x0D, 8, 8, 0x59F0)
+        )
+        selected_off = selected_word_list.index(
+            mips.i_type(0x0D, 8, 8, 0x59F8)
+        )
+        selected_on_branch = selected_word_list[selected_on + 1]
+        self.assertEqual(selected_on_branch >> 26, 0x04)
+        selected_on_delta = selected_on_branch & 0xFFFF
+        if selected_on_delta & 0x8000:
+            selected_on_delta -= 0x10000
+        selected_on_target = selected_on + 2 + selected_on_delta
+        self.assertEqual(
+            selected_word_list[selected_on_target],
+            mips.i_type(0x0F, 0, 8, 0x4284),
+        )
+        self.assertEqual(
+            selected_word_list[selected_off + 3],
+            mips.i_type(0x0F, 0, 8, 0x426C),
         )
 
         unselected = build.symbols[
@@ -1575,12 +1600,13 @@ class RuntimeInjectorTests(unittest.TestCase):
         unselected_payload = build.payload[
             unselected.file_offset:unselected.file_offset + unselected.size
         ]
-        unselected_words = {
+        unselected_word_list = [
             int.from_bytes(
                 unselected_payload[offset:offset + 4], "little"
             )
             for offset in range(0, len(unselected_payload), 4)
-        }
+        ]
+        unselected_words = set(unselected_word_list)
         self.assertIn(
             mips.jump(0x02, 0x00379A20),
             unselected_words,
@@ -1589,7 +1615,7 @@ class RuntimeInjectorTests(unittest.TestCase):
             mips.jump(0x03, 0x00379A20),
             unselected_words,
         )
-        for value, register in ((59.0, 8), (49.0, 9)):
+        for value, register in ((59.0, 8), (49.0, 9), (31.0, 9)):
             bits = struct.unpack("<I", struct.pack("<f", value))[0]
             self.assertIn(
                 mips.i_type(0x0F, 0, register, bits >> 16),
@@ -1602,6 +1628,30 @@ class RuntimeInjectorTests(unittest.TestCase):
         self.assertIn(
             mips.i_type(0x0D, 8, 8, 0x59F8),
             unselected_words,
+        )
+        self.assertIn(
+            mips.i_type(0x0D, 8, 8, 0x59F0),
+            unselected_words,
+        )
+        unselected_on = unselected_word_list.index(
+            mips.i_type(0x0D, 8, 8, 0x59F0)
+        )
+        unselected_off = unselected_word_list.index(
+            mips.i_type(0x0D, 8, 8, 0x59F8)
+        )
+        unselected_on_branch = unselected_word_list[unselected_on + 1]
+        self.assertEqual(unselected_on_branch >> 26, 0x04)
+        unselected_on_delta = unselected_on_branch & 0xFFFF
+        if unselected_on_delta & 0x8000:
+            unselected_on_delta -= 0x10000
+        unselected_on_target = unselected_on + 2 + unselected_on_delta
+        self.assertEqual(
+            unselected_word_list[unselected_on_target],
+            mips.i_type(0x0F, 0, 8, 0x4284),
+        )
+        self.assertEqual(
+            unselected_word_list[unselected_off + 3],
+            mips.i_type(0x0F, 0, 8, 0x426C),
         )
 
         body = build.symbols[

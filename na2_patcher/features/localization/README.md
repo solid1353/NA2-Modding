@@ -1855,8 +1855,10 @@ canonical translation mappings. Its exact BTL list call at file `0x1C4048`
 publishes a transient scope only around native `0x00383600`; the selected and
 unselected calls inside that helper are redirected at ELF files `0x283914`
 and `0x283A60`. They map Yes and No while that scope is active; outside it,
-only the exact Special Controls ON/OFF pointers use their measured coordinates,
-and all other rows tail-call native behavior. The exact body call at BTL file
+both hooks recognize both exact Special Controls ON/OFF pointers. ON therefore
+retains local `(66,31)` and OFF retains `(59,49)` when selection swaps which
+helper renders each row; all other rows tail-call native behavior. The exact
+body call at BTL file
 `0x1C407C` copies at most 255 bytes to the adapter stack, greedily wraps that
 copy inside a 420-by-40 two-line box, and draws from X `48`, Y `12`.
 Neither the formatted source buffer nor canonical mappings receive newline

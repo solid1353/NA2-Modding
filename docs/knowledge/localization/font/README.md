@@ -1360,3 +1360,17 @@ linked trial payload at `0x008F6000`, redirected only the five session-aware
 core hooks plus this body call, and produced the same break and line origins as
 the supplied NUN5 reference. Confidence is high; user acceptance remains a
 separate epic state.
+
+The later matched OFF-highlight ss1 pair exposed a separate selector-state
+regression in the already shared selected/unselected hooks. The first state
+showed selected ON and unselected OFF, so the original guards recognized only
+ON in the selected helper and only OFF in the unselected helper. Highlighting
+OFF swaps those consumer roles: selected receives pointer `0x006059F8` and
+unselected receives `0x006059F0`; both guards missed and fell back to native
+placement. The corrected adapters recognize both pointers in both roles and
+keep coordinates attached to the text row: ON `(66,31)`, OFF `(59,49)`.
+An exact-guarded converted copy of the new state redirected only ELF calls
+`0x283914` and `0x283A60` to a task-local linked payload and matched the NUN5
+OFF-highlight selector while retaining the accepted wrapped body. Focused
+tests now verify the branch target for each ON pointer loads X `66`, while
+each OFF fallthrough loads X `59`; this prevents another role-swap regression.

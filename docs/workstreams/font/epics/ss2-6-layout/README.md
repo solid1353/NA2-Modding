@@ -14,11 +14,15 @@ before beginning the next slot.
   `work/Font/inputs/sstates/epics/ss2-6/`.
 - Additional remade ss1 inputs:
   `work/Font/inputs/sstates/special-controls-on-off/remade-ss1-20260727/`.
+- OFF-highlight ss1 regression pair:
+  `work/Font/inputs/sstates/special-controls-on-off/off-highlight-20260727/`.
 - Extracted source screenshots:
   `work/Font/inputs/screenshots/epics/ss2-6/`.
 - Provenance:
   `work/Font/inputs/sstates/epics/ss2-6/provenance.tsv` and
-  `work/Font/inputs/sstates/special-controls-on-off/remade-ss1-20260727/provenance.tsv`.
+  `work/Font/inputs/sstates/special-controls-on-off/remade-ss1-20260727/provenance.tsv`,
+  plus
+  `work/Font/inputs/sstates/special-controls-on-off/off-highlight-20260727/provenance.tsv`.
 - Protected `@pcsx2_user` sources remain untouched.
 - Status: the remade ss2 and ss3 pair records the same Pause Controls modal in
   normal and selected states. Both are user-verified and removed from the
@@ -37,7 +41,8 @@ before beginning the next slot.
 ### ss1 — Special Controls selector and explanatory body
 
 - State: selector mapping/positioning and bounded explanatory-body wrapping
-  implemented; agent-validated against the remade pair and awaiting user
+  implemented; the later OFF-highlight regression is corrected and
+  agent-validated against both supplied highlight states, awaiting user
   acceptance of the complete screen.
 - Baseline defect: Current draws fullwidth Shift-JIS `Ｏ　Ｎ`/`ＯＦＦ`, producing
   physically larger glyphs and wide internal advances, while NUN5 draws compact
@@ -46,6 +51,9 @@ before beginning the next slot.
   at `0x513E68`/`0x513E6C`. The paired states prove identical modal list
   geometry, so the existing selected/unselected shared adapters use exact
   string-pointer guards and measured local targets `(66,31)` / `(59,49)`.
+  The later OFF-highlight pair proved that selection swaps which shared helper
+  receives each pointer. Both hooks now recognize both pointers, so coordinates
+  remain attached to ON or OFF rather than to the selected/unselected role.
   Every unrelated list remains native. The same pair also proves T1880 must
   remain one unbroken canonical string while the exact BTL body call at
   `0x1C3D38` creates a transient two-line copy in NUN5's 400-by-60 box,

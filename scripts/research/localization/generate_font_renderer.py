@@ -1463,8 +1463,21 @@ def build_v2_quit_selected_adapter() -> Fragment:
     assembler.branch(0x05, t0, zero, "quit_scope")
     assembler.emit(0)
     mips.load_u32(assembler, t0, SPECIAL_CONTROLS_ON_TEXT)
+    assembler.branch(0x04, a0, t0, "special_on")
+    assembler.emit(0)
+    mips.load_u32(assembler, t0, SPECIAL_CONTROLS_OFF_TEXT)
     assembler.branch(0x05, a0, t0, "original")
     assembler.emit(0)
+    emit_load_float(
+        assembler, t0, 12, SPECIAL_CONTROLS_OFF_TARGET[0]
+    )
+    emit_load_float(
+        assembler, t0, 13, SPECIAL_CONTROLS_OFF_TARGET[1]
+    )
+    assembler.branch(0x04, zero, zero, "original")
+    assembler.emit(0)
+
+    assembler.label("special_on")
     emit_load_float(
         assembler, t0, 12, SPECIAL_CONTROLS_ON_TARGET[0]
     )
@@ -1520,6 +1533,9 @@ def build_v2_quit_unselected_adapter() -> Fragment:
     assembler.branch(0x05, t0, zero, "quit_scope")
     assembler.emit(0)
     assembler.emit(mips.i_type(0x23, a1, t1, 8))
+    mips.load_u32(assembler, t0, SPECIAL_CONTROLS_ON_TEXT)
+    assembler.branch(0x04, t1, t0, "special_on")
+    assembler.emit(0)
     mips.load_u32(assembler, t0, SPECIAL_CONTROLS_OFF_TEXT)
     assembler.branch(0x05, t1, t0, "original")
     assembler.emit(0)
@@ -1528,6 +1544,16 @@ def build_v2_quit_unselected_adapter() -> Fragment:
     )
     mips.load_u32(
         assembler, t1, float_bits(SPECIAL_CONTROLS_OFF_TARGET[1])
+    )
+    assembler.branch(0x04, zero, zero, "mapped")
+    assembler.emit(0)
+
+    assembler.label("special_on")
+    mips.load_u32(
+        assembler, t0, float_bits(SPECIAL_CONTROLS_ON_TARGET[0])
+    )
+    mips.load_u32(
+        assembler, t1, float_bits(SPECIAL_CONTROLS_ON_TARGET[1])
     )
     assembler.branch(0x04, zero, zero, "mapped")
     assembler.emit(0)

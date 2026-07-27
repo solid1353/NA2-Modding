@@ -61,8 +61,9 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - `ss`: savestate; `ss<number>`: that numbered savestate slot in the user's
   PCSX2, for example `ss7`.
 - `zxc`: checkpoint and stop gracefully for restart or reboot.
-- `task done`: remove the uniquely identifiable current task through its owning
-  coordinator and push the task-management update.
+- `task done`: the owning workstream coordinator removes the uniquely
+  identifiable current task and pushes the task-management update. This never
+  means the task named `Task coordinator`.
 
 Detailed command and task behavior is in
 [`docs/policies/interaction.md`](docs/policies/interaction.md).

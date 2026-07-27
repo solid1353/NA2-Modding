@@ -95,10 +95,11 @@
   `Backlog`, or `Archive`; `Testing` is last within its current status.
 - Approved active work moves its whole subsection to `In Progress`. Move to
   `Backlog` only by explicit user instruction.
-- `task done` removes the exact task. If the subsection becomes empty, move it
-  to `Archive` without deleting it or archiving its coordinator chat. If work
-  returns, move it to `In Progress` when approved or to `Backlog` only by
-  explicit instruction.
+- `task done` makes the owning workstream coordinator remove the exact task;
+  the task named `Task coordinator` never performs task-entry edits. If the
+  subsection becomes empty, move it to `Archive` without deleting it or
+  archiving its coordinator chat. If work returns, move it to `In Progress`
+  when approved or to `Backlog` only by explicit instruction.
 - Documented workstreams use `docs/workstreams/<workstream>/README.md`, linked
   from the subsection heading, with recurring rules under
   `## Workstream policy`.

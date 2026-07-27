@@ -110,8 +110,11 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   input; the surrounding request determines what action, if any, is authorized.
 - `zxc` invokes the graceful-stop procedure below.
 - `task done` accepts the uniquely identifiable current task as complete and
-  orders its owning coordinator to remove the exact entry. Ask when the task is
-  not uniquely identifiable.
+  orders its owning workstream coordinator to remove the exact entry. When the
+  command is given in that coordinator, it performs the edit itself. Never
+  route task-entry removal to the task named `Task coordinator`; contact that
+  task afterward only when the resulting subsection change requires chat
+  actualization. Ask when the task is not uniquely identifiable.
 
 ## `zxc` graceful stop
 

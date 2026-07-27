@@ -1827,6 +1827,17 @@ is enabled and runtime-proven in isolated matched Command Chart and
 Practice captures. The user accepted the Command Chart result on 2026-07-27;
 the Practice title result remains agent-validated and awaiting acceptance.
 
+The dedicated ss3 layer, `font_v2_pause_controls_list`, replaces only the
+Pause Controls list-row call at BTL file `0x1C97D8`. Its clean guard is the
+native `jal 0x00382470` plus NOP delay slot. The adapter preserves the caller's
+object, text, style, and X origin, moves the native Y origin upward four units,
+and applies the shared v2 shrink-only formula inside a 216-by-20 single-line
+box before returning through the original `0x00382470` helper. It does not
+enable the retained `font_layout_wrappers` multiplexer or select any ss4
+confirmation-body or Yes/No call. The layer is enabled as
+`approved_for_test`; deterministic generation and focused static/package tests
+pass, while matched ss3 runtime review remains pending.
+
 The third thin caller layer, `font_v2_practice_explanations`, replaces only the
 Practice per-token explanation loop at BTL file `0x1C4BA0`. It assembles one
 bounded 512-byte mixed text/tag buffer, applies unlimited word wrapping inside

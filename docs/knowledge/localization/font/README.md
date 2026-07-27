@@ -789,6 +789,35 @@ titles and explanations. The user explicitly accepted the Command Chart result
 on 2026-07-27. The Practice title result remains agent-validated and awaiting
 user acceptance.
 
+### Pause Controls list v2 caller
+
+The retained disabled shared UI helper established the intended ss3 behavior:
+a shrink-only 216-unit box and a four-unit upward Y correction. Bounded NA2
+BTL inspection isolates the actual Pause Controls row call at runtime
+`0x0087D6D8`, BTL file `0x1C97D8` using the confirmed live mapping
+`0x006B3F00 + file offset`. Its clean bytes are
+`1C090E0C00000000`, a `jal 0x00382470` followed by a NOP delay slot.
+
+The v2 implementation hooks that BTL call directly rather than re-enabling the
+retained boot-ELF return-address multiplexer. The adapter preserves the native
+object, text, style, and X origin; uses `caller_y - 4`, a 216-by-20
+single-line left-aligned box, and shrink-only fitting; then tail-calls the
+original `0x00382470` list helper. The shared v2 adapter owns measurement,
+horizontal scale, tracking, active-session publication, and restoration.
+The accepted width table measures the two overflowing visible rows as
+`Back to Game Mode Screen = 245` and `Back to Character Select = 231`, giving
+scales `216/245` and `216/231`. The other four visible rows measure
+`77`, `119`, `140`, and `124`, so they remain at scale `1`.
+
+Deterministic generation produces dedicated
+`localization.font.v2.pause_list_adapter` and
+`localization.font.v2.pause_list_callback` fragments. Static tests verify the
+exact hook guard and target, callback ABI, `f13 - 4.0` instruction, 216-unit
+width, 20-unit height/line height, and dependency only on the accepted v2
+core. No ss4 confirmation-body or Yes/No site is selected. Confidence is
+**high** for caller isolation and the reconstructed contract; runtime parity
+against the supplied ss3 pair remains unverified.
+
 ### Practice explanation mixed-text wrapping
 
 Bounded NA2/NUN5 BTL comparison identifies the Practice explanation loop as a

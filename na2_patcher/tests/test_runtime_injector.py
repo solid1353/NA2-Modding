@@ -119,6 +119,7 @@ class RuntimeInjectorTests(unittest.TestCase):
                 "font_v2_layout_core",
                 "font_v2_controls",
                 "font_v2_titles",
+                "font_v2_pause_controls_list",
                 "font_v2_practice_explanations",
                 "font_ninja_song_ascii_numbers",
             },
@@ -143,6 +144,7 @@ class RuntimeInjectorTests(unittest.TestCase):
                 "font_v2_controls_01",
                 "font_v2_titles_01",
                 "font_v2_titles_02",
+                "font_v2_pause_controls_list_01",
                 "font_v2_practice_explanations_01",
                 "font_ninja_song_ascii_numbers_01",
                 "font_ninja_song_ascii_numbers_02",
@@ -204,6 +206,7 @@ class RuntimeInjectorTests(unittest.TestCase):
                 0x1C4B98,
                 0x1C4BA0,
                 0x1C6A28,
+                0x1C97D8,
                 0x64B28,
                 0x64BA8,
                 0x64CE4,
@@ -780,6 +783,180 @@ class RuntimeInjectorTests(unittest.TestCase):
                     0,
                 ],
             )
+
+        pause_list_declaration = replace(
+            disabled_declaration,
+            patches={
+                patch_id: replace(
+                    patch,
+                    enabled=patch_id
+                    in {
+                        "font_v2_layout_core",
+                        "font_v2_pause_controls_list",
+                    },
+                )
+                for patch_id, patch in disabled_declaration.patches.items()
+            },
+        )
+        pause_list_build = build_resident_payload(
+            pause_list_declaration.fragments
+        )
+        pause_list_resolved = resolve_symbolic_patches(
+            pause_list_build,
+            pause_list_declaration.symbolic_patches,
+        )
+        pause_list_package = engine.build_binary_package(
+            pause_list_declaration,
+            pause_list_resolved,
+        )
+        self.assertEqual(
+            {edit.edit_id for edit in pause_list_package.edits},
+            {
+                "font_v2_layout_core_01",
+                "font_v2_layout_core_02",
+                "font_v2_layout_core_03",
+                "font_v2_layout_core_04",
+                "font_v2_layout_core_05",
+                "font_v2_pause_controls_list_01",
+            },
+        )
+        pause_list_edit = next(
+            edit
+            for edit in pause_list_package.edits
+            if edit.edit_id == "font_v2_pause_controls_list_01"
+        )
+        self.assertEqual(pause_list_edit.destination_offset, 0x1C97D8)
+        self.assertEqual(
+            bytes.fromhex(pause_list_edit.expected_hex),
+            bytes.fromhex("1C090E0C00000000"),
+        )
+        for text, expected_width in (
+            ("Controls", 77),
+            ("1P Commands", 119),
+            ("Command Chart", 140),
+            ("Simple Display", 124),
+            ("Back to Game Mode Screen", 245),
+            ("Back to Character Select", 231),
+        ):
+            measured_width = sum(
+                v2_width_payload[ord(character) - 0x20]
+                for character in text
+            )
+            self.assertEqual(measured_width, expected_width)
+            self.assertEqual(
+                measured_width > 216,
+                text.startswith("Back to "),
+            )
+        pause_list_hook = bytes.fromhex(
+            pause_list_edit.replacement_hex
+        )
+        self.assertEqual(len(pause_list_hook), 8)
+        pause_list_jump = int.from_bytes(
+            pause_list_hook[:4],
+            "little",
+        )
+        self.assertEqual(pause_list_jump >> 26, 0x03)
+        self.assertEqual(
+            (pause_list_jump & 0x03FFFFFF) << 2,
+            pause_list_build.symbols[
+                "localization.font.v2.pause_list_adapter"
+            ].runtime_address,
+        )
+        self.assertEqual(pause_list_hook[4:], b"\0" * 4)
+
+        pause_list_adapter_fragment = next(
+            fragment
+            for fragment in pause_list_declaration.fragments
+            if fragment.symbol
+            == "localization.font.v2.pause_list_adapter"
+        )
+        self.assertEqual(
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation in pause_list_adapter_fragment.relocations
+            },
+            {
+                (
+                    "hi16",
+                    "localization.font.v2.pause_list_callback",
+                ),
+                (
+                    "lo16",
+                    "localization.font.v2.pause_list_callback",
+                ),
+                ("jal26", "localization.font.v2.adapter_call"),
+            },
+        )
+        pause_list_adapter = pause_list_build.symbols[
+            "localization.font.v2.pause_list_adapter"
+        ]
+        pause_list_adapter_payload = pause_list_build.payload[
+            pause_list_adapter.file_offset:
+            pause_list_adapter.file_offset + pause_list_adapter.size
+        ]
+        pause_list_adapter_words = {
+            int.from_bytes(
+                pause_list_adapter_payload[offset:offset + 4],
+                "little",
+            )
+            for offset in range(
+                0,
+                len(pause_list_adapter_payload),
+                4,
+            )
+        }
+        for value in (4.0, 20.0):
+            bits = struct.unpack("<I", struct.pack("<f", value))[0]
+            self.assertIn(
+                mips.i_type(0x0F, 0, 8, bits >> 16),
+                pause_list_adapter_words,
+            )
+        for expected_word in (
+            mips.i_type(0x2B, 29, 8, 0x10),
+            mips.i_type(0x2B, 29, 8, 0x14),
+            mips.i_type(0x2B, 29, 0, 0x18),
+            mips.i_type(0x2B, 29, 0, 0x1C),
+            mips.i_type(0x2B, 29, 8, 0x20),
+            mips.i_type(0x2B, 29, 8, 0x24),
+            mips.i_type(0x2B, 29, 9, 0x5C),
+            mips.i_type(0x0D, 8, 8, 216),
+            mips.cop1(0x01, 0, 13, 0),
+            mips.jump(
+                0x03,
+                pause_list_build.symbols[
+                    "localization.font.v2.adapter_call"
+                ].runtime_address,
+            ),
+        ):
+            self.assertIn(expected_word, pause_list_adapter_words)
+
+        pause_list_callback = pause_list_build.symbols[
+            "localization.font.v2.pause_list_callback"
+        ]
+        pause_list_callback_payload = pause_list_build.payload[
+            pause_list_callback.file_offset:
+            pause_list_callback.file_offset + pause_list_callback.size
+        ]
+        pause_list_callback_words = {
+            int.from_bytes(
+                pause_list_callback_payload[offset:offset + 4],
+                "little",
+            )
+            for offset in range(
+                0,
+                len(pause_list_callback_payload),
+                4,
+            )
+        }
+        self.assertEqual(
+            pause_list_callback_words,
+            {
+                mips.i_type(0x31, 7, 12, 0x48),
+                mips.i_type(0x31, 7, 13, 0x4C),
+                mips.jump(0x02, 0x00382470),
+                0,
+            },
+        )
 
         practice_declaration = replace(
             disabled_declaration,

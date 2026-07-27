@@ -20,7 +20,8 @@ before beginning the next slot.
   `work/Font/inputs/sstates/epics/ss2-6/provenance.tsv` and
   `work/Font/inputs/sstates/special-controls-on-off/remade-ss1-20260727/provenance.tsv`.
 - Protected `@pcsx2_user` sources remain untouched.
-- Status: all six baselines are captured; implementation has not started.
+- Status: all six baselines are captured; ss3 is implemented and statically
+  validated, with post-build runtime comparison pending.
 - Existing accepted Font and resident-renderer behavior remains the regression
   baseline. The accepted Command Chart title is not reopened by ss2; ss2 owns
   only the remaining command-body layout.
@@ -50,7 +51,8 @@ before beginning the next slot.
 
 ### ss3 — Pause Controls list
 
-- State: baseline captured; not implemented.
+- State: dedicated v2 caller implemented and statically validated; runtime
+  comparison and user acceptance pending.
 - Remaining defect: Current long menu rows run beyond the panel edge, while
   NUN5 fits them within the list.
 
@@ -85,16 +87,16 @@ before beginning the next slot.
 
 ## Efficiency-prioritized sequential plan
 
-1. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
-   through a dedicated final-selector adapter, matching glyph scale and
-   advance together without changing either ASCII literal family or reopening
-   the accepted first-eight Controls rows.
-2. **ss3 — Pause Controls list.** The retained disabled shared UI helper
+1. **ss3 — Pause Controls list.** The retained disabled shared UI helper
    already proves the 216-unit shrink-only box and Y correction. Rebuild that
    behavior through the v2 architecture first because it establishes reusable
    plumbing for ss4 with the least new logic.
-3. **ss4 — Quit confirmation.** Reuse the ss3 plumbing and add only the
+2. **ss4 — Quit confirmation.** Reuse the ss3 plumbing and add only the
    separately guarded confirmation-body and Yes/No positioning behavior.
+3. **ss1 — Special Controls final selector.** Reuse the accepted Controls core
+   through a dedicated final-selector adapter, matching glyph scale and
+   advance together without changing either ASCII literal family or reopening
+   the accepted first-eight Controls rows.
 4. **ss2 — Command Chart body.** Reuse the accepted multiline primitives, but
    treat the command-description loop as its own caller family and leave the
    accepted title untouched.

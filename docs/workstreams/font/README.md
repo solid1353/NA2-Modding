@@ -15,7 +15,7 @@ in the shared knowledge base rather than being duplicated here.
 
 ## Active epics
 
-- [ss1–ss6 layout parity](epics/ss2-6-layout/README.md)
+- [Layout parity batches](epics/ss2-6-layout/README.md)
 
 ## Workstream policy
 

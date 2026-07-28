@@ -4,10 +4,24 @@ Maintained development lab for compiling ordinary C into PS2 EE MIPS, linking
 it with Armips, and emitting a reloadable PNACH for Current Narutimate Accel
 v2.28.
 
+The imported `NA2-C.zip` source used for the port has SHA-256
+`8A4D94465C4F7938DCC2D49D3DAA268BDF800AD7E89112B8E09BAA6EE58D289E`.
+Its root README and Makefile are inherited from the earlier Midnight Club 3
+proof, but its active `gen_pnach.py`, linker, ELF input, and C sources target
+NUN5 `SLPS_258.37`. The maintained lab ports those active files rather than the
+stale wrapper documentation.
+
 The original imported NUN5 payload base `0x003E4410` is not free in clean NA2
 and crashed the game. This adaptation targets only the Current ISO identity
 derived at build time and uses payload-builder's explicit development
 reservation at `0x008F0000-0x008F3D00`.
+
+The source proof inserts its C call into the five-word epilogue beginning at
+runtime `0x001D0578`. Archived NUN5 and clean Current contain the identical
+words `DFBF0000 27BD0010 03E00008 00000000 00000000` there. The maintained
+linker replaces them with `jal injectionLabTick`, a delay-slot `nop`, and the
+equivalent moved epilogue. The native `jal WakeupThread` at `0x001D0570`
+remains untouched.
 
 Start Current with cheats enabled, then build and install from the repository
 root:
@@ -17,11 +31,15 @@ root:
 ```
 
 The script verifies Current's serial and CRC, `228.BIN` memory contract, two
-independent ELF boundary values, and exact hook bytes before compiling. It
-temporarily replaces only the matching Current PNACH alias and records enough
-state to restore an existing regular file or symbolic link. Edit `src/test.c`,
-then run the same command again. The original `NA2-C.zip` proof's VS Code task
-only runs its generator; the generator triggers PCSX2's observed automatic
+independent ELF boundary values, and the complete five-word hook window before
+compiling. The generator fails with a nonzero exit when an imported source,
+compiler/tool query, linker step, linker label, or hook symbol is missing
+instead of accepting a stale or incomplete PNACH. The runner temporarily
+replaces only the matching Current PNACH alias and records enough state to
+restore an existing regular file or symbolic link. Edit `src/test.c`, then run
+the same command again. The original
+`NA2-C.zip` proof's VS Code task only runs its generator; the generator
+triggers PCSX2's observed automatic
 refresh by truncating and rewriting the active CRC-named regular PNACH in
 place. This lab preserves its guarded build/install separation, but refreshes
 the installed regular PNACH using that same write pattern instead of replacing

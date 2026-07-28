@@ -52,8 +52,7 @@ def make_resolve_tokens(labels):
             elif token in labels:
                 resolved.append(labels[token])
             else:
-                print(f"  WARNING: label '{token}' was not found for .org")
-                resolved.append(None)
+                raise RuntimeError(f"Linker label '{token}' was not found for .org")
         return resolved
     return resolve_tokens
 
@@ -189,6 +188,10 @@ def parse_asm(filename, initial_labels=None):
 
 def run(cmd):
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, env=os.environ)
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip()
+        suffix = f": {detail}" if detail else ""
+        raise RuntimeError(f"Command failed ({result.returncode}): {cmd}{suffix}")
     return result.stdout
 
 def obj_size(obj):
@@ -580,8 +583,9 @@ def main():
 
     base_address = labels.get("BASE_ADDRESS") or labels.get("c_code_addr")
     if not base_address:
-        print("ERROR: BASE_ADDRESS was not found in linker.asm")
-        return
+        raise RuntimeError("BASE_ADDRESS was not found in linker.asm")
+    if not importobjs:
+        raise RuntimeError("linker.asm does not import any C objects")
 
     print("Compiling C...")
     objs = []
@@ -591,8 +595,7 @@ def main():
 
         obj = f"{OBJ_DIR}/{name}.o"
         if not os.path.exists(src):
-            print(f"  WARNING: {src} was not found; skipping it")
-            continue
+            raise FileNotFoundError(f"Imported C source was not found: {src}")
         print(f"  Compiling {src}...")
         command = (
             "ee-gcc -w -D_EE -G0 -O2 -std=c99 "
@@ -600,7 +603,7 @@ def main():
             f"-c {src} -o {obj}"
         )
         if run_cmd(command) != 0:
-            return
+            raise RuntimeError(f"C compilation failed: {src}")
         objs.append(name)
     t1 = time.time()
     print(f"  -> {int((t1-t0)*1000)}ms")
@@ -618,21 +621,21 @@ def main():
 
     print("Linking main image...")
     if run_cmd("armips.exe build/linker_generated.asm") != 0:
-        return
+        raise RuntimeError("Armips failed to link the main image")
 
     function_symbols = collect_all_symbols(obj_addrs)
 
     generate_textblocks_linker(labels, importobjs, obj_addrs, header_symbols=header_symbols)
     print("Linking text blocks...")
     if run_cmd("armips.exe build/linker_textblocks.asm") != 0:
-        return
+        raise RuntimeError("Armips failed to link the injected text blocks")
 
     with open("linker.asm", "r") as f:
         original_content = f.read()
     generate_asmblocks_linker(original_content, asm_blocks, labels, function_symbols)
     print("Linking assembly blocks...")
     if run_cmd("armips.exe build/linker_asmblocks.asm") != 0:
-        return
+        raise RuntimeError("Armips failed to link the hook assembly blocks")
 
     t2 = time.time()
     print(f"  -> {int((t2-t1)*1000)}ms")
@@ -700,7 +703,10 @@ def main():
                 resolved = header_symbols[token]
                 source = "Main.h"
             if resolved is None:
-                print(f"  WARNING: symbol '{token}' was not found in the objects or {HEADER_FILE}")
+                raise RuntimeError(
+                    f"Hook symbol '{token}' was not found in the objects or "
+                    f"{HEADER_FILE}"
+                )
             else:
                 lines_out.append(f"; {token} -> {hex(resolved)} ({source})")
                 lines_out.append(word_patch(org_addr, resolved))

@@ -108,33 +108,41 @@ every frame and the message repeated. Mutable injected state must therefore
 live in the reserved range without a recurring PNACH initializer; code may use
 a source-derived build signature to recognize a newly reloaded build.
 
-For the Current proof hook, runtime `0x001D0570` is the single
-`jal WakeupThread` instruction in `FUN_001d0560`, called once per main-thread
-loop from `FUN_001c13f0`. A development adapter can call the displaced
-`WakeupThread` first and then run its test logic, so only that one guarded word
-is redirected and the native epilogue remains intact. Clean and Current boot
-ELFs both contain little-endian bytes `0477050C` there. Confidence is **high**
-for the recorded file/runtime mapping and caller behavior; runtime acceptance
-of each injected C build remains separate.
+The imported `NA2-C.zip` source reviewed for the maintained lab has SHA-256
+`8A4D94465C4F7938DCC2D49D3DAA268BDF800AD7E89112B8E09BAA6EE58D289E`.
+Although its root README and Makefile still describe the earlier Midnight Club
+3 proof, its active generator, linker, ELF input, and C sources target NUN5
+`SLPS_258.37`. The active linker does not replace `WakeupThread`: it inserts a
+C call into the function epilogue beginning at runtime `0x001D0578`, then moves
+the displaced return sequence into the following words.
 
-An isolated PCSX2 2.6.3 startup test of Current identity
+Archived NUN5 and clean Current contain the identical five-word window
+`DFBF0000 27BD0010 03E00008 00000000 00000000` at
+`0x001D0578-0x001D058C`. The maintained lab therefore emits
+`jal injectionLabTick`, `nop`, `ld ra,0(sp)`, `jr ra`, and
+`addiu sp,sp,0x10` across that exact guarded window. The native
+`jal WakeupThread` at `0x001D0570` remains unchanged. Confidence is **high**
+for the source mechanism, byte identity, and file/runtime mapping; runtime
+acceptance of each injected C build remains separate.
+
+An earlier isolated PCSX2 2.6.3 startup test of Current identity
 `SLOP-NA228 / 7036AA4A` loaded the generated 31-write PNACH and remained
-running. Read-only PINE verification observed hook word `0x0C23C000`, compiled
-code at `0x008F0000`, read-only data at `0x008F0050`, and the C function's
-source-derived `.bss` build ID `0x4B0F31A2` at `0x008F0048`; that final value
-proves the hooked C function executed rather than merely being copied into
-memory. A second source build with ID `0x58F7CCC7` initialized identically
-after a clean restart.
+running with the former one-word `0x001D0570` adapter. Read-only PINE
+verification observed hook word `0x0C23C000`, compiled code at `0x008F0000`,
+read-only data at `0x008F0050`, and the C function's source-derived `.bss`
+build ID `0x4B0F31A2` at `0x008F0048`; that final value proves the hooked C
+function executed rather than merely being copied into memory. A second source
+build with ID `0x58F7CCC7` initialized identically after a clean restart. This
+historical test validates the reservation and compiled-code path, but not the
+new source-faithful epilogue hook.
 
-Changing the PNACH on disk did not update the running clone by itself: the
-first build ID remained live for a bounded 20-second check. Official PCSX2
-2.6.3 source has no PNACH file watcher; its explicit `System` ->
-`Reload Cheats/Patches` action calls `VMManager::ReloadPatches(...)`. Therefore
-the development loop is compile/install, then invoke that action while the game
-continues running. A plain file save is not an automatic reload trigger in
-PCSX2 2.6.3. Confidence is **high** for the clean-start C execution and reload
-mechanism; visible in-place reload remains a manual user action rather than an
-agent-controlled operation.
+The source generator rewrites its active CRC-named PNACH by opening the same
+file in truncating write mode. User-observed PCSX2 behavior confirms that this
+in-place rewrite triggers automatic reload. An earlier bounded clone check
+used a replacement-style update and did not reload, so it does not contradict
+the in-place watcher path. The maintained installer now preserves the
+filesystem object and performs the same truncate/write/flush sequence, with
+`System` -> `Reload Cheats/Patches` retained as a fallback.
 
 ### Widescreen heap target
 

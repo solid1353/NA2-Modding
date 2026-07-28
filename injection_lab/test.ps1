@@ -14,8 +14,21 @@ $statePath = Join-Path $labRoot 'build\test-install.json'
 $backupPath = Join-Path $labRoot 'build\current-pnach.before-test'
 $payloadConfigPath = Join-Path $repository 'na2_patcher\payload_builder\config.tsv'
 $identityScript = Join-Path $repository 'scripts\na2\iso_identity.ps1'
-$hookRuntimeAddress = 0x001D0570
-$expectedHook = [byte[]](0x04, 0x77, 0x05, 0x0C)
+$hookRuntimeAddress = 0x001D0578
+$hookRuntimeAddresses = [uint32[]]@(
+    0x001D0578,
+    0x001D057C,
+    0x001D0580,
+    0x001D0584,
+    0x001D0588
+)
+$expectedHook = [byte[]](
+    0x00, 0x00, 0xBF, 0xDF,
+    0x10, 0x00, 0xBD, 0x27,
+    0x08, 0x00, 0xE0, 0x03,
+    0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00
+)
 
 if (-not $CurrentIso) {
     $CurrentIso = Join-Path $repository 'build\NA2.28 - Current.iso'
@@ -385,15 +398,24 @@ if (-not (Test-Path -LiteralPath $output)) {
     throw "Generator did not produce the expected PNACH: $output"
 }
 
-$hookWriteCount = 0
+$hookWrites = @{}
 foreach ($line in Get-Content -LiteralPath $output) {
-    if ($line -notmatch '^patch=1,EE,(?<address>[0-9A-F]{8}),extended,[0-9A-F]{8}$') {
+    if ($line -notmatch (
+        '^patch=1,EE,(?<address>[0-9A-F]{8}),extended,' +
+        '(?<value>[0-9A-F]{8})$'
+    )) {
         continue
     }
     $encodedAddress = [Convert]::ToUInt32($Matches.address, 16)
     $runtimeAddress = $encodedAddress -band 0x0FFFFFFF
-    if ($runtimeAddress -eq $hookRuntimeAddress) {
-        $hookWriteCount++
+    if ($runtimeAddress -in $hookRuntimeAddresses) {
+        if ($hookWrites.ContainsKey($runtimeAddress)) {
+            throw (
+                'Generated PNACH writes hook address 0x{0:X8} more than once.' -f
+                $runtimeAddress
+            )
+        }
+        $hookWrites[$runtimeAddress] = [Convert]::ToUInt32($Matches.value, 16)
         continue
     }
     if ($runtimeAddress -lt $injectionBase -or $runtimeAddress -ge $injectionEnd) {
@@ -401,8 +423,55 @@ foreach ($line in Get-Content -LiteralPath $output) {
             $runtimeAddress)
     }
 }
-if ($hookWriteCount -ne 1) {
-    throw "Generated PNACH must contain exactly one guarded hook write."
+if ($hookWrites.Count -ne $hookRuntimeAddresses.Count) {
+    throw (
+        'Generated PNACH must contain exactly five guarded epilogue-hook ' +
+        "writes; found $($hookWrites.Count)."
+    )
+}
+foreach ($address in $hookRuntimeAddresses) {
+    if (-not $hookWrites.ContainsKey($address)) {
+        throw ('Generated PNACH is missing hook address 0x{0:X8}.' -f $address)
+    }
+}
+$jal = [uint32]$hookWrites[[uint32]0x001D0578]
+if (($jal -band 0xFC000000) -ne 0x0C000000) {
+    throw ('Generated hook is not a JAL instruction: 0x{0:X8}.' -f $jal)
+}
+$hookTarget = [uint32](($jal -band 0x03FFFFFF) -shl 2)
+if ($hookTarget -lt $injectionBase -or $hookTarget -ge $injectionEnd) {
+    throw (
+        'Generated hook target is outside the reserved range: 0x{0:X8}.' -f
+        $hookTarget
+    )
+}
+$expectedHookTail = @(
+    [pscustomobject]@{
+        Address = [uint32]0x001D057C
+        Value = [uint32]0x00000000
+    }
+    [pscustomobject]@{
+        Address = [uint32]0x001D0580
+        Value = [Convert]::ToUInt32('DFBF0000', 16)
+    }
+    [pscustomobject]@{
+        Address = [uint32]0x001D0584
+        Value = [uint32]0x03E00008
+    }
+    [pscustomobject]@{
+        Address = [uint32]0x001D0588
+        Value = [uint32]0x27BD0010
+    }
+)
+foreach ($entry in $expectedHookTail) {
+    if ([uint32]$hookWrites[$entry.Address] -ne [uint32]$entry.Value) {
+        throw (
+            (
+                'Generated displaced epilogue mismatch at 0x{0:X8}: ' +
+                '0x{1:X8} != 0x{2:X8}.'
+            ) -f $entry.Address, $hookWrites[$entry.Address], $entry.Value
+        )
+    }
 }
 
 $outputHash = Get-Sha256 $output

@@ -49,6 +49,8 @@ drift-prone implementation details here.
 
 ### Permanent tests
 
+- Do not add stupid checks. Every check must have a clear, decision-relevant
+  failure meaning tied to accepted behavior or a documented safety contract.
 - Permanent tests are optional. Add one only when it independently detects a
   meaningful regression in accepted behavior or a documented safety contract.
 - Tests must not merely restate the current implementation or require chosen

@@ -591,7 +591,7 @@ their exact mixed integer/float register convention. The user confirmed no
 visible change across the Controls regression pass, after which the old
 assembly session builder was removed.
 
-### Stage 5 Command Chart / Practice title C candidate — awaiting user regression
+### Stage 5 Command Chart / Practice title C replacement — accepted
 
 The accepted shared title family now uses compiled C for its common session
 construction and both direct hook entries. EE GCC consumes the existing three
@@ -608,8 +608,26 @@ assembly adapter plus two 12-byte assembly entries, reducing the v2 renderer
 blob from 5,796 to 5,784 bytes. Both guarded hooks and the 16-byte native boxed
 draw callback remain unchanged. That callback is the minimal ABI shim which
 loads prepared `$f12`/`$f13` coordinates and tail-calls the absolute original
-renderer entrypoint. The old assembly title adapter and entries remain
-non-live only until the user confirms title-family regression parity.
+renderer entrypoint. The user confirmed no visible change across the
+title-family regression pass, after which the old assembly title adapter and
+entries were removed.
+
+### Approved collapsed remainder
+
+On 2026-07-28, the user approved collapsing the remaining C migration into
+exactly three independently committed steps:
+
+1. Port all remaining behavioral layout code together: Pause Controls,
+   shared native measurement/wrapping, Quit confirmation, Special Controls
+   explanatory body, and Practice explanations/icon flow. Preserve only
+   unavoidable native-entry and displaced-instruction ABI shims. Stop after
+   the pushed candidate for one regression pass covering every affected screen.
+2. Evaluate and, when it reduces maintained assembly without changing scope,
+   port the independent numeric formatter to C.
+3. Move canonical C/compiler/generator inputs out of `scripts/research/`,
+   remove every superseded assembly builder, and document the minimal retained
+   ABI shims. This final structural step must not change generated payload
+   bytes.
 
 Every stage first passes deterministic regeneration, object/symbol/relocation
 validation, focused tests, the full patcher suite, and exact Localization-pin

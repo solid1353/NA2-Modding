@@ -8,7 +8,9 @@ import csv
 import hashlib
 import struct
 import sys
+import tempfile
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 
@@ -28,6 +30,7 @@ if str(REPOSITORY) not in sys.path:
 
 from na2_patcher.modules.runtime_injector import engine  # noqa: E402
 from na2_patcher.project_paths import load_project_paths  # noqa: E402
+from scripts.research.localization import ee_c_fragments  # noqa: E402
 from scripts.research.localization import mips  # noqa: E402
 
 
@@ -48,6 +51,15 @@ PACKED_METRICS_INPUT = load_project_paths(REPOSITORY).path(
     "assets",
     "nun5_semantic_14x20_packed_map.bin",
 )
+C_CORE_SOURCE = (
+    REPOSITORY
+    / "scripts"
+    / "research"
+    / "localization"
+    / "font_renderer_c"
+    / "font_v2_core.c"
+)
+C_TOOLCHAIN_BIN = ee_c_fragments.default_toolchain_bin(REPOSITORY)
 
 PREFIX = "localization.font"
 NINJA_SONG_ASCII_NUMBER = f"{PREFIX}.ninja_song_ascii_number"
@@ -590,6 +602,75 @@ def build_v2_prepare() -> Fragment:
     assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
     payload, relocations = assembler.build()
     return Fragment(V2_PREPARE, payload, relocations)
+
+
+@lru_cache(maxsize=1)
+def build_v2_c_core() -> tuple[Fragment, ...]:
+    with tempfile.TemporaryDirectory(prefix="na2-font-v2-c-") as temporary:
+        extracted = ee_c_fragments.compile_and_extract(
+            C_CORE_SOURCE,
+            Path(temporary) / "font_v2_core.o",
+            namespace=f"{V2_PREFIX}.c",
+            toolchain_bin=C_TOOLCHAIN_BIN,
+            external_symbols={
+                "font_v2_ascii_widths": ee_c_fragments.SymbolReference(
+                    V2_ASCII_WIDTHS
+                )
+            },
+        )
+
+    expected_exports = {"font_v2_measure", "font_v2_prepare"}
+    if set(extracted.symbols) != expected_exports:
+        raise ValueError(
+            "Font v2 C exports differ: "
+            f"expected={sorted(expected_exports)}, "
+            f"actual={sorted(extracted.symbols)}"
+        )
+    aliases = {
+        extracted.symbols["font_v2_measure"].symbol: V2_MEASURE,
+        extracted.symbols["font_v2_prepare"].symbol: V2_PREPARE,
+    }
+    helper_symbols = {
+        fragment.symbol
+        for fragment in extracted.fragments
+        if fragment.symbol not in aliases
+    }
+    if len(helper_symbols) != 1:
+        raise ValueError(
+            "Font v2 C core must contain exactly one private helper fragment; "
+            f"actual={sorted(helper_symbols)}"
+        )
+    aliases[next(iter(helper_symbols))] = f"{V2_PREFIX}.c.is_br"
+
+    result = tuple(
+        Fragment(
+            symbol=aliases[fragment.symbol],
+            payload=fragment.payload,
+            relocations=tuple(
+                mips.Relocation(
+                    offset=relocation.offset,
+                    kind=relocation.kind,
+                    symbol=aliases.get(
+                        relocation.symbol,
+                        relocation.symbol,
+                    ),
+                    addend=relocation.addend,
+                )
+                for relocation in fragment.relocations
+            ),
+            kind=fragment.kind,
+            alignment=fragment.alignment,
+            init=fragment.init,
+        )
+        for fragment in extracted.fragments
+    )
+    if {fragment.symbol for fragment in result} != {
+        f"{V2_PREFIX}.c.is_br",
+        V2_MEASURE,
+        V2_PREPARE,
+    }:
+        raise ValueError("Font v2 C fragment aliases are incomplete")
+    return result
 
 
 def build_v2_adapter_call() -> Fragment:
@@ -2688,8 +2769,7 @@ def v2_fragments() -> tuple[Fragment, ...]:
             kind="rodata",
             alignment=1,
         ),
-        build_v2_measure(),
-        build_v2_prepare(),
+        *build_v2_c_core(),
         build_v2_adapter_call(),
         build_v2_controls_callback(),
         build_v2_controls_adapter(),

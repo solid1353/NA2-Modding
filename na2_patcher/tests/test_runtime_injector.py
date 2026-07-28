@@ -1304,11 +1304,41 @@ class RuntimeInjectorTests(unittest.TestCase):
             for offset in range(0, len(practice_prepare_payload), 4)
         }
         for expected_word in (
-            mips.i_type(0x0C, 5, 8, 0x10),
-            mips.i_type(0x0C, 10, 10, 0x08),
-            mips.i_type(0x31, 16, 5, 0x68),
+            mips.i_type(0x0C, 5, 2, 0x10),
+            mips.i_type(0x0C, 6, 2, 0x08),
+            mips.i_type(0x31, 16, 2, 0x68),
         ):
             self.assertIn(expected_word, practice_prepare_words)
+        practice_prepare_fragment = next(
+            fragment
+            for fragment in practice_declaration.fragments
+            if fragment.symbol == "localization.font.v2.prepare"
+        )
+        self.assertEqual(
+            {
+                ("jal26", "localization.font.v2.measure"),
+            },
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation in practice_prepare_fragment.relocations
+            },
+        )
+        practice_measure_fragment = next(
+            fragment
+            for fragment in practice_declaration.fragments
+            if fragment.symbol == "localization.font.v2.measure"
+        )
+        self.assertEqual(
+            {
+                ("hi16", "localization.font.v2.ascii_widths"),
+                ("lo16", "localization.font.v2.ascii_widths"),
+                ("jal26", "localization.font.v2.c.is_br"),
+            },
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation in practice_measure_fragment.relocations
+            },
+        )
 
     def test_v2_quit_confirmation_is_scoped_and_mapping_neutral(
         self,

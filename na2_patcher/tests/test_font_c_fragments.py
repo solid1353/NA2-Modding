@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -7,6 +8,7 @@ from pathlib import Path
 from na2_patcher.payload_builder import build_resident_payload
 from na2_patcher.payload_builder.operations import PayloadFragment
 from scripts.research.localization import ee_c_fragments
+from scripts.research.localization import generate_font_renderer
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -132,6 +134,65 @@ class FontCFragmentTests(unittest.TestCase):
                     object_path,
                     namespace="localization.font.c.probe",
                 )
+
+
+class FontCSharedCoreTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        if not COMPILER.is_file():
+            raise unittest.SkipTest(f"local EE compiler is unavailable: {COMPILER}")
+
+    def test_compiled_core_is_deterministic_and_assembly_fallback_remains(self) -> None:
+        compiled = {
+            fragment.symbol: (
+                len(fragment.payload),
+                hashlib.sha256(fragment.payload).hexdigest().upper(),
+            )
+            for fragment in generate_font_renderer.build_v2_c_core()
+        }
+        self.assertEqual(
+            {
+                "localization.font.v2.c.is_br": (
+                    72,
+                    "8D237660C7EAFF9CC326A0E61BB7A56E2EB67FF6B8627B1EECCBFFE62225DF1B",
+                ),
+                "localization.font.v2.measure": (
+                    312,
+                    "3556D787360097C7BD0901101068AE640168533B041B11866F3FE8A91533C7A7",
+                ),
+                "localization.font.v2.prepare": (
+                    584,
+                    "7B0E8737D296AD767CDC377730EC990B727E9A43ADA6A05142482AAE67E30B14",
+                ),
+            },
+            compiled,
+        )
+        self.assertEqual(
+            (272, 516),
+            (
+                len(generate_font_renderer.build_v2_measure().payload),
+                len(generate_font_renderer.build_v2_prepare().payload),
+            ),
+        )
+
+    def test_c_core_reproduces_canonical_generated_outputs(self) -> None:
+        v2_blob, numeric_blob, fragments, relocations = (
+            generate_font_renderer.generated_outputs()
+        )
+        self.assertEqual(
+            generate_font_renderer.V2_BLOB_OUTPUT.read_bytes(), v2_blob
+        )
+        self.assertEqual(
+            generate_font_renderer.NUMERIC_BLOB_OUTPUT.read_bytes(),
+            numeric_blob,
+        )
+        self.assertEqual(
+            generate_font_renderer.FRAGMENTS_OUTPUT.read_bytes(), fragments
+        )
+        self.assertEqual(
+            generate_font_renderer.RELOCATIONS_OUTPUT.read_bytes(),
+            relocations,
+        )
 
 
 if __name__ == "__main__":

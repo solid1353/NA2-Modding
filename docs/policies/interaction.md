@@ -59,6 +59,10 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   visual comparison, implementation, commit/push, silence, moving to another
   case, or an unrelated continuation command never implies user acceptance.
   Keep agent validation and pending user acceptance as separate statuses.
+- If the user orders A, then a stop for testing, review, or acceptance, then B,
+  complete A and stop. Requests to finish, batch changes, or use one commit do
+  not permit B. Continue to B only when the user explicitly says to skip the
+  required stop.
 - Execute freely within the approved scope. If the task becomes unclear or the
   whole approach is wrong, stop and clarify; a replacement plan needs approval.
 - During approved work, questions, corrections, objections, status requests,

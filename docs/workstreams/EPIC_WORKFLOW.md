@@ -20,7 +20,9 @@
   After the user accepts it, present the remaining epic and wait.
 - **Continuous** is used only when the user explicitly requests it. Complete
   subtasks in order without further user input until none remain or a blocker
-  is encountered.
+  is encountered. If the user ordered a stop between two steps for testing,
+  review, or acceptance, Continuous mode stops there unless the user explicitly
+  says to skip that stop.
 
 ## Subtask flow
 

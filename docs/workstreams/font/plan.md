@@ -487,8 +487,8 @@ fragments and never depend on a PNACH or a fixed development-bank address.
 
 Migration proceeds in independently committed stages:
 
-1. Add deterministic EE C compilation and object-section extraction for Font,
-   with no game hook or behavior change.
+1. Completed on 2026-07-28: add deterministic EE C compilation and
+   object-section extraction for Font, with no game hook or behavior change.
 2. Replace shared v2 measurement, spacing, fitting, positioning, and session
    algorithms with C while retaining only the minimal assembly ABI and
    displaced-instruction shims.
@@ -503,6 +503,30 @@ edits, and unavoidable register/return trampolines remain declarative binary
 or assembly inputs. C code must not own final `228.BIN` placement: generated
 sections and relocations are exported as runtime-injector fragments, and the
 shared payload builder assigns their final addresses.
+
+### Stage 1 C compiler/extraction boundary
+
+`scripts/research/localization/ee_c_fragments.py` reuses Injection Lab's
+bundled `ee-gcc` and proven EE compilation contract. It does not duplicate the
+compiler or use the lab's fixed development-bank linker. Instead, it converts
+the compiler's ELF32 little-endian MIPS relocatable object into canonical
+payload-builder inputs:
+
+- allocated code, read-only data, initialized data, and zero-initialized BSS
+  become address-independent runtime-injector fragments;
+- exported C symbols retain their section-relative offsets;
+- `R_MIPS_32`, `R_MIPS_26`, `R_MIPS_HI16`, and `R_MIPS_LO16` become the
+  payload builder's existing `abs32`, `j26`/`jal26`, `hi16`, and `lo16`
+  relocations;
+- external C symbols require an explicit payload-symbol mapping and fail
+  closed when missing;
+- deterministic fingerprints cover extracted bytes, relocations, and exported
+  symbol references.
+
+This boundary adds no canonical fragment row, resident asset, hook, profile-pin
+change, or runtime behavior. The next stage may feed extracted C fragments into
+the existing Font generator while retaining the assembly implementation until
+static and user-run regression parity are established.
 
 Every stage first passes deterministic regeneration, object/symbol/relocation
 validation, focused tests, the full patcher suite, and exact Localization-pin

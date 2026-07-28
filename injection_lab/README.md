@@ -48,6 +48,15 @@ the filesystem object. If a PCSX2 configuration does not reload it, select
 makes the example print exactly once for each distinct build without emitting
 its mutable state as a recurring PNACH write.
 
+PCSX2 can keep executing a cached host translation after PNACH overwrites code
+at an address that already ran. The lab avoids that failure with a fixed
+dispatcher at `0x008F0000`, an active-entry pointer at `0x008F0010`, and two
+alternating C banks: `0x008F0100-0x008F1F00` and
+`0x008F1F00-0x008F3D00`. The dispatcher reads the pointer each call, so a new
+build enters the inactive bank and is translated fresh. The first dispatcher
+build requires one clean game restart; later C rebuilds are reloadable in the
+running game.
+
 To compile and validate without installing:
 
 ```powershell

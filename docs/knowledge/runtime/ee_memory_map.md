@@ -144,6 +144,25 @@ the in-place watcher path. The maintained installer now preserves the
 filesystem object and performs the same truncate/write/flush sequence, with
 `System` -> `Reload Cheats/Patches` retained as a fallback.
 
+A later Current `SLOP-NA228 / 1236AA28` run separated PNACH reload from
+executed-code refresh. `emulog.txt` recorded successful cheat reparses at
+runtime timestamps `470.5826` and `492.3710`, but the newly compiled C message
+did not execute again after the first message at `437.9280`. The installed and
+generated PNACH hashes matched, so the watcher and file update had succeeded.
+The remaining failure is consistent with PCSX2 continuing to execute an
+already translated host block for the overwritten EE code. This is a useful
+negative result: the data-table update demonstrated by the source video does
+not prove that overwriting previously executed code is hot-reload safe.
+
+The maintained lab therefore keeps a fixed four-instruction dispatcher at
+`0x008F0000-0x008F0010`, stores its active C entry pointer at `0x008F0010`,
+and alternates compiled C between `0x008F0100-0x008F1F00` and
+`0x008F1F00-0x008F3D00`. The already translated dispatcher reloads the pointer
+from EE memory on every call, while each changed build enters the other code
+bank and receives a fresh translation. Confidence is **high** for the observed
+reload-without-code-refresh failure and **medium** for the JIT-cache mechanism
+until the alternating-bank path is user-verified at runtime.
+
 ### Widescreen heap target
 
 The official clean-NA2 widescreen write targets `0x00AF3694`, the first

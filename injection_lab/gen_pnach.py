@@ -12,9 +12,13 @@ PNACH_FILE = f"build/{CRC}.pnach"
 ELF = "data/FILES/SLOP_NA2.28"
 INJECTION_BASE = int(os.environ.get("NA2_INJECTION_BASE", "0"), 0)
 INJECTION_END = int(os.environ.get("NA2_INJECTION_END", "0"), 0)
+CODE_BASE = int(os.environ.get("NA2_INJECTION_CODE_BASE", "0"), 0)
+CODE_END = int(os.environ.get("NA2_INJECTION_CODE_END", "0"), 0)
 BUILD_ID = int(os.environ.get("NA2_INJECTION_BUILD_ID", "0"), 0)
 if not 0 < INJECTION_BASE < INJECTION_END <= 0x02000000:
     raise RuntimeError("Invalid NA2 development injection reservation")
+if not INJECTION_BASE < CODE_BASE < CODE_END <= INJECTION_END:
+    raise RuntimeError("Invalid NA2 development injection code bank")
 if not 0 < BUILD_ID <= 0xFFFFFFFF:
     raise RuntimeError("NA2_INJECTION_BUILD_ID must be a nonzero 32-bit value")
 PS2DEV = os.path.abspath("msys/1.0/local/ps2dev/ee/bin")
@@ -430,12 +434,7 @@ def word_patch(addr, value):
 def generate_linker(filename, labels, importobjs, word_orgs, asm_blocks,
                      obj_sizes, obj_data_sizes, obj_rodata_sizes, obj_bss_sizes,
                      header_symbols=None):
-    base = labels.get("BASE_ADDRESS") or labels.get("c_code_addr")
-    if base != INJECTION_BASE:
-        raise RuntimeError(
-            f"linker BASE_ADDRESS {base:#x} does not match reserved base "
-            f"{INJECTION_BASE:#x}"
-        )
+    base = CODE_BASE
 
     addr = base
     obj_addrs = {}
@@ -460,10 +459,10 @@ def generate_linker(filename, labels, importobjs, word_orgs, asm_blocks,
 
         addr = (rodata_addr + rodata_size + 15) & ~15
 
-    if addr > INJECTION_END:
+    if addr > CODE_END:
         raise RuntimeError(
-            f"compiled C image exceeds reserved range: {addr:#x} > "
-            f"{INJECTION_END:#x}"
+            f"compiled C image exceeds selected code bank: {addr:#x} > "
+            f"{CODE_END:#x}"
         )
 
     with open(filename, "r") as f:
@@ -476,7 +475,10 @@ def generate_linker(filename, labels, importobjs, word_orgs, asm_blocks,
         if l.startswith(".ps2") or l.startswith(".Open") or \
            l.startswith(".definelabel") or l.startswith(";") or \
            re.match(r'^\w+\s+equ\s+', l):
-            header_lines.append(line)
+            if re.match(r'^BASE_ADDRESS\s+equ\s+', l):
+                header_lines.append(f"BASE_ADDRESS equ {CODE_BASE:#x}")
+            else:
+                header_lines.append(line)
             m = re.match(r'^\.definelabel\s+(\w+)', l)
             if m:
                 already_defined.add(m.group(1).lower())
@@ -581,9 +583,9 @@ def main():
 
     labels, importobjs, word_orgs, asm_blocks = parse_asm("linker.asm", initial_labels=header_symbols)
 
-    base_address = labels.get("BASE_ADDRESS") or labels.get("c_code_addr")
-    if not base_address:
+    if not (labels.get("BASE_ADDRESS") or labels.get("c_code_addr")):
         raise RuntimeError("BASE_ADDRESS was not found in linker.asm")
+    labels["BASE_ADDRESS"] = CODE_BASE
     if not importobjs:
         raise RuntimeError("linker.asm does not import any C objects")
 
@@ -648,6 +650,7 @@ def main():
     lines_out.append(
         f"// Reserved range: 0x{INJECTION_BASE:08X}-0x{INJECTION_END:08X}"
     )
+    lines_out.append(f"// Code bank: 0x{CODE_BASE:08X}-0x{CODE_END:08X}")
     lines_out.append(f"// Build ID: 0x{BUILD_ID:08X}")
     lines_out.append("")
 

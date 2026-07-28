@@ -302,6 +302,42 @@ if (-not (
 )) {
     throw 'Payload-builder development injection reservation is invalid.'
 }
+$dispatcherRuntimeAddress = [uint32]$injectionBase
+$activeTargetRuntimeAddress = [uint32]($injectionBase + 0x10)
+$codeAreaBase = [uint32]($injectionBase + 0x100)
+$codeAreaLength = [uint32]($injectionEnd - $codeAreaBase)
+if ($codeAreaLength -lt 0x200 -or $codeAreaLength % 0x20 -ne 0) {
+    throw 'Injection reservation cannot be divided into two aligned code banks.'
+}
+$codeBankSize = [uint32]($codeAreaLength / 2)
+$codeBankA = $codeAreaBase
+$codeBankB = [uint32]($codeBankA + $codeBankSize)
+$previousCodeBase = $null
+if (Test-Path -LiteralPath $statePath -PathType Leaf) {
+    $selectionState = Get-Content -Raw -LiteralPath $statePath |
+        ConvertFrom-Json
+    if ('code_base' -in $selectionState.PSObject.Properties.Name) {
+        $encodedCodeBase = [string]$selectionState.code_base
+        if ($encodedCodeBase -notmatch '^0x[0-9A-Fa-f]{8}$') {
+            throw 'Injection-lab state contains an invalid code_base.'
+        }
+        $previousCodeBase = [Convert]::ToUInt32(
+            $encodedCodeBase.Substring(2),
+            16
+        )
+        if ($previousCodeBase -notin $codeBankA, $codeBankB) {
+            throw 'Injection-lab state contains an unknown code bank.'
+        }
+    }
+}
+$codeBase = if ($previousCodeBase -eq $codeBankA) {
+    $codeBankB
+}
+else {
+    $codeBankA
+}
+$codeEnd = [uint32]($codeBase + $codeBankSize)
+$requiresDispatcherRestart = $null -eq $previousCodeBase
 
 $iso = [IO.File]::OpenRead($currentIso)
 try {
@@ -369,11 +405,15 @@ $oldEnvironment = @{
     NA2_INJECTION_CRC = $env:NA2_INJECTION_CRC
     NA2_INJECTION_BASE = $env:NA2_INJECTION_BASE
     NA2_INJECTION_END = $env:NA2_INJECTION_END
+    NA2_INJECTION_CODE_BASE = $env:NA2_INJECTION_CODE_BASE
+    NA2_INJECTION_CODE_END = $env:NA2_INJECTION_CODE_END
     NA2_INJECTION_BUILD_ID = $env:NA2_INJECTION_BUILD_ID
 }
 $env:NA2_INJECTION_CRC = [string]$identity.CRC
 $env:NA2_INJECTION_BASE = ('0x{0:X8}' -f $injectionBase)
 $env:NA2_INJECTION_END = ('0x{0:X8}' -f $injectionEnd)
+$env:NA2_INJECTION_CODE_BASE = ('0x{0:X8}' -f $codeBase)
+$env:NA2_INJECTION_CODE_END = ('0x{0:X8}' -f $codeEnd)
 $env:NA2_INJECTION_BUILD_ID = ('0x{0:X8}' -f $buildId)
 Push-Location $labRoot
 try {
@@ -399,6 +439,7 @@ if (-not (Test-Path -LiteralPath $output)) {
 }
 
 $hookWrites = @{}
+$dispatcherWrites = @{}
 foreach ($line in Get-Content -LiteralPath $output) {
     if ($line -notmatch (
         '^patch=1,EE,(?<address>[0-9A-F]{8}),extended,' +
@@ -422,6 +463,18 @@ foreach ($line in Get-Content -LiteralPath $output) {
         throw ('Generated PNACH writes outside the reserved range: 0x{0:X8}' -f
             $runtimeAddress)
     }
+    if ($runtimeAddress -lt $codeAreaBase) {
+        if ($dispatcherWrites.ContainsKey($runtimeAddress)) {
+            throw (
+                'Generated PNACH writes dispatcher address 0x{0:X8} more than once.' -f
+                $runtimeAddress
+            )
+        }
+        $dispatcherWrites[$runtimeAddress] = [Convert]::ToUInt32(
+            $Matches.value,
+            16
+        )
+    }
 }
 if ($hookWrites.Count -ne $hookRuntimeAddresses.Count) {
     throw (
@@ -439,9 +492,9 @@ if (($jal -band 0xFC000000) -ne 0x0C000000) {
     throw ('Generated hook is not a JAL instruction: 0x{0:X8}.' -f $jal)
 }
 $hookTarget = [uint32](($jal -band 0x03FFFFFF) -shl 2)
-if ($hookTarget -lt $injectionBase -or $hookTarget -ge $injectionEnd) {
+if ($hookTarget -ne $dispatcherRuntimeAddress) {
     throw (
-        'Generated hook target is outside the reserved range: 0x{0:X8}.' -f
+        'Generated hook target is not the fixed dispatcher: 0x{0:X8}.' -f
         $hookTarget
     )
 }
@@ -473,6 +526,39 @@ foreach ($entry in $expectedHookTail) {
         )
     }
 }
+$expectedDispatcher = @(
+    [pscustomobject]@{
+        Address = $dispatcherRuntimeAddress
+        Value = [Convert]::ToUInt32('3C19008F', 16)
+    }
+    [pscustomobject]@{
+        Address = [uint32]($dispatcherRuntimeAddress + 4)
+        Value = [Convert]::ToUInt32('8F390010', 16)
+    }
+    [pscustomobject]@{
+        Address = [uint32]($dispatcherRuntimeAddress + 8)
+        Value = [Convert]::ToUInt32('03200008', 16)
+    }
+    [pscustomobject]@{
+        Address = [uint32]($dispatcherRuntimeAddress + 12)
+        Value = [uint32]0
+    }
+    [pscustomobject]@{
+        Address = $activeTargetRuntimeAddress
+        Value = $codeBase
+    }
+)
+foreach ($entry in $expectedDispatcher) {
+    if (-not $dispatcherWrites.ContainsKey($entry.Address) -or
+        [uint32]$dispatcherWrites[$entry.Address] -ne [uint32]$entry.Value) {
+        throw (
+            (
+                'Generated dispatcher mismatch at 0x{0:X8}: ' +
+                'expected 0x{1:X8}.'
+            ) -f $entry.Address, $entry.Value
+        )
+    }
+}
 
 $outputHash = Get-Sha256 $output
 if ($BuildOnly) {
@@ -481,6 +567,10 @@ if ($BuildOnly) {
     Write-Host (
         '[injection_lab] Reservation: 0x{0:X8}-0x{1:X8} ({2} bytes)' -f
         $injectionBase, $injectionEnd, ($injectionEnd - $injectionBase)
+    )
+    Write-Host (
+        '[injection_lab] Code bank: 0x{0:X8}-0x{1:X8}' -f
+        $codeBase, $codeEnd
     )
     Write-Host ('[injection_lab] Build ID: 0x{0:X8}' -f $buildId)
     Write-Host "[injection_lab] PNACH: $output"
@@ -534,6 +624,8 @@ else {
         installed_sha256 = ''
         current_crc = [string]$identity.CRC
         build_id = ('0x{0:X8}' -f $buildId)
+        code_base = ('0x{0:X8}' -f $codeBase)
+        layout = 'dispatcher_v1'
     }
 }
 
@@ -541,12 +633,24 @@ Write-PnachInPlace -Source $output -Target $target
 $state.installed_sha256 = Get-Sha256 $target
 $state.current_crc = [string]$identity.CRC
 $state.build_id = ('0x{0:X8}' -f $buildId)
+$state | Add-Member `
+    -NotePropertyName code_base `
+    -NotePropertyValue ('0x{0:X8}' -f $codeBase) `
+    -Force
+$state | Add-Member `
+    -NotePropertyName layout `
+    -NotePropertyValue 'dispatcher_v1' `
+    -Force
 $state | ConvertTo-Json | Set-Content -LiteralPath $statePath -Encoding UTF8
 
 Write-Host '[injection_lab] Current development PNACH installed.'
 Write-Host "[injection_lab] Target: $target"
+Write-Host ('[injection_lab] Code bank: 0x{0:X8}' -f $codeBase)
 Write-Host ('[injection_lab] Build ID: 0x{0:X8}' -f $buildId)
+if ($requiresDispatcherRestart) {
+    Write-Host '[injection_lab] Start or restart Current once to activate the dispatcher.'
+}
 Write-Host '[injection_lab] PCSX2 should detect the in-place PNACH rewrite automatically.'
 Write-Host '[injection_lab] If it does not, select System -> Reload Cheats/Patches.'
-Write-Host '[injection_lab] Watch the PCSX2 console for:'
+Write-Host '[injection_lab] Check pcsx2/logs/emulog.txt for:'
 Write-Host 'NA2.28 injection lab: C hot reload active'

@@ -180,6 +180,29 @@ mechanism. On 2026-07-29 the user ran the reload-enabled PCSX2 build and
 Injection Lab end to end and confirmed that the explicit PINE reload path
 worked in the running game.
 
+The production-aware lab adapter keeps this dispatcher and alternating-bank
+mechanism but does not use the imported proof's ordinary-section linker. It
+compiles one selected canonical runtime-injector C source through
+`ee_c_fragments.py`, applies the source's declared fragment aliases and
+relocations, and resolves its external imports against the symbol map belonging
+to the exact on-disc Current `228.BIN` hash. It verifies the recorded bytes and
+fragment hashes before emitting a PNACH. One ABI-allowlisted resident entry is
+replaced by an eight-byte `j 0x008F0000; nop` tail redirect; existing
+file-backed caller hooks remain unchanged. The selected C closure is linked
+wholly into one bank and overflow is rejected.
+
+On 2026-07-29 the current `font_v2_core` closure occupied `0x1180` bytes and
+resolved 15 resident imports. All seven declared top-level Font entries passed
+build-only linking against Current `SLOP-NA228 / 092FEF8A` and `228.BIN`
+SHA-256
+`81DED6B73DAB6B2B72B52FC158FD7F3C9C4A05CE8654EB1A273C81779AAF6E2D`.
+Confidence is **high for static identity, relocation, bank-bound, and
+entry-guard validation**, but there is no runtime acceptance yet. A lab result
+is valid only with the same Current payload and compatible resident writable
+state. It does not prove cold initialization, file-backed integration, overlay
+lifetime, release-payload placement, or callers not exercised through the
+selected entry.
+
 ### Widescreen heap target
 
 The official clean-NA2 widescreen write targets `0x00AF3694`, the first

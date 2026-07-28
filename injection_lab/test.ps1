@@ -4,7 +4,9 @@ param(
     [switch]$Remove,
     [string]$CurrentIso,
     [string]$CheatsDirectory,
-    [int]$PinePort
+    [int]$PinePort,
+    [string]$ProductionSource,
+    [string]$ProductionEntry
 )
 
 $ErrorActionPreference = 'Stop'
@@ -33,6 +35,16 @@ $expectedHook = [byte[]](
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00
 )
+$productionMode = [bool]$ProductionSource -or [bool]$ProductionEntry
+if ([bool]$ProductionSource -ne [bool]$ProductionEntry) {
+    throw 'ProductionSource and ProductionEntry must be supplied together.'
+}
+$expectedLayout = if ($productionMode) {
+    'production_dispatcher_v1'
+}
+else {
+    'dispatcher_v1'
+}
 
 if (-not $CurrentIso) {
     $CurrentIso = $projectPaths.files.current_iso
@@ -400,6 +412,22 @@ $previousCodeBase = $null
 if (Test-Path -LiteralPath $statePath -PathType Leaf) {
     $selectionState = Get-Content -Raw -LiteralPath $statePath |
         ConvertFrom-Json
+    $recordedLayout = [string]$selectionState.layout
+    if (-not $BuildOnly -and $recordedLayout -cne $expectedLayout) {
+        throw (
+            "Injection Lab mode changed from $recordedLayout to " +
+            "$expectedLayout. Run .\injection_lab\test.ps1 -Remove first."
+        )
+    }
+    if (-not $BuildOnly -and $productionMode -and (
+        [string]$selectionState.production_source -cne $ProductionSource -or
+        [string]$selectionState.production_entry -cne $ProductionEntry
+    )) {
+        throw (
+            'Production source or entry changed while a test PNACH is ' +
+            'installed. Run .\injection_lab\test.ps1 -Remove first.'
+        )
+    }
     if ('code_base' -in $selectionState.PSObject.Properties.Name) {
         $encodedCodeBase = [string]$selectionState.code_base
         if ($encodedCodeBase -notmatch '^0x[0-9A-Fa-f]{8}$') {
@@ -482,6 +510,10 @@ $inputDirectory = Join-Path $labRoot 'data\FILES'
     (Join-Path $inputDirectory 'SLOP_NA2.28'),
     $bootBytes
 )
+[IO.File]::WriteAllBytes(
+    (Join-Path $inputDirectory '228.BIN'),
+    $payloadBytes
+)
 
 $buildId = Get-BuildId
 $output = Join-Path $labRoot ("build\{0}.pnach" -f $identity.CRC)
@@ -501,7 +533,14 @@ $env:NA2_INJECTION_CODE_END = ('0x{0:X8}' -f $codeEnd)
 $env:NA2_INJECTION_BUILD_ID = ('0x{0:X8}' -f $buildId)
 Push-Location $labRoot
 try {
-    & python gen_pnach.py
+    if ($productionMode) {
+        & python production_adapter.py `
+            --source-id $ProductionSource `
+            --entry $ProductionEntry
+    }
+    else {
+        & python gen_pnach.py
+    }
     if ($LASTEXITCODE -ne 0) {
         throw "PNACH generation failed with exit code $LASTEXITCODE."
     }
@@ -522,6 +561,135 @@ if (-not (Test-Path -LiteralPath $output)) {
     throw "Generator did not produce the expected PNACH: $output"
 }
 
+if ($productionMode) {
+    $manifestPath = Join-Path $labRoot 'build\production-adapter.json'
+    if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+        throw "Production adapter did not produce its manifest: $manifestPath"
+    }
+    $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
+    if ([string]$manifest.mode -cne 'production_c' -or
+        [string]$manifest.source_id -cne $ProductionSource -or
+        [string]$manifest.entry_symbol -cne $ProductionEntry) {
+        throw 'Production adapter manifest does not match the requested source/entry.'
+    }
+    $manifestPayloadHash = [string]$manifest.payload_sha256
+    $actualPayloadHash = Get-Sha256 (Join-Path $inputDirectory '228.BIN')
+    if ($manifestPayloadHash -cne $actualPayloadHash) {
+        throw 'Production adapter manifest does not match exact Current 228.BIN.'
+    }
+    $residentEntryAddress = [Convert]::ToUInt32(
+        ([string]$manifest.entry_resident_address).Substring(2),
+        16
+    )
+    $bankEntryAddress = [Convert]::ToUInt32(
+        ([string]$manifest.entry_bank_address).Substring(2),
+        16
+    )
+    $usedEnd = [Convert]::ToUInt32(
+        ([string]$manifest.used_end).Substring(2),
+        16
+    )
+    if ($usedEnd -le $codeBase -or $usedEnd -gt $codeEnd) {
+        throw 'Production adapter manifest reports an invalid used bank range.'
+    }
+    $expectedResidentEntry = [Convert]::FromHexString(
+        [string]$manifest.entry_resident_expected_hex
+    )
+    if ($expectedResidentEntry.Length -ne 8) {
+        throw 'Production adapter manifest must guard exactly eight entry bytes.'
+    }
+    $residentOffset = [uint32]($residentEntryAddress - $payloadBase)
+    Assert-Bytes -Data $payloadBytes -Offset $residentOffset `
+        -Expected $expectedResidentEntry `
+        -Context ('Current 228.BIN entry at runtime 0x{0:X8}' -f
+            $residentEntryAddress)
+
+    $writes = @{}
+    foreach ($line in Get-Content -LiteralPath $output) {
+        if ($line -notmatch (
+            '^patch=1,EE,(?<address>[0-9A-F]{8}),extended,' +
+            '(?<value>[0-9A-F]{8})$'
+        )) {
+            continue
+        }
+        $encodedAddress = [Convert]::ToUInt32($Matches.address, 16)
+        $runtimeAddress = $encodedAddress -band 0x0FFFFFFF
+        if ($writes.ContainsKey($runtimeAddress)) {
+            throw (
+                'Generated production PNACH writes address 0x{0:X8} more ' +
+                'than once.' -f $runtimeAddress
+            )
+        }
+        $writes[$runtimeAddress] = [Convert]::ToUInt32($Matches.value, 16)
+        $insideDispatcher = (
+            $runtimeAddress -ge $injectionBase -and
+            $runtimeAddress -lt $codeAreaBase
+        )
+        $insideUsedBank = (
+            $runtimeAddress -ge $codeBase -and
+            $runtimeAddress -lt $usedEnd
+        )
+        $insideEntry = (
+            $runtimeAddress -eq $residentEntryAddress -or
+            $runtimeAddress -eq [uint32]($residentEntryAddress + 4)
+        )
+        if (-not ($insideDispatcher -or $insideUsedBank -or $insideEntry)) {
+            throw (
+                'Generated production PNACH writes outside its guarded ' +
+                ('ranges: 0x{0:X8}' -f $runtimeAddress)
+            )
+        }
+    }
+
+    for ($address = $codeBase; $address -lt $usedEnd; $address += 4) {
+        if (-not $writes.ContainsKey([uint32]$address)) {
+            throw ('Production PNACH is missing bank word 0x{0:X8}.' -f $address)
+        }
+    }
+    $expectedDispatcher = @(
+        [pscustomobject]@{
+            Address = $dispatcherRuntimeAddress
+            Value = [Convert]::ToUInt32('3C19008F', 16)
+        }
+        [pscustomobject]@{
+            Address = [uint32]($dispatcherRuntimeAddress + 4)
+            Value = [Convert]::ToUInt32('8F390010', 16)
+        }
+        [pscustomobject]@{
+            Address = [uint32]($dispatcherRuntimeAddress + 8)
+            Value = [Convert]::ToUInt32('03200008', 16)
+        }
+        [pscustomobject]@{
+            Address = [uint32]($dispatcherRuntimeAddress + 12)
+            Value = [uint32]0
+        }
+        [pscustomobject]@{
+            Address = $activeTargetRuntimeAddress
+            Value = $bankEntryAddress
+        }
+    )
+    foreach ($entry in $expectedDispatcher) {
+        if (-not $writes.ContainsKey($entry.Address) -or
+            [uint32]$writes[$entry.Address] -ne [uint32]$entry.Value) {
+            throw (
+                (
+                    'Generated production dispatcher mismatch at 0x{0:X8}: ' +
+                    'expected 0x{1:X8}.'
+                ) -f $entry.Address, $entry.Value
+            )
+        }
+    }
+    $redirect = [uint32]$writes[$residentEntryAddress]
+    if (($redirect -band 0xFC000000) -ne 0x08000000) {
+        throw ('Production resident redirect is not J: 0x{0:X8}.' -f $redirect)
+    }
+    $redirectTarget = [uint32](($redirect -band 0x03FFFFFF) -shl 2)
+    if ($redirectTarget -ne $dispatcherRuntimeAddress -or
+        [uint32]$writes[[uint32]($residentEntryAddress + 4)] -ne 0) {
+        throw 'Production resident redirect does not tail-jump through the dispatcher.'
+    }
+}
+else {
 $hookWrites = @{}
 $dispatcherWrites = @{}
 foreach ($line in Get-Content -LiteralPath $output) {
@@ -643,11 +811,18 @@ foreach ($entry in $expectedDispatcher) {
         )
     }
 }
+}
 
 $outputHash = Get-Sha256 $output
 if ($BuildOnly) {
     Write-Host '[injection_lab] Build-only validation passed.'
     Write-Host "[injection_lab] Current: $($identity.Serial)_$($identity.CRC)"
+    if ($productionMode) {
+        Write-Host (
+            '[injection_lab] Production C: {0} -> {1}' -f
+            $ProductionSource, $ProductionEntry
+        )
+    }
     Write-Host (
         '[injection_lab] Reservation: 0x{0:X8}-0x{1:X8} ({2} bytes)' -f
         $injectionBase, $injectionEnd, ($injectionEnd - $injectionBase)
@@ -712,7 +887,9 @@ else {
         current_crc = [string]$identity.CRC
         build_id = ('0x{0:X8}' -f $buildId)
         code_base = ('0x{0:X8}' -f $codeBase)
-        layout = 'dispatcher_v1'
+        layout = $expectedLayout
+        production_source = $(if ($productionMode) { $ProductionSource } else { '' })
+        production_entry = $(if ($productionMode) { $ProductionEntry } else { '' })
     }
 }
 
@@ -726,7 +903,15 @@ $state | Add-Member `
     -Force
 $state | Add-Member `
     -NotePropertyName layout `
-    -NotePropertyValue 'dispatcher_v1' `
+    -NotePropertyValue $expectedLayout `
+    -Force
+$state | Add-Member `
+    -NotePropertyName production_source `
+    -NotePropertyValue $(if ($productionMode) { $ProductionSource } else { '' }) `
+    -Force
+$state | Add-Member `
+    -NotePropertyName production_entry `
+    -NotePropertyValue $(if ($productionMode) { $ProductionEntry } else { '' }) `
     -Force
 $state | ConvertTo-Json | Set-Content -LiteralPath $statePath -Encoding UTF8
 Invoke-PineReloadPatches -Port $effectivePinePort

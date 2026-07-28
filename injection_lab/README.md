@@ -103,10 +103,66 @@ build enters the inactive bank and is translated fresh. The first dispatcher
 build requires one clean game restart; later C rebuilds are reloadable in the
 running game.
 
+## Production runtime-injector C mode
+
+The lab can compile one canonical runtime-injector C source through the same
+`ee_c_fragments.py` frontend used by normal composition, link its complete
+declared fragment closure into the inactive bank, and redirect one explicitly
+declared production entry through the fixed dispatcher:
+
+```powershell
+.\injection_lab\test.ps1 `
+  -ProductionSource font_v2_core `
+  -ProductionEntry localization.font.v2.controls_adapter
+```
+
+`production_entries.tsv` is the ABI allowlist. The adapter rejects helper
+fragments and undeclared entrypoints instead of guessing whether an internal C
+function is safe to call directly. It reads source, import, fragment-alias, and
+relocation declarations from the canonical Localization `runtime_injector`
+package; it does not copy that C or maintain a second production fragment
+layout.
+
+Before emitting the PNACH, production mode:
+
+1. hashes the exact `PRG/228.BIN` extracted from the selected Current ISO;
+2. finds a retained build record with the same payload SHA-256 and rejects
+   matching records whose symbol maps disagree;
+3. verifies every symbol-map row used by the adapter against the exact payload
+   bytes and recorded fragment hash;
+4. resolves only the selected source's declared external imports against that
+   exact map;
+5. links every declared source fragment into one bank and rejects overflow or
+   undeclared dependencies; and
+6. guards the production resident entry's first eight bytes before replacing
+   them with a tail jump to the dispatcher.
+
+Existing file-backed BTL/ETC/ELF caller hooks remain untouched. The PNACH
+changes only the selected resident entry, fixed dispatcher/pointer, and inactive
+development bank. Switching between generic and production mode, or selecting
+a different production source/entry while installed, requires `-Remove` first.
+Recompiling the same selected entry alternates banks normally.
+
+This is a development accelerator, not release validation. It requires a
+savestate from the same exact Current payload and compatible writable resident
+state. A successful hot reload proves only behavior reached through the
+selected entry in that running state; it does not prove clean boot, file-backed
+hook installation, overlay lifetime, normal payload composition, or unrelated
+callers. Final accepted changes still require the normal build/integration
+boundary and the user's requested regression check.
+
 To compile and validate without installing:
 
 ```powershell
 .\injection_lab\test.ps1 -BuildOnly
+```
+
+Production mode accepts the same switch:
+
+```powershell
+.\injection_lab\test.ps1 -BuildOnly `
+  -ProductionSource font_v2_core `
+  -ProductionEntry localization.font.v2.controls_adapter
 ```
 
 To remove the test and restore any pre-existing regular PNACH:
@@ -147,10 +203,11 @@ injection_lab/msys/1.0/local/ps2dev/
 └── ps2sdk/bin/   # armips
 ```
 
-`test.ps1` derives `data/FILES/SLOP_NA2.28` from the verified Current ISO on
-every build. The ignored `data/`, `obj/`, and `build/` directories are
-reproducible outputs and must not be committed. The imported `msys/` tree is a
-local dependency and is not redistributed by this repository.
+`test.ps1` derives `data/FILES/SLOP_NA2.28` and `data/FILES/228.BIN` from the
+verified Current ISO on every build. The ignored `data/`, `obj/`, and `build/`
+directories are reproducible outputs and must not be committed. The imported
+`msys/` tree is a local dependency and is not redistributed by this
+repository.
 
 The original proof of concept was based on:
 https://youtu.be/-N2QR7W1_kM

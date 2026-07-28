@@ -1,0 +1,8 @@
+source_id	entry_symbol	abi	purpose
+font_v2_core	localization.font.v2.controls_adapter	text_style_center_x_draw_y	Controls and Special Controls one-line labels
+font_v2_core	localization.font.v2.command_title_entry	arg0_text_arg2_native_x_native_y	Command Chart title
+font_v2_core	localization.font.v2.practice_title_entry	arg0_text_arg2_native_x_native_y	Practice title
+font_v2_core	localization.font.v2.pause_list_adapter	arg0_text_arg2_native_x_native_y	Pause-list row
+font_v2_core	localization.font.v2.quit_unselected_adapter	arg0_record_arg2_arg3	Quit choice not selected
+font_v2_core	localization.font.v2.quit_body_adapter	arg0_text_arg2	Quit confirmation body
+font_v2_core	localization.font.v2.special_controls_body_adapter	arg0_text_arg2	Special Controls explanatory body

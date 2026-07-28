@@ -100,12 +100,13 @@ Detailed command and task behavior is in
   `python -B -m unittest discover -s na2_patcher/tests -p 'test_*.py'`.
   Never infer command semantics from a flag name; verify the documented exact
   command before execution.
-- Do not add a hypothesis, candidate, or unconfirmed fix to the tracked
-  permanent test suite. Check it manually or with disposable task-owned checks
-  that are excluded from normal builds and deleted when no longer needed.
-  Permanent coverage begins only after the exact behavior is confirmed or
-  user-accepted; a static-only exception requires explicit user approval.
-  Never make an unverified implementation choice run on every build.
+- Keep hypothesis/candidate checks outside the permanent tracked suite and
+  normal builds. Permanent coverage begins only after explicit user acceptance
+  of the exact behavior; static-only coverage requires explicit user approval.
+  TDD is allowed only when declared in an approved task plan against an
+  independently established contract. Permanent tests protect approved
+  behavior or documented safety requirements, never an unverified
+  implementation merely because it currently exists.
 - Only the user may change profile `bypass_check`; agents preserve it exactly.
 - Preserve substantive disassembly, decompilation, and live-memory findings in
   canonical knowledge with identities, ranges, reconstructed behavior,

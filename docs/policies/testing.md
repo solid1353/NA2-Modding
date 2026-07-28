@@ -4,19 +4,76 @@ Read `scripts/README.md`, `docs/PROJECT_CONTEXT.md`, and `docs/LOGGING.md` for
 the current command implementation and build records. Do not duplicate their
 drift-prone implementation details here.
 
-## Permanent tests
+## Test workflow
 
-- Hypotheses, candidates, and fixes awaiting runtime confirmation or explicit
-  user acceptance must not add to or alter the tracked permanent test suite.
-- Workers may check them manually or with disposable task-owned checks. Such
-  checks stay outside normal build/test discovery, are not committed as
-  permanent coverage, and are deleted when no longer needed.
-- Permanent coverage begins only after the exact behavior is confirmed.
-  Static-only coverage requires the user's explicit approval.
-- Permanent tests enforce documented accepted behavior, not an address,
-  constant, byte sequence, hash, structure, or algorithm merely because the
-  current candidate uses it. Remove coverage for a rejected or superseded
-  approach with that approach.
+### Default workflow
+
+1. Form a hypothesis.
+2. Implement a candidate.
+3. Validate it manually or with candidate-specific automation.
+4. Obtain valid runtime evidence and explicit user acceptance.
+5. Add permanent tests only when they provide meaningful regression
+   protection.
+
+### Candidate validation
+
+- Hypotheses, candidates, and unconfirmed fixes must not add to or alter the
+  permanent tracked test suite.
+- Agents may run existing tests and create automated candidate checks.
+- Candidate checks remain task-owned and outside normal test discovery and
+  builds until acceptance.
+- Compilation, agent testing, screenshots, and candidate checks do not
+  establish user acceptance.
+
+### TDD exception
+
+- TDD may be used only when explicitly declared in the task plan and approved
+  by the user.
+- The plan identifies the exact behavior or safety contract and the
+  independent evidence establishing it.
+- TDD may define an already-established requirement; it must not invent
+  expected behavior for an unresolved hypothesis.
+- Passing a TDD test proves implementation compliance, not that the requirement
+  itself was correct.
+- If investigation changes the requirement, revise or remove the obsolete test
+  before continuing. Approved TDD tests may enter the permanent suite with the
+  implementation.
+
+### Acceptance gate
+
+- User-visible or gameplay behavior requires explicit user acceptance of that
+  exact result before permanent tests are added.
+- Static-only or nonvisual acceptance requires explicit user approval.
+- Plan approval, agent runtime evidence, matching screenshots, successful
+  compilation, and passing checks never imply user acceptance.
+
+### Permanent tests
+
+- Permanent tests are optional. Add one only when it independently detects a
+  meaningful regression in accepted behavior or a documented safety contract.
+- Tests must not merely restate the current implementation or require chosen
+  values, addresses, constants, hashes, structures, algorithms, or complete
+  generated output to remain unchanged.
+- A test must not reconstruct the implementation and compare it with itself.
+- Automated inspection of compiled instructions is allowed when it verifies
+  documented machine-code requirements necessary for the shipped patch.
+- Exact instruction bytes may be frozen only when independently established as
+  the required contract and explicitly approved by the user.
+
+### Lifecycle and execution
+
+- After acceptance, useful candidate checks may be promoted into permanent
+  tests; the rest are discarded.
+- Remove tests for rejected, reverted, or superseded approaches with those
+  approaches.
+- When an accepted implementation changes, review its tests against accepted
+  behavior; never mechanically update expectations merely to make the new
+  implementation pass.
+- Run the full suite at meaningful integration boundaries, not repeatedly
+  during hypothesis iteration.
+
+Core principle: test approved behavior and independently established safety
+requirements, not whatever implementation happens to exist today.
 
 ## ISO builds
 

@@ -46,6 +46,52 @@
         "panel": "shared"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Injection Lab: Watch production Font",
+      "type": "shell",
+      "command": "pwsh.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\injection_lab\\watch.ps1",
+        "-ProductionSource",
+        "font_v2_core",
+        "-ProductionEntry",
+        "${input:fontProductionEntry}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "clear": false
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "fontProductionEntry",
+      "type": "pickString",
+      "description": "Production Font entry to hot reload",
+      "options": [
+        "localization.font.v2.controls_adapter",
+        "localization.font.v2.command_title_entry",
+        "localization.font.v2.practice_title_entry",
+        "localization.font.v2.pause_list_adapter",
+        "localization.font.v2.quit_unselected_adapter",
+        "localization.font.v2.quit_body_adapter",
+        "localization.font.v2.special_controls_body_adapter"
+      ],
+      "default": "localization.font.v2.controls_adapter"
     }
   ]
 }

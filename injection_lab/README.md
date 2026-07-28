@@ -151,6 +151,37 @@ hook installation, overlay lifetime, normal payload composition, or unrelated
 callers. Final accepted changes still require the normal build/integration
 boundary and the user's requested regression check.
 
+### Rebuild automatically on save
+
+Start the maintained production watcher with an explicit canonical source and
+allowlisted entry:
+
+```powershell
+.\injection_lab\watch.ps1 `
+  -ProductionSource font_v2_core `
+  -ProductionEntry localization.font.v2.controls_adapter
+```
+
+The watcher runs one guarded production build immediately, then hashes the
+selected canonical C source plus `c_sources.tsv`, `c_imports.tsv`,
+`c_fragments.tsv`, and the lab's `production_entries.tsv`. After a save it
+waits for the inputs to remain unchanged for 400 ms and invokes `test.ps1`
+serially. Saves during a build queue one follow-up build; builds never overlap.
+A failed compile, install, or PINE reload is printed in red and leaves the
+watcher running for the next save.
+
+In VS Code, run `Tasks: Run Task` and choose
+`Injection Lab: Watch production Font`, then select the entry to exercise.
+Stop its dedicated terminal with Ctrl+C. The task does not start automatically
+when the repository opens and does not guess an entry.
+
+The first successful dispatcher installation still requires one clean Current
+restart. Later successful rebuilds of the same selected source/entry alternate
+banks and explicitly reload patches through PINE. Stop the watcher and run
+`test.ps1 -Remove` before switching source, entry, or lab mode. Watcher success
+has the same narrow development meaning as a manual hot reload; it is not
+release or runtime acceptance.
+
 To compile and validate without installing:
 
 ```powershell

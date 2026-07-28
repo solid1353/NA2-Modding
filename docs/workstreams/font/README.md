@@ -25,3 +25,6 @@ in the shared knowledge base rather than being duplicated here.
   from the existing findings and repeat epic-wide analysis only when new
   evidence proves them insufficient or indicates that a broad fix may be
   better than separate subtask fixes.
+- When a Font change reaches a runtime regression boundary, stop before
+  runtime testing and tell the user the exact screens, actions, and expected
+  unchanged behavior to verify. Do not perform that regression pass for them.

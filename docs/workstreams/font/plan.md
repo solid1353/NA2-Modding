@@ -16,10 +16,9 @@ execution order.
 ## Current result for review
 
 The accepted native 14x20 NUN5-derived font remains enabled and unchanged.
-The generic resident patcher and all Font code/data declarations also remain.
-The user rejected the combined July 24-25 autofit/layout result as unstable,
-so its five logical selections are retained but default-disabled before the
-stage-by-stage rebuild. The independently reviewed Character Select modal
+The generic runtime injector remains. The obsolete July v1 renderer, its five
+disabled logical selections, and its unreachable code/data declarations were
+retired on 2026-07-28. The independently reviewed Character Select modal
 alignment remains enabled.
 
 The replacement v2 shared core and Controls family are now runtime-proven and
@@ -95,8 +94,9 @@ slot keeps its own guarded caller and acceptance boundary.
 ## Required execution order
 
 1. Completed and retained: establish and accept the native NUN5-derived font.
-2. Current stage: default-disable the rejected July 24-25 autofit/layout stack
-   without deleting its code, assets, declarations, or evidence.
+2. Completed: retire the rejected July 24-25 v1 executable stack after the v2
+   implementation made every one of its fragments unreachable; retain its
+   reusable evidence in canonical knowledge and Git history.
 3. Capture and accept the post-reset baseline, including the Save/Load lower
    modal from slot 9.
 4. Reimplement one proven caller family at a time. Commit, push, and obtain
@@ -112,15 +112,13 @@ negative evidence, not implementation parents.
 
 ## Approved replacement architecture — implementation active
 
-Status: approved for implementation. Keep the accepted font and the retained
-July autofit/layout implementation unchanged, with the old implementation
-remaining disabled. The shared v2 core and its adapter/session ABI are now
-separate completed foundations; no caller-family behavior is enabled by either
-boundary.
+Status: approved and active. Keep the accepted font unchanged. The retired July
+v1 implementation is historical evidence only. The shared v2 core and its
+adapter/session ABI are the current behavioral baseline.
 
 ### Architecture
 
-Add an independent `localization.font.v2.*` implementation linked into
+Use the independent `localization.font.v2.*` implementation linked into
 `PRG/228.BIN`. It is a shared NUN5-compatible layout core plus thin
 caller-family adapters, not a transplanted NUN5 renderer:
 
@@ -135,15 +133,14 @@ caller-family adapters, not a transplanted NUN5 renderer:
 5. No adapter duplicates measurement, spacing, fitting or wrapping formulas.
    Several windows may share an adapter only when their call contract and layout
    semantics are genuinely the same.
-6. Avoid the retained monolithic return-address multiplexer. Prefer one explicit
+6. Avoid the retired monolithic return-address multiplexer. Prefer one explicit
    entrypoint per family; if callers genuinely converge, pass an explicit mode
    from the outer caller rather than inferring behavior from nested returns.
 
 ### Resident implementation
 
-Extend `scripts/research/localization/generate_font_renderer.py` to generate a
-separate v2 resident asset while preserving the retained old blob and symbols.
-New fragments use unique `localization.font.v2.*` names and provide:
+`scripts/research/localization/generate_font_renderer.py` generates the live v2
+resident asset and unique `localization.font.v2.*` symbols:
 
 - the accepted 95-entry proportional-width table;
 - exact printable-ASCII measurement;
@@ -154,9 +151,7 @@ New fragments use unique `localization.font.v2.*` names and provide:
 - call-local layout-session entry and cleanup;
 - one adapter per implemented caller family.
 
-The resident patcher may still link retained old fragments when any Font
-resident patch is active, but no new hook may target them. Their presence is
-inert retained evidence, not executable behavior.
+No retired v1 fragment or hook remains in canonical executable inputs.
 
 ### Call-local layout session
 
@@ -213,8 +208,7 @@ window itself remains a local screen/table change outside the layout core.
 
 ### Canonical patch structure
 
-Retain every old autofit/layout row as default-disabled. Add new resident
-patches rather than altering those rows:
+The retired v1 autofit/layout rows must not return. Live resident structure is:
 
 - one v2 shared-core patch for guarded renderer primitives;
 - one independently selectable patch for each caller family;
@@ -236,12 +230,11 @@ may change that value.
 The user directed the shared core and adapter/session layer to be completed
 before caller-family behavior:
 
-1. `font_v2_layout_core` was introduced as a default-disabled resident patch with a separate
-   generated v2 asset. It exports the accepted 95-entry width table, guarded
+1. `font_v2_layout_core` exports the accepted 95-entry width table, guarded
    printable-ASCII and explicit-line measurement, shrink-only preparation,
    horizontal and vertical box positioning, one zero-initialized active-session
    pointer, and five null-session renderer hooks. It does not target any
-   retained v1 symbol or redirect a screen.
+   retired v1 symbol or redirect a screen.
 2. The adapter/session ABI is a separate resident fragment that prepares one
    caller-owned stack record, publishes it only around one native callback,
    and restores the previous session, renderer tracking, horizontal scale and
@@ -386,7 +379,7 @@ state are both user-verified; the Pause Controls caller family is accepted.
 ### ss4 epic caller family: Battle quit confirmation
 
 The ss4 implementation adds one explicit caller-local layer rather than
-re-enabling the retained global layout multiplexer:
+restoring the retired v1 global layout multiplexer:
 
 - BTL file `0x1C4048` scopes the native `0x00383600` Yes/No list call;
 - BTL file `0x1C407C` routes the native `0x003825B0` body call through a
@@ -413,8 +406,8 @@ cannot validate this patch.
 
 Before each caller-family commit:
 
-1. Verify deterministic regeneration of the old and v2 resident assets and
-   tables.
+1. Verify deterministic regeneration of the live C/assembly resident assets
+   and tables.
 2. Verify unique symbols, exact relocation targets and preserved jump delay
    slots.
 3. Verify inactive hooks reproduce the original NA2 instructions and formulas.
@@ -438,8 +431,11 @@ For each family:
 3. Verify representative short, fitting and overflowing strings.
 4. Rerun every previously accepted caller family for regressions.
 5. Commit and push the completed family.
-6. Present one composed grid with NUN5 on the left and Current NA2 on the right.
-7. Wait for user acceptance before beginning the next family.
+6. Stop and give the user the exact regression checklist; do not perform the
+   runtime regression pass for them.
+7. After the user supplies the resulting captures, present one composed grid
+   with NUN5 on the left and Current NA2 on the right.
+8. Wait for user acceptance before beginning the next family.
 
 ### Remaining caller-family order
 
@@ -480,6 +476,39 @@ regression risk.
 **Plan approved; foundations complete; Controls and Command Chart accepted;
 Practice title and Practice explanations agent-validated and awaiting user
 acceptance**
+
+## Approved C migration
+
+The live v2 behavioral renderer migrates from hand-encoded MIPS to ordinary C
+compiled for PS2 EE and contributed through the existing runtime-injector and
+payload-builder architecture. The Injection Lab is a development compiler and
+hot-reload aid only; canonical builds consume deterministic generated
+fragments and never depend on a PNACH or a fixed development-bank address.
+
+Migration proceeds in independently committed stages:
+
+1. Add deterministic EE C compilation and object-section extraction for Font,
+   with no game hook or behavior change.
+2. Replace shared v2 measurement, spacing, fitting, positioning, and session
+   algorithms with C while retaining only the minimal assembly ABI and
+   displaced-instruction shims.
+3. Replace caller-family behavioral adapters one family at a time.
+4. Evaluate the independent numeric formatter separately and migrate it only
+   when doing so reduces maintained assembly without broadening behavior.
+5. Remove each superseded assembly implementation only in the same commit that
+   proves static parity for its C replacement.
+
+Native glyph assets, donor bytes, constants, coordinates, guarded call-site
+edits, and unavoidable register/return trampolines remain declarative binary
+or assembly inputs. C code must not own final `228.BIN` placement: generated
+sections and relocations are exported as runtime-injector fragments, and the
+shared payload builder assigns their final addresses.
+
+Every stage first passes deterministic regeneration, object/symbol/relocation
+validation, focused tests, the full patcher suite, and exact Localization-pin
+validation. When runtime regression becomes necessary, Font stops and gives
+the user a concrete verification checklist. The user performs the regression
+pass and returns the result before the next migration stage begins.
 
 ## Accepted font implementation
 
@@ -542,12 +571,12 @@ descriptor height only when the existing secondary-font mode bit is set. This
 restores the intended 24x28 secondary quad without changing X geometry or the
 primary/fullwidth path.
 
-### Research and implement NUN5 auto-adjust behavior - preserved, disabled
+### Historical v1 NUN5 auto-adjust experiment - retired
 
 The July 24-25 implementation reproduced NUN5's fit decision as well as its
 scaling, without redirecting NA2 to a layout-incompatible NUN5 function.
-Its findings remain useful, but its combined executable selection is now
-default-disabled pending the stage-by-stage rebuild:
+The implementation is retired and recoverable from Git history. Its reusable
+findings remain canonical inputs to the live v2 per-caller renderer:
 
 - Compare NUN5's boxed path
   `FUN_00399df0 -> FUN_00389df0 -> FUN_0018b1b0 -> FUN_0018ca40` with the
@@ -570,12 +599,11 @@ call. `OFF` remains on the ordinary renderer.
 ## Preserved baseline and evidence
 
 - `na2_patcher/features/localization/binary_patcher/` contains the enabled
-  native secondary font and independent Character Select modal alignment plus
-  the retained, disabled static autofit state.
-  `na2_patcher/features/localization/runtime_injector/` retains the linked
-  metric, fit, scale, and layout helpers with their default selections
-  disabled. All remain covered by the current Localization aggregate feature
-  pin.
+  native secondary font, guarded hook-site edits, and independent Character
+  Select modal alignment.
+  `na2_patcher/features/localization/runtime_injector/` contains the live v2
+  metric, fit, scale, layout, and numeric fragments. All remain covered by the
+  current Localization aggregate feature pin.
 - `docs/knowledge/localization/font/README.md` consolidates the v23, semantic-palette, and
   2026-07-19 auto-fit negative results. The retired raw declarative records
   are recoverable from Git commit `69da715` and are not retained in the

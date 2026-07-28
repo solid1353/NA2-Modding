@@ -629,11 +629,47 @@ exactly three independently committed steps:
    ABI shims. This final structural step must not change generated payload
    bytes.
 
-Every stage first passes deterministic regeneration, object/symbol/relocation
-validation, focused tests, the full patcher suite, and exact Localization-pin
-validation. When runtime regression becomes necessary, Font stops and gives
-the user a concrete verification checklist. The user performs the regression
-pass and returns the result before the next migration stage begins.
+For the collapsed migration, deterministic regeneration, object/symbol/
+relocation inspection, package loading, and exact Localization-pin validation
+precede delivery of each candidate. Per the user's 2026-07-28 instruction,
+runtime regression is manual first: Font stops with a concrete verification
+checklist, the user performs the pass, and only an accepted candidate is added
+to or updates permanent automated coverage. Unaccepted implementation choices
+remain outside the permanent suite.
+
+### Collapsed step 1 candidate — awaiting user regression
+
+The first collapsed candidate ports the remaining behavioral layout code to
+the existing compiled-C pipeline:
+
+- Pause Controls normal and selected session construction;
+- nested Quit-confirmation scope and selected/unselected coordinate mapping;
+- native measurement with ordinary-space correction and greedy draw-time
+  wrapping;
+- shared Quit/Special Controls explanatory-body construction;
+- Practice mixed text/icon assembly, icon metrics/drawing, and wrapped layout.
+
+The compiler exports 25 C fragments. Together with retained data and ABI
+bridges, the v2 package contains 49 fragments in a 5,924-byte resident blob,
+SHA-256
+`7F021178787EA9A845EED8AE348B731345C3459BF1AF29D48CA02B26E84D5F28`.
+The independent 188-byte numeric blob remains byte-identical at SHA-256
+`A110555F91F4A21E32546F49B9C0FF7D7EDD1C72EB2EA9796D3AB00C3A9D0604`.
+
+Assembly remains only where the native game ABI or displaced instructions
+require it: absolute renderer tail calls, live-register capture at selected
+Pause and Practice entries, the scoped native Quit-list call, and the five
+session-guarded renderer hooks. Manual object disassembly caught and corrected
+one EE EABI issue before canonical generation: integer arguments five and six
+are passed in `t0`/`t1`, not caller-stack slots. The runtime-injector package
+loads with 2 targets, 3 groups, 8 patches, 50 total fragments including the
+numeric formatter, and 21 guarded edits. The combined Localization pin is
+`430D8B6EC42EC0EC2322DD53657C21655EBA797E24CA0A7B097B8C4A2D10D266`,
+with the user-owned bypass value preserved at `1`.
+
+No ISO or PCSX2 run and no permanent test change belongs to this boundary.
+Runtime parity across every affected caller remains pending the user's manual
+regression pass.
 
 ## Accepted font implementation
 

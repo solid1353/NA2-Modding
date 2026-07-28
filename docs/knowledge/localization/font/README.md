@@ -1119,6 +1119,32 @@ The ten converted captures and the untouched-state controls are retained under
 `work/Font/artifacts/load_freeze/resident_regression/` for comparison while the
 remaining caller families are implemented.
 
+### 2026-07-28 remaining-layout C migration candidate
+
+The remaining v2 behavioral layout implementation can be expressed as ordinary
+EE C without changing its canonical payload symbols or guarded game hooks.
+The candidate compiles Pause Controls, Quit scope/choice mapping, native
+measurement and greedy wrapping, Quit/Special Controls body construction, and
+Practice mixed text/icon flow into relocatable runtime-injector fragments.
+Native renderer tail calls, live-register entry capture, and the five
+displaced-instruction hooks remain small assembly bridges because they encode
+game-specific ABIs rather than layout policy.
+
+Manual disassembly established a reusable EE compiler ABI requirement: this
+toolchain passes integer arguments five and six in `t0` and `t1`. A first shim
+draft incorrectly used caller-stack slots; it was rejected before canonical
+generation. The corrected selected-Pause bridge leaves the live color in
+`t0`, while the Practice bridge moves its secondary object into `t0` and the
+native Y float bits into `t1`.
+
+The corrected candidate contains 49 v2 fragments in 5,924 bytes, SHA-256
+`7F021178787EA9A845EED8AE348B731345C3459BF1AF29D48CA02B26E84D5F28`.
+The separate 188-byte numeric formatter is unchanged. Static evidence covers
+compiler extraction, supported relocations, exact exported-symbol closure,
+session/frame offset assertions, bounded buffers, package loading, and the
+combined feature hash. Runtime parity is not yet claimed; the user requested a
+manual regression pass before permanent automated coverage is updated.
+
 ## 2026-07-19 superseded clean-font baseline
 
 This earlier baseline started from clean NA2, not from m01, v22, v23, or the

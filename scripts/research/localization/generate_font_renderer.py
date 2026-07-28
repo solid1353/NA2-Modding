@@ -84,10 +84,19 @@ V2_PAUSE_LIST_SELECTED_CALLBACK = (
 V2_PAUSE_LIST_SELECTED_ADAPTER = (
     f"{V2_PREFIX}.pause_list_selected_adapter"
 )
+V2_PAUSE_LIST_SELECTED_IMPL = (
+    f"{V2_PREFIX}.c.pause_list_selected_impl"
+)
 V2_QUIT_ACTIVE = f"{V2_PREFIX}.quit_active"
 V2_QUIT_CHOICES_SCOPE = f"{V2_PREFIX}.quit_choices_scope"
+V2_QUIT_SCOPE_ENTER = f"{V2_PREFIX}.c.quit_scope_enter"
+V2_QUIT_SCOPE_LEAVE = f"{V2_PREFIX}.c.quit_scope_leave"
 V2_QUIT_SELECTED_ADAPTER = f"{V2_PREFIX}.quit_selected_adapter"
+V2_QUIT_SELECTED_MAP = f"{V2_PREFIX}.c.quit_selected_map"
 V2_QUIT_UNSELECTED_ADAPTER = f"{V2_PREFIX}.quit_unselected_adapter"
+V2_QUIT_UNSELECTED_CALLBACK = (
+    f"{V2_PREFIX}.c.quit_unselected_callback"
+)
 V2_QUIT_BODY_CALLBACK = f"{V2_PREFIX}.quit_body_callback"
 V2_QUIT_BODY_ADAPTER = f"{V2_PREFIX}.quit_body_adapter"
 V2_SPECIAL_CONTROLS_BODY_CALLBACK = (
@@ -97,14 +106,19 @@ V2_SPECIAL_CONTROLS_BODY_ADAPTER = (
     f"{V2_PREFIX}.special_controls_body_adapter"
 )
 V2_NATIVE_MEASURE = f"{V2_PREFIX}.native_measure"
+V2_NATIVE_MEASURE_CALLBACK = f"{V2_PREFIX}.c.native_measure_callback"
 V2_WRAP_NATIVE = f"{V2_PREFIX}.wrap_native"
 V2_PRACTICE_TOKENS = f"{V2_PREFIX}.practice_tokens"
 V2_PRACTICE_APPEND = f"{V2_PREFIX}.practice_append"
 V2_PRACTICE_ICON_MAP = f"{V2_PREFIX}.practice_icon_map"
 V2_PRACTICE_ICON_METRIC = f"{V2_PREFIX}.practice_icon_metric"
 V2_PRACTICE_ICON_DRAW = f"{V2_PREFIX}.practice_icon_draw"
+V2_PRACTICE_ICON_DRAW_CALLBACK = (
+    f"{V2_PREFIX}.c.practice_icon_draw_callback"
+)
 V2_PRACTICE_CALLBACK = f"{V2_PREFIX}.practice_callback"
 V2_PRACTICE_ADAPTER = f"{V2_PREFIX}.practice_adapter"
+V2_PRACTICE_ADAPTER_IMPL = f"{V2_PREFIX}.c.practice_adapter_impl"
 V2_PLAIN_SPACE = f"{V2_PREFIX}.plain_space"
 V2_NEWLINE_ADVANCE = f"{V2_PREFIX}.newline_advance"
 V2_RIGHT_EDGE = f"{V2_PREFIX}.right_edge"
@@ -326,6 +340,49 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
                 "font_v2_title_callback": ee_c_fragments.SymbolReference(
                     V2_TITLE_CALLBACK
                 ),
+                "font_v2_pause_list_callback": (
+                    ee_c_fragments.SymbolReference(V2_PAUSE_LIST_CALLBACK)
+                ),
+                "font_v2_pause_list_selected_callback": (
+                    ee_c_fragments.SymbolReference(
+                        V2_PAUSE_LIST_SELECTED_CALLBACK
+                    )
+                ),
+                "font_v2_quit_active": ee_c_fragments.SymbolReference(
+                    V2_QUIT_ACTIVE
+                ),
+                "font_v2_quit_unselected_callback": (
+                    ee_c_fragments.SymbolReference(
+                        V2_QUIT_UNSELECTED_CALLBACK
+                    )
+                ),
+                "font_v2_quit_body_callback": (
+                    ee_c_fragments.SymbolReference(V2_QUIT_BODY_CALLBACK)
+                ),
+                "font_v2_special_controls_body_callback": (
+                    ee_c_fragments.SymbolReference(
+                        V2_SPECIAL_CONTROLS_BODY_CALLBACK
+                    )
+                ),
+                "font_v2_native_measure_callback": (
+                    ee_c_fragments.SymbolReference(
+                        V2_NATIVE_MEASURE_CALLBACK
+                    )
+                ),
+                "font_v2_practice_tokens": (
+                    ee_c_fragments.SymbolReference(V2_PRACTICE_TOKENS)
+                ),
+                "font_v2_practice_icon_map": (
+                    ee_c_fragments.SymbolReference(V2_PRACTICE_ICON_MAP)
+                ),
+                "font_v2_practice_icon_draw_callback": (
+                    ee_c_fragments.SymbolReference(
+                        V2_PRACTICE_ICON_DRAW_CALLBACK
+                    )
+                ),
+                "font_v2_practice_callback": (
+                    ee_c_fragments.SymbolReference(V2_PRACTICE_CALLBACK)
+                ),
             },
         )
 
@@ -336,6 +393,20 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         "font_v2_controls_adapter",
         "font_v2_command_title_entry",
         "font_v2_practice_title_entry",
+        "font_v2_pause_list_adapter",
+        "font_v2_pause_list_selected_impl",
+        "font_v2_quit_scope_enter",
+        "font_v2_quit_scope_leave",
+        "font_v2_quit_selected_map",
+        "font_v2_quit_unselected_adapter",
+        "font_v2_native_measure",
+        "font_v2_wrap_native",
+        "font_v2_quit_body_adapter",
+        "font_v2_special_controls_body_adapter",
+        "font_v2_practice_append",
+        "font_v2_practice_icon_metric",
+        "font_v2_practice_icon_draw",
+        "font_v2_practice_adapter_impl",
     }
     if set(extracted.symbols) != expected_exports:
         raise ValueError(
@@ -356,6 +427,46 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         extracted.symbols["font_v2_practice_title_entry"].symbol: (
             V2_PRACTICE_TITLE_ENTRY
         ),
+        extracted.symbols["font_v2_pause_list_adapter"].symbol: (
+            V2_PAUSE_LIST_ADAPTER
+        ),
+        extracted.symbols["font_v2_pause_list_selected_impl"].symbol: (
+            V2_PAUSE_LIST_SELECTED_IMPL
+        ),
+        extracted.symbols["font_v2_quit_scope_enter"].symbol: (
+            V2_QUIT_SCOPE_ENTER
+        ),
+        extracted.symbols["font_v2_quit_scope_leave"].symbol: (
+            V2_QUIT_SCOPE_LEAVE
+        ),
+        extracted.symbols["font_v2_quit_selected_map"].symbol: (
+            V2_QUIT_SELECTED_MAP
+        ),
+        extracted.symbols["font_v2_quit_unselected_adapter"].symbol: (
+            V2_QUIT_UNSELECTED_ADAPTER
+        ),
+        extracted.symbols["font_v2_native_measure"].symbol: (
+            V2_NATIVE_MEASURE
+        ),
+        extracted.symbols["font_v2_wrap_native"].symbol: V2_WRAP_NATIVE,
+        extracted.symbols["font_v2_quit_body_adapter"].symbol: (
+            V2_QUIT_BODY_ADAPTER
+        ),
+        extracted.symbols[
+            "font_v2_special_controls_body_adapter"
+        ].symbol: V2_SPECIAL_CONTROLS_BODY_ADAPTER,
+        extracted.symbols["font_v2_practice_append"].symbol: (
+            V2_PRACTICE_APPEND
+        ),
+        extracted.symbols["font_v2_practice_icon_metric"].symbol: (
+            V2_PRACTICE_ICON_METRIC
+        ),
+        extracted.symbols["font_v2_practice_icon_draw"].symbol: (
+            V2_PRACTICE_ICON_DRAW
+        ),
+        extracted.symbols["font_v2_practice_adapter_impl"].symbol: (
+            V2_PRACTICE_ADAPTER_IMPL
+        ),
     }
     helper_symbols = {
         fragment.symbol
@@ -366,6 +477,15 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         f"{V2_PREFIX}.c.text": f"{V2_PREFIX}.c.is_br",
         f"{V2_PREFIX}.c.text.font.v2.title.adapter.common": (
             V2_TITLE_ADAPTER
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.map.choice": (
+            f"{V2_PREFIX}.c.map_choice"
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.wrapped.body.common": (
+            f"{V2_PREFIX}.c.wrapped_body_common"
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.icon.record": (
+            f"{V2_PREFIX}.c.icon_record"
         ),
     }
     if helper_symbols != set(helper_aliases):
@@ -407,6 +527,23 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_TITLE_ADAPTER,
         V2_COMMAND_TITLE_ENTRY,
         V2_PRACTICE_TITLE_ENTRY,
+        V2_PAUSE_LIST_ADAPTER,
+        V2_PAUSE_LIST_SELECTED_IMPL,
+        V2_QUIT_SCOPE_ENTER,
+        V2_QUIT_SCOPE_LEAVE,
+        f"{V2_PREFIX}.c.map_choice",
+        V2_QUIT_SELECTED_MAP,
+        V2_QUIT_UNSELECTED_ADAPTER,
+        V2_NATIVE_MEASURE,
+        V2_WRAP_NATIVE,
+        f"{V2_PREFIX}.c.wrapped_body_common",
+        V2_QUIT_BODY_ADAPTER,
+        V2_SPECIAL_CONTROLS_BODY_ADAPTER,
+        V2_PRACTICE_APPEND,
+        f"{V2_PREFIX}.c.icon_record",
+        V2_PRACTICE_ICON_METRIC,
+        V2_PRACTICE_ICON_DRAW,
+        V2_PRACTICE_ADAPTER_IMPL,
     }:
         raise ValueError("Font v2 C fragment aliases are incomplete")
     return result
@@ -730,6 +867,32 @@ def build_v2_pause_list_selected_adapter() -> Fragment:
     )
 
 
+def build_v2_pause_list_selected_entry() -> Fragment:
+    """Capture the selected-row color from live t0 for the C implementation."""
+
+    t0 = 8
+    sp, ra = 29, 31
+    frame_size = 0x20
+    saved_ra = 0x1C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    # The PS2 EE EABI passes the fifth integer argument in t0.  The native
+    # selected-row caller already has the required live color in that register.
+    assembler.jump_symbol(0x03, V2_PAUSE_LIST_SELECTED_IMPL)
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, 0, 0, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(
+        V2_PAUSE_LIST_SELECTED_ADAPTER,
+        payload,
+        relocations,
+    )
+
+
 def build_v2_quit_choices_scope() -> Fragment:
     """Publish ss4 scope only while its native Yes/No list is drawing."""
 
@@ -758,6 +921,60 @@ def build_v2_quit_choices_scope() -> Fragment:
     assembler.emit(mips.i_type(0x23, sp, s0, saved_s0))
     assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
     assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_QUIT_CHOICES_SCOPE, payload, relocations)
+
+
+def build_v2_quit_choices_scope_entry() -> Fragment:
+    """Bridge the native list ABI around C-owned nested scope state."""
+
+    v0, a0, a1, a2, a3 = 2, 4, 5, 6, 7
+    sp, ra = 29, 31
+    frame_size = 0x40
+    saved_arg0 = 0x10
+    saved_arg1 = 0x14
+    saved_arg2 = 0x18
+    saved_arg3 = 0x1C
+    saved_f12 = 0x20
+    saved_f13 = 0x24
+    saved_active = 0x28
+    saved_result = 0x2C
+    saved_ra = 0x3C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    for register, offset in (
+        (a0, saved_arg0),
+        (a1, saved_arg1),
+        (a2, saved_arg2),
+        (a3, saved_arg3),
+    ):
+        assembler.emit(mips.i_type(0x2B, sp, register, offset))
+    assembler.emit(mips.i_type(0x39, sp, 12, saved_f12))
+    assembler.emit(mips.i_type(0x39, sp, 13, saved_f13))
+    assembler.jump_symbol(0x03, V2_QUIT_SCOPE_ENTER)
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x2B, sp, v0, saved_active))
+    for register, offset in (
+        (a0, saved_arg0),
+        (a1, saved_arg1),
+        (a2, saved_arg2),
+        (a3, saved_arg3),
+    ):
+        assembler.emit(mips.i_type(0x23, sp, register, offset))
+    assembler.emit(mips.i_type(0x31, sp, 12, saved_f12))
+    assembler.emit(mips.i_type(0x31, sp, 13, saved_f13))
+    assembler.emit(mips.jump(0x03, FONT_CHOICE_LIST_DRAW))
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x2B, sp, v0, saved_result))
+    assembler.emit(mips.i_type(0x23, sp, a0, saved_active))
+    assembler.jump_symbol(0x03, V2_QUIT_SCOPE_LEAVE)
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x23, sp, v0, saved_result))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, 0, 0, 0x08))
     assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
     payload, relocations = assembler.build()
     return Fragment(V2_QUIT_CHOICES_SCOPE, payload, relocations)
@@ -819,6 +1036,53 @@ def build_v2_quit_selected_adapter() -> Fragment:
     emit_load_float(assembler, t0, 13, NO_TARGET[1])
 
     assembler.label("original")
+    assembler.emit(mips.jump(0x02, FONT_SELECTED_DRAW))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(V2_QUIT_SELECTED_ADAPTER, payload, relocations)
+
+
+def build_v2_quit_selected_entry() -> Fragment:
+    """Bridge native float coordinates through the C choice mapper."""
+
+    v0, a0, a1, a2, a3 = 2, 4, 5, 6, 7
+    t0 = 8
+    sp, ra = 29, 31
+    frame_size = 0x30
+    saved_arg0 = 0x10
+    saved_arg1 = 0x14
+    saved_arg2 = 0x18
+    saved_arg3 = 0x1C
+    mapped_y = 0x20
+    saved_ra = 0x2C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    for register, offset in (
+        (a0, saved_arg0),
+        (a1, saved_arg1),
+        (a2, saved_arg2),
+        (a3, saved_arg3),
+    ):
+        assembler.emit(mips.i_type(0x2B, sp, register, offset))
+    assembler.emit(mips.mfc1(a1, 13))
+    assembler.emit(mips.mfc1(a2, 12))
+    assembler.emit(mips.i_type(0x09, sp, a3, mapped_y))
+    assembler.jump_symbol(0x03, V2_QUIT_SELECTED_MAP)
+    assembler.emit(0)
+    assembler.emit(mips.mtc1(v0, 12))
+    assembler.emit(mips.i_type(0x23, sp, t0, mapped_y))
+    assembler.emit(mips.mtc1(t0, 13))
+    for register, offset in (
+        (a0, saved_arg0),
+        (a1, saved_arg1),
+        (a2, saved_arg2),
+        (a3, saved_arg3),
+    ):
+        assembler.emit(mips.i_type(0x23, sp, register, offset))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
     assembler.emit(mips.jump(0x02, FONT_SELECTED_DRAW))
     assembler.emit(0)
     payload, relocations = assembler.build()
@@ -917,6 +1181,16 @@ def build_v2_quit_unselected_adapter() -> Fragment:
     assembler.emit(0)
     payload, relocations = assembler.build()
     return Fragment(V2_QUIT_UNSELECTED_ADAPTER, payload, relocations)
+
+
+def build_v2_quit_unselected_callback() -> Fragment:
+    """Tail-call the original ordinary UI renderer for the C adapter."""
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.jump(0x02, FONT_UI_DRAW))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(V2_QUIT_UNSELECTED_CALLBACK, payload, relocations)
 
 
 def build_v2_wrapped_body_callback(
@@ -1193,6 +1467,18 @@ def build_v2_native_measure() -> Fragment:
     assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
     payload, relocations = assembler.build()
     return Fragment(V2_NATIVE_MEASURE, payload, relocations)
+
+
+def build_v2_native_measure_callback() -> Fragment:
+    """Call NA2's native tagged-text metric ABI from compiled C."""
+
+    zero, a1 = 0, 5
+    assembler = mips.Assembler()
+    assembler.emit(mips.r_type(zero, zero, a1, 0x21))
+    assembler.emit(mips.jump(0x02, FONT_MEASURE))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(V2_NATIVE_MEASURE_CALLBACK, payload, relocations)
 
 
 def build_v2_wrap_native() -> Fragment:
@@ -1579,6 +1865,16 @@ def build_v2_practice_icon_draw() -> Fragment:
     return Fragment(V2_PRACTICE_ICON_DRAW, payload, relocations)
 
 
+def build_v2_practice_icon_draw_callback() -> Fragment:
+    """Tail-call NA2's icon renderer with C-prepared integer/float arguments."""
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.jump(0x02, FONT_ICON_DRAW))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(V2_PRACTICE_ICON_DRAW_CALLBACK, payload, relocations)
+
+
 def build_v2_practice_callback() -> Fragment:
     a3 = 7
     assembler = mips.Assembler()
@@ -1912,6 +2208,31 @@ def build_v2_practice_adapter() -> Fragment:
     return Fragment(V2_PRACTICE_ADAPTER, payload, relocations)
 
 
+def build_v2_practice_adapter_entry() -> Fragment:
+    """Capture Practice's live s3/s2 objects and f12 Y for compiled C."""
+
+    a3, t0, t1 = 7, 8, 9
+    s2, s3 = 18, 19
+    sp, ra = 29, 31
+    frame_size = 0x30
+    saved_ra = 0x2C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(s3, 0, a3, 0x21))
+    # The PS2 EE EABI carries integer arguments five and six in t0/t1.
+    assembler.emit(mips.r_type(s2, 0, t0, 0x21))
+    assembler.emit(mips.mfc1(t1, 12))
+    assembler.jump_symbol(0x03, V2_PRACTICE_ADAPTER_IMPL)
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, 0, 0, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_PRACTICE_ADAPTER, payload, relocations)
+
+
 def load_v2_session(
     assembler: mips.Assembler,
     address_register: int,
@@ -2191,28 +2512,22 @@ def v2_fragments() -> tuple[Fragment, ...]:
         build_v2_controls_callback(),
         build_v2_title_callback(),
         build_v2_pause_list_callback(),
-        build_v2_pause_list_adapter(),
         build_v2_pause_list_selected_callback(),
-        build_v2_pause_list_selected_adapter(),
-        build_v2_quit_choices_scope(),
-        build_v2_quit_selected_adapter(),
-        build_v2_quit_unselected_adapter(),
+        build_v2_pause_list_selected_entry(),
+        build_v2_quit_choices_scope_entry(),
+        build_v2_quit_selected_entry(),
+        build_v2_quit_unselected_callback(),
         build_v2_quit_body_callback(),
-        build_v2_quit_body_adapter(),
-        build_v2_native_measure(),
-        build_v2_wrap_native(),
-        build_v2_practice_append(),
-        build_v2_practice_icon_metric(),
-        build_v2_practice_icon_draw(),
+        build_v2_native_measure_callback(),
+        build_v2_practice_icon_draw_callback(),
         build_v2_practice_callback(),
-        build_v2_practice_adapter(),
+        build_v2_practice_adapter_entry(),
         build_v2_plain_space(),
         build_v2_newline_advance(),
         build_v2_right_edge(),
         build_v2_half_space(),
         build_v2_glyph_advance(),
         build_v2_special_controls_body_callback(),
-        build_v2_special_controls_body_adapter(),
     )
     symbols = [fragment.symbol for fragment in result]
     if len(symbols) != len(set(symbols)):

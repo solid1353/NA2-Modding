@@ -949,10 +949,9 @@ exact-guarded task-owned conversion redirected only the second list call to
 `localization.font.v2.quit_choices_scope`. The hidden capture reused the
 existing C mapping—Yes `(64.5,31.5)`, No `(68.5,49)`—and visually matched
 NUN5 while leaving the body unchanged. No new formula or assembly payload is
-needed. Confidence is **high** for the caller identity, guard, isolation, and
-candidate result; the layer is **approved for test** pending the user's
-normal-build regression of Mode Select and the retained Collection
-confirmation.
+needed. The user verified the normal-build Mode Select result on 2026-07-29.
+The layer is therefore **runtime-proven** with verified confidence; the
+separate Collection confirmation remains unfinished epic work.
 
 ### Practice explanation mixed-text wrapping
 

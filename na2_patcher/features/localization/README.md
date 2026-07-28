@@ -1872,9 +1872,10 @@ layer therefore redirects only the second call at boot-ELF file `0x285E98`
 (runtime `0x00385D98`, clean guard `800D0E0C00000000`) to
 `localization.font.v2.quit_choices_scope`; the first call remains native. An
 exact-guarded converted remade ss1 state centers Yes/No with NUN5 row spacing
-while leaving the already-matching body unchanged. The layer remains
-`approved_for_test` until the user regresses Mode Select and the retained
-Collection confirmation on a normal build.
+while leaving the already-matching body unchanged. The user verified the
+normal-build Mode Select result on 2026-07-29, so the layer is
+`runtime_proven`. The separate Collection confirmation remains unfinished
+Font epic work.
 
 The separate `font_layout_special_controls_body` layer completes the explanatory
 block on the same ss1 Special Controls screen. Exact telemetry identifies only

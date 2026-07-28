@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,6 +8,7 @@ from na2_patcher.payload_builder import build_resident_payload
 from na2_patcher.payload_builder.operations import PayloadFragment
 from scripts.research.localization import ee_c_fragments
 from scripts.research.localization import generate_font_renderer
+from scripts.research.localization import mips
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -142,50 +142,76 @@ class FontCSharedCoreTests(unittest.TestCase):
         if not COMPILER.is_file():
             raise unittest.SkipTest(f"local EE compiler is unavailable: {COMPILER}")
 
-    def test_compiled_core_is_deterministic(self) -> None:
-        compiled = {
-            fragment.symbol: (
-                len(fragment.payload),
-                hashlib.sha256(fragment.payload).hexdigest().upper(),
-            )
-            for fragment in generate_font_renderer.build_v2_c_core()
-        }
-        self.assertEqual(
+    def test_compiled_core_is_deterministic_and_relocatable(self) -> None:
+        first = generate_font_renderer.build_v2_c_core()
+        second = generate_font_renderer.build_v2_c_core()
+        self.assertEqual(first, second)
+
+        fragments = {fragment.symbol: fragment for fragment in first}
+        self.assertTrue(
             {
-                "localization.font.v2.c.is_br": (
-                    72,
-                    "8D237660C7EAFF9CC326A0E61BB7A56E2EB67FF6B8627B1EECCBFFE62225DF1B",
+                "localization.font.v2.measure",
+                "localization.font.v2.prepare",
+                "localization.font.v2.adapter_call",
+                "localization.font.v2.pause_list_adapter",
+                "localization.font.v2.quit_unselected_adapter",
+                "localization.font.v2.wrap_native",
+                "localization.font.v2.c.practice_adapter_impl",
+            }.issubset(fragments)
+        )
+        for fragment in first:
+            self.assertEqual(fragment.kind, "code")
+            self.assertGreater(len(fragment.payload), 0)
+            self.assertEqual(len(fragment.payload) % 4, 0)
+            self.assertTrue(
+                all(
+                    relocation.kind in {"abs32", "j26", "jal26", "hi16", "lo16"}
+                    for relocation in fragment.relocations
+                )
+            )
+
+    def test_native_entry_shims_preserve_ee_eabi_register_contract(
+        self,
+    ) -> None:
+        pause = generate_font_renderer.build_v2_pause_list_selected_entry()
+        pause_words = [
+            int.from_bytes(pause.payload[offset:offset + 4], "little")
+            for offset in range(0, len(pause.payload), 4)
+        ]
+        self.assertEqual(
+            pause.relocations,
+            (
+                mips.Relocation(
+                    offset=0x8,
+                    kind="jal26",
+                    symbol=generate_font_renderer.V2_PAUSE_LIST_SELECTED_IMPL,
                 ),
-                "localization.font.v2.measure": (
-                    312,
-                    "3556D787360097C7BD0901101068AE640168533B041B11866F3FE8A91533C7A7",
+            ),
+        )
+        self.assertNotIn(mips.i_type(0x2B, 29, 8, 0x10), pause_words)
+
+        practice = generate_font_renderer.build_v2_practice_adapter_entry()
+        practice_words = [
+            int.from_bytes(practice.payload[offset:offset + 4], "little")
+            for offset in range(0, len(practice.payload), 4)
+        ]
+        self.assertEqual(
+            practice_words[2:5],
+            [
+                mips.r_type(19, 0, 7, 0x21),
+                mips.r_type(18, 0, 8, 0x21),
+                mips.mfc1(9, 12),
+            ],
+        )
+        self.assertEqual(
+            practice.relocations,
+            (
+                mips.Relocation(
+                    offset=0x14,
+                    kind="jal26",
+                    symbol=generate_font_renderer.V2_PRACTICE_ADAPTER_IMPL,
                 ),
-                "localization.font.v2.prepare": (
-                    584,
-                    "7B0E8737D296AD767CDC377730EC990B727E9A43ADA6A05142482AAE67E30B14",
-                ),
-                "localization.font.v2.adapter_call": (
-                    216,
-                    "1763CE7B8E15393AE9FC25C8F15E3E53DEE796C806B2D764A8BB889B6247B595",
-                ),
-                "localization.font.v2.controls_adapter": (
-                    136,
-                    "5F9F94ED1AB2248C2F4BAECE1AFD905C39704AC019B8F060D6C3E6CEE268773F",
-                ),
-                "localization.font.v2.title_adapter": (
-                    120,
-                    "AE60BAD491CDC7542FDB08C0B161AD8CD49A0CC01930B2DC3600549618C25C02",
-                ),
-                "localization.font.v2.command_title_entry": (
-                    56,
-                    "4EF411D3F32815A14E4EC8C8EB5765766DEB1F4B046F6BFE4333A67B39B86E25",
-                ),
-                "localization.font.v2.practice_title_entry": (
-                    56,
-                    "157653A9FB727D469438BB99D055D0F99A3A15D3ACF8C39A07B4FA25E89F0056",
-                ),
-            },
-            compiled,
+            ),
         )
 
     def test_c_core_reproduces_canonical_generated_outputs(self) -> None:

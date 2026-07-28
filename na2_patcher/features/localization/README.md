@@ -1878,7 +1878,7 @@ and D-pad, face, plus, and shoulder icons. Controls and Command Chart
 regressions remain intact. This layer is enabled and runtime-proven;
 the grouped Practice grids still await user acceptance.
 
-The current step-1 C-migration candidate preserves those public symbols,
+The accepted step-1 C migration preserves those public symbols,
 hooks, constants, and patch selections while compiling all remaining
 behavioral layout policy—Pause sessions, Quit scope and coordinate mapping,
 native measurement/wrapping, both body adapters, and Practice text/icon
@@ -1887,9 +1887,10 @@ calls, live-register entry capture, the scoped native Quit-list call, and the
 five displaced renderer hooks. The generated v2 asset is 5,924 bytes with
 SHA-256
 `7F021178787EA9A845EED8AE348B731345C3459BF1AF29D48CA02B26E84D5F28`.
-This is a static candidate awaiting the user's broad manual regression; its
-existing patch provenance remains the accepted pre-migration runtime evidence,
-not proof of the newly compiled bytes.
+The user manually regressed every affected caller on Current CRC `12369AA2`
+and reported `no diff`. Permanent coverage added after that acceptance protects
+the documented EE entry ABI and required symbolic dependency chains without
+freezing compiler hashes or obsolete instruction layouts.
 
 The live v2 auto-fit and layout components require `font_nun5_glyphs` because
 their positions and fit decisions are tuned to its metrics. They otherwise

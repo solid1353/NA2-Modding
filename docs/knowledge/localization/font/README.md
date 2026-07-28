@@ -1119,7 +1119,7 @@ The ten converted captures and the untouched-state controls are retained under
 `work/Font/artifacts/load_freeze/resident_regression/` for comparison while the
 remaining caller families are implemented.
 
-### 2026-07-28 remaining-layout C migration candidate
+### 2026-07-28 accepted remaining-layout C migration
 
 The remaining v2 behavioral layout implementation can be expressed as ordinary
 EE C without changing its canonical payload symbols or guarded game hooks.
@@ -1137,13 +1137,17 @@ generation. The corrected selected-Pause bridge leaves the live color in
 `t0`, while the Practice bridge moves its secondary object into `t0` and the
 native Y float bits into `t1`.
 
-The corrected candidate contains 49 v2 fragments in 5,924 bytes, SHA-256
+The accepted implementation contains 49 v2 fragments in 5,924 bytes, SHA-256
 `7F021178787EA9A845EED8AE348B731345C3459BF1AF29D48CA02B26E84D5F28`.
 The separate 188-byte numeric formatter is unchanged. Static evidence covers
 compiler extraction, supported relocations, exact exported-symbol closure,
 session/frame offset assertions, bounded buffers, package loading, and the
-combined feature hash. Runtime parity is not yet claimed; the user requested a
-manual regression pass before permanent automated coverage is updated.
+combined feature hash. The normal build promoted Current CRC `12369AA2`; the
+user manually regressed every affected caller family and reported `no diff`.
+Only after that explicit acceptance were permanent tests updated. They protect
+the relocatable C and native-ABI safety contracts without freezing compiler
+hashes or old assembly layouts; focused tests pass 11/11 and the full patcher
+suite passes 201/201.
 
 ## 2026-07-19 superseded clean-font baseline
 

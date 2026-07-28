@@ -873,49 +873,6 @@ class RuntimeInjectorTests(unittest.TestCase):
                 ("jal26", "localization.font.v2.adapter_call"),
             },
         )
-        pause_list_adapter = pause_list_build.symbols[
-            "localization.font.v2.pause_list_adapter"
-        ]
-        pause_list_adapter_payload = pause_list_build.payload[
-            pause_list_adapter.file_offset:
-            pause_list_adapter.file_offset + pause_list_adapter.size
-        ]
-        pause_list_adapter_words = {
-            int.from_bytes(
-                pause_list_adapter_payload[offset:offset + 4],
-                "little",
-            )
-            for offset in range(
-                0,
-                len(pause_list_adapter_payload),
-                4,
-            )
-        }
-        for value in (4.0, 20.0):
-            bits = struct.unpack("<I", struct.pack("<f", value))[0]
-            self.assertIn(
-                mips.i_type(0x0F, 0, 8, bits >> 16),
-                pause_list_adapter_words,
-            )
-        for expected_word in (
-            mips.i_type(0x2B, 29, 8, 0x10),
-            mips.i_type(0x2B, 29, 8, 0x14),
-            mips.i_type(0x2B, 29, 0, 0x18),
-            mips.i_type(0x2B, 29, 0, 0x1C),
-            mips.i_type(0x2B, 29, 8, 0x20),
-            mips.i_type(0x2B, 29, 8, 0x24),
-            mips.i_type(0x2B, 29, 9, 0x5C),
-            mips.i_type(0x0D, 8, 8, 216),
-            mips.cop1(0x01, 0, 13, 0),
-            mips.jump(
-                0x03,
-                pause_list_build.symbols[
-                    "localization.font.v2.adapter_call"
-                ].runtime_address,
-            ),
-        ):
-            self.assertIn(expected_word, pause_list_adapter_words)
-
         pause_list_callback = pause_list_build.symbols[
             "localization.font.v2.pause_list_callback"
         ]
@@ -958,6 +915,24 @@ class RuntimeInjectorTests(unittest.TestCase):
             },
             {
                 (
+                    "jal26",
+                    "localization.font.v2.c.pause_list_selected_impl",
+                ),
+            },
+        )
+        pause_list_selected_impl = next(
+            fragment
+            for fragment in pause_list_declaration.fragments
+            if fragment.symbol
+            == "localization.font.v2.c.pause_list_selected_impl"
+        )
+        self.assertEqual(
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation in pause_list_selected_impl.relocations
+            },
+            {
+                (
                     "hi16",
                     "localization.font.v2.pause_list_selected_callback",
                 ),
@@ -968,50 +943,6 @@ class RuntimeInjectorTests(unittest.TestCase):
                 ("jal26", "localization.font.v2.adapter_call"),
             },
         )
-        pause_list_selected_adapter = pause_list_build.symbols[
-            "localization.font.v2.pause_list_selected_adapter"
-        ]
-        pause_list_selected_adapter_payload = pause_list_build.payload[
-            pause_list_selected_adapter.file_offset:
-            pause_list_selected_adapter.file_offset
-            + pause_list_selected_adapter.size
-        ]
-        pause_list_selected_adapter_words = {
-            int.from_bytes(
-                pause_list_selected_adapter_payload[offset:offset + 4],
-                "little",
-            )
-            for offset in range(
-                0,
-                len(pause_list_selected_adapter_payload),
-                4,
-            )
-        }
-        for value in (2.0, 4.0, 20.0):
-            bits = struct.unpack("<I", struct.pack("<f", value))[0]
-            self.assertIn(
-                mips.i_type(0x0F, 0, 8, bits >> 16),
-                pause_list_selected_adapter_words,
-            )
-        for expected_word in (
-            mips.i_type(0x2B, 29, 8, 0x68),
-            mips.mtc1(5, 0),
-            mips.mtc1(6, 0),
-            mips.cop1(0x20, 0, 0, fmt=20),
-            mips.cop1(0x00, 0, 0, 1),
-            mips.cop1(0x01, 0, 0, 1),
-            mips.i_type(0x0D, 8, 8, 216),
-            mips.jump(
-                0x03,
-                pause_list_build.symbols[
-                    "localization.font.v2.adapter_call"
-                ].runtime_address,
-            ),
-        ):
-            self.assertIn(
-                expected_word,
-                pause_list_selected_adapter_words,
-            )
 
         pause_list_selected_callback = pause_list_build.symbols[
             "localization.font.v2.pause_list_selected_callback"
@@ -1199,105 +1130,50 @@ class RuntimeInjectorTests(unittest.TestCase):
                 ].relocations
             },
             {
+                (
+                    "jal26",
+                    "localization.font.v2.c.practice_adapter_impl",
+                ),
+            },
+        )
+        practice_impl_dependencies = {
+            (relocation.kind, relocation.symbol)
+            for relocation in practice_fragments[
+                "localization.font.v2.c.practice_adapter_impl"
+            ].relocations
+        }
+        self.assertTrue(
+            {
                 ("hi16", "localization.font.v2.practice_tokens"),
                 ("lo16", "localization.font.v2.practice_tokens"),
                 ("jal26", "localization.font.v2.practice_append"),
-                (
-                    "hi16",
-                    "localization.font.v2.practice_icon_metric",
-                ),
-                (
-                    "lo16",
-                    "localization.font.v2.practice_icon_metric",
-                ),
-                (
-                    "hi16",
-                    "localization.font.v2.practice_icon_draw",
-                ),
-                (
-                    "lo16",
-                    "localization.font.v2.practice_icon_draw",
-                ),
+                ("hi16", "localization.font.v2.practice_icon_metric"),
+                ("lo16", "localization.font.v2.practice_icon_metric"),
+                ("hi16", "localization.font.v2.practice_icon_draw"),
+                ("lo16", "localization.font.v2.practice_icon_draw"),
                 ("jal26", "localization.font.v2.wrap_native"),
-                (
-                    "hi16",
-                    "localization.font.v2.practice_callback",
-                ),
-                (
-                    "lo16",
-                    "localization.font.v2.practice_callback",
-                ),
+                ("hi16", "localization.font.v2.practice_callback"),
+                ("lo16", "localization.font.v2.practice_callback"),
                 ("jal26", "localization.font.v2.adapter_call"),
+            }.issubset(practice_impl_dependencies)
+        )
+        self.assertEqual(
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation in practice_fragments[
+                    "localization.font.v2.practice_icon_draw"
+                ].relocations
+            },
+            {
+                ("jal26", "localization.font.v2.c.icon_record"),
+                ("hi16", "localization.font.v2.session_pointer"),
+                ("lo16", "localization.font.v2.session_pointer"),
+                (
+                    "jal26",
+                    "localization.font.v2.c.practice_icon_draw_callback",
+                ),
             },
         )
-
-        practice_adapter = practice_build.symbols[
-            "localization.font.v2.practice_adapter"
-        ]
-        practice_adapter_payload = practice_build.payload[
-            practice_adapter.file_offset:
-            practice_adapter.file_offset + practice_adapter.size
-        ]
-        practice_adapter_words = {
-            int.from_bytes(
-                practice_adapter_payload[offset:offset + 4], "little"
-            )
-            for offset in range(0, len(practice_adapter_payload), 4)
-        }
-        for value in (39.2, 21.2, 28.0, 14.0):
-            bits = struct.unpack("<I", struct.pack("<f", value))[0]
-            self.assertIn(
-                mips.i_type(0x0F, 0, 8, bits >> 16),
-                practice_adapter_words,
-            )
-            if bits & 0xFFFF:
-                self.assertIn(
-                    mips.i_type(0x0D, 8, 8, bits & 0xFFFF),
-                    practice_adapter_words,
-                )
-        for expected_word in (
-            mips.i_type(0x0D, 8, 8, 364),
-            mips.i_type(0x0D, 8, 8, 48),
-            mips.i_type(0x0D, 8, 8, 0x1D),
-            mips.i_type(0x2B, 29, 19, 0x6C),
-            mips.i_type(0x2B, 29, 18, 0x70),
-            mips.i_type(0x2B, 29, 8, 0x24),
-            mips.i_type(0x23, 8, 9, 0x7C),
-            mips.i_type(0x23, 8, 9, 0x78),
-            mips.i_type(0x2B, 8, 9, 0x7C),
-            mips.i_type(0x2B, 8, 9, 0x78),
-        ):
-            self.assertIn(expected_word, practice_adapter_words)
-        self.assertIn(
-            struct.pack(
-                "<2I",
-                mips.i_type(0x0F, 0, 8, 0),
-                mips.i_type(0x2B, 29, 8, 0x24),
-            ),
-            practice_adapter_payload,
-        )
-
-        practice_icon_draw = practice_build.symbols[
-            "localization.font.v2.practice_icon_draw"
-        ]
-        practice_icon_draw_payload = practice_build.payload[
-            practice_icon_draw.file_offset:
-            practice_icon_draw.file_offset + practice_icon_draw.size
-        ]
-        practice_icon_draw_words = {
-            int.from_bytes(
-                practice_icon_draw_payload[offset:offset + 4], "little"
-            )
-            for offset in range(0, len(practice_icon_draw_payload), 4)
-        }
-        for expected_word in (
-            mips.jump(0x03, 0x0037BB40),
-            mips.i_type(0x23, 8, 4, 0x6C),
-            mips.i_type(0x23, 8, 4, 0x70),
-            mips.i_type(0x0F, 0, 9, 0x008D),
-            mips.i_type(0x0D, 9, 9, 0x14C0),
-        ):
-            self.assertIn(expected_word, practice_icon_draw_words)
 
         practice_callback = practice_build.symbols[
             "localization.font.v2.practice_callback"
@@ -1471,10 +1347,26 @@ class RuntimeInjectorTests(unittest.TestCase):
                 ].relocations
             },
             {
-                ("hi16", "localization.font.v2.quit_active"),
-                ("lo16", "localization.font.v2.quit_active"),
+                ("jal26", "localization.font.v2.c.quit_scope_enter"),
+                ("jal26", "localization.font.v2.c.quit_scope_leave"),
             },
         )
+        for symbol in (
+            "localization.font.v2.c.quit_scope_enter",
+            "localization.font.v2.c.quit_scope_leave",
+            "localization.font.v2.c.map_choice",
+        ):
+            self.assertTrue(
+                {
+                    ("hi16", "localization.font.v2.quit_active"),
+                    ("lo16", "localization.font.v2.quit_active"),
+                }.issubset(
+                    {
+                        (relocation.kind, relocation.symbol)
+                        for relocation in fragments[symbol].relocations
+                    }
+                )
+            )
         self.assertEqual(
             {
                 (relocation.kind, relocation.symbol)
@@ -1483,7 +1375,10 @@ class RuntimeInjectorTests(unittest.TestCase):
                 ].relocations
             },
             {
-                ("jal26", "localization.font.v2.wrap_native"),
+                (
+                    "jal26",
+                    "localization.font.v2.c.wrapped_body_common",
+                ),
                 (
                     "hi16",
                     "localization.font.v2.quit_body_callback",
@@ -1492,154 +1387,58 @@ class RuntimeInjectorTests(unittest.TestCase):
                     "lo16",
                     "localization.font.v2.quit_body_callback",
                 ),
+            },
+        )
+        self.assertEqual(
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation in fragments[
+                    "localization.font.v2.quit_selected_adapter"
+                ].relocations
+            },
+            {
+                (
+                    "jal26",
+                    "localization.font.v2.c.quit_selected_map",
+                ),
+            },
+        )
+        self.assertEqual(
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation in fragments[
+                    "localization.font.v2.c.quit_selected_map"
+                ].relocations
+            },
+            {("jal26", "localization.font.v2.c.map_choice")},
+        )
+        self.assertEqual(
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation in fragments[
+                    "localization.font.v2.quit_unselected_adapter"
+                ].relocations
+            },
+            {
+                ("jal26", "localization.font.v2.c.map_choice"),
+                (
+                    "jal26",
+                    "localization.font.v2.c.quit_unselected_callback",
+                ),
+            },
+        )
+        self.assertEqual(
+            {
+                (relocation.kind, relocation.symbol)
+                for relocation in fragments[
+                    "localization.font.v2.c.wrapped_body_common"
+                ].relocations
+            },
+            {
+                ("jal26", "localization.font.v2.wrap_native"),
                 ("jal26", "localization.font.v2.adapter_call"),
             },
         )
-
-        selected = build.symbols[
-            "localization.font.v2.quit_selected_adapter"
-        ]
-        selected_payload = build.payload[
-            selected.file_offset:selected.file_offset + selected.size
-        ]
-        selected_word_list = [
-            int.from_bytes(
-                selected_payload[offset:offset + 4], "little"
-            )
-            for offset in range(0, len(selected_payload), 4)
-        ]
-        selected_words = set(selected_word_list)
-        for value in (
-            24.0,
-            56.0,
-            64.5,
-            31.5,
-            68.5,
-            49.0,
-            66.0,
-            31.0,
-        ):
-            bits = struct.unpack("<I", struct.pack("<f", value))[0]
-            self.assertIn(
-                mips.i_type(0x0F, 0, 8, bits >> 16),
-                selected_words,
-            )
-        self.assertIn(
-            mips.i_type(0x0F, 0, 8, 0x0060),
-            selected_words,
-        )
-        self.assertIn(
-            mips.i_type(0x0D, 8, 8, 0x59F0),
-            selected_words,
-        )
-        self.assertIn(
-            mips.i_type(0x0D, 8, 8, 0x59F8),
-            selected_words,
-        )
-        self.assertIn(
-            mips.jump(0x02, 0x00379150),
-            selected_words,
-        )
-        selected_on = selected_word_list.index(
-            mips.i_type(0x0D, 8, 8, 0x59F0)
-        )
-        selected_off = selected_word_list.index(
-            mips.i_type(0x0D, 8, 8, 0x59F8)
-        )
-        selected_on_branch = selected_word_list[selected_on + 1]
-        self.assertEqual(selected_on_branch >> 26, 0x04)
-        selected_on_delta = selected_on_branch & 0xFFFF
-        if selected_on_delta & 0x8000:
-            selected_on_delta -= 0x10000
-        selected_on_target = selected_on + 2 + selected_on_delta
-        self.assertEqual(
-            selected_word_list[selected_on_target],
-            mips.i_type(0x0F, 0, 8, 0x4284),
-        )
-        self.assertEqual(
-            selected_word_list[selected_off + 3],
-            mips.i_type(0x0F, 0, 8, 0x426C),
-        )
-
-        unselected = build.symbols[
-            "localization.font.v2.quit_unselected_adapter"
-        ]
-        unselected_payload = build.payload[
-            unselected.file_offset:unselected.file_offset + unselected.size
-        ]
-        unselected_word_list = [
-            int.from_bytes(
-                unselected_payload[offset:offset + 4], "little"
-            )
-            for offset in range(0, len(unselected_payload), 4)
-        ]
-        unselected_words = set(unselected_word_list)
-        self.assertIn(
-            mips.jump(0x02, 0x00379A20),
-            unselected_words,
-        )
-        self.assertIn(
-            mips.jump(0x03, 0x00379A20),
-            unselected_words,
-        )
-        for value, register in ((59.0, 8), (49.0, 9), (31.0, 9)):
-            bits = struct.unpack("<I", struct.pack("<f", value))[0]
-            self.assertIn(
-                mips.i_type(0x0F, 0, register, bits >> 16),
-                unselected_words,
-            )
-        self.assertIn(
-            mips.i_type(0x0F, 0, 8, 0x0060),
-            unselected_words,
-        )
-        self.assertIn(
-            mips.i_type(0x0D, 8, 8, 0x59F8),
-            unselected_words,
-        )
-        self.assertIn(
-            mips.i_type(0x0D, 8, 8, 0x59F0),
-            unselected_words,
-        )
-        unselected_on = unselected_word_list.index(
-            mips.i_type(0x0D, 8, 8, 0x59F0)
-        )
-        unselected_off = unselected_word_list.index(
-            mips.i_type(0x0D, 8, 8, 0x59F8)
-        )
-        unselected_on_branch = unselected_word_list[unselected_on + 1]
-        self.assertEqual(unselected_on_branch >> 26, 0x04)
-        unselected_on_delta = unselected_on_branch & 0xFFFF
-        if unselected_on_delta & 0x8000:
-            unselected_on_delta -= 0x10000
-        unselected_on_target = unselected_on + 2 + unselected_on_delta
-        self.assertEqual(
-            unselected_word_list[unselected_on_target],
-            mips.i_type(0x0F, 0, 8, 0x4284),
-        )
-        self.assertEqual(
-            unselected_word_list[unselected_off + 3],
-            mips.i_type(0x0F, 0, 8, 0x426C),
-        )
-
-        body = build.symbols[
-            "localization.font.v2.quit_body_adapter"
-        ]
-        body_payload = build.payload[
-            body.file_offset:body.file_offset + body.size
-        ]
-        body_words = {
-            int.from_bytes(body_payload[offset:offset + 4], "little")
-            for offset in range(0, len(body_payload), 4)
-        }
-        for expected_word in (
-            mips.i_type(0x09, 0, 5, 420),
-            mips.i_type(0x09, 0, 6, 2),
-            mips.i_type(0x09, 0, 8, 0x14),
-            mips.i_type(0x09, 29, 19, 0x80),
-            mips.i_type(0x2B, 29, 2, 0x30),
-            mips.i_type(0x2B, 29, 3, 0x34),
-        ):
-            self.assertIn(expected_word, body_words)
 
         callback = build.symbols[
             "localization.font.v2.quit_body_callback"
@@ -1768,7 +1567,10 @@ class RuntimeInjectorTests(unittest.TestCase):
                 ].relocations
             },
             {
-                ("jal26", "localization.font.v2.wrap_native"),
+                (
+                    "jal26",
+                    "localization.font.v2.c.wrapped_body_common",
+                ),
                 (
                     "hi16",
                     "localization.font.v2.special_controls_body_callback",
@@ -1777,32 +1579,7 @@ class RuntimeInjectorTests(unittest.TestCase):
                     "lo16",
                     "localization.font.v2.special_controls_body_callback",
                 ),
-                ("jal26", "localization.font.v2.adapter_call"),
             },
-        )
-
-        body = build.symbols[
-            "localization.font.v2.special_controls_body_adapter"
-        ]
-        body_payload = build.payload[
-            body.file_offset:body.file_offset + body.size
-        ]
-        body_words = {
-            int.from_bytes(body_payload[offset:offset + 4], "little")
-            for offset in range(0, len(body_payload), 4)
-        }
-        for expected_word in (
-            mips.i_type(0x09, 0, 5, 400),
-            mips.i_type(0x09, 0, 6, 2),
-            mips.i_type(0x09, 0, 8, 0x14),
-            mips.i_type(0x09, 29, 19, 0x80),
-            mips.i_type(0x2B, 29, 2, 0x30),
-            mips.i_type(0x2B, 29, 3, 0x34),
-        ):
-            self.assertIn(expected_word, body_words)
-        self.assertIn(
-            mips.i_type(0x0D, 8, 8, 60),
-            body_words,
         )
 
         callback = build.symbols[

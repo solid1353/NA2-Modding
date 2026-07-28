@@ -637,7 +637,7 @@ checklist, the user performs the pass, and only an accepted candidate is added
 to or updates permanent automated coverage. Unaccepted implementation choices
 remain outside the permanent suite.
 
-### Collapsed step 1 candidate — awaiting user regression
+### Collapsed step 1 — accepted
 
 The first collapsed candidate ports the remaining behavioral layout code to
 the existing compiled-C pipeline:
@@ -667,9 +667,16 @@ numeric formatter, and 21 guarded edits. The combined Localization pin is
 `430D8B6EC42EC0EC2322DD53657C21655EBA797E24CA0A7B097B8C4A2D10D266`,
 with the user-owned bypass value preserved at `1`.
 
-No ISO or PCSX2 run and no permanent test change belongs to this boundary.
-Runtime parity across every affected caller remains pending the user's manual
-regression pass.
+The normal `na2` workflow built and promoted Current CRC `12369AA2`, build
+record `@logs/na2/builds/20260728_203916_483_pid40912`. The user manually
+regressed Pause Controls, Quit confirmations, Special Controls, Practice
+explanations, Controls, and both title callers and reported `no diff`.
+
+After that explicit acceptance, permanent coverage was updated to protect the
+relocatable C contract, documented EE `t0`/`t1` entry ABI, canonical hooks,
+native callbacks, and required fragment dependency chains without freezing
+compiler hashes or obsolete instruction layouts. Focused Font C/injector tests
+pass 11/11 and the full patcher suite passes 201/201.
 
 ## Accepted font implementation
 

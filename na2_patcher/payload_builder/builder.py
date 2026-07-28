@@ -30,6 +30,8 @@ CONFIG_KEYS = {
     "cave_runtime_address",
     "destination_table_file_offset",
     "old_memory_boundary",
+    "development_injection_base",
+    "development_injection_end",
 }
 SYMBOL_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
 KIND_ORDER = {"code": 0, "rodata": 1, "data": 2}
@@ -49,6 +51,8 @@ class ResidentPayloadConfig:
     cave_runtime_address: int
     destination_table_file_offset: int
     old_memory_boundary: int
+    development_injection_base: int
+    development_injection_end: int
 
 
 def _parse_int(value: str, label: str) -> int:
@@ -103,6 +107,18 @@ def load_config(path: Path | None = None) -> ResidentPayloadConfig:
         raise ValueError("resident-payload minimum data offset overlaps its entrypoint")
     if config.maximum_end <= config.load_base:
         raise ValueError("resident-payload maximum end must exceed its load base")
+    if not (
+        config.old_memory_boundary
+        <= config.development_injection_base
+        < config.development_injection_end
+        <= config.load_base
+    ):
+        raise ValueError(
+            "development injection reservation must be inside the protected "
+            "pre-payload gap"
+        )
+    if config.development_injection_base & 0xF or config.development_injection_end & 0xF:
+        raise ValueError("development injection reservation must be 16-byte aligned")
     return config
 
 

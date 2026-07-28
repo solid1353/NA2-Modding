@@ -11,3 +11,5 @@ cave_file_offset	0x00507414
 cave_runtime_address	0x00607314
 destination_table_file_offset	0x00502AC0
 old_memory_boundary	0x008DD080
+development_injection_base	0x008F0000
+development_injection_end	0x008F3D00

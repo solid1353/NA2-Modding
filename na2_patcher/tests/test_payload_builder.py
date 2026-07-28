@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import dataclasses
+import tempfile
 import unittest
+from pathlib import Path
 
 from na2_patcher.composer import resolve_symbolic_patches
 from na2_patcher.payload_builder.builder import build_resident_payload, load_config
@@ -104,6 +106,29 @@ class PayloadBuilderTests(unittest.TestCase):
                 (PayloadFragment("a", "large", "data", 4, b"x" * 32),),
                 config=constrained,
             )
+
+    def test_development_injection_range_is_reserved_before_payload(self) -> None:
+        config = load_config()
+        self.assertEqual(config.development_injection_base, 0x008F0000)
+        self.assertEqual(config.development_injection_end, config.load_base)
+        self.assertEqual(
+            config.development_injection_end - config.development_injection_base,
+            0x3D00,
+        )
+
+    def test_rejects_development_injection_range_outside_protected_gap(self) -> None:
+        source = Path("na2_patcher/payload_builder/config.tsv").read_text(
+            encoding="utf-8"
+        )
+        invalid = source.replace(
+            "development_injection_end\t0x008F3D00",
+            "development_injection_end\t0x008F3D10",
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "config.tsv"
+            path.write_text(invalid, encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "pre-payload gap"):
+                load_config(path)
 
 
 if __name__ == "__main__":

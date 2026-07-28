@@ -22,3 +22,12 @@ The configured maximum end is the previously runtime-tested two-file
 reservation boundary. The actual heap boundary follows the linked payload's
 aligned end, so the current compact build returns unused capacity to the game
 while future contributions fail before exceeding the proven envelope.
+
+The configuration also declares the development-only injection reservation
+`0x008F0000-0x008F3D00` immediately below the fixed payload load base. It is
+inside the Current-only gap excluded from overlays and from the relocated game
+heap by the payload integration. It is never emitted into `228.BIN`, never used
+by release composition, and must be targeted only by an exact-identity,
+guard-validated development tool. The reservation gives the C/PNACH injection
+lab one deterministic 15,616-byte range without treating zero-filled ELF,
+overlay, or heap memory as an implicit code cave.

@@ -88,6 +88,54 @@ The final Current heap user base is `0x00940120`; the end sentinel begins at
 `0x01FF5FF0`. The clean/vanilla user base is `0x008DD0A0`, so the heap-start
 movement is exactly the `0x63080` fixed reservation.
 
+### Development injection reservation
+
+`payload_builder/config.tsv` reserves `0x008F0000-0x008F3D00` (15,616 bytes)
+inside the proven Current-only safety gap for temporary C/PNACH development.
+The range is below the fixed `228.BIN` load base, above the maximum overlay end,
+and below the relocated heap boundary. It is not part of `228.BIN` and is never
+included in a release image. A development tool must still verify the exact
+Current ISO identity, its resident-payload header, and every hook's clean bytes
+before emitting a CRC-named PNACH.
+
+The first imported NUN5 injection experiment instead used
+`0x003E4410`, which contains active clean-NA2 data. Its hook executed and
+printed successfully, but the overwritten data caused an invalid
+`F005FC1D` instruction and a TLB miss at `0x06E42F68` during startup. The same
+experiment also demonstrated that ordinary `patch=1` PNACH data writes are
+reapplied continuously: a writable `print_pending` initializer was restored
+every frame and the message repeated. Mutable injected state must therefore
+live in the reserved range without a recurring PNACH initializer; code may use
+a source-derived build signature to recognize a newly reloaded build.
+
+For the Current proof hook, runtime `0x001D0570` is the single
+`jal WakeupThread` instruction in `FUN_001d0560`, called once per main-thread
+loop from `FUN_001c13f0`. A development adapter can call the displaced
+`WakeupThread` first and then run its test logic, so only that one guarded word
+is redirected and the native epilogue remains intact. Clean and Current boot
+ELFs both contain little-endian bytes `0477050C` there. Confidence is **high**
+for the recorded file/runtime mapping and caller behavior; runtime acceptance
+of each injected C build remains separate.
+
+An isolated PCSX2 2.6.3 startup test of Current identity
+`SLOP-NA228 / 7036AA4A` loaded the generated 31-write PNACH and remained
+running. Read-only PINE verification observed hook word `0x0C23C000`, compiled
+code at `0x008F0000`, read-only data at `0x008F0050`, and the C function's
+source-derived `.bss` build ID `0x4B0F31A2` at `0x008F0048`; that final value
+proves the hooked C function executed rather than merely being copied into
+memory. A second source build with ID `0x58F7CCC7` initialized identically
+after a clean restart.
+
+Changing the PNACH on disk did not update the running clone by itself: the
+first build ID remained live for a bounded 20-second check. Official PCSX2
+2.6.3 source has no PNACH file watcher; its explicit `System` ->
+`Reload Cheats/Patches` action calls `VMManager::ReloadPatches(...)`. Therefore
+the development loop is compile/install, then invoke that action while the game
+continues running. A plain file save is not an automatic reload trigger in
+PCSX2 2.6.3. Confidence is **high** for the clean-start C execution and reload
+mechanism; visible in-place reload remains a manual user action rather than an
+agent-controlled operation.
+
 ### Widescreen heap target
 
 The official clean-NA2 widescreen write targets `0x00AF3694`, the first

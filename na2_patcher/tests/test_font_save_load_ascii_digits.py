@@ -58,6 +58,8 @@ class SaveLoadAsciiDigitsTests(unittest.TestCase):
                 hook.relocation_offset,
             )
             self.assertEqual(symbolic.symbol, hook.symbol)
+            self.assertEqual(symbolic.encoding, hook.encoding)
+            self.assertEqual(symbolic.encoding, "jal26")
 
     def test_clean_elf_guards_and_local_colon_are_exact(self) -> None:
         elf = load_project_paths(self.repository).path("source_na2") / "SLPS_258.37"

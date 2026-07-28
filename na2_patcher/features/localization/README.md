@@ -1901,6 +1901,15 @@ The user manually accepted the Ninja Song ss2–ss5 result on Current CRC
 `12369A62`; permanent coverage now protects its public symbol, EE `t0`
 argument, native formatting bridge, guarded callers, and padding modes.
 
+The same production `font_numeric.c` now owns the six accepted Save/Load
+date/time fields and ordinary Battle Settings Time values. The first
+consolidated build incorrectly used non-linking `j26` hooks and broke Load;
+the corrected seven call sites use `jal26`, preserving the native return path.
+After a fresh corrected build, the user verified Load, Save, the ordinary
+Battle Settings value, and its separate 100/infinity path. Both compiled-C
+families are runtime-proven, and permanent coverage protects the linking-call
+contract independently of payload addresses.
+
 The live v2 auto-fit and layout components require `font_nun5_glyphs` because
 their positions and fit decisions are tuned to its metrics. They otherwise
 remain independently selectable through their patch rows. Setting a resident

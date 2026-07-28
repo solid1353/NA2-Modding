@@ -308,8 +308,12 @@ hook. The corrected candidate uses `jal26` at relocation offset `0x8`, so the
 C entry returns to the next instruction and the surrounding Save/Load function
 continues. The argument setup, C object, returned-year move into `s6`, block
 sizes, and every formatter outside this family remain unchanged. Runtime
-acceptance of the corrected candidate is pending. Production generation is
-consolidated in `scripts/localization/generate_font_renderer.py`.
+acceptance is complete: after the fresh corrected build, the user verified
+that Load and Save open without freezing and retain the accepted date/time
+presentation. Production generation is consolidated in
+`scripts/localization/generate_font_renderer.py`. Permanent coverage now
+protects the independently established linking-call contract for all six
+Save/Load hooks.
 
 The isolated worker build retained at
 `work/Font/build/save-load-ascii-digits.iso` has boot CRC `F9FC3002`. After a
@@ -343,8 +347,10 @@ changes only the hook encoding. C uses the immutable `%d` bridge. The adjacent
 `100` continues to render the native infinity symbol. Selector state, the
 stored timer value, the other five settings rows, and every other fullwidth
 formatter caller remain unchanged. Production generation is consolidated in
-`scripts/localization/generate_font_renderer.py`. The patch remains
-`approved_for_test` until the user reproduces the slot-1 screen.
+`scripts/localization/generate_font_renderer.py`. After the corrected fresh
+build, the user verified the ordinary below-100 value and the separate
+100/infinity behavior. The patch is therefore `runtime_proven`, and permanent
+coverage protects its linking-call contract.
 
 ## Ninja Song ASCII dynamic numbers
 

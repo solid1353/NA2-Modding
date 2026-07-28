@@ -36,7 +36,7 @@ class BattleSettingsAsciiDigitsTests(unittest.TestCase):
     def test_canonical_symbolic_hook_matches_the_generator(self) -> None:
         patch = self.package.patches["font_battle_settings_ascii_digits"]
         self.assertTrue(patch.enabled)
-        self.assertEqual(patch.status, "approved_for_test")
+        self.assertEqual(patch.status, "runtime_proven")
         self.assertEqual(patch.group_id, "battle_ui")
         edit = next(
             edit
@@ -58,6 +58,8 @@ class BattleSettingsAsciiDigitsTests(unittest.TestCase):
             symbolic.symbol,
             generate_font_renderer.BATTLE_SETTINGS_TIME,
         )
+        self.assertEqual(symbolic.encoding, self.hook.encoding)
+        self.assertEqual(symbolic.encoding, "jal26")
 
     def test_clean_guard_and_infinity_branch_are_untouched(self) -> None:
         btl = (

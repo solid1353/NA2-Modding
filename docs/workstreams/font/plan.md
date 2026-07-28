@@ -747,8 +747,13 @@ Localization pin
 `7D4F9F6C8297873136A49F84B4E802B98A6F86F8147CAE2D5314E1CEE5623F97`
 with the user-owned bypass value preserved at `1`. Deterministic regeneration,
 the exact disposable seven-hook call-contract check, and the full patcher suite
-pass (201/201). The correction awaits the user's fresh-build Load-screen
-regression before any further migration work.
+pass (201/201). The user then ran the fresh corrected build and verified Load,
+Save, Battle Settings values below 100, and the separate 100/infinity path.
+The consolidated numeric C migration and its production-file move are accepted.
+Permanent coverage now protects the seven linking-call contracts. The accepted
+metadata boundary uses Localization pin
+`6A2F795BCA38D189A4388430439DF0A7ED5DD8D9215C2D96013138EC22960AF0`,
+with the user-owned bypass value still `1`.
 
 ## Accepted font implementation
 

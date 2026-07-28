@@ -932,6 +932,28 @@ Battle/Practice and Game Mode/Character Select combinations on 2026-07-27.
 The shared quit-confirmation layer is therefore **runtime-proven** with high
 confidence.
 
+### Mode Select Return to Title confirmation caller
+
+The 2026-07-29 remade ss1 pair isolates a second consumer of the accepted
+C-owned Yes/No mapper. NA2 `FUN_00385C00` draws two list objects through
+adjacent calls to `FUN_00383600`: object `+0xD0` at boot-ELF file
+`0x285E80`, then object `+0xCC` at file `0x285E98` / runtime `0x00385D98`.
+The confirmation state in `FUN_00382EF0` operates only object `+0xCC`, so the
+second call is the bounded live-widget hook; selecting both would include an
+unrelated resident object without evidence. Its clean eight-byte guard is
+`800D0E0C00000000`.
+
+The body already matches closely. Current instead draws Yes/No roughly
+19–23 screenshot pixels left of NUN5 and uses a wider row interval. An
+exact-guarded task-owned conversion redirected only the second list call to
+`localization.font.v2.quit_choices_scope`. The hidden capture reused the
+existing C mapping—Yes `(64.5,31.5)`, No `(68.5,49)`—and visually matched
+NUN5 while leaving the body unchanged. No new formula or assembly payload is
+needed. Confidence is **high** for the caller identity, guard, isolation, and
+candidate result; the layer is **approved for test** pending the user's
+normal-build regression of Mode Select and the retained Collection
+confirmation.
+
 ### Practice explanation mixed-text wrapping
 
 Bounded NA2/NUN5 BTL comparison identifies the Practice explanation loop as a

@@ -1864,6 +1864,18 @@ content and corrected it in `f4f12f6`. The user verified the combined
 fresh-build result across all four Battle/Practice and Game Mode/Character
 Select combinations on 2026-07-27, so the layer is `runtime_proven`.
 
+The separate `font_layout_mode_select_confirmation` caller layer reuses the
+same C-owned scope and coordinate map without adding another renderer formula.
+Mode Select `FUN_00385C00` draws two resident list objects through adjacent
+native calls, but its confirmation state operates only object `+0xCC`. The
+layer therefore redirects only the second call at boot-ELF file `0x285E98`
+(runtime `0x00385D98`, clean guard `800D0E0C00000000`) to
+`localization.font.v2.quit_choices_scope`; the first call remains native. An
+exact-guarded converted remade ss1 state centers Yes/No with NUN5 row spacing
+while leaving the already-matching body unchanged. The layer remains
+`approved_for_test` until the user regresses Mode Select and the retained
+Collection confirmation on a normal build.
+
 The separate `font_layout_special_controls_body` layer completes the explanatory
 block on the same ss1 Special Controls screen. Exact telemetry identifies only
 the native UI-body call at BTL file `0x1C3D38` (runtime `0x00877C38`, clean

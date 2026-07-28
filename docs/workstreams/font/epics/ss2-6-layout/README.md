@@ -15,22 +15,27 @@ before beginning the next case.
 - Inputs:
   `work/Font/inputs/sstates/epics/ss2-6/` and
   `work/Font/inputs/sstates/batches/2026-07-27-ss1-10/`, plus
-  `work/Font/inputs/sstates/batches/2026-07-27-additional-ss1/`.
+  `work/Font/inputs/sstates/batches/2026-07-27-additional-ss1/` and
+  `work/Font/inputs/sstates/batches/2026-07-29-priority4-ss1/`.
 - Extracted source screenshots:
   `work/Font/inputs/screenshots/epics/ss2-6/` and
   `work/Font/inputs/screenshots/batches/2026-07-27-ss1-10/`, plus
-  `work/Font/inputs/screenshots/batches/2026-07-27-additional-ss1/`.
+  `work/Font/inputs/screenshots/batches/2026-07-27-additional-ss1/` and
+  `work/Font/inputs/screenshots/batches/2026-07-29-priority4-ss1/`.
 - Provenance:
   `work/Font/inputs/sstates/epics/ss2-6/provenance.tsv` and
   `work/Font/inputs/sstates/batches/2026-07-27-ss1-10/provenance.tsv`, plus
-  `work/Font/inputs/sstates/batches/2026-07-27-additional-ss1/provenance.tsv`.
+  `work/Font/inputs/sstates/batches/2026-07-27-additional-ss1/provenance.tsv`
+  and
+  `work/Font/inputs/sstates/batches/2026-07-29-priority4-ss1/provenance.tsv`.
 - Protected `@pcsx2_user` sources remain untouched.
 - Status: the remade ss2 and ss3 pair records the same Pause Controls modal in
   normal and selected states. Both are user-verified and removed from the
   remaining report. The shared quit-confirmation and ss1 Special Controls cases
   are also user-verified and removed. The original batch retains two cases and
   the new batch contributes ten baseline cases. The additional Command Chart
-  ss1 raises the remaining total to thirteen cases.
+  ss1 raises the remaining total to thirteen cases. The 2026-07-29 remade ss1
+  supersedes the old ss10 Mode Select evidence without changing that total.
 - Existing accepted Font and resident-renderer behavior remains the regression
   baseline. The previously retained Command Chart ss2 image was superseded by
   the remade Pause Controls ss2 state and is no longer an epic input.
@@ -108,12 +113,16 @@ before beginning the next case.
 
 ## Mode Select
 
-### Priority 4 — New batch ss10: Return to Title Screen confirmation
+### Priority 4 — Remade ss1: Return to Title Screen confirmation
 
-- State: baseline captured; not implemented.
-- Review target: regression coverage for the shared modal geometry.
+- State: exact-guarded candidate captured; implementation is ready for the
+  user's normal-build regression. This pair supersedes the prior new-batch
+  ss10 evidence.
+- Result: the body remains unchanged; the existing C-owned Yes/No mapper now
+  centers both labels and reproduces NUN5 row spacing through one isolated
+  Mode Select caller hook.
 
-![Priority 4 Mode Select confirmation baseline](4-mode-select-confirmation.png)
+![Priority 4 Mode Select confirmation candidate](4-mode-select-confirmation.png)
 
 ## Current priorities
 
@@ -129,8 +138,10 @@ Collection and Mode Select grids so each remains under its semantic section.
    family once, then validate both states.
 3. **New ss5 and ss9 — Character Select modal text.** Address the overflowing
    list entry and confirmation body while keeping new ss6 as regression proof.
-4. **New ss1 and ss10 — Shared confirmation regression.** Confirm whether the
-   existing modal adapters already provide parity before adding any caller.
+4. **New-batch ss1 plus remade ss1 — Shared confirmation regression.** The
+   remade Mode Select ss1 candidate reuses the existing modal adapter and is
+   ready for user regression. Keep the Collection baseline as the unchanged
+   companion check before accepting this subtask.
 5. **New ss2–ss3 — Practice Settings review.** Separate translation-owned
    content differences from remaining Font geometry before patching.
 6. **Original ss5 — Character model move list.** Add bounded wrapping and

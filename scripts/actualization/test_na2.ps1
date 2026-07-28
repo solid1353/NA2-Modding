@@ -230,26 +230,51 @@ try {
         -Message 'Actualization did not report the preserved injection-lab PNACH.'
 
     [IO.File]::AppendAllText($labTarget, "// external change`n")
-    $tamperRejected = $false
-    try {
-        $null = & $actualizer `
+    $withChangedLab = & $actualizer `
+        -ProjectPaths $projectPaths `
+        -IdentityResolver $identityResolver `
+        -InjectionLabStatePath $labStatePath
+    Assert-Na2ActualizeTest `
+        -Condition (
+            [IO.File]::ReadAllText($labTarget) -match 'external change'
+        ) `
+        -Message 'Actualization replaced an installed lab PNACH after a rewrite.'
+    Assert-Na2ActualizeTest `
+        -Condition (@($withChangedLab.PreservedInjectionLabPnach).Count -eq 1) `
+        -Message 'Actualization did not preserve a rewritten lab PNACH.'
+
+    Remove-Item -LiteralPath $labStatePath -Force
+    $withoutLabState = & $actualizer `
+        -ProjectPaths $projectPaths `
+        -IdentityResolver $identityResolver `
+        -InjectionLabStatePath $labStatePath
+    $repairedLabTarget = Get-Item -LiteralPath $labTarget -Force
+    Assert-Na2ActualizeTest `
+        -Condition ($repairedLabTarget.LinkType -ceq 'SymbolicLink') `
+        -Message 'Actualization did not repair an orphaned regular PNACH.'
+    foreach ($invalidLabState in '{ invalid json', 'null', '{}') {
+        [IO.File]::WriteAllText(
+            $labStatePath,
+            $invalidLabState,
+            [Text.UTF8Encoding]::new($false)
+        )
+        $withInvalidLabState = & $actualizer `
             -ProjectPaths $projectPaths `
             -IdentityResolver $identityResolver `
             -InjectionLabStatePath $labStatePath
+        Assert-Na2ActualizeTest `
+            -Condition (
+                @($withInvalidLabState.PreservedInjectionLabPnach).Count -eq 0
+            ) `
+            -Message 'Invalid lab state was incorrectly treated as an installation.'
+        Assert-Na2ActualizeTest `
+            -Condition (
+                (Get-Item -LiteralPath $labTarget -Force).LinkType -ceq
+                    'SymbolicLink'
+            ) `
+            -Message 'Invalid lab state blocked canonical PNACH actualization.'
     }
-    catch {
-        $tamperRejected = $_.Exception.Message -match (
-            'changed outside the lab'
-        )
-    }
-    Assert-Na2ActualizeTest `
-        -Condition $tamperRejected `
-        -Message 'Actualization did not reject a tampered injection-lab PNACH.'
-    [IO.File]::WriteAllText(
-        $labTarget,
-        $labText,
-        [Text.UTF8Encoding]::new($false)
-    )
+    Remove-Item -LiteralPath $labStatePath -Force
 
     Remove-Item -LiteralPath $candidateIso -Force
 
@@ -279,8 +304,18 @@ try {
         -Message 'Configured base memory card was modified.'
 
     [IO.File]::WriteAllBytes($canonicalCheats, [byte[]]@())
-    Remove-Item -LiteralPath $labStatePath -Force
     Remove-Item -LiteralPath $labTarget -Force
+    [IO.File]::WriteAllText(
+        $labTarget,
+        $labText,
+        [Text.UTF8Encoding]::new($false)
+    )
+    $staleRegularPnach = Join-Path $cheats 'SLOP-NA228_AAAAAAAA.pnach'
+    [IO.File]::WriteAllText(
+        $staleRegularPnach,
+        $labText,
+        [Text.UTF8Encoding]::new($false)
+    )
     $null = & $actualizer `
         -ProjectPaths $projectPaths `
         -IdentityResolver $identityResolver `

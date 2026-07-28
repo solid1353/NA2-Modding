@@ -17,14 +17,18 @@ Current PCSX2 actualization:
   `@pcsx2_files/gamesettings.ini`.
 - `act na2` derives each retained Current, Previous, and Candidate identity
   from its ISO, maintains matching CRC-named PNACH symlinks, and writes distinct
-  real GameSettings files under `@pcsx2_user/`.
+  real GameSettings files under `@pcsx2_user/`. An installed injection-lab
+  regular PNACH identified by the lab state is preserved without making lab
+  integrity a launch prerequisite. Orphaned regular files at managed NA2.28
+  CRC aliases are repaired to canonical symlinks.
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v3 organizes each package as groups, atomic patches, and exact edits; independent group and patch `enabled` switches control normal composition. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`.
 - Actualization is an explicit standalone workflow with `na2`, `input`, and
   `links` modes; bare `act` runs all three in that order. User-owned
   Current/Previous/Candidate builds and launches also run `act na2`
   automatically, while worker builds never actualize.
-- A zero-byte canonical PNACH removes its managed PCSX2 CRC aliases. Other
-  games, real files, and unrelated symlinks are preserved.
+- A zero-byte canonical PNACH removes its managed PCSX2 CRC aliases, including
+  orphaned regular lab files. Other game identities, real files, and unrelated
+  symlinks are preserved.
 - Current keeps the `[MemoryCards]` section and exact `Slot1_Filename` from
   `gamesettings.ini`. Previous and Candidate omit the entire section. When
   multiple images share one PCSX2 serial/CRC identity, the single GameSettings

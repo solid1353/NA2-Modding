@@ -145,10 +145,9 @@ function Test-Na2ActualizePathWithin {
     )
 }
 
-function Get-Na2ActiveInjectionLabPnach {
+function Get-Na2InstalledInjectionLabPnach {
     param(
         [Parameter(Mandatory)][string]$StatePath,
-        [Parameter(Mandatory)][object[]]$Roles,
         [Parameter(Mandatory)][string]$CheatsDirectory
     )
 
@@ -162,60 +161,41 @@ function Get-Na2ActiveInjectionLabPnach {
         ) | ConvertFrom-Json
     }
     catch {
-        throw "Injection-lab install state is invalid: $StatePath"
+        return $null
     }
-    foreach ($required in 'target', 'installed_sha256', 'current_crc') {
-        if ($required -notin $state.PSObject.Properties.Name -or
-            [string]::IsNullOrWhiteSpace([string]$state.$required)) {
-            throw "Injection-lab install state is missing '$required': $StatePath"
-        }
+    if ($null -eq $state) {
+        return $null
+    }
+    $targetProperty = $state.PSObject.Properties['target']
+    if ($null -eq $targetProperty -or
+        [string]::IsNullOrWhiteSpace([string]$targetProperty.Value)) {
+        return $null
+    }
+    $target = [string]$targetProperty.Value
+
+    try {
+        $recordedPath = Resolve-Na2ActualizePhysicalPath `
+            -Path $target
+    }
+    catch {
+        return $null
+    }
+    if (-not (Test-Na2ActualizePathWithin `
+        -Path $recordedPath `
+        -Directory $CheatsDirectory)) {
+        return $null
     }
 
-    $current = @($Roles | Where-Object Role -CEQ 'Current')
-    if ($current.Count -ne 1) {
-        throw 'Injection-lab state exists without exactly one Current image.'
-    }
-    if ([string]$state.current_crc -cne [string]$current[0].CRC) {
-        throw (
-            'Injection-lab state does not match the Current CRC. ' +
-            'Run .\injection_lab\test.ps1 -Remove before actualizing a new Current.'
-        )
-    }
-
-    $expectedPath = Join-Path $CheatsDirectory $current[0].PnachName
-    $recordedPath = Resolve-Na2ActualizePhysicalPath `
-        -Path ([string]$state.target)
-    $physicalExpected = Resolve-Na2ActualizePhysicalPath -Path $expectedPath
-    if (-not [IO.Path]::Equals($recordedPath, $physicalExpected)) {
-        throw (
-            'Injection-lab state targets a different PNACH. ' +
-            'Run .\injection_lab\test.ps1 -Remove before actualizing.'
-        )
-    }
-
-    $item = Get-Item -LiteralPath $physicalExpected -Force -ErrorAction SilentlyContinue
+    $item = Get-Item -LiteralPath $recordedPath -Force -ErrorAction SilentlyContinue
     if ($null -eq $item -or
         $item.PSIsContainer -or
         -not [string]::IsNullOrWhiteSpace([string]$item.LinkType)) {
-        throw 'The recorded injection-lab PNACH is not an installed regular file.'
-    }
-    $expectedHash = [string]$state.installed_sha256
-    if ($expectedHash -notmatch '^[0-9A-Fa-f]{64}$') {
-        throw 'Injection-lab install state contains an invalid PNACH SHA-256.'
-    }
-    $actualHash = (Get-FileHash `
-        -LiteralPath $physicalExpected `
-        -Algorithm SHA256).Hash
-    if ($actualHash -cne $expectedHash.ToUpperInvariant()) {
-        throw (
-            'The installed injection-lab PNACH changed outside the lab. ' +
-            'Actualization will not overwrite it.'
-        )
+        return $null
     }
 
     return [pscustomobject]@{
-        Path = $physicalExpected
-        Name = [string]$current[0].PnachName
+        Path = $recordedPath
+        Name = [IO.Path]::GetFileName($recordedPath)
     }
 }
 
@@ -223,7 +203,8 @@ function Set-Na2ActualizeSymlink {
     param(
         [Parameter(Mandatory)][string]$Path,
         [Parameter(Mandatory)][string]$Target,
-        [Parameter(Mandatory)][scriptblock]$IsManaged
+        [Parameter(Mandatory)][scriptblock]$IsManaged,
+        [switch]$ReplaceRegularFile
     )
 
     $fullPath = [IO.Path]::GetFullPath($Path)
@@ -242,10 +223,20 @@ function Set-Na2ActualizeSymlink {
     $status = 'verified'
     if ($null -ne $item) {
         $destination = Get-Na2ActualizeLinkDestination -Item $item
-        if ($null -eq $destination -or -not (& $IsManaged $item $destination)) {
+        $replaceableRegularFile = (
+            $ReplaceRegularFile -and
+            $null -eq $destination -and
+            -not $item.PSIsContainer -and
+            [string]::IsNullOrWhiteSpace([string]$item.LinkType)
+        )
+        if (-not $replaceableRegularFile -and (
+            $null -eq $destination -or
+            -not (& $IsManaged $item $destination)
+        )) {
             throw "Refusing to replace an unmanaged file at alias path: $fullPath"
         }
-        if (-not [IO.Path]::Equals($destination, $fullTarget)) {
+        if ($replaceableRegularFile -or
+            -not [IO.Path]::Equals($destination, $fullTarget)) {
             Remove-Item -LiteralPath $physicalPath -Force
             $item = $null
             $status = 'updated'
@@ -483,18 +474,33 @@ $managedPnachLink = {
         )
     )
 }
-$activeInjectionLabPnach = Get-Na2ActiveInjectionLabPnach `
+$installedInjectionLabPnach = Get-Na2InstalledInjectionLabPnach `
     -StatePath $InjectionLabStatePath `
-    -Roles $roles `
     -CheatsDirectory $cheatsDirectory
 $desiredPnachNames = @($roles.PnachName | Select-Object -Unique)
+$managedPnachNamePattern = (
+    '^(?:SLOP-NA228|SLUS-NA228|SLPS-22228)_[0-9A-F]{8}\.pnach$'
+)
 $removedPnachSymlinks = @(
     Get-ChildItem -LiteralPath $cheatsDirectory -Filter '*.pnach' -File -Force |
         Where-Object {
+            $isInstalledLabPnach = (
+                $null -ne $installedInjectionLabPnach -and
+                [IO.Path]::Equals(
+                    $_.FullName,
+                    $installedInjectionLabPnach.Path
+                )
+            )
             $destination = Get-Na2ActualizeLinkDestination -Item $_
-            $null -ne $destination -and
-                (& $managedPnachLink $_ $destination) -and
-                $_.Name -notin $desiredPnachNames
+            -not $isInstalledLabPnach -and
+                $_.Name -notin $desiredPnachNames -and
+                (
+                    $_.Name -match $managedPnachNamePattern -or
+                    (
+                        $null -ne $destination -and
+                        (& $managedPnachLink $_ $destination)
+                    )
+                )
         } |
         ForEach-Object {
             $name = $_.Name
@@ -506,18 +512,25 @@ $removedPnachSymlinks = @(
 $pnachState = Get-Na2PnachState -Path $canonicalCheats
 $cheatAliases = [Collections.Generic.List[string]]::new()
 $preservedInjectionLabPnach = [Collections.Generic.List[string]]::new()
+if ($null -ne $installedInjectionLabPnach) {
+    $preservedInjectionLabPnach.Add($installedInjectionLabPnach.Path)
+}
 foreach ($pnachName in $desiredPnachNames) {
     $aliasPath = Join-Path $cheatsDirectory $pnachName
-    if ($null -ne $activeInjectionLabPnach -and
-        $pnachName -ceq $activeInjectionLabPnach.Name) {
-        $cheatAliases.Add($activeInjectionLabPnach.Path)
-        $preservedInjectionLabPnach.Add($activeInjectionLabPnach.Path)
+    $physicalAliasPath = Resolve-Na2ActualizePhysicalPath -Path $aliasPath
+    if ($null -ne $installedInjectionLabPnach -and
+        [IO.Path]::Equals(
+            $physicalAliasPath,
+            $installedInjectionLabPnach.Path
+        )) {
+        $cheatAliases.Add($installedInjectionLabPnach.Path)
     }
     elseif (-not $pnachState.IsEmpty) {
         $null = Set-Na2ActualizeSymlink `
             -Path $aliasPath `
             -Target $canonicalCheats `
-            -IsManaged $managedPnachLink
+            -IsManaged $managedPnachLink `
+            -ReplaceRegularFile
         $cheatAliases.Add($aliasPath)
     }
 }
@@ -525,9 +538,22 @@ if ($pnachState.IsEmpty) {
     $removedPnachSymlinks += @(
         Get-ChildItem -LiteralPath $cheatsDirectory -Filter '*.pnach' -File -Force |
             Where-Object {
+                $isInstalledLabPnach = (
+                    $null -ne $installedInjectionLabPnach -and
+                    [IO.Path]::Equals(
+                        $_.FullName,
+                        $installedInjectionLabPnach.Path
+                    )
+                )
                 $destination = Get-Na2ActualizeLinkDestination -Item $_
-                $null -ne $destination -and
-                    (& $managedPnachLink $_ $destination)
+                -not $isInstalledLabPnach -and
+                    (
+                        $_.Name -in $desiredPnachNames -or
+                        (
+                            $null -ne $destination -and
+                            (& $managedPnachLink $_ $destination)
+                        )
+                    )
             } |
             ForEach-Object {
                 $name = $_.Name
@@ -541,7 +567,9 @@ if ($pnachState.IsEmpty) {
     Roles = $roles
     CanonicalPnach = $canonicalCheats
     CheatAliases = @($cheatAliases)
-    PreservedInjectionLabPnach = @($preservedInjectionLabPnach)
+    PreservedInjectionLabPnach = @(
+        $preservedInjectionLabPnach | Select-Object -Unique
+    )
     RemovedCheatSymlinks = @($removedPnachSymlinks | Select-Object -Unique)
     EnabledCheats = $pnachState.EnabledCheats
     CreatedGameSettings = @($createdGameSettings)

@@ -115,10 +115,14 @@ file so PCSX2's file watcher can observe the change. It refuses refresh or
 cleanup if another process or user changed the installed PNACH. Removal
 restores the previous file or managed symbolic link, including its relative
 target, but already-applied memory writes remain until Current is restarted.
-While that guarded install record is active, normal `na2` actualization
-recognizes and preserves the exact recorded Current PNACH instead of replacing
-it with the canonical cheat symlink. Unknown, stale, or tampered regular PNACH
-files still fail closed.
+While that install record identifies a regular file inside the PCSX2 cheats
+directory, normal `na2` actualization preserves the file instead of replacing
+it with the canonical cheat symlink. Integrity enforcement remains local to the
+lab's install, refresh, and removal commands; it never becomes a launch gate.
+Without a valid install record, regular files at NA2.28-managed CRC aliases are
+treated as orphaned lab artifacts and repaired to canonical symlinks, or
+removed when the canonical PNACH is empty. Corrupt or stale lab state is
+ignored by actualization, while unrelated game identities remain untouched.
 
 Ordinary `patch=1` PNACH writes are reapplied continuously. Mutable state must
 not be initialized through those recurring writes. The adapted object keeps

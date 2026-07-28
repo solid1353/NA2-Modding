@@ -59,10 +59,12 @@ C_CORE_SOURCE = (
     / "font_renderer_c"
     / "font_v2_core.c"
 )
+C_NUMERIC_SOURCE = C_CORE_SOURCE.with_name("font_numeric.c")
 C_TOOLCHAIN_BIN = ee_c_fragments.default_toolchain_bin(REPOSITORY)
 
 PREFIX = "localization.font"
 NINJA_SONG_ASCII_NUMBER = f"{PREFIX}.ninja_song_ascii_number"
+NINJA_SONG_FORMAT_DECIMAL = f"{PREFIX}.c.numeric_format_decimal"
 
 V2_PREFIX = f"{PREFIX}.v2"
 V2_SESSION_POINTER = f"{V2_PREFIX}.session_pointer"
@@ -547,6 +549,62 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
     }:
         raise ValueError("Font v2 C fragment aliases are incomplete")
     return result
+
+
+@lru_cache(maxsize=1)
+def build_numeric_c_core() -> tuple[Fragment, ...]:
+    with tempfile.TemporaryDirectory(prefix="na2-font-numeric-c-") as temporary:
+        extracted = ee_c_fragments.compile_and_extract(
+            C_NUMERIC_SOURCE,
+            Path(temporary) / "font_numeric.o",
+            namespace=f"{PREFIX}.numeric.c",
+            toolchain_bin=C_TOOLCHAIN_BIN,
+            external_symbols={
+                "font_numeric_format_decimal": (
+                    ee_c_fragments.SymbolReference(
+                        NINJA_SONG_FORMAT_DECIMAL
+                    )
+                ),
+            },
+        )
+
+    if set(extracted.symbols) != {"font_ninja_song_ascii_number"}:
+        raise ValueError(
+            "Font numeric C exports differ: "
+            f"actual={sorted(extracted.symbols)}"
+        )
+    aliases = {
+        extracted.symbols["font_ninja_song_ascii_number"].symbol: (
+            NINJA_SONG_ASCII_NUMBER
+        ),
+    }
+    if {fragment.symbol for fragment in extracted.fragments} != set(aliases):
+        raise ValueError(
+            "Font numeric C fragments differ: "
+            f"actual={sorted(fragment.symbol for fragment in extracted.fragments)}"
+        )
+    return tuple(
+        Fragment(
+            symbol=aliases[fragment.symbol],
+            payload=fragment.payload,
+            relocations=tuple(
+                mips.Relocation(
+                    offset=relocation.offset,
+                    kind=relocation.kind,
+                    symbol=aliases.get(
+                        relocation.symbol,
+                        relocation.symbol,
+                    ),
+                    addend=relocation.addend,
+                )
+                for relocation in fragment.relocations
+            ),
+            kind=fragment.kind,
+            alignment=fragment.alignment,
+            init=fragment.init,
+        )
+        for fragment in extracted.fragments
+    )
 
 
 def build_v2_controls_callback() -> Fragment:
@@ -2472,6 +2530,19 @@ def build_ninja_song_ascii_number() -> Fragment:
     return Fragment(NINJA_SONG_ASCII_NUMBER, payload, relocations)
 
 
+def build_ninja_song_format_decimal() -> Fragment:
+    """Bridge the C helper to NA2's native ``sprintf(destination, "%d", value)``."""
+
+    zero, a1, a2 = 0, 5, 6
+    assembler = mips.Assembler()
+    assembler.emit(mips.r_type(a1, zero, a2, 0x21))
+    mips.load_u32(assembler, a1, FORMAT_D)
+    assembler.emit(mips.jump(0x02, SPRINTF))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(NINJA_SONG_FORMAT_DECIMAL, payload, relocations)
+
+
 
 
 
@@ -2536,7 +2607,7 @@ def v2_fragments() -> tuple[Fragment, ...]:
 
 
 def numeric_fragments() -> tuple[Fragment, ...]:
-    result = (build_ninja_song_ascii_number(),)
+    result = (*build_numeric_c_core(), build_ninja_song_format_decimal())
     symbols = [fragment.symbol for fragment in result]
     if len(symbols) != len(set(symbols)):
         raise ValueError("generated numeric fragments export duplicate symbols")

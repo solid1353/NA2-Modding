@@ -1149,6 +1149,31 @@ the relocatable C and native-ABI safety contracts without freezing compiler
 hashes or old assembly layouts; focused tests pass 11/11 and the full patcher
 suite passes 201/201.
 
+### 2026-07-28 Ninja Song numeric C candidate
+
+The accepted Ninja Song formatter contract can also be expressed in ordinary
+EE C without changing its five BTL callers or public payload symbol. The
+native call sites supply the numeric value in `a1`, requested width in `a2`,
+destination in `a3`, and padding mode as the fifth EE EABI integer argument in
+`t0`. Compiled disassembly confirms the C entry saves those live values before
+calling its only external dependency.
+
+The sole retained assembly fragment is a 20-byte ABI bridge for NA2's native
+variadic formatter: it moves the C callback's value from `a1` to `a2`, loads
+the immutable ASCII `%d` string at `0x006042D3` into `a1`, and tail-calls
+`sprintf` at `0x0017BCA0`. The 184-byte C fragment plus this bridge produce a
+204-byte numeric asset with SHA-256
+`8043B1393F6D901FC91DF6BB4BFC8AB4D2800F7FD9E17CA4EEE2C4C34992A9F6`.
+The prior 188-byte handwritten implementation is superseded as executable
+input but remains recoverable from Git history.
+
+Static confidence is high: the compiler emits one explicit relocation to the
+bridge; its 16-byte decimal buffer is disjoint from the saved-register area;
+the accepted space, no-padding, and zero-padding modes are retained; and the
+native decimal length remains the public return value. Runtime confidence
+remains pending until the user checks the supplied Ninja Song ss2–ss5 screens
+on the newly built Current image.
+
 ## 2026-07-19 superseded clean-font baseline
 
 This earlier baseline started from clean NA2, not from m01, v22, v23, or the

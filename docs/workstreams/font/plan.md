@@ -678,6 +678,33 @@ native callbacks, and required fragment dependency chains without freezing
 compiler hashes or obsolete instruction layouts. Focused Font C/injector tests
 pass 11/11 and the full patcher suite passes 201/201.
 
+### Collapsed step 2 — candidate awaiting runtime regression
+
+The independent Ninja Song ASCII-number helper is now compiled from
+`font_numeric.c`. It retains the accepted public symbol and all five guarded
+BTL call-site hooks. The C entry consumes the original EE EABI arguments
+unchanged: value in `a1`, width in `a2`, destination in `a3`, and the fifth
+integer padding-mode argument in `t0`. Its accepted modes remain
+space-padded, unpadded, and zero-padded.
+
+Only the game-native variadic call remains an assembly ABI bridge. The
+20-byte `localization.font.c.numeric_format_decimal` fragment converts the C
+two-argument callback into
+`sprintf(destination, 0x006042D3 /* "%d" */, value)` and tail-calls native
+`0x0017BCA0`. The compiled C fragment is 184 bytes; together they form a
+204-byte numeric blob with SHA-256
+`8043B1393F6D901FC91DF6BB4BFC8AB4D2800F7FD9E17CA4EEE2C4C34992A9F6`.
+The combined Localization pin is
+`F0E4F4A1E0E05504EE3C74E9AECB9C5673D2E683130534F2132B24D33810FD6D`,
+with the user-owned bypass value preserved at `1`.
+
+Manual object disassembly confirms the fifth argument is captured from `t0`,
+the destination and width survive the native callback, the bounded 16-byte
+temporary cannot overlap the compiler's saved-register area, the return value
+remains the native decimal length, and the only C relocation targets the
+explicit ABI bridge. Runtime acceptance remains pending for the supplied Ninja
+Song ss2–ss5 cases; permanent numeric tests remain unchanged until that review.
+
 ## Accepted font implementation
 
 ### Make font identical to UN5 — accepted

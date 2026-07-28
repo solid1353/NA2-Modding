@@ -1892,6 +1892,15 @@ and reported `no diff`. Permanent coverage added after that acceptance protects
 the documented EE entry ABI and required symbolic dependency chains without
 freezing compiler hashes or obsolete instruction layouts.
 
+The step-2 numeric candidate preserves the accepted
+`localization.font.ninja_song_ascii_number` symbol and all five Ninja Song BTL
+hooks while compiling padding and copying policy from `font_numeric.c`. Its
+only assembly fragment is a 20-byte bridge to NA2's native
+`sprintf(destination, "%d", value)` ABI. The 184-byte C fragment and bridge
+form a 204-byte asset with SHA-256
+`8043B1393F6D901FC91DF6BB4BFC8AB4D2800F7FD9E17CA4EEE2C4C34992A9F6`.
+Runtime acceptance and permanent-test migration remain pending.
+
 The live v2 auto-fit and layout components require `font_nun5_glyphs` because
 their positions and fit decisions are tuned to its metrics. They otherwise
 remain independently selectable through their patch rows. Setting a resident

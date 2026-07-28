@@ -8,6 +8,11 @@
 ### [Font](docs/workstreams/font/README.md)
 -  Layout/autofit epic.
 
+### Testing
+- Isolate and promote runtime-proven patches.
+- Test translation thoroughout the whole game.
+- Audit and refactor the project-wide permanent test suite after the Font migration.
+
 ## Backlog
 
 ### Project
@@ -40,11 +45,6 @@
 ### Visuals
 - Create a proper widescreen patch.
 - Create an upscaled texture pack for pcsx2 (currently blocked by UI translation).
-
-### Testing
-- Isolate and promote runtime-proven patches.
-- Test translation thoroughout the whole game.
-- Audit and refactor the project-wide permanent test suite after the Font migration.
 
 ## Archive
 

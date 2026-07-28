@@ -209,7 +209,7 @@ def build_patch_rows() -> tuple[dict[str, str], list[dict[str, str]]]:
 
     patch = {
         "patch_id": PATCH_ID,
-        "group_id": "battle_ui",
+        "group_id": "ui_layout",
         "enabled": "1",
         "status": "approved_for_test",
         "confidence": "high",

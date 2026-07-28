@@ -1,9 +1,5 @@
 group_id	enabled	name	description	review_notes
-glyph_data	1	Glyph data	Native font glyph and metric payloads.	""
-auto_fit	1	Auto-fit	Shrink-only text fitting behavior.	""
-alignment	1	Alignment	Local screen and modal alignment corrections.	""
-battle_ui	1	Battle UI	Localized battle HUD, prompts, labels, confirmation layouts, menus, overlays, and regional input handlers.	""
-front_end	1	Front end	Localized boot-ELF menus, option layouts, setup, save, modal, and regional input handlers.	""
-etc_ui	1	ETC UI	ETC-owned front-end and submenu input handlers.	""
-battle_results	1	Battle results	Battle-results input behavior.	""
-collection	1	Collection	Localized Collection labels and page-control layouts.	""
+font_glyphs	1	Font glyphs	Static native-font glyph, metric-table, and geometry inputs.	""
+font_layout	1	Font layout	Static font layout, contextual presentation, alignment, and formatting call-site inputs.	""
+ui_layout	1	UI layout	Localized graphical UI layout and geometry.	""
+regional_input	1	Regional input	Regional menu, overlay, setup, result, and audio input behavior.	""

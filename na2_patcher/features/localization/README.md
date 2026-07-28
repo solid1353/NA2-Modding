@@ -16,6 +16,13 @@ The feature directory name declares its identity. Its module-named
 subdirectories are the inputs that compose it; enabling Localization enables all
 of them, and one aggregate profile pin covers their canonical inputs.
 
+Where an engine supports groups, Localization groups patches by capability
+rather than by game mode or target file. The binary package uses
+`font_glyphs`, `font_layout`, `ui_layout`, and `regional_input`; the runtime
+package uses `font_glyphs`, `font_layout`, and `font_numeric_formatting`.
+Group IDs remain local to their module and do not declare cross-module
+dependencies.
+
 ## NA2 translation importer
 
 This first-class `na2_patcher` module imports and validates strings for

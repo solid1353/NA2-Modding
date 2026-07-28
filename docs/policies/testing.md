@@ -4,6 +4,20 @@ Read `scripts/README.md`, `docs/PROJECT_CONTEXT.md`, and `docs/LOGGING.md` for
 the current command implementation and build records. Do not duplicate their
 drift-prone implementation details here.
 
+## Permanent tests
+
+- Hypotheses, candidates, and fixes awaiting runtime confirmation or explicit
+  user acceptance must not add to or alter the tracked permanent test suite.
+- Workers may check them manually or with disposable task-owned checks. Such
+  checks stay outside normal build/test discovery, are not committed as
+  permanent coverage, and are deleted when no longer needed.
+- Permanent coverage begins only after the exact behavior is confirmed.
+  Static-only coverage requires the user's explicit approval.
+- Permanent tests enforce documented accepted behavior, not an address,
+  constant, byte sequence, hash, structure, or algorithm merely because the
+  current candidate uses it. Remove coverage for a rejected or superseded
+  approach with that approach.
+
 ## ISO builds
 
 - Shared `build/` contains only Current, at most Previous, and when needed

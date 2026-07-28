@@ -110,11 +110,18 @@ a source-derived build signature to recognize a newly reloaded build.
 
 The imported `NA2-C.zip` source reviewed for the maintained lab has SHA-256
 `8A4D94465C4F7938DCC2D49D3DAA268BDF800AD7E89112B8E09BAA6EE58D289E`.
-Although its root README and Makefile still describe the earlier Midnight Club
-3 proof, its active generator, linker, ELF input, and C sources target NUN5
-`SLPS_258.37`. The active linker does not replace `WakeupThread`: it inserts a
-C call into the function epilogue beginning at runtime `0x001D0578`, then moves
-the displaced return sequence into the following words.
+The exact `NA2-C/` tree supplied on 2026-07-28 is recoverable from commit
+`087d4970a644819da7241dfcbc8f2cde85b4ce71`; commit
+`5da885bee016b8ef06daced2cc0d6de85647b4c2` removes it from the live checkout.
+It is an internally mixed snapshot: its root wrappers and generator constants
+still name the earlier MC3/SLES build, its compact linker and C example target
+NUN5 `SLPS_258.37`, and its checked-in generated linker outputs came from a
+different, larger input set. It is preserved as evidence, not as a runnable
+dependency.
+
+The compact NUN5 linker does not replace `WakeupThread`: it inserts a C call
+into the function epilogue beginning at runtime `0x001D0578`, then moves the
+displaced return sequence into the following words.
 
 Archived NUN5 and clean Current contain the identical five-word window
 `DFBF0000 27BD0010 03E00008 00000000 00000000` at
@@ -136,13 +143,17 @@ build with ID `0x58F7CCC7` initialized identically after a clean restart. This
 historical test validates the reservation and compiled-code path, but not the
 new source-faithful epilogue hook.
 
-The source generator rewrites its active CRC-named PNACH by opening the same
-file in truncating write mode. User-observed PCSX2 behavior confirms that this
-in-place rewrite triggers automatic reload. An earlier bounded clone check
-used a replacement-style update and did not reload, so it does not contradict
-the in-place watcher path. The maintained installer now preserves the
-filesystem object and performs the same truncate/write/flush sequence, with
-`System` -> `Reload Cheats/Patches` retained as a fallback.
+The imported VS Code task merely runs `gen_pnach.sh`, which adds PS2DEV tools
+to `PATH` and invokes `gen_pnach.py`. The generator compiles imported C objects,
+uses Armips to resolve their sections and hook blocks, serializes the resolved
+words as `patch=1` entries, and opens its CRC-named PNACH in truncating write
+mode. It sends no command to PCSX2. User-observed PCSX2 behavior confirms that
+the in-place rewrite itself triggers the emulator's file watcher and automatic
+cheat reparse. An earlier bounded clone check used a replacement-style update
+and did not reload, so it does not contradict the in-place watcher path. The
+maintained installer now preserves the filesystem object and performs the same
+truncate/write/flush sequence, with `System` -> `Reload Cheats/Patches`
+retained as a fallback.
 
 A later Current `SLOP-NA228 / 1236AA28` run separated PNACH reload from
 executed-code refresh. `emulog.txt` recorded successful cheat reparses at

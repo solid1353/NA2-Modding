@@ -6,10 +6,50 @@ v2.28.
 
 The imported `NA2-C.zip` source used for the port has SHA-256
 `8A4D94465C4F7938DCC2D49D3DAA268BDF800AD7E89112B8E09BAA6EE58D289E`.
-Its root README and Makefile are inherited from the earlier Midnight Club 3
-proof, but its active `gen_pnach.py`, linker, ELF input, and C sources target
-NUN5 `SLPS_258.37`. The maintained lab ports those active files rather than the
-stale wrapper documentation.
+The exact `NA2-C/` tree supplied on 2026-07-28 is preserved by Git commit
+`087d4970a644819da7241dfcbc8f2cde85b4ce71` and removed from the live tree by
+`5da885bee016b8ef06daced2cc0d6de85647b4c2`. Recover it for inspection with
+`git archive --format=zip --output=NA2-C-history.zip 087d497 -- NA2-C`; do not
+execute it directly.
+
+That snapshot is internally mixed. Its root README, Makefile, and `build.sh`
+come from the earlier Midnight Club 3 proof. Its compact `linker.asm`,
+`src/test.c`, `src/Main.h`, and supplied `SLPS_258.37` demonstrate the NUN5
+adaptation, but `gen_pnach.py` still pins MC3/SLES values (`C0659AD1`,
+`SLES_556.05`), and the checked-in generated linker files describe a different,
+much larger build. The maintained lab ports the demonstrated mechanism, not
+that inconsistent snapshot as a runnable package.
+
+## What the imported VS Code task does
+
+The task named `Gerar PNACH` in `.vscode/tasks.json` only starts
+`./gen_pnach.sh` through Git Bash with the source root as its working
+directory. The shell wrapper adds the bundled PS2DEV compiler and PS2SDK tools
+to `PATH`, then runs `python3 gen_pnach.py`.
+
+The generator:
+
+1. reads game-function addresses from comments in `src/Main.h` and parses
+   `linker.asm` for imported objects, labels, assembly blocks, and hooks;
+2. compiles the referenced C files with `ee-gcc`;
+3. assigns addresses to their `.text`, `.rodata`, `.data`, and `.bss`
+   sections and generates Armips linker inputs;
+4. runs Armips to resolve the linked code and hook instructions;
+5. converts the resulting words into PNACH `patch=1,EE,...` writes; and
+6. opens the configured CRC-named PNACH with Python mode `w`, truncating and
+   rewriting the existing file at the same path.
+
+There is no PCSX2 API call, process control, or explicit reload command. The
+apparent hot reload comes from PCSX2 watching the active PNACH file: the
+in-place truncate/write changes the file, PCSX2 reparses it, and its recurring
+`patch=1` entries write the new code/data into EE memory. A changed map table
+is data, so the game reads the new values on later frames and the selection
+changes immediately.
+
+Rewriting code at an already executed address is less reliable because PCSX2
+may keep the old host-JIT translation. The maintained lab adds the fixed
+dispatcher and alternating code banks described below; that is the part the
+imported task does not provide.
 
 The original imported NUN5 payload base `0x003E4410` is not free in clean NA2
 and crashed the game. This adaptation targets only the Current ISO identity

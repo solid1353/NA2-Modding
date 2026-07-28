@@ -1,8 +1,8 @@
 # NA2 injection lab
 
 Maintained development lab for compiling ordinary C into PS2 EE MIPS, linking
-it with Armips, and emitting a reloadable PNACH for Current Narutimate Accel
-v2.28.
+it with Armips, emitting a PNACH for Current Narutimate Accel v2.28, and
+explicitly reloading that PNACH through PCSX2's PINE interface.
 
 The imported `NA2-C.zip` source used for the port has SHA-256
 `8A4D94465C4F7938DCC2D49D3DAA268BDF800AD7E89112B8E09BAA6EE58D289E`.
@@ -63,8 +63,12 @@ linker replaces them with `jal injectionLabTick`, a delay-slot `nop`, and the
 equivalent moved epilogue. The native `jal WakeupThread` at `0x001D0570`
 remains untouched.
 
-Start Current with cheats enabled, then build and install from the repository
-root:
+The default local runtime is the ignored repository-root `pcsx2_dev` link,
+which points to the custom PCSX2 build's `bin/` directory. That directory uses
+portable mode and a copied, independent set of the user's PCSX2 configuration,
+BIOS, game settings, and input profiles. Its dedicated PINE port is separate
+from stable PCSX2. Launch `pcsx2_dev/pcsx2-qtx64-avx2-dev.exe`, start Current
+with cheats enabled, then build and install from the repository root:
 
 ```powershell
 .\injection_lab\test.ps1
@@ -75,18 +79,20 @@ independent ELF boundary values, and the complete five-word hook window before
 compiling. The generator fails with a nonzero exit when an imported source,
 compiler/tool query, linker step, linker label, or hook symbol is missing
 instead of accepting a stale or incomplete PNACH. The runner temporarily
-replaces only the matching Current PNACH alias and records enough state to
+replaces only the matching Current PNACH inside `pcsx2_dev/cheats` and records
+enough state to
 restore an existing regular file or symbolic link. Edit `src/test.c`, then run
-the same command again. The original
-`NA2-C.zip` proof's VS Code task only runs its generator; the generator
-triggers PCSX2's observed automatic
-refresh by truncating and rewriting the active CRC-named regular PNACH in
-place. This lab preserves its guarded build/install separation, but refreshes
-the installed regular PNACH using that same write pattern instead of replacing
-the filesystem object. If a PCSX2 configuration does not reload it, select
-`System` -> `Reload Cheats/Patches` as a fallback. A source-derived build ID
-makes the example print exactly once for each distinct build without emitting
-its mutable state as a recurring PNACH write.
+the same command again. The original `NA2-C.zip` proof's VS Code task only runs
+its generator and relies on an observed PCSX2 file-watcher path. The maintained
+lab does not rely on that behavior. After refreshing the installed regular
+PNACH in place, it reads the enabled PINE port from the PCSX2 configuration and
+sends the parameterless `ReloadPatches` opcode `0x10`. It requires a synchronous
+`OK` reply, meaning the CPU-thread reload completed before the script returns.
+This requires the project's reload-enabled PCSX2 build; an ordinary build
+rejects the opcode explicitly. `-PinePort <port>` overrides configuration
+discovery for an isolated development instance. A source-derived build ID makes
+the example print exactly once for each distinct build without emitting its
+mutable state as a recurring PNACH write.
 
 PCSX2 can keep executing a cached host translation after PNACH overwrites code
 at an address that already ran. The lab avoids that failure with a fixed
@@ -111,18 +117,18 @@ To remove the test and restore any pre-existing regular PNACH:
 
 The installer records and temporarily replaces only the exact CRC alias. After
 the first guarded install, later builds truncate and rewrite that same regular
-file so PCSX2's file watcher can observe the change. It refuses refresh or
-cleanup if another process or user changed the installed PNACH. Removal
-restores the previous file or managed symbolic link, including its relative
-target, but already-applied memory writes remain until Current is restarted.
-While that install record identifies a regular file inside the PCSX2 cheats
-directory, normal `na2` actualization preserves the file instead of replacing
-it with the canonical cheat symlink. Integrity enforcement remains local to the
-lab's install, refresh, and removal commands; it never becomes a launch gate.
-Without a valid install record, regular files at NA2.28-managed CRC aliases are
-treated as orphaned lab artifacts and repaired to canonical symlinks, or
-removed when the canonical PNACH is empty. Corrupt or stale lab state is
-ignored by actualization, while unrelated game identities remain untouched.
+file, then requests the explicit PINE reload. It refuses refresh or cleanup if
+another process or user changed the installed PNACH. Removal restores the
+previous file or managed symbolic link, including its relative target, but
+already-applied memory writes remain until Current is restarted. While that
+install record identifies a regular file inside the PCSX2 cheats directory,
+normal `na2` actualization preserves the file instead of replacing it with the
+canonical cheat symlink. Integrity enforcement remains local to the lab's
+install, refresh, and removal commands; it never becomes a launch gate. Without
+a valid install record, regular files at NA2.28-managed CRC aliases are treated
+as orphaned lab artifacts and repaired to canonical symlinks, or removed when
+the canonical PNACH is empty. Corrupt or stale lab state is ignored by
+actualization, while unrelated game identities remain untouched.
 
 Ordinary `patch=1` PNACH writes are reapplied continuously. Mutable state must
 not be initialized through those recurring writes. The adapted object keeps

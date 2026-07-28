@@ -3,13 +3,17 @@ param(
     [switch]$BuildOnly,
     [switch]$Remove,
     [string]$CurrentIso,
-    [string]$CheatsDirectory
+    [string]$CheatsDirectory,
+    [int]$PinePort
 )
 
 $ErrorActionPreference = 'Stop'
 
 $labRoot = $PSScriptRoot
 $repository = Split-Path -Parent $labRoot
+$projectPathsScript = Join-Path $repository 'scripts\lib\project_paths.ps1'
+. $projectPathsScript
+$projectPaths = Get-Na2ProjectPaths
 $statePath = Join-Path $labRoot 'build\test-install.json'
 $backupPath = Join-Path $labRoot 'build\current-pnach.before-test'
 $payloadConfigPath = Join-Path $repository 'na2_patcher\payload_builder\config.tsv'
@@ -31,10 +35,10 @@ $expectedHook = [byte[]](
 )
 
 if (-not $CurrentIso) {
-    $CurrentIso = Join-Path $repository 'build\NA2.28 - Current.iso'
+    $CurrentIso = $projectPaths.files.current_iso
 }
 if (-not $CheatsDirectory) {
-    $CheatsDirectory = Join-Path $repository 'pcsx2\cheats'
+    $CheatsDirectory = Join-Path $projectPaths.pcsx2_dev 'cheats'
 }
 $currentIso = [IO.Path]::GetFullPath($CurrentIso)
 $cheatsDirectory = [IO.Path]::GetFullPath($CheatsDirectory)
@@ -71,6 +75,86 @@ function Write-PnachInPlace([string]$Source, [string]$Target) {
     }
     finally {
         $stream.Dispose()
+    }
+}
+
+function Get-InjectionLabPinePort(
+    [string]$CheatsDirectory,
+    [int]$ExplicitPort
+) {
+    if ($ExplicitPort) {
+        if ($ExplicitPort -lt 1 -or $ExplicitPort -gt 65535) {
+            throw "PINE port is outside 1..65535: $ExplicitPort"
+        }
+        return $ExplicitPort
+    }
+
+    $pcsx2Root = Split-Path -Parent $CheatsDirectory
+    $iniPath = Join-Path $pcsx2Root 'inis\PCSX2.ini'
+    if (-not (Test-Path -LiteralPath $iniPath)) {
+        throw "PCSX2.ini was not found beside the cheats directory: $iniPath"
+    }
+    $ini = Get-Content -Raw -LiteralPath $iniPath
+    if ($ini -notmatch '(?m)^\s*EnablePINE\s*=\s*true\s*$') {
+        throw "PINE is not enabled in PCSX2.ini: $iniPath"
+    }
+    if ($ini -notmatch '(?m)^\s*PINESlot\s*=\s*(\d+)\s*$') {
+        throw "PCSX2.ini has no valid PINESlot: $iniPath"
+    }
+    $configuredPort = [int]$Matches[1]
+    if ($configuredPort -lt 1 -or $configuredPort -gt 65535) {
+        throw "Configured PINE port is outside 1..65535: $configuredPort"
+    }
+    return $configuredPort
+}
+
+function Read-PineBytes([IO.Stream]$Stream, [int]$Length) {
+    $result = [byte[]]::new($Length)
+    $offset = 0
+    while ($offset -lt $Length) {
+        $read = $Stream.Read($result, $offset, $Length - $offset)
+        if ($read -eq 0) {
+            throw 'PCSX2 closed the PINE connection during the reply.'
+        }
+        $offset += $read
+    }
+    return $result
+}
+
+function Invoke-PineReloadPatches([int]$Port) {
+    $client = [Net.Sockets.TcpClient]::new()
+    try {
+        $connection = $client.ConnectAsync('127.0.0.1', $Port)
+        if (-not $connection.Wait([TimeSpan]::FromSeconds(3))) {
+            throw "Timed out connecting to PINE port $Port."
+        }
+        $stream = $client.GetStream()
+        $stream.ReadTimeout = 3000
+        $stream.WriteTimeout = 3000
+
+        [byte[]]$packet = [BitConverter]::GetBytes([uint32]5) +
+            [byte[]]@(0x10)
+        $stream.Write($packet, 0, $packet.Length)
+        $stream.Flush()
+
+        $sizeBytes = Read-PineBytes -Stream $stream -Length 4
+        $replySize = [BitConverter]::ToUInt32($sizeBytes, 0)
+        if ($replySize -ne 5) {
+            throw "PINE reload returned an invalid reply size: $replySize"
+        }
+        $reply = Read-PineBytes -Stream $stream -Length 1
+        if ($reply[0] -ne 0) {
+            throw (
+                'PCSX2 rejected PINE reload opcode 0x10. ' +
+                'Run the custom reload-enabled PCSX2 build.'
+            )
+        }
+    }
+    catch {
+        throw "Could not reload PCSX2 patches through PINE: $($_.Exception.Message)"
+    }
+    finally {
+        $client.Dispose()
     }
 }
 
@@ -581,6 +665,9 @@ if ($BuildOnly) {
 if (-not (Test-Path -LiteralPath $cheatsDirectory)) {
     throw "PCSX2 cheats directory was not found: $cheatsDirectory"
 }
+$effectivePinePort = Get-InjectionLabPinePort `
+    -CheatsDirectory $cheatsDirectory `
+    -ExplicitPort $PinePort
 $target = Join-Path $cheatsDirectory ([string]$identity.PnachName)
 
 if (Test-Path -LiteralPath $statePath) {
@@ -642,6 +729,7 @@ $state | Add-Member `
     -NotePropertyValue 'dispatcher_v1' `
     -Force
 $state | ConvertTo-Json | Set-Content -LiteralPath $statePath -Encoding UTF8
+Invoke-PineReloadPatches -Port $effectivePinePort
 
 Write-Host '[injection_lab] Current development PNACH installed.'
 Write-Host "[injection_lab] Target: $target"
@@ -650,7 +738,6 @@ Write-Host ('[injection_lab] Build ID: 0x{0:X8}' -f $buildId)
 if ($requiresDispatcherRestart) {
     Write-Host '[injection_lab] Start or restart Current once to activate the dispatcher.'
 }
-Write-Host '[injection_lab] PCSX2 should detect the in-place PNACH rewrite automatically.'
-Write-Host '[injection_lab] If it does not, select System -> Reload Cheats/Patches.'
+Write-Host "[injection_lab] PCSX2 patches reloaded through PINE port $effectivePinePort."
 Write-Host '[injection_lab] Check pcsx2/logs/emulog.txt for:'
 Write-Host 'NA2.28 injection lab: C hot reload active'

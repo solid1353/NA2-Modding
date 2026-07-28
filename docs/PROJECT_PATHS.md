@@ -45,6 +45,9 @@ The manifest currently defines these stable logical names:
   `act links`.
 - `pcsx2_user`: the user's protected portable PCSX2 installation. User launch,
   build-promotion, and actualization commands address it; agents do not.
+- `pcsx2_dev`: the ignored repository-root link to the locally built,
+  reload-enabled PCSX2 development runtime. It is existence-deferred because
+  a fresh checkout does not contain the sibling emulator build.
 - `pcsx2_clean`: the protected immutable worker template under
   `@utils/pcsx2_clean/`. Agents copy its complete tree into
   `work/<task title>/pcsx2/` before use; it is never launched or modified
@@ -67,6 +70,8 @@ their producing workflow runs. File entries should reference a named root with
 
 - `pcsx2_user_exe`: `@pcsx2_user/pcsx2-qt.exe`, used by user-owned launch and
   standard-build process control.
+- `pcsx2_dev_exe`: `@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe`, used for explicit
+  Injection Lab development runs.
 - `canonical_cheats`: `@pcsx2_files/cheats.pnach`.
 - `canonical_gamesettings`: `@pcsx2_files/gamesettings.ini`.
 - `comparison_input_profile`:

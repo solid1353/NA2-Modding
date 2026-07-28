@@ -151,9 +151,13 @@ mode. It sends no command to PCSX2. User-observed PCSX2 behavior confirms that
 the in-place rewrite itself triggers the emulator's file watcher and automatic
 cheat reparse. An earlier bounded clone check used a replacement-style update
 and did not reload, so it does not contradict the in-place watcher path. The
-maintained installer now preserves the filesystem object and performs the same
-truncate/write/flush sequence, with `System` -> `Reload Cheats/Patches`
-retained as a fallback.
+maintained installer preserves the filesystem object and performs the same
+truncate/write/flush sequence, but no longer depends on the watcher. The
+project's PCSX2 fork adds parameterless PINE opcode `0x10`, which synchronously
+dispatches `VMManager::ReloadPatches(true, false, true, true)` on the CPU
+thread. Injection Lab sends that opcode after each install and requires the
+five-byte `OK` reply before returning. Stock PCSX2 rejects the unknown opcode;
+the extension does not change PNACH parsing or patch application semantics.
 
 A later Current `SLOP-NA228 / 1236AA28` run separated PNACH reload from
 executed-code refresh. `emulog.txt` recorded successful cheat reparses at

@@ -644,30 +644,21 @@ class RuntimeInjectorTests(unittest.TestCase):
             )
             for offset in range(0, len(title_adapter_payload), 4)
         }
-        for value in (27.2, 31.2, -3.8, -6.8, 20.0):
-            bits = struct.unpack("<I", struct.pack("<f", value))[0]
-            self.assertIn(
-                mips.i_type(0x0F, 0, 8, bits >> 16),
-                title_adapter_words,
-            )
-            if bits & 0xFFFF:
-                self.assertIn(
-                    mips.i_type(0x0D, 8, 8, bits & 0xFFFF),
-                    title_adapter_words,
-                )
-        for width in (288, 352):
-            self.assertIn(
-                mips.i_type(0x0D, 8, 8, width),
-                title_adapter_words,
-            )
+        line_height_bits = struct.unpack(
+            "<I", struct.pack("<f", 20.0)
+        )[0]
         for expected_word in (
-            mips.i_type(0x2B, 29, 8, 0x10),
-            mips.i_type(0x2B, 29, 8, 0x14),
+            mips.cop1(0x00, 12, 12, 14),
+            mips.i_type(0x0F, 0, 1, line_height_bits >> 16),
+            mips.i_type(0x39, 29, 13, 0x08),
+            mips.i_type(0x39, 29, 12, 0x0C),
+            mips.i_type(0x2B, 29, 7, 0x10),
+            mips.i_type(0x2B, 29, 2, 0x14),
             mips.i_type(0x2B, 29, 0, 0x18),
             mips.i_type(0x2B, 29, 0, 0x1C),
-            mips.i_type(0x2B, 29, 8, 0x20),
-            mips.i_type(0x2B, 29, 8, 0x24),
-            mips.i_type(0x2B, 29, 9, 0x5C),
+            mips.i_type(0x2B, 29, 3, 0x20),
+            mips.i_type(0x2B, 29, 3, 0x24),
+            mips.i_type(0x2B, 29, 29, 0x5C),
             mips.jump(
                 0x03,
                 titles_build.symbols[
@@ -701,9 +692,19 @@ class RuntimeInjectorTests(unittest.TestCase):
         )
 
         title_adapter_address = title_adapter.runtime_address
-        for symbol, mode in (
-            ("localization.font.v2.command_title_entry", 0),
-            ("localization.font.v2.practice_title_entry", 1),
+        for symbol, box_x, y_offset, width in (
+            (
+                "localization.font.v2.command_title_entry",
+                27.2,
+                -3.8,
+                288,
+            ),
+            (
+                "localization.font.v2.practice_title_entry",
+                31.2,
+                -6.8,
+                352,
+            ),
         ):
             entry = titles_build.symbols[symbol]
             entry_payload = titles_build.payload[
@@ -715,13 +716,28 @@ class RuntimeInjectorTests(unittest.TestCase):
                 )
                 for offset in range(0, len(entry_payload), 4)
             ]
-            self.assertEqual(
+            self.assertIn(mips.cop1(0x06, 12, 13, 0), entry_words)
+            for value, float_register in (
+                (y_offset, 14),
+                (box_x, 13),
+            ):
+                bits = struct.unpack("<I", struct.pack("<f", value))[0]
+                self.assertIn(
+                    mips.i_type(0x0F, 0, 1, bits >> 16),
+                    entry_words,
+                )
+                self.assertIn(
+                    mips.i_type(0x0D, 1, 1, bits & 0xFFFF),
+                    entry_words,
+                )
+                self.assertIn(mips.mtc1(1, float_register), entry_words)
+            self.assertIn(
+                mips.i_type(0x09, 0, 7, width),
                 entry_words,
-                [
-                    mips.i_type(0x09, 0, 7, mode),
-                    mips.jump(0x02, title_adapter_address),
-                    0,
-                ],
+            )
+            self.assertIn(
+                mips.jump(0x03, title_adapter_address),
+                entry_words,
             )
 
         pause_list_declaration = replace(

@@ -591,6 +591,26 @@ their exact mixed integer/float register convention. The user confirmed no
 visible change across the Controls regression pass, after which the old
 assembly session builder was removed.
 
+### Stage 5 Command Chart / Practice title C candidate — awaiting user regression
+
+The accepted shared title family now uses compiled C for its common session
+construction and both direct hook entries. EE GCC consumes the existing three
+integer arguments plus native `$f12`/`$f13` coordinates directly, so no new
+register shim is needed. The two C entries preserve their separate accepted
+geometry and call one shared C helper:
+
+- Command Chart: X `27.2`, native Y plus `-3.8`, width `288`;
+- Practice title: X `31.2`, native Y plus `-6.8`, width `352`;
+- both: height and line height `20`, start alignment, one line, shrink-only.
+
+The 120-byte common C adapter and two 56-byte C entries replace the 220-byte
+assembly adapter plus two 12-byte assembly entries, reducing the v2 renderer
+blob from 5,796 to 5,784 bytes. Both guarded hooks and the 16-byte native boxed
+draw callback remain unchanged. That callback is the minimal ABI shim which
+loads prepared `$f12`/`$f13` coordinates and tail-calls the absolute original
+renderer entrypoint. The old assembly title adapter and entries remain
+non-live only until the user confirms title-family regression parity.
+
 Every stage first passes deterministic regeneration, object/symbol/relocation
 validation, focused tests, the full patcher suite, and exact Localization-pin
 validation. When runtime regression becomes necessary, Font stops and gives

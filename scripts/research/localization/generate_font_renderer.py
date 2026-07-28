@@ -323,6 +323,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
                 "font_v2_controls_callback": ee_c_fragments.SymbolReference(
                     V2_CONTROLS_CALLBACK
                 ),
+                "font_v2_title_callback": ee_c_fragments.SymbolReference(
+                    V2_TITLE_CALLBACK
+                ),
             },
         )
 
@@ -331,6 +334,8 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         "font_v2_prepare",
         "font_v2_adapter_call",
         "font_v2_controls_adapter",
+        "font_v2_command_title_entry",
+        "font_v2_practice_title_entry",
     }
     if set(extracted.symbols) != expected_exports:
         raise ValueError(
@@ -345,18 +350,31 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         extracted.symbols["font_v2_controls_adapter"].symbol: (
             V2_CONTROLS_ADAPTER
         ),
+        extracted.symbols["font_v2_command_title_entry"].symbol: (
+            V2_COMMAND_TITLE_ENTRY
+        ),
+        extracted.symbols["font_v2_practice_title_entry"].symbol: (
+            V2_PRACTICE_TITLE_ENTRY
+        ),
     }
     helper_symbols = {
         fragment.symbol
         for fragment in extracted.fragments
         if fragment.symbol not in aliases
     }
-    if len(helper_symbols) != 1:
+    helper_aliases = {
+        f"{V2_PREFIX}.c.text": f"{V2_PREFIX}.c.is_br",
+        f"{V2_PREFIX}.c.text.font.v2.title.adapter.common": (
+            V2_TITLE_ADAPTER
+        ),
+    }
+    if helper_symbols != set(helper_aliases):
         raise ValueError(
-            "Font v2 C core must contain exactly one private helper fragment; "
+            "Font v2 C private helper fragments differ: "
+            f"expected={sorted(helper_aliases)}, "
             f"actual={sorted(helper_symbols)}"
         )
-    aliases[next(iter(helper_symbols))] = f"{V2_PREFIX}.c.is_br"
+    aliases.update(helper_aliases)
 
     result = tuple(
         Fragment(
@@ -386,6 +404,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_PREPARE,
         V2_ADAPTER_CALL,
         V2_CONTROLS_ADAPTER,
+        V2_TITLE_ADAPTER,
+        V2_COMMAND_TITLE_ENTRY,
+        V2_PRACTICE_TITLE_ENTRY,
     }:
         raise ValueError("Font v2 C fragment aliases are incomplete")
     return result
@@ -2310,15 +2331,6 @@ def v2_fragments() -> tuple[Fragment, ...]:
         *build_v2_c_core(),
         build_v2_controls_callback(),
         build_v2_title_callback(),
-        build_v2_title_adapter(),
-        build_v2_title_entry(
-            V2_COMMAND_TITLE_ENTRY,
-            COMMAND_TITLE_MODE,
-        ),
-        build_v2_title_entry(
-            V2_PRACTICE_TITLE_ENTRY,
-            PRACTICE_TITLE_MODE,
-        ),
         build_v2_pause_list_callback(),
         build_v2_pause_list_adapter(),
         build_v2_pause_list_selected_callback(),

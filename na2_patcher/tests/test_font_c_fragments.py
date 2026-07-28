@@ -172,6 +172,18 @@ class FontCSharedCoreTests(unittest.TestCase):
                     136,
                     "5F9F94ED1AB2248C2F4BAECE1AFD905C39704AC019B8F060D6C3E6CEE268773F",
                 ),
+                "localization.font.v2.title_adapter": (
+                    120,
+                    "AE60BAD491CDC7542FDB08C0B161AD8CD49A0CC01930B2DC3600549618C25C02",
+                ),
+                "localization.font.v2.command_title_entry": (
+                    56,
+                    "4EF411D3F32815A14E4EC8C8EB5765766DEB1F4B046F6BFE4333A67B39B86E25",
+                ),
+                "localization.font.v2.practice_title_entry": (
+                    56,
+                    "157653A9FB727D469438BB99D055D0F99A3A15D3ACF8C39A07B4FA25E89F0056",
+                ),
             },
             compiled,
         )

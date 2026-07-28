@@ -11,11 +11,11 @@ FR-V2-R009	localization.font.v2.adapter_call	50	0xD0	lo16	localization.font.v2.s
 FR-V2-R010	localization.font.v2.controls_adapter	10	0x24	hi16	localization.font.v2.controls_callback	0
 FR-V2-R011	localization.font.v2.controls_adapter	20	0x34	lo16	localization.font.v2.controls_callback	0
 FR-V2-R012	localization.font.v2.controls_adapter	30	0x70	jal26	localization.font.v2.adapter_call	0
-FR-V2-R013	localization.font.v2.title_adapter	10	0xB0	hi16	localization.font.v2.title_callback	0
-FR-V2-R014	localization.font.v2.title_adapter	20	0xB4	lo16	localization.font.v2.title_callback	0
-FR-V2-R015	localization.font.v2.title_adapter	30	0xC8	jal26	localization.font.v2.adapter_call	0
-FR-V2-R016	localization.font.v2.command_title_entry	10	0x4	j26	localization.font.v2.title_adapter	0
-FR-V2-R017	localization.font.v2.practice_title_entry	10	0x4	j26	localization.font.v2.title_adapter	0
+FR-V2-R013	localization.font.v2.title_adapter	10	0x1C	hi16	localization.font.v2.title_callback	0
+FR-V2-R014	localization.font.v2.title_adapter	20	0x28	lo16	localization.font.v2.title_callback	0
+FR-V2-R015	localization.font.v2.title_adapter	30	0x64	jal26	localization.font.v2.adapter_call	0
+FR-V2-R016	localization.font.v2.command_title_entry	10	0x24	jal26	localization.font.v2.title_adapter	0
+FR-V2-R017	localization.font.v2.practice_title_entry	10	0x24	jal26	localization.font.v2.title_adapter	0
 FR-V2-R018	localization.font.v2.pause_list_adapter	10	0x64	hi16	localization.font.v2.pause_list_callback	0
 FR-V2-R019	localization.font.v2.pause_list_adapter	20	0x68	lo16	localization.font.v2.pause_list_callback	0
 FR-V2-R020	localization.font.v2.pause_list_adapter	30	0x7C	jal26	localization.font.v2.adapter_call	0

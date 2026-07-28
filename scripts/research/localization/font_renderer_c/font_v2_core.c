@@ -23,6 +23,14 @@ typedef signed int s32;
 #define FONT_CONTROLS_BOX_WIDTH 128u
 #define FONT_CONTROLS_BOX_HEIGHT 20u
 #define FONT_CONTROLS_LINE_HEIGHT 20.0f
+#define FONT_COMMAND_TITLE_BOX_X 27.2f
+#define FONT_COMMAND_TITLE_BOX_WIDTH 288u
+#define FONT_COMMAND_TITLE_Y_OFFSET -3.8f
+#define FONT_PRACTICE_TITLE_BOX_X 31.2f
+#define FONT_PRACTICE_TITLE_BOX_WIDTH 352u
+#define FONT_PRACTICE_TITLE_Y_OFFSET -6.8f
+#define FONT_TITLE_BOX_HEIGHT 20u
+#define FONT_TITLE_LINE_HEIGHT 20.0f
 
 #define FONT_V2_SECTION(name) \
     __attribute__((section(name), noinline))
@@ -78,6 +86,12 @@ FONT_V2_ASSERT(session_size, sizeof(FontV2Session) == 0x6C);
 extern const u8 font_v2_ascii_widths[95];
 extern FontV2Session *font_v2_active_session;
 extern int font_v2_controls_callback(
+    u32 arg0,
+    u32 arg1,
+    u32 arg2,
+    u32 arg3
+);
+extern int font_v2_title_callback(
     u32 arg0,
     u32 arg1,
     u32 arg2,
@@ -300,4 +314,75 @@ int font_v2_controls_adapter(
     session.callback_arg3 = 0;
 
     return font_v2_adapter_call(&session);
+}
+
+static FONT_V2_SECTION(".text.font_v2_title_adapter_common")
+int font_v2_title_adapter_common(
+    u32 arg0,
+    const u8 *text,
+    u32 arg2,
+    float native_y,
+    float box_x,
+    float y_offset,
+    u32 box_width
+) {
+    FontV2Session session;
+
+    session.text = text;
+    session.box_x = box_x;
+    session.box_y = native_y + y_offset;
+    session.box_width = box_width;
+    session.box_height = FONT_TITLE_BOX_HEIGHT;
+    session.horizontal_alignment = FONT_V2_ALIGN_START;
+    session.vertical_alignment = FONT_V2_ALIGN_START;
+    session.flags = FONT_V2_FLAG_SHRINK_X;
+    session.line_limit = 1;
+    session.line_height = FONT_TITLE_LINE_HEIGHT;
+    session.callback = (u32)font_v2_title_callback;
+    session.callback_arg0 = arg0;
+    session.callback_arg1 = (u32)text;
+    session.callback_arg2 = arg2;
+    session.callback_arg3 = (u32)&session;
+
+    return font_v2_adapter_call(&session);
+}
+
+FONT_V2_SECTION(".text.font_v2_command_title_entry")
+int font_v2_command_title_entry(
+    u32 arg0,
+    const u8 *text,
+    u32 arg2,
+    float native_x,
+    float native_y
+) {
+    (void)native_x;
+    return font_v2_title_adapter_common(
+        arg0,
+        text,
+        arg2,
+        native_y,
+        FONT_COMMAND_TITLE_BOX_X,
+        FONT_COMMAND_TITLE_Y_OFFSET,
+        FONT_COMMAND_TITLE_BOX_WIDTH
+    );
+}
+
+FONT_V2_SECTION(".text.font_v2_practice_title_entry")
+int font_v2_practice_title_entry(
+    u32 arg0,
+    const u8 *text,
+    u32 arg2,
+    float native_x,
+    float native_y
+) {
+    (void)native_x;
+    return font_v2_title_adapter_common(
+        arg0,
+        text,
+        arg2,
+        native_y,
+        FONT_PRACTICE_TITLE_BOX_X,
+        FONT_PRACTICE_TITLE_Y_OFFSET,
+        FONT_PRACTICE_TITLE_BOX_WIDTH
+    );
 }

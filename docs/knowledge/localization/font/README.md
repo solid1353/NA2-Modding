@@ -292,10 +292,24 @@ unchanged. The Save/Load-only fullwidth colon at ELF file offset `0x503134`
 remains a declarative ASCII-colon edit.
 
 The pre-migration behavior is runtime-proven: the user confirmed correct
-`DD/MM/YYYY`, including the four-digit year, on Current CRC `55739D20`. The C
-port preserves that accepted contract; its post-migration regression is
-pending. Production generation is consolidated in
-`scripts/localization/generate_font_renderer.py`.
+`DD/MM/YYYY`, including the four-digit year, on Current CRC `55739D20`.
+The first consolidated C candidate at commit `ced1186` was runtime-rejected on
+Current CRC `8A663AA9`: user `ss1` records the menu immediately before Load,
+and `ss2` records the broken Load screen. Their task-owned copies and hashes
+are retained under
+`work/Font/inputs/sstates/c-migration-load-regression-2026-07-28/`.
+
+Static control-flow comparison identifies the exact defect with high
+confidence. All six guarded blocks are mid-function replacements for native
+`jal sprintf` calls, but the rejected symbolic rows used non-linking `j26`.
+Each compiled C entry returns with `jr ra`; without a new link address, it
+returns to the surrounding formatter's caller instead of resuming after the
+hook. The corrected candidate uses `jal26` at relocation offset `0x8`, so the
+C entry returns to the next instruction and the surrounding Save/Load function
+continues. The argument setup, C object, returned-year move into `s6`, block
+sizes, and every formatter outside this family remain unchanged. Runtime
+acceptance of the corrected candidate is pending. Production generation is
+consolidated in `scripts/localization/generate_font_renderer.py`.
 
 The isolated worker build retained at
 `work/Font/build/save-load-ascii-digits.iso` has boot CRC `F9FC3002`. After a
@@ -322,7 +336,9 @@ runtime `0x008802D8`). The NUN5 homolog is `FUN_0089cbd0`, called by
 
 `font_battle_settings_ascii_digits` changes only that ordinary-value block to
 set up the value and stack buffer, then call the compiled C entry through a
-symbolic runtime-injector hook. C uses the immutable `%d` bridge. The adjacent
+linking `jal26` runtime-injector hook. The rejected consolidated candidate used
+the same non-linking `j26` control-flow error as Save/Load; the correction
+changes only the hook encoding. C uses the immutable `%d` bridge. The adjacent
 40-byte branch ending at the edit site is independently guarded, so value
 `100` continues to render the native infinity symbol. Selector state, the
 stored timer value, the other five settings rows, and every other fullwidth

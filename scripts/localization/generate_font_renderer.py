@@ -278,6 +278,7 @@ class NumericHook:
     relocation_offset: int
     symbol: str
     reason: str
+    encoding: str = "jal26"
 
 
 def float_bits(value: float) -> int:

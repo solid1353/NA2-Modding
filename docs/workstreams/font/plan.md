@@ -734,12 +734,21 @@ it produces a 456-byte numeric blob, SHA-256
 Manual EE disassembly confirms the first Save/Load entry returns the loaded
 year after the `%02d` call, the hour entry implements signed
 `value < 100 ? value : 99`, and every typed wrapper relocates only to its
-declared native-format bridge. The runtime package contains 4 groups,
-10 patches, 57 fragments, and 28 guarded edits. Its combined Localization pin
-is `05C66C7858830DE7356F3C69B22E76786C841FD226A06E0C1BEB81D7EA867A44`,
-with the user-owned bypass value preserved at `1`. Runtime regression remains
-the user's next boundary. Deterministic regeneration passes and the full
-patcher suite passes 201/201.
+declared native-format bridge.
+
+The first consolidated candidate at commit `ced1186` is rejected. Its six
+Save/Load and one Battle Settings call-site rows incorrectly used non-linking
+`j26`; because the compiled entries return with `jr ra`, the Load screen
+escaped the surrounding formatter instead of resuming after each call. User
+`ss1` and `ss2` preserve the before-Load and broken-Load states for Current CRC
+`8A663AA9`. The correction changes only those seven encodings to `jal26`,
+retains the completed C and production-file migration, and produces
+Localization pin
+`7D4F9F6C8297873136A49F84B4E802B98A6F86F8147CAE2D5314E1CEE5623F97`
+with the user-owned bypass value preserved at `1`. Deterministic regeneration,
+the exact disposable seven-hook call-contract check, and the full patcher suite
+pass (201/201). The correction awaits the user's fresh-build Load-screen
+regression before any further migration work.
 
 ## Accepted font implementation
 

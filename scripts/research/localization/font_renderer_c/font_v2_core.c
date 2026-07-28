@@ -17,6 +17,9 @@ typedef signed int s32;
 #define FONT_V2_ALIGN_START 0u
 #define FONT_V2_ALIGN_CENTER 1u
 #define FONT_V2_ALIGN_END 2u
+#define FONT_RENDERER_POINTER_ADDRESS 0x00607470u
+#define FONT_HORIZONTAL_SCALE_ADDRESS 0x0060737Cu
+#define FONT_RENDERER_TRACKING_OFFSET 0x3Cu
 
 #define FONT_V2_SECTION(name) \
     __attribute__((section(name), noinline))
@@ -70,6 +73,9 @@ FONT_V2_ASSERT(glyph_height_offset,
 FONT_V2_ASSERT(session_size, sizeof(FontV2Session) == 0x6C);
 
 extern const u8 font_v2_ascii_widths[95];
+extern FontV2Session *font_v2_active_session;
+
+typedef int (*FontV2Callback)(u32 arg0, u32 arg1, u32 arg2, u32 arg3);
 
 static u32 font_v2_is_br(const u8 *text) {
     return text[0] == (u8)'<' &&
@@ -213,4 +219,48 @@ int font_v2_prepare(FontV2Session *session) {
     }
 
     return 0;
+}
+
+FONT_V2_SECTION(".text.font_v2_adapter_call")
+int font_v2_adapter_call(FontV2Session *session) {
+    volatile u32 *renderer;
+    volatile u32 *scale_bits =
+        (volatile u32 *)FONT_HORIZONTAL_SCALE_ADDRESS;
+    FontV2Callback callback;
+    int result;
+
+    if (!session || !session->callback) {
+        return -1;
+    }
+    if (font_v2_prepare(session) != 0) {
+        return -1;
+    }
+
+    renderer = *(volatile u32 **)FONT_RENDERER_POINTER_ADDRESS;
+    if (!renderer) {
+        return -1;
+    }
+
+    session->previous = (u32)font_v2_active_session;
+    session->saved_tracking =
+        renderer[FONT_RENDERER_TRACKING_OFFSET / sizeof(u32)];
+    session->saved_scale = *scale_bits;
+
+    renderer[FONT_RENDERER_TRACKING_OFFSET / sizeof(u32)] = 0;
+    *(volatile float *)FONT_HORIZONTAL_SCALE_ADDRESS = session->scale_x;
+    font_v2_active_session = session;
+
+    callback = (FontV2Callback)session->callback;
+    result = callback(
+        session->callback_arg0,
+        session->callback_arg1,
+        session->callback_arg2,
+        session->callback_arg3
+    );
+
+    *scale_bits = session->saved_scale;
+    renderer[FONT_RENDERER_TRACKING_OFFSET / sizeof(u32)] =
+        session->saved_tracking;
+    font_v2_active_session = (FontV2Session *)session->previous;
+    return result;
 }

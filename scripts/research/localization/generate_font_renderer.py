@@ -316,11 +316,18 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
             external_symbols={
                 "font_v2_ascii_widths": ee_c_fragments.SymbolReference(
                     V2_ASCII_WIDTHS
-                )
+                ),
+                "font_v2_active_session": ee_c_fragments.SymbolReference(
+                    V2_SESSION_POINTER
+                ),
             },
         )
 
-    expected_exports = {"font_v2_measure", "font_v2_prepare"}
+    expected_exports = {
+        "font_v2_measure",
+        "font_v2_prepare",
+        "font_v2_adapter_call",
+    }
     if set(extracted.symbols) != expected_exports:
         raise ValueError(
             "Font v2 C exports differ: "
@@ -330,6 +337,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
     aliases = {
         extracted.symbols["font_v2_measure"].symbol: V2_MEASURE,
         extracted.symbols["font_v2_prepare"].symbol: V2_PREPARE,
+        extracted.symbols["font_v2_adapter_call"].symbol: V2_ADAPTER_CALL,
     }
     helper_symbols = {
         fragment.symbol
@@ -369,6 +377,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         f"{V2_PREFIX}.c.is_br",
         V2_MEASURE,
         V2_PREPARE,
+        V2_ADAPTER_CALL,
     }:
         raise ValueError("Font v2 C fragment aliases are incomplete")
     return result
@@ -2471,7 +2480,6 @@ def v2_fragments() -> tuple[Fragment, ...]:
             alignment=1,
         ),
         *build_v2_c_core(),
-        build_v2_adapter_call(),
         build_v2_controls_callback(),
         build_v2_controls_adapter(),
         build_v2_title_callback(),

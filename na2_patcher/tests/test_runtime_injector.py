@@ -285,7 +285,7 @@ class RuntimeInjectorTests(unittest.TestCase):
             mips.jump(0x03, prepare.runtime_address),
             adapter_words,
         )
-        self.assertIn(mips.r_type(25, 0, 31, 0x09), adapter_words)
+        self.assertIn(mips.r_type(2, 0, 31, 0x09), adapter_words)
         for argument_register, offset in (
             (4, 0x50),
             (5, 0x54),
@@ -293,23 +293,35 @@ class RuntimeInjectorTests(unittest.TestCase):
             (7, 0x5C),
         ):
             self.assertIn(
-                mips.i_type(0x23, 16, argument_register, offset),
+                mips.i_type(0x23, 17, argument_register, offset),
                 adapter_words,
             )
         for expected_word in (
-            mips.i_type(0x2B, 16, 9, 0x00),
-            mips.i_type(0x2B, 16, 9, 0x60),
-            mips.i_type(0x2B, 16, 9, 0x64),
+            mips.i_type(0x2B, 17, 3, 0x00),
+            mips.i_type(0x2B, 17, 2, 0x60),
+            mips.i_type(0x2B, 17, 3, 0x64),
             mips.i_type(0x2B, 18, 0, 0x3C),
-            mips.i_type(0x23, 16, 9, 0x38),
-            mips.i_type(0x2B, 17, 16, 0x00),
-            mips.i_type(0x2B, 17, 9, 0x00),
-            mips.i_type(0x23, 16, 9, 0x60),
-            mips.i_type(0x23, 16, 9, 0x64),
-            mips.r_type(2, 0, 19, 0x21),
-            mips.r_type(19, 0, 2, 0x21),
+            mips.i_type(0x31, 17, 0, 0x38),
+            mips.i_type(0x23, 17, 2, 0x60),
+            mips.i_type(0x23, 17, 3, 0x64),
+            mips.r_type(2, 0, 5, 0x2D),
+            mips.r_type(5, 0, 2, 0x2D),
         ):
             self.assertIn(expected_word, adapter_words)
+        self.assertTrue(
+            any(
+                word & 0xFFFF0000
+                == mips.i_type(0x2B, 16, 17, 0) & 0xFFFF0000
+                for word in adapter_words
+            )
+        )
+        self.assertTrue(
+            any(
+                word & 0xFFFF0000
+                == mips.i_type(0x2B, 16, 3, 0) & 0xFFFF0000
+                for word in adapter_words
+            )
+        )
         v2_symbols = {
             "font_v2_layout_core_01": "localization.font.v2.plain_space",
             "font_v2_layout_core_02": (

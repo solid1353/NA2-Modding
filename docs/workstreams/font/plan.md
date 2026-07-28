@@ -469,7 +469,7 @@ The agent owns analysis, generation, worker builds, task PCSX2 operation,
 validation, commits and pushes. Existing states were sufficient to implement
 and review the Practice explanation family.
 
-Recommended effort: **max**, due to cross-function MIPS ABI preservation,
+Recommended effort: **high**, due to cross-function MIPS ABI preservation,
 renderer-state restoration, symbolic resident linking and multi-screen runtime
 regression risk.
 
@@ -489,8 +489,8 @@ Migration proceeds in independently committed stages:
 
 1. Completed on 2026-07-28: add deterministic EE C compilation and
    object-section extraction for Font, with no game hook or behavior change.
-2. Replace shared v2 measurement, spacing, fitting, positioning, and session
-   algorithms with C while retaining only the minimal assembly ABI and
+2. Replace shared v2 measurement, spacing, fitting, positioning, and the
+   session dispatcher with C while retaining only the minimal assembly ABI and
    displaced-instruction shims.
 3. Replace caller-family behavioral adapters one family at a time.
 4. Evaluate the independent numeric formatter separately and migrate it only
@@ -550,6 +550,28 @@ preparation fragments to compiled C:
 The C core adds one private `<br>` helper and increases the v2 renderer blob
 from 5,652 to 5,832 bytes. Its call-site patches, caller adapters, and
 caller-specific constants remain unchanged.
+
+### Stage 3 shared-session C candidate — awaiting user regression
+
+The shared `localization.font.v2.adapter_call` dispatcher is now generated from
+`font_v2_adapter_call` in the same C source as the accepted measurement and
+preparation core. The candidate preserves the existing session ABI and caller
+adapters:
+
+- validate and prepare the caller-owned session before changing renderer state;
+- save the prior active session, renderer tracking, and horizontal scale;
+- clear tracking, apply the prepared horizontal scale, and publish the session;
+- invoke the original native callback indirectly with its four stored
+  arguments;
+- restore scale, tracking, and the prior session before returning the callback
+  result.
+
+The compiled dispatcher is 216 bytes, uses only the supported symbolic
+relocations to `prepare` and the active-session pointer, and emits no runtime
+library helper. Replacing the 244-byte assembly dispatcher reduces the v2
+renderer blob from 5,832 to 5,804 bytes. The assembly builder remains only as a
+non-live fallback until the user confirms the shared-session regression pass;
+caller-family adapters and every game hook remain unchanged.
 
 Every stage first passes deterministic regeneration, object/symbol/relocation
 validation, focused tests, the full patcher suite, and exact Localization-pin

@@ -175,8 +175,10 @@ and alternates compiled C between `0x008F0100-0x008F1F00` and
 `0x008F1F00-0x008F3D00`. The already translated dispatcher reloads the pointer
 from EE memory on every call, while each changed build enters the other code
 bank and receives a fresh translation. Confidence is **high** for the observed
-reload-without-code-refresh failure and **medium** for the JIT-cache mechanism
-until the alternating-bank path is user-verified at runtime.
+reload-without-code-refresh failure and the alternating-bank JIT-cache
+mechanism. On 2026-07-29 the user ran the reload-enabled PCSX2 build and
+Injection Lab end to end and confirmed that the explicit PINE reload path
+worked in the running game.
 
 ### Widescreen heap target
 

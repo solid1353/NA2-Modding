@@ -574,7 +574,7 @@ across the shared-session regression pass, after which the superseded assembly
 builder was removed. Caller-family adapters and every game hook remain
 unchanged.
 
-### Stage 4 Controls C candidate — awaiting user regression
+### Stage 4 Controls C replacement — accepted
 
 The accepted first-eight-label Controls behavior now constructs its stack-local
 session in compiled C. The C entry receives the existing hook's text/style
@@ -587,9 +587,9 @@ v2 renderer blob from 5,804 to 5,796 bytes. The hook, Controls constants,
 shared dispatcher, and native drawing behavior are unchanged. The existing
 108-byte assembly callback remains the minimal native-renderer ABI shim: it
 must call the original absolute measurement and centered-draw entrypoints with
-their exact mixed integer/float register convention. The old assembly session
-builder remains non-live only until the user confirms Controls regression
-parity.
+their exact mixed integer/float register convention. The user confirmed no
+visible change across the Controls regression pass, after which the old
+assembly session builder was removed.
 
 Every stage first passes deterministic regeneration, object/symbol/relocation
 validation, focused tests, the full patcher suite, and exact Localization-pin

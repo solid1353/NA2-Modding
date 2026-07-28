@@ -551,7 +551,7 @@ The C core adds one private `<br>` helper and increases the v2 renderer blob
 from 5,652 to 5,832 bytes. Its call-site patches, caller adapters, and
 caller-specific constants remain unchanged.
 
-### Stage 3 shared-session C candidate — awaiting user regression
+### Stage 3 shared-session C replacement — accepted
 
 The shared `localization.font.v2.adapter_call` dispatcher is now generated from
 `font_v2_adapter_call` in the same C source as the accepted measurement and
@@ -569,9 +569,10 @@ adapters:
 The compiled dispatcher is 216 bytes, uses only the supported symbolic
 relocations to `prepare` and the active-session pointer, and emits no runtime
 library helper. Replacing the 244-byte assembly dispatcher reduces the v2
-renderer blob from 5,832 to 5,804 bytes. The assembly builder remains only as a
-non-live fallback until the user confirms the shared-session regression pass;
-caller-family adapters and every game hook remain unchanged.
+renderer blob from 5,832 to 5,804 bytes. The user confirmed no visible change
+across the shared-session regression pass, after which the superseded assembly
+builder was removed. Caller-family adapters and every game hook remain
+unchanged.
 
 Every stage first passes deterministic regeneration, object/symbol/relocation
 validation, focused tests, the full patcher suite, and exact Localization-pin

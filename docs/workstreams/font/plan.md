@@ -528,10 +528,10 @@ change, or runtime behavior. The next stage may feed extracted C fragments into
 the existing Font generator while retaining the assembly implementation until
 static and user-run regression parity are established.
 
-### Stage 2 shared-core C candidate
+### Stage 2 shared-core C replacement — accepted
 
-The current review candidate replaces only the canonical v2 measurement and
-preparation fragments with compiled C:
+The accepted replacement changes only the canonical v2 measurement and
+preparation fragments to compiled C:
 
 - `font_v2_measure` preserves printable-ASCII measurement, `<br>` handling,
   explicit newline handling, maximum-line width, and line count;
@@ -544,12 +544,12 @@ preparation fragments with compiled C:
   address, or unsupported relocation;
 - the existing adapter and every caller-family hook remain unchanged and still
   call the canonical `localization.font.v2.prepare` symbol;
-- the prior assembly builders remain available in the generator until the
-  user-run regression pass accepts the C candidate.
+- the user confirmed no visible change across the shared-core regression pass,
+  after which the superseded measure/prepare assembly builders were removed.
 
 The C core adds one private `<br>` helper and increases the v2 renderer blob
-from 5,652 to 5,832 bytes. This candidate requires the shared-core regression
-checkpoint before the assembly fallback may be removed.
+from 5,652 to 5,832 bytes. Its call-site patches, caller adapters, and
+caller-specific constants remain unchanged.
 
 Every stage first passes deterministic regeneration, object/symbol/relocation
 validation, focused tests, the full patcher suite, and exact Localization-pin

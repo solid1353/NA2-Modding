@@ -142,7 +142,7 @@ class FontCSharedCoreTests(unittest.TestCase):
         if not COMPILER.is_file():
             raise unittest.SkipTest(f"local EE compiler is unavailable: {COMPILER}")
 
-    def test_compiled_core_is_deterministic_and_assembly_fallback_remains(self) -> None:
+    def test_compiled_core_is_deterministic(self) -> None:
         compiled = {
             fragment.symbol: (
                 len(fragment.payload),
@@ -166,13 +166,6 @@ class FontCSharedCoreTests(unittest.TestCase):
                 ),
             },
             compiled,
-        )
-        self.assertEqual(
-            (272, 516),
-            (
-                len(generate_font_renderer.build_v2_measure().payload),
-                len(generate_font_renderer.build_v2_prepare().payload),
-            ),
         )
 
     def test_c_core_reproduces_canonical_generated_outputs(self) -> None:

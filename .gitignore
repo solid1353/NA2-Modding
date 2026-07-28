@@ -6,10 +6,4 @@ Desktop.ini
 /build
 /logs
 /work
-/source
-/utils
 __pycache__/
-
-# PCSX2
-/PCSX2*
-!PCSX2_files

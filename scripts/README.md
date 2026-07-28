@@ -17,9 +17,10 @@ history; do not recreate an archive directory for dead scripts.
 - `na2/`: build, promotion, ISO identity, worker-path validation, and focused
   build/run-log tests.
 - `pcsx2/`: PCSX2 launch, process, configuration, CRC helpers, the user-facing
-  single-instance and multi-game launch commands, the dot-sourced source-game
-  command set, user savestate filing, the minimal hidden workstream-copy
-  launcher, task-owned PINE savestate screenshot extraction, and
+  user/development single-instance and multi-game launch commands, the
+  dot-sourced source-game command set, user savestate filing, the minimal
+  hidden workstream-copy launcher, task-owned PINE savestate screenshot
+  extraction, and
   `patch_savestate_memory.py` for exact-byte-guarded EE-memory patches in copied
   task-owned savestates. Unsupported Zstandard ZIP members are bulk-extracted
   once through 7-Zip when available, with `tar` as the portable fallback,

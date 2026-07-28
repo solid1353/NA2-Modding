@@ -7,6 +7,9 @@ Desktop.ini
 /logs
 /work
 /source
-/pcsx2
 /utils
 __pycache__/
+
+# PCSX2
+/PCSX2*
+!PCSX2_files

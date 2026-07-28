@@ -20,6 +20,9 @@ typedef signed int s32;
 #define FONT_RENDERER_POINTER_ADDRESS 0x00607470u
 #define FONT_HORIZONTAL_SCALE_ADDRESS 0x0060737Cu
 #define FONT_RENDERER_TRACKING_OFFSET 0x3Cu
+#define FONT_CONTROLS_BOX_WIDTH 128u
+#define FONT_CONTROLS_BOX_HEIGHT 20u
+#define FONT_CONTROLS_LINE_HEIGHT 20.0f
 
 #define FONT_V2_SECTION(name) \
     __attribute__((section(name), noinline))
@@ -74,6 +77,12 @@ FONT_V2_ASSERT(session_size, sizeof(FontV2Session) == 0x6C);
 
 extern const u8 font_v2_ascii_widths[95];
 extern FontV2Session *font_v2_active_session;
+extern int font_v2_controls_callback(
+    u32 arg0,
+    u32 arg1,
+    u32 arg2,
+    u32 arg3
+);
 
 typedef int (*FontV2Callback)(u32 arg0, u32 arg1, u32 arg2, u32 arg3);
 
@@ -263,4 +272,32 @@ int font_v2_adapter_call(FontV2Session *session) {
         session->saved_tracking;
     font_v2_active_session = (FontV2Session *)session->previous;
     return result;
+}
+
+FONT_V2_SECTION(".text.font_v2_controls_adapter")
+int font_v2_controls_adapter(
+    const u8 *text,
+    u32 style,
+    float center_x,
+    float draw_y
+) {
+    FontV2Session session;
+
+    session.text = text;
+    session.box_x = center_x - (float)(FONT_CONTROLS_BOX_WIDTH / 2u);
+    session.box_y = draw_y;
+    session.box_width = FONT_CONTROLS_BOX_WIDTH;
+    session.box_height = FONT_CONTROLS_BOX_HEIGHT;
+    session.horizontal_alignment = FONT_V2_ALIGN_CENTER;
+    session.vertical_alignment = FONT_V2_ALIGN_START;
+    session.flags = FONT_V2_FLAG_SHRINK_X;
+    session.line_limit = 1;
+    session.line_height = FONT_CONTROLS_LINE_HEIGHT;
+    session.callback = (u32)font_v2_controls_callback;
+    session.callback_arg0 = (u32)text;
+    session.callback_arg1 = style;
+    session.callback_arg2 = (u32)&session;
+    session.callback_arg3 = 0;
+
+    return font_v2_adapter_call(&session);
 }

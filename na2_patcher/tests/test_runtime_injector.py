@@ -504,16 +504,20 @@ class RuntimeInjectorTests(unittest.TestCase):
             controls_adapter_words,
         )
         self.assertIn(
-            mips.i_type(0x0F, 0, 8, 0x4280),
+            mips.i_type(0x0F, 0, 1, 0x4280),
             controls_adapter_words,
         )
         for expected_word in (
-            mips.i_type(0x2B, 29, 8, 0x10),
-            mips.i_type(0x2B, 29, 8, 0x14),
-            mips.i_type(0x2B, 29, 8, 0x18),
-            mips.i_type(0x2B, 29, 8, 0x20),
-            mips.i_type(0x2B, 29, 8, 0x24),
-            mips.i_type(0x2B, 29, 9, 0x58),
+            mips.cop1(0x01, 12, 12, 0),
+            mips.i_type(0x39, 29, 12, 0x08),
+            mips.i_type(0x39, 29, 13, 0x0C),
+            mips.i_type(0x2B, 29, 2, 0x10),
+            mips.i_type(0x2B, 29, 3, 0x14),
+            mips.i_type(0x2B, 29, 6, 0x18),
+            mips.i_type(0x2B, 29, 0, 0x1C),
+            mips.i_type(0x2B, 29, 6, 0x20),
+            mips.i_type(0x2B, 29, 6, 0x24),
+            mips.i_type(0x2B, 29, 29, 0x58),
         ):
             self.assertIn(expected_word, controls_adapter_words)
 

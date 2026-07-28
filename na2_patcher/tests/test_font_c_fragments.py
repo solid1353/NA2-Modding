@@ -168,6 +168,10 @@ class FontCSharedCoreTests(unittest.TestCase):
                     216,
                     "1763CE7B8E15393AE9FC25C8F15E3E53DEE796C806B2D764A8BB889B6247B595",
                 ),
+                "localization.font.v2.controls_adapter": (
+                    136,
+                    "5F9F94ED1AB2248C2F4BAECE1AFD905C39704AC019B8F060D6C3E6CEE268773F",
+                ),
             },
             compiled,
         )

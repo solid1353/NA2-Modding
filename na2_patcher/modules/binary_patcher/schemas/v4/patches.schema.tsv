@@ -6,6 +6,5 @@ status	1	enum:pending|approved_for_test|runtime_proven|runtime_failed|deprecated
 confidence	1	enum:high|medium|low|verified	Analytical confidence.
 name	1	string	Short human-readable name.
 description	1	string	Scope or likely runtime location.
-source_mapping_id	0	identifier	Corresponding analytical mapping.
-runtime_classification	0	string	Observed runtime screen/effect.
+evidence_id	0	identifier	Stable analytical or provenance identifier.
 review_notes	0	string	Ambiguity and review notes; never executable.

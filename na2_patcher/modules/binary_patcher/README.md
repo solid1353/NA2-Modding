@@ -22,7 +22,7 @@ guarded file edits.
 - Patch ranges may overlap; ordered composition accepts compatible chains and rejects guard conflicts.
 - Concrete edits are simulated in deterministic order before output creation. Already-satisfied
   writes and guarded chains are allowed; incompatible staged bytes are rejected as conflicts.
-- Binary-patcher v3 has no patch dependency or declarative relation mechanism.
+- Binary-patcher v4 has no patch dependency or declarative relation mechanism.
 - Only `approved_for_test` and `runtime_proven` patches can be applied.
 - Pending candidates can be inspected with `plan` but cannot be applied.
 - Outputs must be new, stay outside input roots, and preserve target sizes.
@@ -46,7 +46,7 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
   --package na2_patcher/features/localization/binary_patcher `
   --root na2=@source_na2 `
   --root nun5=@source_nun5 `
-  --patch ELF-M008
+  --patch regional_input_selectable_modal
 ```
 
 Application requires a new output directory and an approved patch status:
@@ -56,7 +56,7 @@ python -m na2_patcher.modules.binary_patcher.engine apply `
   --package na2_patcher/features/localization/binary_patcher `
   --root na2=@source_na2 `
   --root nun5=@source_nun5 `
-  --patch ELF-M008 `
+  --patch regional_input_selectable_modal `
   --output-root work/temp/example_patch_output
 ```
 
@@ -77,11 +77,13 @@ does not bypass status, guard, overlap, or conflict validation.
 
 ## Schema
 
-Schema v3 is described by the column tables under `schemas/v3/`. Every package has
+Schema v4 is described by the column tables under `schemas/v4/`. Every package has
 exactly four canonical control tables: `targets.tsv`, `groups.tsv`, `patches.tsv`,
 and `edits.tsv`, plus any blobs referenced by edit rows. Package identity is
 derived from its feature/module path; identity manifests and package-version
 metadata are not accepted. Headers are strict and must match exactly. Groups
-organize patches; patches own one or more exact edits. A completely empty reserved
+organize patches; patches own one or more exact edits. Patch rows use one
+`evidence_id` for analytical or provenance identity; runtime observations belong
+in `review_notes` rather than a parallel classification column. A completely empty reserved
 package is valid, but declared groups without patches and patches without edits are
 rejected. Earlier schemas are available only through Git history.

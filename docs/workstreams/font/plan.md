@@ -230,7 +230,7 @@ may change that value.
 The user directed the shared core and adapter/session layer to be completed
 before caller-family behavior:
 
-1. `font_v2_layout_core` exports the accepted 95-entry width table, guarded
+1. `font_layout_core` exports the accepted 95-entry width table, guarded
    printable-ASCII and explicit-line measurement, shrink-only preparation,
    horizontal and vertical box positioning, one zero-initialized active-session
    pointer, and five null-session renderer hooks. It does not target any

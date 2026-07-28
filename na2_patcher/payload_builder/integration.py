@@ -285,8 +285,7 @@ def build_integration_package(
             confidence="verified",
             name=patch_id,
             description=patch.reason,
-            source_mapping_id=patch.mapping_id,
-            runtime_classification="resident_payload",
+            evidence_id=patch.mapping_id,
             review_notes="",
         )
         edits.append(

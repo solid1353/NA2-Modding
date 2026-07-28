@@ -44,7 +44,7 @@ class StringPatcherTests(unittest.TestCase):
         )
 
         self.assertIn("BTL", package.groups)
-        self.assertEqual(package.patches["BTL-I0001"].source_mapping_id, "BTL-M001")
+        self.assertEqual(package.patches["BTL-I0001"].evidence_id, "BTL-M001")
         self.assertTrue(package.patches["BTL-I0001"].enabled)
         selected = ["BTL-I0001"]
         edits = binary_patcher.validate_selection(
@@ -59,7 +59,7 @@ class StringPatcherTests(unittest.TestCase):
             edits,
         )
         self.assertEqual(bytes(buffers[target_id]), b"\0\0EN\0\0\0\0")
-        self.assertEqual(rows[0]["source_mapping_id"], "BTL-M001")
+        self.assertEqual(rows[0]["evidence_id"], "BTL-M001")
 
 
 if __name__ == "__main__":

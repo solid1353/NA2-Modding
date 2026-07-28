@@ -350,8 +350,7 @@ def build_binary_package(
             confidence=spec.confidence,
             name=spec.string_id,
             description=spec.reason,
-            source_mapping_id="",
-            runtime_classification="",
+            evidence_id="",
             review_notes=spec.review_notes,
         )
         edits.append(
@@ -461,8 +460,7 @@ def build_binary_package(
             confidence="verified",
             name=import_id,
             description=reason,
-            source_mapping_id=source_mapping_id,
-            runtime_classification="",
+            evidence_id=source_mapping_id,
             review_notes="",
         )
         edits.append(

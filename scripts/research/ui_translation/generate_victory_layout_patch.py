@@ -19,7 +19,7 @@ from na2_patcher.modules.binary_patcher import engine  # noqa: E402
 from na2_patcher.project_paths import load_project_paths  # noqa: E402
 
 
-PATCH_ID = "UI-BTL-014"
+PATCH_ID = "ui_layout_victory_names"
 CHARACTER_COUNT = 94
 NA2_BTL_EXPECTED_SIZE = 2_237_184
 NA2_BTL_EXPECTED_SHA256 = (
@@ -179,7 +179,7 @@ def build_patch_rows() -> tuple[dict[str, str], list[dict[str, str]]]:
         )
         edits.append(
             {
-                "edit_id": f"{PATCH_ID}-{len(edits) + 1:03d}",
+                "edit_id": f"{PATCH_ID}_{len(edits) + 1:02d}",
                 "patch_id": PATCH_ID,
                 "order": str((len(edits) + 1) * 10),
                 "destination_target_id": "na2_btl",
@@ -218,10 +218,9 @@ def build_patch_rows() -> tuple[dict[str, str], list[dict[str, str]]]:
             "Derive every compatible NA2 prebuilt Victory name rectangle from "
             "the official NUN5 frame templates and English character-width table."
         ),
-        "source_mapping_id": "UI-VICTORY-NAME-LAYOUT-001",
-        "runtime_classification": "overlay",
+        "evidence_id": "UI-VICTORY-NAME-LAYOUT-001",
         "review_notes": (
-            "NUN5 builds each 24-byte rectangle at runtime from a localized "
+            "Runtime: overlay | NUN5 builds each 24-byte rectangle at runtime from a localized "
             "width row and frame template, whereas NA2's BTL callback returns "
             "a pointer to a prebuilt rectangle. Each replacement is therefore "
             "the complete official frame template plus the verified NUN5 width "
@@ -239,7 +238,7 @@ def main() -> int:
     parser.add_argument(
         "--write",
         action="store_true",
-        help="Replace the UI-BTL-014 package rows after validation.",
+        help="Replace the ui_layout_victory_names package rows after validation.",
     )
     parser.add_argument(
         "--state-plan",

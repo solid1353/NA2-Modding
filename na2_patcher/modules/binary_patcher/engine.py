@@ -22,7 +22,7 @@ from na2_patcher.source_media import read_root_file
 
 PROJECT_PATHS = load_project_paths(REPOSITORY_ROOT, allow_missing=True)
 
-BINARY_PATCHER_SCHEMA_VERSION = 3
+BINARY_PATCHER_SCHEMA_VERSION = 4
 TARGET_FIELDS = [
     "target_id",
     "root_id",
@@ -46,8 +46,7 @@ PATCH_FIELDS = [
     "confidence",
     "name",
     "description",
-    "source_mapping_id",
-    "runtime_classification",
+    "evidence_id",
     "review_notes",
 ]
 EDIT_FIELDS = [
@@ -117,8 +116,7 @@ class Patch:
     confidence: str
     name: str
     description: str
-    source_mapping_id: str
-    runtime_classification: str
+    evidence_id: str
     review_notes: str
 
 
@@ -351,8 +349,7 @@ def load_package(directory: Path) -> Package:
             confidence=confidence,
             name=row["name"],
             description=row["description"],
-            source_mapping_id=row["source_mapping_id"],
-            runtime_classification=row["runtime_classification"],
+            evidence_id=row["evidence_id"],
             review_notes=row["review_notes"],
         )
     edits: list[Edit] = []
@@ -747,7 +744,7 @@ def patch_selection_rows(
             "patch_enabled": int(patch.enabled),
             "effective_selected": int(patch.patch_id in selected_ids),
             "selection_mode": selection_mode,
-            "source_mapping_id": patch.source_mapping_id,
+            "evidence_id": patch.evidence_id,
             "status": patch.status,
             "confidence": patch.confidence,
             "name": patch.name,
@@ -826,7 +823,7 @@ def compose_edits(
                 "group_id": group.group_id,
                 "group_name": group.name,
                 "patch_id": edit.patch_id,
-                "source_mapping_id": patch.source_mapping_id,
+                "evidence_id": patch.evidence_id,
                 "edit_id": edit.edit_id,
                 "target_id": target.target_id,
                 "path": target.path.as_posix(),
@@ -903,7 +900,7 @@ def apply_package(
                 "group_id",
                 "group_name",
                 "patch_id",
-                "source_mapping_id",
+                "evidence_id",
                 "edit_id",
                 "target_id",
                 "path",
@@ -927,7 +924,7 @@ def apply_package(
                 "patch_enabled",
                 "effective_selected",
                 "selection_mode",
-                "source_mapping_id",
+                "evidence_id",
                 "status",
                 "confidence",
                 "name",

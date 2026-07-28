@@ -2601,7 +2601,7 @@ def _hook_payload(
 def numeric_hooks() -> tuple[NumericHook, ...]:
     save_specs = (
         (
-            "font_save_load_ascii_digits_01",
+            "font_numeric_save_load_01",
             10,
             0x0E660C,
             "0E0065942D200000040006249000A7270100082444E10D0C00000000",
@@ -2611,7 +2611,7 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
             "Format the EU day in C and return the loaded year for s6.",
         ),
         (
-            "font_save_load_ascii_digits_02",
+            "font_numeric_save_load_02",
             20,
             0x0E6650,
             "2D2000002D282002020006249000A7272D40C00044E10D0C00000000",
@@ -2621,7 +2621,7 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
             "Format the EU month through the shared C two-digit entry.",
         ),
         (
-            "font_save_load_ascii_digits_03",
+            "font_numeric_save_load_03",
             30,
             0x0E6694,
             "2D2000002D28A002020006249000A7272D40C00044E10D0C00000000",
@@ -2631,7 +2631,7 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
             "Format the preserved four-digit year through C.",
         ),
         (
-            "font_save_load_ascii_digits_04",
+            "font_numeric_save_load_04",
             40,
             0x0E67A4,
             "2D2000002D28A002030006249000A7270200082444E10D0C00000000",
@@ -2641,7 +2641,7 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
             "Apply the accepted signed 99-hour cap and two-digit format in C.",
         ),
         (
-            "font_save_load_ascii_digits_05",
+            "font_numeric_save_load_05",
             50,
             0x0E67E8,
             "2D2000002D282002020006249000A7272D40C00044E10D0C00000000",
@@ -2651,7 +2651,7 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
             "Format minutes through the shared C two-digit entry.",
         ),
         (
-            "font_save_load_ascii_digits_06",
+            "font_numeric_save_load_06",
             60,
             0x0E682C,
             "2D2000002D28C002020006249000A7272D40C00044E10D0C00000000",
@@ -2664,7 +2664,7 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
     hooks = [
         NumericHook(
             edit_id=edit_id,
-            patch_id="font_save_load_ascii_digits",
+            patch_id="font_numeric_save_load",
             order=order,
             target_id="na2_elf",
             offset=offset,
@@ -2692,8 +2692,8 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
     ]
     hooks.append(
         NumericHook(
-            edit_id="font_battle_settings_ascii_digits_01",
-            patch_id="font_battle_settings_ascii_digits",
+            edit_id="font_numeric_battle_settings_01",
+            patch_id="font_numeric_battle_settings",
             order=10,
             target_id="na2_btl",
             offset=0x1CC3D8,

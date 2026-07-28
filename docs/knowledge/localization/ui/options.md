@@ -65,7 +65,7 @@ NUN5's localized records total 80 logical pixels:
 | Cancel label | `0x4DEA10` / `0100310038001600` | `(1,49,56,22)` |
 | Empty tail | `0x4DEA18` / `0000000000000000` | empty |
 
-`UI-ELF-008` copies all three official NUN5 records into the corresponding NA2
+`ui_layout_common_prompts` copies all three official NUN5 records into the corresponding NA2
 static slots. This preserves NA2's object ABI and compositor code while making
 every shared case-4 caller use the same geometry as NUN5.
 
@@ -85,7 +85,7 @@ regional globals, and adds `-12` for OK and `-8` for Back before calling
 `FUN_0038bb10`. Those additions do not exist in the NA2 caller, so copying the
 nominal donor loads would not move either prompt.
 
-`UI-ELF-008` therefore stores the equivalent NA2 values X=`388`
+`ui_layout_common_prompts` therefore stores the equivalent NA2 values X=`388`
 (`C243023C`) and X=`462` (`E743023C`) at the two guarded call sites. These are
 authored ABI ports, not literal donor copies. A task-owned slot-1 savestate
 patched with only those two words rendered the complete Cross/OK and
@@ -121,7 +121,7 @@ NUN5 uses the same register and instruction positions but loads `200.0f` with
 | Music Select icon | `0x0038A4B8` / `0x28A5B8` | `0x0039BDE8` / `0x29BF68` |
 | Music legend | `0x0038A4DC` / `0x28A5DC` | `0x0039BE10` / `0x29BF90` |
 
-`UI-ELF-009` copies all four NUN5 `4843023C` instructions over NA2's guarded
+`ui_layout_options_footers` copies all four NUN5 `4843023C` instructions over NA2's guarded
 `6643023C` instructions. This moves the two complete Select groups together by
 30 logical pixels while preserving their internal spacing.
 
@@ -134,7 +134,7 @@ nominal values in both homologs, then converts the same two signed regional
 globals and adds `-12` and `-8`. Its effective anchors are therefore X=`388`
 and X=`462` on both screens.
 
-The NUN5 GP-relative loads are not ABI-compatible with NA2. `UI-ELF-009`
+The NUN5 GP-relative loads are not ABI-compatible with NA2. `ui_layout_options_footers`
 extends the already-owning shared footer patch with two authored same-register
 constants per function (`C243023C` and `E743023C`) rather than duplicating
 logic or copying unsafe global accesses. Each guarded task-owned state changed
@@ -173,7 +173,7 @@ X=`400` and X=`470`, but converts two signed regional globals to floats and
 adds `-12` and `-8` first. Those additions are absent from NA2, so copying
 NUN5's nominal load instructions would leave the visible mismatch unchanged.
 
-`UI-ELF-005` therefore writes the equivalent effective NA2 constants
+`ui_layout_mode_select` therefore writes the equivalent effective NA2 constants
 X=`388` (`C243023C`) and X=`462` (`E743023C`). These are authored behavior
 ports rather than literal donor copies. They reproduce the official NUN5
 result while retaining NA2's register flow and shared compositor ABI. The
@@ -226,7 +226,7 @@ footer on 2026-07-26. Confidence is **verified**.
   spacing remained unchanged.
 - A newer paired Music Settings state then isolated the remaining OK/Back
   mismatch in the same renderer. Guarded X=`388`/`462` writes aligned both
-  groups; this is an extension of the existing `UI-ELF-009` ownership, not a
+  groups; this is an extension of the existing `ui_layout_options_footers` ownership, not a
   second implementation.
 - The overflowing Music Options help sentence is emitted through the text/font
   renderer and is outside this texture-layout correction.

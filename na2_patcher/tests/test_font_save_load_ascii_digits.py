@@ -12,7 +12,7 @@ class SaveLoadAsciiDigitsTests(unittest.TestCase):
         cls.hooks = tuple(
             hook
             for hook in generate_font_renderer.numeric_hooks()
-            if hook.patch_id == "font_save_load_ascii_digits"
+            if hook.patch_id == "font_numeric_save_load"
         )
 
     def test_date_order_and_year_lifetime_are_explicit(self) -> None:

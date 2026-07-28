@@ -171,7 +171,7 @@ void draw_collection_state_footer(CollectionState *state) {
 ```
 
 The NUN5 table is byte-identical to NA2, so copying donor bytes cannot port the
-behavior. `UI-ELF-008` instead stores the equivalent effective X values
+behavior. `ui_layout_common_prompts` instead stores the equivalent effective X values
 `368` (`0000B843`) and `452` (`0000E243`) at NA2 ETC offsets `0x2F010` and
 `0x2F018`; the Y values and every other state field remain unchanged. A
 guarded task-owned Slot 2 savestate and hidden worker render moved both
@@ -231,7 +231,7 @@ void draw_home_action_prompt(HomePromptState state) {
 }
 ```
 
-`UI-ELF-008` implements this once for every caller of the NA2 helper:
+`ui_layout_common_prompts` implements this once for every caller of the NA2 helper:
 
 - ETC file `0x30`, load address `0x006B3F30`: replace 16 zero padding bytes
   retained in the loaded MWO3 image with a four-instruction wrapper. It moves
@@ -356,7 +356,7 @@ The whole NUN5 `HOME.CCS` donor supplies 144-pixel English page-prompt art,
 but it cannot change these ETC-owned tables. NA2 therefore clipped the first
 rectangle to 118 pixels, displaying `Previous Pa`. NUN5 widens both entries to
 144 and moves their centers outward by 13 pixels, preserving the paired layout
-without overlap. `UI-ETC-002` consequently copies both complete page-prompt
+without overlap. `ui_layout_collection_submenu` consequently copies both complete page-prompt
 tables, all three reviewed category-title records, and the reviewed Play
 record. The viewer-control correction copies the complete four-record position
 and rectangle blocks rather than splitting their semantic unit. It contains no
@@ -406,7 +406,7 @@ respectively `220 + 118 = 338` and `233 + 144 = 377`.
   Working copies remain under
   `work/UI translation/temp/slot1_20260722_0827_down_labels/` until runtime
   acceptance; the original PCSX2 states were not modified.
-- The isolated eight-edit `UI-ETC-002` apply preserves the 200,448-byte ETC
+- The isolated eight-edit `ui_layout_collection_submenu` apply preserves the 200,448-byte ETC
   size and produces SHA-256
   `E6054FCD42A3834197AE638D3EF77E10BE86633A997C6CF9F18887FA788A298A`.
   Exactly 30 bytes differ from canonical NA2 ETC, all inside the declared
@@ -425,7 +425,7 @@ respectively `220 + 118 = 338` and `233 + 144 = 377`.
 - NA2 `FUN_006b44b0` / NUN5 `FUN_006c7250` and the NUN5 localized accessor
   `FUN_003d4210` do not draw the Previous/Next Page controls. They are the
   separate common Play/Stop prompt family, and their state-2 Play branch is
-  now covered by `UI-ETC-002`.
+  now covered by `ui_layout_collection_submenu`.
 - NA2 `FUN_006b7c30` / NUN5 `FUN_006cad20` and accessor `FUN_003d41c0`
   render character-grid selection markers, not page controls.
 - Searching for an isolated `(0,0,144,24)` rectangle was a false boundary:
@@ -450,4 +450,4 @@ class factories, state, draw functions, localized accessors, exact
 source/destination ranges, table semantics, and paired visual failures all
 agree across canonical binaries and captured memory. The only uncompleted
 evidence is the user's visual review of a rebuilt NA2 ISO containing
-`UI-ETC-002`.
+`ui_layout_collection_submenu`.

@@ -37,7 +37,7 @@ NA2 uses `random_x=300.0f`, `select_color_x=160.0f`, `ok_x=400.0f`, and
 `select_color_x=100.0f`; its OK/Back paths start from the same nominal
 `400.0f`/`470.0f` values and then add signed regional globals `-12`/`-8`.
 The artwork loads have the same destination register and equivalent call
-sites, so `UI-ELF-007` copies the official NUN5 instruction words directly:
+sites, so `ui_layout_character_select_footer` copies the official NUN5 instruction words directly:
 
 | Control | NA2 offset / bytes | NUN5 offset / bytes |
 | --- | --- | --- |

@@ -1,7 +1,7 @@
 # Stage Select UI
 
 This record preserves the reusable NA2/NUN5 Stage Select analysis behind
-`UI-BTL-002`. It covers graphical layout and texture selection only; string and
+`ui_layout_stage_select`. It covers graphical layout and texture selection only; string and
 font behavior are outside this patch.
 
 ## Binary identity and address mapping
@@ -31,7 +31,7 @@ NA2 file range `0x20FC10..0x20FD8F` is 24 records of 16 bytes:
 ```cpp
 struct Na2StageRecord {
     int32_t stage_id;
-    int32_t preview_index; // repurposed by UI-BTL-002 as name_scale_x
+    int32_t preview_index; // repurposed by ui_layout_stage_select as name_scale_x
     int16_t u, v, width, height;
 };
 ```
@@ -49,7 +49,7 @@ Every stage ID and preview index matches by row, and every preview index equals
 its row number `0..23`. NA2's selected-preview path is represented by Ghidra
 `FUN_007144e0`; NUN5's structural twin is `FUN_00729f00`. Their relevant
 function boundaries in the exports are `0x007144E0..0x007146BC` and
-`0x00729F00..0x0072A0E0`. `UI-BTL-002` redirects the selected-preview read at
+`0x00729F00..0x0072A0E0`. `ui_layout_stage_select` redirects the selected-preview read at
 NA2 file offset `0x606BC` to the already matched row index.
 
 Ghidra omitted a second, structurally matched preview-construction range. Its
@@ -76,7 +76,7 @@ an intentional NA2-specific adaptation, not a donor-copy candidate.
 
 NUN5 obtains 24 English rectangles from boot-ELF file range
 `0x4DDB90..0x4DDC4F` and applies `min(1.0f, 214.0f / width)` horizontally.
-`UI-BTL-002` copies those rectangles into the NA2 inline records and stores the
+`ui_layout_stage_select` copies those rectangles into the NA2 inline records and stores the
 exact single-precision result in each repurposed second word. NA2 file offsets
 `0x61570` and `0x6157C` keep vertical scale at `1.0` and load the stored value
 only into horizontal scale.
@@ -94,7 +94,7 @@ dispatchers. Their export boundaries are `0x00715C80..0x00715E9C` and
 stage-name draw routines, then submit the bottom prompt objects.
 
 NA2 uses X=`300.0f` for prompt item 3 and its companion sprite. NUN5 uses
-X=`260.0f` for both. `UI-BTL-002` copies the exact NUN5 `lui v0,0x4382`
+X=`260.0f` for both. `ui_layout_stage_select` copies the exact NUN5 `lui v0,0x4382`
 instructions from NUN5 BTL file offsets `0x64C50` and `0x64C78` into NA2 file
 offsets `0x61F40` and `0x61F64`.
 
@@ -103,7 +103,7 @@ The same dispatcher builds the OK and Back objects from nominal X anchors
 so its effective screen anchors are X=`388.0f` and X=`462.0f`. NA2 omits those
 regional additions. The corresponding NUN5 global-offset loads are not safe
 donor instructions for NA2 because the two executables use different global
-pointer layouts. `UI-BTL-002` therefore uses two authored, same-register
+pointer layouts. `ui_layout_stage_select` therefore uses two authored, same-register
 constant adaptations at NA2 BTL file offsets `0x61EF8` and `0x61F1C`:
 
 ```cpp

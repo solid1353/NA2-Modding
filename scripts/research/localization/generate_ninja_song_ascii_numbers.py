@@ -27,7 +27,7 @@ if str(REPOSITORY) not in sys.path:
 from na2_patcher.project_paths import load_project_paths  # noqa: E402
 
 
-PATCH_ID = "font_ninja_song_ascii_numbers"
+PATCH_ID = "font_numeric_ninja_song"
 SYMBOL = "localization.font.ninja_song_ascii_number"
 FORMATTER_JAL_HEX = "44E10D0C"
 

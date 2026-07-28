@@ -26,7 +26,7 @@ if str(REPOSITORY) not in sys.path:
 from na2_patcher.project_paths import load_project_paths  # noqa: E402
 
 
-PATCH_ID = "font_on_off_context_split"
+PATCH_ID = "font_layout_on_off_context"
 
 TITLECASE_TABLE_ADDRESS = 0x00604658
 TITLECASE_TABLE_OFFSET = 0x504758

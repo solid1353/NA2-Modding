@@ -66,9 +66,8 @@ class RuntimeInjectorTests(unittest.TestCase):
                         confidence="high",
                         name="Layout hook",
                         description="Retained disabled hook.",
-                        source_mapping_id="TEST-LAYOUT",
-                        runtime_classification="resident",
-                        review_notes="",
+                        evidence_id="TEST-LAYOUT",
+                        review_notes="Runtime: resident",
                     )
                 },
                 edits=[],
@@ -135,9 +134,8 @@ class RuntimeInjectorTests(unittest.TestCase):
                     "confidence": "high",
                     "name": "Layout hook",
                     "description": "Route one hook.",
-                    "source_mapping_id": "TEST-LAYOUT",
-                    "runtime_classification": "resident",
-                    "review_notes": "",
+                    "evidence_id": "TEST-LAYOUT",
+                    "review_notes": "Runtime: resident",
                 }],
             )
             write_tsv(

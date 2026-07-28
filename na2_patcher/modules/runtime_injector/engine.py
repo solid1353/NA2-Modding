@@ -266,9 +266,9 @@ def _load_patches(
             )
         if confidence not in binary_patcher.CONFIDENCE_VALUES:
             raise ValueError(f"patches.tsv:{line}: invalid confidence {confidence!r}")
-        if not row["name"] or not row["description"] or not row["source_mapping_id"]:
+        if not row["name"] or not row["description"] or not row["evidence_id"]:
             raise ValueError(
-                f"patches.tsv:{line}: name, description, and source_mapping_id "
+                f"patches.tsv:{line}: name, description, and evidence_id "
                 "are required"
             )
         patches[patch_id] = binary_patcher.Patch(
@@ -279,8 +279,7 @@ def _load_patches(
             confidence=confidence,
             name=row["name"],
             description=row["description"],
-            source_mapping_id=row["source_mapping_id"],
-            runtime_classification=row["runtime_classification"],
+            evidence_id=row["evidence_id"],
             review_notes=row["review_notes"],
         )
     if not patches:

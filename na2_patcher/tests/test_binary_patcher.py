@@ -80,8 +80,7 @@ class BinaryPatcherTests(unittest.TestCase):
                 "confidence": "verified",
                 "name": "test patch",
                 "description": "replace and copy",
-                "source_mapping_id": "",
-                "runtime_classification": "",
+                "evidence_id": "",
                 "review_notes": "",
             }],
         )

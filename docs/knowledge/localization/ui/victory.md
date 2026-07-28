@@ -160,7 +160,7 @@ bool victory_rect(Rect* out, int character_id, int frame) {
 }
 ```
 
-`UI-BTL-014` preserves NA2's pointer-return ABI and generates the equivalent
+`ui_layout_victory_names` preserves NA2's pointer-return ABI and generates the equivalent
 prebuilt records instead of replacing the renderer. The maintained
 `generate_victory_layout_patch.py` script verifies all four source identities,
 reads every NA2 pointer and NUN5 English row, and derives each complete

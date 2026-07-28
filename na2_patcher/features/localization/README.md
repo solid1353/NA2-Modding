@@ -18,8 +18,9 @@ of them, and one aggregate profile pin covers their canonical inputs.
 
 Where an engine supports groups, Localization groups patches by capability
 rather than by game mode or target file. The binary package uses
-`font_glyphs`, `font_layout`, `ui_layout`, and `regional_input`; the runtime
-package uses `font_glyphs`, `font_layout`, and `font_numeric_formatting`.
+`font_glyphs`, `font_layout`, `font_numeric_formatting`, `ui_layout`, and
+`regional_input`; the runtime package uses `font_glyphs`, `font_layout`, and
+`font_numeric_formatting`.
 Group IDs remain local to their module and do not declare cross-module
 dependencies.
 
@@ -851,7 +852,7 @@ from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
   Shikamaru remain mapped fixed-capacity exceptions: Haku discards transparent
   canvas and uses seven nearest colors from its NUN5 palette; Shikamaru omits
   only its faintest donor antialias shade. No character texture blobs are
-  stored. `UI-BTL-014` separately derives NA2's prebuilt name rectangles from
+  stored. `ui_layout_victory_names` separately derives NA2's prebuilt name rectangles from
   the official NUN5 frame templates and English width table.
 - `3EYE/ENDDEMO.CCS` is mapped so only the complete NUN5 `enddemo01` TEX/CLT
   pair, including the English `WINNER` emblem, replaces the corresponding NA2
@@ -866,7 +867,7 @@ from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
   `TEX_xpanel` replaces NA2's Circle/decision and Cross/back legends with
   NUN5's Cross/OK and Triangle/Back legends wherever the common panel is used.
 - The NUN5 one-part `OUGI.CCS` layout also requires the paired,
-  size-preserving `UI-BTL-001` semantic port in
+  size-preserving `ui_layout_ultimate_jutsu_label` semantic port in
   `na2_patcher/features/localization/binary_patcher/`.
 
 The engine searches deterministic zlib encodings first. Twenty-eight
@@ -934,7 +935,7 @@ different inline-record layout. The remaining 21 are documented NA2-specific
 ports where the equivalent NUN5 behavior has a different instruction or data
 topology, or where NA2 intentionally needs a different value.
 
-### UI-BTL-001: one-part OUGI label
+### ui_layout_ultimate_jutsu_label: one-part OUGI label
 
 NA2's Ultimate Jutsu banner uses two 64x64 label halves. The official English
 NUN5 and Brazilian NUN6 versions both use one 128x64 label and one-part
@@ -942,7 +943,7 @@ construction behavior. The whole-container `OUGI.CCS` import supplies that
 one-part model, UV, texture, and animation layout.
 
 At BTL file offset `0xB5E80`, NA2 contains `02 00 42 2A`
-(`slti v0,s2,2`). `UI-BTL-001` replaces it with `01 00 42 2A`
+(`slti v0,s2,2`). `ui_layout_ultimate_jutsu_label` replaces it with `01 00 42 2A`
 (`slti v0,s2,1`) to port the donor's one-part behavior into NA2's loop. The
 canonical NUN5 ELF, BTL, ETC, and ADV files do not contain that exact four-byte
 instruction, so this row correctly remains an authored semantic port rather
@@ -959,13 +960,13 @@ python -m na2_patcher.modules.binary_patcher.engine validate `
 python -m na2_patcher.modules.binary_patcher.engine plan `
   --package na2_patcher/features/localization/binary_patcher `
   --root na2=@source_na2 `
-  --patch UI-BTL-001
+  --patch ui_layout_ultimate_jutsu_label
 ```
 
 Evidence and the broader container/layout analysis are recorded in
 `docs/workstreams/ui_translation/plan.md`.
 
-### UI-BTL-002: localized stage-name rectangles and width fitting
+### ui_layout_stage_select: localized stage-name rectangles and width fitting
 
 NA2 and NUN5 store the same 24 `(stage_id, index)` pairs in the same order:
 
@@ -980,7 +981,7 @@ English language table is the 24-entry rectangle range at NUN5 ELF file offset
 `min(1.0, 214.0 / width)`; copying only the rectangles would therefore preserve
 the clipping visible in NA2.
 
-`UI-BTL-002` reproduces the localized behavior without adding a jump or
+`ui_layout_stage_select` reproduces the localized behavior without adding a jump or
 overwriting a code cave. In the NA2 table, every second key word is exactly the
 matched loop index. The selected-preview consumer at BTL file offset `0x606BC`
 changes from loading that redundant word to `move s0,s1`. The small-thumbnail
@@ -1010,10 +1011,10 @@ stage keys remain unchanged and match NUN5, every rectangle equals the official
 English table, every scale equals the NUN5 formula, all changed bytes stay
 inside declared ranges, and the 2,237,184-byte BTL size is unchanged. The user
 then compared the integrated Slot 3 result with NUN5 and accepted Stage Select
-as fixed, promoting `UI-BTL-002` to `runtime_proven`. A later guarded paired
+as fixed, promoting `ui_layout_stage_select` to `runtime_proven`. A later guarded paired
 Slot 5 capture proves the added OK/Back anchors match the NUN5 footer.
 
-### UI-ELF-001: localized character-name atlas rectangles
+### ui_layout_character_name_rectangles: localized character-name atlas rectangles
 
 The character-name renderers do not obtain their rectangles from
 `CHARSEL1.CCS`. NA2 `FUN_0037d410` reads one 96-entry table at EE `0x005D4E70`
@@ -1035,7 +1036,7 @@ NUN5's counterpart of NA2 `FUN_0037d470`. An earlier test build copied that
 range and produced the stacked name fragments captured at runtime; the
 localized accessor and call-site pairs disprove that source selection.
 
-### UI-ELF-002: localized Options label rectangles
+### ui_layout_options_labels: localized Options label rectangles
 
 Importing the complete NUN5 `OPTION.CCS` is not sufficient by itself. The main
 Options renderer supplies atlas rectangles from the boot ELF:
@@ -1049,11 +1050,11 @@ Options renderer supplies atlas rectangles from the boot ELF:
 Both renderers use the same five screen positions and `0.9` scales. Their arrow
 rectangle is also byte-identical. The remaining difference is the 96-byte
 rectangle block: five menu labels, an eight-byte zero separator, and six
-difficulty labels. `UI-ELF-002` copies that complete official English block from
+difficulty labels. `ui_layout_options_labels` copies that complete official English block from
 NUN5 ELF file offset `0x4DDD10` to NA2 ELF file offset `0x4D53E0`. Source and
 destination ranges are hash guarded and the ELF size is preserved.
 
-### UI-ELF-003: difficulty-value sprite routing
+### ui_layout_difficulty_sprite: difficulty-value sprite routing
 
 The NUN5 rectangles alone fix the five main Options labels, but the widest
 difficulty value still fragments unless it is drawn through the same alternate
@@ -1062,7 +1063,7 @@ sprite object used by NUN5. The homologous renderers differ in one predicate:
 - NA2 `FUN_0038c160` selects the alternate object for indices `0` and `5`;
 - NUN5 `FUN_0039dba0` selects it for indices `0`, `4`, and `5`.
 
-At NA2 EE `0x0038C30C` (ELF file offset `0x28C40C`), `UI-ELF-003`
+At NA2 EE `0x0038C30C` (ELF file offset `0x28C40C`), `ui_layout_difficulty_sprite`
 replaces the existing `index == 5` test with `index >= 4`, while retaining the
 following `index == 0` test. For the renderer's proven valid domain `0..5`, the
 resulting set is exactly `{0, 4, 5}`. The edit changes two instructions, keeps
@@ -1073,7 +1074,7 @@ and verified the eight-byte readback. After one redraw, the corrupt selected
 value became a clean centered `INSANE`; captures of `HARD`, `EASY`, and
 `SIMPLE` also rendered cleanly, including both arrow endpoints.
 
-### UI-BTL-004: localized Practice Settings prompt layout
+### ui_layout_practice_settings_prompt: localized Practice Settings prompt layout
 
 The VS-screen Practice Settings prompt needs both the English atlas rectangle
 and the localized horizontal anchor. The corresponding renderers provide exact
@@ -1084,7 +1085,7 @@ cross-build evidence:
 - NUN5 `FUN_006d4170` calls localized accessor `FUN_003d46c0`, whose English
   table resolves to ELF file offset `0x4DE0E0`, and passes X=`100.0`.
 
-`UI-BTL-004` copies the official NUN5 rectangle `(0, 280, 176, 24)` from its
+`ui_layout_practice_settings_prompt` copies the official NUN5 rectangle `(0, 280, 176, 24)` from its
 ELF and copies the structurally equivalent `lui v0,0x42c8` instruction from
 NUN5 BTL file offset `0xD500`. Both edits are exactly guarded, preserve BTL
 size, and remain confined to the Practice Settings path.
@@ -1094,10 +1095,10 @@ After one redraw, the sprite object reported X=`276`, Y=`356`, size `176x24`,
 and UV `(0,280)`. The archived screenshot shows the full label and Square icon
 at the same bottom-left position as the NUN5 target.
 
-### UI-BTL-005: localized VS confirmation labels, inputs, and prompts
+### ui_layout_vs_confirmation: localized VS confirmation labels, inputs, and prompts
 
 The battle-confirmation Customize screen retains Japanese regional rectangle
-tables even after importing the NUN5 VS texture container. `UI-BTL-005` copies
+tables even after importing the NUN5 VS texture container. `ui_layout_vs_confirmation` copies
 the exact English NUN5 rectangles for:
 
 - `Customize Jutsu` and its Circle prompt;
@@ -1116,7 +1117,7 @@ is drawn at the official X=`94` through the constant at `0xCFD8`.
 
 NUN5 passes X=`260` for `Customize Jutsu`. The final guarded test proves that
 this exact value is valid once the open-selector state is corrected: the full
-Circle prompt remains on-screen and matches NUN5. `UI-BTL-005` therefore copies
+Circle prompt remains on-screen and matches NUN5. `ui_layout_vs_confirmation` therefore copies
 only the X-immediate halfword from NUN5 BTL `0xD6A8` into NA2 `0xCF70`, keeping
 NA2's required `v0` destination register rather than copying an incompatible
 whole instruction.
@@ -1145,13 +1146,13 @@ them and exposed unrelated atlas data. No such hook is retained.
 This patch changes texture selection, placement, and submenu visibility only.
 It does not change or evaluate command-name text or font rendering.
 
-### UI-BTL-006: localized Round label layout
+### ui_layout_round_label: localized Round label layout
 
 NA2 constructs `Round` from two Japanese 38x38 glyph rectangles at X=`216`,
 Y=`44`, and scale `1.4`. NUN5 uses one English 94x30 rectangle at X=`256`,
 Y=`24`, with scale `1.2` and a Y=`64` render constant.
 
-`UI-BTL-006` copies the exact NUN5 rectangle from ELF file offset `0x4DE110`,
+`ui_layout_round_label` copies the exact NUN5 rectangle from ELF file offset `0x4DE110`,
 zeros the unused second-glyph record, ports the differently stored X/Y fields,
 and copies the four structurally equivalent scale/render instruction ranges
 from NUN5 BTL into NA2 offsets `0xCCB4`, `0xCD5C`, `0xCD64`, and `0xCDA4`.
@@ -1159,7 +1160,7 @@ Eight guarded live writes were read back exactly. The resulting one-part label
 matches the paired NUN5 capture; small frame-to-frame outline differences are
 the screen's normal pulsation.
 
-### UI-BTL-007: localized open Jutsu-selector arrows
+### ui_layout_jutsu_selector_arrows: localized open Jutsu-selector arrows
 
 The open Jutsu selector is a separate state from the accepted closed
 confirmation screen. NA2 `FUN_006bd4d0` incorrectly retains the two horizontal
@@ -1194,7 +1195,7 @@ no collateral label changes. The user accepted the paired result as perfect;
 confidence and runtime status are verified. No label text, command text, font,
 or gameplay-input data is changed.
 
-### UI-BTL-008: localized command-list scroll arrows
+### ui_layout_command_scroll_arrows: localized command-list scroll arrows
 
 Command Menu and Command Chart share the same scroll-indicator draw method:
 NA2 `FUN_00878820` and NUN5 `FUN_00894f60`. Both render one `TEX_xselect`
@@ -1203,7 +1204,7 @@ Slots 5 and 6 reuse the same sprite object, so their green-garbage defect has
 one data root rather than two independent layouts.
 
 NA2 BTL offset `0x21D648` selects `(194,195,20,20)`, which samples green text
-fragments from the imported NUN5 atlas. `UI-BTL-008` copies the exact NUN5 BTL
+fragments from the imported NUN5 atlas. `ui_layout_command_scroll_arrows` copies the exact NUN5 BTL
 record `(1,225,20,22)` from `0x2214D8`, selecting the orange vertical-scroll
 triangle. The existing positions and pulse are retained; small capture-to-
 capture Y differences remain normal animation. The user verified the integrated
@@ -1213,10 +1214,10 @@ as good, promoting the shared correction to runtime-proven/verified.
 Detailed function, address, side-effect, and negative-result evidence for both
 patches is preserved in `docs/knowledge/localization/ui/battle.md`.
 
-### UI-BTL-009: localized paired item-status labels
+### ui_layout_item_status_paired: localized paired item-status labels
 
 Paired item effects use two foreground rows, a shared bubble, and a three-rank
-offset table. `UI-BTL-009` copies the official NUN5 records `0x8E..0x94` and
+offset table. `ui_layout_item_status_paired` copies the official NUN5 records `0x8E..0x94` and
 `0x9B..0x9C` plus the complete rank table. The remaining writes are an
 NA2-specific ABI port: they add anisotropic sprite scaling, preserve NA2's
 object layout, and reproduce the donor width normalization, centering, row
@@ -1235,14 +1236,14 @@ all four item classes. Its first NA2 port correctly preserved the NUN5 scale in
 `f22` and alpha in `f21`, but the final centered-offset calculation still
 negated `f21`. At partial alpha, that scaled each local half-width/half-height
 offset and made the foreground appear to slide into and out of a stationary
-bubble. `UI-BTL-009-30` copies NUN5's exact `neg.s f2,f22` instruction from
+bubble. `ui_layout_item_status_paired_27` copies NUN5's exact `neg.s f2,f22` instruction from
 ELF file `0x284418` to NA2 file `0x2772F4`. Alpha continues to fade normally,
 while local geometry remains constant; fully visible placement is unchanged.
 
-### UI-BTL-010: localized numeric item-status labels
+### ui_layout_item_status_numeric: localized numeric item-status labels
 
 Numeric item effects share one class for Health, Chakra, Recovery, and their
-one-, two-, and three-digit values. `UI-BTL-010` copies the complete official
+one-, two-, and three-digit values. `ui_layout_item_status_numeric` copies the complete official
 NUN5 records `0x81`, `0x82`, and `0x8D`, then routes the NA2 numeric top and
 lower label callers through the ABI-safe item helper with the donor anchors and
 rotation behavior.
@@ -1259,10 +1260,10 @@ Detailed function boundaries, file/runtime mappings, reconstructed behavior,
 side effects, evidence, and the rejected whole-function donor transplant are
 preserved in `docs/knowledge/localization/ui/battle.md`.
 
-### UI-BTL-011: localized single item-status labels
+### ui_layout_item_status_single: localized single item-status labels
 
 Single item effects use one foreground label and the same common bubble
-controller as the paired and numeric classes. `UI-BTL-011` copies the complete
+controller as the paired and numeric classes. `ui_layout_item_status_single` copies the complete
 official NUN5 records `0x96..0x9A`. The object-code-to-record tables are already
 identical in NA2 and NUN5, so no mapping data is authored or duplicated.
 
@@ -1282,7 +1283,7 @@ captured set, so its branch is statically verified from both complete draw
 functions and the patch is runtime-proven with high confidence rather than
 marked verified.
 
-### UI-BTL-012: localized fixed item-status labels
+### ui_layout_item_status_fixed: localized fixed item-status labels
 
 The fixed two-label item class always draws records `0x8E` and `0x8D`. Those
 official rectangles are already supplied by the donor-backed paired and numeric
@@ -1290,7 +1291,7 @@ item patches, so this patch adds no texture data or duplicate table copy.
 
 NA2 placed the two records with fixed regional offsets `(+38,+11)` and
 `(+18,+25)`. NUN5 centers each record from its live rectangle width and uses Y
-offsets `+20` and `+37`. `UI-BTL-012` routes both NA2 draw sites through the
+offsets `+20` and `+37`. `ui_layout_item_status_fixed` routes both NA2 draw sites through the
 existing runtime-proven shared item-width helper, with zero X bias and local Y
 biases `+2` and `+17` over that helper's established `+18/+20` row bases. The
 fixed renderer ignores the helper's angle output, preserving its original
@@ -1304,7 +1305,7 @@ object delta is the expected one-frame pulse/update difference. Because the
 checkpoint uses a transformed live object rather than a naturally spawned
 fixed notification, the runtime-proven patch retains high confidence.
 
-### UI-BTL-013: localized battle Mash prompt rectangles
+### ui_layout_mash_prompts: localized battle Mash prompt rectangles
 
 The battle prompt object stores its main label ID at `+0x2F` and supplemental
 controller-glyph IDs from `+0x30`. NUN5 routes main IDs below seven through a
@@ -1312,7 +1313,7 @@ regional boot-ELF accessor; NA2 directly indexes a Japanese seven-record table
 inside `BTL.BIN`. With the NUN5 battle texture already imported, NA2's first
 record samples the English Mash artwork vertically and clips it.
 
-`UI-BTL-013` copies the complete 56-byte official NUN5 English table from boot
+`ui_layout_mash_prompts` copies the complete 56-byte official NUN5 English table from boot
 ELF offset `0x4DE630` to NA2 BTL offset `0x1DB730`. It is one exact guarded
 donor edit: no literal replacement, code hook, object-layout change, or stored
 asset is required. A paired guarded savestate test rendered both Mash labels
@@ -1325,7 +1326,7 @@ boundary. Exact renderer functions, address mappings, object fields, records,
 and negative evidence are preserved in
 `docs/knowledge/localization/ui/battle.md`.
 
-### UI-BTL-014: localized Victory character-name layouts
+### ui_layout_victory_names: localized Victory character-name layouts
 
 NA2 and NUN5 use homologous Victory update and draw functions, but their
 rectangle-provider ABIs differ. NA2 BTL returns pointers to 24-byte prebuilt
@@ -1334,7 +1335,7 @@ fills its width from the localized boot-ELF table. For Naruto, NUN5 atlas
 widths `156, 192` become renderer widths `154, 190`; NA2's records contain
 `236, 173`.
 
-`UI-BTL-014` keeps the NA2 pointer-return ABI and generates all 78 unique
+`ui_layout_victory_names` keeps the NA2 pointer-return ABI and generates all 78 unique
 compatible records from the exact NUN5 templates plus each English width minus
 the renderer's two-pixel border. Zero-only NUN5 aliases remain untouched, and
 all shared-pointer rows agree whenever they provide a nonzero width. Direct
@@ -1351,13 +1352,13 @@ file/runtime mappings, reconstruction, alias evidence, and the remaining
 normal-entry runtime requirement are preserved in
 `docs/knowledge/localization/ui/victory.md`.
 
-### UI-BTL-015: localized settings footer anchors
+### ui_layout_settings_footers: localized settings footer anchors
 
 The Battle and Practice Settings footers are rendered inside BTL rather than
 by the shared resident Options functions. NA2 `FUN_008807a0` and
 `FUN_00882250` draw Select at X=`230`, while the homologous NUN5
 `FUN_0089d280` and `FUN_0089f130` draw both Select components at X=`200`.
-`UI-BTL-015` therefore copies all four exact same-register NUN5 instructions.
+`ui_layout_settings_footers` therefore copies all four exact same-register NUN5 instructions.
 
 NUN5 loads nominal X=`400`/`470` for OK/Back and then adds per-call runtime
 offsets `-12`/`-8`. NA2 has no equivalent additions. Copying only the nominal
@@ -1371,11 +1372,11 @@ positions without changing the accepted Customize Jutsu footer. Exact function
 ranges, file/runtime mappings, reconstructed behavior, and evidence are
 preserved in `docs/knowledge/localization/ui/battle.md`.
 
-### UI-BTL-016: localized Battle Results summary layout
+### ui_layout_battle_results: localized Battle Results summary layout
 
 The whole NUN5 `XNINKA.CCS` import supplies the English Battle Results artwork,
 but NA2 retained Japanese result-label rectangles, moving-cloud widths, footer
-records, title offset, and rank-stamp geometry. `UI-BTL-016` imports the
+records, title offset, and rank-stamp geometry. `ui_layout_battle_results` imports the
 complete six-record NUN5 result table, paired title/cloud rectangles, Display
 Details rectangle, and complete five-cloud motion/geometry table. The five
 cloud positions, speeds, and heights were already equal; the NUN5 widths keep
@@ -1383,12 +1384,12 @@ each moving object inside the localized cloud strip instead of traversing
 animated `Ninja Song` letters.
 
 The shared five-value rank selector reads the complete NUN5 English rectangle
-table installed by `UI-ELF-004`, while the visible layer samples five
+table installed by `ui_layout_battle_hud_name_rectangles`, while the visible layer samples five
 corresponding 44-row cells in the packed `XNINKA.CCS` label column. The earlier
 authored centered-renderer replacement and whole-column upward translation
 obscured the untouched per-value behavior. At the user's request, both
 rank-specific corrections are disabled for matched baseline capture:
-`UI-BTL-016-11` is absent and `UI-NINKA-001` imports the complete official
+`ui_layout_battle_results_11` is absent and `UI-NINKA-001` imports the complete official
 NUN5 container with the unmodified donor atlas. Every other Battle Results
 layout edit remains active.
 
@@ -1402,7 +1403,7 @@ ranges, file/runtime mappings, reconstruction, live object fields, side
 effects, and negative evidence are preserved in
 `docs/knowledge/localization/ui/battle.md`.
 
-### UI-ETC-002: localized Collection submenu layout
+### ui_layout_collection_submenu: localized Collection submenu layout
 
 The whole NUN5 `HOME.CCS` import supplies the complete English `Previous Page`
 and `Next Page` artwork. NA2 still draws those pixels through two ETC-owned
@@ -1411,7 +1412,7 @@ and two 118x24 source rectangles. NUN5's homologous tables use centers X=`87`
 and X=`233` and two 144x24 rectangles. The narrower NA2 rectangle clips
 `Previous Page` to `Previous Pa`.
 
-`UI-ETC-002` copies both complete tables from NUN5: 32 placement bytes from
+`ui_layout_collection_submenu` copies both complete tables from NUN5: 32 placement bytes from
 NUN5 ETC offset `0x281C0` to NA2 offset `0x2E930`, then 16 rectangle bytes from
 NUN5 offset `0x29A60` to NA2 offset `0x30A80`. Both page controls remain paired
 exactly as the original draw loop expects; no authored replacement bytes or
@@ -1449,7 +1450,7 @@ reconstruction and paired Characters/Movie/Music evidence are recorded in
 `docs/knowledge/localization/ui/collection.md`. All eight operations derive bytes from
 canonical NUN5 files and preserve ETC size. Runtime acceptance remains pending.
 
-### UI-ELF-005: localized Mode Select layout
+### ui_layout_mode_select: localized Mode Select layout
 
 The whole NUN5 `MODESEL1.CCS` import supplies the English START artwork, but
 NA2's static rectangle still selected only `(1,397,206,22)` and drew it at
@@ -1458,7 +1459,7 @@ NUN5 `FUN_003972e0` obtains rectangle `(1,393,254,26)` from localized accessor
 `FUN_003d4bc0` (English table entry at ELF offset `0x4DE318`) and draws it at
 X=`150`.
 
-`UI-ELF-005` copies that exact eight-byte rectangle into NA2 ELF offset
+`ui_layout_mode_select` copies that exact eight-byte rectangle into NA2 ELF offset
 `0x504710`. The X constant at NA2 offset `0x285F28` is an authored
 same-register port from `130` to `150`: the corresponding NUN5 instruction
 writes `v1`, while NA2's following instruction consumes `v0`, so copying the
@@ -1478,19 +1479,19 @@ The complete function mapping, behavior reconstruction, side effects, and
 donor-copy limitation are preserved in
 `docs/knowledge/localization/ui/options.md`.
 
-### UI-ELF-006: localized Controls Vibration-label rectangle
+### ui_layout_controls_vibration: localized Controls Vibration-label rectangle
 
 The whole NUN5 `CMN/GAUGE.CCS` import supplies the English `TEX_xmenu`
 artwork, but NA2's boot-ELF table still selects the Japanese rectangle
 `(1,69,42,22)` at file offset `0x4D53C0`. NUN5's localized table selects
 `(64,88,64,20)` at file offset `0x4DEA28`.
 
-`UI-ELF-006` copies that exact eight-byte NUN5 rectangle into the homologous
+`ui_layout_controls_vibration` copies that exact eight-byte NUN5 rectangle into the homologous
 NA2 table. It changes only the graphical Vibration label selection; surrounding
 OFF/On text and font rendering are outside scope. Both ranges are guarded and
 the ELF size is preserved.
 
-### UI-ELF-007: localized Character Select footer anchors
+### ui_layout_character_select_footer: localized Character Select footer anchors
 
 The complete NUN5 `CHARSEL1.CCS` import already supplies the English
 `Select Color` and `Random` artwork. Their screen positions come from the
@@ -1500,7 +1501,7 @@ boot-ELF Character Select footer compositor:
 - NUN5 homolog `FUN_003cf0d0` draws the same two records at X=`260` and
   X=`100`.
 
-`UI-ELF-007` copies the two exact NUN5 `lui v0` instructions into NA2 ELF
+`ui_layout_character_select_footer` copies the two exact NUN5 `lui v0` instructions into NA2 ELF
 offsets `0x2BC600` and `0x2BC624`. Both homologs use `v0` for these calls, so
 no register adaptation or authored literal is needed. NUN5 also adds regional
 offsets `-12`/`-8` to nominal OK/Back X=`400`/`470`; NA2 issues those separate
@@ -1512,7 +1513,7 @@ NUN5 positions within normal one-pixel pulse variance. Exact boundaries,
 mappings, reconstruction, and runtime evidence are preserved in
 `docs/knowledge/localization/ui/character_select.md`.
 
-### UI-ELF-008: localized shared common prompts
+### ui_layout_common_prompts: localized shared common prompts
 
 The complete NUN5 `CMN/GAUGE.CCS` import supplies the English common-prompt
 artwork, but NA2 `FUN_0037c980` still centers its case-4 Cancel prompt using
@@ -1520,7 +1521,7 @@ three Japanese rectangle widths totaling 182 logical pixels. NUN5 homolog
 `FUN_0038bb10` uses localized records 6, 4, and 5 totaling 80 pixels around
 the same caller anchor.
 
-`UI-ELF-008` copies those three exact NUN5 records into the corresponding NA2
+`ui_layout_common_prompts` copies those three exact NUN5 records into the corresponding NA2
 static slots: the localized Triangle icon, 56-pixel Cancel label, and empty
 tail. The shared correction therefore applies to every case-4 common-prompt
 caller rather than compensating only the Options screen. A guarded patched
@@ -1529,7 +1530,7 @@ one pixel of NUN5 in both axes, consistent with normal pulse timing.
 
 Battle Results exposed the same shared compositor's record 2: NA2 retained a
 70-pixel Next label while NUN5 uses the complete 66-pixel English record.
-The fourth edit copies that exact NUN5 record; `UI-BTL-016` supplies its NUN5
+The fourth edit copies that exact NUN5 record; `ui_layout_battle_results` supplies its NUN5
 screen anchor.
 
 The Options-root caller also exposes the same regional footer-anchor difference
@@ -1554,7 +1555,7 @@ nominal table at ETC `0x2E7E0`. NUN5 homolog `FUN_006c7250` applies
 state-specific localized geometry: Cross `-12`, width-derived Play `-24`,
 Triangle/Back `-8`, and a width-derived Stop layout. Its GP-relative regional
 globals and language accessors are not ABI-compatible with NA2, so
-`UI-ELF-008` ports the arithmetic through one four-instruction tail-call
+`ui_layout_common_prompts` ports the arithmetic through one four-instruction tail-call
 wrapper in load-preserved MWO3 header padding. The helper's four compositor
 calls use exact deltas `-12`, `-24`, `-8`, and `-2`; the Play and Stop labels
 use local X offsets `-59` and `-40`. State 4 also copies the exact NUN5
@@ -1571,7 +1572,7 @@ preserved in `docs/knowledge/localization/ui/options.md`,
 `docs/knowledge/localization/ui/collection.md`, and
 `docs/knowledge/localization/ui/battle.md`.
 
-### UI-ELF-009: shared Controls and Music footer anchors
+### ui_layout_options_footers: shared Controls and Music footer anchors
 
 The complete NUN5 common-UI import supplies the localized Select footer
 artwork, but both NA2 Options renderers place the paired Select icon and legend
@@ -1580,7 +1581,7 @@ at X=`230`. Their NUN5 homologs place both calls at X=`200`:
 - NA2 Controls `FUN_00388b90` / NUN5 `FUN_0039a450`;
 - NA2 Music Options `FUN_0038a1f0` / NUN5 `FUN_0039bb00`.
 
-`UI-ELF-009` copies all four exact NUN5 `lui v0,0x4348` anchor instructions
+`ui_layout_options_footers` copies all four exact NUN5 `lui v0,0x4348` anchor instructions
 over the corresponding guarded NA2 `lui v0,0x4366` instructions. The broad
 correction keeps each icon and legend paired, applies consistently to both
 screens, and leaves vertical placement and internal spacing unchanged. Both
@@ -1606,32 +1607,32 @@ python -m na2_patcher.modules.binary_patcher.engine plan `
   --package na2_patcher/features/localization/binary_patcher `
   --root na2=@source_na2 `
   --root nun5=@source_nun5 `
-  --patch UI-BTL-001 `
-  --patch UI-BTL-002 `
-  --patch UI-BTL-003 `
-  --patch UI-BTL-004 `
-  --patch UI-BTL-005 `
-  --patch UI-BTL-006 `
-  --patch UI-BTL-007 `
-  --patch UI-BTL-008 `
-  --patch UI-BTL-009 `
-  --patch UI-BTL-010 `
-  --patch UI-BTL-011 `
-  --patch UI-BTL-012 `
-  --patch UI-BTL-013 `
-  --patch UI-BTL-014 `
-  --patch UI-BTL-015 `
-  --patch UI-BTL-016 `
-  --patch UI-ETC-002 `
-  --patch UI-ELF-001 `
-  --patch UI-ELF-002 `
-  --patch UI-ELF-003 `
-  --patch UI-ELF-004 `
-  --patch UI-ELF-005 `
-  --patch UI-ELF-006 `
-  --patch UI-ELF-007 `
-  --patch UI-ELF-008 `
-  --patch UI-ELF-009
+  --patch ui_layout_ultimate_jutsu_label `
+  --patch ui_layout_stage_select `
+  --patch ui_layout_battle_hud_names `
+  --patch ui_layout_practice_settings_prompt `
+  --patch ui_layout_vs_confirmation `
+  --patch ui_layout_round_label `
+  --patch ui_layout_jutsu_selector_arrows `
+  --patch ui_layout_command_scroll_arrows `
+  --patch ui_layout_item_status_paired `
+  --patch ui_layout_item_status_numeric `
+  --patch ui_layout_item_status_single `
+  --patch ui_layout_item_status_fixed `
+  --patch ui_layout_mash_prompts `
+  --patch ui_layout_victory_names `
+  --patch ui_layout_settings_footers `
+  --patch ui_layout_battle_results `
+  --patch ui_layout_collection_submenu `
+  --patch ui_layout_character_name_rectangles `
+  --patch ui_layout_options_labels `
+  --patch ui_layout_difficulty_sprite `
+  --patch ui_layout_battle_hud_name_rectangles `
+  --patch ui_layout_mode_select `
+  --patch ui_layout_controls_vibration `
+  --patch ui_layout_character_select_footer `
+  --patch ui_layout_common_prompts `
+  --patch ui_layout_options_footers
 ```
 
 ## Compact external strings
@@ -1731,7 +1732,7 @@ enabled by default when Localization is enabled. The historical v1
 autofit/layout implementation was removed after the independent v2
 reimplementation made all ten of its resident fragments unreachable:
 
-- `font_nun5_glyphs` installs native 14x20 NUN5 raster geometry and metrics
+- `font_glyphs_native` installs native 14x20 NUN5 raster geometry and metrics
   for same-semantic English cells. Unsupported printable punctuation is
   reconstructed from clean NA2, preserving 95/95 printable-ASCII coverage.
   The shortened 123-cell secondary atlas is locally guarded. Its metric rows
@@ -1742,21 +1743,22 @@ reimplementation made all ten of its resident fragments unreachable:
   emitter keeps descriptor width on the primary/fullwidth path and uses
   descriptor height only for the secondary quad, restoring its intended
   24x28 presentation without widening it.
-- `font_modal_alignment` loads independently measured X positions for the
+- `font_layout_character_modal` loads independently measured X positions for the
   five character-select `Back to Game Mode Screen` rows while retaining the
   accepted local Y behavior. Its selected-path compensation prevents the
   shadow draw from shifting visible ink.
-- `font_save_load_ascii_digits` routes only the six Save/Load numeric blocks
+- `font_numeric_save_load` routes only the six Save/Load numeric blocks
   through compiled C and keeps their call sites as argument setup plus
   symbolic hooks. The first C entry returns the record's year for the proven
   `s6` lifetime while rendering day; later entries preserve EU `DD/MM/YYYY`,
   two-digit time, timer math, and NUN5's 99-hour cap. The Save/Load-only ASCII
-  colon remains a local declarative constant.
-- `font_battle_settings_ascii_digits` routes only the ordinary Battle Settings
+  colon remains the local declarative `font_numeric_save_load_separator`
+  patch.
+- `font_numeric_battle_settings` routes only the ordinary Battle Settings
   Time branch through the compiled C decimal entry. Its adjacent exact guard
   preserves the separate value-100 infinity path and leaves the other five
   rows and every unrelated numeric caller unchanged.
-- `font_ninja_song_ascii_numbers` redirects exactly five guarded BTL formatter
+- `font_numeric_ninja_song` redirects exactly five guarded BTL formatter
   calls shared by the supplied ss2–ss5 Ninja Song screens to one resident
   ASCII-decimal helper. It preserves NUN5's right-aligned widths 3, 3, 5, and
   4 plus the unpadded inline mode. The reachable multiplication separator
@@ -1787,7 +1789,7 @@ session, publishes it only around one native callback, and restores the prior
 session pointer, renderer tracking, horizontal scale and callback result
 through one cleanup path.
 
-The first thin caller layer, `font_v2_controls`, redirects the shared
+The first thin caller layer, `font_layout_controls`, redirects the shared
 first-eight-label call in Control Settings `FUN_003885b0`. It builds NUN5's 128-unit box, keeps
 fitting labels at scale `1`, applies `128 / 178` to
 `Ultimate Jutsu Prep`, derives NUN5's exact box left as the native NA2 caller
@@ -1797,7 +1799,7 @@ runtime-proven from the matched review and real title-to-Load transition. Its
 ninth call at ELF file `0x2888D4` draws the unrelated vibration row and remains
 native.
 
-`font_on_off_context_split` now contains only the user-verified Practice
+`font_layout_on_off_context` now contains only the user-verified Practice
 Settings split. Its three BTL row-table pointers at files `0x20B498`,
 `0x20B49C`, and `0x20B4A0` select the existing title-case table at runtime
 `0x00604658`, preserving the original Off-then-On selector order. Canonical
@@ -1816,7 +1818,7 @@ quit scope is inactive, exact runtime text pointers `0x006059F0` and
 caller remains a native tail call, so this adds no overlapping hook and does
 not alter the accepted quit-confirmation behavior.
 
-The second thin caller layer, `font_v2_titles`, replaces only two guarded BTL
+The second thin caller layer, `font_layout_titles`, replaces only two guarded BTL
 draw calls: Command Chart file `0x1C6A28` and Practice file `0x1C4B98`.
 Two explicit mode entrypoints tail-call one configurable title adapter, which
 uses the proven 288-by-20 and 352-by-20 boxes respectively and delegates
@@ -1828,7 +1830,7 @@ is enabled and runtime-proven in isolated matched Command Chart and
 Practice captures. The user accepted the Command Chart result on 2026-07-27;
 the Practice title result remains agent-validated and awaiting acceptance.
 
-The dedicated Pause Controls layer, `font_v2_pause_controls_list`, replaces the
+The dedicated Pause Controls layer, `font_layout_pause_controls`, replaces the
 normal list-row call at BTL file `0x1C97D8` and the selected list-row call at
 `0x1C9794`. Their clean guards are the native `jal 0x00382470` and
 `jal 0x003827A0` instructions plus NOP delay slots. Both adapters use the same
@@ -1841,7 +1843,7 @@ so the layer is `runtime_proven`. It does not restore the retired v1
 `font_layout_wrappers` multiplexer or select any ss4 confirmation-body or
 Yes/No call.
 
-The dedicated ss4 layer, `font_v2_quit_confirmation`, authors no newline in
+The dedicated ss4 layer, `font_layout_quit_confirmation`, authors no newline in
 canonical translation mappings. Its exact BTL list call at file `0x1C4048`
 publishes a transient scope only around native `0x00383600`; the selected and
 unselected calls inside that helper are redirected at ELF files `0x283914`
@@ -1862,7 +1864,7 @@ content and corrected it in `f4f12f6`. The user verified the combined
 fresh-build result across all four Battle/Practice and Game Mode/Character
 Select combinations on 2026-07-27, so the layer is `runtime_proven`.
 
-The separate `font_v2_special_controls_body` layer completes the explanatory
+The separate `font_layout_special_controls_body` layer completes the explanatory
 block on the same ss1 Special Controls screen. Exact telemetry identifies only
 the native UI-body call at BTL file `0x1C3D38` (runtime `0x00877C38`, clean
 guard `jal 0x003825B0` plus NOP). NUN5 retains T1880 as one unbroken source
@@ -1875,7 +1877,7 @@ body caller. An exact-guarded converted ss1 capture matches NUN5's break and
 line origins, so the layer is `runtime_proven`; user acceptance of the whole
 ss1 case remains separate.
 
-The third thin caller layer, `font_v2_practice_explanations`, replaces only the
+The third thin caller layer, `font_layout_practice_explanations`, replaces only the
 Practice per-token explanation loop at BTL file `0x1C4BA0`. It assembles one
 bounded 512-byte mixed text/tag buffer, applies unlimited word wrapping inside
 the proven 364-by-48 box, and installs call-local metric and draw callbacks for
@@ -1919,7 +1921,7 @@ Battle Settings value, and its separate 100/infinity path. Both compiled-C
 families are runtime-proven, and permanent coverage protects the linking-call
 contract independently of payload addresses.
 
-The live v2 auto-fit and layout components require `font_nun5_glyphs` because
+The live v2 auto-fit and layout components require `font_glyphs_native` because
 their positions and fit decisions are tuned to its metrics. They otherwise
 remain independently selectable through their patch rows. Setting a resident
 patch's `enabled=0`, or setting its owning group's `enabled=0`, removes its
@@ -1929,7 +1931,7 @@ so obsolete implementations must not remain as declarations.
 The rejected shared `font_vertical_quad_height` component was removed from
 executable inputs because it stretched both axes to 28x28. Its exact negative
 result remains in `docs/knowledge/localization/font/README.md` and Git history;
-the accepted secondary-only height helper is part of `font_nun5_glyphs`.
+the accepted secondary-only height helper is part of `font_glyphs_native`.
 
 Matched Controls, Practice, Save/Load, and character-modal captures established
 the historical rendering behavior before its resident relocation. The final

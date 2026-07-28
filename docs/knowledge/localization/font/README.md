@@ -28,7 +28,7 @@ unstable. These five module/patch rows were disabled at that boundary:
 - resident `font_controls_auto_fit`;
 - resident `font_layout_wrappers`.
 
-`font_nun5_glyphs` remains enabled. Binary `font_modal_alignment` also remains
+`font_glyphs_native` remains enabled. Binary `font_layout_character_modal` also remains
 enabled because it is the independently reviewed Character Select `Back to
 Game Mode Screen` row alignment, not the Save/Load lower modal described
 below. Their confirmed formulas and rejected integration behavior remained
@@ -182,7 +182,7 @@ Confidence is **high** for the pointer guards, hook isolation, and placement.
 The earlier identification of `FUN_003885B0` and its call at runtime
 `0x003887D4` / ELF file `0x2888D4` as this ss1 modal was incorrect. Retained
 telemetry identifies that path as Control Settings, with the ninth call drawing
-its vibration row. The provisional second `font_v2_controls` hook is removed;
+its vibration row. The provisional second `font_layout_controls` hook is removed;
 the runtime evidence is a useful negative result against reusing that call site
 for Special Controls.
 
@@ -227,7 +227,7 @@ It is a new, deterministic donor built from hash-verified clean NA2 and
 official NUN5 inputs; it is not based on m01, v22/v23, the rejected semantic
 palette swap, the 10x22 resample, or a whole-file GF4 replacement.
 
-`font_nun5_glyphs` installs native NUN5 14x20 geometry and metrics for
+`font_glyphs_native` installs native NUN5 14x20 geometry and metrics for
 same-semantic English cells. Unsupported punctuation is reconstructed from
 clean NA2, retaining 95/95 printable-ASCII coverage. The 123-cell secondary
 atlas is locally bounded; packed metric rows occupy only value words of empty
@@ -335,7 +335,7 @@ branch. Every other value reaches the fullwidth formatter through the guarded
 runtime `0x008802D8`). The NUN5 homolog is `FUN_0089cbd0`, called by
 `FUN_0089d280`.
 
-`font_battle_settings_ascii_digits` changes only that ordinary-value block to
+`font_numeric_battle_settings` changes only that ordinary-value block to
 set up the value and stack buffer, then call the compiled C entry through a
 linking `jal26` runtime-injector hook. The rejected consolidated candidate used
 the same non-linking `j26` control-flow error as Save/Load; the correction
@@ -477,7 +477,7 @@ bottom = y + (float)descriptor->output_height * scale_y;
 ```
 
 The accepted NA2 secondary descriptor retains its original 24x28 output quad,
-as recorded by `font_nun5_glyphs_01`, but NA2 therefore presents its normal
+as recorded by `font_glyphs_native_01`, but NA2 therefore presents its normal
 glyph as 24x24. NUN5 uses all 28 vertical pixels. This matches the reviewed
 median two-to-three pixel height deficit and explains why the rejected
 file-offset `0x88064` experiment was wrong: changing the shared width load from
@@ -1228,7 +1228,7 @@ The accepted patch set has two independent `runtime_proven` components:
   centered origin, draws through the original helper, and restores scale
   `1.0`. The ninth `OFF` call remains on the ordinary renderer. The row origin
   changes from 48 to 50, retaining the original 26.8-unit interval.
-- `font_modal_alignment` uses measured X values `84, 79, 79, 75, 13`, moves
+- `font_layout_character_modal` uses measured X values `84, 79, 79, 75, 13`, moves
   the first four rows down one local unit, places the red row at local Y 117,
   and compensates the selected shadow path by two X units.
 

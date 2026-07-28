@@ -190,7 +190,7 @@ rejected rather than retained as a special texture-engine transform.
 
 ### Accepted draw-scoped compatibility port
 
-`UI-VS-001` remains a byte-for-byte whole NUN5 donor. `UI-BTL-007` replaces the
+`UI-VS-001` remains a byte-for-byte whole NUN5 donor. `ui_layout_jutsu_selector_arrows` replaces the
 now-unwanted horizontal blocks at file `0x9ABC..0x9B23` with a branch over a
 compact helper stored inside those same dead blocks. The main path resumes at
 file `0x9B38`; no shared BTL-header cave is used. The upper and lower paths copy
@@ -244,7 +244,7 @@ NUN5's boot-ELF table at file `0x4DE9F0` (runtime `0x005DE870`) contains the
 complete Cross/OK `(1,1,56,22)` and Triangle/Back `(1,25,64,22)` records. NA2's
 homologous table at file `0x4D4790` (runtime `0x005D4690`) instead contains two
 70x22 regional records and `FUN_0037c980` optionally draws a separate input
-glyph before each label. `UI-BTL-005` copies the complete 16-byte NUN5 table and
+glyph before each label. `ui_layout_vs_confirmation` copies the complete 16-byte NUN5 table and
 sets the two call-site glyph arguments to zero at BTL `0xD014` and `0xD038`.
 
 The wrapper implementations are not byte-equivalent: their queued-sprite
@@ -303,7 +303,7 @@ With the imported NUN5 `TEX_xselect`, the NA2 rectangle selects green text
 fragments, while the NUN5 rectangle selects the orange vertical-scroll
 triangle. Paired Slots 5 and 6 reuse the same Current object at `0x00E6A500`
 and the same NUN5 object at `0x00DEA000`; only their pulse-dependent Y position
-differs. `UI-BTL-008` therefore performs one exact eight-byte NUN5 BTL copy.
+differs. `ui_layout_command_scroll_arrows` therefore performs one exact eight-byte NUN5 BTL copy.
 No code, position, pulse, command text, or font data is changed.
 
 Evidence: paired Slots 5 and 6 screenshots and EE memory, identical live object
@@ -346,7 +346,7 @@ drawPairForeground(layout.x, layout.y, widthScale, 1.0f, layout.rotation);
 NUN5 carries independent horizontal and vertical scale values through its
 sprite call. NA2's homolog originally reused one value and its object offset
 `+0x40` is a next pointer rather than NUN5's scale field. Copying the NUN5
-implementation wholesale would corrupt the NA2 object chain. `UI-BTL-009`
+implementation wholesale would corrupt the NA2 object chain. `ui_layout_item_status_paired`
 therefore ports the anisotropic renderer contract into NA2's resident renderer
 and uses verified zero padding at BTL file `0x2119E4..0x211C1F` for ABI-safe
 helpers and constants. Callers pass derived values without changing the NA2
@@ -402,7 +402,7 @@ state retained those offsets through alpha `0.0`.
 The earlier hypothesis that the BTL wrapper passed its anisotropic arguments
 in the wrong order was disproven: changing that order moved the bubbles and
 did not correct the foreground transition. No wrapper, object field, timing,
-atlas, or item-effect change is needed. `UI-BTL-009-30` therefore copies only
+atlas, or item-effect change is needed. `ui_layout_item_status_paired_27` therefore copies only
 the exact four-byte NUN5 instruction. Confidence is **verified** from both
 preserved ELF exports, exact clean-file bytes, paired saved-memory fields, and
 fresh isolated runtime captures.
@@ -472,7 +472,7 @@ void drawTopLabel(ItemObject *item, Vec4 position, int x, int y) {
 The NUN5 digit path first establishes a negative-50 X origin and then adds
 `14/23/32`, `18/28`, or `24` for three-, two-, or one-digit values. NA2's
 object layout and renderer call ABI differ, so copying the complete NUN5
-functions is unsafe. `UI-BTL-010` instead:
+functions is unsafe. `ui_layout_item_status_numeric` instead:
 
 - imports the three exact NUN5 records;
 - calls the existing NA2-compatible item helper with the NUN5 `22/20` and
@@ -532,7 +532,7 @@ The five object-code maps are byte-identical:
 | `0x13` | `0x97` |
 | `0x12` | `0x96` |
 
-`UI-BTL-011` therefore copies only the complete official NUN5 record range
+`ui_layout_item_status_single` therefore copies only the complete official NUN5 record range
 `0x96..0x9A`, from NUN5 ELF file `0x4B8758..0x4B8793` to NA2 ELF file
 `0x4B1268..0x4B12A3`. No authored texture rectangle or mapping row is needed.
 
@@ -620,8 +620,8 @@ the preserved Ghidra labels remain `0x40` below the live addresses.
 | Second adapted draw block | BTL file `0x5B1F0`, live `0x0070F0F0` | behavior inside `FUN_00724570` |
 
 The class always draws record `0x8E` followed by record `0x8D`. Their complete
-official NUN5 rectangles are already imported by `UI-BTL-009` and
-`UI-BTL-010`; `UI-BTL-012` therefore contains only two NA2 ABI adaptations and
+official NUN5 rectangles are already imported by `ui_layout_item_status_paired` and
+`ui_layout_item_status_numeric`; `ui_layout_item_status_fixed` therefore contains only two NA2 ABI adaptations and
 no new texture or table donor.
 
 ### Reconstructed behavior
@@ -647,7 +647,7 @@ NUN5 whole-function body cannot be copied safely because its fixed object owns
 a scale at `+0x40`, where NA2 stores the next-object pointer, and it calls a
 NUN5-only width-query helper.
 
-The NA2 port instead reuses the runtime-proven `UI-BTL-009` width helper. Both
+The NA2 port instead reuses the runtime-proven `ui_layout_item_status_paired` width helper. Both
 call sites pass zero X bias. The first selects the helper's 18-unit top row and
 adds two units; the second selects its 20-unit lower row and adds 17 units. The
 fixed renderer does not consume the helper's angle output, so its original
@@ -717,7 +717,7 @@ const PromptRect *mainPromptRect(uint8_t promptId) {
 
 For prompt ID zero, NA2 selected `(0,24,48,24)`, which samples the imported
 English Mash artwork vertically and clips it. The official NUN5 English record
-is `(0,84,64,20)`. `UI-BTL-013` copies all seven contiguous English records
+is `(0,84,64,20)`. `ui_layout_mash_prompts` copies all seven contiguous English records
 from the canonical NUN5 boot ELF to NA2's complete BTL table. This preserves
 the existing renderer and object ABI while covering every prompt handled by
 the NUN5 regional accessor.
@@ -796,10 +796,10 @@ calling its common compositor. NA2 calls its compositor immediately after the
 nominal loads and has no equivalent additions. Copying the nominal NUN5
 instructions would therefore preserve the visible NA2 mismatch.
 
-`UI-BTL-015` expresses the equivalent behavior with NA2-specific effective
+`ui_layout_settings_footers` expresses the equivalent behavior with NA2-specific effective
 constants X=`388` and X=`462`, plus four exact X=`200` NUN5 donor copies. The
 same effective OK/Back constants are independently runtime-proven in
-`UI-BTL-005`; this patch changes only the distinct Battle and Practice Settings
+`ui_layout_vs_confirmation`; this patch changes only the distinct Battle and Practice Settings
 functions.
 
 ### State behavior, evidence, and confidence
@@ -843,7 +843,7 @@ at the top of this document.
 | Moving-cloud table | BTL file `0x1E5CC0`, live `0x00899BC0` | BTL file `0x1EE1F0`, live `0x008B4EF0` |
 | Shared rank call site | BTL file `0x634E8`, Ghidra `0x007173A8`, live `0x007173E8` | equivalent block inside `FUN_0072CA00` |
 
-`UI-ELF-004` already copies the complete official 95-entry NUN5 English
+`ui_layout_battle_hud_name_rectangles` already copies the complete official 95-entry NUN5 English
 battle-HUD rectangle table from NUN5 ELF file `0x4DEA30` to NA2 file
 `0x4B14A0`. Its first five entries are the shared rank values:
 
@@ -901,7 +901,7 @@ NUN5 reaches that behavior through localized accessor `FUN_003D5160`, width-fit
 helper `FUN_003D5700`, and centered renderer `FUN_0038ADC0`. Those functions
 and their call ABI do not exist on the NA2 path. All five English records are
 at most 112 pixels wide, so their scaled widths are already below NUN5's
-220-pixel fit ceiling. `UI-BTL-016` therefore retains NA2's imported donor
+220-pixel fit ceiling. `ui_layout_battle_results` therefore retains NA2's imported donor
 table and selector, but replaces the 208-byte inline uncentered block with a
 call to existing NA2 centered renderer `FUN_0037BD00`. The port supplies the
 NUN5 effective X/Y anchors and the same 1.35 anisotropic arguments; unused
@@ -964,7 +964,7 @@ Their scalar fields and corresponding parent scalar fields match. Two guarded
 task-clone trials then disproved the assumption that this object controls the
 visible label:
 
-- changing both the `UI-BTL-016-11` live Y constant at `0x007173E8` and the
+- changing both the `ui_layout_battle_results_11` live Y constant at `0x007173E8` and the
   object's anchor Y at `0x00C6E194` by `-16` pixels persisted in a fresh state
   but changed zero visible rank pixels;
 - changing the first donor rectangle U at `0x005B13A0` from `0` to `80` and
@@ -1003,10 +1003,10 @@ user-accepted.
 
 The user directed a clean matched capture after the whole-column trial mixed
 neighboring 44-row label cells. The canonical baseline therefore removes only
-rank-specific interventions: `UI-BTL-016-11` no longer replaces the NA2 rank
+rank-specific interventions: `ui_layout_battle_results_11` no longer replaces the NA2 rank
 renderer, and `UI-NINKA-001` now uses `transform=copy`, preserving the complete
 official NUN5 `XNINKA.CCS` payload and its atlas unchanged. The other twelve
-`UI-BTL-016` edits remain active.
+`ui_layout_battle_results` edits remain active.
 
 This reset does not reject the donor container or the five one-to-one atlas
 cells. It removes the two corrections that obscured untouched behavior so five
@@ -1085,7 +1085,7 @@ duplicate existing behavior.
 The complete official NUN5 `XNINKA.CCS` remains the internally coherent donor.
 Its stamp animation has 21 frames and no material/UV controller; its stamp
 model uses the same UVs as NA2 but English-aspect geometry. Selection belongs
-to the BTL rectangle table, not the model defaults. `UI-BTL-016-11` therefore
+to the BTL rectangle table, not the model defaults. `ui_layout_battle_results_11` therefore
 copies exactly the five NUN5 records from SLES file `0x4DDCE0` to NA2 BTL file
 `0x2100B0`. Because index 3 is copied with the other records, the existing
 delta calculation stays coherent. The edit changes no result value, selector
@@ -1123,15 +1123,15 @@ The complete paired functions provide the same result: NUN5 reads
 `iGpffff9a7c` before the nominal 395 call and the already-established
 `iGpffff9a78=-8` before the nominal 470 call. NA2 has neither addition.
 
-`UI-BTL-016-12` replaces the NA2 instruction pair at file `0x649CC`
+`ui_layout_battle_results_12` replaces the NA2 instruction pair at file `0x649CC`
 (`0x0071888C`) with X=`375` (`BB43023C00804234`).
-`UI-BTL-016-13` replaces the word at file `0x649F4` (`0x007188B4`) with
+`ui_layout_battle_results_13` replaces the word at file `0x649F4` (`0x007188B4`) with
 X=`462` (`E743023C`). These are authored same-register ports because NUN5's
 GP-relative globals are not ABI-compatible with NA2. The proven summary-footer
 call sites at `0x62B24..0x62B5B` remain untouched.
 
 A useful negative result is that the ss8 state already contained the complete
-earlier `UI-BTL-016` summary-footer bytes, including X=`287`, Y=`356`, and the
+earlier `ui_layout_battle_results` summary-footer bytes, including X=`287`, Y=`356`, and the
 localized record-2 geometry. Reapplying or changing those rows would target
 the wrong screen. The two new rows are **statically verified with high
 confidence** and remain **awaiting normal-build runtime and user validation**.

@@ -1,5 +1,6 @@
 group_id	enabled	name	description	review_notes
 font_glyphs	1	Font glyphs	Static native-font glyph, metric-table, and geometry inputs.	""
 font_layout	1	Font layout	Static font layout, contextual presentation, alignment, and formatting call-site inputs.	""
+font_numeric_formatting	1	Font numeric formatting	Static ASCII numeric-formatting data and call-site inputs.	""
 ui_layout	1	UI layout	Localized graphical UI layout and geometry.	""
 regional_input	1	Regional input	Regional menu, overlay, setup, result, and audio input behavior.	""

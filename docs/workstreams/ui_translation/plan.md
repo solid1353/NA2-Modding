@@ -88,13 +88,13 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   with 9,035 bytes of zero padding and is now the pinned `gauge` replacement.
 - The character-select renderer reads 96 eight-byte UV records from the boot ELF,
   not from `CHARSEL1.CCS`. NA2 `FUN_0037d410` uses ELF file offset `0x4D4F70`;
-  NUN5 `FUN_0038c3a0` uses `0x4DC120`. All 96 records differ. `UI-ELF-001`
+  NUN5 `FUN_0038c3a0` uses `0x4DC120`. All 96 records differ. `ui_layout_character_name_rectangles`
   copies the complete range with source and destination range-hash guards.
 - The stage-name problem combines wrong rectangles with missing width fitting.
   NA2 and NUN5 have the same 24 stage IDs and indices in the same order, but NA2
   stores Japanese rectangles inline at BTL file offset `0x20FC10`; NUN5 reads its
   English rectangles from ELF file offset `0x4DDB90` and horizontally fits any
-  source wider than 214 pixels. `UI-BTL-002` copies all 24 official rectangles
+  source wider than 214 pixels. `ui_layout_stage_select` copies all 24 official rectangles
   and stores the exact single-precision `min(1, 214/width)` result in NA2's
   redundant index word. The selected-preview consumer uses the already matched
   loop index; the thumbnail consumer recovers that index from its `row * 16`
@@ -104,7 +104,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 - The Options root renderer uses five menu-label and six difficulty-label
   rectangles from the boot ELF even when the complete NUN5 `OPTION.CCS` is
   present. NA2 and NUN5 use byte-identical screen positions, scales, and arrow
-  rectangle; their label rectangles differ. `UI-ELF-002` copies the complete
+  rectangle; their label rectangles differ. `ui_layout_options_labels` copies the complete
   guarded 96-byte NUN5 block, including its eight-byte zero separator, from ELF
   file offset `0x4DDD10` to NA2 file offset `0x4D53E0`.
 - The Collection Movie strings were already exact official NUN5 text. The
@@ -115,7 +115,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 - Preserved slot 1 showed that the imported Mode Select START art was clipped by
   NA2's static `(1,397,206,22)` rectangle and X=`130` anchor. NUN5 localized
   accessor `FUN_003d4bc0` supplies `(1,393,254,26)` and renderer
-  `FUN_003972e0` uses X=`150`. `UI-ELF-005` copies the exact rectangle and uses
+  `FUN_003972e0` uses X=`150`. `ui_layout_mode_select` copies the exact rectangle and uses
   an authored same-register immediate port for X because the two compiled
   renderers use different destination registers. A later slot-1 pair showed
   the same screen's OK/Back anchors still right of NUN5. NUN5 applies regional
@@ -321,15 +321,15 @@ production writer.
 - Slot 5, Collection Characters: whole HOME restores the English Characters
   and page-control artwork, but NA2's ETC draw tables still clipped the
   144-pixel `Previous Page` donor to 118 pixels and extended the Characters
-  rectangle into the Movie row. `UI-ETC-002` copies the paired NUN5 page
+  rectangle into the Movie row. `ui_layout_collection_submenu` copies the paired NUN5 page
   centers/rectangles plus the NUN5 category-title rectangles; runtime
   acceptance is pending.
 - Slot 6, character details: whole HOME restores the earlier accepted button
   labels and layout that the mapped import regressed.
 - Slot 7, Collection Movie: whole HOME supplies Movie and Play graphics;
-  `UI-ETC-002` now supplies their exact NUN5 source rectangles, while mapping
+  `ui_layout_collection_submenu` now supplies their exact NUN5 source rectangles, while mapping
   v35 removes the four unauthorized authored `<br>` transforms.
-- Slot 8, Controls: `UI-ELF-006` copies the exact NUN5 Vibration-label
+- Slot 8, Controls: `ui_layout_controls_vibration` copies the exact NUN5 Vibration-label
   rectangle used by the imported common UI atlas.
 - Visible text overflow/font spacing and OFF/On values are out of scope.
   Normal pulsation differences are not defects.
@@ -338,9 +338,9 @@ production writer.
 
 No static implementation question blocks the remaining-screen pass. Runtime
 visual acceptance remains with the user by explicit instruction. Slot 3 Stage
-Select passed comparison with NUN5 on 2026-07-22 and `UI-BTL-002` is now
+Select passed comparison with NUN5 on 2026-07-22 and `ui_layout_stage_select` is now
 `runtime_proven`; the guarded Mode Select slot-1 comparison likewise promotes
-`UI-ELF-005` to `runtime_proven`. Vibration and Collection submenu patches
+`ui_layout_mode_select` to `runtime_proven`. Vibration and Collection submenu patches
 stay `approved_for_test` until their respective screens pass. `LOGO.CCS`,
 upscale-pack hash mapping, and broader NUN6 comparison remain optional future
 research.
@@ -403,7 +403,7 @@ screens clip `Play` to `Pl...`. Their list wording, wrapping, and font spacing
 remain explicitly outside this texture-only pass.
 
 Static tracing identifies exact homologous records rather than authored
-placement guesses. `UI-ETC-002` copies NUN5 centers X=`87`/`233` over NA2
+placement guesses. `ui_layout_collection_submenu` copies NUN5 centers X=`87`/`233` over NA2
 X=`100`/`220`, then copies the two 144x24 page rectangles over NA2's 118x24
 rectangles. It also replaces the three NA2 category-title records with NUN5's
 exact Characters `(0,0,192,28)`, Movie `(0,28,96,28)`, and Music
@@ -437,7 +437,7 @@ The NUN5 rectangle table also widens both Zoom records and selects Zoom Out at
 its English-atlas U coordinate. Back, the character model, and all name/jutsu
 text are accepted or out of scope and remain untouched.
 
-`UI-ETC-002` now adds two exact guarded NUN5 ETC copies: the complete 64-byte
+`ui_layout_collection_submenu` now adds two exact guarded NUN5 ETC copies: the complete 64-byte
 position block from `0x283D0` to NA2 `0x2EB40`, and the complete 32-byte
 rectangle block from `0x29A90` to NA2 `0x30AB0`. No literal replacement or
 stored asset is added. The isolated eight-edit apply preserves the 200,448-byte
@@ -481,8 +481,8 @@ irrelevant for these visual screen references and must not be used to date a
 regression. Cases may be handled individually or grouped only after static
 analysis demonstrates a shared renderer or table root cause. Slot 3 Stage
 Select is runtime-proven. The integrated visual pass accepted Slots 5 and 6,
-promoting their shared `UI-BTL-008` correction to runtime-proven, while Slot 4
-rejected the first `UI-BTL-007` result and remains under active correction. The
+promoting their shared `ui_layout_command_scroll_arrows` correction to runtime-proven, while Slot 4
+rejected the first `ui_layout_jutsu_selector_arrows` result and remains under active correction. The
 other slots remain untouched by this iteration.
 
 With the user's authorization, global PCSX2 texture replacement loading was
@@ -497,7 +497,7 @@ uses a Japanese-atlas rectangle that samples lettering after the NUN5 VS
 import, and never rotates the donor's right-pointing green arrow. NUN5 homolog
 `FUN_006d0850` omits the horizontal draws, uses rectangle
 `(145,385,22,38)`, and applies `+pi/2`/`-pi/2` around the upper/lower draws.
-The accepted `UI-BTL-007` replaces only the dead horizontal-arrow draw region
+The accepted `ui_layout_jutsu_selector_arrows` replaces only the dead horizontal-arrow draw region
 with a draw-scoped helper, copies both NUN5 rotation constants and the complete
 NUN5 arrow record, and redirects the two existing vertical-arrow calls through
 that helper. The helper enables sprite mode 1 only around the rotated draw and
@@ -510,7 +510,7 @@ Detailed negative and accepted-path evidence is preserved in
 Paired Slots 5 and 6 reuse the same `TEX_xselect` sprite object and the same
 draw record. NA2 `FUN_00878820` and NUN5 `FUN_00894f60` already share the
 two-draw/one-rotation behavior; only their source rectangles differ.
-`UI-BTL-008` therefore copies one exact NUN5 record `(1,225,20,22)` over
+`ui_layout_command_scroll_arrows` therefore copies one exact NUN5 record `(1,225,20,22)` over
 NA2's imported-atlas garbage selection `(194,195,20,20)`. Pulse-dependent
 placement is preserved. The user verified both integrated screens and accepted
 Command Menu and Command Chart as good.
@@ -539,17 +539,17 @@ matches the reference. Collection Music Slot 3 uses the different shared HOME
 action helper: one guarded wrapper applies NUN5's state-specific Cross
 `-12`, Play `-24`, and Triangle `-8` geometry, and the Play label receives the
 same localized centering shift. Its task-owned render matches the reference.
-Character Select Slot 4 extends its existing `UI-ELF-007` footer patch with
+Character Select Slot 4 extends its existing `ui_layout_character_select_footer` footer patch with
 effective NUN5 OK/Back anchors X=`388`/`462`; its task-owned render also
-matches the reference. Stage Select Slot 5 extends `UI-BTL-002` with the same
+matches the reference. Stage Select Slot 5 extends `ui_layout_stage_select` with the same
 effective anchors at its separate overlay call sites; its guarded task-owned
 render matches the reference. Current Slots 1-5 are complete. New paired
-slot-1 Music Settings extends the existing `UI-ELF-009` renderer patch with
+slot-1 Music Settings extends the existing `ui_layout_options_footers` renderer patch with
 effective NUN5 OK/Back anchors X=`388`/`462`; its guarded task-owned render
 matches the reference. Newer paired slot-2 Collection Characters is a true
-reuse of the already-canonical `UI-ELF-008` HOME helper: the existing five
+reuse of the already-canonical `ui_layout_common_prompts` HOME helper: the existing five
 guarded rows align its OK/Back groups with no new binary edit. Newer paired
-slot-3 Control Settings extends the same `UI-ELF-009` ownership at its separate
+slot-3 Control Settings extends the same `ui_layout_options_footers` ownership at its separate
 renderer call sites with the same effective NUN5 anchors; its guarded
 task-owned render matches the reference. The
 earlier original Slot 2 failure of the `0x2E7E0` table/HOME helper remains

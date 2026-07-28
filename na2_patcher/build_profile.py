@@ -179,7 +179,7 @@ def write_binary_patch_log(
         log_directory / "patch_log.tsv",
         [
             "package_id", "feature_id", "group_id", "group_name",
-            "patch_id", "source_mapping_id",
+            "patch_id", "evidence_id",
             "edit_id", "target_id", "path",
             "offset", "length", "original_hex", "new_hex", "operation", "outcome", "reason",
         ],
@@ -190,7 +190,7 @@ def write_binary_patch_log(
         [
             "group_id", "group_name", "group_enabled", "patch_id",
             "patch_enabled", "effective_selected", "selection_mode",
-            "source_mapping_id", "status", "confidence", "name",
+            "evidence_id", "status", "confidence", "name",
         ],
         binary_patcher_module.patch_selection_rows(
             package,

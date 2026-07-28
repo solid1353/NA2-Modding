@@ -110,42 +110,95 @@ class NinjaSongAsciiNumbersTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported"):
             format_number(7, 4, 3)
 
-    def test_generated_helper_has_same_abi_and_ascii_primitives(self) -> None:
-        fragment = generate_font_renderer.build_ninja_song_ascii_number()
+    def test_accepted_c_helper_keeps_public_symbol_and_native_abi(self) -> None:
+        first = generate_font_renderer.build_numeric_c_core()
+        generate_font_renderer.build_numeric_c_core.cache_clear()
+        second = generate_font_renderer.build_numeric_c_core()
+        self.assertEqual(first, second)
+        self.assertEqual(len(first), 1)
+
+        fragment = first[0]
         self.assertEqual(
             fragment.symbol,
             generate_ninja_song_ascii_numbers.SYMBOL,
         )
-        self.assertEqual(fragment.relocations, ())
-        self.assertEqual(len(fragment.payload), 188)
-        words = {
+        self.assertEqual(len(fragment.relocations), 1)
+        relocation = fragment.relocations[0]
+        self.assertEqual(relocation.kind, "jal26")
+        self.assertEqual(
+            relocation.symbol,
+            generate_font_renderer.NINJA_SONG_FORMAT_DECIMAL,
+        )
+        self.assertEqual(relocation.addend, 0)
+
+        words = [
             int.from_bytes(fragment.payload[offset:offset + 4], "little")
             for offset in range(0, len(fragment.payload), 4)
-        }
-        for expected_word in (
-            mips.jump(0x03, generate_font_renderer.SPRINTF),
-            mips.i_type(0x0F, 0, 5, 0x60),
-            mips.i_type(0x0D, 5, 5, 0x42D3),
-            mips.i_type(0x09, 0, 9, 0x20),
-            mips.i_type(0x09, 0, 9, 0x30),
-            mips.i_type(0x2B, 29, 31, 0x4C),
-            mips.i_type(0x23, 29, 31, 0x4C),
-            mips.r_type(31, 0, 0, 0x08),
-        ):
-            self.assertIn(expected_word, words)
+        ]
+        self.assertTrue(
+            any(
+                word >> 26 == 0
+                and (word >> 21) & 0x1F == 8
+                and (word >> 16) & 0x1F == 0
+                and word & 0x3F in {0x21, 0x2D}
+                for word in words
+            ),
+            "compiled helper must consume the fifth EE EABI argument from t0",
+        )
+
+        bridge = generate_font_renderer.build_ninja_song_format_decimal()
+        self.assertEqual(
+            bridge.symbol,
+            generate_font_renderer.NINJA_SONG_FORMAT_DECIMAL,
+        )
+        self.assertEqual(bridge.relocations, ())
+        bridge_words = [
+            int.from_bytes(bridge.payload[offset:offset + 4], "little")
+            for offset in range(0, len(bridge.payload), 4)
+        ]
+        self.assertEqual(
+            bridge_words,
+            [
+                mips.r_type(5, 0, 6, 0x21),
+                mips.i_type(0x0F, 0, 5, 0x60),
+                mips.i_type(0x0D, 5, 5, 0x42D3),
+                mips.jump(0x02, generate_font_renderer.SPRINTF),
+                0,
+            ],
+        )
 
         numeric_fragments = generate_font_renderer.numeric_fragments()
-        self.assertEqual(numeric_fragments, (fragment,))
-        rows = [
-            row
+        self.assertEqual(numeric_fragments, (fragment, bridge))
+        rows = {
+            row.symbol: row
             for row in self.declaration.fragments
-            if row.symbol == fragment.symbol
-        ]
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0].payload, fragment.payload)
-        self.assertEqual(len(rows[0].payload), 188)
-        self.assertEqual(rows[0].kind, "code")
-        self.assertEqual(rows[0].alignment, 4)
+            if row.symbol in {fragment.symbol, bridge.symbol}
+        }
+        self.assertEqual(set(rows), {fragment.symbol, bridge.symbol})
+        self.assertEqual(rows[fragment.symbol].payload, fragment.payload)
+        self.assertEqual(rows[bridge.symbol].payload, bridge.payload)
+        self.assertEqual(
+            [
+                (
+                    item.offset,
+                    item.kind,
+                    item.symbol,
+                    item.addend,
+                )
+                for item in rows[fragment.symbol].relocations
+            ],
+            [
+                (
+                    item.offset,
+                    item.kind,
+                    item.symbol,
+                    item.addend,
+                )
+                for item in fragment.relocations
+            ],
+        )
+        self.assertEqual(rows[fragment.symbol].kind, "code")
+        self.assertEqual(rows[bridge.symbol].kind, "code")
 
 
 if __name__ == "__main__":

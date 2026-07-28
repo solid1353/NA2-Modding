@@ -678,7 +678,7 @@ native callbacks, and required fragment dependency chains without freezing
 compiler hashes or obsolete instruction layouts. Focused Font C/injector tests
 pass 11/11 and the full patcher suite passes 201/201.
 
-### Collapsed step 2 — candidate awaiting runtime regression
+### Collapsed step 2 — accepted
 
 The independent Ninja Song ASCII-number helper is now compiled from
 `font_numeric.c`. It retains the accepted public symbol and all five guarded
@@ -702,8 +702,19 @@ Manual object disassembly confirms the fifth argument is captured from `t0`,
 the destination and width survive the native callback, the bounded 16-byte
 temporary cannot overlap the compiler's saved-register area, the return value
 remains the native decimal length, and the only C relocation targets the
-explicit ABI bridge. Runtime acceptance remains pending for the supplied Ninja
-Song ss2–ss5 cases; permanent numeric tests remain unchanged until that review.
+explicit ABI bridge. The normal build promoted Current CRC `12369A62`; the user
+manually regressed the supplied Ninja Song ss2–ss5 cases and reported that the
+result is good. Permanent coverage added after that acceptance protects the
+public symbol, deterministic relocatable C output, fifth-argument `t0`
+contract, native formatting bridge, five guarded callers, and accepted padding
+modes without freezing the complete compiler output.
+
+The Save/Load date/time and Battle Settings Time ASCII conversions remain
+small guarded in-place instruction patches rather than resident helpers. The
+initial collapsed-step wording treated those patches as retained native ABI
+edits, but they still encode behavioral MIPS. Final structural cleanup is
+blocked until the user decides whether the broader migration goal also requires
+moving those two accepted families to C.
 
 ## Accepted font implementation
 

@@ -273,29 +273,29 @@ ordinary ASCII digits and punctuation.
 NA2 `FUN_001e6370` owns all six visible numeric calls. It routes year, month,
 day, hour, minute, and second through the fullwidth formatter
 `FUN_00378510`; the NUN5 homolog `FUN_001ec0b0` routes its numeric fields
-through ASCII formatted output. The first implementation stage therefore
-changes only the six guarded call blocks at ELF file offsets `0xE660C`,
-`0xE6650`, `0xE6694`, `0xE67A4`, `0xE67E8`, and `0xE682C` to call NA2's
-existing `sprintf` at runtime `0x0017BCA0`. Existing immutable format strings
-`%d` and `%02d` preserve the date, minute, and second widths. The hour call
-uses `%02d` and reproduces NUN5's signed `hour < 100 ? hour : 99` cap inside
-the same guarded 28-byte call block. The
-Save/Load-only fullwidth colon at ELF file offset `0x503134` becomes ASCII
-colon.
+through ASCII formatted output. The compiled-C implementation changes only the
+six guarded call blocks at ELF file offsets `0xE660C`, `0xE6650`, `0xE6694`,
+`0xE67A4`, `0xE67E8`, and `0xE682C`. Each block now contains argument setup,
+a symbolic runtime-injector call, and unavoidable year-return preservation;
+all formatting behavior lives in `font_numeric.c`.
 
-The current call-local patch emits EU `DD/MM/YYYY` by loading the year into
-callee-saved `s6` and rendering the day with `%02d` at `0xE660C`, retaining
-month and `%02d` at `0xE6650`, and rendering the preserved year with `%d` at
-`0xE6694`. Canonical liveness shows `s6` is saved in the prologue and otherwise
-unused until the later seconds calculation, so it safely survives both
-intervening `sprintf` calls. Timer divisors `108000`, `1800`, and `30`, the six
+The first C entry reads day and year directly from the live record, formats
+day through immutable `%02d`, and returns year in `v0`; the hook moves that
+return to callee-saved `s6`. The month uses the same C two-digit entry, the
+third entry emits the preserved year through `%d`, and the hour C entry
+reproduces NUN5's signed `hour < 100 ? hour : 99` rule before `%02d`.
+Canonical liveness shows `s6` is saved in the prologue and otherwise unused
+until the later seconds calculation, so it safely survives the intervening
+native formatting calls. Timer divisors `108000`, `1800`, and `30`, all six
 guarded block sizes, and every formatter caller outside `FUN_001e6370` remain
-unchanged. The original ASCII conversion is runtime-proven, and the user
-confirmed correct `DD/MM/YYYY` output—including the four-digit year—on Current
-CRC `55739D20`. The NUN5-derived two-digit hour/99-hour cap remains statically
-verified. Visual positioning remains a separate reviewable stage. The
-deterministic generator is
-`scripts/research/localization/generate_save_load_ascii_digits.py`.
+unchanged. The Save/Load-only fullwidth colon at ELF file offset `0x503134`
+remains a declarative ASCII-colon edit.
+
+The pre-migration behavior is runtime-proven: the user confirmed correct
+`DD/MM/YYYY`, including the four-digit year, on Current CRC `55739D20`. The C
+port preserves that accepted contract; its post-migration regression is
+pending. Production generation is consolidated in
+`scripts/localization/generate_font_renderer.py`.
 
 The isolated worker build retained at
 `work/Font/build/save-load-ascii-digits.iso` has boot CRC `F9FC3002`. After a
@@ -321,15 +321,14 @@ runtime `0x008802D8`). The NUN5 homolog is `FUN_0089cbd0`, called by
 `FUN_0089d280`.
 
 `font_battle_settings_ascii_digits` changes only that ordinary-value block to
-call NA2's existing ASCII `sprintf` at runtime `0x0017BCA0` with the immutable
-`%d` format at `0x006042D3`. The adjacent 40-byte branch ending at the edit
-site is independently guarded, so value `100` continues to render the native
-infinity symbol. Selector state, the stored timer value, the other five
-settings rows, and every other fullwidth formatter caller remain unchanged.
-The deterministic generator is
-`scripts/research/localization/generate_battle_settings_ascii_digits.py`.
-The patch remains `approved_for_test` until a worker ISO reproduces the
-slot-1 screen.
+set up the value and stack buffer, then call the compiled C entry through a
+symbolic runtime-injector hook. C uses the immutable `%d` bridge. The adjacent
+40-byte branch ending at the edit site is independently guarded, so value
+`100` continues to render the native infinity symbol. Selector state, the
+stored timer value, the other five settings rows, and every other fullwidth
+formatter caller remain unchanged. Production generation is consolidated in
+`scripts/localization/generate_font_renderer.py`. The patch remains
+`approved_for_test` until the user reproduces the slot-1 screen.
 
 ## Ninja Song ASCII dynamic numbers
 
@@ -368,7 +367,7 @@ they are not separate strings: all values pass through the same five guarded
 call sites and width-aware decimal helper. The patch is therefore
 `runtime_proven`; arbitrary unseen decimal values retain the same mode and
 padding behavior. The deterministic generators are
-`scripts/research/localization/generate_font_renderer.py` and
+`scripts/localization/generate_font_renderer.py` and
 `scripts/research/localization/generate_ninja_song_ascii_numbers.py`.
 
 Controls retains full-width `Linked Attack`, fits the official 19-byte

@@ -29,9 +29,9 @@ if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
 from na2_patcher.modules.runtime_injector import engine  # noqa: E402
+from na2_patcher.payload_builder import mips  # noqa: E402
 from na2_patcher.project_paths import load_project_paths  # noqa: E402
-from scripts.research.localization import ee_c_fragments  # noqa: E402
-from scripts.research.localization import mips  # noqa: E402
+from na2_patcher.payload_builder import ee_c_fragments  # noqa: E402
 
 
 MODULE = load_project_paths(REPOSITORY).path(
@@ -51,20 +51,20 @@ PACKED_METRICS_INPUT = load_project_paths(REPOSITORY).path(
     "assets",
     "nun5_semantic_14x20_packed_map.bin",
 )
-C_CORE_SOURCE = (
-    REPOSITORY
-    / "scripts"
-    / "research"
-    / "localization"
-    / "font_renderer_c"
-    / "font_v2_core.c"
-)
+C_CORE_SOURCE = MODULE / "sources" / "font_v2_core.c"
 C_NUMERIC_SOURCE = C_CORE_SOURCE.with_name("font_numeric.c")
 C_TOOLCHAIN_BIN = ee_c_fragments.default_toolchain_bin(REPOSITORY)
 
 PREFIX = "localization.font"
 NINJA_SONG_ASCII_NUMBER = f"{PREFIX}.ninja_song_ascii_number"
-NINJA_SONG_FORMAT_DECIMAL = f"{PREFIX}.c.numeric_format_decimal"
+NUMERIC_FORMAT_DECIMAL = f"{PREFIX}.c.numeric_format_decimal"
+NUMERIC_FORMAT_TWO_DECIMAL = f"{PREFIX}.c.numeric_format_two_decimal"
+NINJA_SONG_FORMAT_DECIMAL = NUMERIC_FORMAT_DECIMAL
+SAVE_LOAD_DAY = f"{PREFIX}.save_load_day"
+SAVE_LOAD_TWO = f"{PREFIX}.save_load_two"
+SAVE_LOAD_YEAR = f"{PREFIX}.save_load_year"
+SAVE_LOAD_HOUR = f"{PREFIX}.save_load_hour"
+BATTLE_SETTINGS_TIME = f"{PREFIX}.battle_settings_time"
 
 V2_PREFIX = f"{PREFIX}.v2"
 V2_SESSION_POINTER = f"{V2_PREFIX}.session_pointer"
@@ -140,6 +140,7 @@ FONT_CHOICE_LIST_DRAW = 0x00383600
 FONT_ICON_DRAW = 0x0037BB40
 SPRINTF = 0x0017BCA0
 FORMAT_D = 0x006042D3
+FORMAT_02D = 0x00605C20
 PRACTICE_ICON_TABLE = 0x008D14C0
 PRACTICE_EXPLANATION_TEXT_TABLE = 0x008BD510
 PACKED_METRICS_SHA256 = (
@@ -263,6 +264,20 @@ class Fragment:
     kind: str = "code"
     alignment: int = 4
     init: bool = False
+
+
+@dataclass(frozen=True)
+class NumericHook:
+    edit_id: str
+    patch_id: str
+    order: int
+    target_id: str
+    offset: int
+    expected_hex: str
+    replacement_hex: str
+    relocation_offset: int
+    symbol: str
+    reason: str
 
 
 def float_bits(value: float) -> int:
@@ -562,21 +577,33 @@ def build_numeric_c_core() -> tuple[Fragment, ...]:
             external_symbols={
                 "font_numeric_format_decimal": (
                     ee_c_fragments.SymbolReference(
-                        NINJA_SONG_FORMAT_DECIMAL
+                        NUMERIC_FORMAT_DECIMAL
+                    )
+                ),
+                "font_numeric_format_two_decimal": (
+                    ee_c_fragments.SymbolReference(
+                        NUMERIC_FORMAT_TWO_DECIMAL
                     )
                 ),
             },
         )
 
-    if set(extracted.symbols) != {"font_ninja_song_ascii_number"}:
+    expected_exports = {
+        "font_ninja_song_ascii_number": NINJA_SONG_ASCII_NUMBER,
+        "font_save_load_day": SAVE_LOAD_DAY,
+        "font_save_load_two": SAVE_LOAD_TWO,
+        "font_save_load_year": SAVE_LOAD_YEAR,
+        "font_save_load_hour": SAVE_LOAD_HOUR,
+        "font_battle_settings_time": BATTLE_SETTINGS_TIME,
+    }
+    if set(extracted.symbols) != set(expected_exports):
         raise ValueError(
             "Font numeric C exports differ: "
             f"actual={sorted(extracted.symbols)}"
         )
     aliases = {
-        extracted.symbols["font_ninja_song_ascii_number"].symbol: (
-            NINJA_SONG_ASCII_NUMBER
-        ),
+        extracted.symbols[name].symbol: symbol
+        for name, symbol in expected_exports.items()
     }
     if {fragment.symbol for fragment in extracted.fragments} != set(aliases):
         raise ValueError(
@@ -2530,17 +2557,167 @@ def build_ninja_song_ascii_number() -> Fragment:
     return Fragment(NINJA_SONG_ASCII_NUMBER, payload, relocations)
 
 
-def build_ninja_song_format_decimal() -> Fragment:
-    """Bridge the C helper to NA2's native ``sprintf(destination, "%d", value)``."""
+def build_numeric_format_bridge(symbol: str, format_address: int) -> Fragment:
+    """Bridge typed C calls to NA2's native variadic ``sprintf`` ABI."""
 
     zero, a1, a2 = 0, 5, 6
     assembler = mips.Assembler()
     assembler.emit(mips.r_type(a1, zero, a2, 0x21))
-    mips.load_u32(assembler, a1, FORMAT_D)
+    mips.load_u32(assembler, a1, format_address)
     assembler.emit(mips.jump(0x02, SPRINTF))
     assembler.emit(0)
     payload, relocations = assembler.build()
-    return Fragment(NINJA_SONG_FORMAT_DECIMAL, payload, relocations)
+    return Fragment(symbol, payload, relocations)
+
+
+def build_ninja_song_format_decimal() -> Fragment:
+    """Retain the public helper used by accepted Ninja Song coverage."""
+
+    return build_numeric_format_bridge(NUMERIC_FORMAT_DECIMAL, FORMAT_D)
+
+
+def build_numeric_format_two_decimal() -> Fragment:
+    return build_numeric_format_bridge(
+        NUMERIC_FORMAT_TWO_DECIMAL,
+        FORMAT_02D,
+    )
+
+
+def _hook_payload(
+    value_register: int,
+    buffer_offset: int,
+    word_count: int,
+    *,
+    preserve_year: bool = False,
+) -> bytes:
+    zero, v0, a0, a1, s6, sp = 0, 2, 4, 5, 22, 29
+    assembler = mips.Assembler()
+    assembler.emit(mips.r_type(value_register, zero, a0, 0x2D))
+    assembler.emit(mips.i_type(0x09, sp, a1, buffer_offset))
+    assembler.emit(0)
+    assembler.emit(0)
+    if preserve_year:
+        assembler.emit(mips.r_type(v0, zero, s6, 0x2D))
+    while len(assembler.words) < word_count:
+        assembler.emit(0)
+    payload, relocations = assembler.build()
+    if relocations:
+        raise AssertionError("numeric hook unexpectedly emitted relocations")
+    return payload
+
+
+def numeric_hooks() -> tuple[NumericHook, ...]:
+    save_specs = (
+        (
+            "font_save_load_ascii_digits_01",
+            10,
+            0x0E660C,
+            "0E0065942D200000040006249000A7270100082444E10D0C00000000",
+            3,
+            SAVE_LOAD_DAY,
+            True,
+            "Format the EU day in C and return the loaded year for s6.",
+        ),
+        (
+            "font_save_load_ascii_digits_02",
+            20,
+            0x0E6650,
+            "2D2000002D282002020006249000A7272D40C00044E10D0C00000000",
+            17,
+            SAVE_LOAD_TWO,
+            False,
+            "Format the EU month through the shared C two-digit entry.",
+        ),
+        (
+            "font_save_load_ascii_digits_03",
+            30,
+            0x0E6694,
+            "2D2000002D28A002020006249000A7272D40C00044E10D0C00000000",
+            22,
+            SAVE_LOAD_YEAR,
+            False,
+            "Format the preserved four-digit year through C.",
+        ),
+        (
+            "font_save_load_ascii_digits_04",
+            40,
+            0x0E67A4,
+            "2D2000002D28A002030006249000A7270200082444E10D0C00000000",
+            21,
+            SAVE_LOAD_HOUR,
+            False,
+            "Apply the accepted signed 99-hour cap and two-digit format in C.",
+        ),
+        (
+            "font_save_load_ascii_digits_05",
+            50,
+            0x0E67E8,
+            "2D2000002D282002020006249000A7272D40C00044E10D0C00000000",
+            17,
+            SAVE_LOAD_TWO,
+            False,
+            "Format minutes through the shared C two-digit entry.",
+        ),
+        (
+            "font_save_load_ascii_digits_06",
+            60,
+            0x0E682C,
+            "2D2000002D28C002020006249000A7272D40C00044E10D0C00000000",
+            22,
+            SAVE_LOAD_TWO,
+            False,
+            "Format seconds through the shared C two-digit entry.",
+        ),
+    )
+    hooks = [
+        NumericHook(
+            edit_id=edit_id,
+            patch_id="font_save_load_ascii_digits",
+            order=order,
+            target_id="na2_elf",
+            offset=offset,
+            expected_hex=expected,
+            replacement_hex=_hook_payload(
+                value_register,
+                0x90,
+                7,
+                preserve_year=preserve_year,
+            ).hex().upper(),
+            relocation_offset=8,
+            symbol=symbol,
+            reason=reason,
+        )
+        for (
+            edit_id,
+            order,
+            offset,
+            expected,
+            value_register,
+            symbol,
+            preserve_year,
+            reason,
+        ) in save_specs
+    ]
+    hooks.append(
+        NumericHook(
+            edit_id="font_battle_settings_ascii_digits_01",
+            patch_id="font_battle_settings_ascii_digits",
+            order=10,
+            target_id="na2_btl",
+            offset=0x1CC3D8,
+            expected_hex=(
+                "2D200000030006246000A7270100082444E10D0C00000000"
+            ),
+            replacement_hex=_hook_payload(5, 0x60, 6).hex().upper(),
+            relocation_offset=8,
+            symbol=BATTLE_SETTINGS_TIME,
+            reason=(
+                "Route only ordinary Battle Settings Time through C while "
+                "preserving the separate 100/infinity branch."
+            ),
+        )
+    )
+    return tuple(hooks)
 
 
 
@@ -2607,7 +2784,11 @@ def v2_fragments() -> tuple[Fragment, ...]:
 
 
 def numeric_fragments() -> tuple[Fragment, ...]:
-    result = (*build_numeric_c_core(), build_ninja_song_format_decimal())
+    result = (
+        *build_numeric_c_core(),
+        build_ninja_song_format_decimal(),
+        build_numeric_format_two_decimal(),
+    )
     symbols = [fragment.symbol for fragment in result]
     if len(symbols) != len(set(symbols)):
         raise ValueError("generated numeric fragments export duplicate symbols")

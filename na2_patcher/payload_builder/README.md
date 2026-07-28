@@ -11,6 +11,13 @@ a complete symbol map.
 `module_pipeline.py` gathers every contribution before invoking the builder, so
 no individual feature consumer decides when the shared payload is complete.
 
+`ee_c_fragments.py` compiles ordinary PS2 EE C with the configured Injection
+Lab toolchain and converts supported ELF sections and relocations into this
+builder's address-independent fragment model. `mips.py` provides the small
+deterministic instruction/relocation encoder used only for unavoidable native
+ABI shims and guarded hook templates. Both are maintained build inputs rather
+than research artifacts.
+
 No feature owns the file, its load address, its entrypoint, or the global loader
 and memory-reservation integration. Modules never declare offsets inside
 `228.BIN` or calculate final runtime addresses. The profile composer resolves

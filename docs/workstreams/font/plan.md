@@ -139,7 +139,7 @@ caller-family adapters, not a transplanted NUN5 renderer:
 
 ### Resident implementation
 
-`scripts/research/localization/generate_font_renderer.py` generates the live v2
+`scripts/localization/generate_font_renderer.py` generates the live v2
 resident asset and unique `localization.font.v2.*` symbols:
 
 - the accepted 95-entry proportional-width table;
@@ -506,7 +506,7 @@ shared payload builder assigns their final addresses.
 
 ### Stage 1 C compiler/extraction boundary
 
-`scripts/research/localization/ee_c_fragments.py` reuses Injection Lab's
+`na2_patcher/payload_builder/ee_c_fragments.py` reuses Injection Lab's
 bundled `ee-gcc` and proven EE compilation contract. It does not duplicate the
 compiler or use the lab's fixed development-bank linker. Instead, it converts
 the compiler's ELF32 little-endian MIPS relocatable object into canonical
@@ -709,12 +709,37 @@ public symbol, deterministic relocatable C output, fifth-argument `t0`
 contract, native formatting bridge, five guarded callers, and accepted padding
 modes without freezing the complete compiler output.
 
-The Save/Load date/time and Battle Settings Time ASCII conversions remain
-small guarded in-place instruction patches rather than resident helpers. The
-initial collapsed-step wording treated those patches as retained native ABI
-edits, but they still encode behavioral MIPS. Final structural cleanup is
-blocked until the user decides whether the broader migration goal also requires
-moving those two accepted families to C.
+The remainder of the approved migration is consolidated into one boundary.
+Save/Load and Battle Settings now join Ninja Song in `font_numeric.c`.
+Save/Load's six native blocks retain only argument setup, symbolic calls, and
+the required `v0`-to-`s6` year lifetime; Battle Settings retains only its
+ordinary-value argument setup and symbolic call. C owns EU date order,
+two-digit fields, the signed 99-hour cap, and ordinary Battle Settings decimal
+formatting. The adjacent Battle Settings value-100 infinity branch remains
+untouched.
+
+Production inputs no longer live under `scripts/research/`: C sources reside
+under `na2_patcher/features/localization/runtime_injector/sources/`, the
+generic EE object extractor resides in `na2_patcher/payload_builder/`, and the
+deterministic generator resides in `scripts/localization/`. The superseded
+Save/Load and Battle Settings in-place assembly generators were removed.
+Retained assembly is limited to native renderer/displaced-instruction ABI
+shims, the two typed-to-variadic `sprintf` bridges, and minimal register setup
+at guarded hooks.
+
+The consolidated numeric object exports Ninja Song, Save/Load day/two-digit/
+year/hour, and Battle Settings entries. Together with the two native bridges,
+it produces a 456-byte numeric blob, SHA-256
+`C82F4BD35793FC8866D961912F35B50F39D11124745ECA13F6C98AA6441A4341`.
+Manual EE disassembly confirms the first Save/Load entry returns the loaded
+year after the `%02d` call, the hour entry implements signed
+`value < 100 ? value : 99`, and every typed wrapper relocates only to its
+declared native-format bridge. The runtime package contains 4 groups,
+10 patches, 57 fragments, and 28 guarded edits. Its combined Localization pin
+is `05C66C7858830DE7356F3C69B22E76786C841FD226A06E0C1BEB81D7EA867A44`,
+with the user-owned bypass value preserved at `1`. Runtime regression remains
+the user's next boundary. Deterministic regeneration passes and the full
+patcher suite passes 201/201.
 
 ## Accepted font implementation
 

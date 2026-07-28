@@ -35,6 +35,8 @@ history; do not recreate an archive directory for dead scripts.
   building blocks; ISO changes belong in hash-pinned profiles, not direct
   file-replacement helpers.
 - `project/`: source and completed-analysis read-only maintenance.
+- `localization/`: maintained deterministic Localization generators whose
+  outputs are consumed by normal profile builds.
 - `research/ghidra/`: hash-pinned headless Ghidra imports into the shared
   `@analysis/disassembly/` root, MWo3 preparation, portable source-path
   normalization, C/ASCII export, verified manifests, and exact shared-binary
@@ -44,9 +46,8 @@ history; do not recreate an archive directory for dead scripts.
 - `research/ee_memory_map/`: PCSX2 savestate extraction, allocator-chain
   validation, overlay identification, and EE-region reporting for injection
   capacity research.
-- `research/localization/`: deterministic native Font asset, resident
-  renderer, and Save/Load ASCII-number generation plus NUN5-left/NA2-right
-  Font comparison artifacts.
+- `research/localization/`: preserved Font asset investigation, mapping
+  probes, and NUN5-left/NA2-right comparison artifacts.
 - `research/ui_translation/`: offline paired-savestate import and screenshot
   extraction, rendering preflight, deterministic Victory texture and layout
   generation, and user-directed runtime research for NUN5-to-NA2 UI

@@ -1,7 +1,7 @@
 /*
  * Address-independent C form of the accepted Font v2 measurement and
- * preparation algorithms. This source is compiled by ee_c_fragments.py and
- * does not own final 228.BIN placement or any game hook.
+ * preparation algorithms. This source is compiled by the payload builder's
+ * EE C fragment extractor and does not own final 228.BIN placement or hooks.
  */
 
 typedef unsigned char u8;

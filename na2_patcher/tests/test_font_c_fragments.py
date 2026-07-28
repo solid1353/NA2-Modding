@@ -5,10 +5,10 @@ import unittest
 from pathlib import Path
 
 from na2_patcher.payload_builder import build_resident_payload
+from na2_patcher.payload_builder import mips
 from na2_patcher.payload_builder.operations import PayloadFragment
-from scripts.research.localization import ee_c_fragments
-from scripts.research.localization import generate_font_renderer
-from scripts.research.localization import mips
+from na2_patcher.payload_builder import ee_c_fragments
+from scripts.localization import generate_font_renderer
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]

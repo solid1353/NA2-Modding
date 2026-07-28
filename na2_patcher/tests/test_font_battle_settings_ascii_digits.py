@@ -3,110 +3,99 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from na2_patcher.modules.binary_patcher import engine
-from scripts.research.localization import generate_battle_settings_ascii_digits
+from na2_patcher.modules.runtime_injector import engine
+from na2_patcher.project_paths import load_project_paths
+from scripts.localization import generate_font_renderer
+
+
+SPECIAL_BRANCH_OFFSET = 0x1CC3B0
+SPECIAL_BRANCH_EXPECTED = bytes.fromhex(
+    "640002240800A214000000006000A42778B1858FE0F0050C00000000"
+    "080000100000000000000000"
+)
 
 
 class BattleSettingsAsciiDigitsTests(unittest.TestCase):
-    def test_canonical_patch_matches_the_generator(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        package = engine.load_package(
-            repository
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.repository = Path(__file__).resolve().parents[2]
+        cls.package = engine.load_package(
+            cls.repository
             / "na2_patcher"
             / "features"
             / "localization"
-            / "binary_patcher"
+            / "runtime_injector",
+            owner="localization.runtime_injector",
         )
-        patch = package.patches[
-            generate_battle_settings_ascii_digits.PATCH_ID
-        ]
+        cls.hook = next(
+            hook
+            for hook in generate_font_renderer.numeric_hooks()
+            if hook.patch_id == "font_battle_settings_ascii_digits"
+        )
+
+    def test_canonical_symbolic_hook_matches_the_generator(self) -> None:
+        patch = self.package.patches["font_battle_settings_ascii_digits"]
         self.assertTrue(patch.enabled)
         self.assertEqual(patch.status, "approved_for_test")
-        self.assertEqual(patch.confidence, "verified")
         self.assertEqual(patch.group_id, "battle_ui")
-
-        canonical = [
+        edit = next(
             edit
-            for edit in package.edits
-            if edit.patch_id
-            == generate_battle_settings_ascii_digits.PATCH_ID
-        ]
-        generated = generate_battle_settings_ascii_digits.generated_edits()
-        self.assertEqual(len(canonical), len(generated))
-        for edit, expected in zip(canonical, generated, strict=True):
-            self.assertEqual(edit.edit_id, expected["edit_id"])
-            self.assertEqual(edit.order, expected["order"])
-            self.assertEqual(
-                edit.destination_target_id,
-                expected["destination_target_id"],
-            )
-            self.assertEqual(
-                edit.destination_offset,
-                expected["destination_offset"],
-            )
-            self.assertEqual(edit.operation, expected["operation"])
-            self.assertEqual(edit.length, expected["length"])
-            self.assertEqual(edit.expected_hex, expected["expected_hex"])
-            self.assertEqual(
-                edit.replacement_hex,
-                expected["replacement_hex"],
-            )
-
-    def test_clean_btl_guard_and_ascii_format_are_exact(self) -> None:
-        btl, elf = generate_battle_settings_ascii_digits.verify_source()
-        self.assertTrue(btl.is_file())
-        self.assertTrue(elf.is_file())
-
-    def test_replacement_is_call_local_and_preserves_infinity_branch(self) -> None:
-        replacement = generate_battle_settings_ascii_digits.build_call()
-        self.assertEqual(len(replacement), 24)
-        words = [
-            int.from_bytes(replacement[index : index + 4], "little")
-            for index in range(0, len(replacement), 4)
-        ]
+            for edit in self.package.edits
+            if edit.patch_id == patch.patch_id
+        )
+        symbolic = edit.symbolic_patch
+        self.assertEqual(symbolic.offset, self.hook.offset)
         self.assertEqual(
-            words,
-            [
-                generate_battle_settings_ascii_digits.mips.r_type(
-                    generate_battle_settings_ascii_digits.A1,
-                    generate_battle_settings_ascii_digits.ZERO,
-                    generate_battle_settings_ascii_digits.A2,
-                    0x2D,
-                ),
-                generate_battle_settings_ascii_digits.mips.i_type(
-                    0x09,
-                    generate_battle_settings_ascii_digits.SP,
-                    generate_battle_settings_ascii_digits.A0,
-                    generate_battle_settings_ascii_digits.BUFFER_OFFSET,
-                ),
-                generate_battle_settings_ascii_digits.mips.i_type(
-                    0x0F,
-                    generate_battle_settings_ascii_digits.ZERO,
-                    generate_battle_settings_ascii_digits.A1,
-                    generate_battle_settings_ascii_digits.FORMAT_D >> 16,
-                ),
-                generate_battle_settings_ascii_digits.mips.jump(
-                    0x03,
-                    generate_battle_settings_ascii_digits.SPRINTF,
-                ),
-                generate_battle_settings_ascii_digits.mips.i_type(
-                    0x09,
-                    generate_battle_settings_ascii_digits.A1,
-                    generate_battle_settings_ascii_digits.A1,
-                    generate_battle_settings_ascii_digits.FORMAT_D & 0xFFFF,
-                ),
-                0,
-            ],
+            symbolic.expected.hex().upper(),
+            self.hook.expected_hex,
         )
         self.assertEqual(
-            generate_battle_settings_ascii_digits.SPECIAL_BRANCH_OFFSET
-            + len(
-                bytes.fromhex(
-                    generate_battle_settings_ascii_digits
-                    .SPECIAL_BRANCH_EXPECTED_HEX
-                )
-            ),
-            generate_battle_settings_ascii_digits.DESTINATION_OFFSET,
+            symbolic.replacement_template.hex().upper(),
+            self.hook.replacement_hex,
+        )
+        self.assertEqual(symbolic.relocation_offset, 8)
+        self.assertEqual(
+            symbolic.symbol,
+            generate_font_renderer.BATTLE_SETTINGS_TIME,
+        )
+
+    def test_clean_guard_and_infinity_branch_are_untouched(self) -> None:
+        btl = (
+            load_project_paths(self.repository).path("source_na2")
+            / "PRG"
+            / "BTL.BIN"
+        )
+        data = btl.read_bytes()
+        expected = bytes.fromhex(self.hook.expected_hex)
+        self.assertEqual(
+            data[self.hook.offset : self.hook.offset + len(expected)],
+            expected,
+        )
+        self.assertEqual(
+            data[
+                SPECIAL_BRANCH_OFFSET
+                : SPECIAL_BRANCH_OFFSET + len(SPECIAL_BRANCH_EXPECTED)
+            ],
+            SPECIAL_BRANCH_EXPECTED,
+        )
+        self.assertEqual(
+            SPECIAL_BRANCH_OFFSET + len(SPECIAL_BRANCH_EXPECTED),
+            self.hook.offset,
+        )
+
+    def test_compiled_entry_uses_only_decimal_bridge(self) -> None:
+        fragments = {
+            fragment.symbol: fragment
+            for fragment in generate_font_renderer.build_numeric_c_core()
+        }
+        self.assertEqual(
+            {
+                relocation.symbol
+                for relocation in fragments[
+                    generate_font_renderer.BATTLE_SETTINGS_TIME
+                ].relocations
+            },
+            {generate_font_renderer.NUMERIC_FORMAT_DECIMAL},
         )
 
 

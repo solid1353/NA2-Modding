@@ -5,11 +5,11 @@ from pathlib import Path
 
 from na2_patcher.composer import resolve_symbolic_patches
 from na2_patcher.modules.runtime_injector import engine
+from na2_patcher.payload_builder import mips
 from na2_patcher.payload_builder.builder import build_resident_payload
+from scripts.localization import generate_font_renderer
 from scripts.research.localization import (
-    generate_font_renderer,
     generate_ninja_song_ascii_numbers,
-    mips,
 )
 
 
@@ -115,9 +115,12 @@ class NinjaSongAsciiNumbersTests(unittest.TestCase):
         generate_font_renderer.build_numeric_c_core.cache_clear()
         second = generate_font_renderer.build_numeric_c_core()
         self.assertEqual(first, second)
-        self.assertEqual(len(first), 1)
 
-        fragment = first[0]
+        fragment = next(
+            item
+            for item in first
+            if item.symbol == generate_ninja_song_ascii_numbers.SYMBOL
+        )
         self.assertEqual(
             fragment.symbol,
             generate_ninja_song_ascii_numbers.SYMBOL,
@@ -168,7 +171,8 @@ class NinjaSongAsciiNumbersTests(unittest.TestCase):
         )
 
         numeric_fragments = generate_font_renderer.numeric_fragments()
-        self.assertEqual(numeric_fragments, (fragment, bridge))
+        self.assertIn(fragment, numeric_fragments)
+        self.assertIn(bridge, numeric_fragments)
         rows = {
             row.symbol: row
             for row in self.declaration.fragments

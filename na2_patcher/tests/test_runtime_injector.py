@@ -16,7 +16,7 @@ from na2_patcher.payload_builder.builder import (
     build_resident_payload,
     load_config,
 )
-from scripts.research.localization import mips
+from na2_patcher.payload_builder import mips
 
 
 def write_tsv(
@@ -124,6 +124,8 @@ class RuntimeInjectorTests(unittest.TestCase):
                 "font_v2_special_controls_body",
                 "font_v2_practice_explanations",
                 "font_ninja_song_ascii_numbers",
+                "font_save_load_ascii_digits",
+                "font_battle_settings_ascii_digits",
             },
         )
         canonical_build = build_resident_payload(
@@ -159,6 +161,13 @@ class RuntimeInjectorTests(unittest.TestCase):
                 "font_ninja_song_ascii_numbers_03",
                 "font_ninja_song_ascii_numbers_04",
                 "font_ninja_song_ascii_numbers_05",
+                "font_save_load_ascii_digits_01",
+                "font_save_load_ascii_digits_02",
+                "font_save_load_ascii_digits_03",
+                "font_save_load_ascii_digits_04",
+                "font_save_load_ascii_digits_05",
+                "font_save_load_ascii_digits_06",
+                "font_battle_settings_ascii_digits_01",
             },
         )
 

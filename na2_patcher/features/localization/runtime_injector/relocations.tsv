@@ -84,5 +84,10 @@ FR-V2-R082	localization.font.v2.right_edge	20	0x10	lo16	localization.font.v2.ses
 FR-V2-R083	localization.font.v2.half_space	10	0xC	hi16	localization.font.v2.session_pointer	0
 FR-V2-R084	localization.font.v2.half_space	20	0x10	lo16	localization.font.v2.session_pointer	0
 FR-NUM-R001	localization.font.ninja_song_ascii_number	10	0x20	jal26	localization.font.c.numeric_format_decimal	0
+FR-NUM-R002	localization.font.save_load_day	10	0x24	jal26	localization.font.c.numeric_format_two_decimal	0
+FR-NUM-R003	localization.font.save_load_two	10	0x10	jal26	localization.font.c.numeric_format_two_decimal	0
+FR-NUM-R004	localization.font.save_load_year	10	0x10	jal26	localization.font.c.numeric_format_decimal	0
+FR-NUM-R005	localization.font.save_load_hour	10	0x1C	jal26	localization.font.c.numeric_format_two_decimal	0
+FR-NUM-R006	localization.font.battle_settings_time	10	0x10	jal26	localization.font.c.numeric_format_decimal	0
 FR-V2-SS1-R001	localization.font.v2.glyph_advance	10	0xC	hi16	localization.font.v2.session_pointer	0
 FR-V2-SS1-R002	localization.font.v2.glyph_advance	20	0x10	lo16	localization.font.v2.session_pointer	0

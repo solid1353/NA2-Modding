@@ -3,163 +3,139 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from na2_patcher.modules.binary_patcher import engine
-from scripts.research.localization import generate_save_load_ascii_digits
+from na2_patcher.modules.binary_patcher import engine as binary_engine
+from na2_patcher.modules.runtime_injector import engine as runtime_engine
+from na2_patcher.payload_builder import mips
+from na2_patcher.project_paths import load_project_paths
+from scripts.localization import generate_font_renderer
 
 
 class SaveLoadAsciiDigitsTests(unittest.TestCase):
-    def test_canonical_patch_matches_the_generator(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        package = engine.load_package(
-            repository
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.repository = Path(__file__).resolve().parents[2]
+        feature = (
+            cls.repository
             / "na2_patcher"
             / "features"
             / "localization"
-            / "binary_patcher"
         )
-        patch = package.patches[
-            generate_save_load_ascii_digits.PATCH_ID
-        ]
+        cls.runtime = runtime_engine.load_package(
+            feature / "runtime_injector",
+            owner="localization.runtime_injector",
+        )
+        cls.binary = binary_engine.load_package(feature / "binary_patcher")
+        cls.hooks = tuple(
+            hook
+            for hook in generate_font_renderer.numeric_hooks()
+            if hook.patch_id == "font_save_load_ascii_digits"
+        )
+
+    def test_canonical_symbolic_hooks_match_the_generator(self) -> None:
+        patch = self.runtime.patches["font_save_load_ascii_digits"]
         self.assertTrue(patch.enabled)
         self.assertEqual(patch.status, "runtime_proven")
-        self.assertEqual(patch.confidence, "verified")
         self.assertEqual(patch.group_id, "front_end")
-
-        canonical = [
+        canonical = tuple(
             edit
-            for edit in package.edits
-            if edit.patch_id == generate_save_load_ascii_digits.PATCH_ID
+            for edit in self.runtime.edits
+            if edit.patch_id == patch.patch_id
+        )
+        self.assertEqual(len(canonical), 6)
+        for edit, hook in zip(canonical, self.hooks, strict=True):
+            self.assertEqual(edit.edit_id, hook.edit_id)
+            self.assertEqual(edit.order, hook.order)
+            self.assertEqual(edit.target_id, hook.target_id)
+            symbolic = edit.symbolic_patch
+            self.assertEqual(symbolic.offset, hook.offset)
+            self.assertEqual(symbolic.expected.hex().upper(), hook.expected_hex)
+            self.assertEqual(
+                symbolic.replacement_template.hex().upper(),
+                hook.replacement_hex,
+            )
+            self.assertEqual(
+                symbolic.relocation_offset,
+                hook.relocation_offset,
+            )
+            self.assertEqual(symbolic.symbol, hook.symbol)
+            self.assertEqual(symbolic.encoding, "j26")
+
+    def test_clean_elf_guards_and_local_colon_are_exact(self) -> None:
+        elf = load_project_paths(self.repository).path("source_na2") / "SLPS_258.37"
+        data = elf.read_bytes()
+        for hook in self.hooks:
+            expected = bytes.fromhex(hook.expected_hex)
+            self.assertEqual(
+                data[hook.offset : hook.offset + len(expected)],
+                expected,
+            )
+        colon = [
+            edit
+            for edit in self.binary.edits
+            if edit.patch_id == "font_save_load_ascii_digits"
         ]
-        generated = generate_save_load_ascii_digits.generated_edits()
-        self.assertEqual(len(canonical), len(generated))
-        for edit, expected in zip(canonical, generated, strict=True):
-            self.assertEqual(edit.edit_id, expected["edit_id"])
-            self.assertEqual(edit.order, expected["order"])
-            self.assertEqual(
-                edit.destination_target_id,
-                expected["destination_target_id"],
-            )
-            self.assertEqual(
-                edit.destination_offset,
-                expected["destination_offset"],
-            )
-            self.assertEqual(edit.operation, expected["operation"])
-            self.assertEqual(edit.length, expected["length"])
-            self.assertEqual(edit.expected_hex, expected["expected_hex"])
-            self.assertEqual(
-                edit.replacement_hex,
-                expected["replacement_hex"],
-            )
+        self.assertEqual(len(colon), 1)
+        self.assertEqual(colon[0].destination_offset, 0x503134)
+        self.assertEqual(colon[0].replacement_hex, "3A000000")
 
-    def test_clean_elf_guards_and_ascii_formats_are_exact(self) -> None:
-        elf = generate_save_load_ascii_digits.verify_source()
-        self.assertTrue(elf.is_file())
-        for site in generate_save_load_ascii_digits.CALL_SITES:
-            replacement = generate_save_load_ascii_digits.build_call(site)
-            self.assertEqual(len(replacement), 28)
-            jal = int.from_bytes(replacement[20:24], "little")
-            self.assertEqual(
-                jal,
-                generate_save_load_ascii_digits.mips.jump(
-                    0x03,
-                    generate_save_load_ascii_digits.SPRINTF,
-                ),
-            )
-
-    def test_hour_call_matches_nun5_width_and_cap(self) -> None:
-        hour = next(
-            site
-            for site in generate_save_load_ascii_digits.CALL_SITES
-            if site.label == "hour"
-        )
-        replacement = generate_save_load_ascii_digits.build_call(hour)
-        words = [
-            int.from_bytes(replacement[index : index + 4], "little")
-            for index in range(0, len(replacement), 4)
-        ]
-        self.assertEqual(hour.format_address, generate_save_load_ascii_digits.FORMAT_02D)
-        self.assertEqual(hour.maximum, 99)
+    def test_date_order_and_year_lifetime_are_explicit(self) -> None:
         self.assertEqual(
-            words[:3],
+            [hook.symbol for hook in self.hooks[:3]],
             [
-                generate_save_load_ascii_digits.mips.i_type(
-                    0x0A,
-                    generate_save_load_ascii_digits.S5,
-                    generate_save_load_ascii_digits.AT,
-                    100,
-                ),
-                generate_save_load_ascii_digits.mips.i_type(
-                    0x09,
-                    generate_save_load_ascii_digits.ZERO,
-                    generate_save_load_ascii_digits.A2,
-                    99,
-                ),
-                generate_save_load_ascii_digits.mips.r_type(
-                    generate_save_load_ascii_digits.S5,
-                    generate_save_load_ascii_digits.AT,
-                    generate_save_load_ascii_digits.A2,
-                    0x0B,
-                ),
-            ],
-        )
-
-    def test_date_calls_use_eu_day_month_year_order(self) -> None:
-        date_sites = generate_save_load_ascii_digits.CALL_SITES[:3]
-        self.assertEqual(
-            [site.label for site in date_sites],
-            ["day", "month", "year"],
-        )
-        self.assertEqual(
-            [site.format_address for site in date_sites],
-            [
-                generate_save_load_ascii_digits.FORMAT_02D,
-                generate_save_load_ascii_digits.FORMAT_02D,
-                generate_save_load_ascii_digits.FORMAT_D,
-            ],
-        )
-        self.assertEqual(
-            [site.value_word for site in date_sites],
-            [
-                generate_save_load_ascii_digits.mips.r_type(
-                    generate_save_load_ascii_digits.S5,
-                    generate_save_load_ascii_digits.ZERO,
-                    generate_save_load_ascii_digits.A2,
-                    0x2D,
-                ),
-                generate_save_load_ascii_digits.mips.r_type(
-                    generate_save_load_ascii_digits.S1,
-                    generate_save_load_ascii_digits.ZERO,
-                    generate_save_load_ascii_digits.A2,
-                    0x2D,
-                ),
-                generate_save_load_ascii_digits.mips.r_type(
-                    generate_save_load_ascii_digits.S6,
-                    generate_save_load_ascii_digits.ZERO,
-                    generate_save_load_ascii_digits.A2,
-                    0x2D,
-                ),
+                generate_font_renderer.SAVE_LOAD_DAY,
+                generate_font_renderer.SAVE_LOAD_TWO,
+                generate_font_renderer.SAVE_LOAD_YEAR,
             ],
         )
         first_words = [
             int.from_bytes(
-                generate_save_load_ascii_digits.build_call(date_sites[0])[
-                    index : index + 4
-                ],
+                bytes.fromhex(self.hooks[0].replacement_hex)[index : index + 4],
                 "little",
             )
             for index in range(0, 28, 4)
         ]
         self.assertEqual(
             first_words[0],
-            generate_save_load_ascii_digits.mips.i_type(
-                0x25,
-                generate_save_load_ascii_digits.V1,
-                generate_save_load_ascii_digits.S6,
-                0x0E,
-            ),
+            mips.r_type(3, 0, 4, 0x2D),
         )
-        self.assertEqual(first_words[1], date_sites[0].value_word)
-        self.assertEqual(first_words[-1], 0)
+        self.assertEqual(first_words[2], 0)
+        self.assertEqual(
+            first_words[4],
+            mips.r_type(2, 0, 22, 0x2D),
+        )
+
+    def test_compiled_entries_use_only_native_format_bridges(self) -> None:
+        fragments = {
+            fragment.symbol: fragment
+            for fragment in generate_font_renderer.build_numeric_c_core()
+        }
+        self.assertEqual(
+            {
+                relocation.symbol
+                for relocation in fragments[
+                    generate_font_renderer.SAVE_LOAD_DAY
+                ].relocations
+            },
+            {generate_font_renderer.NUMERIC_FORMAT_TWO_DECIMAL},
+        )
+        self.assertEqual(
+            {
+                relocation.symbol
+                for relocation in fragments[
+                    generate_font_renderer.SAVE_LOAD_HOUR
+                ].relocations
+            },
+            {generate_font_renderer.NUMERIC_FORMAT_TWO_DECIMAL},
+        )
+        self.assertEqual(
+            {
+                relocation.symbol
+                for relocation in fragments[
+                    generate_font_renderer.SAVE_LOAD_YEAR
+                ].relocations
+            },
+            {generate_font_renderer.NUMERIC_FORMAT_DECIMAL},
+        )
 
 
 if __name__ == "__main__":

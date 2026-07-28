@@ -44,6 +44,7 @@
 ### Testing
 - Isolate and promote runtime-proven patches.
 - Test translation thoroughout the whole game.
+- Audit and refactor the project-wide permanent test suite after the Font migration.
 
 ## Archive
 

@@ -4,6 +4,7 @@
   "editor.formatOnSave": false,
   "editor.formatOnPaste": false,
   "editor.formatOnType": false,
+  "C_Cpp.errorSquiggles": "disabled",
   "files.trimTrailingWhitespace": true,
   "files.exclude": {
     "**/__pycache__": true

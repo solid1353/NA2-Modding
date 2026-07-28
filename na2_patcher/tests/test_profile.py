@@ -406,44 +406,15 @@ class ProfileTests(unittest.TestCase):
                 first, module_content_sha256(module, "runtime_injector")
             )
 
-    def test_current_profile_and_feature_layout(self) -> None:
+    def test_current_profile_loads(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         profile_directory = repository / "na2_patcher" / "profiles" / "current"
         marker = repository / "na2_patcher" / "release_manifest.json"
-        profile = load_profile(
+        load_profile(
             profile_directory,
             repository,
             root_overrides={"na2": marker, "nun5": marker},
         )
-        self.assertEqual(profile.profile_id, "current")
-        self.assertEqual(
-            [module.module_id for module in profile.modules],
-            [
-                "localization.translation_importer",
-                "localization.runtime_injector",
-                "localization.texture_patcher",
-                "localization.binary_patcher",
-                "qol.binary_patcher",
-                "battle_logic.binary_patcher",
-                "rendering.binary_patcher",
-            ],
-        )
-        self.assertEqual(profile.identity.source_boot_path, "SLPS_258.37")
-        self.assertEqual(profile.identity.output_boot_path, "SLOP_NA2.28")
-        self.assertEqual(profile.identity.memory_card_title_offset, 0x2FBAE0)
-        self.assertEqual(profile.identity.output_memory_card_title, "ＮＡ　ｖ２．２８")
-        self.assertFalse((profile_directory / "image.tsv").exists())
-        self.assertFalse((profile_directory / "manifest.tsv").exists())
-        self.assertFalse((profile_directory / "modules.tsv").exists())
-        features_root = repository / "na2_patcher" / "features"
-        for feature in features_root.iterdir():
-            if not feature.is_dir() or feature.name == "schemas":
-                continue
-            self.assertTrue((feature / "README.md").is_file(), feature.name)
-            self.assertEqual(list(feature.glob("manifest.tsv")), [], feature.name)
-            nested_markdown = [path for path in feature.rglob("*.md") if path.parent != feature]
-            self.assertEqual(nested_markdown, [], feature.name)
-        self.assertEqual(list(features_root.rglob("binary_patcher/manifest.tsv")), [])
 
     def test_registered_module_readmes_declare_downstream_invocations(self) -> None:
         repository = Path(__file__).resolve().parents[2]

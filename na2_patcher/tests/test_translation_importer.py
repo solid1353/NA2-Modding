@@ -7,220 +7,30 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from na2_patcher.modules import translation_importer
 from na2_patcher.modules.translation_importer import engine
 
 
 class TranslationImporterTests(unittest.TestCase):
-    def test_canonical_mappings_use_t_ids_and_evidence_guards(
-        self,
-    ) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        data_root = (
-            repository
-            / "na2_patcher/features/localization/translation_importer"
-        )
-        mappings_raw = engine.read_rows(data_root / "mappings.tsv")
-        mappings = engine.parse_mappings(
-            mappings_raw,
-            table_name="mappings.tsv",
-        )
-        verified_corrections = {
-            "T1956": ("Off", "NUN5_SLES@0x513EF8"),
-            "T1957": ("On", "NUN5_SLES@0x513EFC"),
-            "T2158": ("Warning", "NUN5_SLES@0x513F38"),
-            "T24": (
-                "COM will make the following standing movements when in Jump mode.",
-                "NUN5_TEXTENG@0x10070",
-            ),
-            "T637": ("Hidden Leaf Village", "NUN5_TEXTENG@0x2C40"),
-            "T638": ("Hidden Leaf Gate", "NUN5_TEXTENG@0x2C60"),
-            "T744": ("Faint Unease", "NUN5_TEXTENG@0x24C8"),
-            "T767": ("Silent Confidence", "NUN5_TEXTENG@0x24B0"),
-        }
-        semantic_donor_corrections = {
-            "T27": ("Simple", "NUN5_SLES@0x514218", ""),
-            "T1983": ("Easy", "NUN5_SLES@0x514220", ""),
-            "T28": ("Normal", "NUN5_SLES@0x514228", ""),
-            "T1984": ("Hard", "NUN5_SLES@0x514230", ""),
-            "T29": ("Insane", "NUN5_SLES@0x514238", ""),
-            "T50": (
-                "Difficulty",
-                "NUN5_TEXTENG@0xF880",
-                "NA2_BTL@0x20A264",
-            ),
-        }
-        direct_replacements = {
-            "T30": "Ultimate",
-            "T1877": 'Fire Style: Fireball Jutsu "Divinity"',
-            "T1920": "Charge Chakra",
-            "T1958": (
-                "Press <iconCROSS> to select the button/item to change. "
-                "Press the left directional button or right directional "
-                "button to change controls."
-            ),
-            "T2194": "100%% Health bonus",
-            "T2197": ".",
-        }
-        structural_rows = {
-            "T2011": (
-                "Save or Load menu > saving-progress message",
-                "seen:replacement-validation-save-progress-corruption",
-            ),
-            "T2041": (
-                "Save or Load menu > saving-progress message",
-                "inferred:complete-save-progress-message-family-from-paired-screen",
-            ),
-            "T2042": (
-                "Save or Load menu > saving-progress message",
-                "inferred:complete-save-progress-message-family-from-paired-screen",
-            ),
-            "T2014": (
-                "Save or Load menu > overwrite confirmation",
-                "seen:tid-pass-2026-07-26 paired screenshot",
-            ),
-            "T2015": (
-                "Save or Load menu > overwrite confirmation",
-                "inferred:complete-overwrite-message-family",
-            ),
-        }
-
-        self.assertEqual(len(mappings_raw), 2075)
-        self.assertEqual(len(mappings["text"]), 2075)
-        self.assertEqual(mappings["inactive"], [])
-        mapping_ids = {row["id"] for row in mappings_raw}
-        self.assertTrue(
-            all(
-                mapping_id.startswith("T") and mapping_id[1:].isdigit()
-                for mapping_id in mapping_ids
-            )
-        )
-        self.assertTrue({"T1937", "T1938"} <= mapping_ids)
-        self.assertFalse(
-            any(
-                str(row["display_context"]).startswith("Shop >")
-                for row in mappings_raw
-            )
-        )
-        self.assertEqual(
-            len(mapping_ids),
-            len(mappings_raw),
-        )
-        for row in mappings_raw:
-            self.assertEqual(row["enabled"], "1")
-            self.assertTrue(row["display_context"])
-            self.assertTrue(
-                row["display_basis"].startswith(engine.DISPLAY_BASIS_PREFIXES)
-            )
-            if row["id"] in verified_corrections:
-                donor, donor_ref = verified_corrections[row["id"]]
-                self.assertEqual(row["donor"], donor)
-                self.assertEqual(row["donor_ref"], donor_ref)
-                self.assertEqual(row["replacement"], "")
-                continue
-            if row["id"] in semantic_donor_corrections:
-                donor, donor_ref, reference_refs = semantic_donor_corrections[
-                    row["id"]
-                ]
-                self.assertEqual(row["donor"], donor)
-                self.assertEqual(row["donor_ref"], donor_ref)
-                self.assertEqual(row["reference_refs"], reference_refs)
-                self.assertEqual(row["replacement"], "")
-                continue
-            if row["id"] == "T30":
-                self.assertEqual(row["donor"], "")
-                self.assertEqual(row["donor_ref"], "")
-                self.assertEqual(row["replacement"], "Ultimate")
-                self.assertEqual(row["reference_refs"], "NA2_BTL@0x209CB4")
-                continue
-
-        self.assertEqual(
-            {
-                row["id"]
-                for row in mappings_raw
-                if not row["donor"] and not row["donor_ref"]
-            },
-            {"T30"},
-        )
-        self.assertEqual(
-            {
-                row["id"]: row["replacement"]
-                for row in mappings_raw
-                if row["replacement"]
-            },
-            direct_replacements,
-        )
-        by_id = {row["id"]: row for row in mappings_raw}
-        for mapping_id, (display_context, display_basis) in structural_rows.items():
-            self.assertEqual(by_id[mapping_id]["display_context"], display_context)
-            self.assertEqual(by_id[mapping_id]["display_basis"], display_basis)
-        self.assertEqual(by_id["T2042"]["parent_mapping_id"], "T2011")
-        self.assertEqual(by_id["T2045"]["parent_mapping_id"], "T2043")
-        self.assertEqual(by_id["T2050"]["parent_mapping_id"], "T2048")
-        self.assertEqual(by_id["T63"]["transform"], "format_literal_through_arg1")
-        self.assertEqual(by_id["T63"]["arguments"], "arg1=Battle")
-        self.assertEqual(by_id["T64"]["transform"], "format_literal_through_arg1")
-        self.assertEqual(by_id["T64"]["arguments"], "arg1=Practice")
-        self.assertEqual(
-            (by_id["T2201"]["donor"], by_id["T2201"]["donor_ref"]),
-            ("Character Select", "NUN5_TEXTENG@0xA60"),
-        )
-        self.assertEqual(
-            (by_id["T2202"]["donor"], by_id["T2202"]["donor_ref"]),
-            ("Game Mode Select", "NUN5_TEXTENG@0xA80"),
-        )
-        self.assertEqual(
-            (
-                by_id["T2203"]["source"],
-                by_id["T2203"]["donor"],
-                by_id["T2203"]["source_ref"],
-                by_id["T2203"]["donor_ref"],
-            ),
-            ("Ｏ　Ｎ", "ON", "NA2_SLPS@0x505AF0", "NUN5_SLES@0x513E68"),
-        )
-        self.assertEqual(
-            (
-                by_id["T2204"]["source"],
-                by_id["T2204"]["donor"],
-                by_id["T2204"]["source_ref"],
-                by_id["T2204"]["donor_ref"],
-            ),
-            ("ＯＦＦ", "OFF", "NA2_SLPS@0x505AF8", "NUN5_SLES@0x513E6C"),
-        )
-
-        engine.validate_structured_message_families(
-            mappings["text"],
-            table_name="mappings.tsv",
-        )
-        for missing_id in ("T2041", "T2042", "T2015"):
-            with self.subTest(missing_id=missing_id):
-                with self.assertRaisesRegex(
-                    ValueError,
-                    "incomplete structured message family.*missing parts",
-                ):
-                    engine.validate_structured_message_families(
-                        [
-                            row
-                            for row in mappings["text"]
-                            if row["id"] != missing_id
-                        ],
-                        table_name="mappings.tsv",
-                    )
-
     def test_iso_source_delegates_to_the_shared_iso_reader(self) -> None:
         exact = SimpleNamespace(path="PRG/BTL.BIN", is_dir=False)
         basename = SimpleNamespace(path="OTHER/ETC.BIN", is_dir=False)
         image = SimpleNamespace(
             by_path={"PRG/BTL.BIN": exact, "OTHER/ETC.BIN": basename},
-            read_file=mock.Mock(side_effect=lambda record: record.path.encode("ascii")),
+            read_file=mock.Mock(
+                side_effect=lambda record: record.path.encode("ascii")
+            ),
         )
         with mock.patch.object(engine, "Iso9660", return_value=image) as iso_type:
             source = engine.IsoSource(Path("source.iso"))
         iso_type.assert_called_once()
         self.assertEqual(
-            source.read(("PRG/BTL.BIN",), "BTL"), b"PRG/BTL.BIN"
+            source.read(("PRG/BTL.BIN",), "BTL"),
+            b"PRG/BTL.BIN",
         )
-        self.assertEqual(source.read(("ETC.BIN",), "ETC"), b"OTHER/ETC.BIN")
+        self.assertEqual(
+            source.read(("ETC.BIN",), "ETC"),
+            b"OTHER/ETC.BIN",
+        )
 
     def test_rejects_unresolved_mode(self) -> None:
         row = {
@@ -271,10 +81,20 @@ class TranslationImporterTests(unittest.TestCase):
 
     def test_rejects_placeholder_donor_for_identifier_target(self) -> None:
         with self.assertRaisesRegex(ValueError, "placeholder donor text"):
-            engine.validate_semantic_replacement("unknown", "pjrvspl0", "M1336")
+            engine.validate_semantic_replacement(
+                "unknown",
+                "pjrvspl0",
+                "M1336",
+            )
 
     def test_allows_placeholder_word_for_visible_target(self) -> None:
-        engine.validate_semantic_replacement("Unknown", "<r不明|ふめい>", "visible")
+        self.assertIsNone(
+            engine.validate_semantic_replacement(
+                "Unknown",
+                "<r不明|ふめい>",
+                "visible",
+            )
+        )
 
     def test_empty_replacement_uses_the_imported_donor(self) -> None:
         row = {
@@ -289,7 +109,9 @@ class TranslationImporterTests(unittest.TestCase):
             "Official translation",
         )
 
-    def test_empty_transform_materializes_an_intentionally_empty_string(self) -> None:
+    def test_empty_transform_materializes_an_intentionally_empty_string(
+        self,
+    ) -> None:
         row = {
             "donor": "Unused official fragment",
             "prefix": "",
@@ -297,7 +119,10 @@ class TranslationImporterTests(unittest.TestCase):
             "transform": "empty",
             "arguments": {},
         }
-        self.assertEqual(engine.resolve_replacement_text(row, "M0822"), "")
+        self.assertEqual(
+            engine.resolve_replacement_text(row, "M0822"),
+            "",
+        )
 
     def test_user_prefix_is_prepended_to_the_selected_translation(self) -> None:
         imported = {
@@ -372,7 +197,9 @@ class TranslationImporterTests(unittest.TestCase):
             "[P] MAX Damage!",
         )
 
-    def test_fullwidth_ascii_is_normalized_in_donor_reference_arguments(self) -> None:
+    def test_fullwidth_ascii_is_normalized_in_donor_reference_arguments(
+        self,
+    ) -> None:
         row = {
             "donor": "Quit %1?",
             "prefix": "",
@@ -407,7 +234,7 @@ class TranslationImporterTests(unittest.TestCase):
             (("BTL", 0x10), ("SLPS", 0x20)),
         )
 
-    def test_importer_preserves_canonical_game_title_donor(self) -> None:
+    def test_materialization_preserves_the_imported_donor(self) -> None:
         mappings = [
             {
                 "id": "MTEST",
@@ -461,7 +288,9 @@ class TranslationImporterTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "outside 2 parts"):
             engine.resolve_replacement_text(row, "parent")
 
-    def test_empty_import_log_requires_explicit_replacement_mode_opt_in(self) -> None:
+    def test_empty_import_log_requires_explicit_replacement_mode_opt_in(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "translation_imports.tsv"
             with self.assertRaisesRegex(

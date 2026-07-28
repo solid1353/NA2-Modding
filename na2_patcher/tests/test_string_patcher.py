@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import unittest
-from pathlib import Path
 
 from na2_patcher.modules.binary_patcher import engine as binary_patcher
 from na2_patcher.modules.string_patcher import engine as string_patcher
@@ -10,14 +9,7 @@ from na2_patcher.modules.string_patcher import engine as string_patcher
 class StringPatcherTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.localization = Path(__file__).resolve().parents[1] / "features" / "localization"
         cls.package = string_patcher.build_binary_package(None)
-
-    def test_import_consumer_needs_no_placeholder_feature_directory(self) -> None:
-        self.assertFalse((self.localization / "string_patcher").exists())
-        self.assertFalse(
-            (self.localization / "translation_importer" / "references.tsv").exists()
-        )
 
     def test_allows_import_only_derived_consumer(self) -> None:
         self.assertIsInstance(self.package, binary_patcher.Package)

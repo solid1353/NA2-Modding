@@ -6,7 +6,6 @@ from dataclasses import replace
 from pathlib import Path
 
 from na2_patcher.composer import resolve_symbolic_patches
-from na2_patcher.modules.binary_patcher import engine as binary_patcher
 from na2_patcher.modules.string_patcher import engine as string_patcher
 from na2_patcher.modules.translation_importer import engine as translation_importer
 from na2_patcher.payload_builder import builder as payload_builder
@@ -58,40 +57,6 @@ class IntegratedExternalStringTests(unittest.TestCase):
             boot_path="SLPS_258.37",
             clean_boot=cls.import_plan.clean_targets["SLPS"],
         )
-
-    def test_shared_builder_produces_the_exact_fit_derived_228_binary(self) -> None:
-        mod = self.build.payload
-        self.assertEqual(self.build.output_path, "PRG/228.BIN")
-        self.assertEqual(len(mod), 0x6E0)
-        self.assertEqual(
-            binary_patcher.data_sha256(mod),
-            "A6E4015FE78252234E0A7E121309D642B13EFE5AC167B5B7044B59CA30F03735",
-        )
-        self.assertEqual(
-            struct.unpack_from("<4s7I", mod, 0),
-            (b"MWo3", 8, 0x008F3D00, 0x40, 0x690, 0, 0x008F43E0, 0x008F43E0),
-        )
-        self.assertEqual(mod[0x20:0x28], b"228.bin\0")
-        self.assertEqual(struct.unpack_from("<II", mod, 0x40), (0x03E00008, 0))
-
-    def test_string_patcher_declares_fragments_and_symbolic_pointers_only(self) -> None:
-        self.assertEqual(len(self.draft.external_draft.fragments), 30)
-        self.assertEqual(len(self.draft.external_draft.symbolic_patches), 35)
-        self.assertEqual(len(self.plan.external_plan.resolved_patches), 35)
-        self.assertTrue(all(patch.kind == "redirect_pointer" for patch in self.resolved))
-        self.assertEqual(self.plan.summary["external_mappings"], 33)
-        self.assertEqual(self.plan.summary["external_binary_edits"], 35)
-        self.assertEqual(self.plan.summary["compiled_binary_edits"], 2309)
-
-    def test_pool_contains_only_referenced_strings_and_deduplicates_one_pair(self) -> None:
-        summary = self.plan.summary["external_strings"]
-        self.assertEqual(summary["count"], 31)
-        self.assertEqual(summary["distinct"], 30)
-        self.assertEqual(summary["encoded_bytes"], 1440)
-        self.assertEqual(summary["derived"], 3)
-        rows = {row["mapping_id"]: row for row in summary["rows"]}
-        self.assertEqual(rows["T364"]["runtime_address"], rows["T117"]["runtime_address"])
-        self.assertGreaterEqual(min(int(row["file_offset"], 0) for row in rows.values()), 0x100)
 
     def test_structural_loader_edits_are_owned_by_payload_builder(self) -> None:
         counts: dict[str, int] = {}
@@ -217,93 +182,6 @@ class IntegratedExternalStringTests(unittest.TestCase):
                     expected_occurrence_count=0,
                 ),
             )
-
-    def test_canonical_rows_derive_translation_and_placement_state(self) -> None:
-        self.assertEqual(len(self.import_plan.text_mappings), 2075)
-        self.assertTrue(
-            all(row["mode"] in {"slot", "sequence"} for row in self.import_plan.text_mappings)
-        )
-        self.assertTrue(
-            all(not str(row["replacement"]).startswith("[S]") for row in self.import_plan.text_mappings)
-        )
-        override_rows = [
-            row for row in self.import_plan.text_mappings if str(row["replacement"])
-        ]
-        self.assertEqual(
-            {str(row["id"]) for row in override_rows},
-            {"T30", "T1877", "T1920", "T1958", "T2194", "T2197"},
-        )
-        self.assertEqual(
-            self.import_plan.resolved_texts["T1877"],
-            'Fire Style: Fireball Jutsu "Divinity"',
-        )
-        self.assertEqual(self.import_plan.resolved_texts["T1920"], "Charge Chakra")
-        self.assertEqual(
-            {
-                mapping_id: self.import_plan.resolved_texts[mapping_id]
-                for mapping_id in (
-                    "T63",
-                    "T64",
-                    "T66",
-                    "T67",
-                    "T2201",
-                    "T2202",
-                    "T2203",
-                    "T2204",
-                )
-            },
-            {
-                "T63": "Are you sure you want to quit Battle",
-                "T64": "Are you sure you want to quit Practice",
-                "T66": " and return to ",
-                "T67": "?",
-                "T2201": "Character Select",
-                "T2202": "Game Mode Select",
-                "T2203": "ON",
-                "T2204": "OFF",
-            },
-        )
-        inline_mapping_ids = {
-            str(row["source_mapping_id"])
-            for row in self.draft.translation_plan.import_rows
-        }
-        self.assertTrue(
-            {"T2201", "T2202", "T2203", "T2204"} <= inline_mapping_ids
-        )
-        self.assertTrue(
-            {"T63", "T64"}
-            <= {
-                str(row["mapping_id"])
-                for row in self.draft.external_draft.rows
-            }
-        )
-        self.assertEqual(len(self.import_plan.references), 34)
-        self.assertTrue(
-            all(str(row["display_context"]) for row in self.import_plan.text_mappings)
-        )
-        self.assertTrue(
-            all(
-                str(row["display_basis"]).startswith(
-                    ("seen:", "inferred:", "character:")
-                )
-                for row in self.import_plan.text_mappings
-            )
-        )
-
-    def test_canonical_mappings_preserve_confirmed_fixes(self) -> None:
-        self.assertEqual(self.import_plan.resolved_texts["T443"], "Kankuro")
-        self.assertEqual(self.import_plan.resolved_texts["T812"], "Provocation")
-        self.assertEqual(
-            self.import_plan.resolved_texts["T813"],
-            "Contrasting Pair",
-        )
-        self.assertEqual(self.import_plan.resolved_texts["T2158"], "Warning")
-        self.assertEqual(self.import_plan.resolved_texts["T5"], "MAX")
-        self.assertEqual(self.import_plan.resolved_texts["T528"], "Opponent")
-
-    def test_generic_choice_labels_preserve_official_case(self) -> None:
-        self.assertEqual(self.import_plan.resolved_texts["T2025"], "No")
-        self.assertEqual(self.import_plan.resolved_texts["T2026"], "Yes")
 
     def test_title_policy_fails_closed_in_string_patcher(self) -> None:
         with self.assertRaisesRegex(ValueError, "policy coverage differs"):

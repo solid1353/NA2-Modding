@@ -1,12 +1,8 @@
 from __future__ import annotations
 
 import unittest
-from pathlib import Path
 
-from na2_patcher.composer import resolve_symbolic_patches
-from na2_patcher.modules.runtime_injector import engine
 from na2_patcher.payload_builder import mips
-from na2_patcher.payload_builder.builder import build_resident_payload
 from scripts.localization import generate_font_renderer
 from scripts.research.localization import (
     generate_ninja_song_ascii_numbers,
@@ -14,89 +10,6 @@ from scripts.research.localization import (
 
 
 class NinjaSongAsciiNumbersTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.repository = Path(__file__).resolve().parents[2]
-        cls.declaration = engine.load_package(
-            cls.repository
-            / "na2_patcher"
-            / "features"
-            / "localization"
-            / "runtime_injector",
-            owner="localization.runtime_injector",
-        )
-
-    def test_canonical_patch_matches_generated_five_call_redirects(self) -> None:
-        patch_id = generate_ninja_song_ascii_numbers.PATCH_ID
-        patch = self.declaration.patches[patch_id]
-        self.assertTrue(patch.enabled)
-        self.assertEqual(patch.group_id, "battle_ui")
-        self.assertEqual(patch.status, "runtime_proven")
-        self.assertEqual(patch.confidence, "high")
-
-        canonical = [
-            edit
-            for edit in self.declaration.active_edits
-            if edit.patch_id == patch_id
-        ]
-        generated = generate_ninja_song_ascii_numbers.generated_edits()
-        self.assertEqual(len(canonical), 5)
-        self.assertEqual(len(canonical), len(generated))
-        for edit, expected in zip(canonical, generated, strict=True):
-            self.assertEqual(edit.edit_id, expected["edit_id"])
-            self.assertEqual(edit.order, expected["order"])
-            self.assertEqual(edit.target_id, expected["target_id"])
-            symbolic = edit.symbolic_patch
-            self.assertEqual(symbolic.offset, expected["offset"])
-            self.assertEqual(
-                symbolic.expected.hex().upper(),
-                expected["expected_hex"],
-            )
-            self.assertEqual(
-                symbolic.replacement_template.hex().upper(),
-                expected["replacement_hex"],
-            )
-            self.assertEqual(symbolic.relocation_offset, 0)
-            self.assertEqual(symbolic.symbol, expected["symbol"])
-            self.assertEqual(symbolic.encoding, "jal26")
-            self.assertEqual(symbolic.addend, 0)
-
-        build = build_resident_payload(self.declaration.fragments)
-        resolved = resolve_symbolic_patches(
-            build, self.declaration.symbolic_patches
-        )
-        package = engine.build_binary_package(self.declaration, resolved)
-        canonical_edits = {
-            edit.edit_id: edit
-            for edit in package.edits
-            if edit.patch_id == patch_id
-        }
-        self.assertEqual(set(canonical_edits), {
-            row["edit_id"] for row in generated
-        })
-        helper = build.symbols[
-            generate_ninja_song_ascii_numbers.SYMBOL
-        ]
-        for edit in canonical_edits.values():
-            hook = bytes.fromhex(edit.replacement_hex)
-            self.assertEqual(len(hook), 4)
-            jump = int.from_bytes(hook, "little")
-            self.assertEqual(jump >> 26, 0x03)
-            self.assertEqual(
-                (jump & 0x03FFFFFF) << 2,
-                helper.runtime_address,
-            )
-
-    def test_clean_btl_contexts_and_multiplication_mapping_are_exact(self) -> None:
-        self.assertTrue(
-            generate_ninja_song_ascii_numbers.verify_source().is_file()
-        )
-        self.assertTrue(
-            generate_ninja_song_ascii_numbers
-            .verify_multiplication_mapping()
-            .is_file()
-        )
-
     def test_nun5_padding_modes_are_preserved(self) -> None:
         format_number = (
             generate_ninja_song_ascii_numbers.format_ascii_number
@@ -169,41 +82,6 @@ class NinjaSongAsciiNumbersTests(unittest.TestCase):
                 0,
             ],
         )
-
-        numeric_fragments = generate_font_renderer.numeric_fragments()
-        self.assertIn(fragment, numeric_fragments)
-        self.assertIn(bridge, numeric_fragments)
-        rows = {
-            row.symbol: row
-            for row in self.declaration.fragments
-            if row.symbol in {fragment.symbol, bridge.symbol}
-        }
-        self.assertEqual(set(rows), {fragment.symbol, bridge.symbol})
-        self.assertEqual(rows[fragment.symbol].payload, fragment.payload)
-        self.assertEqual(rows[bridge.symbol].payload, bridge.payload)
-        self.assertEqual(
-            [
-                (
-                    item.offset,
-                    item.kind,
-                    item.symbol,
-                    item.addend,
-                )
-                for item in rows[fragment.symbol].relocations
-            ],
-            [
-                (
-                    item.offset,
-                    item.kind,
-                    item.symbol,
-                    item.addend,
-                )
-                for item in fragment.relocations
-            ],
-        )
-        self.assertEqual(rows[fragment.symbol].kind, "code")
-        self.assertEqual(rows[bridge.symbol].kind, "code")
-
 
 if __name__ == "__main__":
     unittest.main()

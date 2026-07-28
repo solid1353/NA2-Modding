@@ -389,6 +389,7 @@ else {
                 }
             )
             CheatAliases = @('alias')
+            PreservedInjectionLabPnach = @('alias')
             RemovedCheatSymlinks = @('old-link')
             EnabledCheats = @('Intro skips')
             CreatedGameSettings = @()
@@ -398,6 +399,7 @@ else {
         }) `
         -ProjectPaths $paths
     Assert-Na2Test -Condition ($status -match 'Current=SLOP-NA228_C0659AD1') -Message 'Actualize status omitted the role identity.'
+    Assert-Na2Test -Condition ($status -match 'lab PNACH preserved=1') -Message 'Actualize status omitted the preserved injection-lab PNACH.'
     Assert-Na2Test -Condition ($status -match 'Intro skips') -Message 'Actualize status omitted enabled cheats.'
     Assert-Na2Test -Condition ($status -match 'GameSettings') -Message 'Actualize status omitted GameSettings.'
 

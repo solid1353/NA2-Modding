@@ -48,6 +48,10 @@ file so PCSX2's file watcher can observe the change. It refuses refresh or
 cleanup if another process or user changed the installed PNACH. Removal
 restores the previous file or managed symbolic link, including its relative
 target, but already-applied memory writes remain until Current is restarted.
+While that guarded install record is active, normal `na2` actualization
+recognizes and preserves the exact recorded Current PNACH instead of replacing
+it with the canonical cheat symlink. Unknown, stale, or tampered regular PNACH
+files still fail closed.
 
 Ordinary `patch=1` PNACH writes are reapplied continuously. Mutable state must
 not be initialized through those recurring writes. The adapted object keeps

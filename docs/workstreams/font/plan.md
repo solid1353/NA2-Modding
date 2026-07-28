@@ -378,7 +378,7 @@ guarded by `jal 0x003827A0` plus NOP. Together they:
 - delegate measurement, scaling, session publication, and restoration to the
   accepted v2 core, then call the original native helper for each path.
 
-The retained `font_layout_wrappers` patch remains disabled, and no ss4
+The retired v1 `font_layout_wrappers` patch is not present, and no ss4
 confirmation-body or Yes/No call is selected. Generation, relocation, hook,
 ABI, and package tests pass. The normal ss2 state and corrected selected ss3
 state are both user-verified; the Pause Controls caller family is accepted.

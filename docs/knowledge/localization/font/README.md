@@ -20,8 +20,7 @@ provide.
 
 The user retained the accepted native font and generic runtime-injector
 infrastructure but rejected the combined July 24-25 autofit/layout selection as
-unstable. The implementation remains recoverable in place; only its default
-selection changed. These five module/patch rows are now disabled:
+unstable. These five module/patch rows were disabled at that boundary:
 
 - binary `font_renderer_metrics`;
 - binary `font_controls_auto_fit`;
@@ -32,10 +31,27 @@ selection changed. These five module/patch rows are now disabled:
 `font_nun5_glyphs` remains enabled. Binary `font_modal_alignment` also remains
 enabled because it is the independently reviewed Character Select `Back to
 Game Mode Screen` row alignment, not the Save/Load lower modal described
-below. The resident fragments, metric table, relocations, hook declarations,
-and generated blobs were not deleted. Their confirmed formulas and rejected
-integration behavior remain evidence for selective reimplementation rather
-than an enabled baseline.
+below. Their confirmed formulas and rejected integration behavior remained
+evidence for the independent v2 reimplementation rather than an enabled
+baseline.
+
+### 2026-07-28 v1 executable retirement
+
+After the v2 caller families became the only active implementation, a complete
+symbol-relocation closure from all enabled resident hook roots reached all 37
+v2 fragments and the numeric formatter, but none of the ten v1 fragments.
+The generic runtime injector validates all declarations and contributes every
+declared fragment whenever any resident edit is active, so the unreachable
+1,847-byte v1 blob was still physically linked into each current `228.BIN`.
+An in-memory payload build measured 1,856 bytes of actual linked size after
+alignment.
+
+The obsolete v1 fragments, relocations, disabled patch/edit rows, generated
+blob, generator-only assembly builders, and v1-specific tests were therefore
+removed. The paired binary-patcher tracking/alignment rows were removed with
+them. Git history is the executable archive; the detailed findings below
+remain canonical historical evidence. The live v2 renderer, numeric formatter,
+native glyph data, and independent binary patches were unchanged.
 
 The user identified `ss9` as the current broken Save/Load modal. Its protected
 state was copied read-only from
@@ -656,7 +672,11 @@ task-local gap at `0x008DD1D0`, and the initialized `1.0` scale word at
 The preceding v3 helper remains rejected because it clobbered that return
 register and produced no usable capture.
 
-### Shared renderer-metric and layout-wrapper port
+### Retired v1 shared renderer-metric and layout-wrapper port
+
+The following describes the superseded July v1 implementation for historical
+and reverse-engineering reference. None of these symbols or hook declarations
+remain executable inputs after the 2026-07-28 retirement.
 
 The exact boxed result is now implemented as shared renderer behavior rather
 than another screen-local denominator. The canonical port makes these guarded

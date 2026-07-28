@@ -186,116 +186,6 @@ class RuntimeInjectorTests(unittest.TestCase):
         self.assertEqual(group_disabled_declaration.payload_fragments, ())
         self.assertEqual(group_disabled_declaration.symbolic_patches, ())
 
-        declaration = replace(
-            disabled_declaration,
-            patches={
-                patch_id: replace(patch, enabled=True)
-                for patch_id, patch in disabled_declaration.patches.items()
-            },
-        )
-        build = build_resident_payload(declaration.fragments)
-        resolved = resolve_symbolic_patches(
-            build, declaration.symbolic_patches
-        )
-        package = engine.build_binary_package(declaration, resolved)
-
-        self.assertLessEqual(build.memory_end, load_config().maximum_end)
-        self.assertEqual(
-            {edit.destination_offset for edit in package.edits},
-            {
-                0x88070,
-                0x88704,
-                0x88B7C,
-                0x893EC,
-                0x897D8,
-                0x279250,
-                0x279B20,
-                0x288848,
-                0x283914,
-                0x283A60,
-                0x1C4048,
-                0x1C407C,
-                0x1C3D38,
-                0x1C4B98,
-                0x1C4BA0,
-                0x1C6A28,
-                0x1C9794,
-                0x1C97D8,
-                0x64B28,
-                0x64BA8,
-                0x64CE4,
-                0x64E4C,
-                0x64ED4,
-            },
-        )
-        self.assertTrue(
-            all(
-                not 0x2D3F00 <= edit.destination_offset < 0x2D4488
-                for edit in package.edits
-            )
-        )
-        ui = build.symbols["localization.font.ui_helper"]
-        ui_payload = build.payload[ui.file_offset:ui.file_offset + ui.size]
-        self.assertNotIn((0x003FAD20).to_bytes(4, "little"), ui_payload)
-        widths = build.symbols["localization.font.ascii_widths"]
-        width_payload = build.payload[
-            widths.file_offset:widths.file_offset + widths.size
-        ]
-        self.assertEqual(len(width_payload), 95)
-        for text, expected in (
-            ("Susanoo's Blade", 142),
-            ("Reverse Halo", 115),
-            (
-                "Fire Style: Phoenix Flower Jutsu @Petal Shower@",
-                440,
-            ),
-        ):
-            self.assertEqual(
-                sum(width_payload[ord(character) - 0x20] for character in text),
-                expected,
-            )
-        for fragment in declaration.fragments:
-            if fragment.kind != "code":
-                continue
-            linked = build.symbols[fragment.symbol]
-            payload = build.payload[
-                linked.file_offset:linked.file_offset + linked.size
-            ]
-            for offset in range(0, len(payload), 4):
-                word = int.from_bytes(payload[offset:offset + 4], "little")
-                opcode = word >> 26
-                if opcode not in {1, 4, 5, 6, 7}:
-                    continue
-                immediate = word & 0xFFFF
-                if immediate & 0x8000:
-                    immediate -= 0x10000
-                target = linked.runtime_address + offset + 4 + immediate * 4
-                self.assertLessEqual(linked.runtime_address, target)
-                self.assertLess(target, linked.runtime_address + linked.size)
-        self.assertTrue(
-            all(
-                len(bytes.fromhex(edit.expected_hex))
-                == len(bytes.fromhex(edit.replacement_hex))
-                for edit in package.edits
-            )
-        )
-        scale = build.symbols["localization.font.scale_advance"]
-        edits = {edit.edit_id: edit for edit in package.edits}
-        for edit_id, addend in (
-            ("font_controls_auto_fit_01", 0x00),
-            ("font_controls_auto_fit_02", 0x18),
-            ("font_controls_auto_fit_03", 0x2C),
-        ):
-            word = int.from_bytes(
-                bytes.fromhex(edits[edit_id].replacement_hex)[:4],
-                "little",
-            )
-            self.assertEqual(word >> 26, 0x02)
-            self.assertEqual(
-                (word & 0x03FFFFFF) << 2,
-                scale.runtime_address + addend,
-            )
-
         v2_declaration = replace(
             disabled_declaration,
             patches={
@@ -339,7 +229,22 @@ class RuntimeInjectorTests(unittest.TestCase):
         v2_width_payload = v2_build.payload[
             v2_widths.file_offset:v2_widths.file_offset + v2_widths.size
         ]
-        self.assertEqual(v2_width_payload, width_payload)
+        self.assertEqual(len(v2_width_payload), 95)
+        for text, expected in (
+            ("Susanoo's Blade", 142),
+            ("Reverse Halo", 115),
+            (
+                "Fire Style: Phoenix Flower Jutsu @Petal Shower@",
+                440,
+            ),
+        ):
+            self.assertEqual(
+                sum(
+                    v2_width_payload[ord(character) - 0x20]
+                    for character in text
+                ),
+                expected,
+            )
         self.assertEqual(
             sum(
                 v2_width_payload[ord(character) - 0x20]

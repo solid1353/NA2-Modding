@@ -1718,11 +1718,11 @@ GF4 replacement as an implementation parent. The accepted build changes
 `DATA/GF4.BIN` and `SLPS_258.37` without changing either file's size;
 `DATA/GF4C.BIN` remains byte-identical to clean NA2.
 
-Three Font components remain enabled by default when Localization is enabled:
-the accepted native glyph component, the independent Character Select modal
-alignment, and the call-local Save/Load ASCII numeric formatter. The historical
-autofit/layout components are retained in place but default-disabled for a
-user-directed stage-by-stage reimplementation:
+The accepted native glyph component, independent Character Select modal
+alignment, call-local numeric formatters, and reviewed v2 caller families are
+enabled by default when Localization is enabled. The historical v1
+autofit/layout implementation was removed after the independent v2
+reimplementation made all ten of its resident fragments unreachable:
 
 - `font_nun5_glyphs` installs native 14x20 NUN5 raster geometry and metrics
   for same-semantic English cells. Unsupported printable punctuation is
@@ -1733,18 +1733,6 @@ user-directed stage-by-stage reimplementation:
   descriptor width on the primary/fullwidth path and uses descriptor height
   only for the secondary quad, restoring its intended 24x28 presentation
   without widening it.
-- Retained, default-disabled `font_renderer_metrics` ports the shared NUN5 secondary tracking, ordinary
-  ASCII-space, newline-advance, and logical-width behavior. Boxed callers use
-  the same corrected denominator instead of reconstructing it independently.
-  Pure printable ASCII uses the linked 95-entry proportional-width table;
-  retained NUN5 runtime probes confirm Command Chart denominators `142`, `115`,
-  and `440`.
-- Retained, default-disabled `font_controls_auto_fit` reproduces NUN5's shrink-only Controls behavior.
-  It keeps `Linked Attack` full width, fits the official
-  `Ultimate Jutsu Prep` label, leaves `OFF` on the ordinary renderer, and
-  shifts only the left and right labels for visible-ink centering. Its
-  128-unit wrapper delegates measurement to `font_renderer_metrics`, and its
-  local scale is restored immediately after every fitted call.
 - `font_modal_alignment` loads independently measured X positions for the
   five character-select `Back to Game Mode Screen` rows while retaining the
   accepted local Y behavior. Its selected-path compensation prevents the
@@ -1769,21 +1757,14 @@ user-directed stage-by-stage reimplementation:
   rewritten by this patch. The user built and tested the integrated ss2–ss5
   result and declared the task done; unseen decimal values use these same
   guarded calls rather than separate string mappings.
-- Retained, default-disabled `font_layout_wrappers` ports shared selected/unselected confirmation-choice
-  placement, the 216-unit Practice pause-list fit and Y origin, Practice and
-  Collection confirmation-body alignment, and the character-return body's
-  centered 368-unit box. It also distinguishes the Command Chart 288-unit and
-  Practice-title 352-unit containers while sharing their shrink-only fit
-  implementation. Exact caller guards leave unrelated shared-wrapper users
-  untouched.
-
-Executable metric, fit, scale, and layout helpers are nine relocatable code
-fragments plus one linked read-only metric table in `PRG/228.BIN`. Their eight
-guarded ELF hook sites are resolved only after final payload placement. The
-binary-patcher module retains only static renderer data, tracking, and local
-alignment edits; it no longer installs executable code into ELF zero padding.
-The shared UI wrapper keeps transient coordinates and saved renderer fields in
-its own stack frame rather than the former global scratch record.
+The removed v1 implementation consisted of nine relocatable code fragments,
+one linked metric table, eight disabled runtime hook edits, and four disabled
+binary tracking/alignment edits. Although its hooks were disabled, the generic
+injector still linked all declared fragments whenever any active resident edit
+existed. Retiring the declarations and generated blob removes 1,856 aligned
+bytes from `PRG/228.BIN`. Git history and
+`docs/knowledge/localization/font/README.md` preserve its formulas, validation,
+and negative integration result.
 
 An independent `localization.font.v2.*` implementation is enabled for the
 accepted Controls family and does not target any retained symbol above. Its
@@ -1849,7 +1830,7 @@ native Y origin upward four units. The selected adapter preserves the native
 red style, bridges the integer-coordinate ABI, and applies the previously
 proven two-unit selected-helper X compensation so selection does not move the
 row. The normal ss2 state and corrected selected ss3 state are user-verified,
-so the layer is `runtime_proven`. It does not enable the retained
+so the layer is `runtime_proven`. It does not restore the retired v1
 `font_layout_wrappers` multiplexer or select any ss4 confirmation-body or
 Yes/No call.
 
@@ -1897,15 +1878,13 @@ and D-pad, face, plus, and shoulder icons. Controls and Command Chart
 regressions remain intact. This layer is enabled and runtime-proven;
 the grouped Practice grids still await user acceptance.
 
-The retained auto-fit and layout components require `font_nun5_glyphs` because
+The live v2 auto-fit and layout components require `font_nun5_glyphs` because
 their positions and fit decisions are tuned to its metrics. They otherwise
-remain independent. Their fragments, relocations, hook declarations, generated
-assets, and historical validation evidence remain canonical. Setting a
-resident patch's `enabled=0`, or setting its owning group's `enabled=0`, removes
-it from normal composition without deleting the implementation. With every
-resident Font row effectively disabled, the resident engine
-validates the retained package but contributes no Font fragments or hooks to
-the shared payload.
+remain independently selectable through their patch rows. Setting a resident
+patch's `enabled=0`, or setting its owning group's `enabled=0`, removes its
+hooks from normal composition; the current runtime-injector contract still
+links all declared fragments whenever any resident Font patch remains active,
+so obsolete implementations must not remain as declarations.
 The rejected shared `font_vertical_quad_height` component was removed from
 executable inputs because it stretched both axes to 28x28. Its exact negative
 result remains in `docs/knowledge/localization/font/README.md` and Git history;
@@ -1931,7 +1910,9 @@ title acceptance remains pending.
 regenerates and verifies the four native glyph/metric/decoder blobs from
 configured `@source_na2/` and `@source_nun5/` inputs.
 `scripts/research/localization/generate_font_renderer.py` deterministically
-regenerates the resident renderer blob plus its fragment and relocation tables.
+regenerates the v2 renderer and numeric formatter blobs plus their fragment and
+relocation tables. Its write mode also removes the retired v1 output so stale
+copies fail verification instead of silently returning to canonical inputs.
 `scripts/research/localization/generate_save_load_ascii_digits.py`
 deterministically generates and verifies the six Save/Load call replacements
 and their local punctuation edit.

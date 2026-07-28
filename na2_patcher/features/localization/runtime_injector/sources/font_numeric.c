@@ -4,7 +4,9 @@
  * The Ninja Song caller supplies the output pointer in a3 and the padding
  * mode as the fifth integer argument in t0 under the PS2 EE EABI. Save/Load
  * and Battle Settings use typed entries so their behavior lives in C while
- * native call sites retain only argument setup and hooks.
+ * native call sites retain only argument setup and hooks. The runtime
+ * injector compiles this unit into address-independent fragments during
+ * normal composition.
  */
 
 typedef unsigned int u32;

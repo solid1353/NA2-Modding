@@ -1,7 +1,8 @@
 /*
  * Address-independent C form of the accepted Font v2 measurement and
- * preparation algorithms. This source is compiled by the payload builder's
- * EE C fragment extractor and does not own final 228.BIN placement or hooks.
+ * preparation algorithms. The runtime injector compiles this source through
+ * the generic EE C fragment extractor during composition; the payload builder
+ * owns final 228.BIN placement, and this unit owns no hooks or addresses.
  */
 
 typedef unsigned char u8;

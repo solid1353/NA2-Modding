@@ -34,6 +34,9 @@ RUNTIME_INJECTOR_CONTROL_FILES = (
     "groups.tsv",
     "patches.tsv",
     "fragments.tsv",
+    "c_sources.tsv",
+    "c_imports.tsv",
+    "c_fragments.tsv",
     "relocations.tsv",
     "edits.tsv",
 )
@@ -308,6 +311,33 @@ def _runtime_injector_content_files(path: Path) -> list[Path]:
         if not blob.is_file():
             raise FileNotFoundError(blob)
         files.append(blob)
+    sources_path = path / "c_sources.tsv"
+    with sources_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        fields = reader.fieldnames or []
+        if "path" not in fields:
+            raise ValueError(f"{sources_path}: missing path column")
+        source_paths = {
+            (row.get("path") or "").strip()
+            for row in reader
+            if (row.get("path") or "").strip()
+        }
+    for value in sorted(source_paths):
+        candidate = Path(value.replace("\\", "/"))
+        if candidate.is_absolute() or ".." in candidate.parts:
+            raise ValueError(
+                f"{sources_path}: path must be module-relative: {value!r}"
+            )
+        source = (path / candidate).resolve()
+        try:
+            source.relative_to(path)
+        except ValueError as exc:
+            raise ValueError(
+                f"{sources_path}: path escapes module: {value!r}"
+            ) from exc
+        if not source.is_file():
+            raise FileNotFoundError(source)
+        files.append(source)
     return files
 
 

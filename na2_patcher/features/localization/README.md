@@ -1942,14 +1942,15 @@ title acceptance remains pending.
 regenerates and verifies the four native glyph/metric/decoder blobs from
 configured `@source_na2/` and `@source_nun5/` inputs.
 `scripts/localization/generate_font_renderer.py` deterministically
-regenerates the v2 renderer and numeric formatter blobs plus their fragment and
-relocation tables. Its write mode also removes the retired v1 output so stale
-copies fail verification instead of silently returning to canonical inputs.
-The same generator emits the six Save/Load and one Battle Settings symbolic
-hook templates; their C sources live with the runtime-injector package under
-`sources/`. The only retained assembly in the numeric layer is the pair of
-typed-to-variadic native `sprintf` bridges and the minimal call-site register
-setup.
+reconstructs the accepted v2 renderer, numeric formatter, and retained ABI-shim
+fragments as an independent verifier. Normal composition does not persist its
+aggregate outputs: `runtime_injector/c_sources.tsv` declares the two canonical
+C units under `sources/`, compiles them with the pinned EE toolchain, and
+converts their sections and relocations directly into normalized fragments.
+Static ABI/data fragments remain inline in `fragments.tsv`; the shared payload
+builder links both kinds into the final `228.BIN`. The only retained generated
+MIPS in the numeric layer is the pair of typed-to-variadic native `sprintf`
+bridges and the minimal call-site register setup.
 `scripts/research/localization/generate_ninja_song_ascii_numbers.py`
 deterministically verifies the five shared clean-BTL formatter calls, emits
 their symbolic redirects, and guards the canonical ASCII multiplication

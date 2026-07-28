@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-import argparse
-import csv
 import hashlib
 import struct
 import sys
@@ -37,13 +35,6 @@ from na2_patcher.payload_builder import ee_c_fragments  # noqa: E402
 MODULE = load_project_paths(REPOSITORY).path(
     "features", "localization", "runtime_injector"
 )
-RETIRED_LEGACY_BLOB_OUTPUT = MODULE / "assets" / "font_renderer_resident.bin"
-V2_BLOB_RELATIVE = Path("assets") / "font_renderer_v2_resident.bin"
-V2_BLOB_OUTPUT = MODULE / V2_BLOB_RELATIVE
-NUMERIC_BLOB_RELATIVE = Path("assets") / "font_numeric_resident.bin"
-NUMERIC_BLOB_OUTPUT = MODULE / NUMERIC_BLOB_RELATIVE
-FRAGMENTS_OUTPUT = MODULE / "fragments.tsv"
-RELOCATIONS_OUTPUT = MODULE / "relocations.tsv"
 PACKED_METRICS_INPUT = load_project_paths(REPOSITORY).path(
     "features",
     "localization",
@@ -2798,159 +2789,49 @@ def numeric_fragments() -> tuple[Fragment, ...]:
 
 
 
-def tsv_bytes(fields: list[str], rows: list[dict[str, object]]) -> bytes:
-    from io import StringIO
-
-    stream = StringIO(newline="")
-    writer = csv.DictWriter(
-        stream, fieldnames=fields, delimiter="\t", lineterminator="\n"
-    )
-    writer.writeheader()
-    writer.writerows(rows)
-    return stream.getvalue().encode("utf-8")
-
-
-def pack_blob(
-    generated: tuple[Fragment, ...],
-) -> tuple[bytes, dict[str, int]]:
-    blob = bytearray()
-    offsets: dict[str, int] = {}
-    for fragment in generated:
-        while len(blob) % 4:
-            blob.append(0)
-        offsets[fragment.symbol] = len(blob)
-        blob.extend(fragment.payload)
-    return bytes(blob), offsets
-
-
-def make_fragment_rows(
-    generated: tuple[Fragment, ...],
-    blob_relative: Path,
-    blob: bytes,
-    offsets: dict[str, int],
-) -> list[dict[str, object]]:
-    blob_hash = hashlib.sha256(blob).hexdigest().upper()
-    return [
-        {
-            "fragment_id": fragment.symbol,
-            "kind": fragment.kind,
-            "alignment": fragment.alignment,
-            "blob_path": blob_relative.as_posix(),
-            "blob_offset": f"0x{offsets[fragment.symbol]:X}",
-            "length": len(fragment.payload),
-            "blob_sha256": blob_hash,
-            "init": int(fragment.init),
-        }
-        for fragment in generated
-    ]
-
-
-def relocation_rows(
-    generated: tuple[Fragment, ...],
-    id_prefix: str,
-) -> list[dict[str, object]]:
-    rows: list[dict[str, object]] = []
-    relocation_index = 1
-    for fragment in generated:
-        for order, relocation in enumerate(fragment.relocations, 1):
-            rows.append(
-                {
-                    "relocation_id": (
-                        f"{id_prefix}{relocation_index:03d}"
-                    ),
-                    "fragment_id": fragment.symbol,
-                    "order": order * 10,
-                    "offset": f"0x{relocation.offset:X}",
-                    "kind": relocation.kind,
-                    "symbol": relocation.symbol,
-                    "addend": relocation.addend,
-                }
-            )
-            relocation_index += 1
-    return rows
-
-
-def generated_outputs() -> tuple[bytes, bytes, bytes, bytes]:
-    v2 = v2_fragments()
-    v2_base = v2[:-2]
-    v2_special_controls = v2[-2:]
-    numeric = numeric_fragments()
-    v2_blob, v2_offsets = pack_blob(v2)
-    numeric_blob, numeric_offsets = pack_blob(numeric)
-    fragment_rows = [
-        *make_fragment_rows(
-            v2_base,
-            V2_BLOB_RELATIVE,
-            v2_blob,
-            v2_offsets,
-        ),
-        *make_fragment_rows(
-            numeric,
-            NUMERIC_BLOB_RELATIVE,
-            numeric_blob,
-            numeric_offsets,
-        ),
-        *make_fragment_rows(
-            v2_special_controls,
-            V2_BLOB_RELATIVE,
-            v2_blob,
-            v2_offsets,
-        ),
-    ]
-    generated_relocations = [
-        *relocation_rows(v2_base, "FR-V2-R"),
-        *relocation_rows(numeric, "FR-NUM-R"),
-        *relocation_rows(
-            v2_special_controls,
-            "FR-V2-SS1-R",
-        ),
-    ]
-    return (
-        v2_blob,
-        numeric_blob,
-        tsv_bytes(engine.FRAGMENT_FIELDS, fragment_rows),
-        tsv_bytes(engine.RELOCATION_FIELDS, generated_relocations),
-    )
-
-
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--write",
-        action="store_true",
-        help="write the verified resident blob and declarative tables",
+    declaration = engine.load_package(
+        MODULE, owner="localization.runtime_injector"
     )
-    args = parser.parse_args()
-    if RETIRED_LEGACY_BLOB_OUTPUT.is_file():
-        if not args.write:
-            raise ValueError(
-                f"retired generated output remains: {RETIRED_LEGACY_BLOB_OUTPUT}"
+    v2 = v2_fragments()
+    expected = (*v2[:-2], *numeric_fragments(), *v2[-2:])
+    if len(declaration.fragments) != len(expected):
+        raise ValueError(
+            "runtime-injector fragment count differs from Font sources"
+        )
+    for actual, generated in zip(
+        declaration.fragments, expected, strict=True
+    ):
+        actual_relocations = tuple(
+            (
+                relocation.offset,
+                relocation.kind,
+                relocation.symbol,
+                relocation.addend,
             )
-        RETIRED_LEGACY_BLOB_OUTPUT.unlink()
-    outputs = zip(
-        (
-            V2_BLOB_OUTPUT,
-            NUMERIC_BLOB_OUTPUT,
-            FRAGMENTS_OUTPUT,
-            RELOCATIONS_OUTPUT,
-        ),
-        generated_outputs(),
-        strict=True,
-    )
-    action = "verified"
-    for path, payload in outputs:
-        if args.write:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            if not path.is_file() or path.read_bytes() != payload:
-                path.write_bytes(payload)
-            action = "wrote"
-        elif not path.is_file():
-            raise FileNotFoundError(path)
-        elif path.read_bytes() != payload:
-            raise ValueError(f"generated output differs: {path}")
-        print(f"{action}\t{path.relative_to(REPOSITORY).as_posix()}")
-        print(f"size\t{len(payload)}")
-        print(f"sha256\t{hashlib.sha256(payload).hexdigest().upper()}")
+            for relocation in actual.relocations
+        )
+        generated_relocations = tuple(
+            (
+                relocation.offset,
+                relocation.kind,
+                relocation.symbol,
+                relocation.addend,
+            )
+            for relocation in generated.relocations
+        )
+        if (
+            actual.symbol != generated.symbol
+            or actual.kind != generated.kind
+            or actual.alignment != generated.alignment
+            or actual.payload != generated.payload
+            or actual_relocations != generated_relocations
+            or actual.init != generated.init
+        ):
+            raise ValueError(
+                f"runtime-injector fragment differs: {actual.symbol}"
+            )
+    print(f"verified\t{len(expected)} Font runtime fragments")
 
 
 if __name__ == "__main__":

@@ -66,6 +66,9 @@ class ProfileTests(unittest.TestCase):
                 ("groups.tsv", runtime_injector.GROUP_FIELDS),
                 ("patches.tsv", runtime_injector.PATCH_FIELDS),
                 ("fragments.tsv", runtime_injector.FRAGMENT_FIELDS),
+                ("c_sources.tsv", runtime_injector.C_SOURCE_FIELDS),
+                ("c_imports.tsv", runtime_injector.C_IMPORT_FIELDS),
+                ("c_fragments.tsv", runtime_injector.C_FRAGMENT_FIELDS),
                 ("relocations.tsv", runtime_injector.RELOCATION_FIELDS),
                 ("edits.tsv", runtime_injector.EDIT_FIELDS),
             ):
@@ -353,8 +356,10 @@ class ProfileTests(unittest.TestCase):
                 runtime_injector.FRAGMENT_FIELDS,
                 [{
                     "fragment_id": "test.code",
+                    "order": 1,
                     "kind": "code",
                     "alignment": 4,
+                    "payload_hex": "",
                     "blob_path": "assets/resident.bin",
                     "blob_offset": 0,
                     "length": 4,
@@ -372,6 +377,31 @@ class ProfileTests(unittest.TestCase):
                 first, module_content_sha256(module, "runtime_injector")
             )
             blob.write_bytes(b"\1\0\0\0")
+            self.assertNotEqual(
+                first, module_content_sha256(module, "runtime_injector")
+            )
+
+    def test_resident_hash_includes_declared_c_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            feature = root / "feature"
+            feature.mkdir()
+            module = self.create_module(feature, "runtime_injector")
+            source = module / "sources" / "resident.c"
+            source.parent.mkdir()
+            source.write_text("int resident(void) { return 1; }\n", encoding="utf-8")
+            write_tsv(
+                module / "c_sources.tsv",
+                runtime_injector.C_SOURCE_FIELDS,
+                [{
+                    "source_id": "resident",
+                    "language": "c",
+                    "path": "sources/resident.c",
+                    "namespace": "test.resident",
+                }],
+            )
+            first = module_content_sha256(module, "runtime_injector")
+            source.write_text("int resident(void) { return 2; }\n", encoding="utf-8")
             self.assertNotEqual(
                 first, module_content_sha256(module, "runtime_injector")
             )

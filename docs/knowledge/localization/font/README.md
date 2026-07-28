@@ -1478,3 +1478,24 @@ An exact-guarded converted copy of the new state redirected only ELF calls
 OFF-highlight selector while retaining the accepted wrapped body. Focused
 tests now verify the branch target for each ON pointer loads X `66`, while
 each OFF fallthrough loads X `59`; this prevents another role-swap regression.
+
+## 2026-07-28 composition-time C cutover
+
+The two accepted Font C units are now compiled during normal
+`runtime_injector` package loading. `c_sources.tsv` declares the source and
+namespace, `c_imports.tsv` binds its external symbols, and `c_fragments.tsv`
+maps extracted object sections to stable payload symbols and global order.
+Compiler objects exist only in a temporary directory. Retained native ABI/data
+shims are represented directly in `fragments.tsv`; the payload builder links
+all normalized fragments into the one final `PRG/228.BIN`.
+
+This is an architecture-only cutover. Comparison against the preceding
+canonical package produced the same 57 fragments, the same 6,480-byte
+runtime-injector link with SHA-256
+`48621B34B8183866BA2D420B7D6691D110825BE090424E7C44B3A305BF9332FF`,
+and the same 7,968-byte complete profile payload with SHA-256
+`56748DA8F0D3C2BFE3AC689B1899DBF4EA358D5316DC387F562165CCCDB9C99C`;
+the linked memory end remains `0x008F5C20`. The removed aggregate blobs were
+therefore redundant build intermediates, not runtime resources. Confidence is
+high because equality covers compiled section bytes, relocations, fragment
+order, and the final linked payload.

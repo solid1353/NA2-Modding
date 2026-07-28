@@ -9,8 +9,17 @@ package. A feature never chooses an offset inside `PRG/228.BIN` or owns its
 loader, memory reservation, or final runtime address.
 
 Canonical inputs are `targets.tsv`, `groups.tsv`, `patches.tsv`,
-`fragments.tsv`, `relocations.tsv`, and `edits.tsv`, plus only the blobs
-referenced by fragment rows. Fragment IDs are exported payload symbols.
+`fragments.tsv`, `c_sources.tsv`, `c_imports.tsv`, `c_fragments.tsv`,
+`relocations.tsv`, and `edits.tsv`, plus only the source files and blobs
+referenced by those tables. Static fragments may contain their bytes inline or
+select a guarded range from a referenced blob. Declared C sources are compiled
+with the pinned Injection Lab EE toolchain during normal package loading; the
+generic object extractor converts their sections and relocations directly into
+the same address-independent fragment model. Compiler objects and aggregate
+payload blobs are temporary and are not canonical feature inputs.
+
+Fragment IDs are exported payload symbols. `c_fragments.tsv` aliases extracted
+object-section symbols to those stable IDs and assigns their global order.
 Relocations may target any exported symbol in the complete linked payload.
 Symbolic edit templates preserve surrounding instructions such as branch or
 jump delay slots while replacing only the declared relocation field.

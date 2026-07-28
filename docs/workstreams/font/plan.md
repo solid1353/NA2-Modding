@@ -841,6 +841,25 @@ width, while the official 19-byte `Ultimate Jutsu Prep` probe matches NUN5's
 157-pixel visible width and X center. Scale returns to `1.0` before the next
 call. `OFF` remains on the ordinary renderer.
 
+## Composition-time C boundary
+
+Normal profile composition now treats Font C as canonical input instead of
+requiring checked-in aggregate MIPS blobs. The Localization runtime-injector
+package declares each C unit, external import, extracted object section, stable
+fragment ID, and global fragment order. During package loading the pinned
+Injection Lab compiler produces temporary objects; the generic EE extractor
+normalizes their supported sections and relocations; the payload builder lays
+those fragments out with retained static ABI/data fragments and external
+strings in the single final `PRG/228.BIN`.
+
+The checked-in `font_renderer_v2_resident.bin` and
+`font_numeric_resident.bin` intermediates are retired. The deterministic Font
+generator remains an independent source reconstruction/verifier for the
+compiled and retained static fragments, not a production blob writer. This
+boundary intentionally changes no hook, formula, fragment order, linked byte,
+or runtime behavior. Its acceptance gate is exact equality with the previous
+57-fragment package and linked-profile payload.
+
 ## Preserved baseline and evidence
 
 - `na2_patcher/features/localization/binary_patcher/` contains the enabled

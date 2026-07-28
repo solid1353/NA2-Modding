@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from na2_patcher.modules.runtime_injector import engine as runtime_injector
 from na2_patcher.payload_builder import build_resident_payload
 from na2_patcher.payload_builder import mips
 from na2_patcher.payload_builder.operations import PayloadFragment
@@ -214,24 +215,49 @@ class FontCSharedCoreTests(unittest.TestCase):
             ),
         )
 
-    def test_c_core_reproduces_canonical_generated_outputs(self) -> None:
-        v2_blob, numeric_blob, fragments, relocations = (
-            generate_font_renderer.generated_outputs()
+    def test_normal_build_compiles_canonical_font_fragments(self) -> None:
+        directory = (
+            REPOSITORY_ROOT
+            / "na2_patcher"
+            / "features"
+            / "localization"
+            / "runtime_injector"
         )
+        declaration = runtime_injector.load_package(
+            directory, owner="localization.runtime_injector"
+        )
+        v2 = generate_font_renderer.v2_fragments()
+        expected = (*v2[:-2], *generate_font_renderer.numeric_fragments(), *v2[-2:])
         self.assertEqual(
-            generate_font_renderer.V2_BLOB_OUTPUT.read_bytes(), v2_blob
+            [fragment.symbol for fragment in expected],
+            [fragment.symbol for fragment in declaration.fragments],
         )
-        self.assertEqual(
-            generate_font_renderer.NUMERIC_BLOB_OUTPUT.read_bytes(),
-            numeric_blob,
-        )
-        self.assertEqual(
-            generate_font_renderer.FRAGMENTS_OUTPUT.read_bytes(), fragments
-        )
-        self.assertEqual(
-            generate_font_renderer.RELOCATIONS_OUTPUT.read_bytes(),
-            relocations,
-        )
+        for generated, actual in zip(
+            expected, declaration.fragments, strict=True
+        ):
+            self.assertEqual(generated.payload, actual.payload)
+            self.assertEqual(generated.kind, actual.kind)
+            self.assertEqual(generated.alignment, actual.alignment)
+            self.assertEqual(
+                [
+                    (
+                        relocation.offset,
+                        relocation.kind,
+                        relocation.symbol,
+                        relocation.addend,
+                    )
+                    for relocation in generated.relocations
+                ],
+                [
+                    (
+                        relocation.offset,
+                        relocation.kind,
+                        relocation.symbol,
+                        relocation.addend,
+                    )
+                    for relocation in actual.relocations
+                ],
+            )
 
 
 if __name__ == "__main__":

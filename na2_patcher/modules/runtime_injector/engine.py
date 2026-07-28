@@ -3,9 +3,11 @@ from __future__ import annotations
 import csv
 import hashlib
 import re
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
+from ...payload_builder import ee_c_fragments
 from ...payload_builder.operations import (
     FRAGMENT_KINDS,
     RELOCATION_KINDS,
@@ -22,13 +24,33 @@ GROUP_FIELDS = binary_patcher.GROUP_FIELDS
 PATCH_FIELDS = binary_patcher.PATCH_FIELDS
 FRAGMENT_FIELDS = [
     "fragment_id",
+    "order",
     "kind",
     "alignment",
+    "payload_hex",
     "blob_path",
     "blob_offset",
     "length",
     "blob_sha256",
     "init",
+]
+C_SOURCE_FIELDS = [
+    "source_id",
+    "language",
+    "path",
+    "namespace",
+]
+C_IMPORT_FIELDS = [
+    "source_id",
+    "name",
+    "symbol",
+    "addend",
+]
+C_FRAGMENT_FIELDS = [
+    "source_id",
+    "order",
+    "object_fragment",
+    "fragment_id",
 ]
 RELOCATION_FIELDS = [
     "relocation_id",
@@ -58,6 +80,9 @@ CONTROL_FILES = (
     "groups.tsv",
     "patches.tsv",
     "fragments.tsv",
+    "c_sources.tsv",
+    "c_imports.tsv",
+    "c_fragments.tsv",
     "relocations.tsv",
     "edits.tsv",
 )
@@ -263,9 +288,28 @@ def _load_patches(
     return patches
 
 
-def _load_fragments(
+def _module_file(directory: Path, value: str, label: str) -> Path:
+    relative = _relative_path(value, label)
+    path = (directory / Path(relative.as_posix())).resolve()
+    try:
+        path.relative_to(directory.resolve())
+    except ValueError as exc:
+        raise ValueError(f"{label}: path escapes module") from exc
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    return path
+
+
+def _repository_root(directory: Path) -> Path:
+    for candidate in (directory.resolve(), *directory.resolve().parents):
+        if (candidate / "project-paths.json").is_file():
+            return candidate
+    raise FileNotFoundError("project-paths.json was not found")
+
+
+def _load_static_fragments(
     directory: Path, owner: str
-) -> tuple[PayloadFragment, ...]:
+) -> list[tuple[int, int, PayloadFragment]]:
     fragment_rows = _read_tsv(directory / "fragments.tsv", FRAGMENT_FIELDS)
     relocation_rows = _read_tsv(
         directory / "relocations.tsv", RELOCATION_FIELDS
@@ -278,9 +322,6 @@ def _load_fragments(
         if fragment_id in rows_by_id:
             raise ValueError(f"fragments.tsv:{line}: duplicate fragment {fragment_id}")
         rows_by_id[fragment_id] = (line, row)
-    if not rows_by_id:
-        raise ValueError("runtime_injector requires at least one fragment")
-
     relocations: dict[str, list[tuple[int, int, PayloadRelocation]]] = {
         fragment_id: [] for fragment_id in rows_by_id
     }
@@ -315,9 +356,12 @@ def _load_fragments(
         )
         relocations[fragment_id].append((order, line, relocation))
 
-    fragments: list[PayloadFragment] = []
+    fragments: list[tuple[int, int, PayloadFragment]] = []
     blob_cache: dict[Path, bytes] = {}
     for fragment_id, (line, row) in rows_by_id.items():
+        order = _integer(
+            row["order"], f"fragments.tsv:{line} order", minimum=1
+        )
         kind = row["kind"]
         if kind not in FRAGMENT_KINDS:
             raise ValueError(f"fragments.tsv:{line}: invalid kind {kind!r}")
@@ -328,37 +372,52 @@ def _load_fragments(
             raise ValueError(
                 f"fragments.tsv:{line}: alignment must be a power of two"
             )
-        relative = _relative_path(
-            row["blob_path"], f"fragments.tsv:{line} blob_path"
-        )
-        blob_path = (directory / Path(relative.as_posix())).resolve()
-        try:
-            blob_path.relative_to(directory.resolve())
-        except ValueError as exc:
-            raise ValueError(
-                f"fragments.tsv:{line}: blob_path escapes module"
-            ) from exc
-        if not blob_path.is_file():
-            raise FileNotFoundError(blob_path)
-        blob = blob_cache.setdefault(blob_path, blob_path.read_bytes())
-        expected_blob_hash = _sha256(
-            row["blob_sha256"], f"fragments.tsv:{line} blob_sha256"
-        )
-        actual_blob_hash = hashlib.sha256(blob).hexdigest().upper()
-        if actual_blob_hash != expected_blob_hash:
-            raise ValueError(
-                f"fragments.tsv:{line}: blob SHA-256 {actual_blob_hash} "
-                f"does not match {expected_blob_hash}"
-            )
-        blob_offset = _integer(
-            row["blob_offset"], f"fragments.tsv:{line} blob_offset"
-        )
         length = _integer(
             row["length"], f"fragments.tsv:{line} length", minimum=1
         )
-        payload = blob[blob_offset:blob_offset + length]
-        if len(payload) != length:
-            raise ValueError(f"fragments.tsv:{line}: fragment exceeds blob")
+        has_inline = bool(row["payload_hex"])
+        has_blob = bool(row["blob_path"])
+        if has_inline == has_blob:
+            raise ValueError(
+                f"fragments.tsv:{line}: exactly one of payload_hex or "
+                "blob_path is required"
+            )
+        if has_inline:
+            if row["blob_offset"] or row["blob_sha256"]:
+                raise ValueError(
+                    f"fragments.tsv:{line}: inline payload cannot declare "
+                    "blob_offset or blob_sha256"
+                )
+            payload = _hex(
+                row["payload_hex"], f"fragments.tsv:{line} payload_hex"
+            )
+            if len(payload) != length:
+                raise ValueError(
+                    f"fragments.tsv:{line}: inline payload length "
+                    f"{len(payload)} does not match {length}"
+                )
+        else:
+            blob_path = _module_file(
+                directory,
+                row["blob_path"],
+                f"fragments.tsv:{line} blob_path",
+            )
+            blob = blob_cache.setdefault(blob_path, blob_path.read_bytes())
+            expected_blob_hash = _sha256(
+                row["blob_sha256"], f"fragments.tsv:{line} blob_sha256"
+            )
+            actual_blob_hash = hashlib.sha256(blob).hexdigest().upper()
+            if actual_blob_hash != expected_blob_hash:
+                raise ValueError(
+                    f"fragments.tsv:{line}: blob SHA-256 {actual_blob_hash} "
+                    f"does not match {expected_blob_hash}"
+                )
+            blob_offset = _integer(
+                row["blob_offset"], f"fragments.tsv:{line} blob_offset"
+            )
+            payload = blob[blob_offset:blob_offset + length]
+            if len(payload) != length:
+                raise ValueError(f"fragments.tsv:{line}: fragment exceeds blob")
         ordered_relocations = sorted(
             relocations[fragment_id], key=lambda item: (item[0], item[1])
         )
@@ -369,19 +428,197 @@ def _load_fragments(
                 f"fragments.tsv:{line}: relocation order values must be unique"
             )
         fragments.append(
-            PayloadFragment(
-                owner=owner,
-                symbol=fragment_id,
-                kind=kind,
-                alignment=alignment,
-                payload=payload,
-                relocations=tuple(item[2] for item in ordered_relocations),
-                init=binary_patcher.parse_bool(
-                    row["init"], f"fragments.tsv:{line} init"
+            (
+                order,
+                line,
+                PayloadFragment(
+                    owner=owner,
+                    symbol=fragment_id,
+                    kind=kind,
+                    alignment=alignment,
+                    payload=payload,
+                    relocations=tuple(item[2] for item in ordered_relocations),
+                    init=binary_patcher.parse_bool(
+                        row["init"], f"fragments.tsv:{line} init"
+                    ),
                 ),
             )
         )
-    return tuple(fragments)
+    return fragments
+
+
+def _load_c_fragments(
+    directory: Path, owner: str
+) -> list[tuple[int, int, PayloadFragment]]:
+    source_rows = _read_tsv(directory / "c_sources.tsv", C_SOURCE_FIELDS)
+    import_rows = _read_tsv(directory / "c_imports.tsv", C_IMPORT_FIELDS)
+    fragment_rows = _read_tsv(
+        directory / "c_fragments.tsv", C_FRAGMENT_FIELDS
+    )
+    sources: dict[str, tuple[int, Path, str]] = {}
+    for line, row in enumerate(source_rows, 2):
+        source_id = _identifier(
+            row["source_id"], f"c_sources.tsv:{line} source_id"
+        )
+        if source_id in sources:
+            raise ValueError(
+                f"c_sources.tsv:{line}: duplicate source {source_id}"
+            )
+        if row["language"] != "c":
+            raise ValueError(
+                f"c_sources.tsv:{line}: unsupported language "
+                f"{row['language']!r}"
+            )
+        source_path = _module_file(
+            directory, row["path"], f"c_sources.tsv:{line} path"
+        )
+        namespace = _identifier(
+            row["namespace"], f"c_sources.tsv:{line} namespace"
+        )
+        sources[source_id] = (line, source_path, namespace)
+
+    imports: dict[str, dict[str, ee_c_fragments.SymbolReference]] = {
+        source_id: {} for source_id in sources
+    }
+    for line, row in enumerate(import_rows, 2):
+        source_id = row["source_id"]
+        if source_id not in sources:
+            raise ValueError(
+                f"c_imports.tsv:{line}: unknown source {source_id!r}"
+            )
+        name = _identifier(row["name"], f"c_imports.tsv:{line} name")
+        if name in imports[source_id]:
+            raise ValueError(
+                f"c_imports.tsv:{line}: duplicate import {name!r} "
+                f"for {source_id}"
+            )
+        imports[source_id][name] = ee_c_fragments.SymbolReference(
+            symbol=_identifier(
+                row["symbol"], f"c_imports.tsv:{line} symbol"
+            ),
+            addend=_integer(
+                row["addend"],
+                f"c_imports.tsv:{line} addend",
+                minimum=-0x80000000,
+            ),
+        )
+
+    mappings: dict[
+        str, dict[str, tuple[int, int, str]]
+    ] = {source_id: {} for source_id in sources}
+    final_ids: set[str] = set()
+    for line, row in enumerate(fragment_rows, 2):
+        source_id = row["source_id"]
+        if source_id not in sources:
+            raise ValueError(
+                f"c_fragments.tsv:{line}: unknown source {source_id!r}"
+            )
+        object_fragment = _identifier(
+            row["object_fragment"],
+            f"c_fragments.tsv:{line} object_fragment",
+        )
+        if object_fragment in mappings[source_id]:
+            raise ValueError(
+                f"c_fragments.tsv:{line}: duplicate object fragment "
+                f"{object_fragment!r} for {source_id}"
+            )
+        fragment_id = _identifier(
+            row["fragment_id"], f"c_fragments.tsv:{line} fragment_id"
+        )
+        if fragment_id in final_ids:
+            raise ValueError(
+                f"c_fragments.tsv:{line}: duplicate output fragment "
+                f"{fragment_id!r}"
+            )
+        final_ids.add(fragment_id)
+        mappings[source_id][object_fragment] = (
+            _integer(
+                row["order"],
+                f"c_fragments.tsv:{line} order",
+                minimum=1,
+            ),
+            line,
+            fragment_id,
+        )
+
+    if not sources and fragment_rows:
+        raise ValueError("c_fragments.tsv declares fragments without sources")
+    if not sources:
+        return []
+
+    result: list[tuple[int, int, PayloadFragment]] = []
+    repository = _repository_root(directory)
+    toolchain = ee_c_fragments.default_toolchain_bin(repository)
+    with tempfile.TemporaryDirectory(prefix="na2-runtime-c-") as temporary:
+        output_root = Path(temporary)
+        for source_id, (_line, source_path, namespace) in sources.items():
+            extracted = ee_c_fragments.compile_and_extract(
+                source_path,
+                output_root / f"{source_id}.o",
+                namespace=namespace,
+                toolchain_bin=toolchain,
+                owner=owner,
+                external_symbols=imports[source_id],
+            )
+            aliases = {
+                object_fragment: mapping[2]
+                for object_fragment, mapping in mappings[source_id].items()
+            }
+            actual = {fragment.symbol for fragment in extracted.fragments}
+            declared = set(aliases)
+            if actual != declared:
+                raise ValueError(
+                    f"C source {source_id}: extracted fragments differ from "
+                    f"declarations; missing={sorted(declared - actual)}, "
+                    f"extra={sorted(actual - declared)}"
+                )
+            for fragment in extracted.fragments:
+                order, line, fragment_id = mappings[source_id][fragment.symbol]
+                result.append(
+                    (
+                        order,
+                        line,
+                        PayloadFragment(
+                            owner=owner,
+                            symbol=fragment_id,
+                            kind=fragment.kind,
+                            alignment=fragment.alignment,
+                            payload=fragment.payload,
+                            relocations=tuple(
+                                PayloadRelocation(
+                                    offset=relocation.offset,
+                                    kind=relocation.kind,
+                                    symbol=aliases.get(
+                                        relocation.symbol,
+                                        relocation.symbol,
+                                    ),
+                                    addend=relocation.addend,
+                                )
+                                for relocation in fragment.relocations
+                            ),
+                            init=fragment.init,
+                        ),
+                    )
+                )
+    return result
+
+
+def _load_fragments(
+    directory: Path, owner: str
+) -> tuple[PayloadFragment, ...]:
+    declared = [
+        *_load_static_fragments(directory, owner),
+        *_load_c_fragments(directory, owner),
+    ]
+    if not declared:
+        raise ValueError("runtime_injector requires at least one fragment")
+    orders = [item[0] for item in declared]
+    if len(orders) != len(set(orders)):
+        raise ValueError("runtime_injector fragment orders must be unique")
+    symbols = [item[2].symbol for item in declared]
+    if len(symbols) != len(set(symbols)):
+        raise ValueError("runtime_injector fragment symbols must be unique")
+    return tuple(item[2] for item in sorted(declared, key=lambda item: item[:2]))
 
 
 def _load_edits(

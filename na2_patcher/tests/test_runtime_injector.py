@@ -1690,8 +1690,10 @@ class RuntimeInjectorTests(unittest.TestCase):
                 [
                     {
                         "fragment_id": "test.code",
+                        "order": 1,
                         "kind": "code",
                         "alignment": 4,
+                        "payload_hex": "",
                         "blob_path": "assets/resident.bin",
                         "blob_offset": 0,
                         "length": 8,
@@ -1700,8 +1702,10 @@ class RuntimeInjectorTests(unittest.TestCase):
                     },
                     {
                         "fragment_id": "test.scale",
+                        "order": 2,
                         "kind": "data",
                         "alignment": 4,
+                        "payload_hex": "",
                         "blob_path": "assets/resident.bin",
                         "blob_offset": 8,
                         "length": 4,
@@ -1709,6 +1713,21 @@ class RuntimeInjectorTests(unittest.TestCase):
                         "init": 0,
                     },
                 ],
+            )
+            write_tsv(
+                directory / "c_sources.tsv",
+                engine.C_SOURCE_FIELDS,
+                [],
+            )
+            write_tsv(
+                directory / "c_imports.tsv",
+                engine.C_IMPORT_FIELDS,
+                [],
+            )
+            write_tsv(
+                directory / "c_fragments.tsv",
+                engine.C_FRAGMENT_FIELDS,
+                [],
             )
             write_tsv(
                 directory / "relocations.tsv",

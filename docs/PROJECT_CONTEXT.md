@@ -171,8 +171,9 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 - `scripts/na2/` contains build/promotion, ISO identity, worker-path validation,
   and focused tests.
 - `@pcsx2_scripts/` contains PCSX2 launch, process, configuration, and CRC
-  helpers. `launch_user.ps1` and `launch_dev.ps1` preserve their respective
-  PCSX2 working directories;
+  helpers. `launch_configured.ps1` contains the shared configured-launch
+  implementation; `launch_user.ps1` and `launch_dev.ps1` are target-specific
+  entrypoints that preserve their respective PCSX2 working directories;
   `game_commands.ps1` defines the manifest-driven `na2s`, `nun3`, `nun5`, and
   `nun6` commands; `move_na2_savestates.ps1` files user savestates under
   `@user_savestates`; and `launch_pair.ps1` is the multi-game launch-and-tile

@@ -81,6 +81,8 @@ their producing workflow runs. File entries should reference a named root with
 - `notification_state`: the shared mute state for the dedicated Notifications
   task at `@repository/.agents/notifications.json`.
 - `na2_command`: `@repository/_na2.ps1`.
+- `pcsx2_configured_launch_command`:
+  `@pcsx2_scripts/launch_configured.ps1`.
 - `pcsx2_user_launch_command`: `@pcsx2_scripts/launch_user.ps1`.
 - `pcsx2_dev_launch_command`: `@pcsx2_scripts/launch_dev.ps1`.
 - `pcsx2_savestate_move_command`:

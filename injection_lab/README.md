@@ -20,12 +20,15 @@ The script verifies Current's serial and CRC, `228.BIN` memory contract, two
 independent ELF boundary values, and exact hook bytes before compiling. It
 temporarily replaces only the matching Current PNACH alias and records enough
 state to restore an existing regular file or symbolic link. Edit `src/test.c`,
-run the same command again, then select `System` -> `Reload Cheats/Patches` in
-PCSX2. PCSX2 2.6.3 does not watch PNACH files automatically. The explicit
-reload reparses the file and invalidates translated code without restarting
-the game. A source-derived build ID makes the example print exactly once for
-each distinct build without emitting its mutable state as a recurring PNACH
-write.
+then run the same command again. The original `NA2-C.zip` proof's VS Code task
+only runs its generator; the generator triggers PCSX2's observed automatic
+refresh by truncating and rewriting the active CRC-named regular PNACH in
+place. This lab preserves its guarded build/install separation, but refreshes
+the installed regular PNACH using that same write pattern instead of replacing
+the filesystem object. If a PCSX2 configuration does not reload it, select
+`System` -> `Reload Cheats/Patches` as a fallback. A source-derived build ID
+makes the example print exactly once for each distinct build without emitting
+its mutable state as a recurring PNACH write.
 
 To compile and validate without installing:
 
@@ -39,11 +42,12 @@ To remove the test and restore any pre-existing regular PNACH:
 .\injection_lab\test.ps1 -Remove
 ```
 
-The installer records and temporarily replaces only the exact CRC alias. It
-refuses cleanup if another process or user changed the installed PNACH.
-Removal restores the previous file or managed symbolic link, including its
-relative target, but already-applied memory writes remain until Current is
-restarted.
+The installer records and temporarily replaces only the exact CRC alias. After
+the first guarded install, later builds truncate and rewrite that same regular
+file so PCSX2's file watcher can observe the change. It refuses refresh or
+cleanup if another process or user changed the installed PNACH. Removal
+restores the previous file or managed symbolic link, including its relative
+target, but already-applied memory writes remain until Current is restarted.
 
 Ordinary `patch=1` PNACH writes are reapplied continuously. Mutable state must
 not be initialized through those recurring writes. The adapted object keeps

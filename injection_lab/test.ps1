@@ -30,6 +30,37 @@ function Get-Sha256([string]$Path) {
     return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
 }
 
+function Write-PnachInPlace([string]$Source, [string]$Target) {
+    $existing = Get-Item -LiteralPath $Target -Force -ErrorAction SilentlyContinue
+    if ($existing -and
+        ($existing.PSIsContainer -or [string]$existing.LinkType)) {
+        throw "PNACH refresh target must be a regular file: $Target"
+    }
+
+    $bytes = [IO.File]::ReadAllBytes($Source)
+    $mode = if ($existing) {
+        [IO.FileMode]::Open
+    }
+    else {
+        [IO.FileMode]::CreateNew
+    }
+    $sharing = [IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete
+    $stream = [IO.File]::Open(
+        $Target,
+        $mode,
+        [IO.FileAccess]::Write,
+        $sharing
+    )
+    try {
+        $stream.SetLength(0)
+        $stream.Write($bytes, 0, $bytes.Length)
+        $stream.Flush($true)
+    }
+    finally {
+        $stream.Dispose()
+    }
+}
+
 function Get-UInt16LE([byte[]]$Data, [int]$Offset) {
     return [BitConverter]::ToUInt16($Data, $Offset)
 }
@@ -437,7 +468,7 @@ else {
     }
 }
 
-Copy-Item -LiteralPath $output -Destination $target -Force
+Write-PnachInPlace -Source $output -Target $target
 $state.installed_sha256 = Get-Sha256 $target
 $state.current_crc = [string]$identity.CRC
 $state.build_id = ('0x{0:X8}' -f $buildId)
@@ -446,6 +477,7 @@ $state | ConvertTo-Json | Set-Content -LiteralPath $statePath -Encoding UTF8
 Write-Host '[injection_lab] Current development PNACH installed.'
 Write-Host "[injection_lab] Target: $target"
 Write-Host ('[injection_lab] Build ID: 0x{0:X8}' -f $buildId)
-Write-Host '[injection_lab] In running PCSX2, select System -> Reload Cheats/Patches.'
+Write-Host '[injection_lab] PCSX2 should detect the in-place PNACH rewrite automatically.'
+Write-Host '[injection_lab] If it does not, select System -> Reload Cheats/Patches.'
 Write-Host '[injection_lab] Watch the PCSX2 console for:'
 Write-Host 'NA2.28 injection lab: C hot reload active'

@@ -1728,11 +1728,13 @@ reimplementation made all ten of its resident fragments unreachable:
   for same-semantic English cells. Unsupported printable punctuation is
   reconstructed from clean NA2, preserving 95/95 printable-ASCII coverage.
   The shortened 123-cell secondary atlas is locally guarded. Its metric rows
-  are packed into the value words of empty primary-map slots and decoded only
-  by the secondary draw and measurement hooks. The normal glyph emitter keeps
-  descriptor width on the primary/fullwidth path and uses descriptor height
-  only for the secondary quad, restoring its intended 24x28 presentation
-  without widening it.
+  are packed into the value words of empty primary-map slots. Composition-time
+  C in `runtime_injector/sources/font_glyph_metrics.c` decodes them for both
+  measurement and drawing; two guarded boot-ELF hooks provide the live
+  context/register ABI and rejoin the native cleanup paths. The normal glyph
+  emitter keeps descriptor width on the primary/fullwidth path and uses
+  descriptor height only for the secondary quad, restoring its intended
+  24x28 presentation without widening it.
 - `font_modal_alignment` loads independently measured X positions for the
   five character-select `Back to Game Mode Screen` rows while retaining the
   accepted local Y behavior. Its selected-path compensation prevents the
@@ -1939,8 +1941,9 @@ enabled and runtime-proven: Command Chart is user-accepted, while Practice
 title acceptance remains pending.
 
 `scripts/research/localization/generate_font_assets.py` deterministically
-regenerates and verifies the four native glyph/metric/decoder blobs from
-configured `@source_na2/` and `@source_nun5/` inputs.
+regenerates and verifies the two native glyph/metric data blobs from configured
+`@source_na2/` and `@source_nun5/` inputs. Executable metric behavior is
+compiled from C during composition and is not stored as an asset.
 `scripts/localization/generate_font_renderer.py` deterministically
 reconstructs the accepted v2 renderer, numeric formatter, and retained ABI-shim
 fragments as an independent verifier. Normal composition does not persist its

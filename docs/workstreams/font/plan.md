@@ -856,9 +856,19 @@ The checked-in `font_renderer_v2_resident.bin` and
 `font_numeric_resident.bin` intermediates are retired. The deterministic Font
 generator remains an independent source reconstruction/verifier for the
 compiled and retained static fragments, not a production blob writer. This
-boundary intentionally changes no hook, formula, fragment order, linked byte,
-or runtime behavior. Its acceptance gate is exact equality with the previous
-57-fragment package and linked-profile payload.
+boundary intentionally changed no hook, formula, fragment order, linked byte,
+or runtime behavior; exact equality with the previous 57-fragment package and
+linked-profile payload established that acceptance.
+
+The next cutover moves the accepted secondary metric decoder and measurement
+helper out of fixed ELF blobs. `font_glyph_metrics.c` contributes a 208-byte
+lookup entry and a 328-byte draw-application entry through the same
+composition-time C path. Fixed ELF files `0x87374` and `0x87B60` now contain
+only 24-byte guarded ABI/control-flow hooks; compiled logic lives in expandable
+`PRG/228.BIN`. The native atlas and packed metric map remain data assets. This
+changes runtime control flow and remains `approved_for_test` until the user
+regresses representative secondary-font drawing, fitting, and primary/
+fullwidth isolation.
 
 ## Preserved baseline and evidence
 

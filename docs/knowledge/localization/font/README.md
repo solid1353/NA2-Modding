@@ -241,19 +241,16 @@ verify these referenced blobs:
 - atlas: 17,220 bytes, SHA-256
   `6E4B988E512568F0A91E0226A8A4046362C1A4EF078E50BBF630BEEF90333736`;
 - packed map: 1,736 bytes, SHA-256
-  `6F691015E5BA54EA87B2976970D828863E274BB543CC3D531D93800018EB7A5E`;
-- decoder: 316 bytes, SHA-256
-  `C65B283CCBF7A8CCFF59DB7D96CC2A87731B6AD2BE142E37A088BEE6BFF9D70F`;
-- measurement hook: 24 bytes, SHA-256
-  `8B7A75C0FDFD2F055ACFC1FCF90996E298CE363E112659579513A89606FE7C1C`;
-- resident renderer blob: 1,360 bytes, SHA-256
-  `BD2889358F17B8FFF732842CD701D0F4C48F9CCB8A84A766E2710D4D56B3F2D6`.
+  `6F691015E5BA54EA87B2976970D828863E274BB543CC3D531D93800018EB7A5E`.
 
-The current runtime-reviewed result contains 24 static binary-patcher Font
-declarations and eight linked runtime-injector hooks. The resident blob exports
-nine code fragments for shared metrics, Controls fitting and horizontal
-scaling, selected-choice layout, shared UI layout, and the two displaced-code
-trampolines.
+The former 316-byte decoder and 24-byte measurement-hook blobs are retained
+only in Git history. Their accepted behavior is now expressed by
+composition-time C and guarded symbolic hooks, documented in the 2026-07-28
+cutover record below.
+
+The current runtime injector compiles Font behavior from canonical C units and
+links retained ABI shims directly from declarative fragments; it stores no
+aggregate executable Font blob in Git.
 The original 19-edit `native_final_v2` state established the atlas, metrics,
 fit, and modal baseline; the later bearing and secondary-height work promoted
 the remaining proven behavior into canonical guarded locations. Matched
@@ -1499,3 +1496,37 @@ the linked memory end remains `0x008F5C20`. The removed aggregate blobs were
 therefore redundant build intermediates, not runtime resources. Confidence is
 high because equality covers compiled section bytes, relocations, fragment
 order, and the final linked payload.
+
+### Secondary metric decoder cutover
+
+The accepted fixed-ELF decoder had two observable entry contracts. The draw
+entry received the renderer context in `s3`, secondary cell in `v0`, and
+native mode flags in `a2`; it selected the indexed empty primary-map value,
+decoded four packed metric nibbles, applied the local horizontal factor only
+to the horizontal leading bearing, selected top/bottom metrics for the native
+vertical mode, stored trailing trim at context `+0x38`, and rejoined cleanup
+at runtime `0x001873B4`. The measurement entry received the current byte
+through `s2`, converted printable secondary codes to cells `0..122`, returned
+the same expanded four-byte metric row, stored it through `s1`, and rejoined
+cleanup at `0x00187B68`.
+
+`font_glyph_metrics.c` now implements both contracts in expandable
+`PRG/228.BIN`. The compiled lookup entry is 208 bytes and the draw-application
+entry is 328 bytes; neither has an external relocation. Boot-ELF file
+`0x87374` now contains only a 24-byte register-setup/link/cleanup hook to
+`localization.font.glyph_metric_apply`; file `0x87B60` contains the analogous
+24-byte hook to `localization.font.glyph_metric_lookup`. Static composition
+places the candidate entries at runtime `0x008F3EE8` and `0x008F3DA0`
+respectively, but these addresses are payload-builder results rather than
+feature-owned constants. The complete candidate payload is 8,512 bytes,
+SHA-256
+`81DED6B73DAB6B2B72B52FC158FD7F3C9C4A05CE8654EB1A273C81779AAF6E2D`,
+ending at runtime `0x008F5E40`.
+
+The atlas, packed map, descriptor, secondary-cell guard, horizontal scale word,
+and secondary-only quad-height path remain unchanged. The pre-generated
+decoder and measurement blobs are removed. Static confidence is high from
+clean-byte guards, bounded disassembly of both native contexts, compiler
+instruction review, and resolved-hook inspection. Runtime status remains
+`approved_for_test` until the user verifies representative secondary-font
+drawing/fitting and an unaffected primary/fullwidth case.

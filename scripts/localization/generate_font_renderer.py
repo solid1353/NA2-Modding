@@ -2795,13 +2795,18 @@ def main() -> None:
     )
     v2 = v2_fragments()
     expected = (*v2[:-2], *numeric_fragments(), *v2[-2:])
-    if len(declaration.fragments) != len(expected):
-        raise ValueError(
-            "runtime-injector fragment count differs from Font sources"
-        )
-    for actual, generated in zip(
-        declaration.fragments, expected, strict=True
-    ):
+    actual_by_symbol = {
+        fragment.symbol: fragment for fragment in declaration.fragments
+    }
+    missing = [
+        fragment.symbol
+        for fragment in expected
+        if fragment.symbol not in actual_by_symbol
+    ]
+    if missing:
+        raise ValueError(f"runtime-injector is missing Font fragments: {missing}")
+    for generated in expected:
+        actual = actual_by_symbol[generated.symbol]
         actual_relocations = tuple(
             (
                 relocation.offset,
@@ -2821,8 +2826,7 @@ def main() -> None:
             for relocation in generated.relocations
         )
         if (
-            actual.symbol != generated.symbol
-            or actual.kind != generated.kind
+            actual.kind != generated.kind
             or actual.alignment != generated.alignment
             or actual.payload != generated.payload
             or actual_relocations != generated_relocations
@@ -2831,7 +2835,10 @@ def main() -> None:
             raise ValueError(
                 f"runtime-injector fragment differs: {actual.symbol}"
             )
-    print(f"verified\t{len(expected)} Font runtime fragments")
+    print(
+        f"verified\t{len(expected)} reconstructed Font fragments "
+        f"within {len(declaration.fragments)} compiled/static declarations"
+    )
 
 
 if __name__ == "__main__":

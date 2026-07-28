@@ -8,6 +8,7 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - Read this file first, then read only the shared policies routed below that
   apply to the current work. A routed policy is mandatory when its trigger
   applies.
+- Agents communicate with the user in English only.
 - The task workflow and plan-approval gate apply only to explicitly selected
   `TASKS.md` work. Perform small, direct, low-risk changes immediately.
 - Feasibility, preference, and design questions request discussion only.

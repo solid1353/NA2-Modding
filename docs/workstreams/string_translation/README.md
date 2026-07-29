@@ -51,5 +51,5 @@ The temporary mapping-ID diagnostic build, its stable candidate inventory, the
 cumulative replacement ISO, and their launcher selectors were retired after
 the evidence-backed rows were promoted to canonical `mappings.tsv`. Their last
 complete tracked implementation is recoverable from Git commit
-`9bb1e191a2e523f467f60c63758db2ff1df0b15b`; recover it only into task-owned
+`4687470b31db4ff8a2a46071808a35f9282745cf`; recover it only into task-owned
 temporary space for historical inspection.

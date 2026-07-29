@@ -1860,7 +1860,7 @@ Mode/Character Select combinations prove that this first X value starts every
 Current body at screenshot X `101`, versus NUN5 X `72`, while Y already
 matches. The shared local X is therefore corrected to `19` with Y `12`
 unchanged. String Translation separately owns the exposed wrong dynamic
-content and corrected it in `f4f12f6`. The user verified the combined
+content and corrected it in `277ecc1`. The user verified the combined
 fresh-build result across all four Battle/Practice and Game Mode/Character
 Select combinations on 2026-07-27, so the layer is `runtime_proven`.
 

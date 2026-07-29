@@ -736,7 +736,7 @@ year after the `%02d` call, the hour entry implements signed
 `value < 100 ? value : 99`, and every typed wrapper relocates only to its
 declared native-format bridge.
 
-The first consolidated candidate at commit `ced1186` is rejected. Its six
+The first consolidated candidate at commit `1d796a5` is rejected. Its six
 Save/Load and one Battle Settings call-site rows incorrectly used non-linking
 `j26`; because the compiled entries return with `jr ra`, the Load screen
 escaped the surrounding formatter instead of resuming after each call. User
@@ -880,7 +880,7 @@ fullwidth isolation.
   current Localization aggregate feature pin.
 - `docs/knowledge/localization/font/README.md` consolidates the v23, semantic-palette, and
   2026-07-19 auto-fit negative results. The retired raw declarative records
-  are recoverable from Git commit `69da715` and are not retained in the
+  are recoverable from Git commit `55d1163` and are not retained in the
   working tree.
 - Reuse the preserved NA2 and NUN5 analysis under
   `@analysis/disassembly/NA2/` and `@analysis/disassembly/NUN5/`.

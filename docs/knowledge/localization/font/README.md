@@ -4,7 +4,7 @@ This directory preserves confirmed visual, structural, and byte-level Font
 evidence in this file and the focused matched-savestate report. Raw schema-v1
 replicas of retired m01/v22/v23 packages and the rejected palette experiment
 were removed after their reusable conclusions were consolidated here. They
-remain recoverable from Git commit `69da715`; they are not implementation
+remain recoverable from Git commit `55d1163`; they are not implementation
 parents or active patch inputs.
 
 ## Current savestate comparison
@@ -290,7 +290,7 @@ remains a declarative ASCII-colon edit.
 
 The pre-migration behavior is runtime-proven: the user confirmed correct
 `DD/MM/YYYY`, including the four-digit year, on Current CRC `55739D20`.
-The first consolidated C candidate at commit `ced1186` was runtime-rejected on
+The first consolidated C candidate at commit `1d796a5` was runtime-rejected on
 Current CRC `8A663AA9`: user `ss1` records the menu immediately before Load,
 and `ss2` records the broken Load screen. Their task-owned copies and hashes
 are retained under
@@ -925,7 +925,7 @@ modal origin, the shared correction changes its local X from `48` to `19` and
 leaves Y `12` unchanged. The same evidence exposes a separate dynamic
 text-assembly defect: Battle says `Free Battle`, connective text is duplicated,
 and the Japanese destination tail remains. String Translation corrected that
-independent assembly in `f4f12f6` by splitting the mode head, connective,
+independent assembly in `277ecc1` by splitting the mode head, connective,
 destination, and terminator; no canonical mapping gained an authored newline.
 The user verified the combined fresh-build result across all four
 Battle/Practice and Game Mode/Character Select combinations on 2026-07-27.
@@ -1020,7 +1020,7 @@ and
 The family is runtime-proven and enabled; the grids still await user
 acceptance before work begins on another caller family.
 
-Commit `3d52a14` placed the complete helper block at runtime
+Commit `e906ce0` placed the complete helper block at runtime
 `0x003D3E00..0x003D4388` (file `0x2D3F00..0x2D4488`) inside the larger
 common-zero interval `0x003D3DB6..0x003D5D30`. That interval is zero in the
 clean ELF and was zero in all 16 states then sampled. A disposable ISO marker
@@ -1301,7 +1301,7 @@ Do not repeat this single-field tracking patch as a standalone fix. It does
 not prove that tracking or `FUN_00186510` is irrelevant; later analysis showed
 that tracking zero must be paired with the correct ordinary-space and boxed
 measurement behavior. The deleted one-row patch log and comparison screenshot
-remain recoverable from commit `69da715`.
+remain recoverable from commit `55d1163`.
 
 Surrounding confirmed observations:
 
@@ -1309,7 +1309,7 @@ Surrounding confirmed observations:
 - Replacing NA2 GF4 with the exact NUN5 GF4, padded or unpadded, produced broad spacing but patchy glyph rendering and could disrupt PNACH behavior. Do not repeat that direct swap as a new hypothesis.
 - The v22 state was clean and closer to NUN5, but glyphs could touch or overlap and long text still clipped.
 - The retired declarative m01, m02, v22, v23, and semantic-palette records are
-  recoverable from commit `69da715`. Their useful conclusions are consolidated
+  recoverable from commit `55d1163`. Their useful conclusions are consolidated
   in this document; none is an active patch set or implementation parent.
 
 The remaining font work still separates into glyph appearance, positioning/advance behavior, and missing NUN5-style auto-fit/squish. Reuse applicable historical evidence from Git history and maintain current analysis under `@analysis/disassembly/NA2/` and `@analysis/disassembly/NUN5/`, never under `@source/`.

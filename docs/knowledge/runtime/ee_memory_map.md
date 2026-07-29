@@ -111,8 +111,8 @@ a source-derived build signature to recognize a newly reloaded build.
 The imported `NA2-C.zip` source reviewed for the maintained lab has SHA-256
 `8A4D94465C4F7938DCC2D49D3DAA268BDF800AD7E89112B8E09BAA6EE58D289E`.
 The exact `NA2-C/` tree supplied on 2026-07-28 is recoverable from commit
-`087d4970a644819da7241dfcbc8f2cde85b4ce71`; commit
-`5da885bee016b8ef06daced2cc0d6de85647b4c2` removes it from the live checkout.
+`9ef9dc93ec276a08b431192ca0fe798b4f834ada`; commit
+`e1a0d9b604009a82afbda18bbf8423988b5e5ce3` removes it from the live checkout.
 It is an internally mixed snapshot: its root wrappers and generator constants
 still name the earlier MC3/SLES build, its compact linker and C example target
 NUN5 `SLPS_258.37`, and its checked-in generated linker outputs came from a
@@ -449,7 +449,7 @@ Static allocator, stack, and overlay analysis uses the maintained Ghidra 12.1.2
 NA2 export under `@analysis/disassembly/NA2/exports/SLPS_258.37/`. The whole-
 TEXTENG structure and used-string analysis is canonical in
 [`external_string_payload.md`](../localization/external_string_payload.md), updated by
-commit `cb7d1d7`. The compact-pool calculation was independently reproduced from
+commit `afe6ceb`. The compact-pool calculation was independently reproduced from
 the active hash-pinned string-patcher plan and its 30 distinct generated
 string locations.
 

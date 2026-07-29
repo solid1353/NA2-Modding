@@ -7,9 +7,9 @@ explicitly reloading that PNACH through PCSX2's PINE interface.
 The imported `NA2-C.zip` source used for the port has SHA-256
 `8A4D94465C4F7938DCC2D49D3DAA268BDF800AD7E89112B8E09BAA6EE58D289E`.
 The exact `NA2-C/` tree supplied on 2026-07-28 is preserved by Git commit
-`087d4970a644819da7241dfcbc8f2cde85b4ce71` and removed from the live tree by
-`5da885bee016b8ef06daced2cc0d6de85647b4c2`. Recover it for inspection with
-`git archive --format=zip --output=NA2-C-history.zip 087d497 -- NA2-C`; do not
+`9ef9dc93ec276a08b431192ca0fe798b4f834ada` and removed from the live tree by
+`e1a0d9b604009a82afbda18bbf8423988b5e5ce3`. Recover it for inspection with
+`git archive --format=zip --output=NA2-C-history.zip 9ef9dc9 -- NA2-C`; do not
 execute it directly.
 
 That snapshot is internally mixed. Its root README, Makefile, and `build.sh`

@@ -155,14 +155,20 @@ requirements, not whatever implementation happens to exist today.
   whole portable copy from `@pcsx2_clean`, add only concretely required assets,
   and configure its unique PINE port before launch. No coordinator or other
   workstream performs bulk replacement.
-- Agent-only PCSX2 testing stays hidden. PINE and maintained operation plans
-  may load a user-supplied state, capture output, or perform bounded memory
-  operations, but never navigate emulator or game menus. Do not inject window
-  messages or keystrokes to manufacture a required game position. A worker
-  instance may be visible only when the user must personally inspect or
-  interact with it; before launch, state exactly what is required from the
-  user. Never expose, restore, activate, or foreground an instance merely for
-  agent automation.
+- Agent-only PCSX2 testing stays hidden. The maintained worker launcher uses
+  PCSX2 no-GUI mode, suppresses any remaining render window, and verifies after
+  launch that the launched process owns no visible top-level windows. Passing
+  `-WindowStyle Hidden`, passing `-nogui`, or intending a hidden launch is not
+  sufficient evidence. If the read-back check finds a visible worker window or
+  the launcher cannot keep the process hidden, terminate only that newly
+  launched worker process and fail the launch.
+- PINE and maintained operation plans may load a user-supplied state, capture
+  output, or perform bounded memory operations, but never navigate emulator or
+  game menus. Do not inject window messages or keystrokes to manufacture a
+  required game position. A worker instance may be visible only when the user
+  must personally inspect or interact with it; before launch, state exactly
+  what is required from the user. Never expose, restore, activate, or foreground
+  an instance merely for agent automation.
 - Never save or serialize a complete savestate solely to obtain a screenshot.
   Extract an existing state's embedded `Screenshot.png` directly. For a fresh
   runtime frame, use PCSX2's native screenshot output; capture a new savestate

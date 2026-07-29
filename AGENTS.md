@@ -107,9 +107,13 @@ Detailed command and task behavior is in
   promote useful findings and remove disposable artifacts, logs, and every
   empty directory.
 - Agent PCSX2 uses only a task-owned clone of `@pcsx2_clean` with a unique PINE
-  port. Agent-only runs stay hidden. Never navigate emulator or game menus
-  through PINE or injected input. If a required savestate was not supplied,
-  stop and ask the user for that exact state.
+  port. Agent-only runs use PCSX2 no-GUI mode, suppress any render window, and
+  count as hidden only after a read-back check finds no visible top-level
+  windows owned by the launched process; flags, `-WindowStyle Hidden`, and
+  launch intent are not proof. If the worker process cannot remain hidden,
+  terminate that newly launched process and fail. Never navigate emulator or
+  game menus through PINE or injected input. If a required savestate was not
+  supplied, stop and ask the user for that exact state.
 - Never centrally migrate, replace, or clean another task's PCSX2 copy. Before
   reusing an existing copy for new work, its owning task audits it, promotes
   anything still needed, then replaces the whole copy from `@pcsx2_clean`.

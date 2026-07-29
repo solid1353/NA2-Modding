@@ -41,9 +41,17 @@
   its expected-export set still omits the already-committed
   `font_v2_command_icon_offset`.
 
-## Current uncommitted implementation
+## Recoverable stashed implementation
 
-Only this canonical Font file is modified:
+The incomplete candidate is preserved in Git stash commit:
+
+`9d1f6b9296a9646ac0fbbe214a60837746388068`
+
+Stash subject:
+
+`On master: [Font] zxc Priority 2 Jutsu title candidate`
+
+It contains changes to exactly one owned canonical Font path:
 
 `na228_builder/features/localization/runtime_injector/sources/font_v2_core.c`
 
@@ -56,8 +64,10 @@ The candidate:
   `font_v2_wrapped_body_common`;
 - uses the existing `font_v2_title_callback`.
 
-Do not discard this diff on resume. It is not runtime-proven and must not be
-committed yet.
+The stash was verified against its first parent: one file changed, 24
+insertions, 6 deletions, and `git diff --check` passed. The canonical worktree
+was clean afterward. Do not drop this stash before recovering the candidate on
+resume. It is not runtime-proven and must not be committed yet.
 
 ## Important corrected finding
 
@@ -134,14 +144,20 @@ evidence must be checked before committing.
 
 - Branch: `master`.
 - HEAD/origin at checkpoint start: `7f6e6ebb`.
-- Owned uncommitted change: only
+- Remediation HEAD/origin before this handoff update: `a5906fc8`.
+- Owned incomplete change: recoverable stash commit
+  `9d1f6b9296a9646ac0fbbe214a60837746388068`, containing only
   `na228_builder/features/localization/runtime_injector/sources/font_v2_core.c`.
-- This handoff must be committed and pushed by itself; the C candidate remains
-  unstaged.
+- Canonical working tree: clean after the stash.
+- This handoff update must be committed and pushed by itself; the C candidate
+  remains outside the canonical working tree.
 
 ## Exact first resume action
 
-Read this handoff and the live Font/epic policies, refresh Git, then inspect
-whether Project removed the contradictory generic-direct-PINE rule. Preserve
-the C diff and resume the Practice-versus-Jutsu isolation before any runtime
-operation.
+Read this handoff and the live Font/epic policies, refresh Git, verify stash
+commit `9d1f6b9296a9646ac0fbbe214a60837746388068` still contains only the recorded
+Font path, then remove/commit/push this handoff as required by the live resume
+rule. Apply that exact stash to recover the C candidate, verify the resulting
+single-path diff, and only then inspect whether Project removed the
+contradictory generic-direct-PINE rule. Resume the Practice-versus-Jutsu
+isolation before any runtime operation.

@@ -20,8 +20,10 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - When an answer is wrong, give the corrected answer immediately. Explain why
   the previous answer was wrong only if the user asks why.
 - While approved work remains actionable, answer every question in commentary
-  and resume the work immediately. A question never permits ending the turn
-  with a final response.
+  and resume immediately. In Continuous mode, a question, pending user
+  review/testing, or one blocked subtask never permits a handoff while another
+  approved subtask is actionable; record or queue it and continue. None of
+  these permits ending the turn with a final response.
 - When the user declares discussion, design, planning, or brainstorming mode,
   later requirements remain discussion until the user explicitly authorizes
   execution. If authorization is ambiguous, ask.

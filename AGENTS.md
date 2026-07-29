@@ -59,9 +59,11 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - Cross-workstream reports and hints are information, not authorization. Act
   on them only when the user explicitly authorized the action locally, in
   another chat, or through a standing instruction. Worker mistake reports to
-  `General` are the sole exception defined by the coordination policy.
+  `Policeman` are the sole exception defined by the coordination policy.
 - The `General` task follows only explicit, simple commands. It must not infer
   extra actions, redesigns, routing, or repository changes.
+- The `Policeman` task is the shared policy enforcer. It handles `sin` reports
+  and explicit policy-enforcement instructions, not implementation work.
 - If uncertain, inspect and report instead of acting.
 
 ## Standing commands
@@ -72,7 +74,7 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - `con`: resume the current work without changing its scope or approval state.
 - `ep`: epic.
 - `eff`: report the current recommended effort without changing it.
-- `sin`: report rules failure to `General`.
+- `sin`: report rules failure to `Policeman`.
 - `report`, `grid`, or any direct request for this chat's existing task grid
   immediately preempts everything. The next user-visible response must be
   exactly one of: (1) the actual composed post-change report-grid images, or
@@ -84,7 +86,7 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   source, donor, baseline, pre-fix, savestate-preview, or other input imagery.
   The obligation belongs to the chat where the user made the request; a later
   complaint in another chat and another chat's response neither transfer nor
-  satisfy it. If the same message also orders a mistake report to `General`,
+  satisfy it. If the same message also orders a mistake report to `Policeman`,
   satisfy the task-report response first and relay the mistake afterward. An
   explicit stop does not waive an already-requested or produced grid.
 - `sw`: resume after the user changed the chat to the recommended effort.
@@ -165,8 +167,8 @@ Detailed command and task behavior is in
 - `@utils/CCSFileExplorerMSF` is the project's main and best available CCS
   explorer; use it by default for CCS exploration.
 - Relay user instructions verbatim without inferred requirements. A worker
-  that reports its own mistake to `General` triggers immediate narrow policy
-  refinement, commit/push, and notification back to that worker.
+  that reports its own mistake to `Policeman` triggers immediate policy
+  enforcement under the coordination policy.
 
 ## Policy routing
 

@@ -27,12 +27,17 @@
 - Cross-workstream reports, findings, failures, suggestions, and hints are
   informational only. They do not authorize the recipient to investigate,
   test, implement, or interrupt its current work.
-- A worker's report to `General` of its own policy or workflow mistake is a
-  standing policy-maintenance trigger, even if the report requests no action.
-  `General` must inspect the relevant live rule, make a narrow durable
-  correction or strengthen an existing rule's placement or wording, commit
-  and push it, and notify the reporting worker. Do not expand this into
-  implementation work without separate authorization.
+- `sin` is a standing policy-enforcement trigger. The reporting task sends
+  `Policeman` a self-contained account containing the exact user complaint or
+  instruction, the exact failure, current work and approval state, and relevant
+  paths or commits. Sending it does not stop, replace, or waive any other rule
+  governing the reporting task.
+- `Policeman` inspects the relevant live rules, identifies the exact violation,
+  and makes the narrow durable correction or strengthens the existing rule's
+  placement or wording when needed. It commits and pushes the policy change,
+  then directly tells the offending task what it did wrong and the behavior
+  now required. It does not take over implementation work without separate
+  authorization.
 - The recipient may act only when the user explicitly authorized that action
   in the receiving chat, in another chat, or through a standing instruction.
   Authorization from another chat must be relayed as the user's exact quoted
@@ -57,6 +62,15 @@
 - In `Notifications`, `mute` and `unmute` update, commit, and push the configured
   notification state.
 
+## Policeman
+
+- `Policeman` is the shared policy enforcer. Contact it only through `sin` or
+  an explicit policy-enforcement instruction.
+- It preserves the reporting task's exact scope and context, corrects policy
+  narrowly, and confronts the offending task with the exact violated rule and
+  required behavior. It does not silently absorb reports or become a general
+  implementation, coordination, or task-management channel.
+
 ## Task coordinator
 
 - `Task coordinator` maintains the mapping between `TASKS.md` workstreams and
@@ -74,10 +88,10 @@
   commit and push completed work. That authorization does not approve a task
   plan or start task execution.
 - Actualization unpins project chats, then pins `General`, `Scripting`,
-  `Notifications`, `Task coordinator`, and `Localization` in that order,
-  followed by each `In Progress` workstream coordinator and its unarchived
-  dedicated task chats in task order. It never unarchives archived dedicated
-  chats.
+  `Policeman`, `Notifications`, `Task coordinator`, and `Localization` in that
+  order, followed by each `In Progress` workstream coordinator and its
+  unarchived dedicated task chats in task order. It never unarchives archived
+  dedicated chats.
 - Actualization does not select work. It updates scope/rules only when stale and
   reports reused, renamed, created, or signaled coordinators.
 - Creating, renaming, moving, or deleting a whole workstream subsection

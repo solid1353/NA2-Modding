@@ -44,14 +44,13 @@ alters it.
    - dispatchers and active-entry pointers;
    - guarded data and caller writes.
 5. In the same process, apply those addressed writes directly through PINE to
-   the task-owned PCSX2. No intermediate transport file is required.
-6. If executable memory that may already have been translated was changed,
-   invalidate the affected EE recompiler/JIT state, then resume emulation. Pure
-   data writes do not require JIT invalidation.
-7. Capture evidence through the maintained hidden-worker screenshot interface.
-8. If the supplied state has already passed the code that must be changed,
+   the task-owned PCSX2. The maintained applier owns the complete memory-update
+   and runtime-refresh operation; agents do not perform a separate cache step.
+   No intermediate transport file is required.
+6. Capture evidence through the maintained hidden-worker screenshot interface.
+7. If the supplied state has already passed the code that must be changed,
    request an earlier state instead of adding a workaround.
-9. After user acceptance, integrate the same canonical source and declarations
+8. After user acceptance, integrate the same canonical source and declarations
    through the normal builder and validate a clean launch/build as required.
 
 Agents do not use the watcher, filesystem synchronization, install/restore
@@ -85,8 +84,9 @@ transport stage:
 3. Write the linked code and data into the selected inactive bank.
 4. Write the fixed dispatchers and their active-entry pointers.
 5. Write the guarded caller hooks or resident redirects.
-6. Invoke code-cache invalidation when executable addresses that may already
-   have run were changed.
+6. Automatically invoke the custom PINE opcode `0x10` once after all writes.
+   This internal applier action refreshes PCSX2 execution state and is not a WW
+   step or agent decision.
 7. Read back guarded writes and report a concise result.
 
 ## Implementation plan
@@ -97,17 +97,16 @@ transport stage:
    returns the transport-neutral process-local build result instead of coupling
    the linker result to PNACH generation.
 3. Add direct PINE application to that existing adapter entry point:
-   compile/link, apply linked image and guarded overlay writes, invalidate
-   executable code when required, and return a concise result. Do not add
-   another wrapper script or persistent install-state lifecycle.
+   compile/link, apply linked image and guarded overlay writes, automatically
+   invoke opcode `0x10`, and return a concise result. Do not add another wrapper
+   script or persistent install-state lifecycle.
 4. Preserve the current user watcher and its user-owned interactive behavior.
    It may consume the same transport-neutral result through its existing path.
 5. Ensure WW never reads or writes cheat directories and never emits PNACH
    files.
 6. Validate WW against the current Font candidate using only an isolated
    task-owned PCSX2 clone: load the supplied state stopped, apply the candidate,
-   invalidate executable changes, resume, capture, and verify that no cheat
-   file changed.
+   resume, capture, and verify that no cheat file changed.
 7. Update the maintained Injection Lab documentation and give Font the exact
    command and sequencing contract.
 

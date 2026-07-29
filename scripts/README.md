@@ -1,7 +1,8 @@
 # Script layout
 
 `_na2.ps1` is the routine user-facing build/launch command.
-`actualization/act.ps1` is the standalone user-facing actualization command.
+`pcsx2/actualization/act.ps1` is the standalone user-facing actualization
+command.
 Everything else below `scripts/` is an internal workflow helper, a focused
 maintenance tool, or a preserved research utility.
 
@@ -12,14 +13,13 @@ history; do not recreate an archive directory for dead scripts.
 
 - `lib/`: shared PowerShell bootstrap, portable run-log, and structured
   build-record helpers.
-- `actualization/`: standalone dispatch, PCSX2 state actualization, PNACH-state
-  parsing, and focused tests.
 - `na2/`: build, promotion, ISO identity, worker-path validation, and focused
   build/run-log tests.
 - `pcsx2/`: PCSX2 launch, process, configuration, CRC helpers, the user-facing
   user/development single-instance and multi-game launch commands, the
   dot-sourced source-game command set, stable/development savestate filing,
-  the minimal hidden workstream-copy launcher, and
+  actualization dispatch/state/input-profile generation and focused tests, the
+  minimal hidden workstream-copy launcher, and
   `patch_savestate_memory.py` for exact-byte-guarded EE-memory patches in copied
   task-owned savestates. Unsupported Zstandard ZIP members are bulk-extracted
   once through 7-Zip when available, with `tar` as the portable fallback,
@@ -35,8 +35,6 @@ history; do not recreate an archive directory for dead scripts.
   building blocks; ISO changes belong in hash-pinned profiles, not direct
   file-replacement helpers.
 - `project/`: source and completed-analysis read-only maintenance.
-- `localization/`: maintained deterministic Localization generators whose
-  outputs are consumed by normal profile builds.
 - `research/ghidra/`: hash-pinned headless Ghidra imports into the shared
   `@analysis/disassembly/` root, MWo3 preparation, portable source-path
   normalization, C/ASCII export, verified manifests, and exact shared-binary
@@ -46,8 +44,9 @@ history; do not recreate an archive directory for dead scripts.
 - `research/ee_memory_map/`: PCSX2 savestate extraction, allocator-chain
   validation, overlay identification, and EE-region reporting for injection
   capacity research.
-- `research/localization/`: preserved Font asset investigation, mapping
-  probes, and NUN5-left/NA2-right comparison artifacts.
+- `research/localization/`: preserved Font asset investigation, independent
+  renderer-fragment verification, mapping probes, and NUN5-left/NA2-right
+  comparison artifacts.
 - `research/ui_translation/`: offline paired-savestate import and screenshot
   extraction, rendering preflight, deterministic Victory texture and layout
   generation, and user-directed runtime research for NUN5-to-NA2 UI
@@ -87,17 +86,18 @@ selected ISO fails before any PCSX2 process is changed.
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 
-`actualization/input.ps1` regenerates the NA2 comparison input profile from the
-canonical base profile while changing only the four configured `[Pad1]`
-face-button bindings. Run it as `act input`; the legacy `na2inputs` profile
-helper delegates to that mode.
+`pcsx2/actualization/input.ps1` regenerates the NA2 comparison input profile
+from the canonical base profile while changing only the four configured
+`[Pad1]` face-button bindings. Run it as `act input`; the legacy `na2inputs`
+profile helper delegates to that mode.
 
-`actualization/act.ps1` owns standalone actualization logging and dispatch.
-Bare `act` runs `na2`, then `input`. `actualization/na2.ps1` derives
-every retained role's serial and ELF CRC, maintains canonical PNACH aliases,
-writes real GameSettings, keeps the template `[MemoryCards]` section only for
-Current, and deduplicates shared serial/CRC identities with Current taking
-precedence. It never creates or modifies memory cards.
+`pcsx2/actualization/act.ps1` owns standalone actualization logging and
+dispatch. Bare `act` runs `na2`, then `input`.
+`pcsx2/actualization/na2.ps1` derives every retained role's serial and ELF CRC,
+maintains canonical PNACH aliases, writes real GameSettings, keeps the template
+`[MemoryCards]` section only for Current, and deduplicates shared serial/CRC
+identities with Current taking precedence. It never creates or modifies memory
+cards.
 Run `act help` or `act -h` for the standalone command summary.
 
 `pcsx2/launch.ps1` is the single PCSX2 launcher. Configured launches default to

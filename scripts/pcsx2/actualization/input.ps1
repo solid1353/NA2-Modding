@@ -37,7 +37,7 @@ if ([string]::IsNullOrWhiteSpace($BasePath) -xor
 
 $usingConfiguredPaths = [string]::IsNullOrWhiteSpace($BasePath)
 if ($usingConfiguredPaths) {
-    . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
+    . (Join-Path $PSScriptRoot '..\..\lib\project_paths.ps1')
     $projectPaths = Get-Na2ProjectPaths
     $BasePath = $projectPaths.files.comparison_input_profile
     $OutputPath = $projectPaths.files.comparison_na2_input_profile

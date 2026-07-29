@@ -104,9 +104,9 @@ try {
     New-Item -ItemType Directory -Force -Path $fakeNa2Scripts | Out-Null
     $fakePcsx2Scripts = Join-Path $fakeRepository 'scripts\pcsx2'
     New-Item -ItemType Directory -Force -Path $fakePcsx2Scripts | Out-Null
-    $fakeActualizationScripts = Join-Path $fakeRepository 'scripts\actualization'
+    $fakeActualizationScripts = Join-Path $fakePcsx2Scripts 'actualization'
     New-Item -ItemType Directory -Force -Path $fakeActualizationScripts | Out-Null
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\actualization\act.ps1') `
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\pcsx2\actualization\act.ps1') `
         -Destination $fakeActualizationScripts
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'worker_paths.ps1') `
         -Destination $fakeNa2Scripts
@@ -128,9 +128,9 @@ try {
   },
   "files": {
     "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
-    "actualize_command": "@scripts/actualization/act.ps1",
-    "actualize_na2_command": "@scripts/actualization/na2.ps1",
-    "actualize_input_command": "@scripts/actualization/input.ps1",
+    "actualize_command": "@pcsx2_scripts/actualization/act.ps1",
+    "actualize_na2_command": "@pcsx2_scripts/actualization/na2.ps1",
+    "actualize_input_command": "@pcsx2_scripts/actualization/input.ps1",
     "current_iso": "@build/NA2.28 - Current.iso",
     "previous_iso": "@build/NA2.28 - Previous.iso",
     "candidate_iso": "@build/NA2.28 - Candidate.iso"

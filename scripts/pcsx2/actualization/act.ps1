@@ -26,8 +26,8 @@ if ($Help -or $Mode -ceq 'help') {
     return
 }
 
-. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
-. (Join-Path $PSScriptRoot '..\lib\run_log.ps1')
+. (Join-Path $PSScriptRoot '..\..\lib\project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\..\lib\run_log.ps1')
 
 $projectPaths = Get-Na2ProjectPaths
 $selectedModes = @(

@@ -279,8 +279,9 @@ DATA.CVM passwords: `cc2fuku` for NA2, NUN3, and NUN5; `Iruka` for NUN6 A35.
 
 ## Actualize Workflow
 
-`scripts/actualization/act.ps1` is the standalone command entrypoint and owns
-its transcript and status reporting. Bare `act` dispatches `na2`, then `input`.
+`scripts/pcsx2/actualization/act.ps1` is the standalone command entrypoint and
+owns its transcript and status reporting. Bare `act` dispatches `na2`, then
+`input`.
 `na2.ps1` derives identities for every retained Current, Previous, and
 Candidate ISO, deletes stale managed cheat symlinks and NA2.28 GameSettings,
 creates the required cheat aliases and real role GameSettings, and keeps the

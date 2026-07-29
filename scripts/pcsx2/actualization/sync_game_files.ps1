@@ -268,10 +268,10 @@ function Set-Na2ActualizeSymlink {
 }
 
 $files = $ProjectPaths.files
-$canonicalCheats = Resolve-Na2ActualizePhysicalPath `
-    -Path $files.canonical_cheats
-$canonicalGameSettings = Resolve-Na2ActualizePhysicalPath `
-    -Path $files.canonical_gamesettings
+$cheatTemplate = Resolve-Na2ActualizePhysicalPath `
+    -Path $files.cheat_template
+$gameSettingsTemplatePath = Resolve-Na2ActualizePhysicalPath `
+    -Path $files.gamesettings_template
 $cheatsDirectory = Resolve-Na2ActualizePhysicalPath `
     -Path $ProjectPaths.pcsx2_cheats
 $gameSettingsDirectory = Resolve-Na2ActualizePhysicalPath -Path (
@@ -281,7 +281,7 @@ $memoryCardsDirectory = Resolve-Na2ActualizePhysicalPath -Path (
     $ProjectPaths.pcsx2_memory_cards
 )
 
-foreach ($requiredFile in $canonicalCheats, $canonicalGameSettings) {
+foreach ($requiredFile in $cheatTemplate, $gameSettingsTemplatePath) {
     if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) {
         throw "Required NA2 actualization input not found: $requiredFile"
     }
@@ -296,27 +296,24 @@ foreach ($requiredDirectory in (
     }
 }
 
-$gameSettingsTemplate = [IO.File]::ReadAllText($canonicalGameSettings)
-$baseCardName = Get-Na2IniValue `
-    -Text $gameSettingsTemplate `
-    -Section 'MemoryCards' `
-    -Key 'Slot1_Filename'
-if ([string]::IsNullOrWhiteSpace($baseCardName) -or
-    $baseCardName -cne [IO.Path]::GetFileName($baseCardName)) {
-    throw 'gamesettings.ini must contain a plain Slot1_Filename.'
-}
-$baseCard = Join-Path $memoryCardsDirectory $baseCardName
-if (-not (Test-Path -LiteralPath $baseCard -PathType Leaf)) {
-    throw "Base memory card referenced by gamesettings.ini was not found: $baseCard"
-}
-$settingsWithoutMemoryCard = Remove-Na2IniSection `
-    -Text $gameSettingsTemplate `
-    -Section 'MemoryCards'
+$gameSettingsTemplate = [IO.File]::ReadAllText($gameSettingsTemplatePath)
 
 $definitions = @(
-    [pscustomobject]@{ Role = 'Current'; Iso = $files.current_iso }
-    [pscustomobject]@{ Role = 'Previous'; Iso = $files.previous_iso }
-    [pscustomobject]@{ Role = 'Candidate'; Iso = $files.candidate_iso }
+    [pscustomobject]@{
+        Role = 'Current'
+        Iso = $files.current_iso
+        MemoryCard = $files.current_memory_card
+    }
+    [pscustomobject]@{
+        Role = 'Previous'
+        Iso = $files.previous_iso
+        MemoryCard = $files.previous_memory_card
+    }
+    [pscustomobject]@{
+        Role = 'Candidate'
+        Iso = $files.candidate_iso
+        MemoryCard = $files.candidate_memory_card
+    }
 )
 
 $roles = @(
@@ -334,13 +331,21 @@ $roles = @(
         }
         $serial = ([string]$identity.Serial).ToUpperInvariant()
         $crc = ([string]$identity.CRC).ToUpperInvariant()
-        $isCurrent = [string]$definition.Role -ceq 'Current'
-        $settingsText = if ($isCurrent) {
-            $gameSettingsTemplate
+        $memoryCardPath = [IO.Path]::GetFullPath(
+            [string]$definition.MemoryCard
+        )
+        if (-not (Test-Path -LiteralPath $memoryCardPath -PathType Leaf)) {
+            throw (
+                "$($definition.Role) memory card was not found: " +
+                $memoryCardPath
+            )
         }
-        else {
-            $settingsWithoutMemoryCard
-        }
+        $memoryCardName = [IO.Path]::GetFileName($memoryCardPath)
+        $settingsText = Set-Na2IniValue `
+            -Text $gameSettingsTemplate `
+            -Section 'MemoryCards' `
+            -Key 'Slot1_Filename' `
+            -Value $memoryCardName
 
         [pscustomobject]@{
             Role = [string]$definition.Role
@@ -350,6 +355,7 @@ $roles = @(
             PnachName = "${serial}_${crc}.pnach"
             GameSettingsName = "${serial}_${crc}.ini"
             GameSettingsText = $settingsText
+            MemoryCardName = $memoryCardName
         }
     }
 )
@@ -370,7 +376,7 @@ $managedLegacySettingsLink = {
         return $false
     }
     return (
-        [IO.Path]::Equals($destination, $canonicalGameSettings) -or
+        [IO.Path]::Equals($destination, $gameSettingsTemplatePath) -or
         (Test-Na2ActualizePathWithin `
             -Path $destination `
             -Directory $legacyGameSettingsDirectory)
@@ -462,7 +468,7 @@ $managedPnachLink = {
         return $false
     }
     return (
-        [IO.Path]::Equals($destination, $canonicalCheats) -or
+        [IO.Path]::Equals($destination, $cheatTemplate) -or
         (
             [IO.Path]::Equals(
                 [IO.Path]::GetDirectoryName($destination),
@@ -507,7 +513,7 @@ $removedPnachSymlinks = @(
         }
 )
 
-$pnachState = Get-Na2PnachState -Path $canonicalCheats
+$pnachState = Get-Na2PnachState -Path $cheatTemplate
 $cheatAliases = [Collections.Generic.List[string]]::new()
 $preservedInjectionLabPnach = [Collections.Generic.List[string]]::new()
 if ($null -ne $installedInjectionLabPnach) {
@@ -526,7 +532,7 @@ foreach ($pnachName in $desiredPnachNames) {
     elseif (-not $pnachState.IsEmpty) {
         $null = Set-Na2ActualizeSymlink `
             -Path $aliasPath `
-            -Target $canonicalCheats `
+            -Target $cheatTemplate `
             -IsManaged $managedPnachLink `
             -ReplaceRegularFile
         $cheatAliases.Add($aliasPath)
@@ -563,7 +569,7 @@ if ($pnachState.IsEmpty) {
 
 [pscustomobject]@{
     Roles = $roles
-    CanonicalPnach = $canonicalCheats
+    CheatTemplate = $cheatTemplate
     CheatAliases = @($cheatAliases)
     PreservedInjectionLabPnach = @(
         $preservedInjectionLabPnach | Select-Object -Unique

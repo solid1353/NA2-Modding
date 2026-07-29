@@ -3,6 +3,7 @@ param()
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot '..\ini.ps1')
 
 function Assert-Na2ActualizeTest {
     param(
@@ -34,25 +35,44 @@ try {
         ) |
         Out-Null
 
-    $canonicalCheats = Join-Path $cheats 'NA228.pnach'
-    $canonicalGameSettings = Join-Path $gameSettings 'NA228.ini'
+    $cheatTemplate = Join-Path $cheats 'SLOP-NA228.pnach'
+    $gameSettingsTemplate = Join-Path $gameSettings 'SLOP-NA228.ini'
     [IO.File]::WriteAllText(
-        $canonicalCheats,
+        $cheatTemplate,
         "// [Intro skips]`npatch=1,EE,00100000,word,00000000`n",
         [Text.UTF8Encoding]::new($false)
     )
     [IO.File]::WriteAllText(
-        $canonicalGameSettings,
+        $gameSettingsTemplate,
         (
             "[EmuCore]`nInputProfileName = Comparison`n`n" +
             "[MemoryCards]`nSlot1_Filename = Base.ps2`n"
         ),
         [Text.UTF8Encoding]::new($false)
     )
-    [IO.File]::WriteAllBytes(
-        (Join-Path $memoryCards 'Base.ps2'),
-        [byte[]](1, 2, 3, 4)
+    $currentMemoryCard = Join-Path $memoryCards 'NA228 - Current.ps2'
+    $previousMemoryCard = Join-Path $memoryCards 'NA228 - Previous.ps2'
+    $candidateMemoryCard = Join-Path $memoryCards 'NA228 - Candidate.ps2'
+    $memoryCardInputs = @(
+        [pscustomobject]@{
+            Path = $currentMemoryCard
+            Bytes = [byte[]](1, 2, 3, 4)
+        }
+        [pscustomobject]@{
+            Path = $previousMemoryCard
+            Bytes = [byte[]](5, 6, 7, 8)
+        }
+        [pscustomobject]@{
+            Path = $candidateMemoryCard
+            Bytes = [byte[]](9, 10, 11, 12)
+        }
     )
+    foreach ($memoryCardInput in $memoryCardInputs) {
+        [IO.File]::WriteAllBytes(
+            $memoryCardInput.Path,
+            $memoryCardInput.Bytes
+        )
+    }
 
     $currentIso = Join-Path $build 'Current.iso'
     $previousIso = Join-Path $build 'Previous.iso'
@@ -68,8 +88,11 @@ try {
         pcsx2_game_settings = $gameSettings
         pcsx2_memory_cards = $memoryCards
         files = [pscustomobject]@{
-            canonical_cheats = $canonicalCheats
-            canonical_gamesettings = $canonicalGameSettings
+            cheat_template = $cheatTemplate
+            gamesettings_template = $gameSettingsTemplate
+            current_memory_card = $currentMemoryCard
+            previous_memory_card = $previousMemoryCard
+            candidate_memory_card = $candidateMemoryCard
             current_iso = $currentIso
             previous_iso = $previousIso
             candidate_iso = $candidateIso
@@ -126,42 +149,37 @@ try {
             )) `
             -Message "GameSettings is not a real file: $($role.GameSettingsName)"
         $settingsText = [IO.File]::ReadAllText($settingsPath)
-        $shouldKeepMemoryCard = $role.GameSettingsName -ceq $currentSettingsName
+        $settingsOwner = if (
+            $role.GameSettingsName -ceq $currentSettingsName
+        ) {
+            'Current'
+        }
+        else {
+            $role.Role
+        }
+        $expectedMemoryCard = "NA228 - $settingsOwner.ps2"
         Assert-Na2ActualizeTest `
             -Condition (
-                ($settingsText -match '(?m)^\[MemoryCards\]$') -eq
-                $shouldKeepMemoryCard
+                (Get-Na2IniValue `
+                    -Text $settingsText `
+                    -Section 'MemoryCards' `
+                    -Key 'Slot1_Filename') -ceq
+                $expectedMemoryCard
             ) `
-            -Message "GameSettings memory-card block is wrong: $($role.Role)"
+            -Message "GameSettings memory card is wrong: $($role.Role)"
         Assert-Na2ActualizeTest `
             -Condition (Test-Path -LiteralPath $cheatPath -PathType Leaf) `
             -Message "Cheat symlink is broken: $($role.PnachName)"
         Assert-Na2ActualizeTest `
             -Condition (
                 [IO.File]::ReadAllText($cheatPath) -ceq
-                [IO.File]::ReadAllText($canonicalCheats)
+                [IO.File]::ReadAllText($cheatTemplate)
             ) `
             -Message "Cheat symlink target is wrong: $($role.PnachName)"
     }
 
-    Assert-Na2ActualizeTest `
-        -Condition (-not (Test-Path -LiteralPath (
-            Join-Path $memoryCards 'Base - Current.ps2'
-        ))) `
-        -Message 'Current role memory card was unexpectedly created.'
-    Assert-Na2ActualizeTest `
-        -Condition (-not (Test-Path -LiteralPath (
-            Join-Path $memoryCards 'Base - Previous.ps2'
-        ))) `
-        -Message 'Previous role memory card was unexpectedly created.'
-    Assert-Na2ActualizeTest `
-        -Condition (-not (Test-Path -LiteralPath (
-            Join-Path $memoryCards 'Base - Candidate.ps2'
-        ))) `
-        -Message 'Candidate role memory card was unexpectedly created.'
-
     [IO.File]::AppendAllText(
-        $canonicalCheats,
+        $cheatTemplate,
         "// link identity probe`n",
         [Text.UTF8Encoding]::new($false)
     )
@@ -170,9 +188,9 @@ try {
         Assert-Na2ActualizeTest `
             -Condition (
                 [IO.File]::ReadAllText($cheatPath) -ceq
-                [IO.File]::ReadAllText($canonicalCheats)
+                [IO.File]::ReadAllText($cheatTemplate)
             ) `
-            -Message "Cheat symlink does not track its canonical PNACH: $($role.PnachName)"
+            -Message "Cheat symlink does not track its template: $($role.PnachName)"
     }
 
     $currentRole = $first.Roles |
@@ -264,7 +282,7 @@ try {
                 (Get-Item -LiteralPath $labTarget -Force).LinkType -ceq
                     'SymbolicLink'
             ) `
-            -Message 'Invalid lab state blocked canonical PNACH actualization.'
+            -Message 'Invalid lab state blocked cheat-template actualization.'
     }
     Remove-Item -LiteralPath $labStatePath -Force
 
@@ -287,15 +305,17 @@ try {
             Join-Path $cheats 'SLPS-22228_33333333.pnach'
         ))) `
         -Message 'Obsolete managed Candidate cheat symlink was not removed.'
-    Assert-Na2ActualizeTest `
-        -Condition (
-            [IO.File]::ReadAllBytes(
-                (Join-Path $memoryCards 'Base.ps2')
-            )[0] -eq 1
-        ) `
-        -Message 'Configured base memory card was modified.'
+    foreach ($memoryCardInput in $memoryCardInputs) {
+        Assert-Na2ActualizeTest `
+            -Condition (
+                [Convert]::ToHexString(
+                    [IO.File]::ReadAllBytes($memoryCardInput.Path)
+                ) -ceq [Convert]::ToHexString($memoryCardInput.Bytes)
+            ) `
+            -Message "Configured memory card was modified: $($memoryCardInput.Path)"
+    }
 
-    [IO.File]::WriteAllBytes($canonicalCheats, [byte[]]@())
+    [IO.File]::WriteAllBytes($cheatTemplate, [byte[]]@())
     Remove-Item -LiteralPath $labTarget -Force
     [IO.File]::WriteAllText(
         $labTarget,
@@ -320,11 +340,11 @@ try {
             $remainingPnach.Count -eq 1 -and
             [IO.Path]::Equals(
                 $remainingPnach[0].FullName,
-                $canonicalCheats
+                $cheatTemplate
             ) -and
             $remainingPnach[0].Length -eq 0
         ) `
-        -Message 'Empty canonical PNACH did not remove every managed alias.'
+        -Message 'Empty cheat template did not remove every managed alias.'
 
     Write-Host 'NA2 actualization tests passed.' -ForegroundColor Green
 }

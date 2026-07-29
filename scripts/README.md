@@ -93,11 +93,11 @@ profile helper delegates to that mode.
 
 `pcsx2/actualization/act.ps1` owns standalone actualization logging and
 dispatch. Bare `act` runs `na2`, then `input`.
-`pcsx2/actualization/sync_game_files.ps1` derives every retained role's serial and ELF CRC,
-maintains canonical PNACH aliases, writes real GameSettings, keeps the template
-`[MemoryCards]` section only for Current, and deduplicates shared serial/CRC
-identities with Current taking precedence. It never creates or modifies memory
-cards.
+`pcsx2/actualization/sync_game_files.ps1` derives every retained role's serial
+and ELF CRC, links the stable cheat template to generated CRC aliases, writes
+real GameSettings that select the configured existing Current, Previous, or
+Candidate card, and deduplicates shared serial/CRC identities with Current
+taking precedence. It never creates or modifies templates or memory cards.
 Run `act help` or `act -h` for the standalone command summary.
 
 `pcsx2/launch.ps1` is the single PCSX2 launcher. Configured launches default to

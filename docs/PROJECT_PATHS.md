@@ -80,8 +80,11 @@ their producing workflow runs. File entries should reference a named root with
   compatibility and release checks.
 - `pcsx2_dev_exe`: `@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe`, used by default
   configured launches and Injection Lab development runs.
-- `canonical_cheats`: `@pcsx2_cheats/NA228.pnach`.
-- `canonical_gamesettings`: `@pcsx2_game_settings/NA228.ini`.
+- `cheat_template`: `@pcsx2_cheats/SLOP-NA228.pnach`.
+- `gamesettings_template`: `@pcsx2_game_settings/SLOP-NA228.ini`.
+- `current_memory_card`: `@pcsx2_memory_cards/NA228 - Current.ps2`.
+- `previous_memory_card`: `@pcsx2_memory_cards/NA228 - Previous.ps2`.
+- `candidate_memory_card`: `@pcsx2_memory_cards/NA228 - Candidate.ps2`.
 - `comparison_input_profile`:
   `@pcsx2_files/input_profiles/Comparison.ini`.
 - `comparison_na2_input_profile`:

@@ -220,10 +220,10 @@ workflow.
 
 While the install record identifies a regular file inside the PCSX2 cheats
 directory, normal `na228` actualization preserves the file instead of replacing
-it with the canonical cheat symlink. The lab state never becomes a launch
+it with the template-backed cheat symlink. The lab state never becomes a launch
 gate. Without a valid install record, regular files at
 NA2.28-managed CRC aliases are treated as orphaned lab artifacts and repaired
-to canonical symlinks, or removed when the canonical PNACH is empty. Corrupt
+to template-backed symlinks, or removed when the cheat template is empty. Corrupt
 or stale lab state is ignored by actualization, while unrelated game
 identities remain untouched.
 

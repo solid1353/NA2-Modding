@@ -76,7 +76,7 @@ entry** to override this title or copy the stock compatibility entry. Directly
 editing `@pcsx2_stable/cache/gamelist.cache` is likewise rejected because it is
 generated, machine-local state.
 
-The canonical PNACH is `@pcsx2_cheats/NA228.pnach`. Actualization derives each
+The stable cheat template is `@pcsx2_cheats/SLOP-NA228.pnach`. Actualization derives each
 retained image's alphanumeric serial from `SYSTEM.CNF`, creates matching
 `@pcsx2_cheats/<serial>_<crc>.pnach` aliases, and removes obsolete managed
 aliases without touching unrelated files. On 2026-07-24 the retained Current,

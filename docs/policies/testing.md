@@ -177,7 +177,8 @@ requirements, not whatever implementation happens to exist today.
   actualization pipeline automatically; worker builds never actualize.
 - `act na228` manages only the configured NA2.28 Current/Previous/Candidate
   identities, CRC cheat aliases, and GameSettings inside `@pcsx2_files/`.
-  Current keeps the template's `[MemoryCards]` section; Previous and Candidate
-  omit it. Identity collisions are deduplicated with Current taking precedence.
-  The configured memory card is never copied or modified.
+  Each role selects its configured existing Current, Previous, or Candidate
+  memory card. Identity collisions are deduplicated with Current taking
+  precedence. Templates and configured memory cards are never created, copied,
+  or modified.
 - `act input` regenerates the configured NA2 comparison input profile.

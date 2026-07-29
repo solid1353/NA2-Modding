@@ -13,27 +13,30 @@ may later be ported to NA2.
 
 Current PCSX2 actualization:
 
-- Canonical editable inputs are `@pcsx2_cheats/NA228.pnach` and
-  `@pcsx2_game_settings/NA228.ini`.
+- Read-only generation templates are `@pcsx2_cheats/SLOP-NA228.pnach` and
+  `@pcsx2_game_settings/SLOP-NA228.ini`. They are stable serial-based inputs, not
+  canonical PCSX2 identities; each built image's serial/CRC determines its
+  generated alias.
 - `act na228` derives each retained Current, Previous, and Candidate identity
   from its ISO, maintains matching CRC-named PNACH symlinks, and writes distinct
   real GameSettings files under `@pcsx2_files/`. An installed injection-lab
   regular PNACH identified by the lab state is preserved without making lab
   integrity a launch prerequisite. Orphaned regular files at managed NA2.28
-  CRC aliases are repaired to canonical symlinks.
+  CRC aliases are repaired to template-backed symlinks.
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v4 organizes each package as groups, atomic patches, and exact edits; independent group and patch `enabled` switches control normal composition. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`.
 - Actualization is an explicit standalone workflow with `na2` and `input`
   modes; bare `act` runs both in that order. User-owned
   Current/Previous/Candidate builds and launches also run `act na228`
   automatically, while worker builds never actualize.
-- A zero-byte canonical PNACH removes its managed PCSX2 CRC aliases, including
+- A zero-byte cheat template removes its managed PCSX2 CRC aliases, including
   orphaned regular lab files. Other game identities, real files, and unrelated
   symlinks are preserved.
-- Current keeps the `[MemoryCards]` section and exact `Slot1_Filename` from
-  `NA228.ini`. Previous and Candidate omit the entire section. When
-  multiple images share one PCSX2 serial/CRC identity, the single GameSettings
-  file is deduplicated with Current taking precedence. Actualization never
-  creates, copies, or modifies memory cards.
+- Current, Previous, and Candidate select the existing
+  `NA228 - Current.ps2`, `NA228 - Previous.ps2`, and
+  `NA228 - Candidate.ps2` cards respectively. When multiple images share one
+  PCSX2 serial/CRC identity, the single GameSettings file is deduplicated with
+  Current taking precedence. Actualization never creates, copies, or modifies
+  the templates or configured memory cards.
 - `@pcsx2_files/` contains the canonical BIOS, cheats, GameSettings, input
   profiles, input recordings, and memory cards used directly by stable and
   development PCSX2.
@@ -221,10 +224,10 @@ PCSX2 cheat filenames include the game CRC, for example:
 If the boot ELF inside an ISO changes, PCSX2 may report a different CRC.
 Actualize derives the alphanumeric serial from the ISO boot path and creates a
 matching `@pcsx2_cheats/<serial>_<crc>.pnach` link to
-`@pcsx2_cheats/NA228.pnach`.
+`@pcsx2_cheats/SLOP-NA228.pnach`.
 
-Stable and development PCSX2 use `@pcsx2_cheats/` directly. The canonical
-PNACH has a semantic name; actualized CRC aliases are relative symlinks in the
+Stable and development PCSX2 use `@pcsx2_cheats/` directly. The cheat template
+has a stable human-facing name; actualized CRC aliases are relative symlinks in the
 same shared directory.
 
 Known PCSX2 paths from prior notes:
@@ -232,7 +235,7 @@ Known PCSX2 paths from prior notes:
 - Routine log: `@pcsx2_dev/logs/emulog.txt`
 - Explicit stable-check log: `@pcsx2_stable/logs/emulog.txt`
 - Cheats: CRC aliases in `@pcsx2_cheats/`, targeting
-  `@pcsx2_cheats/NA228.pnach`
+  `@pcsx2_cheats/SLOP-NA228.pnach`
 
 Known log pattern:
 
@@ -284,9 +287,9 @@ owns its transcript and status reporting. Bare `act` dispatches `na2`, then
 `input`.
 `sync_game_files.ps1` derives identities for every retained Current, Previous, and
 Candidate ISO, deletes stale managed cheat symlinks and NA2.28 GameSettings,
-creates the required cheat aliases and real role GameSettings, and keeps the
-template's `[MemoryCards]` section only in Current's GameSettings.
-Previous and Candidate omit that section, and memory cards are never copied.
+creates the required cheat aliases and real role GameSettings, and sets each
+role to its existing Current, Previous, or Candidate memory card. Templates and
+memory cards are never created, copied, or modified.
 `sync_input.ps1` regenerates `Comparison_NA2.ini`.
 
 ## Release Workflow

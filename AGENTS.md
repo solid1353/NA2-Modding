@@ -99,10 +99,13 @@ Detailed command and task behavior is in
 - Never change binary files manually; all binary changes go through scripts.
 - Run every shell, filesystem, script, and Git command elevated from the first
   attempt. On permission failure, retry the exact operation elevated.
-- File-working tasks own `work/<exact task title>/`. Keep inputs, experiments,
-  builds, logs, and runtime files there; reusable scripts belong under
-  `scripts/`. At completion, promote useful findings and remove disposable
-  artifacts, logs, and every empty directory.
+- File-working tasks own `work/<exact task title>/` and have standing authority
+  to create, modify, move, or delete anything inside that exact directory
+  without separate destructive-action approval. This authority never extends
+  outside the owned directory. Keep inputs, experiments, builds, logs, and
+  runtime files there; reusable scripts belong under `scripts/`. At completion,
+  promote useful findings and remove disposable artifacts, logs, and every
+  empty directory.
 - Agent PCSX2 uses only a task-owned clone of `@pcsx2_clean` with a unique PINE
   port. Agent-only runs stay hidden. Never navigate emulator or game menus
   through PINE or injected input. If a required savestate was not supplied,

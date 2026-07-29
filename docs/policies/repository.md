@@ -82,8 +82,11 @@
 
 ## Work ownership and external inputs
 
-- A file-working task owns `work/<exact task title>/`. It may read another
-  task's directory but must copy files into its own before changing them.
+- A file-working task owns `work/<exact task title>/` and has standing
+  authority to create, modify, move, or delete anything inside that exact
+  directory without separate destructive-action approval. This authority
+  never extends outside the owned directory. It may read another task's
+  directory but must copy files into its own before changing them.
 - Keep task copies, experiments, intermediate files, builds, runtime artifacts,
   and logs in clearly named subfolders under that owner. Never use top-level
   `work/temp/`.
@@ -128,7 +131,8 @@
 - Prefer reusable verifiable commands/scripts over long one-off command chains.
 - Treat `@utils/old/` as untrusted; inspect a chosen tool before execution.
 - Ask before destructive actions, mass rewrites, or modifying originals,
-  except for an owning task's audited task-PCSX2 replacement authorized above.
+  except for actions contained within the acting task's owned
+  `work/<exact task title>/` directory.
 
 ## Documentation layout
 

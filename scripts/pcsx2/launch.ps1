@@ -24,6 +24,99 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\na228\worker_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
+function Initialize-WorkerWindowApi {
+    if ('Na228WorkerWindowApi' -as [type]) {
+        return
+    }
+
+    Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+public static class Na228WorkerWindowApi
+{
+    public delegate bool EnumWindowsCallback(IntPtr window, IntPtr parameter);
+
+    [DllImport("user32.dll")]
+    public static extern bool EnumWindows(
+        EnumWindowsCallback callback,
+        IntPtr parameter
+    );
+
+    [DllImport("user32.dll")]
+    public static extern uint GetWindowThreadProcessId(
+        IntPtr window,
+        out uint processId
+    );
+
+    [DllImport("user32.dll")]
+    public static extern bool IsWindowVisible(IntPtr window);
+
+    [DllImport("user32.dll")]
+    public static extern bool ShowWindowAsync(IntPtr window, int command);
+}
+'@
+}
+
+function Get-VisibleProcessWindows {
+    param(
+        [Parameter(Mandatory)]
+        [int]$OwnerProcessId
+    )
+
+    $windows = [Collections.Generic.List[IntPtr]]::new()
+    $callback = [Na228WorkerWindowApi+EnumWindowsCallback]{
+        param([IntPtr]$window, [IntPtr]$parameter)
+
+        [uint32]$windowProcessId = 0
+        [void][Na228WorkerWindowApi]::GetWindowThreadProcessId(
+            $window,
+            [ref]$windowProcessId
+        )
+        if (
+            $windowProcessId -eq [uint32]$OwnerProcessId -and
+            [Na228WorkerWindowApi]::IsWindowVisible($window)
+        ) {
+            $windows.Add($window)
+        }
+        return $true
+    }
+    [void][Na228WorkerWindowApi]::EnumWindows($callback, [IntPtr]::Zero)
+    return @($windows)
+}
+
+function Hide-WorkerProcessWindows {
+    param(
+        [Parameter(Mandatory)]
+        [Diagnostics.Process]$Process
+    )
+
+    Initialize-WorkerWindowApi
+    $deadline = [DateTime]::UtcNow.AddSeconds(5)
+    do {
+        $Process.Refresh()
+        if ($Process.HasExited) {
+            throw "Worker PCSX2 exited during launch (exit $($Process.ExitCode))."
+        }
+
+        foreach ($window in @(Get-VisibleProcessWindows -OwnerProcessId $Process.Id)) {
+            [void][Na228WorkerWindowApi]::ShowWindowAsync($window, 0)
+        }
+        Start-Sleep -Milliseconds 50
+    } while ([DateTime]::UtcNow -lt $deadline)
+
+    $visibleWindows = @(
+        Get-VisibleProcessWindows -OwnerProcessId $Process.Id
+    )
+    if ($visibleWindows.Count -gt 0) {
+        Stop-Process -Id $Process.Id -Force -ErrorAction SilentlyContinue
+        throw (
+            'Worker PCSX2 did not remain hidden; terminated process ' +
+            "$($Process.Id)."
+        )
+    }
+}
+
 if ($PSCmdlet.ParameterSetName -eq 'Worker') {
     $worker = Get-Na2WorkerContext `
         -WorkerRoot $WorkerRoot `
@@ -103,6 +196,9 @@ if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
 }
 
 $launchArguments = @()
+if ($hidden) {
+    $launchArguments += '-nogui'
+}
 if ($IsoPath) {
     $launchArguments += @('-batch', "`"$resolvedIso`"")
 }
@@ -120,6 +216,24 @@ if ($launchArguments.Count -gt 0) {
 }
 if ($hidden) {
     $startArguments.WindowStyle = 'Hidden'
+    $startArguments.PassThru = $true
+    $process = Start-Process @startArguments
+    try {
+        Hide-WorkerProcessWindows -Process $process
+    }
+    catch {
+        if (-not $process.HasExited) {
+            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+        }
+        throw
+    }
+    if ($Wait) {
+        $process.WaitForExit()
+    }
+    if ($PassThru) {
+        $process
+    }
+    return
 }
 if ($Wait) {
     $startArguments.Wait = $true

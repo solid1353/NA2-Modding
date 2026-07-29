@@ -102,12 +102,16 @@ Run `act help` or `act -h` for the standalone command summary.
 
 `pcsx2/launch.ps1` is the single PCSX2 launcher. Configured launches default to
 `dev`; pass `-Target stable` for an explicit stable check. Agent launches use
-`-WorkerRoot work/<task title>` and start the existing task-owned PCSX2 copy
-hidden. `-IsoPath` is optional for configured launches and mandatory and
-repository-relative for worker launches.
+`-WorkerRoot work/<task title>` and start the existing task-owned PCSX2 copy in
+no-GUI mode. The launcher suppresses process-owned render windows for the
+worker startup interval, reads back top-level-window visibility, and terminates
+only the newly launched worker if it cannot remain hidden. `-IsoPath` is
+optional for configured launches and mandatory and repository-relative for
+worker launches.
 `-PassThru` returns the started process for higher-level orchestration such as
 window tiling. The launcher does not copy or configure PCSX2, inspect or stop
-processes, use PINE, load savestates, capture output, or perform cleanup.
+unrelated processes, use PINE, load savestates, capture output, or perform
+cleanup.
 Source-game and pair-launch commands inherit the `dev` default. Savestate
 filing also defaults to `dev`; pass `-Target stable` to file states from the
 stable installation.

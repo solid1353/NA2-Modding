@@ -1,5 +1,8 @@
 # Font resume handoff — 2026-07-29
 
+Canonical location:
+`docs/workstreams/font/2026-07-29-font-resume.md`.
+
 ## Objective and task
 
 - Workstream/task title: `Font`.

@@ -15,8 +15,8 @@
   stop; in Continuous mode, queue only the blocked subtask and continue
   independent approved subtasks first. Check once per wakeup, make no unrelated
   changes, and disable it when resolved.
-- A workstream that asks `Scripting` for anything stops immediately and sleeps
-  until `Scripting` responds.
+- A workstream that asks `Project` for anything stops immediately and sleeps
+  until `Project` responds.
 - Use canonical tracked files as shared context. Send concise handoffs only
   when another chat must act or decide, with owner, objective, exact paths,
   commit, confirmed decisions, unresolved questions, and requested action.
@@ -87,7 +87,7 @@
 - Every new project chat's initial scope carries standing authorization to
   commit and push completed work. That authorization does not approve a task
   plan or start task execution.
-- Actualization unpins project chats, then pins `General`, `Scripting`,
+- Actualization unpins project chats, then pins `General`, `Project`,
   `Policeman`, `Notifications`, `Task coordinator`, and `Localization` in that
   order, followed by each `In Progress` workstream coordinator and its
   unarchived dedicated task chats in task order. It never unarchives archived

@@ -11,7 +11,7 @@
 
 ## Backlog
 
-### Project
+### [Project](docs/workstreams/project/README.md)
 - Release: add feature/group/patch config + instructions + default release config.
 - Investigate cross-platform development/deployment possibilities.
 - Global cleanup - preserve what is needed, delete the rest. Project should ask corresponding chats for specifics. Includes, but not limited to:
@@ -49,8 +49,6 @@
 ## Archive
 
 ### [Localization](docs/workstreams/localization/README.md)
-
-### [Scripting](docs/workstreams/scripting/README.md)
 
 ### [UI Translation](docs/workstreams/ui_translation/README.md)
 

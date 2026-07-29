@@ -13,14 +13,8 @@
   authorize starting, stopping, exposing, hiding, relaunching, or otherwise
   changing the operation. Answer in commentary and continue approved work
   unchanged unless the same message explicitly orders a change.
-- When an operational instruction or command proves wrong, the next answer
-  begins with the corrected verified instruction or the exact statement
-  `No verified corrected answer is available yet.` Before presenting another
-  command as working, validate its complete workflow under matching paths,
-  inputs, permissions, and target conditions—not merely compilation or an
-  earlier stage. If complete validation is unavailable, label the replacement
-  unverified and name the exact untested boundary. Root-cause explanation and
-  self-report follow the answer; they never replace or delay it.
+- When an answer is wrong, give the corrected answer immediately. Explain why
+  the previous answer was wrong only if the user asks why.
 - During explicit discussion, design, planning, or brainstorming mode, every
   later message updates the proposed specification only, even when phrased as
   an imperative. Only the user can exit that mode through explicit execution

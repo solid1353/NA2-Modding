@@ -17,12 +17,8 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   requests an explanation only. Never convert it into an instruction to start,
   stop, expose, hide, relaunch, or otherwise change the work. Answer it and
   continue approved work unchanged unless the user explicitly orders a change.
-- After an operational instruction proves wrong, lead with either the corrected
-  verified answer or `No verified corrected answer is available yet.` Validate
-  the complete replacement under matching conditions before presenting another
-  command; if full validation is impossible, label the command unverified and
-  state the exact gap. Explain the prior failure only after answering, never
-  instead of answering.
+- When an answer is wrong, give the corrected answer immediately. Explain why
+  the previous answer was wrong only if the user asks why.
 - While approved work remains actionable, answer every question in commentary
   and resume the work immediately. A question never permits ending the turn
   with a final response.

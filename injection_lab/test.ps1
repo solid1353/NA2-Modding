@@ -1,7 +1,6 @@
 [CmdletBinding()]
 param(
     [switch]$BuildOnly,
-    [switch]$Remove,
     [string]$CurrentIso,
     [string]$CheatsDirectory,
     [int]$PinePort,
@@ -17,7 +16,6 @@ $projectPathsScript = Join-Path $repository 'scripts\lib\project_paths.ps1'
 . $projectPathsScript
 $projectPaths = Get-Na2ProjectPaths
 $statePath = Join-Path $labRoot 'build\test-install.json'
-$backupPath = Join-Path $labRoot 'build\current-pnach.before-test'
 $payloadConfigPath = Join-Path $repository 'na2_patcher\payload_builder\config.tsv'
 $identityScript = Join-Path $repository 'scripts\na2\iso_identity.ps1'
 $hookRuntimeAddress = 0x001D0578
@@ -272,97 +270,6 @@ function Get-BuildId {
         $id = 1
     }
     return $id
-}
-
-function New-FileSymbolicLink([string]$Path, [string]$Target) {
-    $useNative = -not [IO.Path]::IsPathRooted($Target)
-    if (-not $useNative) {
-        try {
-            [void](New-Item -ItemType SymbolicLink -Path $Path -Target $Target)
-            return
-        }
-        catch [UnauthorizedAccessException] {
-            $useNative = $true
-        }
-    }
-    if ($useNative) {
-        if (-not ('InjectionLabNativeMethods' -as [type])) {
-            Add-Type @'
-using System;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
-
-public static class InjectionLabNativeMethods {
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern bool CreateSymbolicLink(
-        string symbolicLink,
-        string target,
-        int flags
-    );
-
-    public static void CreateFileSymbolicLink(string symbolicLink, string target) {
-        const int SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE = 0x2;
-        if (!CreateSymbolicLink(
-            symbolicLink,
-            target,
-            SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE
-        )) {
-            throw new Win32Exception(Marshal.GetLastWin32Error());
-        }
-    }
-}
-'@
-        }
-        [InjectionLabNativeMethods]::CreateFileSymbolicLink($Path, $Target)
-    }
-}
-
-function Restore-TestPnach {
-    if (-not (Test-Path -LiteralPath $statePath)) {
-        Write-Host '[injection_lab] No installed test PNACH is recorded.'
-        return
-    }
-
-    $state = Get-Content -Raw -LiteralPath $statePath | ConvertFrom-Json
-    $recordedTarget = [string]$state.target
-    if (
-        [string]$state.previous_kind -ceq 'file' -and
-        -not (Test-Path -LiteralPath $backupPath -PathType Leaf)
-    ) {
-        throw (
-            'Cannot restore the pre-test PNACH because its backup is ' +
-            "missing: $backupPath"
-        )
-    }
-    if (Test-Path -LiteralPath $recordedTarget) {
-        Remove-Item -LiteralPath $recordedTarget -Force
-    }
-
-    switch ([string]$state.previous_kind) {
-        'symbolic_link' {
-            New-FileSymbolicLink -Path $recordedTarget `
-                -Target ([string]$state.previous_target)
-            Write-Host "[injection_lab] Restored the managed PNACH link: $recordedTarget"
-        }
-        'file' {
-            Copy-Item -LiteralPath $backupPath -Destination $recordedTarget
-            Remove-Item -LiteralPath $backupPath -Force
-            Write-Host "[injection_lab] Restored the pre-test PNACH: $recordedTarget"
-        }
-        'none' {
-            Write-Host "[injection_lab] Removed the test PNACH: $recordedTarget"
-        }
-        default {
-            throw "Unknown recorded PNACH kind: $($state.previous_kind)"
-        }
-    }
-
-    Remove-Item -LiteralPath $statePath -Force
-}
-
-if ($Remove) {
-    Restore-TestPnach
-    exit 0
 }
 
 if (-not (Test-Path -LiteralPath $currentIso)) {
@@ -835,26 +742,16 @@ if (Test-Path -LiteralPath $statePath) {
 }
 else {
     $existing = Get-Item -LiteralPath $target -Force -ErrorAction SilentlyContinue
-    $previousKind = 'none'
-    $previousTarget = ''
     if ($existing) {
         if ([string]$existing.LinkType -ceq 'SymbolicLink') {
-            $previousKind = 'symbolic_link'
-            $previousTarget = [string]$existing.Target
             Remove-Item -LiteralPath $target -Force
         }
-        elseif (-not $existing.PSIsContainer) {
-            $previousKind = 'file'
-            Copy-Item -LiteralPath $target -Destination $backupPath
-        }
-        else {
+        elseif ($existing.PSIsContainer) {
             throw "Refusing to replace a directory at the PNACH path: $target"
         }
     }
     $state = [pscustomobject]@{
         target = $target
-        previous_kind = $previousKind
-        previous_target = $previousTarget
         current_crc = [string]$identity.CRC
         build_id = ('0x{0:X8}' -f $buildId)
         code_base = ('0x{0:X8}' -f $codeBase)
@@ -863,7 +760,6 @@ else {
         production_entry = $(if ($productionMode) { $ProductionEntry } else { '' })
     }
 }
-
 Write-PnachInPlace -Source $output -Target $target
 $state.target = $target
 $state.current_crc = [string]$identity.CRC

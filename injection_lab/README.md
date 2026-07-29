@@ -139,9 +139,9 @@ Before emitting the PNACH, production mode:
 
 Existing file-backed BTL/ETC/ELF caller hooks remain untouched. The PNACH
 changes only the selected resident entry, fixed dispatcher/pointer, and inactive
-development bank. Switching between generic and production mode, or selecting
-a different production source/entry while installed, requires `-Remove` first.
-Recompiling the same selected entry alternates banks normally.
+development bank. Switching between generic and production mode or selecting
+a different production entry simply overwrites the development PNACH.
+Recompiling alternates banks normally.
 
 This is a development accelerator, not release validation. It requires a
 savestate from the same exact Current payload and compatible writable resident
@@ -212,20 +212,10 @@ Production mode accepts the same switch:
   -ProductionEntry localization.font.v2.controls_adapter
 ```
 
-To remove the test and restore any pre-existing regular PNACH:
-
-```powershell
-.\injection_lab\test.ps1 -Remove
-```
-
-The installer records and temporarily replaces the exact CRC alias. Later
-builds directly rewrite that regular file and request the explicit PINE
-reload. Removal deletes the current lab PNACH and restores the previous file
-or managed symbolic link, including its relative target. It does not compare
-file hashes or inspect EE memory.
-
-Already-applied memory writes remain until Current is restarted. The lab does
-not enforce that restart.
+The installer replaces the exact CRC alias with one generated regular PNACH.
+Every later build rewrites that file and requests the explicit PINE reload.
+Stop the watcher with Ctrl+C. There is no separate removal or restoration
+workflow.
 
 While the install record identifies a regular file inside the PCSX2 cheats
 directory, normal `na2` actualization preserves the file instead of replacing

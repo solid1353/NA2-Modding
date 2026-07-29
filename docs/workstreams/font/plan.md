@@ -10,8 +10,10 @@ remain separate from raster-weight refinement so an appearance change cannot
 silently invalidate the accepted layout.
 
 Confirmed findings and negative results remain canonical in
-`docs/knowledge/localization/font/README.md`. This document defines the active work and its
-execution order.
+`docs/knowledge/localization/font/README.md`. This document preserves
+architecture and implementation history. The linked epic README is the sole
+authority for the active mode, order, current subtask, pending grid, and
+remaining work.
 
 ## Current result for review
 
@@ -31,8 +33,9 @@ enabled. The user explicitly accepted the Command Chart result on
 2026-07-27; the Practice title result remains agent-validated and awaiting
 acceptance. The next Practice explanation family is also agent-validated
 across supplied slots 2-7: wrapping, line spacing, placement, and native inline
-icons match NUN5. Its composed comparison grids await user acceptance before
-the next caller family begins.
+icons match NUN5. Its composed comparison grids remain awaiting user
+acceptance; that pending review does not set the active epic's execution mode
+or stop boundary.
 
 The reset baseline is documented in the existing
 [Font knowledge record](../../knowledge/localization/font/README.md). User
@@ -66,49 +69,13 @@ scoped. It is recorded here as separate Font work and does not reopen the
 accepted fitting, positioning, or clipping behavior in the ss1–ss6 layout
 epic.
 
-## Active ss1–ss6 epic priorities
+## Active epic authority
 
-The user directed Font to work only on the
-[ss1–ss6 layout-parity epic](epics/ss2-6-layout/README.md) for now. Its
-efficiency-prioritized sequential order supersedes the generic remaining-family
-order below while the epic is active:
-
-1. **ss4 — Quit confirmation.** Reuse the accepted Pause Controls plumbing, then add only
-   the guarded confirmation-body and Yes/No positioning behavior. Commit and
-   review it independently.
-2. **ss1 — Special Controls final selector.** Convert the two proven
-   modal-specific fullwidth Shift-JIS slots to official NUN5 ASCII `ON`/`OFF`
-   through canonical mappings, then measure the fresh mapped result and add a
-   bounded positioning correction only if it remains necessary. Preserve the
-   accepted first-eight Control Settings result.
-3. **ss5 — Character model move list.** Add bounded wrapping and positioning
-   for the right-side move-name column.
-4. **ss6 — Movie list.** Implement the variable-height wrapped-row behavior
-   last because it has the largest caller-specific layout and row-advance
-   burden.
-
-Complete, commit, push, report, and obtain explicit acceptance for each item
-before beginning the next. Shared primitives are implemented once, but each
-slot keeps its own guarded caller and acceptance boundary.
-
-## Required execution order
-
-1. Completed and retained: establish and accept the native NUN5-derived font.
-2. Completed: retire the rejected July 24-25 v1 executable stack after the v2
-   implementation made every one of its fragments unreachable; retain its
-   reusable evidence in canonical knowledge and Git history.
-3. Capture and accept the post-reset baseline, including the Save/Load lower
-   modal from slot 9.
-4. Reimplement one proven caller family at a time. Commit, push, and obtain
-   visual acceptance before beginning the next family.
-5. Prefer one shared denominator or wrapper when cross-screen evidence proves
-   it; never duplicate shared behavior merely because it appears in several
-   screens.
-
-Auto-adjust is downstream of horizontal metrics. A scaling test is not valid
-until logical width, visible glyph bounds, advances, and centering are measured
-for the same strings. The historical m01 and semantic-palette experiments are
-negative evidence, not implementation parents.
+The current Font epic is
+[Layout parity batches](epics/ss2-6-layout/README.md). Its README alone defines
+the active mode, priority order, execution state, review state, and remaining
+cases. Historical sequences and acceptance boundaries below do not override
+that live epic.
 
 ## Approved replacement architecture — implementation active
 
@@ -434,11 +401,9 @@ For each family:
 3. Verify representative short, fitting and overflowing strings.
 4. Rerun every previously accepted caller family for regressions.
 5. Commit and push the completed family.
-6. Stop and give the user the exact regression checklist; do not perform the
-   runtime regression pass for them.
-7. After the user supplies the resulting captures, present one composed grid
-   with NUN5 on the left and Current NA2 on the right.
-8. Wait for user acceptance before beginning the next family.
+6. Follow the active epic workflow for visible grid delivery and continuation.
+   User acceptance remains a separate explicit state and never changes the
+   active mode by implication.
 
 ### Remaining caller-family order
 

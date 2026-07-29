@@ -20,10 +20,18 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - When an answer is wrong, give the corrected answer immediately. Explain why
   the previous answer was wrong only if the user asks why.
 - While approved work remains actionable, answer every question in commentary
-  and resume immediately. In Continuous mode, a question, pending user
-  review/testing, or one blocked subtask never permits a handoff while another
-  approved subtask is actionable; record or queue it and continue. None of
-  these permits ending the turn with a final response.
+  and resume immediately.
+- Before ending any turn, apply this gate in order:
+  1. If this chat owes a task grid, visibly send it first. A chat owes the grid
+     when the user requested it there or when that chat produced a subtask grid
+     that it has not yet shown. An explicit stop cancels new work, not this
+     delivery.
+  2. If approved Continuous epic work remains actionable and the user has not
+     stopped it, a final response is prohibited. Send intermediate output in
+     commentary and continue. Pending review/testing, a question, or one
+     blocked subtask is not a whole-epic blocker while another approved subtask
+     can proceed.
+  3. Otherwise, end normally.
 - When the user declares discussion, design, planning, or brainstorming mode,
   later requirements remain discussion until the user explicitly authorizes
   execution. If authorization is ambiguous, ask.
@@ -64,16 +72,20 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - `con`: resume the current work without changing its scope or approval state.
 - `ep`: epic.
 - `eff`: report the current recommended effort without changing it.
-- `report` or `grid`: immediately preempt everything. The next user-visible
-  response must be exactly one of: (1) the actual composed post-change
-  report-grid images, or (2) `Cannot produce report grid: <exact reason>.
-  Missing: <exact post-change input>.` No status, promise, findings, tool
-  narration, implementation, final answer, or relay to another task may appear
-  first. If post-change imagery is absent, use outcome (2) immediately; do not
-  build, launch, investigate, or substitute source, donor, baseline, pre-fix,
-  savestate-preview, or other input imagery. If the same message also orders a
-  mistake report to `General`, satisfy this task-report response first and send
-  the separate mistake report afterward; neither replaces the other.
+- `report`, `grid`, or any direct request for this chat's existing task grid
+  immediately preempts everything. The next user-visible response must be
+  exactly one of: (1) the actual composed post-change report-grid images, or
+  (2) `Cannot produce report grid: <exact reason>. Missing: <exact post-change
+  input>.` Before using outcome (2), check this task's recorded report state
+  and expected artifact locations; never guess that a grid or input is absent.
+  No status, promise, findings, tool narration, implementation, final answer,
+  or relay may appear first. Do not build, launch, investigate, or substitute
+  source, donor, baseline, pre-fix, savestate-preview, or other input imagery.
+  The obligation belongs to the chat where the user made the request; a later
+  complaint in another chat and another chat's response neither transfer nor
+  satisfy it. If the same message also orders a mistake report to `General`,
+  satisfy the task-report response first and relay the mistake afterward. An
+  explicit stop does not waive an already-requested or produced grid.
 - `sw`: resume after the user changed the chat to the recommended effort.
 - `ss`: savestate; `ss<number>`: that numbered savestate slot in the user's
   PCSX2, for example `ss7`.
@@ -189,8 +201,4 @@ Read the matching policy before acting:
   applies only to exact work that the user explicitly declares an epic inside
   a workstream that links it. A workflow link never classifies tasks, stages,
   screenshots, comparisons, or other artifacts as epic content.
-- In Continuous epic mode, pending user review of a completed subtask is not a
-  blocker. Record it and continue actionable approved subtasks; stop only for
-  an explicit user-required boundary or a real dependency with no independent
-  epic work remaining.
 - `docs/workstreams/README.md` defines the workstream-policy storage boundary.

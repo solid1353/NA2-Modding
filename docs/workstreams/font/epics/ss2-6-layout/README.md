@@ -11,6 +11,18 @@ implement one case or proven shared caller family, commit and push it, present
 its NUN5-left/Current-NA2-right result, then proceed unless a required
 regression boundary or blocker requires user input.
 
+## Execution state
+
+- Mode: Continuous.
+- Current subtask: Priority 2 — Refreshed ss3–ss4 Jutsu-name list;
+  implementation is in progress in Font-owned uncommitted files.
+- Pending grid:
+  `work/Font/artifacts/command_relationships_v2/command-chart-ss1-ss2-row-aware-grid.png`
+  for completed Priority 1. Font produced it after commit `9808766f`, but has
+  not yet visibly delivered it in the Font chat.
+- Next action: visibly deliver the pending Priority 1 grid in Font, then resume
+  Priority 2 without waiting for Priority 1 acceptance.
+
 ## Scope and evidence
 
 - Declared: 2026-07-27.
@@ -87,7 +99,8 @@ regression boundary or blocker requires user input.
 
 ### Priority 1 — Refreshed ss1–ss2: Command details
 
-- State: two matched baselines captured; not implemented.
+- State: implemented and agent-validated in commit `9808766f`; the composed
+  post-change grid is pending visible delivery and user verification.
 - ss1: Current keeps the relationship explanation on one line and overflows;
   NUN5 wraps it within the command-details panel.
 - ss2: Current's blue explanation and controller-icon rows sit
@@ -112,7 +125,8 @@ regression boundary or blocker requires user input.
 
 ### Priority 2 — Refreshed ss3–ss4: Jutsu-name list
 
-- State: two matched baselines captured; not implemented.
+- State: implementation in progress in Font-owned uncommitted files; not yet
+  validated, committed, or reported.
 - Remaining defect: Current selected and expanded-list titles overflow
   horizontally; NUN5 wraps them inside the left-side list bounds.
 

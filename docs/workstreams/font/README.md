@@ -10,7 +10,7 @@ in the shared knowledge base rather than being duplicated here.
 
 ## Documents
 
-- [Active plan and working context](plan.md)
+- [Architecture and implementation history; not active execution authority](plan.md)
 - [Confirmed font knowledge and preserved evidence](../../knowledge/localization/font/README.md)
 
 ## Active epics

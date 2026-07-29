@@ -36,7 +36,16 @@ For each subtask:
 1. Analyze only as needed.
 2. Implement.
 3. Commit and push.
-4. Report the result using the accepted composed-grid format.
+4. Visibly send the result in the accepted composed-grid format from the
+   owning chat. In Continuous mode, send it in commentary and continue the next
+   independent approved subtask.
+
+Every active epic README records `Mode`, `Current subtask`, and `Pending grid`.
+`Pending grid` is `none`, a repository-relative path to the composed
+post-change grid, or `missing: <exact post-change input>`. Set it as soon as a
+subtask result becomes due and clear it only after the owning chat visibly
+sends that grid or exact inability response. Consult these fields before every
+final response.
 
 Track implementation, agent validation, delivery to the user, and explicit
 user acceptance as separate states in epic READMEs and reports. Only an
@@ -73,11 +82,8 @@ sequential mode, present the remaining epic after the completed subtask is
 accepted.
 
 Internal tool output, paths, links, or claims of delivery do not prove
-delivery. The user-facing response appropriate to the current task state must
-visibly contain every semantic-group heading and every composed grid:
-commentary while actionable Continuous work remains, or the final response
-only at a permitted handoff. After an intermediate Continuous-mode report,
-resume the active subtask in the same turn.
+delivery. Follow the universal turn-end gate in `AGENTS.md` after each epic
+report.
 
 Preserve each epic and its report grids together under
 `docs/workstreams/<workstream>/epics/<epic-id>/`. Each epic directory contains

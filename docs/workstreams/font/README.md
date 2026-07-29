@@ -28,3 +28,5 @@ in the shared knowledge base rather than being duplicated here.
 - When a Font change reaches a runtime regression boundary, stop before
   runtime testing and tell the user the exact screens, actions, and expected
   unchanged behavior to verify. Do not perform that regression pass for them.
+  In explicitly requested Continuous epic mode, this stop is waived: record
+  the pending regression review and continue to the next subtask.

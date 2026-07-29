@@ -23,7 +23,7 @@ REPOSITORY = find_repository(Path(__file__))
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
-from na2_patcher.project_paths import load_project_paths  # noqa: E402
+from na228_builder.project_paths import load_project_paths  # noqa: E402
 
 
 PACKAGE = load_project_paths(REPOSITORY).path(

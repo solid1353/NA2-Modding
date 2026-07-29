@@ -24,7 +24,7 @@ REPOSITORY = find_repository(Path(__file__))
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
-from na2_patcher.project_paths import load_project_paths  # noqa: E402
+from na228_builder.project_paths import load_project_paths  # noqa: E402
 
 
 PATCH_ID = "font_numeric_ninja_song"
@@ -157,7 +157,7 @@ def verify_source() -> Path:
 def verify_multiplication_mapping() -> Path:
     mappings = (
         REPOSITORY
-        / "na2_patcher"
+        / "na228_builder"
         / "features"
         / "localization"
         / "translation_importer"

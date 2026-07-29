@@ -15,7 +15,7 @@ Current PCSX2 actualization:
 
 - Canonical editable inputs are `@pcsx2_cheats/NA228.pnach` and
   `@pcsx2_game_settings/NA228.ini`.
-- `act na2` derives each retained Current, Previous, and Candidate identity
+- `act na228` derives each retained Current, Previous, and Candidate identity
   from its ISO, maintains matching CRC-named PNACH symlinks, and writes distinct
   real GameSettings files under `@pcsx2_files/`. An installed injection-lab
   regular PNACH identified by the lab state is preserved without making lab
@@ -24,7 +24,7 @@ Current PCSX2 actualization:
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v4 organizes each package as groups, atomic patches, and exact edits; independent group and patch `enabled` switches control normal composition. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`.
 - Actualization is an explicit standalone workflow with `na2` and `input`
   modes; bare `act` runs both in that order. User-owned
-  Current/Previous/Candidate builds and launches also run `act na2`
+  Current/Previous/Candidate builds and launches also run `act na228`
   automatically, while worker builds never actualize.
 - A zero-byte canonical PNACH removes its managed PCSX2 CRC aliases, including
   orphaned regular lab files. Other game identities, real files, and unrelated
@@ -51,15 +51,15 @@ replaced with a copied machine-specific absolute path.
 
 - `@source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
 - `@source/*.files/`: extracted views of original source archives. Treat as read-only reference.
-- `build/`: normally contains `build/NA2.28 - Current.iso`, may retain at most `build/NA2.28 - Previous.iso` as rotation history, and may retain `build/NA2.28 - Candidate.iso` while concurrent refactoring/testing needs it. Standard builds use `NA2.28 - Current.iso.building`, then discard an identical candidate or promote and rotate a changed one. `na2 -t` instead uses `NA2.28 - Candidate.iso.building`, atomically updates only Candidate, leaves PCSX2 running, and never changes Current, Previous, their build mapping, or Current's preflight receipt. Staging files are removed on failure.
-- `work/<task title>/build/`: isolated agent ISOs produced by `na2 -t work/<task title>/build/<name>.iso`. Staging remains beside the requested output, build records remain under that task's `logs/`, and the mode never touches shared build, preflight, promotion, PNACH, or PCSX2 state.
+- `build/`: normally contains `build/NA2.28 - Current.iso`, may retain at most `build/NA2.28 - Previous.iso` as rotation history, and may retain `build/NA2.28 - Candidate.iso` while concurrent refactoring/testing needs it. Standard builds use `NA2.28 - Current.iso.building`, then discard an identical candidate or promote and rotate a changed one. `na228 -t` instead uses `NA2.28 - Candidate.iso.building`, atomically updates only Candidate, leaves PCSX2 running, and never changes Current, Previous, their build mapping, or Current's preflight receipt. Staging files are removed on failure.
+- `work/<task title>/build/`: isolated agent ISOs produced by `na228 -t work/<task title>/build/<name>.iso`. Staging remains beside the requested output, build records remain under that task's `logs/`, and the mode never touches shared build, preflight, promotion, PNACH, or PCSX2 state.
 - Temporary imported archives live under the active task's `work/<task title>/temp/` folder until normalized or retired. Reproducible data lives as hash-pinned inputs beside its module; complete accepted states are preserved by annotated Git tags, and retired inputs remain available through Git history.
-- `na2_patcher/features/localization/translation_importer/mappings.tsv` is the Localization feature's current hash-pinned importer input and folds the verified pointer inventory into each applicable mapping row. `source_ref` and `source` retain the guarded NA2 origin; `donor_ref` and `donor` retain the official translation and make it executable by default. A nonempty user-authored `replacement` overrides the donor, and `prefix` is prepended to the selected text. Profile `identity.json` owns the imported/output game titles, and the generic `string_patcher` applies that output policy before deriving inline or linked placement from encoded fit and available references. Feature-owned custom resident functions and guarded hooks are declared through `runtime_injector`; `payload_builder` links those fragments together with external strings into `PRG/228.BIN` and owns its loader/memory integration. The composer resolves symbols and `binary_patcher` applies concrete guarded writes. No standalone export or source-hash bypass exists.
-- `@logs/`: disposable shared-workflow records; no files should be written directly in the root. `na2` keeps bounded Current/Previous/Candidate provenance under `@logs/na2/`, and shared generated workstream evidence belongs under `@workstream_logs/<exact task title>/`. Agent ISO records instead stay under `work/<task title>/logs/`. See `docs/LOGGING.md`.
+- `na228_builder/features/localization/translation_importer/mappings.tsv` is the Localization feature's current hash-pinned importer input and folds the verified pointer inventory into each applicable mapping row. `source_ref` and `source` retain the guarded NA2 origin; `donor_ref` and `donor` retain the official translation and make it executable by default. A nonempty user-authored `replacement` overrides the donor, and `prefix` is prepended to the selected text. Profile `identity.json` owns the imported/output game titles, and the generic `string_patcher` applies that output policy before deriving inline or linked placement from encoded fit and available references. Feature-owned custom resident functions and guarded hooks are declared through `runtime_injector`; `payload_builder` links those fragments together with external strings into `PRG/228.BIN` and owns its loader/memory integration. The composer resolves symbols and `binary_patcher` applies concrete guarded writes. No standalone export or source-hash bypass exists.
+- `@logs/`: disposable shared-workflow records; no files should be written directly in the root. `na228` keeps bounded Current/Previous/Candidate provenance under `@logs/na228/`, and shared generated workstream evidence belongs under `@workstream_logs/<exact task title>/`. Agent ISO records instead stay under `work/<task title>/logs/`. See `docs/LOGGING.md`.
 - `scripts/`: repeatable tooling.
 - `@pcsx2_files/`: shared PCSX2 artifacts under
   `@workshop/pcsx2/__shared/`.
-- `@pcsx2_dev/`: the default user-facing PCSX2 runtime. Routine `na2`,
+- `@pcsx2_dev/`: the default user-facing PCSX2 runtime. Routine `na228`,
   source-game, pair-launch, and savestate-filing commands use it unless
   `stable` is selected explicitly.
 - `@pcsx2_stable/`: protected user-owned portable stable PCSX2 installation
@@ -71,12 +71,12 @@ replaced with a copied machine-specific absolute path.
   concrete task- or test-related reason from `@pcsx2_files` into the task-owned
   runtime. The source template is never populated, launched, or mutated.
 - `work/<task title>/pcsx2/`: the exact workstream's private PCSX2 copy. The minimal hidden launcher starts only this copy; other PCSX2 processes are off-limits.
-- `na2_patcher/modules/binary_patcher/`: repository-owned schema v4 and reusable CLI validator/patcher for canonical group/patch/edit packages owned by features. The schema has no relations table; a patch is normally selected only when both its group and patch `enabled` switches are `1`. Selected edits are simulated in deterministic order so compatible overlaps and already-satisfied replacements are retained while real guard conflicts fail before ISO staging. It never applies `pending`, `runtime_failed`, or `deprecated` patches and writes only new same-size outputs with complete logs.
-- `na2_patcher/modules/runtime_injector/`: reusable declarative bridge for feature-owned code/data fragments, internal relocations, and guarded symbolic hooks. It contributes to the shared payload builder and compiles linked hooks into an in-memory binary-patcher package; it never chooses offsets or final addresses inside `PRG/228.BIN`.
-- `na2_patcher/modules/translation_importer/`: the reusable official-string importer engine. Localization-owned mappings and their pointer-reference inventory live under `na2_patcher/features/localization/translation_importer/`.
-- `na2_patcher/modules/string_patcher/`: the reusable semantic string-placement engine. Localization has no feature-owned string-patcher directory or local declarations; its importer artifact invokes the engine as a derived consumer. The engine compiles inline imports and contributes external fragments/symbolic pointers without owning `228.BIN` layout. The memory-card title belongs to profile `identity.json`, not Localization.
-- `na2_patcher/modules/texture_patcher/`: the reusable fixed-size texture derivation engine. The Localization feature owns its 34 source-derived NUN5 UI recipes under `na2_patcher/features/localization/texture_patcher/`; no replacement blobs are stored.
-- `na2_patcher/`: manifest-free profiles, reusable aggregate-hash-pinned feature packages, folder-derived module orchestration, artifact dependency composition, and reusable transformation engines. `na2_patcher/profiles/current/` contains source-root bindings, enabled feature IDs/pins, and final image identity. Feature rows define stable peer order; module directories define ownership and engine type; the composer resolves declared artifacts and closes typed operations. `payload_builder/` links shared resident code/data and global integration; `image_assembler/` alone performs ISO9660/UDF mutation and complete staged-image verification. Binary packages apply patches enabled by both group and patch switches and contain four canonical control tables plus referenced blobs. Adjacent READMEs, engine code, and non-input helpers are excluded from feature pins.
+- `na228_builder/modules/binary_patcher/`: repository-owned schema v4 and reusable CLI validator/patcher for canonical group/patch/edit packages owned by features. The schema has no relations table; a patch is normally selected only when both its group and patch `enabled` switches are `1`. Selected edits are simulated in deterministic order so compatible overlaps and already-satisfied replacements are retained while real guard conflicts fail before ISO staging. It never applies `pending`, `runtime_failed`, or `deprecated` patches and writes only new same-size outputs with complete logs.
+- `na228_builder/modules/runtime_injector/`: reusable declarative bridge for feature-owned code/data fragments, internal relocations, and guarded symbolic hooks. It contributes to the shared payload builder and compiles linked hooks into an in-memory binary-patcher package; it never chooses offsets or final addresses inside `PRG/228.BIN`.
+- `na228_builder/modules/translation_importer/`: the reusable official-string importer engine. Localization-owned mappings and their pointer-reference inventory live under `na228_builder/features/localization/translation_importer/`.
+- `na228_builder/modules/string_patcher/`: the reusable semantic string-placement engine. Localization has no feature-owned string-patcher directory or local declarations; its importer artifact invokes the engine as a derived consumer. The engine compiles inline imports and contributes external fragments/symbolic pointers without owning `228.BIN` layout. The memory-card title belongs to profile `identity.json`, not Localization.
+- `na228_builder/modules/texture_patcher/`: the reusable fixed-size texture derivation engine. The Localization feature owns its 34 source-derived NUN5 UI recipes under `na228_builder/features/localization/texture_patcher/`; no replacement blobs are stored.
+- `na228_builder/`: manifest-free profiles, reusable aggregate-hash-pinned feature packages, folder-derived module orchestration, artifact dependency composition, and reusable transformation engines. `na228_builder/profiles/current/` contains source-root bindings, enabled feature IDs/pins, and final image identity. Feature rows define stable peer order; module directories define ownership and engine type; the composer resolves declared artifacts and closes typed operations. `payload_builder/` links shared resident code/data and global integration; `image_assembler/` alone performs ISO9660/UDF mutation and complete staged-image verification. Binary packages apply patches enabled by both group and patch switches and contain four canonical control tables plus referenced blobs. Adjacent READMEs, engine code, and non-input helpers are excluded from feature pins.
 - `.agents/`: dated human-readable handoffs exchanged between separate Windows installations and Codex instances. They may contain machine-specific paths as historical context, are non-authoritative, and must be reviewed rather than deleted as clutter.
 - `docs/`: repository-wide context, confirmed knowledge, active plans, hypotheses, and release documentation. Component-specific READMEs remain beside their components.
 - `docs/knowledge/`: confirmed findings, reusable negative results, and supporting evidence promoted out of disposable logs. Module-owned structured evidence remains beside its module.
@@ -177,8 +177,8 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 
 ## Current Scripts
 
-- Root `_na2.ps1` is the routine build/launch entrypoint. Bare `na2`, `na2 -b`, bare `na2 -t`, `na2 -c`, and `na2 -p` retain their Current/Previous/Candidate behavior. The standalone `act` command performs actualization without building or launching. User-owned shared-image modes run `act na2` automatically; the launcher does not read or rewrite the user's `PCSX2.ini`. `na2 -t work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
-- `scripts/na2/` contains build/promotion, ISO identity, worker-path validation,
+- Root `_na228.ps1` is the routine build/launch entrypoint. Bare `na228`, `na228 -b`, bare `na228 -t`, `na228 -c`, and `na228 -p` retain their Current/Previous/Candidate behavior. The standalone `act` command performs actualization without building or launching. User-owned shared-image modes run `act na228` automatically; the launcher does not read or rewrite the user's `PCSX2.ini`. `na228 -t work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
+- `scripts/na228/` contains build/promotion, ISO identity, worker-path validation,
   and focused tests.
 - `@pcsx2_scripts/` contains PCSX2 launch, process, configuration, and CRC
   helpers. `launch.ps1` is the single configured and worker-PCSX2 launcher;
@@ -189,19 +189,19 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   worker launches; `-PassThru` exposes the started process to higher-level
   orchestration. It performs no cloning, configuration, process inspection,
   PINE operation, savestate handling, capture, cleanup, or termination.
-  `game_commands.ps1` defines the manifest-driven `na2s`, `nun3`, `nun5`, and
+  `game_commands.ps1` defines the manifest-driven `na2`, `nun3`, `nun5`, and
   `nun6` commands and inherits the development default;
-  `move_na2_savestates.ps1` files development savestates by default or stable
+  `move_na228_savestates.ps1` files development savestates by default or stable
   savestates with `-Target stable` under `@user_savestates`; and
   `launch_pair.ps1` is the development-default multi-game launch-and-tile
   backend used by `na`, which accepts any ordered combination of its registered
   ISO selectors. Existing selectors and zero-argument behavior remain
   unchanged.
-- `na2_patcher/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na2_patcher/build_profile.py` applies that prepared pipeline and writes its run log. `na2_patcher/composer.py` resolves module artifacts and closes typed image operations. `na2_patcher/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Candidate, or worker-owned output.
+- `na228_builder/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na228_builder/build_profile.py` applies that prepared pipeline and writes its run log. `na228_builder/composer.py` resolves module artifacts and closes typed image operations. `na228_builder/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Candidate, or worker-owned output.
 - `scripts/media/` contains the recursive source extractor, its byte-parity
   verifier, and focused ISO, AFS, and CVM building blocks. Direct same-size ISO
   replacement is retired; guarded replacements belong to the hash-pinned
-  `na2_patcher.image_assembler` workflow.
+  `na228_builder.image_assembler` workflow.
 - `scripts/project/` contains configured-source read-only maintenance. There is currently no maintained release-creation script; the release workflow will be redesigned before new automation is added.
 - `scripts/research/menu_input/` and `scripts/research/translation/` retain useful one-off analysis tools outside the normal build path. Their lack of runtime callers does not make them disposable.
 - See `scripts/README.md` for the maintained directory contract and individual responsibilities.

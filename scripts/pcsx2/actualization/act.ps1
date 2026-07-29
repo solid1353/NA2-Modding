@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('na2', 'input', 'help')]
+    [ValidateSet('na228', 'input', 'help')]
     [string]$Mode,
 
     [Alias('h')]
@@ -17,8 +17,8 @@ $ErrorActionPreference = 'Stop'
 if ($Help -or $Mode -ceq 'help') {
     @(
         'Actualization commands:'
-        '  act        Run na2, then input'
-        '  act na2    Actualize built NA2.28 GameSettings and cheat aliases'
+        '  act        Run na228, then input'
+        '  act na228    Actualize built NA2.28 GameSettings and cheat aliases'
         '  act input  Regenerate the Comparison_NA2 input profile'
         '  act help   Show this help'
         ''
@@ -32,7 +32,7 @@ if ($Help -or $Mode -ceq 'help') {
 $projectPaths = Get-Na2ProjectPaths
 $selectedModes = @(
     if ([string]::IsNullOrWhiteSpace($Mode)) {
-        'na2'
+        'na228'
         'input'
     }
     else {
@@ -62,11 +62,11 @@ $runFailure = ''
 try {
     foreach ($selectedMode in $selectedModes) {
         switch ($selectedMode) {
-            'na2' {
+            'na228' {
                 Write-Host '[act] Actualize built NA2.28 images' `
                     -ForegroundColor Cyan
                 $output = @(
-                    & $projectPaths.files.actualize_na2_command
+                    & $projectPaths.files.actualize_na228_command
                 )
                 if ($output.Count -ne 1) {
                     throw (

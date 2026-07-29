@@ -16,7 +16,7 @@ $supportedGames = @(
     'current',
     'previous',
     'candidate',
-    'na2s',
+    'na2',
     'nun3',
     'nun5',
     'nun6'
@@ -51,7 +51,7 @@ $pcsx2Launcher = [IO.Path]::GetFullPath(
 )
 $directIsoFiles = @{
     candidate = 'candidate_iso'
-    na2s = 'na2_iso'
+    na2 = 'na2_iso'
     nun3 = 'nun3_iso'
     nun5 = 'nun5_iso'
     nun6 = 'nun6_iso'
@@ -112,7 +112,7 @@ if (-not $PSCmdlet.ShouldProcess($pcsx2Exe, $action)) {
 
 $launchedGames = [Collections.Generic.List[object]]::new()
 try {
-    & $projectPaths.files.actualize_command na2
+    & $projectPaths.files.actualize_command na228
     Stop-Na2Pcsx2 -Executable $pcsx2Exe
 
     foreach ($game in $selectedGames) {

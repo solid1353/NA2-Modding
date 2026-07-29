@@ -157,12 +157,12 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 
 ## Production artifacts and validation
 
-- `na2_patcher/features/localization/texture_patcher/` contains 109
+- `na228_builder/features/localization/texture_patcher/` contains 109
   source-derived fixed-size recipes, 223 reviewed mappings, recorded
   source/donor/replacement/payload identities, and the deterministic verifier.
   Every replacement retains its target member size, and no replacement CCS
   blobs are stored in the repository.
-- `na2_patcher/features/localization/binary_patcher/` contains the canonical UI
+- `na228_builder/features/localization/binary_patcher/` contains the canonical UI
   companion patches across BTL, ETC, and the boot ELF. The current UI subset
   has 27 patches and 297 guarded edits: 101 exact NUN5 copies, 24 values
   derived from NUN5's stage-width formula, 78 complete Victory descriptors
@@ -192,7 +192,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
 - The 2026-07-19 non-launching normal profile build derived all 34 replacements
   through 76 texture mappings, applied all 88 companion edits, and reported
   `ISO result: updated` with rotation. Build record
-  `@logs/na2/builds/20260719_030924_177_pid43832/` promoted a
+  `@logs/na228/builds/20260719_030924_177_pid43832/` promoted a
   1,928,429,568-byte Current ISO with SHA-256
   `1AAE44B09BA9DA02F5AEBAF45F1605CEFB5B39B5C34E88D47745F8F613370369`;
   the previous accepted image rotated to Previous with SHA-256
@@ -200,13 +200,13 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   That historical Current boot ELF has independently verified PCSX2 CRC
   `273C80F3`. The runtime target has since been refreshed to the live Current
   identity, CRC `6D94D558`, with matching neutral per-game settings.
-- Build record `@logs/na2/builds/20260718_061234_625_pid41880/` fully verified
+- Build record `@logs/na228/builds/20260718_061234_625_pid41880/` fully verified
   and promoted a changed 1,928,429,568-byte image. It is now
   `NA2.28 - Previous.iso`. An independent on-disc check found all 33 member ranges exact and the
   BTL bytes at `0xB5E80` equal to `01 00 42 2A`. This build predates the global
   `GAUGE.CCS`, character-table, and stage-layout fixes and is the captured
   defect baseline.
-- Build record `@logs/na2/builds/20260718_094002_615_pid32972/` verified and
+- Build record `@logs/na228/builds/20260718_094002_615_pid32972/` verified and
   promoted the complete current batch as the new 1,928,429,568-byte
   `NA2.28 - Current.iso`, rotating the defect baseline to Previous. The ISO
   SHA-256 is
@@ -228,7 +228,7 @@ Import appropriate official NUN5 English UI textures into NA2, correct the offse
   `273480D7`. Its runtime guard selected `SLPS-22228_273480D7.ini`, copied
   byte-for-byte from the earlier neutral Current override so rendering and the
   dedicated memory-card setup remained unchanged.
-- Build record `@logs/na2/builds/20260718_233134_587_pid36704/` verified and
+- Build record `@logs/na228/builds/20260718_233134_587_pid36704/` verified and
   promoted the prior accepted profile as a 1,928,429,568-byte Current ISO. That
   image is now Previous; its SHA-256 is
   `C90B6B51AF8D4FB7DAC327DF144D1017653BDF8CC398CD1C837AAB53BC538A4C`.
@@ -373,7 +373,7 @@ passes all 61 repository tests, exact-source raw composition, translation v35, a
 34-container derivation.
 
 The non-launching profile build retained
-`@logs/na2/builds/20260719_071938_407_pid46920/`, promoted the
+`@logs/na228/builds/20260719_071938_407_pid46920/`, promoted the
 1,928,429,568-byte Current ISO with SHA-256
 `8BC43A5C583F488A9D71CD17338E6164006CF68EF8C439A209F59640D77B7E37`,
 and rotated the prior Current to Previous with SHA-256

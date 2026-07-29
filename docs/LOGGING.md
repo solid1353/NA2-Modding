@@ -37,9 +37,9 @@ expensive or impractical to regenerate. Retention is never a substitute for
 knowledge promotion, and another task's concurrently active records are left
 untouched.
 
-## Routine `na2` logs
+## Routine `na228` logs
 
-`@logs/na2/` contains:
+`@logs/na228/` contains:
 
 - `latest.log`: the latest completed operational invocation.
 - `rolling.log`: the newest 20 completed operational invocations, stored as
@@ -74,7 +74,7 @@ running.
 
 ## Worker build and runtime logs
 
-`na2 -t work/<task title>/build/<name>.iso` keeps its operational
+`na228 -t work/<task title>/build/<name>.iso` keeps its operational
 `latest.log`/`rolling.log` and structured `builds/<build-id>/` records under
 that task's `work/<task title>/logs/`. Worker records never participate in or
 prune shared Candidate/Current/Previous records. Completed structured worker

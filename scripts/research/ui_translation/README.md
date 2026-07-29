@@ -70,11 +70,11 @@ Other examples:
 ```powershell
 na current nun3
 na candidate nun5
-na na2s nun5 nun6
+na na2 nun5 nun6
 ```
 
-Supported names are `current`, `previous`, `candidate`, `na2s`, `nun3`,
-`nun5`, and `nun6`. Current and Previous use `na2 -c` and `na2 -p`; the others
+Supported names are `current`, `previous`, `candidate`, `na2`, `nun3`,
+`nun5`, and `nun6`. Current and Previous use `na228 -c` and `na228 -p`; the others
 launch their configured ISO directly.
 The launcher closes existing instances of the configured PCSX2 executable,
 uses equal columns for up to three games and a grid for larger lists, and

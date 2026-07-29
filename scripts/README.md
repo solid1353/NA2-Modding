@@ -1,6 +1,6 @@
 # Script layout
 
-`_na2.ps1` is the routine user-facing build/launch command.
+`_na228.ps1` is the routine user-facing build/launch command.
 `pcsx2/actualization/act.ps1` is the standalone user-facing actualization
 command.
 Everything else below `scripts/` is an internal workflow helper, a focused
@@ -13,7 +13,7 @@ history; do not recreate an archive directory for dead scripts.
 
 - `lib/`: shared PowerShell bootstrap, portable run-log, and structured
   build-record helpers.
-- `na2/`: build, promotion, ISO identity, worker-path validation, and focused
+- `na228/`: build, promotion, ISO identity, worker-path validation, and focused
   build/run-log tests.
 - `pcsx2/`: PCSX2 launch, process, configuration, CRC helpers, the user-facing
   user/development single-instance and multi-game launch commands, the
@@ -52,30 +52,30 @@ history; do not recreate an archive directory for dead scripts.
   generation, and user-directed runtime research for NUN5-to-NA2 UI
   comparisons.
 
-Normal builds call `na2_patcher.build_profile` through `na2/build.ps1`.
-Before that call, `na2/build.ps1` checks the deterministic successful-build
-receipt through `na2_patcher.build_preflight`; an exact hit returns the normal
-unchanged result without staging an ISO. `na2/test_build_preflight.ps1` covers
+Normal builds call `na228_builder.build_profile` through `na228/build.ps1`.
+Before that call, `na228/build.ps1` checks the deterministic successful-build
+receipt through `na228_builder.build_preflight`; an exact hit returns the normal
+unchanged result without staging an ISO. `na228/test_build_preflight.ps1` covers
 the cache-hit and safe full-build-fallback dispatch paths.
-`na2 -t` calls the same builder in candidate-only mode: it always composes a
+`na228 -t` calls the same builder in candidate-only mode: it always composes a
 fresh verified `@build/NA2.28 - Candidate.iso`, bypasses Current preflight and
 promotion state, and does not probe or close PCSX2.
-`na2 -t work/<task title>/build/<name>.iso` instead builds an isolated
+`na228 -t work/<task title>/build/<name>.iso` instead builds an isolated
 worker-owned ISO, stages beside it, and keeps both operational and structured
 records under `work/<task title>/logs/`. The path is caller-supplied and
 validated; worker mode cannot address shared build outputs or mutate shared
 preflight, promotion, PNACH, log, or emulator state. Agents must use this form
-rather than bare `na2`, `na2 -b`, or bare `na2 -t`.
-Despite its historical `Test` parameter name, `na2 -t` is always an ISO-build
-command and never runs tests. The unambiguous full patcher-suite command is:
+rather than bare `na228`, `na228 -b`, or bare `na228 -t`.
+Despite its historical `Test` parameter name, `na228 -t` is always an ISO-build
+command and never runs tests. The unambiguous full builder-suite command is:
 
 ```powershell
-python -B -m unittest discover -s na2_patcher/tests -p 'test_*.py'
+python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'
 ```
 
-`na2 -b` runs the standard Current build and conditional promotion pipeline but
-does not launch PCSX2. Bare `na2` keeps the build-then-launch workflow.
-User-owned shared-image builds and launches run `act na2` automatically;
+`na228 -b` runs the standard Current build and conditional promotion pipeline but
+does not launch PCSX2. Bare `na228` keeps the build-then-launch workflow.
+User-owned shared-image builds and launches run `act na228` automatically;
 worker-output builds never actualize. The standalone `act` command can run all
 actualization modes without building or launching.
 
@@ -120,7 +120,7 @@ and is composed before the image assembler runs rather than owned by a feature.
 the pinned toolchain and current profile. See `docs/RELEASE_PROCESS.md`.
 
 `release/publish_release.ps1` is the guarded publication backend for
-`na2 release [version]`; it validates the production package before pushing an
+`na228 release [version]`; it validates the production package before pushing an
 annotated version tag that triggers GitHub Release publication.
 
 When adding a script, place it beside the workflow it supports. Do not add new
@@ -143,8 +143,8 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 | Former path | Recovery commit | Retirement and maintained replacement |
 | --- | --- | --- |
 | `scripts/pcsx2/capture_state_screenshot.ps1` | `ec4b8276193bc214b526d5ab4f4f85b240ef7949` | Retired because it serialized a complete savestate solely to obtain a fresh screenshot. Extract `Screenshot.png` directly from an existing state; use PCSX2's native screenshot output for a fresh runtime frame. |
-| `scripts/archive/replace_iso_file_same_size.ps1` | `858da62aacc5d9571bdef072e36b484efddc15e9` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na2_patcher.image_assembler`. |
-| `scripts/na2/check_log_crc.ps1` | `ce4b06c57a7e1a28124c7a8efffd38169723d915` | Manual log/PNACH comparison was superseded by `na2/iso_identity.ps1` and the maintained standalone actualization workflow. |
+| `scripts/archive/replace_iso_file_same_size.ps1` | `858da62aacc5d9571bdef072e36b484efddc15e9` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na228_builder.image_assembler`. |
+| `scripts/na2/check_log_crc.ps1` | `ce4b06c57a7e1a28124c7a8efffd38169723d915` | Manual log/PNACH comparison was superseded by `na228/iso_identity.ps1` and the maintained standalone actualization workflow. |
 | `scripts/na2/get_elf_crc.ps1` | `858da62aacc5d9571bdef072e36b484efddc15e9` | The redundant command wrapper was removed; `pcsx2/pcsx2_elf_crc.ps1` remains the shared tested implementation. |
 | `scripts/actualization/links.ps1` and `test_links.ps1` | `a972fc1` | Retired when stable and development PCSX2 were configured to consume `@pcsx2_files/` directly; no copy or link synchronization step remains. |
 | `scripts/na2/test_memory_card.ps1` | `5e2f7a49723ad6b1ae0262880588bb7926e880c3` | Retired with the later agent PCSX2 runtime framework; there is no maintained replacement. |

@@ -79,7 +79,7 @@ try {
 
     Push-Location $repository
     try {
-        & $python -B -m unittest discover -s na2_patcher/tests -p 'test_*.py'
+        & $python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'
         if ($LASTEXITCODE -ne 0) { throw 'Patcher tests failed.' }
     }
     finally {
@@ -93,7 +93,7 @@ from pathlib import Path
 
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
-from na2_patcher.profile import load_profile, profile_resource_files
+from na228_builder.profile import load_profile, profile_resource_files
 
 marker = Path(sys.argv[3]).resolve()
 profile = load_profile(
@@ -113,7 +113,7 @@ print(json.dumps([
     $resources += @(
         [IO.Path]::GetRelativePath($repository, $paths.ManifestPath).Replace('\', '/'),
         [IO.Path]::GetRelativePath($repository, $manifestPath).Replace('\', '/'),
-        'na2_patcher/payload_builder/config.tsv'
+        'na228_builder/payload_builder/config.tsv'
     )
     foreach ($relative in @($resources | Sort-Object -Unique)) {
         $source = [IO.Path]::GetFullPath((Join-Path $repository $relative))
@@ -126,12 +126,12 @@ print(json.dumps([
 import os
 
 if os.environ.get("NA2_RELEASE_SELF_TEST") == "1":
-    from na2_patcher.release_runtime import validate_packaged_release
+    from na228_builder.release_runtime import validate_packaged_release
     count = validate_packaged_release()
     print(f"Release package self-test: OK ({count} module invocations)")
     raise SystemExit(0)
 
-from na2_patcher.app import main
+from na228_builder.app import main
 
 raise SystemExit(main())
 '@
@@ -140,7 +140,7 @@ raise SystemExit(main())
     $env:PYINSTALLER_CONFIG_DIR = $cacheRoot
     $baseName = [IO.Path]::GetFileNameWithoutExtension([string]$manifest.executable_name)
     $addData = "${resourceRoot}:."
-    & $python -B -m PyInstaller --noconfirm --clean --onefile --console --noupx --name $baseName --icon $iconPath --paths $repository --add-data $addData --collect-all zopfli --hidden-import na2_patcher.release_runtime --distpath $distRoot --workpath (Join-Path $workRoot 'work') --specpath $specRoot $bootstrap
+    & $python -B -m PyInstaller --noconfirm --clean --onefile --console --noupx --name $baseName --icon $iconPath --paths $repository --add-data $addData --collect-all zopfli --hidden-import na228_builder.release_runtime --distpath $distRoot --workpath (Join-Path $workRoot 'work') --specpath $specRoot $bootstrap
     if ($LASTEXITCODE -ne 0) { throw 'PyInstaller failed.' }
 
     $built = Join-Path $distRoot ([string]$manifest.executable_name)

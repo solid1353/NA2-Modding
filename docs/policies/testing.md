@@ -102,14 +102,14 @@ requirements, not whatever implementation happens to exist today.
   exact-guarded task-owned conversion or a user-supplied post-build state is
   available. An unconverted stale state cannot validate the patch.
 - Agent builds use only
-  `na2 -t work/<task title>/build/<name>.iso`, with staging beside the output
+  `na228 -t work/<task title>/build/<name>.iso`, with staging beside the output
   and structured records under the same task's `logs/`. Agents never invoke
-  bare `na2`, `na2 -b`, or bare `na2 -t`.
-- In both `na2 -t` and `_na2.ps1 -t`, `-t` is an ISO-build switch: without an
+  bare `na228`, `na228 -b`, or bare `na228 -t`.
+- In both `na228 -t` and `_na228.ps1 -t`, `-t` is an ISO-build switch: without an
   output path it builds and actualizes Candidate; with a worker output path it
-  builds that isolated ISO. It is never a test-suite switch. Run the patcher
+  builds that isolated ISO. It is never a test-suite switch. Run the builder
   suite only with
-  `python -B -m unittest discover -s na2_patcher/tests -p 'test_*.py'`.
+  `python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'`.
   Verify every validation command's documented semantics before running it;
   never infer behavior from a short flag.
 - Worker-output builds never touch Current, Previous, Candidate, promotion,
@@ -156,14 +156,14 @@ requirements, not whatever implementation happens to exist today.
   runtime frame, use PCSX2's native screenshot output; capture a new savestate
   only when the state itself is a required artifact.
 - Builds and single-ISO launch commands never probe or close any PCSX2 process.
-- Bare `na2`, launch selectors, standalone `act`, `na`, and UI pair-launch
+- Bare `na228`, launch selectors, standalone `act`, `na`, and UI pair-launch
   commands are user-only.
 
 ## Actualization
 
 - User-owned Current/Previous/Candidate workflows may run the maintained
   actualization pipeline automatically; worker builds never actualize.
-- `act na2` manages only the configured NA2.28 Current/Previous/Candidate
+- `act na228` manages only the configured NA2.28 Current/Previous/Candidate
   identities, CRC cheat aliases, and GameSettings inside `@pcsx2_files/`.
   Current keeps the template's `[MemoryCards]` section; Previous and Candidate
   omit it. Identity collisions are deduplicated with Current taking precedence.

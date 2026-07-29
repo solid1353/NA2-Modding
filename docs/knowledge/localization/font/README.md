@@ -1185,7 +1185,7 @@ combined feature hash. The normal build promoted Current CRC `12369AA2`; the
 user manually regressed every affected caller family and reported `no diff`.
 Only after that explicit acceptance were permanent tests updated. They protect
 the relocatable C and native-ABI safety contracts without freezing compiler
-hashes or old assembly layouts; focused tests pass 11/11 and the full patcher
+hashes or old assembly layouts; focused tests pass 11/11 and the full builder
 suite passes 201/201.
 
 ### 2026-07-28 accepted Ninja Song numeric C migration
@@ -1279,7 +1279,7 @@ The exact guarded captures and generated measurements remain under
 `work/Font/verification/font_package_v2_log/`.
 
 The integrated profile build is retained at
-`@logs/na2/builds/20260719_202514_393_pid36044/`. It selected the two accepted
+`@logs/na228/builds/20260719_202514_393_pid36044/`. It selected the two accepted
 Font patches, preserved the QoL module hash, promoted an updated Current ISO,
 and recorded Font's clean-to-patched ELF hashes above. The resulting Current
 ISO SHA-256 is

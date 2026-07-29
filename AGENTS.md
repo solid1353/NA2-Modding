@@ -105,9 +105,9 @@ Detailed command and task behavior is in
   port. Agent-only runs stay hidden. Never navigate emulator or game menus
   through PINE or injected input. If a required savestate was not supplied,
   stop and ask the user for that exact state.
-- `na2 -t` and `_na2.ps1 -t` build ISOs; `-t` never means tests. The full
-  patcher test suite is
-  `python -B -m unittest discover -s na2_patcher/tests -p 'test_*.py'`.
+- `na228 -t` and `_na228.ps1 -t` build ISOs; `-t` never means tests. The full
+  builder test suite is
+  `python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'`.
   Never infer command semantics from a flag name; verify the documented exact
   command before execution.
 - Keep hypothesis/candidate checks outside the permanent tracked suite and
@@ -145,7 +145,7 @@ Read the matching policy before acting:
   [`docs/policies/coordination.md`](docs/policies/coordination.md)
 - ISO builds, actualization, PCSX2, savestates, and runtime testing:
   [`docs/policies/testing.md`](docs/policies/testing.md)
-- Profiles, patcher architecture, binary edits, PNACH, source media, and text
+- Profiles, builder architecture, binary edits, PNACH, source media, and text
   encoding:
   [`docs/policies/modding.md`](docs/policies/modding.md)
 - Disassembly, live-memory analysis, hypotheses, and knowledge preservation:

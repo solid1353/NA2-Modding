@@ -102,7 +102,7 @@
   canonical data, then delete disposable logs and empty directories. Follow
   `docs/LOGGING.md`.
 - Maintained scripts live by responsibility under `scripts/lib/`,
-  `scripts/na2/`, `scripts/pcsx2/`, `scripts/media/`, `scripts/project/`, or
+  `scripts/na228/`, `scripts/pcsx2/`, `scripts/media/`, `scripts/project/`, or
   `scripts/research/`. Never create `scripts/archive/`; use Git history and the
   retirement index in `scripts/README.md`.
 - Reusable or potentially helpful scripts never remain under `work/`; promote
@@ -118,10 +118,10 @@
 
 - `docs/` contains repository context, plans, hypotheses, policies, and release
   documentation.
-- Each feature has exactly one `na2_patcher/features/<feature>/README.md`;
+- Each feature has exactly one `na228_builder/features/<feature>/README.md`;
   feature-module details are sections there, not nested or sibling feature
   Markdown files. Reusable engine documentation belongs in the corresponding
-  `na2_patcher/modules/<module>/README.md`.
+  `na228_builder/modules/<module>/README.md`.
 - When retiring a script, promote reusable logic/knowledge and record the old
   path, recovery commit, retirement reason, and maintained replacement in the
   retirement index in `scripts/README.md`. Recover historical code only into

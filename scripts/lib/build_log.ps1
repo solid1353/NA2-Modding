@@ -13,7 +13,7 @@ function ConvertFrom-Na2BuildRecordPath {
         return $null
     }
     $value = $BuildRecord.Trim().Replace('\', '/')
-    if ($value -notmatch '^@logs/na2/builds/([A-Za-z0-9][A-Za-z0-9._-]*)$') {
+    if ($value -notmatch '^@logs/na228/builds/([A-Za-z0-9][A-Za-z0-9._-]*)$') {
         throw "Invalid build record path in builds.tsv: $value"
     }
     $buildId = $Matches[1]
@@ -108,7 +108,7 @@ function Set-Na2BuildMap {
         }
         $recordDirectory = Join-Path (Join-Path $LogDirectory 'builds') $buildId
         if (-not (Test-Path -LiteralPath $recordDirectory -PathType Container)) {
-            throw "Cannot map an ISO to a missing build record: @logs/na2/builds/$buildId"
+            throw "Cannot map an ISO to a missing build record: @logs/na228/builds/$buildId"
         }
     }
 
@@ -116,12 +116,12 @@ function Set-Na2BuildMap {
         ''
     }
     else {
-        "@logs/na2/builds/$PreviousBuildId"
+        "@logs/na228/builds/$PreviousBuildId"
     }
     $isoKeys = Get-Na2ConfiguredIsoMapKeys -ProjectPaths $ProjectPaths
     $content = @(
         "iso`tbuild_record"
-        "$($isoKeys.Current)`t@logs/na2/builds/$CurrentBuildId"
+        "$($isoKeys.Current)`t@logs/na228/builds/$CurrentBuildId"
         "$($isoKeys.Previous)`t$previousRecord"
     ) -join "`n"
     Set-Na2Utf8FileAtomic `
@@ -249,6 +249,6 @@ function Complete-Na2BuildRecord {
 
     return [pscustomobject]@{
         BuildId = $effectiveCurrentBuildId
-        BuildRecord = "@logs/na2/builds/$effectiveCurrentBuildId"
+        BuildRecord = "@logs/na228/builds/$effectiveCurrentBuildId"
     }
 }

@@ -47,7 +47,7 @@ jobs:
         id: release
         shell: pwsh
         run: |
-          $manifest = Get-Content -Raw na2_patcher/release_manifest.json | ConvertFrom-Json
+          $manifest = Get-Content -Raw na228_builder/release_manifest.json | ConvertFrom-Json
           . ./scripts/lib/project_paths.ps1
           $paths = Get-Na2ProjectPaths -AllowMissing
           $candidate = Join-Path $paths.release_candidates $manifest.executable_name

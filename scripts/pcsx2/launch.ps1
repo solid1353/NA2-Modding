@@ -21,7 +21,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
-. (Join-Path $PSScriptRoot '..\na2\worker_paths.ps1')
+. (Join-Path $PSScriptRoot '..\na228\worker_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
 if ($PSCmdlet.ParameterSetName -eq 'Worker') {

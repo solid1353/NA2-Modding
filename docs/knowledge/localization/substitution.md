@@ -8,7 +8,7 @@ This document promotes the durable findings from the 2026-07-05 substitution-rel
 - Historical CRC alias during the investigation: `@pcsx2_cheats/SLPS-25837_E0F064C5.pnach`. CRC aliases are managed links and are not canonical.
 - Historical NA2 decompiler/Ghidra evidence remains available through Git
   history. Restore reusable analysis only under `@analysis/disassembly/NA2/`.
-- Reproducible substitution-cost patch: `ELF-S001` in `na2_patcher/features/battle_logic/binary_patcher/`.
+- Reproducible substitution-cost patch: `ELF-S001` in `na228_builder/features/battle_logic/binary_patcher/`.
 
 The retired generic Testing feature preserved the four edits below as
 `ELF-H001`. That executable duplicate was removed after this evidence became

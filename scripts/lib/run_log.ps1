@@ -68,7 +68,7 @@ function ConvertTo-Na2PortableText {
 
     $portableLines = foreach ($line in ($sanitized -split "`r?`n", 0, 'RegexMatch')) {
         if (Test-Na2WindowsAbsolutePath -Text $line) {
-            '[na2] Redacted output containing an external absolute path.'
+            '[na228] Redacted output containing an external absolute path.'
         }
         else {
             ($line -replace '\\', '/')
@@ -138,7 +138,7 @@ function Start-Na2RunLog {
     )
 
     $logDirectory = if ([string]::IsNullOrWhiteSpace($LogDirectory)) {
-        Join-Path $ProjectPaths.logs 'na2'
+        Join-Path $ProjectPaths.logs 'na228'
     }
     else {
         [IO.Path]::GetFullPath($LogDirectory)

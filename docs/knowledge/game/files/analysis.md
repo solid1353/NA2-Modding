@@ -240,7 +240,7 @@ component separately.
 - `scripts/research/menu_input/`: range disassembler, direct-call finder,
   address-reference finder, MIPS mask analyzer, and Ghidra-export comparison
   helpers for targeted EE work.
-- `na2_patcher/features/localization/binary_patcher/`: reusable overlay and
+- `na228_builder/features/localization/binary_patcher/`: reusable overlay and
   boot-ELF function maps, exact edits, provenance, and runtime tests.
 - `docs/knowledge/localization/substitution.md`,
   `docs/knowledge/runtime/menu_input.md`, and

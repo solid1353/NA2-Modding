@@ -26,10 +26,10 @@ REPOSITORY = find_repository(Path(__file__))
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
-from na2_patcher.modules.runtime_injector import engine  # noqa: E402
-from na2_patcher.payload_builder import mips  # noqa: E402
-from na2_patcher.project_paths import load_project_paths  # noqa: E402
-from na2_patcher.payload_builder import ee_c_fragments  # noqa: E402
+from na228_builder.modules.runtime_injector import engine  # noqa: E402
+from na228_builder.payload_builder import mips  # noqa: E402
+from na228_builder.project_paths import load_project_paths  # noqa: E402
+from na228_builder.payload_builder import ee_c_fragments  # noqa: E402
 
 
 MODULE = load_project_paths(REPOSITORY).path(

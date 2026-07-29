@@ -16,8 +16,8 @@ LAB_ROOT = Path(__file__).resolve().parent
 REPOSITORY = LAB_ROOT.parent
 sys.path.insert(0, str(REPOSITORY))
 
-from na2_patcher.payload_builder import ee_c_fragments
-from na2_patcher.payload_builder.operations import (
+from na228_builder.payload_builder import ee_c_fragments
+from na228_builder.payload_builder.operations import (
     PayloadFragment,
     PayloadRelocation,
     encode_symbol_reference,
@@ -170,7 +170,7 @@ def load_source(
     list[tuple[int, str, str]],
 ]:
     package_root = (
-        REPOSITORY / "na2_patcher" / "features" / "localization" / "runtime_injector"
+        REPOSITORY / "na228_builder" / "features" / "localization" / "runtime_injector"
     )
     source_rows = read_tsv(package_root / "c_sources.tsv", SOURCE_FIELDS)
     selected = [row for row in source_rows if row["source_id"] == source_id]

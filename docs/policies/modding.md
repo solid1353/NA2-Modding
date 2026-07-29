@@ -1,12 +1,12 @@
 # Modding and source policy
 
-## Canonical patcher contract
+## Canonical builder contract
 
 - Before modifying profiles, features, modules, composition, or image assembly,
-  read `na2_patcher/README.md` and the affected module/feature README. Those
+  read `na228_builder/README.md` and the affected module/feature README. Those
   files are canonical for the current schema and pipeline; do not recreate
   retired schemas or assumptions from history.
-- `na2_patcher/profiles/current/` is the active reproducible build definition.
+- `na228_builder/profiles/current/` is the active reproducible build definition.
   `bypass_check=1` is temporary local development only; accepted reproducible
   checkpoints require the actual pin and `bypass_check=0`.
 - Only the user may change profile `bypass_check` values. Agents preserve every
@@ -14,7 +14,7 @@
   that field.
 - Use annotated Git tags for accepted reproducible checkpoints whose profile
   pins, canonical inputs, and documentation agree.
-- Reusable engines/schemas/tools belong under `na2_patcher/modules/`;
+- Reusable engines/schemas/tools belong under `na228_builder/modules/`;
   reproducible feature-owned inputs belong under the owning feature.
 - Feature module directories must contain actual executable inputs. Never keep
   placeholder directories/files, identity manifests, `.gitkeep`, or header-only
@@ -26,7 +26,7 @@
   offsets, own global loader/memory integration, or construct the final file.
 - Translation checkpoints tag the complete project state; do not duplicate
   mappings into snapshots. Accepted normal builds continue using
-  `na2_patcher/features/localization/translation_importer/mappings.tsv` as the
+  `na228_builder/features/localization/translation_importer/mappings.tsv` as the
   sole translation source of truth.
 
 ## Binary and donor changes

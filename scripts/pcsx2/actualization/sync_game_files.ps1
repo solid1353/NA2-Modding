@@ -11,7 +11,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\..\lib\project_paths.ps1')
 . (Join-Path $PSScriptRoot '..\ini.ps1')
 . (Join-Path $PSScriptRoot 'pnach_state.ps1')
-. (Join-Path $PSScriptRoot '..\..\na2\iso_identity.ps1')
+. (Join-Path $PSScriptRoot '..\..\na228\iso_identity.ps1')
 
 if ($null -eq $ProjectPaths) {
     $ProjectPaths = Get-Na2ProjectPaths

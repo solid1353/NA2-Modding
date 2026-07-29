@@ -24,7 +24,7 @@ $labRoot = $PSScriptRoot
 $repository = Split-Path -Parent $labRoot
 $testScript = Join-Path $labRoot 'test.ps1'
 $packageRoot = Join-Path $repository (
-    'na2_patcher\features\localization\runtime_injector'
+    'na228_builder\features\localization\runtime_injector'
 )
 $sourceTable = Join-Path $packageRoot 'c_sources.tsv'
 $resolvedSourcePath = if ([IO.Path]::IsPathRooted($SourcePath)) {

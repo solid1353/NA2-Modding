@@ -13,8 +13,8 @@ REPOSITORY = Path(__file__).resolve().parents[2]
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
-from na2_patcher.image_assembler.iso9660 import Iso9660, IsoRecord
-from na2_patcher.project_paths import load_project_paths
+from na228_builder.image_assembler.iso9660 import Iso9660, IsoRecord
+from na228_builder.project_paths import load_project_paths
 
 
 PROJECT_PATHS = load_project_paths(REPOSITORY)

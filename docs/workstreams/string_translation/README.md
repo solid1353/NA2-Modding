@@ -42,7 +42,7 @@ Global source, binary-safety, profile, testing, and cleanup rules remain in
 
 ## Documents
 
-- [Localization feature and mapping history](../../../na2_patcher/features/localization/README.md)
+- [Localization feature and mapping history](../../../na228_builder/features/localization/README.md)
 - [External string-payload architecture](../../knowledge/localization/external_string_payload.md)
 
 ## Retired rebuild workflow

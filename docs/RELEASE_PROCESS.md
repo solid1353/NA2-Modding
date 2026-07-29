@@ -21,7 +21,7 @@ one exact clean NUN5 ISO beside the EXE.
 7. It never modifies either input, creates no runtime log files, removes its
    staging file after failure, and waits for Enter before closing.
 
-The executable embeds the interpreter, patcher engines, current profile,
+The executable embeds the interpreter, builder engines, current profile,
 feature inputs, payload-builder configuration, and Zopfli runtime. It does not
 embed original/donor ISOs, extracted source trees, or derived game payloads.
 
@@ -43,7 +43,7 @@ uncommitted release work:
 The toolchain is pinned by `scripts/release/toolchain.json` and
 `scripts/release/requirements.txt`. The builder creates an isolated virtual
 environment under the configured Project task temporary root, runs the complete
-patcher test suite, stages only canonical release data, builds a PyInstaller
+builder test suite, stages only canonical release data, builds a PyInstaller
 one-file console EXE, runs its embedded-data self-test, and atomically updates
 the configured candidate path. Temporary packaging state is removed afterward.
 
@@ -54,7 +54,7 @@ workflow from a tagged commit.
 
 ## Release manifest
 
-`na2_patcher/release_manifest.json` is authoritative for the product name,
+`na228_builder/release_manifest.json` is authoritative for the product name,
 version, executable name, output name, embedded profile, and supported source
 identities. The pinned source identities are:
 
@@ -70,7 +70,7 @@ The maintained publication command performs the version update and complete
 Git/tag sequence:
 
 ```powershell
-na2 release 0.1.0
+na228 release 0.1.0
 ```
 
 Omitting the argument publishes the version already declared by the manifest.
@@ -81,28 +81,28 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
 
 ## Architecture
 
-- `na2_patcher/app.py` owns end-user discovery, hashing, locking, collision
+- `na228_builder/app.py` owns end-user discovery, hashing, locking, collision
   refusal, staging cleanup, promotion, console messages, and the Enter pause.
-- `na2_patcher/release_runtime.py` loads the embedded current profile with the
+- `na228_builder/release_runtime.py` loads the embedded current profile with the
   two verified source ISOs as root overrides and calls the ordinary profile
   builder without runtime logs.
-- `na2_patcher/source_media.py` gives engines one read-only boundary for files
+- `na228_builder/source_media.py` gives engines one read-only boundary for files
   from either extracted roots or original ISOs.
-- `na2_patcher/cvm.py` reads encrypted `DATA.CVM` members directly using the
+- `na228_builder/cvm.py` reads encrypted `DATA.CVM` members directly using the
   confirmed `cc2fuku` password; it does not extract or modify the container.
-- `na2_patcher/build_profile.py` exposes the same staged-image composition used
+- `na228_builder/build_profile.py` exposes the same staged-image composition used
   by the normal CLI and the release adapter.
 - `scripts/release/build_release.ps1` owns packaging; the GitHub workflow calls
   that same script rather than implementing another packager.
 
-The ordinary `na2`, `na2 -b`, and `na2 -t` workflows are unchanged.
+The ordinary `na228`, `na228 -b`, and `na228 -t` workflows are unchanged.
 
 ## Validation evidence
 
 The integrated development candidate was built on Windows x64 with Python
 3.14.6, PyInstaller 6.21.0, and the exact hash-pinned requirements.
 
-- full patcher suite: 126/126 passed
+- full builder suite: 126/126 passed
 - EXE size: 9,907,358 bytes
 - EXE SHA-256:
   `EACCED2C942A97E7C70B76E6D34857671953F1EF28F4DD429820023EB2A8A9DB`
@@ -129,7 +129,7 @@ pipeline.
 A tag must be annotated and exactly equal `v<product_version>`; tagged runs
 publish a GitHub Release and mark SemVer suffixes as prereleases.
 
-A production publication sequence, automated by `na2 release [version]`, is:
+A production publication sequence, automated by `na228 release [version]`, is:
 
 1. update and validate the current profile and release manifest;
 2. run the production builder from a clean committed tree;

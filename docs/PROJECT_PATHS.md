@@ -34,13 +34,13 @@ The manifest currently defines these stable logical names:
   `@workshop/analysis/`.
 - `utils`: shared utilities under `@workshop/tools/`, including Ghidra and
   the untrusted historical dump.
-- `build`, `logs`, `patcher`, `scripts`, and `work`:
+- `build`, `logs`, `builder`, `scripts`, and `work`:
   their corresponding project areas.
 - `pcsx2_scripts`: maintained PCSX2 launch, process, configuration, and CRC
   helpers under `@scripts/pcsx2/`.
 - `workstream_logs`: shared generated evidence grouped below
   `@logs/workstreams/<exact task title>/`; see `docs/LOGGING.md`.
-- `features`: the canonical feature-package root beneath `@patcher/`; profile
+- `features`: the canonical feature-package root beneath `@builder/`; profile
   module discovery resolves this root instead of hardcoding its repository path.
 - `pcsx2_files`: shared PCSX2-related files under
   `@workshop/pcsx2/__shared/`.
@@ -88,14 +88,14 @@ their producing workflow runs. File entries should reference a named root with
   `@pcsx2_files/input_profiles/Comparison_NA2.ini`.
 - `notification_state`: the shared mute state for the dedicated Notifications
   task at `@repository/.agents/notifications.json`.
-- `na2_command`: `@repository/_na2.ps1`.
+- `na228_command`: `@repository/_na228.ps1`.
 - `pcsx2_launch_command`: `@pcsx2_scripts/launch.ps1`.
 - `pcsx2_savestate_move_command`:
-  `@pcsx2_scripts/move_na2_savestates.ps1`.
+  `@pcsx2_scripts/move_na228_savestates.ps1`.
 - `pcsx2_game_commands`: `@pcsx2_scripts/game_commands.ps1`.
 - `pcsx2_pair_launch_command`: `@pcsx2_scripts/launch_pair.ps1`.
 - `actualize_command`: `@pcsx2_scripts/actualization/act.ps1`.
-- `actualize_na2_command` and `actualize_input_command`: the two standalone
+- `actualize_na228_command` and `actualize_input_command`: the two standalone
   actualization modes under `@pcsx2_scripts/actualization/`.
 - `na2_iso`: `@source/NA2.iso`.
 - `nun3_iso`: `@source/NUN3.iso`.
@@ -121,14 +121,14 @@ $projectPaths = Get-Na2ProjectPaths
 $iso = $projectPaths.files.na2_iso
 ```
 
-The root `_na2.ps1` entry point uses `scripts/lib/project_paths.ps1` as its
+The root `_na228.ps1` entry point uses `scripts/lib/project_paths.ps1` as its
 bootstrap. The manifest and shared path loaders are stable bootstrap files and
 should not be moved during an ordinary directory migration.
 
 ## Python
 
 Repository Python code imports the shared loader from
-`na2_patcher.project_paths`. Preserved menu-input research tools use their small
+`na228_builder.project_paths`. Preserved menu-input research tools use their small
 local `scripts/research/menu_input/project_paths.py` bootstrap:
 
 ```python

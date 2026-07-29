@@ -168,7 +168,7 @@ For canonical runtime-injector C, provide its path and an allowlisted entry:
 
 ```powershell
 .\injection_lab\watch.ps1 `
-  -SourcePath .\na2_patcher\features\localization\runtime_injector\sources\font_v2_core.c `
+  -SourcePath .\na228_builder\features\localization\runtime_injector\sources\font_v2_core.c `
   -ProductionEntry localization.font.v2.controls_adapter
 ```
 
@@ -219,7 +219,7 @@ Stop the watcher with Ctrl+C. There is no separate removal or restoration
 workflow.
 
 While the install record identifies a regular file inside the PCSX2 cheats
-directory, normal `na2` actualization preserves the file instead of replacing
+directory, normal `na228` actualization preserves the file instead of replacing
 it with the canonical cheat symlink. The lab state never becomes a launch
 gate. Without a valid install record, regular files at
 NA2.28-managed CRC aliases are treated as orphaned lab artifacts and repaired

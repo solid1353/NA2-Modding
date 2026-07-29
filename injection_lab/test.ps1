@@ -16,8 +16,8 @@ $projectPathsScript = Join-Path $repository 'scripts\lib\project_paths.ps1'
 . $projectPathsScript
 $projectPaths = Get-Na2ProjectPaths
 $statePath = Join-Path $labRoot 'build\test-install.json'
-$payloadConfigPath = Join-Path $repository 'na2_patcher\payload_builder\config.tsv'
-$identityScript = Join-Path $repository 'scripts\na2\iso_identity.ps1'
+$payloadConfigPath = Join-Path $repository 'na228_builder\payload_builder\config.tsv'
+$identityScript = Join-Path $repository 'scripts\na228\iso_identity.ps1'
 $hookRuntimeAddress = 0x001D0578
 $hookRuntimeAddresses = [uint32[]]@(
     0x001D0578,

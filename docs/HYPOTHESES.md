@@ -7,7 +7,7 @@ Use this file for old patch candidates, failed experiments, unverified addresses
 Status: resolved for the reviewed screens on 2026-07-19. Confirmed behavior,
 matched measurements, exact patch records, and negative results are preserved
 in `docs/knowledge/localization/font/README.md`; canonical accepted patch data remain under
-their owning `na2_patcher/features/<feature>/binary_patcher/` package. Retired
+their owning `na228_builder/features/<feature>/binary_patcher/` package. Retired
 raw historical records are recoverable from Git commit `55d1163`.
 
 The accepted integration baseline uses a guarded native 14x20 NUN5-derived
@@ -89,7 +89,7 @@ hypotheses unless current module data or a new test proves them.
 ### Localization and asset leads
 
 - Translation mapping v36 removed the old non-executable unresolved inventory
-  from `na2_patcher/features/localization/translation_importer/mappings.tsv`.
+  from `na228_builder/features/localization/translation_importer/mappings.tsv`.
   Git history retains the 57 contextless battle offsets and one obsolete legacy
   dialog fragment; none had a verified official source or generated a patch.
 - Dynamic save date/time digits at `SLPS_258.37 + 0x304A30` occupy a 12-byte
@@ -124,7 +124,7 @@ Status: compact one-file module implemented; its predecessor passed an initial
 ISO runtime test. Confirmed layout, loader, donor, FLIST, and ISO findings are recorded in
 `docs/knowledge/localization/external_string_payload.md`; the canonical pointer inventory is
 folded into each applicable row's `reference_refs` field in
-`na2_patcher/features/localization/translation_importer/mappings.tsv`.
+`na228_builder/features/localization/translation_importer/mappings.tsv`.
 
 - Candidate resident cave: ELF file `0x00507414-0x0050747F` / runtime
   `0x00607314-0x0060737F` is zero-filled and has no aligned exact pointer found

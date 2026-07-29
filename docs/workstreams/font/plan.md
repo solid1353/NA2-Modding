@@ -140,7 +140,7 @@ caller-family adapters, not a transplanted NUN5 renderer:
 ### Resident implementation
 
 The canonical C units under
-`na2_patcher/features/localization/runtime_injector/sources/` generate the live
+`na228_builder/features/localization/runtime_injector/sources/` generate the live
 v2 resident asset and unique `localization.font.v2.*` symbols.
 `scripts/research/localization/verify_font_renderer.py` independently
 reconstructs and verifies those fragments:
@@ -509,7 +509,7 @@ shared payload builder assigns their final addresses.
 
 ### Stage 1 C compiler/extraction boundary
 
-`na2_patcher/payload_builder/ee_c_fragments.py` reuses Injection Lab's
+`na228_builder/payload_builder/ee_c_fragments.py` reuses Injection Lab's
 bundled `ee-gcc` and proven EE compilation contract. It does not duplicate the
 compiler or use the lab's fixed development-bank linker. Instead, it converts
 the compiler's ELF32 little-endian MIPS relocatable object into canonical
@@ -670,8 +670,8 @@ numeric formatter, and 21 guarded edits. The combined Localization pin is
 `430D8B6EC42EC0EC2322DD53657C21655EBA797E24CA0A7B097B8C4A2D10D266`,
 with the user-owned bypass value preserved at `1`.
 
-The normal `na2` workflow built and promoted Current CRC `12369AA2`, build
-record `@logs/na2/builds/20260728_203916_483_pid40912`. The user manually
+The normal `na228` workflow built and promoted Current CRC `12369AA2`, build
+record `@logs/na228/builds/20260728_203916_483_pid40912`. The user manually
 regressed Pause Controls, Quit confirmations, Special Controls, Practice
 explanations, Controls, and both title callers and reported `no diff`.
 
@@ -679,7 +679,7 @@ After that explicit acceptance, permanent coverage was updated to protect the
 relocatable C contract, documented EE `t0`/`t1` entry ABI, canonical hooks,
 native callbacks, and required fragment dependency chains without freezing
 compiler hashes or obsolete instruction layouts. Focused Font C/injector tests
-pass 11/11 and the full patcher suite passes 201/201.
+pass 11/11 and the full builder suite passes 201/201.
 
 ### Collapsed step 2 — accepted
 
@@ -722,8 +722,8 @@ formatting. The adjacent Battle Settings value-100 infinity branch remains
 untouched.
 
 Production inputs no longer live under `scripts/research/`: C sources reside
-under `na2_patcher/features/localization/runtime_injector/sources/`, the
-generic EE object extractor resides in `na2_patcher/payload_builder/`, and the
+under `na228_builder/features/localization/runtime_injector/sources/`, the
+generic EE object extractor resides in `na228_builder/payload_builder/`, and the
 deterministic generator resides in `scripts/localization/`. The superseded
 Save/Load and Battle Settings in-place assembly generators were removed.
 Retained assembly is limited to native renderer/displaced-instruction ABI
@@ -749,7 +749,7 @@ retains the completed C and production-file migration, and produces
 Localization pin
 `7D4F9F6C8297873136A49F84B4E802B98A6F86F8147CAE2D5314E1CEE5623F97`
 with the user-owned bypass value preserved at `1`. Deterministic regeneration,
-the exact disposable seven-hook call-contract check, and the full patcher suite
+the exact disposable seven-hook call-contract check, and the full builder suite
 pass (201/201). The user then ran the fresh corrected build and verified Load,
 Save, Battle Settings values below 100, and the separate 100/infinity path.
 The consolidated numeric C migration and its production-file move are accepted.
@@ -875,10 +875,10 @@ fullwidth isolation.
 
 ## Preserved baseline and evidence
 
-- `na2_patcher/features/localization/binary_patcher/` contains the enabled
+- `na228_builder/features/localization/binary_patcher/` contains the enabled
   native secondary font, guarded hook-site edits, and independent Character
   Select modal alignment.
-  `na2_patcher/features/localization/runtime_injector/` contains the live v2
+  `na228_builder/features/localization/runtime_injector/` contains the live v2
   metric, fit, scale, layout, and numeric fragments. All remain covered by the
   current Localization aggregate feature pin.
 - `docs/knowledge/localization/font/README.md` consolidates the v23, semantic-palette, and

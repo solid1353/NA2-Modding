@@ -46,13 +46,13 @@ context rather than repeated here.
   EXE, its validation gates, and GitHub publication workflow.
 
 Component-specific documentation stays with its component, including the
-[translation importer](na2_patcher/modules/translation_importer/README.md) and the
-[binary patcher module](na2_patcher/modules/binary_patcher/README.md), plus the
-[string patcher module](na2_patcher/modules/string_patcher/README.md) and the
-[texture patcher module](na2_patcher/modules/texture_patcher/README.md).
+[translation importer](na228_builder/modules/translation_importer/README.md) and the
+[binary patcher module](na228_builder/modules/binary_patcher/README.md), plus the
+[string patcher module](na228_builder/modules/string_patcher/README.md) and the
+[texture patcher module](na228_builder/modules/texture_patcher/README.md).
 
-Install the pinned patcher dependency before building the current profile:
+Install the pinned builder dependency before building the current profile:
 
 ```powershell
-python -m pip install -r na2_patcher/requirements.txt
+python -m pip install -r na228_builder/requirements.txt
 ```

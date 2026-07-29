@@ -1,3 +1,4 @@
+# Synchronize the generated NA2 comparison input profile.
 [CmdletBinding()]
 param(
     [string]$BasePath,

@@ -18,7 +18,7 @@ function Assert-Condition {
     }
 }
 
-$synchronizer = Join-Path $PSScriptRoot 'input.ps1'
+$synchronizer = Join-Path $PSScriptRoot 'sync_input.ps1'
 $temporaryRoot = Join-Path (
     [IO.Path]::GetTempPath()
 ) ('na2-input-profile-test-{0}' -f [guid]::NewGuid().ToString('N'))

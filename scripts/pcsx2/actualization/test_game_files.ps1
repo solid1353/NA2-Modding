@@ -93,7 +93,7 @@ try {
         }
     }
 
-    $actualizer = Join-Path $PSScriptRoot 'na2.ps1'
+    $actualizer = Join-Path $PSScriptRoot 'sync_game_files.ps1'
     $first = & $actualizer `
         -ProjectPaths $projectPaths `
         -IdentityResolver $identityResolver `

@@ -129,8 +129,8 @@ try {
   "files": {
     "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
     "actualize_command": "@pcsx2_scripts/actualization/act.ps1",
-    "actualize_na2_command": "@pcsx2_scripts/actualization/na2.ps1",
-    "actualize_input_command": "@pcsx2_scripts/actualization/input.ps1",
+    "actualize_na2_command": "@pcsx2_scripts/actualization/sync_game_files.ps1",
+    "actualize_input_command": "@pcsx2_scripts/actualization/sync_input.ps1",
     "current_iso": "@build/NA2.28 - Current.iso",
     "previous_iso": "@build/NA2.28 - Previous.iso",
     "candidate_iso": "@build/NA2.28 - Candidate.iso"
@@ -171,7 +171,7 @@ try {
         ))) `
         -Message 'Actualization help created run logs.'
 
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'na2.ps1') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'sync_game_files.ps1') -Content @'
 Write-Host '[fake] actualize na2'
 [pscustomobject]@{
     Roles = @(
@@ -190,7 +190,7 @@ Write-Host '[fake] actualize na2'
     RemovedGameSettings = @()
 }
 '@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'input.ps1') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'sync_input.ps1') -Content @'
 param([switch]$PassThru)
 $result = [pscustomobject]@{ Changed = $false }
 if ($PassThru) { $result }

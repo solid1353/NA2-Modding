@@ -282,12 +282,12 @@ DATA.CVM passwords: `cc2fuku` for NA2, NUN3, and NUN5; `Iruka` for NUN6 A35.
 `scripts/pcsx2/actualization/act.ps1` is the standalone command entrypoint and
 owns its transcript and status reporting. Bare `act` dispatches `na2`, then
 `input`.
-`na2.ps1` derives identities for every retained Current, Previous, and
+`sync_game_files.ps1` derives identities for every retained Current, Previous, and
 Candidate ISO, deletes stale managed cheat symlinks and NA2.28 GameSettings,
 creates the required cheat aliases and real role GameSettings, and keeps the
 template's `[MemoryCards]` section only in Current's GameSettings.
 Previous and Candidate omit that section, and memory cards are never copied.
-`input.ps1` regenerates `Comparison_NA2.ini`.
+`sync_input.ps1` regenerates `Comparison_NA2.ini`.
 
 ## Release Workflow
 

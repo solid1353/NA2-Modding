@@ -86,14 +86,14 @@ selected ISO fails before any PCSX2 process is changed.
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 
-`pcsx2/actualization/input.ps1` regenerates the NA2 comparison input profile
+`pcsx2/actualization/sync_input.ps1` regenerates the NA2 comparison input profile
 from the canonical base profile while changing only the four configured
 `[Pad1]` face-button bindings. Run it as `act input`; the legacy `na2inputs`
 profile helper delegates to that mode.
 
 `pcsx2/actualization/act.ps1` owns standalone actualization logging and
 dispatch. Bare `act` runs `na2`, then `input`.
-`pcsx2/actualization/na2.ps1` derives every retained role's serial and ELF CRC,
+`pcsx2/actualization/sync_game_files.ps1` derives every retained role's serial and ELF CRC,
 maintains canonical PNACH aliases, writes real GameSettings, keeps the template
 `[MemoryCards]` section only for Current, and deduplicates shared serial/CRC
 identities with Current taking precedence. It never creates or modifies memory

@@ -152,6 +152,14 @@ Next response: short plan + effort recommendation + needed user inputs + approva
 - Preserve the minimum resumption artifacts and release exclusive resources
   when possible. Disable pending wakeups unless monitoring should continue. Do
   not perform normal completion cleanup.
+- Do not leave task-owned canonical implementation changes hanging in the
+  shared worktree. Before completing the stop, either stash only the owned
+  changes and record the recoverable stash identity and affected paths in the
+  handoff, or document the changes and reconstruction steps sufficiently for
+  resumption and revert only the owned changes. Verify both recoverability and
+  the resulting Git state. Never stash or revert unrelated changes; if owned
+  changes cannot be isolated safely, report the exact conflict and do not claim
+  the graceful stop is complete.
 - Commit and push only the handoff; never commit incomplete implementation
   merely because `zxc` was issued.
 - On resume, validate the handoff against live rules, Git, work artifacts, and

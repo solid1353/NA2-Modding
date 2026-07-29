@@ -5,7 +5,8 @@ param(
     [string]$CheatsDirectory,
     [int]$PinePort,
     [string]$ProductionSource,
-    [string]$ProductionEntry
+    [string]$ProductionEntry,
+    [string]$OverlayPlan
 )
 
 $ErrorActionPreference = 'Stop'
@@ -33,7 +34,47 @@ $expectedHook = [byte[]](
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00
 )
-$productionMode = [bool]$ProductionSource -or [bool]$ProductionEntry
+$overlayPlanPath = $null
+if ($OverlayPlan) {
+    $overlayPlanPath = if ([IO.Path]::IsPathRooted($OverlayPlan)) {
+        [IO.Path]::GetFullPath($OverlayPlan)
+    }
+    else {
+        [IO.Path]::GetFullPath((Join-Path $repository $OverlayPlan))
+    }
+    $workRoot = [IO.Path]::GetFullPath(
+        (Join-Path $repository 'work')
+    ).TrimEnd(
+        [IO.Path]::DirectorySeparatorChar,
+        [IO.Path]::AltDirectorySeparatorChar
+    )
+    $workPrefix = $workRoot + [IO.Path]::DirectorySeparatorChar
+    if (-not $overlayPlanPath.StartsWith(
+        $workPrefix,
+        [StringComparison]::OrdinalIgnoreCase
+    ) -or -not (Test-Path -LiteralPath $overlayPlanPath -PathType Leaf)) {
+        throw 'OverlayPlan must be a task-owned file under work/<task>/.'
+    }
+    $plan = Get-Content -Raw -LiteralPath $overlayPlanPath | ConvertFrom-Json
+    $planSource = [string]$plan.source_id
+    $planEntry = [string]$plan.entry_symbol
+    if (-not $planSource -or -not $planEntry) {
+        throw 'OverlayPlan must declare source_id and entry_symbol.'
+    }
+    if ($ProductionSource -and $ProductionSource -cne $planSource) {
+        throw 'ProductionSource does not match OverlayPlan source_id.'
+    }
+    if ($ProductionEntry -and $ProductionEntry -cne $planEntry) {
+        throw 'ProductionEntry does not match OverlayPlan entry_symbol.'
+    }
+    $ProductionSource = $planSource
+    $ProductionEntry = $planEntry
+}
+$productionMode = (
+    [bool]$ProductionSource -or
+    [bool]$ProductionEntry -or
+    [bool]$overlayPlanPath
+)
 if ([bool]$ProductionSource -ne [bool]$ProductionEntry) {
     throw 'ProductionSource and ProductionEntry must be supplied together.'
 }
@@ -428,9 +469,17 @@ $env:NA2_INJECTION_MSYS = [string]$projectPaths.ps2_msys
 Push-Location $labRoot
 try {
     if ($productionMode) {
-        & python production_adapter.py `
-            --source-id $ProductionSource `
-            --entry $ProductionEntry
+        $adapterArguments = @(
+            'production_adapter.py',
+            '--source-id',
+            $ProductionSource,
+            '--entry',
+            $ProductionEntry
+        )
+        if ($overlayPlanPath) {
+            $adapterArguments += @('--overlay-plan', $overlayPlanPath)
+        }
+        & python @adapterArguments
     }
     else {
         & python gen_pnach.py
@@ -471,10 +520,34 @@ if ($productionMode) {
     if ($manifestPayloadHash -cne $actualPayloadHash) {
         throw 'Production adapter manifest does not match exact Current 228.BIN.'
     }
-    $residentEntryAddress = [Convert]::ToUInt32(
-        ([string]$manifest.entry_resident_address).Substring(2),
-        16
-    )
+    $redirectMode = [string]$manifest.redirect_mode
+    if ($redirectMode -notin 'resident', 'overlay') {
+        throw 'Production adapter manifest has an unknown redirect mode.'
+    }
+    if (($null -ne $overlayPlanPath) -ne ($redirectMode -ceq 'overlay')) {
+        throw 'Production adapter redirect mode does not match OverlayPlan usage.'
+    }
+    $residentEntryAddress = $null
+    if ($redirectMode -ceq 'resident') {
+        $residentEntryAddress = [Convert]::ToUInt32(
+            ([string]$manifest.entry_resident_address).Substring(2),
+            16
+        )
+    }
+    else {
+        $manifestPlanPath = [IO.Path]::GetFullPath(
+            (Join-Path $repository ([string]$manifest.overlay_plan))
+        )
+        if (-not $manifestPlanPath.Equals(
+            $overlayPlanPath,
+            [StringComparison]::OrdinalIgnoreCase
+        )) {
+            throw 'Production adapter manifest references a different overlay plan.'
+        }
+        if (@($manifest.overlay_writes).Count -lt 1) {
+            throw 'Production overlay manifest contains no guarded writes.'
+        }
+    }
     $bankEntryAddress = [Convert]::ToUInt32(
         ([string]$manifest.entry_bank_address).Substring(2),
         16
@@ -486,17 +559,19 @@ if ($productionMode) {
     if ($usedEnd -le $codeBase -or $usedEnd -gt $codeEnd) {
         throw 'Production adapter manifest reports an invalid used bank range.'
     }
-    $expectedResidentEntry = [Convert]::FromHexString(
-        [string]$manifest.entry_resident_expected_hex
-    )
-    if ($expectedResidentEntry.Length -ne 8) {
-        throw 'Production adapter manifest must guard exactly eight entry bytes.'
+    if ($redirectMode -ceq 'resident') {
+        $expectedResidentEntry = [Convert]::FromHexString(
+            [string]$manifest.entry_resident_expected_hex
+        )
+        if ($expectedResidentEntry.Length -ne 8) {
+            throw 'Production adapter must guard exactly eight resident entry bytes.'
+        }
+        $residentOffset = [uint32]($residentEntryAddress - $payloadBase)
+        Assert-Bytes -Data $payloadBytes -Offset $residentOffset `
+            -Expected $expectedResidentEntry `
+            -Context ('Current 228.BIN entry at runtime 0x{0:X8}' -f
+                $residentEntryAddress)
     }
-    $residentOffset = [uint32]($residentEntryAddress - $payloadBase)
-    Assert-Bytes -Data $payloadBytes -Offset $residentOffset `
-        -Expected $expectedResidentEntry `
-        -Context ('Current 228.BIN entry at runtime 0x{0:X8}' -f
-            $residentEntryAddress)
 
     $writes = @{}
     foreach ($line in Get-Content -LiteralPath $output) {
@@ -523,7 +598,7 @@ if ($productionMode) {
             $runtimeAddress -ge $codeBase -and
             $runtimeAddress -lt $usedEnd
         )
-        $insideEntry = (
+        $insideEntry = $redirectMode -ceq 'resident' -and (
             $runtimeAddress -eq $residentEntryAddress -or
             $runtimeAddress -eq [uint32]($residentEntryAddress + 4)
         )
@@ -573,14 +648,20 @@ if ($productionMode) {
             )
         }
     }
-    $redirect = [uint32]$writes[$residentEntryAddress]
-    if (($redirect -band 0xFC000000) -ne 0x08000000) {
-        throw ('Production resident redirect is not J: 0x{0:X8}.' -f $redirect)
-    }
-    $redirectTarget = [uint32](($redirect -band 0x03FFFFFF) -shl 2)
-    if ($redirectTarget -ne $dispatcherRuntimeAddress -or
-        [uint32]$writes[[uint32]($residentEntryAddress + 4)] -ne 0) {
-        throw 'Production resident redirect does not tail-jump through the dispatcher.'
+    if ($redirectMode -ceq 'resident') {
+        $redirect = [uint32]$writes[$residentEntryAddress]
+        if (($redirect -band 0xFC000000) -ne 0x08000000) {
+            throw ('Production resident redirect is not J: 0x{0:X8}.' -f
+                $redirect)
+        }
+        $redirectTarget = [uint32](($redirect -band 0x03FFFFFF) -shl 2)
+        if ($redirectTarget -ne $dispatcherRuntimeAddress -or
+            [uint32]$writes[[uint32]($residentEntryAddress + 4)] -ne 0) {
+            throw (
+                'Production resident redirect does not tail-jump through ' +
+                'the dispatcher.'
+            )
+        }
     }
 }
 else {
@@ -716,6 +797,13 @@ if ($BuildOnly) {
             '[injection_lab] Production C: {0} -> {1}' -f
             $ProductionSource, $ProductionEntry
         )
+        if ($overlayPlanPath) {
+            Write-Host "[injection_lab] Overlay plan: $overlayPlanPath"
+            Write-Host (
+                '[injection_lab] Guarded overlay writes: {0}' -f
+                @($manifest.overlay_writes).Count
+            )
+        }
     }
     Write-Host (
         '[injection_lab] Reservation: 0x{0:X8}-0x{1:X8} ({2} bytes)' -f
@@ -760,6 +848,7 @@ else {
         layout = $expectedLayout
         production_source = $(if ($productionMode) { $ProductionSource } else { '' })
         production_entry = $(if ($productionMode) { $ProductionEntry } else { '' })
+        overlay_plan = $(if ($overlayPlanPath) { $overlayPlanPath } else { '' })
     }
 }
 Write-PnachInPlace -Source $output -Target $target
@@ -782,8 +871,21 @@ $state | Add-Member `
     -NotePropertyName production_entry `
     -NotePropertyValue $(if ($productionMode) { $ProductionEntry } else { '' }) `
     -Force
+$state | Add-Member `
+    -NotePropertyName overlay_plan `
+    -NotePropertyValue $(if ($overlayPlanPath) { $overlayPlanPath } else { '' }) `
+    -Force
 $state | ConvertTo-Json | Set-Content -LiteralPath $statePath -Encoding UTF8
 Invoke-PineReloadPatches -Port $effectivePinePort
+if ($overlayPlanPath) {
+    & python (Join-Path $labRoot 'overlay_writer.py') `
+        --manifest $manifestPath `
+        --port $effectivePinePort
+    if ($LASTEXITCODE -ne 0) {
+        throw "Guarded overlay writes failed with exit code $LASTEXITCODE."
+    }
+    Invoke-PineReloadPatches -Port $effectivePinePort
+}
 
 Write-Host '[injection_lab] Current development PNACH installed.'
 Write-Host "[injection_lab] Target: $target"

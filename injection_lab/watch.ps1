@@ -4,6 +4,7 @@ param(
     [string]$SourcePath = (Join-Path $PSScriptRoot 'src'),
 
     [string]$ProductionEntry,
+    [string]$OverlayPlan,
 
     [ValidateRange(100, 10000)]
     [int]$DebounceMilliseconds = 400,
@@ -27,6 +28,28 @@ $packageRoot = Join-Path $repository (
     'na228_builder\features\localization\runtime_injector'
 )
 $sourceTable = Join-Path $packageRoot 'c_sources.tsv'
+$resolvedOverlayPlan = $null
+if ($OverlayPlan) {
+    $resolvedOverlayPlan = if ([IO.Path]::IsPathRooted($OverlayPlan)) {
+        [IO.Path]::GetFullPath($OverlayPlan)
+    }
+    else {
+        [IO.Path]::GetFullPath((Join-Path $repository $OverlayPlan))
+    }
+    $workRoot = [IO.Path]::GetFullPath(
+        (Join-Path $repository 'work')
+    ).TrimEnd(
+        [IO.Path]::DirectorySeparatorChar,
+        [IO.Path]::AltDirectorySeparatorChar
+    )
+    $workPrefix = $workRoot + [IO.Path]::DirectorySeparatorChar
+    if (-not $resolvedOverlayPlan.StartsWith(
+        $workPrefix,
+        [StringComparison]::OrdinalIgnoreCase
+    ) -or -not (Test-Path -LiteralPath $resolvedOverlayPlan -PathType Leaf)) {
+        throw 'OverlayPlan must be a task-owned file under work/<task>/.'
+    }
+}
 $resolvedSourcePath = if ([IO.Path]::IsPathRooted($SourcePath)) {
     [IO.Path]::GetFullPath($SourcePath)
 }
@@ -62,29 +85,49 @@ $genericMode = (
 )
 $ProductionSource = ''
 if ($genericMode) {
-    if ($ProductionEntry) {
-        throw 'ProductionEntry cannot be used with the generic lab source.'
+    if ($ProductionEntry -or $resolvedOverlayPlan) {
+        throw (
+            'ProductionEntry and OverlayPlan cannot be used with the ' +
+            'generic lab source.'
+        )
     }
 }
 else {
     if (-not (Test-Path -LiteralPath $sourceTable -PathType Leaf)) {
         throw "Canonical C source table was not found: $sourceTable"
     }
-    if (-not $ProductionEntry) {
-        throw 'ProductionEntry is required for a canonical production source.'
+    $ProductionSource = ''
+    if ($resolvedOverlayPlan) {
+        $plan = Get-Content -Raw -LiteralPath $resolvedOverlayPlan |
+            ConvertFrom-Json
+        $planSource = [string]$plan.source_id
+        $planEntry = [string]$plan.entry_symbol
+        if (-not $planSource -or -not $planEntry) {
+            throw 'OverlayPlan must declare source_id and entry_symbol.'
+        }
+        if ($ProductionEntry -and $ProductionEntry -cne $planEntry) {
+            throw 'ProductionEntry does not match OverlayPlan entry_symbol.'
+        }
+        $ProductionSource = $planSource
+        $ProductionEntry = $planEntry
     }
-    $entryTable = Join-Path $labRoot 'production_entries.tsv'
-    $entryRows = @(Import-Csv -LiteralPath $entryTable -Delimiter "`t" |
-        Where-Object {
-            $_.entry_symbol -ceq $ProductionEntry
-        })
-    if ($entryRows.Count -ne 1) {
-        throw (
-            "ProductionEntry '$ProductionEntry' must match exactly one " +
-            'production_entries.tsv row.'
-        )
+    else {
+        if (-not $ProductionEntry) {
+            throw 'ProductionEntry is required for a canonical production source.'
+        }
+        $entryTable = Join-Path $labRoot 'production_entries.tsv'
+        $entryRows = @(Import-Csv -LiteralPath $entryTable -Delimiter "`t" |
+            Where-Object {
+                $_.entry_symbol -ceq $ProductionEntry
+            })
+        if ($entryRows.Count -ne 1) {
+            throw (
+                "ProductionEntry '$ProductionEntry' must match exactly one " +
+                'production_entries.tsv row.'
+            )
+        }
+        $ProductionSource = [string]$entryRows[0].source_id
     }
-    $ProductionSource = [string]$entryRows[0].source_id
     $sourceRows = @(Import-Csv -LiteralPath $sourceTable -Delimiter "`t")
     $selectedSources = @($sourceRows | Where-Object {
         $_.source_id -ceq $ProductionSource -and
@@ -124,13 +167,19 @@ else {
 }
 $productionMode = -not $genericMode
 $declarationPaths = if ($productionMode) {
-    @(
+    $paths = @(
         $resolvedSourcePath,
         $sourceTable,
         (Join-Path $packageRoot 'c_imports.tsv'),
         (Join-Path $packageRoot 'c_fragments.tsv'),
+        (Join-Path $packageRoot 'fragments.tsv'),
+        (Join-Path $packageRoot 'relocations.tsv'),
         (Join-Path $labRoot 'production_entries.tsv')
     )
+    if ($resolvedOverlayPlan) {
+        $paths += $resolvedOverlayPlan
+    }
+    $paths
 }
 else {
     @(
@@ -219,6 +268,10 @@ function Invoke-WatchedBuild {
         )) {
             $arguments.Add($argument)
         }
+        if ($resolvedOverlayPlan) {
+            $arguments.Add('-OverlayPlan')
+            $arguments.Add($resolvedOverlayPlan)
+        }
     }
     if ($BuildOnly) {
         $arguments.Add('-BuildOnly')
@@ -274,6 +327,9 @@ if ($productionMode) {
     Write-Host '[injection_lab] Production watcher started.'
     Write-Host "[injection_lab] Source ID: $ProductionSource"
     Write-Host "[injection_lab] Entry: $ProductionEntry"
+    if ($resolvedOverlayPlan) {
+        Write-Host "[injection_lab] Overlay plan: $resolvedOverlayPlan"
+    }
 }
 else {
     Write-Host '[injection_lab] Generic source watcher started.'

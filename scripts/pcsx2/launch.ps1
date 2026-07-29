@@ -37,7 +37,23 @@ if ($PSCmdlet.ParameterSetName -eq 'Worker') {
             (Join-Path $projectPaths.repository $IsoPath)
         )
     }
-    $executable = Join-Path $worker.Pcsx2 'pcsx2-qt.exe'
+    $workerExecutables = @(
+        Get-ChildItem -LiteralPath $worker.Pcsx2 -File -ErrorAction SilentlyContinue |
+            Where-Object {
+                $_.Name -ceq 'pcsx2-qt.exe' -or
+                $_.Name -like 'pcsx2-qtx64-*.exe'
+            } |
+            Sort-Object @{
+                Expression = { if ($_.Name -ceq 'pcsx2-qt.exe') { 0 } else { 1 } }
+            }, Name
+    )
+    if ($workerExecutables.Count -eq 0) {
+        throw (
+            'The workstream PCSX2 copy contains no supported executable: ' +
+            $worker.Pcsx2
+        )
+    }
+    $executable = $workerExecutables[0].FullName
     $workingDirectory = $worker.Pcsx2
     $hidden = $true
 }

@@ -152,6 +152,71 @@ hook installation, overlay lifetime, normal payload composition, or unrelated
 callers. Final accepted changes still require the normal build/integration
 boundary and the user's requested regression check.
 
+### Bootstrap a new overlay caller
+
+A task can test a newly declared canonical entry before that entry exists in
+Current's `228.BIN`. Keep a JSON plan under `work/<task>/`:
+
+```json
+{
+  "schema_version": 1,
+  "source_id": "font_v2_core",
+  "entry_symbol": "localization.font.v2.command_relationship_adapter",
+  "abi": "command_relationship_native",
+  "purpose": "Test a new Command Chart caller.",
+  "writes": [
+    {
+      "id": "command_relationship_call",
+      "runtime_address": "0x0087A970",
+      "expected_hex": "C4080E0C00000000",
+      "replacement": {
+        "kind": "entry_call"
+      },
+      "reason": "Redirect the loaded BTL caller through the lab dispatcher."
+    },
+    {
+      "id": "command_relationship_suppressed_call",
+      "runtime_address": "0x0087A9BC",
+      "expected_hex": "C4080E0C00000000",
+      "replacement": {
+        "kind": "bytes",
+        "hex": "0000000000000000"
+      },
+      "reason": "Suppress the duplicate loaded BTL call."
+    }
+  ]
+}
+```
+
+`entry_symbol` may be a canonical static fragment such as an ABI shim. The
+adapter selects its transitive static/C fragment closure, links that closure
+into the inactive lab bank, and resolves only remaining imports from the exact
+Current symbol map. Selecting the internal C implementation instead of the
+caller-compatible static shim is ABI-wrong.
+
+Each write is resolved before generation and checked for overlap. At runtime
+the writer verifies every live expected byte before changing any address,
+applies the caller family once through PINE, and verifies the result.
+`entry_call` emits `jal` to the fixed dispatcher plus `nop`; `bytes` emits the
+exact supplied bytes. These loaded-overlay writes are deliberately not placed
+in the recurring PNACH.
+
+The script reloads the generated bank PNACH, applies the one-shot overlay
+writes, then reloads again. The project's custom PINE opcode performs the
+second reload and clears PCSX2 CPU execution caches on the CPU thread, so a
+caller that already ran in the supplied savestate executes the new
+instructions on its next visit.
+
+Compile and validate the complete contract without touching PCSX2:
+
+```powershell
+.\injection_lab\test.ps1 -BuildOnly `
+  -OverlayPlan .\work\<task>\<plan>.json
+```
+
+Install once or rebuild manually with the same command without `-BuildOnly`.
+The supplied game state must already have the relevant overlay loaded.
+
 ### Rebuild automatically on save
 
 Start the generic lab watcher with its default source directory:
@@ -176,6 +241,19 @@ The watcher infers the production source ID from `c_sources.tsv`; a path cannot
 bypass the canonical declaration. Production mode also watches
 `c_sources.tsv`, `c_imports.tsv`, `c_fragments.tsv`, and
 `production_entries.tsv`.
+
+For a task-owned overlay plan, the plan supplies both the production source and
+entry:
+
+```powershell
+.\injection_lab\watch.ps1 `
+  -SourcePath .\na228_builder\features\localization\runtime_injector\sources `
+  -OverlayPlan .\work\<task>\<plan>.json
+```
+
+The watcher also tracks the plan and the canonical static-fragment and
+relocation tables. Each successful save rebuild repeats the bank reload,
+guarded one-shot caller writes, and post-write JIT invalidation serially.
 
 `SourcePath` may name the supported source file or its containing source
 directory. Directories are hashed recursively. Omitting it selects the lab's

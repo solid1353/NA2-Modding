@@ -7,6 +7,8 @@ param(
     [Parameter(Mandatory, ParameterSetName = 'Worker')]
     [string]$WorkerRoot,
 
+    [Parameter(ParameterSetName = 'Configured')]
+    [Parameter(Mandatory, ParameterSetName = 'Worker')]
     [string]$IsoPath,
 
     [Parameter(ValueFromRemainingArguments)]

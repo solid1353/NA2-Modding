@@ -104,10 +104,10 @@ Run `act help` or `act -h` for the standalone command summary.
 
 `pcsx2/launch.ps1` is the single PCSX2 launcher. Configured launches use
 `-Target stable|dev`; agent launches use `-WorkerRoot work/<task title>` and
-start the existing task-owned PCSX2 copy hidden. `-IsoPath` is optional; when
-supplied to a worker launch it must be repository-relative. The launcher does
-not copy or configure PCSX2, inspect or stop processes, use PINE, load
-savestates, capture output, or perform cleanup.
+start the existing task-owned PCSX2 copy hidden. `-IsoPath` is optional for
+configured launches and mandatory and repository-relative for worker launches.
+The launcher does not copy or configure PCSX2, inspect or stop processes, use
+PINE, load savestates, capture output, or perform cleanup.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`

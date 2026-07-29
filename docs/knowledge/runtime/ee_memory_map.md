@@ -387,6 +387,38 @@ runs. Compacting therefore matters first for a resident object larger than
 or as the prerequisite to moving the structural boundary down and reclaiming
 most of the fixed reservation for the heap.
 
+## Injection Lab mode-switch lifetime
+
+Injection Lab's generic mode installs a recurring call at runtime
+`0x001D0578`, while production mode redirects one resident `228.BIN` entry to
+the fixed dispatcher at `0x008F0000`. Removing the PNACH restores the file on
+disk but cannot undo either write already applied to EE memory.
+
+The 2026-07-29 generic-to-production trial proved the resulting hazard. The
+same PCSX2 session first activated the generic dispatcher, removed its PNACH,
+then installed production entry `localization.font.v2.controls_adapter`
+without restarting Current. Production repointed the dispatcher while the
+old generic per-frame call remained live. That stale call invoked the Font
+entry with unrelated registers, including `a0 = 0x7`, producing repeated
+loads from address `0x7` at hot-linked PC `0x008F01A0`
+(`localization.font.v2.measure + 0x58`) and cascading native renderer TLB
+misses at `0x001858D0` and `0x001896E8`.
+
+This was a lifecycle conflict, not a different Font ABI or bad C compilation:
+
+- the guarded production caller at `0x00388748` loads the text pointer into
+  `a0`, style into `a1`, and centers into `f12`/`f13`;
+- the banked controls fragment matched the exact resident fragment byte for
+  byte except its expected relocated call to `adapter_call`; and
+- the first invalid access began only after production reused the dispatcher
+  in the still-running generic session.
+
+`test.ps1 -Remove` now records the clean words guarded by the removed mode.
+Before another installation it reads those addresses through PINE and refuses
+to continue until a clean Current restart restores them. Mode changes therefore
+cannot rely on the user noticing a restart message, and loading a stale
+savestate cannot falsely satisfy the boundary.
+
 ## Safe-use constraints
 
 - Fixed injection into the two Current zero regions is valid only while the

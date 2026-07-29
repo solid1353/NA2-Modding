@@ -18,6 +18,7 @@ $projectPathsScript = Join-Path $repository 'scripts\lib\project_paths.ps1'
 $projectPaths = Get-Na2ProjectPaths
 $statePath = Join-Path $labRoot 'build\test-install.json'
 $backupPath = Join-Path $labRoot 'build\current-pnach.before-test'
+$restartPath = Join-Path $labRoot 'build\restart-required.json'
 $payloadConfigPath = Join-Path $repository 'na2_patcher\payload_builder\config.tsv'
 $identityScript = Join-Path $repository 'scripts\na2\iso_identity.ps1'
 $hookRuntimeAddress = 0x001D0578
@@ -168,6 +169,113 @@ function Invoke-PineReloadPatches([int]$Port) {
     finally {
         $client.Dispose()
     }
+}
+
+function Invoke-PineRead32([int]$Port, [uint32]$Address) {
+    $client = [Net.Sockets.TcpClient]::new()
+    try {
+        $connection = $client.ConnectAsync('127.0.0.1', $Port)
+        if (-not $connection.Wait([TimeSpan]::FromSeconds(3))) {
+            throw "Timed out connecting to PINE port $Port."
+        }
+        $stream = $client.GetStream()
+        $stream.ReadTimeout = 3000
+        $stream.WriteTimeout = 3000
+
+        [byte[]]$packet = [BitConverter]::GetBytes([uint32]9) +
+            [byte[]]@(0x02) +
+            [BitConverter]::GetBytes($Address)
+        $stream.Write($packet, 0, $packet.Length)
+        $stream.Flush()
+
+        $sizeBytes = Read-PineBytes -Stream $stream -Length 4
+        $replySize = [BitConverter]::ToUInt32($sizeBytes, 0)
+        if ($replySize -ne 9) {
+            throw "PINE Read32 returned an invalid reply size: $replySize"
+        }
+        $reply = Read-PineBytes -Stream $stream -Length 5
+        if ($reply[0] -ne 0) {
+            throw (
+                'PCSX2 rejected PINE Read32 at runtime address ' +
+                ('0x{0:X8}.' -f $Address)
+            )
+        }
+        return [BitConverter]::ToUInt32($reply, 1)
+    }
+    catch {
+        throw (
+            'Could not verify the Injection Lab restart boundary through ' +
+            "PINE: $($_.Exception.Message)"
+        )
+    }
+    finally {
+        $client.Dispose()
+    }
+}
+
+function Assert-CleanRestartBoundary(
+    [string]$MarkerPath,
+    [string]$CurrentCrc,
+    [int]$Port
+) {
+    if (-not (Test-Path -LiteralPath $MarkerPath -PathType Leaf)) {
+        return
+    }
+    $marker = Get-Content -Raw -LiteralPath $MarkerPath | ConvertFrom-Json
+    if ([string]$marker.current_crc -cne $CurrentCrc) {
+        throw (
+            'Injection Lab restart marker belongs to a different Current ' +
+            "CRC: $($marker.current_crc) != $CurrentCrc"
+        )
+    }
+    $guards = @($marker.runtime_guards)
+    if (-not $guards.Count) {
+        throw (
+            'Injection Lab cannot verify the removed runtime state. Restart ' +
+            "Current cleanly, then remove $MarkerPath."
+        )
+    }
+
+    $mismatches = [Collections.Generic.List[string]]::new()
+    foreach ($guard in $guards) {
+        $addressText = [string]$guard.address
+        $expectedHex = [string]$guard.expected_hex
+        if ($addressText -notmatch '^0x[0-9A-Fa-f]{8}$' -or
+            $expectedHex -notmatch '^(?:[0-9A-Fa-f]{8})+$') {
+            throw 'Injection Lab restart marker contains an invalid guard.'
+        }
+        $address = [Convert]::ToUInt32($addressText.Substring(2), 16)
+        $expected = [Convert]::FromHexString($expectedHex)
+        for ($offset = 0; $offset -lt $expected.Length; $offset += 4) {
+            $actualWord = Invoke-PineRead32 `
+                -Port $Port `
+                -Address ([uint32]($address + $offset))
+            $actual = [BitConverter]::GetBytes($actualWord)
+            $expectedWord = $expected[$offset..($offset + 3)]
+            if (-not [Linq.Enumerable]::SequenceEqual(
+                [byte[]]$actual,
+                [byte[]]$expectedWord
+            )) {
+                $mismatches.Add(
+                    (
+                        '0x{0:X8}: {1} != {2}' -f
+                        ($address + $offset),
+                        [Convert]::ToHexString($actual),
+                        [Convert]::ToHexString($expectedWord)
+                    )
+                )
+            }
+        }
+    }
+    if ($mismatches.Count) {
+        throw (
+            'Current still contains a removed Injection Lab hook. Restart ' +
+            'Current cleanly before installing another lab mode. Mismatch: ' +
+            [string]::Join('; ', $mismatches)
+        )
+    }
+    Remove-Item -LiteralPath $MarkerPath -Force
+    Write-Host '[injection_lab] Clean Current restart confirmed through PINE.'
 }
 
 function Get-UInt16LE([byte[]]$Data, [int]$Offset) {
@@ -355,8 +463,51 @@ function Restore-TestPnach {
         }
     }
 
+    $runtimeGuards = @()
+    if ('runtime_guards' -in $state.PSObject.Properties.Name) {
+        $runtimeGuards = @($state.runtime_guards)
+    }
+    elseif ([string]$state.layout -ceq 'dispatcher_v1') {
+        for ($offset = 0; $offset -lt $expectedHook.Length; $offset += 4) {
+            $runtimeGuards += [pscustomobject]@{
+                address = ('0x{0:X8}' -f ($hookRuntimeAddress + $offset))
+                expected_hex = [Convert]::ToHexString(
+                    $expectedHook[$offset..($offset + 3)]
+                )
+            }
+        }
+    }
+    elseif ([string]$state.layout -ceq 'production_dispatcher_v1') {
+        $manifestPath = Join-Path $labRoot 'build\production-adapter.json'
+        if (Test-Path -LiteralPath $manifestPath -PathType Leaf) {
+            $manifest = Get-Content -Raw -LiteralPath $manifestPath |
+                ConvertFrom-Json
+            if (
+                [string]$manifest.source_id -ceq
+                    [string]$state.production_source -and
+                [string]$manifest.entry_symbol -ceq
+                    [string]$state.production_entry
+            ) {
+                $runtimeGuards = @([pscustomobject]@{
+                    address = [string]$manifest.entry_resident_address
+                    expected_hex = [string]$manifest.entry_resident_expected_hex
+                })
+            }
+        }
+    }
+    [pscustomobject]@{
+        schema_version = 1
+        current_crc = [string]$state.current_crc
+        removed_layout = [string]$state.layout
+        runtime_guards = $runtimeGuards
+    } | ConvertTo-Json -Depth 5 |
+        Set-Content -LiteralPath $restartPath -Encoding UTF8
+
     Remove-Item -LiteralPath $statePath -Force
-    Write-Host '[injection_lab] Restart Current to restore the original in-memory hook.'
+    Write-Host (
+        '[injection_lab] Restart Current before installing another lab mode; ' +
+        'the next install will verify the clean runtime through PINE.'
+    )
 }
 
 if ($Remove) {
@@ -813,6 +964,24 @@ foreach ($entry in $expectedDispatcher) {
 }
 }
 
+$runtimeGuards = if ($productionMode) {
+    @([pscustomobject]@{
+        address = ('0x{0:X8}' -f $residentEntryAddress)
+        expected_hex = [Convert]::ToHexString($expectedResidentEntry)
+    })
+}
+else {
+    @(
+        for ($offset = 0; $offset -lt $expectedHook.Length; $offset += 4) {
+            [pscustomobject]@{
+                address = ('0x{0:X8}' -f ($hookRuntimeAddress + $offset))
+                expected_hex = [Convert]::ToHexString(
+                    $expectedHook[$offset..($offset + 3)]
+                )
+            }
+        }
+    )
+}
 $outputHash = Get-Sha256 $output
 if ($BuildOnly) {
     Write-Host '[injection_lab] Build-only validation passed.'
@@ -843,6 +1012,10 @@ if (-not (Test-Path -LiteralPath $cheatsDirectory)) {
 $effectivePinePort = Get-InjectionLabPinePort `
     -CheatsDirectory $cheatsDirectory `
     -ExplicitPort $PinePort
+Assert-CleanRestartBoundary `
+    -MarkerPath $restartPath `
+    -CurrentCrc ([string]$identity.CRC) `
+    -Port $effectivePinePort
 $target = Join-Path $cheatsDirectory ([string]$identity.PnachName)
 
 if (Test-Path -LiteralPath $statePath) {
@@ -890,6 +1063,7 @@ else {
         layout = $expectedLayout
         production_source = $(if ($productionMode) { $ProductionSource } else { '' })
         production_entry = $(if ($productionMode) { $ProductionEntry } else { '' })
+        runtime_guards = $runtimeGuards
     }
 }
 
@@ -913,7 +1087,12 @@ $state | Add-Member `
     -NotePropertyName production_entry `
     -NotePropertyValue $(if ($productionMode) { $ProductionEntry } else { '' }) `
     -Force
-$state | ConvertTo-Json | Set-Content -LiteralPath $statePath -Encoding UTF8
+$state | Add-Member `
+    -NotePropertyName runtime_guards `
+    -NotePropertyValue $runtimeGuards `
+    -Force
+$state | ConvertTo-Json -Depth 5 |
+    Set-Content -LiteralPath $statePath -Encoding UTF8
 Invoke-PineReloadPatches -Port $effectivePinePort
 
 Write-Host '[injection_lab] Current development PNACH installed.'

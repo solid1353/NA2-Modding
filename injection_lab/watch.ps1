@@ -1,8 +1,7 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
-    [string]$SourcePath,
+    [string]$SourcePath = (Join-Path $PSScriptRoot 'src'),
 
     [string]$ProductionEntry,
 
@@ -64,7 +63,7 @@ $genericMode = (
 $ProductionSource = ''
 if ($genericMode) {
     if ($ProductionEntry) {
-        throw 'ProductionEntry cannot be used with the generic test.c source.'
+        throw 'ProductionEntry cannot be used with the generic lab source.'
     }
 }
 else {
@@ -242,7 +241,7 @@ function Invoke-WatchedBuild {
         "$ProductionSource -> $ProductionEntry"
     }
     else {
-        'generic test.c'
+        'generic lab source'
     }
     Write-Host "[injection_lab] $timestamp building $selection" `
         -ForegroundColor Cyan
@@ -277,7 +276,7 @@ if ($productionMode) {
     Write-Host "[injection_lab] Entry: $ProductionEntry"
 }
 else {
-    Write-Host '[injection_lab] Generic test.c watcher started.'
+    Write-Host '[injection_lab] Generic source watcher started.'
 }
 Write-Host "[injection_lab] Source path: $resolvedSourcePath"
 Write-Host '[injection_lab] Inputs:'

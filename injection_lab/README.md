@@ -153,15 +153,15 @@ boundary and the user's requested regression check.
 
 ### Rebuild automatically on save
 
-Start the generic lab watcher with an explicit source path:
+Start the generic lab watcher with its default source directory:
 
 ```powershell
-.\injection_lab\watch.ps1 `
-  -SourcePath .\injection_lab\src\test.c
+.\injection_lab\watch.ps1
 ```
 
-It watches `src/test.c`, `src/Main.h`, `linker.asm`, and `gen_pnach.py`. In
-VS Code, run `Tasks: Run Task` and choose `Injection Lab: Watch test C`.
+The default `SourcePath` is the complete `injection_lab/src` directory. It
+watches that tree recursively, plus `linker.asm` and `gen_pnach.py`. In VS
+Code, run `Tasks: Run Task` and choose `Injection Lab: Watch src`.
 
 For canonical runtime-injector C, provide its path and an allowlisted entry:
 
@@ -177,7 +177,7 @@ bypass the canonical declaration. Production mode also watches
 `production_entries.tsv`.
 
 `SourcePath` may name the supported source file or its containing source
-directory. Directories are hashed recursively. Generic mode accepts the lab's
+directory. Directories are hashed recursively. Omitting it selects the lab's
 `src` directory; production mode accepts a directory only when it contains the
 canonical source selected by `ProductionEntry`.
 
@@ -224,16 +224,24 @@ The installer records and temporarily replaces only the exact CRC alias. After
 the first guarded install, later builds truncate and rewrite that same regular
 file, then requests the explicit PINE reload. It refuses refresh or cleanup if
 another process or user changed the installed PNACH. Removal restores the
-previous file or managed symbolic link, including its relative target, but
-already-applied memory writes remain until Current is restarted. While that
-install record identifies a regular file inside the PCSX2 cheats directory,
-normal `na2` actualization preserves the file instead of replacing it with the
-canonical cheat symlink. Integrity enforcement remains local to the lab's
-install, refresh, and removal commands; it never becomes a launch gate. Without
-a valid install record, regular files at NA2.28-managed CRC aliases are treated
-as orphaned lab artifacts and repaired to canonical symlinks, or removed when
-the canonical PNACH is empty. Corrupt or stale lab state is ignored by
-actualization, while unrelated game identities remain untouched.
+previous file or managed symbolic link, including its relative target.
+
+Already-applied memory writes remain until Current is restarted. Removal
+therefore records the exact clean runtime words for the removed hook. Before
+any later lab installation, `test.ps1` reads those words through PINE and
+refuses to proceed until a clean Current restart is proven. This prevents a
+stale generic per-frame hook from calling a newly selected production entry,
+and prevents a stale production redirect from surviving into generic mode.
+
+While the install record identifies a regular file inside the PCSX2 cheats
+directory, normal `na2` actualization preserves the file instead of replacing
+it with the canonical cheat symlink. Integrity enforcement remains local to
+the lab's install, refresh, removal, and restart-verification commands; it
+never becomes a launch gate. Without a valid install record, regular files at
+NA2.28-managed CRC aliases are treated as orphaned lab artifacts and repaired
+to canonical symlinks, or removed when the canonical PNACH is empty. Corrupt
+or stale lab state is ignored by actualization, while unrelated game
+identities remain untouched.
 
 Ordinary `patch=1` PNACH writes are reapplied continuously. Mutable state must
 not be initialized through those recurring writes. The adapted object keeps

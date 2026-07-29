@@ -48,7 +48,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Injection Lab: Watch test C",
+      "label": "Injection Lab: Watch src",
       "type": "shell",
       "command": "pwsh.exe",
       "args": [
@@ -56,9 +56,7 @@
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        "${workspaceFolder}\\injection_lab\\watch.ps1",
-        "-SourcePath",
-        "${workspaceFolder}\\injection_lab\\src\\test.c"
+        "${workspaceFolder}\\injection_lab\\watch.ps1"
       ],
       "options": {
         "cwd": "${workspaceFolder}"

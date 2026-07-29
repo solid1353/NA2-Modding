@@ -13,6 +13,12 @@
   authorize starting, stopping, exposing, hiding, relaunching, or otherwise
   changing the operation. Answer in commentary and continue approved work
   unchanged unless the same message explicitly orders a change.
+- Answer every small, self-contained clarification directly, including during
+  an ongoing task. Do not precede it with phase, purpose, changes, effort,
+  status, plan, or tool-narration ceremony, and do not perform inspection
+  solely to generate that ceremony. Use status or effort announcements only
+  when substantive inspection or execution is beginning or continuing, or
+  when the user explicitly asks for them.
 - When an answer is wrong, give the corrected answer immediately. Explain why
   the previous answer was wrong only if the user asks why.
 - During explicit discussion, design, planning, or brainstorming mode, every

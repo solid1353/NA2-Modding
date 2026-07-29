@@ -34,9 +34,8 @@ Current PCSX2 actualization:
   multiple images share one PCSX2 serial/CRC identity, the single GameSettings
   file is deduplicated with Current taking precedence. Actualization never
   creates, copies, or modifies memory cards.
-- `@pcsx2_files/` contains the Git-tracked canonical PNACH, GameSettings
-  template, input profiles, project input recordings, and ignored local
-  screenshots.
+- `@pcsx2_files/` contains the canonical PNACH, GameSettings template, shared
+  input profiles, input recordings, and local screenshots.
 - `act` reports enabled named cheats from uncommented `patch=` or setting lines, or `none` when no cheats are enabled.
 - PNACH labels such as `// [Skip CC2 intro]` are comments only. A cheat is enabled only when its executable `patch=`/setting line is uncommented. Disabled proven cheats and disabled hypotheses must keep their executable lines commented out. Temporary PNACH hypothesis patches go at the top as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 - Fixed-address PNACH hypotheses are safe by default only for the boot ELF or another region proven to remain resident and stable for the entire write lifetime.
@@ -57,9 +56,12 @@ replaced with a copied machine-specific absolute path.
 - `na2_patcher/features/localization/translation_importer/mappings.tsv` is the Localization feature's current hash-pinned importer input and folds the verified pointer inventory into each applicable mapping row. `source_ref` and `source` retain the guarded NA2 origin; `donor_ref` and `donor` retain the official translation and make it executable by default. A nonempty user-authored `replacement` overrides the donor, and `prefix` is prepended to the selected text. Profile `identity.json` owns the imported/output game titles, and the generic `string_patcher` applies that output policy before deriving inline or linked placement from encoded fit and available references. Feature-owned custom resident functions and guarded hooks are declared through `runtime_injector`; `payload_builder` links those fragments together with external strings into `PRG/228.BIN` and owns its loader/memory integration. The composer resolves symbols and `binary_patcher` applies concrete guarded writes. No standalone export or source-hash bypass exists.
 - `@logs/`: disposable shared-workflow records; no files should be written directly in the root. `na2` keeps bounded Current/Previous/Candidate provenance under `@logs/na2/`, and shared generated workstream evidence belongs under `@workstream_logs/<exact task title>/`. Agent ISO records instead stay under `work/<task title>/logs/`. See `docs/LOGGING.md`.
 - `scripts/`: repeatable tooling.
-- `@pcsx2_files/`: project-owned PCSX2 artifacts. The canonical PNACH and input recordings are tracked; screenshots remain local and ignored.
+- `@pcsx2_files/`: shared PCSX2 artifacts under
+  `UN Workshop/pcsx2/files/`.
 - `@pcsx2_user/`: protected user-owned portable PCSX2 installation and state. User launch/actualization workflows address it; agents never inspect, launch, or modify it.
-- `@pcsx2_clean/`: protected immutable worker template stored at `@utils/pcsx2_clean/`. Agents copy its complete tree to `work/<task title>/pcsx2/` before use and never launch or mutate the template.
+- `@pcsx2_clean/`: protected immutable stable worker template under
+  `UN Workshop/pcsx2/clean/stable/`. Agents copy its complete tree to
+  `work/<task title>/pcsx2/` before use and never launch or mutate the template.
 - `work/<task title>/pcsx2/`: the exact workstream's private PCSX2 copy. The minimal hidden launcher starts only this copy; other PCSX2 processes are off-limits.
 - `na2_patcher/modules/binary_patcher/`: repository-owned schema v4 and reusable CLI validator/patcher for canonical group/patch/edit packages owned by features. The schema has no relations table; a patch is normally selected only when both its group and patch `enabled` switches are `1`. Selected edits are simulated in deterministic order so compatible overlaps and already-satisfied replacements are retained while real guard conflicts fail before ISO staging. It never applies `pending`, `runtime_failed`, or `deprecated` patches and writes only new same-size outputs with complete logs.
 - `na2_patcher/modules/runtime_injector/`: reusable declarative bridge for feature-owned code/data fragments, internal relocations, and guarded symbolic hooks. It contributes to the shared payload builder and compiles linked hooks into an in-memory binary-patcher package; it never chooses offsets or final addresses inside `PRG/228.BIN`.

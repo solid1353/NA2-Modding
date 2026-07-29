@@ -24,7 +24,7 @@ that inconsistent snapshot as a runnable package.
 
 The task named `Gerar PNACH` in `.vscode/tasks.json` only starts
 `./gen_pnach.sh` through Git Bash with the source root as its working
-directory. The shell wrapper adds the bundled PS2DEV compiler and PS2SDK tools
+directory. The shell wrapper adds the supplied PS2DEV compiler and PS2SDK tools
 to `PATH`, then runs `python3 gen_pnach.py`.
 
 The generator:
@@ -63,12 +63,13 @@ linker replaces them with `jal injectionLabTick`, a delay-slot `nop`, and the
 equivalent moved epilogue. The native `jal WakeupThread` at `0x001D0570`
 remains untouched.
 
-The default local runtime is the ignored repository-root `pcsx2_dev` link,
-which points to the custom PCSX2 build's `bin/` directory. That directory uses
-portable mode and a copied, independent set of the user's PCSX2 configuration,
-BIOS, game settings, and input profiles. Its dedicated PINE port is separate
-from stable PCSX2. Launch `pcsx2_dev/pcsx2-qtx64-avx2-dev.exe`, start Current
-with cheats enabled, then build and install from the repository root:
+The default local runtime is `@pcsx2_dev`, which resolves to the custom PCSX2
+runtime copied into `UN Workshop/pcsx2/dev/`. That directory
+uses portable mode and a copied, independent set of the user's PCSX2
+configuration, BIOS, game settings, and input profiles. Its dedicated PINE port
+is separate from stable PCSX2. Launch
+`@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe`, start Current with cheats enabled, then
+build and install from the repository root:
 
 ```powershell
 .\injection_lab\test.ps1
@@ -79,7 +80,7 @@ independent ELF boundary values, and the complete five-word hook window before
 compiling. The generator fails with a nonzero exit when an imported source,
 compiler/tool query, linker step, linker label, or hook symbol is missing
 instead of accepting a stale or incomplete PNACH. The runner temporarily
-replaces only the matching Current PNACH inside `pcsx2_dev/cheats` and records
+replaces only the matching Current PNACH inside `@pcsx2_dev/cheats` and records
 enough state to
 restore an existing regular file or symbolic link. Edit `src/test.c`, then run
 the same command again. The original `NA2-C.zip` proof's VS Code task only runs
@@ -238,7 +239,7 @@ ELF inputs, object files, or generated PNACH/linker outputs. The local
 toolchain must use this layout:
 
 ```text
-injection_lab/msys/1.0/local/ps2dev/
+@ps2_msys/1.0/local/ps2dev/
 ├── ee/bin/       # ee-gcc, ee-nm, ee-objdump
 └── ps2sdk/bin/   # armips
 ```
@@ -246,8 +247,8 @@ injection_lab/msys/1.0/local/ps2dev/
 `test.ps1` derives `data/FILES/SLOP_NA2.28` and `data/FILES/228.BIN` from the
 verified Current ISO on every build. The ignored `data/`, `obj/`, and `build/`
 directories are reproducible outputs and must not be committed. The imported
-`msys/` tree is a local dependency and is not redistributed by this
-repository.
+`@ps2_msys/` tree is a local shared dependency and is not redistributed by
+this repository.
 
 The original proof of concept was based on:
 https://youtu.be/-N2QR7W1_kM

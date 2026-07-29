@@ -122,10 +122,10 @@ requirements, not whatever implementation happens to exist today.
 
 ## User PCSX2 and agent runtimes
 
-- `@pcsx2_user` and the repository-root `pcsx2` convenience link are the user's
-  protected installation. Agents may read and copy from it but never create,
-  modify, move, delete, link, launch, control, or write through hardlinks into
-  it, except for an ISO launch explicitly requested by the user.
+- `@pcsx2_user` is the user's protected stable installation. Agents may read
+  and copy from it but never create, modify, move, delete, link, launch,
+  control, or write through hardlinks into it, except for an ISO launch
+  explicitly requested by the user.
 - When the user explicitly asks to launch an ISO, launch that ISO through
   `@pcsx2_user`; do not substitute an isolated worker PCSX2. That request
   authorizes only the requested launch, not other user-PCSX2 changes or control.

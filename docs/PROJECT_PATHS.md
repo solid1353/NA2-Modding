@@ -23,14 +23,16 @@ genuinely local one-off paths.
 The manifest currently defines these stable logical names:
 
 - `repository`: the repository itself; this must remain `.`.
-- `source`: read-only original media and extracted views.
+- `source`: read-only original media and extracted views under the sibling
+  `UN Workshop/source/` tree.
 - `source_na2`: the extracted read-only NA2 source tree.
 - `source_nun3`: the extracted read-only NUN3 source tree.
 - `source_nun5`: the extracted read-only NUN5 source tree.
 - `source_nun6`: the extracted read-only NUN6 A35 source tree.
-- `analysis`: shared reverse-engineering projects and disassembly exports for
-  related game projects.
-- `utils`: shared utilities, including Ghidra and the untrusted historical dump.
+- `analysis`: shared reverse-engineering projects and disassembly exports under
+  `UN Workshop/analysis/`.
+- `utils`: shared utilities under `UN Workshop/tools/`, including Ghidra and
+  the untrusted historical dump.
 - `build`, `logs`, `patcher`, `scripts`, and `work`:
   their corresponding project areas.
 - `pcsx2_scripts`: maintained PCSX2 launch, process, configuration, and CRC
@@ -39,19 +41,25 @@ The manifest currently defines these stable logical names:
   `@logs/workstreams/<exact task title>/`; see `docs/LOGGING.md`.
 - `features`: the canonical feature-package root beneath `@patcher/`; profile
   module discovery resolves this root instead of hardcoding its repository path.
-- `pcsx2_files`: project-owned PCSX2-related files.
+- `pcsx2_files`: shared PCSX2-related files under
+  `UN Workshop/pcsx2/files/`.
 - `pcsx2_game_settings`, `pcsx2_input_profiles`, and
   `pcsx2_input_recordings`: the three project trees maintained by
   `act links`.
-- `pcsx2_user`: the user's protected portable PCSX2 installation. User launch,
-  build-promotion, and actualization commands address it; agents do not.
-- `pcsx2_dev`: the ignored repository-root link to the locally built,
-  reload-enabled PCSX2 development runtime. It is existence-deferred because
-  a fresh checkout does not contain the sibling emulator build.
-- `pcsx2_clean`: the protected immutable worker template under
-  `@utils/pcsx2_clean/`. Agents copy its complete tree into
+- `pcsx2_user`: the user's protected portable stable PCSX2 installation under
+  `UN Workshop/pcsx2/stable/`. User launch, build-promotion, and actualization
+  commands address it; agents do not.
+- `pcsx2_dev`: the locally built, reload-enabled PCSX2 development runtime
+  copied from the separate PCSX2 source checkout into
+  `UN Workshop/pcsx2/dev/`. It is existence-deferred because a fresh checkout
+  does not contain the local emulator build.
+- `pcsx2_clean`: the protected immutable stable worker template under
+  `UN Workshop/pcsx2/clean/stable/`. Agents copy its complete tree into
   `work/<task title>/pcsx2/` before use; it is never launched or modified
   directly.
+- `ps2_msys`: the local shared MSYS/PS2SDK toolchain under
+  `UN Workshop/injection_lab/msys/`. Injection Lab resolves it through the
+  manifest rather than storing the toolchain inside the repository.
 - `pcsx2_user_gamesettings`, `pcsx2_user_inputprofiles`,
   `pcsx2_user_inputrecordings`, and `pcsx2_user_memcards`: the corresponding
   user-state children used only by user-owned actualization. The PCSX2 INI is
@@ -139,8 +147,7 @@ iso = PROJECT_PATHS.file("na2_iso")
 
 Do not copy resolved absolute paths into scripts, logs, profiles, or documentation.
 
-The ignored repository-root `source`, `pcsx2`, and `utils` symlinks are human
-convenience links to the corresponding parent-level directories and are the
-local bindings for `@source`, `@pcsx2_user`, and `@utils`. A fresh checkout must
-recreate them before loading the manifest. The `pcsx2` link still points to a
-protected user installation and grants agents no access.
+Shared media, analysis, tools, and PCSX2 roots resolve directly into the
+sibling `UN Workshop/` tree. No repository-root convenience symlinks are
+required. The stable PCSX2 binding remains protected and grants agents no
+additional access.

@@ -21,8 +21,9 @@ if not INJECTION_BASE < CODE_BASE < CODE_END <= INJECTION_END:
     raise RuntimeError("Invalid NA2 development injection code bank")
 if not 0 < BUILD_ID <= 0xFFFFFFFF:
     raise RuntimeError("NA2_INJECTION_BUILD_ID must be a nonzero 32-bit value")
-PS2DEV = os.path.abspath("msys/1.0/local/ps2dev/ee/bin")
-PS2SDK = os.path.abspath("msys/1.0/local/ps2dev/ps2sdk/bin")
+MSYS_ROOT = os.environ.get("NA2_INJECTION_MSYS", "msys")
+PS2DEV = os.path.abspath(os.path.join(MSYS_ROOT, "1.0/local/ps2dev/ee/bin"))
+PS2SDK = os.path.abspath(os.path.join(MSYS_ROOT, "1.0/local/ps2dev/ps2sdk/bin"))
 OBJ_DIR = "obj"
 BUILD_DIR = "build"
 

@@ -416,6 +416,7 @@ $oldEnvironment = @{
     NA2_INJECTION_CODE_BASE = $env:NA2_INJECTION_CODE_BASE
     NA2_INJECTION_CODE_END = $env:NA2_INJECTION_CODE_END
     NA2_INJECTION_BUILD_ID = $env:NA2_INJECTION_BUILD_ID
+    NA2_INJECTION_MSYS = $env:NA2_INJECTION_MSYS
 }
 $env:NA2_INJECTION_CRC = [string]$identity.CRC
 $env:NA2_INJECTION_BASE = ('0x{0:X8}' -f $injectionBase)
@@ -423,6 +424,7 @@ $env:NA2_INJECTION_END = ('0x{0:X8}' -f $injectionEnd)
 $env:NA2_INJECTION_CODE_BASE = ('0x{0:X8}' -f $codeBase)
 $env:NA2_INJECTION_CODE_END = ('0x{0:X8}' -f $codeEnd)
 $env:NA2_INJECTION_BUILD_ID = ('0x{0:X8}' -f $buildId)
+$env:NA2_INJECTION_MSYS = [string]$projectPaths.ps2_msys
 Push-Location $labRoot
 try {
     if ($productionMode) {

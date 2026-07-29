@@ -23,6 +23,7 @@ from na2_patcher.payload_builder.operations import (
     PayloadFragment,
     PayloadRelocation,
 )
+from na2_patcher.project_paths import load_project_paths
 
 
 EM_MIPS = 8
@@ -116,15 +117,13 @@ class _Relocation:
 
 
 def default_toolchain_bin(repository_root: Path) -> Path:
-    return (
-        repository_root
-        / "injection_lab"
-        / "msys"
-        / "1.0"
-        / "local"
-        / "ps2dev"
-        / "ee"
-        / "bin"
+    return load_project_paths(repository_root).path(
+        "ps2_msys",
+        "1.0",
+        "local",
+        "ps2dev",
+        "ee",
+        "bin",
     )
 
 

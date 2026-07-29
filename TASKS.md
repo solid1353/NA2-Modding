@@ -48,8 +48,6 @@
 
 ## Archive
 
-### [Localization](docs/workstreams/localization/README.md)
-
 ### [UI Translation](docs/workstreams/ui_translation/README.md)
 
 ### [String Translation](docs/workstreams/string_translation/README.md)

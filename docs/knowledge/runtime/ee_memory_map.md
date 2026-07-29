@@ -413,11 +413,10 @@ This was a lifecycle conflict, not a different Font ABI or bad C compilation:
 - the first invalid access began only after production reused the dispatcher
   in the still-running generic session.
 
-`test.ps1 -Remove` now records the clean words guarded by the removed mode.
-Before another installation it reads those addresses through PINE and refuses
-to continue until a clean Current restart restores them. Mode changes therefore
-cannot rely on the user noticing a restart message, and loading a stale
-savestate cannot falsely satisfy the boundary.
+This remains a known manual-development hazard, but the user explicitly
+rejected enforced runtime-state validation in Injection Lab. The maintained
+tool therefore permits direct mode and entry changes; a clean restart remains
+available when the operator wants to clear previously applied PNACH writes.
 
 ## Safe-use constraints
 

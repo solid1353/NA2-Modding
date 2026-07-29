@@ -192,13 +192,11 @@ In VS Code, run `Tasks: Run Task` and choose
 Stop its dedicated terminal with Ctrl+C. The task does not start automatically
 when the repository opens and does not guess an entry.
 
-The first successful dispatcher installation still requires one clean Current
-restart. Later successful rebuilds of the same selected source/entry alternate
-banks and explicitly reload patches through PINE. Run only one watcher at a
-time. Stop it and run `test.ps1 -Remove` before switching between generic and
-production mode, or between production entries. Watcher success has the same
-narrow development meaning as a manual hot reload; it is not release or
-runtime acceptance.
+Successful rebuilds alternate banks and explicitly reload patches through
+PINE. Stop one watcher before starting another; the lab does not enforce a
+restart or cleanup boundary when switching modes or production entries.
+Watcher success has the same narrow development meaning as a manual hot
+reload; it is not release or runtime acceptance.
 
 To compile and validate without installing:
 
@@ -220,29 +218,19 @@ To remove the test and restore any pre-existing regular PNACH:
 .\injection_lab\test.ps1 -Remove
 ```
 
-The installer records and temporarily replaces only the exact CRC alias. After
-the first guarded install, later builds truncate and rewrite that same regular
-file, then requests the explicit PINE reload. It refuses refresh or cleanup if
-another process or user changed the installed PNACH. Removal restores the
-previous file or managed symbolic link, including its relative target.
+The installer records and temporarily replaces the exact CRC alias. Later
+builds directly rewrite that regular file and request the explicit PINE
+reload. Removal deletes the current lab PNACH and restores the previous file
+or managed symbolic link, including its relative target. It does not compare
+file hashes or inspect EE memory.
 
-Already-applied memory writes remain until Current is restarted. Removal
-therefore records the exact clean runtime words for the removed hook. Before
-any later lab installation, `test.ps1` reads those words through PINE and
-refuses to proceed until a clean Current restart is proven. This prevents a
-stale generic per-frame hook from calling a newly selected production entry,
-and prevents a stale production redirect from surviving into generic mode.
-If another maintained development step appended trial lines to the installed
-PNACH, removal recognizes the recorded lab header, preserves that exact changed
-file under ignored `injection_lab/build/`, and still restores the pre-lab
-state. It continues refusing files whose identity no longer matches the
-recorded lab installation.
+Already-applied memory writes remain until Current is restarted. The lab does
+not enforce that restart.
 
 While the install record identifies a regular file inside the PCSX2 cheats
 directory, normal `na2` actualization preserves the file instead of replacing
-it with the canonical cheat symlink. Integrity enforcement remains local to
-the lab's install, refresh, removal, and restart-verification commands; it
-never becomes a launch gate. Without a valid install record, regular files at
+it with the canonical cheat symlink. The lab state never becomes a launch
+gate. Without a valid install record, regular files at
 NA2.28-managed CRC aliases are treated as orphaned lab artifacts and repaired
 to canonical symlinks, or removed when the canonical PNACH is empty. Corrupt
 or stale lab state is ignored by actualization, while unrelated game

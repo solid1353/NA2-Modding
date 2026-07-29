@@ -26,6 +26,12 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - Never infer the user's desired action, authorization, classification,
   cleanup, rollback, or final state from complaints, context, or agent
   proposals. Perform only the requested change and unavoidable prerequisites.
+- Keep disposable development tools to the simplest workflow that performs the
+  requested function. Add only validation required to make that function work;
+  optional guards, backups, recovery state, identity/hash enforcement, cleanup
+  commands, restart requirements, or other workflow-blocking safeguards require
+  explicit user authorization. If an unsolicited safeguard causes a failure,
+  remove or simplify it; never repair it by adding another safeguard layer.
 - For a selected task, only read-only inspection is allowed before plan
   approval. `approved`, `qwe`, or its same-key keyboard-layout equivalent
   approves the current plan, including when used in a longer message.

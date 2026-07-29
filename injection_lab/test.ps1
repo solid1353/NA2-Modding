@@ -827,19 +827,20 @@ $effectivePinePort = Get-InjectionLabPinePort `
     -ExplicitPort $PinePort
 $target = Join-Path $cheatsDirectory ([string]$identity.PnachName)
 
+$existing = Get-Item -LiteralPath $target -Force -ErrorAction SilentlyContinue
+if ($existing) {
+    if ([string]$existing.LinkType -ceq 'SymbolicLink') {
+        Remove-Item -LiteralPath $target -Force
+    }
+    elseif ($existing.PSIsContainer) {
+        throw "Refusing to replace a directory at the PNACH path: $target"
+    }
+}
+
 if (Test-Path -LiteralPath $statePath) {
     $state = Get-Content -Raw -LiteralPath $statePath | ConvertFrom-Json
 }
 else {
-    $existing = Get-Item -LiteralPath $target -Force -ErrorAction SilentlyContinue
-    if ($existing) {
-        if ([string]$existing.LinkType -ceq 'SymbolicLink') {
-            Remove-Item -LiteralPath $target -Force
-        }
-        elseif ($existing.PSIsContainer) {
-            throw "Refusing to replace a directory at the PNACH path: $target"
-        }
-    }
     $state = [pscustomobject]@{
         target = $target
         current_crc = [string]$identity.CRC

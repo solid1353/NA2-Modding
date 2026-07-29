@@ -70,6 +70,8 @@
   narrowly, and confronts the offending task with the exact violated rule and
   required behavior. It does not silently absorb reports or become a general
   implementation, coordination, or task-management channel.
+- After every `sin` report, it adjusts the live policies with a narrow durable
+  correction or strengthening based on that report.
 - Every confirmed-violation confrontation tells the offending task exactly:
   `YOU'RE UNDER ARREST.`
 

@@ -122,10 +122,10 @@ requirements, not whatever implementation happens to exist today.
 
 ## User PCSX2 and agent runtimes
 
-- `@pcsx2_stable` is the user's protected stable installation. Agents may read
-  and copy from it but never create, modify, move, delete, link, launch,
-  control, or write through hardlinks into it, except for an ISO launch
-  explicitly requested by the user.
+- `@pcsx2_dev` and `@pcsx2_stable` are the user's protected read-only
+  installations. Agents may read and copy from them but never create, modify,
+  move, delete, link, launch, control, or write through hardlinks into either
+  installation, except for an ISO launch explicitly requested by the user.
 - When the user explicitly asks to launch an ISO, use `@pcsx2_dev` by default;
   use `@pcsx2_stable` only when the user requests stable or the exact task is an
   approved stable compatibility/release check. Do not substitute an isolated

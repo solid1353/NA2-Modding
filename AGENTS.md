@@ -91,9 +91,11 @@ Detailed command and task behavior is in
   preserve unrelated work, and stage only intended changes.
 - Commit and push every completed change automatically with the authoring
   agent's identity; Git never requires separate approval.
-- Treat `@source/` and `@pcsx2_stable` as protected read-only resources unless
-  the user explicitly authorizes a specific source change. Agents never launch
-  or control the user PCSX2 process.
+- Treat `@source/` as protected read-only unless the user explicitly authorizes
+  a specific source change. Treat both `@pcsx2_dev` and `@pcsx2_stable` as
+  protected read-only user installations. Only an ISO launch explicitly
+  requested by the user permits executing either installation; it never
+  authorizes modifying it or otherwise controlling the user PCSX2 process.
 - Never change binary files manually; all binary changes go through scripts.
 - Run every shell, filesystem, script, and Git command elevated from the first
   attempt. On permission failure, retry the exact operation elevated.

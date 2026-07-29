@@ -189,9 +189,13 @@ Current's `228.BIN`. Keep a JSON plan under `work/<task>/`:
 ```
 
 `entry_symbol` may be a canonical static fragment such as an ABI shim. The
-adapter selects its transitive static/C fragment closure, links that closure
-into the inactive lab bank, and resolves only remaining imports from the exact
-Current symbol map. Selecting the internal C implementation instead of the
+adapter selects its transitive static/C fragment closure, links new or changed
+fragments into the inactive lab bank, and resolves byte-identical resident
+dependencies from the exact Current symbol map. The selected entry always
+remains bank-linked. This preserves one identity for established shared state
+and callbacks while still hot-reloading the selected entry and every changed
+dependency. The generated manifest lists resident dependencies in
+`current_imports`. Selecting the internal C implementation instead of the
 caller-compatible static shim is ABI-wrong.
 
 Each write is resolved before generation and checked for overlap. At runtime
@@ -276,6 +280,19 @@ PINE. Stop one watcher before starting another; the lab does not enforce a
 restart or cleanup boundary when switching modes or production entries.
 Watcher success has the same narrow development meaning as a manual hot
 reload; it is not release or runtime acceptance.
+
+The custom development PCSX2 also exposes parameterless PINE opcode `0x11`.
+It queues the emulator's native screenshot operation on the GS thread and
+returns success immediately; PCSX2 writes the PNG asynchronously into that
+worker clone's configured `snaps` directory. It does not create a savestate,
+expose a window, or inject game input. Invoke it with:
+
+```powershell
+.\injection_lab\screenshot.ps1 -PinePort <worker-port>
+```
+
+The raw request is `05 00 00 00 11`; success is
+`05 00 00 00 00`. The caller may poll `snaps` for a new stabilized PNG.
 
 To compile and validate without installing:
 

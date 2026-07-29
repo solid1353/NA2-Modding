@@ -454,6 +454,8 @@ def select_fragment_closure(
     entry_symbol: str,
     c_fragments: list[PayloadFragment],
     mappings: list[tuple[int, str, str]],
+    symbol_map: dict[str, dict[str, object]],
+    current_payload: bytes,
 ) -> tuple[list[PayloadFragment], set[str]]:
     c_orders = {
         fragment_id: order
@@ -477,6 +479,57 @@ def select_fragment_closure(
 
     selected: set[str] = set()
     external_symbols: set[str] = set()
+    current_match_cache: dict[str, bool] = {}
+
+    def matches_current(symbol: str, active: set[str] | None = None) -> bool:
+        if symbol == entry_symbol:
+            return False
+        cached = current_match_cache.get(symbol)
+        if cached is not None:
+            return cached
+        active = set() if active is None else active
+        if symbol in active:
+            return False
+        active.add(symbol)
+        fragment = catalog[symbol][2]
+        row = symbol_map.get(fragment.symbol)
+        if (
+            row is None
+            or row["kind"] != fragment.kind
+            or int(row["size"]) != len(fragment.payload)
+        ):
+            active.remove(symbol)
+            current_match_cache[symbol] = False
+            return False
+        resolved = bytearray(fragment.payload)
+        for relocation in fragment.relocations:
+            target_row = symbol_map.get(relocation.symbol)
+            if target_row is None:
+                active.remove(symbol)
+                current_match_cache[symbol] = False
+                return False
+            replacement = encode_symbol_reference(
+                relocation.kind,
+                int(target_row["address"]) + relocation.addend,
+            )
+            end = relocation.offset + len(replacement)
+            if relocation.offset < 0 or end > len(resolved):
+                raise ValueError(
+                    f"{fragment.symbol}: relocation exceeds its fragment"
+                )
+            resolved[relocation.offset:end] = replacement
+        offset = int(row["offset"])
+        matches = (
+            bytes(resolved) == current_payload[offset : offset + len(resolved)]
+            and all(
+                relocation.symbol not in catalog
+                or matches_current(relocation.symbol, active)
+                for relocation in fragment.relocations
+            )
+        )
+        active.remove(symbol)
+        current_match_cache[symbol] = matches
+        return matches
 
     def visit(symbol: str) -> None:
         if symbol in selected:
@@ -485,7 +538,10 @@ def select_fragment_closure(
         fragment = catalog[symbol][2]
         for relocation in fragment.relocations:
             if relocation.symbol in catalog:
-                visit(relocation.symbol)
+                if matches_current(relocation.symbol):
+                    external_symbols.add(relocation.symbol)
+                else:
+                    visit(relocation.symbol)
             else:
                 external_symbols.add(relocation.symbol)
 
@@ -583,7 +639,11 @@ def main() -> int:
         source_id, source_path, namespace, imports, mappings
     )
     fragments, external_symbols = select_fragment_closure(
-        entry_symbol, compiled_c_fragments, mappings
+        entry_symbol,
+        compiled_c_fragments,
+        mappings,
+        symbol_map,
+        payload,
     )
     entry_fragment = next(
         fragment for fragment in fragments if fragment.symbol == entry_symbol
@@ -699,7 +759,9 @@ def main() -> int:
         "used_end": f"0x{code_base + len(image):08X}",
         "used_bytes": len(image),
         "fragment_count": len(fragments),
+        "bank_fragments": [fragment.symbol for fragment in fragments],
         "import_count": len(external_symbols),
+        "current_imports": sorted(external_symbols),
         "overlay_plan": (
             overlay_plan_path.relative_to(REPOSITORY).as_posix()
             if overlay_plan_path is not None

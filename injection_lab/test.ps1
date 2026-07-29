@@ -35,6 +35,7 @@ $expectedHook = [byte[]](
     0x00, 0x00, 0x00, 0x00
 )
 $overlayPlanPath = $null
+$overlayPlanEntries = @()
 if ($OverlayPlan) {
     $overlayPlanPath = if ([IO.Path]::IsPathRooted($OverlayPlan)) {
         [IO.Path]::GetFullPath($OverlayPlan)
@@ -57,9 +58,17 @@ if ($OverlayPlan) {
     }
     $plan = Get-Content -Raw -LiteralPath $overlayPlanPath | ConvertFrom-Json
     $planSource = [string]$plan.source_id
-    $planEntry = [string]$plan.entry_symbol
+    if ([int]$plan.schema_version -eq 2) {
+        $overlayPlanEntries = @(
+            $plan.entry_symbols | ForEach-Object { [string]$_.symbol }
+        )
+    }
+    else {
+        $overlayPlanEntries = @([string]$plan.entry_symbol)
+    }
+    $planEntry = [string]$overlayPlanEntries[0]
     if (-not $planSource -or -not $planEntry) {
-        throw 'OverlayPlan must declare source_id and entry_symbol.'
+        throw 'OverlayPlan must declare source_id and at least one entry.'
     }
     if ($ProductionSource -and $ProductionSource -cne $planSource) {
         throw 'ProductionSource does not match OverlayPlan source_id.'
@@ -515,6 +524,19 @@ if ($productionMode) {
         [string]$manifest.entry_symbol -cne $ProductionEntry) {
         throw 'Production adapter manifest does not match the requested source/entry.'
     }
+    if ($overlayPlanPath) {
+        $manifestEntries = @(
+            $manifest.entry_symbols | ForEach-Object { [string]$_.symbol }
+        )
+        if ($manifestEntries.Count -ne $overlayPlanEntries.Count) {
+            throw 'Production adapter manifest entry count differs from OverlayPlan.'
+        }
+        for ($index = 0; $index -lt $overlayPlanEntries.Count; $index++) {
+            if ($manifestEntries[$index] -cne $overlayPlanEntries[$index]) {
+                throw 'Production adapter manifest entries differ from OverlayPlan.'
+            }
+        }
+    }
     $manifestPayloadHash = [string]$manifest.payload_sha256
     $actualPayloadHash = Get-Sha256 (Join-Path $inputDirectory '228.BIN')
     if ($manifestPayloadHash -cne $actualPayloadHash) {
@@ -552,6 +574,56 @@ if ($productionMode) {
         ([string]$manifest.entry_bank_address).Substring(2),
         16
     )
+    $manifestEntryRows = @($manifest.entry_symbols)
+    if ($manifestEntryRows.Count -lt 1) {
+        throw 'Production adapter manifest contains no entry symbols.'
+    }
+    $dispatcherRanges = @{}
+    foreach ($entryRow in $manifestEntryRows) {
+        $entryDispatcher = [Convert]::ToUInt32(
+            ([string]$entryRow.dispatcher_address).Substring(2),
+            16
+        )
+        $entryPointer = [Convert]::ToUInt32(
+            ([string]$entryRow.active_pointer_address).Substring(2),
+            16
+        )
+        $entryBank = [Convert]::ToUInt32(
+            ([string]$entryRow.bank_address).Substring(2),
+            16
+        )
+        if ($entryDispatcher -lt $injectionBase -or
+            $entryDispatcher + 0x14 -gt $codeAreaBase -or
+            $entryPointer -ne $entryDispatcher + 0x10 -or
+            $dispatcherRanges.ContainsKey($entryDispatcher)) {
+            throw 'Production adapter manifest contains invalid dispatcher slots.'
+        }
+        if ($entryBank -lt $codeBase -or $entryBank -ge $codeEnd) {
+            throw 'Production adapter manifest entry lies outside the selected bank.'
+        }
+        $dispatcherRanges[$entryDispatcher] = [pscustomobject]@{
+            Dispatcher = [uint32]$entryDispatcher
+            Pointer = [uint32]$entryPointer
+            Bank = [uint32]$entryBank
+        }
+    }
+    $primaryEntryDispatcher = [Convert]::ToUInt32(
+        ([string]$manifestEntryRows[0].dispatcher_address).Substring(2),
+        16
+    )
+    $primaryEntryPointer = [Convert]::ToUInt32(
+        ([string]$manifestEntryRows[0].active_pointer_address).Substring(2),
+        16
+    )
+    $primaryEntryBank = [Convert]::ToUInt32(
+        ([string]$manifestEntryRows[0].bank_address).Substring(2),
+        16
+    )
+    if ($primaryEntryDispatcher -ne $dispatcherRuntimeAddress -or
+        $primaryEntryPointer -ne $activeTargetRuntimeAddress -or
+        $primaryEntryBank -ne $bankEntryAddress) {
+        throw 'Production adapter manifest primary entry fields disagree.'
+    }
     $usedEnd = [Convert]::ToUInt32(
         ([string]$manifest.used_end).Substring(2),
         16
@@ -616,25 +688,29 @@ if ($productionMode) {
         }
     }
     $expectedDispatcher = @(
-        [pscustomobject]@{
-            Address = $dispatcherRuntimeAddress
-            Value = [Convert]::ToUInt32('3C19008F', 16)
-        }
-        [pscustomobject]@{
-            Address = [uint32]($dispatcherRuntimeAddress + 4)
-            Value = [Convert]::ToUInt32('8F390010', 16)
-        }
-        [pscustomobject]@{
-            Address = [uint32]($dispatcherRuntimeAddress + 8)
-            Value = [Convert]::ToUInt32('03200008', 16)
-        }
-        [pscustomobject]@{
-            Address = [uint32]($dispatcherRuntimeAddress + 12)
-            Value = [uint32]0
-        }
-        [pscustomobject]@{
-            Address = $activeTargetRuntimeAddress
-            Value = $bankEntryAddress
+        foreach ($slot in $dispatcherRanges.Values) {
+            $pointerHi = [uint32](($slot.Pointer + 0x8000) -shr 16)
+            $pointerLo = [uint32]($slot.Pointer -band 0xFFFF)
+            [pscustomobject]@{
+                Address = $slot.Dispatcher
+                Value = [uint32](0x3C190000 -bor $pointerHi)
+            }
+            [pscustomobject]@{
+                Address = [uint32]($slot.Dispatcher + 4)
+                Value = [uint32](0x8F390000 -bor $pointerLo)
+            }
+            [pscustomobject]@{
+                Address = [uint32]($slot.Dispatcher + 8)
+                Value = [Convert]::ToUInt32('03200008', 16)
+            }
+            [pscustomobject]@{
+                Address = [uint32]($slot.Dispatcher + 12)
+                Value = [uint32]0
+            }
+            [pscustomobject]@{
+                Address = $slot.Pointer
+                Value = $slot.Bank
+            }
         }
     )
     foreach ($entry in $expectedDispatcher) {

@@ -54,7 +54,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Compile one canonical runtime-injector C source into an Injection "
-            "Lab bank and redirect one production entry through the lab dispatcher."
+            "Lab bank and redirect selected production entries."
         )
     )
     parser.add_argument("--source-id", required=True)
@@ -110,10 +110,14 @@ def load_overlay_plan(
     *,
     source_id: str,
     entry_symbol: str,
-    dispatcher: int,
-) -> tuple[Path | None, dict[str, object] | None, list[dict[str, object]]]:
+) -> tuple[
+    Path | None,
+    dict[str, object] | None,
+    list[dict[str, str]],
+    list[dict[str, object]],
+]:
     if value is None:
-        return None, None, []
+        return None, None, [], []
     plan_path = Path(value)
     if not plan_path.is_absolute():
         plan_path = REPOSITORY / plan_path
@@ -128,31 +132,85 @@ def load_overlay_plan(
     raw = json.loads(plan_path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise ValueError("Overlay plan root must be a JSON object")
-    expected_fields = {
-        "schema_version",
-        "source_id",
-        "entry_symbol",
-        "abi",
-        "purpose",
-        "writes",
-    }
+    version = raw.get("schema_version")
+    expected_fields = (
+        {
+            "schema_version",
+            "source_id",
+            "entry_symbol",
+            "abi",
+            "purpose",
+            "writes",
+        }
+        if version == 1
+        else {
+            "schema_version",
+            "source_id",
+            "entry_symbols",
+            "purpose",
+            "writes",
+        }
+    )
     if set(raw) != expected_fields:
         raise ValueError(
             "Overlay plan fields differ: "
             f"missing={sorted(expected_fields - set(raw))}, "
             f"extra={sorted(set(raw) - expected_fields)}"
         )
-    if raw["schema_version"] != 1:
-        raise ValueError("Overlay plan schema_version must be 1")
-    if raw["source_id"] != source_id or raw["entry_symbol"] != entry_symbol:
-        raise ValueError("Overlay plan source_id/entry_symbol does not match selection")
-    identifier(str(raw["abi"]), "overlay plan abi")
+    if version not in (1, 2):
+        raise ValueError("Overlay plan schema_version must be 1 or 2")
+    if raw["source_id"] != source_id:
+        raise ValueError("Overlay plan source_id does not match selection")
     if not isinstance(raw["purpose"], str) or not raw["purpose"].strip():
         raise ValueError("Overlay plan purpose must be non-empty text")
     if not isinstance(raw["writes"], list) or not raw["writes"]:
         raise ValueError("Overlay plan writes must be a non-empty array")
 
-    resolved: list[dict[str, object]] = []
+    if version == 1:
+        selected_symbol = identifier(
+            str(raw["entry_symbol"]), "overlay plan entry_symbol"
+        )
+        if selected_symbol != entry_symbol:
+            raise ValueError("Overlay plan entry_symbol does not match selection")
+        entries = [
+            {
+                "symbol": selected_symbol,
+                "abi": identifier(str(raw["abi"]), "overlay plan abi"),
+                "purpose": str(raw["purpose"]).strip(),
+            }
+        ]
+    else:
+        raw_entries = raw["entry_symbols"]
+        if not isinstance(raw_entries, list) or not raw_entries:
+            raise ValueError(
+                "Overlay plan entry_symbols must be a non-empty array"
+            )
+        entries: list[dict[str, str]] = []
+        seen_symbols: set[str] = set()
+        for index, item in enumerate(raw_entries, 1):
+            label = f"overlay plan entry_symbols[{index}]"
+            if not isinstance(item, dict) or set(item) != {"symbol", "abi"}:
+                raise ValueError(
+                    f"{label}: expected only symbol and abi"
+                )
+            symbol = identifier(str(item["symbol"]), f"{label} symbol")
+            if symbol in seen_symbols:
+                raise ValueError(f"{label}: duplicate symbol {symbol!r}")
+            seen_symbols.add(symbol)
+            entries.append(
+                {
+                    "symbol": symbol,
+                    "abi": identifier(str(item["abi"]), f"{label} abi"),
+                    "purpose": str(raw["purpose"]).strip(),
+                }
+            )
+        if entries[0]["symbol"] != entry_symbol:
+            raise ValueError(
+                "Overlay plan first entry_symbols item does not match selection"
+            )
+
+    selected_symbols = {entry["symbol"] for entry in entries}
+    unresolved: list[dict[str, object]] = []
     seen_ids: set[str] = set()
     occupied: list[tuple[int, int]] = []
     for index, item in enumerate(raw["writes"], 1):
@@ -190,10 +248,25 @@ def load_overlay_plan(
                 raise ValueError(
                     f"{label}: entry_call requires exactly eight expected bytes"
                 )
-            replacement = (
-                encode_symbol_reference("jal26", dispatcher)
-                + bytes(4)
+            replacement_kind = "entry_call"
+            replacement_symbol = None
+            replacement = bytes(8)
+        elif kind == "symbol_call":
+            if set(replacement_spec) != {"kind", "symbol"} or len(expected) != 8:
+                raise ValueError(
+                    f"{label}: symbol_call requires symbol and exactly eight "
+                    "expected bytes"
+                )
+            replacement_symbol = identifier(
+                str(replacement_spec["symbol"]), f"{label} replacement symbol"
             )
+            if replacement_symbol not in selected_symbols:
+                raise ValueError(
+                    f"{label}: symbol_call target {replacement_symbol!r} is "
+                    "not selected by entry_symbols"
+                )
+            replacement_kind = "symbol_call"
+            replacement = bytes(8)
         elif kind == "bytes":
             if set(replacement_spec) != {"kind", "hex"}:
                 raise ValueError(
@@ -202,8 +275,13 @@ def load_overlay_plan(
             replacement = hex_bytes(
                 str(replacement_spec["hex"]), f"{label} replacement hex"
             )
+            replacement_kind = "bytes"
+            replacement_symbol = None
         else:
-            raise ValueError(f"{label}: replacement kind must be entry_call or bytes")
+            raise ValueError(
+                f"{label}: replacement kind must be entry_call, symbol_call, "
+                "or bytes"
+            )
         if len(replacement) != len(expected):
             raise ValueError(f"{label}: replacement length differs from expected")
         end = address + len(expected)
@@ -215,16 +293,51 @@ def load_overlay_plan(
         occupied.append((address, end))
         if not isinstance(item["reason"], str) or not item["reason"].strip():
             raise ValueError(f"{label}: reason must be non-empty text")
-        resolved.append(
+        unresolved.append(
             {
                 "id": write_id,
                 "runtime_address": f"0x{address:08X}",
                 "expected_hex": expected.hex().upper(),
                 "replacement_hex": replacement.hex().upper(),
+                "replacement_kind": replacement_kind,
+                "replacement_symbol": replacement_symbol,
                 "reason": item["reason"].strip(),
             }
         )
-    return plan_path, raw, resolved
+    return plan_path, raw, entries, unresolved
+
+
+def resolve_overlay_writes(
+    writes: list[dict[str, object]],
+    *,
+    dispatcher_addresses: dict[str, int],
+    primary_dispatcher: int,
+) -> list[dict[str, object]]:
+    resolved: list[dict[str, object]] = []
+    for row in writes:
+        kind = str(row["replacement_kind"])
+        if kind == "entry_call":
+            replacement = (
+                encode_symbol_reference("jal26", primary_dispatcher) + bytes(4)
+            )
+        elif kind == "symbol_call":
+            symbol = str(row["replacement_symbol"])
+            replacement = (
+                encode_symbol_reference("jal26", dispatcher_addresses[symbol])
+                + bytes(4)
+            )
+        else:
+            replacement = bytes.fromhex(str(row["replacement_hex"]))
+        resolved.append(
+            {
+                "id": row["id"],
+                "runtime_address": row["runtime_address"],
+                "expected_hex": row["expected_hex"],
+                "replacement_hex": replacement.hex().upper(),
+                "reason": row["reason"],
+            }
+        )
+    return resolved
 
 
 def sha256(data: bytes) -> str:
@@ -369,18 +482,10 @@ def load_source(
     return source_path, namespace, imports, mappings
 
 
-def load_entry(
+def load_declared_entry(
     source_id: str,
     entry_symbol: str,
-    overlay_plan: dict[str, object] | None,
 ) -> dict[str, str]:
-    if overlay_plan is not None:
-        return {
-            "source_id": source_id,
-            "entry_symbol": entry_symbol,
-            "abi": str(overlay_plan["abi"]),
-            "purpose": str(overlay_plan["purpose"]).strip(),
-        }
     entries = read_tsv(LAB_ROOT / "production_entries.tsv", ENTRY_FIELDS)
     selected = [
         row
@@ -396,7 +501,11 @@ def load_entry(
     identifier(entry["abi"], "production_entries.tsv abi")
     if not entry["purpose"]:
         raise ValueError("production_entries.tsv purpose must not be empty")
-    return entry
+    return {
+        "symbol": entry["entry_symbol"],
+        "abi": entry["abi"],
+        "purpose": entry["purpose"],
+    }
 
 
 def compile_fragments(
@@ -451,7 +560,7 @@ def compile_fragments(
 
 
 def select_fragment_closure(
-    entry_symbol: str,
+    entry_symbols: list[str],
     c_fragments: list[PayloadFragment],
     mappings: list[tuple[int, str, str]],
     symbol_map: dict[str, dict[str, object]],
@@ -472,17 +581,19 @@ def select_fragment_closure(
                 f"Duplicate canonical fragment symbol {fragment.symbol!r}"
             )
         catalog[fragment.symbol] = (order, line, fragment)
-    if entry_symbol not in catalog:
-        raise ValueError(
-            f"Entry {entry_symbol!r} is not a canonical runtime-injector fragment"
-        )
+    for entry_symbol in entry_symbols:
+        if entry_symbol not in catalog:
+            raise ValueError(
+                f"Entry {entry_symbol!r} is not a canonical runtime-injector fragment"
+            )
 
+    root_symbols = set(entry_symbols)
     selected: set[str] = set()
     external_symbols: set[str] = set()
     current_match_cache: dict[str, bool] = {}
 
     def matches_current(symbol: str, active: set[str] | None = None) -> bool:
-        if symbol == entry_symbol:
+        if symbol in root_symbols:
             return False
         cached = current_match_cache.get(symbol)
         if cached is not None:
@@ -545,7 +656,8 @@ def select_fragment_closure(
             else:
                 external_symbols.add(relocation.symbol)
 
-    visit(entry_symbol)
+    for entry_symbol in entry_symbols:
+        visit(entry_symbol)
     ordered = sorted(
         (catalog[symbol] for symbol in selected),
         key=lambda item: (item[0], item[1], item[2].symbol),
@@ -616,13 +728,17 @@ def main() -> int:
     build_id = environment_int("NA2_INJECTION_BUILD_ID")
     if not injection_base < code_base < code_end <= injection_end:
         raise ValueError("Invalid Injection Lab bank reservation")
-    dispatcher = injection_base
-    active_pointer = injection_base + 0x10
-    overlay_plan_path, overlay_plan, overlay_writes = load_overlay_plan(
+    primary_dispatcher = injection_base
+    primary_active_pointer = injection_base + 0x10
+    (
+        overlay_plan_path,
+        overlay_plan,
+        overlay_entries,
+        unresolved_overlay_writes,
+    ) = load_overlay_plan(
         args.overlay_plan,
         source_id=source_id,
         entry_symbol=entry_symbol,
-        dispatcher=dispatcher,
     )
 
     payload_path = LAB_ROOT / "data" / "FILES" / "228.BIN"
@@ -634,22 +750,33 @@ def main() -> int:
         raise ValueError("Matching build record has an unexpected 228.BIN load base")
 
     source_path, namespace, imports, mappings = load_source(source_id)
-    entry_declaration = load_entry(source_id, entry_symbol, overlay_plan)
+    entry_declarations = (
+        overlay_entries
+        if overlay_plan is not None
+        else [load_declared_entry(source_id, entry_symbol)]
+    )
+    entry_symbols = [entry["symbol"] for entry in entry_declarations]
+    dispatcher_limit = injection_base + 0x100
+    if len(entry_symbols) * 0x20 > dispatcher_limit - injection_base:
+        raise ValueError("Injection Lab supports at most eight selected entries")
+    dispatchers = {
+        symbol: (injection_base + index * 0x20, injection_base + index * 0x20 + 0x10)
+        for index, symbol in enumerate(entry_symbols)
+    }
     compiled_c_fragments = compile_fragments(
         source_id, source_path, namespace, imports, mappings
     )
     fragments, external_symbols = select_fragment_closure(
-        entry_symbol,
+        entry_symbols,
         compiled_c_fragments,
         mappings,
         symbol_map,
         payload,
     )
-    entry_fragment = next(
-        fragment for fragment in fragments if fragment.symbol == entry_symbol
-    )
-    if entry_fragment.kind != "code":
-        raise ValueError(f"Entry {entry_symbol!r} is not executable code")
+    by_symbol = {fragment.symbol: fragment for fragment in fragments}
+    for selected_entry in entry_symbols:
+        if by_symbol[selected_entry].kind != "code":
+            raise ValueError(f"Entry {selected_entry!r} is not executable code")
 
     external_addresses: dict[str, int] = {}
     for symbol in external_symbols:
@@ -665,6 +792,13 @@ def main() -> int:
         code_base=code_base,
         code_end=code_end,
         external_addresses=external_addresses,
+    )
+    overlay_writes = resolve_overlay_writes(
+        unresolved_overlay_writes,
+        dispatcher_addresses={
+            symbol: dispatchers[symbol][0] for symbol in entry_symbols
+        },
+        primary_dispatcher=primary_dispatcher,
     )
     resident_entry = symbol_map.get(entry_symbol)
     resident_address: int | None = None
@@ -683,19 +817,13 @@ def main() -> int:
         resident_offset = int(resident_entry["offset"])
         expected_entry = payload[resident_offset : resident_offset + 8]
 
-    hi = (active_pointer + 0x8000) >> 16
-    lo = active_pointer & 0xFFFF
-    dispatcher_words = (
-        0x3C190000 | hi,
-        0x8F390000 | lo,
-        0x03200008,
-        0,
-    )
     entry_address = addresses[entry_symbol]
     redirect_words = ()
     if resident_address is not None:
         redirect_words = (
-            int.from_bytes(encode_symbol_reference("j26", dispatcher), "little"),
+            int.from_bytes(
+                encode_symbol_reference("j26", primary_dispatcher), "little"
+            ),
             0,
         )
 
@@ -708,7 +836,7 @@ def main() -> int:
         f"// Current 228.BIN SHA-256: {payload_sha256}",
         f"// Build record: {build_record.relative_to(REPOSITORY).as_posix()}",
         f"// Production source: {source_id}",
-        f"// Production entry: {entry_symbol}",
+        f"// Production entries: {', '.join(entry_symbols)}",
         (
             "// Entry redirect: task-owned guarded overlay plan"
             if overlay_plan is not None
@@ -723,10 +851,21 @@ def main() -> int:
     for offset in range(0, len(image), 4):
         value = int.from_bytes(image[offset : offset + 4], "little")
         lines.append(word_patch(code_base + offset, value))
-    lines.extend(("", "; fixed tail dispatcher"))
-    for index, value in enumerate(dispatcher_words):
-        lines.append(word_patch(dispatcher + index * 4, value))
-    lines.append(word_patch(active_pointer, entry_address))
+    lines.extend(("", "; fixed per-entry dispatchers"))
+    for selected_entry in entry_symbols:
+        dispatcher, active_pointer = dispatchers[selected_entry]
+        hi = (active_pointer + 0x8000) >> 16
+        lo = active_pointer & 0xFFFF
+        dispatcher_words = (
+            0x3C190000 | hi,
+            0x8F390000 | lo,
+            0x03200008,
+            0,
+        )
+        lines.append(f"; {selected_entry}")
+        for index, value in enumerate(dispatcher_words):
+            lines.append(word_patch(dispatcher + index * 4, value))
+        lines.append(word_patch(active_pointer, addresses[selected_entry]))
     if resident_address is not None:
         lines.extend(("", "; guarded production resident-entry redirect"))
         for index, value in enumerate(redirect_words):
@@ -742,8 +881,25 @@ def main() -> int:
         "build_record": build_record.relative_to(REPOSITORY).as_posix(),
         "source_id": source_id,
         "entry_symbol": entry_symbol,
-        "entry_abi": entry_declaration["abi"],
-        "entry_purpose": entry_declaration["purpose"],
+        "entry_abi": entry_declarations[0]["abi"],
+        "entry_purpose": entry_declarations[0]["purpose"],
+        "entry_symbols": [
+            {
+                "symbol": selected_entry,
+                "abi": declaration["abi"],
+                "purpose": declaration["purpose"],
+                "bank_address": f"0x{addresses[selected_entry]:08X}",
+                "dispatcher_address": (
+                    f"0x{dispatchers[selected_entry][0]:08X}"
+                ),
+                "active_pointer_address": (
+                    f"0x{dispatchers[selected_entry][1]:08X}"
+                ),
+            }
+            for selected_entry, declaration in zip(
+                entry_symbols, entry_declarations, strict=True
+            )
+        ],
         "redirect_mode": "overlay" if overlay_plan is not None else "resident",
         "entry_resident_address": (
             f"0x{resident_address:08X}"
@@ -752,8 +908,8 @@ def main() -> int:
         ),
         "entry_resident_expected_hex": expected_entry.hex().upper(),
         "entry_bank_address": f"0x{entry_address:08X}",
-        "dispatcher_address": f"0x{dispatcher:08X}",
-        "active_pointer_address": f"0x{active_pointer:08X}",
+        "dispatcher_address": f"0x{primary_dispatcher:08X}",
+        "active_pointer_address": f"0x{primary_active_pointer:08X}",
         "code_base": f"0x{code_base:08X}",
         "code_end": f"0x{code_end:08X}",
         "used_end": f"0x{code_base + len(image):08X}",
@@ -785,7 +941,11 @@ def main() -> int:
         f"Linked {len(fragments)} fragments and {len(external_symbols)} "
         f"Current imports into 0x{code_base:08X}-0x{code_base + len(image):08X}"
     )
-    print(f"Production entry {entry_symbol} -> 0x{entry_address:08X}")
+    for selected_entry in entry_symbols:
+        print(
+            f"Production entry {selected_entry} -> "
+            f"0x{addresses[selected_entry]:08X}"
+        )
     if overlay_plan_path is not None:
         print(
             f"Resolved {len(overlay_writes)} guarded overlay writes from "

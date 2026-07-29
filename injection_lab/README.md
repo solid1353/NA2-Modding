@@ -159,20 +159,29 @@ Current's `228.BIN`. Keep a JSON plan under `work/<task>/`:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "source_id": "font_v2_core",
-  "entry_symbol": "localization.font.v2.command_relationship_adapter",
-  "abi": "command_relationship_native",
-  "purpose": "Test a new Command Chart caller.",
+  "entry_symbols": [
+    {
+      "symbol": "localization.font.v2.command_relationship_adapter",
+      "abi": "command_relationship_native"
+    },
+    {
+      "symbol": "localization.font.v2.command_icon_offset_adapter",
+      "abi": "command_icon_offset_native"
+    }
+  ],
+  "purpose": "Test two new Command Chart callers.",
   "writes": [
     {
       "id": "command_relationship_call",
       "runtime_address": "0x0087A970",
       "expected_hex": "C4080E0C00000000",
       "replacement": {
-        "kind": "entry_call"
+        "kind": "symbol_call",
+        "symbol": "localization.font.v2.command_relationship_adapter"
       },
-      "reason": "Redirect the loaded BTL caller through the lab dispatcher."
+      "reason": "Redirect the loaded BTL caller to its bank-linked ABI shim."
     },
     {
       "id": "command_relationship_suppressed_call",
@@ -183,27 +192,43 @@ Current's `228.BIN`. Keep a JSON plan under `work/<task>/`:
         "hex": "0000000000000000"
       },
       "reason": "Suppress the duplicate loaded BTL call."
+    },
+    {
+      "id": "command_icon_offset_call",
+      "runtime_address": "0x0087A9CC",
+      "expected_hex": "A041023C00008244",
+      "replacement": {
+        "kind": "symbol_call",
+        "symbol": "localization.font.v2.command_icon_offset_adapter"
+      },
+      "reason": "Redirect icon positioning to its separate bank-linked ABI shim."
     }
   ]
 }
 ```
 
-`entry_symbol` may be a canonical static fragment such as an ABI shim. The
-adapter selects its transitive static/C fragment closure, links new or changed
-fragments into the inactive lab bank, and resolves byte-identical resident
-dependencies from the exact Current symbol map. The selected entry always
-remains bank-linked. This preserves one identity for established shared state
-and callbacks while still hot-reloading the selected entry and every changed
-dependency. The generated manifest lists resident dependencies in
-`current_imports`. Selecting the internal C implementation instead of the
+Each `entry_symbols` item names a canonical static or C root and its caller ABI.
+The first item is the primary entry retained in the legacy manifest fields.
+The adapter selects the union of every root's transitive static/C fragment
+closure, links new or changed fragments into one inactive lab bank, and
+resolves byte-identical resident dependencies once from the exact Current
+symbol map. Every selected root remains bank-linked. This preserves one
+identity for established shared state and callbacks while hot-reloading every
+selected entry and changed dependency. The generated manifest records every
+root and bank address in `entry_symbols`, and lists shared resident dependencies
+in `current_imports`. Selecting an internal C implementation instead of its
 caller-compatible static shim is ABI-wrong.
 
 Each write is resolved before generation and checked for overlap. At runtime
 the writer verifies every live expected byte before changing any address,
 applies the caller family once through PINE, and verifies the result.
-`entry_call` emits `jal` to the fixed dispatcher plus `nop`; `bytes` emits the
-exact supplied bytes. These loaded-overlay writes are deliberately not placed
-in the recurring PNACH.
+`symbol_call` emits `jal` to a fixed dispatcher assigned to the named selected
+entry plus `nop`; that dispatcher's pointer alternates with the entry's bank
+address, so guarded caller bytes stay stable across rebuilds. `bytes` emits the
+exact supplied bytes. Existing schema-v1 one-entry plans remain supported:
+their `entry_symbol`/`abi` fields and `entry_call` replacement still route
+through the primary fixed dispatcher. These loaded-overlay writes are
+deliberately not placed in the recurring PNACH.
 
 The script reloads the generated bank PNACH, applies the one-shot overlay
 writes, then reloads again. The project's custom PINE opcode performs the

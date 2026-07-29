@@ -101,9 +101,17 @@ else {
         $plan = Get-Content -Raw -LiteralPath $resolvedOverlayPlan |
             ConvertFrom-Json
         $planSource = [string]$plan.source_id
-        $planEntry = [string]$plan.entry_symbol
+        if ([int]$plan.schema_version -eq 2) {
+            $planEntries = @(
+                $plan.entry_symbols | ForEach-Object { [string]$_.symbol }
+            )
+        }
+        else {
+            $planEntries = @([string]$plan.entry_symbol)
+        }
+        $planEntry = [string]$planEntries[0]
         if (-not $planSource -or -not $planEntry) {
-            throw 'OverlayPlan must declare source_id and entry_symbol.'
+            throw 'OverlayPlan must declare source_id and at least one entry.'
         }
         if ($ProductionEntry -and $ProductionEntry -cne $planEntry) {
             throw 'ProductionEntry does not match OverlayPlan entry_symbol.'

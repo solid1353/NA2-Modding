@@ -153,7 +153,9 @@ try {
         $isoName = [IO.Path]::GetFileName($isoPath)
         Write-Na2Stage "Run $isoName without rebuilding"
         Invoke-Na2Actualization
-        & (Join-Path $projectPaths.pcsx2_scripts 'launch.ps1') -IsoPath $isoPath
+        & $projectPaths.files.pcsx2_launch_command `
+            -Target stable `
+            -IsoPath $isoPath
     }
     else {
         Write-Na2Stage '1/2 Build pinned current profile'
@@ -163,7 +165,8 @@ try {
         }
         Invoke-Na2Actualization
         Write-Na2Stage "2/2 Launch $currentIsoName"
-        & (Join-Path $projectPaths.pcsx2_scripts 'launch.ps1') `
+        & $projectPaths.files.pcsx2_launch_command `
+            -Target stable `
             -IsoPath $projectPaths.files.current_iso
     }
     $runOutcome = 'succeeded'

@@ -127,6 +127,7 @@ try {
     "work": "work"
   },
   "files": {
+    "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
     "actualize_command": "@scripts/actualization/act.ps1",
     "actualize_na2_command": "@scripts/actualization/na2.ps1",
     "actualize_input_command": "@scripts/actualization/input.ps1",
@@ -201,8 +202,8 @@ $result = [pscustomobject]@{ Created = @(); Verified = @() }
 if ($PassThru) { $result }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch.ps1') -Content @'
-param([string]$IsoPath)
-Write-Host "[fake] launch $IsoPath"
+param([string]$Target, [string]$IsoPath)
+Write-Host "[fake] launch $Target $IsoPath"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'build.ps1') -Content @'
 param([switch]$CandidateOnly, [string]$WorkerOutputIso)

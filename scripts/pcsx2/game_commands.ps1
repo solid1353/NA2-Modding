@@ -18,10 +18,11 @@ function Invoke-Na2Pcsx2Game {
         'nun6' { 'nun6_iso' }
     }
 
-    & $projectPaths.files.pcsx2_user_launch_command `
-        -batch `
-        $projectPaths.files.$isoFile `
-        @Arguments
+    & $projectPaths.files.pcsx2_launch_command `
+        -Target stable `
+        -IsoPath $projectPaths.files.$isoFile `
+        -Arguments $Arguments `
+        -Wait
 }
 
 function na2s { Invoke-Na2Pcsx2Game -Game na2s -Arguments $args }

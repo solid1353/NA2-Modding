@@ -171,18 +171,17 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 - `scripts/na2/` contains build/promotion, ISO identity, worker-path validation,
   and focused tests.
 - `@pcsx2_scripts/` contains PCSX2 launch, process, configuration, and CRC
-  helpers. `launch_configured.ps1` contains the shared configured-launch
-  implementation; `launch_user.ps1` and `launch_dev.ps1` are target-specific
-  entrypoints that preserve their respective PCSX2 working directories;
+  helpers. `launch.ps1` is the single configured and worker-PCSX2 launcher;
+  configured launches select `stable` or `dev`, while worker launches select
+  an already-existing task-owned runtime with `-WorkerRoot` and start it
+  hidden. It performs no cloning, configuration, process inspection, PINE
+  operation, savestate handling, capture, cleanup, or termination.
   `game_commands.ps1` defines the manifest-driven `na2s`, `nun3`, `nun5`, and
   `nun6` commands; `move_na2_savestates.ps1` files user savestates under
   `@user_savestates`; and `launch_pair.ps1` is the multi-game launch-and-tile
   backend used by `na`, which accepts any ordered combination of its registered
   ISO selectors. Existing selectors and zero-argument behavior remain
   unchanged.
-  `test_launch.ps1` starts an already-existing workstream PCSX2 copy hidden; it
-  performs no cloning, configuration, process inspection, PINE operation,
-  savestate handling, capture, cleanup, or termination.
 - `na2_patcher/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na2_patcher/build_profile.py` applies that prepared pipeline and writes its run log. `na2_patcher/composer.py` resolves module artifacts and closes typed image operations. `na2_patcher/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Candidate, or worker-owned output.
 - `scripts/media/` contains the recursive source extractor, its byte-parity
   verifier, and focused ISO, AFS, and CVM building blocks. Direct same-size ISO

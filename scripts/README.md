@@ -102,10 +102,11 @@ precedence. It never creates or modifies memory cards.
 hardlinks and refuses differing occupied counterparts.
 Run `act help` or `act -h` for the standalone command summary.
 
-`pcsx2/test_launch.ps1` is the minimal agent-side PCSX2 launcher. It launches an
-already-existing `work/<task title>/pcsx2/pcsx2-qt.exe` copy hidden with a
-repository-relative ISO path. It does not copy or configure PCSX2, inspect or
-stop processes, use PINE, load savestates, capture output, or perform cleanup.
+`pcsx2/launch.ps1` is the single PCSX2 launcher. Configured launches use
+`-Target stable|dev`; agent launches use `-WorkerRoot work/<task title>` and
+start the existing task-owned PCSX2 copy hidden with a repository-relative ISO
+path. The launcher does not copy or configure PCSX2, inspect or stop processes,
+use PINE, load savestates, capture output, or perform cleanup.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`

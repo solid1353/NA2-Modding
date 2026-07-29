@@ -196,7 +196,7 @@ $result = [pscustomobject]@{ Changed = $false }
 if ($PassThru) { $result }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch.ps1') -Content @'
-param([string]$Target, [string]$IsoPath)
+param([string]$Target = 'dev', [string]$IsoPath)
 Write-Host "[fake] launch $Target $IsoPath"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'build.ps1') -Content @'
@@ -256,6 +256,9 @@ else {
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch .+$').Count -eq 3) `
         -Message 'Root dispatch did not launch Current, Previous, and build output exactly once each.'
+    Assert-Na2Test `
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch dev .+$').Count -eq 3) `
+        -Message 'Root dispatch did not preserve the configured development-launch default.'
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: candidate').Count -eq 1) `
         -Message 'Test build did not dispatch exactly once to Candidate.'

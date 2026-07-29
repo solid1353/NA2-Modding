@@ -126,14 +126,16 @@ requirements, not whatever implementation happens to exist today.
   and copy from it but never create, modify, move, delete, link, launch,
   control, or write through hardlinks into it, except for an ISO launch
   explicitly requested by the user.
-- When the user explicitly asks to launch an ISO, launch that ISO through
-  `@pcsx2_stable`; do not substitute an isolated worker PCSX2. That request
-  authorizes only the requested launch, not other user-PCSX2 changes or control.
-- `@pcsx2_stable/sstates/` and `snaps/` are user read-only libraries. Copy chosen
-  inputs with provenance into the task's `inputs/sstates/` or
-  `inputs/screenshots/`. When a workstream needs a savestate that the user has
-  not supplied, stop and ask the user for that exact state; do not create or
-  navigate to a substitute state.
+- When the user explicitly asks to launch an ISO, use `@pcsx2_dev` by default;
+  use `@pcsx2_stable` only when the user requests stable or the exact task is an
+  approved stable compatibility/release check. Do not substitute an isolated
+  worker PCSX2. That request authorizes only the requested launch, not other
+  user-PCSX2 changes or control.
+- `@pcsx2_dev/sstates/`, `@pcsx2_stable/sstates/`, and their `snaps/`
+  directories are user read-only libraries. Copy chosen inputs with provenance
+  into the task's `inputs/sstates/` or `inputs/screenshots/`. When a workstream
+  needs a savestate that the user has not supplied, stop and ask the user for
+  that exact state; do not create or navigate to a substitute state.
 - When PCSX2 is needed, copy the read-only compiled `@pcsx2_clean` template to
   `work/<task title>/pcsx2/`. An agent may copy any shared assets for which it
   has a concrete task- or test-related reason from `@pcsx2_files` into that

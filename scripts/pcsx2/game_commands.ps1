@@ -19,7 +19,6 @@ function Invoke-Na2Pcsx2Game {
     }
 
     & $projectPaths.files.pcsx2_launch_command `
-        -Target stable `
         -IsoPath $projectPaths.files.$isoFile `
         -Arguments $Arguments `
         -Wait

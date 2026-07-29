@@ -18,8 +18,8 @@ history; do not recreate an archive directory for dead scripts.
   build/run-log tests.
 - `pcsx2/`: PCSX2 launch, process, configuration, CRC helpers, the user-facing
   user/development single-instance and multi-game launch commands, the
-  dot-sourced source-game command set, user savestate filing, the minimal
-  hidden workstream-copy launcher, and
+  dot-sourced source-game command set, stable/development savestate filing,
+  the minimal hidden workstream-copy launcher, and
   `patch_savestate_memory.py` for exact-byte-guarded EE-memory patches in copied
   task-owned savestates. Unsupported Zstandard ZIP members are bulk-extracted
   once through 7-Zip when available, with `tar` as the portable fallback,
@@ -100,13 +100,17 @@ Current, and deduplicates shared serial/CRC identities with Current taking
 precedence. It never creates or modifies memory cards.
 Run `act help` or `act -h` for the standalone command summary.
 
-`pcsx2/launch.ps1` is the single PCSX2 launcher. Configured launches use
-`-Target stable|dev`; agent launches use `-WorkerRoot work/<task title>` and
-start the existing task-owned PCSX2 copy hidden. `-IsoPath` is optional for
-configured launches and mandatory and repository-relative for worker launches.
+`pcsx2/launch.ps1` is the single PCSX2 launcher. Configured launches default to
+`dev`; pass `-Target stable` for an explicit stable check. Agent launches use
+`-WorkerRoot work/<task title>` and start the existing task-owned PCSX2 copy
+hidden. `-IsoPath` is optional for configured launches and mandatory and
+repository-relative for worker launches.
 `-PassThru` returns the started process for higher-level orchestration such as
 window tiling. The launcher does not copy or configure PCSX2, inspect or stop
 processes, use PINE, load savestates, capture output, or perform cleanup.
+Source-game and pair-launch commands inherit the `dev` default. Savestate
+filing also defaults to `dev`; pass `-Target stable` to file states from the
+stable installation.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`

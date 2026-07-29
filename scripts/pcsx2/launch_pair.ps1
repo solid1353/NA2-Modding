@@ -45,7 +45,7 @@ if ($duplicateGames.Count -gt 0) {
     throw "Each game may be listed only once: $($duplicateGames -join ', ')."
 }
 
-$pcsx2Exe = [IO.Path]::GetFullPath($projectPaths.files.pcsx2_stable_exe)
+$pcsx2Exe = [IO.Path]::GetFullPath($projectPaths.files.pcsx2_dev_exe)
 $pcsx2Launcher = [IO.Path]::GetFullPath(
     $projectPaths.files.pcsx2_launch_command
 )
@@ -117,7 +117,6 @@ try {
 
     foreach ($game in $selectedGames) {
         $process = & $pcsx2Launcher `
-            -Target stable `
             -IsoPath $selectedIsoPaths[$game] `
             -PassThru
 

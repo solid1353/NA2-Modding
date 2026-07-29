@@ -59,7 +59,12 @@ replaced with a copied machine-specific absolute path.
 - `scripts/`: repeatable tooling.
 - `@pcsx2_files/`: shared PCSX2 artifacts under
   `@workshop/pcsx2/__shared/`.
-- `@pcsx2_stable/`: protected user-owned portable PCSX2 installation and state. User launch/actualization workflows address it; agents never inspect, launch, or modify it.
+- `@pcsx2_dev/`: the default user-facing PCSX2 runtime. Routine `na2`,
+  source-game, pair-launch, and savestate-filing commands use it unless
+  `stable` is selected explicitly.
+- `@pcsx2_stable/`: protected user-owned portable stable PCSX2 installation
+  and state, retained for explicit compatibility and release checks. Agents
+  never inspect, launch, or modify it without direct authorization.
 - `@pcsx2_clean/`: protected immutable compiled worker template at the external
   PCSX2 checkout's `bin/` output. Agents copy it to
   `work/<task title>/pcsx2/` and may copy any assets for which they have a
@@ -177,15 +182,18 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   and focused tests.
 - `@pcsx2_scripts/` contains PCSX2 launch, process, configuration, and CRC
   helpers. `launch.ps1` is the single configured and worker-PCSX2 launcher;
-  configured launches select `stable` or `dev`, while worker launches select
-  an already-existing task-owned runtime with `-WorkerRoot` and start it
+  configured launches default to `dev` and may select `stable` explicitly,
+  while worker launches select an already-existing task-owned runtime with
+  `-WorkerRoot` and start it
   hidden. `-IsoPath` is optional for configured launches and mandatory for
   worker launches; `-PassThru` exposes the started process to higher-level
   orchestration. It performs no cloning, configuration, process inspection,
   PINE operation, savestate handling, capture, cleanup, or termination.
   `game_commands.ps1` defines the manifest-driven `na2s`, `nun3`, `nun5`, and
-  `nun6` commands; `move_na2_savestates.ps1` files user savestates under
-  `@user_savestates`; and `launch_pair.ps1` is the multi-game launch-and-tile
+  `nun6` commands and inherits the development default;
+  `move_na2_savestates.ps1` files development savestates by default or stable
+  savestates with `-Target stable` under `@user_savestates`; and
+  `launch_pair.ps1` is the development-default multi-game launch-and-tile
   backend used by `na`, which accepts any ordered combination of its registered
   ISO selectors. Existing selectors and zero-argument behavior remain
   unchanged.
@@ -221,7 +229,8 @@ same shared directory.
 
 Known PCSX2 paths from prior notes:
 
-- Log: `@pcsx2_stable/logs/emulog.txt`
+- Routine log: `@pcsx2_dev/logs/emulog.txt`
+- Explicit stable-check log: `@pcsx2_stable/logs/emulog.txt`
 - Cheats: CRC aliases in `@pcsx2_cheats/`, targeting
   `@pcsx2_cheats/NA228.pnach`
 

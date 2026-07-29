@@ -1,8 +1,8 @@
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'Configured')]
 param(
-    [Parameter(Mandatory, ParameterSetName = 'Configured')]
+    [Parameter(ParameterSetName = 'Configured')]
     [ValidateSet('stable', 'dev')]
-    [string]$Target,
+    [string]$Target = 'dev',
 
     [Parameter(Mandatory, ParameterSetName = 'Worker')]
     [string]$WorkerRoot,

@@ -50,11 +50,11 @@ The manifest currently defines these stable logical names:
   configured PCSX2 installations. Input recordings are opened explicitly
   because PCSX2 does not expose a configurable folder for them.
 - `pcsx2_stable`: the user's protected portable stable PCSX2 installation under
-  `@workshop/pcsx2/stable/`. User launch, build-promotion, and actualization
-  commands address it; agents do not.
+  `@workshop/pcsx2/stable/`, retained for explicit compatibility and release
+  checks.
 - `pcsx2_dev`: the locally built, reload-enabled PCSX2 development runtime
-  copied from the separate PCSX2 source checkout into
-  `@workshop/pcsx2/dev/`.
+  copied from the separate PCSX2 source checkout into `@workshop/pcsx2/dev/`.
+  It is the default for configured user-facing launch and savestate commands.
 - `pcsx2_clean`: the protected immutable worker template at the external
   PCSX2 checkout's clean compiled `bin/` output (`../../PCSX2/bin`). Agents
   copy it into `work/<task title>/pcsx2/` and may copy any assets for which
@@ -76,10 +76,10 @@ The manifest also defines canonical file paths which may not exist yet before
 their producing workflow runs. File entries should reference a named root with
 `@root/child` syntax so the root path is not duplicated:
 
-- `pcsx2_stable_exe`: `@pcsx2_stable/pcsx2-qt.exe`, used by user-owned launch and
-  standard-build process control.
-- `pcsx2_dev_exe`: `@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe`, used for explicit
-  Injection Lab development runs.
+- `pcsx2_stable_exe`: `@pcsx2_stable/pcsx2-qt.exe`, used for explicit stable
+  compatibility and release checks.
+- `pcsx2_dev_exe`: `@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe`, used by default
+  configured launches and Injection Lab development runs.
 - `canonical_cheats`: `@pcsx2_cheats/NA228.pnach`.
 - `canonical_gamesettings`: `@pcsx2_game_settings/NA228.ini`.
 - `comparison_input_profile`:

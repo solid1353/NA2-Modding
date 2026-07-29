@@ -154,7 +154,6 @@ try {
         Write-Na2Stage "Run $isoName without rebuilding"
         Invoke-Na2Actualization
         & $projectPaths.files.pcsx2_launch_command `
-            -Target stable `
             -IsoPath $isoPath
     }
     else {
@@ -166,7 +165,6 @@ try {
         Invoke-Na2Actualization
         Write-Na2Stage "2/2 Launch $currentIsoName"
         & $projectPaths.files.pcsx2_launch_command `
-            -Target stable `
             -IsoPath $projectPaths.files.current_iso
     }
     $runOutcome = 'succeeded'

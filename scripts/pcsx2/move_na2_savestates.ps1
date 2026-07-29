@@ -2,14 +2,22 @@
 param(
     [Parameter(Mandatory, Position = 0)]
     [ValidateNotNullOrEmpty()]
-    [string]$SubPath
+    [string]$SubPath,
+
+    [Parameter(Position = 1)]
+    [ValidateSet('stable', 'dev')]
+    [string]$Target = 'dev'
 )
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
-$sourceRoot = Join-Path $projectPaths.pcsx2_stable 'sstates'
+$sourceInstallation = switch ($Target) {
+    'stable' { $projectPaths.pcsx2_stable }
+    'dev' { $projectPaths.pcsx2_dev }
+}
+$sourceRoot = Join-Path $sourceInstallation 'sstates'
 $destinationRoot = $projectPaths.user_savestates
 
 if ([string]::IsNullOrWhiteSpace($SubPath)) {
@@ -200,6 +208,7 @@ foreach ($slotGroup in $slotGroups) {
                 -ErrorAction Stop
 
             [pscustomobject]@{
+                Target             = $Target
                 Source             = $plan.State.File.Name
                 Destination        = $plan.TargetName
                 OriginalSlot       = $plan.State.OriginalSlotText

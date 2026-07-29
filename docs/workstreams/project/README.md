@@ -15,5 +15,9 @@ Canonical documentation landing page for the `Project` workstream.
   `@pcsx2_files/input_profiles/Comparison_NA2.ini` with the maintained
   `act input`; do not edit the generated profile directly.
 
+## Drafts
+
+- [PCSX2 user and workstream workflows](pcsx2_workflows.md)
+
 Global path, source, testing, and cleanup rules remain in `AGENTS.md` and are
 not duplicated here.

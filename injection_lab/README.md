@@ -232,6 +232,11 @@ any later lab installation, `test.ps1` reads those words through PINE and
 refuses to proceed until a clean Current restart is proven. This prevents a
 stale generic per-frame hook from calling a newly selected production entry,
 and prevents a stale production redirect from surviving into generic mode.
+If another maintained development step appended trial lines to the installed
+PNACH, removal recognizes the recorded lab header, preserves that exact changed
+file under ignored `injection_lab/build/`, and still restores the pre-lab
+state. It continues refusing files whose identity no longer matches the
+recorded lab installation.
 
 While the install record identifies a regular file inside the PCSX2 cheats
 directory, normal `na2` actualization preserves the file instead of replacing

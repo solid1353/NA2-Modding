@@ -425,6 +425,67 @@ public static class InjectionLabNativeMethods {
     }
 }
 
+function Test-RecordedInjectionLabPnach(
+    [string]$Path,
+    [pscustomobject]$State
+) {
+    $item = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+    if (-not $item -or $item.PSIsContainer -or $item.LinkType) {
+        return $false
+    }
+    $header = @(Get-Content -LiteralPath $Path -TotalCount 16)
+    $expectedBanner = if (
+        [string]$State.layout -ceq 'production_dispatcher_v1'
+    ) {
+        '// Auto-generated production-aware Injection Lab PNACH'
+    }
+    else {
+        '// Auto-generated pnach'
+    }
+    $requiredLines = @(
+        $expectedBanner
+        'gametitle=Narutimate Accel v2.28 injection lab'
+        "// Current CRC: $([string]$State.current_crc)"
+        "// Build ID: $([string]$State.build_id)"
+    )
+    if ([string]$State.layout -ceq 'production_dispatcher_v1') {
+        $requiredLines +=
+            "// Production source: $([string]$State.production_source)"
+        $requiredLines +=
+            "// Production entry: $([string]$State.production_entry)"
+    }
+    foreach ($requiredLine in $requiredLines) {
+        if ($requiredLine -cnotin $header) {
+            return $false
+        }
+    }
+    return $true
+}
+
+function Preserve-ChangedInjectionLabPnach(
+    [string]$Path,
+    [string]$Sha256
+) {
+    $recoveryPath = Join-Path $labRoot (
+        "build\changed-pnach-$Sha256.pnach"
+    )
+    if (Test-Path -LiteralPath $recoveryPath) {
+        if ((Get-Sha256 $recoveryPath) -cne $Sha256) {
+            throw (
+                'Injection Lab recovery path is occupied by different ' +
+                "content: $recoveryPath"
+            )
+        }
+    }
+    else {
+        Copy-Item -LiteralPath $Path -Destination $recoveryPath
+        if ((Get-Sha256 $recoveryPath) -cne $Sha256) {
+            throw "Failed to preserve the changed Injection Lab PNACH: $Path"
+        }
+    }
+    return $recoveryPath
+}
+
 function Restore-TestPnach {
     if (-not (Test-Path -LiteralPath $statePath)) {
         Write-Host '[injection_lab] No installed test PNACH is recorded.'
@@ -433,10 +494,36 @@ function Restore-TestPnach {
 
     $state = Get-Content -Raw -LiteralPath $statePath | ConvertFrom-Json
     $recordedTarget = [string]$state.target
+    if (
+        [string]$state.previous_kind -ceq 'file' -and
+        -not (Test-Path -LiteralPath $backupPath -PathType Leaf)
+    ) {
+        throw (
+            'Cannot restore the pre-test PNACH because its backup is ' +
+            "missing: $backupPath"
+        )
+    }
     if (Test-Path -LiteralPath $recordedTarget) {
         $actualHash = Get-Sha256 $recordedTarget
         if ($actualHash -cne [string]$state.installed_sha256) {
-            throw "Refusing to remove a PNACH changed after installation: $recordedTarget"
+            if (-not (
+                Test-RecordedInjectionLabPnach `
+                    -Path $recordedTarget `
+                    -State $state
+            )) {
+                throw (
+                    'Refusing to remove a PNACH changed after installation ' +
+                    "because it no longer matches the recorded lab identity: " +
+                    $recordedTarget
+                )
+            }
+            $recoveryPath = Preserve-ChangedInjectionLabPnach `
+                -Path $recordedTarget `
+                -Sha256 $actualHash
+            Write-Host (
+                '[injection_lab] Preserved the changed managed PNACH: ' +
+                $recoveryPath
+            )
         }
         Remove-Item -LiteralPath $recordedTarget -Force
     }
@@ -448,9 +535,6 @@ function Restore-TestPnach {
             Write-Host "[injection_lab] Restored the managed PNACH link: $recordedTarget"
         }
         'file' {
-            if (-not (Test-Path -LiteralPath $backupPath)) {
-                throw "Cannot restore the pre-test PNACH because its backup is missing: $backupPath"
-            }
             Copy-Item -LiteralPath $backupPath -Destination $recordedTarget
             Remove-Item -LiteralPath $backupPath -Force
             Write-Host "[injection_lab] Restored the pre-test PNACH: $recordedTarget"

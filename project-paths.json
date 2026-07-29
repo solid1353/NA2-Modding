@@ -18,7 +18,7 @@
     "pcsx2_user": "../UN Workshop/pcsx2/stable",
     "pcsx2_clean": "../UN Workshop/pcsx2/clean/stable",
     "pcsx2_dev": "../UN Workshop/pcsx2/dev",
-    "ps2_msys": "../UN Workshop/injection_lab/msys",
+    "ps2_msys": "../UN Workshop/tools/msys",
     "pcsx2_files": "../UN Workshop/pcsx2/__shared",
     "pcsx2_bios": "@pcsx2_files/bios",
     "pcsx2_cheats": "@pcsx2_files/cheats",

@@ -60,7 +60,7 @@ The manifest currently defines these stable logical names:
   `work/<task title>/pcsx2/` before use; it is never launched or modified
   directly.
 - `ps2_msys`: the local shared MSYS/PS2SDK toolchain under
-  `UN Workshop/injection_lab/msys/`. Injection Lab resolves it through the
+  `UN Workshop/tools/msys/`. Injection Lab resolves it through the
   manifest rather than storing the toolchain inside the repository.
 
 Documentation uses `@root/child` notation, such as `@source_na2/PRG/BTL.BIN`.

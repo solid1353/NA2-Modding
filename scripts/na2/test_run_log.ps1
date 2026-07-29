@@ -131,7 +131,6 @@ try {
     "actualize_command": "@scripts/actualization/act.ps1",
     "actualize_na2_command": "@scripts/actualization/na2.ps1",
     "actualize_input_command": "@scripts/actualization/input.ps1",
-    "actualize_links_command": "@scripts/actualization/links.ps1",
     "current_iso": "@build/NA2.28 - Current.iso",
     "previous_iso": "@build/NA2.28 - Previous.iso",
     "candidate_iso": "@build/NA2.28 - Candidate.iso"
@@ -158,7 +157,7 @@ try {
     $actShortHelpText = (
         & (Join-Path $fakeActualizationScripts 'act.ps1') -h
     ) -join "`n"
-    foreach ($expectedCommand in 'act na2', 'act input', 'act links') {
+    foreach ($expectedCommand in 'act na2', 'act input') {
         Assert-Na2Test `
             -Condition ($actHelpText.Contains($expectedCommand)) `
             -Message "Actualization help omitted $expectedCommand."
@@ -182,7 +181,7 @@ Write-Host '[fake] actualize na2'
             CRC = '12345678'
         }
     )
-    CheatAliases = @('pcsx2_user/cheats/SLOP-NA228_12345678.pnach')
+    CheatAliases = @('pcsx2_files/cheats/SLOP-NA228_12345678.pnach')
     RemovedCheatSymlinks = @()
     EnabledCheats = @()
     CreatedGameSettings = @()
@@ -194,11 +193,6 @@ Write-Host '[fake] actualize na2'
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'input.ps1') -Content @'
 param([switch]$PassThru)
 $result = [pscustomobject]@{ Changed = $false }
-if ($PassThru) { $result }
-'@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'links.ps1') -Content @'
-param([switch]$PassThru)
-$result = [pscustomobject]@{ Created = @(); Verified = @() }
 if ($PassThru) { $result }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch.ps1') -Content @'

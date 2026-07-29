@@ -271,16 +271,13 @@ $canonicalCheats = Resolve-Na2ActualizePhysicalPath `
     -Path $files.canonical_cheats
 $canonicalGameSettings = Resolve-Na2ActualizePhysicalPath `
     -Path $files.canonical_gamesettings
-$pcsx2FilesDirectory = Resolve-Na2ActualizePhysicalPath `
-    -Path $ProjectPaths.pcsx2_files
-$cheatsDirectory = Resolve-Na2ActualizePhysicalPath -Path (
-    Join-Path $ProjectPaths.pcsx2_user 'cheats'
-)
+$cheatsDirectory = Resolve-Na2ActualizePhysicalPath `
+    -Path $ProjectPaths.pcsx2_cheats
 $gameSettingsDirectory = Resolve-Na2ActualizePhysicalPath -Path (
-    $ProjectPaths.pcsx2_user_gamesettings
+    $ProjectPaths.pcsx2_game_settings
 )
 $memoryCardsDirectory = Resolve-Na2ActualizePhysicalPath -Path (
-    $ProjectPaths.pcsx2_user_memcards
+    $ProjectPaths.pcsx2_memory_cards
 )
 
 foreach ($requiredFile in $canonicalCheats, $canonicalGameSettings) {
@@ -468,7 +465,7 @@ $managedPnachLink = {
         (
             [IO.Path]::Equals(
                 [IO.Path]::GetDirectoryName($destination),
-                $pcsx2FilesDirectory
+                $cheatsDirectory
             ) -and
             [IO.Path]::GetExtension($destination) -ieq '.pnach'
         )

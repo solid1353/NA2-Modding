@@ -252,7 +252,7 @@ def rendering_for_target(
 ) -> RenderingSettings:
     return inspect_rendering_settings(
         paths.path("pcsx2_user", "inis", "PCSX2.ini"),
-        paths.path("pcsx2_user", "gamesettings", target.settings_file),
+        paths.path("pcsx2_game_settings", target.settings_file),
     )
 
 

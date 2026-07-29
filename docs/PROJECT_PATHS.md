@@ -42,10 +42,12 @@ The manifest currently defines these stable logical names:
 - `features`: the canonical feature-package root beneath `@patcher/`; profile
   module discovery resolves this root instead of hardcoding its repository path.
 - `pcsx2_files`: shared PCSX2-related files under
-  `UN Workshop/pcsx2/files/`.
-- `pcsx2_game_settings`, `pcsx2_input_profiles`, and
-  `pcsx2_input_recordings`: the three project trees maintained by
-  `act links`.
+  `UN Workshop/pcsx2/__shared/`.
+- `pcsx2_bios`, `pcsx2_cheats`, `pcsx2_game_settings`,
+  `pcsx2_input_profiles`, `pcsx2_input_recordings`, and
+  `pcsx2_memory_cards`: the canonical shared asset categories used by both
+  configured PCSX2 installations. Input recordings are opened explicitly
+  because PCSX2 does not expose a configurable folder for them.
 - `pcsx2_user`: the user's protected portable stable PCSX2 installation under
   `UN Workshop/pcsx2/stable/`. User launch, build-promotion, and actualization
   commands address it; agents do not.
@@ -60,10 +62,6 @@ The manifest currently defines these stable logical names:
 - `ps2_msys`: the local shared MSYS/PS2SDK toolchain under
   `UN Workshop/injection_lab/msys/`. Injection Lab resolves it through the
   manifest rather than storing the toolchain inside the repository.
-- `pcsx2_user_gamesettings`, `pcsx2_user_inputprofiles`,
-  `pcsx2_user_inputrecordings`, and `pcsx2_user_memcards`: the corresponding
-  user-state children used only by user-owned actualization. The PCSX2 INI is
-  not a separate manifest entry.
 
 Documentation uses `@root/child` notation, such as `@source_na2/PRG/BTL.BIN`.
 This is a logical reference, not a literal filesystem path. Profile `roots.tsv`
@@ -80,8 +78,8 @@ their producing workflow runs. File entries should reference a named root with
   standard-build process control.
 - `pcsx2_dev_exe`: `@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe`, used for explicit
   Injection Lab development runs.
-- `canonical_cheats`: `@pcsx2_files/cheats.pnach`.
-- `canonical_gamesettings`: `@pcsx2_files/gamesettings.ini`.
+- `canonical_cheats`: `@pcsx2_cheats/NA228.pnach`.
+- `canonical_gamesettings`: `@pcsx2_game_settings/NA228.ini`.
 - `comparison_input_profile`:
   `@pcsx2_files/input_profiles/Comparison.ini`.
 - `comparison_na2_input_profile`:
@@ -95,8 +93,8 @@ their producing workflow runs. File entries should reference a named root with
 - `pcsx2_game_commands`: `@pcsx2_scripts/game_commands.ps1`.
 - `pcsx2_pair_launch_command`: `@pcsx2_scripts/launch_pair.ps1`.
 - `actualize_command`: `@scripts/actualization/act.ps1`.
-- `actualize_na2_command`, `actualize_input_command`, and
-  `actualize_links_command`: the three standalone actualization modes.
+- `actualize_na2_command` and `actualize_input_command`: the two standalone
+  actualization modes.
 - `na2_iso`: `@source/NA2.iso`.
 - `nun3_iso`: `@source/NUN3.iso`.
 - `nun5_iso`: `@source/NUN5.iso`.
@@ -149,5 +147,6 @@ Do not copy resolved absolute paths into scripts, logs, profiles, or documentati
 
 Shared media, analysis, tools, and PCSX2 roots resolve directly into the
 sibling `UN Workshop/` tree. No repository-root convenience symlinks are
-required. The stable PCSX2 binding remains protected and grants agents no
-additional access.
+required. Stable and development PCSX2 resolve shared asset folders directly
+through their native `[Folders]` configuration. The stable PCSX2 binding
+remains protected and grants agents no additional access.

@@ -18,15 +18,12 @@
   Explain when the requested link type cannot provide tracked content diffs.
 - When pairing trees, enumerate both sides and preserve exact existing spelling.
   Ask if no unique mapping exists.
-- Maintain file hardlinks from project files under
-  `@pcsx2_files/game_settings/`, `@pcsx2_files/input_profiles/`, and
-  `@pcsx2_files/input_recordings/` to same-relative-path counterparts under
-  `@pcsx2_user/gamesettings/`, `@pcsx2_user/inputprofiles/`, and
-  `@pcsx2_user/inputrecordings/`. Directories are never linked. Extra PCSX2
-  files remain untouched. After authorized operations or Git actions that may
-  replace project files, verify and restore the hardlinks. Refuse a differing
-  occupied counterpart. This invariant does not independently authorize
-  protected-tree access.
+- `@pcsx2_files/` is the canonical shared asset pool used directly by the
+  configured stable and development PCSX2 installations. BIOS, cheats,
+  GameSettings, input profiles, input recordings, and memory cards live only
+  there; do not recreate per-installation copies or links. PCSX2 has no
+  configurable input-recordings folder, so recordings are opened from their
+  canonical shared paths explicitly.
 
 ## Git and concurrent work
 

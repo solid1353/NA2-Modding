@@ -13,29 +13,30 @@ may later be ported to NA2.
 
 Current PCSX2 actualization:
 
-- Canonical editable inputs are `@pcsx2_files/cheats.pnach` and
-  `@pcsx2_files/gamesettings.ini`.
+- Canonical editable inputs are `@pcsx2_cheats/NA228.pnach` and
+  `@pcsx2_game_settings/NA228.ini`.
 - `act na2` derives each retained Current, Previous, and Candidate identity
   from its ISO, maintains matching CRC-named PNACH symlinks, and writes distinct
-  real GameSettings files under `@pcsx2_user/`. An installed injection-lab
+  real GameSettings files under `@pcsx2_files/`. An installed injection-lab
   regular PNACH identified by the lab state is preserved without making lab
   integrity a launch prerequisite. Orphaned regular files at managed NA2.28
   CRC aliases are repaired to canonical symlinks.
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v4 organizes each package as groups, atomic patches, and exact edits; independent group and patch `enabled` switches control normal composition. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`.
-- Actualization is an explicit standalone workflow with `na2`, `input`, and
-  `links` modes; bare `act` runs all three in that order. User-owned
+- Actualization is an explicit standalone workflow with `na2` and `input`
+  modes; bare `act` runs both in that order. User-owned
   Current/Previous/Candidate builds and launches also run `act na2`
   automatically, while worker builds never actualize.
 - A zero-byte canonical PNACH removes its managed PCSX2 CRC aliases, including
   orphaned regular lab files. Other game identities, real files, and unrelated
   symlinks are preserved.
 - Current keeps the `[MemoryCards]` section and exact `Slot1_Filename` from
-  `gamesettings.ini`. Previous and Candidate omit the entire section. When
+  `NA228.ini`. Previous and Candidate omit the entire section. When
   multiple images share one PCSX2 serial/CRC identity, the single GameSettings
   file is deduplicated with Current taking precedence. Actualization never
   creates, copies, or modifies memory cards.
-- `@pcsx2_files/` contains the canonical PNACH, GameSettings template, shared
-  input profiles, input recordings, and local screenshots.
+- `@pcsx2_files/` contains the canonical BIOS, cheats, GameSettings, input
+  profiles, input recordings, and memory cards used directly by stable and
+  development PCSX2.
 - `act` reports enabled named cheats from uncommented `patch=` or setting lines, or `none` when no cheats are enabled.
 - PNACH labels such as `// [Skip CC2 intro]` are comments only. A cheat is enabled only when its executable `patch=`/setting line is uncommented. Disabled proven cheats and disabled hypotheses must keep their executable lines commented out. Temporary PNACH hypothesis patches go at the top as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 - Fixed-address PNACH hypotheses are safe by default only for the boot ELF or another region proven to remain resident and stable for the entire write lifetime.
@@ -57,7 +58,7 @@ replaced with a copied machine-specific absolute path.
 - `@logs/`: disposable shared-workflow records; no files should be written directly in the root. `na2` keeps bounded Current/Previous/Candidate provenance under `@logs/na2/`, and shared generated workstream evidence belongs under `@workstream_logs/<exact task title>/`. Agent ISO records instead stay under `work/<task title>/logs/`. See `docs/LOGGING.md`.
 - `scripts/`: repeatable tooling.
 - `@pcsx2_files/`: shared PCSX2 artifacts under
-  `UN Workshop/pcsx2/files/`.
+  `UN Workshop/pcsx2/__shared/`.
 - `@pcsx2_user/`: protected user-owned portable PCSX2 installation and state. User launch/actualization workflows address it; agents never inspect, launch, or modify it.
 - `@pcsx2_clean/`: protected immutable stable worker template under
   `UN Workshop/pcsx2/clean/stable/`. Agents copy its complete tree to
@@ -209,16 +210,18 @@ PCSX2 cheat filenames include the game CRC, for example:
 
 If the boot ELF inside an ISO changes, PCSX2 may report a different CRC.
 Actualize derives the alphanumeric serial from the ISO boot path and creates a
-matching `@pcsx2_user/cheats/<serial>_<crc>.pnach` link to
-`@pcsx2_files/cheats.pnach`.
+matching `@pcsx2_cheats/<serial>_<crc>.pnach` link to
+`@pcsx2_cheats/NA228.pnach`.
 
-The user installation uses its internal `@pcsx2_user/cheats/` folder. Only the canonical PNACH is tracked in the project; actualized CRC aliases are relative symlinks in the user installation.
+Stable and development PCSX2 use `@pcsx2_cheats/` directly. The canonical
+PNACH has a semantic name; actualized CRC aliases are relative symlinks in the
+same shared directory.
 
 Known PCSX2 paths from prior notes:
 
 - Log: `@pcsx2_user/logs/emulog.txt`
-- Cheats: CRC aliases in `@pcsx2_user/cheats/`, targeting
-  `@pcsx2_files/cheats.pnach`
+- Cheats: CRC aliases in `@pcsx2_cheats/`, targeting
+  `@pcsx2_cheats/NA228.pnach`
 
 Known log pattern:
 
@@ -266,15 +269,13 @@ DATA.CVM passwords: `cc2fuku` for NA2, NUN3, and NUN5; `Iruka` for NUN6 A35.
 ## Actualize Workflow
 
 `scripts/actualization/act.ps1` is the standalone command entrypoint and owns
-its transcript and status reporting. Bare `act` dispatches `na2`, `input`, then
-`links`. `na2.ps1` derives identities for every retained Current, Previous, and
+its transcript and status reporting. Bare `act` dispatches `na2`, then `input`.
+`na2.ps1` derives identities for every retained Current, Previous, and
 Candidate ISO, deletes stale managed cheat symlinks and NA2.28 GameSettings,
 creates the required cheat aliases and real role GameSettings, and keeps the
 template's `[MemoryCards]` section only in Current's GameSettings.
 Previous and Candidate omit that section, and memory cards are never copied.
-`input.ps1`
-regenerates `Comparison_NA2.ini`; `links.ps1` creates or verifies the configured
-project-to-user hardlinks. Occupied unmanaged destinations are refused.
+`input.ps1` regenerates `Comparison_NA2.ini`.
 
 ## Release Workflow
 

@@ -76,9 +76,9 @@ entry** to override this title or copy the stock compatibility entry. Directly
 editing `@pcsx2_user/cache/gamelist.cache` is likewise rejected because it is
 generated, machine-local state.
 
-The canonical PNACH is `@pcsx2_files/cheats.pnach`. Actualization derives each
+The canonical PNACH is `@pcsx2_cheats/NA228.pnach`. Actualization derives each
 retained image's alphanumeric serial from `SYSTEM.CNF`, creates matching
-`@pcsx2_user/cheats/<serial>_<crc>.pnach` aliases, and removes obsolete managed
+`@pcsx2_cheats/<serial>_<crc>.pnach` aliases, and removes obsolete managed
 aliases without touching unrelated files. On 2026-07-24 the retained Current,
 Previous, and Candidate images resolved respectively as `SLOP-NA228`,
 `SLUS-NA228`, and `SLPS-22228`, all with CRC `6D94D520`; these identities are

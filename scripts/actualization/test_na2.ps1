@@ -22,28 +22,20 @@ try {
     $repository = Join-Path $testRoot 'repository'
     $build = Join-Path $repository 'build'
     $pcsx2Files = Join-Path $repository 'pcsx2_files'
-    $pcsx2Physical = Join-Path $testRoot 'pcsx2-user'
-    $pcsx2 = Join-Path $repository 'pcsx2'
-    $cheats = Join-Path $pcsx2 'cheats'
-    $gameSettings = Join-Path $pcsx2 'gamesettings'
-    $memoryCards = Join-Path $pcsx2 'memcards'
+    $cheats = Join-Path $pcsx2Files 'cheats'
+    $gameSettings = Join-Path $pcsx2Files 'game_settings'
+    $memoryCards = Join-Path $pcsx2Files 'memory_cards'
     New-Item -ItemType Directory -Force `
         -Path (
             $build,
-            $pcsx2Files,
-            (Join-Path $pcsx2Physical 'cheats'),
-            (Join-Path $pcsx2Physical 'gamesettings'),
-            (Join-Path $pcsx2Physical 'memcards')
+            $cheats,
+            $gameSettings,
+            $memoryCards
         ) |
         Out-Null
-    New-Item `
-        -ItemType SymbolicLink `
-        -Path $pcsx2 `
-        -Target $pcsx2Physical |
-        Out-Null
 
-    $canonicalCheats = Join-Path $pcsx2Files 'cheats.pnach'
-    $canonicalGameSettings = Join-Path $pcsx2Files 'gamesettings.ini'
+    $canonicalCheats = Join-Path $cheats 'NA228.pnach'
+    $canonicalGameSettings = Join-Path $gameSettings 'NA228.ini'
     [IO.File]::WriteAllText(
         $canonicalCheats,
         "// [Intro skips]`npatch=1,EE,00100000,word,00000000`n",
@@ -71,10 +63,10 @@ try {
     [IO.File]::WriteAllText($candidateIso, 'candidate')
 
     $projectPaths = [pscustomobject]@{
-        pcsx2_user = $pcsx2
         pcsx2_files = $pcsx2Files
-        pcsx2_user_gamesettings = $gameSettings
-        pcsx2_user_memcards = $memoryCards
+        pcsx2_cheats = $cheats
+        pcsx2_game_settings = $gameSettings
+        pcsx2_memory_cards = $memoryCards
         files = [pscustomobject]@{
             canonical_cheats = $canonicalCheats
             canonical_gamesettings = $canonicalGameSettings
@@ -320,11 +312,19 @@ try {
         -ProjectPaths $projectPaths `
         -IdentityResolver $identityResolver `
         -InjectionLabStatePath $labStatePath
+    $remainingPnach = @(
+        Get-ChildItem -LiteralPath $cheats -Filter '*.pnach' -File -Force
+    )
     Assert-Na2ActualizeTest `
-        -Condition (@(
-            Get-ChildItem -LiteralPath $cheats -Filter '*.pnach' -Force
-        ).Count -eq 0) `
-        -Message 'Empty canonical PNACH did not remove managed symlinks.'
+        -Condition (
+            $remainingPnach.Count -eq 1 -and
+            [IO.Path]::Equals(
+                $remainingPnach[0].FullName,
+                $canonicalCheats
+            ) -and
+            $remainingPnach[0].Length -eq 0
+        ) `
+        -Message 'Empty canonical PNACH did not remove every managed alias.'
 
     Write-Host 'NA2 actualization tests passed.' -ForegroundColor Green
 }

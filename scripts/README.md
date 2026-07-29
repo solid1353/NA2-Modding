@@ -93,13 +93,11 @@ face-button bindings. Run it as `act input`; the legacy `na2inputs` profile
 helper delegates to that mode.
 
 `actualization/act.ps1` owns standalone actualization logging and dispatch.
-Bare `act` runs `na2`, `input`, then `links`. `actualization/na2.ps1` derives
+Bare `act` runs `na2`, then `input`. `actualization/na2.ps1` derives
 every retained role's serial and ELF CRC, maintains canonical PNACH aliases,
 writes real GameSettings, keeps the template `[MemoryCards]` section only for
 Current, and deduplicates shared serial/CRC identities with Current taking
 precedence. It never creates or modifies memory cards.
-`actualization/links.ps1` creates or verifies the configured project-to-user
-hardlinks and refuses differing occupied counterparts.
 Run `act help` or `act -h` for the standalone command summary.
 
 `pcsx2/launch.ps1` is the single PCSX2 launcher. Configured launches use
@@ -144,6 +142,7 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 | `scripts/archive/replace_iso_file_same_size.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na2_patcher.image_assembler`. |
 | `scripts/na2/check_log_crc.ps1` | `804c2df8d16019a3b55f6acb10a023c435faaafc` | Manual log/PNACH comparison was superseded by `na2/iso_identity.ps1` and the maintained standalone actualization workflow. |
 | `scripts/na2/get_elf_crc.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | The redundant command wrapper was removed; `pcsx2/pcsx2_elf_crc.ps1` remains the shared tested implementation. |
+| `scripts/actualization/links.ps1` and `test_links.ps1` | `9caaa64` | Retired when stable and development PCSX2 were configured to consume `@pcsx2_files/` directly; no copy or link synchronization step remains. |
 | `scripts/na2/test_memory_card.ps1` | `70a81a36ecf119b6330b19984c9c8104d54bcc61` | Retired with the later agent PCSX2 runtime framework; there is no maintained replacement. |
 | `scripts/na2/test_test_memory_card.ps1` | `70a81a36ecf119b6330b19984c9c8104d54bcc61` | Retired with the later agent PCSX2 runtime framework; there is no maintained replacement. |
 | `scripts/na2/pine.ps1`, `provision_test_pcsx2.ps1`, `test_operation.ps1`, `test_process_ownership.ps1`, `test_runtime.ps1`, `test_test_operation.ps1`, `test_test_pine.ps1`, `test_test_runtime.ps1`, `test_worker_pcsx2.ps1`, and `worker_pcsx2.ps1` | `4f6578e7d131fca9905aff8358371ed6eb8d9791` | The unsolicited agent PCSX2 ownership, PINE-operation, provisioning, and runtime framework was removed. Only the minimal hidden launcher remains. |

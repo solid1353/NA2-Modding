@@ -80,7 +80,7 @@ independent ELF boundary values, and the complete five-word hook window before
 compiling. The generator fails with a nonzero exit when an imported source,
 compiler/tool query, linker step, linker label, or hook symbol is missing
 instead of accepting a stale or incomplete PNACH. The runner temporarily
-replaces only the matching Current PNACH inside `@pcsx2_dev/cheats` and records
+replaces only the matching Current PNACH inside `@pcsx2_cheats/` and records
 enough state to
 restore an existing regular file or symbolic link. Edit `src/test.c`, then run
 the same command again. The original `NA2-C.zip` proof's VS Code task only runs

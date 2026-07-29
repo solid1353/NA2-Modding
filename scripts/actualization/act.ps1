@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('na2', 'input', 'links', 'help')]
+    [ValidateSet('na2', 'input', 'help')]
     [string]$Mode,
 
     [Alias('h')]
@@ -17,10 +17,9 @@ $ErrorActionPreference = 'Stop'
 if ($Help -or $Mode -ceq 'help') {
     @(
         'Actualization commands:'
-        '  act        Run na2, input, then links'
+        '  act        Run na2, then input'
         '  act na2    Actualize built NA2.28 GameSettings and cheat aliases'
         '  act input  Regenerate the Comparison_NA2 input profile'
-        '  act links  Create or verify project-to-PCSX2 hardlinks'
         '  act help   Show this help'
         ''
     ) | Write-Output
@@ -35,7 +34,6 @@ $selectedModes = @(
     if ([string]::IsNullOrWhiteSpace($Mode)) {
         'na2'
         'input'
-        'links'
     }
     else {
         $Mode
@@ -102,24 +100,6 @@ try {
                 }
                 Write-Host "[act] Comparison_NA2: $state." `
                     -ForegroundColor Cyan
-            }
-            'links' {
-                Write-Host '[act] Actualize project-to-PCSX2 hardlinks' `
-                    -ForegroundColor Cyan
-                $output = @(
-                    & $projectPaths.files.actualize_links_command -PassThru
-                )
-                if ($output.Count -ne 1) {
-                    throw (
-                        'Hardlink actualization returned {0} results; expected one.' -f
-                        $output.Count
-                    )
-                }
-                Write-Host (
-                    '[act] Hardlinks: created={0}; verified={1}.' -f
-                    @($output[0].Created).Count,
-                    @($output[0].Verified).Count
-                ) -ForegroundColor Cyan
             }
         }
     }

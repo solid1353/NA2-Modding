@@ -48,7 +48,7 @@ if (-not $CurrentIso) {
     $CurrentIso = $projectPaths.files.current_iso
 }
 if (-not $CheatsDirectory) {
-    $CheatsDirectory = Join-Path $projectPaths.pcsx2_dev 'cheats'
+    $CheatsDirectory = $projectPaths.pcsx2_cheats
 }
 $currentIso = [IO.Path]::GetFullPath($CurrentIso)
 $cheatsDirectory = [IO.Path]::GetFullPath($CheatsDirectory)

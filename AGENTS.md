@@ -111,7 +111,11 @@ Detailed command and task behavior is in
   reusing an existing copy for new work, its owning task audits it, promotes
   anything still needed, then replaces the whole copy from `@pcsx2_clean`.
   This audit includes PINE configuration, hot-reload PNACH state, savestates,
-  screenshots, logs, memory cards, cheats, GameSettings, and input files.
+  screenshots, logs, memory cards, cheats, GameSettings, and input files. After
+  that audit and promotion, the owner has standing authority to delete and
+  recreate its complete `work/<exact task title>/pcsx2/` copy without another
+  destructive-action approval. This authority never extends to another task's
+  copy, `@pcsx2_clean`, `@pcsx2_dev`, or `@pcsx2_stable`.
 - `na228 -t` and `_na228.ps1 -t` build ISOs; `-t` never means tests. The full
   builder test suite is
   `python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'`.

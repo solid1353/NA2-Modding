@@ -37,8 +37,12 @@
   Promote useful inputs, runtime evidence, source patches, configuration, or
   generated results into the task's proper owned folders or canonical project
   files; then remove the old runtime and recreate the complete portable copy
-  from `@pcsx2_clean`. Another task or coordinator never performs this
-  replacement on its behalf.
+  from `@pcsx2_clean`. Once that audit and promotion are complete, removal and
+  recreation of the owner's complete `work/<exact task title>/pcsx2/` runtime
+  has standing authorization and does not require separate destructive-action
+  approval. Another task or coordinator never performs this replacement on its
+  behalf, and this authority never applies to another task's copy,
+  `@pcsx2_clean`, `@pcsx2_dev`, or `@pcsx2_stable`.
 
 ## Git and concurrent work
 
@@ -123,7 +127,8 @@
   size.
 - Prefer reusable verifiable commands/scripts over long one-off command chains.
 - Treat `@utils/old/` as untrusted; inspect a chosen tool before execution.
-- Ask before destructive actions, mass rewrites, or modifying originals.
+- Ask before destructive actions, mass rewrites, or modifying originals,
+  except for an owning task's audited task-PCSX2 replacement authorized above.
 
 ## Documentation layout
 

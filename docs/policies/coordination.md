@@ -71,7 +71,7 @@
   required behavior. It does not silently absorb reports or become a general
   implementation, coordination, or task-management channel.
 - Every confirmed-violation confrontation tells the offending task exactly:
-  `You're under arrest.`
+  `YOU'RE UNDER ARREST.`
 
 ## Task coordinator
 

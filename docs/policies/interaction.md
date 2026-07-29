@@ -25,6 +25,12 @@
   later message updates the proposed specification only, even when phrased as
   an imperative. Only the user can exit that mode through explicit execution
   authorization or applicable plan approval.
+- Choosing an implementation, stating that something should or will be
+  implemented, or using implementation verbs while that mode is active remains
+  a design decision. Execution begins only after the user explicitly exits the
+  mode and directs execution now, or gives applicable plan approval. Before
+  that transition, do not announce execution effort, create an execution plan,
+  invoke implementation tools, or mutate anything.
 - Never guess desired action, authorization, cleanup, rollback, or final state.
   Never classify work as mistaken, obsolete, unwanted, disposable, canonical,
   or approved unless the user said so or verified evidence establishes it.

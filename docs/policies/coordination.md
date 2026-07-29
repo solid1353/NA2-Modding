@@ -7,9 +7,14 @@
   shared ISO promotion state, and other unisolated mutable resources are
   exclusive. The existing owner keeps the resource; competitors sleep and
   wake rather than inventing work. Independent worker-output ISOs are allowed.
-- When no necessary in-scope work remains while waiting for a task, user,
-  process, or external dependency, stop and schedule a bounded wakeup. Check
-  once per wakeup, make no unrelated changes, and disable it when resolved.
+- Schedule a bounded wakeup only when no other approved in-scope work is
+  actionable, a concrete external operation is already running or a future
+  state change is confirmed, and that change can be detected without a new user
+  message. Never poll for an action the user has not explicitly agreed to
+  perform. When user input or a user-created artifact is required, ask once and
+  stop; in Continuous mode, queue only the blocked subtask and continue
+  independent approved subtasks first. Check once per wakeup, make no unrelated
+  changes, and disable it when resolved.
 - A workstream that asks `Scripting` for anything stops immediately and sleeps
   until `Scripting` responds.
 - Use canonical tracked files as shared context. Send concise handoffs only

@@ -116,6 +116,9 @@ Detailed command and task behavior is in
   terminate that newly launched process and fail. Never navigate emulator or
   game menus through PINE or injected input. If a required savestate was not
   supplied, stop and ask the user for that exact state.
+- `injection_lab/watch.ps1` is user-only interactive convenience. Agents never
+  run or depend on the watcher; they invoke explicit one-shot Injection Lab
+  build/apply commands for each candidate.
 - Never centrally migrate, replace, or clean another task's PCSX2 copy. Before
   reusing an existing copy for new work, its owning task audits it, promotes
   anything still needed, then replaces the whole copy from `@pcsx2_clean`.

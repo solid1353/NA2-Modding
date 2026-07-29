@@ -246,7 +246,11 @@ Compile and validate the complete contract without touching PCSX2:
 Install once or rebuild manually with the same command without `-BuildOnly`.
 The supplied game state must already have the relevant overlay loaded.
 
-### Rebuild automatically on save
+### Rebuild automatically on save (user only)
+
+`watch.ps1` is interactive convenience for the user. Agents must not run or
+depend on it; agent candidate testing invokes `test.ps1` explicitly once per
+iteration.
 
 Start the generic lab watcher with its default source directory:
 

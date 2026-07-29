@@ -169,6 +169,9 @@ requirements, not whatever implementation happens to exist today.
   must personally inspect or interact with it; before launch, state exactly
   what is required from the user. Never expose, restore, activate, or foreground
   an instance merely for agent automation.
+- The Injection Lab filesystem watcher is user-only. Agent candidate testing
+  uses explicit one-shot build/apply invocations so every attempted mutation
+  has a bounded command, result, and failure boundary.
 - Never save or serialize a complete savestate solely to obtain a screenshot.
   Extract an existing state's embedded `Screenshot.png` directly. For a fresh
   runtime frame, use PCSX2's native screenshot output; capture a new savestate

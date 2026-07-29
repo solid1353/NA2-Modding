@@ -1,124 +1,194 @@
 # PCSX2 workflows draft
 
-Status: tracked discussion draft. This is not yet canonical policy or an
-implementation contract.
+Status: tracked discussion draft. This records the selected design but is not
+yet canonical policy or an implementation contract.
 
-In discussion, **UW** means user workflow and **WW** means workstream workflow.
+In this document, **UW** means user workflow and **WW** means workstream
+workflow.
 
 ## Boundary
 
 - User interactive work and agent work are separate workflows.
-- Agents do not work with cheats or PNACH files at all: they do not inspect,
-  copy, create, modify, install, actualize, enable, or remove them.
-- The Injection Lab compiler/linker remains useful. Its user watcher and its
-  cheat-based transport are not part of WW.
 - Runtime injection is development evidence, not release acceptance. Accepted
-  behavior still needs a clean normal build and the appropriate integration
+  behavior still needs a clean normal build and its applicable integration
   validation.
+- Agents never use PNACH or cheat files to transport runtime candidates.
+- The maintained compiler/linker produces transport-neutral files consumed by
+  direct PINE application.
+- The current `injection_lab/` top-level subsystem will be assimilated into the
+  normal source, script, build, and documentation trees.
+
+## Target layout
+
+```text
+src/
+  runtime.h
+  hot_reload_test.c
+
+scripts/
+  injection/
+    build.py
+    apply.py
+    watch.ps1
+  pcsx2/
+    pine.py
+
+build/
+  injection/
+    <target>/
+      fragment.bin
+      manifest.json
+```
+
+`build/` is already ignored. No additional ignore rule is required for
+`build/injection/`.
+
+Project-level EE C belongs under root `src/`. Feature-owned production C and
+its declarations remain with the owning feature, for example under
+`na228_builder/features/localization/runtime_injector/`.
+
+Workstreams place generated candidates under
+`work/<exact task title>/injection/` instead of the shared build directory.
+
+## Generated contract
+
+Each successful build produces exactly two persistent files:
+
+- `fragment.bin`: compiled and fully linked EE MIPS code and initialized data.
+- `manifest.json`: the fragment's addressed segments, required zero-fill
+  ranges, exported symbols, resolved entrypoints, guarded data/caller writes,
+  and execution-refresh requirement.
+
+Compiler objects, linker inputs, and other intermediates are temporary and are
+not retained as workflow outputs. There are no generated PNACH, linker-ASM,
+installation-state, backup, or separate bank files.
+
+## Maintained scripts
+
+### `scripts/injection/build.py`
+
+- Consumes canonical C, runtime declarations, Current resident symbols, and an
+  optional task-owned overlay plan.
+- Invokes the external EE compiler and resolves relocations and Current
+  imports.
+- Produces only `fragment.bin` and `manifest.json`.
+- Contains no PINE, PCSX2 process, cheat, or watcher behavior.
+
+### `scripts/injection/apply.py`
+
+- Consumes one generated fragment/manifest pair.
+- Reads the initial PCSX2 state through PINE.
+- Pauses the VM synchronously when it was running.
+- Applies the fragment, zero-fill ranges, and guarded writes.
+- Refreshes EE execution state.
+- Resumes only when the VM was running before application.
+- Contains no PNACH installation, synchronization, removal, recovery, or
+  backup lifecycle.
+
+### `scripts/injection/watch.ps1`
+
+- User-only interactive convenience.
+- Watches explicitly selected source, declaration, and overlay-plan inputs.
+- Debounces saves and runs builds serially.
+- Calls `build.py`, then `apply.py`.
+- Contains no compiler, linker, manifest, or PINE implementation.
+
+### `scripts/pcsx2/pine.py`
+
+- Provides the small shared PINE client and command-line operations used by
+  maintained scripts and workstreams.
+- Supports ordinary status, read, and write operations plus the selected
+  pause, resume, execution-cache refresh, and screenshot controls.
+- Remains a protocol tool rather than a complete workstream wrapper.
+
+## PCSX2 PINE controls
+
+The development PCSX2 fork will expose three additional synchronous controls:
+
+1. pause the VM;
+2. resume the VM; and
+3. clear EE execution caches without reloading patch or cheat files.
+
+The existing screenshot control remains available. The existing
+reload-patches control is independent of the new direct-memory transaction.
+
+Synchronous pause makes live code replacement a single transaction. The new
+workflow therefore uses one fixed development memory reservation and removes
+the old alternating A/B banks, active-bank pointer, and bank-switching files.
 
 ## User workflow
 
-1. Launch the visible development PCSX2 installation.
-2. Navigate the game, create savestates, and capture screenshots manually.
-3. For interactive C iteration, optionally run the user-only Injection Lab
-   watcher against the user-owned PCSX2 environment.
-4. Edit and save canonical C; the watcher recompiles, relinks, refreshes the
-   user's runtime candidate, and reports failures in the console.
-5. Use stable PCSX2 only for explicit compatibility or release validation.
+1. Launch the visible development PCSX2 installation and navigate normally.
+2. Start `watch.ps1` for the selected source and optional overlay plan.
+3. Edit and save C.
+4. The watcher invokes `build.py`.
+5. On success, the watcher invokes `apply.py`.
+6. The applier briefly pauses PCSX2, applies the candidate, refreshes execution
+   state, and restores the prior running/paused state.
+7. The user observes the result and repeats by saving another edit.
 
-UW may use the user's own shared cheat setup. Nothing in WW depends on or
-alters it.
+UW does not require PNACH generation, cheat synchronization, installation
+state, a remove command, or a clean restart between ordinary rebuilds.
 
 ## Workstream workflow
 
 1. Create or refresh only the workstream's task-owned PCSX2 clone from
    `@pcsx2_clean`; assign a unique PINE port and keep the process hidden.
-2. Copy only assets required by the concrete task, including a user-supplied
-   savestate when runtime positioning is needed. Keep cheats disabled and do
-   not access any cheat directory.
-3. Load the supplied state while emulation is stopped.
-4. Compile and link canonical C plus the task-owned overlay plan through the
-   Injection Lab frontend into a transport-neutral process-local build result:
-   - linked image bytes and base address;
-   - resolved symbol addresses;
-   - dispatchers and active-entry pointers;
-   - guarded data and caller writes.
-5. In the same process, apply those addressed writes directly through PINE to
-   the task-owned PCSX2. The maintained applier owns the complete memory-update
-   and runtime-refresh operation; agents do not perform a separate cache step.
-   No intermediate transport file is required.
-6. Capture evidence through the maintained hidden-worker screenshot interface.
-7. If the supplied state has already passed the code that must be changed,
-   request an earlier state instead of adding a workaround.
+2. Copy only inputs required by the task, including a user-supplied savestate
+   when runtime positioning is required.
+3. Load the supplied state before applying the candidate.
+4. Run `build.py` once into `work/<exact task title>/injection/`.
+5. Run `apply.py` once against that folder and the task-owned PINE port.
+6. Capture evidence with the shared PINE screenshot operation when needed.
+7. Repeat the build/apply commands manually for another candidate.
 8. After user acceptance, integrate the same canonical source and declarations
-   through the normal builder and validate a clean launch/build as required.
+   through the normal builder and perform the required clean validation.
 
-Agents do not use the watcher, filesystem synchronization, install/restore
-state, shared PCSX2 installations, or task-local wrapper scripts for this flow.
+WW has no watcher and no higher-level workflow wrapper. Agents do not use
+PNACH, cheat directories, shared PCSX2 installations, filesystem
+synchronization, or task-local injection scripts.
 
-## Transport-neutral build result
+If the supplied state has already passed behavior that cannot be re-entered,
+the workstream requests an earlier state instead of adding an input or
+navigation workaround.
 
-The result is an ordinary Python object that exists only while the production
-adapter is running. It is not shared memory, EE memory, a daemon, or a
-persistent artifact.
+## Structural migration
 
-The compiler/linker constructs the result once. The selected consumer then
-uses it immediately:
+- Refactor useful compile/link logic from
+  `injection_lab/production_adapter.py` into
+  `scripts/injection/build.py`.
+- Refactor direct-memory application from
+  `injection_lab/overlay_writer.py` into
+  `scripts/injection/apply.py` and the shared PINE client.
+- Move and simplify `injection_lab/watch.ps1`.
+- Replace the standalone screenshot script with the shared PINE screenshot
+  command.
+- Move the project-level C example from `injection_lab/src/` to root `src/`
+  with meaningful names.
+- Move production entry declarations beside their owning runtime-injector
+  feature.
+- Remove `gen_pnach.py`, `linker.asm`, `test.ps1`, Lab PNACH transport,
+  install-state handling, and the nested Lab ignore file.
+- Preserve useful imported-source provenance and runtime-injection findings in
+  maintained project documentation before removing the Lab README.
+- Remove the empty `injection_lab/` directory after migration.
 
-- WW direct mode sends its addressed writes through PINE.
-- UW compatibility mode serializes the same result through its existing
-  interactive transport.
-- Candidate checks may inspect it without contacting PCSX2.
+## Implementation order
 
-When the adapter process exits, the object disappears.
+1. Update this tracked design before code changes.
+2. Add and validate the three PINE controls in the development PCSX2 fork.
+3. Refactor compile/link into the two-file builder contract.
+4. Implement the transactional direct-PINE applier.
+5. Reduce the watcher to build/apply orchestration.
+6. Move retained source/declarations and remove the PNACH-era Lab files.
+7. Validate consecutive UW saves without restarting PCSX2.
+8. Validate WW against an established candidate in a task-owned hidden clone.
+9. Confirm that neither workflow transports candidates through cheat files.
+10. Update canonical policy and operational documentation only after the
+    implementation contract is proven.
 
-## Direct-PINE application
-
-The current production adapter already computes the linked image, symbol
-addresses, dispatchers, active pointers, and resolved caller replacements. It
-then converts those values into PNACH text. WW replaces only that final
-transport stage:
-
-1. Connect to the task-owned PCSX2 PINE port.
-2. Read and validate every guarded caller range before changing memory.
-3. Write the linked code and data into the selected inactive bank.
-4. Write the fixed dispatchers and their active-entry pointers.
-5. Write the guarded caller hooks or resident redirects.
-6. Automatically invoke the custom PINE opcode `0x10` once after all writes.
-   This internal applier action refreshes PCSX2 execution state and is not a WW
-   step or agent decision.
-7. Read back guarded writes and report a concise result.
-
-## Implementation plan
-
-1. Replace contradictory PCSX2/C-injection rules in `AGENTS.md` and the testing
-   policy with UW, WW, and the absolute no-cheats boundary for agents.
-2. Refactor the existing Injection Lab production adapter so compile/link
-   returns the transport-neutral process-local build result instead of coupling
-   the linker result to PNACH generation.
-3. Add direct PINE application to that existing adapter entry point:
-   compile/link, apply linked image and guarded overlay writes, automatically
-   invoke opcode `0x10`, and return a concise result. Do not add another wrapper
-   script or persistent install-state lifecycle.
-4. Preserve the current user watcher and its user-owned interactive behavior.
-   It may consume the same transport-neutral result through its existing path.
-5. Ensure WW never reads or writes cheat directories and never emits PNACH
-   files.
-6. Validate WW against the current Font candidate using only an isolated
-   task-owned PCSX2 clone: load the supplied state stopped, apply the candidate,
-   resume, capture, and verify that no cheat file changed.
-7. Update the maintained Injection Lab documentation and give Font the exact
-   command and sequencing contract.
-
-## Constraints
-
-- Do not modify Font-owned canonical files or task artifacts.
-- Do not add identity/hash enforcement, backups, cleanup commands, restart
-  rituals, or recovery state unless they are functionally required and
-  explicitly approved.
-- Do not create a general-purpose runtime protocol or a new script around two
-  direct operations.
-- Preserve backward compatibility for existing one-entry and multi-entry
-  overlay plans where it does not retain the WW PNACH dependency.
+No additional proof of concept is required: existing Font work has already
+proven the C compiler/linker path, and prior workstream testing has already
+proven direct PINE EE-memory writes.
 
 Recommended implementation effort: High.

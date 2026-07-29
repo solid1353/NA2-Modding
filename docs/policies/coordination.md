@@ -72,6 +72,9 @@
   implementation, coordination, or task-management channel.
 - After every `sin` report, it adjusts the live policies with a durable
   correction or strengthening based on that report.
+- Policy adjustments prevent the failed behavior across its applicable scope;
+  they do not encode an incident's exact path, artifact, task title, or other
+  one-off detail unless the rule inherently applies only there.
 - Every confirmed-violation confrontation tells the offending task exactly:
   `YOU'RE UNDER ARREST.`
 
@@ -101,9 +104,6 @@
   triggers actualization before the corresponding task-management commit and
   push. Editing entries within an unchanged subsection does not. Non-coordinator
   chats send one concise request to `Task coordinator`.
-- When workstream retirement deletes the last file under
-  `docs/workstreams/<workstream>/`, remove the resulting empty directory and
-  verify its absence before claiming completion.
 - Do not archive, delete, merge, or repurpose unrelated chats without explicit
   instruction.
 - A task presented in the wrong chat is routed to the matching coordinator or

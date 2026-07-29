@@ -94,10 +94,13 @@
   inputs, including selected screenshots and savestates, into
   `work/<task title>/inputs/` with provenance before relying on them.
 - Baselines, modified copies, analysis outputs, and builds remain separate.
+- Before claiming any filesystem-changing work complete, inspect every path and
+  directory tree affected by the work, resolve all resulting cleanup including
+  ignored or untracked remnants and empty directories, and verify the intended
+  final state. A clean Git diff does not prove untracked filesystem cleanup.
 - At completion, inspect the owned tree; delete disposable copies, probes,
   generated files, and logs; promote reusable findings; document every retained
-  artifact and its purpose; and scan every changed directory tree to remove
-  every empty directory, including ignored and untracked ones.
+  artifact and its purpose.
 - Empty directories never represent configuration or ownership. Do not retain
   `.gitkeep`, placeholder READMEs, or header-only data solely to preserve one.
   Represent required declarations through meaningful tracked configuration or

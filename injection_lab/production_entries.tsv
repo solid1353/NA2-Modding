@@ -1,5 +1,6 @@
 source_id	entry_symbol	abi	purpose
 font_v2_core	localization.font.v2.controls_adapter	text_style_center_x_draw_y	Controls and Special Controls one-line labels
+font_v2_core	localization.font.v2.command_relationship_adapter	command_relationship_native	Command Chart relationship row
 font_v2_core	localization.font.v2.command_title_entry	arg0_text_arg2_native_x_native_y	Command Chart title
 font_v2_core	localization.font.v2.practice_title_entry	arg0_text_arg2_native_x_native_y	Practice title
 font_v2_core	localization.font.v2.pause_list_adapter	arg0_text_arg2_native_x_native_y	Pause-list row

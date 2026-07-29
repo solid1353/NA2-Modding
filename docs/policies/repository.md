@@ -28,6 +28,17 @@
   has no
   configurable input-recordings folder, so recordings are opened from their
   canonical shared paths explicitly.
+- Task-owned PCSX2 copies are complete disposable portable runtimes, including
+  their configuration, unique PINE port, installed hot-reload PNACH, savestates,
+  screenshots, logs, cache, copied memory cards, cheats, GameSettings, and input
+  files. They are not shared infrastructure. Never migrate, replace, or clean
+  them repository-wide.
+- When an owning task next needs PCSX2, it audits any existing copy first.
+  Promote useful inputs, runtime evidence, source patches, configuration, or
+  generated results into the task's proper owned folders or canonical project
+  files; then remove the old runtime and recreate the complete portable copy
+  from `@pcsx2_clean`. Another task or coordinator never performs this
+  replacement on its behalf.
 
 ## Git and concurrent work
 

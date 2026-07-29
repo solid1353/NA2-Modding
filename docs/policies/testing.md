@@ -143,6 +143,18 @@ requirements, not whatever implementation happens to exist today.
   memory cards, cheats, and GameSettings, is allowed. Assign a PINE port unique
   among live agent instances and operate only that copy. Other workstream
   copies/processes are off-limits.
+- If `work/<task title>/pcsx2/` already exists when new runtime work begins,
+  its owning task inspects it before reuse. The inspection covers PCSX2
+  configuration and PINE port, Injection Lab or other hot-reload PNACH state,
+  savestates, screenshots and `snaps/`, logs, caches, memory cards, cheats,
+  GameSettings, input profiles, and input recordings.
+- Preserve anything still needed in the task's proper `inputs/`, `outputs/`,
+  `logs/`, reusable scripts, canonical patch data, or knowledge before deleting
+  the old runtime. Generated PNACH and hot-reload outputs are disposable once
+  their useful source changes and evidence have been promoted. Recreate the
+  whole portable copy from `@pcsx2_clean`, add only concretely required assets,
+  and configure its unique PINE port before launch. No coordinator or other
+  workstream performs bulk replacement.
 - Agent-only PCSX2 testing stays hidden. PINE and maintained operation plans
   may load a user-supplied state, capture output, or perform bounded memory
   operations, but never navigate emulator or game menus. Do not inject window

@@ -184,4 +184,8 @@ Read the matching policy before acting:
   applies only to exact work that the user explicitly declares an epic inside
   a workstream that links it. A workflow link never classifies tasks, stages,
   screenshots, comparisons, or other artifacts as epic content.
+- In Continuous epic mode, pending user review of a completed subtask is not a
+  blocker. Record it and continue actionable approved subtasks; stop only for
+  an explicit user-required boundary or a real dependency with no independent
+  epic work remaining.
 - `docs/workstreams/README.md` defines the workstream-policy storage boundary.

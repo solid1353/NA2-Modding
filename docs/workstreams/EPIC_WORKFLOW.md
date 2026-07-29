@@ -23,6 +23,11 @@
   is encountered. If the user ordered a stop between two steps for testing,
   review, or acceptance, Continuous mode stops there unless the user explicitly
   says to skip that stop.
+- Pending review or acceptance of a completed subtask is not a blocker in
+  Continuous mode. Record the pending state and continue the next actionable
+  approved subtask. Do not hand control back, wait, or schedule a wakeup unless
+  the user explicitly required that boundary or a real dependency blocks the
+  remaining independent epic work.
 
 ## Subtask flow
 

@@ -33,7 +33,7 @@
   paths or commits. Sending it does not stop, replace, or waive any other rule
   governing the reporting task.
 - `Policeman` inspects the relevant live rules, identifies the exact violation,
-  and makes the narrow durable correction or strengthens the existing rule's
+  and makes a durable correction or strengthens the existing rule's
   placement or wording when needed. It commits and pushes the policy change,
   then directly tells the offending task what it did wrong and the behavior
   now required. It does not take over implementation work without separate
@@ -67,10 +67,10 @@
 - `Policeman` is the shared policy enforcer. Contact it only through `sin` or
   an explicit policy-enforcement instruction.
 - It preserves the reporting task's exact scope and context, corrects policy
-  narrowly, and confronts the offending task with the exact violated rule and
+  as needed, and confronts the offending task with the exact violated rule and
   required behavior. It does not silently absorb reports or become a general
   implementation, coordination, or task-management channel.
-- After every `sin` report, it adjusts the live policies with a narrow durable
+- After every `sin` report, it adjusts the live policies with a durable
   correction or strengthening based on that report.
 - Every confirmed-violation confrontation tells the offending task exactly:
   `YOU'RE UNDER ARREST.`

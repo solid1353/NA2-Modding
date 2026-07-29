@@ -16,12 +16,8 @@ regression boundary or blocker requires user input.
 - Mode: Continuous.
 - Current subtask: Priority 2 — Refreshed ss3–ss4 Jutsu-name list;
   implementation is in progress in Font-owned uncommitted files.
-- Pending grid:
-  `work/Font/artifacts/command_relationships_v2/command-chart-ss1-ss2-row-aware-grid.png`
-  for completed Priority 1. Font produced it after commit `9808766f`, but has
-  not yet visibly delivered it in the Font chat.
-- Next action: visibly deliver the pending Priority 1 grid in Font, then resume
-  Priority 2 without waiting for Priority 1 acceptance.
+- Pending grid: none.
+- Next action: resume Priority 2 without waiting for Priority 1 acceptance.
 
 ## Scope and evidence
 
@@ -100,7 +96,8 @@ regression boundary or blocker requires user input.
 ### Priority 1 — Refreshed ss1–ss2: Command details
 
 - State: implemented and agent-validated in commit `9808766f`; the composed
-  post-change grid is pending visible delivery and user verification.
+  post-change grid was visibly delivered in Font on 2026-07-29 and awaits
+  user verification.
 - ss1: Current keeps the relationship explanation on one line and overflows;
   NUN5 wraps it within the command-details panel.
 - ss2: Current's blue explanation and controller-icon rows sit

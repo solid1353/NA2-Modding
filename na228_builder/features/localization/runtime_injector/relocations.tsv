@@ -15,3 +15,4 @@ FR-V2-R084	localization.font.v2.half_space	20	0x10	lo16	localization.font.v2.ses
 FR-V2-SS1-R001	localization.font.v2.glyph_advance	10	0xC	hi16	localization.font.v2.session_pointer	0
 FR-V2-SS1-R002	localization.font.v2.glyph_advance	20	0x10	lo16	localization.font.v2.session_pointer	0
 FR-V2-CMD-R001	localization.font.v2.command_relationship_adapter	10	0x10	jal26	localization.font.v2.c.command_relationship_impl	0
+FR-V2-CMD-R002	localization.font.v2.command_icon_offset_adapter	10	0x4	j26	localization.font.v2.c.command_icon_offset	0

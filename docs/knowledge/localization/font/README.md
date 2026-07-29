@@ -872,21 +872,63 @@ from NA2's live table at `0x008BD1D0`, combines them without modifying canonical
 mapping bytes, and wraps at spaces through the shared native-metric v2 helper.
 The measured NA2-side request uses X `43.2`, native Y minus `11.5`, width `226`,
 height `32`, line advance `30`, glyph height `14`, and a further `-8` Y bias
-only when the wrapped result has one line. The native icon loop remains intact;
-its one shared `+20` float constant at BTL file `0x1C6ACC` becomes `+16`, while
-the existing additional `+4` branch for tokens 4 and above is unchanged.
+only when the wrapped result has one line. The native icon loop remains intact.
+A first candidate changed its one shared `+20` float constant at BTL file
+`0x1C6ACC` to `+16`; this matched rows with relationship text but was wrong for
+rows without it. The reason is visible in both preserved homologs. NA2 leaves
+its row coordinate at the title base for a plain row, or advances it by `30`
+before drawing a relationship, then adds one shared icon offset. NUN5 starts
+from a title base six units above NA2's, adds `8` only for a relationship row,
+and then adds `44` for icons. Expressed at NA2's unchanged hook coordinate, the
+NUN5 targets are therefore `+16` after a relationship and `+38` after a plain
+title. The corrected port replaces only the two-instruction `+20` load at
+runtime `0x0087A9CC` / BTL file `0x1C6ACC` with a native-register shim and
+generated-C selector using record byte `+4`; both icon branches and the
+existing additional `+4` for tokens 4 and above remain native.
+
+The first relationship candidate also allocated
+`FONT_V2_FLAG_SCALE_LINE_ADVANCE` at `0x10`, which was already owned by
+`FONT_V2_FLAG_PREMEASURED`. Every premeasured caller therefore also scaled its
+line advance, causing regressions outside Command Chart. The corrected flag is
+`0x20`; the Command relationship request becomes `0x3D` instead of `0x1D`,
+and the shared prepare check tests `0x20` independently. The user confirmed
+that this isolation restores the previously working modal families. This flag
+correction does not alter glyph metrics, fitting, wrapping, or any caller box.
 
 Hidden task-owned runtime captures on Current CRC `092FEF8A` used the refreshed
-ss1 and ss2 states and the production C hot-reload path. At 640x480, ss1's
+ss1 and ss2 states and the production C hot-reload path for the first
+relationship candidate. At 640x480, ss1's
 relationship ink is `160,231-396,262` versus NUN5
 `162,232-397,262`, and its first relationship icon is
 `196,278-212,294` versus `196,278-212,295`. Across ss2, all three blue rows
 remain within one raster row of NUN5 and the icon bounds match at Y
-`153-170`, `278-294/295`, and `403-420`. Titles, icon records, horizontal
-icon spacing, and all other BTL callers remain native. Confidence is **high**
-for the homolog, selectors, call sites, buffer composition, shared one-/two-line
-geometry, and icon offset. This remains `approved_for_test` pending explicit
-user acceptance of the composed pair.
+`153-170`, `278-294/295`, and `403-420`. A later isolated ss1 capture proves
+that the row-aware `+38` plain-row path moves the final input sequence down by
+the missing 22 local units and aligns it with the retained NUN5 reference.
+Complete post-change ss1 and ss2 captures then exercised the relationship
+adapter and row-aware icon selector together: ss1 retains the jointly wrapped
+two-line relationship and aligns both relationship and plain input rows, while
+all three ss2 relationships remain on one line without overflow and all three
+input rows retain their NUN5 Y geometry. Titles, icon records, horizontal icon
+spacing, and all other BTL callers remain native.
+
+Those supplied `092FEF8A` states restore an older resident payload than the
+later on-disc Current build. Offline `eeMemory.bin` signature recovery proves
+that `localization.font.v2.adapter_call` remains stable at `0x008F4130`, but
+`practice_append` is at `0x008F4D68` rather than Current `0x008F4F30`,
+`title_callback` is at `0x008F5500` rather than `0x008F56E8`, `wrap_native`
+is at `0x008F5510` rather than `0x008F56F8`, and the native-measure callback
+is at `0x008F4320` rather than `0x008F44C0`. Importing those shifted Current
+addresses first removed the blue rows and then stalled the guest when only the
+top-level implementation was bank-linked. The successful development overlay
+therefore bank-linked the complete shifted dependency closure and imported
+only the signature-confirmed stable adapter call. This is a savestate-specific
+development constraint, not a production payload requirement.
+
+Confidence is **high** for the homolog, selectors, call sites, buffer
+composition, shared one-/two-line geometry, conditional icon offsets, flag
+ownership, and integrated ss1/ss2 runtime behavior. The patch remains
+`approved_for_test` pending explicit user acceptance of the composed pair.
 
 ### Pause Controls list v2 callers
 

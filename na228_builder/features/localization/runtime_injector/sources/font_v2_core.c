@@ -14,7 +14,7 @@ typedef signed int s32;
 #define FONT_V2_FLAG_BR_TAGS 0x02u
 #define FONT_V2_FLAG_NEWLINE_BYTES 0x04u
 #define FONT_V2_FLAG_SEPARATE_LINE_ADVANCE 0x08u
-#define FONT_V2_FLAG_SCALE_LINE_ADVANCE 0x10u
+#define FONT_V2_FLAG_SCALE_LINE_ADVANCE 0x20u
 #define FONT_V2_NATIVE_LINE_ADVANCE 40.0f
 #define FONT_V2_FLAG_PREMEASURED 0x10u
 
@@ -39,6 +39,8 @@ typedef signed int s32;
 #define FONT_COMMAND_RELATION_LINE_HEIGHT 30.0f
 #define FONT_COMMAND_RELATION_GLYPH_HEIGHT 14.0f
 #define FONT_COMMAND_RELATION_LINE_LIMIT 2u
+#define FONT_COMMAND_ICON_RELATION_OFFSET 16.0f
+#define FONT_COMMAND_ICON_PLAIN_OFFSET 38.0f
 #define FONT_PRACTICE_TITLE_BOX_X 31.2f
 #define FONT_PRACTICE_TITLE_BOX_WIDTH 352u
 #define FONT_PRACTICE_TITLE_Y_OFFSET -6.8f
@@ -976,6 +978,14 @@ int font_v2_command_relationship_impl(
     frame.session.callback_arg2 = arg2;
     frame.session.callback_arg3 = (u32)&frame.session;
     return font_v2_adapter_call(&frame.session);
+}
+
+FONT_V2_SECTION(".text.font_v2_command_icon_offset")
+float font_v2_command_icon_offset(const u8 *record) {
+    if (record && record[4]) {
+        return FONT_COMMAND_ICON_RELATION_OFFSET;
+    }
+    return FONT_COMMAND_ICON_PLAIN_OFFSET;
 }
 
 static FONT_V2_SECTION(".text.font_v2_icon_record")

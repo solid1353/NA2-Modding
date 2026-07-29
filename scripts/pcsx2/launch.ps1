@@ -7,7 +7,6 @@ param(
     [Parameter(Mandatory, ParameterSetName = 'Worker')]
     [string]$WorkerRoot,
 
-    [Parameter(Mandatory)]
     [string]$IsoPath,
 
     [Parameter(ValueFromRemainingArguments)]
@@ -26,24 +25,28 @@ if ($PSCmdlet.ParameterSetName -eq 'Worker') {
         -WorkerRoot $WorkerRoot `
         -ProjectPaths $projectPaths `
         -RequireRelative
-    if ([IO.Path]::IsPathRooted($IsoPath)) {
-        throw 'Worker ISO paths must be repository-relative.'
+    if ($IsoPath) {
+        if ([IO.Path]::IsPathRooted($IsoPath)) {
+            throw 'Worker ISO paths must be repository-relative.'
+        }
+        $resolvedIso = [IO.Path]::GetFullPath(
+            (Join-Path $projectPaths.repository $IsoPath)
+        )
     }
-    $resolvedIso = [IO.Path]::GetFullPath(
-        (Join-Path $projectPaths.repository $IsoPath)
-    )
     $executable = Join-Path $worker.Pcsx2 'pcsx2-qt.exe'
     $workingDirectory = $worker.Pcsx2
     $hidden = $true
 }
 else {
-    $resolvedIso = if ([IO.Path]::IsPathRooted($IsoPath)) {
-        [IO.Path]::GetFullPath($IsoPath)
-    }
-    else {
-        [IO.Path]::GetFullPath(
-            (Join-Path $projectPaths.repository $IsoPath)
-        )
+    if ($IsoPath) {
+        $resolvedIso = if ([IO.Path]::IsPathRooted($IsoPath)) {
+            [IO.Path]::GetFullPath($IsoPath)
+        }
+        else {
+            [IO.Path]::GetFullPath(
+                (Join-Path $projectPaths.repository $IsoPath)
+            )
+        }
     }
     if ($Target -eq 'stable') {
         $executable = [IO.Path]::GetFullPath(
@@ -64,7 +67,9 @@ else {
     $hidden = $false
 }
 
-if (-not (Test-Path -LiteralPath $resolvedIso -PathType Leaf)) {
+if ($IsoPath -and -not (
+    Test-Path -LiteralPath $resolvedIso -PathType Leaf
+)) {
     throw "ISO does not exist: $resolvedIso"
 }
 if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
@@ -77,7 +82,10 @@ if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
     throw "PCSX2 executable does not exist: $executable"
 }
 
-$launchArguments = @('-batch', "`"$resolvedIso`"")
+$launchArguments = @()
+if ($IsoPath) {
+    $launchArguments += @('-batch', "`"$resolvedIso`"")
+}
 if ($Arguments) {
     $launchArguments += @(
         $Arguments | Where-Object { -not [string]::IsNullOrEmpty($_) }
@@ -86,7 +94,9 @@ if ($Arguments) {
 $startArguments = @{
     FilePath = $executable
     WorkingDirectory = $workingDirectory
-    ArgumentList = $launchArguments
+}
+if ($launchArguments.Count -gt 0) {
+    $startArguments.ArgumentList = $launchArguments
 }
 if ($hidden) {
     $startArguments.WindowStyle = 'Hidden'

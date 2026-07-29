@@ -174,8 +174,9 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   helpers. `launch.ps1` is the single configured and worker-PCSX2 launcher;
   configured launches select `stable` or `dev`, while worker launches select
   an already-existing task-owned runtime with `-WorkerRoot` and start it
-  hidden. It performs no cloning, configuration, process inspection, PINE
-  operation, savestate handling, capture, cleanup, or termination.
+  hidden. `-IsoPath` is optional in either mode. It performs no cloning,
+  configuration, process inspection, PINE operation, savestate handling,
+  capture, cleanup, or termination.
   `game_commands.ps1` defines the manifest-driven `na2s`, `nun3`, `nun5`, and
   `nun6` commands; `move_na2_savestates.ps1` files user savestates under
   `@user_savestates`; and `launch_pair.ps1` is the multi-game launch-and-tile

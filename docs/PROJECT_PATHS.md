@@ -6,11 +6,10 @@ the repository directory or another named root; the PowerShell and Python
 loaders reject absolute paths. A repository migration or a move of shared
 media/tools should require changing this file only.
 
-`existence_deferred_roots` lists protected roots whose paths and aliases are
-validated without probing the filesystem during ordinary manifest loading.
-Their authorized user or provisioning consumer performs the necessary
-existence/content validation at the point of use. Descendant root aliases
-inherit the same deferred behavior.
+The loader supports an optional `existence_deferred_roots` list for portable
+manifests whose external resources are provisioned only at use time. The
+current project does not defer any roots: every configured local root must
+exist during ordinary manifest loading.
 
 Stable paths and named files used by maintained workflows belong in this
 manifest instead of being repeated as literals. Prefer the root and file
@@ -23,15 +22,17 @@ genuinely local one-off paths.
 The manifest currently defines these stable logical names:
 
 - `repository`: the repository itself; this must remain `.`.
-- `source`: read-only original media and extracted views under the sibling
-  `UN Workshop/source/` tree.
+- `workshop`: the sibling `UN Workshop/` environment containing shared media,
+  analysis, tools, and configured emulator installations.
+- `source`: read-only original media and extracted views under
+  `@workshop/source/`.
 - `source_na2`: the extracted read-only NA2 source tree.
 - `source_nun3`: the extracted read-only NUN3 source tree.
 - `source_nun5`: the extracted read-only NUN5 source tree.
 - `source_nun6`: the extracted read-only NUN6 A35 source tree.
 - `analysis`: shared reverse-engineering projects and disassembly exports under
-  `UN Workshop/analysis/`.
-- `utils`: shared utilities under `UN Workshop/tools/`, including Ghidra and
+  `@workshop/analysis/`.
+- `utils`: shared utilities under `@workshop/tools/`, including Ghidra and
   the untrusted historical dump.
 - `build`, `logs`, `patcher`, `scripts`, and `work`:
   their corresponding project areas.
@@ -42,25 +43,26 @@ The manifest currently defines these stable logical names:
 - `features`: the canonical feature-package root beneath `@patcher/`; profile
   module discovery resolves this root instead of hardcoding its repository path.
 - `pcsx2_files`: shared PCSX2-related files under
-  `UN Workshop/pcsx2/__shared/`.
+  `@workshop/pcsx2/__shared/`.
 - `pcsx2_bios`, `pcsx2_cheats`, `pcsx2_game_settings`,
   `pcsx2_input_profiles`, `pcsx2_input_recordings`, and
   `pcsx2_memory_cards`: the canonical shared asset categories used by both
   configured PCSX2 installations. Input recordings are opened explicitly
   because PCSX2 does not expose a configurable folder for them.
-- `pcsx2_user`: the user's protected portable stable PCSX2 installation under
-  `UN Workshop/pcsx2/stable/`. User launch, build-promotion, and actualization
+- `pcsx2_stable`: the user's protected portable stable PCSX2 installation under
+  `@workshop/pcsx2/stable/`. User launch, build-promotion, and actualization
   commands address it; agents do not.
 - `pcsx2_dev`: the locally built, reload-enabled PCSX2 development runtime
   copied from the separate PCSX2 source checkout into
-  `UN Workshop/pcsx2/dev/`. It is existence-deferred because a fresh checkout
-  does not contain the local emulator build.
-- `pcsx2_clean`: the protected immutable stable worker template under
-  `UN Workshop/pcsx2/clean/stable/`. Agents copy its complete tree into
-  `work/<task title>/pcsx2/` before use; it is never launched or modified
-  directly.
+  `@workshop/pcsx2/dev/`.
+- `pcsx2_clean`: the protected immutable worker template at the external
+  PCSX2 checkout's clean compiled `bin/` output (`../../PCSX2/bin`). Agents
+  copy it into `work/<task title>/pcsx2/` and may copy any assets for which
+  they have a concrete task- or test-related reason from `@pcsx2_files` into
+  the task-owned runtime. The source template is never populated, launched,
+  or modified directly.
 - `ps2_msys`: the local shared MSYS/PS2SDK toolchain under
-  `UN Workshop/tools/msys/`. Injection Lab resolves it through the
+  `@workshop/tools/msys/`. Injection Lab resolves it through the
   manifest rather than storing the toolchain inside the repository.
 
 Documentation uses `@root/child` notation, such as `@source_na2/PRG/BTL.BIN`.
@@ -74,7 +76,7 @@ The manifest also defines canonical file paths which may not exist yet before
 their producing workflow runs. File entries should reference a named root with
 `@root/child` syntax so the root path is not duplicated:
 
-- `pcsx2_user_exe`: `@pcsx2_user/pcsx2-qt.exe`, used by user-owned launch and
+- `pcsx2_stable_exe`: `@pcsx2_stable/pcsx2-qt.exe`, used by user-owned launch and
   standard-build process control.
 - `pcsx2_dev_exe`: `@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe`, used for explicit
   Injection Lab development runs.
@@ -145,8 +147,8 @@ iso = PROJECT_PATHS.file("na2_iso")
 
 Do not copy resolved absolute paths into scripts, logs, profiles, or documentation.
 
-Shared media, analysis, tools, and PCSX2 roots resolve directly into the
-sibling `UN Workshop/` tree. No repository-root convenience symlinks are
+Shared media, analysis, tools, and PCSX2 roots resolve through `@workshop`.
+No repository-root convenience symlinks are
 required. Stable and development PCSX2 resolve shared asset folders directly
 through their native `[Folders]` configuration. The stable PCSX2 binding
 remains protected and grants agents no additional access.

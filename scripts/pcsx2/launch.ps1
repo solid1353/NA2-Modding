@@ -54,10 +54,10 @@ else {
     }
     if ($Target -eq 'stable') {
         $executable = [IO.Path]::GetFullPath(
-            $projectPaths.files.pcsx2_user_exe
+            $projectPaths.files.pcsx2_stable_exe
         )
         $workingDirectory = [IO.Path]::GetFullPath(
-            $projectPaths.pcsx2_user
+            $projectPaths.pcsx2_stable
         )
     }
     else {

@@ -28,7 +28,7 @@ try {
         build = $build
         logs = $logs
         patcher = Join-Path $repository 'na2_patcher'
-        pcsx2_user = Join-Path $testRoot 'pcsx2_user'
+        pcsx2_stable = Join-Path $testRoot 'pcsx2_stable'
         scripts = Join-Path $repository 'scripts'
         files = [pscustomobject]@{
             current_iso = Join-Path $build 'NA2.28 - Current.iso'
@@ -120,7 +120,7 @@ try {
     "build": "build",
     "logs": "logs",
     "patcher": "na2_patcher",
-    "pcsx2_user": "pcsx2_user",
+    "pcsx2_stable": "pcsx2_stable",
     "pcsx2_files": "pcsx2_files",
     "scripts": "scripts",
     "pcsx2_scripts": "@scripts/pcsx2",
@@ -139,7 +139,7 @@ try {
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'project-paths.json') -Content $manifest
     foreach ($directory in @(
-        'source', 'utils', 'build', 'logs', 'na2_patcher', 'pcsx2_user',
+        'source', 'utils', 'build', 'logs', 'na2_patcher', 'pcsx2_stable',
         'pcsx2_files', 'scripts', 'work'
     )) {
         New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository $directory) | Out-Null

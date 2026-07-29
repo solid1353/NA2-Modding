@@ -58,11 +58,13 @@ replaced with a copied machine-specific absolute path.
 - `@logs/`: disposable shared-workflow records; no files should be written directly in the root. `na2` keeps bounded Current/Previous/Candidate provenance under `@logs/na2/`, and shared generated workstream evidence belongs under `@workstream_logs/<exact task title>/`. Agent ISO records instead stay under `work/<task title>/logs/`. See `docs/LOGGING.md`.
 - `scripts/`: repeatable tooling.
 - `@pcsx2_files/`: shared PCSX2 artifacts under
-  `UN Workshop/pcsx2/__shared/`.
-- `@pcsx2_user/`: protected user-owned portable PCSX2 installation and state. User launch/actualization workflows address it; agents never inspect, launch, or modify it.
-- `@pcsx2_clean/`: protected immutable stable worker template under
-  `UN Workshop/pcsx2/clean/stable/`. Agents copy its complete tree to
-  `work/<task title>/pcsx2/` before use and never launch or mutate the template.
+  `@workshop/pcsx2/__shared/`.
+- `@pcsx2_stable/`: protected user-owned portable PCSX2 installation and state. User launch/actualization workflows address it; agents never inspect, launch, or modify it.
+- `@pcsx2_clean/`: protected immutable compiled worker template at the external
+  PCSX2 checkout's `bin/` output. Agents copy it to
+  `work/<task title>/pcsx2/` and may copy any assets for which they have a
+  concrete task- or test-related reason from `@pcsx2_files` into the task-owned
+  runtime. The source template is never populated, launched, or mutated.
 - `work/<task title>/pcsx2/`: the exact workstream's private PCSX2 copy. The minimal hidden launcher starts only this copy; other PCSX2 processes are off-limits.
 - `na2_patcher/modules/binary_patcher/`: repository-owned schema v4 and reusable CLI validator/patcher for canonical group/patch/edit packages owned by features. The schema has no relations table; a patch is normally selected only when both its group and patch `enabled` switches are `1`. Selected edits are simulated in deterministic order so compatible overlaps and already-satisfied replacements are retained while real guard conflicts fail before ISO staging. It never applies `pending`, `runtime_failed`, or `deprecated` patches and writes only new same-size outputs with complete logs.
 - `na2_patcher/modules/runtime_injector/`: reusable declarative bridge for feature-owned code/data fragments, internal relocations, and guarded symbolic hooks. It contributes to the shared payload builder and compiles linked hooks into an in-memory binary-patcher package; it never chooses offsets or final addresses inside `PRG/228.BIN`.
@@ -219,7 +221,7 @@ same shared directory.
 
 Known PCSX2 paths from prior notes:
 
-- Log: `@pcsx2_user/logs/emulog.txt`
+- Log: `@pcsx2_stable/logs/emulog.txt`
 - Cheats: CRC aliases in `@pcsx2_cheats/`, targeting
   `@pcsx2_cheats/NA228.pnach`
 

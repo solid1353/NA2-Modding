@@ -73,7 +73,7 @@ inherited automatically by the synthetic serial.
 
 The project will **never install, modify, or maintain a custom PCSX2 GameDB
 entry** to override this title or copy the stock compatibility entry. Directly
-editing `@pcsx2_user/cache/gamelist.cache` is likewise rejected because it is
+editing `@pcsx2_stable/cache/gamelist.cache` is likewise rejected because it is
 generated, machine-local state.
 
 The canonical PNACH is `@pcsx2_cheats/NA228.pnach`. Actualization derives each

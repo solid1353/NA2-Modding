@@ -22,10 +22,10 @@ that inconsistent snapshot as a runnable package.
 
 ## What the imported VS Code task does
 
-The task named `Gerar PNACH` in `.vscode/tasks.json` only starts
-`./gen_pnach.sh` through Git Bash with the source root as its working
-directory. The shell wrapper adds the supplied PS2DEV compiler and PS2SDK tools
-to `PATH`, then runs `python3 gen_pnach.py`.
+In the archived imported snapshot, the task named `Gerar PNACH` in its
+`.vscode/tasks.json` only starts `./gen_pnach.sh` through Git Bash with the
+source root as its working directory. The shell wrapper adds the supplied
+PS2DEV compiler and PS2SDK tools to `PATH`, then runs `python3 gen_pnach.py`.
 
 The generator:
 

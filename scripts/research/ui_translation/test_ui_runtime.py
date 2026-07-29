@@ -274,7 +274,7 @@ class StateArchiveTests(unittest.TestCase):
                 roots={
                     "repository": repository,
                     "source": source,
-                    "pcsx2_user": pcsx2,
+                    "pcsx2_stable": pcsx2,
                     "pcsx2_game_settings": pcsx2 / "gamesettings",
                     "build": build,
                     "work": work,
@@ -376,7 +376,7 @@ class StateArchiveTests(unittest.TestCase):
                 roots={
                     "repository": repository,
                     "source": source,
-                    "pcsx2_user": pcsx2,
+                    "pcsx2_stable": pcsx2,
                     "pcsx2_game_settings": pcsx2 / "gamesettings",
                     "build": build,
                     "work": work,
@@ -417,7 +417,7 @@ class StateArchiveTests(unittest.TestCase):
             )
             self.assertEqual(
                 manifest["state"]["source_path"],
-                "@pcsx2_user/sstates/SLES-55605 (C071D4C1).01.p2s",
+                "@pcsx2_stable/sstates/SLES-55605 (C071D4C1).01.p2s",
             )
             self.assertTrue(state.is_file())
             self.assertFalse(result["slot_state_removed"])

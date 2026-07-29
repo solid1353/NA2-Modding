@@ -1,25 +1,20 @@
 {
   "schema_version": 1,
-  "existence_deferred_roots": [
-    "pcsx2_user",
-    "pcsx2_clean",
-    "pcsx2_dev",
-    "ps2_msys"
-  ],
   "roots": {
     "repository": ".",
-    "source": "../UN Workshop/source",
+    "workshop": "../UN Workshop",
+    "source": "@workshop/source",
     "source_na2": "@source/NA2.iso.files",
     "source_nun3": "@source/NUN3.iso.files",
     "source_nun5": "@source/NUN5.iso.files",
     "source_nun6": "@source/NUN6 A35.iso.files",
-    "analysis": "../UN Workshop/analysis",
-    "utils": "../UN Workshop/tools",
-    "pcsx2_user": "../UN Workshop/pcsx2/stable",
-    "pcsx2_clean": "../UN Workshop/pcsx2/clean/stable",
-    "pcsx2_dev": "../UN Workshop/pcsx2/dev",
-    "ps2_msys": "../UN Workshop/tools/msys",
-    "pcsx2_files": "../UN Workshop/pcsx2/__shared",
+    "analysis": "@workshop/analysis",
+    "utils": "@workshop/tools",
+    "pcsx2_stable": "@workshop/pcsx2/stable",
+    "pcsx2_clean": "../../PCSX2/bin",
+    "pcsx2_dev": "@workshop/pcsx2/dev",
+    "ps2_msys": "@workshop/tools/msys",
+    "pcsx2_files": "@workshop/pcsx2/__shared",
     "pcsx2_bios": "@pcsx2_files/bios",
     "pcsx2_cheats": "@pcsx2_files/cheats",
     "pcsx2_game_settings": "@pcsx2_files/game_settings",
@@ -40,7 +35,7 @@
     "release_candidates": "@release_work/candidates"
   },
   "files": {
-    "pcsx2_user_exe": "@pcsx2_user/pcsx2-qt.exe",
+    "pcsx2_stable_exe": "@pcsx2_stable/pcsx2-qt.exe",
     "pcsx2_dev_exe": "@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe",
     "canonical_cheats": "@pcsx2_cheats/NA228.pnach",
     "canonical_gamesettings": "@pcsx2_game_settings/NA228.ini",

@@ -24,7 +24,7 @@ before beginning the next case.
   `work/Font/inputs/sstates/epics/ss2-6/provenance.tsv` and
   `work/Font/inputs/sstates/batches/2026-07-27-ss1-10/provenance.tsv`, plus
   `work/Font/inputs/sstates/batches/2026-07-27-additional-ss1/provenance.tsv`.
-- Protected `@pcsx2_user` sources remain untouched.
+- Protected `@pcsx2_stable` sources remain untouched.
 - Status: the remade ss2 and ss3 pair records the same Pause Controls modal in
   normal and selected states. Both are user-verified and removed from the
   remaining report. The shared quit-confirmation and ss1 Special Controls cases

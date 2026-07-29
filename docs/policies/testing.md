@@ -122,22 +122,25 @@ requirements, not whatever implementation happens to exist today.
 
 ## User PCSX2 and agent runtimes
 
-- `@pcsx2_user` is the user's protected stable installation. Agents may read
+- `@pcsx2_stable` is the user's protected stable installation. Agents may read
   and copy from it but never create, modify, move, delete, link, launch,
   control, or write through hardlinks into it, except for an ISO launch
   explicitly requested by the user.
 - When the user explicitly asks to launch an ISO, launch that ISO through
-  `@pcsx2_user`; do not substitute an isolated worker PCSX2. That request
+  `@pcsx2_stable`; do not substitute an isolated worker PCSX2. That request
   authorizes only the requested launch, not other user-PCSX2 changes or control.
-- `@pcsx2_user/sstates/` and `snaps/` are user read-only libraries. Copy chosen
+- `@pcsx2_stable/sstates/` and `snaps/` are user read-only libraries. Copy chosen
   inputs with provenance into the task's `inputs/sstates/` or
   `inputs/screenshots/`. When a workstream needs a savestate that the user has
   not supplied, stop and ask the user for that exact state; do not create or
   navigate to a substitute state.
-- When PCSX2 is needed, copy the complete read-only `@pcsx2_clean` template to
-  `work/<task title>/pcsx2/`, assign a PINE port unique among live agent
-  instances, and operate only that copy. Other workstream copies/processes are
-  off-limits.
+- When PCSX2 is needed, copy the read-only compiled `@pcsx2_clean` template to
+  `work/<task title>/pcsx2/`. An agent may copy any shared assets for which it
+  has a concrete task- or test-related reason from `@pcsx2_files` into that
+  task-owned runtime. Any asset category, including input profiles, recordings,
+  memory cards, cheats, and GameSettings, is allowed. Assign a PINE port unique
+  among live agent instances and operate only that copy. Other workstream
+  copies/processes are off-limits.
 - Agent-only PCSX2 testing stays hidden. PINE and maintained operation plans
   may load a user-supplied state, capture output, or perform bounded memory
   operations, but never navigate emulator or game menus. Do not inject window

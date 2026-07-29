@@ -50,7 +50,7 @@ cannot be explained from NUN5 and Current plus the unpacked static sources.
   claiming a live PINE identity. `--consume-states` is explicit and destructive.
 - A capture is first copied and verified under
   `@work/UI translation/runtime_cases/`. Only after that succeeds is the newly
-  generated slot state removed from `@pcsx2_user/sstates/`; pass
+  generated slot state removed from `@pcsx2_stable/sstates/`; pass
   `--keep-slot-state` to retain it there.
 - Runtime writes require an exact serial/CRC match, neutral rendering settings,
   paused PCSX2, an exact expected-byte range, and complete readback. A failed

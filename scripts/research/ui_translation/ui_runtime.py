@@ -251,7 +251,7 @@ def rendering_for_target(
     paths: ProjectPaths, target: Target
 ) -> RenderingSettings:
     return inspect_rendering_settings(
-        paths.path("pcsx2_user", "inis", "PCSX2.ini"),
+        paths.path("pcsx2_stable", "inis", "PCSX2.ini"),
         paths.path("pcsx2_game_settings", target.settings_file),
     )
 
@@ -831,7 +831,7 @@ def capture_state(
         raise UiRuntimeError("Capture timeout must be positive")
 
     rendering, image_path = _validated_target_context(paths, target)
-    state_root = paths.path("pcsx2_user", "sstates")
+    state_root = paths.path("pcsx2_stable", "sstates")
     state_root.mkdir(parents=True, exist_ok=True)
     before = _slot_state_snapshot(state_root)
 
@@ -864,7 +864,7 @@ def capture_state(
 def _manual_state_path(paths: ProjectPaths, target: Target, slot: int) -> Path:
     _validate_case_and_slot("manual", slot)
     return paths.path(
-        "pcsx2_user", "sstates", f"{target.serial} ({target.crc}).{slot:02d}.p2s"
+        "pcsx2_stable", "sstates", f"{target.serial} ({target.crc}).{slot:02d}.p2s"
     )
 
 

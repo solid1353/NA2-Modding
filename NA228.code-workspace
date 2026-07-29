@@ -1,11 +1,31 @@
 {
   "folders": [
-	{
-		"path": "."
-	},
-	{
-		"path": "../UN Workshop"
-	}
-],
-  "settings": {}
+    {
+      "name": "NA2 Modding",
+      "path": "."
+    },
+    {
+      "name": "UN Workshop",
+      "path": "../UN Workshop"
+    }
+  ],
+  "settings": {
+    "files.eol": "\n",
+    "diffEditor.ignoreTrimWhitespace": true,
+    "editor.formatOnSave": false,
+    "editor.formatOnPaste": false,
+    "editor.formatOnType": false,
+    "C_Cpp.errorSquiggles": "disabled",
+    "files.trimTrailingWhitespace": true,
+    "files.exclude": {
+      "**/__pycache__": true
+    },
+    "search.exclude": {
+      "**/__pycache__": true
+    },
+    "files.watcherExclude": {
+      "**/__pycache__/**": true
+    },
+    "powershell.cwd": "NA2 Modding"
+  }
 }

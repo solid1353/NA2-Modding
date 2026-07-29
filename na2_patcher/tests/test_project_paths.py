@@ -115,14 +115,14 @@ class ProjectPathTests(unittest.TestCase):
             root = Path(directory)
             manifest = {
                 "schema_version": 1,
-                "existence_deferred_roots": ["pcsx2_user"],
+                "existence_deferred_roots": ["pcsx2_stable"],
                 "roots": {
                     "repository": ".",
-                    "pcsx2_user": "missing-user-pcsx2",
-                    "pcsx2_user_memcards": "@pcsx2_user/memcards",
+                    "pcsx2_stable": "missing-user-pcsx2",
+                    "pcsx2_stable_memcards": "@pcsx2_stable/memcards",
                 },
                 "files": {
-                    "pcsx2_user_exe": "@pcsx2_user/pcsx2-qt.exe",
+                    "pcsx2_stable_exe": "@pcsx2_stable/pcsx2-qt.exe",
                 },
             }
             manifest_path = root / "project-paths.json"
@@ -131,7 +131,7 @@ class ProjectPathTests(unittest.TestCase):
             paths = load_project_paths(manifest_path)
 
             self.assertEqual(
-                paths.path("pcsx2_user_memcards"),
+                paths.path("pcsx2_stable_memcards"),
                 root.resolve() / "missing-user-pcsx2" / "memcards",
             )
 

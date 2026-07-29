@@ -7,5 +7,5 @@
   "entry_point": "na2_patcher/app.py",
   "release_manifest": "na2_patcher/release_manifest.json",
   "temporary_root": "@project_work/temp/release",
-  "icon": "icons/advanced/NA2.28.ico"
+  "icon": "icons/release/NA2.28.ico"
 }

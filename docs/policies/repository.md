@@ -21,7 +21,11 @@
 - `@pcsx2_files/` is the canonical shared asset pool used directly by the
   configured stable and development PCSX2 installations. BIOS, cheats,
   GameSettings, input profiles, input recordings, and memory cards live only
-  there; do not recreate per-installation copies or links. PCSX2 has no
+  there; do not recreate configured-installation copies or links. After
+  copying `@pcsx2_clean`, an agent may copy any assets for which it has a
+  concrete task- or test-related reason into its task-owned PCSX2 copy. Any
+  asset category is allowed; never populate the clean template itself. PCSX2
+  has no
   configurable input-recordings folder, so recordings are opened from their
   canonical shared paths explicitly.
 

@@ -9,7 +9,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
-$sourceRoot = Join-Path $projectPaths.pcsx2_user 'sstates'
+$sourceRoot = Join-Path $projectPaths.pcsx2_stable 'sstates'
 $destinationRoot = $projectPaths.user_savestates
 
 if ([string]::IsNullOrWhiteSpace($SubPath)) {

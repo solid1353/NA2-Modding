@@ -146,6 +146,10 @@ requirements, not whatever implementation happens to exist today.
   interact with it; before launch, state exactly what is required from the
   user. Never expose, restore, activate, or foreground an instance merely for
   agent automation.
+- Never save or serialize a complete savestate solely to obtain a screenshot.
+  Extract an existing state's embedded `Screenshot.png` directly. For a fresh
+  runtime frame, use PCSX2's native screenshot output; capture a new savestate
+  only when the state itself is a required artifact.
 - Builds and single-ISO launch commands never probe or close any PCSX2 process.
 - Bare `na2`, launch selectors, standalone `act`, `na`, and UI pair-launch
   commands are user-only.

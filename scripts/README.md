@@ -19,8 +19,7 @@ history; do not recreate an archive directory for dead scripts.
 - `pcsx2/`: PCSX2 launch, process, configuration, CRC helpers, the user-facing
   user/development single-instance and multi-game launch commands, the
   dot-sourced source-game command set, user savestate filing, the minimal
-  hidden workstream-copy launcher, task-owned PINE savestate screenshot
-  extraction, and
+  hidden workstream-copy launcher, and
   `patch_savestate_memory.py` for exact-byte-guarded EE-memory patches in copied
   task-owned savestates. Unsupported Zstandard ZIP members are bulk-extracted
   once through 7-Zip when available, with `tar` as the portable fallback,
@@ -108,14 +107,6 @@ already-existing `work/<task title>/pcsx2/pcsx2-qt.exe` copy hidden with a
 repository-relative ISO path. It does not copy or configure PCSX2, inspect or
 stop processes, use PINE, load savestates, capture output, or perform cleanup.
 
-`pcsx2/capture_state_screenshot.ps1` handles the narrower screenshot workflow
-for an already-existing task-owned PCSX2 copy. It validates that its ISO,
-savestate, and screenshot paths remain under the supplied workstream root,
-loads the input through a private slot, asks that clone's configured PINE port
-to save a distinct fresh slot, and extracts the embedded `Screenshot.png`.
-It launches hidden, never reads or controls protected shared PCSX2 trees or
-unrelated processes, and closes only the exact process it started.
-
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`
 and is composed before the image assembler runs rather than owned by a feature.
@@ -146,6 +137,7 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 
 | Former path | Recovery commit | Retirement and maintained replacement |
 | --- | --- | --- |
+| `scripts/pcsx2/capture_state_screenshot.ps1` | `a9938c40b3b97ab4adf072b9c577d551b620a46c` | Retired because it serialized a complete savestate solely to obtain a fresh screenshot. Extract `Screenshot.png` directly from an existing state; use PCSX2's native screenshot output for a fresh runtime frame. |
 | `scripts/archive/replace_iso_file_same_size.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na2_patcher.image_assembler`. |
 | `scripts/na2/check_log_crc.ps1` | `804c2df8d16019a3b55f6acb10a023c435faaafc` | Manual log/PNACH comparison was superseded by `na2/iso_identity.ps1` and the maintained standalone actualization workflow. |
 | `scripts/na2/get_elf_crc.ps1` | `ff615f410889c93dea015e5fe4ea44ec4662dbee` | The redundant command wrapper was removed; `pcsx2/pcsx2_elf_crc.ps1` remains the shared tested implementation. |

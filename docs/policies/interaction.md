@@ -144,11 +144,13 @@ Next response: short plan + effort recommendation + needed user inputs + approva
 - Stop at the next safe boundary without beginning new substantive work. Do
   not interrupt an atomic file, Git, ISO-promotion, or similar operation
   unsafely.
-- Create a dated `.agents/<date>-<task-title>-resume.md` recording the objective,
-  task title, phase, plan, effort, approval, completed/remaining steps,
-  decisions, commands/results/tests, Git state and owned changes, files,
-  retained work artifacts, processes/resources, required inputs,
-  uncertainties, and exact first resume action.
+- Create a dated
+  `docs/workstreams/<workstream>/<date>-<task-title>-resume.md` in the owning
+  workstream's documentation directory, recording the objective, task title,
+  phase, plan, effort, approval, completed/remaining steps, decisions,
+  commands/results/tests, Git state and owned changes, files, retained work
+  artifacts, processes/resources, required inputs, uncertainties, and exact
+  first resume action.
 - Preserve the minimum resumption artifacts and release exclusive resources
   when possible. Disable pending wakeups unless monitoring should continue. Do
   not perform normal completion cleanup.

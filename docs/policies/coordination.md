@@ -141,8 +141,12 @@
 
 ## Cross-install handoffs
 
-- `.agents/` is intentional cross-install handoff infrastructure, not clutter.
+- `.agents/` is intentional installation-context infrastructure, not clutter,
+  but workstream resume handoffs never live there.
 - `.agents/git-authors.tsv` stores non-secret author identities only.
 - Dated handoffs are context snapshots subordinate to live repository state,
   rules, docs, and user instructions. Machine paths and task IDs may appear
   only as originating-install context.
+- Workstream resume handoffs are canonical documents placed directly beside
+  the owning `docs/workstreams/<workstream>/README.md`; they use
+  repository-relative paths and omit installation-specific task IDs.

@@ -12,8 +12,9 @@ When a workstream needs durable documentation, create
 and link it from the workstream heading in `TASKS.md`. Put explicit recurring
 rules in a `## Workstream policy` section. Keep larger plans, working context,
 and other workstream-owned documents beside it and link them from the landing
-page. Do not create empty files or directories in anticipation of future rules,
-and do not maintain a second index beside `TASKS.md`.
+page. Place dated `zxc` resume handoffs directly in this directory, never under
+`.agents/`. Do not create empty files or directories in anticipation of future
+rules, and do not maintain a second index beside `TASKS.md`.
 
 ## Content boundary
 

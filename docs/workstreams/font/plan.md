@@ -449,8 +449,8 @@ acceptance**
 
 The live v2 behavioral renderer migrates from hand-encoded MIPS to ordinary C
 compiled for PS2 EE and contributed through the existing runtime-injector and
-payload-builder architecture. The Injection Lab is a development compiler and
-hot-reload aid only; canonical builds consume deterministic generated
+payload-builder architecture. The direct-PINE injection scripts are a
+development build/apply aid only; canonical builds consume deterministic generated
 fragments and never depend on a PNACH or a fixed development-bank address.
 
 Migration proceeds in independently committed stages:
@@ -474,9 +474,9 @@ shared payload builder assigns their final addresses.
 
 ### Stage 1 C compiler/extraction boundary
 
-`na228_builder/payload_builder/ee_c_fragments.py` reuses Injection Lab's
-bundled `ee-gcc` and proven EE compilation contract. It does not duplicate the
-compiler or use the lab's fixed development-bank linker. Instead, it converts
+`na228_builder/payload_builder/ee_c_fragments.py` uses the configured
+`ee-gcc` and proven EE compilation contract. It does not duplicate the
+compiler or use a fixed development-address linker. Instead, it converts
 the compiler's ELF32 little-endian MIPS relocatable object into canonical
 payload-builder inputs:
 
@@ -815,7 +815,7 @@ Normal profile composition now treats Font C as canonical input instead of
 requiring checked-in aggregate MIPS blobs. The Localization runtime-injector
 package declares each C unit, external import, extracted object section, stable
 fragment ID, and global fragment order. During package loading the pinned
-Injection Lab compiler produces temporary objects; the generic EE extractor
+EE compiler produces temporary objects; the generic EE extractor
 normalizes their supported sections and relocations; the payload builder lays
 those fragments out with retained static ABI/data fragments and external
 strings in the single final `PRG/228.BIN`.

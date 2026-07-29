@@ -13,7 +13,7 @@ Canonical inputs are `targets.tsv`, `groups.tsv`, `patches.tsv`,
 `relocations.tsv`, and `edits.tsv`, plus only the source files and blobs
 referenced by those tables. Static fragments may contain their bytes inline or
 select a guarded range from a referenced blob. Declared C sources are compiled
-with the pinned Injection Lab EE toolchain during normal package loading; the
+with the pinned EE toolchain during normal package loading; the
 generic object extractor converts their sections and relocations directly into
 the same address-independent fragment model. Compiler objects and aggregate
 payload blobs are temporary and are not canonical feature inputs.

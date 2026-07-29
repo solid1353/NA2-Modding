@@ -137,11 +137,13 @@ Detailed command and task behavior is in
   task-owned overlay plan into addressed guarded writes, then apply those
   writes directly through PINE to the task-owned PCSX2 and invalidate the JIT.
   Agents never transport runtime candidates through PNACH files, cheat-folder
-  synchronization, install/restore state, or filesystem watchers. Until the
-  maintained generic direct-PINE command exists, report that pipeline gap
-  instead of extending the PNACH workaround.
-- `injection_lab/watch.ps1` is user-only interactive convenience. It is not an
+  synchronization, install/restore state, or filesystem watchers.
+- `scripts/injection/watch.ps1` is user-only interactive convenience. It is not an
   agent workflow or dependency.
+- Agents capture fresh runtime screenshots only through
+  `scripts/pcsx2/pine.py screenshot` against their task-owned PINE port, then
+  poll that worker's `snaps/` tree for the new PNG. Never use window capture,
+  screenshot hotkeys, window messages, or foregrounding as substitutes.
 - Never centrally migrate, replace, or clean another task's PCSX2 copy. Before
   reusing an existing copy for new work, its owning task audits it, promotes
   anything still needed, then replaces the whole copy from `@pcsx2_clean`.

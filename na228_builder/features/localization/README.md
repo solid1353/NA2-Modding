@@ -1976,6 +1976,9 @@ Static ABI/data fragments remain inline in `fragments.tsv`; the shared payload
 builder links both kinds into the final `228.BIN`. The only retained generated
 MIPS in the numeric layer is the pair of typed-to-variadic native `sprintf`
 bridges and the minimal call-site register setup.
+`runtime_injector/entries.tsv` is the development-only ABI entry allowlist used
+by `scripts/injection/build.py`; it does not invoke the feature, enter the
+profile content hash, or change normal payload composition.
 `scripts/research/localization/generate_ninja_song_ascii_numbers.py`
 deterministically verifies the five shared clean-BTL formatter calls, emits
 their symbolic redirects, and guards the canonical ASCII multiplication

@@ -19,18 +19,17 @@ Current PCSX2 actualization:
   generated alias.
 - `act na228` derives each retained Current, Previous, and Candidate identity
   from its ISO, maintains matching CRC-named PNACH symlinks, and writes distinct
-  real GameSettings files under `@pcsx2_files/`. An installed injection-lab
-  regular PNACH identified by the lab state is preserved without making lab
-  integrity a launch prerequisite. Orphaned regular files at managed NA2.28
-  CRC aliases are repaired to template-backed symlinks.
+  real GameSettings files under `@pcsx2_files/`. Orphaned regular files at
+  managed NA2.28 CRC aliases are repaired to template-backed symlinks. Runtime
+  C candidates bypass actualization and cheat files: they are applied directly
+  to task-owned PCSX2 memory through PINE.
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v4 organizes each package as groups, atomic patches, and exact edits; independent group and patch `enabled` switches control normal composition. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`.
 - Actualization is an explicit standalone workflow with `na2` and `input`
   modes; bare `act` runs both in that order. User-owned
   Current/Previous/Candidate builds and launches also run `act na228`
   automatically, while worker builds never actualize.
-- A zero-byte cheat template removes its managed PCSX2 CRC aliases, including
-  orphaned regular lab files. Other game identities, real files, and unrelated
-  symlinks are preserved.
+- A zero-byte cheat template removes its managed PCSX2 CRC aliases. Other game
+  identities, real files, and unrelated symlinks are preserved.
 - Current, Previous, and Candidate select the existing
   `NA228 - Current.ps2`, `NA228 - Previous.ps2`, and
   `NA228 - Candidate.ps2` cards respectively. When multiple images share one

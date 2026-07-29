@@ -5,15 +5,15 @@ import argparse
 import csv
 import hashlib
 import json
-import os
 import re
 import sys
+import tempfile
 from dataclasses import replace
 from pathlib import Path
 
 
-LAB_ROOT = Path(__file__).resolve().parent
-REPOSITORY = LAB_ROOT.parent
+SCRIPT_ROOT = Path(__file__).resolve().parent
+REPOSITORY = SCRIPT_ROOT.parents[1]
 PACKAGE_ROOT = (
     REPOSITORY
     / "na228_builder"
@@ -30,9 +30,9 @@ from na228_builder.payload_builder.operations import (
     encode_symbol_reference,
 )
 from na228_builder.modules.runtime_injector.engine import _load_static_fragments
+from na228_builder.image_assembler.iso9660 import Iso9660
 
 
-CRC_PATTERN = re.compile(r"[0-9A-F]{8}\Z")
 SYMBOL_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
 SOURCE_FIELDS = ["source_id", "language", "path", "namespace"]
 IMPORT_FIELDS = ["source_id", "name", "symbol", "addend"]
@@ -48,30 +48,27 @@ SYMBOL_MAP_FIELDS = [
     "sha256",
     "init",
 ]
+HOT_RELOAD_SOURCE = "hot_reload_test"
+HOT_RELOAD_ENTRY = "project.hot_reload_test"
+FIXED_EXTERNAL_ADDRESSES = {
+    "project.ee_kernel_print": 0x0015E070,
+}
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description=(
-            "Compile one canonical runtime-injector C source into an Injection "
-            "Lab bank and redirect selected production entries."
-        )
+        description="Compile and link a runtime-injector C fragment."
     )
     parser.add_argument("--source-id", required=True)
     parser.add_argument("--entry", required=True)
     parser.add_argument("--overlay-plan")
+    parser.add_argument(
+        "--iso",
+        type=Path,
+        default=REPOSITORY / "build" / "NA2.28 - Current.iso",
+    )
+    parser.add_argument("--output", type=Path)
     return parser.parse_args()
-
-
-def environment_int(name: str) -> int:
-    value = os.environ.get(name, "")
-    try:
-        result = int(value, 0)
-    except ValueError as exc:
-        raise ValueError(f"{name} is not a valid integer: {value!r}") from exc
-    if not 0 < result <= 0xFFFFFFFF:
-        raise ValueError(f"{name} is outside the unsigned 32-bit range")
-    return result
 
 
 def read_tsv(path: Path, fields: list[str]) -> list[dict[str, str]]:
@@ -310,21 +307,18 @@ def load_overlay_plan(
 def resolve_overlay_writes(
     writes: list[dict[str, object]],
     *,
-    dispatcher_addresses: dict[str, int],
-    primary_dispatcher: int,
+    entry_addresses: dict[str, int],
+    primary_entry: int,
 ) -> list[dict[str, object]]:
     resolved: list[dict[str, object]] = []
     for row in writes:
         kind = str(row["replacement_kind"])
         if kind == "entry_call":
-            replacement = (
-                encode_symbol_reference("jal26", primary_dispatcher) + bytes(4)
-            )
+            replacement = encode_symbol_reference("jal26", primary_entry) + bytes(4)
         elif kind == "symbol_call":
             symbol = str(row["replacement_symbol"])
             replacement = (
-                encode_symbol_reference("jal26", dispatcher_addresses[symbol])
-                + bytes(4)
+                encode_symbol_reference("jal26", entry_addresses[symbol]) + bytes(4)
             )
         else:
             replacement = bytes.fromhex(str(row["replacement_hex"]))
@@ -419,6 +413,23 @@ def load_source(
     dict[str, ee_c_fragments.SymbolReference],
     list[tuple[int, str, str]],
 ]:
+    if source_id == HOT_RELOAD_SOURCE:
+        return (
+            REPOSITORY / "src" / "hot_reload_test.c",
+            "project.hot_reload",
+            {
+                "eeKernelPrint": ee_c_fragments.SymbolReference(
+                    symbol="project.ee_kernel_print",
+                    addend=0,
+                )
+            },
+            [
+                (1, "project.hot_reload.text", HOT_RELOAD_ENTRY),
+                (2, "project.hot_reload.rodata", "project.hot_reload.rodata"),
+                (3, "project.hot_reload.bss", "project.hot_reload.bss"),
+            ],
+        )
+
     package_root = PACKAGE_ROOT
     source_rows = read_tsv(package_root / "c_sources.tsv", SOURCE_FIELDS)
     selected = [row for row in source_rows if row["source_id"] == source_id]
@@ -486,7 +497,14 @@ def load_declared_entry(
     source_id: str,
     entry_symbol: str,
 ) -> dict[str, str]:
-    entries = read_tsv(LAB_ROOT / "production_entries.tsv", ENTRY_FIELDS)
+    if source_id == HOT_RELOAD_SOURCE and entry_symbol == HOT_RELOAD_ENTRY:
+        return {
+            "symbol": HOT_RELOAD_ENTRY,
+            "abi": "void",
+            "purpose": "Project C hot-reload smoke entry.",
+        }
+
+    entries = read_tsv(PACKAGE_ROOT / "entries.tsv", ENTRY_FIELDS)
     selected = [
         row
         for row in entries
@@ -495,12 +513,12 @@ def load_declared_entry(
     if len(selected) != 1:
         raise ValueError(
             "The selected production source/entry is not an explicitly "
-            "declared Injection Lab ABI boundary"
+            "declared runtime-injector ABI boundary"
         )
     entry = selected[0]
-    identifier(entry["abi"], "production_entries.tsv abi")
+    identifier(entry["abi"], "entries.tsv abi")
     if not entry["purpose"]:
-        raise ValueError("production_entries.tsv purpose must not be empty")
+        raise ValueError("entries.tsv purpose must not be empty")
     return {
         "symbol": entry["entry_symbol"],
         "abi": entry["abi"],
@@ -514,8 +532,8 @@ def compile_fragments(
     namespace: str,
     imports: dict[str, ee_c_fragments.SymbolReference],
     mappings: list[tuple[int, str, str]],
+    object_path: Path,
 ) -> list[PayloadFragment]:
-    object_path = LAB_ROOT / "obj" / "production" / f"{source_id}.o"
     object_path.parent.mkdir(parents=True, exist_ok=True)
     extracted = ee_c_fragments.compile_and_extract(
         source_path,
@@ -665,7 +683,7 @@ def select_fragment_closure(
     return [item[2] for item in ordered], external_symbols
 
 
-def link_bank(
+def link_fragment(
     fragments: list[PayloadFragment],
     *,
     code_base: int,
@@ -681,7 +699,7 @@ def link_bank(
     used_end = align(cursor, 4)
     if used_end > code_end:
         raise ValueError(
-            "Production C closure exceeds the selected Injection Lab bank: "
+            "Production C closure exceeds the development reservation: "
             f"0x{used_end:X} > 0x{code_end:X}"
         )
 
@@ -710,26 +728,21 @@ def link_bank(
     return bytes(image), addresses
 
 
-def word_patch(address: int, value: int) -> str:
-    return f"patch=1,EE,{address + 0x20000000:08X},extended,{value:08X}"
+def resolved_path(value: Path) -> Path:
+    return value.resolve() if value.is_absolute() else (REPOSITORY / value).resolve()
 
 
 def main() -> int:
     args = parse_args()
     source_id = identifier(args.source_id, "source-id")
     entry_symbol = identifier(args.entry, "entry")
-    crc = os.environ.get("NA2_INJECTION_CRC", "").upper()
-    if not CRC_PATTERN.fullmatch(crc):
-        raise ValueError("NA2_INJECTION_CRC must be eight hexadecimal digits")
-    injection_base = environment_int("NA2_INJECTION_BASE")
-    injection_end = environment_int("NA2_INJECTION_END")
-    code_base = environment_int("NA2_INJECTION_CODE_BASE")
-    code_end = environment_int("NA2_INJECTION_CODE_END")
-    build_id = environment_int("NA2_INJECTION_BUILD_ID")
-    if not injection_base < code_base < code_end <= injection_end:
-        raise ValueError("Invalid Injection Lab bank reservation")
-    primary_dispatcher = injection_base
-    primary_active_pointer = injection_base + 0x10
+    iso_path = resolved_path(args.iso)
+    output = resolved_path(
+        args.output or Path("build") / "injection" / source_id
+    )
+    code_base = 0x008F0000
+    code_end = 0x008F3D00
+
     (
         overlay_plan_path,
         overlay_plan,
@@ -741,8 +754,12 @@ def main() -> int:
         entry_symbol=entry_symbol,
     )
 
-    payload_path = LAB_ROOT / "data" / "FILES" / "228.BIN"
-    payload = payload_path.read_bytes()
+    iso = Iso9660(iso_path)
+    try:
+        payload_record = iso.by_path["PRG/228.BIN"]
+    except KeyError as exc:
+        raise ValueError(f"{iso_path}: PRG/228.BIN was not found") from exc
+    payload = iso.read_file(payload_record)
     payload_sha256 = sha256(payload)
     build_record, payload_summary = locate_build_record(payload_sha256)
     symbol_map = load_symbol_map(build_record, payload)
@@ -756,16 +773,16 @@ def main() -> int:
         else [load_declared_entry(source_id, entry_symbol)]
     )
     entry_symbols = [entry["symbol"] for entry in entry_declarations]
-    dispatcher_limit = injection_base + 0x100
-    if len(entry_symbols) * 0x20 > dispatcher_limit - injection_base:
-        raise ValueError("Injection Lab supports at most eight selected entries")
-    dispatchers = {
-        symbol: (injection_base + index * 0x20, injection_base + index * 0x20 + 0x10)
-        for index, symbol in enumerate(entry_symbols)
-    }
-    compiled_c_fragments = compile_fragments(
-        source_id, source_path, namespace, imports, mappings
-    )
+
+    with tempfile.TemporaryDirectory(prefix="na228-injection-") as temporary:
+        compiled_c_fragments = compile_fragments(
+            source_id,
+            source_path,
+            namespace,
+            imports,
+            mappings,
+            Path(temporary) / f"{source_id}.o",
+        )
     fragments, external_symbols = select_fragment_closure(
         entry_symbols,
         compiled_c_fragments,
@@ -780,6 +797,9 @@ def main() -> int:
 
     external_addresses: dict[str, int] = {}
     for symbol in external_symbols:
+        if symbol in FIXED_EXTERNAL_ADDRESSES:
+            external_addresses[symbol] = FIXED_EXTERNAL_ADDRESSES[symbol]
+            continue
         row = symbol_map.get(symbol)
         if row is None:
             raise ValueError(
@@ -787,7 +807,7 @@ def main() -> int:
             )
         external_addresses[symbol] = int(row["address"])
 
-    image, addresses = link_bank(
+    fragment, addresses = link_fragment(
         fragments,
         code_base=code_base,
         code_end=code_end,
@@ -795,15 +815,31 @@ def main() -> int:
     )
     overlay_writes = resolve_overlay_writes(
         unresolved_overlay_writes,
-        dispatcher_addresses={
-            symbol: dispatchers[symbol][0] for symbol in entry_symbols
-        },
-        primary_dispatcher=primary_dispatcher,
+        entry_addresses=addresses,
+        primary_entry=addresses[entry_symbol],
     )
-    resident_entry = symbol_map.get(entry_symbol)
-    resident_address: int | None = None
-    expected_entry = b""
-    if overlay_plan is None:
+
+    writes = list(overlay_writes)
+    if overlay_plan is None and source_id == HOT_RELOAD_SOURCE:
+        writes.append(
+            {
+                "id": "hot_reload_test_call",
+                "runtime_address": "0x001D0578",
+                "expected_hex": (
+                    "0000BFDF1000BD270800E0030000000000000000"
+                ),
+                "replacement_hex": (
+                    encode_symbol_reference(
+                        "jal26", addresses[HOT_RELOAD_ENTRY]
+                    )
+                    + bytes(4)
+                    + bytes.fromhex("0000BFDF0800E0031000BD27")
+                ).hex().upper(),
+                "reason": "Call the project hot-reload smoke entry.",
+            }
+        )
+    elif overlay_plan is None:
+        resident_entry = symbol_map.get(entry_symbol)
         if resident_entry is None:
             raise ValueError(
                 f"Exact Current symbol map does not contain entry {entry_symbol!r}; "
@@ -813,146 +849,89 @@ def main() -> int:
             raise ValueError(
                 f"Production entry {entry_symbol!r} is smaller than 8 bytes"
             )
-        resident_address = int(resident_entry["address"])
         resident_offset = int(resident_entry["offset"])
-        expected_entry = payload[resident_offset : resident_offset + 8]
-
-    entry_address = addresses[entry_symbol]
-    redirect_words = ()
-    if resident_address is not None:
-        redirect_words = (
-            int.from_bytes(
-                encode_symbol_reference("j26", primary_dispatcher), "little"
-            ),
-            0,
+        expected = payload[resident_offset : resident_offset + 8]
+        replacement = (
+            encode_symbol_reference("j26", addresses[entry_symbol]) + bytes(4)
+        )
+        writes.append(
+            {
+                "id": "resident_entry_redirect",
+                "runtime_address": (
+                    f"0x{int(resident_entry['address']):08X}"
+                ),
+                "expected_hex": expected.hex().upper(),
+                "replacement_hex": replacement.hex().upper(),
+                "reason": "Redirect the Current resident entry to the fragment.",
+            }
         )
 
-    output_path = LAB_ROOT / "build" / f"{crc}.pnach"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    lines = [
-        "// Auto-generated production-aware Injection Lab PNACH",
-        "gametitle=Narutimate Accel v2.28 injection lab",
-        f"// Current CRC: {crc}",
-        f"// Current 228.BIN SHA-256: {payload_sha256}",
-        f"// Build record: {build_record.relative_to(REPOSITORY).as_posix()}",
-        f"// Production source: {source_id}",
-        f"// Production entries: {', '.join(entry_symbols)}",
-        (
-            "// Entry redirect: task-owned guarded overlay plan"
-            if overlay_plan is not None
-            else "// Entry redirect: exact Current resident symbol"
-        ),
-        f"// Code bank: 0x{code_base:08X}-0x{code_end:08X}",
-        f"// Used bank bytes: {len(image)}",
-        f"// Build ID: 0x{build_id:08X}",
-        "",
-        "; selected production C closure",
-    ]
-    for offset in range(0, len(image), 4):
-        value = int.from_bytes(image[offset : offset + 4], "little")
-        lines.append(word_patch(code_base + offset, value))
-    lines.extend(("", "; fixed per-entry dispatchers"))
-    for selected_entry in entry_symbols:
-        dispatcher, active_pointer = dispatchers[selected_entry]
-        hi = (active_pointer + 0x8000) >> 16
-        lo = active_pointer & 0xFFFF
-        dispatcher_words = (
-            0x3C190000 | hi,
-            0x8F390000 | lo,
-            0x03200008,
-            0,
-        )
-        lines.append(f"; {selected_entry}")
-        for index, value in enumerate(dispatcher_words):
-            lines.append(word_patch(dispatcher + index * 4, value))
-        lines.append(word_patch(active_pointer, addresses[selected_entry]))
-    if resident_address is not None:
-        lines.extend(("", "; guarded production resident-entry redirect"))
-        for index, value in enumerate(redirect_words):
-            lines.append(word_patch(resident_address + index * 4, value))
-    lines.append("")
-    output_path.write_text("\n".join(lines), encoding="ascii")
-
+    output.mkdir(parents=True, exist_ok=True)
+    fragment_path = output / "fragment.bin"
+    manifest_path = output / "manifest.json"
+    fragment_path.write_bytes(fragment)
     manifest = {
         "schema_version": 1,
-        "mode": "production_c",
-        "current_crc": crc,
-        "payload_sha256": payload_sha256,
-        "build_record": build_record.relative_to(REPOSITORY).as_posix(),
         "source_id": source_id,
-        "entry_symbol": entry_symbol,
-        "entry_abi": entry_declarations[0]["abi"],
-        "entry_purpose": entry_declarations[0]["purpose"],
         "entry_symbols": [
             {
                 "symbol": selected_entry,
                 "abi": declaration["abi"],
                 "purpose": declaration["purpose"],
-                "bank_address": f"0x{addresses[selected_entry]:08X}",
-                "dispatcher_address": (
-                    f"0x{dispatchers[selected_entry][0]:08X}"
-                ),
-                "active_pointer_address": (
-                    f"0x{dispatchers[selected_entry][1]:08X}"
-                ),
+                "runtime_address": f"0x{addresses[selected_entry]:08X}",
             }
             for selected_entry, declaration in zip(
                 entry_symbols, entry_declarations, strict=True
             )
         ],
-        "redirect_mode": "overlay" if overlay_plan is not None else "resident",
-        "entry_resident_address": (
-            f"0x{resident_address:08X}"
-            if resident_address is not None
-            else None
+        "fragment_file": "fragment.bin",
+        "fragment_sha256": sha256(fragment),
+        "segments": [
+            {
+                "file_offset": 0,
+                "runtime_address": f"0x{code_base:08X}",
+                "size": len(fragment),
+            }
+        ],
+        "zero_fill": [],
+        "writes": writes,
+        "used_end": f"0x{code_base + len(fragment):08X}",
+        "selected_fragments": [item.symbol for item in fragments],
+        "current_imports": sorted(
+            external_symbols - FIXED_EXTERNAL_ADDRESSES.keys()
         ),
-        "entry_resident_expected_hex": expected_entry.hex().upper(),
-        "entry_bank_address": f"0x{entry_address:08X}",
-        "dispatcher_address": f"0x{primary_dispatcher:08X}",
-        "active_pointer_address": f"0x{primary_active_pointer:08X}",
-        "code_base": f"0x{code_base:08X}",
-        "code_end": f"0x{code_end:08X}",
-        "used_end": f"0x{code_base + len(image):08X}",
-        "used_bytes": len(image),
-        "fragment_count": len(fragments),
-        "bank_fragments": [fragment.symbol for fragment in fragments],
-        "import_count": len(external_symbols),
-        "current_imports": sorted(external_symbols),
+        "fixed_imports": {
+            symbol: f"0x{FIXED_EXTERNAL_ADDRESSES[symbol]:08X}"
+            for symbol in sorted(
+                external_symbols & FIXED_EXTERNAL_ADDRESSES.keys()
+            )
+        },
+        "payload_sha256": payload_sha256,
+        "build_record": build_record.relative_to(REPOSITORY).as_posix(),
         "overlay_plan": (
             overlay_plan_path.relative_to(REPOSITORY).as_posix()
             if overlay_plan_path is not None
             else None
         ),
-        "overlay_plan_sha256": (
-            sha256(overlay_plan_path.read_bytes())
-            if overlay_plan_path is not None
-            else None
-        ),
-        "overlay_writes": overlay_writes,
-        "build_id": f"0x{build_id:08X}",
-        "pnach": output_path.relative_to(LAB_ROOT).as_posix(),
-        "pnach_sha256": sha256(output_path.read_bytes()),
     }
-    manifest_path = LAB_ROOT / "build" / "production-adapter.json"
     manifest_path.write_text(
         json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
     )
     print(
-        f"Linked {len(fragments)} fragments and {len(external_symbols)} "
-        f"Current imports into 0x{code_base:08X}-0x{code_base + len(image):08X}"
+        f"Linked {len(fragments)} fragments, "
+        f"{len(external_symbols - FIXED_EXTERNAL_ADDRESSES.keys())} "
+        f"Current imports, and "
+        f"{len(external_symbols & FIXED_EXTERNAL_ADDRESSES.keys())} "
+        f"fixed imports into "
+        f"0x{code_base:08X}-0x{code_base + len(fragment):08X}"
     )
     for selected_entry in entry_symbols:
         print(
             f"Production entry {selected_entry} -> "
             f"0x{addresses[selected_entry]:08X}"
         )
-    if overlay_plan_path is not None:
-        print(
-            f"Resolved {len(overlay_writes)} guarded overlay writes from "
-            f"{overlay_plan_path}"
-        )
-    print(f"PNACH generated at {output_path}")
-    print(f"Manifest generated at {manifest_path}")
+    print(f"Fragment: {fragment_path}")
+    print(f"Manifest: {manifest_path}")
     return 0
 
 

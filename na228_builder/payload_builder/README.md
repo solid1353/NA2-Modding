@@ -12,7 +12,7 @@ a complete symbol map.
 no individual feature consumer decides when the shared payload is complete.
 
 `ee_c_fragments.py` is the generic C frontend used by `runtime_injector`: it
-compiles ordinary PS2 EE C with the configured Injection Lab toolchain and
+compiles ordinary PS2 EE C with the configured EE toolchain and
 converts supported ELF sections and relocations directly into this builder's
 address-independent fragment model. Object files are temporary. The builder
 then lays out those fragments together with static and external-string
@@ -38,6 +38,6 @@ The configuration also declares the development-only injection reservation
 inside the Current-only gap excluded from overlays and from the relocated game
 heap by the payload integration. It is never emitted into `228.BIN`, never used
 by release composition, and must be targeted only by an exact-identity,
-guard-validated development tool. The reservation gives the C/PNACH injection
-lab one deterministic 15,616-byte range without treating zero-filled ELF,
-overlay, or heap memory as an implicit code cave.
+guard-validated development tool. The reservation gives the direct-PINE
+injection workflow one deterministic 15,616-byte range without treating
+zero-filled ELF, overlay, or heap memory as an implicit code cave.

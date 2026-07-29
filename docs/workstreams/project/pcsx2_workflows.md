@@ -1,7 +1,7 @@
-# PCSX2 workflows draft
+# PCSX2 runtime-injection workflows
 
-Status: tracked discussion draft. This records the selected design but is not
-yet canonical policy or an implementation contract.
+Status: maintained Project workflow. Agent requirements remain authoritative in
+`AGENTS.md` and `docs/policies/testing.md`.
 
 In this document, **UW** means user workflow and **WW** means workstream
 workflow.
@@ -15,8 +15,8 @@ workflow.
 - Agents never use PNACH or cheat files to transport runtime candidates.
 - The maintained compiler/linker produces transport-neutral files consumed by
   direct PINE application.
-- The current `injection_lab/` top-level subsystem will be assimilated into the
-  normal source, script, build, and documentation trees.
+- The former top-level `injection_lab/` subsystem is assimilated into the normal
+  source, script, build, and documentation trees.
 
 ## Target layout
 
@@ -103,14 +103,15 @@ installation-state, backup, or separate bank files.
 
 ## PCSX2 PINE controls
 
-The development PCSX2 fork will expose three additional synchronous controls:
+The development PCSX2 fork exposes these custom parameterless controls:
 
-1. pause the VM;
-2. resume the VM; and
-3. clear EE execution caches without reloading patch or cheat files.
+1. `0x11`: queue a native screenshot;
+2. `0x12`: pause the VM synchronously;
+3. `0x13`: resume the VM synchronously; and
+4. `0x14`: clear EE execution caches without reloading patch or cheat files.
 
-The existing screenshot control remains available. The existing
-reload-patches control is independent of the new direct-memory transaction.
+The older `0x10` reload-patches control remains available but is independent of
+the direct-memory transaction.
 
 Synchronous pause makes live code replacement a single transaction. The new
 workflow therefore uses one fixed development memory reservation and removes
@@ -152,43 +153,31 @@ If the supplied state has already passed behavior that cannot be re-entered,
 the workstream requests an earlier state instead of adding an input or
 navigation workaround.
 
-## Structural migration
+## Historical source and migration
 
-- Refactor useful compile/link logic from
-  `injection_lab/production_adapter.py` into
-  `scripts/injection/build.py`.
-- Refactor direct-memory application from
-  `injection_lab/overlay_writer.py` into
-  `scripts/injection/apply.py` and the shared PINE client.
-- Move and simplify `injection_lab/watch.ps1`.
-- Replace the standalone screenshot script with the shared PINE screenshot
-  command.
-- Move the project-level C example from `injection_lab/src/` to root `src/`
-  with meaningful names.
-- Move production entry declarations beside their owning runtime-injector
-  feature.
-- Remove `gen_pnach.py`, `linker.asm`, `test.ps1`, Lab PNACH transport,
-  install-state handling, and the nested Lab ignore file.
-- Preserve useful imported-source provenance and runtime-injection findings in
-  maintained project documentation before removing the Lab README.
-- Remove the empty `injection_lab/` directory after migration.
+The imported `NA2-C.zip` used for the original investigation has SHA-256
+`8A4D94465C4F7938DCC2D49D3DAA268BDF800AD7E89112B8E09BAA6EE58D289E`.
+Its exact supplied tree is preserved in commit
+`9ef9dc93ec276a08b431192ca0fe798b4f834ada`; commit
+`e1a0d9b604009a82afbda18bbf8423988b5e5ce3` removed that inconsistent snapshot
+from the live tree. The archived VS Code task compiled C, linked it with
+Armips, rewrote a CRC-named PNACH, and relied on PCSX2 reloading that file.
 
-## Implementation order
+The maintained workflow retains the proven EE compiler/object extraction,
+relocation, Current-symbol import, and exact guarded-caller logic. It removes
+PNACH transport, alternating banks, dispatcher pointers, installation state,
+backup/removal commands, and Lab-specific actualization handling. Historical
+Lab scripts are recoverable at commit `35628bb4`.
 
-1. Update this tracked design before code changes.
-2. Add and validate the three PINE controls in the development PCSX2 fork.
-3. Refactor compile/link into the two-file builder contract.
-4. Implement the transactional direct-PINE applier.
-5. Reduce the watcher to build/apply orchestration.
-6. Move retained source/declarations and remove the PNACH-era Lab files.
-7. Validate consecutive UW saves without restarting PCSX2.
-8. Validate WW against an established candidate in a task-owned hidden clone.
-9. Confirm that neither workflow transports candidates through cheat files.
-10. Update canonical policy and operational documentation only after the
-    implementation contract is proven.
+## Validation
 
-No additional proof of concept is required: existing Font work has already
-proven the C compiler/linker path, and prior workstream testing has already
-proven direct PINE EE-memory writes.
-
-Recommended implementation effort: High.
+On 2026-07-30, an isolated hidden Project worker validated status, synchronous
+pause, cache-only refresh, resume, direct fragment/caller writes, readback, and
+native PINE screenshot output. Two different root C builds were applied
+consecutively to the same fixed reservation without restarting PCSX2; the
+second transaction found the caller already active, replaced the fragment
+while paused, cleared execution caches, and resumed the VM. The test emitted no
+PNACH file. The custom PCSX2 source is commit
+`9cf3890b8e98bed6242d66d764732177dd78b450`; the validated Windows executable
+has SHA-256
+`A2101F8FC9F3ADF9C5E8A936296F8C2D2A383B67495A0425AFBC62ECDB2607F9`.

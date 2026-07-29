@@ -2,8 +2,7 @@
 [CmdletBinding()]
 param(
     [psobject]$ProjectPaths,
-    [scriptblock]$IdentityResolver,
-    [string]$InjectionLabStatePath
+    [scriptblock]$IdentityResolver
 )
 
 Set-StrictMode -Version Latest
@@ -22,12 +21,6 @@ if ($null -eq $IdentityResolver) {
         Get-Na2IsoPcsx2Identity -Path $Path
     }
 }
-if ([string]::IsNullOrWhiteSpace($InjectionLabStatePath)) {
-    $InjectionLabStatePath = Join-Path (
-        [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
-    ) 'injection_lab\build\test-install.json'
-}
-
 function Test-Na2ActualizeBytesEqual {
     param([byte[]]$Left, [byte[]]$Right)
 
@@ -144,60 +137,6 @@ function Test-Na2ActualizePathWithin {
         $fullDirectory + [IO.Path]::DirectorySeparatorChar,
         [StringComparison]::OrdinalIgnoreCase
     )
-}
-
-function Get-Na2InstalledInjectionLabPnach {
-    param(
-        [Parameter(Mandatory)][string]$StatePath,
-        [Parameter(Mandatory)][string]$CheatsDirectory
-    )
-
-    if (-not (Test-Path -LiteralPath $StatePath -PathType Leaf)) {
-        return $null
-    }
-
-    try {
-        $state = [IO.File]::ReadAllText(
-            [IO.Path]::GetFullPath($StatePath)
-        ) | ConvertFrom-Json
-    }
-    catch {
-        return $null
-    }
-    if ($null -eq $state) {
-        return $null
-    }
-    $targetProperty = $state.PSObject.Properties['target']
-    if ($null -eq $targetProperty -or
-        [string]::IsNullOrWhiteSpace([string]$targetProperty.Value)) {
-        return $null
-    }
-    $target = [string]$targetProperty.Value
-
-    try {
-        $recordedPath = Resolve-Na2ActualizePhysicalPath `
-            -Path $target
-    }
-    catch {
-        return $null
-    }
-    if (-not (Test-Na2ActualizePathWithin `
-        -Path $recordedPath `
-        -Directory $CheatsDirectory)) {
-        return $null
-    }
-
-    $item = Get-Item -LiteralPath $recordedPath -Force -ErrorAction SilentlyContinue
-    if ($null -eq $item -or
-        $item.PSIsContainer -or
-        -not [string]::IsNullOrWhiteSpace([string]$item.LinkType)) {
-        return $null
-    }
-
-    return [pscustomobject]@{
-        Path = $recordedPath
-        Name = [IO.Path]::GetFileName($recordedPath)
-    }
 }
 
 function Set-Na2ActualizeSymlink {
@@ -478,9 +417,6 @@ $managedPnachLink = {
         )
     )
 }
-$installedInjectionLabPnach = Get-Na2InstalledInjectionLabPnach `
-    -StatePath $InjectionLabStatePath `
-    -CheatsDirectory $cheatsDirectory
 $desiredPnachNames = @($roles.PnachName | Select-Object -Unique)
 $managedPnachNamePattern = (
     '^(?:SLOP-NA228|SLUS-NA228|SLPS-22228)_[0-9A-F]{8}\.pnach$'
@@ -488,16 +424,8 @@ $managedPnachNamePattern = (
 $removedPnachSymlinks = @(
     Get-ChildItem -LiteralPath $cheatsDirectory -Filter '*.pnach' -File -Force |
         Where-Object {
-            $isInstalledLabPnach = (
-                $null -ne $installedInjectionLabPnach -and
-                [IO.Path]::Equals(
-                    $_.FullName,
-                    $installedInjectionLabPnach.Path
-                )
-            )
             $destination = Get-Na2ActualizeLinkDestination -Item $_
-            -not $isInstalledLabPnach -and
-                $_.Name -notin $desiredPnachNames -and
+            $_.Name -notin $desiredPnachNames -and
                 (
                     $_.Name -match $managedPnachNamePattern -or
                     (
@@ -515,21 +443,9 @@ $removedPnachSymlinks = @(
 
 $pnachState = Get-Na2PnachState -Path $cheatTemplate
 $cheatAliases = [Collections.Generic.List[string]]::new()
-$preservedInjectionLabPnach = [Collections.Generic.List[string]]::new()
-if ($null -ne $installedInjectionLabPnach) {
-    $preservedInjectionLabPnach.Add($installedInjectionLabPnach.Path)
-}
 foreach ($pnachName in $desiredPnachNames) {
     $aliasPath = Join-Path $cheatsDirectory $pnachName
-    $physicalAliasPath = Resolve-Na2ActualizePhysicalPath -Path $aliasPath
-    if ($null -ne $installedInjectionLabPnach -and
-        [IO.Path]::Equals(
-            $physicalAliasPath,
-            $installedInjectionLabPnach.Path
-        )) {
-        $cheatAliases.Add($installedInjectionLabPnach.Path)
-    }
-    elseif (-not $pnachState.IsEmpty) {
+    if (-not $pnachState.IsEmpty) {
         $null = Set-Na2ActualizeSymlink `
             -Path $aliasPath `
             -Target $cheatTemplate `
@@ -542,16 +458,8 @@ if ($pnachState.IsEmpty) {
     $removedPnachSymlinks += @(
         Get-ChildItem -LiteralPath $cheatsDirectory -Filter '*.pnach' -File -Force |
             Where-Object {
-                $isInstalledLabPnach = (
-                    $null -ne $installedInjectionLabPnach -and
-                    [IO.Path]::Equals(
-                        $_.FullName,
-                        $installedInjectionLabPnach.Path
-                    )
-                )
                 $destination = Get-Na2ActualizeLinkDestination -Item $_
-                -not $isInstalledLabPnach -and
-                    (
+                (
                         $_.Name -in $desiredPnachNames -or
                         (
                             $null -ne $destination -and
@@ -571,9 +479,6 @@ if ($pnachState.IsEmpty) {
     Roles = $roles
     CheatTemplate = $cheatTemplate
     CheatAliases = @($cheatAliases)
-    PreservedInjectionLabPnach = @(
-        $preservedInjectionLabPnach | Select-Object -Unique
-    )
     RemovedCheatSymlinks = @($removedPnachSymlinks | Select-Object -Unique)
     EnabledCheats = $pnachState.EnabledCheats
     CreatedGameSettings = @($createdGameSettings)

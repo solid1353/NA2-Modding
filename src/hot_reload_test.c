@@ -1,4 +1,4 @@
-#include "Main.h"
+#include "runtime.h"
 
 #ifndef NA2_INJECTION_BUILD_ID
 #define NA2_INJECTION_BUILD_ID 0x4E413232u
@@ -6,9 +6,9 @@
 
 static volatile unsigned int last_build_id;
 
-void injectionLabTick(void){
+void hotReloadTest(void){
     if (last_build_id != NA2_INJECTION_BUILD_ID) {
         last_build_id = NA2_INJECTION_BUILD_ID;
-        eeKernelPrint("NA2.28 injection lab: C hot reload active\n");
+        eeKernelPrint("NA2.28 C hot reload active\n");
     }
 }

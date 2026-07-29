@@ -125,7 +125,7 @@ displaced return sequence into the following words.
 
 Archived NUN5 and clean Current contain the identical five-word window
 `DFBF0000 27BD0010 03E00008 00000000 00000000` at
-`0x001D0578-0x001D058C`. The maintained lab therefore emits
+`0x001D0578-0x001D058C`. The historical Lab therefore emitted
 `jal injectionLabTick`, `nop`, `ld ra,0(sp)`, `jr ra`, and
 `addiu sp,sp,0x10` across that exact guarded window. The native
 `jal WakeupThread` at `0x001D0570` remains unchanged. Confidence is **high**
@@ -151,11 +151,11 @@ mode. It sends no command to PCSX2. User-observed PCSX2 behavior confirms that
 the in-place rewrite itself triggers the emulator's file watcher and automatic
 cheat reparse. An earlier bounded clone check used a replacement-style update
 and did not reload, so it does not contradict the in-place watcher path. The
-maintained installer preserves the filesystem object and performs the same
-truncate/write/flush sequence, but no longer depends on the watcher. The
+now-retired Lab installer preserved the filesystem object and performed the
+same truncate/write/flush sequence. The
 project's PCSX2 fork adds parameterless PINE opcode `0x10`, which synchronously
 dispatches `VMManager::ReloadPatches(true, false, true, true)` on the CPU
-thread. Injection Lab sends that opcode after each install and requires the
+thread. The retired Lab sent that opcode after each install and required the
 five-byte `OK` reply before returning. Stock PCSX2 rejects the unknown opcode;
 the extension does not change PNACH parsing or patch application semantics.
 
@@ -169,20 +169,20 @@ already translated host block for the overwritten EE code. This is a useful
 negative result: the data-table update demonstrated by the source video does
 not prove that overwriting previously executed code is hot-reload safe.
 
-The maintained lab therefore keeps a fixed four-instruction dispatcher at
+The historical Lab therefore kept a fixed four-instruction dispatcher at
 `0x008F0000-0x008F0010`, stores its active C entry pointer at `0x008F0010`,
 and alternates compiled C between `0x008F0100-0x008F1F00` and
 `0x008F1F00-0x008F3D00`. The already translated dispatcher reloads the pointer
 from EE memory on every call, while each changed build enters the other code
 bank and receives a fresh translation. Confidence is **high** for the observed
 reload-without-code-refresh failure and the alternating-bank JIT-cache
-mechanism. On 2026-07-29 the user ran the reload-enabled PCSX2 build and
-Injection Lab end to end and confirmed that the explicit PINE reload path
+mechanism. On 2026-07-29 the user ran the reload-enabled PCSX2 build and the
+Lab end to end and confirmed that the explicit PINE reload path
 worked in the running game.
 
-The production-aware lab adapter keeps this dispatcher and alternating-bank
-mechanism but does not use the imported proof's ordinary-section linker. It
-compiles one selected canonical runtime-injector C source through
+The historical production-aware adapter kept this dispatcher and
+alternating-bank mechanism but did not use the imported proof's
+ordinary-section linker. It compiled one selected canonical runtime-injector C source through
 `ee_c_fragments.py`, applies the source's declared fragment aliases and
 relocations, and resolves its external imports against the symbol map belonging
 to the exact on-disc Current `228.BIN` hash. It verifies the recorded bytes and
@@ -202,6 +202,17 @@ is valid only with the same Current payload and compatible resident writable
 state. It does not prove cold initialization, file-backed integration, overlay
 lifetime, release-payload placement, or callers not exercised through the
 selected entry.
+
+On 2026-07-30, the maintained workflow replaced PNACH transport and alternating
+banks with `scripts/injection/build.py` and
+`scripts/injection/apply.py`. The builder emits one addressed `fragment.bin`
+and `manifest.json`; the applier synchronously pauses the VM, writes one fixed
+development reservation and exact-guarded callers through PINE, invokes the
+custom cache-only opcode `0x14`, and restores the prior running/paused state.
+Two different root C builds were applied consecutively to the same reservation
+in an isolated worker without restarting PCSX2. Confidence is **high** for this
+direct-memory transaction and readback; its development evidence remains
+narrower than a clean integrated build.
 
 ### Widescreen heap target
 
@@ -387,9 +398,9 @@ runs. Compacting therefore matters first for a resident object larger than
 or as the prerequisite to moving the structural boundary down and reclaiming
 most of the fixed reservation for the heap.
 
-## Injection Lab mode-switch lifetime
+## Retired Injection Lab mode-switch lifetime
 
-Injection Lab's generic mode installs a recurring call at runtime
+The retired Lab's generic mode installed a recurring call at runtime
 `0x001D0578`, while production mode redirects one resident `228.BIN` entry to
 the fixed dispatcher at `0x008F0000`. Removing the PNACH restores the file on
 disk but cannot undo either write already applied to EE memory.
@@ -413,10 +424,10 @@ This was a lifecycle conflict, not a different Font ABI or bad C compilation:
 - the first invalid access began only after production reused the dispatcher
   in the still-running generic session.
 
-This remains a known manual-development hazard, but the user explicitly
-rejected enforced runtime-state validation in Injection Lab. The maintained
-tool therefore permits direct mode and entry changes; a clean restart remains
-available when the operator wants to clear previously applied PNACH writes.
+This was a Lab/PNACH lifecycle hazard. The maintained direct-PINE transaction
+does not install recurring cheat writes, share a dispatcher between modes, or
+maintain install/remove state. Exact caller guards still determine whether a
+candidate is compatible with the current runtime state.
 
 ## Safe-use constraints
 

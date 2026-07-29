@@ -279,18 +279,9 @@ function Format-Na2ActualizeStatus {
     else {
         $enabledCheatNames -join ', '
     }
-    $preservedLabPnach = if (
-        'PreservedInjectionLabPnach' -in $Result.PSObject.Properties.Name
-    ) {
-        @($Result.PreservedInjectionLabPnach).Count
-    }
-    else {
-        0
-    }
     return (
         "[act] NA2 roles: $roles; " +
         "cheat aliases=$(@($Result.CheatAliases).Count), " +
-        "lab PNACH preserved=$preservedLabPnach, " +
         "removed=$(@($Result.RemovedCheatSymlinks).Count), " +
         "enabled=$enabledCheats; " +
         "GameSettings created=$(@($Result.CreatedGameSettings).Count), " +

@@ -62,8 +62,8 @@ The manifest currently defines these stable logical names:
   the task-owned runtime. The source template is never populated, launched,
   or modified directly.
 - `ps2_msys`: the local shared MSYS/PS2SDK toolchain under
-  `@workshop/tools/msys/`. Injection Lab resolves it through the
-  manifest rather than storing the toolchain inside the repository.
+  `@workshop/tools/msys/`. The runtime-injection compiler resolves it through
+  the manifest rather than storing the toolchain inside the repository.
 
 Documentation uses `@root/child` notation, such as `@source_na2/PRG/BTL.BIN`.
 This is a logical reference, not a literal filesystem path. Profile `roots.tsv`
@@ -79,7 +79,7 @@ their producing workflow runs. File entries should reference a named root with
 - `pcsx2_stable_exe`: `@pcsx2_stable/pcsx2-qt.exe`, used for explicit stable
   compatibility and release checks.
 - `pcsx2_dev_exe`: `@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe`, used by default
-  configured launches and Injection Lab development runs.
+  configured launches and user runtime-injection development.
 - `cheat_template`: `@pcsx2_cheats/SLOP-NA228.pnach`.
 - `gamesettings_template`: `@pcsx2_game_settings/SLOP-NA228.ini`.
 - `current_memory_card`: `@pcsx2_memory_cards/NA228 - Current.ps2`.

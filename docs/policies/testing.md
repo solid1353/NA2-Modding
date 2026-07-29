@@ -169,23 +169,23 @@ requirements, not whatever implementation happens to exist today.
   must personally inspect or interact with it; before launch, state exactly
   what is required from the user. Never expose, restore, activate, or foreground
   an instance merely for agent automation.
-- Agent runtime C iteration uses only two explicit operations: the maintained
-  Injection Lab compiler/linker produces addressed guarded writes from
-  canonical C and a task-owned overlay plan, then a generic PINE client applies
+- Agent runtime C iteration uses only two explicit operations:
+  `scripts/injection/build.py` produces addressed guarded writes from canonical
+  C and a task-owned overlay plan, then `scripts/injection/apply.py` applies
   those writes to the task-owned PCSX2 and invokes JIT invalidation. The agent
   path does not generate or install PNACH files, synchronize cheat directories,
   maintain install/restore records, invoke specialized intermediate writers,
   or use filesystem watchers.
-- The Injection Lab filesystem watcher is user-only interactive convenience.
+- `scripts/injection/watch.ps1` is user-only interactive convenience.
   It may automate the same compile/link and direct-PINE operations for the user,
   but agents never run or depend on it.
-- Until the maintained generic direct-PINE command exists, agents report the
-  missing runtime pipeline instead of adding wrappers or extending the legacy
-  PNACH transport. This does not authorize changing Injection Lab scripts.
 - Never save or serialize a complete savestate solely to obtain a screenshot.
   Extract an existing state's embedded `Screenshot.png` directly. For a fresh
-  runtime frame, use PCSX2's native screenshot output; capture a new savestate
-  only when the state itself is a required artifact.
+  runtime frame, invoke `scripts/pcsx2/pine.py screenshot` against the
+  task-owned PINE port and poll that worker's `snaps/` tree recursively for the
+  fresh PNG. Agents never use window capture, screenshot hotkeys, window
+  messages, or foregrounding. Capture a new savestate only when the state
+  itself is a required artifact.
 - Builds and single-ISO launch commands never probe or close any PCSX2 process.
 - Bare `na228`, launch selectors, standalone `act`, `na`, and UI pair-launch
   commands are user-only.

@@ -840,6 +840,54 @@ titles and explanations. The user explicitly accepted the Command Chart result
 on 2026-07-27. The Practice title result remains agent-validated and awaiting
 user acceptance.
 
+### Command Chart relationship rows
+
+Refreshed paired ss1 and ss2 isolate the auxiliary relationship text drawn
+below each accepted Command Chart title. The preserved NA2 BTL export identifies
+the owning row function as `FUN_0087A700`. For each 0x34-byte row record it
+draws the title, reads optional text selectors from record bytes `+4` and `+5`,
+and renders them independently through `SUB_00382310` at Ghidra addresses
+`0x0087A930` and `0x0087A97C`. With the confirmed live BTL base
+`0x006B3F00`, those are runtime `0x0087A970` / file `0x1C6A70` and runtime
+`0x0087A9BC` / file `0x1C6ABC`. The separate calls cannot wrap the combined
+English relationship and cause refreshed ss1 to overflow horizontally.
+
+The structural NUN5 homolog is `FUN_00896E70`. Its branch at
+`LAB_008977BC` resolves selector `+4` through `SUB_003D16C0`, copies the
+result into a 0x100-byte stack buffer, resolves and appends selector `+5` when
+present, then draws the complete buffer once through `SUB_00393ED0`. The
+request uses width `308`, height `32`, line limit `2`, and style `9`. Its
+native row formula also separates relationship and icon placement: after the
+title it draws the combined relationship from `fVar17 + 4` and the icons from
+`fVar17 + 44`, while NA2 advances its shared row coordinate by `30` before
+the relationship and then draws icons only `20` units below it. This explains
+both refreshed cases: ss1 needs one jointly wrapped two-line block, while all
+three ss2 single-line rows and their icons share the same repeatable vertical
+correction.
+
+The bounded NA2 port therefore hooks only the first exact auxiliary call through
+a 36-byte native-register shim, passes the row record and native Y to generated
+C, and suppresses only the second exact draw. The C entry resolves both strings
+from NA2's live table at `0x008BD1D0`, combines them without modifying canonical
+mapping bytes, and wraps at spaces through the shared native-metric v2 helper.
+The measured NA2-side request uses X `43.2`, native Y minus `11.5`, width `226`,
+height `32`, line advance `30`, glyph height `14`, and a further `-8` Y bias
+only when the wrapped result has one line. The native icon loop remains intact;
+its one shared `+20` float constant at BTL file `0x1C6ACC` becomes `+16`, while
+the existing additional `+4` branch for tokens 4 and above is unchanged.
+
+Hidden task-owned runtime captures on Current CRC `092FEF8A` used the refreshed
+ss1 and ss2 states and the production C hot-reload path. At 640x480, ss1's
+relationship ink is `160,231-396,262` versus NUN5
+`162,232-397,262`, and its first relationship icon is
+`196,278-212,294` versus `196,278-212,295`. Across ss2, all three blue rows
+remain within one raster row of NUN5 and the icon bounds match at Y
+`153-170`, `278-294/295`, and `403-420`. Titles, icon records, horizontal
+icon spacing, and all other BTL callers remain native. Confidence is **high**
+for the homolog, selectors, call sites, buffer composition, shared one-/two-line
+geometry, and icon offset. This remains `approved_for_test` pending explicit
+user acceptance of the composed pair.
+
 ### Pause Controls list v2 callers
 
 The retained disabled shared UI helper established the intended Pause Controls

@@ -32,3 +32,4 @@ font_numeric	52	localization.font.numeric.c.text.font.save.load.hour	localizatio
 font_numeric	53	localization.font.numeric.c.text.font.battle.settings.time	localization.font.battle_settings_time
 font_glyph_metrics	58	localization.font.glyph.c.text.font.glyph.metric.lookup	localization.font.glyph_metric_lookup
 font_glyph_metrics	59	localization.font.glyph.c.text.font.glyph.metric.apply	localization.font.glyph_metric_apply
+font_v2_core	60	localization.font.v2.c.text.font.v2.command.relationship.impl	localization.font.v2.c.command_relationship_impl

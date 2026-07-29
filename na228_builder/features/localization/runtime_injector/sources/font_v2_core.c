@@ -14,6 +14,8 @@ typedef signed int s32;
 #define FONT_V2_FLAG_BR_TAGS 0x02u
 #define FONT_V2_FLAG_NEWLINE_BYTES 0x04u
 #define FONT_V2_FLAG_SEPARATE_LINE_ADVANCE 0x08u
+#define FONT_V2_FLAG_SCALE_LINE_ADVANCE 0x10u
+#define FONT_V2_NATIVE_LINE_ADVANCE 40.0f
 #define FONT_V2_FLAG_PREMEASURED 0x10u
 
 #define FONT_V2_ALIGN_START 0u
@@ -28,6 +30,15 @@ typedef signed int s32;
 #define FONT_COMMAND_TITLE_BOX_X 27.2f
 #define FONT_COMMAND_TITLE_BOX_WIDTH 288u
 #define FONT_COMMAND_TITLE_Y_OFFSET -3.8f
+#define FONT_COMMAND_TEXT_TABLE_ADDRESS 0x008BD1D0u
+#define FONT_COMMAND_RELATION_BOX_X 43.2f
+#define FONT_COMMAND_RELATION_Y_OFFSET -11.5f
+#define FONT_COMMAND_RELATION_SINGLE_LINE_Y_OFFSET -8.0f
+#define FONT_COMMAND_RELATION_BOX_WIDTH 226u
+#define FONT_COMMAND_RELATION_BOX_HEIGHT 32u
+#define FONT_COMMAND_RELATION_LINE_HEIGHT 30.0f
+#define FONT_COMMAND_RELATION_GLYPH_HEIGHT 14.0f
+#define FONT_COMMAND_RELATION_LINE_LIMIT 2u
 #define FONT_PRACTICE_TITLE_BOX_X 31.2f
 #define FONT_PRACTICE_TITLE_BOX_WIDTH 352u
 #define FONT_PRACTICE_TITLE_Y_OFFSET -6.8f
@@ -327,6 +338,10 @@ int font_v2_prepare(FontV2Session *session) {
 
     session->scale_x = 1.0f;
     session->scale_y = 1.0f;
+    if (session->flags & FONT_V2_FLAG_SCALE_LINE_ADVANCE) {
+        session->scale_y =
+            session->line_height / FONT_V2_NATIVE_LINE_ADVANCE;
+    }
     if (
         (session->flags & FONT_V2_FLAG_SHRINK_X) &&
         measured_width > session->box_width
@@ -891,6 +906,76 @@ u8 *font_v2_practice_append(
     }
     *destination = 0;
     return destination;
+}
+
+FONT_V2_SECTION(".text.font_v2_command_relationship_impl")
+int font_v2_command_relationship_impl(
+    u32 arg0,
+    const u8 *record,
+    u32 arg2,
+    u32 native_y_bits
+) {
+    FontV2BodyFrame frame;
+    const u8 *volatile *text_table =
+        (const u8 *volatile *)FONT_COMMAND_TEXT_TABLE_ADDRESS;
+    u8 *destination = frame.buffer;
+    u8 *limit = frame.buffer + FONT_BODY_BUFFER_SIZE - 1u;
+    FontV2Bits native_y;
+
+    if (!record || !record[4]) {
+        return -1;
+    }
+
+    *destination = 0;
+    destination = font_v2_practice_append(
+        destination, text_table[record[4]], limit
+    );
+    if (record[5]) {
+        destination = font_v2_practice_append(
+            destination, text_table[record[5]], limit
+        );
+    }
+
+    if (
+        font_v2_wrap_native(
+            frame.buffer,
+            FONT_COMMAND_RELATION_BOX_WIDTH,
+            FONT_COMMAND_RELATION_LINE_LIMIT,
+            &frame.session.measured_width,
+            &frame.session.line_count
+        ) != 0
+    ) {
+        return -1;
+    }
+
+    native_y.u = native_y_bits;
+    frame.session.text = frame.buffer;
+    frame.session.box_x = FONT_COMMAND_RELATION_BOX_X;
+    frame.session.box_y =
+        native_y.f + FONT_COMMAND_RELATION_Y_OFFSET;
+    if (frame.session.line_count == 1u) {
+        frame.session.box_y +=
+            FONT_COMMAND_RELATION_SINGLE_LINE_Y_OFFSET;
+    }
+    frame.session.box_width = FONT_COMMAND_RELATION_BOX_WIDTH;
+    frame.session.box_height = FONT_COMMAND_RELATION_BOX_HEIGHT;
+    frame.session.horizontal_alignment = FONT_V2_ALIGN_START;
+    frame.session.vertical_alignment = FONT_V2_ALIGN_CENTER;
+    frame.session.flags =
+        FONT_V2_FLAG_SHRINK_X |
+        FONT_V2_FLAG_NEWLINE_BYTES |
+        FONT_V2_FLAG_SEPARATE_LINE_ADVANCE |
+        FONT_V2_FLAG_SCALE_LINE_ADVANCE |
+        FONT_V2_FLAG_PREMEASURED;
+    frame.session.line_limit = FONT_COMMAND_RELATION_LINE_LIMIT;
+    frame.session.line_height = FONT_COMMAND_RELATION_LINE_HEIGHT;
+    frame.session.glyph_height = FONT_COMMAND_RELATION_GLYPH_HEIGHT;
+    frame.session.callback = (u32)font_v2_title_callback;
+    frame.session.callback_arg0 = arg0;
+    frame.session.callback_arg1 = (u32)frame.buffer;
+    frame.session.callback_arg2 = arg2;
+    frame.session.callback_arg3 = (u32)&frame.session;
+    return font_v2_adapter_call(&frame.session);
 }
 
 static FONT_V2_SECTION(".text.font_v2_icon_record")

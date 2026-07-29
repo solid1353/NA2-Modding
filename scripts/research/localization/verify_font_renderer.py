@@ -103,6 +103,9 @@ V2_NATIVE_MEASURE_CALLBACK = f"{V2_PREFIX}.c.native_measure_callback"
 V2_WRAP_NATIVE = f"{V2_PREFIX}.wrap_native"
 V2_PRACTICE_TOKENS = f"{V2_PREFIX}.practice_tokens"
 V2_PRACTICE_APPEND = f"{V2_PREFIX}.practice_append"
+V2_COMMAND_RELATIONSHIP_IMPL = (
+    f"{V2_PREFIX}.c.command_relationship_impl"
+)
 V2_PRACTICE_ICON_MAP = f"{V2_PREFIX}.practice_icon_map"
 V2_PRACTICE_ICON_METRIC = f"{V2_PREFIX}.practice_icon_metric"
 V2_PRACTICE_ICON_DRAW = f"{V2_PREFIX}.practice_icon_draw"
@@ -413,6 +416,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         "font_v2_quit_body_adapter",
         "font_v2_special_controls_body_adapter",
         "font_v2_practice_append",
+        "font_v2_command_relationship_impl",
         "font_v2_practice_icon_metric",
         "font_v2_practice_icon_draw",
         "font_v2_practice_adapter_impl",
@@ -466,6 +470,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         ].symbol: V2_SPECIAL_CONTROLS_BODY_ADAPTER,
         extracted.symbols["font_v2_practice_append"].symbol: (
             V2_PRACTICE_APPEND
+        ),
+        extracted.symbols["font_v2_command_relationship_impl"].symbol: (
+            V2_COMMAND_RELATIONSHIP_IMPL
         ),
         extracted.symbols["font_v2_practice_icon_metric"].symbol: (
             V2_PRACTICE_ICON_METRIC
@@ -549,6 +556,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_QUIT_BODY_ADAPTER,
         V2_SPECIAL_CONTROLS_BODY_ADAPTER,
         V2_PRACTICE_APPEND,
+        V2_COMMAND_RELATIONSHIP_IMPL,
         f"{V2_PREFIX}.c.icon_record",
         V2_PRACTICE_ICON_METRIC,
         V2_PRACTICE_ICON_DRAW,

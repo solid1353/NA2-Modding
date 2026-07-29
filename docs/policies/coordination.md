@@ -77,6 +77,10 @@
   one-off detail unless the rule inherently applies only there.
 - Every confirmed-violation confrontation tells the offending task exactly:
   `YOU'RE UNDER ARREST.`
+- It also directs the offending task to correct the violation and any resulting
+  noncompliant state itself. This is standing authorization only for remediation
+  needed to restore compliance within the work's previously authorized scope;
+  it never authorizes new implementation or unrelated cleanup.
 
 ## Task coordinator
 

@@ -153,22 +153,39 @@ boundary and the user's requested regression check.
 
 ### Rebuild automatically on save
 
-Start the maintained production watcher with an explicit canonical source and
-allowlisted entry:
+Start the generic lab watcher with an explicit source path:
 
 ```powershell
 .\injection_lab\watch.ps1 `
-  -ProductionSource font_v2_core `
+  -SourcePath .\injection_lab\src\test.c
+```
+
+It watches `src/test.c`, `src/Main.h`, `linker.asm`, and `gen_pnach.py`. In
+VS Code, run `Tasks: Run Task` and choose `Injection Lab: Watch test C`.
+
+For canonical runtime-injector C, provide its path and an allowlisted entry:
+
+```powershell
+.\injection_lab\watch.ps1 `
+  -SourcePath .\na2_patcher\features\localization\runtime_injector\sources\font_v2_core.c `
   -ProductionEntry localization.font.v2.controls_adapter
 ```
 
-The watcher runs one guarded production build immediately, then hashes the
-selected canonical C source plus `c_sources.tsv`, `c_imports.tsv`,
-`c_fragments.tsv`, and the lab's `production_entries.tsv`. After a save it
-waits for the inputs to remain unchanged for 400 ms and invokes `test.ps1`
-serially. Saves during a build queue one follow-up build; builds never overlap.
-A failed compile, install, or PINE reload is printed in red and leaves the
-watcher running for the next save.
+The watcher infers the production source ID from `c_sources.tsv`; a path cannot
+bypass the canonical declaration. Production mode also watches
+`c_sources.tsv`, `c_imports.tsv`, `c_fragments.tsv`, and
+`production_entries.tsv`.
+
+`SourcePath` may name the supported source file or its containing source
+directory. Directories are hashed recursively. Generic mode accepts the lab's
+`src` directory; production mode accepts a directory only when it contains the
+canonical source selected by `ProductionEntry`.
+
+Both modes run one guarded build immediately. After a save, the watcher waits
+for its inputs to remain unchanged for 400 ms and invokes `test.ps1` serially.
+Saves during a build queue one follow-up build; builds never overlap. A failed
+compile, install, or PINE reload prints the complete child output and leaves
+the watcher running for the next save.
 
 In VS Code, run `Tasks: Run Task` and choose
 `Injection Lab: Watch production Font`, then select the entry to exercise.
@@ -177,10 +194,11 @@ when the repository opens and does not guess an entry.
 
 The first successful dispatcher installation still requires one clean Current
 restart. Later successful rebuilds of the same selected source/entry alternate
-banks and explicitly reload patches through PINE. Stop the watcher and run
-`test.ps1 -Remove` before switching source, entry, or lab mode. Watcher success
-has the same narrow development meaning as a manual hot reload; it is not
-release or runtime acceptance.
+banks and explicitly reload patches through PINE. Run only one watcher at a
+time. Stop it and run `test.ps1 -Remove` before switching between generic and
+production mode, or between production entries. Watcher success has the same
+narrow development meaning as a manual hot reload; it is not release or
+runtime acceptance.
 
 To compile and validate without installing:
 

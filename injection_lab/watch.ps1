@@ -2,10 +2,8 @@
 param(
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
-    [string]$ProductionSource,
+    [string]$SourcePath,
 
-    [Parameter(Mandatory)]
-    [ValidateNotNullOrEmpty()]
     [string]$ProductionEntry,
 
     [ValidateRange(100, 10000)]
@@ -30,14 +28,138 @@ $packageRoot = Join-Path $repository (
     'na2_patcher\features\localization\runtime_injector'
 )
 $sourceTable = Join-Path $packageRoot 'c_sources.tsv'
-$declarationPaths = @(
-    $sourceTable,
-    (Join-Path $packageRoot 'c_imports.tsv'),
-    (Join-Path $packageRoot 'c_fragments.tsv'),
-    (Join-Path $labRoot 'production_entries.tsv')
+$resolvedSourcePath = if ([IO.Path]::IsPathRooted($SourcePath)) {
+    [IO.Path]::GetFullPath($SourcePath)
+}
+else {
+    [IO.Path]::GetFullPath((Join-Path $repository $SourcePath))
+}
+$sourceItem = Get-Item -LiteralPath $resolvedSourcePath -Force `
+    -ErrorAction SilentlyContinue
+if (-not $sourceItem -or (
+    -not $sourceItem.PSIsContainer -and
+    -not (Test-Path -LiteralPath $resolvedSourcePath -PathType Leaf)
+)) {
+    throw "SourcePath must be an existing file or directory: $resolvedSourcePath"
+}
+$genericSourceFile = [IO.Path]::GetFullPath(
+    (Join-Path $labRoot 'src\test.c')
 )
+$genericSourceDirectory = [IO.Path]::GetFullPath(
+    (Join-Path $labRoot 'src')
+)
+$genericMode = (
+    $resolvedSourcePath.Equals(
+        $genericSourceFile,
+        [StringComparison]::OrdinalIgnoreCase
+    ) -or
+    (
+        $sourceItem.PSIsContainer -and
+        $resolvedSourcePath.Equals(
+            $genericSourceDirectory,
+            [StringComparison]::OrdinalIgnoreCase
+        )
+    )
+)
+$ProductionSource = ''
+if ($genericMode) {
+    if ($ProductionEntry) {
+        throw 'ProductionEntry cannot be used with the generic test.c source.'
+    }
+}
+else {
+    if (-not (Test-Path -LiteralPath $sourceTable -PathType Leaf)) {
+        throw "Canonical C source table was not found: $sourceTable"
+    }
+    if (-not $ProductionEntry) {
+        throw 'ProductionEntry is required for a canonical production source.'
+    }
+    $entryTable = Join-Path $labRoot 'production_entries.tsv'
+    $entryRows = @(Import-Csv -LiteralPath $entryTable -Delimiter "`t" |
+        Where-Object {
+            $_.entry_symbol -ceq $ProductionEntry
+        })
+    if ($entryRows.Count -ne 1) {
+        throw (
+            "ProductionEntry '$ProductionEntry' must match exactly one " +
+            'production_entries.tsv row.'
+        )
+    }
+    $ProductionSource = [string]$entryRows[0].source_id
+    $sourceRows = @(Import-Csv -LiteralPath $sourceTable -Delimiter "`t")
+    $selectedSources = @($sourceRows | Where-Object {
+        $_.source_id -ceq $ProductionSource -and
+        [string]$_.language -ceq 'c'
+    })
+    if ($selectedSources.Count -ne 1) {
+        throw (
+            "Production entry source '$ProductionSource' must match exactly " +
+            'one canonical C source.'
+        )
+    }
+    $canonicalSourcePath = [IO.Path]::GetFullPath(
+        (Join-Path $packageRoot ([string]$selectedSources[0].path))
+    )
+    $sourceContainsCanonical = if ($sourceItem.PSIsContainer) {
+        $directoryPrefix = $resolvedSourcePath.TrimEnd(
+            [IO.Path]::DirectorySeparatorChar,
+            [IO.Path]::AltDirectorySeparatorChar
+        ) + [IO.Path]::DirectorySeparatorChar
+        $canonicalSourcePath.StartsWith(
+            $directoryPrefix,
+            [StringComparison]::OrdinalIgnoreCase
+        )
+    }
+    else {
+        $resolvedSourcePath.Equals(
+            $canonicalSourcePath,
+            [StringComparison]::OrdinalIgnoreCase
+        )
+    }
+    if (-not $sourceContainsCanonical) {
+        throw (
+            "SourcePath does not contain the canonical source selected by " +
+            "$ProductionEntry`: $canonicalSourcePath"
+        )
+    }
+}
+$productionMode = -not $genericMode
+$declarationPaths = if ($productionMode) {
+    @(
+        $resolvedSourcePath,
+        $sourceTable,
+        (Join-Path $packageRoot 'c_imports.tsv'),
+        (Join-Path $packageRoot 'c_fragments.tsv'),
+        (Join-Path $labRoot 'production_entries.tsv')
+    )
+}
+else {
+    @(
+        $resolvedSourcePath,
+        (Join-Path $labRoot 'src\Main.h'),
+        (Join-Path $labRoot 'linker.asm'),
+        (Join-Path $labRoot 'gen_pnach.py')
+    )
+}
 
 function Get-FileSignature([string]$Path) {
+    if (Test-Path -LiteralPath $Path -PathType Container) {
+        $root = [IO.Path]::GetFullPath($Path).TrimEnd(
+            [IO.Path]::DirectorySeparatorChar,
+            [IO.Path]::AltDirectorySeparatorChar
+        )
+        $parts = [Collections.Generic.List[string]]::new()
+        foreach ($file in @(
+            Get-ChildItem -LiteralPath $root -Recurse -File -Force |
+                Sort-Object FullName
+        )) {
+            $relativePath = $file.FullName.Substring($root.Length + 1)
+            $parts.Add(
+                "$relativePath`t$(Get-FileSignature $file.FullName)"
+            )
+        }
+        return "DIRECTORY`n$([string]::Join("`n", $parts))"
+    }
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
         return 'MISSING'
     }
@@ -60,55 +182,10 @@ function Get-FileSignature([string]$Path) {
     }
 }
 
-function Resolve-SelectedSourcePath {
-    if (-not (Test-Path -LiteralPath $sourceTable -PathType Leaf)) {
-        throw "Canonical C source table was not found: $sourceTable"
-    }
-
-    $rows = @(Import-Csv -LiteralPath $sourceTable -Delimiter "`t")
-    $selected = @($rows | Where-Object {
-        $_.source_id -ceq $ProductionSource
-    })
-    if ($selected.Count -ne 1) {
-        throw (
-            "Production source '$ProductionSource' must match exactly one " +
-            'c_sources.tsv row.'
-        )
-    }
-    if ([string]$selected[0].language -cne 'c') {
-        throw "Production source '$ProductionSource' is not declared as C."
-    }
-
-    $relativePath = [string]$selected[0].path
-    if (-not $relativePath) {
-        throw "Production source '$ProductionSource' has no declared path."
-    }
-    $candidate = [IO.Path]::GetFullPath((Join-Path $packageRoot $relativePath))
-    $rootPrefix = [IO.Path]::GetFullPath($packageRoot).TrimEnd(
-        [IO.Path]::DirectorySeparatorChar,
-        [IO.Path]::AltDirectorySeparatorChar
-    ) + [IO.Path]::DirectorySeparatorChar
-    if (-not $candidate.StartsWith(
-        $rootPrefix,
-        [StringComparison]::OrdinalIgnoreCase
-    )) {
-        throw "Production source path escapes its package: $relativePath"
-    }
-    return $candidate
-}
-
 function Get-WatchState {
     $paths = [Collections.Generic.List[string]]::new()
     foreach ($path in $declarationPaths) {
         $paths.Add([IO.Path]::GetFullPath($path))
-    }
-
-    $resolutionError = ''
-    try {
-        $paths.Add((Resolve-SelectedSourcePath))
-    }
-    catch {
-        $resolutionError = $_.Exception.Message
     }
 
     $uniquePaths = @($paths |
@@ -117,30 +194,32 @@ function Get-WatchState {
     foreach ($path in $uniquePaths) {
         $parts.Add("$path`t$(Get-FileSignature $path)")
     }
-    if ($resolutionError) {
-        $parts.Add("SOURCE_RESOLUTION_ERROR`t$resolutionError")
-    }
-
     return [pscustomobject]@{
         Paths = $uniquePaths
         Signature = [string]::Join("`n", $parts)
     }
 }
 
-function Invoke-ProductionBuild {
+function Invoke-WatchedBuild {
     $arguments = [Collections.Generic.List[string]]::new()
     foreach ($argument in @(
         '-NoProfile',
         '-ExecutionPolicy',
         'Bypass',
         '-File',
-        $testScript,
-        '-ProductionSource',
-        $ProductionSource,
-        '-ProductionEntry',
-        $ProductionEntry
+        $testScript
     )) {
         $arguments.Add($argument)
+    }
+    if ($productionMode) {
+        foreach ($argument in @(
+            '-ProductionSource',
+            $ProductionSource,
+            '-ProductionEntry',
+            $ProductionEntry
+        )) {
+            $arguments.Add($argument)
+        }
     }
     if ($BuildOnly) {
         $arguments.Add('-BuildOnly')
@@ -159,10 +238,14 @@ function Invoke-ProductionBuild {
     }
 
     $timestamp = Get-Date -Format 'HH:mm:ss'
-    Write-Host (
-        "[injection_lab] $timestamp building $ProductionSource -> " +
-        $ProductionEntry
-    ) -ForegroundColor Cyan
+    $selection = if ($productionMode) {
+        "$ProductionSource -> $ProductionEntry"
+    }
+    else {
+        'generic test.c'
+    }
+    Write-Host "[injection_lab] $timestamp building $selection" `
+        -ForegroundColor Cyan
 
     $pwsh = Get-Command pwsh.exe -ErrorAction SilentlyContinue
     $powerShell = if ($pwsh) {
@@ -171,10 +254,13 @@ function Invoke-ProductionBuild {
     else {
         (Get-Process -Id $PID).Path
     }
-    & $powerShell @arguments
-    if ($LASTEXITCODE -ne 0) {
+    & $powerShell @arguments 2>&1 | ForEach-Object {
+        Write-Host $_
+    }
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -ne 0) {
         Write-Host (
-            "[injection_lab] Build/reload failed (exit $LASTEXITCODE); " +
+            "[injection_lab] Build/reload failed (exit $exitCode); " +
             'watching for the next save.'
         ) -ForegroundColor Red
         return $false
@@ -185,9 +271,15 @@ function Invoke-ProductionBuild {
 }
 
 $state = Get-WatchState
-Write-Host '[injection_lab] Production watcher started.'
-Write-Host "[injection_lab] Source: $ProductionSource"
-Write-Host "[injection_lab] Entry: $ProductionEntry"
+if ($productionMode) {
+    Write-Host '[injection_lab] Production watcher started.'
+    Write-Host "[injection_lab] Source ID: $ProductionSource"
+    Write-Host "[injection_lab] Entry: $ProductionEntry"
+}
+else {
+    Write-Host '[injection_lab] Generic test.c watcher started.'
+}
+Write-Host "[injection_lab] Source path: $resolvedSourcePath"
 Write-Host '[injection_lab] Inputs:'
 foreach ($path in $state.Paths) {
     Write-Host "  $path"
@@ -195,7 +287,7 @@ foreach ($path in $state.Paths) {
 Write-Host '[injection_lab] Press Ctrl+C to stop.'
 
 $initialBuildSignature = $state.Signature
-[void](Invoke-ProductionBuild)
+[void](Invoke-WatchedBuild)
 $state = Get-WatchState
 $observedSignature = $state.Signature
 $pendingSignature = $null
@@ -230,7 +322,7 @@ while ($true) {
 
     $buildSignature = $pendingSignature
     $pendingSignature = $null
-    [void](Invoke-ProductionBuild)
+    [void](Invoke-WatchedBuild)
 
     $afterBuild = Get-WatchState
     $observedSignature = $afterBuild.Signature

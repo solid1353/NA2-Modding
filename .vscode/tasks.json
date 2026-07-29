@@ -48,6 +48,33 @@
       "problemMatcher": []
     },
     {
+      "label": "Injection Lab: Watch test C",
+      "type": "shell",
+      "command": "pwsh.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\injection_lab\\watch.ps1",
+        "-SourcePath",
+        "${workspaceFolder}\\injection_lab\\src\\test.c"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "clear": false
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Injection Lab: Watch production Font",
       "type": "shell",
       "command": "pwsh.exe",
@@ -57,8 +84,8 @@
         "Bypass",
         "-File",
         "${workspaceFolder}\\injection_lab\\watch.ps1",
-        "-ProductionSource",
-        "font_v2_core",
+        "-SourcePath",
+        "${workspaceFolder}\\na2_patcher\\features\\localization\\runtime_injector\\sources\\font_v2_core.c",
         "-ProductionEntry",
         "${input:fontProductionEntry}"
       ],

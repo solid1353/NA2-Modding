@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 
 from na2_patcher.payload_builder import mips
-from scripts.localization import generate_font_renderer
+from scripts.research.localization import verify_font_renderer
 from scripts.research.localization import (
     generate_ninja_song_ascii_numbers,
 )
@@ -24,9 +24,9 @@ class NinjaSongAsciiNumbersTests(unittest.TestCase):
             format_number(7, 4, 3)
 
     def test_accepted_c_helper_keeps_public_symbol_and_native_abi(self) -> None:
-        first = generate_font_renderer.build_numeric_c_core()
-        generate_font_renderer.build_numeric_c_core.cache_clear()
-        second = generate_font_renderer.build_numeric_c_core()
+        first = verify_font_renderer.build_numeric_c_core()
+        verify_font_renderer.build_numeric_c_core.cache_clear()
+        second = verify_font_renderer.build_numeric_c_core()
         self.assertEqual(first, second)
 
         fragment = next(
@@ -43,7 +43,7 @@ class NinjaSongAsciiNumbersTests(unittest.TestCase):
         self.assertEqual(relocation.kind, "jal26")
         self.assertEqual(
             relocation.symbol,
-            generate_font_renderer.NINJA_SONG_FORMAT_DECIMAL,
+            verify_font_renderer.NINJA_SONG_FORMAT_DECIMAL,
         )
         self.assertEqual(relocation.addend, 0)
 
@@ -62,10 +62,10 @@ class NinjaSongAsciiNumbersTests(unittest.TestCase):
             "compiled helper must consume the fifth EE EABI argument from t0",
         )
 
-        bridge = generate_font_renderer.build_ninja_song_format_decimal()
+        bridge = verify_font_renderer.build_ninja_song_format_decimal()
         self.assertEqual(
             bridge.symbol,
-            generate_font_renderer.NINJA_SONG_FORMAT_DECIMAL,
+            verify_font_renderer.NINJA_SONG_FORMAT_DECIMAL,
         )
         self.assertEqual(bridge.relocations, ())
         bridge_words = [
@@ -78,7 +78,7 @@ class NinjaSongAsciiNumbersTests(unittest.TestCase):
                 mips.r_type(5, 0, 6, 0x21),
                 mips.i_type(0x0F, 0, 5, 0x60),
                 mips.i_type(0x0D, 5, 5, 0x42D3),
-                mips.jump(0x02, generate_font_renderer.SPRINTF),
+                mips.jump(0x02, verify_font_renderer.SPRINTF),
                 0,
             ],
         )

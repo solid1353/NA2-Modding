@@ -307,8 +307,8 @@ continues. The argument setup, C object, returned-year move into `s6`, block
 sizes, and every formatter outside this family remain unchanged. Runtime
 acceptance is complete: after the fresh corrected build, the user verified
 that Load and Save open without freezing and retain the accepted date/time
-presentation. Production generation is consolidated in
-`scripts/localization/generate_font_renderer.py`. Permanent coverage now
+presentation. Independent fragment reconstruction is retained in
+`scripts/research/localization/verify_font_renderer.py`. Permanent coverage now
 protects the independently established linking-call contract for all six
 Save/Load hooks.
 
@@ -343,9 +343,9 @@ changes only the hook encoding. C uses the immutable `%d` bridge. The adjacent
 40-byte branch ending at the edit site is independently guarded, so value
 `100` continues to render the native infinity symbol. Selector state, the
 stored timer value, the other five settings rows, and every other fullwidth
-formatter caller remain unchanged. Production generation is consolidated in
-`scripts/localization/generate_font_renderer.py`. After the corrected fresh
-build, the user verified the ordinary below-100 value and the separate
+formatter caller remain unchanged. Independent fragment reconstruction is
+retained in `scripts/research/localization/verify_font_renderer.py`. After the
+corrected fresh build, the user verified the ordinary below-100 value and the separate
 100/infinity behavior. The patch is therefore `runtime_proven`, and permanent
 coverage protects its linking-call contract.
 
@@ -385,8 +385,8 @@ declared the task done. Some runtime numeric values were not observed, but
 they are not separate strings: all values pass through the same five guarded
 call sites and width-aware decimal helper. The patch is therefore
 `runtime_proven`; arbitrary unseen decimal values retain the same mode and
-padding behavior. The deterministic generators are
-`scripts/localization/generate_font_renderer.py` and
+padding behavior. Deterministic verification is provided by
+`scripts/research/localization/verify_font_renderer.py` and
 `scripts/research/localization/generate_ninja_song_ascii_numbers.py`.
 
 Controls retains full-width `Linked Attack`, fits the official 19-byte

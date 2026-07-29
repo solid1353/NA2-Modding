@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 
 from na2_patcher.payload_builder import mips
-from scripts.localization import generate_font_renderer
+from scripts.research.localization import verify_font_renderer
 
 
 class SaveLoadAsciiDigitsTests(unittest.TestCase):
@@ -11,7 +11,7 @@ class SaveLoadAsciiDigitsTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.hooks = tuple(
             hook
-            for hook in generate_font_renderer.numeric_hooks()
+            for hook in verify_font_renderer.numeric_hooks()
             if hook.patch_id == "font_numeric_save_load"
         )
 
@@ -19,9 +19,9 @@ class SaveLoadAsciiDigitsTests(unittest.TestCase):
         self.assertEqual(
             [hook.symbol for hook in self.hooks[:3]],
             [
-                generate_font_renderer.SAVE_LOAD_DAY,
-                generate_font_renderer.SAVE_LOAD_TWO,
-                generate_font_renderer.SAVE_LOAD_YEAR,
+                verify_font_renderer.SAVE_LOAD_DAY,
+                verify_font_renderer.SAVE_LOAD_TWO,
+                verify_font_renderer.SAVE_LOAD_YEAR,
             ],
         )
         first_words = [
@@ -44,34 +44,34 @@ class SaveLoadAsciiDigitsTests(unittest.TestCase):
     def test_compiled_entries_use_only_native_format_bridges(self) -> None:
         fragments = {
             fragment.symbol: fragment
-            for fragment in generate_font_renderer.build_numeric_c_core()
+            for fragment in verify_font_renderer.build_numeric_c_core()
         }
         self.assertEqual(
             {
                 relocation.symbol
                 for relocation in fragments[
-                    generate_font_renderer.SAVE_LOAD_DAY
+                    verify_font_renderer.SAVE_LOAD_DAY
                 ].relocations
             },
-            {generate_font_renderer.NUMERIC_FORMAT_TWO_DECIMAL},
+            {verify_font_renderer.NUMERIC_FORMAT_TWO_DECIMAL},
         )
         self.assertEqual(
             {
                 relocation.symbol
                 for relocation in fragments[
-                    generate_font_renderer.SAVE_LOAD_HOUR
+                    verify_font_renderer.SAVE_LOAD_HOUR
                 ].relocations
             },
-            {generate_font_renderer.NUMERIC_FORMAT_TWO_DECIMAL},
+            {verify_font_renderer.NUMERIC_FORMAT_TWO_DECIMAL},
         )
         self.assertEqual(
             {
                 relocation.symbol
                 for relocation in fragments[
-                    generate_font_renderer.SAVE_LOAD_YEAR
+                    verify_font_renderer.SAVE_LOAD_YEAR
                 ].relocations
             },
-            {generate_font_renderer.NUMERIC_FORMAT_DECIMAL},
+            {verify_font_renderer.NUMERIC_FORMAT_DECIMAL},
         )
 
 

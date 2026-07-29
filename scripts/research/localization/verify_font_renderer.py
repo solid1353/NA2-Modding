@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate relocatable resident code for the accepted NA2 font renderer."""
+"""Verify reconstructed resident fragments for the accepted NA2 font renderer."""
 
 from __future__ import annotations
 

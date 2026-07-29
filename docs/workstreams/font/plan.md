@@ -139,8 +139,11 @@ caller-family adapters, not a transplanted NUN5 renderer:
 
 ### Resident implementation
 
-`scripts/localization/generate_font_renderer.py` generates the live v2
-resident asset and unique `localization.font.v2.*` symbols:
+The canonical C units under
+`na2_patcher/features/localization/runtime_injector/sources/` generate the live
+v2 resident asset and unique `localization.font.v2.*` symbols.
+`scripts/research/localization/verify_font_renderer.py` independently
+reconstructs and verifies those fragments:
 
 - the accepted 95-entry proportional-width table;
 - exact printable-ASCII measurement;

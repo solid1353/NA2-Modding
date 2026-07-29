@@ -1966,7 +1966,7 @@ title acceptance remains pending.
 regenerates and verifies the two native glyph/metric data blobs from configured
 `@source_na2/` and `@source_nun5/` inputs. Executable metric behavior is
 compiled from C during composition and is not stored as an asset.
-`scripts/localization/generate_font_renderer.py` deterministically
+`scripts/research/localization/verify_font_renderer.py` deterministically
 reconstructs the accepted v2 renderer, numeric formatter, and retained ABI-shim
 fragments as an independent verifier. Normal composition does not persist its
 aggregate outputs: `runtime_injector/c_sources.tsv` declares the two canonical
@@ -1979,8 +1979,9 @@ bridges and the minimal call-site register setup.
 `scripts/research/localization/generate_ninja_song_ascii_numbers.py`
 deterministically verifies the five shared clean-BTL formatter calls, emits
 their symbolic redirects, and guards the canonical ASCII multiplication
-mapping. Its resident helper is emitted by
-`scripts/localization/generate_font_renderer.py`.
+mapping. Its resident helper is declared by the canonical runtime-injector
+package and independently reconstructed by
+`scripts/research/localization/verify_font_renderer.py`.
 Exact static and symbolic hooks, guards, replacement templates, and reasons are
 recorded in the two module-owned `edits.tsv` files; confirmed evidence and
 negative results are recorded in

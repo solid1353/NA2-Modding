@@ -8,7 +8,7 @@ from na2_patcher.payload_builder import build_resident_payload
 from na2_patcher.payload_builder import mips
 from na2_patcher.payload_builder.operations import PayloadFragment
 from na2_patcher.payload_builder import ee_c_fragments
-from scripts.localization import generate_font_renderer
+from scripts.research.localization import verify_font_renderer
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -143,8 +143,8 @@ class FontCSharedCoreTests(unittest.TestCase):
             raise unittest.SkipTest(f"local EE compiler is unavailable: {COMPILER}")
 
     def test_compiled_core_is_deterministic_and_relocatable(self) -> None:
-        first = generate_font_renderer.build_v2_c_core()
-        second = generate_font_renderer.build_v2_c_core()
+        first = verify_font_renderer.build_v2_c_core()
+        second = verify_font_renderer.build_v2_c_core()
         self.assertEqual(first, second)
 
         fragments = {fragment.symbol: fragment for fragment in first}
@@ -173,7 +173,7 @@ class FontCSharedCoreTests(unittest.TestCase):
     def test_native_entry_shims_preserve_ee_eabi_register_contract(
         self,
     ) -> None:
-        pause = generate_font_renderer.build_v2_pause_list_selected_entry()
+        pause = verify_font_renderer.build_v2_pause_list_selected_entry()
         pause_words = [
             int.from_bytes(pause.payload[offset:offset + 4], "little")
             for offset in range(0, len(pause.payload), 4)
@@ -184,13 +184,13 @@ class FontCSharedCoreTests(unittest.TestCase):
                 mips.Relocation(
                     offset=0x8,
                     kind="jal26",
-                    symbol=generate_font_renderer.V2_PAUSE_LIST_SELECTED_IMPL,
+                    symbol=verify_font_renderer.V2_PAUSE_LIST_SELECTED_IMPL,
                 ),
             ),
         )
         self.assertNotIn(mips.i_type(0x2B, 29, 8, 0x10), pause_words)
 
-        practice = generate_font_renderer.build_v2_practice_adapter_entry()
+        practice = verify_font_renderer.build_v2_practice_adapter_entry()
         practice_words = [
             int.from_bytes(practice.payload[offset:offset + 4], "little")
             for offset in range(0, len(practice.payload), 4)
@@ -209,7 +209,7 @@ class FontCSharedCoreTests(unittest.TestCase):
                 mips.Relocation(
                     offset=0x14,
                     kind="jal26",
-                    symbol=generate_font_renderer.V2_PRACTICE_ADAPTER_IMPL,
+                    symbol=verify_font_renderer.V2_PRACTICE_ADAPTER_IMPL,
                 ),
             ),
         )

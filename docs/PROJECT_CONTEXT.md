@@ -175,7 +175,8 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   configured launches select `stable` or `dev`, while worker launches select
   an already-existing task-owned runtime with `-WorkerRoot` and start it
   hidden. `-IsoPath` is optional for configured launches and mandatory for
-  worker launches. It performs no cloning, configuration, process inspection,
+  worker launches; `-PassThru` exposes the started process to higher-level
+  orchestration. It performs no cloning, configuration, process inspection,
   PINE operation, savestate handling, capture, cleanup, or termination.
   `game_commands.ps1` defines the manifest-driven `na2s`, `nun3`, `nun5`, and
   `nun6` commands; `move_na2_savestates.ps1` files user savestates under

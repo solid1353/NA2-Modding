@@ -14,7 +14,9 @@ param(
     [Parameter(ValueFromRemainingArguments)]
     [string[]]$Arguments,
 
-    [switch]$Wait
+    [switch]$Wait,
+
+    [switch]$PassThru
 )
 
 $ErrorActionPreference = 'Stop'
@@ -105,5 +107,8 @@ if ($hidden) {
 }
 if ($Wait) {
     $startArguments.Wait = $true
+}
+if ($PassThru) {
+    $startArguments.PassThru = $true
 }
 Start-Process @startArguments

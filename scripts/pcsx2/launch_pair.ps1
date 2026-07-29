@@ -46,7 +46,9 @@ if ($duplicateGames.Count -gt 0) {
 }
 
 $pcsx2Exe = [IO.Path]::GetFullPath($projectPaths.files.pcsx2_user_exe)
-$na2Command = [IO.Path]::GetFullPath($projectPaths.files.na2_command)
+$pcsx2Launcher = [IO.Path]::GetFullPath(
+    $projectPaths.files.pcsx2_launch_command
+)
 $directIsoFiles = @{
     candidate = 'candidate_iso'
     na2s = 'na2_iso'
@@ -67,10 +69,7 @@ foreach ($game in $selectedGames) {
     }
 }
 
-$requiredFiles = @($pcsx2Exe)
-if ($selectedGames -contains 'current' -or $selectedGames -contains 'previous') {
-    $requiredFiles += $na2Command
-}
+$requiredFiles = @($pcsx2Exe, $pcsx2Launcher)
 $requiredFiles += @($selectedIsoPaths.Values)
 foreach ($requiredFile in $requiredFiles) {
     if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) {
@@ -104,28 +103,6 @@ public static class Na2LaunchWindow
 '@
 }
 
-function Wait-Na2LaunchProcess {
-    param(
-        [Parameter(Mandatory = $true)][string]$Executable,
-        [Parameter(Mandatory = $true)][AllowEmptyCollection()][int[]]$ExcludedProcessIds,
-        [Parameter(Mandatory = $true)][DateTime]$Deadline
-    )
-
-    do {
-        $candidate = @(
-            Get-Na2Pcsx2Process -Executable $Executable |
-                Where-Object { $_.Id -notin $ExcludedProcessIds } |
-                Sort-Object StartTime -Descending
-        ) | Select-Object -First 1
-        if ($null -ne $candidate) {
-            return $candidate
-        }
-        Start-Sleep -Milliseconds 100
-    } while ([DateTime]::UtcNow -lt $Deadline)
-
-    throw 'PCSX2 did not create the expected process before the timeout.'
-}
-
 $workingArea = [Windows.Forms.Screen]::PrimaryScreen.WorkingArea
 $gameList = $selectedGames -join ', '
 $action = "close existing PCSX2 instances, launch $gameList, and tile their windows"
@@ -139,25 +116,10 @@ try {
     Stop-Na2Pcsx2 -Executable $pcsx2Exe
 
     foreach ($game in $selectedGames) {
-        $process = if ($game -eq 'current' -or $game -eq 'previous') {
-            $knownProcessIds = @($launchedGames | ForEach-Object { $_.Process.Id })
-            if ($game -eq 'current') {
-                & $na2Command -c | Out-Host
-            }
-            else {
-                & $na2Command -p | Out-Host
-            }
-            Wait-Na2LaunchProcess `
-                -Executable $pcsx2Exe `
-                -ExcludedProcessIds $knownProcessIds `
-                -Deadline ([DateTime]::UtcNow.AddSeconds($WindowWaitSeconds))
-        }
-        else {
-            Start-Process -FilePath $pcsx2Exe `
-                -WorkingDirectory $projectPaths.pcsx2_user `
-                -ArgumentList @('-batch', "`"$($selectedIsoPaths[$game])`"") `
-                -PassThru
-        }
+        $process = & $pcsx2Launcher `
+            -Target stable `
+            -IsoPath $selectedIsoPaths[$game] `
+            -PassThru
 
         $launchedGames.Add([pscustomobject]@{
             Game = $game

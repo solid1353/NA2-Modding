@@ -106,8 +106,9 @@ Run `act help` or `act -h` for the standalone command summary.
 `-Target stable|dev`; agent launches use `-WorkerRoot work/<task title>` and
 start the existing task-owned PCSX2 copy hidden. `-IsoPath` is optional for
 configured launches and mandatory and repository-relative for worker launches.
-The launcher does not copy or configure PCSX2, inspect or stop processes, use
-PINE, load savestates, capture output, or perform cleanup.
+`-PassThru` returns the started process for higher-level orchestration such as
+window tiling. The launcher does not copy or configure PCSX2, inspect or stop
+processes, use PINE, load savestates, capture output, or perform cleanup.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`

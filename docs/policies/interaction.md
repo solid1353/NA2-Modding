@@ -109,6 +109,7 @@ Next response: short plan + effort recommendation + needed user inputs + approva
 - `con` resumes current work with scope, effort, progress, and approval intact.
 - `ep` means `epic`.
 - `eff` asks for the current recommended effort and does not change it.
+- `sin` means report rules failure to `General`.
 - `report`, `grid`, or a direct request for this chat's existing task grid is
   an immediate response command, not a request to begin producing evidence.
   The next user-visible response is either the actual composed post-change grid

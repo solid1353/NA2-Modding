@@ -72,6 +72,7 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - `con`: resume the current work without changing its scope or approval state.
 - `ep`: epic.
 - `eff`: report the current recommended effort without changing it.
+- `sin`: report rules failure to `General`.
 - `report`, `grid`, or any direct request for this chat's existing task grid
   immediately preempts everything. The next user-visible response must be
   exactly one of: (1) the actual composed post-change report-grid images, or

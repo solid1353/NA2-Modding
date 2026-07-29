@@ -110,11 +110,6 @@ Detailed command and task behavior is in
   anything still needed, then replaces the whole copy from `@pcsx2_clean`.
   This audit includes PINE configuration, hot-reload PNACH state, savestates,
   screenshots, logs, memory cards, cheats, GameSettings, and input files.
-- Never centrally migrate, replace, or clean another task's PCSX2 copy. Before
-  reusing an existing copy for new work, its owning task audits it, promotes
-  anything still needed, then replaces the whole copy from `@pcsx2_clean`.
-  This audit includes PINE configuration, hot-reload PNACH state, savestates,
-  screenshots, logs, memory cards, cheats, GameSettings, and input files.
 - `na228 -t` and `_na228.ps1 -t` build ISOs; `-t` never means tests. The full
   builder test suite is
   `python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'`.

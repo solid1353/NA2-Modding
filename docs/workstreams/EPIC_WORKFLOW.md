@@ -40,6 +40,13 @@ For each subtask:
    owning chat. In Continuous mode, send it in commentary and continue the next
    independent approved subtask.
 
+Existing code, enabled hooks, compilation, and successful composition do not
+make a selected subtask implemented when accurate current-result evidence still
+shows its requested defect. Keep that case unresolved under `pending/` and use
+the existing accurate grid as failure evidence; do not replace it with a
+missing-input claim or ask the user to reproduce the same result. Changing only
+execution text or status cannot substitute for changing the result.
+
 A later nonvisual integration, build, metadata, or documentation repair to an
 already-reported subtask does not create a new grid obligation when it neither
 changes the visible result nor makes the delivered grid's imagery or metadata

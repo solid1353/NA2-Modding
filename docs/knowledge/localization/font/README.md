@@ -1735,3 +1735,73 @@ clean-byte guards, bounded disassembly of both native contexts, compiler
 instruction review, and resolved-hook inspection. Runtime status remains
 `approved_for_test` until the user verifies representative secondary-font
 drawing/fitting and an unaffected primary/fullwidth case.
+
+## 2026-07-30 Battle Settings Jutsu-row renderer
+
+The replacement ss3–ss6 batch isolates one Jutsu-selector caller family. Its
+source identities are NA2 `PRG/BTL.BIN` SHA-256
+`56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C`
+and NUN5 `PRG/BTL.BIN` SHA-256
+`7E8518DA7BD4957AF18CB0ABABE67F0E9B37C42C6551375201B15997F0A3DFE3`.
+The supplied visible ss5 and ss6 states restore with the selector objects
+already constructed, and the final row draw executes after either state
+resumes. They therefore validate this draw-time caller directly with no game
+input. The user also supplied the exact constructor sequence ss3, Cross, ss4,
+Circle, ss5, Cross, ss6, but it was not required for the bounded runtime pass;
+ss3 and ss4 are precursors rather than separate defects.
+
+NA2 row compositor `FUN_006BCB70` sets a point and calls the ordinary text
+renderer directly. The exact call is BTL file `0x9178`, Ghidra
+`0x006BCF9C`, live MWo3 `0x006BCFDC`, guarded by
+`5020060C00000000` (`jal 0x00188140`; NOP). Its left-side point is
+`(30 + f21, 16 + f20)` and its right-side point is
+`(310 - f21, 16 + f20)`. This path has no width, line-count, or wrapping
+contract, which explains why long translated names remain on one line and
+overflow.
+
+An earlier uncommitted experiment intercepted three presumed Jutsu
+constructor/list families independently through
+`font_v2_jutsu_primary_entry`, `font_v2_jutsu_secondary_entry`, and
+`font_v2_jutsu_list_entry`, with guessed 208-unit wrapping and separate
+128-unit boxes. It was rejected and is not retained: those wrappers did not
+own the final visible ss5/ss6 text draw. The exact row-compositor call above
+supersedes all three and is the only hook required for this defect.
+
+NUN5 homolog `FUN_006CFE70` replaces that direct draw with
+`FUN_00389EA0` at Ghidra `0x006D02DC`. It passes a `186 x 32` box, line
+limit `2`, horizontal policy `0`, vertical policy `1`, and wrapping mode `1`.
+Relative to the NA2 native point, its box origin is X `-7` on the left, X
+`-4` on the right, and Y `-10` on both sides. The callee copies the text,
+wraps it to the requested width and line limit, and then delegates to
+`FUN_0018B1B0`; that final renderer applies start-horizontal and
+center-vertical placement and advances once per produced line.
+
+The bounded C implementation therefore hooks only live `0x006BCFDC`, copies
+the source into a 256-byte stack buffer, wraps it at 186 units and two lines,
+keeps the native left/right branch, and draws through the accepted session
+renderer before restoring the caller's position. The first fresh candidate
+proved the caller isolation: `Naruto Uzumaki Combo Attack` became
+`Naruto Uzumaki` / `Combo Attack`, but relying on the shared newline hook
+produced an 18-pixel row step instead of NUN5's 20. The corrected callback
+owns both line draws directly; a 16-unit game-space Y step produces the exact
+20-pixel NUN5 step at 640x480.
+
+The remaining vertical overflow was glyph-quad geometry rather than line
+spacing. Setting the secondary descriptor or renderer mode before
+`FUN_00188140` was ineffective because that draw path resets the selector
+before the per-glyph emitter. The existing layout-session right-edge shim at
+ELF file `0x88070`, runtime `0x00187F70`, is the correct bounded boundary. A
+new session flag `0x40` makes only the Jutsu draw take a `20.0`-unit bottom
+edge from `FontV2Session.glyph_height`; every session without that flag
+continues at `0x00187F78` through the accepted native primary/secondary helper.
+The flagged path rejoins at `0x00187F80` and preserves displaced delay-slot
+word `0x8F84CA6C` (`lw a0,-0x3594(gp)`). Omitting that load makes the row text
+disappear, which was a useful rejected transport result rather than a renderer
+hypothesis.
+
+The final current-renderer compensation is box Y offset `-7`. In supplied ss5
+and ss6, NUN5's 640x480 white-glyph bounds are rows `245..254` and `265..274`.
+The fresh NA2.28 960x720 captures are rows `368..381` and `398..411`, exactly
+the corresponding normalized bounds and 30-pixel line step. Both long selected
+names remain inside the row. This is agent-validated runtime evidence; explicit
+user acceptance remains pending.

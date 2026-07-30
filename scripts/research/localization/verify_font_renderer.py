@@ -113,6 +113,8 @@ V2_CHARACTER_CONFIRMATION_BODY_ADAPTER = (
 V2_CHARACTER_SELECTED_ADAPTER = (
     f"{V2_PREFIX}.character_selected_adapter"
 )
+V2_JUTSU_DRAW_CALLBACK = f"{V2_PREFIX}.c.jutsu_draw_callback"
+V2_JUTSU_DRAW_ENTRY = f"{V2_PREFIX}.jutsu_draw_entry"
 V2_CHARACTER_CONFIRMATION_BODY_CALLBACK = (
     f"{V2_PREFIX}.c.character_confirmation_body_callback"
 )
@@ -163,6 +165,8 @@ NEWLINE_ADVANCE_RETURN = 0x00188670
 V2_PLAIN_SPACE_RESUME = 0x001892F4
 V2_NEWLINE_ORIGINAL_RESUME = 0x0018860C
 V2_RIGHT_EDGE_RESUME = 0x00187F78
+V2_GLYPH_BOTTOM_RESUME = 0x00187F80
+V2_GLYPH_BOTTOM_DELAY = 0x8F84CA6C
 V2_HALF_SPACE_RESUME = 0x00188A84
 V2_GLYPH_ADVANCE_RESUME = 0x001896E0
 YES_SOURCE = (50.0, 24.0)
@@ -245,6 +249,7 @@ V2_FLAG_BR_TAGS = 0x02
 V2_FLAG_NEWLINE_BYTES = 0x04
 V2_FLAG_SEPARATE_LINE_ADVANCE = 0x08
 V2_FLAG_PREMEASURED = 0x10
+V2_FLAG_GLYPH_HEIGHT = 0x40
 
 CONTROLS_BOX_WIDTH = 128
 CONTROLS_BOX_HEIGHT = 20
@@ -430,6 +435,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         "font_v2_command_icon_offset",
         "font_v2_character_confirmation_body_adapter",
         "font_v2_character_selected_adapter",
+        "font_v2_jutsu_draw_entry",
         "font_v2_practice_icon_metric",
         "font_v2_practice_icon_draw",
         "font_v2_practice_adapter_impl",
@@ -496,6 +502,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         extracted.symbols["font_v2_character_selected_adapter"].symbol: (
             V2_CHARACTER_SELECTED_ADAPTER
         ),
+        extracted.symbols["font_v2_jutsu_draw_entry"].symbol: (
+            V2_JUTSU_DRAW_ENTRY
+        ),
         extracted.symbols["font_v2_practice_icon_metric"].symbol: (
             V2_PRACTICE_ICON_METRIC
         ),
@@ -529,6 +538,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
             f"{V2_PREFIX}.c.text.font.v2.character."
             "confirmation.body.callback"
         ): V2_CHARACTER_CONFIRMATION_BODY_CALLBACK,
+        f"{V2_PREFIX}.c.text.font.v2.jutsu.draw.callback": (
+            V2_JUTSU_DRAW_CALLBACK
+        ),
     }
     if helper_symbols != set(helper_aliases):
         raise ValueError(
@@ -587,6 +599,8 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_CHARACTER_CONFIRMATION_BODY_ADAPTER,
         V2_CHARACTER_SELECTED_ADAPTER,
         V2_CHARACTER_CONFIRMATION_BODY_CALLBACK,
+        V2_JUTSU_DRAW_CALLBACK,
+        V2_JUTSU_DRAW_ENTRY,
         f"{V2_PREFIX}.c.icon_record",
         V2_PRACTICE_ICON_METRIC,
         V2_PRACTICE_ICON_DRAW,
@@ -2378,13 +2392,15 @@ def finish_v2_hook(
     address_register: int,
     pointer_register: int,
     resume_address: int,
+    *,
+    delay_word: int = 0,
 ) -> None:
     sp = 29
     assembler.emit(mips.i_type(0x23, sp, address_register, 0))
     assembler.emit(mips.i_type(0x23, sp, pointer_register, 4))
     assembler.emit(mips.i_type(0x09, sp, sp, 0x10))
     assembler.emit(mips.jump(0x02, resume_address))
-    assembler.emit(0)
+    assembler.emit(delay_word)
 
 
 def build_v2_plain_space() -> Fragment:
@@ -2452,6 +2468,25 @@ def build_v2_right_edge() -> Fragment:
     assembler.emit(mips.cop1(0x02, 2, 1, 2))
     assembler.emit(mips.cop1(0x00, 21, 2, 0))
     assembler.emit(mips.i_type(0x31, s1, 0, 0x20))
+    assembler.emit(
+        mips.i_type(0x23, v1, v0, V2_SESSION_FLAGS)
+    )
+    assembler.emit(
+        mips.i_type(0x0C, v0, v0, V2_FLAG_GLYPH_HEIGHT)
+    )
+    assembler.branch(0x04, v0, zero, "native_bottom")
+    assembler.emit(
+        mips.i_type(0x31, v1, 1, V2_SESSION_GLYPH_HEIGHT)
+    )
+    assembler.emit(mips.cop1(0x00, 20, 0, 1))
+    finish_v2_hook(
+        assembler,
+        v0,
+        v1,
+        V2_GLYPH_BOTTOM_RESUME,
+        delay_word=V2_GLYPH_BOTTOM_DELAY,
+    )
+    assembler.label("native_bottom")
     finish_v2_hook(
         assembler, v0, v1, V2_RIGHT_EDGE_RESUME
     )

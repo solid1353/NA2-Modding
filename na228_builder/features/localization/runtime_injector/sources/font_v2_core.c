@@ -15,6 +15,7 @@ typedef signed int s32;
 #define FONT_V2_FLAG_NEWLINE_BYTES 0x04u
 #define FONT_V2_FLAG_SEPARATE_LINE_ADVANCE 0x08u
 #define FONT_V2_FLAG_SCALE_LINE_ADVANCE 0x20u
+#define FONT_V2_FLAG_GLYPH_HEIGHT 0x40u
 #define FONT_V2_NATIVE_LINE_ADVANCE 40.0f
 #define FONT_V2_FLAG_PREMEASURED 0x10u
 
@@ -24,12 +25,16 @@ typedef signed int s32;
 #define FONT_RENDERER_POINTER_ADDRESS 0x00607470u
 #define FONT_HORIZONTAL_SCALE_ADDRESS 0x0060737Cu
 #define FONT_RENDERER_TRACKING_OFFSET 0x3Cu
+#define FONT_RENDERER_POSITION_X_OFFSET 0x14u
+#define FONT_RENDERER_POSITION_Y_OFFSET 0x18u
 #define FONT_RENDERER_DRAW_X_OFFSET 0x28u
 #define FONT_RENDERER_DRAW_Y_OFFSET 0x2Cu
 #define FONT_RENDERER_CONTEXT_OFFSET 0x6Cu
 #define FONT_INITIALIZE_ADDRESS 0x00186510u
 #define FONT_SET_CONTEXT_ADDRESS 0x001866D0u
+#define FONT_SET_POSITION_ADDRESS 0x00186700u
 #define FONT_DRAW_ADDRESS 0x00379040u
+#define FONT_JUTSU_DRAW_ADDRESS 0x00188140u
 #define FONT_CHARACTER_SELECTED_DRAW_ADDRESS 0x00382610u
 #define FONT_CONTROLS_BOX_WIDTH 128u
 #define FONT_CONTROLS_BOX_HEIGHT 20u
@@ -48,6 +53,15 @@ typedef signed int s32;
 #define FONT_COMMAND_RELATION_LINE_LIMIT 2u
 #define FONT_COMMAND_ICON_RELATION_OFFSET 16.0f
 #define FONT_COMMAND_ICON_PLAIN_OFFSET 38.0f
+#define FONT_JUTSU_BOX_WIDTH 186u
+#define FONT_JUTSU_BOX_HEIGHT 32u
+#define FONT_JUTSU_LEFT_X_OFFSET -7.0f
+#define FONT_JUTSU_RIGHT_X_OFFSET -4.0f
+#define FONT_JUTSU_Y_OFFSET -7.0f
+#define FONT_JUTSU_SIDE_THRESHOLD 256.0f
+#define FONT_JUTSU_LINE_ADVANCE 16.0f
+#define FONT_JUTSU_GLYPH_HEIGHT 20.0f
+#define FONT_JUTSU_LINE_LIMIT 2u
 #define FONT_PRACTICE_TITLE_BOX_X 31.2f
 #define FONT_PRACTICE_TITLE_BOX_WIDTH 352u
 #define FONT_PRACTICE_TITLE_Y_OFFSET -6.8f
@@ -264,6 +278,12 @@ extern int font_v2_practice_callback(
 typedef int (*FontV2Callback)(u32 arg0, u32 arg1, u32 arg2, u32 arg3);
 typedef void (*FontV2NativeInitialize)(u32 renderer, u32 mode);
 typedef void (*FontV2NativeSetContext)(u32 renderer, u32 context);
+typedef void (*FontV2NativeSetPosition)(
+    float draw_x,
+    float draw_y,
+    u32 renderer
+);
+typedef void (*FontV2NativeTextDraw)(u32 renderer, const u8 *text);
 typedef void (*FontV2NativeDraw)(
     float draw_x,
     float draw_y,
@@ -855,6 +875,136 @@ int font_v2_wrap_native(
     *measured_width = maximum_width;
     *line_count = lines;
     return 0;
+}
+
+static FONT_V2_SECTION(".text.font_v2_jutsu_draw_callback")
+int font_v2_jutsu_draw_callback(
+    u32 renderer_address,
+    const u8 *text,
+    u32 arg2,
+    FontV2Session *session
+) {
+    volatile float *renderer = (volatile float *)renderer_address;
+    FontV2NativeSetPosition set_position =
+        (FontV2NativeSetPosition)FONT_SET_POSITION_ADDRESS;
+    FontV2NativeTextDraw draw =
+        (FontV2NativeTextDraw)FONT_JUTSU_DRAW_ADDRESS;
+    float saved_x;
+    float saved_y;
+    float origin_x;
+    float origin_y;
+    u8 *cursor;
+    u8 *line_start;
+    u32 line_index;
+
+    (void)arg2;
+    if (!renderer || !text || !session) {
+        return -1;
+    }
+
+    saved_x = renderer[FONT_RENDERER_POSITION_X_OFFSET / sizeof(float)];
+    saved_y = renderer[FONT_RENDERER_POSITION_Y_OFFSET / sizeof(float)];
+    origin_x = renderer[FONT_RENDERER_DRAW_X_OFFSET / sizeof(float)];
+    origin_y = renderer[FONT_RENDERER_DRAW_Y_OFFSET / sizeof(float)];
+    cursor = (u8 *)text;
+    line_start = cursor;
+    line_index = 0;
+
+    for (;;) {
+        if (!*cursor || *cursor == (u8)'\n') {
+            u8 saved = *cursor;
+            *cursor = 0;
+            set_position(
+                session->draw_x - origin_x,
+                session->draw_y +
+                    (float)(s32)line_index * session->line_height -
+                    origin_y,
+                renderer_address
+            );
+            draw(renderer_address, line_start);
+            *cursor = saved;
+            if (!saved) {
+                break;
+            }
+            cursor += 1;
+            line_start = cursor;
+            line_index += 1;
+        } else {
+            cursor += 1;
+        }
+    }
+
+    set_position(
+        saved_x - origin_x,
+        saved_y - origin_y,
+        renderer_address
+    );
+    return 0;
+}
+
+FONT_V2_SECTION(".text.font_v2_jutsu_draw_entry")
+int font_v2_jutsu_draw_entry(
+    u32 renderer_address,
+    const u8 *text
+) {
+    FontV2BodyFrame frame;
+    volatile float *renderer = (volatile float *)renderer_address;
+    float native_x;
+    float native_y;
+    u32 index = 0;
+
+    if (!renderer || !text) {
+        return -1;
+    }
+
+    while (index < FONT_BODY_BUFFER_SIZE - 1u && text[index]) {
+        frame.buffer[index] = text[index];
+        index += 1;
+    }
+    frame.buffer[index] = 0;
+
+    if (
+        font_v2_wrap_native(
+            frame.buffer,
+            FONT_JUTSU_BOX_WIDTH,
+            FONT_JUTSU_LINE_LIMIT,
+            &frame.session.measured_width,
+            &frame.session.line_count
+        ) != 0
+    ) {
+        return -1;
+    }
+
+    native_x =
+        renderer[FONT_RENDERER_POSITION_X_OFFSET / sizeof(float)];
+    native_y =
+        renderer[FONT_RENDERER_POSITION_Y_OFFSET / sizeof(float)];
+    frame.session.text = frame.buffer;
+    frame.session.box_x =
+        native_x +
+        (
+            native_x < FONT_JUTSU_SIDE_THRESHOLD
+                ? FONT_JUTSU_LEFT_X_OFFSET
+                : FONT_JUTSU_RIGHT_X_OFFSET
+        );
+    frame.session.box_y = native_y + FONT_JUTSU_Y_OFFSET;
+    frame.session.box_width = FONT_JUTSU_BOX_WIDTH;
+    frame.session.box_height = FONT_JUTSU_BOX_HEIGHT;
+    frame.session.horizontal_alignment = FONT_V2_ALIGN_START;
+    frame.session.vertical_alignment = FONT_V2_ALIGN_CENTER;
+    frame.session.flags =
+        FONT_V2_FLAG_SEPARATE_LINE_ADVANCE |
+        FONT_V2_FLAG_PREMEASURED |
+        FONT_V2_FLAG_GLYPH_HEIGHT;
+    frame.session.line_limit = FONT_JUTSU_LINE_LIMIT;
+    frame.session.line_height = FONT_JUTSU_LINE_ADVANCE;
+    frame.session.glyph_height = FONT_JUTSU_GLYPH_HEIGHT;
+    frame.session.callback = (u32)font_v2_jutsu_draw_callback;
+    frame.session.callback_arg0 = renderer_address;
+    frame.session.callback_arg1 = (u32)frame.buffer;
+    frame.session.callback_arg2 = 0;
+    frame.session.callback_arg3 = (u32)&frame.session;
+    return font_v2_adapter_call(&frame.session);
 }
 
 static FONT_V2_SECTION(".text.font_v2_wrapped_body_common")

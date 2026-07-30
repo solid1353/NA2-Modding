@@ -12,12 +12,11 @@ case.
 ## Execution state
 
 - Mode: Continuous.
-- Current subtask: Priority 2 — ss2 Linked Mode center modal. The dedicated
-  three-label caller is agent-validated and being promoted.
+- Current subtask: Priority 3 — ss3–ss6 Jutsu selector.
 - Pending grid:
-  `work/Font/artifacts/2026-07-30-batch/ss02-linked-mode-y-grid.png`.
-- Next action: validate, commit and push the isolated caller fix, deliver the
-  pending result grid, then continue Priority 3.
+  `docs/workstreams/font/epics/ss2-6-layout/3-jutsu-selector.png`.
+- Next action: validate, commit and push the one-caller Jutsu fix, visibly
+  deliver the pending result grid, then continue Priority 4.
 
 ## Scope and evidence
 
@@ -34,9 +33,10 @@ case.
   center modal; ss3–ss6 one Jutsu-selector defect, with ss3/ss4 supplied as
   precursors and ss5/ss6 showing the defect; ss7 Collection confirmation; ss8
   Movie list; ss9–ss10 character move lists.
-- Every slot is loaded directly. The agent does not navigate between supplied
-  states. If a state does not expose the required caller, that subtask stops
-  for an exact replacement state.
+- Every slot is loaded directly. The user supplied the exact Priority 3
+  constructor sequence ss3 -> Cross -> ss4 -> Circle -> ss5 -> Cross -> ss6,
+  but the final draw-time caller executes after direct ss5 and ss6 reloads, so
+  no agent navigation was required.
 - Existing accepted Font and resident-renderer behavior remains the regression
   baseline.
 - Text-content differences are normally routed to the translation workstreams.
@@ -55,8 +55,8 @@ case.
 
 ### Priority 2 — ss2: Linked Mode center modal
 
-- State: isolated three-instruction fix is agent-validated and being promoted;
-  user acceptance remains pending.
+- State: isolated three-instruction fix is committed, pushed,
+  agent-validated, and visibly delivered; user acceptance remains pending.
 - Result: the center-modal `Linked Mode`, `Manual`, and `Auto` labels now
   match the NUN5 vertical geometry without changing another modal or renderer.
 
@@ -66,10 +66,18 @@ case.
 
 ### Priority 3 — ss3–ss6: One Jutsu-selector defect
 
-- State: four matched states captured; not implemented.
+- State: implemented and agent-validated on supplied ss5 and ss6; user
+  acceptance remains pending. The exact native row draw at live BTL
+  `0x006BCFDC` is isolated behind one guarded C caller. Both long selected
+  names wrap inside the NUN5 186-by-32 two-line box. A session-scoped
+  20-unit glyph bottom edge and explicit 16-unit row advance match the NUN5
+  normalized top, bottom, height, and line spacing without changing another
+  renderer session.
 - ss3 and ss4 are supplied precursors for this one caller family.
 - ss5 and ss6 visibly prove that Current keeps long Jutsu names on one line
   and overflows, while NUN5 wraps them inside the selector bounds.
+- Runtime validation used direct supplied ss5 and ss6 loads; no game input or
+  menu navigation was required.
 
 ![Priority 3 Jutsu-selector baselines](3-jutsu-selector.png)
 

@@ -63,6 +63,15 @@
   accidentally included, the commit may be pushed as-is and must be reported.
 - Commit and push every completed change automatically at a coherent boundary.
   Git never requires `qwe` or separate approval.
+- Before yielding at any pause, review, validation, user-input, or other
+  handoff boundary, an agent must leave no task-owned canonical changes dirty
+  in the shared worktree. Commit and push completed coherent changes. For
+  incomplete changes, either stash only the owned paths and record the exact
+  stash identity and paths in the active task/workstream state, or document
+  sufficient reconstruction steps and revert only the owned paths. Verify
+  recoverability and the resulting Git state; unrelated concurrent changes
+  remain untouched. On resume, restore and verify the exact owned diff, then
+  immediately drop that exact stash and verify its removal.
 - Normal pushes of completed commits to already configured project remotes and
   branches have standing user authorization. Never ask the user to authorize
   them again. This standing authorization does not permit changing remotes,

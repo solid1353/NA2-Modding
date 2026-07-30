@@ -12,14 +12,14 @@ case.
 ## Execution state
 
 - Mode: Continuous.
-- Current subtask: Priority 4 — ss7 Collection exit confirmation, awaiting a
-  fresh post-build frame from clean modal construction.
-- Pending grid: missing: a fresh NA2.28 ss7 screenshot or savestate created
-  after entering the Collection exit confirmation on a build containing the
-  Priority 4 patch.
-- Next action: stop after Priority 4 as explicitly requested. Do not start
-  Priority 5. When the missing post-build ss7 input is supplied, compose and
-  visibly deliver the Priority 4 result grid.
+- Current subtask: stopped after Priority 4 — ss7 Collection exit confirmation,
+  as explicitly requested. Implementation commit `76e5023f` is pushed;
+  clean-construction runtime output and user acceptance remain pending.
+- Pending grid: none; the exact missing-input response was visibly delivered
+  after commit `76e5023f`.
+- Next action: when a fresh post-build ss7 screenshot or savestate is supplied,
+  finish only the Priority 4 result report and acceptance state. Do not start
+  Priority 5 without a new continuation instruction.
 
 ## Scope and evidence
 

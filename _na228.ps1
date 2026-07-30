@@ -14,6 +14,8 @@ param(
     [switch]$Current,
     [Alias('p')]
     [switch]$Previous,
+    [Alias('w')]
+    [switch]$Watch,
     [Alias('h')]
     [switch]$Help
 )
@@ -36,6 +38,25 @@ function Invoke-Na2Actualization {
     & $projectPaths.files.actualize_command na228 -NoRunLog
 }
 
+function Get-Na2DevPinePort {
+    $iniPath = Join-Path $projectPaths.pcsx2_dev 'inis\PCSX2.ini'
+    if (-not (Test-Path -LiteralPath $iniPath -PathType Leaf)) {
+        throw "Development PCSX2 configuration was not found: $iniPath"
+    }
+    $match = Select-String `
+        -LiteralPath $iniPath `
+        -Pattern '^\s*PINESlot\s*=\s*(\d+)\s*$' |
+        Select-Object -First 1
+    if ($null -eq $match) {
+        throw "Development PCSX2 PINESlot is not configured in $iniPath"
+    }
+    $port = [int]$match.Matches[0].Groups[1].Value
+    if ($port -lt 1 -or $port -gt 65535) {
+        throw "Development PCSX2 PINESlot is invalid: $port"
+    }
+    return $port
+}
+
 $workerBuild = if ($Test -and -not [string]::IsNullOrWhiteSpace($Mode)) {
     Get-Na2WorkerBuildContext `
         -OutputPath $Mode `
@@ -48,10 +69,10 @@ else {
 $command = if ($Mode -and -not $Test) { $Mode.ToLowerInvariant() } else { '' }
 $runSelected = $Current -or $Previous
 
-if (@($Build, $Test, $Current, $Previous).Where({ $_ }).Count -gt 1) {
-    throw '-Build / -b, -Test / -t, -Current / -c, and -Previous / -p are mutually exclusive.'
+if (@($Build, $Test, $Current, $Previous, $Watch).Where({ $_ }).Count -gt 1) {
+    throw '-Build / -b, -Test / -t, -Current / -c, -Previous / -p, and -Watch / -w are mutually exclusive.'
 }
-if ($command -and ($Build -or $Test -or $runSelected)) {
+if ($command -and ($Build -or $Test -or $runSelected -or $Watch)) {
     throw 'Build/launch switches cannot be combined with a command mode.'
 }
 if ($command -and $command -ne 'release') {
@@ -69,6 +90,7 @@ if ($Help) {
         '  na228 -t work/<worker>/build/<name>.iso  Build an isolated worker ISO and worker-owned logs'
         "  na228 -c    Run build/$currentIsoName without rebuilding"
         "  na228 -p    Run build/$previousIsoName without rebuilding"
+        '  na228 -w    Watch src/ and hot-reload saved C changes into dev PCSX2'
         '  na228 release [version]  Validate, commit, tag, and publish a GitHub release'
         ''
     ) | Write-Output
@@ -81,6 +103,14 @@ if ($command -eq 'release') {
         $releaseArguments.Version = $Version
     }
     & $projectPaths.files.release_publish_command @releaseArguments
+    return
+}
+
+if ($Watch) {
+    $pinePort = Get-Na2DevPinePort
+    Write-Na2Stage "Watch src/ and hot-reload through PINE port $pinePort"
+    & (Join-Path $projectPaths.scripts 'injection\watch.ps1') `
+        -PinePort $pinePort
     return
 }
 

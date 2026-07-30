@@ -155,6 +155,8 @@ cheat-folder state. `scripts/injection/watch.ps1` is the user-only equivalent;
 omit `-SourcePath`, `-SourceId`, and `-Entry` for the root smoke source, or pass
 an owning feature source/entry or overlay plan explicitly. Agents invoke
 `test.ps1` and never run the watcher or its build/apply stages separately.
+The routine root-source watcher is exposed as `na228 -w`; it reads the PINE
+port from the configured development PCSX2.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`

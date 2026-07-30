@@ -3,11 +3,8 @@ param(
     [Parameter(Position = 0)]
     [string]$Mode,
 
-    [Parameter(Position = 1)]
-    [string]$Version,
-
-    [Parameter(Position = 2, ValueFromRemainingArguments)]
-    [string[]]$RemainingArguments,
+    [Parameter(Position = 1, ValueFromRemainingArguments)]
+    [string[]]$CommandArguments = @(),
 
     [Alias('b')]
     [switch]$Build,
@@ -36,15 +33,6 @@ function Write-Na2Stage {
     Write-Host "[na228] $Message" -ForegroundColor Cyan
 }
 
-$workerBuild = if ($Test -and -not [string]::IsNullOrWhiteSpace($Mode)) {
-    Get-Na2WorkerBuildContext `
-        -OutputPath $Mode `
-        -ProjectPaths $projectPaths `
-        -RequireRelative
-}
-else {
-    $null
-}
 $compactRecipe = if (
     $Mode -and
     -not $Test -and
@@ -75,10 +63,13 @@ if ($command -and ($Build -or $Test -or $runSelected -or $Watch)) {
 if ($command -and $command -notin @('release', 'launch')) {
     throw "Unknown NA2.28 command: $Mode"
 }
-if (($Version -or $RemainingArguments) -and $command -notin @('release', 'launch')) {
+if ($Test -and @($CommandArguments).Count -gt 0) {
+    throw 'na228 -t accepts at most one worker output path.'
+}
+if (@($CommandArguments).Count -gt 0 -and $command -notin @('release', 'launch')) {
     throw 'Positional arguments are accepted only by na228 release or na228 launch.'
 }
-if ($command -eq 'release' -and $RemainingArguments) {
+if ($command -eq 'release' -and @($CommandArguments).Count -gt 1) {
     throw 'na228 release accepts at most one version argument.'
 }
 if ($compactRecipe) {
@@ -113,67 +104,67 @@ if ($Help) {
 
 if ($command -eq 'release') {
     $releaseArguments = @{}
-    if ($Version) {
-        $releaseArguments.Version = $Version
+    if (@($CommandArguments).Count -eq 1) {
+        $releaseArguments.Version = $CommandArguments[0]
     }
     & $projectPaths.files.release_publish_command @releaseArguments
     return
 }
 
 if ($command -eq 'launch') {
-    $selectedGames = @()
-    if ($Version) {
-        $selectedGames += $Version
-    }
-    if ($RemainingArguments) {
-        $selectedGames += $RemainingArguments
-    }
-    & $projectPaths.files.pcsx2_game_launch_command @selectedGames
+    & $projectPaths.files.pcsx2_game_launch_command @CommandArguments
     return
 }
+
+$workerBuild = if ($Test -and -not [string]::IsNullOrWhiteSpace($Mode)) {
+    Get-Na2WorkerBuildContext `
+        -OutputPath $Mode `
+        -ProjectPaths $projectPaths `
+        -RequireRelative
+}
+else {
+    $null
+}
+
+[string[]]$actionCodes = @(
+    if ($compactRecipe) {
+        $compactRecipe.ToCharArray() | ForEach-Object { [string]$_ }
+    }
+    elseif ($Build) { 'b' }
+    elseif ($Test) { 't' }
+    elseif ($Current) { 'c' }
+    elseif ($Previous) { 'p' }
+    elseif ($Watch) { 'w' }
+    else { 'default' }
+)
 
 if ($compactRecipe) {
     Write-Na2Stage "Run compact recipe $compactRecipe"
-    $recipeSwitches = @{
-        b = 'Build'
-        t = 'Test'
-        c = 'Current'
-        p = 'Previous'
-        w = 'Watch'
-    }
-    foreach ($step in $compactRecipe.ToCharArray()) {
-        $stepName = [string]$step
-        Write-Na2Stage "Recipe step $stepName"
-        $stepArguments = @{}
-        $stepArguments[$recipeSwitches[$stepName]] = $true
-        & $PSCommandPath @stepArguments
-    }
-    return
 }
 
-if ($Watch) {
-    & (Join-Path $projectPaths.scripts 'injection\watch.ps1')
-    return
-}
+foreach ($actionCode in $actionCodes) {
+    if ($compactRecipe) {
+        Write-Na2Stage "Recipe step $actionCode"
+    }
+    if ($actionCode -eq 'w') {
+        & (Join-Path $projectPaths.scripts 'injection\watch.ps1')
+        continue
+    }
 
-$runAction = if ($Test) {
-    if ($null -ne $workerBuild) { 'worker-build' } else { 'candidate-build' }
+    $runAction = switch ($actionCode) {
+        'b' { 'build-only' }
+        't' {
+            if ($null -ne $workerBuild) { 'worker-build' }
+            else { 'candidate-build' }
+        }
+        'c' { 'current' }
+        'p' { 'previous' }
+        default { 'build-and-launch' }
+    }
+    $runArguments = @{ Action = $runAction }
+    if ($runAction -eq 'worker-build') {
+        $runArguments.WorkerOutputIso = $workerBuild.OutputIso
+        $runArguments.WorkerLogDirectory = $workerBuild.Logs
+    }
+    & (Join-Path $projectPaths.scripts 'na228\run.ps1') @runArguments
 }
-elseif ($Previous) {
-    'previous'
-}
-elseif ($Current) {
-    'current'
-}
-elseif ($Build) {
-    'build-only'
-}
-else {
-    'build-and-launch'
-}
-$runArguments = @{ Action = $runAction }
-if ($null -ne $workerBuild) {
-    $runArguments.WorkerOutputIso = $workerBuild.OutputIso
-    $runArguments.WorkerLogDirectory = $workerBuild.Logs
-}
-& (Join-Path $projectPaths.scripts 'na228\run.ps1') @runArguments

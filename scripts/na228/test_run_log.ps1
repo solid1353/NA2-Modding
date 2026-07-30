@@ -106,6 +106,8 @@ try {
         -Destination $fakeNa2Scripts
     $fakePcsx2Scripts = Join-Path $fakeRepository 'scripts\pcsx2'
     New-Item -ItemType Directory -Force -Path $fakePcsx2Scripts | Out-Null
+    $fakeReleaseScripts = Join-Path $fakeRepository 'scripts\release'
+    New-Item -ItemType Directory -Force -Path $fakeReleaseScripts | Out-Null
     $fakeActualizationScripts = Join-Path $fakePcsx2Scripts 'actualization'
     New-Item -ItemType Directory -Force -Path $fakeActualizationScripts | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\pcsx2\actualization\act.ps1') `
@@ -131,6 +133,7 @@ try {
   "files": {
     "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
     "pcsx2_game_launch_command": "@scripts/pcsx2/launch_games.ps1",
+    "release_publish_command": "@scripts/release/publish_release.ps1",
     "actualize_command": "@pcsx2_scripts/actualization/act.ps1",
     "actualize_na228_command": "@pcsx2_scripts/actualization/sync_game_files.ps1",
     "actualize_input_command": "@pcsx2_scripts/actualization/sync_input.ps1",
@@ -212,6 +215,10 @@ param(
 )
 Write-Output "[fake] multi-game launch $($Games -join ',')"
 '@
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeReleaseScripts 'publish_release.ps1') -Content @'
+param([string]$Version)
+Write-Output "[fake] release $Version"
+'@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'build.ps1') -Content @'
 param([switch]$CandidateOnly, [string]$WorkerOutputIso)
 if ($WorkerOutputIso) {
@@ -287,6 +294,24 @@ else {
     Assert-Na2Test `
         -Condition ($launchLogSectionsAfter -eq $launchLogSectionsBefore) `
         -Message 'Unified multi-game launch changed builder run logs.'
+    $release = (
+        & (Join-Path $fakeRepository '_na228.ps1') release 1.2.3
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition ($release -match '\[fake\] release 1\.2\.3') `
+        -Message 'Release dispatch did not preserve its optional version.'
+    $extraReleaseArgumentRejected = $false
+    try {
+        & (Join-Path $fakeRepository '_na228.ps1') release 1.2.3 extra
+    }
+    catch {
+        $extraReleaseArgumentRejected = (
+            $_.Exception.Message -match 'accepts at most one version argument'
+        )
+    }
+    Assert-Na2Test `
+        -Condition $extraReleaseArgumentRejected `
+        -Message 'Release dispatch accepted more than one version argument.'
     & (Join-Path $fakeRepository '_na228.ps1') -Current
     & (Join-Path $fakeRepository '_na228.ps1') -Previous
     & (Join-Path $fakeRepository '_na228.ps1') -t

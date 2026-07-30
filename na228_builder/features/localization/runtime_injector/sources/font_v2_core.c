@@ -1010,6 +1010,13 @@ int font_v2_jutsu_draw_entry(
         return -1;
     }
 
+    if (frame.session.line_count <= 1u) {
+        FontV2NativeTextDraw draw =
+            (FontV2NativeTextDraw)FONT_JUTSU_DRAW_ADDRESS;
+        draw(renderer_address, text);
+        return 0;
+    }
+
     native_x =
         renderer[FONT_RENDERER_POSITION_X_OFFSET / sizeof(float)];
     native_y =

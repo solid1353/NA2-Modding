@@ -12,13 +12,12 @@ case.
 ## Execution state
 
 - Mode: Continuous.
-- Current subtask: Priority 3 — ss3–ss6 selective Jutsu-selector wrapping.
-  Priority 2 implementation, canonical validation, and agent runtime evidence
-  are complete; its grid remains pending visible delivery.
+- Current subtask: Priority 5 — ss8 Movie-list wrapping. Priority 4 remains
+  queued because supplied ss7 resumes after its two owner calls.
 - Pending grid:
-  `docs/workstreams/font/epics/ss2-6-layout/2-linked-mode-modal.png`.
-- Next action: visibly deliver Priority 2, then continue Priority 3 without
-  waiting for Priority 2 acceptance.
+  `docs/workstreams/font/epics/ss2-6-layout/3-jutsu-selector.png`.
+- Next action: visibly deliver Priority 3, then investigate the ss8 draw-time
+  caller without waiting for Priority 3 acceptance.
 
 ## Scope and evidence
 
@@ -92,16 +91,17 @@ case.
 
 ### Priority 3 — ss3–ss6: One Jutsu-selector defect
 
-- State: rejected and reopened by user evidence on 2026-07-30. The current
-  enabled-off build does nothing in supplemental ss3. The earlier candidate
-  also over-scoped its session height/advance changes to collapsed one-line
-  strings that NUN5 leaves native.
-- The canonical hook is currently disabled after the build-offset repair in
-  `76f445f4`; its corrected BTL file offset is `0x90DC`.
-- Corrected contract: preserve native short one-line rows exactly and invoke
-  the NUN5-matched two-line box only when the selected title requires wrapping.
-- Supplemental ss3 is the current collapsed target. Original ss5/ss6 remain
-  retained evidence for the same long-title family in its other visible state.
+- State: implemented, canonically validated, and agent-validated on
+  supplemental ss3; visible delivery and explicit user acceptance remain
+  pending.
+- The enabled hook uses corrected BTL file offset `0x90DC`.
+- The C entry preserves native one-line rows exactly and invokes the
+  NUN5-matched 186-by-32 session only when measurement actually produces a
+  line break.
+- Supplemental ss3 gives exact NUN5 bounds for the wrapped selected title and
+  exact untouched-Current bounds for short `Great Ball Rasengan`. Original
+  ss5/ss6 remain retained evidence for the same long-title compositor in its
+  other visible state.
 
 ![Priority 3 Jutsu-selector regression](3-jutsu-selector.png)
 
@@ -147,13 +147,13 @@ Priority is determined by the most efficient implementation order.
 1. **ss1 — Character Select return confirmation.** User-verified.
 2. **supplemental ss1–ss2 — Character Select option lists.** Implemented and
    agent-validated; visible delivery and explicit user acceptance are pending.
-3. **ss3–ss6 — one Jutsu-selector defect.** Use ss5/ss6 as visible targets and
-   supplemental ss3 as the collapsed target; preserve every native short
-   one-line row and wrap only the NUN5-wrapped long selected title.
-4. **ss7 — Collection exit confirmation.** Match its body and choice geometry
-   without affecting the Character Select modal family.
-5. **ss8 — Movie list.** Implement caller-specific variable-height wrapped
-   rows.
+3. **ss3–ss6 — one Jutsu-selector defect.** Implemented and agent-validated;
+   visible delivery and explicit user acceptance are pending.
+4. **ss7 — Collection exit confirmation.** Implementation is ready, but the
+   supplied visible-prompt state resumes after both owner calls; final runtime
+   construction evidence remains queued.
+5. **ss8 — Movie list.** Next actionable case: implement caller-specific
+   variable-height wrapped rows.
 6. **ss9–ss10 — Character move lists.** Reuse one bounded wrapping primitive
    for both long-title cases where the caller family is shared.
 

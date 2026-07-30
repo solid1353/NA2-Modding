@@ -1858,10 +1858,13 @@ wraps it to the requested width and line limit, and then delegates to
 center-vertical placement and advances once per produced line.
 
 The bounded C implementation therefore hooks only live `0x006BCFDC`, copies
-the source into a 256-byte stack buffer, wraps it at 186 units and two lines,
-keeps the native left/right branch, and draws through the accepted session
-renderer before restoring the caller's position. The first fresh candidate
-proved the caller isolation: `Naruto Uzumaki Combo Attack` became
+the source into a 256-byte stack buffer, and measures/wraps that copy at 186
+units and two lines. If the result remains one line, it immediately calls the
+exact displaced native renderer with the original text and does not enter a
+layout session. Only a produced line break keeps the native left/right branch
+and draws through the accepted two-line session before restoring the caller's
+position. The first fresh candidate proved the caller isolation:
+`Naruto Uzumaki Combo Attack` became
 `Naruto Uzumaki` / `Combo Attack`, but relying on the shared newline hook
 produced an 18-pixel row step instead of NUN5's 20. The corrected callback
 owns both line draws directly; a 16-unit game-space Y step produces the exact
@@ -1884,5 +1887,15 @@ The final current-renderer compensation is box Y offset `-7`. In supplied ss5
 and ss6, NUN5's 640x480 white-glyph bounds are rows `245..254` and `265..274`.
 The fresh NA2.28 960x720 captures are rows `368..381` and `398..411`, exactly
 the corresponding normalized bounds and 30-pixel line step. Both long selected
-names remain inside the row. This is agent-validated runtime evidence; explicit
-user acceptance remains pending.
+names remain inside the row.
+
+Supplemental ss3 from compatible boot CRC `0961FB89` proves the final selective
+branch in one frame. Its selected long title has candidate white-glyph bounds
+`(30..292,245..275)`, matching NUN5 exactly. The short
+`Great Ball Rasengan` row has candidate bounds `(39..259,296..311)`, identical
+to the untouched Current baseline, proving that one-line text stays on the
+native renderer rather than inheriting the two-line session's height or
+advance. The other long visible row also wraps because its measured width
+exceeds the same 186-unit contract; its different string content prevents a
+direct NUN5 raster comparison. Confidence is high and runtime status is
+agent-validated; explicit user acceptance remains pending.

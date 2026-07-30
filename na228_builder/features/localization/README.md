@@ -1916,6 +1916,17 @@ Manual, and ordinary Auto; the native draw calls, text pointers, X geometry,
 and every other modal remain untouched. The layer is `approved_for_test`
 pending explicit user acceptance.
 
+The separate `font_layout_jutsu_selector` layer owns only the final Jutsu-row
+text call at BTL file `0x90DC`. Its C entry first applies the native 186-unit
+word-wrap measurement to a bounded copy. A one-line result immediately invokes
+the exact displaced native renderer with the original text and unchanged
+renderer state. Only a result that actually wraps enters the 186-by-32,
+two-line session with its scoped 16-unit line advance and 20-unit secondary
+glyph bottom. Supplemental ss3 matches the selected two-line NUN5 bounds while
+the short `Great Ball Rasengan` row retains its exact native baseline bounds.
+The layer is enabled and `approved_for_test`; explicit user acceptance remains
+pending.
+
 The separate `font_layout_special_controls_body` layer completes the explanatory
 block on the same ss1 Special Controls screen. Exact telemetry identifies only
 the native UI-body call at BTL file `0x1C3D38` (runtime `0x00877C38`, clean

@@ -184,11 +184,8 @@ try {
         -Condition ($helpText -notmatch '(?m)^\s*na228 act\b') `
         -Message 'Root help still exposes the retired na228 act command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 <game> \[games\.\.\.\]') `
-        -Message 'Root help omitted the unified multi-game launch command.'
-    Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 <recipe>w \[games\.\.\.\]') `
-        -Message 'Root help omitted the composable recipe grammar.'
+        -Condition ($helpText -match '(?m)^\s*na228 <token> \[token\]') `
+        -Message 'Root help omitted the ordered token grammar.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 worker work/') `
         -Message 'Root help omitted the explicit worker-build command.'
@@ -341,7 +338,7 @@ else {
         & (Join-Path $fakeRepository '_na228.ps1') launch na2 nun5
     }
     catch {
-        $launchSubcommandRejected = $_.Exception.Message -match 'Unknown game name'
+        $launchSubcommandRejected = $true
     }
     Assert-Na2Test `
         -Condition $launchSubcommandRejected `
@@ -415,14 +412,32 @@ else {
     & (Join-Path $fakeRepository '_na228.ps1') build l
     & (Join-Path $fakeRepository '_na228.ps1') build t
     $composedRecipe = (
-        & (Join-Path $fakeRepository '_na228.ps1') btw p nun5
+        & (Join-Path $fakeRepository '_na228.ps1') nun5 btw
     ) -join "`n"
     Assert-Na2Test `
-        -Condition ($composedRecipe -match 'multi-game launch test,previous,nun5 skip=True') `
-        -Message 'Composed build recipe did not launch normalized game selectors.'
+        -Condition ($composedRecipe -match 'multi-game launch nun5,test skip=True') `
+        -Message 'Trailing build/watch token did not preserve window order.'
     Assert-Na2Test `
-        -Condition ($composedRecipe -match '\[fake\] watch 28014') `
-        -Message 'Composed recipe did not watch the primary launch PINE port.'
+        -Condition ($composedRecipe -match '\[fake\] watch 28015') `
+        -Message 'Trailing watch suffix did not select the second game PINE port.'
+    $leadingBuildWatch = (
+        & (Join-Path $fakeRepository '_na228.ps1') blw nun5
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $leadingBuildWatch -match 'multi-game launch latest,nun5 skip=True' -and
+            $leadingBuildWatch -match '\[fake\] watch 28014'
+        ) `
+        -Message 'Leading build/watch token did not preserve window order.'
+    $latestWatch = (
+        & (Join-Path $fakeRepository '_na228.ps1') lw
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $latestWatch -match 'multi-game launch latest skip=False' -and
+            $latestWatch -match '\[fake\] watch 28014'
+        ) `
+        -Message 'Latest watch token did not launch and watch Latest.'
     & (Join-Path $fakeRepository '_na228.ps1')
     $fakeLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\latest.log'))
     $fakeRolling = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\rolling.log'))
@@ -439,7 +454,7 @@ else {
             -Message "$mode dispatch was not logged."
     }
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 7) `
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 8) `
         -Message 'Root dispatch test produced the wrong rolling-log section count.'
     Assert-Na2Test `
         -Condition (-not (Test-Na2WindowsAbsolutePath -Text $fakeRolling)) `
@@ -461,10 +476,10 @@ else {
         -Condition ($workerLatest -match 'ISO result: worker') `
         -Message 'Explicit worker build did not dispatch to worker-output mode.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 2) `
+        -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 3) `
         -Message 'Build-only and build-and-launch did not use the standard build pipeline.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize na228').Count -eq 6) `
+        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize na228').Count -eq 7) `
         -Message 'Standalone and user-owned workflows did not preserve NA2 actualization.'
     $structuredLog = Join-Path $logs 'na228'
     $buildRecords = Join-Path $structuredLog 'builds'

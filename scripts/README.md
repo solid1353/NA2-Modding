@@ -80,13 +80,12 @@ full builder-suite command is:
 python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'
 ```
 
-Bare `na228` builds and runs Latest. Compact recipes select a primary role:
-`l`, `p`, or `t` runs Latest, Previous, or Test; `bl` and `bt` first build
-Latest or Test; extra game selectors launch as comparisons; and optional final
-`w` watches the primary launched instance. `b` remains shorthand for `bl`.
-For example, `na228 btw p` builds Test, launches Test and Previous side by
-side, then watches Test. `na228 build l|t` provides the uncommon build-only
-forms.
+Bare `na228` builds and runs Latest. Compact invocations contain one or two
+positional game tokens whose order defines window placement. `l`, `p`, or `t`
+runs Latest, Previous, or Test; `bl` and `bt` build and run Latest or Test; and
+suffix `w` watches that token's game. `b` remains shorthand for `bl`. For
+example, `na228 nun5 btw` builds Test, launches NUN5 and Test side by side, then
+watches Test. `na228 build l|t` provides the uncommon build-only forms.
 User-owned shared-image builds and launches run `act na228` automatically;
 worker-output builds never actualize. The standalone `act` command can run all
 actualization modes without building or launching.
@@ -124,8 +123,8 @@ worker launches; worker paths must be independent copies under
 `-PassThru` returns the started process for higher-level orchestration such as
 multi-game launch. `scripts/na228/launch_games.ps1` assigns successive
 process-local PINE ports beginning at the configured development `PINESlot`
-and passes each as `-pine-port`; a compact recipe ending in `w` sends the
-primary launch's returned port to the watcher.
+and passes each as `-pine-port`; a compact token ending in `w` sends that
+launch's returned port to the watcher.
 window tiling. The launcher does not copy or configure PCSX2, inspect or stop
 unrelated processes, use PINE, load savestates, capture output, or perform
 cleanup.

@@ -69,8 +69,11 @@ installation-state, backup, or separate bank files.
 
 - Consumes canonical C, runtime declarations, Current resident symbols, and an
   optional task-owned overlay plan.
-- Invokes the external EE compiler and resolves relocations and Current
-  imports.
+- An overlay plan may provide `resident_symbol_overrides` for verified symbols
+  restored by an older supplied savestate. Overrides affect only symbols that
+  the selected closure actually imports and are recorded in the manifest.
+- Invokes the external EE compiler and resolves relocations and resident
+  imports, using Current's exact symbol map by default.
 - Produces only `fragment.bin` and `manifest.json`.
 - Contains no PINE, PCSX2 process, cheat, or watcher behavior.
 

@@ -11,6 +11,7 @@ from unittest import mock
 
 
 apply_injection = importlib.import_module("scripts.injection.apply")
+build_injection = importlib.import_module("scripts.injection.build")
 
 
 class FakePineClient:
@@ -146,6 +147,99 @@ class InjectionApplyTests(unittest.TestCase):
             (directory / "fragment.bin").write_bytes(bytes(8))
             with self.assertRaisesRegex(ValueError, "does not match"):
                 apply_injection.load_candidate(directory)
+
+
+class InjectionBuildTests(unittest.TestCase):
+    def test_overlay_plan_accepts_resident_symbol_overrides(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary)
+            plan_path = repository / "work" / "Font" / "overlay.json"
+            plan_path.parent.mkdir(parents=True)
+            plan_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "source_id": "font_v2_core",
+                        "entry_symbol": "localization.font.v2.entry",
+                        "abi": "arg0_text_arg2",
+                        "purpose": "Exercise an older resident layout.",
+                        "writes": [
+                            {
+                                "id": "caller",
+                                "runtime_address": "0x003BCA54",
+                                "expected_hex": "C4080E0C00000000",
+                                "replacement": {"kind": "entry_call"},
+                                "reason": "Route the selected caller.",
+                            }
+                        ],
+                        "resident_symbol_overrides": {
+                            "localization.font.v2.title_callback": "0x008F5500",
+                            "localization.font.v2.wrap_native": "0x008F5510",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with mock.patch.object(
+                build_injection, "REPOSITORY", repository
+            ):
+                (
+                    _path,
+                    _raw,
+                    _entries,
+                    _writes,
+                    overrides,
+                ) = build_injection.load_overlay_plan(
+                    str(plan_path),
+                    source_id="font_v2_core",
+                    entry_symbol="localization.font.v2.entry",
+                )
+
+        self.assertEqual(
+            overrides,
+            {
+                "localization.font.v2.title_callback": 0x008F5500,
+                "localization.font.v2.wrap_native": 0x008F5510,
+            },
+        )
+
+    def test_resident_symbol_overrides_replace_selected_imports(self) -> None:
+        addresses = build_injection.resolve_external_addresses(
+            {
+                "localization.font.v2.title_callback",
+                "localization.font.v2.wrap_native",
+            },
+            {
+                "localization.font.v2.title_callback": {
+                    "address": 0x008F56E8,
+                },
+                "localization.font.v2.wrap_native": {
+                    "address": 0x008F56F8,
+                },
+            },
+            {
+                "localization.font.v2.title_callback": 0x008F5500,
+            },
+        )
+
+        self.assertEqual(
+            addresses,
+            {
+                "localization.font.v2.title_callback": 0x008F5500,
+                "localization.font.v2.wrap_native": 0x008F56F8,
+            },
+        )
+
+    def test_rejects_override_for_unselected_import(self) -> None:
+        with self.assertRaisesRegex(
+            ValueError, "not selected imports.*unused"
+        ):
+            build_injection.resolve_external_addresses(
+                {"selected"},
+                {"selected": {"address": 0x008F4000}},
+                {"unused": 0x008F5000},
+            )
 
 
 if __name__ == "__main__":

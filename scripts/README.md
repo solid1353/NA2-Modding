@@ -131,8 +131,10 @@ python -B scripts/injection/build.py `
 
 Production entries are declared in the owning feature's
 `runtime_injector/entries.tsv`; task-owned overlay plans may select multiple
-declared roots and guarded callers. Workstreams direct output to their owned
-tree and apply it once to their isolated PCSX2:
+declared roots and guarded callers. A plan may also supply
+`resident_symbol_overrides` when a verified supplied savestate restores an
+older resident-symbol layout. Workstreams direct output to their owned tree and
+apply it once to their isolated PCSX2:
 
 ```powershell
 python -B scripts/injection/build.py `

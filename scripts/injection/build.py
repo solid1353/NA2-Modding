@@ -112,9 +112,10 @@ def load_overlay_plan(
     dict[str, object] | None,
     list[dict[str, str]],
     list[dict[str, object]],
+    dict[str, int],
 ]:
     if value is None:
-        return None, None, [], []
+        return None, None, [], [], {}
     plan_path = Path(value)
     if not plan_path.is_absolute():
         plan_path = REPOSITORY / plan_path
@@ -148,11 +149,15 @@ def load_overlay_plan(
             "writes",
         }
     )
-    if set(raw) != expected_fields:
+    optional_fields = {"resident_symbol_overrides"}
+    actual_fields = set(raw)
+    if not expected_fields.issubset(actual_fields) or (
+        actual_fields - expected_fields - optional_fields
+    ):
         raise ValueError(
             "Overlay plan fields differ: "
-            f"missing={sorted(expected_fields - set(raw))}, "
-            f"extra={sorted(set(raw) - expected_fields)}"
+            f"missing={sorted(expected_fields - actual_fields)}, "
+            f"extra={sorted(actual_fields - expected_fields - optional_fields)}"
         )
     if version not in (1, 2):
         raise ValueError("Overlay plan schema_version must be 1 or 2")
@@ -162,6 +167,25 @@ def load_overlay_plan(
         raise ValueError("Overlay plan purpose must be non-empty text")
     if not isinstance(raw["writes"], list) or not raw["writes"]:
         raise ValueError("Overlay plan writes must be a non-empty array")
+
+    resident_symbol_overrides: dict[str, int] = {}
+    raw_overrides = raw.get("resident_symbol_overrides", {})
+    if not isinstance(raw_overrides, dict):
+        raise ValueError("resident_symbol_overrides must be an object")
+    for raw_symbol, raw_address in raw_overrides.items():
+        symbol = identifier(
+            str(raw_symbol), "resident_symbol_overrides symbol"
+        )
+        address = integer(
+            str(raw_address),
+            f"resident_symbol_overrides {symbol} runtime_address",
+        )
+        if address % 4 or address < 0 or address >= 0x02000000:
+            raise ValueError(
+                f"resident_symbol_overrides {symbol}: runtime_address must "
+                "be aligned EE memory"
+            )
+        resident_symbol_overrides[symbol] = address
 
     if version == 1:
         selected_symbol = identifier(
@@ -301,7 +325,13 @@ def load_overlay_plan(
                 "reason": item["reason"].strip(),
             }
         )
-    return plan_path, raw, entries, unresolved
+    return (
+        plan_path,
+        raw,
+        entries,
+        unresolved,
+        resident_symbol_overrides,
+    )
 
 
 def resolve_overlay_writes(
@@ -728,6 +758,35 @@ def link_fragment(
     return bytes(image), addresses
 
 
+def resolve_external_addresses(
+    external_symbols: set[str],
+    symbol_map: dict[str, dict[str, object]],
+    resident_symbol_overrides: dict[str, int],
+) -> dict[str, int]:
+    unused_overrides = set(resident_symbol_overrides) - external_symbols
+    if unused_overrides:
+        raise ValueError(
+            "Resident symbol overrides are not selected imports: "
+            + ", ".join(sorted(unused_overrides))
+        )
+
+    result: dict[str, int] = {}
+    for symbol in external_symbols:
+        if symbol in resident_symbol_overrides:
+            result[symbol] = resident_symbol_overrides[symbol]
+            continue
+        if symbol in FIXED_EXTERNAL_ADDRESSES:
+            result[symbol] = FIXED_EXTERNAL_ADDRESSES[symbol]
+            continue
+        row = symbol_map.get(symbol)
+        if row is None:
+            raise ValueError(
+                f"Exact Current symbol map does not resolve import {symbol!r}"
+            )
+        result[symbol] = int(row["address"])
+    return result
+
+
 def resolved_path(value: Path) -> Path:
     return value.resolve() if value.is_absolute() else (REPOSITORY / value).resolve()
 
@@ -748,6 +807,7 @@ def main() -> int:
         overlay_plan,
         overlay_entries,
         unresolved_overlay_writes,
+        resident_symbol_overrides,
     ) = load_overlay_plan(
         args.overlay_plan,
         source_id=source_id,
@@ -795,17 +855,11 @@ def main() -> int:
         if by_symbol[selected_entry].kind != "code":
             raise ValueError(f"Entry {selected_entry!r} is not executable code")
 
-    external_addresses: dict[str, int] = {}
-    for symbol in external_symbols:
-        if symbol in FIXED_EXTERNAL_ADDRESSES:
-            external_addresses[symbol] = FIXED_EXTERNAL_ADDRESSES[symbol]
-            continue
-        row = symbol_map.get(symbol)
-        if row is None:
-            raise ValueError(
-                f"Exact Current symbol map does not resolve import {symbol!r}"
-            )
-        external_addresses[symbol] = int(row["address"])
+    external_addresses = resolve_external_addresses(
+        external_symbols,
+        symbol_map,
+        resident_symbol_overrides,
+    )
 
     fragment, addresses = link_fragment(
         fragments,
@@ -897,9 +951,17 @@ def main() -> int:
         "writes": writes,
         "used_end": f"0x{code_base + len(fragment):08X}",
         "selected_fragments": [item.symbol for item in fragments],
-        "current_imports": sorted(
+        "resident_imports": sorted(
             external_symbols - FIXED_EXTERNAL_ADDRESSES.keys()
         ),
+        "resident_symbol_overrides": {
+            symbol: f"0x{address:08X}"
+            for symbol, address in sorted(resident_symbol_overrides.items())
+        },
+        "resolved_imports": {
+            symbol: f"0x{address:08X}"
+            for symbol, address in sorted(external_addresses.items())
+        },
         "fixed_imports": {
             symbol: f"0x{FIXED_EXTERNAL_ADDRESSES[symbol]:08X}"
             for symbol in sorted(
@@ -920,7 +982,7 @@ def main() -> int:
     print(
         f"Linked {len(fragments)} fragments, "
         f"{len(external_symbols - FIXED_EXTERNAL_ADDRESSES.keys())} "
-        f"Current imports, and "
+        f"resident imports, and "
         f"{len(external_symbols & FIXED_EXTERNAL_ADDRESSES.keys())} "
         f"fixed imports into "
         f"0x{code_base:08X}-0x{code_base + len(fragment):08X}"

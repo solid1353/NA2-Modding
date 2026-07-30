@@ -47,6 +47,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--case", required=True)
     parser.add_argument("--status", required=True)
     parser.add_argument("--finding", required=True)
+    parser.add_argument("--current-label", default="Current NA2.28")
     return parser.parse_args()
 
 
@@ -54,18 +55,17 @@ def main() -> int:
     args = parse_args()
     reference = Image.open(args.reference).convert("RGB")
     current = Image.open(args.current).convert("RGB")
-    if reference.size != current.size:
-        raise ValueError(
-            f"source dimensions differ: {reference.size} versus {current.size}"
-        )
 
     font = ImageFont.load_default()
-    width, height = reference.size
+    reference_width, reference_height = reference.size
+    current_width, current_height = current.size
     canvas = Image.new(
         "RGB",
         (
-            PADDING * 2 + width * 2 + GAP,
-            PADDING * 2 + HEADER_HEIGHT + height,
+            PADDING * 2 + reference_width + current_width + GAP,
+            PADDING * 2 +
+            HEADER_HEIGHT +
+            max(reference_height, current_height),
         ),
         BACKGROUND,
     )
@@ -79,15 +79,21 @@ def main() -> int:
     )
     draw.text((PADDING, 50), args.finding, fill=SECONDARY, font=font)
     draw.text(
-        (PADDING + width // 2, 72),
+        (PADDING + reference_width // 2, 72),
         "NUN5 reference",
         anchor="mm",
         fill=PRIMARY,
         font=font,
     )
     draw.text(
-        (PADDING + width + GAP + width // 2, 72),
-        "Current NA2.28",
+        (
+            PADDING +
+            reference_width +
+            GAP +
+            current_width // 2,
+            72,
+        ),
+        args.current_label,
         anchor="mm",
         fill=PRIMARY,
         font=font,
@@ -95,7 +101,7 @@ def main() -> int:
 
     y = PADDING + HEADER_HEIGHT
     canvas.paste(reference, (PADDING, y))
-    canvas.paste(current, (PADDING + width + GAP, y))
+    canvas.paste(current, (PADDING + reference_width + GAP, y))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(args.output, optimize=True)
     return 0

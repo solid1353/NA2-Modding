@@ -1115,6 +1115,7 @@ int font_v2_collection_list_entry(
     FontV2NativeDraw draw = (FontV2NativeDraw)FONT_DRAW_ADDRESS;
     u32 text_address = (u32)text;
     u32 box_width = 0;
+    u32 movie_row = 0;
     u32 index = 0;
 
     if (!text) {
@@ -1125,6 +1126,7 @@ int font_v2_collection_list_entry(
         text_address < FONT_COLLECTION_MOVIE_TEXT_END
     ) {
         box_width = FONT_COLLECTION_MOVIE_BOX_WIDTH;
+        movie_row = 1;
     } else if (
         text_address == FONT_CHARACTER_MOVE_152_TEXT_0 ||
         text_address == FONT_CHARACTER_MOVE_152_TEXT_1 ||
@@ -1161,6 +1163,11 @@ int font_v2_collection_list_entry(
         return -1;
     }
 
+    if (movie_row && frame.session.line_count == 1u) {
+        draw(native_x, native_y, text, highlighted);
+        return 0;
+    }
+
     frame.session.text = frame.buffer;
     frame.session.box_x = native_x;
     frame.session.box_y = native_y + FONT_COLLECTION_LIST_BOX_Y_OFFSET;
@@ -1171,8 +1178,10 @@ int font_v2_collection_list_entry(
     frame.session.flags =
         FONT_V2_FLAG_NEWLINE_BYTES |
         FONT_V2_FLAG_SEPARATE_LINE_ADVANCE |
-        FONT_V2_FLAG_PREMEASURED |
-        FONT_V2_FLAG_GLYPH_HEIGHT;
+        FONT_V2_FLAG_PREMEASURED;
+    if (!movie_row) {
+        frame.session.flags |= FONT_V2_FLAG_GLYPH_HEIGHT;
+    }
     frame.session.line_limit = FONT_COLLECTION_LIST_LINE_LIMIT;
     frame.session.line_height = FONT_COLLECTION_LIST_LINE_ADVANCE;
     frame.session.glyph_height = FONT_COLLECTION_LIST_GLYPH_HEIGHT;

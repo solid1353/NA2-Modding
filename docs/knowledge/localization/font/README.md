@@ -1156,14 +1156,31 @@ renderer produces a 25-unit interval on these screens. Short titles, the
 highlighted red style, fixed caller cadence, source mappings, and every
 other pointer through the shared renderer remain native.
 
-Task-owned ss8-ss10 candidates reproduce every NUN5 break and horizontal
-origin. `Reunion Time I`, `Reunion Time II`, `Credits`, `Right!`,
-`Running Wild`, and the three short ss10 titles retain their native rows. The
-candidates were compiled and linked against the exact compatible ISO, applied
-after each supplied-state reload, and captured through the task-owned PINE
-worker. Confidence is **verified** for the shared caller, pointer families,
-three box geometries, line interval, ss8 regression, and visible ss9/ss10
-results; status is **approved for test** pending explicit user acceptance.
+The first shared implementation nevertheless published a 20-unit glyph-height
+override for every recognized pointer. That meant its earlier ss8 result did
+not preserve native one-line or fitting multiline glyph geometry, and the
+delivered grid was not representative of the integrated ISO. The user reopened
+Priority 5 and rejected that evidence on 2026-07-30.
+
+The corrected Movie-only branch now returns directly to the displaced native
+draw when wrapping produces one line. When wrapping produces two lines, it
+retains the proven 192-unit width, native X, Y-minus-10 origin calculation, and
+16-unit line interval but does not publish the glyph-height override. The
+character-detail branches remain unchanged for their separate later review.
+
+The supplied ss8 state was reloaded through the standard task-owned direct-PINE
+workflow after compiling the canonical C. The retained runtime-injected
+candidate at
+`work/Font/artifacts/priority5_movie_list/rework_2026-07-30/`
+shows the four exact breaks above, native-height one-line rows, and native
+glyph geometry on the wrapped rows. Its screenshot SHA-256 is
+`E26CA0B3F66E413CE55EBA562C7760E6EF539CE6A6096D327D6006510E0391E5`;
+the injected fragment SHA-256 is
+`1BBA7F25F2CEB3E887B8AB101D36BAF80AD7B531667DC01566F657E1BE7DC06C`.
+This is candidate evidence only, not integrated-ISO proof. Confidence is
+**high** for the bounded Movie branch and runtime appearance; status remains
+**approved for test** pending an exact integrated-ISO capture and user
+acceptance.
 
 ### Character Select modal selected row, return body, and choice list
 

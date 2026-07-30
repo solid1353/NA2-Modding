@@ -11,13 +11,16 @@ case.
 
 ## Execution state
 
-- Mode: Continuous, resumed for the explicitly selected Priority 5 correction.
-- Current subtask: Priority 5 — ss8 Movie list.
+- Mode: Continuous, limited by the user's current authorization to the
+  explicitly selected Priority 5 correction.
+- Current subtask: Priority 5 — ss8 Movie list, awaiting integrated-ISO
+  verification.
 - Pending grid: missing: exact post-change Priority 5 capture from the
   integrated ISO.
-- Next action: preserve native one-line rendering, wrap only overflowing Movie
-  titles, and retain native glyph height for wrapped rows that fit. Priority 4
-  remains queued because supplied ss7 resumes after its two owner calls.
+- Next action: verify the implemented Movie-only correction on the integrated
+  ISO and replace the missing report state with an exact native-resolution
+  result grid. Other priorities remain discussion-only until explicitly
+  authorized.
 
 ## Scope and evidence
 
@@ -121,16 +124,16 @@ case.
 
 ### Priority 5 — ss8: Movie list
 
-- State: reopened by the user on 2026-07-30. The previous grid was not
-  representative of the integrated ISO and has been removed.
-- Remaining defect: the shared wrapper forced its 20-unit glyph-height
-  override on every recognized Movie row. That vertically squeezed one-line
-  rows and also squeezed wrapped rows even when their native-height block fit.
-- Required result: one-line Movie rows bypass the wrapper completely. Only
+- State: corrected in canonical C, compose-validated, and exercised as a
+  runtime-injected candidate on the supplied ss8 state. The previous grid was
+  not representative of the integrated ISO and remains removed. Exact
+  integrated-ISO output and user acceptance are pending.
+- Implemented result: one-line Movie rows bypass the wrapper completely. Only
   titles that actually wrap use the 192-unit two-line layout and 16-unit line
-  interval; fitting wrapped rows retain native glyph geometry. Selection style,
-  source strings, fixed caller cadence, character-detail branches, and every
-  non-Movie caller remain unchanged.
+  interval; those wrapped rows retain native glyph geometry instead of
+  receiving the 20-unit glyph-height override. Selection style, source strings,
+  fixed caller cadence, character-detail branches, and every non-Movie caller
+  remain unchanged.
 - Evidence requirement: development injection may be reported only as a
   runtime-injected candidate. The canonical result grid requires untouched
   NUN5 and exact integrated-ISO captures at native resolution.
@@ -160,9 +163,10 @@ Priority is determined by the most efficient implementation order.
 4. **ss7 — Collection exit confirmation.** Implementation is ready, but the
    supplied visible-prompt state resumes after both owner calls; final runtime
    construction evidence remains queued.
-5. **ss8 — Movie list.** Reopened. Preserve native one-line rows and native
-   glyph height for fitting wrapped rows; the previous nonrepresentative grid
-   is removed and exact integrated-ISO evidence is pending.
+5. **ss8 — Movie list.** Corrected and compose-validated. A runtime-injected
+   candidate preserves native one-line rows and native glyph height for fitting
+   wrapped rows; the previous nonrepresentative grid is removed and exact
+   integrated-ISO evidence is pending.
 6. **ss9–ss10 — Character move lists.** Implemented, agent-validated on both
    supplied states through one pointer-bounded shared entry, and visibly
    delivered; explicit user acceptance remains pending.

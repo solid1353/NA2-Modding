@@ -136,8 +136,8 @@ the old alternating A/B banks, active-bank pointer, and bank-switching files.
 
 1. Launch the visible development PCSX2 installation and navigate normally.
 2. Run `na228 -w`. The command reads the PINE port from the configured
-   development PCSX2, waits quietly for it for up to 60 seconds, and starts
-   `watch.ps1` with root `src/` defaults.
+   development PCSX2, waits quietly for the resident payload and root hook for
+   up to 60 seconds, and starts `watch.ps1` with root `src/` defaults.
 3. Edit and save C.
 4. The watcher invokes `build.py`.
 5. On success, the watcher invokes `apply.py`.
@@ -205,3 +205,7 @@ PNACH file. The custom PCSX2 source is commit
 `9cf3890b8e98bed6242d66d764732177dd78b450`; the validated Windows executable
 has SHA-256
 `A2101F8FC9F3ADF9C5E8A936296F8C2D2A383B67495A0425AFBC62ECDB2607F9`.
+The user flow `na228 -c && na228 -w` was then validated from a stopped VM.
+Waiting for both the loaded root hook and the resident `MWo3` payload marker
+prevented an early application from being cleared later in boot; the immutable
+fragment bytes and guarded caller remained active on delayed readback.

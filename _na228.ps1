@@ -57,34 +57,45 @@ function Get-Na2DevPinePort {
     return $port
 }
 
-function Wait-Na2PinePort {
+function Wait-Na2InjectionTarget {
     param(
         [int]$Port,
         [int]$TimeoutSeconds = 60
     )
 
+    $pineScript = Join-Path $projectPaths.scripts 'pcsx2\pine.py'
+    $emptyHook = '00' * 20
+    $residentMagic = '4D576F33'
     $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
     do {
-        $client = [Net.Sockets.TcpClient]::new()
-        try {
-            $connect = $client.ConnectAsync(
-                [Net.IPAddress]::Loopback,
-                $Port
-            )
-            if ($connect.Wait(250) -and $client.Connected) {
+        $state = & python -B $pineScript --port $Port status 2>$null
+        if (
+            $LASTEXITCODE -eq 0 -and
+            ([string]$state).Trim() -in @('running', 'paused')
+        ) {
+            $hook = & python -B $pineScript `
+                --port $Port `
+                read 0x001D0578 20 `
+                2>$null
+            $hookExitCode = $LASTEXITCODE
+            $resident = & python -B $pineScript `
+                --port $Port `
+                read 0x008F3D00 4 `
+                2>$null
+            $residentExitCode = $LASTEXITCODE
+            if (
+                $hookExitCode -eq 0 -and
+                $residentExitCode -eq 0 -and
+                ([string]$hook).Trim() -ne $emptyHook -and
+                ([string]$resident).Trim() -ceq $residentMagic
+            ) {
                 return
             }
-        }
-        catch {
-            # PCSX2 has not opened PINE yet.
-        }
-        finally {
-            $client.Dispose()
         }
         Start-Sleep -Milliseconds 250
     } while ([DateTime]::UtcNow -lt $deadline)
 
-    throw "Development PCSX2 did not open PINE port $Port within $TimeoutSeconds seconds."
+    throw "Development PCSX2 did not load the resident payload and root injection target on PINE port $Port within $TimeoutSeconds seconds."
 }
 
 $workerBuild = if ($Test -and -not [string]::IsNullOrWhiteSpace($Mode)) {
@@ -138,8 +149,8 @@ if ($command -eq 'release') {
 
 if ($Watch) {
     $pinePort = Get-Na2DevPinePort
-    Write-Na2Stage "Wait up to 60 seconds for PINE port $pinePort"
-    Wait-Na2PinePort -Port $pinePort
+    Write-Na2Stage "Wait up to 60 seconds for the injection target on PINE port $pinePort"
+    Wait-Na2InjectionTarget -Port $pinePort
     Write-Na2Stage "Watch src/ and hot-reload through PINE port $pinePort"
     & (Join-Path $projectPaths.scripts 'injection\watch.ps1') `
         -PinePort $pinePort

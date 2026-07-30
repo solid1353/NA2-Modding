@@ -11,13 +11,12 @@ case.
 
 ## Execution state
 
-- Mode: Continuous.
-- Current subtask: Priority 6 — ss9–ss10 character move lists. Priority 4 remains
-  queued because supplied ss7 resumes after its two owner calls.
-- Pending grid:
-  `docs/workstreams/font/epics/ss2-6-layout/6-character-move-list.png`.
-- Next action: finish canonical validation and visibly deliver the Priority 6
-  result, then stop as explicitly requested.
+- Mode: Continuous, stopped after Priority 6 by explicit user instruction.
+- Current subtask: none. Priority 4 remains queued because supplied ss7 resumes
+  after its two owner calls.
+- Pending grid: none.
+- Next action: wait for explicit continuation; Priority 4 still needs a
+  post-construction Collection confirmation state or screenshot.
 
 ## Scope and evidence
 
@@ -138,7 +137,8 @@ case.
 ### Priority 6 — ss9–ss10: Character move lists
 
 - State: implemented, canonically validated, agent-validated on both supplied
-  states, and awaiting visible delivery and explicit user acceptance.
+  states, and visibly delivered on 2026-07-30; explicit user acceptance remains
+  pending.
 - Result: the shared ETC row entry recognizes only the two exact
   character-detail pointer families. ss9 uses NUN5's 152-by-32 box and ss10
   uses its 192-by-32 box; both retain native X, move Y up 10 units, and use the
@@ -162,9 +162,9 @@ Priority is determined by the most efficient implementation order.
    construction evidence remains queued.
 5. **ss8 — Movie list.** Implemented, agent-validated, and visibly delivered
    with fixed-cadence two-line wrapping; explicit user acceptance is pending.
-6. **ss9–ss10 — Character move lists.** Implemented and agent-validated on
-   both supplied states through one pointer-bounded shared entry; visible
-   delivery and explicit user acceptance remain pending.
+6. **ss9–ss10 — Character move lists.** Implemented, agent-validated on both
+   supplied states through one pointer-bounded shared entry, and visibly
+   delivered; explicit user acceptance remains pending.
 
 Shared primitives are implemented only once. Each prioritized caller family
 receives one guarded implementation and commit/push boundary; every case keeps

@@ -69,6 +69,94 @@ scoped. It is recorded here as separate Font work and does not reopen the
 accepted fitting, positioning, or clipping behavior in the ss1–ss6 layout
 epic.
 
+## Deferred broad Collection-family layout — after isolated epic work
+
+Status: deferred by the user until the remaining isolated Font cases are
+finished. This section records the future approach only; it does not add work
+to the active epic or authorize implementation.
+
+### Scope
+
+Collection contains these relevant page families:
+
+- ordinary characters: Figure, Ultimate Jutsu, and character-specific Music;
+- legacy characters: Ultimate Jutsu only;
+- Diorama;
+- Movie;
+- global Music;
+- the Characters index/list where applicable.
+
+Figure is the only narrow character-detail list. The other Collection lists
+use the same wider dimensions. The accepted Movie result and the accepted
+Naruto Figure target remain regression baselines rather than separate future
+implementations.
+
+### Planned shared solution
+
+1. Keep one shared ETC list-renderer hook. Replace the current exact-text
+   pointer whitelist with structural page-family classification.
+2. Pass the live list/page or owner context into the resident C adapter. Prefer
+   a stable field already present in the live ETC object. If no reliable field
+   exists, tag the bounded set of shared owner callers or use compact
+   page-family metadata in expandable `228.BIN`; never patch every character,
+   row, or string independently.
+3. Use two profiles:
+   - Figure: the retained narrow `152`-unit width;
+   - Wide: the retained `192`-unit width for ordinary and legacy Ultimate
+     Jutsu, character-specific Music, Movie, global Music, Diorama, and other
+     confirmed users of the common list dimensions.
+4. Preserve native/NUN5 glyph height and spacing for every fitting one-line
+   row. Wrap only measured horizontal overflow. A wrapped block also keeps
+   native glyph geometry when its final lines fit vertically; shrinking is a
+   last resort only when the completed block exceeds its actual container.
+5. Fix the shared character-name header once rather than per character.
+   Naruto's Figure, Ultimate Jutsu, and character-specific Music pages are the
+   first proof set. Check whether legacy Ultimate Jutsu pages use the same
+   header caller before extending the correction.
+6. Remove the old exact-string special cases only after every representative
+   family passes. Preserve the accepted Movie behavior and all unrelated ETC
+   callers as regressions.
+
+Raw NUN5 ETC records are not a safe donor: the homologous list records assign
+different meanings to fields at `+0x14/+0x18` and shift live resource fields.
+The future work ports NUN5's classification and layout semantics, not whole
+records or tables byte-for-byte.
+
+### Required representative inputs
+
+The retained paired batch already supplies Movie (`ss8`), Naruto Figure
+(`ss9`), and Naruto Ultimate Jutsu (`ss10`). Do not recreate those unless a
+later incompatible build replaces the batch.
+
+Before implementation, request one paired NA2.28/NUN5 savestate for each
+missing family:
+
+- Naruto character-specific Music;
+- one legacy-character Ultimate Jutsu page, preferably Naruto Classic;
+- Diorama;
+- global Music;
+- Characters index/list.
+
+One representative state per family is sufficient; states for every character
+are not required. The states provide both runtime structure and screenshots, so
+separate screenshots are unnecessary.
+
+### Future implementation boundaries
+
+1. Confirm the structural page discriminator and shared name-header caller.
+2. Trial the two-profile shared classifier without changing canonical
+   production inputs, then stop for the user's representative-family review.
+3. After acceptance, promote, validate, commit, and push the shared list
+   classifier as one coherent boundary.
+4. Implement and commit the shared character-name alignment as a separate
+   boundary.
+5. Validate native-resolution one-line and wrapped rows across every supplied
+   family, including accepted Movie regression output, before retiring the
+   pointer whitelist.
+
+Expected scale: medium. The resident C change should be small; most of the work
+is bounded ETC ownership analysis and representative-family runtime validation.
+
 ## Active epic authority
 
 The current Font epic is

@@ -122,24 +122,29 @@ different meanings to fields at `+0x14/+0x18` and shift live resource fields.
 The future work ports NUN5's classification and layout semantics, not whole
 records or tables byte-for-byte.
 
-### Required representative inputs
+### Representative inputs
 
-The retained paired batch already supplies Movie (`ss8`), Naruto Figure
-(`ss9`), and Naruto Ultimate Jutsu (`ss10`). Do not recreate those unless a
-later incompatible build replaces the batch.
+The retained earlier paired batch supplies Movie, Naruto Figure, and Naruto
+Ultimate Jutsu. The user supplied the remaining representative runtime
+families on 2026-07-31 under
+`work/Font/inputs/sstates/batches/2026-07-31-collection-ss4-8/`, with hashes
+and exact source aliases in its `provenance.tsv`:
 
-Before implementation, request one paired NA2.28/NUN5 savestate for each
-missing family:
+- ss4: Naruto character-specific Music;
+- ss5: Naruto Classic Ultimate Jutsu;
+- ss6: Diorama;
+- ss7: global Music;
+- ss8: Sasori ordinary-character Ultimate Jutsu.
 
-- Naruto character-specific Music;
-- one legacy-character Ultimate Jutsu page, preferably Naruto Classic;
-- Diorama;
-- global Music;
-- Characters index/list.
+Their paired embedded screenshots are under
+`work/Font/inputs/screenshots/batches/2026-07-31-collection-ss4-8/`. The same
+directory retains the user-supplied NA2.28 Characters-index screenshot as
+`character-index_NA228.png`. The user reports no Font defect on that index,
+so it is reference-only and no paired savestate is required for it.
 
-One representative state per family is sufficient; states for every character
-are not required. The states provide both runtime structure and screenshots, so
-separate screenshots are unnecessary.
+One representative state per runtime family is sufficient; states for every
+character are not required. Do not recreate these inputs unless a later
+incompatible build replaces the batch.
 
 ### Future implementation boundaries
 

@@ -24,10 +24,13 @@
   configured stable and development PCSX2 installations. BIOS, cheats,
   GameSettings, input profiles, input recordings, and memory cards live only
   there; do not recreate configured-installation copies or links. After
-  copying `@pcsx2_clean`, an agent may copy any assets for which it has a
-  concrete task- or test-related reason into its task-owned PCSX2 copy. Any
-  asset category is allowed; never populate the clean template itself. PCSX2
-  has no
+  creating a task-owned runtime with
+  `scripts/pcsx2/copy_worker.ps1 -WorkerRoot work/<task title>`, an agent may
+  copy any additional assets for which it has a concrete task- or test-related
+  reason into that copy. The maintained command always copies
+  `@pcsx2_clean` and the shared BIOS together; agents never assemble the base
+  runtime manually. Any asset category is allowed; never populate the clean
+  template itself. PCSX2 has no
   configurable input-recordings folder, so recordings are opened from their
   canonical shared paths explicitly.
 - `@pcsx2_files/input_profiles/Base.ini` is the only manually edited

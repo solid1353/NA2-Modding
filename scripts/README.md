@@ -20,11 +20,11 @@ history; do not recreate an archive directory for dead scripts.
 - `na228/`: build/launch execution, promotion, ISO identity, worker-path
   validation, and focused build/run-log tests. Root `_na228.ps1` owns argument
   parsing and dispatches substantive execution to `na228/run.ps1`.
-- `pcsx2/`: PCSX2 launch, process, configuration, CRC helpers, the user-facing
-  user/development single-instance and multi-game launch commands, the
-  dot-sourced source-game command set, stable/development savestate filing,
-  actualization dispatch/state/input-profile generation and focused tests, the
-  minimal hidden workstream-copy launcher, and
+- `pcsx2/`: PCSX2 launch, worker-runtime copying, configuration, CRC helpers,
+  the user-facing user/development single-instance and multi-game launch
+  commands, the dot-sourced source-game command set, stable/development
+  savestate filing, actualization dispatch/state/input-profile generation and
+  focused tests, the minimal hidden workstream-copy launcher, and
   `patch_savestate_memory.py` for exact-byte-guarded EE-memory patches in copied
   task-owned savestates, and `pine.py` for direct status, memory, pause, resume,
   execution-cache refresh, and native screenshot operations. Unsupported
@@ -112,6 +112,17 @@ real GameSettings that select the configured existing Latest, Previous, or
 Test card, and deduplicates shared serial/CRC identities with Latest
 taking precedence. It never creates or modifies templates or memory cards.
 Run `act help` or `act -h` for the standalone command summary.
+
+Create a fresh task-owned worker runtime with:
+
+```powershell
+scripts/pcsx2/copy_worker.ps1 -WorkerRoot work/<task title>
+```
+
+This mandatory command copies the protected `@pcsx2_clean` template and the
+shared BIOS together. It refuses an existing destination; the owning task must
+first audit and remove its obsolete runtime under the normal work cleanup
+policy. Other task-specific shared assets are copied only when needed.
 
 `pcsx2/launch.ps1` is the single PCSX2 launcher. Configured launches default to
 `dev` and start it in unlimited-speed mode; pass `-Target stable` for an

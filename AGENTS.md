@@ -129,8 +129,11 @@ Detailed command and task behavior is in
   runtime files there; reusable scripts belong under `scripts/`. At completion,
   promote useful findings and remove disposable artifacts, logs, and every
   empty directory.
-- Agent PCSX2 uses only a task-owned clone of `@pcsx2_clean` with a unique PINE
-  port. Agent-only runs use PCSX2 no-GUI mode, suppress any render window, and
+- Agent PCSX2 uses only a task-owned clone created with
+  `scripts/pcsx2/copy_worker.ps1 -WorkerRoot work/<exact task title>`. The
+  command copies `@pcsx2_clean` and the required shared BIOS together; agents
+  never assemble worker runtimes manually. Assign a unique PINE port.
+  Agent-only runs use PCSX2 no-GUI mode, suppress any render window, and
   count as hidden only after a read-back check finds no visible top-level
   windows owned by the launched process; flags, `-WindowStyle Hidden`, and
   launch intent are not proof. If the worker process cannot remain hidden,

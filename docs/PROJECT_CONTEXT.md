@@ -183,8 +183,10 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 - `scripts/na228/` contains build/launch execution, promotion, ISO identity,
   worker-path validation, and focused tests. Root `_na228.ps1` owns argument
   parsing and dispatches substantive execution to `scripts/na228/run.ps1`.
-- `@pcsx2_scripts/` contains PCSX2 launch, process, configuration, and CRC
-  helpers. `launch.ps1` is the single configured and worker-PCSX2 launcher;
+- `@pcsx2_scripts/` contains PCSX2 launch, worker-runtime copying,
+  configuration, and CRC helpers. `copy_worker.ps1` is the mandatory
+  task-runtime creator and copies the clean template plus shared BIOS together.
+  `launch.ps1` is the single configured and worker-PCSX2 launcher;
   configured launches default to `dev` and may select `stable` explicitly,
   while worker launches select an already-existing task-owned runtime with
   `-WorkerRoot`, use PCSX2 no-GUI mode, suppress process-owned render windows,

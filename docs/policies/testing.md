@@ -141,13 +141,16 @@ requirements, not whatever implementation happens to exist today.
   into the task's `inputs/sstates/` or `inputs/screenshots/`. When a workstream
   needs a savestate that the user has not supplied, stop and ask the user for
   that exact state; do not create or navigate to a substitute state.
-- When PCSX2 is needed, copy the read-only compiled `@pcsx2_clean` template to
-  `work/<task title>/pcsx2/`. An agent may copy any shared assets for which it
-  has a concrete task- or test-related reason from `@pcsx2_files` into that
-  task-owned runtime. Any asset category, including input profiles, recordings,
-  memory cards, cheats, and GameSettings, is allowed. Assign a PINE port unique
-  among live agent instances and operate only that copy. Other workstream
-  copies/processes are off-limits.
+- When PCSX2 is needed, create the task-owned runtime only with
+  `scripts/pcsx2/copy_worker.ps1 -WorkerRoot work/<task title>`. It copies the
+  read-only compiled `@pcsx2_clean` template and the required shared BIOS into
+  `work/<task title>/pcsx2/`; agents never assemble that base runtime manually.
+  An agent may then copy any other shared assets for which it has a concrete
+  task- or test-related reason from `@pcsx2_files`. Any asset category,
+  including input profiles, recordings, memory cards, cheats, and
+  GameSettings, is allowed. Assign a PINE port unique among live agent
+  instances and operate only that copy. Other workstream copies/processes are
+  off-limits.
 - Shared Latest, Previous, and Test ISOs are mutable user files. A worker
   PCSX2 process, injection build, or other worker command must never open those
   shared paths. Pass only an independent full copy under
@@ -169,10 +172,11 @@ requirements, not whatever implementation happens to exist today.
 - Preserve anything still needed in the task's proper `inputs/`, `outputs/`,
   `logs/`, reusable scripts, canonical patch data, or knowledge before deleting
   the old runtime. Generated PNACH and hot-reload outputs are disposable once
-  their useful source changes and evidence have been promoted. Recreate the
-  whole portable copy from `@pcsx2_clean`, add only concretely required assets,
-  and configure its unique PINE port before launch. No coordinator or other
-  workstream performs bulk replacement.
+  their useful source changes and evidence have been promoted. Rerun the
+  maintained copy command to recreate the whole portable copy from
+  `@pcsx2_clean`, add only concretely required assets, and configure its unique
+  PINE port before launch. No coordinator or other workstream performs bulk
+  replacement.
 - Agent-only PCSX2 testing stays hidden. The maintained worker launcher uses
   PCSX2 no-GUI mode, suppresses any remaining render window, and verifies after
   launch that the launched process owns no visible top-level windows. Passing

@@ -162,6 +162,20 @@ if ($PSCmdlet.ParameterSetName -eq 'Worker') {
             $worker.Pcsx2
         )
     }
+    $workerBios = Join-Path $worker.Pcsx2 'bios'
+    if (@(
+        Get-ChildItem `
+            -LiteralPath $workerBios `
+            -File `
+            -Filter '*.bin' `
+            -ErrorAction SilentlyContinue
+    ).Count -eq 0) {
+        throw (
+            'The workstream PCSX2 copy contains no BIOS image. Recreate it with ' +
+            "scripts/pcsx2/copy_worker.ps1 -WorkerRoot " +
+            "work/$($worker.WorkerName)."
+        )
+    }
     $executable = $workerExecutables[0].FullName
     $workingDirectory = $worker.Pcsx2
     $hidden = $true
@@ -204,8 +218,9 @@ if ($IsoPath -and -not (
 if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
     if ($PSCmdlet.ParameterSetName -eq 'Worker') {
         throw (
-            'The workstream PCSX2 copy does not exist. Copy pcsx2_clean to ' +
-            "work/$($worker.WorkerName)/pcsx2 before launching."
+            'The workstream PCSX2 copy does not exist. Run ' +
+            "scripts/pcsx2/copy_worker.ps1 -WorkerRoot " +
+            "work/$($worker.WorkerName) before launching."
         )
     }
     throw "PCSX2 executable does not exist: $executable"

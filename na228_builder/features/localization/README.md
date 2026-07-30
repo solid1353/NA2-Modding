@@ -1877,6 +1877,19 @@ normal-build Mode Select result on 2026-07-29, so the layer is
 `runtime_proven`. The separate Collection confirmation remains unfinished
 Font epic work.
 
+The `font_layout_character_select_modal` layer now owns three exact main-ELF
+callers rather than broad modal behavior. File `0x2BC984` routes only the
+selected five-row modal entry through its 240-unit shrink-only box; file
+`0x2BCB54` routes only the return-confirmation body through the accepted
+secondary-renderer 368-by-24 box. Replacement-batch ss1 isolates the complete
+top Yes/No list at file `0x2BCAAC`, clean guard
+`800D0E0C00000000`; that call reuses
+`localization.font.v2.quit_choices_scope`, so its rows receive the same
+relative modal offsets as NUN5 without adding another renderer formula. The
+lower body is user-accepted. The top selector is agent-validated and remains
+`approved_for_test` pending explicit user acceptance. Every ordinary row,
+Linked Mode list, and unrelated main-ELF list/body caller stays native.
+
 The separate `font_layout_special_controls_body` layer completes the explanatory
 block on the same ss1 Special Controls screen. Exact telemetry identifies only
 the native UI-body call at BTL file `0x1C3D38` (runtime `0x00877C38`, clean

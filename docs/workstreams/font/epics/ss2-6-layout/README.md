@@ -13,12 +13,12 @@ case.
 
 - Mode: Continuous.
 - Current subtask: Priority 1 — ss1 Character Select return confirmation top
-  Yes/No selector. The accepted lower body remains unchanged; an isolated
-  selector candidate is undergoing agent validation.
-- Pending grid: missing: matching-dimension fresh post-change NA2.28 screenshot
-  for ss1.
-- Next action: finish ss1 validation, commit and push its isolated caller fix,
-  deliver the result grid, then continue Priority 2.
+  Yes/No selector. The accepted lower body remains unchanged; the isolated
+  selector is agent-validated and being promoted.
+- Pending grid:
+  `work/Font/artifacts/2026-07-30-batch/ss01-character-select-choices-grid.png`.
+- Next action: validate, commit and push the isolated caller fix, deliver the
+  pending result grid, then continue Priority 2.
 
 ## Scope and evidence
 
@@ -47,8 +47,9 @@ case.
 ### Priority 1 — ss1: Return confirmation
 
 - State: accepted lower-body fix retained; isolated top-selector candidate is
-  agent-tested but not yet committed or reported.
-- Remaining defect: the top Yes/No selector does not yet match NUN5 geometry.
+  agent-validated and being promoted; user acceptance remains pending.
+- Result: the scoped top Yes/No list has the same offsets from its modal origin
+  as NUN5 while the accepted lower body remains unchanged.
 
 ![Priority 1 Character Select confirmation baseline](1-character-select-confirmation.png)
 

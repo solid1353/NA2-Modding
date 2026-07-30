@@ -1043,14 +1043,18 @@ needed. The user verified the normal-build Mode Select result on 2026-07-29.
 The layer is therefore **runtime-proven** with verified confidence; the
 separate Collection confirmation remains unfinished epic work.
 
-### Character Select modal selected row and return body
+### Character Select modal selected row, return body, and choice list
 
 The refreshed 2026-07-29 ss5-ss7 pairs isolate two main-ELF callers inside
-the Character Select modal family:
+the Character Select modal family, and the replacement 2026-07-30 ss1 pair
+isolates its remaining return-confirmation list caller:
 
 - file `0x2BC984` / runtime `0x003BC884`, guarded by
   `84090E0C00000000`, draws only the selected row in the five-row
   `Back to Game Mode Screen` modal;
+- file `0x2BCAAC` / runtime `0x003BC9AC`, guarded by
+  `800D0E0C00000000`, draws the complete top Yes/No list for the return
+  confirmation;
 - file `0x2BCB54` / runtime `0x003BCA54`, guarded by
   `C4080E0C00000000`, draws only the `Return to Game Mode Screen?`
   confirmation body.
@@ -1083,9 +1087,24 @@ For the exact accepted string, both NUN5 and NA2.28 black-ink bounds are
 `(151,328)-(484,341)`; dark-pixel counts are `1209` and `1202`. The retained
 comparison is
 `work/Font/artifacts/priority3/ss7-secondary-renderer-left-edge-comparison.png`.
-The user accepted the combined Character Select result on 2026-07-30.
-Confidence is **verified** for the two call sites, renderer selection,
-coordinate contract, selected-row isolation, and supplied ss5-ss7 behavior.
+The user accepted that lower confirmation body as good enough on 2026-07-30.
+
+The same replacement-batch ss1 proves that the body remains correct while the
+native top Yes/No list does not share NUN5's relative placement. Redirecting
+only file `0x2BCAAC` to the existing
+`localization.font.v2.quit_choices_scope` reuses the already-proven Yes
+`(64.5,31.5)` and No `(68.5,49)` map without introducing another C formula or
+assembly fragment. A hidden direct-PINE trial loaded the supplied ss1,
+installed only that guarded call, and produced a native 640x480 capture. The
+modal boxes have different absolute X positions between games, but both
+Current rows then have the same X/Y offsets from their respective modal
+origins as NUN5. The accepted lower body remains unchanged. This selector
+result is agent-validated and awaits explicit user acceptance.
+
+Confidence is **verified** for the three call sites, renderer selection,
+coordinate contracts, caller isolation, and supplied-state behavior. User
+acceptance currently covers the lower confirmation body, not the new top
+selector result.
 
 ### Practice explanation mixed-text wrapping
 

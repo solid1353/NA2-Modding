@@ -200,7 +200,7 @@ an owning feature source/entry or overlay plan explicitly. `watchers.json`
 declares reusable user-facing target names; a direct task-owned overlay-plan
 path remains valid for current experiments. The compact `w` suffix chooses the
 PCSX2 instance, while the following optional target chooses what is rebuilt:
-`na228 blw font-controls nun5`. Standalone `na228 w [target|plan]` uses the
+`na228 nun5 blw font-controls`. Standalone `na228 w [target|plan]` uses the
 configured development PINE port. Both forms wait up to 60 seconds for a live
 VM with the resident payload and injection target loaded. Agents invoke
 `test.ps1` and never run the watcher or its build/apply stages separately.

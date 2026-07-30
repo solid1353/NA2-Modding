@@ -196,8 +196,10 @@ $resolvedOutput = if ($Output) {
 else {
     Join-Path $repository "build\injection\$SourceId"
 }
-if (-not $BuildOnly -and $PinePort -eq 0) {
-    $PinePort = Get-ConfiguredDevelopmentPinePort
+if (-not $BuildOnly) {
+    if ($PinePort -eq 0) {
+        $PinePort = Get-ConfiguredDevelopmentPinePort
+    }
     Write-Host (
         "[injection] Wait up to 60 seconds for the injection target on PINE port $PinePort"
     ) -ForegroundColor Cyan

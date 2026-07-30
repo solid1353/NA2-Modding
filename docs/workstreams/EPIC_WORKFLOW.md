@@ -40,6 +40,12 @@ For each subtask:
    owning chat. In Continuous mode, send it in commentary and continue the next
    independent approved subtask.
 
+A later nonvisual integration, build, metadata, or documentation repair to an
+already-reported subtask does not create a new grid obligation when it neither
+changes the visible result nor makes the delivered grid's imagery or metadata
+stale. If the repair changes visible output or invalidates the delivered
+evidence, treat the corrected result as due and update `Pending grid`.
+
 Every active epic README records `Mode`, `Current subtask`, and `Pending grid`.
 `Pending grid` is `none`, a repository-relative path to the composed
 post-change grid, or `missing: <exact post-change input>`. Set it as soon as a

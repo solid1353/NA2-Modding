@@ -124,6 +124,10 @@ Next response: short plan + effort recommendation + needed user inputs + approva
 - `sin` means report rules failure to `Policeman`.
 - `report`, `grid`, or a direct request for this chat's existing task grid is
   an immediate response command, not a request to begin producing evidence.
+  The command applies when the user uses `report` or `grid` as an instruction,
+  or otherwise directly asks for delivery. Merely mentioning reports or grids
+  inside a complaint, explanation, allegation, or `sin` report does not create
+  a grid request; never infer that requested action from complaint wording.
   The next user-visible response is either the actual composed post-change grid
   or the exact inability statement required by `AGENTS.md`. Before declaring
   it unavailable, check the current task's recorded report state and expected

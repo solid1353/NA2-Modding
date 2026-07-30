@@ -12,13 +12,15 @@ case.
 ## Execution state
 
 - Mode: Continuous, limited by the user's current authorization to the
-  explicitly selected Priority 6 correction.
-- Current subtask: Priority 6 — ss9–ss10 character move lists.
-- Pending grid: missing: exact post-change Priority 6 captures from the
-  integrated ISO.
-- Next action: compose the corrected resident hook and Collection caller, then
-  verify integrated ss8–ss10 output. ss8 is the shared-hook regression; ss9 and
-  ss10 are the selected Priority 6 result.
+  explicitly selected Priority 4 correction.
+- Current subtask: Priority 4 — ss7 Collection exit confirmation.
+- Pending grid: missing: exact post-change Priority 4 capture from a newly
+  constructed Collection exit prompt.
+- Next action: obtain one NA2.28 savestate on the Collection menu immediately
+  before the action that opens `Quit Collection?`, then run the already-enabled
+  body and choice hooks and capture the first newly constructed prompt. The
+  retained visible-prompt ss7 resumes after both owner calls and cannot prove
+  this result.
 
 ## Scope and evidence
 
@@ -105,9 +107,11 @@ case.
 
 ### Priority 4 — ss7: Exit confirmation
 
-- State: bounded C/file-backed implementation is ready and its exact guards,
-  compilation, relocation, and fragment reconstruction are agent-validated;
-  clean-construction runtime output and user acceptance remain pending.
+- State: selected again by the user on 2026-07-30. The bounded C/file-backed
+  implementation remains enabled from commit `76e5023f`; its exact guards,
+  compilation, relocation, fragment reconstruction, and current full-profile
+  composition are agent-validated. Clean-construction runtime output and user
+  acceptance remain pending.
 - Result design: route only ETC body object `+4` through the existing wrapped
   body primitive at local `(24,12)` in a 400-by-60 box, and scope only choice
   object `+8` through the accepted Yes/No mapper. Native Collection inputs
@@ -115,8 +119,9 @@ case.
 - Validation limitation: the supplied visible-prompt ss7 state resumes after
   both owner calls. Its baseline frame is retained below, but it cannot produce
   the required post-change result or validate clean modal construction.
-- Remaining action: build the patch, enter the Collection exit prompt normally,
-  and supply one fresh screenshot or savestate for the final result grid.
+- Remaining action: supply one NA2.28 savestate on the Collection menu
+  immediately before opening the exit prompt. The existing enabled patch can
+  then be exercised without an ISO build or agent menu navigation.
 
 ![Priority 4 Collection confirmation baseline](pending/4-collection-confirmation.png)
 

@@ -112,6 +112,13 @@ Canonical epic grids are split by acceptance state:
 - `awaiting_approval/` contains implemented post-change result grids whose
   exact displayed result has not yet received explicit user acceptance.
 
+When an unresolved epic case produces and shows a new runtime-injected
+candidate, immediately preserve that exact evidence in a truthfully
+candidate-labeled grid under `awaiting_approval/` and update the README state,
+image reference, and `Pending grid` atomically. This obligation applies while
+the candidate implementation remains uncommitted and integrated validation is
+still pending; do not leave the older baseline as the sole canonical record.
+
 Accepted grids are not retained in the epic. When the user accepts or verifies
 an exact result, delete its grid and remove its README image reference in the
 same commit. When a pending case gains valid post-change evidence, move or

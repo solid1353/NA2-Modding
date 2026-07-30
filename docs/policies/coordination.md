@@ -93,6 +93,12 @@
   noncompliant state itself. This is standing authorization only for remediation
   needed to restore compliance within the work's previously authorized scope;
   it never authorizes new implementation or unrelated cleanup.
+- When the user explicitly places a task on the Wall of Shame, membership is
+  transient task state and is never recorded in repository files or Git
+  history. `Policeman` informs that task without supplying the reason; the task
+  inspects its own recent conduct, identifies why it was placed there, and
+  proposes an adequate correction. Until it proposes an adequate solution,
+  every response from that task begins with a direct apology.
 
 ## Task coordinator
 

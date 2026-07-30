@@ -86,11 +86,12 @@ runs Latest, Previous, or Test; `bl` and `bt` build and run Latest or Test; and
 suffix `w` watches that token's game. `b` remains shorthand for `bl`. For
 example, `na228 nun5 btw` builds Test, launches NUN5 and Test side by side, then
 watches Test. A named watch target or task-owned overlay-plan path may follow
-the watched token: `na228 blw font-controls nun5` or
+the watched token: `na228 nun5 blw font-controls` or
 `na228 nun5 btw work/Font/operations/jutsu_names_overlay.json`.
 `na228 build l|t` provides the uncommon build-only forms.
-Configured launches containing any `games.json` `builds` entry run `act na228`
-exactly once; source-only launches and worker-output builds never actualize.
+Launch-only commands never actualize. A changed Latest build actualizes Latest
+and, when rotation changed it, Previous; a changed Test build actualizes only
+Test. Unchanged/cache-hit and worker-output builds actualize nothing.
 Configured launches preserve existing PCSX2 instances and tile only the newly
 started windows. The standalone `act` command can run all actualization modes
 without building or launching.
@@ -113,7 +114,10 @@ dispatch. Bare `act` runs `na2`, then `input`.
 and ELF CRC, links the stable cheat template to generated CRC aliases, writes
 real GameSettings that select the configured existing Latest, Previous, or
 Test card, and deduplicates shared serial/CRC identities with Latest
-taking precedence. It never creates or modifies templates or memory cards.
+taking precedence. Build-driven calls limit creation and updates to the roles
+reported changed by the build while retaining all current role identities for
+collision and stale-file cleanup. It never creates or modifies templates or
+memory cards.
 Run `act help` or `act -h` for the standalone command summary.
 
 Create a fresh task-owned worker runtime with:

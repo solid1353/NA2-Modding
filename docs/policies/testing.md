@@ -216,8 +216,10 @@ requirements, not whatever implementation happens to exist today.
 
 ## Actualization
 
-- User-owned Latest/Previous/Test workflows may run the maintained
-  actualization pipeline automatically; worker builds never actualize.
+- Launch-only workflows never actualize. A changed Latest build actualizes
+  Latest and, only when promotion rotated it, Previous. A changed Test build
+  actualizes only Test. Unchanged/cache-hit and worker builds never actualize.
+  Standalone `act na228` remains the explicit full synchronization workflow.
 - `act na228` manages only the configured NA2.28 Latest/Previous/Test
   identities, CRC cheat aliases, and GameSettings inside `@pcsx2_files/`.
   Each role selects its configured existing Latest, Previous, or Test

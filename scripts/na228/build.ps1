@@ -118,6 +118,7 @@ function Promote-VerifiedIso {
             LatestIso = $latest
             PreviousIso = $previous
             Rotated = $false
+            ChangedRoles = [string[]]@()
         }
     }
 
@@ -145,11 +146,17 @@ function Promote-VerifiedIso {
         'no previous image was available to retain'
     }
     Write-Host "[na228] ISO result: updated; staged image promoted to $([IO.Path]::GetFileName($latest)), $rotationResult." -ForegroundColor Cyan
+    $changedRoles = [Collections.Generic.List[string]]::new()
+    $changedRoles.Add('latest')
+    if ($rotatedLatest) {
+        $changedRoles.Add('previous')
+    }
     [pscustomobject]@{
         Status = 'updated'
         LatestIso = $latest
         PreviousIso = $previous
         Rotated = $rotatedLatest
+        ChangedRoles = [string[]]@($changedRoles)
     }
 }
 
@@ -198,6 +205,7 @@ if ($ComposeOnly) {
         PreviousIso = $resolvedPreviousIso
         Rotated = $false
         PreflightCacheHit = $false
+        ChangedRoles = [string[]]@()
     }
 }
 
@@ -343,6 +351,11 @@ if ($TestOnly -or $null -ne $workerBuild) {
             BuildId = $isolatedBuildId
             ProfileLogDirectory = $isolatedRecord
             PreflightCacheHit = $false
+            ChangedRoles = [string[]]@(
+                if ($isolatedKind -eq 'test' -and $isolatedChanged) {
+                    'test'
+                }
+            )
         }
     }
     finally {
@@ -407,6 +420,7 @@ if ($preflight.status -eq 'hit') {
             BuildId = $buildMap.LatestBuildId
             ProfileLogDirectory = $buildRecord
             PreflightCacheHit = $true
+            ChangedRoles = [string[]]@()
         }
     }
     catch {

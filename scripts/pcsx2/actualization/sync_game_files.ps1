@@ -2,7 +2,11 @@
 [CmdletBinding()]
 param(
     [psobject]$ProjectPaths,
-    [scriptblock]$IdentityResolver
+    [scriptblock]$IdentityResolver,
+
+    [Alias('Roles')]
+    [ValidateSet('latest', 'previous', 'test')]
+    [string[]]$SelectedRoles
 )
 
 Set-StrictMode -Version Latest
@@ -255,7 +259,26 @@ $definitions = @(
     }
 )
 
-$roles = @(
+$requestedRoleNames = [Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::OrdinalIgnoreCase
+)
+foreach ($selectedRole in @($SelectedRoles)) {
+    if (-not [string]::IsNullOrWhiteSpace($selectedRole)) {
+        [void]$requestedRoleNames.Add($selectedRole)
+    }
+}
+if ($requestedRoleNames.Count -gt 0) {
+    $knownRoleNames = @($definitions.Role)
+    $unknownRoleNames = @(
+        $requestedRoleNames |
+            Where-Object { $_ -notin $knownRoleNames }
+    )
+    if ($unknownRoleNames.Count -gt 0) {
+        throw "Unknown NA2.28 build role: $($unknownRoleNames -join ', ')."
+    }
+}
+
+$allResolvedRoles = @(
     foreach ($definition in $definitions) {
         $isoPath = [IO.Path]::GetFullPath([string]$definition.Iso)
         if (-not (Test-Path -LiteralPath $isoPath -PathType Leaf)) {
@@ -273,18 +296,7 @@ $roles = @(
         $memoryCardPath = [IO.Path]::GetFullPath(
             [string]$definition.MemoryCard
         )
-        if (-not (Test-Path -LiteralPath $memoryCardPath -PathType Leaf)) {
-            throw (
-                "$($definition.Role) memory card was not found: " +
-                $memoryCardPath
-            )
-        }
         $memoryCardName = [IO.Path]::GetFileName($memoryCardPath)
-        $settingsText = Set-Na2IniValue `
-            -Text $gameSettingsTemplate `
-            -Section 'MemoryCards' `
-            -Key 'Slot1_Filename' `
-            -Value $memoryCardName
 
         [pscustomobject]@{
             Role = [string]$definition.Role
@@ -293,20 +305,58 @@ $roles = @(
             CRC = $crc
             PnachName = "${serial}_${crc}.pnach"
             GameSettingsName = "${serial}_${crc}.ini"
-            GameSettingsText = $settingsText
+            MemoryCardPath = $memoryCardPath
             MemoryCardName = $memoryCardName
         }
     }
 )
-if ($roles.Count -eq 0) {
+if ($allResolvedRoles.Count -eq 0) {
     throw 'No built NA2.28 image is available for actualization.'
 }
 
-$settingsRoles = @(
-    $roles |
+$roles = @(
+    if ($requestedRoleNames.Count -eq 0) {
+        $allResolvedRoles
+    }
+    else {
+        $allResolvedRoles |
+            Where-Object { $requestedRoleNames.Contains($_.Role) }
+    }
+)
+if ($roles.Count -eq 0) {
+    throw (
+        'No selected NA2.28 build image is available for actualization: ' +
+        "$(@($SelectedRoles) -join ', ')."
+    )
+}
+
+$allSettingsRoles = @(
+    $allResolvedRoles |
         Group-Object GameSettingsName |
         ForEach-Object { $_.Group | Select-Object -First 1 }
 )
+$settingsRoles = @(
+    if ($requestedRoleNames.Count -eq 0) {
+        $allSettingsRoles
+    }
+    else {
+        $allSettingsRoles |
+            Where-Object { $requestedRoleNames.Contains($_.Role) }
+    }
+)
+foreach ($role in $settingsRoles) {
+    if (-not (Test-Path -LiteralPath $role.MemoryCardPath -PathType Leaf)) {
+        throw "$($role.Role) memory card was not found: $($role.MemoryCardPath)"
+    }
+    $settingsText = Set-Na2IniValue `
+        -Text $gameSettingsTemplate `
+        -Section 'MemoryCards' `
+        -Key 'Slot1_Filename' `
+        -Value $role.MemoryCardName
+    $role | Add-Member `
+        -NotePropertyName GameSettingsText `
+        -NotePropertyValue $settingsText
+}
 
 $legacyGameSettingsDirectory = Join-Path $gameSettingsDirectory '.na2'
 $managedLegacySettingsLink = {
@@ -335,7 +385,7 @@ $removedLegacySettingsSymlinks = @(
         }
 )
 
-$desiredSettingsNames = @($settingsRoles.GameSettingsName)
+$desiredSettingsNames = @($allSettingsRoles.GameSettingsName)
 $managedGameSettingsPattern = (
     '^(?:SLOP-NA228|SLUS-NA228|SLPS-22228)_[0-9A-F]{8}\.ini$'
 )
@@ -417,6 +467,10 @@ $managedPnachLink = {
         )
     )
 }
+$allDesiredPnachNames = @(
+    $allResolvedRoles.PnachName |
+        Select-Object -Unique
+)
 $desiredPnachNames = @($roles.PnachName | Select-Object -Unique)
 $managedPnachNamePattern = (
     '^(?:SLOP-NA228|SLUS-NA228|SLPS-22228)_[0-9A-F]{8}\.pnach$'
@@ -425,7 +479,7 @@ $removedPnachSymlinks = @(
     Get-ChildItem -LiteralPath $cheatsDirectory -Filter '*.pnach' -File -Force |
         Where-Object {
             $destination = Get-Na2ActualizeLinkDestination -Item $_
-            $_.Name -notin $desiredPnachNames -and
+            $_.Name -notin $allDesiredPnachNames -and
                 (
                     $_.Name -match $managedPnachNamePattern -or
                     (

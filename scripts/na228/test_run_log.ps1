@@ -237,13 +237,31 @@ try {
         -Message 'Actualization help created run logs.'
 
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'sync_game_files.ps1') -Content @'
-Write-Host '[fake] actualize na228'
+param([string[]]$Roles)
+$resolvedRoles = @(
+    if ($null -eq $Roles -or $Roles.Count -eq 0) {
+        'latest'
+    }
+    else {
+        $Roles
+    }
+)
+$callLog = [IO.Path]::GetFullPath(
+    (Join-Path $PSScriptRoot '..\..\..\actualization_calls.txt')
+)
+Add-Content `
+    -LiteralPath $callLog `
+    -Value ($resolvedRoles -join ',') `
+    -Encoding utf8
+Write-Host "[fake] actualize na228 roles=$($resolvedRoles -join ',')"
 [pscustomobject]@{
     Roles = @(
-        [pscustomobject]@{
-            Role = 'Latest'
-            Serial = 'SLOP-NA228'
-            CRC = '12345678'
+        foreach ($role in $resolvedRoles) {
+            [pscustomobject]@{
+                Role = (Get-Culture).TextInfo.ToTitleCase($role)
+                Serial = 'SLOP-NA228'
+                CRC = '12345678'
+            }
         }
     )
     CheatAliases = @('pcsx2_files/cheats/SLOP-NA228_12345678.pnach')
@@ -267,8 +285,7 @@ Write-Host "[fake] launch $Target $IsoPath"
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'launch_games.ps1') -Content @'
 param(
     [Parameter(Position = 0, ValueFromRemainingArguments = $true)]
-    [string[]]$Games,
-    [switch]$SkipActualization
+    [string[]]$Games
 )
 $aliases = @{
     l = 'latest'
@@ -283,7 +300,7 @@ if (@($canonical | Where-Object { $_ -notin @(
 ) }).Count -gt 0) {
     throw "Unknown game name: $($Games -join ',')"
 }
-Write-Output "[fake] multi-game launch $($canonical -join ',') skip=$SkipActualization"
+Write-Output "[fake] multi-game launch $($canonical -join ',')"
 $port = 28014
 foreach ($game in $canonical) {
     [pscustomobject]@{
@@ -320,19 +337,22 @@ param(
 )
 if ($WorkerOutputIso) {
     Write-Host '[na228] ISO result: worker; rotation: no; PCSX2 left running.'
-    [pscustomobject]@{ Status = 'worker' }
+    [pscustomobject]@{ Status = 'worker'; ChangedRoles = [string[]]@() }
 }
 elseif ($TestOnly) {
     Write-Host '[na228] ISO result: test; rotation: no; PCSX2 left running.'
-    [pscustomobject]@{ Status = 'test' }
+    [pscustomobject]@{ Status = 'test'; ChangedRoles = [string[]]@('test') }
 }
 elseif ($ComposeOnly) {
     Write-Host '[na228] Profile composition valid; no ISO produced.'
-    [pscustomobject]@{ Status = 'validated' }
+    [pscustomobject]@{ Status = 'validated'; ChangedRoles = [string[]]@() }
 }
 else {
-    Write-Host '[na228] ISO result: unchanged; rotation: no.'
-    [pscustomobject]@{ Status = 'unchanged' }
+    Write-Host '[na228] ISO result: updated; rotation: yes.'
+    [pscustomobject]@{
+        Status = 'updated'
+        ChangedRoles = [string[]]@('latest', 'previous')
+    }
 }
 '@
     & (Join-Path $fakeActualizationScripts 'act.ps1')
@@ -413,6 +433,12 @@ else {
     Assert-Na2Test `
         -Condition $extraReleaseArgumentRejected `
         -Message 'Release dispatch accepted more than one version argument.'
+    $actualizationCallLog = Join-Path $fakeRepository 'actualization_calls.txt'
+    $launchActualizationCountBefore = @(
+        if (Test-Path -LiteralPath $actualizationCallLog) {
+            Get-Content -LiteralPath $actualizationCallLog
+        }
+    ).Count
     $latestLaunch = (
         & (Join-Path $fakeRepository '_na228.ps1') l
     ) -join "`n"
@@ -420,26 +446,51 @@ else {
         & (Join-Path $fakeRepository '_na228.ps1') p
     ) -join "`n"
     Assert-Na2Test `
-        -Condition ($latestLaunch -match 'multi-game launch latest skip=False') `
+        -Condition (
+            $latestLaunch -match 'multi-game launch latest'
+        ) `
         -Message 'Latest selector alias did not resolve through game launch.'
     Assert-Na2Test `
-        -Condition ($previousLaunch -match 'multi-game launch previous skip=False') `
+        -Condition (
+            $previousLaunch -match 'multi-game launch previous'
+        ) `
         -Message 'Previous selector alias did not resolve through game launch.'
     $testLaunch = (
         & (Join-Path $fakeRepository '_na228.ps1') t
     ) -join "`n"
     Assert-Na2Test `
-        -Condition ($testLaunch -match 'multi-game launch test skip=False') `
+        -Condition (
+            $testLaunch -match 'multi-game launch test'
+        ) `
         -Message 'Test selector alias did not resolve through game launch.'
+    $launchActualizationCountAfter = @(
+        if (Test-Path -LiteralPath $actualizationCallLog) {
+            Get-Content -LiteralPath $actualizationCallLog
+        }
+    ).Count
+    Assert-Na2Test `
+        -Condition (
+            $launchActualizationCountAfter -eq
+            $launchActualizationCountBefore
+        ) `
+        -Message 'Launch-only selectors invoked actualization.'
     & (Join-Path $fakeRepository '_na228.ps1') worker 'work\General\build\agent.iso'
     & (Join-Path $fakeRepository '_na228.ps1') validate
     & (Join-Path $fakeRepository '_na228.ps1') build l
+    $latestBuildRoles = Get-Content -LiteralPath $actualizationCallLog -Tail 1
     & (Join-Path $fakeRepository '_na228.ps1') build t
+    $testBuildRoles = Get-Content -LiteralPath $actualizationCallLog -Tail 1
+    Assert-Na2Test `
+        -Condition ($latestBuildRoles -ceq 'latest,previous') `
+        -Message 'Latest build did not actualize only its changed roles.'
+    Assert-Na2Test `
+        -Condition ($testBuildRoles -ceq 'test') `
+        -Message 'Test build did not actualize only Test.'
     $composedRecipe = (
         & (Join-Path $fakeRepository '_na228.ps1') nun5 btw
     ) -join "`n"
     Assert-Na2Test `
-        -Condition ($composedRecipe -match 'multi-game launch nun5,test skip=True') `
+        -Condition ($composedRecipe -match 'multi-game launch nun5,test') `
         -Message 'Trailing build/watch token did not preserve window order.'
     Assert-Na2Test `
         -Condition ($composedRecipe -match '\[fake\] watch 28015') `
@@ -449,7 +500,7 @@ else {
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $leadingBuildWatch -match 'multi-game launch latest,nun5 skip=True' -and
+            $leadingBuildWatch -match 'multi-game launch latest,nun5' -and
             $leadingBuildWatch -match '\[fake\] watch 28014'
         ) `
         -Message 'Leading build/watch token did not preserve window order.'
@@ -458,7 +509,7 @@ else {
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $namedBuildWatch -match 'multi-game launch latest,nun5 skip=True' -and
+            $namedBuildWatch -match 'multi-game launch latest,nun5' -and
             $namedBuildWatch -match (
                 '\[fake\] watch 28014 source=font_v2_core ' +
                 'entry=localization\.font\.v2\.controls_adapter'
@@ -473,7 +524,7 @@ else {
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $directPlanWatch -match 'multi-game launch nun5,test skip=True' -and
+            $directPlanWatch -match 'multi-game launch nun5,test' -and
             $directPlanWatch -match (
                 'plan=work\\Font\\operations\\jutsu_names_overlay\.json'
             )
@@ -495,7 +546,7 @@ else {
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $latestWatch -match 'multi-game launch latest skip=False' -and
+            $latestWatch -match 'multi-game launch latest' -and
             $latestWatch -match '\[fake\] watch 28014'
         ) `
         -Message 'Latest watch token did not launch and watch Latest.'
@@ -537,7 +588,7 @@ else {
         -Condition ($workerLatest -match 'ISO result: worker') `
         -Message 'Explicit worker build did not dispatch to worker-output mode.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 4) `
+        -Condition ([regex]::Matches($fakeRolling, 'ISO result: updated').Count -eq 4) `
         -Message 'Build-only and build-and-launch did not use the standard build pipeline.'
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize na228').Count -eq 9) `

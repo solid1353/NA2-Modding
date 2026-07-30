@@ -8,6 +8,10 @@ param(
     [switch]$Help,
 
     [Parameter(DontShow)]
+    [ValidateSet('latest', 'previous', 'test')]
+    [string[]]$Roles,
+
+    [Parameter(DontShow)]
     [switch]$NoRunLog
 )
 
@@ -39,6 +43,12 @@ $selectedModes = @(
         $Mode
     }
 )
+if ($null -ne $Roles -and $Roles.Count -gt 0 -and (
+    $selectedModes.Count -ne 1 -or
+    $selectedModes[0] -ne 'na228'
+)) {
+    throw 'Role-scoped actualization is valid only for act na228.'
+}
 $runLog = $null
 if (-not $NoRunLog) {
     try {
@@ -65,8 +75,12 @@ try {
             'na228' {
                 Write-Host '[act] Actualize built NA2.28 images' `
                     -ForegroundColor Cyan
+                $syncArguments = @{}
+                if ($null -ne $Roles -and $Roles.Count -gt 0) {
+                    $syncArguments.Roles = $Roles
+                }
                 $output = @(
-                    & $projectPaths.files.actualize_na228_command
+                    & $projectPaths.files.actualize_na228_command @syncArguments
                 )
                 if ($output.Count -ne 1) {
                     throw (

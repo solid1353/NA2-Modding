@@ -125,6 +125,8 @@ try {
         -Message 'Cache hit did not return unchanged.'
     Assert-Na2PreflightTest -Condition $hit.PreflightCacheHit `
         -Message 'Cache hit was not marked on the build result.'
+    Assert-Na2PreflightTest -Condition (@($hit.ChangedRoles).Count -eq 0) `
+        -Message 'Cache hit incorrectly reported changed build roles.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
         -Message 'Cache hit invoked module derivation or receipt recording.'
     Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$latestIso.building")) `
@@ -137,6 +139,8 @@ try {
         -Message 'Synthetic full-build fallback did not preserve unchanged result.'
     Assert-Na2PreflightTest -Condition (-not $miss.PreflightCacheHit) `
         -Message 'Full-build fallback was incorrectly marked as a cache hit.'
+    Assert-Na2PreflightTest -Condition (@($miss.ChangedRoles).Count -eq 0) `
+        -Message 'Unchanged full build incorrectly reported changed roles.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 3) `
         -Message 'Full-build fallback did not check, build, and record exactly once.'
     Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$latestIso.building")) `
@@ -147,6 +151,9 @@ try {
     $testIso = Join-Path $repository 'build\NA2.28 - Test.iso'
     Assert-Na2PreflightTest -Condition ($test.Status -eq 'test') `
         -Message 'Test-only build did not return test status.'
+    Assert-Na2PreflightTest `
+        -Condition ((@($test.ChangedRoles) -join ',') -ceq 'test') `
+        -Message 'Changed Test build did not report only the Test role.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
         -Message 'Test-only build invoked preflight or receipt recording.'
     Assert-Na2PreflightTest `
@@ -167,6 +174,9 @@ try {
     $unchangedTest = & (Join-Path $scriptRoot 'build.ps1') -TestOnly
     Assert-Na2PreflightTest -Condition ($unchangedTest.TestState -eq 'unchanged') `
         -Message 'Repeated test-only build did not detect unchanged output.'
+    Assert-Na2PreflightTest `
+        -Condition (@($unchangedTest.ChangedRoles).Count -eq 0) `
+        -Message 'Unchanged Test build incorrectly reported a changed role.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
         -Message 'Repeated test-only build invoked anything except profile composition.'
     Assert-Na2PreflightTest `

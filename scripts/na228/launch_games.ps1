@@ -4,9 +4,7 @@ param(
     [string[]]$Games,
 
     [ValidateRange(5, 120)]
-    [int]$WindowWaitSeconds = 30,
-
-    [switch]$SkipActualization
+    [int]$WindowWaitSeconds = 30
 )
 
 $ErrorActionPreference = 'Stop'
@@ -126,16 +124,6 @@ foreach ($endpoint in [Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalPr
 
 $launchedGames = [Collections.Generic.List[object]]::new()
 try {
-    $usesNa228Build = @(
-        $selectedGames |
-            Where-Object {
-                $projectPaths.games.Entries.PSObject.Properties[$_].Value.Category -eq 'builds'
-            }
-    ).Count -gt 0
-    if ($usesNa228Build -and -not $SkipActualization) {
-        & $projectPaths.files.actualize_command na228
-    }
-
     $nextPinePort = $pinePortBase
     for ($index = 0; $index -lt $selectedGames.Count; $index++) {
         $game = $selectedGames[$index]

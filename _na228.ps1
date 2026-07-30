@@ -196,12 +196,8 @@ foreach ($buildAction in @($buildActions | Select-Object -Unique)) {
     & (Join-Path $projectPaths.scripts 'na228\run.ps1') -Action $buildAction
 }
 
-$launchArguments = @{ Games = @($games) }
-if ($buildActions.Count -gt 0) {
-    $launchArguments.SkipActualization = $true
-}
 $launchResults = @(
-    & $projectPaths.files.na228_game_launch_command @launchArguments
+    & $projectPaths.files.na228_game_launch_command -Games @($games)
 )
 $launchResults
 

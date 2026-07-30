@@ -25,9 +25,10 @@ NA2.28 PCSX2 actualization:
   to task-owned PCSX2 memory through PINE.
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v4 organizes each package as groups, atomic patches, and exact edits; independent group and patch `enabled` switches control normal composition. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`.
 - Actualization is an explicit standalone workflow with `na2` and `input`
-  modes; bare `act` runs both in that order. User-owned
-  catalog `builds` launches run `act na228`
-  automatically, while worker builds never actualize.
+  modes; bare `act` runs both in that order. Launch-only commands never
+  actualize. Changed Latest builds actualize Latest and Previous only when
+  rotation changed it; changed Test builds actualize only Test. Unchanged,
+  cache-hit, and worker builds never actualize.
 - A zero-byte cheat template removes its managed PCSX2 CRC aliases. Other game
   identities, real files, and unrelated symlinks are preserved.
 - Latest, Previous, and Test select the existing
@@ -179,7 +180,7 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 
 ## Current Scripts
 
-- Root `_na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Latest. Compact invocations contain one or two positional game tokens whose order defines window placement: `l`, `p`, or `t` runs Latest, Previous, or Test; `bl` or `bt` builds and runs Latest or Test; and suffix `w` watches that token's game. An optional named `watchers.json` target or task-owned overlay-plan path immediately after the watched token selects what is rebuilt. Explicit `build l|t`, standalone `w [target|plan]`, `worker`, `release`, and `help` remain available. The standalone `act` command performs actualization without building or launching. A launch containing any `games.json` `builds` entry runs `act na228` exactly once; source-only launches do not actualize. Configured launches never stop existing PCSX2 instances, select unused PINE ports, and tile only their newly started windows. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
+- Root `_na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Latest. Compact invocations contain one or two positional game tokens whose order defines window placement: `l`, `p`, or `t` runs Latest, Previous, or Test; `bl` or `bt` builds and runs Latest or Test; and suffix `w` watches that token's game. An optional named `watchers.json` target or task-owned overlay-plan path immediately after the watched token selects what is rebuilt. Explicit `build l|t`, standalone `w [target|plan]`, `worker`, `release`, and `help` remain available. The standalone `act` command performs full actualization without building or launching. Launches never actualize; changed builds actualize only the roles reported changed by promotion or Test replacement. Configured launches never stop existing PCSX2 instances, select unused PINE ports, and tile only their newly started windows. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
 - `scripts/na228/` contains build/launch execution, promotion, ISO identity,
   worker-path validation, and focused tests. Root `_na228.ps1` owns argument
   parsing and dispatches substantive execution to `scripts/na228/run.ps1`.
@@ -299,7 +300,9 @@ owns its transcript and status reporting. Bare `act` dispatches `na2`, then
 Test ISO, deletes stale managed cheat symlinks and NA2.28 GameSettings,
 creates the required cheat aliases and real role GameSettings, and sets each
 role to its existing Latest, Previous, or Test memory card. Templates and
-memory cards are never created, copied, or modified.
+memory cards are never created, copied, or modified. Build-driven calls limit
+creation and updates to changed roles; standalone `act na228` remains a full
+repair/synchronization pass.
 `sync_input.ps1` regenerates `Base_NA2.ini` from the maintained `Base.ini`.
 
 ## Release Workflow

@@ -131,6 +131,7 @@ try {
             }
         }
     }
+    $testCrc = '33333333'
     $identityResolver = {
         param([string]$Path)
         if ([IO.Path]::Equals($Path, $latestIso) -or
@@ -143,7 +144,7 @@ try {
         if ([IO.Path]::Equals($Path, $testIso)) {
             return [pscustomobject]@{
                 Serial = 'SLPS-22228'
-                CRC = '33333333'
+                CRC = $testCrc
             }
         }
         throw "Unexpected ISO: $Path"
@@ -225,6 +226,51 @@ try {
             -Message "Cheat symlink does not track its template: $($role.PnachName)"
     }
 
+    $latestSettingsPath = Join-Path $gameSettings $latestSettingsName
+    $latestSettingsProbe = "[probe]`nunchanged = true`n"
+    [IO.File]::WriteAllText(
+        $latestSettingsPath,
+        $latestSettingsProbe,
+        [Text.UTF8Encoding]::new($false)
+    )
+    $testCrc = '44444444'
+    $scoped = & $actualizer `
+        -ProjectPaths $projectPaths `
+        -IdentityResolver $identityResolver `
+        -Roles test
+    Assert-Na2ActualizeTest `
+        -Condition (
+            $scoped.Roles.Count -eq 1 -and
+            $scoped.Roles[0].Role -ceq 'Test'
+        ) `
+        -Message 'Role-scoped actualization did not select only Test.'
+    Assert-Na2ActualizeTest `
+        -Condition (
+            [IO.File]::ReadAllText($latestSettingsPath) -ceq
+            $latestSettingsProbe
+        ) `
+        -Message 'Test-only actualization rewrote unrelated Latest GameSettings.'
+    Assert-Na2ActualizeTest `
+        -Condition (
+            -not (Test-Path -LiteralPath (
+                Join-Path $gameSettings 'SLPS-22228_33333333.ini'
+            )) -and
+            (Test-Path -LiteralPath (
+                Join-Path $gameSettings 'SLPS-22228_44444444.ini'
+            ) -PathType Leaf)
+        ) `
+        -Message 'Test-only actualization did not rotate its managed GameSettings identity.'
+    Assert-Na2ActualizeTest `
+        -Condition (
+            -not (Test-Path -LiteralPath (
+                Join-Path $cheats 'SLPS-22228_33333333.pnach'
+            )) -and
+            (Test-Path -LiteralPath (
+                Join-Path $cheats 'SLPS-22228_44444444.pnach'
+            ) -PathType Leaf)
+        ) `
+        -Message 'Test-only actualization did not rotate its managed cheat identity.'
+
     Remove-Item -LiteralPath $testIso -Force
 
     $second = & $actualizer `
@@ -235,12 +281,12 @@ try {
         -Message 'Second run retained a missing Test image.'
     Assert-Na2ActualizeTest `
         -Condition (-not (Test-Path -LiteralPath (
-            Join-Path $gameSettings 'SLPS-22228_33333333.ini'
+            Join-Path $gameSettings 'SLPS-22228_44444444.ini'
         ))) `
         -Message 'Obsolete managed Test GameSettings was not removed.'
     Assert-Na2ActualizeTest `
         -Condition (-not (Test-Path -LiteralPath (
-            Join-Path $cheats 'SLPS-22228_33333333.pnach'
+            Join-Path $cheats 'SLPS-22228_44444444.pnach'
         ))) `
         -Message 'Obsolete managed Test cheat symlink was not removed.'
     foreach ($memoryCardInput in $memoryCardInputs) {

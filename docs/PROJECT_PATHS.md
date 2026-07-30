@@ -1,11 +1,12 @@
 # Project path configuration
 
-`project-paths.json` is the source of truth for stable project infrastructure
-roots and named files. `games.json` is the source of truth for registered
-source games, NA2.28 build roles, selector aliases, and their game-specific
-configuration. The shared PowerShell and Python loaders merge both files.
-Every persisted path must be relative to the repository directory or another
-named root; both loaders reject absolute paths.
+`project-paths.json` is the root bootstrap and source of truth for stable
+project infrastructure roots and named files. `settings/games.json` is the
+source of truth for registered source games, NA2.28 build roles, selector
+aliases, and their game-specific configuration. The shared PowerShell and
+Python loaders merge both files. Every persisted path must be relative to the
+repository directory or another named root; both loaders reject absolute
+paths.
 
 The loader supports an optional `existence_deferred_roots` list for portable
 manifests whose external resources are provisioned only at use time. The
@@ -28,7 +29,8 @@ The manifest currently defines these stable logical names:
 - `source`: read-only original media and extracted views under
   `@workshop/source/`.
 - `source_na2`, `source_nun3`, `source_nun5`, and `source_nun6`: derived by
-  the loaders from each source game's `extracted` path in `games.json`.
+  the loaders from each source game's `extracted` path in
+  `settings/games.json`.
 - `analysis`: shared reverse-engineering projects and disassembly exports under
   `@workshop/analysis/`.
 - `utils`: shared utilities under `@workshop/tools/`, including Ghidra and
@@ -80,12 +82,12 @@ their producing workflow runs. File entries reference a named root with
   compatibility and release checks.
 - `pcsx2_dev_exe`: `@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe`, used by default
   configured launches and user runtime-injection development.
-- `game_catalog`: `@repository/games.json`.
-- `watch_catalog`: `@repository/watchers.json`, containing named user-facing
+- `game_catalog`: `@repository/settings/games.json`.
+- `watch_catalog`: `@repository/settings/watchers.json`, containing named user-facing
   live-injection targets.
 - `notification_state`: the shared mute state for the dedicated Notifications
-  task at `@repository/.agents/notifications.json`.
-- `na228_command`: `@repository/_na228.ps1`.
+  task at `@repository/settings/notifications.json`.
+- `na228_command`: `@repository/na228.ps1`.
 - `pcsx2_launch_command`: `@pcsx2_scripts/launch.ps1`.
 - `pcsx2_savestate_move_command`:
   `@pcsx2_scripts/move_na228_savestates.ps1`.
@@ -109,9 +111,9 @@ PowerShell accesses these as `$projectPaths.files.na2_iso` and
 
 ## Game catalog
 
-`games.json` keeps `sources` as a direct game map. `builds` contains shared
-build configuration plus an `entries` map because those keys occupy the same
-section. Empty optional values are omitted.
+`settings/games.json` keeps `sources` as a direct game map. `builds` contains
+shared build configuration plus an `entries` map because those keys occupy the
+same section. Empty optional values are omitted.
 
 Configuration inherits from root `config`, then category-wide build
 configuration, then a game's own non-structural fields. The current root
@@ -142,7 +144,7 @@ $projectPaths = Get-Na2ProjectPaths
 $iso = $projectPaths.files.na2_iso
 ```
 
-The root `_na228.ps1` entry point uses `scripts/lib/project_paths.ps1` as its
+The root `na228.ps1` entry point uses `scripts/lib/project_paths.ps1` as its
 bootstrap. The manifest and shared path loaders are stable bootstrap files and
 should not be moved during an ordinary directory migration.
 
@@ -162,7 +164,7 @@ iso = PROJECT_PATHS.file("na2_iso")
 
 1. Move the directory or canonical file without changing its contents.
 2. Edit its repository-relative value in `project-paths.json` for shared
-   infrastructure or `games.json` for a game/build entry.
+   infrastructure or `settings/games.json` for a game/build entry.
 3. Run the path-loader checks and automated tests.
 4. Search documentation for literal legacy paths and express them as `@root/...`.
 

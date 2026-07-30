@@ -4,14 +4,13 @@
 
 - Canonical project files, scripts, configuration, logs, manifests, metadata,
   and generated artifacts use repository-relative paths. Machine-specific
-  absolute paths are limited to dated `.agents/` handoffs, transient tool
-  arguments/diagnostics, and user-facing clickable links unless explicitly
-  authorized.
+  absolute paths are limited to transient tool arguments/diagnostics and
+  user-facing clickable links unless explicitly authorized.
 - `project-paths.json` is the source of truth for stable project-level
-  infrastructure directories and named files; `games.json` owns registered
-  source games, build roles, selector aliases, and game-specific configuration.
-  Resolve both through the shared PowerShell or Python loader. Do not inventory
-  ordinary descendants such as `BTL.BIN`.
+  infrastructure directories and named files; `settings/games.json` owns
+  registered source games, build roles, selector aliases, and game-specific
+  configuration. Resolve both through the shared PowerShell or Python loader.
+  Do not inventory ordinary descendants such as `BTL.BIN`.
 - Deleting or moving the last content of a configured root or direct manifest
   file must update the manifest and every `@root` documentation reference, then
   validate both path loaders. Never preserve an empty directory for a manifest.
@@ -90,7 +89,7 @@
   exact push. Do not pause approved work or repeat the check unless the remote
   configuration changes.
 - Commit subjects use `[<exact task title>] <imperative summary>`. Override the
-  author for that commit only using the matching `.agents/git-authors.tsv`
+  author for that commit only using the matching `settings/git-authors.tsv`
   entry, or `<agent-name>@agent.invalid` when absent. Never alter repository or
   global identity or rewrite user commits.
 - Git history recovers tracked files. Delete confirmed disposable generated
@@ -155,7 +154,7 @@
   are limited to thin dot-source imports and aliases that expose project-owned
   entrypoint scripts. Keep all functions and reusable implementation under the
   project's maintained `scripts/` tree.
-- Keep root `_na228.ps1` a short user-facing command router. Build, launch,
+- Keep root `na228.ps1` a short user-facing command router. Build, launch,
   watcher, release, validation, and other implementation logic belongs under
   the maintained `scripts/` tree; the root entrypoint only parses and
   dispatches modes.

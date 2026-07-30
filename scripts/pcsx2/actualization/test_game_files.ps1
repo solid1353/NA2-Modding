@@ -36,7 +36,7 @@ try {
         Out-Null
 
     $catalog = Get-Content -Raw -LiteralPath (
-        Join-Path $PSScriptRoot '..\..\..\games.json'
+        Join-Path $PSScriptRoot '..\..\..\settings\games.json'
     ) | ConvertFrom-Json
     $cheatTemplate = Join-Path $cheats (
         [IO.Path]::GetFileName([string]$catalog.builds.cheat_template)

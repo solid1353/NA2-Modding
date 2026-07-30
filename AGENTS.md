@@ -104,9 +104,9 @@ Detailed command and task behavior is in
 ## Universal repository boundaries
 
 - Use repository-relative paths in canonical project files. Machine-specific
-  absolute paths are allowed only in dated `.agents/` handoffs, transient tool
-  arguments or diagnostics, and user-facing clickable file links unless the
-  user authorizes a specific exception.
+  absolute paths are allowed only in transient tool arguments or diagnostics
+  and user-facing clickable file links unless the user authorizes a specific
+  exception.
 - Treat user edits and commits as expected. Refresh Git before Git operations,
   preserve unrelated work, and stage only intended changes.
 - Commit and push every completed change automatically with the authoring
@@ -173,7 +173,7 @@ Detailed command and task behavior is in
   recreate its complete `work/<exact task title>/pcsx2/` copy without another
   destructive-action approval. This authority never extends to another task's
   copy, `@pcsx2_clean`, `@pcsx2_dev`, or `@pcsx2_stable`.
-- `na228 t` and `_na228.ps1 t` run the retained Test ISO; `na228 bt` builds
+- `na228 t` and `na228.ps1 t` run the retained Test ISO; `na228 bt` builds
   Test and then runs it, while `na228 build t` is the explicit build-only form.
   These commands never mean the test suite. The full builder test suite is
   `python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'`.
@@ -215,7 +215,7 @@ Read the matching policy before acting:
   cleanup:
   [`docs/policies/repository.md`](docs/policies/repository.md)
 - Cross-chat routing, concurrency, Notifications, Task coordinator, and
-  `.agents/` handoffs:
+  workstream-owned state:
   [`docs/policies/coordination.md`](docs/policies/coordination.md)
 - ISO builds, actualization, PCSX2, savestates, and runtime testing:
   [`docs/policies/testing.md`](docs/policies/testing.md)

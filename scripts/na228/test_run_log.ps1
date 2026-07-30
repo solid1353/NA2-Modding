@@ -95,7 +95,7 @@ try {
 
     $fakeRepository = Join-Path $testRoot 'help-project'
     New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository 'scripts\lib') | Out-Null
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\..\_na228.ps1') -Destination $fakeRepository
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\..\na228.ps1') -Destination $fakeRepository
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\lib\project_paths.ps1') `
         -Destination (Join-Path $fakeRepository 'scripts\lib')
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\lib\run_log.ps1') `
@@ -110,6 +110,8 @@ try {
     New-Item -ItemType Directory -Force -Path $fakeReleaseScripts | Out-Null
     $fakeInjectionScripts = Join-Path $fakeRepository 'scripts\injection'
     New-Item -ItemType Directory -Force -Path $fakeInjectionScripts | Out-Null
+    $fakeSettings = Join-Path $fakeRepository 'settings'
+    New-Item -ItemType Directory -Force -Path $fakeSettings | Out-Null
     Copy-Item `
         -LiteralPath (Join-Path $PSScriptRoot '..\injection\watch_targets.ps1') `
         -Destination $fakeInjectionScripts
@@ -137,8 +139,8 @@ try {
     "work": "work"
   },
   "files": {
-    "game_catalog": "@repository/games.json",
-    "watch_catalog": "@repository/watchers.json",
+    "game_catalog": "@repository/settings/games.json",
+    "watch_catalog": "@repository/settings/watchers.json",
     "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
     "na228_game_launch_command": "@scripts/na228/launch_games.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1",
@@ -148,7 +150,7 @@ try {
   }
 }
 '@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'watchers.json') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeSettings 'watchers.json') -Content @'
 {
   "schema_version": 1,
   "targets": {
@@ -160,7 +162,7 @@ try {
 }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'project-paths.json') -Content $manifest
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'games.json') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeSettings 'games.json') -Content @'
 {
   "schema_version": 1,
   "builds": {
@@ -191,7 +193,7 @@ try {
     )) {
         New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository $directory) | Out-Null
     }
-    $helpText = (& (Join-Path $fakeRepository '_na228.ps1') help) -join "`n"
+    $helpText = (& (Join-Path $fakeRepository 'na228.ps1') help) -join "`n"
     Assert-Na2Test `
         -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'logs\na228'))) `
         -Message 'Help invocation created run logs.'
@@ -360,7 +362,7 @@ else {
     & (Join-Path $fakeActualizationScripts 'act.ps1') na228
     $na2ActRejected = $false
     try {
-        & (Join-Path $fakeRepository '_na228.ps1') act
+        & (Join-Path $fakeRepository 'na228.ps1') act
     }
     catch {
         $na2ActRejected = $_.Exception.Message -match 'Unknown game name: act'
@@ -370,7 +372,7 @@ else {
         -Message 'The retired na228 act route was not rejected.'
     $dashedModeRejected = $false
     try {
-        & (Join-Path $fakeRepository '_na228.ps1') -b
+        & (Join-Path $fakeRepository 'na228.ps1') -b
     }
     catch {
         $dashedModeRejected = $true
@@ -380,7 +382,7 @@ else {
         -Message 'The retired dashed build mode was not rejected.'
     $launchSubcommandRejected = $false
     try {
-        & (Join-Path $fakeRepository '_na228.ps1') launch na2 nun5
+        & (Join-Path $fakeRepository 'na228.ps1') launch na2 nun5
     }
     catch {
         $launchSubcommandRejected = $true
@@ -399,7 +401,7 @@ else {
         0
     }
     $multiGameLaunch = (
-        & (Join-Path $fakeRepository '_na228.ps1') na2 nun5
+        & (Join-Path $fakeRepository 'na228.ps1') na2 nun5
     ) -join "`n"
     Assert-Na2Test `
         -Condition ($multiGameLaunch -match '\[fake\] multi-game launch na2,nun5') `
@@ -417,14 +419,14 @@ else {
         -Condition ($launchLogSectionsAfter -eq $launchLogSectionsBefore) `
         -Message 'Unified multi-game launch changed builder run logs.'
     $release = (
-        & (Join-Path $fakeRepository '_na228.ps1') release 1.2.3
+        & (Join-Path $fakeRepository 'na228.ps1') release 1.2.3
     ) -join "`n"
     Assert-Na2Test `
         -Condition ($release -match '\[fake\] release 1\.2\.3') `
         -Message 'Release dispatch did not preserve its optional version.'
     $extraReleaseArgumentRejected = $false
     try {
-        & (Join-Path $fakeRepository '_na228.ps1') release 1.2.3 extra
+        & (Join-Path $fakeRepository 'na228.ps1') release 1.2.3 extra
     }
     catch {
         $extraReleaseArgumentRejected = (
@@ -441,10 +443,10 @@ else {
         }
     ).Count
     $latestLaunch = (
-        & (Join-Path $fakeRepository '_na228.ps1') l
+        & (Join-Path $fakeRepository 'na228.ps1') l
     ) -join "`n"
     $previousLaunch = (
-        & (Join-Path $fakeRepository '_na228.ps1') p
+        & (Join-Path $fakeRepository 'na228.ps1') p
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
@@ -457,7 +459,7 @@ else {
         ) `
         -Message 'Previous selector alias did not resolve through game launch.'
     $testLaunch = (
-        & (Join-Path $fakeRepository '_na228.ps1') t
+        & (Join-Path $fakeRepository 'na228.ps1') t
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
@@ -475,11 +477,11 @@ else {
             $launchActualizationCountBefore
         ) `
         -Message 'Launch-only selectors invoked actualization.'
-    & (Join-Path $fakeRepository '_na228.ps1') worker 'work\General\build\agent.iso'
-    & (Join-Path $fakeRepository '_na228.ps1') validate
-    & (Join-Path $fakeRepository '_na228.ps1') build l
+    & (Join-Path $fakeRepository 'na228.ps1') worker 'work\General\build\agent.iso'
+    & (Join-Path $fakeRepository 'na228.ps1') validate
+    & (Join-Path $fakeRepository 'na228.ps1') build l
     $latestBuildRoles = Get-Content -LiteralPath $actualizationCallLog -Tail 1
-    & (Join-Path $fakeRepository '_na228.ps1') build t
+    & (Join-Path $fakeRepository 'na228.ps1') build t
     $testBuildRoles = Get-Content -LiteralPath $actualizationCallLog -Tail 1
     Assert-Na2Test `
         -Condition ($latestBuildRoles -ceq 'latest,previous') `
@@ -488,7 +490,7 @@ else {
         -Condition ($testBuildRoles -ceq 'test') `
         -Message 'Test build did not actualize only Test.'
     $composedRecipe = (
-        & (Join-Path $fakeRepository '_na228.ps1') nun5 btw
+        & (Join-Path $fakeRepository 'na228.ps1') nun5 btw
     ) -join "`n"
     Assert-Na2Test `
         -Condition ($composedRecipe -match 'multi-game launch nun5,test') `
@@ -497,7 +499,7 @@ else {
         -Condition ($composedRecipe -match '\[fake\] watch 28015') `
         -Message 'Trailing watch suffix did not select the second game PINE port.'
     $leadingBuildWatch = (
-        & (Join-Path $fakeRepository '_na228.ps1') blw nun5
+        & (Join-Path $fakeRepository 'na228.ps1') blw nun5
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
@@ -506,7 +508,7 @@ else {
         ) `
         -Message 'Leading build/watch token did not preserve window order.'
     $namedBuildWatch = (
-        & (Join-Path $fakeRepository '_na228.ps1') blw font nun5
+        & (Join-Path $fakeRepository 'na228.ps1') blw font nun5
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
@@ -518,7 +520,7 @@ else {
         ) `
         -Message 'Whole-Font watch target did not preserve launch order or selection.'
     $directPlanWatch = (
-        & (Join-Path $fakeRepository '_na228.ps1') `
+        & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
             btw `
             'work\Font\operations\jutsu_names_overlay.json'
@@ -532,7 +534,7 @@ else {
         ) `
         -Message 'Direct overlay-plan watch target was not forwarded.'
     $standaloneNamedWatch = (
-        & (Join-Path $fakeRepository '_na228.ps1') w font
+        & (Join-Path $fakeRepository 'na228.ps1') w font
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
@@ -543,7 +545,7 @@ else {
         ) `
         -Message 'Standalone whole-Font watch target was not forwarded.'
     $latestWatch = (
-        & (Join-Path $fakeRepository '_na228.ps1') lw
+        & (Join-Path $fakeRepository 'na228.ps1') lw
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
@@ -551,7 +553,7 @@ else {
             $latestWatch -match '\[fake\] watch 28014'
         ) `
         -Message 'Latest watch token did not launch and watch Latest.'
-    & (Join-Path $fakeRepository '_na228.ps1')
+    & (Join-Path $fakeRepository 'na228.ps1')
     $fakeLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\latest.log'))
     $fakeRolling = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\rolling.log'))
     Assert-Na2Test -Condition ($fakeLatest -match '(?m)^mode: build$') -Message 'Root build mode was not logged.'

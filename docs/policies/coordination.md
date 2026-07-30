@@ -157,14 +157,13 @@
   `TASKS.md` and dedicated context created for that update. Actualize chats only
   for whole-subsection creation, rename, status move, or deletion.
 
-## Cross-install handoffs
+## Workstream-owned state
 
-- `.agents/` is intentional installation-context infrastructure, not clutter,
-  but workstream resume handoffs never live there.
-- `.agents/git-authors.tsv` stores non-secret author identities only.
-- Dated handoffs are context snapshots subordinate to live repository state,
-  rules, docs, and user instructions. Machine paths and task IDs may appear
-  only as originating-install context.
-- Workstream resume handoffs are canonical documents placed directly beside
-  the owning `docs/workstreams/<workstream>/README.md`; they use
-  repository-relative paths and omit installation-specific task IDs.
+- The repository has no cross-install or OS-migration handoff procedure.
+- Every agent records durable recurring rules, resumable execution state, and
+  linked plans only in its owning `docs/workstreams/<workstream>/` tree.
+- Workstream documents use repository-relative paths and omit installation-
+  specific task IDs. Live repository state, rules, and user instructions remain
+  authoritative.
+- Shared non-secret agent identities and notification state live under
+  `settings/`; they are configuration, not handoffs.

@@ -1,6 +1,6 @@
 # Script layout
 
-`_na228.ps1` is the routine user-facing build/launch command.
+`na228.ps1` is the routine user-facing build/launch command.
 `pcsx2/actualization/act.ps1` is the standalone user-facing actualization
 command.
 Everything else below `scripts/` is an internal workflow helper, a focused
@@ -18,7 +18,7 @@ history; do not recreate an archive directory for dead scripts.
   standard workstream build/reload/apply command, and the user-only save
   watcher.
 - `na228/`: build/launch execution, promotion, ISO identity, worker-path
-  validation, and focused build/run-log tests. Root `_na228.ps1` owns argument
+  validation, and focused build/run-log tests. Root `na228.ps1` owns argument
   parsing and dispatches substantive execution to `na228/run.ps1`.
 - `pcsx2/`: PCSX2 launch, worker-runtime copying, configuration, CRC helpers,
   the user-facing user/development single-instance and multi-game launch
@@ -196,11 +196,12 @@ The applier preserves the VM's prior running/paused state, writes the fragment
 and guarded callers while paused, clears execution caches, and uses no PNACH or
 cheat-folder state. `scripts/injection/watch.ps1` is the user-only equivalent;
 omit `-SourcePath`, `-SourceId`, and `-Entry` for the root smoke source, or pass
-an owning feature source/entry or overlay plan explicitly. `watchers.json`
-declares reusable user-facing target names; a direct task-owned overlay-plan
+an owning feature source/entry or overlay plan explicitly.
+`settings/watchers.json` declares reusable user-facing target names; a direct
+task-owned overlay-plan
 path remains valid for current experiments. The compact `w` suffix chooses the
 PCSX2 instance, while the following optional target chooses what is rebuilt:
-`na228 nun5 blw font-controls`. Standalone `na228 w [target|plan]` uses the
+`na228 nun5 blw font`. Standalone `na228 w [target|plan]` uses the
 configured development PINE port. Both forms wait up to 60 seconds for a live
 VM with the resident payload and injection target loaded. Agents invoke
 `test.ps1` and never run the watcher or its build/apply stages separately.
@@ -253,7 +254,7 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 
 | Former path | Recovery commit | Retirement and maintained replacement |
 | --- | --- | --- |
-| `scripts/pcsx2/game_commands.ps1` and `launch_pair.ps1` | `dae022c8` | Separate source-game functions and the pair/multi-game alias were consolidated into `_na228.ps1` command routing and `scripts/na228/launch_games.ps1`. Pass game selectors directly to `na228`. |
+| `scripts/pcsx2/game_commands.ps1` and `launch_pair.ps1` | `dae022c8` | Separate source-game functions and the pair/multi-game alias were consolidated into `na228.ps1` command routing and `scripts/na228/launch_games.ps1`. Pass game selectors directly to `na228`. |
 | `scripts/pcsx2/capture_state_screenshot.ps1` | `ec4b8276193bc214b526d5ab4f4f85b240ef7949` | Retired because it serialized a complete savestate solely to obtain a fresh screenshot. Extract `Screenshot.png` directly from an existing state; use `scripts/pcsx2/pine.py screenshot` for a fresh runtime frame. |
 | `injection_lab/gen_pnach.py`, `linker.asm`, `overlay_writer.py`, `production_adapter.py`, `screenshot.ps1`, `test.ps1`, and `watch.ps1` | `35628bb4` | The PNACH transport, alternating banks, install/restore state, standalone screenshot helper, and Lab wrapper were retired after the direct-PINE workflow was proven. Workstreams use the unrelated maintained `scripts/injection/test.ps1`; user live editing uses `scripts/injection/watch.ps1`. |
 | `scripts/archive/replace_iso_file_same_size.ps1` | `858da62aacc5d9571bdef072e36b484efddc15e9` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na228_builder.image_assembler`. |

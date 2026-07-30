@@ -224,7 +224,7 @@ class ProjectPathTests(unittest.TestCase):
                     "pcsx2_input_profiles": "pcsx2/input_profiles",
                     "pcsx2_memory_cards": "pcsx2/memory_cards",
                 },
-                "files": {"game_catalog": "@repository/games.json"},
+                "files": {"game_catalog": "@repository/settings/games.json"},
             }
             catalog = {
                 "schema_version": 1,
@@ -273,7 +273,8 @@ class ProjectPathTests(unittest.TestCase):
             }
             manifest_path = root / "project-paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
-            (root / "games.json").write_text(
+            (root / "settings").mkdir()
+            (root / "settings/games.json").write_text(
                 json.dumps(catalog),
                 encoding="utf-8",
             )
@@ -318,7 +319,7 @@ class ProjectPathTests(unittest.TestCase):
                     "pcsx2_memory_cards": "pcsx2/memory_cards",
                 },
                 "files": {
-                    "game_catalog": "@repository/games.json",
+                    "game_catalog": "@repository/settings/games.json",
                     "latest_iso": "@build/Latest.iso",
                 },
             }
@@ -342,7 +343,8 @@ class ProjectPathTests(unittest.TestCase):
             }
             manifest_path = root / "project-paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
-            (root / "games.json").write_text(
+            (root / "settings").mkdir()
+            (root / "settings/games.json").write_text(
                 json.dumps(catalog),
                 encoding="utf-8",
             )

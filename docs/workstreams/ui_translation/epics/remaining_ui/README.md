@@ -15,7 +15,8 @@ the slot 4 substitution-doll fix.
 ## Remaining subtasks
 
 - **Battle UI — substitution doll item effect, slot 4**
-  - Status: implemented; integrated post-change capture pending.
+  - Status: corrected after the rejected record-`0x2E` implementation;
+    integrated post-change capture pending.
   - Defect: Current samples the green `Recovery` label instead of the
     substitution doll icon shown by NUN5.
   - Preserved pair:

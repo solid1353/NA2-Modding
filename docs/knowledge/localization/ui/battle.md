@@ -612,45 +612,51 @@ above. The complete resident item-record tables begin at NA2 runtime
 | Role | NA2 | NUN5 |
 | --- | --- | --- |
 | Resident uniform item renderer | file `0x277160`, runtime `FUN_00377060` | file `0x284280`, runtime `FUN_00384100` |
-| Table record selected by the live doll effect | index `0x2E`, file `0x4B0D88`, runtime `0x005B0C88` | index `0x0A`, file `0x4B80C8`, runtime `0x005B7F48` |
+| Table record selected by the live doll effect | index `0x0A`, file `0x4B0BD8`, runtime `0x005B0AD8` | index `0x0A`, file `0x4B80C8`, runtime `0x005B7F48` |
 | Active homologous `TEX_xselect` sprite | `0x00E384C0` | `0x00DB5040` |
 
 The resident renderers index their tables by `recordId * 12`, copy the record's
 U/V/width/height into the sprite, center it, and call `FUN_001cc350` in NA2 or
 `FUN_001d1480` in NUN5. Their resource lookup callees are
 `FUN_00376610` / `FUN_00383470` and `FUN_00375180` / `FUN_00381fb0`.
-The BTL pickup caller supplies record `0x2E` in NA2 and record `0x0A` in NUN5;
-that caller-side semantic numbering difference is retained.
+Both live objects retain logical code `0x0A` at sprite offset `+0x0C`. The
+restored NA2 sprite initially contains U/V geometry matching record `0x2E`,
+but the first resumed updater pass replaces it from record `0x0A`.
 
 ### Reconstructed behavior and correction
 
 The matched Slot 4 states reduce the defect to:
 
 ```cpp
-// Existing game-specific callers:
-drawResidentItemSprite(na2Record[0x2E]);   // wrong after NUN5 atlas import
-drawResidentItemSprite(nun5Record[0x0A]);  // official substitution doll
+// Shared logical pickup code in the paired live objects:
+recordId = 0x0A;
+drawResidentItemSprite(recordTable[recordId]);
 
 // NA2-compatible data port:
-na2Record[0x2E] = nun5Record[0x0A];
+na2Record[0x0A] = nun5Record[0x0A];
 ```
 
 Both active sprites occupy the same pool position, use `TEX_xselect`, retain
 30x30 source dimensions and flags `0xC127FFFF`, and differ in anchor by only
-three pixels at the captured animation phase. Current's record is
-`(65,225,30,30)`, which selects the green `Recovery` artwork from the imported
-NUN5 atlas. NUN5's record is `(161,225,30,30)`, which selects the substitution
-doll. `ui_layout_item_pickup_doll_01` therefore performs one guarded 12-byte
-copy from NUN5 ELF file `0x4B80C8` to NA2 ELF file `0x4B0D88`.
+three pixels at the captured animation phase. After one updater pass, Current
+record `0x0A` supplies `(161,193,30,30)`, which selects the green `Recovery`
+artwork from the imported NUN5 atlas. NUN5 record `0x0A` supplies
+`(161,225,30,30)`, which selects the substitution doll.
+`ui_layout_item_pickup_doll_01` therefore performs one guarded same-index
+12-byte copy from NUN5 ELF file `0x4B80C8` to NA2 ELF file `0x4B0BD8`.
 
-Copying NUN5 record `0x2E` by index is a useful negative result: it contains the
-same `(65,225,30,30)` Recovery rectangle and would preserve the defect.
-Copying the whole table is likewise unsupported because the games' semantic
-record IDs are not globally aligned. The bounded cross-index donor changes no
-renderer code, item selection, item behavior, effect lifetime, animation, or
-object allocation. The record mapping is **verified** from exact source bytes
-and both retained EE images; the integrated visible result remains
-`approved_for_test` until a fresh post-change capture.
+The rejected cross-index copy from NUN5 record `0x0A` to NA2 record `0x2E` is a
+useful negative result. It altered only geometry serialized in the restored
+frame; the live updater immediately selected record `0x0A` again, and the user
+confirmed that a fresh normal build showed no visible change. An exact-guarded
+task-owned conversion of NA2 record `0x0A`, resumed for 120 ms, replaced the
+visible green label with the doll. Copying the whole table remains unsupported
+because the games' other semantic record IDs are not globally aligned. The
+bounded same-index donor changes no renderer code, item selection, item
+behavior, effect lifetime, animation, or object allocation. The selection and
+candidate result are **verified** from exact source bytes, both retained EE
+images, and the resumed task-owned state; the integrated normal-build result
+remains `approved_for_test` until a fresh post-change capture.
 
 ## Fixed two-label item status
 

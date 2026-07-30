@@ -1307,18 +1307,19 @@ fixed notification, the runtime-proven patch retains high confidence.
 
 ### ui_layout_item_pickup_doll: localized substitution-doll pickup
 
-The battle pickup effect uses the resident `TEX_xselect` sprite pool but the
-two games pass different logical record IDs for the substitution doll. In
-matched Slot 4 states, Current NA2 passes record `0x2E`, whose retained
-`(65,225,30,30)` rectangle samples the green `Recovery` label after the NUN5
-atlas import. NUN5 passes record `0x0A`, whose `(161,225,30,30)` rectangle
-selects the doll icon.
+The battle pickup effect uses the resident `TEX_xselect` sprite pool and both
+games retain logical record ID `0x0A` in the matched Slot 4 live object. The
+restored NA2 sprite briefly contains record `0x2E` geometry, but the next
+per-frame update replaces it from NA2 record `0x0A`. That record's
+`(161,193,30,30)` rectangle samples the green `Recovery` label after the NUN5
+atlas import. NUN5 record `0x0A` instead uses `(161,225,30,30)` and selects the
+doll icon.
 
-`ui_layout_item_pickup_doll` copies the complete official NUN5 record `0x0A`
-from ELF file offset `0x4B80C8` into NA2 record `0x2E` at `0x4B0D88`. The
-cross-index copy is deliberate: NUN5 record `0x2E` is the same wrong Recovery
-rectangle and therefore cannot be used as a same-index donor. No renderer,
-animation, item-selection, or gameplay code changes.
+`ui_layout_item_pickup_doll` therefore copies the complete official NUN5 record
+`0x0A` from ELF file offset `0x4B80C8` over homologous NA2 record `0x0A` at
+`0x4B0BD8`. The rejected cross-index copy into NA2 record `0x2E` changed only
+the transient restored descriptor and produced no visible change in a fresh
+normal build. No renderer, animation, item-selection, or gameplay code changes.
 
 ### ui_layout_mash_prompts: localized battle Mash prompt rectangles
 

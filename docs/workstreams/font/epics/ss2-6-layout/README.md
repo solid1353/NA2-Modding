@@ -14,10 +14,10 @@ case.
 - Mode: Continuous, limited by the user's current authorization to the
   explicitly selected Priority 3 correction.
 - Current subtask: Priority 3 — replacement ss1–ss2 Jutsu-selector evidence.
-- Pending grid: none.
-- Next action: correct the shared Jutsu-list X origin, effective wrap width,
-  and vertically squeezed wrapped-text geometry against the replacement
-  ss1–ss2 pair.
+- Pending grid:
+  `docs/workstreams/font/epics/ss2-6-layout/awaiting_approval/3-jutsu-selector.png`.
+- Next action: preserve the shown runtime-injected candidate unchanged until
+  its exact integrated ss1–ss2 result is built and explicitly user-verified.
 
 ## Scope and evidence
 
@@ -129,20 +129,24 @@ case.
 
 ### Priority 3 — replacement ss1–ss2: One Jutsu-selector defect
 
-- State: unresolved and selected for implementation. The enabled hook at BTL
-  file offset `0x90DC` remains the current integrated baseline, but the new
-  paired output proves that its behavior is not a NUN5 match.
+- State: a runtime-injected C candidate was produced and visibly shown on
+  2026-07-31. The candidate is not an integrated result, its C implementation
+  remains uncommitted, and integrated ss1–ss2 validation plus explicit user
+  acceptance remain pending.
 - ss1: fitting one-line rows are shifted right in NA2.28.
 - ss2: the effective text box is too narrow. NUN5 wraps `Explosive Destruction
   Formation` after `Destruction`, while NA2.28 wraps after `Explosive`.
 - ss2: the wrapped text is also too narrow vertically in NA2.28.
+- Shown candidate evidence: ss2 wraps after `Destruction`, preserves
+  native-height surrounding one-line rows, and was copied unchanged to
+  `work/Font/artifacts/priority3_jutsu_selector/replacement_2026-07-31/ss02_runtime_injected_candidate.png`.
 - Required result: preserve native/NUN5 glyph height, move fitting one-line
   rows to the NUN5 X origin, and use the NUN5 effective width, line break, and
   vertical glyph geometry for titles that actually wrap.
 - Older ss3–ss6 states remain regression inputs for the same caller family;
   they do not override the replacement pair.
 
-![Priority 3 Jutsu-selector unresolved baseline](pending/3-jutsu-selector.png)
+![Priority 3 Jutsu-selector runtime-injected candidate](awaiting_approval/3-jutsu-selector.png)
 
 ## Practice Settings
 

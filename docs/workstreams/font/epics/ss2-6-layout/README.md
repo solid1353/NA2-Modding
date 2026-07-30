@@ -11,16 +11,11 @@ case.
 
 ## Execution state
 
-- Mode: Continuous, limited by the user's current authorization to the
-  explicitly selected Priority 5 correction.
-- Current subtask: Priority 5 — ss8 Movie list, awaiting integrated-ISO
-  verification.
-- Pending grid: missing: exact post-change Priority 5 capture from the
-  integrated ISO.
-- Next action: verify the implemented Movie-only correction on the integrated
-  ISO and replace the missing report state with an exact native-resolution
-  result grid. Other priorities remain discussion-only until explicitly
-  authorized.
+- Mode: Continuous; the explicitly selected Priority 5 correction is complete.
+- Current subtask: none; Priority 5 is user-verified.
+- Pending grid: none.
+- Next action: await explicit authorization for another priority. Other
+  priorities remain discussion-only.
 
 ## Scope and evidence
 
@@ -125,19 +120,18 @@ case.
 ### Priority 5 — ss8: Movie list
 
 - State: corrected in canonical C, compose-validated, and exercised as a
-  runtime-injected candidate on the supplied ss8 state. The user accepted that
-  displayed candidate on 2026-07-30. The previous grid was not representative
-  of the integrated ISO and remains removed; exact integrated-ISO output is
-  still pending.
+  runtime-injected candidate on the supplied ss8 state. The user then verified
+  the exact integrated-ISO result on 2026-07-30. The previous
+  nonrepresentative grid remains removed, and no accepted grid is retained.
 - Implemented result: one-line Movie rows bypass the wrapper completely. Only
   titles that actually wrap use the 192-unit two-line layout and 16-unit line
   interval; those wrapped rows retain native glyph geometry instead of
   receiving the 20-unit glyph-height override. Selection style, source strings,
   fixed caller cadence, character-detail branches, and every non-Movie caller
   remain unchanged.
-- Evidence requirement: development injection may be reported only as a
-  runtime-injected candidate. The canonical result grid requires untouched
-  NUN5 and exact integrated-ISO captures at native resolution.
+- Evidence: development injection established the candidate appearance; the
+  user's subsequent integrated-ISO verification establishes the accepted
+  shipped result.
 
 ### Priority 6 — ss9–ss10: Character move lists
 
@@ -164,11 +158,9 @@ Priority is determined by the most efficient implementation order.
 4. **ss7 — Collection exit confirmation.** Implementation is ready, but the
    supplied visible-prompt state resumes after both owner calls; final runtime
    construction evidence remains queued.
-5. **ss8 — Movie list.** Corrected and compose-validated. A runtime-injected
-   candidate preserves native one-line rows and native glyph height for fitting
-   wrapped rows and was user-accepted on 2026-07-30; the previous
-   nonrepresentative grid is removed and exact integrated-ISO evidence is
-   pending.
+5. **ss8 — Movie list.** Corrected, compose-validated, and user-verified on the
+   integrated ISO on 2026-07-30. One-line rows and fitting wrapped rows retain
+   native glyph height; the previous nonrepresentative grid remains removed.
 6. **ss9–ss10 — Character move lists.** Implemented, agent-validated on both
    supplied states through one pointer-bounded shared entry, and visibly
    delivered; explicit user acceptance remains pending.

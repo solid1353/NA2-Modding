@@ -1177,10 +1177,10 @@ glyph geometry on the wrapped rows. Its screenshot SHA-256 is
 `E26CA0B3F66E413CE55EBA562C7760E6EF539CE6A6096D327D6006510E0391E5`;
 the injected fragment SHA-256 is
 `1BBA7F25F2CEB3E887B8AB101D36BAF80AD7B531667DC01566F657E1BE7DC06C`.
-This is candidate evidence only, not integrated-ISO proof. Confidence is
-**high** for the bounded Movie branch and runtime appearance; status remains
-**approved for test** pending an exact integrated-ISO capture and user
-acceptance.
+The user subsequently verified the exact integrated-ISO result on 2026-07-30.
+Confidence is **verified** for the bounded Movie branch and runtime appearance;
+status is **runtime proven**. The character-detail branches remain a separate
+review boundary.
 
 ### Character Select modal selected row, return body, and choice list
 

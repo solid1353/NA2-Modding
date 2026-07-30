@@ -75,8 +75,15 @@
 - Policy adjustments prevent the failed behavior across its applicable scope;
   they do not encode an incident's exact path, artifact, task title, or other
   one-off detail unless the rule inherently applies only there.
+- A `sin` report is an allegation, not proof of guilt. `Policeman` arrests or
+  confronts a task as an offender only after evidence confirms that the task's
+  action violated an exact rule that was live when it acted. A newly added or
+  clarified rule cannot retroactively turn previously permitted behavior into
+  a violation.
 - Every confirmed-violation confrontation tells the offending task exactly:
-  `YOU'RE UNDER ARREST.`
+  `YOU'RE UNDER ARREST.` When no live-rule violation is confirmed, do not use
+  that statement or label the reported task an offender; start the enforcement
+  response exactly with `Charges lifted.`
 - It also directs the offending task to correct the violation and any resulting
   noncompliant state itself. This is standing authorization only for remediation
   needed to restore compliance within the work's previously authorized scope;

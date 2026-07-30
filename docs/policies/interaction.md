@@ -73,6 +73,10 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   visual comparison, implementation, commit/push, silence, moving to another
   case, or an unrelated continuation command never implies user acceptance.
   Keep agent validation and pending user acceptance as separate statuses.
+- Positive feedback about candidate evidence confirms only what the user
+  explicitly praised. It does not accept an integrated result, satisfy a
+  required user runtime test, or authorize promotion, closure, or cleanup
+  unless the user explicitly confirms that exact boundary.
 - If the user orders A, then a stop for testing, review, or acceptance, then B,
   complete A and stop. Requests to finish, batch changes, or use one commit do
   not permit B. Continue to B only when the user explicitly says to skip the

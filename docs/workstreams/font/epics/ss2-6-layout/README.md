@@ -12,14 +12,12 @@ case.
 ## Execution state
 
 - Mode: Continuous, limited by the user's current authorization to the
-  explicitly selected Priority 4 correction.
-- Current subtask: Priority 4 — ss7 Collection exit confirmation.
-- Pending grid: missing: exact post-change Priority 4 capture from a newly
-  constructed Collection exit prompt.
-- Next action: run an ISO containing commit `76e5023f`, open
-  `Quit Collection?` normally, and supply one fresh visible-prompt screenshot
-  or savestate. The retained visible-prompt ss7 was constructed before the
-  enabled hooks and cannot prove this result.
+  explicitly selected Priority 3 correction.
+- Current subtask: Priority 3 — replacement ss1–ss2 Jutsu-selector evidence.
+- Pending grid: missing: canonical Priority 3 ss1–ss2 baseline update from the
+  newly copied paired batch.
+- Next action: finish the required paired-input provenance and canonical-grid
+  update, then correct the shared list X origin and effective box width.
 
 ## Scope and evidence
 
@@ -106,23 +104,18 @@ case.
 
 ### Priority 4 — ss7: Exit confirmation
 
-- State: selected again by the user on 2026-07-30. The bounded C/file-backed
-  implementation remains enabled from commit `76e5023f`; its exact guards,
-  compilation, relocation, fragment reconstruction, and current full-profile
-  composition are agent-validated. Clean-construction runtime output and user
-  acceptance remain pending.
-- Result design: route only ETC body object `+4` through the existing wrapped
-  body primitive at local `(24,12)` in a 400-by-60 box, and scope only choice
-  object `+8` through the accepted Yes/No mapper. Native Collection inputs
-  `(50,24)` and `(50,56)` already match that mapper's source keys.
-- Validation limitation: the supplied visible-prompt ss7 state resumes after
-  both owner calls. Its baseline frame is retained below, but it cannot produce
-  the required post-change result or validate clean modal construction.
-- Remaining action: open the exit prompt normally in an ISO containing commit
-  `76e5023f` and supply one fresh visible-prompt screenshot or savestate. No
-  agent menu navigation is permitted or required.
+- State: unresolved. Commit `76e5023f` installed bounded C/file-backed hooks
+  and the current profile composes, but the accurate integrated-game grid below
+  still shows an unacceptable result. Existing code and successful composition
+  do not make this subtask implemented.
+- Remaining defect: the displayed prompt/body and choice layout still fail the
+  requested NUN5 match. The existing grid is the authoritative failing
+  evidence; the user does not need to reproduce it.
+- Remaining action: diagnose and change the actual Priority 4 result when the
+  user authorizes returning to this subtask. Do not replace the grid with a
+  missing-input claim.
 
-![Priority 4 Collection confirmation baseline](pending/4-collection-confirmation.png)
+![Priority 4 unresolved integrated result](pending/4-collection-confirmation.png)
 
 ### Priority 5 — ss8: Movie list
 
@@ -173,9 +166,9 @@ Priority is determined by the most efficient implementation order.
 2. **supplemental ss1–ss2 — Character Select option lists.** User-accepted.
 3. **ss3–ss6 — one Jutsu-selector defect.** Implemented, agent-validated, and
    visibly delivered; explicit user acceptance is pending.
-4. **ss7 — Collection exit confirmation.** Implementation is ready, but the
-   supplied visible-prompt state resumes after both owner calls; final runtime
-   construction evidence remains queued.
+4. **ss7 — Collection exit confirmation.** Unresolved: the accurate integrated
+   grid still shows an unacceptable result despite the enabled hooks and
+   successful composition.
 5. **ss8 — Movie list.** Corrected, compose-validated, and user-verified on the
    integrated ISO on 2026-07-30. One-line rows and fitting wrapped rows retain
    native glyph height; the previous nonrepresentative grid remains removed.

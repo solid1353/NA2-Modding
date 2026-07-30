@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
     [switch]$CandidateOnly,
+    [switch]$ComposeOnly,
     [string]$WorkerOutputIso
 )
 
@@ -10,8 +11,14 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'worker_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
-if ($CandidateOnly -and -not [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
-    throw '-CandidateOnly and -WorkerOutputIso are mutually exclusive.'
+if (
+    @(
+        $CandidateOnly.IsPresent
+        $ComposeOnly.IsPresent
+        -not [string]::IsNullOrWhiteSpace($WorkerOutputIso)
+    ).Where({ $_ }).Count -gt 1
+) {
+    throw '-CandidateOnly, -ComposeOnly, and -WorkerOutputIso are mutually exclusive.'
 }
 $workerBuild = if (-not [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
     Get-Na2WorkerBuildContext `
@@ -159,6 +166,40 @@ $logDirectory = Join-Path $projectPaths.logs 'na228'
 $buildLogRoot = Join-Path $logDirectory 'builds'
 $receiptPath = Join-Path $logDirectory 'preflight\current.json'
 $candidateIso = "$resolvedOutputIso.building"
+
+if ($ComposeOnly) {
+    $composeArguments = @(
+        '-B'
+        '-m', 'na228_builder.build_profile'
+        '--source', $inputIso
+        '--profile', $profile
+        '--compose-only'
+    )
+    Write-Host (
+        '[na228] Compose-only: derive and conflict-check the full pinned profile; ' +
+        'preflight reuse and ISO staging are disabled.'
+    ) -ForegroundColor Cyan
+    Push-Location $projectPaths.repository
+    try {
+        $composeOutput = & python @composeArguments
+        $composeExitCode = $LASTEXITCODE
+    }
+    finally {
+        Pop-Location
+    }
+    $composeOutput | ForEach-Object { Write-Host $_ }
+    if ($composeExitCode -ne 0) {
+        throw "NA2 profile composition failed (exit $composeExitCode)."
+    }
+    Write-Host '[na228] Profile composition valid; no ISO produced.' -ForegroundColor Cyan
+    return [pscustomobject]@{
+        Status = 'validated'
+        CurrentIso = $resolvedOutputIso
+        PreviousIso = $resolvedPreviousIso
+        Rotated = $false
+        PreflightCacheHit = $false
+    }
+}
 
 if ($CandidateOnly -or $null -ne $workerBuild) {
     $candidateBuildId = (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"

@@ -4,6 +4,7 @@ param(
     [ValidateSet(
         'worker-build',
         'candidate-build',
+        'validate',
         'build-only',
         'build-and-launch'
     )]
@@ -44,6 +45,7 @@ elseif ($WorkerOutputIso -or $WorkerLogDirectory) {
 $runMode = switch ($Action) {
     'worker-build' { 'worker-build' }
     'candidate-build' { 'candidate-build' }
+    'validate' { 'validate' }
     default { 'build' }
 }
 $runLog = $null
@@ -65,6 +67,13 @@ $runOutcome = 'failed'
 $runFailure = ''
 try {
     switch ($Action) {
+        'validate' {
+            Write-Na2Stage 'Validate full current-profile composition without staging an ISO'
+            $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') -ComposeOnly
+            if (-not $buildResult -or $buildResult.Status -ne 'validated') {
+                throw 'Profile composition did not return a valid result.'
+            }
+        }
         'worker-build' {
             $portableOutput = ConvertTo-Na2ProjectPath `
                 -Path $WorkerOutputIso `

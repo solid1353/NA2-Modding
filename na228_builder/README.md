@@ -96,6 +96,12 @@ python -m pip install -r na228_builder/requirements.txt
 & scripts/na228/build.ps1
 ```
 
+`na228 validate` runs the same module derivation, edit composition, payload
+linking, identity closure, and insertion/replacement planning against the real
+source images, but bypasses preflight reuse and stops before ISO staging. It
+does not promote or rotate images, update build receipts, actualize PCSX2
+files, or launch PCSX2.
+
 Before staging, `na228_builder/build_preflight.py` hashes both canonical source
 ISOs, the complete `na228_builder/` tree except generated Python caches, the
 selected profile path, and active Python/Zlib/Zopfli versions. A valid receipt

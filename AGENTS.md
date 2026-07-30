@@ -172,6 +172,11 @@ Detailed command and task behavior is in
   `python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'`.
   Never infer command semantics from a flag name; verify the documented exact
   command before execution.
+- Before completing a turn that changes active profile inputs, feature patches,
+  modules, payload code, or composition logic, run `na228 validate`. It derives
+  and conflict-checks the full pinned profile against the real source images
+  without preflight reuse or ISO staging. Unit tests and focused package checks
+  do not replace this integration gate.
 - Keep hypothesis/candidate checks outside the permanent tracked suite and
   normal builds. Permanent coverage begins only after explicit user acceptance
   of the exact behavior; static-only coverage requires explicit user approval.

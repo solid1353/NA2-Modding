@@ -193,6 +193,9 @@ try {
         -Condition ($helpText -match '(?m)^\s*na228 worker work/') `
         -Message 'Root help omitted the explicit worker-build command.'
     Assert-Na2Test `
+        -Condition ($helpText -match '(?m)^\s*na228 validate\s') `
+        -Message 'Root help omitted the compose-only validation command.'
+    Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 (?:bw|tw) ') `
         -Message 'Root help hardcodes composed recipe groups.'
     Assert-Na2Test `
@@ -281,7 +284,11 @@ param([string]$Version)
 Write-Output "[fake] release $Version"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'build.ps1') -Content @'
-param([switch]$CandidateOnly, [string]$WorkerOutputIso)
+param(
+    [switch]$CandidateOnly,
+    [switch]$ComposeOnly,
+    [string]$WorkerOutputIso
+)
 if ($WorkerOutputIso) {
     Write-Host '[na228] ISO result: worker; rotation: no; PCSX2 left running.'
     [pscustomobject]@{ Status = 'worker' }
@@ -289,6 +296,10 @@ if ($WorkerOutputIso) {
 elseif ($CandidateOnly) {
     Write-Host '[na228] ISO result: candidate; rotation: no; PCSX2 left running.'
     [pscustomobject]@{ Status = 'candidate' }
+}
+elseif ($ComposeOnly) {
+    Write-Host '[na228] Profile composition valid; no ISO produced.'
+    [pscustomobject]@{ Status = 'validated' }
 }
 else {
     Write-Host '[na228] ISO result: unchanged; rotation: no.'
@@ -419,6 +430,7 @@ else {
         -Message 'Previous selector alias did not resolve through game launch.'
     & (Join-Path $fakeRepository '_na228.ps1') t
     & (Join-Path $fakeRepository '_na228.ps1') worker 'work\General\build\agent.iso'
+    & (Join-Path $fakeRepository '_na228.ps1') validate
     & (Join-Path $fakeRepository '_na228.ps1') b
     $composedRecipe = (
         & (Join-Path $fakeRepository '_na228.ps1') bw c nun5
@@ -437,6 +449,7 @@ else {
         'actualize',
         'actualize-na228',
         'candidate-build',
+        'validate',
         'build'
     )) {
         Assert-Na2Test `
@@ -444,7 +457,7 @@ else {
             -Message "$mode dispatch was not logged."
     }
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 6) `
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 7) `
         -Message 'Root dispatch test produced the wrong rolling-log section count.'
     Assert-Na2Test `
         -Condition (-not (Test-Na2WindowsAbsolutePath -Text $fakeRolling)) `

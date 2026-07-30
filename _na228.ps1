@@ -43,6 +43,7 @@ if ($mode -eq 'help') {
         "  na228       Build the pinned current profile, conditionally rotate, then run $currentIsoName"
         "  na228 b     Build and conditionally rotate $currentIsoName without launching PCSX2"
         "  na228 t     Build build/$candidateIsoName without changing Current/Previous"
+        '  na228 validate  Compose and conflict-check the pinned profile without producing an ISO'
         '  na228 w     Watch src/ and hot-reload saved C changes into dev PCSX2'
         '  na228 <recipe> [games...]  Compose b or t, game launch, and optional final w'
         '  na228 <game> [games...]  Launch and tile selected games'
@@ -65,6 +66,14 @@ if ($mode -eq 'release') {
         $releaseArguments.Version = $arguments[0]
     }
     & $projectPaths.files.release_publish_command @releaseArguments
+    return
+}
+
+if ($mode -eq 'validate') {
+    if ($arguments.Count -gt 0) {
+        throw 'na228 validate accepts no arguments.'
+    }
+    & (Join-Path $projectPaths.scripts 'na228\run.ps1') -Action validate
     return
 }
 

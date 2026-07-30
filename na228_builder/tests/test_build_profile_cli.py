@@ -13,6 +13,64 @@ from na228_builder import build_profile
 
 
 class BuildProfileCliTests(unittest.TestCase):
+    def test_compose_only_skips_output_staging_and_profile_logs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory).resolve()
+            source_iso = workspace / "source.iso"
+            source_iso.write_bytes(b"source")
+            profile_directory = workspace / "profiles" / "current"
+            profile = SimpleNamespace(profile_id="current", features=(), modules=())
+            plan = SimpleNamespace(
+                replacements=(object(), object()),
+                insertions=(object(),),
+                renames=(object(),),
+            )
+            composed = build_profile.ProfileCompositionResult(
+                results=(),
+                payload_result=None,
+                composition=SimpleNamespace(
+                    plan=plan,
+                    identity_edits=({"target": "SYSTEM.CNF"},),
+                ),
+                insertion_owners={},
+            )
+            arguments = [
+                "build_profile",
+                "--source",
+                str(source_iso),
+                "--profile",
+                str(profile_directory),
+                "--compose-only",
+            ]
+
+            output = io.StringIO()
+            with (
+                patch.object(sys, "argv", arguments),
+                patch.object(
+                    build_profile,
+                    "PROJECT_PATHS",
+                    new=SimpleNamespace(repository=workspace),
+                ),
+                patch.object(build_profile, "load_profile", return_value=profile),
+                patch.object(
+                    build_profile,
+                    "compose_profile_candidate",
+                    return_value=composed,
+                ) as compose,
+                patch.object(build_profile, "build_profile_candidate") as build,
+                redirect_stdout(output),
+            ):
+                self.assertEqual(build_profile.main(), 0)
+
+            compose.assert_called_once_with(source_iso=source_iso, profile=profile)
+            build.assert_not_called()
+            self.assertIn("identity (1 edits)", output.getvalue())
+            self.assertIn(
+                "Validated composition: 2 replacements, 1 insertions, "
+                "1 renames; no ISO staged.",
+                output.getvalue(),
+            )
+
     def test_normal_cli_logs_requested_output_not_staging_candidate(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory).resolve()

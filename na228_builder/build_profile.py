@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .composer import compose_assembly_plan
+from .composer import CompositionResult, compose_assembly_plan
 from .image_assembler.assembler import (
     assemble_image,
     building_image_path,
@@ -33,6 +33,14 @@ class ProfileBuildResult:
     payload_result: dict[str, object] | None
     identity_edits: tuple[dict[str, object], ...]
     staged_iso: Path
+
+
+@dataclass(frozen=True)
+class ProfileCompositionResult:
+    results: tuple[dict[str, object], ...]
+    payload_result: dict[str, object] | None
+    composition: CompositionResult
+    insertion_owners: dict[str, str]
 
 
 def normalize(path: str) -> str:
@@ -761,6 +769,45 @@ def write_profile_log(
     )
 
 
+def compose_profile_candidate(
+    *,
+    source_iso: Path,
+    profile: Profile,
+) -> ProfileCompositionResult:
+    """Compose and conflict-check one profile without staging an image."""
+    source_iso = source_iso.resolve()
+    if not source_iso.is_file():
+        raise FileNotFoundError(source_iso)
+
+    source = Iso9660(source_iso)
+    payloads: dict[str, bytearray] = {}
+    owners: dict[str, str] = {}
+    insertions: dict[str, bytes] = {}
+    insertion_owners: dict[str, str] = {}
+    profile_results, payload_result = apply_profile_modules(
+        profile,
+        source=source,
+        payloads=payloads,
+        owners=owners,
+        insertions=insertions,
+        insertion_owners=insertion_owners,
+    )
+    composition = compose_assembly_plan(
+        source=source,
+        identity=profile.identity,
+        payloads=payloads,
+        owners=owners,
+        insertions=insertions,
+        insertion_owners=insertion_owners,
+    )
+    return ProfileCompositionResult(
+        results=tuple(profile_results),
+        payload_result=payload_result,
+        composition=composition,
+        insertion_owners=insertion_owners,
+    )
+
+
 def build_profile_candidate(
     *,
     source_iso: Path,
@@ -780,32 +827,14 @@ def build_profile_candidate(
     if profile_log_directory is not None and profile_log_directory.exists():
         raise FileExistsError(profile_log_directory)
 
-    source = Iso9660(source_iso)
-    payloads: dict[str, bytearray] = {}
-    owners: dict[str, str] = {}
-    insertions: dict[str, bytes] = {}
-    insertion_owners: dict[str, str] = {}
-    profile_results, payload_result = apply_profile_modules(
-        profile,
-        source=source,
-        payloads=payloads,
-        owners=owners,
-        insertions=insertions,
-        insertion_owners=insertion_owners,
-    )
-
-    composition = compose_assembly_plan(
-        source=source,
-        identity=profile.identity,
-        payloads=payloads,
-        owners=owners,
-        insertions=insertions,
-        insertion_owners=insertion_owners,
-    )
+    composed = compose_profile_candidate(source_iso=source_iso, profile=profile)
+    profile_results = list(composed.results)
+    payload_result = composed.payload_result
+    composition = composed.composition
     assembly = assemble_image(source_iso, output_iso, composition.plan)
     results_by_owner: dict[str, list[IsoInsertion]] = {}
     for insertion in assembly.insertions:
-        owner = insertion_owners[insertion.path]
+        owner = composed.insertion_owners[insertion.path]
         results_by_owner.setdefault(owner, []).append(insertion)
     for item in profile_results:
         module = item["module"]
@@ -861,42 +890,11 @@ def build_profile_candidate(
     )
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Build a verified staged NA2 ISO from one hash-pinned profile."
-    )
-    parser.add_argument("--source", required=True, type=Path)
-    parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument("--profile", required=True, type=Path)
-    parser.add_argument("--profile-log-directory", required=True, type=Path)
-    args = parser.parse_args()
-
-    workspace = PROJECT_PATHS.repository
-    source_iso = args.source.resolve()
-    output_iso = args.output.resolve()
-    if not source_iso.is_file():
-        raise FileNotFoundError(source_iso)
-    if source_iso == output_iso:
-        raise ValueError("Source and output ISO paths must differ")
-
-    profile_directory = args.profile if args.profile.is_absolute() else workspace / args.profile
-    profile = load_profile(profile_directory, workspace)
-    profile_log_directory = binary_patcher_module.command_relative_path(
-        str(args.profile_log_directory), "--profile-log-directory", workspace
-    )
-    if profile_log_directory.exists():
-        raise FileExistsError(profile_log_directory)
-
-    build = build_profile_candidate(
-        source_iso=source_iso,
-        output_iso=output_iso,
-        profile=profile,
-        workspace=workspace,
-        profile_log_directory=profile_log_directory,
-    )
-    profile_results = build.results
-    payload_result = build.payload_result
-
+def print_profile_summary(
+    profile: Profile,
+    profile_results: tuple[dict[str, object], ...] | list[dict[str, object]],
+    payload_result: dict[str, object] | None,
+) -> None:
     green = "\033[32m"
     reset = "\033[0m"
     print(f"Applied profile: {profile.profile_id}")
@@ -937,6 +935,69 @@ def main() -> int:
         )
         for path in sorted(str(value) for value in payload_result.get("paths", [])):
             print(f"    {green}{path}{reset}")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Build a verified staged NA2 ISO from one hash-pinned profile."
+    )
+    parser.add_argument("--source", required=True, type=Path)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--profile", required=True, type=Path)
+    parser.add_argument("--profile-log-directory", type=Path)
+    parser.add_argument(
+        "--compose-only",
+        action="store_true",
+        help="Compose and conflict-check the profile without staging an ISO.",
+    )
+    args = parser.parse_args()
+
+    workspace = PROJECT_PATHS.repository
+    source_iso = args.source.resolve()
+    if not source_iso.is_file():
+        raise FileNotFoundError(source_iso)
+
+    profile_directory = args.profile if args.profile.is_absolute() else workspace / args.profile
+    profile = load_profile(profile_directory, workspace)
+    if args.compose_only:
+        composed = compose_profile_candidate(source_iso=source_iso, profile=profile)
+        print_profile_summary(profile, composed.results, composed.payload_result)
+        plan = composed.composition.plan
+        print(f"  identity ({len(composed.composition.identity_edits)} edits)")
+        print(
+            "Validated composition: "
+            f"{len(plan.replacements)} replacements, "
+            f"{len(plan.insertions)} insertions, "
+            f"{len(plan.renames)} renames; no ISO staged."
+        )
+        return 0
+
+    if args.output is None:
+        parser.error("--output is required unless --compose-only is used")
+    if args.profile_log_directory is None:
+        parser.error(
+            "--profile-log-directory is required unless --compose-only is used"
+        )
+    output_iso = args.output.resolve()
+    if source_iso == output_iso:
+        raise ValueError("Source and output ISO paths must differ")
+    profile_log_directory = binary_patcher_module.command_relative_path(
+        str(args.profile_log_directory), "--profile-log-directory", workspace
+    )
+    if profile_log_directory.exists():
+        raise FileExistsError(profile_log_directory)
+
+    build = build_profile_candidate(
+        source_iso=source_iso,
+        output_iso=output_iso,
+        profile=profile,
+        workspace=workspace,
+        profile_log_directory=profile_log_directory,
+    )
+    profile_results = build.results
+    payload_result = build.payload_result
+
+    print_profile_summary(profile, profile_results, payload_result)
     print(f"  identity ({len(build.identity_edits)} edits)")
     print(f"Verified staged ISO: {build.staged_iso.name}")
     return 0

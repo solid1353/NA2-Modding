@@ -704,7 +704,7 @@ T674	1	Collection > Music > track title	<r帰|かえ>るべき<r場所|ばしょ
 T675	1	Collection > Music > track title	オルゴール	Music Box			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B898	NUN5_TEXTENG@0x2FF8	slot	28				
 T676	1	Collection > quit confirmation	<color080860>コレクション<color000000>を<r終了|しゅうりょう>しますか？	<BLACK>Quit <color080860>%1<BLACK>?			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24F50	NUN5_TEXTENG@0x750	slot	72	format_literal_arg1	arg1=Collection		
 T677	1	Collection > Voice > character voice title	<r悲|かな>しみと<r怒|いか>り	Sadness and Rage			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BB60	NUN5_TEXTENG@0x1E80	slot	32				
-T678	1	Collection > Voice > character voice title	ナルトの<r決意|けつい>	Naruto's Resolve			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BB80	NUN5_TEXTENG@0x28860	slot	32				
+T678	1	Collection > Voice > character voice title	ナルトの<r決意|けつい>	Naruto's Determination			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BB80	NUN5_TEXTENG@0x1EA0	slot	32				
 T679	1	Collection > Voice > character voice title	<r激情|げきじょう>	Passion			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BBA0	NUN5_TEXTENG@0x4AA9	slot	32				
 T680	1	Collection > Voice > character voice title	<r二人|ふたり>の<r繋|つな>がり	The Bond Between Us			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BBC0	NUN5_TEXTENG@0x1EC0	slot	32				
 T681	1	Collection > Voice > character voice title	<r再会|さいかい>…そして…	Reunion, and then...			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BBE0	NUN5_TEXTENG@0x1EE0	slot	32				

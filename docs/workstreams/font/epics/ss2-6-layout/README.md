@@ -68,8 +68,8 @@ case.
 
 ### Priority 2 — supplemental ss1–ss2: Character Select option lists
 
-- State: implemented, canonically validated, agent-validated, and visibly
-  delivered on 2026-07-30; explicit user acceptance remains pending.
+- State: implemented, canonically validated, agent-validated, visibly
+  delivered, and user-accepted on 2026-07-30.
 - ss1: the highlighted first player-mode row remains unchanged. The ordinary
   rows already had exact NUN5 Y bounds, but bypassed the selected row's
   NUN5-metric session, making them eight or nine pixels too wide and six pixels
@@ -79,10 +79,8 @@ case.
 - ss2: the title stays at local Y `8`; one shared `46 + 20*i` choice formula,
   with no selected-only compensation, gives exact NUN5 Y bounds for selected
   `Manual` and ordinary `Auto`.
-- Remaining action: explicit user review only. The verified return-confirmation
-  family and every unrelated caller remain unchanged.
-
-![Priority 2 Linked Mode result](awaiting_approval/2-linked-mode-modal.png)
+- The verified return-confirmation family and every unrelated caller remain
+  unchanged.
 
 ## Battle Settings / Jutsu selector
 
@@ -151,8 +149,7 @@ case.
 Priority is determined by the most efficient implementation order.
 
 1. **ss1 — Character Select return confirmation.** User-verified.
-2. **supplemental ss1–ss2 — Character Select option lists.** Implemented,
-   agent-validated, and visibly delivered; explicit user acceptance is pending.
+2. **supplemental ss1–ss2 — Character Select option lists.** User-accepted.
 3. **ss3–ss6 — one Jutsu-selector defect.** Implemented, agent-validated, and
    visibly delivered; explicit user acceptance is pending.
 4. **ss7 — Collection exit confirmation.** Implementation is ready, but the

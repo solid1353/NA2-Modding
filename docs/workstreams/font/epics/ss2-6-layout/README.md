@@ -33,6 +33,12 @@ case.
   `work/Font/inputs/screenshots/batches/2026-07-31-priority3-ss1-2/`.
 - Priority 3 replacement provenance and hashes:
   `work/Font/inputs/sstates/batches/2026-07-31-priority3-ss1-2/provenance.tsv`.
+- Supplemental Practice Settings ss3 inputs:
+  `work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss3/`.
+- Supplemental Practice Settings ss3 source screenshots:
+  `work/Font/inputs/screenshots/batches/2026-07-31-practice-settings-ss3/`.
+- Supplemental Practice Settings ss3 provenance and hashes:
+  `work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss3/provenance.tsv`.
 - Supplemental regression inputs:
   `work/Font/inputs/sstates/batches/2026-07-30-regressions/`.
 - Supplemental extracted screenshots:
@@ -59,6 +65,8 @@ case.
   presentation evidence. Its ss1 is the collapsed Jutsu list and its ss2 is
   the expanded list. Older ss3–ss6 states remain only as regression evidence
   for the same caller family.
+- The 2026-07-31 paired ss3 state is a separate Practice Settings list case.
+  It is not part of Priority 3 and does not replace any Jutsu-selector input.
 - Every slot is loaded directly. The user supplied the exact Priority 3
   constructor sequence ss3 -> Cross -> ss4 -> Circle -> ss5 -> Cross -> ss6,
   but the final draw-time caller executes after direct ss5 and ss6 reloads, so
@@ -111,6 +119,24 @@ case.
   they do not override the replacement pair.
 
 ![Priority 3 Jutsu-selector unresolved baseline](pending/3-jutsu-selector.png)
+
+## Practice Settings
+
+### Priority 7 — supplemental ss3: Left option-label column
+
+- State: unresolved paired baseline added on 2026-07-31; it is not selected
+  for implementation by the current Priority 3 authorization.
+- Every visible left-column option label starts 9–10 native pixels farther
+  right in NA2.28 than in NUN5, including the selected `Extra Hit Counter`
+  row.
+- Ordinary-row glyph Y bounds match NUN5. The right value column, differing
+  option values, lower explanation text, and the accepted native selected-row
+  movement behavior are outside this exact alignment case.
+- Required result: move only the Practice Settings left option-label column
+  to the NUN5 X origin while preserving its current Y positions, selected
+  styling, right value column, title, footer, and explanation paths.
+
+![Priority 7 Practice Settings unresolved baseline](pending/7-practice-settings-list.png)
 
 ## Collection
 
@@ -189,6 +215,9 @@ Priority is determined by the most efficient implementation order.
 6. **ss9–ss10 — Character move lists.** Corrected and candidate-validated
    against the user-accepted target. The previous nonrepresentative grid is
    removed; exact integrated-ISO ss9/ss10 evidence is pending.
+7. **supplemental ss3 — Practice Settings left option-label column.**
+   Unresolved paired baseline: every left option label starts 9–10 pixels too
+   far right while ordinary-row vertical bounds already match NUN5.
 
 Shared primitives are implemented only once. Each prioritized caller family
 receives one guarded implementation and commit/push boundary; every case keeps

@@ -14,10 +14,9 @@ case.
 - Mode: Continuous.
 - Current subtask: Priority 6 — ss9–ss10 character move lists. Priority 4 remains
   queued because supplied ss7 resumes after its two owner calls.
-- Pending grid:
-  `docs/workstreams/font/epics/ss2-6-layout/5-movie-list.png`.
-- Next action: visibly deliver Priority 5, then investigate the shared
-  ss9–ss10 move-list caller family without waiting for earlier acceptance.
+- Pending grid: none.
+- Next action: investigate the shared ss9–ss10 move-list caller family without
+  waiting for earlier acceptance.
 
 ## Scope and evidence
 
@@ -125,8 +124,8 @@ case.
 
 ### Priority 5 — ss8: Movie list
 
-- State: implemented, canonically validated, and agent-validated; visible
-  delivery and explicit user acceptance remain pending.
+- State: implemented, canonically validated, agent-validated, and visibly
+  delivered; explicit user acceptance remains pending.
 - Result: one guarded ETC caller routes only Movie-table pointers through a
   192-by-32, two-line C wrapper at native X and native Y minus 10. The four
   long titles now use NUN5's exact breaks and 16-unit line interval while the
@@ -155,8 +154,8 @@ Priority is determined by the most efficient implementation order.
 4. **ss7 — Collection exit confirmation.** Implementation is ready, but the
    supplied visible-prompt state resumes after both owner calls; final runtime
    construction evidence remains queued.
-5. **ss8 — Movie list.** Implemented and agent-validated with fixed-cadence
-   two-line wrapping; visible delivery and explicit user acceptance are pending.
+5. **ss8 — Movie list.** Implemented, agent-validated, and visibly delivered
+   with fixed-cadence two-line wrapping; explicit user acceptance is pending.
 6. **ss9–ss10 — Character move lists.** Next actionable case: reuse one
    bounded wrapping primitive for both long-title cases where the caller
    family is shared.

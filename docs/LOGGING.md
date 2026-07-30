@@ -45,30 +45,30 @@ untouched.
 - `rolling.log`: the newest 20 completed operational invocations, stored as
   bounded sections in one file.
 - `builds/<build-id>/`: structured profile records retained only while they
-  correspond to the catalog-derived Current or Previous build ISO.
+  correspond to the catalog-derived Latest or Previous build ISO.
 - `builds.tsv`: a single atomically replaced `iso` / `build_record` mapping.
-  It always contains rows for the configured current and previous ISO files;
+  It always contains rows for the configured Latest and Previous ISO files;
   the previous record is empty when no corresponding retained build record is
   available.
-- `preflight/current.json`: the atomically replaced successful-build receipt
+- `preflight/latest.json`: the atomically replaced successful-build receipt
   used for no-op detection. It records only portable logical labels, the
-  deterministic input fingerprint, and the Current ISO size and SHA-256.
-- `candidates/<build-id>/`: the latest candidate-only profile record, including
-  `candidate_result.tsv`. It is independent of `builds.tsv` and the Current
-  receipt; a successful candidate build replaces the previous candidate record.
+  deterministic input fingerprint, and the Latest ISO size and SHA-256.
+- `tests/<build-id>/`: the latest Test-only profile record, including
+  `test_result.tsv`. It is independent of `builds.tsv` and the Latest receipt;
+  a successful Test build replaces the previous Test record.
 
-Help output is not logged. A preflight cache hit reuses the Current ISO's
+Help output is not logged. A preflight cache hit reuses the Latest ISO's
 structured record. A full verified build always retains its new structured
-record as the Current ISO's latest provenance, even when the candidate is
+record as the Latest ISO's latest provenance, even when the staged image is
 identical and records `ISO result: unchanged`; the superseded record is then
-pruned, so this does not increase retained history. A changed candidate records
-`ISO result: updated`; its structured record becomes current and the previous
-current record rotates with the outgoing ISO. Unreferenced structured records
+pruned, so this does not increase retained history. A changed staged image records
+`ISO result: updated`; its structured record becomes latest and the previous
+latest record rotates with the outgoing ISO. Unreferenced structured records
 are deleted only after the complete two-ISO mapping has been replaced.
 Deleting or corrupting the preflight receipt is safe: the next invocation runs
 the complete verified build and recreates the receipt only after success.
-Candidate-only builds always perform complete composition, report whether the
-Candidate ISO changed, and record that rotation is disabled and PCSX2 is left
+Test-only builds always perform complete composition, report whether the
+Test ISO changed, and record that rotation is disabled and PCSX2 is left
 running.
 
 ## Worker build and runtime logs
@@ -76,7 +76,7 @@ running.
 `na228 worker work/<task title>/build/<name>.iso` keeps its operational
 `latest.log`/`rolling.log` and structured `builds/<build-id>/` records under
 that task's `work/<task title>/logs/`. Worker records never participate in or
-prune shared Candidate/Current/Previous records. Completed structured worker
+prune shared Test/Latest/Previous records. Completed structured worker
 records are capped at 20 per task; task cleanup may delete them sooner after
 promoting reusable findings.
 

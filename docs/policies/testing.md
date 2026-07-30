@@ -79,12 +79,12 @@ requirements, not whatever implementation happens to exist today.
 
 ## ISO builds
 
-- Shared `build/` contains only Current, at most Previous, and when needed
-  Candidate. Standard and Candidate builds stage beside their destination as
+- Shared `build/` contains only Latest, at most Previous, and when needed
+  Test. Latest and Test builds stage beside their destination as
   `.building` and remove staging files on failure.
 - A standard build discards an identical verified candidate without rotation
   or atomically promotes a changed candidate and rotates history. Candidate
-  mode updates Candidate only.
+  composition in Test mode updates Test only.
 - Agents decide whether a full ISO is necessary from scope, risk, and required
   evidence. Use narrower validation when sufficient.
 - Never build an agent ISO merely because executable inputs changed or for
@@ -105,19 +105,20 @@ requirements, not whatever implementation happens to exist today.
   `na228 worker work/<task title>/build/<name>.iso`, with staging beside the output
   and structured records under the same task's `logs/`. Agents never invoke
   bare `na228`, `na228 b`, or bare `na228 t`.
-- In both `na228 t` and `_na228.ps1 t`, `t` is an ISO-build recipe that builds
-  and actualizes Candidate. Isolated output uses the explicit `worker` command.
+- In compact recipes, `t` runs Test and `bt` builds then runs Test. Explicit
+  `na228 build t` builds and actualizes Test without launching. Isolated output
+  uses the explicit `worker` command.
   Neither mode runs the test suite. Run the builder
   suite only with
   `python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'`.
   Verify every validation command's documented semantics before running it;
   never infer behavior from a short flag.
-- Worker-output builds never touch Current, Previous, Candidate, promotion,
+- Worker-output builds never touch Latest, Previous, Test, promotion,
   preflight, shared records, PNACH aliases, actualization, or PCSX2.
 - Temporary or hypothesis ISOs remain under the owning task while they have a
   named future use and are deleted when useless.
-- Standard logs report `ISO result: unchanged|updated` and rotation. Candidate
-  logs report `ISO result: candidate`, whether it changed, `rotation: no`, and
+- Standard logs report `ISO result: unchanged|updated` and rotation. Test
+  logs report `ISO result: test`, whether it changed, `rotation: no`, and
   that PCSX2 was left running.
 
 ## User PCSX2 and agent runtimes
@@ -147,7 +148,7 @@ requirements, not whatever implementation happens to exist today.
   memory cards, cheats, and GameSettings, is allowed. Assign a PINE port unique
   among live agent instances and operate only that copy. Other workstream
   copies/processes are off-limits.
-- Shared Current, Previous, and Candidate ISOs are mutable user files. A worker
+- Shared Latest, Previous, and Test ISOs are mutable user files. A worker
   PCSX2 process, injection build, or other worker command must never open those
   shared paths. Pass only an independent full copy under
   `work/<exact task title>/inputs/isos/` to worker launch and injection
@@ -155,7 +156,7 @@ requirements, not whatever implementation happens to exist today.
   hardlink. Record the copied image's SHA-256 and disc identity with the
   supplied-state provenance. If the exact compatible image is unavailable or
   cannot be established, stop and request it instead of using the latest
-  Current or producing a replacement build. Keep only copies required by
+  Latest or producing a replacement build. Keep only copies required by
   active compatible savestate batches or the current test. Delete superseded
   worker ISOs before copying another, and delete all remaining worker ISO
   copies when runtime work ends. Preserve the small provenance records, not
@@ -211,12 +212,12 @@ requirements, not whatever implementation happens to exist today.
 
 ## Actualization
 
-- User-owned Current/Previous/Candidate workflows may run the maintained
+- User-owned Latest/Previous/Test workflows may run the maintained
   actualization pipeline automatically; worker builds never actualize.
-- `act na228` manages only the configured NA2.28 Current/Previous/Candidate
+- `act na228` manages only the configured NA2.28 Latest/Previous/Test
   identities, CRC cheat aliases, and GameSettings inside `@pcsx2_files/`.
-  Each role selects its configured existing Current, Previous, or Candidate
-  memory card. Identity collisions are deduplicated with Current taking
+  Each role selects its configured existing Latest, Previous, or Test
+  memory card. Identity collisions are deduplicated with Latest taking
   precedence. Templates and configured memory cards are never created, copied,
   or modified.
 - `act input` regenerates the configured NA2 comparison input profile.

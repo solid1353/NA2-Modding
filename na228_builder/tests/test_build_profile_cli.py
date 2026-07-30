@@ -76,7 +76,7 @@ class BuildProfileCliTests(unittest.TestCase):
             workspace = Path(directory).resolve()
             source_iso = workspace / "source.iso"
             source_iso.write_bytes(b"source")
-            output_iso = workspace / "build" / "NA2.28 - Current.iso"
+            output_iso = workspace / "build" / "NA2.28 - Latest.iso"
             profile_directory = workspace / "profiles" / "current"
             profile_log_directory = workspace / "logs" / "profile"
             profile = SimpleNamespace(profile_id="current", features=(), modules=())
@@ -138,7 +138,7 @@ class BuildProfileCliTests(unittest.TestCase):
             self.assertIn("payload_builder (0 symbols, 7 bytes)", output.getvalue())
             self.assertIn("identity (1 edits)", output.getvalue())
             self.assertIn(
-                "Verified staged ISO: NA2.28 - Current.iso.building",
+                "Verified staged ISO: NA2.28 - Latest.iso.building",
                 output.getvalue(),
             )
 

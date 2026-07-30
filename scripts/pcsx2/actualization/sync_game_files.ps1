@@ -1,4 +1,4 @@
-# Synchronize NA2.28 CRC-named cheats and GameSettings with built images.
+# Synchronize NA2.28 CRC-named cheats and GameSettings with retained builds.
 [CmdletBinding()]
 param(
     [psobject]$ProjectPaths,

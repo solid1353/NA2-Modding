@@ -31,7 +31,7 @@ try {
         pcsx2_stable = Join-Path $testRoot 'pcsx2_stable'
         scripts = Join-Path $repository 'scripts'
         files = [pscustomobject]@{
-            current_iso = Join-Path $build 'NA2.28 - Current.iso'
+            latest_iso = Join-Path $build 'NA2.28 - Latest.iso'
             previous_iso = Join-Path $build 'NA2.28 - Previous.iso'
         }
     }
@@ -40,10 +40,10 @@ try {
         [IO.Path]::VolumeSeparatorChar, [IO.Path]::DirectorySeparatorChar
 
     $portable = ConvertTo-Na2PortableText `
-        -Text "ISO: $build\NA2.28 - Current.iso`nExternal: $externalPath" `
+        -Text "ISO: $build\NA2.28 - Latest.iso`nExternal: $externalPath" `
         -ProjectPaths $paths
     Assert-Na2Test `
-        -Condition ($portable -match 'ISO: @build/NA2\.28 - Current\.iso') `
+        -Condition ($portable -match 'ISO: @build/NA2\.28 - Latest\.iso') `
         -Message 'Configured build path was not converted to @build.'
     Assert-Na2Test `
         -Condition ($portable -match 'Redacted output containing an external absolute path') `
@@ -57,7 +57,7 @@ try {
             -Mode "test-$index" `
             -ProjectPaths $paths `
             -MaxRollingSections 20
-        Write-Host "run-marker-$index $build\NA2.28 - Current.iso"
+        Write-Host "run-marker-$index $build\NA2.28 - Latest.iso"
         Complete-Na2RunLog -Context $context -Outcome succeeded
     }
 
@@ -81,16 +81,16 @@ try {
     $failurePaths = $paths.PSObject.Copy()
     $failurePaths.logs = Join-Path $repository 'failure-logs'
     $failureContext = Start-Na2RunLog -Mode failure-test -ProjectPaths $failurePaths
-    Write-Host "failure marker $build\NA2.28 - Current.iso"
+    Write-Host "failure marker $build\NA2.28 - Latest.iso"
     $failureExternalPath = 'C{0}{1}Private{1}failure.txt' -f `
         [IO.Path]::VolumeSeparatorChar, [IO.Path]::DirectorySeparatorChar
     Complete-Na2RunLog `
         -Context $failureContext `
         -Outcome failed `
-        -FailureMessage "Configured: $build\NA2.28 - Current.iso`nExternal: $failureExternalPath"
+        -FailureMessage "Configured: $build\NA2.28 - Latest.iso`nExternal: $failureExternalPath"
     $failureLog = [IO.File]::ReadAllText((Join-Path $failurePaths.logs 'na228\latest.log'))
     Assert-Na2Test -Condition ($failureLog -match '(?m)^outcome: failed$') -Message 'Failed outcome was not recorded.'
-    Assert-Na2Test -Condition ($failureLog -match '@build/NA2\.28 - Current\.iso') -Message 'Failure path was not made portable.'
+    Assert-Na2Test -Condition ($failureLog -match '@build/NA2\.28 - Latest\.iso') -Message 'Failure path was not made portable.'
     Assert-Na2Test -Condition (-not (Test-Na2WindowsAbsolutePath -Text $failureLog)) -Message 'Failure log contains an absolute path.'
 
     $fakeRepository = Join-Path $testRoot 'help-project'
@@ -152,9 +152,9 @@ try {
     "title": "NA2.28",
     "memory_card": "@pcsx2_memory_cards/NA228.ps2",
     "entries": {
-      "current": { "aliases": ["c"], "postfix": "Current" },
+      "latest": { "aliases": ["l"], "postfix": "Latest" },
       "previous": { "aliases": ["p"], "postfix": "Previous" },
-      "candidate": { "aliases": ["cand"], "postfix": "Candidate" }
+      "test": { "aliases": ["t"], "postfix": "Test" }
     }
   },
   "sources": {
@@ -187,7 +187,7 @@ try {
         -Condition ($helpText -match '(?m)^\s*na228 <game> \[games\.\.\.\]') `
         -Message 'Root help omitted the unified multi-game launch command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 <recipe> \[games\.\.\.\]') `
+        -Condition ($helpText -match '(?m)^\s*na228 <recipe>w \[games\.\.\.\]') `
         -Message 'Root help omitted the composable recipe grammar.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 worker work/') `
@@ -196,11 +196,8 @@ try {
         -Condition ($helpText -match '(?m)^\s*na228 validate\s') `
         -Message 'Root help omitted the compose-only validation command.'
     Assert-Na2Test `
-        -Condition ($helpText -notmatch '(?m)^\s*na228 (?:bw|tw) ') `
-        -Message 'Root help hardcodes composed recipe groups.'
-    Assert-Na2Test `
-        -Condition ($helpText -notmatch '(?m)^\s*na228 [cp]\s') `
-        -Message 'Root help still exposes retired Current/Previous recipe steps.'
+        -Condition ($helpText -match '(?m)^\s*na228 build l\|t\s') `
+        -Message 'Root help omitted the explicit build-only command.'
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 -[btcpwh]\b') `
         -Message 'Root help still exposes a retired dashed mode.'
@@ -232,7 +229,7 @@ Write-Host '[fake] actualize na228'
 [pscustomobject]@{
     Roles = @(
         [pscustomobject]@{
-            Role = 'Current'
+            Role = 'Latest'
             Serial = 'SLOP-NA228'
             CRC = '12345678'
         }
@@ -262,22 +259,33 @@ param(
     [switch]$SkipActualization
 )
 $aliases = @{
-    c = 'current'
+    l = 'latest'
     p = 'previous'
-    cand = 'candidate'
+    t = 'test'
 }
 $canonical = @($Games | ForEach-Object {
     if ($aliases.ContainsKey($_)) { $aliases[$_] } else { $_ }
 })
 if (@($canonical | Where-Object { $_ -notin @(
-    'current', 'previous', 'candidate', 'na2', 'nun5'
+    'latest', 'previous', 'test', 'na2', 'nun5'
 ) }).Count -gt 0) {
     throw "Unknown game name: $($Games -join ',')"
 }
 Write-Output "[fake] multi-game launch $($canonical -join ',') skip=$SkipActualization"
+$port = 28014
+foreach ($game in $canonical) {
+    [pscustomobject]@{
+        Game = $game
+        ProcessId = 1000 + $port
+        PinePort = $port
+        GridCell = '1,1'
+    }
+    $port++
+}
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeInjectionScripts 'watch.ps1') -Content @'
-Write-Output '[fake] watch'
+param([int]$PinePort)
+Write-Output "[fake] watch $PinePort"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeReleaseScripts 'publish_release.ps1') -Content @'
 param([string]$Version)
@@ -285,7 +293,7 @@ Write-Output "[fake] release $Version"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'build.ps1') -Content @'
 param(
-    [switch]$CandidateOnly,
+    [switch]$TestOnly,
     [switch]$ComposeOnly,
     [string]$WorkerOutputIso
 )
@@ -293,9 +301,9 @@ if ($WorkerOutputIso) {
     Write-Host '[na228] ISO result: worker; rotation: no; PCSX2 left running.'
     [pscustomobject]@{ Status = 'worker' }
 }
-elseif ($CandidateOnly) {
-    Write-Host '[na228] ISO result: candidate; rotation: no; PCSX2 left running.'
-    [pscustomobject]@{ Status = 'candidate' }
+elseif ($TestOnly) {
+    Write-Host '[na228] ISO result: test; rotation: no; PCSX2 left running.'
+    [pscustomobject]@{ Status = 'test' }
 }
 elseif ($ComposeOnly) {
     Write-Host '[na228] Profile composition valid; no ISO produced.'
@@ -338,38 +346,6 @@ else {
     Assert-Na2Test `
         -Condition $launchSubcommandRejected `
         -Message 'The retired launch subcommand was not rejected.'
-    $duplicateRecipeRejected = $false
-    try {
-        & (Join-Path $fakeRepository '_na228.ps1') bb
-    }
-    catch {
-        $duplicateRecipeRejected = $_.Exception.Message -match "repeats step 'b'"
-    }
-    Assert-Na2Test `
-        -Condition $duplicateRecipeRejected `
-        -Message 'A compact recipe with a duplicate step was not rejected.'
-    $blockingRecipeRejected = $false
-    try {
-        & (Join-Path $fakeRepository '_na228.ps1') wb
-    }
-    catch {
-        $blockingRecipeRejected = $_.Exception.Message -match "watcher step 'w' last"
-    }
-    Assert-Na2Test `
-        -Condition $blockingRecipeRejected `
-        -Message 'A recipe with a non-final watcher was not rejected.'
-    $conflictingBuildRecipeRejected = $false
-    try {
-        & (Join-Path $fakeRepository '_na228.ps1') bt
-    }
-    catch {
-        $conflictingBuildRecipeRejected = (
-            $_.Exception.Message -match 'cannot combine Current and Candidate'
-        )
-    }
-    Assert-Na2Test `
-        -Condition $conflictingBuildRecipeRejected `
-        -Message 'A recipe combining Current and Candidate builds was not rejected.'
     $launchLogPath = Join-Path $fakeRepository 'logs\na228\rolling.log'
     $launchLogSectionsBefore = if (Test-Path -LiteralPath $launchLogPath) {
         [regex]::Matches(
@@ -416,31 +392,37 @@ else {
     Assert-Na2Test `
         -Condition $extraReleaseArgumentRejected `
         -Message 'Release dispatch accepted more than one version argument.'
-    $currentLaunch = (
-        & (Join-Path $fakeRepository '_na228.ps1') c
+    $latestLaunch = (
+        & (Join-Path $fakeRepository '_na228.ps1') l
     ) -join "`n"
     $previousLaunch = (
         & (Join-Path $fakeRepository '_na228.ps1') p
     ) -join "`n"
     Assert-Na2Test `
-        -Condition ($currentLaunch -match 'multi-game launch current skip=False') `
-        -Message 'Current selector alias did not resolve through game launch.'
+        -Condition ($latestLaunch -match 'multi-game launch latest skip=False') `
+        -Message 'Latest selector alias did not resolve through game launch.'
     Assert-Na2Test `
         -Condition ($previousLaunch -match 'multi-game launch previous skip=False') `
         -Message 'Previous selector alias did not resolve through game launch.'
-    & (Join-Path $fakeRepository '_na228.ps1') t
-    & (Join-Path $fakeRepository '_na228.ps1') worker 'work\General\build\agent.iso'
-    & (Join-Path $fakeRepository '_na228.ps1') validate
-    & (Join-Path $fakeRepository '_na228.ps1') b
-    $composedRecipe = (
-        & (Join-Path $fakeRepository '_na228.ps1') bw c nun5
+    $testLaunch = (
+        & (Join-Path $fakeRepository '_na228.ps1') t
     ) -join "`n"
     Assert-Na2Test `
-        -Condition ($composedRecipe -match 'multi-game launch current,nun5 skip=True') `
+        -Condition ($testLaunch -match 'multi-game launch test skip=False') `
+        -Message 'Test selector alias did not resolve through game launch.'
+    & (Join-Path $fakeRepository '_na228.ps1') worker 'work\General\build\agent.iso'
+    & (Join-Path $fakeRepository '_na228.ps1') validate
+    & (Join-Path $fakeRepository '_na228.ps1') build l
+    & (Join-Path $fakeRepository '_na228.ps1') build t
+    $composedRecipe = (
+        & (Join-Path $fakeRepository '_na228.ps1') btw p nun5
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition ($composedRecipe -match 'multi-game launch test,previous,nun5 skip=True') `
         -Message 'Composed build recipe did not launch normalized game selectors.'
     Assert-Na2Test `
-        -Condition ($composedRecipe -match '\[fake\] watch') `
-        -Message 'Composed recipe did not run the watcher last.'
+        -Condition ($composedRecipe -match '\[fake\] watch 28014') `
+        -Message 'Composed recipe did not watch the primary launch PINE port.'
     & (Join-Path $fakeRepository '_na228.ps1')
     $fakeLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\latest.log'))
     $fakeRolling = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\rolling.log'))
@@ -448,7 +430,7 @@ else {
     foreach ($mode in (
         'actualize',
         'actualize-na228',
-        'candidate-build',
+        'test-build',
         'validate',
         'build'
     )) {
@@ -469,8 +451,8 @@ else {
         -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch dev .+$').Count -eq 1) `
         -Message 'Root dispatch did not preserve the configured development-launch default.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, 'ISO result: candidate').Count -eq 1) `
-        -Message 'Test build did not dispatch exactly once to Candidate.'
+        -Condition ([regex]::Matches($fakeRolling, 'ISO result: test').Count -eq 2) `
+        -Message 'Test build recipes did not dispatch exactly twice to Test.'
     $workerLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'work\General\logs\latest.log'))
     Assert-Na2Test `
         -Condition ($workerLatest -match '(?m)^mode: worker-build$') `
@@ -479,81 +461,83 @@ else {
         -Condition ($workerLatest -match 'ISO result: worker') `
         -Message 'Explicit worker build did not dispatch to worker-output mode.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 3) `
-        -Message 'Build-only, composed-recipe build, and build-and-launch did not use the standard build pipeline.'
+        -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 2) `
+        -Message 'Build-only and build-and-launch did not use the standard build pipeline.'
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize na228').Count -eq 6) `
         -Message 'Standalone and user-owned workflows did not preserve NA2 actualization.'
     $structuredLog = Join-Path $logs 'na228'
     $buildRecords = Join-Path $structuredLog 'builds'
-    foreach ($buildId in 'old-previous', 'old-current', 'new-current', 'orphan') {
+    foreach ($buildId in 'old-previous', 'old-latest', 'new-latest', 'orphan') {
         New-Item -ItemType Directory -Force -Path (Join-Path $buildRecords $buildId) | Out-Null
     }
-    Set-Content -NoNewline -LiteralPath $paths.files.current_iso -Value 'current'
+    Set-Content -NoNewline -LiteralPath $paths.files.latest_iso -Value 'latest'
     Set-Content -NoNewline -LiteralPath $paths.files.previous_iso -Value 'previous'
-    Set-Na2BuildMap `
-        -LogDirectory $structuredLog `
-        -CurrentBuildId 'old-current' `
-        -PreviousBuildId 'old-previous' `
-        -ProjectPaths $paths
+    Set-Na2Utf8FileAtomic `
+        -Path (Join-Path $structuredLog 'builds.tsv') `
+        -Content (
+            "iso`tbuild_record`n" +
+            "@build/NA2.28 - Current.iso`t@logs/na228/builds/old-latest`n" +
+            "@build/NA2.28 - Previous.iso`t@logs/na228/builds/old-previous`n"
+        )
     $renamedPaths = $paths.PSObject.Copy()
     $renamedFiles = $paths.files.PSObject.Copy()
-    $renamedFiles.current_iso = Join-Path $build 'NA v2.28 - Current.iso'
+    $renamedFiles.latest_iso = Join-Path $build 'NA v2.28 - Latest.iso'
     $renamedFiles.previous_iso = Join-Path $build 'NA v2.28 - Previous.iso'
     $renamedPaths.files = $renamedFiles
     $migratedMap = Read-Na2BuildMap `
         -LogDirectory $structuredLog `
         -ProjectPaths $renamedPaths
     Assert-Na2Test `
-        -Condition ($migratedMap.CurrentBuildId -eq 'old-current') `
-        -Message 'Renamed Current ISO key lost its retained build record.'
+        -Condition ($migratedMap.LatestBuildId -eq 'old-latest') `
+        -Message 'Renamed Latest ISO key lost its retained build record.'
     Assert-Na2Test `
         -Condition ($migratedMap.PreviousBuildId -eq 'old-previous') `
         -Message 'Renamed Previous ISO key lost its retained build record.'
     $migratedMapText = [IO.File]::ReadAllText((Join-Path $structuredLog 'builds.tsv'))
     Assert-Na2Test `
-        -Condition ($migratedMapText -match '@build/NA v2\.28 - Current\.iso') `
-        -Message 'Renamed Current ISO key was not migrated in builds.tsv.'
+        -Condition ($migratedMapText -match '@build/NA v2\.28 - Latest\.iso') `
+        -Message 'Renamed Latest ISO key was not migrated in builds.tsv.'
     Assert-Na2Test `
         -Condition ($migratedMapText -notmatch '@build/NA2\.28 - Current\.iso') `
-        -Message 'The stale pre-rename Current ISO key remained in builds.tsv.'
+        -Message 'The stale Current ISO key remained in builds.tsv.'
     Set-Na2BuildMap `
         -LogDirectory $structuredLog `
-        -CurrentBuildId 'old-current' `
+        -LatestBuildId 'old-latest' `
         -PreviousBuildId 'old-previous' `
         -ProjectPaths $paths
     $record = Complete-Na2BuildRecord `
         -LogDirectory $structuredLog `
-        -BuildId 'new-current' `
+        -BuildId 'new-latest' `
         -Result updated `
         -Rotated $true `
-        -CurrentIso $paths.files.current_iso `
+        -LatestIso $paths.files.latest_iso `
         -PreviousIso $paths.files.previous_iso `
         -Profile (Join-Path $paths.builder 'profiles\current') `
         -ProjectPaths $paths
-    Assert-Na2Test -Condition ($record.BuildId -eq 'new-current') -Message 'Updated build was not retained.'
+    Assert-Na2Test -Condition ($record.BuildId -eq 'new-latest') -Message 'Updated build was not retained.'
     $updatedBuildMap = Read-Na2BuildMap `
         -LogDirectory $structuredLog `
         -ProjectPaths $paths
     Assert-Na2Test `
-        -Condition ($updatedBuildMap.CurrentBuildId -eq 'new-current') `
-        -Message 'Current build mapping was not advanced.'
+        -Condition ($updatedBuildMap.LatestBuildId -eq 'new-latest') `
+        -Message 'Latest build mapping was not advanced.'
     Assert-Na2Test `
-        -Condition ($updatedBuildMap.PreviousBuildId -eq 'old-current') `
+        -Condition ($updatedBuildMap.PreviousBuildId -eq 'old-latest') `
         -Message 'Previous build mapping was not rotated.'
     $buildMapText = [IO.File]::ReadAllText((Join-Path $structuredLog 'builds.tsv'))
     Assert-Na2Test `
         -Condition ($buildMapText -ceq (
             "iso`tbuild_record`n" +
-            "@build/NA2.28 - Current.iso`t@logs/na228/builds/new-current`n" +
-            "@build/NA2.28 - Previous.iso`t@logs/na228/builds/old-current`n"
+            "@build/NA2.28 - Latest.iso`t@logs/na228/builds/new-latest`n" +
+            "@build/NA2.28 - Previous.iso`t@logs/na228/builds/old-latest`n"
         )) `
         -Message 'builds.tsv does not contain the exact atomic two-ISO mapping.'
     $remainingRecords = @(Get-ChildItem -LiteralPath $buildRecords -Directory).Name
     Assert-Na2Test -Condition ($remainingRecords.Count -eq 2) -Message 'Unreferenced build records were not pruned.'
-    $buildResult = [IO.File]::ReadAllText((Join-Path $buildRecords 'new-current\build_result.tsv'))
+    $buildResult = [IO.File]::ReadAllText((Join-Path $buildRecords 'new-latest\build_result.tsv'))
     Assert-Na2Test -Condition ($buildResult -match "updated`tyes") -Message 'build_result.tsv lacks result/rotation.'
-    Assert-Na2Test -Condition ($buildResult -match '@build/NA2\.28 - Current\.iso') -Message 'build_result.tsv lacks a portable ISO path.'
+    Assert-Na2Test -Condition ($buildResult -match '@build/NA2\.28 - Latest\.iso') -Message 'build_result.tsv lacks a portable ISO path.'
     Assert-Na2Test -Condition (-not (Test-Na2WindowsAbsolutePath -Text $buildResult)) -Message 'build_result.tsv contains an absolute path.'
 
     New-Item -ItemType Directory -Path (Join-Path $buildRecords 'duplicate') | Out-Null
@@ -562,19 +546,19 @@ else {
         -BuildId duplicate `
         -Result unchanged `
         -Rotated $false `
-        -CurrentIso $paths.files.current_iso `
+        -LatestIso $paths.files.latest_iso `
         -PreviousIso $paths.files.previous_iso `
         -Profile 'na228_builder/profiles/current' `
         -ProjectPaths $paths
     Assert-Na2Test `
         -Condition ($unchanged.BuildId -eq 'duplicate') `
-        -Message 'Unchanged full build did not become the current provenance record.'
+        -Message 'Unchanged full build did not become the latest provenance record.'
     Assert-Na2Test `
         -Condition (Test-Path -LiteralPath (Join-Path $buildRecords 'duplicate')) `
         -Message 'Unchanged full build record was not retained.'
     Assert-Na2Test `
-        -Condition (-not (Test-Path -LiteralPath (Join-Path $buildRecords 'new-current'))) `
-        -Message 'Superseded current build record was not pruned.'
+        -Condition (-not (Test-Path -LiteralPath (Join-Path $buildRecords 'new-latest'))) `
+        -Message 'Superseded latest build record was not pruned.'
 
     $freshStructuredLog = Join-Path $logs 'fresh-na228'
     $firstBuildId = 'first-unchanged'
@@ -585,7 +569,7 @@ else {
         -BuildId $firstBuildId `
         -Result unchanged `
         -Rotated $false `
-        -CurrentIso $paths.files.current_iso `
+        -LatestIso $paths.files.latest_iso `
         -PreviousIso $null `
         -Profile 'na228_builder/profiles/current' `
         -ProjectPaths $paths
@@ -596,8 +580,8 @@ else {
         -LogDirectory $freshStructuredLog `
         -ProjectPaths $paths
     Assert-Na2Test `
-        -Condition ($firstBuildMap.CurrentBuildId -eq $firstBuildId) `
-        -Message 'First unchanged build did not establish the current mapping.'
+        -Condition ($firstBuildMap.LatestBuildId -eq $firstBuildId) `
+        -Message 'First unchanged build did not establish the latest mapping.'
     Assert-Na2Test `
         -Condition ([string]::IsNullOrWhiteSpace($firstBuildMap.PreviousBuildId)) `
         -Message 'Unavailable previous ISO record was not left empty.'
@@ -616,7 +600,7 @@ else {
         -Result ([pscustomobject]@{
             Roles = @(
                 [pscustomobject]@{
-                    Role = 'Current'
+                    Role = 'Latest'
                     Serial = 'SLOP-NA228'
                     CRC = 'C0659AD1'
                 }
@@ -630,7 +614,7 @@ else {
             RemovedGameSettings = @('old-settings')
         }) `
         -ProjectPaths $paths
-    Assert-Na2Test -Condition ($status -match 'Current=SLOP-NA228_C0659AD1') -Message 'Actualize status omitted the role identity.'
+    Assert-Na2Test -Condition ($status -match 'Latest=SLOP-NA228_C0659AD1') -Message 'Actualize status omitted the role identity.'
     Assert-Na2Test -Condition ($status -match 'Intro skips') -Message 'Actualize status omitted enabled cheats.'
     Assert-Na2Test -Condition ($status -match 'GameSettings') -Message 'Actualize status omitted GameSettings.'
 

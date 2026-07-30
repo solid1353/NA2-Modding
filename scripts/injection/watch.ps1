@@ -5,7 +5,7 @@ param(
     [string]$Entry,
     [string]$OverlayPlan,
     [string]$Output,
-    [string]$CurrentIso,
+    [string]$LatestIso,
     [ValidateRange(1, 65535)]
     [int]$PinePort,
     [ValidateRange(100, 10000)]
@@ -270,8 +270,8 @@ function Invoke-InjectionBuild([switch]$ExitOnFailure) {
     if ($resolvedOverlayPlan) {
         $buildArguments += @('--overlay-plan', $resolvedOverlayPlan)
     }
-    if ($CurrentIso) {
-        $buildArguments += @('--iso', (Resolve-RepositoryPath $CurrentIso))
+    if ($LatestIso) {
+        $buildArguments += @('--iso', (Resolve-RepositoryPath $LatestIso))
     }
 
     $timestamp = Get-Date -Format 'HH:mm:ss'

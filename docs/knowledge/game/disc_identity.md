@@ -50,13 +50,13 @@ PCSX2 uses its GameDB title for known serials. For a serial absent from the
 GameDB, the Game List falls back to the scanned image filename. The local cache
 confirmed this for the unknown `SLUS-55606`: `NUN6 A35.iso` appears as
 `NUN6 A35`. Because normal project images are intentionally named
-`NA v2.28 - Current.iso` and `NA v2.28 - Previous.iso`, `SLOP-NA228` appears in the
-Game List as `NA v2.28 - Current` or `NA v2.28 - Previous` rather than
+`NA v2.28 - Latest.iso` and `NA v2.28 - Previous.iso`, `SLOP-NA228` appears in the
+Game List as `NA v2.28 - Latest` or `NA v2.28 - Previous` rather than
 `Narutimate Accel v2.28`.
 
 The runtime window title is a separate path. A game started from the populated
 Game List has the path's scanned title available, so normal Game List launches
-can retain `NA v2.28 - Current` or `NUN6 A35`. A direct command-line/`-batch`
+can retain `NA v2.28 - Latest` or `NUN6 A35`. A direct command-line/`-batch`
 launch has no
 scanned-entry title available during boot. PCSX2 2.6.3 then deliberately formats
 an unknown serial as `<serial> [?]`. This was runtime-confirmed as

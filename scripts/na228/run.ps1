@@ -3,10 +3,10 @@ param(
     [Parameter(Mandatory)]
     [ValidateSet(
         'worker-build',
-        'candidate-build',
+        'test-build',
         'validate',
-        'build-only',
-        'build-and-launch'
+        'latest-build',
+        'latest-build-and-launch'
     )]
     [string]$Action,
 
@@ -18,8 +18,8 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 . (Join-Path $PSScriptRoot '..\lib\run_log.ps1')
 $projectPaths = Get-Na2ProjectPaths
-$currentIsoName = [IO.Path]::GetFileName($projectPaths.files.current_iso)
-$candidateIsoName = [IO.Path]::GetFileName($projectPaths.files.candidate_iso)
+$latestIsoName = [IO.Path]::GetFileName($projectPaths.files.latest_iso)
+$testIsoName = [IO.Path]::GetFileName($projectPaths.files.test_iso)
 
 function Write-Na2Stage {
     param([string]$Message)
@@ -44,7 +44,7 @@ elseif ($WorkerOutputIso -or $WorkerLogDirectory) {
 
 $runMode = switch ($Action) {
     'worker-build' { 'worker-build' }
-    'candidate-build' { 'candidate-build' }
+    'test-build' { 'test-build' }
     'validate' { 'validate' }
     default { 'build' }
 }
@@ -85,16 +85,16 @@ try {
                 throw 'Worker build did not return a valid result.'
             }
         }
-        'candidate-build' {
-            Write-Na2Stage "Build $candidateIsoName"
-            $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') -CandidateOnly
-            if (-not $buildResult -or $buildResult.Status -ne 'candidate') {
-                throw 'Candidate build did not return a valid result.'
+        'test-build' {
+            Write-Na2Stage "Build $testIsoName"
+            $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') -TestOnly
+            if (-not $buildResult -or $buildResult.Status -ne 'test') {
+                throw 'Test build did not return a valid result.'
             }
             Invoke-Na2Actualization
         }
-        'build-only' {
-            Write-Na2Stage "Build $currentIsoName without launching PCSX2"
+        'latest-build' {
+            Write-Na2Stage "Build $latestIsoName without launching PCSX2"
             $buildResult = & (Join-Path $PSScriptRoot 'build.ps1')
             if (
                 -not $buildResult -or
@@ -104,7 +104,7 @@ try {
             }
             Invoke-Na2Actualization
         }
-        'build-and-launch' {
+        'latest-build-and-launch' {
             Write-Na2Stage '1/2 Build pinned current profile'
             $buildResult = & (Join-Path $PSScriptRoot 'build.ps1')
             if (
@@ -114,9 +114,9 @@ try {
                 throw 'Profile build did not return a valid promotion result.'
             }
             Invoke-Na2Actualization
-            Write-Na2Stage "2/2 Launch $currentIsoName"
+            Write-Na2Stage "2/2 Launch $latestIsoName"
             & $projectPaths.files.pcsx2_launch_command `
-                -IsoPath $projectPaths.files.current_iso
+                -IsoPath $projectPaths.files.latest_iso
         }
     }
     $runOutcome = 'succeeded'

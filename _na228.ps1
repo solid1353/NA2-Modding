@@ -8,8 +8,8 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'scripts\lib\project_paths.ps1')
 . (Join-Path $PSScriptRoot 'scripts\na228\worker_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
-$currentIsoName = [IO.Path]::GetFileName($projectPaths.files.current_iso)
-$candidateIsoName = [IO.Path]::GetFileName($projectPaths.files.candidate_iso)
+$latestIsoName = [IO.Path]::GetFileName($projectPaths.files.latest_iso)
+$testIsoName = [IO.Path]::GetFileName($projectPaths.files.test_iso)
 $gameAliases = @(
     $projectPaths.games.Aliases.PSObject.Properties |
         Where-Object { [string]$_.Name -cne [string]$_.Value } |
@@ -40,12 +40,14 @@ if ($mode -eq 'help') {
     }
     @(
         'NA2.28 commands:'
-        "  na228       Build the pinned current profile, conditionally rotate, then run $currentIsoName"
-        "  na228 b     Build and conditionally rotate $currentIsoName without launching PCSX2"
-        "  na228 t     Build build/$candidateIsoName without changing Current/Previous"
+        "  na228       Build and run $latestIsoName"
+        '  na228 l|p|t [games...]  Run Latest, Previous, or Test with optional comparisons'
+        "  na228 bl [games...]  Build and run $latestIsoName with optional comparisons"
+        "  na228 bt [games...]  Build and run $testIsoName with optional comparisons"
+        '  na228 <recipe>w [games...]  Run a compact recipe, then watch src/'
+        '  na228 build l|t  Build Latest or Test without running it'
         '  na228 validate  Compose and conflict-check the pinned profile without producing an ISO'
         '  na228 w     Watch src/ and hot-reload saved C changes into dev PCSX2'
-        '  na228 <recipe> [games...]  Compose b or t, game launch, and optional final w'
         '  na228 <game> [games...]  Launch and tile selected games'
         '  na228 worker work/<worker>/build/<name>.iso  Build an isolated worker ISO'
         '  na228 release [version]  Validate, commit, tag, and publish a GitHub release'
@@ -67,6 +69,28 @@ if ($mode -eq 'release') {
     }
     & $projectPaths.files.release_publish_command @releaseArguments
     return
+}
+
+if ($mode -eq 'build') {
+    if ($arguments.Count -ne 1) {
+        throw 'na228 build requires exactly one target: l or t.'
+    }
+    $target = $arguments[0].ToLowerInvariant()
+    switch ($target) {
+        { $_ -in @('l', 'latest') } {
+            & (Join-Path $projectPaths.scripts 'na228\run.ps1') `
+                -Action latest-build
+            return
+        }
+        { $_ -in @('t', 'test') } {
+            & (Join-Path $projectPaths.scripts 'na228\run.ps1') `
+                -Action test-build
+            return
+        }
+        default {
+            throw "na228 build target must be l or t: $target"
+        }
+    }
 }
 
 if ($mode -eq 'validate') {
@@ -94,57 +118,77 @@ if ($mode -eq 'worker') {
 
 if (-not $mode) {
     & (Join-Path $projectPaths.scripts 'na228\run.ps1') `
-        -Action build-and-launch
+        -Action latest-build-and-launch
     return
 }
 
-$recipe = if ($mode -cmatch '^[btw]+$') { $mode } else { '' }
-if ($recipe) {
-    $duplicateStep = $recipe.ToCharArray() |
-        Group-Object |
-        Where-Object Count -gt 1 |
-        Select-Object -First 1
-    if ($null -ne $duplicateStep) {
-        throw "Recipe '$recipe' repeats step '$($duplicateStep.Name)'."
+if ($mode -eq 'w') {
+    if ($arguments.Count -gt 0) {
+        throw 'na228 w accepts no game arguments; put w at the end of a run recipe.'
     }
-    if ($recipe.Contains('b') -and $recipe.Contains('t')) {
-        throw "Recipe '$recipe' cannot combine Current and Candidate builds."
-    }
-    if ($recipe.Contains('w') -and -not $recipe.EndsWith('w')) {
-        throw "Recipe '$recipe' must place blocking watcher step 'w' last."
-    }
-}
-$gameTokens = @(
-    if ($recipe) { $arguments } else { $commandTokens }
-)
-
-if (-not $recipe) {
-    & $projectPaths.files.na228_game_launch_command @gameTokens
-    return
-}
-
-if ($recipe.Length -gt 1) {
-    Write-Na2Stage "Run recipe $recipe"
-}
-
-$built = $false
-if ($recipe.Contains('b')) {
-    & (Join-Path $projectPaths.scripts 'na228\run.ps1') -Action build-only
-    $built = $true
-}
-elseif ($recipe.Contains('t')) {
-    & (Join-Path $projectPaths.scripts 'na228\run.ps1') -Action candidate-build
-    $built = $true
-}
-
-if ($gameTokens.Count -gt 0) {
-    $launchArguments = @{ Games = $gameTokens }
-    if ($built) {
-        $launchArguments.SkipActualization = $true
-    }
-    & $projectPaths.files.na228_game_launch_command @launchArguments
-}
-
-if ($recipe.EndsWith('w')) {
     & (Join-Path $projectPaths.scripts 'injection\watch.ps1')
+    return
+}
+
+$recipeMode = switch -Regex ($mode) {
+    '^b$' { 'bl'; break }
+    '^bw$' { 'blw'; break }
+    '^(?:b?[lt]|p)w?$' { $mode; break }
+    default { '' }
+}
+if (-not $recipeMode) {
+    & $projectPaths.files.na228_game_launch_command @commandTokens
+    return
+}
+
+$watch = $recipeMode.EndsWith('w')
+$coreRecipe = if ($watch) {
+    $recipeMode.Substring(0, $recipeMode.Length - 1)
+}
+else {
+    $recipeMode
+}
+$build = $coreRecipe.StartsWith('b')
+$targetAlias = if ($build) { $coreRecipe.Substring(1) } else { $coreRecipe }
+$target = switch ($targetAlias) {
+    'l' { 'latest' }
+    'p' { 'previous' }
+    't' { 'test' }
+    default { throw "Invalid NA2.28 recipe target: $targetAlias" }
+}
+
+if ($build) {
+    $buildAction = if ($target -eq 'latest') {
+        'latest-build'
+    }
+    else {
+        'test-build'
+    }
+    & (Join-Path $projectPaths.scripts 'na228\run.ps1') -Action $buildAction
+}
+
+$gameTokens = @($target) + @($arguments)
+$launchArguments = @{ Games = $gameTokens }
+if ($build) {
+    $launchArguments.SkipActualization = $true
+}
+$launchResults = @(
+    & $projectPaths.files.na228_game_launch_command @launchArguments
+)
+$launchResults
+
+if ($watch) {
+    $primaryLaunch = @(
+        $launchResults |
+            Where-Object {
+                $null -ne $_.PSObject.Properties['Game'] -and
+                [string]$_.Game -ceq $target
+            }
+    )
+    if ($primaryLaunch.Count -ne 1 -or
+        $null -eq $primaryLaunch[0].PSObject.Properties['PinePort']) {
+        throw "Launch result did not expose the PINE port for primary target '$target'."
+    }
+    & (Join-Path $projectPaths.scripts 'injection\watch.ps1') `
+        -PinePort ([int]$primaryLaunch[0].PinePort)
 }

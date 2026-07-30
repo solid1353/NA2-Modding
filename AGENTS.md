@@ -135,7 +135,7 @@ Detailed command and task behavior is in
   game menus through PINE or injected input. If a required savestate was not
   supplied, stop and ask the user for that exact state.
 - Worker PCSX2, injection builds, and other worker processes never open the
-  shared Current, Previous, or Candidate ISO paths. Pass only an independent
+  shared Latest, Previous, or Test ISO paths. Pass only an independent
   full copy under `work/<exact task title>/inputs/isos/`; no other worker ISO
   location is valid. Symlinks and hardlinks are forbidden because the user may
   replace or modify a shared ISO at any time. Record the copied ISO's SHA-256
@@ -167,8 +167,9 @@ Detailed command and task behavior is in
   recreate its complete `work/<exact task title>/pcsx2/` copy without another
   destructive-action approval. This authority never extends to another task's
   copy, `@pcsx2_clean`, `@pcsx2_dev`, or `@pcsx2_stable`.
-- `na228 t` and `_na228.ps1 t` build ISOs; recipe `t` never means tests. The full
-  builder test suite is
+- `na228 t` and `_na228.ps1 t` run the retained Test ISO; `na228 bt` builds
+  Test and then runs it, while `na228 build t` is the explicit build-only form.
+  These commands never mean the test suite. The full builder test suite is
   `python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'`.
   Never infer command semantics from a flag name; verify the documented exact
   command before execution.

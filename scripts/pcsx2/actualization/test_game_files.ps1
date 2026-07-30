@@ -57,15 +57,15 @@ try {
         ),
         [Text.UTF8Encoding]::new($false)
     )
-    $currentPostfix = 'Current'
+    $latestPostfix = 'Latest'
     $previousPostfix = 'Previous'
-    $candidatePostfix = 'Candidate'
-    $currentMemoryCard = Join-Path $memoryCards "NA228 - $currentPostfix.ps2"
+    $testPostfix = 'Test'
+    $latestMemoryCard = Join-Path $memoryCards "NA228 - $latestPostfix.ps2"
     $previousMemoryCard = Join-Path $memoryCards "NA228 - $previousPostfix.ps2"
-    $candidateMemoryCard = Join-Path $memoryCards "NA228 - $candidatePostfix.ps2"
+    $testMemoryCard = Join-Path $memoryCards "NA228 - $testPostfix.ps2"
     $memoryCardInputs = @(
         [pscustomobject]@{
-            Path = $currentMemoryCard
+            Path = $latestMemoryCard
             Bytes = [byte[]](1, 2, 3, 4)
         }
         [pscustomobject]@{
@@ -73,7 +73,7 @@ try {
             Bytes = [byte[]](5, 6, 7, 8)
         }
         [pscustomobject]@{
-            Path = $candidateMemoryCard
+            Path = $testMemoryCard
             Bytes = [byte[]](9, 10, 11, 12)
         }
     )
@@ -84,12 +84,12 @@ try {
         )
     }
 
-    $currentIso = Join-Path $build "NA2.28 - $currentPostfix.iso"
+    $latestIso = Join-Path $build "NA2.28 - $latestPostfix.iso"
     $previousIso = Join-Path $build "NA2.28 - $previousPostfix.iso"
-    $candidateIso = Join-Path $build "NA2.28 - $candidatePostfix.iso"
-    [IO.File]::WriteAllText($currentIso, 'current')
+    $testIso = Join-Path $build "NA2.28 - $testPostfix.iso"
+    [IO.File]::WriteAllText($latestIso, 'latest')
     [IO.File]::WriteAllText($previousIso, 'previous')
-    [IO.File]::WriteAllText($candidateIso, 'candidate')
+    [IO.File]::WriteAllText($testIso, 'test')
 
     $projectPaths = [pscustomobject]@{
         pcsx2_files = $pcsx2Files
@@ -98,11 +98,11 @@ try {
         pcsx2_memory_cards = $memoryCards
         games = [pscustomobject]@{
             Entries = [pscustomobject]@{
-                current = [pscustomobject]@{
+                latest = [pscustomobject]@{
                     Category = 'builds'
-                    Postfix = $currentPostfix
-                    IsoPath = $currentIso
-                    MemoryCardPath = $currentMemoryCard
+                    Postfix = $latestPostfix
+                    IsoPath = $latestIso
+                    MemoryCardPath = $latestMemoryCard
                     Config = [pscustomobject]@{
                         cheat_template = $cheatTemplate
                         gamesettings_template = $gameSettingsTemplate
@@ -118,11 +118,11 @@ try {
                         gamesettings_template = $gameSettingsTemplate
                     }
                 }
-                candidate = [pscustomobject]@{
+                test = [pscustomobject]@{
                     Category = 'builds'
-                    Postfix = $candidatePostfix
-                    IsoPath = $candidateIso
-                    MemoryCardPath = $candidateMemoryCard
+                    Postfix = $testPostfix
+                    IsoPath = $testIso
+                    MemoryCardPath = $testMemoryCard
                     Config = [pscustomobject]@{
                         cheat_template = $cheatTemplate
                         gamesettings_template = $gameSettingsTemplate
@@ -133,14 +133,14 @@ try {
     }
     $identityResolver = {
         param([string]$Path)
-        if ([IO.Path]::Equals($Path, $currentIso) -or
+        if ([IO.Path]::Equals($Path, $latestIso) -or
             [IO.Path]::Equals($Path, $previousIso)) {
             return [pscustomobject]@{
                 Serial = 'SLOP-NA228'
                 CRC = '11111111'
             }
         }
-        if ([IO.Path]::Equals($Path, $candidateIso)) {
+        if ([IO.Path]::Equals($Path, $testIso)) {
             return [pscustomobject]@{
                 Serial = 'SLPS-22228'
                 CRC = '33333333'
@@ -162,10 +162,10 @@ try {
         -Message 'Enabled cheat reporting was lost.'
     Assert-Na2ActualizeTest `
         -Condition (@($first.CreatedGameSettings).Count -eq 2) `
-        -Message 'Shared Current/Previous identity was not deduplicated.'
-    $currentSettingsName = (
+        -Message 'Shared Latest/Previous identity was not deduplicated.'
+    $latestSettingsName = (
         $first.Roles |
-            Where-Object Role -CEQ 'Current' |
+            Where-Object Role -CEQ 'Latest' |
             Select-Object -First 1
     ).GameSettingsName
 
@@ -182,9 +182,9 @@ try {
             -Message "GameSettings is not a real file: $($role.GameSettingsName)"
         $settingsText = [IO.File]::ReadAllText($settingsPath)
         $settingsOwner = if (
-            $role.GameSettingsName -ceq $currentSettingsName
+            $role.GameSettingsName -ceq $latestSettingsName
         ) {
-            'Current'
+            'Latest'
         }
         else {
             $role.Role
@@ -225,24 +225,24 @@ try {
             -Message "Cheat symlink does not track its template: $($role.PnachName)"
     }
 
-    Remove-Item -LiteralPath $candidateIso -Force
+    Remove-Item -LiteralPath $testIso -Force
 
     $second = & $actualizer `
         -ProjectPaths $projectPaths `
         -IdentityResolver $identityResolver
     Assert-Na2ActualizeTest `
         -Condition ($second.Roles.Count -eq 2) `
-        -Message 'Second run retained a missing Candidate image.'
+        -Message 'Second run retained a missing Test image.'
     Assert-Na2ActualizeTest `
         -Condition (-not (Test-Path -LiteralPath (
             Join-Path $gameSettings 'SLPS-22228_33333333.ini'
         ))) `
-        -Message 'Obsolete managed Candidate GameSettings was not removed.'
+        -Message 'Obsolete managed Test GameSettings was not removed.'
     Assert-Na2ActualizeTest `
         -Condition (-not (Test-Path -LiteralPath (
             Join-Path $cheats 'SLPS-22228_33333333.pnach'
         ))) `
-        -Message 'Obsolete managed Candidate cheat symlink was not removed.'
+        -Message 'Obsolete managed Test cheat symlink was not removed.'
     foreach ($memoryCardInput in $memoryCardInputs) {
         Assert-Na2ActualizeTest `
             -Condition (
@@ -254,14 +254,14 @@ try {
     }
 
     [IO.File]::WriteAllBytes($cheatTemplate, [byte[]]@())
-    $currentPnach = Join-Path $cheats $first.Roles[0].PnachName
-    Remove-Item -LiteralPath $currentPnach -Force
+    $latestPnach = Join-Path $cheats $first.Roles[0].PnachName
+    Remove-Item -LiteralPath $latestPnach -Force
     $staleText = (
         "// Stale managed runtime PNACH`n" +
         "patch=1,EE,208F0000,extended,00000000`n"
     )
     [IO.File]::WriteAllText(
-        $currentPnach,
+        $latestPnach,
         $staleText,
         [Text.UTF8Encoding]::new($false)
     )

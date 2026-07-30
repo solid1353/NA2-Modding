@@ -29,7 +29,7 @@ class ProjectPathTests(unittest.TestCase):
                 {
                     "na2_iso": "@build/NA2.iso",
                     "nun5_iso": "@build/NUN5.iso",
-                    "current_iso": "@build/NA2.28 - Current.iso",
+                    "latest_iso": "@build/NA2.28 - Latest.iso",
                     "previous_iso": "@build/NA2.28 - Previous.iso",
                 },
             )
@@ -45,8 +45,8 @@ class ProjectPathTests(unittest.TestCase):
                 root.resolve() / "build" / "NUN5.iso",
             )
             self.assertEqual(
-                paths.file("current_iso"),
-                root.resolve() / "build" / "NA2.28 - Current.iso",
+                paths.file("latest_iso"),
+                root.resolve() / "build" / "NA2.28 - Latest.iso",
             )
             self.assertEqual(
                 paths.file("previous_iso"),
@@ -58,7 +58,7 @@ class ProjectPathTests(unittest.TestCase):
             root = Path(directory)
             manifest = self.write_manifest(
                 root,
-                {"current_iso": "../outside.iso"},
+                {"latest_iso": "../outside.iso"},
             )
 
             with self.assertRaisesRegex(ValueError, "remain within the repository"):
@@ -142,7 +142,7 @@ class ProjectPathTests(unittest.TestCase):
                 "schema_version": 1,
                 "existence_deferred_roots": ["missing"],
                 "roots": {"repository": "."},
-                "files": {"current_iso": "Current.iso"},
+                "files": {"latest_iso": "Latest.iso"},
             }
             manifest_path = root / "project-paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
@@ -162,7 +162,7 @@ class ProjectPathTests(unittest.TestCase):
                     "first": "@second/child",
                     "second": "@first/child",
                 },
-                "files": {"current_iso": "Current.iso"},
+                "files": {"latest_iso": "Latest.iso"},
             }
             manifest_path = root / "project-paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
@@ -175,7 +175,7 @@ class ProjectPathTests(unittest.TestCase):
             root = Path(directory)
             manifest = self.write_manifest(
                 root,
-                {"current_iso": "@build/../outside.iso"},
+                {"latest_iso": "@build/../outside.iso"},
             )
 
             with self.assertRaisesRegex(ValueError, "within configured root"):
@@ -186,7 +186,7 @@ class ProjectPathTests(unittest.TestCase):
             root = Path(directory)
             manifest = self.write_manifest(
                 root,
-                {"current_iso": "@missing/Current.iso"},
+                {"latest_iso": "@missing/Latest.iso"},
             )
 
             with self.assertRaisesRegex(ValueError, "unknown project root"):
@@ -239,9 +239,9 @@ class ProjectPathTests(unittest.TestCase):
                     ),
                     "memory_card": "@pcsx2_memory_cards/NA228.ps2",
                     "entries": {
-                        "current": {
-                            "aliases": ["c"],
-                            "postfix": "Current",
+                        "latest": {
+                            "aliases": ["l"],
+                            "postfix": "Latest",
                         },
                         "previous": {
                             "aliases": ["p"],
@@ -281,12 +281,12 @@ class ProjectPathTests(unittest.TestCase):
             paths = load_project_paths(manifest_path)
 
             self.assertEqual(
-                paths.file("current_iso"),
-                root.resolve() / "build" / "NA v2.28 - Current.iso",
+                paths.file("latest_iso"),
+                root.resolve() / "build" / "NA v2.28 - Latest.iso",
             )
             self.assertEqual(
-                paths.file("current_memory_card"),
-                root.resolve() / "pcsx2/memory_cards/NA228 - Current.ps2",
+                paths.file("latest_memory_card"),
+                root.resolve() / "pcsx2/memory_cards/NA228 - Latest.ps2",
             )
             self.assertEqual(
                 paths.file("nun5_iso"),
@@ -319,7 +319,7 @@ class ProjectPathTests(unittest.TestCase):
                 },
                 "files": {
                     "game_catalog": "@repository/games.json",
-                    "current_iso": "@build/Current.iso",
+                    "latest_iso": "@build/Latest.iso",
                 },
             }
             catalog = {
@@ -328,8 +328,8 @@ class ProjectPathTests(unittest.TestCase):
                     "title": "NA v2.28",
                     "memory_card": "@pcsx2_memory_cards/NA228.ps2",
                     "entries": {
-                        "current": {
-                            "postfix": "Current",
+                        "latest": {
+                            "postfix": "Latest",
                         }
                     }
                 },

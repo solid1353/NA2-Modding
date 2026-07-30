@@ -53,9 +53,9 @@ try {
     "pcsx2_stable_exe": "@pcsx2_stable/pcsx2-qt.exe",
     "na2_iso": "@source/NA2.iso",
     "nun5_iso": "@source/NUN5.iso",
-    "current_iso": "@build/NA2.28 - Current.iso",
+    "latest_iso": "@build/NA2.28 - Latest.iso",
     "previous_iso": "@build/NA2.28 - Previous.iso",
-    "candidate_iso": "@build/NA2.28 - Candidate.iso"
+    "test_iso": "@build/NA2.28 - Test.iso"
   }
 }
 '@
@@ -67,15 +67,15 @@ try {
         -Path (Join-Path $repository 'na228_builder\profiles\current') | Out-Null
     [IO.File]::WriteAllText((Join-Path $repository 'source\NA2.iso'), 'clean na2')
     [IO.File]::WriteAllText((Join-Path $repository 'source\NUN5.iso'), 'clean nun5')
-    $currentIso = Join-Path $repository 'build\NA2.28 - Current.iso'
-    [IO.File]::WriteAllText($currentIso, 'verified current')
+    $latestIso = Join-Path $repository 'build\NA2.28 - Latest.iso'
+    [IO.File]::WriteAllText($latestIso, 'verified latest')
 
     $logDirectory = Join-Path $repository 'logs\na228'
     New-Item -ItemType Directory -Force `
         -Path (Join-Path $logDirectory 'builds\existing') | Out-Null
     $buildMap = @(
         "iso`tbuild_record"
-        "@build/NA2.28 - Current.iso`t@logs/na228/builds/existing"
+        "@build/NA2.28 - Latest.iso`t@logs/na228/builds/existing"
         "@build/NA2.28 - Previous.iso`t"
     ) -join "`n"
     [IO.File]::WriteAllText((Join-Path $logDirectory 'builds.tsv'), $buildMap + "`n")
@@ -130,7 +130,7 @@ try {
         -Message 'Cache hit was not marked on the build result.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
         -Message 'Cache hit invoked module derivation or receipt recording.'
-    Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$currentIso.building")) `
+    Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$latestIso.building")) `
         -Message 'Cache hit created a .building ISO.'
 
     $global:Na2PreflightTestMode = 'miss'
@@ -142,42 +142,42 @@ try {
         -Message 'Full-build fallback was incorrectly marked as a cache hit.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 3) `
         -Message 'Full-build fallback did not check, build, and record exactly once.'
-    Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$currentIso.building")) `
+    Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$latestIso.building")) `
         -Message 'Full-build fallback left a .building ISO.'
 
     $global:Na2PreflightTestCalls = @()
-    $candidate = & (Join-Path $scriptRoot 'build.ps1') -CandidateOnly
-    $candidateIso = Join-Path $repository 'build\NA2.28 - Candidate.iso'
-    Assert-Na2PreflightTest -Condition ($candidate.Status -eq 'candidate') `
-        -Message 'Candidate-only build did not return candidate status.'
+    $test = & (Join-Path $scriptRoot 'build.ps1') -TestOnly
+    $testIso = Join-Path $repository 'build\NA2.28 - Test.iso'
+    Assert-Na2PreflightTest -Condition ($test.Status -eq 'test') `
+        -Message 'Test-only build did not return test status.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
-        -Message 'Candidate-only build invoked preflight or receipt recording.'
+        -Message 'Test-only build invoked preflight or receipt recording.'
     Assert-Na2PreflightTest `
         -Condition ($global:Na2PreflightTestCalls[0] -contains 'na228_builder.build_profile') `
-        -Message 'Candidate-only build did not run the full profile builder.'
-    Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $candidateIso -PathType Leaf) `
-        -Message 'Candidate-only build did not retain its verified ISO.'
+        -Message 'Test-only build did not run the full profile builder.'
+    Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $testIso -PathType Leaf) `
+        -Message 'Test-only build did not retain its verified ISO.'
     Assert-Na2PreflightTest `
-        -Condition ([IO.File]::ReadAllText($currentIso) -ceq 'verified current') `
-        -Message 'Candidate-only build changed the Current ISO.'
-    Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$candidateIso.building")) `
-        -Message 'Candidate-only build left its .building ISO.'
+        -Condition ([IO.File]::ReadAllText($latestIso) -ceq 'verified latest') `
+        -Message 'Test-only build changed the Latest ISO.'
+    Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$testIso.building")) `
+        -Message 'Test-only build left its .building ISO.'
     Assert-Na2PreflightTest `
-        -Condition (Test-Path -LiteralPath (Join-Path $repository $candidate.ProfileLogDirectory.Replace('@logs/', 'logs/')) -PathType Container) `
-        -Message 'Candidate-only build did not retain its structured record.'
+        -Condition (Test-Path -LiteralPath (Join-Path $repository $test.ProfileLogDirectory.Replace('@logs/', 'logs/')) -PathType Container) `
+        -Message 'Test-only build did not retain its structured record.'
 
     $global:Na2PreflightTestCalls = @()
-    $unchangedCandidate = & (Join-Path $scriptRoot 'build.ps1') -CandidateOnly
-    Assert-Na2PreflightTest -Condition ($unchangedCandidate.CandidateState -eq 'unchanged') `
-        -Message 'Repeated candidate-only build did not detect unchanged output.'
+    $unchangedTest = & (Join-Path $scriptRoot 'build.ps1') -TestOnly
+    Assert-Na2PreflightTest -Condition ($unchangedTest.TestState -eq 'unchanged') `
+        -Message 'Repeated test-only build did not detect unchanged output.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
-        -Message 'Repeated candidate-only build invoked anything except profile composition.'
+        -Message 'Repeated test-only build invoked anything except profile composition.'
     Assert-Na2PreflightTest `
-        -Condition (@(Get-ChildItem -LiteralPath (Join-Path $logDirectory 'candidates') -Directory).Count -eq 1) `
-        -Message 'Candidate-only build retained obsolete candidate records.'
+        -Condition (@(Get-ChildItem -LiteralPath (Join-Path $logDirectory 'tests') -Directory).Count -eq 1) `
+        -Message 'Test-only build retained obsolete test records.'
 
-    $currentBeforeWorkers = [IO.File]::ReadAllText($currentIso)
-    $candidateBeforeWorkers = [IO.File]::ReadAllText($candidateIso)
+    $latestBeforeWorkers = [IO.File]::ReadAllText($latestIso)
+    $testBeforeWorkers = [IO.File]::ReadAllText($testIso)
     $global:Na2PreflightTestCalls = @()
     $generalOutput = 'work\General\build\general-test.iso'
     $general = & (Join-Path $scriptRoot 'build.ps1') -WorkerOutputIso $generalOutput
@@ -208,11 +208,11 @@ try {
         -Condition (Test-Path -LiteralPath $generalRecord -PathType Container) `
         -Message 'Second worker build pruned the first worker record.'
     Assert-Na2PreflightTest `
-        -Condition ([IO.File]::ReadAllText($currentIso) -ceq $currentBeforeWorkers) `
-        -Message 'Worker build changed Current.'
+        -Condition ([IO.File]::ReadAllText($latestIso) -ceq $latestBeforeWorkers) `
+        -Message 'Worker build changed Latest.'
     Assert-Na2PreflightTest `
-        -Condition ([IO.File]::ReadAllText($candidateIso) -ceq $candidateBeforeWorkers) `
-        -Message 'Worker build changed Candidate.'
+        -Condition ([IO.File]::ReadAllText($testIso) -ceq $testBeforeWorkers) `
+        -Message 'Worker build changed Test.'
 
     foreach ($invalidOutput in @(
         'build\agent.iso',

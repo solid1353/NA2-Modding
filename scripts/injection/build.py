@@ -66,7 +66,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--iso",
         type=Path,
-        default=load_project_paths(REPOSITORY).file("current_iso"),
+        default=load_project_paths(REPOSITORY).file("latest_iso"),
     )
     parser.add_argument("--output", type=Path)
     return parser.parse_args()
@@ -388,7 +388,7 @@ def locate_build_record(
         if not required:
             return None
         raise ValueError(
-            "No retained NA2 build record matches the exact Current 228.BIN "
+            "No retained NA2 build record matches the exact Latest 228.BIN "
             f"SHA-256 {payload_sha256}"
         )
     matches.sort(key=lambda item: item[0].name)
@@ -424,13 +424,13 @@ def load_symbol_map(
         size = integer(row["size"], f"symbol_map.tsv:{line} size")
         if offset < 0 or size <= 0 or offset + size > len(payload):
             raise ValueError(
-                f"symbol_map.tsv:{line}: {symbol} exceeds exact Current 228.BIN"
+                f"symbol_map.tsv:{line}: {symbol} exceeds exact Latest 228.BIN"
             )
         actual_sha = sha256(payload[offset : offset + size])
         expected_sha = row["sha256"].upper()
         if actual_sha != expected_sha:
             raise ValueError(
-                f"symbol_map.tsv:{line}: exact Current bytes do not match {symbol}"
+                f"symbol_map.tsv:{line}: exact Latest bytes do not match {symbol}"
             )
         result[symbol] = {
             "offset": offset,
@@ -791,7 +791,7 @@ def resolve_external_addresses(
         row = symbol_map.get(symbol)
         if row is None:
             raise ValueError(
-                f"Exact Current symbol map does not resolve import {symbol!r}"
+                f"Exact Latest symbol map does not resolve import {symbol!r}"
             )
         result[symbol] = int(row["address"])
     return result
@@ -917,7 +917,7 @@ def main() -> int:
         resident_entry = symbol_map.get(entry_symbol)
         if resident_entry is None:
             raise ValueError(
-                f"Exact Current symbol map does not contain entry {entry_symbol!r}; "
+                f"Exact Latest symbol map does not contain entry {entry_symbol!r}; "
                 "a task-owned overlay plan is required to bootstrap a new entry"
             )
         if int(resident_entry["size"]) < 8:
@@ -937,7 +937,7 @@ def main() -> int:
                 ),
                 "expected_hex": expected.hex().upper(),
                 "replacement_hex": replacement.hex().upper(),
-                "reason": "Redirect the Current resident entry to the fragment.",
+                "reason": "Redirect the Latest resident entry to the fragment.",
             }
         )
 

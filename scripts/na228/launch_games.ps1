@@ -14,9 +14,28 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\pcsx2\process.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
+function Get-Na2ConfiguredDevelopmentPinePort {
+    $iniPath = Join-Path $projectPaths.pcsx2_dev 'inis\PCSX2.ini'
+    if (-not (Test-Path -LiteralPath $iniPath -PathType Leaf)) {
+        throw "Development PCSX2 configuration was not found: $iniPath"
+    }
+    $match = Select-String `
+        -LiteralPath $iniPath `
+        -Pattern '^\s*PINESlot\s*=\s*(\d+)\s*$' |
+        Select-Object -First 1
+    if ($null -eq $match) {
+        throw "Development PCSX2 PINESlot is not configured in $iniPath"
+    }
+    $port = [int]$match.Matches[0].Groups[1].Value
+    if ($port -lt 1024 -or $port -gt 65535) {
+        throw "Development PCSX2 PINESlot is invalid: $port"
+    }
+    return $port
+}
+
 $requestedGames = @(
     if ($null -eq $Games -or $Games.Count -eq 0) {
-        'nun5', 'current'
+        'nun5', 'latest'
     }
     else {
         $Games | ForEach-Object { $_.Trim().ToLowerInvariant() }
@@ -63,6 +82,10 @@ foreach ($requiredFile in $requiredFiles) {
         throw "Required file does not exist: $requiredFile"
     }
 }
+$pinePortBase = Get-Na2ConfiguredDevelopmentPinePort
+if ($pinePortBase + $selectedGames.Count - 1 -gt 65535) {
+    throw "Not enough PINE ports remain after configured port $pinePortBase."
+}
 
 Add-Type -AssemblyName System.Windows.Forms
 if (-not ('Na2LaunchWindow' -as [type])) {
@@ -104,14 +127,18 @@ try {
     }
     Stop-Na2Pcsx2 -Executable $pcsx2Exe
 
-    foreach ($game in $selectedGames) {
+    for ($index = 0; $index -lt $selectedGames.Count; $index++) {
+        $game = $selectedGames[$index]
+        $pinePort = $pinePortBase + $index
         $process = & $pcsx2Launcher `
             -IsoPath $selectedIsoPaths[$game] `
+            -Arguments @('-pine-port', [string]$pinePort) `
             -PassThru
 
         $launchedGames.Add([pscustomobject]@{
             Game = $game
             Process = $process
+            PinePort = $pinePort
         })
     }
 
@@ -180,6 +207,7 @@ try {
         [pscustomobject]@{
             Game = $launch.Game
             ProcessId = $launch.Process.Id
+            PinePort = $launch.PinePort
             GridCell = "$(1 + $row),$(1 + $column)"
         }
     }

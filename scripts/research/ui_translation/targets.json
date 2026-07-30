@@ -13,7 +13,7 @@
     "current": {
       "image": {
         "kind": "project_file",
-        "value": "current_iso"
+        "value": "latest_iso"
       },
       "serial": "SLOP-NA228",
       "crc": "6D94D5CC",

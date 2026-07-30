@@ -11,13 +11,13 @@ project files. NUN6 A35 is a Brazilian mod of NUN5, not an official successor.
 It is retained as a feature donor because it contains many modifications that
 may later be ported to NA2.
 
-Current PCSX2 actualization:
+NA2.28 PCSX2 actualization:
 
 - Read-only generation templates are `@pcsx2_cheats/_SLOP-NA228.pnach` and
   `@pcsx2_game_settings/_SLOP-NA228.ini`. They are stable serial-based inputs, not
   canonical PCSX2 identities; each built image's serial/CRC determines its
   generated alias.
-- `act na228` derives each retained Current, Previous, and Candidate identity
+- `act na228` derives each retained Latest, Previous, and Test identity
   from its ISO, maintains matching CRC-named PNACH symlinks, and writes distinct
   real GameSettings files under `@pcsx2_files/`. Orphaned regular files at
   managed NA2.28 CRC aliases are repaired to template-backed symlinks. Runtime
@@ -26,15 +26,15 @@ Current PCSX2 actualization:
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v4 organizes each package as groups, atomic patches, and exact edits; independent group and patch `enabled` switches control normal composition. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`.
 - Actualization is an explicit standalone workflow with `na2` and `input`
   modes; bare `act` runs both in that order. User-owned
-  Current/Previous/Candidate builds and launches also run `act na228`
+  Latest/Previous/Test builds and launches also run `act na228`
   automatically, while worker builds never actualize.
 - A zero-byte cheat template removes its managed PCSX2 CRC aliases. Other game
   identities, real files, and unrelated symlinks are preserved.
-- Current, Previous, and Candidate select the existing
-  `NA228 - Current.ps2`, `NA228 - Previous.ps2`, and
-  `NA228 - Candidate.ps2` cards respectively. When multiple images share one
+- Latest, Previous, and Test select the existing
+  `NA228 - Latest.ps2`, `NA228 - Previous.ps2`, and
+  `NA228 - Test.ps2` cards respectively. When multiple images share one
   PCSX2 serial/CRC identity, the single GameSettings file is deduplicated with
-  Current taking precedence. Actualization never creates, copies, or modifies
+  Latest taking precedence. Actualization never creates, copies, or modifies
   the templates or configured memory cards.
 - `@pcsx2_files/` contains the canonical BIOS, cheats, GameSettings, input
   profiles, input recordings, and memory cards used directly by stable and
@@ -53,11 +53,11 @@ replaced with a copied machine-specific absolute path.
 
 - `@source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
 - `@source/*.files/`: extracted views of original source archives. Treat as read-only reference.
-- `build/`: normally contains `build/NA v2.28 - Current.iso`, may retain at most `build/NA v2.28 - Previous.iso` as rotation history, and may retain `build/NA v2.28 - Candidate.iso` while concurrent refactoring/testing needs it. These names are derived from `games.json` build title and postfixes. Standard builds use `NA v2.28 - Current.iso.building`, then discard an identical candidate or promote and rotate a changed one. `na228 t` instead uses `NA v2.28 - Candidate.iso.building`, atomically updates only Candidate, leaves PCSX2 running, and never changes Current, Previous, their build mapping, or Current's preflight receipt. Staging files are removed on failure.
+- `build/`: normally contains `build/NA v2.28 - Latest.iso`, may retain at most `build/NA v2.28 - Previous.iso` as rotation history, and may retain `build/NA v2.28 - Test.iso` while concurrent refactoring/testing needs it. These names are derived from `games.json` build title and postfixes. Standard builds use `NA v2.28 - Latest.iso.building`, then discard an identical staged image or promote and rotate a changed one. Test builds use `NA v2.28 - Test.iso.building`, atomically update only Test, leave PCSX2 running, and never change Latest, Previous, their build mapping, or Latest's preflight receipt. Staging files are removed on failure.
 - `work/<task title>/build/`: isolated agent ISOs produced by `na228 worker work/<task title>/build/<name>.iso`. Staging remains beside the requested output, build records remain under that task's `logs/`, and the mode never touches shared build, preflight, promotion, PNACH, or PCSX2 state.
 - Temporary imported archives live under the active task's `work/<task title>/temp/` folder until normalized or retired. Reproducible data lives as hash-pinned inputs beside its module; complete accepted states are preserved by annotated Git tags, and retired inputs remain available through Git history.
 - `na228_builder/features/localization/translation_importer/mappings.tsv` is the Localization feature's current hash-pinned importer input and folds the verified pointer inventory into each applicable mapping row. `source_ref` and `source` retain the guarded NA2 origin; `donor_ref` and `donor` retain the official translation and make it executable by default. A nonempty user-authored `replacement` overrides the donor, and `prefix` is prepended to the selected text. Profile `identity.json` owns the imported/output game titles, and the generic `string_patcher` applies that output policy before deriving inline or linked placement from encoded fit and available references. Feature-owned custom resident functions and guarded hooks are declared through `runtime_injector`; `payload_builder` links those fragments together with external strings into `PRG/228.BIN` and owns its loader/memory integration. The composer resolves symbols and `binary_patcher` applies concrete guarded writes. No standalone export or source-hash bypass exists.
-- `@logs/`: disposable shared-workflow records; no files should be written directly in the root. `na228` keeps bounded Current/Previous/Candidate provenance under `@logs/na228/`, and shared generated workstream evidence belongs under `@workstream_logs/<exact task title>/`. Agent ISO records instead stay under `work/<task title>/logs/`. See `docs/LOGGING.md`.
+- `@logs/`: disposable shared-workflow records; no files should be written directly in the root. `na228` keeps bounded Latest/Previous/Test provenance under `@logs/na228/`, and shared generated workstream evidence belongs under `@workstream_logs/<exact task title>/`. Agent ISO records instead stay under `work/<task title>/logs/`. See `docs/LOGGING.md`.
 - `scripts/`: repeatable tooling.
 - `@pcsx2_files/`: shared PCSX2 artifacts under
   `@workshop/pcsx2/__shared/`.
@@ -179,7 +179,7 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 
 ## Current Scripts
 
-- Root `_na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Current; recipes use unique `b`/`t`/`w` steps, with any game selectors supplied separately and blocking `w` last; direct game-selector arguments launch and tile those games; and `worker`, `release`, and `help` remain explicit commands. The standalone `act` command performs actualization without building or launching. User-owned shared-image modes run `act na228` automatically; the launcher does not read or rewrite the user's `PCSX2.ini`. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
+- Root `_na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Latest. Compact recipes select one primary role: `l`, `p`, or `t` runs it; `bl` or `bt` builds Latest or Test before running it; optional comparison selectors follow; and optional final `w` watches the primary launched instance. Explicit `build l|t`, `worker`, `release`, and `help` remain available. The standalone `act` command performs actualization without building or launching. User-owned shared-image modes run `act na228` automatically; configured multi-game launches use distinct PINE ports without rewriting the user's base `PCSX2.ini`. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
 - `scripts/na228/` contains build/launch execution, promotion, ISO identity,
   worker-path validation, and focused tests. Root `_na228.ps1` owns argument
   parsing and dispatches substantive execution to `scripts/na228/run.ps1`.
@@ -193,6 +193,9 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   worker launches; `-PassThru` exposes the started process to higher-level
   orchestration. It performs no cloning, configuration, process inspection, or
   termination beyond the newly launched worker's hidden-state check, and
+  configured multi-game orchestration passes the custom process-local
+  `-pine-port` override so each process keeps an independent PINE endpoint
+  without rewriting the persistent INI.
   performs no PINE operation, savestate handling, capture, or cleanup.
   `scripts/na228/launch_games.ps1` is the development-default multi-game
   launch-and-tile backend used by direct `na228` game selectors and accepts any
@@ -205,7 +208,7 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   synchronous resume `0x13`, and EE execution-cache refresh `0x14`. Direct
   injection uses pause/write/cache-refresh/resume and does not reload or
   transport candidates through patch or cheat files.
-- `na228_builder/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na228_builder/build_profile.py` applies that prepared pipeline and writes its run log. `na228_builder/composer.py` resolves module artifacts and closes typed image operations. `na228_builder/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Candidate, or worker-owned output.
+- `na228_builder/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na228_builder/build_profile.py` applies that prepared pipeline and writes its run log. `na228_builder/composer.py` resolves module artifacts and closes typed image operations. `na228_builder/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Test, or worker-owned output.
 - `scripts/media/` contains the recursive source extractor, its byte-parity
   verifier, and focused ISO, AFS, and CVM building blocks. Direct same-size ISO
   replacement is retired; guarded replacements belong to the hash-pinned
@@ -290,10 +293,10 @@ DATA.CVM passwords: `cc2fuku` for NA2, NUN3, and NUN5; `Iruka` for NUN6 A35.
 `scripts/pcsx2/actualization/act.ps1` is the standalone command entrypoint and
 owns its transcript and status reporting. Bare `act` dispatches `na2`, then
 `input`.
-`sync_game_files.ps1` derives identities for every retained Current, Previous, and
-Candidate ISO, deletes stale managed cheat symlinks and NA2.28 GameSettings,
+`sync_game_files.ps1` derives identities for every retained Latest, Previous, and
+Test ISO, deletes stale managed cheat symlinks and NA2.28 GameSettings,
 creates the required cheat aliases and real role GameSettings, and sets each
-role to its existing Current, Previous, or Candidate memory card. Templates and
+role to its existing Latest, Previous, or Test memory card. Templates and
 memory cards are never created, copied, or modified.
 `sync_input.ps1` regenerates `Base_NA2.ini` from the maintained `Base.ini`.
 

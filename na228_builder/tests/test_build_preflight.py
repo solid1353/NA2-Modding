@@ -45,17 +45,17 @@ class BuildPreflightTests(unittest.TestCase):
         na2_iso.parent.mkdir()
         na2_iso.write_bytes(b"clean na2")
         nun5_iso.write_bytes(b"clean nun5")
-        current_iso = workspace / "build" / "NA2.28 - Current.iso"
-        current_iso.parent.mkdir()
-        current_iso.write_bytes(b"verified current")
+        latest_iso = workspace / "build" / "NA2.28 - Latest.iso"
+        latest_iso.parent.mkdir()
+        latest_iso.write_bytes(b"verified latest")
         return {
             "workspace": workspace,
             "builder": builder,
             "profile": profile,
             "na2_iso": na2_iso,
             "nun5_iso": nun5_iso,
-            "current_iso": current_iso,
-            "receipt": workspace / "logs" / "na228" / "preflight" / "current.json",
+            "latest_iso": latest_iso,
+            "receipt": workspace / "logs" / "na228" / "preflight" / "latest.json",
         }
 
     def state(self, paths: dict[str, Path], **overrides: object) -> dict[str, object]:
@@ -74,7 +74,7 @@ class BuildPreflightTests(unittest.TestCase):
             workspace=paths["workspace"],
             na2_iso=paths["na2_iso"],
             nun5_iso=paths["nun5_iso"],
-            current_iso=paths["current_iso"],
+            latest_iso=paths["latest_iso"],
             profile_directory=paths["profile"],
             receipt_path=paths["receipt"],
             dependencies=DEPENDENCIES,
@@ -89,7 +89,7 @@ class BuildPreflightTests(unittest.TestCase):
             workspace=paths["workspace"],
             na2_iso=paths["na2_iso"],
             nun5_iso=paths["nun5_iso"],
-            current_iso=paths["current_iso"],
+            latest_iso=paths["latest_iso"],
             profile_directory=paths["profile"],
             receipt_path=paths["receipt"],
             expected_fingerprint=expected_fingerprint,
@@ -143,7 +143,7 @@ class BuildPreflightTests(unittest.TestCase):
                 builder_tree_entry(paths["builder"])["sha256"],
             )
 
-    def test_receipt_hit_requires_matching_fingerprint_and_current_hash(self) -> None:
+    def test_receipt_hit_requires_matching_fingerprint_and_latest_hash(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             fingerprint = state_fingerprint(self.state(paths))
@@ -152,10 +152,10 @@ class BuildPreflightTests(unittest.TestCase):
             self.assertEqual(written["status"], "written")
             self.assertEqual(self.check(paths)["status"], "hit")
 
-            original = paths["current_iso"].read_bytes()
-            paths["current_iso"].write_bytes(b"X" * len(original))
-            self.assertEqual(self.check(paths)["reason"], "current-iso-hash-mismatch")
-            paths["current_iso"].write_bytes(original)
+            original = paths["latest_iso"].read_bytes()
+            paths["latest_iso"].write_bytes(b"X" * len(original))
+            self.assertEqual(self.check(paths)["reason"], "latest-iso-hash-mismatch")
+            paths["latest_iso"].write_bytes(original)
 
             paths["builder"].joinpath("engine.py").write_text(
                 "ENGINE = 3\n", encoding="utf-8"

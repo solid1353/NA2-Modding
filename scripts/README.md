@@ -64,30 +64,29 @@ Before that call, `na228/build.ps1` checks the deterministic successful-build
 receipt through `na228_builder.build_preflight`; an exact hit returns the normal
 unchanged result without staging an ISO. `na228/test_build_preflight.ps1` covers
 the cache-hit and safe full-build-fallback dispatch paths.
-`na228 t` calls the same builder in candidate-only mode: it always composes a
-fresh verified catalog-derived Candidate ISO, bypasses Current preflight and
+`na228 build t` calls the same builder in Test-only mode: it always composes a
+fresh verified catalog-derived Test ISO, bypasses Latest preflight and
 promotion state, and does not probe or close PCSX2.
 `na228 worker work/<task title>/build/<name>.iso` instead builds an isolated
 worker-owned ISO, stages beside it, and keeps both operational and structured
 records under `work/<task title>/logs/`. The path is caller-supplied and
 validated; worker mode cannot address shared build outputs or mutate shared
 preflight, promotion, PNACH, log, or emulator state. Agents must use this form
-rather than bare `na228`, `na228 b`, or bare `na228 t`.
-Recipe `t` is always an ISO-build command and never runs tests. The unambiguous
+rather than bare `na228`, compact build recipes, or `na228 build l|t`.
+The unambiguous
 full builder-suite command is:
 
 ```powershell
 python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'
 ```
 
-`na228 b` runs the standard Current build and conditional promotion pipeline but
-does not launch PCSX2. Bare `na228` keeps the build-then-launch workflow.
-Compact recipes compose `b` or `t` with optional final `w`; game selectors are
-separate recipe arguments. Letters must be unique, `b` and `t` are mutually
-exclusive, and blocking watcher step `w` must be last. For example,
-`na228 bw p` builds Current, launches Previous, then starts the root-source
-watcher. Selector aliases `c`, `p`, and `cand` mean Current, Previous, and
-Candidate.
+Bare `na228` builds and runs Latest. Compact recipes select a primary role:
+`l`, `p`, or `t` runs Latest, Previous, or Test; `bl` and `bt` first build
+Latest or Test; extra game selectors launch as comparisons; and optional final
+`w` watches the primary launched instance. `b` remains shorthand for `bl`.
+For example, `na228 btw p` builds Test, launches Test and Previous side by
+side, then watches Test. `na228 build l|t` provides the uncommon build-only
+forms.
 User-owned shared-image builds and launches run `act na228` automatically;
 worker-output builds never actualize. The standalone `act` command can run all
 actualization modes without building or launching.
@@ -108,8 +107,8 @@ profile helper delegates to that mode.
 dispatch. Bare `act` runs `na2`, then `input`.
 `pcsx2/actualization/sync_game_files.ps1` derives every retained role's serial
 and ELF CRC, links the stable cheat template to generated CRC aliases, writes
-real GameSettings that select the configured existing Current, Previous, or
-Candidate card, and deduplicates shared serial/CRC identities with Current
+real GameSettings that select the configured existing Latest, Previous, or
+Test card, and deduplicates shared serial/CRC identities with Latest
 taking precedence. It never creates or modifies templates or memory cards.
 Run `act help` or `act -h` for the standalone command summary.
 
@@ -123,6 +122,10 @@ optional for configured launches and mandatory and repository-relative for
 worker launches; worker paths must be independent copies under
 `work/<task title>/inputs/isos/`.
 `-PassThru` returns the started process for higher-level orchestration such as
+multi-game launch. `scripts/na228/launch_games.ps1` assigns successive
+process-local PINE ports beginning at the configured development `PINESlot`
+and passes each as `-pine-port`; a compact recipe ending in `w` sends the
+primary launch's returned port to the watcher.
 window tiling. The launcher does not copy or configure PCSX2, inspect or stop
 unrelated processes, use PINE, load savestates, capture output, or perform
 cleanup.

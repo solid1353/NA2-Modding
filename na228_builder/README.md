@@ -105,7 +105,7 @@ files, or launch PCSX2.
 Before staging, `na228_builder/build_preflight.py` hashes both canonical source
 ISOs, the complete `na228_builder/` tree except generated Python caches, the
 selected profile path, and active Python/Zlib/Zopfli versions. A valid receipt
-and matching Current ISO produces the normal unchanged/no-rotation result
+and matching Latest ISO produces the normal unchanged/no-rotation result
 without module derivation or a `.building` file.
 
 On a miss, `na228_builder/module_pipeline.py` prepares feature artifacts, derived
@@ -115,15 +115,16 @@ plus the profile identity into typed operations. `na228_builder/payload_builder/
 and data into the shared resident `PRG/228.BIN`, owns its global loader/memory
 integration, and records its symbol map. `na228_builder/image_assembler/` alone
 stages and verifies
-the catalog-derived Current ISO staging path. `scripts/na228/build.ps1` discards an
-identical candidate without rotation or atomically promotes a changed one.
+the catalog-derived Latest ISO staging path. `scripts/na228/build.ps1` discards an
+identical staged image without rotation or atomically promotes a changed one.
 File sizes remain fixed except for the separately approved filesystem insertion
 support used by compact external strings, which preserves total ISO size and
 validates both ISO9660 and UDF trees.
 
-The ordinary `na228` command builds and launches PCSX2. `na228 c` launches Current
-without rebuilding; `na228 p` launches Previous. User-owned shared-image
+The ordinary `na228` command builds and launches Latest. `na228 l`, `na228 p`,
+and `na228 t` launch Latest, Previous, and Test without rebuilding; `bl` and
+`bt` are the corresponding build-and-run recipes. User-owned shared-image
 workflows automatically run `act na228`; the standalone `act` command also
-provides `na2`, `input`, and `links` modes.
+provides `na2` and `input` modes.
 Profile-run logs record the enabled feature pins and the complete derived module
 result inventory.

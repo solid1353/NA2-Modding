@@ -184,7 +184,7 @@ def check_preflight(
     workspace: Path,
     na2_iso: Path,
     nun5_iso: Path,
-    current_iso: Path,
+    latest_iso: Path,
     profile_directory: Path,
     receipt_path: Path,
     dependencies: dict[str, str] | None = None,
@@ -211,20 +211,20 @@ def check_preflight(
         return result
     if receipt["fingerprint"] != fingerprint:
         return _miss("fingerprint-mismatch", fingerprint)
-    if not current_iso.is_file():
-        return _miss("current-iso-missing", fingerprint)
+    if not latest_iso.is_file():
+        return _miss("latest-iso-missing", fingerprint)
     output = receipt["output"]
     assert isinstance(output, dict)
-    if current_iso.stat().st_size != output["size"]:
-        return _miss("current-iso-size-mismatch", fingerprint)
-    current_hash = file_sha256(current_iso)
-    if current_hash != output["sha256"]:
-        return _miss("current-iso-hash-mismatch", fingerprint)
+    if latest_iso.stat().st_size != output["size"]:
+        return _miss("latest-iso-size-mismatch", fingerprint)
+    latest_hash = file_sha256(latest_iso)
+    if latest_hash != output["sha256"]:
+        return _miss("latest-iso-hash-mismatch", fingerprint)
     return {
         "status": "hit",
         "reason": "receipt-and-output-match",
         "fingerprint": fingerprint,
-        "output_sha256": current_hash,
+        "output_sha256": latest_hash,
     }
 
 
@@ -233,7 +233,7 @@ def write_receipt(
     workspace: Path,
     na2_iso: Path,
     nun5_iso: Path,
-    current_iso: Path,
+    latest_iso: Path,
     profile_directory: Path,
     receipt_path: Path,
     expected_fingerprint: str,
@@ -254,14 +254,14 @@ def write_receipt(
                 "reason": "inputs-changed-during-build",
                 "fingerprint": fingerprint,
             }
-        if not current_iso.is_file():
-            return {"status": "skipped", "reason": "current-iso-missing"}
+        if not latest_iso.is_file():
+            return {"status": "skipped", "reason": "latest-iso-missing"}
         receipt = {
             "schema_version": RECEIPT_SCHEMA_VERSION,
             "fingerprint": fingerprint,
             "output": {
-                "size": current_iso.stat().st_size,
-                "sha256": file_sha256(current_iso),
+                "size": latest_iso.stat().st_size,
+                "sha256": file_sha256(latest_iso),
             },
             "state": state,
         }
@@ -304,7 +304,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         command = subparsers.add_parser(name)
         command.add_argument("--na2-iso", required=True, type=Path)
         command.add_argument("--nun5-iso", required=True, type=Path)
-        command.add_argument("--current", required=True, type=Path)
+        command.add_argument("--latest", required=True, type=Path)
         command.add_argument("--profile", required=True, type=Path)
         command.add_argument("--receipt", required=True, type=Path)
         if name == "record":
@@ -316,7 +316,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         "workspace": workspace,
         "na2_iso": args.na2_iso,
         "nun5_iso": args.nun5_iso,
-        "current_iso": args.current,
+        "latest_iso": args.latest,
         "profile_directory": _profile_path(args.profile, workspace),
         "receipt_path": args.receipt,
     }

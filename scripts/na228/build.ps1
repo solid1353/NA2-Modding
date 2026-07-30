@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [switch]$CandidateOnly,
+    [switch]$TestOnly,
     [switch]$ComposeOnly,
     [string]$WorkerOutputIso
 )
@@ -13,12 +13,12 @@ $projectPaths = Get-Na2ProjectPaths
 
 if (
     @(
-        $CandidateOnly.IsPresent
+        $TestOnly.IsPresent
         $ComposeOnly.IsPresent
         -not [string]::IsNullOrWhiteSpace($WorkerOutputIso)
     ).Where({ $_ }).Count -gt 1
 ) {
-    throw '-CandidateOnly, -ComposeOnly, and -WorkerOutputIso are mutually exclusive.'
+    throw '-TestOnly, -ComposeOnly, and -WorkerOutputIso are mutually exclusive.'
 }
 $workerBuild = if (-not [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
     Get-Na2WorkerBuildContext `
@@ -51,7 +51,7 @@ function Invoke-Na2BuildPreflight {
         [Parameter(Mandatory = $true)][ValidateSet('check', 'record')][string]$Command,
         [Parameter(Mandatory = $true)][string]$Na2Iso,
         [Parameter(Mandatory = $true)][string]$Nun5Iso,
-        [Parameter(Mandatory = $true)][string]$CurrentIso,
+        [Parameter(Mandatory = $true)][string]$LatestIso,
         [Parameter(Mandatory = $true)][string]$Profile,
         [Parameter(Mandatory = $true)][string]$Receipt,
         [AllowNull()][string]$ExpectedFingerprint,
@@ -64,7 +64,7 @@ function Invoke-Na2BuildPreflight {
         $Command
         '--na2-iso', $Na2Iso
         '--nun5-iso', $Nun5Iso
-        '--current', $CurrentIso
+        '--latest', $LatestIso
         '--profile', $Profile
         '--receipt', $Receipt
     )
@@ -99,73 +99,73 @@ function Invoke-Na2BuildPreflight {
 
 function Promote-VerifiedIso {
     param(
-        [Parameter(Mandatory = $true)][string]$CurrentIso,
+        [Parameter(Mandatory = $true)][string]$LatestIso,
         [Parameter(Mandatory = $true)][string]$PreviousIso
     )
 
-    $current = [IO.Path]::GetFullPath($CurrentIso)
+    $latest = [IO.Path]::GetFullPath($LatestIso)
     $previous = [IO.Path]::GetFullPath($PreviousIso)
-    $candidate = "$current.building"
-    if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
-        throw "Verified staged ISO does not exist: $candidate"
+    $staged = "$latest.building"
+    if (-not (Test-Path -LiteralPath $staged -PathType Leaf)) {
+        throw "Verified staged ISO does not exist: $staged"
     }
 
-    if ((Test-Path -LiteralPath $current -PathType Leaf) -and
-        (Test-FileContentEqual -LeftPath $candidate -RightPath $current)) {
-        Write-Host "[na228] ISO result: unchanged; candidate matches $([IO.Path]::GetFileName($current)), promotion and rotation skipped." -ForegroundColor Cyan
+    if ((Test-Path -LiteralPath $latest -PathType Leaf) -and
+        (Test-FileContentEqual -LeftPath $staged -RightPath $latest)) {
+        Write-Host "[na228] ISO result: unchanged; staged image matches $([IO.Path]::GetFileName($latest)), promotion and rotation skipped." -ForegroundColor Cyan
         return [pscustomobject]@{
             Status = 'unchanged'
-            CurrentIso = $current
+            LatestIso = $latest
             PreviousIso = $previous
             Rotated = $false
         }
     }
 
-    $rotatedCurrent = $false
+    $rotatedLatest = $false
     try {
-        if (Test-Path -LiteralPath $current -PathType Leaf) {
-            [IO.File]::Move($current, $previous, $true)
-            $rotatedCurrent = $true
+        if (Test-Path -LiteralPath $latest -PathType Leaf) {
+            [IO.File]::Move($latest, $previous, $true)
+            $rotatedLatest = $true
         }
-        [IO.File]::Move($candidate, $current, $true)
+        [IO.File]::Move($staged, $latest, $true)
     }
     catch {
-        if ($rotatedCurrent -and
-            -not (Test-Path -LiteralPath $current) -and
+        if ($rotatedLatest -and
+            -not (Test-Path -LiteralPath $latest) -and
             (Test-Path -LiteralPath $previous -PathType Leaf)) {
-            [IO.File]::Move($previous, $current, $true)
+            [IO.File]::Move($previous, $latest, $true)
         }
         throw
     }
 
-    $rotationResult = if ($rotatedCurrent) {
+    $rotationResult = if ($rotatedLatest) {
         "previous image retained as $([IO.Path]::GetFileName($previous))"
     }
     else {
         'no previous image was available to retain'
     }
-    Write-Host "[na228] ISO result: updated; candidate promoted to $([IO.Path]::GetFileName($current)), $rotationResult." -ForegroundColor Cyan
+    Write-Host "[na228] ISO result: updated; staged image promoted to $([IO.Path]::GetFileName($latest)), $rotationResult." -ForegroundColor Cyan
     [pscustomobject]@{
         Status = 'updated'
-        CurrentIso = $current
+        LatestIso = $latest
         PreviousIso = $previous
-        Rotated = $rotatedCurrent
+        Rotated = $rotatedLatest
     }
 }
 
 $inputIso = $projectPaths.files.na2_iso
 $nun5Iso = $projectPaths.files.nun5_iso
-$resolvedOutputIso = [IO.Path]::GetFullPath($projectPaths.files.current_iso)
+$resolvedLatestIso = [IO.Path]::GetFullPath($projectPaths.files.latest_iso)
 $resolvedPreviousIso = [IO.Path]::GetFullPath($projectPaths.files.previous_iso)
-$resolvedCandidateIso = [IO.Path]::GetFullPath($projectPaths.files.candidate_iso)
+$resolvedTestIso = [IO.Path]::GetFullPath($projectPaths.files.test_iso)
 $profile = [IO.Path]::GetRelativePath(
     $projectPaths.repository,
     (Join-Path $projectPaths.builder 'profiles\current')
 )
 $logDirectory = Join-Path $projectPaths.logs 'na228'
 $buildLogRoot = Join-Path $logDirectory 'builds'
-$receiptPath = Join-Path $logDirectory 'preflight\current.json'
-$candidateIso = "$resolvedOutputIso.building"
+$receiptPath = Join-Path $logDirectory 'preflight\latest.json'
+$stagedIso = "$resolvedLatestIso.building"
 
 if ($ComposeOnly) {
     $composeArguments = @(
@@ -194,96 +194,96 @@ if ($ComposeOnly) {
     Write-Host '[na228] Profile composition valid; no ISO produced.' -ForegroundColor Cyan
     return [pscustomobject]@{
         Status = 'validated'
-        CurrentIso = $resolvedOutputIso
+        LatestIso = $resolvedLatestIso
         PreviousIso = $resolvedPreviousIso
         Rotated = $false
         PreflightCacheHit = $false
     }
 }
 
-if ($CandidateOnly -or $null -ne $workerBuild) {
-    $candidateBuildId = (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
-    $isolatedKind = if ($null -ne $workerBuild) { 'worker' } else { 'candidate' }
+if ($TestOnly -or $null -ne $workerBuild) {
+    $isolatedBuildId = (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
+    $isolatedKind = if ($null -ne $workerBuild) { 'worker' } else { 'test' }
     $isolatedOutputIso = if ($null -ne $workerBuild) {
         $workerBuild.OutputIso
     }
     else {
-        $resolvedCandidateIso
+        $resolvedTestIso
     }
-    $candidateLogRoot = if ($null -ne $workerBuild) {
+    $isolatedLogRoot = if ($null -ne $workerBuild) {
         Join-Path $workerBuild.Logs 'builds'
     }
     else {
-        Join-Path $logDirectory 'candidates'
+        Join-Path $logDirectory 'tests'
     }
-    $candidateProfileLog = Join-Path $candidateLogRoot $candidateBuildId
-    $candidateProfileLogDirectory = [IO.Path]::GetRelativePath(
+    $isolatedProfileLog = Join-Path $isolatedLogRoot $isolatedBuildId
+    $isolatedProfileLogDirectory = [IO.Path]::GetRelativePath(
         $projectPaths.repository,
-        $candidateProfileLog
+        $isolatedProfileLog
     )
-    $candidateBuildingIso = "$isolatedOutputIso.building"
-    $candidateArguments = @(
+    $isolatedBuildingIso = "$isolatedOutputIso.building"
+    $isolatedArguments = @(
         '-B'
         '-m', 'na228_builder.build_profile'
         '--source', $inputIso
         '--output', $isolatedOutputIso
         '--profile', $profile
-        '--profile-log-directory', $candidateProfileLogDirectory
+        '--profile-log-directory', $isolatedProfileLogDirectory
     )
 
     $isolatedLabel = if ($isolatedKind -eq 'worker') {
         'Worker-output mode'
     }
     else {
-        'Candidate mode'
+        'Test mode'
     }
     Write-Host (
         "[na228] ${isolatedLabel}: full verified build; preflight, " +
-        'Current/Previous promotion, rotation, and receipt updates are disabled.'
+        'Latest/Previous promotion, rotation, and receipt updates are disabled.'
     ) -ForegroundColor Cyan
-    $candidateCompleted = $false
+    $isolatedCompleted = $false
     try {
         Push-Location $projectPaths.repository
         try {
-            $candidateOutput = & python @candidateArguments
-            $candidateExitCode = $LASTEXITCODE
+            $isolatedOutput = & python @isolatedArguments
+            $isolatedExitCode = $LASTEXITCODE
         }
         finally {
             Pop-Location
         }
-        $candidateOutput | ForEach-Object { Write-Host $_ }
-        if ($candidateExitCode -ne 0) {
-            throw "NA2 $isolatedKind build failed (exit $candidateExitCode)."
+        $isolatedOutput | ForEach-Object { Write-Host $_ }
+        if ($isolatedExitCode -ne 0) {
+            throw "NA2 $isolatedKind build failed (exit $isolatedExitCode)."
         }
-        if (-not (Test-Path -LiteralPath $candidateProfileLog -PathType Container)) {
+        if (-not (Test-Path -LiteralPath $isolatedProfileLog -PathType Container)) {
             throw "$isolatedLabel completed without creating its structured build record."
         }
-        if (-not (Test-Path -LiteralPath $candidateBuildingIso -PathType Leaf)) {
-            throw "Verified $isolatedKind ISO does not exist: $candidateBuildingIso"
+        if (-not (Test-Path -LiteralPath $isolatedBuildingIso -PathType Leaf)) {
+            throw "Verified $isolatedKind ISO does not exist: $isolatedBuildingIso"
         }
 
-        $candidateChanged = -not (
+        $isolatedChanged = -not (
             (Test-Path -LiteralPath $isolatedOutputIso -PathType Leaf) -and
             (Test-FileContentEqual `
-                -LeftPath $candidateBuildingIso `
+                -LeftPath $isolatedBuildingIso `
                 -RightPath $isolatedOutputIso)
         )
-        $candidateState = if ($candidateChanged) { 'updated' } else { 'unchanged' }
+        $isolatedState = if ($isolatedChanged) { 'updated' } else { 'unchanged' }
 
         $profilePortable = ConvertTo-Na2PortableText `
             -Text $profile `
             -ProjectPaths $projectPaths
-        $candidatePortable = ConvertTo-Na2PortableText `
+        $outputPortable = ConvertTo-Na2PortableText `
             -Text $isolatedOutputIso `
             -ProjectPaths $projectPaths
         $recordPortable = ConvertTo-Na2PortableText `
-            -Text $candidateProfileLog `
+            -Text $isolatedProfileLog `
             -ProjectPaths $projectPaths
         $resultContent = @(
             "timestamp_utc`tresult`toutput_state`trotation`tpcsx2_closed`tprofile`toutput_iso`tbuild_record"
             (
                 (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" +
-                "$isolatedKind`t$candidateState`tno`tno`t$profilePortable`t$candidatePortable`t$recordPortable"
+                "$isolatedKind`t$isolatedState`tno`tno`t$profilePortable`t$outputPortable`t$recordPortable"
             )
         ) -join "`n"
         $resultContent += "`n"
@@ -294,71 +294,71 @@ if ($CandidateOnly -or $null -ne $workerBuild) {
             'build_result.tsv'
         }
         else {
-            'candidate_result.tsv'
+            'test_result.tsv'
         }
         Set-Na2Utf8FileAtomic `
-            -Path (Join-Path $candidateProfileLog $resultFilename) `
+            -Path (Join-Path $isolatedProfileLog $resultFilename) `
             -Content $resultContent
 
-        if ($candidateChanged) {
-            [IO.File]::Move($candidateBuildingIso, $isolatedOutputIso, $true)
+        if ($isolatedChanged) {
+            [IO.File]::Move($isolatedBuildingIso, $isolatedOutputIso, $true)
         }
         else {
-            Remove-Item -LiteralPath $candidateBuildingIso -Force
+            Remove-Item -LiteralPath $isolatedBuildingIso -Force
         }
 
-        if ($isolatedKind -eq 'candidate') {
-            Get-ChildItem -LiteralPath $candidateLogRoot -Directory |
-                Where-Object FullName -CNE $candidateProfileLog |
+        if ($isolatedKind -eq 'test') {
+            Get-ChildItem -LiteralPath $isolatedLogRoot -Directory |
+                Where-Object FullName -CNE $isolatedProfileLog |
                 Remove-Item -Recurse -Force
         }
         else {
-            Get-ChildItem -LiteralPath $candidateLogRoot -Directory |
+            Get-ChildItem -LiteralPath $isolatedLogRoot -Directory |
                 Where-Object {
-                    $_.FullName -CNE $candidateProfileLog -and
+                    $_.FullName -CNE $isolatedProfileLog -and
                     (Test-Path -LiteralPath (Join-Path $_.FullName 'build_result.tsv') -PathType Leaf)
                 } |
                 Sort-Object LastWriteTimeUtc -Descending |
                 Select-Object -Skip 19 |
                 Remove-Item -Recurse -Force
         }
-        $candidateCompleted = $true
-        $candidateRecord = ConvertTo-Na2ProjectPath `
-            -Path $candidateProfileLog `
+        $isolatedCompleted = $true
+        $isolatedRecord = ConvertTo-Na2ProjectPath `
+            -Path $isolatedProfileLog `
             -ProjectPaths $projectPaths
         Write-Host (
-            "[na228] ISO result: $isolatedKind ($candidateState); Current/Previous unchanged; " +
+            "[na228] ISO result: $isolatedKind ($isolatedState); Latest/Previous unchanged; " +
             'rotation: no; PCSX2 left running.'
         ) -ForegroundColor Cyan
-        Write-Host "[na228] $isolatedLabel record: retained $candidateRecord." -ForegroundColor Cyan
+        Write-Host "[na228] $isolatedLabel record: retained $isolatedRecord." -ForegroundColor Cyan
         return [pscustomobject]@{
             Status = $isolatedKind
-            CandidateState = $candidateState
-            OutputState = $candidateState
+            TestState = if ($isolatedKind -eq 'test') { $isolatedState } else { $null }
+            OutputState = $isolatedState
             OutputIso = $isolatedOutputIso
-            CandidateIso = if ($isolatedKind -eq 'candidate') { $isolatedOutputIso } else { $null }
-            CurrentIso = $resolvedOutputIso
+            TestIso = if ($isolatedKind -eq 'test') { $isolatedOutputIso } else { $null }
+            LatestIso = $resolvedLatestIso
             PreviousIso = $resolvedPreviousIso
             Rotated = $false
-            BuildId = $candidateBuildId
-            ProfileLogDirectory = $candidateRecord
+            BuildId = $isolatedBuildId
+            ProfileLogDirectory = $isolatedRecord
             PreflightCacheHit = $false
         }
     }
     finally {
-        if (Test-Path -LiteralPath $candidateBuildingIso) {
-            Remove-Item -LiteralPath $candidateBuildingIso -Force
+        if (Test-Path -LiteralPath $isolatedBuildingIso) {
+            Remove-Item -LiteralPath $isolatedBuildingIso -Force
         }
-        if (-not $candidateCompleted -and
-            (Test-Path -LiteralPath $candidateProfileLog -PathType Container)) {
-            Remove-Item -LiteralPath $candidateProfileLog -Recurse -Force
+        if (-not $isolatedCompleted -and
+            (Test-Path -LiteralPath $isolatedProfileLog -PathType Container)) {
+            Remove-Item -LiteralPath $isolatedProfileLog -Recurse -Force
         }
         if ($null -ne $workerBuild) {
             Remove-Na2EmptyWorkerAncestors `
-                -Path $candidateLogRoot `
+                -Path $isolatedLogRoot `
                 -WorkRoot $projectPaths.work
             Remove-Na2EmptyWorkerAncestors `
-                -Path ([IO.Path]::GetDirectoryName($candidateBuildingIso)) `
+                -Path ([IO.Path]::GetDirectoryName($isolatedBuildingIso)) `
                 -WorkRoot $projectPaths.work
         }
     }
@@ -371,7 +371,7 @@ try {
         -Command check `
         -Na2Iso $inputIso `
         -Nun5Iso $nun5Iso `
-        -CurrentIso $resolvedOutputIso `
+        -LatestIso $resolvedLatestIso `
         -Profile $profile `
         -Receipt $receiptPath `
         -Repository $projectPaths.repository
@@ -389,22 +389,22 @@ if ($preflight.status -eq 'hit') {
         $buildMap = Read-Na2BuildMap `
             -LogDirectory $logDirectory `
             -ProjectPaths $projectPaths
-        if ([string]::IsNullOrWhiteSpace($buildMap.CurrentBuildId)) {
-            throw 'The Current ISO has no retained build record.'
+        if ([string]::IsNullOrWhiteSpace($buildMap.LatestBuildId)) {
+            throw 'The Latest ISO has no retained build record.'
         }
-        $buildRecord = "@logs/na228/builds/$($buildMap.CurrentBuildId)"
+        $buildRecord = "@logs/na228/builds/$($buildMap.LatestBuildId)"
         Write-Host (
             "[na228] Preflight: cache hit; fingerprint $($preflight.fingerprint); " +
-            "Current SHA-256 $($preflight.output_sha256)."
+            "Latest SHA-256 $($preflight.output_sha256)."
         ) -ForegroundColor Cyan
         Write-Host '[na228] ISO result: unchanged; preflight cache hit; rotation: no.' -ForegroundColor Cyan
         Write-Host "[na228] Build record: reused $buildRecord." -ForegroundColor Cyan
         return [pscustomobject]@{
             Status = 'unchanged'
-            CurrentIso = $resolvedOutputIso
+            LatestIso = $resolvedLatestIso
             PreviousIso = $resolvedPreviousIso
             Rotated = $false
-            BuildId = $buildMap.CurrentBuildId
+            BuildId = $buildMap.LatestBuildId
             ProfileLogDirectory = $buildRecord
             PreflightCacheHit = $true
         }
@@ -443,7 +443,7 @@ $arguments = @(
     '-B'
     '-m', 'na228_builder.build_profile'
     '--source', $inputIso
-    '--output', $resolvedOutputIso
+    '--output', $resolvedLatestIso
     '--profile', $profile
     '--profile-log-directory', $profileLogDirectory
 )
@@ -467,7 +467,7 @@ try {
     }
 
     $promotion = Promote-VerifiedIso `
-        -CurrentIso $resolvedOutputIso `
+        -LatestIso $resolvedLatestIso `
         -PreviousIso $resolvedPreviousIso
     $promotionCompleted = $true
     $buildRecord = Complete-Na2BuildRecord `
@@ -475,7 +475,7 @@ try {
         -BuildId $buildId `
         -Result $promotion.Status `
         -Rotated $promotion.Rotated `
-        -CurrentIso $promotion.CurrentIso `
+        -LatestIso $promotion.LatestIso `
         -PreviousIso $promotion.PreviousIso `
         -Profile $profile `
         -ProjectPaths $projectPaths
@@ -489,7 +489,7 @@ try {
                 -Command record `
                 -Na2Iso $inputIso `
                 -Nun5Iso $nun5Iso `
-                -CurrentIso $resolvedOutputIso `
+                -LatestIso $resolvedLatestIso `
                 -Profile $profile `
                 -Receipt $receiptPath `
                 -ExpectedFingerprint $preflightFingerprint `
@@ -520,8 +520,8 @@ try {
     $promotion
 }
 finally {
-    if (Test-Path -LiteralPath $candidateIso) {
-        Remove-Item -Force -LiteralPath $candidateIso
+    if (Test-Path -LiteralPath $stagedIso) {
+        Remove-Item -Force -LiteralPath $stagedIso
     }
     if (-not $promotionCompleted -and (Test-Path -LiteralPath $profileLog -PathType Container)) {
         Remove-Item -LiteralPath $profileLog -Recurse -Force

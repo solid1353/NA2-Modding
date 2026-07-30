@@ -9,17 +9,17 @@
     "gamesettings_template": "@pcsx2_game_settings/_SLOP-NA228.ini",
     "memory_card": "@pcsx2_memory_cards/NA228.ps2",
     "entries": {
-      "current": {
-        "aliases": ["c"],
-        "postfix": "Current"
+      "latest": {
+        "aliases": ["l"],
+        "postfix": "Latest"
       },
       "previous": {
         "aliases": ["p"],
         "postfix": "Previous"
       },
-      "candidate": {
-        "aliases": ["cand"],
-        "postfix": "Candidate"
+      "test": {
+        "aliases": ["t"],
+        "postfix": "Test"
       }
     }
   },

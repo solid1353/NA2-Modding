@@ -101,7 +101,7 @@ The loaders additionally expose catalog-derived compatibility files:
 - `cheat_template` and `gamesettings_template` from build-wide configuration.
 
 PowerShell accesses these as `$projectPaths.files.na2_iso` and
-`$projectPaths.files.current_iso`. Python accesses them through calls such as
+`$projectPaths.files.latest_iso`. Python accesses them through calls such as
 `PROJECT_PATHS.file("nun5_iso")` and `PROJECT_PATHS.file("previous_iso")`.
 
 ## Game catalog
@@ -124,8 +124,8 @@ Keep per-game configuration fields in this order when present: `cheats`,
 `title`, `cheat_template`, `gamesettings_template`, `memory_card`.
 
 The PowerShell loader exposes canonical selectors and aliases through
-`$projectPaths.games`. For example, `c`, `p`, and `cand` resolve to `current`,
-`previous`, and `candidate`.
+`$projectPaths.games`. The build aliases `l`, `p`, and `t` resolve to `latest`,
+`previous`, and `test`.
 
 ## PowerShell
 

@@ -1797,13 +1797,19 @@ Circle, ss5, Cross, ss6, but it was not required for the bounded runtime pass;
 ss3 and ss4 are precursors rather than separate defects.
 
 NA2 row compositor `FUN_006BCB70` sets a point and calls the ordinary text
-renderer directly. The exact call is BTL file `0x9178`, Ghidra
+renderer directly. The exact call is BTL file `0x90DC`, Ghidra
 `0x006BCF9C`, live MWo3 `0x006BCFDC`, guarded by
 `5020060C00000000` (`jal 0x00188140`; NOP). Its left-side point is
 `(30 + f21, 16 + f20)` and its right-side point is
 `(310 - f21, 16 + f20)`. This path has no width, line-count, or wrapping
 contract, which explains why long translated names remain on one line and
 overflow.
+
+The initially recorded file offset `0x9178` was wrong: clean BTL bytes there
+are unrelated pointer setup, so normal profile composition correctly rejected
+the conflicting guard. The preserved export maps Ghidra `0x006BCF9C` to clean
+BTL file `0x90DC`; the live `+0x40` relocation affects the runtime address,
+not that file offset.
 
 An earlier uncommitted experiment intercepted three presumed Jutsu
 constructor/list families independently through

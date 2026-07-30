@@ -1341,6 +1341,37 @@ the relocatable C and native-ABI safety contracts without freezing compiler
 hashes or old assembly layouts; focused tests pass 11/11 and the full builder
 suite passes 201/201.
 
+## 2026-07-30 Linked Mode center-selector isolation
+
+Replacement-batch ss2 identifies the center-screen `Linked Mode`, `Manual`,
+and `Auto` selector as main-ELF `FUN_003B8F40`. This is not the adjacent
+five-row character-modal family: trial changes to that family left ss2
+unchanged, while three exact writes in `FUN_003B8F40` moved only the visible
+center modal.
+
+The title path loads local Y `12.0` at runtime `0x003B8FE0` (ELF file
+`0x2B90E0`) before its ordinary renderer call. The choice loop loads base Y
+`48.0` at runtime `0x003B90A4` (file `0x2B91A4`) and retains a native
+`48 + 26*i` formula. Its selected renderer call is at runtime `0x003B90DC`;
+the delay slot at runtime `0x003B90E0` (file `0x2B91E0`) is a clean NOP.
+The unselected call remains at runtime `0x003B90FC`.
+
+The bounded candidate changes the title to Y `8`, the choice base to Y `44`,
+and the selected-call delay slot to `addiu a2,a2,-2`. No C adapter or shared
+renderer change is required: these are local constants and one call-local
+compensation in a dedicated draw function. Pixel bounds from the fresh
+task-owned capture are:
+
+- title: NUN5 and Current both Y `138..151`;
+- unselected `Manual`: NUN5 and Current both Y `183..196`;
+- selected `Auto`: NUN5 Y `211..224`, Current Y `210..224`, a one-edge-pixel
+  raster difference with matched placement.
+
+The exact clean guards are `4041023C`, `4042023C`, and `00000000`; the
+replacements are `0041023C`, `3042023C`, and `FEFFC624`. Confidence is high
+for caller isolation and placement. Runtime status is agent-validated and
+awaits explicit user acceptance.
+
 ### 2026-07-28 accepted Ninja Song numeric C migration
 
 The accepted Ninja Song formatter contract can also be expressed in ordinary

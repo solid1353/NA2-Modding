@@ -12,13 +12,12 @@ case.
 ## Execution state
 
 - Mode: Continuous.
-- Current subtask: Priority 1 — ss1 Character Select return confirmation top
-  Yes/No selector. The accepted lower body remains unchanged; the isolated
-  selector is agent-validated and being promoted.
+- Current subtask: Priority 2 — ss2 Linked Mode center modal. The dedicated
+  three-label caller is agent-validated and being promoted.
 - Pending grid:
-  `work/Font/artifacts/2026-07-30-batch/ss01-character-select-choices-grid.png`.
+  `work/Font/artifacts/2026-07-30-batch/ss02-linked-mode-y-grid.png`.
 - Next action: validate, commit and push the isolated caller fix, deliver the
-  pending result grid, then continue Priority 2.
+  pending result grid, then continue Priority 3.
 
 ## Scope and evidence
 
@@ -46,8 +45,9 @@ case.
 
 ### Priority 1 — ss1: Return confirmation
 
-- State: accepted lower-body fix retained; isolated top-selector candidate is
-  agent-validated and being promoted; user acceptance remains pending.
+- State: accepted lower-body fix retained; isolated top-selector fix is
+  committed, pushed, agent-validated, and visibly delivered; user acceptance
+  remains pending.
 - Result: the scoped top Yes/No list has the same offsets from its modal origin
   as NUN5 while the accepted lower body remains unchanged.
 
@@ -55,9 +55,10 @@ case.
 
 ### Priority 2 — ss2: Linked Mode center modal
 
-- State: matched baseline captured; not implemented.
-- Remaining defect: the center-modal `Linked Mode`, `Manual`, and `Auto` labels
-  all sit lower in Current than in NUN5.
+- State: isolated three-instruction fix is agent-validated and being promoted;
+  user acceptance remains pending.
+- Result: the center-modal `Linked Mode`, `Manual`, and `Auto` labels now
+  match the NUN5 vertical geometry without changing another modal or renderer.
 
 ![Priority 2 Linked Mode baseline](2-linked-mode-modal.png)
 

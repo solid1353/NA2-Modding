@@ -1890,6 +1890,17 @@ lower body is user-accepted. The top selector is agent-validated and remains
 `approved_for_test` pending explicit user acceptance. Every ordinary row,
 Linked Mode list, and unrelated main-ELF list/body caller stays native.
 
+The declarative `font_layout_linked_mode_modal` layer owns only main-ELF
+`FUN_003B8F40`, the center-screen Linked Mode selector in replacement-batch
+ss2. It changes the title constant at file `0x2B90E0` from local Y `12` to
+`8`, changes the three-choice base at file `0x2B91A4` from local Y `48` to
+`44`, and uses the existing selected-call delay slot at file `0x2B91E0` for
+`addiu a2,a2,-2`. The native 26-unit row step, draw calls, text pointers, X
+geometry, and every other modal remain untouched. Fresh task-owned runtime
+capture gives identical NUN5/current vertical ink bounds for `Linked Mode`
+and `Manual`; selected `Auto` differs only at one antialiased raster edge.
+The layer is `approved_for_test` pending explicit user acceptance.
+
 The separate `font_layout_special_controls_body` layer completes the explanatory
 block on the same ss1 Special Controls screen. Exact telemetry identifies only
 the native UI-body call at BTL file `0x1C3D38` (runtime `0x00877C38`, clean

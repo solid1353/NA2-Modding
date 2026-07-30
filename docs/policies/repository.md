@@ -147,6 +147,16 @@
   retirement index in `scripts/README.md`.
 - Reusable or potentially helpful scripts never remain under `work/`; promote
   them immediately. Task-local probes may remain only while disposable.
+- Unify third-party package use through maintained central dependency sets.
+  Ordinary package-bearing Python callers use
+  `scripts/lib/run_python.ps1`; their requirements belong only in
+  `scripts/lib/python_packages.json`. The self-contained release builder's
+  pinned lockfile is its release-only central set, not a general runtime.
+  Never select an interpreter, probe packages, install dependencies, or add
+  fallback logic separately in a workstream, task-local helper, or maintained
+  script. Extend the applicable central set and resolver when a shared package
+  is added. Successful runtime selection is silent; report only a genuine
+  failure to satisfy the requested set.
 - Prefer cohesive responsibility-based files. Split independent concerns when
   that improves navigation, testing, or concurrency; do not split solely by
   size.

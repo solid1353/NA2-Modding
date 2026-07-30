@@ -11,8 +11,8 @@ history; do not recreate an archive directory for dead scripts.
 
 ## Directories
 
-- `lib/`: shared PowerShell bootstrap, portable run-log, and structured
-  build-record helpers.
+- `lib/`: shared PowerShell bootstrap, portable run-log, structured
+  build-record helpers, and unified Python runtime/package-set resolution.
 - `injection/`: compile/link canonical EE C into `fragment.bin` plus
   `manifest.json`, apply that candidate transactionally through PINE, the
   standard workstream build/reload/apply command, and the user-only save
@@ -198,6 +198,24 @@ annotated version tag that triggers GitHub Release publication.
 When adding a script, place it beside the workflow it supports. Do not add new
 files directly under `scripts/`; the root is reserved for this index and
 responsibility directories.
+
+## Python package sets
+
+Third-party Python packages are declared once in
+`lib/python_packages.json`. Invoke package-bearing scripts through
+`lib/run_python.ps1`; do not call a guessed interpreter or probe/install a
+package locally. For example:
+
+```powershell
+.\scripts\lib\run_python.ps1 `
+  -PackageSet imaging `
+  -Script scripts/research/localization/compose_font_report_grid.py `
+  -ArgumentList @('--help')
+```
+
+`NA228_PYTHON` may identify an explicit compatible runtime. Otherwise the
+resolver silently selects an available runtime that satisfies the complete
+named set.
 
 ## Retired scripts
 

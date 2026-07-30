@@ -117,6 +117,9 @@ Detailed command and task behavior is in
   requested by the user permits executing either installation; it never
   authorizes modifying it or otherwise controlling the user PCSX2 process.
 - Never change binary files manually; all binary changes go through scripts.
+- Use the shared project runtime and named dependency sets for package-bearing
+  scripts. Never select interpreters, install packages, or implement fallback
+  discovery separately in a task or script; extend the central resolver once.
 - Run every shell, filesystem, script, and Git command elevated from the first
   attempt. On permission failure, retry the exact operation elevated.
 - File-working tasks own `work/<exact task title>/` and have standing authority

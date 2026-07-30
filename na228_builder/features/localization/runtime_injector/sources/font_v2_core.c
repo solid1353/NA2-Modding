@@ -10,139 +10,331 @@ typedef signed short s16;
 typedef unsigned int u32;
 typedef signed int s32;
 
+/*
+ * Screen geometry uses the game's local coordinates, not capture pixels.
+ * Larger X moves right; smaller X moves left. Larger Y moves down; smaller Y
+ * moves up. Larger widths wrap later. Address, offset, flag, count, and buffer
+ * constants are internal contracts, not visual tuning controls.
+ */
+
+/* === Shared layout engine: internal flags and alignment modes === */
+
 #define FONT_V2_FLAG_SHRINK_X 0x01u
+/* Allows horizontal shrinking when measured text exceeds its box width. */
 #define FONT_V2_FLAG_BR_TAGS 0x02u
+/* Makes measurement treat the four-byte <br> tag as a line break. */
 #define FONT_V2_FLAG_NEWLINE_BYTES 0x04u
+/* Makes measurement treat an actual '\n' byte as a line break. */
 #define FONT_V2_FLAG_SEPARATE_LINE_ADVANCE 0x08u
+/* Uses line_height as row spacing instead of the glyph's native advance. */
 #define FONT_V2_FLAG_SCALE_LINE_ADVANCE 0x20u
+/* Scales row spacing together with vertical text scale when enabled. */
 #define FONT_V2_FLAG_GLYPH_HEIGHT 0x40u
+/* Overrides drawn glyph-quad height; misuse visibly squeezes or stretches text. */
 #define FONT_V2_NATIVE_LINE_ADVANCE 40.0f
+/* Native fallback row advance when no separate line spacing is requested. */
 #define FONT_V2_FLAG_PREMEASURED 0x10u
+/* Trusts caller-supplied measured_width and line_count instead of remeasuring. */
 
 #define FONT_V2_ALIGN_START 0u
+/* Anchors content at the box's left or top edge. */
 #define FONT_V2_ALIGN_CENTER 1u
+/* Centers content within the box on the selected axis. */
 #define FONT_V2_ALIGN_END 2u
+/* Anchors content at the box's right or bottom edge. */
+
+/* === Native renderer ABI: fixed addresses and structure offsets === */
+
 #define FONT_RENDERER_POINTER_ADDRESS 0x00607470u
+/* Fixed EE address containing NA2's live renderer pointer; do not tune. */
 #define FONT_HORIZONTAL_SCALE_ADDRESS 0x0060737Cu
+/* Fixed EE address of NA2's live horizontal text scale; do not tune. */
 #define FONT_RENDERER_TRACKING_OFFSET 0x3Cu
+/* Fixed renderer-field offset for extra inter-character tracking. */
 #define FONT_RENDERER_POSITION_X_OFFSET 0x14u
+/* Fixed renderer-field offset for the caller's logical X position. */
 #define FONT_RENDERER_POSITION_Y_OFFSET 0x18u
+/* Fixed renderer-field offset for the caller's logical Y position. */
 #define FONT_RENDERER_DRAW_X_OFFSET 0x28u
+/* Fixed renderer-field offset for the current draw-origin X. */
 #define FONT_RENDERER_DRAW_Y_OFFSET 0x2Cu
+/* Fixed renderer-field offset for the current draw-origin Y. */
 #define FONT_RENDERER_CONTEXT_OFFSET 0x6Cu
+/* Fixed renderer-field offset for the active native drawing context. */
 #define FONT_INITIALIZE_ADDRESS 0x00186510u
+/* Fixed native renderer-initialization function address; do not tune. */
 #define FONT_SET_CONTEXT_ADDRESS 0x001866D0u
+/* Fixed native renderer-context setter address; do not tune. */
 #define FONT_SET_POSITION_ADDRESS 0x00186700u
+/* Fixed native renderer-position setter address; do not tune. */
 #define FONT_DRAW_ADDRESS 0x00379040u
+/* Fixed ordinary native text-draw function address; do not tune. */
 #define FONT_JUTSU_DRAW_ADDRESS 0x00188140u
+/* Fixed Battle Settings/Jutsu native draw function address; do not tune. */
 #define FONT_CHARACTER_SELECTED_DRAW_ADDRESS 0x00382610u
+/* Fixed selected Character Select row draw function address; do not tune. */
+
+/* === Control Settings: first eight action labels === */
+
 #define FONT_CONTROLS_BOX_WIDTH 128u
+/* Label box width; larger values delay shrinking and widen rendered labels. */
 #define FONT_CONTROLS_BOX_HEIGHT 20u
+/* Label box height used for vertical centering. */
 #define FONT_CONTROLS_LINE_HEIGHT 20.0f
+/* Single-row layout height used by the Controls adapter. */
+
+/* === Command Chart: title === */
+
 #define FONT_COMMAND_TITLE_BOX_X 27.2f
+/* Left edge of the Command Chart title; increase to move it right. */
 #define FONT_COMMAND_TITLE_BOX_WIDTH 288u
+/* Title width; larger values shrink less and permit longer titles. */
 #define FONT_COMMAND_TITLE_Y_OFFSET -3.8f
+/* Added to the native title Y; more negative moves the title up. */
+
+/* === Command Chart: relationship descriptions and inline icons === */
+
 #define FONT_COMMAND_TEXT_TABLE_ADDRESS 0x008BD1D0u
+/* Fixed runtime address of the Command Chart text table; do not tune. */
 #define FONT_COMMAND_RELATION_BOX_X 43.2f
+/* Left edge of wrapped relationship text; increase to move it right. */
 #define FONT_COMMAND_RELATION_Y_OFFSET -11.5f
+/* Added to wrapped-block Y; more negative moves multiline text up. */
 #define FONT_COMMAND_RELATION_SINGLE_LINE_Y_OFFSET -8.0f
+/* Added only to fitting one-line relationship text; more negative moves it up. */
 #define FONT_COMMAND_RELATION_BOX_WIDTH 226u
+/* Relationship text width; larger values wrap later. */
 #define FONT_COMMAND_RELATION_BOX_HEIGHT 32u
+/* Relationship box height used to center one- or two-line output. */
 #define FONT_COMMAND_RELATION_LINE_HEIGHT 30.0f
+/* Vertical distance between wrapped relationship lines. */
 #define FONT_COMMAND_RELATION_GLYPH_HEIGHT 14.0f
+/* Requested relationship glyph-quad height when that override is enabled. */
 #define FONT_COMMAND_RELATION_LINE_LIMIT 2u
+/* Maximum relationship lines; reduce only if truncation is intentionally desired. */
 #define FONT_COMMAND_ICON_RELATION_OFFSET 16.0f
+/* Icon X offset when the relationship-description row is present. */
 #define FONT_COMMAND_ICON_PLAIN_OFFSET 38.0f
+/* Icon X offset when no relationship-description row precedes the commands. */
+
+/* === Battle Settings: left and right Jutsu-selector lists === */
+
 #define FONT_JUTSU_BOX_WIDTH 186u
+/* Nominal wrap width; larger values produce fewer or later line breaks. */
 #define FONT_JUTSU_BOX_HEIGHT 32u
+/* Wrapped-block box height used for vertical centering. */
 #define FONT_JUTSU_LEFT_X_OFFSET -7.0f
+/* Horizontal correction for the left list; more negative moves rows left. */
 #define FONT_JUTSU_RIGHT_X_OFFSET -4.0f
+/* Horizontal correction for the right list; more negative moves rows left. */
 #define FONT_JUTSU_Y_OFFSET -7.0f
+/* Applied only to wrapped blocks; more negative moves the block up. */
 #define FONT_JUTSU_SIDE_THRESHOLD 256.0f
+/* Native X below this value is classified as the left-side list. */
 #define FONT_JUTSU_LINE_ADVANCE 16.0f
+/* Vertical distance between wrapped Jutsu-title lines. */
 #define FONT_JUTSU_GLYPH_HEIGHT 20.0f
+/* Glyph height used only to calculate wrapped-block vertical placement. */
 #define FONT_JUTSU_LINE_LIMIT 2u
+/* Target maximum line count for adaptive wrapping. */
+
+/* === Collection: Movie and character move-list classification === */
+
 #define FONT_COLLECTION_MOVIE_TEXT_START 0x003FFAA0u
+/* First text address classified as a Movie row; fixed identity boundary. */
 #define FONT_COLLECTION_MOVIE_TEXT_END 0x003FFC10u
+/* Exclusive end of the Movie-row text range; fixed identity boundary. */
 #define FONT_CHARACTER_MOVE_152_TEXT_0 0x006D9BD8u
+/* Fixed first narrow Figure-row text pointer; not a position value. */
 #define FONT_CHARACTER_MOVE_152_TEXT_1 0x006D9C00u
+/* Fixed second narrow Figure-row text pointer; not a position value. */
 #define FONT_CHARACTER_MOVE_152_TEXT_2 0x006D9C40u
+/* Fixed third narrow Figure-row text pointer; not a position value. */
 #define FONT_CHARACTER_MOVE_192_TEXT_0 0x006DC340u
+/* Fixed first wide character-list text pointer; not a position value. */
 #define FONT_CHARACTER_MOVE_192_TEXT_1 0x006DC370u
+/* Fixed second wide character-list text pointer; not a position value. */
 #define FONT_CHARACTER_MOVE_192_TEXT_2 0x006DC3A0u
+/* Fixed third wide character-list text pointer; not a position value. */
 #define FONT_CHARACTER_MOVE_192_TEXT_3 0x006DC3C0u
+/* Fixed fourth wide character-list text pointer; not a position value. */
 #define FONT_COLLECTION_LIST_BOX_Y_OFFSET -10.0f
+/* Added to wrapped Collection rows; more negative moves the block up. */
 #define FONT_COLLECTION_MOVIE_BOX_WIDTH 192u
+/* Movie-list wrap width; larger values wrap later. */
 #define FONT_CHARACTER_MOVE_152_BOX_WIDTH 152u
+/* Narrow Figure-page wrap width; larger values wrap later. */
 #define FONT_CHARACTER_MOVE_192_BOX_WIDTH 192u
+/* Wide character-page wrap width; larger values wrap later. */
 #define FONT_COLLECTION_LIST_BOX_HEIGHT 32u
+/* Collection row box height used for vertical block placement. */
 #define FONT_COLLECTION_LIST_LINE_ADVANCE 16.0f
+/* Vertical distance between wrapped Collection-row lines. */
 #define FONT_COLLECTION_LIST_GLYPH_HEIGHT 20.0f
+/* Glyph height used for Collection block layout, not automatic squeezing. */
 #define FONT_COLLECTION_LIST_LINE_LIMIT 2u
+/* Maximum wrapped lines supported by the Collection list adapter. */
+
+/* === Practice: screen title === */
+
 #define FONT_PRACTICE_TITLE_BOX_X 31.2f
+/* Left edge of the Practice title; increase to move it right. */
 #define FONT_PRACTICE_TITLE_BOX_WIDTH 352u
+/* Practice-title width; larger values shrink less. */
 #define FONT_PRACTICE_TITLE_Y_OFFSET -6.8f
+/* Added to native Practice-title Y; more negative moves it up. */
+
+/* === Shared Command Chart and Practice title geometry === */
+
 #define FONT_TITLE_BOX_HEIGHT 20u
+/* Shared title box height used for vertical placement. */
 #define FONT_TITLE_LINE_HEIGHT 20.0f
+/* Shared single-line title height. */
+
+/* === Pause menu: Controls list === */
+
 #define FONT_PAUSE_LIST_BOX_WIDTH 216u
+/* Pause label width; larger values shrink less. */
 #define FONT_PAUSE_LIST_BOX_HEIGHT 20u
+/* Pause label box height used for vertical centering. */
 #define FONT_PAUSE_LIST_Y_OFFSET -4.0f
+/* Added to every Pause Controls row Y; more negative moves rows up. */
 #define FONT_PAUSE_LIST_SELECTED_X_OFFSET 2.0f
+/* Extra X correction for the selected red row; positive moves it right. */
 #define FONT_PAUSE_LIST_LINE_HEIGHT 20.0f
+/* Single-row layout height for Pause Controls labels. */
+
+/* === Character Select: player-mode option list === */
+
 #define FONT_CHARACTER_LIST_BOX_WIDTH 240u
+/* Option-row width; larger values shrink less. */
 #define FONT_CHARACTER_LIST_BOX_HEIGHT 20u
+/* Option-row box height used for vertical centering. */
 #define FONT_CHARACTER_LIST_X_OFFSET 5.0f
+/* Added to ordinary option-row X; positive moves rows right. */
 #define FONT_CHARACTER_LIST_LINE_HEIGHT 20.0f
+/* Single-row layout height for Character Select options. */
+
+/* === Shared Yes/No selectors: quit, return, and Special Controls === */
+
 #define FONT_QUIT_YES_SOURCE_BITS 0x41C00000u
+/* Exact native Y bit pattern identifying the ordinary Yes row. */
 #define FONT_QUIT_NO_SOURCE_BITS 0x42600000u
+/* Exact native Y bit pattern identifying the ordinary No row. */
 #define FONT_QUIT_YES_X 64.5f
+/* Target local Yes X; increase to move Yes right. */
 #define FONT_QUIT_YES_Y 31.5f
+/* Target local Yes Y; increase to move Yes down. */
 #define FONT_QUIT_NO_X 68.5f
+/* Target local No X; increase to move No right. */
 #define FONT_QUIT_NO_Y 49.0f
+/* Target local No Y; increase to move No down. */
 #define FONT_SPECIAL_ON_TEXT 0x006059F0u
+/* Fixed runtime pointer identifying Special Controls ON. */
 #define FONT_SPECIAL_OFF_TEXT 0x006059F8u
+/* Fixed runtime pointer identifying Special Controls OFF. */
 #define FONT_SPECIAL_ON_X 66.0f
+/* Special Controls ON local X; increase to move it right. */
 #define FONT_SPECIAL_ON_Y 31.0f
+/* Special Controls ON local Y; increase to move it down. */
 #define FONT_SPECIAL_OFF_X 59.0f
+/* Special Controls OFF local X; increase to move it right. */
 #define FONT_SPECIAL_OFF_Y 49.0f
+/* Special Controls OFF local Y; increase to move it down. */
+
+/* === Battle/Practice quit-confirmation body === */
+
 #define FONT_QUIT_BODY_BOX_X 19.0f
+/* Quit prompt body left edge; increase to move the body right. */
 #define FONT_QUIT_BODY_BOX_Y 12.0f
+/* Quit prompt body top edge; increase to move the body down. */
 #define FONT_QUIT_BODY_BOX_WIDTH 420u
+/* Quit prompt width; larger values wrap later. */
 #define FONT_QUIT_BODY_BOX_HEIGHT 40u
+/* Quit prompt box height used to place its wrapped block. */
 #define FONT_QUIT_BODY_LINE_HEIGHT 20.0f
+/* Vertical distance between quit-prompt lines. */
 #define FONT_QUIT_BODY_LINE_LIMIT 2u
+/* Maximum quit-prompt line count. */
+
+/* === Character Select return-confirmation body === */
+
 #define FONT_CHARACTER_BODY_BOX_X 8.0f
+/* Return prompt left edge; increase to move the body right. */
 #define FONT_CHARACTER_BODY_BOX_Y 8.0f
+/* Return prompt top edge; increase to move the body down. */
 #define FONT_CHARACTER_BODY_BOX_WIDTH 368u
+/* Return prompt width; larger values wrap later or shrink less. */
 #define FONT_CHARACTER_BODY_BOX_HEIGHT 24u
+/* Return prompt box height used for vertical centering. */
 #define FONT_CHARACTER_BODY_LINE_HEIGHT 20.0f
+/* Return prompt line height. */
 #define FONT_CHARACTER_BODY_LINE_LIMIT 1u
+/* Keeps the Character Select return prompt on one line. */
+
+/* === Special Controls explanatory body === */
+
 #define FONT_SPECIAL_BODY_BOX_X 24.0f
+/* Special Controls body left edge; increase to move it right. */
 #define FONT_SPECIAL_BODY_BOX_Y 12.0f
+/* Special Controls body top edge; increase to move it down. */
 #define FONT_SPECIAL_BODY_BOX_WIDTH 400u
+/* Special Controls body width; larger values wrap later. */
 #define FONT_SPECIAL_BODY_BOX_HEIGHT 60u
+/* Special Controls body height used for vertical placement. */
 #define FONT_SPECIAL_BODY_LINE_HEIGHT 20.0f
+/* Vertical distance between Special Controls body lines. */
 #define FONT_SPECIAL_BODY_LINE_LIMIT 2u
+/* Maximum Special Controls body line count. */
+
+/* === Collection exit-confirmation body === */
+
 #define FONT_COLLECTION_BODY_BOX_X 24.0f
+/* Collection exit body left edge; increase to move it right. */
 #define FONT_COLLECTION_BODY_BOX_Y 12.0f
+/* Collection exit body top edge; increase to move it down. */
 #define FONT_COLLECTION_BODY_BOX_WIDTH 400u
+/* Collection exit body width; larger values wrap later. */
 #define FONT_COLLECTION_BODY_BOX_HEIGHT 60u
+/* Collection exit body height used for vertical placement. */
 #define FONT_COLLECTION_BODY_LINE_HEIGHT 20.0f
+/* Vertical distance between Collection exit body lines. */
 #define FONT_COLLECTION_BODY_LINE_LIMIT 2u
+/* Maximum Collection exit body line count. */
+
+/* === Shared temporary body storage: internal capacity === */
+
 #define FONT_BODY_BUFFER_SIZE 0x100u
+/* Maximum copied body/list text bytes including the terminator; not geometry. */
+
+/* === Practice explanations and inline controller icons === */
+
 #define FONT_PRACTICE_ICON_TABLE_ADDRESS 0x008D14C0u
+/* Fixed runtime address of Practice's native icon records; do not tune. */
 #define FONT_PRACTICE_TEXT_TABLE_ADDRESS 0x008BD510u
+/* Fixed runtime address of Practice's native text table; do not tune. */
 #define FONT_PRACTICE_BOX_X 39.2f
+/* Practice explanation left edge; increase to move the block right. */
 #define FONT_PRACTICE_BOX_Y_OFFSET 21.2f
+/* Added to native explanation Y; increase to move the block down. */
 #define FONT_PRACTICE_BOX_WIDTH 364u
+/* Explanation width; larger values wrap later. */
 #define FONT_PRACTICE_BOX_HEIGHT 48u
+/* Explanation box height used for vertical placement. */
 #define FONT_PRACTICE_GLYPH_HEIGHT 28.0f
+/* Glyph-quad height used by the Practice explanation renderer. */
 #define FONT_PRACTICE_LINE_ADVANCE 14.0f
+/* Vertical distance between wrapped Practice explanation lines. */
 #define FONT_PRACTICE_LINE_LIMIT 0u
+/* Zero means Practice explanations have no artificial line-count limit. */
 #define FONT_PRACTICE_TOKEN_COUNT 13u
+/* Number of direct text/icon token records in the native token table. */
 #define FONT_PRACTICE_TOKEN_STRIDE 16u
+/* Byte stride between direct Practice token records. */
 #define FONT_PRACTICE_ICON_MAP_COUNT 18u
+/* Number of entries in the controller-icon remapping table. */
 #define FONT_PRACTICE_BUFFER_SIZE 0x200u
+/* Maximum assembled mixed text/icon bytes including the terminator. */
 
 #define FONT_V2_SECTION(name) \
     __attribute__((section(name), noinline))

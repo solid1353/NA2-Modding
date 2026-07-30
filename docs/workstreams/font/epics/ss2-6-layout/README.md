@@ -16,16 +16,8 @@ case.
 - Current subtask: Priority 3 — replacement ss1–ss2 Jutsu-selector evidence.
 - Pending grid: none; the runtime-injected Priority 3 candidate grid was
   visibly delivered on 2026-07-31.
-- Next action: preserve the shown runtime-injected candidate unchanged until
-  its exact integrated ss1–ss2 result is built and explicitly user-verified.
-- Paused candidate recovery: Git stash object
-  `0992c741d4b58451f13a44e179139108adb30937`, message
-  `[Font] Priority 3 Jutsu selector candidate awaiting integrated validation`,
-  patch ID `b5344bf95b87bb933137687ba0661aab3e842959`; its only affected
-  path is
-  `na228_builder/features/localization/runtime_injector/sources/font_v2_core.c`.
-  On authorized resumption, restore and verify this exact diff, immediately
-  drop this exact stash, and verify its removal.
+- Next action: build and test the committed Priority 3 candidate on the exact
+  integrated ss1–ss2 pair; explicit user acceptance remains pending.
 
 ## Scope and evidence
 
@@ -138,8 +130,7 @@ case.
 ### Priority 3 — replacement ss1–ss2: One Jutsu-selector defect
 
 - State: a runtime-injected C candidate was produced and visibly shown on
-  2026-07-31. The candidate is not an integrated result; its C implementation
-  remains uncommitted in the exact recovery stash recorded above, and
+  2026-07-31. Its canonical C implementation is test-ready but unaccepted;
   integrated ss1–ss2 validation plus explicit user acceptance remain pending.
 - ss1: fitting one-line rows are shifted right in NA2.28.
 - ss2: the effective text box is too narrow. NUN5 wraps `Explosive Destruction

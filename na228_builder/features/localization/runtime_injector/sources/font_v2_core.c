@@ -127,16 +127,20 @@ typedef signed int s32;
 /* Horizontal correction for the left list; more negative moves rows left. */
 #define FONT_JUTSU_RIGHT_X_OFFSET -4.0f
 /* Horizontal correction for the right list; more negative moves rows left. */
-#define FONT_JUTSU_Y_OFFSET -7.0f
+#define FONT_JUTSU_Y_OFFSET -9.0f
 /* Applied only to wrapped blocks; more negative moves the block up. */
 #define FONT_JUTSU_SIDE_THRESHOLD 256.0f
 /* Native X below this value is classified as the left-side list. */
 #define FONT_JUTSU_LINE_ADVANCE 16.0f
 /* Vertical distance between wrapped Jutsu-title lines. */
-#define FONT_JUTSU_GLYPH_HEIGHT 20.0f
+#define FONT_JUTSU_LAYOUT_GLYPH_HEIGHT 20.0f
 /* Glyph height used only to calculate wrapped-block vertical placement. */
 #define FONT_JUTSU_LINE_LIMIT 2u
 /* Target maximum line count for adaptive wrapping. */
+#define FONT_JUTSU_OVERFLOW_WIDTH_FACTOR 0.4f
+/* Higher values widen the retry box more aggressively after a third line appears. */
+#define FONT_JUTSU_WRAP_WIDTH_STEP 16.0f
+/* Extra width added per retry until the title fits within the line limit. */
 
 /* === Collection: Movie and character move-list classification === */
 
@@ -1192,9 +1196,18 @@ int font_v2_jutsu_draw_entry(
     const u8 *text
 ) {
     FontV2BodyFrame frame;
+    u8 original[FONT_BODY_BUFFER_SIZE];
     volatile float *renderer = (volatile float *)renderer_address;
+    volatile u32 *renderer_words = (volatile u32 *)renderer_address;
+    FontV2NativeSetPosition set_position =
+        (FontV2NativeSetPosition)FONT_SET_POSITION_ADDRESS;
+    FontV2NativeTextDraw draw =
+        (FontV2NativeTextDraw)FONT_JUTSU_DRAW_ADDRESS;
     float native_x;
     float native_y;
+    float origin_x;
+    float origin_y;
+    float wrap_width;
     u32 index = 0;
 
     if (!renderer || !text) {
@@ -1202,16 +1215,18 @@ int font_v2_jutsu_draw_entry(
     }
 
     while (index < FONT_BODY_BUFFER_SIZE - 1u && text[index]) {
+        original[index] = text[index];
         frame.buffer[index] = text[index];
         index += 1;
     }
+    original[index] = 0;
     frame.buffer[index] = 0;
 
     if (
         font_v2_wrap_native(
             frame.buffer,
             FONT_JUTSU_BOX_WIDTH,
-            FONT_JUTSU_LINE_LIMIT,
+            0,
             &frame.session.measured_width,
             &frame.session.line_count
         ) != 0
@@ -1219,17 +1234,102 @@ int font_v2_jutsu_draw_entry(
         return -1;
     }
 
-    if (frame.session.line_count <= 1u) {
-        FontV2NativeTextDraw draw =
-            (FontV2NativeTextDraw)FONT_JUTSU_DRAW_ADDRESS;
-        draw(renderer_address, text);
-        return 0;
+    if (frame.session.line_count > FONT_JUTSU_LINE_LIMIT) {
+        u8 *cursor = frame.buffer;
+        u8 *line_start = cursor;
+        u32 line_index = 0;
+        u32 overflow_width = 0;
+        u32 overflow_lines = 0;
+        u32 saved_tracking =
+            renderer_words[FONT_RENDERER_TRACKING_OFFSET / sizeof(u32)];
+
+        renderer_words[FONT_RENDERER_TRACKING_OFFSET / sizeof(u32)] = 0;
+        for (;;) {
+            if (!*cursor || *cursor == (u8)'\n') {
+                u8 saved = *cursor;
+                *cursor = 0;
+                if (line_index >= FONT_JUTSU_LINE_LIMIT) {
+                    overflow_width += font_v2_native_measure(line_start);
+                    overflow_lines += 1;
+                }
+                *cursor = saved;
+                if (!saved) {
+                    break;
+                }
+                cursor += 1;
+                line_start = cursor;
+                line_index += 1;
+            } else {
+                cursor += 1;
+            }
+        }
+        renderer_words[FONT_RENDERER_TRACKING_OFFSET / sizeof(u32)] =
+            saved_tracking;
+
+        wrap_width = (float)(s32)FONT_JUTSU_BOX_WIDTH;
+        if (overflow_lines) {
+            wrap_width +=
+                (
+                    (float)(s32)overflow_width /
+                    (float)(s32)overflow_lines
+                ) * FONT_JUTSU_OVERFLOW_WIDTH_FACTOR;
+        }
+
+        do {
+            index = 0;
+            while (
+                index < FONT_BODY_BUFFER_SIZE - 1u &&
+                original[index]
+            ) {
+                frame.buffer[index] = original[index];
+                index += 1;
+            }
+            frame.buffer[index] = 0;
+            if (
+                font_v2_wrap_native(
+                    frame.buffer,
+                    (u32)wrap_width,
+                    0,
+                    &frame.session.measured_width,
+                    &frame.session.line_count
+                ) != 0
+            ) {
+                return -1;
+            }
+            wrap_width += FONT_JUTSU_WRAP_WIDTH_STEP;
+        } while (frame.session.line_count > FONT_JUTSU_LINE_LIMIT);
     }
 
     native_x =
         renderer[FONT_RENDERER_POSITION_X_OFFSET / sizeof(float)];
     native_y =
         renderer[FONT_RENDERER_POSITION_Y_OFFSET / sizeof(float)];
+    origin_x =
+        renderer[FONT_RENDERER_DRAW_X_OFFSET / sizeof(float)];
+    origin_y =
+        renderer[FONT_RENDERER_DRAW_Y_OFFSET / sizeof(float)];
+
+    if (frame.session.line_count <= 1u) {
+        set_position(
+            native_x +
+                (
+                    native_x < FONT_JUTSU_SIDE_THRESHOLD
+                        ? FONT_JUTSU_LEFT_X_OFFSET
+                        : FONT_JUTSU_RIGHT_X_OFFSET
+                ) -
+                origin_x,
+            native_y - origin_y,
+            renderer_address
+        );
+        draw(renderer_address, text);
+        set_position(
+            native_x - origin_x,
+            native_y - origin_y,
+            renderer_address
+        );
+        return 0;
+    }
+
     frame.session.text = frame.buffer;
     frame.session.box_x =
         native_x +
@@ -1245,11 +1345,10 @@ int font_v2_jutsu_draw_entry(
     frame.session.vertical_alignment = FONT_V2_ALIGN_CENTER;
     frame.session.flags =
         FONT_V2_FLAG_SEPARATE_LINE_ADVANCE |
-        FONT_V2_FLAG_PREMEASURED |
-        FONT_V2_FLAG_GLYPH_HEIGHT;
+        FONT_V2_FLAG_PREMEASURED;
     frame.session.line_limit = FONT_JUTSU_LINE_LIMIT;
     frame.session.line_height = FONT_JUTSU_LINE_ADVANCE;
-    frame.session.glyph_height = FONT_JUTSU_GLYPH_HEIGHT;
+    frame.session.glyph_height = FONT_JUTSU_LAYOUT_GLYPH_HEIGHT;
     frame.session.callback = (u32)font_v2_jutsu_draw_callback;
     frame.session.callback_arg0 = renderer_address;
     frame.session.callback_arg1 = (u32)frame.buffer;

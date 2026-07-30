@@ -2500,6 +2500,7 @@ def build_v2_right_edge() -> Fragment:
         mips.i_type(0x0C, v0, v0, V2_FLAG_GLYPH_HEIGHT)
     )
     assembler.branch(0x04, v0, zero, "native_bottom")
+    assembler.emit(0)
     assembler.emit(
         mips.i_type(0x31, v1, 1, V2_SESSION_GLYPH_HEIGHT)
     )

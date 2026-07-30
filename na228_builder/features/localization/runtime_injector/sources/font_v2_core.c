@@ -1179,9 +1179,6 @@ int font_v2_collection_list_entry(
         FONT_V2_FLAG_NEWLINE_BYTES |
         FONT_V2_FLAG_SEPARATE_LINE_ADVANCE |
         FONT_V2_FLAG_PREMEASURED;
-    if (!movie_row) {
-        frame.session.flags |= FONT_V2_FLAG_GLYPH_HEIGHT;
-    }
     frame.session.line_limit = FONT_COLLECTION_LIST_LINE_LIMIT;
     frame.session.line_height = FONT_COLLECTION_LIST_LINE_ADVANCE;
     frame.session.glyph_height = FONT_COLLECTION_LIST_GLYPH_HEIGHT;

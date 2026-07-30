@@ -1156,17 +1156,41 @@ renderer produces a 25-unit interval on these screens. Short titles, the
 highlighted red style, fixed caller cadence, source mappings, and every
 other pointer through the shared renderer remain native.
 
-The first shared implementation nevertheless published a 20-unit glyph-height
-override for every recognized pointer. That meant its earlier ss8 result did
-not preserve native one-line or fitting multiline glyph geometry, and the
-delivered grid was not representative of the integrated ISO. The user reopened
-Priority 5 and rejected that evidence on 2026-07-30.
+The first shared implementation nevertheless published a 20-unit glyph-quad
+override for every recognized pointer. It also exposed the flag-aware
+right-edge shim defect described below. The compatible task ISO's payload
+SHA-256
+`74A2A4BD0E66C0F4C55C5A0F67A2342D2E0DE01768D2D2416B945E64D2C0EB39`
+still used the older 88-byte shim at runtime `0x008F57B8`, while rejected
+integrated build record `20260730_162124_431_pid9072` linked the 128-byte
+flag-aware shim at `0x008F5E30`. The older shim ignored flag `0x40`, so direct
+injection appeared correct while the integrated payload squeezed the same
+rows. This was a resident-hook difference, not a screenshot-composition
+difference or a change in the Collection caller.
 
 The corrected Movie-only branch now returns directly to the displaced native
 draw when wrapping produces one line. When wrapping produces two lines, it
 retains the proven 192-unit width, native X, Y-minus-10 origin calculation, and
-16-unit line interval but does not publish the glyph-height override. The
-character-detail branches remain unchanged for their separate later review.
+16-unit line interval but does not publish the glyph-quad override. The fixed
+right-edge shim now makes that clear flag effective. A supplied-ss8 regression
+through the fixed shim reproduced the complete retained accepted right text
+panel pixel-for-pixel.
+
+The corrected character-detail branch uses the same separation. It retains
+`glyph_height = 20.0` solely in `font_v2_prepare`'s two-line
+`rendered_height` calculation, which preserves the accepted vertical centering,
+but no longer publishes flag `0x40`; the glyph quads therefore remain native.
+Fresh supplied-ss9 and ss10 direct-injection captures through the corrected
+shim reproduce the accepted ss9 target and retained ss10 target exactly for
+every text group. ss9 target/corrected bounds and dark/red glyph-pixel counts
+are identical: `Right!` `(646,241)..(734,267)`, `Shadow Clone Jutsu`
+`(648,296)..(871,345)`, and `Running Wild`
+`(648,376)..(843,401)`. ss10 likewise matches exactly for
+`Great Ball Rasengan`, `Overflowing Power`, `Nine-Tail's Cloak`, and
+`Unchanging Relationship`. Non-text animation pixels may differ between fresh
+frames; the text evidence is native-resolution. The user explicitly accepted
+the ss9 target appearance on 2026-07-30; exact integrated-ISO confirmation of
+the corrected payload remains pending.
 
 The supplied ss8 state was reloaded through the standard task-owned direct-PINE
 workflow after compiling the canonical C. The retained runtime-injected
@@ -1179,8 +1203,9 @@ the injected fragment SHA-256 is
 `1BBA7F25F2CEB3E887B8AB101D36BAF80AD7B531667DC01566F657E1BE7DC06C`.
 The user subsequently verified the exact integrated-ISO result on 2026-07-30.
 Confidence is **verified** for the bounded Movie branch and runtime appearance;
-status is **runtime proven**. The character-detail branches remain a separate
-review boundary.
+status is **runtime proven**. The character-detail branch is
+**runtime-injected candidate validated** with a user-accepted target and still
+awaits exact integrated-ISO confirmation.
 
 ### Character Select modal selected row, return body, and choice list
 
@@ -1971,8 +1996,14 @@ spacing. Setting the secondary descriptor or renderer mode before
 before the per-glyph emitter. The existing layout-session right-edge shim at
 ELF file `0x88070`, runtime `0x00187F70`, is the correct bounded boundary. A
 new session flag `0x40` makes only the Jutsu draw take a `20.0`-unit bottom
-edge from `FontV2Session.glyph_height`; every session without that flag
-continues at `0x00187F78` through the accepted native primary/secondary helper.
+edge from `FontV2Session.glyph_height`. A 2026-07-30 differential check exposed
+that the first flag-aware shim did not actually preserve the intended native
+path: its conditional branch placed the session `glyph_height` load in the
+MIPS delay slot, so that load executed even when flag `0x40` was clear. The
+corrected shim leaves a NOP in that delay slot and loads `glyph_height` only
+after the branch falls through. Every session without the flag now retains the
+displaced native bottom edge and continues at `0x00187F78` through the accepted
+primary/secondary helper.
 The flagged path rejoins at `0x00187F80` and preserves displaced delay-slot
 word `0x8F84CA6C` (`lw a0,-0x3594(gp)`). Omitting that load makes the row text
 disappear, which was a useful rejected transport result rather than a renderer

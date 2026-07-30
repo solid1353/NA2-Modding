@@ -16,9 +16,9 @@ case.
 - Current subtask: Priority 6 — ss9–ss10 character move lists.
 - Pending grid: missing: exact post-change Priority 6 captures from the
   integrated ISO.
-- Next action: preserve native one-line rendering and native glyph height for
-  the two character-detail pointer families while retaining only their required
-  NUN5 line breaks and placement.
+- Next action: compose the corrected resident hook and Collection caller, then
+  verify integrated ss8–ss10 output. ss8 is the shared-hook regression; ss9 and
+  ss10 are the selected Priority 6 result.
 
 ## Scope and evidence
 
@@ -138,19 +138,28 @@ case.
 
 ### Priority 6 — ss9–ss10: Character move lists
 
-- State: reopened by the user on 2026-07-30. The previous grid was not
-  representative of the integrated ISO and has been removed.
-- Remaining defect: both character-detail branches forced the 20-unit
-  glyph-height override on every recognized row. One-line rows were therefore
-  vertically squeezed, and the required two-line rows were also squeezed
-  despite fitting with native glyph geometry.
-- Required result: one-line rows bypass the wrapper completely. Only rows that
-  actually wrap use the 152- or 192-unit two-line layout, native X, Y minus 10,
-  and 16-unit line interval; wrapped rows retain native glyph geometry.
-  Priority 5 Movie behavior and every unrelated ETC row remain unchanged.
-- Evidence requirement: development injection may be reported only as a
-  runtime-injected candidate. The canonical result grid requires untouched
-  NUN5 and exact integrated-ISO captures at native resolution.
+- State: corrected in canonical C/static core and agent-validated as a
+  runtime-injected candidate. The user explicitly accepted the exact ss9 target
+  appearance on 2026-07-30. Exact integrated-ISO confirmation remains pending,
+  and the previous nonrepresentative grid remains removed.
+- Root cause: the compatible development ISO retained the older right-edge
+  session shim, which ignored the character branch's `0x40` glyph-quad flag.
+  The integrated payload used the newer flag-aware shim, whose conditional
+  branch loaded `session.glyph_height` from its MIPS delay slot even when the
+  flag was clear. Development therefore appeared correct while the integrated
+  rows were squeezed.
+- Implemented result: the shared hook now uses a NOP delay slot and loads
+  `glyph_height` only on its flagged path. Character rows retain
+  `glyph_height = 20` solely for two-line box centering but no longer set the
+  glyph-quad flag. Their accepted 152- or 192-unit boxes, native X, Y minus 10,
+  required line breaks, and 16-unit line interval are unchanged.
+- Candidate evidence: fresh ss9 and ss10 captures through the corrected modern
+  hook reproduce every retained target text group's native-resolution bounds
+  and glyph-pixel counts exactly. A supplied ss8 regression reproduces the
+  accepted Movie right panel pixel-for-pixel. Non-text animation pixels are not
+  part of that identity claim.
+- Evidence requirement: the canonical result grid still requires untouched
+  NUN5 and exact integrated-ISO ss9/ss10 captures at native resolution.
 
 ## Current priorities
 
@@ -166,10 +175,9 @@ Priority is determined by the most efficient implementation order.
 5. **ss8 — Movie list.** Corrected, compose-validated, and user-verified on the
    integrated ISO on 2026-07-30. One-line rows and fitting wrapped rows retain
    native glyph height; the previous nonrepresentative grid remains removed.
-6. **ss9–ss10 — Character move lists.** Reopened. Preserve native one-line
-   rows and native glyph height for the required ss9/ss10 wraps; the previous
-   nonrepresentative grid is removed and exact integrated-ISO evidence is
-   pending.
+6. **ss9–ss10 — Character move lists.** Corrected and candidate-validated
+   against the user-accepted target. The previous nonrepresentative grid is
+   removed; exact integrated-ISO ss9/ss10 evidence is pending.
 
 Shared primitives are implemented only once. Each prioritized caller family
 receives one guarded implementation and commit/push boundary; every case keeps

@@ -112,7 +112,8 @@ taking precedence. It never creates or modifies templates or memory cards.
 Run `act help` or `act -h` for the standalone command summary.
 
 `pcsx2/launch.ps1` is the single PCSX2 launcher. Configured launches default to
-`dev`; pass `-Target stable` for an explicit stable check. Agent launches use
+`dev` and start it in unlimited-speed mode; pass `-Target stable` for an
+explicit capped stable check. Agent launches use
 `-WorkerRoot work/<task title>` and start the existing task-owned PCSX2 copy in
 no-GUI mode. The launcher suppresses process-owned render windows for the
 worker startup interval, reads back top-level-window visibility, and terminates

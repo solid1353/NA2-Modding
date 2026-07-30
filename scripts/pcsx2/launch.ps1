@@ -215,6 +215,12 @@ $launchArguments = @()
 if ($hidden) {
     $launchArguments += '-nogui'
 }
+if (
+    $PSCmdlet.ParameterSetName -eq 'Configured' -and
+    $Target -eq 'dev'
+) {
+    $launchArguments += '-unlimited'
+}
 if ($IsoPath) {
     $launchArguments += @('-batch', "`"$resolvedIso`"")
 }

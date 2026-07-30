@@ -216,7 +216,7 @@ narrower than a clean integrated build. That validation used custom PCSX2
 source commit `9cf3890b8e98bed6242d66d764732177dd78b450`; the tested Windows
 executable had SHA-256
 `A2101F8FC9F3ADF9C5E8A936296F8C2D2A383B67495A0425AFBC62ECDB2607F9`.
-The user flow `na228 -c && na228 -w` was subsequently validated from a stopped
+The user flow `na228 c && na228 w` was subsequently validated from a stopped
 VM. Waiting for both the loaded root hook and resident `MWo3` marker prevented
 the initial direct-memory application from being cleared later during boot;
 delayed readback confirmed that the immutable fragment bytes and guarded

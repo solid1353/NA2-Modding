@@ -115,8 +115,8 @@ File sizes remain fixed except for the separately approved filesystem insertion
 support used by compact external strings, which preserves total ISO size and
 validates both ISO9660 and UDF trees.
 
-The ordinary `na228` command builds and launches PCSX2. `na228 -c` launches Current
-without rebuilding; `na228 -p` launches Previous. User-owned shared-image
+The ordinary `na228` command builds and launches PCSX2. `na228 c` launches Current
+without rebuilding; `na228 p` launches Previous. User-owned shared-image
 workflows automatically run `act na228`; the standalone `act` command also
 provides `na2`, `input`, and `links` modes.
 Profile-run logs record the enabled feature pins and the complete derived module

@@ -166,7 +166,7 @@ Detailed command and task behavior is in
   recreate its complete `work/<exact task title>/pcsx2/` copy without another
   destructive-action approval. This authority never extends to another task's
   copy, `@pcsx2_clean`, `@pcsx2_dev`, or `@pcsx2_stable`.
-- `na228 -t` and `_na228.ps1 -t` build ISOs; `-t` never means tests. The full
+- `na228 t` and `_na228.ps1 t` build ISOs; recipe `t` never means tests. The full
   builder test suite is
   `python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'`.
   Never infer command semantics from a flag name; verify the documented exact

@@ -58,19 +58,19 @@ cannot be explained from NUN5 and Current plus the unpacked static sources.
 
 ## Workflow
 
-The canonical `na228` command exposes a `launch` subcommand that accepts any
-ordered combination of registered ISO selectors:
+The canonical `na228` command accepts any ordered combination of registered
+ISO selectors directly:
 
 ```powershell
-na228 launch current nun5
+na228 current nun5
 ```
 
 Other examples:
 
 ```powershell
-na228 launch current nun3
-na228 launch candidate nun5
-na228 launch na2 nun5 nun6
+na228 current nun3
+na228 candidate nun5
+na228 na2 nun5 nun6
 ```
 
 Supported names are `current`, `previous`, `candidate`, `na2`, `nun3`,

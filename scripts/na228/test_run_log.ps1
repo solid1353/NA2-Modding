@@ -132,7 +132,7 @@ try {
   },
   "files": {
     "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
-    "pcsx2_game_launch_command": "@scripts/pcsx2/launch_games.ps1",
+    "na228_game_launch_command": "@scripts/na228/launch_games.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1",
     "actualize_command": "@pcsx2_scripts/actualization/act.ps1",
     "actualize_na228_command": "@pcsx2_scripts/actualization/sync_game_files.ps1",
@@ -150,7 +150,7 @@ try {
     )) {
         New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository $directory) | Out-Null
     }
-    $helpText = (& (Join-Path $fakeRepository '_na228.ps1') -Help) -join "`n"
+    $helpText = (& (Join-Path $fakeRepository '_na228.ps1') help) -join "`n"
     Assert-Na2Test `
         -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'logs\na228'))) `
         -Message 'Help invocation created run logs.'
@@ -158,8 +158,14 @@ try {
         -Condition ($helpText -notmatch '(?m)^\s*na228 act\b') `
         -Message 'Root help still exposes the retired na228 act command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 launch \[games\.\.\.\]') `
+        -Condition ($helpText -match '(?m)^\s*na228 <game> \[games\.\.\.\]') `
         -Message 'Root help omitted the unified multi-game launch command.'
+    Assert-Na2Test `
+        -Condition ($helpText -notmatch '(?m)^\s*na228 -[btcpwh]\b') `
+        -Message 'Root help still exposes a retired dashed mode.'
+    Assert-Na2Test `
+        -Condition ($helpText -notmatch '(?m)^\s*na228 launch\b') `
+        -Message 'Root help still exposes the retired launch subcommand.'
     $actHelpText = (
         & (Join-Path $fakeActualizationScripts 'act.ps1') help
     ) -join "`n"
@@ -208,11 +214,16 @@ if ($PassThru) { $result }
 param([string]$Target = 'dev', [string]$IsoPath)
 Write-Host "[fake] launch $Target $IsoPath"
 '@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch_games.ps1') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'launch_games.ps1') -Content @'
 param(
     [Parameter(Position = 0, ValueFromRemainingArguments = $true)]
     [string[]]$Games
 )
+if (@($Games | Where-Object { $_ -notin @(
+    'current', 'previous', 'candidate', 'na2', 'nun3', 'nun5', 'nun6'
+) }).Count -gt 0) {
+    throw "Unknown game name: $($Games -join ',')"
+}
 Write-Output "[fake] multi-game launch $($Games -join ',')"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeReleaseScripts 'publish_release.ps1') -Content @'
@@ -241,11 +252,31 @@ else {
         & (Join-Path $fakeRepository '_na228.ps1') act
     }
     catch {
-        $na2ActRejected = $_.Exception.Message -match 'Unknown NA2.28 command: act'
+        $na2ActRejected = $_.Exception.Message -match 'Unknown game name: act'
     }
     Assert-Na2Test `
         -Condition $na2ActRejected `
         -Message 'The retired na228 act route was not rejected.'
+    $dashedModeRejected = $false
+    try {
+        & (Join-Path $fakeRepository '_na228.ps1') -b
+    }
+    catch {
+        $dashedModeRejected = $true
+    }
+    Assert-Na2Test `
+        -Condition $dashedModeRejected `
+        -Message 'The retired dashed build mode was not rejected.'
+    $launchSubcommandRejected = $false
+    try {
+        & (Join-Path $fakeRepository '_na228.ps1') launch na2 nun5
+    }
+    catch {
+        $launchSubcommandRejected = $_.Exception.Message -match 'Unknown game name'
+    }
+    Assert-Na2Test `
+        -Condition $launchSubcommandRejected `
+        -Message 'The retired launch subcommand was not rejected.'
     $duplicateRecipeRejected = $false
     try {
         & (Join-Path $fakeRepository '_na228.ps1') bb
@@ -277,7 +308,7 @@ else {
         0
     }
     $multiGameLaunch = (
-        & (Join-Path $fakeRepository '_na228.ps1') launch na2 nun5
+        & (Join-Path $fakeRepository '_na228.ps1') na2 nun5
     ) -join "`n"
     Assert-Na2Test `
         -Condition ($multiGameLaunch -match '\[fake\] multi-game launch na2,nun5') `
@@ -312,11 +343,11 @@ else {
     Assert-Na2Test `
         -Condition $extraReleaseArgumentRejected `
         -Message 'Release dispatch accepted more than one version argument.'
-    & (Join-Path $fakeRepository '_na228.ps1') -Current
-    & (Join-Path $fakeRepository '_na228.ps1') -Previous
-    & (Join-Path $fakeRepository '_na228.ps1') -t
-    & (Join-Path $fakeRepository '_na228.ps1') -t 'work\General\build\agent.iso'
-    & (Join-Path $fakeRepository '_na228.ps1') -b
+    & (Join-Path $fakeRepository '_na228.ps1') c
+    & (Join-Path $fakeRepository '_na228.ps1') p
+    & (Join-Path $fakeRepository '_na228.ps1') t
+    & (Join-Path $fakeRepository '_na228.ps1') t 'work\General\build\agent.iso'
+    & (Join-Path $fakeRepository '_na228.ps1') b
     & (Join-Path $fakeRepository '_na228.ps1') bp
     & (Join-Path $fakeRepository '_na228.ps1')
     $fakeLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\latest.log'))

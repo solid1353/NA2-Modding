@@ -1,23 +1,7 @@
 [CmdletBinding()]
 param(
-    [Parameter(Position = 0)]
-    [string]$Mode,
-
-    [Parameter(Position = 1, ValueFromRemainingArguments)]
-    [string[]]$CommandArguments = @(),
-
-    [Alias('b')]
-    [switch]$Build,
-    [Alias('t')]
-    [switch]$Test,
-    [Alias('c')]
-    [switch]$Current,
-    [Alias('p')]
-    [switch]$Previous,
-    [Alias('w')]
-    [switch]$Watch,
-    [Alias('h')]
-    [switch]$Help
+    [Parameter(Position = 0, ValueFromRemainingArguments)]
+    [string[]]$Tokens = @()
 )
 
 $ErrorActionPreference = 'Stop'
@@ -33,92 +17,78 @@ function Write-Na2Stage {
     Write-Host "[na228] $Message" -ForegroundColor Cyan
 }
 
-$compactRecipe = if (
-    $Mode -and
-    -not $Test -and
-    $Mode -cmatch '^[bBtTcCpPwW]+$'
-) {
-    $Mode.ToLowerInvariant()
+$commandTokens = @($Tokens)
+$mode = if ($commandTokens.Count -gt 0) {
+    $commandTokens[0].ToLowerInvariant()
 }
 else {
     ''
 }
-$command = if ($Mode -and -not $Test -and -not $compactRecipe) {
-    $Mode.ToLowerInvariant()
-}
-else {
-    ''
-}
-$runSelected = $Current -or $Previous
+$arguments = @(
+    if ($commandTokens.Count -gt 1) {
+        $commandTokens[1..($commandTokens.Count - 1)]
+    }
+)
 
-if (@($Build, $Test, $Current, $Previous, $Watch).Where({ $_ }).Count -gt 1) {
-    throw '-Build / -b, -Test / -t, -Current / -c, -Previous / -p, and -Watch / -w are mutually exclusive.'
-}
-if ($compactRecipe -and ($Build -or $Test -or $runSelected -or $Watch -or $Help)) {
-    throw 'A compact recipe cannot be combined with build/launch/help switches.'
-}
-if ($command -and ($Build -or $Test -or $runSelected -or $Watch)) {
-    throw 'Build/launch switches cannot be combined with a command mode.'
-}
-if ($command -and $command -notin @('release', 'launch')) {
-    throw "Unknown NA2.28 command: $Mode"
-}
-if ($Test -and @($CommandArguments).Count -gt 0) {
-    throw 'na228 -t accepts at most one worker output path.'
-}
-if (@($CommandArguments).Count -gt 0 -and $command -notin @('release', 'launch')) {
-    throw 'Positional arguments are accepted only by na228 release or na228 launch.'
-}
-if ($command -eq 'release' -and @($CommandArguments).Count -gt 1) {
-    throw 'na228 release accepts at most one version argument.'
-}
-if ($compactRecipe) {
-    $duplicateStep = $compactRecipe.ToCharArray() |
-        Group-Object |
-        Where-Object Count -gt 1 |
-        Select-Object -First 1
-    if ($null -ne $duplicateStep) {
-        throw "Compact recipe '$compactRecipe' repeats step '$($duplicateStep.Name)'."
+if ($mode -eq 'help') {
+    if ($arguments.Count -gt 0) {
+        throw 'na228 help accepts no arguments.'
     }
-    if ($compactRecipe.Contains('w') -and -not $compactRecipe.EndsWith('w')) {
-        throw "Compact recipe '$compactRecipe' must place blocking watcher step 'w' last."
-    }
-}
-if ($Help) {
     @(
         'NA2.28 commands:'
         "  na228       Build the pinned current profile, conditionally rotate, then run $currentIsoName"
-        "  na228 -b    Build and conditionally rotate $currentIsoName without launching PCSX2"
-        "  na228 -t    Build build/$candidateIsoName without changing Current/Previous"
-        '  na228 -t work/<worker>/build/<name>.iso  Build an isolated worker ISO and worker-owned logs'
-        "  na228 -c    Run build/$currentIsoName without rebuilding"
-        "  na228 -p    Run build/$previousIsoName without rebuilding"
-        '  na228 -w    Watch src/ and hot-reload saved C changes into dev PCSX2'
+        "  na228 b     Build and conditionally rotate $currentIsoName without launching PCSX2"
+        "  na228 t     Build build/$candidateIsoName without changing Current/Previous"
+        '  na228 t work/<worker>/build/<name>.iso  Build an isolated worker ISO and worker-owned logs'
+        "  na228 c     Run build/$currentIsoName without rebuilding"
+        "  na228 p     Run build/$previousIsoName without rebuilding"
+        '  na228 w     Watch src/ and hot-reload saved C changes into dev PCSX2'
         '  na228 <recipe>  Run unique b/t/c/p/w steps left-to-right; w must be last (example: na228 bpw)'
-        '  na228 launch [games...]  Launch and tile games; defaults to NUN5 + Current'
+        '  na228 <game> [games...]  Launch and tile selected games'
         '  na228 release [version]  Validate, commit, tag, and publish a GitHub release'
+        '  na228 help  Show this help'
         ''
     ) | Write-Output
     return
 }
 
-if ($command -eq 'release') {
+if ($mode -eq 'release') {
+    if ($arguments.Count -gt 1) {
+        throw 'na228 release accepts at most one version argument.'
+    }
     $releaseArguments = @{}
-    if (@($CommandArguments).Count -eq 1) {
-        $releaseArguments.Version = $CommandArguments[0]
+    if ($arguments.Count -eq 1) {
+        $releaseArguments.Version = $arguments[0]
     }
     & $projectPaths.files.release_publish_command @releaseArguments
     return
 }
 
-if ($command -eq 'launch') {
-    & $projectPaths.files.pcsx2_game_launch_command @CommandArguments
+if ($mode -and $mode -cnotmatch '^[btcpw]+$') {
+    & $projectPaths.files.na228_game_launch_command @commandTokens
     return
 }
 
-$workerBuild = if ($Test -and -not [string]::IsNullOrWhiteSpace($Mode)) {
+$recipe = $mode
+if ($recipe) {
+    $duplicateStep = $recipe.ToCharArray() |
+        Group-Object |
+        Where-Object Count -gt 1 |
+        Select-Object -First 1
+    if ($null -ne $duplicateStep) {
+        throw "Compact recipe '$recipe' repeats step '$($duplicateStep.Name)'."
+    }
+    if ($recipe.Contains('w') -and -not $recipe.EndsWith('w')) {
+        throw "Compact recipe '$recipe' must place blocking watcher step 'w' last."
+    }
+    if ($arguments.Count -gt 0 -and ($recipe -ne 't' -or $arguments.Count -gt 1)) {
+        throw 'Only recipe t accepts one worker output path.'
+    }
+}
+
+$workerBuild = if ($recipe -eq 't' -and $arguments.Count -eq 1) {
     Get-Na2WorkerBuildContext `
-        -OutputPath $Mode `
+        -OutputPath $arguments[0] `
         -ProjectPaths $projectPaths `
         -RequireRelative
 }
@@ -127,23 +97,18 @@ else {
 }
 
 [string[]]$actionCodes = @(
-    if ($compactRecipe) {
-        $compactRecipe.ToCharArray() | ForEach-Object { [string]$_ }
+    if ($recipe) {
+        $recipe.ToCharArray() | ForEach-Object { [string]$_ }
     }
-    elseif ($Build) { 'b' }
-    elseif ($Test) { 't' }
-    elseif ($Current) { 'c' }
-    elseif ($Previous) { 'p' }
-    elseif ($Watch) { 'w' }
     else { 'default' }
 )
 
-if ($compactRecipe) {
-    Write-Na2Stage "Run compact recipe $compactRecipe"
+if ($recipe.Length -gt 1) {
+    Write-Na2Stage "Run compact recipe $recipe"
 }
 
 foreach ($actionCode in $actionCodes) {
-    if ($compactRecipe) {
+    if ($recipe.Length -gt 1) {
         Write-Na2Stage "Recipe step $actionCode"
     }
     if ($actionCode -eq 'w') {

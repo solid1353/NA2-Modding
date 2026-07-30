@@ -64,23 +64,23 @@ Before that call, `na228/build.ps1` checks the deterministic successful-build
 receipt through `na228_builder.build_preflight`; an exact hit returns the normal
 unchanged result without staging an ISO. `na228/test_build_preflight.ps1` covers
 the cache-hit and safe full-build-fallback dispatch paths.
-`na228 -t` calls the same builder in candidate-only mode: it always composes a
+`na228 t` calls the same builder in candidate-only mode: it always composes a
 fresh verified `@build/NA2.28 - Candidate.iso`, bypasses Current preflight and
 promotion state, and does not probe or close PCSX2.
-`na228 -t work/<task title>/build/<name>.iso` instead builds an isolated
+`na228 t work/<task title>/build/<name>.iso` instead builds an isolated
 worker-owned ISO, stages beside it, and keeps both operational and structured
 records under `work/<task title>/logs/`. The path is caller-supplied and
 validated; worker mode cannot address shared build outputs or mutate shared
 preflight, promotion, PNACH, log, or emulator state. Agents must use this form
-rather than bare `na228`, `na228 -b`, or bare `na228 -t`.
-Despite its historical `Test` parameter name, `na228 -t` is always an ISO-build
-command and never runs tests. The unambiguous full builder-suite command is:
+rather than bare `na228`, `na228 b`, or bare `na228 t`.
+Recipe `t` is always an ISO-build command and never runs tests. The unambiguous
+full builder-suite command is:
 
 ```powershell
 python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'
 ```
 
-`na228 -b` runs the standard Current build and conditional promotion pipeline but
+`na228 b` runs the standard Current build and conditional promotion pipeline but
 does not launch PCSX2. Bare `na228` keeps the build-then-launch workflow.
 Compact recipes run the existing `b`, `t`, `c`, `p`, and `w` modes
 left-to-right without duplicating their implementations. Letters must be
@@ -90,9 +90,9 @@ User-owned shared-image builds and launches run `act na228` automatically;
 worker-output builds never actualize. The standalone `act` command can run all
 actualization modes without building or launching.
 
-`na228 launch` accepts any ordered combination of registered ISO selectors. Its
-selectors and zero-argument NUN5-plus-Current behavior are unchanged. A missing
-selected ISO fails before any PCSX2 process is changed.
+Passing one or more registered ISO selectors directly to `na228` launches them
+in the requested order. A missing selected ISO fails before any PCSX2 process
+is changed.
 
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
@@ -169,7 +169,7 @@ cheat-folder state. `scripts/injection/watch.ps1` is the user-only equivalent;
 omit `-SourcePath`, `-SourceId`, and `-Entry` for the root smoke source, or pass
 an owning feature source/entry or overlay plan explicitly. Agents invoke
 `test.ps1` and never run the watcher or its build/apply stages separately.
-The routine root-source watcher is exposed as `na228 -w`; it reads the PINE
+The routine root-source watcher is exposed as `na228 w`; it reads the PINE
 port from the configured development PCSX2 and waits up to 60 seconds for a
 live VM with the resident payload and root hook loaded.
 
@@ -203,7 +203,7 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 
 | Former path | Recovery commit | Retirement and maintained replacement |
 | --- | --- | --- |
-| `scripts/pcsx2/game_commands.ps1` and `launch_pair.ps1` | `dae022c8` | Separate source-game functions and the pair/multi-game alias were consolidated into `_na228.ps1` command routing and `scripts/pcsx2/launch_games.ps1`. Use `na228 launch [games...]`. |
+| `scripts/pcsx2/game_commands.ps1` and `launch_pair.ps1` | `dae022c8` | Separate source-game functions and the pair/multi-game alias were consolidated into `_na228.ps1` command routing and `scripts/na228/launch_games.ps1`. Pass game selectors directly to `na228`. |
 | `scripts/pcsx2/capture_state_screenshot.ps1` | `ec4b8276193bc214b526d5ab4f4f85b240ef7949` | Retired because it serialized a complete savestate solely to obtain a fresh screenshot. Extract `Screenshot.png` directly from an existing state; use `scripts/pcsx2/pine.py screenshot` for a fresh runtime frame. |
 | `injection_lab/gen_pnach.py`, `linker.asm`, `overlay_writer.py`, `production_adapter.py`, `screenshot.ps1`, `test.ps1`, and `watch.ps1` | `35628bb4` | The PNACH transport, alternating banks, install/restore state, standalone screenshot helper, and Lab wrapper were retired after the direct-PINE workflow was proven. Workstreams use the unrelated maintained `scripts/injection/test.ps1`; user live editing uses `scripts/injection/watch.ps1`. |
 | `scripts/archive/replace_iso_file_same_size.ps1` | `858da62aacc5d9571bdef072e36b484efddc15e9` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na228_builder.image_assembler`. |

@@ -95,7 +95,7 @@ their producing workflow runs. File entries should reference a named root with
 - `pcsx2_launch_command`: `@pcsx2_scripts/launch.ps1`.
 - `pcsx2_savestate_move_command`:
   `@pcsx2_scripts/move_na228_savestates.ps1`.
-- `pcsx2_game_launch_command`: `@pcsx2_scripts/launch_games.ps1`.
+- `na228_game_launch_command`: `@scripts/na228/launch_games.ps1`.
 - `actualize_command`: `@pcsx2_scripts/actualization/act.ps1`.
 - `actualize_na228_command` and `actualize_input_command`: the two standalone
   actualization modes under `@pcsx2_scripts/actualization/`.

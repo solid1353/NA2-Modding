@@ -95,7 +95,7 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
 - `scripts/release/build_release.ps1` owns packaging; the GitHub workflow calls
   that same script rather than implementing another packager.
 
-The ordinary `na228`, `na228 -b`, and `na228 -t` workflows are unchanged.
+The ordinary `na228`, `na228 b`, and `na228 t` workflows are unchanged.
 
 ## Validation evidence
 

@@ -9,22 +9,22 @@ Mode: Sequential
 
 Current subtask: Battle item substitution doll, slot 4.
 
-Pending grid: missing: integrated Current NA2.28 post-change screenshot for
-the slot 4 substitution-doll fix.
+Pending grid:
+`awaiting_approval/battle-item-doll-ss04.png`.
 
 ## Remaining subtasks
 
 - **Battle UI — substitution doll item effect, slot 4**
-  - Status: corrected after the rejected record-`0x2E` implementation;
-    integrated post-change capture pending.
-  - Defect: Current samples the green `Recovery` label instead of the
-    substitution doll icon shown by NUN5.
+  - Status: agent-validated on the integrated worker image; awaiting explicit
+    user verification.
+  - Requested defect: pre-fix Current sampled the green `Recovery` label
+    instead of the substitution doll icon shown by NUN5.
   - Preserved pair:
     `work/UI translation/inputs/sstates/battle_item_doll_ss04_20260731/`.
   - Provenance:
     `work/UI translation/inputs/sstates/battle_item_doll_ss04_20260731/provenance.tsv`.
 
-![Pending slot 4 comparison](pending/battle-item-doll-ss04.png)
+![Awaiting-verification slot 4 comparison](awaiting_approval/battle-item-doll-ss04.png)
 
 ## User-accepted completed cases
 

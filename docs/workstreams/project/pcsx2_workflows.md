@@ -103,6 +103,9 @@ installation-state, backup, or separate bank files.
 - Watches explicitly selected source, declaration, and overlay-plan inputs.
 - Debounces saves and runs builds serially.
 - Calls `build.py`, then `apply.py`.
+- Exits immediately if its initial build or apply fails; after a successful
+  start, a later save failure is reported and the watcher remains available
+  for the next edit.
 - Contains no compiler, linker, manifest, or PINE implementation.
 
 ### `scripts/pcsx2/pine.py`

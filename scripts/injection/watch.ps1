@@ -187,7 +187,7 @@ function Get-WatchSignature {
     return [string]::Join("`n", $parts)
 }
 
-function Invoke-InjectionBuild {
+function Invoke-InjectionBuild([switch]$ExitOnFailure) {
     $buildArguments = @(
         '-B',
         $buildScript,
@@ -210,20 +210,36 @@ function Invoke-InjectionBuild {
         "[injection] $timestamp building $SourceId -> $Entry"
     ) -ForegroundColor Cyan
     & python @buildArguments
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host (
-            "[injection] Build failed (exit $LASTEXITCODE); " +
-            'watching for the next save.'
-        ) -ForegroundColor Red
+    $buildExitCode = $LASTEXITCODE
+    if ($buildExitCode -ne 0) {
+        $suffix = if ($ExitOnFailure) {
+            ''
+        }
+        else {
+            ' Watching for the next save.'
+        }
+        Write-Host "[injection] Build failed (exit $buildExitCode).$suffix" `
+            -ForegroundColor Red
+        if ($ExitOnFailure) {
+            exit $buildExitCode
+        }
         return
     }
     if (-not $BuildOnly) {
         & python -B $applyScript --input $resolvedOutput --port $PinePort
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host (
-                "[injection] Apply failed (exit $LASTEXITCODE); " +
-                'watching for the next save.'
-            ) -ForegroundColor Red
+        $applyExitCode = $LASTEXITCODE
+        if ($applyExitCode -ne 0) {
+            $suffix = if ($ExitOnFailure) {
+                ''
+            }
+            else {
+                ' Watching for the next save.'
+            }
+            Write-Host "[injection] Apply failed (exit $applyExitCode).$suffix" `
+                -ForegroundColor Red
+            if ($ExitOnFailure) {
+                exit $applyExitCode
+            }
             return
         }
     }
@@ -241,7 +257,7 @@ Write-Host "[injection] Output: $resolvedOutput"
 Write-Host '[injection] Press Ctrl+C to stop.'
 
 $observedSignature = Get-WatchSignature
-Invoke-InjectionBuild
+Invoke-InjectionBuild -ExitOnFailure
 $pendingSignature = $null
 $lastChange = [DateTime]::MinValue
 

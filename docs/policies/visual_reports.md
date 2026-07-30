@@ -70,6 +70,10 @@
   work until that message containing the visible grid has been sent. If it
   fails to render, retry the image delivery rather than performing more
   internal image views.
+- If an owed or newly produced task grid is delivered in commentary and the
+  turn later ends with a final handoff, embed that same grid in the final
+  response too. Commentary collapses after the final appears, so delivery in
+  commentary alone does not satisfy the completed handoff.
 - When newer user evidence changes a case's slot, status, or remaining defect,
   regenerate the canonical grid from the retained task-owned inputs before
   reporting the update. Stale grid imagery or metadata is not an updated

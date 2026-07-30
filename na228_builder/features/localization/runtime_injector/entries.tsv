@@ -9,4 +9,4 @@ font_v2_core	localization.font.v2.quit_unselected_adapter	arg0_record_arg2_arg3	
 font_v2_core	localization.font.v2.quit_body_adapter	arg0_text_arg2	Quit confirmation body
 font_v2_core	localization.font.v2.character_confirmation_body_adapter	arg0_text_arg2	Character Select return-confirmation body
 font_v2_core	localization.font.v2.special_controls_body_adapter	arg0_text_arg2	Special Controls explanatory body
-font_v2_core	localization.font.v2.movie_list_entry	text_highlight_native_x_native_y	Collection Movie-list row
+font_v2_core	localization.font.v2.collection_list_entry	text_highlight_native_x_native_y	Collection Movie and character-move list row

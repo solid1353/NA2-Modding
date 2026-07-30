@@ -41,5 +41,5 @@ font_v2_core	67	localization.font.v2.c.text.font.v2.jutsu.draw.callback	localiza
 font_v2_core	68	localization.font.v2.c.text.font.v2.jutsu.draw.entry	localization.font.v2.jutsu_draw_entry
 font_v2_core	69	localization.font.v2.c.text.font.v2.collection.body.adapter	localization.font.v2.collection_body_adapter
 font_v2_core	70	localization.font.v2.c.text.font.v2.character.unselected.adapter	localization.font.v2.character_unselected_adapter
-font_v2_core	71	localization.font.v2.c.text.font.v2.movie.list.callback	localization.font.v2.c.movie_list_callback
-font_v2_core	72	localization.font.v2.c.text.font.v2.movie.list.entry	localization.font.v2.movie_list_entry
+font_v2_core	71	localization.font.v2.c.text.font.v2.collection.list.callback	localization.font.v2.c.collection_list_callback
+font_v2_core	72	localization.font.v2.c.text.font.v2.collection.list.entry	localization.font.v2.collection_list_entry

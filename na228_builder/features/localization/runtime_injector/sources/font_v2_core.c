@@ -62,14 +62,23 @@ typedef signed int s32;
 #define FONT_JUTSU_LINE_ADVANCE 16.0f
 #define FONT_JUTSU_GLYPH_HEIGHT 20.0f
 #define FONT_JUTSU_LINE_LIMIT 2u
-#define FONT_MOVIE_TEXT_START 0x003FFAA0u
-#define FONT_MOVIE_TEXT_END 0x003FFC10u
-#define FONT_MOVIE_BOX_Y_OFFSET -10.0f
-#define FONT_MOVIE_BOX_WIDTH 192u
-#define FONT_MOVIE_BOX_HEIGHT 32u
-#define FONT_MOVIE_LINE_ADVANCE 16.0f
-#define FONT_MOVIE_GLYPH_HEIGHT 20.0f
-#define FONT_MOVIE_LINE_LIMIT 2u
+#define FONT_COLLECTION_MOVIE_TEXT_START 0x003FFAA0u
+#define FONT_COLLECTION_MOVIE_TEXT_END 0x003FFC10u
+#define FONT_CHARACTER_MOVE_152_TEXT_0 0x006D9BD8u
+#define FONT_CHARACTER_MOVE_152_TEXT_1 0x006D9C00u
+#define FONT_CHARACTER_MOVE_152_TEXT_2 0x006D9C40u
+#define FONT_CHARACTER_MOVE_192_TEXT_0 0x006DC340u
+#define FONT_CHARACTER_MOVE_192_TEXT_1 0x006DC370u
+#define FONT_CHARACTER_MOVE_192_TEXT_2 0x006DC3A0u
+#define FONT_CHARACTER_MOVE_192_TEXT_3 0x006DC3C0u
+#define FONT_COLLECTION_LIST_BOX_Y_OFFSET -10.0f
+#define FONT_COLLECTION_MOVIE_BOX_WIDTH 192u
+#define FONT_CHARACTER_MOVE_152_BOX_WIDTH 152u
+#define FONT_CHARACTER_MOVE_192_BOX_WIDTH 192u
+#define FONT_COLLECTION_LIST_BOX_HEIGHT 32u
+#define FONT_COLLECTION_LIST_LINE_ADVANCE 16.0f
+#define FONT_COLLECTION_LIST_GLYPH_HEIGHT 20.0f
+#define FONT_COLLECTION_LIST_LINE_LIMIT 2u
 #define FONT_PRACTICE_TITLE_BOX_X 31.2f
 #define FONT_PRACTICE_TITLE_BOX_WIDTH 352u
 #define FONT_PRACTICE_TITLE_Y_OFFSET -6.8f
@@ -1057,8 +1066,8 @@ int font_v2_jutsu_draw_entry(
     return font_v2_adapter_call(&frame.session);
 }
 
-static FONT_V2_SECTION(".text.font_v2_movie_list_callback")
-int font_v2_movie_list_callback(
+static FONT_V2_SECTION(".text.font_v2_collection_list_callback")
+int font_v2_collection_list_callback(
     u32 text,
     u32 highlighted,
     u32 arg2,
@@ -1095,8 +1104,8 @@ int font_v2_movie_list_callback(
     return 0;
 }
 
-FONT_V2_SECTION(".text.font_v2_movie_list_entry")
-int font_v2_movie_list_entry(
+FONT_V2_SECTION(".text.font_v2_collection_list_entry")
+int font_v2_collection_list_entry(
     const u8 *text,
     u32 highlighted,
     float native_x,
@@ -1105,15 +1114,31 @@ int font_v2_movie_list_entry(
     FontV2BodyFrame frame;
     FontV2NativeDraw draw = (FontV2NativeDraw)FONT_DRAW_ADDRESS;
     u32 text_address = (u32)text;
+    u32 box_width = 0;
     u32 index = 0;
 
     if (!text) {
         return -1;
     }
     if (
-        text_address < FONT_MOVIE_TEXT_START ||
-        text_address >= FONT_MOVIE_TEXT_END
+        text_address >= FONT_COLLECTION_MOVIE_TEXT_START &&
+        text_address < FONT_COLLECTION_MOVIE_TEXT_END
     ) {
+        box_width = FONT_COLLECTION_MOVIE_BOX_WIDTH;
+    } else if (
+        text_address == FONT_CHARACTER_MOVE_152_TEXT_0 ||
+        text_address == FONT_CHARACTER_MOVE_152_TEXT_1 ||
+        text_address == FONT_CHARACTER_MOVE_152_TEXT_2
+    ) {
+        box_width = FONT_CHARACTER_MOVE_152_BOX_WIDTH;
+    } else if (
+        text_address == FONT_CHARACTER_MOVE_192_TEXT_0 ||
+        text_address == FONT_CHARACTER_MOVE_192_TEXT_1 ||
+        text_address == FONT_CHARACTER_MOVE_192_TEXT_2 ||
+        text_address == FONT_CHARACTER_MOVE_192_TEXT_3
+    ) {
+        box_width = FONT_CHARACTER_MOVE_192_BOX_WIDTH;
+    } else {
         draw(native_x, native_y, text, highlighted);
         return 0;
     }
@@ -1127,8 +1152,8 @@ int font_v2_movie_list_entry(
     if (
         font_v2_wrap_native(
             frame.buffer,
-            FONT_MOVIE_BOX_WIDTH,
-            FONT_MOVIE_LINE_LIMIT,
+            box_width,
+            FONT_COLLECTION_LIST_LINE_LIMIT,
             &frame.session.measured_width,
             &frame.session.line_count
         ) != 0
@@ -1138,9 +1163,9 @@ int font_v2_movie_list_entry(
 
     frame.session.text = frame.buffer;
     frame.session.box_x = native_x;
-    frame.session.box_y = native_y + FONT_MOVIE_BOX_Y_OFFSET;
-    frame.session.box_width = FONT_MOVIE_BOX_WIDTH;
-    frame.session.box_height = FONT_MOVIE_BOX_HEIGHT;
+    frame.session.box_y = native_y + FONT_COLLECTION_LIST_BOX_Y_OFFSET;
+    frame.session.box_width = box_width;
+    frame.session.box_height = FONT_COLLECTION_LIST_BOX_HEIGHT;
     frame.session.horizontal_alignment = FONT_V2_ALIGN_START;
     frame.session.vertical_alignment = FONT_V2_ALIGN_CENTER;
     frame.session.flags =
@@ -1148,10 +1173,10 @@ int font_v2_movie_list_entry(
         FONT_V2_FLAG_SEPARATE_LINE_ADVANCE |
         FONT_V2_FLAG_PREMEASURED |
         FONT_V2_FLAG_GLYPH_HEIGHT;
-    frame.session.line_limit = FONT_MOVIE_LINE_LIMIT;
-    frame.session.line_height = FONT_MOVIE_LINE_ADVANCE;
-    frame.session.glyph_height = FONT_MOVIE_GLYPH_HEIGHT;
-    frame.session.callback = (u32)font_v2_movie_list_callback;
+    frame.session.line_limit = FONT_COLLECTION_LIST_LINE_LIMIT;
+    frame.session.line_height = FONT_COLLECTION_LIST_LINE_ADVANCE;
+    frame.session.glyph_height = FONT_COLLECTION_LIST_GLYPH_HEIGHT;
+    frame.session.callback = (u32)font_v2_collection_list_callback;
     frame.session.callback_arg0 = (u32)frame.buffer;
     frame.session.callback_arg1 = highlighted;
     frame.session.callback_arg2 = 0;

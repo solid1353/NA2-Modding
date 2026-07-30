@@ -1093,41 +1093,58 @@ a truthful post-change result grid. Clean-construction runtime validation and
 user acceptance remain pending. Confidence is **high** for the bounded caller
 identity and target geometry; status is **approved for test**.
 
-### Collection Movie-list fixed-cadence wrapping
+### Collection fixed-cadence list wrapping
 
-The replacement 2026-07-30 ss8 pair isolates the Collection Movie list.
-Bounded NA2 ETC inspection identifies `FUN_006B4D30`; its single active title
-draw is runtime `0x006B4ED8`, file `0xFD8`, guarded by
+The replacement 2026-07-30 ss8-ss10 pairs isolate the Collection Movie and
+character-detail lists. Bounded NA2 ETC inspection identifies
+`FUN_006B4D30`; its shared active row draw is runtime `0x006B4ED8`, file
+`0xFD8`, guarded by
 `10E40D0C00000000` (`jal 0x00379040` plus NOP). The NUN5 homolog
 `FUN_006C7CA0` replaces the corresponding draw at ETC file `0x1164` with its
 boxed renderer at `0x0038A210`.
 
-NUN5 uses a 192-by-32, two-line box at native X and native Y minus 10. The
-outer list retains fixed row cadence; wrapped titles occupy two lines inside
-their existing row rather than increasing later row positions. Its exact
-visible breaks are:
+NUN5 stores the active box width and height in each list structure at
+`+0x14/+0x18`. The supplied states prove a 192-by-32 box for ss8 Movie titles,
+a 152-by-32 box for the ss9 move list, and a 192-by-32 box for the ss10
+relationship list. Every family uses native X, native Y minus 10, two lines,
+and a 16-unit line interval. The outer list retains fixed row cadence; wrapped
+titles occupy two lines inside their existing row rather than increasing later
+row positions. Exact visible breaks include:
 
 - `Sealing Jutsu: Nine` / `Phantom Dragons`;
 - `People of Endless` / `Darkness`;
 - `Ninja Art: Beast` / `Scroll Replicas`;
-- `Fourth Awakened` / `Mode`.
+- `Fourth Awakened` / `Mode`;
+- `Shadow Clone` / `Jutsu`;
+- `Unchanging` / `Relationship`.
 
-The bounded implementation accepts only Movie-title pointers in
-`0x003FFAA0..0x003FFC10`, copies the source to a transient buffer, and reuses
+NA2's ss9 parent at `0x00C8D110` points to list head `0x00C75C00`; the visible
+text pointers are `0x006D9BD8` (`Right!`), `0x006D9C00`
+(`Shadow Clone Jutsu`), and `0x006D9C40` (`Running Wild`). Its ss10 parent at
+`0x00C9BDE0` points to list head `0x00C79EE0`; the visible text pointers are
+`0x006DC340`, `0x006DC370`, `0x006DC3A0`, and `0x006DC3C0`. The corresponding
+NUN5 parents are `0x00C0BCA0` with width 152 and `0x00C1C630` with width 192.
+The NA2 structures do not retain homologous usable box fields at the NUN5
+offsets, so copying those offsets is not a valid implementation.
+
+The bounded implementation accepts Movie-title pointers in
+`0x003FFAA0..0x003FFC10` plus only the seven exact ss9/ss10 character-detail
+pointers above, copies the source to a transient buffer, and reuses
 `font_v2_wrap_native` with a two-line limit. It draws each resulting line
 through the displaced native renderer at a 16-unit interval. That separate
 line draw is required because passing the inserted newline to NA2's native
-renderer produces a 25-unit interval on this screen. Short titles, the
+renderer produces a 25-unit interval on these screens. Short titles, the
 highlighted red style, fixed caller cadence, source mappings, and every
-non-Movie use of the shared renderer remain native.
+other pointer through the shared renderer remain native.
 
-The task-owned ss8 candidate gives the same four breaks and horizontal origins
-as NUN5, while `Reunion Time I`, `Reunion Time II`, and `Credits` retain their
-native rows. The candidate was compiled and linked against the exact
-compatible ISO, applied after supplied-state reload, and captured through the
-task-owned PINE worker. Confidence is **verified** for the caller, pointer
-boundary, wrapper geometry, line interval, and visible ss8 result; status is
-**approved for test** pending explicit user acceptance.
+Task-owned ss8-ss10 candidates reproduce every NUN5 break and horizontal
+origin. `Reunion Time I`, `Reunion Time II`, `Credits`, `Right!`,
+`Running Wild`, and the three short ss10 titles retain their native rows. The
+candidates were compiled and linked against the exact compatible ISO, applied
+after each supplied-state reload, and captured through the task-owned PINE
+worker. Confidence is **verified** for the shared caller, pointer families,
+three box geometries, line interval, ss8 regression, and visible ss9/ss10
+results; status is **approved for test** pending explicit user acceptance.
 
 ### Character Select modal selected row, return body, and choice list
 

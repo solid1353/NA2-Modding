@@ -14,9 +14,10 @@ case.
 - Mode: Continuous.
 - Current subtask: Priority 6 — ss9–ss10 character move lists. Priority 4 remains
   queued because supplied ss7 resumes after its two owner calls.
-- Pending grid: none.
-- Next action: investigate the shared ss9–ss10 move-list caller family without
-  waiting for earlier acceptance.
+- Pending grid:
+  `docs/workstreams/font/epics/ss2-6-layout/6-character-move-list.png`.
+- Next action: finish canonical validation and visibly deliver the Priority 6
+  result, then stop as explicitly requested.
 
 ## Scope and evidence
 
@@ -136,11 +137,16 @@ case.
 
 ### Priority 6 — ss9–ss10: Character move lists
 
-- State: two matched baselines captured; not implemented.
-- Remaining defect: Current keeps long move and relationship titles on one
-  line and overflows, while NUN5 wraps them within the move-list column.
+- State: implemented, canonically validated, agent-validated on both supplied
+  states, and awaiting visible delivery and explicit user acceptance.
+- Result: the shared ETC row entry recognizes only the two exact
+  character-detail pointer families. ss9 uses NUN5's 152-by-32 box and ss10
+  uses its 192-by-32 box; both retain native X, move Y up 10 units, and use the
+  accepted 16-unit two-line compositor. Short rows and every unrelated ETC row
+  remain native. The broadened entry also preserves the accepted ss8 Movie-list
+  output.
 
-![Priority 6 Character move-list baselines](6-character-move-list.png)
+![Priority 6 Character move-list result](6-character-move-list.png)
 
 ## Current priorities
 
@@ -156,9 +162,9 @@ Priority is determined by the most efficient implementation order.
    construction evidence remains queued.
 5. **ss8 — Movie list.** Implemented, agent-validated, and visibly delivered
    with fixed-cadence two-line wrapping; explicit user acceptance is pending.
-6. **ss9–ss10 — Character move lists.** Next actionable case: reuse one
-   bounded wrapping primitive for both long-title cases where the caller
-   family is shared.
+6. **ss9–ss10 — Character move lists.** Implemented and agent-validated on
+   both supplied states through one pointer-bounded shared entry; visible
+   delivery and explicit user acceptance remain pending.
 
 Shared primitives are implemented only once. Each prioritized caller family
 receives one guarded implementation and commit/push boundary; every case keeps

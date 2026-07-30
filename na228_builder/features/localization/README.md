@@ -1889,18 +1889,19 @@ verification pass; clean-construction runtime validation and user acceptance
 remain pending because the supplied visible-prompt ss7 state resumes after
 both owner calls.
 
-The separate `font_layout_collection_movie_list` layer owns only the Movie
+The separate `font_layout_collection_lists` layer owns the shared Collection
 row draw in ETC `FUN_006B4D30`, file `0xFD8` (clean guard
-`10E40D0C00000000`). Its C entry accepts only pointers in the exact Movie-title
-table range `0x003FFAA0..0x003FFC10`; every other caller immediately executes
-the displaced native draw. Movie titles are copied to a bounded transient
-buffer, wrapped to the NUN5 192-by-32 two-line box, and rendered at native X
-and native Y minus 10. The list owner keeps its fixed row cadence. Each
-transient line is drawn separately at a 16-unit interval because NA2's native
-newline path advances 25 units on this screen. Replacement-batch ss8 proves
-the exact NUN5 breaks and origins for all four long titles while the short
-titles, selection style, and unrelated ETC callers remain native. The layer
-is `approved_for_test` pending explicit user acceptance.
+`10E40D0C00000000`). Its C entry accepts only the exact Movie-title range and
+the two verified character-detail pointer families; every unrelated row
+immediately executes the displaced native draw. Movie and relationship titles
+use NUN5's 192-by-32 box, while the narrower character-move list uses its
+152-by-32 box. All selected rows are rendered at native X and native Y minus
+10. The list owner keeps fixed row cadence, and each transient line is drawn
+separately at a 16-unit interval because NA2's native newline path advances 25
+units on these screens. Replacement-batch ss8-ss10 proves the exact NUN5
+breaks and origins for every visible long title while short titles, selection
+style, and unrelated ETC rows remain native. The layer is
+`approved_for_test` pending explicit user acceptance.
 
 The `font_layout_character_select_modal` layer owns four exact main-ELF
 callers rather than broad modal behavior. Files `0x2BC984` and `0x2BC9BC`

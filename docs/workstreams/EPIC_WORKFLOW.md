@@ -154,6 +154,11 @@ user-declared epic case, immediately:
 3. Update the canonical epic README and composed report grid to show the new
    slot, status, and remaining defect.
 
+A worker may not reclassify user-identified epic-case inputs as deferred,
+plan-only, or outside the active epic to omit this canonical update.
+Deferring their implementation changes only the recorded case state; it does
+not waive the README and baseline-grid boundary.
+
 A chat-only acknowledgment is not an update. Do not report the savestate as
 recorded until the task-owned copies and canonical epic artifacts reflect it.
 If replacement evidence reopens an accepted case, create its regenerated grid

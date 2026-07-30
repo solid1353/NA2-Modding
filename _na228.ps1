@@ -107,11 +107,29 @@ $workerBuild = if ($Test -and -not [string]::IsNullOrWhiteSpace($Mode)) {
 else {
     $null
 }
-$command = if ($Mode -and -not $Test) { $Mode.ToLowerInvariant() } else { '' }
+$compactRecipe = if (
+    $Mode -and
+    -not $Test -and
+    $Mode -cmatch '^[bBtTcCpPwW]+$'
+) {
+    $Mode.ToLowerInvariant()
+}
+else {
+    ''
+}
+$command = if ($Mode -and -not $Test -and -not $compactRecipe) {
+    $Mode.ToLowerInvariant()
+}
+else {
+    ''
+}
 $runSelected = $Current -or $Previous
 
 if (@($Build, $Test, $Current, $Previous, $Watch).Where({ $_ }).Count -gt 1) {
     throw '-Build / -b, -Test / -t, -Current / -c, -Previous / -p, and -Watch / -w are mutually exclusive.'
+}
+if ($compactRecipe -and ($Build -or $Test -or $runSelected -or $Watch -or $Help)) {
+    throw 'A compact recipe cannot be combined with build/launch/help switches.'
 }
 if ($command -and ($Build -or $Test -or $runSelected -or $Watch)) {
     throw 'Build/launch switches cannot be combined with a command mode.'
@@ -121,6 +139,18 @@ if ($command -and $command -ne 'release') {
 }
 if ($Version -and $command -ne 'release') {
     throw 'A version argument is accepted only by na228 release.'
+}
+if ($compactRecipe) {
+    $duplicateStep = $compactRecipe.ToCharArray() |
+        Group-Object |
+        Where-Object Count -gt 1 |
+        Select-Object -First 1
+    if ($null -ne $duplicateStep) {
+        throw "Compact recipe '$compactRecipe' repeats step '$($duplicateStep.Name)'."
+    }
+    if ($compactRecipe.Contains('w') -and -not $compactRecipe.EndsWith('w')) {
+        throw "Compact recipe '$compactRecipe' must place blocking watcher step 'w' last."
+    }
 }
 if ($Help) {
     @(
@@ -132,6 +162,7 @@ if ($Help) {
         "  na228 -c    Run build/$currentIsoName without rebuilding"
         "  na228 -p    Run build/$previousIsoName without rebuilding"
         '  na228 -w    Watch src/ and hot-reload saved C changes into dev PCSX2'
+        '  na228 <recipe>  Run unique b/t/c/p/w steps left-to-right; w must be last (example: na228 bpw)'
         '  na228 release [version]  Validate, commit, tag, and publish a GitHub release'
         ''
     ) | Write-Output
@@ -144,6 +175,25 @@ if ($command -eq 'release') {
         $releaseArguments.Version = $Version
     }
     & $projectPaths.files.release_publish_command @releaseArguments
+    return
+}
+
+if ($compactRecipe) {
+    Write-Na2Stage "Run compact recipe $compactRecipe"
+    $recipeSwitches = @{
+        b = 'Build'
+        t = 'Test'
+        c = 'Current'
+        p = 'Previous'
+        w = 'Watch'
+    }
+    foreach ($step in $compactRecipe.ToCharArray()) {
+        $stepName = [string]$step
+        Write-Na2Stage "Recipe step $stepName"
+        $stepArguments = @{}
+        $stepArguments[$recipeSwitches[$stepName]] = $true
+        & $PSCommandPath @stepArguments
+    }
     return
 }
 

@@ -226,11 +226,32 @@ else {
     Assert-Na2Test `
         -Condition $na2ActRejected `
         -Message 'The retired na228 act route was not rejected.'
+    $duplicateRecipeRejected = $false
+    try {
+        & (Join-Path $fakeRepository '_na228.ps1') bb
+    }
+    catch {
+        $duplicateRecipeRejected = $_.Exception.Message -match "repeats step 'b'"
+    }
+    Assert-Na2Test `
+        -Condition $duplicateRecipeRejected `
+        -Message 'A compact recipe with a duplicate step was not rejected.'
+    $blockingRecipeRejected = $false
+    try {
+        & (Join-Path $fakeRepository '_na228.ps1') wb
+    }
+    catch {
+        $blockingRecipeRejected = $_.Exception.Message -match "watcher step 'w' last"
+    }
+    Assert-Na2Test `
+        -Condition $blockingRecipeRejected `
+        -Message 'A compact recipe with a non-final watcher was not rejected.'
     & (Join-Path $fakeRepository '_na228.ps1') -Current
     & (Join-Path $fakeRepository '_na228.ps1') -Previous
     & (Join-Path $fakeRepository '_na228.ps1') -t
     & (Join-Path $fakeRepository '_na228.ps1') -t 'work\General\build\agent.iso'
     & (Join-Path $fakeRepository '_na228.ps1') -b
+    & (Join-Path $fakeRepository '_na228.ps1') bp
     & (Join-Path $fakeRepository '_na228.ps1')
     $fakeLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\latest.log'))
     $fakeRolling = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\rolling.log'))
@@ -248,16 +269,16 @@ else {
             -Message "$mode dispatch was not logged."
     }
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 7) `
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 9) `
         -Message 'Root dispatch test produced the wrong rolling-log section count.'
     Assert-Na2Test `
         -Condition (-not (Test-Na2WindowsAbsolutePath -Text $fakeRolling)) `
         -Message 'Root dispatch persisted an absolute path.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch .+$').Count -eq 3) `
-        -Message 'Root dispatch did not launch Current, Previous, and build output exactly once each.'
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch .+$').Count -eq 4) `
+        -Message 'Root dispatch and compact recipe produced the wrong launch count.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch dev .+$').Count -eq 3) `
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch dev .+$').Count -eq 4) `
         -Message 'Root dispatch did not preserve the configured development-launch default.'
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: candidate').Count -eq 1) `
@@ -270,10 +291,10 @@ else {
         -Condition ($workerLatest -match 'ISO result: worker') `
         -Message 'Explicit worker build did not dispatch to worker-output mode.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 2) `
-        -Message 'Build-only and build-and-launch did not both use the standard build pipeline.'
+        -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 3) `
+        -Message 'Build-only, compact-recipe build, and build-and-launch did not use the standard build pipeline.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize na228').Count -eq 7) `
+        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize na228').Count -eq 9) `
         -Message 'Standalone and user-owned workflows did not preserve NA2 actualization.'
     $structuredLog = Join-Path $logs 'na228'
     $buildRecords = Join-Path $structuredLog 'builds'

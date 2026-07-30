@@ -81,6 +81,10 @@ python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'
 
 `na228 -b` runs the standard Current build and conditional promotion pipeline but
 does not launch PCSX2. Bare `na228` keeps the build-then-launch workflow.
+Compact recipes run the existing `b`, `t`, `c`, `p`, and `w` modes
+left-to-right without duplicating their implementations. Letters must be
+unique, and blocking watcher step `w` must be last; for example, `na228 bpw`
+builds Current, launches Previous, then starts the root-source watcher.
 User-owned shared-image builds and launches run `act na228` automatically;
 worker-output builds never actualize. The standalone `act` command can run all
 actualization modes without building or launching.

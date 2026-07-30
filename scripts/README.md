@@ -128,6 +128,15 @@ Source-game and pair-launch commands inherit the `dev` default. Savestate
 filing also defaults to `dev`; pass `-Target stable` to file states from the
 stable installation.
 
+Each injection build retains exactly two transport-neutral outputs:
+`fragment.bin`, containing the addressed linked EE MIPS code/data, and
+`manifest.json`, containing segments, zero-fill ranges, exported symbols,
+entrypoints, guarded writes, and execution-refresh requirements. User builds
+default to ignored `build/injection/<source>/`; workstreams build under
+`work/<exact task title>/injection/`. Compiler objects and linker inputs are
+temporary. The maintained pipeline emits no PNACH, installation state,
+backup, dispatcher, or alternating-bank files.
+
 Build a project smoke candidate into the ignored default output:
 
 ```powershell

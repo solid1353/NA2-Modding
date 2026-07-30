@@ -122,6 +122,10 @@ requirements, not whatever implementation happens to exist today.
 
 ## User PCSX2 and agent runtimes
 
+- Runtime injection is development evidence, not release acceptance. User
+  interactive injection and isolated workstream testing are separate
+  workflows: users may use the maintained watcher, while agents use only the
+  maintained savestate-based test command against a task-owned runtime.
 - `@pcsx2_dev` and `@pcsx2_stable` are the user's protected read-only
   installations. Agents may read and copy from them but never create, modify,
   move, delete, link, launch, control, or write through hardlinks into either

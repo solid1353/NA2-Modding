@@ -180,8 +180,8 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 ## Current Scripts
 
 - Root `_na228.ps1` is the routine build/launch entrypoint. Bare `na228`, `na228 -b`, bare `na228 -t`, `na228 -c`, and `na228 -p` retain their Current/Previous/Candidate behavior; `na228 -w` starts the user-only root C watcher using the configured development PCSX2 PINE port. A compact recipe such as `na228 bpw` runs unique `b`/`t`/`c`/`p`/`w` modes left-to-right, with blocking `w` required to be last. The standalone `act` command performs actualization without building or launching. User-owned shared-image modes run `act na228` automatically; the launcher does not read or rewrite the user's `PCSX2.ini`. `na228 -t work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
-- `scripts/na228/` contains build/promotion, ISO identity, worker-path validation,
-  and focused tests.
+- `scripts/na228/` contains the root-command implementation, build/promotion,
+  ISO identity, worker-path validation, and focused tests.
 - `@pcsx2_scripts/` contains PCSX2 launch, process, configuration, and CRC
   helpers. `launch.ps1` is the single configured and worker-PCSX2 launcher;
   configured launches default to `dev` and may select `stable` explicitly,
@@ -201,6 +201,11 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   backend used by `na`, which accepts any ordered combination of its registered
   ISO selectors. Existing selectors and zero-argument behavior remain
   unchanged.
+- The custom development PCSX2 PINE interface retains reload-patches opcode
+  `0x10` and adds native screenshot `0x11`, synchronous pause `0x12`,
+  synchronous resume `0x13`, and EE execution-cache refresh `0x14`. Direct
+  injection uses pause/write/cache-refresh/resume and does not reload or
+  transport candidates through patch or cheat files.
 - `na228_builder/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na228_builder/build_profile.py` applies that prepared pipeline and writes its run log. `na228_builder/composer.py` resolves module artifacts and closes typed image operations. `na228_builder/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Candidate, or worker-owned output.
 - `scripts/media/` contains the recursive source extractor, its byte-parity
   verifier, and focused ISO, AFS, and CVM building blocks. Direct same-size ISO

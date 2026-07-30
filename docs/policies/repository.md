@@ -28,6 +28,10 @@
   has no
   configurable input-recordings folder, so recordings are opened from their
   canonical shared paths explicitly.
+- `@pcsx2_files/input_profiles/Comparison.ini` is the only manually edited
+  comparison input profile. Regenerate
+  `@pcsx2_files/input_profiles/Comparison_NA2.ini` with the maintained
+  `act input`; never edit the generated profile directly.
 - Task-owned PCSX2 copies are complete disposable portable runtimes, including
   their configuration, unique PINE port, savestates, screenshots, logs, cache,
   copied memory cards, cheats, GameSettings, input files, and any legacy

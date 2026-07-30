@@ -7,27 +7,18 @@ the right.
 
 Mode: Sequential
 
-Current subtask: Battle item substitution doll, slot 4.
+Current subtask: none.
 
-Pending grid:
-`awaiting_approval/battle-item-doll-ss04.png`.
+Pending grid: none.
 
 ## Remaining subtasks
 
-- **Battle UI — substitution doll item effect, slot 4**
-  - Status: agent-validated on the integrated worker image; awaiting explicit
-    user verification.
-  - Requested defect: pre-fix Current sampled the green `Recovery` label
-    instead of the substitution doll icon shown by NUN5.
-  - Preserved pair:
-    `work/UI translation/inputs/sstates/battle_item_doll_ss04_20260731/`.
-  - Provenance:
-    `work/UI translation/inputs/sstates/battle_item_doll_ss04_20260731/provenance.tsv`.
-
-![Awaiting-verification slot 4 comparison](awaiting_approval/battle-item-doll-ss04.png)
+None.
 
 ## User-accepted completed cases
 
+- Battle item substitution doll: the user explicitly confirmed the corrected
+  icon selection on 2026-07-31.
 - Cross/Triangle labels: every preserved pair (original slots 1-5 and newer
   slots 1-3) was explicitly confirmed fixed by the user on 2026-07-26.
 - Character Items transition: the user explicitly confirmed all five paired

@@ -12,11 +12,10 @@ case.
 ## Execution state
 
 - Mode: Continuous.
-- Current subtask: Priority 3 — ss3–ss6 Jutsu selector.
-- Pending grid:
-  `docs/workstreams/font/epics/ss2-6-layout/3-jutsu-selector.png`.
-- Next action: validate, commit and push the one-caller Jutsu fix, visibly
-  deliver the pending result grid, then continue Priority 4.
+- Current subtask: Priority 4 — ss7 Collection exit confirmation.
+- Pending grid: none.
+- Next action: isolate and implement the Collection-only confirmation body and
+  choice geometry from the replacement ss7 pair.
 
 ## Scope and evidence
 
@@ -66,8 +65,9 @@ case.
 
 ### Priority 3 — ss3–ss6: One Jutsu-selector defect
 
-- State: implemented and agent-validated on supplied ss5 and ss6; user
-  acceptance remains pending. The exact native row draw at live BTL
+- State: committed and pushed in `1d0f7e2f`, agent-validated on supplied ss5
+  and ss6, and visibly delivered; user acceptance remains pending. The exact
+  native row draw at live BTL
   `0x006BCFDC` is isolated behind one guarded C caller. Both long selected
   names wrap inside the NUN5 186-by-32 two-line box. A session-scoped
   20-unit glyph bottom edge and explicit 16-unit row advance match the NUN5

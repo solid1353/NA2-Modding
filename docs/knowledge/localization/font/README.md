@@ -530,6 +530,25 @@ NUN5, while visible-ink mass is `0.965854`; the remaining horizontal deficit
 is therefore advance/spacing behavior rather than excess palette weight.
 Confidence is **high** for the byte-level palette and guarded runtime results.
 
+### Native NA2 selected-row offset behavior
+
+Using the same clean NA2 and NUN5 ELF identities and preserved exports above,
+the shared selected-row paths intentionally differ. NA2 `FUN_00379040` first
+draws the gray shade at the caller's input origin, then draws the red foreground
+after subtracting one local X unit and two local Y units. Selection therefore
+changes the apparent text position for every caller that uses this helper.
+NUN5 counterpart `FUN_00389B30` instead enables the renderer's shadow state and
+draws the red foreground without changing its input geometry.
+
+The resulting NA2 text jump is native game behavior, not a localization,
+font-asset, autofit, or positioning regression. It is accepted as a known
+NA2/NUN5 presentation difference and requires no correction. Do not compensate
+for it in caller layout or classify it as an unresolved Font defect unless the
+user explicitly selects a separate NUN5-parity change. This conclusion is
+bounded to callers using these shared helpers; other selected-text paths retain
+their own verified behavior. Confidence is **high** from the cross-game
+function comparison and matching runtime presentation.
+
 ### Ordinary tracking and plain-space root cause
 
 NA2 initializer `FUN_00186510`

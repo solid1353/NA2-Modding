@@ -1,157 +1,118 @@
 # Layout parity batches
 
-User-declared Font epic covering matched NUN5/NA2.28 layout cases. Slots 2–6
-formed the original declaration; the user later added and accepted the remade
-Special Controls slot 1 pair. On 2026-07-27 the user added a distinct matched
-batch in slots 1–10, then supplied one additional Command Chart ss1 pair. On
-2026-07-29 the user recreated every current NA2.28 state after the C-pipeline
-cutover; retained NUN5 references were matched to the refreshed slots by screen
-semantics. The epic now runs in efficiency-prioritized Continuous mode:
-implement one case or proven shared caller family, commit and push it, present
-its NUN5-left/Current-NA2-right result, then proceed unless a required
-regression boundary or blocker requires user input.
+User-declared Font epic covering matched NUN5/NA2.28 layout cases. On
+2026-07-30 the user replaced every prior active savestate with one new paired
+ss1–10 batch and ordered the work to continue from it. The active evidence,
+slot meanings, priorities, and grids below refer only to that replacement
+batch. Work runs in efficiency-prioritized Continuous mode: implement one
+case or proven shared caller family, commit and push it, visibly present its
+NUN5-left/Current-NA2.28-right result, then proceed to the next actionable
+case.
 
 ## Execution state
 
 - Mode: Continuous.
-- Current subtask: Priority 2 — Refreshed ss3–ss4 Jutsu-name list;
-  implementation is in progress in Font-owned uncommitted files.
-- Pending grid: none.
-- Next action: resume Priority 2 without waiting for Priority 1 acceptance.
+- Current subtask: Priority 1 — ss1 Character Select return confirmation top
+  Yes/No selector. The accepted lower body remains unchanged; an isolated
+  selector candidate is undergoing agent validation.
+- Pending grid: missing: matching-dimension fresh post-change NA2.28 screenshot
+  for ss1.
+- Next action: finish ss1 validation, commit and push its isolated caller fix,
+  deliver the result grid, then continue Priority 2.
 
 ## Scope and evidence
 
 - Declared: 2026-07-27.
-- Inputs:
-  `work/Font/inputs/sstates/epics/ss2-6/` and
-  `work/Font/inputs/sstates/batches/2026-07-27-ss1-10/`, plus
-  `work/Font/inputs/sstates/batches/2026-07-27-additional-ss1/`. The active
-  refreshed batch is
-  `work/Font/inputs/sstates/batches/2026-07-29-c-pipeline-na228-ss1-10/`.
+- Inputs: `work/Font/inputs/sstates/batches/2026-07-30-ss1-10/`.
 - Extracted source screenshots:
-  `work/Font/inputs/screenshots/epics/ss2-6/` and
-  `work/Font/inputs/screenshots/batches/2026-07-27-ss1-10/`, plus
-  `work/Font/inputs/screenshots/batches/2026-07-27-additional-ss1/`. The active
-  refreshed screenshots are under
-  `work/Font/inputs/screenshots/batches/2026-07-29-c-pipeline-na228-ss1-10/`.
-- Provenance:
-  `work/Font/inputs/sstates/epics/ss2-6/provenance.tsv` and
-  `work/Font/inputs/sstates/batches/2026-07-27-ss1-10/provenance.tsv`, plus
-  `work/Font/inputs/sstates/batches/2026-07-27-additional-ss1/provenance.tsv`.
-  The active refreshed mapping and hashes are recorded in
-  `work/Font/inputs/sstates/batches/2026-07-29-c-pipeline-na228-ss1-10/provenance.tsv`.
+  `work/Font/inputs/screenshots/batches/2026-07-30-ss1-10/`.
+- State provenance and hashes:
+  `work/Font/inputs/sstates/batches/2026-07-30-ss1-10/provenance.tsv`.
+- Compatible independent worker ISO provenance:
+  `work/Font/inputs/sstates/batches/2026-07-30-ss1-10/iso_provenance.tsv`.
 - Protected `@pcsx2_dev` sources remain untouched.
-- Status: the remade ss2 and ss3 pair records the same Pause Controls modal in
-  normal and selected states. Both are user-verified and removed from the
-  remaining report. The shared quit-confirmation and ss1 Special Controls cases
-  are also user-verified and removed. The original batch retains two cases and
-  the new batch contributes nine remaining cases. The additional Command Chart
-  ss1 raises the remaining total to twelve cases. The accepted 2026-07-29
-  remade ss1 superseded the old ss10 Mode Select evidence and has been removed
-  from this remaining-work report. The refreshed batch retains the same ten
-  remaining semantic cases with new numbering: Command Chart ss1–2, Jutsu
-  ss3–4, Character Select ss5–7, Collection ss8, and Practice Settings ss9–10.
+- Exact grouping: ss1 Character Select return confirmation; ss2 Linked Mode
+  center modal; ss3–ss6 one Jutsu-selector defect, with ss3/ss4 supplied as
+  precursors and ss5/ss6 showing the defect; ss7 Collection confirmation; ss8
+  Movie list; ss9–ss10 character move lists.
+- Every slot is loaded directly. The agent does not navigate between supplied
+  states. If a state does not expose the required caller, that subtask stops
+  for an exact replacement state.
 - Existing accepted Font and resident-renderer behavior remains the regression
-  baseline. The previously retained Command Chart ss2 image was superseded by
-  the remade Pause Controls ss2 state and is no longer an epic input.
+  baseline.
 - Text-content differences are normally routed to the translation workstreams.
-
-## Collection
-
-### Priority 6 — Original ss5: Character model move list
-
-- State: baseline captured; not implemented.
-- Remaining defect: Current overflows the long move name, while NUN5 wraps it
-  inside the right-side column.
-
-![Priority 6 character model baseline](6-character-model-move-list.png)
-
-### Priority 7 — Original ss6: Movie list
-
-- State: baseline captured; not implemented.
-- Remaining defect: Current movie titles remain single-line and overflow,
-  while NUN5 uses variable-height wrapped rows.
-
-![Priority 7 movie list baseline](7-movie-list.png)
-
-### Priority 4 — Refreshed ss8: Quit Collection confirmation
-
-- State: baseline captured; not implemented.
-- Review target: shared modal selector and body geometry.
-
-![Priority 4 Collection confirmation baseline](4-collection-confirmation.png)
-
-## Battle / Practice Settings
-
-### Priority 5 — Refreshed ss9–ss10: Settings rows and explanations
-
-- State: two matched baselines captured; not implemented.
-- Review targets: row-value geometry, selection alignment, and lower
-  explanatory-text flow. Content differences remain translation-owned.
-
-![Priority 5 Practice Settings baselines](5-practice-settings.png)
-
-## Battle / Command Chart
-
-### Priority 1 — Refreshed ss1–ss2: Command details
-
-- State: implemented and agent-validated in commit `9808766f`; the composed
-  post-change grid was visibly delivered in Font on 2026-07-29 and awaits
-  user verification.
-- ss1: Current keeps the relationship explanation on one line and overflows;
-  NUN5 wraps it within the command-details panel.
-- ss2: Current's blue explanation and controller-icon rows sit
-  roughly 8–14 pixels lower than NUN5 within each command entry.
-
-![Priority 1 Command Chart baselines](1-command-chart.png)
 
 ## Character Select
 
-### Priority 3 — Refreshed ss5–ss7: Shared selection/modal family
+### Priority 1 — ss1: Return confirmation
 
-- State: three matched baselines captured; not implemented.
-- ss5: Current's final `Back to Game Mode Screen` option overflows the modal.
-- ss6: Linked Mode is retained as a regression case for shared selector
-  geometry.
-- ss7: Current's return-confirmation body overflows while NUN5 fits it inside
-  the footer box.
+- State: accepted lower-body fix retained; isolated top-selector candidate is
+  agent-tested but not yet committed or reported.
+- Remaining defect: the top Yes/No selector does not yet match NUN5 geometry.
 
-![Priority 3 Character Select baselines](3-character-select-modals.png)
+![Priority 1 Character Select confirmation baseline](1-character-select-confirmation.png)
 
-## Battle Settings / Customize Jutsu
+### Priority 2 — ss2: Linked Mode center modal
 
-### Priority 2 — Refreshed ss3–ss4: Jutsu-name list
+- State: matched baseline captured; not implemented.
+- Remaining defect: the center-modal `Linked Mode`, `Manual`, and `Auto` labels
+  all sit lower in Current than in NUN5.
 
-- State: implementation in progress in Font-owned uncommitted files; not yet
-  validated, committed, or reported.
-- Remaining defect: Current selected and expanded-list titles overflow
-  horizontally; NUN5 wraps them inside the left-side list bounds.
+![Priority 2 Linked Mode baseline](2-linked-mode-modal.png)
 
-![Priority 2 Jutsu-name list baselines](2-jutsu-name-list.png)
+## Battle Settings / Jutsu selector
+
+### Priority 3 — ss3–ss6: One Jutsu-selector defect
+
+- State: four matched states captured; not implemented.
+- ss3 and ss4 are supplied precursors for this one caller family.
+- ss5 and ss6 visibly prove that Current keeps long Jutsu names on one line
+  and overflows, while NUN5 wraps them inside the selector bounds.
+
+![Priority 3 Jutsu-selector baselines](3-jutsu-selector.png)
+
+## Collection
+
+### Priority 4 — ss7: Exit confirmation
+
+- State: matched baseline captured; not implemented.
+- Remaining defect: confirmation body and choice geometry remain to match.
+
+![Priority 4 Collection confirmation baseline](4-collection-confirmation.png)
+
+### Priority 5 — ss8: Movie list
+
+- State: matched baseline captured; not implemented.
+- Remaining defect: Current movie titles remain single-line and overflow,
+  while NUN5 uses variable-height wrapped rows.
+
+![Priority 5 Movie-list baseline](5-movie-list.png)
+
+### Priority 6 — ss9–ss10: Character move lists
+
+- State: two matched baselines captured; not implemented.
+- Remaining defect: Current keeps long move and relationship titles on one
+  line and overflows, while NUN5 wraps them within the move-list column.
+
+![Priority 6 Character move-list baselines](6-character-move-list.png)
 
 ## Current priorities
 
 Priority is determined by the most efficient implementation order.
 
-1. **Refreshed ss1–ss2 — Command Chart details.** Reuse the
-   established command/practice text-flow primitives for the bounded
-   relationship explanation, and correct the shared per-entry explanation/icon
-   vertical geometry once for both states.
-2. **Refreshed ss3–ss4 — Jutsu-name list.** Resolve the shared selected/list title
-   family once, then validate both states.
-3. **Refreshed ss5 and ss7 — Character Select modal text.** Address the
-   overflowing list entry and confirmation body while keeping refreshed ss6 as
-   regression proof.
-4. **Refreshed ss8 — Quit Collection confirmation.** Treat its modal selector
-   and body geometry as a separate unfinished layout case.
-5. **Refreshed ss9–ss10 — Practice Settings review.** Separate translation-owned
-   content differences from remaining Font geometry before patching.
-6. **Original ss5 — Character model move list.** Add bounded wrapping and
-   positioning for the right-side move-name column.
-7. **Original ss6 — Movie list.** Implement variable-height wrapped rows last
-   because this case has the greatest caller-specific row-advance burden.
+1. **ss1 — Character Select return confirmation.** Finish the already-isolated
+   top selector while preserving the accepted lower body.
+2. **ss2 — Linked Mode center modal.** Correct the shared three-label vertical
+   geometry as one bounded caller.
+3. **ss3–ss6 — one Jutsu-selector defect.** Use ss5/ss6 as visible targets and
+   retain ss3/ss4 only as the supplied precursor states.
+4. **ss7 — Collection exit confirmation.** Match its body and choice geometry
+   without affecting the Character Select modal family.
+5. **ss8 — Movie list.** Implement caller-specific variable-height wrapped
+   rows.
+6. **ss9–ss10 — Character move lists.** Reuse one bounded wrapping primitive
+   for both long-title cases where the caller family is shared.
 
 Shared primitives are implemented only once. Each prioritized caller family
 receives one guarded implementation and commit/push boundary; every case keeps
-its own result evidence and explicit acceptance, so shared code does not merge
-the twelve remaining review decisions.
+its own result evidence and explicit acceptance.

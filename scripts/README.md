@@ -86,9 +86,11 @@ runs Latest, Previous, or Test; `bl` and `bt` build and run Latest or Test; and
 suffix `w` watches that token's game. `b` remains shorthand for `bl`. For
 example, `na228 nun5 btw` builds Test, launches NUN5 and Test side by side, then
 watches Test. `na228 build l|t` provides the uncommon build-only forms.
-User-owned shared-image builds and launches run `act na228` automatically;
-worker-output builds never actualize. The standalone `act` command can run all
-actualization modes without building or launching.
+Configured launches containing any `games.json` `builds` entry run `act na228`
+exactly once; source-only launches and worker-output builds never actualize.
+Configured launches preserve existing PCSX2 instances and tile only the newly
+started windows. The standalone `act` command can run all actualization modes
+without building or launching.
 
 Passing one or more registered ISO selectors directly to `na228` launches them
 in the requested order. A missing selected ISO fails before any PCSX2 process

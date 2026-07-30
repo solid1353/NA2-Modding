@@ -11,7 +11,6 @@ param(
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
-. (Join-Path $PSScriptRoot '..\pcsx2\process.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
 function Get-Na2ConfiguredDevelopmentPinePort {
@@ -115,21 +114,40 @@ public static class Na2LaunchWindow
 
 $workingArea = [Windows.Forms.Screen]::PrimaryScreen.WorkingArea
 $gameList = $selectedGames -join ', '
-$action = "close existing PCSX2 instances, launch $gameList, and tile their windows"
+$action = "launch $gameList and tile their windows"
 if (-not $PSCmdlet.ShouldProcess($pcsx2Exe, $action)) {
     return
 }
 
+$usedPinePorts = [Collections.Generic.HashSet[int]]::new()
+foreach ($endpoint in [Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties().GetActiveTcpListeners()) {
+    [void]$usedPinePorts.Add($endpoint.Port)
+}
+
 $launchedGames = [Collections.Generic.List[object]]::new()
 try {
-    if (-not $SkipActualization) {
+    $usesNa228Build = @(
+        $selectedGames |
+            Where-Object {
+                $projectPaths.games.Entries.PSObject.Properties[$_].Value.Category -eq 'builds'
+            }
+    ).Count -gt 0
+    if ($usesNa228Build -and -not $SkipActualization) {
         & $projectPaths.files.actualize_command na228
     }
-    Stop-Na2Pcsx2 -Executable $pcsx2Exe
 
+    $nextPinePort = $pinePortBase
     for ($index = 0; $index -lt $selectedGames.Count; $index++) {
         $game = $selectedGames[$index]
-        $pinePort = $pinePortBase + $index
+        while ($usedPinePorts.Contains($nextPinePort)) {
+            $nextPinePort++
+        }
+        if ($nextPinePort -gt 65535) {
+            throw 'No free PINE port remains in the configured range.'
+        }
+        $pinePort = $nextPinePort
+        [void]$usedPinePorts.Add($pinePort)
+        $nextPinePort++
         $process = & $pcsx2Launcher `
             -IsoPath $selectedIsoPaths[$game] `
             -Arguments @('-pine-port', [string]$pinePort) `

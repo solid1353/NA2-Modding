@@ -26,9 +26,6 @@ try {
         -Path $scriptRoot, $pcsx2ScriptRoot, $libRoot |
         Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'build.ps1') -Destination $scriptRoot
-    Copy-Item `
-        -LiteralPath (Join-Path $PSScriptRoot '..\pcsx2\process.ps1') `
-        -Destination $pcsx2ScriptRoot
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'worker_paths.ps1') -Destination $scriptRoot
     foreach ($name in 'project_paths.ps1', 'run_log.ps1', 'build_log.ps1') {
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot "..\lib\$name") -Destination $libRoot

@@ -34,3 +34,6 @@ font_glyph_metrics	58	localization.font.glyph.c.text.font.glyph.metric.lookup	lo
 font_glyph_metrics	59	localization.font.glyph.c.text.font.glyph.metric.apply	localization.font.glyph_metric_apply
 font_v2_core	60	localization.font.v2.c.text.font.v2.command.relationship.impl	localization.font.v2.c.command_relationship_impl
 font_v2_core	61	localization.font.v2.c.text.font.v2.command.icon.offset	localization.font.v2.c.command_icon_offset
+font_v2_core	64	localization.font.v2.c.text.font.v2.character.confirmation.body.adapter	localization.font.v2.character_confirmation_body_adapter
+font_v2_core	65	localization.font.v2.c.text.font.v2.character.selected.adapter	localization.font.v2.character_selected_adapter
+font_v2_core	66	localization.font.v2.c.text.font.v2.character.confirmation.body.callback	localization.font.v2.c.character_confirmation_body_callback

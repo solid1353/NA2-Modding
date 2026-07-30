@@ -4,6 +4,8 @@ font_v2_core	localization.font.v2.command_relationship_adapter	command_relations
 font_v2_core	localization.font.v2.command_title_entry	arg0_text_arg2_native_x_native_y	Command Chart title
 font_v2_core	localization.font.v2.practice_title_entry	arg0_text_arg2_native_x_native_y	Practice title
 font_v2_core	localization.font.v2.pause_list_adapter	arg0_text_arg2_native_x_native_y	Pause-list row
+font_v2_core	localization.font.v2.character_selected_adapter	object_draw_x_draw_y_text	Character Select selected modal row
 font_v2_core	localization.font.v2.quit_unselected_adapter	arg0_record_arg2_arg3	Quit choice not selected
 font_v2_core	localization.font.v2.quit_body_adapter	arg0_text_arg2	Quit confirmation body
+font_v2_core	localization.font.v2.character_confirmation_body_adapter	arg0_text_arg2	Character Select return-confirmation body
 font_v2_core	localization.font.v2.special_controls_body_adapter	arg0_text_arg2	Special Controls explanatory body

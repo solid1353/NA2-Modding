@@ -1043,6 +1043,50 @@ needed. The user verified the normal-build Mode Select result on 2026-07-29.
 The layer is therefore **runtime-proven** with verified confidence; the
 separate Collection confirmation remains unfinished epic work.
 
+### Character Select modal selected row and return body
+
+The refreshed 2026-07-29 ss5-ss7 pairs isolate two main-ELF callers inside
+the Character Select modal family:
+
+- file `0x2BC984` / runtime `0x003BC884`, guarded by
+  `84090E0C00000000`, draws only the selected row in the five-row
+  `Back to Game Mode Screen` modal;
+- file `0x2BCB54` / runtime `0x003BCA54`, guarded by
+  `C4080E0C00000000`, draws only the `Return to Game Mode Screen?`
+  confirmation body.
+
+The selected-row adapter uses a 240-by-20, single-line, shrink-only box at the
+caller's Y and five local units to the right of its incoming X. The original
+declarative selected-delay-slot compensation is removed because the symbolic
+eight-byte hook replaces that call and delay slot atomically. The final ss5
+red-ink bounds are `x=170..466`, exactly matching NUN5. The supplied ss6
+Linked Mode state remains unchanged, proving that the selected hook does not
+select the adjacent ordinary-row family.
+
+NUN5 telemetry for the confirmation body is box `(8,8,368,24)`, horizontal
+policy `2` (center), vertical policy `1`, and incoming scale `1`. A first C
+candidate applied only those box dimensions while retaining NA2's existing
+primary/direct renderer setup. It fit, but its letters stayed visibly smaller
+and narrower than NUN5. That negative result proves that box math alone does
+not select the expected glyph presentation.
+
+The accepted sequence selects the secondary renderer through
+`FUN_00186510(renderer,1)`, restores renderer fields `+0x28/+0x2C`, sets the
+draw context from the modal object at `+0x74` through `FUN_001866D0`, then
+uses the resident v2 measurement to compute the centered left edge inside the
+368-unit box. The final callback draws from that prepared left edge through
+native left draw `0x00379040`. Calling the native centered primitive instead
+is rejected here: it remeasures with obsolete state and shifts the otherwise
+correct result left.
+
+For the exact accepted string, both NUN5 and NA2.28 black-ink bounds are
+`(151,328)-(484,341)`; dark-pixel counts are `1209` and `1202`. The retained
+comparison is
+`work/Font/artifacts/priority3/ss7-secondary-renderer-left-edge-comparison.png`.
+The user accepted the combined Character Select result on 2026-07-30.
+Confidence is **verified** for the two call sites, renderer selection,
+coordinate contract, selected-row isolation, and supplied ss5-ss7 behavior.
+
 ### Practice explanation mixed-text wrapping
 
 Bounded NA2/NUN5 BTL comparison identifies the Practice explanation loop as a

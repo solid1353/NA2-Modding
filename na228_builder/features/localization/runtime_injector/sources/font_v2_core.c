@@ -24,6 +24,13 @@ typedef signed int s32;
 #define FONT_RENDERER_POINTER_ADDRESS 0x00607470u
 #define FONT_HORIZONTAL_SCALE_ADDRESS 0x0060737Cu
 #define FONT_RENDERER_TRACKING_OFFSET 0x3Cu
+#define FONT_RENDERER_DRAW_X_OFFSET 0x28u
+#define FONT_RENDERER_DRAW_Y_OFFSET 0x2Cu
+#define FONT_RENDERER_CONTEXT_OFFSET 0x6Cu
+#define FONT_INITIALIZE_ADDRESS 0x00186510u
+#define FONT_SET_CONTEXT_ADDRESS 0x001866D0u
+#define FONT_DRAW_ADDRESS 0x00379040u
+#define FONT_CHARACTER_SELECTED_DRAW_ADDRESS 0x00382610u
 #define FONT_CONTROLS_BOX_WIDTH 128u
 #define FONT_CONTROLS_BOX_HEIGHT 20u
 #define FONT_CONTROLS_LINE_HEIGHT 20.0f
@@ -51,6 +58,10 @@ typedef signed int s32;
 #define FONT_PAUSE_LIST_Y_OFFSET -4.0f
 #define FONT_PAUSE_LIST_SELECTED_X_OFFSET 2.0f
 #define FONT_PAUSE_LIST_LINE_HEIGHT 20.0f
+#define FONT_CHARACTER_LIST_BOX_WIDTH 240u
+#define FONT_CHARACTER_LIST_BOX_HEIGHT 20u
+#define FONT_CHARACTER_LIST_SELECTED_X_OFFSET 5.0f
+#define FONT_CHARACTER_LIST_LINE_HEIGHT 20.0f
 #define FONT_QUIT_YES_SOURCE_BITS 0x41C00000u
 #define FONT_QUIT_NO_SOURCE_BITS 0x42600000u
 #define FONT_QUIT_YES_X 64.5f
@@ -69,6 +80,12 @@ typedef signed int s32;
 #define FONT_QUIT_BODY_BOX_HEIGHT 40u
 #define FONT_QUIT_BODY_LINE_HEIGHT 20.0f
 #define FONT_QUIT_BODY_LINE_LIMIT 2u
+#define FONT_CHARACTER_BODY_BOX_X 8.0f
+#define FONT_CHARACTER_BODY_BOX_Y 8.0f
+#define FONT_CHARACTER_BODY_BOX_WIDTH 368u
+#define FONT_CHARACTER_BODY_BOX_HEIGHT 24u
+#define FONT_CHARACTER_BODY_LINE_HEIGHT 20.0f
+#define FONT_CHARACTER_BODY_LINE_LIMIT 1u
 #define FONT_SPECIAL_BODY_BOX_X 24.0f
 #define FONT_SPECIAL_BODY_BOX_Y 12.0f
 #define FONT_SPECIAL_BODY_BOX_WIDTH 400u
@@ -245,6 +262,14 @@ extern int font_v2_practice_callback(
 );
 
 typedef int (*FontV2Callback)(u32 arg0, u32 arg1, u32 arg2, u32 arg3);
+typedef void (*FontV2NativeInitialize)(u32 renderer, u32 mode);
+typedef void (*FontV2NativeSetContext)(u32 renderer, u32 context);
+typedef void (*FontV2NativeDraw)(
+    float draw_x,
+    float draw_y,
+    const u8 *text,
+    u32 highlighted
+);
 
 static u32 font_v2_is_br(const u8 *text) {
     return text[0] == (u8)'<' &&
@@ -598,6 +623,36 @@ int font_v2_pause_list_selected_impl(
     return font_v2_adapter_call(&session);
 }
 
+FONT_V2_SECTION(".text.font_v2_character_selected_adapter")
+int font_v2_character_selected_adapter(
+    u32 object,
+    s32 draw_x,
+    s32 draw_y,
+    const u8 *text
+) {
+    FontV2Session session;
+
+    session.text = text;
+    session.box_x =
+        (float)draw_x + FONT_CHARACTER_LIST_SELECTED_X_OFFSET;
+    session.box_y = (float)draw_y;
+    session.box_width = FONT_CHARACTER_LIST_BOX_WIDTH;
+    session.box_height = FONT_CHARACTER_LIST_BOX_HEIGHT;
+    session.horizontal_alignment = FONT_V2_ALIGN_START;
+    session.vertical_alignment = FONT_V2_ALIGN_START;
+    session.flags = FONT_V2_FLAG_SHRINK_X;
+    session.line_limit = 1;
+    session.line_height = FONT_CHARACTER_LIST_LINE_HEIGHT;
+    session.callback = FONT_CHARACTER_SELECTED_DRAW_ADDRESS;
+    session.callback_arg0 = object;
+    session.callback_arg1 =
+        (u32)(draw_x + (s32)FONT_CHARACTER_LIST_SELECTED_X_OFFSET);
+    session.callback_arg2 = (u32)draw_y;
+    session.callback_arg3 = (u32)text;
+
+    return font_v2_adapter_call(&session);
+}
+
 FONT_V2_SECTION(".text.font_v2_quit_scope_enter")
 u32 font_v2_quit_scope_enter(void) {
     u32 previous = font_v2_quit_active;
@@ -873,6 +928,88 @@ int font_v2_quit_body_adapter(
         FONT_QUIT_BODY_LINE_LIMIT,
         (u32)font_v2_quit_body_callback
     );
+}
+
+static FONT_V2_SECTION(
+    ".text.font_v2_character_confirmation_body_callback"
+)
+int font_v2_character_confirmation_body_callback(
+    u32 arg0,
+    const u8 *text,
+    u32 arg2,
+    FontV2Session *session
+) {
+    FontV2NativeDraw draw = (FontV2NativeDraw)FONT_DRAW_ADDRESS;
+
+    (void)arg0;
+    (void)arg2;
+    draw(
+        session->draw_x,
+        session->draw_y,
+        text,
+        0u
+    );
+    return 0;
+}
+
+FONT_V2_SECTION(".text.font_v2_character_confirmation_body_adapter")
+int font_v2_character_confirmation_body_adapter(
+    u32 object,
+    const u8 *text,
+    u32 arg2
+) {
+    volatile u32 *renderer =
+        *(volatile u32 **)FONT_RENDERER_POINTER_ADDRESS;
+    volatile u32 *object_words = (volatile u32 *)object;
+    FontV2NativeInitialize initialize =
+        (FontV2NativeInitialize)FONT_INITIALIZE_ADDRESS;
+    FontV2NativeSetContext set_context =
+        (FontV2NativeSetContext)FONT_SET_CONTEXT_ADDRESS;
+    FontV2Session session;
+    u32 saved_draw_x;
+    u32 saved_draw_y;
+    u32 saved_context;
+    int result;
+
+    if (!renderer || !object_words || !text) {
+        return -1;
+    }
+
+    saved_draw_x =
+        renderer[FONT_RENDERER_DRAW_X_OFFSET / sizeof(u32)];
+    saved_draw_y =
+        renderer[FONT_RENDERER_DRAW_Y_OFFSET / sizeof(u32)];
+    saved_context =
+        renderer[FONT_RENDERER_CONTEXT_OFFSET / sizeof(u32)];
+
+    initialize((u32)renderer, 1u);
+    renderer[FONT_RENDERER_DRAW_X_OFFSET / sizeof(u32)] = saved_draw_x;
+    renderer[FONT_RENDERER_DRAW_Y_OFFSET / sizeof(u32)] = saved_draw_y;
+    set_context(
+        (u32)renderer,
+        object_words[0x74u / sizeof(u32)]
+    );
+
+    session.text = text;
+    session.box_x = FONT_CHARACTER_BODY_BOX_X;
+    session.box_y = FONT_CHARACTER_BODY_BOX_Y;
+    session.box_width = FONT_CHARACTER_BODY_BOX_WIDTH;
+    session.box_height = FONT_CHARACTER_BODY_BOX_HEIGHT;
+    session.horizontal_alignment = FONT_V2_ALIGN_CENTER;
+    session.vertical_alignment = FONT_V2_ALIGN_CENTER;
+    session.flags = FONT_V2_FLAG_SHRINK_X;
+    session.line_limit = FONT_CHARACTER_BODY_LINE_LIMIT;
+    session.line_height = FONT_CHARACTER_BODY_LINE_HEIGHT;
+    session.callback =
+        (u32)font_v2_character_confirmation_body_callback;
+    session.callback_arg0 = object;
+    session.callback_arg1 = (u32)text;
+    session.callback_arg2 = arg2;
+    session.callback_arg3 = (u32)&session;
+
+    result = font_v2_adapter_call(&session);
+    renderer[FONT_RENDERER_CONTEXT_OFFSET / sizeof(u32)] = saved_context;
+    return result;
 }
 
 FONT_V2_SECTION(".text.font_v2_special_controls_body_adapter")

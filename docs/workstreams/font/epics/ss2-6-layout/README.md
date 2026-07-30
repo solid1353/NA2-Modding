@@ -16,11 +16,10 @@ case.
 - Current subtask: Priority 4 — ss7 Collection exit confirmation.
 - Pending grid: missing: exact post-change Priority 4 capture from a newly
   constructed Collection exit prompt.
-- Next action: obtain one NA2.28 savestate on the Collection menu immediately
-  before the action that opens `Quit Collection?`, then run the already-enabled
-  body and choice hooks and capture the first newly constructed prompt. The
-  retained visible-prompt ss7 resumes after both owner calls and cannot prove
-  this result.
+- Next action: run an ISO containing commit `76e5023f`, open
+  `Quit Collection?` normally, and supply one fresh visible-prompt screenshot
+  or savestate. The retained visible-prompt ss7 was constructed before the
+  enabled hooks and cannot prove this result.
 
 ## Scope and evidence
 
@@ -119,9 +118,9 @@ case.
 - Validation limitation: the supplied visible-prompt ss7 state resumes after
   both owner calls. Its baseline frame is retained below, but it cannot produce
   the required post-change result or validate clean modal construction.
-- Remaining action: supply one NA2.28 savestate on the Collection menu
-  immediately before opening the exit prompt. The existing enabled patch can
-  then be exercised without an ISO build or agent menu navigation.
+- Remaining action: open the exit prompt normally in an ISO containing commit
+  `76e5023f` and supply one fresh visible-prompt screenshot or savestate. No
+  agent menu navigation is permitted or required.
 
 ![Priority 4 Collection confirmation baseline](pending/4-collection-confirmation.png)
 

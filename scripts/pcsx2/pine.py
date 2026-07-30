@@ -14,6 +14,26 @@ SCREENSHOT = 0x11
 PAUSE = 0x12
 RESUME = 0x13
 CLEAR_EXECUTION_CACHES = 0x14
+PAD_PULSE = 0x15
+
+PAD_BUTTONS = {
+    "up": 0,
+    "right": 1,
+    "down": 2,
+    "left": 3,
+    "triangle": 4,
+    "circle": 5,
+    "cross": 6,
+    "square": 7,
+    "select": 8,
+    "start": 9,
+    "l1": 10,
+    "l2": 11,
+    "r1": 12,
+    "r2": 13,
+    "l3": 14,
+    "r3": 15,
+}
 
 STATUS_NAMES = {
     0: "running",
@@ -90,6 +110,22 @@ class PineClient:
     def screenshot(self) -> None:
         self.command(SCREENSHOT)
 
+    def pad_pulse(
+        self, button: int, duration_ms: int, controller: int = 0
+    ) -> None:
+        if not 0 <= controller <= 7:
+            raise ValueError("controller is outside 0..7")
+        if not 0 <= button <= 15:
+            raise ValueError("button is outside 0..15")
+        if not 1 <= duration_ms <= 1000:
+            raise ValueError("pulse duration is outside 1..1000 ms")
+        reply = self.exchange(
+            bytes([PAD_PULSE, controller, button])
+            + struct.pack("<H", duration_ms)
+        )
+        if reply:
+            raise RuntimeError("PINE PadPulse returned unexpected data")
+
     def read32(self, address: int) -> int:
         reply = self.exchange(bytes([READ32]) + struct.pack("<I", address))
         if len(reply) != 4:
@@ -137,6 +173,10 @@ def parse_args() -> argparse.Namespace:
     commands.add_parser("resume")
     commands.add_parser("refresh")
     commands.add_parser("screenshot")
+    pad_pulse = commands.add_parser("pad-pulse")
+    pad_pulse.add_argument("button", choices=sorted(PAD_BUTTONS))
+    pad_pulse.add_argument("--controller", type=integer, default=0)
+    pad_pulse.add_argument("--milliseconds", type=integer, default=100)
     load_state = commands.add_parser("load-state")
     load_state.add_argument("slot", type=integer)
     read = commands.add_parser("read")
@@ -170,6 +210,16 @@ def main() -> int:
         elif args.command == "screenshot":
             client.screenshot()
             print("screenshot queued")
+        elif args.command == "pad-pulse":
+            client.pad_pulse(
+                PAD_BUTTONS[args.button],
+                args.milliseconds,
+                args.controller,
+            )
+            print(
+                f"controller {args.controller} {args.button} pulsed for "
+                f"{args.milliseconds} ms"
+            )
         elif args.command == "read":
             print(client.read(args.address, args.length).hex().upper())
         elif args.command == "write":

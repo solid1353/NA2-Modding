@@ -56,10 +56,11 @@ The manifest currently defines these stable logical names:
   It is the default for configured user-facing launch and savestate commands.
 - `pcsx2_clean`: the protected immutable worker template at the external
   PCSX2 checkout's clean compiled `bin/` output (`../../PCSX2/bin`). Agents
-  copy it into `work/<task title>/pcsx2/` and may copy any assets for which
-  they have a concrete task- or test-related reason from `@pcsx2_files` into
-  the task-owned runtime. The source template is never populated, launched,
-  or modified directly.
+  create task-owned runtimes with `scripts/pcsx2/copy_worker.ps1`, which copies
+  the template and shared BIOS together. They may then copy any other assets
+  for which they have a concrete task- or test-related reason from
+  `@pcsx2_files`. The source template is never populated, launched, or modified
+  directly.
 - `ps2_msys`: the local shared MSYS/PS2SDK toolchain under
   `@workshop/tools/msys/`. The runtime-injection compiler resolves it through
   the manifest rather than storing the toolchain inside the repository.
@@ -80,6 +81,8 @@ their producing workflow runs. File entries reference a named root with
 - `pcsx2_dev_exe`: `@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe`, used by default
   configured launches and user runtime-injection development.
 - `game_catalog`: `@repository/games.json`.
+- `watch_catalog`: `@repository/watchers.json`, containing named user-facing
+  live-injection targets.
 - `notification_state`: the shared mute state for the dedicated Notifications
   task at `@repository/.agents/notifications.json`.
 - `na228_command`: `@repository/_na228.ps1`.

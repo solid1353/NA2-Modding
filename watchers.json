@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "targets": {
+    "font-controls": {
+      "source_id": "font_v2_core",
+      "entry": "localization.font.v2.controls_adapter"
+    },
+    "font-command-relationships": {
+      "source_id": "font_v2_core",
+      "entry": "localization.font.v2.command_relationship_adapter"
+    },
+    "font-command-title": {
+      "source_id": "font_v2_core",
+      "entry": "localization.font.v2.command_title_entry"
+    },
+    "font-practice-title": {
+      "source_id": "font_v2_core",
+      "entry": "localization.font.v2.practice_title_entry"
+    },
+    "font-pause-list": {
+      "source_id": "font_v2_core",
+      "entry": "localization.font.v2.pause_list_adapter"
+    },
+    "font-character-selected": {
+      "source_id": "font_v2_core",
+      "entry": "localization.font.v2.character_selected_adapter"
+    },
+    "font-quit-unselected": {
+      "source_id": "font_v2_core",
+      "entry": "localization.font.v2.quit_unselected_adapter"
+    },
+    "font-quit-body": {
+      "source_id": "font_v2_core",
+      "entry": "localization.font.v2.quit_body_adapter"
+    },
+    "font-character-confirmation": {
+      "source_id": "font_v2_core",
+      "entry": "localization.font.v2.character_confirmation_body_adapter"
+    },
+    "font-special-controls": {
+      "source_id": "font_v2_core",
+      "entry": "localization.font.v2.special_controls_body_adapter"
+    },
+    "font-collection-list": {
+      "source_id": "font_v2_core",
+      "entry": "localization.font.v2.collection_list_entry"
+    }
+  }
+}

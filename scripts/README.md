@@ -85,7 +85,10 @@ positional game tokens whose order defines window placement. `l`, `p`, or `t`
 runs Latest, Previous, or Test; `bl` and `bt` build and run Latest or Test; and
 suffix `w` watches that token's game. `b` remains shorthand for `bl`. For
 example, `na228 nun5 btw` builds Test, launches NUN5 and Test side by side, then
-watches Test. `na228 build l|t` provides the uncommon build-only forms.
+watches Test. A named watch target or task-owned overlay-plan path may follow
+the watched token: `na228 blw font-controls nun5` or
+`na228 nun5 btw work/Font/operations/jutsu_names_overlay.json`.
+`na228 build l|t` provides the uncommon build-only forms.
 Configured launches containing any `games.json` `builds` entry run `act na228`
 exactly once; source-only launches and worker-output builds never actualize.
 Configured launches preserve existing PCSX2 instances and tile only the newly
@@ -189,11 +192,14 @@ The applier preserves the VM's prior running/paused state, writes the fragment
 and guarded callers while paused, clears execution caches, and uses no PNACH or
 cheat-folder state. `scripts/injection/watch.ps1` is the user-only equivalent;
 omit `-SourcePath`, `-SourceId`, and `-Entry` for the root smoke source, or pass
-an owning feature source/entry or overlay plan explicitly. Agents invoke
+an owning feature source/entry or overlay plan explicitly. `watchers.json`
+declares reusable user-facing target names; a direct task-owned overlay-plan
+path remains valid for current experiments. The compact `w` suffix chooses the
+PCSX2 instance, while the following optional target chooses what is rebuilt:
+`na228 blw font-controls nun5`. Standalone `na228 w [target|plan]` uses the
+configured development PINE port. Both forms wait up to 60 seconds for a live
+VM with the resident payload and injection target loaded. Agents invoke
 `test.ps1` and never run the watcher or its build/apply stages separately.
-The routine root-source watcher is exposed as `na228 w`; it reads the PINE
-port from the configured development PCSX2 and waits up to 60 seconds for a
-live VM with the resident payload and root hook loaded.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`

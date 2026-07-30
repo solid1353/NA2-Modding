@@ -110,6 +110,9 @@ try {
     New-Item -ItemType Directory -Force -Path $fakeReleaseScripts | Out-Null
     $fakeInjectionScripts = Join-Path $fakeRepository 'scripts\injection'
     New-Item -ItemType Directory -Force -Path $fakeInjectionScripts | Out-Null
+    Copy-Item `
+        -LiteralPath (Join-Path $PSScriptRoot '..\injection\watch_targets.ps1') `
+        -Destination $fakeInjectionScripts
     $fakeActualizationScripts = Join-Path $fakePcsx2Scripts 'actualization'
     New-Item -ItemType Directory -Force -Path $fakeActualizationScripts | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\pcsx2\actualization\act.ps1') `
@@ -135,12 +138,24 @@ try {
   },
   "files": {
     "game_catalog": "@repository/games.json",
+    "watch_catalog": "@repository/watchers.json",
     "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
     "na228_game_launch_command": "@scripts/na228/launch_games.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1",
     "actualize_command": "@pcsx2_scripts/actualization/act.ps1",
     "actualize_na228_command": "@pcsx2_scripts/actualization/sync_game_files.ps1",
     "actualize_input_command": "@pcsx2_scripts/actualization/sync_input.ps1"
+  }
+}
+'@
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'watchers.json') -Content @'
+{
+  "schema_version": 1,
+  "targets": {
+    "font-controls": {
+      "source_id": "font_v2_core",
+      "entry": "localization.font.v2.controls_adapter"
+    }
   }
 }
 '@
@@ -281,8 +296,17 @@ foreach ($game in $canonical) {
 }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeInjectionScripts 'watch.ps1') -Content @'
-param([int]$PinePort)
-Write-Output "[fake] watch $PinePort"
+param(
+    [int]$PinePort,
+    [string]$SourceId,
+    [string]$Entry,
+    [string]$SourcePath,
+    [string]$OverlayPlan
+)
+Write-Output (
+    "[fake] watch $PinePort source=$SourceId entry=$Entry " +
+    "sourcePath=$SourcePath plan=$OverlayPlan"
+)
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeReleaseScripts 'publish_release.ps1') -Content @'
 param([string]$Version)
@@ -429,6 +453,43 @@ else {
             $leadingBuildWatch -match '\[fake\] watch 28014'
         ) `
         -Message 'Leading build/watch token did not preserve window order.'
+    $namedBuildWatch = (
+        & (Join-Path $fakeRepository '_na228.ps1') blw font-controls nun5
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $namedBuildWatch -match 'multi-game launch latest,nun5 skip=True' -and
+            $namedBuildWatch -match (
+                '\[fake\] watch 28014 source=font_v2_core ' +
+                'entry=localization\.font\.v2\.controls_adapter'
+            )
+        ) `
+        -Message 'Named watch target did not preserve launch order or watcher selection.'
+    $directPlanWatch = (
+        & (Join-Path $fakeRepository '_na228.ps1') `
+            nun5 `
+            btw `
+            'work\Font\operations\jutsu_names_overlay.json'
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $directPlanWatch -match 'multi-game launch nun5,test skip=True' -and
+            $directPlanWatch -match (
+                'plan=work\\Font\\operations\\jutsu_names_overlay\.json'
+            )
+        ) `
+        -Message 'Direct overlay-plan watch target was not forwarded.'
+    $standaloneNamedWatch = (
+        & (Join-Path $fakeRepository '_na228.ps1') w font-controls
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $standaloneNamedWatch -match (
+                '\[fake\] watch 0 source=font_v2_core ' +
+                'entry=localization\.font\.v2\.controls_adapter'
+            )
+        ) `
+        -Message 'Standalone named watch target was not forwarded.'
     $latestWatch = (
         & (Join-Path $fakeRepository '_na228.ps1') lw
     ) -join "`n"
@@ -454,7 +515,7 @@ else {
             -Message "$mode dispatch was not logged."
     }
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 8) `
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 10) `
         -Message 'Root dispatch test produced the wrong rolling-log section count.'
     Assert-Na2Test `
         -Condition (-not (Test-Na2WindowsAbsolutePath -Text $fakeRolling)) `
@@ -466,8 +527,8 @@ else {
         -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch dev .+$').Count -eq 1) `
         -Message 'Root dispatch did not preserve the configured development-launch default.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, 'ISO result: test').Count -eq 2) `
-        -Message 'Test build recipes did not dispatch exactly twice to Test.'
+        -Condition ([regex]::Matches($fakeRolling, 'ISO result: test').Count -eq 3) `
+        -Message 'Test build recipes did not dispatch exactly three times to Test.'
     $workerLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'work\General\logs\latest.log'))
     Assert-Na2Test `
         -Condition ($workerLatest -match '(?m)^mode: worker-build$') `
@@ -476,10 +537,10 @@ else {
         -Condition ($workerLatest -match 'ISO result: worker') `
         -Message 'Explicit worker build did not dispatch to worker-output mode.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 3) `
+        -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 4) `
         -Message 'Build-only and build-and-launch did not use the standard build pipeline.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize na228').Count -eq 7) `
+        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize na228').Count -eq 9) `
         -Message 'Standalone and user-owned workflows did not preserve NA2 actualization.'
     $structuredLog = Join-Path $logs 'na228'
     $buildRecords = Join-Path $structuredLog 'builds'

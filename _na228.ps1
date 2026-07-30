@@ -7,6 +7,7 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'scripts\lib\project_paths.ps1')
 . (Join-Path $PSScriptRoot 'scripts\na228\worker_paths.ps1')
+. (Join-Path $PSScriptRoot 'scripts\injection\watch_targets.ps1')
 $projectPaths = Get-Na2ProjectPaths
 $gameAliases = @(
     $projectPaths.games.Aliases.PSObject.Properties |
@@ -40,11 +41,11 @@ if ($mode -eq 'help') {
         'NA2.28'
         ''
         '  na228                      Build and run Latest'
-        '  na228 w                    Watch src/ and hot-reload saved C changes'
+        '  na228 w [target|plan]      Watch and hot-reload saved C changes'
         '  na228 <token> [token]      Run one or two games in window order'
         '  l | p | t                  Latest | Previous | Test'
         '  bl | bt                    Build and run Latest | Test'
-        '  <token>w                   Watch that game'
+        '  <token>w [target|plan]     Watch that game; target follows its token'
         ''
         '  na228 build l|t             Build Latest or Test without running it'
         '  na228 validate              Validate the complete build without producing an ISO'
@@ -122,29 +123,42 @@ if (-not $mode) {
 }
 
 if ($mode -eq 'w') {
-    if ($arguments.Count -gt 0) {
-        throw 'na228 w accepts no arguments.'
+    if ($arguments.Count -gt 1) {
+        throw 'na228 w accepts at most one watch target or overlay-plan path.'
     }
-    & (Join-Path $projectPaths.scripts 'injection\watch.ps1')
+    $watchArguments = Get-Na228WatchTargetArguments `
+        -Target $(if ($arguments.Count -eq 1) { $arguments[0] } else { '' }) `
+        -ProjectPaths $projectPaths
+    & (Join-Path $projectPaths.scripts 'injection\watch.ps1') @watchArguments
     return
 }
 
-$runTokens = @($commandTokens | ForEach-Object { $_.ToLowerInvariant() })
-if ($runTokens.Count -gt 2) {
-    throw 'na228 accepts at most two game tokens.'
+function Test-Na228GameToken {
+    param([Parameter(Mandatory)][string]$Token)
+
+    $candidate = $Token.ToLowerInvariant()
+    if ($candidate.Length -gt 1 -and $candidate.EndsWith('w')) {
+        $candidate = $candidate.Substring(0, $candidate.Length - 1)
+    }
+    if ($candidate -in @('b', 'bl', 'bt', 'l', 'p', 't')) {
+        return $true
+    }
+    return $null -ne $projectPaths.games.Aliases.PSObject.Properties[$candidate]
 }
 
+$runTokens = @($commandTokens)
 $games = [Collections.Generic.List[string]]::new()
 $buildActions = [Collections.Generic.List[string]]::new()
 $watchIndex = $null
+$watchTarget = ''
 for ($index = 0; $index -lt $runTokens.Count; $index++) {
-    $token = $runTokens[$index]
+    $token = $runTokens[$index].ToLowerInvariant()
     $watch = $token.Length -gt 1 -and $token.EndsWith('w')
     if ($watch) {
         if ($null -ne $watchIndex) {
             throw 'Only one game token may request watching.'
         }
-        $watchIndex = $index
+        $watchIndex = $games.Count
         $token = $token.Substring(0, $token.Length - 1)
     }
     switch ($token) {
@@ -165,6 +179,17 @@ for ($index = 0; $index -lt $runTokens.Count; $index++) {
         't' { $games.Add('test') }
         default { $games.Add($token) }
     }
+    if (
+        $watch -and
+        $index + 1 -lt $runTokens.Count -and
+        -not (Test-Na228GameToken -Token $runTokens[$index + 1])
+    ) {
+        $watchTarget = $runTokens[$index + 1]
+        $index++
+    }
+}
+if ($games.Count -gt 2) {
+    throw 'na228 accepts at most two game tokens.'
 }
 
 foreach ($buildAction in @($buildActions | Select-Object -Unique)) {
@@ -191,6 +216,9 @@ if ($null -ne $watchIndex) {
     if ($gameLaunchResults.Count -le $watchIndex) {
         throw "Launch result did not expose the PINE port for game token $($watchIndex + 1)."
     }
-    & (Join-Path $projectPaths.scripts 'injection\watch.ps1') `
-        -PinePort ([int]$gameLaunchResults[$watchIndex].PinePort)
+    $watchArguments = Get-Na228WatchTargetArguments `
+        -Target $watchTarget `
+        -ProjectPaths $projectPaths
+    $watchArguments.PinePort = [int]$gameLaunchResults[$watchIndex].PinePort
+    & (Join-Path $projectPaths.scripts 'injection\watch.ps1') @watchArguments
 }

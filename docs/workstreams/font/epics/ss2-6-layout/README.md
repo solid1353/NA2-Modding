@@ -11,11 +11,14 @@ case.
 
 ## Execution state
 
-- Mode: Continuous; the explicitly selected Priority 5 correction is complete.
-- Current subtask: none; Priority 5 is user-verified.
-- Pending grid: none.
-- Next action: await explicit authorization for another priority. Other
-  priorities remain discussion-only.
+- Mode: Continuous, limited by the user's current authorization to the
+  explicitly selected Priority 6 correction.
+- Current subtask: Priority 6 — ss9–ss10 character move lists.
+- Pending grid: missing: exact post-change Priority 6 captures from the
+  integrated ISO.
+- Next action: preserve native one-line rendering and native glyph height for
+  the two character-detail pointer families while retaining only their required
+  NUN5 line breaks and placement.
 
 ## Scope and evidence
 
@@ -135,17 +138,19 @@ case.
 
 ### Priority 6 — ss9–ss10: Character move lists
 
-- State: implemented, canonically validated, agent-validated on both supplied
-  states, and visibly delivered on 2026-07-30; explicit user acceptance remains
-  pending.
-- Result: the shared ETC row entry recognizes only the two exact
-  character-detail pointer families. ss9 uses NUN5's 152-by-32 box and ss10
-  uses its 192-by-32 box; both retain native X, move Y up 10 units, and use the
-  accepted 16-unit two-line compositor. Short rows and every unrelated ETC row
-  remain native. The broadened entry also preserves the accepted ss8 Movie-list
-  output.
-
-![Priority 6 Character move-list result](awaiting_approval/6-character-move-list.png)
+- State: reopened by the user on 2026-07-30. The previous grid was not
+  representative of the integrated ISO and has been removed.
+- Remaining defect: both character-detail branches forced the 20-unit
+  glyph-height override on every recognized row. One-line rows were therefore
+  vertically squeezed, and the required two-line rows were also squeezed
+  despite fitting with native glyph geometry.
+- Required result: one-line rows bypass the wrapper completely. Only rows that
+  actually wrap use the 152- or 192-unit two-line layout, native X, Y minus 10,
+  and 16-unit line interval; wrapped rows retain native glyph geometry.
+  Priority 5 Movie behavior and every unrelated ETC row remain unchanged.
+- Evidence requirement: development injection may be reported only as a
+  runtime-injected candidate. The canonical result grid requires untouched
+  NUN5 and exact integrated-ISO captures at native resolution.
 
 ## Current priorities
 
@@ -161,9 +166,10 @@ Priority is determined by the most efficient implementation order.
 5. **ss8 — Movie list.** Corrected, compose-validated, and user-verified on the
    integrated ISO on 2026-07-30. One-line rows and fitting wrapped rows retain
    native glyph height; the previous nonrepresentative grid remains removed.
-6. **ss9–ss10 — Character move lists.** Implemented, agent-validated on both
-   supplied states through one pointer-bounded shared entry, and visibly
-   delivered; explicit user acceptance remains pending.
+6. **ss9–ss10 — Character move lists.** Reopened. Preserve native one-line
+   rows and native glyph height for the required ss9/ss10 wraps; the previous
+   nonrepresentative grid is removed and exact integrated-ISO evidence is
+   pending.
 
 Shared primitives are implemented only once. Each prioritized caller family
 receives one guarded implementation and commit/push boundary; every case keeps

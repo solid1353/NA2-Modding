@@ -137,8 +137,8 @@ def collect_build_state(
     return {
         "fingerprint_schema_version": FINGERPRINT_SCHEMA_VERSION,
         "source_isos": [
-            _file_entry("source/NA2.iso", na2_iso),
-            _file_entry("source/NUN5.iso", nun5_iso),
+            _file_entry(f"source/{na2_iso.name}", na2_iso),
+            _file_entry(f"source/{nun5_iso.name}", nun5_iso),
         ],
         "builder_tree": builder_tree_entry(builder),
         "profile": profile,

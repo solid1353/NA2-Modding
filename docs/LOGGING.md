@@ -45,8 +45,7 @@ untouched.
 - `rolling.log`: the newest 20 completed operational invocations, stored as
   bounded sections in one file.
 - `builds/<build-id>/`: structured profile records retained only while they
-  correspond to `@build/NA2.28 - Current.iso` or
-  `@build/NA2.28 - Previous.iso`.
+  correspond to the catalog-derived Current or Previous build ISO.
 - `builds.tsv`: a single atomically replaced `iso` / `build_record` mapping.
   It always contains rows for the configured current and previous ISO files;
   the previous record is empty when no corresponding retained build record is
@@ -74,7 +73,7 @@ running.
 
 ## Worker build and runtime logs
 
-`na228 t work/<task title>/build/<name>.iso` keeps its operational
+`na228 worker work/<task title>/build/<name>.iso` keeps its operational
 `latest.log`/`rolling.log` and structured `builds/<build-id>/` records under
 that task's `work/<task title>/logs/`. Worker records never participate in or
 prune shared Candidate/Current/Previous records. Completed structured worker

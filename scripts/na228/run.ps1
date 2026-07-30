@@ -5,8 +5,6 @@ param(
         'worker-build',
         'candidate-build',
         'build-only',
-        'current',
-        'previous',
         'build-and-launch'
     )]
     [string]$Action,
@@ -46,8 +44,6 @@ elseif ($WorkerOutputIso -or $WorkerLogDirectory) {
 $runMode = switch ($Action) {
     'worker-build' { 'worker-build' }
     'candidate-build' { 'candidate-build' }
-    'current' { 'current' }
-    'previous' { 'previous' }
     default { 'build' }
 }
 $runLog = $null
@@ -98,18 +94,6 @@ try {
                 throw 'Profile build did not return a valid promotion result.'
             }
             Invoke-Na2Actualization
-        }
-        { $_ -in @('current', 'previous') } {
-            $isoPath = if ($Action -eq 'previous') {
-                $projectPaths.files.previous_iso
-            }
-            else {
-                $projectPaths.files.current_iso
-            }
-            $isoName = [IO.Path]::GetFileName($isoPath)
-            Write-Na2Stage "Run $isoName without rebuilding"
-            Invoke-Na2Actualization
-            & $projectPaths.files.pcsx2_launch_command -IsoPath $isoPath
         }
         'build-and-launch' {
             Write-Na2Stage '1/2 Build pinned current profile'

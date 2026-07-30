@@ -109,7 +109,7 @@ plus the profile identity into typed operations. `na228_builder/payload_builder/
 and data into the shared resident `PRG/228.BIN`, owns its global loader/memory
 integration, and records its symbol map. `na228_builder/image_assembler/` alone
 stages and verifies
-`build/NA2.28 - Current.iso.building`. `scripts/na228/build.ps1` discards an
+the catalog-derived Current ISO staging path. `scripts/na228/build.ps1` discards an
 identical candidate without rotation or atomically promotes a changed one.
 File sizes remain fixed except for the separately approved filesystem insertion
 support used by compact external strings, which preserves total ISO size and

@@ -25,9 +25,9 @@ $temporaryRoot = Join-Path (
 
 New-Item -ItemType Directory -Path $temporaryRoot | Out-Null
 try {
-    $basePath = Join-Path $temporaryRoot 'Comparison.ini'
-    $outputPath = Join-Path $temporaryRoot 'Comparison_NA2.ini'
-    $linkedOutputPath = Join-Path $temporaryRoot 'PCSX2_Comparison_NA2.ini'
+    $basePath = Join-Path $temporaryRoot 'Base.ini'
+    $outputPath = Join-Path $temporaryRoot 'Base_NA2.ini'
+    $linkedOutputPath = Join-Path $temporaryRoot 'PCSX2_Base_NA2.ini'
     $baseText = @'
 [Pad1]
 Type = DualShock2

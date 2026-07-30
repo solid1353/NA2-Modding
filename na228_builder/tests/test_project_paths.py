@@ -200,6 +200,156 @@ class ProjectPathTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "has no files"):
                 load_project_paths(manifest)
 
+    def test_game_catalog_derives_builds_sources_and_shared_config(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for path in (
+                "build",
+                "source/NA2.iso.files",
+                "source/NUN5.iso.files",
+                "pcsx2/cheats",
+                "pcsx2/game_settings",
+                "pcsx2/input_profiles",
+                "pcsx2/memory_cards",
+            ):
+                (root / path).mkdir(parents=True, exist_ok=True)
+            manifest = {
+                "schema_version": 1,
+                "roots": {
+                    "repository": ".",
+                    "build": "build",
+                    "source": "source",
+                    "pcsx2_cheats": "pcsx2/cheats",
+                    "pcsx2_game_settings": "pcsx2/game_settings",
+                    "pcsx2_input_profiles": "pcsx2/input_profiles",
+                    "pcsx2_memory_cards": "pcsx2/memory_cards",
+                },
+                "files": {"game_catalog": "@repository/games.json"},
+            }
+            catalog = {
+                "schema_version": 1,
+                "config": {
+                    "input_profile": "@pcsx2_input_profiles/Base.ini"
+                },
+                "builds": {
+                    "title": "NA v2.28",
+                    "cheat_template": "@pcsx2_cheats/_SLOP-NA228.pnach",
+                    "gamesettings_template": (
+                        "@pcsx2_game_settings/_SLOP-NA228.ini"
+                    ),
+                    "memory_card": "@pcsx2_memory_cards/NA228.ps2",
+                    "entries": {
+                        "current": {
+                            "aliases": ["c"],
+                            "postfix": "Current",
+                        },
+                        "previous": {
+                            "aliases": ["p"],
+                            "postfix": "Previous",
+                        },
+                    },
+                },
+                "sources": {
+                    "na2": {
+                        "iso": "@source/NA2.iso",
+                        "extracted": "@source/NA2.iso.files",
+                        "cheats": "@pcsx2_cheats/SLPS-25837_C0659AD1.pnach",
+                        "game_settings": (
+                            "@pcsx2_game_settings/SLPS-25837_C0659AD1.ini"
+                        ),
+                        "memory_card": "@pcsx2_memory_cards/NA2.ps2",
+                        "input_profile": "@pcsx2_input_profiles/Base_NA2.ini",
+                    },
+                    "nun5": {
+                        "iso": "@source/NUN5.iso",
+                        "extracted": "@source/NUN5.iso.files",
+                        "cheats": "@pcsx2_cheats/SLUS-21727_EE3737A4.pnach",
+                        "memory_card": "@pcsx2_memory_cards/NUN5.ps2",
+                        "game_settings": (
+                            "@pcsx2_game_settings/SLUS-21727_EE3737A4.ini"
+                        ),
+                    },
+                },
+            }
+            manifest_path = root / "project-paths.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            (root / "games.json").write_text(
+                json.dumps(catalog),
+                encoding="utf-8",
+            )
+
+            paths = load_project_paths(manifest_path)
+
+            self.assertEqual(
+                paths.file("current_iso"),
+                root.resolve() / "build" / "NA v2.28 - Current.iso",
+            )
+            self.assertEqual(
+                paths.file("current_memory_card"),
+                root.resolve() / "pcsx2/memory_cards/NA228 - Current.ps2",
+            )
+            self.assertEqual(
+                paths.file("nun5_iso"),
+                root.resolve() / "source/NUN5.iso",
+            )
+            self.assertEqual(
+                paths.path("source_nun5"),
+                root.resolve() / "source/NUN5.iso.files",
+            )
+            self.assertEqual(
+                paths.file("input_profile"),
+                root.resolve() / "pcsx2/input_profiles/Base.ini",
+            )
+            self.assertEqual(
+                paths.file("cheat_template"),
+                root.resolve() / "pcsx2/cheats/_SLOP-NA228.pnach",
+            )
+
+    def test_rejects_catalog_file_duplicated_by_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "build").mkdir()
+            (root / "pcsx2/memory_cards").mkdir(parents=True)
+            manifest = {
+                "schema_version": 1,
+                "roots": {
+                    "repository": ".",
+                    "build": "build",
+                    "pcsx2_memory_cards": "pcsx2/memory_cards",
+                },
+                "files": {
+                    "game_catalog": "@repository/games.json",
+                    "current_iso": "@build/Current.iso",
+                },
+            }
+            catalog = {
+                "schema_version": 1,
+                "builds": {
+                    "title": "NA v2.28",
+                    "memory_card": "@pcsx2_memory_cards/NA228.ps2",
+                    "entries": {
+                        "current": {
+                            "postfix": "Current",
+                        }
+                    }
+                },
+                "sources": {
+                    "na2": {
+                        "iso": "@build/NA2.iso",
+                        "extracted": "@build",
+                    }
+                },
+            }
+            manifest_path = root / "project-paths.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            (root / "games.json").write_text(
+                json.dumps(catalog),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "duplicates games.json"):
+                load_project_paths(manifest_path)
+
 
 if __name__ == "__main__":
     unittest.main()

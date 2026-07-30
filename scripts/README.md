@@ -65,9 +65,9 @@ receipt through `na228_builder.build_preflight`; an exact hit returns the normal
 unchanged result without staging an ISO. `na228/test_build_preflight.ps1` covers
 the cache-hit and safe full-build-fallback dispatch paths.
 `na228 t` calls the same builder in candidate-only mode: it always composes a
-fresh verified `@build/NA2.28 - Candidate.iso`, bypasses Current preflight and
+fresh verified catalog-derived Candidate ISO, bypasses Current preflight and
 promotion state, and does not probe or close PCSX2.
-`na228 t work/<task title>/build/<name>.iso` instead builds an isolated
+`na228 worker work/<task title>/build/<name>.iso` instead builds an isolated
 worker-owned ISO, stages beside it, and keeps both operational and structured
 records under `work/<task title>/logs/`. The path is caller-supplied and
 validated; worker mode cannot address shared build outputs or mutate shared
@@ -82,10 +82,12 @@ python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'
 
 `na228 b` runs the standard Current build and conditional promotion pipeline but
 does not launch PCSX2. Bare `na228` keeps the build-then-launch workflow.
-Compact recipes run the existing `b`, `t`, `c`, `p`, and `w` modes
-left-to-right without duplicating their implementations. Letters must be
-unique, and blocking watcher step `w` must be last; for example, `na228 bpw`
-builds Current, launches Previous, then starts the root-source watcher.
+Compact recipes compose `b` or `t` with optional final `w`; game selectors are
+separate recipe arguments. Letters must be unique, `b` and `t` are mutually
+exclusive, and blocking watcher step `w` must be last. For example,
+`na228 bw p` builds Current, launches Previous, then starts the root-source
+watcher. Selector aliases `c`, `p`, and `cand` mean Current, Previous, and
+Candidate.
 User-owned shared-image builds and launches run `act na228` automatically;
 worker-output builds never actualize. The standalone `act` command can run all
 actualization modes without building or launching.

@@ -35,8 +35,15 @@ try {
         ) |
         Out-Null
 
-    $cheatTemplate = Join-Path $cheats 'SLOP-NA228.pnach'
-    $gameSettingsTemplate = Join-Path $gameSettings 'SLOP-NA228.ini'
+    $catalog = Get-Content -Raw -LiteralPath (
+        Join-Path $PSScriptRoot '..\..\..\games.json'
+    ) | ConvertFrom-Json
+    $cheatTemplate = Join-Path $cheats (
+        [IO.Path]::GetFileName([string]$catalog.builds.cheat_template)
+    )
+    $gameSettingsTemplate = Join-Path $gameSettings (
+        [IO.Path]::GetFileName([string]$catalog.builds.gamesettings_template)
+    )
     [IO.File]::WriteAllText(
         $cheatTemplate,
         "// [Intro skips]`npatch=1,EE,00100000,word,00000000`n",
@@ -50,9 +57,12 @@ try {
         ),
         [Text.UTF8Encoding]::new($false)
     )
-    $currentMemoryCard = Join-Path $memoryCards 'NA228 - Current.ps2'
-    $previousMemoryCard = Join-Path $memoryCards 'NA228 - Previous.ps2'
-    $candidateMemoryCard = Join-Path $memoryCards 'NA228 - Candidate.ps2'
+    $currentPostfix = 'Current'
+    $previousPostfix = 'Previous'
+    $candidatePostfix = 'Candidate'
+    $currentMemoryCard = Join-Path $memoryCards "NA228 - $currentPostfix.ps2"
+    $previousMemoryCard = Join-Path $memoryCards "NA228 - $previousPostfix.ps2"
+    $candidateMemoryCard = Join-Path $memoryCards "NA228 - $candidatePostfix.ps2"
     $memoryCardInputs = @(
         [pscustomobject]@{
             Path = $currentMemoryCard
@@ -74,9 +84,9 @@ try {
         )
     }
 
-    $currentIso = Join-Path $build 'Current.iso'
-    $previousIso = Join-Path $build 'Previous.iso'
-    $candidateIso = Join-Path $build 'Candidate.iso'
+    $currentIso = Join-Path $build "NA2.28 - $currentPostfix.iso"
+    $previousIso = Join-Path $build "NA2.28 - $previousPostfix.iso"
+    $candidateIso = Join-Path $build "NA2.28 - $candidatePostfix.iso"
     [IO.File]::WriteAllText($currentIso, 'current')
     [IO.File]::WriteAllText($previousIso, 'previous')
     [IO.File]::WriteAllText($candidateIso, 'candidate')
@@ -86,33 +96,57 @@ try {
         pcsx2_cheats = $cheats
         pcsx2_game_settings = $gameSettings
         pcsx2_memory_cards = $memoryCards
-        files = [pscustomobject]@{
-            cheat_template = $cheatTemplate
-            gamesettings_template = $gameSettingsTemplate
-            current_memory_card = $currentMemoryCard
-            previous_memory_card = $previousMemoryCard
-            candidate_memory_card = $candidateMemoryCard
-            current_iso = $currentIso
-            previous_iso = $previousIso
-            candidate_iso = $candidateIso
+        games = [pscustomobject]@{
+            Entries = [pscustomobject]@{
+                current = [pscustomobject]@{
+                    Category = 'builds'
+                    Postfix = $currentPostfix
+                    IsoPath = $currentIso
+                    MemoryCardPath = $currentMemoryCard
+                    Config = [pscustomobject]@{
+                        cheat_template = $cheatTemplate
+                        gamesettings_template = $gameSettingsTemplate
+                    }
+                }
+                previous = [pscustomobject]@{
+                    Category = 'builds'
+                    Postfix = $previousPostfix
+                    IsoPath = $previousIso
+                    MemoryCardPath = $previousMemoryCard
+                    Config = [pscustomobject]@{
+                        cheat_template = $cheatTemplate
+                        gamesettings_template = $gameSettingsTemplate
+                    }
+                }
+                candidate = [pscustomobject]@{
+                    Category = 'builds'
+                    Postfix = $candidatePostfix
+                    IsoPath = $candidateIso
+                    MemoryCardPath = $candidateMemoryCard
+                    Config = [pscustomobject]@{
+                        cheat_template = $cheatTemplate
+                        gamesettings_template = $gameSettingsTemplate
+                    }
+                }
+            }
         }
     }
     $identityResolver = {
         param([string]$Path)
-        switch ([IO.Path]::GetFileNameWithoutExtension($Path)) {
-            'Current' {
-                [pscustomobject]@{ Serial = 'SLOP-NA228'; CRC = '11111111' }
-            }
-            'Previous' {
-                [pscustomobject]@{ Serial = 'SLOP-NA228'; CRC = '11111111' }
-            }
-            'Candidate' {
-                [pscustomobject]@{ Serial = 'SLPS-22228'; CRC = '33333333' }
-            }
-            default {
-                throw "Unexpected ISO: $Path"
+        if ([IO.Path]::Equals($Path, $currentIso) -or
+            [IO.Path]::Equals($Path, $previousIso)) {
+            return [pscustomobject]@{
+                Serial = 'SLOP-NA228'
+                CRC = '11111111'
             }
         }
+        if ([IO.Path]::Equals($Path, $candidateIso)) {
+            return [pscustomobject]@{
+                Serial = 'SLPS-22228'
+                CRC = '33333333'
+            }
+        }
+        throw "Unexpected ISO: $Path"
     }
 
     $actualizer = Join-Path $PSScriptRoot 'sync_game_files.ps1'

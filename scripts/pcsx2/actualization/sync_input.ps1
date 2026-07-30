@@ -40,8 +40,8 @@ $usingConfiguredPaths = [string]::IsNullOrWhiteSpace($BasePath)
 if ($usingConfiguredPaths) {
     . (Join-Path $PSScriptRoot '..\..\lib\project_paths.ps1')
     $projectPaths = Get-Na2ProjectPaths
-    $BasePath = $projectPaths.files.comparison_input_profile
-    $OutputPath = $projectPaths.files.comparison_na2_input_profile
+    $BasePath = $projectPaths.files.input_profile
+    $OutputPath = $projectPaths.games.Entries.na2.Config.input_profile
 }
 
 $baseFullPath = [IO.Path]::GetFullPath($BasePath)
@@ -159,5 +159,5 @@ if ($PassThru) {
 }
 else {
     $state = if ($changed) { 'updated' } else { 'already current' }
-    Write-Host "Comparison input profiles: $state."
+    Write-Host "Base_NA2 input profile: $state."
 }

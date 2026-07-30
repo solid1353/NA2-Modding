@@ -13,8 +13,8 @@ may later be ported to NA2.
 
 Current PCSX2 actualization:
 
-- Read-only generation templates are `@pcsx2_cheats/SLOP-NA228.pnach` and
-  `@pcsx2_game_settings/SLOP-NA228.ini`. They are stable serial-based inputs, not
+- Read-only generation templates are `@pcsx2_cheats/_SLOP-NA228.pnach` and
+  `@pcsx2_game_settings/_SLOP-NA228.ini`. They are stable serial-based inputs, not
   canonical PCSX2 identities; each built image's serial/CRC determines its
   generated alias.
 - `act na228` derives each retained Current, Previous, and Candidate identity
@@ -53,8 +53,8 @@ replaced with a copied machine-specific absolute path.
 
 - `@source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
 - `@source/*.files/`: extracted views of original source archives. Treat as read-only reference.
-- `build/`: normally contains `build/NA2.28 - Current.iso`, may retain at most `build/NA2.28 - Previous.iso` as rotation history, and may retain `build/NA2.28 - Candidate.iso` while concurrent refactoring/testing needs it. Standard builds use `NA2.28 - Current.iso.building`, then discard an identical candidate or promote and rotate a changed one. `na228 t` instead uses `NA2.28 - Candidate.iso.building`, atomically updates only Candidate, leaves PCSX2 running, and never changes Current, Previous, their build mapping, or Current's preflight receipt. Staging files are removed on failure.
-- `work/<task title>/build/`: isolated agent ISOs produced by `na228 t work/<task title>/build/<name>.iso`. Staging remains beside the requested output, build records remain under that task's `logs/`, and the mode never touches shared build, preflight, promotion, PNACH, or PCSX2 state.
+- `build/`: normally contains `build/NA v2.28 - Current.iso`, may retain at most `build/NA v2.28 - Previous.iso` as rotation history, and may retain `build/NA v2.28 - Candidate.iso` while concurrent refactoring/testing needs it. These names are derived from `games.json` build title and postfixes. Standard builds use `NA v2.28 - Current.iso.building`, then discard an identical candidate or promote and rotate a changed one. `na228 t` instead uses `NA v2.28 - Candidate.iso.building`, atomically updates only Candidate, leaves PCSX2 running, and never changes Current, Previous, their build mapping, or Current's preflight receipt. Staging files are removed on failure.
+- `work/<task title>/build/`: isolated agent ISOs produced by `na228 worker work/<task title>/build/<name>.iso`. Staging remains beside the requested output, build records remain under that task's `logs/`, and the mode never touches shared build, preflight, promotion, PNACH, or PCSX2 state.
 - Temporary imported archives live under the active task's `work/<task title>/temp/` folder until normalized or retired. Reproducible data lives as hash-pinned inputs beside its module; complete accepted states are preserved by annotated Git tags, and retired inputs remain available through Git history.
 - `na228_builder/features/localization/translation_importer/mappings.tsv` is the Localization feature's current hash-pinned importer input and folds the verified pointer inventory into each applicable mapping row. `source_ref` and `source` retain the guarded NA2 origin; `donor_ref` and `donor` retain the official translation and make it executable by default. A nonempty user-authored `replacement` overrides the donor, and `prefix` is prepended to the selected text. Profile `identity.json` owns the imported/output game titles, and the generic `string_patcher` applies that output policy before deriving inline or linked placement from encoded fit and available references. Feature-owned custom resident functions and guarded hooks are declared through `runtime_injector`; `payload_builder` links those fragments together with external strings into `PRG/228.BIN` and owns its loader/memory integration. The composer resolves symbols and `binary_patcher` applies concrete guarded writes. No standalone export or source-hash bypass exists.
 - `@logs/`: disposable shared-workflow records; no files should be written directly in the root. `na228` keeps bounded Current/Previous/Candidate provenance under `@logs/na228/`, and shared generated workstream evidence belongs under `@workstream_logs/<exact task title>/`. Agent ISO records instead stay under `work/<task title>/logs/`. See `docs/LOGGING.md`.
@@ -179,7 +179,7 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 
 ## Current Scripts
 
-- Root `_na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Current; recipes composed from unique `b`/`t`/`c`/`p`/`w` actions run left-to-right with blocking `w` last; direct game-selector arguments launch and tile those games; and `release` and `help` remain explicit commands. The standalone `act` command performs actualization without building or launching. User-owned shared-image modes run `act na228` automatically; the launcher does not read or rewrite the user's `PCSX2.ini`. `na228 t work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
+- Root `_na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Current; recipes use unique `b`/`t`/`w` steps, with any game selectors supplied separately and blocking `w` last; direct game-selector arguments launch and tile those games; and `worker`, `release`, and `help` remain explicit commands. The standalone `act` command performs actualization without building or launching. User-owned shared-image modes run `act na228` automatically; the launcher does not read or rewrite the user's `PCSX2.ini`. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
 - `scripts/na228/` contains build/launch execution, promotion, ISO identity,
   worker-path validation, and focused tests. Root `_na228.ps1` owns argument
   parsing and dispatches substantive execution to `scripts/na228/run.ps1`.
@@ -229,7 +229,7 @@ PCSX2 cheat filenames include the game CRC, for example:
 If the boot ELF inside an ISO changes, PCSX2 may report a different CRC.
 Actualize derives the alphanumeric serial from the ISO boot path and creates a
 matching `@pcsx2_cheats/<serial>_<crc>.pnach` link to
-`@pcsx2_cheats/SLOP-NA228.pnach`.
+`@pcsx2_cheats/_SLOP-NA228.pnach`.
 
 Stable and development PCSX2 use `@pcsx2_cheats/` directly. The cheat template
 has a stable human-facing name; actualized CRC aliases are relative symlinks in the
@@ -240,7 +240,7 @@ Known PCSX2 paths from prior notes:
 - Routine log: `@pcsx2_dev/logs/emulog.txt`
 - Explicit stable-check log: `@pcsx2_stable/logs/emulog.txt`
 - Cheats: CRC aliases in `@pcsx2_cheats/`, targeting
-  `@pcsx2_cheats/SLOP-NA228.pnach`
+  `@pcsx2_cheats/_SLOP-NA228.pnach`
 
 Known log pattern:
 
@@ -295,7 +295,7 @@ Candidate ISO, deletes stale managed cheat symlinks and NA2.28 GameSettings,
 creates the required cheat aliases and real role GameSettings, and sets each
 role to its existing Current, Previous, or Candidate memory card. Templates and
 memory cards are never created, copied, or modified.
-`sync_input.ps1` regenerates `Comparison_NA2.ini`.
+`sync_input.ps1` regenerates `Base_NA2.ini` from the maintained `Base.ini`.
 
 ## Release Workflow
 

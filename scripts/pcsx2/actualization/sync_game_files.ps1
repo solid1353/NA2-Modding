@@ -206,11 +206,19 @@ function Set-Na2ActualizeSymlink {
     return $status
 }
 
-$files = $ProjectPaths.files
+$buildEntries = @(
+    $ProjectPaths.games.Entries.PSObject.Properties |
+        ForEach-Object { $_.Value } |
+        Where-Object Category -eq 'builds'
+)
+if ($buildEntries.Count -eq 0) {
+    throw 'Game catalog has no NA2.28 build entries.'
+}
+$buildConfig = $buildEntries[0].Config
 $cheatTemplate = Resolve-Na2ActualizePhysicalPath `
-    -Path $files.cheat_template
+    -Path $buildConfig.cheat_template
 $gameSettingsTemplatePath = Resolve-Na2ActualizePhysicalPath `
-    -Path $files.gamesettings_template
+    -Path $buildConfig.gamesettings_template
 $cheatsDirectory = Resolve-Na2ActualizePhysicalPath `
     -Path $ProjectPaths.pcsx2_cheats
 $gameSettingsDirectory = Resolve-Na2ActualizePhysicalPath -Path (
@@ -238,20 +246,12 @@ foreach ($requiredDirectory in (
 $gameSettingsTemplate = [IO.File]::ReadAllText($gameSettingsTemplatePath)
 
 $definitions = @(
-    [pscustomobject]@{
-        Role = 'Current'
-        Iso = $files.current_iso
-        MemoryCard = $files.current_memory_card
-    }
-    [pscustomobject]@{
-        Role = 'Previous'
-        Iso = $files.previous_iso
-        MemoryCard = $files.previous_memory_card
-    }
-    [pscustomobject]@{
-        Role = 'Candidate'
-        Iso = $files.candidate_iso
-        MemoryCard = $files.candidate_memory_card
+    foreach ($entry in $buildEntries) {
+        [pscustomobject]@{
+            Role = $entry.Postfix
+            Iso = $entry.IsoPath
+            MemoryCard = $entry.MemoryCardPath
+        }
     }
 )
 
@@ -390,7 +390,7 @@ foreach ($role in $settingsRoles) {
 }
 
 if (Test-Path -LiteralPath $legacyGameSettingsDirectory -PathType Container) {
-    foreach ($legacyName in 'Current.ini', 'Previous.ini', 'Candidate.ini') {
+    foreach ($legacyName in @($definitions.Role | ForEach-Object { "$_.ini" })) {
         $legacyPath = Join-Path $legacyGameSettingsDirectory $legacyName
         if (Test-Path -LiteralPath $legacyPath -PathType Leaf) {
             Remove-Item -LiteralPath $legacyPath -Force

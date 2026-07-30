@@ -4,7 +4,9 @@ param(
     [string[]]$Games,
 
     [ValidateRange(5, 120)]
-    [int]$WindowWaitSeconds = 30
+    [int]$WindowWaitSeconds = 30,
+
+    [switch]$SkipActualization
 )
 
 $ErrorActionPreference = 'Stop'
@@ -12,16 +14,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\pcsx2\process.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
-$supportedGames = @(
-    'current',
-    'previous',
-    'candidate',
-    'na2',
-    'nun3',
-    'nun5',
-    'nun6'
-)
-$selectedGames = @(
+$requestedGames = @(
     if ($null -eq $Games -or $Games.Count -eq 0) {
         'nun5', 'current'
     }
@@ -30,15 +23,23 @@ $selectedGames = @(
     }
 )
 
-$invalidGames = @($selectedGames | Where-Object { $_ -notin $supportedGames })
-if ($invalidGames.Count -gt 0) {
-    throw "Unknown game name(s): $($invalidGames -join ', '). Supported names: $($supportedGames -join ', ')."
-}
 $seenGames = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+$selectedGames = [Collections.Generic.List[string]]::new()
 $duplicateGames = [Collections.Generic.List[string]]::new()
-foreach ($game in $selectedGames) {
+foreach ($requestedGame in $requestedGames) {
+    $aliasProperty = $projectPaths.games.Aliases.PSObject.Properties[$requestedGame]
+    if ($null -eq $aliasProperty) {
+        throw (
+            "Unknown game name: $requestedGame. Supported names: " +
+            "$($projectPaths.games.Names -join ', ')."
+        )
+    }
+    $game = [string]$aliasProperty.Value
     if (-not $seenGames.Add($game)) {
-        $duplicateGames.Add($game)
+        $duplicateGames.Add($requestedGame)
+    }
+    else {
+        $selectedGames.Add($game)
     }
 }
 if ($duplicateGames.Count -gt 0) {
@@ -49,24 +50,10 @@ $pcsx2Exe = [IO.Path]::GetFullPath($projectPaths.files.pcsx2_dev_exe)
 $pcsx2Launcher = [IO.Path]::GetFullPath(
     $projectPaths.files.pcsx2_launch_command
 )
-$directIsoFiles = @{
-    candidate = 'candidate_iso'
-    na2 = 'na2_iso'
-    nun3 = 'nun3_iso'
-    nun5 = 'nun5_iso'
-    nun6 = 'nun6_iso'
-}
 $selectedIsoPaths = @{}
 foreach ($game in $selectedGames) {
-    $selectedIsoPaths[$game] = switch ($game) {
-        'current' { [IO.Path]::GetFullPath($projectPaths.files.current_iso) }
-        'previous' { [IO.Path]::GetFullPath($projectPaths.files.previous_iso) }
-        default {
-            [IO.Path]::GetFullPath(
-                $projectPaths.files.($directIsoFiles[$game])
-            )
-        }
-    }
+    $entry = $projectPaths.games.Entries.PSObject.Properties[$game].Value
+    $selectedIsoPaths[$game] = [IO.Path]::GetFullPath($entry.IsoPath)
 }
 
 $requiredFiles = @($pcsx2Exe, $pcsx2Launcher)
@@ -112,7 +99,9 @@ if (-not $PSCmdlet.ShouldProcess($pcsx2Exe, $action)) {
 
 $launchedGames = [Collections.Generic.List[object]]::new()
 try {
-    & $projectPaths.files.actualize_command na228
+    if (-not $SkipActualization) {
+        & $projectPaths.files.actualize_command na228
+    }
     Stop-Na2Pcsx2 -Executable $pcsx2Exe
 
     foreach ($game in $selectedGames) {

@@ -200,6 +200,255 @@ def load_project_paths(
             )
         files[name] = configured_path
 
+    catalog_path = files.get("game_catalog")
+    if catalog_path is not None:
+        if not catalog_path.is_file():
+            raise FileNotFoundError(f"Game catalog not found: {catalog_path}")
+        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+        if catalog.get("schema_version") != 1:
+            raise ValueError(
+                "Unsupported game catalog schema: "
+                f"{catalog.get('schema_version')!r}"
+            )
+
+        def resolve_catalog_value(label: str, raw_value: object) -> object:
+            if not isinstance(raw_value, str) or not raw_value:
+                raise ValueError(f"{label} has an invalid value: {raw_value!r}")
+            if not raw_value.startswith("@"):
+                return raw_value
+            root_and_child = raw_value[1:].replace("\\", "/").split("/", 1)
+            if len(root_and_child) != 2 or not all(root_and_child):
+                raise ValueError(f"{label} has an invalid path: {raw_value!r}")
+            root_name, child = root_and_child
+            try:
+                base_path = roots[root_name]
+            except KeyError as exc:
+                raise ValueError(
+                    f"{label} references unknown project root {root_name!r}"
+                ) from exc
+            child_path = Path(child)
+            if child_path.is_absolute() or ".." in child_path.parts:
+                raise ValueError(f"{label} must remain within {root_name!r}")
+            result = Path(os.path.abspath(base_path / child_path))
+            if base_path not in result.parents:
+                raise ValueError(f"{label} must remain within {root_name!r}")
+            return result
+
+        global_config = catalog.get("config", {})
+        if not isinstance(global_config, dict):
+            raise ValueError("Game catalog 'config' must be an object")
+        resolved_global_config: dict[str, object] = {}
+        for config_name, raw_value in global_config.items():
+            if (
+                not isinstance(config_name, str)
+                or not config_name
+                or not config_name[0].islower()
+                or not config_name.replace("_", "").isalnum()
+            ):
+                raise ValueError(
+                    f"Invalid global game configuration name: {config_name!r}"
+                )
+            if config_name in files:
+                raise ValueError(
+                    f"Project file {config_name!r} duplicates games.json"
+                )
+            resolved = resolve_catalog_value(
+                f"Global game configuration {config_name!r}",
+                raw_value,
+            )
+            resolved_global_config[config_name] = resolved
+            if isinstance(resolved, Path):
+                files[config_name] = resolved
+
+        selectors: set[str] = set()
+        for category in ("builds", "sources"):
+            section = catalog.get(category)
+            if not isinstance(section, dict) or not section:
+                raise ValueError(
+                    f"Game catalog has no non-empty {category!r} section"
+                )
+            resolved_category_config = dict(resolved_global_config)
+            if category == "builds":
+                definitions = section.get("entries")
+                if not isinstance(definitions, dict) or not definitions:
+                    raise ValueError(
+                        "Game catalog 'builds' section has no non-empty "
+                        "'entries' object"
+                    )
+                category_config = {
+                    name: value
+                    for name, value in section.items()
+                    if name != "entries"
+                }
+                for config_name, raw_value in category_config.items():
+                    if (
+                        not isinstance(config_name, str)
+                        or not config_name
+                        or not config_name[0].islower()
+                        or not config_name.replace("_", "").isalnum()
+                    ):
+                        raise ValueError(
+                            f"Invalid {category!r} configuration name: "
+                            f"{config_name!r}"
+                        )
+                    resolved = resolve_catalog_value(
+                        f"Game category {category!r} configuration "
+                        f"{config_name!r}",
+                        raw_value,
+                    )
+                    resolved_category_config[config_name] = resolved
+                    if isinstance(resolved, Path):
+                        files.setdefault(config_name, resolved)
+            else:
+                definitions = section
+
+            for game_name, definition in definitions.items():
+                if (
+                    not isinstance(game_name, str)
+                    or not game_name
+                    or not game_name[0].islower()
+                    or not game_name.isalnum()
+                ):
+                    raise ValueError(
+                        f"Invalid canonical game selector: {game_name!r}"
+                    )
+                if game_name.casefold() in selectors:
+                    raise ValueError(
+                        f"Duplicate game selector or alias: {game_name!r}"
+                    )
+                selectors.add(game_name.casefold())
+                if not isinstance(definition, dict):
+                    raise ValueError(
+                        f"Game {game_name!r} definition must be an object"
+                    )
+
+                aliases = definition.get("aliases")
+                if aliases is None:
+                    aliases = []
+                elif not isinstance(aliases, list):
+                    raise ValueError(
+                        f"Game {game_name!r} aliases must be a list"
+                    )
+                for alias in aliases:
+                    if (
+                        not isinstance(alias, str)
+                        or not alias
+                        or not alias[0].islower()
+                        or not alias.isalnum()
+                    ):
+                        raise ValueError(
+                            f"Invalid alias for game {game_name!r}: {alias!r}"
+                        )
+                    if alias.casefold() in selectors:
+                        raise ValueError(
+                            f"Duplicate game selector or alias: {alias!r}"
+                        )
+                    selectors.add(alias.casefold())
+
+                memory_card_path: Path | None = None
+                structural_fields = {"aliases", "postfix", "iso", "extracted"}
+                resolved_game_config = dict(resolved_category_config)
+                for config_name, raw_value in definition.items():
+                    if config_name in structural_fields:
+                        continue
+                    if (
+                        not isinstance(config_name, str)
+                        or not config_name
+                        or not config_name[0].islower()
+                        or not config_name.replace("_", "").isalnum()
+                    ):
+                        raise ValueError(
+                            f"Invalid game {game_name!r} configuration name: "
+                            f"{config_name!r}"
+                        )
+                    resolved_game_config[config_name] = resolve_catalog_value(
+                        f"Game {game_name!r} configuration {config_name!r}",
+                        raw_value,
+                    )
+
+                if category == "builds":
+                    title = resolved_category_config.get("title")
+                    if (
+                        not isinstance(title, str)
+                        or not title.strip()
+                        or Path(title).name != title
+                    ):
+                        raise ValueError(
+                            f"Game catalog has an invalid build title: {title!r}"
+                        )
+                    memory_card_template = resolved_category_config.get(
+                        "memory_card"
+                    )
+                    if not isinstance(memory_card_template, Path):
+                        raise ValueError(
+                            "Game catalog has no valid build memory_card"
+                        )
+                    postfix = definition.get("postfix")
+                    if (
+                        not isinstance(postfix, str)
+                        or not postfix.strip()
+                        or Path(postfix).name != postfix
+                    ):
+                        raise ValueError(
+                            f"Game {game_name!r} has an invalid build postfix: "
+                            f"{postfix!r}"
+                        )
+                    try:
+                        build_root = roots["build"]
+                    except KeyError as exc:
+                        raise ValueError(
+                            f"Build game {game_name!r} requires project root "
+                            f"{exc.args[0]!r}"
+                        ) from exc
+                    iso_path = build_root / f"{title} - {postfix}.iso"
+                    memory_card_path = memory_card_template.with_name(
+                        f"{memory_card_template.stem} - {postfix}"
+                        f"{memory_card_template.suffix}"
+                    )
+                else:
+                    iso_path = resolve_catalog_value(
+                        f"Game {game_name!r} ISO path",
+                        definition.get("iso"),
+                    )
+                    extracted_path = resolve_catalog_value(
+                        f"Game {game_name!r} extracted path",
+                        definition.get("extracted"),
+                    )
+                    if not isinstance(iso_path, Path):
+                        raise ValueError(
+                            f"Game {game_name!r} ISO path is not a path"
+                        )
+                    if not isinstance(extracted_path, Path):
+                        raise ValueError(
+                            f"Game {game_name!r} extracted path is not a path"
+                        )
+                    if not allow_missing and not extracted_path.exists():
+                        raise FileNotFoundError(
+                            f"Configured source extraction for {game_name!r}: "
+                            f"{extracted_path}"
+                        )
+                    root_name = f"source_{game_name}"
+                    if root_name in roots:
+                        raise ValueError(
+                            f"Project root {root_name!r} duplicates games.json"
+                        )
+                    roots[root_name] = extracted_path
+
+                file_name = f"{game_name}_iso"
+                if file_name in files:
+                    raise ValueError(
+                        f"Project file {file_name!r} duplicates games.json"
+                    )
+                files[file_name] = iso_path
+                if memory_card_path is not None:
+                    memory_card_file = f"{game_name}_memory_card"
+                    if memory_card_file in files:
+                        raise ValueError(
+                            f"Project file {memory_card_file!r} duplicates "
+                            "games.json"
+                        )
+                    files[memory_card_file] = memory_card_path
+
     return ProjectPaths(
         manifest_path,
         MappingProxyType(roots),

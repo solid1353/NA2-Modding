@@ -1,10 +1,11 @@
 # Project path configuration
 
-`project-paths.json` is the single source of truth for project directory roots
-and canonical project files. Every persisted value in it must be relative to
-the repository directory or another named root; the PowerShell and Python
-loaders reject absolute paths. A repository migration or a move of shared
-media/tools should require changing this file only.
+`project-paths.json` is the source of truth for stable project infrastructure
+roots and named files. `games.json` is the source of truth for registered
+source games, NA2.28 build roles, selector aliases, and their game-specific
+configuration. The shared PowerShell and Python loaders merge both files.
+Every persisted path must be relative to the repository directory or another
+named root; both loaders reject absolute paths.
 
 The loader supports an optional `existence_deferred_roots` list for portable
 manifests whose external resources are provisioned only at use time. The
@@ -26,10 +27,8 @@ The manifest currently defines these stable logical names:
   analysis, tools, and configured emulator installations.
 - `source`: read-only original media and extracted views under
   `@workshop/source/`.
-- `source_na2`: the extracted read-only NA2 source tree.
-- `source_nun3`: the extracted read-only NUN3 source tree.
-- `source_nun5`: the extracted read-only NUN5 source tree.
-- `source_nun6`: the extracted read-only NUN6 A35 source tree.
+- `source_na2`, `source_nun3`, `source_nun5`, and `source_nun6`: derived by
+  the loaders from each source game's `extracted` path in `games.json`.
 - `analysis`: shared reverse-engineering projects and disassembly exports under
   `@workshop/analysis/`.
 - `utils`: shared utilities under `@workshop/tools/`, including Ghidra and
@@ -72,23 +71,15 @@ files accept the same syntax. Enabled feature folders are resolved through
 
 ## Named files
 
-The manifest also defines canonical file paths which may not exist yet before
-their producing workflow runs. File entries should reference a named root with
+The manifest defines infrastructure entry points which may not exist yet before
+their producing workflow runs. File entries reference a named root with
 `@root/child` syntax so the root path is not duplicated:
 
 - `pcsx2_stable_exe`: `@pcsx2_stable/pcsx2-qt.exe`, used for explicit stable
   compatibility and release checks.
 - `pcsx2_dev_exe`: `@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe`, used by default
   configured launches and user runtime-injection development.
-- `cheat_template`: `@pcsx2_cheats/SLOP-NA228.pnach`.
-- `gamesettings_template`: `@pcsx2_game_settings/SLOP-NA228.ini`.
-- `current_memory_card`: `@pcsx2_memory_cards/NA228 - Current.ps2`.
-- `previous_memory_card`: `@pcsx2_memory_cards/NA228 - Previous.ps2`.
-- `candidate_memory_card`: `@pcsx2_memory_cards/NA228 - Candidate.ps2`.
-- `comparison_input_profile`:
-  `@pcsx2_files/input_profiles/Comparison.ini`.
-- `comparison_na2_input_profile`:
-  `@pcsx2_files/input_profiles/Comparison_NA2.ini`.
+- `game_catalog`: `@repository/games.json`.
 - `notification_state`: the shared mute state for the dedicated Notifications
   task at `@repository/.agents/notifications.json`.
 - `na228_command`: `@repository/_na228.ps1`.
@@ -99,17 +90,42 @@ their producing workflow runs. File entries should reference a named root with
 - `actualize_command`: `@pcsx2_scripts/actualization/act.ps1`.
 - `actualize_na228_command` and `actualize_input_command`: the two standalone
   actualization modes under `@pcsx2_scripts/actualization/`.
-- `na2_iso`: `@source/NA2.iso`.
-- `nun3_iso`: `@source/NUN3.iso`.
-- `nun5_iso`: `@source/NUN5.iso`.
-- `nun6_iso`: `@source/NUN6 A35.iso`.
-- `current_iso`: `@build/NA2.28 - Current.iso`.
-- `previous_iso`: `@build/NA2.28 - Previous.iso`.
-- `candidate_iso`: `@build/NA2.28 - Candidate.iso`.
+
+The loaders additionally expose catalog-derived compatibility files:
+
+- `<source>_iso` from each direct `sources.<source>.iso` entry.
+- `<build>_iso` as `@build/<builds.title> - <postfix>.iso`.
+- `<build>_memory_card` as
+  the configured `builds.memory_card` stem plus ` - <postfix>`.
+- `input_profile` from the root catalog configuration.
+- `cheat_template` and `gamesettings_template` from build-wide configuration.
 
 PowerShell accesses these as `$projectPaths.files.na2_iso` and
 `$projectPaths.files.current_iso`. Python accesses them through calls such as
 `PROJECT_PATHS.file("nun5_iso")` and `PROJECT_PATHS.file("previous_iso")`.
+
+## Game catalog
+
+`games.json` keeps `sources` as a direct game map. `builds` contains shared
+build configuration plus an `entries` map because those keys occupy the same
+section. Empty optional values are omitted.
+
+Configuration inherits from root `config`, then category-wide build
+configuration, then a game's own non-structural fields. The current root
+default is the base `input_profile`; NA2 overrides it with the generated
+`Base_NA2` mapping. Source entries also register their `cheats`,
+`game_settings`, and `memory_card` files. Build entries derive their ISO and
+memory-card names
+from one `postfix`, while their CRC-named cheats and GameSettings continue to
+be produced from the build templates.
+
+Keep per-game configuration fields in this order when present: `cheats`,
+`game_settings`, `memory_card`, `input_profile`. Build-wide equivalents use
+`title`, `cheat_template`, `gamesettings_template`, `memory_card`.
+
+The PowerShell loader exposes canonical selectors and aliases through
+`$projectPaths.games`. For example, `c`, `p`, and `cand` resolve to `current`,
+`previous`, and `candidate`.
 
 ## PowerShell
 
@@ -142,8 +158,8 @@ iso = PROJECT_PATHS.file("na2_iso")
 ## Migration procedure
 
 1. Move the directory or canonical file without changing its contents.
-2. Edit only that root or file's repository-relative value in
-   `project-paths.json`.
+2. Edit its repository-relative value in `project-paths.json` for shared
+   infrastructure or `games.json` for a game/build entry.
 3. Run the path-loader checks and automated tests.
 4. Search documentation for literal legacy paths and express them as `@root/...`.
 

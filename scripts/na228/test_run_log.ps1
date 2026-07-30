@@ -108,6 +108,8 @@ try {
     New-Item -ItemType Directory -Force -Path $fakePcsx2Scripts | Out-Null
     $fakeReleaseScripts = Join-Path $fakeRepository 'scripts\release'
     New-Item -ItemType Directory -Force -Path $fakeReleaseScripts | Out-Null
+    $fakeInjectionScripts = Join-Path $fakeRepository 'scripts\injection'
+    New-Item -ItemType Directory -Force -Path $fakeInjectionScripts | Out-Null
     $fakeActualizationScripts = Join-Path $fakePcsx2Scripts 'actualization'
     New-Item -ItemType Directory -Force -Path $fakeActualizationScripts | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\pcsx2\actualization\act.ps1') `
@@ -126,27 +128,51 @@ try {
     "builder": "na228_builder",
     "pcsx2_stable": "pcsx2_stable",
     "pcsx2_files": "pcsx2_files",
+    "pcsx2_memory_cards": "@pcsx2_files/memory_cards",
     "scripts": "scripts",
     "pcsx2_scripts": "@scripts/pcsx2",
     "work": "work"
   },
   "files": {
+    "game_catalog": "@repository/games.json",
     "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
     "na228_game_launch_command": "@scripts/na228/launch_games.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1",
     "actualize_command": "@pcsx2_scripts/actualization/act.ps1",
     "actualize_na228_command": "@pcsx2_scripts/actualization/sync_game_files.ps1",
-    "actualize_input_command": "@pcsx2_scripts/actualization/sync_input.ps1",
-    "current_iso": "@build/NA2.28 - Current.iso",
-    "previous_iso": "@build/NA2.28 - Previous.iso",
-    "candidate_iso": "@build/NA2.28 - Candidate.iso"
+    "actualize_input_command": "@pcsx2_scripts/actualization/sync_input.ps1"
   }
 }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'project-paths.json') -Content $manifest
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'games.json') -Content @'
+{
+  "schema_version": 1,
+  "builds": {
+    "title": "NA2.28",
+    "memory_card": "@pcsx2_memory_cards/NA228.ps2",
+    "entries": {
+      "current": { "aliases": ["c"], "postfix": "Current" },
+      "previous": { "aliases": ["p"], "postfix": "Previous" },
+      "candidate": { "aliases": ["cand"], "postfix": "Candidate" }
+    }
+  },
+  "sources": {
+    "na2": {
+      "iso": "@source/NA2.iso",
+      "extracted": "@source/NA2.iso.files"
+    },
+    "nun5": {
+      "iso": "@source/NUN5.iso",
+      "extracted": "@source/NUN5.iso.files"
+    }
+  }
+}
+'@
     foreach ($directory in @(
         'source', 'utils', 'build', 'logs', 'na228_builder', 'pcsx2_stable',
-        'pcsx2_files', 'scripts', 'work'
+        'pcsx2_files\memory_cards', 'scripts', 'source\NA2.iso.files',
+        'source\NUN5.iso.files', 'work'
     )) {
         New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository $directory) | Out-Null
     }
@@ -160,6 +186,18 @@ try {
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 <game> \[games\.\.\.\]') `
         -Message 'Root help omitted the unified multi-game launch command.'
+    Assert-Na2Test `
+        -Condition ($helpText -match '(?m)^\s*na228 <recipe> \[games\.\.\.\]') `
+        -Message 'Root help omitted the composable recipe grammar.'
+    Assert-Na2Test `
+        -Condition ($helpText -match '(?m)^\s*na228 worker work/') `
+        -Message 'Root help omitted the explicit worker-build command.'
+    Assert-Na2Test `
+        -Condition ($helpText -notmatch '(?m)^\s*na228 (?:bw|tw) ') `
+        -Message 'Root help hardcodes composed recipe groups.'
+    Assert-Na2Test `
+        -Condition ($helpText -notmatch '(?m)^\s*na228 [cp]\s') `
+        -Message 'Root help still exposes retired Current/Previous recipe steps.'
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 -[btcpwh]\b') `
         -Message 'Root help still exposes a retired dashed mode.'
@@ -217,14 +255,26 @@ Write-Host "[fake] launch $Target $IsoPath"
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'launch_games.ps1') -Content @'
 param(
     [Parameter(Position = 0, ValueFromRemainingArguments = $true)]
-    [string[]]$Games
+    [string[]]$Games,
+    [switch]$SkipActualization
 )
-if (@($Games | Where-Object { $_ -notin @(
-    'current', 'previous', 'candidate', 'na2', 'nun3', 'nun5', 'nun6'
+$aliases = @{
+    c = 'current'
+    p = 'previous'
+    cand = 'candidate'
+}
+$canonical = @($Games | ForEach-Object {
+    if ($aliases.ContainsKey($_)) { $aliases[$_] } else { $_ }
+})
+if (@($canonical | Where-Object { $_ -notin @(
+    'current', 'previous', 'candidate', 'na2', 'nun5'
 ) }).Count -gt 0) {
     throw "Unknown game name: $($Games -join ',')"
 }
-Write-Output "[fake] multi-game launch $($Games -join ',')"
+Write-Output "[fake] multi-game launch $($canonical -join ',') skip=$SkipActualization"
+'@
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeInjectionScripts 'watch.ps1') -Content @'
+Write-Output '[fake] watch'
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeReleaseScripts 'publish_release.ps1') -Content @'
 param([string]$Version)
@@ -296,7 +346,19 @@ else {
     }
     Assert-Na2Test `
         -Condition $blockingRecipeRejected `
-        -Message 'A compact recipe with a non-final watcher was not rejected.'
+        -Message 'A recipe with a non-final watcher was not rejected.'
+    $conflictingBuildRecipeRejected = $false
+    try {
+        & (Join-Path $fakeRepository '_na228.ps1') bt
+    }
+    catch {
+        $conflictingBuildRecipeRejected = (
+            $_.Exception.Message -match 'cannot combine Current and Candidate'
+        )
+    }
+    Assert-Na2Test `
+        -Condition $conflictingBuildRecipeRejected `
+        -Message 'A recipe combining Current and Candidate builds was not rejected.'
     $launchLogPath = Join-Path $fakeRepository 'logs\na228\rolling.log'
     $launchLogSectionsBefore = if (Test-Path -LiteralPath $launchLogPath) {
         [regex]::Matches(
@@ -343,12 +405,30 @@ else {
     Assert-Na2Test `
         -Condition $extraReleaseArgumentRejected `
         -Message 'Release dispatch accepted more than one version argument.'
-    & (Join-Path $fakeRepository '_na228.ps1') c
-    & (Join-Path $fakeRepository '_na228.ps1') p
+    $currentLaunch = (
+        & (Join-Path $fakeRepository '_na228.ps1') c
+    ) -join "`n"
+    $previousLaunch = (
+        & (Join-Path $fakeRepository '_na228.ps1') p
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition ($currentLaunch -match 'multi-game launch current skip=False') `
+        -Message 'Current selector alias did not resolve through game launch.'
+    Assert-Na2Test `
+        -Condition ($previousLaunch -match 'multi-game launch previous skip=False') `
+        -Message 'Previous selector alias did not resolve through game launch.'
     & (Join-Path $fakeRepository '_na228.ps1') t
-    & (Join-Path $fakeRepository '_na228.ps1') t 'work\General\build\agent.iso'
+    & (Join-Path $fakeRepository '_na228.ps1') worker 'work\General\build\agent.iso'
     & (Join-Path $fakeRepository '_na228.ps1') b
-    & (Join-Path $fakeRepository '_na228.ps1') bp
+    $composedRecipe = (
+        & (Join-Path $fakeRepository '_na228.ps1') bw c nun5
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition ($composedRecipe -match 'multi-game launch current,nun5 skip=True') `
+        -Message 'Composed build recipe did not launch normalized game selectors.'
+    Assert-Na2Test `
+        -Condition ($composedRecipe -match '\[fake\] watch') `
+        -Message 'Composed recipe did not run the watcher last.'
     & (Join-Path $fakeRepository '_na228.ps1')
     $fakeLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\latest.log'))
     $fakeRolling = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\rolling.log'))
@@ -356,8 +436,6 @@ else {
     foreach ($mode in (
         'actualize',
         'actualize-na228',
-        'current',
-        'previous',
         'candidate-build',
         'build'
     )) {
@@ -366,16 +444,16 @@ else {
             -Message "$mode dispatch was not logged."
     }
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 9) `
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 6) `
         -Message 'Root dispatch test produced the wrong rolling-log section count.'
     Assert-Na2Test `
         -Condition (-not (Test-Na2WindowsAbsolutePath -Text $fakeRolling)) `
         -Message 'Root dispatch persisted an absolute path.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch .+$').Count -eq 4) `
-        -Message 'Root dispatch and compact recipe produced the wrong launch count.'
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch .+$').Count -eq 1) `
+        -Message 'Root build-and-launch produced the wrong direct launch count.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch dev .+$').Count -eq 4) `
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch dev .+$').Count -eq 1) `
         -Message 'Root dispatch did not preserve the configured development-launch default.'
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: candidate').Count -eq 1) `
@@ -389,9 +467,9 @@ else {
         -Message 'Explicit worker build did not dispatch to worker-output mode.'
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: unchanged').Count -eq 3) `
-        -Message 'Build-only, compact-recipe build, and build-and-launch did not use the standard build pipeline.'
+        -Message 'Build-only, composed-recipe build, and build-and-launch did not use the standard build pipeline.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize na228').Count -eq 9) `
+        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize na228').Count -eq 6) `
         -Message 'Standalone and user-owned workflows did not preserve NA2 actualization.'
     $structuredLog = Join-Path $logs 'na228'
     $buildRecords = Join-Path $structuredLog 'builds'

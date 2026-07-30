@@ -19,7 +19,7 @@ if ($Help -or $Mode -ceq 'help') {
         'Actualization commands:'
         '  act        Run na228, then input'
         '  act na228    Actualize built NA2.28 GameSettings and cheat aliases'
-        '  act input  Regenerate the Comparison_NA2 input profile'
+        '  act input  Regenerate the Base_NA2 input profile from Base'
         '  act help   Show this help'
         ''
     ) | Write-Output
@@ -81,7 +81,7 @@ try {
                 ) -ForegroundColor Cyan
             }
             'input' {
-                Write-Host '[act] Actualize Comparison_NA2 input profile' `
+                Write-Host '[act] Actualize Base_NA2 input profile' `
                     -ForegroundColor Cyan
                 $output = @(
                     & $projectPaths.files.actualize_input_command -PassThru
@@ -98,7 +98,7 @@ try {
                 else {
                     'already current'
                 }
-                Write-Host "[act] Comparison_NA2: $state." `
+                Write-Host "[act] Base_NA2 input profile: $state." `
                     -ForegroundColor Cyan
             }
         }

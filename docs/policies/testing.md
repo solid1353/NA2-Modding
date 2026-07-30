@@ -102,12 +102,12 @@ requirements, not whatever implementation happens to exist today.
   exact-guarded task-owned conversion or a user-supplied post-build state is
   available. An unconverted stale state cannot validate the patch.
 - Agent builds use only
-  `na228 t work/<task title>/build/<name>.iso`, with staging beside the output
+  `na228 worker work/<task title>/build/<name>.iso`, with staging beside the output
   and structured records under the same task's `logs/`. Agents never invoke
   bare `na228`, `na228 b`, or bare `na228 t`.
-- In both `na228 t` and `_na228.ps1 t`, `t` is an ISO-build recipe: without an
-  output path it builds and actualizes Candidate; with a worker output path it
-  builds that isolated ISO. It never runs the test suite. Run the builder
+- In both `na228 t` and `_na228.ps1 t`, `t` is an ISO-build recipe that builds
+  and actualizes Candidate. Isolated output uses the explicit `worker` command.
+  Neither mode runs the test suite. Run the builder
   suite only with
   `python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'`.
   Verify every validation command's documented semantics before running it;

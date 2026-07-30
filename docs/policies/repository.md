@@ -7,9 +7,11 @@
   absolute paths are limited to dated `.agents/` handoffs, transient tool
   arguments/diagnostics, and user-facing clickable links unless explicitly
   authorized.
-- `project-paths.json` is the single source of truth for stable project-level
-  directories and named files. Resolve them through the shared PowerShell or
-  Python loader. Do not inventory ordinary descendants such as `BTL.BIN`.
+- `project-paths.json` is the source of truth for stable project-level
+  infrastructure directories and named files; `games.json` owns registered
+  source games, build roles, selector aliases, and game-specific configuration.
+  Resolve both through the shared PowerShell or Python loader. Do not inventory
+  ordinary descendants such as `BTL.BIN`.
 - Deleting or moving the last content of a configured root or direct manifest
   file must update the manifest and every `@root` documentation reference, then
   validate both path loaders. Never preserve an empty directory for a manifest.
@@ -28,9 +30,9 @@
   has no
   configurable input-recordings folder, so recordings are opened from their
   canonical shared paths explicitly.
-- `@pcsx2_files/input_profiles/Comparison.ini` is the only manually edited
+- `@pcsx2_files/input_profiles/Base.ini` is the only manually edited
   comparison input profile. Regenerate
-  `@pcsx2_files/input_profiles/Comparison_NA2.ini` with the maintained
+  `@pcsx2_files/input_profiles/Base_NA2.ini` with the maintained
   `act input`; never edit the generated profile directly.
 - Task-owned PCSX2 copies are complete disposable portable runtimes, including
   their configuration, unique PINE port, savestates, screenshots, logs, cache,

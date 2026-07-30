@@ -4,10 +4,6 @@
     "repository": ".",
     "workshop": "../UN Workshop",
     "source": "@workshop/source",
-    "source_na2": "@source/NA2.iso.files",
-    "source_nun3": "@source/NUN3.iso.files",
-    "source_nun5": "@source/NUN5.iso.files",
-    "source_nun6": "@source/NUN6 A35.iso.files",
     "analysis": "@workshop/analysis",
     "utils": "@workshop/tools",
     "pcsx2_stable": "@workshop/pcsx2/stable",
@@ -37,14 +33,8 @@
   "files": {
     "pcsx2_stable_exe": "@pcsx2_stable/pcsx2-qt.exe",
     "pcsx2_dev_exe": "@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe",
-    "cheat_template": "@pcsx2_cheats/SLOP-NA228.pnach",
-    "gamesettings_template": "@pcsx2_game_settings/SLOP-NA228.ini",
-    "current_memory_card": "@pcsx2_memory_cards/NA228 - Current.ps2",
-    "previous_memory_card": "@pcsx2_memory_cards/NA228 - Previous.ps2",
-    "candidate_memory_card": "@pcsx2_memory_cards/NA228 - Candidate.ps2",
-    "comparison_input_profile": "@pcsx2_input_profiles/Comparison.ini",
-    "comparison_na2_input_profile": "@pcsx2_input_profiles/Comparison_NA2.ini",
     "notification_state": "@repository/.agents/notifications.json",
+    "game_catalog": "@repository/games.json",
     "na228_command": "@repository/_na228.ps1",
     "pcsx2_launch_command": "@pcsx2_scripts/launch.ps1",
     "pcsx2_savestate_move_command": "@pcsx2_scripts/move_na228_savestates.ps1",
@@ -52,13 +42,6 @@
     "actualize_command": "@pcsx2_scripts/actualization/act.ps1",
     "actualize_na228_command": "@pcsx2_scripts/actualization/sync_game_files.ps1",
     "actualize_input_command": "@pcsx2_scripts/actualization/sync_input.ps1",
-    "release_publish_command": "@scripts/release/publish_release.ps1",
-    "na2_iso": "@source/NA2.iso",
-    "nun3_iso": "@source/NUN3.iso",
-    "nun5_iso": "@source/NUN5.iso",
-    "nun6_iso": "@source/NUN6 A35.iso",
-    "current_iso": "@build/NA2.28 - Current.iso",
-    "previous_iso": "@build/NA2.28 - Previous.iso",
-    "candidate_iso": "@build/NA2.28 - Candidate.iso"
+    "release_publish_command": "@scripts/release/publish_release.ps1"
   }
 }

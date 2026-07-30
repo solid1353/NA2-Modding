@@ -50,13 +50,13 @@ PCSX2 uses its GameDB title for known serials. For a serial absent from the
 GameDB, the Game List falls back to the scanned image filename. The local cache
 confirmed this for the unknown `SLUS-55606`: `NUN6 A35.iso` appears as
 `NUN6 A35`. Because normal project images are intentionally named
-`NA2.28 - Current.iso` and `NA2.28 - Previous.iso`, `SLOP-NA228` appears in the
-Game List as `NA2.28 - Current` or `NA2.28 - Previous` rather than
+`NA v2.28 - Current.iso` and `NA v2.28 - Previous.iso`, `SLOP-NA228` appears in the
+Game List as `NA v2.28 - Current` or `NA v2.28 - Previous` rather than
 `Narutimate Accel v2.28`.
 
 The runtime window title is a separate path. A game started from the populated
 Game List has the path's scanned title available, so normal Game List launches
-can retain `NA2.28 - Current` or `NUN6 A35`. A direct command-line/`-batch`
+can retain `NA v2.28 - Current` or `NUN6 A35`. A direct command-line/`-batch`
 launch has no
 scanned-entry title available during boot. PCSX2 2.6.3 then deliberately formats
 an unknown serial as `<serial> [?]`. This was runtime-confirmed as
@@ -76,7 +76,7 @@ entry** to override this title or copy the stock compatibility entry. Directly
 editing `@pcsx2_stable/cache/gamelist.cache` is likewise rejected because it is
 generated, machine-local state.
 
-The stable cheat template is `@pcsx2_cheats/SLOP-NA228.pnach`. Actualization derives each
+The stable cheat template is `@pcsx2_cheats/_SLOP-NA228.pnach`. Actualization derives each
 retained image's alphanumeric serial from `SYSTEM.CNF`, creates matching
 `@pcsx2_cheats/<serial>_<crc>.pnach` aliases, and removes obsolete managed
 aliases without touching unrelated files. On 2026-07-24 the retained Current,

@@ -57,6 +57,36 @@ function Get-Na2DevPinePort {
     return $port
 }
 
+function Wait-Na2PinePort {
+    param(
+        [int]$Port,
+        [int]$TimeoutSeconds = 60
+    )
+
+    $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+    do {
+        $client = [Net.Sockets.TcpClient]::new()
+        try {
+            $connect = $client.ConnectAsync(
+                [Net.IPAddress]::Loopback,
+                $Port
+            )
+            if ($connect.Wait(250) -and $client.Connected) {
+                return
+            }
+        }
+        catch {
+            # PCSX2 has not opened PINE yet.
+        }
+        finally {
+            $client.Dispose()
+        }
+        Start-Sleep -Milliseconds 250
+    } while ([DateTime]::UtcNow -lt $deadline)
+
+    throw "Development PCSX2 did not open PINE port $Port within $TimeoutSeconds seconds."
+}
+
 $workerBuild = if ($Test -and -not [string]::IsNullOrWhiteSpace($Mode)) {
     Get-Na2WorkerBuildContext `
         -OutputPath $Mode `
@@ -108,6 +138,8 @@ if ($command -eq 'release') {
 
 if ($Watch) {
     $pinePort = Get-Na2DevPinePort
+    Write-Na2Stage "Wait up to 60 seconds for PINE port $pinePort"
+    Wait-Na2PinePort -Port $pinePort
     Write-Na2Stage "Watch src/ and hot-reload through PINE port $pinePort"
     & (Join-Path $projectPaths.scripts 'injection\watch.ps1') `
         -PinePort $pinePort

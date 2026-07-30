@@ -156,7 +156,8 @@ omit `-SourcePath`, `-SourceId`, and `-Entry` for the root smoke source, or pass
 an owning feature source/entry or overlay plan explicitly. Agents invoke
 `test.ps1` and never run the watcher or its build/apply stages separately.
 The routine root-source watcher is exposed as `na228 -w`; it reads the PINE
-port from the configured development PCSX2.
+port from the configured development PCSX2 and waits up to 60 seconds for it
+to become available.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`

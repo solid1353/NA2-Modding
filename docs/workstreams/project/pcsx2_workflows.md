@@ -136,7 +136,8 @@ the old alternating A/B banks, active-bank pointer, and bank-switching files.
 
 1. Launch the visible development PCSX2 installation and navigate normally.
 2. Run `na228 -w`. The command reads the PINE port from the configured
-   development PCSX2 and starts `watch.ps1` with root `src/` defaults.
+   development PCSX2, waits quietly for it for up to 60 seconds, and starts
+   `watch.ps1` with root `src/` defaults.
 3. Edit and save C.
 4. The watcher invokes `build.py`.
 5. On success, the watcher invokes `apply.py`.

@@ -28,6 +28,7 @@ $entriesPath = Join-Path $packageRoot 'entries.tsv'
 $sourceTable = Join-Path $packageRoot 'c_sources.tsv'
 $buildScript = Join-Path $PSScriptRoot 'build.py'
 $applyScript = Join-Path $PSScriptRoot 'apply.py'
+$pineScript = Join-Path $repository 'scripts\pcsx2\pine.py'
 $hotReloadSourceId = 'hot_reload_test'
 $hotReloadEntry = 'project.hot_reload_test'
 
@@ -36,6 +37,67 @@ function Resolve-RepositoryPath([string]$Path) {
         return [IO.Path]::GetFullPath($Path)
     }
     return [IO.Path]::GetFullPath((Join-Path $repository $Path))
+}
+
+function Get-ConfiguredDevelopmentPinePort {
+    . (Join-Path $repository 'scripts\lib\project_paths.ps1')
+    $projectPaths = Get-Na2ProjectPaths
+    $iniPath = Join-Path $projectPaths.pcsx2_dev 'inis\PCSX2.ini'
+    if (-not (Test-Path -LiteralPath $iniPath -PathType Leaf)) {
+        throw "Development PCSX2 configuration was not found: $iniPath"
+    }
+    $match = Select-String `
+        -LiteralPath $iniPath `
+        -Pattern '^\s*PINESlot\s*=\s*(\d+)\s*$' |
+        Select-Object -First 1
+    if ($null -eq $match) {
+        throw "Development PCSX2 PINESlot is not configured in $iniPath"
+    }
+    $port = [int]$match.Matches[0].Groups[1].Value
+    if ($port -lt 1 -or $port -gt 65535) {
+        throw "Development PCSX2 PINESlot is invalid: $port"
+    }
+    return $port
+}
+
+function Wait-InjectionTarget {
+    param(
+        [int]$Port,
+        [int]$TimeoutSeconds = 60
+    )
+
+    $emptyHook = '00' * 20
+    $residentMagic = '4D576F33'
+    $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+    do {
+        $state = & python -B $pineScript --port $Port status 2>$null
+        if (
+            $LASTEXITCODE -eq 0 -and
+            ([string]$state).Trim() -in @('running', 'paused')
+        ) {
+            $hook = & python -B $pineScript `
+                --port $Port `
+                read 0x001D0578 20 `
+                2>$null
+            $hookExitCode = $LASTEXITCODE
+            $resident = & python -B $pineScript `
+                --port $Port `
+                read 0x008F3D00 4 `
+                2>$null
+            $residentExitCode = $LASTEXITCODE
+            if (
+                $hookExitCode -eq 0 -and
+                $residentExitCode -eq 0 -and
+                ([string]$hook).Trim() -ne $emptyHook -and
+                ([string]$resident).Trim() -ceq $residentMagic
+            ) {
+                return
+            }
+        }
+        Start-Sleep -Milliseconds 250
+    } while ([DateTime]::UtcNow -lt $deadline)
+
+    throw "Development PCSX2 did not load the resident payload and root injection target on PINE port $Port within $TimeoutSeconds seconds."
 }
 
 $resolvedOverlayPlan = $null
@@ -135,7 +197,14 @@ else {
     Join-Path $repository "build\injection\$SourceId"
 }
 if (-not $BuildOnly -and $PinePort -eq 0) {
-    throw 'PinePort is required unless BuildOnly is selected.'
+    $PinePort = Get-ConfiguredDevelopmentPinePort
+    Write-Host (
+        "[injection] Wait up to 60 seconds for the injection target on PINE port $PinePort"
+    ) -ForegroundColor Cyan
+    Wait-InjectionTarget -Port $PinePort
+    Write-Host (
+        "[injection] Watch and hot-reload through PINE port $PinePort"
+    ) -ForegroundColor Cyan
 }
 
 $watchPaths = if ($SourceId -ceq $hotReloadSourceId) {

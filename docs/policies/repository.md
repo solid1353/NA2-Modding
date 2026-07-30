@@ -115,6 +115,10 @@
   are limited to thin dot-source imports and aliases that expose project-owned
   entrypoint scripts. Keep all functions and reusable implementation under the
   project's maintained `scripts/` tree.
+- Keep root `_na228.ps1` a short user-facing command router. Build, launch,
+  watcher, release, validation, and other implementation logic belongs under
+  the maintained `scripts/` tree; the root entrypoint only parses and
+  dispatches modes.
 - Use purpose-specific subfolders under `@logs/`, workstream records under
   `@workstream_logs/<exact task title>/`, and worker records under the task's
   `logs/`; never write directly in shared log roots.

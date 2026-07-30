@@ -17,8 +17,9 @@ history; do not recreate an archive directory for dead scripts.
   `manifest.json`, apply that candidate transactionally through PINE, the
   standard workstream build/reload/apply command, and the user-only save
   watcher.
-- `na228/`: build, promotion, ISO identity, worker-path validation, and focused
-  build/run-log tests.
+- `na228/`: root-command implementation, build, promotion, ISO identity,
+  worker-path validation, and focused build/run-log tests. Root `_na228.ps1`
+  only forwards its parsed parameters to `na228/command.ps1`.
 - `pcsx2/`: PCSX2 launch, process, configuration, CRC helpers, the user-facing
   user/development single-instance and multi-game launch commands, the
   dot-sourced source-game command set, stable/development savestate filing,

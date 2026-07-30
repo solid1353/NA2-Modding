@@ -102,6 +102,8 @@ try {
         -Destination (Join-Path $fakeRepository 'scripts\lib')
     $fakeNa2Scripts = Join-Path $fakeRepository 'scripts\na228'
     New-Item -ItemType Directory -Force -Path $fakeNa2Scripts | Out-Null
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'command.ps1') `
+        -Destination $fakeNa2Scripts
     $fakePcsx2Scripts = Join-Path $fakeRepository 'scripts\pcsx2'
     New-Item -ItemType Directory -Force -Path $fakePcsx2Scripts | Out-Null
     $fakeActualizationScripts = Join-Path $fakePcsx2Scripts 'actualization'

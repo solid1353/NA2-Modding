@@ -102,7 +102,7 @@ try {
             Invoke-Na2Actualization -Roles $buildResult.ChangedRoles
         }
         'latest-build' {
-            Write-Na2Stage "Build $latestIsoName without launching PCSX2"
+            Write-Na2Stage "Build $latestIsoName"
             $buildResult = & (Join-Path $PSScriptRoot 'build.ps1')
             if (
                 -not $buildResult -or

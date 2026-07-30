@@ -80,6 +80,11 @@
   action violated an exact rule that was live when it acted. A newly added or
   clarified rule cannot retroactively turn previously permitted behavior into
   a violation.
+- An exact live rule includes applicable direct and standing user
+  instructions, not only wording already persisted in repository policy.
+  Failure to store a repeated user rule does not erase its authority or justify
+  lifting charges; verify that the instruction applied to the task when it
+  acted, then enforce it and repair the policy-storage gap separately.
 - Every confirmed-violation confrontation tells the offending task exactly:
   `YOU'RE UNDER ARREST.` When no live-rule violation is confirmed, do not use
   that statement or label the reported task an offender; start the enforcement

@@ -89,6 +89,12 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   final response while work remains actionable is allowed only for explicit
   stop/pause/wait, missing required input, unsafe or materially unclear work,
   an unresolved dependency with nothing else in scope, or `zxc`.
+- A user-observed failure in a newly implemented authorized workflow remains
+  actionable remediation of that workflow. Concurrent work on another
+  approved transaction or different files does not make the defect separate:
+  finish any current atomic transaction, then correct the failure before a
+  final response unless the user stops or the remediation is materially
+  unclear.
 - A correction or stop directed at one mistaken action cancels only that
   action. Isolate or undo the detour and continue the parent task unless the
   user stops or replaces it.

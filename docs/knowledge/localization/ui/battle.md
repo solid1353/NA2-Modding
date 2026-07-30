@@ -601,6 +601,57 @@ high-confidence static result rather than a runtime-verified one. The exact
 fixed-class scale is likewise statically traced until a fixed-class state is
 captured.
 
+## Substitution-doll pickup atlas binding
+
+### Identity and address map
+
+This finding uses the boot-ELF identities and file/runtime mappings declared
+above. The complete resident item-record tables begin at NA2 runtime
+`0x005B0A60` and NUN5 runtime `0x005B7ED0`; each entry is 12 bytes.
+
+| Role | NA2 | NUN5 |
+| --- | --- | --- |
+| Resident uniform item renderer | file `0x277160`, runtime `FUN_00377060` | file `0x284280`, runtime `FUN_00384100` |
+| Table record selected by the live doll effect | index `0x2E`, file `0x4B0D88`, runtime `0x005B0C88` | index `0x0A`, file `0x4B80C8`, runtime `0x005B7F48` |
+| Active homologous `TEX_xselect` sprite | `0x00E384C0` | `0x00DB5040` |
+
+The resident renderers index their tables by `recordId * 12`, copy the record's
+U/V/width/height into the sprite, center it, and call `FUN_001cc350` in NA2 or
+`FUN_001d1480` in NUN5. Their resource lookup callees are
+`FUN_00376610` / `FUN_00383470` and `FUN_00375180` / `FUN_00381fb0`.
+The BTL pickup caller supplies record `0x2E` in NA2 and record `0x0A` in NUN5;
+that caller-side semantic numbering difference is retained.
+
+### Reconstructed behavior and correction
+
+The matched Slot 4 states reduce the defect to:
+
+```cpp
+// Existing game-specific callers:
+drawResidentItemSprite(na2Record[0x2E]);   // wrong after NUN5 atlas import
+drawResidentItemSprite(nun5Record[0x0A]);  // official substitution doll
+
+// NA2-compatible data port:
+na2Record[0x2E] = nun5Record[0x0A];
+```
+
+Both active sprites occupy the same pool position, use `TEX_xselect`, retain
+30x30 source dimensions and flags `0xC127FFFF`, and differ in anchor by only
+three pixels at the captured animation phase. Current's record is
+`(65,225,30,30)`, which selects the green `Recovery` artwork from the imported
+NUN5 atlas. NUN5's record is `(161,225,30,30)`, which selects the substitution
+doll. `ui_layout_item_pickup_doll_01` therefore performs one guarded 12-byte
+copy from NUN5 ELF file `0x4B80C8` to NA2 ELF file `0x4B0D88`.
+
+Copying NUN5 record `0x2E` by index is a useful negative result: it contains the
+same `(65,225,30,30)` Recovery rectangle and would preserve the defect.
+Copying the whole table is likewise unsupported because the games' semantic
+record IDs are not globally aligned. The bounded cross-index donor changes no
+renderer code, item selection, item behavior, effect lifetime, animation, or
+object allocation. The record mapping is **verified** from exact source bytes
+and both retained EE images; the integrated visible result remains
+`approved_for_test` until a fresh post-change capture.
+
 ## Fixed two-label item status
 
 ### Identity and address map

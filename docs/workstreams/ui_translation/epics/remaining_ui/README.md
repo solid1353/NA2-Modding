@@ -1,13 +1,29 @@
 # Remaining UI Translation epic
 
-Current report snapshot: 2026-07-27.
+Current report snapshot: 2026-07-31.
 
 Every grid shows the official NUN5 reference on the left and Current NA2.28 on
 the right.
 
+Mode: Sequential
+
+Current subtask: Battle item substitution doll, slot 4.
+
+Pending grid: missing: integrated Current NA2.28 post-change screenshot for
+the slot 4 substitution-doll fix.
+
 ## Remaining subtasks
 
-None.
+- **Battle UI — substitution doll item effect, slot 4**
+  - Status: implemented; integrated post-change capture pending.
+  - Defect: Current samples the green `Recovery` label instead of the
+    substitution doll icon shown by NUN5.
+  - Preserved pair:
+    `work/UI translation/inputs/sstates/battle_item_doll_ss04_20260731/`.
+  - Provenance:
+    `work/UI translation/inputs/sstates/battle_item_doll_ss04_20260731/provenance.tsv`.
+
+![Pending slot 4 comparison](pending/battle-item-doll-ss04.png)
 
 ## User-accepted completed cases
 

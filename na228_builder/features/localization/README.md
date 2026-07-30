@@ -1305,6 +1305,21 @@ object delta is the expected one-frame pulse/update difference. Because the
 checkpoint uses a transformed live object rather than a naturally spawned
 fixed notification, the runtime-proven patch retains high confidence.
 
+### ui_layout_item_pickup_doll: localized substitution-doll pickup
+
+The battle pickup effect uses the resident `TEX_xselect` sprite pool but the
+two games pass different logical record IDs for the substitution doll. In
+matched Slot 4 states, Current NA2 passes record `0x2E`, whose retained
+`(65,225,30,30)` rectangle samples the green `Recovery` label after the NUN5
+atlas import. NUN5 passes record `0x0A`, whose `(161,225,30,30)` rectangle
+selects the doll icon.
+
+`ui_layout_item_pickup_doll` copies the complete official NUN5 record `0x0A`
+from ELF file offset `0x4B80C8` into NA2 record `0x2E` at `0x4B0D88`. The
+cross-index copy is deliberate: NUN5 record `0x2E` is the same wrong Recovery
+rectangle and therefore cannot be used as a same-index donor. No renderer,
+animation, item-selection, or gameplay code changes.
+
 ### ui_layout_mash_prompts: localized battle Mash prompt rectangles
 
 The battle prompt object stores its main label ID at `+0x2F` and supplemental

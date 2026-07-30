@@ -302,6 +302,65 @@ class InjectionBuildTests(unittest.TestCase):
             {"localization.font.v2.resident_helper"},
         )
 
+    def test_forced_source_fragment_is_linked_instead_of_resident_import(self) -> None:
+        entry = build_injection.PayloadFragment(
+            owner="localization.runtime_injector",
+            symbol="localization.font.v2.entry",
+            kind="code",
+            alignment=4,
+            payload=bytes(8),
+            relocations=(
+                build_injection.PayloadRelocation(
+                    offset=0,
+                    kind="jal26",
+                    symbol="localization.font.v2.changed_impl",
+                ),
+            ),
+        )
+        changed_impl = build_injection.PayloadFragment(
+            owner="localization.runtime_injector",
+            symbol="localization.font.v2.changed_impl",
+            kind="code",
+            alignment=4,
+            payload=bytes.fromhex("0800E00300000000"),
+        )
+        current_payload = bytes(16)
+        symbol_map = {
+            "localization.font.v2.changed_impl": {
+                "kind": "code",
+                "size": 8,
+                "offset": 0,
+                "address": 0x008F4000,
+            }
+        }
+
+        with mock.patch.object(
+            build_injection,
+            "_load_static_fragments",
+            return_value=[],
+        ):
+            fragments, imports = build_injection.select_fragment_closure(
+                ["localization.font.v2.entry"],
+                [entry, changed_impl],
+                [
+                    (1, "entry", "localization.font.v2.entry"),
+                    (2, "impl", "localization.font.v2.changed_impl"),
+                ],
+                symbol_map,
+                current_payload,
+                {},
+                forced_symbols={"localization.font.v2.changed_impl"},
+            )
+
+        self.assertEqual(
+            [fragment.symbol for fragment in fragments],
+            [
+                "localization.font.v2.entry",
+                "localization.font.v2.changed_impl",
+            ],
+        )
+        self.assertNotIn("localization.font.v2.changed_impl", imports)
+
     def test_missing_build_record_is_optional_for_override_mode(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             with mock.patch.object(

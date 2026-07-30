@@ -152,9 +152,9 @@ try {
 {
   "schema_version": 1,
   "targets": {
-    "font-controls": {
-      "source_id": "font_v2_core",
-      "entry": "localization.font.v2.controls_adapter"
+    "font": {
+      "overlay_plan": "scripts/injection/targets/font.json",
+      "whole_source": true
     }
   }
 }
@@ -318,11 +318,12 @@ param(
     [string]$SourceId,
     [string]$Entry,
     [string]$SourcePath,
-    [string]$OverlayPlan
+    [string]$OverlayPlan,
+    [switch]$WholeSource
 )
 Write-Output (
     "[fake] watch $PinePort source=$SourceId entry=$Entry " +
-    "sourcePath=$SourcePath plan=$OverlayPlan"
+    "sourcePath=$SourcePath plan=$OverlayPlan wholeSource=$($WholeSource.IsPresent)"
 )
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeReleaseScripts 'publish_release.ps1') -Content @'
@@ -505,17 +506,17 @@ else {
         ) `
         -Message 'Leading build/watch token did not preserve window order.'
     $namedBuildWatch = (
-        & (Join-Path $fakeRepository '_na228.ps1') blw font-controls nun5
+        & (Join-Path $fakeRepository '_na228.ps1') blw font nun5
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
             $namedBuildWatch -match 'multi-game launch latest,nun5' -and
             $namedBuildWatch -match (
-                '\[fake\] watch 28014 source=font_v2_core ' +
-                'entry=localization\.font\.v2\.controls_adapter'
+                '\[fake\] watch 28014 .*' +
+                'plan=scripts/injection/targets/font\.json wholeSource=True'
             )
         ) `
-        -Message 'Named watch target did not preserve launch order or watcher selection.'
+        -Message 'Whole-Font watch target did not preserve launch order or selection.'
     $directPlanWatch = (
         & (Join-Path $fakeRepository '_na228.ps1') `
             nun5 `
@@ -531,16 +532,16 @@ else {
         ) `
         -Message 'Direct overlay-plan watch target was not forwarded.'
     $standaloneNamedWatch = (
-        & (Join-Path $fakeRepository '_na228.ps1') w font-controls
+        & (Join-Path $fakeRepository '_na228.ps1') w font
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
             $standaloneNamedWatch -match (
-                '\[fake\] watch 0 source=font_v2_core ' +
-                'entry=localization\.font\.v2\.controls_adapter'
+                '\[fake\] watch 0 .*' +
+                'plan=scripts/injection/targets/font\.json wholeSource=True'
             )
         ) `
-        -Message 'Standalone named watch target was not forwarded.'
+        -Message 'Standalone whole-Font watch target was not forwarded.'
     $latestWatch = (
         & (Join-Path $fakeRepository '_na228.ps1') lw
     ) -join "`n"

@@ -64,6 +64,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--entry", required=True)
     parser.add_argument("--overlay-plan")
     parser.add_argument(
+        "--whole-source",
+        action="store_true",
+        help="Link every declared fragment from the selected C source.",
+    )
+    parser.add_argument(
         "--iso",
         type=Path,
         default=load_project_paths(REPOSITORY).file("latest_iso"),
@@ -121,13 +126,24 @@ def load_overlay_plan(
     if not plan_path.is_absolute():
         plan_path = REPOSITORY / plan_path
     plan_path = plan_path.resolve()
-    work_root = (REPOSITORY / "work").resolve()
-    try:
-        relative = plan_path.relative_to(work_root)
-    except ValueError as exc:
-        raise ValueError("Overlay plan must be task-owned under work/<task>/") from exc
-    if len(relative.parts) < 2 or not plan_path.is_file():
-        raise ValueError("Overlay plan must be a file under work/<task>/")
+    allowed_roots = (
+        ((REPOSITORY / "work").resolve(), 2),
+        ((SCRIPT_ROOT / "targets").resolve(), 1),
+    )
+    allowed = False
+    for root, minimum_parts in allowed_roots:
+        try:
+            relative = plan_path.relative_to(root)
+        except ValueError:
+            continue
+        if len(relative.parts) >= minimum_parts:
+            allowed = True
+            break
+    if not allowed or not plan_path.is_file():
+        raise ValueError(
+            "Overlay plan must be task-owned under work/<task>/ or a "
+            "maintained target under scripts/injection/targets/"
+        )
     raw = json.loads(plan_path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise ValueError("Overlay plan root must be a JSON object")
@@ -563,6 +579,30 @@ def load_declared_entry(
     }
 
 
+def load_declared_entries(source_id: str) -> list[dict[str, str]]:
+    entries = read_tsv(PACKAGE_ROOT / "entries.tsv", ENTRY_FIELDS)
+    result = []
+    for entry in entries:
+        if entry["source_id"] != source_id:
+            continue
+        identifier(entry["entry_symbol"], "entries.tsv entry_symbol")
+        identifier(entry["abi"], "entries.tsv abi")
+        if not entry["purpose"]:
+            raise ValueError("entries.tsv purpose must not be empty")
+        result.append(
+            {
+                "symbol": entry["entry_symbol"],
+                "abi": entry["abi"],
+                "purpose": entry["purpose"],
+            }
+        )
+    if not result:
+        raise ValueError(
+            f"Production source {source_id!r} has no declared entries"
+        )
+    return result
+
+
 def compile_fragments(
     source_id: str,
     source_path: Path,
@@ -621,6 +661,7 @@ def select_fragment_closure(
     symbol_map: dict[str, dict[str, object]],
     current_payload: bytes,
     resident_symbol_overrides: dict[str, int],
+    forced_symbols: set[str] | None = None,
 ) -> tuple[list[PayloadFragment], set[str]]:
     c_orders = {
         fragment_id: order
@@ -644,6 +685,7 @@ def select_fragment_closure(
             )
 
     root_symbols = set(entry_symbols)
+    root_symbols.update(forced_symbols or ())
     selected: set[str] = set()
     external_symbols: set[str] = set()
     current_match_cache: dict[str, bool] = {}
@@ -714,8 +756,13 @@ def select_fragment_closure(
             else:
                 external_symbols.add(relocation.symbol)
 
-    for entry_symbol in entry_symbols:
-        visit(entry_symbol)
+    for root_symbol in sorted(root_symbols):
+        if root_symbol not in catalog:
+            raise ValueError(
+                f"Selected root {root_symbol!r} is not a canonical "
+                "runtime-injector fragment"
+            )
+        visit(root_symbol)
     ordered = sorted(
         (catalog[symbol] for symbol in selected),
         key=lambda item: (item[0], item[1], item[2].symbol),
@@ -852,6 +899,22 @@ def main() -> int:
         if overlay_plan is not None
         else [load_declared_entry(source_id, entry_symbol)]
     )
+    if args.whole_source:
+        declared = load_declared_entries(source_id)
+        by_symbol = {
+            declaration["symbol"]: declaration
+            for declaration in entry_declarations
+        }
+        for declaration in declared:
+            by_symbol.setdefault(declaration["symbol"], declaration)
+        entry_declarations = [
+            by_symbol[entry_symbol],
+            *(
+                declaration
+                for symbol, declaration in by_symbol.items()
+                if symbol != entry_symbol
+            ),
+        ]
     entry_symbols = [entry["symbol"] for entry in entry_declarations]
 
     with tempfile.TemporaryDirectory(prefix="na228-injection-") as temporary:
@@ -870,6 +933,11 @@ def main() -> int:
         symbol_map,
         payload,
         resident_symbol_overrides,
+        forced_symbols=(
+            {fragment.symbol for fragment in compiled_c_fragments}
+            if args.whole_source
+            else None
+        ),
     )
     by_symbol = {fragment.symbol: fragment for fragment in fragments}
     for selected_entry in entry_symbols:
@@ -895,7 +963,45 @@ def main() -> int:
     )
 
     writes = list(overlay_writes)
-    if overlay_plan is None and source_id == HOT_RELOAD_SOURCE:
+    if args.whole_source:
+        occupied_addresses = {
+            int(write["runtime_address"], 0)
+            for write in writes
+        }
+        for declaration in entry_declarations:
+            selected_entry = declaration["symbol"]
+            resident_entry = symbol_map.get(selected_entry)
+            if resident_entry is None:
+                continue
+            resident_address = int(resident_entry["address"])
+            if resident_address in occupied_addresses:
+                continue
+            if int(resident_entry["size"]) < 8:
+                raise ValueError(
+                    f"Production entry {selected_entry!r} is smaller than 8 bytes"
+                )
+            resident_offset = int(resident_entry["offset"])
+            expected = payload[resident_offset : resident_offset + 8]
+            writes.append(
+                {
+                    "id": (
+                        "resident_entry_redirect_"
+                        + re.sub(r"[^A-Za-z0-9_.-]", "_", selected_entry)
+                    ),
+                    "runtime_address": f"0x{resident_address:08X}",
+                    "expected_hex": expected.hex().upper(),
+                    "replacement_hex": (
+                        encode_symbol_reference("j26", addresses[selected_entry])
+                        + bytes(4)
+                    ).hex().upper(),
+                    "reason": (
+                        "Redirect the Latest resident entry to the whole-source "
+                        "development fragment."
+                    ),
+                }
+            )
+            occupied_addresses.add(resident_address)
+    elif overlay_plan is None and source_id == HOT_RELOAD_SOURCE:
         writes.append(
             {
                 "id": "hot_reload_test_call",
@@ -948,6 +1054,7 @@ def main() -> int:
     manifest = {
         "schema_version": 1,
         "source_id": source_id,
+        "whole_source": args.whole_source,
         "entry_symbols": [
             {
                 "symbol": selected_entry,

@@ -40,7 +40,13 @@ function Get-Na228WatchTargetArguments {
     }
 
     $definition = $targetProperty.Value
-    $allowed = @('source_id', 'entry', 'source_path', 'overlay_plan')
+    $allowed = @(
+        'source_id',
+        'entry',
+        'source_path',
+        'overlay_plan',
+        'whole_source'
+    )
     $extra = @(
         $definition.PSObject.Properties.Name |
             Where-Object { $_ -notin $allowed }
@@ -63,6 +69,15 @@ function Get-Na228WatchTargetArguments {
                 throw "Watch target '$name' has an empty $($mapping[0])."
             }
             $arguments[$mapping[1]] = $value
+        }
+    }
+    $wholeSourceProperty = $definition.PSObject.Properties['whole_source']
+    if ($null -ne $wholeSourceProperty) {
+        if ($wholeSourceProperty.Value -isnot [bool]) {
+            throw "Watch target '$name' has a non-boolean whole_source."
+        }
+        if ([bool]$wholeSourceProperty.Value) {
+            $arguments['WholeSource'] = $true
         }
     }
     if (

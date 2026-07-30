@@ -12,6 +12,7 @@ param(
     [int]$DebounceMilliseconds = 400,
     [ValidateRange(50, 5000)]
     [int]$PollMilliseconds = 150,
+    [switch]$WholeSource,
     [switch]$BuildOnly
 )
 
@@ -135,18 +136,20 @@ if ($SourceId -ceq $hotReloadSourceId) {
     $canonicalSource = Join-Path $repository 'src\hot_reload_test.c'
 }
 else {
-    $entryRows = @(
-        Import-Csv -LiteralPath $entriesPath -Delimiter "`t" |
-            Where-Object { $_.entry_symbol -ceq $Entry }
-    )
-    if ($entryRows.Count -ne 1) {
-        throw "Entry '$Entry' must match exactly one entries.tsv row."
-    }
-    if (-not $SourceId) {
-        $SourceId = [string]$entryRows[0].source_id
-    }
-    if ($SourceId -cne [string]$entryRows[0].source_id) {
-        throw "Entry '$Entry' does not belong to source '$SourceId'."
+    if (-not $resolvedOverlayPlan) {
+        $entryRows = @(
+            Import-Csv -LiteralPath $entriesPath -Delimiter "`t" |
+                Where-Object { $_.entry_symbol -ceq $Entry }
+        )
+        if ($entryRows.Count -ne 1) {
+            throw "Entry '$Entry' must match exactly one entries.tsv row."
+        }
+        if (-not $SourceId) {
+            $SourceId = [string]$entryRows[0].source_id
+        }
+        if ($SourceId -cne [string]$entryRows[0].source_id) {
+            throw "Entry '$Entry' does not belong to source '$SourceId'."
+        }
     }
 
     $sourceRows = @(
@@ -271,6 +274,9 @@ function Invoke-InjectionBuild([switch]$ExitOnFailure) {
     )
     if ($resolvedOverlayPlan) {
         $buildArguments += @('--overlay-plan', $resolvedOverlayPlan)
+    }
+    if ($WholeSource) {
+        $buildArguments += '--whole-source'
     }
     if ($LatestIso) {
         $buildArguments += @('--iso', (Resolve-RepositoryPath $LatestIso))

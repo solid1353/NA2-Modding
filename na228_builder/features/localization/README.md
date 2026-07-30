@@ -1889,29 +1889,32 @@ verification pass; clean-construction runtime validation and user acceptance
 remain pending because the supplied visible-prompt ss7 state resumes after
 both owner calls.
 
-The `font_layout_character_select_modal` layer now owns three exact main-ELF
-callers rather than broad modal behavior. File `0x2BC984` routes only the
-selected five-row modal entry through its 240-unit shrink-only box; file
-`0x2BCB54` routes only the return-confirmation body through the accepted
+The `font_layout_character_select_modal` layer owns four exact main-ELF
+callers rather than broad modal behavior. Files `0x2BC984` and `0x2BC9BC`
+route only the selected and ordinary five-row entries through the same
+240-unit NUN5-metric session and five-local-unit X correction. Their distinct
+native callbacks retain the red selected style and black ordinary style, while
+the accepted row table continues to own every Y coordinate. File `0x2BCB54`
+routes only the return-confirmation body through the accepted
 secondary-renderer 368-by-24 box. Replacement-batch ss1 isolates the complete
-top Yes/No list at file `0x2BCAAC`, clean guard
-`800D0E0C00000000`; that call reuses
+top Yes/No list at file `0x2BCAAC`, clean guard `800D0E0C00000000`; that call reuses
 `localization.font.v2.quit_choices_scope`, so its rows receive the same
 relative modal offsets as NUN5 without adding another renderer formula. The
-lower body is user-accepted. The top selector is agent-validated and remains
-`approved_for_test` pending explicit user acceptance. Every ordinary row,
-Linked Mode list, and unrelated main-ELF list/body caller stays native.
+lower body is user-accepted and the top selector is user-verified.
+Supplemental ss1 proves the ordinary-row session preserves all native Y bounds
+while matching NUN5 horizontal bounds. The refreshed five-row result remains
+`approved_for_test` pending explicit user acceptance. Linked Mode and every
+unrelated main-ELF list/body caller stay isolated.
 
 The declarative `font_layout_linked_mode_modal` layer owns only main-ELF
-`FUN_003B8F40`, the center-screen Linked Mode selector in replacement-batch
-ss2. It changes the title constant at file `0x2B90E0` from local Y `12` to
-`8`, changes the three-choice base at file `0x2B91A4` from local Y `48` to
-`44`, and uses the existing selected-call delay slot at file `0x2B91E0` for
-`addiu a2,a2,-2`. The native 26-unit row step, draw calls, text pointers, X
-geometry, and every other modal remain untouched. Fresh task-owned runtime
-capture gives identical NUN5/current vertical ink bounds for `Linked Mode`
-and `Manual`; selected `Auto` differs only at one antialiased raster edge.
-The layer is `approved_for_test` pending explicit user acceptance.
+`FUN_003B8F40`, the center-screen Linked Mode selector. It changes the title
+constant at file `0x2B90E0` from local Y `12` to `8`, the choice interval at
+file `0x2B9190` from `26` to `20`, and the base at file `0x2B91A4` from `48`
+to `46`. No selected-only delay-slot compensation remains. Supplemental
+Manual-selected ss2 gives exact NUN5/current Y bounds for the title, selected
+Manual, and ordinary Auto; the native draw calls, text pointers, X geometry,
+and every other modal remain untouched. The layer is `approved_for_test`
+pending explicit user acceptance.
 
 The separate `font_layout_special_controls_body` layer completes the explanatory
 block on the same ss1 Special Controls screen. Exact telemetry identifies only

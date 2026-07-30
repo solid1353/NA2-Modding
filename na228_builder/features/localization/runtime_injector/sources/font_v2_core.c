@@ -74,7 +74,7 @@ typedef signed int s32;
 #define FONT_PAUSE_LIST_LINE_HEIGHT 20.0f
 #define FONT_CHARACTER_LIST_BOX_WIDTH 240u
 #define FONT_CHARACTER_LIST_BOX_HEIGHT 20u
-#define FONT_CHARACTER_LIST_SELECTED_X_OFFSET 5.0f
+#define FONT_CHARACTER_LIST_X_OFFSET 5.0f
 #define FONT_CHARACTER_LIST_LINE_HEIGHT 20.0f
 #define FONT_QUIT_YES_SOURCE_BITS 0x41C00000u
 #define FONT_QUIT_NO_SOURCE_BITS 0x42600000u
@@ -660,7 +660,7 @@ int font_v2_character_selected_adapter(
 
     session.text = text;
     session.box_x =
-        (float)draw_x + FONT_CHARACTER_LIST_SELECTED_X_OFFSET;
+        (float)draw_x + FONT_CHARACTER_LIST_X_OFFSET;
     session.box_y = (float)draw_y;
     session.box_width = FONT_CHARACTER_LIST_BOX_WIDTH;
     session.box_height = FONT_CHARACTER_LIST_BOX_HEIGHT;
@@ -672,9 +672,38 @@ int font_v2_character_selected_adapter(
     session.callback = FONT_CHARACTER_SELECTED_DRAW_ADDRESS;
     session.callback_arg0 = object;
     session.callback_arg1 =
-        (u32)(draw_x + (s32)FONT_CHARACTER_LIST_SELECTED_X_OFFSET);
+        (u32)(draw_x + (s32)FONT_CHARACTER_LIST_X_OFFSET);
     session.callback_arg2 = (u32)draw_y;
     session.callback_arg3 = (u32)text;
+
+    return font_v2_adapter_call(&session);
+}
+
+FONT_V2_SECTION(".text.font_v2_character_unselected_adapter")
+int font_v2_character_unselected_adapter(
+    u32 object,
+    const u8 *text,
+    u32 color,
+    float native_x,
+    float native_y
+) {
+    FontV2Session session;
+
+    session.text = text;
+    session.box_x = native_x + FONT_CHARACTER_LIST_X_OFFSET;
+    session.box_y = native_y;
+    session.box_width = FONT_CHARACTER_LIST_BOX_WIDTH;
+    session.box_height = FONT_CHARACTER_LIST_BOX_HEIGHT;
+    session.horizontal_alignment = FONT_V2_ALIGN_START;
+    session.vertical_alignment = FONT_V2_ALIGN_START;
+    session.flags = FONT_V2_FLAG_SHRINK_X;
+    session.line_limit = 1;
+    session.line_height = FONT_CHARACTER_LIST_LINE_HEIGHT;
+    session.callback = (u32)font_v2_pause_list_callback;
+    session.callback_arg0 = object;
+    session.callback_arg1 = (u32)text;
+    session.callback_arg2 = color;
+    session.callback_arg3 = (u32)&session;
 
     return font_v2_adapter_call(&session);
 }

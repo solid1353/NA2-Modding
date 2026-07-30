@@ -12,13 +12,13 @@ case.
 ## Execution state
 
 - Mode: Continuous.
-- Current subtask: Priority 2 — supplemental ss1/ss2 Character Select
-  option-list regressions. Continuous implementation resumed by explicit user
-  instruction; Priority 3 follows with the corrected selective-wrap contract.
+- Current subtask: Priority 3 — ss3–ss6 selective Jutsu-selector wrapping.
+  Priority 2 implementation, canonical validation, and agent runtime evidence
+  are complete; its grid remains pending visible delivery.
 - Pending grid:
   `docs/workstreams/font/epics/ss2-6-layout/2-linked-mode-modal.png`.
-- Next action: commit and visibly deliver the refreshed evidence grids, then
-  fix Priority 2 as one bounded option-list family.
+- Next action: visibly deliver Priority 2, then continue Priority 3 without
+  waiting for Priority 2 acceptance.
 
 ## Scope and evidence
 
@@ -34,8 +34,10 @@ case.
   `work/Font/inputs/screenshots/batches/2026-07-30-regressions/`.
 - Supplemental provenance and hashes:
   `work/Font/inputs/sstates/batches/2026-07-30-regressions/provenance.tsv`.
-- Compatible independent worker ISO provenance:
+- Original-batch compatible independent worker ISO provenance:
   `work/Font/inputs/sstates/batches/2026-07-30-ss1-10/iso_provenance.tsv`.
+- Supplemental-batch compatible independent worker ISO provenance:
+  `work/Font/inputs/sstates/batches/2026-07-30-regressions/iso_provenance.tsv`.
 - Protected `@pcsx2_dev` sources remain untouched.
 - Exact grouping: ss1 Character Select return confirmation; ss2 Linked Mode
   center modal; ss3–ss6 one Jutsu-selector defect, with ss3/ss4 supplied as
@@ -70,14 +72,19 @@ case.
 
 ### Priority 2 — supplemental ss1–ss2: Character Select option lists
 
-- State: reopened by user-supplied regression evidence on 2026-07-30.
-  The earlier default Linked Mode view did not cover highlight-state changes.
-- ss1: the highlighted first player-mode row matches, but the non-highlighted
-  rows drift progressively downward relative to NUN5.
-- ss2: selecting `Manual` exposes incorrect selected/non-highlighted row
-  geometry in the Linked Mode modal.
-- Remaining action: isolate the shared option-list row behavior without
-  disturbing the verified return-confirmation family.
+- State: implemented, canonically validated, and agent-validated on 2026-07-30;
+  visible delivery and explicit user acceptance remain pending.
+- ss1: the highlighted first player-mode row remains unchanged. The ordinary
+  rows already had exact NUN5 Y bounds, but bypassed the selected row's
+  NUN5-metric session, making them eight or nine pixels too wide and six pixels
+  too far left. Their dedicated ordinary callback now enters the same bounded
+  240-unit session and five-local-unit X correction while retaining native Y.
+  All three visible ordinary rows now match NUN5 bounds exactly.
+- ss2: the title stays at local Y `8`; one shared `46 + 20*i` choice formula,
+  with no selected-only compensation, gives exact NUN5 Y bounds for selected
+  `Manual` and ordinary `Auto`.
+- Remaining action: explicit user review only. The verified return-confirmation
+  family and every unrelated caller remain unchanged.
 
 ![Priority 2 Linked Mode baseline](2-linked-mode-modal.png)
 
@@ -138,9 +145,8 @@ case.
 Priority is determined by the most efficient implementation order.
 
 1. **ss1 — Character Select return confirmation.** User-verified.
-2. **supplemental ss1–ss2 — Character Select option lists.** Fix
-   non-highlighted player-mode rows and the Manual-selected Linked Mode
-   geometry as one bounded option-list family.
+2. **supplemental ss1–ss2 — Character Select option lists.** Implemented and
+   agent-validated; visible delivery and explicit user acceptance are pending.
 3. **ss3–ss6 — one Jutsu-selector defect.** Use ss5/ss6 as visible targets and
    supplemental ss3 as the collapsed target; preserve every native short
    one-line row and wrap only the NUN5-wrapped long selected title.

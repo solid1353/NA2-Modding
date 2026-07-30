@@ -1398,25 +1398,54 @@ center modal.
 The title path loads local Y `12.0` at runtime `0x003B8FE0` (ELF file
 `0x2B90E0`) before its ordinary renderer call. The choice loop loads base Y
 `48.0` at runtime `0x003B90A4` (file `0x2B91A4`) and retains a native
-`48 + 26*i` formula. Its selected renderer call is at runtime `0x003B90DC`;
-the delay slot at runtime `0x003B90E0` (file `0x2B91E0`) is a clean NOP.
-The unselected call remains at runtime `0x003B90FC`.
+`48 + 26*i` formula. Its selected renderer call is at runtime `0x003B90DC`
+and its unselected call is at `0x003B90FC`.
 
-The bounded candidate changes the title to Y `8`, the choice base to Y `44`,
-and the selected-call delay slot to `addiu a2,a2,-2`. No C adapter or shared
-renderer change is required: these are local constants and one call-local
-compensation in a dedicated draw function. Pixel bounds from the fresh
-task-owned capture are:
+NUN5 homolog `FUN_003CBAF0` uses one selected-state-aware
+`FUN_00393210` call with local formula `36 + 22*i`. The helper semantics differ
+from NA2's separate selected and ordinary renderers, so copying those two
+constants directly is not coordinate-equivalent. Supplemental ss2 with
+`Manual` selected supplies both NA2 paths in one frame. The earlier
+`44 + 26*i` candidate plus selected-only `-2` compensation put selected Manual
+five pixels too high and ordinary Auto five pixels too low at 640x480.
+
+The corrected bounded formula is `46 + 20*i`, with no selected-only
+compensation. The title remains at local Y `8`. Fresh pixel bounds are:
 
 - title: NUN5 and Current both Y `138..151`;
-- unselected `Manual`: NUN5 and Current both Y `183..196`;
-- selected `Auto`: NUN5 Y `211..224`, Current Y `210..224`, a one-edge-pixel
-  raster difference with matched placement.
+- selected `Manual`: NUN5 and Current both Y `183..196`;
+- ordinary `Auto`: NUN5 and Current both Y `211..223`.
 
-The exact clean guards are `4041023C`, `4042023C`, and `00000000`; the
-replacements are `0041023C`, `3042023C`, and `FEFFC624`. Confidence is high
-for caller isolation and placement. Runtime status is agent-validated and
-awaits explicit user acceptance.
+The exact clean guards are title `4041023C`, interval `D041023C`, and base
+`4042023C`; replacements are `0041023C`, `A041023C`, and `3842023C`.
+No shared renderer or adjacent modal is changed. Confidence is high for caller
+isolation and placement; explicit user acceptance remains pending.
+
+## 2026-07-30 Character Select ordinary-row metric session
+
+Supplemental ss1 reopens only the five-row player-mode list inside
+main-ELF `FUN_003BC780`. NA2 draws its selected entry through
+`FUN_00382610` at runtime `0x003BC884` and every ordinary entry through
+`FUN_00382470` at runtime `0x003BC8BC` (ELF file `0x2BC9BC`, clean guard
+`1C090E0C00000000`). NUN5 homolog `FUN_003CF3F0` instead routes both states
+through one `FUN_00393210` helper, with native local Y values `0`, `24`, `48`,
+`72`, and `106`.
+
+The existing selected hook already enters the accepted 240-unit v2 metric
+session and applies a five-local-unit X correction. Ordinary rows bypassed that
+session, so their Y bounds were already exact but their visible widths were
+eight or nine pixels too large and their left edges were six pixels too far
+left. A second caller-specific C entry now gives only the ordinary draw the
+same metric session and X correction, then returns through the original
+ordinary callback. It does not alter the row table, selected renderer, Linked
+Mode, or confirmation callers.
+
+At 640x480, the three ordinary comparison rows now have exact NUN5 bounds:
+`(259..377,206..219)`, `(257..379,236..249)`, and
+`(246..390,266..279)`. The selected first row remains on its prior accepted
+path. This proves that the discrepancy was session selection rather than
+per-row Y drift or a need for individual scale constants. Confidence is high;
+explicit user acceptance of the refreshed five-row list remains pending.
 
 ### 2026-07-28 accepted Ninja Song numeric C migration
 

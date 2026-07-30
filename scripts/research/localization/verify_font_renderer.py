@@ -114,6 +114,9 @@ V2_CHARACTER_CONFIRMATION_BODY_ADAPTER = (
 V2_CHARACTER_SELECTED_ADAPTER = (
     f"{V2_PREFIX}.character_selected_adapter"
 )
+V2_CHARACTER_UNSELECTED_ADAPTER = (
+    f"{V2_PREFIX}.character_unselected_adapter"
+)
 V2_JUTSU_DRAW_CALLBACK = f"{V2_PREFIX}.c.jutsu_draw_callback"
 V2_JUTSU_DRAW_ENTRY = f"{V2_PREFIX}.jutsu_draw_entry"
 V2_CHARACTER_CONFIRMATION_BODY_CALLBACK = (
@@ -437,6 +440,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         "font_v2_command_icon_offset",
         "font_v2_character_confirmation_body_adapter",
         "font_v2_character_selected_adapter",
+        "font_v2_character_unselected_adapter",
         "font_v2_jutsu_draw_entry",
         "font_v2_practice_icon_metric",
         "font_v2_practice_icon_draw",
@@ -506,6 +510,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         ].symbol: V2_CHARACTER_CONFIRMATION_BODY_ADAPTER,
         extracted.symbols["font_v2_character_selected_adapter"].symbol: (
             V2_CHARACTER_SELECTED_ADAPTER
+        ),
+        extracted.symbols["font_v2_character_unselected_adapter"].symbol: (
+            V2_CHARACTER_UNSELECTED_ADAPTER
         ),
         extracted.symbols["font_v2_jutsu_draw_entry"].symbol: (
             V2_JUTSU_DRAW_ENTRY
@@ -604,6 +611,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_COMMAND_ICON_OFFSET,
         V2_CHARACTER_CONFIRMATION_BODY_ADAPTER,
         V2_CHARACTER_SELECTED_ADAPTER,
+        V2_CHARACTER_UNSELECTED_ADAPTER,
         V2_CHARACTER_CONFIRMATION_BODY_CALLBACK,
         V2_JUTSU_DRAW_CALLBACK,
         V2_JUTSU_DRAW_ENTRY,

@@ -62,6 +62,14 @@ typedef signed int s32;
 #define FONT_JUTSU_LINE_ADVANCE 16.0f
 #define FONT_JUTSU_GLYPH_HEIGHT 20.0f
 #define FONT_JUTSU_LINE_LIMIT 2u
+#define FONT_MOVIE_TEXT_START 0x003FFAA0u
+#define FONT_MOVIE_TEXT_END 0x003FFC10u
+#define FONT_MOVIE_BOX_Y_OFFSET -10.0f
+#define FONT_MOVIE_BOX_WIDTH 192u
+#define FONT_MOVIE_BOX_HEIGHT 32u
+#define FONT_MOVIE_LINE_ADVANCE 16.0f
+#define FONT_MOVIE_GLYPH_HEIGHT 20.0f
+#define FONT_MOVIE_LINE_LIMIT 2u
 #define FONT_PRACTICE_TITLE_BOX_X 31.2f
 #define FONT_PRACTICE_TITLE_BOX_WIDTH 352u
 #define FONT_PRACTICE_TITLE_Y_OFFSET -6.8f
@@ -1044,6 +1052,108 @@ int font_v2_jutsu_draw_entry(
     frame.session.callback = (u32)font_v2_jutsu_draw_callback;
     frame.session.callback_arg0 = renderer_address;
     frame.session.callback_arg1 = (u32)frame.buffer;
+    frame.session.callback_arg2 = 0;
+    frame.session.callback_arg3 = (u32)&frame.session;
+    return font_v2_adapter_call(&frame.session);
+}
+
+static FONT_V2_SECTION(".text.font_v2_movie_list_callback")
+int font_v2_movie_list_callback(
+    u32 text,
+    u32 highlighted,
+    u32 arg2,
+    FontV2Session *session
+) {
+    FontV2NativeDraw draw = (FontV2NativeDraw)FONT_DRAW_ADDRESS;
+    u8 *cursor = (u8 *)text;
+    u8 *line_start = cursor;
+    u32 line_index = 0;
+
+    (void)arg2;
+    for (;;) {
+        if (!*cursor || *cursor == (u8)'\n') {
+            u8 saved = *cursor;
+            *cursor = 0;
+            draw(
+                session->draw_x,
+                session->draw_y +
+                    (float)(s32)line_index * session->line_height,
+                line_start,
+                highlighted
+            );
+            *cursor = saved;
+            if (!saved) {
+                break;
+            }
+            cursor += 1;
+            line_start = cursor;
+            line_index += 1;
+        } else {
+            cursor += 1;
+        }
+    }
+    return 0;
+}
+
+FONT_V2_SECTION(".text.font_v2_movie_list_entry")
+int font_v2_movie_list_entry(
+    const u8 *text,
+    u32 highlighted,
+    float native_x,
+    float native_y
+) {
+    FontV2BodyFrame frame;
+    FontV2NativeDraw draw = (FontV2NativeDraw)FONT_DRAW_ADDRESS;
+    u32 text_address = (u32)text;
+    u32 index = 0;
+
+    if (!text) {
+        return -1;
+    }
+    if (
+        text_address < FONT_MOVIE_TEXT_START ||
+        text_address >= FONT_MOVIE_TEXT_END
+    ) {
+        draw(native_x, native_y, text, highlighted);
+        return 0;
+    }
+
+    while (index < FONT_BODY_BUFFER_SIZE - 1u && text[index]) {
+        frame.buffer[index] = text[index];
+        index += 1;
+    }
+    frame.buffer[index] = 0;
+
+    if (
+        font_v2_wrap_native(
+            frame.buffer,
+            FONT_MOVIE_BOX_WIDTH,
+            FONT_MOVIE_LINE_LIMIT,
+            &frame.session.measured_width,
+            &frame.session.line_count
+        ) != 0
+    ) {
+        return -1;
+    }
+
+    frame.session.text = frame.buffer;
+    frame.session.box_x = native_x;
+    frame.session.box_y = native_y + FONT_MOVIE_BOX_Y_OFFSET;
+    frame.session.box_width = FONT_MOVIE_BOX_WIDTH;
+    frame.session.box_height = FONT_MOVIE_BOX_HEIGHT;
+    frame.session.horizontal_alignment = FONT_V2_ALIGN_START;
+    frame.session.vertical_alignment = FONT_V2_ALIGN_CENTER;
+    frame.session.flags =
+        FONT_V2_FLAG_NEWLINE_BYTES |
+        FONT_V2_FLAG_SEPARATE_LINE_ADVANCE |
+        FONT_V2_FLAG_PREMEASURED |
+        FONT_V2_FLAG_GLYPH_HEIGHT;
+    frame.session.line_limit = FONT_MOVIE_LINE_LIMIT;
+    frame.session.line_height = FONT_MOVIE_LINE_ADVANCE;
+    frame.session.glyph_height = FONT_MOVIE_GLYPH_HEIGHT;
+    frame.session.callback = (u32)font_v2_movie_list_callback;
+    frame.session.callback_arg0 = (u32)frame.buffer;
+    frame.session.callback_arg1 = highlighted;
     frame.session.callback_arg2 = 0;
     frame.session.callback_arg3 = (u32)&frame.session;
     return font_v2_adapter_call(&frame.session);

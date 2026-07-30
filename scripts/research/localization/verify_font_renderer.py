@@ -119,6 +119,8 @@ V2_CHARACTER_UNSELECTED_ADAPTER = (
 )
 V2_JUTSU_DRAW_CALLBACK = f"{V2_PREFIX}.c.jutsu_draw_callback"
 V2_JUTSU_DRAW_ENTRY = f"{V2_PREFIX}.jutsu_draw_entry"
+V2_MOVIE_LIST_CALLBACK = f"{V2_PREFIX}.c.movie_list_callback"
+V2_MOVIE_LIST_ENTRY = f"{V2_PREFIX}.movie_list_entry"
 V2_CHARACTER_CONFIRMATION_BODY_CALLBACK = (
     f"{V2_PREFIX}.c.character_confirmation_body_callback"
 )
@@ -442,6 +444,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         "font_v2_character_selected_adapter",
         "font_v2_character_unselected_adapter",
         "font_v2_jutsu_draw_entry",
+        "font_v2_movie_list_entry",
         "font_v2_practice_icon_metric",
         "font_v2_practice_icon_draw",
         "font_v2_practice_adapter_impl",
@@ -517,6 +520,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         extracted.symbols["font_v2_jutsu_draw_entry"].symbol: (
             V2_JUTSU_DRAW_ENTRY
         ),
+        extracted.symbols["font_v2_movie_list_entry"].symbol: (
+            V2_MOVIE_LIST_ENTRY
+        ),
         extracted.symbols["font_v2_practice_icon_metric"].symbol: (
             V2_PRACTICE_ICON_METRIC
         ),
@@ -552,6 +558,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         ): V2_CHARACTER_CONFIRMATION_BODY_CALLBACK,
         f"{V2_PREFIX}.c.text.font.v2.jutsu.draw.callback": (
             V2_JUTSU_DRAW_CALLBACK
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.movie.list.callback": (
+            V2_MOVIE_LIST_CALLBACK
         ),
     }
     if helper_symbols != set(helper_aliases):
@@ -615,6 +624,8 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_CHARACTER_CONFIRMATION_BODY_CALLBACK,
         V2_JUTSU_DRAW_CALLBACK,
         V2_JUTSU_DRAW_ENTRY,
+        V2_MOVIE_LIST_CALLBACK,
+        V2_MOVIE_LIST_ENTRY,
         f"{V2_PREFIX}.c.icon_record",
         V2_PRACTICE_ICON_METRIC,
         V2_PRACTICE_ICON_DRAW,

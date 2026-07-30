@@ -916,14 +916,18 @@ Those supplied `092FEF8A` states restore an older resident payload than the
 later on-disc Current build. Offline `eeMemory.bin` signature recovery proves
 that `localization.font.v2.adapter_call` remains stable at `0x008F4130`, but
 `practice_append` is at `0x008F4D68` rather than Current `0x008F4F30`,
-`title_callback` is at `0x008F5500` rather than `0x008F56E8`, `wrap_native`
-is at `0x008F5510` rather than `0x008F56F8`, and the native-measure callback
-is at `0x008F4320` rather than `0x008F44C0`. Importing those shifted Current
-addresses first removed the blue rows and then stalled the guest when only the
-top-level implementation was bank-linked. The successful development overlay
-therefore bank-linked the complete shifted dependency closure and imported
-only the signature-confirmed stable adapter call. This is a savestate-specific
-development constraint, not a production payload requirement.
+`title_callback` is at `0x008F5500` rather than `0x008F56E8`, and the
+native-measure callback is at `0x008F4320` rather than `0x008F44C0`.
+The earlier `wrap_native = 0x008F5510` identification was wrong: exact
+disassembly of the compatible ISO's `228.BIN` places that address inside
+`font_v2_prepare`. Calling it as a wrapper trapped the injected Movie-list
+candidate, while a clean ss8 reload without injection rendered normally.
+The same payload proves `font_v2_wrap_native` spans
+`[0x008F5930,0x008F5B38)` (520 bytes) and makes its three measurement calls to
+`font_v2_native_measure` at `0x008F4F38`. A corrected wrap-only probe and the
+complete ss8 candidate both execute normally with `0x008F5930`. This is a
+savestate-specific development constraint, not a production payload
+requirement.
 
 Confidence is **high** for the homolog, selectors, call sites, buffer
 composition, shared one-/two-line geometry, conditional icon offsets, flag
@@ -1089,6 +1093,42 @@ a truthful post-change result grid. Clean-construction runtime validation and
 user acceptance remain pending. Confidence is **high** for the bounded caller
 identity and target geometry; status is **approved for test**.
 
+### Collection Movie-list fixed-cadence wrapping
+
+The replacement 2026-07-30 ss8 pair isolates the Collection Movie list.
+Bounded NA2 ETC inspection identifies `FUN_006B4D30`; its single active title
+draw is runtime `0x006B4ED8`, file `0xFD8`, guarded by
+`10E40D0C00000000` (`jal 0x00379040` plus NOP). The NUN5 homolog
+`FUN_006C7CA0` replaces the corresponding draw at ETC file `0x1164` with its
+boxed renderer at `0x0038A210`.
+
+NUN5 uses a 192-by-32, two-line box at native X and native Y minus 10. The
+outer list retains fixed row cadence; wrapped titles occupy two lines inside
+their existing row rather than increasing later row positions. Its exact
+visible breaks are:
+
+- `Sealing Jutsu: Nine` / `Phantom Dragons`;
+- `People of Endless` / `Darkness`;
+- `Ninja Art: Beast` / `Scroll Replicas`;
+- `Fourth Awakened` / `Mode`.
+
+The bounded implementation accepts only Movie-title pointers in
+`0x003FFAA0..0x003FFC10`, copies the source to a transient buffer, and reuses
+`font_v2_wrap_native` with a two-line limit. It draws each resulting line
+through the displaced native renderer at a 16-unit interval. That separate
+line draw is required because passing the inserted newline to NA2's native
+renderer produces a 25-unit interval on this screen. Short titles, the
+highlighted red style, fixed caller cadence, source mappings, and every
+non-Movie use of the shared renderer remain native.
+
+The task-owned ss8 candidate gives the same four breaks and horizontal origins
+as NUN5, while `Reunion Time I`, `Reunion Time II`, and `Credits` retain their
+native rows. The candidate was compiled and linked against the exact
+compatible ISO, applied after supplied-state reload, and captured through the
+task-owned PINE worker. Confidence is **verified** for the caller, pointer
+boundary, wrapper geometry, line interval, and visible ss8 result; status is
+**approved for test** pending explicit user acceptance.
+
 ### Character Select modal selected row, return body, and choice list
 
 The refreshed 2026-07-29 ss5-ss7 pairs isolate two main-ELF callers inside
@@ -1237,8 +1277,10 @@ Chart, command explanation, Practice settings, Practice quit, character
 return, Collection quit, Collection movie, and the no-memory-card prompt.
 Controls and the wrapper-owned Practice/confirmation families retained their
 matched results. Command explanation, Collection movie, and no-memory-card
-overflow remain separate unresolved caller families; their unchanged defects
-are not regressions from this port. Confidence is **high** for the shared
+overflow were separate unresolved caller families at that historical
+boundary; their unchanged defects were not regressions from this port. The
+later dedicated Collection Movie-list work resolves that family as documented
+above. Confidence is **high** for the shared
 measurement formula, hook boundaries, caller guards, and matched horizontal
 result. That regression did not cover entry into Save/Load and therefore did
 not establish persistent ownership of the helper interval.

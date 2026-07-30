@@ -12,12 +12,12 @@ case.
 ## Execution state
 
 - Mode: Continuous.
-- Current subtask: Priority 5 — ss8 Movie-list wrapping. Priority 4 remains
+- Current subtask: Priority 6 — ss9–ss10 character move lists. Priority 4 remains
   queued because supplied ss7 resumes after its two owner calls.
 - Pending grid:
-  `docs/workstreams/font/epics/ss2-6-layout/3-jutsu-selector.png`.
-- Next action: visibly deliver Priority 3, then investigate the ss8 draw-time
-  caller without waiting for Priority 3 acceptance.
+  `docs/workstreams/font/epics/ss2-6-layout/5-movie-list.png`.
+- Next action: visibly deliver Priority 5, then investigate the shared
+  ss9–ss10 move-list caller family without waiting for earlier acceptance.
 
 ## Scope and evidence
 
@@ -71,8 +71,8 @@ case.
 
 ### Priority 2 — supplemental ss1–ss2: Character Select option lists
 
-- State: implemented, canonically validated, and agent-validated on 2026-07-30;
-  visible delivery and explicit user acceptance remain pending.
+- State: implemented, canonically validated, agent-validated, and visibly
+  delivered on 2026-07-30; explicit user acceptance remains pending.
 - ss1: the highlighted first player-mode row remains unchanged. The ordinary
   rows already had exact NUN5 Y bounds, but bypassed the selected row's
   NUN5-metric session, making them eight or nine pixels too wide and six pixels
@@ -91,9 +91,8 @@ case.
 
 ### Priority 3 — ss3–ss6: One Jutsu-selector defect
 
-- State: implemented, canonically validated, and agent-validated on
-  supplemental ss3; visible delivery and explicit user acceptance remain
-  pending.
+- State: implemented, canonically validated, agent-validated on supplemental
+  ss3, and visibly delivered; explicit user acceptance remains pending.
 - The enabled hook uses corrected BTL file offset `0x90DC`.
 - The C entry preserves native one-line rows exactly and invokes the
   NUN5-matched 186-by-32 session only when measurement actually produces a
@@ -126,11 +125,15 @@ case.
 
 ### Priority 5 — ss8: Movie list
 
-- State: matched baseline captured; not implemented.
-- Remaining defect: Current movie titles remain single-line and overflow,
-  while NUN5 uses variable-height wrapped rows.
+- State: implemented, canonically validated, and agent-validated; visible
+  delivery and explicit user acceptance remain pending.
+- Result: one guarded ETC caller routes only Movie-table pointers through a
+  192-by-32, two-line C wrapper at native X and native Y minus 10. The four
+  long titles now use NUN5's exact breaks and 16-unit line interval while the
+  list keeps fixed row cadence. Short titles, selection style, source strings,
+  and every non-Movie caller remain native.
 
-![Priority 5 Movie-list baseline](5-movie-list.png)
+![Priority 5 Movie-list result](5-movie-list.png)
 
 ### Priority 6 — ss9–ss10: Character move lists
 
@@ -145,17 +148,18 @@ case.
 Priority is determined by the most efficient implementation order.
 
 1. **ss1 — Character Select return confirmation.** User-verified.
-2. **supplemental ss1–ss2 — Character Select option lists.** Implemented and
-   agent-validated; visible delivery and explicit user acceptance are pending.
-3. **ss3–ss6 — one Jutsu-selector defect.** Implemented and agent-validated;
-   visible delivery and explicit user acceptance are pending.
+2. **supplemental ss1–ss2 — Character Select option lists.** Implemented,
+   agent-validated, and visibly delivered; explicit user acceptance is pending.
+3. **ss3–ss6 — one Jutsu-selector defect.** Implemented, agent-validated, and
+   visibly delivered; explicit user acceptance is pending.
 4. **ss7 — Collection exit confirmation.** Implementation is ready, but the
    supplied visible-prompt state resumes after both owner calls; final runtime
    construction evidence remains queued.
-5. **ss8 — Movie list.** Next actionable case: implement caller-specific
-   variable-height wrapped rows.
-6. **ss9–ss10 — Character move lists.** Reuse one bounded wrapping primitive
-   for both long-title cases where the caller family is shared.
+5. **ss8 — Movie list.** Implemented and agent-validated with fixed-cadence
+   two-line wrapping; visible delivery and explicit user acceptance are pending.
+6. **ss9–ss10 — Character move lists.** Next actionable case: reuse one
+   bounded wrapping primitive for both long-title cases where the caller
+   family is shared.
 
 Shared primitives are implemented only once. Each prioritized caller family
 receives one guarded implementation and commit/push boundary; every case keeps

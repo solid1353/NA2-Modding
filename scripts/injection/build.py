@@ -127,17 +127,19 @@ def load_overlay_plan(
         plan_path = REPOSITORY / plan_path
     plan_path = plan_path.resolve()
     allowed_roots = (
-        ((REPOSITORY / "work").resolve(), 2),
-        ((SCRIPT_ROOT / "targets").resolve(), 1),
+        ((REPOSITORY / "work").resolve(), 2, False),
+        ((SCRIPT_ROOT / "targets").resolve(), 1, True),
     )
     allowed = False
-    for root, minimum_parts in allowed_roots:
+    maintained_target = False
+    for root, minimum_parts, root_is_maintained in allowed_roots:
         try:
             relative = plan_path.relative_to(root)
         except ValueError:
             continue
         if len(relative.parts) >= minimum_parts:
             allowed = True
+            maintained_target = root_is_maintained
             break
     if not allowed or not plan_path.is_file():
         raise ValueError(
@@ -182,8 +184,12 @@ def load_overlay_plan(
         raise ValueError("Overlay plan source_id does not match selection")
     if not isinstance(raw["purpose"], str) or not raw["purpose"].strip():
         raise ValueError("Overlay plan purpose must be non-empty text")
-    if not isinstance(raw["writes"], list) or not raw["writes"]:
-        raise ValueError("Overlay plan writes must be a non-empty array")
+    if not isinstance(raw["writes"], list) or (
+        not raw["writes"] and not maintained_target
+    ):
+        raise ValueError(
+            "Task-owned overlay plan writes must be a non-empty array"
+        )
 
     resident_symbol_overrides: dict[str, int] = {}
     raw_overrides = raw.get("resident_symbol_overrides", {})

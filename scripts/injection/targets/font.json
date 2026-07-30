@@ -7,17 +7,6 @@
       "abi": "renderer_text"
     }
   ],
-  "purpose": "Live-edit the complete canonical Font C payload, including the Jutsu Selection row caller.",
-  "writes": [
-    {
-      "id": "jutsu_live_row_draw",
-      "runtime_address": "0x006BCFDC",
-      "expected_hex": "C6D4230C00000000",
-      "replacement": {
-        "kind": "symbol_call",
-        "symbol": "localization.font.v2.jutsu_draw_entry"
-      },
-      "reason": "Route the live NA2 Jutsu Selection row draw through the whole-Font development image."
-    }
-  ]
+  "purpose": "Live-edit the complete canonical Font C payload. Persistent ISO hooks call resident entries, and the watcher redirects those entries to the development image.",
+  "writes": []
 }

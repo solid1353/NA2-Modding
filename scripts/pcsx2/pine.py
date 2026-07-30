@@ -8,6 +8,7 @@ import struct
 
 READ32 = 0x02
 WRITE32 = 0x06
+LOAD_STATE = 0x0A
 STATUS = 0x0F
 SCREENSHOT = 0x11
 PAUSE = 0x12
@@ -71,6 +72,15 @@ class PineClient:
     def pause(self) -> None:
         self.command(PAUSE)
 
+    def load_state(self, slot: int) -> None:
+        if not 0 <= slot <= 255:
+            raise ValueError("savestate slot is outside 0..255")
+        if self.exchange(bytes([LOAD_STATE, slot])):
+            raise RuntimeError("PINE LoadState returned unexpected data")
+        # LoadState is queued by PCSX2. The synchronous pause is a barrier:
+        # its CPU-thread callback runs only after the queued load completes.
+        self.pause()
+
     def resume(self) -> None:
         self.command(RESUME)
 
@@ -127,6 +137,8 @@ def parse_args() -> argparse.Namespace:
     commands.add_parser("resume")
     commands.add_parser("refresh")
     commands.add_parser("screenshot")
+    load_state = commands.add_parser("load-state")
+    load_state.add_argument("slot", type=integer)
     read = commands.add_parser("read")
     read.add_argument("address", type=integer)
     read.add_argument("length", type=integer)
@@ -146,6 +158,9 @@ def main() -> int:
         elif args.command == "pause":
             client.pause()
             print(client.status())
+        elif args.command == "load-state":
+            client.load_state(args.slot)
+            print(f"savestate slot {args.slot} loaded; paused")
         elif args.command == "resume":
             client.resume()
             print(client.status())

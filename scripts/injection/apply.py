@@ -20,6 +20,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--input", required=True, type=Path)
     parser.add_argument("--port", required=True, type=int)
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume after applying even when PCSX2 was initially paused.",
+    )
     return parser.parse_args()
 
 
@@ -148,8 +153,9 @@ def main() -> int:
         initial_state = client.status()
         if initial_state == "shutdown":
             raise RuntimeError("PCSX2 virtual machine is shut down")
-        resume_after = initial_state == "running"
-        if resume_after:
+        was_running = initial_state == "running"
+        resume_after = was_running or args.resume
+        if was_running:
             client.pause()
         try:
             pending_writes: list[tuple[str, int, bytes]] = []

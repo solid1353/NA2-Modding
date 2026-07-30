@@ -12,14 +12,16 @@ from unittest import mock
 
 apply_injection = importlib.import_module("scripts.injection.apply")
 build_injection = importlib.import_module("scripts.injection.build")
+pine = importlib.import_module("scripts.pcsx2.pine")
 
 
 class FakePineClient:
     instances: list["FakePineClient"] = []
     guard = bytes.fromhex("11111111")
+    initial_state = "running"
 
     def __init__(self, _port: int) -> None:
-        self.state = "running"
+        self.state = self.initial_state
         self.events: list[str] = []
         self.memory: dict[int, int] = {
             0x3000 + index: value for index, value in enumerate(self.guard)
@@ -95,9 +97,14 @@ class InjectionApplyTests(unittest.TestCase):
     def setUp(self) -> None:
         FakePineClient.instances.clear()
         FakePineClient.guard = bytes.fromhex("11111111")
+        FakePineClient.initial_state = "running"
 
-    def run_apply(self, directory: Path) -> FakePineClient:
-        arguments = argparse.Namespace(input=directory, port=28100)
+    def run_apply(
+        self, directory: Path, *, resume: bool = False
+    ) -> FakePineClient:
+        arguments = argparse.Namespace(
+            input=directory, port=28100, resume=resume
+        )
         with (
             mock.patch.object(apply_injection, "parse_args", return_value=arguments),
             mock.patch.object(apply_injection, "PineClient", FakePineClient),
@@ -118,12 +125,25 @@ class InjectionApplyTests(unittest.TestCase):
         self.assertEqual(client.events[0], "pause")
         self.assertEqual(client.events[-2:], ["refresh", "resume"])
 
+    def test_explicit_resume_restarts_an_initially_paused_vm(self) -> None:
+        FakePineClient.initial_state = "paused"
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            write_candidate(directory)
+            client = self.run_apply(directory, resume=True)
+
+        self.assertEqual(client.state, "running")
+        self.assertNotIn("pause", client.events)
+        self.assertEqual(client.events[-2:], ["refresh", "resume"])
+
     def test_guard_failure_resumes_without_writing_candidate(self) -> None:
         FakePineClient.guard = bytes.fromhex("33333333")
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             write_candidate(directory)
-            arguments = argparse.Namespace(input=directory, port=28100)
+            arguments = argparse.Namespace(
+                input=directory, port=28100, resume=False
+            )
             with (
                 mock.patch.object(
                     apply_injection, "parse_args", return_value=arguments
@@ -240,6 +260,27 @@ class InjectionBuildTests(unittest.TestCase):
                 {"selected": {"address": 0x008F4000}},
                 {"unused": 0x008F5000},
             )
+
+
+class PineInjectionTests(unittest.TestCase):
+    def test_load_state_queues_slot_then_uses_pause_as_barrier(self) -> None:
+        payloads: list[bytes] = []
+        client = object.__new__(pine.PineClient)
+
+        def exchange(payload: bytes) -> bytes:
+            payloads.append(payload)
+            return b""
+
+        client.exchange = exchange
+        client.load_state(7)
+
+        self.assertEqual(
+            payloads,
+            [
+                bytes([pine.LOAD_STATE, 7]),
+                bytes([pine.PAUSE]),
+            ],
+        )
 
 
 if __name__ == "__main__":

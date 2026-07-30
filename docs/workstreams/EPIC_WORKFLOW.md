@@ -104,6 +104,16 @@ on the left and NA2.28 on the right.
 
 ## Savestate updates
 
+Replacing, renumbering, or semantically regrouping an active epic input batch
+is one atomic canonical-update boundary. Before further implementation or
+runtime testing, update the epic README's input/provenance paths, slot meanings,
+priorities, case states, remaining defects, `Current subtask`, and `Pending
+grid`; regenerate every affected canonical baseline/report grid from the new
+task-owned evidence; remove superseded grid artifacts; and verify every README
+image reference. Continuous mode resumes immediately after this canonical
+update and does not permit implementation to outrun stale epic documentation
+or pictures.
+
 When the user provides or identifies a new savestate pair for a
 user-declared epic case, immediately:
 

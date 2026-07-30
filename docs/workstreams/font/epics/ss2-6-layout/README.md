@@ -11,12 +11,13 @@ case.
 
 ## Execution state
 
-- Mode: Continuous, stopped after Priority 6 by explicit user instruction.
-- Current subtask: none. Priority 4 remains queued because supplied ss7 resumes
-  after its two owner calls.
-- Pending grid: none.
-- Next action: wait for explicit continuation; Priority 4 still needs a
-  post-construction Collection confirmation state or screenshot.
+- Mode: Continuous, resumed for the explicitly selected Priority 5 correction.
+- Current subtask: Priority 5 — ss8 Movie list.
+- Pending grid: missing: exact post-change Priority 5 capture from the
+  integrated ISO.
+- Next action: preserve native one-line rendering, wrap only overflowing Movie
+  titles, and retain native glyph height for wrapped rows that fit. Priority 4
+  remains queued because supplied ss7 resumes after its two owner calls.
 
 ## Scope and evidence
 
@@ -120,15 +121,19 @@ case.
 
 ### Priority 5 — ss8: Movie list
 
-- State: implemented, canonically validated, agent-validated, and visibly
-  delivered; explicit user acceptance remains pending.
-- Result: one guarded ETC caller routes only Movie-table pointers through a
-  192-by-32, two-line C wrapper at native X and native Y minus 10. The four
-  long titles now use NUN5's exact breaks and 16-unit line interval while the
-  list keeps fixed row cadence. Short titles, selection style, source strings,
-  and every non-Movie caller remain native.
-
-![Priority 5 Movie-list result](awaiting_approval/5-movie-list.png)
+- State: reopened by the user on 2026-07-30. The previous grid was not
+  representative of the integrated ISO and has been removed.
+- Remaining defect: the shared wrapper forced its 20-unit glyph-height
+  override on every recognized Movie row. That vertically squeezed one-line
+  rows and also squeezed wrapped rows even when their native-height block fit.
+- Required result: one-line Movie rows bypass the wrapper completely. Only
+  titles that actually wrap use the 192-unit two-line layout and 16-unit line
+  interval; fitting wrapped rows retain native glyph geometry. Selection style,
+  source strings, fixed caller cadence, character-detail branches, and every
+  non-Movie caller remain unchanged.
+- Evidence requirement: development injection may be reported only as a
+  runtime-injected candidate. The canonical result grid requires untouched
+  NUN5 and exact integrated-ISO captures at native resolution.
 
 ### Priority 6 — ss9–ss10: Character move lists
 
@@ -155,8 +160,9 @@ Priority is determined by the most efficient implementation order.
 4. **ss7 — Collection exit confirmation.** Implementation is ready, but the
    supplied visible-prompt state resumes after both owner calls; final runtime
    construction evidence remains queued.
-5. **ss8 — Movie list.** Implemented, agent-validated, and visibly delivered
-   with fixed-cadence two-line wrapping; explicit user acceptance is pending.
+5. **ss8 — Movie list.** Reopened. Preserve native one-line rows and native
+   glyph height for fitting wrapped rows; the previous nonrepresentative grid
+   is removed and exact integrated-ISO evidence is pending.
 6. **ss9–ss10 — Character move lists.** Implemented, agent-validated on both
    supplied states through one pointer-bounded shared entry, and visibly
    delivered; explicit user acceptance remains pending.

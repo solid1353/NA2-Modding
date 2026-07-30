@@ -8,6 +8,11 @@
   action request such as `do it`, `implement it`, or `change it`.
 - A clearly agent-directed request such as `can you add` authorizes that stated
   action only; never infer extra work.
+- A command, recipe, watch target, profile, or other selector presented for a
+  requested scope must actually cover that full scope. Never substitute a
+  narrower adapter, screen, case, or example target unless the user requested
+  that restriction. If only narrower selectors exist, state the limitation
+  instead of presenting one as the full command.
 - A question about current agent behavior asks for an exact answer, not a
   behavioral change. Angry, skeptical, or rhetorical wording does not
   authorize starting, stopping, exposing, hiding, relaunching, or otherwise

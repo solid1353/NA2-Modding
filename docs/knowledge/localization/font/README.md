@@ -1041,7 +1041,53 @@ existing C mapping—Yes `(64.5,31.5)`, No `(68.5,49)`—and visually matched
 NUN5 while leaving the body unchanged. No new formula or assembly payload is
 needed. The user verified the normal-build Mode Select result on 2026-07-29.
 The layer is therefore **runtime-proven** with verified confidence; the
-separate Collection confirmation remains unfinished epic work.
+separate Collection confirmation uses a different ETC caller family.
+
+### Collection exit-confirmation body and choice list
+
+The replacement 2026-07-30 ss7 pair isolates the Collection exit prompt in
+clean NA2 `PRG/ETC.BIN` (200,448 bytes, SHA-256
+`8FF3C6E1ED5CE2B093B0934C898C40D1CEEA0C20778C49CDA5591AAD02375C74`).
+The retained Ghidra export identifies `FUN_006C6520`, called from
+`0x006D879C`, as the bounded owner:
+
+- clean address `0x006C6540`, file `0x12680`, calls the ordinary body renderer
+  for object `+4`; its eight-byte guard is `6C090E0C00000000`;
+- clean address `0x006C6560`, file `0x126A0`, calls the complete choice-list
+  renderer for object `+8`; its eight-byte guard is
+  `800D0E0C00000000`.
+
+The supplied ss7 savestate restores the MWo3 overlay with the 0x40-byte runtime
+header represented in live memory, so those same guarded instructions appear
+at live `0x006C6580` and `0x006C65A0`. This live `+0x40` relation is specific
+to exact-guarded runtime conversion; canonical file edits continue to use
+`0x12680` and `0x126A0`.
+
+Normalized 640-by-480 captures measure Current's body ink at Y `386..401`
+versus NUN5 `381..396`, with the same X origin. Current's selected Yes is at
+X `282..317`, Y `123..136`, versus NUN5 X `299..336`, Y `131..144`;
+Current's No is at X `284..306`, Y `166..178`, versus NUN5 X `306..334`,
+Y `156..168`. Draw telemetry identifies the native Collection inputs as Yes
+text `0x00604570` at local `(50,24)` and No text `0x00604568` at local
+`(50,56)`. Their Y values are exactly the source keys already handled by the
+accepted scoped mapper, whose retained targets are Yes `(64.5,31.5)` and No
+`(68.5,49)`. Collection therefore needs no new choice formula.
+
+The bounded implementation adds one C body adapter using the existing wrapped
+body primitive with local `(24,12)`, a 400-by-60 box, 20-unit line height, and
+a two-line limit. It redirects only the two clean ETC calls above: the body to
+that adapter and the complete list to
+`localization.font.v2.quit_choices_scope`. Every other ETC body/list caller and
+every ordinary Yes/No list remain native.
+
+The exact task-owned overlay guards, C compilation, relocation, and fragment
+verification pass. The supplied ss7 state was captured after both owner calls:
+after state reload and candidate application, the selected/unselected renderer
+hooks ran with `quit_active=0`, while the body and scope owner calls did not
+re-execute. It therefore cannot validate the shipped caller behavior or supply
+a truthful post-change result grid. Clean-construction runtime validation and
+user acceptance remain pending. Confidence is **high** for the bounded caller
+identity and target geometry; status is **approved for test**.
 
 ### Character Select modal selected row, return body, and choice list
 

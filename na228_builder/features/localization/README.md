@@ -1874,8 +1874,20 @@ layer therefore redirects only the second call at boot-ELF file `0x285E98`
 exact-guarded converted remade ss1 state centers Yes/No with NUN5 row spacing
 while leaving the already-matching body unchanged. The user verified the
 normal-build Mode Select result on 2026-07-29, so the layer is
-`runtime_proven`. The separate Collection confirmation remains unfinished
-Font epic work.
+`runtime_proven`.
+
+The separate `font_layout_collection_confirmation` layer owns exactly two
+clean ETC calls in `FUN_006C6520`. File `0x12680` routes the body object at
+`+4` through `localization.font.v2.collection_body_adapter`, which reuses the
+existing wrapped-body primitive at local `(24,12)` inside a 400-by-60,
+two-line box. File `0x126A0` scopes only the complete choice object at `+8`
+through `localization.font.v2.quit_choices_scope`. Collection's native Yes/No
+source Y values are the accepted mapper's existing 24/56 keys, so no new
+choice formula or broad text-pointer hook is added. Every other ETC body/list
+caller remains native. The exact guards, C compilation, and fragment
+verification pass; clean-construction runtime validation and user acceptance
+remain pending because the supplied visible-prompt ss7 state resumes after
+both owner calls.
 
 The `font_layout_character_select_modal` layer now owns three exact main-ELF
 callers rather than broad modal behavior. File `0x2BC984` routes only the

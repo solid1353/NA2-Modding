@@ -98,6 +98,7 @@ V2_SPECIAL_CONTROLS_BODY_CALLBACK = (
 V2_SPECIAL_CONTROLS_BODY_ADAPTER = (
     f"{V2_PREFIX}.special_controls_body_adapter"
 )
+V2_COLLECTION_BODY_ADAPTER = f"{V2_PREFIX}.collection_body_adapter"
 V2_NATIVE_MEASURE = f"{V2_PREFIX}.native_measure"
 V2_NATIVE_MEASURE_CALLBACK = f"{V2_PREFIX}.c.native_measure_callback"
 V2_WRAP_NATIVE = f"{V2_PREFIX}.wrap_native"
@@ -430,6 +431,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         "font_v2_wrap_native",
         "font_v2_quit_body_adapter",
         "font_v2_special_controls_body_adapter",
+        "font_v2_collection_body_adapter",
         "font_v2_practice_append",
         "font_v2_command_relationship_impl",
         "font_v2_command_icon_offset",
@@ -487,6 +489,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         extracted.symbols[
             "font_v2_special_controls_body_adapter"
         ].symbol: V2_SPECIAL_CONTROLS_BODY_ADAPTER,
+        extracted.symbols["font_v2_collection_body_adapter"].symbol: (
+            V2_COLLECTION_BODY_ADAPTER
+        ),
         extracted.symbols["font_v2_practice_append"].symbol: (
             V2_PRACTICE_APPEND
         ),
@@ -593,6 +598,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         f"{V2_PREFIX}.c.wrapped_body_common",
         V2_QUIT_BODY_ADAPTER,
         V2_SPECIAL_CONTROLS_BODY_ADAPTER,
+        V2_COLLECTION_BODY_ADAPTER,
         V2_PRACTICE_APPEND,
         V2_COMMAND_RELATIONSHIP_IMPL,
         V2_COMMAND_ICON_OFFSET,

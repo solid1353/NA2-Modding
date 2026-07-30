@@ -12,10 +12,14 @@ case.
 ## Execution state
 
 - Mode: Continuous.
-- Current subtask: Priority 4 — ss7 Collection exit confirmation.
-- Pending grid: none.
-- Next action: isolate and implement the Collection-only confirmation body and
-  choice geometry from the replacement ss7 pair.
+- Current subtask: Priority 4 — ss7 Collection exit confirmation, awaiting a
+  fresh post-build frame from clean modal construction.
+- Pending grid: missing: a fresh NA2.28 ss7 screenshot or savestate created
+  after entering the Collection exit confirmation on a build containing the
+  Priority 4 patch.
+- Next action: stop after Priority 4 as explicitly requested. Do not start
+  Priority 5. When the missing post-build ss7 input is supplied, compose and
+  visibly deliver the Priority 4 result grid.
 
 ## Scope and evidence
 
@@ -85,8 +89,18 @@ case.
 
 ### Priority 4 — ss7: Exit confirmation
 
-- State: matched baseline captured; not implemented.
-- Remaining defect: confirmation body and choice geometry remain to match.
+- State: bounded C/file-backed implementation is ready and its exact guards,
+  compilation, relocation, and fragment reconstruction are agent-validated;
+  clean-construction runtime output and user acceptance remain pending.
+- Result design: route only ETC body object `+4` through the existing wrapped
+  body primitive at local `(24,12)` in a 400-by-60 box, and scope only choice
+  object `+8` through the accepted Yes/No mapper. Native Collection inputs
+  `(50,24)` and `(50,56)` already match that mapper's source keys.
+- Validation limitation: the supplied visible-prompt ss7 state resumes after
+  both owner calls. Its baseline frame is retained below, but it cannot produce
+  the required post-change result or validate clean modal construction.
+- Remaining action: build the patch, enter the Collection exit prompt normally,
+  and supply one fresh screenshot or savestate for the final result grid.
 
 ![Priority 4 Collection confirmation baseline](4-collection-confirmation.png)
 

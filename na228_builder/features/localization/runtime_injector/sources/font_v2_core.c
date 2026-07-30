@@ -106,6 +106,12 @@ typedef signed int s32;
 #define FONT_SPECIAL_BODY_BOX_HEIGHT 60u
 #define FONT_SPECIAL_BODY_LINE_HEIGHT 20.0f
 #define FONT_SPECIAL_BODY_LINE_LIMIT 2u
+#define FONT_COLLECTION_BODY_BOX_X 24.0f
+#define FONT_COLLECTION_BODY_BOX_Y 12.0f
+#define FONT_COLLECTION_BODY_BOX_WIDTH 400u
+#define FONT_COLLECTION_BODY_BOX_HEIGHT 60u
+#define FONT_COLLECTION_BODY_LINE_HEIGHT 20.0f
+#define FONT_COLLECTION_BODY_LINE_LIMIT 2u
 #define FONT_BODY_BUFFER_SIZE 0x100u
 #define FONT_PRACTICE_ICON_TABLE_ADDRESS 0x008D14C0u
 #define FONT_PRACTICE_TEXT_TABLE_ADDRESS 0x008BD510u
@@ -1178,6 +1184,26 @@ int font_v2_special_controls_body_adapter(
         FONT_SPECIAL_BODY_BOX_HEIGHT,
         FONT_SPECIAL_BODY_LINE_HEIGHT,
         FONT_SPECIAL_BODY_LINE_LIMIT,
+        (u32)font_v2_special_controls_body_callback
+    );
+}
+
+FONT_V2_SECTION(".text.font_v2_collection_body_adapter")
+int font_v2_collection_body_adapter(
+    u32 arg0,
+    const u8 *text,
+    u32 arg2
+) {
+    return font_v2_wrapped_body_common(
+        arg0,
+        text,
+        arg2,
+        FONT_COLLECTION_BODY_BOX_X,
+        FONT_COLLECTION_BODY_BOX_Y,
+        FONT_COLLECTION_BODY_BOX_WIDTH,
+        FONT_COLLECTION_BODY_BOX_HEIGHT,
+        FONT_COLLECTION_BODY_LINE_HEIGHT,
+        FONT_COLLECTION_BODY_LINE_LIMIT,
         (u32)font_v2_special_controls_body_callback
     );
 }

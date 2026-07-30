@@ -39,3 +39,4 @@ font_v2_core	65	localization.font.v2.c.text.font.v2.character.selected.adapter	l
 font_v2_core	66	localization.font.v2.c.text.font.v2.character.confirmation.body.callback	localization.font.v2.c.character_confirmation_body_callback
 font_v2_core	67	localization.font.v2.c.text.font.v2.jutsu.draw.callback	localization.font.v2.c.jutsu_draw_callback
 font_v2_core	68	localization.font.v2.c.text.font.v2.jutsu.draw.entry	localization.font.v2.jutsu_draw_entry
+font_v2_core	69	localization.font.v2.c.text.font.v2.collection.body.adapter	localization.font.v2.collection_body_adapter

@@ -170,6 +170,11 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   the graceful stop is complete.
 - Commit and push only the handoff; never commit incomplete implementation
   merely because `zxc` was issued.
+- When resuming from a recorded stash, restore only the owned changes and
+  verify the exact recovered diff, then immediately drop that exact stash and
+  verify it is no longer listed. If restoration fails or conflicts, retain the
+  stash and report the exact blocker; never delete the recovery copy before
+  successful verification.
 - On resume, validate the handoff against live rules, Git, work artifacts, and
   external resources. Delete, commit, and push the handoff before continuing
   once resumption is possible. Preserve prior approval unless drift invalidates

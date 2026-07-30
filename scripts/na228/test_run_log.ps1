@@ -496,6 +496,32 @@ else {
         -CurrentBuildId 'old-current' `
         -PreviousBuildId 'old-previous' `
         -ProjectPaths $paths
+    $renamedPaths = $paths.PSObject.Copy()
+    $renamedFiles = $paths.files.PSObject.Copy()
+    $renamedFiles.current_iso = Join-Path $build 'NA v2.28 - Current.iso'
+    $renamedFiles.previous_iso = Join-Path $build 'NA v2.28 - Previous.iso'
+    $renamedPaths.files = $renamedFiles
+    $migratedMap = Read-Na2BuildMap `
+        -LogDirectory $structuredLog `
+        -ProjectPaths $renamedPaths
+    Assert-Na2Test `
+        -Condition ($migratedMap.CurrentBuildId -eq 'old-current') `
+        -Message 'Renamed Current ISO key lost its retained build record.'
+    Assert-Na2Test `
+        -Condition ($migratedMap.PreviousBuildId -eq 'old-previous') `
+        -Message 'Renamed Previous ISO key lost its retained build record.'
+    $migratedMapText = [IO.File]::ReadAllText((Join-Path $structuredLog 'builds.tsv'))
+    Assert-Na2Test `
+        -Condition ($migratedMapText -match '@build/NA v2\.28 - Current\.iso') `
+        -Message 'Renamed Current ISO key was not migrated in builds.tsv.'
+    Assert-Na2Test `
+        -Condition ($migratedMapText -notmatch '@build/NA2\.28 - Current\.iso') `
+        -Message 'The stale pre-rename Current ISO key remained in builds.tsv.'
+    Set-Na2BuildMap `
+        -LogDirectory $structuredLog `
+        -CurrentBuildId 'old-current' `
+        -PreviousBuildId 'old-previous' `
+        -ProjectPaths $paths
     $record = Complete-Na2BuildRecord `
         -LogDirectory $structuredLog `
         -BuildId 'new-current' `

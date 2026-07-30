@@ -59,15 +59,21 @@ function Read-Na2BuildMap {
     }
     $rows = @($lines | Select-Object -Skip 1 | ConvertFrom-Csv -Delimiter "`t" -Header iso, build_record)
     $isoKeys = Get-Na2ConfiguredIsoMapKeys -ProjectPaths $ProjectPaths
-    $expectedIsoRows = @($isoKeys.Current, $isoKeys.Previous)
-    $actualIsoText = @($rows.iso | Sort-Object) -join "`n"
-    $expectedIsoText = @($expectedIsoRows | Sort-Object) -join "`n"
-    if ($actualIsoText -cne $expectedIsoText) {
-        throw "builds.tsv must contain one row each for $($isoKeys.Current) and $($isoKeys.Previous)."
+    $migrated = $rows[0].iso -cne $isoKeys.Current -or
+        $rows[1].iso -cne $isoKeys.Previous
+    if ($migrated) {
+        $currentSuffix = $isoKeys.Current.Substring($isoKeys.Current.LastIndexOf(' - '))
+        $previousSuffix = $isoKeys.Previous.Substring($isoKeys.Previous.LastIndexOf(' - '))
+        if (
+            -not ([string]$rows[0].iso).EndsWith($currentSuffix, [StringComparison]::Ordinal) -or
+            -not ([string]$rows[1].iso).EndsWith($previousSuffix, [StringComparison]::Ordinal)
+        ) {
+            throw "builds.tsv must contain one row each for $($isoKeys.Current) and $($isoKeys.Previous)."
+        }
     }
 
-    $currentRecord = [string]($rows | Where-Object iso -CEQ $isoKeys.Current).build_record
-    $previousRecord = [string]($rows | Where-Object iso -CEQ $isoKeys.Previous).build_record
+    $currentRecord = [string]$rows[0].build_record
+    $previousRecord = [string]$rows[1].build_record
     $currentBuildId = ConvertFrom-Na2BuildRecordPath `
         -BuildRecord $currentRecord `
         -LogDirectory $LogDirectory
@@ -79,6 +85,13 @@ function Read-Na2BuildMap {
         -LogDirectory $LogDirectory
     if ($currentBuildId -eq $previousBuildId) {
         throw 'Current and previous ISOs cannot reference the same build record.'
+    }
+    if ($migrated) {
+        Set-Na2BuildMap `
+            -LogDirectory $LogDirectory `
+            -CurrentBuildId $currentBuildId `
+            -PreviousBuildId $previousBuildId `
+            -ProjectPaths $ProjectPaths
     }
 
     return [pscustomobject]@{

@@ -20,6 +20,7 @@
     * [String Translation](work/__sstates/translation/strings)
 
 ### Bugs
+- Translation: sub item.
 - Practice menu entries (like Damage) flicker again (unstable).
 - Flicker on save.
 

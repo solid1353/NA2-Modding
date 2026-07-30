@@ -14,6 +14,10 @@
   `awaiting user verification`; a matching comparison does not accept itself.
 - Use a dark, low-glare background with light text for the report frame,
   headers, and metadata. Do not tint or otherwise alter the source screenshots.
+- Preserve each source screenshot's aspect ratio and output geometry. Inspect
+  and validate the native-resolution source before composing the grid.
+  Resampling for layout is presentation only and never validation evidence;
+  do not let downsampling, cropping, or unequal scaling hide a discrepancy.
 - A grid may contain one row, but never only one screenshot.
 - Result grids use only actual post-change output evidence for the reported
   implementation. Never place source, donor, baseline, pre-fix, preserved
@@ -48,6 +52,20 @@
   regenerate the canonical grid from the retained task-owned inputs before
   reporting the update. Stale grid imagery or metadata is not an updated
   report.
+- For text or layout work, `agent validated`, `matching`, and equivalent result
+  claims require checking the complete visible geometry at native capture
+  resolution, including glyph top and bottom bounds, width, origin, line
+  breaks, and line spacing wherever each property is in scope. Checking only
+  wrapping or horizontal fit is not sufficient evidence for vertical parity.
+- When one shared renderer or adapter handles both unchanged and transformed
+  cases, validate every behavior class that the implementation can select,
+  including at least one one-line/native-preservation case and every relevant
+  multiline path. A transformed result does not prove the unchanged path.
+- Grid findings and canonical descriptions must agree with the implementation
+  and native-resolution evidence. Never claim that a row, branch, metric, or
+  caller remains native when it still passes through an overriding path. If a
+  visible discrepancy or unvalidated behavior remains, state it explicitly
+  and do not label the case `agent validated` or matching.
 
 ## Completed selected-task report
 

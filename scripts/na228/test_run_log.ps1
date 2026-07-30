@@ -130,6 +130,7 @@ try {
   },
   "files": {
     "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
+    "pcsx2_game_launch_command": "@scripts/pcsx2/launch_games.ps1",
     "actualize_command": "@pcsx2_scripts/actualization/act.ps1",
     "actualize_na228_command": "@pcsx2_scripts/actualization/sync_game_files.ps1",
     "actualize_input_command": "@pcsx2_scripts/actualization/sync_input.ps1",
@@ -153,6 +154,9 @@ try {
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 act\b') `
         -Message 'Root help still exposes the retired na228 act command.'
+    Assert-Na2Test `
+        -Condition ($helpText -match '(?m)^\s*na228 launch \[games\.\.\.\]') `
+        -Message 'Root help omitted the unified multi-game launch command.'
     $actHelpText = (
         & (Join-Path $fakeActualizationScripts 'act.ps1') help
     ) -join "`n"
@@ -201,6 +205,13 @@ if ($PassThru) { $result }
 param([string]$Target = 'dev', [string]$IsoPath)
 Write-Host "[fake] launch $Target $IsoPath"
 '@
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch_games.ps1') -Content @'
+param(
+    [Parameter(Position = 0, ValueFromRemainingArguments = $true)]
+    [string[]]$Games
+)
+Write-Output "[fake] multi-game launch $($Games -join ',')"
+'@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'build.ps1') -Content @'
 param([switch]$CandidateOnly, [string]$WorkerOutputIso)
 if ($WorkerOutputIso) {
@@ -223,7 +234,7 @@ else {
         & (Join-Path $fakeRepository '_na228.ps1') act
     }
     catch {
-        $na2ActRejected = $_.Exception.Message -match 'Unknown NA2.28 builder command: act'
+        $na2ActRejected = $_.Exception.Message -match 'Unknown NA2.28 command: act'
     }
     Assert-Na2Test `
         -Condition $na2ActRejected `
@@ -248,6 +259,34 @@ else {
     Assert-Na2Test `
         -Condition $blockingRecipeRejected `
         -Message 'A compact recipe with a non-final watcher was not rejected.'
+    $launchLogPath = Join-Path $fakeRepository 'logs\na228\rolling.log'
+    $launchLogSectionsBefore = if (Test-Path -LiteralPath $launchLogPath) {
+        [regex]::Matches(
+            [IO.File]::ReadAllText($launchLogPath),
+            '(?m)^--- NA2 RUN BEGIN ---$'
+        ).Count
+    }
+    else {
+        0
+    }
+    $multiGameLaunch = (
+        & (Join-Path $fakeRepository '_na228.ps1') launch na2 nun5
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition ($multiGameLaunch -match '\[fake\] multi-game launch na2,nun5') `
+        -Message 'Unified multi-game launch did not preserve ordered selectors.'
+    $launchLogSectionsAfter = if (Test-Path -LiteralPath $launchLogPath) {
+        [regex]::Matches(
+            [IO.File]::ReadAllText($launchLogPath),
+            '(?m)^--- NA2 RUN BEGIN ---$'
+        ).Count
+    }
+    else {
+        0
+    }
+    Assert-Na2Test `
+        -Condition ($launchLogSectionsAfter -eq $launchLogSectionsBefore) `
+        -Message 'Unified multi-game launch changed builder run logs.'
     & (Join-Path $fakeRepository '_na228.ps1') -Current
     & (Join-Path $fakeRepository '_na228.ps1') -Previous
     & (Join-Path $fakeRepository '_na228.ps1') -t

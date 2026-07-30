@@ -6,6 +6,9 @@ param(
     [Parameter(Position = 1)]
     [string]$Version,
 
+    [Parameter(Position = 2, ValueFromRemainingArguments)]
+    [string[]]$RemainingArguments,
+
     [Alias('b')]
     [switch]$Build,
     [Alias('t')]
@@ -69,11 +72,14 @@ if ($compactRecipe -and ($Build -or $Test -or $runSelected -or $Watch -or $Help)
 if ($command -and ($Build -or $Test -or $runSelected -or $Watch)) {
     throw 'Build/launch switches cannot be combined with a command mode.'
 }
-if ($command -and $command -ne 'release') {
-    throw "Unknown NA2.28 builder command: $Mode"
+if ($command -and $command -notin @('release', 'launch')) {
+    throw "Unknown NA2.28 command: $Mode"
 }
-if ($Version -and $command -ne 'release') {
-    throw 'A version argument is accepted only by na228 release.'
+if (($Version -or $RemainingArguments) -and $command -notin @('release', 'launch')) {
+    throw 'Positional arguments are accepted only by na228 release or na228 launch.'
+}
+if ($command -eq 'release' -and $RemainingArguments) {
+    throw 'na228 release accepts at most one version argument.'
 }
 if ($compactRecipe) {
     $duplicateStep = $compactRecipe.ToCharArray() |
@@ -89,7 +95,7 @@ if ($compactRecipe) {
 }
 if ($Help) {
     @(
-        'NA2.28 builder commands:'
+        'NA2.28 commands:'
         "  na228       Build the pinned current profile, conditionally rotate, then run $currentIsoName"
         "  na228 -b    Build and conditionally rotate $currentIsoName without launching PCSX2"
         "  na228 -t    Build build/$candidateIsoName without changing Current/Previous"
@@ -98,6 +104,7 @@ if ($Help) {
         "  na228 -p    Run build/$previousIsoName without rebuilding"
         '  na228 -w    Watch src/ and hot-reload saved C changes into dev PCSX2'
         '  na228 <recipe>  Run unique b/t/c/p/w steps left-to-right; w must be last (example: na228 bpw)'
+        '  na228 launch [games...]  Launch and tile games; defaults to NUN5 + Current'
         '  na228 release [version]  Validate, commit, tag, and publish a GitHub release'
         ''
     ) | Write-Output
@@ -110,6 +117,18 @@ if ($command -eq 'release') {
         $releaseArguments.Version = $Version
     }
     & $projectPaths.files.release_publish_command @releaseArguments
+    return
+}
+
+if ($command -eq 'launch') {
+    $selectedGames = @()
+    if ($Version) {
+        $selectedGames += $Version
+    }
+    if ($RemainingArguments) {
+        $selectedGames += $RemainingArguments
+    }
+    & $projectPaths.files.pcsx2_game_launch_command @selectedGames
     return
 }
 

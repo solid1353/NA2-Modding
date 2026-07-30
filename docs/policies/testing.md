@@ -206,8 +206,7 @@ requirements, not whatever implementation happens to exist today.
   messages, or foregrounding. Capture a new savestate only when the state
   itself is a required artifact.
 - Builds and single-ISO launch commands never probe or close any PCSX2 process.
-- Bare `na228`, launch selectors, standalone `act`, `na`, and UI pair-launch
-  commands are user-only.
+- Bare `na228`, `na228 launch`, and standalone `act` are user-only.
 
 ## Actualization
 

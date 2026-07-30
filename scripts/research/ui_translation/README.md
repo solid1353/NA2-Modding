@@ -58,24 +58,23 @@ cannot be explained from NUN5 and Current plus the unpacked static sources.
 
 ## Workflow
 
-The shared PowerShell profile exposes `na` as the general multi-game launcher.
-Pass any ordered combination of registered ISO selectors:
+The canonical `na228` command exposes a `launch` subcommand that accepts any
+ordered combination of registered ISO selectors:
 
 ```powershell
-na current nun5
+na228 launch current nun5
 ```
 
 Other examples:
 
 ```powershell
-na current nun3
-na candidate nun5
-na na2 nun5 nun6
+na228 launch current nun3
+na228 launch candidate nun5
+na228 launch na2 nun5 nun6
 ```
 
 Supported names are `current`, `previous`, `candidate`, `na2`, `nun3`,
-`nun5`, and `nun6`. Current and Previous use `na228 -c` and `na228 -p`; the others
-launch their configured ISO directly.
+`nun5`, and `nun6`. Each selector resolves its configured ISO directly.
 The launcher closes existing instances of the configured PCSX2 executable,
 uses equal columns for up to three games and a grid for larger lists, and
 prints the game-to-process mapping. Focus the intended window before using

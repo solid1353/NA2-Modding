@@ -90,8 +90,8 @@ User-owned shared-image builds and launches run `act na228` automatically;
 worker-output builds never actualize. The standalone `act` command can run all
 actualization modes without building or launching.
 
-`na` continues accepting any ordered combination of registered ISO selectors;
-its existing selectors and zero-argument behavior remain unchanged. A missing
+`na228 launch` accepts any ordered combination of registered ISO selectors. Its
+selectors and zero-argument NUN5-plus-Current behavior are unchanged. A missing
 selected ISO fails before any PCSX2 process is changed.
 
 Translation is composed directly from the pinned profile; there is no standalone
@@ -124,9 +124,9 @@ worker launches; worker paths must be independent copies under
 window tiling. The launcher does not copy or configure PCSX2, inspect or stop
 unrelated processes, use PINE, load savestates, capture output, or perform
 cleanup.
-Source-game and pair-launch commands inherit the `dev` default. Savestate
-filing also defaults to `dev`; pass `-Target stable` to file states from the
-stable installation.
+The unified multi-game launcher inherits the `dev` default. Savestate filing
+also defaults to `dev`; pass `-Target stable` to file states from the stable
+installation.
 
 Each injection build retains exactly two transport-neutral outputs:
 `fragment.bin`, containing the addressed linked EE MIPS code/data, and
@@ -203,6 +203,7 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 
 | Former path | Recovery commit | Retirement and maintained replacement |
 | --- | --- | --- |
+| `scripts/pcsx2/game_commands.ps1` and `launch_pair.ps1` | `dae022c8` | Separate source-game functions and the pair/multi-game alias were consolidated into `_na228.ps1` command routing and `scripts/pcsx2/launch_games.ps1`. Use `na228 launch [games...]`. |
 | `scripts/pcsx2/capture_state_screenshot.ps1` | `ec4b8276193bc214b526d5ab4f4f85b240ef7949` | Retired because it serialized a complete savestate solely to obtain a fresh screenshot. Extract `Screenshot.png` directly from an existing state; use `scripts/pcsx2/pine.py screenshot` for a fresh runtime frame. |
 | `injection_lab/gen_pnach.py`, `linker.asm`, `overlay_writer.py`, `production_adapter.py`, `screenshot.ps1`, `test.ps1`, and `watch.ps1` | `35628bb4` | The PNACH transport, alternating banks, install/restore state, standalone screenshot helper, and Lab wrapper were retired after the direct-PINE workflow was proven. Workstreams use the unrelated maintained `scripts/injection/test.ps1`; user live editing uses `scripts/injection/watch.ps1`. |
 | `scripts/archive/replace_iso_file_same_size.ps1` | `858da62aacc5d9571bdef072e36b484efddc15e9` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na228_builder.image_assembler`. |

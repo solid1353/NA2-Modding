@@ -62,8 +62,8 @@ replaced with a copied machine-specific absolute path.
 - `@pcsx2_files/`: shared PCSX2 artifacts under
   `@workshop/pcsx2/__shared/`.
 - `@pcsx2_dev/`: the default user-facing PCSX2 runtime. Routine `na228`,
-  source-game, pair-launch, and savestate-filing commands use it unless
-  `stable` is selected explicitly.
+  multi-game launch, and savestate-filing commands use it unless `stable` is
+  selected explicitly.
 - `@pcsx2_stable/`: protected user-owned portable stable PCSX2 installation
   and state, retained for explicit compatibility and release checks. Agents
   never inspect, launch, or modify it without direct authorization.
@@ -179,7 +179,7 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 
 ## Current Scripts
 
-- Root `_na228.ps1` is the routine build/launch entrypoint. Bare `na228`, `na228 -b`, bare `na228 -t`, `na228 -c`, and `na228 -p` retain their Current/Previous/Candidate behavior; `na228 -w` starts the user-only root C watcher using the configured development PCSX2 PINE port. A compact recipe such as `na228 bpw` runs unique `b`/`t`/`c`/`p`/`w` modes left-to-right, with blocking `w` required to be last. The standalone `act` command performs actualization without building or launching. User-owned shared-image modes run `act na228` automatically; the launcher does not read or rewrite the user's `PCSX2.ini`. `na228 -t work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
+- Root `_na228.ps1` is the routine build/launch entrypoint. Bare `na228`, `na228 -b`, bare `na228 -t`, `na228 -c`, and `na228 -p` retain their Current/Previous/Candidate behavior; `na228 launch [games...]` launches and tiles an ordered game selection; and `na228 -w` starts the user-only root C watcher using the configured development PCSX2 PINE port. A compact recipe such as `na228 bpw` runs unique `b`/`t`/`c`/`p`/`w` modes left-to-right, with blocking `w` required to be last. The standalone `act` command performs actualization without building or launching. User-owned shared-image modes run `act na228` automatically; the launcher does not read or rewrite the user's `PCSX2.ini`. `na228 -t work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
 - `scripts/na228/` contains build/launch execution, promotion, ISO identity,
   worker-path validation, and focused tests. Root `_na228.ps1` owns argument
   parsing and dispatches substantive execution to `scripts/na228/run.ps1`.
@@ -194,14 +194,11 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   orchestration. It performs no cloning, configuration, process inspection, or
   termination beyond the newly launched worker's hidden-state check, and
   performs no PINE operation, savestate handling, capture, or cleanup.
-  `game_commands.ps1` defines the manifest-driven `na2`, `nun3`, `nun5`, and
-  `nun6` commands and inherits the development default;
-  `move_na228_savestates.ps1` files development savestates by default or stable
-  savestates with `-Target stable` under `@user_savestates`; and
-  `launch_pair.ps1` is the development-default multi-game launch-and-tile
-  backend used by `na`, which accepts any ordered combination of its registered
-  ISO selectors. Existing selectors and zero-argument behavior remain
-  unchanged.
+  `launch_games.ps1` is the development-default multi-game launch-and-tile
+  backend used by `na228 launch`, which accepts any ordered combination of its
+  registered ISO selectors; and `move_na228_savestates.ps1` files development
+  savestates by default or stable savestates with `-Target stable` under
+  `@user_savestates`.
 - The custom development PCSX2 PINE interface retains reload-patches opcode
   `0x10` and adds native screenshot `0x11`, synchronous pause `0x12`,
   synchronous resume `0x13`, and EE execution-cache refresh `0x14`. Direct

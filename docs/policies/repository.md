@@ -72,6 +72,13 @@
   recoverability and the resulting Git state; unrelated concurrent changes
   remain untouched. On resume, restore and verify the exact owned diff, then
   immediately drop that exact stash and verify its removal.
+- A coherent candidate that the user is expected to test through the normal
+  repository build is a test-ready commit boundary even though acceptance is
+  pending. Commit and push it with an explicit candidate/unaccepted status so
+  the normal builder contains the exact test subject. Never stash, revert, or
+  otherwise remove such a candidate from canonical inputs before the user's
+  test. Use stash or documented reconstruction only for genuinely incomplete
+  work that is not being offered for canonical-path testing.
 - Normal pushes of completed commits to already configured project remotes and
   branches have standing user authorization. Never ask the user to authorize
   them again. This standing authorization does not permit changing remotes,

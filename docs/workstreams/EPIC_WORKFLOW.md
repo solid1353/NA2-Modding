@@ -115,12 +115,12 @@ Canonical epic grids are split by acceptance state:
 When an unresolved epic case produces and shows a new runtime-injected
 candidate, immediately preserve that exact evidence in a truthfully
 candidate-labeled grid under `awaiting_approval/` and update the README state,
-image reference, and `Pending grid` atomically. This obligation applies while
-the candidate implementation remains uncommitted and integrated validation is
-still pending; do not leave the older baseline as the sole canonical record.
-`Uncommitted` describes eligibility for Git history, not permission to leave
-canonical paths dirty; preserve the candidate through the repository's clean
-handoff-boundary rule.
+image reference, and `Pending grid` atomically. Do not leave the older baseline
+as the sole canonical record. When the user is expected to validate that
+candidate through the normal integrated build, restore it to canonical inputs,
+validate it, and commit/push it as explicitly candidate and unaccepted before
+requesting the test. Pending integrated validation prevents acceptance, not a
+test-ready commit.
 
 Accepted grids are not retained in the epic. When the user accepts or verifies
 an exact result, delete its grid and remove its README image reference in the

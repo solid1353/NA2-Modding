@@ -12,14 +12,13 @@ case.
 ## Execution state
 
 - Mode: Continuous.
-- Current subtask: stopped after Priority 4 — ss7 Collection exit confirmation,
-  as explicitly requested. Implementation commit `76e5023f` is pushed;
-  clean-construction runtime output and user acceptance remain pending.
-- Pending grid: none; the exact missing-input response was visibly delivered
-  after commit `76e5023f`.
-- Next action: when a fresh post-build ss7 screenshot or savestate is supplied,
-  finish only the Priority 4 result report and acceptance state. Do not start
-  Priority 5 without a new continuation instruction.
+- Current subtask: Priority 2 — supplemental ss1/ss2 Character Select
+  option-list regressions. Continuous implementation resumed by explicit user
+  instruction; Priority 3 follows with the corrected selective-wrap contract.
+- Pending grid:
+  `docs/workstreams/font/epics/ss2-6-layout/2-linked-mode-modal.png`.
+- Next action: commit and visibly deliver the refreshed evidence grids, then
+  fix Priority 2 as one bounded option-list family.
 
 ## Scope and evidence
 
@@ -29,6 +28,12 @@ case.
   `work/Font/inputs/screenshots/batches/2026-07-30-ss1-10/`.
 - State provenance and hashes:
   `work/Font/inputs/sstates/batches/2026-07-30-ss1-10/provenance.tsv`.
+- Supplemental regression inputs:
+  `work/Font/inputs/sstates/batches/2026-07-30-regressions/`.
+- Supplemental extracted screenshots:
+  `work/Font/inputs/screenshots/batches/2026-07-30-regressions/`.
+- Supplemental provenance and hashes:
+  `work/Font/inputs/sstates/batches/2026-07-30-regressions/provenance.tsv`.
 - Compatible independent worker ISO provenance:
   `work/Font/inputs/sstates/batches/2026-07-30-ss1-10/iso_provenance.tsv`.
 - Protected `@pcsx2_dev` sources remain untouched.
@@ -36,6 +41,13 @@ case.
   center modal; ss3–ss6 one Jutsu-selector defect, with ss3/ss4 supplied as
   precursors and ss5/ss6 showing the defect; ss7 Collection confirmation; ss8
   Movie list; ss9–ss10 character move lists.
+- The supplemental pair reuses ss1 for the Character Select player-mode option
+  list and ss2 for Linked Mode with `Manual` highlighted. It supplements rather
+  than replaces the original batch: the original ss1 remains the accepted
+  return-confirmation evidence.
+- Supplemental ss3 is the current collapsed Jutsu-selector regression: the
+  long selected title remains unwrapped, while native short one-line rows are
+  the behavior that must be preserved.
 - Every slot is loaded directly. The user supplied the exact Priority 3
   constructor sequence ss3 -> Cross -> ss4 -> Circle -> ss5 -> Cross -> ss6,
   but the final draw-time caller executes after direct ss5 and ss6 reloads, so
@@ -49,19 +61,23 @@ case.
 ### Priority 1 — ss1: Return confirmation
 
 - State: accepted lower-body fix retained; isolated top-selector fix is
-  committed, pushed, agent-validated, and visibly delivered; user acceptance
-  remains pending.
+  committed, pushed, agent-validated, visibly delivered, and user-verified on
+  2026-07-30.
 - Result: the scoped top Yes/No list has the same offsets from its modal origin
   as NUN5 while the accepted lower body remains unchanged.
 
 ![Priority 1 Character Select confirmation baseline](1-character-select-confirmation.png)
 
-### Priority 2 — ss2: Linked Mode center modal
+### Priority 2 — supplemental ss1–ss2: Character Select option lists
 
-- State: isolated three-instruction fix is committed, pushed,
-  agent-validated, and visibly delivered; user acceptance remains pending.
-- Result: the center-modal `Linked Mode`, `Manual`, and `Auto` labels now
-  match the NUN5 vertical geometry without changing another modal or renderer.
+- State: reopened by user-supplied regression evidence on 2026-07-30.
+  The earlier default Linked Mode view did not cover highlight-state changes.
+- ss1: the highlighted first player-mode row matches, but the non-highlighted
+  rows drift progressively downward relative to NUN5.
+- ss2: selecting `Manual` exposes incorrect selected/non-highlighted row
+  geometry in the Linked Mode modal.
+- Remaining action: isolate the shared option-list row behavior without
+  disturbing the verified return-confirmation family.
 
 ![Priority 2 Linked Mode baseline](2-linked-mode-modal.png)
 
@@ -69,21 +85,18 @@ case.
 
 ### Priority 3 — ss3–ss6: One Jutsu-selector defect
 
-- State: committed and pushed in `1d0f7e2f`, agent-validated on supplied ss5
-  and ss6, and visibly delivered; user acceptance remains pending. The exact
-  native row draw at live BTL
-  `0x006BCFDC` is isolated behind one guarded C caller. Both long selected
-  names wrap inside the NUN5 186-by-32 two-line box. A session-scoped
-  20-unit glyph bottom edge and explicit 16-unit row advance match the NUN5
-  normalized top, bottom, height, and line spacing without changing another
-  renderer session.
-- ss3 and ss4 are supplied precursors for this one caller family.
-- ss5 and ss6 visibly prove that Current keeps long Jutsu names on one line
-  and overflows, while NUN5 wraps them inside the selector bounds.
-- Runtime validation used direct supplied ss5 and ss6 loads; no game input or
-  menu navigation was required.
+- State: rejected and reopened by user evidence on 2026-07-30. The current
+  enabled-off build does nothing in supplemental ss3. The earlier candidate
+  also over-scoped its session height/advance changes to collapsed one-line
+  strings that NUN5 leaves native.
+- The canonical hook is currently disabled after the build-offset repair in
+  `76f445f4`; its corrected BTL file offset is `0x90DC`.
+- Corrected contract: preserve native short one-line rows exactly and invoke
+  the NUN5-matched two-line box only when the selected title requires wrapping.
+- Supplemental ss3 is the current collapsed target. Original ss5/ss6 remain
+  retained evidence for the same long-title family in its other visible state.
 
-![Priority 3 Jutsu-selector baselines](3-jutsu-selector.png)
+![Priority 3 Jutsu-selector regression](3-jutsu-selector.png)
 
 ## Collection
 
@@ -124,12 +137,13 @@ case.
 
 Priority is determined by the most efficient implementation order.
 
-1. **ss1 — Character Select return confirmation.** Finish the already-isolated
-   top selector while preserving the accepted lower body.
-2. **ss2 — Linked Mode center modal.** Correct the shared three-label vertical
-   geometry as one bounded caller.
+1. **ss1 — Character Select return confirmation.** User-verified.
+2. **supplemental ss1–ss2 — Character Select option lists.** Fix
+   non-highlighted player-mode rows and the Manual-selected Linked Mode
+   geometry as one bounded option-list family.
 3. **ss3–ss6 — one Jutsu-selector defect.** Use ss5/ss6 as visible targets and
-   retain ss3/ss4 only as the supplied precursor states.
+   supplemental ss3 as the collapsed target; preserve every native short
+   one-line row and wrap only the NUN5-wrapped long selected title.
 4. **ss7 — Collection exit confirmation.** Match its body and choice geometry
    without affecting the Character Select modal family.
 5. **ss8 — Movie list.** Implement caller-specific variable-height wrapped

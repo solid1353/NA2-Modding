@@ -125,9 +125,10 @@ case.
 ### Priority 5 — ss8: Movie list
 
 - State: corrected in canonical C, compose-validated, and exercised as a
-  runtime-injected candidate on the supplied ss8 state. The previous grid was
-  not representative of the integrated ISO and remains removed. Exact
-  integrated-ISO output and user acceptance are pending.
+  runtime-injected candidate on the supplied ss8 state. The user accepted that
+  displayed candidate on 2026-07-30. The previous grid was not representative
+  of the integrated ISO and remains removed; exact integrated-ISO output is
+  still pending.
 - Implemented result: one-line Movie rows bypass the wrapper completely. Only
   titles that actually wrap use the 192-unit two-line layout and 16-unit line
   interval; those wrapped rows retain native glyph geometry instead of
@@ -165,8 +166,9 @@ Priority is determined by the most efficient implementation order.
    construction evidence remains queued.
 5. **ss8 — Movie list.** Corrected and compose-validated. A runtime-injected
    candidate preserves native one-line rows and native glyph height for fitting
-   wrapped rows; the previous nonrepresentative grid is removed and exact
-   integrated-ISO evidence is pending.
+   wrapped rows and was user-accepted on 2026-07-30; the previous
+   nonrepresentative grid is removed and exact integrated-ISO evidence is
+   pending.
 6. **ss9–ss10 — Character move lists.** Implemented, agent-validated on both
    supplied states through one pointer-bounded shared entry, and visibly
    delivered; explicit user acceptance remains pending.

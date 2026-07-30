@@ -15,8 +15,9 @@ case.
   explicitly selected Priority 3 correction.
 - Current subtask: Priority 3 — replacement ss1–ss2 Jutsu-selector evidence.
 - Pending grid: none.
-- Next action: correct the shared Jutsu-list X origin and effective box width
-  against the replacement ss1–ss2 pair.
+- Next action: correct the shared Jutsu-list X origin, effective wrap width,
+  and vertically squeezed wrapped-text geometry against the replacement
+  ss1–ss2 pair.
 
 ## Scope and evidence
 
@@ -102,9 +103,10 @@ case.
 - ss1: fitting one-line rows are shifted right in NA2.28.
 - ss2: the effective text box is too narrow. NUN5 wraps `Explosive Destruction
   Formation` after `Destruction`, while NA2.28 wraps after `Explosive`.
-- Required result: preserve native glyph geometry and vertical metrics, move
-  fitting one-line rows to the NUN5 X origin, and use the NUN5 effective width
-  and line break for titles that actually wrap.
+- ss2: the wrapped text is also too narrow vertically in NA2.28.
+- Required result: preserve native/NUN5 glyph height, move fitting one-line
+  rows to the NUN5 X origin, and use the NUN5 effective width, line break, and
+  vertical glyph geometry for titles that actually wrap.
 - Older ss3–ss6 states remain regression inputs for the same caller family;
   they do not override the replacement pair.
 
@@ -175,8 +177,9 @@ Priority is determined by the most efficient implementation order.
 1. **ss1 — Character Select return confirmation.** User-verified.
 2. **supplemental ss1–ss2 — Character Select option lists.** User-accepted.
 3. **replacement ss1–ss2 — one Jutsu-selector defect.** Unresolved and
-   selected: fitting rows are shifted right, and the effective box is too
-   narrow for NUN5's `Explosive Destruction` / `Formation` break.
+   selected: fitting rows are shifted right, the effective box is too narrow
+   for NUN5's `Explosive Destruction` / `Formation` break, and wrapped text is
+   vertically squeezed.
 4. **ss7 — Collection exit confirmation.** Unresolved: the accurate integrated
    grid still shows an unacceptable result despite the enabled hooks and
    successful composition.

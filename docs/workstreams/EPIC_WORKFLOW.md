@@ -48,7 +48,7 @@ evidence, treat the corrected result as due and update `Pending grid`.
 
 Every active epic README records `Mode`, `Current subtask`, and `Pending grid`.
 `Pending grid` is `none`, a repository-relative path to the composed
-post-change grid under that epic's `pending/` directory, or
+post-change grid under that epic's `awaiting_approval/` directory, or
 `missing: <exact post-change input>`. Set it as soon as a subtask result becomes
 due and clear it only after the owning chat visibly sends that grid or exact
 inability response. Consult these fields before every final response.
@@ -100,20 +100,22 @@ canonical epic record.
 
 Canonical epic grids are split by acceptance state:
 
-- `pending/` contains every baseline, candidate, implemented, agent-validated,
-  or visibly delivered grid whose exact result has not yet received explicit
-  user acceptance;
-- `done/` contains only grids whose exact displayed result the user explicitly
-  accepted or verified.
+- `pending/` contains baselines and unresolved cases that still require
+  implementation or valid post-change evidence;
+- `awaiting_approval/` contains implemented post-change result grids whose
+  exact displayed result has not yet received explicit user acceptance.
 
-No canonical grid remains at the epic root. Create either state directory only
-when it contains at least one real grid; never add placeholders to retain an
-empty directory. When the user accepts a result, move its grid from `pending/`
-to `done/` and update its README status and image reference in the same commit.
-If newer evidence reopens or replaces a completed case, move its current grid
-back to `pending/` in the same atomic update. Do not delete an accepted grid
-merely because it leaves the remaining-work report; retain it under `done/`
-unless the user explicitly requests its removal.
+Accepted grids are not retained in the epic. When the user accepts or verifies
+an exact result, delete its grid and remove its README image reference in the
+same commit. When a pending case gains valid post-change evidence, move or
+regenerate its grid under `awaiting_approval/` and update its README status and
+image reference atomically. If an awaiting-approval result is rejected or
+reopened, move its current grid back to `pending/` while recording the remaining
+defect.
+
+No canonical grid remains at the epic root, and no `done/` directory exists.
+Create either allowed state directory only when it contains at least one real
+grid; never add placeholders to retain an empty directory.
 
 Before committing, enumerate the epic directory and verify that every report
 image is referenced by the README, every README image reference resolves, and
@@ -147,6 +149,6 @@ user-declared epic case, immediately:
 
 A chat-only acknowledgment is not an update. Do not report the savestate as
 recorded until the task-owned copies and canonical epic artifacts reflect it.
-If the replacement evidence changes a case already under `done/`, return that
-case and its regenerated grid to `pending/` until the new result is explicitly
-accepted.
+If replacement evidence reopens an accepted case, create its regenerated grid
+under `pending/` until a new implementation produces a result for
+`awaiting_approval/`.

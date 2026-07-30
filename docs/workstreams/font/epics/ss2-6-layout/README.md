@@ -66,8 +66,6 @@ case.
 - Result: the scoped top Yes/No list has the same offsets from its modal origin
   as NUN5 while the accepted lower body remains unchanged.
 
-![Priority 1 Character Select confirmation result](done/1-character-select-confirmation.png)
-
 ### Priority 2 — supplemental ss1–ss2: Character Select option lists
 
 - State: implemented, canonically validated, agent-validated, and visibly
@@ -84,7 +82,7 @@ case.
 - Remaining action: explicit user review only. The verified return-confirmation
   family and every unrelated caller remain unchanged.
 
-![Priority 2 Linked Mode result](pending/2-linked-mode-modal.png)
+![Priority 2 Linked Mode result](awaiting_approval/2-linked-mode-modal.png)
 
 ## Battle Settings / Jutsu selector
 
@@ -101,7 +99,7 @@ case.
   ss5/ss6 remain retained evidence for the same long-title compositor in its
   other visible state.
 
-![Priority 3 Jutsu-selector regression](pending/3-jutsu-selector.png)
+![Priority 3 Jutsu-selector regression](awaiting_approval/3-jutsu-selector.png)
 
 ## Collection
 
@@ -132,7 +130,7 @@ case.
   list keeps fixed row cadence. Short titles, selection style, source strings,
   and every non-Movie caller remain native.
 
-![Priority 5 Movie-list result](pending/5-movie-list.png)
+![Priority 5 Movie-list result](awaiting_approval/5-movie-list.png)
 
 ### Priority 6 — ss9–ss10: Character move lists
 
@@ -146,7 +144,7 @@ case.
   remain native. The broadened entry also preserves the accepted ss8 Movie-list
   output.
 
-![Priority 6 Character move-list result](pending/6-character-move-list.png)
+![Priority 6 Character move-list result](awaiting_approval/6-character-move-list.png)
 
 ## Current priorities
 

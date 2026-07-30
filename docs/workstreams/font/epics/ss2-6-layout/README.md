@@ -14,10 +14,9 @@ case.
 - Mode: Continuous, limited by the user's current authorization to the
   explicitly selected Priority 3 correction.
 - Current subtask: Priority 3 — replacement ss1–ss2 Jutsu-selector evidence.
-- Pending grid: missing: canonical Priority 3 ss1–ss2 baseline update from the
-  newly copied paired batch.
-- Next action: finish the required paired-input provenance and canonical-grid
-  update, then correct the shared list X origin and effective box width.
+- Pending grid: none.
+- Next action: correct the shared Jutsu-list X origin and effective box width
+  against the replacement ss1–ss2 pair.
 
 ## Scope and evidence
 
@@ -27,6 +26,12 @@ case.
   `work/Font/inputs/screenshots/batches/2026-07-30-ss1-10/`.
 - State provenance and hashes:
   `work/Font/inputs/sstates/batches/2026-07-30-ss1-10/provenance.tsv`.
+- Priority 3 replacement inputs:
+  `work/Font/inputs/sstates/batches/2026-07-31-priority3-ss1-2/`.
+- Priority 3 replacement source screenshots:
+  `work/Font/inputs/screenshots/batches/2026-07-31-priority3-ss1-2/`.
+- Priority 3 replacement provenance and hashes:
+  `work/Font/inputs/sstates/batches/2026-07-31-priority3-ss1-2/provenance.tsv`.
 - Supplemental regression inputs:
   `work/Font/inputs/sstates/batches/2026-07-30-regressions/`.
 - Supplemental extracted screenshots:
@@ -49,6 +54,10 @@ case.
 - Supplemental ss3 is the current collapsed Jutsu-selector regression: the
   long selected title remains unwrapped, while native short one-line rows are
   the behavior that must be preserved.
+- The 2026-07-31 paired ss1–ss2 batch supersedes the older Priority 3
+  presentation evidence. Its ss1 is the collapsed Jutsu list and its ss2 is
+  the expanded list. Older ss3–ss6 states remain only as regression evidence
+  for the same caller family.
 - Every slot is loaded directly. The user supplied the exact Priority 3
   constructor sequence ss3 -> Cross -> ss4 -> Circle -> ss5 -> Cross -> ss6,
   but the final draw-time caller executes after direct ss5 and ss6 reloads, so
@@ -85,20 +94,21 @@ case.
 
 ## Battle Settings / Jutsu selector
 
-### Priority 3 — ss3–ss6: One Jutsu-selector defect
+### Priority 3 — replacement ss1–ss2: One Jutsu-selector defect
 
-- State: implemented, canonically validated, agent-validated on supplemental
-  ss3, and visibly delivered; explicit user acceptance remains pending.
-- The enabled hook uses corrected BTL file offset `0x90DC`.
-- The C entry preserves native one-line rows exactly and invokes the
-  NUN5-matched 186-by-32 session only when measurement actually produces a
-  line break.
-- Supplemental ss3 gives exact NUN5 bounds for the wrapped selected title and
-  exact untouched-Current bounds for short `Great Ball Rasengan`. Original
-  ss5/ss6 remain retained evidence for the same long-title compositor in its
-  other visible state.
+- State: unresolved and selected for implementation. The enabled hook at BTL
+  file offset `0x90DC` remains the current integrated baseline, but the new
+  paired output proves that its behavior is not a NUN5 match.
+- ss1: fitting one-line rows are shifted right in NA2.28.
+- ss2: the effective text box is too narrow. NUN5 wraps `Explosive Destruction
+  Formation` after `Destruction`, while NA2.28 wraps after `Explosive`.
+- Required result: preserve native glyph geometry and vertical metrics, move
+  fitting one-line rows to the NUN5 X origin, and use the NUN5 effective width
+  and line break for titles that actually wrap.
+- Older ss3–ss6 states remain regression inputs for the same caller family;
+  they do not override the replacement pair.
 
-![Priority 3 Jutsu-selector regression](awaiting_approval/3-jutsu-selector.png)
+![Priority 3 Jutsu-selector unresolved baseline](pending/3-jutsu-selector.png)
 
 ## Collection
 
@@ -164,8 +174,9 @@ Priority is determined by the most efficient implementation order.
 
 1. **ss1 — Character Select return confirmation.** User-verified.
 2. **supplemental ss1–ss2 — Character Select option lists.** User-accepted.
-3. **ss3–ss6 — one Jutsu-selector defect.** Implemented, agent-validated, and
-   visibly delivered; explicit user acceptance is pending.
+3. **replacement ss1–ss2 — one Jutsu-selector defect.** Unresolved and
+   selected: fitting rows are shifted right, and the effective box is too
+   narrow for NUN5's `Explosive Destruction` / `Formation` break.
 4. **ss7 — Collection exit confirmation.** Unresolved: the accurate integrated
    grid still shows an unacceptable result despite the enabled hooks and
    successful composition.

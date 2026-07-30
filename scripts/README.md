@@ -14,8 +14,9 @@ history; do not recreate an archive directory for dead scripts.
 - `lib/`: shared PowerShell bootstrap, portable run-log, and structured
   build-record helpers.
 - `injection/`: compile/link canonical EE C into `fragment.bin` plus
-  `manifest.json`, apply that candidate transactionally through PINE, and the
-  user-only save watcher that serially invokes those two operations.
+  `manifest.json`, apply that candidate transactionally through PINE, the
+  standard workstream build/reload/apply command, and the user-only save
+  watcher.
 - `na228/`: build, promotion, ISO identity, worker-path validation, and focused
   build/run-log tests.
 - `pcsx2/`: PCSX2 launch, process, configuration, CRC helpers, the user-facing
@@ -112,7 +113,8 @@ no-GUI mode. The launcher suppresses process-owned render windows for the
 worker startup interval, reads back top-level-window visibility, and terminates
 only the newly launched worker if it cannot remain hidden. `-IsoPath` is
 optional for configured launches and mandatory and repository-relative for
-worker launches.
+worker launches; worker paths must be independent copies under
+`work/<task title>/inputs/isos/`.
 `-PassThru` returns the started process for higher-level orchestration such as
 window tiling. The launcher does not copy or configure PCSX2, inspect or stop
 unrelated processes, use PINE, load savestates, capture output, or perform
@@ -133,26 +135,26 @@ Production entries are declared in the owning feature's
 `runtime_injector/entries.tsv`; task-owned overlay plans may select multiple
 declared roots and guarded callers. A plan may also supply
 `resident_symbol_overrides` when a verified supplied savestate restores an
-older resident-symbol layout. Workstreams direct output to their owned tree and
-apply it once to their isolated PCSX2:
+older resident-symbol layout. Workstreams use the maintained command that
+builds into their owned tree, reloads the supplied state, and applies it to
+their isolated PCSX2:
 
 ```powershell
-python -B scripts/injection/build.py `
-  --source-id <source> `
-  --entry <symbol> `
-  --overlay-plan work/<task>/<plan>.json `
-  --output work/<task>/injection
-python -B scripts/injection/apply.py `
-  --input work/<task>/injection `
-  --port <task-port>
+.\scripts\injection\test.ps1 `
+  -SourceId <source> `
+  -Entry <symbol> `
+  -OverlayPlan work/<task>/<plan>.json `
+  -IsoPath work/<task>/inputs/isos/<matching>.iso `
+  -StateSlot <slot> `
+  -PinePort <task-port>
 ```
 
 The applier preserves the VM's prior running/paused state, writes the fragment
 and guarded callers while paused, clears execution caches, and uses no PNACH or
 cheat-folder state. `scripts/injection/watch.ps1` is the user-only equivalent;
 omit `-SourcePath`, `-SourceId`, and `-Entry` for the root smoke source, or pass
-an owning feature source/entry or overlay plan explicitly. Agents invoke the
-builder and applier directly and never run the watcher.
+an owning feature source/entry or overlay plan explicitly. Agents invoke
+`test.ps1` and never run the watcher or its build/apply stages separately.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
 texture-patcher modules. Final output identity comes from profile `identity.json`
@@ -185,7 +187,7 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 | Former path | Recovery commit | Retirement and maintained replacement |
 | --- | --- | --- |
 | `scripts/pcsx2/capture_state_screenshot.ps1` | `ec4b8276193bc214b526d5ab4f4f85b240ef7949` | Retired because it serialized a complete savestate solely to obtain a fresh screenshot. Extract `Screenshot.png` directly from an existing state; use `scripts/pcsx2/pine.py screenshot` for a fresh runtime frame. |
-| `injection_lab/gen_pnach.py`, `linker.asm`, `overlay_writer.py`, `production_adapter.py`, `screenshot.ps1`, `test.ps1`, and `watch.ps1` | `35628bb4` | The PNACH transport, alternating banks, install/restore state, standalone screenshot helper, and Lab wrapper were retired after the direct-PINE workflow was proven. Use `scripts/injection/build.py`, `scripts/injection/apply.py`, the user-only `scripts/injection/watch.ps1`, and `scripts/pcsx2/pine.py`. |
+| `injection_lab/gen_pnach.py`, `linker.asm`, `overlay_writer.py`, `production_adapter.py`, `screenshot.ps1`, `test.ps1`, and `watch.ps1` | `35628bb4` | The PNACH transport, alternating banks, install/restore state, standalone screenshot helper, and Lab wrapper were retired after the direct-PINE workflow was proven. Workstreams use the unrelated maintained `scripts/injection/test.ps1`; user live editing uses `scripts/injection/watch.ps1`. |
 | `scripts/archive/replace_iso_file_same_size.ps1` | `858da62aacc5d9571bdef072e36b484efddc15e9` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na228_builder.image_assembler`. |
 | `scripts/na2/check_log_crc.ps1` | `ce4b06c57a7e1a28124c7a8efffd38169723d915` | Manual log/PNACH comparison was superseded by `na228/iso_identity.ps1` and the maintained standalone actualization workflow. |
 | `scripts/na2/get_elf_crc.ps1` | `858da62aacc5d9571bdef072e36b484efddc15e9` | The redundant command wrapper was removed; `pcsx2/pcsx2_elf_crc.ps1` remains the shared tested implementation. |

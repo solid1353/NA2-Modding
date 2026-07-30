@@ -5,7 +5,6 @@ param(
     [Parameter(Mandatory)]
     [string]$Entry,
     [string]$OverlayPlan,
-    [string]$Output,
     [Parameter(Mandatory)]
     [string]$IsoPath,
     [Parameter(Mandatory)]
@@ -29,22 +28,18 @@ if ([IO.Path]::IsPathRooted($IsoPath)) {
 $resolvedIso = [IO.Path]::GetFullPath((Join-Path $repository $IsoPath))
 $relativeIso = [IO.Path]::GetRelativePath($repository, $resolvedIso)
 if ($relativeIso -notmatch (
-    '^work[\\/][^\\/]+[\\/](?:inputs[\\/]isos|build)[\\/][^\\/]+\.iso$'
+    '^work[\\/][^\\/]+[\\/]inputs[\\/]isos[\\/][^\\/]+\.iso$'
 )) {
     throw (
-        'Worker ISO must be a task-owned file under ' +
-        'work/<task>/inputs/isos/ or work/<task>/build/.'
+        'Worker ISO must be an independent copy under ' +
+        'work/<task>/inputs/isos/.'
     )
 }
 if (-not (Test-Path -LiteralPath $resolvedIso -PathType Leaf)) {
     throw "Worker ISO does not exist: $resolvedIso"
 }
-$resolvedOutput = if ($Output) {
-    [IO.Path]::GetFullPath((Join-Path $repository $Output))
-}
-else {
-    Join-Path $repository "build\injection\$SourceId"
-}
+$taskName = ($relativeIso -split '[\\/]')[1]
+$resolvedOutput = Join-Path $repository "work\$taskName\injection"
 
 $buildArguments = @(
     '-B',

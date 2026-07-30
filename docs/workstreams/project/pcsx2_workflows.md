@@ -29,6 +29,7 @@ scripts/
   injection/
     build.py
     apply.py
+    test.ps1
     watch.ps1
   pcsx2/
     pine.py
@@ -88,6 +89,14 @@ installation-state, backup, or separate bank files.
 - Contains no PNACH installation, synchronization, removal, recovery, or
   backup lifecycle.
 
+### `scripts/injection/test.ps1`
+
+- Standard workstream entry point for savestate-based C injection.
+- Requires the independent compatible ISO under the owning task's
+  `inputs/isos/`, the supplied savestate slot, and the task-owned PINE port.
+- Invokes `build.py`, reloads the state and waits for completion, then invokes
+  `apply.py`; agents do not run those stages separately for runtime testing.
+
 ### `scripts/injection/watch.ps1`
 
 - User-only interactive convenience.
@@ -142,20 +151,20 @@ state, a remove command, or a clean restart between ordinary rebuilds.
    and an independent full copy of its exact matching ISO under
    `work/<exact task title>/inputs/isos/`. Record the ISO SHA-256 and disc
    identity with the state provenance; never use a symlink or hardlink.
-3. Pass only that task-owned ISO to the worker launcher and `build.py`. Worker
+3. Pass only that task-owned ISO to the worker launcher and `test.ps1`. Worker
    processes never open shared Current, Previous, or Candidate.
-4. Load the supplied state before applying the candidate.
-5. Run `build.py` once into `work/<exact task title>/injection/`.
-6. Run `apply.py` once against that folder and the task-owned PINE port.
-7. Capture evidence with the shared PINE screenshot operation when needed.
-8. Repeat the build/apply commands manually for another candidate.
-9. After user acceptance, integrate the same canonical source and declarations
+4. Run `test.ps1` with the supplied savestate slot. It builds into
+   `work/<exact task title>/injection/`, reloads that slot, waits for the load,
+   applies the candidate, invalidates the JIT, and resumes.
+5. Capture evidence with the shared PINE screenshot operation when needed.
+6. Repeat `test.ps1` for another candidate.
+7. After user acceptance, integrate the same canonical source and declarations
    through the normal builder and perform the required clean validation.
-10. Delete task-owned ISO copies as soon as their compatible state batch or
-    current test no longer needs them. Runtime completion leaves no worker ISO
-    copies behind; only provenance remains.
+8. Delete task-owned ISO copies as soon as their compatible state batch or
+   current test no longer needs them. Runtime completion leaves no worker ISO
+   copies behind; only provenance remains.
 
-WW has no watcher and no higher-level workflow wrapper. Agents do not use
+WW uses the maintained `test.ps1` wrapper and no watcher. Agents do not use
 PNACH, cheat directories, shared PCSX2 installations, filesystem
 synchronization, or task-local injection scripts.
 

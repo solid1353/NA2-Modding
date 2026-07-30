@@ -129,29 +129,20 @@ if ($PSCmdlet.ParameterSetName -eq 'Worker') {
         $resolvedIso = [IO.Path]::GetFullPath(
             (Join-Path $projectPaths.repository $IsoPath)
         )
-        $allowedIsoRoots = @(
-            [IO.Path]::GetFullPath($worker.Build),
-            [IO.Path]::GetFullPath((Join-Path $worker.Inputs 'isos'))
+        $allowedIsoRoot = [IO.Path]::GetFullPath(
+            (Join-Path $worker.Inputs 'isos')
         )
-        $isTaskOwnedIso = $false
-        foreach ($allowedRoot in $allowedIsoRoots) {
-            $prefix = $allowedRoot.TrimEnd(
-                [IO.Path]::DirectorySeparatorChar,
-                [IO.Path]::AltDirectorySeparatorChar
-            ) + [IO.Path]::DirectorySeparatorChar
-            if ($resolvedIso.StartsWith(
-                $prefix,
-                [StringComparison]::OrdinalIgnoreCase
-            )) {
-                $isTaskOwnedIso = $true
-                break
-            }
-        }
-        if (-not $isTaskOwnedIso) {
+        $prefix = $allowedIsoRoot.TrimEnd(
+            [IO.Path]::DirectorySeparatorChar,
+            [IO.Path]::AltDirectorySeparatorChar
+        ) + [IO.Path]::DirectorySeparatorChar
+        if (-not $resolvedIso.StartsWith(
+            $prefix,
+            [StringComparison]::OrdinalIgnoreCase
+        )) {
             throw (
-                'Worker ISO must be task-owned under ' +
-                "work/$($worker.WorkerName)/inputs/isos/ or " +
-                "work/$($worker.WorkerName)/build/."
+                'Worker ISO must be an independent copy under ' +
+                "work/$($worker.WorkerName)/inputs/isos/."
             )
         }
     }

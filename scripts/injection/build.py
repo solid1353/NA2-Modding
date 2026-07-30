@@ -373,7 +373,11 @@ def align(value: int, alignment: int) -> int:
     return (value + alignment - 1) & -alignment
 
 
-def locate_build_record(payload_sha256: str) -> tuple[Path, dict[str, object]]:
+def locate_build_record(
+    payload_sha256: str,
+    *,
+    required: bool = True,
+) -> tuple[Path, dict[str, object]] | None:
     matches: list[tuple[Path, dict[str, object]]] = []
     builds_root = REPOSITORY / "logs" / "na228" / "builds"
     for summary_path in builds_root.glob("*/payload_builder/payload_summary.json"):
@@ -381,6 +385,8 @@ def locate_build_record(payload_sha256: str) -> tuple[Path, dict[str, object]]:
         if str(summary.get("sha256", "")).upper() == payload_sha256:
             matches.append((summary_path.parents[1], summary))
     if not matches:
+        if not required:
+            return None
         raise ValueError(
             "No retained NA2 build record matches the exact Current 228.BIN "
             f"SHA-256 {payload_sha256}"
@@ -614,6 +620,7 @@ def select_fragment_closure(
     mappings: list[tuple[int, str, str]],
     symbol_map: dict[str, dict[str, object]],
     current_payload: bytes,
+    resident_symbol_overrides: dict[str, int],
 ) -> tuple[list[PayloadFragment], set[str]]:
     c_orders = {
         fragment_id: order
@@ -644,6 +651,8 @@ def select_fragment_closure(
     def matches_current(symbol: str, active: set[str] | None = None) -> bool:
         if symbol in root_symbols:
             return False
+        if symbol in resident_symbol_overrides:
+            return True
         cached = current_match_cache.get(symbol)
         if cached is not None:
             return cached
@@ -822,10 +831,20 @@ def main() -> int:
         raise ValueError(f"{iso_path}: PRG/228.BIN was not found") from exc
     payload = iso.read_file(payload_record)
     payload_sha256 = sha256(payload)
-    build_record, payload_summary = locate_build_record(payload_sha256)
-    symbol_map = load_symbol_map(build_record, payload)
-    if str(payload_summary.get("load_base", "")).lower() != "0x8f3d00":
-        raise ValueError("Matching build record has an unexpected 228.BIN load base")
+    record_match = locate_build_record(
+        payload_sha256,
+        required=not resident_symbol_overrides,
+    )
+    if record_match is None:
+        build_record = None
+        symbol_map: dict[str, dict[str, object]] = {}
+    else:
+        build_record, payload_summary = record_match
+        symbol_map = load_symbol_map(build_record, payload)
+        if str(payload_summary.get("load_base", "")).lower() != "0x8f3d00":
+            raise ValueError(
+                "Matching build record has an unexpected 228.BIN load base"
+            )
 
     source_path, namespace, imports, mappings = load_source(source_id)
     entry_declarations = (
@@ -850,6 +869,7 @@ def main() -> int:
         mappings,
         symbol_map,
         payload,
+        resident_symbol_overrides,
     )
     by_symbol = {fragment.symbol: fragment for fragment in fragments}
     for selected_entry in entry_symbols:
@@ -970,7 +990,11 @@ def main() -> int:
             )
         },
         "payload_sha256": payload_sha256,
-        "build_record": build_record.relative_to(REPOSITORY).as_posix(),
+        "build_record": (
+            build_record.relative_to(REPOSITORY).as_posix()
+            if build_record is not None
+            else None
+        ),
         "overlay_plan": (
             overlay_plan_path.relative_to(REPOSITORY).as_posix()
             if overlay_plan_path is not None
@@ -988,6 +1012,11 @@ def main() -> int:
         f"fixed imports into "
         f"0x{code_base:08X}-0x{code_base + len(fragment):08X}"
     )
+    if build_record is None:
+        print(
+            "Resident imports resolved from verified overlay-plan overrides; "
+            "the exact ISO payload has no retained shared build record."
+        )
     for selected_entry in entry_symbols:
         print(
             f"Production entry {selected_entry} -> "

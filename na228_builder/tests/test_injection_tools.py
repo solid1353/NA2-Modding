@@ -251,6 +251,71 @@ class InjectionBuildTests(unittest.TestCase):
             },
         )
 
+    def test_resident_override_closes_fragment_without_build_record(self) -> None:
+        entry = build_injection.PayloadFragment(
+            owner="localization.runtime_injector",
+            symbol="localization.font.v2.new_entry",
+            kind="code",
+            alignment=4,
+            payload=bytes(8),
+            relocations=(
+                build_injection.PayloadRelocation(
+                    offset=0,
+                    kind="jal26",
+                    symbol="localization.font.v2.resident_helper",
+                ),
+            ),
+        )
+        helper = build_injection.PayloadFragment(
+            owner="localization.runtime_injector",
+            symbol="localization.font.v2.resident_helper",
+            kind="code",
+            alignment=4,
+            payload=bytes(4),
+        )
+
+        with mock.patch.object(
+            build_injection,
+            "_load_static_fragments",
+            return_value=[],
+        ):
+            fragments, imports = build_injection.select_fragment_closure(
+                ["localization.font.v2.new_entry"],
+                [entry, helper],
+                [
+                    (1, "entry", "localization.font.v2.new_entry"),
+                    (2, "helper", "localization.font.v2.resident_helper"),
+                ],
+                {},
+                b"",
+                {
+                    "localization.font.v2.resident_helper": 0x008F5000,
+                },
+            )
+
+        self.assertEqual(
+            [fragment.symbol for fragment in fragments],
+            ["localization.font.v2.new_entry"],
+        )
+        self.assertEqual(
+            imports,
+            {"localization.font.v2.resident_helper"},
+        )
+
+    def test_missing_build_record_is_optional_for_override_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            with mock.patch.object(
+                build_injection,
+                "REPOSITORY",
+                Path(temporary),
+            ):
+                self.assertIsNone(
+                    build_injection.locate_build_record(
+                        "AA" * 32,
+                        required=False,
+                    )
+                )
+
     def test_rejects_override_for_unselected_import(self) -> None:
         with self.assertRaisesRegex(
             ValueError, "not selected imports.*unused"

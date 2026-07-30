@@ -151,9 +151,13 @@ Production entries are declared in the owning feature's
 `runtime_injector/entries.tsv`; task-owned overlay plans may select multiple
 declared roots and guarded callers. A plan may also supply
 `resident_symbol_overrides` when a verified supplied savestate restores an
-older resident-symbol layout. Workstreams use the maintained command that
-builds into their owned tree, reloads the supplied state, and applies it to
-their isolated PCSX2:
+older resident-symbol layout. Those explicit overrides are also sufficient
+when the compatible ISO's shared build record has already rotated out: the
+linker bank-links the selected new closure and imports only the named verified
+resident symbols. Without overrides, the exact retained build record and its
+byte-verified symbol map remain mandatory. Workstreams use the maintained
+command that builds into their owned tree, reloads the supplied state, and
+applies it to their isolated PCSX2:
 
 ```powershell
 .\scripts\injection\test.ps1 `

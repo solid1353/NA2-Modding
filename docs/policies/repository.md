@@ -64,6 +64,12 @@
   branches have standing user authorization. Never ask the user to authorize
   them again. This standing authorization does not permit changing remotes,
   force-pushing, or rewriting history.
+- For a normal push to the currently configured `origin`, treat that
+  configuration as the established destination; do not add a pre-push
+  origin-verification gate. If execution review nevertheless requires proof,
+  satisfy it once with `git remote get-url origin` and immediately retry the
+  exact push. Do not pause approved work or repeat the check unless the remote
+  configuration changes.
 - Commit subjects use `[<exact task title>] <imperative summary>`. Override the
   author for that commit only using the matching `.agents/git-authors.tsv`
   entry, or `<agent-name>@agent.invalid` when absent. Never alter repository or

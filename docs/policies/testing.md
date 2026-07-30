@@ -143,6 +143,20 @@ requirements, not whatever implementation happens to exist today.
   memory cards, cheats, and GameSettings, is allowed. Assign a PINE port unique
   among live agent instances and operate only that copy. Other workstream
   copies/processes are off-limits.
+- Shared Current, Previous, and Candidate ISOs are mutable user files. A worker
+  PCSX2 process, injection build, or other worker command must never open those
+  shared paths. Pass only an explicit task-owned ISO path under
+  `work/<exact task title>/` to worker launch and injection commands. Before
+  using an existing image, make an independent full copy of the exact
+  savestate-compatible ISO under `inputs/isos/`; agent-built images remain
+  under `build/`. Never use a symlink or hardlink. Record a copied image's
+  SHA-256 and disc identity with the supplied-state provenance. If the exact
+  compatible image is unavailable or cannot be established, stop and request
+  it instead of using the latest Current or producing a replacement build.
+  Keep only copies required by active compatible savestate batches or the
+  current test. Delete superseded worker ISOs before copying another, and
+  delete all remaining worker ISO copies when runtime work ends. Preserve the
+  small provenance records, not the obsolete images.
 - If `work/<task title>/pcsx2/` already exists when new runtime work begins,
   its owning task inspects it before reuse. The inspection covers PCSX2
   configuration and PINE port, Injection Lab or other hot-reload PNACH state,
@@ -175,7 +189,9 @@ requirements, not whatever implementation happens to exist today.
   those writes to the task-owned PCSX2 and invokes JIT invalidation. The agent
   path does not generate or install PNACH files, synchronize cheat directories,
   maintain install/restore records, invoke specialized intermediate writers,
-  or use filesystem watchers.
+  or use filesystem watchers. The build receives its resident-symbol ISO
+  explicitly from the task-owned compatible copy; its shared-Current default
+  is user-only.
 - `scripts/injection/watch.ps1` is user-only interactive convenience.
   It may automate the same compile/link and direct-PINE operations for the user,
   but agents never run or depend on it.

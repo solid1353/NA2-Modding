@@ -129,6 +129,31 @@ if ($PSCmdlet.ParameterSetName -eq 'Worker') {
         $resolvedIso = [IO.Path]::GetFullPath(
             (Join-Path $projectPaths.repository $IsoPath)
         )
+        $allowedIsoRoots = @(
+            [IO.Path]::GetFullPath($worker.Build),
+            [IO.Path]::GetFullPath((Join-Path $worker.Inputs 'isos'))
+        )
+        $isTaskOwnedIso = $false
+        foreach ($allowedRoot in $allowedIsoRoots) {
+            $prefix = $allowedRoot.TrimEnd(
+                [IO.Path]::DirectorySeparatorChar,
+                [IO.Path]::AltDirectorySeparatorChar
+            ) + [IO.Path]::DirectorySeparatorChar
+            if ($resolvedIso.StartsWith(
+                $prefix,
+                [StringComparison]::OrdinalIgnoreCase
+            )) {
+                $isTaskOwnedIso = $true
+                break
+            }
+        }
+        if (-not $isTaskOwnedIso) {
+            throw (
+                'Worker ISO must be task-owned under ' +
+                "work/$($worker.WorkerName)/inputs/isos/ or " +
+                "work/$($worker.WorkerName)/build/."
+            )
+        }
     }
     $workerExecutables = @(
         Get-ChildItem -LiteralPath $worker.Pcsx2 -File -ErrorAction SilentlyContinue |

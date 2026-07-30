@@ -6,7 +6,8 @@ param(
     [string]$Entry,
     [string]$OverlayPlan,
     [string]$Output,
-    [string]$CurrentIso,
+    [Parameter(Mandatory)]
+    [string]$IsoPath,
     [Parameter(Mandatory)]
     [ValidateRange(0, 255)]
     [int]$StateSlot,
@@ -22,6 +23,22 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $buildScript = Join-Path $PSScriptRoot 'build.py'
 $applyScript = Join-Path $PSScriptRoot 'apply.py'
 $pineScript = Join-Path $repository 'scripts\pcsx2\pine.py'
+if ([IO.Path]::IsPathRooted($IsoPath)) {
+    throw 'Worker ISO paths must be repository-relative.'
+}
+$resolvedIso = [IO.Path]::GetFullPath((Join-Path $repository $IsoPath))
+$relativeIso = [IO.Path]::GetRelativePath($repository, $resolvedIso)
+if ($relativeIso -notmatch (
+    '^work[\\/][^\\/]+[\\/](?:inputs[\\/]isos|build)[\\/][^\\/]+\.iso$'
+)) {
+    throw (
+        'Worker ISO must be a task-owned file under ' +
+        'work/<task>/inputs/isos/ or work/<task>/build/.'
+    )
+}
+if (-not (Test-Path -LiteralPath $resolvedIso -PathType Leaf)) {
+    throw "Worker ISO does not exist: $resolvedIso"
+}
 $resolvedOutput = if ($Output) {
     [IO.Path]::GetFullPath((Join-Path $repository $Output))
 }
@@ -36,16 +53,14 @@ $buildArguments = @(
     $SourceId,
     '--entry',
     $Entry,
+    '--iso',
+    $resolvedIso,
     '--output',
     $resolvedOutput
 )
 if ($OverlayPlan) {
     $buildArguments += @('--overlay-plan', $OverlayPlan)
 }
-if ($CurrentIso) {
-    $buildArguments += @('--iso', $CurrentIso)
-}
-
 & python @buildArguments
 if ($LASTEXITCODE -ne 0) {
     throw "Injection build failed with exit code $LASTEXITCODE."

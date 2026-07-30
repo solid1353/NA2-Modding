@@ -133,6 +133,18 @@ Detailed command and task behavior is in
   terminate that newly launched process and fail. Never navigate emulator or
   game menus through PINE or injected input. If a required savestate was not
   supplied, stop and ask the user for that exact state.
+- Worker PCSX2, injection builds, and other worker processes never open the
+  shared Current, Previous, or Candidate ISO paths. Pass only an explicit
+  task-owned ISO path under `work/<exact task title>/`. Existing
+  savestate-compatible images are independent full copies under `inputs/isos/`;
+  agent-built images remain under `build/`. Symlinks and hardlinks are
+  forbidden because the user may replace or modify a shared ISO at any time.
+  Record a copied ISO's SHA-256 and disc identity with the savestate
+  provenance. If exact compatibility cannot be established, stop; never
+  substitute or rebuild another image. Keep only ISO copies required by active
+  compatible savestate batches or the current test. Delete superseded worker
+  ISOs before copying another and delete all remaining worker ISO copies when
+  the runtime work ends; provenance records remain.
 - Agent C injection has exactly two stages: compile/link canonical C and its
   task-owned overlay plan into addressed guarded writes, then apply those
   writes directly through PINE to the task-owned PCSX2 and invalidate the JIT.

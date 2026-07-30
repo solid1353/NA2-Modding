@@ -139,14 +139,21 @@ state, a remove command, or a clean restart between ordinary rebuilds.
 1. Create or refresh only the workstream's task-owned PCSX2 clone from
    `@pcsx2_clean`; assign a unique PINE port and keep the process hidden.
 2. Copy only inputs required by the task, including a user-supplied savestate
-   when runtime positioning is required.
-3. Load the supplied state before applying the candidate.
-4. Run `build.py` once into `work/<exact task title>/injection/`.
-5. Run `apply.py` once against that folder and the task-owned PINE port.
-6. Capture evidence with the shared PINE screenshot operation when needed.
-7. Repeat the build/apply commands manually for another candidate.
-8. After user acceptance, integrate the same canonical source and declarations
+   and an independent full copy of its exact matching ISO under
+   `work/<exact task title>/inputs/isos/`. Record the ISO SHA-256 and disc
+   identity with the state provenance; never use a symlink or hardlink.
+3. Pass only that task-owned ISO to the worker launcher and `build.py`. Worker
+   processes never open shared Current, Previous, or Candidate.
+4. Load the supplied state before applying the candidate.
+5. Run `build.py` once into `work/<exact task title>/injection/`.
+6. Run `apply.py` once against that folder and the task-owned PINE port.
+7. Capture evidence with the shared PINE screenshot operation when needed.
+8. Repeat the build/apply commands manually for another candidate.
+9. After user acceptance, integrate the same canonical source and declarations
    through the normal builder and perform the required clean validation.
+10. Delete task-owned ISO copies as soon as their compatible state batch or
+    current test no longer needs them. Runtime completion leaves no worker ISO
+    copies behind; only provenance remains.
 
 WW has no watcher and no higher-level workflow wrapper. Agents do not use
 PNACH, cheat directories, shared PCSX2 installations, filesystem

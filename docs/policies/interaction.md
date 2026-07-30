@@ -114,10 +114,10 @@ Next response: short plan + effort recommendation + needed user inputs + approva
 - `dnf` means do not forward, relay, signal, quote, or summarize the attached
   message to another task. It grants no other authority.
 - `ag` means reread live `AGENTS.md` completely and apply it immediately.
-- `q:` queues the message in arrival order behind the current safe boundary.
-  It supplements rather than replaces current work unless it says otherwise.
-  Queued instructions remain in the same changeset unless the user says
-  otherwise.
+- `q:` means the user queued the message before delivery. Once received, handle
+  its content normally. The prefix does not direct the agent to delay, reorder,
+  supplement, merge, or preserve the message in any particular changeset, and
+  it does not alter scope, priority, approval, or replacement semantics.
 - `con` resumes current work with scope, effort, progress, and approval intact.
 - `ep` means `epic`.
 - `eff` asks for the current recommended effort and does not change it.

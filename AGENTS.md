@@ -70,7 +70,8 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 
 - `dnf`: do not forward the attached message or its contents.
 - `ag`: reread live `AGENTS.md` and apply it immediately.
-- `q:`: queue the message in arrival order behind the current safe boundary.
+- `q:`: indicates that the user queued the message before the agent received it;
+  it is delivery metadata, not an agent-side queue command.
 - `con`: resume the current work without changing its scope or approval state.
 - `ep`: epic.
 - `eff`: report the current recommended effort without changing it.

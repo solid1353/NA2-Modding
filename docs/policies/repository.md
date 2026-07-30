@@ -58,6 +58,10 @@
   accidentally included, the commit may be pushed as-is and must be reported.
 - Commit and push every completed change automatically at a coherent boundary.
   Git never requires `qwe` or separate approval.
+- Normal pushes of completed commits to already configured project remotes and
+  branches have standing user authorization. Never ask the user to authorize
+  them again. This standing authorization does not permit changing remotes,
+  force-pushing, or rewriting history.
 - Commit subjects use `[<exact task title>] <imperative summary>`. Override the
   author for that commit only using the matching `.agents/git-authors.tsv`
   entry, or `<agent-name>@agent.invalid` when absent. Never alter repository or
@@ -76,6 +80,11 @@
   failure by changing tools, paths, destinations, or methods.
 - After an access failure, retry only the failed operation; do not repeat work
   that already succeeded.
+- An execution-layer rejection of an already-authorized Git operation is a
+  tooling restriction, not missing user authorization. Retry the exact
+  operation through the permitted elevated path. If that path is also denied,
+  report the exact restriction and pending refs without asking the user to
+  approve the Git operation again or inventing a new authorization gate.
 - An access or elevation denial never silently changes an authorized cleanup
   into preservation. Revalidate the exact target, retry the still-pending
   operation with the narrowest valid elevation, and verify its result. If the

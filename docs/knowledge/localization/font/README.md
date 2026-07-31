@@ -2045,3 +2045,51 @@ The user verified the final whole-Font hot-reloaded Jutsu selector on
 fragment reconstruction passed afterward. Confidence is high for this caller
 family; this verification establishes the live displayed result and does not
 claim a separate integrated-ISO runtime pass.
+
+## 2026-07-31 Settings and Ninja Song page templates
+
+The matched Font 3 ss1–ss3 batch uses NUN5, not NUN6, as the layout reference.
+The Settings screens are loop-rendered page templates rather than collections
+of unique rows. Battle Settings uses one label call at BTL file `0x1CC368` and
+two native value branches at `0x1CC424` and `0x1CC598`; Practice Settings uses
+one heading call at `0x1CE528`, one label call at `0x1CE56C`, and one value call
+at `0x1CE5D4`. The guarded redirects therefore cover every row emitted by each
+loop without identifying any translated string or visible row.
+
+The shared Settings value adapter has two data-selected overflow templates.
+A value containing no ASCII space uses the compact-token target; a value with
+an ASCII space uses the descriptive-phrase target. This reproduces both the
+96-pixel NUN5 `Unlimited` result and the exact `(381,216)-(507,229)` NUN5
+`High Speed Move` result while leaving short values such as `Normal` at native
+scale. Battle and Practice labels retain separate page baselines, plus one
+shared selected-state offset. These are page/state formulas, not per-row
+coordinates.
+
+Ninja Song arithmetic is likewise one function-level redirect, not a set of
+token or row hooks. NA2 `FUN_00718920` is replaced from BTL file `0x64A60` by
+one call to `localization.font.v2.ninja_arithmetic_template`; the template
+reads the native 12-byte row record and renders all fifteen entries. The full
+15-entry live table confirms the native routine has three structural outputs:
+expanded arithmetic, total-only, and N/A. NA2 carries the total-only routing
+through its existing indices `9`, `10`, and `13`; the replacement preserves
+that native routing inside the single page renderer rather than creating three
+row patches. The shared geometry owns factor, multiplier, unit, equals, total,
+and N/A placement once for every applicable row.
+
+Fresh hidden-worker ss1–ss3 injection runs proved the Settings loops and the
+continuously redrawn Ninja formulas. At 640x480, the final Practice phrase and
+heading bounds match NUN5 exactly; short Settings values also match, and the
+remaining ordinary-label differences are at most one raster pixel. The Ninja
+factor/total columns and N/A row are within one pixel horizontally; their
+retained current glyph ink is shorter than NUN5, so subpixel baseline changes
+quantize to the neighboring output pixel rather than creating a stable
+per-row correction.
+
+The objective call at BTL file `0x64E98` uses a separate, necessary page
+template because objectives are one- or two-line prose rather than arithmetic
+rows. It copies the text, wraps to two lines, and applies the NUN5 `288 x 32`
+box and two-line baseline. Supplied ss3 resumes after objective construction,
+so that call does not execute after savestate load; the hook and wrapper are
+statically verified, but the objective's post-hook visible result is not
+runtime-proven by this state. This limitation does not apply to the arithmetic
+renderer, which executes continuously after resume.

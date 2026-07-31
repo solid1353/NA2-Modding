@@ -133,6 +133,36 @@ V2_PRACTICE_ICON_DRAW_CALLBACK = (
 V2_PRACTICE_CALLBACK = f"{V2_PREFIX}.practice_callback"
 V2_PRACTICE_ADAPTER = f"{V2_PREFIX}.practice_adapter"
 V2_PRACTICE_ADAPTER_IMPL = f"{V2_PREFIX}.c.practice_adapter_impl"
+V2_SETTINGS_LABEL_CALLBACK = f"{V2_PREFIX}.c.settings_label_callback"
+V2_SETTINGS_HEADING_CALLBACK = f"{V2_PREFIX}.c.settings_heading_callback"
+V2_SETTINGS_VALUE_CALLBACK = f"{V2_PREFIX}.c.settings_value_callback"
+V2_SETTINGS_ROW_COMMON = f"{V2_PREFIX}.c.settings_row_common"
+V2_BATTLE_SETTINGS_LABEL_ADAPTER = (
+    f"{V2_PREFIX}.battle_settings_label_adapter"
+)
+V2_PRACTICE_SETTINGS_LABEL_ADAPTER = (
+    f"{V2_PREFIX}.practice_settings_label_adapter"
+)
+V2_SETTINGS_VALUE_ADAPTER = f"{V2_PREFIX}.settings_value_adapter"
+V2_PRACTICE_SETTINGS_HEADING_ADAPTER = (
+    f"{V2_PREFIX}.practice_settings_heading_adapter"
+)
+V2_NINJA_TEXT_CALLBACK = f"{V2_PREFIX}.c.ninja_text_callback"
+V2_NINJA_TEXT_COMMON = f"{V2_PREFIX}.c.ninja_text_common"
+V2_NINJA_COMPACT_ADAPTER = f"{V2_PREFIX}.ninja_compact_adapter"
+V2_NINJA_HITS_ADAPTER = f"{V2_PREFIX}.ninja_hits_adapter"
+V2_NINJA_EQUALS_ADAPTER = f"{V2_PREFIX}.ninja_equals_adapter"
+V2_NINJA_TOTAL_ADAPTER = f"{V2_PREFIX}.ninja_total_adapter"
+V2_NINJA_EMPTY_ADAPTER = f"{V2_PREFIX}.ninja_empty_adapter"
+V2_NINJA_ARITHMETIC_TEMPLATE = (
+    f"{V2_PREFIX}.ninja_arithmetic_template"
+)
+V2_NINJA_OBJECTIVE_ASCII_WIDTH = (
+    f"{V2_PREFIX}.c.ninja_objective_ascii_width"
+)
+V2_NINJA_OBJECTIVE_WRAP = f"{V2_PREFIX}.c.ninja_objective_wrap"
+V2_NINJA_OBJECTIVE_CALLBACK = f"{V2_PREFIX}.c.ninja_objective_callback"
+V2_NINJA_OBJECTIVE_ADAPTER = f"{V2_PREFIX}.ninja_objective_adapter"
 V2_PLAIN_SPACE = f"{V2_PREFIX}.plain_space"
 V2_NEWLINE_ADVANCE = f"{V2_PREFIX}.newline_advance"
 V2_RIGHT_EDGE = f"{V2_PREFIX}.right_edge"
@@ -416,6 +446,11 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
                 "font_v2_practice_callback": (
                     ee_c_fragments.SymbolReference(V2_PRACTICE_CALLBACK)
                 ),
+                "font_ninja_song_ascii_number": (
+                    ee_c_fragments.SymbolReference(
+                        NINJA_SONG_ASCII_NUMBER
+                    )
+                ),
             },
         )
 
@@ -448,6 +483,12 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         "font_v2_practice_icon_metric",
         "font_v2_practice_icon_draw",
         "font_v2_practice_adapter_impl",
+        "font_v2_battle_settings_label_adapter",
+        "font_v2_practice_settings_label_adapter",
+        "font_v2_settings_value_adapter",
+        "font_v2_practice_settings_heading_adapter",
+        "font_v2_ninja_arithmetic_template",
+        "font_v2_ninja_objective_adapter",
     }
     if set(extracted.symbols) != expected_exports:
         raise ValueError(
@@ -532,6 +573,24 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         extracted.symbols["font_v2_practice_adapter_impl"].symbol: (
             V2_PRACTICE_ADAPTER_IMPL
         ),
+        extracted.symbols[
+            "font_v2_battle_settings_label_adapter"
+        ].symbol: V2_BATTLE_SETTINGS_LABEL_ADAPTER,
+        extracted.symbols[
+            "font_v2_practice_settings_label_adapter"
+        ].symbol: V2_PRACTICE_SETTINGS_LABEL_ADAPTER,
+        extracted.symbols["font_v2_settings_value_adapter"].symbol: (
+            V2_SETTINGS_VALUE_ADAPTER
+        ),
+        extracted.symbols[
+            "font_v2_practice_settings_heading_adapter"
+        ].symbol: V2_PRACTICE_SETTINGS_HEADING_ADAPTER,
+        extracted.symbols["font_v2_ninja_arithmetic_template"].symbol: (
+            V2_NINJA_ARITHMETIC_TEMPLATE
+        ),
+        extracted.symbols["font_v2_ninja_objective_adapter"].symbol: (
+            V2_NINJA_OBJECTIVE_ADAPTER
+        ),
     }
     helper_symbols = {
         fragment.symbol
@@ -564,6 +623,48 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         ),
         f"{V2_PREFIX}.c.text.font.v2.collection.body.callback": (
             f"{V2_PREFIX}.c.collection_body_callback"
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.settings.label.callback": (
+            V2_SETTINGS_LABEL_CALLBACK
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.settings.heading.callback": (
+            V2_SETTINGS_HEADING_CALLBACK
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.settings.value.callback": (
+            V2_SETTINGS_VALUE_CALLBACK
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.settings.row.common": (
+            V2_SETTINGS_ROW_COMMON
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.ninja.text.callback": (
+            V2_NINJA_TEXT_CALLBACK
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.ninja.text.common": (
+            V2_NINJA_TEXT_COMMON
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.ninja.compact.adapter": (
+            V2_NINJA_COMPACT_ADAPTER
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.ninja.hits.adapter": (
+            V2_NINJA_HITS_ADAPTER
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.ninja.equals.adapter": (
+            V2_NINJA_EQUALS_ADAPTER
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.ninja.total.adapter": (
+            V2_NINJA_TOTAL_ADAPTER
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.ninja.empty.adapter": (
+            V2_NINJA_EMPTY_ADAPTER
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.ninja.objective.ascii.width": (
+            V2_NINJA_OBJECTIVE_ASCII_WIDTH
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.ninja.objective.wrap": (
+            V2_NINJA_OBJECTIVE_WRAP
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.ninja.objective.callback": (
+            V2_NINJA_OBJECTIVE_CALLBACK
         ),
     }
     if helper_symbols != set(helper_aliases):
@@ -634,6 +735,26 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_PRACTICE_ICON_METRIC,
         V2_PRACTICE_ICON_DRAW,
         V2_PRACTICE_ADAPTER_IMPL,
+        V2_SETTINGS_LABEL_CALLBACK,
+        V2_SETTINGS_HEADING_CALLBACK,
+        V2_SETTINGS_VALUE_CALLBACK,
+        V2_SETTINGS_ROW_COMMON,
+        V2_BATTLE_SETTINGS_LABEL_ADAPTER,
+        V2_PRACTICE_SETTINGS_LABEL_ADAPTER,
+        V2_SETTINGS_VALUE_ADAPTER,
+        V2_PRACTICE_SETTINGS_HEADING_ADAPTER,
+        V2_NINJA_TEXT_CALLBACK,
+        V2_NINJA_TEXT_COMMON,
+        V2_NINJA_COMPACT_ADAPTER,
+        V2_NINJA_HITS_ADAPTER,
+        V2_NINJA_EQUALS_ADAPTER,
+        V2_NINJA_TOTAL_ADAPTER,
+        V2_NINJA_EMPTY_ADAPTER,
+        V2_NINJA_ARITHMETIC_TEMPLATE,
+        V2_NINJA_OBJECTIVE_ASCII_WIDTH,
+        V2_NINJA_OBJECTIVE_WRAP,
+        V2_NINJA_OBJECTIVE_CALLBACK,
+        V2_NINJA_OBJECTIVE_ADAPTER,
     }:
         raise ValueError("Font v2 C fragment aliases are incomplete")
     return result

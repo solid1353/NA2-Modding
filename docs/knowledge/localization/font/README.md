@@ -1994,34 +1994,43 @@ The remaining vertical overflow was glyph-quad geometry rather than line
 spacing. Setting the secondary descriptor or renderer mode before
 `FUN_00188140` was ineffective because that draw path resets the selector
 before the per-glyph emitter. The existing layout-session right-edge shim at
-ELF file `0x88070`, runtime `0x00187F70`, is the correct bounded boundary. A
-new session flag `0x40` makes only the Jutsu draw take a `20.0`-unit bottom
-edge from `FontV2Session.glyph_height`. A 2026-07-30 differential check exposed
-that the first flag-aware shim did not actually preserve the intended native
-path: its conditional branch placed the session `glyph_height` load in the
-MIPS delay slot, so that load executed even when flag `0x40` was clear. The
-corrected shim leaves a NOP in that delay slot and loads `glyph_height` only
-after the branch falls through. Every session without the flag now retains the
-displaced native bottom edge and continues at `0x00187F78` through the accepted
+ELF file `0x88070`, runtime `0x00187F70`, is the correct bounded boundary.
+Session flag `0x40` makes only a selected caller take its bottom edge from
+`FontV2Session.glyph_height`. A 2026-07-30 differential check exposed that the
+first flag-aware shim did not actually preserve the intended native path: its
+conditional branch placed the session `glyph_height` load in the MIPS delay
+slot, so that load executed even when flag `0x40` was clear. The corrected shim
+leaves a NOP in that delay slot and loads `glyph_height` only after the branch
+falls through. Every session without the flag now retains the displaced native
+bottom edge and continues at `0x00187F78` through the accepted
 primary/secondary helper.
 The flagged path rejoins at `0x00187F80` and preserves displaced delay-slot
 word `0x8F84CA6C` (`lw a0,-0x3594(gp)`). Omitting that load makes the row text
 disappear, which was a useful rejected transport result rather than a renderer
 hypothesis.
 
-The final current-renderer compensation is box Y offset `-7`. In supplied ss5
-and ss6, NUN5's 640x480 white-glyph bounds are rows `245..254` and `265..274`.
-The fresh NA2.28 960x720 captures are rows `368..381` and `398..411`, exactly
-the corresponding normalized bounds and 30-pixel line step. Both long selected
-names remain inside the row.
+The replacement ss1–ss2 evidence supplied on 2026-07-31 refined the final
+constants. The two-line block uses glyph height `22.0`, box Y offset `-6.5`,
+and the already-correct 16-unit line interval. In the user's row-aligned
+comparison before the final correction, NUN5's two visible lines measured
+`624` and `276` composite-image pixels wide while NA2.28 measured `650` and
+`288`; both ratios independently select a `0.96` horizontal multiplier.
 
-Supplemental ss3 from compatible boot CRC `0961FB89` proves the final selective
-branch in one frame. Its selected long title has candidate white-glyph bounds
-`(30..292,245..275)`, matching NUN5 exactly. The short
-`Great Ball Rasengan` row has candidate bounds `(39..259,296..311)`, identical
-to the untouched Current baseline, proving that one-line text stays on the
-native renderer rather than inheriting the two-line session's height or
-advance. The other long visible row also wraps because its measured width
-exceeds the same 186-unit contract; its different string content prevents a
-direct NUN5 raster comparison. Confidence is high and runtime status is
-agent-validated; explicit user acceptance remains pending.
+Writing that multiplier only to `0x0060737C` around `FUN_00188140` produced no
+visible change. The effective boundaries are the existing active-session
+glyph-advance and right-edge hooks, which consume
+`FontV2Session.scale_x`. Internal flag `0x80` therefore preserves an explicit
+caller-provided scale through `font_v2_prepare` instead of deriving it only
+from overflow. Both Jutsu branches publish the same `0.96` session scale.
+Fitting one-line rows deliberately omit the glyph-height and separate-line
+flags, so they receive the width correction without vertical squeezing or
+multiline cadence. Wrapped rows additionally select the `22.0` glyph height
+and 16-unit interval. Measurement and the 186-unit wrap decision occur before
+the draw-only multiplier, preserving the verified
+`Explosive Destruction` / `Formation` break.
+
+The user verified the final whole-Font hot-reloaded Jutsu selector on
+2026-07-31, including fitting one-line and wrapped two-line rows. Canonical
+fragment reconstruction passed afterward. Confidence is high for this caller
+family; this verification establishes the live displayed result and does not
+claim a separate integrated-ISO runtime pass.

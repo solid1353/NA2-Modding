@@ -11,13 +11,12 @@ case.
 
 ## Execution state
 
-- Mode: Continuous, limited by the user's current authorization to the
-  explicitly selected Priority 3 correction.
-- Current subtask: Priority 3 — replacement ss1–ss2 Jutsu-selector evidence.
-- Pending grid: none; the runtime-injected Priority 3 candidate grid was
-  visibly delivered on 2026-07-31.
-- Next action: build and test the committed Priority 3 candidate on the exact
-  integrated ss1–ss2 pair; explicit user acceptance remains pending.
+- Mode: Continuous; the latest authorization was limited to Priority 3 and is
+  now complete.
+- Current subtask: none; the next epic case requires a new user selection.
+- Pending grid: none; the user verified the final live Jutsu-selector result
+  on 2026-07-31, so its superseded pre-final candidate grid was removed.
+- Next action: wait for the user's next selected epic case.
 
 ## Scope and evidence
 
@@ -129,23 +128,22 @@ case.
 
 ### Priority 3 — replacement ss1–ss2: One Jutsu-selector defect
 
-- State: a runtime-injected C candidate was produced and visibly shown on
-  2026-07-31. Its canonical C implementation is test-ready but unaccepted;
-  integrated ss1–ss2 validation plus explicit user acceptance remain pending.
+- State: implemented in canonical C, fragment-verified, and user-verified
+  through whole-Font hot reload on the replacement ss1–ss2 case on
+  2026-07-31. This establishes acceptance of the displayed result; it does not
+  claim a separate integrated-ISO runtime pass.
 - ss1: fitting one-line rows are shifted right in NA2.28.
 - ss2: the effective text box is too narrow. NUN5 wraps `Explosive Destruction
   Formation` after `Destruction`, while NA2.28 wraps after `Explosive`.
 - ss2: the wrapped text is also too narrow vertically in NA2.28.
-- Shown candidate evidence: ss2 wraps after `Destruction`, preserves
-  native-height surrounding one-line rows, and was copied unchanged to
-  `work/Font/artifacts/priority3_jutsu_selector/replacement_2026-07-31/ss02_runtime_injected_candidate.png`.
-- Required result: preserve native/NUN5 glyph height, move fitting one-line
-  rows to the NUN5 X origin, and use the NUN5 effective width, line break, and
-  vertical glyph geometry for titles that actually wrap.
+- Implemented result: fitting one-line and wrapped two-line rows share the
+  measured NUN5-width correction while retaining separate vertical behavior.
+  One-line rows receive no glyph-height or multiline-line-spacing override.
+  Two-line rows keep the 186-unit break policy, 16-unit line interval,
+  22-unit glyph height, and corrected centered Y. Both branches retain the
+  established left/right origins.
 - Older ss3–ss6 states remain regression inputs for the same caller family;
   they do not override the replacement pair.
-
-![Priority 3 Jutsu-selector runtime-injected candidate](awaiting_approval/3-jutsu-selector.png)
 
 ## Practice Settings
 
@@ -260,10 +258,10 @@ Priority is determined by the most efficient implementation order.
 
 1. **ss1 — Character Select return confirmation.** User-verified.
 2. **supplemental ss1–ss2 — Character Select option lists.** User-accepted.
-3. **replacement ss1–ss2 — one Jutsu-selector defect.** Unresolved and
-   selected: fitting rows are shifted right, the effective box is too narrow
-   for NUN5's `Explosive Destruction` / `Formation` break, and wrapped text is
-   vertically squeezed.
+3. **replacement ss1–ss2 — one Jutsu-selector defect.** Implemented,
+   fragment-verified, visibly reviewed through whole-Font hot reload, and
+   user-verified on 2026-07-31. The verified result preserves one-line vertical
+   geometry while matching the two-line break, width, height, and placement.
 4. **ss7 — Collection exit confirmation.** Unresolved: the accurate integrated
    grid still shows an unacceptable result despite the enabled hooks and
    successful composition.

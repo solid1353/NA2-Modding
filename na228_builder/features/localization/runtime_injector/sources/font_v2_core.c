@@ -31,6 +31,8 @@ typedef signed int s32;
 /* Scales row spacing together with vertical text scale when enabled. */
 #define FONT_V2_FLAG_GLYPH_HEIGHT 0x40u
 /* Overrides drawn glyph-quad height; misuse visibly squeezes or stretches text. */
+#define FONT_V2_FLAG_FIXED_SCALE_X 0x80u
+/* Uses the caller-supplied horizontal scale instead of deriving an overflow fit. */
 #define FONT_V2_NATIVE_LINE_ADVANCE 40.0f
 /* Native fallback row advance when no separate line spacing is requested. */
 #define FONT_V2_FLAG_PREMEASURED 0x10u
@@ -127,16 +129,18 @@ typedef signed int s32;
 /* Horizontal correction for the left list; more negative moves rows left. */
 #define FONT_JUTSU_RIGHT_X_OFFSET -4.0f
 /* Horizontal correction for the right list; more negative moves rows left. */
+#define FONT_JUTSU_HORIZONTAL_SCALE 0.96f
+/* Draw-width multiplier shared by one-line and wrapped Jutsu-title rows. */
 #define FONT_JUTSU_SINGLE_LINE_Y_OFFSET -4.0f
 /* Vertical correction for fitting one-line rows; more negative moves them up. */
-#define FONT_JUTSU_Y_OFFSET -9.0f
+#define FONT_JUTSU_Y_OFFSET -6.5f
 /* Applied only to wrapped blocks; more negative moves the block up. */
 #define FONT_JUTSU_SIDE_THRESHOLD 256.0f
 /* Native X below this value is classified as the left-side list. */
 #define FONT_JUTSU_LINE_ADVANCE 16.0f
 /* Vertical distance between wrapped Jutsu-title lines. */
-#define FONT_JUTSU_LAYOUT_GLYPH_HEIGHT 20.0f
-/* Glyph height used only to calculate wrapped-block vertical placement. */
+#define FONT_JUTSU_LAYOUT_GLYPH_HEIGHT 22.0f
+/* Drawn glyph height for wrapped two-line rows; one-line rows bypass it. */
 #define FONT_JUTSU_LINE_LIMIT 2u
 /* Target maximum line count for adaptive wrapping. */
 #define FONT_JUTSU_OVERFLOW_WIDTH_FACTOR 0.4f
@@ -604,13 +608,20 @@ int font_v2_prepare(FontV2Session *session) {
         return -1;
     }
 
-    session->scale_x = 1.0f;
+    if (session->flags & FONT_V2_FLAG_FIXED_SCALE_X) {
+        if (session->scale_x <= 0.0f) {
+            return -1;
+        }
+    } else {
+        session->scale_x = 1.0f;
+    }
     session->scale_y = 1.0f;
     if (session->flags & FONT_V2_FLAG_SCALE_LINE_ADVANCE) {
         session->scale_y =
             session->line_height / FONT_V2_NATIVE_LINE_ADVANCE;
     }
     if (
+        !(session->flags & FONT_V2_FLAG_FIXED_SCALE_X) &&
         (session->flags & FONT_V2_FLAG_SHRINK_X) &&
         measured_width > session->box_width
     ) {
@@ -1201,14 +1212,8 @@ int font_v2_jutsu_draw_entry(
     u8 original[FONT_BODY_BUFFER_SIZE];
     volatile float *renderer = (volatile float *)renderer_address;
     volatile u32 *renderer_words = (volatile u32 *)renderer_address;
-    FontV2NativeSetPosition set_position =
-        (FontV2NativeSetPosition)FONT_SET_POSITION_ADDRESS;
-    FontV2NativeTextDraw draw =
-        (FontV2NativeTextDraw)FONT_JUTSU_DRAW_ADDRESS;
     float native_x;
     float native_y;
-    float origin_x;
-    float origin_y;
     float wrap_width;
     u32 index = 0;
 
@@ -1306,30 +1311,35 @@ int font_v2_jutsu_draw_entry(
         renderer[FONT_RENDERER_POSITION_X_OFFSET / sizeof(float)];
     native_y =
         renderer[FONT_RENDERER_POSITION_Y_OFFSET / sizeof(float)];
-    origin_x =
-        renderer[FONT_RENDERER_DRAW_X_OFFSET / sizeof(float)];
-    origin_y =
-        renderer[FONT_RENDERER_DRAW_Y_OFFSET / sizeof(float)];
 
     if (frame.session.line_count <= 1u) {
-        set_position(
+        frame.session.text = frame.buffer;
+        frame.session.box_x =
             native_x +
-                (
+            (
                 native_x < FONT_JUTSU_SIDE_THRESHOLD
                     ? FONT_JUTSU_LEFT_X_OFFSET
                     : FONT_JUTSU_RIGHT_X_OFFSET
-            ) -
-                origin_x,
-            native_y + FONT_JUTSU_SINGLE_LINE_Y_OFFSET - origin_y,
-            renderer_address
-        );
-        draw(renderer_address, text);
-        set_position(
-            native_x - origin_x,
-            native_y - origin_y,
-            renderer_address
-        );
-        return 0;
+            );
+        frame.session.box_y =
+            native_y + FONT_JUTSU_SINGLE_LINE_Y_OFFSET;
+        frame.session.box_width = FONT_JUTSU_BOX_WIDTH;
+        frame.session.box_height = FONT_JUTSU_BOX_HEIGHT;
+        frame.session.horizontal_alignment = FONT_V2_ALIGN_START;
+        frame.session.vertical_alignment = FONT_V2_ALIGN_START;
+        frame.session.flags =
+            FONT_V2_FLAG_FIXED_SCALE_X |
+            FONT_V2_FLAG_PREMEASURED;
+        frame.session.line_limit = 1u;
+        frame.session.line_height = FONT_JUTSU_LAYOUT_GLYPH_HEIGHT;
+        frame.session.scale_x = FONT_JUTSU_HORIZONTAL_SCALE;
+        frame.session.glyph_height = FONT_JUTSU_LAYOUT_GLYPH_HEIGHT;
+        frame.session.callback = (u32)font_v2_jutsu_draw_callback;
+        frame.session.callback_arg0 = renderer_address;
+        frame.session.callback_arg1 = (u32)frame.buffer;
+        frame.session.callback_arg2 = 0;
+        frame.session.callback_arg3 = (u32)&frame.session;
+        return font_v2_adapter_call(&frame.session);
     }
 
     frame.session.text = frame.buffer;
@@ -1347,9 +1357,12 @@ int font_v2_jutsu_draw_entry(
     frame.session.vertical_alignment = FONT_V2_ALIGN_CENTER;
     frame.session.flags =
         FONT_V2_FLAG_SEPARATE_LINE_ADVANCE |
+        FONT_V2_FLAG_GLYPH_HEIGHT |
+        FONT_V2_FLAG_FIXED_SCALE_X |
         FONT_V2_FLAG_PREMEASURED;
     frame.session.line_limit = FONT_JUTSU_LINE_LIMIT;
     frame.session.line_height = FONT_JUTSU_LINE_ADVANCE;
+    frame.session.scale_x = FONT_JUTSU_HORIZONTAL_SCALE;
     frame.session.glyph_height = FONT_JUTSU_LAYOUT_GLYPH_HEIGHT;
     frame.session.callback = (u32)font_v2_jutsu_draw_callback;
     frame.session.callback_arg0 = renderer_address;

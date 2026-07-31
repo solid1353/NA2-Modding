@@ -14,6 +14,6 @@ void hotReloadTest(void) {
         return;
     }
 
-    draw(16.0f, 16.0f, (const u8 *)"HOT RELOAD 12C2", 1u);
+    draw(16.0f, 16.0f, (const u8 *)"HOT RELOAD TEST", 1u);
     visible_frames += 1u;
 }

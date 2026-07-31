@@ -251,7 +251,17 @@ function Get-FileSignature([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
         return 'MISSING'
     }
-    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
+    try {
+        return (
+            Get-FileHash -LiteralPath $Path -Algorithm SHA256 -ErrorAction Stop
+        ).Hash
+    }
+    catch [System.IO.IOException] {
+        return 'BUSY'
+    }
+    catch [System.UnauthorizedAccessException] {
+        return 'BUSY'
+    }
 }
 
 function Get-WatchSignature {

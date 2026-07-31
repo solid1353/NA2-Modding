@@ -86,6 +86,12 @@ V2_QUIT_SCOPE_ENTER = f"{V2_PREFIX}.c.quit_scope_enter"
 V2_QUIT_SCOPE_LEAVE = f"{V2_PREFIX}.c.quit_scope_leave"
 V2_QUIT_SELECTED_ADAPTER = f"{V2_PREFIX}.quit_selected_adapter"
 V2_QUIT_SELECTED_MAP = f"{V2_PREFIX}.c.quit_selected_map"
+V2_SPECIAL_CHOICE_SELECTED_ADAPTER = (
+    f"{V2_PREFIX}.c.special_choice_selected_adapter"
+)
+V2_SPECIAL_CHOICE_SELECTED_CALLBACK = (
+    f"{V2_PREFIX}.special_choice_selected_callback"
+)
 V2_QUIT_UNSELECTED_ADAPTER = f"{V2_PREFIX}.quit_unselected_adapter"
 V2_QUIT_UNSELECTED_CALLBACK = (
     f"{V2_PREFIX}.c.quit_unselected_callback"
@@ -272,6 +278,7 @@ V2_SESSION_SAVED_SCALE = 0x64
 V2_SESSION_SIZE = 0x68
 V2_SESSION_GLYPH_HEIGHT = 0x68
 V2_PAUSE_LIST_SELECTED_COLOR = V2_SESSION_SIZE
+V2_SPECIAL_CHOICE_NATIVE_ARG3 = 0x6C
 
 V2_PRACTICE_OBJECT_PRIMARY = 0x6C
 V2_PRACTICE_OBJECT_SECONDARY = 0x70
@@ -419,6 +426,11 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
                         V2_QUIT_UNSELECTED_CALLBACK
                     )
                 ),
+                "font_v2_special_choice_selected_callback": (
+                    ee_c_fragments.SymbolReference(
+                        V2_SPECIAL_CHOICE_SELECTED_CALLBACK
+                    )
+                ),
                 "font_v2_quit_body_callback": (
                     ee_c_fragments.SymbolReference(V2_QUIT_BODY_CALLBACK)
                 ),
@@ -466,6 +478,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         "font_v2_quit_scope_enter",
         "font_v2_quit_scope_leave",
         "font_v2_quit_selected_map",
+        "font_v2_special_choice_selected_adapter",
         "font_v2_quit_unselected_adapter",
         "font_v2_native_measure",
         "font_v2_wrap_native",
@@ -524,6 +537,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         extracted.symbols["font_v2_quit_selected_map"].symbol: (
             V2_QUIT_SELECTED_MAP
         ),
+        extracted.symbols[
+            "font_v2_special_choice_selected_adapter"
+        ].symbol: V2_SPECIAL_CHOICE_SELECTED_ADAPTER,
         extracted.symbols["font_v2_quit_unselected_adapter"].symbol: (
             V2_QUIT_UNSELECTED_ADAPTER
         ),
@@ -636,6 +652,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         f"{V2_PREFIX}.c.text.font.v2.settings.row.common": (
             V2_SETTINGS_ROW_COMMON
         ),
+        f"{V2_PREFIX}.c.text.font.v2.special.choice.session.init": (
+            f"{V2_PREFIX}.c.special_choice_session_init"
+        ),
         f"{V2_PREFIX}.c.text.font.v2.ninja.text.callback": (
             V2_NINJA_TEXT_CALLBACK
         ),
@@ -711,7 +730,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_QUIT_SCOPE_ENTER,
         V2_QUIT_SCOPE_LEAVE,
         f"{V2_PREFIX}.c.map_choice",
+        f"{V2_PREFIX}.c.special_choice_session_init",
         V2_QUIT_SELECTED_MAP,
+        V2_SPECIAL_CHOICE_SELECTED_ADAPTER,
         V2_QUIT_UNSELECTED_ADAPTER,
         V2_NATIVE_MEASURE,
         V2_WRAP_NATIVE,
@@ -1325,7 +1346,7 @@ def build_v2_quit_selected_entry() -> Fragment:
     """Bridge native float coordinates through the C choice mapper."""
 
     v0, a0, a1, a2, a3 = 2, 4, 5, 6, 7
-    t0 = 8
+    t0, t1 = 8, 9
     sp, ra = 29, 31
     frame_size = 0x30
     saved_arg0 = 0x10
@@ -1345,6 +1366,23 @@ def build_v2_quit_selected_entry() -> Fragment:
         (a3, saved_arg3),
     ):
         assembler.emit(mips.i_type(0x2B, sp, register, offset))
+    mips.load_u32(assembler, t0, SPECIAL_CONTROLS_ON_TEXT)
+    assembler.branch(0x04, a0, t0, "special_choice")
+    assembler.emit(0)
+    mips.load_u32(assembler, t0, SPECIAL_CONTROLS_OFF_TEXT)
+    assembler.branch(0x05, a0, t0, "mapped_choice")
+    assembler.emit(0)
+
+    assembler.label("special_choice")
+    assembler.emit(mips.mfc1(t0, 12))
+    assembler.emit(mips.mfc1(t1, 13))
+    assembler.jump_symbol(0x03, V2_SPECIAL_CHOICE_SELECTED_ADAPTER)
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, 0, 0, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+
+    assembler.label("mapped_choice")
     assembler.emit(mips.mfc1(a1, 13))
     assembler.emit(mips.mfc1(a2, 12))
     assembler.emit(mips.i_type(0x09, sp, a3, mapped_y))
@@ -1366,6 +1404,26 @@ def build_v2_quit_selected_entry() -> Fragment:
     assembler.emit(0)
     payload, relocations = assembler.build()
     return Fragment(V2_QUIT_SELECTED_ADAPTER, payload, relocations)
+
+
+def build_v2_special_choice_selected_callback() -> Fragment:
+    """Draw one prepared selected Special Controls choice natively."""
+
+    a3 = 7
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x31, a3, 12, V2_SESSION_DRAW_X))
+    assembler.emit(mips.i_type(0x31, a3, 13, V2_SESSION_DRAW_Y))
+    assembler.emit(
+        mips.i_type(0x23, a3, a3, V2_SPECIAL_CHOICE_NATIVE_ARG3)
+    )
+    assembler.emit(mips.jump(0x02, FONT_SELECTED_DRAW))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(
+        V2_SPECIAL_CHOICE_SELECTED_CALLBACK,
+        payload,
+        relocations,
+    )
 
 
 def build_v2_quit_unselected_adapter() -> Fragment:
@@ -2990,6 +3048,7 @@ def v2_fragments() -> tuple[Fragment, ...]:
         build_v2_newline_advance(),
         build_v2_right_edge(),
         build_v2_half_space(),
+        build_v2_special_choice_selected_callback(),
         build_v2_glyph_advance(),
         build_v2_special_controls_body_callback(),
     )

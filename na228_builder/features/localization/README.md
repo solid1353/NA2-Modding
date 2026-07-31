@@ -1834,6 +1834,17 @@ quit scope is inactive, exact runtime text pointers `0x006059F0` and
 caller remains a native tail call, so this adds no overlapping hook and does
 not alter the accepted quit-confirmation behavior.
 
+The 2026-08-01 replacement ss1 pair shows that the mapped Current `ON` and
+`OFF` ink was still two pixels shorter than NUN5 to the right and bottom. The
+same two hooks now apply geometry by native draw state, never by row: selected
+text adds local X `1.0` and uses horizontal scale `1.02`, ordinary text uses
+scale `1.01`, and both use glyph height `26` inside one 104-by-20 one-line box.
+Both exact pointers are accepted by both paths, so the formulas remain valid
+when selection swaps. The adapters change only scoped font state and restore it
+after the native callback; they do not write displayed text. The guarded hidden
+worker comparison aligns the selected and ordinary core-glyph bounds with NUN5;
+integrated user acceptance remains pending.
+
 The second thin caller layer, `font_layout_titles`, replaces only two guarded BTL
 draw calls: Command Chart file `0x1C6A28` and Practice file `0x1C4B98`.
 Two explicit mode entrypoints tail-call one configurable title adapter, which

@@ -64,3 +64,5 @@ font_v2_core	90	localization.font.v2.c.text.font.v2.ninja.objective.adapter	loca
 font_v2_core	91	localization.font.v2.c.text.font.v2.ninja.arithmetic.template	localization.font.v2.ninja_arithmetic_template
 font_v2_core	92	localization.font.v2.c.text.font.v2.ninja.objective.ascii.width	localization.font.v2.c.ninja_objective_ascii_width
 font_v2_core	93	localization.font.v2.c.text.font.v2.ninja.objective.wrap	localization.font.v2.c.ninja_objective_wrap
+font_v2_core	94	localization.font.v2.c.text.font.v2.special.choice.session.init	localization.font.v2.c.special_choice_session_init
+font_v2_core	95	localization.font.v2.c.text.font.v2.special.choice.selected.adapter	localization.font.v2.c.special_choice_selected_adapter

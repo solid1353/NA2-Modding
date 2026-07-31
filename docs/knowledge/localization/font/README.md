@@ -173,11 +173,18 @@ installing overlapping hooks: outside the quit scope, selected text pointer
 `0x006059F0` maps to local `(66,31)`, unselected record text pointer
 `0x006059F8` maps to `(59,49)`, and every other caller tail-calls native
 behavior. Exact-guarded task-state trials established those coordinates
-without rebuilding an ISO. At 640x480, the final current ON center matches
-NUN5 exactly; the OFF center differs by half a pixel because the retained
-current glyph ink is two pixels shorter. That small raster mismatch remains a
-separate Font refinement and is not compensated by further layout movement.
-Confidence is **high** for the pointer guards, hook isolation, and placement.
+without rebuilding an ISO. A replacement ss1 pair from Current CRC `2DA77DC7`
+and NUN5 CRC `C071D4C1` proves that both Current words retained ink two pixels
+shorter than NUN5 even though the row coordinates were already correct. The
+font-only refinement therefore keeps the pointer-specific row coordinates and
+uses two renderer-state formulas rather than row-specific exceptions: selected
+text receives X `+1.0`, horizontal scale `1.02`, and glyph height `26`; ordinary
+text receives horizontal scale `1.01` and glyph height `26`. Both use the same
+104-by-20 one-line box and 20-unit line height. Neither path writes or replaces
+displayed text. An isolated hidden-worker run matches the NUN5 selected and
+ordinary dark-glyph bounds in the retained 8x comparison; user acceptance of
+the integrated result remains pending. Confidence is **high** for the pointer
+guards, hook isolation, placement, and shared draw-state geometry.
 
 The earlier identification of `FUN_003885B0` and its call at runtime
 `0x003887D4` / ELF file `0x2888D4` as this ss1 modal was incorrect. Retained
@@ -1886,6 +1893,34 @@ An exact-guarded converted copy of the new state redirected only ELF calls
 OFF-highlight selector while retaining the accepted wrapped body. Focused
 tests now verify the branch target for each ON pointer loads X `66`, while
 each OFF fallthrough loads X `59`; this prevents another role-swap regression.
+
+## 2026-08-01 Special Controls selector glyph geometry
+
+The replacement slot-1 pair was saved three seconds apart. Current state
+SHA-256 `A8343BC0400BCD3FB1C21CF607308FA880C31C25825569062861A688DEA004CC`
+uses CRC `2DA77DC7`; NUN5 state SHA-256
+`D07EB61EF3D19ADE18B8A1D116D71ACFCAB5371569FAD4CEC946086506328853`
+uses CRC `C071D4C1`. Their embedded 640x480 screenshots have SHA-256
+`A61393D3321402BD8AB497250E5869FE3FCB6290FD40724A78ED6A8298C94205`
+and `B7609673D90CA521B88711D6D8793333FF88E1CBA6215B56D12A67B56722CD7A`
+respectively. The pair shows selected ON and ordinary OFF. Both Current words
+start at the intended row origin but their ink ends two pixels early to the
+right and bottom.
+
+The correction remains inside the two already-owned calls at ELF files
+`0x283914` and `0x283A60`. Both adapters recognize both text pointers, so the
+formula follows selected versus ordinary rendering when the selection swaps;
+it does not follow ON versus OFF. The selected path adds one local X unit and
+uses scale `1.02`; the ordinary path uses scale `1.01`; both request glyph
+height `26` through the existing session-scoped renderer state. The session is
+restored after each native callback, and no string bytes are written. A guarded
+hidden-worker candidate against the matching Current ISO produces the retained
+comparison
+`work/Font 3/outputs/comparisons/settings/ss1_onoff_state_split_s102_u101_h26_nun5_top_candidate_bottom_zoom.png`:
+NUN5 is above, the candidate is below, and the crop is nearest-neighbor 8x.
+The selected and ordinary core-glyph bounds align with NUN5 while all unrelated
+choice pointers continue through their prior native paths. Confidence is
+**high**; integrated user acceptance remains pending.
 
 ## 2026-07-28 composition-time C cutover
 

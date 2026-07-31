@@ -457,6 +457,15 @@ typedef signed int s32;
 /* Special Controls OFF local Y; increase to move it down. */
 #define FONT_SPECIAL_OFF_Y 49.0f
 
+/* Shared font-only geometry for both Special Controls choices. */
+#define FONT_SPECIAL_CHOICE_BOX_WIDTH 104u
+#define FONT_SPECIAL_CHOICE_BOX_HEIGHT 20u
+#define FONT_SPECIAL_CHOICE_LINE_HEIGHT 20.0f
+#define FONT_SPECIAL_CHOICE_SELECTED_X_OFFSET 1.0f
+#define FONT_SPECIAL_CHOICE_SELECTED_SCALE_X 1.02f
+#define FONT_SPECIAL_CHOICE_UNSELECTED_SCALE_X 1.01f
+#define FONT_SPECIAL_CHOICE_GLYPH_HEIGHT 26.0f
+
 /* === Battle/Practice quit-confirmation body === */
 
 /* Quit prompt body left edge; increase to move the body right. */
@@ -654,6 +663,11 @@ typedef struct FontV2UiDrawRecord {
     u32 arg2;
 } FontV2UiDrawRecord;
 
+typedef struct FontV2SpecialChoiceFrame {
+    FontV2Session session;
+    u32 native_arg3;
+} FontV2SpecialChoiceFrame;
+
 #define FONT_V2_OFFSET(type, member) ((u32)&(((type *)0)->member))
 #define FONT_V2_ASSERT(name, expression) \
     typedef char font_v2_assert_##name[(expression) ? 1 : -1]
@@ -671,6 +685,9 @@ FONT_V2_ASSERT(saved_scale_offset,
 FONT_V2_ASSERT(glyph_height_offset,
                FONT_V2_OFFSET(FontV2Session, glyph_height) == 0x68);
 FONT_V2_ASSERT(session_size, sizeof(FontV2Session) == 0x6C);
+FONT_V2_ASSERT(special_choice_arg3_offset,
+               FONT_V2_OFFSET(FontV2SpecialChoiceFrame, native_arg3) ==
+                   0x6C);
 FONT_V2_ASSERT(body_buffer_offset,
                FONT_V2_OFFSET(FontV2BodyFrame, buffer) == 0x80);
 FONT_V2_ASSERT(practice_primary_offset,
@@ -716,6 +733,12 @@ extern int font_v2_pause_list_selected_callback(
     u32 arg3
 );
 extern int font_v2_quit_unselected_callback(
+    u32 arg0,
+    u32 arg1,
+    u32 arg2,
+    u32 arg3
+);
+extern int font_v2_special_choice_selected_callback(
     u32 arg0,
     u32 arg1,
     u32 arg2,
@@ -1310,6 +1333,64 @@ u32 font_v2_quit_selected_map(
     return target_x;
 }
 
+static FONT_V2_SECTION(".text.font_v2_special_choice_session_init")
+void font_v2_special_choice_session_init(
+    FontV2Session *session,
+    const u8 *text,
+    float draw_x,
+    float draw_y,
+    float scale_x,
+    u32 callback
+) {
+    session->text = text;
+    session->box_x = draw_x;
+    session->box_y = draw_y;
+    session->box_width = FONT_SPECIAL_CHOICE_BOX_WIDTH;
+    session->box_height = FONT_SPECIAL_CHOICE_BOX_HEIGHT;
+    session->horizontal_alignment = FONT_V2_ALIGN_START;
+    session->vertical_alignment = FONT_V2_ALIGN_START;
+    session->flags =
+        FONT_V2_FLAG_FIXED_SCALE_X | FONT_V2_FLAG_GLYPH_HEIGHT;
+    session->line_limit = 1u;
+    session->line_height = FONT_SPECIAL_CHOICE_LINE_HEIGHT;
+    session->callback = callback;
+    session->scale_x = scale_x;
+    session->glyph_height = FONT_SPECIAL_CHOICE_GLYPH_HEIGHT;
+}
+
+FONT_V2_SECTION(".text.font_v2_special_choice_selected_adapter")
+int font_v2_special_choice_selected_adapter(
+    u32 text,
+    u32 arg1,
+    u32 arg2,
+    u32 arg3,
+    u32 native_x_bits,
+    u32 native_y_bits
+) {
+    FontV2SpecialChoiceFrame frame;
+    FontV2Bits draw_x;
+    FontV2Bits draw_y;
+
+    draw_x.u = native_x_bits;
+    draw_y.u = native_y_bits;
+    font_v2_map_choice(text, native_y_bits, &draw_x.u, &draw_y.u);
+    draw_x.f += FONT_SPECIAL_CHOICE_SELECTED_X_OFFSET;
+    font_v2_special_choice_session_init(
+        &frame.session,
+        (const u8 *)text,
+        draw_x.f,
+        draw_y.f,
+        FONT_SPECIAL_CHOICE_SELECTED_SCALE_X,
+        (u32)font_v2_special_choice_selected_callback
+    );
+    frame.session.callback_arg0 = text;
+    frame.session.callback_arg1 = arg1;
+    frame.session.callback_arg2 = arg2;
+    frame.session.callback_arg3 = (u32)&frame;
+    frame.native_arg3 = arg3;
+    return font_v2_adapter_call(&frame.session);
+}
+
 FONT_V2_SECTION(".text.font_v2_quit_unselected_adapter")
 int font_v2_quit_unselected_adapter(
     u32 arg0,
@@ -1317,16 +1398,20 @@ int font_v2_quit_unselected_adapter(
     u32 arg2,
     u32 arg3
 ) {
+    FontV2Session session;
     u32 original_x;
     u32 original_y;
     u32 target_x;
     u32 target_y;
     u32 text;
+    u32 special_choice;
     int result;
 
     original_x = record[0];
     original_y = record[1];
     text = record[2];
+    special_choice =
+        text == FONT_SPECIAL_ON_TEXT || text == FONT_SPECIAL_OFF_TEXT;
 
     target_x = original_x;
     target_y = original_y;
@@ -1338,9 +1423,30 @@ int font_v2_quit_unselected_adapter(
 
     record[0] = target_x;
     record[1] = target_y;
-    result = font_v2_quit_unselected_callback(
-        arg0, (u32)record, arg2, arg3
-    );
+    if (special_choice) {
+        FontV2Bits draw_x;
+        FontV2Bits draw_y;
+
+        draw_x.u = target_x;
+        draw_y.u = target_y;
+        font_v2_special_choice_session_init(
+            &session,
+            (const u8 *)text,
+            draw_x.f,
+            draw_y.f,
+            FONT_SPECIAL_CHOICE_UNSELECTED_SCALE_X,
+            (u32)font_v2_quit_unselected_callback
+        );
+        session.callback_arg0 = arg0;
+        session.callback_arg1 = (u32)record;
+        session.callback_arg2 = arg2;
+        session.callback_arg3 = arg3;
+        result = font_v2_adapter_call(&session);
+    } else {
+        result = font_v2_quit_unselected_callback(
+            arg0, (u32)record, arg2, arg3
+        );
+    }
     record[0] = original_x;
     record[1] = original_y;
     return result;

@@ -288,12 +288,10 @@ function Invoke-InjectionBuild([switch]$ExitOnFailure) {
     if ($WholeSource) {
         $buildArguments += '--whole-source'
     }
-    if ($SourceId -ceq $hotReloadSourceId) {
-        $buildArguments += @(
-            '--hot-reload-label',
-            ('HOT RELOAD ' + (Get-Date -Format 'HH:mm:ss'))
-        )
-    }
+    $buildArguments += @(
+        '--hot-reload-label',
+        ('HOT RELOAD ' + (Get-Date -Format 'HH:mm:ss'))
+    )
     if ($LatestIso) {
         $buildArguments += @('--iso', (Resolve-RepositoryPath $LatestIso))
     }

@@ -617,11 +617,7 @@ def compile_fragments(
 ) -> list[PayloadFragment]:
     object_path.parent.mkdir(parents=True, exist_ok=True)
     defines = None
-    if hot_reload_label is not None:
-        if source_id != HOT_RELOAD_SOURCE:
-            raise ValueError(
-                "--hot-reload-label is only valid for the hot_reload_test source"
-            )
+    if hot_reload_label is not None and source_id == HOT_RELOAD_SOURCE:
         defines = {"HOT_RELOAD_LABEL": json.dumps(hot_reload_label)}
     extracted = ee_c_fragments.compile_and_extract(
         source_path,
@@ -929,18 +925,54 @@ def main() -> int:
         ]
     entry_symbols = [entry["symbol"] for entry in entry_declarations]
 
+    include_marker = (
+        source_id == HOT_RELOAD_SOURCE or args.hot_reload_label is not None
+    )
+    root_symbols = list(entry_symbols)
     with tempfile.TemporaryDirectory(prefix="na228-injection-") as temporary:
+        temporary_path = Path(temporary)
         compiled_c_fragments = compile_fragments(
             source_id,
             source_path,
             namespace,
             imports,
             mappings,
-            Path(temporary) / f"{source_id}.o",
+            temporary_path / f"{source_id}.o",
             args.hot_reload_label,
         )
+        if source_id != HOT_RELOAD_SOURCE and include_marker:
+            (
+                marker_source_path,
+                marker_namespace,
+                marker_imports,
+                marker_mappings,
+            ) = load_source(HOT_RELOAD_SOURCE)
+            compiled_c_fragments.extend(
+                compile_fragments(
+                    HOT_RELOAD_SOURCE,
+                    marker_source_path,
+                    marker_namespace,
+                    marker_imports,
+                    marker_mappings,
+                    temporary_path / f"{HOT_RELOAD_SOURCE}.o",
+                    args.hot_reload_label,
+                )
+            )
+            marker_order_base = max(
+                (order for order, _object, _fragment in mappings),
+                default=0,
+            )
+            mappings.extend(
+                (
+                    marker_order_base + order,
+                    object_fragment,
+                    fragment_id,
+                )
+                for order, object_fragment, fragment_id in marker_mappings
+            )
+            root_symbols.append(HOT_RELOAD_ENTRY)
     fragments, external_symbols = select_fragment_closure(
-        entry_symbols,
+        root_symbols,
         compiled_c_fragments,
         mappings,
         symbol_map,
@@ -953,7 +985,7 @@ def main() -> int:
         ),
     )
     by_symbol = {fragment.symbol: fragment for fragment in fragments}
-    for selected_entry in entry_symbols:
+    for selected_entry in root_symbols:
         if by_symbol[selected_entry].kind != "code":
             raise ValueError(f"Entry {selected_entry!r} is not executable code")
 
@@ -1014,25 +1046,7 @@ def main() -> int:
                 }
             )
             occupied_addresses.add(resident_address)
-    elif overlay_plan is None and source_id == HOT_RELOAD_SOURCE:
-        writes.append(
-            {
-                "id": "hot_reload_visible_marker_call",
-                "runtime_address": "0x001085A0",
-                "expected_hex": "A021040C00000000",
-                "replacement_hex": (
-                    encode_symbol_reference(
-                        "jal26", addresses[HOT_RELOAD_ENTRY]
-                    )
-                    + bytes(4)
-                ).hex().upper(),
-                "reason": (
-                    "Replace an existing no-op end-of-frame call with the "
-                    "visible hot-reload marker before renderer flush."
-                ),
-            }
-        )
-    elif overlay_plan is None:
+    elif overlay_plan is None and source_id != HOT_RELOAD_SOURCE:
         resident_entry = symbol_map.get(entry_symbol)
         if resident_entry is None:
             raise ValueError(
@@ -1057,6 +1071,24 @@ def main() -> int:
                 "expected_hex": expected.hex().upper(),
                 "replacement_hex": replacement.hex().upper(),
                 "reason": "Redirect the Latest resident entry to the fragment.",
+            }
+        )
+    if include_marker:
+        writes.append(
+            {
+                "id": "hot_reload_visible_marker_call",
+                "runtime_address": "0x001085A0",
+                "expected_hex": "A021040C00000000",
+                "replacement_hex": (
+                    encode_symbol_reference(
+                        "jal26", addresses[HOT_RELOAD_ENTRY]
+                    )
+                    + bytes(4)
+                ).hex().upper(),
+                "reason": (
+                    "Replace an existing no-op end-of-frame call with the "
+                    "visible hot-reload marker before renderer flush."
+                ),
             }
         )
 

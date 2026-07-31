@@ -109,6 +109,13 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   trace forward from the last proven point to the first unproven value or
   consumer. Do not reopen builds, tools, hooks, inputs, or other earlier layers
   merely because a later adjustment failed.
+- Before claiming that a change affected current observable behavior or asking
+  the user to verify it, compare the post-change state with the pre-change
+  state and confirm an actual change in the requested target. A configured
+  value, compiled output, applied write, or intended code path is not an
+  observable result. If the target did not change, report the attempt as
+  ineffective and continue to the first unproven consumer; do not stop for
+  review or send a final response.
 - After two ineffective attempts, or after context compression during active
   work, restate only the requested result, proven facts, remaining unknown, and
   next narrow action before further mutation. Continue within that boundary;

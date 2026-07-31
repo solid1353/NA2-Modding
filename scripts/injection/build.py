@@ -58,14 +58,14 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Compile and link a runtime-injector C fragment."
     )
-    parser.add_argument("--source-id", required=True)
-    parser.add_argument("--entry", required=True)
-    parser.add_argument("--overlay-plan")
+    parser.add_argument("--source-id")
+    parser.add_argument("--entry")
     parser.add_argument(
-        "--whole-source",
-        action="store_true",
-        help="Link every declared fragment from the selected C source.",
+        "--source-path",
+        type=Path,
+        help="Compile every registered C source selected by this file or folder.",
     )
+    parser.add_argument("--overlay-plan")
     parser.add_argument(
         "--hot-reload-label",
         help="Compile the development marker with this display text.",
@@ -128,26 +128,13 @@ def load_overlay_plan(
     if not plan_path.is_absolute():
         plan_path = REPOSITORY / plan_path
     plan_path = plan_path.resolve()
-    allowed_roots = (
-        ((REPOSITORY / "work").resolve(), 2, False),
-        ((SCRIPT_ROOT / "targets").resolve(), 1, True),
-    )
-    allowed = False
-    maintained_target = False
-    for root, minimum_parts, root_is_maintained in allowed_roots:
-        try:
-            relative = plan_path.relative_to(root)
-        except ValueError:
-            continue
-        if len(relative.parts) >= minimum_parts:
-            allowed = True
-            maintained_target = root_is_maintained
-            break
-    if not allowed or not plan_path.is_file():
-        raise ValueError(
-            "Overlay plan must be task-owned under work/<task>/ or a "
-            "maintained target under scripts/injection/targets/"
-        )
+    work_root = (REPOSITORY / "work").resolve()
+    try:
+        relative = plan_path.relative_to(work_root)
+    except ValueError:
+        relative = Path()
+    if len(relative.parts) < 2 or not plan_path.is_file():
+        raise ValueError("Overlay plan must be task-owned under work/<task>/")
     raw = json.loads(plan_path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise ValueError("Overlay plan root must be a JSON object")
@@ -186,12 +173,8 @@ def load_overlay_plan(
         raise ValueError("Overlay plan source_id does not match selection")
     if not isinstance(raw["purpose"], str) or not raw["purpose"].strip():
         raise ValueError("Overlay plan purpose must be non-empty text")
-    if not isinstance(raw["writes"], list) or (
-        not raw["writes"] and not maintained_target
-    ):
-        raise ValueError(
-            "Task-owned overlay plan writes must be a non-empty array"
-        )
+    if not isinstance(raw["writes"], list) or not raw["writes"]:
+        raise ValueError("Task-owned overlay plan writes must be a non-empty array")
 
     resident_symbol_overrides: dict[str, int] = {}
     raw_overrides = raw.get("resident_symbol_overrides", {})
@@ -587,30 +570,6 @@ def load_declared_entry(
     }
 
 
-def load_declared_entries(source_id: str) -> list[dict[str, str]]:
-    entries = read_tsv(PACKAGE_ROOT / "entries.tsv", ENTRY_FIELDS)
-    result = []
-    for entry in entries:
-        if entry["source_id"] != source_id:
-            continue
-        identifier(entry["entry_symbol"], "entries.tsv entry_symbol")
-        identifier(entry["abi"], "entries.tsv abi")
-        if not entry["purpose"]:
-            raise ValueError("entries.tsv purpose must not be empty")
-        result.append(
-            {
-                "symbol": entry["entry_symbol"],
-                "abi": entry["abi"],
-                "purpose": entry["purpose"],
-            }
-        )
-    if not result:
-        raise ValueError(
-            f"Production source {source_id!r} has no declared entries"
-        )
-    return result
-
-
 def compile_fragments(
     source_id: str,
     source_path: Path,
@@ -861,28 +820,107 @@ def resolved_path(value: Path) -> Path:
     return value.resolve() if value.is_absolute() else (REPOSITORY / value).resolve()
 
 
+def source_ids_for_path(value: Path) -> tuple[Path, list[str]]:
+    scope = resolved_path(value)
+    source_root = (REPOSITORY / "src").resolve()
+    try:
+        scope.relative_to(source_root)
+    except ValueError as exc:
+        raise ValueError(f"Source scope must be inside {source_root}: {scope}") from exc
+    if not scope.exists():
+        raise ValueError(f"Source scope was not found: {scope}")
+    if not scope.is_dir() and scope.suffix.lower() != ".c":
+        raise ValueError(f"Source scope must be a C file or folder: {scope}")
+
+    registered: list[tuple[str, Path]] = [
+        (HOT_RELOAD_SOURCE, (source_root / "hot_reload_message.c").resolve())
+    ]
+    for row in read_tsv(PACKAGE_ROOT / "c_sources.tsv", SOURCE_FIELDS):
+        source_id = identifier(row["source_id"], "c_sources.tsv source_id")
+        source_path, _namespace, _imports, _mappings = load_source(source_id)
+        registered.append((source_id, source_path.resolve()))
+
+    selected = [
+        source_id
+        for source_id, source_path in registered
+        if source_path == scope
+        or (scope.is_dir() and source_path.is_relative_to(scope))
+    ]
+    if not selected:
+        raise ValueError(f"Source scope contains no registered C sources: {scope}")
+
+    selected_paths = {
+        source_path
+        for source_id, source_path in registered
+        if source_id in selected
+    }
+    discovered = {
+        path.resolve()
+        for path in (
+            scope.rglob("*.c") if scope.is_dir() else [scope]
+        )
+    }
+    unregistered = sorted(discovered - selected_paths)
+    if unregistered:
+        relative = [path.relative_to(REPOSITORY).as_posix() for path in unregistered]
+        raise ValueError(
+            "Source scope contains unregistered C files: "
+            + ", ".join(relative)
+        )
+    return scope, selected
+
+
 def main() -> int:
     args = parse_args()
-    source_id = identifier(args.source_id, "source-id")
-    entry_symbol = identifier(args.entry, "entry")
+    direct_scope = args.source_path is not None
+    if direct_scope:
+        if args.source_id or args.entry or args.overlay_plan:
+            raise ValueError(
+                "--source-path cannot be combined with --source-id, --entry, "
+                "or --overlay-plan"
+            )
+        source_scope, source_ids = source_ids_for_path(args.source_path)
+        source_id = source_ids[0]
+        entry_symbol = ""
+        output_name = (
+            "all"
+            if source_scope == (REPOSITORY / "src").resolve()
+            else source_scope.stem
+        )
+    else:
+        if not args.source_id or not args.entry:
+            raise ValueError(
+                "--source-id and --entry are required unless --source-path is used"
+            )
+        source_id = identifier(args.source_id, "source-id")
+        source_ids = [source_id]
+        entry_symbol = identifier(args.entry, "entry")
+        output_name = source_id
     iso_path = resolved_path(args.iso)
     output = resolved_path(
-        args.output or Path("build") / "injection" / source_id
+        args.output or Path("build") / "injection" / output_name
     )
     code_base = 0x008F0000
     code_end = 0x008F3D00
 
-    (
-        overlay_plan_path,
-        overlay_plan,
-        overlay_entries,
-        unresolved_overlay_writes,
-        resident_symbol_overrides,
-    ) = load_overlay_plan(
-        args.overlay_plan,
-        source_id=source_id,
-        entry_symbol=entry_symbol,
-    )
+    if direct_scope:
+        overlay_plan_path = None
+        overlay_plan = None
+        overlay_entries: list[dict[str, str]] = []
+        unresolved_overlay_writes: list[dict[str, object]] = []
+        resident_symbol_overrides: dict[str, int] = {}
+    else:
+        (
+            overlay_plan_path,
+            overlay_plan,
+            overlay_entries,
+            unresolved_overlay_writes,
+            resident_symbol_overrides,
+        ) = load_overlay_plan(
+            args.overlay_plan,
+            source_id=source_id,
+            entry_symbol=entry_symbol,
+        )
 
     iso = Iso9660(iso_path)
     try:
@@ -906,73 +944,88 @@ def main() -> int:
                 "Matching build record has an unexpected 228.BIN load base"
             )
 
-    source_path, namespace, imports, mappings = load_source(source_id)
-    entry_declarations = (
-        overlay_entries
-        if overlay_plan is not None
-        else [load_declared_entry(source_id, entry_symbol)]
-    )
-    if args.whole_source:
-        declared = load_declared_entries(source_id)
-        by_symbol = {
-            declaration["symbol"]: declaration
-            for declaration in entry_declarations
-        }
-        for declaration in declared:
-            by_symbol.setdefault(declaration["symbol"], declaration)
-        entry_declarations = [
-            by_symbol[entry_symbol],
-            *(
-                declaration
-                for symbol, declaration in by_symbol.items()
-                if symbol != entry_symbol
-            ),
-        ]
+    if direct_scope:
+        entry_declarations: list[dict[str, str]] = []
+    else:
+        entry_declarations = (
+            overlay_entries
+            if overlay_plan is not None
+            else [load_declared_entry(source_id, entry_symbol)]
+        )
     entry_symbols = [entry["symbol"] for entry in entry_declarations]
 
-    root_symbols = list(entry_symbols)
+    mappings: list[tuple[int, str, str]] = []
+    compiled_c_fragments: list[PayloadFragment] = []
     with tempfile.TemporaryDirectory(prefix="na228-injection-") as temporary:
         temporary_path = Path(temporary)
-        compiled_c_fragments = compile_fragments(
-            source_id,
-            source_path,
-            namespace,
-            imports,
-            mappings,
-            temporary_path / f"{source_id}.o",
-            args.hot_reload_label,
-        )
-        if source_id != HOT_RELOAD_SOURCE:
+        compiled_source_ids = list(source_ids)
+        if HOT_RELOAD_SOURCE not in compiled_source_ids:
+            compiled_source_ids.append(HOT_RELOAD_SOURCE)
+        for selected_source_id in compiled_source_ids:
             (
-                marker_source_path,
-                marker_namespace,
-                marker_imports,
-                marker_mappings,
-            ) = load_source(HOT_RELOAD_SOURCE)
+                selected_source_path,
+                namespace,
+                imports,
+                source_mappings,
+            ) = load_source(selected_source_id)
+            if selected_source_id == HOT_RELOAD_SOURCE and mappings:
+                marker_order_base = max(
+                    (order for order, _object, _fragment in mappings),
+                    default=0,
+                )
+                source_mappings = [
+                    (
+                        marker_order_base + order,
+                        object_fragment,
+                        fragment_id,
+                    )
+                    for order, object_fragment, fragment_id in source_mappings
+                ]
+            mappings.extend(source_mappings)
             compiled_c_fragments.extend(
                 compile_fragments(
-                    HOT_RELOAD_SOURCE,
-                    marker_source_path,
-                    marker_namespace,
-                    marker_imports,
-                    marker_mappings,
-                    temporary_path / f"{HOT_RELOAD_SOURCE}.o",
+                    selected_source_id,
+                    selected_source_path,
+                    namespace,
+                    imports,
+                    source_mappings,
+                    temporary_path / f"{selected_source_id}.o",
                     args.hot_reload_label,
                 )
             )
-            marker_order_base = max(
-                (order for order, _object, _fragment in mappings),
-                default=0,
+    if direct_scope:
+        root_symbols = [
+            fragment.symbol
+            for fragment in compiled_c_fragments
+            if fragment.kind == "code"
+        ]
+        declared_entries = {
+            row["entry_symbol"]: {
+                "symbol": row["entry_symbol"],
+                "abi": row["abi"],
+                "purpose": row["purpose"],
+            }
+            for row in read_tsv(PACKAGE_ROOT / "entries.tsv", ENTRY_FIELDS)
+            if row["source_id"] in source_ids
+        }
+        entry_symbols = [
+            symbol
+            for symbol in root_symbols
+            if symbol != HOT_RELOAD_ENTRY and symbol in symbol_map
+        ]
+        entry_declarations = [
+            declared_entries.get(
+                symbol,
+                {
+                    "symbol": symbol,
+                    "abi": "resident_symbol",
+                    "purpose": "Direct registered C-source attachment.",
+                },
             )
-            mappings.extend(
-                (
-                    marker_order_base + order,
-                    object_fragment,
-                    fragment_id,
-                )
-                for order, object_fragment, fragment_id in marker_mappings
-            )
-            root_symbols.append(HOT_RELOAD_ENTRY)
+            for symbol in entry_symbols
+        ]
+    else:
+        root_symbols = [*entry_symbols, HOT_RELOAD_ENTRY]
     fragments, external_symbols = select_fragment_closure(
         root_symbols,
         compiled_c_fragments,
@@ -982,7 +1035,7 @@ def main() -> int:
         resident_symbol_overrides,
         forced_symbols=(
             {fragment.symbol for fragment in compiled_c_fragments}
-            if args.whole_source
+            if direct_scope
             else None
         ),
     )
@@ -1003,14 +1056,18 @@ def main() -> int:
         code_end=code_end,
         external_addresses=external_addresses,
     )
-    overlay_writes = resolve_overlay_writes(
-        unresolved_overlay_writes,
-        entry_addresses=addresses,
-        primary_entry=addresses[entry_symbol],
+    overlay_writes = (
+        []
+        if direct_scope
+        else resolve_overlay_writes(
+            unresolved_overlay_writes,
+            entry_addresses=addresses,
+            primary_entry=addresses[entry_symbol],
+        )
     )
 
     writes = list(overlay_writes)
-    if args.whole_source:
+    if direct_scope:
         occupied_addresses = {
             int(write["runtime_address"], 0)
             for write in writes
@@ -1042,8 +1099,8 @@ def main() -> int:
                         + bytes(4)
                     ).hex().upper(),
                     "reason": (
-                        "Redirect the Latest resident entry to the whole-source "
-                        "development fragment."
+                        "Redirect the Latest resident entry to the selected "
+                        "development C sources."
                     ),
                 }
             )
@@ -1100,7 +1157,12 @@ def main() -> int:
     manifest = {
         "schema_version": 1,
         "source_id": source_id,
-        "whole_source": args.whole_source,
+        "source_ids": source_ids,
+        "source_scope": (
+            source_scope.relative_to(REPOSITORY).as_posix()
+            if direct_scope
+            else None
+        ),
         "entry_symbols": [
             {
                 "symbol": selected_entry,

@@ -85,8 +85,8 @@ positional game tokens whose order defines window placement. `l`, `p`, or `t`
 runs Latest, Previous, or Test; `bl` and `bt` build and run Latest or Test; and
 suffix `w` watches that token's game. `b` remains shorthand for `bl`. For
 example, `na228 nun5 btw` builds Test, launches NUN5 and Test side by side, then
-watches Test. A named watch target or task-owned overlay-plan path may follow
-the watched token: `na228 nun5 blw font-controls` or
+watches Test. A registered C file/folder or task-owned overlay-plan path may
+follow the watched token: `na228 nun5 blw src/localization` or
 `na228 nun5 btw work/Font/operations/jutsu_names_overlay.json`.
 `na228 build l|t` provides the uncommon build-only forms.
 Launch-only commands never actualize. A changed Latest build actualizes Latest
@@ -205,17 +205,15 @@ applies it to their isolated PCSX2:
 The applier preserves the VM's prior running/paused state, writes the fragment
 and guarded callers while paused, clears execution caches, and uses no PNACH or
 cheat-folder state. `scripts/injection/watch.ps1` is the user-only equivalent.
-The user-facing `na228 w` command selects the complete registered Font target
-by default; `na228 w injection_test` selects only the root smoke-message source.
-Every production watch also watches and rebuilds that smoke-message source
-because the visible reload confirmation is linked into every candidate. An
-owning feature source/entry or overlay plan may still be passed explicitly.
-`settings/watchers.json` declares reusable user-facing target names; a direct
-task-owned overlay-plan path remains valid for current experiments. The compact
-`w` suffix chooses the PCSX2 instance, while the following optional target
-chooses what is rebuilt: `na228 nun5 blw font`. Standalone
-`na228 w [target|plan]` uses the
-configured development PINE port. Both forms wait up to 60 seconds for a live
+The user-facing `na228 w` command attaches every registered C source under
+`src/`; `na228 w injection_test` selects only the root smoke-message source.
+A registered C file/folder narrows the attachment, while a direct task-owned
+overlay-plan path remains valid for exceptional caller writes. Every watch
+also rebuilds the smoke-message source because the visible reload confirmation
+is linked into every candidate. The compact `w` suffix chooses the PCSX2
+instance, while the following optional C path or plan chooses what is rebuilt.
+Standalone `na228 w [C path|plan]` uses the configured development PINE port.
+Both forms wait up to 60 seconds for a live
 VM with the resident payload and injection target loaded. Agents invoke
 `test.ps1` and never run the watcher or its build/apply stages separately.
 

@@ -112,9 +112,6 @@ try {
     New-Item -ItemType Directory -Force -Path $fakeInjectionScripts | Out-Null
     $fakeSettings = Join-Path $fakeRepository 'settings'
     New-Item -ItemType Directory -Force -Path $fakeSettings | Out-Null
-    Copy-Item `
-        -LiteralPath (Join-Path $PSScriptRoot '..\injection\watch_targets.ps1') `
-        -Destination $fakeInjectionScripts
     $fakeActualizationScripts = Join-Path $fakePcsx2Scripts 'actualization'
     New-Item -ItemType Directory -Force -Path $fakeActualizationScripts | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\pcsx2\actualization\act.ps1') `
@@ -140,29 +137,12 @@ try {
   },
   "files": {
     "game_catalog": "@repository/settings/games.json",
-    "watch_catalog": "@repository/settings/watchers.json",
     "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
     "na228_game_launch_command": "@scripts/na228/launch_games.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1",
     "actualize_command": "@pcsx2_scripts/actualization/act.ps1",
     "actualize_na228_command": "@pcsx2_scripts/actualization/sync_game_files.ps1",
     "actualize_input_command": "@pcsx2_scripts/actualization/sync_input.ps1"
-  }
-}
-'@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeSettings 'watchers.json') -Content @'
-{
-  "schema_version": 1,
-  "default_target": "font",
-  "targets": {
-    "font": {
-      "overlay_plan": "scripts/injection/targets/font.json",
-      "whole_source": true
-    },
-    "injection_test": {
-      "source_id": "hot_reload_message",
-      "entry": "project.hot_reload_message"
-    }
   }
 }
 '@
@@ -325,12 +305,11 @@ param(
     [string]$SourceId,
     [string]$Entry,
     [string]$SourcePath,
-    [string]$OverlayPlan,
-    [switch]$WholeSource
+    [string]$OverlayPlan
 )
 Write-Output (
     "[fake] watch $PinePort source=$SourceId entry=$Entry " +
-    "sourcePath=$SourcePath plan=$OverlayPlan wholeSource=$($WholeSource.IsPresent)"
+    "sourcePath=$SourcePath plan=$OverlayPlan"
 )
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeReleaseScripts 'publish_release.ps1') -Content @'
@@ -512,18 +491,20 @@ else {
             $leadingBuildWatch -match '\[fake\] watch 28014'
         ) `
         -Message 'Leading build/watch token did not preserve window order.'
-    $namedBuildWatch = (
-        & (Join-Path $fakeRepository 'na228.ps1') blw font nun5
+    $scopedBuildWatch = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            blw `
+            'src/localization' `
+            nun5
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $namedBuildWatch -match 'multi-game launch latest,nun5' -and
-            $namedBuildWatch -match (
-                '\[fake\] watch 28014 .*' +
-                'plan=scripts/injection/targets/font\.json wholeSource=True'
+            $scopedBuildWatch -match 'multi-game launch latest,nun5' -and
+            $scopedBuildWatch -match (
+                '\[fake\] watch 28014 .*sourcePath=src/localization'
             )
         ) `
-        -Message 'Whole-Font watch target did not preserve launch order or selection.'
+        -Message 'C-folder watch did not preserve launch order or selection.'
     $directPlanWatch = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
@@ -538,36 +519,37 @@ else {
             )
         ) `
         -Message 'Direct overlay-plan watch target was not forwarded.'
-    $standaloneNamedWatch = (
-        & (Join-Path $fakeRepository 'na228.ps1') w font
+    $standaloneScopedWatch = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            w `
+            'src/localization/font_numeric.c'
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $standaloneNamedWatch -match (
+            $standaloneScopedWatch -match (
                 '\[fake\] watch 0 .*' +
-                'plan=scripts/injection/targets/font\.json wholeSource=True'
+                'sourcePath=src/localization/font_numeric\.c'
             )
         ) `
-        -Message 'Standalone whole-Font watch target was not forwarded.'
+        -Message 'Standalone C-file watch target was not forwarded.'
     $standaloneDefaultWatch = (
         & (Join-Path $fakeRepository 'na228.ps1') w
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
             $standaloneDefaultWatch -match (
-                '\[fake\] watch 0 .*' +
-                'plan=scripts/injection/targets/font\.json wholeSource=True'
+                '\[fake\] watch 0 .*sourcePath=src'
             )
         ) `
-        -Message 'Bare watch command did not select the default whole-Font target.'
+        -Message 'Bare watch command did not select the complete source tree.'
     $standaloneInjectionTestWatch = (
         & (Join-Path $fakeRepository 'na228.ps1') w injection_test
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
             $standaloneInjectionTestWatch -match (
-                '\[fake\] watch 0 source=hot_reload_message ' +
-                'entry=project\.hot_reload_message'
+                '\[fake\] watch 0 .*' +
+                'sourcePath=src/hot_reload_message\.c'
             )
         ) `
         -Message 'Injection-test watch target did not select the smoke message.'

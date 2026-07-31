@@ -7,7 +7,6 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'scripts\lib\project_paths.ps1')
 . (Join-Path $PSScriptRoot 'scripts\na228\worker_paths.ps1')
-. (Join-Path $PSScriptRoot 'scripts\injection\watch_targets.ps1')
 $projectPaths = Get-Na2ProjectPaths
 $gameAliases = @(
     $projectPaths.games.Aliases.PSObject.Properties |
@@ -18,6 +17,21 @@ $gameAliases = @(
 function Write-Na2Stage {
     param([string]$Message)
     Write-Host "[na228] $Message" -ForegroundColor Cyan
+}
+
+function Get-Na228WatchArguments {
+    param([string]$Target)
+
+    if ([string]::IsNullOrWhiteSpace($Target)) {
+        return @{ SourcePath = 'src' }
+    }
+    if ($Target -ceq 'injection_test') {
+        return @{ SourcePath = 'src/hot_reload_message.c' }
+    }
+    if ([IO.Path]::GetExtension($Target) -ieq '.json') {
+        return @{ OverlayPlan = $Target }
+    }
+    return @{ SourcePath = $Target }
 }
 
 $commandTokens = @($Tokens)
@@ -41,12 +55,12 @@ if ($mode -eq 'help') {
         'NA2.28'
         ''
         '  na228                      Build and run Latest'
-        '  na228 w [target|plan]      Watch all Font C by default'
+        '  na228 w [C path|plan]      Watch all registered C by default'
         '  na228 w injection_test     Watch only the reload-message smoke test'
         '  na228 <token> [token]      Run one or two games in window order'
         '  l | p | t                  Latest | Previous | Test'
         '  bl | bt                    Build and run Latest | Test'
-        '  <token>w [target|plan]     Watch that game; target follows its token'
+        '  <token>w [C path|plan]     Watch that game; selection follows its token'
         ''
         '  na228 build l|t             Build Latest or Test without running it'
         '  na228 validate              Validate the complete build without producing an ISO'
@@ -127,9 +141,8 @@ if ($mode -eq 'w') {
     if ($arguments.Count -gt 1) {
         throw 'na228 w accepts at most one watch target or overlay-plan path.'
     }
-    $watchArguments = Get-Na228WatchTargetArguments `
-        -Target $(if ($arguments.Count -eq 1) { $arguments[0] } else { '' }) `
-        -ProjectPaths $projectPaths
+    $watchArguments = Get-Na228WatchArguments `
+        -Target $(if ($arguments.Count -eq 1) { $arguments[0] } else { '' })
     & (Join-Path $projectPaths.scripts 'injection\watch.ps1') @watchArguments
     return
 }
@@ -213,9 +226,7 @@ if ($null -ne $watchIndex) {
     if ($gameLaunchResults.Count -le $watchIndex) {
         throw "Launch result did not expose the PINE port for game token $($watchIndex + 1)."
     }
-    $watchArguments = Get-Na228WatchTargetArguments `
-        -Target $watchTarget `
-        -ProjectPaths $projectPaths
+    $watchArguments = Get-Na228WatchArguments -Target $watchTarget
     $watchArguments.PinePort = [int]$gameLaunchResults[$watchIndex].PinePort
     & (Join-Path $projectPaths.scripts 'injection\watch.ps1') @watchArguments
 }

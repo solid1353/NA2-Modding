@@ -83,8 +83,6 @@ their producing workflow runs. File entries reference a named root with
 - `pcsx2_dev_exe`: `@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe`, used by default
   configured launches and user runtime-injection development.
 - `game_catalog`: `@repository/settings/games.json`.
-- `watch_catalog`: `@repository/settings/watchers.json`, containing named user-facing
-  live-injection targets.
 - `notification_state`: the shared mute state for the dedicated Notifications
   task at `@repository/settings/notifications.json`.
 - `na228_command`: `@repository/na228.ps1`.

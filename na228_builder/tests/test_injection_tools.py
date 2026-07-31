@@ -170,6 +170,31 @@ class InjectionApplyTests(unittest.TestCase):
 
 
 class InjectionBuildTests(unittest.TestCase):
+    def test_direct_source_scope_selects_registered_root_and_file(self) -> None:
+        root, root_sources = build_injection.source_ids_for_path(Path("src"))
+        numeric, numeric_sources = build_injection.source_ids_for_path(
+            Path("src/localization/font_numeric.c")
+        )
+
+        self.assertEqual(root, build_injection.REPOSITORY / "src")
+        self.assertEqual(
+            root_sources,
+            [
+                "hot_reload_message",
+                "font_v2_core",
+                "font_numeric",
+                "font_glyph_metrics",
+            ],
+        )
+        self.assertEqual(
+            numeric,
+            build_injection.REPOSITORY
+            / "src"
+            / "localization"
+            / "font_numeric.c",
+        )
+        self.assertEqual(numeric_sources, ["font_numeric"])
+
     def test_overlay_plan_accepts_resident_symbol_overrides(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             repository = Path(temporary)

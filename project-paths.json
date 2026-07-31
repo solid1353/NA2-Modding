@@ -35,7 +35,6 @@
     "pcsx2_dev_exe": "@pcsx2_dev/pcsx2-qtx64-avx2-dev.exe",
     "notification_state": "@repository/settings/notifications.json",
     "game_catalog": "@repository/settings/games.json",
-    "watch_catalog": "@repository/settings/watchers.json",
     "na228_command": "@repository/na228.ps1",
     "pcsx2_launch_command": "@pcsx2_scripts/launch.ps1",
     "pcsx2_savestate_move_command": "@pcsx2_scripts/move_na228_savestates.ps1",

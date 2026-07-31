@@ -12,7 +12,6 @@ param(
     [int]$DebounceMilliseconds = 400,
     [ValidateRange(50, 5000)]
     [int]$PollMilliseconds = 150,
-    [switch]$WholeSource,
     [switch]$BuildOnly
 )
 
@@ -122,90 +121,137 @@ if ($OverlayPlan) {
     }
 }
 
-if (-not $Entry -and -not $SourceId) {
-    $SourceId = $hotReloadSourceId
-    $Entry = $hotReloadEntry
-}
-if (-not $Entry) {
-    throw 'Entry is required when OverlayPlan does not declare one.'
-}
-if ($SourceId -ceq $hotReloadSourceId) {
-    if ($Entry -cne $hotReloadEntry) {
-        throw "Source '$hotReloadSourceId' requires entry '$hotReloadEntry'."
+$directScope = -not $resolvedOverlayPlan -and -not $SourceId -and -not $Entry
+if ($directScope) {
+    if (-not $SourcePath) {
+        $SourcePath = 'src'
     }
-    $canonicalSource = Join-Path $repository 'src\hot_reload_message.c'
-}
-else {
-    if (-not $resolvedOverlayPlan) {
-        $entryRows = @(
-            Import-Csv -LiteralPath $entriesPath -Delimiter "`t" |
-                Where-Object { $_.entry_symbol -ceq $Entry }
-        )
-        if ($entryRows.Count -ne 1) {
-            throw "Entry '$Entry' must match exactly one entries.tsv row."
-        }
-        if (-not $SourceId) {
-            $SourceId = [string]$entryRows[0].source_id
-        }
-        if ($SourceId -cne [string]$entryRows[0].source_id) {
-            throw "Entry '$Entry' does not belong to source '$SourceId'."
-        }
+    $resolvedSourcePath = Resolve-RepositoryPath $SourcePath
+    $sourceItem = Get-Item -LiteralPath $resolvedSourcePath -Force `
+        -ErrorAction SilentlyContinue
+    if (-not $sourceItem) {
+        throw "Source path was not found: $resolvedSourcePath"
     }
-
-    $sourceRows = @(
-        Import-Csv -LiteralPath $sourceTable -Delimiter "`t" |
-            Where-Object {
-                $_.source_id -ceq $SourceId -and $_.language -ceq 'c'
-            }
-    )
-    if ($sourceRows.Count -ne 1) {
-        throw "Source '$SourceId' must match exactly one canonical C source."
-    }
-    $sourceDeclaration = [string]$sourceRows[0].path
-    if ($sourceDeclaration.Replace('\', '/').StartsWith('src/')) {
-        $canonicalSource = [IO.Path]::GetFullPath(
-            (Join-Path $repository $sourceDeclaration)
-        )
-    }
-    else {
-        $canonicalSource = [IO.Path]::GetFullPath(
-            (Join-Path $packageRoot $sourceDeclaration)
-        )
-    }
-}
-if (-not $SourcePath) {
-    $SourcePath = $canonicalSource
-}
-$resolvedSourcePath = Resolve-RepositoryPath $SourcePath
-$sourceItem = Get-Item -LiteralPath $resolvedSourcePath -Force `
-    -ErrorAction SilentlyContinue
-if (-not $sourceItem) {
-    throw "Source path was not found: $resolvedSourcePath"
-}
-if ($sourceItem.PSIsContainer) {
-    $prefix = $resolvedSourcePath.TrimEnd(
+    $sourceRoot = [IO.Path]::GetFullPath((Join-Path $repository 'src'))
+    $sourcePrefix = $sourceRoot.TrimEnd(
         [IO.Path]::DirectorySeparatorChar,
         [IO.Path]::AltDirectorySeparatorChar
     ) + [IO.Path]::DirectorySeparatorChar
-    if (-not $canonicalSource.StartsWith(
-        $prefix,
-        [StringComparison]::OrdinalIgnoreCase
-    )) {
-        throw "Source path does not contain $canonicalSource"
+    if (
+        -not $resolvedSourcePath.Equals(
+            $sourceRoot,
+            [StringComparison]::OrdinalIgnoreCase
+        ) -and
+        -not $resolvedSourcePath.StartsWith(
+            $sourcePrefix,
+            [StringComparison]::OrdinalIgnoreCase
+        )
+    ) {
+        throw "Source path must be inside $sourceRoot"
+    }
+    if (
+        -not $sourceItem.PSIsContainer -and
+        [IO.Path]::GetExtension($resolvedSourcePath) -ine '.c'
+    ) {
+        throw "Source path must be a C file or folder: $resolvedSourcePath"
     }
 }
-elseif (-not $resolvedSourcePath.Equals(
-    $canonicalSource,
-    [StringComparison]::OrdinalIgnoreCase
-)) {
-    throw "Source path is not the selected canonical source: $canonicalSource"
+else {
+    if (-not $Entry) {
+        throw 'Entry is required when OverlayPlan does not declare one.'
+    }
+    if ($SourceId -ceq $hotReloadSourceId) {
+        if ($Entry -cne $hotReloadEntry) {
+            throw "Source '$hotReloadSourceId' requires entry '$hotReloadEntry'."
+        }
+        $canonicalSource = Join-Path $repository 'src\hot_reload_message.c'
+    }
+    else {
+        if (-not $resolvedOverlayPlan) {
+            $entryRows = @(
+                Import-Csv -LiteralPath $entriesPath -Delimiter "`t" |
+                    Where-Object { $_.entry_symbol -ceq $Entry }
+            )
+            if ($entryRows.Count -ne 1) {
+                throw "Entry '$Entry' must match exactly one entries.tsv row."
+            }
+            if (-not $SourceId) {
+                $SourceId = [string]$entryRows[0].source_id
+            }
+            if ($SourceId -cne [string]$entryRows[0].source_id) {
+                throw "Entry '$Entry' does not belong to source '$SourceId'."
+            }
+        }
+
+        $sourceRows = @(
+            Import-Csv -LiteralPath $sourceTable -Delimiter "`t" |
+                Where-Object {
+                    $_.source_id -ceq $SourceId -and $_.language -ceq 'c'
+                }
+        )
+        if ($sourceRows.Count -ne 1) {
+            throw "Source '$SourceId' must match exactly one canonical C source."
+        }
+        $sourceDeclaration = [string]$sourceRows[0].path
+        if ($sourceDeclaration.Replace('\', '/').StartsWith('src/')) {
+            $canonicalSource = [IO.Path]::GetFullPath(
+                (Join-Path $repository $sourceDeclaration)
+            )
+        }
+        else {
+            $canonicalSource = [IO.Path]::GetFullPath(
+                (Join-Path $packageRoot $sourceDeclaration)
+            )
+        }
+    }
+    if (-not $SourcePath) {
+        $SourcePath = $canonicalSource
+    }
+    $resolvedSourcePath = Resolve-RepositoryPath $SourcePath
+    $sourceItem = Get-Item -LiteralPath $resolvedSourcePath -Force `
+        -ErrorAction SilentlyContinue
+    if (-not $sourceItem) {
+        throw "Source path was not found: $resolvedSourcePath"
+    }
+    if ($sourceItem.PSIsContainer) {
+        $prefix = $resolvedSourcePath.TrimEnd(
+            [IO.Path]::DirectorySeparatorChar,
+            [IO.Path]::AltDirectorySeparatorChar
+        ) + [IO.Path]::DirectorySeparatorChar
+        if (-not $canonicalSource.StartsWith(
+            $prefix,
+            [StringComparison]::OrdinalIgnoreCase
+        )) {
+            throw "Source path does not contain $canonicalSource"
+        }
+    }
+    elseif (-not $resolvedSourcePath.Equals(
+        $canonicalSource,
+        [StringComparison]::OrdinalIgnoreCase
+    )) {
+        throw "Source path is not the selected canonical source: $canonicalSource"
+    }
 }
 
+$outputName = if ($directScope) {
+    if ($resolvedSourcePath.Equals(
+        [IO.Path]::GetFullPath((Join-Path $repository 'src')),
+        [StringComparison]::OrdinalIgnoreCase
+    )) {
+        'all'
+    }
+    else {
+        [IO.Path]::GetFileNameWithoutExtension($resolvedSourcePath)
+    }
+}
+else {
+    $SourceId
+}
 $resolvedOutput = if ($Output) {
     Resolve-RepositoryPath $Output
 }
 else {
-    Join-Path $repository "build\injection\$SourceId"
+    Join-Path $repository "build\injection\$outputName"
 }
 if (-not $BuildOnly) {
     if ($PinePort -eq 0) {
@@ -220,20 +266,33 @@ if (-not $BuildOnly) {
     ) -ForegroundColor Cyan
 }
 
-$watchPaths = if ($SourceId -ceq $hotReloadSourceId) {
-    @($resolvedSourcePath)
-}
-else {
-    @(
-        $resolvedSourcePath,
-        (Join-Path $repository 'src\hot_reload_message.c'),
-        $entriesPath,
-        $sourceTable,
-        (Join-Path $packageRoot 'c_imports.tsv'),
-        (Join-Path $packageRoot 'c_fragments.tsv'),
-        (Join-Path $packageRoot 'fragments.tsv'),
-        (Join-Path $packageRoot 'relocations.tsv')
+$watchPaths = @(
+    $resolvedSourcePath,
+    $entriesPath,
+    $sourceTable,
+    (Join-Path $packageRoot 'c_imports.tsv'),
+    (Join-Path $packageRoot 'c_fragments.tsv'),
+    (Join-Path $packageRoot 'fragments.tsv'),
+    (Join-Path $packageRoot 'relocations.tsv')
+)
+$markerPath = Join-Path $repository 'src\hot_reload_message.c'
+if (
+    -not $resolvedSourcePath.Equals(
+        $markerPath,
+        [StringComparison]::OrdinalIgnoreCase
+    ) -and
+    (
+        -not $sourceItem.PSIsContainer -or
+        -not $markerPath.StartsWith(
+            $resolvedSourcePath.TrimEnd(
+                [IO.Path]::DirectorySeparatorChar,
+                [IO.Path]::AltDirectorySeparatorChar
+            ) + [IO.Path]::DirectorySeparatorChar,
+            [StringComparison]::OrdinalIgnoreCase
+        )
     )
+) {
+    $watchPaths += $markerPath
 }
 if ($resolvedOverlayPlan) {
     $watchPaths += $resolvedOverlayPlan
@@ -281,18 +340,22 @@ function Invoke-InjectionBuild([switch]$ExitOnFailure) {
     $buildArguments = @(
         '-B',
         $buildScript,
-        '--source-id',
-        $SourceId,
-        '--entry',
-        $Entry,
         '--output',
         $resolvedOutput
     )
+    if ($directScope) {
+        $buildArguments += @('--source-path', $resolvedSourcePath)
+    }
+    else {
+        $buildArguments += @(
+            '--source-id',
+            $SourceId,
+            '--entry',
+            $Entry
+        )
+    }
     if ($resolvedOverlayPlan) {
         $buildArguments += @('--overlay-plan', $resolvedOverlayPlan)
-    }
-    if ($WholeSource) {
-        $buildArguments += '--whole-source'
     }
     $buildArguments += @(
         '--hot-reload-label',
@@ -303,9 +366,14 @@ function Invoke-InjectionBuild([switch]$ExitOnFailure) {
     }
 
     $timestamp = Get-Date -Format 'HH:mm:ss'
-    Write-Host (
-        "[injection] $timestamp building $SourceId -> $Entry"
-    ) -ForegroundColor Cyan
+    $selection = if ($directScope) {
+        $resolvedSourcePath
+    }
+    else {
+        "$SourceId -> $Entry"
+    }
+    Write-Host "[injection] $timestamp building $selection" `
+        -ForegroundColor Cyan
     & python @buildArguments
     $buildExitCode = $LASTEXITCODE
     if ($buildExitCode -ne 0) {
@@ -349,7 +417,9 @@ function Invoke-InjectionBuild([switch]$ExitOnFailure) {
 
 Write-Host '[injection] User watcher started.'
 Write-Host "[injection] Source: $resolvedSourcePath"
-Write-Host "[injection] Entry: $Entry"
+if (-not $directScope) {
+    Write-Host "[injection] Entry: $Entry"
+}
 if ($resolvedOverlayPlan) {
     Write-Host "[injection] Overlay plan: $resolvedOverlayPlan"
 }

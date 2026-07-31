@@ -53,6 +53,19 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - Execute freely within approved scope. Stop and clarify if the task becomes
   materially unclear or the whole approach is wrong; a replacement plan needs
   approval.
+- Treat the user's explicit observations and facts already established by
+  evidence as binding for the current work. Do not investigate them again
+  unless specific new evidence directly contradicts them.
+- When an attempted change has no effect after the execution path is proven,
+  trace forward from the last proven point to the first unproven value or
+  consumer. Do not reopen builds, tools, hooks, inputs, or other earlier layers
+  merely because a later adjustment failed.
+- After two ineffective attempts, or after context compression during active
+  work, restate only the requested result, proven facts, remaining unknown, and
+  next narrow action before further mutation. Continue within that boundary;
+  do not expand the problem or revive rejected theories.
+- Increased reasoning effort deepens the remaining narrow question. It never
+  authorizes broader scope or renewed investigation of established facts.
 - If the user says to do A, stop for testing/review/acceptance, and then do B,
   stop after A. Later requests to finish, batch work, or use one commit do not
   authorize B. Continue only when the user explicitly says to skip that

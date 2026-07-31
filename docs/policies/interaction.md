@@ -96,6 +96,19 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   required stop.
 - Execute freely within the approved scope. If the task becomes unclear or the
   whole approach is wrong, stop and clarify; a replacement plan needs approval.
+- Treat the user's explicit observations and facts already established by
+  evidence as binding for the current work. Do not investigate them again
+  unless specific new evidence directly contradicts them.
+- When an attempted change has no effect after the execution path is proven,
+  trace forward from the last proven point to the first unproven value or
+  consumer. Do not reopen builds, tools, hooks, inputs, or other earlier layers
+  merely because a later adjustment failed.
+- After two ineffective attempts, or after context compression during active
+  work, restate only the requested result, proven facts, remaining unknown, and
+  next narrow action before further mutation. Continue within that boundary;
+  do not expand the problem or revive rejected theories.
+- Increased reasoning effort deepens the remaining narrow question. It never
+  authorizes broader scope or renewed investigation of established facts.
 - During approved work, questions, corrections, objections, status requests,
   and rhetorical questions are not stop signals. Answer in commentary and
   continue immediately; a question alone never permits a final response. A

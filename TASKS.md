@@ -19,7 +19,7 @@
     * [UI Translation](work/__sstates/translation/UI)
     * [String Translation](work/__sstates/translation/strings)
 
-### [Bugs](docs/workstreams/bugs/README.md)
+### Bugs
 - **UI Translation:** long character names.
 - **String Translation:** save message.
 - **General:** practice menu entries (like Damage) flicker again (unstable).

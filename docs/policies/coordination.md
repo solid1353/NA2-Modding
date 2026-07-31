@@ -110,6 +110,8 @@
 
 - `Task coordinator` maintains the mapping between `TASKS.md` workstreams and
   Codex coordinator tasks. It does not select or execute workstream tasks.
+- The special `Bugs` subsection is excluded from chat actualization and never
+  receives a coordinator.
 - Contact `Task coordinator` only for `actualize` or `actualize chats`
   requests. Do not send it task-list edits, reports, implementation or policy
   work, or ordinary coordination.
@@ -147,7 +149,10 @@
 - A workstream subsection appears under exactly one of `In Progress`,
   `Backlog`, or `Archive`; `Testing` is last within its current status.
 - `Bugs` always remains under `Backlog`; selecting or working one of its
-  entries never moves the subsection.
+  entries never moves the subsection. It is not a workstream and has no
+  coordinator. Each workstream owns entries labeled with its exact title,
+  reports those entries with its own tasks, and fixes one only when the user
+  explicitly selects it.
 - Approved active work moves its whole subsection to `In Progress`. Move to
   `Backlog` only by explicit user instruction.
 - `task done` makes the owning workstream coordinator remove the exact task;
@@ -159,8 +164,8 @@
   from the subsection heading, with recurring rules under
   `## Workstream policy`.
 - After a successful push or when asked what is next, a coordinator reports
-  only its own subsection choices across statuses, word for word, in original
-  order with applicable headings.
+  only its own subsection choices across statuses and its exact-title entries
+  from `Bugs`, word for word, in original order with applicable headings.
 - Commit and push authorized task-management edits immediately. Stage only
   `TASKS.md` and dedicated context created for that update. Actualize chats only
   for whole-subsection creation, rename, status move, or deletion.

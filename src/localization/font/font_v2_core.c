@@ -145,6 +145,12 @@ typedef signed int s32;
 /* Raster-phase correction when NA2's special-value branch enters ASCII mode. */
 #define FONT_SETTINGS_SPECIAL_VALUE_X_OFFSET -1.0f
 
+/* Shared geometry for digit-leading Settings values. */
+#define FONT_SETTINGS_NUMERIC_VALUE_X_OFFSET 1.8f
+#define FONT_SETTINGS_NUMERIC_VALUE_Y_OFFSET 1.875f
+#define FONT_SETTINGS_NUMERIC_VALUE_SCALE_X 1.02f
+#define FONT_SETTINGS_NUMERIC_VALUE_GLYPH_HEIGHT 26.0f
+
 /* Shared row baselines; selected labels use the taller selected glyph pass. */
 #define FONT_BATTLE_SETTINGS_ROW_Y_OFFSET 1.0f
 #define FONT_PRACTICE_SETTINGS_ROW_Y_OFFSET 0.75f
@@ -1513,6 +1519,8 @@ int font_v2_settings_row_common(
     float box_x,
     u32 box_width,
     u32 fit_width,
+    float fixed_scale_x,
+    float glyph_height,
     u32 horizontal_alignment,
     u32 callback
 ) {
@@ -1526,10 +1534,17 @@ int font_v2_settings_row_common(
     session.horizontal_alignment = horizontal_alignment;
     session.vertical_alignment = FONT_V2_ALIGN_START;
     session.flags = FONT_V2_FLAG_PREMEASURED;
+    if (glyph_height > 0.0f) {
+        session.flags |= FONT_V2_FLAG_GLYPH_HEIGHT;
+        session.glyph_height = glyph_height;
+    }
     session.line_limit = 1u;
     session.line_height = FONT_SETTINGS_LINE_HEIGHT;
     session.measured_width = font_v2_native_measure(text);
-    if (fit_width && session.measured_width > fit_width) {
+    if (fixed_scale_x > 0.0f) {
+        session.flags |= FONT_V2_FLAG_FIXED_SCALE_X;
+        session.scale_x = fixed_scale_x;
+    } else if (fit_width && session.measured_width > fit_width) {
         session.flags |= FONT_V2_FLAG_FIXED_SCALE_X;
         session.scale_x =
             (float)(s32)fit_width / (float)(s32)session.measured_width;
@@ -1561,6 +1576,8 @@ int font_v2_battle_settings_label_adapter(
         FONT_BATTLE_SETTINGS_LABEL_X,
         FONT_BATTLE_SETTINGS_LABEL_WIDTH,
         0u,
+        0.0f,
+        0.0f,
         FONT_V2_ALIGN_START,
         (u32)font_v2_settings_label_callback
     );
@@ -1582,6 +1599,8 @@ int font_v2_practice_settings_label_adapter(
         FONT_PRACTICE_SETTINGS_LABEL_X,
         FONT_PRACTICE_SETTINGS_LABEL_WIDTH,
         0u,
+        0.0f,
+        0.0f,
         FONT_V2_ALIGN_START,
         (u32)font_v2_settings_label_callback
     );
@@ -1600,15 +1619,22 @@ int font_v2_settings_value_adapter(
     float box_x = FONT_SETTINGS_VALUE_X;
     u32 fit_width = 0u;
     u8 saved_renderer_flags = 0u;
+    u32 numeric_value = 0u;
     u32 restore_renderer_flags = 0u;
     int result;
 
     (void)native_x;
+    if (text && *text) {
+        numeric_value = *text >= (u8)'0' && *text <= (u8)'9';
+    }
+    if (numeric_value) {
+        box_x += FONT_SETTINGS_NUMERIC_VALUE_X_OFFSET;
+        native_y += FONT_SETTINGS_NUMERIC_VALUE_Y_OFFSET;
+    }
     if (
-        renderer && text && *text &&
+        renderer && text && *text && !numeric_value &&
         !(renderer[FONT_RENDERER_FLAGS_OFFSET] &
-            (u8)FONT_RENDERER_ASCII_MODE_FLAG) &&
-        (*text < (u8)'0' || *text > (u8)'9')
+            (u8)FONT_RENDERER_ASCII_MODE_FLAG)
     ) {
         saved_renderer_flags = renderer[FONT_RENDERER_FLAGS_OFFSET];
         renderer[FONT_RENDERER_FLAGS_OFFSET] =
@@ -1631,6 +1657,8 @@ int font_v2_settings_value_adapter(
         box_x,
         FONT_SETTINGS_VALUE_WIDTH,
         fit_width,
+        numeric_value ? FONT_SETTINGS_NUMERIC_VALUE_SCALE_X : 0.0f,
+        numeric_value ? FONT_SETTINGS_NUMERIC_VALUE_GLYPH_HEIGHT : 0.0f,
         FONT_V2_ALIGN_CENTER,
         (u32)font_v2_settings_value_callback
     );
@@ -1655,6 +1683,8 @@ int font_v2_practice_settings_heading_adapter(
         FONT_PRACTICE_SETTINGS_HEADING_X,
         FONT_PRACTICE_SETTINGS_HEADING_WIDTH,
         0u,
+        0.0f,
+        0.0f,
         FONT_V2_ALIGN_START,
         (u32)font_v2_settings_heading_callback
     );

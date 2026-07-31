@@ -2065,18 +2065,19 @@ The special Battle time branch is the relevant renderer difference: NUN5 sets
 the ASCII-font bit for value 100 and clears it for ordinary decimal values,
 whereas NA2 clears the bit for both branches before the shared draw.
 
-The shared Settings value adapter therefore keeps compact values on the
-native metric and glyph-advance path inside the one 104-unit shrink-only box;
-the rejected 79-unit fit and character-indexed advance override are removed.
-When NA2 reaches the adapter with the ASCII-font bit clear and a nonnumeric
-value, the adapter temporarily selects the same ASCII mode used by NUN5,
-applies one `-1.0` local-unit raster-phase correction, draws, and restores the
-exact incoming renderer byte. It reads the existing value only to distinguish
-the ordinary decimal form from the special nonnumeric form and never writes
-text. A value containing an ASCII space retains the separately accepted
-descriptive-phrase fit. Battle and Practice labels retain separate page
-baselines plus one shared selected-state offset. These are page/state and
-renderer-mode formulas, not per-row coordinates or visible-string identities.
+The shared Settings value adapter therefore keeps every value inside the one
+104-unit box; the rejected 79-unit fit and character-indexed advance override
+are removed. When Current reaches the adapter with the ASCII-font bit clear
+and a nonnumeric value, the adapter temporarily selects the same ASCII mode
+used by NUN5, applies one `-1.0` local-unit raster-phase correction, draws, and
+restores the exact incoming renderer byte. Digit-leading values retain the
+ordinary native mode but use one numeric session formula: horizontal scale
+`1.02`, glyph height `26.0`, X offset `1.8`, and Y offset `1.875`. This
+compensates for the already accepted ASCII formatter's glyph geometry without
+changing its bytes. A value containing an ASCII space retains the separately
+accepted descriptive-phrase fit. Battle and Practice labels retain separate
+page baselines plus one shared selected-state offset. These are page/state and
+value-class formulas, not per-row coordinates or visible-string identities.
 
 Ninja Song arithmetic is likewise one function-level redirect, not a set of
 token or row hooks. NA2 `FUN_00718920` is replaced from BTL file `0x64A60` by
@@ -2100,10 +2101,24 @@ by no more than `0.56` output pixel. At threshold 128, NUN5 bounds are
 `(396.00,104.44)-(491.56,117.78)`, covering horizontal and vertical position
 as well as width. Fresh ss2 capture `20260731224508` has zero changed pixels
 against accepted capture `20260731205126` in the descriptive phrase and all
-five visible short-value text regions. This supersedes the rejected thin
-uniformly scaled, constant-offset, fixed-character, character-table, and
-zero-advance candidates. Battle replacement acceptance remains pending. The Ninja
-factor/total columns and N/A row are within one pixel horizontally; their
+five visible short-value text regions. The user accepted that Practice result
+and the special Battle value before supplying the additional numeric case.
+
+The supplemental slot-1 pair saved at `23:02` uses Current CRC `2DA70D8F`
+against NUN5 CRC `C071D4C1`, with state SHA-256 values
+`7B853DCB30B142B78374208426138AEF12FEF5DF895465E141B1B569CD3E54AE`
+and `FC9978C8946E8E71055197FC202ED784ABFFADA365B05E0E0EA3F246207485CE`.
+Both display Battle Time `10`. Before the numeric formula, Current's
+threshold-128 ink occupied `(432,104)-(455,114)` while NUN5 occupied
+`(433,105)-(457,117)`. Fresh guarded capture `20260731233506`, normalized to
+640x480, matches NUN5 bounds `(433,105)-(457,117)` at thresholds 96 and 128.
+The four nonnumeric values on the same page retain their exact pre-change
+bounds and occupied columns at both thresholds. This supersedes the rejected
+numeric ASCII-mode switch, which matched height but compressed the two-digit
+span from 25 pixels to 18. The numeric result remains `approved_for_test`
+pending explicit user acceptance.
+
+The Ninja factor/total columns and N/A row are within one pixel horizontally; their
 retained current glyph ink is shorter than NUN5, so subpixel baseline changes
 quantize to the neighboring output pixel rather than creating a stable
 per-row correction.

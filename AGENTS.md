@@ -37,13 +37,16 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   execution. If authorization is ambiguous, ask.
 - Never infer the user's desired action, authorization, classification,
   cleanup, rollback, or final state from complaints, context, or agent
-  proposals. Perform only the requested change and unavoidable prerequisites.
-- Keep disposable development tools to the simplest workflow that performs the
-  requested function. Add only validation required to make that function work;
-  optional guards, backups, recovery state, identity/hash enforcement, cleanup
-  commands, restart requirements, or other workflow-blocking safeguards require
-  explicit user authorization. If an unsolicited safeguard causes a failure,
-  remove or simplify it; never repair it by adding another safeguard layer.
+  proposals. Perform only the requested change; an unrequested prerequisite
+  must be explained and explicitly approved under the next rule.
+- Before introducing any concept, script, mechanism, dependency, workflow,
+  validation, safeguard, state, prerequisite, or other element the user did
+  not request, stop before planning or mutation. Explain in plain language what
+  it is, what it would change, and why it is needed for the requested outcome,
+  then await the user's explicit answer. Define every unfamiliar or
+  project-specific term; jargon never substitutes for an explanation.
+  Necessity, convenience, convention, and agent preference do not substitute
+  for the user's answer.
 - For a selected task, only read-only inspection is allowed before plan
   approval. `approved`, `qwe`, or its same-key keyboard-layout equivalent
   approves the current plan, including when used in a longer message.

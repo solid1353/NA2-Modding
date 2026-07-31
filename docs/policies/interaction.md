@@ -8,6 +8,14 @@
   action request such as `do it`, `implement it`, or `change it`.
 - A clearly agent-directed request such as `can you add` authorizes that stated
   action only; never infer extra work.
+- Before introducing any concept, script, mechanism, dependency, workflow,
+  validation, safeguard, state, prerequisite, or other element not explicitly
+  requested, stop before planning or mutation. Explain in plain language what
+  it is, what it would change, and why it is needed for the requested outcome,
+  then await the user's explicit answer. Define every unfamiliar or
+  project-specific term; jargon never substitutes for an explanation. Do not
+  treat technical necessity, convention, convenience, or an approved parent
+  outcome as authorization for the new element.
 - A command, recipe, watch target, profile, or other selector presented for a
   requested scope must actually cover that full scope. Never substitute a
   narrower adapter, screen, case, or example target unless the user requested

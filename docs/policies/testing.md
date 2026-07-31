@@ -156,14 +156,27 @@ requirements, not whatever implementation happens to exist today.
   shared paths. Pass only an independent full copy under
   `work/<exact task title>/inputs/isos/` to worker launch and injection
   commands; no other worker ISO location is valid. Never use a symlink or
-  hardlink. Record the copied image's SHA-256 and disc identity with the
-  supplied-state provenance. If the exact compatible image is unavailable or
-  cannot be established, stop and request it instead of using the latest
-  Latest or producing a replacement build. Keep only copies required by
-  active compatible savestate batches or the current test. Delete superseded
-  worker ISOs before copying another, and delete all remaining worker ISO
-  copies when runtime work ends. Preserve the small provenance records, not
-  the obsolete images.
+  hardlink.
+- Treat each NA2 savestate batch and its runtime dependencies as one atomic
+  intake bundle. Before implementation or runtime iteration begins, preserve:
+  the independent compatible ISO; its SHA-256, serial, and CRC; the hashes of
+  every resident or overlay payload whose addresses the planned work imports;
+  and either the exact matching payload-builder record and `symbol_map.tsv` or
+  a complete set of independently verified resident-symbol overrides for all
+  selected closures. Copy rotation-sensitive records into
+  `work/<exact task title>/inputs/runtime-records/<payload-sha256>/` while they
+  still exist, and link that path from the batch provenance. A reference-game
+  state needs its own state/screenshot provenance but no NA2 payload map.
+- A batch is not injection-ready merely because its state and ISO load. If its
+  required payload identity or linking metadata is absent, report that at
+  intake and request the smallest exact replacement input immediately; do not
+  begin implementation and discover the deficiency during candidate testing.
+  Never use the newest Latest or produce a replacement build as a substitute.
+- Keep every ISO copy and runtime-metadata bundle required by an active
+  compatible batch or current test. Delete a superseded worker ISO only after
+  no active case references it. Delete remaining worker ISOs when runtime work
+  ends only when no active batch still requires them. Preserve provenance and
+  the small runtime-metadata records after obsolete images are removed.
 - If `work/<task title>/pcsx2/` already exists when new runtime work begins,
   its owning task inspects it before reuse. The inspection covers PCSX2
   configuration and PINE port, Injection Lab or other hot-reload PNACH state,

@@ -159,9 +159,17 @@ user-declared epic case, immediately:
 
 1. Copy both reference and current states from the protected user library into
    the owning workstream's `inputs/sstates/` directory and record provenance.
-2. Refresh the retained mismatch entry and its source screenshots from those
+2. Complete the current-game runtime bundle before implementation: preserve
+   the exact compatible task-owned ISO, ISO/disc identity, relevant resident
+   payload hashes, and either the matching build record/symbol map or complete
+   verified resident-symbol overrides. Store rotation-sensitive metadata under
+   the owning task's `inputs/runtime-records/` tree and link it from the batch
+   provenance. If the bundle cannot be completed, request the smallest exact
+   replacement input immediately instead of deferring discovery until runtime
+   testing.
+3. Refresh the retained mismatch entry and its source screenshots from those
    task-owned copies.
-3. Update the canonical epic README and composed report grid to show the new
+4. Update the canonical epic README and composed report grid to show the new
    slot, status, and remaining defect.
 
 A worker may not reclassify user-identified epic-case inputs as deferred,

@@ -144,13 +144,20 @@ Detailed command and task behavior is in
   shared Latest, Previous, or Test ISO paths. Pass only an independent
   full copy under `work/<exact task title>/inputs/isos/`; no other worker ISO
   location is valid. Symlinks and hardlinks are forbidden because the user may
-  replace or modify a shared ISO at any time. Record the copied ISO's SHA-256
-  and disc identity with the savestate provenance. If exact compatibility
-  cannot be established, stop; never substitute or rebuild another image. Keep
-  only ISO copies required by active compatible savestate batches or the
-  current test. Delete superseded worker ISOs before copying another and
-  delete all remaining worker ISO copies when the runtime work ends;
-  provenance records remain.
+  replace or modify a shared ISO at any time. Intake of an NA2 savestate batch
+  is incomplete until the task has atomically preserved the copied ISO's
+  SHA-256 and disc identity, the exact resident-payload hashes needed by the
+  planned work, and either the matching build record/symbol map or complete
+  verified resident-symbol overrides under the same task's `inputs/` tree.
+  Copy rotation-sensitive build metadata before shared logs can be cleaned.
+  If exact compatibility or the required linking metadata cannot be
+  established, stop at intake and request the exact missing input; never
+  discover that deficiency after implementation begins, substitute another
+  image, or rebuild one. Keep every ISO and runtime-metadata bundle referenced
+  by an active compatible batch or current test. Delete a superseded ISO only
+  after no active case references it, and delete remaining worker ISOs when
+  runtime work ends and no active batch still requires them; provenance and
+  the small runtime-metadata records remain.
 - Agent savestate-based C injection uses only
   `scripts/injection/test.ps1`. It compiles/links canonical C and the task-owned
   overlay plan, reloads the supplied savestate slot and waits for completion,

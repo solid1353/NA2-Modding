@@ -123,10 +123,12 @@ typedef signed int s32;
 /* Nominal wrap width; larger values produce fewer or later line breaks. */
 #define FONT_JUTSU_BOX_HEIGHT 32u
 /* Wrapped-block box height used for vertical centering. */
-#define FONT_JUTSU_LEFT_X_OFFSET -7.0f
+#define FONT_JUTSU_LEFT_X_OFFSET -8.0f
 /* Horizontal correction for the left list; more negative moves rows left. */
 #define FONT_JUTSU_RIGHT_X_OFFSET -4.0f
 /* Horizontal correction for the right list; more negative moves rows left. */
+#define FONT_JUTSU_SINGLE_LINE_Y_OFFSET -4.0f
+/* Vertical correction for fitting one-line rows; more negative moves them up. */
 #define FONT_JUTSU_Y_OFFSET -9.0f
 /* Applied only to wrapped blocks; more negative moves the block up. */
 #define FONT_JUTSU_SIDE_THRESHOLD 256.0f
@@ -1313,12 +1315,12 @@ int font_v2_jutsu_draw_entry(
         set_position(
             native_x +
                 (
-                    native_x < FONT_JUTSU_SIDE_THRESHOLD
-                        ? FONT_JUTSU_LEFT_X_OFFSET
-                        : FONT_JUTSU_RIGHT_X_OFFSET
-                ) -
+                native_x < FONT_JUTSU_SIDE_THRESHOLD
+                    ? FONT_JUTSU_LEFT_X_OFFSET
+                    : FONT_JUTSU_RIGHT_X_OFFSET
+            ) -
                 origin_x,
-            native_y - origin_y,
+            native_y + FONT_JUTSU_SINGLE_LINE_Y_OFFSET - origin_y,
             renderer_address
         );
         draw(renderer_address, text);

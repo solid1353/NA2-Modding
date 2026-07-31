@@ -30,3 +30,8 @@ in the shared knowledge base rather than being duplicated here.
   unchanged behavior to verify. Do not perform that regression pass for them.
   In explicitly requested Continuous epic mode, this stop is waived: record
   the pending regression review and continue to the next subtask.
+- During Font live editing, never attribute unchanged visible output to
+  caching. If a requested coordinate or metric change does not visibly move,
+  the implementation is wrong: retain the user's current screen, trace forward
+  from the proven live entry to the first incorrect value or consumer, and fix
+  that path. Do not ask the user to reopen or reconstruct the same screen.

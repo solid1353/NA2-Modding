@@ -2115,8 +2115,8 @@ threshold-128 ink occupied `(432,104)-(455,114)` while NUN5 occupied
 The four nonnumeric values on the same page retain their exact pre-change
 bounds and occupied columns at both thresholds. This supersedes the rejected
 numeric ASCII-mode switch, which matched height but compressed the two-digit
-span from 25 pixels to 18. The numeric result remains `approved_for_test`
-pending explicit user acceptance.
+span from 25 pixels to 18. The user verified the exact supplemental
+Time 10 result on 2026-07-31; the Settings row family is runtime-proven.
 
 The Ninja factor/total columns and N/A row are within one pixel horizontally; their
 retained current glyph ink is shorter than NUN5, so subpixel baseline changes

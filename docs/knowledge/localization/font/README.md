@@ -2056,14 +2056,27 @@ one heading call at `0x1CE528`, one label call at `0x1CE56C`, and one value call
 at `0x1CE5D4`. The guarded redirects therefore cover every row emitted by each
 loop without identifying any translated string or visible row.
 
-The shared Settings value adapter has two data-selected overflow templates.
-A value containing no ASCII space uses the compact-token target; a value with
-an ASCII space uses the descriptive-phrase target. This reproduces both the
-96-pixel NUN5 `Unlimited` result and the exact `(381,216)-(507,229)` NUN5
-`High Speed Move` result while leaving short values such as `Normal` at native
-scale. Battle and Practice labels retain separate page baselines, plus one
-shared selected-state offset. These are page/state formulas, not per-row
-coordinates.
+Direct donor verification corrected the compact-value theory. NUN5 BTL's
+header records load base `0x006C6D00`, placing `FUN_0089CBD0` at file
+`0x1D5ED0`. Its ordinary Battle values call boxed renderer `FUN_00389DF0`
+with X `304`, width `104`, one line, and centered horizontal placement.
+Practice values make the same X `304`, width `104` call at `0x0089ECA8`.
+The special Battle time branch is the relevant renderer difference: NUN5 sets
+the ASCII-font bit for value 100 and clears it for ordinary decimal values,
+whereas NA2 clears the bit for both branches before the shared draw.
+
+The shared Settings value adapter therefore keeps compact values on the
+native metric and glyph-advance path inside the one 104-unit shrink-only box;
+the rejected 79-unit fit and character-indexed advance override are removed.
+When NA2 reaches the adapter with the ASCII-font bit clear and a nonnumeric
+value, the adapter temporarily selects the same ASCII mode used by NUN5,
+applies one `-1.0` local-unit raster-phase correction, draws, and restores the
+exact incoming renderer byte. It reads the existing value only to distinguish
+the ordinary decimal form from the special nonnumeric form and never writes
+text. A value containing an ASCII space retains the separately accepted
+descriptive-phrase fit. Battle and Practice labels retain separate page
+baselines plus one shared selected-state offset. These are page/state and
+renderer-mode formulas, not per-row coordinates or visible-string identities.
 
 Ninja Song arithmetic is likewise one function-level redirect, not a set of
 token or row hooks. NA2 `FUN_00718920` is replaced from BTL file `0x64A60` by
@@ -2079,7 +2092,17 @@ and N/A placement once for every applicable row.
 Fresh hidden-worker ss1–ss3 injection runs proved the Settings loops and the
 continuously redrawn Ninja formulas. At 640x480, the final Practice phrase and
 heading bounds match NUN5 exactly; short Settings values also match, and the
-remaining ordinary-label differences are at most one raster pixel. The Ninja
+remaining ordinary-label differences are at most one raster pixel. Fresh ss1
+capture `20260731224409` isolates the corrected Battle mode. Across four
+neutral-ink thresholds, every one of the nine glyph starts differs from NUN5
+by no more than `0.56` output pixel. At threshold 128, NUN5 bounds are
+`(396,105)-(491,117)` and the normalized current bounds are
+`(396.00,104.44)-(491.56,117.78)`, covering horizontal and vertical position
+as well as width. Fresh ss2 capture `20260731224508` has zero changed pixels
+against accepted capture `20260731205126` in the descriptive phrase and all
+five visible short-value text regions. This supersedes the rejected thin
+uniformly scaled, constant-offset, fixed-character, character-table, and
+zero-advance candidates. Battle replacement acceptance remains pending. The Ninja
 factor/total columns and N/A row are within one pixel horizontally; their
 retained current glyph ink is shorter than NUN5, so subpixel baseline changes
 quantize to the neighboring output pixel rather than creating a stable

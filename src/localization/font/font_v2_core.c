@@ -67,6 +67,10 @@ typedef signed int s32;
 /* Fixed renderer-field offset for extra inter-character tracking. */
 #define FONT_RENDERER_TRACKING_OFFSET 0x3Cu
 
+/* Fixed renderer-field offset and bit for the ordinary ASCII glyph mode. */
+#define FONT_RENDERER_FLAGS_OFFSET 0x70u
+#define FONT_RENDERER_ASCII_MODE_FLAG 0x08u
+
 /* Fixed renderer-field offset for the caller's logical X position. */
 #define FONT_RENDERER_POSITION_X_OFFSET 0x14u
 
@@ -134,10 +138,12 @@ typedef signed int s32;
 #define FONT_SETTINGS_VALUE_X 303.25f
 #define FONT_SETTINGS_VALUE_WIDTH 104u
 
-/* NUN5 uses two value templates: compact tokens and descriptive phrases. */
-#define FONT_SETTINGS_TOKEN_FIT_WIDTH 79u
+/* NUN5 uses one 104-unit box; descriptive phrases retain their accepted fit. */
 #define FONT_SETTINGS_PHRASE_FIT_WIDTH 99u
 #define FONT_SETTINGS_PHRASE_X_OFFSET -1.5f
+
+/* Raster-phase correction when NA2's special-value branch enters ASCII mode. */
+#define FONT_SETTINGS_SPECIAL_VALUE_X_OFFSET -1.0f
 
 /* Shared row baselines; selected labels use the taller selected glyph pass. */
 #define FONT_BATTLE_SETTINGS_ROW_Y_OFFSET 1.0f
@@ -1588,11 +1594,28 @@ int font_v2_settings_value_adapter(
     float native_x,
     float native_y
 ) {
+    volatile u8 *renderer =
+        *(volatile u8 **)FONT_RENDERER_POINTER_ADDRESS;
     const u8 *cursor = text;
     float box_x = FONT_SETTINGS_VALUE_X;
-    u32 fit_width = FONT_SETTINGS_TOKEN_FIT_WIDTH;
+    u32 fit_width = 0u;
+    u8 saved_renderer_flags = 0u;
+    u32 restore_renderer_flags = 0u;
+    int result;
 
     (void)native_x;
+    if (
+        renderer && text && *text &&
+        !(renderer[FONT_RENDERER_FLAGS_OFFSET] &
+            (u8)FONT_RENDERER_ASCII_MODE_FLAG) &&
+        (*text < (u8)'0' || *text > (u8)'9')
+    ) {
+        saved_renderer_flags = renderer[FONT_RENDERER_FLAGS_OFFSET];
+        renderer[FONT_RENDERER_FLAGS_OFFSET] =
+            saved_renderer_flags | (u8)FONT_RENDERER_ASCII_MODE_FLAG;
+        restore_renderer_flags = 1u;
+        box_x += FONT_SETTINGS_SPECIAL_VALUE_X_OFFSET;
+    }
     while (cursor && *cursor) {
         if (*cursor == (u8)' ') {
             box_x += FONT_SETTINGS_PHRASE_X_OFFSET;
@@ -1601,7 +1624,7 @@ int font_v2_settings_value_adapter(
         }
         cursor += 1;
     }
-    return font_v2_settings_row_common(
+    result = font_v2_settings_row_common(
         text,
         color,
         native_y,
@@ -1611,6 +1634,10 @@ int font_v2_settings_value_adapter(
         FONT_V2_ALIGN_CENTER,
         (u32)font_v2_settings_value_callback
     );
+    if (restore_renderer_flags) {
+        renderer[FONT_RENDERER_FLAGS_OFFSET] = saved_renderer_flags;
+    }
+    return result;
 }
 
 FONT_V2_SECTION(".text.font_v2_practice_settings_heading_adapter")

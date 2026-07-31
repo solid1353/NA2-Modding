@@ -522,13 +522,13 @@ else {
     $standaloneScopedWatch = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             w `
-            'src/localization/font_numeric.c'
+            'src/localization/font/font_numeric.c'
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
             $standaloneScopedWatch -match (
                 '\[fake\] watch 0 .*' +
-                'sourcePath=src/localization/font_numeric\.c'
+                'sourcePath=src/localization/font/font_numeric\.c'
             )
         ) `
         -Message 'Standalone C-file watch target was not forwarded.'

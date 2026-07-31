@@ -173,7 +173,7 @@ class InjectionBuildTests(unittest.TestCase):
     def test_direct_source_scope_selects_registered_root_and_file(self) -> None:
         root, root_sources = build_injection.source_ids_for_path(Path("src"))
         numeric, numeric_sources = build_injection.source_ids_for_path(
-            Path("src/localization/font_numeric.c")
+            Path("src/localization/font/font_numeric.c")
         )
 
         self.assertEqual(root, build_injection.REPOSITORY / "src")
@@ -191,6 +191,7 @@ class InjectionBuildTests(unittest.TestCase):
             build_injection.REPOSITORY
             / "src"
             / "localization"
+            / "font"
             / "font_numeric.c",
         )
         self.assertEqual(numeric_sources, ["font_numeric"])

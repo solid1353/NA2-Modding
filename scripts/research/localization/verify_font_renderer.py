@@ -42,7 +42,7 @@ PACKED_METRICS_INPUT = load_project_paths(REPOSITORY).path(
     "assets",
     "nun5_semantic_14x20_packed_map.bin",
 )
-C_CORE_SOURCE = REPOSITORY / "src" / "localization" / "font_v2_core.c"
+C_CORE_SOURCE = REPOSITORY / "src" / "localization" / "font" / "font_v2_core.c"
 C_NUMERIC_SOURCE = C_CORE_SOURCE.with_name("font_numeric.c")
 C_TOOLCHAIN_BIN = ee_c_fragments.default_toolchain_bin(REPOSITORY)
 

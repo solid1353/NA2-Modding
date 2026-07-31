@@ -158,12 +158,14 @@
   watcher, release, validation, and other implementation logic belongs under
   the maintained `scripts/` tree; the root entrypoint only parses and
   dispatches modes.
-- User-facing watch and hot-reload loops must allow repeated saves to overwrite
-  their own previously generated code and hooks. Do not enforce original-byte,
-  expected-state, identity, or equivalent guards in that iterative path unless
-  the user explicitly requests them. Keep guarded writes in agent/test
-  application paths; never make their safety contract block the disposable
-  user loop.
+- Disposable and user-facing development tools contain only validation
+  necessary to perform the requested function. Never add expected-state,
+  identity, guard, backup, recovery, restart, or other workflow-blocking checks
+  without explicit user authorization. Every documented repeated operation
+  must accept state produced by the tool's own prior successful operation. If
+  unsolicited validation blocks the workflow, remove or simplify it at that
+  boundary; do not repair it with an exception, allowlist, or another safeguard
+  layer. Keep agent/test safety contracts separate from user workflows.
 - Use purpose-specific subfolders under `@logs/`, workstream records under
   `@workstream_logs/<exact task title>/`, and worker records under the task's
   `logs/`; never write directly in shared log roots.

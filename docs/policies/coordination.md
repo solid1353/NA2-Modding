@@ -75,6 +75,12 @@
 - Policy adjustments prevent the failed behavior across its applicable scope;
   they do not encode an incident's exact path, artifact, task title, or other
   one-off detail unless the rule inherently applies only there.
+- State each correction at the broadest behavioral scope supported by the
+  confirmed failure. Do not narrow a universal authorization, validation,
+  completion, reporting, or workflow rule to the particular tool, mechanism,
+  screen, command, or artifact involved in the report. Before committing,
+  verify that the wording prevents the same behavior in unrelated applicable
+  workflows without inventing unsupported requirements.
 - A `sin` report is an allegation, not proof of guilt. `Policeman` arrests or
   confronts a task as an offender only after evidence confirms that the task's
   action violated an exact rule that was live when it acted. A newly added or

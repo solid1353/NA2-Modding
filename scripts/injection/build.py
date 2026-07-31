@@ -67,6 +67,10 @@ def parse_args() -> argparse.Namespace:
         help="Link every declared fragment from the selected C source.",
     )
     parser.add_argument(
+        "--hot-reload-label",
+        help="Compile the development marker with this display text.",
+    )
+    parser.add_argument(
         "--iso",
         type=Path,
         default=load_project_paths(REPOSITORY).file("latest_iso"),
@@ -609,14 +613,23 @@ def compile_fragments(
     imports: dict[str, ee_c_fragments.SymbolReference],
     mappings: list[tuple[int, str, str]],
     object_path: Path,
+    hot_reload_label: str | None = None,
 ) -> list[PayloadFragment]:
     object_path.parent.mkdir(parents=True, exist_ok=True)
+    defines = None
+    if hot_reload_label is not None:
+        if source_id != HOT_RELOAD_SOURCE:
+            raise ValueError(
+                "--hot-reload-label is only valid for the hot_reload_test source"
+            )
+        defines = {"HOT_RELOAD_LABEL": json.dumps(hot_reload_label)}
     extracted = ee_c_fragments.compile_and_extract(
         source_path,
         object_path,
         namespace=namespace,
         toolchain_bin=ee_c_fragments.default_toolchain_bin(REPOSITORY),
         owner="localization.runtime_injector",
+        defines=defines,
         external_symbols=imports,
     )
     aliases = {
@@ -924,6 +937,7 @@ def main() -> int:
             imports,
             mappings,
             Path(temporary) / f"{source_id}.o",
+            args.hot_reload_label,
         )
     fragments, external_symbols = select_fragment_closure(
         entry_symbols,

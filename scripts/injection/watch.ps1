@@ -317,7 +317,10 @@ function Invoke-InjectionBuild([switch]$ExitOnFailure) {
         return
     }
     if (-not $BuildOnly) {
-        & python -B $applyScript --input $resolvedOutput --port $PinePort
+        & python -B $applyScript `
+            --input $resolvedOutput `
+            --port $PinePort `
+            --force-writes
         $applyExitCode = $LASTEXITCODE
         if ($applyExitCode -ne 0) {
             $suffix = if ($ExitOnFailure) {

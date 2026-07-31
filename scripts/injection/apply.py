@@ -21,6 +21,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input", required=True, type=Path)
     parser.add_argument("--port", required=True, type=int)
     parser.add_argument(
+        "--force-writes",
+        action="store_true",
+        help="Replace generated hook writes without checking their prior bytes.",
+    )
+    parser.add_argument(
         "--resume",
         action="store_true",
         help="Resume after applying even when PCSX2 was initially paused.",
@@ -160,6 +165,9 @@ def main() -> int:
         try:
             pending_writes: list[tuple[str, int, bytes]] = []
             for write_id, address, expected, replacement in guarded_writes:
+                if args.force_writes:
+                    pending_writes.append((write_id, address, replacement))
+                    continue
                 live = client.read(address, len(expected))
                 if live == replacement:
                     continue
@@ -191,11 +199,17 @@ def main() -> int:
             if resume_after:
                 client.resume()
 
-    print(
-        f"Applied {len(memory_chunks)} memory ranges and "
-        f"{len(pending_writes)} guarded writes; "
-        f"{len(guarded_writes) - len(pending_writes)} already active"
-    )
+    if args.force_writes:
+        print(
+            f"Applied {len(memory_chunks)} memory ranges and "
+            f"{len(pending_writes)} hook writes"
+        )
+    else:
+        print(
+            f"Applied {len(memory_chunks)} memory ranges and "
+            f"{len(pending_writes)} guarded writes; "
+            f"{len(guarded_writes) - len(pending_writes)} already active"
+        )
     return 0
 
 

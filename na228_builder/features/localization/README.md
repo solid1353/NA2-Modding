@@ -1805,6 +1805,27 @@ session, publishes it only around one native callback, and restores the prior
 session pointer, renderer tracking, horizontal scale and callback result
 through one cleanup path.
 
+The separate `font_layout_global_selected_style` patch changes NA2's complete
+gray-shadow selected-renderer family rather than compensating individual
+screens. A function-level scan of clean `SLPS_258.37`, `ADV.BIN`, `BTL.BIN`,
+and `ETC.BIN` finds six implementations, all in the boot ELF: central
+state-aware runtime `0x00379040`, central caller-colored runtime `0x00379150`,
+fixed two-choice runtime `0x00379C30`, and record-based runtimes `0x001E6060`,
+`0x001E6370`, and `0x001E6CE0`. No overlay defines another implementation.
+
+All six use one rule: the shadow is drawn at `(x+1,y+2)` and the colored glyph
+at the ordinary `(x,y)` origin. The two central primitives retain their guarded
+files `0x279168` and `0x279278` and share the 48-byte `f21/f20` adapter. Seven
+gray calls inside the three record-based components share one 56-byte adapter
+that moves the pointed record before its native shadow draw; each untouched
+native `(-1,-2)` step restores that record before the colored draw. The fixed
+two-choice primitive at file `0x279D30` delegates its selected row to the
+corrected central primitive and its other row to the native ordinary
+primitive, retaining its context, record pointers, draw order, and colors.
+No text bytes, scales, or screen-specific coordinates are changed. All
+screen-specific Font patches remain temporarily disabled for isolated user
+verification.
+
 The first thin caller layer, `font_layout_controls`, redirects the shared
 first-eight-label call in Control Settings `FUN_003885b0`. It builds NUN5's 128-unit box, keeps
 fitting labels at scale `1`, applies `128 / 178` to

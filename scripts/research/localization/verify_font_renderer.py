@@ -92,6 +92,11 @@ V2_SPECIAL_CHOICE_SELECTED_ADAPTER = (
 V2_SPECIAL_CHOICE_SELECTED_CALLBACK = (
     f"{V2_PREFIX}.special_choice_selected_callback"
 )
+V2_GLOBAL_SELECTED_STYLE = f"{V2_PREFIX}.global_selected_style"
+V2_GLOBAL_SELECTED_RECORD_DRAW = (
+    f"{V2_PREFIX}.global_selected_record_draw"
+)
+V2_GLOBAL_TWO_CHOICE_DRAW = f"{V2_PREFIX}.global_two_choice_draw"
 V2_QUIT_UNSELECTED_ADAPTER = f"{V2_PREFIX}.quit_unselected_adapter"
 V2_QUIT_UNSELECTED_CALLBACK = (
     f"{V2_PREFIX}.c.quit_unselected_callback"
@@ -179,13 +184,17 @@ SCALE_ADDRESS = 0x0060737C
 FONT_RENDERER_POINTER = 0x00607470
 FONT_MEASURE = 0x003798E0
 FONT_CENTER = 0x00379240
+FONT_PLAIN_DRAW = 0x00378F50
 FONT_BOX_DRAW = 0x00382310
 FONT_PAUSE_LIST_DRAW = 0x00382470
 FONT_PAUSE_LIST_SELECTED_DRAW = 0x003827A0
 FONT_UI_DRAW = 0x00379A20
 FONT_SELECTED_DRAW = 0x00379150
+FONT_RECORD_DRAW = 0x003821D0
+FONT_SET_CONTEXT = 0x001866D0
 FONT_CHOICE_LIST_DRAW = 0x00383600
 FONT_ICON_DRAW = 0x0037BB40
+FONT_TWO_CHOICE_RECORDS = 0x005B1280
 SPRINTF = 0x0017BCA0
 FORMAT_D = 0x006042D3
 FORMAT_02D = 0x00605C20
@@ -1424,6 +1433,124 @@ def build_v2_special_choice_selected_callback() -> Fragment:
         payload,
         relocations,
     )
+
+
+def build_v2_global_selected_style() -> Fragment:
+    """Shift register coordinates before a native selected two-pass body."""
+
+    zero, v0, a0, t0, gp, ra = 0, 2, 4, 8, 28, 31
+    assembler = mips.Assembler()
+    emit_load_float(assembler, t0, 0, 1.0)
+    assembler.emit(0)
+    assembler.emit(mips.cop1(0x00, 21, 21, 0))
+    emit_load_float(assembler, t0, 0, 2.0)
+    assembler.emit(0)
+    assembler.emit(mips.cop1(0x00, 20, 20, 0))
+    assembler.emit(mips.i_type(0x23, gp, a0, -13696))
+    assembler.emit(mips.i_type(0x0D, zero, v0, 0xFF80))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(V2_GLOBAL_SELECTED_STYLE, payload, relocations)
+
+
+def build_v2_global_selected_record_draw() -> Fragment:
+    """Move one inline selected shadow record below/right, then draw it."""
+
+    a1, t0 = 5, 8
+    assembler = mips.Assembler()
+    emit_load_float(assembler, t0, 0, 1.0)
+    assembler.emit(mips.i_type(0x31, a1, 1, 0))
+    assembler.emit(0)
+    assembler.emit(mips.cop1(0x00, 1, 1, 0))
+    assembler.emit(mips.i_type(0x39, a1, 1, 0))
+    emit_load_float(assembler, t0, 0, 2.0)
+    assembler.emit(mips.i_type(0x31, a1, 1, 4))
+    assembler.emit(0)
+    assembler.emit(mips.cop1(0x00, 1, 1, 0))
+    assembler.emit(mips.i_type(0x39, a1, 1, 4))
+    assembler.emit(mips.jump(0x02, FONT_RECORD_DRAW))
+    assembler.emit(0)
+    payload, relocations = assembler.build()
+    return Fragment(V2_GLOBAL_SELECTED_RECORD_DRAW, payload, relocations)
+
+
+def build_v2_global_two_choice_draw() -> Fragment:
+    """Route the fixed two-choice primitive through ordinary/selected draws."""
+
+    zero, a0, a1 = 0, 4, 5
+    t0 = 8
+    s0, s1, s2 = 16, 17, 18
+    gp, sp, ra = 28, 29, 31
+    frame_size = 0x40
+    saved_s2 = 0x30
+    saved_s1 = 0x34
+    saved_s0 = 0x38
+    saved_ra = 0x3C
+
+    assembler = mips.Assembler()
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, s2, saved_s2))
+    assembler.emit(mips.i_type(0x2B, sp, s1, saved_s1))
+    assembler.emit(mips.i_type(0x2B, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(a0, zero, s0, 0x21))
+    assembler.emit(mips.r_type(a1, zero, s1, 0x21))
+    mips.load_u32(assembler, s2, FONT_TWO_CHOICE_RECORDS)
+
+    assembler.emit(mips.i_type(0x23, gp, a0, -13696))
+    assembler.emit(mips.i_type(0x23, s0, a1, 0x1C))
+    assembler.emit(mips.jump(0x03, FONT_SET_CONTEXT))
+    assembler.emit(0)
+
+    # Preserve the native order: record 1 at +0x10, then record 0 at +0x00.
+    assembler.emit(mips.i_type(0x31, s2, 12, 0x10))
+    assembler.emit(mips.i_type(0x31, s2, 13, 0x14))
+    assembler.emit(mips.i_type(0x23, s2, a0, 0x18))
+    assembler.emit(mips.i_type(0x09, zero, t0, 1))
+    assembler.branch(0x04, s1, t0, "record_1_selected")
+    assembler.emit(0)
+    mips.load_u32(assembler, a1, 0xFF000000)
+    assembler.emit(mips.jump(0x03, FONT_PLAIN_DRAW))
+    assembler.emit(0)
+    assembler.branch(0x04, zero, zero, "record_0")
+    assembler.emit(0)
+
+    assembler.label("record_1_selected")
+    mips.load_u32(assembler, a1, 0xFF0000D4)
+    assembler.emit(mips.jump(0x03, FONT_SELECTED_DRAW))
+    assembler.emit(0)
+
+    assembler.label("record_0")
+    assembler.emit(mips.i_type(0x31, s2, 12, 0x00))
+    assembler.emit(mips.i_type(0x31, s2, 13, 0x04))
+    assembler.emit(mips.i_type(0x23, s2, a0, 0x08))
+    assembler.branch(0x04, s1, zero, "record_0_selected")
+    assembler.emit(0)
+    mips.load_u32(assembler, a1, 0xFF000000)
+    assembler.emit(mips.jump(0x03, FONT_PLAIN_DRAW))
+    assembler.emit(0)
+    assembler.branch(0x04, zero, zero, "restore")
+    assembler.emit(0)
+
+    assembler.label("record_0_selected")
+    mips.load_u32(assembler, a1, 0xFF0000D4)
+    assembler.emit(mips.jump(0x03, FONT_SELECTED_DRAW))
+    assembler.emit(0)
+
+    assembler.label("restore")
+    assembler.emit(mips.i_type(0x23, gp, a0, -13696))
+    assembler.emit(mips.i_type(0x23, gp, a1, -13692))
+    assembler.emit(mips.jump(0x03, FONT_SET_CONTEXT))
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x23, sp, s2, saved_s2))
+    assembler.emit(mips.i_type(0x23, sp, s1, saved_s1))
+    assembler.emit(mips.i_type(0x23, sp, s0, saved_s0))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.r_type(ra, zero, zero, 0x08))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    payload, relocations = assembler.build()
+    return Fragment(V2_GLOBAL_TWO_CHOICE_DRAW, payload, relocations)
 
 
 def build_v2_quit_unselected_adapter() -> Fragment:
@@ -3049,6 +3176,9 @@ def v2_fragments() -> tuple[Fragment, ...]:
         build_v2_right_edge(),
         build_v2_half_space(),
         build_v2_special_choice_selected_callback(),
+        build_v2_global_selected_style(),
+        build_v2_global_selected_record_draw(),
+        build_v2_global_two_choice_draw(),
         build_v2_glyph_advance(),
         build_v2_special_controls_body_callback(),
     )

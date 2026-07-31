@@ -158,6 +158,12 @@
   watcher, release, validation, and other implementation logic belongs under
   the maintained `scripts/` tree; the root entrypoint only parses and
   dispatches modes.
+- User-facing watch and hot-reload loops must allow repeated saves to overwrite
+  their own previously generated code and hooks. Do not enforce original-byte,
+  expected-state, identity, or equivalent guards in that iterative path unless
+  the user explicitly requests them. Keep guarded writes in agent/test
+  application paths; never make their safety contract block the disposable
+  user loop.
 - Use purpose-specific subfolders under `@logs/`, workstream records under
   `@workstream_logs/<exact task title>/`, and worker records under the task's
   `logs/`; never write directly in shared log roots.

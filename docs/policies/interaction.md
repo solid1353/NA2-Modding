@@ -124,6 +124,11 @@ Next response: short plan + effort recommendation + needed user inputs + approva
 - A correction or stop directed at one mistaken action cancels only that
   action. Isolate or undo the detour and continue the parent task unless the
   user stops or replaces it.
+- A correction to a result's status, classification, label, wording, or
+  recorded state changes only that fact. It is not a stop, completion, review,
+  or handoff boundary. Correct it in commentary and immediately continue any
+  actionable approved work; never use a final response for that correction
+  while the parent work remains actionable.
 - An additive instruction such as `also`, `and`, or `in addition` extends the
   current requested work. It does not replace, cancel, or defer unfinished
   parent work; complete both unless the user explicitly says `instead`, `only`,

@@ -72,6 +72,11 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   required stop and proceed.
 - A correction to one disputed action cancels only that action, not the parent
   task, unless the user explicitly stops or replaces the task.
+- A correction to a result's status, classification, label, wording, or
+  recorded state changes only that fact. It is not a stop, completion, review,
+  or handoff boundary. Correct it in commentary and immediately continue any
+  actionable approved work; the normal final-response prohibition still
+  applies.
 - Cross-workstream reports and hints are information, not authorization. Act
   on them only when the user explicitly authorized the action locally, in
   another chat, or through a standing instruction. Worker mistake reports to

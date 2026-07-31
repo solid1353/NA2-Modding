@@ -51,9 +51,7 @@ SYMBOL_MAP_FIELDS = [
 ]
 HOT_RELOAD_SOURCE = "hot_reload_test"
 HOT_RELOAD_ENTRY = "project.hot_reload_test"
-FIXED_EXTERNAL_ADDRESSES = {
-    "project.ee_kernel_print": 0x0015E070,
-}
+FIXED_EXTERNAL_ADDRESSES: dict[str, int] = {}
 
 
 def parse_args() -> argparse.Namespace:
@@ -476,12 +474,7 @@ def load_source(
         return (
             REPOSITORY / "src" / "hot_reload_test.c",
             "project.hot_reload",
-            {
-                "eeKernelPrint": ee_c_fragments.SymbolReference(
-                    symbol="project.ee_kernel_print",
-                    addend=0,
-                )
-            },
+            {},
             [
                 (1, "project.hot_reload.text", HOT_RELOAD_ENTRY),
                 (2, "project.hot_reload.rodata", "project.hot_reload.rodata"),
@@ -1010,19 +1003,19 @@ def main() -> int:
     elif overlay_plan is None and source_id == HOT_RELOAD_SOURCE:
         writes.append(
             {
-                "id": "hot_reload_test_call",
-                "runtime_address": "0x001D0578",
-                "expected_hex": (
-                    "0000BFDF1000BD270800E0030000000000000000"
-                ),
+                "id": "hot_reload_visible_marker_call",
+                "runtime_address": "0x001085A0",
+                "expected_hex": "A021040C00000000",
                 "replacement_hex": (
                     encode_symbol_reference(
                         "jal26", addresses[HOT_RELOAD_ENTRY]
                     )
                     + bytes(4)
-                    + bytes.fromhex("0000BFDF0800E0031000BD27")
                 ).hex().upper(),
-                "reason": "Call the project hot-reload smoke entry.",
+                "reason": (
+                    "Replace an existing no-op end-of-frame call with the "
+                    "visible hot-reload marker before renderer flush."
+                ),
             }
         )
     elif overlay_plan is None:

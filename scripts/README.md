@@ -165,10 +165,20 @@ backup, dispatcher, or alternating-bank files.
 Build a project smoke candidate into the ignored default output:
 
 ```powershell
-python -B scripts/injection/build.py `
-  --source-id hot_reload_test `
-  --entry project.hot_reload_test
+& .\scripts\lib\run_python.ps1 `
+  -PackageSet builder `
+  -Script scripts/injection/build.py `
+  -NoBytecode `
+  -ArgumentList @(
+    '--source-id', 'hot_reload_test',
+    '--entry', 'project.hot_reload_test'
+  )
 ```
+
+After each successful direct-PINE apply, this smoke entry draws
+`HOT RELOAD 12C2` at the top-left of the game for 120 rendered frames. Its
+zero-filled frame counter is reset by every apply, so the visible marker
+replaces log watching as the reload confirmation.
 
 Production entries are declared in the owning feature's
 `runtime_injector/entries.tsv`; task-owned overlay plans may select multiple

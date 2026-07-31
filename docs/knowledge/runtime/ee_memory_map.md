@@ -437,6 +437,27 @@ does not install recurring cheat writes, share a dispatcher between modes, or
 maintain install/remove state. Exact caller guards still determine whether a
 candidate is compatible with the current runtime state.
 
+## Visible hot-reload smoke hook
+
+The maintained project smoke entry uses the native ordinary text draw at
+runtime `0x00379040` to display `HOT RELOAD 12C2` at `(16,16)` for 120
+rendered frames after every direct-PINE apply. Its frame counter lives in the
+injected zero-fill range, so each apply resets the visible interval without a
+build-ID constant or log inspection.
+
+The smoke caller is the native no-op call at runtime `0x001085A0` inside
+`FUN_00108490`. The game establishes its renderer context before this point,
+and flushes the renderer afterward. Clean Current bytes are
+`A021040C00000000` (`jal 0x00108680; nop`); the injected manifest replaces only
+that pair with `jal project.hot_reload_test; nop`.
+
+The earlier `0x001D0578` hook belongs to a scheduler-thread wakeup path and is
+not a valid drawing phase. A session that already contains that old hook must
+be restarted or have a clean compatible savestate loaded once before applying
+the visible-marker build. Confidence is **high** for the clean bytes, native
+draw address, and placement within the renderer-finalization path; the marker's
+exact appearance remains user-runtime validation.
+
 ## Safe-use constraints
 
 - Fixed injection into the two Current zero regions is valid only while the

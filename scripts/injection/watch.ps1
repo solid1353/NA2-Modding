@@ -226,6 +226,7 @@ $watchPaths = if ($SourceId -ceq $hotReloadSourceId) {
 else {
     @(
         $resolvedSourcePath,
+        (Join-Path $repository 'src\hot_reload_message.c'),
         $entriesPath,
         $sourceTable,
         (Join-Path $packageRoot 'c_imports.tsv'),

@@ -930,9 +930,6 @@ def main() -> int:
         ]
     entry_symbols = [entry["symbol"] for entry in entry_declarations]
 
-    include_marker = (
-        source_id == HOT_RELOAD_SOURCE or args.hot_reload_label is not None
-    )
     root_symbols = list(entry_symbols)
     with tempfile.TemporaryDirectory(prefix="na228-injection-") as temporary:
         temporary_path = Path(temporary)
@@ -945,7 +942,7 @@ def main() -> int:
             temporary_path / f"{source_id}.o",
             args.hot_reload_label,
         )
-        if source_id != HOT_RELOAD_SOURCE and include_marker:
+        if source_id != HOT_RELOAD_SOURCE:
             (
                 marker_source_path,
                 marker_namespace,
@@ -1078,24 +1075,23 @@ def main() -> int:
                 "reason": "Redirect the Latest resident entry to the fragment.",
             }
         )
-    if include_marker:
-        writes.append(
-            {
-                "id": "hot_reload_visible_marker_call",
-                "runtime_address": "0x001085A0",
-                "expected_hex": "A021040C00000000",
-                "replacement_hex": (
-                    encode_symbol_reference(
-                        "jal26", addresses[HOT_RELOAD_ENTRY]
-                    )
-                    + bytes(4)
-                ).hex().upper(),
-                "reason": (
-                    "Replace an existing no-op end-of-frame call with the "
-                    "visible hot-reload marker before renderer flush."
-                ),
-            }
-        )
+    writes.append(
+        {
+            "id": "hot_reload_visible_marker_call",
+            "runtime_address": "0x001085A0",
+            "expected_hex": "A021040C00000000",
+            "replacement_hex": (
+                encode_symbol_reference(
+                    "jal26", addresses[HOT_RELOAD_ENTRY]
+                )
+                + bytes(4)
+            ).hex().upper(),
+            "reason": (
+                "Replace an existing no-op end-of-frame call with the "
+                "visible hot-reload marker before renderer flush."
+            ),
+        }
+    )
 
     output.mkdir(parents=True, exist_ok=True)
     fragment_path = output / "fragment.bin"

@@ -127,6 +127,11 @@ requirements, not whatever implementation happens to exist today.
   interactive injection and isolated workstream testing are separate
   workflows: users may use the maintained watcher, while agents use only the
   maintained savestate-based test command against a task-owned runtime.
+- Every development runtime-injection candidate, including user watcher and
+  agent test candidates, compiles and links `src/hot_reload_message.c`, installs
+  its visible marker call, and treats that source as a rebuild input. The marker
+  is development-injection infrastructure and never enters normal profile or
+  release composition.
 - `@pcsx2_dev` and `@pcsx2_stable` are the user's protected read-only
   installations. Agents may read and copy from them but never create, modify,
   move, delete, link, launch, control, or write through hardlinks into either

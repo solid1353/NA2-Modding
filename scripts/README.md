@@ -207,7 +207,9 @@ and guarded callers while paused, clears execution caches, and uses no PNACH or
 cheat-folder state. `scripts/injection/watch.ps1` is the user-only equivalent.
 The user-facing `na228 w` command selects the complete registered Font target
 by default; `na228 w injection_test` selects only the root smoke-message source.
-An owning feature source/entry or overlay plan may still be passed explicitly.
+Every production watch also watches and rebuilds that smoke-message source
+because the visible reload confirmation is linked into every candidate. An
+owning feature source/entry or overlay plan may still be passed explicitly.
 `settings/watchers.json` declares reusable user-facing target names; a direct
 task-owned overlay-plan path remains valid for current experiments. The compact
 `w` suffix chooses the PCSX2 instance, while the following optional target

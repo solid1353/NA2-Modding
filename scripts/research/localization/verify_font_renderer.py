@@ -562,6 +562,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         f"{V2_PREFIX}.c.text.font.v2.collection.list.callback": (
             V2_COLLECTION_LIST_CALLBACK
         ),
+        f"{V2_PREFIX}.c.text.font.v2.collection.body.callback": (
+            f"{V2_PREFIX}.c.collection_body_callback"
+        ),
     }
     if helper_symbols != set(helper_aliases):
         raise ValueError(
@@ -626,6 +629,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_JUTSU_DRAW_ENTRY,
         V2_COLLECTION_LIST_CALLBACK,
         V2_COLLECTION_LIST_ENTRY,
+        f"{V2_PREFIX}.c.collection_body_callback",
         f"{V2_PREFIX}.c.icon_record",
         V2_PRACTICE_ICON_METRIC,
         V2_PRACTICE_ICON_DRAW,

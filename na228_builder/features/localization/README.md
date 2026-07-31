@@ -1881,16 +1881,23 @@ fresh-build result across all four Battle/Practice and Game Mode/Character
 Select combinations on 2026-07-27, so the layer is `runtime_proven`.
 
 The separate `font_layout_mode_select_confirmation` caller layer reuses the
-same C-owned scope and coordinate map without adding another renderer formula.
-Mode Select `FUN_00385C00` draws two resident list objects through adjacent
-native calls, but its confirmation state operates only object `+0xCC`. The
-layer therefore redirects only the second call at boot-ELF file `0x285E98`
-(runtime `0x00385D98`, clean guard `800D0E0C00000000`) to
-`localization.font.v2.quit_choices_scope`; the first call remains native. An
-exact-guarded converted remade ss1 state centers Yes/No with NUN5 row spacing
-while leaving the already-matching body unchanged. The user verified the
-normal-build Mode Select result on 2026-07-29, so the layer is
-`runtime_proven`.
+same C-owned scope, coordinate map, and native body adapter without adding
+another renderer engine. Mode Select `FUN_00385C00` draws the confirmation
+body through `FUN_003825B0` at boot-ELF file `0x285E68` / runtime
+`0x00385D68`, then draws the live choice object `+0xCC` through
+`FUN_00383600` at file `0x285E98` / runtime `0x00385D98`. The body call has
+clean guard `6C090E0C00000000`; the choice call has clean guard
+`800D0E0C00000000`.
+
+The first hook routes only the exact `Return to Title Screen?` body through a
+420-by-40 single-line box at local `(24,12)`. This changes native Y `16` to
+`12` and activates the accepted tracking-zero/plain-space renderer state
+without scaling glyphs or publishing Collection choice scope. The second hook
+retains `localization.font.v2.quit_choices_scope`, whose top Yes/No result was
+user-verified on 2026-07-29. Fresh native-resolution NUN5 and runtime-injected
+NA2 body captures have identical black-ink bounds X `194..909`, Y
+`1042..1078`. The user verified the exact live body result on 2026-07-31, so
+the complete Mode Select confirmation layer is `runtime_proven`.
 
 The separate `font_layout_collection_confirmation` layer owns three clean ETC
 calls. Files `0x12680` and `0x148C8` are the two body consumers and both route

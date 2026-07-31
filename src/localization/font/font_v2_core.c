@@ -335,6 +335,24 @@ typedef signed int s32;
 /* Marks the body-to-choice interval of the Collection exit prompt. */
 #define FONT_COLLECTION_CHOICE_SCOPE 2u
 
+/* Mode Select bottom-body X origin; larger values move it right. */
+#define FONT_MODE_SELECT_BODY_BOX_X 24.0f
+
+/* Mode Select bottom-body Y origin; smaller values move it up. */
+#define FONT_MODE_SELECT_BODY_BOX_Y 12.0f
+
+/* Mode Select bottom-body width before wrapping or shrink-only fitting. */
+#define FONT_MODE_SELECT_BODY_BOX_WIDTH 420u
+
+/* Mode Select bottom-body height available to its single text line. */
+#define FONT_MODE_SELECT_BODY_BOX_HEIGHT 40u
+
+/* Mode Select bottom-body line cadence if the source ever contains a break. */
+#define FONT_MODE_SELECT_BODY_LINE_HEIGHT 20.0f
+
+/* Mode Select bottom body is intentionally limited to one line. */
+#define FONT_MODE_SELECT_BODY_LINE_LIMIT 1u
+
 /* Fixed runtime pointer identifying Special Controls ON. */
 #define FONT_SPECIAL_ON_TEXT 0x006059F0u
 
@@ -670,6 +688,34 @@ static u32 font_v2_is_br(const u8 *text) {
            text[1] == (u8)'b' &&
            text[2] == (u8)'r' &&
            text[3] == (u8)'>';
+}
+
+static u32 font_v2_is_mode_select_body(const u8 *text) {
+    return text &&
+           text[0] == (u8)'R' &&
+           text[1] == (u8)'e' &&
+           text[2] == (u8)'t' &&
+           text[3] == (u8)'u' &&
+           text[4] == (u8)'r' &&
+           text[5] == (u8)'n' &&
+           text[6] == (u8)' ' &&
+           text[7] == (u8)'t' &&
+           text[8] == (u8)'o' &&
+           text[9] == (u8)' ' &&
+           text[10] == (u8)'T' &&
+           text[11] == (u8)'i' &&
+           text[12] == (u8)'t' &&
+           text[13] == (u8)'l' &&
+           text[14] == (u8)'e' &&
+           text[15] == (u8)' ' &&
+           text[16] == (u8)'S' &&
+           text[17] == (u8)'c' &&
+           text[18] == (u8)'r' &&
+           text[19] == (u8)'e' &&
+           text[20] == (u8)'e' &&
+           text[21] == (u8)'n' &&
+           text[22] == (u8)'?' &&
+           text[23] == 0;
 }
 
 FONT_V2_SECTION(".text.font_v2_measure")
@@ -1187,6 +1233,7 @@ int font_v2_quit_unselected_adapter(
     original_x = record[0];
     original_y = record[1];
     text = record[2];
+
     target_x = original_x;
     target_y = original_y;
     if (!font_v2_map_choice(text, original_y, &target_x, &target_y)) {
@@ -1887,6 +1934,22 @@ int font_v2_collection_body_adapter(
     u32 arg2
 ) {
     int result;
+
+    if (font_v2_is_mode_select_body(text)) {
+        return font_v2_wrapped_body_common(
+            arg0,
+            text,
+            arg2,
+            FONT_MODE_SELECT_BODY_BOX_X,
+            FONT_MODE_SELECT_BODY_BOX_Y,
+            FONT_MODE_SELECT_BODY_BOX_WIDTH,
+            FONT_MODE_SELECT_BODY_BOX_HEIGHT,
+            FONT_MODE_SELECT_BODY_LINE_HEIGHT,
+            FONT_MODE_SELECT_BODY_LINE_LIMIT,
+            (u32)font_v2_collection_body_callback,
+            0.0f
+        );
+    }
 
     result = font_v2_wrapped_body_common(
         arg0,

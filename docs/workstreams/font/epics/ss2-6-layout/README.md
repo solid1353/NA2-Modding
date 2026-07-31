@@ -11,12 +11,13 @@ case.
 
 ## Execution state
 
-- Mode: Continuous; the latest authorization was limited to Priority 3 and is
-  now complete.
-- Current subtask: none; the next epic case requires a new user selection.
-- Pending grid: none; the user verified the final live Jutsu-selector result
-  on 2026-07-31, so its superseded pre-final candidate grid was removed.
-- Next action: wait for the user's next selected epic case.
+- Mode: Continuous; Priority 1 is user-verified and the next unresolved
+  live-edit case is active.
+- Current subtask: Priority 7 Practice Settings left option-label column.
+- Pending grid: none.
+- Next action: align the shared left option-label column while preserving its
+  current Y positions, selected styling, right value column, title, footer,
+  and explanation paths.
 
 ## Scope and evidence
 
@@ -102,11 +103,15 @@ case.
 
 ### Priority 1 — ss1: Return confirmation
 
-- State: accepted lower-body fix retained; isolated top-selector fix is
-  committed, pushed, agent-validated, visibly delivered, and user-verified on
-  2026-07-30.
-- Result: the scoped top Yes/No list has the same offsets from its modal origin
-  as NUN5 while the accepted lower body remains unchanged.
+- State: the isolated top-selector and reopened lower-body fixes are
+  user-verified. The complete Mode Select confirmation is runtime-proven.
+- Result: the dedicated body caller uses the NUN5 tracking and
+  plain-space renderer state, moves local Y from `16` to `12`, and applies no
+  glyph scaling. Fresh native-resolution captures give identical NUN5 and
+  NA2.28 ink bounds X `194..909`, Y `1042..1078`; the previously verified
+  top Yes/No selector remains unchanged.
+- Acceptance: the user verified the exact live lower-body result on
+  2026-07-31. Its accepted candidate grid was removed.
 
 ### Priority 2 — supplemental ss1–ss2: Character Select option lists
 
@@ -252,7 +257,8 @@ case.
 
 Priority is determined by the most efficient implementation order.
 
-1. **ss1 — Character Select return confirmation.** User-verified.
+1. **ss1 — Character Select return confirmation.** Top selector and reopened
+   lower body are user-verified; the body has exact NUN5 ink bounds.
 2. **supplemental ss1–ss2 — Character Select option lists.** User-accepted.
 3. **replacement ss1–ss2 — one Jutsu-selector defect.** Implemented,
    fragment-verified, visibly reviewed through whole-Font hot reload, and

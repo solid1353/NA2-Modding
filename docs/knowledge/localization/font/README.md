@@ -1048,23 +1048,33 @@ confidence.
 ### Mode Select Return to Title confirmation caller
 
 The 2026-07-29 remade ss1 pair isolates a second consumer of the accepted
-C-owned Yes/No mapper. NA2 `FUN_00385C00` draws two list objects through
-adjacent calls to `FUN_00383600`: object `+0xD0` at boot-ELF file
-`0x285E80`, then object `+0xCC` at file `0x285E98` / runtime `0x00385D98`.
-The confirmation state in `FUN_00382EF0` operates only object `+0xCC`, so the
-second call is the bounded live-widget hook; selecting both would include an
-unrelated resident object without evidence. Its clean eight-byte guard is
+C-owned Yes/No mapper. NA2 `FUN_00385C00` draws the confirmation sentence
+through dedicated body renderer `FUN_003825B0` at boot-ELF file `0x285E68` /
+runtime `0x00385D68`, then draws the live choice object `+0xCC` through
+`FUN_00383600` at file `0x285E98` / runtime `0x00385D98`. The body call's
+clean eight-byte guard is `6C090E0C00000000`; the choice call's is
 `800D0E0C00000000`.
 
-The body already matches closely. Current instead draws Yes/No roughly
-19–23 screenshot pixels left of NUN5 and uses a wider row interval. An
-exact-guarded task-owned conversion redirected only the second list call to
-`localization.font.v2.quit_choices_scope`. The hidden capture reused the
-existing C mapping—Yes `(64.5,31.5)`, No `(68.5,49)`—and visually matched
-NUN5 while leaving the body unchanged. No new formula or assembly payload is
-needed. The user verified the normal-build Mode Select result on 2026-07-29.
-The layer is therefore **runtime-proven** with verified confidence; the
-separate Collection confirmation uses a different ETC caller family.
+The earlier classification of object `+0xD0` as the visible body was wrong.
+Live object inspection while the prompt was visible found its list empty.
+Tracing forward identified `FUN_003825B0` as the first actual consumer: it
+builds a four-word draw record from constants `DAT_005B1810` X `24` and
+`DAT_005B1814` Y `16`, then calls native UI draw `FUN_00379A20`. This explains
+why changes to the shared unselected-list adapter had no visible effect.
+
+The existing scoped choice hook reuses Yes `(64.5,31.5)` and No
+`(68.5,49)`; the user verified that normal-build top-selector result on
+2026-07-29. The bounded body hook reuses the native-body C adapter only when
+its exact text is `Return to Title Screen?`, selects a 420-by-40 one-line box
+at local `(24,12)`, activates the accepted tracking-zero/plain-space state,
+and applies no glyph scale. It deliberately leaves the Collection choice
+scope inactive. In fresh 1750-by-1313 native screenshots, NUN5 body ink is
+X `194..909`, Y `1042..1078`; unpatched NA2 is X `194..933`, Y
+`1056..1091`; the runtime-injected result is X `194..909`, Y `1042..1078`.
+Pixel counts are 6,049 versus 6,005, consistent with the small retained raster
+difference while geometry is exact. The user verified the exact live body
+result on 2026-07-31. Confidence is **verified** for the consumer, guard,
+coordinates, and runtime geometry.
 
 ### Collection exit-confirmation body and choice list
 

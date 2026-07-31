@@ -238,8 +238,11 @@ Read the matching policy before acting:
 
 - At the start of every user request in a workstream task, before answering or
   acting, read that workstream's linked `README.md` completely and every policy
-  or workflow it directly links. Current explicit user instructions override
-  stored workstream rules; this file remains universally applicable.
+  or workflow it directly links. Also read the current `TASKS.md` Bugs
+  subsection for entries labeled with that exact workstream title, `Shared`,
+  or `Unknown`. Reading an entry supplies context only; it does not select or
+  authorize fixing the bug. Current explicit user instructions override stored
+  workstream rules; this file remains universally applicable.
 - Shared sequential/continuous epic behavior is defined in
   [`docs/workstreams/EPIC_WORKFLOW.md`](docs/workstreams/EPIC_WORKFLOW.md) and
   applies only to exact work that the user explicitly declares an epic inside

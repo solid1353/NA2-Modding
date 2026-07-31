@@ -146,6 +146,8 @@
 - Tasks are added only by the user or by an agent on the user's order.
 - A workstream subsection appears under exactly one of `In Progress`,
   `Backlog`, or `Archive`; `Testing` is last within its current status.
+- `Bugs` always remains under `Backlog`; selecting or working one of its
+  entries never moves the subsection.
 - Approved active work moves its whole subsection to `In Progress`. Move to
   `Backlog` only by explicit user instruction.
 - `task done` makes the owning workstream coordinator remove the exact task;

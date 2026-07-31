@@ -19,9 +19,10 @@
     * [UI Translation](work/__sstates/translation/UI)
     * [String Translation](work/__sstates/translation/strings)
 
-### Bugs
-- Practice menu entries (like Damage) flicker again (unstable).
-- Flicker on save.
+### [Bugs](docs/workstreams/bugs/README.md)
+- **UI Translation:** long character names.
+- **String Translation:** save message.
+- **General:** practice menu entries (like Damage) flicker again (unstable).
 
 ### Logic
 - Make knj cost selective.

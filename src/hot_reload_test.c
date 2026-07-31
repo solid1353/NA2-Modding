@@ -18,7 +18,6 @@ void hotReloadTest(void) {
         return;
     }
 
-    draw(17.0f, 17.0f, (const u8 *)HOT_RELOAD_LABEL, 0u);
-    draw(16.0f, 16.0f, (const u8 *)HOT_RELOAD_LABEL, 1u);
+    draw(1.0f, 1.0f, (const u8 *)HOT_RELOAD_LABEL, 0u);
     visible_frames += 1u;
 }

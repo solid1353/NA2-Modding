@@ -170,14 +170,14 @@ Build a project smoke candidate into the ignored default output:
   -Script scripts/injection/build.py `
   -NoBytecode `
   -ArgumentList @(
-    '--source-id', 'hot_reload_test',
-    '--entry', 'project.hot_reload_test'
+    '--source-id', 'hot_reload_message',
+    '--entry', 'project.hot_reload_message'
   )
 ```
 
-After each successful direct-PINE apply, this smoke entry draws
-`HOT RELOAD 12C2` at the top-left of the game for 120 rendered frames. Its
-zero-filled frame counter is reset by every apply, so the visible marker
+After each successful direct-PINE apply, this message draws the watcher-generated
+`HOT RELOAD HH:mm:ss` label at the top-left of the game for 300 rendered frames.
+Its zero-filled frame counter is reset by every apply, so the visible marker
 replaces log watching as the reload confirmation.
 
 Production entries are declared in the owning feature's

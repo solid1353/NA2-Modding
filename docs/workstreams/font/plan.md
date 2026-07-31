@@ -200,7 +200,7 @@ caller-family adapters, not a transplanted NUN5 renderer:
 ### Resident implementation
 
 The canonical C units under
-`na228_builder/features/localization/runtime_injector/sources/` generate the live
+`src/localization/` generate the live
 v2 resident asset and unique `localization.font.v2.*` symbols.
 `scripts/research/localization/verify_font_renderer.py` independently
 reconstructs and verifies those fragments:
@@ -780,7 +780,7 @@ formatting. The adjacent Battle Settings value-100 infinity branch remains
 untouched.
 
 Production inputs no longer live under `scripts/research/`: C sources reside
-under `na228_builder/features/localization/runtime_injector/sources/`, the
+under `src/localization/`, the
 generic EE object extractor resides in `na228_builder/payload_builder/`, and the
 deterministic generator resides in `scripts/localization/`. The superseded
 Save/Load and Battle Settings in-place assembly generators were removed.

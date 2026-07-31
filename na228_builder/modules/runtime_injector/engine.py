@@ -306,6 +306,22 @@ def _repository_root(directory: Path) -> Path:
     raise FileNotFoundError("project-paths.json was not found")
 
 
+def _source_file(directory: Path, value: str, label: str) -> Path:
+    relative = _relative_path(value, label)
+    if relative.parts and relative.parts[0] == "src":
+        repository = _repository_root(directory)
+        source_root = (repository / "src").resolve()
+        path = (repository / Path(relative.as_posix())).resolve()
+        try:
+            path.relative_to(source_root)
+        except ValueError as exc:
+            raise ValueError(f"{label}: path escapes src") from exc
+        if not path.is_file():
+            raise FileNotFoundError(path)
+        return path
+    return _module_file(directory, value, label)
+
+
 def _load_static_fragments(
     directory: Path, owner: str
 ) -> list[tuple[int, int, PayloadFragment]]:
@@ -468,7 +484,7 @@ def _load_c_fragments(
                 f"c_sources.tsv:{line}: unsupported language "
                 f"{row['language']!r}"
             )
-        source_path = _module_file(
+        source_path = _source_file(
             directory, row["path"], f"c_sources.tsv:{line} path"
         )
         namespace = _identifier(

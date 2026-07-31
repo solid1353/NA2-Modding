@@ -215,9 +215,16 @@ def _profile_root_path(
 
 
 def _tree_digest(path: Path, files: list[Path]) -> str:
+    def digest_path(item: Path) -> str:
+        try:
+            return item.relative_to(path).as_posix()
+        except ValueError:
+            repository = load_project_paths(path, allow_missing=True).repository
+            return "@repository/" + item.relative_to(repository).as_posix()
+
     digest = hashlib.sha256()
-    for item in sorted(files, key=lambda value: value.relative_to(path).as_posix()):
-        relative = item.relative_to(path).as_posix().encode("utf-8")
+    for item in sorted(files, key=digest_path):
+        relative = digest_path(item).encode("utf-8")
         data_hash = hashlib.sha256(item.read_bytes()).hexdigest().upper().encode("ascii")
         digest.update(relative)
         digest.update(b"\0")
@@ -326,15 +333,26 @@ def _runtime_injector_content_files(path: Path) -> list[Path]:
         candidate = Path(value.replace("\\", "/"))
         if candidate.is_absolute() or ".." in candidate.parts:
             raise ValueError(
-                f"{sources_path}: path must be module-relative: {value!r}"
+                f"{sources_path}: path must be relative: {value!r}"
             )
-        source = (path / candidate).resolve()
-        try:
-            source.relative_to(path)
-        except ValueError as exc:
-            raise ValueError(
-                f"{sources_path}: path escapes module: {value!r}"
-            ) from exc
+        if candidate.parts and candidate.parts[0] == "src":
+            repository = load_project_paths(path, allow_missing=True).repository
+            source_root = (repository / "src").resolve()
+            source = (repository / candidate).resolve()
+            try:
+                source.relative_to(source_root)
+            except ValueError as exc:
+                raise ValueError(
+                    f"{sources_path}: path escapes src: {value!r}"
+                ) from exc
+        else:
+            source = (path / candidate).resolve()
+            try:
+                source.relative_to(path)
+            except ValueError as exc:
+                raise ValueError(
+                    f"{sources_path}: path escapes module: {value!r}"
+                ) from exc
         if not source.is_file():
             raise FileNotFoundError(source)
         files.append(source)

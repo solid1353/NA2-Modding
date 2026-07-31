@@ -30,8 +30,8 @@ $sourceTable = Join-Path $packageRoot 'c_sources.tsv'
 $buildScript = Join-Path $PSScriptRoot 'build.py'
 $applyScript = Join-Path $PSScriptRoot 'apply.py'
 $pineScript = Join-Path $repository 'scripts\pcsx2\pine.py'
-$hotReloadSourceId = 'hot_reload_test'
-$hotReloadEntry = 'project.hot_reload_test'
+$hotReloadSourceId = 'hot_reload_message'
+$hotReloadEntry = 'project.hot_reload_message'
 
 function Resolve-RepositoryPath([string]$Path) {
     if ([IO.Path]::IsPathRooted($Path)) {
@@ -133,7 +133,7 @@ if ($SourceId -ceq $hotReloadSourceId) {
     if ($Entry -cne $hotReloadEntry) {
         throw "Source '$hotReloadSourceId' requires entry '$hotReloadEntry'."
     }
-    $canonicalSource = Join-Path $repository 'src\hot_reload_test.c'
+    $canonicalSource = Join-Path $repository 'src\hot_reload_message.c'
 }
 else {
     if (-not $resolvedOverlayPlan) {
@@ -161,9 +161,17 @@ else {
     if ($sourceRows.Count -ne 1) {
         throw "Source '$SourceId' must match exactly one canonical C source."
     }
-    $canonicalSource = [IO.Path]::GetFullPath(
-        (Join-Path $packageRoot ([string]$sourceRows[0].path))
-    )
+    $sourceDeclaration = [string]$sourceRows[0].path
+    if ($sourceDeclaration.Replace('\', '/').StartsWith('src/')) {
+        $canonicalSource = [IO.Path]::GetFullPath(
+            (Join-Path $repository $sourceDeclaration)
+        )
+    }
+    else {
+        $canonicalSource = [IO.Path]::GetFullPath(
+            (Join-Path $packageRoot $sourceDeclaration)
+        )
+    }
 }
 if (-not $SourcePath) {
     $SourcePath = $canonicalSource
@@ -213,10 +221,7 @@ if (-not $BuildOnly) {
 }
 
 $watchPaths = if ($SourceId -ceq $hotReloadSourceId) {
-    @(
-        $resolvedSourcePath,
-        (Join-Path $repository 'src\runtime.h')
-    )
+    @($resolvedSourcePath)
 }
 else {
     @(
@@ -357,6 +362,18 @@ $lastChange = [DateTime]::MinValue
 
 while ($true) {
     Start-Sleep -Milliseconds $PollMilliseconds
+    if (-not $BuildOnly) {
+        $vmState = & python -B $pineScript --port $PinePort status 2>$null
+        if (
+            $LASTEXITCODE -ne 0 -or
+            ([string]$vmState).Trim() -ceq 'shutdown'
+        ) {
+            Write-Host (
+                "[injection] PCSX2 on PINE port $PinePort exited; stopping watcher."
+            ) -ForegroundColor Yellow
+            exit 0
+        }
+    }
     $nextSignature = Get-WatchSignature
     if ($nextSignature -cne $observedSignature) {
         $observedSignature = $nextSignature

@@ -49,8 +49,8 @@ SYMBOL_MAP_FIELDS = [
     "sha256",
     "init",
 ]
-HOT_RELOAD_SOURCE = "hot_reload_test"
-HOT_RELOAD_ENTRY = "project.hot_reload_test"
+HOT_RELOAD_SOURCE = "hot_reload_message"
+HOT_RELOAD_ENTRY = "project.hot_reload_message"
 FIXED_EXTERNAL_ADDRESSES: dict[str, int] = {}
 
 
@@ -476,7 +476,7 @@ def load_source(
 ]:
     if source_id == HOT_RELOAD_SOURCE:
         return (
-            REPOSITORY / "src" / "hot_reload_test.c",
+            REPOSITORY / "src" / "hot_reload_message.c",
             "project.hot_reload",
             {},
             [
@@ -496,12 +496,17 @@ def load_source(
     row = selected[0]
     if row["language"] != "c":
         raise ValueError(f"Production source {source_id!r} is not C")
-    relative_source = Path(row["path"])
+    relative_source = Path(row["path"].replace("\\", "/"))
     if relative_source.is_absolute() or ".." in relative_source.parts:
-        raise ValueError(f"Production source path escapes its package: {row['path']}")
-    source_path = (package_root / relative_source).resolve()
-    if package_root.resolve() not in source_path.parents or not source_path.is_file():
-        raise ValueError(f"Production source was not found in its package: {source_path}")
+        raise ValueError(f"Production source path is invalid: {row['path']}")
+    if relative_source.parts and relative_source.parts[0] == "src":
+        source_path = (REPOSITORY / relative_source).resolve()
+        allowed_root = (REPOSITORY / "src").resolve()
+    else:
+        source_path = (package_root / relative_source).resolve()
+        allowed_root = package_root.resolve()
+    if allowed_root not in source_path.parents or not source_path.is_file():
+        raise ValueError(f"Production source was not found: {source_path}")
     namespace = identifier(row["namespace"], "c_sources.tsv namespace")
 
     imports: dict[str, ee_c_fragments.SymbolReference] = {}

@@ -1753,7 +1753,7 @@ reimplementation made all ten of its resident fragments unreachable:
   reconstructed from clean NA2, preserving 95/95 printable-ASCII coverage.
   The shortened 123-cell secondary atlas is locally guarded. Its metric rows
   are packed into the value words of empty primary-map slots. Composition-time
-  C in `runtime_injector/sources/font_glyph_metrics.c` decodes them for both
+  C in `src/localization/font_glyph_metrics.c` decodes them for both
   measurement and drawing; two guarded boot-ELF hooks provide the live
   context/register ABI and rejoin the native cleanup paths. The normal glyph
   emitter keeps descriptor width on the primary/fullwidth path and uses
@@ -2049,8 +2049,8 @@ compiled from C during composition and is not stored as an asset.
 `scripts/research/localization/verify_font_renderer.py` deterministically
 reconstructs the accepted v2 renderer, numeric formatter, and retained ABI-shim
 fragments as an independent verifier. Normal composition does not persist its
-aggregate outputs: `runtime_injector/c_sources.tsv` declares the two canonical
-C units under `sources/`, compiles them with the pinned EE toolchain, and
+aggregate outputs: `runtime_injector/c_sources.tsv` declares the three canonical
+C units under `src/localization/`, compiles them with the pinned EE toolchain, and
 converts their sections and relocations directly into normalized fragments.
 Static ABI/data fragments remain inline in `fragments.tsv`; the shared payload
 builder links both kinds into the final `228.BIN`. The only retained generated

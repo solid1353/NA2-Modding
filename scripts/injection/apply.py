@@ -165,7 +165,7 @@ def main() -> int:
         try:
             pending_writes: list[tuple[str, int, bytes]] = []
             for write_id, address, expected, replacement in guarded_writes:
-                if args.force_writes:
+                if getattr(args, "force_writes", False):
                     pending_writes.append((write_id, address, replacement))
                     continue
                 live = client.read(address, len(expected))
@@ -199,7 +199,7 @@ def main() -> int:
             if resume_after:
                 client.resume()
 
-    if args.force_writes:
+    if getattr(args, "force_writes", False):
         print(
             f"Applied {len(memory_chunks)} memory ranges and "
             f"{len(pending_writes)} hook writes"

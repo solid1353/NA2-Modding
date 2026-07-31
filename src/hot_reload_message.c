@@ -11,7 +11,7 @@ typedef void (*NativeTextDraw)(float x, float y, const u8 *text, u32 highlighted
 
 static volatile u32 visible_frames;
 
-void hotReloadTest(void) {
+void hotReloadMessage(void) {
     NativeTextDraw draw = (NativeTextDraw)NATIVE_TEXT_DRAW_ADDRESS;
 
     if (visible_frames >= HOT_RELOAD_VISIBLE_FRAMES) {

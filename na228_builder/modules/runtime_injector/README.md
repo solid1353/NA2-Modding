@@ -12,8 +12,10 @@ Canonical inputs are `targets.tsv`, `groups.tsv`, `patches.tsv`,
 `fragments.tsv`, `c_sources.tsv`, `c_imports.tsv`, `c_fragments.tsv`,
 `relocations.tsv`, and `edits.tsv`, plus only the source files and blobs
 referenced by those tables. Static fragments may contain their bytes inline or
-select a guarded range from a referenced blob. Declared C sources are compiled
-with the pinned EE toolchain during normal package loading; the
+select a guarded range from a referenced blob. Canonical project C sources live
+under root `src/`; feature `c_sources.tsv` rows reference those repository paths,
+and their contents remain covered by the owning feature hash. Declared C
+sources are compiled with the pinned EE toolchain during normal package loading; the
 generic object extractor converts their sections and relocations directly into
 the same address-independent fragment model. Compiler objects and aggregate
 payload blobs are temporary and are not canonical feature inputs.

@@ -1,4 +1,4 @@
 source_id	language	path	namespace
-font_v2_core	c	sources/font_v2_core.c	localization.font.v2.c
-font_numeric	c	sources/font_numeric.c	localization.font.numeric.c
-font_glyph_metrics	c	sources/font_glyph_metrics.c	localization.font.glyph.c
+font_v2_core	c	src/localization/font_v2_core.c	localization.font.v2.c
+font_numeric	c	src/localization/font_numeric.c	localization.font.numeric.c
+font_glyph_metrics	c	src/localization/font_glyph_metrics.c	localization.font.glyph.c

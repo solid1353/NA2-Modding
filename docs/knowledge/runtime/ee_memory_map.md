@@ -439,17 +439,17 @@ candidate is compatible with the current runtime state.
 
 ## Visible hot-reload smoke hook
 
-The maintained project smoke entry uses the native ordinary text draw at
-runtime `0x00379040` to display `HOT RELOAD 12C2` at `(16,16)` for 120
-rendered frames after every direct-PINE apply. Its frame counter lives in the
-injected zero-fill range, so each apply resets the visible interval without a
-build-ID constant or log inspection.
+The maintained project hot-reload message uses the native ordinary text draw at
+runtime `0x00379040` to display the watcher-generated `HOT RELOAD HH:mm:ss`
+label at the top-left for 300 rendered frames after every direct-PINE apply.
+Its frame counter lives in the injected zero-fill range, so each apply resets
+the visible interval without log inspection.
 
 The smoke caller is the native no-op call at runtime `0x001085A0` inside
 `FUN_00108490`. The game establishes its renderer context before this point,
 and flushes the renderer afterward. Clean Current bytes are
 `A021040C00000000` (`jal 0x00108680; nop`); the injected manifest replaces only
-that pair with `jal project.hot_reload_test; nop`.
+that pair with `jal project.hot_reload_message; nop`.
 
 The earlier `0x001D0578` hook belongs to a scheduler-thread wakeup path and is
 not a valid drawing phase. A session that already contains that old hook must

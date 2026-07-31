@@ -111,6 +111,10 @@ Next response: short plan + effort recommendation + needed user inputs + approva
 - A correction or stop directed at one mistaken action cancels only that
   action. Isolate or undo the detour and continue the parent task unless the
   user stops or replaces it.
+- An additive instruction such as `also`, `and`, or `in addition` extends the
+  current requested work. It does not replace, cancel, or defer unfinished
+  parent work; complete both unless the user explicitly says `instead`, `only`,
+  or otherwise replaces the earlier action.
 - When asked for an already-produced result or evidence, deliver the actual
   requested content immediately in commentary at the next safe boundary before
   any unrelated work. A visual report is not delivered by acknowledgment,

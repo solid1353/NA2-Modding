@@ -1744,15 +1744,8 @@ int font_v2_ninja_hits_adapter(
     u32 renderer_address,
     const u8 *text
 ) {
-    u8 fallback[5];
-
     if (!text || !*text) {
-        fallback[0] = (u8)'h';
-        fallback[1] = (u8)'i';
-        fallback[2] = (u8)'t';
-        fallback[3] = (u8)'s';
-        fallback[4] = 0;
-        text = fallback;
+        return 0;
     }
     return font_v2_ninja_text_common(
         renderer_address,

@@ -1071,20 +1071,23 @@ separate Collection confirmation uses a different ETC caller family.
 The replacement 2026-07-30 ss7 pair isolates the Collection exit prompt in
 clean NA2 `PRG/ETC.BIN` (200,448 bytes, SHA-256
 `8FF3C6E1ED5CE2B093B0934C898C40D1CEEA0C20778C49CDA5591AAD02375C74`).
-The retained Ghidra export identifies `FUN_006C6520`, called from
-`0x006D879C`, as the bounded owner:
+The retained Ghidra export identifies two body-draw paths and one bounded
+choice-list path:
 
 - clean address `0x006C6540`, file `0x12680`, calls the ordinary body renderer
   for object `+4`; its eight-byte guard is `6C090E0C00000000`;
 - clean address `0x006C6560`, file `0x126A0`, calls the complete choice-list
-  renderer for object `+8`; its eight-byte guard is
-  `800D0E0C00000000`.
+  renderer for object `+8`; its guard is `800D0E0C00000000`;
+- the render-state path repeats the body draw at clean address `0x006C8788`,
+  file `0x148C8`, with the same `6C090E0C00000000` native-call guard.
 
-The supplied ss7 savestate restores the MWo3 overlay with the 0x40-byte runtime
-header represented in live memory, so those same guarded instructions appear
-at live `0x006C6580` and `0x006C65A0`. This live `+0x40` relation is specific
-to exact-guarded runtime conversion; canonical file edits continue to use
-`0x12680` and `0x126A0`.
+The live ETC overlay includes a `0x40`-byte runtime header, placing the first
+owner pair at `0x006C6580`/`0x006C65A0` and the render-state body call at
+`0x006C87C8`. Editing only the first body hook left the visible prompt
+pixel-identical. Exact live inspection then proved that `0x006C87C8` still
+contained the native call; redirecting that second consumer through the same
+C adapter moved the visible body immediately. Canonical edits therefore keep
+both guarded body calls.
 
 Normalized 640-by-480 captures measure Current's body ink at Y `386..401`
 versus NUN5 `381..396`, with the same X origin. Current's selected Yes is at
@@ -1096,21 +1099,19 @@ text `0x00604570` at local `(50,24)` and No text `0x00604568` at local
 accepted scoped mapper, whose retained targets are Yes `(64.5,31.5)` and No
 `(68.5,49)`. Collection therefore needs no new choice formula.
 
-The bounded implementation adds one C body adapter using the existing wrapped
-body primitive with local `(24,12)`, a 400-by-60 box, 20-unit line height, and
-a two-line limit. It redirects only the two clean ETC calls above: the body to
-that adapter and the complete list to
-`localization.font.v2.quit_choices_scope`. Every other ETC body/list caller and
-every ordinary Yes/No list remain native.
+The bounded implementation routes both body calls through one C adapter using
+the native UI-draw ABI, local origin `(24.8,12)`, native horizontal scale, a
+400-by-60 box, 20-unit line height, and a two-line limit. It preserves the
+literal separator between differently colored words. The choice call scopes
+the existing mapper with Collection-local Yes `(64.2,29.85)` and No
+`(68.1,48.2)` targets. Every other ETC body/list caller and ordinary Yes/No
+list remains native.
 
-The exact task-owned overlay guards, C compilation, relocation, and fragment
-verification pass. The supplied ss7 state was captured after both owner calls:
-after state reload and candidate application, the selected/unselected renderer
-hooks ran with `quit_active=0`, while the body and scope owner calls did not
-re-execute. It therefore cannot validate the shipped caller behavior or supply
-a truthful post-change result grid. Clean-construction runtime validation and
-user acceptance remain pending. Confidence is **high** for the bounded caller
-identity and target geometry; status is **approved for test**.
+At the final 1769-by-1327 live-edit capture, scaled NUN5 black ink targets
+X `196..680`, Y `1054..1096`; NA2.28 matches those bounds exactly. Scaled NUN5
+red ink targets approximately X `350..649`, Y `1052..1090`; NA2.28 measures
+X `350..648`, Y `1053..1089`. The user verified the exact live result on
+2026-07-31. Status is **runtime-proven** with verified confidence.
 
 ### Collection fixed-cadence list wrapping
 

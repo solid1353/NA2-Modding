@@ -1892,18 +1892,19 @@ while leaving the already-matching body unchanged. The user verified the
 normal-build Mode Select result on 2026-07-29, so the layer is
 `runtime_proven`.
 
-The separate `font_layout_collection_confirmation` layer owns exactly two
-clean ETC calls in `FUN_006C6520`. File `0x12680` routes the body object at
-`+4` through `localization.font.v2.collection_body_adapter`, which reuses the
-existing wrapped-body primitive at local `(24,12)` inside a 400-by-60,
-two-line box. File `0x126A0` scopes only the complete choice object at `+8`
-through `localization.font.v2.quit_choices_scope`. Collection's native Yes/No
-source Y values are the accepted mapper's existing 24/56 keys, so no new
-choice formula or broad text-pointer hook is added. Every other ETC body/list
-caller remains native. The exact guards, C compilation, and fragment
-verification pass; clean-construction runtime validation and user acceptance
-remain pending because the supplied visible-prompt ss7 state resumes after
-both owner calls.
+The separate `font_layout_collection_confirmation` layer owns three clean ETC
+calls. Files `0x12680` and `0x148C8` are the two body consumers and both route
+through `localization.font.v2.collection_body_adapter`; file `0x126A0` scopes
+only the complete choice object through
+`localization.font.v2.quit_choices_scope`. Live tracing proved the later
+render-state body call at runtime `0x006C87C8` produces the visible prompt,
+while changing only the earlier duplicate leaves it unchanged. The shared
+adapter uses the native UI-draw ABI, local `(24.8,12)`, native horizontal
+scale, and a 400-by-60 two-line box. Collection's native Yes/No source Y values
+24/56 map to Collection-local Yes `(64.2,29.85)` and No `(68.1,48.2)`.
+Native-resolution comparison matches NUN5's black bounds exactly and its red
+bounds within one pixel; the user verified the live result on 2026-07-31.
+Every unrelated ETC body/list caller remains native.
 
 The separate `font_layout_collection_lists` layer owns the shared Collection
 row draw in ETC `FUN_006B4D30`, file `0xFD8` (clean guard

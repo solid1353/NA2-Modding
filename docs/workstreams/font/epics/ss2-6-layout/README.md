@@ -171,18 +171,14 @@ case.
 
 ### Priority 4 — ss7: Exit confirmation
 
-- State: unresolved. Commit `76e5023f` installed bounded C/file-backed hooks
-  and the current profile composes, but the accurate integrated-game grid below
-  still shows an unacceptable result. Existing code and successful composition
-  do not make this subtask implemented.
-- Remaining defect: the displayed prompt/body and choice layout still fail the
-  requested NUN5 match. The existing grid is the authoritative failing
-  evidence; the user does not need to reproduce it.
-- Remaining action: diagnose and change the actual Priority 4 result when the
-  user authorizes returning to this subtask. Do not replace the grid with a
-  missing-input claim.
-
-![Priority 4 unresolved integrated result](pending/4-collection-confirmation.png)
+- State: corrected through the actual ETC render-state body consumer,
+  compose-validated, and user-verified live on 2026-07-31.
+- Implemented result: both guarded body-draw paths use one native-scale C
+  adapter at local `(24.8,12)`, preserving the colored-word separator. The
+  bounded choice call uses Collection-local Yes/No coordinates.
+- Evidence: at native capture resolution, NA2.28 matches the scaled NUN5 black
+  ink bounds exactly and the red ink bounds within one pixel. The prior
+  unresolved grid is removed because accepted grids are not retained.
 
 ### Priority 5 — ss8: Movie list
 
@@ -262,9 +258,8 @@ Priority is determined by the most efficient implementation order.
    fragment-verified, visibly reviewed through whole-Font hot reload, and
    user-verified on 2026-07-31. The verified result preserves one-line vertical
    geometry while matching the two-line break, width, height, and placement.
-4. **ss7 — Collection exit confirmation.** Unresolved: the accurate integrated
-   grid still shows an unacceptable result despite the enabled hooks and
-   successful composition.
+4. **ss7 — Collection exit confirmation.** Corrected through the actual ETC
+   render-state body consumer and user-verified live on 2026-07-31.
 5. **ss8 — Movie list.** Corrected, compose-validated, and user-verified on the
    integrated ISO on 2026-07-30. One-line rows and fitting wrapped rows retain
    native glyph height; the previous nonrepresentative grid remains removed.

@@ -43,3 +43,4 @@ font_v2_core	69	localization.font.v2.c.text.font.v2.collection.body.adapter	loca
 font_v2_core	70	localization.font.v2.c.text.font.v2.character.unselected.adapter	localization.font.v2.character_unselected_adapter
 font_v2_core	71	localization.font.v2.c.text.font.v2.collection.list.callback	localization.font.v2.c.collection_list_callback
 font_v2_core	72	localization.font.v2.c.text.font.v2.collection.list.entry	localization.font.v2.collection_list_entry
+font_v2_core	73	localization.font.v2.c.text.font.v2.collection.body.callback	localization.font.v2.c.collection_body_callback

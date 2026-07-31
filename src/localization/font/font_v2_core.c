@@ -320,6 +320,21 @@ typedef signed int s32;
 /* Target local No Y; increase to move No down. */
 #define FONT_QUIT_NO_Y 49.0f
 
+/* Collection-local Yes X; increase to move Yes right. */
+#define FONT_COLLECTION_YES_X 64.2f
+
+/* Collection-local Yes Y; increase to move Yes down. */
+#define FONT_COLLECTION_YES_Y 29.85f
+
+/* Collection-local No X; increase to move No right. */
+#define FONT_COLLECTION_NO_X 68.1f
+
+/* Collection-local No Y; increase to move No down. */
+#define FONT_COLLECTION_NO_Y 48.2f
+
+/* Marks the body-to-choice interval of the Collection exit prompt. */
+#define FONT_COLLECTION_CHOICE_SCOPE 2u
+
 /* Fixed runtime pointer identifying Special Controls ON. */
 #define FONT_SPECIAL_ON_TEXT 0x006059F0u
 
@@ -401,7 +416,7 @@ typedef signed int s32;
 /* === Collection exit-confirmation body === */
 
 /* Collection exit body left edge; increase to move it right. */
-#define FONT_COLLECTION_BODY_BOX_X 24.0f
+#define FONT_COLLECTION_BODY_BOX_X 24.8f
 
 /* Collection exit body top edge; increase to move it down. */
 #define FONT_COLLECTION_BODY_BOX_Y 12.0f
@@ -411,6 +426,9 @@ typedef signed int s32;
 
 /* Collection exit body height used for vertical placement. */
 #define FONT_COLLECTION_BODY_BOX_HEIGHT 60u
+
+/* Collection exit body glyph width; larger values widen visible letters. */
+#define FONT_COLLECTION_BODY_SCALE_X 1.0f
 
 /* Vertical distance between Collection exit body lines. */
 #define FONT_COLLECTION_BODY_LINE_HEIGHT 20.0f
@@ -525,6 +543,13 @@ typedef struct FontV2IconRecord {
     s16 height;
 } FontV2IconRecord;
 
+typedef struct FontV2UiDrawRecord {
+    float draw_x;
+    float draw_y;
+    const u8 *text;
+    u32 arg2;
+} FontV2UiDrawRecord;
+
 #define FONT_V2_OFFSET(type, member) ((u32)&(((type *)0)->member))
 #define FONT_V2_ASSERT(name, expression) \
     typedef char font_v2_assert_##name[(expression) ? 1 : -1]
@@ -632,6 +657,12 @@ typedef void (*FontV2NativeDraw)(
     float draw_y,
     const u8 *text,
     u32 highlighted
+);
+typedef int (*FontV2NativeUiDraw)(
+    u32 context,
+    const FontV2UiDrawRecord *record,
+    u32 state,
+    s32 index
 );
 
 static u32 font_v2_is_br(const u8 *text) {
@@ -1055,13 +1086,16 @@ int font_v2_character_unselected_adapter(
 FONT_V2_SECTION(".text.font_v2_quit_scope_enter")
 u32 font_v2_quit_scope_enter(void) {
     u32 previous = font_v2_quit_active;
-    font_v2_quit_active = 1;
+    if (previous != FONT_COLLECTION_CHOICE_SCOPE) {
+        font_v2_quit_active = 1;
+    }
     return previous;
 }
 
 FONT_V2_SECTION(".text.font_v2_quit_scope_leave")
 void font_v2_quit_scope_leave(u32 previous) {
-    font_v2_quit_active = previous;
+    font_v2_quit_active =
+        previous == FONT_COLLECTION_CHOICE_SCOPE ? 0u : previous;
 }
 
 static FONT_V2_SECTION(".text.font_v2_map_choice")
@@ -1074,7 +1108,29 @@ u32 font_v2_map_choice(
     FontV2Bits x;
     FontV2Bits y;
 
-    if (font_v2_quit_active) {
+    if (
+        text == 0x00604570u &&
+        source_y == FONT_QUIT_YES_SOURCE_BITS
+    ) {
+        x.f = FONT_COLLECTION_YES_X;
+        y.f = FONT_COLLECTION_YES_Y;
+    } else if (
+        text == 0x00604568u &&
+        source_y == FONT_QUIT_NO_SOURCE_BITS
+    ) {
+        x.f = FONT_COLLECTION_NO_X;
+        y.f = FONT_COLLECTION_NO_Y;
+    } else if (font_v2_quit_active == FONT_COLLECTION_CHOICE_SCOPE) {
+        if (source_y == FONT_QUIT_YES_SOURCE_BITS) {
+            x.f = FONT_COLLECTION_YES_X;
+            y.f = FONT_COLLECTION_YES_Y;
+        } else if (source_y == FONT_QUIT_NO_SOURCE_BITS) {
+            x.f = FONT_COLLECTION_NO_X;
+            y.f = FONT_COLLECTION_NO_Y;
+        } else {
+            return 0;
+        }
+    } else if (font_v2_quit_active) {
         if (source_y == FONT_QUIT_YES_SOURCE_BITS) {
             x.f = FONT_QUIT_YES_X;
             y.f = FONT_QUIT_YES_Y;
@@ -1625,7 +1681,8 @@ int font_v2_wrapped_body_common(
     u32 box_height,
     float line_height,
     u32 line_limit,
-    u32 callback
+    u32 callback,
+    float fixed_scale_x
 ) {
     FontV2BodyFrame frame;
     u32 index = 0;
@@ -1657,6 +1714,10 @@ int font_v2_wrapped_body_common(
     frame.session.vertical_alignment = FONT_V2_ALIGN_START;
     frame.session.flags =
         FONT_V2_FLAG_NEWLINE_BYTES | FONT_V2_FLAG_PREMEASURED;
+    if (fixed_scale_x > 0.0f) {
+        frame.session.flags |= FONT_V2_FLAG_FIXED_SCALE_X;
+        frame.session.scale_x = fixed_scale_x;
+    }
     frame.session.line_limit = line_limit;
     frame.session.line_height = line_height;
     frame.session.callback = callback;
@@ -1683,7 +1744,8 @@ int font_v2_quit_body_adapter(
         FONT_QUIT_BODY_BOX_HEIGHT,
         FONT_QUIT_BODY_LINE_HEIGHT,
         FONT_QUIT_BODY_LINE_LIMIT,
-        (u32)font_v2_quit_body_callback
+        (u32)font_v2_quit_body_callback,
+        0.0f
     );
 }
 
@@ -1785,7 +1847,36 @@ int font_v2_special_controls_body_adapter(
         FONT_SPECIAL_BODY_BOX_HEIGHT,
         FONT_SPECIAL_BODY_LINE_HEIGHT,
         FONT_SPECIAL_BODY_LINE_LIMIT,
-        (u32)font_v2_special_controls_body_callback
+        (u32)font_v2_special_controls_body_callback,
+        0.0f
+    );
+}
+
+static FONT_V2_SECTION(".text.font_v2_collection_body_callback")
+int font_v2_collection_body_callback(
+    u32 object,
+    const u8 *text,
+    u32 arg2,
+    FontV2Session *session
+) {
+    volatile u8 *object_bytes = (volatile u8 *)object;
+    volatile u32 *object_words = (volatile u32 *)object;
+    FontV2NativeUiDraw draw = (FontV2NativeUiDraw)0x00379A20u;
+    FontV2UiDrawRecord record;
+
+    if (!object_bytes || !text || !session || object_bytes[0x62] == 0) {
+        return 0;
+    }
+
+    record.draw_x = session->draw_x;
+    record.draw_y = session->draw_y;
+    record.text = text;
+    record.arg2 = arg2;
+    return draw(
+        object_words[0x78u / sizeof(u32)],
+        &record,
+        object_words[0x74u / sizeof(u32)],
+        -1
     );
 }
 
@@ -1795,7 +1886,9 @@ int font_v2_collection_body_adapter(
     const u8 *text,
     u32 arg2
 ) {
-    return font_v2_wrapped_body_common(
+    int result;
+
+    result = font_v2_wrapped_body_common(
         arg0,
         text,
         arg2,
@@ -1805,8 +1898,13 @@ int font_v2_collection_body_adapter(
         FONT_COLLECTION_BODY_BOX_HEIGHT,
         FONT_COLLECTION_BODY_LINE_HEIGHT,
         FONT_COLLECTION_BODY_LINE_LIMIT,
-        (u32)font_v2_special_controls_body_callback
+        (u32)font_v2_collection_body_callback,
+        FONT_COLLECTION_BODY_SCALE_X
     );
+    if (result >= 0) {
+        font_v2_quit_active = FONT_COLLECTION_CHOICE_SCOPE;
+    }
+    return result;
 }
 
 FONT_V2_SECTION(".text.font_v2_practice_append")

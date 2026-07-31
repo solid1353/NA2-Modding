@@ -56,6 +56,12 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - Treat the user's explicit observations and facts already established by
   evidence as binding for the current work. Do not investigate them again
   unless specific new evidence directly contradicts them.
+- When requested work concerns a state that is currently visible, open, or
+  running, inspect that exact current state through an authorized read-only
+  method before analyzing retained artifacts or making a change. Historical
+  screenshots, logs, disassembly, and prior observations may provide context
+  but never substitute for the current state. If it cannot be inspected, state
+  the exact missing access or input instead of inferring what is present.
 - When an attempted change has no effect after the execution path is proven,
   trace forward from the last proven point to the first unproven value or
   consumer. Do not reopen builds, tools, hooks, inputs, or other earlier layers

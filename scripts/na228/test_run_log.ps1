@@ -153,10 +153,15 @@ try {
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeSettings 'watchers.json') -Content @'
 {
   "schema_version": 1,
+  "default_target": "font",
   "targets": {
     "font": {
       "overlay_plan": "scripts/injection/targets/font.json",
       "whole_source": true
+    },
+    "injection_test": {
+      "source_id": "hot_reload_message",
+      "entry": "project.hot_reload_message"
     }
   }
 }
@@ -544,6 +549,28 @@ else {
             )
         ) `
         -Message 'Standalone whole-Font watch target was not forwarded.'
+    $standaloneDefaultWatch = (
+        & (Join-Path $fakeRepository 'na228.ps1') w
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $standaloneDefaultWatch -match (
+                '\[fake\] watch 0 .*' +
+                'plan=scripts/injection/targets/font\.json wholeSource=True'
+            )
+        ) `
+        -Message 'Bare watch command did not select the default whole-Font target.'
+    $standaloneInjectionTestWatch = (
+        & (Join-Path $fakeRepository 'na228.ps1') w injection_test
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $standaloneInjectionTestWatch -match (
+                '\[fake\] watch 0 source=hot_reload_message ' +
+                'entry=project\.hot_reload_message'
+            )
+        ) `
+        -Message 'Injection-test watch target did not select the smoke message.'
     $latestWatch = (
         & (Join-Path $fakeRepository 'na228.ps1') lw
     ) -join "`n"

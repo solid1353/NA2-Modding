@@ -162,7 +162,7 @@ default to ignored `build/injection/<source>/`; workstreams build under
 temporary. The maintained pipeline emits no PNACH, installation state,
 backup, dispatcher, or alternating-bank files.
 
-Build a project smoke candidate into the ignored default output:
+Build the project smoke-message candidate into the ignored default output:
 
 ```powershell
 & .\scripts\lib\run_python.ps1 `
@@ -204,14 +204,15 @@ applies it to their isolated PCSX2:
 
 The applier preserves the VM's prior running/paused state, writes the fragment
 and guarded callers while paused, clears execution caches, and uses no PNACH or
-cheat-folder state. `scripts/injection/watch.ps1` is the user-only equivalent;
-omit `-SourcePath`, `-SourceId`, and `-Entry` for the root smoke source, or pass
-an owning feature source/entry or overlay plan explicitly.
+cheat-folder state. `scripts/injection/watch.ps1` is the user-only equivalent.
+The user-facing `na228 w` command selects the complete registered Font target
+by default; `na228 w injection_test` selects only the root smoke-message source.
+An owning feature source/entry or overlay plan may still be passed explicitly.
 `settings/watchers.json` declares reusable user-facing target names; a direct
-task-owned overlay-plan
-path remains valid for current experiments. The compact `w` suffix chooses the
-PCSX2 instance, while the following optional target chooses what is rebuilt:
-`na228 nun5 blw font`. Standalone `na228 w [target|plan]` uses the
+task-owned overlay-plan path remains valid for current experiments. The compact
+`w` suffix chooses the PCSX2 instance, while the following optional target
+chooses what is rebuilt: `na228 nun5 blw font`. Standalone
+`na228 w [target|plan]` uses the
 configured development PINE port. Both forms wait up to 60 seconds for a live
 VM with the resident payload and injection target loaded. Agents invoke
 `test.ps1` and never run the watcher or its build/apply stages separately.

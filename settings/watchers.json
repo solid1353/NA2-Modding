@@ -1,9 +1,14 @@
 {
   "schema_version": 1,
+  "default_target": "font",
   "targets": {
     "font": {
       "overlay_plan": "scripts/injection/targets/font.json",
       "whole_source": true
+    },
+    "injection_test": {
+      "source_id": "hot_reload_message",
+      "entry": "project.hot_reload_message"
     }
   }
 }

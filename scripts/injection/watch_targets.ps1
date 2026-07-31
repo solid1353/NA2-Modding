@@ -8,13 +8,13 @@ function Get-Na228WatchTargetArguments {
         [psobject]$ProjectPaths
     )
 
-    if ([string]::IsNullOrWhiteSpace($Target)) {
-        return @{}
-    }
     if (
-        $Target.EndsWith('.json', [StringComparison]::OrdinalIgnoreCase) -or
-        $Target.Contains([IO.Path]::DirectorySeparatorChar) -or
-        $Target.Contains([IO.Path]::AltDirectorySeparatorChar)
+        -not [string]::IsNullOrWhiteSpace($Target) -and
+        (
+            $Target.EndsWith('.json', [StringComparison]::OrdinalIgnoreCase) -or
+            $Target.Contains([IO.Path]::DirectorySeparatorChar) -or
+            $Target.Contains([IO.Path]::AltDirectorySeparatorChar)
+        )
     ) {
         return @{ OverlayPlan = $Target }
     }
@@ -29,7 +29,19 @@ function Get-Na228WatchTargetArguments {
         throw 'Watch-target catalog has no targets object.'
     }
 
-    $name = $Target.ToLowerInvariant()
+    $name = if ([string]::IsNullOrWhiteSpace($Target)) {
+        $defaultProperty = $catalog.PSObject.Properties['default_target']
+        if (
+            $null -eq $defaultProperty -or
+            [string]::IsNullOrWhiteSpace([string]$defaultProperty.Value)
+        ) {
+            throw 'Watch-target catalog has no default_target.'
+        }
+        ([string]$defaultProperty.Value).ToLowerInvariant()
+    }
+    else {
+        $Target.ToLowerInvariant()
+    }
     $targetProperty = $targetsProperty.Value.PSObject.Properties[$name]
     if ($null -eq $targetProperty) {
         $available = @($targetsProperty.Value.PSObject.Properties.Name)

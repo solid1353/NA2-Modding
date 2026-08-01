@@ -79,7 +79,7 @@ if (-not [IO.Path]::Equals($isoItem.Directory.FullName, $projectPaths.source)) {
 }
 if ([string]::IsNullOrWhiteSpace($CvmPassword)) {
     $CvmPassword = switch ($isoItem.Name) {
-        'NUN6 A35.iso' { 'Iruka' }
+        'NUN6_A35.iso' { 'Iruka' }
         default { 'cc2fuku' }
     }
 }

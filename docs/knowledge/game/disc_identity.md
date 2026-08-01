@@ -48,7 +48,7 @@ browser; this does not weaken the exact static guard or size-preservation proof.
 
 PCSX2 uses its GameDB title for known serials. For a serial absent from the
 GameDB, the Game List falls back to the scanned image filename. The local cache
-confirmed this for the unknown `SLUS-55606`: `NUN6 A35.iso` appears as
+confirmed this for the unknown `SLUS-55606`: `NUN6_A35.iso` appears as
 `NUN6 A35`. Because normal project images are intentionally named
 `NA v2.28 - Latest.iso` and `NA v2.28 - Previous.iso`, `SLOP-NA228` appears in the
 Game List as `NA v2.28 - Latest` or `NA v2.28 - Previous` rather than

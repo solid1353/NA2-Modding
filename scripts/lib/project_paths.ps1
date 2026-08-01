@@ -164,6 +164,10 @@ function Get-Na2ProjectPaths {
         if ([int]$catalog.schema_version -ne 1) {
             throw "Unsupported game catalog schema: $($catalog.schema_version)"
         }
+        $gameResolver = Join-Path $PSScriptRoot 'resolve_game.py'
+        if (-not (Test-Path -LiteralPath $gameResolver -PathType Leaf)) {
+            throw "Game resolver not found: $gameResolver"
+        }
 
         $resolveGameConfigValue = {
             param([string]$Label, [object]$Value)
@@ -273,7 +277,7 @@ function Get-Na2ProjectPaths {
             }
 
             foreach ($gameName in $gameNames) {
-                if ($gameName -cnotmatch '^[a-z][a-z0-9]*$') {
+                if ($gameName -cnotmatch '^[A-Za-z0-9][A-Za-z0-9_]*$') {
                     throw "Invalid canonical game selector: $gameName"
                 }
                 if (-not $allSelectors.Add($gameName)) {
@@ -294,9 +298,7 @@ function Get-Na2ProjectPaths {
                     $definition.PSObject.Properties |
                         Where-Object Name -notin @(
                             'aliases',
-                            'postfix',
-                            'iso',
-                            'extracted'
+                            'postfix'
                         )
                 )) {
                     $configName = $configProperty.Name
@@ -307,108 +309,59 @@ function Get-Na2ProjectPaths {
                         "Game '$gameName' configuration '$configName'" `
                         $configProperty.Value
                 }
+                $resolverOutput = & python -B $gameResolver $gameName
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Game resolver failed for '$gameName'."
+                }
+                $derived = ($resolverOutput -join "`n") | ConvertFrom-Json
+                $isoPath = [IO.Path]::GetFullPath([string]$derived.iso)
+                $memoryCardPath = [IO.Path]::GetFullPath(
+                    [string]$derived.memory_card
+                )
+                $resolvedGameConfig['input_profile'] = [IO.Path]::GetFullPath(
+                    [string]$derived.input_profile
+                )
+                if (-not $resolvedFiles.Contains('input_profile')) {
+                    $resolvedFiles['input_profile'] = $resolvedGameConfig.input_profile
+                }
+                $postfix = if ($category -eq 'builds') {
+                    [string]$definition.postfix
+                }
+                else { '' }
                 if ($category -eq 'builds') {
-                    $title = [string]$resolvedCategoryConfig.title
-                    if ([string]::IsNullOrWhiteSpace($title) -or
-                        $title -ne [IO.Path]::GetFileName($title)) {
-                        throw "Game catalog has an invalid build title: $title"
-                    }
-                    $memoryCardTemplate = [string]$resolvedCategoryConfig.memory_card
-                    if ([string]::IsNullOrWhiteSpace($memoryCardTemplate)) {
-                        throw 'Game catalog has no build memory_card.'
-                    }
-                    $postfix = [string]$definition.postfix
-                    if ([string]::IsNullOrWhiteSpace($postfix) -or
-                        $postfix -ne [IO.Path]::GetFileName($postfix)) {
-                        throw "Game '$gameName' has an invalid build postfix: $postfix"
-                    }
-                    if (-not $resolved.Contains('build')) {
-                        throw "Build game '$gameName' requires project root 'build'."
-                    }
-                    $isoPath = [IO.Path]::GetFullPath((
-                        Join-Path $resolved.build "$title - $postfix.iso"
-                    ))
-                    $memoryCardDirectory = [IO.Path]::GetDirectoryName(
-                        $memoryCardTemplate
+                    $resolvedGameConfig['cheat_template'] = [IO.Path]::GetFullPath(
+                        [string]$derived.cheats
                     )
-                    $memoryCardStem = [IO.Path]::GetFileNameWithoutExtension(
-                        $memoryCardTemplate
+                    $resolvedGameConfig['gamesettings_template'] = [IO.Path]::GetFullPath(
+                        [string]$derived.game_settings
                     )
-                    $memoryCardExtension = [IO.Path]::GetExtension(
-                        $memoryCardTemplate
-                    )
-                    $memoryCardPath = [IO.Path]::GetFullPath((
-                        Join-Path $memoryCardDirectory (
-                            "$memoryCardStem - $postfix$memoryCardExtension"
-                        )
-                    ))
+                    if (-not $resolvedFiles.Contains('cheat_template')) {
+                        $resolvedFiles['cheat_template'] = $resolvedGameConfig.cheat_template
+                    }
+                    if (-not $resolvedFiles.Contains('gamesettings_template')) {
+                        $resolvedFiles['gamesettings_template'] = $resolvedGameConfig.gamesettings_template
+                    }
                 }
                 else {
-                    $iso = [string]$definition.iso
-                    $isoMatch = [regex]::Match(
-                        $iso,
-                        '^@(?<root>[^/\\]+)[/\\](?<child>.+)$'
+                    $extractedPath = [IO.Path]::GetFullPath(
+                        [string]$derived.extracted
                     )
-                    if (-not $isoMatch.Success) {
-                        throw "Game '$gameName' has an invalid ISO path: $iso"
-                    }
-                    $rootName = $isoMatch.Groups['root'].Value
-                    if (-not $resolved.Contains($rootName)) {
-                        throw "Game '$gameName' references unknown project root '$rootName': $iso"
-                    }
-                    $child = $isoMatch.Groups['child'].Value
-                    if ([IO.Path]::IsPathRooted($child)) {
-                        throw "Game '$gameName' has an invalid root-relative ISO path: $iso"
-                    }
-                    $rootPath = [string]$resolved[$rootName]
-                    $isoPath = [IO.Path]::GetFullPath((Join-Path $rootPath $child))
-                    $rootPrefix = $rootPath.TrimEnd(
-                        [IO.Path]::DirectorySeparatorChar,
-                        [IO.Path]::AltDirectorySeparatorChar
-                    ) + [IO.Path]::DirectorySeparatorChar
-                    if (-not $isoPath.StartsWith(
-                        $rootPrefix,
-                        [StringComparison]::OrdinalIgnoreCase
-                    )) {
-                        throw "Game '$gameName' ISO path must remain within '$rootName': $iso"
-                    }
-
-                    $extracted = [string]$definition.extracted
-                    $extractedMatch = [regex]::Match(
-                        $extracted,
-                        '^@(?<root>[^/\\]+)[/\\](?<child>.+)$'
+                    $resolvedGameConfig['cheats'] = [IO.Path]::GetFullPath(
+                        [string]$derived.cheats
                     )
-                    if (-not $extractedMatch.Success) {
-                        throw "Game '$gameName' has an invalid extracted path: $extracted"
-                    }
-                    $extractedRootName = $extractedMatch.Groups['root'].Value
-                    if (-not $resolved.Contains($extractedRootName)) {
-                        throw "Game '$gameName' extracted path references unknown project root '$extractedRootName'."
-                    }
-                    $extractedRoot = [string]$resolved[$extractedRootName]
-                    $extractedPath = [IO.Path]::GetFullPath((
-                        Join-Path $extractedRoot $extractedMatch.Groups['child'].Value
-                    ))
-                    $extractedPrefix = $extractedRoot.TrimEnd(
-                        [IO.Path]::DirectorySeparatorChar,
-                        [IO.Path]::AltDirectorySeparatorChar
-                    ) + [IO.Path]::DirectorySeparatorChar
-                    if (-not $extractedPath.StartsWith(
-                        $extractedPrefix,
-                        [StringComparison]::OrdinalIgnoreCase
-                    )) {
-                        throw "Game '$gameName' extracted path must remain within '$extractedRootName'."
-                    }
+                    $resolvedGameConfig['game_settings'] = [IO.Path]::GetFullPath(
+                        [string]$derived.game_settings
+                    )
+                    $resolvedGameConfig['memory_card'] = $memoryCardPath
                     if (-not $AllowMissing -and
                         -not (Test-Path -LiteralPath $extractedPath)) {
                         throw "Configured source extraction for '$gameName' does not exist: $extractedPath"
                     }
-                    $derivedRootName = "source_$gameName"
+                    $derivedRootName = "source_$($gameName.ToLowerInvariant())"
                     if ($resolved.Contains($derivedRootName)) {
                         throw "Project root '$derivedRootName' duplicates games.json."
                     }
                     $resolved[$derivedRootName] = $extractedPath
-
                 }
 
                 $aliasesProperty = $definition.PSObject.Properties['aliases']
@@ -420,22 +373,32 @@ function Get-Na2ProjectPaths {
                 }
                 foreach ($alias in $aliases) {
                     if ($alias -isnot [string] -or
-                        $alias -cnotmatch '^[a-z][a-z0-9]*$') {
+                        $alias -cnotmatch '^[A-Za-z0-9][A-Za-z0-9_]*$') {
                         throw "Invalid alias for game '$gameName': $alias"
                     }
                     if (-not $allSelectors.Add($alias)) {
                         throw "Duplicate game selector or alias: $alias"
                     }
                     $resolvedGameAliases[$alias] = $gameName
+                    if ($category -eq 'sources') {
+                        $aliasName = $alias.ToLowerInvariant()
+                        if (-not $resolved.Contains("source_$aliasName")) {
+                            $resolved["source_$aliasName"] = $extractedPath
+                        }
+                        if (-not $resolvedFiles.Contains("${aliasName}_iso")) {
+                            $resolvedFiles["${aliasName}_iso"] = $isoPath
+                        }
+                    }
                 }
 
-                $fileName = "${gameName}_iso"
+                $gameKey = $gameName.ToLowerInvariant()
+                $fileName = "${gameKey}_iso"
                 if ($resolvedFiles.Contains($fileName)) {
                     throw "Project file '$fileName' duplicates games.json."
                 }
                 $resolvedFiles[$fileName] = $isoPath
                 if ($null -ne $memoryCardPath) {
-                    $memoryCardFileName = "${gameName}_memory_card"
+                    $memoryCardFileName = "${gameKey}_memory_card"
                     if ($resolvedFiles.Contains($memoryCardFileName)) {
                         throw "Project file '$memoryCardFileName' duplicates games.json."
                     }

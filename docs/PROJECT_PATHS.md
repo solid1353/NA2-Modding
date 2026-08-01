@@ -29,8 +29,8 @@ The manifest currently defines these stable logical names:
 - `source`: read-only original media and extracted views under
   `@workshop/source/`.
 - `source_na2`, `source_nun3`, `source_nun5`, and `source_nun6`: derived by
-  the loaders from each source game's `extracted` path in
-  `settings/games.json`.
+  the game resolver from each canonical source identifier. `NUN6` aliases the
+  canonical `NUN6_A35` source while retaining the established root name.
 - `analysis`: shared reverse-engineering projects and disassembly exports under
   `@workshop/analysis/`.
 - `utils`: shared utilities under `@workshop/tools/`, including Ghidra and
@@ -96,12 +96,12 @@ their producing workflow runs. File entries reference a named root with
 
 The loaders additionally expose catalog-derived compatibility files:
 
-- `<source>_iso` from each direct `sources.<source>.iso` entry.
+- `<source>_iso` from the canonical source identifier.
 - `<build>_iso` as `@build/<builds.title> - <postfix>.iso`.
 - `<build>_memory_card` as
-  the configured `builds.memory_card` stem plus ` - <postfix>`.
+  `@pcsx2_memory_cards/<builds.title> - <postfix>.ps2`.
 - `input_profile` from the root catalog configuration.
-- `cheat_template` and `gamesettings_template` from build-wide configuration.
+- `cheat_template` and `gamesettings_template` from `builds.serial`.
 
 PowerShell accesses these as `$projectPaths.files.na2_iso` and
 `$projectPaths.files.latest_iso`. Python accesses them through calls such as
@@ -109,26 +109,35 @@ PowerShell accesses these as `$projectPaths.files.na2_iso` and
 
 ## Game catalog
 
-`settings/games.json` keeps `sources` as a direct game map. `builds` contains
-shared build configuration plus an `entries` map because those keys occupy the
-same section. Empty optional values are omitted.
+`settings/games.json` keeps `sources` as a direct game map. A source's
+canonical key is also its ISO, extraction-directory, and memory-card filename
+stem. Each source stores only `serial`, `crc`, aliases, and genuine overrides.
+`builds` contains the shared build `title` and `serial` plus an `entries` map.
+Empty optional values are omitted.
 
 Configuration inherits from root `config`, then category-wide build
 configuration, then a game's own non-structural fields. The current root
 default is the base `input_profile`; NA2 overrides it with the generated
-`Base_NA2` mapping. Source entries also register their `cheats`,
-`game_settings`, and `memory_card` files. Build entries derive their ISO and
-memory-card names
-from one `postfix`, while their CRC-named cheats and GameSettings continue to
-be produced from the build templates.
+`Base_NA2` mapping.
 
-Keep per-game configuration fields in this order when present: `cheats`,
-`game_settings`, `memory_card`, `input_profile`. Build-wide equivalents use
-`title`, `cheat_template`, `gamesettings_template`, `memory_card`.
+`scripts/lib/resolve_game.py <selector>` is the sole derivation entry point for
+PowerShell. It resolves one selector case-insensitively and prints one JSON
+object containing absolute `iso`, `extracted` when applicable, `cheats`,
+`game_settings`, `memory_card`, and resolved `input_profile` paths. The catalog
+stores only the profile name; the resolver appends `.ini` under
+`@pcsx2_input_profiles`. Python callers import
+`resolve_game()` from `scripts.lib.game_catalog`; they do not start another
+Python process.
+
+Source ISO, extraction, and memory-card paths derive from the canonical key;
+cheats and GameSettings derive from `serial` plus `crc`. Build ISO and
+memory-card paths derive from `title` plus the entry `postfix`; build template
+paths derive from `serial`.
 
 The PowerShell loader exposes canonical selectors and aliases through
-`$projectPaths.games`. The build aliases `l`, `p`, and `t` resolve to `latest`,
-`previous`, and `test`.
+`$projectPaths.games`. Matching is case-insensitive. The build aliases `l`,
+`p`, and `t` resolve to `latest`, `previous`, and `test`; `NUN6` resolves to
+the canonical `NUN6_A35` source.
 
 ## PowerShell
 
@@ -149,7 +158,7 @@ should not be moved during an ordinary directory migration.
 ## Python
 
 Repository Python code imports the shared loader from
-`na228_builder.project_paths`. Preserved menu-input research tools use their small
+`scripts.lib.project_paths`. Preserved menu-input research tools use their small
 local `scripts/research/menu_input/project_paths.py` bootstrap:
 
 ```python

@@ -32,8 +32,8 @@ NA2.28 PCSX2 actualization:
 - A zero-byte cheat template removes its managed PCSX2 CRC aliases. Other game
   identities, real files, and unrelated symlinks are preserved.
 - Latest, Previous, and Test select the existing
-  `NA228 - Latest.ps2`, `NA228 - Previous.ps2`, and
-  `NA228 - Test.ps2` cards respectively. When multiple images share one
+  `NA v2.28 - Latest.ps2`, `NA v2.28 - Previous.ps2`, and
+  `NA v2.28 - Test.ps2` cards respectively. When multiple images share one
   PCSX2 serial/CRC identity, the single GameSettings file is deduplicated with
   Latest taking precedence. Actualization never creates, copies, or modifies
   the templates or configured memory cards.

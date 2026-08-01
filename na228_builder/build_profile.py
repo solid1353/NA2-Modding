@@ -21,7 +21,7 @@ from .payload_builder import builder as payload_builder_module
 from .payload_builder import integration as payload_integration_module
 from .payload_builder.operations import ResidentPayloadBuild
 from .profile import Profile, ProfileModule, load_profile
-from .project_paths import load_project_paths
+from scripts.lib.project_paths import load_project_paths
 
 
 PROJECT_PATHS = load_project_paths(Path(__file__).resolve(), allow_missing=True)

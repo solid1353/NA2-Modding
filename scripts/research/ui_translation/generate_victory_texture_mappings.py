@@ -15,7 +15,7 @@ if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
 from na228_builder.modules.texture_patcher import engine  # noqa: E402
-from na228_builder.project_paths import load_project_paths  # noqa: E402
+from scripts.lib.project_paths import load_project_paths  # noqa: E402
 
 
 MODE1_PATH = re.compile(r"3EYE/3([A-Z0-9]{3})3PCT\.CCS")

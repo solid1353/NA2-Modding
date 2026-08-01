@@ -23,7 +23,7 @@ from na228_builder.payload_builder.operations import (
     PayloadFragment,
     PayloadRelocation,
 )
-from na228_builder.project_paths import load_project_paths
+from scripts.lib.project_paths import load_project_paths
 
 
 EM_MIPS = 8

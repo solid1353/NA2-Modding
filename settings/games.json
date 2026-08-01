@@ -1,13 +1,11 @@
 {
   "schema_version": 1,
   "config": {
-    "input_profile": "@pcsx2_input_profiles/Base.ini"
+    "input_profile": "Base"
   },
   "builds": {
     "title": "NA v2.28",
-    "cheat_template": "@pcsx2_cheats/_SLOP-NA228.pnach",
-    "gamesettings_template": "@pcsx2_game_settings/_SLOP-NA228.ini",
-    "memory_card": "@pcsx2_memory_cards/NA228.ps2",
+    "serial": "SLOP-NA228",
     "entries": {
       "latest": {
         "aliases": ["l"],
@@ -24,46 +22,23 @@
     }
   },
   "sources": {
-    "na2": {
-      "title": "NA2",
+    "NA2": {
       "serial": "SLPS-25837",
-      "CRC": "C0659AD1",
-      "iso": "@source/NA2.iso",
-      "extracted": "@source/NA2.iso.files",
-      "cheats": "@pcsx2_cheats/SLPS-25837_C0659AD1.pnach",
-      "game_settings": "@pcsx2_game_settings/SLPS-25837_C0659AD1.ini",
-      "memory_card": "@pcsx2_memory_cards/NA2.ps2",
-      "input_profile": "@pcsx2_input_profiles/Base_NA2.ini"
+      "crc": "C0659AD1",
+      "input_profile": "Base_NA2"
     },
-    "nun3": {
-      "title": "NUN3",
+    "NUN3": {
       "serial": "SLUS-21727",
-      "CRC": "EE3737A4",
-      "iso": "@source/NUN3.iso",
-      "extracted": "@source/NUN3.iso.files",
-      "cheats": "@pcsx2_cheats/SLUS-21727_EE3737A4.pnach",
-      "game_settings": "@pcsx2_game_settings/SLUS-21727_EE3737A4.ini",
-      "memory_card": "@pcsx2_memory_cards/NUN3.ps2"
+      "crc": "EE3737A4"
     },
-    "nun5": {
-      "title": "NUN5",
+    "NUN5": {
       "serial": "SLES-55605",
-      "CRC": "C071D4C1",
-      "iso": "@source/NUN5.iso",
-      "extracted": "@source/NUN5.iso.files",
-      "cheats": "@pcsx2_cheats/SLES-55605_C071D4C1.pnach",
-      "game_settings": "@pcsx2_game_settings/SLES-55605_C071D4C1.ini",
-      "memory_card": "@pcsx2_memory_cards/NUN5.ps2"
+      "crc": "C071D4C1"
     },
-    "nun6": {
-      "title": "NUN6 A35",
+    "NUN6_A35": {
+      "aliases": ["NUN6"],
       "serial": "SLUS-55606",
-      "CRC": "688C83D6",
-      "iso": "@source/NUN6 A35.iso",
-      "extracted": "@source/NUN6 A35.iso.files",
-      "cheats": "@pcsx2_cheats/SLUS-55606_688C83D6.pnach",
-      "game_settings": "@pcsx2_game_settings/SLUS-55606_688C83D6.ini",
-      "memory_card": "@pcsx2_memory_cards/NUN6 A35.ps2"
+      "crc": "688C83D6"
     }
   }
 }

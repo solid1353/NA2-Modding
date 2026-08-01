@@ -35,14 +35,15 @@ try {
         ) |
         Out-Null
 
-    $catalog = Get-Content -Raw -LiteralPath (
-        Join-Path $PSScriptRoot '..\..\..\settings\games.json'
-    ) | ConvertFrom-Json
+    $resolver = Join-Path $PSScriptRoot '..\..\lib\resolve_game.py'
+    $latestGame = (& python -B $resolver latest | ConvertFrom-Json)
+    $previousGame = (& python -B $resolver previous | ConvertFrom-Json)
+    $testGame = (& python -B $resolver test | ConvertFrom-Json)
     $cheatTemplate = Join-Path $cheats (
-        [IO.Path]::GetFileName([string]$catalog.builds.cheat_template)
+        [IO.Path]::GetFileName([string]$latestGame.cheats)
     )
     $gameSettingsTemplate = Join-Path $gameSettings (
-        [IO.Path]::GetFileName([string]$catalog.builds.gamesettings_template)
+        [IO.Path]::GetFileName([string]$latestGame.game_settings)
     )
     [IO.File]::WriteAllText(
         $cheatTemplate,
@@ -60,9 +61,15 @@ try {
     $latestPostfix = 'Latest'
     $previousPostfix = 'Previous'
     $testPostfix = 'Test'
-    $latestMemoryCard = Join-Path $memoryCards "NA228 - $latestPostfix.ps2"
-    $previousMemoryCard = Join-Path $memoryCards "NA228 - $previousPostfix.ps2"
-    $testMemoryCard = Join-Path $memoryCards "NA228 - $testPostfix.ps2"
+    $latestMemoryCard = Join-Path $memoryCards (
+        [IO.Path]::GetFileName([string]$latestGame.memory_card)
+    )
+    $previousMemoryCard = Join-Path $memoryCards (
+        [IO.Path]::GetFileName([string]$previousGame.memory_card)
+    )
+    $testMemoryCard = Join-Path $memoryCards (
+        [IO.Path]::GetFileName([string]$testGame.memory_card)
+    )
     $memoryCardInputs = @(
         [pscustomobject]@{
             Path = $latestMemoryCard
@@ -190,7 +197,12 @@ try {
         else {
             $role.Role
         }
-        $expectedMemoryCard = "NA228 - $settingsOwner.ps2"
+        $expectedMemoryCardPath = switch ($settingsOwner) {
+            'Latest' { $latestMemoryCard }
+            'Previous' { $previousMemoryCard }
+            'Test' { $testMemoryCard }
+        }
+        $expectedMemoryCard = [IO.Path]::GetFileName($expectedMemoryCardPath)
         Assert-Na2ActualizeTest `
             -Condition (
                 (Get-Na2IniValue `

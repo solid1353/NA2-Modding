@@ -10,7 +10,7 @@ from na228_builder.modules.string_patcher import engine as string_patcher
 from na228_builder.modules.translation_importer import engine as translation_importer
 from na228_builder.payload_builder import builder as payload_builder
 from na228_builder.payload_builder import integration as payload_integration
-from na228_builder.project_paths import load_project_paths
+from scripts.lib.project_paths import load_project_paths
 
 
 class IntegratedExternalStringTests(unittest.TestCase):

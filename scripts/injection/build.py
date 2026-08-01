@@ -31,7 +31,7 @@ from na228_builder.payload_builder.operations import (
 )
 from na228_builder.modules.runtime_injector.engine import _load_static_fragments
 from na228_builder.image_assembler.iso9660 import Iso9660
-from na228_builder.project_paths import load_project_paths
+from scripts.lib.project_paths import load_project_paths
 
 
 SYMBOL_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")

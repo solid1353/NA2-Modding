@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.project_paths import load_project_paths
+from scripts.lib.project_paths import load_project_paths
 
 
 class ProjectPathTests(unittest.TestCase):
@@ -229,15 +229,11 @@ class ProjectPathTests(unittest.TestCase):
             catalog = {
                 "schema_version": 1,
                 "config": {
-                    "input_profile": "@pcsx2_input_profiles/Base.ini"
+                    "input_profile": "Base"
                 },
                 "builds": {
                     "title": "NA v2.28",
-                    "cheat_template": "@pcsx2_cheats/_SLOP-NA228.pnach",
-                    "gamesettings_template": (
-                        "@pcsx2_game_settings/_SLOP-NA228.ini"
-                    ),
-                    "memory_card": "@pcsx2_memory_cards/NA228.ps2",
+                    "serial": "SLOP-NA228",
                     "entries": {
                         "latest": {
                             "aliases": ["l"],
@@ -250,24 +246,14 @@ class ProjectPathTests(unittest.TestCase):
                     },
                 },
                 "sources": {
-                    "na2": {
-                        "iso": "@source/NA2.iso",
-                        "extracted": "@source/NA2.iso.files",
-                        "cheats": "@pcsx2_cheats/SLPS-25837_C0659AD1.pnach",
-                        "game_settings": (
-                            "@pcsx2_game_settings/SLPS-25837_C0659AD1.ini"
-                        ),
-                        "memory_card": "@pcsx2_memory_cards/NA2.ps2",
-                        "input_profile": "@pcsx2_input_profiles/Base_NA2.ini",
+                    "NA2": {
+                        "serial": "SLPS-25837",
+                        "crc": "C0659AD1",
+                        "input_profile": "Base_NA2",
                     },
-                    "nun5": {
-                        "iso": "@source/NUN5.iso",
-                        "extracted": "@source/NUN5.iso.files",
-                        "cheats": "@pcsx2_cheats/SLUS-21727_EE3737A4.pnach",
-                        "memory_card": "@pcsx2_memory_cards/NUN5.ps2",
-                        "game_settings": (
-                            "@pcsx2_game_settings/SLUS-21727_EE3737A4.ini"
-                        ),
+                    "NUN5": {
+                        "serial": "SLUS-21727",
+                        "crc": "EE3737A4",
                     },
                 },
             }
@@ -287,7 +273,7 @@ class ProjectPathTests(unittest.TestCase):
             )
             self.assertEqual(
                 paths.file("latest_memory_card"),
-                root.resolve() / "pcsx2/memory_cards/NA228 - Latest.ps2",
+                root.resolve() / "pcsx2/memory_cards/NA v2.28 - Latest.ps2",
             )
             self.assertEqual(
                 paths.file("nun5_iso"),
@@ -310,12 +296,18 @@ class ProjectPathTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "build").mkdir()
+            (root / "pcsx2/cheats").mkdir(parents=True)
+            (root / "pcsx2/game_settings").mkdir(parents=True)
+            (root / "pcsx2/input_profiles").mkdir(parents=True)
             (root / "pcsx2/memory_cards").mkdir(parents=True)
             manifest = {
                 "schema_version": 1,
                 "roots": {
                     "repository": ".",
                     "build": "build",
+                    "pcsx2_cheats": "pcsx2/cheats",
+                    "pcsx2_game_settings": "pcsx2/game_settings",
+                    "pcsx2_input_profiles": "pcsx2/input_profiles",
                     "pcsx2_memory_cards": "pcsx2/memory_cards",
                 },
                 "files": {
@@ -325,9 +317,10 @@ class ProjectPathTests(unittest.TestCase):
             }
             catalog = {
                 "schema_version": 1,
+                "config": {"input_profile": "Base"},
                 "builds": {
                     "title": "NA v2.28",
-                    "memory_card": "@pcsx2_memory_cards/NA228.ps2",
+                    "serial": "SLOP-NA228",
                     "entries": {
                         "latest": {
                             "postfix": "Latest",
@@ -335,9 +328,9 @@ class ProjectPathTests(unittest.TestCase):
                     }
                 },
                 "sources": {
-                    "na2": {
-                        "iso": "@build/NA2.iso",
-                        "extracted": "@build",
+                    "NA2": {
+                        "serial": "SLPS-25837",
+                        "crc": "C0659AD1",
                     }
                 },
             }

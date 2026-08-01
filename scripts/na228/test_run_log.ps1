@@ -98,6 +98,10 @@ try {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\..\na228.ps1') -Destination $fakeRepository
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\lib\project_paths.ps1') `
         -Destination (Join-Path $fakeRepository 'scripts\lib')
+    foreach ($pythonFile in 'project_paths.py', 'game_catalog.py', 'resolve_game.py') {
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot "..\lib\$pythonFile") `
+            -Destination (Join-Path $fakeRepository 'scripts\lib')
+    }
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\lib\run_log.ps1') `
         -Destination (Join-Path $fakeRepository 'scripts\lib')
     $fakeNa2Scripts = Join-Path $fakeRepository 'scripts\na228'
@@ -130,6 +134,9 @@ try {
     "builder": "na228_builder",
     "pcsx2_stable": "pcsx2_stable",
     "pcsx2_files": "pcsx2_files",
+    "pcsx2_cheats": "@pcsx2_files/cheats",
+    "pcsx2_game_settings": "@pcsx2_files/game_settings",
+    "pcsx2_input_profiles": "@pcsx2_files/input_profiles",
     "pcsx2_memory_cards": "@pcsx2_files/memory_cards",
     "scripts": "scripts",
     "pcsx2_scripts": "@scripts/pcsx2",
@@ -150,9 +157,12 @@ try {
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeSettings 'games.json') -Content @'
 {
   "schema_version": 1,
+  "config": {
+    "input_profile": "Base"
+  },
   "builds": {
-    "title": "NA2.28",
-    "memory_card": "@pcsx2_memory_cards/NA228.ps2",
+    "title": "NA v2.28",
+    "serial": "SLOP-NA228",
     "entries": {
       "latest": { "aliases": ["l"], "postfix": "Latest" },
       "previous": { "aliases": ["p"], "postfix": "Previous" },
@@ -160,20 +170,22 @@ try {
     }
   },
   "sources": {
-    "na2": {
-      "iso": "@source/NA2.iso",
-      "extracted": "@source/NA2.iso.files"
+    "NA2": {
+      "serial": "SLPS-25837",
+      "crc": "C0659AD1",
+      "input_profile": "Base_NA2"
     },
-    "nun5": {
-      "iso": "@source/NUN5.iso",
-      "extracted": "@source/NUN5.iso.files"
+    "NUN5": {
+      "serial": "SLES-55605",
+      "crc": "C071D4C1"
     }
   }
 }
 '@
     foreach ($directory in @(
         'source', 'utils', 'build', 'logs', 'na228_builder', 'pcsx2_stable',
-        'pcsx2_files\memory_cards', 'scripts', 'source\NA2.iso.files',
+        'pcsx2_files\cheats', 'pcsx2_files\game_settings',
+        'pcsx2_files\input_profiles', 'pcsx2_files\memory_cards', 'scripts', 'source\NA2.iso.files',
         'source\NUN5.iso.files', 'work'
     )) {
         New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository $directory) | Out-Null

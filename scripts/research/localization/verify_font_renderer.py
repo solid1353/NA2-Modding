@@ -28,7 +28,7 @@ if str(REPOSITORY) not in sys.path:
 
 from na228_builder.modules.runtime_injector import engine  # noqa: E402
 from na228_builder.payload_builder import mips  # noqa: E402
-from na228_builder.project_paths import load_project_paths  # noqa: E402
+from scripts.lib.project_paths import load_project_paths  # noqa: E402
 from na228_builder.payload_builder import ee_c_fragments  # noqa: E402
 
 

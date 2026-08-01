@@ -10,7 +10,7 @@ import zlib
 from pathlib import Path
 from typing import Iterable
 
-from .project_paths import load_project_paths
+from scripts.lib.project_paths import load_project_paths
 
 
 RECEIPT_SCHEMA_VERSION = 1

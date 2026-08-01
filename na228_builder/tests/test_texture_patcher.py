@@ -7,7 +7,7 @@ from pathlib import Path
 
 from na228_builder.build_profile import write_texture_patch_log
 from na228_builder.modules.texture_patcher import engine
-from na228_builder.project_paths import load_project_paths
+from scripts.lib.project_paths import load_project_paths
 
 
 class UiTextureTests(unittest.TestCase):

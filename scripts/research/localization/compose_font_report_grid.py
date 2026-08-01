@@ -14,7 +14,7 @@ REPOSITORY_BOOTSTRAP = Path(__file__).resolve().parents[3]
 if str(REPOSITORY_BOOTSTRAP) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_BOOTSTRAP))
 
-from na228_builder.project_paths import load_project_paths
+from scripts.lib.project_paths import load_project_paths
 
 
 PROJECT_PATHS = load_project_paths(Path(__file__).resolve(), allow_missing=True)

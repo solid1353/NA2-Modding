@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
-from ...project_paths import load_project_paths, resolve_alias
+from scripts.lib.project_paths import load_project_paths, resolve_alias
 from ...source_media import IsoFileView, cvm_members
 
 try:

@@ -17,7 +17,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
-from na228_builder.project_paths import load_project_paths, resolve_alias
+from scripts.lib.project_paths import load_project_paths, resolve_alias
 from na228_builder.source_media import read_root_file
 
 PROJECT_PATHS = load_project_paths(REPOSITORY_ROOT, allow_missing=True)

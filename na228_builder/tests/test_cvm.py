@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 from na228_builder.cvm import CvmError, CvmIso, _crypt_sector, _rofs_key
 from na228_builder.image_assembler.iso9660 import Iso9660, IsoRecord, SECTOR
-from na228_builder.project_paths import load_project_paths
+from scripts.lib.project_paths import load_project_paths
 
 
 PASSWORD = "cc2fuku"

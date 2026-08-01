@@ -7,6 +7,8 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Mapping
 
+from .game_catalog import derive_game_paths
+
 
 MANIFEST_NAME = "project-paths.json"
 
@@ -48,8 +50,11 @@ def _find_manifest(start: Path) -> Path:
     raise FileNotFoundError(f"Could not find {MANIFEST_NAME} above {start}")
 
 
-def load_project_paths(
-    start: Path | None = None, *, allow_missing: bool = False
+def _load_project_paths(
+    start: Path | None = None,
+    *,
+    allow_missing: bool = False,
+    include_catalog: bool = True,
 ) -> ProjectPaths:
     manifest_path = _find_manifest(start or Path.cwd())
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -200,7 +205,7 @@ def load_project_paths(
             )
         files[name] = configured_path
 
-    catalog_path = files.get("game_catalog")
+    catalog_path = files.get("game_catalog") if include_catalog else None
     if catalog_path is not None:
         if not catalog_path.is_file():
             raise FileNotFoundError(f"Game catalog not found: {catalog_path}")
@@ -306,8 +311,8 @@ def load_project_paths(
                 if (
                     not isinstance(game_name, str)
                     or not game_name
-                    or not game_name[0].islower()
-                    or not game_name.isalnum()
+                    or not game_name[0].isalnum()
+                    or not game_name.replace("_", "").isalnum()
                 ):
                     raise ValueError(
                         f"Invalid canonical game selector: {game_name!r}"
@@ -333,8 +338,8 @@ def load_project_paths(
                     if (
                         not isinstance(alias, str)
                         or not alias
-                        or not alias[0].islower()
-                        or not alias.isalnum()
+                        or not alias[0].isalnum()
+                        or not alias.replace("_", "").isalnum()
                     ):
                         raise ValueError(
                             f"Invalid alias for game {game_name!r}: {alias!r}"
@@ -346,7 +351,7 @@ def load_project_paths(
                     selectors.add(alias.casefold())
 
                 memory_card_path: Path | None = None
-                structural_fields = {"aliases", "postfix", "iso", "extracted"}
+                structural_fields = {"aliases", "postfix"}
                 resolved_game_config = dict(resolved_category_config)
                 for config_name, raw_value in definition.items():
                     if config_name in structural_fields:
@@ -366,82 +371,38 @@ def load_project_paths(
                         raw_value,
                     )
 
+                derived = derive_game_paths(game_name, catalog, roots)
+                iso_path = derived["iso"]
+                memory_card_path = derived["memory_card"]
+                extracted_path = derived.get("extracted")
+                files.setdefault("input_profile", derived["input_profile"])
                 if category == "builds":
-                    title = resolved_category_config.get("title")
-                    if (
-                        not isinstance(title, str)
-                        or not title.strip()
-                        or Path(title).name != title
-                    ):
-                        raise ValueError(
-                            f"Game catalog has an invalid build title: {title!r}"
-                        )
-                    memory_card_template = resolved_category_config.get(
-                        "memory_card"
-                    )
-                    if not isinstance(memory_card_template, Path):
-                        raise ValueError(
-                            "Game catalog has no valid build memory_card"
-                        )
-                    postfix = definition.get("postfix")
-                    if (
-                        not isinstance(postfix, str)
-                        or not postfix.strip()
-                        or Path(postfix).name != postfix
-                    ):
-                        raise ValueError(
-                            f"Game {game_name!r} has an invalid build postfix: "
-                            f"{postfix!r}"
-                        )
-                    try:
-                        build_root = roots["build"]
-                    except KeyError as exc:
-                        raise ValueError(
-                            f"Build game {game_name!r} requires project root "
-                            f"{exc.args[0]!r}"
-                        ) from exc
-                    iso_path = build_root / f"{title} - {postfix}.iso"
-                    memory_card_path = memory_card_template.with_name(
-                        f"{memory_card_template.stem} - {postfix}"
-                        f"{memory_card_template.suffix}"
+                    files.setdefault("cheat_template", derived["cheats"])
+                    files.setdefault(
+                        "gamesettings_template", derived["game_settings"]
                     )
                 else:
-                    iso_path = resolve_catalog_value(
-                        f"Game {game_name!r} ISO path",
-                        definition.get("iso"),
-                    )
-                    extracted_path = resolve_catalog_value(
-                        f"Game {game_name!r} extracted path",
-                        definition.get("extracted"),
-                    )
-                    if not isinstance(iso_path, Path):
-                        raise ValueError(
-                            f"Game {game_name!r} ISO path is not a path"
-                        )
-                    if not isinstance(extracted_path, Path):
-                        raise ValueError(
-                            f"Game {game_name!r} extracted path is not a path"
-                        )
+                    assert extracted_path is not None
                     if not allow_missing and not extracted_path.exists():
                         raise FileNotFoundError(
                             f"Configured source extraction for {game_name!r}: "
                             f"{extracted_path}"
                         )
-                    root_name = f"source_{game_name}"
+                    root_name = f"source_{game_name.casefold()}"
                     if root_name in roots:
                         raise ValueError(
                             f"Project root {root_name!r} duplicates games.json"
                         )
                     roots[root_name] = extracted_path
 
-                file_name = f"{game_name}_iso"
+                file_name = f"{game_name.casefold()}_iso"
                 if file_name in files:
                     raise ValueError(
                         f"Project file {file_name!r} duplicates games.json"
                     )
                 files[file_name] = iso_path
                 if memory_card_path is not None:
-                    memory_card_file = f"{game_name}_memory_card"
+                    memory_card_file = f"{game_name.casefold()}_memory_card"
                     if memory_card_file in files:
                         raise ValueError(
                             f"Project file {memory_card_file!r} duplicates "
@@ -449,10 +410,32 @@ def load_project_paths(
                         )
                     files[memory_card_file] = memory_card_path
 
+                if category == "sources":
+                    for alias in aliases:
+                        alias_name = alias.casefold()
+                        roots.setdefault(f"source_{alias_name}", extracted_path)
+                        files.setdefault(f"{alias_name}_iso", iso_path)
+
     return ProjectPaths(
         manifest_path,
         MappingProxyType(roots),
         MappingProxyType(files),
+    )
+
+
+def load_base_project_paths(
+    start: Path | None = None, *, allow_missing: bool = False
+) -> ProjectPaths:
+    return _load_project_paths(
+        start, allow_missing=allow_missing, include_catalog=False
+    )
+
+
+def load_project_paths(
+    start: Path | None = None, *, allow_missing: bool = False
+) -> ProjectPaths:
+    return _load_project_paths(
+        start, allow_missing=allow_missing, include_catalog=True
     )
 
 

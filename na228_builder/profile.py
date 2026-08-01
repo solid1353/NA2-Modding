@@ -9,7 +9,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from pathlib import Path
 
-from .project_paths import ProjectPaths, load_project_paths, resolve_alias
+from scripts.lib.project_paths import ProjectPaths, load_project_paths, resolve_alias
 
 
 ROOT_FIELDS = ["root_id", "path"]

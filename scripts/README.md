@@ -6,6 +6,11 @@ command.
 Everything else below `scripts/` is an internal workflow helper, a focused
 maintenance tool, or a preserved research utility.
 
+Extract embedded screenshots from one folder or selected savestates with
+`pcsx2/extract_savestate_screenshots.ps1 <paths...>`. Folder mode recreates the
+single `screenshots/` output directory; explicit same-folder files preserve
+unrelated outputs.
+
 Superseded implementations are removed and remain recoverable through Git
 history; do not recreate an archive directory for dead scripts.
 
@@ -266,6 +271,7 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 
 | Former path | Recovery commit | Retirement and maintained replacement |
 | --- | --- | --- |
+| `scripts/pcsx2/extract_savestate_screenshots.py` | `a7a19d9e` | Replaced by the user-facing PowerShell implementation `scripts/pcsx2/extract_savestate_screenshots.ps1`, which accepts either one folder or explicit same-folder savestates. |
 | `scripts/pcsx2/move_na228_savestates.ps1` | `82444b3a` | Renamed and generalized as `scripts/pcsx2/move_savestates.ps1`; pass a configured game or alias before the destination subpath. |
 | `scripts/pcsx2/game_commands.ps1` and `launch_pair.ps1` | `dae022c8` | Separate source-game functions and the pair/multi-game alias were consolidated into `na228.ps1` command routing and `scripts/na228/launch_games.ps1`. Pass game selectors directly to `na228`. |
 | `scripts/pcsx2/capture_state_screenshot.ps1` | `ec4b8276193bc214b526d5ab4f4f85b240ef7949` | Retired because it serialized a complete savestate solely to obtain a fresh screenshot. Extract `Screenshot.png` directly from an existing state; use `scripts/pcsx2/pine.py screenshot` for a fresh runtime frame. |

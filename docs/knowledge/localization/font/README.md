@@ -2217,3 +2217,74 @@ so that call does not execute after savestate load; the hook and wrapper are
 statically verified, but the objective's post-hook visible result is not
 runtime-proven by this state. This limitation does not apply to the arithmetic
 renderer, which executes continuously after resume.
+
+## Deferred Practice Settings left-column alignment
+
+The paired 2026-07-31 Practice Settings inputs are retained under
+`work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss1/` and
+`work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss3/`, with
+matching extracted screenshots and provenance in their sibling input trees.
+The ss1 state selects `Attack`; ss3 selects `Extra Hit Counter`.
+
+Both pairs show the same template-level defect: selected and ordinary
+left-column labels begin 9–10 native pixels farther right in NA2.28 than in
+NUN5, while ordinary-row vertical bounds already match. The right value
+column, differing option values, lower explanation text, and native selected
+style are separate paths. A future correction should move only the shared left
+option-label column to the NUN5 X origin while preserving current Y positions,
+selected styling, the right value column, title, footer, and explanation
+paths. The former epic subtask and its report grid were retired for later work.
+
+## Deferred structural Collection-family layout
+
+Collection uses these relevant list families:
+
+- ordinary characters: Figure, Ultimate Jutsu, and character-specific Music;
+- legacy characters: Ultimate Jutsu only;
+- Diorama;
+- Movie;
+- global Music;
+- the Characters index where applicable.
+
+Figure is the only narrow character-detail list. It retains the proven
+152-unit profile. The other listed families share the wider 192-unit profile.
+Movie and the accepted Naruto Figure target are regression baselines rather
+than separate future implementations. Fitting one-line rows must retain native
+glyph height and spacing. Wrapping occurs only after measured horizontal
+overflow; a completed multiline block also retains native glyph geometry when
+it fits vertically, and shrinking is a last resort only when the finished
+block exceeds its real container.
+
+The future implementation should keep one shared ETC list-renderer hook and
+replace exact-text pointer whitelists with structural page-family
+classification. Prefer a stable field in the live ETC owner/list object. If no
+reliable discriminator exists, tag the bounded shared owner callers or use
+compact page-family metadata in expandable `228.BIN`; never patch each
+character, row, or string independently. Fix the shared character-name header
+once and prove it first across Naruto Figure, Ultimate Jutsu, and
+character-specific Music. Check whether legacy Ultimate Jutsu pages use the
+same header caller before extending the correction.
+
+Raw NUN5 ETC records are not safe byte donors: homologous list records assign
+different meanings to fields at `+0x14/+0x18` and shift live resource fields.
+Port NUN5 classification and layout semantics instead of entire records or
+tables.
+
+The representative paired batch is retained at
+`work/Font/inputs/sstates/batches/2026-07-31-collection-ss4-8/`, with hashes
+and source aliases in `provenance.tsv`:
+
+- ss4: Naruto character-specific Music;
+- ss5: Naruto Classic Ultimate Jutsu;
+- ss6: Diorama;
+- ss7: global Music;
+- ss8: Sasori ordinary-character Ultimate Jutsu.
+
+Matching screenshots are under
+`work/Font/inputs/screenshots/batches/2026-07-31-collection-ss4-8/`. That tree
+also retains `character-index_NA228.png`; the user reported no Font defect on
+the Characters index, so it is reference-only and needs no paired savestate.
+One representative state per runtime family is sufficient. A future trial
+should prove the structural discriminator and two profiles across every
+representative family, preserve accepted Movie behavior, and retire the exact
+pointer whitelist only after the user accepts the shared result.

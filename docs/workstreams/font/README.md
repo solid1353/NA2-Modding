@@ -10,12 +10,8 @@ in the shared knowledge base rather than being duplicated here.
 
 ## Documents
 
-- [Architecture and implementation history; not active execution authority](plan.md)
+- [Architecture, implementation history, deferred work, and retired epic context](context.md)
 - [Confirmed font knowledge and preserved evidence](../../knowledge/localization/font/README.md)
-
-## Active epics
-
-- [Layout parity batches](epics/ss2-6-layout/README.md)
 
 ## Workstream policy
 

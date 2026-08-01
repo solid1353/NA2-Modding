@@ -8,7 +8,7 @@ maintenance tool, or a preserved research utility.
 Use the Workshop savestate interface for filing and screenshot extraction:
 
 ```powershell
-ws ss move <game> <subpath> [-Target dev|stable] [-Cleanup]
+ws ss move <game> <subpath> [-Target dev|stable] [-Cleanup|-c]
 ws ss extract <paths...>
 ```
 

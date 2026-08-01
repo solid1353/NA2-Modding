@@ -24,7 +24,8 @@ history; do not recreate an archive directory for dead scripts.
   the user-facing user/development single-instance and multi-game launch
   commands, the dot-sourced source-game command set, stable/development
   savestate filing, actualization dispatch/state/input-profile generation and
-  focused tests, the minimal hidden workstream-copy launcher, and
+  embedded-savestate screenshot extraction, focused tests, the minimal hidden
+  workstream-copy launcher, and
   `patch_savestate_memory.py` for exact-byte-guarded EE-memory patches in copied
   task-owned savestates, and `pine.py` for direct status, memory, pause, resume,
   execution-cache refresh, and native screenshot operations. Unsupported

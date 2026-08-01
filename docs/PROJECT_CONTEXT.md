@@ -205,7 +205,9 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   ordered combination of its registered ISO selectors; and
   `move_savestates.ps1 <game-or-alias> <subpath>` files only that selected
   game's development savestates by default, or stable savestates with
-  `-Target stable`, under `@user_savestates`.
+  `-Target stable`, under `@user_savestates`; and
+  `extract_savestate_screenshots.py <folder>` extracts every embedded
+  `Screenshot.png` beside its source savestate in that folder.
 - The custom development PCSX2 PINE interface retains reload-patches opcode
   `0x10` and adds native screenshot `0x11`, synchronous pause `0x12`,
   synchronous resume `0x13`, and EE execution-cache refresh `0x14`. Direct

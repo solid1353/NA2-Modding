@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from scripts.lib.game_catalog import derive_game_paths
 from scripts.lib.project_paths import load_project_paths
 
 
@@ -229,7 +230,7 @@ class ProjectPathTests(unittest.TestCase):
             catalog = {
                 "schema_version": 1,
                 "config": {
-                    "input_profile": "Base"
+                    "input_profile": "Default"
                 },
                 "builds": {
                     "title": "NA v2.28",
@@ -250,7 +251,6 @@ class ProjectPathTests(unittest.TestCase):
                     "NA2": {
                         "serial": "SLPS-25837",
                         "crc": "C0659AD1",
-                        "input_profile": "Base_NA2",
                     },
                     "NUN5": {
                         "serial": "SLUS-21727",
@@ -263,6 +263,12 @@ class ProjectPathTests(unittest.TestCase):
             (root / "settings").mkdir()
             (root / "settings/games.json").write_text(
                 json.dumps(catalog),
+                encoding="utf-8",
+            )
+            override_directory = root / "pcsx2/input_profiles/sources/games"
+            override_directory.mkdir(parents=True)
+            (override_directory / "NA2.ini").write_text(
+                "[Pad1]\nCross = SDL-0/FaceNorth\n",
                 encoding="utf-8",
             )
 
@@ -286,7 +292,27 @@ class ProjectPathTests(unittest.TestCase):
             )
             self.assertEqual(
                 paths.file("input_profile"),
-                root.resolve() / "pcsx2/input_profiles/Base.ini",
+                root.resolve() / "pcsx2/input_profiles/Default.ini",
+            )
+            na2_paths = derive_game_paths(
+                "NA2",
+                catalog,
+                {
+                    "build": root.resolve() / "build",
+                    "source": root.resolve() / "source",
+                    "pcsx2_cheats": root.resolve() / "pcsx2/cheats",
+                    "pcsx2_game_settings": root.resolve() / "pcsx2/game_settings",
+                    "pcsx2_input_profiles": root.resolve() / "pcsx2/input_profiles",
+                    "pcsx2_memory_cards": root.resolve() / "pcsx2/memory_cards",
+                },
+            )
+            self.assertEqual(
+                na2_paths["input_profile"],
+                root.resolve() / "pcsx2/input_profiles/Default_NA2.ini",
+            )
+            self.assertEqual(
+                na2_paths["input_profile_overrides"],
+                root.resolve() / "pcsx2/input_profiles/sources/games/NA2.ini",
             )
             self.assertEqual(
                 paths.file("cheat_template"),
@@ -318,7 +344,7 @@ class ProjectPathTests(unittest.TestCase):
             }
             catalog = {
                 "schema_version": 1,
-                "config": {"input_profile": "Base"},
+                "config": {"input_profile": "Default"},
                 "builds": {
                     "title": "NA v2.28",
                     "serial": "SLOP-NA228",

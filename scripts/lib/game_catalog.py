@@ -68,16 +68,20 @@ def derive_game_paths(
     if not isinstance(global_config, dict):
         raise ValueError("Game catalog 'config' must be an object")
     input_profile = _required_text(
-        definition.get("input_profile", global_config.get("input_profile")),
-        f"Game {canonical_name!r} input_profile",
+        global_config.get("input_profile"),
+        "Global input_profile",
     )
     if Path(input_profile).name != input_profile or Path(input_profile).suffix:
-        raise ValueError(
-            f"Game {canonical_name!r} input_profile must be a profile name"
-        )
-    input_profile_path = (
-        _root(roots, "pcsx2_input_profiles") / f"{input_profile}.ini"
+        raise ValueError("Global input_profile must be a profile name")
+    profile_root = _root(roots, "pcsx2_input_profiles")
+    input_profile_overrides = (
+        profile_root / "sources" / "games" / f"{canonical_name}.ini"
     )
+    override_enabled = input_profile_overrides.is_file()
+    resolved_profile = (
+        f"{input_profile}_{canonical_name}" if override_enabled else input_profile
+    )
+    input_profile_path = profile_root / f"{resolved_profile}.ini"
 
     if category == "sources":
         serial = _required_text(
@@ -100,6 +104,8 @@ def derive_game_paths(
             ),
             "input_profile": input_profile_path,
         }
+        if override_enabled:
+            result["input_profile_overrides"] = input_profile_overrides
         return result
 
     title = _required_text(section.get("title"), "Build title")
@@ -109,7 +115,7 @@ def derive_game_paths(
     postfix = _required_text(
         definition.get("postfix"), f"Game {canonical_name!r} postfix"
     )
-    return {
+    result = {
         "iso": _root(roots, "build") / f"{title} - {postfix}.iso",
         "cheats": _root(roots, "pcsx2_cheats") / f"{template_stem}.pnach",
         "game_settings": (
@@ -120,6 +126,9 @@ def derive_game_paths(
         ),
         "input_profile": input_profile_path,
     }
+    if override_enabled:
+        result["input_profile_overrides"] = input_profile_overrides
+    return result
 
 
 def resolve_game(selector: str) -> dict[str, str]:

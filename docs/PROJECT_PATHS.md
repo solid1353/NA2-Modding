@@ -117,15 +117,17 @@ stem. Each source stores only `serial`, `crc`, aliases, and genuine overrides.
 
 Configuration inherits from root `config`, then category-wide build
 configuration, then a game's own non-structural fields. The current root
-default is the base `input_profile`; NA2 overrides it with the generated
-`Base_NA2` mapping.
+default is the generated `input_profile`. When
+`input_profiles/sources/games/<GAME>.ini` exists for a canonical game selector,
+the resolver derives the generated complete `<profile>_<GAME>.ini` profile.
 
 `scripts/lib/resolve_game.py <selector>` is the sole derivation entry point for
 PowerShell. It resolves one selector case-insensitively and prints one JSON
 object containing absolute `iso`, `extracted` when applicable, `cheats`,
-`game_settings`, `memory_card`, and resolved `input_profile` paths. The catalog
-stores only the profile name; the resolver appends `.ini` under
-`@pcsx2_input_profiles`. Python callers import
+`game_settings`, `memory_card`, and resolved `input_profile` paths. Games with
+an override also include the absolute `input_profile_overrides` path. The
+catalog stores only the default profile name; the resolver derives canonical
+game inputs and generated filenames under `@pcsx2_input_profiles`. Python callers import
 `resolve_game()` from `scripts.lib.game_catalog`; they do not start another
 Python process.
 

@@ -4,6 +4,9 @@ param(
     [ValidateSet('na228', 'input', 'help')]
     [string]$Mode,
 
+    [Parameter(Position = 1)]
+    [string]$InputProfile,
+
     [Alias('h')]
     [switch]$Help,
 
@@ -23,7 +26,7 @@ if ($Help -or $Mode -ceq 'help') {
         'Actualization commands:'
         '  act        Run na228, then input'
         '  act na228    Actualize built NA2.28 GameSettings and cheat aliases'
-        '  act input  Regenerate the Base_NA2 input profile from Base'
+        '  act input [profile]  Generate input profiles and update GameSettings'
         '  act help   Show this help'
         ''
     ) | Write-Output
@@ -48,6 +51,10 @@ if ($null -ne $Roles -and $Roles.Count -gt 0 -and (
     $selectedModes[0] -ne 'na228'
 )) {
     throw 'Role-scoped actualization is valid only for act na228.'
+}
+if (-not [string]::IsNullOrWhiteSpace($InputProfile) -and
+    ($selectedModes.Count -ne 1 -or $selectedModes[0] -ne 'input')) {
+    throw 'An input profile may be selected only with act input.'
 }
 $runLog = $null
 if (-not $NoRunLog) {
@@ -95,10 +102,14 @@ try {
                 ) -ForegroundColor Cyan
             }
             'input' {
-                Write-Host '[act] Actualize Base_NA2 input profile' `
+                $inputArguments = @{ PassThru = $true }
+                if (-not [string]::IsNullOrWhiteSpace($InputProfile)) {
+                    $inputArguments.Profile = $InputProfile
+                }
+                Write-Host '[act] Generate input profiles and update GameSettings' `
                     -ForegroundColor Cyan
                 $output = @(
-                    & $projectPaths.files.actualize_input_command -PassThru
+                    & $projectPaths.files.actualize_input_command @inputArguments
                 )
                 if ($output.Count -ne 1) {
                     throw (
@@ -106,13 +117,13 @@ try {
                         $output.Count
                     )
                 }
-                $state = if ($output[0].Changed) {
-                    'updated'
-                }
-                else {
-                    'already current'
-                }
-                Write-Host "[act] Base_NA2 input profile: $state." `
+                Write-Host (
+                    "[act] Input profile $($output[0].Profile): " +
+                    "generated $($output[0].GeneratedProfiles.Count), " +
+                    "removed $($output[0].RemovedProfiles.Count), " +
+                    "updated GameSettings " +
+                    "$($output[0].UpdatedGameSettings.Count)."
+                ) `
                     -ForegroundColor Cyan
             }
         }

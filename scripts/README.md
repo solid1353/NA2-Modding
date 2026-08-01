@@ -114,10 +114,13 @@ is changed.
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 
-`pcsx2/actualization/sync_input.ps1` regenerates the NA2 comparison input profile
-from the canonical base profile while changing only the four configured
-`[Pad1]` face-button bindings. Run it as `act input`; the legacy `na2inputs`
-profile helper delegates to that mode.
+`pcsx2/actualization/sync_input.ps1` regenerates selected input profiles
+from `input_profiles/sources/Default.ini`, named partial inputs under
+`sources/profiles/`, and game-specific partial inputs under `sources/games/`.
+A partial input replaces existing bindings with the same names. Run it as
+`act input [profile]`; the legacy `na2inputs` profile helper delegates to the
+default `Default` mode. Each run removes generated profiles from the previous
+selection, then recreates only the selected profile combinations.
 
 `pcsx2/actualization/act.ps1` owns standalone actualization logging and
 dispatch. Bare `act` runs `na2`, then `input`.

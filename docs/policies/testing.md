@@ -243,4 +243,6 @@ requirements, not whatever implementation happens to exist today.
   memory card. Identity collisions are deduplicated with Latest taking
   precedence. Templates and configured memory cards are never created, copied,
   or modified.
-- `act input` regenerates the configured NA2 comparison input profile.
+- `act input [profile]` regenerates the selected input-profile combinations
+  from canonical overrides and updates every configured GameSettings file.
+  `Default` is the default profile.

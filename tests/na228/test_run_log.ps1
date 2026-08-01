@@ -159,7 +159,7 @@ try {
 {
   "schema_version": 1,
   "config": {
-    "input_profile": "Base"
+    "input_profile": "Default"
   },
   "builds": {
     "title": "NA v2.28",
@@ -174,8 +174,7 @@ try {
   "sources": {
     "NA2": {
       "serial": "SLPS-25837",
-      "crc": "C0659AD1",
-      "input_profile": "Base_NA2"
+      "crc": "C0659AD1"
     },
     "NUN5": {
       "serial": "SLES-55605",
@@ -275,8 +274,14 @@ Write-Host "[fake] actualize na228 roles=$($resolvedRoles -join ',')"
 }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'sync_input.ps1') -Content @'
-param([switch]$PassThru)
-$result = [pscustomobject]@{ Changed = $false }
+param([string]$Profile, [switch]$PassThru)
+$result = [pscustomobject]@{
+    Profile = 'Default'
+    GeneratedProfiles = @()
+    RemovedProfiles = @()
+    UpdatedGameSettings = @()
+    Changed = $false
+}
 if ($PassThru) { $result }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch.ps1') -Content @'

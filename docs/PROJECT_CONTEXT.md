@@ -307,7 +307,12 @@ role to its existing Latest, Previous, or Test memory card. Templates and
 memory cards are never created, copied, or modified. Build-driven calls limit
 creation and updates to changed roles; standalone `act na228` remains a full
 repair/synchronization pass.
-`sync_input.ps1` regenerates `Base_NA2.ini` from the maintained `Base.ini`.
+`sync_input.ps1` generates selected complete profiles from
+`input_profiles/sources/Default.ini`, named partial inputs under
+`sources/profiles/`, and game-specific partial inputs under `sources/games/`.
+It removes the previously generated root-level profiles and updates every
+configured GameSettings profile reference. `act input` defaults to `Default`;
+`act input Test_Capture` selects that named profile input.
 
 ## Release Workflow
 

@@ -321,6 +321,16 @@ function Get-Na2ProjectPaths {
                 $resolvedGameConfig['input_profile'] = [IO.Path]::GetFullPath(
                     [string]$derived.input_profile
                 )
+                $derivedOverrideProperty = (
+                    $derived.PSObject.Properties['input_profile_overrides']
+                )
+                if ($null -ne $derivedOverrideProperty) {
+                    $resolvedGameConfig['input_profile_overrides'] = (
+                        [IO.Path]::GetFullPath(
+                            [string]$derivedOverrideProperty.Value
+                        )
+                    )
+                }
                 if (-not $resolvedFiles.Contains('input_profile')) {
                     $resolvedFiles['input_profile'] = $resolvedGameConfig.input_profile
                 }

@@ -32,10 +32,16 @@
   template itself. PCSX2 has no
   configurable input-recordings folder, so recordings are opened from their
   canonical shared paths explicitly.
-- `@pcsx2_files/input_profiles/Base.ini` is the only manually edited
-  comparison input profile. Regenerate
-  `@pcsx2_files/input_profiles/Base_NA2.ini` with the maintained
-  `act input`; never edit the generated profile directly.
+- `@pcsx2_files/input_profiles/sources/Default.ini` is the only manually edited
+  complete input profile. Named partial inputs live under `sources/profiles/`;
+  game-specific partial inputs live under `sources/games/` and apply when named
+  for a canonical game selector. Generate complete profiles with
+  `act input [profile]`; `Default` is used when the profile is omitted. Never
+  edit generated root-level profiles directly. A partial input replaces every
+  existing binding with the same name before adding its own binding. Each run
+  removes all generated root-level profiles, then recreates only the selected
+  profile and its matching game variants. It never removes anything under
+  `sources/`.
 - Task-owned PCSX2 copies are complete disposable portable runtimes, including
   their configuration, unique PINE port, savestates, screenshots, logs, cache,
   copied memory cards, cheats, GameSettings, input files, and any legacy

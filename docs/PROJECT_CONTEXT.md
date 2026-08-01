@@ -203,9 +203,9 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   `scripts/na228/launch_games.ps1` is the development-default multi-game
   launch-and-tile backend used by direct `na228` game selectors and accepts any
   ordered combination of its registered ISO selectors; and
-  `move_na228_savestates.ps1` files development
-  savestates by default or stable savestates with `-Target stable` under
-  `@user_savestates`.
+  `move_savestates.ps1 <game-or-alias> <subpath>` files only that selected
+  game's development savestates by default, or stable savestates with
+  `-Target stable`, under `@user_savestates`.
 - The custom development PCSX2 PINE interface retains reload-patches opcode
   `0x10` and adds native screenshot `0x11`, synchronous pause `0x12`,
   synchronous resume `0x13`, and EE execution-cache refresh `0x14`. Direct

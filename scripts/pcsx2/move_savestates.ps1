@@ -1,11 +1,15 @@
-# File NA2.28 savestates from the selected user PCSX2 installation.
+# File one game's savestates from the selected user PCSX2 installation.
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory, Position = 0)]
     [ValidateNotNullOrEmpty()]
+    [string]$Game,
+
+    [Parameter(Mandatory, Position = 1)]
+    [ValidateNotNullOrEmpty()]
     [string]$SubPath,
 
-    [Parameter(Position = 1)]
+    [Parameter(Position = 2)]
     [ValidateSet('stable', 'dev')]
     [string]$Target = 'dev'
 )
@@ -13,6 +17,37 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
+
+$aliasProperty = @(
+    $projectPaths.games.Aliases.PSObject.Properties |
+        Where-Object Name -IEQ $Game
+) | Select-Object -First 1
+if ($null -eq $aliasProperty) {
+    throw (
+        "Unknown game or alias '$Game'. Supported names: " +
+        ($projectPaths.games.Aliases.PSObject.Properties.Name -join ', ')
+    )
+}
+$canonicalGame = [string]$aliasProperty.Value
+$gameEntry = @(
+    $projectPaths.games.Entries.PSObject.Properties |
+        Where-Object Name -IEQ $canonicalGame
+) | Select-Object -First 1 -ExpandProperty Value
+
+if ($gameEntry.Category -eq 'sources') {
+    $serial = ([string]$gameEntry.Config.serial).ToUpperInvariant()
+    $crc = ([string]$gameEntry.Config.crc).ToUpperInvariant()
+}
+else {
+    . (Join-Path $PSScriptRoot '..\na228\iso_identity.ps1')
+    if (-not (Test-Path -LiteralPath $gameEntry.IsoPath -PathType Leaf)) {
+        throw "Selected build ISO does not exist: $($gameEntry.IsoPath)"
+    }
+    $identity = Get-Na2IsoPcsx2Identity -Path $gameEntry.IsoPath
+    $serial = ([string]$identity.Serial).ToUpperInvariant()
+    $crc = ([string]$identity.CRC).ToUpperInvariant()
+}
+$expectedStem = "$serial ($crc)"
 
 $sourceInstallation = switch ($Target) {
     'stable' { $projectPaths.pcsx2_stable }
@@ -64,17 +99,6 @@ if (Test-Path -LiteralPath $destinationFull -PathType Leaf) {
     throw "Destination exists as a file: $destinationFull"
 }
 
-if (-not (Test-Path -LiteralPath $destinationFull -PathType Container)) {
-    if ($PSCmdlet.ShouldProcess($destinationFull, 'Create destination directory')) {
-        New-Item `
-            -ItemType Directory `
-            -Path $destinationFull `
-            -Force `
-            -ErrorAction Stop |
-            Out-Null
-    }
-}
-
 $stateFiles = @(
     Get-ChildItem `
         -LiteralPath $sourceRoot `
@@ -95,12 +119,19 @@ $parsedStates = @(
     foreach ($file in $stateFiles) {
         $match = [regex]::Match(
             $file.Name,
-            '^(?<stem>.+)\.(?<slot>\d+)\.p2s$',
+            '^(?<stem>.+ \([0-9A-F]{8}\))\.(?<slot>\d+)\.p2s$',
             [Text.RegularExpressions.RegexOptions]::IgnoreCase
         )
 
         if (-not $match.Success) {
             Write-Warning "Leaving unrecognized savestate filename untouched: $($file.Name)"
+            continue
+        }
+
+        if (-not $match.Groups['stem'].Value.Equals(
+            $expectedStem,
+            [StringComparison]::OrdinalIgnoreCase
+        )) {
             continue
         }
 
@@ -125,8 +156,19 @@ $parsedStates = @(
 )
 
 if ($parsedStates.Count -eq 0) {
-    Write-Warning 'No recognized PCSX2 savestate filenames were found.'
+    Write-Warning "No savestates found for $canonicalGame ($expectedStem)."
     return
+}
+
+if (-not (Test-Path -LiteralPath $destinationFull -PathType Container)) {
+    if ($PSCmdlet.ShouldProcess($destinationFull, 'Create destination directory')) {
+        New-Item `
+            -ItemType Directory `
+            -Path $destinationFull `
+            -Force `
+            -ErrorAction Stop |
+            Out-Null
+    }
 }
 
 $reservedTargets = [Collections.Generic.HashSet[string]]::new(
@@ -209,6 +251,7 @@ foreach ($slotGroup in $slotGroups) {
                 -ErrorAction Stop
 
             [pscustomobject]@{
+                Game               = $canonicalGame
                 Target             = $Target
                 Source             = $plan.State.File.Name
                 Destination        = $plan.TargetName

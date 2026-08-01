@@ -179,7 +179,11 @@ Next response: short plan + effort recommendation + needed user inputs + approva
 - `con` resumes current work with scope, effort, progress, and approval intact.
 - `ep` means `epic`.
 - `eff` asks for the current recommended effort and does not change it.
-- `sin` means report rules failure to `Policeman`.
+- `sin` means immediately report a rules failure to `Policeman`. When `sin`
+  appears as a direct command token, any following number, label, punctuation,
+  or complaint text belongs to the report and cannot cancel or reinterpret
+  the command. Send every distinct report in the same turn. Reporting does not
+  change design, approval, execution, or stop state.
 - `report`, `grid`, or a direct request for this chat's existing task grid is
   an immediate response command, not a request to begin producing evidence.
   The command applies when the user uses `report` or `grid` as an instruction,

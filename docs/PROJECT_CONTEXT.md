@@ -23,8 +23,9 @@ NA2.28 PCSX2 configuration:
 - Runtime C candidates bypass cheat files and are applied directly to
   task-owned PCSX2 memory through PINE.
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v4 organizes each package as groups, atomic patches, and exact edits; independent group and patch `enabled` switches control normal composition. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`.
-- Builds and launches never synchronize PCSX2 identities. `ws input [profile]`
-  regenerates input profiles and updates configured GameSettings references.
+- Builds and launches never synchronize PCSX2 identities. Bare `ws` regenerates
+  every Workshop input profile without changing GameSettings assignments;
+  `ws <profile>` regenerates and assigns one profile.
 - The serial-wide GameSettings fallback uses `NA v2.28.ps2`. CRC override
   sections preserve the current Latest, Previous, and Test assignments to
   their existing role-specific memory cards.
@@ -178,7 +179,7 @@ without running `@tools/old/CVM Parser/cvm_tool.exe`.
 
 ## Current Scripts
 
-- Root `na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Latest. Compact invocations contain one or two positional game tokens whose order defines window placement: `l`, `p`, or `t` runs Latest, Previous, or Test; `bl` or `bt` builds and runs Latest or Test; and suffix `w` watches that token's game. The optional value after a watched token is a registered C file/folder or a task-owned overlay-plan path; with no value, the watcher attaches every registered source under `src/`. Explicit `build l|t`, standalone `w [C path|plan]`, `worker`, `release`, and `help` remain available. Use `ws input [profile]` for shared input generation. Configured launches never stop existing PCSX2 instances, select unused PINE ports, and tile only their newly started windows. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
+- Root `na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Latest. Compact invocations contain one or two positional game tokens whose order defines window placement: `l`, `p`, or `t` runs Latest, Previous, or Test; `bl` or `bt` builds and runs Latest or Test; and suffix `w` watches that token's game. The optional value after a watched token is a registered C file/folder or a task-owned overlay-plan path; with no value, the watcher attaches every registered source under `src/`. Explicit `build l|t`, standalone `w [C path|plan]`, `worker`, `release`, and `help` remain available. Use bare `ws` to regenerate all shared input profiles without reassigning them, or `ws <profile>` to regenerate and assign one profile. Configured launches never stop existing PCSX2 instances, select unused PINE ports, and tile only their newly started windows. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
 - `scripts/na228/` contains build/launch execution, promotion, ISO identity,
   worker-path validation, and focused tests. Root `na228.ps1` owns argument
   parsing and dispatches substantive execution to `scripts/na228/run.ps1`.
@@ -285,12 +286,12 @@ DATA.CVM passwords: `cc2fuku` for NA2, NUN3, and NUN5; `Iruka` for NUN6 A35.
 
 ## Input-profile Workflow
 
-Workshop `ws input [profile]` generates selected complete profiles from
+Bare Workshop `ws` generates every complete profile from
 `input_profiles/sources/Default.ini`, named partial inputs under
-`sources/profiles/`, and game-specific partial inputs under `sources/games/`.
-It removes the previously generated root-level profiles and updates every
-configured GameSettings profile reference. Omitting the profile selects
-`Default`; `ws input Test_Capture` selects that named profile input.
+`sources/profiles/`, and game-specific partial inputs under `sources/games/`,
+without changing GameSettings assignments. `ws <profile>` regenerates only the
+selected profile and its game-specific variants, then assigns those profiles
+through GameSettings. Generated root-level profiles remain tracked by Git.
 
 ## Release Workflow
 

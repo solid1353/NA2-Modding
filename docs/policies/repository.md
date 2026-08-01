@@ -36,16 +36,17 @@
 - `@pcsx2_files/input_profiles/sources/Default.ini` is the only manually edited
   complete input profile. Named partial inputs live under `sources/profiles/`;
   game-specific partial inputs live under `sources/games/` and apply when named
-  for a canonical game selector. Generate complete profiles with
-  `ws input [profile]`; `Default` is used when the profile is omitted. Never
+  for a canonical game selector. Bare `ws` regenerates every complete profile
+  without changing GameSettings assignments. `ws <profile>` regenerates that
+  profile and its game variants, then assigns them in every configured
+  GameSettings file. Never
   edit generated root-level profiles directly. A partial input replaces the
   first existing binding with the same control name and device family in place
   and removes later duplicates of that same pair. SDL overrides never remove
   keyboard bindings, and keyboard overrides never remove SDL bindings.
   Bindings absent from the complete profile are appended as one block with
-  exactly one blank line before and after it. Each run
-  overwrites the selected generated profile and its matching game variants
-  when their content changes. Every generated root-level profile remains in
+  exactly one blank line before and after it. Each run overwrites its generated
+  outputs when their content changes. Every generated root-level profile remains in
   place and is tracked by Git. It never removes anything under `sources/`.
 - The NA2.28 serial-wide PCSX2 files are
   `@pcsx2_cheats/SLOP-NA228.pnach` and

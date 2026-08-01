@@ -228,13 +228,14 @@ requirements, not whatever implementation happens to exist today.
   messages, or foregrounding. Capture a new savestate only when the state
   itself is a required artifact.
 - Builds and single-ISO launch commands never probe or close any PCSX2 process.
-- Bare `na228`, direct game-selector launches, and `ws input` are
-  user-only.
+- Bare `na228`, direct game-selector launches, and input-profile generation
+  through bare `ws` or `ws <profile>` are user-only.
 
 ## Input-profile synchronization
 
 - Builds and launches never generate CRC-specific PNACH or GameSettings files.
   NA2.28 uses the serial-wide files documented in the repository policy.
-- `ws input [profile]` regenerates the selected input-profile combinations
-  from canonical overrides and updates every configured GameSettings file.
-  `Default` is the default profile.
+- Bare `ws` regenerates every input-profile combination from canonical
+  overrides without changing GameSettings assignments. `ws <profile>`
+  regenerates that profile and its game variants, then assigns them in every
+  configured GameSettings file.

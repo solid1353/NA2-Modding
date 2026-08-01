@@ -105,9 +105,9 @@ Workshop `scripts/pcsx2/input.ps1` regenerates input profiles
 from `input_profiles/sources/Default.ini`, named partial inputs under
 `sources/overrides/`, and game-specific partial inputs under
 `sources/overrides/games/`.
-A partial input replaces existing bindings with the same action name and input
-type, then removes other actions using the same binding unless the override
-deliberately assigns that binding to multiple actions. `workshop input`
+A partial input first removes its binding values across the complete profile,
+then adds or replaces its actions only in their declared sections. The override
+may deliberately assign one binding to multiple actions. `workshop input`
 regenerates every profile without changing assignments; `workshop input
 <profile>` regenerates and assigns only the selected profile and its game
 variants. Generated root-level profiles remain tracked by Git.

@@ -259,7 +259,7 @@ def _load_project_paths(
             )
         files[name] = configured_path
 
-    catalog_path = files.get("build_catalog") if include_catalog else None
+    catalog_path = files.get("product_config") if include_catalog else None
     if catalog_path is not None:
         if not catalog_path.is_file():
             raise FileNotFoundError(f"Game catalog not found: {catalog_path}")
@@ -285,7 +285,6 @@ def _load_project_paths(
                 )
             catalog = {
                 "schema_version": 1,
-                "config": source_catalog.get("config", {}),
                 "sources": source_catalog.get("sources"),
                 "title": project_catalog.get("title"),
                 "serial": project_catalog.get("serial"),
@@ -317,32 +316,6 @@ def _load_project_paths(
                 raise ValueError(f"{label} must remain within {root_name!r}")
             return result
 
-        global_config = catalog.get("config", {})
-        if not isinstance(global_config, dict):
-            raise ValueError("Game catalog 'config' must be an object")
-        resolved_global_config: dict[str, object] = {}
-        for config_name, raw_value in global_config.items():
-            if (
-                not isinstance(config_name, str)
-                or not config_name
-                or not config_name[0].islower()
-                or not config_name.replace("_", "").isalnum()
-            ):
-                raise ValueError(
-                    f"Invalid global game configuration name: {config_name!r}"
-                )
-            if config_name in files:
-                raise ValueError(
-                    f"Project file {config_name!r} duplicates game catalogs"
-                )
-            resolved = resolve_catalog_value(
-                f"Global game configuration {config_name!r}",
-                raw_value,
-            )
-            resolved_global_config[config_name] = resolved
-            if isinstance(resolved, Path):
-                files[config_name] = resolved
-
         selectors: set[str] = set()
         for category in ("builds", "sources"):
             section = catalog.get(category)
@@ -350,7 +323,7 @@ def _load_project_paths(
                 raise ValueError(
                     f"Game catalog has no non-empty {category!r} section"
                 )
-            resolved_category_config = dict(resolved_global_config)
+            resolved_category_config: dict[str, object] = {}
             if category == "builds":
                 definitions = section
             else:

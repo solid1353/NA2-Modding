@@ -4,9 +4,10 @@ The path system has four layers with separate owners:
 
 1. Workshop root `paths.json` owns every shared root and named file.
 2. NA2 root `paths.json` imports Workshop and adds only NA2-local paths.
-3. Workshop `settings/games.json` owns shared source-game selectors, aliases,
-   serials, CRCs, and the default input-profile name.
-4. NA2 root `builds.json` owns only NA2.28 identity and build variants.
+3. Workshop root `games.json` owns shared source-game selectors, aliases,
+   serials, and CRCs.
+4. NA2 root `product.json` owns NA2.28 source inputs, output identity, and build
+   variants.
 
 The PowerShell and Python loaders merge both catalogs. Canonical files store
 only repository-relative paths or `@root/child` references. Resolved absolute
@@ -22,8 +23,9 @@ infrastructure:
 - shared PCSX2 assets;
 - reusable PCSX2, savestate, PINE, input-profile, ISO-identity, and Ghidra
   tooling under `@workshop/scripts/`;
-- source-game configuration under `@workshop/settings/games.json`;
-- user savestate filing under the ignored `@workshop/ss/` root.
+- source-game configuration under `@workshop/games.json`;
+- source-game savestate filing under ignored `@workshop/work/ss/`; project
+  build savestates stay under the invoking project's ignored `work/ss/`.
 
 The public repository ignores original media, extracted data, private analysis
 databases, toolchains, emulator binaries, BIOS files, memory cards, savestates,
@@ -32,7 +34,9 @@ logs, and task artifacts.
 ## Important NA2 roots
 
 - `repository`: this repository; always `.`.
-- `workshop`, `source`, `analysis`, `tools`, `ss`: imported Workshop roots.
+- `workshop`, `source`, `analysis`, and `tools`: imported Workshop roots.
+- `ss`: NA2-local `@work/ss`; Workshop source savestates use its own
+  `@workshop/work/ss` root.
 - `build`, `logs`, `builder`, `features`, `scripts`, `work`: NA2 roots.
 - `pcsx2_scripts`: `@workshop/scripts/pcsx2`.
 - `pcsx2_stable`, `pcsx2_dev`, `pcsx2_clean`: protected configured runtimes
@@ -43,8 +47,8 @@ logs, and task artifacts.
 
 ## Important NA2 files
 
-- `game_catalog`: Workshop `settings/games.json`.
-- `build_catalog`: root `builds.json`.
+- `game_catalog`: Workshop root `games.json`.
+- `product_config`: root `product.json`.
 - `game_resolver`: Workshop `scripts/lib/resolve_game.py`.
 - `notification_state` and `git_authors`: shared Workshop settings.
 - `workshop_command`: Workshop `workshop.ps1`.
@@ -67,20 +71,22 @@ Workshop source games use a direct map:
 ```json
 {
   "schema_version": 1,
-  "config": { "input_profile": "Default" },
   "sources": {
     "NUN5": { "serial": "SLES-55605", "crc": "C071D4C1" }
   }
 }
 ```
 
-The NA2 build catalog is deliberately flat:
+The NA2 product configuration is deliberately flat apart from its explicit
+inputs, identity, and builds sections:
 
 ```json
 {
   "schema_version": 1,
   "title": "NA v2.28",
   "serial": "SLOP-NA228",
+  "inputs": { "na2": "@source_na2", "nun5": "@source_nun5" },
+  "identity": { "image": {}, "memory_card": {}, "game_title": {} },
   "builds": {
     "latest": { "aliases": ["l"], "postfix": "Latest" }
   }

@@ -6,11 +6,11 @@
   and generated artifacts use repository-relative paths. Machine-specific
   absolute paths are limited to transient tool arguments/diagnostics and
   user-facing clickable links unless explicitly authorized.
-- `paths.json` is the source of truth for stable project-level
-  infrastructure directories and named files. Workshop `settings/games.json`
-  owns registered source games; root `builds.json` owns this project's build
-  identity, roles, and aliases. Resolve them through the shared PowerShell or
-  Python loader.
+- `paths.json` is the source of truth for stable project-level infrastructure
+  directories and named files. Workshop root `games.json` owns registered
+  source games; root `product.json` owns this project's product identity,
+  canonical inputs, build roles, and aliases. Resolve them through the shared
+  PowerShell or Python loader.
   Do not inventory ordinary descendants such as `BTL.BIN`.
 - Deleting or moving the last content of a configured root or direct manifest
   file must update the manifest and every `@root` documentation reference, then

@@ -61,7 +61,11 @@ try {
         New-Item -ItemType Directory -Force -Path (Join-Path $repository $directory) | Out-Null
     }
     New-Item -ItemType Directory -Force `
-        -Path (Join-Path $repository 'na228_builder\profiles\current') | Out-Null
+        -Path (Join-Path $repository 'na228_builder\profiles') | Out-Null
+    [IO.File]::WriteAllText(
+        (Join-Path $repository 'na228_builder\profiles\default.tsv'),
+        "feature_id`tenabled`texpected_sha256`tbypass_check`n"
+    )
     [IO.File]::WriteAllText((Join-Path $repository 'source\NA2.iso'), 'clean na2')
     [IO.File]::WriteAllText((Join-Path $repository 'source\NUN5.iso'), 'clean nun5')
     $latestIso = Join-Path $repository 'build\NA2.28 - Latest.iso'

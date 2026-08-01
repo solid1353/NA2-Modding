@@ -18,8 +18,8 @@ class BuildProfileCliTests(unittest.TestCase):
             workspace = Path(directory).resolve()
             source_iso = workspace / "source.iso"
             source_iso.write_bytes(b"source")
-            profile_directory = workspace / "profiles" / "current"
-            profile = SimpleNamespace(profile_id="current", features=(), modules=())
+            profile_path = workspace / "profiles" / "default.tsv"
+            profile = SimpleNamespace(profile_id="default", features=(), modules=())
             plan = SimpleNamespace(
                 replacements=(object(), object()),
                 insertions=(object(),),
@@ -39,7 +39,7 @@ class BuildProfileCliTests(unittest.TestCase):
                 "--source",
                 str(source_iso),
                 "--profile",
-                str(profile_directory),
+                str(profile_path),
                 "--compose-only",
             ]
 
@@ -77,9 +77,9 @@ class BuildProfileCliTests(unittest.TestCase):
             source_iso = workspace / "source.iso"
             source_iso.write_bytes(b"source")
             output_iso = workspace / "build" / "NA2.28 - Latest.iso"
-            profile_directory = workspace / "profiles" / "current"
+            profile_path = workspace / "profiles" / "default.tsv"
             profile_log_directory = workspace / "logs" / "profile"
-            profile = SimpleNamespace(profile_id="current", features=(), modules=())
+            profile = SimpleNamespace(profile_id="default", features=(), modules=())
             staged_iso = build_profile.building_image_path(output_iso)
             payload_build = build_profile.ResidentPayloadBuild(
                 output_path="PRG/228.BIN",
@@ -104,7 +104,7 @@ class BuildProfileCliTests(unittest.TestCase):
                 "--output",
                 str(output_iso),
                 "--profile",
-                str(profile_directory),
+                str(profile_path),
                 "--profile-log-directory",
                 "logs/profile",
             ]

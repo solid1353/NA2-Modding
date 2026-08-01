@@ -12,8 +12,7 @@ from pathlib import Path
 from scripts.lib.project_paths import ProjectPaths, load_project_paths, resolve_alias
 
 
-ROOT_FIELDS = ["root_id", "path"]
-FEATURE_FIELDS = ["feature_id", "expected_sha256", "bypass_check"]
+FEATURE_FIELDS = ["feature_id", "enabled", "expected_sha256", "bypass_check"]
 MODULE_TYPE_ORDER = (
     "translation_importer",
     "string_patcher",
@@ -92,8 +91,9 @@ class ProfileModule:
 
 @dataclass(frozen=True)
 class Profile:
-    directory: Path
+    definition_path: Path
     profile_id: str
+    product_path: Path
     roots: dict[str, Path]
     identity: ProfileIdentity
     features: tuple[ProfileFeature, ...]
@@ -115,32 +115,37 @@ def _read_tsv(path: Path, fields: list[str]) -> list[dict[str, str]]:
 def _identity_object(value: object, keys: set[str], label: str) -> dict[str, object]:
     if not isinstance(value, dict) or set(value) != keys:
         expected = ", ".join(sorted(keys))
-        raise ValueError(f"Profile identity {label} keys must be: {expected}")
+        raise ValueError(f"Product {label} keys must be: {expected}")
     return value
 
 
 def _identity_text(value: object, label: str) -> str:
     if not isinstance(value, str) or not value:
-        raise ValueError(f"Profile identity {label} must be non-empty text")
+        raise ValueError(f"Product identity {label} must be non-empty text")
     return value
 
 
 def _identity_int(value: object, label: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
-        raise ValueError(f"Profile identity {label} must be an integer")
+        raise ValueError(f"Product identity {label} must be an integer")
     return value
 
 
-def _read_identity(path: Path) -> ProfileIdentity:
+def _read_product(path: Path) -> tuple[ProfileIdentity, dict[str, str]]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise ValueError(f"Profile identity is not valid JSON: {path}") from exc
-    root = _identity_object(
-        data, {"schema_version", "image", "memory_card", "game_title"}, "root"
+        raise ValueError(f"Product config is not valid JSON: {path}") from exc
+    product = _identity_object(
+        data,
+        {"schema_version", "title", "serial", "inputs", "identity", "builds"},
+        "product",
     )
-    if root["schema_version"] != 1:
-        raise ValueError("Unsupported profile identity schema_version")
+    if product["schema_version"] != 1:
+        raise ValueError("Unsupported product schema_version")
+    root = _identity_object(
+        product["identity"], {"image", "memory_card", "game_title"}, "identity"
+    )
     image = _identity_object(
         root["image"],
         {"source_boot_path", "output_boot_path", "system_cnf_path"},
@@ -156,7 +161,21 @@ def _read_identity(path: Path) -> ProfileIdentity:
         {"imported", "output", "expected_mapping_count", "expected_occurrence_count"},
         "game_title",
     )
-    return ProfileIdentity(
+    inputs = product["inputs"]
+    if not isinstance(inputs, dict) or not inputs:
+        raise ValueError("Product inputs must be a non-empty object")
+    normalized_inputs: dict[str, str] = {}
+    for root_id, value in inputs.items():
+        if (
+            not isinstance(root_id, str)
+            or not re.fullmatch(r"[a-z][a-z0-9_]*", root_id)
+            or root_id in normalized_inputs
+            or not isinstance(value, str)
+            or not value
+        ):
+            raise ValueError(f"Invalid product input: {root_id!r}")
+        normalized_inputs[root_id] = value
+    identity = ProfileIdentity(
         source_boot_path=_identity_text(image["source_boot_path"], "image.source_boot_path"),
         output_boot_path=_identity_text(image["output_boot_path"], "image.output_boot_path"),
         system_cnf_path=_identity_text(image["system_cnf_path"], "image.system_cnf_path"),
@@ -184,6 +203,7 @@ def _read_identity(path: Path) -> ProfileIdentity:
             title["expected_occurrence_count"], "game_title.expected_occurrence_count"
         ),
     )
+    return identity, normalized_inputs
 
 
 def _workspace_path(value: str, label: str, workspace: Path) -> Path:
@@ -198,7 +218,7 @@ def _workspace_path(value: str, label: str, workspace: Path) -> Path:
     return resolved
 
 
-def _profile_root_path(
+def _product_input_path(
     value: str, label: str, workspace: Path, project_paths: ProjectPaths
 ) -> Path:
     if value.startswith("@"):
@@ -426,22 +446,8 @@ def feature_content_sha256(path: Path) -> str:
 def profile_resource_files(profile: Profile) -> tuple[Path, ...]:
     """Return the exact structural and hash-covered files needed to load a profile."""
     files = [
-        profile.directory / "roots.tsv",
-        profile.directory / "features.tsv",
-        profile.directory / "identity.json",
-    ]
-    files.extend(feature.input_path / "README.md" for feature in profile.features)
-    for module in profile.modules:
-        files.extend(_module_content_files(module.input_path, module.module))
-    return tuple(sorted(set(files), key=lambda path: path.as_posix()))
-
-
-def profile_resource_files(profile: Profile) -> tuple[Path, ...]:
-    """Return the exact structural and hash-covered files needed to load a profile."""
-    files = [
-        profile.directory / "roots.tsv",
-        profile.directory / "features.tsv",
-        profile.directory / "identity.json",
+        profile.definition_path,
+        profile.product_path,
     ]
     files.extend(feature.input_path / "README.md" for feature in profile.features)
     for module in profile.modules:
@@ -450,23 +456,28 @@ def profile_resource_files(profile: Profile) -> tuple[Path, ...]:
 
 
 def load_profile(
-    directory: Path,
+    definition_path: Path,
     workspace: Path,
     *,
     root_overrides: Mapping[str, Path] | None = None,
 ) -> Profile:
     workspace = workspace.resolve()
-    directory = directory.resolve()
+    definition_path = definition_path.resolve()
     try:
-        directory.relative_to(workspace)
+        definition_path.relative_to(workspace)
     except ValueError as exc:
-        raise ValueError(f"Profile must be inside the repository: {directory}") from exc
-    profile_id = directory.name
+        raise ValueError(
+            f"Profile must be inside the repository: {definition_path}"
+        ) from exc
+    if not definition_path.is_file() or definition_path.suffix.lower() != ".tsv":
+        raise FileNotFoundError(f"Profile definition is not a TSV file: {definition_path}")
+    profile_id = definition_path.stem
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", profile_id):
-        raise ValueError(f"Invalid profile directory name: {profile_id!r}")
+        raise ValueError(f"Invalid profile name: {profile_id!r}")
 
     project_paths = load_project_paths(workspace, allow_missing=True)
-    identity = _read_identity(directory / "identity.json")
+    product_path = project_paths.file("product_config").resolve()
+    identity, product_inputs = _read_product(product_path)
     memory_card_title_offset = identity.memory_card_title_offset
     memory_card_title_capacity = identity.memory_card_title_capacity
     game_title_mapping_count = identity.game_title_mapping_count
@@ -541,14 +552,11 @@ def load_profile(
     overrides = {
         key: Path(value).resolve() for key, value in (root_overrides or {}).items()
     }
-    for row in _read_tsv(directory / "roots.tsv", ROOT_FIELDS):
-        root_id = row["root_id"]
-        if not root_id or root_id in roots:
-            raise ValueError(f"Duplicate or empty profile root_id: {root_id!r}")
+    for root_id, value in product_inputs.items():
         root = overrides.get(root_id)
         if root is None:
-            root = _profile_root_path(
-                row["path"], f"root {root_id}", workspace, project_paths
+            root = _product_input_path(
+                value, f"product input {root_id}", workspace, project_paths
             )
         if not root.exists():
             raise FileNotFoundError(root)
@@ -560,7 +568,7 @@ def load_profile(
             + ", ".join(unknown_overrides)
         )
 
-    feature_rows = _read_tsv(directory / "features.tsv", FEATURE_FIELDS)
+    feature_rows = _read_tsv(definition_path, FEATURE_FIELDS)
     if not feature_rows:
         raise ValueError("Profile has no enabled features")
     features_root = project_paths.path("features").resolve()
@@ -575,6 +583,13 @@ def load_profile(
         ):
             raise ValueError(f"Duplicate or invalid feature_id: {feature_id!r}")
         seen_features.add(feature_id)
+        enabled_value = row["enabled"]
+        if enabled_value not in ("0", "1"):
+            raise ValueError(
+                f"Feature {feature_id}: enabled must be 0 or 1"
+            )
+        if enabled_value == "0":
+            continue
         feature_path = (features_root / feature_id).resolve()
         try:
             feature_path.relative_to(features_root)
@@ -624,9 +639,13 @@ def load_profile(
             )
         )
 
+    if not features:
+        raise ValueError("Profile has no enabled features")
+
     return Profile(
-        directory=directory,
+        definition_path=definition_path,
         profile_id=profile_id,
+        product_path=product_path,
         roots=roots,
         identity=identity,
         features=tuple(features),

@@ -1042,7 +1042,7 @@ def main() -> int:
     else:
         run_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
         logs_relative = PROJECT_PATHS.path("logs").relative_to(workspace).as_posix()
-        log_text = f"{logs_relative}/na228_builder/binary_patcher/{run_id}"
+        log_text = f"{logs_relative}/na228/binary_patcher/{run_id}"
     log_directory = command_relative_path(log_text, "--log-directory", workspace)
     apply_package(
         package,

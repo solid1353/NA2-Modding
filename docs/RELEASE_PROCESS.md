@@ -15,13 +15,13 @@ one exact clean NUN5 ISO beside the EXE.
    hashes, an existing `NA2.28.iso`, or an existing
    `NA2.28.iso.building`.
 5. It locks both inputs read-only and hashes them again after locking.
-6. It applies the embedded current profile directly from the two ISOs, creates
+6. It applies the embedded default profile directly from the two ISOs, creates
    `NA2.28.iso.building`, verifies the complete staged image and its size, then
    atomically renames it to `NA2.28.iso`.
 7. It never modifies either input, creates no runtime log files, removes its
    staging file after failure, and waits for Enter before closing.
 
-The executable embeds the interpreter, builder engines, current profile,
+The executable embeds the interpreter, builder engines, default profile,
 feature inputs, payload-builder configuration, and Zopfli runtime. It does not
 embed original/donor ISOs, extracted source trees, or derived game payloads.
 
@@ -63,8 +63,7 @@ identities. The pinned source identities are:
 - NUN5: 1,926,234,112 bytes,
   SHA-256 `2E1B9A885F4E94E6B8C4204F139C53ABD568FE49D6521D4D8921FE9460C07BFF`
 
-The profile's `identity.json` output game title must equal the manifest product
-name.
+Root `product.json` output game title must equal the manifest product name.
 
 The maintained publication command performs the version update and complete
 Git/tag sequence:
@@ -83,7 +82,7 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
 
 - `na228_builder/app.py` owns end-user discovery, hashing, locking, collision
   refusal, staging cleanup, promotion, console messages, and the Enter pause.
-- `na228_builder/release_runtime.py` loads the embedded current profile with the
+- `na228_builder/release_runtime.py` loads the embedded default profile with the
   two verified source ISOs as root overrides and calls the ordinary profile
   builder without runtime logs.
 - `na228_builder/source_media.py` gives engines one read-only boundary for files
@@ -131,7 +130,7 @@ publish a GitHub Release and mark SemVer suffixes as prereleases.
 
 A production publication sequence, automated by `na228 release [version]`, is:
 
-1. update and validate the current profile and release manifest;
+1. update and validate the default profile and release manifest;
 2. run the production builder from a clean committed tree;
 3. perform any desired clean-machine/runtime acceptance;
 4. create an annotated `v<product_version>` tag;

@@ -42,8 +42,8 @@ command or file-backed inter-stage handoff.
 The hashes above are documentation, not a second executable manifest. Git
 history and the aggregate Localization feature pin own content identity.
 `mappings.tsv` owns the canonical executable donor translations, overrides,
-and optional pointer inventory. Normal builds import only `mappings.tsv`. Profile
-`identity.json` owns the imported/output title declaration; `string_patcher`
+and optional pointer inventory. Normal builds import only `mappings.tsv`. Root
+`product.json` owns the imported/output title declaration; `string_patcher`
 applies its fixed coverage to the normal translation path.
 
 ### Source and target scope
@@ -169,7 +169,7 @@ and whether the row used the official donor, an override, or a prefix.
 
 Each profile build records the translation importer under:
 
-`logs/na228_builder/current_<run id>/<module id>/`
+`logs/na228/builds/<build-id>/<module-id>/`
 
 containing:
 
@@ -819,8 +819,8 @@ and constructs `PRG/228.BIN`; the composer resolves symbols; `binary_patcher`
 owns byte guards, conflict handling, replacement, and logging. If Localization
 later owns local declarations, it can add `string_patcher/strings.tsv` then.
 
-The memory-card title is output identity and is therefore declared by the active
-profile's `identity.json`; its evidence is documented in
+The memory-card title is output identity and is therefore declared by root
+`product.json`; its evidence is documented in
 `docs/knowledge/game/disc_identity.md`.
 
 ## UI texture translation module

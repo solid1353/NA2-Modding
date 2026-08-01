@@ -120,20 +120,20 @@ def collect_build_state(
     workspace: Path,
     na2_iso: Path,
     nun5_iso: Path,
-    profile_directory: Path,
+    profile_path: Path,
     dependencies: dict[str, str] | None = None,
 ) -> dict[str, object]:
     workspace = workspace.resolve()
     na2_iso = na2_iso.resolve()
     nun5_iso = nun5_iso.resolve()
-    profile_directory = profile_directory.resolve()
+    profile_path = profile_path.resolve()
     builder = (workspace / "na228_builder").resolve()
     try:
-        profile = profile_directory.relative_to(builder).as_posix()
+        profile = profile_path.relative_to(builder).as_posix()
     except ValueError as error:
         raise ValueError("Profile must be inside na228_builder") from error
-    if not profile_directory.is_dir():
-        raise FileNotFoundError(profile_directory)
+    if not profile_path.is_file():
+        raise FileNotFoundError(profile_path)
     return {
         "fingerprint_schema_version": FINGERPRINT_SCHEMA_VERSION,
         "source_isos": [
@@ -185,7 +185,7 @@ def check_preflight(
     na2_iso: Path,
     nun5_iso: Path,
     latest_iso: Path,
-    profile_directory: Path,
+    profile_path: Path,
     receipt_path: Path,
     dependencies: dict[str, str] | None = None,
 ) -> dict[str, object]:
@@ -194,7 +194,7 @@ def check_preflight(
             workspace=workspace,
             na2_iso=na2_iso,
             nun5_iso=nun5_iso,
-            profile_directory=profile_directory,
+            profile_path=profile_path,
             dependencies=dependencies,
         )
         fingerprint = state_fingerprint(state)
@@ -234,7 +234,7 @@ def write_receipt(
     na2_iso: Path,
     nun5_iso: Path,
     latest_iso: Path,
-    profile_directory: Path,
+    profile_path: Path,
     receipt_path: Path,
     expected_fingerprint: str,
     dependencies: dict[str, str] | None = None,
@@ -244,7 +244,7 @@ def write_receipt(
             workspace=workspace,
             na2_iso=na2_iso,
             nun5_iso=nun5_iso,
-            profile_directory=profile_directory,
+            profile_path=profile_path,
             dependencies=dependencies,
         )
         fingerprint = state_fingerprint(state)
@@ -317,7 +317,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         "na2_iso": args.na2_iso,
         "nun5_iso": args.nun5_iso,
         "latest_iso": args.latest,
-        "profile_directory": _profile_path(args.profile, workspace),
+        "profile_path": _profile_path(args.profile, workspace),
         "receipt_path": args.receipt,
     }
     if args.command == "check":

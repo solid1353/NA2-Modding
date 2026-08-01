@@ -60,7 +60,7 @@ python -m na228_builder.modules.binary_patcher.engine apply `
   --output-root work/temp/example_patch_output
 ```
 
-Default standalone logs are written under `logs/na228_builder/binary_patcher/<run-id>/`.
+Default standalone logs are written under `logs/na228/binary_patcher/<run-id>/`.
 Profile builds store the same patch and hash tables beneath that profile run's
 module directory.
 

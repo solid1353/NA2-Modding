@@ -33,9 +33,19 @@ class ProfileTests(unittest.TestCase):
         features = root / "features"
         source = root / "source"
         profiles = root / "profiles"
+        build = root / "build"
+        pcsx2 = root / "pcsx2"
         features.mkdir()
         source.mkdir()
         profiles.mkdir()
+        build.mkdir()
+        for directory in (
+            "cheats",
+            "game_settings",
+            "input_profiles",
+            "memory_cards",
+        ):
+            (pcsx2 / directory).mkdir(parents=True)
         (root / "paths.json").write_text(
             json.dumps(
                 {
@@ -44,8 +54,31 @@ class ProfileTests(unittest.TestCase):
                         "repository": ".",
                         "features": "features",
                         "source": "source",
+                        "build": "build",
+                        "pcsx2_cheats": "pcsx2/cheats",
+                        "pcsx2_game_settings": "pcsx2/game_settings",
+                        "pcsx2_input_profiles": "pcsx2/input_profiles",
+                        "pcsx2_memory_cards": "pcsx2/memory_cards",
                     },
-                    "files": {"placeholder": "placeholder"},
+                    "files": {
+                        "placeholder": "placeholder",
+                        "game_catalog": "games.json",
+                        "product_config": "product.json",
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        (root / "games.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "sources": {
+                        "NA2": {
+                            "serial": "SLPS-25837",
+                            "crc": "C0659AD1",
+                        }
+                    },
                 }
             ),
             encoding="utf-8",
@@ -100,36 +133,40 @@ class ProfileTests(unittest.TestCase):
         *,
         profile_id: str = "test",
     ) -> Path:
-        profile = profiles / profile_id
-        profile.mkdir()
-        write_tsv(profile / "roots.tsv", ["root_id", "path"], [{"root_id": "na2", "path": "source"}])
+        profile = profiles / f"{profile_id}.tsv"
         write_tsv(
-            profile / "features.tsv",
+            profile,
             FEATURE_FIELDS,
-            [{"bypass_check": "0", **row} for row in rows],
+            [{"enabled": "1", "bypass_check": "0", **row} for row in rows],
         )
-        (profile / "identity.json").write_text(
+        (profiles.parent / "product.json").write_text(
             json.dumps(
                 {
                     "schema_version": 1,
-                    "image": {
-                        "source_boot_path": "SLPS_258.37",
-                        "output_boot_path": "SLOP_NA2.28",
-                        "system_cnf_path": "SYSTEM.CNF",
+                    "title": "Test Product",
+                    "serial": "TEST-00000",
+                    "inputs": {"na2": "source"},
+                    "identity": {
+                        "image": {
+                            "source_boot_path": "SLPS_258.37",
+                            "output_boot_path": "SLOP_NA2.28",
+                            "system_cnf_path": "SYSTEM.CNF",
+                        },
+                        "memory_card": {
+                            "title_offset": 4,
+                            "title_capacity": 16,
+                            "title_encoding": "ascii",
+                            "source_title": "Original",
+                            "output_title": "NA 2.28",
+                        },
+                        "game_title": {
+                            "imported": "Imported Game",
+                            "output": "Output Game",
+                            "expected_mapping_count": 1,
+                            "expected_occurrence_count": 1,
+                        },
                     },
-                    "memory_card": {
-                        "title_offset": 4,
-                        "title_capacity": 16,
-                        "title_encoding": "ascii",
-                        "source_title": "Original",
-                        "output_title": "NA 2.28",
-                    },
-                    "game_title": {
-                        "imported": "Imported Game",
-                        "output": "Output Game",
-                        "expected_mapping_count": 1,
-                        "expected_occurrence_count": 1,
-                    },
+                    "builds": {"latest": {"postfix": "Latest"}},
                 },
                 indent=2,
             )
@@ -239,7 +276,7 @@ class ProfileTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Duplicate or invalid feature_id"):
                 load_profile(profile, root)
 
-    def test_omitted_feature_is_disabled(self) -> None:
+    def test_disabled_feature_remains_declared_but_is_not_composed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             features, source, profiles = self.create_workspace(root)
@@ -248,7 +285,17 @@ class ProfileTests(unittest.TestCase):
             profile = self.create_profile(
                 profiles,
                 source,
-                [{"feature_id": "active", "expected_sha256": feature_content_sha256(active)}],
+                [
+                    {
+                        "feature_id": "active",
+                        "expected_sha256": feature_content_sha256(active),
+                    },
+                    {
+                        "feature_id": "inactive",
+                        "enabled": "0",
+                        "expected_sha256": "0" * 64,
+                    },
+                ],
             )
             loaded = load_profile(profile, root)
             self.assertEqual([item.feature_id for item in loaded.features], ["active"])
@@ -267,7 +314,7 @@ class ProfileTests(unittest.TestCase):
             )
             loaded = load_profile(profile_path, root)
             resources = set(profile_resource_files(loaded))
-            self.assertIn((profile_path / "identity.json").resolve(), resources)
+            self.assertIn((root / "product.json").resolve(), resources)
             self.assertIn((feature / "README.md").resolve(), resources)
             self.assertIn(
                 (feature / "binary_patcher" / "edits.tsv").resolve(), resources
@@ -319,10 +366,10 @@ class ProfileTests(unittest.TestCase):
                     {"feature_id": "alpha", "expected_sha256": feature_content_sha256(alpha)},
                 ],
             )
-            identity_path = profile / "identity.json"
-            identity = json.loads(identity_path.read_text(encoding="utf-8"))
-            identity["image"]["output_boot_path"] = "BOOT.ELF"
-            identity_path.write_text(json.dumps(identity, indent=2) + "\n", encoding="utf-8")
+            product_path = root / "product.json"
+            product = json.loads(product_path.read_text(encoding="utf-8"))
+            product["identity"]["image"]["output_boot_path"] = "BOOT.ELF"
+            product_path.write_text(json.dumps(product, indent=2) + "\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "equal byte lengths"):
                 load_profile(profile, root)
 
@@ -406,12 +453,12 @@ class ProfileTests(unittest.TestCase):
                 first, module_content_sha256(module, "runtime_injector")
             )
 
-    def test_current_profile_loads(self) -> None:
+    def test_default_profile_loads(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        profile_directory = repository / "na228_builder" / "profiles" / "current"
+        profile_path = repository / "na228_builder" / "profiles" / "default.tsv"
         marker = repository / "na228_builder" / "release_manifest.json"
         load_profile(
-            profile_directory,
+            profile_path,
             repository,
             root_overrides={"na2": marker, "nun5": marker},
         )

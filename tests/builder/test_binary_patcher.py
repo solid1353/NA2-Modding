@@ -152,7 +152,7 @@ class BinaryPatcherTests(unittest.TestCase):
                 output,
                 "work/temp/output",
                 logs,
-                "logs/na228_builder/binary_patcher/test",
+                "logs/na228/binary_patcher/test",
                 selection_mode="explicit",
             )
             result = (output / "target.bin").read_bytes()

@@ -7,5 +7,5 @@
   "entry_point": "na228_builder/app.py",
   "release_manifest": "na228_builder/release_manifest.json",
   "temporary_root": "@project_work/temp/release",
-  "icon": "icons/release/NA2.28.ico"
+  "icon": "icons/detailed/NA2.28.ico"
 }

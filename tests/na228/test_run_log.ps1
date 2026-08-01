@@ -135,7 +135,7 @@ try {
   },
   "files": {
     "game_catalog": "@repository/games.json",
-    "build_catalog": "@repository/builds.json",
+    "product_config": "@repository/product.json",
     "game_resolver": "@scripts/lib/resolve_game.py",
     "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
     "na228_game_launch_command": "@scripts/na228/launch_games.ps1",
@@ -147,9 +147,6 @@ try {
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'games.json') -Content @'
 {
   "schema_version": 1,
-  "config": {
-    "input_profile": "Default"
-  },
   "sources": {
     "NA2": {
       "serial": "SLPS-25837",
@@ -162,7 +159,7 @@ try {
   }
 }
 '@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'builds.json') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'product.json') -Content @'
 {
   "schema_version": 1,
   "title": "NA v2.28",
@@ -611,7 +608,7 @@ else {
         -Rotated $true `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $paths.files.previous_iso `
-        -Profile (Join-Path $paths.builder 'profiles\current') `
+        -Profile (Join-Path $paths.builder 'profiles\default.tsv') `
         -ProjectPaths $paths
     Assert-Na2Test -Condition ($record.BuildId -eq 'new-latest') -Message 'Updated build was not retained.'
     $updatedBuildMap = Read-Na2BuildMap `
@@ -646,7 +643,7 @@ else {
         -Rotated $false `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $paths.files.previous_iso `
-        -Profile 'na228_builder/profiles/current' `
+        -Profile 'na228_builder/profiles/default.tsv' `
         -ProjectPaths $paths
     Assert-Na2Test `
         -Condition ($unchanged.BuildId -eq 'duplicate') `
@@ -669,7 +666,7 @@ else {
         -Rotated $false `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $null `
-        -Profile 'na228_builder/profiles/current' `
+        -Profile 'na228_builder/profiles/default.tsv' `
         -ProjectPaths $paths
     Assert-Na2Test `
         -Condition ($firstUnchanged.BuildId -eq $firstBuildId) `

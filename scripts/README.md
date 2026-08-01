@@ -207,11 +207,11 @@ VM with the resident payload and injection target loaded. Agents invoke
 `test.ps1` and never run the watcher or its build/apply stages separately.
 
 Profiles consume repository-owned declarative binary-patcher, translation, and
-texture-patcher modules. Final output identity comes from profile `identity.json`
+texture-patcher modules. Final output identity comes from root `product.json`
 and is composed before the image assembler runs rather than owned by a feature.
 
 `release/build_release.ps1` builds the self-contained Windows release EXE from
-the pinned toolchain and current profile. See `docs/RELEASE_PROCESS.md`.
+the pinned toolchain and default profile. See `docs/RELEASE_PROCESS.md`.
 
 `release/publish_release.ps1` is the guarded publication backend for
 `na228 release [version]`; it validates the production package before pushing an

@@ -957,8 +957,8 @@ def main() -> int:
     if not source_iso.is_file():
         raise FileNotFoundError(source_iso)
 
-    profile_directory = args.profile if args.profile.is_absolute() else workspace / args.profile
-    profile = load_profile(profile_directory, workspace)
+    profile_path = args.profile if args.profile.is_absolute() else workspace / args.profile
+    profile = load_profile(profile_path, workspace)
     if args.compose_only:
         composed = compose_profile_candidate(source_iso=source_iso, profile=profile)
         print_profile_summary(profile, composed.results, composed.payload_result)

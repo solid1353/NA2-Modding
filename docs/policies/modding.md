@@ -6,7 +6,8 @@
   read `na228_builder/README.md` and the affected module/feature README. Those
   files are canonical for the current schema and pipeline; do not recreate
   retired schemas or assumptions from history.
-- `na228_builder/profiles/current/` is the active reproducible build definition.
+- `na228_builder/profiles/default.tsv` is the normal reproducible build
+  definition. Root `product.json` owns canonical inputs and output identity.
   `bypass_check=1` is temporary local development only; accepted reproducible
   checkpoints require the actual pin and `bypass_check=0`.
 - Only the user may change profile `bypass_check` values. Agents preserve every

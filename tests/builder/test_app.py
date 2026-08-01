@@ -35,7 +35,7 @@ class ReleaseAppTests(unittest.TestCase):
             product_version="v-test",
             executable_name="NA2.28_test.exe",
             output_name="NA2.28.iso",
-            profile="na228_builder/profiles/current",
+            profile="na228_builder/profiles/default.tsv",
             images=(
                 self.image("na2", "original NA2 ISO", na2),
                 self.image("nun5", "original NUN5 ISO", nun5),
@@ -57,7 +57,7 @@ class ReleaseAppTests(unittest.TestCase):
             "product_version": "1.0.0",
             "executable_name": "NA2.28.exe",
             "output_name": "NA2.28.iso",
-            "profile": "na228_builder/profiles/current",
+            "profile": "na228_builder/profiles/default.tsv",
             "images": [
                 {
                     "id": "NA2",
@@ -87,7 +87,7 @@ class ReleaseAppTests(unittest.TestCase):
             "product_version": "1.0.0",
             "executable_name": "NA2.28.exe",
             "output_name": "build/NA2.28.iso",
-            "profile": "na228_builder/profiles/current",
+            "profile": "na228_builder/profiles/default.tsv",
             "images": [
                 {
                     "id": "na2",

@@ -201,7 +201,7 @@ class ProjectPathTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "has no files"):
                 load_project_paths(manifest)
 
-    def test_game_catalog_derives_builds_sources_and_shared_config(self) -> None:
+    def test_game_catalog_derives_builds_and_sources(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             for path in (
@@ -227,12 +227,11 @@ class ProjectPathTests(unittest.TestCase):
                 },
                 "files": {
                     "game_catalog": "@repository/games.json",
-                    "build_catalog": "@repository/builds.json",
+                    "product_config": "@repository/product.json",
                 },
             }
             source_catalog = {
                 "schema_version": 1,
-                "config": {"input_profile": "Default"},
                 "sources": {
                     "NA2": {
                         "serial": "SLPS-25837",
@@ -244,7 +243,7 @@ class ProjectPathTests(unittest.TestCase):
                     },
                 },
             }
-            build_catalog = {
+            product_config = {
                 "schema_version": 1,
                 "title": "NA v2.28",
                 "serial": "SLOP-NA228",
@@ -264,8 +263,8 @@ class ProjectPathTests(unittest.TestCase):
             (root / "games.json").write_text(
                 json.dumps(source_catalog), encoding="utf-8"
             )
-            (root / "builds.json").write_text(
-                json.dumps(build_catalog), encoding="utf-8"
+            (root / "product.json").write_text(
+                json.dumps(product_config), encoding="utf-8"
             )
             override_directory = root / "pcsx2/input_profiles/sources/games"
             override_directory.mkdir(parents=True)
@@ -298,11 +297,10 @@ class ProjectPathTests(unittest.TestCase):
             )
             catalog = {
                 "schema_version": 1,
-                "config": source_catalog["config"],
                 "sources": source_catalog["sources"],
-                "title": build_catalog["title"],
-                "serial": build_catalog["serial"],
-                "builds": build_catalog["builds"],
+                "title": product_config["title"],
+                "serial": product_config["serial"],
+                "builds": product_config["builds"],
             }
             na2_paths = derive_game_paths(
                 "NA2",
@@ -332,59 +330,6 @@ class ProjectPathTests(unittest.TestCase):
                 paths.file("gamesettings_template"),
                 root.resolve() / "pcsx2/game_settings/SLOP-NA228.ini",
             )
-
-    def test_rejects_catalog_file_duplicated_by_manifest(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            (root / "build").mkdir()
-            (root / "pcsx2/cheats").mkdir(parents=True)
-            (root / "pcsx2/game_settings").mkdir(parents=True)
-            (root / "pcsx2/input_profiles").mkdir(parents=True)
-            (root / "pcsx2/memory_cards").mkdir(parents=True)
-            manifest = {
-                "schema_version": 1,
-                "roots": {
-                    "repository": ".",
-                    "build": "build",
-                    "pcsx2_cheats": "pcsx2/cheats",
-                    "pcsx2_game_settings": "pcsx2/game_settings",
-                    "pcsx2_input_profiles": "pcsx2/input_profiles",
-                    "pcsx2_memory_cards": "pcsx2/memory_cards",
-                },
-                "files": {
-                    "game_catalog": "@repository/games.json",
-                    "build_catalog": "@repository/builds.json",
-                    "latest_iso": "@build/Latest.iso",
-                },
-            }
-            source_catalog = {
-                "schema_version": 1,
-                "config": {"input_profile": "Default"},
-                "sources": {
-                    "NA2": {
-                        "serial": "SLPS-25837",
-                        "crc": "C0659AD1",
-                    }
-                },
-            }
-            build_catalog = {
-                "schema_version": 1,
-                "title": "NA v2.28",
-                "serial": "SLOP-NA228",
-                "builds": {"latest": {"postfix": "Latest"}},
-            }
-            manifest_path = root / "paths.json"
-            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
-            (root / "games.json").write_text(
-                json.dumps(source_catalog), encoding="utf-8"
-            )
-            (root / "builds.json").write_text(
-                json.dumps(build_catalog), encoding="utf-8"
-            )
-
-            with self.assertRaisesRegex(ValueError, "duplicates game catalogs"):
-                load_project_paths(manifest_path)
-
 
 if __name__ == "__main__":
     unittest.main()

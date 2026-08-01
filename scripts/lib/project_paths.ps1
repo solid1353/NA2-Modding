@@ -209,8 +209,8 @@ function Get-Na2ProjectPaths {
 
     $resolvedGames = [ordered]@{}
     $resolvedGameAliases = [ordered]@{}
-    if ($resolvedFiles.Contains('build_catalog')) {
-        $catalogPath = [string]$resolvedFiles['build_catalog']
+    if ($resolvedFiles.Contains('product_config')) {
+        $catalogPath = [string]$resolvedFiles['product_config']
         if (-not (Test-Path -LiteralPath $catalogPath -PathType Leaf)) {
             throw "Game catalog not found: $catalogPath"
         }
@@ -233,7 +233,6 @@ function Get-Na2ProjectPaths {
             }
             $catalog = [pscustomobject][ordered]@{
                 schema_version = 1
-                config = $sourceCatalog.config
                 sources = $sourceCatalog.sources
                 title = $projectCatalog.title
                 serial = $projectCatalog.serial
@@ -292,27 +291,6 @@ function Get-Na2ProjectPaths {
             return $configFile
         }
 
-        $resolvedGlobalConfig = [ordered]@{}
-        $globalConfigProperty = $catalog.PSObject.Properties['config']
-        if ($null -ne $globalConfigProperty) {
-            foreach ($configProperty in $globalConfigProperty.Value.PSObject.Properties) {
-                $configName = $configProperty.Name
-                if ($configName -cnotmatch '^[a-z][a-z0-9_]*$') {
-                    throw "Invalid global game configuration name: $configName"
-                }
-                $configValue = & $resolveGameConfigValue `
-                    "Global game configuration '$configName'" `
-                    $configProperty.Value
-                $resolvedGlobalConfig[$configName] = $configValue
-                if ([string]$configProperty.Value -like '@*') {
-                    if ($resolvedFiles.Contains($configName)) {
-                        throw "Project file '$configName' duplicates game catalogs."
-                    }
-                    $resolvedFiles[$configName] = $configValue
-                }
-            }
-        }
-
         $allSelectors = [Collections.Generic.HashSet[string]]::new(
             [StringComparer]::OrdinalIgnoreCase
         )
@@ -323,9 +301,6 @@ function Get-Na2ProjectPaths {
             }
 
             $resolvedCategoryConfig = [ordered]@{}
-            foreach ($configName in $resolvedGlobalConfig.Keys) {
-                $resolvedCategoryConfig[$configName] = $resolvedGlobalConfig[$configName]
-            }
             $definitions = $categoryProperty.Value
             $gameNames = @($definitions.PSObject.Properties.Name)
             if ($gameNames.Count -eq 0) {

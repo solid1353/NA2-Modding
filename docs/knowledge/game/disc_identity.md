@@ -16,9 +16,9 @@ The serial alternatives considered on 2026-07-18 were rejected as follows:
 
 ## Reproducible implementation
 
-The active profile's `identity.json` declares the clean boot path, output boot
+Root `product.json` declares the clean boot path, output boot
 path, `SYSTEM.CNF` path, and guarded CP932 memory-card title. After feature
-modules have been composed, the profile composer emits two guarded replacements
+modules have been composed, the product composer emits two guarded replacements
 and one equal-length file rename:
 
 1. `SYSTEM.CNF` changes `SLPS_258.37` to `SLOP_NA2.28`.

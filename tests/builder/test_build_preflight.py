@@ -27,17 +27,13 @@ class BuildPreflightTests(unittest.TestCase):
     def create_workspace(self, root: Path) -> dict[str, Path]:
         workspace = root / "repository"
         builder = workspace / "na228_builder"
-        profile = builder / "profiles" / "current"
-        profile.mkdir(parents=True)
+        profile = builder / "profiles" / "default.tsv"
+        profile.parent.mkdir(parents=True)
         (builder / "engine.py").write_text("ENGINE = 1\n", encoding="utf-8")
         (builder / "schema.tsv").write_text("schema\t1\n", encoding="utf-8")
-        (profile / "features.tsv").write_text(
-            "feature_id\texpected_sha256\tbypass_check\n"
-            "feature\t" + "0" * 64 + "\t0\n",
-            encoding="utf-8",
-        )
-        (profile / "roots.tsv").write_text(
-            "root_id\tpath\nna2\t@source_na2\n",
+        profile.write_text(
+            "feature_id\tenabled\texpected_sha256\tbypass_check\n"
+            "feature\t1\t" + "0" * 64 + "\t0\n",
             encoding="utf-8",
         )
         na2_iso = root / "source" / "NA2.iso"
@@ -63,7 +59,7 @@ class BuildPreflightTests(unittest.TestCase):
             "workspace": paths["workspace"],
             "na2_iso": paths["na2_iso"],
             "nun5_iso": paths["nun5_iso"],
-            "profile_directory": paths["profile"],
+            "profile_path": paths["profile"],
             "dependencies": DEPENDENCIES,
         }
         arguments.update(overrides)
@@ -75,7 +71,7 @@ class BuildPreflightTests(unittest.TestCase):
             na2_iso=paths["na2_iso"],
             nun5_iso=paths["nun5_iso"],
             latest_iso=paths["latest_iso"],
-            profile_directory=paths["profile"],
+            profile_path=paths["profile"],
             receipt_path=paths["receipt"],
             dependencies=DEPENDENCIES,
         )
@@ -90,7 +86,7 @@ class BuildPreflightTests(unittest.TestCase):
             na2_iso=paths["na2_iso"],
             nun5_iso=paths["nun5_iso"],
             latest_iso=paths["latest_iso"],
-            profile_directory=paths["profile"],
+            profile_path=paths["profile"],
             receipt_path=paths["receipt"],
             expected_fingerprint=expected_fingerprint,
             dependencies=DEPENDENCIES,
@@ -198,7 +194,7 @@ class BuildPreflightTests(unittest.TestCase):
             self.record(paths, fingerprint)
             text = paths["receipt"].read_text(encoding="utf-8")
             self.assertNotIn(str(paths["workspace"]), text)
-            self.assertIn('"profile": "profiles/current"', text)
+            self.assertIn('"profile": "profiles/default.tsv"', text)
 
 
 if __name__ == "__main__":

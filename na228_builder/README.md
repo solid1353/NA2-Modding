@@ -1,20 +1,18 @@
 # NA2.28 builder
 
-The builder creates the active reproducible image from enabled features rather
-than independently configured module instances.
+The builder creates a reproducible product from a selected profile of features.
 
-Each profile directory contains:
+Root `product.json` owns the product title, serial, canonical source inputs,
+output identity, and named build variants. Profiles are single TSV files under
+`profiles/`; `profiles/default.tsv` is the normal build definition. Each row
+contains a feature ID, an explicit `enabled` switch, its exact aggregate
+canonical-input SHA-256, and a separate per-feature `bypass_check` development
+switch. Disabled features remain visible in the profile but are neither hashed
+nor composed.
 
-- `roots.tsv`: repository-relative source bindings or `@root/...` aliases.
-- `features.tsv`: enabled feature IDs in composition order and each feature's
-  exact aggregate canonical-input SHA-256, plus a separate per-feature
-  `bypass_check` development switch.
-- `identity.json`: structured image, memory-card, and game-title policy for the
-  final output identity.
-
-The profile ID is its directory name. Omission disables a feature. Profiles do
-not contain manifests, module tables, module paths, module IDs, module orders,
-or separate module pins.
+The profile ID is the TSV filename stem. Profiles do not contain source roots,
+identity data, manifests, module tables, module paths, module IDs, module
+orders, or separate module pins.
 
 ## Feature and module discovery
 
@@ -69,7 +67,7 @@ focused CLI/research inputs only and override those switches.
 
 ## Current composition
 
-The current profile enables, in order:
+The default profile enables, in order:
 
 1. Localization: importer with a derived string-patcher consumer, resident
    font-renderer logic, texture patcher, native NUN5-derived font, regional menu
@@ -79,9 +77,9 @@ The current profile enables, in order:
 4. Rendering: verified native 16:9 horizontal scaling through the shared
    rendering-state writer.
 
-The profile's `identity.json` separately declares the equal-length
+Root `product.json` separately declares the equal-length
 `SLPS_258.37` to `SLOP_NA2.28` boot rename and the CP932 memory-card title.
-Output identity is profile configuration, not a feature or module.
+Output identity is product configuration, not a feature or module.
 
 The former generic Testing feature was retired: feature IDs express ownership
 or a coherent capability, while patch `status` and `confidence` express

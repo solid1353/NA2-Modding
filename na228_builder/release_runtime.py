@@ -19,22 +19,22 @@ def packaged_workspace() -> Path:
 def load_release_profile(na2_iso: Path, nun5_iso: Path) -> tuple[Path, Profile]:
     workspace = packaged_workspace()
     manifest = load_release_manifest()
-    profile_directory = (workspace / manifest.profile).resolve()
+    profile_path = (workspace / manifest.profile).resolve()
     try:
-        profile_directory.relative_to(workspace)
+        profile_path.relative_to(workspace)
     except ValueError as exc:
         raise RuntimeError("Packaged profile path escapes release data") from exc
-    if not profile_directory.is_dir():
-        raise FileNotFoundError("Packaged current profile is missing")
+    if not profile_path.is_file():
+        raise FileNotFoundError("Packaged default profile is missing")
 
     profile = load_profile(
-        profile_directory,
+        profile_path,
         workspace,
         root_overrides={"na2": na2_iso, "nun5": nun5_iso},
     )
     if profile.identity.output_game_title != manifest.product_name:
         raise RuntimeError(
-            "Packaged product name does not match the current profile identity"
+            "Packaged product name does not match the product identity"
         )
     return workspace, profile
 
@@ -46,7 +46,7 @@ def validate_packaged_release() -> int:
     marker = workspace / "na228_builder" / "release_manifest.json"
     _, profile = load_release_profile(marker, marker)
     if not profile.modules:
-        raise RuntimeError("Packaged current profile has no module invocations")
+        raise RuntimeError("Packaged default profile has no module invocations")
     return len(profile.modules)
 
 
@@ -56,7 +56,7 @@ def build_release_iso(
     building_iso: Path,
     emit: Emit,
 ) -> None:
-    """Apply the packaged current profile without writing runtime logs."""
+    """Apply the packaged default profile without writing runtime logs."""
     if not building_iso.name.endswith(".building"):
         raise ValueError("Release staging path must end in .building")
     output_iso = building_iso.with_name(

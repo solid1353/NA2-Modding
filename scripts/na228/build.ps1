@@ -167,7 +167,7 @@ $resolvedPreviousIso = [IO.Path]::GetFullPath($projectPaths.files.previous_iso)
 $resolvedTestIso = [IO.Path]::GetFullPath($projectPaths.files.test_iso)
 $profile = [IO.Path]::GetRelativePath(
     $projectPaths.repository,
-    (Join-Path $projectPaths.builder 'profiles\current')
+    (Join-Path $projectPaths.builder 'profiles\default.tsv')
 )
 $logDirectory = Join-Path $projectPaths.logs 'na228'
 $buildLogRoot = Join-Path $logDirectory 'builds'

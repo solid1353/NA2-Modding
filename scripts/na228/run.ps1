@@ -64,7 +64,7 @@ $runFailure = ''
 try {
     switch ($Action) {
         'validate' {
-            Write-Na2Stage 'Validate full current-profile composition without staging an ISO'
+            Write-Na2Stage 'Validate full default-profile composition without staging an ISO'
             $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') -ComposeOnly
             if (-not $buildResult -or $buildResult.Status -ne 'validated') {
                 throw 'Profile composition did not return a valid result.'
@@ -99,7 +99,7 @@ try {
             }
         }
         'latest-build-and-launch' {
-            Write-Na2Stage '1/2 Build pinned current profile'
+            Write-Na2Stage '1/2 Build pinned default profile'
             $buildResult = & (Join-Path $PSScriptRoot 'build.ps1')
             if (
                 -not $buildResult -or

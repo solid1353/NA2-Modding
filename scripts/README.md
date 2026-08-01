@@ -26,16 +26,16 @@ history; do not recreate an archive directory for dead scripts.
   build-record helpers, and unified Python runtime/package-set resolution.
 - `injection/`: compile/link canonical EE C into `fragment.bin` plus
   `manifest.json`, apply that candidate transactionally through PINE, the
-  standard workstream build/reload/apply command, and the user-only save
+  operational `inject_candidate.ps1` workstream command, and the user-only save
   watcher.
-- `na228/`: build/launch execution, promotion, ISO identity, worker-path
-  validation, and focused build/run-log tests. Root `na228.ps1` owns argument
+- `na228/`: build/launch execution, promotion, ISO identity, and worker-path
+  validation. Root `na228.ps1` owns argument
   parsing and dispatches substantive execution to `na228/run.ps1`.
 - `pcsx2/`: PCSX2 launch, worker-runtime copying, configuration, CRC helpers,
   the user-facing user/development single-instance and multi-game launch
   commands, the dot-sourced source-game command set, stable/development
   savestate filing, actualization dispatch/state/input-profile generation and
-  embedded-savestate screenshot extraction, focused tests, the minimal hidden
+  embedded-savestate screenshot extraction, the minimal hidden
   workstream-copy launcher, and
   `patch_savestate_memory.py` for exact-byte-guarded EE-memory patches in copied
   task-owned savestates, and `pine.py` for direct status, memory, pause, resume,
@@ -74,7 +74,7 @@ history; do not recreate an archive directory for dead scripts.
 Normal builds call `na228_builder.build_profile` through `na228/build.ps1`.
 Before that call, `na228/build.ps1` checks the deterministic successful-build
 receipt through `na228_builder.build_preflight`; an exact hit returns the normal
-unchanged result without staging an ISO. `na228/test_build_preflight.ps1` covers
+unchanged result without staging an ISO. `tests/na228/test_build_preflight.ps1` covers
 the cache-hit and safe full-build-fallback dispatch paths.
 `na228 build t` calls the same builder in Test-only mode: it always composes a
 fresh verified catalog-derived Test ISO, bypasses Latest preflight and
@@ -85,11 +85,10 @@ records under `work/<task title>/logs/`. The path is caller-supplied and
 validated; worker mode cannot address shared build outputs or mutate shared
 preflight, promotion, PNACH, log, or emulator state. Agents must use this form
 rather than bare `na228`, compact build recipes, or `na228 build l|t`.
-The unambiguous
-full builder-suite command is:
+The complete project test command is:
 
 ```powershell
-python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'
+.\tests\run.ps1
 ```
 
 Bare `na228` builds and runs Latest. Compact invocations contain one or two
@@ -201,11 +200,11 @@ when the compatible ISO's shared build record has already rotated out: the
 linker bank-links the selected new closure and imports only the named verified
 resident symbols. Without overrides, the exact retained build record and its
 byte-verified symbol map remain mandatory. Workstreams use the maintained
-command that builds into their owned tree, reloads the supplied state, and
-applies it to their isolated PCSX2:
+operational command that builds into their owned tree, reloads the supplied
+state, and applies it to their isolated PCSX2:
 
 ```powershell
-.\scripts\injection\test.ps1 `
+.\scripts\injection\inject_candidate.ps1 `
   -SourceId <source> `
   -Entry <symbol> `
   -OverlayPlan work/<task>/<plan>.json `
@@ -277,11 +276,12 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 
 | Former path | Recovery commit | Retirement and maintained replacement |
 | --- | --- | --- |
+| `scripts/injection/test.ps1` | `9a4ddb5b` | Renamed to `scripts/injection/inject_candidate.ps1` because it is an operational compile/reload/apply command, not a test. |
 | `scripts/pcsx2/extract_savestate_screenshots.py` | `a7a19d9e` | Replaced by the user-facing PowerShell implementation `scripts/pcsx2/extract_savestate_screenshots.ps1`, which accepts either one folder or explicit same-folder savestates. |
 | `scripts/pcsx2/move_na228_savestates.ps1` | `82444b3a` | Renamed and generalized as `scripts/pcsx2/move_savestates.ps1`; pass a configured game or alias before the destination subpath. |
 | `scripts/pcsx2/game_commands.ps1` and `launch_pair.ps1` | `dae022c8` | Separate source-game functions and the pair/multi-game alias were consolidated into `na228.ps1` command routing and `scripts/na228/launch_games.ps1`. Pass game selectors directly to `na228`. |
 | `scripts/pcsx2/capture_state_screenshot.ps1` | `ec4b8276193bc214b526d5ab4f4f85b240ef7949` | Retired because it serialized a complete savestate solely to obtain a fresh screenshot. Extract `Screenshot.png` directly from an existing state; use `scripts/pcsx2/pine.py screenshot` for a fresh runtime frame. |
-| `injection_lab/gen_pnach.py`, `linker.asm`, `overlay_writer.py`, `production_adapter.py`, `screenshot.ps1`, `test.ps1`, and `watch.ps1` | `35628bb4` | The PNACH transport, alternating banks, install/restore state, standalone screenshot helper, and Lab wrapper were retired after the direct-PINE workflow was proven. Workstreams use the unrelated maintained `scripts/injection/test.ps1`; user live editing uses `scripts/injection/watch.ps1`. |
+| `injection_lab/gen_pnach.py`, `linker.asm`, `overlay_writer.py`, `production_adapter.py`, `screenshot.ps1`, `test.ps1`, and `watch.ps1` | `35628bb4` | The PNACH transport, alternating banks, install/restore state, standalone screenshot helper, and Lab wrapper were retired after the direct-PINE workflow was proven. Workstreams use the unrelated maintained `scripts/injection/inject_candidate.ps1`; user live editing uses `scripts/injection/watch.ps1`. |
 | `scripts/archive/replace_iso_file_same_size.ps1` | `858da62aacc5d9571bdef072e36b484efddc15e9` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na228_builder.image_assembler`. |
 | `scripts/na2/check_log_crc.ps1` | `ce4b06c57a7e1a28124c7a8efffd38169723d915` | Manual log/PNACH comparison was superseded by `na228/iso_identity.ps1` and the maintained standalone actualization workflow. |
 | `scripts/na2/get_elf_crc.ps1` | `858da62aacc5d9571bdef072e36b484efddc15e9` | The redundant command wrapper was removed; `pcsx2/pcsx2_elf_crc.ps1` remains the shared tested implementation. |

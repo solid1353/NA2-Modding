@@ -3,7 +3,8 @@ param()
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot 'iso_identity.ps1')
+$sourceRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+. (Join-Path $sourceRepository 'scripts\na228\iso_identity.ps1')
 
 if ((Get-Na2DiscSerialFromBootPath 'SLPS_258.37') -cne 'SLPS-25837') {
     throw 'Numeric boot-path serial parsing regressed.'

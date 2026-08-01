@@ -11,7 +11,7 @@ import zipfile
 from pathlib import Path
 from unittest import mock
 
-import ui_runtime
+from scripts.research.ui_translation import ui_runtime
 
 
 def pine_reply(payload: bytes = b"", *, ok: bool = True) -> bytes:

@@ -79,7 +79,7 @@ try {
 
     Push-Location $repository
     try {
-        & $python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'
+        & $python -B -m unittest discover -s tests -p 'test_*.py'
         if ($LASTEXITCODE -ne 0) { throw 'Patcher tests failed.' }
     }
     finally {

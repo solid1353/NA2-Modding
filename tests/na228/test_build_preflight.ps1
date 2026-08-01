@@ -2,6 +2,7 @@
 param()
 
 $ErrorActionPreference = 'Stop'
+$sourceRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 
 function Assert-Na2PreflightTest {
     param(
@@ -25,10 +26,10 @@ try {
     New-Item -ItemType Directory -Force `
         -Path $scriptRoot, $pcsx2ScriptRoot, $libRoot |
         Out-Null
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'build.ps1') -Destination $scriptRoot
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'worker_paths.ps1') -Destination $scriptRoot
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\build.ps1') -Destination $scriptRoot
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\worker_paths.ps1') -Destination $scriptRoot
     foreach ($name in 'project_paths.ps1', 'run_log.ps1', 'build_log.ps1') {
-        Copy-Item -LiteralPath (Join-Path $PSScriptRoot "..\lib\$name") -Destination $libRoot
+        Copy-Item -LiteralPath (Join-Path $sourceRepository "scripts\lib\$name") -Destination $libRoot
     }
 
     $manifest = @'

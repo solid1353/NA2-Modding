@@ -193,7 +193,7 @@ Detailed command and task behavior is in
   runtime work ends and no active batch still requires them; provenance and
   the small runtime-metadata records remain.
 - Agent savestate-based C injection uses only
-  `scripts/injection/test.ps1`. It compiles/links canonical C and the task-owned
+  `scripts/injection/inject_candidate.ps1`. It compiles/links canonical C and the task-owned
   overlay plan, reloads the supplied savestate slot and waits for completion,
   applies the addressed guarded writes directly through PINE, invalidates the
   JIT, and resumes. Agents do not invoke its `build.py` and `apply.py` stages
@@ -217,7 +217,7 @@ Detailed command and task behavior is in
 - `na228 t` and `na228.ps1 t` run the retained Test ISO; `na228 bt` builds
   Test and then runs it, while `na228 build t` is the explicit build-only form.
   These commands never mean the test suite. The full builder test suite is
-  `python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'`.
+  `.\tests\run.ps1`.
   Never infer command semantics from a flag name; verify the documented exact
   command before execution.
 - Before completing a turn that changes active profile inputs, feature patches,

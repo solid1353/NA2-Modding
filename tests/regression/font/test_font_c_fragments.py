@@ -11,7 +11,7 @@ from na228_builder.payload_builder import ee_c_fragments
 from scripts.research.localization import verify_font_renderer
 
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 TOOLCHAIN_BIN = ee_c_fragments.default_toolchain_bin(REPOSITORY_ROOT)
 COMPILER = TOOLCHAIN_BIN / "ee-gcc.exe"
 

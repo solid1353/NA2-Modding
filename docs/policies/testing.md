@@ -109,8 +109,7 @@ requirements, not whatever implementation happens to exist today.
   `na228 build t` builds and actualizes Test without launching. Isolated output
   uses the explicit `worker` command.
   Neither mode runs the test suite. Run the builder
-  suite only with
-  `python -B -m unittest discover -s na228_builder/tests -p 'test_*.py'`.
+  suite only with `.\tests\run.ps1`.
   Verify every validation command's documented semantics before running it;
   never infer behavior from a short flag.
 - Worker-output builds never touch Latest, Previous, Test, promotion,
@@ -210,7 +209,7 @@ requirements, not whatever implementation happens to exist today.
   what is required from the user. Never expose, restore, activate, or foreground
   an instance merely for agent automation.
 - Agent savestate-based C iteration uses only
-  `scripts/injection/test.ps1`. The script receives the task-owned compatible
+  `scripts/injection/inject_candidate.ps1`. The script receives the task-owned compatible
   ISO, canonical source/entry, task-owned overlay plan, supplied savestate slot,
   and task-owned PINE port; it builds the candidate, reloads the state and
   waits for completion, applies the candidate, invalidates the JIT, and

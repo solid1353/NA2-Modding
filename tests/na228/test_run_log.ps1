@@ -2,7 +2,8 @@
 param()
 
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot '..\lib\build_log.ps1')
+$sourceRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+. (Join-Path $sourceRepository 'scripts\lib\build_log.ps1')
 
 function Assert-Na2Test {
     param(
@@ -95,18 +96,18 @@ try {
 
     $fakeRepository = Join-Path $testRoot 'help-project'
     New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository 'scripts\lib') | Out-Null
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\..\na228.ps1') -Destination $fakeRepository
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\lib\project_paths.ps1') `
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'na228.ps1') -Destination $fakeRepository
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\lib\project_paths.ps1') `
         -Destination (Join-Path $fakeRepository 'scripts\lib')
     foreach ($pythonFile in 'project_paths.py', 'game_catalog.py', 'resolve_game.py') {
-        Copy-Item -LiteralPath (Join-Path $PSScriptRoot "..\lib\$pythonFile") `
+        Copy-Item -LiteralPath (Join-Path $sourceRepository "scripts\lib\$pythonFile") `
             -Destination (Join-Path $fakeRepository 'scripts\lib')
     }
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\lib\run_log.ps1') `
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\lib\run_log.ps1') `
         -Destination (Join-Path $fakeRepository 'scripts\lib')
     $fakeNa2Scripts = Join-Path $fakeRepository 'scripts\na228'
     New-Item -ItemType Directory -Force -Path $fakeNa2Scripts | Out-Null
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'run.ps1') `
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\run.ps1') `
         -Destination $fakeNa2Scripts
     $fakePcsx2Scripts = Join-Path $fakeRepository 'scripts\pcsx2'
     New-Item -ItemType Directory -Force -Path $fakePcsx2Scripts | Out-Null
@@ -118,9 +119,9 @@ try {
     New-Item -ItemType Directory -Force -Path $fakeSettings | Out-Null
     $fakeActualizationScripts = Join-Path $fakePcsx2Scripts 'actualization'
     New-Item -ItemType Directory -Force -Path $fakeActualizationScripts | Out-Null
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\pcsx2\actualization\act.ps1') `
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\pcsx2\actualization\act.ps1') `
         -Destination $fakeActualizationScripts
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'worker_paths.ps1') `
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\worker_paths.ps1') `
         -Destination $fakeNa2Scripts
     $manifest = @'
 {

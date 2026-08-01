@@ -7,7 +7,8 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-$scriptPath = Join-Path $PSScriptRoot 'savestates.ps1'
+$sourceRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+$scriptPath = Join-Path $sourceRepository 'scripts\pcsx2\savestates.ps1'
 $testRoot = Join-Path ([IO.Path]::GetTempPath()) ("na228-savestate-screenshots-" + [guid]::NewGuid())
 $stateDirectory = Join-Path $testRoot 'states'
 $otherDirectory = Join-Path $testRoot 'other'

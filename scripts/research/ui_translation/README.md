@@ -142,7 +142,7 @@ python scripts/research/ui_translation/ui_runtime.py patch `
 Run the focused tests with:
 
 ```powershell
-python scripts/research/ui_translation/test_ui_runtime.py
+python -B -m unittest tests.regression.ui_translation.test_ui_runtime
 ```
 
 Find a cross-build function match with:

@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 
-from analyze_savestates import (
+from scripts.research.ee_memory_map.analyze_savestates import (
     HEAP_GLOBALS,
     MWO3_MAGIC,
     OVERLAY_BASE,

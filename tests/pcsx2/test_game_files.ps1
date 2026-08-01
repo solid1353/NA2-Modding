@@ -3,7 +3,8 @@ param()
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot '..\ini.ps1')
+$sourceRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+. (Join-Path $sourceRepository 'scripts\pcsx2\ini.ps1')
 
 function Assert-Na2ActualizeTest {
     param(
@@ -35,7 +36,7 @@ try {
         ) |
         Out-Null
 
-    $resolver = Join-Path $PSScriptRoot '..\..\lib\resolve_game.py'
+    $resolver = Join-Path $sourceRepository 'scripts\lib\resolve_game.py'
     $latestGame = (& python -B $resolver latest | ConvertFrom-Json)
     $previousGame = (& python -B $resolver previous | ConvertFrom-Json)
     $testGame = (& python -B $resolver test | ConvertFrom-Json)
@@ -157,7 +158,7 @@ try {
         throw "Unexpected ISO: $Path"
     }
 
-    $actualizer = Join-Path $PSScriptRoot 'sync_game_files.ps1'
+    $actualizer = Join-Path $sourceRepository 'scripts\pcsx2\actualization\sync_game_files.ps1'
     $first = & $actualizer `
         -ProjectPaths $projectPaths `
         -IdentityResolver $identityResolver

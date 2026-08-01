@@ -92,6 +92,12 @@
   author for that commit only using the matching `settings/git-authors.tsv`
   entry, or `<agent-name>@agent.invalid` when absent. Never alter repository or
   global identity or rewrite user commits.
+- Before pushing, verify every commit authored by the current task has a
+  subject beginning with that task's exact title in brackets. The author name
+  or email never substitutes for the subject prefix. Correct a mismatch before
+  publication. If it is discovered after publication, report it and use the
+  correct form thereafter; never amend, force-push, or otherwise rewrite the
+  published commit without the user's explicit instruction.
 - Git history recovers tracked files. Delete confirmed disposable generated
   files; preserve irreplaceable untracked inputs deliberately outside the repo
   before deletion.

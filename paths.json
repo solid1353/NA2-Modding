@@ -13,7 +13,7 @@
     "features": "@builder/features",
     "scripts": "scripts",
     "work": "work",
-    "ss": "@work/ss",
+    "ss": "@work/__sstates",
     "project_work": "@work/Project",
     "release_work": "@project_work/release",
     "release_candidates": "@release_work/candidates"

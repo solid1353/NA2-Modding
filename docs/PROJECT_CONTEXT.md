@@ -80,7 +80,7 @@ replaced with a copied machine-specific absolute path.
 - `docs/LOGGING.md`: log contents, bounded retention, cleanup, and knowledge-promotion policy.
 - `docs/HYPOTHESES.md`: archived patch candidates, failed experiments, unverified addresses, and speculative leads.
 - `TASKS.md`: concrete active tasks, test plans, and queued investigations only; no general workflow rules.
-- `@ss/`: ignored NA2-local `work/ss/` library of user-managed savestates, screenshots,
+- `@ss/`: ignored NA2-local `work/__sstates/` library of user-managed savestates, screenshots,
   and related task inputs. Agents inspect it only to choose inputs, copy
   selected files into their own `work/<task title>/inputs/sstates/` tree with
   provenance, and never modify or clean the library itself.

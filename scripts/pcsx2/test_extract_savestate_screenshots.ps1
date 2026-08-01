@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-$scriptPath = Join-Path $PSScriptRoot 'extract_savestate_screenshots.ps1'
+$scriptPath = Join-Path $PSScriptRoot 'savestates.ps1'
 $testRoot = Join-Path ([IO.Path]::GetTempPath()) ("na228-savestate-screenshots-" + [guid]::NewGuid())
 $stateDirectory = Join-Path $testRoot 'states'
 $otherDirectory = Join-Path $testRoot 'other'
@@ -65,7 +65,7 @@ try {
     [void](New-Item -ItemType Directory -Path $screenshots)
     Set-Content -LiteralPath (Join-Path $screenshots 'stale.png') -Value 'stale'
 
-    & $scriptPath $stateDirectory
+    & $scriptPath extract $stateDirectory
     Assert-True -Condition (-not (Test-Path (Join-Path $screenshots 'stale.png'))) `
         -Message 'Folder mode did not clean stale screenshots.'
     Assert-True -Condition (Test-Path (Join-Path $screenshots 'ss1.png')) `
@@ -74,13 +74,13 @@ try {
         -Message 'Folder mode did not extract ss2.png.'
 
     Set-Content -LiteralPath (Join-Path $screenshots 'preserved.png') -Value 'preserve'
-    & $scriptPath $firstState
+    & $scriptPath extract $firstState
     Assert-True -Condition (Test-Path (Join-Path $screenshots 'preserved.png')) `
         -Message 'Explicit-file mode removed an unrelated screenshot.'
 
     $mixedFoldersRejected = $false
     try {
-        & $scriptPath $firstState $otherState
+        & $scriptPath extract $firstState $otherState
     }
     catch {
         $mixedFoldersRejected = $true
@@ -88,7 +88,17 @@ try {
     Assert-True -Condition $mixedFoldersRejected `
         -Message 'Explicit files from different folders were accepted.'
 
-    Write-Host 'Savestate screenshot extraction tests passed.'
+    $moveDispatched = $false
+    try {
+        & $scriptPath move __unknown_game__ destination -Target stable
+    }
+    catch {
+        $moveDispatched = $_.Exception.Message -like 'Unknown game or alias*'
+    }
+    Assert-True -Condition $moveDispatched `
+        -Message 'The move subcommand did not reach move_savestates.ps1.'
+
+    Write-Host 'Savestate command tests passed.'
 }
 finally {
     if (Test-Path -LiteralPath $testRoot) {

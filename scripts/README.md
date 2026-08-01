@@ -6,10 +6,16 @@ command.
 Everything else below `scripts/` is an internal workflow helper, a focused
 maintenance tool, or a preserved research utility.
 
-Extract embedded screenshots from one folder or selected savestates with
-`pcsx2/extract_savestate_screenshots.ps1 <paths...>`. Folder mode recreates the
-single `screenshots/` output directory; explicit same-folder files preserve
-unrelated outputs.
+Use the unified savestate interface for filing and screenshot extraction:
+
+```powershell
+scripts/pcsx2/savestates.ps1 move <game> <subpath> [-Target dev|stable]
+scripts/pcsx2/savestates.ps1 extract <paths...>
+```
+
+Folder extraction recreates the single `screenshots/` output directory;
+explicit same-folder files preserve unrelated outputs. The focused move and
+extract scripts are internal implementations behind this entry point.
 
 Superseded implementations are removed and remain recoverable through Git
 history; do not recreate an archive directory for dead scripts.

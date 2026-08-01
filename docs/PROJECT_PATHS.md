@@ -87,8 +87,7 @@ their producing workflow runs. File entries reference a named root with
   task at `@repository/settings/notifications.json`.
 - `na228_command`: `@repository/na228.ps1`.
 - `pcsx2_launch_command`: `@pcsx2_scripts/launch.ps1`.
-- `pcsx2_savestate_move_command`:
-  `@pcsx2_scripts/move_savestates.ps1`.
+- `pcsx2_savestates_command`: `@pcsx2_scripts/savestates.ps1`.
 - `na228_game_launch_command`: `@scripts/na228/launch_games.ps1`.
 - `actualize_command`: `@pcsx2_scripts/actualization/act.ps1`.
 - `actualize_na228_command` and `actualize_input_command`: the two standalone

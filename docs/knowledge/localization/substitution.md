@@ -4,7 +4,7 @@ This document promotes the durable findings from the 2026-07-05 substitution-rel
 
 ## Stable references
 
-- Cheat template: `@pcsx2_cheats/_SLOP-NA228.pnach`.
+- Cheat template: `@pcsx2_cheats/sources/SLOP-NA228.pnach`.
 - Historical CRC alias during the investigation: `@pcsx2_cheats/SLPS-25837_E0F064C5.pnach`. CRC aliases are managed links derived from the current image identity.
 - Historical NA2 decompiler/Ghidra evidence remains available through Git
   history. Restore reusable analysis only under `@analysis/disassembly/NA2/`.

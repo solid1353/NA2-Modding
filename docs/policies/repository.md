@@ -42,6 +42,12 @@
   removes all generated root-level profiles, then recreates only the selected
   profile and its matching game variants. It never removes anything under
   `sources/`.
+- The NA2.28 cheat and GameSettings generation templates are
+  `@pcsx2_cheats/sources/SLOP-NA228.pnach` and
+  `@pcsx2_game_settings/sources/SLOP-NA228.ini`. Their filenames derive from
+  the build serial; root-level serial/CRC files are PCSX2-facing. Ordinary
+  source-game files remain directly usable at the root because they require no
+  generated alias.
 - Task-owned PCSX2 copies are complete disposable portable runtimes, including
   their configuration, unique PINE port, savestates, screenshots, logs, cache,
   copied memory cards, cheats, GameSettings, input files, and any legacy

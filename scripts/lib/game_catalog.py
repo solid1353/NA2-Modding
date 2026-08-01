@@ -109,17 +109,17 @@ def derive_game_paths(
         return result
 
     title = _required_text(section.get("title"), "Build title")
-    template_stem = _required_text(
-        section.get("template_stem"), "Build template stem"
-    )
+    serial = _required_text(section.get("serial"), "Build serial")
     postfix = _required_text(
         definition.get("postfix"), f"Game {canonical_name!r} postfix"
     )
     result = {
         "iso": _root(roots, "build") / f"{title} - {postfix}.iso",
-        "cheats": _root(roots, "pcsx2_cheats") / f"{template_stem}.pnach",
+        "cheats": (
+            _root(roots, "pcsx2_cheats") / "sources" / f"{serial}.pnach"
+        ),
         "game_settings": (
-            _root(roots, "pcsx2_game_settings") / f"{template_stem}.ini"
+            _root(roots, "pcsx2_game_settings") / "sources" / f"{serial}.ini"
         ),
         "memory_card": (
             _root(roots, "pcsx2_memory_cards") / f"{title} - {postfix}.ps2"

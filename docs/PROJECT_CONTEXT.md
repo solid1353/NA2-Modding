@@ -13,10 +13,11 @@ may later be ported to NA2.
 
 NA2.28 PCSX2 actualization:
 
-- Read-only generation templates are `@pcsx2_cheats/_SLOP-NA228.pnach` and
-  `@pcsx2_game_settings/_SLOP-NA228.ini`. Their shared filename stem is
-  configured explicitly; they are stable inputs, not canonical PCSX2
-  identities. Each built image's serial/CRC determines its generated alias.
+- Read-only generation templates are `@pcsx2_cheats/sources/SLOP-NA228.pnach`
+  and `@pcsx2_game_settings/sources/SLOP-NA228.ini`. Their filenames derive
+  from the configured build serial; they are stable inputs, not canonical
+  PCSX2 identities. Each built image's serial/CRC determines its generated
+  alias.
 - `act na228` derives each retained Latest, Previous, and Test identity
   from its ISO, maintains matching CRC-named PNACH symlinks, and writes distinct
   real GameSettings files under `@pcsx2_files/`. Orphaned regular files at
@@ -239,7 +240,7 @@ PCSX2 cheat filenames include the game CRC, for example:
 If the boot ELF inside an ISO changes, PCSX2 may report a different CRC.
 Actualize derives the alphanumeric serial from the ISO boot path and creates a
 matching `@pcsx2_cheats/<serial>_<crc>.pnach` link to
-`@pcsx2_cheats/_SLOP-NA228.pnach`.
+`@pcsx2_cheats/sources/SLOP-NA228.pnach`.
 
 Stable and development PCSX2 use `@pcsx2_cheats/` directly. The cheat template
 has a stable human-facing name; actualized CRC aliases are relative symlinks in the
@@ -250,7 +251,7 @@ Known PCSX2 paths from prior notes:
 - Routine log: `@pcsx2_dev/logs/emulog.txt`
 - Explicit stable-check log: `@pcsx2_stable/logs/emulog.txt`
 - Cheats: CRC aliases in `@pcsx2_cheats/`, targeting
-  `@pcsx2_cheats/_SLOP-NA228.pnach`
+  `@pcsx2_cheats/sources/SLOP-NA228.pnach`
 
 Known log pattern:
 

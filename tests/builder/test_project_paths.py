@@ -235,7 +235,6 @@ class ProjectPathTests(unittest.TestCase):
                 "builds": {
                     "title": "NA v2.28",
                     "serial": "SLOP-NA228",
-                    "template_stem": "_SLOP-NA228",
                     "entries": {
                         "latest": {
                             "aliases": ["l"],
@@ -316,7 +315,12 @@ class ProjectPathTests(unittest.TestCase):
             )
             self.assertEqual(
                 paths.file("cheat_template"),
-                root.resolve() / "pcsx2/cheats/_SLOP-NA228.pnach",
+                root.resolve() / "pcsx2/cheats/sources/SLOP-NA228.pnach",
+            )
+            self.assertEqual(
+                paths.file("gamesettings_template"),
+                root.resolve()
+                / "pcsx2/game_settings/sources/SLOP-NA228.ini",
             )
 
     def test_rejects_catalog_file_duplicated_by_manifest(self) -> None:
@@ -348,7 +352,6 @@ class ProjectPathTests(unittest.TestCase):
                 "builds": {
                     "title": "NA v2.28",
                     "serial": "SLOP-NA228",
-                    "template_stem": "_SLOP-NA228",
                     "entries": {
                         "latest": {
                             "postfix": "Latest",

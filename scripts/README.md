@@ -8,8 +8,8 @@ maintenance tool, or a preserved research utility.
 Use the Workshop savestate interface for filing and screenshot extraction:
 
 ```powershell
-ws ss move <game> <subpath> [-Target dev|stable] [-Cleanup|-c]
-ws ss extract <paths...>
+workshop ss move <game> <subpath> [-Target dev|stable] [-Cleanup|-c]
+workshop ss extract <paths...>
 ```
 
 Folder extraction recreates the single `screenshots/` output directory;
@@ -91,7 +91,7 @@ follow the watched token: `na228 nun5 blw src/localization` or
 Build and launch commands never generate CRC-specific PCSX2 files. NA2.28 uses
 serial-wide PNACH and GameSettings files directly.
 Configured launches preserve existing PCSX2 instances and tile only the newly
-started windows. `ws input [profile]` regenerates input profiles without
+started windows. `workshop input [profile]` regenerates input profiles without
 building or launching.
 
 Passing one or more registered ISO selectors directly to `na228` launches them
@@ -101,13 +101,16 @@ is changed.
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 
-Workshop `scripts/pcsx2/input.ps1` regenerates selected input profiles
+Workshop `scripts/pcsx2/input.ps1` regenerates input profiles
 from `input_profiles/sources/Default.ini`, named partial inputs under
-`sources/profiles/`, and game-specific partial inputs under `sources/games/`.
-A partial input replaces existing bindings with the same names. Run it as
-`ws input [profile]`; omitting the profile selects `Default`. Each run removes
-generated profiles from the previous
-selection, then recreates only the selected profile combinations.
+`sources/overrides/`, and game-specific partial inputs under
+`sources/overrides/games/`.
+A partial input replaces existing bindings with the same action name and input
+type, then removes other actions using the same binding unless the override
+deliberately assigns that binding to multiple actions. `workshop input`
+regenerates every profile without changing assignments; `workshop input
+<profile>` regenerates and assigns only the selected profile and its game
+variants. Generated root-level profiles remain tracked by Git.
 
 Create a fresh task-owned worker runtime with:
 

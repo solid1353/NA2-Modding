@@ -266,7 +266,9 @@ class ProjectPathTests(unittest.TestCase):
             (root / "product.json").write_text(
                 json.dumps(product_config), encoding="utf-8"
             )
-            override_directory = root / "pcsx2/input_profiles/sources/games"
+            override_directory = (
+                root / "pcsx2/input_profiles/sources/overrides/games"
+            )
             override_directory.mkdir(parents=True)
             (override_directory / "NA2.ini").write_text(
                 "[Pad1]\nCross = SDL-0/FaceNorth\n",
@@ -320,7 +322,8 @@ class ProjectPathTests(unittest.TestCase):
             )
             self.assertEqual(
                 na2_paths["input_profile_overrides"],
-                root.resolve() / "pcsx2/input_profiles/sources/games/NA2.ini",
+                root.resolve()
+                / "pcsx2/input_profiles/sources/overrides/games/NA2.ini",
             )
             self.assertEqual(
                 paths.file("cheat_template"),

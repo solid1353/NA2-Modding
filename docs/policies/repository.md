@@ -34,16 +34,19 @@
   configurable input-recordings folder, so recordings are opened from their
   canonical shared paths explicitly.
 - `@pcsx2_files/input_profiles/sources/Default.ini` is the only manually edited
-  complete input profile. Named partial inputs live under `sources/profiles/`;
-  game-specific partial inputs live under `sources/games/` and apply when named
-  for a canonical game selector. Bare `ws` regenerates every complete profile
-  without changing GameSettings assignments. `ws <profile>` regenerates that
-  profile and its game variants, then assigns them in every configured
-  GameSettings file. Never
+  complete input profile. Named partial inputs live under `sources/overrides/`;
+  game-specific partial inputs live under `sources/overrides/games/` and apply
+  when named for a canonical game selector. `workshop input` regenerates every complete
+  profile without changing GameSettings assignments. `workshop input
+  <profile>` regenerates that profile and its game variants, then assigns them
+  in every configured GameSettings file. Never
   edit generated root-level profiles directly. A partial input replaces the
   first existing binding with the same control name and device family in place
   and removes later duplicates of that same pair. SDL overrides never remove
   keyboard bindings, and keyboard overrides never remove SDL bindings.
+  An override removes other actions using the same binding value while
+  preserving every action deliberately assigned that value by the same
+  override.
   Bindings absent from the complete profile are appended as one block with
   exactly one blank line before and after it. Each run overwrites its generated
   outputs when their content changes. Every generated root-level profile remains in

@@ -229,13 +229,13 @@ requirements, not whatever implementation happens to exist today.
   itself is a required artifact.
 - Builds and single-ISO launch commands never probe or close any PCSX2 process.
 - Bare `na228`, direct game-selector launches, and input-profile generation
-  through bare `ws` or `ws <profile>` are user-only.
+  through `workshop input [profile]` are user-only.
 
 ## Input-profile synchronization
 
 - Builds and launches never generate CRC-specific PNACH or GameSettings files.
   NA2.28 uses the serial-wide files documented in the repository policy.
-- Bare `ws` regenerates every input-profile combination from canonical
-  overrides without changing GameSettings assignments. `ws <profile>`
-  regenerates that profile and its game variants, then assigns them in every
-  configured GameSettings file.
+- `workshop input` regenerates every input-profile combination from canonical
+  overrides without changing GameSettings assignments. `workshop input
+  <profile>` regenerates that profile and its game variants, then assigns them
+  in every configured GameSettings file.

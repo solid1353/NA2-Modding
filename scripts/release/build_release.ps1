@@ -6,8 +6,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
-$paths = Get-Na2ProjectPaths -AllowMissing
+. (Join-Path $PSScriptRoot '..\lib\paths.ps1')
+$paths = Get-Na2Paths -AllowMissing
 $repository = [IO.Path]::GetFullPath($paths.repository)
 $toolchainPath = Join-Path $PSScriptRoot 'toolchain.json'
 $toolchain = Get-Content -Raw -LiteralPath $toolchainPath | ConvertFrom-Json
@@ -16,7 +16,7 @@ $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
 $requirementsPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.requirements))
 $entryPoint = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.entry_point))
 $iconPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.icon))
-$releaseTemp = Resolve-Na2ProjectPathAlias -Alias $toolchain.temporary_root -ProjectPaths $paths
+$releaseTemp = Resolve-Na2ProjectPathAlias -Alias $toolchain.temporary_root -Paths $paths
 
 if ([int]$toolchain.schema_version -ne 1 -or [int]$manifest.schema_version -ne 1) {
     throw 'Unsupported release schema.'

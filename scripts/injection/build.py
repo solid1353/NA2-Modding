@@ -31,7 +31,7 @@ from na228_builder.payload_builder.operations import (
 )
 from na228_builder.modules.runtime_injector.engine import _load_static_fragments
 from na228_builder.image_assembler.iso9660 import Iso9660
-from scripts.lib.project_paths import load_project_paths
+from scripts.lib.paths import load_paths
 
 
 SYMBOL_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
@@ -73,7 +73,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--iso",
         type=Path,
-        default=load_project_paths(REPOSITORY).file("latest_iso"),
+        default=load_paths(REPOSITORY).file("latest_iso"),
     )
     parser.add_argument("--output", type=Path)
     return parser.parse_args()

@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from project_paths import PROJECT_PATHS
+from paths import PATHS
 
 
 def main() -> int:

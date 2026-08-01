@@ -15,11 +15,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\lib\paths.ps1')
 . (Join-Path $PSScriptRoot '..\lib\run_log.ps1')
-$projectPaths = Get-Na2ProjectPaths
-$latestIsoName = [IO.Path]::GetFileName($projectPaths.files.latest_iso)
-$testIsoName = [IO.Path]::GetFileName($projectPaths.files.test_iso)
+$paths = Get-Na2Paths
+$latestIsoName = [IO.Path]::GetFileName($paths.files.latest_iso)
+$testIsoName = [IO.Path]::GetFileName($paths.files.test_iso)
 
 function Write-Na2Stage {
     param([string]$Message)
@@ -48,7 +48,7 @@ $runLog = $null
 try {
     $runLogArguments = @{
         Mode = $runMode
-        ProjectPaths = $projectPaths
+        Paths = $paths
     }
     if ($Action -eq 'worker-build') {
         $runLogArguments.LogDirectory = $WorkerLogDirectory
@@ -73,7 +73,7 @@ try {
         'worker-build' {
             $portableOutput = ConvertTo-Na2ProjectPath `
                 -Path $WorkerOutputIso `
-                -ProjectPaths $projectPaths
+                -Paths $paths
             Write-Na2Stage "Build isolated worker ISO $portableOutput"
             $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') `
                 -WorkerOutputIso $WorkerOutputIso
@@ -108,8 +108,8 @@ try {
                 throw 'Profile build did not return a valid promotion result.'
             }
             Write-Na2Stage "2/2 Launch $latestIsoName"
-            & $projectPaths.files.pcsx2_launch_command `
-                -IsoPath $projectPaths.files.latest_iso
+            & $paths.files.pcsx2_launch_command `
+                -IsoPath $paths.files.latest_iso
         }
     }
     $runOutcome = 'succeeded'

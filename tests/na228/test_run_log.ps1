@@ -42,7 +42,7 @@ try {
 
     $portable = ConvertTo-Na2PortableText `
         -Text "ISO: $build\NA2.28 - Latest.iso`nExternal: $externalPath" `
-        -ProjectPaths $paths
+        -Paths $paths
     Assert-Na2Test `
         -Condition ($portable -match 'ISO: @build/NA2\.28 - Latest\.iso') `
         -Message 'Configured build path was not converted to @build.'
@@ -56,7 +56,7 @@ try {
     foreach ($index in 1..22) {
         $context = Start-Na2RunLog `
             -Mode "test-$index" `
-            -ProjectPaths $paths `
+            -Paths $paths `
             -MaxRollingSections 20
         Write-Host "run-marker-$index $build\NA2.28 - Latest.iso"
         Complete-Na2RunLog -Context $context -Outcome succeeded
@@ -81,7 +81,7 @@ try {
 
     $failurePaths = $paths.PSObject.Copy()
     $failurePaths.logs = Join-Path $repository 'failure-logs'
-    $failureContext = Start-Na2RunLog -Mode failure-test -ProjectPaths $failurePaths
+    $failureContext = Start-Na2RunLog -Mode failure-test -Paths $failurePaths
     Write-Host "failure marker $build\NA2.28 - Latest.iso"
     $failureExternalPath = 'C{0}{1}Private{1}failure.txt' -f `
         [IO.Path]::VolumeSeparatorChar, [IO.Path]::DirectorySeparatorChar
@@ -97,7 +97,7 @@ try {
     $fakeRepository = Join-Path $testRoot 'help-project'
     New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository 'scripts\lib') | Out-Null
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'na228.ps1') -Destination $fakeRepository
-    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\lib\project_paths.ps1') `
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\lib\paths.ps1') `
         -Destination (Join-Path $fakeRepository 'scripts\lib')
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\lib\run_log.ps1') `
         -Destination (Join-Path $fakeRepository 'scripts\lib')
@@ -582,7 +582,7 @@ else {
     $renamedPaths.files = $renamedFiles
     $migratedMap = Read-Na2BuildMap `
         -LogDirectory $structuredLog `
-        -ProjectPaths $renamedPaths
+        -Paths $renamedPaths
     Assert-Na2Test `
         -Condition ($migratedMap.LatestBuildId -eq 'old-latest') `
         -Message 'Renamed Latest ISO key lost its retained build record.'
@@ -600,7 +600,7 @@ else {
         -LogDirectory $structuredLog `
         -LatestBuildId 'old-latest' `
         -PreviousBuildId 'old-previous' `
-        -ProjectPaths $paths
+        -Paths $paths
     $record = Complete-Na2BuildRecord `
         -LogDirectory $structuredLog `
         -BuildId 'new-latest' `
@@ -609,11 +609,11 @@ else {
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $paths.files.previous_iso `
         -Profile (Join-Path $paths.builder 'profiles\default.tsv') `
-        -ProjectPaths $paths
+        -Paths $paths
     Assert-Na2Test -Condition ($record.BuildId -eq 'new-latest') -Message 'Updated build was not retained.'
     $updatedBuildMap = Read-Na2BuildMap `
         -LogDirectory $structuredLog `
-        -ProjectPaths $paths
+        -Paths $paths
     Assert-Na2Test `
         -Condition ($updatedBuildMap.LatestBuildId -eq 'new-latest') `
         -Message 'Latest build mapping was not advanced.'
@@ -644,7 +644,7 @@ else {
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $paths.files.previous_iso `
         -Profile 'na228_builder/profiles/default.tsv' `
-        -ProjectPaths $paths
+        -Paths $paths
     Assert-Na2Test `
         -Condition ($unchanged.BuildId -eq 'duplicate') `
         -Message 'Unchanged full build did not become the latest provenance record.'
@@ -667,13 +667,13 @@ else {
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $null `
         -Profile 'na228_builder/profiles/default.tsv' `
-        -ProjectPaths $paths
+        -Paths $paths
     Assert-Na2Test `
         -Condition ($firstUnchanged.BuildId -eq $firstBuildId) `
         -Message 'First unchanged build was incorrectly discarded.'
     $firstBuildMap = Read-Na2BuildMap `
         -LogDirectory $freshStructuredLog `
-        -ProjectPaths $paths
+        -Paths $paths
     Assert-Na2Test `
         -Condition ($firstBuildMap.LatestBuildId -eq $firstBuildId) `
         -Message 'First unchanged build did not establish the latest mapping.'

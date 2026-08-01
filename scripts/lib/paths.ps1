@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest
 
-function Get-Na2ProjectPaths {
+function Get-Na2Paths {
     [CmdletBinding()]
     param(
         [string]$ManifestPath = (Join-Path $PSScriptRoot '..\..\paths.json'),
@@ -242,12 +242,10 @@ function Get-Na2ProjectPaths {
         else {
             $catalog = $projectCatalog
         }
-        $gameResolver = if ($resolvedFiles.Contains('game_resolver')) {
-            [string]$resolvedFiles['game_resolver']
+        if (-not $resolvedFiles.Contains('game_resolver')) {
+            throw 'Project path imports provide no game resolver.'
         }
-        else {
-            Join-Path $PSScriptRoot 'resolve_game.py'
-        }
+        $gameResolver = [string]$resolvedFiles['game_resolver']
         if (-not (Test-Path -LiteralPath $gameResolver -PathType Leaf)) {
             throw "Game resolver not found: $gameResolver"
         }
@@ -486,12 +484,12 @@ function ConvertTo-Na2ProjectPath {
         [string]$Path,
 
         [Parameter(Mandatory = $true)]
-        [object]$ProjectPaths
+        [object]$Paths
     )
 
     $fullPath = [IO.Path]::GetFullPath($Path)
     $roots = @(
-        $ProjectPaths.PSObject.Properties |
+        $Paths.PSObject.Properties |
             Where-Object { $_.Name -notin @('ManifestPath', 'files', 'games') } |
             ForEach-Object {
                 [pscustomobject]@{
@@ -524,7 +522,7 @@ function Resolve-Na2ProjectPathAlias {
         [string]$Alias,
 
         [Parameter(Mandatory = $true)]
-        [object]$ProjectPaths
+        [object]$Paths
     )
 
     $aliasMatch = [regex]::Match(
@@ -536,7 +534,7 @@ function Resolve-Na2ProjectPathAlias {
     }
 
     $rootName = $aliasMatch.Groups['root'].Value
-    $rootProperty = $ProjectPaths.PSObject.Properties[$rootName]
+    $rootProperty = $Paths.PSObject.Properties[$rootName]
     if ($null -eq $rootProperty -or
         $rootName -in @('ManifestPath', 'files', 'games')) {
         throw "Unknown project root '$rootName': $Alias"

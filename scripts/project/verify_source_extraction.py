@@ -14,10 +14,10 @@ if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
 from na228_builder.image_assembler.iso9660 import Iso9660, IsoRecord
-from scripts.lib.project_paths import load_project_paths
+from scripts.lib.paths import load_paths
 
 
-PROJECT_PATHS = load_project_paths(REPOSITORY)
+PATHS = load_paths(REPOSITORY)
 
 
 @dataclass
@@ -33,9 +33,9 @@ def configured_path(path: Path) -> Path:
     resolved = path.resolve()
     roots = [
         value.resolve()
-        for name, value in PROJECT_PATHS.roots.items()
+        for name, value in PATHS.roots.items()
         if name != "repository"
-    ] + [PROJECT_PATHS.repository.resolve()]
+    ] + [PATHS.repository.resolve()]
     if not any(resolved == root or root in resolved.parents for root in roots):
         raise ValueError(f"Path is outside configured project roots: {path}")
     return resolved

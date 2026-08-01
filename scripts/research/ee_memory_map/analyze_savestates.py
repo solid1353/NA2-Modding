@@ -19,9 +19,9 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
-from scripts.lib.project_paths import (  # noqa: E402
-    ProjectPaths,
-    load_project_paths,
+from scripts.lib.paths import (  # noqa: E402
+    Paths,
+    load_paths,
     resolve_alias,
 )
 
@@ -617,9 +617,9 @@ def write_reports(output_dir: Path, observations: Sequence[StateObservation]) ->
     )
 
 
-def _resolve_argument(value: str, project_paths: ProjectPaths) -> Path:
+def _resolve_argument(value: str, paths: Paths) -> Path:
     if value.startswith("@"):
-        return resolve_alias(value, project_paths)
+        return resolve_alias(value, paths)
     return Path(value).resolve()
 
 
@@ -655,21 +655,21 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    project_paths = load_project_paths(REPOSITORY_ROOT)
+    paths = load_paths(REPOSITORY_ROOT)
     raw_inputs = args.inputs or [
         str(
-            project_paths.path(
+            paths.path(
                 "work", "EE Runtime Memory Map", "savestates", "2026-07-22"
             )
         )
     ]
     inputs: list[Path] = []
     for value in raw_inputs:
-        inputs.extend(_discover_inputs(_resolve_argument(value, project_paths)))
+        inputs.extend(_discover_inputs(_resolve_argument(value, paths)))
     observations = analyze_states(inputs)
 
     if args.output_dir:
-        output_dir = _resolve_argument(args.output_dir, project_paths)
+        output_dir = _resolve_argument(args.output_dir, paths)
         write_reports(output_dir, observations)
         print(f"Analyzed {len(observations)} savestates into {output_dir}")
     else:

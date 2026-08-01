@@ -8,12 +8,12 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot '..\..\lib\project_paths.ps1')
-$projectPaths = Get-Na2ProjectPaths
-. $projectPaths.files.ghidra_runtime
+. (Join-Path $PSScriptRoot '..\..\lib\paths.ps1')
+$paths = Get-Na2Paths
+. $paths.files.ghidra_runtime
 
 function Resolve-SourceAlias([string]$Alias) {
-    return Resolve-Na2ProjectPathAlias -Alias $Alias -ProjectPaths $projectPaths
+    return Resolve-Na2ProjectPathAlias -Alias $Alias -Paths $paths
 }
 
 $targets = Import-Csv -LiteralPath (Join-Path $PSScriptRoot 'targets.tsv') -Delimiter "`t"
@@ -38,16 +38,16 @@ if ($VerifyOnly) {
     exit 0
 }
 
-$runtimeRoot = Join-Path $projectPaths.work 'temp\ghidra_import'
+$runtimeRoot = Join-Path $paths.work 'temp\ghidra_import'
 $ghidra = Initialize-GhidraRuntime `
     -RuntimeRoot $runtimeRoot `
-    -ToolsRoot $projectPaths.utils
+    -ToolsRoot $paths.utils
 $headless = $ghidra.Headless
 $sharedScriptPath = $ghidra.ScriptPath
 
 foreach ($item in $targets) {
     $analysisDirectory = if ($item.target -eq 'shared') { 'shared' } else { $item.target }
-    $analysisRoot = Join-Path $projectPaths.analysis "disassembly\$analysisDirectory"
+    $analysisRoot = Join-Path $paths.analysis "disassembly\$analysisDirectory"
     $projectRoot = Join-Path $analysisRoot 'ghidra'
     $artifactRoot = if ($item.target -eq 'shared') { Join-Path $analysisRoot $item.shared_scope } else { $analysisRoot }
     $summaryPath = Join-Path $artifactRoot "summaries\$($item.program).tsv"

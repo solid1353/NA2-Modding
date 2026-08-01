@@ -23,10 +23,10 @@ REPOSITORY = find_repository(Path(__file__))
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
-from scripts.lib.project_paths import load_project_paths  # noqa: E402
+from scripts.lib.paths import load_paths  # noqa: E402
 
 
-PACKAGE = load_project_paths(REPOSITORY).path(
+PACKAGE = load_paths(REPOSITORY).path(
     "features", "localization", "binary_patcher"
 )
 ATLAS_OUTPUT = PACKAGE / "assets" / "nun5_semantic_14x20.bin"
@@ -346,7 +346,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    paths = load_project_paths(REPOSITORY)
+    paths = load_paths(REPOSITORY)
     clean_na2_root = paths.path("source_na2")
     nun5_root = paths.path("source_nun5")
     clean_na2 = checked_read(clean_na2_root / "DATA" / "GF4.BIN", NA2_GF4_SHA256)

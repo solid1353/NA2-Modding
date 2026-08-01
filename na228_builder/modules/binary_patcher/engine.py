@@ -17,10 +17,10 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
-from scripts.lib.project_paths import load_project_paths, resolve_alias
+from scripts.lib.paths import load_paths, resolve_alias
 from na228_builder.source_media import read_root_file
 
-PROJECT_PATHS = load_project_paths(REPOSITORY_ROOT, allow_missing=True)
+PATHS = load_paths(REPOSITORY_ROOT, allow_missing=True)
 
 BINARY_PATCHER_SCHEMA_VERSION = 4
 TARGET_FIELDS = [
@@ -531,7 +531,7 @@ def parse_roots(values: list[str], workspace: Path) -> dict[str, Path]:
             raise PatchError(f"Duplicate --root binding: {root_id}")
         if path_text.startswith("@"):
             try:
-                path = resolve_alias(path_text, PROJECT_PATHS)
+                path = resolve_alias(path_text, PATHS)
             except (KeyError, ValueError) as exc:
                 raise PatchError(
                     f"Invalid project-root alias for root {root_id}: {path_text!r}"
@@ -1000,7 +1000,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
-    workspace = PROJECT_PATHS.repository
+    workspace = PATHS.repository
     package_path = command_relative_path(args.package, "--package", workspace)
     if not package_path.is_dir():
         raise PatchError(f"Package directory does not exist: {args.package}")
@@ -1041,7 +1041,7 @@ def main() -> int:
         log_text = args.log_directory
     else:
         run_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
-        logs_relative = PROJECT_PATHS.path("logs").relative_to(workspace).as_posix()
+        logs_relative = PATHS.path("logs").relative_to(workspace).as_posix()
         log_text = f"{logs_relative}/na228/binary_patcher/{run_id}"
     log_directory = command_relative_path(log_text, "--log-directory", workspace)
     apply_package(

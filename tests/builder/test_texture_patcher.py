@@ -7,14 +7,14 @@ from pathlib import Path
 
 from na228_builder.build_profile import write_texture_patch_log
 from na228_builder.modules.texture_patcher import engine
-from scripts.lib.project_paths import load_project_paths
+from scripts.lib.paths import load_paths
 
 
 class UiTextureTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         repository = Path(__file__).resolve().parents[2]
-        paths = load_project_paths(repository, allow_missing=True)
+        paths = load_paths(repository, allow_missing=True)
         na2_root = paths.path("source_na2")
         nun5_root = paths.path("source_nun5")
         data_root = (

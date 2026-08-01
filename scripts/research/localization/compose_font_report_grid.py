@@ -14,11 +14,11 @@ REPOSITORY_BOOTSTRAP = Path(__file__).resolve().parents[3]
 if str(REPOSITORY_BOOTSTRAP) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_BOOTSTRAP))
 
-from scripts.lib.project_paths import load_project_paths
+from scripts.lib.paths import load_paths
 
 
-PROJECT_PATHS = load_project_paths(Path(__file__).resolve(), allow_missing=True)
-REPOSITORY = PROJECT_PATHS.repository
+PATHS = load_paths(Path(__file__).resolve(), allow_missing=True)
+REPOSITORY = PATHS.repository
 BACKGROUND = (20, 22, 27)
 PRIMARY = (236, 239, 245)
 SECONDARY = (177, 185, 198)

@@ -222,7 +222,7 @@
 - Unify third-party package use through maintained central dependency sets.
   Ordinary package-bearing Python callers use
   `scripts/lib/run_python.ps1`; their requirements belong only in
-  `scripts/lib/python_packages.json`. The self-contained release builder's
+  `packages.json`. The self-contained release builder's
   pinned lockfile is its release-only central set, not a general runtime.
   Never select an interpreter, probe packages, install dependencies, or add
   fallback logic separately in a workstream, task-local helper, or maintained

@@ -21,10 +21,10 @@ from .payload_builder import builder as payload_builder_module
 from .payload_builder import integration as payload_integration_module
 from .payload_builder.operations import ResidentPayloadBuild
 from .profile import Profile, ProfileModule, load_profile
-from scripts.lib.project_paths import load_project_paths
+from scripts.lib.paths import load_paths
 
 
-PROJECT_PATHS = load_project_paths(Path(__file__).resolve(), allow_missing=True)
+PATHS = load_paths(Path(__file__).resolve(), allow_missing=True)
 
 
 @dataclass(frozen=True)
@@ -952,7 +952,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    workspace = PROJECT_PATHS.repository
+    workspace = PATHS.repository
     source_iso = args.source.resolve()
     if not source_iso.is_file():
         raise FileNotFoundError(source_iso)

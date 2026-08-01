@@ -23,7 +23,7 @@ from na228_builder.payload_builder.operations import (
     PayloadFragment,
     PayloadRelocation,
 )
-from scripts.lib.project_paths import load_project_paths
+from scripts.lib.paths import load_paths
 
 
 EM_MIPS = 8
@@ -117,7 +117,7 @@ class _Relocation:
 
 
 def default_toolchain_bin(repository_root: Path) -> Path:
-    return load_project_paths(repository_root).path(
+    return load_paths(repository_root).path(
         "ps2_msys",
         "1.0",
         "local",

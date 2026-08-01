@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 from na228_builder.cvm import CvmError, CvmIso, _crypt_sector, _rofs_key
 from na228_builder.image_assembler.iso9660 import Iso9660, IsoRecord, SECTOR
-from scripts.lib.project_paths import load_project_paths
+from scripts.lib.paths import load_paths
 
 
 PASSWORD = "cc2fuku"
@@ -172,7 +172,7 @@ class CvmTests(unittest.TestCase):
 class CvmExtractedReferenceTests(unittest.TestCase):
     def test_supported_sources_match_existing_extractions_when_available(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        paths = load_project_paths(repository, allow_missing=True)
+        paths = load_paths(repository, allow_missing=True)
         source = paths.roots["source"]
         cases = ("NA2.iso", "NUN5.iso")
         required = [

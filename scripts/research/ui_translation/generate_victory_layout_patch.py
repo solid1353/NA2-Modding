@@ -16,7 +16,7 @@ if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
 from na228_builder.modules.binary_patcher import engine  # noqa: E402
-from scripts.lib.project_paths import load_project_paths  # noqa: E402
+from scripts.lib.paths import load_paths  # noqa: E402
 
 
 PATCH_ID = "ui_layout_victory_names"
@@ -80,7 +80,7 @@ def read_verified(
 
 
 def build_patch_rows() -> tuple[dict[str, str], list[dict[str, str]]]:
-    paths = load_project_paths(REPOSITORY)
+    paths = load_paths(REPOSITORY)
     na2_btl = read_verified(
         paths.path("source_na2", "PRG", "BTL.BIN"),
         NA2_BTL_EXPECTED_SIZE,
@@ -252,7 +252,7 @@ def main() -> int:
 
     patch, generated_edits = build_patch_rows()
     data_root = (
-        load_project_paths(REPOSITORY).path("features")
+        load_paths(REPOSITORY).path("features")
         / "localization"
         / "binary_patcher"
     )

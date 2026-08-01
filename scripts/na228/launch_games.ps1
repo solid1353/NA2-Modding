@@ -8,11 +8,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
-$projectPaths = Get-Na2ProjectPaths
+. (Join-Path $PSScriptRoot '..\lib\paths.ps1')
+$paths = Get-Na2Paths
 
 function Get-Na2ConfiguredDevelopmentPinePort {
-    $iniPath = Join-Path $projectPaths.pcsx2_dev 'inis\PCSX2.ini'
+    $iniPath = Join-Path $paths.pcsx2_dev 'inis\PCSX2.ini'
     if (-not (Test-Path -LiteralPath $iniPath -PathType Leaf)) {
         throw "Development PCSX2 configuration was not found: $iniPath"
     }
@@ -43,11 +43,11 @@ $seenGames = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordina
 $selectedGames = [Collections.Generic.List[string]]::new()
 $duplicateGames = [Collections.Generic.List[string]]::new()
 foreach ($requestedGame in $requestedGames) {
-    $aliasProperty = $projectPaths.games.Aliases.PSObject.Properties[$requestedGame]
+    $aliasProperty = $paths.games.Aliases.PSObject.Properties[$requestedGame]
     if ($null -eq $aliasProperty) {
         throw (
             "Unknown game name: $requestedGame. Supported names: " +
-            "$($projectPaths.games.Names -join ', ')."
+            "$($paths.games.Names -join ', ')."
         )
     }
     $game = [string]$aliasProperty.Value
@@ -62,13 +62,13 @@ if ($duplicateGames.Count -gt 0) {
     throw "Each game may be listed only once: $($duplicateGames -join ', ')."
 }
 
-$pcsx2Exe = [IO.Path]::GetFullPath($projectPaths.files.pcsx2_dev_exe)
+$pcsx2Exe = [IO.Path]::GetFullPath($paths.files.pcsx2_dev_exe)
 $pcsx2Launcher = [IO.Path]::GetFullPath(
-    $projectPaths.files.pcsx2_launch_command
+    $paths.files.pcsx2_launch_command
 )
 $selectedIsoPaths = @{}
 foreach ($game in $selectedGames) {
-    $entry = $projectPaths.games.Entries.PSObject.Properties[$game].Value
+    $entry = $paths.games.Entries.PSObject.Properties[$game].Value
     $selectedIsoPaths[$game] = [IO.Path]::GetFullPath($entry.IsoPath)
 }
 

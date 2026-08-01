@@ -10,14 +10,14 @@ from na228_builder.modules.string_patcher import engine as string_patcher
 from na228_builder.modules.translation_importer import engine as translation_importer
 from na228_builder.payload_builder import builder as payload_builder
 from na228_builder.payload_builder import integration as payload_integration
-from scripts.lib.project_paths import load_project_paths
+from scripts.lib.paths import load_paths
 
 
 class IntegratedExternalStringTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.repository = Path(__file__).resolve().parents[2]
-        paths = load_project_paths(cls.repository, allow_missing=True)
+        paths = load_paths(cls.repository, allow_missing=True)
         cls.roots = {"na2": paths.path("source_na2")}
         if not all(root.is_dir() for root in cls.roots.values()):
             raise unittest.SkipTest(

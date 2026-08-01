@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
-from scripts.lib.project_paths import load_project_paths, resolve_alias
+from scripts.lib.paths import load_paths, resolve_alias
 from ...source_media import IsoFileView, cvm_members
 
 try:
@@ -1194,7 +1194,7 @@ def parse_selection(value: str) -> tuple[str, ...]:
 
 def default_roots() -> tuple[Path, Path]:
     repository = Path(__file__).resolve().parents[3]
-    paths = load_project_paths(repository)
+    paths = load_paths(repository)
     return (
         paths.path("source_na2"),
         paths.path("source_nun5"),

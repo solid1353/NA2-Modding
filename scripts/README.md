@@ -227,7 +227,7 @@ responsibility directories.
 ## Python package sets
 
 Third-party Python packages are declared once in
-`lib/python_packages.json`. Invoke package-bearing scripts through
+`packages.json`. Invoke package-bearing scripts through
 `lib/run_python.ps1`; do not call a guessed interpreter or probe/install a
 package locally. For example:
 

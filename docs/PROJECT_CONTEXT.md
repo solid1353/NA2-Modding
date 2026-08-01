@@ -40,7 +40,7 @@ NA2.28 PCSX2 configuration:
 ## Working Layout
 
 Directory roots are configured once in `paths.json`; see
-`docs/PROJECT_PATHS.md`. The `@root/...` notation below is logical and must not be
+`docs/PATHS.md`. The `@root/...` notation below is logical and must not be
 replaced with a copied machine-specific absolute path.
 
 - `@source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.

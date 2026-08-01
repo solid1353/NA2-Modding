@@ -9,7 +9,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from pathlib import Path
 
-from scripts.lib.project_paths import ProjectPaths, load_project_paths, resolve_alias
+from scripts.lib.paths import Paths, load_paths, resolve_alias
 
 
 FEATURE_FIELDS = ["feature_id", "enabled", "expected_sha256", "bypass_check"]
@@ -219,11 +219,11 @@ def _workspace_path(value: str, label: str, workspace: Path) -> Path:
 
 
 def _product_input_path(
-    value: str, label: str, workspace: Path, project_paths: ProjectPaths
+    value: str, label: str, workspace: Path, paths: Paths
 ) -> Path:
     if value.startswith("@"):
         try:
-            resolved = resolve_alias(value, project_paths)
+            resolved = resolve_alias(value, paths)
         except (KeyError, ValueError) as exc:
             raise ValueError(
                 f"{label} has an invalid project-root alias: {value!r}"
@@ -239,7 +239,7 @@ def _tree_digest(path: Path, files: list[Path]) -> str:
         try:
             return item.relative_to(path).as_posix()
         except ValueError:
-            repository = load_project_paths(path, allow_missing=True).repository
+            repository = load_paths(path, allow_missing=True).repository
             return "@repository/" + item.relative_to(repository).as_posix()
 
     digest = hashlib.sha256()
@@ -356,7 +356,7 @@ def _runtime_injector_content_files(path: Path) -> list[Path]:
                 f"{sources_path}: path must be relative: {value!r}"
             )
         if candidate.parts and candidate.parts[0] == "src":
-            repository = load_project_paths(path, allow_missing=True).repository
+            repository = load_paths(path, allow_missing=True).repository
             source_root = (repository / "src").resolve()
             source = (repository / candidate).resolve()
             try:
@@ -475,8 +475,8 @@ def load_profile(
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", profile_id):
         raise ValueError(f"Invalid profile name: {profile_id!r}")
 
-    project_paths = load_project_paths(workspace, allow_missing=True)
-    product_path = project_paths.file("product_config").resolve()
+    paths = load_paths(workspace, allow_missing=True)
+    product_path = paths.file("product_config").resolve()
     identity, product_inputs = _read_product(product_path)
     memory_card_title_offset = identity.memory_card_title_offset
     memory_card_title_capacity = identity.memory_card_title_capacity
@@ -556,7 +556,7 @@ def load_profile(
         root = overrides.get(root_id)
         if root is None:
             root = _product_input_path(
-                value, f"product input {root_id}", workspace, project_paths
+                value, f"product input {root_id}", workspace, paths
             )
         if not root.exists():
             raise FileNotFoundError(root)
@@ -571,7 +571,7 @@ def load_profile(
     feature_rows = _read_tsv(definition_path, FEATURE_FIELDS)
     if not feature_rows:
         raise ValueError("Profile has no enabled features")
-    features_root = project_paths.path("features").resolve()
+    features_root = paths.path("features").resolve()
     features: list[ProfileFeature] = []
     modules: list[ProfileModule] = []
     seen_features: set[str] = set()

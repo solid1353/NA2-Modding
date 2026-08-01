@@ -2,15 +2,15 @@ param([string[]]$AnalysisDirs)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
-$projectPaths = Get-Na2ProjectPaths
+. (Join-Path $PSScriptRoot '..\lib\paths.ps1')
+$paths = Get-Na2Paths
 
 if (-not $AnalysisDirs -or $AnalysisDirs.Count -eq 0) {
     $AnalysisDirs = @('NA2', 'NUN3', 'NUN5', 'NUN6', 'shared') | ForEach-Object {
-        Join-Path $projectPaths.analysis "disassembly\$_"
+        Join-Path $paths.analysis "disassembly\$_"
     }
 }
-$disassemblyRoot = [IO.Path]::GetFullPath((Join-Path $projectPaths.analysis 'disassembly'))
+$disassemblyRoot = [IO.Path]::GetFullPath((Join-Path $paths.analysis 'disassembly'))
 $disassemblyPrefix = $disassemblyRoot.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
 
 foreach ($analysisDir in $AnalysisDirs) {
@@ -31,7 +31,7 @@ foreach ($analysisDir in $AnalysisDirs) {
     if ($notReadOnly.Count -ne 0) { throw "Some analysis items remain writable below $fullPath" }
     $fileCount = @($items | Where-Object { -not $_.PSIsContainer }).Count
     $directoryCount = @($items | Where-Object { $_.PSIsContainer }).Count + 1
-    Write-Host "Read-only analysis tree: $(ConvertTo-Na2ProjectPath -Path $fullPath -ProjectPaths $projectPaths)"
+    Write-Host "Read-only analysis tree: $(ConvertTo-Na2ProjectPath -Path $fullPath -Paths $paths)"
     Write-Host "Directories: $directoryCount; files: $fileCount; not read-only: 0"
 }
 

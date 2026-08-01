@@ -6,10 +6,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
+. (Join-Path $PSScriptRoot '..\lib\paths.ps1')
 . (Join-Path $PSScriptRoot '..\lib\build_log.ps1')
 . (Join-Path $PSScriptRoot 'worker_paths.ps1')
-$projectPaths = Get-Na2ProjectPaths
+$paths = Get-Na2Paths
 
 if (
     @(
@@ -23,7 +23,7 @@ if (
 $workerBuild = if (-not [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
     Get-Na2WorkerBuildContext `
         -OutputPath $WorkerOutputIso `
-        -ProjectPaths $projectPaths
+        -Paths $paths
 }
 else {
     $null
@@ -160,16 +160,16 @@ function Promote-VerifiedIso {
     }
 }
 
-$inputIso = $projectPaths.files.na2_iso
-$nun5Iso = $projectPaths.files.nun5_iso
-$resolvedLatestIso = [IO.Path]::GetFullPath($projectPaths.files.latest_iso)
-$resolvedPreviousIso = [IO.Path]::GetFullPath($projectPaths.files.previous_iso)
-$resolvedTestIso = [IO.Path]::GetFullPath($projectPaths.files.test_iso)
+$inputIso = $paths.files.na2_iso
+$nun5Iso = $paths.files.nun5_iso
+$resolvedLatestIso = [IO.Path]::GetFullPath($paths.files.latest_iso)
+$resolvedPreviousIso = [IO.Path]::GetFullPath($paths.files.previous_iso)
+$resolvedTestIso = [IO.Path]::GetFullPath($paths.files.test_iso)
 $profile = [IO.Path]::GetRelativePath(
-    $projectPaths.repository,
-    (Join-Path $projectPaths.builder 'profiles\default.tsv')
+    $paths.repository,
+    (Join-Path $paths.builder 'profiles\default.tsv')
 )
-$logDirectory = Join-Path $projectPaths.logs 'na228'
+$logDirectory = Join-Path $paths.logs 'na228'
 $buildLogRoot = Join-Path $logDirectory 'builds'
 $receiptPath = Join-Path $logDirectory 'preflight\latest.json'
 $stagedIso = "$resolvedLatestIso.building"
@@ -186,7 +186,7 @@ if ($ComposeOnly) {
         '[na228] Compose-only: derive and conflict-check the full pinned profile; ' +
         'preflight reuse and ISO staging are disabled.'
     ) -ForegroundColor Cyan
-    Push-Location $projectPaths.repository
+    Push-Location $paths.repository
     try {
         $composeOutput = & python @composeArguments
         $composeExitCode = $LASTEXITCODE
@@ -226,7 +226,7 @@ if ($TestOnly -or $null -ne $workerBuild) {
     }
     $isolatedProfileLog = Join-Path $isolatedLogRoot $isolatedBuildId
     $isolatedProfileLogDirectory = [IO.Path]::GetRelativePath(
-        $projectPaths.repository,
+        $paths.repository,
         $isolatedProfileLog
     )
     $isolatedBuildingIso = "$isolatedOutputIso.building"
@@ -251,7 +251,7 @@ if ($TestOnly -or $null -ne $workerBuild) {
     ) -ForegroundColor Cyan
     $isolatedCompleted = $false
     try {
-        Push-Location $projectPaths.repository
+        Push-Location $paths.repository
         try {
             $isolatedOutput = & python @isolatedArguments
             $isolatedExitCode = $LASTEXITCODE
@@ -280,13 +280,13 @@ if ($TestOnly -or $null -ne $workerBuild) {
 
         $profilePortable = ConvertTo-Na2PortableText `
             -Text $profile `
-            -ProjectPaths $projectPaths
+            -Paths $paths
         $outputPortable = ConvertTo-Na2PortableText `
             -Text $isolatedOutputIso `
-            -ProjectPaths $projectPaths
+            -Paths $paths
         $recordPortable = ConvertTo-Na2PortableText `
             -Text $isolatedProfileLog `
-            -ProjectPaths $projectPaths
+            -Paths $paths
         $resultContent = @(
             "timestamp_utc`tresult`toutput_state`trotation`tpcsx2_closed`tprofile`toutput_iso`tbuild_record"
             (
@@ -333,7 +333,7 @@ if ($TestOnly -or $null -ne $workerBuild) {
         $isolatedCompleted = $true
         $isolatedRecord = ConvertTo-Na2ProjectPath `
             -Path $isolatedProfileLog `
-            -ProjectPaths $projectPaths
+            -Paths $paths
         Write-Host (
             "[na228] ISO result: $isolatedKind ($isolatedState); Latest/Previous unchanged; " +
             'rotation: no; PCSX2 left running.'
@@ -372,10 +372,10 @@ if ($TestOnly -or $null -ne $workerBuild) {
         if ($null -ne $workerBuild) {
             Remove-Na2EmptyWorkerAncestors `
                 -Path $isolatedLogRoot `
-                -WorkRoot $projectPaths.work
+                -WorkRoot $paths.work
             Remove-Na2EmptyWorkerAncestors `
                 -Path ([IO.Path]::GetDirectoryName($isolatedBuildingIso)) `
-                -WorkRoot $projectPaths.work
+                -WorkRoot $paths.work
         }
     }
 }
@@ -390,7 +390,7 @@ try {
         -LatestIso $resolvedLatestIso `
         -Profile $profile `
         -Receipt $receiptPath `
-        -Repository $projectPaths.repository
+        -Repository $paths.repository
 }
 catch {
     $preflight = [pscustomobject]@{
@@ -404,7 +404,7 @@ if ($preflight.status -eq 'hit') {
     try {
         $buildMap = Read-Na2BuildMap `
             -LogDirectory $logDirectory `
-            -ProjectPaths $projectPaths
+            -Paths $paths
         if ([string]::IsNullOrWhiteSpace($buildMap.LatestBuildId)) {
             throw 'The Latest ISO has no retained build record.'
         }
@@ -456,7 +456,7 @@ else {
 
 $buildId = (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
 $profileLog = Join-Path $buildLogRoot $buildId
-$profileLogDirectory = [IO.Path]::GetRelativePath($projectPaths.repository, $profileLog)
+$profileLogDirectory = [IO.Path]::GetRelativePath($paths.repository, $profileLog)
 $arguments = @(
     '-B'
     '-m', 'na228_builder.build_profile'
@@ -468,7 +468,7 @@ $arguments = @(
 
 $promotionCompleted = $false
 try {
-    Push-Location $projectPaths.repository
+    Push-Location $paths.repository
     try {
         $buildOutput = & python @arguments
         $buildExitCode = $LASTEXITCODE
@@ -496,7 +496,7 @@ try {
         -LatestIso $promotion.LatestIso `
         -PreviousIso $promotion.PreviousIso `
         -Profile $profile `
-        -ProjectPaths $projectPaths
+        -Paths $paths
     $buildRecordPath = Join-Path $buildLogRoot $buildRecord.BuildId
     Write-Host "[na228] Build record: retained $buildRecordPath" -ForegroundColor Cyan
     $promotion | Add-Member -NotePropertyName BuildId -NotePropertyValue $buildRecord.BuildId
@@ -512,7 +512,7 @@ try {
                 -Profile $profile `
                 -Receipt $receiptPath `
                 -ExpectedFingerprint $preflightFingerprint `
-                -Repository $projectPaths.repository
+                -Repository $paths.repository
             if ($receiptResult.status -eq 'written') {
                 Write-Host (
                     "[na228] Preflight receipt: updated for fingerprint " +

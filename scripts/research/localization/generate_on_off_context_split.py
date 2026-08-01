@@ -23,7 +23,7 @@ REPOSITORY = find_repository(Path(__file__))
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
-from scripts.lib.project_paths import load_project_paths  # noqa: E402
+from scripts.lib.paths import load_paths  # noqa: E402
 
 
 PATCH_ID = "font_layout_on_off_context"
@@ -65,7 +65,7 @@ def generated_edits() -> list[dict[str, object]]:
 
 
 def verify_source() -> tuple[Path, Path]:
-    paths = load_project_paths(REPOSITORY)
+    paths = load_paths(REPOSITORY)
     btl = paths.path("source_na2") / "PRG" / "BTL.BIN"
     btl_data = btl.read_bytes()
     elf = paths.path("source_na2") / "SLPS_258.37"

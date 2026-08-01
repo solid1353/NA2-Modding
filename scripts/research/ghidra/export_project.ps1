@@ -7,17 +7,17 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot '..\..\lib\project_paths.ps1')
-$projectPaths = Get-Na2ProjectPaths
-. $projectPaths.files.ghidra_runtime
+. (Join-Path $PSScriptRoot '..\..\lib\paths.ps1')
+$paths = Get-Na2Paths
+. $paths.files.ghidra_runtime
 
 $analysisDirectory = if ($Target -eq 'shared') { 'shared' } else { $Target }
-$analysisRoot = Join-Path $projectPaths.analysis "disassembly\$analysisDirectory"
+$analysisRoot = Join-Path $paths.analysis "disassembly\$analysisDirectory"
 $projectRoot = Join-Path $analysisRoot 'ghidra'
-$runtimeRoot = Join-Path $projectPaths.work "temp\ghidra_export\$Target"
+$runtimeRoot = Join-Path $paths.work "temp\ghidra_export\$Target"
 $ghidra = Initialize-GhidraRuntime `
     -RuntimeRoot $runtimeRoot `
-    -ToolsRoot $projectPaths.utils
+    -ToolsRoot $paths.utils
 $headless = $ghidra.Headless
 $sharedScriptPath = $ghidra.ScriptPath
 

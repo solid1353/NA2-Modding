@@ -28,9 +28,9 @@ REPOSITORY_ROOT = SCRIPT_DIR.parents[2]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
-from scripts.lib.project_paths import (  # noqa: E402
-    ProjectPaths,
-    load_project_paths,
+from scripts.lib.paths import (  # noqa: E402
+    Paths,
+    load_paths,
     resolve_alias,
 )
 
@@ -57,7 +57,7 @@ class Target:
     image_value: str
     settings_file: str
 
-    def image_path(self, paths: ProjectPaths) -> Path:
+    def image_path(self, paths: Paths) -> Path:
         if self.image_kind == "root_alias":
             return resolve_alias(self.image_value, paths)
         if self.image_kind == "project_file":
@@ -248,7 +248,7 @@ def inspect_rendering_settings(
 
 
 def rendering_for_target(
-    paths: ProjectPaths, target: Target
+    paths: Paths, target: Target
 ) -> RenderingSettings:
     return inspect_rendering_settings(
         paths.path("pcsx2_stable", "inis", "PCSX2.ini"),
@@ -428,7 +428,7 @@ def hash_file(path: Path) -> str:
     return _hash_file_cached(str(path.resolve()), stat.st_size, stat.st_mtime_ns)
 
 
-def resolve_runtime_input(value: str, paths: ProjectPaths) -> Path:
+def resolve_runtime_input(value: str, paths: Paths) -> Path:
     if value.startswith("@"):
         try:
             result = resolve_alias(value, paths)
@@ -548,7 +548,7 @@ def guarded_patch_memory(
     }
 
 
-def logical_path(path: Path, paths: ProjectPaths) -> str:
+def logical_path(path: Path, paths: Paths) -> str:
     resolved = path.resolve()
     candidates: list[tuple[int, str, Path]] = []
     for root_name, root_path in paths.roots.items():
@@ -696,7 +696,7 @@ def _validate_case_and_slot(case_id: str, slot: int) -> None:
 
 
 def _validated_target_context(
-    paths: ProjectPaths, target: Target
+    paths: Paths, target: Target
 ) -> tuple[RenderingSettings, Path]:
     rendering = rendering_for_target(paths, target)
     if rendering.blockers:
@@ -715,7 +715,7 @@ def _validated_target_context(
 
 
 def _archive_state(
-    paths: ProjectPaths,
+    paths: Paths,
     target: Target,
     case_id: str,
     source_state: Path,
@@ -818,7 +818,7 @@ def _archive_state(
 
 
 def capture_state(
-    paths: ProjectPaths,
+    paths: Paths,
     target: Target,
     case_id: str,
     *,
@@ -861,7 +861,7 @@ def capture_state(
     )
 
 
-def _manual_state_path(paths: ProjectPaths, target: Target, slot: int) -> Path:
+def _manual_state_path(paths: Paths, target: Target, slot: int) -> Path:
     _validate_case_and_slot("manual", slot)
     return paths.path(
         "pcsx2_stable", "sstates", f"{target.serial} ({target.crc}).{slot:02d}.p2s"
@@ -869,7 +869,7 @@ def _manual_state_path(paths: ProjectPaths, target: Target, slot: int) -> Path:
 
 
 def import_state(
-    paths: ProjectPaths,
+    paths: Paths,
     target: Target,
     case_id: str,
     *,
@@ -894,7 +894,7 @@ def import_state(
 
 
 def import_pairs(
-    paths: ProjectPaths,
+    paths: Paths,
     targets: dict[str, Target],
     pairs: list[tuple[int, str]],
     *,
@@ -949,7 +949,7 @@ def import_pairs(
 
 
 def _settings_payload(
-    paths: ProjectPaths, targets: Iterable[Target]
+    paths: Paths, targets: Iterable[Target]
 ) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for target in targets:
@@ -1046,7 +1046,7 @@ def build_parser(target_names: list[str]) -> argparse.ArgumentParser:
 
 
 def run(argv: list[str] | None = None) -> int:
-    paths = load_project_paths(REPOSITORY_ROOT)
+    paths = load_paths(REPOSITORY_ROOT)
     targets = load_targets()
     parser = build_parser(sorted(targets))
     args = parser.parse_args(argv)

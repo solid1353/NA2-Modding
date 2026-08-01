@@ -33,7 +33,7 @@ context rather than repeated here.
   rules.
 - [Project context](docs/PROJECT_CONTEXT.md) records verified local state,
   directory roles, and established workflows.
-- [Project paths](docs/PROJECT_PATHS.md) documents the single path manifest,
+- [Project paths](docs/PATHS.md) documents the single path manifest,
   logical root notation, and migration procedure.
 - [Logging and retention](docs/LOGGING.md) defines bounded execution logs and
   promotion of reusable findings.

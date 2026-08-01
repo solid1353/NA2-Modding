@@ -5,11 +5,11 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
-$projectPaths = Get-Na2ProjectPaths
+. (Join-Path $PSScriptRoot '..\lib\paths.ps1')
+$paths = Get-Na2Paths
 
 $SourceDir = [IO.Path]::GetFullPath($SourceDir)
-$sourceRoot = [IO.Path]::GetFullPath($projectPaths.source)
+$sourceRoot = [IO.Path]::GetFullPath($paths.source)
 $sourcePrefix = $sourceRoot.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
 $oldRoot = Join-Path $sourceRoot '__old'
 $oldPrefix = $oldRoot.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar

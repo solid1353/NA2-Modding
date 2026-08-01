@@ -4,7 +4,7 @@ function Get-Na2WorkerContext {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$WorkerRoot,
-        [Parameter(Mandatory = $true)][psobject]$ProjectPaths,
+        [Parameter(Mandatory = $true)][psobject]$Paths,
         [switch]$RequireRelative
     )
 
@@ -16,9 +16,9 @@ function Get-Na2WorkerContext {
         [IO.Path]::GetFullPath($WorkerRoot)
     }
     else {
-        [IO.Path]::GetFullPath((Join-Path $ProjectPaths.repository $WorkerRoot))
+        [IO.Path]::GetFullPath((Join-Path $Paths.repository $WorkerRoot))
     }
-    $workRoot = [IO.Path]::GetFullPath($ProjectPaths.work)
+    $workRoot = [IO.Path]::GetFullPath($Paths.work)
     $parent = [IO.Path]::GetDirectoryName($resolved)
     $workerName = [IO.Path]::GetFileName($resolved.TrimEnd(
         [IO.Path]::DirectorySeparatorChar,
@@ -46,7 +46,7 @@ function Get-Na2WorkerBuildContext {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$OutputPath,
-        [Parameter(Mandatory = $true)][psobject]$ProjectPaths,
+        [Parameter(Mandatory = $true)][psobject]$Paths,
         [switch]$RequireRelative
     )
 
@@ -58,7 +58,7 @@ function Get-Na2WorkerBuildContext {
         [IO.Path]::GetFullPath($OutputPath)
     }
     else {
-        [IO.Path]::GetFullPath((Join-Path $ProjectPaths.repository $OutputPath))
+        [IO.Path]::GetFullPath((Join-Path $Paths.repository $OutputPath))
     }
     if ([IO.Path]::GetExtension($resolvedOutput) -ine '.iso') {
         throw 'Worker ISO output filenames must end in .iso.'
@@ -71,12 +71,12 @@ function Get-Na2WorkerBuildContext {
     $workerRoot = [IO.Path]::GetDirectoryName($buildDirectory)
     $worker = Get-Na2WorkerContext `
         -WorkerRoot $workerRoot `
-        -ProjectPaths $ProjectPaths
+        -Paths $Paths
 
     $sharedOutputs = @(
-        $ProjectPaths.files.latest_iso
-        $ProjectPaths.files.previous_iso
-        $ProjectPaths.files.test_iso
+        $Paths.files.latest_iso
+        $Paths.files.previous_iso
+        $Paths.files.test_iso
     ) | ForEach-Object { [IO.Path]::GetFullPath([string]$_) }
     if ($sharedOutputs | Where-Object { [IO.Path]::Equals($_, $resolvedOutput) }) {
         throw 'Worker ISO output must not target Latest, Previous, or Test.'

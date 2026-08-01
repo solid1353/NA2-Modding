@@ -15,7 +15,7 @@ if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
 from na228_builder.modules.texture_patcher import engine  # noqa: E402
-from scripts.lib.project_paths import load_project_paths  # noqa: E402
+from scripts.lib.paths import load_paths  # noqa: E402
 
 
 MODE1_PATH = re.compile(r"3EYE/3([A-Z0-9]{3})3PCT\.CCS")
@@ -122,7 +122,7 @@ def build_rows() -> tuple[
     list[dict[str, str]],
     list[tuple[str, int]],
 ]:
-    paths = load_project_paths(REPOSITORY)
+    paths = load_paths(REPOSITORY)
     data_root = paths.path("features") / "localization" / "texture_patcher"
     container_path = data_root / "containers.tsv"
     mapping_path = data_root / "mappings.tsv"
@@ -477,7 +477,7 @@ def main() -> int:
 
     containers, mappings, strategies, capacities = build_rows()
     data_root = (
-        load_project_paths(REPOSITORY).path("features")
+        load_paths(REPOSITORY).path("features")
         / "localization"
         / "texture_patcher"
     )

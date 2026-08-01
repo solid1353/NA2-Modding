@@ -48,7 +48,7 @@ class BuildProfileCliTests(unittest.TestCase):
                 patch.object(sys, "argv", arguments),
                 patch.object(
                     build_profile,
-                    "PROJECT_PATHS",
+                    "PATHS",
                     new=SimpleNamespace(repository=workspace),
                 ),
                 patch.object(build_profile, "load_profile", return_value=profile),
@@ -114,7 +114,7 @@ class BuildProfileCliTests(unittest.TestCase):
                 patch.object(sys, "argv", arguments),
                 patch.object(
                     build_profile,
-                    "PROJECT_PATHS",
+                    "PATHS",
                     new=SimpleNamespace(repository=workspace),
                 ),
                 patch.object(build_profile, "load_profile", return_value=profile),

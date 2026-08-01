@@ -20,7 +20,7 @@ function ConvertTo-Na2PortableText {
     [CmdletBinding()]
     param(
         [AllowEmptyString()][string]$Text,
-        [Parameter(Mandatory = $true)][psobject]$ProjectPaths
+        [Parameter(Mandatory = $true)][psobject]$Paths
     )
 
     if ([string]::IsNullOrEmpty($Text)) {
@@ -35,7 +35,7 @@ function ConvertTo-Na2PortableText {
     )
 
     $configuredRoots = @(
-        $ProjectPaths.PSObject.Properties |
+        $Paths.PSObject.Properties |
             Where-Object {
                 $_.Name -ne 'ManifestPath' -and
                 -not [string]::IsNullOrWhiteSpace([string]$_.Value) -and
@@ -132,13 +132,13 @@ function Start-Na2RunLog {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$Mode,
-        [Parameter(Mandatory = $true)][psobject]$ProjectPaths,
+        [Parameter(Mandatory = $true)][psobject]$Paths,
         [string]$LogDirectory,
         [ValidateRange(1, 1000)][int]$MaxRollingSections = 20
     )
 
     $logDirectory = if ([string]::IsNullOrWhiteSpace($LogDirectory)) {
-        Join-Path $ProjectPaths.logs 'na228'
+        Join-Path $Paths.logs 'na228'
     }
     else {
         [IO.Path]::GetFullPath($LogDirectory)
@@ -161,7 +161,7 @@ function Start-Na2RunLog {
     return [pscustomobject]@{
         Mode = $Mode
         Started = Get-Date
-        ProjectPaths = $ProjectPaths
+        Paths = $Paths
         TemporaryTranscript = $temporaryTranscript
         LatestLog = Join-Path $logDirectory 'latest.log'
         RollingLog = Join-Path $logDirectory 'rolling.log'
@@ -194,10 +194,10 @@ function Complete-Na2RunLog {
             ''
         }
         $body = Remove-Na2TranscriptBoilerplate -Text $rawTranscript
-        $body = ConvertTo-Na2PortableText -Text $body -ProjectPaths $Context.ProjectPaths
+        $body = ConvertTo-Na2PortableText -Text $body -Paths $Context.Paths
         $portableFailure = ConvertTo-Na2PortableText `
             -Text $FailureMessage `
-            -ProjectPaths $Context.ProjectPaths
+            -Paths $Context.Paths
 
         $durationMilliseconds = [math]::Max(
             0,

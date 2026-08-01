@@ -28,14 +28,14 @@ if str(REPOSITORY) not in sys.path:
 
 from na228_builder.modules.runtime_injector import engine  # noqa: E402
 from na228_builder.payload_builder import mips  # noqa: E402
-from scripts.lib.project_paths import load_project_paths  # noqa: E402
+from scripts.lib.paths import load_paths  # noqa: E402
 from na228_builder.payload_builder import ee_c_fragments  # noqa: E402
 
 
-MODULE = load_project_paths(REPOSITORY).path(
+MODULE = load_paths(REPOSITORY).path(
     "features", "localization", "runtime_injector"
 )
-PACKED_METRICS_INPUT = load_project_paths(REPOSITORY).path(
+PACKED_METRICS_INPUT = load_paths(REPOSITORY).path(
     "features",
     "localization",
     "binary_patcher",

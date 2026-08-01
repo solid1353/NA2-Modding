@@ -27,7 +27,7 @@ try {
         Out-Null
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\build.ps1') -Destination $scriptRoot
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\worker_paths.ps1') -Destination $scriptRoot
-    foreach ($name in 'project_paths.ps1', 'run_log.ps1', 'build_log.ps1') {
+    foreach ($name in 'paths.ps1', 'run_log.ps1', 'build_log.ps1') {
         Copy-Item -LiteralPath (Join-Path $sourceRepository "scripts\lib\$name") -Destination $libRoot
     }
 

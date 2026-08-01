@@ -24,7 +24,7 @@ REPOSITORY = find_repository(Path(__file__))
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
-from scripts.lib.project_paths import load_project_paths  # noqa: E402
+from scripts.lib.paths import load_paths  # noqa: E402
 
 
 PATCH_ID = "font_numeric_ninja_song"
@@ -127,7 +127,7 @@ def generated_edits() -> list[dict[str, object]]:
 
 def verify_source() -> Path:
     btl = (
-        load_project_paths(REPOSITORY).path("source_na2")
+        load_paths(REPOSITORY).path("source_na2")
         / "PRG"
         / "BTL.BIN"
     )

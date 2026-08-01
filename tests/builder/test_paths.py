@@ -5,8 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.lib.game_catalog import derive_game_paths
-from scripts.lib.project_paths import load_project_paths
+from scripts.lib.paths import derive_game_paths, load_paths
 
 
 class ProjectPathTests(unittest.TestCase):
@@ -35,7 +34,7 @@ class ProjectPathTests(unittest.TestCase):
                 },
             )
 
-            paths = load_project_paths(manifest)
+            paths = load_paths(manifest)
 
             self.assertEqual(
                 paths.file("na2_iso"),
@@ -63,7 +62,7 @@ class ProjectPathTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "remain within the repository"):
-                load_project_paths(manifest)
+                load_paths(manifest)
 
     def test_loads_file_below_external_configured_root(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -83,7 +82,7 @@ class ProjectPathTests(unittest.TestCase):
             manifest_path = root / "paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
-            paths = load_project_paths(manifest_path)
+            paths = load_paths(manifest_path)
 
             self.assertEqual(paths.file("nun5_iso"), source.resolve() / "NUN5.iso")
 
@@ -107,7 +106,7 @@ class ProjectPathTests(unittest.TestCase):
             manifest_path = root / "paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
-            paths = load_project_paths(manifest_path)
+            paths = load_paths(manifest_path)
 
             self.assertEqual(paths.path("source_na2"), extracted.resolve())
 
@@ -129,7 +128,7 @@ class ProjectPathTests(unittest.TestCase):
             manifest_path = root / "paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
-            paths = load_project_paths(manifest_path)
+            paths = load_paths(manifest_path)
 
             self.assertEqual(
                 paths.path("pcsx2_stable_memcards"),
@@ -151,7 +150,7 @@ class ProjectPathTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 ValueError, "Invalid existence-deferred project root"
             ):
-                load_project_paths(manifest_path)
+                load_paths(manifest_path)
 
     def test_rejects_root_alias_cycle(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -169,7 +168,7 @@ class ProjectPathTests(unittest.TestCase):
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
             with self.assertRaisesRegex(ValueError, "dependency cycle"):
-                load_project_paths(manifest_path, allow_missing=True)
+                load_paths(manifest_path, allow_missing=True)
 
     def test_rejects_file_alias_escape(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -180,7 +179,7 @@ class ProjectPathTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "within configured root"):
-                load_project_paths(manifest)
+                load_paths(manifest)
 
     def test_rejects_unknown_file_root_alias(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -191,7 +190,7 @@ class ProjectPathTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "unknown project root"):
-                load_project_paths(manifest)
+                load_paths(manifest)
 
     def test_requires_canonical_files(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -199,7 +198,7 @@ class ProjectPathTests(unittest.TestCase):
             manifest = self.write_manifest(root, None)
 
             with self.assertRaisesRegex(ValueError, "has no files"):
-                load_project_paths(manifest)
+                load_paths(manifest)
 
     def test_game_catalog_derives_builds_and_sources(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -275,7 +274,7 @@ class ProjectPathTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            paths = load_project_paths(manifest_path)
+            paths = load_paths(manifest_path)
 
             self.assertEqual(
                 paths.file("latest_iso"),

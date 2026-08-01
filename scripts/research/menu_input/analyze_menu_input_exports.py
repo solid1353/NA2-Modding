@@ -14,7 +14,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from project_paths import PROJECT_PATHS
+from paths import PATHS
 
 
 FUNCTION_RE = re.compile(r"(?m)^(?:[\w *]+)\s+(FUN_[0-9a-f]{8})\([^\n]*\)\s*\n\s*\{")

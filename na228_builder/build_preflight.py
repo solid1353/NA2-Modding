@@ -10,7 +10,7 @@ import zlib
 from pathlib import Path
 from typing import Iterable
 
-from scripts.lib.project_paths import load_project_paths
+from scripts.lib.paths import load_paths
 
 
 RECEIPT_SCHEMA_VERSION = 1
@@ -311,7 +311,7 @@ def main(argv: Iterable[str] | None = None) -> int:
             command.add_argument("--expected-fingerprint", required=True)
     args = parser.parse_args(list(argv) if argv is not None else None)
 
-    workspace = load_project_paths(Path(__file__).resolve()).repository
+    workspace = load_paths(Path(__file__).resolve()).repository
     common = {
         "workspace": workspace,
         "na2_iso": args.na2_iso,

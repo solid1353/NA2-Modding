@@ -5,11 +5,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot 'scripts\lib\project_paths.ps1')
+. (Join-Path $PSScriptRoot 'scripts\lib\paths.ps1')
 . (Join-Path $PSScriptRoot 'scripts\na228\worker_paths.ps1')
-$projectPaths = Get-Na2ProjectPaths
+$paths = Get-Na2Paths
 $gameAliases = @(
-    $projectPaths.games.Aliases.PSObject.Properties |
+    $paths.games.Aliases.PSObject.Properties |
         Where-Object { [string]$_.Name -cne [string]$_.Value } |
         ForEach-Object { "$($_.Name)=$($_.Value)" }
 )
@@ -67,7 +67,7 @@ if ($mode -eq 'help') {
         '  na228 worker work/<worker>/build/<name>.iso  Build an isolated worker ISO'
         '  na228 release [version]     Publish a GitHub release'
         '  na228 help                  Show this help'
-        "  games: $($projectPaths.games.Names -join ', ')"
+        "  games: $($paths.games.Names -join ', ')"
         "  aliases: $($gameAliases -join ', ')"
         ''
     ) | Write-Output
@@ -82,7 +82,7 @@ if ($mode -eq 'release') {
     if ($arguments.Count -eq 1) {
         $releaseArguments.Version = $arguments[0]
     }
-    & $projectPaths.files.release_publish_command @releaseArguments
+    & $paths.files.release_publish_command @releaseArguments
     return
 }
 
@@ -93,12 +93,12 @@ if ($mode -eq 'build') {
     $target = $arguments[0].ToLowerInvariant()
     switch ($target) {
         { $_ -in @('l', 'latest') } {
-            & (Join-Path $projectPaths.scripts 'na228\run.ps1') `
+            & (Join-Path $paths.scripts 'na228\run.ps1') `
                 -Action latest-build
             return
         }
         { $_ -in @('t', 'test') } {
-            & (Join-Path $projectPaths.scripts 'na228\run.ps1') `
+            & (Join-Path $paths.scripts 'na228\run.ps1') `
                 -Action test-build
             return
         }
@@ -112,7 +112,7 @@ if ($mode -eq 'validate') {
     if ($arguments.Count -gt 0) {
         throw 'na228 validate accepts no arguments.'
     }
-    & (Join-Path $projectPaths.scripts 'na228\run.ps1') -Action validate
+    & (Join-Path $paths.scripts 'na228\run.ps1') -Action validate
     return
 }
 
@@ -122,9 +122,9 @@ if ($mode -eq 'worker') {
     }
     $workerBuild = Get-Na2WorkerBuildContext `
         -OutputPath $arguments[0] `
-        -ProjectPaths $projectPaths `
+        -Paths $paths `
         -RequireRelative
-    & (Join-Path $projectPaths.scripts 'na228\run.ps1') `
+    & (Join-Path $paths.scripts 'na228\run.ps1') `
         -Action worker-build `
         -WorkerOutputIso $workerBuild.OutputIso `
         -WorkerLogDirectory $workerBuild.Logs
@@ -132,7 +132,7 @@ if ($mode -eq 'worker') {
 }
 
 if (-not $mode) {
-    & (Join-Path $projectPaths.scripts 'na228\run.ps1') `
+    & (Join-Path $paths.scripts 'na228\run.ps1') `
         -Action latest-build-and-launch
     return
 }
@@ -143,7 +143,7 @@ if ($mode -eq 'w') {
     }
     $watchArguments = Get-Na228WatchArguments `
         -Target $(if ($arguments.Count -eq 1) { $arguments[0] } else { '' })
-    & (Join-Path $projectPaths.scripts 'injection\watch.ps1') @watchArguments
+    & (Join-Path $paths.scripts 'injection\watch.ps1') @watchArguments
     return
 }
 
@@ -157,7 +157,7 @@ function Test-Na228GameToken {
     if ($candidate -in @('b', 'bl', 'bt', 'l', 'p', 't')) {
         return $true
     }
-    return $null -ne $projectPaths.games.Aliases.PSObject.Properties[$candidate]
+    return $null -ne $paths.games.Aliases.PSObject.Properties[$candidate]
 }
 
 $runTokens = @($commandTokens)
@@ -207,11 +207,11 @@ if ($games.Count -gt 2) {
 }
 
 foreach ($buildAction in @($buildActions | Select-Object -Unique)) {
-    & (Join-Path $projectPaths.scripts 'na228\run.ps1') -Action $buildAction
+    & (Join-Path $paths.scripts 'na228\run.ps1') -Action $buildAction
 }
 
 $launchResults = @(
-    & $projectPaths.files.na228_game_launch_command -Games @($games)
+    & $paths.files.na228_game_launch_command -Games @($games)
 )
 $launchResults
 
@@ -228,5 +228,5 @@ if ($null -ne $watchIndex) {
     }
     $watchArguments = Get-Na228WatchArguments -Target $watchTarget
     $watchArguments.PinePort = [int]$gameLaunchResults[$watchIndex].PinePort
-    & (Join-Path $projectPaths.scripts 'injection\watch.ps1') @watchArguments
+    & (Join-Path $paths.scripts 'injection\watch.ps1') @watchArguments
 }

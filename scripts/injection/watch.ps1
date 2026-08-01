@@ -21,8 +21,8 @@ Set-StrictMode -Version 3
 $repository = [IO.Path]::GetFullPath(
     (Join-Path $PSScriptRoot '..\..')
 )
-. (Join-Path $repository 'scripts\lib\project_paths.ps1')
-$projectPaths = Get-Na2ProjectPaths
+. (Join-Path $repository 'scripts\lib\paths.ps1')
+$paths = Get-Na2Paths
 $packageRoot = Join-Path $repository (
     'na228_builder\features\localization\runtime_injector'
 )
@@ -30,7 +30,7 @@ $entriesPath = Join-Path $packageRoot 'entries.tsv'
 $sourceTable = Join-Path $packageRoot 'c_sources.tsv'
 $buildScript = Join-Path $PSScriptRoot 'build.py'
 $applyScript = Join-Path $PSScriptRoot 'apply.py'
-$pineScript = [string]$projectPaths.files.pcsx2_pine_command
+$pineScript = [string]$paths.files.pcsx2_pine_command
 $hotReloadSourceId = 'hot_reload_message'
 $hotReloadEntry = 'project.hot_reload_message'
 
@@ -42,9 +42,9 @@ function Resolve-RepositoryPath([string]$Path) {
 }
 
 function Get-ConfiguredDevelopmentPinePort {
-    . (Join-Path $repository 'scripts\lib\project_paths.ps1')
-    $projectPaths = Get-Na2ProjectPaths
-    $iniPath = Join-Path $projectPaths.pcsx2_dev 'inis\PCSX2.ini'
+    . (Join-Path $repository 'scripts\lib\paths.ps1')
+    $paths = Get-Na2Paths
+    $iniPath = Join-Path $paths.pcsx2_dev 'inis\PCSX2.ini'
     if (-not (Test-Path -LiteralPath $iniPath -PathType Leaf)) {
         throw "Development PCSX2 configuration was not found: $iniPath"
     }

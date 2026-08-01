@@ -100,8 +100,8 @@ absolute paths. Source paths derive from the canonical key plus serial/CRC.
 Build paths derive from title, serial, and postfix. The command is independent
 of the caller's current working directory.
 
-PowerShell callers use `Get-Na2ProjectPaths`; Python callers use
-`load_project_paths()` or `scripts.lib.game_catalog.resolve_game()`. They do not
+PowerShell callers use `Get-Na2Paths`; Python callers use
+`load_paths()` or Workshop's `resolve_game.py`. They do not
 duplicate derivation logic. NA2 overlays its local roots/files on the imported
 Workshop map; Workshop never imports NA2.
 

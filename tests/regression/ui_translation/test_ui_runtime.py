@@ -269,7 +269,7 @@ class StateArchiveTests(unittest.TestCase):
             image = build / "Current.iso"
             image.write_bytes(b"test image")
 
-            paths = ui_runtime.ProjectPaths(
+            paths = ui_runtime.Paths(
                 manifest=repository / "paths.json",
                 roots={
                     "repository": repository,
@@ -371,7 +371,7 @@ class StateArchiveTests(unittest.TestCase):
             image = source / "NUN5.iso"
             image.write_bytes(b"reference image")
 
-            paths = ui_runtime.ProjectPaths(
+            paths = ui_runtime.Paths(
                 manifest=repository / "paths.json",
                 roots={
                     "repository": repository,

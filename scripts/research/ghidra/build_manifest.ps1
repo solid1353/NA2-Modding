@@ -6,20 +6,20 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot '..\..\lib\project_paths.ps1')
-$projectPaths = Get-Na2ProjectPaths
+. (Join-Path $PSScriptRoot '..\..\lib\paths.ps1')
+$paths = Get-Na2Paths
 
 function Resolve-SourceAlias([string]$Alias) {
-    return Resolve-Na2ProjectPathAlias -Alias $Alias -ProjectPaths $projectPaths
+    return Resolve-Na2ProjectPathAlias -Alias $Alias -Paths $paths
 }
 
 $analysisDirectory = if ($Target -eq 'shared') { 'shared' } else { $Target }
-$analysisRoot = Join-Path $projectPaths.analysis "disassembly\$analysisDirectory"
+$analysisRoot = Join-Path $paths.analysis "disassembly\$analysisDirectory"
 $targets = @(Import-Csv -LiteralPath (Join-Path $PSScriptRoot 'targets.tsv') -Delimiter "`t" |
     Where-Object target -eq $Target)
 if ($targets.Count -eq 0) { throw "No manifest targets found for $Target" }
 
-$versionLine = Get-Content -LiteralPath (Join-Path $projectPaths.utils 'ghidra\Ghidra\application.properties') |
+$versionLine = Get-Content -LiteralPath (Join-Path $paths.utils 'ghidra\Ghidra\application.properties') |
     Where-Object { $_ -like 'application.version=*' } |
     Select-Object -First 1
 if (-not $versionLine) { throw 'Ghidra application version was not found.' }
@@ -82,6 +82,6 @@ foreach ($group in $groups) {
 
     $manifestPath = Join-Path $artifactRoot 'manifest.tsv'
     $rows | Export-Csv -LiteralPath $manifestPath -Delimiter "`t" -NoTypeInformation -Encoding utf8
-    Write-Host "Verified analysis manifest: $(ConvertTo-Na2ProjectPath -Path $manifestPath -ProjectPaths $projectPaths)"
+    Write-Host "Verified analysis manifest: $(ConvertTo-Na2ProjectPath -Path $manifestPath -Paths $paths)"
     Write-Host "Programs: $($rows.Count)"
 }

@@ -12,12 +12,12 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
-$projectPaths = Get-Na2ProjectPaths
+. (Join-Path $PSScriptRoot '..\lib\paths.ps1')
+$paths = Get-Na2Paths
 
-$extractIsoScript = Join-Path $projectPaths.media_scripts 'extract_iso.ps1'
-$extractAfsScript = Join-Path $projectPaths.media_scripts 'extract_afs.ps1'
-$splitCvmScript = Join-Path $projectPaths.media_scripts 'split_cvm_rofs.ps1'
+$extractIsoScript = Join-Path $paths.media_scripts 'extract_iso.ps1'
+$extractAfsScript = Join-Path $paths.media_scripts 'extract_afs.ps1'
+$splitCvmScript = Join-Path $paths.media_scripts 'split_cvm_rofs.ps1'
 $verifyExtractionScript = Join-Path $PSScriptRoot 'verify_source_extraction.py'
 $setReadOnlyScript = Join-Path $PSScriptRoot 'set_source_readonly.ps1'
 
@@ -58,7 +58,7 @@ function Get-FinalAlias {
 
     $relative = [IO.Path]::GetRelativePath($StageRoot, $StagePath).Replace([IO.Path]::DirectorySeparatorChar, '/')
     $finalPath = if ($relative -eq '.') { $FinalRoot } else { Join-Path $FinalRoot $relative }
-    return ConvertTo-Na2ProjectPath -Path $finalPath -ProjectPaths $projectPaths
+    return ConvertTo-Na2ProjectPath -Path $finalPath -Paths $paths
 }
 
 if (-not (Test-Path -LiteralPath $IsoPath -PathType Leaf)) {
@@ -74,7 +74,7 @@ if ([string]::IsNullOrWhiteSpace($TaskTitle) -or
 
 $IsoPath = (Resolve-Path -LiteralPath $IsoPath).Path
 $isoItem = Get-Item -LiteralPath $IsoPath
-if (-not [IO.Path]::Equals($isoItem.Directory.FullName, $projectPaths.source)) {
+if (-not [IO.Path]::Equals($isoItem.Directory.FullName, $paths.source)) {
     throw "Source ISO must be a direct child of @source; refusing nested or __old input: $IsoPath"
 }
 if ([string]::IsNullOrWhiteSpace($CvmPassword)) {
@@ -91,11 +91,11 @@ if (Test-Path -LiteralPath $finalRoot) {
 
 $runId = Get-Date -Format "yyyyMMdd_HHmmss_fff"
 $runId = $runId + "_pid" + $PID + "_" + $isoItem.BaseName
-$taskWorkRoot = Join-Path $projectPaths.work $TaskTitle
+$taskWorkRoot = Join-Path $paths.work $TaskTitle
 $stageParent = Join-Path $taskWorkRoot 'temp\source_extraction'
 $stageRun = Join-Path $stageParent $runId
 $stageRoot = Join-Path $stageRun ($isoItem.Name + '.files')
-$logDir = Join-Path $projectPaths.workstream_logs ("Project\extraction\" + $runId)
+$logDir = Join-Path $paths.workstream_logs ("Project\extraction\" + $runId)
 $summaryPath = Join-Path $logDir 'summary.tsv'
 $inventoryPath = Join-Path $logDir 'inventory.tsv'
 
@@ -115,8 +115,8 @@ try {
     & $extractIsoScript -IsoPath $IsoPath -OutDir $stageRoot -NoLog *> $null
     $summary.Add([pscustomobject]@{
         Kind = 'iso'
-        Archive = ConvertTo-Na2ProjectPath -Path $IsoPath -ProjectPaths $projectPaths
-        ExtractedDir = ConvertTo-Na2ProjectPath -Path $finalRoot -ProjectPaths $projectPaths
+        Archive = ConvertTo-Na2ProjectPath -Path $IsoPath -Paths $paths
+        ExtractedDir = ConvertTo-Na2ProjectPath -Path $finalRoot -Paths $paths
         TimestampSource = 'iso9660_recording_time'
     })
 
@@ -228,7 +228,7 @@ try {
     $summary | Export-Csv -LiteralPath $summaryPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8
     $inventory = Get-ChildItem -LiteralPath $finalRoot -Recurse -Force | ForEach-Object {
         [pscustomobject]@{
-            Path = ConvertTo-Na2ProjectPath -Path $_.FullName -ProjectPaths $projectPaths
+            Path = ConvertTo-Na2ProjectPath -Path $_.FullName -Paths $paths
             Type = if ($_.PSIsContainer) { 'dir' } else { 'file' }
             Size = if ($_.PSIsContainer) { '' } else { $_.Length }
             CreationTime = $_.CreationTime.ToString('yyyy-MM-ddTHH:mm:ss')
@@ -238,13 +238,13 @@ try {
     $inventory | Export-Csv -LiteralPath $inventoryPath -Delimiter "`t" -NoTypeInformation -Encoding UTF8
 
     Write-Host "Recursive source extraction complete:"
-    Write-Host (ConvertTo-Na2ProjectPath -Path $IsoPath -ProjectPaths $projectPaths)
+    Write-Host (ConvertTo-Na2ProjectPath -Path $IsoPath -Paths $paths)
     Write-Host "Output:"
-    Write-Host (ConvertTo-Na2ProjectPath -Path $finalRoot -ProjectPaths $projectPaths)
+    Write-Host (ConvertTo-Na2ProjectPath -Path $finalRoot -Paths $paths)
     Write-Host "Containers:"
     Write-Host $summary.Count
     Write-Host "Log:"
-    Write-Host (ConvertTo-Na2ProjectPath -Path $logDir -ProjectPaths $projectPaths)
+    Write-Host (ConvertTo-Na2ProjectPath -Path $logDir -Paths $paths)
     $completed = $true
 }
 catch {

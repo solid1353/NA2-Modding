@@ -8,14 +8,37 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Mapping
 
-from .game_catalog import derive_game_paths
-
-
 MANIFEST_NAME = "paths.json"
 
 
+def _load_workshop_game_catalog():
+    repository = Path(__file__).resolve().parents[2]
+    manifest = json.loads(
+        (repository / MANIFEST_NAME).read_text(encoding="utf-8")
+    )
+    raw_manifest = manifest.get("imports", {}).get("workshop")
+    if not isinstance(raw_manifest, str) or not raw_manifest:
+        raise ValueError("Project paths must import the Workshop manifest")
+    import_manifest = Path(raw_manifest)
+    if import_manifest.is_absolute():
+        raise ValueError("Workshop manifest import must be repository-relative")
+    workshop_root = Path(os.path.abspath(repository / import_manifest)).parent
+    module_path = workshop_root / "scripts" / "lib" / "game_catalog.py"
+    spec = importlib.util.spec_from_file_location(
+        "un_workshop_game_catalog", module_path
+    )
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Could not load Workshop game catalog: {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+derive_game_paths = _load_workshop_game_catalog().derive_game_paths
+
+
 @dataclass(frozen=True)
-class ProjectPaths:
+class Paths:
     manifest: Path
     roots: Mapping[str, Path]
     files: Mapping[str, Path]
@@ -51,12 +74,12 @@ def _find_manifest(start: Path) -> Path:
     raise FileNotFoundError(f"Could not find {MANIFEST_NAME} above {start}")
 
 
-def _load_project_paths(
+def _load_paths(
     start: Path | None = None,
     *,
     allow_missing: bool = False,
     include_catalog: bool = True,
-) -> ProjectPaths:
+) -> Paths:
     manifest_path = _find_manifest(start or Path.cwd())
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
     if data.get("schema_version") != 1:
@@ -110,7 +133,7 @@ def _load_project_paths(
             )
         loader_path = imported_manifest.parent / "scripts" / "lib" / "paths.py"
         spec = importlib.util.spec_from_file_location(
-            f"project_paths_import_{import_name}", loader_path
+            f"paths_import_{import_name}", loader_path
         )
         if spec is None or spec.loader is None:
             raise ImportError(
@@ -438,30 +461,30 @@ def _load_project_paths(
                         roots.setdefault(f"source_{alias_name}", extracted_path)
                         files.setdefault(f"{alias_name}_iso", iso_path)
 
-    return ProjectPaths(
+    return Paths(
         manifest_path,
         MappingProxyType(roots),
         MappingProxyType(files),
     )
 
 
-def load_base_project_paths(
+def load_base_paths(
     start: Path | None = None, *, allow_missing: bool = False
-) -> ProjectPaths:
-    return _load_project_paths(
+) -> Paths:
+    return _load_paths(
         start, allow_missing=allow_missing, include_catalog=False
     )
 
 
-def load_project_paths(
+def load_paths(
     start: Path | None = None, *, allow_missing: bool = False
-) -> ProjectPaths:
-    return _load_project_paths(
+) -> Paths:
+    return _load_paths(
         start, allow_missing=allow_missing, include_catalog=True
     )
 
 
-def resolve_alias(value: str, paths: ProjectPaths) -> Path:
+def resolve_alias(value: str, paths: Paths) -> Path:
     """Resolve @root/child syntax used by declarative profile root tables."""
     if not value.startswith("@"):
         raise ValueError(f"Project path alias must start with '@': {value!r}")

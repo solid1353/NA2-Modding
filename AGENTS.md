@@ -172,6 +172,9 @@ Detailed command and task behavior is in
   runtime files there; reusable scripts belong under `scripts/`. At completion,
   promote useful findings and remove disposable artifacts, logs, and every
   empty directory.
+- After refactoring, never leave a directory containing only one file. Move
+  that file into the appropriate parent or existing responsibility directory
+  and retire the single-file directory.
 - Agent PCSX2 uses only a task-owned clone created with
   `scripts/pcsx2/copy_worker.ps1 -WorkerRoot work/<exact task title>`. The
   command copies `@pcsx2_clean` and the required shared BIOS together; agents

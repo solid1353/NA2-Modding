@@ -164,6 +164,9 @@
   `.gitkeep`, placeholder READMEs, or header-only data solely to preserve one.
   Represent required declarations through meaningful tracked configuration or
   producer/consumer dependencies and verify fresh-checkout behavior.
+- After refactoring, never leave a directory containing only one file. Move
+  that file into the appropriate parent or existing responsibility directory
+  and retire the single-file directory.
 
 ## Logs and scripts
 

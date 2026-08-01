@@ -153,6 +153,8 @@
 
 ## Logs and scripts
 
+- User-facing utilities are written in PowerShell, not Python. Python may be
+  used internally only behind a PowerShell entrypoint.
 - "The PowerShell profile" means the shared profile at
   `$env:USERPROFILE\Documents\PowerShell\profile.ps1`; never hardcode the
   user's account name when locating it.

@@ -38,8 +38,12 @@
   game-specific partial inputs live under `sources/games/` and apply when named
   for a canonical game selector. Generate complete profiles with
   `ws input [profile]`; `Default` is used when the profile is omitted. Never
-  edit generated root-level profiles directly. A partial input replaces every
-  existing binding with the same name before adding its own binding. Each run
+  edit generated root-level profiles directly. A partial input replaces the
+  first existing binding with the same control name and device family in place
+  and removes later duplicates of that same pair. SDL overrides never remove
+  keyboard bindings, and keyboard overrides never remove SDL bindings.
+  Bindings absent from the complete profile are appended as one block with
+  exactly one blank line before and after it. Each run
   overwrites the selected generated profile and its matching game variants
   when their content changes. Every generated root-level profile remains in
   place and is tracked by Git. It never removes anything under `sources/`.

@@ -15,6 +15,31 @@ runtime-to-file mapping within the functions below:
 The complete `CHARSEL1.CCS` payload is already imported from NUN5. Its
 localized artwork and model data are therefore not the remaining cause.
 
+## Shared character-name rectangle table
+
+The character-name renderers do not obtain their rectangles from
+`CHARSEL1.CCS`. NA2 `FUN_0037d410` reads a 96-entry table at runtime
+`0x005D4E70` (ELF file `0x4D4F70`). NUN5's corresponding helper
+`FUN_0038c350` calls localized accessor `FUN_003d45d0`; English language index
+zero resolves to runtime `0x005DDC50` (ELF file `0x4DDDD0`).
+
+Each record is four signed 16-bit values `(u, v, width, height)`. Forty-four
+English records already match NA2; the other 52 change dimensions,
+coordinates, or blank sentinels. Copying the complete 768-byte NUN5 range is
+the minimal complete fix shared by Character Select, VS, the battle HUD, and
+Battle Set. The edit is source/destination range-hash guarded and preserves the
+ELF size.
+
+The nearby NUN5 range at ELF file `0x4DC120` is deliberately excluded. It is
+the separate uniform 38x46 portrait grid used by `FUN_0038c3a0`, not the
+localized name table. A rejected build copied it and produced stacked name
+fragments; the localized accessor and homologous call sites disprove that
+source selection.
+
+Confidence is **verified**: the table identity and accessor path are
+structurally proven, and the user verified the complete Character Select
+roster after the guarded donor copy.
+
 ## Character Select footer compositor
 
 The parent Character Select draw routine calls this compositor once after

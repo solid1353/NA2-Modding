@@ -1,9 +1,10 @@
 # UI Translation context
 
-Consolidated on 2026-08-01 from the former workstream plan and the completed
-Remaining UI epic. This document contains durable execution context and accepted
-results. Exact reverse-engineering evidence remains in the linked knowledge
-documents.
+Consolidated on 2026-08-01 from the former workstream plan and completed
+Remaining UI epic. This document is a concise status and architecture overview;
+it does not select work or grant execution authority. Exact offsets, functions,
+donor ranges, negative results, and per-screen evidence live in the linked
+knowledge documents.
 
 ## Objective
 
@@ -18,12 +19,12 @@ outside this workstream.
 
 - The declared Remaining UI epic is complete.
 - No UI comparison grid or savestate case is awaiting approval.
-- All cases listed under [Accepted runtime results](#accepted-runtime-results)
+- All cases listed under [Retired epic outcomes](#retired-epic-outcomes)
   were explicitly accepted by the user.
 - The current `TASKS.md` Bugs list contains `UI Translation: long character
   names.` This is context only and is not selected or authorized work.
-- Optional future research remains possible for `LOGO.CCS`, mapping the NUN5
-  upscale pack back to disc assets, and broader NUN6 comparison.
+- No active epic document exists. A new one is created only when the user
+  explicitly declares another UI Translation epic.
 
 ## Canonical assets and tools
 
@@ -62,62 +63,28 @@ outside this workstream.
 - Older StudioCCS and CCSFileExplorerWV sources remain format references, not
   trusted production writers.
 
-## Donor-first implementation
+## Architecture and implementation overview
 
-- Official unsuffixed NUN5 assets are the authoritative English donor.
-- Normal compatible CCS members use complete deterministic NUN5 payloads,
-  recompressed into the unchanged NA2 member capacity. Padding follows the
-  valid gzip stream; DATA.CVM member sizes, ISO records, and source files stay
-  unchanged.
-- No replacement CCS blobs are stored. The normal profile derives replacements
-  directly from canonical NA2 and NUN5 inputs.
-- `MODE2KDV`, ENDDEMO, Haku, and Shikamaru are mapped exceptions where complete
-  donor replacement is unsuitable or cannot fit. Their adaptations still use
-  canonical donor pixels or palettes and preserve required NA2 structure.
-- `HOME.CCS` is a complete NUN5 donor. Earlier mapped texture-only import kept
-  incompatible NA2 models and UVs and caused duplicated or clipped Collection
-  artwork.
-- `CMN/GAUGE.CCS` is imported as a complete unit so global button legends,
-  models, and UVs remain coupled.
-- `OUGI.CCS` uses NUN5's four wide labels. The companion BTL patch changes the
-  NA2 construction loop at file offset `0xB5E80` from two parts to one because
-  no exact donor instruction exists at an equivalent NA2 location.
-- `MODE2KDV` retains the NA2 container, portrait, palette, and lower rows while
-  mapping the NUN5 banner into the fixed target capacity.
-- The texture patcher validates source identities, reparses decompressed output,
-  checks intentional visual coverage, and verifies fixed capacities.
-- Binary-patcher companions use exact NUN5 ranges where compatible and narrow
-  NA2-ABI adaptations only where the donor code cannot be copied directly.
+- Official NUN5 assets are the authoritative English donor.
+- Compatible CCS members derive complete NUN5 payloads while preserving NA2's
+  fixed member capacities. Whole-container imports keep artwork, models,
+  palettes, and UVs coupled when partial import is unsafe.
+- Mapped exceptions retain only the NA2 structure required by capacity or ABI
+  constraints and still derive suitable pixels, palettes, or data from NUN5.
+- Narrow authored patches exist only where NUN5 code cannot be copied directly
+  into the NA2 ABI or where NA2 intentionally requires different behavior.
+- Shared executable tables replace repeated per-screen or per-character guesses
+  when several renderers consume the same atlas.
+- Renderer-specific footer and prompt anchors remain separate when the games
+  use different call paths; there is no assumed universal footer table.
+- Animation and visibility ports preserve existing NA2 state machines unless
+  NUN5 evidence proves a localized behavior difference.
+- No replacement CCS blobs are stored. The profile derives replacements from
+  canonical inputs, validates source identities, reparses output, checks visual
+  coverage, and verifies fixed capacities.
 
-## Important layout ports
-
-- Character Select names use a 96-record boot-ELF rectangle table. The complete
-  NUN5 table is copied rather than applying per-character guesses.
-- Stage Select uses all 24 official NUN5 stage rectangles and the NUN5
-  horizontal `min(1, 214 / width)` fit. Vertical scale remains `1.0`; preview
-  and thumbnail consumers preserve the matched stage index.
-- Options uses the complete guarded NUN5 menu/difficulty rectangle block from
-  the boot ELF; screen positions and scale otherwise match.
-- Collection submenu layout uses exact NUN5 ETC position and rectangle blocks
-  for page prompts, Characters/Movie/Music titles, Play/Stop, and the
-  character-viewer controls. Font wrapping and string content are separate.
-- Jutsu Selection suppresses the two closed-state horizontal-arrow draws and
-  routes the vertical arrows through a draw-scoped NUN5 rotation helper. The
-  rejected global sprite-mode transplant and native-texture graft remain
-  documented negative results.
-- Command Menu and Command Chart share one NUN5 `TEX_xselect` rectangle fix;
-  their pulse-dependent placement remains intact.
-- Footer fixes are renderer-specific. Options, Collection root, Collection
-  actions, Character Select, Stage Select, and Control Settings do not all use
-  one universal anchor table.
-- Collection Movie uses the exact official NUN5 strings. The rejected authored
-  `<br>` insertion was removed; text fitting is not UI-texture work.
-- Battle Results rank stamps use the complete five-record NUN5 atlas table.
-  Screen-space Y compensation was rejected; detailed binding evidence is in
-  the battle knowledge document.
-- Battle item substitution doll uses the same-index NUN5 item record. The
-  earlier cross-index `0x2E` edit was inert; the live consumer selects logical
-  record `0x0A`.
+Exact implementation mechanics and evidence are organized by screen family in
+the linked knowledge documents.
 
 ## Runtime comparison
 
@@ -133,7 +100,7 @@ outside this workstream.
   active. Accepted-case grids, states, worker ISOs, probes, logs, and PCSX2
   copies are removed after reusable findings are promoted.
 
-## Accepted runtime results
+## Retired epic outcomes
 
 - Stage Select layout, stage association, thumbnails, labels, Random prompt,
   and footer.
@@ -155,7 +122,7 @@ outside this workstream.
   rank stamps.
 - Battle item substitution doll in slot 4.
 
-The former epic's explicit acceptance dates were:
+The retired epic's explicit acceptance dates were:
 
 - 2026-07-26: Cross/Triangle labels, Character Items, Victory winner names,
   Ninja Song footer, and Battle Results screen 2.
@@ -163,7 +130,12 @@ The former epic's explicit acceptance dates were:
   matched.
 - 2026-07-31: Battle item substitution doll.
 
-## Cleanup already completed
+## Deferred work
+
+Optional future research remains for `LOGO.CCS`, mapping the NUN5 upscale pack
+back to disc assets, and broader NUN6 comparison. None is selected work.
+
+## Retired artifacts
 
 - Deleted the redundant upscale archive and stripped NUN5 tree after verifying
   their retained counterparts.
@@ -175,8 +147,8 @@ The former epic's explicit acceptance dates were:
 ## Detailed knowledge
 
 - [Battle UI](../../knowledge/localization/ui/battle.md)
+- [Character Select UI](../../knowledge/localization/ui/character_select.md)
 - [Collection UI](../../knowledge/localization/ui/collection.md)
 - [Options UI](../../knowledge/localization/ui/options.md)
 - [Stage Select UI](../../knowledge/localization/ui/stage_select.md)
 - [Victory UI](../../knowledge/localization/ui/victory.md)
-

@@ -12,8 +12,9 @@ findings remain in the shared knowledge base rather than being duplicated here.
 
 ## Documents
 
-- [Plan, implementation context, and completed epic](CONTEXT.md)
+- [Status, architecture, and retired epic outcomes](context.md)
 - [Battle UI knowledge](../../knowledge/localization/ui/battle.md)
+- [Character Select UI knowledge](../../knowledge/localization/ui/character_select.md)
 - [Collection UI knowledge](../../knowledge/localization/ui/collection.md)
 - [Options UI knowledge](../../knowledge/localization/ui/options.md)
 - [Stage-select UI knowledge](../../knowledge/localization/ui/stage_select.md)

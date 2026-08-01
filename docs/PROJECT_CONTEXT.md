@@ -14,9 +14,9 @@ may later be ported to NA2.
 NA2.28 PCSX2 actualization:
 
 - Read-only generation templates are `@pcsx2_cheats/_SLOP-NA228.pnach` and
-  `@pcsx2_game_settings/_SLOP-NA228.ini`. They are stable serial-based inputs, not
-  canonical PCSX2 identities; each built image's serial/CRC determines its
-  generated alias.
+  `@pcsx2_game_settings/_SLOP-NA228.ini`. Their shared filename stem is
+  configured explicitly; they are stable inputs, not canonical PCSX2
+  identities. Each built image's serial/CRC determines its generated alias.
 - `act na228` derives each retained Latest, Previous, and Test identity
   from its ISO, maintains matching CRC-named PNACH symlinks, and writes distinct
   real GameSettings files under `@pcsx2_files/`. Orphaned regular files at

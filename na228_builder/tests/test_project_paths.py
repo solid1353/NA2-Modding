@@ -234,6 +234,7 @@ class ProjectPathTests(unittest.TestCase):
                 "builds": {
                     "title": "NA v2.28",
                     "serial": "SLOP-NA228",
+                    "template_stem": "_SLOP-NA228",
                     "entries": {
                         "latest": {
                             "aliases": ["l"],
@@ -321,6 +322,7 @@ class ProjectPathTests(unittest.TestCase):
                 "builds": {
                     "title": "NA v2.28",
                     "serial": "SLOP-NA228",
+                    "template_stem": "_SLOP-NA228",
                     "entries": {
                         "latest": {
                             "postfix": "Latest",

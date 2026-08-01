@@ -101,7 +101,8 @@ The loaders additionally expose catalog-derived compatibility files:
 - `<build>_memory_card` as
   `@pcsx2_memory_cards/<builds.title> - <postfix>.ps2`.
 - `input_profile` from the root catalog configuration.
-- `cheat_template` and `gamesettings_template` from `builds.serial`.
+- `cheat_template` and `gamesettings_template` from the configured
+  `builds.template_stem`, with only their respective extensions added.
 
 PowerShell accesses these as `$projectPaths.files.na2_iso` and
 `$projectPaths.files.latest_iso`. Python accesses them through calls such as
@@ -112,8 +113,8 @@ PowerShell accesses these as `$projectPaths.files.na2_iso` and
 `settings/games.json` keeps `sources` as a direct game map. A source's
 canonical key is also its ISO, extraction-directory, and memory-card filename
 stem. Each source stores only `serial`, `crc`, aliases, and genuine overrides.
-`builds` contains the shared build `title` and `serial` plus an `entries` map.
-Empty optional values are omitted.
+`builds` contains the shared build `title`, `serial`, and explicit
+`template_stem` plus an `entries` map. Empty optional values are omitted.
 
 Configuration inherits from root `config`, then category-wide build
 configuration, then a game's own non-structural fields. The current root
@@ -132,7 +133,8 @@ Python process.
 Source ISO, extraction, and memory-card paths derive from the canonical key;
 cheats and GameSettings derive from `serial` plus `crc`. Build ISO and
 memory-card paths derive from `title` plus the entry `postfix`; build template
-paths derive from `serial`.
+paths use the explicit `template_stem` because that name is a project
+convention rather than a PCSX2 identity rule.
 
 The PowerShell loader exposes canonical selectors and aliases through
 `$projectPaths.games`. Matching is case-insensitive. The build aliases `l`,

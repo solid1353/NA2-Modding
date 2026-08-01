@@ -152,9 +152,13 @@ Detailed command and task behavior is in
   agent's identity; Git never requires separate approval.
 - Treat `@source/` as protected read-only unless the user explicitly authorizes
   a specific source change. Treat both `@pcsx2_dev` and `@pcsx2_stable` as
-  protected read-only user installations. Only an ISO launch explicitly
-  requested by the user permits executing either installation; it never
-  authorizes modifying it or otherwise controlling the user PCSX2 process.
+  protected read-only user installations. The user's explicit authorization
+  for one specific installation change overrides this restriction and any
+  matching routed-policy restriction only for that named change; it grants no
+  broader authority over other files or the running PCSX2 process. Only an ISO
+  launch explicitly requested by the user permits executing either
+  installation; it never authorizes modifying it or otherwise controlling the
+  user PCSX2 process.
 - Never change binary files manually; all binary changes go through scripts.
 - Use the shared project runtime and named dependency sets for package-bearing
   scripts. Never select interpreters, install packages, or implement fallback

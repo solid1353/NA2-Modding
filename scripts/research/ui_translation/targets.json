@@ -8,7 +8,7 @@
       },
       "serial": "SLES-55605",
       "crc": "C071D4C1",
-      "settings_file": "SLES-55605_C071D4C1.ini"
+      "settings_file": "source/SLES-55605_C071D4C1.ini"
     },
     "current": {
       "image": {

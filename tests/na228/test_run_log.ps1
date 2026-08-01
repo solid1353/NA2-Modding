@@ -149,7 +149,6 @@ try {
     "na228_game_launch_command": "@scripts/na228/launch_games.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1",
     "actualize_command": "@pcsx2_scripts/actualization/act.ps1",
-    "actualize_na228_command": "@pcsx2_scripts/actualization/sync_game_files.ps1",
     "actualize_input_command": "@pcsx2_scripts/actualization/sync_input.ps1"
   }
 }
@@ -221,11 +220,12 @@ try {
     $actShortHelpText = (
         & (Join-Path $fakeActualizationScripts 'act.ps1') -h
     ) -join "`n"
-    foreach ($expectedCommand in 'act na228', 'act input') {
-        Assert-Na2Test `
-            -Condition ($actHelpText.Contains($expectedCommand)) `
-            -Message "Actualization help omitted $expectedCommand."
-    }
+    Assert-Na2Test `
+        -Condition ($actHelpText.Contains('act input')) `
+        -Message 'Input-profile help omitted act input.'
+    Assert-Na2Test `
+        -Condition (-not $actHelpText.Contains('act na228')) `
+        -Message 'Input-profile help still exposes retired NA2 actualization.'
     Assert-Na2Test `
         -Condition ($actShortHelpText -ceq $actHelpText) `
         -Message 'act -h does not match act help.'
@@ -235,43 +235,6 @@ try {
         ))) `
         -Message 'Actualization help created run logs.'
 
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'sync_game_files.ps1') -Content @'
-param([string[]]$Roles)
-$resolvedRoles = @(
-    if ($null -eq $Roles -or $Roles.Count -eq 0) {
-        'latest'
-    }
-    else {
-        $Roles
-    }
-)
-$callLog = [IO.Path]::GetFullPath(
-    (Join-Path $PSScriptRoot '..\..\..\actualization_calls.txt')
-)
-Add-Content `
-    -LiteralPath $callLog `
-    -Value ($resolvedRoles -join ',') `
-    -Encoding utf8
-Write-Host "[fake] actualize na228 roles=$($resolvedRoles -join ',')"
-[pscustomobject]@{
-    Roles = @(
-        foreach ($role in $resolvedRoles) {
-            [pscustomobject]@{
-                Role = (Get-Culture).TextInfo.ToTitleCase($role)
-                Serial = 'SLOP-NA228'
-                CRC = '12345678'
-            }
-        }
-    )
-    CheatAliases = @('pcsx2_files/cheats/SLOP-NA228_12345678.pnach')
-    RemovedCheatSymlinks = @()
-    EnabledCheats = @()
-    CreatedGameSettings = @()
-    UpdatedGameSettings = @()
-    PreservedGameSettings = @('SLOP-NA228_12345678.ini')
-    RemovedGameSettings = @()
-}
-'@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'sync_input.ps1') -Content @'
 param([string]$Profile, [switch]$PassThru)
 $result = [pscustomobject]@{
@@ -361,7 +324,7 @@ else {
 }
 '@
     & (Join-Path $fakeActualizationScripts 'act.ps1')
-    & (Join-Path $fakeActualizationScripts 'act.ps1') na228
+    & (Join-Path $fakeActualizationScripts 'act.ps1') input
     $na2ActRejected = $false
     try {
         & (Join-Path $fakeRepository 'na228.ps1') act
@@ -438,12 +401,6 @@ else {
     Assert-Na2Test `
         -Condition $extraReleaseArgumentRejected `
         -Message 'Release dispatch accepted more than one version argument.'
-    $actualizationCallLog = Join-Path $fakeRepository 'actualization_calls.txt'
-    $launchActualizationCountBefore = @(
-        if (Test-Path -LiteralPath $actualizationCallLog) {
-            Get-Content -LiteralPath $actualizationCallLog
-        }
-    ).Count
     $latestLaunch = (
         & (Join-Path $fakeRepository 'na228.ps1') l
     ) -join "`n"
@@ -468,29 +425,13 @@ else {
             $testLaunch -match 'multi-game launch test'
         ) `
         -Message 'Test selector alias did not resolve through game launch.'
-    $launchActualizationCountAfter = @(
-        if (Test-Path -LiteralPath $actualizationCallLog) {
-            Get-Content -LiteralPath $actualizationCallLog
-        }
-    ).Count
-    Assert-Na2Test `
-        -Condition (
-            $launchActualizationCountAfter -eq
-            $launchActualizationCountBefore
-        ) `
-        -Message 'Launch-only selectors invoked actualization.'
     & (Join-Path $fakeRepository 'na228.ps1') worker 'work\General\build\agent.iso'
     & (Join-Path $fakeRepository 'na228.ps1') validate
     & (Join-Path $fakeRepository 'na228.ps1') build l
-    $latestBuildRoles = Get-Content -LiteralPath $actualizationCallLog -Tail 1
     & (Join-Path $fakeRepository 'na228.ps1') build t
-    $testBuildRoles = Get-Content -LiteralPath $actualizationCallLog -Tail 1
     Assert-Na2Test `
-        -Condition ($latestBuildRoles -ceq 'latest,previous') `
-        -Message 'Latest build did not actualize only its changed roles.'
-    Assert-Na2Test `
-        -Condition ($testBuildRoles -ceq 'test') `
-        -Message 'Test build did not actualize only Test.'
+        -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'actualization_calls.txt'))) `
+        -Message 'A build or launch invoked retired NA2 actualization.'
     $composedRecipe = (
         & (Join-Path $fakeRepository 'na228.ps1') nun5 btw
     ) -join "`n"
@@ -585,8 +526,7 @@ else {
     $fakeRolling = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\rolling.log'))
     Assert-Na2Test -Condition ($fakeLatest -match '(?m)^mode: build$') -Message 'Root build mode was not logged.'
     foreach ($mode in (
-        'actualize',
-        'actualize-na228',
+        'actualize-input',
         'test-build',
         'validate',
         'build'
@@ -620,9 +560,6 @@ else {
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: updated').Count -eq 4) `
         -Message 'Build-only and build-and-launch did not use the standard build pipeline.'
-    Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '\[fake\] actualize na228').Count -eq 9) `
-        -Message 'Standalone and user-owned workflows did not preserve NA2 actualization.'
     $structuredLog = Join-Path $logs 'na228'
     $buildRecords = Join-Path $structuredLog 'builds'
     foreach ($buildId in 'old-previous', 'old-latest', 'new-latest', 'orphan') {
@@ -752,28 +689,6 @@ else {
     Assert-Na2Test `
         -Condition ($firstBuildResult -match "unchanged`tno") `
         -Message 'First unchanged build result was not recorded.'
-
-    $status = Format-Na2ActualizeStatus `
-        -Result ([pscustomobject]@{
-            Roles = @(
-                [pscustomobject]@{
-                    Role = 'Latest'
-                    Serial = 'SLOP-NA228'
-                    CRC = 'C0659AD1'
-                }
-            )
-            CheatAliases = @('alias')
-            RemovedCheatSymlinks = @('old-link')
-            EnabledCheats = @('Intro skips')
-            CreatedGameSettings = @()
-            UpdatedGameSettings = @()
-            PreservedGameSettings = @('SLOP-NA228_C0659AD1.ini')
-            RemovedGameSettings = @('old-settings')
-        }) `
-        -ProjectPaths $paths
-    Assert-Na2Test -Condition ($status -match 'Latest=SLOP-NA228_C0659AD1') -Message 'Actualize status omitted the role identity.'
-    Assert-Na2Test -Condition ($status -match 'Intro skips') -Message 'Actualize status omitted enabled cheats.'
-    Assert-Na2Test -Condition ($status -match 'GameSettings') -Message 'Actualize status omitted GameSettings.'
 
     Write-Host 'NA2 run-log tests passed.' -ForegroundColor Green
 }

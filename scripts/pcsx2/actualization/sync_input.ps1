@@ -108,18 +108,6 @@ if ($usingConfiguredPaths) {
         $settingsProfiles[$settingsPath] = $profileName
     }
 
-    $buildEntries = @($entries | Where-Object Category -eq 'builds')
-    if ($buildEntries.Count -gt 0) {
-        $buildSerial = [string]$buildEntries[0].Config.serial
-        Get-ChildItem `
-            -LiteralPath $projectPaths.pcsx2_game_settings `
-            -Filter "${buildSerial}_*.ini" `
-            -File |
-            ForEach-Object {
-                $settingsProfiles[$_.FullName] = $selectedName
-            }
-    }
-
     $removedProfiles = [Collections.Generic.List[string]]::new()
     Get-ChildItem -LiteralPath $profileRoot -Filter '*.ini' -File |
         ForEach-Object {

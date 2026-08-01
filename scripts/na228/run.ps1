@@ -26,18 +26,6 @@ function Write-Na2Stage {
     Write-Host "[na228] $Message" -ForegroundColor Cyan
 }
 
-function Invoke-Na2Actualization {
-    param([string[]]$Roles)
-
-    if ($null -eq $Roles -or $Roles.Count -eq 0) {
-        return
-    }
-    & $projectPaths.files.actualize_command `
-        na228 `
-        -Roles $Roles `
-        -NoRunLog
-}
-
 if ($Action -eq 'worker-build') {
     if (
         [string]::IsNullOrWhiteSpace($WorkerOutputIso) -or
@@ -99,7 +87,6 @@ try {
             if (-not $buildResult -or $buildResult.Status -ne 'test') {
                 throw 'Test build did not return a valid result.'
             }
-            Invoke-Na2Actualization -Roles $buildResult.ChangedRoles
         }
         'latest-build' {
             Write-Na2Stage "Build $latestIsoName"
@@ -110,7 +97,6 @@ try {
             ) {
                 throw 'Profile build did not return a valid promotion result.'
             }
-            Invoke-Na2Actualization -Roles $buildResult.ChangedRoles
         }
         'latest-build-and-launch' {
             Write-Na2Stage '1/2 Build pinned current profile'
@@ -121,7 +107,6 @@ try {
             ) {
                 throw 'Profile build did not return a valid promotion result.'
             }
-            Invoke-Na2Actualization -Roles $buildResult.ChangedRoles
             Write-Na2Stage "2/2 Launch $latestIsoName"
             & $projectPaths.files.pcsx2_launch_command `
                 -IsoPath $projectPaths.files.latest_iso

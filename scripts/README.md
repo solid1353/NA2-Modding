@@ -100,11 +100,10 @@ watches Test. A registered C file/folder or task-owned overlay-plan path may
 follow the watched token: `na228 nun5 blw src/localization` or
 `na228 nun5 btw work/Font/operations/jutsu_names_overlay.json`.
 `na228 build l|t` provides the uncommon build-only forms.
-Launch-only commands never actualize. A changed Latest build actualizes Latest
-and, when rotation changed it, Previous; a changed Test build actualizes only
-Test. Unchanged/cache-hit and worker-output builds actualize nothing.
+Build and launch commands never generate CRC-specific PCSX2 files. NA2.28 uses
+serial-wide PNACH and GameSettings files directly.
 Configured launches preserve existing PCSX2 instances and tile only the newly
-started windows. The standalone `act` command can run all actualization modes
+started windows. The standalone `act` command regenerates input profiles
 without building or launching.
 
 Passing one or more registered ISO selectors directly to `na228` launches them
@@ -122,16 +121,8 @@ A partial input replaces existing bindings with the same names. Run it as
 default `Default` mode. Each run removes generated profiles from the previous
 selection, then recreates only the selected profile combinations.
 
-`pcsx2/actualization/act.ps1` owns standalone actualization logging and
-dispatch. Bare `act` runs `na2`, then `input`.
-`pcsx2/actualization/sync_game_files.ps1` derives every retained role's serial
-and ELF CRC, links the stable cheat template to generated CRC aliases, writes
-real GameSettings that select the configured existing Latest, Previous, or
-Test card, and deduplicates shared serial/CRC identities with Latest
-taking precedence. Build-driven calls limit creation and updates to the roles
-reported changed by the build while retaining all current role identities for
-collision and stale-file cleanup. It never creates or modifies templates or
-memory cards.
+`pcsx2/actualization/act.ps1` owns standalone input-profile logging and
+dispatch. Bare `act` is equivalent to `act input Default`.
 Run `act help` or `act -h` for the standalone command summary.
 
 Create a fresh task-owned worker runtime with:

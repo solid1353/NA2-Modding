@@ -315,12 +315,11 @@ class ProjectPathTests(unittest.TestCase):
             )
             self.assertEqual(
                 paths.file("cheat_template"),
-                root.resolve() / "pcsx2/cheats/sources/SLOP-NA228.pnach",
+                root.resolve() / "pcsx2/cheats/SLOP-NA228.pnach",
             )
             self.assertEqual(
                 paths.file("gamesettings_template"),
-                root.resolve()
-                / "pcsx2/game_settings/sources/SLOP-NA228.ini",
+                root.resolve() / "pcsx2/game_settings/SLOP-NA228.ini",
             )
 
     def test_rejects_catalog_file_duplicated_by_manifest(self) -> None:

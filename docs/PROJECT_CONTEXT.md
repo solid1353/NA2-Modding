@@ -11,37 +11,27 @@ project files. NUN6 A35 is a Brazilian mod of NUN5, not an official successor.
 It is retained as a feature donor because it contains many modifications that
 may later be ported to NA2.
 
-NA2.28 PCSX2 actualization:
+NA2.28 PCSX2 configuration:
 
-- Read-only generation templates are `@pcsx2_cheats/sources/SLOP-NA228.pnach`
-  and `@pcsx2_game_settings/sources/SLOP-NA228.ini`. Their filenames derive
-  from the configured build serial; they are stable inputs, not canonical
-  PCSX2 identities. Each built image's serial/CRC determines its generated
-  alias.
-- `act na228` derives each retained Latest, Previous, and Test identity
-  from its ISO, maintains matching CRC-named PNACH symlinks, and writes distinct
-  real GameSettings files under `@pcsx2_files/`. Orphaned regular files at
-  managed NA2.28 CRC aliases are repaired to template-backed symlinks. Runtime
-  C candidates bypass actualization and cheat files: they are applied directly
-  to task-owned PCSX2 memory through PINE.
+- Canonical serial-wide files are `@pcsx2_cheats/SLOP-NA228.pnach` and
+  `@pcsx2_game_settings/SLOP-NA228.ini`. PCSX2 finds PNACH and GameSettings
+  recursively. No CRC aliases are generated.
+- Ordinary GameSettings sections apply to every CRC. Sections named
+  `[CRC.<8-hex-crc>.<section>]` override the ordinary section for one CRC.
+  Named PNACH groups apply to every CRC unless they contain
+  `crc = <8-hex-crc>[,<8-hex-crc>...]`.
+- Runtime C candidates bypass cheat files and are applied directly to
+  task-owned PCSX2 memory through PINE.
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v4 organizes each package as groups, atomic patches, and exact edits; independent group and patch `enabled` switches control normal composition. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`.
-- Actualization is an explicit standalone workflow with `na2` and `input`
-  modes; bare `act` runs both in that order. Launch-only commands never
-  actualize. Changed Latest builds actualize Latest and Previous only when
-  rotation changed it; changed Test builds actualize only Test. Unchanged,
-  cache-hit, and worker builds never actualize.
-- A zero-byte cheat template removes its managed PCSX2 CRC aliases. Other game
-  identities, real files, and unrelated symlinks are preserved.
-- Latest, Previous, and Test select the existing
-  `NA v2.28 - Latest.ps2`, `NA v2.28 - Previous.ps2`, and
-  `NA v2.28 - Test.ps2` cards respectively. When multiple images share one
-  PCSX2 serial/CRC identity, the single GameSettings file is deduplicated with
-  Latest taking precedence. Actualization never creates, copies, or modifies
-  the templates or configured memory cards.
+- Builds and launches never synchronize PCSX2 identities. Bare `act` and
+  `act input [profile]` only regenerate input profiles and update configured
+  GameSettings profile references.
+- The serial-wide GameSettings fallback uses `NA v2.28.ps2`. CRC override
+  sections preserve the current Latest, Previous, and Test assignments to
+  their existing role-specific memory cards.
 - `@pcsx2_files/` contains the canonical BIOS, cheats, GameSettings, input
   profiles, input recordings, and memory cards used directly by stable and
   development PCSX2.
-- `act` reports enabled named cheats from uncommented `patch=` or setting lines, or `none` when no cheats are enabled.
 - PNACH labels such as `// [Skip CC2 intro]` are comments only. A cheat is enabled only when its executable `patch=`/setting line is uncommented. Disabled proven cheats and disabled hypotheses must keep their executable lines commented out. Temporary PNACH hypothesis patches go at the top as comment-only names plus disabled `// patch=` lines; uncomment them only while actively testing.
 - Fixed-address PNACH hypotheses are safe by default only for the boot ELF or another region proven to remain resident and stable for the entire write lifetime.
 - `BTL.BIN`, `ETC.BIN`, and other on-demand modules are loaded and unloaded into reusable EE memory. Never test them with unguarded fixed-address PNACH writes: patch the file through the binary-patcher module, rebuild the ISO, and test that build instead.
@@ -181,7 +171,7 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
 
 ## Current Scripts
 
-- Root `na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Latest. Compact invocations contain one or two positional game tokens whose order defines window placement: `l`, `p`, or `t` runs Latest, Previous, or Test; `bl` or `bt` builds and runs Latest or Test; and suffix `w` watches that token's game. The optional value after a watched token is a registered C file/folder or a task-owned overlay-plan path; with no value, the watcher attaches every registered source under `src/`. Explicit `build l|t`, standalone `w [C path|plan]`, `worker`, `release`, and `help` remain available. The standalone `act` command performs full actualization without building or launching. Launches never actualize; changed builds actualize only the roles reported changed by promotion or Test replacement. Configured launches never stop existing PCSX2 instances, select unused PINE ports, and tile only their newly started windows. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
+- Root `na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Latest. Compact invocations contain one or two positional game tokens whose order defines window placement: `l`, `p`, or `t` runs Latest, Previous, or Test; `bl` or `bt` builds and runs Latest or Test; and suffix `w` watches that token's game. The optional value after a watched token is a registered C file/folder or a task-owned overlay-plan path; with no value, the watcher attaches every registered source under `src/`. Explicit `build l|t`, standalone `w [C path|plan]`, `worker`, `release`, and `help` remain available. The standalone `act` command regenerates input profiles without building or launching. Configured launches never stop existing PCSX2 instances, select unused PINE ports, and tile only their newly started windows. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
 - `scripts/na228/` contains build/launch execution, promotion, ISO identity,
   worker-path validation, and focused tests. Root `na228.ps1` owns argument
   parsing and dispatches substantive execution to `scripts/na228/run.ps1`.
@@ -233,25 +223,15 @@ Observed examples include AFS tools, CCS tools, Ghidra/EmotionEngine material, K
 
 ## CRC / PNACH Notes
 
-PCSX2 cheat filenames include the game CRC, for example:
-
-`SLOP-NA228_<crc>.pnach`
-
-If the boot ELF inside an ISO changes, PCSX2 may report a different CRC.
-Actualize derives the alphanumeric serial from the ISO boot path and creates a
-matching `@pcsx2_cheats/<serial>_<crc>.pnach` link to
-`@pcsx2_cheats/sources/SLOP-NA228.pnach`.
-
-Stable and development PCSX2 use `@pcsx2_cheats/` directly. The cheat template
-has a stable human-facing name; actualized CRC aliases are relative symlinks in the
-same shared directory.
+PCSX2 still reports the boot ELF CRC, but the NA2.28 cheat file is named only
+`SLOP-NA228.pnach` and therefore survives CRC changes. Use group-level `crc =`
+metadata only when a cheat is valid for specific CRCs.
 
 Known PCSX2 paths from prior notes:
 
 - Routine log: `@pcsx2_dev/logs/emulog.txt`
 - Explicit stable-check log: `@pcsx2_stable/logs/emulog.txt`
-- Cheats: CRC aliases in `@pcsx2_cheats/`, targeting
-  `@pcsx2_cheats/sources/SLOP-NA228.pnach`
+- Cheats: `@pcsx2_cheats/SLOP-NA228.pnach`
 
 Known log pattern:
 
@@ -296,18 +276,10 @@ Prior warnings:
 
 DATA.CVM passwords: `cc2fuku` for NA2, NUN3, and NUN5; `Iruka` for NUN6 A35.
 
-## Actualize Workflow
+## Input-profile Workflow
 
 `scripts/pcsx2/actualization/act.ps1` is the standalone command entrypoint and
-owns its transcript and status reporting. Bare `act` dispatches `na2`, then
-`input`.
-`sync_game_files.ps1` derives identities for every retained Latest, Previous, and
-Test ISO, deletes stale managed cheat symlinks and NA2.28 GameSettings,
-creates the required cheat aliases and real role GameSettings, and sets each
-role to its existing Latest, Previous, or Test memory card. Templates and
-memory cards are never created, copied, or modified. Build-driven calls limit
-creation and updates to changed roles; standalone `act na228` remains a full
-repair/synchronization pass.
+owns its transcript and status reporting. Bare `act` selects `Default`.
 `sync_input.ps1` generates selected complete profiles from
 `input_profiles/sources/Default.ini`, named partial inputs under
 `sources/profiles/`, and game-specific partial inputs under `sources/games/`.

@@ -90,8 +90,8 @@ their producing workflow runs. File entries reference a named root with
 - `pcsx2_savestates_command`: `@pcsx2_scripts/savestates.ps1`.
 - `na228_game_launch_command`: `@scripts/na228/launch_games.ps1`.
 - `actualize_command`: `@pcsx2_scripts/actualization/act.ps1`.
-- `actualize_na228_command` and `actualize_input_command`: the two standalone
-  actualization modes under `@pcsx2_scripts/actualization/`.
+- `actualize_input_command`: the input-profile generator under
+  `@pcsx2_scripts/actualization/`.
 
 The loaders additionally expose catalog-derived compatibility files:
 
@@ -100,8 +100,8 @@ The loaders additionally expose catalog-derived compatibility files:
 - `<build>_memory_card` as
   `@pcsx2_memory_cards/<builds.title> - <postfix>.ps2`.
 - `input_profile` from the root catalog configuration.
-- `cheat_template` and `gamesettings_template` under their respective
-  `sources/` directories, named from the configured build serial.
+- `cheat_template` and `gamesettings_template` are the serial-wide root files
+  named from the configured build serial.
 
 PowerShell accesses these as `$projectPaths.files.na2_iso` and
 `$projectPaths.files.latest_iso`. Python accesses them through calls such as
@@ -132,9 +132,9 @@ game inputs and generated filenames under `@pcsx2_input_profiles`. Python caller
 Python process.
 
 Source ISO, extraction, and memory-card paths derive from the canonical key;
-cheats and GameSettings derive from `serial` plus `crc`. Build ISO and
-memory-card paths derive from `title` plus the entry `postfix`; build template
-paths use the build serial under their respective `sources/` directories.
+source-game cheats and GameSettings derive from `serial` plus `crc`. Build ISO
+and memory-card paths derive from `title` plus the entry `postfix`; build PCSX2
+paths use only the build serial.
 
 The PowerShell loader exposes canonical selectors and aliases through
 `$projectPaths.games`. Matching is case-insensitive. The build aliases `l`,

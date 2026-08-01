@@ -258,35 +258,3 @@ function Complete-Na2RunLog {
         throw $stopError
     }
 }
-
-function Format-Na2ActualizeStatus {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)][psobject]$Result,
-        [Parameter(Mandatory = $true)][psobject]$ProjectPaths
-    )
-
-    $roles = @(
-        $Result.Roles |
-            ForEach-Object {
-                "$($_.Role)=$($_.Serial)_$($_.CRC)"
-            }
-    ) -join ', '
-    $enabledCheatNames = @($Result.EnabledCheats)
-    $enabledCheats = if ($enabledCheatNames.Count -eq 0) {
-        'none'
-    }
-    else {
-        $enabledCheatNames -join ', '
-    }
-    return (
-        "[act] NA2 roles: $roles; " +
-        "cheat aliases=$(@($Result.CheatAliases).Count), " +
-        "removed=$(@($Result.RemovedCheatSymlinks).Count), " +
-        "enabled=$enabledCheats; " +
-        "GameSettings created=$(@($Result.CreatedGameSettings).Count), " +
-        "updated=$(@($Result.UpdatedGameSettings).Count), " +
-        "preserved=$(@($Result.PreservedGameSettings).Count), " +
-        "removed=$(@($Result.RemovedGameSettings).Count)."
-    )
-}

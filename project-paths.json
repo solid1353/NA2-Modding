@@ -40,7 +40,6 @@
     "pcsx2_savestates_command": "@pcsx2_scripts/savestates.ps1",
     "na228_game_launch_command": "@scripts/na228/launch_games.ps1",
     "actualize_command": "@pcsx2_scripts/actualization/act.ps1",
-    "actualize_na228_command": "@pcsx2_scripts/actualization/sync_game_files.ps1",
     "actualize_input_command": "@pcsx2_scripts/actualization/sync_input.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1"
   }

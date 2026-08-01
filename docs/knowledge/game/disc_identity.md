@@ -76,11 +76,9 @@ entry** to override this title or copy the stock compatibility entry. Directly
 editing `@pcsx2_stable/cache/gamelist.cache` is likewise rejected because it is
 generated, machine-local state.
 
-The stable cheat template stem is configured explicitly and currently resolves
-to `@pcsx2_cheats/sources/SLOP-NA228.pnach`. Actualization derives each
-retained image's alphanumeric serial from `SYSTEM.CNF`, creates matching
-`@pcsx2_cheats/<serial>_<crc>.pnach` aliases, and removes obsolete managed
-aliases without touching unrelated files. On 2026-07-24 the retained Current,
+The stable serial-wide cheat file is `@pcsx2_cheats/SLOP-NA228.pnach`.
+It applies across CRC changes; optional group-level `crc =` metadata limits
+individual groups. On 2026-07-24 the retained Current,
 Previous, and Candidate images resolved respectively as `SLOP-NA228`,
 `SLUS-NA228`, and `SLPS-22228`, all with CRC `6D94D520`; these identities are
 derived state rather than hardcoded workflow configuration.

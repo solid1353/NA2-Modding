@@ -99,8 +99,7 @@ python -m pip install -r na228_builder/requirements.txt
 `na228 validate` runs the same module derivation, edit composition, payload
 linking, identity closure, and insertion/replacement planning against the real
 source images, but bypasses preflight reuse and stops before ISO staging. It
-does not promote or rotate images, update build receipts, actualize PCSX2
-files, or launch PCSX2.
+does not promote or rotate images, update build receipts, or launch PCSX2.
 
 Before staging, `na228_builder/build_preflight.py` hashes both canonical source
 ISOs, the complete `na228_builder/` tree except generated Python caches, the
@@ -123,8 +122,7 @@ validates both ISO9660 and UDF trees.
 
 The ordinary `na228` command builds and launches Latest. `na228 l`, `na228 p`,
 and `na228 t` launch Latest, Previous, and Test without rebuilding; `bl` and
-`bt` are the corresponding build-and-run recipes. User-owned shared-image
-workflows automatically run `act na228`; the standalone `act` command also
-provides `na2` and `input` modes.
+`bt` are the corresponding build-and-run recipes. The standalone `act` command
+regenerates input profiles; builds do not generate CRC-specific PCSX2 files.
 Profile-run logs record the enabled feature pins and the complete derived module
 result inventory.

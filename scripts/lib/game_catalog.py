@@ -115,12 +115,8 @@ def derive_game_paths(
     )
     result = {
         "iso": _root(roots, "build") / f"{title} - {postfix}.iso",
-        "cheats": (
-            _root(roots, "pcsx2_cheats") / "sources" / f"{serial}.pnach"
-        ),
-        "game_settings": (
-            _root(roots, "pcsx2_game_settings") / "sources" / f"{serial}.ini"
-        ),
+        "cheats": _root(roots, "pcsx2_cheats") / f"{serial}.pnach",
+        "game_settings": _root(roots, "pcsx2_game_settings") / f"{serial}.ini",
         "memory_card": (
             _root(roots, "pcsx2_memory_cards") / f"{title} - {postfix}.ps2"
         ),

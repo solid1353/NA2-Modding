@@ -106,7 +106,7 @@ requirements, not whatever implementation happens to exist today.
   and structured records under the same task's `logs/`. Agents never invoke
   bare `na228`, `na228 b`, or bare `na228 t`.
 - In compact recipes, `t` runs Test and `bt` builds then runs Test. Explicit
-  `na228 build t` builds and actualizes Test without launching. Isolated output
+  `na228 build t` builds Test without launching. Isolated output
   uses the explicit `worker` command.
   Neither mode runs the test suite. Run the builder
   suite only with `.\tests\run.ps1`.
@@ -231,18 +231,10 @@ requirements, not whatever implementation happens to exist today.
 - Bare `na228`, direct game-selector launches, and standalone `act` are
   user-only.
 
-## Actualization
+## Input-profile synchronization
 
-- Launch-only workflows never actualize. A changed Latest build actualizes
-  Latest and, only when promotion rotated it, Previous. A changed Test build
-  actualizes only Test. Unchanged/cache-hit and worker builds never actualize.
-  Standalone `act na228` remains the explicit full synchronization workflow.
-- `act na228` manages only the configured NA2.28 Latest/Previous/Test
-  identities, CRC cheat aliases, and GameSettings inside `@pcsx2_files/`.
-  Each role selects its configured existing Latest, Previous, or Test
-  memory card. Identity collisions are deduplicated with Latest taking
-  precedence. Templates and configured memory cards are never created, copied,
-  or modified.
+- Builds and launches never generate CRC-specific PNACH or GameSettings files.
+  NA2.28 uses the serial-wide files documented in the repository policy.
 - `act input [profile]` regenerates the selected input-profile combinations
   from canonical overrides and updates every configured GameSettings file.
   `Default` is the default profile.

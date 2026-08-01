@@ -108,6 +108,7 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   it is delivery metadata, not an agent-side queue command.
 - `con`: resume the current work without changing its scope or approval state.
 - `ep`: epic.
+- `sum`: summarize.
 - `eff`: report the current recommended effort without changing it.
 - `sin`: immediately report a rules failure to `Policeman`. `sin` remains the
   command when followed by a number, label, punctuation, or complaint text;

@@ -173,7 +173,9 @@ Detailed command and task behavior is in
   outside the owned directory. Keep inputs, experiments, builds, logs, and
   runtime files there; reusable scripts belong under `scripts/`. At completion,
   promote useful findings and remove disposable artifacts, logs, and every
-  empty directory.
+  empty directory. After moving, renaming, or deleting content, explicitly
+  inspect every vacated source directory and its affected ancestors before
+  completion; Git status cannot reveal empty directories.
 - After refactoring, never leave a directory containing only one file. Move
   that file into the appropriate parent or existing responsibility directory
   and retire the single-file directory.

@@ -167,6 +167,10 @@
   directory tree affected by the work, resolve all resulting cleanup including
   ignored or untracked remnants and empty directories, and verify the intended
   final state. A clean Git diff does not prove untracked filesystem cleanup.
+- After moving, renaming, or deleting content, explicitly inspect every vacated
+  source directory and its affected ancestors as well as the destination.
+  Remove resulting empty directories before commit/push; Git status cannot
+  report them.
 - At completion, inspect the owned tree; delete disposable copies, probes,
   generated files, and logs; promote reusable findings; document every retained
   artifact and its purpose.

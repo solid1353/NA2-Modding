@@ -338,7 +338,10 @@ if ($TestOnly -or $null -ne $workerBuild) {
             "[na228] ISO result: $isolatedKind ($isolatedState); Latest/Previous unchanged; " +
             'rotation: no; PCSX2 left running.'
         ) -ForegroundColor Cyan
-        Write-Host "[na228] $isolatedLabel record: retained $isolatedRecord." -ForegroundColor Cyan
+        Write-Host (
+            "[na228] $isolatedLabel record: retained " +
+            $isolatedProfileLog
+        ) -ForegroundColor Cyan
         return [pscustomobject]@{
             Status = $isolatedKind
             TestState = if ($isolatedKind -eq 'test') { $isolatedState } else { $null }
@@ -411,7 +414,8 @@ if ($preflight.status -eq 'hit') {
             "Latest SHA-256 $($preflight.output_sha256)."
         ) -ForegroundColor Cyan
         Write-Host '[na228] ISO result: unchanged; preflight cache hit; rotation: no.' -ForegroundColor Cyan
-        Write-Host "[na228] Build record: reused $buildRecord." -ForegroundColor Cyan
+        $buildRecordPath = Join-Path $buildLogRoot $buildMap.LatestBuildId
+        Write-Host "[na228] Build record: reused $buildRecordPath" -ForegroundColor Cyan
         return [pscustomobject]@{
             Status = 'unchanged'
             LatestIso = $resolvedLatestIso
@@ -493,7 +497,8 @@ try {
         -PreviousIso $promotion.PreviousIso `
         -Profile $profile `
         -ProjectPaths $projectPaths
-    Write-Host "[na228] Build record: retained $($buildRecord.BuildRecord)." -ForegroundColor Cyan
+    $buildRecordPath = Join-Path $buildLogRoot $buildRecord.BuildId
+    Write-Host "[na228] Build record: retained $buildRecordPath" -ForegroundColor Cyan
     $promotion | Add-Member -NotePropertyName BuildId -NotePropertyValue $buildRecord.BuildId
     $promotion | Add-Member -NotePropertyName ProfileLogDirectory -NotePropertyValue $buildRecord.BuildRecord
     $promotion | Add-Member -NotePropertyName PreflightCacheHit -NotePropertyValue $false

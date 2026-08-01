@@ -40,9 +40,9 @@
   `ws input [profile]`; `Default` is used when the profile is omitted. Never
   edit generated root-level profiles directly. A partial input replaces every
   existing binding with the same name before adding its own binding. Each run
-  removes all generated root-level profiles, then recreates only the selected
-  profile and its matching game variants. It never removes anything under
-  `sources/`.
+  overwrites the selected generated profile and its matching game variants
+  when their content changes. Every generated root-level profile remains in
+  place and is tracked by Git. It never removes anything under `sources/`.
 - The NA2.28 serial-wide PCSX2 files are
   `@pcsx2_cheats/SLOP-NA228.pnach` and
   `@pcsx2_game_settings/SLOP-NA228.ini`. PCSX2 discovers PNACH and GameSettings

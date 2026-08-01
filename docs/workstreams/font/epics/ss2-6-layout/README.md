@@ -11,13 +11,13 @@ case.
 
 ## Execution state
 
-- Mode: Continuous; Priority 1 is user-verified and the next unresolved
-  live-edit case is active.
-- Current subtask: Priority 7 Practice Settings left option-label column.
+- Mode: Continuous; implemented cases remain recorded below.
+- Current subtask: none; Priority 6 still requires exact integrated-ISO
+  confirmation.
 - Pending grid: none.
-- Next action: align the shared left option-label column while preserving its
-  current Y positions, selected styling, right value column, title, footer,
-  and explanation paths.
+- Next action: obtain exact integrated-ISO ss9/ss10 confirmation when this epic
+  resumes. Practice Settings column alignment and broad Collection-family work
+  were removed from this epic for later work and preserved in `../../plan.md`.
 
 ## Scope and evidence
 
@@ -33,24 +33,6 @@ case.
   `work/Font/inputs/screenshots/batches/2026-07-31-priority3-ss1-2/`.
 - Priority 3 replacement provenance and hashes:
   `work/Font/inputs/sstates/batches/2026-07-31-priority3-ss1-2/provenance.tsv`.
-- Supplemental Practice Settings ss3 inputs:
-  `work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss3/`.
-- Supplemental Practice Settings ss3 source screenshots:
-  `work/Font/inputs/screenshots/batches/2026-07-31-practice-settings-ss3/`.
-- Supplemental Practice Settings ss3 provenance and hashes:
-  `work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss3/provenance.tsv`.
-- Supplemental Practice Settings ss1 inputs:
-  `work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss1/`.
-- Supplemental Practice Settings ss1 source screenshots:
-  `work/Font/inputs/screenshots/batches/2026-07-31-practice-settings-ss1/`.
-- Supplemental Practice Settings ss1 provenance and hashes:
-  `work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss1/provenance.tsv`.
-- Supplemental Collection ss4–ss8 inputs:
-  `work/Font/inputs/sstates/batches/2026-07-31-collection-ss4-8/`.
-- Supplemental Collection ss4–ss8 source screenshots:
-  `work/Font/inputs/screenshots/batches/2026-07-31-collection-ss4-8/`.
-- Supplemental Collection ss4–ss8 provenance and hashes:
-  `work/Font/inputs/sstates/batches/2026-07-31-collection-ss4-8/provenance.tsv`.
 - Supplemental regression inputs:
   `work/Font/inputs/sstates/batches/2026-07-30-regressions/`.
 - Supplemental extracted screenshots:
@@ -77,20 +59,6 @@ case.
   presentation evidence. Its ss1 is the collapsed Jutsu list and its ss2 is
   the expanded list. Older ss3–ss6 states remain only as regression evidence
   for the same caller family.
-- The 2026-07-31 paired ss3 state is a separate Practice Settings list case.
-  It is not part of Priority 3 and does not replace any Jutsu-selector input.
-- The 2026-07-31 paired ss1 state is a second view of that same Practice
-  Settings caller family with `Attack` selected. Together, ss1 and ss3 prove
-  that the left-column defect is shared across selected rows and surrounding
-  ordinary labels; ss1 is not a new priority and is not part of Priority 3.
-- The 2026-07-31 paired Collection batch adds ss4 Naruto
-  character-specific Music, ss5 Naruto Classic Ultimate Jutsu, ss6 Diorama,
-  ss7 global Music, and ss8 Sasori ordinary-character Ultimate Jutsu. These
-  are representative families for one future structural Collection-list
-  correction, not five per-character implementations.
-- The user-supplied NA2.28 Characters-index screenshot is retained beside the
-  Collection batch as `character-index_NA228.png`. The user reports no Font
-  defect there, so it is reference-only and has no paired baseline grid.
 - Every slot is loaded directly. The user supplied the exact Priority 3
   constructor sequence ss3 -> Cross -> ss4 -> Circle -> ss5 -> Cross -> ss6,
   but the final draw-time caller executes after direct ss5 and ss6 reloads, so
@@ -150,28 +118,6 @@ case.
 - Older ss3–ss6 states remain regression inputs for the same caller family;
   they do not override the replacement pair.
 
-## Practice Settings
-
-### Priority 7 — supplemental ss1 and ss3: Left option-label column
-
-- State: unresolved paired baselines added on 2026-07-31; this case is not
-  selected for implementation by the current Priority 3 authorization.
-- ss1: `Attack` is selected. The selected row and every surrounding ordinary
-  left-column label reproduce the same right-shifted NA2.28 origin.
-- ss3: `Extra Hit Counter` is selected. Every visible left-column label again
-  starts farther right in NA2.28 than in NUN5.
-- Every visible left-column option label starts 9–10 native pixels farther
-  right in the measured ss3 pair. The ss1 pair independently proves the same
-  shared-column direction and scope.
-- Ordinary-row glyph Y bounds match NUN5. The right value column, differing
-  option values, lower explanation text, and the accepted native selected-row
-  movement behavior are outside this exact alignment case.
-- Required result: move only the Practice Settings left option-label column
-  to the NUN5 X origin while preserving its current Y positions, selected
-  styling, right value column, title, footer, and explanation paths.
-
-![Priority 7 Practice Settings unresolved baseline](pending/7-practice-settings-list.png)
-
 ## Collection
 
 ### Priority 4 — ss7: Exit confirmation
@@ -226,33 +172,6 @@ case.
 - Evidence requirement: the canonical result grid still requires untouched
   NUN5 and exact integrated-ISO ss9/ss10 captures at native resolution.
 
-### Priority 8 — supplemental ss4–ss8: Shared Collection lists
-
-- State: unresolved paired baselines added on 2026-07-31. Implementation is
-  deferred until the remaining isolated epic cases are finished.
-- ss4: Naruto character-specific Music is the wide character-page and shared
-  name-header representative. Its differing English translations prevent
-  exact row-break comparison, so it remains a scope and regression input.
-- ss5: Naruto Classic Ultimate Jutsu proves the legacy-character path keeps
-  long titles on one line and clips them at the right edge instead of using
-  NUN5 wrapping.
-- ss6: Diorama uses the shared wide dimensions, but NA2.28 leaves its long
-  titles on clipped one-line rows while NUN5 wraps them.
-- ss7: global Music uses the same wide dimensions. NUN5 wraps
-  `Five-Seal Barrier Cliff` after `Barrier`; NA2.28 keeps it on one line.
-- ss8: Sasori Ultimate Jutsu proves the ordinary-character path likewise
-  keeps every overflowing title on a clipped one-line row.
-- Required result: classify the shared ETC page family structurally rather
-  than by character or string; retain the narrow `152`-unit Figure profile,
-  use the shared `192`-unit profile for the other listed families, preserve
-  native glyph height for fitting one-line and multiline output, and wrap only
-  measured overflow. Fix the shared character-name header once, with accepted
-  Movie and Figure behavior retained as regressions.
-
-![Priority 8 Collection character-page baselines](pending/8-collection-character-pages.png)
-
-![Priority 8 Collection shared-page baselines](pending/8-collection-shared-pages.png)
-
 ## Current priorities
 
 Priority is determined by the most efficient implementation order.
@@ -272,15 +191,6 @@ Priority is determined by the most efficient implementation order.
 6. **ss9–ss10 — Character move lists.** Corrected and candidate-validated
    against the user-accepted target. The previous nonrepresentative grid is
    removed; exact integrated-ISO ss9/ss10 evidence is pending.
-7. **supplemental ss1 and ss3 — Practice Settings left option-label
-   column.** Unresolved paired baselines: both selected rows and their
-   surrounding ordinary labels expose the same shared right-shifted column,
-   while ordinary-row vertical bounds already match NUN5.
-8. **supplemental ss4–ss8 — shared Collection lists.** Unresolved paired
-   baselines retained for one deferred structural classifier: Figure remains
-   the sole narrow profile, the other representative lists share the wide
-   profile, and only measured overflow wraps.
-
 Shared primitives are implemented only once. Each prioritized caller family
 receives one guarded implementation and commit/push boundary; every case keeps
 its own result evidence and explicit acceptance.

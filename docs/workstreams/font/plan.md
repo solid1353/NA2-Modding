@@ -69,6 +69,20 @@ scoped. It is recorded here as separate Font work and does not reopen the
 accepted fitting, positioning, or clipping behavior in the ss1–ss6 layout
 epic.
 
+## Deferred Practice Settings column alignment
+
+Status: removed from the active layout epic for later work. Paired ss1 and ss3
+evidence is retained under
+`work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss1/` and
+`work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss3/`, with the
+matching extracted screenshots and provenance in their sibling input trees.
+
+Both states show the same shared defect: selected and ordinary left-column
+labels begin 9–10 native pixels farther right in NA2.28 than in NUN5, while
+ordinary-row vertical bounds already match. A future fix should move only that
+left option-label column to the NUN5 X origin and preserve current Y positions,
+selected styling, the right value column, title, footer, and explanation paths.
+
 ## Deferred broad Collection-family layout — after isolated epic work
 
 Status: deferred by the user until the remaining isolated Font cases are

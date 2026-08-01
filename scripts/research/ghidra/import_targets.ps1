@@ -10,21 +10,10 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\..\lib\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
+. $projectPaths.files.ghidra_runtime
 
 function Resolve-SourceAlias([string]$Alias) {
     return Resolve-Na2ProjectPathAlias -Alias $Alias -ProjectPaths $projectPaths
-}
-
-function Find-JavaHome {
-    $java = Get-Command java.exe -ErrorAction SilentlyContinue
-    if ($java) { return Split-Path (Split-Path $java.Source -Parent) -Parent }
-    $jetBrainsRoot = Join-Path $env:ProgramFiles 'JetBrains'
-    $javaItem = Get-ChildItem -LiteralPath $jetBrainsRoot -Directory -Filter 'JetBrains Rider *' -ErrorAction SilentlyContinue |
-        Sort-Object Name -Descending |
-        ForEach-Object { Get-Item -LiteralPath (Join-Path $_.FullName 'jbr\bin\java.exe') -ErrorAction SilentlyContinue } |
-        Select-Object -First 1
-    if (-not $javaItem) { throw 'A Ghidra-compatible JDK was not found.' }
-    return Split-Path (Split-Path $javaItem.FullName -Parent) -Parent
 }
 
 $targets = Import-Csv -LiteralPath (Join-Path $PSScriptRoot 'targets.tsv') -Delimiter "`t"
@@ -50,22 +39,11 @@ if ($VerifyOnly) {
 }
 
 $runtimeRoot = Join-Path $projectPaths.work 'temp\ghidra_import'
-$settingsRoot = Join-Path $runtimeRoot 'AppData\Roaming\ghidra\ghidra_12.1.2_PUBLIC'
-$extensionsRoot = Join-Path $settingsRoot 'Extensions'
-$extensionDir = Join-Path $extensionsRoot 'ghidra-emotionengine-reloaded'
-$extensionZip = Join-Path $projectPaths.utils 'ghidra\ghidra_12.1.2_PUBLIC_20260607_ghidra-emotionengine-reloaded.zip'
-$headless = Join-Path $projectPaths.utils 'ghidra\support\analyzeHeadless.bat'
-New-Item -ItemType Directory -Force -Path $runtimeRoot, $extensionsRoot | Out-Null
-if (-not (Test-Path -LiteralPath $extensionDir -PathType Container)) {
-    Expand-Archive -LiteralPath $extensionZip -DestinationPath $extensionsRoot
-}
-
-$env:USERPROFILE = $runtimeRoot
-$env:APPDATA = Join-Path $runtimeRoot 'AppData\Roaming'
-$env:LOCALAPPDATA = Join-Path $runtimeRoot 'AppData\Local'
-$env:JAVA_HOME = Find-JavaHome
-$env:PATH = (Join-Path $env:JAVA_HOME 'bin') + ';' + $env:PATH
-New-Item -ItemType Directory -Force -Path $env:APPDATA, $env:LOCALAPPDATA | Out-Null
+$ghidra = Initialize-GhidraRuntime `
+    -RuntimeRoot $runtimeRoot `
+    -ToolsRoot $projectPaths.utils
+$headless = $ghidra.Headless
+$sharedScriptPath = $ghidra.ScriptPath
 
 foreach ($item in $targets) {
     $analysisDirectory = if ($item.target -eq 'shared') { 'shared' } else { $item.target }
@@ -91,7 +69,7 @@ foreach ($item in $targets) {
         }
         $arguments = @(
             $projectRoot, $item.target, '-process', $item.program,
-            '-scriptPath', $PSScriptRoot,
+            '-scriptPath', $sharedScriptPath,
             '-postScript', 'WriteAnalysisSummary.java', $summaryPath, $item.source,
             $item.expected_sha256, $item.format, $loadBase
         )
@@ -130,14 +108,14 @@ foreach ($item in $targets) {
                 '-processor', 'r5900:LE:32:default', '-cspec', 'default',
                 '-loader', 'BinaryLoader', '-loader-baseAddr', $loadBase,
                 '-loader-fileOffset', '0x40', '-loader-length', [string]((Get-Item $inputPath).Length - 0x40),
-                '-loader-blockName', 'image', '-scriptPath', $PSScriptRoot,
+                '-loader-blockName', 'image', '-scriptPath', $sharedScriptPath,
                 '-preScript', 'PrepareMwo3.java', $loadBase, ('0x{0:X8}' -f $textLength), $entry
             )
         }
         default { throw "Unsupported target format: $($item.format)" }
     }
     $arguments += @(
-        '-scriptPath', $PSScriptRoot,
+        '-scriptPath', $sharedScriptPath,
         '-postScript', 'WriteAnalysisSummary.java', $summaryPath, $item.source,
         $item.expected_sha256, $item.format, $loadBase
     )

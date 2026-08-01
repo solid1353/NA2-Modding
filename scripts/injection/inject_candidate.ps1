@@ -19,9 +19,11 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 3
 
 $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+. (Join-Path $repository 'scripts\lib\project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
 $buildScript = Join-Path $PSScriptRoot 'build.py'
 $applyScript = Join-Path $PSScriptRoot 'apply.py'
-$pineScript = Join-Path $repository 'scripts\pcsx2\pine.py'
+$pineScript = [string]$projectPaths.files.pcsx2_pine_command
 if ([IO.Path]::IsPathRooted($IsoPath)) {
     throw 'Worker ISO paths must be repository-relative.'
 }

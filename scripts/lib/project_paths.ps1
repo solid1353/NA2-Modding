@@ -3,7 +3,7 @@ Set-StrictMode -Version Latest
 function Get-Na2ProjectPaths {
     [CmdletBinding()]
     param(
-        [string]$ManifestPath = (Join-Path $PSScriptRoot '..\..\project-paths.json'),
+        [string]$ManifestPath = (Join-Path $PSScriptRoot '..\..\paths.json'),
         [switch]$AllowMissing
     )
 
@@ -17,11 +17,62 @@ function Get-Na2ProjectPaths {
     if ([int]$manifest.schema_version -ne 1) {
         throw "Unsupported project path manifest schema: $($manifest.schema_version)"
     }
+    $names = @($manifest.roots.PSObject.Properties.Name)
+    $configuredFiles = $manifest.files
+    $fileNames = if ($null -eq $configuredFiles) {
+        @()
+    }
+    else {
+        @($configuredFiles.PSObject.Properties.Name)
+    }
 
     $resolved = [ordered]@{
         ManifestPath = $manifestItem.FullName
     }
-    $names = @($manifest.roots.PSObject.Properties.Name)
+    $resolvedFiles = [ordered]@{}
+    if ($null -ne $manifest.PSObject.Properties['imports']) {
+        foreach ($property in $manifest.imports.PSObject.Properties) {
+            $importName = [string]$property.Name
+            $rawImport = [string]$property.Value
+            if ([string]::IsNullOrWhiteSpace($importName) -or
+                [string]::IsNullOrWhiteSpace($rawImport) -or
+                [IO.Path]::IsPathRooted($rawImport)) {
+                throw "Invalid project path import '$importName': $rawImport"
+            }
+            $importManifest = [IO.Path]::GetFullPath((
+                Join-Path $repositoryRoot $rawImport
+            ))
+            if (-not (Test-Path -LiteralPath $importManifest -PathType Leaf)) {
+                throw "Project path import '$importName' not found: $importManifest"
+            }
+            $importRoot = Split-Path -Parent $importManifest
+            $importLoader = Join-Path $importRoot 'scripts\lib\paths.ps1'
+            if (-not (Test-Path -LiteralPath $importLoader -PathType Leaf)) {
+                throw "Project path import loader not found: $importLoader"
+            }
+            . $importLoader
+            $imported = Get-UnWorkshopPaths
+            if ($resolved.Contains($importName)) {
+                throw "Duplicate imported root '$importName'."
+            }
+            $resolved[$importName] = [string]$imported.Roots.repository
+            foreach ($rootProperty in $imported.Roots.PSObject.Properties) {
+                if ($rootProperty.Name -eq 'repository' -or
+                    $rootProperty.Name -in $names) { continue }
+                if ($resolved.Contains($rootProperty.Name)) {
+                    throw "Duplicate imported root '$($rootProperty.Name)'."
+                }
+                $resolved[$rootProperty.Name] = [string]$rootProperty.Value
+            }
+            foreach ($fileProperty in $imported.Files.PSObject.Properties) {
+                if ($fileProperty.Name -in $fileNames) { continue }
+                if ($resolvedFiles.Contains($fileProperty.Name)) {
+                    throw "Duplicate imported file '$($fileProperty.Name)'."
+                }
+                $resolvedFiles[$fileProperty.Name] = [string]$fileProperty.Value
+            }
+        }
+    }
     if ($names.Count -eq 0) {
         throw 'Project path manifest has no roots.'
     }
@@ -40,7 +91,12 @@ function Get-Na2ProjectPaths {
     }
 
     $pending = [Collections.Generic.List[string]]::new()
-    foreach ($name in $names) { $pending.Add($name) }
+    foreach ($name in $names) {
+        if ($resolved.Contains($name)) {
+            throw "Project root '$name' duplicates an import."
+        }
+        $pending.Add($name)
+    }
     while ($pending.Count -gt 0) {
         $madeProgress = $false
         foreach ($name in @($pending)) {
@@ -57,7 +113,8 @@ function Get-Na2ProjectPaths {
                     throw "Project root '$name' has an invalid root alias: $value"
                 }
                 $parentName = $aliasMatch.Groups['root'].Value
-                if ($parentName -notin $names) {
+                if ($parentName -notin $names -and
+                    -not $resolved.Contains($parentName)) {
                     throw "Project root '$name' references unknown project root '$parentName': $value"
                 }
                 if (-not $resolved.Contains($parentName)) { continue }
@@ -97,15 +154,12 @@ function Get-Na2ProjectPaths {
         }
     }
 
-    $configuredFiles = $manifest.files
     if ($null -eq $configuredFiles) {
         throw 'Project path manifest has no files.'
     }
-    $fileNames = @($configuredFiles.PSObject.Properties.Name)
     if ($fileNames.Count -eq 0) {
         throw 'Project path manifest has no files.'
     }
-    $resolvedFiles = [ordered]@{}
     foreach ($name in $fileNames) {
         $value = [string]$configuredFiles.$name
         if ([string]::IsNullOrWhiteSpace($value) -or [IO.Path]::IsPathRooted($value)) {
@@ -155,16 +209,46 @@ function Get-Na2ProjectPaths {
 
     $resolvedGames = [ordered]@{}
     $resolvedGameAliases = [ordered]@{}
-    if ($resolvedFiles.Contains('game_catalog')) {
-        $catalogPath = [string]$resolvedFiles['game_catalog']
+    if ($resolvedFiles.Contains('build_catalog')) {
+        $catalogPath = [string]$resolvedFiles['build_catalog']
         if (-not (Test-Path -LiteralPath $catalogPath -PathType Leaf)) {
             throw "Game catalog not found: $catalogPath"
         }
-        $catalog = Get-Content -Raw -LiteralPath $catalogPath | ConvertFrom-Json
-        if ([int]$catalog.schema_version -ne 1) {
-            throw "Unsupported game catalog schema: $($catalog.schema_version)"
+        $projectCatalog = Get-Content -Raw -LiteralPath $catalogPath | ConvertFrom-Json
+        if ([int]$projectCatalog.schema_version -ne 1) {
+            throw "Unsupported game catalog schema: $($projectCatalog.schema_version)"
         }
-        $gameResolver = Join-Path $PSScriptRoot 'resolve_game.py'
+        if ($resolvedFiles.Contains('game_catalog')) {
+            $sourceCatalogPath = [string]$resolvedFiles['game_catalog']
+            if (-not (Test-Path -LiteralPath $sourceCatalogPath -PathType Leaf)) {
+                throw "Source game catalog not found: $sourceCatalogPath"
+            }
+            $sourceCatalog = Get-Content -Raw -LiteralPath $sourceCatalogPath |
+                ConvertFrom-Json
+            if ([int]$sourceCatalog.schema_version -ne 1) {
+                throw (
+                    'Unsupported source game catalog schema: ' +
+                    $sourceCatalog.schema_version
+                )
+            }
+            $catalog = [pscustomobject][ordered]@{
+                schema_version = 1
+                config = $sourceCatalog.config
+                sources = $sourceCatalog.sources
+                title = $projectCatalog.title
+                serial = $projectCatalog.serial
+                builds = $projectCatalog.builds
+            }
+        }
+        else {
+            $catalog = $projectCatalog
+        }
+        $gameResolver = if ($resolvedFiles.Contains('game_resolver')) {
+            [string]$resolvedFiles['game_resolver']
+        }
+        else {
+            Join-Path $PSScriptRoot 'resolve_game.py'
+        }
         if (-not (Test-Path -LiteralPath $gameResolver -PathType Leaf)) {
             throw "Game resolver not found: $gameResolver"
         }
@@ -222,7 +306,7 @@ function Get-Na2ProjectPaths {
                 $resolvedGlobalConfig[$configName] = $configValue
                 if ([string]$configProperty.Value -like '@*') {
                     if ($resolvedFiles.Contains($configName)) {
-                        throw "Project file '$configName' duplicates games.json."
+                        throw "Project file '$configName' duplicates game catalogs."
                     }
                     $resolvedFiles[$configName] = $configValue
                 }
@@ -242,35 +326,7 @@ function Get-Na2ProjectPaths {
             foreach ($configName in $resolvedGlobalConfig.Keys) {
                 $resolvedCategoryConfig[$configName] = $resolvedGlobalConfig[$configName]
             }
-            if ($category -eq 'builds') {
-                $entriesProperty = (
-                    $categoryProperty.Value.PSObject.Properties['entries']
-                )
-                if ($null -eq $entriesProperty) {
-                    throw "Game catalog 'builds' section has no entries."
-                }
-                $definitions = $entriesProperty.Value
-                foreach ($configProperty in (
-                    $categoryProperty.Value.PSObject.Properties |
-                        Where-Object Name -ne 'entries'
-                )) {
-                    $configName = $configProperty.Name
-                    if ($configName -cnotmatch '^[a-z][a-z0-9_]*$') {
-                        throw "Invalid '$category' configuration name: $configName"
-                    }
-                    $configValue = & $resolveGameConfigValue `
-                        "Game category '$category' configuration '$configName'" `
-                        $configProperty.Value
-                    $resolvedCategoryConfig[$configName] = $configValue
-                    if ([string]$configProperty.Value -like '@*' -and
-                        -not $resolvedFiles.Contains($configName)) {
-                        $resolvedFiles[$configName] = $configValue
-                    }
-                }
-            }
-            else {
-                $definitions = $categoryProperty.Value
-            }
+            $definitions = $categoryProperty.Value
             $gameNames = @($definitions.PSObject.Properties.Name)
             if ($gameNames.Count -eq 0) {
                 throw "Game catalog '$category' section is empty."
@@ -309,7 +365,11 @@ function Get-Na2ProjectPaths {
                         "Game '$gameName' configuration '$configName'" `
                         $configProperty.Value
                 }
-                $resolverOutput = & python -B $gameResolver $gameName
+                $resolverArguments = @('-B', $gameResolver, $gameName)
+                if ($resolvedFiles.Contains('game_catalog')) {
+                    $resolverArguments += @('--project-root', $repositoryRoot)
+                }
+                $resolverOutput = & python @resolverArguments
                 if ($LASTEXITCODE -ne 0) {
                     throw "Game resolver failed for '$gameName'."
                 }
@@ -369,7 +429,7 @@ function Get-Na2ProjectPaths {
                     }
                     $derivedRootName = "source_$($gameName.ToLowerInvariant())"
                     if ($resolved.Contains($derivedRootName)) {
-                        throw "Project root '$derivedRootName' duplicates games.json."
+                        throw "Project root '$derivedRootName' duplicates game catalogs."
                     }
                     $resolved[$derivedRootName] = $extractedPath
                 }
@@ -404,13 +464,13 @@ function Get-Na2ProjectPaths {
                 $gameKey = $gameName.ToLowerInvariant()
                 $fileName = "${gameKey}_iso"
                 if ($resolvedFiles.Contains($fileName)) {
-                    throw "Project file '$fileName' duplicates games.json."
+                    throw "Project file '$fileName' duplicates game catalogs."
                 }
                 $resolvedFiles[$fileName] = $isoPath
                 if ($null -ne $memoryCardPath) {
                     $memoryCardFileName = "${gameKey}_memory_card"
                     if ($resolvedFiles.Contains($memoryCardFileName)) {
-                        throw "Project file '$memoryCardFileName' duplicates games.json."
+                        throw "Project file '$memoryCardFileName' duplicates game catalogs."
                     }
                     $resolvedFiles[$memoryCardFileName] = $memoryCardPath
                 }
@@ -438,7 +498,7 @@ function Get-Na2ProjectPaths {
 
     if (-not $resolved.Contains('repository') -or
         -not [IO.Path]::Equals($resolved.repository, $repositoryRoot)) {
-        throw "The 'repository' root must resolve to the directory containing project-paths.json."
+        throw "The 'repository' root must resolve to the directory containing paths.json."
     }
 
     return [pscustomobject]$resolved

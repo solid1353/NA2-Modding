@@ -6,10 +6,11 @@
   and generated artifacts use repository-relative paths. Machine-specific
   absolute paths are limited to transient tool arguments/diagnostics and
   user-facing clickable links unless explicitly authorized.
-- `project-paths.json` is the source of truth for stable project-level
-  infrastructure directories and named files; `settings/games.json` owns
-  registered source games, build roles, selector aliases, and game-specific
-  configuration. Resolve both through the shared PowerShell or Python loader.
+- `paths.json` is the source of truth for stable project-level
+  infrastructure directories and named files. Workshop `settings/games.json`
+  owns registered source games; root `builds.json` owns this project's build
+  identity, roles, and aliases. Resolve them through the shared PowerShell or
+  Python loader.
   Do not inventory ordinary descendants such as `BTL.BIN`.
 - Deleting or moving the last content of a configured root or direct manifest
   file must update the manifest and every `@root` documentation reference, then
@@ -24,7 +25,7 @@
   GameSettings, input profiles, input recordings, and memory cards live only
   there; do not recreate configured-installation copies or links. After
   creating a task-owned runtime with
-  `scripts/pcsx2/copy_worker.ps1 -WorkerRoot work/<task title>`, an agent may
+  `@pcsx2_scripts/copy_worker.ps1 -WorkerRoot work/<task title>`, an agent may
   copy any additional assets for which it has a concrete task- or test-related
   reason into that copy. The maintained command always copies
   `@pcsx2_clean` and the shared BIOS together; agents never assemble the base
@@ -36,7 +37,7 @@
   complete input profile. Named partial inputs live under `sources/profiles/`;
   game-specific partial inputs live under `sources/games/` and apply when named
   for a canonical game selector. Generate complete profiles with
-  `act input [profile]`; `Default` is used when the profile is omitted. Never
+  `ws input [profile]`; `Default` is used when the profile is omitted. Never
   edit generated root-level profiles directly. A partial input replaces every
   existing binding with the same name before adding its own binding. Each run
   removes all generated root-level profiles, then recreates only the selected
@@ -103,7 +104,8 @@
   exact push. Do not pause approved work or repeat the check unless the remote
   configuration changes.
 - Commit subjects use `[<exact task title>] <imperative summary>`. Override the
-  author for that commit only using the matching `settings/git-authors.tsv`
+  author for that commit only using the matching
+  `@workshop/settings/git-authors.tsv`
   entry, or `<agent-name>@agent.invalid` when absent. Never alter repository or
   global identity or rewrite user commits.
 - Before pushing, verify every commit authored by the current task has a
@@ -198,10 +200,11 @@
   confirmed reusable findings and useful negative results into knowledge or
   canonical data, then delete disposable logs and empty directories. Follow
   `docs/LOGGING.md`.
-- Maintained scripts live by responsibility under `scripts/lib/`,
-  `scripts/na228/`, `scripts/pcsx2/`, `scripts/media/`, `scripts/project/`, or
+- Maintained project scripts live by responsibility under `scripts/lib/`,
+  `scripts/na228/`, `scripts/project/`, or
   `scripts/research/`. Never create `scripts/archive/`; use Git history and the
-  retirement index in `scripts/README.md`.
+  retirement index in `scripts/README.md`. Reusable PCSX2, Ghidra, and media
+  infrastructure lives under `@workshop/scripts/`.
 - Reusable or potentially helpful scripts never remain under `work/`; promote
   them immediately. Task-local probes may remain only while disposable.
 - Unify third-party package use through maintained central dependency sets.
@@ -218,7 +221,7 @@
   that improves navigation, testing, or concurrency; do not split solely by
   size.
 - Prefer reusable verifiable commands/scripts over long one-off command chains.
-- Treat `@utils/old/` as untrusted; inspect a chosen tool before execution.
+- Treat `@tools/old/` as untrusted; inspect a chosen tool before execution.
 - Ask before destructive actions, mass rewrites, or modifying originals,
   except for actions contained within the acting task's owned
   `work/<exact task title>/` directory.

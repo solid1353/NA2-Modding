@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import importlib.util
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,7 +11,7 @@ from typing import Mapping
 from .game_catalog import derive_game_paths
 
 
-MANIFEST_NAME = "project-paths.json"
+MANIFEST_NAME = "paths.json"
 
 
 @dataclass(frozen=True)
@@ -79,6 +80,62 @@ def _load_project_paths(
 
     repository = manifest_path.parent.resolve()
     roots: dict[str, Path] = {}
+    files: dict[str, Path] = {}
+    local_root_names = set(configured)
+    local_files = data.get("files")
+    if not isinstance(local_files, dict) or not local_files:
+        raise ValueError("Project path manifest has no files")
+    local_file_names = set(local_files)
+
+    imports = data.get("imports", {})
+    if not isinstance(imports, dict):
+        raise ValueError("Project path manifest imports must be an object")
+    for import_name, raw_manifest in imports.items():
+        if (
+            not isinstance(import_name, str)
+            or not import_name
+            or not isinstance(raw_manifest, str)
+            or not raw_manifest
+        ):
+            raise ValueError("Invalid project path import")
+        import_path = Path(raw_manifest)
+        if import_path.is_absolute():
+            raise ValueError(
+                f"Project path import {import_name!r} must be relative"
+            )
+        imported_manifest = Path(os.path.abspath(repository / import_path))
+        if not imported_manifest.is_file():
+            raise FileNotFoundError(
+                f"Project path import {import_name!r}: {imported_manifest}"
+            )
+        loader_path = imported_manifest.parent / "scripts" / "lib" / "paths.py"
+        spec = importlib.util.spec_from_file_location(
+            f"project_paths_import_{import_name}", loader_path
+        )
+        if spec is None or spec.loader is None:
+            raise ImportError(
+                f"Could not load path import {import_name!r}: {loader_path}"
+            )
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        imported = module.load_workshop_paths(imported_manifest.parent)
+        imported_repository = imported.roots["repository"]
+        if import_name in roots:
+            raise ValueError(f"Duplicate imported root: {import_name!r}")
+        roots[import_name] = imported_repository
+        for name, value in imported.roots.items():
+            if name == "repository" or name in local_root_names:
+                continue
+            if name in roots:
+                raise ValueError(f"Duplicate imported root: {name!r}")
+            roots[name] = value
+        for name, value in imported.files.items():
+            if name in local_file_names:
+                continue
+            if name in files:
+                raise ValueError(f"Duplicate imported file: {name!r}")
+            files[name] = value
+
     resolving: set[str] = set()
     deferred_roots = set(configured_deferred)
 
@@ -154,10 +211,7 @@ def _load_project_paths(
             "The 'repository' root must resolve to the directory containing "
             f"{MANIFEST_NAME}"
         )
-    configured_files = data.get("files")
-    if not isinstance(configured_files, dict) or not configured_files:
-        raise ValueError("Project path manifest has no files")
-    files: dict[str, Path] = {}
+    configured_files = local_files
     for name, raw_value in configured_files.items():
         if not isinstance(raw_value, str) or not raw_value:
             raise ValueError(
@@ -205,16 +259,40 @@ def _load_project_paths(
             )
         files[name] = configured_path
 
-    catalog_path = files.get("game_catalog") if include_catalog else None
+    catalog_path = files.get("build_catalog") if include_catalog else None
     if catalog_path is not None:
         if not catalog_path.is_file():
             raise FileNotFoundError(f"Game catalog not found: {catalog_path}")
-        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
-        if catalog.get("schema_version") != 1:
+        project_catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+        if project_catalog.get("schema_version") != 1:
             raise ValueError(
                 "Unsupported game catalog schema: "
-                f"{catalog.get('schema_version')!r}"
+                f"{project_catalog.get('schema_version')!r}"
             )
+        source_catalog_path = files.get("game_catalog")
+        if source_catalog_path is not None:
+            if not source_catalog_path.is_file():
+                raise FileNotFoundError(
+                    f"Source game catalog not found: {source_catalog_path}"
+                )
+            source_catalog = json.loads(
+                source_catalog_path.read_text(encoding="utf-8")
+            )
+            if source_catalog.get("schema_version") != 1:
+                raise ValueError(
+                    "Unsupported source game catalog schema: "
+                    f"{source_catalog.get('schema_version')!r}"
+                )
+            catalog = {
+                "schema_version": 1,
+                "config": source_catalog.get("config", {}),
+                "sources": source_catalog.get("sources"),
+                "title": project_catalog.get("title"),
+                "serial": project_catalog.get("serial"),
+                "builds": project_catalog.get("builds"),
+            }
+        else:
+            catalog = project_catalog
 
         def resolve_catalog_value(label: str, raw_value: object) -> object:
             if not isinstance(raw_value, str) or not raw_value:
@@ -255,7 +333,7 @@ def _load_project_paths(
                 )
             if config_name in files:
                 raise ValueError(
-                    f"Project file {config_name!r} duplicates games.json"
+                    f"Project file {config_name!r} duplicates game catalogs"
                 )
             resolved = resolve_catalog_value(
                 f"Global game configuration {config_name!r}",
@@ -274,36 +352,7 @@ def _load_project_paths(
                 )
             resolved_category_config = dict(resolved_global_config)
             if category == "builds":
-                definitions = section.get("entries")
-                if not isinstance(definitions, dict) or not definitions:
-                    raise ValueError(
-                        "Game catalog 'builds' section has no non-empty "
-                        "'entries' object"
-                    )
-                category_config = {
-                    name: value
-                    for name, value in section.items()
-                    if name != "entries"
-                }
-                for config_name, raw_value in category_config.items():
-                    if (
-                        not isinstance(config_name, str)
-                        or not config_name
-                        or not config_name[0].islower()
-                        or not config_name.replace("_", "").isalnum()
-                    ):
-                        raise ValueError(
-                            f"Invalid {category!r} configuration name: "
-                            f"{config_name!r}"
-                        )
-                    resolved = resolve_catalog_value(
-                        f"Game category {category!r} configuration "
-                        f"{config_name!r}",
-                        raw_value,
-                    )
-                    resolved_category_config[config_name] = resolved
-                    if isinstance(resolved, Path):
-                        files.setdefault(config_name, resolved)
+                definitions = section
             else:
                 definitions = section
 
@@ -391,14 +440,14 @@ def _load_project_paths(
                     root_name = f"source_{game_name.casefold()}"
                     if root_name in roots:
                         raise ValueError(
-                            f"Project root {root_name!r} duplicates games.json"
+                            f"Project root {root_name!r} duplicates game catalogs"
                         )
                     roots[root_name] = extracted_path
 
                 file_name = f"{game_name.casefold()}_iso"
                 if file_name in files:
                     raise ValueError(
-                        f"Project file {file_name!r} duplicates games.json"
+                        f"Project file {file_name!r} duplicates game catalogs"
                     )
                 files[file_name] = iso_path
                 if memory_card_path is not None:

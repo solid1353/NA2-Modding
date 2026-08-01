@@ -12,7 +12,7 @@ from unittest import mock
 
 apply_injection = importlib.import_module("scripts.injection.apply")
 build_injection = importlib.import_module("scripts.injection.build")
-pine = importlib.import_module("scripts.pcsx2.pine")
+pine = apply_injection.PINE_MODULE
 
 
 class FakePineClient:

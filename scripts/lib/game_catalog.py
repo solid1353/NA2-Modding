@@ -1,146 +1,54 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 from pathlib import Path
-from typing import Mapping
+from types import ModuleType
 
 
-def _required_text(value: object, label: str) -> str:
-    if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"{label} must be a non-empty string")
-    return value
+REPOSITORY = Path(__file__).resolve().parents[2]
 
 
-def _root(roots: Mapping[str, Path], name: str) -> Path:
-    try:
-        return roots[name]
-    except KeyError as exc:
-        raise ValueError(f"Game path derivation requires project root {name!r}") from exc
-
-
-def _find_definition(
-    selector: str, catalog: Mapping[str, object]
-) -> tuple[str, str, Mapping[str, object], Mapping[str, object]]:
-    requested = selector.casefold()
-    match: tuple[str, str, Mapping[str, object], Mapping[str, object]] | None = None
-
-    for category in ("builds", "sources"):
-        section = catalog.get(category)
-        if not isinstance(section, dict) or not section:
-            raise ValueError(f"Game catalog has no non-empty {category!r} section")
-        definitions = section.get("entries") if category == "builds" else section
-        if not isinstance(definitions, dict) or not definitions:
-            raise ValueError(f"Game catalog has no non-empty {category!r} entries")
-
-        for canonical_name, raw_definition in definitions.items():
-            if not isinstance(canonical_name, str) or not canonical_name:
-                raise ValueError(f"Invalid canonical game selector: {canonical_name!r}")
-            if not isinstance(raw_definition, dict):
-                raise ValueError(
-                    f"Game {canonical_name!r} definition must be an object"
-                )
-            aliases = raw_definition.get("aliases", [])
-            if not isinstance(aliases, list) or any(
-                not isinstance(alias, str) or not alias for alias in aliases
-            ):
-                raise ValueError(f"Game {canonical_name!r} aliases must be strings")
-            names = (canonical_name, *aliases)
-            if any(name.casefold() == requested for name in names):
-                if match is not None:
-                    raise ValueError(f"Duplicate game selector or alias: {selector!r}")
-                match = (category, canonical_name, raw_definition, section)
-
-    if match is None:
-        raise KeyError(f"Unknown game selector: {selector}")
-    return match
-
-
-def derive_game_paths(
-    selector: str,
-    catalog: Mapping[str, object],
-    roots: Mapping[str, Path],
-) -> dict[str, Path]:
-    category, canonical_name, definition, section = _find_definition(
-        selector, catalog
+def _workshop_root() -> Path:
+    manifest = json.loads(
+        (REPOSITORY / "paths.json").read_text(encoding="utf-8")
     )
-    global_config = catalog.get("config", {})
-    if not isinstance(global_config, dict):
-        raise ValueError("Game catalog 'config' must be an object")
-    input_profile = _required_text(
-        global_config.get("input_profile"),
-        "Global input_profile",
-    )
-    if Path(input_profile).name != input_profile or Path(input_profile).suffix:
-        raise ValueError("Global input_profile must be a profile name")
-    profile_root = _root(roots, "pcsx2_input_profiles")
-    input_profile_overrides = (
-        profile_root / "sources" / "games" / f"{canonical_name}.ini"
-    )
-    override_enabled = input_profile_overrides.is_file()
-    resolved_profile = (
-        f"{input_profile}_{canonical_name}" if override_enabled else input_profile
-    )
-    input_profile_path = profile_root / f"{resolved_profile}.ini"
+    raw = manifest["imports"]["workshop"]
+    path = Path(raw)
+    if path.is_absolute() or raw.startswith("@"):
+        raise ValueError("Workshop bootstrap path must be repository-relative")
+    return Path(os.path.abspath(REPOSITORY / path)).parent
 
-    if category == "sources":
-        serial = _required_text(
-            definition.get("serial"), f"Game {canonical_name!r} serial"
-        )
-        crc = _required_text(
-            definition.get("crc"), f"Game {canonical_name!r} crc"
-        ).upper()
-        source = _root(roots, "source")
-        extracted = source / f"{canonical_name}.iso.files"
-        result = {
-            "iso": source / f"{canonical_name}.iso",
-            "extracted": extracted,
-            "cheats": _root(roots, "pcsx2_cheats") / f"{serial}_{crc}.pnach",
-            "game_settings": (
-                _root(roots, "pcsx2_game_settings") / f"{serial}_{crc}.ini"
-            ),
-            "memory_card": (
-                _root(roots, "pcsx2_memory_cards") / f"{canonical_name}.ps2"
-            ),
-            "input_profile": input_profile_path,
-        }
-        if override_enabled:
-            result["input_profile_overrides"] = input_profile_overrides
-        return result
 
-    title = _required_text(section.get("title"), "Build title")
-    serial = _required_text(section.get("serial"), "Build serial")
-    postfix = _required_text(
-        definition.get("postfix"), f"Game {canonical_name!r} postfix"
-    )
-    result = {
-        "iso": _root(roots, "build") / f"{title} - {postfix}.iso",
-        "cheats": _root(roots, "pcsx2_cheats") / f"{serial}.pnach",
-        "game_settings": _root(roots, "pcsx2_game_settings") / f"{serial}.ini",
-        "memory_card": (
-            _root(roots, "pcsx2_memory_cards") / f"{title} - {postfix}.ps2"
-        ),
-        "input_profile": input_profile_path,
-    }
-    if override_enabled:
-        result["input_profile_overrides"] = input_profile_overrides
-    return result
+def _shared_module() -> ModuleType:
+    path = _workshop_root() / "scripts" / "lib" / "game_catalog.py"
+    spec = importlib.util.spec_from_file_location("un_workshop_game_catalog", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Could not load Workshop game catalog module: {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_SHARED = _shared_module()
+derive_game_paths = _SHARED.derive_game_paths
+find_definition = _SHARED.find_definition
+
+
+def load_game_catalog() -> dict[str, object]:
+    return _SHARED.load_catalog(_workshop_root(), REPOSITORY)
 
 
 def resolve_game(selector: str) -> dict[str, str]:
     from .project_paths import load_base_project_paths
 
-    root = Path(__file__).resolve().parents[2]
-    paths = load_base_project_paths(root, allow_missing=True)
-    catalog_path = paths.file("game_catalog")
-    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
-    if catalog.get("schema_version") != 1:
-        raise ValueError(
-            f"Unsupported game catalog schema: {catalog.get('schema_version')!r}"
-        )
+    paths = load_base_project_paths(REPOSITORY, allow_missing=True)
     return {
         name: os.path.abspath(path)
         for name, path in derive_game_paths(
-            selector, catalog, paths.roots
+            selector,
+            load_game_catalog(),
+            paths.roots,
         ).items()
     }

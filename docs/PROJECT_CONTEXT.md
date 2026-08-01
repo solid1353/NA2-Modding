@@ -23,9 +23,8 @@ NA2.28 PCSX2 configuration:
 - Runtime C candidates bypass cheat files and are applied directly to
   task-owned PCSX2 memory through PINE.
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v4 organizes each package as groups, atomic patches, and exact edits; independent group and patch `enabled` switches control normal composition. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`.
-- Builds and launches never synchronize PCSX2 identities. Bare `act` and
-  `act input [profile]` only regenerate input profiles and update configured
-  GameSettings profile references.
+- Builds and launches never synchronize PCSX2 identities. `ws input [profile]`
+  regenerates input profiles and updates configured GameSettings references.
 - The serial-wide GameSettings fallback uses `NA v2.28.ps2`. CRC override
   sections preserve the current Latest, Previous, and Test assignments to
   their existing role-specific memory cards.
@@ -39,13 +38,13 @@ NA2.28 PCSX2 configuration:
 
 ## Working Layout
 
-Directory roots are configured once in `project-paths.json`; see
+Directory roots are configured once in `paths.json`; see
 `docs/PROJECT_PATHS.md`. The `@root/...` notation below is logical and must not be
 replaced with a copied machine-specific absolute path.
 
 - `@source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
 - `@source/*.files/`: extracted views of original source archives. Treat as read-only reference.
-- `build/`: normally contains `build/NA v2.28 - Latest.iso`, may retain at most `build/NA v2.28 - Previous.iso` as rotation history, and may retain `build/NA v2.28 - Test.iso` while concurrent refactoring/testing needs it. These names are derived from `settings/games.json` build title and postfixes. Standard builds use `NA v2.28 - Latest.iso.building`, then discard an identical staged image or promote and rotate a changed one. Test builds use `NA v2.28 - Test.iso.building`, atomically update only Test, leave PCSX2 running, and never change Latest, Previous, their build mapping, or Latest's preflight receipt. Staging files are removed on failure.
+- `build/`: normally contains `build/NA v2.28 - Latest.iso`, may retain at most `build/NA v2.28 - Previous.iso` as rotation history, and may retain `build/NA v2.28 - Test.iso` while concurrent refactoring/testing needs it. These names are derived from root `builds.json`. Standard builds use `NA v2.28 - Latest.iso.building`, then discard an identical staged image or promote and rotate a changed one. Test builds use `NA v2.28 - Test.iso.building`, atomically update only Test, leave PCSX2 running, and never change Latest, Previous, their build mapping, or Latest's preflight receipt. Staging files are removed on failure.
 - `work/<task title>/build/`: isolated agent ISOs produced by `na228 worker work/<task title>/build/<name>.iso`. Staging remains beside the requested output, build records remain under that task's `logs/`, and the mode never touches shared build, preflight, promotion, PNACH, or PCSX2 state.
 - Temporary imported archives live under the active task's `work/<task title>/temp/` folder until normalized or retired. Reproducible data lives as hash-pinned inputs beside its module; complete accepted states are preserved by annotated Git tags, and retired inputs remain available through Git history.
 - `na228_builder/features/localization/translation_importer/mappings.tsv` is the Localization feature's current hash-pinned importer input and folds the verified pointer inventory into each applicable mapping row. `source_ref` and `source` retain the guarded NA2 origin; `donor_ref` and `donor` retain the official translation and make it executable by default. A nonempty user-authored `replacement` overrides the donor, and `prefix` is prepended to the selected text. Profile `identity.json` owns the imported/output game titles, and the generic `string_patcher` applies that output policy before deriving inline or linked placement from encoded fit and available references. Feature-owned custom resident functions and guarded hooks are declared through `runtime_injector`; `payload_builder` links those fragments together with external strings into `PRG/228.BIN` and owns its loader/memory integration. The composer resolves symbols and `binary_patcher` applies concrete guarded writes. No standalone export or source-hash bypass exists.
@@ -71,13 +70,19 @@ replaced with a copied machine-specific absolute path.
 - `na228_builder/modules/string_patcher/`: the reusable semantic string-placement engine. Localization has no feature-owned string-patcher directory or local declarations; its importer artifact invokes the engine as a derived consumer. The engine compiles inline imports and contributes external fragments/symbolic pointers without owning `228.BIN` layout. The memory-card title belongs to profile `identity.json`, not Localization.
 - `na228_builder/modules/texture_patcher/`: the reusable fixed-size texture derivation engine. The Localization feature owns its 34 source-derived NUN5 UI recipes under `na228_builder/features/localization/texture_patcher/`; no replacement blobs are stored.
 - `na228_builder/`: manifest-free profiles, reusable aggregate-hash-pinned feature packages, folder-derived module orchestration, artifact dependency composition, and reusable transformation engines. `na228_builder/profiles/current/` contains source-root bindings, enabled feature IDs/pins, and final image identity. Feature rows define stable peer order; module directories define ownership and engine type; the composer resolves declared artifacts and closes typed operations. `payload_builder/` links shared resident code/data and global integration; `image_assembler/` alone performs ISO9660/UDF mutation and complete staged-image verification. Binary packages apply patches enabled by both group and patch switches and contain four canonical control tables plus referenced blobs. Adjacent READMEs, engine code, and non-input helpers are excluded from feature pins.
-- `settings/`: tracked project configuration containing the game and watcher catalogs, non-secret agent commit identities, and Notifications mute state. Resumable agent state belongs to the owning `docs/workstreams/<workstream>/` tree; the project has no OS-migration handoff directory.
+- Root `builds.json` contains NA2 build identity/roles. Shared source games,
+  non-secret commit identities, and Notifications state live in Workshop
+  `settings/`. Resumable agent state belongs to the owning
+  `docs/workstreams/<workstream>/` tree.
 - `docs/`: repository-wide context, confirmed knowledge, active plans, hypotheses, and release documentation. Component-specific READMEs remain beside their components.
 - `docs/knowledge/`: confirmed findings, reusable negative results, and supporting evidence promoted out of disposable logs. Module-owned structured evidence remains beside its module.
 - `docs/LOGGING.md`: log contents, bounded retention, cleanup, and knowledge-promotion policy.
 - `docs/HYPOTHESES.md`: archived patch candidates, failed experiments, unverified addresses, and speculative leads.
 - `TASKS.md`: concrete active tasks, test plans, and queued investigations only; no general workflow rules.
-- `@user_savestates/`: ignored, user-managed, read-only library of savestates, screenshots, and related task inputs. Its subject folders may be linked from `TASKS.md`; agents inspect them only to choose inputs, copy selected files into their own `work/<task title>/inputs/sstates/` tree with provenance, and never modify or clean the library itself.
+- `@ss/`: ignored Workshop library of user-managed savestates, screenshots,
+  and related task inputs. Agents inspect it only to choose inputs, copy
+  selected files into their own `work/<task title>/inputs/sstates/` tree with
+  provenance, and never modify or clean the library itself.
 - `work/<task title>/`: ignored workspace owned by that exact Codex task. `build/` and `logs/` contain isolated agent build/runtime records, supplied savestates are copied into `inputs/sstates/`, created savestates and captures belong under `artifacts/`, and `temp/` holds disposable caches. The shared top-level `work/temp/` directory is forbidden.
 
 Scratch/intermediate folders should be created only when needed under the active task's `work/<task title>/temp/` folder. Extractions of original source archives stay beside the source archive under `@source/`.
@@ -138,14 +143,14 @@ original/
 
 For edited/build versions, do not edit anything under `@source/` in place. Copy the needed file or archive into a task/build folder first, then patch that copy through scripts and log the source path and output path. If extraction or inspection needs shared metadata, write it under the owning `@workstream_logs/<exact task title>/` folder using source-relative paths instead of placing files in `@source/`.
 
-Use `scripts/media/extract_source_iso.ps1 -IsoPath <path> -TaskTitle <exact task
+Use `scripts/project/extract_source_iso.ps1 -IsoPath <path> -TaskTitle <exact task
 title>` for a new canonical extraction. It stages under the invoking task's
 owned `work/<task title>/temp/source_extraction/` folder and never recreates
 top-level `work/temp/`. It recursively expands CVM, inner ISO, AFS,
 and nested AFS containers, verifies file sets and byte contents, normalizes
 timestamps from archive metadata or deterministic container fallbacks, then
 promotes exactly one `<ISO filename>.files` tree. It refuses to merge into an
-existing tree. Use `scripts/media/verify_extraction.py` to recheck an existing
+existing tree. Use `scripts/project/verify_source_extraction.py` to recheck an existing
 tree.
 
 The active `@source/` ISOs and extraction trees have Windows read-only
@@ -167,11 +172,12 @@ Current split/extraction outputs:
 - `@source_na2/DATA/DATA.CVM.files/DATA.CVM.hdr`
 - `@source_na2/DATA/DATA.CVM.files/DATA.CVM.iso.files/`
 
-Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without running `@utils/old/CVM Parser/cvm_tool.exe`.
+Use `@media_scripts/split_cvm_rofs.ps1` to split the encrypted CVM safely
+without running `@tools/old/CVM Parser/cvm_tool.exe`.
 
 ## Current Scripts
 
-- Root `na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Latest. Compact invocations contain one or two positional game tokens whose order defines window placement: `l`, `p`, or `t` runs Latest, Previous, or Test; `bl` or `bt` builds and runs Latest or Test; and suffix `w` watches that token's game. The optional value after a watched token is a registered C file/folder or a task-owned overlay-plan path; with no value, the watcher attaches every registered source under `src/`. Explicit `build l|t`, standalone `w [C path|plan]`, `worker`, `release`, and `help` remain available. The standalone `act` command regenerates input profiles without building or launching. Configured launches never stop existing PCSX2 instances, select unused PINE ports, and tile only their newly started windows. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
+- Root `na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Latest. Compact invocations contain one or two positional game tokens whose order defines window placement: `l`, `p`, or `t` runs Latest, Previous, or Test; `bl` or `bt` builds and runs Latest or Test; and suffix `w` watches that token's game. The optional value after a watched token is a registered C file/folder or a task-owned overlay-plan path; with no value, the watcher attaches every registered source under `src/`. Explicit `build l|t`, standalone `w [C path|plan]`, `worker`, `release`, and `help` remain available. Use `ws input [profile]` for shared input generation. Configured launches never stop existing PCSX2 instances, select unused PINE ports, and tile only their newly started windows. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
 - `scripts/na228/` contains build/launch execution, promotion, ISO identity,
   worker-path validation, and focused tests. Root `na228.ps1` owns argument
   parsing and dispatches substantive execution to `scripts/na228/run.ps1`.
@@ -196,8 +202,8 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   ordered combination of its registered ISO selectors; and
   `savestates.ps1 move <game-or-alias> <subpath>` files only that selected
   game's development savestates by default, or stable savestates with
-  `-Target stable`, under `@user_savestates`; and
-  `savestates.ps1 extract <paths...>` extracts embedded `Screenshot.png`
+  `-Target stable`, under `@ss`; and
+  `ws ss extract <paths...>` extracts embedded `Screenshot.png`
   members into the source folder's `screenshots/` directory. One folder
   selects every direct `.p2s` and replaces that output directory; one or more
   explicit files from the same folder preserve unrelated outputs.
@@ -207,17 +213,17 @@ Use `scripts/media/split_cvm_rofs.ps1` to split the encrypted CVM safely without
   injection uses pause/write/cache-refresh/resume and does not reload or
   transport candidates through patch or cheat files.
 - `na228_builder/module_pipeline.py` prepares one explicit hash-pinned profile's artifacts, derived consumers, and shared payload contributions. `na228_builder/build_profile.py` applies that prepared pipeline and writes its run log. `na228_builder/composer.py` resolves module artifacts and closes typed image operations. `na228_builder/image_assembler/` alone stages, mutates, and verifies the caller-selected `.building` image for standard promotion, shared Test, or worker-owned output.
-- `scripts/media/` contains the recursive source extractor, its byte-parity
-  verifier, and focused ISO, AFS, and CVM building blocks. Direct same-size ISO
-  replacement is retired; guarded replacements belong to the hash-pinned
+- `@media_scripts/` contains reusable ISO, AFS, and CVM extractors in Workshop.
+  `scripts/project/` contains NA2 source-extraction orchestration, byte-parity
+  verification, and configured-source read-only maintenance. Direct same-size
+  ISO replacement is retired; guarded replacements belong to the hash-pinned
   `na228_builder.image_assembler` workflow.
-- `scripts/project/` contains configured-source read-only maintenance. There is currently no maintained release-creation script; the release workflow will be redesigned before new automation is added.
 - `scripts/research/menu_input/` and `scripts/research/translation/` retain useful one-off analysis tools outside the normal build path. Their lack of runtime callers does not make them disposable.
 - See `scripts/README.md` for the maintained directory contract and individual responsibilities.
 
 ## Utils Dump
 
-`@utils/old/` is an untrusted historical tool/archive dump. It may contain useful tools or source references, but nothing there should be treated as current workflow or executed blindly.
+`@tools/old/` is an untrusted historical tool/archive dump. It may contain useful tools or source references, but nothing there should be treated as current workflow or executed blindly.
 
 Observed examples include AFS tools, CCS tools, Ghidra/EmotionEngine material, Kuriimu, PS2Dis, PSS tools, StudioCCS variants, and many unknown `.bin` files. Inspect and select a tool for a specific task before using it.
 
@@ -278,14 +284,12 @@ DATA.CVM passwords: `cc2fuku` for NA2, NUN3, and NUN5; `Iruka` for NUN6 A35.
 
 ## Input-profile Workflow
 
-`scripts/pcsx2/actualization/act.ps1` is the standalone command entrypoint and
-owns its transcript and status reporting. Bare `act` selects `Default`.
-`sync_input.ps1` generates selected complete profiles from
+Workshop `ws input [profile]` generates selected complete profiles from
 `input_profiles/sources/Default.ini`, named partial inputs under
 `sources/profiles/`, and game-specific partial inputs under `sources/games/`.
 It removes the previously generated root-level profiles and updates every
-configured GameSettings profile reference. `act input` defaults to `Default`;
-`act input Test_Capture` selects that named profile input.
+configured GameSettings profile reference. Omitting the profile selects
+`Default`; `ws input Test_Capture` selects that named profile input.
 
 ## Release Workflow
 

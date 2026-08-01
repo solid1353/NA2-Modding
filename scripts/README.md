@@ -1,16 +1,15 @@
 # Script layout
 
-`na228.ps1` is the routine user-facing build/launch command.
-`pcsx2/actualization/act.ps1` is the standalone user-facing actualization
-command.
+`na228.ps1` is the routine NA2 user-facing build/launch command. Shared
+input-profile and savestate utilities are exposed by Workshop `workshop.ps1`.
 Everything else below `scripts/` is an internal workflow helper, a focused
 maintenance tool, or a preserved research utility.
 
-Use the unified savestate interface for filing and screenshot extraction:
+Use the Workshop savestate interface for filing and screenshot extraction:
 
 ```powershell
-scripts/pcsx2/savestates.ps1 move <game> <subpath> [-Target dev|stable]
-scripts/pcsx2/savestates.ps1 extract <paths...>
+ws ss move <game> <subpath> [-Target dev|stable]
+ws ss extract <paths...>
 ```
 
 Folder extraction recreates the single `screenshots/` output directory;
@@ -28,36 +27,25 @@ history; do not recreate an archive directory for dead scripts.
   `manifest.json`, apply that candidate transactionally through PINE, the
   operational `inject_candidate.ps1` workstream command, and the user-only save
   watcher.
-- `na228/`: build/launch execution, promotion, ISO identity, and worker-path
+- `na228/`: build/launch execution, promotion, and worker-path
   validation. Root `na228.ps1` owns argument
   parsing and dispatches substantive execution to `na228/run.ps1`.
-- `pcsx2/`: PCSX2 launch, worker-runtime copying, configuration, CRC helpers,
-  the user-facing user/development single-instance and multi-game launch
-  commands, the dot-sourced source-game command set, stable/development
-  savestate filing, actualization dispatch/state/input-profile generation and
-  embedded-savestate screenshot extraction, the minimal hidden
-  workstream-copy launcher, and
-  `patch_savestate_memory.py` for exact-byte-guarded EE-memory patches in copied
-  task-owned savestates, and `pine.py` for direct status, memory, pause, resume,
-  execution-cache refresh, and native screenshot operations. Unsupported
-  Zstandard ZIP members are bulk-extracted
-  once through 7-Zip when available, with `tar` as the portable fallback,
-  instead of rescanning the whole archive for every member.
-- `media/`: ISO, AFS, and CVM inspection/extraction tools. Use
+- `@pcsx2_scripts/`: Workshop-owned PCSX2 launch, worker copying, PINE,
+  input-profile, savestate, disc-identity, and CRC utilities.
+- `@media_scripts/`: Workshop-owned reusable ISO, AFS, and CVM extractors.
+- `project/`: NA2 source extraction and maintenance. Use
   `extract_source_iso.ps1 -IsoPath <path> -TaskTitle <exact task title>` for
   canonical recursive source extraction: it stages under
   `work/<task title>/temp/source_extraction/`, expands CVM, inner ISO, AFS, and
   nested AFS containers, verifies byte parity and timestamps, then promotes one
   `<ISO filename>.files` tree. It never uses shared top-level `work/temp/`.
-  `verify_extraction.py` can recheck an existing tree. The lower-level
+  `verify_source_extraction.py` can recheck an existing tree. Workshop
   `extract_iso.ps1`, `extract_afs.ps1`, and `split_cvm_rofs.ps1` remain focused
   building blocks; ISO changes belong in hash-pinned profiles, not direct
   file-replacement helpers.
-- `project/`: source and completed-analysis read-only maintenance.
-- `research/ghidra/`: hash-pinned headless Ghidra imports into the shared
-  `@analysis/disassembly/` root, MWo3 preparation, portable source-path
-  normalization, C/ASCII export, verified manifests, and exact shared-binary
-  game cohorts.
+- `research/ghidra/`: NA2 target manifests, cohorts, import/export wrappers,
+  and portable source-path normalization. Reusable Java scripts and runtime
+  setup live under `@workshop/scripts/ghidra/`.
 - `research/menu_input/`: preserved MIPS and Ghidra analysis helpers from the
   menu-input investigation.
 - `research/ee_memory_map/`: PCSX2 savestate extraction, allocator-chain
@@ -103,8 +91,8 @@ follow the watched token: `na228 nun5 blw src/localization` or
 Build and launch commands never generate CRC-specific PCSX2 files. NA2.28 uses
 serial-wide PNACH and GameSettings files directly.
 Configured launches preserve existing PCSX2 instances and tile only the newly
-started windows. The standalone `act` command regenerates input profiles
-without building or launching.
+started windows. `ws input [profile]` regenerates input profiles without
+building or launching.
 
 Passing one or more registered ISO selectors directly to `na228` launches them
 in the requested order. A missing selected ISO fails before any PCSX2 process
@@ -113,22 +101,18 @@ is changed.
 Translation is composed directly from the pinned profile; there is no standalone
 translation-export command or non-strict source-hash mode.
 
-`pcsx2/actualization/sync_input.ps1` regenerates selected input profiles
+Workshop `scripts/pcsx2/input.ps1` regenerates selected input profiles
 from `input_profiles/sources/Default.ini`, named partial inputs under
 `sources/profiles/`, and game-specific partial inputs under `sources/games/`.
 A partial input replaces existing bindings with the same names. Run it as
-`act input [profile]`; the legacy `na2inputs` profile helper delegates to the
-default `Default` mode. Each run removes generated profiles from the previous
+`ws input [profile]`; omitting the profile selects `Default`. Each run removes
+generated profiles from the previous
 selection, then recreates only the selected profile combinations.
-
-`pcsx2/actualization/act.ps1` owns standalone input-profile logging and
-dispatch. Bare `act` is equivalent to `act input Default`.
-Run `act help` or `act -h` for the standalone command summary.
 
 Create a fresh task-owned worker runtime with:
 
 ```powershell
-scripts/pcsx2/copy_worker.ps1 -WorkerRoot work/<task title>
+@pcsx2_scripts/copy_worker.ps1 -WorkerRoot work/<task title>
 ```
 
 This mandatory command copies the protected `@pcsx2_clean` template and the
@@ -136,7 +120,7 @@ shared BIOS together. It refuses an existing destination; the owning task must
 first audit and remove its obsolete runtime under the normal work cleanup
 policy. Other task-specific shared assets are copied only when needed.
 
-`pcsx2/launch.ps1` is the single PCSX2 launcher. Configured launches default to
+`@pcsx2_scripts/launch.ps1` is the single PCSX2 launcher. Configured launches default to
 `dev` and start it in unlimited-speed mode; pass `-Target stable` for an
 explicit capped stable check. Agent launches use
 `-WorkerRoot work/<task title>` and start the existing task-owned PCSX2 copy in
@@ -271,14 +255,14 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 | Former path | Recovery commit | Retirement and maintained replacement |
 | --- | --- | --- |
 | `scripts/injection/test.ps1` | `9a4ddb5b` | Renamed to `scripts/injection/inject_candidate.ps1` because it is an operational compile/reload/apply command, not a test. |
-| `scripts/pcsx2/extract_savestate_screenshots.py` | `a7a19d9e` | Replaced by the user-facing PowerShell implementation `scripts/pcsx2/extract_savestate_screenshots.ps1`, which accepts either one folder or explicit same-folder savestates. |
-| `scripts/pcsx2/move_na228_savestates.ps1` | `82444b3a` | Renamed and generalized as `scripts/pcsx2/move_savestates.ps1`; pass a configured game or alias before the destination subpath. |
+| `scripts/pcsx2/extract_savestate_screenshots.py` | `a7a19d9e` | Replaced by the user-facing PowerShell implementation `@pcsx2_scripts/extract_savestate_screenshots.ps1`, which accepts either one folder or explicit same-folder savestates. |
+| `scripts/pcsx2/move_na228_savestates.ps1` | `82444b3a` | Renamed and generalized as `@pcsx2_scripts/move_savestates.ps1`; pass a configured game or alias before the destination subpath. |
 | `scripts/pcsx2/game_commands.ps1` and `launch_pair.ps1` | `dae022c8` | Separate source-game functions and the pair/multi-game alias were consolidated into `na228.ps1` command routing and `scripts/na228/launch_games.ps1`. Pass game selectors directly to `na228`. |
-| `scripts/pcsx2/capture_state_screenshot.ps1` | `ec4b8276193bc214b526d5ab4f4f85b240ef7949` | Retired because it serialized a complete savestate solely to obtain a fresh screenshot. Extract `Screenshot.png` directly from an existing state; use `scripts/pcsx2/pine.py screenshot` for a fresh runtime frame. |
+| `scripts/pcsx2/capture_state_screenshot.ps1` | `ec4b8276193bc214b526d5ab4f4f85b240ef7949` | Retired because it serialized a complete savestate solely to obtain a fresh screenshot. Extract `Screenshot.png` directly from an existing state; use `@pcsx2_scripts/pine.py screenshot` for a fresh runtime frame. |
 | `injection_lab/gen_pnach.py`, `linker.asm`, `overlay_writer.py`, `production_adapter.py`, `screenshot.ps1`, `test.ps1`, and `watch.ps1` | `35628bb4` | The PNACH transport, alternating banks, install/restore state, standalone screenshot helper, and Lab wrapper were retired after the direct-PINE workflow was proven. Workstreams use the unrelated maintained `scripts/injection/inject_candidate.ps1`; user live editing uses `scripts/injection/watch.ps1`. |
 | `scripts/archive/replace_iso_file_same_size.ps1` | `858da62aacc5d9571bdef072e36b484efddc15e9` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na228_builder.image_assembler`. |
-| `scripts/na2/check_log_crc.ps1` | `ce4b06c57a7e1a28124c7a8efffd38169723d915` | Manual log/PNACH comparison was superseded by `na228/iso_identity.ps1` and the maintained standalone actualization workflow. |
-| `scripts/na2/get_elf_crc.ps1` | `858da62aacc5d9571bdef072e36b484efddc15e9` | The redundant command wrapper was removed; `pcsx2/pcsx2_elf_crc.ps1` remains the shared tested implementation. |
+| `scripts/na2/check_log_crc.ps1` | `ce4b06c57a7e1a28124c7a8efffd38169723d915` | Manual log/PNACH comparison was superseded by `@pcsx2_scripts/iso_identity.ps1`. |
+| `scripts/na2/get_elf_crc.ps1` | `858da62aacc5d9571bdef072e36b484efddc15e9` | The redundant command wrapper was removed; `@pcsx2_scripts/pcsx2_elf_crc.ps1` remains the shared tested implementation. |
 | `scripts/actualization/links.ps1` and `test_links.ps1` | `a972fc1` | Retired when stable and development PCSX2 were configured to consume `@pcsx2_files/` directly; no copy or link synchronization step remains. |
 | `scripts/na2/test_memory_card.ps1` | `5e2f7a49723ad6b1ae0262880588bb7926e880c3` | Retired with the later agent PCSX2 runtime framework; there is no maintained replacement. |
 | `scripts/na2/test_test_memory_card.ps1` | `5e2f7a49723ad6b1ae0262880588bb7926e880c3` | Retired with the later agent PCSX2 runtime framework; there is no maintained replacement. |

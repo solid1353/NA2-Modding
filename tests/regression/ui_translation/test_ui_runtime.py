@@ -270,7 +270,7 @@ class StateArchiveTests(unittest.TestCase):
             image.write_bytes(b"test image")
 
             paths = ui_runtime.ProjectPaths(
-                manifest=repository / "project-paths.json",
+                manifest=repository / "paths.json",
                 roots={
                     "repository": repository,
                     "source": source,
@@ -372,7 +372,7 @@ class StateArchiveTests(unittest.TestCase):
             image.write_bytes(b"reference image")
 
             paths = ui_runtime.ProjectPaths(
-                manifest=repository / "project-paths.json",
+                manifest=repository / "paths.json",
                 roots={
                     "repository": repository,
                     "source": source,

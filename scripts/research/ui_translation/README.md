@@ -31,7 +31,7 @@ frame templates and character-width table into NA2's prebuilt rectangle ABI.
 The normal comparison has two targets:
 
 - `nun5`: the official English reference selected by project file `nun5_iso`.
-- `current`: the current project image selected by `project-paths.json`.
+- `current`: the current project image selected by `paths.json`.
 
 Vanilla NA2 is not part of the routine capture path. Use it only when a result
 cannot be explained from NUN5 and Current plus the unpacked static sources.

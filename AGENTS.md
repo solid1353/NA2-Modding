@@ -176,7 +176,7 @@ Detailed command and task behavior is in
   that file into the appropriate parent or existing responsibility directory
   and retire the single-file directory.
 - Agent PCSX2 uses only a task-owned clone created with
-  `scripts/pcsx2/copy_worker.ps1 -WorkerRoot work/<exact task title>`. The
+  `@pcsx2_scripts/copy_worker.ps1 -WorkerRoot work/<exact task title>`. The
   command copies `@pcsx2_clean` and the required shared BIOS together; agents
   never assemble worker runtimes manually. Assign a unique PINE port.
   Agent-only runs use PCSX2 no-GUI mode, suppress any render window, and
@@ -214,7 +214,7 @@ Detailed command and task behavior is in
 - `scripts/injection/watch.ps1` is user-only interactive convenience. It is not an
   agent workflow or dependency.
 - Agents capture fresh runtime screenshots only through
-  `scripts/pcsx2/pine.py screenshot` against their task-owned PINE port, then
+  `@pcsx2_scripts/pine.py screenshot` against their task-owned PINE port, then
   poll that worker's `snaps/` tree for the new PNG. Never use window capture,
   screenshot hotkeys, window messages, or foregrounding as substitutes.
 - Never centrally migrate, replace, or clean another task's PCSX2 copy. Before
@@ -251,7 +251,7 @@ Detailed command and task behavior is in
   implementation derived from such findings unless the canonical knowledge
   update is included in the same commit; never clean up its analysis artifacts
   before verifying that promotion.
-- `@utils/CCSFileExplorerMSF` is the project's main and best available CCS
+- `@tools/CCSFileExplorerMSF` is the project's main and best available CCS
   explorer; use it by default for CCS exploration.
 - Relay user instructions verbatim without inferred requirements. A worker
   that reports its own mistake to `Policeman` triggers immediate policy

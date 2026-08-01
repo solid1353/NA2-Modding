@@ -21,6 +21,8 @@ Set-StrictMode -Version 3
 $repository = [IO.Path]::GetFullPath(
     (Join-Path $PSScriptRoot '..\..')
 )
+. (Join-Path $repository 'scripts\lib\project_paths.ps1')
+$projectPaths = Get-Na2ProjectPaths
 $packageRoot = Join-Path $repository (
     'na228_builder\features\localization\runtime_injector'
 )
@@ -28,7 +30,7 @@ $entriesPath = Join-Path $packageRoot 'entries.tsv'
 $sourceTable = Join-Path $packageRoot 'c_sources.tsv'
 $buildScript = Join-Path $PSScriptRoot 'build.py'
 $applyScript = Join-Path $PSScriptRoot 'apply.py'
-$pineScript = Join-Path $repository 'scripts\pcsx2\pine.py'
+$pineScript = [string]$projectPaths.files.pcsx2_pine_command
 $hotReloadSourceId = 'hot_reload_message'
 $hotReloadEntry = 'project.hot_reload_message'
 

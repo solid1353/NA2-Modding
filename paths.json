@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "imports": {
+    "workshop": "../UN Workshop/paths.json"
+  },
+  "roots": {
+    "repository": ".",
+    "build": "build",
+    "logs": "logs",
+    "workstream_logs": "@logs/workstreams",
+    "builder": "na228_builder",
+    "features": "@builder/features",
+    "scripts": "scripts",
+    "work": "work",
+    "project_work": "@work/Project",
+    "release_work": "@project_work/release",
+    "release_candidates": "@release_work/candidates"
+  },
+  "files": {
+    "build_catalog": "@repository/builds.json",
+    "na228_command": "@repository/na228.ps1",
+    "na228_game_launch_command": "@scripts/na228/launch_games.ps1",
+    "release_publish_command": "@scripts/release/publish_release.ps1"
+  }
+}

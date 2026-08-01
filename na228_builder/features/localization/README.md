@@ -918,7 +918,7 @@ is no blob-authoring command or stored binary fallback.
 The investigation used the repository's extracted NA2, NUN5, and Brazilian
 NUN6 sources; preserved Ghidra exports; a purpose-built CCS parser and texture
 decoder; gzip/zlib and Zopfli 0.4.3; and CCSFileExplorerMSF 3.0.0.0 for
-independent visual inspection. StudioCCS material under `@utils/old/` was used
+independent visual inspection. StudioCCS material under `@tools/old/` was used
 as format evidence only; no untrusted historical utility was executed. The
 reasoning, inventory, layout comparisons, and historical runtime evidence are
 recorded in `docs/workstreams/ui_translation/plan.md`.

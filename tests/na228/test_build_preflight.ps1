@@ -21,10 +21,9 @@ $testRoot = Join-Path (
 try {
     $repository = Join-Path $testRoot 'repository'
     $scriptRoot = Join-Path $repository 'scripts\na228'
-    $pcsx2ScriptRoot = Join-Path $repository 'scripts\pcsx2'
     $libRoot = Join-Path $repository 'scripts\lib'
     New-Item -ItemType Directory -Force `
-        -Path $scriptRoot, $pcsx2ScriptRoot, $libRoot |
+        -Path $scriptRoot, $libRoot |
         Out-Null
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\build.ps1') -Destination $scriptRoot
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\worker_paths.ps1') -Destination $scriptRoot
@@ -57,7 +56,7 @@ try {
   }
 }
 '@
-    [IO.File]::WriteAllText((Join-Path $repository 'project-paths.json'), $manifest)
+    [IO.File]::WriteAllText((Join-Path $repository 'paths.json'), $manifest)
     foreach ($directory in 'source\NA2.iso.files', 'source\NUN5.iso.files', 'build', 'logs', 'na228_builder', 'pcsx2_stable', 'work') {
         New-Item -ItemType Directory -Force -Path (Join-Path $repository $directory) | Out-Null
     }

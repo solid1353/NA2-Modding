@@ -36,7 +36,7 @@ class ProfileTests(unittest.TestCase):
         features.mkdir()
         source.mkdir()
         profiles.mkdir()
-        (root / "project-paths.json").write_text(
+        (root / "paths.json").write_text(
             json.dumps(
                 {
                     "schema_version": 1,

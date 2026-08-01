@@ -301,9 +301,9 @@ def _module_file(directory: Path, value: str, label: str) -> Path:
 
 def _repository_root(directory: Path) -> Path:
     for candidate in (directory.resolve(), *directory.resolve().parents):
-        if (candidate / "project-paths.json").is_file():
+        if (candidate / "paths.json").is_file():
             return candidate
-    raise FileNotFoundError("project-paths.json was not found")
+    raise FileNotFoundError("paths.json was not found")
 
 
 def _source_file(directory: Path, value: str, label: str) -> Path:

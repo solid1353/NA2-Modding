@@ -17,7 +17,7 @@ class ProjectPathTests(unittest.TestCase):
         }
         if files is not None:
             manifest["files"] = files
-        path = root / "project-paths.json"
+        path = root / "paths.json"
         path.write_text(json.dumps(manifest), encoding="utf-8")
         (root / "build").mkdir()
         return path
@@ -80,7 +80,7 @@ class ProjectPathTests(unittest.TestCase):
                 },
                 "files": {"nun5_iso": "@source/NUN5.iso"},
             }
-            manifest_path = root / "project-paths.json"
+            manifest_path = root / "paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
             paths = load_project_paths(manifest_path)
@@ -104,7 +104,7 @@ class ProjectPathTests(unittest.TestCase):
                 },
                 "files": {"na2_iso": "@source/NA2.iso"},
             }
-            manifest_path = root / "project-paths.json"
+            manifest_path = root / "paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
             paths = load_project_paths(manifest_path)
@@ -126,7 +126,7 @@ class ProjectPathTests(unittest.TestCase):
                     "pcsx2_stable_exe": "@pcsx2_stable/pcsx2-qt.exe",
                 },
             }
-            manifest_path = root / "project-paths.json"
+            manifest_path = root / "paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
             paths = load_project_paths(manifest_path)
@@ -145,7 +145,7 @@ class ProjectPathTests(unittest.TestCase):
                 "roots": {"repository": "."},
                 "files": {"latest_iso": "Latest.iso"},
             }
-            manifest_path = root / "project-paths.json"
+            manifest_path = root / "paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
             with self.assertRaisesRegex(
@@ -165,7 +165,7 @@ class ProjectPathTests(unittest.TestCase):
                 },
                 "files": {"latest_iso": "Latest.iso"},
             }
-            manifest_path = root / "project-paths.json"
+            manifest_path = root / "paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
             with self.assertRaisesRegex(ValueError, "dependency cycle"):
@@ -225,27 +225,14 @@ class ProjectPathTests(unittest.TestCase):
                     "pcsx2_input_profiles": "pcsx2/input_profiles",
                     "pcsx2_memory_cards": "pcsx2/memory_cards",
                 },
-                "files": {"game_catalog": "@repository/settings/games.json"},
+                "files": {
+                    "game_catalog": "@repository/games.json",
+                    "build_catalog": "@repository/builds.json",
+                },
             }
-            catalog = {
+            source_catalog = {
                 "schema_version": 1,
-                "config": {
-                    "input_profile": "Default"
-                },
-                "builds": {
-                    "title": "NA v2.28",
-                    "serial": "SLOP-NA228",
-                    "entries": {
-                        "latest": {
-                            "aliases": ["l"],
-                            "postfix": "Latest",
-                        },
-                        "previous": {
-                            "aliases": ["p"],
-                            "postfix": "Previous",
-                        },
-                    },
-                },
+                "config": {"input_profile": "Default"},
                 "sources": {
                     "NA2": {
                         "serial": "SLPS-25837",
@@ -257,12 +244,28 @@ class ProjectPathTests(unittest.TestCase):
                     },
                 },
             }
-            manifest_path = root / "project-paths.json"
+            build_catalog = {
+                "schema_version": 1,
+                "title": "NA v2.28",
+                "serial": "SLOP-NA228",
+                "builds": {
+                    "latest": {
+                        "aliases": ["l"],
+                        "postfix": "Latest",
+                    },
+                    "previous": {
+                        "aliases": ["p"],
+                        "postfix": "Previous",
+                    },
+                },
+            }
+            manifest_path = root / "paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
-            (root / "settings").mkdir()
-            (root / "settings/games.json").write_text(
-                json.dumps(catalog),
-                encoding="utf-8",
+            (root / "games.json").write_text(
+                json.dumps(source_catalog), encoding="utf-8"
+            )
+            (root / "builds.json").write_text(
+                json.dumps(build_catalog), encoding="utf-8"
             )
             override_directory = root / "pcsx2/input_profiles/sources/games"
             override_directory.mkdir(parents=True)
@@ -293,6 +296,14 @@ class ProjectPathTests(unittest.TestCase):
                 paths.file("input_profile"),
                 root.resolve() / "pcsx2/input_profiles/Default.ini",
             )
+            catalog = {
+                "schema_version": 1,
+                "config": source_catalog["config"],
+                "sources": source_catalog["sources"],
+                "title": build_catalog["title"],
+                "serial": build_catalog["serial"],
+                "builds": build_catalog["builds"],
+            }
             na2_paths = derive_game_paths(
                 "NA2",
                 catalog,
@@ -341,22 +352,14 @@ class ProjectPathTests(unittest.TestCase):
                     "pcsx2_memory_cards": "pcsx2/memory_cards",
                 },
                 "files": {
-                    "game_catalog": "@repository/settings/games.json",
+                    "game_catalog": "@repository/games.json",
+                    "build_catalog": "@repository/builds.json",
                     "latest_iso": "@build/Latest.iso",
                 },
             }
-            catalog = {
+            source_catalog = {
                 "schema_version": 1,
                 "config": {"input_profile": "Default"},
-                "builds": {
-                    "title": "NA v2.28",
-                    "serial": "SLOP-NA228",
-                    "entries": {
-                        "latest": {
-                            "postfix": "Latest",
-                        }
-                    }
-                },
                 "sources": {
                     "NA2": {
                         "serial": "SLPS-25837",
@@ -364,15 +367,22 @@ class ProjectPathTests(unittest.TestCase):
                     }
                 },
             }
-            manifest_path = root / "project-paths.json"
+            build_catalog = {
+                "schema_version": 1,
+                "title": "NA v2.28",
+                "serial": "SLOP-NA228",
+                "builds": {"latest": {"postfix": "Latest"}},
+            }
+            manifest_path = root / "paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
-            (root / "settings").mkdir()
-            (root / "settings/games.json").write_text(
-                json.dumps(catalog),
-                encoding="utf-8",
+            (root / "games.json").write_text(
+                json.dumps(source_catalog), encoding="utf-8"
+            )
+            (root / "builds.json").write_text(
+                json.dumps(build_catalog), encoding="utf-8"
             )
 
-            with self.assertRaisesRegex(ValueError, "duplicates games.json"):
+            with self.assertRaisesRegex(ValueError, "duplicates game catalogs"):
                 load_project_paths(manifest_path)
 
 

@@ -99,10 +99,6 @@ try {
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'na228.ps1') -Destination $fakeRepository
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\lib\project_paths.ps1') `
         -Destination (Join-Path $fakeRepository 'scripts\lib')
-    foreach ($pythonFile in 'project_paths.py', 'game_catalog.py', 'resolve_game.py') {
-        Copy-Item -LiteralPath (Join-Path $sourceRepository "scripts\lib\$pythonFile") `
-            -Destination (Join-Path $fakeRepository 'scripts\lib')
-    }
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\lib\run_log.ps1') `
         -Destination (Join-Path $fakeRepository 'scripts\lib')
     $fakeNa2Scripts = Join-Path $fakeRepository 'scripts\na228'
@@ -115,12 +111,6 @@ try {
     New-Item -ItemType Directory -Force -Path $fakeReleaseScripts | Out-Null
     $fakeInjectionScripts = Join-Path $fakeRepository 'scripts\injection'
     New-Item -ItemType Directory -Force -Path $fakeInjectionScripts | Out-Null
-    $fakeSettings = Join-Path $fakeRepository 'settings'
-    New-Item -ItemType Directory -Force -Path $fakeSettings | Out-Null
-    $fakeActualizationScripts = Join-Path $fakePcsx2Scripts 'actualization'
-    New-Item -ItemType Directory -Force -Path $fakeActualizationScripts | Out-Null
-    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\pcsx2\actualization\act.ps1') `
-        -Destination $fakeActualizationScripts
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\worker_paths.ps1') `
         -Destination $fakeNa2Scripts
     $manifest = @'
@@ -144,30 +134,21 @@ try {
     "work": "work"
   },
   "files": {
-    "game_catalog": "@repository/settings/games.json",
+    "game_catalog": "@repository/games.json",
+    "build_catalog": "@repository/builds.json",
+    "game_resolver": "@scripts/lib/resolve_game.py",
     "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
     "na228_game_launch_command": "@scripts/na228/launch_games.ps1",
-    "release_publish_command": "@scripts/release/publish_release.ps1",
-    "actualize_command": "@pcsx2_scripts/actualization/act.ps1",
-    "actualize_input_command": "@pcsx2_scripts/actualization/sync_input.ps1"
+    "release_publish_command": "@scripts/release/publish_release.ps1"
   }
 }
 '@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'project-paths.json') -Content $manifest
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeSettings 'games.json') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'paths.json') -Content $manifest
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'games.json') -Content @'
 {
   "schema_version": 1,
   "config": {
     "input_profile": "Default"
-  },
-  "builds": {
-    "title": "NA v2.28",
-    "serial": "SLOP-NA228",
-    "entries": {
-      "latest": { "aliases": ["l"], "postfix": "Latest" },
-      "previous": { "aliases": ["p"], "postfix": "Previous" },
-      "test": { "aliases": ["t"], "postfix": "Test" }
-    }
   },
   "sources": {
     "NA2": {
@@ -180,6 +161,57 @@ try {
     }
   }
 }
+'@
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'builds.json') -Content @'
+{
+  "schema_version": 1,
+  "title": "NA v2.28",
+  "serial": "SLOP-NA228",
+  "builds": {
+    "latest": { "aliases": ["l"], "postfix": "Latest" },
+    "previous": { "aliases": ["p"], "postfix": "Previous" },
+    "test": { "aliases": ["t"], "postfix": "Test" }
+  }
+}
+'@
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'scripts\lib\resolve_game.py') -Content @'
+import argparse
+import json
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("selector")
+parser.add_argument("--project-root", type=Path, required=True)
+args = parser.parse_args()
+root = args.project_root.resolve()
+name = args.selector
+builds = {
+    "latest": "Latest",
+    "previous": "Previous",
+    "test": "Test",
+}
+aliases = {"l": "latest", "p": "previous", "t": "test"}
+name = aliases.get(name.casefold(), name)
+if name in builds:
+    title = "NA v2.28"
+    result = {
+        "iso": str(root / "build" / f"{title} - {builds[name]}.iso"),
+        "cheats": str(root / "pcsx2_files" / "cheats" / "SLOP-NA228.pnach"),
+        "game_settings": str(root / "pcsx2_files" / "game_settings" / "SLOP-NA228.ini"),
+        "memory_card": str(root / "pcsx2_files" / "memory_cards" / f"{title} - {builds[name]}.ps2"),
+        "input_profile": str(root / "pcsx2_files" / "input_profiles" / "Default.ini"),
+    }
+else:
+    canonical = name.upper()
+    result = {
+        "iso": str(root / "source" / f"{canonical}.iso"),
+        "extracted": str(root / "source" / f"{canonical}.iso.files"),
+        "cheats": str(root / "pcsx2_files" / "cheats" / "source" / f"{canonical}.pnach"),
+        "game_settings": str(root / "pcsx2_files" / "game_settings" / "source" / f"{canonical}.ini"),
+        "memory_card": str(root / "pcsx2_files" / "memory_cards" / f"{canonical}.ps2"),
+        "input_profile": str(root / "pcsx2_files" / "input_profiles" / "Default.ini"),
+    }
+print(json.dumps(result))
 '@
     foreach ($directory in @(
         'source', 'utils', 'build', 'logs', 'na228_builder', 'pcsx2_stable',
@@ -214,38 +246,6 @@ try {
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 launch\b') `
         -Message 'Root help still exposes the retired launch subcommand.'
-    $actHelpText = (
-        & (Join-Path $fakeActualizationScripts 'act.ps1') help
-    ) -join "`n"
-    $actShortHelpText = (
-        & (Join-Path $fakeActualizationScripts 'act.ps1') -h
-    ) -join "`n"
-    Assert-Na2Test `
-        -Condition ($actHelpText.Contains('act input')) `
-        -Message 'Input-profile help omitted act input.'
-    Assert-Na2Test `
-        -Condition (-not $actHelpText.Contains('act na228')) `
-        -Message 'Input-profile help still exposes retired NA2 actualization.'
-    Assert-Na2Test `
-        -Condition ($actShortHelpText -ceq $actHelpText) `
-        -Message 'act -h does not match act help.'
-    Assert-Na2Test `
-        -Condition (-not (Test-Path -LiteralPath (
-            Join-Path $fakeRepository 'logs\na228'
-        ))) `
-        -Message 'Actualization help created run logs.'
-
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeActualizationScripts 'sync_input.ps1') -Content @'
-param([string]$Profile, [switch]$PassThru)
-$result = [pscustomobject]@{
-    Profile = 'Default'
-    GeneratedProfiles = @()
-    RemovedProfiles = @()
-    UpdatedGameSettings = @()
-    Changed = $false
-}
-if ($PassThru) { $result }
-'@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch.ps1') -Content @'
 param([string]$Target = 'dev', [string]$IsoPath)
 Write-Host "[fake] launch $Target $IsoPath"
@@ -323,8 +323,6 @@ else {
     }
 }
 '@
-    & (Join-Path $fakeActualizationScripts 'act.ps1')
-    & (Join-Path $fakeActualizationScripts 'act.ps1') input
     $na2ActRejected = $false
     try {
         & (Join-Path $fakeRepository 'na228.ps1') act
@@ -526,7 +524,6 @@ else {
     $fakeRolling = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\rolling.log'))
     Assert-Na2Test -Condition ($fakeLatest -match '(?m)^mode: build$') -Message 'Root build mode was not logged.'
     foreach ($mode in (
-        'actualize-input',
         'test-build',
         'validate',
         'build'
@@ -535,9 +532,16 @@ else {
             -Condition ($fakeRolling -match "(?m)^mode: $mode$") `
             -Message "$mode dispatch was not logged."
     }
+    $rollingSectionCount = [regex]::Matches(
+        $fakeRolling,
+        '(?m)^--- NA2 RUN BEGIN ---$'
+    ).Count
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^--- NA2 RUN BEGIN ---$').Count -eq 10) `
-        -Message 'Root dispatch test produced the wrong rolling-log section count.'
+        -Condition ($rollingSectionCount -eq 8) `
+        -Message (
+            'Root dispatch test produced the wrong rolling-log section count: ' +
+            $rollingSectionCount
+        )
     Assert-Na2Test `
         -Condition (-not (Test-Na2WindowsAbsolutePath -Text $fakeRolling)) `
         -Message 'Root dispatch persisted an absolute path.'

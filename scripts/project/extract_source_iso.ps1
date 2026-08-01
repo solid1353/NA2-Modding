@@ -15,11 +15,11 @@ $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot '..\lib\project_paths.ps1')
 $projectPaths = Get-Na2ProjectPaths
 
-$extractIsoScript = Join-Path $PSScriptRoot 'extract_iso.ps1'
-$extractAfsScript = Join-Path $PSScriptRoot 'extract_afs.ps1'
-$splitCvmScript = Join-Path $PSScriptRoot 'split_cvm_rofs.ps1'
-$verifyExtractionScript = Join-Path $PSScriptRoot 'verify_extraction.py'
-$setReadOnlyScript = Join-Path $projectPaths.scripts 'project\set_source_readonly.ps1'
+$extractIsoScript = Join-Path $projectPaths.media_scripts 'extract_iso.ps1'
+$extractAfsScript = Join-Path $projectPaths.media_scripts 'extract_afs.ps1'
+$splitCvmScript = Join-Path $projectPaths.media_scripts 'split_cvm_rofs.ps1'
+$verifyExtractionScript = Join-Path $PSScriptRoot 'verify_source_extraction.py'
+$setReadOnlyScript = Join-Path $PSScriptRoot 'set_source_readonly.ps1'
 
 function Test-PathInside {
     param(
@@ -95,7 +95,7 @@ $taskWorkRoot = Join-Path $projectPaths.work $TaskTitle
 $stageParent = Join-Path $taskWorkRoot 'temp\source_extraction'
 $stageRun = Join-Path $stageParent $runId
 $stageRoot = Join-Path $stageRun ($isoItem.Name + '.files')
-$logDir = Join-Path $projectPaths.workstream_logs ("Scripting\extraction\" + $runId)
+$logDir = Join-Path $projectPaths.workstream_logs ("Project\extraction\" + $runId)
 $summaryPath = Join-Path $logDir 'summary.tsv'
 $inventoryPath = Join-Path $logDir 'inventory.tsv'
 
@@ -112,7 +112,7 @@ try {
     New-Item -ItemType Directory -Force -Path $stageRun | Out-Null
     New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 
-    & $extractIsoScript -IsoPath $IsoPath -OutDir $stageRoot -NoLog -SkipReadOnly *> $null
+    & $extractIsoScript -IsoPath $IsoPath -OutDir $stageRoot -NoLog *> $null
     $summary.Add([pscustomobject]@{
         Kind = 'iso'
         Archive = ConvertTo-Na2ProjectPath -Path $IsoPath -ProjectPaths $projectPaths
@@ -162,7 +162,7 @@ try {
         if ($pendingIso.Count -gt 0) {
             $innerIso = $pendingIso[0]
             $innerOut = $innerIso.FullName + '.files'
-            & $extractIsoScript -IsoPath $innerIso.FullName -OutDir $innerOut -NoLog -SkipReadOnly *> $null
+            & $extractIsoScript -IsoPath $innerIso.FullName -OutDir $innerOut -NoLog *> $null
             $summary.Add([pscustomobject]@{
                 Kind = 'iso'
                 Archive = Get-FinalAlias -StagePath $innerIso.FullName -StageRoot $stageRoot -FinalRoot $finalRoot
@@ -184,7 +184,7 @@ try {
         if ($pendingAfs.Count -gt 0) {
             $afs = $pendingAfs[0]
             $afsOut = $afs.FullName + '.files'
-            & $extractAfsScript -AfsPath $afs.FullName -OutDir $afsOut -NoLog -SkipReadOnly *> $null
+            & $extractAfsScript -AfsPath $afs.FullName -OutDir $afsOut -NoLog *> $null
             $summary.Add([pscustomobject]@{
                 Kind = 'afs'
                 Archive = Get-FinalAlias -StagePath $afs.FullName -StageRoot $stageRoot -FinalRoot $finalRoot

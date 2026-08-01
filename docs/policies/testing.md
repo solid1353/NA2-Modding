@@ -146,7 +146,7 @@ requirements, not whatever implementation happens to exist today.
   needs a savestate that the user has not supplied, stop and ask the user for
   that exact state; do not create or navigate to a substitute state.
 - When PCSX2 is needed, create the task-owned runtime only with
-  `scripts/pcsx2/copy_worker.ps1 -WorkerRoot work/<task title>`. It copies the
+  `@pcsx2_scripts/copy_worker.ps1 -WorkerRoot work/<task title>`. It copies the
   read-only compiled `@pcsx2_clean` template and the required shared BIOS into
   `work/<task title>/pcsx2/`; agents never assemble that base runtime manually.
   An agent may then copy any other shared assets for which it has a concrete
@@ -222,19 +222,19 @@ requirements, not whatever implementation happens to exist today.
   but agents never run or depend on it.
 - Never save or serialize a complete savestate solely to obtain a screenshot.
   Extract an existing state's embedded `Screenshot.png` directly. For a fresh
-  runtime frame, invoke `scripts/pcsx2/pine.py screenshot` against the
+  runtime frame, invoke `@pcsx2_scripts/pine.py screenshot` against the
   task-owned PINE port and poll that worker's `snaps/` tree recursively for the
   fresh PNG. Agents never use window capture, screenshot hotkeys, window
   messages, or foregrounding. Capture a new savestate only when the state
   itself is a required artifact.
 - Builds and single-ISO launch commands never probe or close any PCSX2 process.
-- Bare `na228`, direct game-selector launches, and standalone `act` are
+- Bare `na228`, direct game-selector launches, and `ws input` are
   user-only.
 
 ## Input-profile synchronization
 
 - Builds and launches never generate CRC-specific PNACH or GameSettings files.
   NA2.28 uses the serial-wide files documented in the repository policy.
-- `act input [profile]` regenerates the selected input-profile combinations
+- `ws input [profile]` regenerates the selected input-profile combinations
   from canonical overrides and updates every configured GameSettings file.
   `Default` is the default profile.

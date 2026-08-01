@@ -3,15 +3,31 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import sys
 from pathlib import Path
+from types import ModuleType
 
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPOSITORY))
 
-from scripts.pcsx2.pine import PineClient
+from scripts.lib.project_paths import load_project_paths
+
+
+def _load_pine_module() -> ModuleType:
+    path = load_project_paths(REPOSITORY).file("pcsx2_pine_command")
+    spec = importlib.util.spec_from_file_location("un_workshop_pine", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Could not load Workshop PINE module: {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+PINE_MODULE = _load_pine_module()
+PineClient = PINE_MODULE.PineClient
 
 
 def parse_args() -> argparse.Namespace:

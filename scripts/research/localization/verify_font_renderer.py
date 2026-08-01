@@ -17,9 +17,9 @@ def find_repository(start: Path) -> Path:
     if current.is_file():
         current = current.parent
     for candidate in (current, *current.parents):
-        if (candidate / "project-paths.json").is_file():
+        if (candidate / "paths.json").is_file():
             return candidate
-    raise FileNotFoundError("project-paths.json was not found")
+    raise FileNotFoundError("paths.json was not found")
 
 
 REPOSITORY = find_repository(Path(__file__))

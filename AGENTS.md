@@ -83,8 +83,10 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   stop after A. Later requests to finish, batch work, or use one commit do not
   authorize B. Continue only when the user explicitly says to skip that
   required stop and proceed.
-- A correction to one disputed action cancels only that action, not the parent
-  task, unless the user explicitly stops or replaces the task.
+- A correction, prohibition, or limiting instruction applies only to the named
+  action. `Do not <action>` forbids that action; it never stops the parent task
+  or other approved work. Continue every other actionable part immediately
+  unless the user explicitly stops, pauses, waits, or replaces the parent task.
 - A correction to a result's status, classification, label, wording, or
   recorded state changes only that fact. It is not a stop, completion, review,
   or handoff boundary. Correct it in commentary and immediately continue any

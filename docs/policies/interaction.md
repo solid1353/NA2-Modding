@@ -134,9 +134,11 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   finish any current atomic transaction, then correct the failure before a
   final response unless the user stops or the remediation is materially
   unclear.
-- A correction or stop directed at one mistaken action cancels only that
-  action. Isolate or undo the detour and continue the parent task unless the
-  user stops or replaces it.
+- A correction, prohibition, or limiting instruction applies only to the named
+  action. `Do not <action>` forbids that action; never expand it into a stop of
+  the parent task or other approved work. Isolate or omit the prohibited action
+  and continue every other actionable part immediately unless the user
+  explicitly stops, pauses, waits, or replaces the parent task.
 - A correction to a result's status, classification, label, wording, or
   recorded state changes only that fact. It is not a stop, completion, review,
   or handoff boundary. Correct it in commentary and immediately continue any

@@ -242,8 +242,8 @@ print(json.dumps(result))
         -Condition ($helpText -match '(?m)^\s*na228 test \[suite\] \[-b\]') `
         -Message 'Root help omitted the visual-regression command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test reference <suite> -f') `
-        -Message 'Root help omitted guarded reference regeneration.'
+        -Condition ($helpText -match '(?m)^\s*na228 test reference <suite> \[-f\]') `
+        -Message 'Root help omitted first-time and guarded reference generation.'
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 -[btcpwh]\b') `
         -Message 'Root help still exposes a retired dashed mode.'
@@ -442,28 +442,20 @@ Add-Content `
     & (Join-Path $fakeRepository 'na228.ps1') test beta -b
     & (Join-Path $fakeRepository 'na228.ps1') test run alpha
     & (Join-Path $fakeRepository 'na228.ps1') test new font_full
-    $unguardedReferenceRejected = $false
-    try {
-        & (Join-Path $fakeRepository 'na228.ps1') test reference alpha
-    }
-    catch {
-        $unguardedReferenceRejected = $_.Exception.Message -match 'reference <suite> -f'
-    }
-    Assert-Na2Test `
-        -Condition $unguardedReferenceRejected `
-        -Message 'Reference regeneration did not require explicit -f.'
+    & (Join-Path $fakeRepository 'na228.ps1') test reference alpha
     & (Join-Path $fakeRepository 'na228.ps1') test reference alpha -f
     & (Join-Path $fakeRepository 'na228.ps1') test approve alpha -s '2,4,18-21'
     & (Join-Path $fakeRepository 'na228.ps1') test approve beta -a
     $calls = @(Get-Content -LiteralPath $visualCalls)
     Assert-Na2Test `
-        -Condition ($calls.Count -eq 6 -and
+        -Condition ($calls.Count -eq 7 -and
             $calls[0] -ceq 'run suite=beta build=True' -and
             $calls[1] -ceq 'run suite=alpha build=False' -and
             $calls[2] -ceq 'new recording=font_full' -and
-            $calls[3] -ceq 'reference suite=alpha force=True' -and
-            $calls[4] -ceq 'approve suite=alpha slots=2,4,18-21 all=False' -and
-            $calls[5] -ceq 'approve suite=beta slots= all=True') `
+            $calls[3] -ceq 'reference suite=alpha force=False' -and
+            $calls[4] -ceq 'reference suite=alpha force=True' -and
+            $calls[5] -ceq 'approve suite=alpha slots=2,4,18-21 all=False' -and
+            $calls[6] -ceq 'approve suite=beta slots= all=True') `
         -Message 'Named run, suite creation, or approval dispatch was incorrect.'
     $na2ActRejected = $false
     try {

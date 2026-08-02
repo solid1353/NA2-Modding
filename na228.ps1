@@ -60,7 +60,7 @@ if ($mode -eq 'help') {
         '  na228 build l|mt            Build Latest or Manual Test without running it'
         '  na228 test [suite] [-b]     Run one or all E2E suites; -b builds once first'
         '  na228 test new <recording>  Create a NUN5 reference suite'
-        '  na228 test reference <suite> -f  Regenerate NUN5 reference screenshots'
+        '  na228 test reference <suite> [-f]  Create or replace NUN5 reference screenshots'
         '  na228 test approve <suite> -s <slots> | -a'
         '  na228 validate              Validate the complete build without producing an ISO'
         '  na228 worker work/<worker>/build/<name>.iso  Build an isolated worker ISO'
@@ -119,10 +119,11 @@ if ($mode -eq 'test') {
         throw 'Usage: na228 test approve <suite> -s <slots> | -a'
     }
     if ($testCommand -eq 'reference') {
-        if ($arguments.Count -ne 3 -or $arguments[2] -cne '-f') {
-            throw 'Usage: na228 test reference <suite> -f'
+        if ($arguments.Count -lt 2 -or $arguments.Count -gt 3 -or
+            ($arguments.Count -eq 3 -and $arguments[2] -cne '-f')) {
+            throw 'Usage: na228 test reference <suite> [-f]'
         }
-        & $visualReference -Suite $arguments[1] -f
+        & $visualReference -Suite $arguments[1] -f:($arguments.Count -eq 3)
         return
     }
 

@@ -5,12 +5,12 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-if (-not $f) {
-    throw 'Usage: na228 test reference <suite> -f'
-}
-
 . (Join-Path $PSScriptRoot 'suite.ps1')
 $context = Get-VisualRegressionContext -Suite $Suite
+$captureExists = Test-Path -LiteralPath $context.CaptureRoot -PathType Container
+if ($captureExists -and -not $f) {
+    throw 'Capture suite already exists; rerun with -f to overwrite its references.'
+}
 if (-not (Test-Path -LiteralPath $context.SuiteRoot -PathType Container)) {
     throw "Visual-regression suite does not exist: $Suite"
 }
@@ -35,9 +35,20 @@ $transaction = New-VisualRegressionTransaction `
     -Root $context.Root `
     -Prefix 'reference'
 $captureRoot = Join-Path $transaction 'capture'
-$referenceStage = Join-Path $transaction 'references'
+$suiteCaptureStage = Join-Path $transaction 'suite-captures'
+$referenceStage = if ($captureExists) {
+    Join-Path $transaction 'references'
+}
+else {
+    Join-Path $suiteCaptureStage 'references'
+}
 $referenceScreenshots = Join-Path $referenceStage 'screenshots'
-$reportsStage = Join-Path $transaction 'reports'
+$reportsStage = if ($captureExists) {
+    Join-Path $transaction 'reports'
+}
+else {
+    Join-Path $suiteCaptureStage 'reports'
+}
 $scratch = Join-Path $transaction 'scratch'
 
 try {
@@ -57,11 +68,17 @@ try {
         -PendingRoot (Join-Path $context.CaptureRoot 'pending') `
         -OutputRoot $reportsStage `
         -ScratchRoot $scratch
-    Publish-VisualRegressionTransaction `
-        -Replacements ([ordered]@{
+    $replacements = if ($captureExists) {
+        [ordered]@{
             (Join-Path $context.CaptureRoot 'references\screenshots') = $referenceScreenshots
             (Join-Path $context.CaptureRoot 'reports') = $reportsStage
-        }) `
+        }
+    }
+    else {
+        [ordered]@{ $context.CaptureRoot = $suiteCaptureStage }
+    }
+    Publish-VisualRegressionTransaction `
+        -Replacements $replacements `
         -TransactionRoot $transaction
     Write-Host 'Reference screenshots and reports were replaced atomically.' -ForegroundColor Green
 }

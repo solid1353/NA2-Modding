@@ -4,8 +4,9 @@ This is the main-repository infrastructure for emulator-driven end-to-end game
 tests. Its current suites perform visual regression, and the suite format can
 grow to cover runtime state and logic. Suite recordings and metadata are
 tracked here. `captures/` is a nested independent repository with no remote
-during MVP; it versions reference and approved screenshots while pending
-captures, reports, and all paired savestates remain local and untracked.
+during MVP; it versions reference, approved, and pending screenshots. Reports
+remain local and untracked. Savestates are agent-only and remain as one
+untracked latest batch per suite.
 
 From the parent project root, use the integrated commands:
 
@@ -13,6 +14,7 @@ From the parent project root, use the integrated commands:
 na228 test
 na228 test NUN5_font_full -b
 na228 test new <recording>
+na228 test reference NUN5_font_full
 na228 test reference NUN5_font_full -f
 na228 test approve NUN5_font_full -s 2,4,18-21
 na228 test approve NUN5_font_full -a
@@ -29,10 +31,11 @@ completed capture as its reference set:
 .\e2e\scripts\new_suite.ps1 -Recording NUN5_font_full
 ```
 
-Regenerate an existing suite's NUN5 reference screenshots only with the
-explicit force flag:
+Create a missing capture suite's NUN5 reference screenshots without a force
+flag. Regenerate an existing capture suite's references only with `-f`:
 
 ```powershell
+.\e2e\scripts\reference.ps1 -Suite NUN5_font_full
 .\e2e\scripts\reference.ps1 -Suite NUN5_font_full -f
 ```
 
@@ -58,8 +61,9 @@ Approve selected pending slots, or explicitly approve the whole batch:
 Each definition lives under `suites/<recording-name>/` with `input.p2m2` and
 `screens.tsv`. Its expanded capture data lives under
 `captures/<recording-name>/`, with `references/`, `approved/`, `pending/`, and
-`reports/`. Every screenshot tier keeps its paired `sstates/` directory.
-Approval copies only selected pending screenshots and matching savestates into
-`approved/`; if a selected pending savestate is absent, the obsolete approved
-state for that slot is removed. Pending evidence is kept for review, and all
-available pairwise and three-way reports are regenerated.
+`reports/`, plus one agent-only `sstates/` directory at the suite root. A run
+keeps only screenshots that differ from, or are absent from, the approved set
+under `pending/screenshots/`, and atomically replaces the suite-level
+savestate batch when the replay produced one. Approval moves selected
+screenshots out of the pending review set and never changes savestates. All
+pairwise and three-way reports contain changed comparisons only.

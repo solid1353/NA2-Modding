@@ -57,47 +57,40 @@ $transaction = New-VisualRegressionTransaction `
     -Root $context.Root `
     -Prefix 'approve'
 $approvedStage = Join-Path $transaction 'approved'
+$pendingStage = Join-Path $transaction 'pending'
 $reportsStage = Join-Path $transaction 'reports'
 $scratch = Join-Path $transaction 'scratch'
 try {
-    [void](New-Item -ItemType Directory -Path $approvedStage, $scratch -Force)
+    [void](New-Item -ItemType Directory -Path $approvedStage, $pendingStage, $scratch -Force)
     $existingApproved = Join-Path $context.CaptureRoot 'approved'
     if (Test-Path -LiteralPath $existingApproved -PathType Container) {
         Get-ChildItem -LiteralPath $existingApproved -Force |
+            Where-Object Name -cne 'sstates' |
             Copy-Item -Destination $approvedStage -Recurse -Force
     }
+    Get-ChildItem -LiteralPath $pending -Force |
+        Where-Object Name -cne 'sstates' |
+        Copy-Item -Destination $pendingStage -Recurse -Force
     $approvedScreenshots = Join-Path $approvedStage 'screenshots'
-    $approvedStates = Join-Path $approvedStage 'sstates'
-    [void](New-Item -ItemType Directory -Path $approvedScreenshots, $approvedStates -Force)
-    $pendingStates = Join-Path $pending 'sstates'
+    [void](New-Item -ItemType Directory -Path $approvedScreenshots -Force)
     foreach ($slot in $selected) {
         $screenshot = Get-ChildItem -LiteralPath $pendingScreenshots -Filter '*.png' -File |
             Where-Object { $_.BaseName -match '(\d+)$' -and [int]$Matches[1] -eq $slot } |
             Select-Object -First 1
         Copy-Item -LiteralPath $screenshot.FullName -Destination (Join-Path $approvedScreenshots $screenshot.Name) -Force
-
-        $approvedSlotStates = @(Get-ChildItem -LiteralPath $approvedStates -Filter '*.p2s' -File -ErrorAction SilentlyContinue |
-            Where-Object { $_.BaseName -match '(\d+)$' -and [int]$Matches[1] -eq $slot })
-        foreach ($state in $approvedSlotStates) { Remove-Item -LiteralPath $state.FullName -Force }
-        if (Test-Path -LiteralPath $pendingStates -PathType Container) {
-            $pendingState = Get-ChildItem -LiteralPath $pendingStates -Filter '*.p2s' -File |
-                Where-Object { $_.BaseName -match '(\d+)$' -and [int]$Matches[1] -eq $slot } |
-                Select-Object -First 1
-            if ($null -ne $pendingState) {
-                Copy-Item -LiteralPath $pendingState.FullName -Destination (Join-Path $approvedStates $pendingState.Name) -Force
-            }
-        }
+        Remove-Item -LiteralPath (Join-Path $pendingStage "screenshots\$($screenshot.Name)") -Force
     }
 
     New-VisualRegressionReports `
         -Suite $Suite `
-        -PendingRoot $pending `
+        -PendingRoot $pendingStage `
         -OutputRoot $reportsStage `
         -ScratchRoot $scratch `
         -ApprovedRoot $approvedStage
     Publish-VisualRegressionTransaction `
         -Replacements ([ordered]@{
             (Join-Path $context.CaptureRoot 'approved') = $approvedStage
+            (Join-Path $context.CaptureRoot 'pending') = $pendingStage
             (Join-Path $context.CaptureRoot 'reports') = $reportsStage
         }) `
         -TransactionRoot $transaction

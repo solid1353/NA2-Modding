@@ -282,8 +282,6 @@ def main() -> int:
     pair_dir = args.output / "pairs"
     blend_dir = args.output / "blends"
     diff_dir = args.output / "diffs"
-    for directory in (pair_dir, blend_dir):
-        directory.mkdir(parents=True, exist_ok=True)
 
     metrics: list[dict[str, object]] = []
     pairs_by_family: dict[str, list[tuple[ManifestRow, Image.Image]]] = {}
@@ -303,6 +301,27 @@ def main() -> int:
                 f"Slot {row.slot:04d} differs from suite size {expected_size}: {reference.size}"
             )
 
+        diff, slot_metrics = make_diff(
+            reference,
+            current,
+            row,
+            args.reference_label,
+            args.current_label,
+        )
+        metrics.append(
+            {
+                "slot": row.slot,
+                "reference_slot": row.reference_slot,
+                "current_slot": row.current_slot,
+                "family": row.family,
+                "screen": row.screen,
+                "notes": row.notes,
+                **slot_metrics,
+            }
+        )
+        if diff is None:
+            continue
+
         pair = make_pair(
             reference,
             current,
@@ -317,46 +336,29 @@ def main() -> int:
             args.reference_label,
             args.current_label,
         )
-        diff, slot_metrics = make_diff(
-            reference,
-            current,
-            row,
-            args.reference_label,
-            args.current_label,
-        )
+        for directory in (pair_dir, blend_dir, diff_dir):
+            directory.mkdir(parents=True, exist_ok=True)
         pair.save(pair_dir / f"{row.slot:04d}.png")
         blend.save(blend_dir / f"{row.slot:04d}.png")
-        if diff is not None:
-            diff_dir.mkdir(parents=True, exist_ok=True)
-            diff.save(diff_dir / f"{row.slot:04d}.png")
-        metrics.append(
-            {
-                "slot": row.slot,
-                "reference_slot": row.reference_slot,
-                "current_slot": row.current_slot,
-                "family": row.family,
-                "screen": row.screen,
-                "notes": row.notes,
-                **slot_metrics,
-            }
-        )
+        diff.save(diff_dir / f"{row.slot:04d}.png")
         all_pairs.append((row, pair))
         pairs_by_family.setdefault(row.family, []).append((row, pair))
 
-    grid_root = args.output / "grids"
-    write_grid_pages(
-        all_pairs,
-        grid_root / "all",
-        args.grid_columns,
-        args.grid_items_per_page,
-    )
-    for family, pairs in sorted(pairs_by_family.items()):
+    if all_pairs:
+        grid_root = args.output / "grids"
         write_grid_pages(
-            pairs,
-            grid_root / safe_name(family),
+            all_pairs,
+            grid_root / "all",
             args.grid_columns,
             args.grid_items_per_page,
         )
+        for family, pairs in sorted(pairs_by_family.items()):
+            write_grid_pages(
+                pairs,
+                grid_root / safe_name(family),
+                args.grid_columns,
+                args.grid_items_per_page,
+            )
 
     summary_path = args.output / "summary.tsv"
     with summary_path.open("w", encoding="utf-8", newline="") as stream:

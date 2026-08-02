@@ -96,6 +96,37 @@ function Get-CommonSlots {
     [int[]]@($common | Sort-Object)
 }
 
+function Remove-ApprovedIdenticalPendingScreenshots {
+    param(
+        [Parameter(Mandatory)][string]$PendingRoot,
+        [Parameter(Mandatory)][string]$Summary
+    )
+
+    if (-not (Test-Path -LiteralPath $Summary -PathType Leaf)) {
+        return 0
+    }
+    $pendingScreenshots = Join-Path $PendingRoot 'screenshots'
+    $identicalSlots = [int[]]@(
+        Import-Csv -LiteralPath $Summary -Delimiter "`t" |
+            Where-Object { [long]$_.changed_pixels -eq 0 } |
+            ForEach-Object { [int]$_.slot }
+    )
+    $removed = 0
+    foreach ($slot in $identicalSlots) {
+        $matches = @(
+            Get-ChildItem -LiteralPath $pendingScreenshots -Filter '*.png' -File |
+                Where-Object {
+                    $_.BaseName -match '(\d+)$' -and [int]$Matches[1] -eq $slot
+                }
+        )
+        foreach ($match in $matches) {
+            Remove-Item -LiteralPath $match.FullName -Force
+            $removed++
+        }
+    }
+    return $removed
+}
+
 function Write-SubsetManifest {
     param(
         [Parameter(Mandatory)][int[]]$Slots,
@@ -155,14 +186,11 @@ function New-VisualRegressionReports {
         $right = $comparison.Right
         $name = $comparison.Name
         $slots = @(Get-CommonSlots -Directories @($sets[$left], $sets[$right]))
-        $destination = Join-Path $OutputRoot $name
-        [void](New-Item -ItemType Directory -Path $destination -Force)
         if ($slots.Count -eq 0) {
-            Set-Content -LiteralPath (Join-Path $destination 'unavailable.txt') `
-                -Value "No common $left/$right screenshot slots are available.`n" `
-                -NoNewline -Encoding utf8
             continue
         }
+        $destination = Join-Path $OutputRoot $name
+        [void](New-Item -ItemType Directory -Path $destination -Force)
         $manifest = Join-Path $ScratchRoot "$name.tsv"
         Write-SubsetManifest -Slots $slots -SourceManifest $context.Manifest -Destination $manifest
         & $context.Comparator `
@@ -180,14 +208,11 @@ function New-VisualRegressionReports {
     $threeWaySlots = @(Get-CommonSlots -Directories @(
         $sets.Reference, $sets.Approved, $sets.Pending
     ))
-    $threeWayOutput = Join-Path $OutputRoot 'three-way-grids'
-    [void](New-Item -ItemType Directory -Path $threeWayOutput -Force)
     if ($threeWaySlots.Count -eq 0) {
-        Set-Content -LiteralPath (Join-Path $threeWayOutput 'unavailable.txt') `
-            -Value "No common Reference/Approved/Pending screenshot slots are available.`n" `
-            -NoNewline -Encoding utf8
         return
     }
+    $threeWayOutput = Join-Path $OutputRoot 'three-way-grids'
+    [void](New-Item -ItemType Directory -Path $threeWayOutput -Force)
     $threeWayManifest = Join-Path $ScratchRoot 'three-way.tsv'
     Write-SubsetManifest `
         -Slots $threeWaySlots `

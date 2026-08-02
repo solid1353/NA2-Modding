@@ -29,6 +29,7 @@ $transaction = New-VisualRegressionTransaction `
     -Prefix 'run'
 $captureRoot = Join-Path $transaction 'capture'
 $pendingStage = Join-Path $transaction 'pending'
+$statesStage = Join-Path $transaction 'sstates'
 $reportsStage = Join-Path $transaction 'reports'
 $scratch = Join-Path $transaction 'scratch'
 
@@ -57,7 +58,7 @@ try {
     Copy-Item -LiteralPath $capturedScreenshots -Destination $pendingStage -Recurse
     $capturedStates = Join-Path $captureRoot 'sstates'
     if (Test-Path -LiteralPath $capturedStates -PathType Container) {
-        Copy-Item -LiteralPath $capturedStates -Destination $pendingStage -Recurse
+        Copy-Item -LiteralPath $capturedStates -Destination $statesStage -Recurse
     }
 
     New-VisualRegressionReports `
@@ -65,38 +66,36 @@ try {
         -PendingRoot $pendingStage `
         -OutputRoot $reportsStage `
         -ScratchRoot $scratch
+    $approvedSummary = Join-Path $reportsStage 'approved-vs-pending\summary.tsv'
+    $removedIdentical = Remove-ApprovedIdenticalPendingScreenshots `
+        -PendingRoot $pendingStage `
+        -Summary $approvedSummary
+    if ($removedIdentical -gt 0) {
+        Remove-Item -LiteralPath $reportsStage -Recurse -Force
+        New-VisualRegressionReports `
+            -Suite $Suite `
+            -PendingRoot $pendingStage `
+            -OutputRoot $reportsStage `
+            -ScratchRoot $scratch
+    }
+    $replacements = [ordered]@{
+        (Join-Path $context.CaptureRoot 'pending') = $pendingStage
+        (Join-Path $context.CaptureRoot 'reports') = $reportsStage
+    }
+    if (Test-Path -LiteralPath $statesStage -PathType Container) {
+        $replacements[(Join-Path $context.CaptureRoot 'sstates')] = $statesStage
+    }
     Publish-VisualRegressionTransaction `
-        -Replacements ([ordered]@{
-            (Join-Path $context.CaptureRoot 'pending') = $pendingStage
-            (Join-Path $context.CaptureRoot 'reports') = $reportsStage
-        }) `
+        -Replacements $replacements `
         -TransactionRoot $transaction
     $pendingSlots = @(Get-NumericPngSlots -Directory (Join-Path $context.CaptureRoot 'pending\screenshots'))
     $approvedDirectory = Join-Path $context.CaptureRoot 'approved\screenshots'
     $approvedSlots = @(Get-NumericPngSlots -Directory $approvedDirectory)
-    $clean = $pendingSlots.Count -eq $approvedSlots.Count
-    if ($clean) {
-        foreach ($slot in $pendingSlots) {
-            $pendingFile = Get-ChildItem `
-                -LiteralPath (Join-Path $context.CaptureRoot 'pending\screenshots') `
-                -Filter '*.png' -File |
-                Where-Object { $_.BaseName -match '(\d+)$' -and [int]$Matches[1] -eq $slot } |
-                Select-Object -First 1
-            $approvedFile = Get-ChildItem -LiteralPath $approvedDirectory -Filter '*.png' -File |
-                Where-Object { $_.BaseName -match '(\d+)$' -and [int]$Matches[1] -eq $slot } |
-                Select-Object -First 1
-            if ($null -eq $approvedFile -or
-                (Get-FileHash -LiteralPath $pendingFile.FullName -Algorithm SHA256).Hash -cne
-                (Get-FileHash -LiteralPath $approvedFile.FullName -Algorithm SHA256).Hash) {
-                $clean = $false
-                break
-            }
-        }
-    }
+    $clean = $pendingSlots.Count -eq 0
     $status = if ($clean) { 'clean' } else { 'review-required' }
     Write-Host (
         "Visual-regression batch completed ($status). " +
-        'Pending captures and reports were replaced atomically.'
+        'Pending differences, suite-level savestates, and reports were replaced atomically.'
     ) -ForegroundColor $(if ($clean) { 'Green' } else { 'Yellow' })
     [pscustomobject]@{
         Suite = $Suite

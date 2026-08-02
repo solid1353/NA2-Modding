@@ -85,8 +85,9 @@ command. Its infrastructure and suite definitions are main-tracked under
 `e2e/captures/` repository. `na228 test` replays every suite against the retained Screenshot Test
 ISO, `na228 test <suite>` selects one suite, and `-b` builds Screenshot Test
 once before replay. `na228 test new <recording>` creates a NUN5 reference
-suite. `na228 test reference <suite> -f` explicitly regenerates that suite's
-NUN5 reference screenshots. Approve reviewed captures selectively with
+suite. `na228 test reference <suite>` creates a missing capture suite's NUN5
+references; `-f` explicitly regenerates an existing capture suite's
+references. Approve reviewed captures selectively with
 `na228 test approve <suite> -s <slots>`, or explicitly approve the complete
 pending batch with `na228 test approve <suite> -a`.
 

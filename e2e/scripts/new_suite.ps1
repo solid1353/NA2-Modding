@@ -43,20 +43,19 @@ try {
     }
 
     $referenceScreenshots = Join-Path $captureStage 'references\screenshots'
-    $referenceStates = Join-Path $captureStage 'references\sstates'
     $approvedScreenshots = Join-Path $captureStage 'approved\screenshots'
-    $approvedStates = Join-Path $captureStage 'approved\sstates'
+    $suiteStates = Join-Path $captureStage 'sstates'
     [void](New-Item -ItemType Directory -Path `
         $suiteStage, `
-        $referenceScreenshots, $referenceStates, `
-        $approvedScreenshots, $approvedStates -Force)
+        $referenceScreenshots, $approvedScreenshots -Force)
     Copy-Item -LiteralPath $recordingPath -Destination (Join-Path $suiteStage 'input.p2m2')
     Get-ChildItem -LiteralPath $capturedScreenshots -File |
         Copy-Item -Destination $referenceScreenshots
     $capturedStates = Join-Path $capture 'sstates'
     if (Test-Path -LiteralPath $capturedStates -PathType Container) {
+        [void](New-Item -ItemType Directory -Path $suiteStates -Force)
         Get-ChildItem -LiteralPath $capturedStates -File |
-            Copy-Item -Destination $referenceStates
+            Copy-Item -Destination $suiteStates
     }
 
     $manifestRows = foreach ($slot in (Get-NumericPngSlots -Directory $referenceScreenshots)) {

@@ -61,6 +61,8 @@ def main() -> int:
         images = [open_rgb(sets[label][slot]) for label in sets]
         if len({image.size for image in images}) != 1:
             raise ValueError(f"Slot {slot:04d} has mismatched image sizes")
+        if images[0].tobytes() == images[1].tobytes() == images[2].tobytes():
+            continue
         width, height = images[0].size
         review = Image.new("RGB", (width * 3, height + HEADER), (12, 12, 12))
         draw = ImageDraw.Draw(review)

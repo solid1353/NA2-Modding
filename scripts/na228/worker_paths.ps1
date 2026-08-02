@@ -76,10 +76,10 @@ function Get-Na2WorkerBuildContext {
     $sharedOutputs = @(
         $Paths.files.latest_iso
         $Paths.files.previous_iso
-        $Paths.files.test_iso
+        $Paths.files.manual_test_iso
     ) | ForEach-Object { [IO.Path]::GetFullPath([string]$_) }
     if ($sharedOutputs | Where-Object { [IO.Path]::Equals($_, $resolvedOutput) }) {
-        throw 'Worker ISO output must not target Latest, Previous, or Test.'
+        throw 'Worker ISO output must not target Latest, Previous, Manual Test, or Screenshot Test.'
     }
 
     $worker | Add-Member -NotePropertyName OutputIso -NotePropertyValue $resolvedOutput

@@ -35,9 +35,13 @@
       "aliases": ["p"],
       "postfix": "Previous"
     },
-    "test": {
-      "aliases": ["t"],
-      "postfix": "Test"
+    "manual_test": {
+      "aliases": ["mt"],
+      "postfix": "Manual Test"
+    },
+    "screenshot_test": {
+      "aliases": ["st"],
+      "postfix": "Screenshot Test"
     }
   }
 }

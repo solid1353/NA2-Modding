@@ -52,12 +52,12 @@ if ($mode -eq 'help') {
         '  na228 w [C path|plan]      Watch all registered C by default'
         '  na228 w injection_test     Watch only the reload-message smoke test'
         '  na228 <token> [token]      Run one or two games in window order'
-        '  l | p | t                  Latest | Previous | Test'
-        '  bl | bt                    Build and run Latest | Test'
+        '  l | p | mt                 Latest | Previous | Manual Test'
+        '  bl | bmt                   Build and run Latest | Manual Test'
         '  <token>w [C path|plan]     Watch that game; selection follows its token'
         '  additional launch arguments  See workshop help'
         ''
-        '  na228 build l|t             Build Latest or Test without running it'
+        '  na228 build l|mt            Build Latest or Manual Test without running it'
         '  na228 validate              Validate the complete build without producing an ISO'
         '  na228 worker work/<worker>/build/<name>.iso  Build an isolated worker ISO'
         '  na228 release [version]     Publish a GitHub release'
@@ -83,7 +83,7 @@ if ($mode -eq 'release') {
 
 if ($mode -eq 'build') {
     if ($arguments.Count -ne 1) {
-        throw 'na228 build requires exactly one target: l or t.'
+        throw 'na228 build requires exactly one target: l or mt.'
     }
     $target = $arguments[0].ToLowerInvariant()
     switch ($target) {
@@ -92,13 +92,13 @@ if ($mode -eq 'build') {
                 -Action latest-build
             return
         }
-        { $_ -in @('t', 'test') } {
+        { $_ -in @('mt', 'manual_test') } {
             & (Join-Path $paths.scripts 'na228\run.ps1') `
-                -Action test-build
+                -Action manual-test-build
             return
         }
         default {
-            throw "na228 build target must be l or t: $target"
+            throw "na228 build target must be l or mt: $target"
         }
     }
 }
@@ -149,7 +149,7 @@ function Test-Na228GameToken {
     if ($candidate.Length -gt 1 -and $candidate.EndsWith('w')) {
         $candidate = $candidate.Substring(0, $candidate.Length - 1)
     }
-    if ($candidate -in @('b', 'bl', 'bt', 'l', 'p', 't')) {
+    if ($candidate -in @('b', 'bl', 'bmt', 'l', 'p', 'mt')) {
         return $true
     }
     return $null -ne $paths.games.Aliases.PSObject.Properties[$candidate]
@@ -195,13 +195,13 @@ for ($index = 0; $index -lt $runTokens.Count; $index++) {
             $games.Add('latest')
             $buildActions.Add('latest-build')
         }
-        'bt' {
-            $games.Add('test')
-            $buildActions.Add('test-build')
+        'bmt' {
+            $games.Add('manual_test')
+            $buildActions.Add('manual-test-build')
         }
         'l' { $games.Add('latest') }
         'p' { $games.Add('previous') }
-        't' { $games.Add('test') }
+        'mt' { $games.Add('manual_test') }
         default { $games.Add($token) }
     }
     if (

@@ -64,15 +64,15 @@ Before that call, `na228/build.ps1` checks the deterministic successful-build
 receipt through `na228_builder.build_preflight`; an exact hit returns the normal
 unchanged result without staging an ISO. `tests/na228/test_build_preflight.ps1` covers
 the cache-hit and safe full-build-fallback dispatch paths.
-`na228 build t` calls the same builder in Test-only mode: it always composes a
-fresh verified catalog-derived Test ISO, bypasses Latest preflight and
+`na228 build mt` calls the same builder in Manual Test-only mode: it always composes a
+fresh verified catalog-derived Manual Test ISO, bypasses Latest preflight and
 promotion state, and does not probe or close PCSX2.
 `na228 worker work/<task title>/build/<name>.iso` instead builds an isolated
 worker-owned ISO, stages beside it, and keeps both operational and structured
 records under `work/<task title>/logs/`. The path is caller-supplied and
 validated; worker mode cannot address shared build outputs or mutate shared
 preflight, promotion, PNACH, log, or emulator state. Agents must use this form
-rather than bare `na228`, compact build recipes, or `na228 build l|t`.
+rather than bare `na228`, compact build recipes, or `na228 build l|mt`.
 The complete project test command is:
 
 ```powershell
@@ -81,7 +81,7 @@ The complete project test command is:
 
 Bare `na228` builds and runs Latest. Compact invocations contain one or two
 positional game tokens whose order defines window placement. `l`, `p`, or `t`
-runs Latest, Previous, or Test; `bl` and `bt` build and run Latest or Test; and
+runs Latest, Previous, or Manual Test; `bl` and `bmt` build and run Latest or Manual Test; and
 suffix `w` watches that token's game. `b` remains shorthand for `bl`. For
 example, `na228 nun5 btw` builds Test, launches NUN5 and Test side by side, then
 watches Test. A registered C file/folder or task-owned overlay-plan path may
@@ -89,7 +89,7 @@ follow the watched token: `na228 nun5 blw src/localization` or
 `na228 nun5 btw work/Font/operations/jutsu_names_overlay.json`.
 Trailing launch arguments are forwarded unchanged to Workshop; use `workshop
 help` for the shared launch options.
-`na228 build l|t` provides the uncommon build-only forms.
+`na228 build l|mt` provides the uncommon build-only forms.
 Build and launch commands never generate CRC-specific PCSX2 files. NA2.28 uses
 serial-wide PNACH and GameSettings files directly.
 Single-game configured launches preserve existing PCSX2 instances. Paired

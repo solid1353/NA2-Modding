@@ -119,8 +119,8 @@ support used by compact external strings, which preserves total ISO size and
 validates both ISO9660 and UDF trees.
 
 The ordinary `na228` command builds and launches Latest. `na228 l`, `na228 p`,
-and `na228 t` launch Latest, Previous, and Test without rebuilding; `bl` and
-`bt` are the corresponding build-and-run recipes. The standalone `act` command
+and `na228 mt` launch Latest, Previous, and Manual Test without rebuilding;
+`bl` and `bmt` are the corresponding build-and-run recipes. The standalone `act` command
 regenerates input profiles; builds do not generate CRC-specific PCSX2 files.
 Profile-run logs record the enabled feature pins and the complete derived module
 result inventory.

@@ -168,7 +168,7 @@ try {
   "builds": {
     "latest": { "aliases": ["l"], "postfix": "Latest" },
     "previous": { "aliases": ["p"], "postfix": "Previous" },
-    "test": { "aliases": ["t"], "postfix": "Test" }
+    "manual_test": { "aliases": ["mt"], "postfix": "Manual Test" }
   }
 }
 '@
@@ -186,9 +186,9 @@ name = args.selector
 builds = {
     "latest": "Latest",
     "previous": "Previous",
-    "test": "Test",
+    "manual_test": "Manual Test",
 }
-aliases = {"l": "latest", "p": "previous", "t": "test"}
+aliases = {"l": "latest", "p": "previous", "mt": "manual_test"}
 name = aliases.get(name.casefold(), name)
 if name in builds:
     title = "NA v2.28"
@@ -236,7 +236,7 @@ print(json.dumps(result))
         -Condition ($helpText -match '(?m)^\s*na228 validate\s') `
         -Message 'Root help omitted the compose-only validation command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 build l\|t\s') `
+        -Condition ($helpText -match '(?m)^\s*na228 build l\|mt\s') `
         -Message 'Root help omitted the explicit build-only command.'
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 -[btcpwh]\b') `
@@ -260,13 +260,13 @@ param(
 $aliases = @{
     l = 'latest'
     p = 'previous'
-    t = 'test'
+    mt = 'manual_test'
 }
 $canonical = @($Games | ForEach-Object {
     if ($aliases.ContainsKey($_)) { $aliases[$_] } else { $_ }
 })
 if (@($canonical | Where-Object { $_ -notin @(
-    'latest', 'previous', 'test', 'na2', 'nun5'
+    'latest', 'previous', 'manual_test', 'na2', 'nun5'
 ) }).Count -gt 0) {
     throw "Unknown game name: $($Games -join ',')"
 }
@@ -310,7 +310,7 @@ for ($index = 0; $index -lt $tokens.Count; $index++) {
         }
     }
 }
-$aliases = @{ l = 'latest'; p = 'previous'; t = 'test' }
+$aliases = @{ l = 'latest'; p = 'previous'; mt = 'manual_test' }
 $canonical = @($games | ForEach-Object {
     if ($aliases.ContainsKey($_)) { $aliases[$_] } else { $_ }
 })
@@ -318,7 +318,7 @@ if ($canonical.Count -eq 0) {
     throw 'Workshop launch requires at least one game.'
 }
 if (@($canonical | Where-Object { $_ -notin @(
-    'latest', 'previous', 'test', 'na2', 'nun5'
+    'latest', 'previous', 'manual_test', 'na2', 'nun5'
 ) }).Count -gt 0) {
     throw "Unknown game name: $($games -join ',')"
 }
@@ -356,7 +356,8 @@ Write-Output "[fake] release $Version"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'build.ps1') -Content @'
 param(
-    [switch]$TestOnly,
+    [switch]$ManualTestOnly,
+    [switch]$ScreenshotTestOnly,
     [switch]$ComposeOnly,
     [string]$WorkerOutputIso
 )
@@ -364,9 +365,13 @@ if ($WorkerOutputIso) {
     Write-Host '[na228] ISO result: worker; rotation: no; PCSX2 left running.'
     [pscustomobject]@{ Status = 'worker'; ChangedRoles = [string[]]@() }
 }
-elseif ($TestOnly) {
-    Write-Host '[na228] ISO result: test; rotation: no; PCSX2 left running.'
-    [pscustomobject]@{ Status = 'test'; ChangedRoles = [string[]]@('test') }
+elseif ($ManualTestOnly) {
+    Write-Host '[na228] ISO result: manual-test; rotation: no; PCSX2 left running.'
+    [pscustomobject]@{ Status = 'manual-test'; ChangedRoles = [string[]]@('manual_test') }
+}
+elseif ($ScreenshotTestOnly) {
+    Write-Host '[na228] ISO result: screenshot-test; rotation: no; PCSX2 left running.'
+    [pscustomobject]@{ Status = 'screenshot-test'; ChangedRoles = [string[]]@('screenshot_test') }
 }
 elseif ($ComposeOnly) {
     Write-Host '[na228] Profile composition valid; no ISO produced.'
@@ -532,25 +537,25 @@ else {
         ) `
         -Message 'Previous selector alias did not resolve through game launch.'
     $testLaunch = (
-        & (Join-Path $fakeRepository 'na228.ps1') t
+        & (Join-Path $fakeRepository 'na228.ps1') mt
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $testLaunch -match 'multi-game launch test'
+            $testLaunch -match 'multi-game launch manual_test'
         ) `
-        -Message 'Test selector alias did not resolve through game launch.'
+        -Message 'Manual Test selector alias did not resolve through game launch.'
     & (Join-Path $fakeRepository 'na228.ps1') worker 'work\General\build\agent.iso'
     & (Join-Path $fakeRepository 'na228.ps1') validate
     & (Join-Path $fakeRepository 'na228.ps1') build l
-    & (Join-Path $fakeRepository 'na228.ps1') build t
+    & (Join-Path $fakeRepository 'na228.ps1') build mt
     Assert-Na2Test `
         -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'actualization_calls.txt'))) `
         -Message 'A build or launch invoked retired NA2 actualization.'
     $composedRecipe = (
-        & (Join-Path $fakeRepository 'na228.ps1') nun5 btw
+        & (Join-Path $fakeRepository 'na228.ps1') nun5 bmtw
     ) -join "`n"
     Assert-Na2Test `
-        -Condition ($composedRecipe -match 'multi-game launch nun5,test') `
+        -Condition ($composedRecipe -match 'multi-game launch nun5,manual_test') `
         -Message 'Trailing build/watch token did not preserve window order.'
     Assert-Na2Test `
         -Condition ($composedRecipe -match '\[fake\] watch 28015') `
@@ -581,12 +586,12 @@ else {
     $directPlanWatch = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
-            btw `
+            bmtw `
             'work\Font\operations\jutsu_names_overlay.json'
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $directPlanWatch -match 'multi-game launch nun5,test' -and
+            $directPlanWatch -match 'multi-game launch nun5,manual_test' -and
             $directPlanWatch -match (
                 'plan=work\\Font\\operations\\jutsu_names_overlay\.json'
             )
@@ -640,7 +645,7 @@ else {
     $fakeRolling = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\rolling.log'))
     Assert-Na2Test -Condition ($fakeLatest -match '(?m)^mode: build$') -Message 'Root build mode was not logged.'
     foreach ($mode in (
-        'test-build',
+        'manual-test-build',
         'validate',
         'build'
     )) {
@@ -668,8 +673,8 @@ else {
         -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch dev .+$').Count -eq 1) `
         -Message 'Root dispatch did not preserve the configured development-launch default.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, 'ISO result: test').Count -eq 3) `
-        -Message 'Test build recipes did not dispatch exactly three times to Test.'
+        -Condition ([regex]::Matches($fakeRolling, 'ISO result: manual-test').Count -eq 3) `
+        -Message 'Manual Test build recipes did not dispatch exactly three times.'
     $workerLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'work\General\logs\latest.log'))
     Assert-Na2Test `
         -Condition ($workerLatest -match '(?m)^mode: worker-build$') `

@@ -52,7 +52,8 @@ try {
     "nun5_iso": "@source/NUN5.iso",
     "latest_iso": "@build/NA2.28 - Latest.iso",
     "previous_iso": "@build/NA2.28 - Previous.iso",
-    "test_iso": "@build/NA2.28 - Test.iso"
+    "manual_test_iso": "@build/NA2.28 - Manual Test.iso",
+    "screenshot_test_iso": "@build/NA2.28 - Screenshot Test.iso"
   }
 }
 '@
@@ -151,41 +152,65 @@ try {
         -Message 'Full-build fallback left a .building ISO.'
 
     $global:Na2PreflightTestCalls = @()
-    $test = & (Join-Path $scriptRoot 'build.ps1') -TestOnly
-    $testIso = Join-Path $repository 'build\NA2.28 - Test.iso'
-    Assert-Na2PreflightTest -Condition ($test.Status -eq 'test') `
-        -Message 'Test-only build did not return test status.'
+    $test = & (Join-Path $scriptRoot 'build.ps1') -ManualTestOnly
+    $testIso = Join-Path $repository 'build\NA2.28 - Manual Test.iso'
+    Assert-Na2PreflightTest -Condition ($test.Status -eq 'manual-test') `
+        -Message 'Manual Test-only build did not return manual-test status.'
     Assert-Na2PreflightTest `
-        -Condition ((@($test.ChangedRoles) -join ',') -ceq 'test') `
-        -Message 'Changed Test build did not report only the Test role.'
+        -Condition ((@($test.ChangedRoles) -join ',') -ceq 'manual_test') `
+        -Message 'Changed Manual Test build did not report only its own role.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
-        -Message 'Test-only build invoked preflight or receipt recording.'
+        -Message 'Manual Test-only build invoked preflight or receipt recording.'
     Assert-Na2PreflightTest `
         -Condition ($global:Na2PreflightTestCalls[0] -contains 'na228_builder.build_profile') `
-        -Message 'Test-only build did not run the full profile builder.'
+        -Message 'Manual Test-only build did not run the full profile builder.'
     Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $testIso -PathType Leaf) `
-        -Message 'Test-only build did not retain its verified ISO.'
+        -Message 'Manual Test-only build did not retain its verified ISO.'
     Assert-Na2PreflightTest `
         -Condition ([IO.File]::ReadAllText($latestIso) -ceq 'verified latest') `
-        -Message 'Test-only build changed the Latest ISO.'
+        -Message 'Manual Test-only build changed the Latest ISO.'
     Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$testIso.building")) `
-        -Message 'Test-only build left its .building ISO.'
+        -Message 'Manual Test-only build left its .building ISO.'
     Assert-Na2PreflightTest `
         -Condition (Test-Path -LiteralPath (Join-Path $repository $test.ProfileLogDirectory.Replace('@logs/', 'logs/')) -PathType Container) `
-        -Message 'Test-only build did not retain its structured record.'
+        -Message 'Manual Test-only build did not retain its structured record.'
 
     $global:Na2PreflightTestCalls = @()
-    $unchangedTest = & (Join-Path $scriptRoot 'build.ps1') -TestOnly
-    Assert-Na2PreflightTest -Condition ($unchangedTest.TestState -eq 'unchanged') `
-        -Message 'Repeated test-only build did not detect unchanged output.'
+    $unchangedTest = & (Join-Path $scriptRoot 'build.ps1') -ManualTestOnly
+    Assert-Na2PreflightTest -Condition ($unchangedTest.ManualTestState -eq 'unchanged') `
+        -Message 'Repeated Manual Test-only build did not detect unchanged output.'
     Assert-Na2PreflightTest `
         -Condition (@($unchangedTest.ChangedRoles).Count -eq 0) `
-        -Message 'Unchanged Test build incorrectly reported a changed role.'
+        -Message 'Unchanged Manual Test build incorrectly reported a changed role.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
-        -Message 'Repeated test-only build invoked anything except profile composition.'
+        -Message 'Repeated Manual Test-only build invoked anything except profile composition.'
     Assert-Na2PreflightTest `
-        -Condition (@(Get-ChildItem -LiteralPath (Join-Path $logDirectory 'tests') -Directory).Count -eq 1) `
-        -Message 'Test-only build retained obsolete test records.'
+        -Condition (@(Get-ChildItem -LiteralPath (Join-Path $logDirectory 'manual_tests') -Directory).Count -eq 1) `
+        -Message 'Manual Test-only build retained obsolete test records.'
+
+    $global:Na2PreflightTestCalls = @()
+    $screenshotTest = & (Join-Path $scriptRoot 'build.ps1') -ScreenshotTestOnly
+    $screenshotTestIso = Join-Path $repository 'build\NA2.28 - Screenshot Test.iso'
+    Assert-Na2PreflightTest -Condition ($screenshotTest.Status -eq 'screenshot-test') `
+        -Message 'Screenshot-test build did not return screenshot-test status.'
+    Assert-Na2PreflightTest `
+        -Condition ((@($screenshotTest.ChangedRoles) -join ',') -ceq 'screenshot_test') `
+        -Message 'Changed Screenshot Test build did not report only its own role.'
+    Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
+        -Message 'Screenshot-test build invoked preflight or receipt recording.'
+    Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $screenshotTestIso -PathType Leaf) `
+        -Message 'Screenshot-test build did not retain its verified ISO.'
+    Assert-Na2PreflightTest `
+        -Condition ([IO.File]::ReadAllText($latestIso) -ceq 'verified latest') `
+        -Message 'Screenshot-test build changed the Latest ISO.'
+    Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$screenshotTestIso.building")) `
+        -Message 'Screenshot-test build left its .building ISO.'
+    $screenshotTestRecord = Join-Path $repository (
+        $screenshotTest.ProfileLogDirectory.Replace('@logs/', 'logs/')
+    )
+    Assert-Na2PreflightTest `
+        -Condition (Test-Path -LiteralPath (Join-Path $screenshotTestRecord 'screenshot_test_result.tsv') -PathType Leaf) `
+        -Message 'Screenshot-test build did not retain its dedicated structured record.'
 
     $latestBeforeWorkers = [IO.File]::ReadAllText($latestIso)
     $testBeforeWorkers = [IO.File]::ReadAllText($testIso)
@@ -223,13 +248,15 @@ try {
         -Message 'Worker build changed Latest.'
     Assert-Na2PreflightTest `
         -Condition ([IO.File]::ReadAllText($testIso) -ceq $testBeforeWorkers) `
-        -Message 'Worker build changed Test.'
+        -Message 'Worker build changed Manual Test.'
 
     foreach ($invalidOutput in @(
         'build\agent.iso',
         'work\General\agent.iso',
         'work\General\build\agent.bin',
-        'work\General\nested\build\agent.iso'
+        'work\General\nested\build\agent.iso',
+        'build\NA2.28 - Manual Test.iso',
+        'build\NA2.28 - Screenshot Test.iso'
     )) {
         $failed = $false
         try {

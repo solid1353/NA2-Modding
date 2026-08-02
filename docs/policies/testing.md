@@ -80,11 +80,11 @@ requirements, not whatever implementation happens to exist today.
 ## ISO builds
 
 - Shared `build/` contains only Latest, at most Previous, and when needed
-  Test. Latest and Test builds stage beside their destination as
+  Manual Test. Latest and Manual Test builds stage beside their destination as
   `.building` and remove staging files on failure.
 - A standard build discards an identical verified candidate without rotation
   or atomically promotes a changed candidate and rotates history. Candidate
-  composition in Test mode updates Test only.
+  composition in Manual Test mode updates Manual Test only.
 - Agents decide whether a full ISO is necessary from scope, risk, and required
   evidence. Use narrower validation when sufficient.
 - Never build an agent ISO merely because executable inputs changed or for
@@ -104,9 +104,9 @@ requirements, not whatever implementation happens to exist today.
 - Agent builds use only
   `na228 worker work/<task title>/build/<name>.iso`, with staging beside the output
   and structured records under the same task's `logs/`. Agents never invoke
-  bare `na228`, `na228 b`, or bare `na228 t`.
-- In compact recipes, `t` runs Test and `bt` builds then runs Test. Explicit
-  `na228 build t` builds Test without launching. Isolated output
+  bare `na228`, `na228 b`, or bare `na228 mt`.
+- In compact recipes, `mt` runs Manual Test and `bmt` builds then runs Manual
+  Test. Explicit `na228 build mt` builds Manual Test without launching. Isolated output
   uses the explicit `worker` command.
   Neither mode runs the test suite. Run the builder
   suite only with `.\tests\run.ps1`.
@@ -155,7 +155,7 @@ requirements, not whatever implementation happens to exist today.
   GameSettings, is allowed. Assign a PINE port unique among live agent
   instances and operate only that copy. Other workstream copies/processes are
   off-limits.
-- Shared Latest, Previous, and Test ISOs are mutable user files. A worker
+- Shared Latest, Previous, Manual Test, and Screenshot Test ISOs are mutable user files. A worker
   PCSX2 process, injection build, or other worker command must never open those
   shared paths. Pass only an independent full copy under
   `work/<exact task title>/inputs/isos/` to worker launch and injection

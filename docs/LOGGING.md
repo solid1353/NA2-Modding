@@ -53,9 +53,9 @@ untouched.
 - `preflight/latest.json`: the atomically replaced successful-build receipt
   used for no-op detection. It records only portable logical labels, the
   deterministic input fingerprint, and the Latest ISO size and SHA-256.
-- `tests/<build-id>/`: the latest Test-only profile record, including
-  `test_result.tsv`. It is independent of `builds.tsv` and the Latest receipt;
-  a successful Test build replaces the previous Test record.
+- `manual_tests/<build-id>/`: the latest Manual Test-only profile record, including
+  `manual_test_result.tsv`. It is independent of `builds.tsv` and the Latest
+  receipt; a successful Manual Test build replaces the previous Manual Test record.
 
 Help output is not logged. A preflight cache hit reuses the Latest ISO's
 structured record. A full verified build always retains its new structured
@@ -67,8 +67,8 @@ latest record rotates with the outgoing ISO. Unreferenced structured records
 are deleted only after the complete two-ISO mapping has been replaced.
 Deleting or corrupting the preflight receipt is safe: the next invocation runs
 the complete verified build and recreates the receipt only after success.
-Test-only builds always perform complete composition, report whether the
-Test ISO changed, and record that rotation is disabled and PCSX2 is left
+Manual Test-only builds always perform complete composition, report whether the
+Manual Test ISO changed, and record that rotation is disabled and PCSX2 is left
 running.
 
 ## Worker build and runtime logs

@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)]
     [ValidateSet(
         'worker-build',
-        'test-build',
+        'manual-test-build',
         'validate',
         'latest-build',
         'latest-build-and-launch'
@@ -19,7 +19,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\run_log.ps1')
 $paths = Get-Na2Paths
 $latestIsoName = [IO.Path]::GetFileName($paths.files.latest_iso)
-$testIsoName = [IO.Path]::GetFileName($paths.files.test_iso)
+$manualTestIsoName = [IO.Path]::GetFileName($paths.files.manual_test_iso)
 
 function Write-Na2Stage {
     param([string]$Message)
@@ -40,7 +40,7 @@ elseif ($WorkerOutputIso -or $WorkerLogDirectory) {
 
 $runMode = switch ($Action) {
     'worker-build' { 'worker-build' }
-    'test-build' { 'test-build' }
+    'manual-test-build' { 'manual-test-build' }
     'validate' { 'validate' }
     default { 'build' }
 }
@@ -81,11 +81,11 @@ try {
                 throw 'Worker build did not return a valid result.'
             }
         }
-        'test-build' {
-            Write-Na2Stage "Build $testIsoName"
-            $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') -TestOnly
-            if (-not $buildResult -or $buildResult.Status -ne 'test') {
-                throw 'Test build did not return a valid result.'
+        'manual-test-build' {
+            Write-Na2Stage "Build $manualTestIsoName"
+            $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') -ManualTestOnly
+            if (-not $buildResult -or $buildResult.Status -ne 'manual-test') {
+                throw 'Manual Test build did not return a valid result.'
             }
         }
         'latest-build' {

@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-    [switch]$TestOnly,
+    [switch]$ManualTestOnly,
+    [switch]$ScreenshotTestOnly,
     [switch]$ComposeOnly,
     [string]$WorkerOutputIso
 )
@@ -13,12 +14,13 @@ $paths = Get-Na2Paths
 
 if (
     @(
-        $TestOnly.IsPresent
+        $ManualTestOnly.IsPresent
+        $ScreenshotTestOnly.IsPresent
         $ComposeOnly.IsPresent
         -not [string]::IsNullOrWhiteSpace($WorkerOutputIso)
     ).Where({ $_ }).Count -gt 1
 ) {
-    throw '-TestOnly, -ComposeOnly, and -WorkerOutputIso are mutually exclusive.'
+    throw '-ManualTestOnly, -ScreenshotTestOnly, -ComposeOnly, and -WorkerOutputIso are mutually exclusive.'
 }
 $workerBuild = if (-not [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
     Get-Na2WorkerBuildContext `
@@ -164,7 +166,8 @@ $inputIso = $paths.files.na2_iso
 $nun5Iso = $paths.files.nun5_iso
 $resolvedLatestIso = [IO.Path]::GetFullPath($paths.files.latest_iso)
 $resolvedPreviousIso = [IO.Path]::GetFullPath($paths.files.previous_iso)
-$resolvedTestIso = [IO.Path]::GetFullPath($paths.files.test_iso)
+$resolvedManualTestIso = [IO.Path]::GetFullPath($paths.files.manual_test_iso)
+$resolvedScreenshotTestIso = [IO.Path]::GetFullPath($paths.files.screenshot_test_iso)
 $profile = [IO.Path]::GetRelativePath(
     $paths.repository,
     (Join-Path $paths.builder 'profiles\default.tsv')
@@ -209,20 +212,34 @@ if ($ComposeOnly) {
     }
 }
 
-if ($TestOnly -or $null -ne $workerBuild) {
+if ($ManualTestOnly -or $ScreenshotTestOnly -or $null -ne $workerBuild) {
     $isolatedBuildId = (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
-    $isolatedKind = if ($null -ne $workerBuild) { 'worker' } else { 'test' }
+    $isolatedKind = if ($null -ne $workerBuild) {
+        'worker'
+    }
+    elseif ($ScreenshotTestOnly) {
+        'screenshot-test'
+    }
+    else {
+        'manual-test'
+    }
     $isolatedOutputIso = if ($null -ne $workerBuild) {
         $workerBuild.OutputIso
     }
+    elseif ($ScreenshotTestOnly) {
+        $resolvedScreenshotTestIso
+    }
     else {
-        $resolvedTestIso
+        $resolvedManualTestIso
     }
     $isolatedLogRoot = if ($null -ne $workerBuild) {
         Join-Path $workerBuild.Logs 'builds'
     }
+    elseif ($ScreenshotTestOnly) {
+        Join-Path $logDirectory 'screenshot_tests'
+    }
     else {
-        Join-Path $logDirectory 'tests'
+        Join-Path $logDirectory 'manual_tests'
     }
     $isolatedProfileLog = Join-Path $isolatedLogRoot $isolatedBuildId
     $isolatedProfileLogDirectory = [IO.Path]::GetRelativePath(
@@ -239,11 +256,10 @@ if ($TestOnly -or $null -ne $workerBuild) {
         '--profile-log-directory', $isolatedProfileLogDirectory
     )
 
-    $isolatedLabel = if ($isolatedKind -eq 'worker') {
-        'Worker-output mode'
-    }
-    else {
-        'Test mode'
+    $isolatedLabel = switch ($isolatedKind) {
+        'worker' { 'Worker-output mode' }
+        'screenshot-test' { 'Screenshot Test mode' }
+        default { 'Manual Test mode' }
     }
     Write-Host (
         "[na228] ${isolatedLabel}: full verified build; preflight, " +
@@ -298,11 +314,10 @@ if ($TestOnly -or $null -ne $workerBuild) {
         if (Test-Na2WindowsAbsolutePath -Text $resultContent) {
             throw "Refusing to write the $isolatedKind result with an absolute path."
         }
-        $resultFilename = if ($isolatedKind -eq 'worker') {
-            'build_result.tsv'
-        }
-        else {
-            'test_result.tsv'
+        $resultFilename = switch ($isolatedKind) {
+            'worker' { 'build_result.tsv' }
+            'screenshot-test' { 'screenshot_test_result.tsv' }
+            default { 'manual_test_result.tsv' }
         }
         Set-Na2Utf8FileAtomic `
             -Path (Join-Path $isolatedProfileLog $resultFilename) `
@@ -315,7 +330,7 @@ if ($TestOnly -or $null -ne $workerBuild) {
             Remove-Item -LiteralPath $isolatedBuildingIso -Force
         }
 
-        if ($isolatedKind -eq 'test') {
+        if ($isolatedKind -in @('manual-test', 'screenshot-test')) {
             Get-ChildItem -LiteralPath $isolatedLogRoot -Directory |
                 Where-Object FullName -CNE $isolatedProfileLog |
                 Remove-Item -Recurse -Force
@@ -344,10 +359,12 @@ if ($TestOnly -or $null -ne $workerBuild) {
         ) -ForegroundColor Cyan
         return [pscustomobject]@{
             Status = $isolatedKind
-            TestState = if ($isolatedKind -eq 'test') { $isolatedState } else { $null }
+            ManualTestState = if ($isolatedKind -eq 'manual-test') { $isolatedState } else { $null }
+            ScreenshotTestState = if ($isolatedKind -eq 'screenshot-test') { $isolatedState } else { $null }
             OutputState = $isolatedState
             OutputIso = $isolatedOutputIso
-            TestIso = if ($isolatedKind -eq 'test') { $isolatedOutputIso } else { $null }
+            ManualTestIso = if ($isolatedKind -eq 'manual-test') { $isolatedOutputIso } else { $null }
+            ScreenshotTestIso = if ($isolatedKind -eq 'screenshot-test') { $isolatedOutputIso } else { $null }
             LatestIso = $resolvedLatestIso
             PreviousIso = $resolvedPreviousIso
             Rotated = $false
@@ -355,8 +372,11 @@ if ($TestOnly -or $null -ne $workerBuild) {
             ProfileLogDirectory = $isolatedRecord
             PreflightCacheHit = $false
             ChangedRoles = [string[]]@(
-                if ($isolatedKind -eq 'test' -and $isolatedChanged) {
-                    'test'
+                if ($isolatedKind -eq 'manual-test' -and $isolatedChanged) {
+                    'manual_test'
+                }
+                elseif ($isolatedKind -eq 'screenshot-test' -and $isolatedChanged) {
+                    'screenshot_test'
                 }
             )
         }

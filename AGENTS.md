@@ -217,7 +217,7 @@ Detailed command and task behavior is in
   game menus through PINE or injected input. If a required savestate was not
   supplied, stop and ask the user for that exact state.
 - Worker PCSX2, injection builds, and other worker processes never open the
-  shared Latest, Previous, or Test ISO paths. Pass only an independent
+  shared Latest, Previous, Manual Test, or Screenshot Test ISO paths. Pass only an independent
   full copy under `work/<exact task title>/inputs/isos/`; no other worker ISO
   location is valid. Symlinks and hardlinks are forbidden because the user may
   replace or modify a shared ISO at any time. Intake of an NA2 savestate batch
@@ -256,8 +256,9 @@ Detailed command and task behavior is in
   recreate its complete `work/<exact task title>/pcsx2/` copy without another
   destructive-action approval. This authority never extends to another task's
   copy, `@pcsx2_clean`, `@pcsx2_dev`, or `@pcsx2_stable`.
-- `na228 t` and `na228.ps1 t` run the retained Test ISO; `na228 bt` builds
-  Test and then runs it, while `na228 build t` is the explicit build-only form.
+- `na228 mt` and `na228.ps1 mt` run the retained Manual Test ISO; `na228 bmt`
+  builds Manual Test and then runs it, while `na228 build mt` is the explicit
+  build-only form.
   These commands never mean the test suite. The full builder test suite is
   `.\tests\run.ps1`.
   Never infer command semantics from a flag name; verify the documented exact

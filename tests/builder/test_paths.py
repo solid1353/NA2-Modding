@@ -294,7 +294,7 @@ class ProjectPathTests(unittest.TestCase):
             )
             self.assertEqual(
                 paths.file("input_profile"),
-                root.resolve() / "pcsx2/input_profiles/Default.ini",
+                root.resolve() / "pcsx2/input_profiles/Default_Base.ini",
             )
             catalog = {
                 "schema_version": 1,

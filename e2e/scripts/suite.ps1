@@ -78,6 +78,28 @@ function Invoke-VisualRegressionReplay {
     }
 }
 
+function New-VisualRegressionStateStage {
+    param(
+        [Parameter(Mandatory)][string]$ExistingRoot,
+        [Parameter(Mandatory)][string]$StageRoot,
+        [Parameter(Mandatory)][ValidateSet('references', 'approved', 'pending')][string]$Tier,
+        [Parameter(Mandatory)][string]$CapturedDirectory
+    )
+
+    [void](New-Item -ItemType Directory -Path $StageRoot -Force)
+    foreach ($preservedTier in 'references', 'approved', 'pending') {
+        if ($preservedTier -ceq $Tier) { continue }
+        $source = Join-Path $ExistingRoot $preservedTier
+        if (Test-Path -LiteralPath $source -PathType Container) {
+            Copy-Item -LiteralPath $source -Destination $StageRoot -Recurse -Force
+        }
+    }
+    $destination = Join-Path $StageRoot $Tier
+    [void](New-Item -ItemType Directory -Path $destination -Force)
+    Get-ChildItem -LiteralPath $CapturedDirectory -Filter '*.p2s' -File |
+        Copy-Item -Destination $destination
+}
+
 function Get-NumericPngSlots {
     param([Parameter(Mandatory)][string]$Directory)
 

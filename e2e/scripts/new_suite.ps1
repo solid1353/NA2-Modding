@@ -44,7 +44,7 @@ try {
 
     $referenceScreenshots = Join-Path $captureStage 'references'
     $approvedScreenshots = Join-Path $captureStage 'approved'
-    $suiteStates = Join-Path $captureStage 'sstates'
+    $suiteStates = Join-Path $captureStage 'sstates\references'
     [void](New-Item -ItemType Directory -Path `
         $suiteStage, `
         $referenceScreenshots, $approvedScreenshots -Force)

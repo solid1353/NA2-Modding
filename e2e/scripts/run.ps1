@@ -55,7 +55,11 @@ try {
         Copy-Item -Destination $pendingStage
     $capturedStates = Join-Path $captureRoot 'sstates'
     if (Test-Path -LiteralPath $capturedStates -PathType Container) {
-        Copy-Item -LiteralPath $capturedStates -Destination $statesStage -Recurse
+        New-VisualRegressionStateStage `
+            -ExistingRoot (Join-Path $context.CaptureRoot 'sstates') `
+            -StageRoot $statesStage `
+            -Tier pending `
+            -CapturedDirectory $capturedStates
     }
 
     New-VisualRegressionReports `
@@ -92,7 +96,7 @@ try {
     $status = if ($clean) { 'clean' } else { 'review-required' }
     Write-Host (
         "Visual-regression batch completed ($status). " +
-        'Pending differences, suite-level savestates, and reports were replaced atomically.'
+        'Pending differences, pending savestates, and reports were replaced atomically.'
     ) -ForegroundColor $(if ($clean) { 'Green' } else { 'Yellow' })
     [pscustomobject]@{
         Suite = $Suite

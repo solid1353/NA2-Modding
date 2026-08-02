@@ -59,6 +59,7 @@ $transaction = New-VisualRegressionTransaction `
 $approvedStage = Join-Path $transaction 'approved'
 $pendingStage = Join-Path $transaction 'pending'
 $reportsStage = Join-Path $transaction 'reports'
+$statesStage = Join-Path $transaction 'sstates'
 $scratch = Join-Path $transaction 'scratch'
 try {
     [void](New-Item -ItemType Directory -Path $approvedStage, $pendingStage, $scratch -Force)
@@ -81,18 +82,46 @@ try {
         Remove-Item -LiteralPath (Join-Path $pendingStage $screenshot.Name) -Force
     }
 
+    $existingStates = Join-Path $context.CaptureRoot 'sstates'
+    if (Test-Path -LiteralPath $existingStates -PathType Container) {
+        [void](New-Item -ItemType Directory -Path $statesStage -Force)
+        foreach ($tier in 'references', 'approved', 'pending') {
+            $tierSource = Join-Path $existingStates $tier
+            if (Test-Path -LiteralPath $tierSource -PathType Container) {
+                Copy-Item -LiteralPath $tierSource -Destination $statesStage -Recurse -Force
+            }
+        }
+        $approvedStates = Join-Path $statesStage 'approved'
+        $pendingStates = Join-Path $statesStage 'pending'
+        [void](New-Item -ItemType Directory -Path $approvedStates, $pendingStates -Force)
+        foreach ($slot in $selected) {
+            $slotStates = @(
+                Get-ChildItem -LiteralPath $pendingStates -Filter '*.p2s' -File |
+                    Where-Object { $_.BaseName -match '(\d+)$' -and [int]$Matches[1] -eq $slot }
+            )
+            foreach ($state in $slotStates) {
+                Copy-Item -LiteralPath $state.FullName -Destination $approvedStates -Force
+                Remove-Item -LiteralPath $state.FullName -Force
+            }
+        }
+    }
+
     New-VisualRegressionReports `
         -Suite $Suite `
         -PendingDirectory $pendingStage `
         -OutputRoot $reportsStage `
         -ScratchRoot $scratch `
         -ApprovedDirectory $approvedStage
+    $replacements = [ordered]@{
+        (Join-Path $context.CaptureRoot 'approved') = $approvedStage
+        (Join-Path $context.CaptureRoot 'pending') = $pendingStage
+        (Join-Path $context.CaptureRoot 'reports') = $reportsStage
+    }
+    if (Test-Path -LiteralPath $statesStage -PathType Container) {
+        $replacements[(Join-Path $context.CaptureRoot 'sstates')] = $statesStage
+    }
     Publish-VisualRegressionTransaction `
-        -Replacements ([ordered]@{
-            (Join-Path $context.CaptureRoot 'approved') = $approvedStage
-            (Join-Path $context.CaptureRoot 'pending') = $pendingStage
-            (Join-Path $context.CaptureRoot 'reports') = $reportsStage
-        }) `
+        -Replacements $replacements `
         -TransactionRoot $transaction
     Write-Host "Approved $($selected.Count) slot(s): $($selected -join ', ')" -ForegroundColor Green
 }

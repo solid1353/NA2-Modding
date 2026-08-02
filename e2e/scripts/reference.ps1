@@ -47,6 +47,12 @@ $reportsStage = if (-not $initializeCapture) {
 else {
     Join-Path $suiteCaptureStage 'reports'
 }
+$statesStage = if ($initializeCapture) {
+    Join-Path $suiteCaptureStage 'sstates'
+}
+else {
+    Join-Path $transaction 'sstates'
+}
 $scratch = Join-Path $transaction 'scratch'
 
 try {
@@ -69,6 +75,14 @@ try {
     }
     Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File |
         Copy-Item -Destination $referenceScreenshots
+    $capturedStates = Join-Path $captureRoot 'sstates'
+    if (Test-Path -LiteralPath $capturedStates -PathType Container) {
+        New-VisualRegressionStateStage `
+            -ExistingRoot (Join-Path $context.CaptureRoot 'sstates') `
+            -StageRoot $statesStage `
+            -Tier references `
+            -CapturedDirectory $capturedStates
+    }
 
     New-VisualRegressionReports `
         -Suite $Suite `
@@ -77,10 +91,14 @@ try {
         -OutputRoot $reportsStage `
         -ScratchRoot $scratch
     $replacements = if (-not $initializeCapture) {
-        [ordered]@{
+        $existingReplacements = [ordered]@{
             (Join-Path $context.CaptureRoot 'references') = $referenceScreenshots
             (Join-Path $context.CaptureRoot 'reports') = $reportsStage
         }
+        if (Test-Path -LiteralPath $statesStage -PathType Container) {
+            $existingReplacements[(Join-Path $context.CaptureRoot 'sstates')] = $statesStage
+        }
+        $existingReplacements
     }
     else {
         [ordered]@{ $context.CaptureRoot = $suiteCaptureStage }
@@ -88,7 +106,7 @@ try {
     Publish-VisualRegressionTransaction `
         -Replacements $replacements `
         -TransactionRoot $transaction
-    Write-Host 'Reference screenshots and reports were replaced atomically.' -ForegroundColor Green
+    Write-Host 'Reference screenshots, savestates, and reports were replaced atomically.' -ForegroundColor Green
 }
 finally {
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $context.Root

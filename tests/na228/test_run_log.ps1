@@ -196,7 +196,7 @@ if name in builds:
         "cheats": str(root / "pcsx2_files" / "cheats" / "SLOP-NA228.pnach"),
         "game_settings": str(root / "pcsx2_files" / "game_settings" / "SLOP-NA228.ini"),
         "memory_card": str(root / "pcsx2_files" / "memory_cards" / f"{title} - {builds[name]}.ps2"),
-        "input_profile": str(root / "pcsx2_files" / "input_profiles" / "Default.ini"),
+        "input_profile": str(root / "pcsx2_files" / "input_profiles" / "Default_Base.ini"),
     }
 else:
     canonical = name.upper()
@@ -206,7 +206,7 @@ else:
         "cheats": str(root / "pcsx2_files" / "cheats" / "source" / f"{canonical}.pnach"),
         "game_settings": str(root / "pcsx2_files" / "game_settings" / "source" / f"{canonical}.ini"),
         "memory_card": str(root / "pcsx2_files" / "memory_cards" / f"{canonical}.ps2"),
-        "input_profile": str(root / "pcsx2_files" / "input_profiles" / "Default.ini"),
+        "input_profile": str(root / "pcsx2_files" / "input_profiles" / "Default_Base.ini"),
     }
 print(json.dumps(result))
 '@

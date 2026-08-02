@@ -43,7 +43,9 @@
   edit generated root-level profiles directly. Generation first merges all
   selected partial inputs by section, action, and input family. It then removes
   conflicting bindings, replaces existing actions in place, and appends only
-  new actions in their declared sections. SDL overrides never
+  new actions in their declared sections. Base outputs use
+  `<profile>_Base.ini`; game-specific outputs use `<profile>_<game>.ini`. SDL
+  overrides never
   remove unrelated keyboard values, and keyboard overrides never remove
   unrelated SDL values. Multiple assignments declared by the same override may
   deliberately share one binding value.

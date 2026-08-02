@@ -58,6 +58,9 @@ if ($mode -eq 'help') {
         '  additional launch arguments  See workshop help'
         ''
         '  na228 build l|mt            Build Latest or Manual Test without running it'
+        '  na228 test [suite] [-b]     Run one or all visual suites; -b builds once first'
+        '  na228 test new <recording>  Create a NUN5 reference suite'
+        '  na228 test approve <suite> -s <slots> | -a'
         '  na228 validate              Validate the complete build without producing an ISO'
         '  na228 worker work/<worker>/build/<name>.iso  Build an isolated worker ISO'
         '  na228 release [version]     Publish a GitHub release'
@@ -66,6 +69,124 @@ if ($mode -eq 'help') {
         "  aliases: $($gameAliases -join ', ')"
         ''
     ) | Write-Output
+    return
+}
+
+if ($mode -eq 'test') {
+    $visualRoot = Join-Path $PSScriptRoot 'tests\visual_regression'
+    $visualRun = Join-Path $visualRoot 'run.ps1'
+    $visualNew = Join-Path $visualRoot 'new_suite.ps1'
+    $visualApprove = Join-Path $visualRoot 'approve.ps1'
+    foreach ($required in $visualRun, $visualNew, $visualApprove) {
+        if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
+            throw (
+                'The independent visual-regression repository is unavailable. ' +
+                "Expected: $visualRoot"
+            )
+        }
+    }
+
+    $testCommand = if ($arguments.Count -gt 0) {
+        $arguments[0].ToLowerInvariant()
+    }
+    else {
+        'run'
+    }
+    if ($testCommand -eq 'new') {
+        if ($arguments.Count -ne 2) {
+            throw 'Usage: na228 test new <recording>'
+        }
+        & $visualNew -Recording $arguments[1]
+        return
+    }
+    if ($testCommand -eq 'approve') {
+        if ($arguments.Count -lt 3) {
+            throw 'Usage: na228 test approve <suite> -s <slots> | -a'
+        }
+        $suite = $arguments[1]
+        $selector = $arguments[2]
+        if ($selector -ceq '-a' -and $arguments.Count -eq 3) {
+            & $visualApprove -Suite $suite -All
+            return
+        }
+        if ($selector -ceq '-s' -and $arguments.Count -eq 4) {
+            & $visualApprove -Suite $suite -Slots $arguments[3]
+            return
+        }
+        throw 'Usage: na228 test approve <suite> -s <slots> | -a'
+    }
+
+    $runArguments = @(
+        if ($testCommand -eq 'run') {
+            if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] }
+        }
+        else {
+            $arguments
+        }
+    )
+    $buildFirst = $false
+    $suite = $null
+    foreach ($argument in $runArguments) {
+        if ($argument -ceq '-b') {
+            if ($buildFirst) { throw 'na228 test accepts -b only once.' }
+            $buildFirst = $true
+        }
+        elseif ($argument.StartsWith('-')) {
+            throw "Unknown na228 test option: $argument"
+        }
+        elseif ($null -eq $suite) {
+            $suite = $argument
+        }
+        else {
+            throw 'Usage: na228 test [run] [suite] [-b]'
+        }
+    }
+
+    $suiteRoot = Join-Path $visualRoot 'suites'
+    $suites = if ($null -ne $suite) {
+        $selected = Join-Path $suiteRoot $suite
+        if (-not (Test-Path -LiteralPath $selected -PathType Container)) {
+            throw "Unknown visual-regression suite: $suite"
+        }
+        @($suite)
+    }
+    else {
+        @(
+            Get-ChildItem -LiteralPath $suiteRoot -Directory -ErrorAction SilentlyContinue |
+                Sort-Object Name |
+                ForEach-Object Name
+        )
+    }
+    $suites = @($suites)
+    if ($suites.Count -eq 0) {
+        throw 'No visual-regression suites are available.'
+    }
+
+    $reviewRequired = $false
+    for ($index = 0; $index -lt $suites.Count; $index++) {
+        $runOutput = @(
+            & $visualRun `
+                -Suite $suites[$index] `
+                -b:($buildFirst -and $index -eq 0)
+        )
+        $result = @(
+            $runOutput | Where-Object {
+                $_.PSObject.Properties.Name -contains 'Status' -and
+                $_.Status -in @('clean', 'review-required')
+            }
+        ) | Select-Object -Last 1
+        if ($null -eq $result -or $result.Status -notin @('clean', 'review-required')) {
+            throw "Visual-regression suite returned no valid result: $($suites[$index])"
+        }
+        if ($result.Status -eq 'review-required') {
+            $reviewRequired = $true
+        }
+    }
+    if ($reviewRequired) {
+        Write-Host 'Visual regression completed; review is required.' -ForegroundColor Yellow
+        exit 2
+    }
+    Write-Host 'Visual regression clean.' -ForegroundColor Green
     return
 }
 

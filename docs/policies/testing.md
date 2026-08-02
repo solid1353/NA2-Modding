@@ -80,8 +80,9 @@ requirements, not whatever implementation happens to exist today.
 ## ISO builds
 
 - Shared `build/` contains only Latest, at most Previous, and when needed
-  Manual Test. Latest and Manual Test builds stage beside their destination as
-  `.building` and remove staging files on failure.
+  Manual Test and Screenshot Test. Latest, Manual Test, and Screenshot Test
+  builds stage beside their destination as `.building` and remove staging
+  files on failure.
 - A standard build discards an identical verified candidate without rotation
   or atomically promotes a changed candidate and rotates history. Candidate
   composition in Manual Test mode updates Manual Test only.
@@ -108,17 +109,18 @@ requirements, not whatever implementation happens to exist today.
 - In compact recipes, `mt` runs Manual Test and `bmt` builds then runs Manual
   Test. Explicit `na228 build mt` builds Manual Test without launching. Isolated output
   uses the explicit `worker` command.
-  Neither mode runs the test suite. Run the builder
-  suite only with `.\tests\run.ps1`.
+  Neither mode runs a test suite. `na228 test [suite] [-b]` runs the personal
+  visual-regression workflow, with `-b` building Screenshot Test once before
+  replay. Run the permanent builder suite only with `.\tests\run.ps1`.
   Verify every validation command's documented semantics before running it;
   never infer behavior from a short flag.
 - Worker-output builds never touch Latest, Previous, Test, promotion,
   preflight, shared records, PNACH aliases, actualization, or PCSX2.
 - Temporary or hypothesis ISOs remain under the owning task while they have a
   named future use and are deleted when useless.
-- Standard logs report `ISO result: unchanged|updated` and rotation. Test
-  logs report `ISO result: test`, whether it changed, `rotation: no`, and
-  that PCSX2 was left running.
+- Standard logs report `ISO result: unchanged|updated` and rotation. Manual
+  Test and Screenshot Test logs report their isolated result, `rotation: no`,
+  and that PCSX2 was left running.
 
 ## User PCSX2 and agent runtimes
 

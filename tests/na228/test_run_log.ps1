@@ -239,6 +239,9 @@ print(json.dumps(result))
         -Condition ($helpText -match '(?m)^\s*na228 build l\|mt\s') `
         -Message 'Root help omitted the explicit build-only command.'
     Assert-Na2Test `
+        -Condition ($helpText -match '(?m)^\s*na228 test \[suite\] \[-b\]') `
+        -Message 'Root help omitted the visual-regression command.'
+    Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 -[btcpwh]\b') `
         -Message 'Root help still exposes a retired dashed mode.'
     Assert-Na2Test `
@@ -385,6 +388,60 @@ else {
     }
 }
 '@
+    $fakeVisualRoot = Join-Path $fakeRepository 'tests\visual_regression'
+    New-Item -ItemType Directory -Force -Path `
+        (Join-Path $fakeVisualRoot 'suites\alpha'), `
+        (Join-Path $fakeVisualRoot 'suites\beta') | Out-Null
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualRoot 'run.ps1') -Content @'
+param([Parameter(Mandatory)][string]$Suite, [switch]$b)
+Add-Content `
+    -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
+    -Value "run suite=$Suite build=$($b.IsPresent)"
+[pscustomobject]@{ Suite = $Suite; Status = 'clean' }
+'@
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualRoot 'new_suite.ps1') -Content @'
+param([Parameter(Mandatory)][string]$Recording)
+Add-Content `
+    -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
+    -Value "new recording=$Recording"
+'@
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualRoot 'approve.ps1') -Content @'
+param([Parameter(Mandatory)][string]$Suite, [string]$Slots, [switch]$All)
+Add-Content `
+    -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
+    -Value "approve suite=$Suite slots=$Slots all=$($All.IsPresent)"
+'@
+    $visualCalls = Join-Path $fakeVisualRoot 'calls.txt'
+    & (Join-Path $fakeRepository 'na228.ps1') test
+    $calls = @(Get-Content -LiteralPath $visualCalls)
+    Assert-Na2Test `
+        -Condition ($calls.Count -eq 2 -and
+            $calls[0] -ceq 'run suite=alpha build=False' -and
+            $calls[1] -ceq 'run suite=beta build=False') `
+        -Message 'Bare na228 test did not run every suite in name order.'
+    Remove-Item -LiteralPath $visualCalls
+    & (Join-Path $fakeRepository 'na228.ps1') test -b
+    $calls = @(Get-Content -LiteralPath $visualCalls)
+    Assert-Na2Test `
+        -Condition ($calls.Count -eq 2 -and
+            $calls[0] -ceq 'run suite=alpha build=True' -and
+            $calls[1] -ceq 'run suite=beta build=False') `
+        -Message 'na228 test -b did not build exactly once before all suites.'
+    Remove-Item -LiteralPath $visualCalls
+    & (Join-Path $fakeRepository 'na228.ps1') test beta -b
+    & (Join-Path $fakeRepository 'na228.ps1') test run alpha
+    & (Join-Path $fakeRepository 'na228.ps1') test new font_full
+    & (Join-Path $fakeRepository 'na228.ps1') test approve alpha -s '2,4,18-21'
+    & (Join-Path $fakeRepository 'na228.ps1') test approve beta -a
+    $calls = @(Get-Content -LiteralPath $visualCalls)
+    Assert-Na2Test `
+        -Condition ($calls.Count -eq 5 -and
+            $calls[0] -ceq 'run suite=beta build=True' -and
+            $calls[1] -ceq 'run suite=alpha build=False' -and
+            $calls[2] -ceq 'new recording=font_full' -and
+            $calls[3] -ceq 'approve suite=alpha slots=2,4,18-21 all=False' -and
+            $calls[4] -ceq 'approve suite=beta slots= all=True') `
+        -Message 'Named run, suite creation, or approval dispatch was incorrect.'
     $na2ActRejected = $false
     try {
         & (Join-Path $fakeRepository 'na228.ps1') act

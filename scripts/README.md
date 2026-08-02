@@ -79,14 +79,23 @@ The complete project test command is:
 .\tests\run.ps1
 ```
 
+The separate personal visual-regression workflow is exposed through the root
+command. `na228 test` replays every suite against the retained Screenshot Test
+ISO, `na228 test <suite>` selects one suite, and `-b` builds Screenshot Test
+once before replay. `na228 test new <recording>` creates a NUN5 reference
+suite. Approve reviewed captures selectively with
+`na228 test approve <suite> -s <slots>`, or explicitly approve the complete
+pending batch with `na228 test approve <suite> -a`.
+
 Bare `na228` builds and runs Latest. Compact invocations contain one or two
-positional game tokens whose order defines window placement. `l`, `p`, or `t`
+positional game tokens whose order defines window placement. `l`, `p`, or `mt`
 runs Latest, Previous, or Manual Test; `bl` and `bmt` build and run Latest or Manual Test; and
 suffix `w` watches that token's game. `b` remains shorthand for `bl`. For
-example, `na228 nun5 btw` builds Test, launches NUN5 and Test side by side, then
-watches Test. A registered C file/folder or task-owned overlay-plan path may
+example, `na228 nun5 bmtw` builds Manual Test, launches NUN5 and Manual Test
+side by side, then watches Manual Test. A registered C file/folder or
+task-owned overlay-plan path may
 follow the watched token: `na228 nun5 blw src/localization` or
-`na228 nun5 btw work/Font/operations/jutsu_names_overlay.json`.
+`na228 nun5 bmtw work/Font/operations/jutsu_names_overlay.json`.
 Trailing launch arguments are forwarded unchanged to Workshop; use `workshop
 help` for the shared launch options.
 `na228 build l|mt` provides the uncommon build-only forms.

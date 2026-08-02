@@ -47,6 +47,13 @@
 - Never guess desired action, authorization, cleanup, rollback, or final state.
   Never classify work as mistaken, obsolete, unwanted, disposable, canonical,
   or approved unless the user said so or verified evidence establishes it.
+- Authorization is bound to the exact requested action, object, repository or
+  location, and existing-state boundary. `Just` or `only` excludes every
+  unmentioned action. A request to change a path, reference, configuration, or
+  future behavior does not by itself authorize migrating, renaming, or
+  renumbering existing contents or modifying another repository or consumer.
+  Explain each additional mutation separately and await explicit approval
+  before including it in an execution plan or attempting it.
 - A policy clarification changes the policy only; it does not authorize
   retroactive filesystem or implementation changes.
 

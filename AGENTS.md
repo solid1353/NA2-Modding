@@ -39,6 +39,13 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   cleanup, rollback, or final state from complaints, context, or agent
   proposals. Perform only the requested change; an unrequested prerequisite
   must be explained and explicitly approved under the next rule.
+- Authorization is bound to the exact requested action, object, repository or
+  location, and existing-state boundary. `Just` or `only` excludes every
+  unmentioned action. A request to change a path, reference, configuration, or
+  future behavior does not by itself authorize migrating, renaming, or
+  renumbering existing contents or modifying another repository or consumer.
+  Explain each additional mutation separately and await explicit approval
+  before including it in an execution plan or attempting it.
 - Before introducing any concept, script, mechanism, dependency, workflow,
   validation, safeguard, state, prerequisite, or other element the user did
   not request, stop before planning or mutation. Explain in plain language what

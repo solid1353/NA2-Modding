@@ -48,8 +48,8 @@ jobs:
         shell: pwsh
         run: |
           $manifest = Get-Content -Raw na228_builder/release_manifest.json | ConvertFrom-Json
-          . ./scripts/lib/project_paths.ps1
-          $paths = Get-Na2ProjectPaths -AllowMissing
+          . ./scripts/lib/paths.ps1
+          $paths = Get-Na2LocalPaths -AllowMissing
           $candidate = Join-Path $paths.release_candidates $manifest.executable_name
           if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
               throw "Release candidate is missing: $candidate"

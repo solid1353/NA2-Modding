@@ -1,10 +1,11 @@
 Set-StrictMode -Version Latest
 
-function Get-Na2Paths {
+function Resolve-Na2PathManifest {
     [CmdletBinding()]
     param(
         [string]$ManifestPath = (Join-Path $PSScriptRoot '..\..\paths.json'),
-        [switch]$AllowMissing
+        [switch]$AllowMissing,
+        [switch]$IncludeImports
     )
 
     if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
@@ -30,7 +31,7 @@ function Get-Na2Paths {
         ManifestPath = $manifestItem.FullName
     }
     $resolvedFiles = [ordered]@{}
-    if ($null -ne $manifest.PSObject.Properties['imports']) {
+    if ($IncludeImports -and $null -ne $manifest.PSObject.Properties['imports']) {
         foreach ($property in $manifest.imports.PSObject.Properties) {
             $importName = [string]$property.Name
             $rawImport = [string]$property.Value
@@ -209,7 +210,7 @@ function Get-Na2Paths {
 
     $resolvedGames = [ordered]@{}
     $resolvedGameAliases = [ordered]@{}
-    if ($resolvedFiles.Contains('product_config')) {
+    if ($IncludeImports -and $resolvedFiles.Contains('product_config')) {
         $catalogPath = [string]$resolvedFiles['product_config']
         if (-not (Test-Path -LiteralPath $catalogPath -PathType Leaf)) {
             throw "Game catalog not found: $catalogPath"
@@ -475,6 +476,31 @@ function Get-Na2Paths {
     }
 
     return [pscustomobject]$resolved
+}
+
+function Get-Na2LocalPaths {
+    [CmdletBinding()]
+    param(
+        [string]$ManifestPath = (Join-Path $PSScriptRoot '..\..\paths.json'),
+        [switch]$AllowMissing
+    )
+
+    Resolve-Na2PathManifest `
+        -ManifestPath $ManifestPath `
+        -AllowMissing:$AllowMissing
+}
+
+function Get-Na2Paths {
+    [CmdletBinding()]
+    param(
+        [string]$ManifestPath = (Join-Path $PSScriptRoot '..\..\paths.json'),
+        [switch]$AllowMissing
+    )
+
+    Resolve-Na2PathManifest `
+        -ManifestPath $ManifestPath `
+        -AllowMissing:$AllowMissing `
+        -IncludeImports
 }
 
 function ConvertTo-Na2ProjectPath {

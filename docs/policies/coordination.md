@@ -20,6 +20,11 @@
 - Use canonical tracked files as shared context. Send concise handoffs only
   when another chat must act or decide, with owner, objective, exact paths,
   commit, confirmed decisions, unresolved questions, and requested action.
+- Authorization to contact another task or relay a message applies once to the
+  exact requested message. It never authorizes later status, correction,
+  completion, or adjacent-context follow-ups. Every additional cross-task
+  message requires a new explicit user instruction unless a standing policy
+  independently mandates that exact notification.
 - When relaying user instructions, quote them verbatim and preserve scope,
   force, ambiguity, and omissions. Put confirmed facts in `Verified context`
   and interpretations in a labeled non-authoritative section. Never attribute

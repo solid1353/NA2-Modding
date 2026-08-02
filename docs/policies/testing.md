@@ -237,5 +237,5 @@ requirements, not whatever implementation happens to exist today.
   NA2.28 uses the serial-wide files documented in the repository policy.
 - `workshop input` regenerates every input-profile combination from canonical
   overrides without changing GameSettings assignments. `workshop input
-  <profile>` regenerates that profile and its game variants, then assigns them
-  in every configured GameSettings file.
+  <profile>` also regenerates every combination, then assigns the selected
+  profile variants in every configured GameSettings file.

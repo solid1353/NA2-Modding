@@ -38,8 +38,8 @@
   game-specific partial inputs live under `sources/overrides/games/` and apply
   when named for a canonical game selector. `workshop input` regenerates every complete
   profile without changing GameSettings assignments. `workshop input
-  <profile>` regenerates that profile and its game variants, then assigns them
-  in every configured GameSettings file. Never
+  <profile>` also regenerates every complete profile, then assigns the selected
+  profile variants in every configured GameSettings file. Never
   edit generated root-level profiles directly. For each partial input,
   generation first removes every existing assignment using one of its binding
   values across the complete profile. It then adds or replaces every override

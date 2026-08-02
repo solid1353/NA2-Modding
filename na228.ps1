@@ -83,7 +83,7 @@ if ($mode -eq 'test') {
     foreach ($required in $visualRun, $visualNew, $visualReference, $visualApprove) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
             throw (
-                'The independent E2E repository is unavailable. ' +
+                'The E2E infrastructure is unavailable. ' +
                 "Expected: $visualRoot"
             )
         }

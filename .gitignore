@@ -6,4 +6,6 @@ Desktop.ini
 /build
 /logs
 /work
+/e2e/captures/
+/e2e/.transactions/
 __pycache__/

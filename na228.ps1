@@ -1,15 +1,3 @@
-[CmdletBinding()]
-param(
-    [Parameter(Position = 0, ValueFromRemainingArguments)]
-    [string[]]$Tokens = @(),
-
-    [string]$p,
-
-    [string]$r,
-
-    [string]$t
-)
-
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'scripts\lib\paths.ps1')
 . (Join-Path $PSScriptRoot 'scripts\na228\worker_paths.ps1')
@@ -40,17 +28,7 @@ function Get-Na228WatchArguments {
     return @{ SourcePath = $Target }
 }
 
-$commandTokens = @($Tokens)
-$playRecording = $p
-$recordRecording = $r
-$testRecording = $t
-$recordingModes = @(
-    @($playRecording, $recordRecording, $testRecording) |
-        Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-)
-if ($recordingModes.Count -gt 1) {
-    throw 'Use only one of -p, -r, or -t.'
-}
+$commandTokens = @($args)
 $mode = if ($commandTokens.Count -gt 0) {
     $commandTokens[0].ToLowerInvariant()
 }
@@ -77,9 +55,7 @@ if ($mode -eq 'help') {
         '  l | p | t                  Latest | Previous | Test'
         '  bl | bt                    Build and run Latest | Test'
         '  <token>w [C path|plan]     Watch that game; selection follows its token'
-        '  ... -p name                Replay one recording in every launched game'
-        '  ... -r name                Record the last/rightmost launched game'
-        '  ... -t name                Replay one game and capture regression markers'
+        '  additional launch arguments  See workshop help'
         ''
         '  na228 build l|t             Build Latest or Test without running it'
         '  na228 validate              Validate the complete build without producing an ISO'
@@ -179,7 +155,23 @@ function Test-Na228GameToken {
     return $null -ne $paths.games.Aliases.PSObject.Properties[$candidate]
 }
 
-$runTokens = @($commandTokens)
+$launchArgumentIndex = 0
+while (
+    $launchArgumentIndex -lt $commandTokens.Count -and
+    -not $commandTokens[$launchArgumentIndex].StartsWith('-')
+) {
+    $launchArgumentIndex++
+}
+$runTokens = @(
+    if ($launchArgumentIndex -gt 0) {
+        $commandTokens[0..($launchArgumentIndex - 1)]
+    }
+)
+$forwardedLaunchArguments = @(
+    if ($launchArgumentIndex -lt $commandTokens.Count) {
+        $commandTokens[$launchArgumentIndex..($commandTokens.Count - 1)]
+    }
+)
 $games = [Collections.Generic.List[string]]::new()
 $buildActions = [Collections.Generic.List[string]]::new()
 $watchIndex = $null
@@ -229,22 +221,9 @@ foreach ($buildAction in @($buildActions | Select-Object -Unique)) {
     & (Join-Path $paths.scripts 'na228\run.ps1') -Action $buildAction
 }
 
-$launchParameters = @{
-    Games = @($games)
-    ProjectRoot = $paths.repository
-}
-if (-not [string]::IsNullOrWhiteSpace($playRecording)) {
-    $launchParameters.Play = $playRecording
-}
-if (-not [string]::IsNullOrWhiteSpace($recordRecording)) {
-    $launchParameters.Record = $recordRecording
-}
-if (-not [string]::IsNullOrWhiteSpace($testRecording)) {
-    $launchParameters.Play = $testRecording
-    $launchParameters.Test = $true
-}
+$workshopArguments = @($games) + $forwardedLaunchArguments
 $launchResults = @(
-    & $paths.files.pcsx2_game_launch_command @launchParameters
+    & $paths.files.workshop_command @workshopArguments
 )
 $launchResults
 

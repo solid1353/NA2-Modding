@@ -139,6 +139,7 @@ try {
     "game_resolver": "@scripts/lib/resolve_game.py",
     "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
     "pcsx2_game_launch_command": "@scripts/pcsx2/launch_games.ps1",
+    "workshop_command": "@repository/workshop.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1"
   }
 }
@@ -284,6 +285,58 @@ foreach ($game in $canonical) {
     $port++
 }
 '@
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'workshop.ps1') -Content @'
+$tokens = @($args)
+Write-Output "[fake] workshop args=$($tokens -join '|')"
+$games = [Collections.Generic.List[string]]::new()
+$play = ''
+$record = ''
+$test = $false
+for ($index = 0; $index -lt $tokens.Count; $index++) {
+    switch ($tokens[$index]) {
+        '-p' { $play = $tokens[++$index] }
+        '-r' { $record = $tokens[++$index] }
+        '-t' {
+            $play = $tokens[++$index]
+            $test = $true
+        }
+        default {
+            if (-not $tokens[$index].StartsWith('-')) {
+                $games.Add($tokens[$index])
+            }
+            elseif ($index + 1 -lt $tokens.Count) {
+                $index++
+            }
+        }
+    }
+}
+$aliases = @{ l = 'latest'; p = 'previous'; t = 'test' }
+$canonical = @($games | ForEach-Object {
+    if ($aliases.ContainsKey($_)) { $aliases[$_] } else { $_ }
+})
+if ($canonical.Count -eq 0) {
+    throw 'Workshop launch requires at least one game.'
+}
+if (@($canonical | Where-Object { $_ -notin @(
+    'latest', 'previous', 'test', 'na2', 'nun5'
+) }).Count -gt 0) {
+    throw "Unknown game name: $($games -join ',')"
+}
+Write-Output (
+    "[fake] multi-game launch $($canonical -join ',') " +
+    "play=$play record=$record test=$test"
+)
+$port = 28014
+foreach ($game in $canonical) {
+    [pscustomobject]@{
+        Game = $game
+        ProcessId = 1000 + $port
+        PinePort = $port
+        GridCell = '1,1'
+    }
+    $port++
+}
+'@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeInjectionScripts 'watch.ps1') -Content @'
 param(
     [int]$PinePort,
@@ -417,6 +470,21 @@ else {
             )
         ) `
         -Message 'Regression playback was not forwarded to the shared launcher.'
+    $futureLaunchArguments = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            nun5 `
+            l `
+            -future-option `
+            'future-value'
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $futureLaunchArguments -match (
+                '\[fake\] workshop args=nun5\|latest\|' +
+                '-future-option\|future-value'
+            )
+        ) `
+        -Message 'Unknown trailing launch arguments were not forwarded unchanged to Workshop.'
     $launchLogSectionsAfter = if (Test-Path -LiteralPath $launchLogPath) {
         [regex]::Matches(
             [IO.File]::ReadAllText($launchLogPath),

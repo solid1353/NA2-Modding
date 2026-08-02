@@ -179,7 +179,7 @@ without running `@tools/old/CVM Parser/cvm_tool.exe`.
 
 ## Current Scripts
 
-- Root `na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Latest. Compact invocations contain one or two positional game tokens whose order defines window placement: `l`, `p`, or `t` runs Latest, Previous, or Test; `bl` or `bt` builds and runs Latest or Test; and suffix `w` watches that token's game. The optional value after a watched token is a registered C file/folder or a task-owned overlay-plan path; with no value, the watcher attaches every registered source under `src/`. A final `-p <recording>` replays one shared input recording in every launched game; `-r <recording>` records only the last/rightmost game; and `-t <recording>` replays one game hidden while capturing its regression markers. Explicit `build l|t`, standalone `w [C path|plan]`, `worker`, `release`, and `help` remain available. Use `workshop input` to regenerate all shared input profiles without reassigning them, or `workshop input <profile>` to regenerate and assign one profile. Configured launches never stop existing PCSX2 instances, select unused PINE ports, and tile only their newly started windows. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
+- Root `na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Latest. Compact invocations contain one or two positional game tokens whose order defines window placement: `l`, `p`, or `t` runs Latest, Previous, or Test; `bl` or `bt` builds and runs Latest or Test; and suffix `w` watches that token's game. The optional value after a watched token is a registered C file/folder or a task-owned overlay-plan path; with no value, the watcher attaches every registered source under `src/`. Trailing launch arguments are forwarded unchanged to Workshop, which alone parses shared launch options such as input-recording playback, recording, and regression capture. Explicit `build l|t`, standalone `w [C path|plan]`, `worker`, `release`, and `help` remain available. Use `workshop input` to regenerate all shared input profiles without reassigning them, or `workshop input <profile>` to regenerate and assign one profile. Single-game configured launches preserve existing PCSX2 instances; two-game launches close configured user instances first, then select unused PINE ports and tile only their newly started windows. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
 - `scripts/na228/` contains build/launch execution, promotion, ISO identity,
   worker-path validation, and focused tests. Root `na228.ps1` owns argument
   parsing and dispatches substantive execution to `scripts/na228/run.ps1`.
@@ -199,10 +199,9 @@ without running `@tools/old/CVM Parser/cvm_tool.exe`.
   `-pine-port` override so each process keeps an independent PINE endpoint
   without rewriting the persistent INI.
   performs no PINE operation, savestate handling, capture, or cleanup.
-  Workshop `@pcsx2_scripts/launch_games.ps1` is the shared multi-game
-  launch-and-tile backend used by direct `na228` game selectors and accepts one
-  or two ordered source/build selectors with optional shared playback or
-  rightmost recording; and
+  Workshop is the public shared-launch parser used by direct `na228` game
+  selectors; it forwards one or two ordered source/build selectors and shared
+  launch options to `@pcsx2_scripts/launch_games.ps1`; and
   `savestates.ps1 move <game-or-alias> <subpath>` files only that selected
   game's development savestates by default, or stable savestates with
   `-Target stable`, under `@ss`; and

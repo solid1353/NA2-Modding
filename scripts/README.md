@@ -87,12 +87,15 @@ example, `na228 nun5 btw` builds Test, launches NUN5 and Test side by side, then
 watches Test. A registered C file/folder or task-owned overlay-plan path may
 follow the watched token: `na228 nun5 blw src/localization` or
 `na228 nun5 btw work/Font/operations/jutsu_names_overlay.json`.
+Trailing launch arguments are forwarded unchanged to Workshop; use `workshop
+help` for the shared launch options.
 `na228 build l|t` provides the uncommon build-only forms.
 Build and launch commands never generate CRC-specific PCSX2 files. NA2.28 uses
 serial-wide PNACH and GameSettings files directly.
-Configured launches preserve existing PCSX2 instances and tile only the newly
-started windows. `workshop input [profile]` regenerates input profiles without
-building or launching.
+Single-game configured launches preserve existing PCSX2 instances. Paired
+launches close configured user instances first and tile only the newly started
+windows. `workshop input [profile]` regenerates input profiles without building
+or launching.
 
 Passing one or more registered ISO selectors directly to `na228` launches them
 in the requested order. A missing selected ISO fails before any PCSX2 process

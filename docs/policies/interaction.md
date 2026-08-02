@@ -54,6 +54,10 @@
   renumbering existing contents or modifying another repository or consumer.
   Explain each additional mutation separately and await explicit approval
   before including it in an execution plan or attempting it.
+- When explaining or reporting authorization, classify each action separately:
+  what the user authorized, what was only proposed, what was attempted, what
+  was reverted, and what persisted. Never transfer one action's authorization
+  status to another or describe authorized sibling work as unauthorized.
 - A policy clarification changes the policy only; it does not authorize
   retroactive filesystem or implementation changes.
 

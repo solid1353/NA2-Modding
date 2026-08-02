@@ -46,6 +46,10 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   renumbering existing contents or modifying another repository or consumer.
   Explain each additional mutation separately and await explicit approval
   before including it in an execution plan or attempting it.
+- When explaining or reporting authorization, classify each action separately:
+  what the user authorized, what was only proposed, what was attempted, what
+  was reverted, and what persisted. Never transfer one action's authorization
+  status to another or describe authorized sibling work as unauthorized.
 - Before introducing any concept, script, mechanism, dependency, workflow,
   validation, safeguard, state, prerequisite, or other element the user did
   not request, stop before planning or mutation. Explain in plain language what

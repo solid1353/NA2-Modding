@@ -1,7 +1,13 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0, ValueFromRemainingArguments)]
-    [string[]]$Tokens = @()
+    [string[]]$Tokens = @(),
+
+    [string]$p,
+
+    [string]$r,
+
+    [string]$t
 )
 
 $ErrorActionPreference = 'Stop'
@@ -35,35 +41,15 @@ function Get-Na228WatchArguments {
 }
 
 $commandTokens = @($Tokens)
-$playRecording = $null
-$recordRecording = $null
-$recordingOptionIndexes = @(
-    for ($index = 0; $index -lt $commandTokens.Count; $index++) {
-        if ($commandTokens[$index] -ieq '-play' -or
-            $commandTokens[$index] -ieq '-record') {
-            $index
-        }
-    }
+$playRecording = $p
+$recordRecording = $r
+$testRecording = $t
+$recordingModes = @(
+    @($playRecording, $recordRecording, $testRecording) |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
 )
-if ($recordingOptionIndexes.Count -gt 1) {
-    throw 'Use only one of -play or -record.'
-}
-if ($recordingOptionIndexes.Count -eq 1) {
-    $optionIndex = $recordingOptionIndexes[0]
-    if ($optionIndex -ne $commandTokens.Count - 2) {
-        throw '-play or -record must be the final option followed by one recording name.'
-    }
-    if ($commandTokens[$optionIndex] -ieq '-play') {
-        $playRecording = $commandTokens[$optionIndex + 1]
-    }
-    else {
-        $recordRecording = $commandTokens[$optionIndex + 1]
-    }
-    $commandTokens = @(
-        if ($optionIndex -gt 0) {
-            $commandTokens[0..($optionIndex - 1)]
-        }
-    )
+if ($recordingModes.Count -gt 1) {
+    throw 'Use only one of -p, -r, or -t.'
 }
 $mode = if ($commandTokens.Count -gt 0) {
     $commandTokens[0].ToLowerInvariant()
@@ -91,8 +77,9 @@ if ($mode -eq 'help') {
         '  l | p | t                  Latest | Previous | Test'
         '  bl | bt                    Build and run Latest | Test'
         '  <token>w [C path|plan]     Watch that game; selection follows its token'
-        '  ... -play name             Replay one recording in every launched game'
-        '  ... -record name           Record the last/rightmost launched game'
+        '  ... -p name                Replay one recording in every launched game'
+        '  ... -r name                Record the last/rightmost launched game'
+        '  ... -t name                Replay one game and capture regression markers'
         ''
         '  na228 build l|t             Build Latest or Test without running it'
         '  na228 validate              Validate the complete build without producing an ISO'
@@ -246,11 +233,15 @@ $launchParameters = @{
     Games = @($games)
     ProjectRoot = $paths.repository
 }
-if ($null -ne $playRecording) {
+if (-not [string]::IsNullOrWhiteSpace($playRecording)) {
     $launchParameters.Play = $playRecording
 }
-if ($null -ne $recordRecording) {
+if (-not [string]::IsNullOrWhiteSpace($recordRecording)) {
     $launchParameters.Record = $recordRecording
+}
+if (-not [string]::IsNullOrWhiteSpace($testRecording)) {
+    $launchParameters.Play = $testRecording
+    $launchParameters.Test = $true
 }
 $launchResults = @(
     & $paths.files.pcsx2_game_launch_command @launchParameters

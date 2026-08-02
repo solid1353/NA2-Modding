@@ -253,6 +253,7 @@ param(
     [string[]]$Games,
     [string]$Play,
     [string]$Record,
+    [switch]$Test,
     [string]$ProjectRoot
 )
 $aliases = @{
@@ -270,7 +271,7 @@ if (@($canonical | Where-Object { $_ -notin @(
 }
 Write-Output (
     "[fake] multi-game launch $($canonical -join ',') " +
-    "play=$Play record=$Record project=$ProjectRoot"
+    "play=$Play record=$Record test=$Test project=$ProjectRoot"
 )
 $port = 28014
 foreach ($game in $canonical) {
@@ -376,7 +377,7 @@ else {
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
             l `
-            -play `
+            -p `
             'practice-menu'
     ) -join "`n"
     Assert-Na2Test `
@@ -386,12 +387,12 @@ else {
                 'play=practice-menu record='
             )
         ) `
-        -Message 'Paired playback was not forwarded to the shared launcher.'
+        -Message "Paired playback was not forwarded to the shared launcher: $pairedPlayback"
     $pairedRecording = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
             l `
-            -record `
+            -r `
             'practice-menu'
     ) -join "`n"
     Assert-Na2Test `
@@ -402,6 +403,20 @@ else {
             )
         ) `
         -Message 'Rightmost recording was not forwarded to the shared launcher.'
+    $regressionPlayback = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            nun5 `
+            -t `
+            'practice-menu'
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $regressionPlayback -match (
+                'multi-game launch nun5 ' +
+                'play=practice-menu record= test=True'
+            )
+        ) `
+        -Message 'Regression playback was not forwarded to the shared launcher.'
     $launchLogSectionsAfter = if (Test-Path -LiteralPath $launchLogPath) {
         [regex]::Matches(
             [IO.File]::ReadAllText($launchLogPath),

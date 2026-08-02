@@ -242,6 +242,9 @@ print(json.dumps(result))
         -Condition ($helpText -match '(?m)^\s*na228 test \[suite\] \[-b\]') `
         -Message 'Root help omitted the visual-regression command.'
     Assert-Na2Test `
+        -Condition ($helpText -match '(?m)^\s*na228 test reference <suite> -f') `
+        -Message 'Root help omitted guarded reference regeneration.'
+    Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 -[btcpwh]\b') `
         -Message 'Root help still exposes a retired dashed mode.'
     Assert-Na2Test `
@@ -388,30 +391,38 @@ else {
     }
 }
 '@
-    $fakeVisualRoot = Join-Path $fakeRepository 'tests\visual_regression'
+    $fakeVisualRoot = Join-Path $fakeRepository 'e2e'
+    $fakeVisualScripts = Join-Path $fakeVisualRoot 'scripts'
     New-Item -ItemType Directory -Force -Path `
+        $fakeVisualScripts, `
         (Join-Path $fakeVisualRoot 'suites\alpha'), `
         (Join-Path $fakeVisualRoot 'suites\beta') | Out-Null
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualRoot 'run.ps1') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'run.ps1') -Content @'
 param([Parameter(Mandatory)][string]$Suite, [switch]$b)
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
     -Value "run suite=$Suite build=$($b.IsPresent)"
 [pscustomobject]@{ Suite = $Suite; Status = 'clean' }
 '@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualRoot 'new_suite.ps1') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'new_suite.ps1') -Content @'
 param([Parameter(Mandatory)][string]$Recording)
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
     -Value "new recording=$Recording"
 '@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualRoot 'approve.ps1') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'reference.ps1') -Content @'
+param([Parameter(Mandatory)][string]$Suite, [switch]$f)
+Add-Content `
+    -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
+    -Value "reference suite=$Suite force=$($f.IsPresent)"
+'@
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'approve.ps1') -Content @'
 param([Parameter(Mandatory)][string]$Suite, [string]$Slots, [switch]$All)
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
     -Value "approve suite=$Suite slots=$Slots all=$($All.IsPresent)"
 '@
-    $visualCalls = Join-Path $fakeVisualRoot 'calls.txt'
+    $visualCalls = Join-Path $fakeVisualScripts 'calls.txt'
     & (Join-Path $fakeRepository 'na228.ps1') test
     $calls = @(Get-Content -LiteralPath $visualCalls)
     Assert-Na2Test `
@@ -431,16 +442,28 @@ Add-Content `
     & (Join-Path $fakeRepository 'na228.ps1') test beta -b
     & (Join-Path $fakeRepository 'na228.ps1') test run alpha
     & (Join-Path $fakeRepository 'na228.ps1') test new font_full
+    $unguardedReferenceRejected = $false
+    try {
+        & (Join-Path $fakeRepository 'na228.ps1') test reference alpha
+    }
+    catch {
+        $unguardedReferenceRejected = $_.Exception.Message -match 'reference <suite> -f'
+    }
+    Assert-Na2Test `
+        -Condition $unguardedReferenceRejected `
+        -Message 'Reference regeneration did not require explicit -f.'
+    & (Join-Path $fakeRepository 'na228.ps1') test reference alpha -f
     & (Join-Path $fakeRepository 'na228.ps1') test approve alpha -s '2,4,18-21'
     & (Join-Path $fakeRepository 'na228.ps1') test approve beta -a
     $calls = @(Get-Content -LiteralPath $visualCalls)
     Assert-Na2Test `
-        -Condition ($calls.Count -eq 5 -and
+        -Condition ($calls.Count -eq 6 -and
             $calls[0] -ceq 'run suite=beta build=True' -and
             $calls[1] -ceq 'run suite=alpha build=False' -and
             $calls[2] -ceq 'new recording=font_full' -and
-            $calls[3] -ceq 'approve suite=alpha slots=2,4,18-21 all=False' -and
-            $calls[4] -ceq 'approve suite=beta slots= all=True') `
+            $calls[3] -ceq 'reference suite=alpha force=True' -and
+            $calls[4] -ceq 'approve suite=alpha slots=2,4,18-21 all=False' -and
+            $calls[5] -ceq 'approve suite=beta slots= all=True') `
         -Message 'Named run, suite creation, or approval dispatch was incorrect.'
     $na2ActRejected = $false
     try {

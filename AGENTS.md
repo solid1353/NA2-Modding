@@ -260,8 +260,8 @@ Detailed command and task behavior is in
   builds Manual Test and then runs it, while `na228 build mt` is the explicit
   build-only form.
   These commands never mean a test suite. `na228 test [suite] [-b]` runs one
-  or all personal visual-regression suites from the independent
-  `tests/visual_regression/` repository; `-b` builds Screenshot Test once
+  or all personal game E2E suites from the independent `e2e/`
+  repository; `-b` builds Screenshot Test once
   before replay. The full permanent builder test suite remains
   `.\tests\run.ps1`.
   Never infer command semantics from a flag name; verify the documented exact

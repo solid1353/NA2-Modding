@@ -79,11 +79,12 @@ The complete project test command is:
 .\tests\run.ps1
 ```
 
-The separate personal visual-regression workflow is exposed through the root
+The separate personal end-to-end game-test workflow is exposed through the root
 command. `na228 test` replays every suite against the retained Screenshot Test
 ISO, `na228 test <suite>` selects one suite, and `-b` builds Screenshot Test
 once before replay. `na228 test new <recording>` creates a NUN5 reference
-suite. Approve reviewed captures selectively with
+suite. `na228 test reference <suite> -f` explicitly regenerates that suite's
+NUN5 reference screenshots. Approve reviewed captures selectively with
 `na228 test approve <suite> -s <slots>`, or explicitly approve the complete
 pending batch with `na228 test approve <suite> -a`.
 

@@ -110,7 +110,7 @@ requirements, not whatever implementation happens to exist today.
   Test. Explicit `na228 build mt` builds Manual Test without launching. Isolated output
   uses the explicit `worker` command.
   Neither mode runs a test suite. `na228 test [suite] [-b]` runs the personal
-  visual-regression workflow, with `-b` building Screenshot Test once before
+  end-to-end game-test workflow, with `-b` building Screenshot Test once before
   replay. Run the permanent builder suite only with `.\tests\run.ps1`.
   Verify every validation command's documented semantics before running it;
   never infer behavior from a short flag.

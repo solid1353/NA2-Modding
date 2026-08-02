@@ -58,8 +58,9 @@ if ($mode -eq 'help') {
         '  additional launch arguments  See workshop help'
         ''
         '  na228 build l|mt            Build Latest or Manual Test without running it'
-        '  na228 test [suite] [-b]     Run one or all visual suites; -b builds once first'
+        '  na228 test [suite] [-b]     Run one or all E2E suites; -b builds once first'
         '  na228 test new <recording>  Create a NUN5 reference suite'
+        '  na228 test reference <suite> -f  Regenerate NUN5 reference screenshots'
         '  na228 test approve <suite> -s <slots> | -a'
         '  na228 validate              Validate the complete build without producing an ISO'
         '  na228 worker work/<worker>/build/<name>.iso  Build an isolated worker ISO'
@@ -73,14 +74,16 @@ if ($mode -eq 'help') {
 }
 
 if ($mode -eq 'test') {
-    $visualRoot = Join-Path $PSScriptRoot 'tests\visual_regression'
-    $visualRun = Join-Path $visualRoot 'run.ps1'
-    $visualNew = Join-Path $visualRoot 'new_suite.ps1'
-    $visualApprove = Join-Path $visualRoot 'approve.ps1'
-    foreach ($required in $visualRun, $visualNew, $visualApprove) {
+    $visualRoot = Join-Path $PSScriptRoot 'e2e'
+    $visualScripts = Join-Path $visualRoot 'scripts'
+    $visualRun = Join-Path $visualScripts 'run.ps1'
+    $visualNew = Join-Path $visualScripts 'new_suite.ps1'
+    $visualReference = Join-Path $visualScripts 'reference.ps1'
+    $visualApprove = Join-Path $visualScripts 'approve.ps1'
+    foreach ($required in $visualRun, $visualNew, $visualReference, $visualApprove) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
             throw (
-                'The independent visual-regression repository is unavailable. ' +
+                'The independent E2E repository is unavailable. ' +
                 "Expected: $visualRoot"
             )
         }
@@ -115,6 +118,13 @@ if ($mode -eq 'test') {
         }
         throw 'Usage: na228 test approve <suite> -s <slots> | -a'
     }
+    if ($testCommand -eq 'reference') {
+        if ($arguments.Count -ne 3 -or $arguments[2] -cne '-f') {
+            throw 'Usage: na228 test reference <suite> -f'
+        }
+        & $visualReference -Suite $arguments[1] -f
+        return
+    }
 
     $runArguments = @(
         if ($testCommand -eq 'run') {
@@ -146,7 +156,7 @@ if ($mode -eq 'test') {
     $suites = if ($null -ne $suite) {
         $selected = Join-Path $suiteRoot $suite
         if (-not (Test-Path -LiteralPath $selected -PathType Container)) {
-            throw "Unknown visual-regression suite: $suite"
+            throw "Unknown E2E suite: $suite"
         }
         @($suite)
     }
@@ -159,7 +169,7 @@ if ($mode -eq 'test') {
     }
     $suites = @($suites)
     if ($suites.Count -eq 0) {
-        throw 'No visual-regression suites are available.'
+        throw 'No E2E suites are available.'
     }
 
     $reviewRequired = $false
@@ -176,17 +186,17 @@ if ($mode -eq 'test') {
             }
         ) | Select-Object -Last 1
         if ($null -eq $result -or $result.Status -notin @('clean', 'review-required')) {
-            throw "Visual-regression suite returned no valid result: $($suites[$index])"
+            throw "E2E suite returned no valid result: $($suites[$index])"
         }
         if ($result.Status -eq 'review-required') {
             $reviewRequired = $true
         }
     }
     if ($reviewRequired) {
-        Write-Host 'Visual regression completed; review is required.' -ForegroundColor Yellow
+        Write-Host 'E2E tests completed; review is required.' -ForegroundColor Yellow
         exit 2
     }
-    Write-Host 'Visual regression clean.' -ForegroundColor Green
+    Write-Host 'E2E tests clean.' -ForegroundColor Green
     return
 }
 

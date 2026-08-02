@@ -16,14 +16,6 @@ if (-not (Test-Path -LiteralPath $recordingPath -PathType Leaf)) {
 }
 . (Join-Path $context.Repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
-$sharedRecording = Join-Path $paths.pcsx2_input_recordings "$Suite.p2m2"
-if (-not (Test-Path -LiteralPath $sharedRecording -PathType Leaf)) {
-    throw "Shared replay recording does not exist: $sharedRecording"
-}
-if ((Get-FileHash -LiteralPath $recordingPath -Algorithm SHA256).Hash -cne
-    (Get-FileHash -LiteralPath $sharedRecording -Algorithm SHA256).Hash) {
-    throw 'The shared replay recording differs from the suite-tracked recording.'
-}
 $transaction = New-VisualRegressionTransaction `
     -Root $context.Root `
     -Prefix 'run'
@@ -46,8 +38,12 @@ try {
         throw 'Screenshot Test.iso does not exist; rerun with -b.'
     }
 
-    & (Join-Path $context.Repository 'na228.ps1') `
-        st -t $Suite -o $captureRoot
+    Invoke-VisualRegressionReplay `
+        -Repository $context.Repository `
+        -SharedRecordingRoot $paths.pcsx2_input_recordings `
+        -RecordingPath $recordingPath `
+        -Game st `
+        -CaptureRoot $captureRoot
     if (-not (Test-Path -LiteralPath $captureRoot -PathType Container)) {
         throw "Replay completed without a capture directory: $captureRoot"
     }

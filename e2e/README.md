@@ -31,8 +31,10 @@ completed capture as its reference set:
 .\e2e\scripts\new_suite.ps1 -Recording NUN5_font_full
 ```
 
-Create a missing capture suite's NUN5 reference screenshots without a force
-flag. Regenerate an existing capture suite's references only with `-f`:
+`test new` imports its recording from Workshop's shared input-recording folder.
+`test reference` replays the existing suite's tracked `input.p2m2`. It creates
+a missing or empty capture structure without a force flag; `-f` is required
+only when reference screenshots already exist and would be overwritten:
 
 ```powershell
 .\e2e\scripts\reference.ps1 -Suite NUN5_font_full

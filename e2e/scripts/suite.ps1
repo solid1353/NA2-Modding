@@ -55,6 +55,29 @@ function Remove-VisualRegressionTransaction {
     }
 }
 
+function Invoke-VisualRegressionReplay {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][string]$SharedRecordingRoot,
+        [Parameter(Mandatory)][string]$RecordingPath,
+        [Parameter(Mandatory)][string]$Game,
+        [Parameter(Mandatory)][string]$CaptureRoot
+    )
+
+    $stagedName = 'e2e-' + [guid]::NewGuid().ToString('N') + '.p2m2'
+    $stagedPath = Join-Path $SharedRecordingRoot $stagedName
+    try {
+        Copy-Item -LiteralPath $RecordingPath -Destination $stagedPath
+        & (Join-Path $Repository 'na228.ps1') `
+            $Game -t $stagedName -o $CaptureRoot
+    }
+    finally {
+        if (Test-Path -LiteralPath $stagedPath -PathType Leaf) {
+            Remove-Item -LiteralPath $stagedPath -Force
+        }
+    }
+}
+
 function Get-NumericPngSlots {
     param([Parameter(Mandatory)][string]$Directory)
 

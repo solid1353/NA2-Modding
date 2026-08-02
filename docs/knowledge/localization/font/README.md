@@ -1544,20 +1544,203 @@ NUN5 homolog `FUN_003CBAF0` uses one selected-state-aware
 from NA2's separate selected and ordinary renderers, so copying those two
 constants directly is not coordinate-equivalent. Supplemental ss2 with
 `Manual` selected supplies both NA2 paths in one frame. The earlier
-`44 + 26*i` candidate plus selected-only `-2` compensation put selected Manual
-five pixels too high and ordinary Auto five pixels too low at 640x480.
+`44 + 26*i` plus selected-only compensation and later `46 + 20*i` candidate
+were intermediate geometry trials and are superseded.
 
-The corrected bounded formula is `46 + 20*i`, with no selected-only
-compensation. The title remains at local Y `8`. Fresh pixel bounds are:
+The final bounded formula is `45 + 22*i`, with no selected-only compensation,
+and the title remains at local Y `8`. The exact clean guards are title
+`4041023C`, interval `D041023C`, and base `4042023C`; replacements are
+`0041023C`, `B041023C`, and `3442023C`. Final-red captures 18 and 19 show
+selected `Auto` and `Manual` red and aligned with NUN5. No adjacent modal is
+changed; explicit user acceptance remains pending.
 
-- title: NUN5 and Current both Y `138..151`;
-- selected `Manual`: NUN5 and Current both Y `183..196`;
-- ordinary `Auto`: NUN5 and Current both Y `211..223`.
+## 2026-08-02 Linked Mode selected-color ABI correction
 
-The exact clean guards are title `4041023C`, interval `D041023C`, and base
-`4042023C`; replacements are `0041023C`, `A041023C`, and `3842023C`.
-No shared renderer or adjacent modal is changed. Confidence is high for caller
-isolation and placement; explicit user acceptance remains pending.
+Clean main ELF SHA-256
+`20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`
+proves that the selected Linked Mode call at file `0x2B91DC` supplies exactly
+four arguments: `a0=object`, `a1=draw_x`, `a2=draw_y`, and `a3=text`. The
+pre-call block at `0x2B91C4..0x2B91D8` never initializes `t0`.
+
+The native callee `FUN_00382610` forwards selected state `1` to
+`FUN_00379040`. That state renders the gray pass and then packed red
+`0xFF0000D4`. By contrast, the Pause selected callback legitimately receives a
+fifth packed-color argument in `t0` before tail-calling `FUN_003827A0`.
+Reusing that callback for Linked Mode treated undefined caller-saved `t0` as a
+color; the integrated capture exposed the result as blue selected `Auto`.
+
+The bounded correction is deliberately color-only. The existing Linked metric
+session, centered `1.05` scale, computed draw origin, title position, shared
+choice base, and row interval remain unchanged. The typed Linked entry ignores
+incoming `t0` and supplies `0xFF0000D4` to the retained callback. This preserves
+the user-reviewed geometry while restoring the native selected red. A future
+renderer refactor may instead use a dedicated tail callback to `FUN_00382610`,
+but it must first prove byte-equivalent visible geometry; it is not part of
+this correction.
+
+## 2026-08-02 Font 3 global layout overhaul
+
+The Font 3 overhaul moves layout ownership from individual visible rows to
+structural renderer families in `src/localization/font/font_v2_core.c`. Thin
+caller adapters retain each native ABI and container, while the shared session
+owns proportional measurement, shrink-only fitting, centered origins,
+line-count-aware wrapping, renderer state, and cleanup. No displayed string,
+pointer mapping, objective prose, marker, unit, or fallback label is created or
+rewritten by this work.
+
+The retained global selected-style dispatcher is the foundation: it keeps the
+base/shadow geometry stable and overlays the selected pass instead of applying
+NA2's state-dependent replacement movement. Renderer families are bounded
+last-mile geometry adapters on top of that fix. They correct the individual
+container origins, widths, wrapping, and ABIs that a global draw-state change
+cannot infer.
+
+This boundary matters beyond the captured examples. Every row reaching the
+same caller family now inherits the same formula, including unseen strings and
+characters. Short text stays on its native one-line renderer. Only measured
+overflow enters wrapping or shrinking, and selected and ordinary states share
+geometry unless the native container has a proven structural footer or modal
+state.
+
+This is consistent with the original executables, but it is not a claim that
+they contain a literal object named a renderer family. Both NA2 and NUN5 reuse
+low-level measurement, font-state, boxed-compositor, and selected-style
+routines from multiple callers; screen code supplies the row data, bounds, and
+state. The Font 3 layer makes those naturally shared caller groups explicit in
+typed C so one proven correction reaches every member without widening the
+hook to unrelated consumers.
+
+### Implemented renderer families
+
+- **Controls:** the first eight action labels share one `128`-unit box and one
+  raster-phase correction. The vibration row remains on its unrelated native
+  caller.
+- **Practice Settings:** heading, left labels, compact values, descriptive
+  values, and digit-leading values use page-level formulas rather than row
+  tables. The explanation path is separate.
+- **Battle Settings:** labels and values use Battle-local selected, ordinary,
+  and value raster phases. Compact values, numeric values, and `Unlimited`
+  retain the shared value container without changing their source text. Battle
+  and Practice retain the same structural row model, but their final pixel
+  phases are separate because forcing the Practice phase onto Battle produced
+  visibly different weight and alignment.
+- **Linked Mode:** title Y is `8`; both choices use `45 + 22*i` and one centered
+  `1.05` horizontal scale session. Both draw states share placement. The
+  selected entry supplies native red `0xFF0000D4` instead of undefined `t0`.
+- **Character Select player-mode list:** selected and ordinary rows share one
+  bounded metric family. Rows one through four share the normal formula; the
+  structurally distinct fifth footer receives one selected-state Y correction.
+- **Save confirmation:** two guarded fixed header records move to the shared
+  origin, while one stack-record adapter positions both choices and preserves
+  the native initializer, strings, and selected style.
+- **Pause, Special Controls, quit, Character Select confirmation, Collection
+  confirmation, and Mode Select confirmation:** each native modal family keeps
+  its own container but shares selected/ordinary geometry within that family.
+- **Jutsu selector:** all fitting names use one family session at scale `1.0`
+  with side-dependent X and one-line Y origins. Only measured overflow enters
+  the `186 x 32` two-line compositor and its separate multiline Y/line-step
+  geometry, so fitting text is never vertically collapsed.
+- **Practice explanations:** one bounded mixed text/icon compositor replaces
+  the native per-token loop. One-, two-, and three-line outputs use shared
+  line-count Y formulas; native icon callbacks and source strings remain.
+- **Command Chart:** the title has one shared X/Y origin correction. Both
+  optional relationship fields are composed in a bounded transient buffer and
+  drawn once through a `226 x 32` box. Relationship and plain rows select
+  structural icon offsets rather than per-row offsets.
+- **Collection lists:** the shared ETC list hook classifies narrow Figure move
+  rows into the `152`-unit profile and wider relationship/Movie rows into the
+  `192`-unit profile. Figure/Music headers share one origin formula and ordinary
+  or legacy Ultimate Jutsu headers share another. No character or string
+  whitelist is used.
+- **Ninja Song arithmetic:** one data-driven renderer reads the native row
+  table and covers all fifteen expanded, total-only, and N/A rows.
+- **Ninja Song objectives:** one caller hook draws the existing red index,
+  existing one-byte marker, and existing prose as independent elements. Prose
+  uses one `288`-unit constant for both wrapping and the bounded two-line
+  compositor; no text is prefixed or substituted.
+
+### Runtime and static result
+
+The last captured isolated build used for the main and Collection evidence is
+`work/Font 3/build/font-overhaul-final-red.iso`, SHA-256
+`39F7EF26AB833559E6AD2EC1905D14599724B259E6066F40085F13DB9F607C09`,
+with retained build record
+`work/Font 3/logs/builds/20260802_171859_865_pid38392/`. After those captures,
+the final source replaced the objective-only `320`-unit wrap threshold with the
+same `288`-unit constant used by its render box. That source is not claimed to
+be byte-identical to the captured ISO. The latest compose-only result retains
+`139` resident symbols, `18,608` payload bytes, and `67` runtime-injector
+edits. Deterministic reconstruction reports `105` Font fragments within `109`
+compiled/static declarations, and full default-profile composition succeeds
+without conflicts.
+
+The synchronized main replay provides valid post-change cases 1-49 under
+`work/Font 3/overhaul/comparisons/font-overhaul-final-red-main-1-49-vs-nun5/`.
+A severity-first review found no wrong selected color, overflow, bad wrap,
+missing label, or large width/position error. Linked `Auto` and `Manual` are red
+in both selected captures. The separate Collection replay provides valid cases
+1-7 under
+`work/Font 3/overhaul/comparisons/font-overhaul-final-red-font2-vs-nun5/`,
+covering Sakura Figure, Ultimate Jutsu and Music, Movie rows, and legacy Naruto
+Ultimate Jutsu; no large Font defect remains there. Classic Naruto's missing
+Figure and Music pages are native content structure, not missing Font output.
+
+The Ninja arithmetic family was runtime-proven in the earlier fresh ss3
+injection and redraws continuously after resume. The final six Ninja objective
+capture markers are not runtime evidence: that recording desynchronized and
+captured Character Select instead. Earlier runs prove older objective
+candidates, but their payload differs from the final build. The final objective
+implementation therefore remains statically verified until one synchronized
+final-build replay is supplied; no stronger claim is retained.
+
+### Preserved regression tooling
+
+Reusable scripts under `scripts/research/localization/` are retained as the
+reproducible project surface:
+
+- `replay_font_recording_worker.ps1` runs a recording against the task-owned
+  worker and collects marker screenshots without using the shared ISO paths.
+- `verify_font_replay_bundle.ps1` and `verify_font_replay_bundle.py` verify the
+  copied ISO's boot/resident members, payload hash and size, retained build
+  record, symbol map, and required symbol identities before replay.
+- `compare_font_capture_sets.ps1` and `compare_font_capture_sets.py` pair exact
+  marker IDs and generate full-scale side-by-side images, blends, differences,
+  and paged grids.
+- `measure_font_capture_regions.ps1` and
+  `measure_font_capture_regions.py` measure configured regions without turning
+  tiny subpixel differences into automatic defects.
+- `set_font_patch_state.ps1` atomically toggles the enabled columns in the two
+  canonical Font patch tables for controlled isolation runs. It supports the
+  `GlobalOnly` and `AllEnabled` presets plus explicit patch overrides; it never
+  edits displayed text.
+
+Generated ISOs, captures, logs, and comparison products remain task-owned
+under `work/Font 3/`; only reusable scripts and canonical findings are tracked.
+
+### Capturing remaining discrepancies
+
+Use two game-specific recordings, one authored for NUN5 and one for NA2, with
+the same ordered semantic marker IDs. Never replay one game's `.p2m2` against
+the other game. A marker is evidence only when both games are on the same
+semantic screen and the text has reached a stable frame; if either replay
+diverges, discard that marker and every later marker until synchronization is
+re-established. Do not compare a later menu merely because its frame number
+happens to match.
+
+Add separate markers for each materially different renderer state: selected
+and ordinary rows, shortest and longest available strings, one- and two-line
+containers, optional rows, legacy characters with absent sections, and each
+distinct modal or page header. Character variation is coverage for one shared
+family, not a reason to create character-specific fixes. Place an additional
+marker immediately before each risky navigation transition so the first
+divergence is localized instead of invalidating an unexplained tail.
+
+The comparison pass should first flag large semantic defects: overflow,
+clipping, wrong wrapping, wrong selected color, missing output, or a visibly
+wrong origin/width. Only after those are exhausted should exact-scale blends
+be used for smaller raster-phase differences. Content differences between
+games, animation timing, and absent native sections are recorded but are not
+Font defects.
 
 ## 2026-07-30 Character Select ordinary-row metric session
 
@@ -2074,18 +2257,13 @@ wraps it to the requested width and line limit, and then delegates to
 `FUN_0018B1B0`; that final renderer applies start-horizontal and
 center-vertical placement and advances once per produced line.
 
-The bounded C implementation therefore hooks only live `0x006BCFDC`, copies
-the source into a 256-byte stack buffer, and measures/wraps that copy at 186
-units and two lines. If the result remains one line, it immediately calls the
-exact displaced native renderer with the original text and does not enter a
-layout session. Only a produced line break keeps the native left/right branch
-and draws through the accepted two-line session before restoring the caller's
-position. The first fresh candidate proved the caller isolation:
-`Naruto Uzumaki Combo Attack` became
-`Naruto Uzumaki` / `Combo Attack`, but relying on the shared newline hook
-produced an 18-pixel row step instead of NUN5's 20. The corrected callback
-owns both line draws directly; a 16-unit game-space Y step produces the exact
-20-pixel NUN5 step at 640x480.
+The bounded C implementation hooks only live `0x006BCFDC`, copies the source
+into a 256-byte stack buffer, and measures/wraps that copy at 186 units and two
+lines. The first fresh candidate proved the caller isolation:
+`Naruto Uzumaki Combo Attack` became `Naruto Uzumaki` / `Combo Attack`, but
+relying on the shared newline hook produced an 18-pixel row step instead of
+NUN5's 20. The corrected callback owns both line draws directly; a 16-unit
+game-space Y step produces the exact 20-pixel NUN5 step at 640x480.
 
 The remaining vertical overflow was glyph-quad geometry rather than line
 spacing. Setting the secondary descriptor or renderer mode before
@@ -2106,25 +2284,17 @@ word `0x8F84CA6C` (`lw a0,-0x3594(gp)`). Omitting that load makes the row text
 disappear, which was a useful rejected transport result rather than a renderer
 hypothesis.
 
-The replacement ss1–ss2 evidence supplied on 2026-07-31 refined the final
-constants. The two-line block uses glyph height `22.0`, box Y offset `-6.5`,
-and the already-correct 16-unit line interval. In the user's row-aligned
-comparison before the final correction, NUN5's two visible lines measured
-`624` and `276` composite-image pixels wide while NA2.28 measured `650` and
-`288`; both ratios independently select a `0.96` horizontal multiplier.
-
-Writing that multiplier only to `0x0060737C` around `FUN_00188140` produced no
-visible change. The effective boundaries are the existing active-session
-glyph-advance and right-edge hooks, which consume
-`FontV2Session.scale_x`. Internal flag `0x80` therefore preserves an explicit
-caller-provided scale through `font_v2_prepare` instead of deriving it only
-from overflow. Both Jutsu branches publish the same `0.96` session scale.
-Fitting one-line rows deliberately omit the glyph-height and separate-line
-flags, so they receive the width correction without vertical squeezing or
-multiline cadence. Wrapped rows additionally select the `22.0` glyph height
-and 16-unit interval. Measurement and the 186-unit wrap decision occur before
-the draw-only multiplier, preserving the verified
-`Explosive Destruction` / `Formation` break.
+The replacement ss1–ss2 evidence supplied on 2026-07-31 established the
+selective-wrap boundary and the 16-unit wrapped-line interval. Those historical
+captures led through a `0.96` scale and `-6.5` Y candidate, but the 2026-08-02
+overhaul supersedes those final constants. The current family measures before
+drawing and publishes scale `1.0` for both branches. Fitting rows use the native
+glyph path through a session with X offsets `-5.6` on the left and `-4.0` on
+the right plus one-line Y offset `-1.6`; they do not receive multiline glyph
+height or cadence. Wrapped rows use Y offset `-5.7`, glyph height `22.0`, and
+the retained 16-unit line interval. Only measured overflow selects that
+multiline branch, preserving the verified `Explosive Destruction` /
+`Formation` break without vertically collapsing fitting labels.
 
 The user verified the final whole-Font hot-reloaded Jutsu selector on
 2026-07-31, including fitting one-line and wrapped two-line rows. Canonical
@@ -2209,16 +2379,16 @@ retained current glyph ink is shorter than NUN5, so subpixel baseline changes
 quantize to the neighboring output pixel rather than creating a stable
 per-row correction.
 
-The objective call at BTL file `0x64E98` uses a separate, necessary page
-template because objectives are one- or two-line prose rather than arithmetic
-rows. It copies the text, wraps to two lines, and applies the NUN5 `288 x 32`
-box and two-line baseline. Supplied ss3 resumes after objective construction,
-so that call does not execute after savestate load; the hook and wrapper are
-statically verified, but the objective's post-hook visible result is not
-runtime-proven by this state. This limitation does not apply to the arithmetic
-renderer, which executes continuously after resume.
+The final objective boundary is no longer the earlier detail-only call at
+`0x64E98`. The overhaul replaces the complete visible objective-row block at
+BTL file `0x64630` once. Its adapter independently positions the existing red
+index, existing one-byte marker, and existing prose, then wraps only the prose
+through the NUN5 `288 x 32` two-line box. The final font2 replay desynchronized
+before this page, so the final objective's visible result remains statically
+verified. This limitation does not apply to the arithmetic renderer, which was
+runtime-proven and executes continuously after resume.
 
-## Deferred Practice Settings left-column alignment
+## 2026-08-02 Practice Settings left-column completion
 
 The paired 2026-07-31 Practice Settings inputs are retained under
 `work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss1/` and
@@ -2226,16 +2396,14 @@ The paired 2026-07-31 Practice Settings inputs are retained under
 matching extracted screenshots and provenance in their sibling input trees.
 The ss1 state selects `Attack`; ss3 selects `Extra Hit Counter`.
 
-Both pairs show the same template-level defect: selected and ordinary
-left-column labels begin 9–10 native pixels farther right in NA2.28 than in
-NUN5, while ordinary-row vertical bounds already match. The right value
-column, differing option values, lower explanation text, and native selected
-style are separate paths. A future correction should move only the shared left
-option-label column to the NUN5 X origin while preserving current Y positions,
-selected styling, the right value column, title, footer, and explanation
-paths. The former epic subtask and its report grid were retired for later work.
+Both pairs established one template-level left-column origin error across
+selected and ordinary labels, not unique row defects. The overhaul now routes
+the exact Practice heading and loop label callers through shared page formulas
+while keeping the right value and explanation families separate. The final
+main replay includes the corrected page without a large position, width, wrap,
+or style discrepancy.
 
-## Deferred structural Collection-family layout
+## 2026-08-02 structural Collection-family completion
 
 Collection uses these relevant list families:
 
@@ -2246,33 +2414,22 @@ Collection uses these relevant list families:
 - global Music;
 - the Characters index where applicable.
 
-Figure is the only narrow character-detail list. It retains the proven
-152-unit profile. The other listed families share the wider 192-unit profile.
-Movie and the accepted Naruto Figure target are regression baselines rather
-than separate future implementations. Fitting one-line rows must retain native
-glyph height and spacing. Wrapping occurs only after measured horizontal
-overflow; a completed multiline block also retains native glyph geometry when
-it fits vertically, and shrinking is a last resort only when the finished
-block exceeds its real container.
-
-The future implementation should keep one shared ETC list-renderer hook and
-replace exact-text pointer whitelists with structural page-family
-classification. Prefer a stable field in the live ETC owner/list object. If no
-reliable discriminator exists, tag the bounded shared owner callers or use
-compact page-family metadata in expandable `228.BIN`; never patch each
-character, row, or string independently. Fix the shared character-name header
-once and prove it first across Naruto Figure, Ultimate Jutsu, and
-character-specific Music. Check whether legacy Ultimate Jutsu pages use the
-same header caller before extending the correction.
+Figure remains the only narrow character-detail list and uses the `152`-unit
+profile. Relationship and Movie rows use the wider `192`-unit profile. One
+shared ETC hook classifies them from native call geometry; no character, row,
+or string whitelist remains. Fitting rows retain the native glyph renderer at
+family X `+1.2` and one-line Y `-4.0`; only measured overflow enters the
+two-line compositor. Figure/Music character headers share one origin formula,
+and ordinary/legacy Ultimate Jutsu headers share another.
 
 Raw NUN5 ETC records are not safe byte donors: homologous list records assign
 different meanings to fields at `+0x14/+0x18` and shift live resource fields.
 Port NUN5 classification and layout semantics instead of entire records or
 tables.
 
-The representative paired batch is retained at
-`work/Font/inputs/sstates/batches/2026-07-31-collection-ss4-8/`, with hashes
-and source aliases in `provenance.tsv`:
+The earlier representative paired batch is retained at
+`work/Font/inputs/sstates/batches/2026-07-31-collection-ss4-8/`, with hashes and
+source aliases in `provenance.tsv`:
 
 - ss4: Naruto character-specific Music;
 - ss5: Naruto Classic Ultimate Jutsu;
@@ -2283,8 +2440,6 @@ and source aliases in `provenance.tsv`:
 Matching screenshots are under
 `work/Font/inputs/screenshots/batches/2026-07-31-collection-ss4-8/`. That tree
 also retains `character-index_NA228.png`; the user reported no Font defect on
-the Characters index, so it is reference-only and needs no paired savestate.
-One representative state per runtime family is sufficient. A future trial
-should prove the structural discriminator and two profiles across every
-representative family, preserve accepted Movie behavior, and retire the exact
-pointer whitelist only after the user accepts the shared result.
+the Characters index, so it remains reference-only. Synchronized final-red
+font2 cases 1-7 cover Sakura and legacy-character variants plus Movie without a
+large Font defect; later desynchronized cases are excluded from evidence.

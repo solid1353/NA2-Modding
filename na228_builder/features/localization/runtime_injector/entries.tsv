@@ -9,10 +9,15 @@ font_v2_core	localization.font.v2.quit_unselected_adapter	arg0_record_arg2_arg3	
 font_v2_core	localization.font.v2.quit_body_adapter	arg0_text_arg2	Quit confirmation body
 font_v2_core	localization.font.v2.character_confirmation_body_adapter	arg0_text_arg2	Character Select return-confirmation body
 font_v2_core	localization.font.v2.special_controls_body_adapter	arg0_text_arg2	Special Controls explanatory body
-font_v2_core	localization.font.v2.collection_list_entry	text_highlight_native_x_native_y	Collection Movie and character-move list row
+font_v2_core	localization.font.v2.collection_list_entry	text_highlight_native_x_native_y	Shared Collection list row classifier
+font_v2_core	localization.font.v2.collection_figure_music_header_adapter	native_x_native_y_text_style	Shared Collection Figure and Music header origin formula
+font_v2_core	localization.font.v2.collection_jutsu_header_adapter	native_x_native_y_text_style	Shared Collection Ultimate Jutsu header origin formula
 font_v2_core	localization.font.v2.battle_settings_label_adapter	text_style_native_x_native_y	Battle Settings label row
 font_v2_core	localization.font.v2.practice_settings_label_adapter	text_style_native_x_native_y	Practice Settings label row
-font_v2_core	localization.font.v2.settings_value_adapter	text_color_native_x_native_y	Battle or Practice Settings centered value
+font_v2_core	localization.font.v2.battle_settings_value_adapter	text_color_native_x_native_y	Battle Settings centered value with page-local raster phase
+font_v2_core	localization.font.v2.settings_value_adapter	text_color_native_x_native_y	Practice Settings centered value
 font_v2_core	localization.font.v2.practice_settings_heading_adapter	text_color_native_x_native_y	Practice Settings section heading
 font_v2_core	localization.font.v2.ninja_arithmetic_template	native_x_native_y_row_set_row_index	Shared data-driven Ninja Song formula renderer for all fifteen rows
-font_v2_core	localization.font.v2.ninja_objective_adapter	text_color_native_x_native_y	Ninja Song wrapped objective
+font_v2_core	localization.font.v2.ninja_objective_row_adapter	page_row_record_display_index_row_y_bits	Shared Ninja Song visible objective-row renderer preserving the native index, marker, and prose strings
+font_v2_core	localization.font.v2.save_choices_prepare	renderer_mode_caller_stack	Shared Save confirmation stack-record positions
+font_v2_core	localization.font.v2.linked_choice_unselected_adapter	arg0_text_arg2_native_x_native_y	Linked Mode ordinary centered choice

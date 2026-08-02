@@ -2,6 +2,8 @@ relocation_id	fragment_id	order	offset	kind	symbol	addend
 FR-V2-R072	localization.font.v2.pause_list_selected_adapter	10	0x8	jal26	localization.font.v2.c.pause_list_selected_impl	0
 FR-V2-R073	localization.font.v2.quit_choices_scope	10	0x20	jal26	localization.font.v2.c.quit_scope_enter	0
 FR-V2-R074	localization.font.v2.quit_choices_scope	20	0x54	jal26	localization.font.v2.c.quit_scope_leave	0
+FR-V2-CHAR-SCOPE-R001	localization.font.v2.character_choices_scope	10	0x20	jal26	localization.font.v2.c.character_scope_enter	0
+FR-V2-CHAR-SCOPE-R002	localization.font.v2.character_choices_scope	20	0x54	jal26	localization.font.v2.c.quit_scope_leave	0
 FR-V2-SPECIAL-R001	localization.font.v2.quit_selected_adapter	10	0x40	jal26	localization.font.v2.c.special_choice_selected_adapter	0
 FR-V2-R075	localization.font.v2.quit_selected_adapter	20	0x60	jal26	localization.font.v2.c.quit_selected_map	0
 FR-V2-R076	localization.font.v2.practice_adapter	10	0x14	jal26	localization.font.v2.c.practice_adapter_impl	0
@@ -17,3 +19,4 @@ FR-V2-SS1-R001	localization.font.v2.glyph_advance	10	0xC	hi16	localization.font.
 FR-V2-SS1-R002	localization.font.v2.glyph_advance	20	0x10	lo16	localization.font.v2.session_pointer	0
 FR-V2-CMD-R001	localization.font.v2.command_relationship_adapter	10	0x10	jal26	localization.font.v2.c.command_relationship_impl	0
 FR-V2-CMD-R002	localization.font.v2.command_icon_offset_adapter	10	0x4	j26	localization.font.v2.c.command_icon_offset	0
+FR-V2-LINKED-R001	localization.font.v2.linked_choice_selected_adapter	10	0x8	jal26	localization.font.v2.c.linked_choice_selected_impl	0

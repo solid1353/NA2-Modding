@@ -18,7 +18,11 @@ one cannot silently invalidate the other.
 
 ## Current state
 
-- No Font epic is active.
+- The 2026-08-02 Font 3 global layout overhaul is implemented in the shared
+  v2 C core and caller-family manifests. The retained global selected-style
+  dispatcher is the foundation; structural families provide bounded
+  container-specific geometry on top. This replaces individual row tuning and
+  does not edit displayed strings.
 - The native 14x20 NUN5-derived font is accepted and enabled.
 - The shared v2 C renderer/session architecture is the retained behavioral
   baseline; the July v1 renderer is retired.
@@ -26,11 +30,16 @@ one cannot silently invalidate the other.
   Collection exit confirmation, Movie lists, Jutsu selector, Settings page
   templates, Ninja Song numeric output, and Save/Load numeric formatting have
   accepted or runtime-proven boundaries recorded in knowledge.
-- Practice title and Practice explanations were agent-validated in the former
-  rollout but lacked an explicit final acceptance record there.
-- Collection character move-list appearance was accepted as a candidate; an
-  exact integrated-ISO ss9/ss10 confirmation was still outstanding when the
-  epic was retired.
+- The current 49-screen main replay covers confirmation modals, Controls,
+  Settings, Practice explanations, Pause, Character Select, Save, and Jutsu.
+  Severity-first review found no remaining large Font defect in those cases.
+- The separate final replay proves Sakura and legacy-character Collection
+  families across Figure, Ultimate Jutsu, character Music, and Movie. Their
+  shared widths, wraps, and header origins have no remaining large Font defect.
+- Ninja arithmetic was runtime-proven by the earlier fresh ss3 injection and
+  redraws continuously. The final replay desynchronized into Character Select
+  before its six objective captures, so only final-build objective runtime
+  verification remains unclaimed.
 - The secondary metric decoder C cutover retained an `approved_for_test`
   boundary in the old record; verify current live status before selecting new
   work from it.
@@ -123,13 +132,8 @@ with their provenance records.
 
 - A small residual raster-appearance mismatch against NUN5 remains separately
   scoped from accepted layout behavior.
-- Practice Settings left-column alignment is deferred. Newer paired evidence
-  shows one shared horizontal origin defect while ordinary-row vertical bounds
-  already match.
-- Broad Collection-family layout is deferred. Future work should classify page
-  families structurally, preserve the narrow Figure profile, use the shared
-  wide profile elsewhere, wrap only measured overflow, and fix the shared
-  character-name header once.
+- Obtain one synchronized final-build Ninja Song objective capture before
+  promoting that runtime boundary from static verification.
 - Before acting on any old pending-review label above, refresh live code,
   knowledge, and user instructions; these records do not select work.
 

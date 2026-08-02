@@ -80,9 +80,20 @@ V2_PAUSE_LIST_SELECTED_ADAPTER = (
 V2_PAUSE_LIST_SELECTED_IMPL = (
     f"{V2_PREFIX}.c.pause_list_selected_impl"
 )
+V2_LINKED_CHOICE_SELECTED_ADAPTER = (
+    f"{V2_PREFIX}.linked_choice_selected_adapter"
+)
+V2_LINKED_CHOICE_SELECTED_IMPL = (
+    f"{V2_PREFIX}.c.linked_choice_selected_impl"
+)
+V2_LINKED_CHOICE_UNSELECTED_ADAPTER = (
+    f"{V2_PREFIX}.linked_choice_unselected_adapter"
+)
 V2_QUIT_ACTIVE = f"{V2_PREFIX}.quit_active"
 V2_QUIT_CHOICES_SCOPE = f"{V2_PREFIX}.quit_choices_scope"
+V2_CHARACTER_CHOICES_SCOPE = f"{V2_PREFIX}.character_choices_scope"
 V2_QUIT_SCOPE_ENTER = f"{V2_PREFIX}.c.quit_scope_enter"
+V2_CHARACTER_SCOPE_ENTER = f"{V2_PREFIX}.c.character_scope_enter"
 V2_QUIT_SCOPE_LEAVE = f"{V2_PREFIX}.c.quit_scope_leave"
 V2_QUIT_SELECTED_ADAPTER = f"{V2_PREFIX}.quit_selected_adapter"
 V2_QUIT_SELECTED_MAP = f"{V2_PREFIX}.c.quit_selected_map"
@@ -113,6 +124,7 @@ V2_COLLECTION_BODY_ADAPTER = f"{V2_PREFIX}.collection_body_adapter"
 V2_NATIVE_MEASURE = f"{V2_PREFIX}.native_measure"
 V2_NATIVE_MEASURE_CALLBACK = f"{V2_PREFIX}.c.native_measure_callback"
 V2_WRAP_NATIVE = f"{V2_PREFIX}.wrap_native"
+V2_WRAP_RETRY = f"{V2_PREFIX}.c.wrap_retry"
 V2_PRACTICE_TOKENS = f"{V2_PREFIX}.practice_tokens"
 V2_PRACTICE_APPEND = f"{V2_PREFIX}.practice_append"
 V2_COMMAND_RELATIONSHIP_IMPL = (
@@ -132,6 +144,12 @@ V2_JUTSU_DRAW_CALLBACK = f"{V2_PREFIX}.c.jutsu_draw_callback"
 V2_JUTSU_DRAW_ENTRY = f"{V2_PREFIX}.jutsu_draw_entry"
 V2_COLLECTION_LIST_CALLBACK = f"{V2_PREFIX}.c.collection_list_callback"
 V2_COLLECTION_LIST_ENTRY = f"{V2_PREFIX}.collection_list_entry"
+V2_COLLECTION_FIGURE_MUSIC_HEADER_ADAPTER = (
+    f"{V2_PREFIX}.collection_figure_music_header_adapter"
+)
+V2_COLLECTION_JUTSU_HEADER_ADAPTER = (
+    f"{V2_PREFIX}.collection_jutsu_header_adapter"
+)
 V2_CHARACTER_CONFIRMATION_BODY_CALLBACK = (
     f"{V2_PREFIX}.c.character_confirmation_body_callback"
 )
@@ -155,25 +173,28 @@ V2_PRACTICE_SETTINGS_LABEL_ADAPTER = (
     f"{V2_PREFIX}.practice_settings_label_adapter"
 )
 V2_SETTINGS_VALUE_ADAPTER = f"{V2_PREFIX}.settings_value_adapter"
+V2_BATTLE_SETTINGS_VALUE_ADAPTER = (
+    f"{V2_PREFIX}.battle_settings_value_adapter"
+)
 V2_PRACTICE_SETTINGS_HEADING_ADAPTER = (
     f"{V2_PREFIX}.practice_settings_heading_adapter"
 )
 V2_NINJA_TEXT_CALLBACK = f"{V2_PREFIX}.c.ninja_text_callback"
 V2_NINJA_TEXT_COMMON = f"{V2_PREFIX}.c.ninja_text_common"
 V2_NINJA_COMPACT_ADAPTER = f"{V2_PREFIX}.ninja_compact_adapter"
-V2_NINJA_HITS_ADAPTER = f"{V2_PREFIX}.ninja_hits_adapter"
+V2_NINJA_UNIT_ADAPTER = f"{V2_PREFIX}.ninja_unit_adapter"
 V2_NINJA_EQUALS_ADAPTER = f"{V2_PREFIX}.ninja_equals_adapter"
 V2_NINJA_TOTAL_ADAPTER = f"{V2_PREFIX}.ninja_total_adapter"
 V2_NINJA_EMPTY_ADAPTER = f"{V2_PREFIX}.ninja_empty_adapter"
 V2_NINJA_ARITHMETIC_TEMPLATE = (
     f"{V2_PREFIX}.ninja_arithmetic_template"
 )
-V2_NINJA_OBJECTIVE_ASCII_WIDTH = (
-    f"{V2_PREFIX}.c.ninja_objective_ascii_width"
-)
-V2_NINJA_OBJECTIVE_WRAP = f"{V2_PREFIX}.c.ninja_objective_wrap"
 V2_NINJA_OBJECTIVE_CALLBACK = f"{V2_PREFIX}.c.ninja_objective_callback"
-V2_NINJA_OBJECTIVE_ADAPTER = f"{V2_PREFIX}.ninja_objective_adapter"
+V2_NINJA_OBJECTIVE_DRAW = f"{V2_PREFIX}.c.ninja_objective_draw"
+V2_NINJA_OBJECTIVE_ROW_ADAPTER = (
+    f"{V2_PREFIX}.ninja_objective_row_adapter"
+)
+V2_SAVE_CHOICES_PREPARE = f"{V2_PREFIX}.save_choices_prepare"
 V2_PLAIN_SPACE = f"{V2_PREFIX}.plain_space"
 V2_NEWLINE_ADVANCE = f"{V2_PREFIX}.newline_advance"
 V2_RIGHT_EDGE = f"{V2_PREFIX}.right_edge"
@@ -484,7 +505,10 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         "font_v2_practice_title_entry",
         "font_v2_pause_list_adapter",
         "font_v2_pause_list_selected_impl",
+        "font_v2_linked_choice_selected_impl",
+        "font_v2_linked_choice_unselected_adapter",
         "font_v2_quit_scope_enter",
+        "font_v2_character_scope_enter",
         "font_v2_quit_scope_leave",
         "font_v2_quit_selected_map",
         "font_v2_special_choice_selected_adapter",
@@ -502,15 +526,19 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         "font_v2_character_unselected_adapter",
         "font_v2_jutsu_draw_entry",
         "font_v2_collection_list_entry",
+        "font_v2_collection_figure_music_header_adapter",
+        "font_v2_collection_jutsu_header_adapter",
         "font_v2_practice_icon_metric",
         "font_v2_practice_icon_draw",
         "font_v2_practice_adapter_impl",
         "font_v2_battle_settings_label_adapter",
         "font_v2_practice_settings_label_adapter",
         "font_v2_settings_value_adapter",
+        "font_v2_battle_settings_value_adapter",
         "font_v2_practice_settings_heading_adapter",
         "font_v2_ninja_arithmetic_template",
-        "font_v2_ninja_objective_adapter",
+        "font_v2_ninja_objective_row_adapter",
+        "font_v2_save_choices_prepare",
     }
     if set(extracted.symbols) != expected_exports:
         raise ValueError(
@@ -537,8 +565,17 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         extracted.symbols["font_v2_pause_list_selected_impl"].symbol: (
             V2_PAUSE_LIST_SELECTED_IMPL
         ),
+        extracted.symbols["font_v2_linked_choice_selected_impl"].symbol: (
+            V2_LINKED_CHOICE_SELECTED_IMPL
+        ),
+        extracted.symbols[
+            "font_v2_linked_choice_unselected_adapter"
+        ].symbol: V2_LINKED_CHOICE_UNSELECTED_ADAPTER,
         extracted.symbols["font_v2_quit_scope_enter"].symbol: (
             V2_QUIT_SCOPE_ENTER
+        ),
+        extracted.symbols["font_v2_character_scope_enter"].symbol: (
+            V2_CHARACTER_SCOPE_ENTER
         ),
         extracted.symbols["font_v2_quit_scope_leave"].symbol: (
             V2_QUIT_SCOPE_LEAVE
@@ -589,6 +626,12 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         extracted.symbols["font_v2_collection_list_entry"].symbol: (
             V2_COLLECTION_LIST_ENTRY
         ),
+        extracted.symbols[
+            "font_v2_collection_figure_music_header_adapter"
+        ].symbol: V2_COLLECTION_FIGURE_MUSIC_HEADER_ADAPTER,
+        extracted.symbols[
+            "font_v2_collection_jutsu_header_adapter"
+        ].symbol: V2_COLLECTION_JUTSU_HEADER_ADAPTER,
         extracted.symbols["font_v2_practice_icon_metric"].symbol: (
             V2_PRACTICE_ICON_METRIC
         ),
@@ -608,13 +651,19 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
             V2_SETTINGS_VALUE_ADAPTER
         ),
         extracted.symbols[
+            "font_v2_battle_settings_value_adapter"
+        ].symbol: V2_BATTLE_SETTINGS_VALUE_ADAPTER,
+        extracted.symbols[
             "font_v2_practice_settings_heading_adapter"
         ].symbol: V2_PRACTICE_SETTINGS_HEADING_ADAPTER,
         extracted.symbols["font_v2_ninja_arithmetic_template"].symbol: (
             V2_NINJA_ARITHMETIC_TEMPLATE
         ),
-        extracted.symbols["font_v2_ninja_objective_adapter"].symbol: (
-            V2_NINJA_OBJECTIVE_ADAPTER
+        extracted.symbols[
+            "font_v2_ninja_objective_row_adapter"
+        ].symbol: V2_NINJA_OBJECTIVE_ROW_ADAPTER,
+        extracted.symbols["font_v2_save_choices_prepare"].symbol: (
+            V2_SAVE_CHOICES_PREPARE
         ),
     }
     helper_symbols = {
@@ -630,9 +679,13 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         f"{V2_PREFIX}.c.text.font.v2.map.choice": (
             f"{V2_PREFIX}.c.map_choice"
         ),
+        f"{V2_PREFIX}.c.text.font.v2.linked.choice.session.prepare": (
+            f"{V2_PREFIX}.c.linked_choice_session_prepare"
+        ),
         f"{V2_PREFIX}.c.text.font.v2.wrapped.body.common": (
             f"{V2_PREFIX}.c.wrapped_body_common"
         ),
+        f"{V2_PREFIX}.c.text.font.v2.wrap.retry": V2_WRAP_RETRY,
         f"{V2_PREFIX}.c.text.font.v2.icon.record": (
             f"{V2_PREFIX}.c.icon_record"
         ),
@@ -673,8 +726,8 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         f"{V2_PREFIX}.c.text.font.v2.ninja.compact.adapter": (
             V2_NINJA_COMPACT_ADAPTER
         ),
-        f"{V2_PREFIX}.c.text.font.v2.ninja.hits.adapter": (
-            V2_NINJA_HITS_ADAPTER
+        f"{V2_PREFIX}.c.text.font.v2.ninja.unit.adapter": (
+            V2_NINJA_UNIT_ADAPTER
         ),
         f"{V2_PREFIX}.c.text.font.v2.ninja.equals.adapter": (
             V2_NINJA_EQUALS_ADAPTER
@@ -685,14 +738,11 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         f"{V2_PREFIX}.c.text.font.v2.ninja.empty.adapter": (
             V2_NINJA_EMPTY_ADAPTER
         ),
-        f"{V2_PREFIX}.c.text.font.v2.ninja.objective.ascii.width": (
-            V2_NINJA_OBJECTIVE_ASCII_WIDTH
-        ),
-        f"{V2_PREFIX}.c.text.font.v2.ninja.objective.wrap": (
-            V2_NINJA_OBJECTIVE_WRAP
-        ),
         f"{V2_PREFIX}.c.text.font.v2.ninja.objective.callback": (
             V2_NINJA_OBJECTIVE_CALLBACK
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.ninja.objective.draw": (
+            V2_NINJA_OBJECTIVE_DRAW
         ),
     }
     if helper_symbols != set(helper_aliases):
@@ -736,7 +786,11 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_PRACTICE_TITLE_ENTRY,
         V2_PAUSE_LIST_ADAPTER,
         V2_PAUSE_LIST_SELECTED_IMPL,
+        f"{V2_PREFIX}.c.linked_choice_session_prepare",
+        V2_LINKED_CHOICE_SELECTED_IMPL,
+        V2_LINKED_CHOICE_UNSELECTED_ADAPTER,
         V2_QUIT_SCOPE_ENTER,
+        V2_CHARACTER_SCOPE_ENTER,
         V2_QUIT_SCOPE_LEAVE,
         f"{V2_PREFIX}.c.map_choice",
         f"{V2_PREFIX}.c.special_choice_session_init",
@@ -745,6 +799,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_QUIT_UNSELECTED_ADAPTER,
         V2_NATIVE_MEASURE,
         V2_WRAP_NATIVE,
+        V2_WRAP_RETRY,
         f"{V2_PREFIX}.c.wrapped_body_common",
         V2_QUIT_BODY_ADAPTER,
         V2_SPECIAL_CONTROLS_BODY_ADAPTER,
@@ -760,6 +815,8 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_JUTSU_DRAW_ENTRY,
         V2_COLLECTION_LIST_CALLBACK,
         V2_COLLECTION_LIST_ENTRY,
+        V2_COLLECTION_FIGURE_MUSIC_HEADER_ADAPTER,
+        V2_COLLECTION_JUTSU_HEADER_ADAPTER,
         f"{V2_PREFIX}.c.collection_body_callback",
         f"{V2_PREFIX}.c.icon_record",
         V2_PRACTICE_ICON_METRIC,
@@ -772,19 +829,20 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_BATTLE_SETTINGS_LABEL_ADAPTER,
         V2_PRACTICE_SETTINGS_LABEL_ADAPTER,
         V2_SETTINGS_VALUE_ADAPTER,
+        V2_BATTLE_SETTINGS_VALUE_ADAPTER,
         V2_PRACTICE_SETTINGS_HEADING_ADAPTER,
         V2_NINJA_TEXT_CALLBACK,
         V2_NINJA_TEXT_COMMON,
         V2_NINJA_COMPACT_ADAPTER,
-        V2_NINJA_HITS_ADAPTER,
+        V2_NINJA_UNIT_ADAPTER,
         V2_NINJA_EQUALS_ADAPTER,
         V2_NINJA_TOTAL_ADAPTER,
         V2_NINJA_EMPTY_ADAPTER,
         V2_NINJA_ARITHMETIC_TEMPLATE,
-        V2_NINJA_OBJECTIVE_ASCII_WIDTH,
-        V2_NINJA_OBJECTIVE_WRAP,
         V2_NINJA_OBJECTIVE_CALLBACK,
-        V2_NINJA_OBJECTIVE_ADAPTER,
+        V2_NINJA_OBJECTIVE_DRAW,
+        V2_NINJA_OBJECTIVE_ROW_ADAPTER,
+        V2_SAVE_CHOICES_PREPARE,
     }:
         raise ValueError("Font v2 C fragment aliases are incomplete")
     return result
@@ -1176,8 +1234,11 @@ def build_v2_pause_list_selected_adapter() -> Fragment:
     )
 
 
-def build_v2_pause_list_selected_entry() -> Fragment:
-    """Capture the selected-row color from live t0 for the C implementation."""
+def build_v2_pause_list_selected_entry(
+    fragment_symbol: str = V2_PAUSE_LIST_SELECTED_ADAPTER,
+    implementation_symbol: str = V2_PAUSE_LIST_SELECTED_IMPL,
+) -> Fragment:
+    """Capture live selected-row color in t0 for a typed C implementation."""
 
     t0 = 8
     sp, ra = 29, 31
@@ -1189,14 +1250,14 @@ def build_v2_pause_list_selected_entry() -> Fragment:
     assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
     # The PS2 EE EABI passes the fifth integer argument in t0.  The native
     # selected-row caller already has the required live color in that register.
-    assembler.jump_symbol(0x03, V2_PAUSE_LIST_SELECTED_IMPL)
+    assembler.jump_symbol(0x03, implementation_symbol)
     assembler.emit(0)
     assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
     assembler.emit(mips.r_type(ra, 0, 0, 0x08))
     assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
     payload, relocations = assembler.build()
     return Fragment(
-        V2_PAUSE_LIST_SELECTED_ADAPTER,
+        fragment_symbol,
         payload,
         relocations,
     )
@@ -1235,8 +1296,11 @@ def build_v2_quit_choices_scope() -> Fragment:
     return Fragment(V2_QUIT_CHOICES_SCOPE, payload, relocations)
 
 
-def build_v2_quit_choices_scope_entry() -> Fragment:
-    """Bridge the native list ABI around C-owned nested scope state."""
+def build_v2_quit_choices_scope_entry(
+    fragment_symbol: str = V2_QUIT_CHOICES_SCOPE,
+    enter_symbol: str = V2_QUIT_SCOPE_ENTER,
+) -> Fragment:
+    """Bridge the native list ABI around a C-owned nested scope state."""
 
     v0, a0, a1, a2, a3 = 2, 4, 5, 6, 7
     sp, ra = 29, 31
@@ -1263,7 +1327,7 @@ def build_v2_quit_choices_scope_entry() -> Fragment:
         assembler.emit(mips.i_type(0x2B, sp, register, offset))
     assembler.emit(mips.i_type(0x39, sp, 12, saved_f12))
     assembler.emit(mips.i_type(0x39, sp, 13, saved_f13))
-    assembler.jump_symbol(0x03, V2_QUIT_SCOPE_ENTER)
+    assembler.jump_symbol(0x03, enter_symbol)
     assembler.emit(0)
     assembler.emit(mips.i_type(0x2B, sp, v0, saved_active))
     for register, offset in (
@@ -1286,7 +1350,7 @@ def build_v2_quit_choices_scope_entry() -> Fragment:
     assembler.emit(mips.r_type(ra, 0, 0, 0x08))
     assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
     payload, relocations = assembler.build()
-    return Fragment(V2_QUIT_CHOICES_SCOPE, payload, relocations)
+    return Fragment(fragment_symbol, payload, relocations)
 
 
 def build_v2_quit_selected_adapter() -> Fragment:
@@ -3163,7 +3227,15 @@ def v2_fragments() -> tuple[Fragment, ...]:
         build_v2_pause_list_callback(),
         build_v2_pause_list_selected_callback(),
         build_v2_pause_list_selected_entry(),
+        build_v2_pause_list_selected_entry(
+            V2_LINKED_CHOICE_SELECTED_ADAPTER,
+            V2_LINKED_CHOICE_SELECTED_IMPL,
+        ),
         build_v2_quit_choices_scope_entry(),
+        build_v2_quit_choices_scope_entry(
+            V2_CHARACTER_CHOICES_SCOPE,
+            V2_CHARACTER_SCOPE_ENTER,
+        ),
         build_v2_quit_selected_entry(),
         build_v2_quit_unselected_callback(),
         build_v2_quit_body_callback(),

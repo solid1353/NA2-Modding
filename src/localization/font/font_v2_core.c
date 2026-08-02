@@ -95,8 +95,11 @@ typedef signed int s32;
 /* Fixed native renderer-position setter address; do not tune. */
 #define FONT_SET_POSITION_ADDRESS 0x00186700u
 
-/* Fixed native renderer-color setter address; do not tune. */
-#define FONT_SET_COLOR_ADDRESS 0x00186B30u
+/* Native palette-index selector used by page code that passes colors 0..15. */
+#define FONT_SET_INDEXED_COLOR_ADDRESS 0x00186AC0u
+
+/* Native raw-color selector used by code that passes packed RGBA values. */
+#define FONT_SET_RGBA_COLOR_ADDRESS 0x00186B30u
 
 /* Fixed ordinary native text-draw function address; do not tune. */
 #define FONT_DRAW_ADDRESS 0x00379040u
@@ -124,18 +127,26 @@ typedef signed int s32;
 /* Single-row layout height used by the Controls adapter. */
 #define FONT_CONTROLS_LINE_HEIGHT 20.0f
 
+/* Shared one-output-pixel raster phase for all first-eight labels. */
+#define FONT_CONTROLS_X_OFFSET 0.8f
+#define FONT_CONTROLS_Y_OFFSET 0.8f
+
 /* === Battle Settings and Practice Settings rows === */
 
+/* Shared one-pixel raster-origin correction for every Settings text box. */
+#define FONT_SETTINGS_X_OFFSET 0.8f
+
 /* NUN5 left edge and width for Battle Settings labels. */
-#define FONT_BATTLE_SETTINGS_LABEL_X 92.0f
+#define FONT_BATTLE_SETTINGS_LABEL_X \
+    (92.0f + FONT_SETTINGS_X_OFFSET + 0.8f)
 #define FONT_BATTLE_SETTINGS_LABEL_WIDTH 158u
 
 /* NUN5 left edge and width for Practice Settings labels. */
-#define FONT_PRACTICE_SETTINGS_LABEL_X 92.0f
+#define FONT_PRACTICE_SETTINGS_LABEL_X (92.0f + FONT_SETTINGS_X_OFFSET)
 #define FONT_PRACTICE_SETTINGS_LABEL_WIDTH 150u
 
 /* NUN5 left edge and width for both settings value columns. */
-#define FONT_SETTINGS_VALUE_X 303.25f
+#define FONT_SETTINGS_VALUE_X (303.25f + FONT_SETTINGS_X_OFFSET)
 #define FONT_SETTINGS_VALUE_WIDTH 104u
 
 /* NUN5 uses one 104-unit box; descriptive phrases retain their accepted fit. */
@@ -152,12 +163,15 @@ typedef signed int s32;
 #define FONT_SETTINGS_NUMERIC_VALUE_GLYPH_HEIGHT 26.0f
 
 /* Shared row baselines; selected labels use the taller selected glyph pass. */
-#define FONT_BATTLE_SETTINGS_ROW_Y_OFFSET 1.0f
+#define FONT_BATTLE_SETTINGS_ROW_Y_OFFSET 0.0f
+#define FONT_BATTLE_SETTINGS_SELECTED_Y_OFFSET -0.8f
+#define FONT_BATTLE_SETTINGS_ORDINARY_Y_OFFSET 1.6f
+#define FONT_BATTLE_SETTINGS_VALUE_Y_OFFSET 0.8f
 #define FONT_PRACTICE_SETTINGS_ROW_Y_OFFSET 0.75f
 #define FONT_SETTINGS_SELECTED_Y_OFFSET 1.5f
 
 /* NUN5 left edge and width for the Practice Settings section heading. */
-#define FONT_PRACTICE_SETTINGS_HEADING_X 84.0f
+#define FONT_PRACTICE_SETTINGS_HEADING_X (84.0f + FONT_SETTINGS_X_OFFSET)
 #define FONT_PRACTICE_SETTINGS_HEADING_WIDTH 158u
 
 /* Native one-line height retained by every Settings row adapter. */
@@ -165,21 +179,30 @@ typedef signed int s32;
 
 /* === Ninja Song objective and arithmetic rows === */
 
-/* NUN5 objective text box geometry relative to the native NA2 origin. */
-#define FONT_NINJA_OBJECTIVE_X_OFFSET -10.0f
-#define FONT_NINJA_OBJECTIVE_WRAP_WIDTH 300u
+/* NUN5 objective row geometry converted to NA2 renderer coordinates. */
+#define FONT_NINJA_OBJECTIVE_INDEX_ORIGIN_X 81.6f
+#define FONT_NINJA_OBJECTIVE_INDEX_LEADING_SPACE_OFFSET 5.6f
+#define FONT_NINJA_OBJECTIVE_MARKER_ORIGIN_X 88.0f
+#define FONT_NINJA_OBJECTIVE_PROSE_X 113.6f
+#define FONT_NINJA_OBJECTIVE_INDEX_Y_OFFSET 0.8f
+#define FONT_NINJA_OBJECTIVE_MARKER_Y_OFFSET -1.6f
+#define FONT_NINJA_OBJECTIVE_PROSE_Y_OFFSET 0.8f
+#define FONT_NINJA_OBJECTIVE_Y_OFFSET -9.6f
 #define FONT_NINJA_OBJECTIVE_WIDTH 288u
+#define FONT_NINJA_OBJECTIVE_HEIGHT 32u
 #define FONT_NINJA_OBJECTIVE_LINE_LIMIT 2u
+/* Layout-only height reproduces donor line-count centering; glyphs stay native. */
+#define FONT_NINJA_OBJECTIVE_LAYOUT_LINE_HEIGHT 12.8f
+/* Visible baselines retain the donor's full 16-unit separation. */
 #define FONT_NINJA_OBJECTIVE_LINE_ADVANCE 16.0f
-#define FONT_NINJA_OBJECTIVE_GLYPH_HEIGHT 20.0f
 
 /* NUN5 arithmetic positions relative to the shared formula origin. */
 #define FONT_NINJA_FORMULA_Y_OFFSET 0.975f
-#define FONT_NINJA_HITS_X_OFFSET 176.0f
-#define FONT_NINJA_HITS_Y_OFFSET -6.0f
-#define FONT_NINJA_HITS_SCALE_X 0.62f
-#define FONT_NINJA_HITS_WIDTH 52u
-#define FONT_NINJA_HITS_HEIGHT 32u
+#define FONT_NINJA_UNIT_X_OFFSET 176.0f
+#define FONT_NINJA_UNIT_Y_OFFSET -6.0f
+#define FONT_NINJA_UNIT_SCALE_X 0.62f
+#define FONT_NINJA_UNIT_WIDTH 52u
+#define FONT_NINJA_UNIT_HEIGHT 32u
 #define FONT_NINJA_EQUALS_X_OFFSET 227.0f
 #define FONT_NINJA_TOTAL_X_OFFSET 263.4f
 #define FONT_NINJA_TOTAL_WIDTH 64u
@@ -192,6 +215,8 @@ typedef signed int s32;
 #define FONT_NINJA_MULTIPLY_POINTER_ADDRESS 0x00899A90u
 #define FONT_NINJA_EQUALS_POINTER_ADDRESS 0x00899A94u
 #define FONT_NINJA_EMPTY_POINTER_ADDRESS 0x00899A98u
+#define FONT_NINJA_MARKER_POINTER_ADDRESS 0x00899A9Cu
+#define FONT_NINJA_INDEX_TABLE_ADDRESS 0x008993E0u
 #define FONT_NINJA_UNIT_TABLE_ADDRESS 0x00899AE0u
 #define FONT_NINJA_MULTIPLIER_TABLE_ADDRESS 0x008C3CB0u
 #define FONT_NINJA_RENDERER_FLAGS_OFFSET 0x70u
@@ -199,13 +224,13 @@ typedef signed int s32;
 /* === Command Chart: title === */
 
 /* Left edge of the Command Chart title; increase to move it right. */
-#define FONT_COMMAND_TITLE_BOX_X 27.2f
+#define FONT_COMMAND_TITLE_BOX_X 30.4f
 
 /* Title width; larger values shrink less and permit longer titles. */
 #define FONT_COMMAND_TITLE_BOX_WIDTH 288u
 
 /* Added to the native title Y; more negative moves the title up. */
-#define FONT_COMMAND_TITLE_Y_OFFSET -3.8f
+#define FONT_COMMAND_TITLE_Y_OFFSET -0.6f
 
 /* === Command Chart: relationship descriptions and inline icons === */
 
@@ -213,10 +238,10 @@ typedef signed int s32;
 #define FONT_COMMAND_TEXT_TABLE_ADDRESS 0x008BD1D0u
 
 /* Left edge of wrapped relationship text; increase to move it right. */
-#define FONT_COMMAND_RELATION_BOX_X 43.2f
+#define FONT_COMMAND_RELATION_BOX_X 46.4f
 
 /* Added to wrapped-block Y; more negative moves multiline text up. */
-#define FONT_COMMAND_RELATION_Y_OFFSET -11.5f
+#define FONT_COMMAND_RELATION_Y_OFFSET -9.9f
 
 /* Added only to fitting one-line relationship text; more negative moves it up. */
 #define FONT_COMMAND_RELATION_SINGLE_LINE_Y_OFFSET -8.0f
@@ -251,19 +276,19 @@ typedef signed int s32;
 #define FONT_JUTSU_BOX_HEIGHT 32u
 
 /* Horizontal correction for the left list; more negative moves rows left. */
-#define FONT_JUTSU_LEFT_X_OFFSET -8.0f
+#define FONT_JUTSU_LEFT_X_OFFSET -5.6f
 
 /* Horizontal correction for the right list; more negative moves rows left. */
 #define FONT_JUTSU_RIGHT_X_OFFSET -4.0f
 
 /* Draw-width multiplier shared by one-line and wrapped Jutsu-title rows. */
-#define FONT_JUTSU_HORIZONTAL_SCALE 0.96f
+#define FONT_JUTSU_HORIZONTAL_SCALE 1.0f
 
 /* Vertical correction for fitting one-line rows; more negative moves them up. */
-#define FONT_JUTSU_SINGLE_LINE_Y_OFFSET -4.0f
+#define FONT_JUTSU_SINGLE_LINE_Y_OFFSET -1.6f
 
 /* Applied only to wrapped blocks; more negative moves the block up. */
-#define FONT_JUTSU_Y_OFFSET -6.5f
+#define FONT_JUTSU_Y_OFFSET -5.7f
 
 /* Native X below this value is classified as the left-side list. */
 #define FONT_JUTSU_SIDE_THRESHOLD 256.0f
@@ -277,52 +302,44 @@ typedef signed int s32;
 /* Target maximum line count for adaptive wrapping. */
 #define FONT_JUTSU_LINE_LIMIT 2u
 
-/* Higher values widen the retry box more aggressively after a third line appears. */
-#define FONT_JUTSU_OVERFLOW_WIDTH_FACTOR 0.4f
+/* Shared NUN5 overflow retry used by constrained two-line list families. */
+#define FONT_WRAP_OVERFLOW_WIDTH_FACTOR 0.4f
+#define FONT_WRAP_WIDTH_STEP 16.0f
 
-/* Extra width added per retry until the title fits within the line limit. */
-#define FONT_JUTSU_WRAP_WIDTH_STEP 16.0f
+/* === Collection: shared list-family classification === */
 
-/* === Collection: Movie and character move-list classification === */
+/* Fixed native centered Collection character-header draw; do not tune. */
+#define FONT_COLLECTION_HEADER_DRAW_ADDRESS 0x00379240u
 
-/* First text address classified as a Movie row; fixed identity boundary. */
-#define FONT_COLLECTION_MOVIE_TEXT_START 0x003FFAA0u
+/* Shared Collection list-row raster origin. */
+#define FONT_COLLECTION_X_OFFSET 1.2f
 
-/* Exclusive end of the Movie-row text range; fixed identity boundary. */
-#define FONT_COLLECTION_MOVIE_TEXT_END 0x003FFC10u
+/* All three character-header callers share one centered-plaque X origin. */
+#define FONT_COLLECTION_HEADER_X_OFFSET 1.6f
 
-/* Fixed first narrow Figure-row text pointer; not a position value. */
-#define FONT_CHARACTER_MOVE_152_TEXT_0 0x006D9BD8u
+/* Figure and Music share one corrected direct-draw vertical origin. */
+#define FONT_COLLECTION_FIGURE_MUSIC_HEADER_Y_OFFSET -5.0f
 
-/* Fixed second narrow Figure-row text pointer; not a position value. */
-#define FONT_CHARACTER_MOVE_152_TEXT_1 0x006D9C00u
+/* The parent Jutsu plaque starts seven output pixels below its NUN5 homolog. */
+#define FONT_COLLECTION_JUTSU_HEADER_Y_OFFSET -5.6f
 
-/* Fixed third narrow Figure-row text pointer; not a position value. */
-#define FONT_CHARACTER_MOVE_152_TEXT_2 0x006D9C40u
+/* Figure rows are the only target family whose native X is above this. */
+#define FONT_COLLECTION_NARROW_X_THRESHOLD 320.0f
 
-/* Fixed first wide character-list text pointer; not a position value. */
-#define FONT_CHARACTER_MOVE_192_TEXT_0 0x006DC340u
-
-/* Fixed second wide character-list text pointer; not a position value. */
-#define FONT_CHARACTER_MOVE_192_TEXT_1 0x006DC370u
-
-/* Fixed third wide character-list text pointer; not a position value. */
-#define FONT_CHARACTER_MOVE_192_TEXT_2 0x006DC3A0u
-
-/* Fixed fourth wide character-list text pointer; not a position value. */
-#define FONT_CHARACTER_MOVE_192_TEXT_3 0x006DC3C0u
+/* Every other target list is right of this; companion lists remain native. */
+#define FONT_COLLECTION_WIDE_X_THRESHOLD 256.0f
 
 /* Added to wrapped Collection rows; more negative moves the block up. */
-#define FONT_COLLECTION_LIST_BOX_Y_OFFSET -10.0f
+#define FONT_COLLECTION_LIST_BOX_Y_OFFSET -8.0f
 
-/* Movie-list wrap width; larger values wrap later. */
-#define FONT_COLLECTION_MOVIE_BOX_WIDTH 192u
+/* Fitting target rows share the same native-origin vertical correction. */
+#define FONT_COLLECTION_SINGLE_LINE_Y_OFFSET -4.0f
 
 /* Narrow Figure-page wrap width; larger values wrap later. */
-#define FONT_CHARACTER_MOVE_152_BOX_WIDTH 152u
+#define FONT_COLLECTION_NARROW_BOX_WIDTH 152u
 
-/* Wide character-page wrap width; larger values wrap later. */
-#define FONT_CHARACTER_MOVE_192_BOX_WIDTH 192u
+/* Shared wide-list wrap width; larger values wrap later. */
+#define FONT_COLLECTION_WIDE_BOX_WIDTH 192u
 
 /* Collection row box height used for vertical block placement. */
 #define FONT_COLLECTION_LIST_BOX_HEIGHT 32u
@@ -363,14 +380,29 @@ typedef signed int s32;
 /* Pause label box height used for vertical centering. */
 #define FONT_PAUSE_LIST_BOX_HEIGHT 20u
 
+/* Shared ordinary/selected Pause Controls row-origin correction. */
+#define FONT_PAUSE_LIST_X_OFFSET 1.6f
+
 /* Added to every Pause Controls row Y; more negative moves rows up. */
-#define FONT_PAUSE_LIST_Y_OFFSET -4.0f
+#define FONT_PAUSE_LIST_Y_OFFSET -2.4f
 
 /* Extra X correction for the selected red row; positive moves it right. */
-#define FONT_PAUSE_LIST_SELECTED_X_OFFSET 2.0f
+#define FONT_PAUSE_LIST_SELECTED_X_OFFSET 0.0f
 
 /* Single-row layout height for Pause Controls labels. */
 #define FONT_PAUSE_LIST_LINE_HEIGHT 20.0f
+
+/* === Character Select: Linked Mode choices === */
+
+/* Both choices share one centered horizontal-scale correction. */
+#define FONT_LINKED_CHOICE_SCALE_X 1.05f
+
+/* The native Linked selected helper always chooses the red selected style. */
+#define FONT_LINKED_CHOICE_SELECTED_COLOR 0xFF0000D4u
+
+/* One-line choice geometry; the native caller supplies the shared row Y. */
+#define FONT_LINKED_CHOICE_BOX_HEIGHT 20u
+#define FONT_LINKED_CHOICE_LINE_HEIGHT 20.0f
 
 /* === Character Select: player-mode option list === */
 
@@ -380,8 +412,15 @@ typedef signed int s32;
 /* Option-row box height used for vertical centering. */
 #define FONT_CHARACTER_LIST_BOX_HEIGHT 20u
 
-/* Added to ordinary option-row X; positive moves rows right. */
-#define FONT_CHARACTER_LIST_X_OFFSET 5.0f
+/* Added to every native option-row X; positive moves the row right. */
+#define FONT_CHARACTER_LIST_X_OFFSET 5.8f
+
+/* Selected helper consumes integer coordinates, so use the nearest integer. */
+#define FONT_CHARACTER_LIST_SELECTED_X_OFFSET 6
+
+/* The fifth structural row is a separate footer group below the options. */
+#define FONT_CHARACTER_LIST_FOOTER_Y_THRESHOLD 96.0f
+#define FONT_CHARACTER_LIST_SELECTED_FOOTER_Y_OFFSET (-2)
 
 /* Single-row layout height for Character Select options. */
 #define FONT_CHARACTER_LIST_LINE_HEIGHT 20.0f
@@ -394,11 +433,21 @@ typedef signed int s32;
 /* Exact native Y bit pattern identifying the ordinary No row. */
 #define FONT_QUIT_NO_SOURCE_BITS 0x42600000u
 
+/* Shared residual correction for the first row of confirmation selectors. */
+#define FONT_CONFIRMATION_YES_X_OFFSET 0.0f
+#define FONT_CONFIRMATION_YES_Y_OFFSET 0.0f
+
+/* Selected confirmations retain one output-pixel vertical style residual. */
+#define FONT_CONFIRMATION_SELECTED_Y_OFFSET (-0.8f)
+
+/* Character Select's confirmation container is one output pixel lower. */
+#define FONT_CHARACTER_CONFIRMATION_Y_OFFSET (-0.8f)
+
 /* Target local Yes X; increase to move Yes right. */
-#define FONT_QUIT_YES_X 64.5f
+#define FONT_QUIT_YES_X (64.5f + FONT_CONFIRMATION_YES_X_OFFSET)
 
 /* Target local Yes Y; increase to move Yes down. */
-#define FONT_QUIT_YES_Y 31.5f
+#define FONT_QUIT_YES_Y (31.5f + FONT_CONFIRMATION_YES_Y_OFFSET)
 
 /* Target local No X; increase to move No right. */
 #define FONT_QUIT_NO_X 68.5f
@@ -407,10 +456,12 @@ typedef signed int s32;
 #define FONT_QUIT_NO_Y 49.0f
 
 /* Collection-local Yes X; increase to move Yes right. */
-#define FONT_COLLECTION_YES_X 64.2f
+#define FONT_COLLECTION_YES_X \
+    (64.2f + FONT_CONFIRMATION_YES_X_OFFSET)
 
 /* Collection-local Yes Y; increase to move Yes down. */
-#define FONT_COLLECTION_YES_Y 29.85f
+#define FONT_COLLECTION_YES_Y \
+    (29.85f + FONT_CONFIRMATION_YES_Y_OFFSET)
 
 /* Collection-local No X; increase to move No right. */
 #define FONT_COLLECTION_NO_X 68.1f
@@ -420,6 +471,9 @@ typedef signed int s32;
 
 /* Marks the body-to-choice interval of the Collection exit prompt. */
 #define FONT_COLLECTION_CHOICE_SCOPE 2u
+
+/* Separates Character Select's structurally lower confirmation container. */
+#define FONT_CHARACTER_CHOICE_SCOPE 3u
 
 /* Mode Select bottom-body X origin; larger values move it right. */
 #define FONT_MODE_SELECT_BODY_BOX_X 24.0f
@@ -439,29 +493,39 @@ typedef signed int s32;
 /* Mode Select bottom body is intentionally limited to one line. */
 #define FONT_MODE_SELECT_BODY_LINE_LIMIT 1u
 
+/* === Shared Save/overwrite/return-title confirmation positions === */
+
+/* Stack-local draw records constructed by native FUN_001E6CE0. */
+#define FONT_SAVE_YES_RECORD_STACK_OFFSET 0x60u
+#define FONT_SAVE_NO_RECORD_STACK_OFFSET 0x50u
+
+/* NUN5-matched local positions for the shared two-choice component. */
+#define FONT_SAVE_YES_X 183.2f
+#define FONT_SAVE_YES_Y 92.0f
+#define FONT_SAVE_NO_X 256.2f
+#define FONT_SAVE_NO_Y 92.0f
+
 /* Fixed runtime pointer identifying Special Controls ON. */
 #define FONT_SPECIAL_ON_TEXT 0x006059F0u
 
 /* Fixed runtime pointer identifying Special Controls OFF. */
 #define FONT_SPECIAL_OFF_TEXT 0x006059F8u
 
-/* Special Controls ON local X; increase to move it right. */
-#define FONT_SPECIAL_ON_X 66.0f
+/* Native source Y values identify the two structural selector rows. */
+#define FONT_SPECIAL_ROW_0_SOURCE_Y_BITS 0x41C00000u
+#define FONT_SPECIAL_ROW_1_SOURCE_Y_BITS 0x42600000u
 
-/* Special Controls ON local Y; increase to move it down. */
-#define FONT_SPECIAL_ON_Y 31.0f
-
-/* Special Controls OFF local X; increase to move it right. */
-#define FONT_SPECIAL_OFF_X 59.0f
-
-/* Special Controls OFF local Y; increase to move it down. */
-#define FONT_SPECIAL_OFF_Y 49.0f
+/* Shared two-row formula; neither coordinate follows the selected text. */
+#define FONT_SPECIAL_ROW_X 68.4f
+#define FONT_SPECIAL_ROW_X_INTERVAL -7.0f
+#define FONT_SPECIAL_ROW_Y 29.0f
+#define FONT_SPECIAL_ROW_Y_INTERVAL 20.0f
 
 /* Shared font-only geometry for both Special Controls choices. */
 #define FONT_SPECIAL_CHOICE_BOX_WIDTH 104u
 #define FONT_SPECIAL_CHOICE_BOX_HEIGHT 20u
 #define FONT_SPECIAL_CHOICE_LINE_HEIGHT 20.0f
-#define FONT_SPECIAL_CHOICE_SELECTED_X_OFFSET 1.0f
+#define FONT_SPECIAL_CHOICE_SELECTED_X_OFFSET 0.0f
 #define FONT_SPECIAL_CHOICE_SELECTED_SCALE_X 1.02f
 #define FONT_SPECIAL_CHOICE_UNSELECTED_SCALE_X 1.01f
 #define FONT_SPECIAL_CHOICE_GLYPH_HEIGHT 26.0f
@@ -469,7 +533,7 @@ typedef signed int s32;
 /* === Battle/Practice quit-confirmation body === */
 
 /* Quit prompt body left edge; increase to move the body right. */
-#define FONT_QUIT_BODY_BOX_X 19.0f
+#define FONT_QUIT_BODY_BOX_X 25.4f
 
 /* Quit prompt body top edge; increase to move the body down. */
 #define FONT_QUIT_BODY_BOX_Y 12.0f
@@ -509,7 +573,7 @@ typedef signed int s32;
 /* === Special Controls explanatory body === */
 
 /* Special Controls body left edge; increase to move it right. */
-#define FONT_SPECIAL_BODY_BOX_X 24.0f
+#define FONT_SPECIAL_BODY_BOX_X 26.0f
 
 /* Special Controls body top edge; increase to move it down. */
 #define FONT_SPECIAL_BODY_BOX_Y 12.0f
@@ -563,10 +627,14 @@ typedef signed int s32;
 #define FONT_PRACTICE_TEXT_TABLE_ADDRESS 0x008BD510u
 
 /* Practice explanation left edge; increase to move the block right. */
-#define FONT_PRACTICE_BOX_X 39.2f
+#define FONT_PRACTICE_BOX_X 40.8f
 
 /* Added to native explanation Y; increase to move the block down. */
 #define FONT_PRACTICE_BOX_Y_OFFSET 21.2f
+
+/* NUN5 centers one- and two-line mixed rows at distinct vertical phases. */
+#define FONT_PRACTICE_SINGLE_LINE_Y_OFFSET 5.6f
+#define FONT_PRACTICE_TWO_LINE_Y_OFFSET 3.2f
 
 /* Explanation width; larger values wrap later. */
 #define FONT_PRACTICE_BOX_WIDTH 364u
@@ -755,6 +823,12 @@ extern int font_v2_special_controls_body_callback(
     u32 arg1,
     u32 arg2,
     u32 arg3
+);
+static int font_v2_collection_body_callback(
+    u32 object,
+    const u8 *text,
+    u32 arg2,
+    FontV2Session *session
 );
 extern u32 font_v2_native_measure_callback(const u8 *text);
 extern void font_v2_practice_icon_draw_callback(
@@ -1037,8 +1111,10 @@ int font_v2_controls_adapter(
     FontV2Session session;
 
     session.text = text;
-    session.box_x = center_x - (float)(FONT_CONTROLS_BOX_WIDTH / 2u);
-    session.box_y = draw_y;
+    session.box_x =
+        center_x - (float)(FONT_CONTROLS_BOX_WIDTH / 2u) +
+        FONT_CONTROLS_X_OFFSET;
+    session.box_y = draw_y + FONT_CONTROLS_Y_OFFSET;
     session.box_width = FONT_CONTROLS_BOX_WIDTH;
     session.box_height = FONT_CONTROLS_BOX_HEIGHT;
     session.horizontal_alignment = FONT_V2_ALIGN_CENTER;
@@ -1137,7 +1213,7 @@ int font_v2_pause_list_adapter(
     FontV2Session session;
 
     session.text = text;
-    session.box_x = native_x;
+    session.box_x = native_x + FONT_PAUSE_LIST_X_OFFSET;
     session.box_y = native_y + FONT_PAUSE_LIST_Y_OFFSET;
     session.box_width = FONT_PAUSE_LIST_BOX_WIDTH;
     session.box_height = FONT_PAUSE_LIST_BOX_HEIGHT;
@@ -1168,7 +1244,9 @@ int font_v2_pause_list_selected_impl(
 
     color_bits.u = color;
     session.text = text;
-    session.box_x = (float)native_x + FONT_PAUSE_LIST_SELECTED_X_OFFSET;
+    session.box_x =
+        (float)native_x + FONT_PAUSE_LIST_X_OFFSET +
+        FONT_PAUSE_LIST_SELECTED_X_OFFSET;
     session.box_y = (float)native_y + FONT_PAUSE_LIST_Y_OFFSET;
     session.box_width = FONT_PAUSE_LIST_BOX_WIDTH;
     session.box_height = FONT_PAUSE_LIST_BOX_HEIGHT;
@@ -1187,6 +1265,102 @@ int font_v2_pause_list_selected_impl(
     return font_v2_adapter_call(&session);
 }
 
+static FONT_V2_SECTION(".text.font_v2_linked_choice_session_prepare")
+int font_v2_linked_choice_session_prepare(
+    FontV2Session *session,
+    const u8 *text,
+    float native_x,
+    float native_y,
+    u32 callback
+) {
+    u32 measured_width;
+    u32 line_count;
+
+    if (
+        font_v2_measure(text, 0u, &measured_width, &line_count) != 0 ||
+        measured_width == 0u ||
+        line_count != 1u
+    ) {
+        return -1;
+    }
+
+    session->text = text;
+    session->box_x = native_x;
+    session->box_y = native_y;
+    session->box_width = measured_width;
+    session->box_height = FONT_LINKED_CHOICE_BOX_HEIGHT;
+    session->horizontal_alignment = FONT_V2_ALIGN_CENTER;
+    session->vertical_alignment = FONT_V2_ALIGN_START;
+    session->flags =
+        FONT_V2_FLAG_FIXED_SCALE_X | FONT_V2_FLAG_PREMEASURED;
+    session->line_limit = 1u;
+    session->line_height = FONT_LINKED_CHOICE_LINE_HEIGHT;
+    session->callback = callback;
+    session->measured_width = measured_width;
+    session->line_count = line_count;
+    session->scale_x = FONT_LINKED_CHOICE_SCALE_X;
+    return 0;
+}
+
+FONT_V2_SECTION(".text.font_v2_linked_choice_selected_impl")
+int font_v2_linked_choice_selected_impl(
+    u32 arg0,
+    s32 native_x,
+    s32 native_y,
+    const u8 *text,
+    u32 ignored_color
+) {
+    FontV2Session session;
+    FontV2Bits color_bits;
+
+    (void)ignored_color;
+
+    if (font_v2_linked_choice_session_prepare(
+            &session,
+            text,
+            (float)native_x,
+            (float)native_y,
+            (u32)font_v2_pause_list_selected_callback
+        ) != 0) {
+        return -1;
+    }
+
+    color_bits.u = FONT_LINKED_CHOICE_SELECTED_COLOR;
+    session.callback_arg0 = arg0;
+    session.callback_arg1 = (u32)native_x;
+    session.callback_arg2 = (u32)native_y;
+    session.callback_arg3 = (u32)&session;
+    session.glyph_height = color_bits.f;
+    return font_v2_adapter_call(&session);
+}
+
+FONT_V2_SECTION(".text.font_v2_linked_choice_unselected_adapter")
+int font_v2_linked_choice_unselected_adapter(
+    u32 arg0,
+    const u8 *text,
+    u32 arg2,
+    float native_x,
+    float native_y
+) {
+    FontV2Session session;
+
+    if (font_v2_linked_choice_session_prepare(
+            &session,
+            text,
+            native_x,
+            native_y,
+            (u32)font_v2_pause_list_callback
+        ) != 0) {
+        return -1;
+    }
+
+    session.callback_arg0 = arg0;
+    session.callback_arg1 = (u32)text;
+    session.callback_arg2 = arg2;
+    session.callback_arg3 = (u32)&session;
+    return font_v2_adapter_call(&session);
+}
+
 FONT_V2_SECTION(".text.font_v2_character_selected_adapter")
 int font_v2_character_selected_adapter(
     u32 object,
@@ -1195,11 +1369,16 @@ int font_v2_character_selected_adapter(
     const u8 *text
 ) {
     FontV2Session session;
+    s32 selected_y = draw_y;
+
+    if ((float)selected_y > FONT_CHARACTER_LIST_FOOTER_Y_THRESHOLD) {
+        selected_y += FONT_CHARACTER_LIST_SELECTED_FOOTER_Y_OFFSET;
+    }
 
     session.text = text;
     session.box_x =
-        (float)draw_x + FONT_CHARACTER_LIST_X_OFFSET;
-    session.box_y = (float)draw_y;
+        (float)draw_x + (float)FONT_CHARACTER_LIST_SELECTED_X_OFFSET;
+    session.box_y = (float)selected_y;
     session.box_width = FONT_CHARACTER_LIST_BOX_WIDTH;
     session.box_height = FONT_CHARACTER_LIST_BOX_HEIGHT;
     session.horizontal_alignment = FONT_V2_ALIGN_START;
@@ -1210,8 +1389,8 @@ int font_v2_character_selected_adapter(
     session.callback = FONT_CHARACTER_SELECTED_DRAW_ADDRESS;
     session.callback_arg0 = object;
     session.callback_arg1 =
-        (u32)(draw_x + (s32)FONT_CHARACTER_LIST_X_OFFSET);
-    session.callback_arg2 = (u32)draw_y;
+        (u32)(draw_x + FONT_CHARACTER_LIST_SELECTED_X_OFFSET);
+    session.callback_arg2 = (u32)selected_y;
     session.callback_arg3 = (u32)text;
 
     return font_v2_adapter_call(&session);
@@ -1252,6 +1431,13 @@ u32 font_v2_quit_scope_enter(void) {
     if (previous != FONT_COLLECTION_CHOICE_SCOPE) {
         font_v2_quit_active = 1;
     }
+    return previous;
+}
+
+FONT_V2_SECTION(".text.font_v2_character_scope_enter")
+u32 font_v2_character_scope_enter(void) {
+    u32 previous = font_v2_quit_active;
+    font_v2_quit_active = FONT_CHARACTER_CHOICE_SCOPE;
     return previous;
 }
 
@@ -1303,14 +1489,28 @@ u32 font_v2_map_choice(
         } else {
             return 0;
         }
-    } else if (text == FONT_SPECIAL_ON_TEXT) {
-        x.f = FONT_SPECIAL_ON_X;
-        y.f = FONT_SPECIAL_ON_Y;
-    } else if (text == FONT_SPECIAL_OFF_TEXT) {
-        x.f = FONT_SPECIAL_OFF_X;
-        y.f = FONT_SPECIAL_OFF_Y;
+    } else if (
+        text == FONT_SPECIAL_ON_TEXT || text == FONT_SPECIAL_OFF_TEXT
+    ) {
+        u32 row;
+
+        if (source_y == FONT_SPECIAL_ROW_0_SOURCE_Y_BITS) {
+            row = 0u;
+        } else if (source_y == FONT_SPECIAL_ROW_1_SOURCE_Y_BITS) {
+            row = 1u;
+        } else {
+            return 0;
+        }
+        x.f = FONT_SPECIAL_ROW_X +
+            (float)(s32)row * FONT_SPECIAL_ROW_X_INTERVAL;
+        y.f = FONT_SPECIAL_ROW_Y +
+            (float)(s32)row * FONT_SPECIAL_ROW_Y_INTERVAL;
     } else {
         return 0;
+    }
+
+    if (font_v2_quit_active == FONT_CHARACTER_CHOICE_SCOPE) {
+        y.f += FONT_CHARACTER_CONFIRMATION_Y_OFFSET;
     }
 
     *target_x = x.u;
@@ -1327,10 +1527,39 @@ u32 font_v2_quit_selected_map(
 ) {
     u32 target_x = source_x;
     u32 mapped_y = source_y;
+    FontV2Bits selected_y;
 
-    font_v2_map_choice(text, source_y, &target_x, &mapped_y);
+    if (font_v2_map_choice(text, source_y, &target_x, &mapped_y)) {
+        if (font_v2_quit_active != FONT_CHARACTER_CHOICE_SCOPE) {
+            selected_y.u = mapped_y;
+            selected_y.f += FONT_CONFIRMATION_SELECTED_Y_OFFSET;
+            mapped_y = selected_y.u;
+        }
+    }
     *target_y = mapped_y;
     return target_x;
+}
+
+FONT_V2_SECTION(".text.font_v2_save_choices_prepare")
+void font_v2_save_choices_prepare(
+    u32 renderer_address,
+    u32 renderer_mode,
+    u32 caller_stack
+) {
+    FontV2NativeInitialize initialize =
+        (FontV2NativeInitialize)FONT_INITIALIZE_ADDRESS;
+    volatile float *yes = (volatile float *)(
+        caller_stack + FONT_SAVE_YES_RECORD_STACK_OFFSET
+    );
+    volatile float *no = (volatile float *)(
+        caller_stack + FONT_SAVE_NO_RECORD_STACK_OFFSET
+    );
+
+    initialize(renderer_address, renderer_mode);
+    yes[0] = FONT_SAVE_YES_X;
+    yes[1] = FONT_SAVE_YES_Y;
+    no[0] = FONT_SAVE_NO_X;
+    no[1] = FONT_SAVE_NO_Y;
 }
 
 static FONT_V2_SECTION(".text.font_v2_special_choice_session_init")
@@ -1559,6 +1788,124 @@ int font_v2_wrap_native(
     return 0;
 }
 
+static FONT_V2_SECTION(".text.font_v2_wrap_retry")
+int font_v2_wrap_retry(
+    u8 *buffer,
+    const u8 *text,
+    u32 box_width,
+    u32 line_limit,
+    u32 *measured_width,
+    u32 *line_count
+) {
+    volatile u32 *renderer_words =
+        *(volatile u32 **)FONT_RENDERER_POINTER_ADDRESS;
+    float wrap_width;
+    u32 index = 0u;
+
+    if (
+        !buffer || !text || !line_limit ||
+        !measured_width || !line_count
+    ) {
+        return -1;
+    }
+
+    while (index < FONT_BODY_BUFFER_SIZE - 1u && text[index]) {
+        buffer[index] = text[index];
+        index += 1u;
+    }
+    buffer[index] = 0u;
+    if (
+        font_v2_wrap_native(
+            buffer,
+            box_width,
+            0u,
+            measured_width,
+            line_count
+        )
+    ) {
+        return -1;
+    }
+
+    if (*line_count > line_limit) {
+        u8 *cursor = buffer;
+        u8 *line_start = cursor;
+        u32 line_index = 0u;
+        u32 overflow_width = 0u;
+        u32 overflow_lines = 0u;
+        u32 saved_tracking = 0u;
+
+        if (renderer_words) {
+            saved_tracking = renderer_words[
+                FONT_RENDERER_TRACKING_OFFSET / sizeof(u32)
+            ];
+            renderer_words[
+                FONT_RENDERER_TRACKING_OFFSET / sizeof(u32)
+            ] = 0u;
+        }
+        for (;;) {
+            if (!*cursor || *cursor == (u8)'\n') {
+                u8 saved = *cursor;
+            if (saved) {
+                *cursor = 0u;
+            }
+                if (line_index >= line_limit) {
+                    overflow_width += font_v2_native_measure(line_start);
+                    overflow_lines += 1u;
+                }
+                *cursor = saved;
+                if (!saved) {
+                    break;
+                }
+                cursor += 1;
+                line_start = cursor;
+                line_index += 1u;
+            } else {
+                cursor += 1;
+            }
+        }
+        if (renderer_words) {
+            renderer_words[
+                FONT_RENDERER_TRACKING_OFFSET / sizeof(u32)
+            ] = saved_tracking;
+        }
+
+        wrap_width = (float)(s32)box_width;
+        if (overflow_lines) {
+            wrap_width +=
+                (
+                    (float)(s32)overflow_width /
+                    (float)(s32)overflow_lines
+                ) * FONT_WRAP_OVERFLOW_WIDTH_FACTOR;
+        }
+
+        do {
+            index = 0u;
+            while (
+                index < FONT_BODY_BUFFER_SIZE - 1u &&
+                text[index]
+            ) {
+                buffer[index] = text[index];
+                index += 1u;
+            }
+            buffer[index] = 0u;
+            if (
+                font_v2_wrap_native(
+                    buffer,
+                    (u32)wrap_width,
+                    0u,
+                    measured_width,
+                    line_count
+                )
+            ) {
+                return -1;
+            }
+            wrap_width += FONT_WRAP_WIDTH_STEP;
+        } while (*line_count > line_limit);
+    }
+
+    return 0;
+}
+
 static FONT_V2_SECTION(".text.font_v2_settings_label_callback")
 int font_v2_settings_label_callback(
     u32 text,
@@ -1678,7 +2025,10 @@ int font_v2_battle_settings_label_adapter(
         text,
         style,
         native_y + FONT_BATTLE_SETTINGS_ROW_Y_OFFSET +
-            (style ? FONT_SETTINGS_SELECTED_Y_OFFSET : 0.0f),
+            (style
+                ? FONT_SETTINGS_SELECTED_Y_OFFSET +
+                    FONT_BATTLE_SETTINGS_SELECTED_Y_OFFSET
+                : FONT_BATTLE_SETTINGS_ORDINARY_Y_OFFSET),
         FONT_BATTLE_SETTINGS_LABEL_X,
         FONT_BATTLE_SETTINGS_LABEL_WIDTH,
         0u,
@@ -1772,6 +2122,27 @@ int font_v2_settings_value_adapter(
         renderer[FONT_RENDERER_FLAGS_OFFSET] = saved_renderer_flags;
     }
     return result;
+}
+
+FONT_V2_SECTION(".text.font_v2_battle_settings_value_adapter")
+int font_v2_battle_settings_value_adapter(
+    const u8 *text,
+    u32 color,
+    float native_x,
+    float native_y
+) {
+    if (
+        !text || !*text ||
+        *text < (u8)'0' || *text > (u8)'9'
+    ) {
+        native_y += FONT_BATTLE_SETTINGS_VALUE_Y_OFFSET;
+    }
+    return font_v2_settings_value_adapter(
+        text,
+        color,
+        native_x,
+        native_y
+    );
 }
 
 FONT_V2_SECTION(".text.font_v2_practice_settings_heading_adapter")
@@ -1875,8 +2246,8 @@ int font_v2_ninja_compact_adapter(
     );
 }
 
-static FONT_V2_SECTION(".text.font_v2_ninja_hits_adapter")
-int font_v2_ninja_hits_adapter(
+static FONT_V2_SECTION(".text.font_v2_ninja_unit_adapter")
+int font_v2_ninja_unit_adapter(
     u32 renderer_address,
     const u8 *text
 ) {
@@ -1888,10 +2259,10 @@ int font_v2_ninja_hits_adapter(
         text,
         0.0f,
         0.0f,
-        FONT_NINJA_HITS_WIDTH,
-        FONT_NINJA_HITS_HEIGHT,
+        FONT_NINJA_UNIT_WIDTH,
+        FONT_NINJA_UNIT_HEIGHT,
         FONT_V2_ALIGN_START,
-        FONT_NINJA_HITS_SCALE_X
+        FONT_NINJA_UNIT_SCALE_X
     );
 }
 
@@ -1954,7 +2325,7 @@ void font_v2_ninja_arithmetic_template(
     s32 row_index
 ) {
     FontV2NativeSetColor set_color =
-        (FontV2NativeSetColor)FONT_SET_COLOR_ADDRESS;
+        (FontV2NativeSetColor)FONT_SET_RGBA_COLOR_ADDRESS;
     FontV2NativeSetPosition set_position =
         (FontV2NativeSetPosition)FONT_SET_POSITION_ADDRESS;
     u32 renderer_address = *(volatile u32 *)FONT_RENDERER_POINTER_ADDRESS;
@@ -2034,11 +2405,11 @@ void font_v2_ninja_arithmetic_template(
             (u32)*(s16 *)(descriptor + 2u)
         ];
         set_position(
-            native_x + FONT_NINJA_HITS_X_OFFSET,
-            native_y + FONT_NINJA_HITS_Y_OFFSET,
+            native_x + FONT_NINJA_UNIT_X_OFFSET,
+            native_y + FONT_NINJA_UNIT_Y_OFFSET,
             renderer_address
         );
-        font_v2_ninja_hits_adapter(renderer_address, unit_text);
+        font_v2_ninja_unit_adapter(renderer_address, unit_text);
 
         set_position(
             native_x + FONT_NINJA_EQUALS_X_OFFSET,
@@ -2061,105 +2432,6 @@ void font_v2_ninja_arithmetic_template(
     *renderer_flags = (*renderer_flags & (u8)0xF7u) | (u8)8u;
 }
 
-static FONT_V2_SECTION(".text.font_v2_ninja_objective_ascii_width")
-u32 font_v2_ninja_objective_ascii_width(const u8 *text) {
-    u32 width = 0u;
-
-    while (*text) {
-        u32 character = *text;
-        if (character < 0x20u || character > 0x7Eu) {
-            text += 1;
-            continue;
-        }
-        width += font_v2_ascii_widths[character - 0x20u];
-        text += 1;
-    }
-    return width;
-}
-
-static FONT_V2_SECTION(".text.font_v2_ninja_objective_wrap")
-int font_v2_ninja_objective_wrap(
-    u8 *text,
-    u32 box_width,
-    u32 line_limit,
-    u32 *measured_width,
-    u32 *line_count
-) {
-    u8 *cursor;
-    u8 *line_start;
-    u8 *last_space = (u8 *)0;
-    u32 lines = 1u;
-    u32 maximum_width = 0u;
-
-    if (!text || !measured_width || !line_count) {
-        return -1;
-    }
-    cursor = text;
-    line_start = text;
-    while (*cursor) {
-        if (*cursor == (u8)'\n') {
-            line_start = cursor + 1;
-            last_space = (u8 *)0;
-            lines += 1u;
-        } else if (
-            *cursor == (u8)' ' ||
-            *cursor < 0x20u ||
-            *cursor > 0x7Eu
-        ) {
-            u8 separator = *cursor;
-            u32 width;
-            *cursor = 0;
-            width = font_v2_ninja_objective_ascii_width(line_start);
-            *cursor = separator;
-            if (
-                width > box_width &&
-                (!line_limit || lines < line_limit)
-            ) {
-                u8 *wrap = last_space ? last_space : cursor;
-                *wrap = (u8)'\n';
-                line_start = wrap + 1;
-                lines += 1u;
-            }
-            last_space = cursor;
-        }
-        cursor += 1;
-    }
-
-    if (
-        font_v2_ninja_objective_ascii_width(line_start) > box_width &&
-        last_space &&
-        (!line_limit || lines < line_limit)
-    ) {
-        *last_space = (u8)'\n';
-        lines += 1u;
-    }
-
-    cursor = text;
-    line_start = text;
-    for (;;) {
-        if (!*cursor || *cursor == (u8)'\n') {
-            u8 saved = *cursor;
-            u32 width;
-            *cursor = 0;
-            width = font_v2_ninja_objective_ascii_width(line_start);
-            *cursor = saved;
-            if (width > maximum_width) {
-                maximum_width = width;
-            }
-            if (!saved) {
-                break;
-            }
-            cursor += 1;
-            line_start = cursor;
-        } else {
-            cursor += 1;
-        }
-    }
-    *measured_width = maximum_width;
-    *line_count = lines;
-    return 0;
-}
-
 static FONT_V2_SECTION(".text.font_v2_ninja_objective_callback")
 int font_v2_ninja_objective_callback(
     u32 text,
@@ -2180,14 +2452,15 @@ int font_v2_ninja_objective_callback(
             draw(
                 session->draw_x,
                 session->draw_y +
-                    (float)(s32)line_index * session->line_height,
+                    (float)(s32)line_index *
+                        FONT_NINJA_OBJECTIVE_LINE_ADVANCE,
                 line_start,
                 color
             );
-            *cursor = saved;
             if (!saved) {
                 break;
             }
+            *cursor = saved;
             line_index += 1u;
             cursor += 1;
             line_start = cursor;
@@ -2198,16 +2471,15 @@ int font_v2_ninja_objective_callback(
     return 0;
 }
 
-FONT_V2_SECTION(".text.font_v2_ninja_objective_adapter")
-int font_v2_ninja_objective_adapter(
+static FONT_V2_SECTION(".text.font_v2_ninja_objective_draw")
+int font_v2_ninja_objective_draw(
     const u8 *text,
     u32 color,
-    float native_x,
+    float box_x,
     float native_y
 ) {
     FontV2BodyFrame frame;
     u32 index = 0u;
-    u32 wrapped_lines;
 
     if (!text) {
         return -1;
@@ -2216,11 +2488,11 @@ int font_v2_ninja_objective_adapter(
         frame.buffer[index] = text[index];
         index += 1u;
     }
-    frame.buffer[index] = 0;
+    frame.buffer[index] = 0u;
     if (
-        font_v2_ninja_objective_wrap(
+        font_v2_wrap_native(
             frame.buffer,
-            FONT_NINJA_OBJECTIVE_WRAP_WIDTH,
+            FONT_NINJA_OBJECTIVE_WIDTH,
             FONT_NINJA_OBJECTIVE_LINE_LIMIT,
             &frame.session.measured_width,
             &frame.session.line_count
@@ -2228,29 +2500,92 @@ int font_v2_ninja_objective_adapter(
     ) {
         return -1;
     }
-    wrapped_lines = frame.session.line_count;
 
     frame.session.text = frame.buffer;
-    frame.session.box_x = native_x + FONT_NINJA_OBJECTIVE_X_OFFSET;
-    frame.session.box_y = native_y + (wrapped_lines == 1u ? 0.0f : -6.0f);
+    frame.session.box_x = box_x;
+    frame.session.box_y = native_y + FONT_NINJA_OBJECTIVE_Y_OFFSET;
     frame.session.box_width = FONT_NINJA_OBJECTIVE_WIDTH;
-    frame.session.box_height = (u32)FONT_NINJA_OBJECTIVE_GLYPH_HEIGHT;
+    frame.session.box_height = FONT_NINJA_OBJECTIVE_HEIGHT;
     frame.session.horizontal_alignment = FONT_V2_ALIGN_START;
-    frame.session.vertical_alignment = FONT_V2_ALIGN_START;
+    frame.session.vertical_alignment = FONT_V2_ALIGN_CENTER;
     frame.session.flags =
         FONT_V2_FLAG_NEWLINE_BYTES |
-        FONT_V2_FLAG_SEPARATE_LINE_ADVANCE |
         FONT_V2_FLAG_PREMEASURED;
-    frame.session.line_limit = 1u;
-    frame.session.line_count = 1u;
-    frame.session.line_height = FONT_NINJA_OBJECTIVE_LINE_ADVANCE;
-    frame.session.glyph_height = FONT_NINJA_OBJECTIVE_GLYPH_HEIGHT;
+    frame.session.line_limit = FONT_NINJA_OBJECTIVE_LINE_LIMIT;
+    frame.session.line_height = FONT_NINJA_OBJECTIVE_LAYOUT_LINE_HEIGHT;
     frame.session.callback = (u32)font_v2_ninja_objective_callback;
     frame.session.callback_arg0 = (u32)frame.buffer;
     frame.session.callback_arg1 = color;
     frame.session.callback_arg2 = 0u;
     frame.session.callback_arg3 = (u32)&frame.session;
     return font_v2_adapter_call(&frame.session);
+}
+
+FONT_V2_SECTION(".text.font_v2_ninja_objective_row_adapter")
+void font_v2_ninja_objective_row_adapter(
+    u32 page,
+    u32 row_record,
+    u32 display_index,
+    u32 row_y_bits
+) {
+    FontV2NativeSetPosition set_position =
+        (FontV2NativeSetPosition)FONT_SET_POSITION_ADDRESS;
+    FontV2NativeSetColor set_color =
+        (FontV2NativeSetColor)FONT_SET_INDEXED_COLOR_ADDRESS;
+    FontV2NativeTextDraw draw =
+        (FontV2NativeTextDraw)FONT_JUTSU_DRAW_ADDRESS;
+    u32 renderer_address = *(volatile u32 *)FONT_RENDERER_POINTER_ADDRESS;
+    const u8 *const *index_table =
+        (const u8 *const *)FONT_NINJA_INDEX_TABLE_ADDRESS;
+    const u8 *marker = *(const u8 **)FONT_NINJA_MARKER_POINTER_ADDRESS;
+    u32 descriptor = *(u32 *)row_record;
+    const u8 *prose = *(const u8 **)(descriptor + 8u);
+    FontV2Bits row_y;
+    const u8 *index_text;
+    const u8 *index_end;
+    u32 index_width;
+    u32 index_lines;
+
+    (void)page;
+    row_y.u = row_y_bits;
+    index_text = index_table[display_index];
+    if (font_v2_measure(index_text, 0u, &index_width, &index_lines)) {
+        return;
+    }
+    index_end = index_text;
+    while (*index_end) {
+        index_end += 1;
+    }
+    while (index_end > index_text && index_end[-1] == (u8)' ') {
+        index_width -= font_v2_ascii_widths[0];
+        index_end -= 1;
+    }
+
+    set_color(renderer_address, 10u, 1u);
+    set_position(
+        FONT_NINJA_OBJECTIVE_INDEX_ORIGIN_X -
+            (index_text[0] == (u8)' '
+                ? FONT_NINJA_OBJECTIVE_INDEX_LEADING_SPACE_OFFSET
+                : 0.0f),
+        row_y.f + FONT_NINJA_OBJECTIVE_INDEX_Y_OFFSET,
+        renderer_address
+    );
+    draw(renderer_address, index_text);
+
+    set_color(renderer_address, 15u, 1u);
+    set_position(
+        FONT_NINJA_OBJECTIVE_MARKER_ORIGIN_X + (float)(s32)index_width,
+        row_y.f + FONT_NINJA_OBJECTIVE_MARKER_Y_OFFSET,
+        renderer_address
+    );
+    draw(renderer_address, marker);
+
+    font_v2_ninja_objective_draw(
+        prose,
+        15u,
+        FONT_NINJA_OBJECTIVE_PROSE_X,
+        row_y.f + FONT_NINJA_OBJECTIVE_PROSE_Y_OFFSET
+    );
 }
 
 static FONT_V2_SECTION(".text.font_v2_jutsu_draw_callback")
@@ -2324,102 +2659,25 @@ int font_v2_jutsu_draw_entry(
     const u8 *text
 ) {
     FontV2BodyFrame frame;
-    u8 original[FONT_BODY_BUFFER_SIZE];
     volatile float *renderer = (volatile float *)renderer_address;
-    volatile u32 *renderer_words = (volatile u32 *)renderer_address;
     float native_x;
     float native_y;
-    float wrap_width;
-    u32 index = 0;
 
     if (!renderer || !text) {
         return -1;
     }
 
-    while (index < FONT_BODY_BUFFER_SIZE - 1u && text[index]) {
-        original[index] = text[index];
-        frame.buffer[index] = text[index];
-        index += 1;
-    }
-    original[index] = 0;
-    frame.buffer[index] = 0;
-
     if (
-        font_v2_wrap_native(
+        font_v2_wrap_retry(
             frame.buffer,
+            text,
             FONT_JUTSU_BOX_WIDTH,
-            0,
+            FONT_JUTSU_LINE_LIMIT,
             &frame.session.measured_width,
             &frame.session.line_count
-        ) != 0
+        )
     ) {
         return -1;
-    }
-
-    if (frame.session.line_count > FONT_JUTSU_LINE_LIMIT) {
-        u8 *cursor = frame.buffer;
-        u8 *line_start = cursor;
-        u32 line_index = 0;
-        u32 overflow_width = 0;
-        u32 overflow_lines = 0;
-        u32 saved_tracking =
-            renderer_words[FONT_RENDERER_TRACKING_OFFSET / sizeof(u32)];
-
-        renderer_words[FONT_RENDERER_TRACKING_OFFSET / sizeof(u32)] = 0;
-        for (;;) {
-            if (!*cursor || *cursor == (u8)'\n') {
-                u8 saved = *cursor;
-                *cursor = 0;
-                if (line_index >= FONT_JUTSU_LINE_LIMIT) {
-                    overflow_width += font_v2_native_measure(line_start);
-                    overflow_lines += 1;
-                }
-                *cursor = saved;
-                if (!saved) {
-                    break;
-                }
-                cursor += 1;
-                line_start = cursor;
-                line_index += 1;
-            } else {
-                cursor += 1;
-            }
-        }
-        renderer_words[FONT_RENDERER_TRACKING_OFFSET / sizeof(u32)] =
-            saved_tracking;
-
-        wrap_width = (float)(s32)FONT_JUTSU_BOX_WIDTH;
-        if (overflow_lines) {
-            wrap_width +=
-                (
-                    (float)(s32)overflow_width /
-                    (float)(s32)overflow_lines
-                ) * FONT_JUTSU_OVERFLOW_WIDTH_FACTOR;
-        }
-
-        do {
-            index = 0;
-            while (
-                index < FONT_BODY_BUFFER_SIZE - 1u &&
-                original[index]
-            ) {
-                frame.buffer[index] = original[index];
-                index += 1;
-            }
-            frame.buffer[index] = 0;
-            if (
-                font_v2_wrap_native(
-                    frame.buffer,
-                    (u32)wrap_width,
-                    0,
-                    &frame.session.measured_width,
-                    &frame.session.line_count
-                ) != 0
-            ) {
-                return -1;
-            }
-            wrap_width += FONT_JUTSU_WRAP_WIDTH_STEP;
-        } while (frame.session.line_count > FONT_JUTSU_LINE_LIMIT);
     }
 
     native_x =
@@ -2525,6 +2783,42 @@ int font_v2_collection_list_callback(
     return 0;
 }
 
+FONT_V2_SECTION(".text.font_v2_collection_figure_music_header_adapter")
+void font_v2_collection_figure_music_header_adapter(
+    float native_x,
+    float native_y,
+    const u8 *text,
+    u32 style
+) {
+    FontV2NativeDraw draw =
+        (FontV2NativeDraw)FONT_COLLECTION_HEADER_DRAW_ADDRESS;
+
+    draw(
+        native_x + FONT_COLLECTION_HEADER_X_OFFSET,
+        native_y + FONT_COLLECTION_FIGURE_MUSIC_HEADER_Y_OFFSET,
+        text,
+        style
+    );
+}
+
+FONT_V2_SECTION(".text.font_v2_collection_jutsu_header_adapter")
+void font_v2_collection_jutsu_header_adapter(
+    float native_x,
+    float native_y,
+    const u8 *text,
+    u32 style
+) {
+    FontV2NativeDraw draw =
+        (FontV2NativeDraw)FONT_COLLECTION_HEADER_DRAW_ADDRESS;
+
+    draw(
+        native_x + FONT_COLLECTION_HEADER_X_OFFSET,
+        native_y + FONT_COLLECTION_JUTSU_HEADER_Y_OFFSET,
+        text,
+        style
+    );
+}
+
 FONT_V2_SECTION(".text.font_v2_collection_list_entry")
 int font_v2_collection_list_entry(
     const u8 *text,
@@ -2534,63 +2828,45 @@ int font_v2_collection_list_entry(
 ) {
     FontV2BodyFrame frame;
     FontV2NativeDraw draw = (FontV2NativeDraw)FONT_DRAW_ADDRESS;
-    u32 text_address = (u32)text;
     u32 box_width = 0;
-    u32 movie_row = 0;
-    u32 index = 0;
 
     if (!text) {
         return -1;
     }
-    if (
-        text_address >= FONT_COLLECTION_MOVIE_TEXT_START &&
-        text_address < FONT_COLLECTION_MOVIE_TEXT_END
-    ) {
-        box_width = FONT_COLLECTION_MOVIE_BOX_WIDTH;
-        movie_row = 1;
-    } else if (
-        text_address == FONT_CHARACTER_MOVE_152_TEXT_0 ||
-        text_address == FONT_CHARACTER_MOVE_152_TEXT_1 ||
-        text_address == FONT_CHARACTER_MOVE_152_TEXT_2
-    ) {
-        box_width = FONT_CHARACTER_MOVE_152_BOX_WIDTH;
-    } else if (
-        text_address == FONT_CHARACTER_MOVE_192_TEXT_0 ||
-        text_address == FONT_CHARACTER_MOVE_192_TEXT_1 ||
-        text_address == FONT_CHARACTER_MOVE_192_TEXT_2 ||
-        text_address == FONT_CHARACTER_MOVE_192_TEXT_3
-    ) {
-        box_width = FONT_CHARACTER_MOVE_192_BOX_WIDTH;
+    if (native_x > FONT_COLLECTION_NARROW_X_THRESHOLD) {
+        box_width = FONT_COLLECTION_NARROW_BOX_WIDTH;
+    } else if (native_x > FONT_COLLECTION_WIDE_X_THRESHOLD) {
+        box_width = FONT_COLLECTION_WIDE_BOX_WIDTH;
     } else {
         draw(native_x, native_y, text, highlighted);
         return 0;
     }
 
-    while (index < FONT_BODY_BUFFER_SIZE - 1u && text[index]) {
-        frame.buffer[index] = text[index];
-        index += 1;
-    }
-    frame.buffer[index] = 0;
-
     if (
-        font_v2_wrap_native(
+        font_v2_wrap_retry(
             frame.buffer,
+            text,
             box_width,
             FONT_COLLECTION_LIST_LINE_LIMIT,
             &frame.session.measured_width,
             &frame.session.line_count
-        ) != 0
+        )
     ) {
         return -1;
     }
 
-    if (movie_row && frame.session.line_count == 1u) {
-        draw(native_x, native_y, text, highlighted);
+    if (frame.session.line_count == 1u) {
+        draw(
+            native_x + FONT_COLLECTION_X_OFFSET,
+            native_y + FONT_COLLECTION_SINGLE_LINE_Y_OFFSET,
+            text,
+            highlighted
+        );
         return 0;
     }
 
     frame.session.text = frame.buffer;
-    frame.session.box_x = native_x;
+    frame.session.box_x = native_x + FONT_COLLECTION_X_OFFSET;
     frame.session.box_y = native_y + FONT_COLLECTION_LIST_BOX_Y_OFFSET;
     frame.session.box_width = box_width;
     frame.session.box_height = FONT_COLLECTION_LIST_BOX_HEIGHT;
@@ -2599,7 +2875,8 @@ int font_v2_collection_list_entry(
     frame.session.flags =
         FONT_V2_FLAG_NEWLINE_BYTES |
         FONT_V2_FLAG_SEPARATE_LINE_ADVANCE |
-        FONT_V2_FLAG_PREMEASURED;
+        FONT_V2_FLAG_PREMEASURED |
+        FONT_V2_FLAG_SHRINK_X;
     frame.session.line_limit = FONT_COLLECTION_LIST_LINE_LIMIT;
     frame.session.line_height = FONT_COLLECTION_LIST_LINE_ADVANCE;
     frame.session.glyph_height = FONT_COLLECTION_LIST_GLYPH_HEIGHT;
@@ -2685,7 +2962,7 @@ int font_v2_quit_body_adapter(
         FONT_QUIT_BODY_BOX_HEIGHT,
         FONT_QUIT_BODY_LINE_HEIGHT,
         FONT_QUIT_BODY_LINE_LIMIT,
-        (u32)font_v2_quit_body_callback,
+        (u32)font_v2_collection_body_callback,
         0.0f
     );
 }
@@ -2788,7 +3065,7 @@ int font_v2_special_controls_body_adapter(
         FONT_SPECIAL_BODY_BOX_HEIGHT,
         FONT_SPECIAL_BODY_LINE_HEIGHT,
         FONT_SPECIAL_BODY_LINE_LIMIT,
-        (u32)font_v2_special_controls_body_callback,
+        (u32)font_v2_collection_body_callback,
         0.0f
     );
 }
@@ -3116,6 +3393,11 @@ int font_v2_practice_adapter_impl(
     frame.session.text = frame.buffer;
     frame.session.box_x = FONT_PRACTICE_BOX_X;
     frame.session.box_y = native_y.f + FONT_PRACTICE_BOX_Y_OFFSET;
+    if (frame.session.line_count == 1u) {
+        frame.session.box_y += FONT_PRACTICE_SINGLE_LINE_Y_OFFSET;
+    } else if (frame.session.line_count == 2u) {
+        frame.session.box_y += FONT_PRACTICE_TWO_LINE_Y_OFFSET;
+    }
     frame.session.box_width = FONT_PRACTICE_BOX_WIDTH;
     frame.session.box_height = FONT_PRACTICE_BOX_HEIGHT;
     frame.session.horizontal_alignment = FONT_V2_ALIGN_START;

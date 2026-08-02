@@ -31,8 +31,10 @@ one cannot silently invalidate the other.
   templates, Ninja Song numeric output, and Save/Load numeric formatting have
   accepted or runtime-proven boundaries recorded in knowledge.
 - The current 49-screen main replay covers confirmation modals, Controls,
-  Settings, Practice explanations, Pause, Character Select, Save, and Jutsu.
+  Settings, Practice explanations, Pause, Character Select, and Jutsu.
   Severity-first review found no remaining large Font defect in those cases.
+  Its Save confirmation frames represent a retired absolute-position candidate
+  and are not evidence for the current native-position behavior.
 - The separate final replay proves Sakura and legacy-character Collection
   families across Figure, Ultimate Jutsu, character Music, and Movie. Their
   shared widths, wraps, and header origins have no remaining large Font defect.
@@ -164,6 +166,8 @@ and epic behavior always come from live repository policies, not this context.
 - Blind GF4/GF4C swaps, global tracking changes, global descriptor-height
   edits, threshold-only Controls fitting, and complete NUN5-renderer transplant
   were rejected.
+- The Save confirmation absolute-position adapter was retired because NA2 and
+  NUN5 use different modal dimensions; NA2 now retains its native positions.
 - Aggregate resident Font blobs and superseded assembly-producing research
   scripts were removed after the composition-time C boundary was proven.
 - Accepted epic grids were deleted after their reusable results were promoted.

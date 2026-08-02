@@ -70,7 +70,6 @@ font_v2_core	93	localization.font.v2.c.text.font.v2.collection.figure.music.head
 font_v2_core	94	localization.font.v2.c.text.font.v2.special.choice.session.init	localization.font.v2.c.special_choice_session_init
 font_v2_core	95	localization.font.v2.c.text.font.v2.special.choice.selected.adapter	localization.font.v2.c.special_choice_selected_adapter
 font_v2_core	102	localization.font.v2.c.text.font.v2.collection.jutsu.header.adapter	localization.font.v2.collection_jutsu_header_adapter
-font_v2_core	100	localization.font.v2.c.text.font.v2.save.choices.prepare	localization.font.v2.save_choices_prepare
 font_v2_core	106	localization.font.v2.c.text.font.v2.linked.choice.session.prepare	localization.font.v2.c.linked_choice_session_prepare
 font_v2_core	107	localization.font.v2.c.text.font.v2.linked.choice.selected.impl	localization.font.v2.c.linked_choice_selected_impl
 font_v2_core	108	localization.font.v2.c.text.font.v2.linked.choice.unselected.adapter	localization.font.v2.linked_choice_unselected_adapter

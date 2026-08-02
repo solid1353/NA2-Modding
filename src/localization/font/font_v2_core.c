@@ -493,18 +493,6 @@ typedef signed int s32;
 /* Mode Select bottom body is intentionally limited to one line. */
 #define FONT_MODE_SELECT_BODY_LINE_LIMIT 1u
 
-/* === Shared Save/overwrite/return-title confirmation positions === */
-
-/* Stack-local draw records constructed by native FUN_001E6CE0. */
-#define FONT_SAVE_YES_RECORD_STACK_OFFSET 0x60u
-#define FONT_SAVE_NO_RECORD_STACK_OFFSET 0x50u
-
-/* NUN5-matched local positions for the shared two-choice component. */
-#define FONT_SAVE_YES_X 183.2f
-#define FONT_SAVE_YES_Y 92.0f
-#define FONT_SAVE_NO_X 256.2f
-#define FONT_SAVE_NO_Y 92.0f
-
 /* Fixed runtime pointer identifying Special Controls ON. */
 #define FONT_SPECIAL_ON_TEXT 0x006059F0u
 
@@ -1538,28 +1526,6 @@ u32 font_v2_quit_selected_map(
     }
     *target_y = mapped_y;
     return target_x;
-}
-
-FONT_V2_SECTION(".text.font_v2_save_choices_prepare")
-void font_v2_save_choices_prepare(
-    u32 renderer_address,
-    u32 renderer_mode,
-    u32 caller_stack
-) {
-    FontV2NativeInitialize initialize =
-        (FontV2NativeInitialize)FONT_INITIALIZE_ADDRESS;
-    volatile float *yes = (volatile float *)(
-        caller_stack + FONT_SAVE_YES_RECORD_STACK_OFFSET
-    );
-    volatile float *no = (volatile float *)(
-        caller_stack + FONT_SAVE_NO_RECORD_STACK_OFFSET
-    );
-
-    initialize(renderer_address, renderer_mode);
-    yes[0] = FONT_SAVE_YES_X;
-    yes[1] = FONT_SAVE_YES_Y;
-    no[0] = FONT_SAVE_NO_X;
-    no[1] = FONT_SAVE_NO_Y;
 }
 
 static FONT_V2_SECTION(".text.font_v2_special_choice_session_init")

@@ -194,7 +194,6 @@ V2_NINJA_OBJECTIVE_DRAW = f"{V2_PREFIX}.c.ninja_objective_draw"
 V2_NINJA_OBJECTIVE_ROW_ADAPTER = (
     f"{V2_PREFIX}.ninja_objective_row_adapter"
 )
-V2_SAVE_CHOICES_PREPARE = f"{V2_PREFIX}.save_choices_prepare"
 V2_PLAIN_SPACE = f"{V2_PREFIX}.plain_space"
 V2_NEWLINE_ADVANCE = f"{V2_PREFIX}.newline_advance"
 V2_RIGHT_EDGE = f"{V2_PREFIX}.right_edge"
@@ -538,7 +537,6 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         "font_v2_practice_settings_heading_adapter",
         "font_v2_ninja_arithmetic_template",
         "font_v2_ninja_objective_row_adapter",
-        "font_v2_save_choices_prepare",
     }
     if set(extracted.symbols) != expected_exports:
         raise ValueError(
@@ -662,9 +660,6 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         extracted.symbols[
             "font_v2_ninja_objective_row_adapter"
         ].symbol: V2_NINJA_OBJECTIVE_ROW_ADAPTER,
-        extracted.symbols["font_v2_save_choices_prepare"].symbol: (
-            V2_SAVE_CHOICES_PREPARE
-        ),
     }
     helper_symbols = {
         fragment.symbol
@@ -842,7 +837,6 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_NINJA_OBJECTIVE_CALLBACK,
         V2_NINJA_OBJECTIVE_DRAW,
         V2_NINJA_OBJECTIVE_ROW_ADAPTER,
-        V2_SAVE_CHOICES_PREPARE,
     }:
         raise ValueError("Font v2 C fragment aliases are incomplete")
     return result

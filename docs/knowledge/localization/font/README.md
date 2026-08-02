@@ -1630,9 +1630,6 @@ hook to unrelated consumers.
 - **Character Select player-mode list:** selected and ordinary rows share one
   bounded metric family. Rows one through four share the normal formula; the
   structurally distinct fifth footer receives one selected-state Y correction.
-- **Save confirmation:** two guarded fixed header records move to the shared
-  origin, while one stack-record adapter positions both choices and preserves
-  the native initializer, strings, and selected style.
 - **Pause, Special Controls, quit, Character Select confirmation, Collection
   confirmation, and Mode Select confirmation:** each native modal family keeps
   its own container but shares selected/ordinary geometry within that family.
@@ -1659,6 +1656,18 @@ hook to unrelated consumers.
   uses one `288`-unit constant for both wrapping and the bounded two-line
   compositor; no text is prefixed or substituted.
 
+### Retired Save confirmation absolute-position fix
+
+The Save confirmation header and choice-position patches are retired. They
+copied NUN5-local absolute coordinates into NA2 even though the two games use
+different modal dimensions, so those coordinates are not equivalent layout
+targets. The two header record edits at ELF files `0x4C0780` and `0x4C0790`,
+the initializer hook at `0xE6F8C`, its stack-record adapter, and all supporting
+payload declarations are removed. NA2 again owns the modal's native text
+positions. The independent global selected-style dispatcher remains active;
+no displayed string, color, or Save/Load numeric formatting is changed by this
+retirement.
+
 ### Runtime and static result
 
 The last captured isolated build used for the main and Collection evidence is
@@ -1669,8 +1678,8 @@ with retained build record
 the final source replaced the objective-only `320`-unit wrap threshold with the
 same `288`-unit constant used by its render box. That source is not claimed to
 be byte-identical to the captured ISO. The latest compose-only result retains
-`139` resident symbols, `18,608` payload bytes, and `67` runtime-injector
-edits. Deterministic reconstruction reports `105` Font fragments within `109`
+`138` resident symbols, `18,512` payload bytes, and `66` runtime-injector
+edits. Deterministic reconstruction reports `104` Font fragments within `108`
 compiled/static declarations, and full default-profile composition succeeds
 without conflicts.
 

@@ -114,8 +114,10 @@ requirements, not whatever implementation happens to exist today.
   replay. Run the permanent builder suite only with `.\tests\run.ps1`.
   Verify every validation command's documented semantics before running it;
   never infer behavior from a short flag.
-- Worker-output builds never touch Latest, Previous, Test, promotion,
-  preflight, shared records, PNACH aliases, actualization, or PCSX2.
+- Worker-output builds never touch Latest, Previous, shared Test outputs,
+  promotion, shared preflight, shared records, PNACH aliases, actualization,
+  or PCSX2. Their output-specific receipts and records remain under the owning
+  task's `logs/`.
 - Temporary or hypothesis ISOs remain under the owning task while they have a
   named future use and are deleted when useless.
 - Standard logs report `ISO result: unchanged|updated` and rotation. Manual

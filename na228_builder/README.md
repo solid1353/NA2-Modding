@@ -100,10 +100,13 @@ source images, but bypasses preflight reuse and stops before ISO staging. It
 does not promote or rotate images, update build receipts, or launch PCSX2.
 
 Before staging, `na228_builder/build_preflight.py` hashes both canonical source
-ISOs, the complete `na228_builder/` tree except generated Python caches, the
-selected profile path, and active Python/Zlib/Zopfli versions. A valid receipt
-and matching Latest ISO produces the normal unchanged/no-rotation result
-without module derivation or a `.building` file.
+ISOs, ISO-composing builder code and schemas, the exact selected profile
+resources, product/path configuration, and active Python/Zlib/Zopfli versions.
+Documentation, generated Python caches, preflight implementation, and
+release-only files do not invalidate ordinary ISO builds. Each ISO-producing
+mode has its own receipt; a valid receipt, matching output ISO, and retained
+build record return the normal unchanged result without module derivation or a
+`.building` file.
 
 On a miss, `na228_builder/module_pipeline.py` prepares feature artifacts, derived
 consumers, and shared payload contributions. `na228_builder/build_profile.py`

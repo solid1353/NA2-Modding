@@ -12,6 +12,7 @@ from na228_builder.build_preflight import (
     state_fingerprint,
     write_receipt,
 )
+from na228_builder.profile import feature_content_sha256
 
 
 DEPENDENCIES = {
@@ -31,9 +32,94 @@ class BuildPreflightTests(unittest.TestCase):
         profile.parent.mkdir(parents=True)
         (builder / "engine.py").write_text("ENGINE = 1\n", encoding="utf-8")
         (builder / "schema.tsv").write_text("schema\t1\n", encoding="utf-8")
+        feature = builder / "features" / "feature"
+        module = feature / "string_patcher"
+        module.mkdir(parents=True)
+        (feature / "README.md").write_text("# Feature\n", encoding="utf-8")
+        (module / "strings.tsv").write_text("string_id\n", encoding="utf-8")
+        source_roots = workspace / "source_roots"
+        source_roots.mkdir(parents=True)
+        (source_roots / "NA2.iso.files").mkdir()
+        (source_roots / "NUN5.iso.files").mkdir()
+        shared = workspace / "shared"
+        for name in (
+            "cheats",
+            "game_settings",
+            "input_profiles",
+            "memory_cards",
+        ):
+            (shared / name).mkdir(parents=True)
+        (workspace / "build").mkdir()
+        (workspace / "paths.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "roots": {
+                        "repository": ".",
+                        "builder": "na228_builder",
+                        "features": "@builder/features",
+                        "source": "source_roots",
+                        "build": "build",
+                        "pcsx2_cheats": "shared/cheats",
+                        "pcsx2_game_settings": "shared/game_settings",
+                        "pcsx2_input_profiles": "shared/input_profiles",
+                        "pcsx2_memory_cards": "shared/memory_cards",
+                    },
+                    "files": {
+                        "product_config": "@repository/product.json",
+                        "game_catalog": "@repository/games.json",
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        (workspace / "games.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "sources": {
+                        "NA2": {"serial": "SLPS-25837", "crc": "C0659AD1"},
+                        "NUN5": {"serial": "SLES-55605", "crc": "C071D4C1"},
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        (workspace / "product.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "title": "Test Product",
+                    "serial": "TEST-00000",
+                    "inputs": {"na2": "@source_na2", "nun5": "@source_nun5"},
+                    "identity": {
+                        "image": {
+                            "source_boot_path": "SLPS_258.37",
+                            "output_boot_path": "SLOP_NA2.28",
+                            "system_cnf_path": "SYSTEM.CNF",
+                        },
+                        "memory_card": {
+                            "title_offset": 4,
+                            "title_capacity": 16,
+                            "title_encoding": "ascii",
+                            "source_title": "Original",
+                            "output_title": "Output",
+                        },
+                        "game_title": {
+                            "imported": "Imported",
+                            "output": "Output",
+                            "expected_mapping_count": 1,
+                            "expected_occurrence_count": 1,
+                        },
+                    },
+                    "builds": {"latest": {"postfix": "Latest"}},
+                }
+            ),
+            encoding="utf-8",
+        )
         profile.write_text(
             "feature_id\tenabled\texpected_sha256\tbypass_check\n"
-            "feature\t1\t" + "0" * 64 + "\t0\n",
+            "feature\t1\t" + feature_content_sha256(feature) + "\t1\n",
             encoding="utf-8",
         )
         na2_iso = root / "source" / "NA2.iso"
@@ -42,7 +128,7 @@ class BuildPreflightTests(unittest.TestCase):
         na2_iso.write_bytes(b"clean na2")
         nun5_iso.write_bytes(b"clean nun5")
         latest_iso = workspace / "build" / "NA2.28 - Latest.iso"
-        latest_iso.parent.mkdir()
+        latest_iso.parent.mkdir(exist_ok=True)
         latest_iso.write_bytes(b"verified latest")
         return {
             "workspace": workspace,
@@ -70,7 +156,7 @@ class BuildPreflightTests(unittest.TestCase):
             workspace=paths["workspace"],
             na2_iso=paths["na2_iso"],
             nun5_iso=paths["nun5_iso"],
-            latest_iso=paths["latest_iso"],
+            output_iso=paths["latest_iso"],
             profile_path=paths["profile"],
             receipt_path=paths["receipt"],
             dependencies=DEPENDENCIES,
@@ -85,7 +171,7 @@ class BuildPreflightTests(unittest.TestCase):
             workspace=paths["workspace"],
             na2_iso=paths["na2_iso"],
             nun5_iso=paths["nun5_iso"],
-            latest_iso=paths["latest_iso"],
+            output_iso=paths["latest_iso"],
             profile_path=paths["profile"],
             receipt_path=paths["receipt"],
             expected_fingerprint=expected_fingerprint,
@@ -122,14 +208,22 @@ class BuildPreflightTests(unittest.TestCase):
                 ),
             )
 
-    def test_builder_hash_covers_tests_and_docs_but_ignores_python_cache(self) -> None:
+    def test_builder_hash_excludes_non_composing_files_and_python_cache(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             initial = builder_tree_entry(paths["builder"])
             documentation = paths["builder"] / "README.md"
             documentation.write_text("documentation\n", encoding="utf-8")
             with_documentation = builder_tree_entry(paths["builder"])
-            self.assertNotEqual(initial["sha256"], with_documentation["sha256"])
+            self.assertEqual(initial["sha256"], with_documentation["sha256"])
+
+            (paths["builder"] / "release_runtime.py").write_text(
+                "RELEASE_ONLY = True\n", encoding="utf-8"
+            )
+            self.assertEqual(
+                with_documentation["sha256"],
+                builder_tree_entry(paths["builder"])["sha256"],
+            )
 
             cache = paths["builder"] / "__pycache__"
             cache.mkdir()
@@ -139,7 +233,33 @@ class BuildPreflightTests(unittest.TestCase):
                 builder_tree_entry(paths["builder"])["sha256"],
             )
 
-    def test_receipt_hit_requires_matching_fingerprint_and_latest_hash(self) -> None:
+    def test_profile_resources_invalidate_but_documentation_content_does_not(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self.create_workspace(Path(directory))
+            initial = state_fingerprint(self.state(paths))
+            feature = paths["builder"] / "features" / "feature"
+
+            (feature / "README.md").write_text(
+                "# Updated documentation only\n", encoding="utf-8"
+            )
+            self.assertEqual(initial, state_fingerprint(self.state(paths)))
+
+            (feature / "string_patcher" / "strings.tsv").write_text(
+                "string_id\nchanged\n", encoding="utf-8"
+            )
+            self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
+
+    def test_product_configuration_invalidates_fingerprint(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self.create_workspace(Path(directory))
+            initial = state_fingerprint(self.state(paths))
+            product = paths["workspace"] / "product.json"
+            document = json.loads(product.read_text(encoding="utf-8"))
+            document["title"] = "Changed Product"
+            product.write_text(json.dumps(document), encoding="utf-8")
+            self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
+
+    def test_receipt_hit_requires_matching_fingerprint_and_output_hash(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             fingerprint = state_fingerprint(self.state(paths))
@@ -150,7 +270,7 @@ class BuildPreflightTests(unittest.TestCase):
 
             original = paths["latest_iso"].read_bytes()
             paths["latest_iso"].write_bytes(b"X" * len(original))
-            self.assertEqual(self.check(paths)["reason"], "latest-iso-hash-mismatch")
+            self.assertEqual(self.check(paths)["reason"], "output-iso-hash-mismatch")
             paths["latest_iso"].write_bytes(original)
 
             paths["builder"].joinpath("engine.py").write_text(

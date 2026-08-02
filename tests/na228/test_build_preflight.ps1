@@ -151,6 +151,7 @@ try {
     Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$latestIso.building")) `
         -Message 'Full-build fallback left a .building ISO.'
 
+    $global:Na2PreflightTestMode = 'miss'
     $global:Na2PreflightTestCalls = @()
     $test = & (Join-Path $scriptRoot 'build.ps1') -ManualTestOnly
     $testIso = Join-Path $repository 'build\NA2.28 - Manual Test.iso'
@@ -159,10 +160,10 @@ try {
     Assert-Na2PreflightTest `
         -Condition ((@($test.ChangedRoles) -join ',') -ceq 'manual_test') `
         -Message 'Changed Manual Test build did not report only its own role.'
-    Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
-        -Message 'Manual Test-only build invoked preflight or receipt recording.'
+    Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 3) `
+        -Message 'Manual Test-only miss did not check, build, and record exactly once.'
     Assert-Na2PreflightTest `
-        -Condition ($global:Na2PreflightTestCalls[0] -contains 'na228_builder.build_profile') `
+        -Condition ($global:Na2PreflightTestCalls[1] -contains 'na228_builder.build_profile') `
         -Message 'Manual Test-only build did not run the full profile builder.'
     Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $testIso -PathType Leaf) `
         -Message 'Manual Test-only build did not retain its verified ISO.'
@@ -175,6 +176,7 @@ try {
         -Condition (Test-Path -LiteralPath (Join-Path $repository $test.ProfileLogDirectory.Replace('@logs/', 'logs/')) -PathType Container) `
         -Message 'Manual Test-only build did not retain its structured record.'
 
+    $global:Na2PreflightTestMode = 'hit'
     $global:Na2PreflightTestCalls = @()
     $unchangedTest = & (Join-Path $scriptRoot 'build.ps1') -ManualTestOnly
     Assert-Na2PreflightTest -Condition ($unchangedTest.ManualTestState -eq 'unchanged') `
@@ -183,11 +185,14 @@ try {
         -Condition (@($unchangedTest.ChangedRoles).Count -eq 0) `
         -Message 'Unchanged Manual Test build incorrectly reported a changed role.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
-        -Message 'Repeated Manual Test-only build invoked anything except profile composition.'
+        -Message 'Repeated Manual Test-only cache hit invoked composition or receipt recording.'
+    Assert-Na2PreflightTest -Condition $unchangedTest.PreflightCacheHit `
+        -Message 'Repeated Manual Test-only build was not marked as a preflight hit.'
     Assert-Na2PreflightTest `
         -Condition (@(Get-ChildItem -LiteralPath (Join-Path $logDirectory 'manual_tests') -Directory).Count -eq 1) `
         -Message 'Manual Test-only build retained obsolete test records.'
 
+    $global:Na2PreflightTestMode = 'miss'
     $global:Na2PreflightTestCalls = @()
     $screenshotTest = & (Join-Path $scriptRoot 'build.ps1') -ScreenshotTestOnly
     $screenshotTestIso = Join-Path $repository 'build\NA2.28 - Screenshot Test.iso'
@@ -196,8 +201,8 @@ try {
     Assert-Na2PreflightTest `
         -Condition ((@($screenshotTest.ChangedRoles) -join ',') -ceq 'screenshot_test') `
         -Message 'Changed Screenshot Test build did not report only its own role.'
-    Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
-        -Message 'Screenshot-test build invoked preflight or receipt recording.'
+    Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 3) `
+        -Message 'Screenshot-test miss did not check, build, and record exactly once.'
     Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $screenshotTestIso -PathType Leaf) `
         -Message 'Screenshot-test build did not retain its verified ISO.'
     Assert-Na2PreflightTest `
@@ -212,15 +217,24 @@ try {
         -Condition (Test-Path -LiteralPath (Join-Path $screenshotTestRecord 'screenshot_test_result.tsv') -PathType Leaf) `
         -Message 'Screenshot-test build did not retain its dedicated structured record.'
 
+    $global:Na2PreflightTestMode = 'hit'
+    $global:Na2PreflightTestCalls = @()
+    $screenshotTestHit = & (Join-Path $scriptRoot 'build.ps1') -ScreenshotTestOnly
+    Assert-Na2PreflightTest -Condition $screenshotTestHit.PreflightCacheHit `
+        -Message 'Repeated Screenshot Test build was not marked as a preflight hit.'
+    Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
+        -Message 'Screenshot Test cache hit invoked composition or receipt recording.'
+
     $latestBeforeWorkers = [IO.File]::ReadAllText($latestIso)
     $testBeforeWorkers = [IO.File]::ReadAllText($testIso)
+    $global:Na2PreflightTestMode = 'miss'
     $global:Na2PreflightTestCalls = @()
     $generalOutput = 'work\General\build\general-test.iso'
     $general = & (Join-Path $scriptRoot 'build.ps1') -WorkerOutputIso $generalOutput
     Assert-Na2PreflightTest -Condition ($general.Status -eq 'worker') `
         -Message 'Worker build did not return worker status.'
-    Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
-        -Message 'Worker build invoked preflight or another shared pipeline.'
+    Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 3) `
+        -Message 'Worker miss did not check, build, and record exactly once.'
     Assert-Na2PreflightTest `
         -Condition (Test-Path -LiteralPath (Join-Path $repository $generalOutput) -PathType Leaf) `
         -Message 'Worker build did not retain its requested ISO.'
@@ -232,6 +246,15 @@ try {
         -Condition (Test-Path -LiteralPath (Join-Path $generalRecord 'build_result.tsv') -PathType Leaf) `
         -Message 'Worker build record was not retained under the worker logs.'
 
+    $global:Na2PreflightTestMode = 'hit'
+    $global:Na2PreflightTestCalls = @()
+    $generalHit = & (Join-Path $scriptRoot 'build.ps1') -WorkerOutputIso $generalOutput
+    Assert-Na2PreflightTest -Condition $generalHit.PreflightCacheHit `
+        -Message 'Repeated worker build was not marked as a preflight hit.'
+    Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
+        -Message 'Worker cache hit invoked composition or receipt recording.'
+
+    $global:Na2PreflightTestMode = 'miss'
     $global:Na2PreflightTestCalls = @()
     $uiOutput = 'work\UI Translation\build\ui-test.iso'
     $ui = & (Join-Path $scriptRoot 'build.ps1') -WorkerOutputIso $uiOutput

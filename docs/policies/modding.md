@@ -29,6 +29,13 @@
   mappings into snapshots. Accepted normal builds continue using
   `na228_builder/features/localization/translation_importer/mappings.tsv` as the
   sole translation source of truth.
+- Preflight may skip composition only when its fingerprint covers every input
+  capable of changing the selected ISO. Any commit that adds, moves, or changes
+  a build-affecting input or dependency contract must update the canonical
+  preflight dependency closure and add an invalidation regression in the same
+  commit. Exclude a file only after proving it cannot affect composed ISO bytes;
+  never exclude a broad directory unless the exact selected resources from it
+  are fingerprinted separately.
 
 ## Binary and donor changes
 

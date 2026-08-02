@@ -10,13 +10,21 @@ import zlib
 from pathlib import Path
 from typing import Iterable
 
+from na228_builder.profile import load_profile, profile_resource_files
 from scripts.lib.paths import load_paths
 
 
 RECEIPT_SCHEMA_VERSION = 1
-FINGERPRINT_SCHEMA_VERSION = 2
+FINGERPRINT_SCHEMA_VERSION = 3
 SHA256_HEX_LENGTH = 64
 GENERATED_SUFFIXES = {".pyc", ".pyo"}
+NON_COMPOSING_BUILDER_FILES = {
+    "app.py",
+    "build_preflight.py",
+    "release_manifest.json",
+    "release_runtime.py",
+    "requirements.txt",
+}
 
 
 def file_sha256(path: Path) -> str:
@@ -72,6 +80,9 @@ def _builder_files(builder: Path) -> list[Path]:
             if path.is_file()
             and "__pycache__" not in path.relative_to(builder).parts
             and path.suffix.casefold() not in GENERATED_SUFFIXES
+            and path.suffix.casefold() != ".md"
+            and path.relative_to(builder).parts[0] not in {"features", "profiles"}
+            and path.relative_to(builder).as_posix() not in NON_COMPOSING_BUILDER_FILES
         ),
         key=lambda path: path.relative_to(builder).as_posix(),
     )
@@ -95,6 +106,43 @@ def builder_tree_entry(builder: Path) -> dict[str, object]:
         digest.update(b"\n")
     return {
         "label": "na228_builder",
+        "file_count": len(files),
+        "size": total_size,
+        "sha256": digest.hexdigest().upper(),
+    }
+
+
+def profile_resources_entry(workspace: Path, profile_path: Path) -> dict[str, object]:
+    profile = load_profile(profile_path, workspace)
+    paths_file = workspace / "paths.json"
+    files = sorted(
+        set(profile_resource_files(profile)) | {paths_file},
+        key=lambda path: path.as_posix(),
+    )
+    digest = hashlib.sha256()
+    total_size = 0
+    for path in files:
+        if not path.is_file():
+            raise FileNotFoundError(path)
+        try:
+            relative = path.resolve().relative_to(workspace).as_posix()
+        except ValueError as error:
+            raise ValueError(f"Profile resource is outside the repository: {path}") from error
+        if path.suffix.casefold() == ".md":
+            size = 0
+            content_hash = "STRUCTURAL-PRESENCE-ONLY"
+        else:
+            size = path.stat().st_size
+            content_hash = file_sha256(path)
+            total_size += size
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(str(size).encode("ascii"))
+        digest.update(b"\0")
+        digest.update(content_hash.encode("ascii"))
+        digest.update(b"\n")
+    return {
+        "label": "profile_resources",
         "file_count": len(files),
         "size": total_size,
         "sha256": digest.hexdigest().upper(),
@@ -141,6 +189,7 @@ def collect_build_state(
             _file_entry(f"source/{nun5_iso.name}", nun5_iso),
         ],
         "builder_tree": builder_tree_entry(builder),
+        "profile_resources": profile_resources_entry(workspace, profile_path),
         "profile": profile,
         "dependencies": dependencies if dependencies is not None else dependency_versions(),
     }
@@ -184,7 +233,7 @@ def check_preflight(
     workspace: Path,
     na2_iso: Path,
     nun5_iso: Path,
-    latest_iso: Path,
+    output_iso: Path,
     profile_path: Path,
     receipt_path: Path,
     dependencies: dict[str, str] | None = None,
@@ -211,20 +260,20 @@ def check_preflight(
         return result
     if receipt["fingerprint"] != fingerprint:
         return _miss("fingerprint-mismatch", fingerprint)
-    if not latest_iso.is_file():
-        return _miss("latest-iso-missing", fingerprint)
+    if not output_iso.is_file():
+        return _miss("output-iso-missing", fingerprint)
     output = receipt["output"]
     assert isinstance(output, dict)
-    if latest_iso.stat().st_size != output["size"]:
-        return _miss("latest-iso-size-mismatch", fingerprint)
-    latest_hash = file_sha256(latest_iso)
-    if latest_hash != output["sha256"]:
-        return _miss("latest-iso-hash-mismatch", fingerprint)
+    if output_iso.stat().st_size != output["size"]:
+        return _miss("output-iso-size-mismatch", fingerprint)
+    output_hash = file_sha256(output_iso)
+    if output_hash != output["sha256"]:
+        return _miss("output-iso-hash-mismatch", fingerprint)
     return {
         "status": "hit",
         "reason": "receipt-and-output-match",
         "fingerprint": fingerprint,
-        "output_sha256": latest_hash,
+        "output_sha256": output_hash,
     }
 
 
@@ -233,7 +282,7 @@ def write_receipt(
     workspace: Path,
     na2_iso: Path,
     nun5_iso: Path,
-    latest_iso: Path,
+    output_iso: Path,
     profile_path: Path,
     receipt_path: Path,
     expected_fingerprint: str,
@@ -254,14 +303,14 @@ def write_receipt(
                 "reason": "inputs-changed-during-build",
                 "fingerprint": fingerprint,
             }
-        if not latest_iso.is_file():
-            return {"status": "skipped", "reason": "latest-iso-missing"}
+        if not output_iso.is_file():
+            return {"status": "skipped", "reason": "output-iso-missing"}
         receipt = {
             "schema_version": RECEIPT_SCHEMA_VERSION,
             "fingerprint": fingerprint,
             "output": {
-                "size": latest_iso.stat().st_size,
-                "sha256": file_sha256(latest_iso),
+                "size": output_iso.stat().st_size,
+                "sha256": file_sha256(output_iso),
             },
             "state": state,
         }
@@ -304,7 +353,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         command = subparsers.add_parser(name)
         command.add_argument("--na2-iso", required=True, type=Path)
         command.add_argument("--nun5-iso", required=True, type=Path)
-        command.add_argument("--latest", required=True, type=Path)
+        command.add_argument("--output", required=True, type=Path)
         command.add_argument("--profile", required=True, type=Path)
         command.add_argument("--receipt", required=True, type=Path)
         if name == "record":
@@ -316,7 +365,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         "workspace": workspace,
         "na2_iso": args.na2_iso,
         "nun5_iso": args.nun5_iso,
-        "latest_iso": args.latest,
+        "output_iso": args.output,
         "profile_path": _profile_path(args.profile, workspace),
         "receipt_path": args.receipt,
     }

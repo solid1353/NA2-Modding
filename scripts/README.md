@@ -60,18 +60,19 @@ history; do not recreate an archive directory for dead scripts.
   comparisons.
 
 Normal builds call `na228_builder.build_profile` through `na228/build.ps1`.
-Before that call, `na228/build.ps1` checks the deterministic successful-build
-receipt through `na228_builder.build_preflight`; an exact hit returns the normal
-unchanged result without staging an ISO. `tests/na228/test_build_preflight.ps1` covers
-the cache-hit and safe full-build-fallback dispatch paths.
-`na228 build mt` calls the same builder in Manual Test-only mode: it always composes a
-fresh verified catalog-derived Manual Test ISO, bypasses Latest preflight and
-promotion state, and does not probe or close PCSX2.
+Before that call, `na228/build.ps1` checks the output-specific deterministic
+successful-build receipt through `na228_builder.build_preflight`; an exact hit
+with a retained build record returns the normal unchanged result without
+staging an ISO. `tests/na228/test_build_preflight.ps1` covers cache hits and
+safe full-build fallbacks for Latest, Manual Test, Screenshot Test, and worker
+outputs. `na228 build mt` calls the same builder in Manual Test-only mode and
+uses its own receipt without touching Latest promotion state or PCSX2.
 `na228 worker work/<task title>/build/<name>.iso` instead builds an isolated
 worker-owned ISO, stages beside it, and keeps both operational and structured
 records under `work/<task title>/logs/`. The path is caller-supplied and
-validated; worker mode cannot address shared build outputs or mutate shared
-preflight, promotion, PNACH, log, or emulator state. Agents must use this form
+validated; worker mode stores its receipt under the owning task's logs and
+cannot address shared build outputs or mutate shared preflight, promotion,
+PNACH, log, or emulator state. Agents must use this form
 rather than bare `na228`, compact build recipes, or `na228 build l|mt`.
 The complete project test command is:
 

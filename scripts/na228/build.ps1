@@ -53,7 +53,7 @@ function Invoke-Na2BuildPreflight {
         [Parameter(Mandatory = $true)][ValidateSet('check', 'record')][string]$Command,
         [Parameter(Mandatory = $true)][string]$Na2Iso,
         [Parameter(Mandatory = $true)][string]$Nun5Iso,
-        [Parameter(Mandatory = $true)][string]$LatestIso,
+        [Parameter(Mandatory = $true)][string]$OutputIso,
         [Parameter(Mandatory = $true)][string]$Profile,
         [Parameter(Mandatory = $true)][string]$Receipt,
         [AllowNull()][string]$ExpectedFingerprint,
@@ -66,7 +66,7 @@ function Invoke-Na2BuildPreflight {
         $Command
         '--na2-iso', $Na2Iso
         '--nun5-iso', $Nun5Iso
-        '--latest', $LatestIso
+        '--output', $OutputIso
         '--profile', $Profile
         '--receipt', $Receipt
     )
@@ -97,6 +97,40 @@ function Invoke-Na2BuildPreflight {
     catch {
         throw 'NA2 build preflight returned invalid JSON.'
     }
+}
+
+function Find-Na2IsolatedBuildRecord {
+    param(
+        [Parameter(Mandatory = $true)][string]$LogRoot,
+        [Parameter(Mandatory = $true)][string]$ResultFilename,
+        [Parameter(Mandatory = $true)][string]$OutputIso,
+        [Parameter(Mandatory = $true)][psobject]$Paths
+    )
+
+    if (-not (Test-Path -LiteralPath $LogRoot -PathType Container)) {
+        return $null
+    }
+    $expectedOutput = ConvertTo-Na2PortableText -Text $OutputIso -Paths $Paths
+    foreach ($record in Get-ChildItem -LiteralPath $LogRoot -Directory |
+        Sort-Object LastWriteTimeUtc -Descending) {
+        $resultPath = Join-Path $record.FullName $ResultFilename
+        if (-not (Test-Path -LiteralPath $resultPath -PathType Leaf)) {
+            continue
+        }
+        try {
+            $rows = @(Import-Csv -LiteralPath $resultPath -Delimiter "`t")
+        }
+        catch {
+            continue
+        }
+        if (
+            $rows.Count -eq 1 -and
+            [string]$rows[0].output_iso -ceq $expectedOutput
+        ) {
+            return $record
+        }
+    }
+    return $null
 }
 
 function Promote-VerifiedIso {
@@ -174,7 +208,7 @@ $profile = [IO.Path]::GetRelativePath(
 )
 $logDirectory = Join-Path $paths.logs 'na228'
 $buildLogRoot = Join-Path $logDirectory 'builds'
-$receiptPath = Join-Path $logDirectory 'preflight\latest.json'
+$latestReceiptPath = Join-Path $logDirectory 'preflight\latest.json'
 $stagedIso = "$resolvedLatestIso.building"
 
 if ($ComposeOnly) {
@@ -241,6 +275,22 @@ if ($ManualTestOnly -or $ScreenshotTestOnly -or $null -ne $workerBuild) {
     else {
         Join-Path $logDirectory 'manual_tests'
     }
+    $resultFilename = switch ($isolatedKind) {
+        'worker' { 'build_result.tsv' }
+        'screenshot-test' { 'screenshot_test_result.tsv' }
+        default { 'manual_test_result.tsv' }
+    }
+    $isolatedReceiptPath = if ($null -ne $workerBuild) {
+        Join-Path $workerBuild.Logs (
+            'preflight\' + [IO.Path]::GetFileName($isolatedOutputIso) + '.json'
+        )
+    }
+    elseif ($ScreenshotTestOnly) {
+        Join-Path $logDirectory 'preflight\screenshot_test.json'
+    }
+    else {
+        Join-Path $logDirectory 'preflight\manual_test.json'
+    }
     $isolatedProfileLog = Join-Path $isolatedLogRoot $isolatedBuildId
     $isolatedProfileLogDirectory = [IO.Path]::GetRelativePath(
         $paths.repository,
@@ -261,9 +311,91 @@ if ($ManualTestOnly -or $ScreenshotTestOnly -or $null -ne $workerBuild) {
         'screenshot-test' { 'Screenshot Test mode' }
         default { 'Manual Test mode' }
     }
+    try {
+        $isolatedPreflight = Invoke-Na2BuildPreflight `
+            -Command check `
+            -Na2Iso $inputIso `
+            -Nun5Iso $nun5Iso `
+            -OutputIso $isolatedOutputIso `
+            -Profile $profile `
+            -Receipt $isolatedReceiptPath `
+            -Repository $paths.repository
+    }
+    catch {
+        $isolatedPreflight = [pscustomobject]@{
+            status = 'miss'
+            reason = 'preflight-command-error'
+            detail = $_.Exception.Message
+        }
+    }
+    if ($isolatedPreflight.status -eq 'hit') {
+        $retainedRecord = Find-Na2IsolatedBuildRecord `
+            -LogRoot $isolatedLogRoot `
+            -ResultFilename $resultFilename `
+            -OutputIso $isolatedOutputIso `
+            -Paths $paths
+        if ($null -ne $retainedRecord) {
+            $retainedRecordPath = ConvertTo-Na2ProjectPath `
+                -Path $retainedRecord.FullName `
+                -Paths $paths
+            Write-Host (
+                "[na228] Preflight: cache hit; fingerprint $($isolatedPreflight.fingerprint); " +
+                "$isolatedLabel SHA-256 $($isolatedPreflight.output_sha256)."
+            ) -ForegroundColor Cyan
+            Write-Host (
+                "[na228] ISO result: $isolatedKind (unchanged); preflight cache hit; " +
+                'Latest/Previous unchanged; rotation: no; PCSX2 left running.'
+            ) -ForegroundColor Cyan
+            Write-Host (
+                "[na228] $isolatedLabel record: reused $($retainedRecord.FullName)"
+            ) -ForegroundColor Cyan
+            return [pscustomobject]@{
+                Status = $isolatedKind
+                ManualTestState = if ($isolatedKind -eq 'manual-test') { 'unchanged' } else { $null }
+                ScreenshotTestState = if ($isolatedKind -eq 'screenshot-test') { 'unchanged' } else { $null }
+                OutputState = 'unchanged'
+                OutputIso = $isolatedOutputIso
+                ManualTestIso = if ($isolatedKind -eq 'manual-test') { $isolatedOutputIso } else { $null }
+                ScreenshotTestIso = if ($isolatedKind -eq 'screenshot-test') { $isolatedOutputIso } else { $null }
+                LatestIso = $resolvedLatestIso
+                PreviousIso = $resolvedPreviousIso
+                Rotated = $false
+                BuildId = $retainedRecord.Name
+                ProfileLogDirectory = $retainedRecordPath
+                PreflightCacheHit = $true
+                ChangedRoles = [string[]]@()
+            }
+        }
+        $isolatedPreflight = [pscustomobject]@{
+            status = 'miss'
+            reason = 'build-record-invalid'
+            detail = "$isolatedLabel has no retained build record for its output."
+            fingerprint = $isolatedPreflight.fingerprint
+        }
+    }
+    $isolatedPreflightDetail = if (
+        $isolatedPreflight.PSObject.Properties.Name -contains 'detail'
+    ) {
+        ": $($isolatedPreflight.detail)"
+    }
+    else {
+        ''
+    }
     Write-Host (
-        "[na228] ${isolatedLabel}: full verified build; preflight, " +
-        'Latest/Previous promotion, rotation, and receipt updates are disabled.'
+        "[na228] Preflight: cache miss ($($isolatedPreflight.reason)$isolatedPreflightDetail); " +
+        'running the full verified build.'
+    ) -ForegroundColor Yellow
+    $isolatedPreflightFingerprint = if (
+        $isolatedPreflight.PSObject.Properties.Name -contains 'fingerprint'
+    ) {
+        [string]$isolatedPreflight.fingerprint
+    }
+    else {
+        $null
+    }
+    Write-Host (
+        "[na228] ${isolatedLabel}: full verified build; " +
+        'Latest/Previous promotion and rotation are disabled.'
     ) -ForegroundColor Cyan
     $isolatedCompleted = $false
     try {
@@ -314,11 +446,6 @@ if ($ManualTestOnly -or $ScreenshotTestOnly -or $null -ne $workerBuild) {
         if (Test-Na2WindowsAbsolutePath -Text $resultContent) {
             throw "Refusing to write the $isolatedKind result with an absolute path."
         }
-        $resultFilename = switch ($isolatedKind) {
-            'worker' { 'build_result.tsv' }
-            'screenshot-test' { 'screenshot_test_result.tsv' }
-            default { 'manual_test_result.tsv' }
-        }
         Set-Na2Utf8FileAtomic `
             -Path (Join-Path $isolatedProfileLog $resultFilename) `
             -Content $resultContent
@@ -344,6 +471,42 @@ if ($ManualTestOnly -or $ScreenshotTestOnly -or $null -ne $workerBuild) {
                 Sort-Object LastWriteTimeUtc -Descending |
                 Select-Object -Skip 19 |
                 Remove-Item -Recurse -Force
+        }
+        if (-not [string]::IsNullOrWhiteSpace($isolatedPreflightFingerprint)) {
+            try {
+                $isolatedReceiptResult = Invoke-Na2BuildPreflight `
+                    -Command record `
+                    -Na2Iso $inputIso `
+                    -Nun5Iso $nun5Iso `
+                    -OutputIso $isolatedOutputIso `
+                    -Profile $profile `
+                    -Receipt $isolatedReceiptPath `
+                    -ExpectedFingerprint $isolatedPreflightFingerprint `
+                    -Repository $paths.repository
+                if ($isolatedReceiptResult.status -eq 'written') {
+                    Write-Host (
+                        '[na228] Preflight receipt: updated for fingerprint ' +
+                        "$($isolatedReceiptResult.fingerprint)."
+                    ) -ForegroundColor Cyan
+                }
+                else {
+                    Write-Warning (
+                        "Preflight receipt was not updated ($($isolatedReceiptResult.reason)); " +
+                        'the next build will safely run in full.'
+                    )
+                }
+            }
+            catch {
+                Write-Warning (
+                    "Preflight receipt was not updated: $($_.Exception.Message) " +
+                    'The next build will safely run in full.'
+                )
+            }
+        }
+        else {
+            Write-Warning (
+                'Preflight fingerprint was unavailable; the next build will safely run in full.'
+            )
         }
         $isolatedCompleted = $true
         $isolatedRecord = ConvertTo-Na2ProjectPath `
@@ -407,9 +570,9 @@ try {
         -Command check `
         -Na2Iso $inputIso `
         -Nun5Iso $nun5Iso `
-        -LatestIso $resolvedLatestIso `
+        -OutputIso $resolvedLatestIso `
         -Profile $profile `
-        -Receipt $receiptPath `
+        -Receipt $latestReceiptPath `
         -Repository $paths.repository
 }
 catch {
@@ -528,9 +691,9 @@ try {
                 -Command record `
                 -Na2Iso $inputIso `
                 -Nun5Iso $nun5Iso `
-                -LatestIso $resolvedLatestIso `
+                -OutputIso $resolvedLatestIso `
                 -Profile $profile `
-                -Receipt $receiptPath `
+                -Receipt $latestReceiptPath `
                 -ExpectedFingerprint $preflightFingerprint `
                 -Repository $paths.repository
             if ($receiptResult.status -eq 'written') {

@@ -52,7 +52,7 @@ replaced with a copied machine-specific absolute path.
 - `@logs/`: disposable shared-workflow records; no files should be written directly in the root. `na228` keeps bounded Latest/Previous/Test provenance under `@logs/na228/`, and shared generated workstream evidence belongs under `@workstream_logs/<exact task title>/`. Agent ISO records instead stay under `work/<task title>/logs/`. See `docs/LOGGING.md`.
 - `scripts/`: repeatable tooling.
 - `@pcsx2_files/`: shared PCSX2 artifacts under
-  `@workshop/pcsx2/__shared/`.
+  `@workshop/pcsx2_shared/`.
 - `@pcsx2_dev/`: the default user-facing PCSX2 runtime. Routine `na228`,
   multi-game launch, and savestate-filing commands use it unless `stable` is
   selected explicitly.

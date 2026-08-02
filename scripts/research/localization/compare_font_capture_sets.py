@@ -210,7 +210,7 @@ def make_diff(
     row: ManifestRow,
     reference_label: str,
     current_label: str,
-) -> tuple[Image.Image, dict[str, float | int]]:
+) -> tuple[Image.Image | None, dict[str, float | int]]:
     raw = ImageChops.difference(reference, current)
     extrema = raw.getextrema()
     channel_max = max(channel[1] for channel in extrema)
@@ -220,6 +220,14 @@ def make_diff(
     changed = pixel_count - unchanged
     weighted = sum(value * count for value, count in enumerate(histogram))
     mean_abs = weighted / pixel_count
+    metrics = {
+        "changed_pixels": changed,
+        "changed_fraction": changed / pixel_count,
+        "mean_absolute_luma_delta": mean_abs,
+        "maximum_channel_delta": channel_max,
+    }
+    if changed == 0:
+        return None, metrics
     visible = ImageEnhance.Contrast(ImageOps.autocontrast(raw)).enhance(2.0)
     result = Image.new("RGB", (visible.width, HEADER_HEIGHT + visible.height), (0, 0, 0))
     result.paste(visible, (0, HEADER_HEIGHT))
@@ -231,12 +239,7 @@ def make_diff(
             f"{row.screen}"
         ),
     )
-    return result, {
-        "changed_pixels": changed,
-        "changed_fraction": changed / pixel_count,
-        "mean_absolute_luma_delta": mean_abs,
-        "maximum_channel_delta": channel_max,
-    }
+    return result, metrics
 
 
 def safe_name(value: str) -> str:
@@ -279,7 +282,7 @@ def main() -> int:
     pair_dir = args.output / "pairs"
     blend_dir = args.output / "blends"
     diff_dir = args.output / "diffs"
-    for directory in (pair_dir, blend_dir, diff_dir):
+    for directory in (pair_dir, blend_dir):
         directory.mkdir(parents=True, exist_ok=True)
 
     metrics: list[dict[str, object]] = []
@@ -323,7 +326,9 @@ def main() -> int:
         )
         pair.save(pair_dir / f"{row.slot:04d}.png")
         blend.save(blend_dir / f"{row.slot:04d}.png")
-        diff.save(diff_dir / f"{row.slot:04d}.png")
+        if diff is not None:
+            diff_dir.mkdir(parents=True, exist_ok=True)
+            diff.save(diff_dir / f"{row.slot:04d}.png")
         metrics.append(
             {
                 "slot": row.slot,

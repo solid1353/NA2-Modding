@@ -10,6 +10,9 @@
     }
   ],
   "settings": {
+    "git.scanRepositories": [
+      "e2e/captures"
+    ],
     "files.eol": "\n",
     "diffEditor.ignoreTrimWhitespace": true,
     "editor.formatOnSave": false,

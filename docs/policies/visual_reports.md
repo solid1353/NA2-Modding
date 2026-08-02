@@ -2,6 +2,9 @@
 
 ## Accepted screenshot grid
 
+- Screenshot-grid obligations apply only to exact work the user explicitly
+  declared an epic. Outside such an epic, `report` requests a factual textual
+  account responsive to the user's wording; never invent a missing grid.
 - Screenshot comparisons are delivered as composed report-grid images, not as
   separate screenshots, file links, or internal tool previews.
 - Every grid has `NUN5 reference` on the left and `Current NA2`/NA2.28 on the
@@ -52,16 +55,17 @@
   group remain under one shared heading; never present the report as an
   unsectioned image sequence. Emit the composed grids as actual conversation
   images visible to the user.
-- A request for a report or grid requires immediate delivery of the actual
-  composed grid images. Text-only status, promises to deliver, paths, links,
-  and internal previews do not satisfy the request. Attach an existing current
-  grid immediately; regenerate it first only when its imagery or metadata is
-  stale. Check the current task's recorded report state and expected artifact
-  locations before declaring it unavailable. If actual post-change imagery
-  does not exist, the next response must instead be `Cannot produce report
-  grid: <exact reason>. Missing: <exact post-change input>.` Send that response
-  immediately; afterward follow the active work-mode rule. Do not build,
-  launch, investigate, or attach input imagery before the response.
+- When an epic chat owes an existing task grid, a request for that report or
+  grid requires immediate delivery of the actual composed grid images.
+  Text-only status, promises to deliver, paths, links, and internal previews do
+  not satisfy the request. Attach an existing current grid immediately;
+  regenerate it first only when its imagery or metadata is stale. Check the
+  current task's recorded report state and expected artifact locations before
+  declaring it unavailable. If actual post-change imagery does not exist, the
+  next response must instead be `Cannot produce report grid: <exact reason>.
+  Missing: <exact post-change input>.` Send that response immediately;
+  afterward follow the active work-mode rule. Do not build, launch,
+  investigate, or attach input imagery before the response.
 - `view_image`, `Viewed an image`, and similar inspection-tool calls are
   internal inspection only and never deliver an image to the user. Deliver
   each grid in a user-facing commentary or permitted final message as an actual

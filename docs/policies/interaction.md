@@ -197,10 +197,14 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   or complaint text belongs to the report and cannot cancel or reinterpret
   the command. Send every distinct report in the same turn. Reporting does not
   change design, approval, execution, or stop state.
-- `report`, `grid`, or a direct request for this chat's existing task grid is
-  an immediate response command, not a request to begin producing evidence.
-  The command applies when the user uses `report` or `grid` as an instruction,
-  or otherwise directly asks for delivery. Merely mentioning reports or grids
+- Outside explicitly declared epic work with an owed task grid, `report` means
+  a factual textual account responsive to the user's wording. Never invent a
+  screenshot-grid obligation from an ordinary report request.
+- For explicitly declared epic work with an owed task grid, `report`, `grid`,
+  or a direct request for that existing grid is an immediate response command,
+  not a request to begin producing evidence. The command applies when the user
+  uses `report` or `grid` as an instruction, or otherwise directly asks for
+  delivery. Merely mentioning reports or grids
   inside a complaint, explanation, allegation, or `sin` report does not create
   a grid request; never infer that requested action from complaint wording.
   The next user-visible response is either the actual composed post-change grid

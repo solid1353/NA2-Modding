@@ -22,10 +22,10 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - While approved work remains actionable, answer every question in commentary
   and resume immediately.
 - Before ending any turn, apply this gate in order:
-  1. If this chat owes a task grid, visibly send it first. A chat owes the grid
-     when the user requested it there or when that chat produced a subtask grid
-     that it has not yet shown. An explicit stop cancels new work, not this
-     delivery.
+  1. If explicitly declared epic work in this chat owes a task grid, visibly
+     send it first. An epic chat owes the grid when the user requested it there
+     or when that chat produced a subtask grid that it has not yet shown. An
+     explicit stop cancels new work, not this delivery.
   2. If approved Continuous epic work remains actionable and the user has not
      stopped it, a final response is prohibited. Send intermediate output in
      commentary and continue. Pending review/testing, a question, or one
@@ -128,8 +128,12 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   everything after it is report content. Never reinterpret it as a statement
   about `Policeman` or as a command to change task state. Send every distinct
   `sin` report in the same turn.
-- `report`, `grid`, or any direct request for this chat's existing task grid
-  immediately preempts everything. The next user-visible response must be
+- Outside explicitly declared epic work with an owed task grid, `report` means
+  a factual textual account responsive to the user's wording. Never invent a
+  screenshot-grid obligation from an ordinary report request.
+- For explicitly declared epic work with an owed task grid, `report`, `grid`,
+  or any direct request for that existing grid immediately preempts everything.
+  The next user-visible response must be
   exactly one of: (1) the actual composed post-change report-grid images, or
   (2) `Cannot produce report grid: <exact reason>. Missing: <exact post-change
   input>.` Before using outcome (2), check this task's recorded report state

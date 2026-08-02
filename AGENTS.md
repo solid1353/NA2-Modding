@@ -104,6 +104,11 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   action. `Do not <action>` forbids that action; it never stops the parent task
   or other approved work. Continue every other actionable part immediately
   unless the user explicitly stops, pauses, waits, or replaces the parent task.
+- During approved work, acknowledging a correction, prohibition, or limitation
+  is never a handoff boundary and must not be a final response. Acknowledge it
+  in commentary, then take the next permissible action in the same turn. Stop
+  only when the instruction leaves no actionable approved work and a normal
+  blocker or explicit stop applies.
 - A correction to a result's status, classification, label, wording, or
   recorded state changes only that fact. It is not a stop, completion, review,
   or handoff boundary. Correct it in commentary and immediately continue any

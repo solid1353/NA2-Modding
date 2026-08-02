@@ -18,7 +18,7 @@ if ($PSCmdlet.ParameterSetName -eq 'None') {
 }
 $context = Get-VisualRegressionContext -Suite $Suite
 $pending = Join-Path $context.CaptureRoot 'pending'
-$pendingScreenshots = Join-Path $pending 'screenshots'
+$pendingScreenshots = $pending
 $available = @(Get-NumericPngSlots -Directory $pendingScreenshots)
 if ($available.Count -eq 0) {
     throw 'No pending screenshots are available for approval.'
@@ -71,22 +71,22 @@ try {
     Get-ChildItem -LiteralPath $pending -Force |
         Where-Object Name -cne 'sstates' |
         Copy-Item -Destination $pendingStage -Recurse -Force
-    $approvedScreenshots = Join-Path $approvedStage 'screenshots'
+    $approvedScreenshots = $approvedStage
     [void](New-Item -ItemType Directory -Path $approvedScreenshots -Force)
     foreach ($slot in $selected) {
         $screenshot = Get-ChildItem -LiteralPath $pendingScreenshots -Filter '*.png' -File |
             Where-Object { $_.BaseName -match '(\d+)$' -and [int]$Matches[1] -eq $slot } |
             Select-Object -First 1
         Copy-Item -LiteralPath $screenshot.FullName -Destination (Join-Path $approvedScreenshots $screenshot.Name) -Force
-        Remove-Item -LiteralPath (Join-Path $pendingStage "screenshots\$($screenshot.Name)") -Force
+        Remove-Item -LiteralPath (Join-Path $pendingStage $screenshot.Name) -Force
     }
 
     New-VisualRegressionReports `
         -Suite $Suite `
-        -PendingRoot $pendingStage `
+        -PendingDirectory $pendingStage `
         -OutputRoot $reportsStage `
         -ScratchRoot $scratch `
-        -ApprovedRoot $approvedStage
+        -ApprovedDirectory $approvedStage
     Publish-VisualRegressionTransaction `
         -Replacements ([ordered]@{
             (Join-Path $context.CaptureRoot 'approved') = $approvedStage

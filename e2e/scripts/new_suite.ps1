@@ -42,8 +42,8 @@ try {
         throw 'NUN5 reference replay completed without captured screenshots.'
     }
 
-    $referenceScreenshots = Join-Path $captureStage 'references\screenshots'
-    $approvedScreenshots = Join-Path $captureStage 'approved\screenshots'
+    $referenceScreenshots = Join-Path $captureStage 'references'
+    $approvedScreenshots = Join-Path $captureStage 'approved'
     $suiteStates = Join-Path $captureStage 'sstates'
     [void](New-Item -ItemType Directory -Path `
         $suiteStage, `

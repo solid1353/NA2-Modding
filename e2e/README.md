@@ -63,9 +63,10 @@ Approve selected pending slots, or explicitly approve the whole batch:
 Each definition lives under `suites/<recording-name>/` with `input.p2m2` and
 `screens.tsv`. Its expanded capture data lives under
 `captures/<recording-name>/`, with `references/`, `approved/`, `pending/`, and
-`reports/`, plus one agent-only `sstates/` directory at the suite root. A run
-keeps only screenshots that differ from, or are absent from, the approved set
-under `pending/screenshots/`, and atomically replaces the suite-level
+`reports/`, plus one agent-only `sstates/` directory at the suite root. The
+three screenshot tiers contain their PNG files directly. A run keeps only
+screenshots that differ from, or are absent from, the approved set under
+`pending/`, and atomically replaces the suite-level
 savestate batch when the replay produced one. Approval moves selected
 screenshots out of the pending review set and never changes savestates. All
 pairwise and three-way reports contain changed comparisons only.

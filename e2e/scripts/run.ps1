@@ -51,7 +51,8 @@ try {
     if (@(Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File).Count -eq 0) {
         throw 'Replay completed without captured screenshots.'
     }
-    Copy-Item -LiteralPath $capturedScreenshots -Destination $pendingStage -Recurse
+    Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File |
+        Copy-Item -Destination $pendingStage
     $capturedStates = Join-Path $captureRoot 'sstates'
     if (Test-Path -LiteralPath $capturedStates -PathType Container) {
         Copy-Item -LiteralPath $capturedStates -Destination $statesStage -Recurse
@@ -59,18 +60,18 @@ try {
 
     New-VisualRegressionReports `
         -Suite $Suite `
-        -PendingRoot $pendingStage `
+        -PendingDirectory $pendingStage `
         -OutputRoot $reportsStage `
         -ScratchRoot $scratch
     $approvedSummary = Join-Path $reportsStage 'approved-vs-pending\summary.tsv'
     $removedIdentical = Remove-ApprovedIdenticalPendingScreenshots `
-        -PendingRoot $pendingStage `
+        -PendingDirectory $pendingStage `
         -Summary $approvedSummary
     if ($removedIdentical -gt 0) {
         Remove-Item -LiteralPath $reportsStage -Recurse -Force
         New-VisualRegressionReports `
             -Suite $Suite `
-            -PendingRoot $pendingStage `
+            -PendingDirectory $pendingStage `
             -OutputRoot $reportsStage `
             -ScratchRoot $scratch
     }
@@ -84,8 +85,8 @@ try {
     Publish-VisualRegressionTransaction `
         -Replacements $replacements `
         -TransactionRoot $transaction
-    $pendingSlots = @(Get-NumericPngSlots -Directory (Join-Path $context.CaptureRoot 'pending\screenshots'))
-    $approvedDirectory = Join-Path $context.CaptureRoot 'approved\screenshots'
+    $pendingSlots = @(Get-NumericPngSlots -Directory (Join-Path $context.CaptureRoot 'pending'))
+    $approvedDirectory = Join-Path $context.CaptureRoot 'approved'
     $approvedSlots = @(Get-NumericPngSlots -Directory $approvedDirectory)
     $clean = $pendingSlots.Count -eq 0
     $status = if ($clean) { 'clean' } else { 'review-required' }

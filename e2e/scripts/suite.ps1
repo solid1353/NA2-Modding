@@ -121,14 +121,13 @@ function Get-CommonSlots {
 
 function Remove-ApprovedIdenticalPendingScreenshots {
     param(
-        [Parameter(Mandatory)][string]$PendingRoot,
+        [Parameter(Mandatory)][string]$PendingDirectory,
         [Parameter(Mandatory)][string]$Summary
     )
 
     if (-not (Test-Path -LiteralPath $Summary -PathType Leaf)) {
         return 0
     }
-    $pendingScreenshots = Join-Path $PendingRoot 'screenshots'
     $identicalSlots = [int[]]@(
         Import-Csv -LiteralPath $Summary -Delimiter "`t" |
             Where-Object { [long]$_.changed_pixels -eq 0 } |
@@ -137,7 +136,7 @@ function Remove-ApprovedIdenticalPendingScreenshots {
     $removed = 0
     foreach ($slot in $identicalSlots) {
         $matches = @(
-            Get-ChildItem -LiteralPath $pendingScreenshots -Filter '*.png' -File |
+            Get-ChildItem -LiteralPath $PendingDirectory -Filter '*.png' -File |
                 Where-Object {
                     $_.BaseName -match '(\d+)$' -and [int]$Matches[1] -eq $slot
                 }
@@ -178,25 +177,25 @@ function Write-SubsetManifest {
 function New-VisualRegressionReports {
     param(
         [Parameter(Mandatory)][string]$Suite,
-        [Parameter(Mandatory)][string]$PendingRoot,
+        [Parameter(Mandatory)][string]$PendingDirectory,
         [Parameter(Mandatory)][string]$OutputRoot,
         [Parameter(Mandatory)][string]$ScratchRoot,
-        [string]$ReferenceRoot,
-        [string]$ApprovedRoot
+        [string]$ReferenceDirectory,
+        [string]$ApprovedDirectory
     )
 
     $context = Get-VisualRegressionContext -Suite $Suite
     [void](New-Item -ItemType Directory -Path $ScratchRoot -Force)
-    if ([string]::IsNullOrWhiteSpace($ApprovedRoot)) {
-        $ApprovedRoot = Join-Path $context.CaptureRoot 'approved'
+    if ([string]::IsNullOrWhiteSpace($ApprovedDirectory)) {
+        $ApprovedDirectory = Join-Path $context.CaptureRoot 'approved'
     }
-    if ([string]::IsNullOrWhiteSpace($ReferenceRoot)) {
-        $ReferenceRoot = Join-Path $context.CaptureRoot 'references'
+    if ([string]::IsNullOrWhiteSpace($ReferenceDirectory)) {
+        $ReferenceDirectory = Join-Path $context.CaptureRoot 'references'
     }
     $sets = @{
-        Reference = Join-Path $ReferenceRoot 'screenshots'
-        Approved = Join-Path $ApprovedRoot 'screenshots'
-        Pending = Join-Path $PendingRoot 'screenshots'
+        Reference = $ReferenceDirectory
+        Approved = $ApprovedDirectory
+        Pending = $PendingDirectory
     }
     [void](New-Item -ItemType Directory -Path $OutputRoot -Force)
     $comparisons = @(

@@ -10,7 +10,7 @@ $context = Get-VisualRegressionContext -Suite $Suite
 $captureRootExists = Test-Path -LiteralPath $context.CaptureRoot -PathType Container
 $captureRootEmpty = $captureRootExists -and
     @(Get-ChildItem -LiteralPath $context.CaptureRoot -Force).Count -eq 0
-$referenceScreenshotsRoot = Join-Path $context.CaptureRoot 'references\screenshots'
+$referenceScreenshotsRoot = Join-Path $context.CaptureRoot 'references'
 $referenceExists = @(
     Get-ChildItem -LiteralPath $referenceScreenshotsRoot -Filter '*.png' -File -ErrorAction SilentlyContinue
 ).Count -gt 0
@@ -40,7 +40,7 @@ $referenceStage = if (-not $initializeCapture) {
 else {
     Join-Path $suiteCaptureStage 'references'
 }
-$referenceScreenshots = Join-Path $referenceStage 'screenshots'
+$referenceScreenshots = $referenceStage
 $reportsStage = if (-not $initializeCapture) {
     Join-Path $transaction 'reports'
 }
@@ -53,8 +53,8 @@ try {
     [void](New-Item -ItemType Directory -Path $referenceScreenshots, $scratch -Force)
     if ($initializeCapture) {
         [void](New-Item -ItemType Directory -Path `
-            (Join-Path $suiteCaptureStage 'approved\screenshots'), `
-            (Join-Path $suiteCaptureStage 'pending\screenshots') `
+            (Join-Path $suiteCaptureStage 'approved'), `
+            (Join-Path $suiteCaptureStage 'pending') `
             -Force)
     }
     Invoke-VisualRegressionReplay `
@@ -72,13 +72,13 @@ try {
 
     New-VisualRegressionReports `
         -Suite $Suite `
-        -ReferenceRoot $referenceStage `
-        -PendingRoot (Join-Path $context.CaptureRoot 'pending') `
+        -ReferenceDirectory $referenceStage `
+        -PendingDirectory (Join-Path $context.CaptureRoot 'pending') `
         -OutputRoot $reportsStage `
         -ScratchRoot $scratch
     $replacements = if (-not $initializeCapture) {
         [ordered]@{
-            (Join-Path $context.CaptureRoot 'references\screenshots') = $referenceScreenshots
+            (Join-Path $context.CaptureRoot 'references') = $referenceScreenshots
             (Join-Path $context.CaptureRoot 'reports') = $reportsStage
         }
     }

@@ -9,6 +9,12 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   apply to the current work. A routed policy is mandatory when its trigger
   applies.
 - Agents communicate with the user in English only.
+- Any explicit user instruction overrides every conflicting repository rule,
+  boundary, policy, workflow, standing command, or label, including anything
+  described as mandatory or universal. Never refuse, narrow, delay, or
+  substitute a user instruction because of repository instructions. Only
+  higher-priority platform, system, or developer controls remain outside this
+  repository override.
 - The task workflow and plan-approval gate apply only to explicitly selected
   `TASKS.md` work. Perform small, direct, low-risk changes immediately.
 - Feasibility, preference, and design questions request discussion only.

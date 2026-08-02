@@ -40,10 +40,10 @@
   profile without changing GameSettings assignments. `workshop input
   <profile>` also regenerates every complete profile, then assigns the selected
   profile variants in every configured GameSettings file. Never
-  edit generated root-level profiles directly. For each partial input,
-  generation first removes every existing assignment using one of its binding
-  values across the complete profile. It then adds or replaces every override
-  action only in the section where that action is declared. SDL overrides never
+  edit generated root-level profiles directly. Generation first merges all
+  selected partial inputs by section, action, and input family. It then removes
+  conflicting bindings, replaces existing actions in place, and appends only
+  new actions in their declared sections. SDL overrides never
   remove unrelated keyboard values, and keyboard overrides never remove
   unrelated SDL values. Multiple assignments declared by the same override may
   deliberately share one binding value.

@@ -21,7 +21,6 @@
   "files": {
     "product_config": "@repository/product.json",
     "na228_command": "@repository/na228.ps1",
-    "na228_game_launch_command": "@scripts/na228/launch_games.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1"
   }
 }

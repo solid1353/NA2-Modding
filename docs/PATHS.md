@@ -53,11 +53,10 @@ logs, and task artifacts.
 - `game_resolver`: Workshop `scripts/lib/resolve_game.py`.
 - `notification_state` and `git_authors`: shared Workshop settings.
 - `workshop_command`: Workshop `workshop.ps1`.
-- `pcsx2_launch_command`, `pcsx2_copy_worker_command`,
+- `pcsx2_launch_command`, `pcsx2_game_launch_command`, `pcsx2_copy_worker_command`,
   `pcsx2_pine_command`, and `pcsx2_iso_identity`: Workshop utilities.
 - `ghidra_runtime`: Workshop headless-Ghidra runtime setup.
-- `na228_command`, `na228_game_launch_command`, and
-  `release_publish_command`: NA2-specific entrypoints.
+- `na228_command` and `release_publish_command`: NA2-specific entrypoints.
 
 Catalog-derived compatibility files remain available to callers:
 

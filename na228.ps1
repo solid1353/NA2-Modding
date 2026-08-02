@@ -35,6 +35,36 @@ function Get-Na228WatchArguments {
 }
 
 $commandTokens = @($Tokens)
+$playRecording = $null
+$recordRecording = $null
+$recordingOptionIndexes = @(
+    for ($index = 0; $index -lt $commandTokens.Count; $index++) {
+        if ($commandTokens[$index] -ieq '-play' -or
+            $commandTokens[$index] -ieq '-record') {
+            $index
+        }
+    }
+)
+if ($recordingOptionIndexes.Count -gt 1) {
+    throw 'Use only one of -play or -record.'
+}
+if ($recordingOptionIndexes.Count -eq 1) {
+    $optionIndex = $recordingOptionIndexes[0]
+    if ($optionIndex -ne $commandTokens.Count - 2) {
+        throw '-play or -record must be the final option followed by one recording name.'
+    }
+    if ($commandTokens[$optionIndex] -ieq '-play') {
+        $playRecording = $commandTokens[$optionIndex + 1]
+    }
+    else {
+        $recordRecording = $commandTokens[$optionIndex + 1]
+    }
+    $commandTokens = @(
+        if ($optionIndex -gt 0) {
+            $commandTokens[0..($optionIndex - 1)]
+        }
+    )
+}
 $mode = if ($commandTokens.Count -gt 0) {
     $commandTokens[0].ToLowerInvariant()
 }
@@ -61,6 +91,8 @@ if ($mode -eq 'help') {
         '  l | p | t                  Latest | Previous | Test'
         '  bl | bt                    Build and run Latest | Test'
         '  <token>w [C path|plan]     Watch that game; selection follows its token'
+        '  ... -play name             Replay one recording in every launched game'
+        '  ... -record name           Record the last/rightmost launched game'
         ''
         '  na228 build l|t             Build Latest or Test without running it'
         '  na228 validate              Validate the complete build without producing an ISO'
@@ -210,8 +242,18 @@ foreach ($buildAction in @($buildActions | Select-Object -Unique)) {
     & (Join-Path $paths.scripts 'na228\run.ps1') -Action $buildAction
 }
 
+$launchParameters = @{
+    Games = @($games)
+    ProjectRoot = $paths.repository
+}
+if ($null -ne $playRecording) {
+    $launchParameters.Play = $playRecording
+}
+if ($null -ne $recordRecording) {
+    $launchParameters.Record = $recordRecording
+}
 $launchResults = @(
-    & $paths.files.na228_game_launch_command -Games @($games)
+    & $paths.files.pcsx2_game_launch_command @launchParameters
 )
 $launchResults
 

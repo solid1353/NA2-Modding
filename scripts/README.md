@@ -133,11 +133,12 @@ only the newly launched worker if it cannot remain hidden. `-IsoPath` is
 optional for configured launches and mandatory and repository-relative for
 worker launches; worker paths must be independent copies under
 `work/<task title>/inputs/isos/`.
-`-PassThru` returns the started process for higher-level orchestration such as
-multi-game launch. `scripts/na228/launch_games.ps1` assigns successive
-process-local PINE ports beginning at the configured development `PINESlot`
-and passes each as `-pine-port`; a compact token ending in `w` sends that
-launch's returned port to the watcher.
+`-PassThru` returns the started process for higher-level orchestration.
+Workshop `@pcsx2_scripts/launch_games.ps1` resolves and tiles one or two games,
+assigns successive process-local PINE ports beginning at the configured
+`PINESlot`, and optionally replays one shared recording or records the
+last/rightmost instance. A compact token ending in `w` sends that launch's
+returned port to the NA2 watcher.
 window tiling. The launcher does not copy or configure PCSX2, inspect or stop
 unrelated processes, use PINE, load savestates, capture output, or perform
 cleanup.
@@ -260,7 +261,7 @@ git show '<commit>:<former-path>' > 'work/<task title>/temp/<filename>'
 | `scripts/injection/test.ps1` | `9a4ddb5b` | Renamed to `scripts/injection/inject_candidate.ps1` because it is an operational compile/reload/apply command, not a test. |
 | `scripts/pcsx2/extract_savestate_screenshots.py` | `a7a19d9e` | Replaced by the user-facing PowerShell implementation `@pcsx2_scripts/extract_savestate_screenshots.ps1`, which accepts either one folder or explicit same-folder savestates. |
 | `scripts/pcsx2/move_na228_savestates.ps1` | `82444b3a` | Renamed and generalized as `@pcsx2_scripts/move_savestates.ps1`; pass a configured game or alias before the destination subpath. |
-| `scripts/pcsx2/game_commands.ps1` and `launch_pair.ps1` | `dae022c8` | Separate source-game functions and the pair/multi-game alias were consolidated into `na228.ps1` command routing and `scripts/na228/launch_games.ps1`. Pass game selectors directly to `na228`. |
+| `scripts/pcsx2/game_commands.ps1`, `launch_pair.ps1`, and `scripts/na228/launch_games.ps1` | `dae022c8`, Workshop `1f8bd3d` | Game resolution and one/two-instance launch orchestration are centralized in Workshop `@pcsx2_scripts/launch_games.ps1`; `na228.ps1` retains only build recipes and watcher attachment. |
 | `scripts/pcsx2/capture_state_screenshot.ps1` | `ec4b8276193bc214b526d5ab4f4f85b240ef7949` | Retired because it serialized a complete savestate solely to obtain a fresh screenshot. Extract `Screenshot.png` directly from an existing state; use `@pcsx2_scripts/pine.py screenshot` for a fresh runtime frame. |
 | `injection_lab/gen_pnach.py`, `linker.asm`, `overlay_writer.py`, `production_adapter.py`, `screenshot.ps1`, `test.ps1`, and `watch.ps1` | `35628bb4` | The PNACH transport, alternating banks, install/restore state, standalone screenshot helper, and Lab wrapper were retired after the direct-PINE workflow was proven. Workstreams use the unrelated maintained `scripts/injection/inject_candidate.ps1`; user live editing uses `scripts/injection/watch.ps1`. |
 | `scripts/archive/replace_iso_file_same_size.ps1` | `858da62aacc5d9571bdef072e36b484efddc15e9` | Direct unverified ISO mutation was superseded by guarded, hash-pinned replacements through `na228_builder.image_assembler`. |

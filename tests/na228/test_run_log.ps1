@@ -138,7 +138,7 @@ try {
     "product_config": "@repository/product.json",
     "game_resolver": "@scripts/lib/resolve_game.py",
     "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
-    "na228_game_launch_command": "@scripts/na228/launch_games.ps1",
+    "pcsx2_game_launch_command": "@scripts/pcsx2/launch_games.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1"
   }
 }
@@ -247,10 +247,13 @@ print(json.dumps(result))
 param([string]$Target = 'dev', [string]$IsoPath)
 Write-Host "[fake] launch $Target $IsoPath"
 '@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'launch_games.ps1') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch_games.ps1') -Content @'
 param(
     [Parameter(Position = 0, ValueFromRemainingArguments = $true)]
-    [string[]]$Games
+    [string[]]$Games,
+    [string]$Play,
+    [string]$Record,
+    [string]$ProjectRoot
 )
 $aliases = @{
     l = 'latest'
@@ -265,7 +268,10 @@ if (@($canonical | Where-Object { $_ -notin @(
 ) }).Count -gt 0) {
     throw "Unknown game name: $($Games -join ',')"
 }
-Write-Output "[fake] multi-game launch $($canonical -join ',')"
+Write-Output (
+    "[fake] multi-game launch $($canonical -join ',') " +
+    "play=$Play record=$Record project=$ProjectRoot"
+)
 $port = 28014
 foreach ($game in $canonical) {
     [pscustomobject]@{
@@ -366,6 +372,36 @@ else {
     Assert-Na2Test `
         -Condition ($multiGameLaunch -match '\[fake\] multi-game launch na2,nun5') `
         -Message 'Unified multi-game launch did not preserve ordered selectors.'
+    $pairedPlayback = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            nun5 `
+            l `
+            -play `
+            'practice-menu'
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $pairedPlayback -match (
+                'multi-game launch nun5,latest ' +
+                'play=practice-menu record='
+            )
+        ) `
+        -Message 'Paired playback was not forwarded to the shared launcher.'
+    $pairedRecording = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            nun5 `
+            l `
+            -record `
+            'practice-menu'
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $pairedRecording -match (
+                'multi-game launch nun5,latest ' +
+                'play= record=practice-menu'
+            )
+        ) `
+        -Message 'Rightmost recording was not forwarded to the shared launcher.'
     $launchLogSectionsAfter = if (Test-Path -LiteralPath $launchLogPath) {
         [regex]::Matches(
             [IO.File]::ReadAllText($launchLogPath),

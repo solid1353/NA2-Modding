@@ -226,6 +226,10 @@
   `scripts/lib/run_python.ps1`; their requirements belong only in
   `packages.json`. The self-contained release builder's
   pinned lockfile is its release-only central set, not a general runtime.
+  On Windows, never execute a `.py` path directly through PowerShell or the
+  shell: that can invoke the user's file association and open an application
+  chooser or editor. Invoke Python through the maintained runtime wrapper or
+  an explicitly resolved Python executable.
   Never select an interpreter, probe packages, install dependencies, or add
   fallback logic separately in a workstream, task-local helper, or maintained
   script. Extend the applicable central set and resolver when a shared package

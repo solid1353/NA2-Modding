@@ -112,7 +112,10 @@ function New-VisualRegressionStateStage {
         [Parameter(Mandatory)][string]$ExistingRoot,
         [Parameter(Mandatory)][string]$StageRoot,
         [Parameter(Mandatory)][string]$Tier,
-        [Parameter(Mandatory)][string]$CapturedDirectory
+        [Parameter(Mandatory)][string]$CapturedDirectory,
+        [Parameter(Mandatory)][string]$ExistingScreenshotDirectory,
+        [Parameter(Mandatory)][string]$CapturedScreenshotDirectory,
+        [Parameter(Mandatory)][string]$PythonRunner
     )
 
     if ($Tier -cnotin $script:E2eCaptureTiers.Values) {
@@ -128,8 +131,45 @@ function New-VisualRegressionStateStage {
     }
     $destination = Join-Path $StageRoot $Tier
     [void](New-Item -ItemType Directory -Path $destination -Force)
-    Get-ChildItem -LiteralPath $CapturedDirectory -Filter '*.p2s' -File |
-        Copy-Item -Destination $destination
+    $identicalScreenshots = [Collections.Generic.HashSet[string]]::new(
+        [StringComparer]::OrdinalIgnoreCase
+    )
+    if (Test-Path -LiteralPath $ExistingScreenshotDirectory -PathType Container) {
+        $comparison = @(
+            & $PythonRunner `
+                -PackageSet imaging `
+                -Script (Join-Path $PSScriptRoot 'find_identical_pngs.py') `
+                -ArgumentList @(
+                    '--existing', $ExistingScreenshotDirectory,
+                    '--captured', $CapturedScreenshotDirectory
+                ) `
+                -NoBytecode
+        )
+        if ($LASTEXITCODE -ne 0) {
+            throw "PNG comparison failed with exit code $LASTEXITCODE."
+        }
+        foreach ($name in $comparison) {
+            if (-not [string]::IsNullOrWhiteSpace($name)) {
+                [void]$identicalScreenshots.Add($name)
+            }
+        }
+    }
+
+    $existingStates = Join-Path $ExistingRoot $Tier
+    foreach ($capturedState in Get-ChildItem -LiteralPath $CapturedDirectory -Filter '*.p2s' -File) {
+        $screenshotName = $capturedState.BaseName + '.png'
+        $existingState = Join-Path $existingStates $capturedState.Name
+        $sourceState = if (
+            $identicalScreenshots.Contains($screenshotName) -and
+            (Test-Path -LiteralPath $existingState -PathType Leaf)
+        ) {
+            $existingState
+        }
+        else {
+            $capturedState.FullName
+        }
+        Copy-Item -LiteralPath $sourceState -Destination $destination
+    }
 }
 
 function Get-NumericPngSlots {

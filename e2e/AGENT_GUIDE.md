@@ -70,10 +70,12 @@ and again before deciding that the result is correct.
 5. Repeat until every named capture has the requested result or a concrete
    blocker remains.
 
-The run atomically replaces `current/`, `sstates/current/`, and `report/`.
-Files listed in the suite's `ignore.txt` keep
-their previous current screenshot, while their new current savestate remains
-available.
+The run atomically publishes `current/`, `sstates/current/`, and `report/`.
+When a freshly captured PNG is pixel-identical to the existing current PNG,
+the existing savestate is retained instead of replacing it. A changed or new
+PNG publishes its matching fresh savestate. Files listed in the suite's
+`ignore.txt` keep their previous current screenshot; their fresh savestate is
+published only when the raw captured PNG differs.
 
 ## Verification and delivery gate
 

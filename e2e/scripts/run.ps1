@@ -63,7 +63,10 @@ try {
             -ExistingRoot $context.Capture.States `
             -StageRoot $statesStage `
             -Tier $script:E2eCaptureTiers.Current `
-            -CapturedDirectory $capturedStates
+            -CapturedDirectory $capturedStates `
+            -ExistingScreenshotDirectory $context.Capture.Current `
+            -CapturedScreenshotDirectory $capturedScreenshots `
+            -PythonRunner $context.PythonRunner
     }
 
     $replacements = [ordered]@{
@@ -84,7 +87,7 @@ try {
         -TransactionRoot $transaction
     $capturedSlots = @(Get-NumericPngSlots -Directory $context.Capture.Current)
     Write-Host (
-        'E2E current captures and savestates were replaced atomically.'
+        'E2E current captures and changed-screen savestates were published atomically.'
     ) -ForegroundColor Green
     [pscustomobject]@{
         Suite = $Suite

@@ -81,7 +81,10 @@ try {
             -ExistingRoot $context.Capture.States `
             -StageRoot $statesStage `
             -Tier $script:E2eCaptureTiers.Reference `
-            -CapturedDirectory $capturedStates
+            -CapturedDirectory $capturedStates `
+            -ExistingScreenshotDirectory $context.Capture.Reference `
+            -CapturedScreenshotDirectory $capturedScreenshots `
+            -PythonRunner $context.PythonRunner
     }
 
     $currentScreenshots = if ($initializeCapture) {
@@ -120,7 +123,7 @@ try {
     Publish-VisualRegressionTransaction `
         -Replacements $replacements `
         -TransactionRoot $transaction
-    Write-Host 'Reference screenshots, savestates, and report were replaced atomically.' -ForegroundColor Green
+    Write-Host 'Reference screenshots, changed-screen savestates, and report were published atomically.' -ForegroundColor Green
 }
 finally {
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $context.Root

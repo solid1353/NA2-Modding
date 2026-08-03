@@ -36,6 +36,35 @@ The approved-versus-pending comparison is authoritative for a local NA2.28
 regression. A reference image provides design context; different games or
 video modes do not necessarily produce pixel-identical frames.
 
+When the target is plain text, an agent using ordinary capture PNGs or grid
+pages must zoom them until individual glyph pixels, spacing, baselines, and
+alignment are clearly legible. A thumbnail, fitted whole screenshot, or fitted
+grid page alone is not sufficient evidence for a text-rendering conclusion.
+Inspect the relevant pair, diff, or blend at that readable zoom before deciding
+what to change and again before deciding that the result is correct.
+
+## Evidence gate
+
+- Open and inspect every capture named by the command. Evidence from one slot
+  never establishes the state of another slot.
+- A relational claim such as "aligned with", "matches", "same bounds", or
+  "consistent across" requires an actual comparison of every named side at a
+  readable zoom. Observing that one capture moved is not evidence that it now
+  aligns with another capture.
+- When the request distinguishes selected, highlighted, ordinary, disabled, or
+  other states, inspect the exact state named for each capture. Do not
+  substitute a visually similar state.
+- After each `na228 test <suite> -b` run, reopen the regenerated evidence for
+  every named capture. Pre-run images and observations cannot establish the
+  post-run result.
+- Do not claim that a result is correct, aligned, or complete until every
+  property named by the request has been directly checked in every applicable
+  capture.
+- Do not say that comparison, testing, or inspection is happening "now" and
+  then yield or end the turn. Perform that action in the same turn and report
+  only the evidence actually obtained. Stop only for a concrete blocker that
+  prevents the required inspection or test.
+
 ## Fix and verify
 
 1. Inspect the supplied difference and identify the exact requested visual

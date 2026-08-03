@@ -87,9 +87,9 @@ requirements, not whatever implementation happens to exist today.
   or atomically promotes a changed candidate and rotates history. Candidate
   composition in Manual Test mode updates Manual Test only.
 - Focused validation is appropriate during iteration, but every implementation
-  result must pass the complete `na228 test [suite]` pipeline before
-  presentation. Supply the affected suite when unrelated suites are not part of
-  the result; omit it only when all suites must run.
+  result must pass bare `na228 test` before presentation. Agents never supply a
+  suite selector: the complete gate always replays every main-tracked E2E suite.
+  Selective `na228 test <suite>` execution is user-only.
 - An agent ISO build is permitted only when an already available compatible
   savestate reaches the exact target without navigation, the test concerns
   boot/startup behavior requiring no navigation, or the user explicitly
@@ -112,7 +112,8 @@ requirements, not whatever implementation happens to exist today.
   portable PCSX2 installation. It replays all suites or one selected suite
   against every variant, verifies cross-variant stability, and publishes only
   the configured variant's captures after all work succeeds. `.\tests\run.ps1` is its internal
-  permanent-test phase, not a second public test workflow.
+  permanent-test phase, not a second public test workflow. The optional suite
+  selector is user-only; agents always use bare `na228 test`.
   Verify every validation command's documented semantics before running it;
   never infer behavior from a short flag.
 - Worker-output builds never touch Latest, Previous, shared Test outputs,

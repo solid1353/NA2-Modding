@@ -17,6 +17,9 @@ na228 test delete <suite>
 replays all suites; with one it replays only that suite. It starts three
 concurrent jobs:
 
+The optional suite selector is user-only. Agents always run bare `na228 test`
+so every main-tracked suite participates in the integration gate.
+
 1. the complete permanent project test suite;
 2. a preflight-resolved normal E2E Test build followed by the selected replays;
 3. a preflight-resolved padded E2E Test build followed by the selected replays.

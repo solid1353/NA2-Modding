@@ -136,7 +136,7 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   [`e2e/AGENT_GUIDE.md`](e2e/AGENT_GUIDE.md). `<captures>` accepts one slot,
   comma-separated slots, and inclusive ranges, for example `25` or
   `25, 27-30`. Inspect the prepared differences for those captures, change only
-  the responsible implementation, run `na228 test <suite>`, inspect the
+  the responsible implementation, run the full `na228 test`, inspect the
   regenerated differences, and continue implementing and testing until every
   named capture has the requested local result or a concrete blocker remains.
   Do not wait for separate plan approval. The command does not authorize
@@ -290,13 +290,16 @@ Detailed command and task behavior is in
   pipeline passes. Suite definitions
   live under `e2e/`; screenshot history lives in the independent
   `e2e/captures/` repository. `.\tests\run.ps1` remains the internal permanent
-  test runner used by that pipeline.
+  test runner used by that pipeline. The optional suite selector is user-only;
+  agents always invoke bare `na228 test` so every main-tracked E2E suite runs.
   Never infer command semantics from a flag name; verify the documented exact
   command before execution.
-- Before presenting any implementation result, run `na228 test [suite]`. Its normal and
+- Before presenting any implementation result, run bare `na228 test`. Its normal and
   padded builds each derive, conflict-check, build, and validate the full pinned
   profile against the real source images; its permanent tests and complete E2E
-  replay are one indivisible integration gate. Focused checks do not replace it.
+  replay of every suite are one indivisible integration gate. Agents never pass
+  a suite selector; selective `na228 test <suite>` execution is user-only.
+  Focused checks do not replace the full gate.
 - Keep hypothesis/candidate checks outside the permanent tracked suite and
   normal builds. Permanent coverage begins only after explicit user acceptance
   of the exact behavior; static-only coverage requires explicit user approval.

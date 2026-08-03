@@ -13,7 +13,8 @@ e2e font/main 25, 27-30: <requested fix>
 
 A capture expression accepts one slot, comma-separated slots, and inclusive
 ranges. The command authorizes immediate implementation and repeated execution
-of the affected suite without separate plan approval.
+of the full E2E suite set without separate plan approval. Its suite name narrows
+the evidence to inspect; it never narrows agent test execution.
 
 ## Evidence
 
@@ -65,7 +66,7 @@ and again before deciding that the result is correct.
 3. Run the complete permanent and E2E pipeline:
 
    ```powershell
-   na228 test <suite>
+   na228 test
    ```
 
 4. Inspect the regenerated current images and report.
@@ -81,6 +82,8 @@ the existing savestate is retained instead of replacing it. A changed or new
 PNG publishes its matching fresh savestate. Files listed in the suite's
 `ignore.txt` keep both their previous current screenshot and previous current
 savestate; a newly ignored slot without existing evidence publishes neither.
+The optional `na228 test <suite>` selector is user-only. Agents always run the
+bare command and inspect every regenerated capture that changed.
 
 ## Verification and delivery gate
 

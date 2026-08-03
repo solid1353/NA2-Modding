@@ -266,8 +266,8 @@ Detailed command and task behavior is in
   build-only form.
   These commands never mean a test suite. `na228 test [suite]` is the only test
   execution command: it runs the permanent project tests while independently
-  preparing normal and padded E2E Test ISOs, then serializes emulator replays
-  through the shared portable PCSX2 installation. It replays every main-tracked
+  preparing and replaying normal and padded E2E Test ISOs concurrently through
+  the shared portable PCSX2 installation. It replays every main-tracked
   suite or the selected suite against both builds, compares each replay for
   heap stability, and publishes only the normal captures after the whole
   pipeline passes. Suite definitions

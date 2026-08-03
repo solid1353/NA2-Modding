@@ -24,11 +24,13 @@ so every main-tracked suite participates in the integration gate.
 2. a preflight-resolved normal E2E Test build followed by the selected replays;
 3. a preflight-resolved padded E2E Test build followed by the selected replays.
 
-Each build is prepared once per invocation. Permanent tests and variant builds
-run concurrently, while emulator replays are serialized because they share one
-portable PCSX2 installation. Every selected suite is replayed once against each
-ISO, and its normal/padded screenshots are compared as soon as both replays
-finish. The pipeline prints periodic job-state progress while this work runs.
+Each build is prepared once per invocation. Permanent tests and both variant
+build/replay pipelines run concurrently through the shared portable PCSX2
+installation. Each variant uses its own game configuration, memory card,
+recording staging path, and capture output. Every selected suite is replayed
+once against each ISO, and its normal/padded screenshots are compared as soon
+as both replays finish. The pipeline prints periodic job-state progress while
+this work runs.
 It fails if any non-ignored PNG differs. Only after all jobs and comparisons
 pass are the normal screenshots, changed-screen savestates, and
 reference/current reports published atomically. The already built normal E2E

@@ -98,8 +98,7 @@ $pipelineCompleted = $false
 try {
     Write-Host (
         "E2E pipeline started for $($suites -join ', '): permanent tests and " +
-        "build variants $(@($configuration.Variants.name) -join ', ') run concurrently; " +
-        'shared PCSX2 replays run one at a time.'
+        "build/replay variants $(@($configuration.Variants.name) -join ', ') run concurrently."
     ) -ForegroundColor Cyan
     $testsJob = Start-Job -Name 'tests' -ScriptBlock {
         param($Repository, $Transaction)

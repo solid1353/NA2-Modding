@@ -80,9 +80,9 @@ rasterization in Font captures 10 and 19. The exact game-engine dependency
 between heap layout and matrix inputs was not isolated because a stable
 reservation removes it from the build-to-build testing contract.
 
-The permanent `na228 test` gate now prepares fingerprinted normal and 32-byte
-padded E2E Test builds in independent pipelines, serializes their emulator
-replays through the shared portable PCSX2 installation, and compares raw replay
+The permanent `na228 test` gate now prepares and replays fingerprinted normal
+and 32-byte padded E2E Test builds in independent concurrent pipelines through
+the shared portable PCSX2 installation, and compares raw replay
 PNG hashes without publishing an alternate baseline. The original focused proof matched all 58 non-ignored `font/main`
 captures byte-identically; seven established volatile save-data captures in
 that suite's `ignore.txt` remain excluded. Detailed paired states, GS/VU

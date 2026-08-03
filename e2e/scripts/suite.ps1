@@ -268,29 +268,13 @@ function Invoke-VisualRegressionReplay {
         'generated' `
         ('e2e-' + [guid]::NewGuid().ToString('N') + '.p2m2')
     $stagedPath = Join-Path $SharedRecordingRoot $stagedName
-    $replayMutex = [Threading.Mutex]::new(
-        $false,
-        'Local\NA228_E2E_PCSX2_REPLAY'
-    )
-    $replayLockTaken = $false
     try {
         Copy-Item -LiteralPath $RecordingPath -Destination $stagedPath
-        Write-Host "[e2e] Waiting for shared PCSX2 replay slot: $Game"
-        try {
-            $replayLockTaken = $replayMutex.WaitOne()
-        }
-        catch [Threading.AbandonedMutexException] {
-            $replayLockTaken = $true
-        }
         Write-Host "[e2e] Replaying $Game"
         & (Join-Path $Repository 'na228.ps1') `
             $Game -t $stagedName -o $CaptureRoot
     }
     finally {
-        if ($replayLockTaken) {
-            $replayMutex.ReleaseMutex()
-        }
-        $replayMutex.Dispose()
         if (Test-Path -LiteralPath $stagedPath -PathType Leaf) {
             Remove-Item -LiteralPath $stagedPath -Force
         }

@@ -2493,9 +2493,10 @@ fix is instead in `payload_builder`: `228.BIN` retains its real linked
 stable `reservation_end = 0x00940100`.
 
 The maintained `na228 test` gate fingerprints independent normal and 32-byte
-padded E2E Test builds, prepares them concurrently, replays every E2E suite
-against both, and compares raw PNG hashes without publishing alternate
-captures. Only normal captures are published after the complete run passes.
+padded E2E Test builds, prepares them concurrently, serializes their emulator
+replays through the shared portable PCSX2 installation, and compares raw PNG
+hashes without publishing alternate captures. Only normal captures are
+published after the complete run passes.
 The verified initial focused proof matched all 58 non-ignored `font/main`
 screenshots byte for byte. Seven volatile save-data slots remain governed by
 the base suite's existing `ignore.txt`. Reusable probe evidence and comparison scripts are under

@@ -84,9 +84,10 @@ The separate personal end-to-end game-test workflow is exposed through the root
 command. Its infrastructure and suite definitions are main-tracked under
 `e2e/`; screenshot history is versioned by the independent
 `e2e/captures/` repository. `na228 test [suite]` runs permanent tests while
-independent pipelines preflight/build the active E2E Test variants, replay all
-suites or one selected suite, compare variant PNGs, and publish only the
-configured normal evidence after the entire run passes.
+independent pipelines preflight/build the active E2E Test variants. Emulator
+replays then run one at a time through the shared portable PCSX2 installation;
+they replay all suites or one selected suite, compare variant PNGs, and publish
+only the configured normal evidence after the entire run passes.
 `na228 test new <suite> <recording> [game]` copies a shared Workshop recording,
 creates an empty `ignore.txt`, optionally captures the game's reference, and
 always runs the new suite. Reference capture is an internal part of suite

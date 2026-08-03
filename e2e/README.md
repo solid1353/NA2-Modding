@@ -19,12 +19,15 @@ concurrent jobs:
 2. a preflight-resolved normal E2E Test build followed by the selected replays;
 3. a preflight-resolved padded E2E Test build followed by the selected replays.
 
-Each build is prepared once per invocation. Every suite is replayed once
-against each ISO, and its normal/padded screenshots are compared as soon as
-both replays finish. The pipeline fails if any non-ignored PNG differs. Only
-after all jobs and comparisons pass are the normal screenshots, changed-screen
-savestates, and reference/current reports published atomically. The already
-built normal E2E Test ISO remains active; no third build is performed.
+Each build is prepared once per invocation. Permanent tests and variant builds
+run concurrently, while emulator replays are serialized because they share one
+portable PCSX2 installation. Every selected suite is replayed once against each
+ISO, and its normal/padded screenshots are compared as soon as both replays
+finish. The pipeline prints periodic job-state progress while this work runs.
+It fails if any non-ignored PNG differs. Only after all jobs and comparisons
+pass are the normal screenshots, changed-screen savestates, and
+reference/current reports published atomically. The already built normal E2E
+Test ISO remains active; no third build is performed.
 
 The variants live in `config.json`. `normal` publishes captures; `padded` adds
 a fingerprinted 32-byte resident-payload tail and compares against `normal`.

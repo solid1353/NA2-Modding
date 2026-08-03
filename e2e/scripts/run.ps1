@@ -96,6 +96,11 @@ $compareReadyVariants = {
 }
 $pipelineCompleted = $false
 try {
+    Write-Host (
+        "E2E pipeline started for $($suites -join ', '): permanent tests and " +
+        "build variants $(@($configuration.Variants.name) -join ', ') run concurrently; " +
+        'shared PCSX2 replays run one at a time.'
+    ) -ForegroundColor Cyan
     $testsJob = Start-Job -Name 'tests' -ScriptBlock {
         param($Repository, $Transaction)
         $ErrorActionPreference = 'Stop'
@@ -113,14 +118,24 @@ try {
     foreach ($variant in $configuration.Variants) {
         $variantName = [string]$variant.name
         $variantJob = Start-Job -Name $variantName -ScriptBlock {
-            param($Script, $Variant, $Transaction)
+            param($Script, $Variant, $Transaction, $Suite)
             $ErrorActionPreference = 'Stop'
-            & $Script -Variant $Variant -Transaction $Transaction
-        } -ArgumentList (Join-Path $PSScriptRoot 'variant.ps1'), $variantName, $transaction
+            & $Script -Variant $Variant -Transaction $Transaction -Suite $Suite
+        } -ArgumentList (
+            Join-Path $PSScriptRoot 'variant.ps1'
+        ), $variantName, $transaction, $Suite
         $jobs.Add($variantJob)
     }
 
+    $nextProgress = [DateTime]::UtcNow
     while (@($jobs | Where-Object State -in @('NotStarted', 'Running')).Count -gt 0) {
+        if ([DateTime]::UtcNow -ge $nextProgress) {
+            $jobState = @(
+                $jobs | ForEach-Object { "$($_.Name)=$($_.State)" }
+            ) -join ', '
+            Write-Host "E2E pipeline running: $jobState"
+            $nextProgress = [DateTime]::UtcNow.AddSeconds(10)
+        }
         & $compareReadyVariants $false
         if (@($jobs | Where-Object State -in @('NotStarted', 'Running')).Count -gt 0) {
             Start-Sleep -Milliseconds 200

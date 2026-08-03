@@ -108,9 +108,10 @@ requirements, not whatever implementation happens to exist today.
   uses the explicit `worker` command.
   Neither mode runs a test suite. `na228 test [suite]` runs the permanent project
   tests, prepares and validates all active E2E Test variants in independent
-  concurrent pipelines, replays all suites or one selected suite against them,
-  verifies cross-variant stability, and publishes only the configured variant's
-  captures after all work succeeds. `.\tests\run.ps1` is its internal
+  concurrent pipelines, then serializes emulator replays through the shared
+  portable PCSX2 installation. It replays all suites or one selected suite
+  against every variant, verifies cross-variant stability, and publishes only
+  the configured variant's captures after all work succeeds. `.\tests\run.ps1` is its internal
   permanent-test phase, not a second public test workflow.
   Verify every validation command's documented semantics before running it;
   never infer behavior from a short flag.

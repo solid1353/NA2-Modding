@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][ValidateSet('normal', 'padded')][string]$Variant,
-    [Parameter(Mandatory)][string]$Transaction
+    [Parameter(Mandatory)][string]$Transaction,
+    [string]$Suite
 )
 
 $ErrorActionPreference = 'Stop'
@@ -15,11 +16,21 @@ $configuration = Get-E2eConfiguration -Root $root
 $buildVariant = Get-E2eBuildVariant -Name $Variant -Root $root
 $suiteRoot = Join-Path $root 'suites'
 $suites = @(
-    Get-ChildItem -LiteralPath $suiteRoot -Filter 'input.p2m2' -File -Recurse |
-        ForEach-Object {
-            [IO.Path]::GetRelativePath($suiteRoot, $_.DirectoryName).Replace('\', '/')
-        } |
-        Sort-Object -Unique
+    if ([string]::IsNullOrWhiteSpace($Suite)) {
+        Get-ChildItem -LiteralPath $suiteRoot -Filter 'input.p2m2' -File -Recurse |
+            ForEach-Object {
+                [IO.Path]::GetRelativePath($suiteRoot, $_.DirectoryName).Replace('\', '/')
+            } |
+            Sort-Object -Unique
+    }
+    else {
+        $requestedContext = Get-VisualRegressionContext -Suite $Suite
+        $recording = Join-Path $requestedContext.SuiteRoot 'input.p2m2'
+        if (-not (Test-Path -LiteralPath $recording -PathType Leaf)) {
+            throw "E2E suite does not exist: $($requestedContext.Suite)"
+        }
+        $requestedContext.Suite
+    }
 )
 if ($suites.Count -eq 0) {
     throw 'No E2E suites are available.'

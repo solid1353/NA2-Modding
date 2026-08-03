@@ -1,26 +1,51 @@
 $ErrorActionPreference = 'Stop'
+$script:E2eCaptureTiers = [ordered]@{
+    Reference = 'reference'
+    Current = 'current'
+}
+$script:E2eReportDirectory = 'report'
 
 function Get-VisualRegressionContext {
     param([Parameter(Mandatory)][string]$Suite)
 
-    if ([string]::IsNullOrWhiteSpace($Suite) -or
-        [IO.Path]::GetFileName($Suite) -cne $Suite) {
-        throw 'Suite must be one directory name.'
+    if ([string]::IsNullOrWhiteSpace($Suite) -or [IO.Path]::IsPathRooted($Suite)) {
+        throw 'Suite must be a relative path.'
     }
+    $normalizedSuite = $Suite.Replace('\', '/')
+    $segments = @($normalizedSuite.Split('/'))
+    if ($segments.Count -eq 0 -or @(
+        $segments | Where-Object {
+            [string]::IsNullOrWhiteSpace($_) -or
+            $_ -in @('.', '..') -or
+            $_.IndexOfAny([IO.Path]::GetInvalidFileNameChars()) -ge 0
+        }
+    ).Count -gt 0) {
+        throw "Suite contains an invalid path component: $Suite"
+    }
+    $suiteName = $segments -join '/'
+    $suiteRelativePath = $segments -join [IO.Path]::DirectorySeparatorChar
     $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
     $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
-    $caseRoot = Join-Path $root "suites\$Suite"
-    $captureRoot = Join-Path $root "captures\$Suite"
+    $caseRoot = Join-Path (Join-Path $root 'suites') $suiteRelativePath
+    $captureRoot = Join-Path (Join-Path $root 'captures') $suiteRelativePath
+    $statesRoot = Join-Path $captureRoot 'sstates'
     [pscustomobject]@{
         Root = $root
-        Suite = $Suite
+        Suite = $suiteName
+        SuiteRelativePath = $suiteRelativePath
         SuiteRoot = $caseRoot
         CaptureRoot = $captureRoot
+        Capture = [pscustomobject]@{
+            Reference = Join-Path $captureRoot $script:E2eCaptureTiers.Reference
+            Current = Join-Path $captureRoot $script:E2eCaptureTiers.Current
+            Report = Join-Path $captureRoot $script:E2eReportDirectory
+            States = $statesRoot
+            ReferenceStates = Join-Path $statesRoot $script:E2eCaptureTiers.Reference
+            CurrentStates = Join-Path $statesRoot $script:E2eCaptureTiers.Current
+        }
         Repository = $repository
-        Manifest = Join-Path $caseRoot 'screens.tsv'
         Comparator = Join-Path $repository 'scripts\research\localization\compare_font_capture_sets.ps1'
         PythonRunner = Join-Path $repository 'scripts\lib\run_python.ps1'
-        ThreeWay = Join-Path $PSScriptRoot 'three_way_grids.py'
     }
 }
 
@@ -82,12 +107,15 @@ function New-VisualRegressionStateStage {
     param(
         [Parameter(Mandatory)][string]$ExistingRoot,
         [Parameter(Mandatory)][string]$StageRoot,
-        [Parameter(Mandatory)][ValidateSet('references', 'approved', 'pending')][string]$Tier,
+        [Parameter(Mandatory)][string]$Tier,
         [Parameter(Mandatory)][string]$CapturedDirectory
     )
 
+    if ($Tier -cnotin $script:E2eCaptureTiers.Values) {
+        throw "Unknown capture tier: $Tier"
+    }
     [void](New-Item -ItemType Directory -Path $StageRoot -Force)
-    foreach ($preservedTier in 'references', 'approved', 'pending') {
+    foreach ($preservedTier in $script:E2eCaptureTiers.Values) {
         if ($preservedTier -ceq $Tier) { continue }
         $source = Join-Path $ExistingRoot $preservedTier
         if (Test-Path -LiteralPath $source -PathType Container) {
@@ -118,9 +146,10 @@ function Get-NumericPngSlots {
     )
 }
 
-function Remove-IgnoredPendingScreenshots {
+function Restore-IgnoredCurrentScreenshots {
     param(
-        [Parameter(Mandatory)][string]$PendingDirectory,
+        [Parameter(Mandatory)][string]$CurrentDirectory,
+        [Parameter(Mandatory)][string]$ExistingDirectory,
         [Parameter(Mandatory)][string]$IgnoreFile
     )
 
@@ -137,16 +166,19 @@ function Remove-IgnoredPendingScreenshots {
         }
         [void]$ignored.Add($entry)
     }
-    $removed = 0
-    foreach ($screenshot in @(
-        Get-ChildItem -LiteralPath $PendingDirectory -Filter '*.png' -File
-    )) {
-        if ($ignored.Contains($screenshot.Name)) {
-            Remove-Item -LiteralPath $screenshot.FullName -Force
-            $removed++
+    $restored = 0
+    foreach ($name in $ignored) {
+        $current = Join-Path $CurrentDirectory $name
+        $existing = Join-Path $ExistingDirectory $name
+        if (Test-Path -LiteralPath $existing -PathType Leaf) {
+            Copy-Item -LiteralPath $existing -Destination $current -Force
+            $restored++
+        }
+        elseif (Test-Path -LiteralPath $current -PathType Leaf) {
+            Remove-Item -LiteralPath $current -Force
         }
     }
-    return $removed
+    return $restored
 }
 
 function Get-CommonSlots {
@@ -172,140 +204,31 @@ function Get-CommonSlots {
     [int[]]@($common | Sort-Object)
 }
 
-function Remove-ApprovedIdenticalPendingScreenshots {
-    param(
-        [Parameter(Mandatory)][string]$PendingDirectory,
-        [Parameter(Mandatory)][string]$Summary
-    )
-
-    if (-not (Test-Path -LiteralPath $Summary -PathType Leaf)) {
-        return 0
-    }
-    $identicalSlots = [int[]]@(
-        Import-Csv -LiteralPath $Summary -Delimiter "`t" |
-            Where-Object { [long]$_.changed_pixels -eq 0 } |
-            ForEach-Object { [int]$_.slot }
-    )
-    $removed = 0
-    foreach ($slot in $identicalSlots) {
-        $matches = @(
-            Get-ChildItem -LiteralPath $PendingDirectory -Filter '*.png' -File |
-                Where-Object {
-                    $_.BaseName -match '(\d+)$' -and [int]$Matches[1] -eq $slot
-                }
-        )
-        foreach ($match in $matches) {
-            Remove-Item -LiteralPath $match.FullName -Force
-            $removed++
-        }
-    }
-    return $removed
-}
-
-function Write-SubsetManifest {
-    param(
-        [Parameter(Mandatory)][int[]]$Slots,
-        [Parameter(Mandatory)][string]$SourceManifest,
-        [Parameter(Mandatory)][string]$Destination
-    )
-
-    $metadata = @{}
-    if (Test-Path -LiteralPath $SourceManifest -PathType Leaf) {
-        foreach ($row in @(Import-Csv -LiteralPath $SourceManifest -Delimiter "`t")) {
-            $metadata[[int]$row.slot] = $row
-        }
-    }
-    $rows = foreach ($slot in $Slots) {
-        $source = $metadata[$slot]
-        [pscustomobject]@{
-            slot = $slot
-            family = if ($null -ne $source -and $source.family) { $source.family } else { 'unclassified' }
-            screen = if ($null -ne $source -and $source.screen) { $source.screen } else { "Slot {0:D4}" -f $slot }
-            notes = if ($null -ne $source) { $source.notes } else { '' }
-        }
-    }
-    $rows | Export-Csv -LiteralPath $Destination -Delimiter "`t" -NoTypeInformation -Encoding utf8
-}
-
-function New-VisualRegressionReports {
+function New-VisualRegressionReport {
     param(
         [Parameter(Mandatory)][string]$Suite,
-        [Parameter(Mandatory)][string]$PendingDirectory,
+        [Parameter(Mandatory)][string]$CurrentDirectory,
         [Parameter(Mandatory)][string]$OutputRoot,
-        [Parameter(Mandatory)][string]$ScratchRoot,
-        [string]$ReferenceDirectory,
-        [string]$ApprovedDirectory
+        [string]$ReferenceDirectory
     )
 
     $context = Get-VisualRegressionContext -Suite $Suite
-    [void](New-Item -ItemType Directory -Path $ScratchRoot -Force)
-    if ([string]::IsNullOrWhiteSpace($ApprovedDirectory)) {
-        $ApprovedDirectory = Join-Path $context.CaptureRoot 'approved'
-    }
     if ([string]::IsNullOrWhiteSpace($ReferenceDirectory)) {
-        $ReferenceDirectory = Join-Path $context.CaptureRoot 'references'
+        $ReferenceDirectory = $context.Capture.Reference
     }
-    $sets = @{
-        Reference = $ReferenceDirectory
-        Approved = $ApprovedDirectory
-        Pending = $PendingDirectory
-    }
-    [void](New-Item -ItemType Directory -Path $OutputRoot -Force)
-    $comparisons = @(
-        [pscustomobject]@{ Left = 'Approved'; Right = 'Pending'; Name = 'approved-vs-pending' }
-        [pscustomobject]@{ Left = 'Reference'; Right = 'Approved'; Name = 'reference-vs-approved' }
-        [pscustomobject]@{ Left = 'Reference'; Right = 'Pending'; Name = 'reference-vs-pending' }
-    )
-    foreach ($comparison in $comparisons) {
-        $left = $comparison.Left
-        $right = $comparison.Right
-        $name = $comparison.Name
-        $slots = @(Get-CommonSlots -Directories @($sets[$left], $sets[$right]))
-        if ($slots.Count -eq 0) {
-            continue
-        }
-        $destination = Join-Path $OutputRoot $name
-        [void](New-Item -ItemType Directory -Path $destination -Force)
-        $manifest = Join-Path $ScratchRoot "$name.tsv"
-        Write-SubsetManifest -Slots $slots -SourceManifest $context.Manifest -Destination $manifest
-        & $context.Comparator `
-            -ReferenceDirectory $sets[$left] `
-            -CurrentDirectory $sets[$right] `
-            -OutputDirectory $destination `
-            -Manifest $manifest `
-            -ReferenceLabel $left `
-            -CurrentLabel $right
-        if ($LASTEXITCODE -ne 0) {
-            throw "$left/$right comparison failed with exit code $LASTEXITCODE."
-        }
-    }
-
-    $threeWaySlots = @(Get-CommonSlots -Directories @(
-        $sets.Reference, $sets.Approved, $sets.Pending
-    ))
-    if ($threeWaySlots.Count -eq 0) {
+    $slots = @(Get-CommonSlots -Directories @($ReferenceDirectory, $CurrentDirectory))
+    if ($slots.Count -eq 0) {
         return
     }
-    $threeWayOutput = Join-Path $OutputRoot 'three-way-grids'
-    [void](New-Item -ItemType Directory -Path $threeWayOutput -Force)
-    $threeWayManifest = Join-Path $ScratchRoot 'three-way.tsv'
-    Write-SubsetManifest `
-        -Slots $threeWaySlots `
-        -SourceManifest $context.Manifest `
-        -Destination $threeWayManifest
-    & $context.PythonRunner `
-        -PackageSet imaging `
-        -Script $context.ThreeWay `
-        -ArgumentList @(
-            '--reference', $sets.Reference,
-            '--approved', $sets.Approved,
-            '--pending', $sets.Pending,
-            '--manifest', $threeWayManifest,
-            '--output', $threeWayOutput
-        ) `
-        -NoBytecode
+    [void](New-Item -ItemType Directory -Path $OutputRoot -Force)
+    & $context.Comparator `
+        -ReferenceDirectory $ReferenceDirectory `
+        -CurrentDirectory $CurrentDirectory `
+        -OutputDirectory $OutputRoot `
+        -ReferenceLabel 'Reference' `
+        -CurrentLabel 'Current'
     if ($LASTEXITCODE -ne 0) {
-        throw "Three-way grid generation failed with exit code $LASTEXITCODE."
+        throw "Reference/current comparison failed with exit code $LASTEXITCODE."
     }
 }
 
@@ -348,6 +271,41 @@ function Publish-VisualRegressionTransaction {
         }
     }
 
+    function Sync-PublishedFiles {
+        param(
+            [Parameter(Mandatory)][string]$Source,
+            [Parameter(Mandatory)][string]$Destination
+        )
+
+        [void](New-Item -ItemType Directory -Path $Destination -Force)
+        $sourceFiles = @(Get-ChildItem -LiteralPath $Source -Recurse -File -Force)
+        $relativePaths = [Collections.Generic.HashSet[string]]::new(
+            [StringComparer]::OrdinalIgnoreCase
+        )
+        foreach ($file in $sourceFiles) {
+            $relative = [IO.Path]::GetRelativePath($Source, $file.FullName)
+            [void]$relativePaths.Add($relative)
+            $target = Join-Path $Destination $relative
+            [void](New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($target)) -Force)
+            $temporary = "$target.publishing-$([guid]::NewGuid().ToString('N'))"
+            try {
+                [IO.File]::Copy($file.FullName, $temporary, $true)
+                [IO.File]::Move($temporary, $target, $true)
+            }
+            finally {
+                if (Test-Path -LiteralPath $temporary -PathType Leaf) {
+                    Remove-Item -LiteralPath $temporary -Force
+                }
+            }
+        }
+        foreach ($file in @(Get-ChildItem -LiteralPath $Destination -Recurse -File -Force)) {
+            $relative = [IO.Path]::GetRelativePath($Destination, $file.FullName)
+            if (-not $relativePaths.Contains($relative)) {
+                Remove-Item -LiteralPath $file.FullName -Force
+            }
+        }
+    }
+
     function Remove-EmptyPublishedDirectories {
         param([Parameter(Mandatory)][string]$Root)
 
@@ -372,13 +330,13 @@ function Publish-VisualRegressionTransaction {
         foreach ($destination in $Replacements.Keys) {
             $source = $Replacements[$destination]
             $backup = Join-Path $TransactionRoot ('.backup-' + [IO.Path]::GetFileName($destination))
-            if ([IO.Path]::GetFileName($destination) -ceq 'reports') {
+            $stableDirectoryNames = @($script:E2eCaptureTiers.Values) + $script:E2eReportDirectory
+            if ($stableDirectoryNames -ccontains [IO.Path]::GetFileName($destination)) {
                 if (Test-Path -LiteralPath $destination -PathType Container) {
                     Copy-PublishedFiles -Source $destination -Destination $backup
                 }
                 try {
-                    Clear-PublishedFiles -Root $destination
-                    Copy-PublishedFiles -Source $source -Destination $destination
+                    Sync-PublishedFiles -Source $source -Destination $destination
                     Remove-EmptyPublishedDirectories -Root $destination
                     $published.Add([pscustomobject]@{
                         Destination = $destination

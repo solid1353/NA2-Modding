@@ -59,9 +59,8 @@ if ($mode -eq 'help') {
         ''
         '  na228 build l|mt            Build Latest or Manual Test without running it'
         '  na228 test [suite] [-b]     Run one or all E2E suites; -b builds once first'
-        '  na228 test new <recording>  Create a NUN5 reference suite'
-        '  na228 test reference <suite> [-f]  Create or replace NUN5 reference screenshots'
-        '  na228 test approve <suite> -s <slots> | -a'
+        '  na228 test new <recording> [suite] [-r reference]  Create a suite'
+        '  na228 test reference <suite> -r reference [-f]  Create or replace reference captures'
         '  na228 validate              Validate the complete build without producing an ISO'
         '  na228 worker work/<worker>/build/<name>.iso  Build an isolated worker ISO'
         '  na228 release [version]     Publish a GitHub release'
@@ -79,8 +78,7 @@ if ($mode -eq 'test') {
     $visualRun = Join-Path $visualScripts 'run.ps1'
     $visualNew = Join-Path $visualScripts 'new_suite.ps1'
     $visualReference = Join-Path $visualScripts 'reference.ps1'
-    $visualApprove = Join-Path $visualScripts 'approve.ps1'
-    foreach ($required in $visualRun, $visualNew, $visualReference, $visualApprove) {
+    foreach ($required in $visualRun, $visualNew, $visualReference) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
             throw (
                 'The E2E infrastructure is unavailable. ' +
@@ -96,34 +94,69 @@ if ($mode -eq 'test') {
         'run'
     }
     if ($testCommand -eq 'new') {
-        if ($arguments.Count -ne 2) {
-            throw 'Usage: na228 test new <recording>'
+        if ($arguments.Count -lt 2 -or $arguments.Count -gt 5) {
+            throw 'Usage: na228 test new <recording> [suite] [-r reference]'
         }
-        & $visualNew -Recording $arguments[1]
+        $newSuite = $null
+        $referenceGame = $null
+        $newTail = @($arguments | Select-Object -Skip 2)
+        for ($index = 0; $index -lt $newTail.Count; $index++) {
+            $argument = $newTail[$index]
+            if ($argument -ceq '-r') {
+                if ($null -ne $referenceGame -or $index + 1 -ge $newTail.Count) {
+                    throw 'na228 test new requires exactly one value after -r.'
+                }
+                $referenceGame = $newTail[++$index]
+                if ($referenceGame.StartsWith('-')) {
+                    throw 'na228 test new requires a reference game after -r.'
+                }
+            }
+            elseif ($argument.StartsWith('-')) {
+                throw "Unknown na228 test new option: $argument"
+            }
+            elseif ($null -eq $newSuite) {
+                $newSuite = $argument
+            }
+            else {
+                throw 'Usage: na228 test new <recording> [suite] [-r reference]'
+            }
+        }
+        & $visualNew `
+            -Recording $arguments[1] `
+            -Suite $newSuite `
+            -Reference $referenceGame
         return
     }
-    if ($testCommand -eq 'approve') {
-        if ($arguments.Count -lt 3) {
-            throw 'Usage: na228 test approve <suite> -s <slots> | -a'
-        }
-        $suite = $arguments[1]
-        $selector = $arguments[2]
-        if ($selector -ceq '-a' -and $arguments.Count -eq 3) {
-            & $visualApprove -Suite $suite -All
-            return
-        }
-        if ($selector -ceq '-s' -and $arguments.Count -eq 4) {
-            & $visualApprove -Suite $suite -Slots $arguments[3]
-            return
-        }
-        throw 'Usage: na228 test approve <suite> -s <slots> | -a'
-    }
     if ($testCommand -eq 'reference') {
-        if ($arguments.Count -lt 2 -or $arguments.Count -gt 3 -or
-            ($arguments.Count -eq 3 -and $arguments[2] -cne '-f')) {
-            throw 'Usage: na228 test reference <suite> [-f]'
+        if ($arguments.Count -lt 4 -or $arguments.Count -gt 5) {
+            throw 'Usage: na228 test reference <suite> -r reference [-f]'
         }
-        & $visualReference -Suite $arguments[1] -f:($arguments.Count -eq 3)
+        $referenceGame = $null
+        $forceReference = $false
+        $referenceTail = @($arguments | Select-Object -Skip 2)
+        for ($index = 0; $index -lt $referenceTail.Count; $index++) {
+            $argument = $referenceTail[$index]
+            if ($argument -ceq '-r') {
+                if ($null -ne $referenceGame -or $index + 1 -ge $referenceTail.Count) {
+                    throw 'na228 test reference requires exactly one value after -r.'
+                }
+                $referenceGame = $referenceTail[++$index]
+                if ($referenceGame.StartsWith('-')) {
+                    throw 'na228 test reference requires a reference game after -r.'
+                }
+            }
+            elseif ($argument -ceq '-f') {
+                if ($forceReference) { throw 'na228 test reference accepts -f only once.' }
+                $forceReference = $true
+            }
+            else {
+                throw "Unknown na228 test reference option: $argument"
+            }
+        }
+        if ([string]::IsNullOrWhiteSpace($referenceGame)) {
+            throw 'Usage: na228 test reference <suite> -r reference [-f]'
+        }
+        & $visualReference -Suite $arguments[1] -Reference $referenceGame -f:$forceReference
         return
     }
 
@@ -155,17 +188,15 @@ if ($mode -eq 'test') {
 
     $suiteRoot = Join-Path $visualRoot 'suites'
     $suites = if ($null -ne $suite) {
-        $selected = Join-Path $suiteRoot $suite
-        if (-not (Test-Path -LiteralPath $selected -PathType Container)) {
-            throw "Unknown E2E suite: $suite"
-        }
         @($suite)
     }
     else {
         @(
-            Get-ChildItem -LiteralPath $suiteRoot -Directory -ErrorAction SilentlyContinue |
-                Sort-Object Name |
-                ForEach-Object Name
+            Get-ChildItem -LiteralPath $suiteRoot -Filter 'input.p2m2' -File -Recurse -ErrorAction SilentlyContinue |
+                ForEach-Object {
+                    [IO.Path]::GetRelativePath($suiteRoot, $_.DirectoryName).Replace('\', '/')
+                } |
+                Sort-Object
         )
     }
     $suites = @($suites)
@@ -173,7 +204,6 @@ if ($mode -eq 'test') {
         throw 'No E2E suites are available.'
     }
 
-    $reviewRequired = $false
     for ($index = 0; $index -lt $suites.Count; $index++) {
         $runOutput = @(
             & $visualRun `
@@ -183,21 +213,14 @@ if ($mode -eq 'test') {
         $result = @(
             $runOutput | Where-Object {
                 $_.PSObject.Properties.Name -contains 'Status' -and
-                $_.Status -in @('clean', 'review-required')
+                $_.Status -ceq 'captured'
             }
         ) | Select-Object -Last 1
-        if ($null -eq $result -or $result.Status -notin @('clean', 'review-required')) {
+        if ($null -eq $result -or $result.Status -cne 'captured') {
             throw "E2E suite returned no valid result: $($suites[$index])"
         }
-        if ($result.Status -eq 'review-required') {
-            $reviewRequired = $true
-        }
     }
-    if ($reviewRequired) {
-        Write-Host 'E2E tests completed; review is required.' -ForegroundColor Yellow
-        exit 2
-    }
-    Write-Host 'E2E tests clean.' -ForegroundColor Green
+    Write-Host 'E2E captures completed.' -ForegroundColor Green
     return
 }
 

@@ -20,13 +20,13 @@ $transaction = New-VisualRegressionTransaction `
     -Root $context.Root `
     -Prefix 'run'
 $captureRoot = Join-Path $transaction 'capture'
-$pendingStage = Join-Path $transaction 'pending'
+$currentStage = Join-Path $transaction $script:E2eCaptureTiers.Current
 $statesStage = Join-Path $transaction 'sstates'
-$reportsStage = Join-Path $transaction 'reports'
+$reportStage = Join-Path $transaction $script:E2eReportDirectory
 $scratch = Join-Path $transaction 'scratch'
 
 try {
-    [void](New-Item -ItemType Directory -Path $pendingStage, $scratch -Force)
+    [void](New-Item -ItemType Directory -Path $currentStage, $scratch -Force)
 
     if ($b) {
         $build = & (Join-Path $context.Repository 'scripts\na228\build.ps1') -ScreenshotTestOnly
@@ -52,60 +52,44 @@ try {
         throw 'Replay completed without captured screenshots.'
     }
     Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File |
-        Copy-Item -Destination $pendingStage
-    [void](Remove-IgnoredPendingScreenshots `
-        -PendingDirectory $pendingStage `
+        Copy-Item -Destination $currentStage
+    [void](Restore-IgnoredCurrentScreenshots `
+        -CurrentDirectory $currentStage `
+        -ExistingDirectory $context.Capture.Current `
         -IgnoreFile (Join-Path $context.SuiteRoot 'ignore.txt'))
     $capturedStates = Join-Path $captureRoot 'sstates'
     if (Test-Path -LiteralPath $capturedStates -PathType Container) {
         New-VisualRegressionStateStage `
-            -ExistingRoot (Join-Path $context.CaptureRoot 'sstates') `
+            -ExistingRoot $context.Capture.States `
             -StageRoot $statesStage `
-            -Tier pending `
+            -Tier $script:E2eCaptureTiers.Current `
             -CapturedDirectory $capturedStates
     }
 
-    New-VisualRegressionReports `
-        -Suite $Suite `
-        -PendingDirectory $pendingStage `
-        -OutputRoot $reportsStage `
-        -ScratchRoot $scratch
-    $approvedSummary = Join-Path $reportsStage 'approved-vs-pending\summary.tsv'
-    $removedIdentical = Remove-ApprovedIdenticalPendingScreenshots `
-        -PendingDirectory $pendingStage `
-        -Summary $approvedSummary
-    if ($removedIdentical -gt 0) {
-        Remove-Item -LiteralPath $reportsStage -Recurse -Force
-        New-VisualRegressionReports `
-            -Suite $Suite `
-            -PendingDirectory $pendingStage `
-            -OutputRoot $reportsStage `
-            -ScratchRoot $scratch
-    }
     $replacements = [ordered]@{
-        (Join-Path $context.CaptureRoot 'pending') = $pendingStage
-        (Join-Path $context.CaptureRoot 'reports') = $reportsStage
+        ($context.Capture.Current) = $currentStage
+    }
+    if (@(Get-NumericPngSlots -Directory $context.Capture.Reference).Count -gt 0) {
+        New-VisualRegressionReport `
+            -Suite $Suite `
+            -CurrentDirectory $currentStage `
+            -OutputRoot $reportStage
+        $replacements[$context.Capture.Report] = $reportStage
     }
     if (Test-Path -LiteralPath $statesStage -PathType Container) {
-        $replacements[(Join-Path $context.CaptureRoot 'sstates')] = $statesStage
+        $replacements[$context.Capture.States] = $statesStage
     }
     Publish-VisualRegressionTransaction `
         -Replacements $replacements `
         -TransactionRoot $transaction
-    $pendingSlots = @(Get-NumericPngSlots -Directory (Join-Path $context.CaptureRoot 'pending'))
-    $approvedDirectory = Join-Path $context.CaptureRoot 'approved'
-    $approvedSlots = @(Get-NumericPngSlots -Directory $approvedDirectory)
-    $clean = $pendingSlots.Count -eq 0
-    $status = if ($clean) { 'clean' } else { 'review-required' }
+    $capturedSlots = @(Get-NumericPngSlots -Directory $context.Capture.Current)
     Write-Host (
-        "Visual-regression batch completed ($status). " +
-        'Pending differences, pending savestates, and reports were replaced atomically.'
-    ) -ForegroundColor $(if ($clean) { 'Green' } else { 'Yellow' })
+        'E2E current captures and savestates were replaced atomically.'
+    ) -ForegroundColor Green
     [pscustomobject]@{
         Suite = $Suite
-        Status = $status
-        PendingScreenshots = $pendingSlots.Count
-        ApprovedScreenshots = $approvedSlots.Count
+        Status = 'captured'
+        Screenshots = $capturedSlots.Count
     }
 }
 finally {

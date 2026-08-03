@@ -1,79 +1,65 @@
 # NA2 end-to-end tests
 
 This is the main-repository infrastructure for emulator-driven end-to-end game
-tests. Its current suites perform visual regression, and the suite format can
-grow to cover runtime state and logic. Suite recordings and metadata are
-tracked here. `captures/` is a nested independent repository with no remote
-during MVP; it versions reference, approved, and pending screenshots. Reports
-remain local and untracked. Savestates are agent-only and remain as untracked
-`references`, `approved`, and `pending` batches per suite.
+tests. Its current suites capture visual evidence, and the suite format can
+grow to cover runtime state and logic. Suite recordings and ignore lists are
+tracked here. `captures/` is a nested local repository that versions each
+suite's reference images, latest NA2.28 captures, generated report, and
+savestates.
 
 Agents making local NA2.28 visual fixes follow
 [`AGENT_GUIDE.md`](AGENT_GUIDE.md).
 
-From the parent project root, use the integrated commands:
+From the project root:
 
 ```powershell
 na228 test
-na228 test NUN5_font_full -b
+na228 test font/main -b
+na228 test font/load_save -b
 na228 test new <recording>
-na228 test reference NUN5_font_full
-na228 test reference NUN5_font_full -f
-na228 test approve NUN5_font_full -s 2,4,18-21
-na228 test approve NUN5_font_full -a
+na228 test new <recording> font/character_select -r nun5
+na228 test reference font/main -r nun5
+na228 test reference font/main -r nun5 -f
 ```
 
 `na228 test` runs every suite against the existing Screenshot Test ISO. `-b`
-builds that ISO once before the selected suite, or once before the first suite
-when all suites run.
+builds Screenshot Test once before the selected suite, or once before the first
+suite when all suites run.
 
-Create a suite by replaying its recording against NUN5 and publishing the
-completed capture as its reference set:
+`test new` imports a recording from Workshop's shared input-recording folder.
+Without `-r`, it creates a reference-less suite. `-r <reference>` replays the
+recording against that game and creates reference captures. A reference-less
+suite captures current screenshots and savestates but has no comparison
+report. `test reference` uses the suite-tracked `input.p2m2` and requires the
+reference game explicitly with `-r`; `-f` is required
+only when reference images already exist and would be overwritten.
 
-```powershell
-.\e2e\scripts\new_suite.ps1 -Recording NUN5_font_full
+Each suite definition lives under `suites/<suite>/` with `input.p2m2` and an
+optional `ignore.txt`. Suite names may contain relative subfolders such as
+`font/load_save` and `font/character_select`. The ignore file lists capture
+filenames whose existing `current/` image is preserved during a new run. Their
+freshly captured savestates are still retained.
+
+Capture data lives under:
+
+```text
+captures/<suite>/
+├── reference/             # optional
+├── current/
+├── report/
+└── sstates/
+    ├── reference/
+    └── current/
 ```
 
-`test new` imports its recording from Workshop's shared input-recording folder.
-`test reference` replays the existing suite's tracked `input.p2m2`. It creates
-a missing or empty capture structure without a force flag; `-f` is required
-only when reference screenshots already exist and would be overwritten:
+`current/` is atomically replaced by the latest NA2.28 replay. Git shows which
+current images differ from the last committed capture state. The tracked
+`report/` compares reference with current and contains pairs, pixel diffs,
+blends, and grid pages. Identical comparisons produce no pair, diff, blend, or
+grid entry. Reference-less suites omit the report.
 
-```powershell
-.\e2e\scripts\reference.ps1 -Suite NUN5_font_full
-.\e2e\scripts\reference.ps1 -Suite NUN5_font_full -f
-```
-
-Run the complete recording against the existing Screenshot Test build:
-
-```powershell
-.\e2e\scripts\run.ps1 -Suite NUN5_font_full
-```
-
-Use `-b` to build Screenshot Test once before replaying:
-
-```powershell
-.\e2e\scripts\run.ps1 -Suite NUN5_font_full -b
-```
-
-Approve selected pending slots, or explicitly approve the whole batch:
-
-```powershell
-.\e2e\scripts\approve.ps1 -Suite NUN5_font_full -Slots 2,4,18-21
-.\e2e\scripts\approve.ps1 -Suite NUN5_font_full -All
-```
-
-Each definition lives under `suites/<recording-name>/` with `input.p2m2`,
-`screens.tsv`, and an optional `ignore.txt`. The ignore file lists screenshot
-filenames that are omitted from pending comparisons while their captured
-savestates remain available. Its expanded capture data lives under
-`captures/<recording-name>/`, with `references/`, `approved/`, `pending/`, and
-`reports/`, plus agent-only `sstates/references/`, `sstates/approved/`, and
-`sstates/pending/` directories. The three screenshot tiers contain their PNG
-files directly. A run keeps only
-screenshots that differ from, or are absent from, the approved set under
-`pending/`, and atomically replaces `sstates/pending/` when the replay produced
-states. Every captured pending savestate is retained even when its screenshot
-is pixel-identical and omitted. Approval moves selected screenshots and their
-available states into the approved tiers. All
-pairwise and three-way reports contain changed comparisons only.
+After explicit user verification and approval, commit the accepted current
+screenshots, savestates, and regenerated report in the capture repository
+together with the corresponding implementation delivery. Current captures,
+savestates, and report stay uncommitted while a visual fix is still under
+review. The previous accepted batch remains available through Git.

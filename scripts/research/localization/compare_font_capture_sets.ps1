@@ -9,8 +9,6 @@ param(
     [Parameter(Mandatory)]
     [string]$OutputDirectory,
 
-    [string]$Manifest,
-
     [string]$ReferenceLabel = 'Reference',
 
     [string]$CurrentLabel = 'Current',
@@ -36,9 +34,6 @@ $arguments = @(
     '--grid-columns', [string]$GridColumns
     '--grid-items-per-page', [string]$GridItemsPerPage
 )
-if (-not [string]::IsNullOrWhiteSpace($Manifest)) {
-    $arguments += @('--manifest', [IO.Path]::GetFullPath($Manifest))
-}
 if (-not [string]::IsNullOrWhiteSpace($Slots)) {
     $arguments += @('--slots', $Slots)
 }

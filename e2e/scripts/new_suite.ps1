@@ -1,5 +1,9 @@
 [CmdletBinding()]
-param([Parameter(Mandatory)][string]$Recording)
+param(
+    [Parameter(Mandatory)][string]$Recording,
+    [string]$Suite,
+    [string]$Reference
+)
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'suite.ps1')
@@ -7,7 +11,8 @@ if ([IO.Path]::GetFileName($Recording) -cne $Recording) {
     throw 'Recording must be a shared input-recording filename or stem.'
 }
 $recordingName = [IO.Path]::GetFileNameWithoutExtension($Recording)
-$context = Get-VisualRegressionContext -Suite $recordingName
+$suiteName = if ([string]::IsNullOrWhiteSpace($Suite)) { $recordingName } else { $Suite }
+$context = Get-VisualRegressionContext -Suite $suiteName
 if ((Test-Path -LiteralPath $context.SuiteRoot) -or
     (Test-Path -LiteralPath $context.CaptureRoot)) {
     throw "Visual-regression suite already exists: $recordingName"
@@ -32,22 +37,37 @@ $transaction = New-VisualRegressionTransaction `
     -Root $context.Root `
     -Prefix 'new'
 $capture = Join-Path $transaction 'runtime-capture'
-$suiteStage = Join-Path $transaction $recordingName
+$suiteStage = Join-Path $transaction 'suite-definition'
 $captureStage = Join-Path $transaction 'capture-data'
 try {
+    if ([string]::IsNullOrWhiteSpace($Reference)) {
+        [void](New-Item -ItemType Directory -Path $suiteStage -Force)
+        Copy-Item -LiteralPath $recordingPath -Destination (Join-Path $suiteStage 'input.p2m2')
+        [void](New-Item `
+            -ItemType Directory `
+            -Path ([IO.Path]::GetDirectoryName($context.SuiteRoot)) `
+            -Force)
+        Publish-VisualRegressionTransaction `
+            -Replacements ([ordered]@{ ($context.SuiteRoot) = $suiteStage }) `
+            -TransactionRoot $transaction
+        Write-Host "Created reference-less E2E suite: $($context.Suite)" -ForegroundColor Green
+        return
+    }
     & (Join-Path $context.Repository 'na228.ps1') `
-        nun5 -t $recordingFilename -o $capture
+        $Reference -t $recordingFilename -o $capture
     $capturedScreenshots = Join-Path $capture 'screenshots'
     if (@(Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File).Count -eq 0) {
-        throw 'NUN5 reference replay completed without captured screenshots.'
+        throw 'Reference replay completed without captured screenshots.'
     }
 
-    $referenceScreenshots = Join-Path $captureStage 'references'
-    $approvedScreenshots = Join-Path $captureStage 'approved'
-    $suiteStates = Join-Path $captureStage 'sstates\references'
+    $referenceScreenshots = Join-Path $captureStage $script:E2eCaptureTiers.Reference
+    $currentScreenshots = Join-Path $captureStage $script:E2eCaptureTiers.Current
+    $suiteStates = Join-Path `
+        (Join-Path $captureStage 'sstates') `
+        $script:E2eCaptureTiers.Reference
     [void](New-Item -ItemType Directory -Path `
         $suiteStage, `
-        $referenceScreenshots, $approvedScreenshots -Force)
+        $referenceScreenshots, $currentScreenshots -Force)
     Copy-Item -LiteralPath $recordingPath -Destination (Join-Path $suiteStage 'input.p2m2')
     Get-ChildItem -LiteralPath $capturedScreenshots -File |
         Copy-Item -Destination $referenceScreenshots
@@ -58,18 +78,6 @@ try {
             Copy-Item -Destination $suiteStates
     }
 
-    $manifestRows = foreach ($slot in (Get-NumericPngSlots -Directory $referenceScreenshots)) {
-        [pscustomobject]@{
-            slot = $slot
-            family = 'unclassified'
-            screen = "Slot {0:D4}" -f $slot
-            notes = ''
-        }
-    }
-    $manifestRows | Export-Csv `
-        -LiteralPath (Join-Path $suiteStage 'screens.tsv') `
-        -Delimiter "`t" -NoTypeInformation -Encoding utf8
-
     [void](New-Item `
         -ItemType Directory `
         -Path `
@@ -78,11 +86,11 @@ try {
         -Force)
     Publish-VisualRegressionTransaction `
         -Replacements ([ordered]@{
-            $context.SuiteRoot = $suiteStage
-            $context.CaptureRoot = $captureStage
+            ($context.SuiteRoot) = $suiteStage
+            ($context.CaptureRoot) = $captureStage
         }) `
         -TransactionRoot $transaction
-    Write-Host "Created visual-regression suite: $recordingName" -ForegroundColor Green
+    Write-Host "Created visual-regression suite: $($context.Suite)" -ForegroundColor Green
 }
 finally {
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $context.Root

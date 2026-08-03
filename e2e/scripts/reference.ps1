@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string]$Suite,
+    [Parameter(Mandatory)][string]$Reference,
     [switch]$f
 )
 
@@ -10,7 +11,7 @@ $context = Get-VisualRegressionContext -Suite $Suite
 $captureRootExists = Test-Path -LiteralPath $context.CaptureRoot -PathType Container
 $captureRootEmpty = $captureRootExists -and
     @(Get-ChildItem -LiteralPath $context.CaptureRoot -Force).Count -eq 0
-$referenceScreenshotsRoot = Join-Path $context.CaptureRoot 'references'
+$referenceScreenshotsRoot = $context.Capture.Reference
 $referenceExists = @(
     Get-ChildItem -LiteralPath $referenceScreenshotsRoot -Filter '*.png' -File -ErrorAction SilentlyContinue
 ).Count -gt 0
@@ -35,17 +36,17 @@ $transaction = New-VisualRegressionTransaction `
 $captureRoot = Join-Path $transaction 'capture'
 $suiteCaptureStage = Join-Path $transaction 'suite-captures'
 $referenceStage = if (-not $initializeCapture) {
-    Join-Path $transaction 'references'
+    Join-Path $transaction $script:E2eCaptureTiers.Reference
 }
 else {
-    Join-Path $suiteCaptureStage 'references'
+    Join-Path $suiteCaptureStage $script:E2eCaptureTiers.Reference
 }
 $referenceScreenshots = $referenceStage
-$reportsStage = if (-not $initializeCapture) {
-    Join-Path $transaction 'reports'
+$reportStage = if (-not $initializeCapture) {
+    Join-Path $transaction $script:E2eReportDirectory
 }
 else {
-    Join-Path $suiteCaptureStage 'reports'
+    Join-Path $suiteCaptureStage $script:E2eReportDirectory
 }
 $statesStage = if ($initializeCapture) {
     Join-Path $suiteCaptureStage 'sstates'
@@ -59,54 +60,67 @@ try {
     [void](New-Item -ItemType Directory -Path $referenceScreenshots, $scratch -Force)
     if ($initializeCapture) {
         [void](New-Item -ItemType Directory -Path `
-            (Join-Path $suiteCaptureStage 'approved'), `
-            (Join-Path $suiteCaptureStage 'pending') `
+            (Join-Path $suiteCaptureStage $script:E2eCaptureTiers.Current) `
             -Force)
     }
     Invoke-VisualRegressionReplay `
         -Repository $context.Repository `
         -SharedRecordingRoot $paths.pcsx2_input_recordings `
         -RecordingPath $recordingPath `
-        -Game nun5 `
+        -Game $Reference `
         -CaptureRoot $captureRoot
     $capturedScreenshots = Join-Path $captureRoot 'screenshots'
     if (@(Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File).Count -eq 0) {
-        throw 'NUN5 reference replay completed without captured screenshots.'
+        throw 'Reference replay completed without captured screenshots.'
     }
     Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File |
         Copy-Item -Destination $referenceScreenshots
     $capturedStates = Join-Path $captureRoot 'sstates'
     if (Test-Path -LiteralPath $capturedStates -PathType Container) {
         New-VisualRegressionStateStage `
-            -ExistingRoot (Join-Path $context.CaptureRoot 'sstates') `
+            -ExistingRoot $context.Capture.States `
             -StageRoot $statesStage `
-            -Tier references `
+            -Tier $script:E2eCaptureTiers.Reference `
             -CapturedDirectory $capturedStates
     }
 
-    New-VisualRegressionReports `
-        -Suite $Suite `
-        -ReferenceDirectory $referenceStage `
-        -PendingDirectory (Join-Path $context.CaptureRoot 'pending') `
-        -OutputRoot $reportsStage `
-        -ScratchRoot $scratch
+    $currentScreenshots = if ($initializeCapture) {
+        Join-Path $suiteCaptureStage $script:E2eCaptureTiers.Current
+    }
+    else {
+        $context.Capture.Current
+    }
     $replacements = if (-not $initializeCapture) {
         $existingReplacements = [ordered]@{
-            (Join-Path $context.CaptureRoot 'references') = $referenceScreenshots
-            (Join-Path $context.CaptureRoot 'reports') = $reportsStage
+            ($context.Capture.Reference) = $referenceScreenshots
+        }
+        if (@(Get-NumericPngSlots -Directory $currentScreenshots).Count -gt 0) {
+            New-VisualRegressionReport `
+                -Suite $Suite `
+                -ReferenceDirectory $referenceStage `
+                -CurrentDirectory $currentScreenshots `
+                -OutputRoot $reportStage
+            $existingReplacements[$context.Capture.Report] = $reportStage
         }
         if (Test-Path -LiteralPath $statesStage -PathType Container) {
-            $existingReplacements[(Join-Path $context.CaptureRoot 'sstates')] = $statesStage
+            $existingReplacements[$context.Capture.States] = $statesStage
         }
         $existingReplacements
     }
     else {
-        [ordered]@{ $context.CaptureRoot = $suiteCaptureStage }
+        if (@(Get-NumericPngSlots -Directory $currentScreenshots).Count -gt 0) {
+            New-VisualRegressionReport `
+                -Suite $Suite `
+                -ReferenceDirectory $referenceStage `
+                -CurrentDirectory $currentScreenshots `
+                -OutputRoot $reportStage
+        }
+        [ordered]@{ ($context.CaptureRoot) = $suiteCaptureStage }
     }
     Publish-VisualRegressionTransaction `
         -Replacements $replacements `
         -TransactionRoot $transaction
-    Write-Host 'Reference screenshots, savestates, and reports were replaced atomically.' -ForegroundColor Green
+    Write-Host 'Reference screenshots, savestates, and report were replaced atomically.' -ForegroundColor Green
 }
 finally {
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $context.Root

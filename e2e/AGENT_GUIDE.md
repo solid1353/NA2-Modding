@@ -1,134 +1,96 @@
 # Agent workflow for local NA2.28 visual fixes
 
-Use this workflow when the user gives you an existing E2E difference and asks
-for a local NA2.28 rendering fix. The E2E suite owns the build, replay,
-capture, and comparison mechanics; do not reproduce those steps manually.
+Use this workflow when the user gives an existing E2E difference and requests a
+local NA2.28 rendering fix. The E2E command owns building, replay, capture,
+state retention, and report generation; do not reproduce those steps manually.
 
 ## Invocation
 
-The root standing command may identify the suite and captures directly:
-
 ```text
-e2e font 25: <requested fix>
-e2e font 25, 27-30: <requested fix>
+e2e font/main 25: <requested fix>
+e2e font/main 25, 27-30: <requested fix>
 ```
 
 A capture expression accepts one slot, comma-separated slots, and inclusive
-ranges. This command authorizes immediate implementation and repeated execution
-of the affected E2E suite. Begin with the named prepared differences and keep
-implementing, running `na228 test <suite> -b`, and inspecting the regenerated
-differences until every named capture has the requested result or a concrete
-blocker remains. Do not stop for separate plan approval.
+ranges. The command authorizes immediate implementation and repeated execution
+of the affected suite without separate plan approval.
 
-## Read the evidence
+## Evidence
 
 For suite `<suite>` and capture `<slot>`:
 
-- `captures/<suite>/approved/<slot>.png` is the accepted NA2.28 rendering.
-- `captures/<suite>/pending/<slot>.png` is the current NA2.28 rendering.
-- `captures/<suite>/references/<slot>.png` is the reference-game rendering.
-- `captures/<suite>/reports/approved-vs-pending/` contains the prepared pairs,
-  diffs, blends, and grids for the current NA2.28 change.
-- `captures/<suite>/sstates/pending/<slot>.p2s` is available when the visible
+- `captures/<suite>/reference/<slot>.png` is the optional reference-game image.
+- `captures/<suite>/current/<slot>.png` is the latest NA2.28 image.
+- `captures/<suite>/report/` contains generated reference/current pairs,
+  pixel diffs, blends, and grids when the suite has a reference.
+- `captures/<suite>/sstates/current/<slot>.p2s` is available when the visible
   difference requires runtime investigation.
+- Git history in the capture repository records accepted prior versions of the
+  current images, savestates, and generated report.
 
-The approved-versus-pending comparison is authoritative for a local NA2.28
-regression. A reference image provides design context; different games or
-video modes do not necessarily produce pixel-identical frames.
-
-When the target is plain text, an agent using ordinary capture PNGs or grid
-pages must zoom them until individual glyph pixels, spacing, baselines, and
-alignment are clearly legible. A thumbnail, fitted whole screenshot, or fitted
-grid page alone is not sufficient evidence for a text-rendering conclusion.
-Inspect the relevant pair, diff, or blend at that readable zoom before deciding
-what to change and again before deciding that the result is correct.
+When the target is plain text, ordinary capture PNGs or grid pages must be
+zoomed until individual glyph pixels, spacing, baselines, and alignment are
+clearly legible. A thumbnail or fitted whole image is insufficient. Inspect the
+relevant pair, diff, or blend at readable zoom before deciding what to change
+and again before deciding that the result is correct.
 
 ## Evidence gate
 
 - Open and inspect every capture named by the command. Evidence from one slot
   never establishes the state of another slot.
-- A relational claim such as "aligned with", "matches", "same bounds", or
-  "consistent across" requires an actual comparison of every named side at a
-  readable zoom. Observing that one capture moved is not evidence that it now
-  aligns with another capture.
-- When the request distinguishes selected, highlighted, ordinary, disabled, or
-  other states, inspect the exact state named for each capture. Do not
-  substitute a visually similar state.
-- After each `na228 test <suite> -b` run, reopen the regenerated evidence for
-  every named capture. Pre-run images and observations cannot establish the
-  post-run result.
-- Do not claim that a result is correct, aligned, or complete until every
-  property named by the request has been directly checked in every applicable
-  capture.
-- Do not say that comparison, testing, or inspection is happening "now" and
-  then yield or end the turn. Perform that action in the same turn and report
-  only the evidence actually obtained. Stop only for a concrete blocker that
-  prevents the required inspection or test.
+- A claim such as "aligned with", "matches", "same bounds", or "consistent
+  across" requires an actual comparison of every named side at readable zoom.
+- Inspect the exact selected, highlighted, ordinary, disabled, or other state
+  named by the request; never substitute a visually similar state.
+- After every `na228 test <suite> -b` run, reopen the regenerated evidence for
+  every named capture. Pre-run evidence cannot establish the post-run result.
+- Do not claim correctness or completion until every requested property has
+  been checked directly in every applicable capture.
+- Do not say comparison, testing, or inspection is happening "now" and then
+  yield. Perform it in the same turn. Stop only for a concrete blocker.
 
 ## Fix and verify
 
-1. Inspect the supplied difference and identify the exact requested visual
-   result.
-2. Change only the NA2.28 code or asset responsible for that result.
-3. Run the affected suite with a fresh Screenshot Test build. For the current
-   font suite:
+1. Inspect the named current images and reference/current evidence.
+2. Change only the NA2.28 code or asset responsible for the requested result.
+3. Run the affected suite; for the current font suite:
 
    ```powershell
-   na228 test font -b
+   na228 test font/main -b
    ```
 
-4. Inspect the regenerated approved-versus-pending report.
-5. Repeat the change, command, and inspection until the requested local result
-   is correct.
+4. Inspect the regenerated current images and report.
+5. Repeat until every named capture has the requested result or a concrete
+   blocker remains.
 
-The command builds or reuses Screenshot Test, replays the suite recording,
-captures its markers and savestates, removes pixel-identical and suite-ignored
-pending screenshots, and regenerates the comparisons transactionally.
+The run atomically replaces `current/`, `sstates/current/`, and `report/`.
+Files listed in the suite's `ignore.txt` keep
+their previous current screenshot, while their new current savestate remains
+available.
 
 ## Verification and delivery gate
 
-E2E implementation remains uncommitted while the agent iterates. Agent visual
-inspection and a successful test command do not authorize acceptance, capture
-approval, a commit, or a push. Present the regenerated evidence and wait for
-the user to explicitly verify and approve the result.
+Keep implementation, current screenshots, current savestates, and the report
+uncommitted while iterating. Agent inspection and a successful command do not
+establish user acceptance. Present the regenerated evidence and wait for
+explicit user verification and approval.
 
-After that explicit approval, complete one coordinated delivery:
-
-1. Approve only the user-accepted captures, for example:
-
-   ```powershell
-   na228 test approve font -s '25,27-30'
-   ```
-
-2. Verify that those screenshots moved from `pending/` to `approved/`, their
-   available savestates moved to the approved state tier, and unrelated pending
-   captures were preserved.
-3. Commit the accepted capture-history changes in the nested `e2e/captures/`
-   repository and commit the implementation changes in the main repository.
-4. Push both commits as the same delivery when both repositories have remotes.
-   If the capture repository has no remote, its commit necessarily remains
-   local; push the main implementation only after the local capture commit
-   succeeds and report that the capture history was committed but not pushed.
-
-The two repositories cannot share one Git commit. "Together" means that both
-accepted histories are finalized from the same explicit user approval, with no
-implementation push before the capture-history commit succeeds.
+After approval, commit the accepted capture-history changes in the nested
+`e2e/captures/` repository and the implementation changes in the main
+repository as one coordinated delivery. Include the regenerated tracked report
+changes. If the capture repository has no remote, commit it locally before
+pushing the main implementation and report that it was not pushed.
 
 ## Boundaries
 
 - Do not navigate PCSX2 manually or construct comparison images yourself.
-- Do not edit `approved/`, `pending/`, `references/`, reports, recordings,
-  `screens.tsv`, or `ignore.txt` unless the user explicitly requests that
-  exact change.
-- Do not approve captures or regenerate references before the explicit user
-  verification and approval required above. Acceptance belongs to the user.
+- Do not manually edit current images, references, the report, recordings, or
+  `ignore.txt` unless the user explicitly requests that exact change.
+- Do not regenerate references without explicit user authorization.
 - Do not treat a NUN5 reference as accepted NA2.28 output.
-- Preserve unrelated pending differences.
-- Do not expand a local visual fix into release work, broad cleanup, or
-  unrelated validation.
+- Preserve unrelated current/report changes.
+- Do not expand a local visual fix into release work or broad cleanup.
 
-Before user acceptance, hand off only the implementation files changed, the
-capture slots affected, the `na228 test <suite> -b` result, and any remaining
-visible difference. After acceptance and delivery, report both repository
-commits and state separately whether each was pushed. Keep agent validation
-separate from user acceptance.
+Before acceptance, report the implementation files changed, capture slots, test
+result, and remaining visible differences. After delivery, report both
+repository commits and whether each was pushed.

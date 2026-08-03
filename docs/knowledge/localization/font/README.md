@@ -2492,11 +2492,12 @@ fix is instead in `payload_builder`: `228.BIN` retains its real linked
 `memory_end`, while all boot-ELF program headers and heap-boundary constants use
 stable `reservation_end = 0x00940100`.
 
-The maintained `font/heap_stability` E2E suite fingerprints a test-only
-32-byte payload-padding build, replays it, restores and replays the normal
-build, and compares raw PNG hashes without publishing alternate captures. The
-verified initial run matched all 58 non-ignored `font/main` screenshots byte
-for byte. Seven volatile save-data slots remain governed by the base suite's
-existing `ignore.txt`. Reusable probe evidence and comparison scripts are under
+The maintained `na228 test` gate fingerprints independent normal and 32-byte
+padded E2E Test builds, prepares them concurrently, replays every E2E suite
+against both, and compares raw PNG hashes without publishing alternate
+captures. Only normal captures are published after the complete run passes.
+The verified initial focused proof matched all 58 non-ignored `font/main`
+screenshots byte for byte. Seven volatile save-data slots remain governed by
+the base suite's existing `ignore.txt`. Reusable probe evidence and comparison scripts are under
 `work/Font 3/investigation/heap-boundary-tail-probe/` and
 `work/Font 3/investigation/stable-boundary-ab/`.

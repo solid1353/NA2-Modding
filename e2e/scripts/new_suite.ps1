@@ -1,8 +1,7 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][string]$Recording,
-    [string]$Suite,
-    [string]$Reference
+    [Parameter(Mandatory)][string]$Suite,
+    [Parameter(Mandatory)][string]$Recording
 )
 
 $ErrorActionPreference = 'Stop'
@@ -10,18 +9,16 @@ $ErrorActionPreference = 'Stop'
 if ([IO.Path]::GetFileName($Recording) -cne $Recording) {
     throw 'Recording must be a shared input-recording filename or stem.'
 }
-$recordingName = [IO.Path]::GetFileNameWithoutExtension($Recording)
-$suiteName = if ([string]::IsNullOrWhiteSpace($Suite)) { $recordingName } else { $Suite }
-$context = Get-VisualRegressionContext -Suite $suiteName
+$context = Get-VisualRegressionContext -Suite $Suite
 if ((Test-Path -LiteralPath $context.SuiteRoot) -or
     (Test-Path -LiteralPath $context.CaptureRoot)) {
-    throw "Visual-regression suite already exists: $recordingName"
+    throw "E2E suite already exists: $($context.Suite)"
 }
 
 . (Join-Path $context.Repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
 $recordingFilename = if ($Recording.EndsWith('.p2m2', [StringComparison]::OrdinalIgnoreCase)) {
-    [IO.Path]::GetFileName($Recording)
+    $Recording
 }
 else {
     "$Recording.p2m2"
@@ -33,75 +30,20 @@ if (-not (Test-Path -LiteralPath $recordingPath -PathType Leaf)) {
     throw "Input recording does not exist: $recordingPath"
 }
 
-$transaction = New-VisualRegressionTransaction `
-    -Root $context.Root `
-    -Prefix 'new'
-$capture = Join-Path $transaction 'runtime-capture'
+$transaction = New-VisualRegressionTransaction -Root $context.Root -Prefix 'new'
 $suiteStage = Join-Path $transaction 'suite-definition'
-$captureStage = Join-Path $transaction 'capture-data'
 try {
-    if ([string]::IsNullOrWhiteSpace($Reference)) {
-        [void](New-Item -ItemType Directory -Path $suiteStage -Force)
-        Copy-Item -LiteralPath $recordingPath -Destination (Join-Path $suiteStage 'input.p2m2')
-        [void](New-Item `
-            -ItemType Directory `
-            -Path ([IO.Path]::GetDirectoryName($context.SuiteRoot)) `
-            -Force)
-        Publish-VisualRegressionTransaction `
-            -Replacements ([ordered]@{ ($context.SuiteRoot) = $suiteStage }) `
-            -TransactionRoot $transaction
-        Write-Host "Created reference-less E2E suite: $($context.Suite)" -ForegroundColor Green
-        return
-    }
-    & (Join-Path $context.Repository 'na228.ps1') `
-        $Reference -t $recordingFilename -o $capture
-    $capturedScreenshots = Join-Path $capture 'screenshots'
-    if (@(Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File).Count -eq 0) {
-        throw 'Reference replay completed without captured screenshots.'
-    }
-
-    $referenceScreenshots = Join-Path $captureStage $script:E2eCaptureTiers.Reference
-    $currentScreenshots = Join-Path $captureStage $script:E2eCaptureTiers.Current
-    $suiteStates = Join-Path `
-        (Join-Path $captureStage 'sstates') `
-        $script:E2eCaptureTiers.Reference
-    [void](New-Item -ItemType Directory -Path `
-        $suiteStage, `
-        $referenceScreenshots, $currentScreenshots -Force)
+    [void](New-Item -ItemType Directory -Path $suiteStage -Force)
     Copy-Item -LiteralPath $recordingPath -Destination (Join-Path $suiteStage 'input.p2m2')
-    Get-ChildItem -LiteralPath $capturedScreenshots -File |
-        Copy-Item -Destination $referenceScreenshots
-    $capturedStates = Join-Path $capture 'sstates'
-    if (Test-Path -LiteralPath $capturedStates -PathType Container) {
-        [void](New-Item -ItemType Directory -Path $suiteStates -Force)
-        Get-ChildItem -LiteralPath $capturedStates -File |
-            Copy-Item -Destination $suiteStates
-    }
-
     [void](New-Item `
         -ItemType Directory `
-        -Path `
-            ([IO.Path]::GetDirectoryName($context.SuiteRoot)), `
-            ([IO.Path]::GetDirectoryName($context.CaptureRoot)) `
+        -Path ([IO.Path]::GetDirectoryName($context.SuiteRoot)) `
         -Force)
     Publish-VisualRegressionTransaction `
-        -Replacements ([ordered]@{
-            ($context.SuiteRoot) = $suiteStage
-            ($context.CaptureRoot) = $captureStage
-        }) `
+        -Replacements ([ordered]@{ ($context.SuiteRoot) = $suiteStage }) `
         -TransactionRoot $transaction
-    Write-Host "Created visual-regression suite: $($context.Suite)" -ForegroundColor Green
+    Write-Host "Created E2E suite: $($context.Suite)" -ForegroundColor Green
 }
 finally {
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $context.Root
-    $suitesRoot = Join-Path $context.Root 'suites'
-    if ((Test-Path -LiteralPath $suitesRoot -PathType Container) -and
-        @(Get-ChildItem -LiteralPath $suitesRoot -Force).Count -eq 0) {
-        Remove-Item -LiteralPath $suitesRoot -Force
-    }
-    $capturesRoot = Join-Path $context.Root 'captures'
-    if ((Test-Path -LiteralPath $capturesRoot -PathType Container) -and
-        @(Get-ChildItem -LiteralPath $capturesRoot -Force).Count -eq 0) {
-        Remove-Item -LiteralPath $capturesRoot -Force
-    }
 }

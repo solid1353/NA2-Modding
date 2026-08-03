@@ -188,6 +188,12 @@ class BuildPreflightTests(unittest.TestCase):
                 initial,
                 state_fingerprint(self.state(paths, payload_padding=32)),
             )
+            self.assertNotEqual(
+                initial,
+                state_fingerprint(
+                    self.state(paths, boot_elf_crc_discriminator=0x45324501)
+                ),
+            )
 
             (paths["builder"] / "engine.py").write_text(
                 "ENGINE = 2\n", encoding="utf-8"

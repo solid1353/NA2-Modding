@@ -35,6 +35,12 @@ function Get-Na2ConfiguredIsoMapKeys {
         Previous = ConvertTo-Na2ProjectPath `
             -Path $Paths.files.previous_iso `
             -Paths $Paths
+        E2eTestNormal = ConvertTo-Na2ProjectPath `
+            -Path $Paths.files.e2e_test_iso `
+            -Paths $Paths
+        E2eTestPadded = ConvertTo-Na2ProjectPath `
+            -Path $Paths.files.e2e_test_padded_iso `
+            -Paths $Paths
     }
 }
 
@@ -50,56 +56,89 @@ function Read-Na2BuildMap {
         return [pscustomobject]@{
             LatestBuildId = $null
             PreviousBuildId = $null
+            E2eTestNormalBuildId = $null
+            E2eTestPaddedBuildId = $null
         }
     }
 
     $lines = @([IO.File]::ReadAllLines($mapPath))
-    if ($lines.Count -ne 3 -or $lines[0] -cne "iso`tbuild_record") {
-        throw 'builds.tsv must contain its exact header and exactly two ISO rows.'
+    if ($lines.Count -lt 3 -or $lines[0] -cne "iso`tbuild_record") {
+        throw 'builds.tsv must contain its exact header and at least Latest/Previous rows.'
     }
     $rows = @($lines | Select-Object -Skip 1 | ConvertFrom-Csv -Delimiter "`t" -Header iso, build_record)
     $isoKeys = Get-Na2ConfiguredIsoMapKeys -Paths $Paths
-    $migrated = $rows[0].iso -cne $isoKeys.Latest -or
-        $rows[1].iso -cne $isoKeys.Previous
-    if ($migrated) {
-        $previousSuffix = $isoKeys.Previous.Substring($isoKeys.Previous.LastIndexOf(' - '))
-        $legacyLatest = ([string]$rows[0].iso).EndsWith(
-            ' - Current.iso',
-            [StringComparison]::Ordinal
-        )
-        if (
-            -not $legacyLatest -or
-            -not ([string]$rows[1].iso).EndsWith($previousSuffix, [StringComparison]::Ordinal)
-        ) {
-            throw "builds.tsv must contain one row each for $($isoKeys.Latest) and $($isoKeys.Previous)."
+    $rowsByIso = @{}
+    foreach ($row in $rows) {
+        $iso = [string]$row.iso
+        if ([string]::IsNullOrWhiteSpace($iso) -or $rowsByIso.ContainsKey($iso)) {
+            throw "builds.tsv contains an empty or duplicate ISO row: $iso"
         }
+        $rowsByIso[$iso] = $row
     }
 
-    $latestRecord = [string]$rows[0].build_record
-    $previousRecord = [string]$rows[1].build_record
-    $latestBuildId = ConvertFrom-Na2BuildRecordPath `
-        -BuildRecord $latestRecord `
-        -LogDirectory $LogDirectory
-    if ([string]::IsNullOrWhiteSpace($latestBuildId)) {
-        throw "The $($isoKeys.Latest) row in builds.tsv must reference a retained build record."
+    $latestRow = $rowsByIso[$isoKeys.Latest]
+    $previousRow = $rowsByIso[$isoKeys.Previous]
+    $migrated = $false
+    if ($null -eq $latestRow) {
+        $legacyLatest = @(
+            $rows | Where-Object {
+                ([string]$_.iso).EndsWith(' - Current.iso', [StringComparison]::Ordinal)
+            }
+        )
+        if ($legacyLatest.Count -ne 1) {
+            throw "builds.tsv has no row for $($isoKeys.Latest)."
+        }
+        $latestRow = $legacyLatest[0]
+        $migrated = $true
     }
-    $previousBuildId = ConvertFrom-Na2BuildRecordPath `
-        -BuildRecord $previousRecord `
+    if ($null -eq $previousRow) {
+        $legacyPrevious = @(
+            $rows | Where-Object {
+                ([string]$_.iso).EndsWith(' - Previous.iso', [StringComparison]::Ordinal)
+            }
+        )
+        if ($legacyPrevious.Count -ne 1) {
+            throw "builds.tsv has no row for $($isoKeys.Previous)."
+        }
+        $previousRow = $legacyPrevious[0]
+        $migrated = $true
+    }
+
+    $latestBuildId = ConvertFrom-Na2BuildRecordPath `
+        -BuildRecord ([string]$latestRow.build_record) `
         -LogDirectory $LogDirectory
-    if ($latestBuildId -eq $previousBuildId) {
+    $previousBuildId = ConvertFrom-Na2BuildRecordPath `
+        -BuildRecord ([string]$previousRow.build_record) `
+        -LogDirectory $LogDirectory
+    if (
+        -not [string]::IsNullOrWhiteSpace($latestBuildId) -and
+        $latestBuildId -eq $previousBuildId
+    ) {
         throw 'Latest and Previous ISOs cannot reference the same build record.'
     }
+    $normalRow = $rowsByIso[$isoKeys.E2eTestNormal]
+    $paddedRow = $rowsByIso[$isoKeys.E2eTestPadded]
+    $normalBuildId = ConvertFrom-Na2BuildRecordPath `
+        -BuildRecord $(if ($null -ne $normalRow) { [string]$normalRow.build_record } else { '' }) `
+        -LogDirectory $LogDirectory
+    $paddedBuildId = ConvertFrom-Na2BuildRecordPath `
+        -BuildRecord $(if ($null -ne $paddedRow) { [string]$paddedRow.build_record } else { '' }) `
+        -LogDirectory $LogDirectory
     if ($migrated) {
         Set-Na2BuildMap `
             -LogDirectory $LogDirectory `
             -LatestBuildId $latestBuildId `
             -PreviousBuildId $previousBuildId `
+            -E2eTestNormalBuildId $normalBuildId `
+            -E2eTestPaddedBuildId $paddedBuildId `
             -Paths $Paths
     }
 
     return [pscustomobject]@{
         LatestBuildId = $latestBuildId
         PreviousBuildId = $previousBuildId
+        E2eTestNormalBuildId = $normalBuildId
+        E2eTestPaddedBuildId = $paddedBuildId
     }
 }
 
@@ -107,15 +146,22 @@ function Set-Na2BuildMap {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$LogDirectory,
-        [Parameter(Mandatory = $true)][string]$LatestBuildId,
+        [AllowNull()][string]$LatestBuildId,
         [AllowNull()][string]$PreviousBuildId,
+        [AllowNull()][string]$E2eTestNormalBuildId,
+        [AllowNull()][string]$E2eTestPaddedBuildId,
         [Parameter(Mandatory = $true)][psobject]$Paths
     )
 
     if ($LatestBuildId -eq $PreviousBuildId) {
         $PreviousBuildId = $null
     }
-    foreach ($buildId in @($LatestBuildId, $PreviousBuildId)) {
+    foreach ($buildId in @(
+        $LatestBuildId,
+        $PreviousBuildId,
+        $E2eTestNormalBuildId,
+        $E2eTestPaddedBuildId
+    )) {
         if ([string]::IsNullOrWhiteSpace($buildId)) {
             continue
         }
@@ -128,17 +174,18 @@ function Set-Na2BuildMap {
         }
     }
 
-    $previousRecord = if ([string]::IsNullOrWhiteSpace($PreviousBuildId)) {
-        ''
-    }
-    else {
-        "@logs/na228/builds/$PreviousBuildId"
+    $recordPath = {
+        param([AllowNull()][string]$BuildId)
+        if ([string]::IsNullOrWhiteSpace($BuildId)) { return '' }
+        return "@logs/na228/builds/$BuildId"
     }
     $isoKeys = Get-Na2ConfiguredIsoMapKeys -Paths $Paths
     $content = @(
         "iso`tbuild_record"
-        "$($isoKeys.Latest)`t@logs/na228/builds/$LatestBuildId"
-        "$($isoKeys.Previous)`t$previousRecord"
+        "$($isoKeys.Latest)`t$(& $recordPath $LatestBuildId)"
+        "$($isoKeys.Previous)`t$(& $recordPath $PreviousBuildId)"
+        "$($isoKeys.E2eTestNormal)`t$(& $recordPath $E2eTestNormalBuildId)"
+        "$($isoKeys.E2eTestPadded)`t$(& $recordPath $E2eTestPaddedBuildId)"
     ) -join "`n"
     Set-Na2Utf8FileAtomic `
         -Path (Join-Path $LogDirectory 'builds.tsv') `
@@ -181,23 +228,97 @@ function Write-Na2BuildResult {
     Set-Na2Utf8FileAtomic -Path (Join-Path $RecordDirectory 'build_result.tsv') -Content $content
 }
 
+function Write-Na2E2eBuildResult {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][string]$RecordDirectory,
+        [Parameter(Mandatory = $true)][ValidateSet('normal', 'padded')][string]$Variant,
+        [Parameter(Mandatory = $true)][string]$OutputIso,
+        [Parameter(Mandatory = $true)][string]$Profile,
+        [Parameter(Mandatory = $true)][int]$PayloadPadding,
+        [Parameter(Mandatory = $true)][uint32]$BootElfCrcDiscriminator,
+        [Parameter(Mandatory = $true)][psobject]$Paths
+    )
+
+    $outputPortable = ConvertTo-Na2PortableText -Text $OutputIso -Paths $Paths
+    $profilePortable = ConvertTo-Na2PortableText -Text $Profile -Paths $Paths
+    $recordPortable = ConvertTo-Na2PortableText -Text $RecordDirectory -Paths $Paths
+    $crcDiscriminator = '0x{0:X8}' -f $BootElfCrcDiscriminator
+    $content = @(
+        (
+            "timestamp_utc`tresult`tvariant`tprofile`toutput_iso`tpayload_padding`t" +
+            "boot_elf_crc_discriminator`tbuild_record"
+        )
+        (
+            (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" +
+            (
+                "built`t$Variant`t$profilePortable`t$outputPortable`t$PayloadPadding`t" +
+                "$crcDiscriminator`t$recordPortable"
+            )
+        )
+    ) -join "`n"
+    $content += "`n"
+    if (Test-Na2WindowsAbsolutePath -Text $content) {
+        throw 'Refusing to write E2E build_result.tsv with an absolute path.'
+    }
+    Set-Na2Utf8FileAtomic -Path (Join-Path $RecordDirectory 'build_result.tsv') -Content $content
+}
+
+function Enter-Na2BuildMapLock {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][string]$LogDirectory,
+        [ValidateRange(1, 300)][int]$TimeoutSeconds = 120
+    )
+
+    [void](New-Item -ItemType Directory -Path $LogDirectory -Force)
+    $lockPath = Join-Path $LogDirectory '.builds.lock'
+    $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+    do {
+        try {
+            return [IO.File]::Open(
+                $lockPath,
+                [IO.FileMode]::OpenOrCreate,
+                [IO.FileAccess]::ReadWrite,
+                [IO.FileShare]::None
+            )
+        }
+        catch [IO.IOException] {
+            if ([DateTime]::UtcNow -ge $deadline) {
+                throw "Timed out waiting for the NA2 build-map lock: $lockPath"
+            }
+            Start-Sleep -Milliseconds 100
+        }
+    } while ($true)
+}
+
 function Remove-Na2UnreferencedBuildRecords {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$LogDirectory,
         [AllowNull()][string]$LatestBuildId,
-        [AllowNull()][string]$PreviousBuildId
+        [AllowNull()][string]$PreviousBuildId,
+        [AllowNull()][string]$E2eTestNormalBuildId,
+        [AllowNull()][string]$E2eTestPaddedBuildId
     )
 
     $buildRoot = Join-Path $LogDirectory 'builds'
     if (-not (Test-Path -LiteralPath $buildRoot -PathType Container)) {
         return
     }
-    $retained = @($LatestBuildId, $PreviousBuildId) |
+    $retained = @(
+        $LatestBuildId,
+        $PreviousBuildId,
+        $E2eTestNormalBuildId,
+        $E2eTestPaddedBuildId
+    ) |
         Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
         Select-Object -Unique
     foreach ($record in Get-ChildItem -LiteralPath $buildRoot -Directory -Force) {
         if ($record.Name -in $retained) {
+            continue
+        }
+        if (Test-Path -LiteralPath (Join-Path $buildRoot ".active-$($record.Name)") -PathType Leaf) {
             continue
         }
         if (($record.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
@@ -225,12 +346,6 @@ function Complete-Na2BuildRecord {
     if (-not (Test-Path -LiteralPath $recordDirectory -PathType Container)) {
         throw "Profile build record does not exist: builds/$BuildId"
     }
-    $buildMap = Read-Na2BuildMap `
-        -LogDirectory $LogDirectory `
-        -Paths $Paths
-    $latestBuildId = $buildMap.LatestBuildId
-    $previousBuildId = $buildMap.PreviousBuildId
-
     Write-Na2BuildResult `
         -RecordDirectory $recordDirectory `
         -Result $Result `
@@ -239,32 +354,110 @@ function Complete-Na2BuildRecord {
         -PreviousIso $PreviousIso `
         -Profile $Profile `
         -Paths $Paths
-    $effectiveLatestBuildId = $BuildId
+    $lock = Enter-Na2BuildMapLock -LogDirectory $LogDirectory
+    try {
+        $buildMap = Read-Na2BuildMap `
+            -LogDirectory $LogDirectory `
+            -Paths $Paths
+        $previousExists = -not [string]::IsNullOrWhiteSpace($PreviousIso) -and
+            (Test-Path -LiteralPath $PreviousIso -PathType Leaf)
+        $effectivePreviousBuildId = if ($Result -eq 'updated' -and $Rotated) {
+            $buildMap.LatestBuildId
+        }
+        elseif ($previousExists) {
+            $buildMap.PreviousBuildId
+        }
+        else {
+            $null
+        }
 
-    $previousExists = -not [string]::IsNullOrWhiteSpace($PreviousIso) -and
-        (Test-Path -LiteralPath $PreviousIso -PathType Leaf)
-    $effectivePreviousBuildId = if ($Result -eq 'updated' -and $Rotated) {
-        $latestBuildId
+        Set-Na2BuildMap `
+            -LogDirectory $LogDirectory `
+            -LatestBuildId $BuildId `
+            -PreviousBuildId $effectivePreviousBuildId `
+            -E2eTestNormalBuildId $buildMap.E2eTestNormalBuildId `
+            -E2eTestPaddedBuildId $buildMap.E2eTestPaddedBuildId `
+            -Paths $Paths
+        Remove-Na2UnreferencedBuildRecords `
+            -LogDirectory $LogDirectory `
+            -LatestBuildId $BuildId `
+            -PreviousBuildId $effectivePreviousBuildId `
+            -E2eTestNormalBuildId $buildMap.E2eTestNormalBuildId `
+            -E2eTestPaddedBuildId $buildMap.E2eTestPaddedBuildId
     }
-    elseif ($previousExists) {
-        $previousBuildId
+    finally {
+        $lock.Dispose()
     }
-    else {
-        $null
-    }
-
-    Set-Na2BuildMap `
-        -LogDirectory $LogDirectory `
-        -LatestBuildId $effectiveLatestBuildId `
-        -PreviousBuildId $effectivePreviousBuildId `
-        -Paths $Paths
-    Remove-Na2UnreferencedBuildRecords `
-        -LogDirectory $LogDirectory `
-        -LatestBuildId $effectiveLatestBuildId `
-        -PreviousBuildId $effectivePreviousBuildId
 
     return [pscustomobject]@{
-        BuildId = $effectiveLatestBuildId
-        BuildRecord = "@logs/na228/builds/$effectiveLatestBuildId"
+        BuildId = $BuildId
+        BuildRecord = "@logs/na228/builds/$BuildId"
+    }
+}
+
+function Complete-Na2E2eBuildRecord {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][string]$LogDirectory,
+        [Parameter(Mandatory = $true)][string]$BuildId,
+        [Parameter(Mandatory = $true)][ValidateSet('normal', 'padded')][string]$Variant,
+        [Parameter(Mandatory = $true)][string]$OutputIso,
+        [Parameter(Mandatory = $true)][string]$Profile,
+        [Parameter(Mandatory = $true)][int]$PayloadPadding,
+        [Parameter(Mandatory = $true)][uint32]$BootElfCrcDiscriminator,
+        [Parameter(Mandatory = $true)][psobject]$Paths
+    )
+
+    $recordDirectory = Join-Path (Join-Path $LogDirectory 'builds') $BuildId
+    if (-not (Test-Path -LiteralPath $recordDirectory -PathType Container)) {
+        throw "E2E build record does not exist: builds/$BuildId"
+    }
+    Write-Na2E2eBuildResult `
+        -RecordDirectory $recordDirectory `
+        -Variant $Variant `
+        -OutputIso $OutputIso `
+        -Profile $Profile `
+        -PayloadPadding $PayloadPadding `
+        -BootElfCrcDiscriminator $BootElfCrcDiscriminator `
+        -Paths $Paths
+
+    $lock = Enter-Na2BuildMapLock -LogDirectory $LogDirectory
+    try {
+        $buildMap = Read-Na2BuildMap `
+            -LogDirectory $LogDirectory `
+            -Paths $Paths
+        $normalBuildId = if ($Variant -ceq 'normal') {
+            $BuildId
+        }
+        else {
+            $buildMap.E2eTestNormalBuildId
+        }
+        $paddedBuildId = if ($Variant -ceq 'padded') {
+            $BuildId
+        }
+        else {
+            $buildMap.E2eTestPaddedBuildId
+        }
+        Set-Na2BuildMap `
+            -LogDirectory $LogDirectory `
+            -LatestBuildId $buildMap.LatestBuildId `
+            -PreviousBuildId $buildMap.PreviousBuildId `
+            -E2eTestNormalBuildId $normalBuildId `
+            -E2eTestPaddedBuildId $paddedBuildId `
+            -Paths $Paths
+        Remove-Na2UnreferencedBuildRecords `
+            -LogDirectory $LogDirectory `
+            -LatestBuildId $buildMap.LatestBuildId `
+            -PreviousBuildId $buildMap.PreviousBuildId `
+            -E2eTestNormalBuildId $normalBuildId `
+            -E2eTestPaddedBuildId $paddedBuildId
+    }
+    finally {
+        $lock.Dispose()
+    }
+
+    return [pscustomobject]@{
+        BuildId = $BuildId
+        BuildRecord = "@logs/na228/builds/$BuildId"
     }
 }

@@ -42,7 +42,7 @@ and again before deciding that the result is correct.
   across" requires an actual comparison of every named side at readable zoom.
 - Inspect the exact selected, highlighted, ordinary, disabled, or other state
   named by the request; never substitute a visually similar state.
-- After every `na228 test <suite> -b` run, reopen the regenerated evidence for
+- After every `na228 test` run, reopen the regenerated evidence for
   every named capture. Pre-run evidence cannot establish the post-run result.
 - Inspect every regenerated capture that differs from its tracked predecessor,
   including captures not named by the request. Never call a difference
@@ -60,17 +60,20 @@ and again before deciding that the result is correct.
 
 1. Inspect the named current images and reference/current evidence.
 2. Change only the NA2.28 code or asset responsible for the requested result.
-3. Run the affected suite; for the current font suite:
+3. Run the complete permanent and E2E pipeline:
 
    ```powershell
-   na228 test font/main -b
+   na228 test
    ```
 
 4. Inspect the regenerated current images and report.
 5. Repeat until every named capture has the requested result or a concrete
    blocker remains.
 
-The run atomically publishes `current/`, `sstates/current/`, and `report/`.
+The run builds and validates normal/padded E2E Test ISOs, replays every suite
+against both, requires all non-ignored normal/padded screenshots to match, and
+then atomically publishes `current/`, `sstates/current/`, and `report/` from the
+normal replay.
 When a freshly captured PNG is pixel-identical to the existing current PNG,
 the existing savestate is retained instead of replacing it. A changed or new
 PNG publishes its matching fresh savestate. Files listed in the suite's

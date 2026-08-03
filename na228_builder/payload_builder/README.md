@@ -36,11 +36,12 @@ Unused capacity therefore remains reserved, and payload growth within the
 envelope cannot relocate the game heap. Contributions fail before crossing the
 reservation.
 
-Screenshot Test builds expose a test-only aligned `payload_padding` input. It
-is fingerprinted by preflight and contributes one final zero-filled data
-fragment without changing feature sources. The `font/heap_stability` E2E suite
-uses 32 bytes of padding, restores the normal build, and requires every
-non-ignored replay PNG to remain byte-identical.
+The padded E2E Test build exposes a test-only aligned `payload_padding` input.
+It is fingerprinted by preflight and contributes one final zero-filled data
+fragment without changing feature sources. Every `na228 test` invocation
+builds or resolves the configured 32-byte padded variant alongside normal,
+replays every suite against both, and requires every non-ignored PNG to remain
+byte-identical.
 
 The configuration also declares the development-only injection reservation
 `0x008F0000-0x008F3D00` immediately below the fixed payload load base. It is

@@ -1,8 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string]$Suite,
-    [Parameter(Mandatory)][string]$Reference,
-    [switch]$f
+    [Parameter(Mandatory)][string]$Game
 )
 
 $ErrorActionPreference = 'Stop'
@@ -12,12 +11,6 @@ $captureRootExists = Test-Path -LiteralPath $context.CaptureRoot -PathType Conta
 $captureRootEmpty = $captureRootExists -and
     @(Get-ChildItem -LiteralPath $context.CaptureRoot -Force).Count -eq 0
 $referenceScreenshotsRoot = $context.Capture.Reference
-$referenceExists = @(
-    Get-ChildItem -LiteralPath $referenceScreenshotsRoot -Filter '*.png' -File -ErrorAction SilentlyContinue
-).Count -gt 0
-if ($referenceExists -and -not $f) {
-    throw 'Capture suite already exists; rerun with -f to overwrite its references.'
-}
 if (-not (Test-Path -LiteralPath $context.SuiteRoot -PathType Container)) {
     throw "Visual-regression suite does not exist: $Suite"
 }
@@ -67,7 +60,7 @@ try {
         -Repository $context.Repository `
         -SharedRecordingRoot $paths.pcsx2_input_recordings `
         -RecordingPath $recordingPath `
-        -Game $Reference `
+        -Game $Game `
         -CaptureRoot $captureRoot
     $capturedScreenshots = Join-Path $captureRoot 'screenshots'
     if (@(Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File).Count -eq 0) {

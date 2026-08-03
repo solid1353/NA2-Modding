@@ -1,73 +1,89 @@
 # NA2 end-to-end tests
 
-This is the main-repository infrastructure for emulator-driven end-to-end game
-tests. Its current suites capture visual evidence, and the suite format can
-grow to cover runtime state and logic. Suite recordings and ignore lists are
-tracked here. `captures/` is a nested local repository that versions each
-suite's reference images, latest NA2.28 captures, generated report, and
-savestates.
+This directory contains the main-repository infrastructure, suite definitions,
+and configuration for emulator-driven end-to-end tests. Screenshot history is
+stored in the nested local Git repository at `captures/`.
 
-Agents making local NA2.28 visual fixes follow
-[`AGENT_GUIDE.md`](AGENT_GUIDE.md).
-
-From the project root:
+## Commands
 
 ```powershell
 na228 test
-na228 test font/main -b
-na228 test font/heap_stability
-na228 test font/load_save -b
-na228 test new <recording>
-na228 test new <recording> font/character_select -r nun5
-na228 test reference font/main -r nun5
-na228 test reference font/main -r nun5 -f
+na228 test new <suite> <recording>
+na228 test reference <suite> <game>
 ```
 
-`na228 test` runs every suite against the existing Screenshot Test ISO. `-b`
-builds Screenshot Test once before the selected suite, or once before the first
-suite when all suites run.
+`na228 test` is the only test-execution command. It starts three concurrent
+jobs:
 
-`font/heap_stability` is a two-build determinism suite. It builds and replays a
-test-only 32-byte resident-payload padding variant, rebuilds and replays the
-normal profile, and requires every raw PNG to be byte-identical. The padding is
-part of the build fingerprint, does not edit feature inputs, and the normal
-Screenshot Test ISO is restored before comparison. This suite publishes no
-alternate captures or accepted baseline.
+1. the complete permanent project test suite;
+2. a preflight-resolved normal E2E Test build followed by every E2E replay;
+3. a preflight-resolved padded E2E Test build followed by every E2E replay.
 
-`test new` imports a recording from Workshop's shared input-recording folder.
-Without `-r`, it creates a reference-less suite. `-r <reference>` replays the
-recording against that game and creates reference captures. A reference-less
-suite captures current screenshots and savestates but has no comparison
-report. `test reference` uses the suite-tracked `input.p2m2` and requires the
-reference game explicitly with `-r`; `-f` is required
-only when reference images already exist and would be overwritten.
+Each build is prepared once per invocation. Every suite is replayed once
+against each ISO, and its normal/padded screenshots are compared as soon as
+both replays finish. The pipeline fails if any non-ignored PNG differs. Only
+after all jobs and comparisons pass are the normal screenshots, changed-screen
+savestates, and reference/current reports published atomically. The already
+built normal E2E Test ISO remains active; no third build is performed.
 
-Each suite definition lives under `suites/<suite>/` with `input.p2m2` and an
-optional `ignore.txt`. Suite names may contain relative subfolders such as
-`font/load_save` and `font/character_select`. The ignore file lists capture
-filenames whose existing `current/` image and current savestate are preserved
-during a new run. A newly ignored slot without existing evidence is omitted.
+The mandatory variants live in `config.json`. `normal` publishes captures;
+`padded` adds a fingerprinted 32-byte resident-payload tail and compares
+against `normal`. This cross-cutting stability check applies automatically to
+every suite rather than existing as a separate suite.
 
-Capture data lives under:
+The two E2E build roles also carry different `boot_elf_crc_discriminator`
+values from `product.json`. Each value changes one aligned zero word outside
+all ELF headers, runtime-loaded segments, and file-backed sections. PCSX2
+therefore sees distinct CRCs without changing executed data, and the
+serial-wide GameSettings file can select `NA v2.28 - E2E Test.ps2` and
+`NA v2.28 - E2E Test Padded.ps2` independently. Build actualization writes
+only those CRC sections; the one-time card files are not managed by the test
+pipeline.
+
+`test new` copies `<recording>.p2m2` from Workshop's shared input-recording
+folder into `suites/<suite>/input.p2m2`. `test reference` replays that tracked
+recording against `<game>` and creates or replaces the suite's reference
+captures.
+
+## Layout
 
 ```text
-captures/<suite>/
-├── reference/             # optional
-├── current/
-├── report/
-└── sstates/
-    ├── reference/
-    └── current/
+e2e/
+├── config.json
+├── suites/<suite>/
+│   ├── input.p2m2
+│   └── ignore.txt                 # optional
+├── captures/<suite>/              # nested local Git repository
+│   ├── reference/                 # optional
+│   ├── current/
+│   ├── report/
+│   └── sstates/
+│       ├── reference/
+│       └── current/
+└── .transactions/run-<uuid>/      # transient, ignored
+    ├── owner.json
+    ├── jobs/tests/
+    ├── jobs/normal/suites/<suite>/
+    ├── jobs/padded/suites/<suite>/
+    └── comparisons/<suite>/
 ```
 
-`current/` is atomically replaced by the latest NA2.28 replay. Git shows which
-current images differ from the last committed capture state. The tracked
-`report/` compares reference with current and contains pairs, pixel diffs,
-blends, and grid pages. Identical comparisons produce no pair, diff, blend, or
-grid entry. Reference-less suites omit the report.
+Each transaction records its owning PID and process start time. A later run
+removes only abandoned transactions carrying valid ownership metadata; legacy
+directories without metadata and transactions owned by live processes are
+preserved.
 
-After explicit user verification and approval, commit the accepted current
-screenshots, savestates, and regenerated report in the capture repository
-together with the corresponding implementation delivery. Current captures,
-savestates, and report stay uncommitted while a visual fix is still under
-review. The previous accepted batch remains available through Git.
+Build provenance is shared with normal builds under
+`logs/na228/builds/<build-id>/` and `logs/na228/builds.tsv`. Output-specific
+preflight receipts are `logs/na228/preflight/e2e_test_normal.json` and
+`e2e_test_padded.json`.
+
+An optional `ignore.txt` lists PNG filenames whose existing `current/` image
+and current savestate are preserved. Ignored filenames are also excluded from
+the normal/padded stability comparison. A newly ignored slot without existing
+evidence is omitted.
+
+After explicit user verification and approval, commit accepted current
+screenshots, savestates, and regenerated reports in the capture repository
+together with the corresponding implementation delivery. Until then, generated
+capture-history changes remain uncommitted.

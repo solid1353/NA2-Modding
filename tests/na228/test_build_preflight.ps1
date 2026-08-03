@@ -22,14 +22,19 @@ try {
     $repository = Join-Path $testRoot 'repository'
     $scriptRoot = Join-Path $repository 'scripts\na228'
     $libRoot = Join-Path $repository 'scripts\lib'
+    $e2eScripts = Join-Path $repository 'e2e\scripts'
+    $pcsx2Scripts = Join-Path $repository 'scripts\pcsx2'
     New-Item -ItemType Directory -Force `
-        -Path $scriptRoot, $libRoot |
+        -Path $scriptRoot, $libRoot, $e2eScripts, $pcsx2Scripts |
         Out-Null
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\build.ps1') -Destination $scriptRoot
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\worker_paths.ps1') -Destination $scriptRoot
     foreach ($name in 'paths.ps1', 'run_log.ps1', 'build_log.ps1') {
         Copy-Item -LiteralPath (Join-Path $sourceRepository "scripts\lib\$name") -Destination $libRoot
     }
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'e2e\scripts\config.ps1') -Destination $e2eScripts
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'e2e\config.json') -Destination (Join-Path $repository 'e2e')
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'product.json') -Destination $repository
 
     $manifest = @'
 {
@@ -53,7 +58,9 @@ try {
     "latest_iso": "@build/NA2.28 - Latest.iso",
     "previous_iso": "@build/NA2.28 - Previous.iso",
     "manual_test_iso": "@build/NA2.28 - Manual Test.iso",
-    "screenshot_test_iso": "@build/NA2.28 - Screenshot Test.iso"
+    "e2e_test_iso": "@build/NA2.28 - E2E Test.iso",
+    "e2e_test_padded_iso": "@build/NA2.28 - E2E Test Padded.iso",
+    "pcsx2_sync_build_game_settings_command": "@scripts/pcsx2/sync_build_game_settings.ps1"
   }
 }
 '@
@@ -69,6 +76,20 @@ try {
     )
     [IO.File]::WriteAllText((Join-Path $repository 'source\NA2.iso'), 'clean na2')
     [IO.File]::WriteAllText((Join-Path $repository 'source\NUN5.iso'), 'clean nun5')
+    [IO.File]::WriteAllText(
+        (Join-Path $pcsx2Scripts 'sync_build_game_settings.ps1'),
+        @'
+param([string[]]$BuildSelector, [string]$ProjectRoot, [switch]$PassThru)
+[pscustomobject]@{
+    Builds = @($BuildSelector | ForEach-Object { [pscustomobject]@{ Selector = $_ } })
+    UpdatedGameSettings = @()
+    Changed = $false
+}
+'@
+    )
+    . (Join-Path $libRoot 'paths.ps1')
+    . (Join-Path $libRoot 'build_log.ps1')
+    $testPaths = Get-Na2Paths
     $latestIso = Join-Path $repository 'build\NA2.28 - Latest.iso'
     [IO.File]::WriteAllText($latestIso, 'verified latest')
 
@@ -194,36 +215,73 @@ try {
 
     $global:Na2PreflightTestMode = 'miss'
     $global:Na2PreflightTestCalls = @()
-    $screenshotTest = & (Join-Path $scriptRoot 'build.ps1') -ScreenshotTestOnly
-    $screenshotTestIso = Join-Path $repository 'build\NA2.28 - Screenshot Test.iso'
-    Assert-Na2PreflightTest -Condition ($screenshotTest.Status -eq 'screenshot-test') `
-        -Message 'Screenshot-test build did not return screenshot-test status.'
+    $e2eNormal = & (Join-Path $scriptRoot 'build.ps1') -E2eVariant normal
+    $e2eNormalIso = Join-Path $repository 'build\NA2.28 - E2E Test.iso'
+    Assert-Na2PreflightTest -Condition ($e2eNormal.Status -eq 'e2e-test') `
+        -Message 'Normal E2E Test build did not return e2e-test status.'
     Assert-Na2PreflightTest `
-        -Condition ((@($screenshotTest.ChangedRoles) -join ',') -ceq 'screenshot_test') `
-        -Message 'Changed Screenshot Test build did not report only its own role.'
+        -Condition ((@($e2eNormal.ChangedRoles) -join ',') -ceq 'e2e_test_normal') `
+        -Message 'Changed normal E2E Test build did not report only its own role.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 3) `
-        -Message 'Screenshot-test miss did not check, build, and record exactly once.'
-    Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $screenshotTestIso -PathType Leaf) `
-        -Message 'Screenshot-test build did not retain its verified ISO.'
+        -Message 'Normal E2E Test miss did not check, build, and record exactly once.'
+    Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $e2eNormalIso -PathType Leaf) `
+        -Message 'Normal E2E Test build did not retain its verified ISO.'
     Assert-Na2PreflightTest `
         -Condition ([IO.File]::ReadAllText($latestIso) -ceq 'verified latest') `
-        -Message 'Screenshot-test build changed the Latest ISO.'
-    Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$screenshotTestIso.building")) `
-        -Message 'Screenshot-test build left its .building ISO.'
-    $screenshotTestRecord = Join-Path $repository (
-        $screenshotTest.ProfileLogDirectory.Replace('@logs/', 'logs/')
+        -Message 'Normal E2E Test build changed the Latest ISO.'
+    Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$e2eNormalIso.building")) `
+        -Message 'Normal E2E Test build left its .building ISO.'
+    $e2eNormalRecord = Join-Path $repository (
+        $e2eNormal.ProfileLogDirectory.Replace('@logs/', 'logs/')
     )
     Assert-Na2PreflightTest `
-        -Condition (Test-Path -LiteralPath (Join-Path $screenshotTestRecord 'screenshot_test_result.tsv') -PathType Leaf) `
-        -Message 'Screenshot-test build did not retain its dedicated structured record.'
+        -Condition (Test-Path -LiteralPath (Join-Path $e2eNormalRecord 'build_result.tsv') -PathType Leaf) `
+        -Message 'Normal E2E Test build did not retain its shared structured record.'
 
     $global:Na2PreflightTestMode = 'hit'
     $global:Na2PreflightTestCalls = @()
-    $screenshotTestHit = & (Join-Path $scriptRoot 'build.ps1') -ScreenshotTestOnly
-    Assert-Na2PreflightTest -Condition $screenshotTestHit.PreflightCacheHit `
-        -Message 'Repeated Screenshot Test build was not marked as a preflight hit.'
+    $e2eNormalHit = & (Join-Path $scriptRoot 'build.ps1') -E2eVariant normal
+    Assert-Na2PreflightTest -Condition $e2eNormalHit.PreflightCacheHit `
+        -Message 'Repeated normal E2E Test build was not marked as a preflight hit.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
-        -Message 'Screenshot Test cache hit invoked composition or receipt recording.'
+        -Message 'Normal E2E Test cache hit invoked composition or receipt recording.'
+
+    $global:Na2PreflightTestMode = 'miss'
+    $global:Na2PreflightTestCalls = @()
+    $e2ePadded = & (Join-Path $scriptRoot 'build.ps1') -E2eVariant padded
+    $e2ePaddedIso = Join-Path $repository 'build\NA2.28 - E2E Test Padded.iso'
+    Assert-Na2PreflightTest -Condition ($e2ePadded.Status -eq 'e2e-test') `
+        -Message 'Padded E2E Test build did not return e2e-test status.'
+    Assert-Na2PreflightTest `
+        -Condition ((@($e2ePadded.ChangedRoles) -join ',') -ceq 'e2e_test_padded') `
+        -Message 'Changed padded E2E Test build did not report only its own role.'
+    Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $e2ePaddedIso -PathType Leaf) `
+        -Message 'Padded E2E Test build did not retain its verified ISO.'
+    $paddedBuildCalls = @(
+        $global:Na2PreflightTestCalls |
+            Where-Object { $_ -contains 'na228_builder.build_profile' }
+    )
+    Assert-Na2PreflightTest -Condition ($paddedBuildCalls.Count -eq 1) `
+        -Message 'Padded E2E Test did not run exactly one full profile build.'
+    $paddedBuildCall = $paddedBuildCalls[0]
+    $paddingIndex = [Array]::IndexOf($paddedBuildCall, '--payload-padding') + 1
+    Assert-Na2PreflightTest `
+        -Condition ($paddedBuildCall[$paddingIndex] -ceq '32') `
+        -Message 'Padded E2E Test build did not use the configured 32-byte padding.'
+    $discriminatorIndex = [Array]::IndexOf(
+        $paddedBuildCall,
+        '--boot-elf-crc-discriminator'
+    ) + 1
+    Assert-Na2PreflightTest `
+        -Condition ($paddedBuildCall[$discriminatorIndex] -ceq '0x45324502') `
+        -Message 'Padded E2E Test build did not use its configured CRC discriminator.'
+    $e2eMap = Read-Na2BuildMap -LogDirectory $logDirectory -Paths $testPaths
+    Assert-Na2PreflightTest `
+        -Condition (-not [string]::IsNullOrWhiteSpace($e2eMap.E2eTestNormalBuildId)) `
+        -Message 'Normal E2E Test build was not retained in builds.tsv.'
+    Assert-Na2PreflightTest `
+        -Condition (-not [string]::IsNullOrWhiteSpace($e2eMap.E2eTestPaddedBuildId)) `
+        -Message 'Padded E2E Test build was not retained in builds.tsv.'
 
     $latestBeforeWorkers = [IO.File]::ReadAllText($latestIso)
     $testBeforeWorkers = [IO.File]::ReadAllText($testIso)
@@ -279,7 +337,8 @@ try {
         'work\General\build\agent.bin',
         'work\General\nested\build\agent.iso',
         'build\NA2.28 - Manual Test.iso',
-        'build\NA2.28 - Screenshot Test.iso'
+        'build\NA2.28 - E2E Test.iso',
+        'build\NA2.28 - E2E Test Padded.iso'
     )) {
         $failed = $false
         try {

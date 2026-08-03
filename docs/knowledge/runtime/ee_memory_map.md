@@ -80,13 +80,13 @@ rasterization in Font captures 10 and 19. The exact game-engine dependency
 between heap layout and matrix inputs was not isolated because a stable
 reservation removes it from the build-to-build testing contract.
 
-The permanent `font/heap_stability` E2E suite builds a fingerprinted 32-byte
-padding variant first, rebuilds the normal profile in `finally`, and compares
-raw replay PNG hashes without publishing an alternate baseline. Its first
-complete run proved all 58 non-ignored `font/main` captures byte-identical; the
-seven established volatile save-data captures in that suite's `ignore.txt`
-remain excluded. Detailed paired states, GS/VU comparisons, heap reports, and
-the original probe build record are retained under
+The permanent `na228 test` gate now prepares fingerprinted normal and 32-byte
+padded E2E Test builds in independent pipelines, replays every suite against
+both, and compares raw replay PNG hashes without publishing an alternate
+baseline. The original focused proof matched all 58 non-ignored `font/main`
+captures byte-identically; seven established volatile save-data captures in
+that suite's `ignore.txt` remain excluded. Detailed paired states, GS/VU
+comparisons, heap reports, and the original probe build record are retained under
 `work/Font 3/investigation/heap-boundary-tail-probe/`.
 
 Direct inline patching alone is not an equivalent full-string alternative.

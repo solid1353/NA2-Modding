@@ -66,6 +66,7 @@ class BuildProfileCliTests(unittest.TestCase):
                 source_iso=source_iso,
                 profile=profile,
                 payload_padding=0,
+                boot_elf_crc_discriminator=0,
             )
             build.assert_not_called()
             self.assertIn("identity (1 edits)", output.getvalue())

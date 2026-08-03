@@ -64,7 +64,7 @@ Before that call, `na228/build.ps1` checks the output-specific deterministic
 successful-build receipt through `na228_builder.build_preflight`; an exact hit
 with a retained build record returns the normal unchanged result without
 staging an ISO. `tests/na228/test_build_preflight.ps1` covers cache hits and
-safe full-build fallbacks for Latest, Manual Test, Screenshot Test, and worker
+safe full-build fallbacks for Latest, Manual Test, normal/padded E2E Test, and worker
 outputs. `na228 build mt` calls the same builder in Manual Test-only mode and
 uses its own receipt without touching Latest promotion state or PCSX2.
 `na228 worker work/<task title>/build/<name>.iso` instead builds an isolated
@@ -83,15 +83,14 @@ The complete project test command is:
 The separate personal end-to-end game-test workflow is exposed through the root
 command. Its infrastructure and suite definitions are main-tracked under
 `e2e/`; screenshot history is versioned by the independent
-`e2e/captures/` repository. `na228 test` replays every suite against the retained Screenshot Test
-ISO, `na228 test <suite>` selects one suite, and `-b` builds Screenshot Test
-once before replay. `na228 test new <recording>` creates a NUN5 reference
-suite from Workshop's shared input-recording folder. `na228 test reference
-<suite>` replays the suite-tracked input and creates a missing or empty capture
-suite's NUN5 references; `-f` explicitly overwrites existing references.
-Approve reviewed captures selectively with
-`na228 test approve <suite> -s <slots>`, or explicitly approve the complete
-pending batch with `na228 test approve <suite> -a`.
+`e2e/captures/` repository. `na228 test` runs permanent tests while two
+independent pipelines preflight/build normal and padded E2E Test ISOs, replay
+every suite, compare normal/padded PNGs, and publish only normal evidence after
+the entire run passes. `na228 test new <suite> <recording>` copies a shared
+Workshop recording into a suite. `na228 test reference <suite> <game>` replays
+the suite-tracked input and creates or replaces its reference captures. Capture
+promotion is ordinary selective Git staging and commit after user acceptance;
+there is no separate approval command.
 
 Bare `na228` builds and runs Latest. Compact invocations contain one or two
 positional game tokens whose order defines window placement. `l`, `p`, or `mt`
@@ -104,9 +103,12 @@ follow the watched token: `na228 nun5 blw src/localization` or
 `na228 nun5 bmtw work/Font/operations/jutsu_names_overlay.json`.
 Trailing launch arguments are forwarded unchanged to Workshop; use `workshop
 help` for the shared launch options.
-`na228 build l|mt` provides the uncommon build-only forms.
-Build and launch commands never generate CRC-specific PCSX2 files. NA2.28 uses
-serial-wide PNACH and GameSettings files directly.
+`na228 build l|mt` provides the uncommon build-only forms. Shared builds keep
+using the serial-wide PNACH and GameSettings files: after a successful build,
+the built boot-ELF CRC regenerates only that role's
+`[CRC.<crc>.MemoryCards]` section. The generator writes the catalog-derived
+card filename and never touches the card file itself. No CRC-named PCSX2 files
+are generated, and launch-only or worker commands do not actualize.
 Single-game configured launches preserve existing PCSX2 instances. Paired
 launches close configured user instances first and tile only the newly started
 windows. `workshop input [profile]` regenerates input profiles without building

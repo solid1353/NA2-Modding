@@ -136,7 +136,7 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   [`e2e/AGENT_GUIDE.md`](e2e/AGENT_GUIDE.md). `<captures>` accepts one slot,
   comma-separated slots, and inclusive ranges, for example `25` or
   `25, 27-30`. Inspect the prepared differences for those captures, change only
-  the responsible implementation, run `na228 test <suite> -b`, inspect the
+  the responsible implementation, run `na228 test`, inspect the
   regenerated differences, and continue implementing and testing until every
   named capture has the requested local result or a concrete blocker remains.
   Do not wait for separate plan approval. The command does not authorize
@@ -239,7 +239,7 @@ Detailed command and task behavior is in
   game menus through PINE or injected input. If a required savestate was not
   supplied, stop and ask the user for that exact state.
 - Worker PCSX2, injection builds, and other worker processes never open the
-  shared Latest, Previous, Manual Test, or Screenshot Test ISO paths. Pass only an independent
+  shared Latest, Previous, Manual Test, or E2E Test ISO paths. Pass only an independent
   full copy under `work/<exact task title>/inputs/isos/`; no other worker ISO
   location is valid. Symlinks and hardlinks are forbidden because the user may
   replace or modify a shared ISO at any time. Intake of an NA2 savestate batch
@@ -281,19 +281,20 @@ Detailed command and task behavior is in
 - `na228 mt` and `na228.ps1 mt` run the retained Manual Test ISO; `na228 bmt`
   builds Manual Test and then runs it, while `na228 build mt` is the explicit
   build-only form.
-  These commands never mean a test suite. `na228 test [suite] [-b]` runs one
-  or all personal game E2E suites using main-tracked infrastructure and suite
-  definitions under `e2e/`; screenshot history lives in the independent
-  `e2e/captures/` repository. `-b` builds Screenshot Test once
-  before replay. The full permanent builder test suite remains
-  `.\tests\run.ps1`.
+  These commands never mean a test suite. `na228 test` is the only test
+  execution command: it runs the permanent project tests while independently
+  preparing normal and padded E2E Test ISOs, replays every main-tracked suite
+  against both builds, compares each suite for heap stability, and publishes
+  only the normal captures after the whole pipeline passes. Suite definitions
+  live under `e2e/`; screenshot history lives in the independent
+  `e2e/captures/` repository. `.\tests\run.ps1` remains the internal permanent
+  test runner used by that pipeline.
   Never infer command semantics from a flag name; verify the documented exact
   command before execution.
-- Before completing a turn that changes active profile inputs, feature patches,
-  modules, payload code, or composition logic, run `na228 validate`. It derives
-  and conflict-checks the full pinned profile against the real source images
-  without preflight reuse or ISO staging. Unit tests and focused package checks
-  do not replace this integration gate.
+- Before presenting any implementation result, run `na228 test`. Its normal and
+  padded builds each derive, conflict-check, build, and validate the full pinned
+  profile against the real source images; its permanent tests and complete E2E
+  replay are one indivisible integration gate. Focused checks do not replace it.
 - Keep hypothesis/candidate checks outside the permanent tracked suite and
   normal builds. Permanent coverage begins only after explicit user acceptance
   of the exact behavior; static-only coverage requires explicit user approval.

@@ -34,6 +34,8 @@ try {
         files = [pscustomobject]@{
             latest_iso = Join-Path $build 'NA2.28 - Latest.iso'
             previous_iso = Join-Path $build 'NA2.28 - Previous.iso'
+            e2e_test_iso = Join-Path $build 'NA2.28 - E2E Test.iso'
+            e2e_test_padded_iso = Join-Path $build 'NA2.28 - E2E Test Padded.iso'
         }
     }
     New-Item -ItemType Directory -Force -Path $logs, $build | Out-Null
@@ -168,7 +170,9 @@ try {
   "builds": {
     "latest": { "aliases": ["l"], "postfix": "Latest" },
     "previous": { "aliases": ["p"], "postfix": "Previous" },
-    "manual_test": { "aliases": ["mt"], "postfix": "Manual Test" }
+    "manual_test": { "aliases": ["mt"], "postfix": "Manual Test" },
+    "e2e_test": { "postfix": "E2E Test" },
+    "e2e_test_padded": { "postfix": "E2E Test Padded" }
   }
 }
 '@
@@ -233,17 +237,17 @@ print(json.dumps(result))
         -Condition ($helpText -match '(?m)^\s*na228 worker work/') `
         -Message 'Root help omitted the explicit worker-build command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 validate\s') `
-        -Message 'Root help omitted the compose-only validation command.'
+        -Condition ($helpText -notmatch '(?m)^\s*na228 validate\s') `
+        -Message 'Root help still exposes the retired separate validation command.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 build l\|mt\s') `
         -Message 'Root help omitted the explicit build-only command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test \[suite\] \[-b\]') `
-        -Message 'Root help omitted the visual-regression command.'
+        -Condition ($helpText -match '(?m)^\s*na228 test\s+Run unit tests; prepare and validate normal/padded E2E Test ISOs; replay and compare all E2E suites and update captures$') `
+        -Message 'Root help omitted the complete one-command E2E pipeline.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test reference <suite> -r reference \[-f\]') `
-        -Message 'Root help omitted explicit reference selection and guarded regeneration.'
+        -Condition ($helpText -match '(?m)^\s*na228 test reference <suite> <game>') `
+        -Message 'Root help omitted the simple reference-maintenance command.'
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 -[btcpwh]\b') `
         -Message 'Root help still exposes a retired dashed mode.'
@@ -363,8 +367,6 @@ Write-Output "[fake] release $Version"
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'build.ps1') -Content @'
 param(
     [switch]$ManualTestOnly,
-    [switch]$ScreenshotTestOnly,
-    [switch]$ComposeOnly,
     [string]$WorkerOutputIso
 )
 if ($WorkerOutputIso) {
@@ -374,14 +376,6 @@ if ($WorkerOutputIso) {
 elseif ($ManualTestOnly) {
     Write-Host '[na228] ISO result: manual-test; rotation: no; PCSX2 left running.'
     [pscustomobject]@{ Status = 'manual-test'; ChangedRoles = [string[]]@('manual_test') }
-}
-elseif ($ScreenshotTestOnly) {
-    Write-Host '[na228] ISO result: screenshot-test; rotation: no; PCSX2 left running.'
-    [pscustomobject]@{ Status = 'screenshot-test'; ChangedRoles = [string[]]@('screenshot_test') }
-}
-elseif ($ComposeOnly) {
-    Write-Host '[na228] Profile composition valid; no ISO produced.'
-    [pscustomobject]@{ Status = 'validated'; ChangedRoles = [string[]]@() }
 }
 else {
     Write-Host '[na228] ISO result: updated; rotation: yes.'
@@ -404,61 +398,45 @@ else {
             -Content 'recording'
     }
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'run.ps1') -Content @'
-param([Parameter(Mandatory)][string]$Suite, [switch]$b)
-Add-Content `
-    -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
-    -Value "run suite=$Suite build=$($b.IsPresent)"
-[pscustomobject]@{ Suite = $Suite; Status = 'captured' }
+param()
+Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value 'run complete'
+[pscustomobject]@{ Status = 'passed' }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'new_suite.ps1') -Content @'
-param([Parameter(Mandatory)][string]$Recording, [string]$Suite, [string]$Reference)
+param([Parameter(Mandatory)][string]$Suite, [Parameter(Mandatory)][string]$Recording)
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
-    -Value "new recording=$Recording suite=$Suite reference=$Reference"
+    -Value "new suite=$Suite recording=$Recording"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'reference.ps1') -Content @'
-param([Parameter(Mandatory)][string]$Suite, [Parameter(Mandatory)][string]$Reference, [switch]$f)
+param([Parameter(Mandatory)][string]$Suite, [Parameter(Mandatory)][string]$Game)
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
-    -Value "reference suite=$Suite reference=$Reference force=$($f.IsPresent)"
+    -Value "reference suite=$Suite game=$Game"
 '@
     $visualCalls = Join-Path $fakeVisualScripts 'calls.txt'
     & (Join-Path $fakeRepository 'na228.ps1') test
     $calls = @(Get-Content -LiteralPath $visualCalls)
-    Assert-Na2Test `
-        -Condition ($calls.Count -eq 3 -and
-            $calls[0] -ceq 'run suite=alpha build=False' -and
-            $calls[1] -ceq 'run suite=beta build=False' -and
-            $calls[2] -ceq 'run suite=font/load_save build=False') `
-        -Message 'Bare na228 test did not run every suite in name order.'
+    Assert-Na2Test -Condition (($calls -join ',') -ceq 'run complete') `
+        -Message 'Bare na228 test did not dispatch the complete E2E pipeline exactly once.'
     Remove-Item -LiteralPath $visualCalls
-    & (Join-Path $fakeRepository 'na228.ps1') test -b
+    & (Join-Path $fakeRepository 'na228.ps1') test new font/character_select font_full
+    & (Join-Path $fakeRepository 'na228.ps1') test reference alpha nun5
     $calls = @(Get-Content -LiteralPath $visualCalls)
     Assert-Na2Test `
-        -Condition ($calls.Count -eq 3 -and
-            $calls[0] -ceq 'run suite=alpha build=True' -and
-            $calls[1] -ceq 'run suite=beta build=False' -and
-            $calls[2] -ceq 'run suite=font/load_save build=False') `
-        -Message 'na228 test -b did not build exactly once before all suites.'
-    Remove-Item -LiteralPath $visualCalls
-    & (Join-Path $fakeRepository 'na228.ps1') test beta -b
-    & (Join-Path $fakeRepository 'na228.ps1') test run alpha
-    & (Join-Path $fakeRepository 'na228.ps1') test new font_full font/character_select -r nun5
-    & (Join-Path $fakeRepository 'na228.ps1') test new logic_only logic/story_progress
-    & (Join-Path $fakeRepository 'na228.ps1') test font/load_save
-    & (Join-Path $fakeRepository 'na228.ps1') test reference alpha -r nun5
-    & (Join-Path $fakeRepository 'na228.ps1') test reference alpha -r nun5 -f
-    $calls = @(Get-Content -LiteralPath $visualCalls)
-    Assert-Na2Test `
-        -Condition ($calls.Count -eq 7 -and
-            $calls[0] -ceq 'run suite=beta build=True' -and
-            $calls[1] -ceq 'run suite=alpha build=False' -and
-            $calls[2] -ceq 'new recording=font_full suite=font/character_select reference=nun5' -and
-            $calls[3] -ceq 'new recording=logic_only suite=logic/story_progress reference=' -and
-            $calls[4] -ceq 'run suite=font/load_save build=False' -and
-            $calls[5] -ceq 'reference suite=alpha reference=nun5 force=False' -and
-            $calls[6] -ceq 'reference suite=alpha reference=nun5 force=True') `
-        -Message 'Named run, suite creation, or reference dispatch was incorrect.'
+        -Condition ($calls.Count -eq 2 -and
+            $calls[0] -ceq 'new suite=font/character_select recording=font_full' -and
+            $calls[1] -ceq 'reference suite=alpha game=nun5') `
+        -Message 'Suite creation or reference dispatch was incorrect.'
+    $oldTestShapeRejected = $false
+    try {
+        & (Join-Path $fakeRepository 'na228.ps1') test alpha
+    }
+    catch {
+        $oldTestShapeRejected = $_.Exception.Message -match '^Usage: na228 test'
+    }
+    Assert-Na2Test -Condition $oldTestShapeRejected `
+        -Message 'The retired per-suite na228 test form was accepted.'
     $na2ActRejected = $false
     try {
         & (Join-Path $fakeRepository 'na228.ps1') act
@@ -619,12 +597,8 @@ Add-Content `
         ) `
         -Message 'Manual Test selector alias did not resolve through game launch.'
     & (Join-Path $fakeRepository 'na228.ps1') worker 'work\General\build\agent.iso'
-    & (Join-Path $fakeRepository 'na228.ps1') validate
     & (Join-Path $fakeRepository 'na228.ps1') build l
     & (Join-Path $fakeRepository 'na228.ps1') build mt
-    Assert-Na2Test `
-        -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'actualization_calls.txt'))) `
-        -Message 'A build or launch invoked retired NA2 actualization.'
     $composedRecipe = (
         & (Join-Path $fakeRepository 'na228.ps1') nun5 bmtw
     ) -join "`n"
@@ -720,7 +694,6 @@ Add-Content `
     Assert-Na2Test -Condition ($fakeLatest -match '(?m)^mode: build$') -Message 'Root build mode was not logged.'
     foreach ($mode in (
         'manual-test-build',
-        'validate',
         'build'
     )) {
         Assert-Na2Test `
@@ -732,7 +705,7 @@ Add-Content `
         '(?m)^--- NA2 RUN BEGIN ---$'
     ).Count
     Assert-Na2Test `
-        -Condition ($rollingSectionCount -eq 8) `
+        -Condition ($rollingSectionCount -eq 7) `
         -Message (
             'Root dispatch test produced the wrong rolling-log section count: ' +
             $rollingSectionCount
@@ -823,9 +796,11 @@ Add-Content `
         -Condition ($buildMapText -ceq (
             "iso`tbuild_record`n" +
             "@build/NA2.28 - Latest.iso`t@logs/na228/builds/new-latest`n" +
-            "@build/NA2.28 - Previous.iso`t@logs/na228/builds/old-latest`n"
+            "@build/NA2.28 - Previous.iso`t@logs/na228/builds/old-latest`n" +
+            "@build/NA2.28 - E2E Test.iso`t`n" +
+            "@build/NA2.28 - E2E Test Padded.iso`t`n"
         )) `
-        -Message 'builds.tsv does not contain the exact atomic two-ISO mapping.'
+        -Message 'builds.tsv does not contain the exact atomic four-role mapping.'
     $remainingRecords = @(Get-ChildItem -LiteralPath $buildRecords -Directory).Name
     Assert-Na2Test -Condition ($remainingRecords.Count -eq 2) -Message 'Unreferenced build records were not pruned.'
     $buildResult = [IO.File]::ReadAllText((Join-Path $buildRecords 'new-latest\build_result.tsv'))

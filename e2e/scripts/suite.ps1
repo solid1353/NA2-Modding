@@ -56,12 +56,55 @@ function New-VisualRegressionTransaction {
         [Parameter(Mandatory)][string]$Prefix
     )
 
-    $transactions = Join-Path $Root '.transactions'
+    $transactions = [IO.Path]::GetFullPath((Join-Path $Root '.transactions'))
     [void](New-Item -ItemType Directory -Path $transactions -Force)
+    foreach ($candidate in Get-ChildItem -LiteralPath $transactions -Directory -Force) {
+        $ownerPath = Join-Path $candidate.FullName 'owner.json'
+        if (-not (Test-Path -LiteralPath $ownerPath -PathType Leaf)) {
+            continue
+        }
+        try {
+            $owner = Get-Content -Raw -LiteralPath $ownerPath | ConvertFrom-Json
+            $ownerProcess = [Diagnostics.Process]::GetProcessById([int]$owner.pid)
+            $ownerStart = [DateTime]::Parse(
+                [string]$owner.process_start_utc,
+                [Globalization.CultureInfo]::InvariantCulture,
+                [Globalization.DateTimeStyles]::RoundtripKind
+            ).ToUniversalTime()
+            $isLive = (
+                [int]$owner.pid -ne $PID -and
+                $ownerProcess.StartTime.ToUniversalTime() -eq $ownerStart
+            )
+        }
+        catch [ArgumentException] {
+            $isLive = $false
+        }
+        catch [InvalidOperationException] {
+            $isLive = $false
+        }
+        catch {
+            $isLive = $true
+        }
+        if ($isLive) {
+            continue
+        }
+        Remove-Item -LiteralPath $candidate.FullName -Recurse -Force
+    }
     $transaction = Join-Path $transactions (
         $Prefix + '-' + [guid]::NewGuid().ToString('N')
     )
     [void](New-Item -ItemType Directory -Path $transaction)
+    $process = Get-Process -Id $PID
+    $owner = [ordered]@{
+        schema_version = 1
+        pid = $PID
+        process_start_utc = $process.StartTime.ToUniversalTime().ToString('O')
+        created_utc = (Get-Date).ToUniversalTime().ToString('O')
+    } | ConvertTo-Json
+    $ownerPath = Join-Path $transaction 'owner.json'
+    $ownerTemporary = "$ownerPath.tmp-$([guid]::NewGuid().ToString('N'))"
+    [IO.File]::WriteAllText($ownerTemporary, $owner + "`n", [Text.UTF8Encoding]::new($false))
+    [IO.File]::Move($ownerTemporary, $ownerPath, $true)
     return $transaction
 }
 
@@ -71,10 +114,18 @@ function Remove-VisualRegressionTransaction {
         [Parameter(Mandatory)][string]$Root
     )
 
-    if (Test-Path -LiteralPath $Transaction) {
-        Remove-Item -LiteralPath $Transaction -Recurse -Force
+    $transactions = [IO.Path]::GetFullPath((Join-Path $Root '.transactions'))
+    $resolvedTransaction = [IO.Path]::GetFullPath($Transaction)
+    $transactionPrefix = $transactions.TrimEnd(
+        [IO.Path]::DirectorySeparatorChar,
+        [IO.Path]::AltDirectorySeparatorChar
+    ) + [IO.Path]::DirectorySeparatorChar
+    if (-not $resolvedTransaction.StartsWith($transactionPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to remove a transaction outside $transactions"
     }
-    $transactions = Join-Path $Root '.transactions'
+    if (Test-Path -LiteralPath $resolvedTransaction) {
+        Remove-Item -LiteralPath $resolvedTransaction -Recurse -Force
+    }
     if ((Test-Path -LiteralPath $transactions -PathType Container) -and
         @(Get-ChildItem -LiteralPath $transactions -Force).Count -eq 0) {
         Remove-Item -LiteralPath $transactions -Force
@@ -312,6 +363,79 @@ function New-VisualRegressionReport {
     }
 }
 
+function Compare-VisualRegressionVariants {
+    param(
+        [Parameter(Mandatory)][string]$Suite,
+        [Parameter(Mandatory)][string]$BaselineDirectory,
+        [Parameter(Mandatory)][string]$CandidateDirectory,
+        [Parameter(Mandatory)][string]$OutputRoot,
+        [string]$IgnoreFile
+    )
+
+    $ignored = [Collections.Generic.HashSet[string]]::new(
+        [StringComparer]::OrdinalIgnoreCase
+    )
+    $ignoredNames = @(Get-IgnoredCaptureNames -IgnoreFile $IgnoreFile)
+    if ($ignoredNames.Count -gt 0) {
+        $ignored.UnionWith([string[]]$ignoredNames)
+    }
+    $baseline = @{}
+    $candidate = @{}
+    foreach ($file in Get-ChildItem -LiteralPath $BaselineDirectory -Filter '*.png' -File) {
+        if (-not $ignored.Contains($file.Name)) { $baseline[$file.Name] = $file.FullName }
+    }
+    foreach ($file in Get-ChildItem -LiteralPath $CandidateDirectory -Filter '*.png' -File) {
+        if (-not $ignored.Contains($file.Name)) { $candidate[$file.Name] = $file.FullName }
+    }
+    $names = @($baseline.Keys + $candidate.Keys | Sort-Object -Unique)
+    $mismatches = [Collections.Generic.List[object]]::new()
+    $differenceRoot = Join-Path $OutputRoot 'differences'
+    foreach ($name in $names) {
+        $kind = if (-not $baseline.ContainsKey($name)) {
+            'missing-in-normal'
+        }
+        elseif (-not $candidate.ContainsKey($name)) {
+            'missing-in-padded'
+        }
+        elseif (
+            (Get-FileHash -LiteralPath $baseline[$name] -Algorithm SHA256).Hash -cne
+            (Get-FileHash -LiteralPath $candidate[$name] -Algorithm SHA256).Hash
+        ) {
+            'content'
+        }
+        else {
+            $null
+        }
+        if ($null -eq $kind) { continue }
+        $mismatches.Add([ordered]@{ name = $name; kind = $kind })
+        foreach ($side in @(
+            [pscustomobject]@{ Name = 'normal'; Files = $baseline },
+            [pscustomobject]@{ Name = 'padded'; Files = $candidate }
+        )) {
+            if (-not $side.Files.ContainsKey($name)) { continue }
+            $sideRoot = Join-Path $differenceRoot $side.Name
+            [void](New-Item -ItemType Directory -Path $sideRoot -Force)
+            Copy-Item -LiteralPath $side.Files[$name] -Destination (Join-Path $sideRoot $name)
+        }
+    }
+    [void](New-Item -ItemType Directory -Path $OutputRoot -Force)
+    $result = [ordered]@{
+        schema_version = 1
+        suite = $Suite
+        status = if ($mismatches.Count -eq 0) { 'passed' } else { 'failed' }
+        compared = $names.Count
+        ignored = $ignored.Count
+        mismatches = @($mismatches)
+    }
+    $resultPath = Join-Path $OutputRoot 'result.json'
+    [IO.File]::WriteAllText(
+        $resultPath,
+        (($result | ConvertTo-Json -Depth 5) + "`n"),
+        [Text.UTF8Encoding]::new($false)
+    )
+    return [pscustomobject]$result
+}
+
 function Publish-VisualRegressionTransaction {
     param(
         [Parameter(Mandatory)][Collections.IDictionary]$Replacements,
@@ -406,10 +530,14 @@ function Publish-VisualRegressionTransaction {
     }
 
     $published = [Collections.Generic.List[object]]::new()
+    $backupRoot = Join-Path $TransactionRoot '.backups'
+    [void](New-Item -ItemType Directory -Path $backupRoot -Force)
+    $backupIndex = 0
     try {
         foreach ($destination in $Replacements.Keys) {
             $source = $Replacements[$destination]
-            $backup = Join-Path $TransactionRoot ('.backup-' + [IO.Path]::GetFileName($destination))
+            $backup = Join-Path $backupRoot ('{0:D4}' -f $backupIndex)
+            $backupIndex++
             $stableDirectoryNames = @($script:E2eCaptureTiers.Values) + $script:E2eReportDirectory
             if ($stableDirectoryNames -ccontains [IO.Path]::GetFileName($destination)) {
                 if (Test-Path -LiteralPath $destination -PathType Container) {

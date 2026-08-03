@@ -15,7 +15,7 @@ NA2.28 PCSX2 configuration:
 
 - Canonical serial-wide files are `@pcsx2_cheats/SLOP-NA228.pnach` and
   `@pcsx2_game_settings/SLOP-NA228.ini`. PCSX2 finds PNACH and GameSettings
-  recursively. No CRC aliases are generated.
+  recursively. No CRC-named alias files are generated.
 - Ordinary GameSettings sections apply to every CRC. Sections named
   `[CRC.<8-hex-crc>.<section>]` override the ordinary section for one CRC.
   Named PNACH groups apply to every CRC unless they contain
@@ -23,13 +23,17 @@ NA2.28 PCSX2 configuration:
 - Runtime C candidates bypass cheat files and are applied directly to
   task-owned PCSX2 memory through PINE.
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v4 organizes each package as groups, atomic patches, and exact edits; independent group and patch `enabled` switches control normal composition. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`.
-- Builds and launches never synchronize PCSX2 identities. `workshop input`
-  regenerates every Workshop input profile without changing GameSettings
-  assignments; `workshop input <profile>` regenerates and assigns one profile.
+- Every successful shared build resolves the built ISO's boot-ELF CRC and
+  atomically updates that role's `[CRC.<crc>.MemoryCards]` section in the
+  serial-wide GameSettings file. This generation changes only GameSettings
+  text; it never creates, copies, resets, validates, or otherwise touches a
+  memory-card file. Worker builds and launch-only commands do not actualize.
+  `workshop input` regenerates every Workshop input profile without changing
+  memory-card assignments; `workshop input <profile>` regenerates and assigns
+  one input profile.
 - The serial-wide GameSettings fallback uses `NA v2.28.ps2`. CRC override
-  sections preserve the current Latest, Previous, Manual Test, and Screenshot
-  Test assignments to
-  their existing role-specific memory cards.
+  sections assign Latest, Previous, Manual Test, E2E Test, and E2E Test Padded
+  to their distinct role-specific memory-card filenames.
 - `@pcsx2_files/` contains the canonical BIOS, cheats, GameSettings, input
   profiles, input recordings, and memory cards used directly by stable and
   development PCSX2.
@@ -46,7 +50,7 @@ replaced with a copied machine-specific absolute path.
 
 - `@source/`: untouched source media. Do not modify unless explicitly instructed. No generated logs, temp files, probes, manifests, or metadata belong here.
 - `@source/*.files/`: extracted views of original source archives. Treat as read-only reference.
-- `build/`: normally contains `build/NA v2.28 - Latest.iso`, may retain at most `build/NA v2.28 - Previous.iso` as rotation history, and may retain `build/NA v2.28 - Manual Test.iso` and `build/NA v2.28 - Screenshot Test.iso` for isolated manual and visual testing. These names are derived from root `product.json`. Standard builds use `NA v2.28 - Latest.iso.building`, then discard an identical staged image or promote and rotate a changed one. Isolated builds atomically update only their named output, leave PCSX2 running, and never change Latest, Previous, their build mapping, or Latest's preflight receipt. Staging files are removed on failure.
+- `build/`: normally contains `build/NA v2.28 - Latest.iso`, may retain at most `build/NA v2.28 - Previous.iso` as rotation history, and may retain `build/NA v2.28 - Manual Test.iso`, `build/NA v2.28 - E2E Test.iso`, and `build/NA v2.28 - E2E Test Padded.iso` for isolated manual and end-to-end testing. These names are derived from root `product.json`. Standard builds use `NA v2.28 - Latest.iso.building`, then discard an identical staged image or promote and rotate a changed one. Isolated builds atomically update only their named output, leave PCSX2 running, and never rotate Latest or Previous. Staging files are removed on failure.
 - `work/<task title>/build/`: isolated agent ISOs produced by `na228 worker work/<task title>/build/<name>.iso`. Staging remains beside the requested output, build records remain under that task's `logs/`, and the mode never touches shared build, preflight, promotion, PNACH, or PCSX2 state.
 - Temporary imported archives live under the active task's `work/<task title>/temp/` folder until normalized or retired. Reproducible data lives as hash-pinned inputs beside its module; complete accepted states are preserved by annotated Git tags, and retired inputs remain available through Git history.
 - `na228_builder/features/localization/translation_importer/mappings.tsv` is the Localization feature's current hash-pinned importer input and folds the verified pointer inventory into each applicable mapping row. `source_ref` and `source` retain the guarded NA2 origin; `donor_ref` and `donor` retain the official translation and make it executable by default. A nonempty user-authored `replacement` overrides the donor, and `prefix` is prepended to the selected text. Root `product.json` owns the imported/output game titles, and the generic `string_patcher` applies that output policy before deriving inline or linked placement from encoded fit and available references. Feature-owned custom resident functions and guarded hooks are declared through `runtime_injector`; `payload_builder` links those fragments together with external strings into `PRG/228.BIN` and owns its loader/memory integration. The composer resolves symbols and `binary_patcher` applies concrete guarded writes. No standalone export or source-hash bypass exists.
@@ -180,7 +184,7 @@ without running `@tools/old/CVM Parser/cvm_tool.exe`.
 
 ## Current Scripts
 
-- Root `na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Latest. Compact invocations contain one or two positional game tokens whose order defines window placement: `l`, `p`, or `mt` runs Latest, Previous, or Manual Test; `bl` or `bmt` builds and runs Latest or Manual Test; and suffix `w` watches that token's game. The optional value after a watched token is a registered C file/folder or a task-owned overlay-plan path; with no value, the watcher attaches every registered source under `src/`. Trailing launch arguments are forwarded unchanged to Workshop, which alone parses shared launch options such as input-recording playback, recording, and regression capture. `na228 test [suite] [-b]` runs one or all personal E2E suites using main-tracked infrastructure and definitions under `e2e/`, with screenshot history stored in the independent `e2e/captures/` repository; `-b` optionally builds Screenshot Test once first. Its `new`, guarded `reference`, and `approve` subcommands create NUN5 suites, regenerate reference screenshots, and accept reviewed captures. The permanent project test suite remains `.\tests\run.ps1`. Explicit `build l|mt`, standalone `w [C path|plan]`, `worker`, `release`, and `help` remain available. Use `workshop input` to regenerate all shared input profiles without reassigning them, or `workshop input <profile>` to regenerate and assign one profile. Single-game configured launches preserve existing PCSX2 instances; two-game launches close configured user instances first, then select unused PINE ports and tile only their newly started windows. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for builds.
+- Root `na228.ps1` is the routine build/launch entrypoint. Bare `na228` builds and launches Latest. Compact invocations contain one or two positional game tokens whose order defines window placement: `l`, `p`, or `mt` runs Latest, Previous, or Manual Test; `bl` or `bmt` builds and runs Latest or Manual Test; and suffix `w` watches that token's game. The optional value after a watched token is a registered C file/folder or a task-owned overlay-plan path; with no value, the watcher attaches every registered source under `src/`. Trailing launch arguments are forwarded unchanged to Workshop, which alone parses shared launch options such as input-recording playback, recording, and regression capture. `na228 test` is the only test-execution command: it runs permanent tests, prepares normal and padded E2E Test ISOs concurrently, replays every suite against both, compares them for stability, and atomically publishes only normal captures after the complete pipeline passes. Infrastructure and definitions live under `e2e/`, while screenshot history is stored in the independent `e2e/captures/` repository. `na228 test new <suite> <recording>` and `na228 test reference <suite> <game>` maintain suite inputs and references. Explicit `build l|mt`, standalone `w [C path|plan]`, `worker`, `release`, and `help` remain available. Use `workshop input` to regenerate all shared input profiles without reassigning them, or `workshop input <profile>` to regenerate and assign one profile. Single-game configured launches preserve existing PCSX2 instances; two-game launches close configured user instances first, then select unused PINE ports and tile only their newly started windows. `na228 worker work/<task title>/build/<name>.iso` adds a full verified worker-output mode with task-owned staging/logs and no shared-state mutation; agents must use that form for isolated worker builds.
 - `scripts/na228/` contains build/launch execution, promotion, ISO identity,
   worker-path validation, and focused tests. Root `na228.ps1` owns argument
   parsing and dispatches substantive execution to `scripts/na228/run.ps1`.

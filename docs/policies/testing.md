@@ -80,19 +80,14 @@ requirements, not whatever implementation happens to exist today.
 ## ISO builds
 
 - Shared `build/` contains only Latest, at most Previous, and when needed
-  Manual Test and Screenshot Test. Latest, Manual Test, and Screenshot Test
-  builds stage beside their destination as `.building` and remove staging
-  files on failure.
+  Manual Test plus normal and padded E2E Test outputs. Latest, Manual Test, and
+  E2E Test builds stage beside their destination as `.building` and remove
+  staging files on failure.
 - A standard build discards an identical verified candidate without rotation
   or atomically promotes a changed candidate and rotates history. Candidate
   composition in Manual Test mode updates Manual Test only.
-- Agents decide whether a full ISO is necessary from scope, risk, and required
-  evidence. Use narrower validation when sufficient.
-- Never build an agent ISO merely because executable inputs changed or for
-  generic validation. Before building, identify the exact runtime fact that
-  only the ISO run can establish, prove that every required input or savestate
-  will exercise the newly built bytes, and confirm that narrower validation
-  cannot establish the same fact. If any condition fails, do not build.
+- Focused validation is appropriate during iteration, but every implementation
+  result must pass the complete `na228 test` pipeline before presentation.
 - An agent ISO build is permitted only when an already available compatible
   savestate reaches the exact target without navigation, the test concerns
   boot/startup behavior requiring no navigation, or the user explicitly
@@ -109,9 +104,11 @@ requirements, not whatever implementation happens to exist today.
 - In compact recipes, `mt` runs Manual Test and `bmt` builds then runs Manual
   Test. Explicit `na228 build mt` builds Manual Test without launching. Isolated output
   uses the explicit `worker` command.
-  Neither mode runs a test suite. `na228 test [suite] [-b]` runs the personal
-  end-to-end game-test workflow, with `-b` building Screenshot Test once before
-  replay. Run the permanent builder suite only with `.\tests\run.ps1`.
+  Neither mode runs a test suite. `na228 test` runs the permanent project tests,
+  prepares and validates normal/padded E2E Test ISOs in independent concurrent
+  pipelines, replays every suite against both, verifies stability, and publishes
+  only normal captures after all work succeeds. `.\tests\run.ps1` is its internal
+  permanent-test phase, not a second public test workflow.
   Verify every validation command's documented semantics before running it;
   never infer behavior from a short flag.
 - Worker-output builds never touch Latest, Previous, shared Test outputs,
@@ -121,7 +118,7 @@ requirements, not whatever implementation happens to exist today.
 - Temporary or hypothesis ISOs remain under the owning task while they have a
   named future use and are deleted when useless.
 - Standard logs report `ISO result: unchanged|updated` and rotation. Manual
-  Test and Screenshot Test logs report their isolated result, `rotation: no`,
+  Test and E2E Test logs report their isolated result, `rotation: no`,
   and that PCSX2 was left running.
 
 ## User PCSX2 and agent runtimes
@@ -159,7 +156,7 @@ requirements, not whatever implementation happens to exist today.
   GameSettings, is allowed. Assign a PINE port unique among live agent
   instances and operate only that copy. Other workstream copies/processes are
   off-limits.
-- Shared Latest, Previous, Manual Test, and Screenshot Test ISOs are mutable user files. A worker
+- Shared Latest, Previous, Manual Test, and E2E Test ISOs are mutable user files. A worker
   PCSX2 process, injection build, or other worker command must never open those
   shared paths. Pass only an independent full copy under
   `work/<exact task title>/inputs/isos/` to worker launch and injection
@@ -237,8 +234,12 @@ requirements, not whatever implementation happens to exist today.
 
 ## Input-profile synchronization
 
-- Builds and launches never generate CRC-specific PNACH or GameSettings files.
-  NA2.28 uses the serial-wide files documented in the repository policy.
+- Builds and launches never generate CRC-named PNACH or GameSettings files.
+  After a successful non-worker build, the build path resolves the output
+  boot-ELF CRC and atomically regenerates the selected role's
+  `[CRC.<crc>.MemoryCards]` assignment inside the serial-wide GameSettings
+  file. It removes the stale CRC section for that same role card and does not
+  create, copy, reset, validate, or otherwise touch memory-card files.
 - `workshop input` regenerates every input-profile combination from canonical
   overrides without changing GameSettings assignments. `workshop input
   <profile>` also regenerates every combination, then assigns the selected

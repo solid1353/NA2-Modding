@@ -58,10 +58,9 @@ if ($mode -eq 'help') {
         '  additional launch arguments  See workshop help'
         ''
         '  na228 build l|mt            Build Latest or Manual Test without running it'
-        '  na228 test [suite] [-b]     Run one or all E2E suites; -b builds once first'
-        '  na228 test new <recording> [suite] [-r reference]  Create a suite'
-        '  na228 test reference <suite> -r reference [-f]  Create or replace reference captures'
-        '  na228 validate              Validate the complete build without producing an ISO'
+        '  na228 test                              Run unit tests; prepare and validate normal/padded E2E Test ISOs; replay and compare all E2E suites and update captures'
+        '  na228 test new <suite> <recording>      Create an E2E suite from a shared recording'
+        '  na228 test reference <suite> <game>     Create or replace reference captures'
         '  na228 worker work/<worker>/build/<name>.iso  Build an isolated worker ISO'
         '  na228 release [version]     Publish a GitHub release'
         '  na228 help                  Show this help'
@@ -73,156 +72,36 @@ if ($mode -eq 'help') {
 }
 
 if ($mode -eq 'test') {
-    $visualRoot = Join-Path $PSScriptRoot 'e2e'
-    $visualScripts = Join-Path $visualRoot 'scripts'
+    $visualScripts = Join-Path $PSScriptRoot 'e2e\scripts'
     $visualRun = Join-Path $visualScripts 'run.ps1'
     $visualNew = Join-Path $visualScripts 'new_suite.ps1'
     $visualReference = Join-Path $visualScripts 'reference.ps1'
     foreach ($required in $visualRun, $visualNew, $visualReference) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
-            throw (
-                'The E2E infrastructure is unavailable. ' +
-                "Expected: $visualRoot"
-            )
+            throw "The E2E infrastructure is unavailable: $required"
         }
     }
 
-    $testCommand = if ($arguments.Count -gt 0) {
-        $arguments[0].ToLowerInvariant()
-    }
-    else {
-        'run'
-    }
-    if ($testCommand -eq 'new') {
-        if ($arguments.Count -lt 2 -or $arguments.Count -gt 5) {
-            throw 'Usage: na228 test new <recording> [suite] [-r reference]'
-        }
-        $newSuite = $null
-        $referenceGame = $null
-        $newTail = @($arguments | Select-Object -Skip 2)
-        for ($index = 0; $index -lt $newTail.Count; $index++) {
-            $argument = $newTail[$index]
-            if ($argument -ceq '-r') {
-                if ($null -ne $referenceGame -or $index + 1 -ge $newTail.Count) {
-                    throw 'na228 test new requires exactly one value after -r.'
-                }
-                $referenceGame = $newTail[++$index]
-                if ($referenceGame.StartsWith('-')) {
-                    throw 'na228 test new requires a reference game after -r.'
-                }
-            }
-            elseif ($argument.StartsWith('-')) {
-                throw "Unknown na228 test new option: $argument"
-            }
-            elseif ($null -eq $newSuite) {
-                $newSuite = $argument
-            }
-            else {
-                throw 'Usage: na228 test new <recording> [suite] [-r reference]'
-            }
-        }
-        & $visualNew `
-            -Recording $arguments[1] `
-            -Suite $newSuite `
-            -Reference $referenceGame
+    if ($arguments.Count -eq 0) {
+        & $visualRun
         return
     }
-    if ($testCommand -eq 'reference') {
-        if ($arguments.Count -lt 4 -or $arguments.Count -gt 5) {
-            throw 'Usage: na228 test reference <suite> -r reference [-f]'
+    $testCommand = $arguments[0].ToLowerInvariant()
+    if ($testCommand -ceq 'new') {
+        if ($arguments.Count -ne 3) {
+            throw 'Usage: na228 test new <suite> <recording>'
         }
-        $referenceGame = $null
-        $forceReference = $false
-        $referenceTail = @($arguments | Select-Object -Skip 2)
-        for ($index = 0; $index -lt $referenceTail.Count; $index++) {
-            $argument = $referenceTail[$index]
-            if ($argument -ceq '-r') {
-                if ($null -ne $referenceGame -or $index + 1 -ge $referenceTail.Count) {
-                    throw 'na228 test reference requires exactly one value after -r.'
-                }
-                $referenceGame = $referenceTail[++$index]
-                if ($referenceGame.StartsWith('-')) {
-                    throw 'na228 test reference requires a reference game after -r.'
-                }
-            }
-            elseif ($argument -ceq '-f') {
-                if ($forceReference) { throw 'na228 test reference accepts -f only once.' }
-                $forceReference = $true
-            }
-            else {
-                throw "Unknown na228 test reference option: $argument"
-            }
-        }
-        if ([string]::IsNullOrWhiteSpace($referenceGame)) {
-            throw 'Usage: na228 test reference <suite> -r reference [-f]'
-        }
-        & $visualReference -Suite $arguments[1] -Reference $referenceGame -f:$forceReference
+        & $visualNew -Suite $arguments[1] -Recording $arguments[2]
         return
     }
-
-    $runArguments = @(
-        if ($testCommand -eq 'run') {
-            if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] }
+    if ($testCommand -ceq 'reference') {
+        if ($arguments.Count -ne 3) {
+            throw 'Usage: na228 test reference <suite> <game>'
         }
-        else {
-            $arguments
-        }
-    )
-    $buildFirst = $false
-    $suite = $null
-    foreach ($argument in $runArguments) {
-        if ($argument -ceq '-b') {
-            if ($buildFirst) { throw 'na228 test accepts -b only once.' }
-            $buildFirst = $true
-        }
-        elseif ($argument.StartsWith('-')) {
-            throw "Unknown na228 test option: $argument"
-        }
-        elseif ($null -eq $suite) {
-            $suite = $argument
-        }
-        else {
-            throw 'Usage: na228 test [run] [suite] [-b]'
-        }
+        & $visualReference -Suite $arguments[1] -Game $arguments[2]
+        return
     }
-
-    $suiteRoot = Join-Path $visualRoot 'suites'
-    $suites = if ($null -ne $suite) {
-        @($suite)
-    }
-    else {
-        @(
-            Get-ChildItem -LiteralPath $suiteRoot -File -Recurse -ErrorAction SilentlyContinue |
-                Where-Object { $_.Name -in @('input.p2m2', 'stability.json') } |
-                ForEach-Object {
-                    [IO.Path]::GetRelativePath($suiteRoot, $_.DirectoryName).Replace('\', '/')
-                } |
-                Sort-Object -Unique
-        )
-    }
-    $suites = @($suites)
-    if ($suites.Count -eq 0) {
-        throw 'No E2E suites are available.'
-    }
-
-    for ($index = 0; $index -lt $suites.Count; $index++) {
-        $runOutput = @(
-            & $visualRun `
-                -Suite $suites[$index] `
-                -b:($buildFirst -and $index -eq 0)
-        )
-        $result = @(
-            $runOutput | Where-Object {
-                $_.PSObject.Properties.Name -contains 'Status' -and
-                $_.Status -cin @('captured', 'verified')
-            }
-        ) | Select-Object -Last 1
-        if ($null -eq $result -or $result.Status -cnotin @('captured', 'verified')) {
-            throw "E2E suite returned no valid result: $($suites[$index])"
-        }
-    }
-    Write-Host 'E2E captures completed.' -ForegroundColor Green
-    return
+    throw 'Usage: na228 test | na228 test new <suite> <recording> | na228 test reference <suite> <game>'
 }
 
 if ($mode -eq 'release') {
@@ -257,14 +136,6 @@ if ($mode -eq 'build') {
             throw "na228 build target must be l or mt: $target"
         }
     }
-}
-
-if ($mode -eq 'validate') {
-    if ($arguments.Count -gt 0) {
-        throw 'na228 validate accepts no arguments.'
-    }
-    & (Join-Path $paths.scripts 'na228\run.ps1') -Action validate
-    return
 }
 
 if ($mode -eq 'worker') {

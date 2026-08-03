@@ -74,12 +74,19 @@ function Get-Na2WorkerBuildContext {
         -Paths $Paths
 
     $sharedOutputs = @(
-        $Paths.files.latest_iso
-        $Paths.files.previous_iso
-        $Paths.files.manual_test_iso
+        foreach ($property in @(
+            'latest_iso',
+            'previous_iso',
+            'manual_test_iso',
+            'e2e_test_iso',
+            'e2e_test_padded_iso'
+        )) {
+            $configured = $Paths.files.PSObject.Properties[$property]
+            if ($null -ne $configured) { $configured.Value }
+        }
     ) | ForEach-Object { [IO.Path]::GetFullPath([string]$_) }
     if ($sharedOutputs | Where-Object { [IO.Path]::Equals($_, $resolvedOutput) }) {
-        throw 'Worker ISO output must not target Latest, Previous, Manual Test, or Screenshot Test.'
+        throw 'Worker ISO output must not target Latest, Previous, Manual Test, or E2E Test outputs.'
     }
 
     $worker | Add-Member -NotePropertyName OutputIso -NotePropertyValue $resolvedOutput

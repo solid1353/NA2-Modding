@@ -94,10 +94,11 @@ python -m pip install -r na228_builder/requirements.txt
 & scripts/na228/build.ps1
 ```
 
-`na228 validate` runs the same module derivation, edit composition, payload
-linking, identity closure, and insertion/replacement planning against the real
-source images, but bypasses preflight reuse and stops before ISO staging. It
-does not promote or rotate images, update build receipts, or launch PCSX2.
+`na228 test` is the public integration gate. Its normal and padded E2E Test
+pipelines each perform module derivation, edit composition, payload linking,
+identity closure, insertion/replacement planning, verified ISO production, and
+emulator replay. The two outputs have independent preflight receipts and build
+records; neither rotates Latest or Previous.
 
 Before staging, `na228_builder/build_preflight.py` hashes both canonical source
 ISOs, ISO-composing builder code and schemas, the exact selected profile
@@ -123,7 +124,10 @@ validates both ISO9660 and UDF trees.
 
 The ordinary `na228` command builds and launches Latest. `na228 l`, `na228 p`,
 and `na228 mt` launch Latest, Previous, and Manual Test without rebuilding;
-`bl` and `bmt` are the corresponding build-and-run recipes. The standalone `act` command
-regenerates input profiles; builds do not generate CRC-specific PCSX2 files.
+`bl` and `bmt` are the corresponding build-and-run recipes. Successful shared
+builds resolve the verified output's boot-ELF CRC and regenerate only that
+role's memory-card override inside the serial-wide GameSettings file. They do
+not generate CRC-named files or touch memory-card files. The standalone `act`
+command regenerates input profiles.
 Profile-run logs record the enabled feature pins and the complete derived module
 result inventory.

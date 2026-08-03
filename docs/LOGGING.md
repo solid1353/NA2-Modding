@@ -45,14 +45,20 @@ untouched.
 - `rolling.log`: the newest 20 completed operational invocations, stored as
   bounded sections in one file.
 - `builds/<build-id>/`: structured profile records retained only while they
-  correspond to the catalog-derived Latest or Previous build ISO.
+  correspond to the catalog-derived Latest, Previous, normal E2E Test, or
+  padded E2E Test ISO.
 - `builds.tsv`: a single atomically replaced `iso` / `build_record` mapping.
-  It always contains rows for the configured Latest and Previous ISO files;
-  the previous record is empty when no corresponding retained build record is
-  available.
+  It contains one row for each of those four roles; a row is empty when no
+  corresponding retained build record is available. Parallel build completion
+  serializes map replacement through `@logs/na228/.builds.lock` and preserves
+  active, not-yet-mapped build records.
 - `preflight/latest.json`: the atomically replaced successful-build receipt
   used for no-op detection. It records only portable logical labels, the
   deterministic input fingerprint, and the Latest ISO size and SHA-256.
+- `preflight/e2e_test_normal.json` and `preflight/e2e_test_padded.json`: the
+  output-specific receipts for the two mandatory E2E Test variants. Their
+  fingerprints include both resident-payload padding and the build role's
+  boot-ELF CRC discriminator.
 - `manual_tests/<build-id>/`: the latest Manual Test-only profile record, including
   `manual_test_result.tsv`. It is independent of `builds.tsv` and the Latest
   receipt; a successful Manual Test build replaces the previous Manual Test record.
@@ -64,7 +70,7 @@ identical and records `ISO result: unchanged`; the superseded record is then
 pruned, so this does not increase retained history. A changed staged image records
 `ISO result: updated`; its structured record becomes latest and the previous
 latest record rotates with the outgoing ISO. Unreferenced structured records
-are deleted only after the complete two-ISO mapping has been replaced.
+are deleted only after the complete four-role mapping has been replaced.
 Deleting or corrupting the preflight receipt is safe: the next invocation runs
 the complete verified build and recreates the receipt only after success.
 Manual Test-only builds always perform complete composition, report whether the

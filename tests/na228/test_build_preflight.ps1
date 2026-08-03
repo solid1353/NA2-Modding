@@ -238,6 +238,13 @@ param([string[]]$BuildSelector, [string]$ProjectRoot, [switch]$PassThru)
         -Condition (Test-Path -LiteralPath (Join-Path $e2eNormalRecord 'build_result.tsv') -PathType Leaf) `
         -Message 'Normal E2E Test build did not retain its shared structured record.'
 
+    $newerStandardRecord = Join-Path $logDirectory 'builds\newer-standard'
+    [void](New-Item -ItemType Directory -Path $newerStandardRecord -Force)
+    [IO.File]::WriteAllText(
+        (Join-Path $newerStandardRecord 'build_result.tsv'),
+        "timestamp_utc`tresult`tlatest_iso`n2026-08-03T00:00:00Z`tupdated`t@build/NA2.28 - Latest.iso`n"
+    )
+
     $global:Na2PreflightTestMode = 'hit'
     $global:Na2PreflightTestCalls = @()
     $e2eNormalHit = & (Join-Path $scriptRoot 'build.ps1') -E2eVariant normal

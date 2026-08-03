@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param()
+param([string]$Suite)
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'suite.ps1')
@@ -8,36 +8,92 @@ $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
 $configuration = Get-E2eConfiguration -Root $root
 $suiteRoot = Join-Path $root 'suites'
-$suites = @(
+$availableSuites = @(
     Get-ChildItem -LiteralPath $suiteRoot -Filter 'input.p2m2' -File -Recurse |
         ForEach-Object {
             [IO.Path]::GetRelativePath($suiteRoot, $_.DirectoryName).Replace('\', '/')
         } |
         Sort-Object -Unique
 )
+$suites = @(
+    if ([string]::IsNullOrWhiteSpace($Suite)) {
+        $availableSuites
+    }
+    else {
+        $requestedContext = Get-VisualRegressionContext -Suite $Suite
+        $recording = Join-Path $requestedContext.SuiteRoot 'input.p2m2'
+        if (-not (Test-Path -LiteralPath $recording -PathType Leaf)) {
+            throw "E2E suite does not exist: $($requestedContext.Suite)"
+        }
+        $requestedContext.Suite
+    }
+)
 if ($suites.Count -eq 0) {
     throw 'No E2E suites are available.'
-}
-if ($configuration.Variants.Count -ne 2) {
-    throw 'The complete E2E pipeline currently requires exactly two build variants.'
 }
 $publishedVariant = [string]$configuration.PublishedVariant.name
 $comparisonVariants = @(
     $configuration.Variants |
         Where-Object { [string]$_.name -cne $publishedVariant }
 )
-if ($comparisonVariants.Count -ne 1) {
-    throw 'The complete E2E pipeline requires one comparison build variant.'
-}
-$comparisonVariant = $comparisonVariants[0]
-if ([string]$comparisonVariant.compare_against -cne $publishedVariant) {
-    throw 'The comparison E2E variant must compare against the published variant.'
+foreach ($comparisonVariant in $comparisonVariants) {
+    if ([string]$comparisonVariant.compare_against -cne $publishedVariant) {
+        throw "Comparison variant $($comparisonVariant.name) must compare against $publishedVariant."
+    }
 }
 
 $transaction = New-VisualRegressionTransaction -Root $root -Prefix 'run'
 $jobs = [Collections.Generic.List[object]]::new()
 $compared = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 $comparisonFailures = [Collections.Generic.List[string]]::new()
+$compareReadyVariants = {
+    param([bool]$RequireComplete)
+
+    foreach ($comparisonVariant in $comparisonVariants) {
+        $candidateName = [string]$comparisonVariant.name
+        foreach ($suite in $suites) {
+            $comparisonKey = "$candidateName|$suite"
+            if ($compared.Contains($comparisonKey)) { continue }
+            $context = Get-VisualRegressionContext -Suite $suite
+            $normalSuite = Join-Path `
+                (Join-Path (Join-Path (Join-Path $transaction 'jobs') $publishedVariant) 'suites') `
+                $context.SuiteRelativePath
+            $candidateSuite = Join-Path `
+                (Join-Path (Join-Path (Join-Path $transaction 'jobs') $candidateName) 'suites') `
+                $context.SuiteRelativePath
+            $normalComplete = Test-Path -LiteralPath `
+                (Join-Path $normalSuite 'complete.json') `
+                -PathType Leaf
+            $candidateComplete = Test-Path -LiteralPath `
+                (Join-Path $candidateSuite 'complete.json') `
+                -PathType Leaf
+            if (-not $normalComplete -or -not $candidateComplete) {
+                if ($RequireComplete) {
+                    throw "Missing completed replay for $publishedVariant/$candidateName suite $suite."
+                }
+                continue
+            }
+            $comparisonRoot = Join-Path `
+                (Join-Path (Join-Path $transaction 'comparisons') $candidateName) `
+                $context.SuiteRelativePath
+            $comparison = Compare-VisualRegressionVariants `
+                -Suite $suite `
+                -BaselineDirectory (Join-Path $normalSuite 'capture\screenshots') `
+                -CandidateDirectory (Join-Path $candidateSuite 'capture\screenshots') `
+                -OutputRoot $comparisonRoot `
+                -IgnoreFile (Join-Path $context.SuiteRoot 'ignore.txt')
+            [void]$compared.Add($comparisonKey)
+            if ($comparison.status -cne 'passed') {
+                $failure = "$candidateName/$suite"
+                $comparisonFailures.Add($failure)
+                Write-Warning (
+                    "$publishedVariant/$candidateName comparison failed for $suite with " +
+                    "$(@($comparison.mismatches).Count) differing capture(s)."
+                )
+            }
+        }
+    }
+}
 $pipelineCompleted = $false
 try {
     $testsJob = Start-Job -Name 'tests' -ScriptBlock {
@@ -65,39 +121,7 @@ try {
     }
 
     while (@($jobs | Where-Object State -in @('NotStarted', 'Running')).Count -gt 0) {
-        foreach ($suite in $suites) {
-            if ($compared.Contains($suite)) { continue }
-            $context = Get-VisualRegressionContext -Suite $suite
-            $normalSuite = Join-Path `
-                (Join-Path (Join-Path (Join-Path $transaction 'jobs') $publishedVariant) 'suites') `
-                $context.SuiteRelativePath
-            $candidateSuite = Join-Path `
-                (Join-Path (Join-Path (Join-Path $transaction 'jobs') ([string]$comparisonVariant.name)) 'suites') `
-                $context.SuiteRelativePath
-            if (
-                -not (Test-Path -LiteralPath (Join-Path $normalSuite 'complete.json') -PathType Leaf) -or
-                -not (Test-Path -LiteralPath (Join-Path $candidateSuite 'complete.json') -PathType Leaf)
-            ) {
-                continue
-            }
-            $comparisonRoot = Join-Path `
-                (Join-Path $transaction 'comparisons') `
-                $context.SuiteRelativePath
-            $comparison = Compare-VisualRegressionVariants `
-                -Suite $suite `
-                -BaselineDirectory (Join-Path $normalSuite 'capture\screenshots') `
-                -CandidateDirectory (Join-Path $candidateSuite 'capture\screenshots') `
-                -OutputRoot $comparisonRoot `
-                -IgnoreFile (Join-Path $context.SuiteRoot 'ignore.txt')
-            [void]$compared.Add($suite)
-            if ($comparison.status -cne 'passed') {
-                $comparisonFailures.Add($suite)
-                Write-Warning (
-                    "Normal/padded comparison failed for $suite with " +
-                    "$(@($comparison.mismatches).Count) differing capture(s)."
-                )
-            }
-        }
+        & $compareReadyVariants $false
         if (@($jobs | Where-Object State -in @('NotStarted', 'Running')).Count -gt 0) {
             Start-Sleep -Milliseconds 200
         }
@@ -117,33 +141,10 @@ try {
         }
     }
 
-    foreach ($suite in $suites) {
-        if ($compared.Contains($suite)) { continue }
-        $context = Get-VisualRegressionContext -Suite $suite
-        $normalSuite = Join-Path `
-            (Join-Path (Join-Path (Join-Path $transaction 'jobs') $publishedVariant) 'suites') `
-            $context.SuiteRelativePath
-        $candidateSuite = Join-Path `
-            (Join-Path (Join-Path (Join-Path $transaction 'jobs') ([string]$comparisonVariant.name)) 'suites') `
-            $context.SuiteRelativePath
-        $comparison = Compare-VisualRegressionVariants `
-            -Suite $suite `
-            -BaselineDirectory (Join-Path $normalSuite 'capture\screenshots') `
-            -CandidateDirectory (Join-Path $candidateSuite 'capture\screenshots') `
-            -OutputRoot (Join-Path (Join-Path $transaction 'comparisons') $context.SuiteRelativePath) `
-            -IgnoreFile (Join-Path $context.SuiteRoot 'ignore.txt')
-        [void]$compared.Add($suite)
-        if ($comparison.status -cne 'passed') {
-            $comparisonFailures.Add($suite)
-            Write-Warning (
-                "Normal/padded comparison failed for $suite with " +
-                "$(@($comparison.mismatches).Count) differing capture(s)."
-            )
-        }
-    }
+    & $compareReadyVariants $true
     if ($comparisonFailures.Count -gt 0) {
         throw (
-            'Heap-stability comparison failed for E2E suite(s): ' +
+            'Build-variant comparison failed for E2E case(s): ' +
             ($comparisonFailures -join ', ')
         )
     }
@@ -175,6 +176,7 @@ try {
             -ExistingDirectory $existingCurrentStage `
             -IgnoreFile (Join-Path $context.SuiteRoot 'ignore.txt'))
 
+        $statesStage = $null
         $capturedStates = Join-Path $suiteJob 'capture\sstates'
         if (Test-Path -LiteralPath $capturedStates -PathType Container) {
             $statesStage = Join-Path (Join-Path $transaction 'publish') (
@@ -191,7 +193,6 @@ try {
                 -CapturedScreenshotDirectory $capturedScreenshots `
                 -PythonRunner $context.PythonRunner `
                 -IgnoreFile (Join-Path $context.SuiteRoot 'ignore.txt')
-            $replacements[$context.Capture.States] = $statesStage
         }
         $reportStage = Join-Path $suiteStage 'report'
         $hasReference = @(Get-NumericPngSlots -Directory $referenceStage).Count -gt 0
@@ -220,13 +221,17 @@ try {
             }
             $replacements[$context.Capture.Grids] = $gridStage
         }
+        if ($null -ne $statesStage) {
+            $replacements[$context.Capture.States] = $statesStage
+        }
     }
     Publish-VisualRegressionTransaction `
         -Replacements $replacements `
         -TransactionRoot $transaction
     Write-Host (
-        "E2E pipeline passed: $($suites.Count) suite(s), normal and padded builds, " +
-        'normal captures published.'
+        "E2E pipeline passed: $($suites.Count) suite(s), " +
+        "build variant(s) $(@($configuration.Variants.name) -join ', '), " +
+        "$publishedVariant captures published."
     ) -ForegroundColor Green
     [pscustomobject]@{
         Status = 'passed'

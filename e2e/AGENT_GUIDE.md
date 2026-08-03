@@ -65,7 +65,7 @@ and again before deciding that the result is correct.
 3. Run the complete permanent and E2E pipeline:
 
    ```powershell
-   na228 test
+   na228 test <suite>
    ```
 
 4. Inspect the regenerated current images and report.

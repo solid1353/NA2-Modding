@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string]$Suite,
-    [Parameter(Mandatory)][string]$Recording
+    [Parameter(Mandatory)][string]$Recording,
+    [string]$Game
 )
 
 $ErrorActionPreference = 'Stop'
@@ -35,6 +36,11 @@ $suiteStage = Join-Path $transaction 'suite-definition'
 try {
     [void](New-Item -ItemType Directory -Path $suiteStage -Force)
     Copy-Item -LiteralPath $recordingPath -Destination (Join-Path $suiteStage 'input.p2m2')
+    [IO.File]::WriteAllText(
+        (Join-Path $suiteStage 'ignore.txt'),
+        '',
+        [Text.UTF8Encoding]::new($false)
+    )
     [void](New-Item `
         -ItemType Directory `
         -Path ([IO.Path]::GetDirectoryName($context.SuiteRoot)) `
@@ -47,3 +53,8 @@ try {
 finally {
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $context.Root
 }
+
+if (-not [string]::IsNullOrWhiteSpace($Game)) {
+    & (Join-Path $PSScriptRoot 'reference.ps1') -Suite $context.Suite -Game $Game
+}
+& (Join-Path $PSScriptRoot 'run.ps1') -Suite $context.Suite

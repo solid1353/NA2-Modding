@@ -188,14 +188,25 @@ function Find-Na2IsolatedBuildRecord {
         catch {
             continue
         }
+        if ($rows.Count -ne 1) {
+            continue
+        }
+        $row = $rows[0]
+        $outputProperty = $row.PSObject.Properties['output_iso']
+        if ($null -eq $outputProperty) {
+            continue
+        }
+        $variantProperty = $row.PSObject.Properties['variant']
         if (
-            $rows.Count -eq 1 -and
-            [string]$rows[0].output_iso -ceq $expectedOutput -and
+            -not [string]::IsNullOrWhiteSpace($Variant) -and
             (
-                [string]::IsNullOrWhiteSpace($Variant) -or
-                [string]$rows[0].variant -ceq $Variant
+                $null -eq $variantProperty -or
+                [string]$variantProperty.Value -cne $Variant
             )
         ) {
+            continue
+        }
+        if ([string]$outputProperty.Value -ceq $expectedOutput) {
             return $record
         }
     }

@@ -26,6 +26,72 @@ try {
     Assert-E2eHelperTest `
         -Condition ([string]$configuration.PublishedVariant.name -ceq 'normal') `
         -Message 'E2E configuration did not select normal as the published variant.'
+    Assert-E2eHelperTest `
+        -Condition ($configuration.AllVariants[1].ignored -eq $false) `
+        -Message 'The padded variant is not explicitly active.'
+
+    $ignoredVariantRoot = Join-Path $testRoot 'ignored-variant-config'
+    [void](New-Item -ItemType Directory -Path $ignoredVariantRoot -Force)
+    [IO.File]::WriteAllText(
+        (Join-Path $ignoredVariantRoot 'config.json'),
+        @'
+{
+  "schema_version": 1,
+  "build_variants": [
+    {
+      "name": "normal",
+      "build": "e2e_test",
+      "payload_padding_bytes": 0,
+      "publish": true
+    },
+    {
+      "name": "padded",
+      "build": "e2e_test_padded",
+      "payload_padding_bytes": 32,
+      "ignored": true,
+      "compare_against": "normal"
+    }
+  ]
+}
+'@
+    )
+    $ignoredVariantConfiguration = Get-E2eConfiguration -Root $ignoredVariantRoot
+    Assert-E2eHelperTest `
+        -Condition (
+            (@($ignoredVariantConfiguration.Variants.name) -join ',') -ceq 'normal' -and
+            (@($ignoredVariantConfiguration.AllVariants.name) -join ',') -ceq 'normal,padded'
+        ) `
+        -Message 'An ignored build variant was not excluded from the active variants.'
+
+    $invalidVariantRoot = Join-Path $testRoot 'invalid-variant-config'
+    [void](New-Item -ItemType Directory -Path $invalidVariantRoot -Force)
+    [IO.File]::WriteAllText(
+        (Join-Path $invalidVariantRoot 'config.json'),
+        @'
+{
+  "schema_version": 1,
+  "build_variants": [
+    {
+      "name": "normal",
+      "build": "e2e_test",
+      "payload_padding_bytes": 0,
+      "publish": true,
+      "ignored": "false"
+    }
+  ]
+}
+'@
+    )
+    $invalidIgnoredRejected = $false
+    try {
+        [void](Get-E2eConfiguration -Root $invalidVariantRoot)
+    }
+    catch {
+        $invalidIgnoredRejected = $_.Exception.Message -match 'ignored must be a boolean'
+    }
+    Assert-E2eHelperTest `
+        -Condition $invalidIgnoredRejected `
+        -Message 'A non-boolean build-variant ignored field was accepted.'
 
     $transactions = Join-Path $testRoot '.transactions'
     $legacy = Join-Path $transactions 'legacy-without-owner'
@@ -55,7 +121,23 @@ try {
     [IO.File]::WriteAllBytes((Join-Path $normal '0002.png'), [byte[]](4))
     [IO.File]::WriteAllBytes((Join-Path $padded '0002.png'), [byte[]](5))
     $ignore = Join-Path $testRoot 'ignore.txt'
+    [IO.File]::WriteAllText($ignore, "# ignored captures`n2`n004`n5-7`n")
+    $ignoredNames = @(Get-IgnoredCaptureNames -IgnoreFile $ignore)
+    Assert-E2eHelperTest `
+        -Condition (($ignoredNames -join ',') -ceq '0002.png,0004.png,0005.png,0006.png,0007.png') `
+        -Message 'Ignore slots, zero padding, comments, or ranges were parsed incorrectly.'
     [IO.File]::WriteAllText($ignore, "0002.png`n")
+    $legacyIgnoreRejected = $false
+    try {
+        [void](Get-IgnoredCaptureNames -IgnoreFile $ignore)
+    }
+    catch {
+        $legacyIgnoreRejected = $_.Exception.Message -match 'Invalid ignore entry'
+    }
+    Assert-E2eHelperTest `
+        -Condition $legacyIgnoreRejected `
+        -Message 'The retired ignore filename format was accepted.'
+    [IO.File]::WriteAllText($ignore, "# ignored captures`n2`n004`n5-7`n")
     $passed = Compare-VisualRegressionVariants `
         -Suite 'test/helpers' `
         -BaselineDirectory $normal `
@@ -104,6 +186,67 @@ try {
     Assert-E2eHelperTest `
         -Condition ([IO.File]::ReadAllText((Join-Path $secondDestination 'new.txt')) -ceq 'new-two') `
         -Message 'Second same-name capture directory was not published.'
+
+    $fakeRepository = Join-Path $testRoot 'new-suite-repository'
+    $fakeScripts = Join-Path $fakeRepository 'e2e\scripts'
+    $fakeRecordings = Join-Path $testRoot 'shared-recordings'
+    [void](New-Item -ItemType Directory -Path `
+        $fakeScripts, `
+        (Join-Path $fakeRepository 'e2e\captures'), `
+        (Join-Path $fakeRepository 'scripts\lib'), `
+        $fakeRecordings `
+        -Force)
+    Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\suite.ps1') `
+        -Destination (Join-Path $fakeScripts 'suite.ps1')
+    Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\new_suite.ps1') `
+        -Destination (Join-Path $fakeScripts 'new_suite.ps1')
+    [IO.File]::WriteAllText(
+        (Join-Path $fakeRepository 'scripts\lib\paths.ps1'),
+        @"
+function Get-Na2Paths {
+    [pscustomobject]@{ pcsx2_input_recordings = '$($fakeRecordings.Replace("'", "''"))' }
+}
+"@
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $fakeScripts 'reference.ps1'),
+        @'
+param([string]$Suite, [string]$Game)
+Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "reference suite=$Suite game=$Game"
+'@
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $fakeScripts 'run.ps1'),
+        @'
+param([string]$Suite)
+Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite=$Suite"
+'@
+    )
+    [IO.File]::WriteAllText((Join-Path $fakeRecordings 'first.p2m2'), 'first')
+    [IO.File]::WriteAllText((Join-Path $fakeRecordings 'second.p2m2'), 'second')
+    & (Join-Path $fakeScripts 'new_suite.ps1') `
+        -Suite 'test/no_reference' `
+        -Recording 'first'
+    $firstIgnore = Join-Path $fakeRepository 'e2e\suites\test\no_reference\ignore.txt'
+    Assert-E2eHelperTest `
+        -Condition (
+            (Test-Path -LiteralPath $firstIgnore -PathType Leaf) -and
+            (Get-Item -LiteralPath $firstIgnore).Length -eq 0
+        ) `
+        -Message 'Suite creation did not generate an empty ignore.txt.'
+    & (Join-Path $fakeScripts 'new_suite.ps1') `
+        -Suite 'test/with_reference' `
+        -Recording 'second.p2m2' `
+        -Game 'nun5'
+    $newSuiteCalls = @(Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt'))
+    Assert-E2eHelperTest `
+        -Condition (
+            $newSuiteCalls.Count -eq 3 -and
+            $newSuiteCalls[0] -ceq 'run suite=test/no_reference' -and
+            $newSuiteCalls[1] -ceq 'reference suite=test/with_reference game=nun5' -and
+            $newSuiteCalls[2] -ceq 'run suite=test/with_reference'
+        ) `
+        -Message 'Suite creation did not run every suite or order optional reference capture first.'
 
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $testRoot
     Write-Host 'E2E helper tests passed.' -ForegroundColor Green

@@ -136,7 +136,7 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   [`e2e/AGENT_GUIDE.md`](e2e/AGENT_GUIDE.md). `<captures>` accepts one slot,
   comma-separated slots, and inclusive ranges, for example `25` or
   `25, 27-30`. Inspect the prepared differences for those captures, change only
-  the responsible implementation, run `na228 test`, inspect the
+  the responsible implementation, run `na228 test <suite>`, inspect the
   regenerated differences, and continue implementing and testing until every
   named capture has the requested local result or a concrete blocker remains.
   Do not wait for separate plan approval. The command does not authorize
@@ -281,17 +281,18 @@ Detailed command and task behavior is in
 - `na228 mt` and `na228.ps1 mt` run the retained Manual Test ISO; `na228 bmt`
   builds Manual Test and then runs it, while `na228 build mt` is the explicit
   build-only form.
-  These commands never mean a test suite. `na228 test` is the only test
+  These commands never mean a test suite. `na228 test [suite]` is the only test
   execution command: it runs the permanent project tests while independently
   preparing normal and padded E2E Test ISOs, replays every main-tracked suite
-  against both builds, compares each suite for heap stability, and publishes
-  only the normal captures after the whole pipeline passes. Suite definitions
+  or the selected suite against both builds, compares each replay for heap
+  stability, and publishes only the normal captures after the whole pipeline
+  passes. Suite definitions
   live under `e2e/`; screenshot history lives in the independent
   `e2e/captures/` repository. `.\tests\run.ps1` remains the internal permanent
   test runner used by that pipeline.
   Never infer command semantics from a flag name; verify the documented exact
   command before execution.
-- Before presenting any implementation result, run `na228 test`. Its normal and
+- Before presenting any implementation result, run `na228 test [suite]`. Its normal and
   padded builds each derive, conflict-check, build, and validate the full pinned
   profile against the real source images; its permanent tests and complete E2E
   replay are one indivisible integration gate. Focused checks do not replace it.

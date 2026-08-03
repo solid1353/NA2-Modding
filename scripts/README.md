@@ -83,14 +83,16 @@ The complete project test command is:
 The separate personal end-to-end game-test workflow is exposed through the root
 command. Its infrastructure and suite definitions are main-tracked under
 `e2e/`; screenshot history is versioned by the independent
-`e2e/captures/` repository. `na228 test` runs permanent tests while two
-independent pipelines preflight/build normal and padded E2E Test ISOs, replay
-every suite, compare normal/padded PNGs, and publish only normal evidence after
-the entire run passes. `na228 test new <suite> <recording>` copies a shared
-Workshop recording into a suite. `na228 test reference <suite> <game>` replays
-the suite-tracked input and creates or replaces its reference captures. Capture
-promotion is ordinary selective Git staging and commit after user acceptance;
-there is no separate approval command.
+`e2e/captures/` repository. `na228 test [suite]` runs permanent tests while
+independent pipelines preflight/build the active E2E Test variants, replay all
+suites or one selected suite, compare variant PNGs, and publish only the
+configured normal evidence after the entire run passes.
+`na228 test new <suite> <recording> [game]` copies a shared Workshop recording,
+creates an empty `ignore.txt`, optionally captures the game's reference, and
+always runs the new suite. Reference capture is an internal part of suite
+creation rather than a separate root command. Capture promotion is ordinary
+selective Git staging and commit after user acceptance; there is no separate
+approval command.
 
 Bare `na228` builds and runs Latest. Compact invocations contain one or two
 positional game tokens whose order defines window placement. `l`, `p`, or `mt`

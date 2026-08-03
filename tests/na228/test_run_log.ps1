@@ -243,11 +243,14 @@ print(json.dumps(result))
         -Condition ($helpText -match '(?m)^\s*na228 build l\|mt\s') `
         -Message 'Root help omitted the explicit build-only command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test\s+Run unit tests; prepare and validate normal/padded E2E Test ISOs; replay and compare all E2E suites and update captures$') `
+        -Condition ($helpText -match '(?m)^\s*na228 test \[suite\]\s+Run unit tests; prepare and validate normal/padded E2E Test ISOs; replay and compare all or one E2E suite and update captures$') `
         -Message 'Root help omitted the complete one-command E2E pipeline.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test reference <suite> <game>') `
-        -Message 'Root help omitted the simple reference-maintenance command.'
+        -Condition ($helpText -match '(?m)^\s*na228 test new <suite> <recording> \[game\]') `
+        -Message 'Root help omitted suite creation with an optional reference game.'
+    Assert-Na2Test `
+        -Condition ($helpText -notmatch '(?m)^\s*na228 test reference\b') `
+        -Message 'Root help still exposes the retired reference command.'
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 -[btcpwh]\b') `
         -Message 'Root help still exposes a retired dashed mode.'
@@ -398,45 +401,45 @@ else {
             -Content 'recording'
     }
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'run.ps1') -Content @'
-param()
-Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value 'run complete'
+param([string]$Suite)
+Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite=$Suite"
 [pscustomobject]@{ Status = 'passed' }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'new_suite.ps1') -Content @'
-param([Parameter(Mandatory)][string]$Suite, [Parameter(Mandatory)][string]$Recording)
+param(
+    [Parameter(Mandatory)][string]$Suite,
+    [Parameter(Mandatory)][string]$Recording,
+    [string]$Game
+)
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
-    -Value "new suite=$Suite recording=$Recording"
-'@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'reference.ps1') -Content @'
-param([Parameter(Mandatory)][string]$Suite, [Parameter(Mandatory)][string]$Game)
-Add-Content `
-    -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
-    -Value "reference suite=$Suite game=$Game"
+    -Value "new suite=$Suite recording=$Recording game=$Game"
 '@
     $visualCalls = Join-Path $fakeVisualScripts 'calls.txt'
     & (Join-Path $fakeRepository 'na228.ps1') test
     $calls = @(Get-Content -LiteralPath $visualCalls)
-    Assert-Na2Test -Condition (($calls -join ',') -ceq 'run complete') `
+    Assert-Na2Test -Condition (($calls -join ',') -ceq 'run suite=') `
         -Message 'Bare na228 test did not dispatch the complete E2E pipeline exactly once.'
     Remove-Item -LiteralPath $visualCalls
+    & (Join-Path $fakeRepository 'na228.ps1') test alpha
     & (Join-Path $fakeRepository 'na228.ps1') test new font/character_select font_full
-    & (Join-Path $fakeRepository 'na228.ps1') test reference alpha nun5
+    & (Join-Path $fakeRepository 'na228.ps1') test new font/with_reference font_full nun5
     $calls = @(Get-Content -LiteralPath $visualCalls)
     Assert-Na2Test `
-        -Condition ($calls.Count -eq 2 -and
-            $calls[0] -ceq 'new suite=font/character_select recording=font_full' -and
-            $calls[1] -ceq 'reference suite=alpha game=nun5') `
-        -Message 'Suite creation or reference dispatch was incorrect.'
-    $oldTestShapeRejected = $false
+        -Condition ($calls.Count -eq 3 -and
+            $calls[0] -ceq 'run suite=alpha' -and
+            $calls[1] -ceq 'new suite=font/character_select recording=font_full game=' -and
+            $calls[2] -ceq 'new suite=font/with_reference recording=font_full game=nun5') `
+        -Message 'Suite selection or suite creation dispatch was incorrect.'
+    $retiredReferenceRejected = $false
     try {
-        & (Join-Path $fakeRepository 'na228.ps1') test alpha
+        & (Join-Path $fakeRepository 'na228.ps1') test reference alpha nun5
     }
     catch {
-        $oldTestShapeRejected = $_.Exception.Message -match '^Usage: na228 test'
+        $retiredReferenceRejected = $_.Exception.Message -match '^Usage: na228 test'
     }
-    Assert-Na2Test -Condition $oldTestShapeRejected `
-        -Message 'The retired per-suite na228 test form was accepted.'
+    Assert-Na2Test -Condition $retiredReferenceRejected `
+        -Message 'The retired reference command was accepted.'
     $na2ActRejected = $false
     try {
         & (Join-Path $fakeRepository 'na228.ps1') act

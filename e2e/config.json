@@ -11,6 +11,7 @@
       "name": "padded",
       "build": "e2e_test_padded",
       "payload_padding_bytes": 32,
+      "ignored": false,
       "compare_against": "normal"
     }
   ]

@@ -375,14 +375,35 @@ function Get-IgnoredCaptureNames {
         return [string[]]@()
     }
 
-    [string[]]@(
-        foreach ($line in Get-Content -LiteralPath $IgnoreFile) {
-            $entry = $line.Trim()
-            if ($entry.Length -gt 0 -and -not $entry.StartsWith('#')) {
-                $entry
-            }
+    $slots = [Collections.Generic.SortedSet[int]]::new()
+    $lineNumber = 0
+    foreach ($line in Get-Content -LiteralPath $IgnoreFile) {
+        $lineNumber++
+        $entry = $line.Trim()
+        if ($entry.Length -eq 0 -or $entry.StartsWith('#')) {
+            continue
         }
-    )
+        $first = 0
+        $last = 0
+        if ($entry -match '^\d+$') {
+            $first = [int]$entry
+            $last = $first
+        }
+        elseif ($entry -match '^(\d+)\s*-\s*(\d+)$') {
+            $first = [int]$Matches[1]
+            $last = [int]$Matches[2]
+        }
+        else {
+            throw "Invalid ignore entry at ${IgnoreFile}:${lineNumber}: $entry"
+        }
+        if ($first -lt 1 -or $last -gt 999 -or $first -gt $last) {
+            throw "Invalid ignore slot range at ${IgnoreFile}:${lineNumber}: $entry"
+        }
+        foreach ($slot in $first..$last) {
+            [void]$slots.Add($slot)
+        }
+    }
+    [string[]]@($slots | ForEach-Object { '{0:D4}.png' -f $_ })
 }
 
 function Restore-IgnoredCurrentScreenshots {

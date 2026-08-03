@@ -246,8 +246,17 @@ print(json.dumps(result))
         -Condition ($helpText -match '(?m)^\s*na228 test \[suite\]\s+Run unit tests; prepare and validate normal/padded E2E Test ISOs; replay and compare all or one E2E suite and update captures$') `
         -Message 'Root help omitted the complete one-command E2E pipeline.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test new <suite> <recording> \[game\]\s+Create or replace a suite, optionally capture its reference, then run it$') `
+        -Condition ($helpText -match '(?m)^\s*na228 test create <suite> <recording> \[game\]\s+Create or replace a suite, optionally capture its reference, then run it$') `
         -Message 'Root help omitted suite replacement with an optional reference game.'
+    Assert-Na2Test `
+        -Condition ($helpText -match '(?m)^\s*na228 test rename <suite> <new-suite>\s+Rename a suite and its capture history$') `
+        -Message 'Root help omitted suite rename.'
+    Assert-Na2Test `
+        -Condition ($helpText -match '(?m)^\s*na228 test delete <suite>\s+Delete a suite and its capture history$') `
+        -Message 'Root help omitted suite deletion.'
+    Assert-Na2Test `
+        -Condition ($helpText -notmatch '(?m)^\s*na228 test new\b') `
+        -Message 'Root help still exposes the retired test new command.'
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 test reference\b') `
         -Message 'Root help still exposes the retired reference command.'
@@ -405,7 +414,7 @@ param([string]$Suite)
 Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite=$Suite"
 [pscustomobject]@{ Status = 'passed' }
 '@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'new_suite.ps1') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'create_suite.ps1') -Content @'
 param(
     [Parameter(Mandatory)][string]$Suite,
     [Parameter(Mandatory)][string]$Recording,
@@ -413,7 +422,19 @@ param(
 )
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
-    -Value "new suite=$Suite recording=$Recording game=$Game"
+    -Value "create suite=$Suite recording=$Recording game=$Game"
+'@
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'rename_suite.ps1') -Content @'
+param([string]$Suite, [string]$NewSuite)
+Add-Content `
+    -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
+    -Value "rename suite=$Suite newSuite=$NewSuite"
+'@
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'delete_suite.ps1') -Content @'
+param([string]$Suite)
+Add-Content `
+    -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
+    -Value "delete suite=$Suite"
 '@
     $visualCalls = Join-Path $fakeVisualScripts 'calls.txt'
     & (Join-Path $fakeRepository 'na228.ps1') test
@@ -422,15 +443,19 @@ Add-Content `
         -Message 'Bare na228 test did not dispatch the complete E2E pipeline exactly once.'
     Remove-Item -LiteralPath $visualCalls
     & (Join-Path $fakeRepository 'na228.ps1') test alpha
-    & (Join-Path $fakeRepository 'na228.ps1') test new font/character_select font_full
-    & (Join-Path $fakeRepository 'na228.ps1') test new font/with_reference font_full nun5
+    & (Join-Path $fakeRepository 'na228.ps1') test create font/character_select font_full
+    & (Join-Path $fakeRepository 'na228.ps1') test create font/with_reference font_full nun5
+    & (Join-Path $fakeRepository 'na228.ps1') test rename font/character_select font/characters
+    & (Join-Path $fakeRepository 'na228.ps1') test delete font/characters
     $calls = @(Get-Content -LiteralPath $visualCalls)
     Assert-Na2Test `
-        -Condition ($calls.Count -eq 3 -and
+        -Condition ($calls.Count -eq 5 -and
             $calls[0] -ceq 'run suite=alpha' -and
-            $calls[1] -ceq 'new suite=font/character_select recording=font_full game=' -and
-            $calls[2] -ceq 'new suite=font/with_reference recording=font_full game=nun5') `
-        -Message 'Suite selection or suite creation dispatch was incorrect.'
+            $calls[1] -ceq 'create suite=font/character_select recording=font_full game=' -and
+            $calls[2] -ceq 'create suite=font/with_reference recording=font_full game=nun5' -and
+            $calls[3] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
+            $calls[4] -ceq 'delete suite=font/characters') `
+        -Message 'Suite selection or lifecycle-command dispatch was incorrect.'
     $retiredReferenceRejected = $false
     try {
         & (Join-Path $fakeRepository 'na228.ps1') test reference alpha nun5

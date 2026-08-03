@@ -27,7 +27,7 @@ if (-not (Test-Path -LiteralPath $recordingPath -PathType Leaf)) {
     throw "Input recording does not exist: $recordingPath"
 }
 
-$transaction = New-VisualRegressionTransaction -Root $context.Root -Prefix 'new'
+$transaction = New-VisualRegressionTransaction -Root $context.Root -Prefix 'create'
 $suiteStage = Join-Path $transaction 'suite-definition'
 $captureStage = Join-Path $transaction 'capture-history'
 try {

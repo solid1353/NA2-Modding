@@ -61,6 +61,37 @@ function Get-VisualRegressionContext {
     }
 }
 
+function Remove-VisualRegressionEmptyParents {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Boundary
+    )
+
+    $boundaryPath = [IO.Path]::GetFullPath($Boundary).TrimEnd(
+        [IO.Path]::DirectorySeparatorChar,
+        [IO.Path]::AltDirectorySeparatorChar
+    )
+    $current = [IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($Path))
+    while (
+        -not [string]::IsNullOrWhiteSpace($current) -and
+        -not $current.Equals($boundaryPath, [StringComparison]::OrdinalIgnoreCase)
+    ) {
+        $parent = [IO.Path]::GetDirectoryName($current)
+        if (
+            -not $current.StartsWith(
+                $boundaryPath + [IO.Path]::DirectorySeparatorChar,
+                [StringComparison]::OrdinalIgnoreCase
+            ) -or
+            -not (Test-Path -LiteralPath $current -PathType Container) -or
+            @(Get-ChildItem -LiteralPath $current -Force).Count -ne 0
+        ) {
+            break
+        }
+        Remove-Item -LiteralPath $current -Force
+        $current = $parent
+    }
+}
+
 function Get-VisualRegressionScreenshotDefinition {
     param([Parameter(Mandatory)][string]$Kind)
 

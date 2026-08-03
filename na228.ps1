@@ -59,7 +59,9 @@ if ($mode -eq 'help') {
         ''
         '  na228 build l|mt            Build Latest or Manual Test without running it'
         '  na228 test [suite]                      Run unit tests; prepare and validate normal/padded E2E Test ISOs; replay and compare all or one E2E suite and update captures'
-        '  na228 test new <suite> <recording> [game]  Create or replace a suite, optionally capture its reference, then run it'
+        '  na228 test create <suite> <recording> [game]  Create or replace a suite, optionally capture its reference, then run it'
+        '  na228 test rename <suite> <new-suite>          Rename a suite and its capture history'
+        '  na228 test delete <suite>                      Delete a suite and its capture history'
         '  na228 worker work/<worker>/build/<name>.iso  Build an isolated worker ISO'
         '  na228 release [version]     Publish a GitHub release'
         '  na228 help                  Show this help'
@@ -73,8 +75,10 @@ if ($mode -eq 'help') {
 if ($mode -eq 'test') {
     $visualScripts = Join-Path $PSScriptRoot 'e2e\scripts'
     $visualRun = Join-Path $visualScripts 'run.ps1'
-    $visualNew = Join-Path $visualScripts 'new_suite.ps1'
-    foreach ($required in $visualRun, $visualNew) {
+    $visualCreate = Join-Path $visualScripts 'create_suite.ps1'
+    $visualRename = Join-Path $visualScripts 'rename_suite.ps1'
+    $visualDelete = Join-Path $visualScripts 'delete_suite.ps1'
+    foreach ($required in $visualRun, $visualCreate, $visualRename, $visualDelete) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
             throw "The E2E infrastructure is unavailable: $required"
         }
@@ -85,25 +89,39 @@ if ($mode -eq 'test') {
         return
     }
     $testCommand = $arguments[0].ToLowerInvariant()
-    if ($testCommand -ceq 'new') {
+    if ($testCommand -ceq 'create') {
         if ($arguments.Count -notin 3, 4) {
-            throw 'Usage: na228 test new <suite> <recording> [game]'
+            throw 'Usage: na228 test create <suite> <recording> [game]'
         }
-        $newArguments = @{
+        $createArguments = @{
             Suite = $arguments[1]
             Recording = $arguments[2]
         }
         if ($arguments.Count -eq 4) {
-            $newArguments.Game = $arguments[3]
+            $createArguments.Game = $arguments[3]
         }
-        & $visualNew @newArguments
+        & $visualCreate @createArguments
+        return
+    }
+    if ($testCommand -ceq 'rename') {
+        if ($arguments.Count -ne 3) {
+            throw 'Usage: na228 test rename <suite> <new-suite>'
+        }
+        & $visualRename -Suite $arguments[1] -NewSuite $arguments[2]
+        return
+    }
+    if ($testCommand -ceq 'delete') {
+        if ($arguments.Count -ne 2) {
+            throw 'Usage: na228 test delete <suite>'
+        }
+        & $visualDelete -Suite $arguments[1]
         return
     }
     if ($arguments.Count -eq 1) {
         & $visualRun -Suite $arguments[0]
         return
     }
-    throw 'Usage: na228 test [suite] | na228 test new <suite> <recording> [game]'
+    throw 'Usage: na228 test [suite] | na228 test create <suite> <recording> [game] | na228 test rename <suite> <new-suite> | na228 test delete <suite>'
 }
 
 if ($mode -eq 'release') {

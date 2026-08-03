@@ -88,12 +88,14 @@ independent pipelines preflight/build the active E2E Test variants. Emulator
 replays then run one at a time through the shared portable PCSX2 installation;
 they replay all suites or one selected suite, compare variant PNGs, and publish
 only the configured normal evidence after the entire run passes.
-`na228 test new <suite> <recording> [game]` copies a shared Workshop recording,
+`na228 test create <suite> <recording> [game]` copies a shared Workshop recording,
 creates an empty `ignore.txt`, optionally captures the game's reference, and
-always runs the new suite. Reference capture is an internal part of suite
-creation rather than a separate root command. Capture promotion is ordinary
-selective Git staging and commit after user acceptance; there is no separate
-approval command.
+always runs the created suite. `na228 test rename <suite> <new-suite>` moves
+the definition and capture history together; `na228 test delete <suite>`
+removes both. Reference capture is an internal part of suite creation rather
+than a separate root command. Capture promotion is ordinary selective Git
+staging and commit after user acceptance; there is no separate approval
+command.
 
 Bare `na228` builds and runs Latest. Compact invocations contain one or two
 positional game tokens whose order defines window placement. `l`, `p`, or `mt`

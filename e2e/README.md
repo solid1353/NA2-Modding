@@ -8,7 +8,9 @@ stored in the nested local Git repository at `captures/`.
 
 ```powershell
 na228 test [suite]
-na228 test new <suite> <recording> [game]
+na228 test create <suite> <recording> [game]
+na228 test rename <suite> <new-suite>
+na228 test delete <suite>
 ```
 
 `na228 test [suite]` is the only test-execution command. Without a suite it
@@ -46,12 +48,16 @@ serial-wide GameSettings file can select `NA v2.28 - E2E Test.ps2` and
 only those CRC sections; the one-time card files are not managed by the test
 pipeline.
 
-`test new` creates or completely replaces the named suite. It copies
+`test create` creates or completely replaces the named suite. It copies
 `<recording>.p2m2` from Workshop's shared input-recording folder into
 `suites/<suite>/input.p2m2`, resets `ignore.txt` to empty, and clears all old
 capture history for that suite. It then optionally captures `_a_reference`
 screenshots from `[game]` and always runs the suite to publish its new current
 screenshots. There is no separate reference command.
+
+`test rename` moves both the suite definition and its capture history to the
+new relative suite path. It rejects an existing destination. `test delete`
+removes both the suite definition and its capture history.
 
 ## Layout
 

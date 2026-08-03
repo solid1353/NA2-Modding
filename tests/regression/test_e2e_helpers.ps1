@@ -187,7 +187,7 @@ try {
         -Condition ([IO.File]::ReadAllText((Join-Path $secondDestination 'new.txt')) -ceq 'new-two') `
         -Message 'Second same-name capture directory was not published.'
 
-    $fakeRepository = Join-Path $testRoot 'new-suite-repository'
+    $fakeRepository = Join-Path $testRoot 'suite-lifecycle-repository'
     $fakeScripts = Join-Path $fakeRepository 'e2e\scripts'
     $fakeRecordings = Join-Path $testRoot 'shared-recordings'
     [void](New-Item -ItemType Directory -Path `
@@ -198,8 +198,12 @@ try {
         -Force)
     Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\suite.ps1') `
         -Destination (Join-Path $fakeScripts 'suite.ps1')
-    Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\new_suite.ps1') `
-        -Destination (Join-Path $fakeScripts 'new_suite.ps1')
+    Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\create_suite.ps1') `
+        -Destination (Join-Path $fakeScripts 'create_suite.ps1')
+    Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\rename_suite.ps1') `
+        -Destination (Join-Path $fakeScripts 'rename_suite.ps1')
+    Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\delete_suite.ps1') `
+        -Destination (Join-Path $fakeScripts 'delete_suite.ps1')
     [IO.File]::WriteAllText(
         (Join-Path $fakeRepository 'scripts\lib\paths.ps1'),
         @"
@@ -224,7 +228,7 @@ Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite
     )
     [IO.File]::WriteAllText((Join-Path $fakeRecordings 'first.p2m2'), 'first')
     [IO.File]::WriteAllText((Join-Path $fakeRecordings 'second.p2m2'), 'second')
-    & (Join-Path $fakeScripts 'new_suite.ps1') `
+    & (Join-Path $fakeScripts 'create_suite.ps1') `
         -Suite 'test/no_reference' `
         -Recording 'first'
     $firstIgnore = Join-Path $fakeRepository 'e2e\suites\test\no_reference\ignore.txt'
@@ -245,7 +249,7 @@ Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite
         (Join-Path $firstCaptureRoot 'screenshots\001_b_current.png'),
         'stale capture data'
     )
-    & (Join-Path $fakeScripts 'new_suite.ps1') `
+    & (Join-Path $fakeScripts 'create_suite.ps1') `
         -Suite 'test/no_reference' `
         -Recording 'second'
     Assert-E2eHelperTest `
@@ -257,7 +261,7 @@ Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite
             @(Get-ChildItem -LiteralPath $firstCaptureRoot -Recurse -Force).Count -eq 0
         ) `
         -Message 'Existing suite definition or capture history was not completely replaced.'
-    & (Join-Path $fakeScripts 'new_suite.ps1') `
+    & (Join-Path $fakeScripts 'create_suite.ps1') `
         -Suite 'test/with_reference' `
         -Recording 'second.p2m2' `
         -Game 'nun5'
@@ -271,6 +275,31 @@ Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite
             $newSuiteCalls[3] -ceq 'run suite=test/with_reference'
         ) `
         -Message 'Suite creation or replacement did not order optional reference capture before the mandatory run.'
+
+    $sourceCaptureRoot = Join-Path $fakeRepository 'e2e\captures\test\with_reference'
+    [IO.File]::WriteAllText((Join-Path $sourceCaptureRoot 'capture.txt'), 'capture history')
+    & (Join-Path $fakeScripts 'rename_suite.ps1') `
+        -Suite 'test/with_reference' `
+        -NewSuite 'renamed/with_reference'
+    $renamedSuiteRoot = Join-Path $fakeRepository 'e2e\suites\renamed\with_reference'
+    $renamedCaptureRoot = Join-Path $fakeRepository 'e2e\captures\renamed\with_reference'
+    Assert-E2eHelperTest `
+        -Condition (
+            -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\suites\test\with_reference')) -and
+            -not (Test-Path -LiteralPath $sourceCaptureRoot) -and
+            (Test-Path -LiteralPath (Join-Path $renamedSuiteRoot 'input.p2m2') -PathType Leaf) -and
+            [IO.File]::ReadAllText((Join-Path $renamedCaptureRoot 'capture.txt')) -ceq 'capture history'
+        ) `
+        -Message 'Suite rename did not move both the definition and capture history.'
+    & (Join-Path $fakeScripts 'delete_suite.ps1') -Suite 'renamed/with_reference'
+    Assert-E2eHelperTest `
+        -Condition (
+            -not (Test-Path -LiteralPath $renamedSuiteRoot) -and
+            -not (Test-Path -LiteralPath $renamedCaptureRoot) -and
+            -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\suites\renamed')) -and
+            -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\captures\renamed'))
+        ) `
+        -Message 'Suite deletion did not remove both roots and their empty parents.'
 
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $testRoot
     Write-Host 'E2E helper tests passed.' -ForegroundColor Green

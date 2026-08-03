@@ -1249,6 +1249,28 @@ red-ink bounds are `x=170..466`, exactly matching NUN5. The supplied ss6
 Linked Mode state remains unchanged, proving that the selected hook does not
 select the adjacent ordinary-row family.
 
+The 2026-08-03 `font/main` captures 50 and 51 isolate the structural fifth row
+in both draw states. Capture 51's ordinary black ink is two output pixels below
+NUN5, whereas capture 50 proves the selected footer already has the correct
+vertical phase. The shared declarative row producer therefore changes only the
+fifth-row origin from local Y `116` to `115`. The selected adapter's local
+compensation changes from `-2` to `-1`, preserving its final Y at `114`, while
+the unchanged ordinary adapter consumes Y `115` directly. Rows one through
+four remain on their existing coordinates. This fixes the ordinary footer
+without adding or resizing any resident fragment, so every unrelated payload
+symbol retains its prior address.
+
+The producer is the row loop in NA2 main-ELF `FUN_003BC780`. When the loop index
+is four, its branch at runtime `0x003BC824` adds the footer-only Y term before
+the selected call at file `0x2BC984` or the ordinary call at file `0x2BC9BC`.
+The existing guarded `font_layout_character_modal_02` replacement owns that
+block at files `0x2BC924..0x2BC94F`: the first four iterations advance from
+local Y `8` by four `24`-unit intervals to `104`, and its instruction at file
+`0x2BC940` now loads `11.0` (`lui v0,0x4130`) instead of `12.0`, producing the
+fifth-row Y `115`. Confidence is high: clean-ELF disassembly identifies both
+draw-state consumers, the guarded replacement isolates the row-four branch,
+and captures 50 and 51 independently expose the two final renderer phases.
+
 NUN5 telemetry for the confirmation body is box `(8,8,368,24)`, horizontal
 policy `2` (center), vertical policy `1`, and incoming scale `1`. A first C
 candidate applied only those box dimensions while retaining NA2's existing

@@ -420,7 +420,7 @@ typedef signed int s32;
 
 /* The fifth structural row is a separate footer group below the options. */
 #define FONT_CHARACTER_LIST_FOOTER_Y_THRESHOLD 96.0f
-#define FONT_CHARACTER_LIST_SELECTED_FOOTER_Y_OFFSET (-2)
+#define FONT_CHARACTER_LIST_SELECTED_FOOTER_Y_OFFSET (-1)
 
 /* Single-row layout height for Character Select options. */
 #define FONT_CHARACTER_LIST_LINE_HEIGHT 20.0f

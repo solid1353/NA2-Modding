@@ -44,6 +44,13 @@ and again before deciding that the result is correct.
   named by the request; never substitute a visually similar state.
 - After every `na228 test <suite> -b` run, reopen the regenerated evidence for
   every named capture. Pre-run evidence cannot establish the post-run result.
+- Inspect every regenerated capture that differs from its tracked predecessor,
+  including captures not named by the request. Never call a difference
+  pre-existing, unrelated, volatile, nondeterministic, or outside the changed
+  code path merely because that classification seems likely. Compare the
+  actual before/after evidence and establish its cause; if the cause remains
+  unknown, report it as unknown and continue investigating. A run is not clean
+  while any regenerated capture difference remains unexplained.
 - Do not claim correctness or completion until every requested property has
   been checked directly in every applicable capture.
 - Do not say comparison, testing, or inspection is happening "now" and then

@@ -77,7 +77,10 @@ e2e/
 │   │   ├── 001_c_pair.png
 │   │   ├── 001_d_blend.png
 │   │   └── 001_e_diff.png
-│   ├── grids/                     # multi-capture report pages
+│   ├── grids/                     # matching pair/blend/diff report pages
+│   │   ├── page_01_c_pair.png
+│   │   ├── page_01_d_blend.png
+│   │   └── page_01_e_diff.png
 │   └── sstates/
 │       ├── reference/
 │       └── current/
@@ -93,6 +96,14 @@ Each transaction records its owning PID and process start time. A later run
 removes only abandoned transactions carrying valid ownership metadata; legacy
 directories without metadata and transactions owned by live processes are
 preserved.
+
+Grid pages use a `page_` prefix and the same `c_pair`, `d_blend`, and `e_diff`
+suffixes as their individual screenshot evidence. Each page number therefore
+sorts as one review group containing the contextual pair, 50% overlay, and
+amplified pixel diff without being confused with a capture-slot image.
+Separate reference-only and current-only grids are not generated because the
+pair page already contains both, while the original full-resolution screenshots
+remain available individually.
 
 Build provenance is shared with normal builds under
 `logs/na228/builds/<build-id>/` and `logs/na228/builds.tsv`. Output-specific

@@ -25,7 +25,8 @@ For suite `<suite>` and capture `<slot>`:
 - `captures/<suite>/screenshots/<slot>_b_current.png` is the latest NA2.28
   image.
 - `_c_pair`, `_d_blend`, and `_e_diff` files follow those two images for the
-  same capture. `captures/<suite>/grids/` contains multi-capture report pages.
+  same capture. `captures/<suite>/grids/` contains matching paged grids named
+  `page_01_c_pair.png`, `page_01_d_blend.png`, and `page_01_e_diff.png`.
 - `captures/<suite>/sstates/current/<slot>.p2s` is available when the visible
   difference requires runtime investigation.
 - Git history in the capture repository records accepted prior versions of the

@@ -182,14 +182,17 @@ def make_diff(
 
 
 def write_grid_pages(
-    pairs: list[tuple[CaptureRow, Image.Image]],
+    items: list[tuple[CaptureRow, Image.Image]],
     output: Path,
     columns: int,
     items_per_page: int,
+    suffix: str,
 ) -> None:
     output.mkdir(parents=True, exist_ok=True)
-    for page_index, start in enumerate(range(0, len(pairs), items_per_page), start=1):
-        page_items = pairs[start : start + items_per_page]
+    for page_index, start in enumerate(
+        range(0, len(items), items_per_page), start=1
+    ):
+        page_items = items[start : start + items_per_page]
         cell_width = max(image.width for _, image in page_items)
         cell_height = max(image.height for _, image in page_items)
         rows = (len(page_items) + columns - 1) // columns
@@ -198,7 +201,14 @@ def write_grid_pages(
             x = (item_index % columns) * cell_width
             y = (item_index // columns) * cell_height
             grid.paste(image, (x, y))
-        grid.save(output / f"page_{page_index:02d}.png")
+        grid.save(output / f"page_{page_index:02d}_{suffix}.png")
+
+
+def clear_generated_grid_pages(output: Path) -> None:
+    if not output.is_dir():
+        return
+    for path in output.glob("page_*.png"):
+        path.unlink()
 
 
 def main() -> int:
@@ -213,7 +223,11 @@ def main() -> int:
     blend_dir = args.output / "blends"
     diff_dir = args.output / "diffs"
 
-    all_pairs: list[tuple[CaptureRow, Image.Image]] = []
+    grid_items: dict[str, list[tuple[CaptureRow, Image.Image]]] = {
+        "c_pair": [],
+        "d_blend": [],
+        "e_diff": [],
+    }
     expected_size: tuple[int, int] | None = None
     for row in captures:
         reference = open_rgb(reference_paths[row.slot])
@@ -258,16 +272,21 @@ def main() -> int:
         pair.save(pair_dir / f"{row.slot:04d}.png")
         blend.save(blend_dir / f"{row.slot:04d}.png")
         diff.save(diff_dir / f"{row.slot:04d}.png")
-        all_pairs.append((row, pair))
+        grid_items["c_pair"].append((row, pair))
+        grid_items["d_blend"].append((row, blend))
+        grid_items["e_diff"].append((row, diff))
 
-    if all_pairs:
+    if grid_items["c_pair"]:
         grid_root = args.output / "grids"
-        write_grid_pages(
-            all_pairs,
-            grid_root,
-            args.grid_columns,
-            args.grid_items_per_page,
-        )
+        clear_generated_grid_pages(grid_root)
+        for suffix, items in grid_items.items():
+            write_grid_pages(
+                items,
+                grid_root,
+                args.grid_columns,
+                args.grid_items_per_page,
+                suffix,
+            )
     print(
         f"Compared {len(captures)} exact-scale pairs; evidence written to {args.output}"
     )

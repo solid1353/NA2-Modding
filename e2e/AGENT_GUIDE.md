@@ -80,6 +80,10 @@ After approval, commit the accepted capture-history changes in the nested
 repository as one coordinated delivery. Include the regenerated tracked report
 changes. If the capture repository has no remote, commit it locally before
 pushing the main implementation and report that it was not pushed.
+This boundary is indivisible: never commit or push the main-repository half
+while accepted capture-history changes remain uncommitted in the nested
+repository. Before reporting delivery, verify and report both repositories'
+commit, push, and dirty states.
 
 ## Boundaries
 

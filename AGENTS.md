@@ -192,6 +192,11 @@ Detailed command and task behavior is in
   preserve unrelated work, and stage only intended changes.
 - Commit and push every completed change automatically with the authoring
   agent's identity; Git never requires separate approval.
+- Treat an authorized coherent delivery that spans multiple repositories as
+  one indivisible completion boundary. Before pushing any participating
+  repository or claiming completion, commit every participating repository's
+  intended changes and verify that none retains task-owned dirty state. Report
+  the commit and push state of each repository separately.
 - Treat `@source/` as protected read-only unless the user explicitly authorizes
   a specific source change. Treat both `@pcsx2_dev` and `@pcsx2_stable` as
   protected read-only user installations. The user's explicit authorization

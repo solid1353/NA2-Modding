@@ -87,6 +87,14 @@
   accidentally included, the commit may be pushed as-is and must be reported.
 - Commit and push every completed change automatically at a coherent boundary.
   Git never requires `qwe` or separate approval.
+- A coherent delivery spanning multiple repositories has one Git boundary, not
+  one boundary per repository. Commit every repository's authorized intended
+  changes before pushing any participating repository or claiming delivery;
+  then verify that no participating repository retains task-owned dirty state.
+  If a repository has no configured remote or a push is blocked, keep its local
+  commit, report that exact exception and the commit/push/dirty state of every
+  repository, and never present the successfully pushed subset as the completed
+  delivery.
 - Before yielding at any pause, review, validation, user-input, or other
   handoff boundary, an agent must leave no task-owned canonical changes dirty
   in the shared worktree. Commit and push completed coherent changes. For

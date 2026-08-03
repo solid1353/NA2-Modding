@@ -246,7 +246,7 @@ print(json.dumps(result))
         -Condition ($helpText -match '(?m)^\s*na228 test \[suite\]\s+Run unit tests; prepare and validate normal/padded E2E Test ISOs; replay and compare all or one E2E suite and update captures$') `
         -Message 'Root help omitted the complete one-command E2E pipeline.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test create <suite> <recording> \[game\]\s+Create or replace a suite; capture its optional reference alongside the test run$') `
+        -Condition ($helpText -match '(?m)^\s*na228 test create <suite> \[game\]\s+Create or replace a suite from its matching shared recording; capture its optional reference alongside the test run$') `
         -Message 'Root help omitted suite replacement with an optional reference game.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 test rename <suite> <new-suite>\s+Rename a suite and its capture history$') `
@@ -417,12 +417,11 @@ Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'create_suite.ps1') -Content @'
 param(
     [Parameter(Mandatory)][string]$Suite,
-    [Parameter(Mandatory)][string]$Recording,
     [string]$Game
 )
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
-    -Value "create suite=$Suite recording=$Recording game=$Game"
+    -Value "create suite=$Suite game=$Game"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'rename_suite.ps1') -Content @'
 param([string]$Suite, [string]$NewSuite)
@@ -443,16 +442,16 @@ Add-Content `
         -Message 'Bare na228 test did not dispatch the complete E2E pipeline exactly once.'
     Remove-Item -LiteralPath $visualCalls
     & (Join-Path $fakeRepository 'na228.ps1') test alpha
-    & (Join-Path $fakeRepository 'na228.ps1') test create font/character_select font_full
-    & (Join-Path $fakeRepository 'na228.ps1') test create font/with_reference font_full nun5
+    & (Join-Path $fakeRepository 'na228.ps1') test create font/character_select
+    & (Join-Path $fakeRepository 'na228.ps1') test create font/with_reference nun5
     & (Join-Path $fakeRepository 'na228.ps1') test rename font/character_select font/characters
     & (Join-Path $fakeRepository 'na228.ps1') test delete font/characters
     $calls = @(Get-Content -LiteralPath $visualCalls)
     Assert-Na2Test `
         -Condition ($calls.Count -eq 5 -and
             $calls[0] -ceq 'run suite=alpha' -and
-            $calls[1] -ceq 'create suite=font/character_select recording=font_full game=' -and
-            $calls[2] -ceq 'create suite=font/with_reference recording=font_full game=nun5' -and
+            $calls[1] -ceq 'create suite=font/character_select game=' -and
+            $calls[2] -ceq 'create suite=font/with_reference game=nun5' -and
             $calls[3] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
             $calls[4] -ceq 'delete suite=font/characters') `
         -Message 'Suite selection or lifecycle-command dispatch was incorrect.'

@@ -8,7 +8,7 @@ stored in the nested local Git repository at `captures/`.
 
 ```powershell
 na228 test [suite]
-na228 test create <suite> <recording> [game]
+na228 test create <suite> [game]
 na228 test rename <suite> <new-suite>
 na228 test delete <suite>
 ```
@@ -54,7 +54,7 @@ only those CRC sections; the one-time card files are not managed by the test
 pipeline.
 
 `test create` creates or completely replaces the named suite. It copies
-`<recording>.p2m2` from Workshop's shared input-recording folder into
+the matching `<suite>.p2m2` path from Workshop's shared input-recording folder into
 `suites/<suite>/input.p2m2`, resets `ignore.txt` to empty, and clears all old
 capture history for that suite. When `[game]` is present, its `_a_reference`
 replay runs concurrently with the permanent tests and normal/padded build and

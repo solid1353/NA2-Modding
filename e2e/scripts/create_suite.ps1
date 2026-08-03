@@ -1,27 +1,18 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string]$Suite,
-    [Parameter(Mandatory)][string]$Recording,
     [string]$Game
 )
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'suite.ps1')
-if ([IO.Path]::GetFileName($Recording) -cne $Recording) {
-    throw 'Recording must be a shared input-recording filename or stem.'
-}
 $context = Get-VisualRegressionContext -Suite $Suite
 
 . (Join-Path $context.Repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
-$recordingFilename = if ($Recording.EndsWith('.p2m2', [StringComparison]::OrdinalIgnoreCase)) {
-    $Recording
-}
-else {
-    "$Recording.p2m2"
-}
-$recordingPath = [IO.Path]::GetFullPath((
-    Join-Path $paths.pcsx2_input_recordings $recordingFilename
+$recordingPath = [IO.Path]::GetFullPath((Join-Path `
+    $paths.pcsx2_input_recordings `
+    ($context.SuiteRelativePath + '.p2m2')
 ))
 if (-not (Test-Path -LiteralPath $recordingPath -PathType Leaf)) {
     throw "Input recording does not exist: $recordingPath"

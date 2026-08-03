@@ -268,11 +268,14 @@ if ($Suite -ceq 'test/with_reference') {
 [IO.File]::WriteAllText((Join-Path $CaptureRoot 'current.txt'), 'current')
 '@
     )
-    [IO.File]::WriteAllText((Join-Path $fakeRecordings 'first.p2m2'), 'first')
-    [IO.File]::WriteAllText((Join-Path $fakeRecordings 'second.p2m2'), 'second')
+    $noReferenceRecording = Join-Path $fakeRecordings 'test\no_reference.p2m2'
+    $withReferenceRecording = Join-Path $fakeRecordings 'test\with_reference.p2m2'
+    [void](New-Item -ItemType Directory -Path (
+        [IO.Path]::GetDirectoryName($noReferenceRecording)
+    ) -Force)
+    [IO.File]::WriteAllText($noReferenceRecording, 'first')
     & (Join-Path $fakeScripts 'create_suite.ps1') `
-        -Suite 'test/no_reference' `
-        -Recording 'first'
+        -Suite 'test/no_reference'
     $firstIgnore = Join-Path $fakeRepository 'e2e\suites\test\no_reference\ignore.txt'
     Assert-E2eHelperTest `
         -Condition (
@@ -291,9 +294,9 @@ if ($Suite -ceq 'test/with_reference') {
         (Join-Path $firstCaptureRoot 'screenshots\001_b_current.png'),
         'stale capture data'
     )
+    [IO.File]::WriteAllText($noReferenceRecording, 'second')
     & (Join-Path $fakeScripts 'create_suite.ps1') `
-        -Suite 'test/no_reference' `
-        -Recording 'second'
+        -Suite 'test/no_reference'
     Assert-E2eHelperTest `
         -Condition (
             [IO.File]::ReadAllText((Join-Path $firstSuiteRoot 'input.p2m2')) -ceq 'second' -and
@@ -306,9 +309,9 @@ if ($Suite -ceq 'test/with_reference') {
             ))
         ) `
         -Message 'Existing suite definition or capture history was not completely replaced.'
+    [IO.File]::WriteAllText($withReferenceRecording, 'second')
     & (Join-Path $fakeScripts 'create_suite.ps1') `
         -Suite 'test/with_reference' `
-        -Recording 'second.p2m2' `
         -Game 'nun5'
     $newSuiteCalls = @(Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt'))
     Assert-E2eHelperTest `
@@ -325,11 +328,11 @@ if ($Suite -ceq 'test/with_reference') {
     $sourceCaptureRoot = Join-Path $fakeRepository 'e2e\captures\test\with_reference'
     [IO.File]::WriteAllText((Join-Path $sourceCaptureRoot 'accepted.txt'), 'accepted history')
     [IO.File]::WriteAllText((Join-Path $fakeScripts 'fail-run'), '')
+    [IO.File]::WriteAllText($withReferenceRecording, 'first')
     $replacementFailed = $false
     try {
         & (Join-Path $fakeScripts 'create_suite.ps1') `
-            -Suite 'test/with_reference' `
-            -Recording 'first'
+            -Suite 'test/with_reference'
     }
     catch {
         $replacementFailed = $true

@@ -1244,17 +1244,10 @@ isolates its remaining return-confirmation list caller:
 The selected-row adapter uses a 240-by-20, single-line, shrink-only box at the
 caller's Y and five local units to the right of its incoming X. The original
 declarative selected-delay-slot compensation is removed because the symbolic
-eight-byte hook replaces that call and delay slot atomically. Font E2E captures
-50 and 51 later proved that the retained fifth-row-only `-2` Y subtraction made
-`Back to Game Mode Screen` move upward when highlighted. Removing it reduced
-the movement but left the selected raster one output pixel above the ordinary
-raster. The selected helper consumes integer Y coordinates, whose next value
-moves two output pixels; the ordinary callback retains float coordinates.
-Selected therefore keeps the caller's integer Y, while the structural ordinary
-footer subtracts half a local Y unit so both states rasterize on the same output
-rows. The final ss5 red-ink bounds are `x=170..466`, exactly matching NUN5. The
-supplied ss6 Linked Mode state remains unchanged, proving that the selected
-hook does not select the adjacent ordinary-row family.
+eight-byte hook replaces that call and delay slot atomically. The final ss5
+red-ink bounds are `x=170..466`, exactly matching NUN5. The supplied ss6
+Linked Mode state remains unchanged, proving that the selected hook does not
+select the adjacent ordinary-row family.
 
 NUN5 telemetry for the confirmation body is box `(8,8,368,24)`, horizontal
 policy `2` (center), vertical policy `1`, and incoming scale `1`. A first C

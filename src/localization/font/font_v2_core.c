@@ -418,9 +418,9 @@ typedef signed int s32;
 /* Selected helper consumes integer coordinates, so use the nearest integer. */
 #define FONT_CHARACTER_LIST_SELECTED_X_OFFSET 6
 
-/* The ordinary float path needs half a local unit to match selected raster phase. */
+/* The fifth structural row is a separate footer group below the options. */
 #define FONT_CHARACTER_LIST_FOOTER_Y_THRESHOLD 96.0f
-#define FONT_CHARACTER_LIST_ORDINARY_FOOTER_Y_OFFSET (-0.5f)
+#define FONT_CHARACTER_LIST_SELECTED_FOOTER_Y_OFFSET (-2)
 
 /* Single-row layout height for Character Select options. */
 #define FONT_CHARACTER_LIST_LINE_HEIGHT 20.0f
@@ -1357,11 +1357,16 @@ int font_v2_character_selected_adapter(
     const u8 *text
 ) {
     FontV2Session session;
+    s32 selected_y = draw_y;
+
+    if ((float)selected_y > FONT_CHARACTER_LIST_FOOTER_Y_THRESHOLD) {
+        selected_y += FONT_CHARACTER_LIST_SELECTED_FOOTER_Y_OFFSET;
+    }
 
     session.text = text;
     session.box_x =
         (float)draw_x + (float)FONT_CHARACTER_LIST_SELECTED_X_OFFSET;
-    session.box_y = (float)draw_y;
+    session.box_y = (float)selected_y;
     session.box_width = FONT_CHARACTER_LIST_BOX_WIDTH;
     session.box_height = FONT_CHARACTER_LIST_BOX_HEIGHT;
     session.horizontal_alignment = FONT_V2_ALIGN_START;
@@ -1373,7 +1378,7 @@ int font_v2_character_selected_adapter(
     session.callback_arg0 = object;
     session.callback_arg1 =
         (u32)(draw_x + FONT_CHARACTER_LIST_SELECTED_X_OFFSET);
-    session.callback_arg2 = (u32)draw_y;
+    session.callback_arg2 = (u32)selected_y;
     session.callback_arg3 = (u32)text;
 
     return font_v2_adapter_call(&session);
@@ -1388,15 +1393,10 @@ int font_v2_character_unselected_adapter(
     float native_y
 ) {
     FontV2Session session;
-    float draw_y = native_y;
-
-    if (draw_y > FONT_CHARACTER_LIST_FOOTER_Y_THRESHOLD) {
-        draw_y += FONT_CHARACTER_LIST_ORDINARY_FOOTER_Y_OFFSET;
-    }
 
     session.text = text;
     session.box_x = native_x + FONT_CHARACTER_LIST_X_OFFSET;
-    session.box_y = draw_y;
+    session.box_y = native_y;
     session.box_width = FONT_CHARACTER_LIST_BOX_WIDTH;
     session.box_height = FONT_CHARACTER_LIST_BOX_HEIGHT;
     session.horizontal_alignment = FONT_V2_ALIGN_START;

@@ -2091,8 +2091,8 @@ time inside a 400-by-60 two-line box, and draws at local X `24`, Y `12` with
 renderer remains untouched. An exact-guarded task-owned state installed the
 linked trial payload at `0x008F6000`, redirected only the five session-aware
 core hooks plus this body call, and produced the same break and line origins as
-the supplied NUN5 reference. Confidence is high; user acceptance remains a
-separate epic state.
+the supplied NUN5 reference. Confidence is high; user acceptance was not
+established by this evidence.
 
 The later matched OFF-highlight ss1 pair exposed a separate selector-state
 regression in the already shared selected/unselected hooks. The first state

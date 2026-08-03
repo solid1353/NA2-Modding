@@ -1,7 +1,7 @@
 # Font context
 
-Consolidated on 2026-08-01 from the former Font plan and retired layout-parity
-epic. This document contains durable workstream context and concise outcome
+Consolidated on 2026-08-01 from the former Font plan and completed layout-parity
+work. This document contains durable workstream context and concise outcome
 summaries. Exact offsets, call paths, geometry, hashes, provenance, negative
 trials, and per-screen evidence remain in the linked knowledge documents.
 
@@ -107,10 +107,9 @@ padding modes, EU date order, two-digit fields, the signed 99-hour cap, and the
 separate Battle Settings infinity branch. A rejected non-linking hook variant
 caused the Load-screen failure; the corrected linking calls were user-verified.
 
-## Retired layout-parity epic outcomes
+## Layout-parity outcomes
 
-The 2026-07-27 through 2026-07-31 epic is retired and retains no report grids.
-Its accepted or useful outcomes are:
+The accepted or useful outcomes from the 2026-07-27 through 2026-07-31 work are:
 
 - **Character Select return confirmation:** the lower body and top selector
   were isolated and user-verified with matched NUN5 geometry.
@@ -157,11 +156,11 @@ with their provenance records.
 - Runtime-injected output is candidate evidence until its required integrated
   boundary is explicitly verified.
 - Active inputs and runtime artifacts remain task-owned. Confirmed reusable
-  findings are promoted to knowledge; disposable grids, logs, and workers are
-  removed after their evidence is no longer needed.
+  findings are promoted to knowledge; disposable captures, logs, and workers
+  are removed after their evidence is no longer needed.
 
 Current execution commands, PCSX2 ownership, ISO isolation, validation, Git,
-and epic behavior always come from live repository policies, not this context.
+and task behavior always come from live repository policies, not this context.
 
 ## Retired approaches and cleanup
 
@@ -175,7 +174,9 @@ and epic behavior always come from live repository policies, not this context.
   NUN5 use different modal dimensions; NA2 now retains its native positions.
 - Aggregate resident Font blobs and superseded assembly-producing research
   scripts were removed after the composition-time C boundary was proven.
-- Accepted epic grids were deleted after their reusable results were promoted.
+- Superseded manual comparison artifacts were deleted after their reusable
+  results were promoted; maintained screenshot comparison now belongs to E2E
+  tests.
 
 ## Detailed knowledge
 

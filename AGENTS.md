@@ -32,17 +32,6 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   the task until the user receives the final factual handoff. A correction or
   unrelated-state clarification before that handoff must be answered without
   waiving or replacing the still-owed report.
-- Before ending any turn, apply this gate in order:
-  1. If explicitly declared epic work in this chat owes a task grid, visibly
-     send it first. An epic chat owes the grid when the user requested it there
-     or when that chat produced a subtask grid that it has not yet shown. An
-     explicit stop cancels new work, not this delivery.
-  2. If approved Continuous epic work remains actionable and the user has not
-     stopped it, a final response is prohibited. Send intermediate output in
-     commentary and continue. Pending review/testing, a question, or one
-     blocked subtask is not a whole-epic blocker while another approved subtask
-     can proceed.
-  3. Otherwise, end normally.
 - When the user declares discussion, design, planning, or brainstorming mode,
   later requirements remain discussion until the user explicitly authorizes
   execution. If authorization is ambiguous, ask.
@@ -150,7 +139,6 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   explicit verification and approval of the result authorizes selective
   capture-history commits followed by coordinated commits and pushes
   of the implementation and capture history as defined by the guide.
-- `ep`: epic.
 - `sum`: summarize.
 - `eff`: report the current recommended effort without changing it.
 - `sin`: immediately report a rules failure to `Policeman`. `sin` remains the
@@ -158,24 +146,7 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   everything after it is report content. Never reinterpret it as a statement
   about `Policeman` or as a command to change task state. Send every distinct
   `sin` report in the same turn.
-- Outside explicitly declared epic work with an owed task grid, `report` means
-  a factual textual account responsive to the user's wording. Never invent a
-  screenshot-grid obligation from an ordinary report request.
-- For explicitly declared epic work with an owed task grid, `report`, `grid`,
-  or any direct request for that existing grid immediately preempts everything.
-  The next user-visible response must be
-  exactly one of: (1) the actual composed post-change report-grid images, or
-  (2) `Cannot produce report grid: <exact reason>. Missing: <exact post-change
-  input>.` Before using outcome (2), check this task's recorded report state
-  and expected artifact locations; never guess that a grid or input is absent.
-  No status, promise, findings, tool narration, implementation, final answer,
-  or relay may appear first. Do not build, launch, investigate, or substitute
-  source, donor, baseline, pre-fix, savestate-preview, or other input imagery.
-  The obligation belongs to the chat where the user made the request; a later
-  complaint in another chat and another chat's response neither transfer nor
-  satisfy it. If the same message also orders a mistake report to `Policeman`,
-  satisfy the task-report response first and relay the mistake afterward. An
-  explicit stop does not waive an already-requested or produced grid.
+- `report` means a factual textual account responsive to the user's wording.
 - `sw`: resume after the user changed the chat to the recommended effort.
 - `ss`: savestate; `ss<number>`: that numbered savestate slot in the user's
   PCSX2, for example `ss7`.
@@ -352,8 +323,6 @@ Read the matching policy before acting:
   [`docs/policies/modding.md`](docs/policies/modding.md)
 - Disassembly, live-memory analysis, hypotheses, and knowledge preservation:
   [`docs/policies/research.md`](docs/policies/research.md)
-- Screenshot grids and task reports:
-  [`docs/policies/visual_reports.md`](docs/policies/visual_reports.md)
 
 ## Workstream policies
 
@@ -364,9 +333,4 @@ Read the matching policy before acting:
   or `Unknown`. Reading an entry supplies context only; it does not select or
   authorize fixing the bug. Current explicit user instructions override stored
   workstream rules; this file remains universally applicable.
-- Shared sequential/continuous epic behavior is defined in
-  [`docs/workstreams/EPIC_WORKFLOW.md`](docs/workstreams/EPIC_WORKFLOW.md) and
-  applies only to exact work that the user explicitly declares an epic inside
-  a workstream that links it. A workflow link never classifies tasks, stages,
-  screenshots, comparisons, or other artifacts as epic content.
 - `docs/workstreams/README.md` defines the workstream-policy storage boundary.

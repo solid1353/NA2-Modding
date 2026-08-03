@@ -10,22 +10,18 @@ in the shared knowledge base rather than being duplicated here.
 
 ## Documents
 
-- [Architecture, implementation history, deferred work, and retired epic context](context.md)
+- [Architecture, implementation history, and deferred work](context.md)
 - [Confirmed font knowledge and preserved evidence](../../knowledge/localization/font/README.md)
 
 ## Workstream policy
 
-- Apply the [shared epic workflow](../EPIC_WORKFLOW.md) only to Font work that
-  the user explicitly declares an epic.
-- For a user-declared Font epic, broad analysis is already complete. Proceed
-  from the existing findings and repeat epic-wide analysis only when new
+- Broad Font layout analysis is already complete. Proceed from the existing
+  findings and repeat broad analysis only when new
   evidence proves them insufficient or indicates that a broad fix may be
   better than separate subtask fixes.
 - When a Font change reaches a runtime regression boundary, stop before
   runtime testing and tell the user the exact screens, actions, and expected
   unchanged behavior to verify. Do not perform that regression pass for them.
-  In explicitly requested Continuous epic mode, this stop is waived: record
-  the pending regression review and continue to the next subtask.
 - During Font live editing, never attribute unchanged visible output to
   caching. If a requested coordinate or metric change does not visibly move,
   the implementation is wrong: retain the user's current screen, trace forward

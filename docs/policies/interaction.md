@@ -166,11 +166,8 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   or otherwise replaces the earlier action.
 - When asked for an already-produced result or evidence, deliver the actual
   requested content immediately in commentary at the next safe boundary before
-  any unrelated work. A visual report is not delivered by acknowledgment,
-  description, path, link, tool output, or a statement that it exists: the
-  composed grid images themselves must be visibly attached. During Continuous
-  work, resume the active subtask in the same turn after delivery; never use a
-  final response for this intermediate handoff.
+  any unrelated work. Do not substitute an acknowledgment, description, path,
+  link, tool output, or statement that the result exists.
 - When completed, refresh Git, commit/push the intended work, and report the
   result in a final factual handoff before ending. The handoff must make the
   requested outcome, validation, commit, and push state clear enough that the
@@ -181,6 +178,12 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   then provide the still-owed completion report without new mutation. Do not
   offer task removal. Completion ends selected-task state even if the entry
   remains in `TASKS.md`.
+
+## Completed selected-task report
+
+For completed `TASKS.md` work, report files read, files created or modified,
+whether originals remained untouched, scripts and commands used, relevant
+sizes, and uncertainties. This format does not apply to small direct changes.
 
 ## Effort at handoff
 
@@ -202,31 +205,13 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   supplement, merge, or preserve the message in any particular changeset, and
   it does not alter scope, priority, approval, or replacement semantics.
 - `con` resumes current work with scope, effort, progress, and approval intact.
-- `ep` means `epic`.
 - `eff` asks for the current recommended effort and does not change it.
 - `sin` means immediately report a rules failure to `Policeman`. When `sin`
   appears as a direct command token, any following number, label, punctuation,
   or complaint text belongs to the report and cannot cancel or reinterpret
   the command. Send every distinct report in the same turn. Reporting does not
   change design, approval, execution, or stop state.
-- Outside explicitly declared epic work with an owed task grid, `report` means
-  a factual textual account responsive to the user's wording. Never invent a
-  screenshot-grid obligation from an ordinary report request.
-- For explicitly declared epic work with an owed task grid, `report`, `grid`,
-  or a direct request for that existing grid is an immediate response command,
-  not a request to begin producing evidence. The command applies when the user
-  uses `report` or `grid` as an instruction, or otherwise directly asks for
-  delivery. Merely mentioning reports or grids
-  inside a complaint, explanation, allegation, or `sin` report does not create
-  a grid request; never infer that requested action from complaint wording.
-  The next user-visible response is either the actual composed post-change grid
-  or the exact inability statement required by `AGENTS.md`. Before declaring
-  it unavailable, check the current task's recorded report state and expected
-  artifact locations. No other user-visible message or mutating action may
-  precede it. The obligation stays with the chat where the user requested it;
-  another chat cannot satisfy it. When the same message also requests a
-  mistake report to `Policeman`, deliver the task report or inability statement
-  first, then send the independent mistake report.
+- `report` means a factual textual account responsive to the user's wording.
 - `sw` resumes after the user stopped only to switch to the recommended effort;
   it preserves prior approval and does not approve an unapproved plan.
 - `ss` means savestate. `ss<number>` refers to that numbered savestate slot in

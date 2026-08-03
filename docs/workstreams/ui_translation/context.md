@@ -1,7 +1,7 @@
 # UI Translation context
 
 Consolidated on 2026-08-01 from the former workstream plan and completed
-Remaining UI epic. This document is a concise status and architecture overview;
+Remaining UI work. This document is a concise status and architecture overview;
 it does not select work or grant execution authority. Exact offsets, functions,
 donor ranges, negative results, and per-screen evidence live in the linked
 knowledge documents.
@@ -17,14 +17,12 @@ outside this workstream.
 
 ## Current state
 
-- The declared Remaining UI epic is complete.
-- No UI comparison grid or savestate case is awaiting approval.
-- All cases listed under [Retired epic outcomes](#retired-epic-outcomes)
+- The declared Remaining UI work is complete.
+- No UI comparison case is awaiting approval.
+- All cases listed under [Accepted outcomes](#accepted-outcomes)
   were explicitly accepted by the user.
 - The current `TASKS.md` Bugs list contains `UI Translation: long character
   names.` This is context only and is not selected or authorized work.
-- No active epic document exists. A new one is created only when the user
-  explicitly declares another UI Translation epic.
 
 ## Canonical assets and tools
 
@@ -93,14 +91,14 @@ the linked knowledge documents.
 - Normal pulsing differences are capture-phase noise. Semantic mismatch,
   clipping, wrong artwork, ordering, visibility, animation, and placement are
   UI defects.
-- Report grids use exact integrated-build captures. Runtime-injected candidates
-  remain explicitly labeled candidates until reproduced through the normal
-  integrated pipeline.
+- Runtime comparisons use exact integrated-build captures. Runtime-injected
+  candidates remain explicitly labeled candidates until reproduced through the
+  normal integrated pipeline.
 - Savestate pairs and worker media live only under `work/UI translation/` while
-  active. Accepted-case grids, states, worker ISOs, probes, logs, and PCSX2
+  active. Accepted-case captures, states, worker ISOs, probes, logs, and PCSX2
   copies are removed after reusable findings are promoted.
 
-## Retired epic outcomes
+## Accepted outcomes
 
 - Stage Select layout, stage association, thumbnails, labels, Random prompt,
   and footer.
@@ -122,7 +120,7 @@ the linked knowledge documents.
   rank stamps.
 - Battle item substitution doll in slot 4.
 
-The retired epic's explicit acceptance dates were:
+The explicit acceptance dates were:
 
 - 2026-07-26: Cross/Triangle labels, Character Items, Victory winner names,
   Ninja Song footer, and Battle Results screen 2.
@@ -141,8 +139,9 @@ back to disc assets, and broader NUN6 comparison. None is selected work.
   their retained counterparts.
 - Removed the formerly tracked derived CCS blobs after exact source-derivation
   parity was established; Git history remains the recovery path.
-- Removed accepted epic grids and their task-owned runtime evidence after user
-  verification and promotion of reusable findings.
+- Removed superseded manual comparison artifacts and their task-owned runtime
+  evidence after user verification and promotion of reusable findings;
+  maintained screenshot comparison now belongs to E2E tests.
 
 ## Detailed knowledge
 

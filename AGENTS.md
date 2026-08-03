@@ -27,6 +27,11 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   the previous answer was wrong only if the user asks why.
 - While approved work remains actionable, answer every question in commentary
   and resume immediately.
+- Reporting the completed result remains actionable work. Implementation,
+  validation, commit/push, or an intermediate status message does not complete
+  the task until the user receives the final factual handoff. A correction or
+  unrelated-state clarification before that handoff must be answered without
+  waiving or replacing the still-owed report.
 - Before ending any turn, apply this gate in order:
   1. If explicitly declared epic work in this chat owes a task grid, visibly
      send it first. An epic chat owes the grid when the user requested it there

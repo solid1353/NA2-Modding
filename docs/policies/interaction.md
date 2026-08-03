@@ -171,9 +171,16 @@ Next response: short plan + effort recommendation + needed user inputs + approva
   composed grid images themselves must be visibly attached. During Continuous
   work, resume the active subtask in the same turn after delivery; never use a
   final response for this intermediate handoff.
-- When completed, refresh Git, commit/push the intended work, report the result,
-  and do not offer task removal. Completion ends selected-task state even if
-  the entry remains in `TASKS.md`.
+- When completed, refresh Git, commit/push the intended work, and report the
+  result in a final factual handoff before ending. The handoff must make the
+  requested outcome, validation, commit, and push state clear enough that the
+  user can tell whether the job finished. Intermediate commentary, a status
+  promise, or a later response that only answers a correction does not satisfy
+  this obligation. If a correction or unrelated-state clarification arrives
+  after implementation or Git delivery but before the handoff, answer it and
+  then provide the still-owed completion report without new mutation. Do not
+  offer task removal. Completion ends selected-task state even if the entry
+  remains in `TASKS.md`.
 
 ## Effort at handoff
 

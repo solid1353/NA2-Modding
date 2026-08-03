@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import dataclasses
+import struct
 import tempfile
 import unittest
 from pathlib import Path
 
 from na228_builder.composer import resolve_symbolic_patches
 from na228_builder.payload_builder.builder import build_resident_payload, load_config
+from na228_builder.payload_builder.integration import build_integration_patches
 from na228_builder.payload_builder.operations import (
     PayloadFragment,
     PayloadRelocation,
@@ -99,13 +101,78 @@ class PayloadBuilderTests(unittest.TestCase):
     def test_rejects_payload_beyond_the_proven_envelope(self) -> None:
         config = load_config()
         constrained = dataclasses.replace(
-            config, maximum_end=config.load_base + config.minimum_data_offset + 8
+            config,
+            maximum_end=config.load_base + config.minimum_data_offset + 8,
+            reservation_end=config.load_base + config.minimum_data_offset + 8,
         )
         with self.assertRaisesRegex(ValueError, "reservation envelope"):
             build_resident_payload(
                 (PayloadFragment("a", "large", "data", 4, b"x" * 32),),
                 config=constrained,
             )
+
+    def test_integration_boundary_is_independent_of_payload_size(self) -> None:
+        config = load_config()
+        small = build_resident_payload(
+            (PayloadFragment("a", "small", "data", 4, b"x" * 16),),
+            config=config,
+        )
+        large = build_resident_payload(
+            (PayloadFragment("a", "large", "data", 4, b"x" * 48),),
+            config=config,
+        )
+        self.assertNotEqual(small.memory_end, large.memory_end)
+
+        clean = bytearray(0x507640)
+        struct.pack_into("<H", clean, 0x2C, 5)
+        old_final = struct.pack(
+            "<8I",
+            1,
+            0x507480,
+            config.old_memory_boundary,
+            config.old_memory_boundary,
+            0,
+            0,
+            6,
+            0x10,
+        )
+        clean[0xB4:0xF4] = old_final + b"\0" * 32
+        for offset, word in (
+            (0x220, 0x3C03008E),
+            (0x228, 0x2463D080),
+            (0x2D0, 0x3C04008E),
+            (0x2D8, 0x2484D080),
+            (0x1885C, 0x3C17008E),
+            (0x18860, 0x26F7D080),
+            (0x4D6908, 0x3C03008E),
+            (0x4D690C, 0x2463D080),
+        ):
+            struct.pack_into("<I", clean, offset, word)
+        struct.pack_into("<I", clean, 0x2F79F4, config.old_memory_boundary)
+        struct.pack_into("<I", clean, 0x50763C, config.old_memory_boundary)
+        struct.pack_into(
+            "<I",
+            clean,
+            config.hook_file_offset,
+            0x0C000000 | (config.original_constructor_function >> 2),
+        )
+
+        small_patches = build_integration_patches(
+            small,
+            config=config,
+            boot_path="SLPS_258.37",
+            clean_boot=bytes(clean),
+        )
+        large_patches = build_integration_patches(
+            large,
+            config=config,
+            boot_path="SLPS_258.37",
+            clean_boot=bytes(clean),
+        )
+        self.assertEqual(
+            [(patch.mapping_id, patch.replacement) for patch in small_patches],
+            [(patch.mapping_id, patch.replacement) for patch in large_patches],
+        )
 
     def test_development_injection_range_is_reserved_before_payload(self) -> None:
         config = load_config()

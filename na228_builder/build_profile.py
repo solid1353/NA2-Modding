@@ -429,8 +429,9 @@ def apply_profile_modules(
     owners: dict[str, str],
     insertions: dict[str, bytes],
     insertion_owners: dict[str, str],
+    payload_padding: int = 0,
 ) -> tuple[list[dict[str, object]], dict[str, object] | None]:
-    pipeline = prepare_module_pipeline(profile)
+    pipeline = prepare_module_pipeline(profile, payload_padding=payload_padding)
     ordered_modules = pipeline.ordered_modules
     import_plans = pipeline.import_plans
     string_plans = pipeline.string_plans
@@ -773,6 +774,7 @@ def compose_profile_candidate(
     *,
     source_iso: Path,
     profile: Profile,
+    payload_padding: int = 0,
 ) -> ProfileCompositionResult:
     """Compose and conflict-check one profile without staging an image."""
     source_iso = source_iso.resolve()
@@ -791,6 +793,7 @@ def compose_profile_candidate(
         owners=owners,
         insertions=insertions,
         insertion_owners=insertion_owners,
+        payload_padding=payload_padding,
     )
     composition = compose_assembly_plan(
         source=source,
@@ -815,6 +818,7 @@ def build_profile_candidate(
     profile: Profile,
     workspace: Path,
     profile_log_directory: Path | None,
+    payload_padding: int = 0,
 ) -> ProfileBuildResult:
     """Compose and verify one staged profile image without promoting it."""
     source_iso = source_iso.resolve()
@@ -827,7 +831,11 @@ def build_profile_candidate(
     if profile_log_directory is not None and profile_log_directory.exists():
         raise FileExistsError(profile_log_directory)
 
-    composed = compose_profile_candidate(source_iso=source_iso, profile=profile)
+    composed = compose_profile_candidate(
+        source_iso=source_iso,
+        profile=profile,
+        payload_padding=payload_padding,
+    )
     profile_results = list(composed.results)
     payload_result = composed.payload_result
     composition = composed.composition
@@ -946,6 +954,12 @@ def main() -> int:
     parser.add_argument("--profile", required=True, type=Path)
     parser.add_argument("--profile-log-directory", type=Path)
     parser.add_argument(
+        "--payload-padding",
+        type=int,
+        default=0,
+        help="Test-only aligned resident-payload padding in bytes.",
+    )
+    parser.add_argument(
         "--compose-only",
         action="store_true",
         help="Compose and conflict-check the profile without staging an ISO.",
@@ -960,7 +974,11 @@ def main() -> int:
     profile_path = args.profile if args.profile.is_absolute() else workspace / args.profile
     profile = load_profile(profile_path, workspace)
     if args.compose_only:
-        composed = compose_profile_candidate(source_iso=source_iso, profile=profile)
+        composed = compose_profile_candidate(
+            source_iso=source_iso,
+            profile=profile,
+            payload_padding=args.payload_padding,
+        )
         print_profile_summary(profile, composed.results, composed.payload_result)
         plan = composed.composition.plan
         print(f"  identity ({len(composed.composition.identity_edits)} edits)")
@@ -993,6 +1011,7 @@ def main() -> int:
         profile=profile,
         workspace=workspace,
         profile_log_directory=profile_log_directory,
+        payload_padding=args.payload_padding,
     )
     profile_results = build.results
     payload_result = build.payload_result

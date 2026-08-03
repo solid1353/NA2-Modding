@@ -62,7 +62,11 @@ class BuildProfileCliTests(unittest.TestCase):
             ):
                 self.assertEqual(build_profile.main(), 0)
 
-            compose.assert_called_once_with(source_iso=source_iso, profile=profile)
+            compose.assert_called_once_with(
+                source_iso=source_iso,
+                profile=profile,
+                payload_padding=0,
+            )
             build.assert_not_called()
             self.assertIn("identity (1 edits)", output.getvalue())
             self.assertIn(

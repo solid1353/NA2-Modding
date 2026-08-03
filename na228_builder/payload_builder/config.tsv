@@ -4,6 +4,7 @@ load_base	0x008F3D00
 entry_offset	0x40
 minimum_data_offset	0x100
 maximum_end	0x00940100
+reservation_end	0x00940100
 loader_function	0x001BE7F0
 original_constructor_function	0x001BDA50
 hook_file_offset	0x000E1020

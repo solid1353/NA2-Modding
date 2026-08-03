@@ -28,10 +28,19 @@ their symbolic game-file references after linking, and `binary_patcher` applies
 the resulting concrete guarded edits. `image_assembler` receives only the
 finished insertion and remains unaware of the payload's internal format.
 
-The configured maximum end is the previously runtime-tested two-file
-reservation boundary. The actual heap boundary follows the linked payload's
-aligned end, so the current compact build returns unused capacity to the game
-while future contributions fail before exceeding the proven envelope.
+The configured `reservation_end` is the previously runtime-tested two-file
+boundary `0x00940100`; `maximum_end` remains its safety ceiling. The linked
+payload records its actual aligned `memory_end`, but the boot ELF program
+headers and every game heap-boundary constant use the stable reservation end.
+Unused capacity therefore remains reserved, and payload growth within the
+envelope cannot relocate the game heap. Contributions fail before crossing the
+reservation.
+
+Screenshot Test builds expose a test-only aligned `payload_padding` input. It
+is fingerprinted by preflight and contributes one final zero-filled data
+fragment without changing feature sources. The `font/heap_stability` E2E suite
+uses 32 bytes of padding, restores the normal build, and requires every
+non-ignored replay PNG to remain byte-identical.
 
 The configuration also declares the development-only injection reservation
 `0x008F0000-0x008F3D00` immediately below the fixed payload load base. It is

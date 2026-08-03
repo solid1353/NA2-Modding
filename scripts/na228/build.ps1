@@ -3,7 +3,8 @@ param(
     [switch]$ManualTestOnly,
     [switch]$ScreenshotTestOnly,
     [switch]$ComposeOnly,
-    [string]$WorkerOutputIso
+    [string]$WorkerOutputIso,
+    [ValidateRange(0, 65536)][int]$PayloadPadding = 0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -11,6 +12,10 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\build_log.ps1')
 . (Join-Path $PSScriptRoot 'worker_paths.ps1')
 $paths = Get-Na2Paths
+
+if ($PayloadPadding -ne 0 -and -not $ScreenshotTestOnly) {
+    throw '-PayloadPadding is test-only and requires -ScreenshotTestOnly.'
+}
 
 if (
     @(
@@ -56,6 +61,7 @@ function Invoke-Na2BuildPreflight {
         [Parameter(Mandatory = $true)][string]$OutputIso,
         [Parameter(Mandatory = $true)][string]$Profile,
         [Parameter(Mandatory = $true)][string]$Receipt,
+        [Parameter(Mandatory = $true)][int]$PayloadPadding,
         [AllowNull()][string]$ExpectedFingerprint,
         [Parameter(Mandatory = $true)][string]$Repository
     )
@@ -69,6 +75,7 @@ function Invoke-Na2BuildPreflight {
         '--output', $OutputIso
         '--profile', $Profile
         '--receipt', $Receipt
+        '--payload-padding', [string]$PayloadPadding
     )
     if ($Command -eq 'record') {
         if ([string]::IsNullOrWhiteSpace($ExpectedFingerprint)) {
@@ -218,6 +225,7 @@ if ($ComposeOnly) {
         '--source', $inputIso
         '--profile', $profile
         '--compose-only'
+        '--payload-padding', [string]$PayloadPadding
     )
     Write-Host (
         '[na228] Compose-only: derive and conflict-check the full pinned profile; ' +
@@ -304,6 +312,7 @@ if ($ManualTestOnly -or $ScreenshotTestOnly -or $null -ne $workerBuild) {
         '--output', $isolatedOutputIso
         '--profile', $profile
         '--profile-log-directory', $isolatedProfileLogDirectory
+        '--payload-padding', [string]$PayloadPadding
     )
 
     $isolatedLabel = switch ($isolatedKind) {
@@ -319,6 +328,7 @@ if ($ManualTestOnly -or $ScreenshotTestOnly -or $null -ne $workerBuild) {
             -OutputIso $isolatedOutputIso `
             -Profile $profile `
             -Receipt $isolatedReceiptPath `
+            -PayloadPadding $PayloadPadding `
             -Repository $paths.repository
     }
     catch {
@@ -481,6 +491,7 @@ if ($ManualTestOnly -or $ScreenshotTestOnly -or $null -ne $workerBuild) {
                     -OutputIso $isolatedOutputIso `
                     -Profile $profile `
                     -Receipt $isolatedReceiptPath `
+                    -PayloadPadding $PayloadPadding `
                     -ExpectedFingerprint $isolatedPreflightFingerprint `
                     -Repository $paths.repository
                 if ($isolatedReceiptResult.status -eq 'written') {
@@ -573,6 +584,7 @@ try {
         -OutputIso $resolvedLatestIso `
         -Profile $profile `
         -Receipt $latestReceiptPath `
+        -PayloadPadding $PayloadPadding `
         -Repository $paths.repository
 }
 catch {
@@ -694,6 +706,7 @@ try {
                 -OutputIso $resolvedLatestIso `
                 -Profile $profile `
                 -Receipt $latestReceiptPath `
+                -PayloadPadding $PayloadPadding `
                 -ExpectedFingerprint $preflightFingerprint `
                 -Repository $paths.repository
             if ($receiptResult.status -eq 'written') {

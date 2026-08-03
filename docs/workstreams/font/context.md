@@ -26,6 +26,10 @@ one cannot silently invalidate the other.
 - The native 14x20 NUN5-derived font is accepted and enabled.
 - The shared v2 C renderer/session architecture is the retained behavioral
   baseline; the July v1 renderer is retired.
+- The resident payload now uses a fixed `0x00940100` heap reservation boundary.
+  Payload-size changes within that envelope no longer relocate the game heap;
+  the `font/heap_stability` E2E suite proves normal and `+32`-byte builds produce
+  identical non-ignored screenshots.
 - Controls, Command Chart, Pause Controls, Character Select option/modal paths,
   Collection exit confirmation, Movie lists, Jutsu selector, Settings page
   templates, Ninja Song numeric output, and Save/Load numeric formatting have

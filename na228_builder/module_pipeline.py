@@ -13,7 +13,11 @@ from .modules import runtime_injector as runtime_injector_module
 from .modules.binary_patcher import engine as binary_patcher_module
 from .modules.string_patcher import engine as string_patcher_module
 from .payload_builder import builder as payload_builder_module
-from .payload_builder.operations import ResidentPayloadBuild, ResolvedPatch
+from .payload_builder.operations import (
+    PayloadFragment,
+    ResidentPayloadBuild,
+    ResolvedPatch,
+)
 from .profile import Profile, ProfileModule
 
 
@@ -74,8 +78,14 @@ def _bind_string_consumer(
 
 def prepare_module_pipeline(
     profile: Profile,
+    *,
+    payload_padding: int = 0,
 ) -> PreparedModulePipeline:
     """Prepare artifacts and link all shared payload contributions once."""
+    if payload_padding < 0 or payload_padding > 0x10000 or payload_padding & 0xF:
+        raise ValueError(
+            "Payload padding must be a 16-byte multiple from 0 through 65536"
+        )
     ordered_modules = resolve_module_order(profile.modules)
     if any(module.module == "translation_importer" for module in ordered_modules):
         if "na2" not in profile.roots:
@@ -155,6 +165,16 @@ def prepare_module_pipeline(
         for declaration in runtime_injection_declarations.values()
         for fragment in declaration.payload_fragments
     )
+    if payload_padding:
+        fragments += (
+            PayloadFragment(
+                owner="zzzz.e2e",
+                symbol="zzzz.e2e.payload_padding",
+                kind="data",
+                alignment=16,
+                payload=b"\0" * payload_padding,
+            ),
+        )
     symbolic_patches = tuple(
         patch
         for preparation in preparations

@@ -81,7 +81,7 @@ def build_integration_patches(
 ) -> tuple[ResolvedPatch, ...]:
     if build.output_path != config.output_path or build.load_base != config.load_base:
         raise ValueError("Resident build does not match its integration configuration")
-    if build.memory_end > config.maximum_end:
+    if build.memory_end > config.reservation_end:
         raise ValueError("Resident build exceeds the configured integration envelope")
     filename = Path(build.output_path).name.encode("ascii") + b"\0"
     if len(filename) != 8:
@@ -118,12 +118,20 @@ def build_integration_patches(
         build.load_base,
         build.load_base,
         0,
-        build.memory_end - build.load_base,
+        config.reservation_end - build.load_base,
         7,
         0x80,
     )
     new_final = struct.pack(
-        "<8I", 1, 0x507480, build.memory_end, build.memory_end, 0, 0, 6, 0x10
+        "<8I",
+        1,
+        0x507480,
+        config.reservation_end,
+        config.reservation_end,
+        0,
+        0,
+        6,
+        0x10,
     )
     patches.append(
         _guarded_patch(
@@ -134,12 +142,12 @@ def build_integration_patches(
             replacement=reservation + new_final,
             mapping_id="ELF-RP-PHEADERS",
             kind="memory_layout",
-            reason="Reserve the exact linked resident-payload range.",
+            reason="Reserve the stable resident-payload envelope.",
         )
     )
 
-    high = (build.memory_end + 0x8000) >> 16
-    low = build.memory_end & 0xFFFF
+    high = (config.reservation_end + 0x8000) >> 16
+    low = config.reservation_end & 0xFFFF
     boundary_words = (
         (0x220, 0x3C03008E, _lui(3, high), "ELF-RP-BOUNDARY-1H"),
         (0x228, 0x2463D080, _addiu(3, 3, low), "ELF-RP-BOUNDARY-1L"),
@@ -160,7 +168,7 @@ def build_integration_patches(
                 replacement=struct.pack("<I", replacement_word),
                 mapping_id=mapping_id,
                 kind="memory_layout",
-                reason="Move a hardcoded resident-memory boundary to the linked payload end.",
+                reason="Move a hardcoded resident-memory boundary to the stable reservation end.",
             )
         )
     for offset, mapping_id, reason in (
@@ -173,7 +181,7 @@ def build_integration_patches(
                 path=boot_path,
                 offset=offset,
                 expected=struct.pack("<I", config.old_memory_boundary),
-                replacement=struct.pack("<I", build.memory_end),
+                replacement=struct.pack("<I", config.reservation_end),
                 mapping_id=mapping_id,
                 kind="memory_layout",
                 reason=reason,

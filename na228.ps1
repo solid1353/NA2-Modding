@@ -192,11 +192,12 @@ if ($mode -eq 'test') {
     }
     else {
         @(
-            Get-ChildItem -LiteralPath $suiteRoot -Filter 'input.p2m2' -File -Recurse -ErrorAction SilentlyContinue |
+            Get-ChildItem -LiteralPath $suiteRoot -File -Recurse -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -in @('input.p2m2', 'stability.json') } |
                 ForEach-Object {
                     [IO.Path]::GetRelativePath($suiteRoot, $_.DirectoryName).Replace('\', '/')
                 } |
-                Sort-Object
+                Sort-Object -Unique
         )
     }
     $suites = @($suites)
@@ -213,10 +214,10 @@ if ($mode -eq 'test') {
         $result = @(
             $runOutput | Where-Object {
                 $_.PSObject.Properties.Name -contains 'Status' -and
-                $_.Status -ceq 'captured'
+                $_.Status -cin @('captured', 'verified')
             }
         ) | Select-Object -Last 1
-        if ($null -eq $result -or $result.Status -cne 'captured') {
+        if ($null -eq $result -or $result.Status -cnotin @('captured', 'verified')) {
             throw "E2E suite returned no valid result: $($suites[$index])"
         }
     }

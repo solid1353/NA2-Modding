@@ -23,6 +23,7 @@ CONFIG_KEYS = {
     "entry_offset",
     "minimum_data_offset",
     "maximum_end",
+    "reservation_end",
     "loader_function",
     "original_constructor_function",
     "hook_file_offset",
@@ -44,6 +45,7 @@ class ResidentPayloadConfig:
     entry_offset: int
     minimum_data_offset: int
     maximum_end: int
+    reservation_end: int
     loader_function: int
     original_constructor_function: int
     hook_file_offset: int
@@ -107,6 +109,11 @@ def load_config(path: Path | None = None) -> ResidentPayloadConfig:
         raise ValueError("resident-payload minimum data offset overlaps its entrypoint")
     if config.maximum_end <= config.load_base:
         raise ValueError("resident-payload maximum end must exceed its load base")
+    if not config.load_base < config.reservation_end <= config.maximum_end:
+        raise ValueError(
+            "resident-payload reservation end must exceed its load base and "
+            "remain inside the proven maximum envelope"
+        )
     if not (
         config.old_memory_boundary
         <= config.development_injection_base
@@ -188,10 +195,10 @@ def build_resident_payload(
         cursor += len(fragment.payload)
     output_size = _align(cursor, 0x10)
     memory_end = config.load_base + output_size
-    if memory_end > config.maximum_end:
+    if memory_end > config.reservation_end:
         raise ValueError(
             "Resident payload exceeds the proven reservation envelope: "
-            f"0x{memory_end:X} > 0x{config.maximum_end:X}"
+            f"0x{memory_end:X} > 0x{config.reservation_end:X}"
         )
 
     addresses = {
@@ -265,6 +272,7 @@ def build_resident_payload(
         "load_base": f"0x{config.load_base:X}",
         "entrypoint": f"0x{config.load_base + config.entry_offset:X}",
         "memory_end": f"0x{memory_end:X}",
+        "reservation_end": f"0x{config.reservation_end:X}",
         "maximum_end": f"0x{config.maximum_end:X}",
         "fragment_count": len(ordered),
         "init_count": len(init_symbols),

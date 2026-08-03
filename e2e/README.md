@@ -15,6 +15,7 @@ From the project root:
 ```powershell
 na228 test
 na228 test font/main -b
+na228 test font/heap_stability
 na228 test font/load_save -b
 na228 test new <recording>
 na228 test new <recording> font/character_select -r nun5
@@ -25,6 +26,13 @@ na228 test reference font/main -r nun5 -f
 `na228 test` runs every suite against the existing Screenshot Test ISO. `-b`
 builds Screenshot Test once before the selected suite, or once before the first
 suite when all suites run.
+
+`font/heap_stability` is a two-build determinism suite. It builds and replays a
+test-only 32-byte resident-payload padding variant, rebuilds and replays the
+normal profile, and requires every raw PNG to be byte-identical. The padding is
+part of the build fingerprint, does not edit feature inputs, and the normal
+Screenshot Test ISO is restored before comparison. This suite publishes no
+alternate captures or accepted baseline.
 
 `test new` imports a recording from Workshop's shared input-recording folder.
 Without `-r`, it creates a reference-less suite. `-r <reference>` replays the

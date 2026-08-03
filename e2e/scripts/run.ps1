@@ -10,6 +10,11 @@ $context = Get-VisualRegressionContext -Suite $Suite
 if (-not (Test-Path -LiteralPath $context.SuiteRoot -PathType Container)) {
     throw "Visual-regression suite does not exist: $Suite"
 }
+$stabilityPath = Join-Path $context.SuiteRoot 'stability.json'
+if (Test-Path -LiteralPath $stabilityPath -PathType Leaf) {
+    & (Join-Path $PSScriptRoot 'stability.ps1') -Suite $Suite
+    return
+}
 $recordingPath = Join-Path $context.SuiteRoot 'input.p2m2'
 if (-not (Test-Path -LiteralPath $recordingPath -PathType Leaf)) {
     throw "Suite recording does not exist: $recordingPath"

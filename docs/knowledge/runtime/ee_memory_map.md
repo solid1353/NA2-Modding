@@ -44,7 +44,7 @@ indexes, and internal pointer tables are unused by the current NA2 design. See
 [`external_string_payload.md`](../localization/external_string_payload.md) for the
 decompilation and integration evidence.
 
-The implemented compact architecture therefore:
+The original compact-boundary architecture therefore:
 
 1. replaces the whole donor and separate bootstrap with one `0x720`-byte
    `228.BIN` at `0x008F3D00`;
@@ -59,6 +59,35 @@ The compact layout is structurally and unit validated but had not yet received
 matched runtime captures when this map was updated. The table below therefore
 continues to describe the measured two-file Current build, not the new compact
 one-file reservation.
+
+### Stable reservation update (2026-08-03)
+
+The exact linked payload end is no longer the game heap boundary. The current
+`18,512`-byte payload occupies `0x008F3D00-0x008F8550`, while the boot ELF keeps
+the structural reservation fixed through `0x00940100`; the allocator user base
+therefore remains `0x00940120`. This gives up `0x47BB0` bytes (293,808 bytes) of
+the compact build's reclaimed heap, but reuses the previously runtime-tested
+two-file boundary and prevents ordinary payload growth from perturbing global
+game state.
+
+This change followed a matched size-only experiment. Adding one 32-byte final
+data fragment moved the former compact heap user base from `0x008F8570` to
+`0x008F8590`. The allocator list eventually selected different reuse layouts;
+VIF/GIF packet addresses moved and the EE wrote slightly different transform
+matrix floats. VU1 microcode and GS local memory remained byte-identical, but
+the changed XYZ and perspective ST values altered character and pedestal
+rasterization in Font captures 10 and 19. The exact game-engine dependency
+between heap layout and matrix inputs was not isolated because a stable
+reservation removes it from the build-to-build testing contract.
+
+The permanent `font/heap_stability` E2E suite builds a fingerprinted 32-byte
+padding variant first, rebuilds the normal profile in `finally`, and compares
+raw replay PNG hashes without publishing an alternate baseline. Its first
+complete run proved all 58 non-ignored `font/main` captures byte-identical; the
+seven established volatile save-data captures in that suite's `ignore.txt`
+remain excluded. Detailed paired states, GS/VU comparisons, heap reports, and
+the original probe build record are retained under
+`work/Font 3/investigation/heap-boundary-tail-probe/`.
 
 Direct inline patching alone is not an equivalent full-string alternative.
 The selected inline NA2 slots are the reason shortening fallbacks exist; the
@@ -77,9 +106,8 @@ end-exclusive.
 | `0x00607380-0x006B3F00` | `0xACB80` | Zero-filled tail of the resident ELF load segment: BSS, allocator globals, and other mutable/static runtime storage. | Resident and occupied; zero at load does not mean free. |
 | `0x006B3F00-0x008DD080` | `0x229180` | Reused MWo3 overlay window for `BTL.BIN`, `ADV.BIN`, and `ETC.BIN`. Contents change with phase. | Never a global fixed injection range. Phase-only use requires a proven overlay/state guard. |
 | `0x008DD080-0x008F3D00` | `0x16C80` | Current-only safety gap above the maximum overlay end. Zero and hash-stable in all eight Current captures. | 93,312-byte persistent fixed candidate while the structural reservation remains active. |
-| `0x008F3D00-0x00924B00` | `0x30E00` | Current generated `TEXTENG.BIN`; hash-stable in all Current captures. | Occupied resident data. |
-| `0x00924B00-0x00940000` | `0x1B500` | Unused portion of the current TEXT envelope. Zero and hash-stable in all Current captures. | 111,872-byte persistent fixed candidate only if a shared layout prevents later TEXT growth. |
-| `0x00940000-0x00940100` | `0x100` | Current generated `MOD.BIN`; hash-stable in all Current captures. | Occupied resident code/data. |
+| `0x008F3D00-0x008F8550` | `0x4850` | Current compact `228.BIN`; the exact end changes as linked resident fragments change. | Occupied resident code/data. |
+| `0x008F8550-0x00940100` | `0x47BB0` | Unused portion of the stable resident-payload envelope for the current 18,512-byte build. | Reserved for future linked payload growth; never use as heap or an independent fixed cave. |
 | `0x00940100-0x00940110` | `0x10` | Alignment before the Current heap base sentinel. Vanilla has the analogous padding at `0x008DD080-0x008DD090`. | Reserve for allocator/system alignment; do not use. |
 | `0x00940110-0x01FF6000` | `0x16B5EF0` | Current game allocator arena including its two sentinels. Vanilla starts at `0x008DD090` and spans `0x1718F70`. | Dynamic allocation only; fixed addresses are unsafe. |
 | `0x01FF6000-0x02000000` | `0xA000` | High-memory system/stack working tail outside the game allocator. It was nonzero and changed across states. | Protected; not an injection cave. |

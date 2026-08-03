@@ -2474,3 +2474,29 @@ also retains `character-index_NA228.png`; the user reported no Font defect on
 the Characters index, so it remains reference-only. Synchronized final-red
 font2 cases 1-7 cover Sakura and legacy-character variants plus Movie without a
 large Font defect; later desynchronized cases are excluded from evidence.
+
+## 2026-08-03 stable heap boundary and screenshot determinism
+
+A 32-byte zero-filled tail fragment proved that the former exact-end payload
+reservation made unrelated Font regression captures depend on resident code
+size. The normal 18,512-byte payload ended at `0x008F8550` and produced heap
+user base `0x008F8570`; the 18,544-byte probe ended at `0x008F8570` and moved
+the user base to `0x008F8590`. Captures 10 and 19 changed only on the 3D
+character and pedestal. GS local memory and textures were identical, while EE
+render packets, transform-matrix floats, and VU1 XYZ/ST results differed.
+
+The Font renderer was not on this causal path. Heap relocation eventually
+changed allocator reuse and the matrix inputs written by the game before VU1;
+the exact address-sensitive engine dependency remains unnamed. The systematic
+fix is instead in `payload_builder`: `228.BIN` retains its real linked
+`memory_end`, while all boot-ELF program headers and heap-boundary constants use
+stable `reservation_end = 0x00940100`.
+
+The maintained `font/heap_stability` E2E suite fingerprints a test-only
+32-byte payload-padding build, replays it, restores and replays the normal
+build, and compares raw PNG hashes without publishing alternate captures. The
+verified initial run matched all 58 non-ignored `font/main` screenshots byte
+for byte. Seven volatile save-data slots remain governed by the base suite's
+existing `ignore.txt`. Reusable probe evidence and comparison scripts are under
+`work/Font 3/investigation/heap-boundary-tail-probe/` and
+`work/Font 3/investigation/stable-boundary-ab/`.

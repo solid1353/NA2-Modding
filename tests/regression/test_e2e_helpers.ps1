@@ -234,6 +234,29 @@ Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite
             (Get-Item -LiteralPath $firstIgnore).Length -eq 0
         ) `
         -Message 'Suite creation did not generate an empty ignore.txt.'
+    $firstSuiteRoot = Split-Path $firstIgnore
+    $firstCaptureRoot = Join-Path $fakeRepository 'e2e\captures\test\no_reference'
+    [IO.File]::WriteAllText($firstIgnore, "1`n")
+    [IO.File]::WriteAllText((Join-Path $firstSuiteRoot 'stale.txt'), 'stale suite data')
+    [void](New-Item -ItemType Directory -Path (
+        Join-Path $firstCaptureRoot 'screenshots'
+    ) -Force)
+    [IO.File]::WriteAllText(
+        (Join-Path $firstCaptureRoot 'screenshots\001_b_current.png'),
+        'stale capture data'
+    )
+    & (Join-Path $fakeScripts 'new_suite.ps1') `
+        -Suite 'test/no_reference' `
+        -Recording 'second'
+    Assert-E2eHelperTest `
+        -Condition (
+            [IO.File]::ReadAllText((Join-Path $firstSuiteRoot 'input.p2m2')) -ceq 'second' -and
+            (Get-Item -LiteralPath $firstIgnore).Length -eq 0 -and
+            -not (Test-Path -LiteralPath (Join-Path $firstSuiteRoot 'stale.txt')) -and
+            (Test-Path -LiteralPath $firstCaptureRoot -PathType Container) -and
+            @(Get-ChildItem -LiteralPath $firstCaptureRoot -Recurse -Force).Count -eq 0
+        ) `
+        -Message 'Existing suite definition or capture history was not completely replaced.'
     & (Join-Path $fakeScripts 'new_suite.ps1') `
         -Suite 'test/with_reference' `
         -Recording 'second.p2m2' `
@@ -241,12 +264,13 @@ Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite
     $newSuiteCalls = @(Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt'))
     Assert-E2eHelperTest `
         -Condition (
-            $newSuiteCalls.Count -eq 3 -and
+            $newSuiteCalls.Count -eq 4 -and
             $newSuiteCalls[0] -ceq 'run suite=test/no_reference' -and
-            $newSuiteCalls[1] -ceq 'reference suite=test/with_reference game=nun5' -and
-            $newSuiteCalls[2] -ceq 'run suite=test/with_reference'
+            $newSuiteCalls[1] -ceq 'run suite=test/no_reference' -and
+            $newSuiteCalls[2] -ceq 'reference suite=test/with_reference game=nun5' -and
+            $newSuiteCalls[3] -ceq 'run suite=test/with_reference'
         ) `
-        -Message 'Suite creation did not run every suite or order optional reference capture first.'
+        -Message 'Suite creation or replacement did not order optional reference capture before the mandatory run.'
 
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $testRoot
     Write-Host 'E2E helper tests passed.' -ForegroundColor Green

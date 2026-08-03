@@ -246,8 +246,8 @@ print(json.dumps(result))
         -Condition ($helpText -match '(?m)^\s*na228 test \[suite\]\s+Run unit tests; prepare and validate normal/padded E2E Test ISOs; replay and compare all or one E2E suite and update captures$') `
         -Message 'Root help omitted the complete one-command E2E pipeline.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test new <suite> <recording> \[game\]') `
-        -Message 'Root help omitted suite creation with an optional reference game.'
+        -Condition ($helpText -match '(?m)^\s*na228 test new <suite> <recording> \[game\]\s+Create or replace a suite, optionally capture its reference, then run it$') `
+        -Message 'Root help omitted suite replacement with an optional reference game.'
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 test reference\b') `
         -Message 'Root help still exposes the retired reference command.'

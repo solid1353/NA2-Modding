@@ -46,11 +46,12 @@ serial-wide GameSettings file can select `NA v2.28 - E2E Test.ps2` and
 only those CRC sections; the one-time card files are not managed by the test
 pipeline.
 
-`test new` copies `<recording>.p2m2` from Workshop's shared input-recording
-folder into `suites/<suite>/input.p2m2`, creates an empty `ignore.txt`,
-optionally captures `_a_reference` screenshots from `[game]`, and always runs
-the new suite to publish its current screenshots. There is no separate
-reference command.
+`test new` creates or completely replaces the named suite. It copies
+`<recording>.p2m2` from Workshop's shared input-recording folder into
+`suites/<suite>/input.p2m2`, resets `ignore.txt` to empty, and clears all old
+capture history for that suite. It then optionally captures `_a_reference`
+screenshots from `[game]` and always runs the suite to publish its new current
+screenshots. There is no separate reference command.
 
 ## Layout
 

@@ -418,6 +418,10 @@ typedef signed int s32;
 /* Selected helper consumes integer coordinates, so use the nearest integer. */
 #define FONT_CHARACTER_LIST_SELECTED_X_OFFSET 6
 
+/* The ordinary float path needs half a local unit to match selected raster phase. */
+#define FONT_CHARACTER_LIST_FOOTER_Y_THRESHOLD 96.0f
+#define FONT_CHARACTER_LIST_ORDINARY_FOOTER_Y_OFFSET (-0.5f)
+
 /* Single-row layout height for Character Select options. */
 #define FONT_CHARACTER_LIST_LINE_HEIGHT 20.0f
 
@@ -1384,10 +1388,15 @@ int font_v2_character_unselected_adapter(
     float native_y
 ) {
     FontV2Session session;
+    float draw_y = native_y;
+
+    if (draw_y > FONT_CHARACTER_LIST_FOOTER_Y_THRESHOLD) {
+        draw_y += FONT_CHARACTER_LIST_ORDINARY_FOOTER_Y_OFFSET;
+    }
 
     session.text = text;
     session.box_x = native_x + FONT_CHARACTER_LIST_X_OFFSET;
-    session.box_y = native_y;
+    session.box_y = draw_y;
     session.box_width = FONT_CHARACTER_LIST_BOX_WIDTH;
     session.box_height = FONT_CHARACTER_LIST_BOX_HEIGHT;
     session.horizontal_alignment = FONT_V2_ALIGN_START;

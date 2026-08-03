@@ -59,7 +59,7 @@ if ($mode -eq 'help') {
         ''
         '  na228 build l|mt            Build Latest or Manual Test without running it'
         '  na228 test [suite]                      Run unit tests; prepare and validate normal/padded E2E Test ISOs; replay and compare all or one E2E suite and update captures'
-        '  na228 test create <suite> <recording> [game]  Create or replace a suite, optionally capture its reference, then run it'
+        '  na228 test create <suite> <recording> [game]  Create or replace a suite; capture its optional reference alongside the test run'
         '  na228 test rename <suite> <new-suite>          Rename a suite and its capture history'
         '  na228 test delete <suite>                      Delete a suite and its capture history'
         '  na228 worker work/<worker>/build/<name>.iso  Build an isolated worker ISO'

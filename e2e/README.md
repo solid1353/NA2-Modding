@@ -56,9 +56,12 @@ pipeline.
 `test create` creates or completely replaces the named suite. It copies
 `<recording>.p2m2` from Workshop's shared input-recording folder into
 `suites/<suite>/input.p2m2`, resets `ignore.txt` to empty, and clears all old
-capture history for that suite. It then optionally captures `_a_reference`
-screenshots from `[game]` and always runs the suite to publish its new current
-screenshots. There is no separate reference command.
+capture history for that suite. When `[game]` is present, its `_a_reference`
+replay runs concurrently with the permanent tests and normal/padded build and
+replay pipelines. After every branch succeeds, creation merges the reference
+and current evidence and publishes the new capture history once. Without
+`[game]`, it runs the test pipeline and publishes current evidence only. There
+is no separate reference command.
 
 `test rename` moves both the suite definition and its capture history to the
 new relative suite path. It rejects an existing destination. `test delete`

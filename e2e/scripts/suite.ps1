@@ -18,7 +18,10 @@ $script:E2eStableCaptureDirectories = @(
 )
 
 function Get-VisualRegressionContext {
-    param([Parameter(Mandatory)][string]$Suite)
+    param(
+        [Parameter(Mandatory)][string]$Suite,
+        [string]$CaptureRoot
+    )
 
     if ([string]::IsNullOrWhiteSpace($Suite) -or [IO.Path]::IsPathRooted($Suite)) {
         throw 'Suite must be a relative path.'
@@ -39,7 +42,12 @@ function Get-VisualRegressionContext {
     $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
     $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
     $caseRoot = Join-Path (Join-Path $root 'suites') $suiteRelativePath
-    $captureRoot = Join-Path (Join-Path $root 'captures') $suiteRelativePath
+    $captureRoot = if ([string]::IsNullOrWhiteSpace($CaptureRoot)) {
+        Join-Path (Join-Path $root 'captures') $suiteRelativePath
+    }
+    else {
+        [IO.Path]::GetFullPath($CaptureRoot)
+    }
     $statesRoot = Join-Path $captureRoot 'sstates'
     [pscustomobject]@{
         Root = $root

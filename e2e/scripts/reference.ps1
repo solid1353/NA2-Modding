@@ -1,12 +1,25 @@
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'Replay')]
 param(
     [Parameter(Mandatory)][string]$Suite,
-    [Parameter(Mandatory)][string]$Game
+    [Parameter(Mandatory, ParameterSetName = 'Replay')]
+    [Parameter(Mandatory, ParameterSetName = 'Capture')]
+    [string]$Game,
+    [Parameter(Mandatory, ParameterSetName = 'Capture')]
+    [string]$CaptureOutputRoot,
+    [Parameter(Mandatory, ParameterSetName = 'Publish')]
+    [string]$CapturedRoot,
+    [Parameter(Mandatory, ParameterSetName = 'Publish')]
+    [string]$CaptureRoot
 )
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'suite.ps1')
-$context = Get-VisualRegressionContext -Suite $Suite
+$context = if ($PSCmdlet.ParameterSetName -ceq 'Publish') {
+    Get-VisualRegressionContext -Suite $Suite -CaptureRoot $CaptureRoot
+}
+else {
+    Get-VisualRegressionContext -Suite $Suite
+}
 $captureRootExists = Test-Path -LiteralPath $context.CaptureRoot -PathType Container
 $captureRootEmpty = $captureRootExists -and
     @(Get-ChildItem -LiteralPath $context.CaptureRoot -Force).Count -eq 0
@@ -22,10 +35,30 @@ if (-not (Test-Path -LiteralPath $recordingPath -PathType Leaf)) {
 $paths = Get-Na2Paths
 $initializeCapture = -not $captureRootExists -or $captureRootEmpty
 
+if ($PSCmdlet.ParameterSetName -ceq 'Capture') {
+    Invoke-VisualRegressionReplay `
+        -Repository $context.Repository `
+        -SharedRecordingRoot $paths.pcsx2_input_recordings `
+        -RecordingPath $recordingPath `
+        -Game $Game `
+        -CaptureRoot $CaptureOutputRoot
+    $capturedScreenshots = Join-Path $CaptureOutputRoot 'screenshots'
+    if (@(Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File).Count -eq 0) {
+        throw 'Reference replay completed without captured screenshots.'
+    }
+    Write-Host 'Reference replay captured for coordinated publication.' -ForegroundColor Green
+    return
+}
+
 $transaction = New-VisualRegressionTransaction `
     -Root $context.Root `
     -Prefix 'reference'
-$runtimeCapture = Join-Path $transaction 'capture'
+$runtimeCapture = if ($PSCmdlet.ParameterSetName -ceq 'Publish') {
+    [IO.Path]::GetFullPath($CapturedRoot)
+}
+else {
+    Join-Path $transaction 'capture'
+}
 $suiteCaptureStage = Join-Path $transaction 'suite-captures'
 $stageRoot = Join-Path $transaction 'stages'
 $referenceStage = Join-Path $stageRoot $script:E2eCaptureTiers.Reference
@@ -57,12 +90,14 @@ try {
         -ScreenshotDirectory $context.Capture.Screenshots `
         -StageDirectory $currentStage `
         -Kind Current
-    Invoke-VisualRegressionReplay `
-        -Repository $context.Repository `
-        -SharedRecordingRoot $paths.pcsx2_input_recordings `
-        -RecordingPath $recordingPath `
-        -Game $Game `
-        -CaptureRoot $runtimeCapture
+    if ($PSCmdlet.ParameterSetName -ceq 'Replay') {
+        Invoke-VisualRegressionReplay `
+            -Repository $context.Repository `
+            -SharedRecordingRoot $paths.pcsx2_input_recordings `
+            -RecordingPath $recordingPath `
+            -Game $Game `
+            -CaptureRoot $runtimeCapture
+    }
     $capturedScreenshots = Join-Path $runtimeCapture 'screenshots'
     if (@(Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File).Count -eq 0) {
         throw 'Reference replay completed without captured screenshots.'

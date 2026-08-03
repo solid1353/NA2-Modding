@@ -215,15 +215,57 @@ function Get-Na2Paths {
     [IO.File]::WriteAllText(
         (Join-Path $fakeScripts 'reference.ps1'),
         @'
-param([string]$Suite, [string]$Game)
-Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "reference suite=$Suite game=$Game"
+param(
+    [string]$Suite,
+    [string]$Game,
+    [string]$CaptureOutputRoot,
+    [string]$CapturedRoot,
+    [string]$CaptureRoot
+)
+$sync = Join-Path $PSScriptRoot 'sync'
+[void](New-Item -ItemType Directory -Path $sync -Force)
+if (-not [string]::IsNullOrWhiteSpace($CaptureOutputRoot)) {
+    [IO.File]::WriteAllText((Join-Path $sync 'reference-started'), '')
+    $deadline = [DateTime]::UtcNow.AddSeconds(5)
+    while (-not (Test-Path -LiteralPath (Join-Path $sync 'run-started'))) {
+        if ([DateTime]::UtcNow -ge $deadline) {
+            throw 'The test run did not overlap the reference capture.'
+        }
+        Start-Sleep -Milliseconds 20
+    }
+    [void](New-Item -ItemType Directory -Path (Join-Path $CaptureOutputRoot 'screenshots') -Force)
+    [IO.File]::WriteAllText((Join-Path $CaptureOutputRoot 'screenshots\0001.png'), 'reference')
+    Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "reference-capture suite=$Suite game=$Game"
+    return
+}
+[void](New-Item -ItemType Directory -Path $CaptureRoot -Force)
+[IO.File]::WriteAllText((Join-Path $CaptureRoot 'reference.txt'), 'reference')
+Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "reference-publish suite=$Suite"
 '@
     )
     [IO.File]::WriteAllText(
         (Join-Path $fakeScripts 'run.ps1'),
         @'
-param([string]$Suite)
+param([string]$Suite, [string]$CaptureRoot)
+if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'fail-run')) {
+    throw 'synthetic run failure'
+}
+if ($Suite -ceq 'test/with_reference') {
+    $sync = Join-Path $PSScriptRoot 'sync'
+    $deadline = [DateTime]::UtcNow.AddSeconds(5)
+    while (-not (Test-Path -LiteralPath (Join-Path $sync 'reference-started'))) {
+        if ([DateTime]::UtcNow -ge $deadline) {
+            throw 'Reference capture did not start alongside the test run.'
+        }
+        Start-Sleep -Milliseconds 20
+    }
+}
 Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite=$Suite"
+if ($Suite -ceq 'test/with_reference') {
+    [IO.File]::WriteAllText((Join-Path $sync 'run-started'), '')
+}
+[void](New-Item -ItemType Directory -Path $CaptureRoot -Force)
+[IO.File]::WriteAllText((Join-Path $CaptureRoot 'current.txt'), 'current')
 '@
     )
     [IO.File]::WriteAllText((Join-Path $fakeRecordings 'first.p2m2'), 'first')
@@ -258,7 +300,10 @@ Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite
             (Get-Item -LiteralPath $firstIgnore).Length -eq 0 -and
             -not (Test-Path -LiteralPath (Join-Path $firstSuiteRoot 'stale.txt')) -and
             (Test-Path -LiteralPath $firstCaptureRoot -PathType Container) -and
-            @(Get-ChildItem -LiteralPath $firstCaptureRoot -Recurse -Force).Count -eq 0
+            [IO.File]::ReadAllText((Join-Path $firstCaptureRoot 'current.txt')) -ceq 'current' -and
+            -not (Test-Path -LiteralPath (
+                Join-Path $firstCaptureRoot 'screenshots\001_b_current.png'
+            ))
         ) `
         -Message 'Existing suite definition or capture history was not completely replaced.'
     & (Join-Path $fakeScripts 'create_suite.ps1') `
@@ -268,15 +313,35 @@ Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite
     $newSuiteCalls = @(Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt'))
     Assert-E2eHelperTest `
         -Condition (
-            $newSuiteCalls.Count -eq 4 -and
+            $newSuiteCalls.Count -eq 5 -and
             $newSuiteCalls[0] -ceq 'run suite=test/no_reference' -and
             $newSuiteCalls[1] -ceq 'run suite=test/no_reference' -and
-            $newSuiteCalls[2] -ceq 'reference suite=test/with_reference game=nun5' -and
-            $newSuiteCalls[3] -ceq 'run suite=test/with_reference'
+            $newSuiteCalls[2] -ceq 'run suite=test/with_reference' -and
+            $newSuiteCalls[3] -ceq 'reference-capture suite=test/with_reference game=nun5' -and
+            $newSuiteCalls[4] -ceq 'reference-publish suite=test/with_reference'
         ) `
-        -Message 'Suite creation or replacement did not order optional reference capture before the mandatory run.'
+        -Message 'Suite creation did not overlap reference capture with the mandatory run before publication.'
 
     $sourceCaptureRoot = Join-Path $fakeRepository 'e2e\captures\test\with_reference'
+    [IO.File]::WriteAllText((Join-Path $sourceCaptureRoot 'accepted.txt'), 'accepted history')
+    [IO.File]::WriteAllText((Join-Path $fakeScripts 'fail-run'), '')
+    $replacementFailed = $false
+    try {
+        & (Join-Path $fakeScripts 'create_suite.ps1') `
+            -Suite 'test/with_reference' `
+            -Recording 'first'
+    }
+    catch {
+        $replacementFailed = $true
+    }
+    Remove-Item -LiteralPath (Join-Path $fakeScripts 'fail-run') -Force
+    Assert-E2eHelperTest `
+        -Condition (
+            $replacementFailed -and
+            [IO.File]::ReadAllText((Join-Path $fakeRepository 'e2e\suites\test\with_reference\input.p2m2')) -ceq 'second' -and
+            [IO.File]::ReadAllText((Join-Path $sourceCaptureRoot 'accepted.txt')) -ceq 'accepted history'
+        ) `
+        -Message 'Failed suite replacement did not restore its previous definition and capture history.'
     [IO.File]::WriteAllText((Join-Path $sourceCaptureRoot 'capture.txt'), 'capture history')
     & (Join-Path $fakeScripts 'rename_suite.ps1') `
         -Suite 'test/with_reference' `

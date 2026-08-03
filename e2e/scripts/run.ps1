@@ -1,5 +1,8 @@
 [CmdletBinding()]
-param([string]$Suite)
+param(
+    [string]$Suite,
+    [string]$CaptureRoot
+)
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'suite.ps1')
@@ -8,6 +11,18 @@ $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
 $configuration = Get-E2eConfiguration -Root $root
 $suiteRoot = Join-Path $root 'suites'
+if (-not [string]::IsNullOrWhiteSpace($CaptureRoot) -and
+    [string]::IsNullOrWhiteSpace($Suite)) {
+    throw 'CaptureRoot requires one selected suite.'
+}
+function Get-E2eRunContext {
+    param([Parameter(Mandatory)][string]$Name)
+
+    if ([string]::IsNullOrWhiteSpace($CaptureRoot)) {
+        return Get-VisualRegressionContext -Suite $Name
+    }
+    return Get-VisualRegressionContext -Suite $Name -CaptureRoot $CaptureRoot
+}
 $availableSuites = @(
     Get-ChildItem -LiteralPath $suiteRoot -Filter 'input.p2m2' -File -Recurse |
         ForEach-Object {
@@ -20,7 +35,7 @@ $suites = @(
         $availableSuites
     }
     else {
-        $requestedContext = Get-VisualRegressionContext -Suite $Suite
+        $requestedContext = Get-E2eRunContext -Name $Suite
         $recording = Join-Path $requestedContext.SuiteRoot 'input.p2m2'
         if (-not (Test-Path -LiteralPath $recording -PathType Leaf)) {
             throw "E2E suite does not exist: $($requestedContext.Suite)"
@@ -54,7 +69,7 @@ $compareReadyVariants = {
         foreach ($suite in $suites) {
             $comparisonKey = "$candidateName|$suite"
             if ($compared.Contains($comparisonKey)) { continue }
-            $context = Get-VisualRegressionContext -Suite $suite
+            $context = Get-E2eRunContext -Name $suite
             $normalSuite = Join-Path `
                 (Join-Path (Join-Path (Join-Path $transaction 'jobs') $publishedVariant) 'suites') `
                 $context.SuiteRelativePath
@@ -169,7 +184,7 @@ try {
 
     $replacements = [ordered]@{}
     foreach ($suite in $suites) {
-        $context = Get-VisualRegressionContext -Suite $suite
+        $context = Get-E2eRunContext -Name $suite
         $suiteJob = Join-Path `
             (Join-Path (Join-Path (Join-Path $transaction 'jobs') $publishedVariant) 'suites') `
             $context.SuiteRelativePath

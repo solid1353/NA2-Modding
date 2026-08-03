@@ -29,7 +29,7 @@ video modes do not necessarily produce pixel-identical frames.
    font suite:
 
    ```powershell
-   na test font -b
+   na228 test font -b
    ```
 
 4. Inspect the regenerated approved-versus-pending report.
@@ -54,5 +54,5 @@ pending screenshots, and regenerates the comparisons transactionally.
   unrelated validation.
 
 At handoff, name the implementation files changed, the capture slots affected,
-the `na test <suite> -b` result, and any remaining visible difference. Keep
+the `na228 test <suite> -b` result, and any remaining visible difference. Keep
 agent validation separate from user acceptance.

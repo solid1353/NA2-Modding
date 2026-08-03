@@ -60,8 +60,10 @@ Approve selected pending slots, or explicitly approve the whole batch:
 .\e2e\scripts\approve.ps1 -Suite NUN5_font_full -All
 ```
 
-Each definition lives under `suites/<recording-name>/` with `input.p2m2` and
-`screens.tsv`. Its expanded capture data lives under
+Each definition lives under `suites/<recording-name>/` with `input.p2m2`,
+`screens.tsv`, and an optional `ignore.txt`. The ignore file lists screenshot
+filenames that are omitted from pending comparisons while their captured
+savestates remain available. Its expanded capture data lives under
 `captures/<recording-name>/`, with `references/`, `approved/`, `pending/`, and
 `reports/`, plus agent-only `sstates/references/`, `sstates/approved/`, and
 `sstates/pending/` directories. The three screenshot tiers contain their PNG

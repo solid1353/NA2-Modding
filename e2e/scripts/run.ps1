@@ -53,6 +53,9 @@ try {
     }
     Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File |
         Copy-Item -Destination $pendingStage
+    [void](Remove-IgnoredPendingScreenshots `
+        -PendingDirectory $pendingStage `
+        -IgnoreFile (Join-Path $context.SuiteRoot 'ignore.txt'))
     $capturedStates = Join-Path $captureRoot 'sstates'
     if (Test-Path -LiteralPath $capturedStates -PathType Container) {
         New-VisualRegressionStateStage `

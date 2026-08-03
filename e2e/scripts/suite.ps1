@@ -118,6 +118,37 @@ function Get-NumericPngSlots {
     )
 }
 
+function Remove-IgnoredPendingScreenshots {
+    param(
+        [Parameter(Mandatory)][string]$PendingDirectory,
+        [Parameter(Mandatory)][string]$IgnoreFile
+    )
+
+    if (-not (Test-Path -LiteralPath $IgnoreFile -PathType Leaf)) {
+        return 0
+    }
+    $ignored = [Collections.Generic.HashSet[string]]::new(
+        [StringComparer]::OrdinalIgnoreCase
+    )
+    foreach ($line in Get-Content -LiteralPath $IgnoreFile) {
+        $entry = $line.Trim()
+        if ($entry.Length -eq 0 -or $entry.StartsWith('#')) {
+            continue
+        }
+        [void]$ignored.Add($entry)
+    }
+    $removed = 0
+    foreach ($screenshot in @(
+        Get-ChildItem -LiteralPath $PendingDirectory -Filter '*.png' -File
+    )) {
+        if ($ignored.Contains($screenshot.Name)) {
+            Remove-Item -LiteralPath $screenshot.FullName -Force
+            $removed++
+        }
+    }
+    return $removed
+}
+
 function Get-CommonSlots {
     param([Parameter(Mandatory)][string[]]$Directories)
 

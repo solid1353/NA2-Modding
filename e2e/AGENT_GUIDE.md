@@ -85,19 +85,50 @@ The command builds or reuses Screenshot Test, replays the suite recording,
 captures its markers and savestates, removes pixel-identical and suite-ignored
 pending screenshots, and regenerates the comparisons transactionally.
 
+## Verification and delivery gate
+
+E2E implementation remains uncommitted while the agent iterates. Agent visual
+inspection and a successful test command do not authorize acceptance, capture
+approval, a commit, or a push. Present the regenerated evidence and wait for
+the user to explicitly verify and approve the result.
+
+After that explicit approval, complete one coordinated delivery:
+
+1. Approve only the user-accepted captures, for example:
+
+   ```powershell
+   na228 test approve font -s '25,27-30'
+   ```
+
+2. Verify that those screenshots moved from `pending/` to `approved/`, their
+   available savestates moved to the approved state tier, and unrelated pending
+   captures were preserved.
+3. Commit the accepted capture-history changes in the nested `e2e/captures/`
+   repository and commit the implementation changes in the main repository.
+4. Push both commits as the same delivery when both repositories have remotes.
+   If the capture repository has no remote, its commit necessarily remains
+   local; push the main implementation only after the local capture commit
+   succeeds and report that the capture history was committed but not pushed.
+
+The two repositories cannot share one Git commit. "Together" means that both
+accepted histories are finalized from the same explicit user approval, with no
+implementation push before the capture-history commit succeeds.
+
 ## Boundaries
 
 - Do not navigate PCSX2 manually or construct comparison images yourself.
 - Do not edit `approved/`, `pending/`, `references/`, reports, recordings,
   `screens.tsv`, or `ignore.txt` unless the user explicitly requests that
   exact change.
-- Do not approve captures or regenerate references. Acceptance belongs to the
-  user.
+- Do not approve captures or regenerate references before the explicit user
+  verification and approval required above. Acceptance belongs to the user.
 - Do not treat a NUN5 reference as accepted NA2.28 output.
 - Preserve unrelated pending differences.
 - Do not expand a local visual fix into release work, broad cleanup, or
   unrelated validation.
 
-At handoff, name the implementation files changed, the capture slots affected,
-the `na228 test <suite> -b` result, and any remaining visible difference. Keep
-agent validation separate from user acceptance.
+Before user acceptance, hand off only the implementation files changed, the
+capture slots affected, the `na228 test <suite> -b` result, and any remaining
+visible difference. After acceptance and delivery, report both repository
+commits and state separately whether each was pushed. Keep agent validation
+separate from user acceptance.

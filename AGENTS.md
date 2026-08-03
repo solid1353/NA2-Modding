@@ -140,8 +140,11 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   regenerated differences, and continue implementing and testing until every
   named capture has the requested local result or a concrete blocker remains.
   Do not wait for separate plan approval. The command does not authorize
-  editing or approving captures, regenerating references, or changing suite
-  ignore data.
+  approving captures, regenerating references, changing suite ignore data, or
+  committing or pushing implementation or capture changes. Only the user's
+  explicit verification and approval of the result authorizes selective
+  approval of the named screenshots followed by coordinated commits and pushes
+  of the implementation and capture history as defined by the guide.
 - `ep`: epic.
 - `sum`: summarize.
 - `eff`: report the current recommended effort without changing it.

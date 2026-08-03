@@ -117,7 +117,8 @@ function New-VisualRegressionStateStage {
         [Parameter(Mandatory)][string]$CaptureRepository,
         [Parameter(Mandatory)][string]$ExistingScreenshotDirectory,
         [Parameter(Mandatory)][string]$CapturedScreenshotDirectory,
-        [Parameter(Mandatory)][string]$PythonRunner
+        [Parameter(Mandatory)][string]$PythonRunner,
+        [string]$IgnoreFile
     )
 
     if ($Tier -cnotin $script:E2eCaptureTiers.Values) {
@@ -169,8 +170,18 @@ function New-VisualRegressionStateStage {
         }
     }
 
+    $ignoredScreenshots = [Collections.Generic.HashSet[string]]::new(
+        [StringComparer]::OrdinalIgnoreCase
+    )
+    $ignoredNames = @(Get-IgnoredCaptureNames -IgnoreFile $IgnoreFile)
+    if ($ignoredNames.Count -gt 0) {
+        $ignoredScreenshots.UnionWith([string[]]$ignoredNames)
+    }
     foreach ($capturedState in Get-ChildItem -LiteralPath $CapturedDirectory -Filter '*.p2s' -File) {
         $screenshotName = $capturedState.BaseName + '.png'
+        if ($ignoredScreenshots.Contains($screenshotName)) {
+            continue
+        }
         $existingState = Join-Path $committedStates $capturedState.Name
         $sourceState = if (
             $identicalScreenshots.Contains($screenshotName) -and
@@ -182,6 +193,13 @@ function New-VisualRegressionStateStage {
             $capturedState.FullName
         }
         Copy-Item -LiteralPath $sourceState -Destination $destination
+    }
+    foreach ($screenshotName in $ignoredScreenshots) {
+        $stateName = [IO.Path]::ChangeExtension($screenshotName, '.p2s')
+        $existingState = Join-Path $existingStates $stateName
+        if (Test-Path -LiteralPath $existingState -PathType Leaf) {
+            Copy-Item -LiteralPath $existingState -Destination $destination
+        }
     }
     Remove-Item -LiteralPath $committedStates -Recurse -Force
 }
@@ -204,6 +222,23 @@ function Get-NumericPngSlots {
     )
 }
 
+function Get-IgnoredCaptureNames {
+    param([string]$IgnoreFile)
+
+    if (-not (Test-Path -LiteralPath $IgnoreFile -PathType Leaf)) {
+        return [string[]]@()
+    }
+
+    [string[]]@(
+        foreach ($line in Get-Content -LiteralPath $IgnoreFile) {
+            $entry = $line.Trim()
+            if ($entry.Length -gt 0 -and -not $entry.StartsWith('#')) {
+                $entry
+            }
+        }
+    )
+}
+
 function Restore-IgnoredCurrentScreenshots {
     param(
         [Parameter(Mandatory)][string]$CurrentDirectory,
@@ -211,21 +246,8 @@ function Restore-IgnoredCurrentScreenshots {
         [Parameter(Mandatory)][string]$IgnoreFile
     )
 
-    if (-not (Test-Path -LiteralPath $IgnoreFile -PathType Leaf)) {
-        return 0
-    }
-    $ignored = [Collections.Generic.HashSet[string]]::new(
-        [StringComparer]::OrdinalIgnoreCase
-    )
-    foreach ($line in Get-Content -LiteralPath $IgnoreFile) {
-        $entry = $line.Trim()
-        if ($entry.Length -eq 0 -or $entry.StartsWith('#')) {
-            continue
-        }
-        [void]$ignored.Add($entry)
-    }
     $restored = 0
-    foreach ($name in $ignored) {
+    foreach ($name in Get-IgnoredCaptureNames -IgnoreFile $IgnoreFile) {
         $current = Join-Path $CurrentDirectory $name
         $existing = Join-Path $ExistingDirectory $name
         if (Test-Path -LiteralPath $existing -PathType Leaf) {

@@ -37,8 +37,8 @@ only when reference images already exist and would be overwritten.
 Each suite definition lives under `suites/<suite>/` with `input.p2m2` and an
 optional `ignore.txt`. Suite names may contain relative subfolders such as
 `font/load_save` and `font/character_select`. The ignore file lists capture
-filenames whose existing `current/` image is preserved during a new run. Their
-freshly captured savestates are still retained.
+filenames whose existing `current/` image and current savestate are preserved
+during a new run. A newly ignored slot without existing evidence is omitted.
 
 Capture data lives under:
 

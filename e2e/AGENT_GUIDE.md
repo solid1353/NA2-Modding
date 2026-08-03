@@ -74,8 +74,8 @@ The run atomically publishes `current/`, `sstates/current/`, and `report/`.
 When a freshly captured PNG is pixel-identical to the existing current PNG,
 the existing savestate is retained instead of replacing it. A changed or new
 PNG publishes its matching fresh savestate. Files listed in the suite's
-`ignore.txt` keep their previous current screenshot; their fresh savestate is
-published only when the raw captured PNG differs.
+`ignore.txt` keep both their previous current screenshot and previous current
+savestate; a newly ignored slot without existing evidence publishes neither.
 
 ## Verification and delivery gate
 

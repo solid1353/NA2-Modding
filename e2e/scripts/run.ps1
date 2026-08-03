@@ -67,7 +67,8 @@ try {
             -CaptureRepository $context.CaptureRepository `
             -ExistingScreenshotDirectory $context.Capture.Current `
             -CapturedScreenshotDirectory $capturedScreenshots `
-            -PythonRunner $context.PythonRunner
+            -PythonRunner $context.PythonRunner `
+            -IgnoreFile (Join-Path $context.SuiteRoot 'ignore.txt')
     }
 
     $replacements = [ordered]@{

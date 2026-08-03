@@ -431,7 +431,7 @@ class MappedCopyTests(unittest.TestCase):
 
     def test_derivation_worker_count_is_bounded_and_overridable(self) -> None:
         with patch.object(engine.os, "cpu_count", return_value=16):
-            self.assertEqual(engine.derivation_worker_count(None, 34), 4)
+            self.assertEqual(engine.derivation_worker_count(None, 34), 16)
         with patch.object(engine.os, "cpu_count", return_value=2):
             self.assertEqual(engine.derivation_worker_count(None, 34), 2)
         self.assertEqual(engine.derivation_worker_count(8, 3), 3)

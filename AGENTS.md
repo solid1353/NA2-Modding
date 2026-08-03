@@ -220,6 +220,13 @@ Detailed command and task behavior is in
   discovery separately in a task or script; extend the central resolver once.
 - Run every shell, filesystem, script, and Git command elevated from the first
   attempt. On permission failure, retry the exact operation elevated.
+- Agents must never use the operating-system temporary directory (`TEMP` or
+  `TMP`) as a workspace or artifact root. Set `NA228_TASK_WORK_ROOT` to the
+  acting task's existing `work/<exact task title>/` directory before invoking
+  project commands that create temporary files; maintained test commands must
+  place their temporary files under that task root. An ordinary user run may
+  use the existing `work/General/` workstream as its default. Clean disposable
+  temporary contents at the end of the run.
 - File-working tasks own `work/<exact task title>/` and have standing authority
   to create, modify, move, or delete anything inside that exact directory
   without separate destructive-action approval. This authority never extends

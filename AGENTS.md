@@ -131,12 +131,17 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - `q:`: indicates that the user queued the message before the agent received it;
   it is delivery metadata, not an agent-side queue command.
 - `con`: resume the current work without changing its scope or approval state.
-- `e2e: <request>`: execute the attached request as a local NA2.28 visual fix
-  by following [`e2e/AGENT_GUIDE.md`](e2e/AGENT_GUIDE.md). Inspect the prepared
-  difference, change only the responsible implementation, run
-  `na228 test <suite> -b`, inspect the regenerated difference, and iterate to
-  the requested local result. The prefix does not authorize editing or
-  approving captures, regenerating references, or changing suite ignore data.
+- `e2e: <request>` or `e2e <suite> <captures>: <request>`: immediately execute
+  the attached request as a local NA2.28 visual fix by following
+  [`e2e/AGENT_GUIDE.md`](e2e/AGENT_GUIDE.md). `<captures>` accepts one slot,
+  comma-separated slots, and inclusive ranges, for example `25` or
+  `25, 27-30`. Inspect the prepared differences for those captures, change only
+  the responsible implementation, run `na228 test <suite> -b`, inspect the
+  regenerated differences, and continue implementing and testing until every
+  named capture has the requested local result or a concrete blocker remains.
+  Do not wait for separate plan approval. The command does not authorize
+  editing or approving captures, regenerating references, or changing suite
+  ignore data.
 - `ep`: epic.
 - `sum`: summarize.
 - `eff`: report the current recommended effort without changing it.

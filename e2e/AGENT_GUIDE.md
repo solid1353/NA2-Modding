@@ -4,6 +4,22 @@ Use this workflow when the user gives you an existing E2E difference and asks
 for a local NA2.28 rendering fix. The E2E suite owns the build, replay,
 capture, and comparison mechanics; do not reproduce those steps manually.
 
+## Invocation
+
+The root standing command may identify the suite and captures directly:
+
+```text
+e2e font 25: <requested fix>
+e2e font 25, 27-30: <requested fix>
+```
+
+A capture expression accepts one slot, comma-separated slots, and inclusive
+ranges. This command authorizes immediate implementation and repeated execution
+of the affected E2E suite. Begin with the named prepared differences and keep
+implementing, running `na228 test <suite> -b`, and inspecting the regenerated
+differences until every named capture has the requested result or a concrete
+blocker remains. Do not stop for separate plan approval.
+
 ## Read the evidence
 
 For suite `<suite>` and capture `<slot>`:

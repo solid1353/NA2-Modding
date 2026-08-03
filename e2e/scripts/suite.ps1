@@ -31,6 +31,7 @@ function Get-VisualRegressionContext {
     $statesRoot = Join-Path $captureRoot 'sstates'
     [pscustomobject]@{
         Root = $root
+        CaptureRepository = Join-Path $root 'captures'
         Suite = $suiteName
         SuiteRelativePath = $suiteRelativePath
         SuiteRoot = $caseRoot
@@ -113,6 +114,7 @@ function New-VisualRegressionStateStage {
         [Parameter(Mandatory)][string]$StageRoot,
         [Parameter(Mandatory)][string]$Tier,
         [Parameter(Mandatory)][string]$CapturedDirectory,
+        [Parameter(Mandatory)][string]$CaptureRepository,
         [Parameter(Mandatory)][string]$ExistingScreenshotDirectory,
         [Parameter(Mandatory)][string]$CapturedScreenshotDirectory,
         [Parameter(Mandatory)][string]$PythonRunner
@@ -131,6 +133,9 @@ function New-VisualRegressionStateStage {
     }
     $destination = Join-Path $StageRoot $Tier
     [void](New-Item -ItemType Directory -Path $destination -Force)
+    $existingStates = Join-Path $ExistingRoot $Tier
+    $committedStates = Join-Path $StageRoot '.committed-states'
+    [void](New-Item -ItemType Directory -Path $committedStates -Force)
     $identicalScreenshots = [Collections.Generic.HashSet[string]]::new(
         [StringComparer]::OrdinalIgnoreCase
     )
@@ -140,8 +145,17 @@ function New-VisualRegressionStateStage {
                 -PackageSet imaging `
                 -Script (Join-Path $PSScriptRoot 'find_identical_pngs.py') `
                 -ArgumentList @(
-                    '--existing', $ExistingScreenshotDirectory,
-                    '--captured', $CapturedScreenshotDirectory
+                    '--repository', $CaptureRepository,
+                    '--existing-prefix', [IO.Path]::GetRelativePath(
+                        $CaptureRepository,
+                        $ExistingScreenshotDirectory
+                    ).Replace('\', '/'),
+                    '--captured', $CapturedScreenshotDirectory,
+                    '--state-prefix', [IO.Path]::GetRelativePath(
+                        $CaptureRepository,
+                        $existingStates
+                    ).Replace('\', '/'),
+                    '--state-output', $committedStates
                 ) `
                 -NoBytecode
         )
@@ -155,10 +169,9 @@ function New-VisualRegressionStateStage {
         }
     }
 
-    $existingStates = Join-Path $ExistingRoot $Tier
     foreach ($capturedState in Get-ChildItem -LiteralPath $CapturedDirectory -Filter '*.p2s' -File) {
         $screenshotName = $capturedState.BaseName + '.png'
-        $existingState = Join-Path $existingStates $capturedState.Name
+        $existingState = Join-Path $committedStates $capturedState.Name
         $sourceState = if (
             $identicalScreenshots.Contains($screenshotName) -and
             (Test-Path -LiteralPath $existingState -PathType Leaf)
@@ -170,6 +183,7 @@ function New-VisualRegressionStateStage {
         }
         Copy-Item -LiteralPath $sourceState -Destination $destination
     }
+    Remove-Item -LiteralPath $committedStates -Recurse -Force
 }
 
 function Get-NumericPngSlots {

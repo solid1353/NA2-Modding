@@ -3,13 +3,25 @@
 from __future__ import annotations
 
 import argparse
+import io
 from pathlib import Path
+import subprocess
 
 from PIL import Image
 
 
-def images_match(existing_path: Path, captured_path: Path) -> bool:
-    with Image.open(existing_path) as existing_source:
+def read_head_file(repository: Path, relative_path: str) -> bytes | None:
+    result = subprocess.run(
+        ["git", "-C", str(repository), "show", f"HEAD:{relative_path}"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return result.stdout if result.returncode == 0 else None
+
+
+def images_match(existing_data: bytes, captured_path: Path) -> bool:
+    with Image.open(io.BytesIO(existing_data)) as existing_source:
         with Image.open(captured_path) as captured_source:
             if existing_source.size != captured_source.size:
                 return False
@@ -20,14 +32,25 @@ def images_match(existing_path: Path, captured_path: Path) -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--existing", type=Path, required=True)
+    parser.add_argument("--repository", type=Path, required=True)
+    parser.add_argument("--existing-prefix", required=True)
     parser.add_argument("--captured", type=Path, required=True)
+    parser.add_argument("--state-prefix", required=True)
+    parser.add_argument("--state-output", type=Path, required=True)
     args = parser.parse_args()
 
+    args.state_output.mkdir(parents=True, exist_ok=True)
     for captured_path in sorted(args.captured.glob("*.png")):
-        existing_path = args.existing / captured_path.name
-        if existing_path.is_file() and images_match(existing_path, captured_path):
-            print(captured_path.name)
+        existing_path = f"{args.existing_prefix.rstrip('/')}/{captured_path.name}"
+        existing_data = read_head_file(args.repository, existing_path)
+        if existing_data is None or not images_match(existing_data, captured_path):
+            continue
+        print(captured_path.name)
+        state_name = captured_path.with_suffix(".p2s").name
+        state_path = f"{args.state_prefix.rstrip('/')}/{state_name}"
+        state_data = read_head_file(args.repository, state_path)
+        if state_data is not None:
+            (args.state_output / state_name).write_bytes(state_data)
     return 0
 
 

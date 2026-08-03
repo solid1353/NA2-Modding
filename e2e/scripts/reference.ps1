@@ -82,6 +82,7 @@ try {
             -StageRoot $statesStage `
             -Tier $script:E2eCaptureTiers.Reference `
             -CapturedDirectory $capturedStates `
+            -CaptureRepository $context.CaptureRepository `
             -ExistingScreenshotDirectory $context.Capture.Reference `
             -CapturedScreenshotDirectory $capturedScreenshots `
             -PythonRunner $context.PythonRunner

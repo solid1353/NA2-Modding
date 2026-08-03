@@ -83,6 +83,12 @@
   operations, preserve unrelated work, and stage only intended paths.
 - Non-overlapping coherent hunks may be edited concurrently. Use hunk-level
   staging. Pause only for overlapping or logically conflicting changes.
+- Concurrent-work protection applies only to changes owned by another task. A
+  task continues to own every change it created across turns, commits, and
+  sibling transactions, including changes that predate its current transaction.
+  At every handoff, include all of those changes in its clean-boundary
+  accounting; never call the task's own unstaged work concurrent or unrelated
+  to leave it hanging.
 - Agents may push already-present commits. If a non-conflicting user change is
   accidentally included, the commit may be pushed as-is and must be reported.
 - Commit and push every completed change automatically at a coherent boundary.

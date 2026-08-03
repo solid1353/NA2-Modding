@@ -190,6 +190,9 @@ Detailed command and task behavior is in
   exception.
 - Treat user edits and commits as expected. Refresh Git before Git operations,
   preserve unrelated work, and stage only intended changes.
+- `Concurrent` or `unrelated` work means work owned by another task. A task's
+  own changes remain task-owned across turns, commits, and sibling transactions;
+  never relabel or preserve them as concurrent to bypass a clean handoff.
 - Commit and push every completed change automatically with the authoring
   agent's identity; Git never requires separate approval.
 - Treat an authorized coherent delivery that spans multiple repositories as

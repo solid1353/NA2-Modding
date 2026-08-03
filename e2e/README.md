@@ -8,6 +8,9 @@ during MVP; it versions reference, approved, and pending screenshots. Reports
 remain local and untracked. Savestates are agent-only and remain as untracked
 `references`, `approved`, and `pending` batches per suite.
 
+Agents making local NA2.28 visual fixes follow
+[`AGENT_GUIDE.md`](AGENT_GUIDE.md).
+
 From the parent project root, use the integrated commands:
 
 ```powershell

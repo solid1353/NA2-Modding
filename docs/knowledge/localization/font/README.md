@@ -2448,10 +2448,21 @@ Collection uses these relevant list families:
 Figure remains the only narrow character-detail list and uses the `152`-unit
 profile. Relationship and Movie rows use the wider `192`-unit profile. One
 shared ETC hook classifies them from native call geometry; no character, row,
-or string whitelist remains. Fitting rows retain the native glyph renderer at
-family X `+1.2` and one-line Y `-4.0`; only measured overflow enters the
-two-line compositor. Figure/Music character headers share one origin formula,
-and ordinary/legacy Ultimate Jutsu headers share another.
+or string whitelist remains. Fitting rows enter the same bounded renderer
+session at family X `+1.2` and one-line Y `-4.0`, with zero tracking and fixed
+horizontal scale `1.0`; they do not publish a glyph-height override, so their
+native vertical glyph size remains unsquished. Only measured overflow enters
+the two-line compositor. Figure/Music character headers share one origin
+formula, and ordinary/legacy Ultimate Jutsu headers share another.
+
+The `font/music` E2E batch exposed why this session boundary must include
+fitting one-line rows: the previous direct native-draw return measured with
+NUN5 proportional metrics but retained NA2's extra renderer tracking, causing
+progressive horizontal divergence and clipping the longest titles. Routing
+those rows through the session removes only that tracking. Across all seven
+paired captures, selected-row top and bottom bounds remain unchanged from the
+pre-change NA2 captures; selected-row widths match NUN5 exactly or differ by
+one antialiasing pixel. The complete normal/padded `font/music` replay passes.
 
 Raw NUN5 ETC records are not safe byte donors: homologous list records assign
 different meanings to fields at `+0x14/+0x18` and shift live resource fields.

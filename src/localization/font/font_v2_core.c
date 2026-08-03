@@ -2821,21 +2821,17 @@ int font_v2_collection_list_entry(
         return -1;
     }
 
-    if (frame.session.line_count == 1u) {
-        draw(
-            native_x + FONT_COLLECTION_X_OFFSET,
-            native_y + FONT_COLLECTION_SINGLE_LINE_Y_OFFSET,
-            text,
-            highlighted
-        );
-        return 0;
-    }
-
     frame.session.text = frame.buffer;
     frame.session.box_x = native_x + FONT_COLLECTION_X_OFFSET;
-    frame.session.box_y = native_y + FONT_COLLECTION_LIST_BOX_Y_OFFSET;
+    frame.session.box_y = native_y + (
+        frame.session.line_count == 1u
+            ? FONT_COLLECTION_SINGLE_LINE_Y_OFFSET
+            : FONT_COLLECTION_LIST_BOX_Y_OFFSET
+    );
     frame.session.box_width = box_width;
-    frame.session.box_height = FONT_COLLECTION_LIST_BOX_HEIGHT;
+    frame.session.box_height = frame.session.line_count == 1u
+        ? (u32)FONT_COLLECTION_LIST_GLYPH_HEIGHT
+        : FONT_COLLECTION_LIST_BOX_HEIGHT;
     frame.session.horizontal_alignment = FONT_V2_ALIGN_START;
     frame.session.vertical_alignment = FONT_V2_ALIGN_CENTER;
     frame.session.flags =
@@ -2843,6 +2839,10 @@ int font_v2_collection_list_entry(
         FONT_V2_FLAG_SEPARATE_LINE_ADVANCE |
         FONT_V2_FLAG_PREMEASURED |
         FONT_V2_FLAG_SHRINK_X;
+    if (frame.session.line_count == 1u) {
+        frame.session.flags |= FONT_V2_FLAG_FIXED_SCALE_X;
+        frame.session.scale_x = 1.0f;
+    }
     frame.session.line_limit = FONT_COLLECTION_LIST_LINE_LIMIT;
     frame.session.line_height = FONT_COLLECTION_LIST_LINE_ADVANCE;
     frame.session.glyph_height = FONT_COLLECTION_LIST_GLYPH_HEIGHT;

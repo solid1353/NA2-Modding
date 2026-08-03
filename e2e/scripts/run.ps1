@@ -126,6 +126,10 @@ try {
         ), $variantName, $transaction, $Suite
         $jobs.Add($variantJob)
     }
+    Write-Host (
+        "E2E ISO build jobs running: " +
+        "$(@($configuration.Variants.name) -join ', ')."
+    ) -ForegroundColor Cyan
 
     $nextProgress = [DateTime]::UtcNow
     while (@($jobs | Where-Object State -in @('NotStarted', 'Running')).Count -gt 0) {

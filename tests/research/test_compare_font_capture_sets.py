@@ -34,6 +34,11 @@ def write_rgb_png(path: Path, color: tuple[int, int, int]) -> None:
     )
 
 
+def read_png_size(path: Path) -> tuple[int, int]:
+    data = path.read_bytes()
+    return struct.unpack(">II", data[16:24])
+
+
 class ComparisonGridTests(unittest.TestCase):
     def test_writes_matching_pair_blend_and_diff_grid_pages(self) -> None:
         powershell = shutil.which("pwsh")
@@ -81,6 +86,18 @@ class ComparisonGridTests(unittest.TestCase):
                     "page_02_d_blend.png",
                     "page_02_e_diff.png",
                 ],
+            )
+            self.assertEqual(
+                read_png_size(output / "grids" / "page_02_c_pair.png")[0],
+                2,
+            )
+            self.assertEqual(
+                read_png_size(output / "grids" / "page_02_d_blend.png")[0],
+                1,
+            )
+            self.assertEqual(
+                read_png_size(output / "grids" / "page_02_e_diff.png")[0],
+                1,
             )
 
 

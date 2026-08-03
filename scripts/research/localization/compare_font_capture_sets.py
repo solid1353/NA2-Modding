@@ -195,8 +195,11 @@ def write_grid_pages(
         page_items = items[start : start + items_per_page]
         cell_width = max(image.width for _, image in page_items)
         cell_height = max(image.height for _, image in page_items)
+        used_columns = min(columns, len(page_items))
         rows = (len(page_items) + columns - 1) // columns
-        grid = Image.new("RGB", (cell_width * columns, cell_height * rows), (8, 8, 8))
+        grid = Image.new(
+            "RGB", (cell_width * used_columns, cell_height * rows), (8, 8, 8)
+        )
         for item_index, (_, image) in enumerate(page_items):
             x = (item_index % columns) * cell_width
             y = (item_index // columns) * cell_height

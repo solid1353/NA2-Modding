@@ -284,17 +284,96 @@ function Publish-VisualRegressionTransaction {
         [Parameter(Mandatory)][string]$TransactionRoot
     )
 
+    function Clear-PublishedFiles {
+        param([Parameter(Mandatory)][string]$Root)
+
+        if (Test-Path -LiteralPath $Root -PathType Container) {
+            Get-ChildItem -LiteralPath $Root -Recurse -File -Force |
+                Remove-Item -Force
+        }
+    }
+
+    function Copy-PublishedFiles {
+        param(
+            [Parameter(Mandatory)][string]$Source,
+            [Parameter(Mandatory)][string]$Destination
+        )
+
+        [void](New-Item -ItemType Directory -Path $Destination -Force)
+        foreach ($file in Get-ChildItem -LiteralPath $Source -Recurse -File -Force) {
+            $relative = [IO.Path]::GetRelativePath($Source, $file.FullName)
+            $target = Join-Path $Destination $relative
+            [void](New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($target)) -Force)
+            $temporary = "$target.publishing-$([guid]::NewGuid().ToString('N'))"
+            try {
+                [IO.File]::Copy($file.FullName, $temporary, $true)
+                [IO.File]::Move($temporary, $target, $true)
+            }
+            finally {
+                if (Test-Path -LiteralPath $temporary -PathType Leaf) {
+                    Remove-Item -LiteralPath $temporary -Force
+                }
+            }
+        }
+    }
+
+    function Remove-EmptyPublishedDirectories {
+        param([Parameter(Mandatory)][string]$Root)
+
+        if (-not (Test-Path -LiteralPath $Root -PathType Container)) { return }
+        foreach ($directory in @(
+            Get-ChildItem -LiteralPath $Root -Recurse -Directory -Force |
+                Sort-Object { $_.FullName.Length } -Descending
+        )) {
+            if (@(Get-ChildItem -LiteralPath $directory.FullName -Force).Count -ne 0) {
+                continue
+            }
+            try {
+                [IO.Directory]::Delete($directory.FullName)
+            }
+            catch [IO.IOException] {}
+            catch [UnauthorizedAccessException] {}
+        }
+    }
+
     $published = [Collections.Generic.List[object]]::new()
     try {
         foreach ($destination in $Replacements.Keys) {
             $source = $Replacements[$destination]
             $backup = Join-Path $TransactionRoot ('.backup-' + [IO.Path]::GetFileName($destination))
+            if ([IO.Path]::GetFileName($destination) -ceq 'reports') {
+                if (Test-Path -LiteralPath $destination -PathType Container) {
+                    Copy-PublishedFiles -Source $destination -Destination $backup
+                }
+                try {
+                    Clear-PublishedFiles -Root $destination
+                    Copy-PublishedFiles -Source $source -Destination $destination
+                    Remove-EmptyPublishedDirectories -Root $destination
+                    $published.Add([pscustomobject]@{
+                        Destination = $destination
+                        Backup = $backup
+                        Stable = $true
+                    })
+                }
+                catch {
+                    Clear-PublishedFiles -Root $destination
+                    if (Test-Path -LiteralPath $backup -PathType Container) {
+                        Copy-PublishedFiles -Source $backup -Destination $destination
+                    }
+                    throw
+                }
+                continue
+            }
             if (Test-Path -LiteralPath $destination) {
                 [IO.Directory]::Move($destination, $backup)
             }
             try {
                 [IO.Directory]::Move($source, $destination)
-                $published.Add([pscustomobject]@{ Destination = $destination; Backup = $backup })
+                $published.Add([pscustomobject]@{
+                    Destination = $destination
+                    Backup = $backup
+                    Stable = $false
+                })
             }
             catch {
                 if (Test-Path -LiteralPath $backup) {
@@ -307,6 +386,14 @@ function Publish-VisualRegressionTransaction {
     catch {
         for ($index = $published.Count - 1; $index -ge 0; $index--) {
             $item = $published[$index]
+            if ($item.Stable) {
+                Clear-PublishedFiles -Root $item.Destination
+                if (Test-Path -LiteralPath $item.Backup -PathType Container) {
+                    Copy-PublishedFiles -Source $item.Backup -Destination $item.Destination
+                }
+                Remove-EmptyPublishedDirectories -Root $item.Destination
+                continue
+            }
             if (Test-Path -LiteralPath $item.Destination) {
                 Remove-Item -LiteralPath $item.Destination -Recurse -Force
             }

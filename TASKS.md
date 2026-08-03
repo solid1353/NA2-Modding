@@ -7,7 +7,7 @@
 - Restructure pcsx2 stuff.
 
 ### [Font](docs/workstreams/font/README.md)
--  Layout/autofit epic.
+- Layout/autofit.
 
 ## Backlog
 

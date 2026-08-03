@@ -19,10 +19,12 @@ of the affected suite without separate plan approval.
 
 For suite `<suite>` and capture `<slot>`:
 
-- `captures/<suite>/reference/<slot>.png` is the optional reference-game image.
-- `captures/<suite>/current/<slot>.png` is the latest NA2.28 image.
-- `captures/<suite>/report/` contains generated reference/current pairs,
-  pixel diffs, blends, and grids when the suite has a reference.
+- `captures/<suite>/screenshots/<slot>_a_reference.png` is the optional
+  reference-game image.
+- `captures/<suite>/screenshots/<slot>_b_current.png` is the latest NA2.28
+  image.
+- `_c_pair`, `_d_blend`, and `_e_diff` files follow those two images for the
+  same capture. `captures/<suite>/grids/` contains multi-capture report pages.
 - `captures/<suite>/sstates/current/<slot>.p2s` is available when the visible
   difference requires runtime investigation.
 - Git history in the capture repository records accepted prior versions of the
@@ -72,8 +74,8 @@ and again before deciding that the result is correct.
 
 The run builds and validates normal/padded E2E Test ISOs, replays every suite
 against both, requires all non-ignored normal/padded screenshots to match, and
-then atomically publishes `current/`, `sstates/current/`, and `report/` from the
-normal replay.
+then atomically publishes `screenshots/`, `grids/`, and `sstates/current/` from
+the normal replay.
 When a freshly captured PNG is pixel-identical to the existing current PNG,
 the existing savestate is retained instead of replacing it. A changed or new
 PNG publishes its matching fresh savestate. Files listed in the suite's
@@ -104,7 +106,7 @@ commit, push, and dirty states.
   `ignore.txt` unless the user explicitly requests that exact change.
 - Do not regenerate references without explicit user authorization.
 - Do not treat a NUN5 reference as accepted NA2.28 output.
-- Preserve unrelated current/report changes.
+- Preserve unrelated screenshot, grid, and savestate changes.
 - Do not expand a local visual fix into release work or broad cleanup.
 
 Before acceptance, report the implementation files changed, capture slots, test

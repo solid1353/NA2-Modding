@@ -42,8 +42,8 @@ pipeline.
 
 `test new` copies `<recording>.p2m2` from Workshop's shared input-recording
 folder into `suites/<suite>/input.p2m2`. `test reference` replays that tracked
-recording against `<game>` and creates or replaces the suite's reference
-captures.
+recording against `<game>` and creates or replaces the suite's `_a_reference`
+screenshots.
 
 ## Layout
 
@@ -54,9 +54,13 @@ e2e/
 │   ├── input.p2m2
 │   └── ignore.txt                 # optional
 ├── captures/<suite>/              # nested local Git repository
-│   ├── reference/                 # optional
-│   ├── current/
-│   ├── report/
+│   ├── screenshots/               # flat, ordered by capture
+│   │   ├── 001_a_reference.png
+│   │   ├── 001_b_current.png
+│   │   ├── 001_c_pair.png
+│   │   ├── 001_d_blend.png
+│   │   └── 001_e_diff.png
+│   ├── grids/                     # multi-capture report pages
 │   └── sstates/
 │       ├── reference/
 │       └── current/
@@ -78,10 +82,10 @@ Build provenance is shared with normal builds under
 preflight receipts are `logs/na228/preflight/e2e_test_normal.json` and
 `e2e_test_padded.json`.
 
-An optional `ignore.txt` lists PNG filenames whose existing `current/` image
-and current savestate are preserved. Ignored filenames are also excluded from
-the normal/padded stability comparison. A newly ignored slot without existing
-evidence is omitted.
+An optional `ignore.txt` lists replay PNG filenames such as `0001.png`. The
+matching `_b_current` screenshot and current savestate are preserved. Ignored
+filenames are also excluded from the normal/padded stability comparison. A
+newly ignored slot without existing evidence is omitted.
 
 After explicit user verification and approval, commit accepted current
 screenshots, savestates, and regenerated reports in the capture repository

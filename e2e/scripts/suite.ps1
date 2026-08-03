@@ -3,7 +3,19 @@ $script:E2eCaptureTiers = [ordered]@{
     Reference = 'reference'
     Current = 'current'
 }
-$script:E2eReportDirectory = 'report'
+$script:E2eScreenshotKinds = [ordered]@{
+    Reference = [pscustomobject]@{ Order = 'a'; Label = 'reference' }
+    Current = [pscustomobject]@{ Order = 'b'; Label = 'current' }
+    Pair = [pscustomobject]@{ Order = 'c'; Label = 'pair' }
+    Blend = [pscustomobject]@{ Order = 'd'; Label = 'blend' }
+    Diff = [pscustomobject]@{ Order = 'e'; Label = 'diff' }
+}
+$script:E2eScreenshotDirectory = 'screenshots'
+$script:E2eGridDirectory = 'grids'
+$script:E2eStableCaptureDirectories = @(
+    $script:E2eScreenshotDirectory,
+    $script:E2eGridDirectory
+)
 
 function Get-VisualRegressionContext {
     param([Parameter(Mandatory)][string]$Suite)
@@ -37,9 +49,8 @@ function Get-VisualRegressionContext {
         SuiteRoot = $caseRoot
         CaptureRoot = $captureRoot
         Capture = [pscustomobject]@{
-            Reference = Join-Path $captureRoot $script:E2eCaptureTiers.Reference
-            Current = Join-Path $captureRoot $script:E2eCaptureTiers.Current
-            Report = Join-Path $captureRoot $script:E2eReportDirectory
+            Screenshots = Join-Path $captureRoot $script:E2eScreenshotDirectory
+            Grids = Join-Path $captureRoot $script:E2eGridDirectory
             States = $statesRoot
             ReferenceStates = Join-Path $statesRoot $script:E2eCaptureTiers.Reference
             CurrentStates = Join-Path $statesRoot $script:E2eCaptureTiers.Current
@@ -47,6 +58,85 @@ function Get-VisualRegressionContext {
         Repository = $repository
         Comparator = Join-Path $repository 'scripts\research\localization\compare_font_capture_sets.ps1'
         PythonRunner = Join-Path $repository 'scripts\lib\run_python.ps1'
+    }
+}
+
+function Get-VisualRegressionScreenshotDefinition {
+    param([Parameter(Mandatory)][string]$Kind)
+
+    if (-not $script:E2eScreenshotKinds.Contains($Kind)) {
+        throw "Unknown screenshot kind: $Kind"
+    }
+    return $script:E2eScreenshotKinds[$Kind]
+}
+
+function Get-VisualRegressionScreenshotName {
+    param(
+        [Parameter(Mandatory)][int]$Slot,
+        [Parameter(Mandatory)][string]$Kind
+    )
+
+    $definition = Get-VisualRegressionScreenshotDefinition -Kind $Kind
+    return '{0:D3}_{1}_{2}.png' -f $Slot, $definition.Order, $definition.Label
+}
+
+function New-VisualRegressionTierStage {
+    param(
+        [Parameter(Mandatory)][string]$ScreenshotDirectory,
+        [Parameter(Mandatory)][string]$StageDirectory,
+        [Parameter(Mandatory)][string]$Kind
+    )
+
+    $definition = Get-VisualRegressionScreenshotDefinition -Kind $Kind
+    [void](New-Item -ItemType Directory -Path $StageDirectory -Force)
+    if (-not (Test-Path -LiteralPath $ScreenshotDirectory -PathType Container)) {
+        return
+    }
+    $suffix = "_$($definition.Order)_$($definition.Label)"
+    foreach ($file in Get-ChildItem -LiteralPath $ScreenshotDirectory -Filter "*$suffix.png" -File) {
+        if ($file.BaseName -notmatch "^(\d+)$([regex]::Escape($suffix))$") {
+            throw "Invalid canonical screenshot name: $($file.FullName)"
+        }
+        $slot = [int]$Matches[1]
+        Copy-Item -LiteralPath $file.FullName -Destination (
+            Join-Path $StageDirectory ('{0:D4}.png' -f $slot)
+        )
+    }
+}
+
+function New-VisualRegressionScreenshotStage {
+    param(
+        [Parameter(Mandatory)][string]$ReferenceDirectory,
+        [Parameter(Mandatory)][string]$CurrentDirectory,
+        [Parameter(Mandatory)][string]$OutputDirectory,
+        [string]$ReportDirectory
+    )
+
+    [void](New-Item -ItemType Directory -Path $OutputDirectory -Force)
+    $sources = @(
+        [pscustomobject]@{ Kind = 'Reference'; Directory = $ReferenceDirectory },
+        [pscustomobject]@{ Kind = 'Current'; Directory = $CurrentDirectory }
+    )
+    if (-not [string]::IsNullOrWhiteSpace($ReportDirectory)) {
+        $sources += @(
+            [pscustomobject]@{ Kind = 'Pair'; Directory = (Join-Path $ReportDirectory 'pairs') },
+            [pscustomobject]@{ Kind = 'Blend'; Directory = (Join-Path $ReportDirectory 'blends') },
+            [pscustomobject]@{ Kind = 'Diff'; Directory = (Join-Path $ReportDirectory 'diffs') }
+        )
+    }
+    foreach ($source in $sources) {
+        if (-not (Test-Path -LiteralPath $source.Directory -PathType Container)) {
+            continue
+        }
+        foreach ($file in Get-ChildItem -LiteralPath $source.Directory -Filter '*.png' -File) {
+            if ($file.BaseName -notmatch '^\d+$') {
+                throw "Non-numeric screenshot name: $($file.FullName)"
+            }
+            $name = Get-VisualRegressionScreenshotName `
+                -Slot ([int]$file.BaseName) `
+                -Kind $source.Kind
+            Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $OutputDirectory $name)
+        }
     }
 }
 
@@ -167,6 +257,7 @@ function New-VisualRegressionStateStage {
         [Parameter(Mandatory)][string]$CapturedDirectory,
         [Parameter(Mandatory)][string]$CaptureRepository,
         [Parameter(Mandatory)][string]$ExistingScreenshotDirectory,
+        [Parameter(Mandatory)][string]$ExistingScreenshotKind,
         [Parameter(Mandatory)][string]$CapturedScreenshotDirectory,
         [Parameter(Mandatory)][string]$PythonRunner,
         [string]$IgnoreFile
@@ -191,6 +282,8 @@ function New-VisualRegressionStateStage {
     $identicalScreenshots = [Collections.Generic.HashSet[string]]::new(
         [StringComparer]::OrdinalIgnoreCase
     )
+    $screenshotDefinition = Get-VisualRegressionScreenshotDefinition `
+        -Kind $ExistingScreenshotKind
     if (Test-Path -LiteralPath $ExistingScreenshotDirectory -PathType Container) {
         $comparison = @(
             & $PythonRunner `
@@ -202,6 +295,8 @@ function New-VisualRegressionStateStage {
                         $CaptureRepository,
                         $ExistingScreenshotDirectory
                     ).Replace('\', '/'),
+                    '--existing-order', $screenshotDefinition.Order,
+                    '--existing-label', $screenshotDefinition.Label,
                     '--captured', $CapturedScreenshotDirectory,
                     '--state-prefix', [IO.Path]::GetRelativePath(
                         $CaptureRepository,
@@ -340,13 +435,10 @@ function New-VisualRegressionReport {
         [Parameter(Mandatory)][string]$Suite,
         [Parameter(Mandatory)][string]$CurrentDirectory,
         [Parameter(Mandatory)][string]$OutputRoot,
-        [string]$ReferenceDirectory
+        [Parameter(Mandatory)][string]$ReferenceDirectory
     )
 
     $context = Get-VisualRegressionContext -Suite $Suite
-    if ([string]::IsNullOrWhiteSpace($ReferenceDirectory)) {
-        $ReferenceDirectory = $context.Capture.Reference
-    }
     $slots = @(Get-CommonSlots -Directories @($ReferenceDirectory, $CurrentDirectory))
     if ($slots.Count -eq 0) {
         return
@@ -538,7 +630,7 @@ function Publish-VisualRegressionTransaction {
             $source = $Replacements[$destination]
             $backup = Join-Path $backupRoot ('{0:D4}' -f $backupIndex)
             $backupIndex++
-            $stableDirectoryNames = @($script:E2eCaptureTiers.Values) + $script:E2eReportDirectory
+            $stableDirectoryNames = $script:E2eStableCaptureDirectories
             if ($stableDirectoryNames -ccontains [IO.Path]::GetFileName($destination)) {
                 if (Test-Path -LiteralPath $destination -PathType Container) {
                     Copy-PublishedFiles -Source $destination -Destination $backup

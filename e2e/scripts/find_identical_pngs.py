@@ -34,6 +34,8 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repository", type=Path, required=True)
     parser.add_argument("--existing-prefix", required=True)
+    parser.add_argument("--existing-order", required=True)
+    parser.add_argument("--existing-label", required=True)
     parser.add_argument("--captured", type=Path, required=True)
     parser.add_argument("--state-prefix", required=True)
     parser.add_argument("--state-output", type=Path, required=True)
@@ -41,7 +43,13 @@ def main() -> int:
 
     args.state_output.mkdir(parents=True, exist_ok=True)
     for captured_path in sorted(args.captured.glob("*.png")):
-        existing_path = f"{args.existing_prefix.rstrip('/')}/{captured_path.name}"
+        if not captured_path.stem.isdecimal():
+            raise ValueError(f"Captured PNG name is not numeric: {captured_path.name}")
+        slot = int(captured_path.stem)
+        existing_name = (
+            f"{slot:03d}_{args.existing_order}_{args.existing_label}.png"
+        )
+        existing_path = f"{args.existing_prefix.rstrip('/')}/{existing_name}"
         existing_data = read_head_file(args.repository, existing_path)
         if existing_data is None or not images_match(existing_data, captured_path):
             continue

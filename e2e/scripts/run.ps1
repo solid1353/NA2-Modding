@@ -155,17 +155,25 @@ try {
             (Join-Path (Join-Path (Join-Path $transaction 'jobs') $publishedVariant) 'suites') `
             $context.SuiteRelativePath
         $capturedScreenshots = Join-Path $suiteJob 'capture\screenshots'
-        $currentStage = Join-Path (Join-Path $transaction 'publish') (
-            Join-Path $context.SuiteRelativePath $script:E2eCaptureTiers.Current
-        )
+        $suiteStage = Join-Path (Join-Path $transaction 'stages') $context.SuiteRelativePath
+        $referenceStage = Join-Path $suiteStage $script:E2eCaptureTiers.Reference
+        $existingCurrentStage = Join-Path $suiteStage 'existing-current'
+        $currentStage = Join-Path $suiteStage $script:E2eCaptureTiers.Current
+        New-VisualRegressionTierStage `
+            -ScreenshotDirectory $context.Capture.Screenshots `
+            -StageDirectory $referenceStage `
+            -Kind Reference
+        New-VisualRegressionTierStage `
+            -ScreenshotDirectory $context.Capture.Screenshots `
+            -StageDirectory $existingCurrentStage `
+            -Kind Current
         [void](New-Item -ItemType Directory -Path $currentStage -Force)
         Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File |
             Copy-Item -Destination $currentStage
         [void](Restore-IgnoredCurrentScreenshots `
             -CurrentDirectory $currentStage `
-            -ExistingDirectory $context.Capture.Current `
+            -ExistingDirectory $existingCurrentStage `
             -IgnoreFile (Join-Path $context.SuiteRoot 'ignore.txt'))
-        $replacements[$context.Capture.Current] = $currentStage
 
         $capturedStates = Join-Path $suiteJob 'capture\sstates'
         if (Test-Path -LiteralPath $capturedStates -PathType Container) {
@@ -178,21 +186,39 @@ try {
                 -Tier $script:E2eCaptureTiers.Current `
                 -CapturedDirectory $capturedStates `
                 -CaptureRepository $context.CaptureRepository `
-                -ExistingScreenshotDirectory $context.Capture.Current `
+                -ExistingScreenshotDirectory $context.Capture.Screenshots `
+                -ExistingScreenshotKind Current `
                 -CapturedScreenshotDirectory $capturedScreenshots `
                 -PythonRunner $context.PythonRunner `
                 -IgnoreFile (Join-Path $context.SuiteRoot 'ignore.txt')
             $replacements[$context.Capture.States] = $statesStage
         }
-        if (@(Get-NumericPngSlots -Directory $context.Capture.Reference).Count -gt 0) {
-            $reportStage = Join-Path (Join-Path $transaction 'publish') (
-                Join-Path $context.SuiteRelativePath $script:E2eReportDirectory
-            )
+        $reportStage = Join-Path $suiteStage 'report'
+        $hasReference = @(Get-NumericPngSlots -Directory $referenceStage).Count -gt 0
+        if ($hasReference) {
             New-VisualRegressionReport `
                 -Suite $suite `
+                -ReferenceDirectory $referenceStage `
                 -CurrentDirectory $currentStage `
                 -OutputRoot $reportStage
-            $replacements[$context.Capture.Report] = $reportStage
+        }
+        $suitePublish = Join-Path (Join-Path $transaction 'publish') $context.SuiteRelativePath
+        $screenshotStage = Join-Path $suitePublish $script:E2eScreenshotDirectory
+        New-VisualRegressionScreenshotStage `
+            -ReferenceDirectory $referenceStage `
+            -CurrentDirectory $currentStage `
+            -ReportDirectory $(if ($hasReference) { $reportStage } else { $null }) `
+            -OutputDirectory $screenshotStage
+        $replacements[$context.Capture.Screenshots] = $screenshotStage
+        if ($hasReference) {
+            $gridStage = Join-Path $suitePublish $script:E2eGridDirectory
+            [void](New-Item -ItemType Directory -Path $gridStage -Force)
+            $generatedGrids = Join-Path $reportStage 'grids'
+            if (Test-Path -LiteralPath $generatedGrids -PathType Container) {
+                Get-ChildItem -LiteralPath $generatedGrids -File |
+                    Copy-Item -Destination $gridStage
+            }
+            $replacements[$context.Capture.Grids] = $gridStage
         }
     }
     Publish-VisualRegressionTransaction `

@@ -89,6 +89,41 @@ that suite's `ignore.txt` remain excluded. Detailed paired states, GS/VU
 comparisons, heap reports, and the original probe build record are retained under
 `work/Font 3/investigation/heap-boundary-tail-probe/`.
 
+### Fixed-boundary allocation-order divergence (2026-08-04)
+
+A later `collection` replay exposed a narrower limitation of that contract.
+Normal build `20260804_022113_427_pid33712` and padded build
+`20260804_022113_646_pid59636` retained the same heap user base
+`0x00940120`, heap end `0x01FF5FF0`, allocation count, tracked bytes, free
+bytes, largest gap, and allocation-size/flag multiset at capture 39. The heap
+arena therefore did not relocate. Their linked lists nevertheless differed
+continuously from allocator index 2427 through 4304. At the first differing
+address, `0x00CA5990`, normal held a `0x50`-byte allocation while padded held
+a `0x90`-byte allocation. The same persistent ordering difference was already
+present at capture 1 and remained at capture 173.
+
+The retained capture-39 savestates were
+`DBD18A0C129D1F88ED33F5241728EB66B7DE582DAEADF3E453CBA4FDE6175881`
+for normal and
+`532C5BC844B2BF67D8B20F40F703AF28F3C6FEF0B346C0C0E1821DF810E5F843`
+for padded. Their complete fixed payload reservations differed in only four
+bytes: the MWO3 data-size word and two memory-end words. The added
+`0x008F8540-0x008F8560` range was zero in both states. PAD state and both VU
+microcode images were identical. GS state differed in four bytes of the active
+ST register at `0x144-0x149`; VU1 working memory and EE render inputs differed.
+The resulting PNG changed 10,536 pixels, bounded to the 3D Choji model and
+pedestal, while all other 172 normal/padded capture pairs matched exactly.
+
+This establishes that the fixed reservation prevents direct heap-base movement
+but does not by itself guarantee identical allocation order. The normal and
+padded states contain the same allocation-size/flag multiset in a different
+order, which is evidence of an execution-order perturbation rather than a
+different resource set. The only established runtime input difference is the
+MWO3 header's 32-byte-longer processed range. It is therefore a medium-confidence
+inference that the extra loader/cache-processing work perturbed boot-time thread
+ordering, which later changed the transform inputs used by the Collection 3D
+viewer. The exact transition inside or after `FUN_00100270` remains untraced.
+
 Direct inline patching alone is not an equivalent full-string alternative.
 The selected inline NA2 slots are the reason shortening fallbacks exist; the
 full official strings do not all fit. Full strings therefore still require

@@ -11,6 +11,7 @@ from scripts.research.ee_memory_map.analyze_savestates import (
     MWO3_MAGIC,
     OVERLAY_BASE,
     MemoryMapError,
+    _variant_for,
     observe_region,
     parse_allocator,
     parse_overlay,
@@ -28,6 +29,21 @@ class IdentityTests(unittest.TestCase):
     def test_rejects_unrecognized_name(self) -> None:
         with self.assertRaises(MemoryMapError):
             parse_state_identity(Path("state.p2s"))
+
+    def test_parses_e2e_transaction_state(self) -> None:
+        path = Path(
+            "e2e/.transactions/run-example/jobs/padded/suites/collection/"
+            "capture/sstates/0039.p2s"
+        )
+        identity = parse_state_identity(path)
+        self.assertEqual(identity.serial, "SLOP-NA228")
+        self.assertEqual(identity.crc, "")
+        self.assertEqual(identity.slot, 39)
+        self.assertEqual(_variant_for(path, identity), "padded")
+
+    def test_rejects_numeric_name_outside_e2e_transaction(self) -> None:
+        with self.assertRaises(MemoryMapError):
+            parse_state_identity(Path("0039.p2s"))
 
 
 class AllocatorTests(unittest.TestCase):

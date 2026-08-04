@@ -80,6 +80,7 @@ STATE_NAME_RE = re.compile(
     r"^(?P<serial>[A-Z]{4}-\d{5}) \((?P<crc>[0-9A-Fa-f]{8})\)\."
     r"(?P<slot>\d{2})\.p2s$"
 )
+E2E_STATE_NAME_RE = re.compile(r"^(?P<slot>\d+)\.p2s$")
 
 
 class MemoryMapError(RuntimeError):
@@ -167,13 +168,41 @@ def read_u32(memory: bytes | bytearray | memoryview, address: int) -> int:
 
 def parse_state_identity(path: Path) -> StateIdentity:
     match = STATE_NAME_RE.fullmatch(path.name)
-    if match is None:
-        raise MemoryMapError(f"Unrecognized PCSX2 savestate name: {path.name}")
-    return StateIdentity(
-        serial=match.group("serial"),
-        crc=match.group("crc").upper(),
-        slot=int(match.group("slot")),
-    )
+    if match is not None:
+        return StateIdentity(
+            serial=match.group("serial"),
+            crc=match.group("crc").upper(),
+            slot=int(match.group("slot")),
+        )
+
+    e2e_match = E2E_STATE_NAME_RE.fullmatch(path.name)
+    if e2e_match is not None and _e2e_variant_for(path) is not None:
+        return StateIdentity(
+            serial="SLOP-NA228",
+            crc="",
+            slot=int(e2e_match.group("slot")),
+        )
+
+    raise MemoryMapError(f"Unrecognized PCSX2 savestate name: {path.name}")
+
+
+def _e2e_variant_for(path: Path) -> str | None:
+    state_directory = path.parent
+    capture_directory = state_directory.parent
+    suite_directory = capture_directory.parent
+    suites_directory = suite_directory.parent
+    variant_directory = suites_directory.parent
+    jobs_directory = variant_directory.parent
+    if (
+        state_directory.name.casefold() != "sstates"
+        or capture_directory.name.casefold() != "capture"
+        or suites_directory.name.casefold() != "suites"
+        or jobs_directory.name.casefold() != "jobs"
+        or not suite_directory.name
+        or not variant_directory.name
+    ):
+        return None
+    return variant_directory.name
 
 
 def _extract_with_zipfile(path: Path, member: str) -> bytes | None:
@@ -406,6 +435,9 @@ def observe_region(
 
 
 def _variant_for(path: Path, identity: StateIdentity) -> str:
+    e2e_variant = _e2e_variant_for(path)
+    if e2e_variant is not None:
+        return e2e_variant
     parent = path.parent.name.casefold()
     if parent in {"vanilla", "current"}:
         return parent
@@ -424,7 +456,7 @@ def analyze_state(path: Path) -> StateObservation:
         observe_region(memory, name, start, end)
         for name, (start, end) in BASE_REGIONS.items()
     ]
-    if variant == "current":
+    if variant == "current" or _e2e_variant_for(path) is not None:
         regions.extend(
             observe_region(memory, name, start, end)
             for name, (start, end) in CURRENT_FIXED_REGIONS.items()

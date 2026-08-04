@@ -24,9 +24,9 @@ infrastructure:
 - reusable PCSX2, savestate, PINE, input-profile, ISO-identity, and Ghidra
   tooling under `@workshop/scripts/`;
 - source-game configuration under `@workshop/games.json`;
-- source-game savestate filing under ignored `@workshop/work/__sstates/`;
+- source-game savestate filing under ignored `@workshop/work/sstates/`;
   project build savestates stay under the invoking project's ignored
-  `work/__sstates/`.
+  `work/sstates/`.
 
 The public repository ignores original media, extracted data, private analysis
 databases, toolchains, emulator binaries, BIOS files, memory cards, savestates,
@@ -36,8 +36,6 @@ logs, and task artifacts.
 
 - `repository`: this repository; always `.`.
 - `workshop`, `source`, `analysis`, and `tools`: imported Workshop roots.
-- `ss`: NA2-local `@work/__sstates`; Workshop source savestates use its own
-  `@workshop/work/__sstates` root.
 - `build`, `logs`, `builder`, `features`, `scripts`, `work`: NA2 roots.
 - `pcsx2_scripts`: `@workshop/scripts/pcsx2`.
 - `pcsx2_stable`, `pcsx2_dev`, `pcsx2_clean`: protected configured runtimes

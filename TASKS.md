@@ -14,10 +14,7 @@
 ### [Project](docs/workstreams/project/README.md)
 - Release: add feature/group/patch config + instructions + default release config.
 - Investigate cross-platform development/deployment possibilities.
-- Global cleanup - preserve what is needed, delete the rest. Project should ask corresponding chats for specifics. Includes, but not limited to:
-    * [Font](work/__sstates/translation/font)
-    * [UI Translation](work/__sstates/translation/UI)
-    * [String Translation](work/__sstates/translation/strings)
+- Global cleanup - preserve/promote what is needed, delete the rest.
 
 ### Bugs
 - **UI Translation:** long character names.

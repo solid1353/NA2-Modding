@@ -2,10 +2,10 @@
 
 ## Inputs and method
 
-The user supplied ten timestamp-matched NUN5/NA2 savestate pairs under
-`@ss/translation/font/`. All 20 files are valid PCSX2 ZIP
-savestates with 640x480 `Screenshot.png` entries. Their combined size is
-212,606,648 bytes.
+The user supplied ten timestamp-matched NUN5/NA2 savestate pairs from the
+former shared savestate library. All 20 files are valid PCSX2 ZIP savestates
+with 640x480 `Screenshot.png` entries. Their combined size is 212,606,648
+bytes.
 
 The source library remained untouched. Exact copies, hashes, embedded
 screenshots, paired presentation images, and measurement tables are retained

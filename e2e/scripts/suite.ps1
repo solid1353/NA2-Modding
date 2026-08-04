@@ -331,8 +331,14 @@ function Invoke-VisualRegressionReplay {
     try {
         Copy-Item -LiteralPath $RecordingPath -Destination $stagedPath
         Write-Host "[e2e] Replaying $Game"
-        & (Join-Path $Repository 'na228.ps1') `
-            $Game -t $stagedName -o $CaptureRoot
+        . (Join-Path $Repository 'scripts\lib\paths.ps1')
+        $paths = Get-Na2Paths -ManifestPath (Join-Path $Repository 'paths.json')
+        & $paths.files.pcsx2_game_launch_command `
+            -Games $Game `
+            -Play $stagedName `
+            -Test `
+            -CaptureDirectory $CaptureRoot `
+            -ProjectRoot $Repository
     }
     finally {
         if (Test-Path -LiteralPath $stagedPath -PathType Leaf) {

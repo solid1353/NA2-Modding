@@ -8,12 +8,6 @@
   action request such as `do it`, `implement it`, or `change it`.
 - A clearly agent-directed request such as `can you add` authorizes that stated
   action only; never infer extra work.
-- Outside declared discussion or design mode, a concrete outcome statement such
-  as `I want <result>` authorizes that stated change when the action and target
-  are clear. Requested inputs supplied for that outcome preserve the execution
-  authorization; never demote the work to inspection-only scope or require a
-  ritual confirmation such as `say do it` after the implementation path is
-  known.
 - Before introducing any concept, script, mechanism, dependency, workflow,
   validation, safeguard, state, prerequisite, or other element not explicitly
   requested, stop before planning or mutation. Explain in plain language what

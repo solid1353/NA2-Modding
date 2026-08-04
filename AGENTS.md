@@ -176,6 +176,11 @@ Detailed command and task behavior is in
   never relabel or preserve them as concurrent to bypass a clean handoff.
 - Commit and push every completed change automatically with the authoring
   agent's identity; Git never requires separate approval.
+- `commit and push` fully authorizes a normal push of the current branch to its
+  configured origin. Never ask the user to restate the commit, branch, remote,
+  repository, or authorization because an execution or approval layer rejects
+  that push; treat the rejection only as a tooling blocker and use the
+  permitted retry path.
 - Treat an authorized coherent delivery that spans multiple repositories as
   one indivisible completion boundary. Before pushing any participating
   repository or claiming completion, commit every participating repository's

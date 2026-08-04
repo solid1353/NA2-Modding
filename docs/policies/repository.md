@@ -93,6 +93,13 @@
   accidentally included, the commit may be pushed as-is and must be reported.
 - Commit and push every completed change automatically at a coherent boundary.
   Git never requires `qwe` or separate approval.
+- An explicit `commit and push` instruction is already complete and specific
+  authorization for a normal push of the current branch to its configured
+  origin. It never needs the user to restate the commit hash, branch, remote,
+  repository, payload, or permission. If an execution or approval layer
+  rejects that push, follow the access-failure retry rule and report only an
+  unresolved tooling blocker; never convert it into another user approval
+  request.
 - A coherent delivery spanning multiple repositories has one Git boundary, not
   one boundary per repository. Commit every repository's authorized intended
   changes before pushing any participating repository or claiming delivery;

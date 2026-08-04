@@ -35,6 +35,11 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
 - When the user declares discussion, design, planning, or brainstorming mode,
   later requirements remain discussion until the user explicitly authorizes
   execution. If authorization is ambiguous, ask.
+- A discussion or design summary preserves every agreed point and its current
+  meaning. Never add requirements, assumptions, constraints, or status chatter,
+  and never omit or reinterpret an agreed point for brevity. When the user
+  rejects specific content, remove only that content; unchanged sibling points
+  remain binding unless the user explicitly removes or replaces them.
 - Never infer the user's desired action, authorization, classification,
   cleanup, rollback, or final state from complaints, context, or agent
   proposals. Perform only the requested change; an unrequested prerequisite

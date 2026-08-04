@@ -44,6 +44,17 @@
   mode and directs execution now, or gives applicable plan approval. Before
   that transition, do not announce execution effort, create an execution plan,
   invoke implementation tools, or mutate anything.
+- A request to summarize discussion or design requests a faithful compression
+  of the agreed specification, not a new revision. Preserve every agreed point
+  in substance and do not add requirements, assumptions, safeguards,
+  constraints, rationales, implementation-status disclaimers, or current-
+  inactivity chatter that the user did not request. Condensing wording never
+  permits dropping a requirement.
+- A rejection or correction changes only the specific content the user names.
+  Remove or revise that content and preserve every unchanged sibling point;
+  never independently delete, weaken, merge, or reinterpret other agreed
+  design content. If the remaining design appears inconsistent, identify the
+  exact conflict and ask instead of silently rewriting it.
 - Never guess desired action, authorization, cleanup, rollback, or final state.
   Never classify work as mistaken, obsolete, unwanted, disposable, canonical,
   or approved unless the user said so or verified evidence establishes it.

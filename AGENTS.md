@@ -150,7 +150,9 @@ Naruto Shippuuden: Narutimate Accel 2 / SLPS-25837.
   command when followed by a number, label, punctuation, or complaint text;
   everything after it is report content. Never reinterpret it as a statement
   about `Policeman` or as a command to change task state. Send every distinct
-  `sin` report in the same turn.
+  `sin` report in the same turn. Reporting, receiving enforcement, or
+  acknowledging the violation never creates a stop or handoff boundary; keep
+  performing every authorized correction and all unaffected approved work.
 - `report` means a factual textual account responsive to the user's wording.
 - `sw`: resume after the user changed the chat to the recommended effort.
 - `ss`: savestate; `ss<number>`: that numbered savestate slot in the user's
@@ -176,6 +178,11 @@ Detailed command and task behavior is in
   never relabel or preserve them as concurrent to bypass a clean handoff.
 - Commit and push every completed change automatically with the authoring
   agent's identity; Git never requires separate approval.
+- Resolve the author identity and complete commit-subject format independently
+  from the live rules of every target repository before each commit. Never use
+  the user's configured or personal identity for an agent commit, and never
+  copy another repository's disclosure suffix, subject convention, or identity
+  into the current repository unless the current repository requires it too.
 - `commit and push` fully authorizes a normal push of the current branch to its
   configured origin. Never ask the user to restate the commit, branch, remote,
   repository, or authorization because an execution or approval layer rejects

@@ -134,11 +134,17 @@
   satisfy it once with `git remote get-url origin` and immediately retry the
   exact push. Do not pause approved work or repeat the check unless the remote
   configuration changes.
-- Commit subjects use `[<exact task title>] <imperative summary>`. Override the
-  author for that commit only using the matching
-  `@workshop/settings/git-authors.tsv`
-  entry, or `<agent-name>@agent.invalid` when absent. Never alter repository or
-  global identity or rewrite user commits.
+- For each target repository, resolve the author identity and complete subject
+  independently before creating the commit. Under this policy the complete
+  subject is `[<exact task title>] <imperative summary>` unless the user or that
+  target repository explicitly requires additional text. A disclosure suffix,
+  subject convention, or identity required by another repository does not
+  transfer to sibling repositories in the same delivery.
+- Override the author for that commit only using the matching
+  `@workshop/settings/git-authors.tsv` entry, or
+  author name `<agent-name>` and email `<agent-name>@agent.invalid` when absent.
+  Never use the user's configured or personal identity for an agent commit,
+  alter repository or global identity, or rewrite user commits.
 - Before pushing, verify every commit authored by the current task has a
   subject beginning with that task's exact title in brackets. The author name
   or email never substitutes for the subject prefix. Correct a mismatch before

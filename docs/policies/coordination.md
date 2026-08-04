@@ -41,7 +41,12 @@
   `Policeman` a self-contained account containing the exact user complaint or
   instruction, the exact failure, current work and approval state, and relevant
   paths or commits. Sending it does not stop, replace, or waive any other rule
-  governing the reporting task.
+  governing the reporting task. Filing the report, receiving enforcement, or
+  acknowledging the violation is not a handoff boundary: the task continues
+  every authorized correction and all unaffected approved work in the same
+  turn. If a required correction such as published-history rewriting needs new
+  explicit authorization, request it once; after the user supplies it, perform
+  the correction instead of stopping with another acknowledgment.
 - `Policeman` inspects the relevant live rules, identifies the exact violation,
   and makes a durable correction or strengthens the existing rule's
   placement or wording when needed. It commits and pushes the policy change,

@@ -322,10 +322,10 @@ function Invoke-VisualRegressionReplay {
         [Parameter(Mandatory)][string]$CaptureRoot
     )
 
-    $generatedRecordingRoot = Join-Path $SharedRecordingRoot 'generated'
+    $generatedRecordingRoot = Join-Path $SharedRecordingRoot '__generated'
     [void](New-Item -ItemType Directory -Path $generatedRecordingRoot -Force)
     $stagedName = Join-Path `
-        'generated' `
+        '__generated' `
         ('e2e-' + [guid]::NewGuid().ToString('N') + '.p2m2')
     $stagedPath = Join-Path $SharedRecordingRoot $stagedName
     try {

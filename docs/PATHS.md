@@ -54,8 +54,7 @@ logs, and task artifacts.
 - `notification_state` and `git_authors`: shared Workshop settings.
 - `workshop_command`: Workshop `workshop.ps1`.
 - `pcsx2_launch_command`, `pcsx2_game_launch_command`, `pcsx2_copy_worker_command`,
-  `pcsx2_pine_command`, `pcsx2_iso_identity`, and
-  `pcsx2_sync_build_game_settings_command`: Workshop utilities.
+  `pcsx2_pine_command`, and `pcsx2_iso_identity`: Workshop utilities.
 - `ghidra_runtime`: Workshop headless-Ghidra runtime setup.
 - `na228_command` and `release_publish_command`: NA2-specific entrypoints.
 

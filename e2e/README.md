@@ -48,15 +48,6 @@ An optional boolean `ignored` field skips an entire variant when `true`;
 cross-cutting stability check applies automatically to every selected suite
 rather than existing as a separate suite.
 
-The two E2E build roles also carry different `boot_elf_crc_discriminator`
-values from `product.json`. Each value changes one aligned zero word outside
-all ELF headers, runtime-loaded segments, and file-backed sections. PCSX2
-therefore sees distinct CRCs without changing executed data, and the
-serial-wide GameSettings file can select `NA v2.28 - E2E Test.ps2` and
-`NA v2.28 - E2E Test Shifted.ps2` independently. Build actualization writes
-only those CRC sections; the one-time card files are not managed by the test
-pipeline.
-
 `test create` creates or completely replaces the named suite. It copies
 the matching `<suite>.p2m2` path from Workshop's shared input-recording folder into
 `suites/<suite>/input.p2m2`, resets `ignore.txt` to empty, and clears all old

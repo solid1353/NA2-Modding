@@ -125,10 +125,9 @@ validates both ISO9660 and UDF trees.
 
 The ordinary `na228` command builds and launches Latest. `na228 l`, `na228 p`,
 and `na228 mt` launch Latest, Previous, and Manual Test without rebuilding;
-`bl` and `bmt` are the corresponding build-and-run recipes. Successful shared
-builds resolve the verified output's boot-ELF CRC and regenerate only that
-role's memory-card override inside the serial-wide GameSettings file. They do
-not generate CRC-named files or touch memory-card files. The standalone `act`
-command regenerates input profiles.
+`bl` and `bmt` are the corresponding build-and-run recipes. Shared builds do
+not rewrite GameSettings. Configured launches select the catalog-derived
+memory-card path whose name uses the selected build postfix. The standalone
+`act` command regenerates input profiles.
 Profile-run logs record the enabled feature pins and the complete derived module
 result inventory.

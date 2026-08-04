@@ -243,12 +243,11 @@ requirements, not whatever implementation happens to exist today.
 
 ## Input-profile synchronization
 
-- Builds and launches never generate CRC-named PNACH or GameSettings files.
-  After a successful non-worker build, the build path resolves the output
-  boot-ELF CRC and atomically regenerates the selected role's
-  `[CRC.<crc>.MemoryCards]` assignment inside the serial-wide GameSettings
-  file. It removes the stale CRC section for that same role card and does not
-  create, copy, reset, validate, or otherwise touch memory-card files.
+- Builds and launches never generate or rewrite PNACH or GameSettings files.
+  Configured launches select slot 1 through PCSX2's process-local memory-card
+  argument. Build card names use the serial-wide `NA v2.28` base plus the
+  selected build's catalog postfix; worker launches retain their task-owned
+  memory-card configuration.
 - `workshop input` regenerates every input-profile combination from canonical
   overrides without changing GameSettings assignments. `workshop input
   <profile>` also regenerates every combination, then assigns the selected

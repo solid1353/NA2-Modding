@@ -51,63 +51,6 @@ function Test-FileContentEqual {
     $leftHash -ceq $rightHash
 }
 
-function Get-Na2BuildCrcDiscriminator {
-    param(
-        [Parameter(Mandatory = $true)][string]$BuildSelector,
-        [Parameter(Mandatory = $true)][psobject]$Paths
-    )
-
-    $productPath = Join-Path $Paths.repository 'product.json'
-    if (-not (Test-Path -LiteralPath $productPath -PathType Leaf)) {
-        throw "NA2 product catalog does not exist: $productPath"
-    }
-    $product = Get-Content -Raw -LiteralPath $productPath | ConvertFrom-Json
-    $entryProperty = $product.builds.PSObject.Properties[$BuildSelector]
-    if ($null -eq $entryProperty) {
-        throw "Unknown NA2 build selector: $BuildSelector"
-    }
-    $valueProperty = (
-        $entryProperty.Value.PSObject.Properties['boot_elf_crc_discriminator']
-    )
-    if ($null -eq $valueProperty) {
-        return [uint32]0
-    }
-    $value = [string]$valueProperty.Value
-    if ($value -cnotmatch '^0x(?<hex>[0-9A-Fa-f]{1,8})$') {
-        throw (
-            "Build $BuildSelector boot_elf_crc_discriminator must be a " +
-            '32-bit hexadecimal value.'
-        )
-    }
-    return [Convert]::ToUInt32($Matches['hex'], 16)
-}
-
-function Sync-Na2BuildGameSettings {
-    param(
-        [Parameter(Mandatory = $true)][string[]]$BuildSelector,
-        [Parameter(Mandatory = $true)][psobject]$Paths
-    )
-
-    $result = @(
-        & $Paths.files.pcsx2_sync_build_game_settings_command `
-            -BuildSelector $BuildSelector `
-            -ProjectRoot $Paths.repository `
-            -PassThru
-    )
-    if (
-        $result.Count -ne 1 -or
-        $null -eq $result[0].PSObject.Properties['Builds']
-    ) {
-        throw 'Build GameSettings synchronization returned no valid result.'
-    }
-    $updated = @($result[0].UpdatedGameSettings).Count
-    Write-Host (
-        "[na228] GameSettings: synchronized $(@($result[0].Builds).Count) build(s); " +
-        "updated files $updated."
-    ) -ForegroundColor Cyan
-    return $result[0]
-}
-
 function Invoke-Na2BuildPreflight {
     param(
         [Parameter(Mandatory = $true)][ValidateSet('check', 'record')][string]$Command,
@@ -117,7 +60,6 @@ function Invoke-Na2BuildPreflight {
         [Parameter(Mandatory = $true)][string]$Profile,
         [Parameter(Mandatory = $true)][string]$Receipt,
         [Parameter(Mandatory = $true)][int]$PayloadShift,
-        [Parameter(Mandatory = $true)][uint32]$BootElfCrcDiscriminator,
         [AllowNull()][string]$ExpectedFingerprint,
         [Parameter(Mandatory = $true)][string]$Repository
     )
@@ -132,7 +74,6 @@ function Invoke-Na2BuildPreflight {
         '--profile', $Profile
         '--receipt', $Receipt
         '--payload-shift', [string]$PayloadShift
-        '--boot-elf-crc-discriminator', ('0x{0:X8}' -f $BootElfCrcDiscriminator)
     )
     if ($Command -eq 'record') {
         if ([string]::IsNullOrWhiteSpace($ExpectedFingerprint)) {
@@ -289,25 +230,6 @@ $logDirectory = Join-Path $paths.logs 'na228'
 $buildLogRoot = Join-Path $logDirectory 'builds'
 $latestReceiptPath = Join-Path $logDirectory 'preflight\latest.json'
 $stagedIso = "$resolvedLatestIso.building"
-$buildSelector = if ($null -ne $workerBuild) {
-    $null
-}
-elseif ($null -ne $e2eBuild) {
-    [string]$e2eBuild.build
-}
-elseif ($ManualTestOnly) {
-    'manual_test'
-}
-else {
-    'latest'
-}
-$bootElfCrcDiscriminator = if ($null -eq $buildSelector) {
-    [uint32]0
-}
-else {
-    Get-Na2BuildCrcDiscriminator -BuildSelector $buildSelector -Paths $paths
-}
-
 if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
     $isolatedBuildId = (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
     $isolatedKind = if ($null -ne $workerBuild) {
@@ -378,7 +300,6 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         '--profile', $profile
         '--profile-log-directory', $isolatedProfileLogDirectory
         '--payload-shift', [string]$payloadShift
-        '--boot-elf-crc-discriminator', ('0x{0:X8}' -f $bootElfCrcDiscriminator)
     )
 
     $isolatedLabel = switch ($isolatedKind) {
@@ -395,7 +316,6 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
             -Profile $profile `
             -Receipt $isolatedReceiptPath `
             -PayloadShift $payloadShift `
-            -BootElfCrcDiscriminator $bootElfCrcDiscriminator `
             -Repository $paths.repository
     }
     catch {
@@ -413,11 +333,6 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
             -Variant $(if ($isolatedKind -eq 'e2e-test') { $E2eVariant } else { $null }) `
             -Paths $paths
         if ($null -ne $retainedRecord) {
-            if ($isolatedKind -ne 'worker') {
-                $null = Sync-Na2BuildGameSettings `
-                    -BuildSelector $buildSelector `
-                    -Paths $paths
-            }
             $retainedRecordPath = ConvertTo-Na2ProjectPath `
                 -Path $retainedRecord.FullName `
                 -Paths $paths
@@ -555,12 +470,6 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
             Remove-Item -LiteralPath $isolatedBuildingIso -Force
         }
 
-        if ($isolatedKind -ne 'worker') {
-            $null = Sync-Na2BuildGameSettings `
-                -BuildSelector $buildSelector `
-                -Paths $paths
-        }
-
         if ($isolatedKind -eq 'e2e-test') {
             $e2eRecord = Complete-Na2E2eBuildRecord `
                 -LogDirectory $logDirectory `
@@ -569,7 +478,6 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
                 -OutputIso $isolatedOutputIso `
                 -Profile $profile `
                 -PayloadShift $payloadShift `
-                -BootElfCrcDiscriminator $bootElfCrcDiscriminator `
                 -Paths $paths
         }
         elseif ($isolatedKind -eq 'manual-test') {
@@ -597,7 +505,6 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
                     -Profile $profile `
                     -Receipt $isolatedReceiptPath `
                     -PayloadShift $payloadShift `
-                    -BootElfCrcDiscriminator $bootElfCrcDiscriminator `
                     -ExpectedFingerprint $isolatedPreflightFingerprint `
                     -Repository $paths.repository
                 if ($isolatedReceiptResult.status -eq 'written') {
@@ -695,7 +602,6 @@ try {
         -Profile $profile `
         -Receipt $latestReceiptPath `
         -PayloadShift 0 `
-        -BootElfCrcDiscriminator $bootElfCrcDiscriminator `
         -Repository $paths.repository
 }
 catch {
@@ -715,9 +621,6 @@ if ($preflight.status -eq 'hit') {
             throw 'The Latest ISO has no retained build record.'
         }
         $buildRecord = "@logs/na228/builds/$($buildMap.LatestBuildId)"
-        $null = Sync-Na2BuildGameSettings `
-            -BuildSelector 'latest' `
-            -Paths $paths
         Write-Host (
             "[na228] Preflight: cache hit; fingerprint $($preflight.fingerprint); " +
             "Latest SHA-256 $($preflight.output_sha256)."
@@ -773,7 +676,6 @@ $arguments = @(
     '--output', $resolvedLatestIso
     '--profile', $profile
     '--profile-log-directory', $profileLogDirectory
-    '--boot-elf-crc-discriminator', ('0x{0:X8}' -f $bootElfCrcDiscriminator)
 )
 
 $promotionCompleted = $false
@@ -808,17 +710,6 @@ try {
         -Profile $profile `
         -Paths $paths
     $buildRecordPath = Join-Path $buildLogRoot $buildRecord.BuildId
-    $settingsSelectors = [Collections.Generic.List[string]]::new()
-    $settingsSelectors.Add('latest')
-    if (
-        $promotion.Rotated -and
-        (Test-Path -LiteralPath $resolvedPreviousIso -PathType Leaf)
-    ) {
-        $settingsSelectors.Add('previous')
-    }
-    $null = Sync-Na2BuildGameSettings `
-        -BuildSelector @($settingsSelectors) `
-        -Paths $paths
     Write-Host "[na228] Build record: retained $buildRecordPath" -ForegroundColor Cyan
     $promotion | Add-Member -NotePropertyName BuildId -NotePropertyValue $buildRecord.BuildId
     $promotion | Add-Member -NotePropertyName ProfileLogDirectory -NotePropertyValue $buildRecord.BuildRecord
@@ -833,7 +724,6 @@ try {
                 -Profile $profile `
                 -Receipt $latestReceiptPath `
                 -PayloadShift 0 `
-                -BootElfCrcDiscriminator $bootElfCrcDiscriminator `
                 -ExpectedFingerprint $preflightFingerprint `
                 -Repository $paths.repository
             if ($receiptResult.status -eq 'written') {

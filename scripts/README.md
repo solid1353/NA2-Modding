@@ -112,11 +112,10 @@ follow the watched token: `na228 nun5 blw src/localization` or
 Trailing launch arguments are forwarded unchanged to Workshop; use `workshop
 help` for the shared launch options.
 `na228 build l|mt` provides the uncommon build-only forms. Shared builds keep
-using the serial-wide PNACH and GameSettings files: after a successful build,
-the built boot-ELF CRC regenerates only that role's
-`[CRC.<crc>.MemoryCards]` section. The generator writes the catalog-derived
-card filename and never touches the card file itself. No CRC-named PCSX2 files
-are generated, and launch-only or worker commands do not actualize.
+using the serial-wide PNACH and GameSettings files without rewriting them.
+Configured launches select the catalog-derived memory-card path directly;
+build card names insert the selected build's postfix after the `NA v2.28`
+base name. Worker commands retain their task-owned memory-card configuration.
 Single-game configured launches preserve existing PCSX2 instances. Paired
 launches close configured user instances first and tile only the newly started
 windows. `workshop input [profile]` regenerates input profiles without building

@@ -236,24 +236,20 @@ function Write-Na2E2eBuildResult {
         [Parameter(Mandatory = $true)][string]$OutputIso,
         [Parameter(Mandatory = $true)][string]$Profile,
         [Parameter(Mandatory = $true)][int]$PayloadShift,
-        [Parameter(Mandatory = $true)][uint32]$BootElfCrcDiscriminator,
         [Parameter(Mandatory = $true)][psobject]$Paths
     )
 
     $outputPortable = ConvertTo-Na2PortableText -Text $OutputIso -Paths $Paths
     $profilePortable = ConvertTo-Na2PortableText -Text $Profile -Paths $Paths
     $recordPortable = ConvertTo-Na2PortableText -Text $RecordDirectory -Paths $Paths
-    $crcDiscriminator = '0x{0:X8}' -f $BootElfCrcDiscriminator
     $content = @(
         (
-            "timestamp_utc`tresult`tvariant`tprofile`toutput_iso`tpayload_shift`t" +
-            "boot_elf_crc_discriminator`tbuild_record"
+            "timestamp_utc`tresult`tvariant`tprofile`toutput_iso`tpayload_shift`tbuild_record"
         )
         (
             (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" +
             (
-                "built`t$Variant`t$profilePortable`t$outputPortable`t$PayloadShift`t" +
-                "$crcDiscriminator`t$recordPortable"
+                "built`t$Variant`t$profilePortable`t$outputPortable`t$PayloadShift`t$recordPortable"
             )
         )
     ) -join "`n"
@@ -404,7 +400,6 @@ function Complete-Na2E2eBuildRecord {
         [Parameter(Mandatory = $true)][string]$OutputIso,
         [Parameter(Mandatory = $true)][string]$Profile,
         [Parameter(Mandatory = $true)][int]$PayloadShift,
-        [Parameter(Mandatory = $true)][uint32]$BootElfCrcDiscriminator,
         [Parameter(Mandatory = $true)][psobject]$Paths
     )
 
@@ -418,7 +413,6 @@ function Complete-Na2E2eBuildRecord {
         -OutputIso $OutputIso `
         -Profile $Profile `
         -PayloadShift $PayloadShift `
-        -BootElfCrcDiscriminator $BootElfCrcDiscriminator `
         -Paths $Paths
 
     $lock = Enter-Na2BuildMapLock -LogDirectory $LogDirectory

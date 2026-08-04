@@ -23,17 +23,14 @@ NA2.28 PCSX2 configuration:
 - Runtime C candidates bypass cheat files and are applied directly to
   task-owned PCSX2 memory through PINE.
 - Former PNACH sections preserved as binary-patcher patch sets are `QoL` and `Battle logic`. Binary-patcher schema v4 organizes each package as groups, atomic patches, and exact edits; independent group and patch `enabled` switches control normal composition. The old `Testing` substitution edits were retired after their negative runtime results were promoted to `docs/knowledge/localization/substitution.md`.
-- Every successful shared build resolves the built ISO's boot-ELF CRC and
-  atomically updates that role's `[CRC.<crc>.MemoryCards]` section in the
-  serial-wide GameSettings file. This generation changes only GameSettings
-  text; it never creates, copies, resets, validates, or otherwise touches a
-  memory-card file. Worker builds and launch-only commands do not actualize.
+- Configured launches select slot 1 directly from the catalog-derived memory-card
+  path without changing GameSettings. Build card names insert the selected
+  build's postfix after the serial-wide `NA v2.28` base name.
   `workshop input` regenerates every Workshop input profile without changing
   memory-card assignments; `workshop input <profile>` regenerates and assigns
   one input profile.
-- The serial-wide GameSettings fallback uses `NA v2.28.ps2`. CRC override
-  sections assign Latest, Previous, Manual Test, E2E Test, and E2E Test Shifted
-  to their distinct role-specific memory-card filenames.
+- The serial-wide GameSettings memory-card base is `NA v2.28.ps2`; it contains
+  no CRC-specific memory-card sections.
 - `@pcsx2_files/` contains the canonical BIOS, cheats, GameSettings, input
   profiles, input recordings, and memory cards used directly by stable and
   development PCSX2.

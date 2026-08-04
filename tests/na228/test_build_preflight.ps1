@@ -59,8 +59,7 @@ try {
     "previous_iso": "@build/NA2.28 - Previous.iso",
     "manual_test_iso": "@build/NA2.28 - Manual Test.iso",
     "e2e_test_iso": "@build/NA2.28 - E2E Test.iso",
-    "e2e_test_shifted_iso": "@build/NA2.28 - E2E Test Shifted.iso",
-    "pcsx2_sync_build_game_settings_command": "@scripts/pcsx2/sync_build_game_settings.ps1"
+    "e2e_test_shifted_iso": "@build/NA2.28 - E2E Test Shifted.iso"
   }
 }
 '@
@@ -76,17 +75,6 @@ try {
     )
     [IO.File]::WriteAllText((Join-Path $repository 'source\NA2.iso'), 'clean na2')
     [IO.File]::WriteAllText((Join-Path $repository 'source\NUN5.iso'), 'clean nun5')
-    [IO.File]::WriteAllText(
-        (Join-Path $pcsx2Scripts 'sync_build_game_settings.ps1'),
-        @'
-param([string[]]$BuildSelector, [string]$ProjectRoot, [switch]$PassThru)
-[pscustomobject]@{
-    Builds = @($BuildSelector | ForEach-Object { [pscustomobject]@{ Selector = $_ } })
-    UpdatedGameSettings = @()
-    Changed = $false
-}
-'@
-    )
     . (Join-Path $libRoot 'paths.ps1')
     . (Join-Path $libRoot 'build_log.ps1')
     $testPaths = Get-Na2Paths
@@ -275,13 +263,6 @@ param([string[]]$BuildSelector, [string]$ProjectRoot, [switch]$PassThru)
     Assert-Na2PreflightTest `
         -Condition ($shiftedBuildCall[$shiftIndex] -ceq '32') `
         -Message 'Shifted E2E Test build did not use the configured 32-byte shift.'
-    $discriminatorIndex = [Array]::IndexOf(
-        $shiftedBuildCall,
-        '--boot-elf-crc-discriminator'
-    ) + 1
-    Assert-Na2PreflightTest `
-        -Condition ($shiftedBuildCall[$discriminatorIndex] -ceq '0x45324502') `
-        -Message 'Shifted E2E Test build did not use its configured CRC discriminator.'
     $e2eMap = Read-Na2BuildMap -LogDirectory $logDirectory -Paths $testPaths
     Assert-Na2PreflightTest `
         -Condition (-not [string]::IsNullOrWhiteSpace($e2eMap.E2eTestNormalBuildId)) `

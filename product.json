@@ -37,16 +37,13 @@
     },
     "manual_test": {
       "aliases": ["mt"],
-      "postfix": "Manual Test",
-      "boot_elf_crc_discriminator": "0x4D540001"
+      "postfix": "Manual Test"
     },
     "e2e_test": {
-      "postfix": "E2E Test",
-      "boot_elf_crc_discriminator": "0x45324501"
+      "postfix": "E2E Test"
     },
     "e2e_test_shifted": {
-      "postfix": "E2E Test Shifted",
-      "boot_elf_crc_discriminator": "0x45324502"
+      "postfix": "E2E Test Shifted"
     }
   }
 }

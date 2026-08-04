@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .composer import CompositionResult, compose_assembly_plan
-from .elf_identity import apply_elf_crc_discriminator
 from .image_assembler.assembler import (
     assemble_image,
     building_image_path,
@@ -776,7 +775,6 @@ def compose_profile_candidate(
     source_iso: Path,
     profile: Profile,
     payload_shift: int = 0,
-    boot_elf_crc_discriminator: int = 0,
 ) -> ProfileCompositionResult:
     """Compose and conflict-check one profile without staging an image."""
     source_iso = source_iso.resolve()
@@ -797,36 +795,6 @@ def compose_profile_candidate(
         insertion_owners=insertion_owners,
         payload_shift=payload_shift,
     )
-    discriminator_edits: tuple[dict[str, object], ...] = ()
-    if boot_elf_crc_discriminator:
-        boot_path = normalize(profile.identity.source_boot_path)
-        boot_record = source.by_path.get(boot_path)
-        if boot_record is None or boot_record.is_dir:
-            raise RuntimeError(
-                f"Boot ELF CRC discriminator requires source boot ELF: {boot_path}"
-            )
-        boot_data = payloads.get(boot_path, bytearray(source.read_file(boot_record)))
-        marked_boot, edit = apply_elf_crc_discriminator(
-            boot_data,
-            boot_elf_crc_discriminator,
-        )
-        assert edit is not None
-        payloads[boot_path] = marked_boot
-        owners.setdefault(boot_path, "build.variant")
-        discriminator_edits = (
-            {
-                "target": boot_path,
-                "offset": f"0x{edit.offset:X}",
-                "length": len(edit.replacement),
-                "original_hex": edit.original.hex().upper(),
-                "new_hex": edit.replacement.hex().upper(),
-                "reason": (
-                    "Assign this build role a distinct PCSX2 boot-ELF CRC without "
-                    "changing runtime-loaded data"
-                ),
-                "owner": "build.variant",
-            },
-        )
     composition = compose_assembly_plan(
         source=source,
         identity=profile.identity,
@@ -835,11 +803,6 @@ def compose_profile_candidate(
         insertions=insertions,
         insertion_owners=insertion_owners,
     )
-    if discriminator_edits:
-        composition = CompositionResult(
-            plan=composition.plan,
-            identity_edits=composition.identity_edits + discriminator_edits,
-        )
     return ProfileCompositionResult(
         results=tuple(profile_results),
         payload_result=payload_result,
@@ -856,7 +819,6 @@ def build_profile_candidate(
     workspace: Path,
     profile_log_directory: Path | None,
     payload_shift: int = 0,
-    boot_elf_crc_discriminator: int = 0,
 ) -> ProfileBuildResult:
     """Compose and verify one staged profile image without promoting it."""
     source_iso = source_iso.resolve()
@@ -873,7 +835,6 @@ def build_profile_candidate(
         source_iso=source_iso,
         profile=profile,
         payload_shift=payload_shift,
-        boot_elf_crc_discriminator=boot_elf_crc_discriminator,
     )
     profile_results = list(composed.results)
     payload_result = composed.payload_result
@@ -999,15 +960,6 @@ def main() -> int:
         help="Test-only aligned resident-payload layout shift in bytes.",
     )
     parser.add_argument(
-        "--boot-elf-crc-discriminator",
-        type=lambda value: int(value, 0),
-        default=0,
-        help=(
-            "Test-build-only 32-bit discriminator written to runtime-unloaded "
-            "boot-ELF padding."
-        ),
-    )
-    parser.add_argument(
         "--compose-only",
         action="store_true",
         help="Compose and conflict-check the profile without staging an ISO.",
@@ -1026,7 +978,6 @@ def main() -> int:
             source_iso=source_iso,
             profile=profile,
             payload_shift=args.payload_shift,
-            boot_elf_crc_discriminator=args.boot_elf_crc_discriminator,
         )
         print_profile_summary(profile, composed.results, composed.payload_result)
         plan = composed.composition.plan
@@ -1061,7 +1012,6 @@ def main() -> int:
         workspace=workspace,
         profile_log_directory=profile_log_directory,
         payload_shift=args.payload_shift,
-        boot_elf_crc_discriminator=args.boot_elf_crc_discriminator,
     )
     profile_results = build.results
     payload_result = build.payload_result

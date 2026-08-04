@@ -2,7 +2,8 @@
 param(
     [string]$Suite,
     [string]$CaptureRoot,
-    [switch]$Shifted
+    [switch]$Shifted,
+    [switch]$RepeatNormal
 )
 
 $ErrorActionPreference = 'Stop'
@@ -15,6 +16,9 @@ $suiteRoot = Join-Path $root 'suites'
 if (-not [string]::IsNullOrWhiteSpace($CaptureRoot) -and
     [string]::IsNullOrWhiteSpace($Suite)) {
     throw 'CaptureRoot requires one selected suite.'
+}
+if ($RepeatNormal.IsPresent -and [string]::IsNullOrWhiteSpace($Suite)) {
+    throw 'RepeatNormal requires one selected suite.'
 }
 function Get-E2eRunContext {
     param([Parameter(Mandatory)][string]$Name)
@@ -60,7 +64,16 @@ $comparisonVariants = @(
     $runVariants |
         Where-Object { [string]$_.name -cne $publishedVariant }
 )
-foreach ($comparisonVariant in $comparisonVariants) {
+$comparisonRuns = @(
+    if ($RepeatNormal.IsPresent) {
+        [pscustomobject]@{
+            name = "$publishedVariant-repeat"
+            compare_against = $publishedVariant
+        }
+    }
+    $comparisonVariants
+)
+foreach ($comparisonVariant in $comparisonRuns) {
     if ([string]$comparisonVariant.compare_against -cne $publishedVariant) {
         throw "Comparison variant $($comparisonVariant.name) must compare against $publishedVariant."
     }
@@ -73,7 +86,7 @@ $comparisonFailures = [Collections.Generic.List[string]]::new()
 $compareReadyVariants = {
     param([bool]$RequireComplete)
 
-    foreach ($comparisonVariant in $comparisonVariants) {
+    foreach ($comparisonVariant in $comparisonRuns) {
         $candidateName = [string]$comparisonVariant.name
         foreach ($suite in $suites) {
             $comparisonKey = "$candidateName|$suite"
@@ -121,9 +134,13 @@ $compareReadyVariants = {
 }
 $pipelineCompleted = $false
 try {
+    $replayNames = @($runVariants.name)
+    if ($RepeatNormal.IsPresent) {
+        $replayNames += "$publishedVariant-repeat"
+    }
     Write-Host (
         "E2E pipeline started for $($suites -join ', '): permanent tests and " +
-        "build/replay variants $(@($runVariants.name) -join ', ') run concurrently."
+        "build/replay lanes $($replayNames -join ', ') run concurrently."
     ) -ForegroundColor Cyan
     $testsJob = Start-Job -Name 'tests' -ScriptBlock {
         param($Repository, $Transaction)
@@ -142,12 +159,22 @@ try {
     foreach ($variant in $runVariants) {
         $variantName = [string]$variant.name
         $variantJob = Start-Job -Name $variantName -ScriptBlock {
-            param($Script, $Variant, $Transaction, $Suite)
+            param($Script, $Variant, $Transaction, $Suite, $Repeat)
             $ErrorActionPreference = 'Stop'
-            & $Script -Variant $Variant -Transaction $Transaction -Suite $Suite
+            $variantArguments = @{
+                Variant = $Variant
+                Transaction = $Transaction
+                Suite = $Suite
+            }
+            if ($Repeat) {
+                $variantArguments.Repeat = $true
+            }
+            & $Script @variantArguments
         } -ArgumentList (
             Join-Path $PSScriptRoot 'variant.ps1'
-        ), $variantName, $transaction, $Suite
+        ), $variantName, $transaction, $Suite, (
+            $RepeatNormal.IsPresent -and $variantName -ceq $publishedVariant
+        )
         $jobs.Add($variantJob)
     }
     Write-Host (
@@ -186,13 +213,11 @@ try {
 
     & $compareReadyVariants $true
     if ($comparisonFailures.Count -gt 0) {
-        foreach ($comparisonVariant in $comparisonVariants) {
-            Preserve-VisualRegressionMismatchEvidence `
-                -Transaction $transaction `
-                -ComparisonVariant ([string]$comparisonVariant.name)
-        }
+        Preserve-VisualRegressionMismatchEvidence `
+            -Transaction $transaction `
+            -ComparisonVariant ([string[]]@($comparisonRuns.name))
         throw (
-            'Build-variant comparison failed for E2E case(s): ' +
+            'E2E capture comparison failed for case(s): ' +
             ($comparisonFailures -join ', ')
         )
     }

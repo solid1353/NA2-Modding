@@ -111,7 +111,10 @@ requirements, not whatever implementation happens to exist today.
   selected suite concurrently through the shared portable PCSX2 installation.
   `-s` also prepares the same-sized internally shifted build, replays the same
   suites against it, and requires exact cross-variant capture stability. Suite
-  creation always enables shifted qualification. Only normal captures are
+  creation additionally replays the normal ISO twice from the same unchanged
+  discard-write card baseline and requires exact repeatability before its
+  separate shifted qualification. Ordinary test runs and manual `-s` runs do
+  not add the duplicate-normal replay. Only normal captures are
   published after all work succeeds. `.\tests\run.ps1` is its internal
   permanent-test phase, not a second public test workflow. The optional suite
   selector is user-only; agents always use bare `na228 test`.

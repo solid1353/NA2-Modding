@@ -77,8 +77,10 @@ and again before deciding that the result is correct.
 The run builds and validates the normal E2E Test ISO, launches every suite
 replay concurrently, and then atomically publishes `screenshots/`, `grids/`,
 and `sstates/current/`. The user may add `-s` to qualify selected suites against
-the same-sized internally shifted payload build; suite creation always performs
-that qualification.
+the same-sized internally shifted payload build. Suite creation alone also
+replays the normal ISO twice from the unchanged discard-write card baseline,
+requires exact PNG equality between those normal runs, and then performs the
+normal/shifted qualification.
 When a freshly captured PNG is pixel-identical to the existing current PNG,
 the existing savestate is retained instead of replacing it. A changed or new
 PNG publishes its matching fresh savestate. Files listed in the suite's

@@ -179,11 +179,21 @@ try {
     $qualificationComparison = Join-Path `
         $qualification `
         'comparisons\shifted\test\helpers'
+    $repeatComparison = Join-Path `
+        $qualification `
+        'comparisons\normal-repeat\test\helpers'
     [void](New-Item -ItemType Directory -Path $qualificationComparison -Force)
     Copy-Item -Path (Join-Path $comparison '*') `
         -Destination $qualificationComparison `
         -Recurse
-    foreach ($variant in @('normal', 'shifted')) {
+    [void](Compare-VisualRegressionVariants `
+        -Suite 'test/helpers' `
+        -BaselineDirectory $normal `
+        -CandidateDirectory $shifted `
+        -CandidateName 'normal-repeat' `
+        -OutputRoot $repeatComparison `
+        -IgnoreFile $ignore)
+    foreach ($variant in @('normal', 'normal-repeat', 'shifted')) {
         $states = Join-Path `
             $qualification `
             "jobs\$variant\suites\test\helpers\capture\sstates"
@@ -194,7 +204,7 @@ try {
     [IO.File]::WriteAllText((Join-Path $qualification 'owner.json'), 'discarded')
     Preserve-VisualRegressionMismatchEvidence `
         -Transaction $qualification `
-        -ComparisonVariant shifted
+        -ComparisonVariant @('normal-repeat', 'shifted')
     $qualificationFiles = @(
         Get-ChildItem -LiteralPath $qualification -Recurse -File |
             ForEach-Object {
@@ -205,6 +215,11 @@ try {
     Assert-E2eHelperTest `
         -Condition (
             ($qualificationFiles -join ',') -ceq (
+                'normal-repeat/test/helpers/report/result.json,' +
+                'normal-repeat/test/helpers/screenshots/normal-repeat/0002.png,' +
+                'normal-repeat/test/helpers/screenshots/normal/0002.png,' +
+                'normal-repeat/test/helpers/sstates/normal-repeat/0002.p2s,' +
+                'normal-repeat/test/helpers/sstates/normal/0002.p2s,' +
                 'shifted/test/helpers/report/result.json,' +
                 'shifted/test/helpers/screenshots/normal/0002.png,' +
                 'shifted/test/helpers/screenshots/shifted/0002.png,' +
@@ -296,7 +311,12 @@ Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "reference
     [IO.File]::WriteAllText(
         (Join-Path $fakeScripts 'run.ps1'),
         @'
-param([string]$Suite, [string]$CaptureRoot, [switch]$Shifted)
+param(
+    [string]$Suite,
+    [string]$CaptureRoot,
+    [switch]$Shifted,
+    [switch]$RepeatNormal
+)
 if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'fail-run')) {
     throw 'synthetic run failure'
 }
@@ -310,7 +330,10 @@ if ($Suite -ceq 'test/with_reference') {
         Start-Sleep -Milliseconds 20
     }
 }
-Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite=$Suite shifted=$($Shifted.IsPresent)"
+Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value (
+    "run suite=$Suite shifted=$($Shifted.IsPresent) " +
+    "repeatNormal=$($RepeatNormal.IsPresent)"
+)
 if ($Suite -ceq 'test/with_reference') {
     [IO.File]::WriteAllText((Join-Path $sync 'run-started'), '')
 }
@@ -367,9 +390,9 @@ if ($Suite -ceq 'test/with_reference') {
     Assert-E2eHelperTest `
         -Condition (
             $newSuiteCalls.Count -eq 5 -and
-            $newSuiteCalls[0] -ceq 'run suite=test/no_reference shifted=True' -and
-            $newSuiteCalls[1] -ceq 'run suite=test/no_reference shifted=True' -and
-            $newSuiteCalls[2] -ceq 'run suite=test/with_reference shifted=True' -and
+            $newSuiteCalls[0] -ceq 'run suite=test/no_reference shifted=True repeatNormal=True' -and
+            $newSuiteCalls[1] -ceq 'run suite=test/no_reference shifted=True repeatNormal=True' -and
+            $newSuiteCalls[2] -ceq 'run suite=test/with_reference shifted=True repeatNormal=True' -and
             $newSuiteCalls[3] -ceq 'reference-capture suite=test/with_reference game=nun5' -and
             $newSuiteCalls[4] -ceq 'reference-publish suite=test/with_reference'
         ) `

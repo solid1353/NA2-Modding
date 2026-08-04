@@ -274,7 +274,9 @@ Detailed command and task behavior is in
   normal E2E Test ISO, then launches every main-tracked suite or the selected
   suite concurrently through the shared portable PCSX2 installation. `-s`
   also prepares the same-sized internally shifted build and strictly compares
-  normal/shifted captures; suite creation always enables that qualification.
+  normal/shifted captures. Suite creation additionally replays the normal ISO
+  twice from the unchanged discard-write card baseline and requires exact PNG
+  equality before performing the separate normal/shifted qualification.
   Only normal captures are published after the whole pipeline passes. Suite definitions
   live under `e2e/`; screenshot history lives in the independent
   `e2e/captures/` repository. `.\tests\run.ps1` remains the internal permanent

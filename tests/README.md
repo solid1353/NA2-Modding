@@ -12,7 +12,8 @@ Tests live here and are grouped by the responsibility they verify:
 
 The public integration command is `na228 test`; it runs this permanent suite
 alongside the normal ISO build and concurrent suite replays. `na228 test -s`
-also performs shifted-layout qualification. The internal permanent
+also performs shifted-layout qualification. Suite creation alone additionally
+requires two normal replays to produce identical PNGs. The internal permanent
 runner remains:
 
 ```powershell

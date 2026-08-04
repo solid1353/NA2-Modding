@@ -593,76 +593,78 @@ function Compare-VisualRegressionVariants {
 function Preserve-VisualRegressionMismatchEvidence {
     param(
         [Parameter(Mandatory)][string]$Transaction,
-        [Parameter(Mandatory)][string]$ComparisonVariant
+        [Parameter(Mandatory)][string[]]$ComparisonVariant
     )
 
-    $comparisonRoot = Join-Path `
-        (Join-Path $Transaction 'comparisons') `
-        $ComparisonVariant
     $evidenceStage = Join-Path $Transaction '.retained-evidence'
     [void](New-Item -ItemType Directory -Path $evidenceStage -Force)
-    foreach ($resultFile in Get-ChildItem `
-        -LiteralPath $comparisonRoot `
-        -Filter 'result.json' `
-        -File `
-        -Recurse
-    ) {
-        $result = Get-Content -Raw -LiteralPath $resultFile.FullName |
-            ConvertFrom-Json
-        if ([string]$result.status -cne 'failed') {
-            continue
-        }
-        $suite = [string]$result.suite
-        $context = Get-VisualRegressionContext -Suite $suite
-        $caseRoot = Join-Path `
-            (Join-Path $evidenceStage $ComparisonVariant) `
-            $context.SuiteRelativePath
-        $screenshotsRoot = Join-Path $caseRoot 'screenshots'
-        $statesRoot = Join-Path $caseRoot 'sstates'
-        $reportRoot = Join-Path $caseRoot 'report'
-        $comparisonCaseRoot = $resultFile.DirectoryName
-        foreach ($mismatch in @($result.mismatches)) {
-            $name = [string]$mismatch.name
-            $stateName = [IO.Path]::ChangeExtension($name, '.p2s')
-            foreach ($variant in @('normal', $ComparisonVariant)) {
-                $screenshot = Join-Path `
-                    (Join-Path $comparisonCaseRoot "differences\$variant") `
-                    $name
-                if (Test-Path -LiteralPath $screenshot -PathType Leaf) {
-                    $screenshotDestination = Join-Path $screenshotsRoot $variant
-                    [void](New-Item `
-                        -ItemType Directory `
-                        -Path $screenshotDestination `
-                        -Force)
-                    Copy-Item `
-                        -LiteralPath $screenshot `
-                        -Destination (Join-Path $screenshotDestination $name)
-                }
-                $state = Join-Path `
-                    (Join-Path `
+    foreach ($comparisonName in $ComparisonVariant) {
+        $comparisonRoot = Join-Path `
+            (Join-Path $Transaction 'comparisons') `
+            $comparisonName
+        foreach ($resultFile in Get-ChildItem `
+            -LiteralPath $comparisonRoot `
+            -Filter 'result.json' `
+            -File `
+            -Recurse
+        ) {
+            $result = Get-Content -Raw -LiteralPath $resultFile.FullName |
+                ConvertFrom-Json
+            if ([string]$result.status -cne 'failed') {
+                continue
+            }
+            $suite = [string]$result.suite
+            $context = Get-VisualRegressionContext -Suite $suite
+            $caseRoot = Join-Path `
+                (Join-Path $evidenceStage $comparisonName) `
+                $context.SuiteRelativePath
+            $screenshotsRoot = Join-Path $caseRoot 'screenshots'
+            $statesRoot = Join-Path $caseRoot 'sstates'
+            $reportRoot = Join-Path $caseRoot 'report'
+            $comparisonCaseRoot = $resultFile.DirectoryName
+            foreach ($mismatch in @($result.mismatches)) {
+                $name = [string]$mismatch.name
+                $stateName = [IO.Path]::ChangeExtension($name, '.p2s')
+                foreach ($variant in @('normal', $comparisonName)) {
+                    $screenshot = Join-Path `
+                        (Join-Path $comparisonCaseRoot "differences\$variant") `
+                        $name
+                    if (Test-Path -LiteralPath $screenshot -PathType Leaf) {
+                        $screenshotDestination = Join-Path $screenshotsRoot $variant
+                        [void](New-Item `
+                            -ItemType Directory `
+                            -Path $screenshotDestination `
+                            -Force)
+                        Copy-Item `
+                            -LiteralPath $screenshot `
+                            -Destination (Join-Path $screenshotDestination $name)
+                    }
+                    $state = Join-Path `
                         (Join-Path `
                             (Join-Path `
-                                (Join-Path $Transaction "jobs\$variant\suites") `
-                                $context.SuiteRelativePath) `
-                            'capture') `
-                        'sstates') `
-                    $stateName
-                if (Test-Path -LiteralPath $state -PathType Leaf) {
-                    $stateDestination = Join-Path $statesRoot $variant
-                    [void](New-Item `
-                        -ItemType Directory `
-                        -Path $stateDestination `
-                        -Force)
-                    Copy-Item `
-                        -LiteralPath $state `
-                        -Destination (Join-Path $stateDestination $stateName)
+                                (Join-Path `
+                                    (Join-Path $Transaction "jobs\$variant\suites") `
+                                    $context.SuiteRelativePath) `
+                                'capture') `
+                            'sstates') `
+                        $stateName
+                    if (Test-Path -LiteralPath $state -PathType Leaf) {
+                        $stateDestination = Join-Path $statesRoot $variant
+                        [void](New-Item `
+                            -ItemType Directory `
+                            -Path $stateDestination `
+                            -Force)
+                        Copy-Item `
+                            -LiteralPath $state `
+                            -Destination (Join-Path $stateDestination $stateName)
+                    }
                 }
             }
+            [void](New-Item -ItemType Directory -Path $reportRoot -Force)
+            Copy-Item `
+                -LiteralPath $resultFile.FullName `
+                -Destination (Join-Path $reportRoot 'result.json')
         }
-        [void](New-Item -ItemType Directory -Path $reportRoot -Force)
-        Copy-Item `
-            -LiteralPath $resultFile.FullName `
-            -Destination (Join-Path $reportRoot 'result.json')
     }
     foreach ($item in Get-ChildItem -LiteralPath $Transaction -Force) {
         if ($item.FullName -ceq $evidenceStage) {

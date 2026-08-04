@@ -33,6 +33,12 @@ against it. Normal and shifted screenshots are compared as soon as both
 replays finish, and any non-ignored difference fails the command. The shifted
 lane is also enabled automatically by `test create`.
 
+`test create` also launches a second replay of the same normal ISO and recording.
+Both normal replays read the same unchanged card because replay capture discards
+memory-card writes. Their non-ignored PNGs must be byte-identical before the
+separate normal/shifted comparison can pass. Ordinary `test` and manual `-s`
+runs do not add this duplicate-normal replay.
+
 The variants live in `config.json`. `normal` publishes captures; `shifted`
 moves every real resident-payload fragment through a fingerprinted 32-byte
 internal layout shift and compares against `normal`. Both payloads serialize
@@ -57,8 +63,8 @@ pipeline.
 the matching `<suite>.p2m2` path from Workshop's shared input-recording folder into
 `suites/<suite>/input.p2m2`, resets `ignore.txt` to empty, and clears all old
 capture history for that suite. When `[game]` is present, its `_a_reference`
-replay runs concurrently with the permanent tests and normal/shifted build and
-replay pipelines. After every branch succeeds, creation merges the reference
+replay runs concurrently with the permanent tests, both normal replays, and the
+shifted build/replay pipeline. After every branch succeeds, creation merges the reference
 and current evidence and publishes the new capture history once. Without
 `[game]`, it runs the test pipeline and publishes current evidence only. There
 is no separate reference command.
@@ -93,6 +99,7 @@ e2e/
     ├── owner.json
     ├── jobs/tests/
     ├── jobs/normal/suites/<suite>/
+    ├── jobs/normal-repeat/suites/<suite>/ # suite creation only
     ├── jobs/shifted/suites/<suite>/
     └── comparisons/<variant>/<suite>/
 ```
@@ -101,9 +108,9 @@ Each transaction records its owning PID and process start time. A later run
 removes only abandoned transactions carrying valid ownership metadata; legacy
 directories without metadata and transactions owned by live processes are
 preserved.
-When shifted qualification finds differences, the command fails after reducing
-its retained transaction to only the mismatching normal/shifted screenshots,
-their paired savestates, and each comparison's `report/result.json`.
+When repeatability or shifted qualification finds differences, the command
+fails after reducing its retained transaction to only the mismatching capture
+pairs, their savestates, and each comparison's `report/result.json`.
 
 Grid pages use a `page_` prefix and the same `c_pair`, `d_blend`, and `e_diff`
 suffixes as their individual screenshot evidence. Each page number therefore

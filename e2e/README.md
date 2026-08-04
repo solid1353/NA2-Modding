@@ -95,6 +95,7 @@ e2e/
 │       └── current/
 └── .transactions/run-<uuid>/      # transient, ignored
     ├── owner.json
+    ├── retained.json               # failed command finished; next run removes it
     ├── jobs/tests/
     ├── jobs/normal/suites/<suite>/
     ├── jobs/normal-repeat/suites/<suite>/ # suite creation only
@@ -102,10 +103,12 @@ e2e/
     └── comparisons/<variant>/<suite>/
 ```
 
-Each transaction records its owning PID and process start time. A later run
-removes only abandoned transactions carrying valid ownership metadata; legacy
-directories without metadata and transactions owned by live processes are
-preserved.
+Each transaction records its owning PID and process start time while its command
+is active. A failed run marks its retained evidence inactive before returning to
+the shell, so the next command can remove it even when that shell remains open.
+Nested transactions in the same shell remain protected while active. Old
+ownerless or malformed leftovers are removed after a one-minute creation-race
+grace period.
 When suite-creation repeatability or explicit shifted qualification finds
 differences, the command
 fails after reducing its retained transaction to only the mismatching capture

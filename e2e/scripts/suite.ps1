@@ -188,23 +188,38 @@ function New-VisualRegressionTransaction {
 
     $transactions = [IO.Path]::GetFullPath((Join-Path $Root '.transactions'))
     [void](New-Item -ItemType Directory -Path $transactions -Force)
+    $ownerlessGraceCutoff = [DateTime]::UtcNow.AddMinutes(-1)
     foreach ($candidate in Get-ChildItem -LiteralPath $transactions -Directory -Force) {
+        if (Test-Path -LiteralPath (Join-Path $candidate.FullName 'retained.json') -PathType Leaf) {
+            Remove-Item -LiteralPath $candidate.FullName -Recurse -Force
+            continue
+        }
         $ownerPath = Join-Path $candidate.FullName 'owner.json'
         if (-not (Test-Path -LiteralPath $ownerPath -PathType Leaf)) {
+            if ($candidate.LastWriteTimeUtc -lt $ownerlessGraceCutoff) {
+                Remove-Item -LiteralPath $candidate.FullName -Recurse -Force
+            }
             continue
         }
         try {
             $owner = Get-Content -Raw -LiteralPath $ownerPath | ConvertFrom-Json
             $ownerProcess = [Diagnostics.Process]::GetProcessById([int]$owner.pid)
-            $ownerStart = [DateTime]::Parse(
-                [string]$owner.process_start_utc,
-                [Globalization.CultureInfo]::InvariantCulture,
-                [Globalization.DateTimeStyles]::RoundtripKind
-            ).ToUniversalTime()
-            $isLive = (
-                [int]$owner.pid -ne $PID -and
-                $ownerProcess.StartTime.ToUniversalTime() -eq $ownerStart
-            )
+            if ($null -ne $owner.process_start_file_time_utc) {
+                $isLive = (
+                    $ownerProcess.StartTime.ToFileTimeUtc() -eq
+                    [long]$owner.process_start_file_time_utc
+                )
+            }
+            else {
+                $ownerStart = [DateTime]::Parse(
+                    [string]$owner.process_start_utc,
+                    [Globalization.CultureInfo]::InvariantCulture,
+                    [Globalization.DateTimeStyles]::RoundtripKind
+                ).ToUniversalTime()
+                $isLive = (
+                    $ownerProcess.StartTime.ToUniversalTime() -eq $ownerStart
+                )
+            }
         }
         catch [ArgumentException] {
             $isLive = $false
@@ -213,7 +228,7 @@ function New-VisualRegressionTransaction {
             $isLive = $false
         }
         catch {
-            $isLive = $true
+            $isLive = $candidate.LastWriteTimeUtc -ge $ownerlessGraceCutoff
         }
         if ($isLive) {
             continue
@@ -226,9 +241,9 @@ function New-VisualRegressionTransaction {
     [void](New-Item -ItemType Directory -Path $transaction)
     $process = Get-Process -Id $PID
     $owner = [ordered]@{
-        schema_version = 1
+        schema_version = 2
         pid = $PID
-        process_start_utc = $process.StartTime.ToUniversalTime().ToString('O')
+        process_start_file_time_utc = $process.StartTime.ToFileTimeUtc()
         created_utc = (Get-Date).ToUniversalTime().ToString('O')
     } | ConvertTo-Json
     $ownerPath = Join-Path $transaction 'owner.json'
@@ -236,6 +251,42 @@ function New-VisualRegressionTransaction {
     [IO.File]::WriteAllText($ownerTemporary, $owner + "`n", [Text.UTF8Encoding]::new($false))
     [IO.File]::Move($ownerTemporary, $ownerPath, $true)
     return $transaction
+}
+
+function Set-VisualRegressionTransactionRetained {
+    param(
+        [Parameter(Mandatory)][string]$Transaction,
+        [Parameter(Mandatory)][string]$Root
+    )
+
+    $transactions = [IO.Path]::GetFullPath((Join-Path $Root '.transactions'))
+    $resolvedTransaction = [IO.Path]::GetFullPath($Transaction)
+    $transactionPrefix = $transactions.TrimEnd(
+        [IO.Path]::DirectorySeparatorChar,
+        [IO.Path]::AltDirectorySeparatorChar
+    ) + [IO.Path]::DirectorySeparatorChar
+    if (-not $resolvedTransaction.StartsWith($transactionPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to mark a transaction outside $transactions"
+    }
+    if (-not (Test-Path -LiteralPath $resolvedTransaction -PathType Container)) {
+        throw "Transaction does not exist: $resolvedTransaction"
+    }
+    $marker = [ordered]@{
+        schema_version = 1
+        status = 'failed'
+        completed_utc = (Get-Date).ToUniversalTime().ToString('O')
+    } | ConvertTo-Json
+    $markerPath = Join-Path $resolvedTransaction 'retained.json'
+    $temporary = "$markerPath.tmp-$([guid]::NewGuid().ToString('N'))"
+    try {
+        [IO.File]::WriteAllText($temporary, $marker + "`n", [Text.UTF8Encoding]::new($false))
+        [IO.File]::Move($temporary, $markerPath, $true)
+    }
+    finally {
+        if (Test-Path -LiteralPath $temporary -PathType Leaf) {
+            Remove-Item -LiteralPath $temporary -Force
+        }
+    }
 }
 
 function Remove-VisualRegressionTransaction {

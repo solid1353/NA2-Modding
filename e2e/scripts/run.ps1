@@ -324,6 +324,12 @@ finally {
         Remove-VisualRegressionTransaction -Transaction $transaction -Root $root
     }
     else {
+        try {
+            Set-VisualRegressionTransactionRetained -Transaction $transaction -Root $root
+        }
+        catch {
+            Write-Warning "Failed to mark the retained E2E transaction inactive: $($_.Exception.Message)"
+        }
         Write-Warning "Failed E2E transaction retained for inspection: $transaction"
     }
 }

@@ -104,8 +104,10 @@ try {
 
     $transactions = Join-Path $testRoot '.transactions'
     $legacy = Join-Path $transactions 'legacy-without-owner'
+    $recent = Join-Path $transactions 'recent-without-owner'
     $stale = Join-Path $transactions 'run-stale'
-    [void](New-Item -ItemType Directory -Path $legacy, $stale -Force)
+    [void](New-Item -ItemType Directory -Path $legacy, $recent, $stale -Force)
+    (Get-Item -LiteralPath $legacy).LastWriteTimeUtc = [DateTime]::UtcNow.AddMinutes(-2)
     [IO.File]::WriteAllText(
         (Join-Path $stale 'owner.json'),
         '{"schema_version":1,"pid":2147483647,"process_start_utc":"2000-01-01T00:00:00.0000000Z"}'
@@ -115,11 +117,39 @@ try {
         -Condition (-not (Test-Path -LiteralPath $stale)) `
         -Message 'A metadata-owned abandoned E2E transaction was not removed.'
     Assert-E2eHelperTest `
-        -Condition (Test-Path -LiteralPath $legacy -PathType Container) `
-        -Message 'A legacy transaction without ownership metadata was removed.'
+        -Condition (-not (Test-Path -LiteralPath $legacy)) `
+        -Message 'An old ownerless E2E transaction was not removed.'
     Assert-E2eHelperTest `
-        -Condition (Test-Path -LiteralPath (Join-Path $transaction 'owner.json') -PathType Leaf) `
-        -Message 'A new E2E transaction did not record its owner.'
+        -Condition (Test-Path -LiteralPath $recent -PathType Container) `
+        -Message 'A newly created ownerless transaction was not protected from the creation race.'
+    $transactionOwner = Get-Content -Raw -LiteralPath (Join-Path $transaction 'owner.json') |
+        ConvertFrom-Json
+    Assert-E2eHelperTest `
+        -Condition (
+            [int]$transactionOwner.schema_version -eq 2 -and
+            [long]$transactionOwner.process_start_file_time_utc -eq
+                (Get-Process -Id $PID).StartTime.ToFileTimeUtc()
+        ) `
+        -Message 'A new E2E transaction did not record a stable process identity.'
+    (Get-Item -LiteralPath $recent).LastWriteTimeUtc = [DateTime]::UtcNow.AddMinutes(-2)
+    $nestedTransaction = New-VisualRegressionTransaction -Root $testRoot -Prefix 'nested'
+    Assert-E2eHelperTest `
+        -Condition (
+            (Test-Path -LiteralPath $transaction -PathType Container) -and
+            -not (Test-Path -LiteralPath $recent)
+        ) `
+        -Message 'Nested same-shell ownership or aged ownerless cleanup was incorrect.'
+    Set-VisualRegressionTransactionRetained `
+        -Transaction $nestedTransaction `
+        -Root $testRoot
+    $sweepTransaction = New-VisualRegressionTransaction -Root $testRoot -Prefix 'sweep'
+    Assert-E2eHelperTest `
+        -Condition (
+            -not (Test-Path -LiteralPath $nestedTransaction) -and
+            (Test-Path -LiteralPath $transaction -PathType Container)
+        ) `
+        -Message 'A completed failed transaction remained pinned to its live interactive shell.'
+    Remove-VisualRegressionTransaction -Transaction $sweepTransaction -Root $testRoot
 
     $normal = Join-Path $testRoot 'normal'
     $shifted = Join-Path $testRoot 'shifted'

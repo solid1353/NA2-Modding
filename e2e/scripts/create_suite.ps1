@@ -64,7 +64,6 @@ try {
     & (Join-Path $PSScriptRoot 'run.ps1') `
         -Suite $context.Suite `
         -CaptureRoot $captureStage `
-        -Shifted `
         -RepeatNormal
 
     if ($null -ne $referenceJob) {

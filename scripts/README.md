@@ -87,9 +87,9 @@ command. Its infrastructure and suite definitions are main-tracked under
 preflighting and building the normal E2E Test ISO, then launches every suite or
 the selected suite concurrently through the shared portable PCSX2 installation.
 `-s` also runs the internally shifted build and strictly compares its PNGs with
-normal. Suite creation alone also repeats the normal replay from the unchanged
-discard-write card baseline, requires exact PNG equality, and then performs the
-shifted qualification. Only normal evidence is published after the entire run
+normal. Suite creation instead repeats the normal replay from the unchanged
+discard-write card baseline and requires exact PNG equality. Only normal
+evidence is published after the entire run
 passes.
 `na228 test create <suite> [game]` copies the matching shared Workshop recording,
 creates an empty `ignore.txt`, optionally captures the game's reference, and

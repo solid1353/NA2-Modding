@@ -38,9 +38,9 @@ Contributions fail before crossing the reservation.
 
 The shifted E2E Test build exposes a test-only aligned `payload_shift` input.
 It is fingerprinted by preflight and moves every real contributed fragment
-before symbolic relocations are resolved. Suite creation and explicit
-`na228 test [suite] -s` qualification use the configured 32-byte shift and
-require every non-ignored normal/shifted PNG to remain byte-identical.
+before symbolic relocations are resolved. Explicit `na228 test [suite] -s`
+qualification uses the configured 32-byte shift and requires every non-ignored
+normal/shifted PNG to remain byte-identical.
 
 The configuration also declares the development-only injection reservation
 `0x008F0000-0x008F3D00` immediately below the fixed payload load base. It is

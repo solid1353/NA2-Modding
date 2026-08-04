@@ -390,9 +390,9 @@ if ($Suite -ceq 'test/with_reference') {
     Assert-E2eHelperTest `
         -Condition (
             $newSuiteCalls.Count -eq 5 -and
-            $newSuiteCalls[0] -ceq 'run suite=test/no_reference shifted=True repeatNormal=True' -and
-            $newSuiteCalls[1] -ceq 'run suite=test/no_reference shifted=True repeatNormal=True' -and
-            $newSuiteCalls[2] -ceq 'run suite=test/with_reference shifted=True repeatNormal=True' -and
+            $newSuiteCalls[0] -ceq 'run suite=test/no_reference shifted=False repeatNormal=True' -and
+            $newSuiteCalls[1] -ceq 'run suite=test/no_reference shifted=False repeatNormal=True' -and
+            $newSuiteCalls[2] -ceq 'run suite=test/with_reference shifted=False repeatNormal=True' -and
             $newSuiteCalls[3] -ceq 'reference-capture suite=test/with_reference game=nun5' -and
             $newSuiteCalls[4] -ceq 'reference-publish suite=test/with_reference'
         ) `

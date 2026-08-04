@@ -30,14 +30,12 @@ reference/current reports published atomically.
 
 `-s` adds the shifted E2E Test build and replays the same selected suites
 against it. Normal and shifted screenshots are compared as soon as both
-replays finish, and any non-ignored difference fails the command. The shifted
-lane is also enabled automatically by `test create`.
+replays finish, and any non-ignored difference fails the command.
 
 `test create` also launches a second replay of the same normal ISO and recording.
 Both normal replays read the same unchanged card because replay capture discards
-memory-card writes. Their non-ignored PNGs must be byte-identical before the
-separate normal/shifted comparison can pass. Ordinary `test` and manual `-s`
-runs do not add this duplicate-normal replay.
+memory-card writes. Their non-ignored PNGs must be byte-identical. Ordinary
+`test` and manual `-s` runs do not add this duplicate-normal replay.
 
 The variants live in `config.json`. `normal` publishes captures; `shifted`
 moves every real resident-payload fragment through a fingerprinted 32-byte
@@ -63,8 +61,8 @@ pipeline.
 the matching `<suite>.p2m2` path from Workshop's shared input-recording folder into
 `suites/<suite>/input.p2m2`, resets `ignore.txt` to empty, and clears all old
 capture history for that suite. When `[game]` is present, its `_a_reference`
-replay runs concurrently with the permanent tests, both normal replays, and the
-shifted build/replay pipeline. After every branch succeeds, creation merges the reference
+replay runs concurrently with the permanent tests and both normal replays.
+After every branch succeeds, creation merges the reference
 and current evidence and publishes the new capture history once. Without
 `[game]`, it runs the test pipeline and publishes current evidence only. There
 is no separate reference command.
@@ -100,7 +98,7 @@ e2e/
     ├── jobs/tests/
     ├── jobs/normal/suites/<suite>/
     ├── jobs/normal-repeat/suites/<suite>/ # suite creation only
-    ├── jobs/shifted/suites/<suite>/
+    ├── jobs/shifted/suites/<suite>/       # explicit -s only
     └── comparisons/<variant>/<suite>/
 ```
 
@@ -108,7 +106,8 @@ Each transaction records its owning PID and process start time. A later run
 removes only abandoned transactions carrying valid ownership metadata; legacy
 directories without metadata and transactions owned by live processes are
 preserved.
-When repeatability or shifted qualification finds differences, the command
+When suite-creation repeatability or explicit shifted qualification finds
+differences, the command
 fails after reducing its retained transaction to only the mismatching capture
 pairs, their savestates, and each comparison's `report/result.json`.
 

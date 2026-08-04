@@ -252,6 +252,23 @@ try {
         -Condition ([IO.File]::ReadAllText((Join-Path $secondDestination 'new.txt')) -ceq 'new-two') `
         -Message 'Second same-name capture directory was not published.'
 
+    $stateDestination = Join-Path $testRoot 'published\states\sstates'
+    $stateSource = Join-Path $testRoot 'sources\states\sstates'
+    [void](New-Item -ItemType Directory -Path $stateDestination, $stateSource -Force)
+    [IO.File]::WriteAllText((Join-Path $stateDestination '0001.p2s'), 'old')
+    [IO.File]::WriteAllText((Join-Path $stateDestination 'stale.p2s'), 'stale')
+    [IO.File]::WriteAllText((Join-Path $stateSource '0001.p2s'), 'new')
+    Publish-VisualRegressionTransaction `
+        -Replacements ([ordered]@{ $stateDestination = $stateSource }) `
+        -TransactionRoot $transaction
+    Assert-E2eHelperTest `
+        -Condition (
+            [IO.File]::ReadAllText((Join-Path $stateDestination '0001.p2s')) -ceq 'new' -and
+            -not (Test-Path -LiteralPath (Join-Path $stateDestination 'stale.p2s')) -and
+            (Test-Path -LiteralPath (Join-Path $stateSource '0001.p2s') -PathType Leaf)
+        ) `
+        -Message 'Savestates were not synchronized without moving their staged directory.'
+
     $fakeRepository = Join-Path $testRoot 'suite-lifecycle-repository'
     $fakeScripts = Join-Path $fakeRepository 'e2e\scripts'
     $fakeRecordings = Join-Path $testRoot 'shared-recordings'

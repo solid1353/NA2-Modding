@@ -14,7 +14,8 @@ $script:E2eScreenshotDirectory = 'screenshots'
 $script:E2eGridDirectory = 'grids'
 $script:E2eStableCaptureDirectories = @(
     $script:E2eScreenshotDirectory,
-    $script:E2eGridDirectory
+    $script:E2eGridDirectory,
+    'sstates'
 )
 
 function Get-VisualRegressionContext {

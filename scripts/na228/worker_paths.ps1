@@ -79,7 +79,7 @@ function Get-Na2WorkerBuildContext {
             'previous_iso',
             'manual_test_iso',
             'e2e_test_iso',
-            'e2e_test_padded_iso'
+            'e2e_test_shifted_iso'
         )) {
             $configured = $Paths.files.PSObject.Properties[$property]
             if ($null -ne $configured) { $configured.Value }

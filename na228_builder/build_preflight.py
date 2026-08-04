@@ -169,7 +169,7 @@ def collect_build_state(
     na2_iso: Path,
     nun5_iso: Path,
     profile_path: Path,
-    payload_padding: int = 0,
+    payload_shift: int = 0,
     boot_elf_crc_discriminator: int = 0,
     dependencies: dict[str, str] | None = None,
 ) -> dict[str, object]:
@@ -177,9 +177,9 @@ def collect_build_state(
     na2_iso = na2_iso.resolve()
     nun5_iso = nun5_iso.resolve()
     profile_path = profile_path.resolve()
-    if payload_padding < 0 or payload_padding > 0x10000 or payload_padding & 0xF:
+    if payload_shift < 0 or payload_shift > 0x10000 or payload_shift & 0xF:
         raise ValueError(
-            "Payload padding must be a 16-byte multiple from 0 through 65536"
+            "Payload shift must be a 16-byte multiple from 0 through 65536"
         )
     if boot_elf_crc_discriminator < 0 or boot_elf_crc_discriminator > 0xFFFFFFFF:
         raise ValueError("Boot ELF CRC discriminator must fit in an unsigned 32-bit word")
@@ -199,7 +199,7 @@ def collect_build_state(
         "builder_tree": builder_tree_entry(builder),
         "profile_resources": profile_resources_entry(workspace, profile_path),
         "profile": profile,
-        "payload_padding": payload_padding,
+        "payload_shift": payload_shift,
         "boot_elf_crc_discriminator": boot_elf_crc_discriminator,
         "dependencies": dependencies if dependencies is not None else dependency_versions(),
     }
@@ -246,7 +246,7 @@ def check_preflight(
     output_iso: Path,
     profile_path: Path,
     receipt_path: Path,
-    payload_padding: int = 0,
+    payload_shift: int = 0,
     boot_elf_crc_discriminator: int = 0,
     dependencies: dict[str, str] | None = None,
 ) -> dict[str, object]:
@@ -256,7 +256,7 @@ def check_preflight(
             na2_iso=na2_iso,
             nun5_iso=nun5_iso,
             profile_path=profile_path,
-            payload_padding=payload_padding,
+            payload_shift=payload_shift,
             boot_elf_crc_discriminator=boot_elf_crc_discriminator,
             dependencies=dependencies,
         )
@@ -300,7 +300,7 @@ def write_receipt(
     profile_path: Path,
     receipt_path: Path,
     expected_fingerprint: str,
-    payload_padding: int = 0,
+    payload_shift: int = 0,
     boot_elf_crc_discriminator: int = 0,
     dependencies: dict[str, str] | None = None,
 ) -> dict[str, object]:
@@ -310,7 +310,7 @@ def write_receipt(
             na2_iso=na2_iso,
             nun5_iso=nun5_iso,
             profile_path=profile_path,
-            payload_padding=payload_padding,
+            payload_shift=payload_shift,
             boot_elf_crc_discriminator=boot_elf_crc_discriminator,
             dependencies=dependencies,
         )
@@ -374,7 +374,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         command.add_argument("--output", required=True, type=Path)
         command.add_argument("--profile", required=True, type=Path)
         command.add_argument("--receipt", required=True, type=Path)
-        command.add_argument("--payload-padding", type=int, default=0)
+        command.add_argument("--payload-shift", type=int, default=0)
         command.add_argument(
             "--boot-elf-crc-discriminator",
             type=lambda value: int(value, 0),
@@ -392,7 +392,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         "output_iso": args.output,
         "profile_path": _profile_path(args.profile, workspace),
         "receipt_path": args.receipt,
-        "payload_padding": args.payload_padding,
+        "payload_shift": args.payload_shift,
         "boot_elf_crc_discriminator": args.boot_elf_crc_discriminator,
     }
     if args.command == "check":

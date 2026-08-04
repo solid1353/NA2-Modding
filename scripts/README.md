@@ -64,7 +64,7 @@ Before that call, `na228/build.ps1` checks the output-specific deterministic
 successful-build receipt through `na228_builder.build_preflight`; an exact hit
 with a retained build record returns the normal unchanged result without
 staging an ISO. `tests/na228/test_build_preflight.ps1` covers cache hits and
-safe full-build fallbacks for Latest, Manual Test, normal/padded E2E Test, and worker
+safe full-build fallbacks for Latest, Manual Test, normal/shifted E2E Test, and worker
 outputs. `na228 build mt` calls the same builder in Manual Test-only mode and
 uses its own receipt without touching Latest promotion state or PCSX2.
 `na228 worker work/<task title>/build/<name>.iso` instead builds an isolated
@@ -84,11 +84,12 @@ The separate personal end-to-end game-test workflow is exposed through the root
 command. Its infrastructure and suite definitions are main-tracked under
 `e2e/`; screenshot history is versioned by the independent
 `e2e/captures/` repository. `na228 test [suite]` runs permanent tests while
-independent pipelines preflight/build the active E2E Test variants. Emulator
-replays then run one at a time through the shared portable PCSX2 installation;
-they replay all suites or one selected suite, compare variant PNGs, and publish
-only the configured normal evidence after the entire run passes.
-`na228 test create <suite> <recording> [game]` copies a shared Workshop recording,
+preflighting and building the normal E2E Test ISO, then launches every suite or
+the selected suite concurrently through the shared portable PCSX2 installation.
+`-s` also runs the internally shifted build and strictly compares its PNGs with
+normal; suite creation enables that qualification automatically. Only normal
+evidence is published after the entire run passes.
+`na228 test create <suite> [game]` copies the matching shared Workshop recording,
 creates an empty `ignore.txt`, optionally captures the game's reference, and
 always runs the created suite. `na228 test rename <suite> <new-suite>` moves
 the definition and capture history together; `na228 test delete <suite>`

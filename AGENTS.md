@@ -270,21 +270,21 @@ Detailed command and task behavior is in
   builds Manual Test and then runs it, while `na228 build mt` is the explicit
   build-only form.
   These commands never mean a test suite. `na228 test [suite]` is the only test
-  execution command: it runs the permanent project tests while independently
-  preparing and replaying normal and padded E2E Test ISOs concurrently through
-  the shared portable PCSX2 installation. It replays every main-tracked
-  suite or the selected suite against both builds, compares each replay for
-  heap stability, and publishes only the normal captures after the whole
-  pipeline passes. Suite definitions
+  execution command: it runs the permanent project tests while preparing the
+  normal E2E Test ISO, then launches every main-tracked suite or the selected
+  suite concurrently through the shared portable PCSX2 installation. `-s`
+  also prepares the same-sized internally shifted build and strictly compares
+  normal/shifted captures; suite creation always enables that qualification.
+  Only normal captures are published after the whole pipeline passes. Suite definitions
   live under `e2e/`; screenshot history lives in the independent
   `e2e/captures/` repository. `.\tests\run.ps1` remains the internal permanent
   test runner used by that pipeline. The optional suite selector is user-only;
   agents always invoke bare `na228 test` so every main-tracked E2E suite runs.
   Never infer command semantics from a flag name; verify the documented exact
   command before execution.
-- Before presenting any implementation result, run bare `na228 test`. Its normal and
-  padded builds each derive, conflict-check, build, and validate the full pinned
-  profile against the real source images; its permanent tests and complete E2E
+- Before presenting any implementation result, run bare `na228 test`. Its normal
+  build derives, conflict-checks, builds, and validates the full pinned profile
+  against the real source images; its permanent tests and complete E2E
   replay of every suite are one indivisible integration gate. Agents never pass
   a suite selector; selective `na228 test <suite>` execution is user-only.
   Focused checks do not replace the full gate.

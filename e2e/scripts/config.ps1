@@ -30,7 +30,7 @@ function Get-E2eConfiguration {
     foreach ($variant in $variants) {
         $name = [string]$variant.name
         $build = [string]$variant.build
-        $padding = [int]$variant.payload_padding_bytes
+        $shift = [int]$variant.payload_shift_bytes
         $ignoredProperty = $variant.PSObject.Properties['ignored']
         if (
             [string]::IsNullOrWhiteSpace($name) -or
@@ -42,8 +42,8 @@ function Get-E2eConfiguration {
         if ([string]::IsNullOrWhiteSpace($build) -or $build -cnotmatch '^[a-z][a-z0-9_]*$') {
             throw "Invalid E2E build selector for variant ${name}: $build"
         }
-        if ($padding -lt 0 -or $padding -gt 65536 -or $padding % 16 -ne 0) {
-            throw "Variant $name payload padding must be a 16-byte multiple through 65536."
+        if ($shift -lt 0 -or $shift -gt 65536 -or $shift % 16 -ne 0) {
+            throw "Variant $name payload shift must be a 16-byte multiple through 65536."
         }
         if ($null -ne $ignoredProperty -and $ignoredProperty.Value -isnot [bool]) {
             throw "Variant $name ignored must be a boolean."

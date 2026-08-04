@@ -72,6 +72,7 @@ class ResidentPayloadBuild:
     load_base: int
     entrypoint: int
     memory_end: int
+    used_end: int
     symbols: dict[str, LinkedSymbol]
     map_rows: tuple[dict[str, object], ...]
     summary: dict[str, object]

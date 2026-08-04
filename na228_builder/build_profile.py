@@ -430,9 +430,9 @@ def apply_profile_modules(
     owners: dict[str, str],
     insertions: dict[str, bytes],
     insertion_owners: dict[str, str],
-    payload_padding: int = 0,
+    payload_shift: int = 0,
 ) -> tuple[list[dict[str, object]], dict[str, object] | None]:
-    pipeline = prepare_module_pipeline(profile, payload_padding=payload_padding)
+    pipeline = prepare_module_pipeline(profile, payload_shift=payload_shift)
     ordered_modules = pipeline.ordered_modules
     import_plans = pipeline.import_plans
     string_plans = pipeline.string_plans
@@ -775,7 +775,7 @@ def compose_profile_candidate(
     *,
     source_iso: Path,
     profile: Profile,
-    payload_padding: int = 0,
+    payload_shift: int = 0,
     boot_elf_crc_discriminator: int = 0,
 ) -> ProfileCompositionResult:
     """Compose and conflict-check one profile without staging an image."""
@@ -795,7 +795,7 @@ def compose_profile_candidate(
         owners=owners,
         insertions=insertions,
         insertion_owners=insertion_owners,
-        payload_padding=payload_padding,
+        payload_shift=payload_shift,
     )
     discriminator_edits: tuple[dict[str, object], ...] = ()
     if boot_elf_crc_discriminator:
@@ -855,7 +855,7 @@ def build_profile_candidate(
     profile: Profile,
     workspace: Path,
     profile_log_directory: Path | None,
-    payload_padding: int = 0,
+    payload_shift: int = 0,
     boot_elf_crc_discriminator: int = 0,
 ) -> ProfileBuildResult:
     """Compose and verify one staged profile image without promoting it."""
@@ -872,7 +872,7 @@ def build_profile_candidate(
     composed = compose_profile_candidate(
         source_iso=source_iso,
         profile=profile,
-        payload_padding=payload_padding,
+        payload_shift=payload_shift,
         boot_elf_crc_discriminator=boot_elf_crc_discriminator,
     )
     profile_results = list(composed.results)
@@ -993,10 +993,10 @@ def main() -> int:
     parser.add_argument("--profile", required=True, type=Path)
     parser.add_argument("--profile-log-directory", type=Path)
     parser.add_argument(
-        "--payload-padding",
+        "--payload-shift",
         type=int,
         default=0,
-        help="Test-only aligned resident-payload padding in bytes.",
+        help="Test-only aligned resident-payload layout shift in bytes.",
     )
     parser.add_argument(
         "--boot-elf-crc-discriminator",
@@ -1025,7 +1025,7 @@ def main() -> int:
         composed = compose_profile_candidate(
             source_iso=source_iso,
             profile=profile,
-            payload_padding=args.payload_padding,
+            payload_shift=args.payload_shift,
             boot_elf_crc_discriminator=args.boot_elf_crc_discriminator,
         )
         print_profile_summary(profile, composed.results, composed.payload_result)
@@ -1060,7 +1060,7 @@ def main() -> int:
         profile=profile,
         workspace=workspace,
         profile_log_directory=profile_log_directory,
-        payload_padding=args.payload_padding,
+        payload_shift=args.payload_shift,
         boot_elf_crc_discriminator=args.boot_elf_crc_discriminator,
     )
     profile_results = build.results

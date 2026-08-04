@@ -81,7 +81,10 @@ def build_integration_patches(
 ) -> tuple[ResolvedPatch, ...]:
     if build.output_path != config.output_path or build.load_base != config.load_base:
         raise ValueError("Resident build does not match its integration configuration")
-    if build.memory_end > config.reservation_end:
+    if (
+        build.memory_end != config.reservation_end
+        or build.used_end > config.reservation_end
+    ):
         raise ValueError("Resident build exceeds the configured integration envelope")
     filename = Path(build.output_path).name.encode("ascii") + b"\0"
     if len(filename) != 8:

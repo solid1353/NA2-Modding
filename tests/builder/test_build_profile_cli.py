@@ -65,7 +65,7 @@ class BuildProfileCliTests(unittest.TestCase):
             compose.assert_called_once_with(
                 source_iso=source_iso,
                 profile=profile,
-                payload_padding=0,
+                payload_shift=0,
                 boot_elf_crc_discriminator=0,
             )
             build.assert_not_called()
@@ -92,6 +92,7 @@ class BuildProfileCliTests(unittest.TestCase):
                 load_base=0,
                 entrypoint=0,
                 memory_end=7,
+                used_end=7,
                 symbols={},
                 map_rows=(),
                 summary={},

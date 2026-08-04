@@ -186,7 +186,7 @@ class BuildPreflightTests(unittest.TestCase):
 
             self.assertNotEqual(
                 initial,
-                state_fingerprint(self.state(paths, payload_padding=32)),
+                state_fingerprint(self.state(paths, payload_shift=32)),
             )
             self.assertNotEqual(
                 initial,

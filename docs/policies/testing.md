@@ -80,7 +80,7 @@ requirements, not whatever implementation happens to exist today.
 ## ISO builds
 
 - Shared `build/` contains only Latest, at most Previous, and when needed
-  Manual Test plus normal and padded E2E Test outputs. Latest, Manual Test, and
+  Manual Test plus normal and shifted E2E Test outputs. Latest, Manual Test, and
   E2E Test builds stage beside their destination as `.building` and remove
   staging files on failure.
 - A standard build discards an identical verified candidate without rotation
@@ -107,11 +107,12 @@ requirements, not whatever implementation happens to exist today.
   Test. Explicit `na228 build mt` builds Manual Test without launching. Isolated output
   uses the explicit `worker` command.
   Neither mode runs a test suite. `na228 test [suite]` runs the permanent project
-  tests, prepares, validates, and replays all active E2E Test variants in
-  independent concurrent pipelines through the shared portable PCSX2
-  installation. It replays all suites or one selected suite
-  against every variant, verifies cross-variant stability, and publishes only
-  the configured variant's captures after all work succeeds. `.\tests\run.ps1` is its internal
+  tests, prepares the normal E2E Test build, and launches all suites or one
+  selected suite concurrently through the shared portable PCSX2 installation.
+  `-s` also prepares the same-sized internally shifted build, replays the same
+  suites against it, and requires exact cross-variant capture stability. Suite
+  creation always enables shifted qualification. Only normal captures are
+  published after all work succeeds. `.\tests\run.ps1` is its internal
   permanent-test phase, not a second public test workflow. The optional suite
   selector is user-only; agents always use bare `na228 test`.
   Verify every validation command's documented semantics before running it;

@@ -59,7 +59,7 @@ try {
     "previous_iso": "@build/NA2.28 - Previous.iso",
     "manual_test_iso": "@build/NA2.28 - Manual Test.iso",
     "e2e_test_iso": "@build/NA2.28 - E2E Test.iso",
-    "e2e_test_padded_iso": "@build/NA2.28 - E2E Test Padded.iso",
+    "e2e_test_shifted_iso": "@build/NA2.28 - E2E Test Shifted.iso",
     "pcsx2_sync_build_game_settings_command": "@scripts/pcsx2/sync_build_game_settings.ps1"
   }
 }
@@ -255,40 +255,40 @@ param([string[]]$BuildSelector, [string]$ProjectRoot, [switch]$PassThru)
 
     $global:Na2PreflightTestMode = 'miss'
     $global:Na2PreflightTestCalls = @()
-    $e2ePadded = & (Join-Path $scriptRoot 'build.ps1') -E2eVariant padded
-    $e2ePaddedIso = Join-Path $repository 'build\NA2.28 - E2E Test Padded.iso'
-    Assert-Na2PreflightTest -Condition ($e2ePadded.Status -eq 'e2e-test') `
-        -Message 'Padded E2E Test build did not return e2e-test status.'
+    $e2eShifted = & (Join-Path $scriptRoot 'build.ps1') -E2eVariant shifted
+    $e2eShiftedIso = Join-Path $repository 'build\NA2.28 - E2E Test Shifted.iso'
+    Assert-Na2PreflightTest -Condition ($e2eShifted.Status -eq 'e2e-test') `
+        -Message 'Shifted E2E Test build did not return e2e-test status.'
     Assert-Na2PreflightTest `
-        -Condition ((@($e2ePadded.ChangedRoles) -join ',') -ceq 'e2e_test_padded') `
-        -Message 'Changed padded E2E Test build did not report only its own role.'
-    Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $e2ePaddedIso -PathType Leaf) `
-        -Message 'Padded E2E Test build did not retain its verified ISO.'
-    $paddedBuildCalls = @(
+        -Condition ((@($e2eShifted.ChangedRoles) -join ',') -ceq 'e2e_test_shifted') `
+        -Message 'Changed shifted E2E Test build did not report only its own role.'
+    Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $e2eShiftedIso -PathType Leaf) `
+        -Message 'Shifted E2E Test build did not retain its verified ISO.'
+    $shiftedBuildCalls = @(
         $global:Na2PreflightTestCalls |
             Where-Object { $_ -contains 'na228_builder.build_profile' }
     )
-    Assert-Na2PreflightTest -Condition ($paddedBuildCalls.Count -eq 1) `
-        -Message 'Padded E2E Test did not run exactly one full profile build.'
-    $paddedBuildCall = $paddedBuildCalls[0]
-    $paddingIndex = [Array]::IndexOf($paddedBuildCall, '--payload-padding') + 1
+    Assert-Na2PreflightTest -Condition ($shiftedBuildCalls.Count -eq 1) `
+        -Message 'Shifted E2E Test did not run exactly one full profile build.'
+    $shiftedBuildCall = $shiftedBuildCalls[0]
+    $shiftIndex = [Array]::IndexOf($shiftedBuildCall, '--payload-shift') + 1
     Assert-Na2PreflightTest `
-        -Condition ($paddedBuildCall[$paddingIndex] -ceq '32') `
-        -Message 'Padded E2E Test build did not use the configured 32-byte padding.'
+        -Condition ($shiftedBuildCall[$shiftIndex] -ceq '32') `
+        -Message 'Shifted E2E Test build did not use the configured 32-byte shift.'
     $discriminatorIndex = [Array]::IndexOf(
-        $paddedBuildCall,
+        $shiftedBuildCall,
         '--boot-elf-crc-discriminator'
     ) + 1
     Assert-Na2PreflightTest `
-        -Condition ($paddedBuildCall[$discriminatorIndex] -ceq '0x45324502') `
-        -Message 'Padded E2E Test build did not use its configured CRC discriminator.'
+        -Condition ($shiftedBuildCall[$discriminatorIndex] -ceq '0x45324502') `
+        -Message 'Shifted E2E Test build did not use its configured CRC discriminator.'
     $e2eMap = Read-Na2BuildMap -LogDirectory $logDirectory -Paths $testPaths
     Assert-Na2PreflightTest `
         -Condition (-not [string]::IsNullOrWhiteSpace($e2eMap.E2eTestNormalBuildId)) `
         -Message 'Normal E2E Test build was not retained in builds.tsv.'
     Assert-Na2PreflightTest `
-        -Condition (-not [string]::IsNullOrWhiteSpace($e2eMap.E2eTestPaddedBuildId)) `
-        -Message 'Padded E2E Test build was not retained in builds.tsv.'
+        -Condition (-not [string]::IsNullOrWhiteSpace($e2eMap.E2eTestShiftedBuildId)) `
+        -Message 'Shifted E2E Test build was not retained in builds.tsv.'
 
     $latestBeforeWorkers = [IO.File]::ReadAllText($latestIso)
     $testBeforeWorkers = [IO.File]::ReadAllText($testIso)
@@ -345,7 +345,7 @@ param([string[]]$BuildSelector, [string]$ProjectRoot, [switch]$PassThru)
         'work\General\nested\build\agent.iso',
         'build\NA2.28 - Manual Test.iso',
         'build\NA2.28 - E2E Test.iso',
-        'build\NA2.28 - E2E Test Padded.iso'
+        'build\NA2.28 - E2E Test Shifted.iso'
     )) {
         $failed = $false
         try {

@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [switch]$ManualTestOnly,
-    [ValidateSet('normal', 'padded')][string]$E2eVariant,
+    [ValidateSet('normal', 'shifted')][string]$E2eVariant,
     [string]$WorkerOutputIso
 )
 
@@ -116,7 +116,7 @@ function Invoke-Na2BuildPreflight {
         [Parameter(Mandatory = $true)][string]$OutputIso,
         [Parameter(Mandatory = $true)][string]$Profile,
         [Parameter(Mandatory = $true)][string]$Receipt,
-        [Parameter(Mandatory = $true)][int]$PayloadPadding,
+        [Parameter(Mandatory = $true)][int]$PayloadShift,
         [Parameter(Mandatory = $true)][uint32]$BootElfCrcDiscriminator,
         [AllowNull()][string]$ExpectedFingerprint,
         [Parameter(Mandatory = $true)][string]$Repository
@@ -131,7 +131,7 @@ function Invoke-Na2BuildPreflight {
         '--output', $OutputIso
         '--profile', $Profile
         '--receipt', $Receipt
-        '--payload-padding', [string]$PayloadPadding
+        '--payload-shift', [string]$PayloadShift
         '--boot-elf-crc-discriminator', ('0x{0:X8}' -f $BootElfCrcDiscriminator)
     )
     if ($Command -eq 'record') {
@@ -364,8 +364,8 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         $isolatedProfileLog
     )
     $isolatedBuildingIso = "$isolatedOutputIso.building"
-    $payloadPadding = if ($null -ne $e2eBuild) {
-        [int]$e2eBuild.payload_padding_bytes
+    $payloadShift = if ($null -ne $e2eBuild) {
+        [int]$e2eBuild.payload_shift_bytes
     }
     else {
         0
@@ -377,7 +377,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         '--output', $isolatedOutputIso
         '--profile', $profile
         '--profile-log-directory', $isolatedProfileLogDirectory
-        '--payload-padding', [string]$payloadPadding
+        '--payload-shift', [string]$payloadShift
         '--boot-elf-crc-discriminator', ('0x{0:X8}' -f $bootElfCrcDiscriminator)
     )
 
@@ -394,7 +394,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
             -OutputIso $isolatedOutputIso `
             -Profile $profile `
             -Receipt $isolatedReceiptPath `
-            -PayloadPadding $payloadPadding `
+            -PayloadShift $payloadShift `
             -BootElfCrcDiscriminator $bootElfCrcDiscriminator `
             -Repository $paths.repository
     }
@@ -568,7 +568,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
                 -Variant $E2eVariant `
                 -OutputIso $isolatedOutputIso `
                 -Profile $profile `
-                -PayloadPadding $payloadPadding `
+                -PayloadShift $payloadShift `
                 -BootElfCrcDiscriminator $bootElfCrcDiscriminator `
                 -Paths $paths
         }
@@ -596,7 +596,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
                     -OutputIso $isolatedOutputIso `
                     -Profile $profile `
                     -Receipt $isolatedReceiptPath `
-                    -PayloadPadding $payloadPadding `
+                    -PayloadShift $payloadShift `
                     -BootElfCrcDiscriminator $bootElfCrcDiscriminator `
                     -ExpectedFingerprint $isolatedPreflightFingerprint `
                     -Repository $paths.repository
@@ -694,7 +694,7 @@ try {
         -OutputIso $resolvedLatestIso `
         -Profile $profile `
         -Receipt $latestReceiptPath `
-        -PayloadPadding 0 `
+        -PayloadShift 0 `
         -BootElfCrcDiscriminator $bootElfCrcDiscriminator `
         -Repository $paths.repository
 }
@@ -832,7 +832,7 @@ try {
                 -OutputIso $resolvedLatestIso `
                 -Profile $profile `
                 -Receipt $latestReceiptPath `
-                -PayloadPadding 0 `
+                -PayloadShift 0 `
                 -BootElfCrcDiscriminator $bootElfCrcDiscriminator `
                 -ExpectedFingerprint $preflightFingerprint `
                 -Repository $paths.repository

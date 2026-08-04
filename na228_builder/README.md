@@ -94,11 +94,12 @@ python -m pip install -r na228_builder/requirements.txt
 & scripts/na228/build.ps1
 ```
 
-`na228 test` is the public integration gate. Its normal and padded E2E Test
-pipelines each perform module derivation, edit composition, payload linking,
-identity closure, insertion/replacement planning, verified ISO production, and
-emulator replay. The two outputs have independent preflight receipts and build
-records; neither rotates Latest or Previous.
+`na228 test` is the public integration gate. Its normal E2E Test pipeline
+performs module derivation, edit composition, payload linking, identity closure,
+insertion/replacement planning, verified ISO production, and concurrent suite
+replay. `na228 test -s` and suite creation also prepare the same-sized internally
+shifted payload build for strict qualification. The two outputs have independent
+preflight receipts and build records; neither rotates Latest or Previous.
 
 Before staging, `na228_builder/build_preflight.py` hashes both canonical source
 ISOs, ISO-composing builder code and schemas, the exact selected profile

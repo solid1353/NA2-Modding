@@ -79,12 +79,12 @@ def _bind_string_consumer(
 def prepare_module_pipeline(
     profile: Profile,
     *,
-    payload_padding: int = 0,
+    payload_shift: int = 0,
 ) -> PreparedModulePipeline:
     """Prepare artifacts and link all shared payload contributions once."""
-    if payload_padding < 0 or payload_padding > 0x10000 or payload_padding & 0xF:
+    if payload_shift < 0 or payload_shift > 0x10000 or payload_shift & 0xF:
         raise ValueError(
-            "Payload padding must be a 16-byte multiple from 0 through 65536"
+            "Payload shift must be a 16-byte multiple from 0 through 65536"
         )
     ordered_modules = resolve_module_order(profile.modules)
     if any(module.module == "translation_importer" for module in ordered_modules):
@@ -165,16 +165,6 @@ def prepare_module_pipeline(
         for declaration in runtime_injection_declarations.values()
         for fragment in declaration.payload_fragments
     )
-    if payload_padding:
-        fragments += (
-            PayloadFragment(
-                owner="zzzz.e2e",
-                symbol="zzzz.e2e.payload_padding",
-                kind="data",
-                alignment=16,
-                payload=b"\0" * payload_padding,
-            ),
-        )
     symbolic_patches = tuple(
         patch
         for preparation in preparations
@@ -185,7 +175,10 @@ def prepare_module_pipeline(
         for patch in declaration.symbolic_patches
     )
     payload_build = (
-        payload_builder_module.build_resident_payload(fragments)
+        payload_builder_module.build_resident_payload(
+            fragments,
+            layout_shift=payload_shift,
+        )
         if fragments
         else None
     )

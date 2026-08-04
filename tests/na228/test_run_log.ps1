@@ -35,7 +35,7 @@ try {
             latest_iso = Join-Path $build 'NA2.28 - Latest.iso'
             previous_iso = Join-Path $build 'NA2.28 - Previous.iso'
             e2e_test_iso = Join-Path $build 'NA2.28 - E2E Test.iso'
-            e2e_test_padded_iso = Join-Path $build 'NA2.28 - E2E Test Padded.iso'
+            e2e_test_shifted_iso = Join-Path $build 'NA2.28 - E2E Test Shifted.iso'
         }
     }
     New-Item -ItemType Directory -Force -Path $logs, $build | Out-Null
@@ -172,7 +172,7 @@ try {
     "previous": { "aliases": ["p"], "postfix": "Previous" },
     "manual_test": { "aliases": ["mt"], "postfix": "Manual Test" },
     "e2e_test": { "postfix": "E2E Test" },
-    "e2e_test_padded": { "postfix": "E2E Test Padded" }
+    "e2e_test_shifted": { "postfix": "E2E Test Shifted" }
   }
 }
 '@
@@ -243,7 +243,7 @@ print(json.dumps(result))
         -Condition ($helpText -match '(?m)^\s*na228 build l\|mt\s') `
         -Message 'Root help omitted the explicit build-only command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test \[suite\]\s+Run unit tests; prepare and validate normal/padded E2E Test ISOs; replay and compare all or one E2E suite and update captures$') `
+        -Condition ($helpText -match '(?m)^\s*na228 test \[suite\] \[-s\]\s+Run permanent tests and normal E2E suites concurrently; -s also qualifies against shifted$') `
         -Message 'Root help omitted the complete one-command E2E pipeline.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 test create <suite> \[game\]\s+Create or replace a suite from its matching shared recording; capture its optional reference alongside the test run$') `
@@ -410,8 +410,10 @@ else {
             -Content 'recording'
     }
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'run.ps1') -Content @'
-param([string]$Suite)
-Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "run suite=$Suite"
+param([string]$Suite, [switch]$Shifted)
+Add-Content `
+    -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
+    -Value "run suite=$Suite shifted=$($Shifted.IsPresent)"
 [pscustomobject]@{ Status = 'passed' }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'create_suite.ps1') -Content @'
@@ -438,22 +440,26 @@ Add-Content `
     $visualCalls = Join-Path $fakeVisualScripts 'calls.txt'
     & (Join-Path $fakeRepository 'na228.ps1') test
     $calls = @(Get-Content -LiteralPath $visualCalls)
-    Assert-Na2Test -Condition (($calls -join ',') -ceq 'run suite=') `
+    Assert-Na2Test -Condition (($calls -join ',') -ceq 'run suite= shifted=False') `
         -Message 'Bare na228 test did not dispatch the complete E2E pipeline exactly once.'
     Remove-Item -LiteralPath $visualCalls
     & (Join-Path $fakeRepository 'na228.ps1') test alpha
+    & (Join-Path $fakeRepository 'na228.ps1') test -s
+    & (Join-Path $fakeRepository 'na228.ps1') test alpha -s
     & (Join-Path $fakeRepository 'na228.ps1') test create font/character_select
     & (Join-Path $fakeRepository 'na228.ps1') test create font/with_reference nun5
     & (Join-Path $fakeRepository 'na228.ps1') test rename font/character_select font/characters
     & (Join-Path $fakeRepository 'na228.ps1') test delete font/characters
     $calls = @(Get-Content -LiteralPath $visualCalls)
     Assert-Na2Test `
-        -Condition ($calls.Count -eq 5 -and
-            $calls[0] -ceq 'run suite=alpha' -and
-            $calls[1] -ceq 'create suite=font/character_select game=' -and
-            $calls[2] -ceq 'create suite=font/with_reference game=nun5' -and
-            $calls[3] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
-            $calls[4] -ceq 'delete suite=font/characters') `
+        -Condition ($calls.Count -eq 7 -and
+            $calls[0] -ceq 'run suite=alpha shifted=False' -and
+            $calls[1] -ceq 'run suite= shifted=True' -and
+            $calls[2] -ceq 'run suite=alpha shifted=True' -and
+            $calls[3] -ceq 'create suite=font/character_select game=' -and
+            $calls[4] -ceq 'create suite=font/with_reference game=nun5' -and
+            $calls[5] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
+            $calls[6] -ceq 'delete suite=font/characters') `
         -Message 'Suite selection or lifecycle-command dispatch was incorrect.'
     $retiredReferenceRejected = $false
     try {
@@ -825,7 +831,7 @@ Add-Content `
             "@build/NA2.28 - Latest.iso`t@logs/na228/builds/new-latest`n" +
             "@build/NA2.28 - Previous.iso`t@logs/na228/builds/old-latest`n" +
             "@build/NA2.28 - E2E Test.iso`t`n" +
-            "@build/NA2.28 - E2E Test Padded.iso`t`n"
+            "@build/NA2.28 - E2E Test Shifted.iso`t`n"
         )) `
         -Message 'builds.tsv does not contain the exact atomic four-role mapping.'
     $remainingRecords = @(Get-ChildItem -LiteralPath $buildRecords -Directory).Name

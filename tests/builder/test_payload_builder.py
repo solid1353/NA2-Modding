@@ -121,7 +121,11 @@ class PayloadBuilderTests(unittest.TestCase):
             (PayloadFragment("a", "large", "data", 4, b"x" * 48),),
             config=config,
         )
-        self.assertNotEqual(small.memory_end, large.memory_end)
+        self.assertEqual(small.memory_end, config.reservation_end)
+        self.assertEqual(large.memory_end, config.reservation_end)
+        self.assertNotEqual(small.used_end, large.used_end)
+        self.assertEqual(len(small.payload), config.reservation_end - config.load_base)
+        self.assertEqual(len(large.payload), config.reservation_end - config.load_base)
 
         clean = bytearray(0x507640)
         struct.pack_into("<H", clean, 0x2C, 5)
@@ -172,6 +176,40 @@ class PayloadBuilderTests(unittest.TestCase):
         self.assertEqual(
             [(patch.mapping_id, patch.replacement) for patch in small_patches],
             [(patch.mapping_id, patch.replacement) for patch in large_patches],
+        )
+
+    def test_layout_shift_moves_real_fragments_inside_the_fixed_envelope(self) -> None:
+        fragments = (
+            PayloadFragment(
+                "feature.code",
+                "shared.code",
+                "code",
+                4,
+                b"\0" * 4,
+                (PayloadRelocation(0, "abs32", "shared.data"),),
+            ),
+            PayloadFragment("feature.data", "shared.data", "data", 16, b"DATA"),
+        )
+        normal = build_resident_payload(fragments)
+        shifted = build_resident_payload(fragments, layout_shift=32)
+
+        self.assertEqual(len(normal.payload), len(shifted.payload))
+        self.assertEqual(normal.memory_end, shifted.memory_end)
+        self.assertGreater(
+            shifted.symbols["shared.code"].runtime_address,
+            normal.symbols["shared.code"].runtime_address,
+        )
+        self.assertGreater(
+            shifted.symbols["shared.data"].runtime_address,
+            normal.symbols["shared.data"].runtime_address,
+        )
+        shifted_code = shifted.symbols["shared.code"]
+        shifted_data = shifted.symbols["shared.data"]
+        self.assertEqual(
+            shifted.payload[
+                shifted_code.file_offset : shifted_code.file_offset + 4
+            ],
+            shifted_data.runtime_address.to_bytes(4, "little"),
         )
 
     def test_development_injection_range_is_reserved_before_payload(self) -> None:

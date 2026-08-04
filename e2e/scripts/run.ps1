@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [string]$Suite,
-    [string]$CaptureRoot
+    [string]$CaptureRoot,
+    [switch]$Shifted
 )
 
 $ErrorActionPreference = 'Stop'
@@ -47,8 +48,16 @@ if ($suites.Count -eq 0) {
     throw 'No E2E suites are available.'
 }
 $publishedVariant = [string]$configuration.PublishedVariant.name
+$runVariants = @(
+    if ($Shifted.IsPresent) {
+        $configuration.Variants
+    }
+    else {
+        $configuration.PublishedVariant
+    }
+)
 $comparisonVariants = @(
-    $configuration.Variants |
+    $runVariants |
         Where-Object { [string]$_.name -cne $publishedVariant }
 )
 foreach ($comparisonVariant in $comparisonVariants) {
@@ -95,6 +104,7 @@ $compareReadyVariants = {
                 -Suite $suite `
                 -BaselineDirectory (Join-Path $normalSuite 'capture\screenshots') `
                 -CandidateDirectory (Join-Path $candidateSuite 'capture\screenshots') `
+                -CandidateName $candidateName `
                 -OutputRoot $comparisonRoot `
                 -IgnoreFile (Join-Path $context.SuiteRoot 'ignore.txt')
             [void]$compared.Add($comparisonKey)
@@ -113,7 +123,7 @@ $pipelineCompleted = $false
 try {
     Write-Host (
         "E2E pipeline started for $($suites -join ', '): permanent tests and " +
-        "build/replay variants $(@($configuration.Variants.name) -join ', ') run concurrently."
+        "build/replay variants $(@($runVariants.name) -join ', ') run concurrently."
     ) -ForegroundColor Cyan
     $testsJob = Start-Job -Name 'tests' -ScriptBlock {
         param($Repository, $Transaction)
@@ -129,7 +139,7 @@ try {
         )
     } -ArgumentList $repository, $transaction
     $jobs.Add($testsJob)
-    foreach ($variant in $configuration.Variants) {
+    foreach ($variant in $runVariants) {
         $variantName = [string]$variant.name
         $variantJob = Start-Job -Name $variantName -ScriptBlock {
             param($Script, $Variant, $Transaction, $Suite)
@@ -142,7 +152,7 @@ try {
     }
     Write-Host (
         "E2E ISO build jobs running: " +
-        "$(@($configuration.Variants.name) -join ', ')."
+        "$(@($runVariants.name) -join ', ')."
     ) -ForegroundColor Cyan
 
     $nextProgress = [DateTime]::UtcNow
@@ -176,6 +186,11 @@ try {
 
     & $compareReadyVariants $true
     if ($comparisonFailures.Count -gt 0) {
+        foreach ($comparisonVariant in $comparisonVariants) {
+            Preserve-VisualRegressionMismatchEvidence `
+                -Transaction $transaction `
+                -ComparisonVariant ([string]$comparisonVariant.name)
+        }
         throw (
             'Build-variant comparison failed for E2E case(s): ' +
             ($comparisonFailures -join ', ')
@@ -263,13 +278,13 @@ try {
         -TransactionRoot $transaction
     Write-Host (
         "E2E pipeline passed: $($suites.Count) suite(s), " +
-        "build variant(s) $(@($configuration.Variants.name) -join ', '), " +
+        "build variant(s) $(@($runVariants.name) -join ', '), " +
         "$publishedVariant captures published."
     ) -ForegroundColor Green
     [pscustomobject]@{
         Status = 'passed'
         Suites = $suites.Count
-        Variants = $configuration.Variants.Count
+        Variants = $runVariants.Count
     }
     $pipelineCompleted = $true
 }

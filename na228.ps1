@@ -58,7 +58,7 @@ if ($mode -eq 'help') {
         '  additional launch arguments  See workshop help'
         ''
         '  na228 build l|mt            Build Latest or Manual Test without running it'
-        '  na228 test [suite]                      Run unit tests; prepare and validate normal/padded E2E Test ISOs; replay and compare all or one E2E suite and update captures'
+        '  na228 test [suite] [-s]                 Run permanent tests and normal E2E suites concurrently; -s also qualifies against shifted'
         '  na228 test create <suite> [game]  Create or replace a suite from its matching shared recording; capture its optional reference alongside the test run'
         '  na228 test rename <suite> <new-suite>          Rename a suite and its capture history'
         '  na228 test delete <suite>                      Delete a suite and its capture history'
@@ -87,6 +87,25 @@ if ($mode -eq 'test') {
     if ($arguments.Count -eq 0) {
         & $visualRun
         return
+    }
+    $shiftFlags = @($arguments | Where-Object { $_ -ceq '-s' })
+    if ($shiftFlags.Count -gt 1) {
+        throw 'na228 test accepts -s at most once.'
+    }
+    if ($shiftFlags.Count -eq 1) {
+        $positional = @($arguments | Where-Object { $_ -cne '-s' })
+        if ($positional.Count -eq 0) {
+            & $visualRun -Shifted
+            return
+        }
+        if (
+            $positional.Count -eq 1 -and
+            $positional[0].ToLowerInvariant() -cnotin @('create', 'rename', 'delete')
+        ) {
+            & $visualRun -Suite $positional[0] -Shifted
+            return
+        }
+        throw 'Usage: na228 test [suite] [-s]'
     }
     $testCommand = $arguments[0].ToLowerInvariant()
     if ($testCommand -ceq 'create') {
@@ -120,7 +139,7 @@ if ($mode -eq 'test') {
         & $visualRun -Suite $arguments[0]
         return
     }
-    throw 'Usage: na228 test [suite] | na228 test create <suite> [game] | na228 test rename <suite> <new-suite> | na228 test delete <suite>'
+    throw 'Usage: na228 test [suite] [-s] | na228 test create <suite> [game] | na228 test rename <suite> <new-suite> | na228 test delete <suite>'
 }
 
 if ($mode -eq 'release') {

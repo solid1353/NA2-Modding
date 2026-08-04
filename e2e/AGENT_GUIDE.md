@@ -74,10 +74,11 @@ and again before deciding that the result is correct.
 5. Repeat until every named capture has the requested result or a concrete
    blocker remains.
 
-The run builds and validates normal/padded E2E Test ISOs, replays every suite
-against both, requires all non-ignored normal/padded screenshots to match, and
-then atomically publishes `screenshots/`, `grids/`, and `sstates/current/` from
-the normal replay.
+The run builds and validates the normal E2E Test ISO, launches every suite
+replay concurrently, and then atomically publishes `screenshots/`, `grids/`,
+and `sstates/current/`. The user may add `-s` to qualify selected suites against
+the same-sized internally shifted payload build; suite creation always performs
+that qualification.
 When a freshly captured PNG is pixel-identical to the existing current PNG,
 the existing savestate is retained instead of replacing it. A changed or new
 PNG publishes its matching fresh savestate. Files listed in the suite's

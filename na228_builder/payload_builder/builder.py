@@ -170,8 +170,14 @@ def build_resident_payload(
     fragments: tuple[PayloadFragment, ...] | list[PayloadFragment],
     *,
     config: ResidentPayloadConfig | None = None,
+    layout_shift: int = 0,
 ) -> ResidentPayloadBuild:
     config = config or load_config()
+    if layout_shift < 0 or layout_shift > 0x10000 or layout_shift & 0xF:
+        raise ValueError(
+            "Resident-payload layout shift must be a 16-byte multiple "
+            "from 0 through 65536"
+        )
     ordered = sorted(
         tuple(fragments),
         key=lambda item: (KIND_ORDER.get(item.kind, 99), item.owner, item.symbol),
@@ -185,21 +191,26 @@ def build_resident_payload(
         raise ValueError("Resident-payload fragments export duplicate symbols")
 
     init_symbols = [fragment.symbol for fragment in ordered if fragment.init]
-    cursor = _align(config.entry_offset + _entry_size(len(init_symbols)), 0x10)
+    cursor = (
+        _align(config.entry_offset + _entry_size(len(init_symbols)), 0x10)
+        + layout_shift
+    )
     offsets: dict[str, int] = {}
     for fragment in ordered:
         if fragment.kind != "code":
-            cursor = max(cursor, config.minimum_data_offset)
+            cursor = max(cursor, config.minimum_data_offset + layout_shift)
         cursor = _align(cursor, fragment.alignment)
         offsets[fragment.symbol] = cursor
         cursor += len(fragment.payload)
-    output_size = _align(cursor, 0x10)
-    memory_end = config.load_base + output_size
-    if memory_end > config.reservation_end:
+    used_size = _align(cursor, 0x10)
+    used_end = config.load_base + used_size
+    if used_end > config.reservation_end:
         raise ValueError(
             "Resident payload exceeds the proven reservation envelope: "
-            f"0x{memory_end:X} > 0x{config.reservation_end:X}"
+            f"0x{used_end:X} > 0x{config.reservation_end:X}"
         )
+    output_size = config.reservation_end - config.load_base
+    memory_end = config.reservation_end
 
     addresses = {
         symbol: config.load_base + offset for symbol, offset in offsets.items()
@@ -272,6 +283,9 @@ def build_resident_payload(
         "load_base": f"0x{config.load_base:X}",
         "entrypoint": f"0x{config.load_base + config.entry_offset:X}",
         "memory_end": f"0x{memory_end:X}",
+        "used_end": f"0x{used_end:X}",
+        "used_size": used_size,
+        "layout_shift": layout_shift,
         "reservation_end": f"0x{config.reservation_end:X}",
         "maximum_end": f"0x{config.maximum_end:X}",
         "fragment_count": len(ordered),
@@ -287,6 +301,7 @@ def build_resident_payload(
         load_base=config.load_base,
         entrypoint=config.load_base + config.entry_offset,
         memory_end=memory_end,
+        used_end=used_end,
         symbols=linked,
         map_rows=tuple(map_rows),
         summary=summary,

@@ -44,8 +44,8 @@
       "postfix": "E2E Test",
       "boot_elf_crc_discriminator": "0x45324501"
     },
-    "e2e_test_padded": {
-      "postfix": "E2E Test Padded",
+    "e2e_test_shifted": {
+      "postfix": "E2E Test Shifted",
       "boot_elf_crc_discriminator": "0x45324502"
     }
   }

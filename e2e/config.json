@@ -4,13 +4,13 @@
     {
       "name": "normal",
       "build": "e2e_test",
-      "payload_padding_bytes": 0,
+      "payload_shift_bytes": 0,
       "publish": true
     },
     {
-      "name": "padded",
-      "build": "e2e_test_padded",
-      "payload_padding_bytes": 32,
+      "name": "shifted",
+      "build": "e2e_test_shifted",
+      "payload_shift_bytes": 32,
       "ignored": false,
       "compare_against": "normal"
     }

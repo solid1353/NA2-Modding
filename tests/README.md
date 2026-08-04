@@ -11,7 +11,8 @@ Tests live here and are grouped by the responsibility they verify:
 - `research/`: maintained research-tool tests.
 
 The public integration command is `na228 test`; it runs this permanent suite
-alongside the normal/padded ISO and replay pipelines. The internal permanent
+alongside the normal ISO build and concurrent suite replays. `na228 test -s`
+also performs shifted-layout qualification. The internal permanent
 runner remains:
 
 ```powershell

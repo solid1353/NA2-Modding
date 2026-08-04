@@ -29,19 +29,18 @@ the resulting concrete guarded edits. `image_assembler` receives only the
 finished insertion and remains unaware of the payload's internal format.
 
 The configured `reservation_end` is the previously runtime-tested two-file
-boundary `0x00940100`; `maximum_end` remains its safety ceiling. The linked
-payload records its actual aligned `memory_end`, but the boot ELF program
-headers and every game heap-boundary constant use the stable reservation end.
-Unused capacity therefore remains reserved, and payload growth within the
-envelope cannot relocate the game heap. Contributions fail before crossing the
-reservation.
+boundary `0x00940100`; `maximum_end` remains its safety ceiling. Every linked
+payload serializes that complete fixed envelope and records the reservation end
+in its MWO3 memory-end fields. Its actual aligned `used_end` remains available
+in build metadata. Unused capacity is zero-filled, so payload growth within the
+envelope changes neither loader workload nor the game heap boundary.
+Contributions fail before crossing the reservation.
 
-The padded E2E Test build exposes a test-only aligned `payload_padding` input.
-It is fingerprinted by preflight and contributes one final zero-filled data
-fragment without changing feature sources. Every `na228 test` invocation
-builds or resolves the configured 32-byte padded variant alongside normal,
-replays every suite against both, and requires every non-ignored PNG to remain
-byte-identical.
+The shifted E2E Test build exposes a test-only aligned `payload_shift` input.
+It is fingerprinted by preflight and moves every real contributed fragment
+before symbolic relocations are resolved. Suite creation and explicit
+`na228 test [suite] -s` qualification use the configured 32-byte shift and
+require every non-ignored normal/shifted PNG to remain byte-identical.
 
 The configuration also declares the development-only injection reservation
 `0x008F0000-0x008F3D00` immediately below the fixed payload load base. It is

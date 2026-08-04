@@ -38,8 +38,8 @@ function Get-Na2ConfiguredIsoMapKeys {
         E2eTestNormal = ConvertTo-Na2ProjectPath `
             -Path $Paths.files.e2e_test_iso `
             -Paths $Paths
-        E2eTestPadded = ConvertTo-Na2ProjectPath `
-            -Path $Paths.files.e2e_test_padded_iso `
+        E2eTestShifted = ConvertTo-Na2ProjectPath `
+            -Path $Paths.files.e2e_test_shifted_iso `
             -Paths $Paths
     }
 }
@@ -57,7 +57,7 @@ function Read-Na2BuildMap {
             LatestBuildId = $null
             PreviousBuildId = $null
             E2eTestNormalBuildId = $null
-            E2eTestPaddedBuildId = $null
+            E2eTestShiftedBuildId = $null
         }
     }
 
@@ -117,12 +117,12 @@ function Read-Na2BuildMap {
         throw 'Latest and Previous ISOs cannot reference the same build record.'
     }
     $normalRow = $rowsByIso[$isoKeys.E2eTestNormal]
-    $paddedRow = $rowsByIso[$isoKeys.E2eTestPadded]
+    $shiftedRow = $rowsByIso[$isoKeys.E2eTestShifted]
     $normalBuildId = ConvertFrom-Na2BuildRecordPath `
         -BuildRecord $(if ($null -ne $normalRow) { [string]$normalRow.build_record } else { '' }) `
         -LogDirectory $LogDirectory
-    $paddedBuildId = ConvertFrom-Na2BuildRecordPath `
-        -BuildRecord $(if ($null -ne $paddedRow) { [string]$paddedRow.build_record } else { '' }) `
+    $shiftedBuildId = ConvertFrom-Na2BuildRecordPath `
+        -BuildRecord $(if ($null -ne $shiftedRow) { [string]$shiftedRow.build_record } else { '' }) `
         -LogDirectory $LogDirectory
     if ($migrated) {
         Set-Na2BuildMap `
@@ -130,7 +130,7 @@ function Read-Na2BuildMap {
             -LatestBuildId $latestBuildId `
             -PreviousBuildId $previousBuildId `
             -E2eTestNormalBuildId $normalBuildId `
-            -E2eTestPaddedBuildId $paddedBuildId `
+            -E2eTestShiftedBuildId $shiftedBuildId `
             -Paths $Paths
     }
 
@@ -138,7 +138,7 @@ function Read-Na2BuildMap {
         LatestBuildId = $latestBuildId
         PreviousBuildId = $previousBuildId
         E2eTestNormalBuildId = $normalBuildId
-        E2eTestPaddedBuildId = $paddedBuildId
+        E2eTestShiftedBuildId = $shiftedBuildId
     }
 }
 
@@ -149,7 +149,7 @@ function Set-Na2BuildMap {
         [AllowNull()][string]$LatestBuildId,
         [AllowNull()][string]$PreviousBuildId,
         [AllowNull()][string]$E2eTestNormalBuildId,
-        [AllowNull()][string]$E2eTestPaddedBuildId,
+        [AllowNull()][string]$E2eTestShiftedBuildId,
         [Parameter(Mandatory = $true)][psobject]$Paths
     )
 
@@ -160,7 +160,7 @@ function Set-Na2BuildMap {
         $LatestBuildId,
         $PreviousBuildId,
         $E2eTestNormalBuildId,
-        $E2eTestPaddedBuildId
+        $E2eTestShiftedBuildId
     )) {
         if ([string]::IsNullOrWhiteSpace($buildId)) {
             continue
@@ -185,7 +185,7 @@ function Set-Na2BuildMap {
         "$($isoKeys.Latest)`t$(& $recordPath $LatestBuildId)"
         "$($isoKeys.Previous)`t$(& $recordPath $PreviousBuildId)"
         "$($isoKeys.E2eTestNormal)`t$(& $recordPath $E2eTestNormalBuildId)"
-        "$($isoKeys.E2eTestPadded)`t$(& $recordPath $E2eTestPaddedBuildId)"
+        "$($isoKeys.E2eTestShifted)`t$(& $recordPath $E2eTestShiftedBuildId)"
     ) -join "`n"
     Set-Na2Utf8FileAtomic `
         -Path (Join-Path $LogDirectory 'builds.tsv') `
@@ -232,10 +232,10 @@ function Write-Na2E2eBuildResult {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$RecordDirectory,
-        [Parameter(Mandatory = $true)][ValidateSet('normal', 'padded')][string]$Variant,
+        [Parameter(Mandatory = $true)][ValidateSet('normal', 'shifted')][string]$Variant,
         [Parameter(Mandatory = $true)][string]$OutputIso,
         [Parameter(Mandatory = $true)][string]$Profile,
-        [Parameter(Mandatory = $true)][int]$PayloadPadding,
+        [Parameter(Mandatory = $true)][int]$PayloadShift,
         [Parameter(Mandatory = $true)][uint32]$BootElfCrcDiscriminator,
         [Parameter(Mandatory = $true)][psobject]$Paths
     )
@@ -246,13 +246,13 @@ function Write-Na2E2eBuildResult {
     $crcDiscriminator = '0x{0:X8}' -f $BootElfCrcDiscriminator
     $content = @(
         (
-            "timestamp_utc`tresult`tvariant`tprofile`toutput_iso`tpayload_padding`t" +
+            "timestamp_utc`tresult`tvariant`tprofile`toutput_iso`tpayload_shift`t" +
             "boot_elf_crc_discriminator`tbuild_record"
         )
         (
             (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" +
             (
-                "built`t$Variant`t$profilePortable`t$outputPortable`t$PayloadPadding`t" +
+                "built`t$Variant`t$profilePortable`t$outputPortable`t$PayloadShift`t" +
                 "$crcDiscriminator`t$recordPortable"
             )
         )
@@ -299,7 +299,7 @@ function Remove-Na2UnreferencedBuildRecords {
         [AllowNull()][string]$LatestBuildId,
         [AllowNull()][string]$PreviousBuildId,
         [AllowNull()][string]$E2eTestNormalBuildId,
-        [AllowNull()][string]$E2eTestPaddedBuildId
+        [AllowNull()][string]$E2eTestShiftedBuildId
     )
 
     $buildRoot = Join-Path $LogDirectory 'builds'
@@ -310,7 +310,7 @@ function Remove-Na2UnreferencedBuildRecords {
         $LatestBuildId,
         $PreviousBuildId,
         $E2eTestNormalBuildId,
-        $E2eTestPaddedBuildId
+        $E2eTestShiftedBuildId
     ) |
         Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
         Select-Object -Unique
@@ -376,14 +376,14 @@ function Complete-Na2BuildRecord {
             -LatestBuildId $BuildId `
             -PreviousBuildId $effectivePreviousBuildId `
             -E2eTestNormalBuildId $buildMap.E2eTestNormalBuildId `
-            -E2eTestPaddedBuildId $buildMap.E2eTestPaddedBuildId `
+            -E2eTestShiftedBuildId $buildMap.E2eTestShiftedBuildId `
             -Paths $Paths
         Remove-Na2UnreferencedBuildRecords `
             -LogDirectory $LogDirectory `
             -LatestBuildId $BuildId `
             -PreviousBuildId $effectivePreviousBuildId `
             -E2eTestNormalBuildId $buildMap.E2eTestNormalBuildId `
-            -E2eTestPaddedBuildId $buildMap.E2eTestPaddedBuildId
+            -E2eTestShiftedBuildId $buildMap.E2eTestShiftedBuildId
     }
     finally {
         $lock.Dispose()
@@ -400,10 +400,10 @@ function Complete-Na2E2eBuildRecord {
     param(
         [Parameter(Mandatory = $true)][string]$LogDirectory,
         [Parameter(Mandatory = $true)][string]$BuildId,
-        [Parameter(Mandatory = $true)][ValidateSet('normal', 'padded')][string]$Variant,
+        [Parameter(Mandatory = $true)][ValidateSet('normal', 'shifted')][string]$Variant,
         [Parameter(Mandatory = $true)][string]$OutputIso,
         [Parameter(Mandatory = $true)][string]$Profile,
-        [Parameter(Mandatory = $true)][int]$PayloadPadding,
+        [Parameter(Mandatory = $true)][int]$PayloadShift,
         [Parameter(Mandatory = $true)][uint32]$BootElfCrcDiscriminator,
         [Parameter(Mandatory = $true)][psobject]$Paths
     )
@@ -417,7 +417,7 @@ function Complete-Na2E2eBuildRecord {
         -Variant $Variant `
         -OutputIso $OutputIso `
         -Profile $Profile `
-        -PayloadPadding $PayloadPadding `
+        -PayloadShift $PayloadShift `
         -BootElfCrcDiscriminator $BootElfCrcDiscriminator `
         -Paths $Paths
 
@@ -432,25 +432,25 @@ function Complete-Na2E2eBuildRecord {
         else {
             $buildMap.E2eTestNormalBuildId
         }
-        $paddedBuildId = if ($Variant -ceq 'padded') {
+        $shiftedBuildId = if ($Variant -ceq 'shifted') {
             $BuildId
         }
         else {
-            $buildMap.E2eTestPaddedBuildId
+            $buildMap.E2eTestShiftedBuildId
         }
         Set-Na2BuildMap `
             -LogDirectory $LogDirectory `
             -LatestBuildId $buildMap.LatestBuildId `
             -PreviousBuildId $buildMap.PreviousBuildId `
             -E2eTestNormalBuildId $normalBuildId `
-            -E2eTestPaddedBuildId $paddedBuildId `
+            -E2eTestShiftedBuildId $shiftedBuildId `
             -Paths $Paths
         Remove-Na2UnreferencedBuildRecords `
             -LogDirectory $LogDirectory `
             -LatestBuildId $buildMap.LatestBuildId `
             -PreviousBuildId $buildMap.PreviousBuildId `
             -E2eTestNormalBuildId $normalBuildId `
-            -E2eTestPaddedBuildId $paddedBuildId
+            -E2eTestShiftedBuildId $shiftedBuildId
     }
     finally {
         $lock.Dispose()

@@ -62,6 +62,15 @@ try {
             (@($ignoredVariantConfiguration.AllVariants.name) -join ',') -ceq 'normal,padded'
         ) `
         -Message 'An ignored build variant was not excluded from the active variants.'
+    $ignoredBuildVariant = Get-E2eBuildVariant `
+        -Name 'padded' `
+        -Root $ignoredVariantRoot
+    Assert-E2eHelperTest `
+        -Condition (
+            [string]$ignoredBuildVariant.name -ceq 'padded' -and
+            $ignoredBuildVariant.ignored -eq $true
+        ) `
+        -Message 'An ignored build variant was unavailable to explicit build resolution.'
 
     $invalidVariantRoot = Join-Path $testRoot 'invalid-variant-config'
     [void](New-Item -ItemType Directory -Path $invalidVariantRoot -Force)

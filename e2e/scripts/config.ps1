@@ -105,7 +105,7 @@ function Get-E2eBuildVariant {
 
     $configuration = Get-E2eConfiguration -Root $Root
     $matches = @(
-        $configuration.Variants |
+        $configuration.AllVariants |
             Where-Object { [string]$_.name -ieq $Name }
     )
     if ($matches.Count -ne 1) {

@@ -5,7 +5,10 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 
 #define SPLASH_UPDATE_ADDRESS 0x001E0980u
+#define MENU_LOADING_DRAW_ADDRESS 0x00203C50u
 #define RENDER_CONTEXT_POINTER_ADDRESS 0x0060745Cu
+#define MENU_CONTROLLER_POINTER_ADDRESS 0x00607600u
+#define MENU_SUBCONTROLLER_POINTER_ADDRESS 0x0060760Cu
 #define PRIMITIVE_SETUP_ADDRESS 0x001830A0u
 #define COLOR_SETUP_ADDRESS 0x00182A20u
 #define VERTEX_SUBMIT_ADDRESS 0x001822B0u
@@ -20,6 +23,7 @@ typedef unsigned int u32;
 #define CONTEXT_FLAGS_OFFSET 0x170u
 
 #define COLOR_WHITE 0xFFFFFFFFu
+#define COLOR_BLACK 0xFF000000u
 #define COLOR_TRACK 0xFF303030u
 
 #define STARTUP_LOADING_SECTION(name) \
@@ -28,6 +32,8 @@ typedef unsigned int u32;
 typedef struct StartupLoadingState {
     volatile u32 frames;
     volatile u32 percent;
+    volatile u32 menu_ready_frames;
+    volatile u32 menu_revealed;
 } StartupLoadingState;
 
 extern volatile StartupLoadingState startup_loading_state;
@@ -180,6 +186,7 @@ void startup_loading_draw(void *unused_sprite)
     }
     startup_loading_state.percent = percent;
 
+    startup_loading_rect(0.0f, 0.0f, 512.0f, 448.0f, COLOR_BLACK);
     startup_loading_digit(196.0f, 142.0f, percent / 10u);
     startup_loading_digit(246.0f, 142.0f, percent % 10u);
     startup_loading_percent_sign(298.0f, 148.0f);
@@ -194,4 +201,37 @@ void startup_loading_draw(void *unused_sprite)
             COLOR_WHITE
         );
     }
+}
+
+STARTUP_LOADING_SECTION(".text.startup_loading_menu_hook")
+void startup_loading_menu_hook(void)
+{
+    void (*draw_loading_system)(void) =
+        (void (*)(void))MENU_LOADING_DRAW_ADDRESS;
+    volatile u32 *menu;
+    volatile u32 *subcontroller;
+
+    draw_loading_system();
+
+    if (startup_loading_state.menu_revealed != 0u) {
+        return;
+    }
+
+    menu = *(volatile u32 **)MENU_CONTROLLER_POINTER_ADDRESS;
+    subcontroller = *(volatile u32 **)MENU_SUBCONTROLLER_POINTER_ADDRESS;
+    if (menu != (volatile u32 *)0 &&
+        menu[2] == 4u &&
+        menu[3] == 1u &&
+        subcontroller != (volatile u32 *)0 &&
+        subcontroller[0] >= 4u) {
+        startup_loading_state.menu_ready_frames += 1u;
+        if (startup_loading_state.menu_ready_frames >= 2u) {
+            startup_loading_state.menu_revealed = 1u;
+            return;
+        }
+    } else {
+        startup_loading_state.menu_ready_frames = 0u;
+    }
+
+    startup_loading_draw((void *)0);
 }

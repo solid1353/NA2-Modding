@@ -1,3 +1,4 @@
 edit_id	patch_id	order	target_id	offset	expected_hex	replacement_hex	relocation_offset	symbol	encoding	addend	reason
 startup_loading_screen_01	startup_loading_screen	10	na2_elf	0xE11A0	6082070C	00000000	0	qol.startup.loading.hook	jal26	0	Initialize and hold the splash controller's first boot-safe draw slot while preserving the startup loop's real loader checks.
 startup_loading_screen_02	startup_loading_screen	20	na2_elf	0xE11E0	3880070C	00000000	0	qol.startup.loading.draw	jal26	0	Replace the visible splash sprite draw with independent boot-safe primitives for a percentage and progress bar paced across the measured 25-second load.
+startup_loading_screen_03	startup_loading_screen	30	na2_elf	0xE9CAC	140F080C	00000000	0	qol.startup.loading.menu.hook	jal26	0	Run the native menu loading draw, then cover its short loading screen and white transition with the startup counter until Mode Select has rendered.

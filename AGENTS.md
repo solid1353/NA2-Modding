@@ -318,6 +318,9 @@ Detailed command and task behavior is in
   before verifying that promotion.
 - `@tools/CCSFileExplorerMSF` is the project's main and best available CCS
   explorer; use it by default for CCS exploration.
+- Utilities deliberately downloaded into `@tools/` are retained shared tools,
+  not task-temporary artifacts. Preserve them during task and work-directory
+  cleanup unless the user explicitly orders their removal.
 - Relay user instructions verbatim without inferred requirements. A worker
   that reports its own mistake to `Policeman` triggers immediate policy
   enforcement under the coordination policy.

@@ -54,6 +54,14 @@ logic. `ELF-Q010` implements that guarded edit. Confidence is **high** for the
 static ownership and scope; the visible one-row result remains pending runtime
 confirmation.
 
+The same handler tests Down at runtime `0x001E6AA0` (ELF file `0xE6BA0`) and
+Up at runtime `0x001E6AE0` (ELF file `0xE6BE0`). Each successful branch changes
+the selected-slot field at object offset `0x10`, clears its transition field at
+`0x18`, and plays sound `0x35`. Replacing only the two input-mask results with
+zero makes both branches unreachable while leaving confirm, cancel, occupancy,
+and save execution unchanged. Confidence is **high** for the static control
+flow; absence of movement and sound remains pending runtime confirmation.
+
 ## Static-analysis index
 
 The module already retains the reusable subroutine and regional comparison data:

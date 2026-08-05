@@ -11,11 +11,16 @@ guarded binary edits.
 three records to one at boot-ELF virtual address `0x001E6970` (file offset
 `0xE6A70`). The three-slot occupancy scan, selection handler, save data, and
 memory card remain unchanged. The modal therefore displays only its first save
-record while retaining the native modal frame and first-row behavior.
+record while retaining the native modal frame and first-row behavior. Two
+additional guarded edits replace the handler's Down and Up input-mask results
+with zero before either movement branch. Vertical input therefore cannot change
+the selected slot or play the slot-navigation sound; confirm and cancel remain
+native.
 
 The guarded edit is statically verified against the clean instruction
-`slti v1,s2,3`. Integrated runtime validation remains pending, so the patch is
-enabled with status `approved_for_test`.
+`slti v1,s2,3`, `andi v0,a0,0x4000`, and `andi v0,a0,0x1000`. Integrated
+runtime validation remains pending, so the patch is enabled with status
+`approved_for_test`.
 
 ## ELF-Q009: Loading screen then main menu
 

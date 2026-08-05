@@ -115,16 +115,27 @@ completion to the unchanged startup loop. The loop still waits for both real
 resource-completion values.
 
 The original sprite draw call at file offset `0xE11E0` (clean bytes
-`38 80 07 0C`) is redirected to a generated-C counter draw. It suppresses the
-logo sprite and calls the native text renderer at `0x00379040` from the same
-boot-safe drawing phase. Its text begins at `NOW LOADING... 0%`, advances one
-percentage point every 60 rendered frames, and caps at `99%`; the number is a
-time estimate and never substitutes for real loader completion. This draw hook
-is also the presentation boundary where a custom loading-screen background can
-be added later without changing loader control flow.
+`38 80 07 0C`) is redirected to a generated-C counter draw. The first version
+suppressed the logo sprite and called the ordinary native text renderer at
+`0x00379040`. User ss1 from integrated CRC `D5AA8F48` captured a black frame,
+while linked state at `0x008F8668` contained frame count `344` and percentage
+`5`. This proves that the replacement draw hook and timer ran, but the ordinary
+font path produced no visible pixels during this boot phase.
+
+The replacement no longer depends on font or menu resources. From the same
+draw call it first invokes the native primitive setup and then uses the active
+render-context pointer at `0x0060745C`, matching the established solid-rectangle
+sequence. Its functions are setup
+`0x001830A0`, color conversion `0x00182A20`, vertex submission `0x001822B0`,
+and flush `0x00182F50`. It draws two seven-segment digits, a primitive percent
+sign, and a progress bar. The displayed value starts at `00%`, advances one
+percentage point every 60 rendered frames, and caps at `99%`; it is a time
+estimate and never substitutes for real loader completion. This draw hook is
+also the presentation boundary where a custom loading-screen background can be
+added later without changing loader control flow.
 
 Together with the enabled opening skip, the intended sequence is the timed
 loading counter during the boot wait, native menu transition, then main menu.
-Confidence is high for the control flow and clean instruction guards; whether
-the ordinary native text renderer has all required resources in this early draw
-phase remains pending integrated user runtime validation.
+Confidence is high for the control flow, clean instruction guards, and failure
+localization. Visibility of the solid-primitive replacement remains pending
+integrated user runtime validation.

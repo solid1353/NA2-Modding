@@ -1,2 +1,2 @@
 source_id	name	symbol	addend
-startup_loading	startup_loading_started	qol.startup.loading.started	0
+startup_loading	startup_loading_state	qol.startup.loading.state	0

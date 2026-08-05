@@ -100,22 +100,31 @@ completion, and hands control to the usable menu. `0x00203B50` initializes the
 loading systems, `0x00203C50` updates and draws them each frame,
 `0x002006C0` stores progress, and `0x001CFAE0` is the native progress query.
 
-The early-loading implementation replaces the splash-update call at file
-offset `0xE11A0` with generated C. On its first invocation it initializes the
-loading systems, synchronously opens the existing loading resource with
-`0x001FFC30(-1, 0)`, and starts the screen with `0x002005B0(0, 1)`. Each later
-startup frame calls `0x00203C50` and returns splash completion, leaving both
-required loader checks and their cleanup path intact.
+Calling the native loading-system functions during startup state `0` is a
+rejected approach. Candidate commit `adbaf92f` initialized `0x00203B50`, opened
+the standard loading resource through `0x001FFC30`, began the screen through
+`0x002005B0`, and updated it through `0x00203C50`. The integrated result remained
+black for the full wait. The menu-loading presentation therefore depends on
+resources or state that are unavailable before the startup loaders finish.
 
-The native progress-query call in this path is guarded at file offset
-`0x1002B8` (clean bytes `B8 3E 07 0C`). Its generated-C replacement returns
-`0.0f` only while main startup state `0` is active, then delegates to
-`0x001CFAE0`. This displays the native loading screen immediately at `0%`,
-hands progress back to the ordinary main-menu loader after the real transition
-begins, and avoids inventing a second loading UI.
+The replacement candidate reuses the boot splash path, which is already proven
+visible during that wait. The call at file offset `0xE11A0` receives the splash
+controller in `a0`. Generated C invokes the original update until its object
+list exists, then holds controller state `1` and draw index `0` while returning
+completion to the unchanged startup loop. The loop still waits for both real
+resource-completion values.
 
-Together with the enabled opening skip, the intended sequence is native loading
-screen during the boot wait, native loading/menu transition, then main menu.
-Confidence is high for the static function roles and supplied-state boundaries;
-the exact visible timing and handoff remain pending integrated user runtime
-validation.
+The original sprite draw call at file offset `0xE11E0` (clean bytes
+`38 80 07 0C`) is redirected to a generated-C counter draw. It suppresses the
+logo sprite and calls the native text renderer at `0x00379040` from the same
+boot-safe drawing phase. Its text begins at `NOW LOADING... 0%`, advances one
+percentage point every 60 rendered frames, and caps at `99%`; the number is a
+time estimate and never substitutes for real loader completion. This draw hook
+is also the presentation boundary where a custom loading-screen background can
+be added later without changing loader control flow.
+
+Together with the enabled opening skip, the intended sequence is the timed
+loading counter during the boot wait, native menu transition, then main menu.
+Confidence is high for the control flow and clean instruction guards; whether
+the ordinary native text renderer has all required resources in this early draw
+phase remains pending integrated user runtime validation.

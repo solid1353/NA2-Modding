@@ -1,56 +1,63 @@
-/*
- * Present NA2's existing main-menu loading screen while the boot loaders run.
- * The ordinary menu path retains ownership once startup state 0 completes.
- */
+/* Display a boot-safe timed loading counter through the splash draw phase. */
 
+typedef unsigned char u8;
+typedef unsigned short u16;
 typedef unsigned int u32;
 
-#define STARTUP_STATE_POINTER_ADDRESS 0x006075C0u
-
-#define LOADING_SYSTEM_INITIALIZE_ADDRESS 0x00203B50u
-#define LOADING_RESOURCE_OPEN_ADDRESS 0x001FFC30u
-#define LOADING_SCREEN_BEGIN_ADDRESS 0x002005B0u
-#define LOADING_SYSTEM_UPDATE_ADDRESS 0x00203C50u
-#define LOADING_PROGRESS_QUERY_ADDRESS 0x001CFAE0u
+#define SPLASH_UPDATE_ADDRESS 0x001E0980u
+#define NATIVE_TEXT_DRAW_ADDRESS 0x00379040u
+#define FRAMES_PER_PERCENT 60u
+#define MAX_DISPLAY_PERCENT 99u
 
 #define STARTUP_LOADING_SECTION(name) \
     __attribute__((section(name), noinline))
 
-extern volatile u32 startup_loading_started;
+typedef struct StartupLoadingState {
+    volatile u32 frames;
+    volatile u32 percent;
+    volatile u8 text[20];
+} StartupLoadingState;
+
+extern volatile StartupLoadingState startup_loading_state;
 
 STARTUP_LOADING_SECTION(".text.startup_loading_hook")
-u32 startup_loading_hook(void)
+u32 startup_loading_hook(void *controller)
 {
-    void (*initialize_loading_system)(void) =
-        (void (*)(void))LOADING_SYSTEM_INITIALIZE_ADDRESS;
-    void (*open_loading_resource)(int, int) =
-        (void (*)(int, int))LOADING_RESOURCE_OPEN_ADDRESS;
-    void (*begin_loading_screen)(int, int) =
-        (void (*)(int, int))LOADING_SCREEN_BEGIN_ADDRESS;
-    void (*update_loading_system)(void) =
-        (void (*)(void))LOADING_SYSTEM_UPDATE_ADDRESS;
+    u32 (*update_splash)(void *) =
+        (u32 (*)(void *))SPLASH_UPDATE_ADDRESS;
+    volatile u16 *halfwords = (volatile u16 *)controller;
+    volatile u32 *words = (volatile u32 *)controller;
 
-    if (startup_loading_started == 0u) {
-        initialize_loading_system();
-        open_loading_resource(-1, 0);
-        begin_loading_screen(0, 1);
-        startup_loading_started = 1u;
+    if (controller != (void *)0 && words[2] == 0u) {
+        update_splash(controller);
     }
 
-    update_loading_system();
+    if (controller != (void *)0 && words[2] != 0u) {
+        halfwords[0] = 1u;
+        halfwords[8] = 0u;
+    }
+
     return 1u;
 }
 
-STARTUP_LOADING_SECTION(".text.startup_loading_progress")
-float startup_loading_progress(void)
+STARTUP_LOADING_SECTION(".text.startup_loading_draw")
+void startup_loading_draw(void *unused_sprite)
 {
-    volatile u32 *startup_state =
-        *(volatile u32 **)STARTUP_STATE_POINTER_ADDRESS;
-    float (*query_native_progress)(void) =
-        (float (*)(void))LOADING_PROGRESS_QUERY_ADDRESS;
+    void (*draw_text)(float, float, const u8 *, u32) =
+        (void (*)(float, float, const u8 *, u32))NATIVE_TEXT_DRAW_ADDRESS;
+    u32 frames;
+    u32 percent;
 
-    if (startup_state != (volatile u32 *)0 && startup_state[0] == 0u) {
-        return 0.0f;
+    (void)unused_sprite;
+    frames = startup_loading_state.frames + 1u;
+    startup_loading_state.frames = frames;
+    percent = frames / FRAMES_PER_PERCENT;
+    if (percent > MAX_DISPLAY_PERCENT) {
+        percent = MAX_DISPLAY_PERCENT;
     }
-    return query_native_progress();
+    startup_loading_state.percent = percent;
+    startup_loading_state.text[15] =
+        percent < 10u ? (u8)' ' : (u8)('0' + percent / 10u);
+    startup_loading_state.text[16] = (u8)('0' + percent % 10u);
+    draw_text(220.0f, 210.0f, (const u8 *)startup_loading_state.text, 0u);
 }

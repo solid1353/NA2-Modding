@@ -8,18 +8,18 @@ guarded binary edits.
 ## ELF-Q009: Loading screen then main menu
 
 `ELF-Q009` replaces the four splash screens with the game's existing main-menu
-loading presentation while preserving the two native startup-loader checks.
-The QoL runtime-injector hook replaces the splash update call at boot-ELF
-virtual address `0x001E11A0` (file offset `0xE11A0`). On its first frame it
-initializes the native loading system, opens the standard loading resource, and
-starts the loading screen. It then updates that screen once per startup frame
-and returns splash completion to the unchanged caller.
+presentation while preserving the two native startup-loader checks. The QoL
+runtime-injector hook replaces the splash update call at boot-ELF virtual
+address `0x001E11A0` (file offset `0xE11A0`). It initializes the existing
+boot-safe splash controller, holds its first draw slot active, and returns
+splash completion to the unchanged startup loop.
 
-A second guarded hook replaces the native loading-progress query at boot-ELF
-file offset `0x1002B8`. It reports zero while the main startup state is `0`, so
-the visible percentage stays at `0%` during the otherwise black boot-loader
-wait. Once that state completes, it delegates to the native query and the
-ordinary main-menu loader owns progress again.
+A second guarded hook replaces the splash sprite draw call at boot-ELF file
+offset `0xE11E0`. It suppresses the original logo sprite and draws
+`NOW LOADING... 0%` through the native text renderer in the same proven drawing
+phase. The counter advances by one percentage point every 60 rendered frames
+and caps at `99%`; the real loader flags, not the displayed estimate, determine
+when startup may continue.
 
 After the required startup loaders complete, the file-backed binary patch
 writes state `3` instead of state `2` at `0x001E12CC`, bypassing the opening
@@ -28,8 +28,8 @@ Start, so the unchanged caller enters main-menu state `4`, substate `1`.
 `Skip opening` remains enabled as a second guard on the opening path.
 
 The notice, Bandai Namco, Bandai, CRIWARE, opening, and interactive title screen
-are therefore bypassed. The source ELF and file size remain unchanged. Static
-and supplied-savestate evidence is recorded in
+are therefore bypassed. The source ELF and file size remain unchanged. Static,
+supplied-savestate, and rejected-candidate evidence is recorded in
 `docs/knowledge/game/startup.md`; integrated runtime validation remains pending.
 
 ## ELF-Q004: Remove Adventure mode

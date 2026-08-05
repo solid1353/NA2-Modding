@@ -21,3 +21,7 @@ ELF-Q010-09	ELF-Q010	90	slps_258_37	0xE5994	replace	4	2041023C		B442023C								
 ELF-Q010-10	ELF-Q010	100	slps_258_37	0xE599C	replace	4	C843023C		6043023C									Shrink the upper Save/Load panel width from 400 to 224.
 ELF-Q010-11	ELF-Q010	110	slps_258_37	0xE59A4	replace	4	6043023C		C042023C									Shrink the upper Save/Load panel height from 224 to 96.
 ELF-Q010-12	ELF-Q010	120	slps_258_37	0xE6DA4	replace	4	E4ED060C		00000000									Suppress the obsolete independent save-slot cursor model draw.
+ELF-Q010-13	ELF-Q010	130	slps_258_37	0xE5108	replace	24	2400848E6C9A070C00000000030003243200431000000000		03006012020002246C9A070C2400848E0300032431004310									Select the sole supported slot directly in save mode while preserving the original slot-list call and result handling in load mode.
+ELF-Q010-14	ELF-Q010	140	slps_258_37	0xE47E4	replace	4	00000000		2400848E									Prepare the unformatted-message helper argument in the status-0x0A dispatch delay slot so load mode can retain the native helper call.
+ELF-Q010-15	ELF-Q010	150	slps_258_37	0xE495C	replace	8	2400848E2D280000		0300601201000224									Skip the unformatted-card information helper only in save mode and supply its completed result.
+ELF-Q010-16	ELF-Q010	160	slps_258_37	0xE4968	replace	4	00000000		2D280000									Preserve the helper's zero second argument in the unchanged load-mode call delay slot.

@@ -21,7 +21,7 @@ ELF-Q010-09	ELF-Q010	90	slps_258_37	0xE5994	replace	4	2041023C		B442023C								
 ELF-Q010-10	ELF-Q010	100	slps_258_37	0xE599C	replace	4	C843023C		6043023C									Shrink the upper Save/Load panel width from 400 to 224.
 ELF-Q010-11	ELF-Q010	110	slps_258_37	0xE59A4	replace	4	6043023C		C042023C									Shrink the upper Save/Load panel height from 224 to 96.
 ELF-Q010-12	ELF-Q010	120	slps_258_37	0xE6DA4	replace	4	E4ED060C		00000000									Suppress the obsolete independent save-slot cursor model draw.
-ELF-Q010-13	ELF-Q010	130	slps_258_37	0xE43C0	replace	8	04CC848F8C87070C		5103001000000000									Enter the sole-slot save path before constructing the redundant slot-list screen.
+ELF-Q010-13	ELF-Q010	130	slps_258_37	0xE4388	replace	8	100083AE2400848E		5F03001000000000									Enter the sole-slot save path before any redundant slot-list setup or rendering.
 ELF-Q010-14	ELF-Q010	140	slps_258_37	0xE5108	replace	32	2400848E6C9A070C000000000300032432004310000000000200032422004310		2400838E1000658C04CC848F9487070C05000224140060ACD2FC0010080082AE									Select slot zero and enter its native save confirmation without rendering the slot list.
 ELF-Q010-15	ELF-Q010	150	slps_258_37	0xE424C	replace	8	04CC828F4C00528C		BC03001004CC828F									Route memory-card status dispatch through the unformatted-screen bypass.
 ELF-Q010-16	ELF-Q010	160	slps_258_37	0xE5140	replace	36	0E006316000000002400828E1000428C040082AE04CC848F0400858E8487070C00000000		4C00528C0A00032442FC4316000000002400838E01000224140062AC43FC001000000000									Advance status 0x0A without constructing its informational screen, then retain native dispatch for every other status.

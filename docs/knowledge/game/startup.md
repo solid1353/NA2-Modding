@@ -30,19 +30,22 @@ Across ss5-ss6, the splash pointer is null and the main state is `3`.
 
 Patch `ELF-Q009` changes the call at boot-ELF file offset `0xE11A0`, virtual
 address `0x001E11A0`, from bytes `60 82 07 0C` (`jal 0x001E0980`) to
-`BC 79 07 0C` (`jal 0x001DE6F0`). The startup loop therefore advances the
-native opening-sequence state machine instead of the four-logo controller while
-preserving the caller's loader checks and splash cleanup.
+`01 00 02 24` (`addiu v0, zero, 1`). The startup loop therefore treats the
+four-logo controller as complete while preserving the caller's loader checks
+and splash cleanup.
 
 `0x001DE6F0` is the native post-splash sequence dispatcher. In the original
 order it runs after the four splashes and before the title. Patch `ELF-Q001`
 retains its proven branch past the CyberConnect2 intro. Patch `ELF-Q005` is
 disabled, so the dispatcher calls the native sequence object with selector `2`,
-the established opening path. Because the dispatcher is now updated from main
-startup state `0`, opening playback can overlap the ROFS/data and startup-
-resource loads rather than beginning only after them. Skipping the opening with
-Start does not bypass those loader checks; if they are still incomplete, the
-screen remains black until they finish before the direct main-menu transition.
+the established opening path, after required startup loading completes.
+
+Calling `0x001DE6F0` from the main-state-0 loader loop is a rejected approach.
+Runtime testing showed that the dispatcher resets its sequence state after the
+opening completes or is skipped, so the next loader-loop iteration starts the
+opening again. Starting it before the normal audio and streaming prerequisites
+are ready also caused first-playback stutter and loud white noise. The opening
+must remain in its native post-loading state-2 position and run only once.
 
 ## Direct main-menu transition
 
@@ -65,17 +68,18 @@ checks must remain because the main-menu controller consumes the initialized
 data.
 
 After all three values are ready, the native code writes state `2` at virtual
-address `0x001E12CC` (file offset `0xE12CC`). `ELF-Q009` changes bytes
-`02 00 03 24` (`addiu v1, zero, 2`) to `03 00 03 24`, selecting title-input
-state `3` without running the title-animation state. The title-input dispatcher
-at virtual address `0x001E1340` (file offset `0xE1340`) normally calls
-`0x001DE840`; return value `1` is the accepted-Start result. The patch changes
-bytes `10 7A 07 0C` to `01 00 02 24`, returning that result immediately. The
-unchanged caller then writes main state `4` and substate `1`, matching ss2-ss4,
-and the native menu controller advances through its loading phases to the
-usable main menu.
+address `0x001E12CC` (file offset `0xE12CC`). That assignment remains
+unchanged, so the native post-splash dispatcher plays the opening once. After
+the opening completes or is skipped, native control reaches title-input state
+`3`. Its dispatcher at virtual address `0x001E1340` (file offset `0xE1340`)
+normally calls `0x001DE840`; return value `1` is the accepted-Start result. The
+patch changes bytes `10 7A 07 0C` to `01 00 02 24`, returning that result
+immediately. The unchanged caller then writes main state `4` and substate `1`,
+matching ss2-ss4, and the native menu controller advances through its loading
+phases to the usable main menu.
 
 Confidence is high: function/resource ownership and control flow are statically
-established, and both supplied state batches establish the splash, loader,
-title, and post-Start boundaries. Integrated runtime behavior remains
-unverified until the user runs a build containing `ELF-Q009`.
+established, both supplied state batches establish the splash, loader, title,
+and post-Start boundaries, and runtime testing disproved opening playback from
+the loader loop. Corrected integrated runtime behavior remains unverified until
+the user runs a build containing the corrected `ELF-Q009`.

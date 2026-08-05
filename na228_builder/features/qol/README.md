@@ -5,22 +5,28 @@ patches are exact static migrations of the canonical PNACH `QoL` section. Each
 row in `patches.tsv` is an atomic patch and its rows in `edits.tsv` are the
 guarded binary edits.
 
-## ELF-Q009: Skip startup splashes
+## ELF-Q009: Boot directly to main menu
 
 `ELF-Q009` bypasses the four-screen splash controller while retaining its
-native completion path. At boot-ELF virtual address `0x001E10A0` (file offset
+native completion path. At boot-ELF virtual address `0x001E11A0` (file offset
 `0xE11A0`), the normal code calls the splash update function and then tests its
 boolean completion result. The patch replaces only that call with
 `addiu v0, zero, 1`; the existing delay-slot `nop` and following result test
 remain unchanged.
 
-The caller therefore performs the normal splash cleanup and proceeds into the
-ordinary title-animation initialization. It skips the notice, Bandai Namco,
-Bandai, and CRIWARE screens, but does not bypass the title animation or alter
-the independent `Skip CC2 intro` and `Skip opening` patches. The source ELF and
-file size remain unchanged. Static and supplied-savestate evidence is recorded
-in `docs/knowledge/game/startup.md`; integrated runtime validation remains
-pending.
+The caller still waits for the native ROFS/data and startup-resource readiness
+flags, then performs the normal splash cleanup. The patch changes the following
+state assignment at `0x001E12CC` from title-animation state `2` to title-input
+state `3`. At `0x001E1340`, it replaces the title update call with
+`addiu v0, zero, 1`, the same result produced when Start is accepted. The
+unchanged caller converts that result into main-menu state `4`, substate `1`.
+
+The notice, Bandai Namco, Bandai, CRIWARE, title animation, and interactive
+title screen are therefore bypassed. Required loading is deliberately retained
+and may appear as a black screen. The independent `Skip CC2 intro` and
+`Skip opening` patches are unchanged. The source ELF and file size remain
+unchanged. Static and supplied-savestate evidence is recorded in
+`docs/knowledge/game/startup.md`; integrated runtime validation remains pending.
 
 ## ELF-Q004: Remove Adventure mode
 

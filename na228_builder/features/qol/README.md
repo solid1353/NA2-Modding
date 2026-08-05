@@ -18,11 +18,12 @@ the selected slot or play the slot-navigation sound; confirm and cancel remain
 native.
 
 The upper frame is reduced from X/Y/width/height `58/10/400/224` to
-`146/134/224/96`, placing a compact one-record panel directly above the
-unchanged lower instruction panel. Within it, the date/play-time block moves
-from local X `108`, Y `14` to X `55`, Y `20`. The redundant slot-number record
-moves outside the viewport and the row-separator condition is disabled. The
-lower instruction panel and all of its contents remain unchanged.
+`146/90/224/96`, placing a compact one-record panel above and visibly detached
+from the unchanged lower instruction panel. Within it, the date/play-time block
+moves from local X `108`, Y `14` to X `45`, Y `20`. The redundant slot-number
+record moves outside the viewport, the row-separator condition is disabled, and
+the now-meaningless independent slot-cursor model is not drawn. The lower
+instruction panel and all of its contents remain unchanged.
 
 The guarded edit is statically verified against the clean instruction
 `slti v1,s2,3`, `andi v0,a0,0x4000`, `andi v0,a0,0x1000`, and the four renderer

@@ -65,18 +65,22 @@ flow; absence of movement and sound remains pending runtime confirmation.
 The one-record layout keeps the lower instruction panel but replaces the
 three-row upper frame. `FUN_001e57b0` constructs that frame at runtime
 `0x001E588C` through `0x001E58A4` (ELF files `0xE598C` through `0xE59A4`). Its
-X/Y/width/height change from `58/10/400/224` to `146/134/224/96`, making it a
-compact centered panel directly above the unchanged lower panel.
+X/Y/width/height change from `58/10/400/224` to `146/90/224/96`, making it a
+compact centered panel visibly detached above the unchanged lower panel.
 
 In `FUN_001e6370`, the shared date/play-time X constant at runtime `0x001E6468`
-(ELF file `0xE6568`) changes from `108.0` to `55.0`, and the row base Y at
+(ELF file `0xE6568`) changes from `108.0` to `45.0`, and the row base Y at
 runtime `0x001E6484` (ELF file `0xE6584`) changes from `14.0` to `20.0`. The
 slot-number X at runtime `0x001E64B8` (ELF file `0xE65B8`) remains outside the
 viewport, suppressing both its selected and ordinary draw passes without
 changing shared localization draw hooks. The separator predicate at runtime
 `0x001E6788` (ELF file `0xE6888`) remains the always-false `s2 < 0`. Confidence
 is **high** for the constructor and renderer ownership and exact guarded
-constants; the compact visual result remains pending user review.
+constants. The independent `MDL_xkun1` slot cursor is no longer meaningful
+after navigation is disabled; its `FUN_001bb790` draw call at runtime
+`0x001E6CA4` (ELF file `0xE6DA4`) is replaced with a NOP while its existing
+state updates and lifetime remain intact. The raised compact visual result
+remains pending user review.
 
 ## Static-analysis index
 

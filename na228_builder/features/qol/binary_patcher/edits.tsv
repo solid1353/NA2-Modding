@@ -12,11 +12,12 @@ ELF-Q008-01	ELF-Q008	10	slps_258_37	0x4D52E0	replace	4	05000000		FFFFFFFF							
 ELF-Q010-01	ELF-Q010	10	slps_258_37	0xE6A70	replace	4	0300432A		0100432A									Limit the shared Save/Load slot-row renderer to its first record.
 ELF-Q010-02	ELF-Q010	20	slps_258_37	0xE6BA0	replace	4	00408230		2D100000									Ignore downward slot navigation before it changes selection or plays the navigation sound.
 ELF-Q010-03	ELF-Q010	30	slps_258_37	0xE6BE0	replace	4	00108230		2D100000									Ignore upward slot navigation before it changes selection or plays the navigation sound.
-ELF-Q010-04	ELF-Q010	40	slps_258_37	0xE6568	replace	4	D842033C		5C42033C									Center the date and play-time block at local X 55 inside the compact panel.
+ELF-Q010-04	ELF-Q010	40	slps_258_37	0xE6568	replace	4	D842033C		3442033C									Center the date and play-time block at local X 45 inside the compact panel.
 ELF-Q010-05	ELF-Q010	50	slps_258_37	0xE6584	replace	4	6041023C		A041023C									Center the single save record at local Y 20 inside the compact panel.
 ELF-Q010-06	ELF-Q010	60	slps_258_37	0xE65B8	replace	4	7042023C		7AC4023C									Move the redundant slot-number record outside the viewport.
 ELF-Q010-07	ELF-Q010	70	slps_258_37	0xE6888	replace	4	0200412A		0000412A									Suppress row separators when only one record is rendered.
 ELF-Q010-08	ELF-Q010	80	slps_258_37	0xE598C	replace	4	6842023C		1243023C									Move the upper Save/Load panel to centered X 146.
-ELF-Q010-09	ELF-Q010	90	slps_258_37	0xE5994	replace	4	2041023C		0643023C									Move the upper Save/Load panel to Y 134 directly above the lower panel.
+ELF-Q010-09	ELF-Q010	90	slps_258_37	0xE5994	replace	4	2041023C		B442023C									Move the upper Save/Load panel to detached Y 90 above the lower panel.
 ELF-Q010-10	ELF-Q010	100	slps_258_37	0xE599C	replace	4	C843023C		6043023C									Shrink the upper Save/Load panel width from 400 to 224.
 ELF-Q010-11	ELF-Q010	110	slps_258_37	0xE59A4	replace	4	6043023C		C042023C									Shrink the upper Save/Load panel height from 224 to 96.
+ELF-Q010-12	ELF-Q010	120	slps_258_37	0xE6DA4	replace	4	E4ED060C		00000000									Suppress the obsolete independent save-slot cursor model draw.

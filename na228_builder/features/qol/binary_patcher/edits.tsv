@@ -1,7 +1,7 @@
 edit_id	patch_id	order	destination_target_id	destination_offset	operation	length	expected_hex	expected_sha256	replacement_hex	source_target_id	source_offset	source_expected_hex	source_expected_sha256	blob_path	blob_offset	blob_sha256	fill_hex	reason
 ELF-Q001-01	ELF-Q001	10	slps_258_37	0xDE868	replace	4	DCCB83A7		DCCB84A7									Skip CC2 intro.
 ELF-Q001-02	ELF-Q005	20	slps_258_37	0xDE8C4	replace	4	02000424		07000010									Skip opening.
-ELF-Q009-01	ELF-Q009	30	slps_258_37	0xE11A0	replace	4	6082070C		01000224									Return splash-sequence completion immediately while preserving the native cleanup and title-animation transition.
+ELF-Q009-01	ELF-Q009	30	slps_258_37	0xE11A0	replace	4	6082070C		BC79070C									Run the native opening-sequence state machine in place of the splash updater while the startup loaders continue asynchronously.
 ELF-Q009-02	ELF-Q009	40	slps_258_37	0xE12CC	replace	4	02000324		03000324									Enter the title-input state immediately after required startup loading and splash cleanup, bypassing the title animation state.
 ELF-Q009-03	ELF-Q009	50	slps_258_37	0xE1340	replace	4	107A070C		01000224									Return the native Start-accepted result without constructing or displaying the title screen, selecting main-menu state 4 substate 1 through the existing caller.
 ELF-Q002-01	ELF-Q002	10	slps_258_37	0xE7C30	replace	4	2530C700		00000000									Voice off by default.

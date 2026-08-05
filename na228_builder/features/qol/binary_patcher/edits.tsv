@@ -29,3 +29,4 @@ ELF-Q010-17	ELF-Q010	170	slps_258_37	0xE53CC	replace	12	04CC848F8C87070C00000000
 ELF-Q010-18	ELF-Q010	180	slps_258_37	0xE47E4	replace	4	00000000		2400848E									Prepare the status-0x0A modal-helper argument before its save-flow bypass.
 ELF-Q010-19	ELF-Q010	190	slps_258_37	0xE495C	replace	8	2400848E2D280000		0300601201000224									Skip the unformatted-card informational modal helper and supply its completed result in the save flow.
 ELF-Q010-20	ELF-Q010	200	slps_258_37	0xE4968	replace	4	00000000		2D280000									Retain the helper's zero second argument when the unformatted save-flow bypass is not taken.
+ELF-Q010-21	ELF-Q010	210	slps_258_37	0xE46E0	replace	12	04CC848F6087070C00000000		010015243004001000000000									Return to the Main Menu when the unformatted format confirmation returns No instead of entering the save restart state.

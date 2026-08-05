@@ -9,7 +9,7 @@ guarded binary edits.
 
 `ELF-Q010` changes the shared Save/Load slot-row renderer's loop limit from
 three records to one at boot-ELF virtual address `0x001E6970` (file offset
-`0xE6970`). The three-slot occupancy scan, selection handler, save data, and
+`0xE6A70`). The three-slot occupancy scan, selection handler, save data, and
 memory card remain unchanged. The modal therefore displays only its first save
 record while retaining the native modal frame and first-row behavior.
 

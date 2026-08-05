@@ -43,7 +43,7 @@ candidate pairs before promoting the family.
 The current user-supplied `ss1` for boot CRC `D5AA8B06` shows three occupied
 records in the Save modal. Static analysis identifies boot-ELF
 `FUN_001e6370` as the shared three-record Save/Load row renderer. Its primary
-draw loop ends at runtime address `0x001E6970` (ELF file offset `0xE6970`) with
+draw loop ends at runtime address `0x001E6970` (ELF file offset `0xE6A70`) with
 clean instruction `slti v1,s2,3`, encoded as `03 00 43 2A`.
 
 The earlier occupancy scan still examines all three records, while

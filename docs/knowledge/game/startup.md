@@ -128,14 +128,21 @@ render-context pointer at `0x0060745C`, matching the established solid-rectangle
 sequence. Its functions are setup
 `0x001830A0`, color conversion `0x00182A20`, vertex submission `0x001822B0`,
 and flush `0x00182F50`. It draws two seven-segment digits, a primitive percent
-sign, and a progress bar. The displayed value starts at `00%`, advances one
-percentage point every 60 rendered frames, and caps at `99%`; it is a time
-estimate and never substitutes for real loader completion. This draw hook is
-also the presentation boundary where a custom loading-screen background can be
-added later without changing loader control flow.
+sign, and a progress bar.
+
+The first solid-primitive integration in `cbc19dfe` called setup once and
+submitted every rectangle before one final flush. User ss1 showed that primitive
+type `5` joined the separate rectangles into one triangle strip, creating large
+diagonal wedges. The corrected renderer mirrors the known solid-rectangle
+function `0x0019FD20`: every segment and bar rectangle performs its own setup,
+color, four-vertex submission, and flush. At 30 FPS, the displayed value maps
+750 frames to the user's measured 25-second full load and caps at `99%`; it is
+only an estimate and never substitutes for real loader completion. This draw
+hook is also the presentation boundary where a custom loading-screen background
+can be added later without changing loader control flow.
 
 Together with the enabled opening skip, the intended sequence is the timed
 loading counter during the boot wait, native menu transition, then main menu.
-Confidence is high for the control flow, clean instruction guards, and failure
-localization. Visibility of the solid-primitive replacement remains pending
-integrated user runtime validation.
+Confidence is high for the control flow, clean instruction guards, triangle-strip
+failure localization, and corrected independent-rectangle sequence. Its final
+appearance and pacing remain pending integrated user runtime validation.

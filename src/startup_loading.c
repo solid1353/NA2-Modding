@@ -10,7 +10,7 @@ typedef unsigned int u32;
 #define COLOR_SETUP_ADDRESS 0x00182A20u
 #define VERTEX_SUBMIT_ADDRESS 0x001822B0u
 #define PRIMITIVE_FLUSH_ADDRESS 0x00182F50u
-#define FRAMES_PER_PERCENT 60u
+#define TOTAL_LOAD_FRAMES 750u
 #define MAX_DISPLAY_PERCENT 99u
 
 #define CONTEXT_COLOR_OFFSET 0x100u
@@ -62,21 +62,6 @@ static void startup_loading_vertex(volatile u8 *context, float x, float y)
     submit(0u);
 }
 
-STARTUP_LOADING_SECTION(".text.startup_loading_rect")
-static void startup_loading_rect(
-    volatile u8 *context,
-    float left,
-    float top,
-    float right,
-    float bottom
-)
-{
-    startup_loading_vertex(context, left, top);
-    startup_loading_vertex(context, right, top);
-    startup_loading_vertex(context, left, bottom);
-    startup_loading_vertex(context, right, bottom);
-}
-
 STARTUP_LOADING_SECTION(".text.startup_loading_color")
 static void startup_loading_color(volatile u8 *context, u32 color)
 {
@@ -85,6 +70,35 @@ static void startup_loading_color(volatile u8 *context, u32 color)
 
     *(volatile u32 *)(context + CONTEXT_FLAGS_OFFSET) |= 0x20000u;
     set_color((float *)(context + CONTEXT_COLOR_OFFSET), color);
+}
+
+STARTUP_LOADING_SECTION(".text.startup_loading_rect")
+static void startup_loading_rect(
+    float left,
+    float top,
+    float right,
+    float bottom,
+    u32 color
+)
+{
+    void (*setup)(u32, u32) = (void (*)(u32, u32))PRIMITIVE_SETUP_ADDRESS;
+    void (*flush)(void) = (void (*)(void))PRIMITIVE_FLUSH_ADDRESS;
+    volatile u8 *context;
+
+    setup(5u, 0u);
+    context = *(volatile u8 **)RENDER_CONTEXT_POINTER_ADDRESS;
+    if (context == (volatile u8 *)0) {
+        return;
+    }
+
+    *(volatile float *)(context + CONTEXT_DEPTH_OFFSET) = 0.0f;
+    *(volatile u32 *)(context + CONTEXT_FLAGS_OFFSET) |= 2u;
+    startup_loading_color(context, color);
+    startup_loading_vertex(context, left, top);
+    startup_loading_vertex(context, right, top);
+    startup_loading_vertex(context, left, bottom);
+    startup_loading_vertex(context, right, bottom);
+    flush();
 }
 
 STARTUP_LOADING_SECTION(".text.startup_loading_digit_mask")
@@ -106,7 +120,6 @@ static u32 startup_loading_digit_mask(u32 digit)
 
 STARTUP_LOADING_SECTION(".text.startup_loading_digit")
 static void startup_loading_digit(
-    volatile u8 *context,
     float x,
     float y,
     u32 digit
@@ -119,82 +132,66 @@ static void startup_loading_digit(
     const u32 mask = startup_loading_digit_mask(digit);
 
     if ((mask & 0x01u) != 0u)
-        startup_loading_rect(context, x + thickness, y, x + width - thickness, y + thickness);
+        startup_loading_rect(x + thickness, y, x + width - thickness, y + thickness, COLOR_WHITE);
     if ((mask & 0x02u) != 0u)
-        startup_loading_rect(context, x + width - thickness, y + thickness, x + width, middle);
+        startup_loading_rect(x + width - thickness, y + thickness, x + width, middle, COLOR_WHITE);
     if ((mask & 0x04u) != 0u)
-        startup_loading_rect(context, x + width - thickness, middle, x + width, y + height - thickness);
+        startup_loading_rect(x + width - thickness, middle, x + width, y + height - thickness, COLOR_WHITE);
     if ((mask & 0x08u) != 0u)
-        startup_loading_rect(context, x + thickness, y + height - thickness, x + width - thickness, y + height);
+        startup_loading_rect(x + thickness, y + height - thickness, x + width - thickness, y + height, COLOR_WHITE);
     if ((mask & 0x10u) != 0u)
-        startup_loading_rect(context, x, middle, x + thickness, y + height - thickness);
+        startup_loading_rect(x, middle, x + thickness, y + height - thickness, COLOR_WHITE);
     if ((mask & 0x20u) != 0u)
-        startup_loading_rect(context, x, y + thickness, x + thickness, middle);
+        startup_loading_rect(x, y + thickness, x + thickness, middle, COLOR_WHITE);
     if ((mask & 0x40u) != 0u)
-        startup_loading_rect(context, x + thickness, middle - thickness * 0.5f, x + width - thickness, middle + thickness * 0.5f);
+        startup_loading_rect(x + thickness, middle - thickness * 0.5f, x + width - thickness, middle + thickness * 0.5f, COLOR_WHITE);
 }
 
 STARTUP_LOADING_SECTION(".text.startup_loading_percent_sign")
 static void startup_loading_percent_sign(
-    volatile u8 *context,
     float x,
     float y
 )
 {
     u32 step;
 
-    startup_loading_rect(context, x, y, x + 8.0f, y + 8.0f);
-    startup_loading_rect(context, x + 28.0f, y + 52.0f, x + 36.0f, y + 60.0f);
+    startup_loading_rect(x, y, x + 8.0f, y + 8.0f, COLOR_WHITE);
+    startup_loading_rect(x + 28.0f, y + 52.0f, x + 36.0f, y + 60.0f, COLOR_WHITE);
     for (step = 0u; step < 6u; ++step) {
         float dx = (float)step * 5.0f;
-        startup_loading_rect(context, x + 25.0f - dx, y + 8.0f + dx * 1.6f,
-                             x + 31.0f - dx, y + 14.0f + dx * 1.6f);
+        startup_loading_rect(x + 25.0f - dx, y + 8.0f + dx * 1.6f,
+                             x + 31.0f - dx, y + 14.0f + dx * 1.6f,
+                             COLOR_WHITE);
     }
 }
 
 STARTUP_LOADING_SECTION(".text.startup_loading_draw")
 void startup_loading_draw(void *unused_sprite)
 {
-    void (*setup)(u32, u32) = (void (*)(u32, u32))PRIMITIVE_SETUP_ADDRESS;
-    void (*flush)(void) = (void (*)(void))PRIMITIVE_FLUSH_ADDRESS;
-    volatile u8 *context;
     u32 frames;
     u32 percent;
 
     (void)unused_sprite;
-    setup(5u, 0u);
-    context = *(volatile u8 **)RENDER_CONTEXT_POINTER_ADDRESS;
-    if (context == (volatile u8 *)0) {
-        return;
-    }
-
     frames = startup_loading_state.frames + 1u;
     startup_loading_state.frames = frames;
-    percent = frames / FRAMES_PER_PERCENT;
+    percent = (frames * 100u) / TOTAL_LOAD_FRAMES;
     if (percent > MAX_DISPLAY_PERCENT) {
         percent = MAX_DISPLAY_PERCENT;
     }
     startup_loading_state.percent = percent;
 
-    *(volatile float *)(context + CONTEXT_DEPTH_OFFSET) = 0.0f;
-    *(volatile u32 *)(context + CONTEXT_FLAGS_OFFSET) |= 2u;
+    startup_loading_digit(196.0f, 142.0f, percent / 10u);
+    startup_loading_digit(246.0f, 142.0f, percent % 10u);
+    startup_loading_percent_sign(298.0f, 148.0f);
 
-    startup_loading_color(context, COLOR_WHITE);
-    startup_loading_digit(context, 196.0f, 142.0f, percent / 10u);
-    startup_loading_digit(context, 246.0f, 142.0f, percent % 10u);
-    startup_loading_percent_sign(context, 298.0f, 148.0f);
-
-    startup_loading_color(context, COLOR_TRACK);
-    startup_loading_rect(context, 96.0f, 260.0f, 416.0f, 272.0f);
+    startup_loading_rect(96.0f, 260.0f, 416.0f, 272.0f, COLOR_TRACK);
     if (percent != 0u) {
-        startup_loading_color(context, COLOR_WHITE);
         startup_loading_rect(
-            context,
             96.0f,
             260.0f,
             96.0f + (float)percent * 3.2f,
-            272.0f
+            272.0f,
+            COLOR_WHITE
         );
     }
-    flush();
 }

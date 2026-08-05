@@ -17,8 +17,10 @@ splash completion to the unchanged startup loop.
 A second guarded hook replaces the splash sprite draw call at boot-ELF file
 offset `0xE11E0`. It suppresses the original logo sprite and uses the same
 boot-safe solid-primitive renderer to draw a large two-digit percentage, percent
-sign, and progress bar. The counter advances by one percentage point every 60
-rendered frames and caps at `99%`; the real loader flags, not the displayed
+sign, and progress bar. Each rectangle is submitted as an independent primitive
+so separate digit segments cannot be joined by the renderer's triangle strip.
+At the game's 30 FPS startup rate, the counter maps 750 frames to the measured
+25-second load and caps at `99%`; the real loader flags, not the displayed
 estimate, determine when startup may continue.
 
 After the required startup loaders complete, the file-backed binary patch

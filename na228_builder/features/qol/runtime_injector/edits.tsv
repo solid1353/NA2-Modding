@@ -1,3 +1,3 @@
 edit_id	patch_id	order	target_id	offset	expected_hex	replacement_hex	relocation_offset	symbol	encoding	addend	reason
 startup_loading_screen_01	startup_loading_screen	10	na2_elf	0xE11A0	6082070C	00000000	0	qol.startup.loading.hook	jal26	0	Initialize and hold the splash controller's first boot-safe draw slot while preserving the startup loop's real loader checks.
-startup_loading_screen_02	startup_loading_screen	20	na2_elf	0xE11E0	3880070C	00000000	0	qol.startup.loading.draw	jal26	0	Replace the visible splash sprite draw with a boot-safe primitive percentage and progress bar that advance once every sixty rendered frames.
+startup_loading_screen_02	startup_loading_screen	20	na2_elf	0xE11E0	3880070C	00000000	0	qol.startup.loading.draw	jal26	0	Replace the visible splash sprite draw with independent boot-safe primitives for a percentage and progress bar paced across the measured 25-second load.

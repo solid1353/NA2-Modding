@@ -5,6 +5,18 @@ patches are exact static migrations of the canonical PNACH `QoL` section. Each
 row in `patches.tsv` is an atomic patch and its rows in `edits.tsv` are the
 guarded binary edits.
 
+## ELF-Q010: Display only first save
+
+`ELF-Q010` changes the shared Save/Load slot-row renderer's loop limit from
+three records to one at boot-ELF virtual address `0x001E6970` (file offset
+`0xE6970`). The three-slot occupancy scan, selection handler, save data, and
+memory card remain unchanged. The modal therefore displays only its first save
+record while retaining the native modal frame and first-row behavior.
+
+The guarded edit is statically verified against the clean instruction
+`slti v1,s2,3`. Integrated runtime validation remains pending, so the patch is
+enabled with status `approved_for_test`.
+
 ## ELF-Q009: Loading screen then main menu
 
 `ELF-Q009` replaces the four splash screens with the game's existing main-menu

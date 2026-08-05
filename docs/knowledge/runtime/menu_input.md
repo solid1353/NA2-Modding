@@ -38,6 +38,22 @@ candidate is individually necessary. Do not enable
 runtime-proven from these tests. A future minimization test should examine
 candidate pairs before promoting the family.
 
+## Save/load slot-row visibility
+
+The current user-supplied `ss1` for boot CRC `D5AA8B06` shows three occupied
+records in the Save modal. Static analysis identifies boot-ELF
+`FUN_001e6370` as the shared three-record Save/Load row renderer. Its primary
+draw loop ends at runtime address `0x001E6970` (ELF file offset `0xE6970`) with
+clean instruction `slti v1,s2,3`, encoded as `03 00 43 2A`.
+
+The earlier occupancy scan still examines all three records, while
+`FUN_001e69b0` separately owns selection and navigation. Consequently changing
+only the draw-loop bound to `slti v1,s2,1` limits visible rows without deleting
+or rewriting save data and without changing the native three-slot selection
+logic. `ELF-Q010` implements that guarded edit. Confidence is **high** for the
+static ownership and scope; the visible one-row result remains pending runtime
+confirmation.
+
 ## Static-analysis index
 
 The module already retains the reusable subroutine and regional comparison data:

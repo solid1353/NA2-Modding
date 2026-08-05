@@ -9,3 +9,4 @@ ELF-Q002-03	ELF-Q007	30	slps_258_37	0xE7B94	replace	4	25186600		00000000								
 ELF-Q003-01	ELF-Q003	10	slps_258_37	0xE7BAC	replace	4	25186600		00000000									Simple display off by default.
 ELF-Q004-01	ELF-Q004	10	slps_258_37	0x4D52D0	replace	4	04000000		FFFFFFFF									Mark only the Adventure Mode Select entry unavailable, matching NUN6's filtered-carousel behavior.
 ELF-Q008-01	ELF-Q008	10	slps_258_37	0x4D52E0	replace	4	05000000		FFFFFFFF									Mark only the Shop Mode Select entry unavailable using the existing filtered-carousel behavior.
+ELF-Q010-01	ELF-Q010	10	slps_258_37	0xE6970	replace	4	0300432A		0100432A									Limit the shared Save/Load slot-row renderer to its first record.

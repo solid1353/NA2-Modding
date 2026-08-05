@@ -82,6 +82,17 @@ after navigation is disabled; its `FUN_001bb790` draw call at runtime
 state updates and lifetime remain intact. The raised compact visual result
 remains pending user review.
 
+## No-save-data confirmation exit
+
+The save-mode "No Narutimate Accel v2.28 data found" confirmation is memory-card
+status `0x0C`, not status `0x2C`. Its No branch resets the save controller to
+the initial save prompt after runtime `0x001E4588` (ELF file `0xE4688`).
+`ELF-Q010-22` replaces that reset with the controller's existing nonzero exit,
+so the enclosing menu resumes instead of reopening the prompt. The user
+confirmed the corrected runtime behavior on 2026-08-05. Two earlier candidates
+at file `0xE47A4` were ineffective because that address belongs to the unrelated
+status-`0x2C` branch; neither candidate was retained.
+
 ## Static-analysis index
 
 The module already retains the reusable subroutine and regional comparison data:

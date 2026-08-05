@@ -26,3 +26,6 @@ ELF-Q010-14	ELF-Q010	140	slps_258_37	0xE5108	replace	32	2400848E6C9A070C00000000
 ELF-Q010-15	ELF-Q010	150	slps_258_37	0xE424C	replace	8	04CC828F4C00528C		BC03001004CC828F									Route memory-card status dispatch through the unformatted-screen bypass.
 ELF-Q010-16	ELF-Q010	160	slps_258_37	0xE5140	replace	36	0E006316000000002400828E1000428C040082AE04CC848F0400858E8487070C00000000		4C00528C0A00032442FC4316000000002400838E01000224140062AC43FC001000000000									Advance status 0x0A without constructing its informational screen, then retain native dispatch for every other status.
 ELF-Q010-17	ELF-Q010	170	slps_258_37	0xE53CC	replace	12	04CC848F8C87070C00000000		01001524F500001000000000									Exit the save controller when the final confirmation returns No instead of reopening the removed slot list.
+ELF-Q010-18	ELF-Q010	180	slps_258_37	0xE47E4	replace	4	00000000		2400848E									Prepare the status-0x0A modal-helper argument before its save-flow bypass.
+ELF-Q010-19	ELF-Q010	190	slps_258_37	0xE495C	replace	8	2400848E2D280000		0300601201000224									Skip the unformatted-card informational modal helper and supply its completed result in the save flow.
+ELF-Q010-20	ELF-Q010	200	slps_258_37	0xE4968	replace	4	00000000		2D280000									Retain the helper's zero second argument when the unformatted save-flow bypass is not taken.

@@ -7,11 +7,11 @@ guarded binary edits.
 
 ## ELF-Q009: Loading screen then main menu
 
-`ELF-Q009` replaces the four splash screens and later menu transition with one
-continuous loading presentation while preserving the two native startup-loader
-checks. The QoL runtime-injector hook replaces the splash update call at
-boot-ELF virtual address `0x001E11A0` (file offset `0xE11A0`). It initializes
-the existing boot-safe splash controller, holds its first draw slot active, and returns
+`ELF-Q009` replaces the four splash screens with the game's existing main-menu
+presentation while preserving the two native startup-loader checks. The QoL
+runtime-injector hook replaces the splash update call at boot-ELF virtual
+address `0x001E11A0` (file offset `0xE11A0`). It initializes the existing
+boot-safe splash controller, holds its first draw slot active, and returns
 splash completion to the unchanged startup loop.
 
 A second guarded hook replaces the splash sprite draw call at boot-ELF file
@@ -23,25 +23,15 @@ At the game's 30 FPS startup rate, the counter maps 750 frames to the measured
 25-second load and caps at `99%`; the real loader flags, not the displayed
 estimate, determine when startup may continue.
 
-The menu dispatcher normally draws a short native loading screen and then a
-white transition while Mode Select initializes. A third guarded hook at boot-
-ELF virtual address `0x001E9BAC` (file offset `0xE9CAC`) still calls the native
-loading-system draw, then covers those two presentation states with the same
-counter. It removes the cover only after the Mode Select subcontroller has
-reached its draw state on two consecutive frames, and latches that decision so
-the cover cannot reappear during later menu navigation. Native loading,
-resource cleanup, transition, and Mode Select initialization remain unchanged.
-
 After the required startup loaders complete, the file-backed binary patch
 writes state `3` instead of state `2` at `0x001E12CC`, bypassing the opening
 sequence. At `0x001E1340`, it returns the same result produced by pressing
 Start, so the unchanged caller enters main-menu state `4`, substate `1`.
 `Skip opening` remains enabled as a second guard on the opening path.
 
-The notice, Bandai Namco, Bandai, CRIWARE, opening, interactive title screen,
-native menu-loader art, and white transition are therefore hidden behind one
-continuous loading presentation. The source ELF and file size remain unchanged.
-Static, supplied-savestate, and rejected-candidate evidence is recorded in
+The notice, Bandai Namco, Bandai, CRIWARE, opening, and interactive title screen
+are therefore bypassed. The source ELF and file size remain unchanged. Static,
+supplied-savestate, and rejected-candidate evidence is recorded in
 `docs/knowledge/game/startup.md`; integrated runtime validation remains pending.
 
 ## ELF-Q004: Remove Adventure mode

@@ -142,40 +142,7 @@ hook is also the presentation boundary where a custom loading-screen background
 can be added later without changing loader control flow.
 
 Together with the enabled opening skip, the intended sequence is the timed
-loading counter through menu readiness, then the main menu.
+loading counter during the boot wait, native menu transition, then main menu.
 Confidence is high for the control flow, clean instruction guards, triangle-strip
 failure localization, and corrected independent-rectangle sequence. Its final
 appearance and pacing remain pending integrated user runtime validation.
-
-## Main-menu transition cover
-
-A fourth user-supplied NA2.28 batch with CRC `D5AA8B06` separates the final
-menu transition into five visible states:
-
-| State | Visible phase | Menu phase/mode | Shared subcontroller state |
-| --- | --- | --- | ---: |
-| ss1 | custom startup counter | absent | absent |
-| ss2 | black transition | absent | absent |
-| ss3 | native main-menu loader, `34.44%` | `2 / 0` | `5` |
-| ss4 | full-white transition | `4 / 1` | `2` |
-| ss5 | usable Mode Select | `4 / 1` | `4` |
-
-The white frame is not the main loading operation. The native menu loader
-`0x001E9C00` has already completed before the Mode Select subcontroller enters
-state `2`. Function `0x001EA240` uses states `0` through `3` to finish the
-loading-resource transition, acquire its resource, and initialize Mode Select;
-state `4` constructs and updates the visible menu. The white frame is therefore
-presentation covering required initialization, not required visible output.
-
-The outer menu dispatcher `0x001E9980` always calls loading-system update/draw
-`0x00203C50` at virtual address `0x001E9BAC`, mapped through the ELF load segment
-to file offset `0xE9CAC` with clean instruction bytes `14 0F 08 0C`. The QoL
-hook preserves that call, then draws a full black cover and the existing startup
-counter while the outer controller is not yet at phase/mode `4 / 1`, or while
-the shared Mode Select subcontroller has not remained in draw state `4` for two
-frames. The second ready frame has already executed the native state-4 draw;
-the hook then permanently disables its cover. This hides both the short native
-loader and white transition without skipping resource cleanup, transition, or
-Mode Select initialization. Confidence is high for the state interpretation,
-address mapping, clean instruction guard, and preservation of native control
-flow. Integrated appearance remains pending user runtime validation.

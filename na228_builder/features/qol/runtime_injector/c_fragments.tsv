@@ -8,4 +8,3 @@ startup_loading	60	qol.startup.loading.text.startup.loading.digit.mask	qol.start
 startup_loading	70	qol.startup.loading.text.startup.loading.digit	qol.startup.loading.digit
 startup_loading	80	qol.startup.loading.text.startup.loading.percent.sign	qol.startup.loading.percent.sign
 startup_loading	90	qol.startup.loading.text.startup.loading.draw	qol.startup.loading.draw
-startup_loading	100	qol.startup.loading.text.startup.loading.menu.hook	qol.startup.loading.menu.hook

@@ -1,2 +1,2 @@
 group_id	enabled	name	description	review_notes
-startup_loading	1	Startup loading screen	Present one timed loading counter from the boot loader wait through main-menu readiness.	Generated C reuses the proven splash draw phase and its solid-primitive renderer, then covers the native menu loader and transition while their state machines continue underneath. The overlay permanently retires itself after Mode Select has rendered.
+startup_loading	1	Startup loading screen	Present a timed loading counter during the boot loader wait.	Generated C reuses the proven splash draw phase and its solid-primitive renderer without displaying the original splash sprites, then returns control to the native menu path after startup state 0.

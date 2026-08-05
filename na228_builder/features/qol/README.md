@@ -5,33 +5,32 @@ patches are exact static migrations of the canonical PNACH `QoL` section. Each
 row in `patches.tsv` is an atomic patch and its rows in `edits.tsv` are the
 guarded binary edits.
 
-## ELF-Q009: Opening movie then main menu
+## ELF-Q009: Loading screen then main menu
 
-`ELF-Q009` bypasses the four-screen splash controller while retaining its
-native completion path. At boot-ELF virtual address `0x001E11A0` (file offset
-`0xE11A0`), the normal code calls the splash update function once per frame
-while two independent startup loaders advance. The patch replaces that call
-with `addiu v0, zero, 1`, returning splash completion immediately; the existing
-delay-slot `nop`, boolean result handling, loader checks, and cleanup remain
-unchanged.
+`ELF-Q009` replaces the four splash screens with the game's existing main-menu
+loading presentation while preserving the two native startup-loader checks.
+The QoL runtime-injector hook replaces the splash update call at boot-ELF
+virtual address `0x001E11A0` (file offset `0xE11A0`). On its first frame it
+initializes the native loading system, opens the standard loading resource, and
+starts the loading screen. It then updates that screen once per startup frame
+and returns splash completion to the unchanged caller.
 
-The caller proceeds only when both loaders are complete, then performs the
-normal splash cleanup and enters native post-splash state `2`. `Skip CC2 intro`
-remains enabled, so that state advances directly to the native opening branch.
-The separate `Skip opening` patch is disabled, allowing the opening to play
-once after startup loading is ready.
+A second guarded hook replaces the native loading-progress query at boot-ELF
+file offset `0x1002B8`. It reports zero while the main startup state is `0`, so
+the visible percentage stays at `0%` during the otherwise black boot-loader
+wait. Once that state completes, it delegates to the native query and the
+ordinary main-menu loader owns progress again.
 
-After the opening completes or is skipped, native control reaches title-input
-state `3`. At `0x001E1340`, the patch replaces the title update call with
-`addiu v0, zero, 1`, the same result produced when Start is accepted. The
-unchanged caller converts that result into main-menu state `4`, substate `1`.
+After the required startup loaders complete, the file-backed binary patch
+writes state `3` instead of state `2` at `0x001E12CC`, bypassing the opening
+sequence. At `0x001E1340`, it returns the same result produced by pressing
+Start, so the unchanged caller enters main-menu state `4`, substate `1`.
+`Skip opening` remains enabled as a second guard on the opening path.
 
-The notice, Bandai Namco, Bandai, CRIWARE, and interactive title screen are
-therefore bypassed. `OPENING.PSS` is retained as the visible startup sequence.
-The source ELF and file size remain unchanged. Static, supplied-savestate, and
-failed-overlap runtime evidence is recorded in
-`docs/knowledge/game/startup.md`; corrected integrated runtime validation
-remains pending.
+The notice, Bandai Namco, Bandai, CRIWARE, opening, and interactive title screen
+are therefore bypassed. The source ELF and file size remain unchanged. Static
+and supplied-savestate evidence is recorded in
+`docs/knowledge/game/startup.md`; integrated runtime validation remains pending.
 
 ## ELF-Q004: Remove Adventure mode
 

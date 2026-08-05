@@ -1,0 +1,3 @@
+source_id	order	object_fragment	fragment_id
+startup_loading	10	qol.startup.loading.text.startup.loading.hook	qol.startup.loading.hook
+startup_loading	20	qol.startup.loading.text.startup.loading.progress	qol.startup.loading.progress

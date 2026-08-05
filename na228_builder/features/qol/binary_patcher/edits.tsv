@@ -12,3 +12,7 @@ ELF-Q008-01	ELF-Q008	10	slps_258_37	0x4D52E0	replace	4	05000000		FFFFFFFF							
 ELF-Q010-01	ELF-Q010	10	slps_258_37	0xE6A70	replace	4	0300432A		0100432A									Limit the shared Save/Load slot-row renderer to its first record.
 ELF-Q010-02	ELF-Q010	20	slps_258_37	0xE6BA0	replace	4	00408230		2D100000									Ignore downward slot navigation before it changes selection or plays the navigation sound.
 ELF-Q010-03	ELF-Q010	30	slps_258_37	0xE6BE0	replace	4	00108230		2D100000									Ignore upward slot navigation before it changes selection or plays the navigation sound.
+ELF-Q010-04	ELF-Q010	40	slps_258_37	0xE6568	replace	4	D842033C		0C43033C									Center the date and play-time block horizontally at local X 140.
+ELF-Q010-05	ELF-Q010	50	slps_258_37	0xE6584	replace	4	6041023C		BC42023C									Center the single save record vertically at local Y 94.
+ELF-Q010-06	ELF-Q010	60	slps_258_37	0xE65B8	replace	4	7042023C		7AC4023C									Move the redundant slot-number record outside the viewport.
+ELF-Q010-07	ELF-Q010	70	slps_258_37	0xE6888	replace	4	0200412A		0000412A									Suppress row separators when only one record is rendered.

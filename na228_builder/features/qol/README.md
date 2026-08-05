@@ -17,10 +17,16 @@ with zero before either movement branch. Vertical input therefore cannot change
 the selected slot or play the slot-navigation sound; confirm and cancel remain
 native.
 
+The original three-row frame remains unchanged. Within it, the date/play-time
+block moves from local X `108`, Y `14` to X `140`, Y `94`, centering the single
+record in the retained panel. The redundant slot-number record moves outside
+the viewport and the row-separator condition is disabled. The lower instruction
+panel and all of its contents remain unchanged.
+
 The guarded edit is statically verified against the clean instruction
-`slti v1,s2,3`, `andi v0,a0,0x4000`, and `andi v0,a0,0x1000`. Integrated
-runtime validation remains pending, so the patch is enabled with status
-`approved_for_test`.
+`slti v1,s2,3`, `andi v0,a0,0x4000`, `andi v0,a0,0x1000`, and the four renderer
+constants. Integrated runtime validation remains pending, so the patch is
+enabled with status `approved_for_test`.
 
 ## ELF-Q009: Loading screen then main menu
 

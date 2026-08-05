@@ -5,6 +5,23 @@ patches are exact static migrations of the canonical PNACH `QoL` section. Each
 row in `patches.tsv` is an atomic patch and its rows in `edits.tsv` are the
 guarded binary edits.
 
+## ELF-Q009: Skip startup splashes
+
+`ELF-Q009` bypasses the four-screen splash controller while retaining its
+native completion path. At boot-ELF virtual address `0x001E10A0` (file offset
+`0xE11A0`), the normal code calls the splash update function and then tests its
+boolean completion result. The patch replaces only that call with
+`addiu v0, zero, 1`; the existing delay-slot `nop` and following result test
+remain unchanged.
+
+The caller therefore performs the normal splash cleanup and proceeds into the
+ordinary title-animation initialization. It skips the notice, Bandai Namco,
+Bandai, and CRIWARE screens, but does not bypass the title animation or alter
+the independent `Skip CC2 intro` and `Skip opening` patches. The source ELF and
+file size remain unchanged. Static and supplied-savestate evidence is recorded
+in `docs/knowledge/game/startup.md`; integrated runtime validation remains
+pending.
+
 ## ELF-Q004: Remove Adventure mode
 
 NUN6 A35 removes Adventure from the Mode Select carousel by storing the signed

@@ -22,7 +22,6 @@ from na228_builder.source_media import read_root_file
 
 PATHS = load_paths(REPOSITORY_ROOT, allow_missing=True)
 
-BINARY_PATCHER_SCHEMA_VERSION = 4
 TARGET_FIELDS = [
     "target_id",
     "root_id",
@@ -302,8 +301,6 @@ def load_targets(path: Path) -> dict[str, Target]:
 
 def load_package(directory: Path, *, targets_path: Path | None = None) -> Package:
     directory = directory.resolve()
-    if (directory / "manifest.tsv").exists():
-        raise PatchError("binary_patcher manifest.tsv is obsolete and must be removed")
     package_id = (
         f"{directory.parent.name}.{directory.name}"
         if directory.name == "binary_patcher"
@@ -977,7 +974,6 @@ def apply_package(
             log_stage / "run_summary.tsv",
             [
                 "timestamp_utc",
-                "schema_version",
                 "package_id",
                 "output_root",
                 "log_directory",
@@ -988,7 +984,6 @@ def apply_package(
             [
                 {
                     "timestamp_utc": timestamp,
-                    "schema_version": BINARY_PATCHER_SCHEMA_VERSION,
                     "package_id": package.package_id,
                     "output_root": output_root_text.replace("\\", "/"),
                     "log_directory": log_directory_text.replace("\\", "/"),

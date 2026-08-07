@@ -234,16 +234,6 @@ class BinaryPatcherTests(unittest.TestCase):
                     {"destination": staged},
                 )
 
-    def test_obsolete_manifest_is_rejected(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            package, _, _ = self.make_fixture(root)
-            (package.directory / "manifest.tsv").write_text(
-                "schema_version\tpackage_id\n2\tfixture\n", encoding="utf-8"
-            )
-            with self.assertRaisesRegex(patcher.PatchError, "obsolete"):
-                patcher.load_package(package.directory)
-
     def test_patch_must_reference_declared_group(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

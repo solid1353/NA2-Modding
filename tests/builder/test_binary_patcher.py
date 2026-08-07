@@ -56,6 +56,14 @@ class BinaryPatcherTests(unittest.TestCase):
                     "expected_size": len(source),
                     "expected_sha256": sha256(source),
                 },
+                {
+                    "target_id": "unused",
+                    "root_id": "unused",
+                    "role": "destination",
+                    "path": "unused.bin",
+                    "expected_size": 1,
+                    "expected_sha256": sha256(b"x"),
+                },
             ],
         )
         write_tsv(
@@ -131,6 +139,7 @@ class BinaryPatcherTests(unittest.TestCase):
             ],
         )
         package = patcher.load_package(package_dir)
+        self.assertEqual(set(package.targets), {"destination", "source"})
         roots = {"na2": na2, "nun5": nun5}
         target_data = patcher.verify_package_data(package, roots)
         return package, roots, target_data

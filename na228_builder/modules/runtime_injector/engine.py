@@ -76,7 +76,6 @@ EDIT_FIELDS = [
     "reason",
 ]
 CONTROL_FILES = (
-    "targets.tsv",
     "groups.tsv",
     "patches.tsv",
     "fragments.tsv",
@@ -178,39 +177,6 @@ def _relative_path(value: str, label: str) -> PurePosixPath:
     if not normalized or path.is_absolute() or ".." in path.parts:
         raise ValueError(f"{label}: path must be package-relative")
     return path
-
-
-def _load_targets(directory: Path) -> dict[str, binary_patcher.Target]:
-    targets: dict[str, binary_patcher.Target] = {}
-    for line, row in enumerate(
-        _read_tsv(directory / "targets.tsv", TARGET_FIELDS), 2
-    ):
-        target_id = _identifier(row["target_id"], f"targets.tsv:{line} target_id")
-        if target_id in targets:
-            raise ValueError(f"targets.tsv:{line}: duplicate target {target_id}")
-        role = row["role"]
-        if role != "destination":
-            raise ValueError(
-                f"targets.tsv:{line}: runtime-injector symbolic targets must be destinations"
-            )
-        path = _relative_path(row["path"], f"targets.tsv:{line} path")
-        targets[target_id] = binary_patcher.Target(
-            target_id=target_id,
-            root_id=_identifier(
-                row["root_id"], f"targets.tsv:{line} root_id"
-            ),
-            role=role,
-            path=path,
-            expected_size=_integer(
-                row["expected_size"], f"targets.tsv:{line} expected_size", minimum=1
-            ),
-            expected_sha256=_sha256(
-                row["expected_sha256"], f"targets.tsv:{line} expected_sha256"
-            ),
-        )
-    if not targets:
-        raise ValueError("runtime_injector requires at least one target")
-    return targets
 
 
 def _load_groups(directory: Path) -> dict[str, binary_patcher.Group]:
@@ -658,6 +624,10 @@ def _load_edits(
             raise ValueError(f"edits.tsv:{line}: unknown patch {patch_id!r}")
         if target_id not in targets:
             raise ValueError(f"edits.tsv:{line}: unknown target {target_id!r}")
+        if targets[target_id].role not in {"destination", "both"}:
+            raise ValueError(
+                f"edits.tsv:{line}: runtime-injector target must be a destination"
+            )
         order = _integer(row["order"], f"edits.tsv:{line} order", minimum=1)
         if order in patch_orders[patch_id]:
             raise ValueError(
@@ -716,7 +686,12 @@ def _load_edits(
     )
 
 
-def load_package(directory: Path, *, owner: str) -> RuntimeInjectionPackage:
+def load_package(
+    directory: Path,
+    *,
+    owner: str,
+    targets_path: Path | None = None,
+) -> RuntimeInjectionPackage:
     directory = directory.resolve()
     if not directory.is_dir():
         raise FileNotFoundError(directory)
@@ -726,11 +701,19 @@ def load_package(directory: Path, *, owner: str) -> RuntimeInjectionPackage:
         raise FileNotFoundError(
             f"runtime_injector is missing canonical inputs: {', '.join(missing)}"
         )
-    targets = _load_targets(directory)
+    targets = binary_patcher.load_targets(
+        binary_patcher.resolve_targets_path(directory, targets_path)
+    )
     groups = _load_groups(directory)
     patches = _load_patches(directory, groups)
     fragments = _load_fragments(directory, owner)
     edits = _load_edits(directory, owner, targets, patches)
+    used_target_ids = {edit.target_id for edit in edits}
+    targets = {
+        target_id: target
+        for target_id, target in targets.items()
+        if target_id in used_target_ids
+    }
     return RuntimeInjectionPackage(
         directory=directory,
         owner=owner,

@@ -258,22 +258,24 @@ def unique_id(value: str, label: str, seen: set[str]) -> str:
     return value
 
 
-def load_package(directory: Path) -> Package:
+def resolve_targets_path(directory: Path, targets_path: Path | None = None) -> Path:
     directory = directory.resolve()
-    if (directory / "manifest.tsv").exists():
-        raise PatchError("binary_patcher manifest.tsv is obsolete and must be removed")
-    package_id = (
-        f"{directory.parent.name}.{directory.name}"
-        if directory.name == "binary_patcher"
-        else directory.name
-    )
-    unique_id(package_id, "package_id", set())
+    if targets_path is not None:
+        resolved = targets_path.resolve()
+    else:
+        local = directory / "targets.tsv"
+        shared = directory.parent.parent / "targets.tsv"
+        resolved = local if local.is_file() else shared
+    if not resolved.is_file():
+        raise FileNotFoundError(resolved)
+    return resolved
 
+
+def load_targets(path: Path) -> dict[str, Target]:
+    path = path.resolve()
     targets: dict[str, Target] = {}
     seen: set[str] = set()
-    for row_number, row in enumerate(
-        read_tsv(directory / "targets.tsv", TARGET_FIELDS), 2
-    ):
+    for row_number, row in enumerate(read_tsv(path, TARGET_FIELDS), 2):
         target_id = unique_id(row["target_id"], "target_id", seen)
         root_id = row["root_id"]
         if not re.fullmatch(r"[a-z][a-z0-9_-]*", root_id):
@@ -295,6 +297,21 @@ def load_package(directory: Path) -> Package:
                 row["expected_sha256"], f"target {target_id} expected_sha256"
             ),
         )
+    return targets
+
+
+def load_package(directory: Path, *, targets_path: Path | None = None) -> Package:
+    directory = directory.resolve()
+    if (directory / "manifest.tsv").exists():
+        raise PatchError("binary_patcher manifest.tsv is obsolete and must be removed")
+    package_id = (
+        f"{directory.parent.name}.{directory.name}"
+        if directory.name == "binary_patcher"
+        else directory.name
+    )
+    unique_id(package_id, "package_id", set())
+
+    targets = load_targets(resolve_targets_path(directory, targets_path))
 
     groups: dict[str, Group] = {}
     seen = set()
@@ -517,6 +534,21 @@ def load_package(directory: Path) -> Package:
     for group_id, count in group_patch_counts.items():
         if count == 0:
             raise PatchError(f"group {group_id} has no patches")
+
+    used_target_ids = {
+        target_id
+        for edit in edits
+        for target_id in (
+            edit.destination_target_id,
+            edit.source_target_id,
+        )
+        if target_id
+    }
+    targets = {
+        target_id: target
+        for target_id, target in targets.items()
+        if target_id in used_target_ids
+    }
 
     return Package(directory, package_id, targets, groups, patches, edits)
 

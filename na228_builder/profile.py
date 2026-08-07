@@ -13,6 +13,7 @@ from scripts.lib.paths import Paths, load_paths, resolve_alias
 
 
 FEATURE_FIELDS = ["feature_id", "enabled", "expected_sha256", "bypass_check"]
+FEATURE_TARGETS_FILE = "targets.tsv"
 MODULE_TYPE_ORDER = (
     "translation_importer",
     "string_patcher",
@@ -22,14 +23,12 @@ MODULE_TYPE_ORDER = (
 )
 MODULE_TYPES = frozenset(MODULE_TYPE_ORDER)
 BINARY_PATCHER_CONTROL_FILES = (
-    "targets.tsv",
     "groups.tsv",
     "patches.tsv",
     "edits.tsv",
 )
 STRING_PATCHER_CONTROL_FILES = ("strings.tsv",)
 RUNTIME_INJECTOR_CONTROL_FILES = (
-    "targets.tsv",
     "groups.tsv",
     "patches.tsv",
     "fragments.tsv",
@@ -94,6 +93,7 @@ class Profile:
     definition_path: Path
     profile_id: str
     product_path: Path
+    targets_path: Path
     roots: dict[str, Path]
     identity: ProfileIdentity
     features: tuple[ProfileFeature, ...]
@@ -234,13 +234,26 @@ def _product_input_path(
     return _workspace_path(value, label, workspace)
 
 
-def _tree_digest(path: Path, files: list[Path]) -> str:
+def _tree_digest(
+    path: Path,
+    files: list[Path],
+    *,
+    external_labels: Mapping[Path, str] | None = None,
+) -> str:
+    labels = {
+        item.resolve(): label
+        for item, label in (external_labels or {}).items()
+    }
+
     def digest_path(item: Path) -> str:
+        resolved = item.resolve()
+        if resolved in labels:
+            return labels[resolved]
         try:
-            return item.relative_to(path).as_posix()
+            return resolved.relative_to(path).as_posix()
         except ValueError:
             repository = load_paths(path, allow_missing=True).repository
-            return "@repository/" + item.relative_to(repository).as_posix()
+            return "@repository/" + resolved.relative_to(repository).as_posix()
 
     digest = hashlib.sha256()
     for item in sorted(files, key=digest_path):
@@ -273,11 +286,21 @@ def _required_files(path: Path, names: tuple[str, ...], label: str) -> list[Path
     return files
 
 
+def _feature_targets_file(module_path: Path) -> Path:
+    targets_path = module_path.resolve().parent.parent / FEATURE_TARGETS_FILE
+    if not targets_path.is_file():
+        raise FileNotFoundError(
+            f"Feature target registry is missing: {targets_path}"
+        )
+    return targets_path
+
+
 def _binary_patcher_content_files(path: Path) -> list[Path]:
     path = path.resolve()
     files = _required_files(
         path, BINARY_PATCHER_CONTROL_FILES, "Binary-patcher module"
     )
+    files.append(_feature_targets_file(path))
     edits_path = path / "edits.tsv"
     with edits_path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
@@ -311,6 +334,7 @@ def _runtime_injector_content_files(path: Path) -> list[Path]:
     files = _required_files(
         path, RUNTIME_INJECTOR_CONTROL_FILES, "runtime_injector module"
     )
+    files.append(_feature_targets_file(path))
     fragments_path = path / "fragments.tsv"
     with fragments_path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
@@ -431,16 +455,33 @@ def module_content_sha256(path: Path, module_type: str) -> str:
         raise ValueError(f"Unsupported module type: {module_type!r}")
     if not path.is_dir():
         raise FileNotFoundError(path)
-    return _tree_digest(path, _module_content_files(path, module_type))
+    files = _module_content_files(path, module_type)
+    external_labels = (
+        {_feature_targets_file(path): "@features/targets.tsv"}
+        if module_type in {"binary_patcher", "runtime_injector"}
+        else None
+    )
+    return _tree_digest(path, files, external_labels=external_labels)
 
 
 def feature_content_sha256(path: Path) -> str:
     """Hash every canonical executable input owned by one feature."""
     path = path.resolve()
     files: list[Path] = []
+    uses_targets = False
     for module_type, module_path in _discover_module_directories(path):
         files.extend(_module_content_files(module_path, module_type))
-    return _tree_digest(path, files)
+        uses_targets = uses_targets or module_type in {
+            "binary_patcher",
+            "runtime_injector",
+        }
+    external_labels = (
+        {path.resolve().parent / FEATURE_TARGETS_FILE: "@features/targets.tsv"}
+        if uses_targets
+        else None
+    )
+    unique_files = list({item.resolve(): item for item in files}.values())
+    return _tree_digest(path, unique_files, external_labels=external_labels)
 
 
 def profile_resource_files(profile: Profile) -> tuple[Path, ...]:
@@ -572,6 +613,7 @@ def load_profile(
     if not feature_rows:
         raise ValueError("Profile has no enabled features")
     features_root = paths.path("features").resolve()
+    targets_path = features_root / FEATURE_TARGETS_FILE
     features: list[ProfileFeature] = []
     modules: list[ProfileModule] = []
     seen_features: set[str] = set()
@@ -646,6 +688,7 @@ def load_profile(
         definition_path=definition_path,
         profile_id=profile_id,
         product_path=product_path,
+        targets_path=targets_path,
         roots=roots,
         identity=identity,
         features=tuple(features),

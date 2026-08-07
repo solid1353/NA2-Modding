@@ -36,6 +36,7 @@ class ProfileTests(unittest.TestCase):
         build = root / "build"
         pcsx2 = root / "pcsx2"
         features.mkdir()
+        write_tsv(features / "targets.tsv", binary_patcher.TARGET_FIELDS, [])
         source.mkdir()
         profiles.mkdir()
         build.mkdir()
@@ -89,13 +90,17 @@ class ProfileTests(unittest.TestCase):
         module = feature / module_type
         module.mkdir(parents=True)
         if module_type == "binary_patcher":
-            write_tsv(module / "targets.tsv", binary_patcher.TARGET_FIELDS, [])
+            targets = feature.parent / "targets.tsv"
+            if not targets.is_file():
+                write_tsv(targets, binary_patcher.TARGET_FIELDS, [])
             write_tsv(module / "groups.tsv", binary_patcher.GROUP_FIELDS, [])
             write_tsv(module / "patches.tsv", binary_patcher.PATCH_FIELDS, [])
             write_tsv(module / "edits.tsv", binary_patcher.EDIT_FIELDS, [])
         elif module_type == "runtime_injector":
+            targets = feature.parent / "targets.tsv"
+            if not targets.is_file():
+                write_tsv(targets, runtime_injector.TARGET_FIELDS, [])
             for name, fields in (
-                ("targets.tsv", runtime_injector.TARGET_FIELDS),
                 ("groups.tsv", runtime_injector.GROUP_FIELDS),
                 ("patches.tsv", runtime_injector.PATCH_FIELDS),
                 ("fragments.tsv", runtime_injector.FRAGMENT_FIELDS),
@@ -319,6 +324,10 @@ class ProfileTests(unittest.TestCase):
             self.assertIn(
                 (feature / "binary_patcher" / "edits.tsv").resolve(), resources
             )
+            self.assertIn((features / "targets.tsv").resolve(), resources)
+            self.assertFalse(
+                (feature / "binary_patcher" / "targets.tsv").exists()
+            )
             self.assertNotIn(helper.resolve(), resources)
 
     def test_rejects_unknown_module_directory(self) -> None:
@@ -382,6 +391,17 @@ class ProfileTests(unittest.TestCase):
             first = module_content_sha256(module, "binary_patcher")
             (module / "helper.py").write_text("print('one')\n", encoding="utf-8")
             self.assertEqual(first, module_content_sha256(module, "binary_patcher"))
+            targets = feature.parent / "targets.tsv"
+            targets.write_text(
+                targets.read_text(encoding="utf-8")
+                + "boot\tna2\tdestination\tSLPS_258.37\t16\t"
+                + "0" * 64
+                + "\n",
+                encoding="utf-8",
+            )
+            self.assertNotEqual(
+                first, module_content_sha256(module, "binary_patcher")
+            )
             (module / "groups.tsv").write_text(
                 "group_id\tname\tdescription\treview_notes\n"
                 "g\tGroup\tChanged canonical input.\t\n",

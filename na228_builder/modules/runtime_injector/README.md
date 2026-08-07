@@ -8,11 +8,13 @@ engine compiles the concrete writes into an in-memory `binary_patcher`
 package. A feature never chooses an offset inside `PRG/228.BIN` or owns its
 loader, memory reservation, or final runtime address.
 
-Canonical inputs are `targets.tsv`, `groups.tsv`, `patches.tsv`,
-`fragments.tsv`, `c_sources.tsv`, `c_imports.tsv`, `c_fragments.tsv`,
+Canonical inputs are the shared `na228_builder/features/targets.tsv` registry
+plus local `groups.tsv`, `patches.tsv`, `fragments.tsv`, `c_sources.tsv`,
+`c_imports.tsv`, `c_fragments.tsv`,
 `relocations.tsv`, and `edits.tsv`, plus only the source files and blobs
-referenced by those tables. Static fragments may contain their bytes inline or
-select a guarded range from a referenced blob. Canonical project C sources live
+referenced by those tables. A package retains only the shared destination
+targets referenced by its symbolic edits. Static fragments may contain their
+bytes inline or select a guarded range from a referenced blob. Canonical project C sources live
 under root `src/`; feature `c_sources.tsv` rows reference those repository paths,
 and their contents remain covered by the owning feature hash. Declared C
 sources are compiled with the pinned EE toolchain during normal package loading; the

@@ -103,14 +103,24 @@ class RuntimeInjectorTests(unittest.TestCase):
             write_tsv(
                 directory / "targets.tsv",
                 engine.TARGET_FIELDS,
-                [{
-                    "target_id": "boot",
-                    "root_id": "na2",
-                    "role": "destination",
-                    "path": "SLPS_258.37",
-                    "expected_size": 64,
-                    "expected_sha256": "1" * 64,
-                }],
+                [
+                    {
+                        "target_id": "boot",
+                        "root_id": "na2",
+                        "role": "destination",
+                        "path": "SLPS_258.37",
+                        "expected_size": 64,
+                        "expected_sha256": "1" * 64,
+                    },
+                    {
+                        "target_id": "unused_source",
+                        "root_id": "nun5",
+                        "role": "source",
+                        "path": "SLES_556.05",
+                        "expected_size": 64,
+                        "expected_sha256": "2" * 64,
+                    },
+                ],
             )
             write_tsv(
                 directory / "groups.tsv",
@@ -206,6 +216,7 @@ class RuntimeInjectorTests(unittest.TestCase):
             declaration = engine.load_package(
                 directory, owner="feature.runtime_injector"
             )
+            self.assertEqual(set(declaration.targets), {"boot"})
             build = build_resident_payload(declaration.fragments)
             resolved = resolve_symbolic_patches(
                 build, declaration.symbolic_patches

@@ -12,6 +12,7 @@ from na228_builder.build_preflight import (
     state_fingerprint,
     write_receipt,
 )
+from na228_builder.modules.binary_patcher import engine as binary_patcher
 from na228_builder.profile import feature_content_sha256
 
 
@@ -35,8 +36,24 @@ class BuildPreflightTests(unittest.TestCase):
         feature = builder / "features" / "feature"
         module = feature / "string_patcher"
         module.mkdir(parents=True)
+        binary_module = feature / "binary_patcher"
+        binary_module.mkdir()
         (feature / "README.md").write_text("# Feature\n", encoding="utf-8")
         (module / "strings.tsv").write_text("string_id\n", encoding="utf-8")
+        targets = builder / "features" / "targets.tsv"
+        targets.write_text(
+            "\t".join(binary_patcher.TARGET_FIELDS) + "\n",
+            encoding="utf-8",
+        )
+        for name, fields in (
+            ("groups.tsv", binary_patcher.GROUP_FIELDS),
+            ("patches.tsv", binary_patcher.PATCH_FIELDS),
+            ("edits.tsv", binary_patcher.EDIT_FIELDS),
+        ):
+            (binary_module / name).write_text(
+                "\t".join(fields) + "\n",
+                encoding="utf-8",
+            )
         source_roots = workspace / "source_roots"
         source_roots.mkdir(parents=True)
         (source_roots / "NA2.iso.files").mkdir()
@@ -250,6 +267,19 @@ class BuildPreflightTests(unittest.TestCase):
 
             (feature / "string_patcher" / "strings.tsv").write_text(
                 "string_id\nchanged\n", encoding="utf-8"
+            )
+            self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
+
+            (feature / "string_patcher" / "strings.tsv").write_text(
+                "string_id\n", encoding="utf-8"
+            )
+            targets = paths["builder"] / "features" / "targets.tsv"
+            targets.write_text(
+                targets.read_text(encoding="utf-8")
+                + "boot\tna2\tdestination\tSLPS_258.37\t16\t"
+                + "0" * 64
+                + "\n",
+                encoding="utf-8",
             )
             self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
 

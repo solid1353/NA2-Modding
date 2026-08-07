@@ -77,9 +77,12 @@ does not bypass status, guard, overlap, or conflict validation.
 
 ## Schema
 
-Schema v4 is described by the column tables under `schemas/v4/`. Every package has
-exactly four canonical control tables: `targets.tsv`, `groups.tsv`, `patches.tsv`,
-and `edits.tsv`, plus any blobs referenced by edit rows. Package identity is
+Schema v4 is described by the column tables under `schemas/v4/`. Repository
+features share the single `na228_builder/features/targets.tsv` registry. Every
+package has exactly three local canonical control tables: `groups.tsv`,
+`patches.tsv`, and `edits.tsv`, plus any blobs referenced by edit rows. A
+package retains and verifies only the shared targets referenced by its edits.
+Package identity is
 derived from its feature/module path; identity manifests and package-version
 metadata are not accepted. Headers are strict and must match exactly. Groups
 organize patches; patches own one or more exact edits. Patch rows use one

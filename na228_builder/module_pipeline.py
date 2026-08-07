@@ -103,7 +103,9 @@ def prepare_module_pipeline(
         if module.module != "runtime_injector":
             continue
         declaration = runtime_injector_module.load_package(
-            module.input_path, owner=module.module_id
+            module.input_path,
+            owner=module.module_id,
+            targets_path=profile.targets_path,
         )
         if module.module_id in owners:
             raise ValueError(

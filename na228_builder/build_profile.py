@@ -51,6 +51,7 @@ def apply_binary_patch_set(
     package_directory: Path,
     *,
     package: binary_patcher_module.Package | None = None,
+    targets_path: Path | None = None,
     roots: dict[str, Path],
     feature_id: str,
     source: Iso9660,
@@ -59,7 +60,10 @@ def apply_binary_patch_set(
     allow_empty_enabled: bool = False,
 ) -> dict[str, object]:
     if package is None:
-        package = binary_patcher_module.load_package(package_directory)
+        package = binary_patcher_module.load_package(
+            package_directory,
+            targets_path=targets_path,
+        )
     target_data = binary_patcher_module.verify_package_data(package, roots)
     enabled_patch_ids = [
         patch.patch_id
@@ -471,6 +475,7 @@ def apply_profile_modules(
         if module.module == "binary_patcher":
             result = apply_binary_patch_set(
                 module.input_path,
+                targets_path=profile.targets_path,
                 roots=profile.roots,
                 feature_id=module.feature_id,
                 source=source,

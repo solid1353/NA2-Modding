@@ -23,6 +23,10 @@ every direct child directory must match a registered engine under
 index; substantial feature documentation lives under the repository root `docs/`
 hierarchy; see [`docs/features/`](../docs/features/README.md). Enabling a feature enables all of its module directories.
 
+`features/targets.tsv` is the single canonical registry of verified binary
+targets shared by every feature. Binary-patcher and runtime-injector modules
+reference target IDs from that registry and retain only the rows they use.
+
 Feature rows define feature order. Within a feature, the engine registry uses
 this deterministic order:
 
@@ -51,11 +55,11 @@ hash, and the build log records both the expected and actual hashes with
 hash once the edit is ready to pin. Do not use bypassed checks for an accepted
 reproducible checkpoint.
 
-- `binary_patcher`: `targets.tsv`, `groups.tsv`, `patches.tsv`, `edits.tsv`,
-  and every blob referenced by `blob_path`.
-- `runtime_injector`: `targets.tsv`, `groups.tsv`, `patches.tsv`,
-  `fragments.tsv`, `relocations.tsv`, `edits.tsv`, and every fragment blob
-  referenced by `blob_path`.
+- `binary_patcher`: shared `features/targets.tsv`, local `groups.tsv`,
+  `patches.tsv`, `edits.tsv`, and every blob referenced by `blob_path`.
+- `runtime_injector`: shared `features/targets.tsv`, local `groups.tsv`,
+  `patches.tsv`, `fragments.tsv`, `relocations.tsv`, `edits.tsv`, and every
+  fragment blob referenced by `blob_path`.
 - `string_patcher`: `strings.tsv`, only for a feature that owns local string
   declarations.
 - `translation_importer`: canonical `mappings.tsv`, including its folded pointer

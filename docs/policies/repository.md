@@ -76,9 +76,13 @@ work directories, or documentation layout.
 - Copy changing external inputs such as selected savestates or screenshots into
   `work/<task>/inputs/` with provenance before relying on them. Keep baselines,
   modified copies, analysis outputs, and builds separate.
-- After moving or deleting files, inspect the affected directories on disk and
-  remove empty directories, including ignored or untracked directories Git does
-  not show.
+- After moving or deleting files, enumerate every affected parent directory on
+  disk with hidden and ignored entries included. Remove an unintended empty
+  parent, then inspect it again. Do not report cleanup or completion from Git
+  status alone because Git does not represent empty directories.
+- A task that moves or deletes files is incomplete until its affected parent
+  directories have been inspected on disk and every unintended empty directory
+  has been removed.
 - Do not create or preserve a directory containing only one file unless it has a
   clear structural, ownership, namespace, tooling, or future-extension purpose.
   Otherwise move the file to the nearest appropriate existing directory and

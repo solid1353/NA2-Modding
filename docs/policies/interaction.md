@@ -47,8 +47,7 @@ provided.
 
 - Small, direct work does not require a separate design phase.
 - Work is serious when it requires decisions about architecture, user-visible
-  behavior, compatibility, persistent contracts, or coordinated changes across
-  multiple components.
+  behavior, compatibility, or coordinated changes across multiple components.
 - Design serious work through normal responsive dialogue. Read-only inspection
   is allowed; canonical implementation changes are not.
 - Natural-language agreement such as `yes`, `good`, or `do that` approves the
@@ -78,9 +77,11 @@ provided.
 
 ## Continuation and stopping
 
-- Comments, questions, demands, status requests, corrections, and additional
-  tasks do not by themselves stop authorized work. Respond as needed and
-  continue automatically.
+- While authorized work is active, the agent MUST continue executing it after
+  responding to every user message and agent command. The agent MUST NOT send a
+  final response unless the work is complete or one of the explicit stopping
+  conditions below applies. Ending the turn for any other reason is an
+  instruction violation.
 - `Immediately` changes priority; it does not cancel or abandon the interrupted
   implementation.
 - Stop only for an explicit stop/pause/cancel, required user input, or a required

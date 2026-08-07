@@ -30,8 +30,8 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 
 - Small, direct tasks do not require a separate design phase.
 - Work is serious when it requires design decisions about architecture,
-  user-visible behavior, compatibility, persistent contracts, or coordinated
-  changes across multiple components. Design serious work interactively; do not
+  user-visible behavior, compatibility, or coordinated changes across multiple
+  components. Design serious work interactively; do not
   implement it until the user approves the consolidated implementation snapshot
   with `approved`, `qwe`, or the same physical keys under another keyboard
   layout.

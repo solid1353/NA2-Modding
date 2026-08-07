@@ -77,6 +77,9 @@ provided.
 
 ## Continuation and stopping
 
+- “Active work” means an ongoing user request. An open task, workstream,
+  uncommitted candidate, dirty files, or other repository state is not a user
+  request and cannot make work active.
 - While authorized work is active, the agent MUST continue executing it after
   responding to every user message and agent command. The agent MUST NOT send a
   final response unless the work is complete or one of the explicit stopping

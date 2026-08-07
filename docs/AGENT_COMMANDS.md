@@ -14,10 +14,6 @@ those.
 - `task done`: remove the uniquely identifiable current task from `TASKS.md`.
   If its workstream becomes empty, move the workstream to `Archive`. Ask when
   the task is not uniquely identifiable.
-- `actualize`, `actualize chats`: reconcile the live workstream headings in
-  `TASKS.md` with project chats/coordinators. Both the user and agents may invoke
-  it when needed. Structural workstream changes are followed by actualization;
-  ordinary entry edits are not.
 
 ## Conversation and metadata
 

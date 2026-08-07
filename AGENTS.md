@@ -49,9 +49,8 @@ Detailed interaction and authorization rules are in
 Canonical command semantics are in
 [`docs/AGENT_COMMANDS.md`](docs/AGENT_COMMANDS.md). The command index is:
 
-`approved`, `qwe`, `tasks`, `task done`, `actualize`, `actualize chats`, `dnf`,
-`ag`, `q:`, `con`, `e2e`, `sum`, `eff`, `report`, `sw`, `ss`, `zxc`, `mute`,
-`unmute`.
+`approved`, `qwe`, `tasks`, `task done`, `dnf`, `ag`, `q:`, `con`, `e2e`,
+`sum`, `eff`, `report`, `sw`, `ss`, `zxc`, `mute`, `unmute`.
 
 ## Policy routing
 
@@ -64,7 +63,7 @@ Read only the routed policy whose trigger applies:
 | validation, tests, builds, PCSX2, runtime injection, E2E | [`docs/policies/testing.md`](docs/policies/testing.md) |
 | profiles, builder inputs, binaries, donor data, source media, PNACH | [`docs/policies/modding.md`](docs/policies/modding.md) |
 | reverse engineering, disassembly, evidence, knowledge, hypotheses | [`docs/policies/research.md`](docs/policies/research.md) |
-| `TASKS.md`, workstreams, actualization, Notifications | [`docs/policies/coordination.md`](docs/policies/coordination.md) |
+| `TASKS.md`, workstreams, project chats, Notifications | [`docs/policies/coordination.md`](docs/policies/coordination.md) |
 
 Read component documentation only when working on that component. Read durable
 workstream-specific documentation when entering or resuming that workstream,

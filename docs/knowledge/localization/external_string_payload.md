@@ -188,8 +188,8 @@ file offsets `0xBC` and `0xC0`, a literal pointer at `0x2F79F4`, and a section
 header address at `0x50763C`. NUN6 changes the equivalent four instruction
 pairs and final marker together. The shared payload builder derives the final
 boundary from every linked contribution; the isolated string-only plan ends at
-`0x008F4410`. The current combined layout is
-recorded in the Localization feature README. Matched captures of the preceding
+`0x008F4410`. The current combined layout is recorded in the
+[Localization external-string documentation](../../features/localization/external_strings.md). Matched captures of the preceding
 two-file build confirmed its exact `0x63080`
 heap reduction and substantial allocator headroom in eight representative
 states; see

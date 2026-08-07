@@ -39,5 +39,5 @@ Durable context for the `String translation` workstream.
 
 ## Documents
 
-- [Localization feature and mapping history](../../../na228_builder/features/localization/README.md)
+- [Localization feature and mapping history](../../features/localization/README.md)
 - [External string-payload architecture](../../knowledge/localization/external_string_payload.md)

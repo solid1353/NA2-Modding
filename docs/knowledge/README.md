@@ -2,9 +2,8 @@
 
 This directory is the long-term record for established reverse-engineering
 and game-behavior knowledge that would otherwise be lost when operational
-logs are cleaned. New unresolved hypotheses belong in topic-local documents
-beside the relevant subsystem or research area; the legacy
-`docs/HYPOTHESES.md` is frozen for later migration.
+logs are cleaned. New unresolved hypotheses belong in topic-local documents beside the
+relevant subsystem or research area.
 
 ## What belongs here
 
@@ -42,6 +41,7 @@ Operational logs remain disposable after their durable findings are promoted. Gi
   inventories.
 - `runtime/`: EE address-space, allocator, overlay-lifetime, injection-capacity,
   and menu-input runtime findings.
+- `gameplay/`: gameplay-behavior findings and topic-local unresolved leads.
 - `localization/`: string placement, substitution, binary evidence, function
   maps, runtime tests, UI draw-path findings, and font research.
 

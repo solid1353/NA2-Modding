@@ -17,14 +17,6 @@
 - Investigate cross-platform development/deployment possibilities.
 - Global cleanup - preserve/promote what is needed, delete the rest.
 
-### Docs
-- Review and reorganize the large localization, Font, UI, and other technical
-  documents; move substantial documentation under the root `docs/` hierarchy
-  where useful while keeping code directories uncluttered.
-- Migrate `docs/HYPOTHESES.md` item by item: promote confirmed findings, move
-  useful unresolved hypotheses beside their owning subsystem, delete obsolete
-  material, then remove the general file.
-
 ### Bugs
 - **UI Translation:** long character names.
 - **String Translation:** save message.
@@ -57,6 +49,8 @@
 - Test translation thoroughout the whole game.
 
 ## Archive
+
+### Docs
 
 ### [UI Translation](docs/workstreams/ui_translation/README.md)
 

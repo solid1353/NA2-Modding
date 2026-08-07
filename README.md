@@ -47,7 +47,9 @@ knowledge, tests, and release behavior.
   [source extraction](docs/runbooks/source-extraction.md).
 - [Path configuration](docs/PATHS.md) and
   [logging/retention](docs/LOGGING.md).
-- [Knowledge index](docs/knowledge/README.md) for durable technical findings.
+- [Feature documentation](docs/features/README.md) and
+  [knowledge index](docs/knowledge/README.md) for current contracts and durable
+  technical findings.
 - [Tasks](TASKS.md), the user's selective coordination and decision tracker.
 - [E2E infrastructure](e2e/README.md) and
   [agent E2E review workflow](e2e/AGENT_GUIDE.md).

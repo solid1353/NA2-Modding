@@ -20,9 +20,7 @@ files, reverse-engineered behavior, hypotheses, or reusable research tooling.
   observations, and useful negative results belong in `docs/knowledge/` or
   beside canonical component data.
 - New unresolved hypotheses belong in a topic-local hypothesis document beside
-  the relevant subsystem/research area. The repository-wide
-  `docs/HYPOTHESES.md` is frozen legacy material pending the `Docs` workstream;
-  do not add new entries to it.
+  the relevant subsystem or research area.
 - Every substantive disassembly, decompilation, or live-memory task promotes
   reusable findings before cleanup. Record game/binary identity, ranges,
   file/runtime mapping, reconstructed behavior, meaningful names,

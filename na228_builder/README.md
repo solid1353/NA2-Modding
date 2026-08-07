@@ -20,8 +20,8 @@ Feature inputs live under the configured `@features/` root. A feature's folder
 name is its ID, it contains the structurally required root `README.md`, and
 every direct child directory must match a registered engine under
 `na228_builder/modules/`. The root README is a concise feature contract and
-index; substantial feature documentation may live under the repository root
-`docs/` hierarchy. Enabling a feature enables all of its module directories.
+index; substantial feature documentation lives under the repository root `docs/`
+hierarchy; see [`docs/features/`](../docs/features/README.md). Enabling a feature enables all of its module directories.
 
 Feature rows define feature order. Within a feature, the engine registry uses
 this deterministic order:
@@ -85,10 +85,8 @@ Output identity is product configuration, not a feature or module.
 
 The former generic Testing feature was retired: feature IDs express ownership
 or a coherent capability, while patch `status` and `confidence` express
-maturity and certainty. Experimental patches belong to their owning feature;
-new unresolved leads belong in topic-local hypothesis documents beside the
-relevant subsystem. The legacy `docs/HYPOTHESES.md` is frozen for later
-migration.
+maturity and certainty. Experimental patches belong to their owning feature; new unresolved leads
+belong in topic-local hypothesis documents beside the relevant subsystem.
 
 ## Build
 

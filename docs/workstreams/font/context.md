@@ -142,6 +142,16 @@ with their provenance records.
 
 ## Runtime comparison lifecycle
 
+- Expand coverage as a recording-backed semantic suite tree organized by game
+  area and nested subarea, for example `free_battle`,
+  `collection/characters`, `collection/movies`, `collection/music`, and
+  `modals`. Each leaf is backed by its own recording and paired NUN5/NA2
+  captures; the tree may grow as additional game areas are recorded.
+- The capture author does not need to classify implementation scope. After the
+  corpus is available, audit it as a whole and choose the broadest layer proven
+  by the evidence: shared core for defects spanning unrelated caller families,
+  a caller-family adapter for a repeated page/template, and a local correction
+  only for a genuinely unique container.
 - Compare official NUN5 on the left with current NA2.28 on the right under
   matching game and emulator conditions.
 - Check representative short, fitting, overflowing, selected, ordinary,

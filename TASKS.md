@@ -5,6 +5,7 @@
 ### General
 - Create notifications.
 - Restructure pcsx2 stuff.
+- [Make startup load the first save automatically](docs/workstreams/general/2026-08-07-auto-load-first-save-resume.md).
 
 ### [Font](docs/workstreams/font/README.md)
 - Layout/autofit.

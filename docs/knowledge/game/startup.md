@@ -70,6 +70,33 @@ unchanged caller then writes main state `4` and substate `1`, matching ss2-ss4,
 and the native menu controller advances through its loading phases to the usable
 main menu.
 
+## Automatic first-save investigation boundary
+
+Base-NA2 savestates for `SLPS-25837` CRC `C0659AD1` preserve the native startup
+sequence: `ss1` title screen, `ss2` load list, `ss3` first save loaded, and
+`ss4` main menu. In base `ss2`, the shared Save/Load controller at global
+`0x00607624` is allocated at `0x00C42820`; its state at `+0x08` is `4`, its
+selected record at `+0x04` is `0`, and its child at `+0x24` is `0x00C428C0`
+with mode `1` at child offset `+0x08`. The same controller advances to state
+`3` in `ss3` and is released by `ss4`.
+
+Current NA2.28 savestates for CRC `6E79CD2E` establish the direct-startup path:
+
+| State | Visible phase | Data-ready byte `0x006074A0` | Main state/substate | Menu phase/mode | Save/Load controller `0x00607624` |
+| --- | --- | ---: | --- | --- | --- |
+| ss1 | custom startup loader | `0` | `0 / 0` | absent | absent |
+| ss2 | usable main menu | `1` | `4 / 1` | `4 / 1` | absent |
+
+A rejected `ELF-Q010` candidate patched runtime `0x001E5008` (ELF file
+`0xE5108`) to force record zero and enter the native mode-1 load operation.
+The bytes were confirmed present in the tested Latest ISO, but the user observed
+no automatic load. The current states show why: the direct startup path reaches
+the main menu without allocating the shared Save/Load controller, so changing
+that controller cannot implement startup loading. This is a **high-confidence
+negative result**. A future candidate must instead locate the native first-save
+operation within the title/startup path bypassed at `0x001E1340`; its exact
+integration point remains unresolved.
+
 ## Early native loading screen
 
 A third user-supplied NA2.28 batch from CRC `C9AB0A4F` narrows the transition

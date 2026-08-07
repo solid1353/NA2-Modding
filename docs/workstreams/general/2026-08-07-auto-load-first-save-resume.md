@@ -2,29 +2,27 @@
 
 ## Outcome
 
-Make NA2.28 load the first memory-card save during startup, then enter the main
-menu without restoring the removed title or Load-list screens.
+Make NA2.28 silently load the first memory-card save during startup, wait for
+the load to finish, and then enter the main menu without restoring the removed
+title or Load-list screens. Preserve a deliberate way to enter the menu without
+loading a save.
 
 ## Recovery
 
-- Stash: `stash@{0}: On master: General: auto-load first save pending user validation`
-- Stash object: `31d6f19d730c830a491a79bee02d300723b3529f`.
+- Stash: `stash@{0}: On master: General: automatic first-save loading paused
+  before silent-startup redesign`
+- Stash object: `6d038f12dc2743a94c28093e8249342fea4b24e2`.
 - Restore with `git stash apply 'stash@{0}'`.
-- The stash was created on commit `090b83e4`, before the policy/documentation
-  refactor. Reconcile its documentation hunks with current canonical files; do
-  not restore deleted or superseded documentation structure.
-- Verify all four task-owned files were recovered before dropping the stash.
+- The stash contains only these four task-owned files:
+  - `docs/knowledge/game/startup.md`
+  - `na228_builder/features/qol/README.md`
+  - `na228_builder/features/qol/binary_patcher/edits.tsv`
+  - `na228_builder/features/qol/binary_patcher/patches.tsv`
+- Verify all four files and the exact recovered diff before dropping the stash.
 
-The stash contains changes to:
-
-- `docs/knowledge/runtime/menu_input.md`
-- `na228_builder/features/qol/README.md`
-- `na228_builder/features/qol/binary_patcher/edits.tsv`
-- `na228_builder/features/qol/binary_patcher/patches.tsv`
-
-Its `ELF-Q010-23` implementation is a rejected candidate, not resumable final
-code. After applying the stash for recovery, remove or replace that edit and
-correct its pending documentation before producing another candidate.
+The previous stash object
+`31d6f19d730c830a491a79bee02d300723b3529f` was explicitly deleted when this
+replacement stash was created.
 
 ## Preserved inputs and analysis
 
@@ -36,36 +34,59 @@ correct its pending documentation before producing another candidate.
   `@pcsx2_dev/sstates/SLOP-NA228 (6E79CD2E).01-02.p2s` are under
   `work/General/inputs/load-first-current/sstates/`; extracted EE memory is
   under `work/General/analysis/load-first-current/states/`.
-- The tested Latest ISO's extracted boot ELF is
+- The earlier tested Latest ISO's extracted boot ELF is
   `work/General/analysis/load-first-current/SLOP_NA2.28`.
-- Reusable state evidence and the rejected-controller boundary are preserved in
+- The current candidate ELF is
+  `work/General/temp/auto-load-first-save-candidate-v1/SLPS_258.37` with SHA-256
+  `8265FB9A2B244E80CD485191C1A15F31DB748EDEBD7AD16132243A2F199D4C93`.
+- Reusable startup and Save/Load-controller findings are in
   [`../../knowledge/game/startup.md`](../../knowledge/game/startup.md).
 
-## Current state
+## Current candidate
 
-- The tested Latest ISO contains the rejected candidate bytes at runtime
-  `0x001E5008`, proving build integration. The user confirmed that it produces
-  no automatic load.
-- That address belongs to the shared Save/Load controller. Current startup
-  states reach the main menu without allocating that controller.
-- Bare `na228` builds and launches Latest through the low-level PCSX2 launcher
-  without a `-memory-card` argument, so it uses `SLOP-NA228.ini`'s configured
-  `Slot1_Filename` (`NA v2.28.ps2`). Workshop game-selector launches separately
-  derive build-postfixed card names; do not assume bare `na228` does.
-- No implementation commit exists. The earlier candidate commit was removed
-  from local and remote branch history; only the named stash retains it.
+- The rejected `ELF-Q010-23` candidate was removed. The replacement candidate
+  changes `ELF-Q009-03` at file offset `0xE1340` to return native title result
+  `2` (`Continue`).
+- Continue constructs the shared Save/Load controller in load mode. The guarded
+  `ELF-Q010-14` replacement at file offset `0xE5108` fixes the selected record
+  at zero, calls the native load operation in mode `1`, retains the unchanged
+  save body for other modes, and rejoins the controller's native post-operation
+  states. It ends before the existing guarded edit at `0xE5140`.
+- Binary-patcher validation passed: one target, four groups, ten patches, and
+  32 edits; the selected dry-run plan contained two atomic patches and 24 edits.
+- Integrated build `20260807_111358_863_pid17324` succeeded and promoted
+  `build/NA v2.28 - Latest.iso`, SHA-256
+  `80471C65AF0B8B15A30BF8459C621E9FA3D8850C6182C159DB668F322179527B`.
+- Independent ISO inspection verified the embedded ELF contains the candidate
+  bytes at `0xE1340` and `0xE5108` and the existing `ELF-Q010-16` bytes at
+  `0xE5140` without overlap corruption.
+- No E2E or runtime validation was run. No runtime behavior has been confirmed.
+  The candidate remains uncommitted and is not accepted.
+
+## Design state
+
+- The user selected silent, blocking loading rather than asynchronous loading:
+  startup may wait for the memory-card operation, but it must not ask a question
+  or display the Load list.
+- Entering the menu without loading a save is also a valid deliberate startup
+  choice. Unconditional silent loading would incorrectly remove that choice.
+- The smallest proposed preservation mechanism is a held-button startup
+  override that skips loading and enters the menu unsaved. No button or exact
+  input point has been selected.
+- This user-visible behavior change has not received a consolidated serious-work
+  snapshot or `approved`/`qwe` authorization. Do not implement the redesign
+  until that boundary is completed.
 
 ## Remaining work
 
-1. Apply the stash and retain it until recovery is verified.
-2. Remove the rejected `ELF-Q010-23` candidate and its incorrect behavioral
-   claims.
-3. Trace the native first-save operation inside the title/startup sequence that
-   current `ELF-Q009` bypasses at runtime `0x001E1340`.
-4. Implement a guarded, script-owned candidate that performs that native load
-   before entering main state `4 / 1`, without displaying the removed screens.
-5. Do not run E2E for this task. The user explicitly rejected E2E because the
-   startup screenshots are expected to change. Use user runtime testing.
-6. Keep the patch uncommitted until the user confirms the runtime result. After
-   acceptance, finalize canonical documentation, commit, push, remove this
-   handoff/task link, and drop the recovered stash.
+1. Apply the new stash and verify recovery of all four task-owned files.
+2. Finish the design of the deliberate no-save override, then present the
+   consolidated implementation snapshot and obtain `approved` or `qwe`.
+3. Trace or adapt the lower-level native first-record load so startup waits for
+   it without constructing or displaying the Continue/Load-list UI.
+4. Replace the current candidate with a guarded, script-owned silent-startup
+   candidate while preserving the explicit no-save path.
+5. Do not run E2E. Use user runtime testing, and keep the patch uncommitted until
+   the user confirms the result.
+6. After acceptance, finalize canonical documentation, commit and push the
+   feature, remove this handoff/task link, and drop the recovered stash.

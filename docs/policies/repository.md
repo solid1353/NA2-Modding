@@ -46,10 +46,9 @@ work directories, or documentation layout.
   `<agent-name>@agent.invalid` when it has no entry. Do not use the user's
   personal identity. Use the concise task-authored subject
   `[<workstream/category>] <imperative summary>`, with the owning workstream or
-  category as the prefix. When no meaningful owner or category applies, omit
-  the bracketed prefix and use only a short imperative summary. Do not use the
-  full task title or invent a prefix taxonomy. Verify the subject before
-  pushing.
+  category as the prefix. When no meaningful owner or category applies, use
+  `[Other] <imperative summary>`. Do not use the full task title or invent
+  another prefix taxonomy. Verify the subject before pushing.
 - Git history is the recovery mechanism for tracked files. Preserve
   irreplaceable untracked inputs deliberately before deleting them.
 

@@ -44,9 +44,10 @@ work directories, or documentation layout.
   repository, then report each repository's commit, push, and dirty state.
 - Use the matching identity from `@workshop/settings/git-authors.tsv`, or
   `<agent-name>@agent.invalid` when it has no entry. Do not use the user's
-  personal identity. The complete task-authored subject is
-  `[<exact task title>] <imperative summary>` unless the user or target
-  repository explicitly requires additional text. Verify the exact-title prefix
+  personal identity. Use the concise task-authored subject
+  `[<workstream/category>] <imperative summary>`, with the owning workstream or
+  category as the prefix. Use `General` when no meaningful owner applies; do
+  not use the full task title or invent a prefix taxonomy. Verify the prefix
   before pushing.
 - Git history is the recovery mechanism for tracked files. Preserve
   irreplaceable untracked inputs deliberately before deleting them.

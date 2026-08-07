@@ -1,197 +1,77 @@
-# Coordination policy
+# Coordination, workstreams, and task tracking
 
-## Cross-chat work
+**Applies when:** using `TASKS.md`, workstreams, project chats, actualization,
+Notifications, or an explicit cross-chat handoff.
 
-- Agents may work concurrently only when tasks and resources are independent.
-  Shared Git transactions, overlapping canonical edits, physical game input,
-  shared ISO promotion state, and other unisolated mutable resources are
-  exclusive. The existing owner keeps the resource; competitors sleep and
-  wake rather than inventing work. Independent worker-output ISOs are allowed.
-- Schedule a bounded wakeup only when no other approved in-scope work is
-  actionable, a concrete external operation is already running or a future
-  state change is confirmed, and that change can be detected without a new user
-  message. Never poll for an action the user has not explicitly agreed to
-  perform. When user input or a user-created artifact is required, ask once and
-  stop; in Continuous mode, queue only the blocked subtask and continue
-  independent approved subtasks first. Check once per wakeup, make no unrelated
-  changes, and disable it when resolved.
-- A workstream that asks `Project` for anything stops immediately and sleeps
-  until `Project` responds.
-- Use canonical tracked files as shared context. Send concise handoffs only
-  when another chat must act or decide, with owner, objective, exact paths,
-  commit, confirmed decisions, unresolved questions, and requested action.
-- Authorization to contact another task or relay a message applies once to the
-  exact requested message. It never authorizes later status, correction,
-  completion, or adjacent-context follow-ups. Every additional cross-task
-  message requires a new explicit user instruction unless a standing policy
-  independently mandates that exact notification.
-- When relaying user instructions, quote them verbatim and preserve scope,
-  force, ambiguity, and omissions. Put confirmed facts in `Verified context`
-  and interpretations in a labeled non-authoritative section. Never attribute
-  inferred requirements to the user.
-- Put the exact user instruction first as the authoritative action block. If it
-  authorizes work, never downgrade it to guidance, label it non-authorizing,
-  postpone it behind optional analysis, or add an approval condition the user
-  did not state. The recipient inherits authorization for exactly the quoted
-  action; advice and interpretations remain separate and cannot restrict it.
-- Cross-workstream reports, findings, failures, suggestions, and hints are
-  informational only. They do not authorize the recipient to investigate,
-  test, implement, or interrupt its current work.
-- `sin` is a standing policy-enforcement trigger. The reporting task sends
-  `Policeman` a self-contained account containing the exact user complaint or
-  instruction, the exact failure, current work and approval state, and relevant
-  paths or commits. Sending it does not stop, replace, or waive any other rule
-  governing the reporting task. Filing the report, receiving enforcement, or
-  acknowledging the violation is not a handoff boundary: the task continues
-  every authorized correction and all unaffected approved work in the same
-  turn. If a required correction such as published-history rewriting needs new
-  explicit authorization, request it once; after the user supplies it, perform
-  the correction instead of stopping with another acknowledgment.
-- `Policeman` inspects the relevant live rules, identifies the exact violation,
-  and makes a durable correction or strengthens the existing rule's
-  placement or wording when needed. It commits and pushes the policy change,
-  then directly tells the offending task what it did wrong and the behavior
-  now required. It does not take over implementation work without separate
-  authorization.
-- The recipient may act only when the user explicitly authorized that action
-  in the receiving chat, in another chat, or through a standing instruction.
-  Authorization from another chat must be relayed as the user's exact quoted
-  instruction with its source; an agent's request or interpretation never
-  substitutes for it.
-- Without authorization, do not perform substantial analysis to validate a
-  cross-workstream hint. Report or preserve it as context and continue the
-  authorized work.
-- Keep one owner per artifact/decision. Link rather than copy logs or history;
-  avoid acknowledgments, chatter, polls, and duplicate analysis.
+## Concurrent and cross-chat work
 
-## Workstreams and Notifications
+- Concurrent work is allowed only when tasks and mutable resources are
+  independent. A shared Git transaction, overlapping canonical edit, physical
+  game input, shared ISO promotion state, or other unisolated mutable resource
+  has one owner at a time.
+- Use tracked canonical files as shared context. When the user explicitly asks
+  for a cross-chat handoff, relay the instruction faithfully and separate
+  verified facts from interpretation. A handoff does not broaden authorization.
+- Keep one owner per artifact and decision. Link to canonical evidence instead
+  of copying logs, history, or analysis between chats.
 
-- The policy linked from a `TASKS.md` subsection is the recurring scoped source
-  for that workstream. Read it on entry/resume. Store only recurring user rules;
-  keep universal rules here, technical findings in knowledge, execution state
-  in plans/handoffs, and one-off instructions in chat.
-- Only long-running tasks notify the `Notifications` task, immediately before
-  handing control back on completion, user-input/approval need, error, or
-  blocker. Include source title, result/problem, and exact requested user
-  action. Respect the configured muted state; muted events are not queued.
-- In `Notifications`, `mute` and `unmute` update, commit, and push the configured
-  notification state.
+## Notifications
 
-## Policeman
-
-- `Policeman` is the shared policy enforcer. Contact it only through `sin` or
-  an explicit policy-enforcement instruction.
-- It preserves the reporting task's exact scope and context, corrects policy
-  as needed, and confronts the offending task with the exact violated rule and
-  required behavior. It does not silently absorb reports or become a general
-  implementation, coordination, or task-management channel.
-- After every `sin` report, it adjusts the live policies with a durable
-  correction or strengthening based on that report.
-- Policy adjustments prevent the failed behavior across its applicable scope;
-  they do not encode an incident's exact path, artifact, task title, or other
-  one-off detail unless the rule inherently applies only there.
-- State each correction at the broadest behavioral scope supported by the
-  confirmed failure. Do not narrow a universal authorization, validation,
-  completion, reporting, or workflow rule to the particular tool, mechanism,
-  screen, command, or artifact involved in the report. Before committing,
-  verify that the wording prevents the same behavior in unrelated applicable
-  workflows without inventing unsupported requirements.
-- A `sin` report is an allegation, not proof of guilt. `Policeman` arrests or
-  confronts a task as an offender only after evidence confirms that the task's
-  action violated an exact rule that was live when it acted. A newly added or
-  clarified rule cannot retroactively turn previously permitted behavior into
-  a violation.
-- An exact live rule includes applicable direct and standing user
-  instructions, not only wording already persisted in repository policy.
-  Failure to store a repeated user rule does not erase its authority or justify
-  lifting charges; verify that the instruction applied to the task when it
-  acted, then enforce it and repair the policy-storage gap separately.
-- Every confirmed-violation confrontation tells the offending task exactly:
-  `YOU'RE UNDER ARREST.` When no live-rule violation is confirmed, do not use
-  that statement or label the reported task an offender; start the enforcement
-  response exactly with `Charges lifted.`
-- It also directs the offending task to correct the violation and any resulting
-  noncompliant state itself. This is standing authorization only for remediation
-  needed to restore compliance within the work's previously authorized scope;
-  it never authorizes new implementation or unrelated cleanup.
-- When the user explicitly places a task on the Wall of Shame, membership is
-  transient task state and is never recorded in repository files or Git
-  history. `Policeman` informs that task without supplying the reason; the task
-  inspects its own recent conduct, identifies why it was placed there, and
-  proposes an adequate correction. Until it proposes an adequate solution,
-  every response from that task begins with a direct apology.
-
-## Task coordinator
-
-- `Task coordinator` maintains the mapping between `TASKS.md` workstreams and
-  Codex coordinator tasks. It does not select or execute workstream tasks.
-- The special `Bugs` subsection is excluded from chat actualization and never
-  receives a coordinator.
-- Contact `Task coordinator` only for `actualize` or `actualize chats`
-  requests. Do not send it task-list edits, reports, implementation or policy
-  work, or ordinary coordination.
-- `actualize` or `actualize chats` means synchronize chats with live
-  `AGENTS.md` and `TASKS.md`; it is unrelated to ISO/PNACH actualization.
-- Actualization may create missing coordinators without separate approval,
-  reuses/renames suitable chats, and maintains exactly one coordinator whose
-  title exactly matches each workstream across statuses. Its scope is limited
-  to that workstream.
-- Every new project chat's initial scope carries standing authorization to
-  commit and push completed work. That authorization does not approve a task
-  plan or start task execution.
-- Actualization unpins project chats, then pins `General`, `Project`,
-  `Policeman`, `Notifications`, and `Task coordinator` in that order, followed
-  by each `In Progress` workstream coordinator and its unarchived dedicated
-  task chats in task order. It never unarchives archived dedicated chats.
-- Actualization does not select work. It updates scope/rules only when stale and
-  reports reused, renamed, created, or signaled coordinators.
-- Creating, renaming, moving, or deleting a whole workstream subsection
-  triggers actualization before the corresponding task-management commit and
-  push. Editing entries within an unchanged subsection does not. Non-coordinator
-  chats send one concise request to `Task coordinator`.
-- Do not archive, delete, merge, or repurpose unrelated chats without explicit
-  instruction.
-- A task presented in the wrong chat is routed to the matching coordinator or
-  dedicated chat with exact wording, status, instructions, evidence, and next
-  step; the originator stops parallel work.
-- Recommend a separate task only when sustained unrelated context or distinct
-  responsibilities threaten quality. Prefer existing tasks and create nothing
-  until the user approves.
+- `Notifications` remains the one-way notification channel for long-running
+  task completion, blockers, errors, or required user action.
+- Send a concise notification immediately before handing control back and
+  include the source title, result/problem, and exact requested user action.
+- Respect the shared muted state. `mute` and `unmute` behavior is defined in
+  [`../AGENT_COMMANDS.md`](../AGENT_COMMANDS.md).
 
 ## `TASKS.md`
 
-- Tasks are added only by the user or by an agent on the user's order.
-- A workstream subsection appears under exactly one of `In Progress`,
-  `Backlog`, or `Archive`; `Testing` is last within its current status.
-- `Bugs` always remains under `Backlog`; selecting or working one of its
-  entries never moves the subsection. It is not a workstream and has no
-  coordinator. Each workstream owns entries labeled with its exact title,
-  reports those entries with its own tasks, and fixes one only when the user
-  explicitly selects it.
-- Approved active work moves its whole subsection to `In Progress`. Move to
-  `Backlog` only by explicit user instruction.
-- `task done` makes the owning workstream coordinator remove the exact task;
-  the task named `Task coordinator` never performs task-entry edits. If the
-  subsection becomes empty, move it to `Archive` without deleting it or
-  archiving its coordinator chat. If work returns, move it to `In Progress`
-  when approved or to `Backlog` only by explicit instruction.
-- Documented workstreams use `docs/workstreams/<workstream>/README.md`, linked
-  from the subsection heading, with recurring rules under
-  `## Workstream policy`.
-- After a successful push or when asked what is next, a coordinator reports
-  only its own subsection choices across statuses and its exact-title entries
-  from `Bugs`, word for word, in original order with applicable headings.
-- Commit and push authorized task-management edits immediately. Stage only
-  `TASKS.md` and dedicated context created for that update. Actualize chats only
-  for whole-subsection creation, rename, status move, or deletion.
+- `TASKS.md` is the user's selective coordination and decision tracker. Do not
+  read it by default.
+- Read or modify it only when the user explicitly asks to inspect, present,
+  select, take, add, update, complete, or remove tracked tasks, or when an
+  invoked `tasks`, `task done`, or `actualize` operation requires it.
+- Selecting an entry identifies work; it does not authorize implementation or
+  change the normal small/serious-work rules.
+- Tasks are added only by the user or on the user's instruction.
+- A workstream subsection appears under exactly one of `In Progress`, `Backlog`,
+  or `Archive`. `Bugs` remains under `Backlog`; it is not a workstream and has
+  no coordinator. Labeled bugs belong to the named workstream without becoming
+  workstreams themselves. Keep `Testing` last within its current status.
+- Approved active work may move its subsection to `In Progress`; move it to
+  `Backlog` only on explicit user instruction.
+- `task done` removes the exact task through its owning workstream. If the
+  subsection becomes empty, move it to `Archive` without deleting it.
+- Commit and push requested task-list edits automatically. Structural workstream
+  changes are followed by `actualize`; ordinary entry edits are not.
 
-## Workstream-owned state
+## Workstreams
 
-- The repository has no cross-install or OS-migration handoff procedure.
-- Every agent records durable recurring rules, resumable execution state, and
-  linked plans only in its owning `docs/workstreams/<workstream>/` tree.
-- Workstream documents use repository-relative paths and omit installation-
-  specific task IDs. Live repository state, rules, and user instructions remain
-  authoritative.
-- Shared non-secret agent identities and notification state live under
-  `settings/`; they are configuration, not handoffs.
+- A workstream is a named tracked area represented by a `TASKS.md` subsection.
+- Workstream documentation is optional. Create
+  `docs/workstreams/<workstream>/` only for durable workstream-specific context
+  that has no better canonical owner. Do not require a landing README,
+  `context.md`, or fixed section structure.
+- Link useful durable workstream documents directly from `TASKS.md` when they
+  exist. Keep reusable technical knowledge, component contracts, procedures,
+  and policy in their canonical topic/component documents.
+- When entering or resuming a workstream, read its applicable durable documents
+  once; do not reread them before every message.
+
+## Actualization and Task coordinator
+
+- Both the user and agents may invoke `actualize` / `actualize chats` when
+  needed. The command reconciles project chats/coordinators with live
+  `AGENTS.md` and `TASKS.md`; it does not select work.
+- `Task coordinator` performs actualization only. It does not execute workstream
+  tasks or make ordinary task-list edits.
+- `Bugs` is excluded. Maintain exactly one coordinator per workstream across
+  statuses, reusing or renaming suitable chats and creating missing ones.
+- `General` is an ordinary workstream/chat; it has no special behavioral or pin
+  priority.
+- Actualization unpins project chats, then pins `Project`, `Notifications`, and
+  `Task coordinator` in that order, followed by each `In Progress` workstream
+  coordinator and its unarchived dedicated task chats in task order. It never
+  unarchives archived dedicated task chats.
+- Do not archive, delete, merge, or repurpose unrelated chats without explicit
+  instruction.

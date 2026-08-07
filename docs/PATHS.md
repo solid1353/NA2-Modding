@@ -1,6 +1,8 @@
 # Path configuration
 
-The path system has four layers with separate owners:
+The maintained modding project may span NA2, Workshop, maintained
+subrepositories such as the PCSX2 fork, and future repositories added to the
+project. The path system has four layers with separate technical owners:
 
 1. Workshop root `paths.json` owns every shared root and named file.
 2. NA2 root `paths.json` imports Workshop and adds only NA2-local paths.
@@ -15,9 +17,9 @@ paths exist only at runtime.
 
 ## Workshop boundary
 
-`@workshop` is imported from the sibling `UN Workshop/paths.json`. Workshop is
-standalone and never references NA2. Its root manifest owns reusable public
-infrastructure:
+`@workshop` is imported from the sibling `UN Workshop/paths.json`. Workshop
+is shared across consuming modding projects and does not depend on NA2. Its
+root manifest owns reusable public infrastructure:
 
 - source media, analysis, tools, and configured emulator roots;
 - shared PCSX2 assets;
@@ -31,6 +33,12 @@ infrastructure:
 The public repository ignores original media, extracted data, private analysis
 databases, toolchains, emulator binaries, BIOS files, memory cards, savestates,
 logs, and task artifacts.
+
+## Source games
+
+The configured original project files are `na2_iso`, `nun3_iso`, `nun5_iso`,
+and `nun6_iso`. NUN6 A35 is a Brazilian NUN5 mod retained as a possible
+feature donor, not an official successor or English authority.
 
 ## Important NA2 roots
 
@@ -104,6 +112,16 @@ Workshop map; Workshop never imports NA2.
 
 ## Migration rule
 
-Move the canonical owner first, update `paths.json` or the owning catalog, then
-run both path-loader checks and the affected repository tests. Never persist
-resolved machine-specific paths in project files.
+Move the canonical owner first and update `paths.json` or the owning catalog.
+For an NA2 path/catalog change, validate the PowerShell loader and its existing
+Python unit tests with:
+
+```powershell
+& { . .\scripts\lib\paths.ps1; Get-Na2Paths | Out-Null }
+& .\scripts\lib\run_python.ps1 `
+  -PackageSet builder `
+  -Script tests/builder/test_paths.py `
+  -NoBytecode
+```
+
+Never persist resolved machine-specific paths in project files.

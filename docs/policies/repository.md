@@ -1,285 +1,147 @@
 # Repository and workspace policy
 
-## Paths and links
+**Applies when:** changing files, paths, Git state, scripts, dependencies, logs,
+work directories, or documentation layout.
 
-- Canonical project files, scripts, configuration, logs, manifests, metadata,
-  and generated artifacts use repository-relative paths. Machine-specific
-  absolute paths are limited to transient tool arguments/diagnostics and
-  user-facing clickable links unless explicitly authorized.
-- `paths.json` is the source of truth for stable project-level infrastructure
-  directories and named files. Workshop root `games.json` owns registered
-  source games; root `product.json` owns this project's product identity,
-  canonical inputs, build roles, and aliases. Resolve them through the shared
-  PowerShell or Python loader.
-  Do not inventory ordinary descendants such as `BTL.BIN`.
-- Deleting or moving the last content of a configured root or direct manifest
-  file must update the manifest and every `@root` documentation reference, then
-  validate both path loaders. Never preserve an empty directory for a manifest.
-- For `from <source> to <destination>` link requests, preserve the source and
-  create the link at the destination. Do not redesign ownership or storage.
-  Explain when the requested link type cannot provide tracked content diffs.
-- When pairing trees, enumerate both sides and preserve exact existing spelling.
-  Ask if no unique mapping exists.
-- `@pcsx2_files/` is the canonical shared asset pool used directly by the
-  configured stable and development PCSX2 installations. BIOS, cheats,
-  GameSettings, input profiles, input recordings, and memory cards live only
-  there; do not recreate configured-installation copies or links. After
-  creating a task-owned runtime with
-  `@pcsx2_scripts/copy_worker.ps1 -WorkerRoot work/<task title>`, an agent may
-  copy any additional assets for which it has a concrete task- or test-related
-  reason into that copy. The maintained command always copies
-  `@pcsx2_clean` and the shared BIOS together; agents never assemble the base
-  runtime manually. Any asset category is allowed; never populate the clean
-  template itself. PCSX2 has no
-  configurable input-recordings folder, so recordings are opened from their
-  canonical shared paths explicitly.
-- `@pcsx2_files/input_profiles/sources/Default.ini` is the only manually edited
-  complete input profile. Named partial inputs live under `sources/overrides/`;
-  game-specific partial inputs live under `sources/overrides/games/` and apply
-  when named for a canonical game selector. `workshop input` regenerates every complete
-  profile without changing GameSettings assignments. `workshop input
-  <profile>` also regenerates every complete profile, then assigns the selected
-  profile variants in every configured GameSettings file. Never
-  edit generated root-level profiles directly. Generation first merges all
-  selected partial inputs by section, action, and input family. It then removes
-  conflicting bindings, replaces existing actions in place, and appends only
-  new actions in their declared sections. Base outputs use
-  `<profile>_Base.ini`; game-specific outputs use `<profile>_<game>.ini`. SDL
-  overrides never
-  remove unrelated keyboard values, and keyboard overrides never remove
-  unrelated SDL values. Multiple assignments declared by the same override may
-  deliberately share one binding value.
-  Bindings absent from the complete profile are appended as one block with
-  exactly one blank line before and after it. Each run overwrites its generated
-  outputs when their content changes. Every generated root-level profile remains in
-  place and is tracked by Git. It never removes anything under `sources/`.
-- The NA2.28 serial-wide PCSX2 files are
-  `@pcsx2_cheats/SLOP-NA228.pnach` and
-  `@pcsx2_game_settings/SLOP-NA228.ini`. PCSX2 discovers PNACH and GameSettings
-  recursively. Ordinary INI sections apply to every CRC; optional
-  `[CRC.<8-hex-crc>.<section>]` sections override one CRC. A named PNACH group
-  applies to every CRC unless it has `crc = <8-hex-crc>[,<8-hex-crc>...]`.
-  Legacy serial/CRC and CRC-only filenames remain readable but are not
-  generated for NA2.28.
-- Task-owned PCSX2 copies are complete disposable portable runtimes, including
-  their configuration, unique PINE port, savestates, screenshots, logs, cache,
-  copied memory cards, cheats, GameSettings, input files, and any legacy
-  hot-reload artifacts. They are not shared infrastructure. Never migrate,
-  replace, or clean them repository-wide.
-- When an owning task next needs PCSX2, it audits any existing copy first.
-  Promote useful inputs, runtime evidence, source patches, configuration, or
-  generated results into the task's proper owned folders or canonical project
-  files; then remove the old runtime and recreate the complete portable copy
-  from `@pcsx2_clean`. Once that audit and promotion are complete, removal and
-  recreation of the owner's complete `work/<exact task title>/pcsx2/` runtime
-  has standing authorization and does not require separate destructive-action
-  approval. Another task or coordinator never performs this replacement on its
-  behalf, and this authority never applies to another task's copy,
-  `@pcsx2_clean`, `@pcsx2_dev`, or `@pcsx2_stable`.
+## Paths and repository boundaries
+
+- Canonical project files, scripts, configuration, logs, metadata, and generated
+  artifacts use repository-relative paths or configured `@root/...` references.
+  Machine-specific absolute paths are limited to transient tool arguments,
+  diagnostics, and user-facing clickable links unless explicitly authorized.
+- Workshop root `paths.json` owns shared roots and named files. Workshop
+  `games.json` owns source-game identity. NA2 root `paths.json` imports Workshop
+  and adds NA2-local paths; `product.json` owns NA2 inputs, output identity,
+  build roles, and aliases. Use the maintained loaders rather than duplicating
+  derivation logic.
+- When moving a configured root or direct manifest file, update its canonical
+  owner and every affected reference, then validate the existing loaders.
+- For a requested `from <source> to <destination>` link, preserve the source and
+  create the link at the destination. Do not redesign ownership unless asked.
+- Treat `@source/`, `@pcsx2_dev`, `@pcsx2_stable`, and the clean PCSX2 worker
+  template as protected. Runtime-specific handling is in
+  [`../runbooks/runtime-testing.md`](../runbooks/runtime-testing.md).
 
 ## Git and concurrent work
 
 - User edits and commits are expected. Refresh status/history before Git
-  operations, preserve unrelated work, and stage only intended paths.
-- Non-overlapping coherent hunks may be edited concurrently. Use hunk-level
-  staging. Pause only for overlapping or logically conflicting changes.
-- Concurrent-work protection applies only to changes owned by another task. A
-  task continues to own every change it created across turns, commits, and
-  sibling transactions, including changes that predate its current transaction.
-  At every handoff, include all of those changes in its clean-boundary
-  accounting; never call the task's own unstaged work concurrent or unrelated
-  to leave it hanging.
-- Agents may push already-present commits. If a non-conflicting user change is
-  accidentally included, the commit may be pushed as-is and must be reported.
-- Commit and push every completed change automatically at a coherent boundary.
-  Git never requires `qwe` or separate approval.
-- An explicit `commit and push` instruction is already complete and specific
-  authorization for a normal push of the current branch to its configured
-  origin. It never needs the user to restate the commit hash, branch, remote,
-  repository, payload, or permission. If an execution or approval layer
-  rejects that push, follow the access-failure retry rule and report only an
-  unresolved tooling blocker; never convert it into another user approval
-  request.
-- A coherent delivery spanning multiple repositories has one Git boundary, not
-  one boundary per repository. Commit every repository's authorized intended
-  changes before pushing any participating repository or claiming delivery;
-  then verify that no participating repository retains task-owned dirty state.
-  If a repository has no configured remote or a push is blocked, keep its local
-  commit, report that exact exception and the commit/push/dirty state of every
-  repository, and never present the successfully pushed subset as the completed
-  delivery.
-- Before yielding at any pause, review, validation, user-input, or other
-  handoff boundary, an agent must leave no task-owned canonical changes dirty
-  in the shared worktree. Commit and push completed coherent changes. For
-  incomplete changes, either stash only the owned paths and record the exact
-  stash identity and paths in the active task/workstream state, or document
-  sufficient reconstruction steps and revert only the owned paths. Verify
-  recoverability and the resulting Git state; unrelated concurrent changes
-  remain untouched. On resume, restore and verify the exact owned diff, then
-  immediately drop that exact stash and verify its removal.
-- A coherent candidate that the user is expected to test through the normal
-  repository build is a test-ready commit boundary even though acceptance is
-  pending. Commit and push it with an explicit candidate/unaccepted status so
-  the normal builder contains the exact test subject. Never stash, revert, or
-  otherwise remove such a candidate from canonical inputs before the user's
-  test. Use stash or documented reconstruction only for genuinely incomplete
-  work that is not being offered for canonical-path testing.
-- Normal pushes of completed commits to already configured project remotes and
-  branches have standing user authorization. Never ask the user to authorize
-  them again. This standing authorization does not permit changing remotes,
-  force-pushing, or rewriting history.
-- For a normal push to the currently configured `origin`, treat that
-  configuration as the established destination; do not add a pre-push
-  origin-verification gate. If execution review nevertheless requires proof,
-  satisfy it once with `git remote get-url origin` and immediately retry the
-  exact push. Do not pause approved work or repeat the check unless the remote
-  configuration changes.
-- For each target repository, resolve the author identity and complete subject
-  independently before creating the commit. Under this policy the complete
-  subject is `[<exact task title>] <imperative summary>` unless the user or that
-  target repository explicitly requires additional text. A disclosure suffix,
-  subject convention, or identity required by another repository does not
-  transfer to sibling repositories in the same delivery.
-- Override the author for that commit only using the matching
-  `@workshop/settings/git-authors.tsv` entry, or
-  author name `<agent-name>` and email `<agent-name>@agent.invalid` when absent.
-  Never use the user's configured or personal identity for an agent commit,
-  alter repository or global identity, or rewrite user commits.
-- Before pushing, verify every commit authored by the current task has a
-  subject beginning with that task's exact title in brackets. The author name
-  or email never substitutes for the subject prefix. Correct a mismatch before
-  publication. If it is discovered after publication, report it and use the
-  correct form thereafter; never amend, force-push, or otherwise rewrite the
-  published commit without the user's explicit instruction.
-- Git history recovers tracked files. Delete confirmed disposable generated
-  files; preserve irreplaceable untracked inputs deliberately outside the repo
-  before deletion.
+  operations, preserve unrelated work, and stage only task-owned paths or hunks.
+- Independent changes may proceed concurrently. Pause only for overlapping or
+  logically conflicting changes or exclusive mutable resources.
+- Completed refactors and other completed non-patch changes are committed after
+  their selected validation, then pushed automatically. Game/runtime patches
+  follow the proof and commit boundary in [`testing.md`](testing.md).
+- Ordinary pauses, questions, reviews, and requests for user input do not require
+  a clean working tree. If work is blocked or incomplete, do not create a WIP
+  commit merely to clean the tree; report the exact task-owned dirty state.
+  `zxc` is the explicit recoverable graceful-stop exception.
+- Every created task-owned commit is pushed automatically. Normal pushes to the
+  configured current branch/origin have standing authorization; do not ask for
+  it again. Changing remotes, force-pushing, or rewriting published history
+  still requires explicit instruction.
+- A coherent delivery spanning maintained repositories has one completion
+  boundary: create every intended commit before pushing any participating
+  repository, then report each repository's commit, push, and dirty state.
+- Use the matching identity from `@workshop/settings/git-authors.tsv`, or
+  `<agent-name>@agent.invalid` when it has no entry. Do not use the user's
+  personal identity. The complete task-authored subject is
+  `[<exact task title>] <imperative summary>` unless the user or target
+  repository explicitly requires additional text. Verify the exact-title prefix
+  before pushing.
+- Git history is the recovery mechanism for tracked files. Preserve
+  irreplaceable untracked inputs deliberately before deleting them.
 
-## Access failures and escalation
+## Access and elevation
 
-- Run every shell command elevated from the first attempt, without judging
-  whether elevation appears necessary. This includes every script invocation
-  and every read-only or mutating filesystem and Git command.
-- If a non-command tool fails because of permissions, retry the exact intended
-  operation through an elevated command when possible. Never evade an access
-  failure by changing tools, paths, destinations, or methods.
-- After an access failure, retry only the failed operation; do not repeat work
-  that already succeeded.
-- An execution-layer rejection of an already-authorized Git operation is a
-  tooling restriction, not missing user authorization. Retry the exact
-  operation through the permitted elevated path. If that path is also denied,
-  report the exact restriction and pending refs without asking the user to
-  approve the Git operation again or inventing a new authorization gate.
-- An access or elevation denial never silently changes an authorized cleanup
-  into preservation. Revalidate the exact target, retry the still-pending
-  operation with the narrowest valid elevation, and verify its result. If the
-  scoped retry is also denied, stop and report the exact unfinished target;
-  never continue or claim completion while leaving it behind.
-- When a new recurring access failure and its solution are confirmed, add one
-  short rule here so later agents avoid it.
+- Run every shell, filesystem, script, and Git operation elevated from the first
+  attempt.
+- If an elevated operation still fails, report the exact failure. Do not switch
+  tools, paths, destinations, workspaces, or methods and do not invent a helper
+  workflow to bypass the access problem.
+- Retry only the failed operation; do not repeat work that already succeeded.
 
 ## Work ownership and external inputs
 
-- A file-working task owns `work/<exact task title>/` and has standing
-  authority to create, modify, move, or delete anything inside that exact
-  directory without separate destructive-action approval. This authority
-  never extends outside the owned directory. It may read another task's
-  directory but must copy files into its own before changing them.
-- Keep task copies, experiments, intermediate files, builds, runtime artifacts,
-  and logs in clearly named subfolders under that owner. Never use top-level
-  `work/temp/`.
-- Treat changing external files as unstable inputs. Copy reasonably small
-  inputs, including selected screenshots and savestates, into
-  `work/<task title>/inputs/` with provenance before relying on them.
-- Baselines, modified copies, analysis outputs, and builds remain separate.
-- Before claiming any filesystem-changing work complete, inspect every path and
-  directory tree affected by the work, resolve all resulting cleanup including
-  ignored or untracked remnants and empty directories, and verify the intended
-  final state. A clean Git diff does not prove untracked filesystem cleanup.
-- After moving, renaming, or deleting content, explicitly inspect every vacated
-  source directory and its affected ancestors as well as the destination.
-  Remove resulting empty directories before commit/push; Git status cannot
-  report them.
-- At completion, inspect the owned tree; delete disposable copies, probes,
-  generated files, and logs; promote reusable findings; document every retained
-  artifact and its purpose.
-- Empty directories never represent configuration or ownership. Do not retain
-  `.gitkeep`, placeholder READMEs, or header-only data solely to preserve one.
-  Represent required declarations through meaningful tracked configuration or
-  producer/consumer dependencies and verify fresh-checkout behavior.
-- After refactoring, never leave a directory containing only one file. Move
-  that file into the appropriate parent or existing responsibility directory
-  and retire the single-file directory.
+- A file-working task owns `work/<exact task title>/` and may manage that tree
+  without separate destructive-action approval. It may read another task's tree
+  but copies anything it needs into its own tree before changing it.
+- Agents do not use the operating-system `TEMP`/`TMP` directory as a workspace
+  or artifact root. Set `NA228_TASK_WORK_ROOT` to the acting task's
+  `work/<exact task title>/` before maintained commands that create temporary
+  files.
+- The permanent-test runner uses `work/General/` as its technical default when
+  `NA228_TASK_WORK_ROOT` is unset. This path has no special chat-role meaning.
+- Keep inputs, experiments, intermediates, outputs, builds, runtime artifacts,
+  and logs in clearly named subdirectories. Do not use top-level `work/temp/`.
+- Copy changing external inputs such as selected savestates or screenshots into
+  `work/<task>/inputs/` with provenance before relying on them. Keep baselines,
+  modified copies, analysis outputs, and builds separate.
+- After moving or deleting files, inspect the affected directories on disk and
+  remove empty directories, including ignored or untracked directories Git does
+  not show.
+- Do not create or preserve a directory containing only one file unless it has a
+  clear structural, ownership, namespace, tooling, or future-extension purpose.
+  Otherwise move the file to the nearest appropriate existing directory and
+  remove the unnecessary folder.
+- Before completion, remove disposable task artifacts and promote reusable
+  findings or tools to their canonical owner. Document every intentionally
+  retained task artifact and its future use.
 
-## Logs and scripts
+## Scripts, dependencies, and logs
 
-- User-facing utilities are written in PowerShell, not Python. Python may be
-  used internally only behind a PowerShell entrypoint.
-- "The PowerShell profile" means the shared profile at
-  `$env:USERPROFILE\Documents\PowerShell\profile.ps1`; never hardcode the
-  user's account name when locating it.
-- Unless the user explicitly requests embedded profile code, profile changes
-  are limited to thin dot-source imports and aliases that expose project-owned
-  entrypoint scripts. Keep all functions and reusable implementation under the
-  project's maintained `scripts/` tree.
-- Keep root `na228.ps1` a short user-facing command router. Build, launch,
-  watcher, release, validation, and other implementation logic belongs under
-  the maintained `scripts/` tree; the root entrypoint only parses and
-  dispatches modes.
-- Disposable and user-facing development tools contain only validation
-  necessary to perform the requested function. Never add expected-state,
-  identity, guard, backup, recovery, restart, or other workflow-blocking checks
-  without explicit user authorization. Every documented repeated operation
-  must accept state produced by the tool's own prior successful operation. If
-  unsolicited validation blocks the workflow, remove or simplify it at that
-  boundary; do not repair it with an exception, allowlist, or another safeguard
-  layer. Keep agent/test safety contracts separate from user workflows.
-- Use purpose-specific subfolders under `@logs/`, workstream records under
-  `@workstream_logs/<exact task title>/`, and worker records under the task's
-  `logs/`; never write directly in shared log roots.
-- Logs are disposable execution records. Before task completion, promote
-  confirmed reusable findings and useful negative results into knowledge or
-  canonical data, then delete disposable logs and empty directories. Follow
-  `docs/LOGGING.md`.
-- Maintained project scripts live by responsibility under `scripts/lib/`,
-  `scripts/na228/`, `scripts/project/`, or
-  `scripts/research/`. Never create `scripts/archive/`; use Git history and the
-  retirement index in `scripts/README.md`. Reusable PCSX2, Ghidra, and media
-  infrastructure lives under `@workshop/scripts/`.
-- Reusable or potentially helpful scripts never remain under `work/`; promote
-  them immediately. Task-local probes may remain only while disposable.
-- Unify third-party package use through maintained central dependency sets.
-  Ordinary package-bearing Python callers use
-  `scripts/lib/run_python.ps1`; their requirements belong only in
-  `packages.json`. The self-contained release builder's
-  pinned lockfile is its release-only central set, not a general runtime.
-  On Windows, never execute a `.py` path directly through PowerShell or the
-  shell: that can invoke the user's file association and open an application
-  chooser or editor. Invoke Python through the maintained runtime wrapper or
-  an explicitly resolved Python executable.
-  Never select an interpreter, probe packages, install dependencies, or add
-  fallback logic separately in a workstream, task-local helper, or maintained
-  script. Extend the applicable central set and resolver when a shared package
-  is added. Successful runtime selection is silent; report only a genuine
-  failure to satisfy the requested set.
+- User-facing utilities are PowerShell. Python may be used internally behind a
+  maintained PowerShell entrypoint.
+- Keep root `na228.ps1` a short parser/router; substantive implementation belongs
+  under `scripts/` by responsibility. Shared PCSX2, media, and Ghidra tooling
+  belongs in Workshop.
+- When a task changes the shared PowerShell profile, locate it through
+  `$env:USERPROFILE`; keep the profile change to a thin alias or dot-source and
+  keep reusable implementation in the project `scripts/` tree.
+- Optional reusable analysis/research tools belong in an existing tooling area;
+  task-local scratch tools remain under the task and are deleted when no longer
+  useful. See the implementation boundary in [`interaction.md`](interaction.md).
+- Third-party packages use the affected component's existing central dependency
+  set and runtime resolver. Do not select interpreters, install packages, or add
+  fallback discovery independently in a task or script.
+- On Windows, do not execute a `.py` path directly through the shell. Use the
+  maintained Python wrapper or an explicitly resolved compatible interpreter.
+- User-facing repeated operations must accept state produced by their own prior
+  successful run. Do not add workflow-blocking identity, expected-state, guard,
+  backup, recovery, or restart validation unless it is explicitly authorized by
+  the applicable validation plan.
+- Write logs only to the configured purpose-specific log/work roots. Promote
+  reusable findings before deleting disposable logs; follow
+  [`../LOGGING.md`](../LOGGING.md).
 - Prefer cohesive responsibility-based files. Split independent concerns when
-  that improves navigation, testing, or concurrency; do not split solely by
+  it improves ownership, navigation, testing, or concurrency, not merely by
   size.
-- Prefer reusable verifiable commands/scripts over long one-off command chains.
-- Treat `@tools/old/` as untrusted; inspect a chosen tool before execution.
-- Ask before destructive actions, mass rewrites, or modifying originals,
-  except for actions contained within the acting task's owned
-  `work/<exact task title>/` directory.
+- Treat `@tools/old/` as untrusted historical material; inspect a chosen tool
+  before execution. Deliberately retained shared tools under `@tools/` are not
+  task-temporary artifacts.
 
 ## Documentation layout
 
-- `docs/` contains repository context, plans, hypotheses, policies, and release
-  documentation.
-- Each feature has exactly one `na228_builder/features/<feature>/README.md`;
-  feature-module details are sections there, not nested or sibling feature
-  Markdown files. Reusable engine documentation belongs in the corresponding
-  `na228_builder/modules/<module>/README.md`.
-- When retiring a script, promote reusable logic/knowledge and record the old
-  path, recovery commit, retirement reason, and maintained replacement in the
-  retirement index in `scripts/README.md`. Recover historical code only into
-  task-owned temporary space for inspection; never execute it blindly.
+Give each document one job and canonical authority:
+
+- root `AGENTS.md` owns universal rules and scoped-document routing;
+- routed policies own scoped normative rules;
+- runbooks own exact operational procedures;
+- `docs/AGENT_COMMANDS.md` owns commands interpreted by agents;
+- the implementing repository or component owns user-facing CLI help;
+- component docs own current architecture, contracts, inputs, and outputs;
+- knowledge/research docs own evidence, findings, hypotheses, and negative
+  results;
+- historical docs contain only non-current material with concrete continuing
+  value.
+
+Link to the canonical owner instead of copying its content. Substantial
+supporting documentation belongs under the repository root `docs/` hierarchy.
+- A code area may retain one concise local `README.md` when nearby orientation
+  or a component contract is useful. Link to substantial documentation instead
+  of accumulating multiple Markdown files beside code.
+- The builder currently requires one root `README.md` in each feature for
+  structural discovery. That requirement does not make the file the mandatory
+  home for all feature/module documentation.
+- Current operational documentation describes the current system. Delete
+  superseded policy, stale incident explanations, and obsolete retirement notes
+  when they no longer provide concrete current value; Git preserves history.

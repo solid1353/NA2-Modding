@@ -1,273 +1,119 @@
 # Interaction and task policy
 
-## Questions, discussion, and authorization
+**Applies when:** discussing work, deciding authorization, sequencing tasks,
+requesting user inputs, troubleshooting an observable result, or reporting
+completion.
 
-- Feasibility, possibility, preference, and design questions such as `can we`,
-  `should we`, or `would this be better` request an answer only. Read-only
-  inspection needed for accuracy is allowed. Execute only after an explicit
-  action request such as `do it`, `implement it`, or `change it`.
-- A clearly agent-directed request such as `can you add` authorizes that stated
-  action only; never infer extra work.
-- Before introducing any concept, script, mechanism, dependency, workflow,
-  validation, safeguard, state, prerequisite, or other element not explicitly
-  requested, stop before planning or mutation. Explain in plain language what
-  it is, what it would change, and why it is needed for the requested outcome,
-  then await the user's explicit answer. Define every unfamiliar or
-  project-specific term; jargon never substitutes for an explanation. Do not
-  treat technical necessity, convention, convenience, or an approved parent
-  outcome as authorization for the new element.
-- A command, recipe, watch target, profile, or other selector presented for a
-  requested scope must actually cover that full scope. Never substitute a
-  narrower adapter, screen, case, or example target unless the user requested
-  that restriction. If only narrower selectors exist, state the limitation
-  instead of presenting one as the full command.
-- A question about current agent behavior asks for an exact answer, not a
-  behavioral change. Angry, skeptical, or rhetorical wording does not
-  authorize starting, stopping, exposing, hiding, relaunching, or otherwise
-  changing the operation. Answer in commentary and continue approved work
-  unchanged unless the same message explicitly orders a change.
-- Answer every small, self-contained clarification directly, including during
-  an ongoing task. Do not precede it with phase, purpose, changes, effort,
-  status, plan, or tool-narration ceremony, and do not perform inspection
-  solely to generate that ceremony. Use status or effort announcements only
-  when substantive inspection or execution is beginning or continuing, or
-  when the user explicitly asks for them.
-- When an answer is wrong, give the corrected answer immediately. Explain why
-  the previous answer was wrong only if the user asks why.
-- During explicit discussion, design, planning, or brainstorming mode, every
-  later message updates the proposed specification only, even when phrased as
-  an imperative. Only the user can exit that mode through explicit execution
-  authorization or applicable plan approval.
-- Choosing an implementation, stating that something should or will be
-  implemented, or using implementation verbs while that mode is active remains
-  a design decision. Execution begins only after the user explicitly exits the
-  mode and directs execution now, or gives applicable plan approval. Before
-  that transition, do not announce execution effort, create an execution plan,
-  invoke implementation tools, or mutate anything.
-- A request to summarize discussion or design requests a faithful compression
-  of the agreed specification, not a new revision. Preserve every agreed point
-  in substance and do not add requirements, assumptions, safeguards,
-  constraints, rationales, implementation-status disclaimers, or current-
-  inactivity chatter that the user did not request. Condensing wording never
-  permits dropping a requirement.
-- A rejection or correction changes only the specific content the user names.
-  Remove or revise that content and preserve every unchanged sibling point;
-  never independently delete, weaken, merge, or reinterpret other agreed
-  design content. If the remaining design appears inconsistent, identify the
-  exact conflict and ask instead of silently rewriting it.
-- Never guess desired action, authorization, cleanup, rollback, or final state.
-  Never classify work as mistaken, obsolete, unwanted, disposable, canonical,
-  or approved unless the user said so or verified evidence establishes it.
-- Authorization is bound to the exact requested action, object, repository or
-  location, and existing-state boundary. `Just` or `only` excludes every
-  unmentioned action. A request to change a path, reference, configuration, or
-  future behavior does not by itself authorize migrating, renaming, or
-  renumbering existing contents or modifying another repository or consumer.
-  Explain each additional mutation separately and await explicit approval
-  before including it in an execution plan or attempting it.
-- When explaining or reporting authorization, classify each action separately:
-  what the user authorized, what was only proposed, what was attempted, what
-  was reverted, and what persisted. Never transfer one action's authorization
-  status to another or describe authorized sibling work as unauthorized.
-- A policy clarification changes the policy only; it does not authorize
-  retroactive filesystem or implementation changes.
+## Discussion and action
 
-## Selected-task workflow
+- Questions about feasibility, preference, design, or current behavior request
+  an answer, not mutation, unless the same message contains an explicit action
+  request.
+- During explicit discussion, design, planning, or brainstorming, later messages
+  refine the proposed result. They do not authorize implementation until the
+  applicable approval boundary is reached.
+- A user correction changes the named point only. Preserve unaffected approved
+  work and continue it unless the user explicitly stops, pauses, cancels, or
+  replaces it.
+- A discussion summary preserves every accepted point, integrates corrections,
+  excludes rejected wording, and adds nothing new.
 
-- A `TASKS.md` entry is selected only when the user explicitly chooses or
-  starts that exact entry. Topical overlap, inspection depth, task mentions,
-  questions, status checks, coordination, and small direct changes do not
-  select it.
-- Verify that a selected task belongs to the current workstream before
-  inspection, planning, or execution. Follow the coordination policy when it
-  belongs elsewhere.
-- Read-only inspection may begin before plan approval. For a non-brief
-  inspection, start with:
+## Work announcement and user inputs
+
+Before starting changes, state:
 
 ```text
-Phase: read-only inspection
-Purpose: gather enough evidence for the plan
-Changes: none
-Recommended effort: <level>
-Next response: short plan + effort recommendation + needed user inputs + approval gate
+Changes: <what will be changed>
+Needed from you: <required input or nothing>
 ```
 
-- Assess effort from the current task's reasoning depth, uncertainty,
-  reverse-engineering breadth, coupling, consequence of error, reversibility,
-  and validation burden. Recommend the lowest reliable level and name the
-  decisive factors. Reassess only when those factors materially change.
-- Every selected-task plan includes `Recommended effort: <level>`,
-  `Needed from you: <items>` (or `nothing`), and ends with
-  **Awaiting plan approval**. Request ideal decision-quality inputs and exact
-  matching conditions; use fallbacks only when necessary and state limitations.
-- `approved`, `qwe`, or the same physical keys under another keyboard layout
-  authorizes the plan, including inside a longer message.
-- Record a result as user-verified, user-accepted, or equivalent only when the
-  user explicitly confirms that exact result. Plan approval authorizes work but
-  does not accept its result. Agent testing, runtime evidence, automated or
-  visual comparison, implementation, commit/push, silence, moving to another
-  case, or an unrelated continuation command never implies user acceptance.
-  Keep agent validation and pending user acceptance as separate statuses.
-- Positive feedback about candidate evidence confirms only what the user
-  explicitly praised. It does not accept an integrated result, satisfy a
-  required user runtime test, or authorize promotion, closure, or cleanup
-  unless the user explicitly confirms that exact boundary.
-- If the user orders A, then a stop for testing, review, or acceptance, then B,
-  complete A and stop. Requests to finish, batch changes, or use one commit do
-  not permit B. Continue to B only when the user explicitly says to skip the
-  required stop.
-- Execute freely within the approved scope. If the task becomes unclear or the
-  whole approach is wrong, stop and clarify; a replacement plan needs approval.
-- Treat the user's explicit observations and facts already established by
-  evidence as binding for the current work. Do not investigate them again
-  unless specific new evidence directly contradicts them.
-- When requested work concerns a state that is currently visible, open, or
-  running, inspect that exact current state through an authorized read-only
-  method before analyzing retained artifacts or making a change. Historical
-  screenshots, logs, disassembly, and prior observations may provide context
-  but never substitute for the current state. If it cannot be inspected, state
-  the exact missing access or input instead of inferring what is present.
-- When an attempted change has no effect after the execution path is proven,
-  trace forward from the last proven point to the first unproven value or
-  consumer. Do not reopen builds, tools, hooks, inputs, or other earlier layers
-  merely because a later adjustment failed.
-- Before claiming that a change affected current observable behavior or asking
-  the user to verify it, compare the post-change state with the pre-change
-  state and confirm an actual change in the requested target. A configured
-  value, compiled output, applied write, or intended code path is not an
-  observable result. If the target did not change, report the attempt as
-  ineffective and continue to the first unproven consumer; do not stop for
-  review or send a final response.
-- After two ineffective attempts, or after context compression during active
-  work, restate only the requested result, proven facts, remaining unknown, and
-  next narrow action before further mutation. Continue within that boundary;
-  do not expand the problem or revive rejected theories.
-- Increased reasoning effort deepens the remaining narrow question. It never
-  authorizes broader scope or renewed investigation of established facts.
-- During approved work, questions, corrections, objections, status requests,
-  and rhetorical questions are not stop signals. Answer in commentary and
-  continue immediately; a question alone never permits a final response. A
-  final response while work remains actionable is allowed only for explicit
-  stop/pause/wait, missing required input, unsafe or materially unclear work,
-  an unresolved dependency with nothing else in scope, or `zxc`.
-- A user-observed failure in a newly implemented authorized workflow remains
-  actionable remediation of that workflow. Concurrent work on another
-  approved transaction or different files does not make the defect separate:
-  finish any current atomic transaction, then correct the failure before a
-  final response unless the user stops or the remediation is materially
-  unclear.
-- A correction, prohibition, or limiting instruction applies only to the named
-  action. `Do not <action>` forbids that action; never expand it into a stop of
-  the parent task or other approved work. Isolate or omit the prohibited action
-  and continue every other actionable part immediately unless the user
-  explicitly stops, pauses, waits, or replaces the parent task.
-- During approved work, acknowledging a correction, prohibition, or limitation
-  is never a handoff boundary and must not be a final response. Acknowledge it
-  in commentary, then take the next permissible action in the same turn. Stop
-  only when the instruction leaves no actionable approved work and a normal
-  blocker or explicit stop applies.
-- A correction to a result's status, classification, label, wording, or
-  recorded state changes only that fact. It is not a stop, completion, review,
-  or handoff boundary. Correct it in commentary and immediately continue any
-  actionable approved work; never use a final response for that correction
-  while the parent work remains actionable.
-- An additive instruction such as `also`, `and`, or `in addition` extends the
-  current requested work. It does not replace, cancel, or defer unfinished
-  parent work; complete both unless the user explicitly says `instead`, `only`,
-  or otherwise replaces the earlier action.
-- When asked for an already-produced result or evidence, deliver the actual
-  requested content immediately in commentary at the next safe boundary before
-  any unrelated work. Do not substitute an acknowledgment, description, path,
-  link, tool output, or statement that the result exists.
-- When completed, refresh Git, commit/push the intended work, and report the
-  result in a final factual handoff before ending. The handoff must make the
-  requested outcome, validation, commit, and push state clear enough that the
-  user can tell whether the job finished. Intermediate commentary, a status
-  promise, or a later response that only answers a correction does not satisfy
-  this obligation. If a correction or unrelated-state clarification arrives
-  after implementation or Git delivery but before the handoff, answer it and
-  then provide the still-owed completion report without new mutation. Do not
-  offer task removal. Completion ends selected-task state even if the entry
-  remains in `TASKS.md`.
+If `Needed from you` is not `nothing`, do not start. Ask early for any
+savestate, screenshot, dump, file, reproduction, access, decision, or other
+user input that is required or would noticeably improve efficiency or quality.
+The ability to continue through a substantially slower or more speculative
+route is not a reason to avoid asking. Resume automatically after the input is
+provided.
 
-## Completed selected-task report
+## Task sequencing
 
-For completed `TASKS.md` work, report files read, files created or modified,
-whether originals remained untouched, scripts and commands used, relevant
-sizes, and uncertainties. This format does not apply to small direct changes.
+- The user may add any number of tasks. Keep them in order and work through them
+  in that order.
+- A new task does not interrupt current work unless the user says to do it
+  immediately. After the immediate item, resume the interrupted work.
+- If a later item is serious, finish already-authorized small items in order and
+  queue the serious item for design unless the user makes it immediate.
 
-## Effort at handoff
+## Small and serious work
 
-- An incomplete selected-task handoff with actionable agent work includes a
-  standalone `Recommended effort: <level>` line.
-- Omit it when waiting solely for user review/action or an external dependency.
-  If the user sends `eff` then, reply
-  `Recommended effort: none while waiting`.
-- Questions and small direct changes outside selected-task state do not use
-  task boilerplate unless the user explicitly sends `eff`.
+- Small, direct work does not require a separate design phase.
+- Work is serious when it requires decisions about architecture, user-visible
+  behavior, compatibility, persistent contracts, or coordinated changes across
+  multiple components.
+- Design serious work through normal responsive dialogue. Read-only inspection
+  is allowed; canonical implementation changes are not.
+- Natural-language agreement such as `yes`, `good`, or `do that` approves the
+  current design point only. Once settled, present one concise implementation
+  snapshot containing the intended outcome, scope, important architecture or
+  behavior, proposed persistent mechanisms, and planned validation.
+- Begin implementation only after `approved`, `qwe`, or its same-key
+  keyboard-layout equivalent. If implementation requires a material change to
+  the snapshot, present that changed part and wait for the same approval.
 
-## Standing commands
+## Implementation boundaries
 
-- `dnf` means do not forward, relay, signal, quote, or summarize the attached
-  message to another task. It grants no other authority.
-- `ag` means reread live `AGENTS.md` completely and apply it immediately.
-- `q:` means the user queued the message before delivery. Once received, handle
-  its content normally. The prefix does not direct the agent to delay, reorder,
-  supplement, merge, or preserve the message in any particular changeset, and
-  it does not alter scope, priority, approval, or replacement semantics.
-- `con` resumes current work with scope, effort, progress, and approval intact.
-- `eff` asks for the current recommended effort and does not change it.
-- `sin` means immediately report a rules failure to `Policeman`. When `sin`
-  appears as a direct command token, any following number, label, punctuation,
-  or complaint text belongs to the report and cannot cancel or reinterpret
-  the command. Send every distinct report in the same turn. Reporting does not
-  change design, approval, execution, or stop state.
-- `report` means a factual textual account responsive to the user's wording.
-- `sw` resumes after the user stopped only to switch to the recommended effort;
-  it preserves prior approval and does not approve an unapproved plan.
-- `ss` means savestate. `ss<number>` refers to that numbered savestate slot in
-  the user's protected PCSX2, for example `ss7`. The shorthand identifies the
-  input; the surrounding request determines what action, if any, is authorized.
-- `zxc` invokes the graceful-stop procedure below.
-- `task done` accepts the uniquely identifiable current task as complete and
-  orders its owning workstream coordinator to remove the exact entry. When the
-  command is given in that coordinator, it performs the edit itself. Never
-  route task-entry removal to the task named `Task coordinator`; contact that
-  task afterward only when the resulting subsection change requires chat
-  actualization. Ask when the task is not uniquely identifiable.
+- Choose ordinary code-level implementation details inside the approved outcome
+  and scope.
+- Ask before expanding the requested outcome or scope, changing unrequested
+  user-visible behavior, or introducing a new long-lived project mechanism or
+  project-wide contract.
+- A new mandatory workflow, pipeline stage, public wrapper/command, canonical
+  generator output, manifest, schema, configuration contract, required
+  persistent state, or production/build/CI/runtime integration requires
+  approval.
+- Dependencies use the existing dependency mechanism of the affected component
+  and need no separate approval. A new package-management mechanism does.
+- A command, recipe, selector, profile, or other interface presented for a
+  requested scope must actually cover that scope. State a limitation instead of
+  presenting a narrower case as the full solution.
 
-## `zxc` graceful stop
+## Continuation and stopping
 
-- Stop at the next safe boundary without beginning new substantive work. Do
-  not interrupt an atomic file, Git, ISO-promotion, or similar operation
-  unsafely.
-- Create a dated
-  `docs/workstreams/<workstream>/<date>-<task-title>-resume.md` in the owning
-  workstream's documentation directory, recording the objective, task title,
-  phase, plan, effort, approval, completed/remaining steps, decisions,
-  commands/results/tests, Git state and owned changes, files, retained work
-  artifacts, processes/resources, required inputs, uncertainties, and exact
-  first resume action.
-- Preserve the minimum resumption artifacts and release exclusive resources
-  when possible. Disable pending wakeups unless monitoring should continue. Do
-  not perform normal completion cleanup.
-- Do not leave task-owned canonical implementation changes hanging in the
-  shared worktree. Before completing the stop, either stash only the owned
-  changes and record the recoverable stash identity and affected paths in the
-  handoff, or document the changes and reconstruction steps sufficiently for
-  resumption and revert only the owned changes. Verify both recoverability and
-  the resulting Git state. Never stash or revert unrelated changes; if owned
-  changes cannot be isolated safely, report the exact conflict and do not claim
-  the graceful stop is complete.
-- Commit and push only the handoff; never commit incomplete implementation
-  merely because `zxc` was issued.
-- When resuming from a recorded stash, restore only the owned changes and
-  verify the exact recovered diff, then immediately drop that exact stash and
-  verify it is no longer listed. If restoration fails or conflicts, retain the
-  stash and report the exact blocker; never delete the recovery copy before
-  successful verification.
-- On resume, validate the handoff against live rules, Git, work artifacts, and
-  external resources. Delete, commit, and push the handoff before continuing
-  once resumption is possible. Preserve prior approval unless drift invalidates
-  the approach. A graceful-stop report identifies the handoff, restart safety,
-  and any remaining live operation or hazard.
+- Comments, questions, demands, status requests, corrections, and additional
+  tasks do not by themselves stop authorized work. Respond as needed and
+  continue automatically.
+- `Immediately` changes priority; it does not cancel or abandon the interrupted
+  implementation.
+- Stop only for an explicit stop/pause/cancel, required user input, or a required
+  user decision such as a material change to an approved serious-work design.
+
+## Evidence and troubleshooting
+
+- Treat explicit user observations and established evidence as current facts
+  unless specific new evidence contradicts them.
+- When the task concerns a state currently visible or running, inspect that
+  state or ask for the exact missing input; historical artifacts are context,
+  not a substitute.
+- If a proven execution path produces no requested observable change, trace
+  forward from the last proven point to the first unproven consumer rather than
+  restarting earlier layers or reviving rejected theories.
+- Do not claim observable success from configuration, compilation, an applied
+  write, or an intended code path alone.
+
+## Completion report
+
+Before reporting completion, review the actual final diff and validation
+results. For serious work, report:
+
+- the achieved outcome and how it matches the approved snapshot;
+- deviations, omitted items, or additional changes;
+- important implementation changes grouped by purpose;
+- user-visible behavior changes;
+- every new persistent mechanism or contract, or explicitly that none were
+  introduced;
+- exact validation and its result;
+- remaining limitations, uncertainty, risks, or unverified areas;
+- commit and push state.
+
+Use enough concrete detail that the user can understand the result without
+reviewing the source. Do not add empty template sections or repeat information
+merely to satisfy a format.

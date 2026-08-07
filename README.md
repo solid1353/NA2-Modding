@@ -2,8 +2,8 @@
 
 A scripted modding and reverse-engineering workspace for the PlayStation 2
 project *Narutimate Accel v2.28*, based on *Naruto Shippuuden: Narutimate Accel
-2*. The project targets PCSX2 and the original game formats; it is not a native
-PC port.
+2*. The project targets PCSX2 and original game formats; it is not a native PC
+port.
 
 | | |
 |---|---|
@@ -14,42 +14,49 @@ PC port.
 
 ## Project scope
 
-The project combines four related areas:
+The project combines:
 
-- English text and UI-texture translation through generated, validated patch
-  tables and fixed-size source-derived official donor-container imports.
+- English text and UI-texture localization through generated, validated patch
+  data and source-derived official donor content.
 - GF4/GF4C font-resource and renderer reverse engineering.
-- Gameplay and default-setting changes through named binary-patcher modules, with PNACH retained for stable resident-ELF/runtime behavior and carefully bounded temporary hypotheses. On-demand overlays such as `BTL.BIN` and `ETC.BIN` are tested through file patches and ISO rebuilds, not unguarded fixed-address cheats.
-- Scripted profile composition, ISO verification, on-demand PNACH CRC aliasing,
-  annotated reproducible checkpoints, and GitHub releases.
+- Gameplay, rendering, and default-setting changes through reproducible
+  file-backed patch modules, with PNACH reserved for stable resident/runtime
+  behavior and bounded hypotheses.
+- Hash-pinned profile composition, verified ISO assembly, PCSX2-based runtime
+  validation, and self-contained release packaging.
 
-Work is organized as reproducible, versioned artifacts. The detailed lifecycle
-and directory boundaries are defined in the agent instructions and project
-context rather than repeated here.
+Shared source-game, PCSX2, media, input, savestate, and Ghidra tooling lives in
+the sibling `UN-Workshop` repository. Workshop owns its public command and
+interfaces; this repository owns NA2-specific configuration, composition,
+knowledge, tests, and release behavior.
 
 ## Documentation
 
-- [Agent instructions](AGENTS.md) define the non-negotiable workspace and safety
-  rules.
-- [Project context](docs/PROJECT_CONTEXT.md) records verified local state,
-  directory roles, and established workflows.
-- [Project paths](docs/PATHS.md) documents the single path manifest,
-  logical root notation, and migration procedure.
-- [Logging and retention](docs/LOGGING.md) defines bounded execution logs and
-  promotion of reusable findings.
-- [Knowledge index](docs/knowledge/README.md) preserves confirmed findings and
-  evidence that must outlive disposable logs.
-- [Tasks](TASKS.md) contains concrete active plans and queued work.
-- [Hypotheses](docs/HYPOTHESES.md) preserves rejected experiments and unresolved
-  reverse-engineering leads.
-- [Release process](docs/RELEASE_PROCESS.md) defines the self-contained Windows
-  EXE, its validation gates, and GitHub publication workflow.
+- [Agent entrypoint](AGENTS.md): universal rules and scoped-document routing.
+- [Agent commands](docs/AGENT_COMMANDS.md): commands interpreted by project
+  agents.
+- Policies:
+  [interaction](docs/policies/interaction.md),
+  [repository](docs/policies/repository.md),
+  [coordination](docs/policies/coordination.md),
+  [validation](docs/policies/testing.md),
+  [modding/source](docs/policies/modding.md), and
+  [research/knowledge](docs/policies/research.md).
+- Runbooks:
+  [runtime testing](docs/runbooks/runtime-testing.md) and
+  [source extraction](docs/runbooks/source-extraction.md).
+- [Path configuration](docs/PATHS.md) and
+  [logging/retention](docs/LOGGING.md).
+- [Knowledge index](docs/knowledge/README.md) for durable technical findings.
+- [Tasks](TASKS.md), the user's selective coordination and decision tracker.
+- [E2E infrastructure](e2e/README.md) and
+  [agent E2E review workflow](e2e/AGENT_GUIDE.md).
+- [Release process](docs/RELEASE_PROCESS.md).
 
-Component-specific documentation stays with its component, including the
-[translation importer](na228_builder/modules/translation_importer/README.md) and the
-[binary patcher module](na228_builder/modules/binary_patcher/README.md), plus the
-[string patcher module](na228_builder/modules/string_patcher/README.md) and the
-[texture patcher module](na228_builder/modules/texture_patcher/README.md).
+Component contracts remain near their implementation when proximity matters,
+including the [builder](na228_builder/README.md) and reusable module READMEs.
+Substantial supporting documentation belongs under `docs/` and is linked from
+those local entrypoints.
 
 Install the pinned builder dependency before building the current profile:
 

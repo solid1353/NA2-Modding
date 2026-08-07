@@ -176,7 +176,7 @@ component separately.
    evidence that points to an artifact, function, address, string, or format.
    Do not begin with an instruction to disassemble everything.
 2. **Reuse existing knowledge.** Check `docs/knowledge/`, module-local evidence,
-   `docs/HYPOTHESES.md`, current patch definitions, preserved exports, and
+   topic-local hypotheses, current patch definitions, preserved exports, and
    `@analysis/disassembly/<target>/` before creating another analysis workspace.
 3. **Identify the exact input.** Record the configured-root path, size, content
    hash, signature/format, and whether the file is an original, extraction,
@@ -192,7 +192,7 @@ component separately.
 6. **Create working material outside the source root.** Keep maintained shared
    analysis under `@analysis/disassembly/<target>/`. Put baseline copies and
    experiments in `@work/<target>/base/`, `@work/<target>/mod/`, or a
-   task-specific `@work/temp/` folder. Never let Ghidra locks, caches, exports,
+   task-specific `work/<task>/temp/` folder. Never let Ghidra locks, caches, exports,
    probes, or scripts write under `@source/`.
 7. **Preserve the minimum evidence.** Record tool/version, import settings,
    function or range boundaries, callers/callees or references used, byte and
@@ -207,8 +207,9 @@ component separately.
    proven load-state/signature guard exists.
 10. **Promote the result.** Put confirmed reusable behavior and mappings in
     `docs/knowledge/` or module-local evidence; put unresolved interpretations
-    in `docs/HYPOTHESES.md`. Remove disposable exports and experiments after
-    their durable information is preserved.
+    in a topic-local hypothesis document beside the relevant subsystem. Remove
+    disposable exports and experiments after their durable information is
+    preserved.
 
 ## Existing reusable analysis
 

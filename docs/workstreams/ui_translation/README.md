@@ -1,6 +1,6 @@
 # UI Translation
 
-Canonical documentation landing page for the `UI Translation` workstream.
+Durable context for the `UI Translation` workstream.
 
 ## Scope
 
@@ -10,7 +10,7 @@ the official NUN5 reference. Text content and font rendering, measurement,
 fitting, and spacing belong to their respective workstreams. Confirmed reusable
 findings remain in the shared knowledge base rather than being duplicated here.
 
-## Documents
+## References
 
 - [Status, architecture, and accepted outcomes](context.md)
 - [Battle UI knowledge](../../knowledge/localization/ui/battle.md)
@@ -20,7 +20,7 @@ findings remain in the shared knowledge base rather than being duplicated here.
 - [Stage-select UI knowledge](../../knowledge/localization/ui/stage_select.md)
 - [Victory UI knowledge](../../knowledge/localization/ui/victory.md)
 
-## Workstream policy
+## Durable working rules
 
 - Broad UI analysis is complete. Proceed from the existing findings and
   repeat broad analysis only when new evidence proves them insufficient or

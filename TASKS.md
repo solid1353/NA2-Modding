@@ -16,6 +16,14 @@
 - Investigate cross-platform development/deployment possibilities.
 - Global cleanup - preserve/promote what is needed, delete the rest.
 
+### Docs
+- Review and reorganize the large localization, Font, UI, and other technical
+  documents; move substantial documentation under the root `docs/` hierarchy
+  where useful while keeping code directories uncluttered.
+- Migrate `docs/HYPOTHESES.md` item by item: promote confirmed findings, move
+  useful unresolved hypotheses beside their owning subsystem, delete obsolete
+  material, then remove the general file.
+
 ### Bugs
 - **UI Translation:** long character names.
 - **String Translation:** save message.
@@ -41,6 +49,9 @@
 - Create an upscaled texture pack for pcsx2 (currently blocked by UI translation).
 
 ### Testing
+- Decouple E2E execution from permanent/unit tests and split the CLI: keep
+  `na228 test` for permanent/unit tests; add global `na228 e2e [-s]`; move E2E
+  create/rename/delete under `na228 e2e`.
 - Isolate and promote runtime-proven patches.
 - Test translation thoroughout the whole game.
 

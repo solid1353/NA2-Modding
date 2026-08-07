@@ -49,8 +49,6 @@ one cannot silently invalidate the other.
 - The secondary metric decoder C cutover retained an `approved_for_test`
   boundary in the old record; verify current live status before selecting new
   work from it.
-- The current `TASKS.md` Bugs list has no Font-labelled entry. This is context,
-  not task selection or authorization.
 
 ## Architecture
 

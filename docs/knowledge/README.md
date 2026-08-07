@@ -1,6 +1,10 @@
 # Durable Project Knowledge
 
-This directory is the long-term record for established reverse-engineering and game-behavior knowledge that would otherwise be lost when operational logs are cleaned. It is separate from `docs/HYPOTHESES.md`, which remains the place for unverified ideas, speculative addresses, and experiments that have not produced a stable conclusion.
+This directory is the long-term record for established reverse-engineering
+and game-behavior knowledge that would otherwise be lost when operational
+logs are cleaned. New unresolved hypotheses belong in topic-local documents
+beside the relevant subsystem or research area; the legacy
+`docs/HYPOTHESES.md` is frozen for later migration.
 
 ## What belongs here
 

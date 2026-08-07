@@ -82,3 +82,31 @@ individual groups. On 2026-07-24 the retained Current,
 Previous, and Candidate images resolved respectively as `SLOP-NA228`,
 `SLUS-NA228`, and `SLPS-22228`, all with CRC `6D94D520`; these identities are
 derived state rather than hardcoded workflow configuration.
+
+## Serial-wide PCSX2 configuration
+
+The canonical NA2.28 PCSX2 files are
+`@pcsx2_cheats/SLOP-NA228.pnach` and
+`@pcsx2_game_settings/SLOP-NA228.ini`. PCSX2 discovers both recursively.
+Ordinary GameSettings sections apply to every CRC; a
+`[CRC.<8-hex-crc>.<section>]` section overrides one CRC. A named PNACH group
+applies to every CRC unless it declares
+`crc = <8-hex-crc>[,<8-hex-crc>...]`.
+
+The serial-wide memory-card base is `NA v2.28.ps2`; configured launches select
+the catalog-derived build card without rewriting GameSettings. No CRC-named
+alias files are generated for NA2.28.
+
+## PCSX2 identity log pattern
+
+The clean-source historical `emulog.txt` identity line is:
+
+```text
+ELF Loading: cdrom0:\SLPS_258.37;1, Game CRC = 870F8722, EntryPoint = 0x00100008
+```
+
+After the product identity is assembled, the corresponding form is:
+
+```text
+ELF Loading: cdrom0:\SLOP_NA2.28;1, Game CRC = <crc>, EntryPoint = 0x00100008
+```

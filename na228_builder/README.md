@@ -17,9 +17,11 @@ orders, or separate module pins.
 ## Feature and module discovery
 
 Feature inputs live under the configured `@features/` root. A feature's folder
-name is its ID, it contains exactly one root `README.md`, and every direct child
-directory must match a registered engine under `na228_builder/modules/`.
-Enabling a feature enables all of its module directories.
+name is its ID, it contains the structurally required root `README.md`, and
+every direct child directory must match a registered engine under
+`na228_builder/modules/`. The root README is a concise feature contract and
+index; substantial feature documentation may live under the repository root
+`docs/` hierarchy. Enabling a feature enables all of its module directories.
 
 Feature rows define feature order. Within a feature, the engine registry uses
 this deterministic order:
@@ -84,8 +86,9 @@ Output identity is product configuration, not a feature or module.
 The former generic Testing feature was retired: feature IDs express ownership
 or a coherent capability, while patch `status` and `confidence` express
 maturity and certainty. Experimental patches belong to their owning feature;
-contextless leads belong in `docs/HYPOTHESES.md` until ownership and an
-executable hypothesis are clear.
+new unresolved leads belong in topic-local hypothesis documents beside the
+relevant subsystem. The legacy `docs/HYPOTHESES.md` is frozen for later
+migration.
 
 ## Build
 
@@ -94,12 +97,12 @@ python -m pip install -r na228_builder/requirements.txt
 & scripts/na228/build.ps1
 ```
 
-`na228 test` is the public integration gate. Its normal E2E Test pipeline
-performs module derivation, edit composition, payload linking, identity closure,
-insertion/replacement planning, verified ISO production, and concurrent suite
-replay. `na228 test -s` also prepares the same-sized internally shifted payload
-build for strict qualification. The two outputs have independent
-preflight receipts and build records; neither rotates Latest or Previous.
+The current `na228 test` implementation prepares the E2E Test build and
+couples permanent tests with emulator-driven replay. Validation policy treats
+those as independently selectable; `TASKS.md` tracks the command/execution-lane
+split. `-s` prepares the same-sized internally shifted payload build for strict
+qualification. The normal and shifted outputs have independent preflight
+receipts and build records; neither rotates Latest or Previous.
 
 Before staging, `na228_builder/build_preflight.py` hashes both canonical source
 ISOs, ISO-composing builder code and schemas, the exact selected profile

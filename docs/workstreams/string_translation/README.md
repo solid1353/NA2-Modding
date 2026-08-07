@@ -1,8 +1,8 @@
 # String translation
 
-Canonical documentation landing page for the `String translation` workstream.
+Durable context for the `String translation` workstream.
 
-## Workstream policy
+## Durable working rules
 
 - `mappings.tsv` is the single canonical translation table and the only
   translation source consumed by normal builds. Existing legacy mappings and
@@ -37,19 +37,7 @@ Canonical documentation landing page for the `String translation` workstream.
   belongs to `Font`; graphical UI assets and their placement belong to
   `UI Translation`.
 
-Global source, binary-safety, profile, testing, and cleanup rules remain in
-`AGENTS.md` and are not duplicated here.
-
 ## Documents
 
 - [Localization feature and mapping history](../../../na228_builder/features/localization/README.md)
 - [External string-payload architecture](../../knowledge/localization/external_string_payload.md)
-
-## Retired rebuild workflow
-
-The temporary mapping-ID diagnostic build, its stable candidate inventory, the
-cumulative replacement ISO, and their launcher selectors were retired after
-the evidence-backed rows were promoted to canonical `mappings.tsv`. Their last
-complete tracked implementation is recoverable from Git commit
-`4687470b31db4ff8a2a46071808a35f9282745cf`; recover it only into task-owned
-temporary space for historical inspection.

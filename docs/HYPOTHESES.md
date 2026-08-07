@@ -1,6 +1,13 @@
-# Hypotheses Archive
+# Legacy hypotheses (frozen)
 
-Use this file for old patch candidates, failed experiments, unverified addresses, and leads that should not clutter active PNACH/build files.
+This file is retained temporarily for the `Docs` workstream to inspect and
+migrate. Do not add new material. New unresolved hypotheses belong in
+topic-local hypothesis documents beside the relevant subsystem or research
+area.
+
+This file contains old patch candidates, failed experiments, unverified
+addresses, and leads retained for migration; it is not the destination for new
+material.
 
 ## GF4 Font Rendering Handoff
 

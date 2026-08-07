@@ -21,8 +21,6 @@ outside this workstream.
 - No UI comparison case is awaiting approval.
 - All cases listed under [Accepted outcomes](#accepted-outcomes)
   were explicitly accepted by the user.
-- The current `TASKS.md` Bugs list contains `UI Translation: long character
-  names.` This is context only and is not selected or authorized work.
 
 ## Canonical assets and tools
 
@@ -131,7 +129,7 @@ The explicit acceptance dates were:
 ## Deferred work
 
 Optional future research remains for `LOGO.CCS`, mapping the NUN5 upscale pack
-back to disc assets, and broader NUN6 comparison. None is selected work.
+back to disc assets, and broader NUN6 comparison.
 
 ## Retired artifacts
 

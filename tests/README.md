@@ -10,17 +10,16 @@ Tests live here and are grouped by the responsibility they verify:
   contracts.
 - `research/`: maintained research-tool tests.
 
-The public integration command is `na228 test`; it runs this permanent suite
-alongside the normal ISO build and concurrent suite replays. `na228 test -s`
-also performs shifted-layout qualification. Suite creation alone additionally
-requires two normal replays to produce identical PNGs. The internal permanent
-runner remains:
+The internal permanent/unit-test runner is:
 
 ```powershell
 .\tests\run.ps1
 ```
 
+The current `na228 test` CLI also starts this runner while performing E2E.
+Validation policy treats permanent tests and E2E as independent selections, and
+`TASKS.md` tracks the command/execution-lane split.
+
 `scripts/injection/inject_candidate.ps1` is an operational agent injection
-command, not a test. It remains under `scripts/` accordingly.
-Reusable PCSX2 and media-tool tests live with their implementations in the
-Workshop repository.
+command, not a test. It remains under `scripts/` accordingly. Reusable PCSX2 and
+media-tool tests live with their implementations in the Workshop repository.

@@ -1,83 +1,79 @@
 # Modding and source policy
 
+**Applies when:** changing profiles, builder features/modules, binary data,
+source media, PNACH, donor data, or encoded game text.
+
 ## Canonical builder contract
 
-- Before modifying profiles, features, modules, composition, or image assembly,
-  read `na228_builder/README.md` and the affected module/feature README. Those
-  files are canonical for the current schema and pipeline; do not recreate
-  retired schemas or assumptions from history.
+- Before modifying builder composition, read the relevant sections of
+  `na228_builder/README.md` and the affected component documentation. Do not
+  recreate retired schemas or assumptions from historical notes.
 - `na228_builder/profiles/default.tsv` is the normal reproducible build
   definition. Root `product.json` owns canonical inputs and output identity.
-  `bypass_check=1` is temporary local development only; accepted reproducible
-  checkpoints require the actual pin and `bypass_check=0`.
-- Only the user may change profile `bypass_check` values. Agents preserve every
-  existing value exactly and never toggle, reset, normalize, or otherwise edit
-  that field.
-- Use annotated Git tags for accepted reproducible checkpoints whose profile
-  pins, canonical inputs, and documentation agree.
-- Reusable engines/schemas/tools belong under `na228_builder/modules/`;
+- Only the user may change profile `bypass_check`; agents preserve every existing
+  value exactly. Accepted reproducible checkpoints use real pins with
+  `bypass_check=0` and may be marked by annotated Git tags.
+- Reusable engines, schemas, and tools belong under `na228_builder/modules/`;
   reproducible feature-owned inputs belong under the owning feature.
-- Feature module directories must contain actual executable inputs. Never keep
-  placeholder directories/files, identity manifests, `.gitkeep`, or header-only
-  tables solely to invoke or register an engine.
-- Every reusable module README states its downstream modules or that it invokes
-  none.
-- `payload_builder` is mandatory shared infrastructure. Feature engines
-  contribute fragments and symbols but do not choose final `PRG/228.BIN`
-  offsets, own global loader/memory integration, or construct the final file.
-- Translation checkpoints tag the complete project state; do not duplicate
-  mappings into snapshots. Accepted normal builds continue using
+- Feature module directories contain executable inputs, not placeholders,
+  identity manifests, `.gitkeep`, or header-only files used only to register an
+  engine.
+- Each reusable module README identifies its downstream module invocations or
+  states that it invokes none.
+- `payload_builder` owns final shared `PRG/228.BIN` layout and loader/memory
+  integration. Feature engines contribute fragments/symbols but do not choose
+  global offsets or construct the final file.
+- Localization normal builds use
   `na228_builder/features/localization/translation_importer/mappings.tsv` as the
   sole translation source of truth.
-- Preflight may skip composition only when its fingerprint covers every input
-  capable of changing the selected ISO. Any commit that adds, moves, or changes
-  a build-affecting input or dependency contract must update the canonical
-  preflight dependency closure and add an invalidation regression in the same
-  commit. Exclude a file only after proving it cannot affect composed ISO bytes;
-  never exclude a broad directory unless the exact selected resources from it
-  are fingerprinted separately.
+- Preflight dependency closure covers every input capable of changing the
+  selected ISO. Any build-affecting input/dependency change updates the closure
+  and its existing invalidation coverage in the same change.
 
 ## Binary and donor changes
 
-- Never edit binaries manually. All binary changes go through scripts.
-- Preserve file sizes unless explicitly instructed. Do not expand DATA.CVM,
-  ELF, BIN, AFS, CCS, or ISO structures without explicit instruction.
-- Prefer verified canonical NUN5 data/bytes when suitable. Binary replacement
-  bytes are allowed when a donor is unsuitable or intended NA2 behavior differs;
-  document the reason and evidence.
-- Log every binary patch: file, offset, original bytes, replacement bytes, and
-  reason.
-- String patches check encoded byte length before writing. `[S]` `shorten`
-  mappings are manual fit exceptions only when they retain an exact official
-  NUN5 source reference. Prefer Shift-JIS/CP932-compatible text unless proven
-  otherwise.
-- Do not include `ADV.bin` in release builds unless explicitly requested. Do
-  not delete or rename PSS files blindly.
+- Never edit binaries manually. All binary changes go through reproducible
+  scripts and guarded canonical data.
+- Preserve file sizes unless the user explicitly approves expansion of the
+  affected DATA.CVM, ELF, BIN, AFS, CCS, or ISO structure.
+- Prefer verified canonical NUN5 data/bytes when suitable. When donor data is
+  unsuitable, document the intended NA2 behavior and evidence for replacement
+  bytes.
+- Every binary patch records target file, offset, original bytes, replacement
+  bytes, and reason.
+- Check encoded byte length before writing strings. `[S]`/`shorten` exceptions
+  are manual fit decisions only when they retain an exact official NUN5 source
+  reference. Prefer Shift-JIS/CP932-compatible text unless proven otherwise.
+- Do not include `ADV.bin` in release builds unless explicitly requested. Do not
+  delete or rename PSS files blindly.
 
 ## Source media
 
-- Everything under `@source/`, including extractions, is read-only reference
-  material unless the user explicitly authorizes a specific modification.
-- Keep untouched archives under `@source/` and their extractions beside them as
-  `<archive filename>.files`. Preserve the extracted structure exactly.
+- Everything under `@source/`, including extracted views, is read-only unless
+  the user explicitly authorizes an exact modification.
+- Keep original archives under `@source/` and extracted contents beside them as
+  `<archive filename>.files`, preserving structure exactly.
 - Never place generated files, logs, probes, manifests, or metadata under
-  `@source/`. Keep Windows read-only attributes applied.
-- Copy any original-derived file outside `@source/` before changing it.
-- Keep temporary imported archives under the active task's `temp/`, normalize
-  useful data, verify it, then delete it or preserve an irreplaceable copy
-  outside the repository.
+  `@source/`. Copy original-derived files outside it before changing them.
+- Keep the active source ISOs and extraction trees Windows read-only. Restore
+  those attributes with the maintained command described by the extraction
+  runbook when needed.
+- Temporary imported archives live under the active task's `temp/` tree until
+  normalized, verified, and either promoted or removed.
+- Use the canonical extraction procedure in
+  [`../runbooks/source-extraction.md`](../runbooks/source-extraction.md).
 
 ## PNACH
 
-- PNACH is authoritative only for emulator settings, runtime-only patches, and
+- PNACH owns emulator settings, confirmed resident/runtime patches, and bounded
   temporary hypotheses not yet expressible as file-backed modules. Permanent
   file-backed changes belong in named binary-patcher patch sets.
 - A PNACH item is enabled only when its executable `patch=` or setting line is
   uncommented; `// [Name]` is only a label.
 - Fixed-address hypothesis writes require a boot ELF or another region proven
   resident and stable for the write lifetime.
-- Never make unguarded fixed writes to load/unload overlays such as `BTL.BIN`
-  or `ETC.BIN`; patch the file through scripts and rebuild instead.
+- Never make unguarded fixed writes to load/unload overlays such as `BTL.BIN` or
+  `ETC.BIN`; patch the file and rebuild instead.
 - Runtime overlay PNACH testing is exceptional and requires a proven load-state
   or signature guard. Avoid dynamic heap writes without proven allocation,
   address, and lifetime.

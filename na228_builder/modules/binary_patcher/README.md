@@ -57,7 +57,7 @@ python -m na228_builder.modules.binary_patcher.engine apply `
   --root na2=@source_na2 `
   --root nun5=@source_nun5 `
   --patch regional_input_selectable_modal `
-  --output-root work/temp/example_patch_output
+  --output-root work/<task>/temp/example_patch_output
 ```
 
 Default standalone logs are written under `logs/na228/binary_patcher/<run-id>/`.

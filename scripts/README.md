@@ -13,7 +13,7 @@ exact agent procedures belong in the linked runbooks.
   provenance, and receipts.
 - `release/build_release.ps1` and `release/publish_release.ps1`: release
   candidate construction and publication; see
-  [`../docs/RELEASE_PROCESS.md`](../docs/RELEASE_PROCESS.md).
+  [`../docs/runbooks/release.md`](../docs/runbooks/release.md).
 
 ## Responsibility directories
 

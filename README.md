@@ -53,7 +53,7 @@ knowledge, tests, and release behavior.
 - [Tasks](TASKS.md), the user's selective coordination and decision tracker.
 - [E2E infrastructure](e2e/README.md) and
   [agent E2E review workflow](e2e/AGENT_GUIDE.md).
-- [Release process](docs/RELEASE_PROCESS.md).
+- [Release process](docs/runbooks/release.md).
 
 Component contracts remain near their implementation when proximity matters,
 including the [builder](na228_builder/README.md) and reusable module READMEs.

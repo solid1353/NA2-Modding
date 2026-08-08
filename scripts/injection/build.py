@@ -446,23 +446,23 @@ def load_symbol_map(
     return result
 
 
-def configured_payload() -> dict[str, tuple[object, dict[str, object]]]:
-    result: dict[str, tuple[object, dict[str, object]]] = {}
+def configured_payload() -> dict[str, tuple[object, str, dict[str, object]]]:
+    result: dict[str, tuple[object, str, dict[str, object]]] = {}
     for feature_id in CATALOG_SELECTION.feature_ids:
-        for node, _injection_id, payload_id, value in catalog_module.payload_entries(
+        for node, injection_id, payload_id, value in catalog_module.payload_entries(
             CATALOG_SELECTION,
             feature_id,
         ):
             if payload_id in result:
                 raise ValueError(f"Duplicate configured payload ID: {payload_id}")
-            result[payload_id] = (node, value)
+            result[payload_id] = (node, injection_id, value)
     return result
 
 
 def production_sources() -> dict[str, dict[str, object]]:
     values = [
         (payload_id, node.feature_id, value)
-        for payload_id, (node, value) in configured_payload().items()
+        for payload_id, (node, _injection_id, value) in configured_payload().items()
         if value.get("kind") == "c"
     ]
 
@@ -492,7 +492,7 @@ def production_sources() -> dict[str, dict[str, object]]:
 
 def production_source_owner(source_id: str) -> str:
     selected = configured_payload().get(source_id)
-    if selected is None or selected[1].get("kind") != "c":
+    if selected is None or selected[2].get("kind") != "c":
         raise ValueError(f"Unknown production C source: {source_id!r}")
     node = selected[0]
     return f"{node.feature_id}.runtime_injector"
@@ -500,7 +500,7 @@ def production_source_owner(source_id: str) -> str:
 
 def _load_static_fragments() -> list[tuple[int, int, PayloadFragment]]:
     result: list[tuple[int, int, PayloadFragment]] = []
-    for payload_id, (node, value) in configured_payload().items():
+    for payload_id, (node, injection_id, value) in configured_payload().items():
         if value.get("kind") == "c":
             continue
         order, fragment = catalog_module.load_static_fragment(
@@ -508,7 +508,7 @@ def _load_static_fragments() -> list[tuple[int, int, PayloadFragment]]:
             f"{node.feature_id}.runtime_injector",
             payload_id,
             value,
-            f"{node.node_id}.payload.{payload_id}",
+            f"injections.{injection_id}.payload.{payload_id}",
         )
         result.append((order, 1, fragment))
     return result
@@ -622,7 +622,10 @@ def load_declared_entry(
         }
 
     source = production_sources().get(source_id)
-    payload = {key: value for key, (_node, value) in configured_payload().items()}
+    payload = {
+        key: value
+        for key, (_node, _injection_id, value) in configured_payload().items()
+    }
     fragment: object = None
     if source is not None and isinstance(source.get("fragments"), dict):
         fragment = source["fragments"].get(entry_symbol)

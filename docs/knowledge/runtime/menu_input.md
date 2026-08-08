@@ -98,16 +98,17 @@ status-`0x2C` branch; neither candidate was retained.
 The module already retains the reusable subroutine and regional comparison data:
 
 - `../localization/function_map.tsv` maps NA2/NUN5 functions, file offsets, input masks, scope, and evidence.
-- `na228_builder/catalog.json` records the selectable regional-input nodes and
-  exact guarded byte edits.
+- `na228_builder/catalog.json` records the selectable regional-input nodes;
+  `na228_builder/edits.json` records the exact guarded byte edits they reference.
 - This document and the linked evidence tables record runtime classification
   and review conclusions.
 - `../localization/binary_evidence.tsv` records import and validation provenance.
 - `../localization/runtime_tests.tsv` records the complete four-test runtime matrix.
 
-The catalog remains the executable definition; the three evidence tables under
-`docs/knowledge/localization/` are canonical research evidence. This document
-is the interpretation and navigation layer, not a second patch definition.
+The catalog and edit store remain the executable definition; the three evidence
+tables under `docs/knowledge/localization/` are canonical research evidence.
+This document is the interpretation and navigation layer, not a second patch
+definition.
 
 ## Provenance
 

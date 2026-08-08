@@ -37,24 +37,32 @@ This document records the accepted builder catalog and configuration design. It 
 ## Configurations
 - Use configurations named `test`, `release`, and `development`.
 - Configurations are the sole owners of enablement and contain no canonical definitions, patch data, or module information.
-- Configurations have exactly two top-level fields: `features` and `overrides`.
-- The base `features` setting is `true`, `false`, or a complete object matching the catalog's `features` children. The maintained configurations use `true`.
-- `overrides` is an object. It may be empty or partially mirror the configuration structure under `features`; unspecified descendants retain their base value.
-- Build and release loading recursively merge `overrides` over the base `features` setting before deriving module invocations.
+- `base.json` has exactly two top-level fields: `features` and `overrides`.
+  The maintained base uses `true` for `features` and an empty object for
+  `overrides`.
+- Repository `test.json`, `release.json`, and `development.json` have exactly
+  one top-level field: `overrides`. They automatically inherit `base.json`.
+- An `overrides` object may be empty or partially mirror the catalog's feature
+  tree directly. It never contains another `features` wrapper. Unspecified
+  descendants retain their prior value.
+- Loading applies `base.features`, then `base.overrides`, then the selected
+  repository configuration's `overrides` before deriving module invocations.
+- Release packaging merges `base.json` with `release.json` into exactly one
+  self-contained external configuration with top-level `features` and
+  `overrides`. The repository base and release source files are not bundled.
 - A configuration value corresponding to a catalog node is `true`, `false`, or an object.
 - `true` enables the node's complete selectable catalog subtree.
 - `false` disables the node's complete selectable catalog subtree.
 - An object configures that node's direct selectable children individually.
 - An object is forbidden for a lowest-level selectable catalog node; leaves must be `true` or `false`.
-- Whenever a configuration descends with an object, its keys must match that catalog node's direct selectable child keys exactly. Missing and extra keys are invalid.
+- Whenever `features` descends with an object, its keys must match that catalog
+  node's direct selectable child keys exactly. An overrides object may select
+  only the descendants it changes, but every supplied key must exist.
 - Configurations contain no `enabled` or `description` fields.
 ```json
 {
-  "features": true,
   "overrides": {
-    "features": {
-      "localization": false
-    }
+    "localization": false
   }
 }
 ```

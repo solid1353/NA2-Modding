@@ -8,12 +8,15 @@ source media, PNACH, donor data, or encoded game text.
 - Before modifying builder composition, read the relevant sections of
   `na228_builder/README.md` and the affected component documentation. Do not
   recreate retired schemas or assumptions from historical notes.
-- `na228_builder/configurations/release.json` is the normal reproducible build
-  selection. `na228_builder/catalog.json` owns selectable definitions,
-  `edits.json` owns guarded binary edits, and `injections.json` owns runtime
-  hooks and payload declarations. Root `product.json` owns canonical inputs
-  and output identity.
-- JSON files under `na228_builder/configurations/` are the only build
+- `na228_builder/configurations/base.json` owns the shared `features` setting
+  and base `overrides`; `release.json` is the normal reproducible build overlay.
+  Loading applies base features, base overrides, then the selected configuration
+  overrides. Release packaging merges base and release into exactly one
+  self-contained external configuration. `na228_builder/catalog.json` owns
+  selectable definitions, `edits.json` owns guarded binary edits, and
+  `injections.json` owns runtime hooks and payload declarations. Root
+  `product.json` owns canonical inputs and output identity.
+- JSON files under `na228_builder/configurations/` are the only repository build
   definitions. Feature enablement and nested selection live only there; there
   is no separate profile or feature-pin table.
 - Reusable engines, operation definitions, and tools belong under

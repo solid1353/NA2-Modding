@@ -9,6 +9,7 @@ from pathlib import Path
 
 from na228_builder.modules.binary_patcher import engine as binary_patcher
 from na228_builder.modules.runtime_injector import engine as runtime_injector
+from na228_builder.scripts import catalog as catalog_module
 from na228_builder.scripts.composer import resolve_module_order
 from na228_builder.scripts.configuration import (
     MODULE_TYPE_ORDER,
@@ -147,8 +148,12 @@ class ConfigurationTests(unittest.TestCase):
         )
         for name in ("edits.json", "injections.json"):
             (root / name).write_text("{}\n", encoding="utf-8")
+        (configurations / "base.json").write_text(
+            json.dumps({"features": True, "overrides": {}}, indent=2) + "\n",
+            encoding="utf-8",
+        )
         configuration.write_text(
-            json.dumps({"features": selection, "overrides": {}}, indent=2) + "\n",
+            json.dumps({"overrides": selection}, indent=2) + "\n",
             encoding="utf-8",
         )
         (root / "product.json").write_text(
@@ -268,6 +273,9 @@ class ConfigurationTests(unittest.TestCase):
             self.assertIn((root / "catalog.json").resolve(), resources)
             self.assertIn((root / "edits.json").resolve(), resources)
             self.assertIn((root / "injections.json").resolve(), resources)
+            self.assertIn(
+                (root / "configurations" / "base.json").resolve(), resources
+            )
             self.assertIn(configuration.resolve(), resources)
             self.assertIn((feature / "translation_importer" / "mappings.tsv").resolve(), resources)
             self.assertIn((builder / "targets.tsv").resolve(), resources)
@@ -468,10 +476,10 @@ class ConfigurationTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         builder_root = repository / "na228_builder"
         default_path = builder_root / "configurations" / "release.json"
-        configuration = json.loads(default_path.read_text(encoding="utf-8"))
-        configuration["overrides"] = {
-            "features": {"localization": False}
-        }
+        configuration = catalog_module.materialized_configuration(
+            builder_root / "catalog.json", default_path
+        )
+        configuration["overrides"] = {"localization": False}
         marker = builder_root / "release_manifest.json"
         texture_root = builder_root / "localization" / "texture_patcher"
         texture_files = {
@@ -499,6 +507,9 @@ class ConfigurationTests(unittest.TestCase):
                 configuration_resource_files(loaded, include_disabled=True)
             )
 
+        self.assertNotIn(
+            (builder_root / "configurations" / "base.json").resolve(), complete
+        )
         self.assertTrue(texture_files.isdisjoint(selected))
         self.assertTrue(texture_files <= complete)
         operations_root = builder_root / "modules" / "binary_patcher" / "operations"

@@ -117,10 +117,13 @@ configuration = load_configuration(
     repository / "na228_builder",
     root_overrides={"na2": marker, "nun5": marker},
 )
+excluded = {Path(sys.argv[2]).resolve()}
+if configuration.selection.base_configuration_path is not None:
+    excluded.add(configuration.selection.base_configuration_path.resolve())
 print(json.dumps([
     path.relative_to(repository).as_posix()
     for path in configuration_resource_files(configuration, include_disabled=True)
-    if path.resolve() != Path(sys.argv[2]).resolve()
+    if path.resolve() not in excluded
 ]))
 '@
     $resourceText = & $python -B -c $resourceProbe $repository $configurationPath $manifestPath
@@ -194,7 +197,29 @@ raise SystemExit(main())
     }
     $packagedConfiguration = Join-Path $distRoot ([string]$manifest.configuration_name)
     $packagedInstructions = Join-Path $distRoot 'README.txt'
-    Copy-Item -LiteralPath $configurationPath -Destination $packagedConfiguration
+    $materializedProbe = @'
+import json
+import sys
+from pathlib import Path
+
+repository = Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(repository))
+from na228_builder.scripts.catalog import materialized_configuration
+
+print(json.dumps(materialized_configuration(
+    repository / "na228_builder" / "catalog.json",
+    Path(sys.argv[2]),
+), indent=2))
+'@
+    $materializedText = @(& $python -B -c $materializedProbe $repository $configurationPath)
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Could not construct the merged release configuration.'
+    }
+    [IO.File]::WriteAllText(
+        $packagedConfiguration,
+        ($materializedText -join "`n") + "`n",
+        [Text.UTF8Encoding]::new($false)
+    )
     Copy-Item -LiteralPath $instructionsPath -Destination $packagedInstructions
 
     $env:NA2_RELEASE_SELF_TEST = '1'
@@ -234,7 +259,11 @@ print(json.dumps(all_enabled_configuration(Path(sys.argv[2])), indent=2))
         -not (($allEnabledSelfTest -join "`n").Contains('Release package self-test: OK'))) {
         throw "All-enabled packaged executable self-test failed.`n$($allEnabledSelfTest -join "`n")"
     }
-    Copy-Item -LiteralPath $configurationPath -Destination $packagedConfiguration -Force
+    [IO.File]::WriteAllText(
+        $packagedConfiguration,
+        ($materializedText -join "`n") + "`n",
+        [Text.UTF8Encoding]::new($false)
+    )
     if ((Get-Item -LiteralPath $built).Length -lt 1MB) {
         throw 'Packaged executable is unexpectedly small.'
     }

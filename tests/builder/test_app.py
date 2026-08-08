@@ -48,6 +48,28 @@ class ReleaseAppTests(unittest.TestCase):
         path.write_text(json.dumps({} if value is None else value), encoding="utf-8")
         return path
 
+    def test_release_toolchain_references_live_inputs(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        toolchain = json.loads(
+            (repository / "scripts" / "release" / "toolchain.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        for field in (
+            "requirements",
+            "entry_point",
+            "release_manifest",
+            "icon",
+            "instructions",
+        ):
+            with self.subTest(field=field):
+                self.assertTrue((repository / toolchain[field]).is_file())
+
+        manifest = json.loads(
+            (repository / toolchain["release_manifest"]).read_text(encoding="utf-8")
+        )
+        self.assertTrue((repository / manifest["configuration"]).is_file())
+
     def test_application_directory_uses_explicit_executable_parent(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             executable = Path(directory) / "folder" / "Narutimate Accel v2.28.exe"

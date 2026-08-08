@@ -12,7 +12,11 @@ integrated definition files.
 - `edits.json` is the direct root map of guarded binary edit definitions.
 - `injections.json` is the direct root map of runtime injection units. Each
   unit contains `hooks`, `payload`, or both.
-- `configurations/test.json`, `release.json`, and `development.json` contain `"features": true` plus an `overrides` object. Overrides may be empty or partially mirror the selectable structure under `features`; the loader recursively applies them over the base setting.
+- `configurations/base.json` contains the shared `features` setting and its
+  `overrides`. `test.json`, `release.json`, and `development.json` contain
+  concrete `overrides`. Each overrides object may be empty or partially mirror
+  the catalog's feature tree directly. The loader applies `base.features`, then
+  `base.overrides`, then the concrete configuration's `overrides`.
 - `targets.tsv` is the single target registry used by edits and injection hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.
 - `localization/assets/` owns edit-referenced localization binary assets.
@@ -53,12 +57,12 @@ replacements. The binary patcher applies selected edits last.
 
 ## Resource fingerprinting
 
-The build-resource fingerprint covers the selected configuration, catalog,
-edits, injections, product and path configuration, shared targets, applicable
-binary operation definitions, referenced assets and sources, and selected
-localization TSV inputs. Release packaging inventories the same closure for
-every selectable catalog node, including disabled nodes. Documentation is not
-an executable builder input.
+The build-resource fingerprint covers the base and selected configurations,
+catalog, edits, injections, product and path configuration, shared targets,
+applicable binary operation definitions, referenced assets and sources, and
+selected localization TSV inputs. Release packaging inventories the same
+closure for every selectable catalog node, including disabled nodes.
+Documentation is not an executable builder input.
 
 ## Current release configuration
 
@@ -69,11 +73,13 @@ The release configuration composes, in order:
 3. Battle-logic behavior.
 4. Rendering behavior.
 
-Release packages include this configuration as editable
-`Narutimate Accel v2.28.json`. The
-packaged EXE validates that external file against its embedded catalog and
-contains resources for every selectable catalog node, including nodes disabled
-by the default release selection. Catalog-owned runtime C sources have packaged
+Release packaging merges `configurations/base.json` with
+`configurations/release.json` and writes exactly one editable, self-contained
+configuration named `Narutimate Accel v2.28.json`. It contains `features` and
+`overrides`; neither repository configuration source is embedded. The packaged
+EXE validates the external file against its embedded catalog and contains
+resources for every selectable catalog node, including nodes disabled by the
+default release selection. Catalog-owned runtime C sources have packaged
 objects, so end users do not need the project PS2 toolchain.
 
 ## Build

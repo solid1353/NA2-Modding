@@ -7,7 +7,7 @@ Narutimate Accel v2.28
 
 Configuration
 
-Narutimate Accel v2.28.json mirrors the selectable structure embedded in the EXE. true enables a node, false disables it, and an object configures its nested nodes individually. Every key must remain present, every leaf must be true or false, and keys must not be added, removed, or renamed.
+Narutimate Accel v2.28.json contains features and overrides. features is the base selection. overrides may be empty or may contain only the feature-tree branches you want to change. true enables a node, false disables it, and an object configures nested nodes individually. Every supplied key must exist in the catalog embedded in the EXE, and leaves must be true or false.
 
 Output
 

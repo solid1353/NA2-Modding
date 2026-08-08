@@ -714,6 +714,8 @@ def configuration_resource_files(
         configuration.selection.injections_path,
         configuration.targets_path,
     ]
+    if configuration.selection.base_configuration_path is not None:
+        files.append(configuration.selection.base_configuration_path)
     if include_disabled or any(
         module.module == "binary_patcher" for module in configuration.modules
     ):

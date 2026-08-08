@@ -17,6 +17,12 @@ class CatalogTests(unittest.TestCase):
                 definition_path = path.with_name(name)
                 if not definition_path.exists():
                     definition_path.write_text("{}\n", encoding="utf-8")
+            configurations = path.parent / "configurations"
+            configurations.mkdir(exist_ok=True)
+            self.write_json(
+                configurations / "base.json",
+                {"features": True, "overrides": {}},
+            )
 
     def test_configuration_must_match_catalog_at_every_descended_level(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -38,12 +44,13 @@ class CatalogTests(unittest.TestCase):
                 },
             )
             self.write_json(
-                configuration_path,
+                root / "configurations" / "base.json",
                 {
                     "features": {"feature": {"nested": {"first_leaf": True}}},
                     "overrides": {},
                 },
             )
+            self.write_json(configuration_path, {"overrides": {}})
             with self.assertRaisesRegex(ValueError, "children differ"):
                 catalog.load_selection(catalog_path, configuration_path)
 
@@ -55,7 +62,7 @@ class CatalogTests(unittest.TestCase):
             self.write_json(catalog_path, {"features": {"feature": {"leaf": {}}}})
             self.write_json(
                 configuration_path,
-                {"features": {"feature": {"leaf": {}}}, "overrides": {}},
+                {"overrides": {"feature": {"leaf": {}}}},
             )
             with self.assertRaisesRegex(ValueError, "must be true or false"):
                 catalog.load_selection(catalog_path, configuration_path)
@@ -69,10 +76,7 @@ class CatalogTests(unittest.TestCase):
                 catalog_path,
                 {"features": {"feature": {"leaf": {"proven": True}}}},
             )
-            self.write_json(
-                configuration_path,
-                {"features": {"feature": {"leaf": True}}, "overrides": {}},
-            )
+            self.write_json(configuration_path, {"overrides": {}})
             with self.assertRaisesRegex(ValueError, "proven must be false"):
                 catalog.load_selection(catalog_path, configuration_path)
 
@@ -84,10 +88,7 @@ class CatalogTests(unittest.TestCase):
             catalog_path.write_text(
                 '{"features":{"feature":{"leaf":{},"leaf":{}}}}\n', encoding="utf-8"
             )
-            self.write_json(
-                configuration_path,
-                {"features": {"feature": {"leaf": True}}, "overrides": {}},
-            )
+            self.write_json(configuration_path, {"overrides": {}})
             with self.assertRaisesRegex(ValueError, "duplicate key"):
                 catalog.load_selection(catalog_path, configuration_path)
 
@@ -140,10 +141,7 @@ class CatalogTests(unittest.TestCase):
             self.write_json(
                 configuration_path,
                 {
-                    "features": True,
-                    "overrides": {
-                        "features": {"feature": {"nested": {"second": False}}}
-                    },
+                    "overrides": {"feature": {"nested": {"second": False}}},
                 },
             )
             selection = catalog.load_selection(catalog_path, configuration_path)
@@ -160,6 +158,100 @@ class CatalogTests(unittest.TestCase):
                 if node.path == ("features", "feature", "nested", "third")
             )
             self.assertEqual(third.node_id, "feature.nested.third")
+
+    def test_base_then_base_overrides_then_configuration_overrides(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path = root / "catalog.json"
+            configuration_path = root / "configuration.json"
+            self.write_json(
+                catalog_path,
+                {
+                    "features": {
+                        "feature": {
+                            "first": {},
+                            "second": {},
+                            "third": {},
+                        }
+                    }
+                },
+            )
+            self.write_json(
+                root / "configurations" / "base.json",
+                {
+                    "features": True,
+                    "overrides": {"feature": {"second": False}},
+                },
+            )
+            self.write_json(
+                configuration_path,
+                {"overrides": {"feature": {"second": True, "third": False}}},
+            )
+
+            selection = catalog.load_selection(catalog_path, configuration_path)
+
+            self.assertTrue(selection.node_enabled("features", "feature", "first"))
+            self.assertTrue(selection.node_enabled("features", "feature", "second"))
+            self.assertFalse(selection.node_enabled("features", "feature", "third"))
+
+            materialized = catalog.materialized_configuration(
+                catalog_path, configuration_path
+            )
+            self.assertEqual(
+                materialized,
+                {
+                    "features": {
+                        "feature": {
+                            "first": True,
+                            "second": False,
+                            "third": True,
+                        }
+                    },
+                    "overrides": {
+                        "feature": {"second": True, "third": False}
+                    },
+                },
+            )
+            bundled_path = root / "bundled.json"
+            self.write_json(bundled_path, materialized)
+            bundled = catalog.load_selection(catalog_path, bundled_path)
+            self.assertIsNone(bundled.base_configuration_path)
+            self.assertEqual(
+                [node.enabled for node in selection.nodes],
+                [node.enabled for node in bundled.nodes],
+            )
+
+    def test_self_contained_configuration_does_not_load_base(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path = root / "catalog.json"
+            configuration_path = root / "configuration.json"
+            self.write_json(catalog_path, {"features": {"feature": {}}})
+            (root / "configurations" / "base.json").write_text(
+                "not json\n", encoding="utf-8"
+            )
+            self.write_json(
+                configuration_path,
+                {"features": True, "overrides": {}},
+            )
+            selection = catalog.load_selection(catalog_path, configuration_path)
+            self.assertIsNone(selection.base_configuration_path)
+            self.assertTrue(selection.node_enabled("features", "feature"))
+
+    def test_repository_configuration_rejects_self_contained_shape(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path = root / "catalog.json"
+            self.write_json(catalog_path, {"features": {"feature": {}}})
+            configuration_path = root / "configurations" / "release.json"
+            self.write_json(
+                configuration_path,
+                {"features": True, "overrides": {}},
+            )
+            with self.assertRaisesRegex(
+                ValueError, "Repository configurations must contain only"
+            ):
+                catalog.load_selection(catalog_path, configuration_path)
 
     def test_runtime_source_uses_packaged_object_without_toolchain(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -278,6 +370,17 @@ class CatalogTests(unittest.TestCase):
         raw_injections = json.loads(
             catalog_path.with_name("injections.json").read_text(encoding="utf-8")
         )
+        self.assertEqual(
+            json.loads((configuration_root / "base.json").read_text(encoding="utf-8")),
+            {"features": True, "overrides": {}},
+        )
+        for name in ("test", "release", "development"):
+            self.assertEqual(
+                json.loads(
+                    (configuration_root / f"{name}.json").read_text(encoding="utf-8")
+                ),
+                {"overrides": {}},
+            )
         self.assertEqual(len(raw_edits), 491)
         self.assertEqual(len(raw_injections), 24)
         localization = raw_catalog["features"]["localization"]

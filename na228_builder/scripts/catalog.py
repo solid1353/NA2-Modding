@@ -52,6 +52,7 @@ class CatalogSelection:
     catalog_path: Path
     edits_path: Path
     injections_path: Path
+    base_configuration_path: Path | None
     configuration_path: Path
     catalog: dict[str, object]
     edits: dict[str, dict[str, object]]
@@ -143,6 +144,56 @@ def _selectable_children(value: dict[str, object], label: str) -> dict[str, dict
     return children
 
 
+def _merge_setting(
+    value: dict[str, object],
+    base: object,
+    override: object,
+    path: tuple[str, ...],
+) -> object:
+    label = ".".join(path)
+    if isinstance(override, bool):
+        return override
+    if not isinstance(override, dict):
+        raise ValueError(
+            f"Configuration override {label} must be true, false, or an object"
+        )
+    children = _selectable_children(value, label)
+    if not children:
+        raise ValueError(
+            f"Configuration override leaf {label} must be true or false"
+        )
+    if not override:
+        return base
+    extra = sorted(set(override) - set(children))
+    if extra:
+        raise ValueError(
+            f"Configuration override {label} has unknown children: {extra}"
+        )
+    if isinstance(base, bool):
+        merged = {key: base for key in children}
+    elif isinstance(base, dict):
+        if set(base) != set(children):
+            missing_keys = sorted(set(children) - set(base))
+            extra_keys = sorted(set(base) - set(children))
+            raise ValueError(
+                f"Configuration {label} children differ from catalog; "
+                f"missing={missing_keys}, extra={extra_keys}"
+            )
+        merged = dict(base)
+    else:
+        raise ValueError(
+            f"Configuration {label} must be true, false, or an object"
+        )
+    for key, child_override in override.items():
+        merged[key] = _merge_setting(
+            children[key],
+            merged[key],
+            child_override,
+            (*path, key),
+        )
+    return merged
+
+
 def _reference_ids(
     value: dict[str, object],
     field: str,
@@ -195,7 +246,6 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
         injections[injection_id] = injection
     configuration = _read_json(configuration_path, "Configuration")
     nodes: list[CatalogNode] = []
-    missing = object()
 
     def setting_enabled(setting: object) -> bool:
         if isinstance(setting, bool):
@@ -261,85 +311,78 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
         for key, child in children.items():
             visit(child, setting[key], (*path, key), enabled)
 
-    def merge_setting(
-        value: dict[str, object],
-        base: object,
-        override: object,
-        path: tuple[str, ...],
-    ) -> object:
-        if override is missing:
-            return base
-        label = ".".join(path)
-        if isinstance(override, bool):
-            return override
-        if not isinstance(override, dict):
-            raise ValueError(
-                f"Configuration override {label} must be true, false, or an object"
-            )
-        children = _selectable_children(value, label)
-        if not children:
-            raise ValueError(
-                f"Configuration override leaf {label} must be true or false"
-            )
-        extra = sorted(set(override) - set(children))
-        if extra:
-            raise ValueError(
-                f"Configuration override {label} has unknown children: {extra}"
-            )
-        if isinstance(base, bool):
-            merged = {key: base for key in children}
-        elif isinstance(base, dict):
-            if set(base) != set(children):
-                missing_keys = sorted(set(children) - set(base))
-                extra_keys = sorted(set(base) - set(children))
-                raise ValueError(
-                    f"Configuration {label} children differ from catalog; "
-                    f"missing={missing_keys}, extra={extra_keys}"
-                )
-            merged = dict(base)
-        else:
-            raise ValueError(
-                f"Configuration {label} must be true, false, or an object"
-            )
-        for key, child_override in override.items():
-            merged[key] = merge_setting(
-                children[key],
-                merged[key],
-                child_override,
-                (*path, key),
-            )
-        return merged
-
     catalog_children = _selectable_children(catalog, "catalog")
     if set(catalog_children) != {"features"}:
         raise ValueError("Catalog root must contain only the features parent")
-    if set(configuration) != {"features", "overrides"}:
-        missing_keys = sorted({"features", "overrides"} - set(configuration))
-        extra_keys = sorted(set(configuration) - {"features", "overrides"})
-        raise ValueError(
-            "Configuration root keys must be features and overrides; "
-            f"missing={missing_keys}, extra={extra_keys}"
-        )
-    overrides = configuration["overrides"]
-    if not isinstance(overrides, dict):
-        raise ValueError("Configuration overrides must be an object")
-    extra_overrides = sorted(set(overrides) - {"features"})
-    if extra_overrides:
-        raise ValueError(
-            f"Configuration overrides have unknown root keys: {extra_overrides}"
-        )
     features_value = catalog_children["features"]
-    effective = merge_setting(
-        features_value,
-        configuration["features"],
-        overrides.get("features", missing),
-        ("features",),
-    )
+    repository_configuration_root = (
+        catalog_path.parent / "configurations"
+    ).resolve()
+    if (
+        configuration_path.parent == repository_configuration_root
+        and set(configuration) != {"overrides"}
+    ):
+        raise ValueError(
+            "Repository configurations must contain only the overrides root key"
+        )
+    if set(configuration) == {"overrides"}:
+        base_configuration_path = (
+            catalog_path.parent / "configurations" / "base.json"
+        ).resolve()
+        base_configuration = _read_json(
+            base_configuration_path, "Base configuration"
+        )
+        if set(base_configuration) != {"features", "overrides"}:
+            missing_keys = sorted(
+                {"features", "overrides"} - set(base_configuration)
+            )
+            extra_keys = sorted(
+                set(base_configuration) - {"features", "overrides"}
+            )
+            raise ValueError(
+                "Base configuration root keys must be features and overrides; "
+                f"missing={missing_keys}, extra={extra_keys}"
+            )
+        base_overrides = base_configuration["overrides"]
+        if not isinstance(base_overrides, dict):
+            raise ValueError("Base configuration overrides must be an object")
+        configuration_overrides = configuration["overrides"]
+        if not isinstance(configuration_overrides, dict):
+            raise ValueError("Configuration overrides must be an object")
+        base_effective = _merge_setting(
+            features_value,
+            base_configuration["features"],
+            base_overrides,
+            ("features",),
+        )
+        effective = _merge_setting(
+            features_value,
+            base_effective,
+            configuration_overrides,
+            ("features",),
+        )
+    elif set(configuration) == {"features", "overrides"}:
+        base_configuration_path = None
+        configuration_overrides = configuration["overrides"]
+        if not isinstance(configuration_overrides, dict):
+            raise ValueError("Configuration overrides must be an object")
+        effective = _merge_setting(
+            features_value,
+            configuration["features"],
+            configuration_overrides,
+            ("features",),
+        )
+    else:
+        raise ValueError(
+            "Configuration root keys must be either overrides or "
+            "features and overrides"
+        )
     visit(features_value, effective, ("features",), True)
     return CatalogSelection(
         catalog_path,
         edits_path,
         injections_path,
+        base_configuration_path,
         configuration_path,
         catalog,
         edits,
@@ -349,11 +392,37 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
 
 
 def all_enabled_configuration(catalog_path: Path) -> dict[str, object]:
-    """Return the compact configuration that enables the complete feature tree."""
+    """Return a compact self-contained configuration that enables every node."""
     catalog = _read_json(catalog_path.resolve(), "Catalog")
-    if set(_selectable_children(catalog, "catalog")) != {"features"}:
+    catalog_children = _selectable_children(catalog, "catalog")
+    if set(catalog_children) != {"features"}:
         raise ValueError("Catalog root must contain only the features parent")
     return {"features": True, "overrides": {}}
+
+
+def materialized_configuration(
+    catalog_path: Path,
+    configuration_path: Path,
+) -> dict[str, object]:
+    """Return one self-contained configuration with base settings applied."""
+    selection = load_selection(catalog_path, configuration_path)
+    configuration = _read_json(selection.configuration_path, "Configuration")
+    if selection.base_configuration_path is None:
+        return configuration
+    base_configuration = _read_json(
+        selection.base_configuration_path, "Base configuration"
+    )
+    features_value = _selectable_children(selection.catalog, "catalog")["features"]
+    features = _merge_setting(
+        features_value,
+        base_configuration["features"],
+        base_configuration["overrides"],
+        ("features",),
+    )
+    return {
+        "features": features,
+        "overrides": configuration["overrides"],
+    }
 
 
 def _parse_int(value: object, label: str, *, minimum: int = 0) -> int:

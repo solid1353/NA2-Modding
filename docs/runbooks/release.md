@@ -10,8 +10,9 @@ NUN5 ISO.
 1. Extract the complete ZIP into one directory.
 2. Put the two supported clean ISOs in that directory. ISO filenames do not
    matter.
-3. Optionally edit `Narutimate Accel v2.28.json`, preserving its complete key
-   structure and using only `true`, `false`, or nested objects.
+3. Optionally edit `Narutimate Accel v2.28.json`. Its `features` value is the
+   base selection, and its `overrides` object may contain only the feature-tree
+   branches being changed.
 4. Double-click the EXE. It validates the external configuration against its
    embedded catalog before hashing either ISO.
 5. The program scans sibling `*.iso` files non-recursively, excluding the
@@ -29,12 +30,13 @@ NUN5 ISO.
    existing output when a build fails, removes its staging file after failure,
    and waits for Enter before closing.
 
-The ZIP contains the versioned EXE, `Narutimate Accel v2.28.json`, and
-`README.txt`. The executable embeds the interpreter, builder engines, catalog,
-resources for the complete selectable catalog rather than only the default
-selection, payload-builder configuration, precompiled objects for injection-owned
-runtime C sources, and Zopfli runtime. It does not embed the project PS2
-toolchain, source ISOs, extracted source trees, or derived game payloads.
+The ZIP contains the versioned EXE, exactly one merged configuration named
+`Narutimate Accel v2.28.json`, and `README.txt`. The executable embeds the
+interpreter, builder engines, catalog, resources for the complete selectable
+catalog rather than only the default selection, payload-builder configuration,
+precompiled objects for injection-owned runtime C sources, and Zopfli runtime.
+It does not embed the project PS2 toolchain, source ISOs, extracted source trees,
+or derived game payloads.
 
 ## Developer build
 

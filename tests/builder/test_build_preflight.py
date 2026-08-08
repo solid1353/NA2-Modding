@@ -59,8 +59,12 @@ class BuildPreflightTests(unittest.TestCase):
         )
         (builder / "edits.json").write_text("{}\n", encoding="utf-8")
         (builder / "injections.json").write_text("{}\n", encoding="utf-8")
-        configuration.write_text(
+        (configuration.parent / "base.json").write_text(
             json.dumps({"features": True, "overrides": {}}),
+            encoding="utf-8",
+        )
+        configuration.write_text(
+            json.dumps({"overrides": {}}),
             encoding="utf-8",
         )
         source_roots = workspace / "source_roots"
@@ -269,6 +273,22 @@ class BuildPreflightTests(unittest.TestCase):
                 "# Updated documentation only\n", encoding="utf-8"
             )
             self.assertEqual(initial, state_fingerprint(self.state(paths)))
+
+            base_configuration = paths["builder"] / "configurations" / "base.json"
+            base_configuration.write_text(
+                json.dumps(
+                    {
+                        "features": True,
+                        "overrides": {"localization": False},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
+            base_configuration.write_text(
+                json.dumps({"features": True, "overrides": {}}),
+                encoding="utf-8",
+            )
 
             (feature / "translation_importer" / "mappings.tsv").write_text(
                 "id\nchanged\n", encoding="utf-8"

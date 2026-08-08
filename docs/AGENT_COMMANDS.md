@@ -10,6 +10,8 @@ those.
 - `qwe`, or the same physical keys under another keyboard layout: follow the
   active workflow's `qwe` rule; outside a workflow mode, authorize the current
   serious-work implementation snapshot.
+- `snapshot`: present the current consolidated implementation snapshot. It
+  requests the snapshot only and does not authorize implementation.
 - `tasks`: read and present `TASKS.md`.
 - `task done`: remove the uniquely identifiable current task from `TASKS.md`.
   If its workstream becomes empty, move the workstream to `Archive`. Ask when

@@ -8,6 +8,8 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 - Read this file first. Communicate with the user in English.
 - The user may override any repository instruction. The scope and duration of an
   override follow the user's wording; unrelated rules remain active.
+- Do not alter or extend the requested contract. If you believe a different
+  contract would be better, ask the user before changing it.
 - `NA2-Modding`, `UN-Workshop`, maintained subrepositories such as the PCSX2
   fork, and future repositories added to this maintained project may be changed
   together when the task requires it. Cross-repository work needs no separate

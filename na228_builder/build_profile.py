@@ -21,7 +21,7 @@ from .modules.texture_patcher import engine as texture_patcher_module
 from .payload_builder import builder as payload_builder_module
 from .payload_builder import integration as payload_integration_module
 from .payload_builder.operations import ResidentPayloadBuild
-from .profile import Profile, ProfileModule, load_profile
+from .profile import Profile, ProfileModule, load_configuration
 from scripts.lib.paths import load_paths
 
 
@@ -693,20 +693,12 @@ def write_profile_log(
         log_directory / "features.tsv",
         [
             "feature_id",
-            "input",
-            "expected_sha256",
-            "actual_sha256",
-            "hash_check",
+            "input_sha256",
         ],
         [
             {
                 "feature_id": feature.feature_id,
-                "input": feature.input_path.relative_to(workspace).as_posix(),
-                "expected_sha256": feature.expected_sha256,
-                "actual_sha256": feature.actual_sha256,
-                "hash_check": (
-                    "bypassed" if feature.hash_check_bypassed else "verified"
-                ),
+                "input_sha256": feature.input_sha256,
             }
             for feature in profile.features
         ],
@@ -925,14 +917,6 @@ def print_profile_summary(
     green = "\033[32m"
     reset = "\033[0m"
     print(f"Applied configuration: {profile.profile_id}")
-    bypassed_features = [
-        feature for feature in profile.features if feature.hash_check_bypassed
-    ]
-    for feature in bypassed_features:
-        print(
-            "Feature hash check bypassed: "
-            f"{feature.feature_id} (actual SHA-256 {feature.actual_sha256})"
-        )
     for item in profile_results:
         module = item["module"]
         assert isinstance(module, ProfileModule)
@@ -996,7 +980,11 @@ def main() -> int:
         if args.configuration.is_absolute()
         else workspace / args.configuration
     )
-    profile = load_profile(configuration_path, workspace)
+    profile = load_configuration(
+        configuration_path,
+        workspace,
+        workspace / "na228_builder",
+    )
     if args.compose_only:
         composed = compose_profile_candidate(
             source_iso=source_iso,

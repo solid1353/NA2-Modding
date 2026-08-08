@@ -24,8 +24,6 @@ IDENTIFIER = re.compile(r"[a-z][a-z0-9_]*\Z")
 RESERVED_NODE_FIELDS = frozenset(
     {"description", "proven", "edits", "hooks", "payload"}
 )
-PIN_FIELDS = ["feature_id", "expected_sha256", "bypass_check"]
-LEGACY_PIN_FIELDS = ["feature_id", "enabled", "expected_sha256", "bypass_check"]
 OPERATION_FIELDS = ["field", "required", "type"]
 FIELD_TYPES = {"hex", "integer", "path", "sha256", "text"}
 
@@ -67,13 +65,6 @@ class CatalogSelection:
         if len(matches) != 1:
             raise ValueError(f"Catalog selection has no unique node: {'.'.join(path)}")
         return matches[0].enabled
-
-
-@dataclass(frozen=True)
-class FeaturePin:
-    feature_id: str
-    expected_sha256: str
-    bypass_check: bool
 
 
 @dataclass(frozen=True)
@@ -207,36 +198,6 @@ def all_enabled_configuration(catalog_path: Path) -> dict[str, object]:
         key: enabled_node(value, key)
         for key, value in _selectable_children(catalog, "catalog").items()
     }
-
-
-def read_pins(path: Path) -> tuple[FeaturePin, ...]:
-    pins: list[FeaturePin] = []
-    seen: set[str] = set()
-    with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
-        if reader.fieldnames not in (PIN_FIELDS, LEGACY_PIN_FIELDS):
-            raise ValueError(
-                f"{path}: expected pin columns " + "\t".join(PIN_FIELDS)
-            )
-        for line, row in enumerate(reader, 2):
-            if None in row or any(value is None for value in row.values()):
-                raise ValueError(f"{path}:{line}: malformed row")
-            if not any(value.strip() for value in row.values()):
-                continue
-            feature_id = _identifier(row["feature_id"].strip(), f"{path}:{line} feature_id")
-            if feature_id in seen:
-                raise ValueError(f"{path}:{line}: duplicate feature {feature_id}")
-            seen.add(feature_id)
-            digest = row["expected_sha256"].strip().upper()
-            if not re.fullmatch(r"[0-9A-F]{64}", digest):
-                raise ValueError(f"{path}:{line}: invalid expected_sha256")
-            bypass = row["bypass_check"].strip()
-            if bypass not in {"0", "1"}:
-                raise ValueError(f"{path}:{line}: bypass_check must be 0 or 1")
-            pins.append(FeaturePin(feature_id, digest, bypass == "1"))
-    if not pins:
-        raise ValueError(f"{path}: no feature pins")
-    return tuple(pins)
 
 
 def _parse_int(value: object, label: str, *, minimum: int = 0) -> int:

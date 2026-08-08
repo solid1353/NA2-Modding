@@ -12,7 +12,7 @@ The builder creates a reproducible product from one configuration and one integr
 - `localization.translated_text` and `localization.translated_textures` select the retained translation-importer and texture-patcher inputs. Their executable data remains in feature-local TSV directories for now.
 - Root `product.json` owns source inputs, output identity, and named build variants.
 
-The existing pin table remains byte-for-byte at `profiles/default.tsv`. Configuration JSON owns enablement; the loader reads only `feature_id`, `expected_sha256`, and `bypass_check` from that table. The old `enabled` column is ignored and remains solely because pin storage was explicitly left untouched during this refactor.
+JSON configurations are the only build definitions. There is no separate profile, pin, or enablement table.
 
 ## Catalog nodes
 
@@ -34,11 +34,9 @@ Reusable engines remain internal under `modules/` and are not represented in cat
 
 The localization importer invokes the string patcher as a derived consumer. Runtime payload declarations are compiled and linked into the shared resident `PRG/228.BIN`; resolved hooks then become guarded in-memory binary replacements. The binary patcher applies catalog edits last.
 
-## Hashing and pins
+## Resource fingerprinting
 
-One feature pin covers its catalog subtree, referenced assets and sources, shared targets when used, binary operation definitions when used, remaining feature-local TSV inputs, and the feature README. The selected configuration itself is covered by the build-resource fingerprint rather than the feature pin.
-
-Only the user changes pin values or `bypass_check`. The loader always calculates the actual aggregate hash. A bypassed pin is recorded as bypassed in the build log and is not an accepted reproducible checkpoint.
+The build-resource fingerprint covers the selected configuration, catalog, product and path configuration, shared targets, applicable binary operation definitions, catalog-referenced assets and sources, and selected feature-local TSV inputs. Release packaging inventories the same closure for every selectable catalog node, including disabled nodes. Documentation is not an executable builder input.
 
 ## Current release configuration
 

@@ -414,7 +414,7 @@ respectively `220 + 118 = 338` and `233 + 144 = 377`.
   Back and every text/font byte remain outside the patch. Package validation
   reports 7 targets, 9 groups, 86 patches, and 252 edits; the 33 focused
   UI/profile tests and full 127-test suite pass. The matching Localization
-  feature pin is
+  feature pin at that checkpoint was
   `CF173194E0BB28DB3CC516B176DB9F90F1103749890F5EE4AF6BD6CCC9CBDB56`.
 - A historical NA2 screenshot from the preserved Previous ISO has the same
   clipping, so this defect predates the current donor conversion.

@@ -254,37 +254,5 @@ class CatalogTests(unittest.TestCase):
         for path in [catalog_path, *configuration_root.glob("*.json")]:
             self.assertNotIn("\n\n", path.read_text(encoding="utf-8"))
 
-    def test_live_pin_values_remain_untouched(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        pins = catalog.read_pins(
-            repository / "na228_builder" / "profiles" / "default.tsv"
-        )
-        self.assertEqual(
-            [(pin.feature_id, pin.expected_sha256, pin.bypass_check) for pin in pins],
-            [
-                (
-                    "localization",
-                    "AFB13606235CC157C3C44CB9FF9D43AFB008EB7FA4F910BA01E6103A0F6BAF30",
-                    True,
-                ),
-                (
-                    "qol",
-                    "6360CB031D2CA1A74CA849C37E3EB8FF2D9A7986BCBE275FC4B2C0D86B19A1B4",
-                    True,
-                ),
-                (
-                    "battle_logic",
-                    "BF8F2AD32E428B605F043AFF849177D3547268E8CD8E6AD40CB32495F96B6878",
-                    True,
-                ),
-                (
-                    "rendering",
-                    "E88CC91E85BBF60DB6D8E3759947475EC68FE7A4DC2D0FC432884EE82B23A491",
-                    True,
-                ),
-            ],
-        )
-
-
 if __name__ == "__main__":
     unittest.main()

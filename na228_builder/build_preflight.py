@@ -10,7 +10,7 @@ import zlib
 from pathlib import Path
 from typing import Iterable
 
-from na228_builder.profile import load_profile, profile_resource_files
+from na228_builder.profile import load_configuration, profile_resource_files
 from scripts.lib.paths import load_paths
 
 
@@ -81,7 +81,7 @@ def _builder_files(builder: Path) -> list[Path]:
             and "__pycache__" not in path.relative_to(builder).parts
             and path.suffix.casefold() not in GENERATED_SUFFIXES
             and path.suffix.casefold() != ".md"
-            and path.relative_to(builder).parts[0] not in {"features", "profiles"}
+            and path.relative_to(builder).parts[0] != "features"
             and path.relative_to(builder).as_posix() not in NON_COMPOSING_BUILDER_FILES
         ),
         key=lambda path: path.relative_to(builder).as_posix(),
@@ -113,7 +113,11 @@ def builder_tree_entry(builder: Path) -> dict[str, object]:
 
 
 def profile_resources_entry(workspace: Path, profile_path: Path) -> dict[str, object]:
-    profile = load_profile(profile_path, workspace)
+    profile = load_configuration(
+        profile_path,
+        workspace,
+        workspace / "na228_builder",
+    )
     paths_file = workspace / "paths.json"
     files = sorted(
         set(profile_resource_files(profile)) | {paths_file},

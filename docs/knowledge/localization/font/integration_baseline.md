@@ -221,7 +221,7 @@ standalone profile module pin was
 `9FC3C4905DFF6D14BAAA848C56E6C17D1DE4E79EEFAB2E1A7A74FAD6A25013F8`,
 and its former standalone feature pin was
 `23A2CFDD285FF00A40F35AC42D0656580E4D9DE5884F2CF568453A20E93AA3A7`.
-The current profile now covers it through the complete Localization feature pin
+The then-current profile covered it through the complete Localization feature pin
 `175401CC76981D5E5AD8A3B07E526DB9AB4DE0903144C78E4CFDFB9A96AA30F4`.
 It is a new, deterministic donor built from hash-verified clean NA2 and
 official NUN5 inputs; it is not based on m01, v22/v23, the rejected semantic

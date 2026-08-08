@@ -40,9 +40,10 @@ payload is stored in Git.
   Three continuation rows deliberately reuse their containing full-message
   pointer.
 Only `mappings.tsv` is covered by the translation importer's contribution to
-the Localization feature hash.
+the configuration-resource fingerprint.
 Payload-builder configuration is executable infrastructure rather than feature
-data; engine code and documentation are excluded from the feature pin.
+data; engine code is covered by the builder-tree fingerprint, while
+documentation is not an executable input.
 
 ## Current linked layout
 

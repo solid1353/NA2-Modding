@@ -15,7 +15,8 @@ loading a save.
 - Restore with `git stash apply 'stash@{0}'`.
 - The stash contains only these four task-owned files:
   - `docs/knowledge/game/startup.md`
-  - `na228_builder/features/qol/README.md`
+  - `na228_builder/features/qol/README.md` (when recovering the stash, reconcile
+    this historical path into the current `docs/features/qol.md`)
   - `na228_builder/features/qol/binary_patcher/edits.tsv`
   - `na228_builder/features/qol/binary_patcher/patches.tsv`
 - Verify all four files and the exact recovered diff before dropping the stash.

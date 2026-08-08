@@ -4,10 +4,12 @@ The selectable feature hierarchy and all migrated binary/runtime executable data
 
 Feature directories contain only files that cannot live inline in the catalog:
 
-- the required feature `README.md`;
 - catalog-referenced assets under `assets/`;
 - feature-local TSV inputs for engines not yet migrated, currently translation and texture import;
 - no binary-patcher or runtime-injector data directories.
+
+Catalog-only features do not have directories. Documentation lives under
+[`../../docs/features/`](../../docs/features/README.md) and is not a builder input.
 
 [`targets.tsv`](targets.tsv) is the one shared verified target registry. Catalog edits and hooks reference its target IDs.
 

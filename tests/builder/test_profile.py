@@ -11,11 +11,8 @@ from na228_builder.modules.binary_patcher import engine as binary_patcher
 from na228_builder.modules.runtime_injector import engine as runtime_injector
 from na228_builder.composer import resolve_module_order
 from na228_builder.profile import (
-    FEATURE_FIELDS,
     MODULE_TYPE_ORDER,
-    feature_content_sha256,
     load_configuration,
-    load_profile,
     module_content_sha256,
     profile_resource_files,
 )
@@ -33,13 +30,13 @@ class ProfileTests(unittest.TestCase):
     def create_workspace(self, root: Path) -> tuple[Path, Path, Path]:
         features = root / "features"
         source = root / "source"
-        profiles = root / "profiles"
+        configurations = root / "configurations"
         build = root / "build"
         pcsx2 = root / "pcsx2"
         features.mkdir()
         write_tsv(features / "targets.tsv", binary_patcher.TARGET_FIELDS, [])
         source.mkdir()
-        profiles.mkdir()
+        configurations.mkdir()
         build.mkdir()
         for directory in (
             "cheats",
@@ -85,7 +82,7 @@ class ProfileTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        return features, source, profiles
+        return features, source, configurations
 
     def create_module(self, feature: Path, module_type: str) -> Path:
         module = feature / module_type
@@ -126,26 +123,30 @@ class ProfileTests(unittest.TestCase):
     def create_feature(self, features: Path, feature_id: str, *module_types: str) -> Path:
         feature = features / feature_id
         feature.mkdir()
-        (feature / "README.md").write_text(f"# {feature_id}\n", encoding="utf-8")
         for module_type in module_types:
             self.create_module(feature, module_type)
         return feature
 
-    def create_profile(
+    def create_configuration(
         self,
-        profiles: Path,
+        configurations: Path,
         source: Path,
-        rows: list[dict[str, object]],
+        catalog: dict[str, object],
+        selection: dict[str, object],
         *,
-        profile_id: str = "test",
+        configuration_id: str = "test",
     ) -> Path:
-        profile = profiles / f"{profile_id}.tsv"
-        write_tsv(
-            profile,
-            FEATURE_FIELDS,
-            [{"enabled": "1", "bypass_check": "0", **row} for row in rows],
+        root = configurations.parent
+        configuration = configurations / f"{configuration_id}.json"
+        (root / "catalog.json").write_text(
+            json.dumps(catalog, indent=2) + "\n",
+            encoding="utf-8",
         )
-        (profiles.parent / "product.json").write_text(
+        configuration.write_text(
+            json.dumps(selection, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        (root / "product.json").write_text(
             json.dumps(
                 {
                     "schema_version": 1,
@@ -179,209 +180,160 @@ class ProfileTests(unittest.TestCase):
             + "\n",
             encoding="utf-8",
         )
-        return profile
+        return configuration
 
-    def test_profile_derives_identity_modules_and_order(self) -> None:
+    def test_configuration_derives_identity_modules_and_order(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            features, source, profiles = self.create_workspace(root)
-            alpha = self.create_feature(features, "alpha", "binary_patcher")
-            localization = self.create_feature(
+            features, source, configurations = self.create_workspace(root)
+            self.create_feature(
                 features,
                 "localization",
                 "translation_importer",
-                "string_patcher",
-                "binary_patcher",
+                "texture_patcher",
             )
-            profile_path = self.create_profile(
-                profiles,
+            configuration_path = self.create_configuration(
+                configurations,
                 source,
-                [
-                    {"feature_id": "alpha", "expected_sha256": feature_content_sha256(alpha)},
-                    {"feature_id": "localization", "expected_sha256": feature_content_sha256(localization)},
-                ],
+                {
+                    "localization": {
+                        "translated_text": {"description": "Text"},
+                        "translated_textures": {"description": "Textures"},
+                    }
+                },
+                {
+                    "localization": {
+                        "translated_text": True,
+                        "translated_textures": True,
+                    }
+                },
             )
-            profile = load_profile(profile_path, root)
+            profile = load_configuration(configuration_path, root, root)
             self.assertEqual(profile.profile_id, "test")
-            self.assertEqual([item.feature_id for item in profile.features], ["alpha", "localization"])
+            self.assertEqual([item.feature_id for item in profile.features], ["localization"])
             self.assertEqual(
                 [item.module_id for item in profile.modules],
                 [
-                    "alpha.binary_patcher",
                     "localization.translation_importer",
-                    "localization.string_patcher",
-                    "localization.binary_patcher",
+                    "localization.texture_patcher",
                 ],
             )
-            self.assertEqual([item.order for item in profile.modules], [1, 2, 3, 4])
+            self.assertEqual([item.order for item in profile.modules], [1, 2])
 
-    def test_rejects_feature_hash_mismatch(self) -> None:
+    def test_configuration_definition_must_be_json(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            features, source, profiles = self.create_workspace(root)
-            self.create_feature(features, "alpha", "binary_patcher")
-            profile = self.create_profile(
-                profiles,
+            _, _, configurations = self.create_workspace(root)
+            definition = configurations / "legacy.tsv"
+            definition.write_text("feature_id\tenabled\n", encoding="utf-8")
+            with self.assertRaisesRegex(FileNotFoundError, "not a JSON file"):
+                load_configuration(definition, root, root)
+
+    def test_disabled_catalog_only_feature_requires_no_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features, source, configurations = self.create_workspace(root)
+            self.create_feature(features, "localization", "translation_importer")
+            configuration = self.create_configuration(
+                configurations,
                 source,
-                [{"feature_id": "alpha", "expected_sha256": "0" * 64}],
+                {
+                    "localization": {"translated_text": {"description": "Text"}},
+                    "catalog_only": {"description": "Catalog-only leaf"},
+                },
+                {
+                    "localization": {"translated_text": True},
+                    "catalog_only": False,
+                },
             )
-            with self.assertRaisesRegex(ValueError, "does not match"):
-                load_profile(profile, root)
+            loaded = load_configuration(configuration, root, root)
+            self.assertFalse((features / "catalog_only").exists())
+            self.assertEqual(loaded.features[1].module_ids, ())
 
-    def test_allows_explicit_feature_hash_bypass_and_records_actual_hash(self) -> None:
+    def test_resources_include_only_canonical_configuration_inputs(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            features, source, profiles = self.create_workspace(root)
-            alpha = self.create_feature(features, "alpha", "binary_patcher")
-            profile = self.create_profile(
-                profiles,
-                source,
-                [
-                    {
-                        "feature_id": "alpha",
-                        "expected_sha256": "0" * 64,
-                        "bypass_check": "1",
-                    }
-                ],
-            )
-
-            loaded = load_profile(profile, root)
-
-            feature = loaded.features[0]
-            self.assertTrue(feature.hash_check_bypassed)
-            self.assertEqual(feature.expected_sha256, "0" * 64)
-            self.assertEqual(feature.actual_sha256, feature_content_sha256(alpha))
-
-    def test_rejects_unknown_feature_hash_bypass_marker(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            features, source, profiles = self.create_workspace(root)
-            self.create_feature(features, "alpha", "binary_patcher")
-            profile = self.create_profile(
-                profiles,
-                source,
-                [
-                    {
-                        "feature_id": "alpha",
-                        "expected_sha256": "0" * 64,
-                        "bypass_check": "x",
-                    }
-                ],
-            )
-
-            with self.assertRaisesRegex(ValueError, "bypass_check must be 0 or 1"):
-                load_profile(profile, root)
-
-    def test_rejects_duplicate_feature(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            features, source, profiles = self.create_workspace(root)
-            alpha = self.create_feature(features, "alpha", "binary_patcher")
-            row = {"feature_id": "alpha", "expected_sha256": feature_content_sha256(alpha)}
-            profile = self.create_profile(profiles, source, [row, row])
-            with self.assertRaisesRegex(ValueError, "Duplicate or invalid feature_id"):
-                load_profile(profile, root)
-
-    def test_disabled_feature_remains_declared_but_is_not_composed(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            features, source, profiles = self.create_workspace(root)
-            active = self.create_feature(features, "active", "binary_patcher")
-            self.create_feature(features, "inactive", "binary_patcher")
-            profile = self.create_profile(
-                profiles,
-                source,
-                [
-                    {
-                        "feature_id": "active",
-                        "expected_sha256": feature_content_sha256(active),
-                    },
-                    {
-                        "feature_id": "inactive",
-                        "enabled": "0",
-                        "expected_sha256": "0" * 64,
-                    },
-                ],
-            )
-            loaded = load_profile(profile, root)
-            self.assertEqual([item.feature_id for item in loaded.features], ["active"])
-
-    def test_release_resources_include_structure_and_only_canonical_module_inputs(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            features, source, profiles = self.create_workspace(root)
-            feature = self.create_feature(features, "alpha", "binary_patcher")
-            helper = feature / "binary_patcher" / "helper.py"
+            features, source, configurations = self.create_workspace(root)
+            feature = self.create_feature(features, "localization", "translation_importer")
+            helper = feature / "translation_importer" / "helper.py"
             helper.write_text("raise SystemExit\n", encoding="utf-8")
-            profile_path = self.create_profile(
-                profiles,
+            configuration = self.create_configuration(
+                configurations,
                 source,
-                [{"feature_id": "alpha", "expected_sha256": feature_content_sha256(feature)}],
+                {"localization": {"translated_text": {"description": "Text"}}},
+                {"localization": {"translated_text": True}},
             )
-            loaded = load_profile(profile_path, root)
+            loaded = load_configuration(configuration, root, root)
             resources = set(profile_resource_files(loaded))
             self.assertIn((root / "product.json").resolve(), resources)
-            self.assertIn((feature / "README.md").resolve(), resources)
-            self.assertIn(
-                (feature / "binary_patcher" / "edits.tsv").resolve(), resources
-            )
+            self.assertIn((root / "catalog.json").resolve(), resources)
+            self.assertIn(configuration.resolve(), resources)
+            self.assertIn((feature / "translation_importer" / "mappings.tsv").resolve(), resources)
             self.assertIn((features / "targets.tsv").resolve(), resources)
-            self.assertFalse(
-                (feature / "binary_patcher" / "targets.tsv").exists()
-            )
             self.assertNotIn(helper.resolve(), resources)
 
     def test_rejects_unknown_module_directory(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            features, _, _ = self.create_workspace(root)
-            feature = features / "alpha"
+            features, source, configurations = self.create_workspace(root)
+            feature = features / "localization"
             feature.mkdir()
-            (feature / "README.md").write_text("# alpha\n", encoding="utf-8")
             (feature / "unknown").mkdir()
-            with self.assertRaisesRegex(ValueError, "unknown module"):
-                feature_content_sha256(feature)
+            configuration = self.create_configuration(
+                configurations,
+                source,
+                {"localization": {"translated_text": {"description": "Text"}}},
+                {"localization": {"translated_text": False}},
+            )
+            with self.assertRaisesRegex(ValueError, "unknown directories"):
+                load_configuration(configuration, root, root)
 
     def test_rejects_feature_root_metadata_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            features, _, _ = self.create_workspace(root)
-            feature = self.create_feature(features, "alpha", "binary_patcher")
+            features, source, configurations = self.create_workspace(root)
+            feature = self.create_feature(features, "localization", "translation_importer")
             (feature / "manifest.tsv").write_text("key\tvalue\n", encoding="utf-8")
+            configuration = self.create_configuration(
+                configurations,
+                source,
+                {"localization": {"translated_text": {"description": "Text"}}},
+                {"localization": {"translated_text": True}},
+            )
             with self.assertRaisesRegex(ValueError, "unsupported files"):
-                feature_content_sha256(feature)
+                load_configuration(configuration, root, root)
 
-    def test_importer_uses_derived_string_consumer_without_feature_directory(self) -> None:
+    def test_importer_uses_derived_string_consumer_without_string_directory(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            features, source, profiles = self.create_workspace(root)
-            feature = self.create_feature(features, "localization", "translation_importer")
-            profile = self.create_profile(
-                profiles,
+            features, source, configurations = self.create_workspace(root)
+            self.create_feature(features, "localization", "translation_importer")
+            configuration = self.create_configuration(
+                configurations,
                 source,
-                [{"feature_id": "localization", "expected_sha256": feature_content_sha256(feature)}],
+                {"localization": {"translated_text": {"description": "Text"}}},
+                {"localization": {"translated_text": True}},
             )
-            loaded = load_profile(profile, root)
+            loaded = load_configuration(configuration, root, root)
             self.assertEqual(resolve_module_order(loaded.modules), loaded.modules)
 
-    def test_profile_identity_requires_equal_length_boot_paths(self) -> None:
+    def test_configuration_identity_requires_equal_length_boot_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            features, source, profiles = self.create_workspace(root)
-            alpha = self.create_feature(features, "alpha", "binary_patcher")
-            profile = self.create_profile(
-                profiles,
+            features, source, configurations = self.create_workspace(root)
+            self.create_feature(features, "localization", "translation_importer")
+            configuration = self.create_configuration(
+                configurations,
                 source,
-                [
-                    {"feature_id": "alpha", "expected_sha256": feature_content_sha256(alpha)},
-                ],
+                {"localization": {"translated_text": {"description": "Text"}}},
+                {"localization": {"translated_text": True}},
             )
             product_path = root / "product.json"
             product = json.loads(product_path.read_text(encoding="utf-8"))
             product["identity"]["image"]["output_boot_path"] = "BOOT.ELF"
             product_path.write_text(json.dumps(product, indent=2) + "\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "equal byte lengths"):
-                load_profile(profile, root)
+                load_configuration(configuration, root, root)
 
     def test_binary_hash_ignores_helpers_but_includes_referenced_blobs(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -480,9 +432,10 @@ class ProfileTests(unittest.TestCase):
             repository / "na228_builder" / "configurations" / "release.json"
         )
         marker = repository / "na228_builder" / "release_manifest.json"
-        loaded = load_profile(
+        loaded = load_configuration(
             profile_path,
             repository,
+            repository / "na228_builder",
             root_overrides={"na2": marker, "nun5": marker},
         )
         self.assertEqual(
@@ -497,6 +450,9 @@ class ProfileTests(unittest.TestCase):
                 "battle_logic.binary_patcher",
             ],
         )
+        features_root = repository / "na228_builder" / "features"
+        for feature_id in ("battle_logic", "qol", "rendering"):
+            self.assertFalse((features_root / feature_id).exists())
 
     def test_complete_release_resources_include_disabled_flat_modules(self) -> None:
         repository = Path(__file__).resolve().parents[2]
@@ -533,6 +489,11 @@ class ProfileTests(unittest.TestCase):
 
         self.assertTrue(texture_files.isdisjoint(selected))
         self.assertTrue(texture_files <= complete)
+        operations_root = builder_root / "modules" / "binary_patcher" / "operations"
+        self.assertEqual(
+            {path.resolve() for path in operations_root.glob("*.tsv")},
+            {path for path in complete if path.parent == operations_root.resolve()},
+        )
 
     def test_registered_module_readmes_declare_downstream_invocations(self) -> None:
         repository = Path(__file__).resolve().parents[2]

@@ -108,12 +108,13 @@ from pathlib import Path
 
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
-from na228_builder.profile import load_profile, profile_resource_files
+from na228_builder.profile import load_configuration, profile_resource_files
 
 marker = Path(sys.argv[3]).resolve()
-profile = load_profile(
+profile = load_configuration(
     Path(sys.argv[2]),
     repository,
+    repository / "na228_builder",
     root_overrides={"na2": marker, "nun5": marker},
 )
 print(json.dumps([

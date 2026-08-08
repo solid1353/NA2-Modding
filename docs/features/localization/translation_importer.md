@@ -14,7 +14,7 @@ command or file-backed inter-stage handoff.
 - Canonical `mappings.tsv` SHA-256: `EC7472B47A336425CDF538543B9D5E5599230CDC203CF34581DAA6C9724CC8CA`
 
 The hashes above are documentation, not a second executable manifest. Git
-history and the aggregate Localization feature pin own content identity.
+history and the builder's configuration-resource fingerprint own content identity.
 `mappings.tsv` owns the canonical executable donor translations, overrides,
 and optional pointer inventory. Normal builds import only `mappings.tsv`. Root
 `product.json` owns the imported/output title declaration; `string_patcher`

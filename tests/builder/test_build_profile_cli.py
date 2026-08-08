@@ -18,7 +18,7 @@ class BuildProfileCliTests(unittest.TestCase):
             workspace = Path(directory).resolve()
             source_iso = workspace / "source.iso"
             source_iso.write_bytes(b"source")
-            profile_path = workspace / "profiles" / "default.tsv"
+            profile_path = workspace / "configurations" / "default.json"
             profile = SimpleNamespace(profile_id="default", features=(), modules=())
             plan = SimpleNamespace(
                 replacements=(object(), object()),
@@ -51,7 +51,7 @@ class BuildProfileCliTests(unittest.TestCase):
                     "PATHS",
                     new=SimpleNamespace(repository=workspace),
                 ),
-                patch.object(build_profile, "load_profile", return_value=profile),
+                patch.object(build_profile, "load_configuration", return_value=profile),
                 patch.object(
                     build_profile,
                     "compose_profile_candidate",
@@ -81,7 +81,7 @@ class BuildProfileCliTests(unittest.TestCase):
             source_iso = workspace / "source.iso"
             source_iso.write_bytes(b"source")
             output_iso = workspace / "build" / "NA2.28 - Latest.iso"
-            profile_path = workspace / "profiles" / "default.tsv"
+            profile_path = workspace / "configurations" / "default.json"
             profile_log_directory = workspace / "logs" / "profile"
             profile = SimpleNamespace(profile_id="default", features=(), modules=())
             staged_iso = build_profile.building_image_path(output_iso)
@@ -122,7 +122,7 @@ class BuildProfileCliTests(unittest.TestCase):
                     "PATHS",
                     new=SimpleNamespace(repository=workspace),
                 ),
-                patch.object(build_profile, "load_profile", return_value=profile),
+                patch.object(build_profile, "load_configuration", return_value=profile),
                 patch.object(
                     build_profile.binary_patcher_module,
                     "command_relative_path",

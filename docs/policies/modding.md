@@ -12,10 +12,9 @@ source media, PNACH, donor data, or encoded game text.
   selection. `na228_builder/catalog.json` owns selectable definitions and
   migrated binary/runtime data. Root `product.json` owns canonical inputs and
   output identity.
-- Pin values remain in `na228_builder/profiles/default.tsv` until their storage
-  is redesigned; its `enabled` column is ignored. Only the user may change a pin
-  or `bypass_check`; agents preserve every existing value exactly. Accepted reproducible checkpoints use real pins with
-  `bypass_check=0` and may be marked by annotated Git tags.
+- JSON files under `na228_builder/configurations/` are the only build
+  definitions. Feature enablement and nested selection live only there; there
+  is no separate profile or feature-pin table.
 - Reusable engines, operation definitions, and tools belong under
   `na228_builder/modules/`; migrated executable definitions belong in the
   catalog and non-inline inputs remain under the owning feature.

@@ -13,7 +13,6 @@ from na228_builder.build_preflight import (
     write_receipt,
 )
 from na228_builder.modules.binary_patcher import engine as binary_patcher
-from na228_builder.profile import feature_content_sha256
 
 
 DEPENDENCIES = {
@@ -29,31 +28,33 @@ class BuildPreflightTests(unittest.TestCase):
     def create_workspace(self, root: Path) -> dict[str, Path]:
         workspace = root / "repository"
         builder = workspace / "na228_builder"
-        profile = builder / "profiles" / "default.tsv"
+        profile = builder / "configurations" / "release.json"
         profile.parent.mkdir(parents=True)
         (builder / "engine.py").write_text("ENGINE = 1\n", encoding="utf-8")
         (builder / "schema.tsv").write_text("schema\t1\n", encoding="utf-8")
-        feature = builder / "features" / "feature"
-        module = feature / "string_patcher"
+        feature = builder / "features" / "localization"
+        module = feature / "translation_importer"
         module.mkdir(parents=True)
-        binary_module = feature / "binary_patcher"
-        binary_module.mkdir()
-        (feature / "README.md").write_text("# Feature\n", encoding="utf-8")
-        (module / "strings.tsv").write_text("string_id\n", encoding="utf-8")
+        (module / "mappings.tsv").write_text("id\n", encoding="utf-8")
         targets = builder / "features" / "targets.tsv"
         targets.write_text(
             "\t".join(binary_patcher.TARGET_FIELDS) + "\n",
             encoding="utf-8",
         )
-        for name, fields in (
-            ("groups.tsv", binary_patcher.GROUP_FIELDS),
-            ("patches.tsv", binary_patcher.PATCH_FIELDS),
-            ("edits.tsv", binary_patcher.EDIT_FIELDS),
-        ):
-            (binary_module / name).write_text(
-                "\t".join(fields) + "\n",
-                encoding="utf-8",
-            )
+        (builder / "catalog.json").write_text(
+            json.dumps(
+                {
+                    "localization": {
+                        "translated_text": {"description": "Text"}
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        profile.write_text(
+            json.dumps({"localization": {"translated_text": True}}),
+            encoding="utf-8",
+        )
         source_roots = workspace / "source_roots"
         source_roots.mkdir(parents=True)
         (source_roots / "NA2.iso.files").mkdir()
@@ -132,11 +133,6 @@ class BuildPreflightTests(unittest.TestCase):
                     "builds": {"latest": {"postfix": "Latest"}},
                 }
             ),
-            encoding="utf-8",
-        )
-        profile.write_text(
-            "feature_id\tenabled\texpected_sha256\tbypass_check\n"
-            "feature\t1\t" + feature_content_sha256(feature) + "\t1\n",
             encoding="utf-8",
         )
         na2_iso = root / "source" / "NA2.iso"
@@ -258,20 +254,22 @@ class BuildPreflightTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             initial = state_fingerprint(self.state(paths))
-            feature = paths["builder"] / "features" / "feature"
+            feature = paths["builder"] / "features" / "localization"
 
-            (feature / "README.md").write_text(
+            documentation = paths["workspace"] / "docs" / "features" / "localization.md"
+            documentation.parent.mkdir(parents=True)
+            documentation.write_text(
                 "# Updated documentation only\n", encoding="utf-8"
             )
             self.assertEqual(initial, state_fingerprint(self.state(paths)))
 
-            (feature / "string_patcher" / "strings.tsv").write_text(
-                "string_id\nchanged\n", encoding="utf-8"
+            (feature / "translation_importer" / "mappings.tsv").write_text(
+                "id\nchanged\n", encoding="utf-8"
             )
             self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
 
-            (feature / "string_patcher" / "strings.tsv").write_text(
-                "string_id\n", encoding="utf-8"
+            (feature / "translation_importer" / "mappings.tsv").write_text(
+                "id\n", encoding="utf-8"
             )
             targets = paths["builder"] / "features" / "targets.tsv"
             targets.write_text(
@@ -323,7 +321,7 @@ class BuildPreflightTests(unittest.TestCase):
 
             self.record(paths, fingerprint)
             receipt = json.loads(paths["receipt"].read_text(encoding="utf-8"))
-            receipt["state"]["profile"] = "profiles/tampered"
+            receipt["state"]["profile"] = "configurations/tampered.json"
             paths["receipt"].write_text(json.dumps(receipt), encoding="utf-8")
             self.assertEqual(self.check(paths)["reason"], "receipt-invalid")
 
@@ -348,7 +346,7 @@ class BuildPreflightTests(unittest.TestCase):
             self.record(paths, fingerprint)
             text = paths["receipt"].read_text(encoding="utf-8")
             self.assertNotIn(str(paths["workspace"]), text)
-            self.assertIn('"profile": "profiles/default.tsv"', text)
+            self.assertIn('"profile": "configurations/release.json"', text)
 
 
 if __name__ == "__main__":

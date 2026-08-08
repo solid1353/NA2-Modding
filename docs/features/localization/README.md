@@ -8,8 +8,23 @@ the remaining translation/texture TSV inputs live under
 Localization composes the accepted English translation, source-derived UI
 textures, guarded UI layout edits, the native NUN5-derived Font stack, compact
 external strings, and regional menu input behavior. Enabling the feature
-is selected by a structurally matching configuration; one aggregate pin covers
-its canonical inputs.
+is selected by a structurally matching configuration. The build-resource
+fingerprint covers its canonical executable inputs.
+
+## Canonical builder inputs
+
+The `localization` subtree of `na228_builder/catalog.json` owns its nested
+selection, guarded binary edits, runtime hooks, resident sources and fragments,
+relocations, and ABI metadata. Files retained under
+`na228_builder/features/localization/` are only non-inline inputs:
+
+- `assets/`: catalog-referenced native Font assets;
+- `translation_importer/`: canonical text mappings and donor provenance;
+- `texture_patcher/`: source-derived English UI containers.
+
+There are no feature-local binary-patcher or runtime-injector data directories.
+Those engines consume catalog data, and the translation importer invokes the
+shared string-patcher engine as a derived stage.
 
 ## Documents
 

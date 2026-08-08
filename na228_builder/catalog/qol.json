@@ -1,6 +1,6 @@
 {
   "startup": {
-    "description": "Independent startup-sequence skips.",
+    "description": "Independent startup-sequence skips and a timed loading counter during the boot loader wait.",
     "skip_cc2_intro": {
       "proven": false,
       "description": "Skip the CyberConnect2 intro.",
@@ -21,6 +21,13 @@
       "edits": [
         "enter_the_title_input_state_immediately_after_required_startup_loading_and_splash_cleanup_bypassing_the_post_splash_sequence",
         "return_the_native_start_accepted_result_without_constructing_or_displaying_the_title_screen_selecting_main_menu_state_4_substate_1_through_the_existing_caller"
+      ]
+    },
+    "loading_screen": {
+      "proven": false,
+      "description": "Replace the boot splashes with a large primitive percentage and progress bar paced across the measured 25-second load while the original startup loaders run.",
+      "injections": [
+        "startup_loading_screen"
       ]
     }
   },
@@ -57,7 +64,7 @@
   },
   "mode_select": {
     "description": "Mode availability and selection behavior.",
-    "remove_adventure_mode": {
+    "remove_adventure": {
       "proven": false,
       "description": "Omit Adventure from Mode Select using the NUN6 negative availability sentinel.",
       "edits": [
@@ -100,16 +107,6 @@
         "retain_the_helper_s_zero_second_argument_when_the_unformatted_save_flow_bypass_is_not_taken",
         "return_to_the_main_menu_when_the_unformatted_format_confirmation_returns_no_instead_of_entering_the_save_restart_state",
         "exit_the_save_controller_when_the_no_save_data_confirmation_returns_no_instead_of_resetting_the_save_flow_to_its_initial_prompt"
-      ]
-    }
-  },
-  "startup_loading": {
-    "description": "Present a timed loading counter during the boot loader wait.",
-    "startup_loading_screen": {
-      "proven": false,
-      "description": "Replace the boot splashes with a large primitive percentage and progress bar paced across the measured 25-second load while the original startup loaders run.",
-      "injections": [
-        "startup_loading_screen"
       ]
     }
   }

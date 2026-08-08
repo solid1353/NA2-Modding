@@ -1,9 +1,9 @@
 {
-  "font_glyphs": {
-    "description": "Static native-font glyph, metric-table, and geometry inputs. Resident native-font metric decoding and draw adjustment.",
-    "font_glyphs_native": {
+  "font": {
+    "description": "English font rendering and formatting.",
+    "glyphs": {
       "proven": false,
-      "description": "Use NUN5's native 14x20 raster geometry and packed metrics for every same-semantic English glyph, reconstruct unsupported punctuation from clean NA2, preserve clean GF4C, bound the secondary atlas, and use descriptor height only for the secondary glyph quad.",
+      "description": "Use the English glyph atlas, packed metrics, and renderer geometry.",
       "edits": [
         "font_glyphs_native_01",
         "font_glyphs_native_02",
@@ -15,1547 +15,511 @@
         "font_glyphs_native_08"
       ],
       "injections": [
-        "localization"
-      ]
-    },
-    "font_glyphs_metrics": {
-      "proven": false,
-      "description": "Decode the accepted packed 14x20 metric rows for measurement and drawing from composition-time C in 228.BIN, leaving only guarded register-setup hooks in the fixed boot ELF.",
-      "injections": [
         "localization",
         "font_glyphs_metrics"
       ]
-    }
-  },
-  "font_layout": {
-    "description": "Static font layout, contextual presentation, alignment, and formatting call-site inputs. Resident font measurement, fitting, wrapping, positioning, and caller adapters.",
-    "font_layout_character_modal": {
+    },
+    "layout": {
       "proven": false,
-      "description": "Use independently measured local X positions for all five Back to Game Mode Screen modal rows and place the structural fifth-row footer at local Y 115.",
+      "description": "Apply English text measurement, fitting, wrapping, selected styling, and screen-specific layout.",
       "edits": [
         "font_layout_character_modal_01",
-        "font_layout_character_modal_02"
-      ],
-      "injections": [
-        "localization",
-        "font_layout"
-      ]
-    },
-    "font_layout_linked_mode_modal": {
-      "proven": false,
-      "description": "Match the dedicated Linked Mode title and both selector rows to NUN5 with one local title origin and one shared choice base and interval; the paired runtime hook owns the centered width correction and selected color. Apply one shared centered 1.05 horizontal-scale session to both Linked Mode choices while retaining the accepted title, base-row, and interval geometry.",
-      "edits": [
+        "font_layout_character_modal_02",
         "font_layout_linked_mode_modal_01",
         "font_layout_linked_mode_modal_02",
-        "font_layout_linked_mode_modal_03"
-      ],
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_linked_mode_modal"
-      ]
-    },
-    "font_layout_on_off_context": {
-      "proven": false,
-      "description": "Route the Commands, Damage, and Guide Ninja Sound Practice Settings rows to the existing title-case Off/On selector table.",
-      "edits": [
+        "font_layout_linked_mode_modal_03",
         "font_layout_on_off_context_01",
         "font_layout_on_off_context_02",
-        "font_layout_on_off_context_03"
-      ],
-      "injections": [
-        "localization",
-        "font_layout"
-      ]
-    },
-    "font_layout_command_relationships": {
-      "proven": false,
-      "description": "Suppress only the second native Command Chart auxiliary-string draw after the runtime-injector adapter combines both optional relationship strings. Combine each Command Chart row's two optional relationship strings and render them once through one bounded two-line layout, then select the homologous icon-row offset according to whether the row has relationship text.",
-      "edits": [
+        "font_layout_on_off_context_03",
         "font_layout_command_relationships_01"
       ],
       "injections": [
         "localization",
         "font_layout",
-        "font_layout_command_relationships"
-      ]
-    },
-    "font_layout_core": {
-      "proven": false,
-      "description": "Provide independent NUN5-compatible printable-ASCII measurement, shrink-only fitting, box positioning, explicit line measurement, and session-guarded renderer hooks for accepted caller-family adapters.",
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_core"
-      ]
-    },
-    "font_layout_global_selected_style": {
-      "proven": false,
-      "description": "Apply one origin rule across every native NA2 gray-shadow selected renderer: keep the colored glyph at its ordinary origin and place its shadow one unit right and two units below.",
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_global_selected_style"
-      ]
-    },
-    "font_layout_controls": {
-      "proven": false,
-      "description": "Route the first eight Control Settings action labels through the v2 128-unit NUN5 box.",
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_controls"
-      ]
-    },
-    "font_layout_titles": {
-      "proven": false,
-      "description": "Route the two title-only BTL draw calls through one configurable v2 adapter with distinct 288-unit Command Chart and 352-unit Practice containers.",
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_titles"
-      ]
-    },
-    "font_layout_pause_controls": {
-      "proven": false,
-      "description": "Route both normal and selected Pause Controls rows through one shared 216-unit shrink-only box with the retained NUN5 four-unit Y correction.",
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_pause_controls"
-      ]
-    },
-    "font_layout_quit_confirmation": {
-      "proven": false,
-      "description": "Route the shared quit-confirmation body and Yes/No list through draw-time wrapping and scoped NUN5 coordinate adapters, while exact Special Controls string-pointer guards reuse the same selected/unselected hooks.",
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_quit_confirmation"
-      ]
-    },
-    "font_layout_mode_select_confirmation": {
-      "proven": false,
-      "description": "Route the dedicated Return to Title Screen body draw through NUN5 renderer state and retain the scoped Yes/No coordinate mapper for the top selector.",
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_mode_select_confirmation"
-      ]
-    },
-    "font_layout_character_select_modal": {
-      "proven": false,
-      "description": "Route both selected and ordinary five-row entries through one bounded NUN5-metric session, render the return-confirmation body through NUN5's 368x24 secondary-font box, and scope only that confirmation's top Yes/No list through the shared NUN5 coordinate mapper.",
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_character_select_modal"
-      ]
-    },
-    "font_layout_collection_confirmation": {
-      "proven": false,
-      "description": "Route both Collection exit-confirmation body consumers and the bounded Yes/No list through NUN5-matched C geometry.",
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_collection_confirmation"
-      ]
-    },
-    "font_layout_collection_lists": {
-      "proven": false,
-      "description": "Route the shared Collection row draw through family boxes and move the three character-header callers through two shared plaque-origin formulas without changing any displayed string.",
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_collection_lists"
-      ]
-    },
-    "font_layout_jutsu_selector": {
-      "proven": false,
-      "description": "Route the exact Battle Settings Jutsu-row draw through a selective C entry that preserves native one-line rendering and uses the NUN5-homologous 186x32 two-line compositor only when wrapping is required.",
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_jutsu_selector"
-      ]
-    },
-    "font_layout_special_controls_body": {
-      "proven": false,
-      "description": "Route only the exact Special Controls explanatory-body call through the shared draw-time word wrapper using the NUN5 400x60 two-line container.",
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_special_controls_body"
-      ]
-    },
-    "font_layout_practice_explanations": {
-      "proven": false,
-      "description": "Replace the per-token Practice explanation renderer with one NUN5-equivalent mixed text/icon buffer, unlimited word wrapping inside the 364x48 box, and call-local icon callbacks.",
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_practice_explanations"
-      ]
-    },
-    "font_layout_settings_rows": {
-      "proven": false,
-      "description": "Route the exact Battle Settings and Practice Settings loops through page-level label, heading, compact-token value, descriptive-phrase value, and digit-leading value templates.",
-      "injections": [
-        "localization",
-        "font_layout",
-        "font_layout_settings_rows"
-      ]
-    },
-    "font_layout_ninja_song_details": {
-      "proven": false,
-      "description": "Replace the shared data-driven formula renderer used by all fifteen rows, retaining its three native formula variants while applying the NUN5 term boxes and positions; wrap every objective through one separate 288x32 prose template.",
-      "injections": [
-        "localization",
-        "font_layout",
+        "font_layout_linked_mode_modal",
+        "font_layout_command_relationships",
+        "font_layout_core",
+        "font_layout_global_selected_style",
+        "font_layout_controls",
+        "font_layout_titles",
+        "font_layout_pause_controls",
+        "font_layout_quit_confirmation",
+        "font_layout_mode_select_confirmation",
+        "font_layout_character_select_modal",
+        "font_layout_collection_confirmation",
+        "font_layout_collection_lists",
+        "font_layout_jutsu_selector",
+        "font_layout_special_controls_body",
+        "font_layout_practice_explanations",
+        "font_layout_settings_rows",
         "font_layout_ninja_song_details"
       ]
-    }
-  },
-  "font_numeric_formatting": {
-    "description": "Static ASCII numeric-formatting data and call-site inputs. Resident ASCII numeric formatting for dynamic UI values.",
-    "font_numeric_save_load_separator": {
+    },
+    "numeric_formatting": {
       "proven": false,
-      "description": "Replace the Save/Load-only fullwidth time colon with ASCII colon; the compiled-C runtime package owns all numeric formatting behavior.",
+      "description": "Format dynamic numbers with the English renderer conventions.",
       "edits": [
         "font_numeric_save_load_separator_01"
       ],
       "injections": [
-        "localization"
-      ]
-    },
-    "font_numeric_ninja_song": {
-      "proven": false,
-      "description": "Route all five dynamic Ninja Song decimal fields through one NUN5-compatible ASCII formatter while preserving each caller's width and padding mode.",
-      "injections": [
         "localization",
-        "font_numeric_ninja_song"
-      ]
-    },
-    "font_numeric_save_load": {
-      "proven": false,
-      "description": "Route the six accepted Save/Load numeric fields through typed C entries while retaining only register setup and symbolic hooks at the native call sites.",
-      "injections": [
-        "localization",
-        "font_numeric_save_load"
-      ]
-    },
-    "font_numeric_battle_settings": {
-      "proven": false,
-      "description": "Route only ordinary Battle Settings Time through the shared ASCII C formatting layer while preserving the special 100/infinity path.",
-      "injections": [
-        "localization",
+        "font_numeric_ninja_song",
+        "font_numeric_save_load",
         "font_numeric_battle_settings"
       ]
     }
   },
   "ui_layout": {
-    "description": "Localized graphical UI layout and geometry.",
-    "ui_layout_ultimate_jutsu_label": {
-      "proven": false,
-      "description": "Make the OUGI label constructor instantiate one 128x64 regional label instead of two 64x64 Japanese halves.",
-      "edits": [
-        "ui_layout_ultimate_jutsu_label_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_stage_select": {
-      "proven": false,
-      "description": "Use the official NUN5 stage-name UV table, horizontal fit, Random-prompt position, effective OK/Back anchors, and correct preview indexing while preserving NA2's 16-byte stage records.",
-      "edits": [
-        "ui_layout_stage_select_01",
-        "ui_layout_stage_select_02",
-        "ui_layout_stage_select_03",
-        "ui_layout_stage_select_04",
-        "ui_layout_stage_select_05",
-        "ui_layout_stage_select_06",
-        "ui_layout_stage_select_07",
-        "ui_layout_stage_select_08",
-        "ui_layout_stage_select_09",
-        "ui_layout_stage_select_10",
-        "ui_layout_stage_select_11",
-        "ui_layout_stage_select_12",
-        "ui_layout_stage_select_13",
-        "ui_layout_stage_select_14",
-        "ui_layout_stage_select_15",
-        "ui_layout_stage_select_16",
-        "ui_layout_stage_select_17",
-        "ui_layout_stage_select_18",
-        "ui_layout_stage_select_19",
-        "ui_layout_stage_select_20",
-        "ui_layout_stage_select_21",
-        "ui_layout_stage_select_22",
-        "ui_layout_stage_select_23",
-        "ui_layout_stage_select_24",
-        "ui_layout_stage_select_25",
-        "ui_layout_stage_select_26",
-        "ui_layout_stage_select_27",
-        "ui_layout_stage_select_28",
-        "ui_layout_stage_select_29",
-        "ui_layout_stage_select_30",
-        "ui_layout_stage_select_31",
-        "ui_layout_stage_select_32",
-        "ui_layout_stage_select_33",
-        "ui_layout_stage_select_34",
-        "ui_layout_stage_select_35",
-        "ui_layout_stage_select_36",
-        "ui_layout_stage_select_37",
-        "ui_layout_stage_select_38",
-        "ui_layout_stage_select_39",
-        "ui_layout_stage_select_40",
-        "ui_layout_stage_select_41",
-        "ui_layout_stage_select_42",
-        "ui_layout_stage_select_43",
-        "ui_layout_stage_select_44",
-        "ui_layout_stage_select_45",
-        "ui_layout_stage_select_46",
-        "ui_layout_stage_select_47",
-        "ui_layout_stage_select_48",
-        "ui_layout_stage_select_49",
-        "ui_layout_stage_select_50",
-        "ui_layout_stage_select_51",
-        "ui_layout_stage_select_52",
-        "ui_layout_stage_select_53",
-        "ui_layout_stage_select_54",
-        "ui_layout_stage_select_55",
-        "ui_layout_stage_select_56"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_character_name_rectangles": {
-      "proven": false,
-      "description": "Replace the 96-entry Japanese character-name UV table with the complete official NUN5 English table used by CHARSEL1.CCS and the shared character-name atlases.",
-      "edits": [
-        "ui_layout_character_name_rectangles_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_options_labels": {
-      "proven": false,
-      "description": "Replace the five Japanese Options-menu and six difficulty-label UV rectangles with the complete official NUN5 English tables used by OPTION.CCS.",
-      "edits": [
-        "ui_layout_options_labels_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_difficulty_sprite": {
-      "proven": false,
-      "description": "Match NUN5's Options renderer by using the alternate sprite object for difficulty indices 0, 4, and 5 instead of only 0 and 5.",
-      "edits": [
-        "ui_layout_difficulty_sprite_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_battle_hud_names": {
-      "proven": false,
-      "description": "Cap the battle-HUD character-name display width at 160 pixels, matching NUN5 while preserving the full atlas source rectangle.",
-      "edits": [
-        "ui_layout_battle_hud_names_01",
-        "ui_layout_battle_hud_names_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_practice_settings_prompt": {
-      "proven": false,
-      "description": "Use the official NUN5 English prompt rectangle and X anchor so the full label and Square icon fit the VS screen.",
-      "edits": [
-        "ui_layout_practice_settings_prompt_01",
-        "ui_layout_practice_settings_prompt_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_battle_hud_name_rectangles": {
-      "proven": false,
-      "description": "Replace the separate 95-entry Japanese battle-HUD UV table with the official NUN5 English table used by CMN/GAUGE.CCS.",
-      "edits": [
-        "ui_layout_battle_hud_name_rectangles_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_vs_confirmation": {
-      "proven": false,
-      "description": "Use the official NUN5 Customize Jutsu, Battle Settings, arrows, input-glyph, Jutsu-label, OK, and Back records with NA2-specific anchor corrections where the two renderers differ.",
-      "edits": [
-        "ui_layout_vs_confirmation_01",
-        "ui_layout_vs_confirmation_02",
-        "ui_layout_vs_confirmation_03",
-        "ui_layout_vs_confirmation_04",
-        "ui_layout_vs_confirmation_05",
-        "ui_layout_vs_confirmation_06",
-        "ui_layout_vs_confirmation_07",
-        "ui_layout_vs_confirmation_08",
-        "ui_layout_vs_confirmation_09",
-        "ui_layout_vs_confirmation_10",
-        "ui_layout_vs_confirmation_11",
-        "ui_layout_vs_confirmation_12",
-        "ui_layout_vs_confirmation_13",
-        "ui_layout_vs_confirmation_14",
-        "ui_layout_vs_confirmation_15",
-        "ui_layout_vs_confirmation_16",
-        "ui_layout_vs_confirmation_17",
-        "ui_layout_vs_confirmation_18",
-        "ui_layout_vs_confirmation_19"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_round_label": {
-      "proven": false,
-      "description": "Replace the two Japanese Round glyphs with the official one-part NUN5 English label and match its position and 1.2 scale.",
-      "edits": [
-        "ui_layout_round_label_01",
-        "ui_layout_round_label_02",
-        "ui_layout_round_label_03",
-        "ui_layout_round_label_04",
-        "ui_layout_round_label_05",
-        "ui_layout_round_label_06",
-        "ui_layout_round_label_07",
-        "ui_layout_round_label_08"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_jutsu_selector_arrows": {
-      "proven": false,
-      "description": "Omit NA2's two closed-selector horizontal-arrow draws and render the official NUN5 arrow record vertically through a draw-scoped NA2 compatibility helper.",
-      "edits": [
-        "ui_layout_jutsu_selector_arrows_01",
-        "ui_layout_jutsu_selector_arrows_02",
-        "ui_layout_jutsu_selector_arrows_03",
-        "ui_layout_jutsu_selector_arrows_04",
-        "ui_layout_jutsu_selector_arrows_05",
-        "ui_layout_jutsu_selector_arrows_06",
-        "ui_layout_jutsu_selector_arrows_07",
-        "ui_layout_jutsu_selector_arrows_08",
-        "ui_layout_jutsu_selector_arrows_09",
-        "ui_layout_jutsu_selector_arrows_10"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_command_scroll_arrows": {
-      "proven": false,
-      "description": "Copy the official NUN5 vertical-scroll triangle rectangle used by the shared Command Menu and Command Chart renderer.",
-      "edits": [
-        "ui_layout_command_scroll_arrows_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_item_status_paired": {
-      "proven": false,
-      "description": "Import the official NUN5 paired item-status records and rank offsets, then port the anisotropic bubble and foreground layout contract without changing NA2's object ABI.",
-      "edits": [
-        "ui_layout_item_status_paired_01",
-        "ui_layout_item_status_paired_02",
-        "ui_layout_item_status_paired_03",
-        "ui_layout_item_status_paired_04",
-        "ui_layout_item_status_paired_05",
-        "ui_layout_item_status_paired_06",
-        "ui_layout_item_status_paired_07",
-        "ui_layout_item_status_paired_08",
-        "ui_layout_item_status_paired_09",
-        "ui_layout_item_status_paired_10",
-        "ui_layout_item_status_paired_11",
-        "ui_layout_item_status_paired_12",
-        "ui_layout_item_status_paired_13",
-        "ui_layout_item_status_paired_14",
-        "ui_layout_item_status_paired_15",
-        "ui_layout_item_status_paired_16",
-        "ui_layout_item_status_paired_17",
-        "ui_layout_item_status_paired_18",
-        "ui_layout_item_status_paired_19",
-        "ui_layout_item_status_paired_20",
-        "ui_layout_item_status_paired_21",
-        "ui_layout_item_status_paired_22",
-        "ui_layout_item_status_paired_23",
-        "ui_layout_item_status_paired_24",
-        "ui_layout_item_status_paired_25",
-        "ui_layout_item_status_paired_26",
-        "ui_layout_item_status_paired_27"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_item_status_numeric": {
-      "proven": false,
-      "description": "Import the official NUN5 Health, Chakra, and Recovery records and port the complete numeric top-label, lower-label, and one/two/three-digit layout through the shared NA2-compatible item helper.",
-      "edits": [
-        "ui_layout_item_status_numeric_01",
-        "ui_layout_item_status_numeric_02",
-        "ui_layout_item_status_numeric_03",
-        "ui_layout_item_status_numeric_04",
-        "ui_layout_item_status_numeric_05",
-        "ui_layout_item_status_numeric_06",
-        "ui_layout_item_status_numeric_07",
-        "ui_layout_item_status_numeric_08",
-        "ui_layout_item_status_numeric_09",
-        "ui_layout_item_status_numeric_10",
-        "ui_layout_item_status_numeric_11",
-        "ui_layout_item_status_numeric_12",
-        "ui_layout_item_status_numeric_13",
-        "ui_layout_item_status_numeric_14",
-        "ui_layout_item_status_numeric_15",
-        "ui_layout_item_status_numeric_16"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_item_status_single": {
-      "proven": false,
-      "description": "Import the official NUN5 single-status records and port the shared origin, donor width scales, and record-specific quarter-turn without changing NA2's object ABI.",
-      "edits": [
-        "ui_layout_item_status_single_01",
-        "ui_layout_item_status_single_02",
-        "ui_layout_item_status_single_03",
-        "ui_layout_item_status_single_04",
-        "ui_layout_item_status_single_05",
-        "ui_layout_item_status_single_06"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_item_status_fixed": {
-      "proven": false,
-      "description": "Reuse the donor-backed item records and shared width helper to center both fixed-class labels at NUN5's exact row positions without changing NA2's object ABI.",
-      "edits": [
-        "ui_layout_item_status_fixed_01",
-        "ui_layout_item_status_fixed_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_item_pickup_doll": {
-      "proven": false,
-      "description": "Copy NUN5's exact substitution-doll item record over the homologous NA2 record selected by the live pickup updater.",
-      "edits": [
-        "ui_layout_item_pickup_doll_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_mash_prompts": {
-      "proven": false,
-      "description": "Copy the complete official NUN5 English seven-record main-prompt rectangle table used by the battle input overlay.",
-      "edits": [
-        "ui_layout_mash_prompts_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_mode_select": {
-      "proven": false,
-      "description": "Copy the official NUN5 English START-label rectangle, port its draw anchor, and reproduce NUN5's effective OK and Back anchors without changing NA2's renderer ABI.",
-      "edits": [
-        "ui_layout_mode_select_01",
-        "ui_layout_mode_select_02",
-        "ui_layout_mode_select_03",
-        "ui_layout_mode_select_04"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_controls_vibration": {
-      "proven": false,
-      "description": "Copy the official NUN5 English Vibration-label rectangle used by the imported common UI atlas over NA2's narrow Japanese rectangle.",
-      "edits": [
-        "ui_layout_controls_vibration_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_character_select_footer": {
-      "proven": false,
-      "description": "Copy NUN5's exact Select Color and Random X-anchor instructions into the homologous NA2 Character Select footer renderer and reproduce NUN5's effective OK and Back anchors without changing NA2's renderer ABI.",
-      "edits": [
-        "ui_layout_character_select_footer_01",
-        "ui_layout_character_select_footer_02",
-        "ui_layout_character_select_footer_03",
-        "ui_layout_character_select_footer_04"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_common_prompts": {
-      "proven": false,
-      "description": "Copy NUN5's exact Next, Triangle icon, Cancel label, empty-tail, and Stop records into NA2's shared compositor data, and reproduce NUN5's effective Options-root and Collection-footer anchors without changing NA2's renderer ABI.",
-      "edits": [
-        "ui_layout_common_prompts_01",
-        "ui_layout_common_prompts_02",
-        "ui_layout_common_prompts_03",
-        "ui_layout_common_prompts_04",
-        "ui_layout_common_prompts_05",
-        "ui_layout_common_prompts_06",
-        "ui_layout_common_prompts_07",
-        "ui_layout_common_prompts_08",
-        "ui_layout_common_prompts_09",
-        "ui_layout_common_prompts_10",
-        "ui_layout_common_prompts_11",
-        "ui_layout_common_prompts_12",
-        "ui_layout_common_prompts_13",
-        "ui_layout_common_prompts_14",
-        "ui_layout_common_prompts_15",
-        "ui_layout_common_prompts_16"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_options_footers": {
-      "proven": false,
-      "description": "Copy NUN5's exact X-anchor instructions into the homologous Controls and Music Options Select calls, and reproduce NUN5's effective OK/Back anchors in both resident renderers.",
-      "edits": [
-        "ui_layout_options_footers_01",
-        "ui_layout_options_footers_02",
-        "ui_layout_options_footers_03",
-        "ui_layout_options_footers_04",
-        "ui_layout_options_footers_05",
-        "ui_layout_options_footers_06",
-        "ui_layout_options_footers_07",
-        "ui_layout_options_footers_08"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_collection_submenu": {
-      "proven": false,
-      "description": "Copy NUN5's Characters, Movie, Music, Play, Previous Page, Next Page, and Collection viewer-control draw records into NA2's Collection tables.",
-      "edits": [
-        "ui_layout_collection_submenu_01",
-        "ui_layout_collection_submenu_02",
-        "ui_layout_collection_submenu_03",
-        "ui_layout_collection_submenu_04",
-        "ui_layout_collection_submenu_05",
-        "ui_layout_collection_submenu_06",
-        "ui_layout_collection_submenu_07",
-        "ui_layout_collection_submenu_08"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_victory_names": {
-      "proven": false,
-      "description": "Derive every compatible NA2 prebuilt Victory name rectangle from the official NUN5 frame templates and English character-width table.",
-      "edits": [
-        "ui_layout_victory_names_01",
-        "ui_layout_victory_names_02",
-        "ui_layout_victory_names_03",
-        "ui_layout_victory_names_04",
-        "ui_layout_victory_names_05",
-        "ui_layout_victory_names_06",
-        "ui_layout_victory_names_07",
-        "ui_layout_victory_names_08",
-        "ui_layout_victory_names_09",
-        "ui_layout_victory_names_10",
-        "ui_layout_victory_names_11",
-        "ui_layout_victory_names_12",
-        "ui_layout_victory_names_13",
-        "ui_layout_victory_names_14",
-        "ui_layout_victory_names_15",
-        "ui_layout_victory_names_16",
-        "ui_layout_victory_names_17",
-        "ui_layout_victory_names_18",
-        "ui_layout_victory_names_19",
-        "ui_layout_victory_names_20",
-        "ui_layout_victory_names_21",
-        "ui_layout_victory_names_22",
-        "ui_layout_victory_names_23",
-        "ui_layout_victory_names_24",
-        "ui_layout_victory_names_25",
-        "ui_layout_victory_names_26",
-        "ui_layout_victory_names_27",
-        "ui_layout_victory_names_28",
-        "ui_layout_victory_names_29",
-        "ui_layout_victory_names_30",
-        "ui_layout_victory_names_31",
-        "ui_layout_victory_names_32",
-        "ui_layout_victory_names_33",
-        "ui_layout_victory_names_34",
-        "ui_layout_victory_names_35",
-        "ui_layout_victory_names_36",
-        "ui_layout_victory_names_37",
-        "ui_layout_victory_names_38",
-        "ui_layout_victory_names_39",
-        "ui_layout_victory_names_40",
-        "ui_layout_victory_names_41",
-        "ui_layout_victory_names_42",
-        "ui_layout_victory_names_43",
-        "ui_layout_victory_names_44",
-        "ui_layout_victory_names_45",
-        "ui_layout_victory_names_46",
-        "ui_layout_victory_names_47",
-        "ui_layout_victory_names_48",
-        "ui_layout_victory_names_49",
-        "ui_layout_victory_names_50",
-        "ui_layout_victory_names_51",
-        "ui_layout_victory_names_52",
-        "ui_layout_victory_names_53",
-        "ui_layout_victory_names_54",
-        "ui_layout_victory_names_55",
-        "ui_layout_victory_names_56",
-        "ui_layout_victory_names_57",
-        "ui_layout_victory_names_58",
-        "ui_layout_victory_names_59",
-        "ui_layout_victory_names_60",
-        "ui_layout_victory_names_61",
-        "ui_layout_victory_names_62",
-        "ui_layout_victory_names_63",
-        "ui_layout_victory_names_64",
-        "ui_layout_victory_names_65",
-        "ui_layout_victory_names_66",
-        "ui_layout_victory_names_67",
-        "ui_layout_victory_names_68",
-        "ui_layout_victory_names_69",
-        "ui_layout_victory_names_70",
-        "ui_layout_victory_names_71",
-        "ui_layout_victory_names_72",
-        "ui_layout_victory_names_73",
-        "ui_layout_victory_names_74",
-        "ui_layout_victory_names_75",
-        "ui_layout_victory_names_76",
-        "ui_layout_victory_names_77",
-        "ui_layout_victory_names_78"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_settings_footers": {
-      "proven": false,
-      "description": "Import NUN5's exact Select anchors and reproduce its effective OK and Back anchors in NA2's homologous Battle and Practice Settings footer renderers.",
-      "edits": [
-        "ui_layout_settings_footers_01",
-        "ui_layout_settings_footers_02",
-        "ui_layout_settings_footers_03",
-        "ui_layout_settings_footers_04",
-        "ui_layout_settings_footers_05",
-        "ui_layout_settings_footers_06",
-        "ui_layout_settings_footers_07",
-        "ui_layout_settings_footers_08"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "ui_layout_battle_results": {
-      "proven": false,
-      "description": "Copy the official NUN5 result-label, rank-atlas, title, moving-cloud, footer, and shared-prompt geometry into the homologous NA2 screens, and reproduce the NUN5 regional Ninja Song details-footer anchors while preserving NA2 renderer ABIs.",
-      "edits": [
-        "ui_layout_battle_results_01",
-        "ui_layout_battle_results_02",
-        "ui_layout_battle_results_03",
-        "ui_layout_battle_results_04",
-        "ui_layout_battle_results_05",
-        "ui_layout_battle_results_06",
-        "ui_layout_battle_results_07",
-        "ui_layout_battle_results_08",
-        "ui_layout_battle_results_09",
-        "ui_layout_battle_results_10",
-        "ui_layout_battle_results_11",
-        "ui_layout_battle_results_12",
-        "ui_layout_battle_results_13"
-      ],
-      "injections": [
-        "localization"
-      ]
-    }
+    "proven": false,
+    "description": "Apply English UI rectangles, anchors, scaling, and screen-specific geometry.",
+    "edits": [
+      "ui_layout_ultimate_jutsu_label_01",
+      "ui_layout_stage_select_01",
+      "ui_layout_stage_select_02",
+      "ui_layout_stage_select_03",
+      "ui_layout_stage_select_04",
+      "ui_layout_stage_select_05",
+      "ui_layout_stage_select_06",
+      "ui_layout_stage_select_07",
+      "ui_layout_stage_select_08",
+      "ui_layout_stage_select_09",
+      "ui_layout_stage_select_10",
+      "ui_layout_stage_select_11",
+      "ui_layout_stage_select_12",
+      "ui_layout_stage_select_13",
+      "ui_layout_stage_select_14",
+      "ui_layout_stage_select_15",
+      "ui_layout_stage_select_16",
+      "ui_layout_stage_select_17",
+      "ui_layout_stage_select_18",
+      "ui_layout_stage_select_19",
+      "ui_layout_stage_select_20",
+      "ui_layout_stage_select_21",
+      "ui_layout_stage_select_22",
+      "ui_layout_stage_select_23",
+      "ui_layout_stage_select_24",
+      "ui_layout_stage_select_25",
+      "ui_layout_stage_select_26",
+      "ui_layout_stage_select_27",
+      "ui_layout_stage_select_28",
+      "ui_layout_stage_select_29",
+      "ui_layout_stage_select_30",
+      "ui_layout_stage_select_31",
+      "ui_layout_stage_select_32",
+      "ui_layout_stage_select_33",
+      "ui_layout_stage_select_34",
+      "ui_layout_stage_select_35",
+      "ui_layout_stage_select_36",
+      "ui_layout_stage_select_37",
+      "ui_layout_stage_select_38",
+      "ui_layout_stage_select_39",
+      "ui_layout_stage_select_40",
+      "ui_layout_stage_select_41",
+      "ui_layout_stage_select_42",
+      "ui_layout_stage_select_43",
+      "ui_layout_stage_select_44",
+      "ui_layout_stage_select_45",
+      "ui_layout_stage_select_46",
+      "ui_layout_stage_select_47",
+      "ui_layout_stage_select_48",
+      "ui_layout_stage_select_49",
+      "ui_layout_stage_select_50",
+      "ui_layout_stage_select_51",
+      "ui_layout_stage_select_52",
+      "ui_layout_stage_select_53",
+      "ui_layout_stage_select_54",
+      "ui_layout_stage_select_55",
+      "ui_layout_stage_select_56",
+      "ui_layout_character_name_rectangles_01",
+      "ui_layout_options_labels_01",
+      "ui_layout_difficulty_sprite_01",
+      "ui_layout_battle_hud_names_01",
+      "ui_layout_battle_hud_names_02",
+      "ui_layout_practice_settings_prompt_01",
+      "ui_layout_practice_settings_prompt_02",
+      "ui_layout_battle_hud_name_rectangles_01",
+      "ui_layout_vs_confirmation_01",
+      "ui_layout_vs_confirmation_02",
+      "ui_layout_vs_confirmation_03",
+      "ui_layout_vs_confirmation_04",
+      "ui_layout_vs_confirmation_05",
+      "ui_layout_vs_confirmation_06",
+      "ui_layout_vs_confirmation_07",
+      "ui_layout_vs_confirmation_08",
+      "ui_layout_vs_confirmation_09",
+      "ui_layout_vs_confirmation_10",
+      "ui_layout_vs_confirmation_11",
+      "ui_layout_vs_confirmation_12",
+      "ui_layout_vs_confirmation_13",
+      "ui_layout_vs_confirmation_14",
+      "ui_layout_vs_confirmation_15",
+      "ui_layout_vs_confirmation_16",
+      "ui_layout_vs_confirmation_17",
+      "ui_layout_vs_confirmation_18",
+      "ui_layout_vs_confirmation_19",
+      "ui_layout_round_label_01",
+      "ui_layout_round_label_02",
+      "ui_layout_round_label_03",
+      "ui_layout_round_label_04",
+      "ui_layout_round_label_05",
+      "ui_layout_round_label_06",
+      "ui_layout_round_label_07",
+      "ui_layout_round_label_08",
+      "ui_layout_jutsu_selector_arrows_01",
+      "ui_layout_jutsu_selector_arrows_02",
+      "ui_layout_jutsu_selector_arrows_03",
+      "ui_layout_jutsu_selector_arrows_04",
+      "ui_layout_jutsu_selector_arrows_05",
+      "ui_layout_jutsu_selector_arrows_06",
+      "ui_layout_jutsu_selector_arrows_07",
+      "ui_layout_jutsu_selector_arrows_08",
+      "ui_layout_jutsu_selector_arrows_09",
+      "ui_layout_jutsu_selector_arrows_10",
+      "ui_layout_command_scroll_arrows_01",
+      "ui_layout_item_status_paired_01",
+      "ui_layout_item_status_paired_02",
+      "ui_layout_item_status_paired_03",
+      "ui_layout_item_status_paired_04",
+      "ui_layout_item_status_paired_05",
+      "ui_layout_item_status_paired_06",
+      "ui_layout_item_status_paired_07",
+      "ui_layout_item_status_paired_08",
+      "ui_layout_item_status_paired_09",
+      "ui_layout_item_status_paired_10",
+      "ui_layout_item_status_paired_11",
+      "ui_layout_item_status_paired_12",
+      "ui_layout_item_status_paired_13",
+      "ui_layout_item_status_paired_14",
+      "ui_layout_item_status_paired_15",
+      "ui_layout_item_status_paired_16",
+      "ui_layout_item_status_paired_17",
+      "ui_layout_item_status_paired_18",
+      "ui_layout_item_status_paired_19",
+      "ui_layout_item_status_paired_20",
+      "ui_layout_item_status_paired_21",
+      "ui_layout_item_status_paired_22",
+      "ui_layout_item_status_paired_23",
+      "ui_layout_item_status_paired_24",
+      "ui_layout_item_status_paired_25",
+      "ui_layout_item_status_paired_26",
+      "ui_layout_item_status_paired_27",
+      "ui_layout_item_status_numeric_01",
+      "ui_layout_item_status_numeric_02",
+      "ui_layout_item_status_numeric_03",
+      "ui_layout_item_status_numeric_04",
+      "ui_layout_item_status_numeric_05",
+      "ui_layout_item_status_numeric_06",
+      "ui_layout_item_status_numeric_07",
+      "ui_layout_item_status_numeric_08",
+      "ui_layout_item_status_numeric_09",
+      "ui_layout_item_status_numeric_10",
+      "ui_layout_item_status_numeric_11",
+      "ui_layout_item_status_numeric_12",
+      "ui_layout_item_status_numeric_13",
+      "ui_layout_item_status_numeric_14",
+      "ui_layout_item_status_numeric_15",
+      "ui_layout_item_status_numeric_16",
+      "ui_layout_item_status_single_01",
+      "ui_layout_item_status_single_02",
+      "ui_layout_item_status_single_03",
+      "ui_layout_item_status_single_04",
+      "ui_layout_item_status_single_05",
+      "ui_layout_item_status_single_06",
+      "ui_layout_item_status_fixed_01",
+      "ui_layout_item_status_fixed_02",
+      "ui_layout_item_pickup_doll_01",
+      "ui_layout_mash_prompts_01",
+      "ui_layout_mode_select_01",
+      "ui_layout_mode_select_02",
+      "ui_layout_mode_select_03",
+      "ui_layout_mode_select_04",
+      "ui_layout_controls_vibration_01",
+      "ui_layout_character_select_footer_01",
+      "ui_layout_character_select_footer_02",
+      "ui_layout_character_select_footer_03",
+      "ui_layout_character_select_footer_04",
+      "ui_layout_common_prompts_01",
+      "ui_layout_common_prompts_02",
+      "ui_layout_common_prompts_03",
+      "ui_layout_common_prompts_04",
+      "ui_layout_common_prompts_05",
+      "ui_layout_common_prompts_06",
+      "ui_layout_common_prompts_07",
+      "ui_layout_common_prompts_08",
+      "ui_layout_common_prompts_09",
+      "ui_layout_common_prompts_10",
+      "ui_layout_common_prompts_11",
+      "ui_layout_common_prompts_12",
+      "ui_layout_common_prompts_13",
+      "ui_layout_common_prompts_14",
+      "ui_layout_common_prompts_15",
+      "ui_layout_common_prompts_16",
+      "ui_layout_options_footers_01",
+      "ui_layout_options_footers_02",
+      "ui_layout_options_footers_03",
+      "ui_layout_options_footers_04",
+      "ui_layout_options_footers_05",
+      "ui_layout_options_footers_06",
+      "ui_layout_options_footers_07",
+      "ui_layout_options_footers_08",
+      "ui_layout_collection_submenu_01",
+      "ui_layout_collection_submenu_02",
+      "ui_layout_collection_submenu_03",
+      "ui_layout_collection_submenu_04",
+      "ui_layout_collection_submenu_05",
+      "ui_layout_collection_submenu_06",
+      "ui_layout_collection_submenu_07",
+      "ui_layout_collection_submenu_08",
+      "ui_layout_victory_names_01",
+      "ui_layout_victory_names_02",
+      "ui_layout_victory_names_03",
+      "ui_layout_victory_names_04",
+      "ui_layout_victory_names_05",
+      "ui_layout_victory_names_06",
+      "ui_layout_victory_names_07",
+      "ui_layout_victory_names_08",
+      "ui_layout_victory_names_09",
+      "ui_layout_victory_names_10",
+      "ui_layout_victory_names_11",
+      "ui_layout_victory_names_12",
+      "ui_layout_victory_names_13",
+      "ui_layout_victory_names_14",
+      "ui_layout_victory_names_15",
+      "ui_layout_victory_names_16",
+      "ui_layout_victory_names_17",
+      "ui_layout_victory_names_18",
+      "ui_layout_victory_names_19",
+      "ui_layout_victory_names_20",
+      "ui_layout_victory_names_21",
+      "ui_layout_victory_names_22",
+      "ui_layout_victory_names_23",
+      "ui_layout_victory_names_24",
+      "ui_layout_victory_names_25",
+      "ui_layout_victory_names_26",
+      "ui_layout_victory_names_27",
+      "ui_layout_victory_names_28",
+      "ui_layout_victory_names_29",
+      "ui_layout_victory_names_30",
+      "ui_layout_victory_names_31",
+      "ui_layout_victory_names_32",
+      "ui_layout_victory_names_33",
+      "ui_layout_victory_names_34",
+      "ui_layout_victory_names_35",
+      "ui_layout_victory_names_36",
+      "ui_layout_victory_names_37",
+      "ui_layout_victory_names_38",
+      "ui_layout_victory_names_39",
+      "ui_layout_victory_names_40",
+      "ui_layout_victory_names_41",
+      "ui_layout_victory_names_42",
+      "ui_layout_victory_names_43",
+      "ui_layout_victory_names_44",
+      "ui_layout_victory_names_45",
+      "ui_layout_victory_names_46",
+      "ui_layout_victory_names_47",
+      "ui_layout_victory_names_48",
+      "ui_layout_victory_names_49",
+      "ui_layout_victory_names_50",
+      "ui_layout_victory_names_51",
+      "ui_layout_victory_names_52",
+      "ui_layout_victory_names_53",
+      "ui_layout_victory_names_54",
+      "ui_layout_victory_names_55",
+      "ui_layout_victory_names_56",
+      "ui_layout_victory_names_57",
+      "ui_layout_victory_names_58",
+      "ui_layout_victory_names_59",
+      "ui_layout_victory_names_60",
+      "ui_layout_victory_names_61",
+      "ui_layout_victory_names_62",
+      "ui_layout_victory_names_63",
+      "ui_layout_victory_names_64",
+      "ui_layout_victory_names_65",
+      "ui_layout_victory_names_66",
+      "ui_layout_victory_names_67",
+      "ui_layout_victory_names_68",
+      "ui_layout_victory_names_69",
+      "ui_layout_victory_names_70",
+      "ui_layout_victory_names_71",
+      "ui_layout_victory_names_72",
+      "ui_layout_victory_names_73",
+      "ui_layout_victory_names_74",
+      "ui_layout_victory_names_75",
+      "ui_layout_victory_names_76",
+      "ui_layout_victory_names_77",
+      "ui_layout_victory_names_78",
+      "ui_layout_settings_footers_01",
+      "ui_layout_settings_footers_02",
+      "ui_layout_settings_footers_03",
+      "ui_layout_settings_footers_04",
+      "ui_layout_settings_footers_05",
+      "ui_layout_settings_footers_06",
+      "ui_layout_settings_footers_07",
+      "ui_layout_settings_footers_08",
+      "ui_layout_battle_results_01",
+      "ui_layout_battle_results_02",
+      "ui_layout_battle_results_03",
+      "ui_layout_battle_results_04",
+      "ui_layout_battle_results_05",
+      "ui_layout_battle_results_06",
+      "ui_layout_battle_results_07",
+      "ui_layout_battle_results_08",
+      "ui_layout_battle_results_09",
+      "ui_layout_battle_results_10",
+      "ui_layout_battle_results_11",
+      "ui_layout_battle_results_12",
+      "ui_layout_battle_results_13"
+    ],
+    "injections": [
+      "localization"
+    ]
   },
   "regional_input": {
-    "description": "Regional menu, overlay, setup, result, and audio input behavior.",
-    "regional_input_candidate_001": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_001_01",
-        "regional_input_candidate_001_02",
-        "regional_input_candidate_001_03",
-        "regional_input_candidate_001_04",
-        "regional_input_candidate_001_05"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_002": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_002_01",
-        "regional_input_candidate_002_02",
-        "regional_input_candidate_002_03",
-        "regional_input_candidate_002_04"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_003": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_003_01",
-        "regional_input_candidate_003_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_004": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_004_01",
-        "regional_input_candidate_004_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_005": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_005_01",
-        "regional_input_candidate_005_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_006": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_006_01",
-        "regional_input_candidate_006_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_007": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_007_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_008": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_008_01",
-        "regional_input_candidate_008_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_009": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_009_01",
-        "regional_input_candidate_009_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_010": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_010_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_011": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_011_01",
-        "regional_input_candidate_011_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_012": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_012_01",
-        "regional_input_candidate_012_02",
-        "regional_input_candidate_012_03"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_013": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_013_01",
-        "regional_input_candidate_013_02",
-        "regional_input_candidate_013_03"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_014": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_014_01",
-        "regional_input_candidate_014_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_015": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_015_01",
-        "regional_input_candidate_015_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_016": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_016_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_017": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_017_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_018": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_018_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_pause_commands": {
-      "proven": false,
-      "description": "Shared Practice and Free Battle command-list and command-chart controller. The complete regional function alignment rotates entry/player routing from Circle to Cross and close from Cross to Triangle without changing battle-input encoding.",
-      "edits": [
-        "regional_input_pause_commands_01",
-        "regional_input_pause_commands_02",
-        "regional_input_pause_commands_03"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_019": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_019_01",
-        "regional_input_candidate_019_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_020": {
-      "proven": false,
-      "description": "Likely battle setup, pause, result, tutorial, mission, or other BTL-owned menu. Exact runtime screen is unclassified; gameplay-input overlap must be ruled out.",
-      "edits": [
-        "regional_input_candidate_020_01",
-        "regional_input_candidate_020_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_save_load_parent": {
-      "proven": false,
-      "description": "Multi-state save/load subsystem controller with six confirm-only branches.",
-      "edits": [
-        "regional_input_save_load_parent_01",
-        "regional_input_save_load_parent_02",
-        "regional_input_save_load_parent_03",
-        "regional_input_save_load_parent_04",
-        "regional_input_save_load_parent_05",
-        "regional_input_save_load_parent_06"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_save_load_confirmation": {
-      "proven": false,
-      "description": "Paired confirm/cancel modal used by the save/load parent controller.",
-      "edits": [
-        "regional_input_save_load_confirmation_01",
-        "regional_input_save_load_confirmation_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_save_load_acknowledgment": {
-      "proven": false,
-      "description": "Confirm-to-close/advance prompt used by the save/load parent controller.",
-      "edits": [
-        "regional_input_save_load_acknowledgment_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_animated_transition": {
-      "proven": false,
-      "description": "Front-end transition prompt.",
-      "edits": [
-        "regional_input_animated_transition_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_player_transition": {
-      "proven": false,
-      "description": "Multiplayer/front-end transition prompt.",
-      "edits": [
-        "regional_input_player_transition_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_timed_prompt": {
-      "proven": false,
-      "description": "Timed prompt or result/message transition.",
-      "edits": [
-        "regional_input_timed_prompt_01",
-        "regional_input_timed_prompt_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_player_list": {
-      "proven": false,
-      "description": "Front-end selectable list.",
-      "edits": [
-        "regional_input_player_list_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_selectable_modal": {
-      "proven": false,
-      "description": "Shared selectable-list/modal handler used across major front-end menus.",
-      "edits": [
-        "regional_input_selectable_modal_01",
-        "regional_input_selectable_modal_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_menu_parent": {
-      "proven": false,
-      "description": "Front-end selection screen using the generic widget family.",
-      "edits": [
-        "regional_input_menu_parent_01",
-        "regional_input_menu_parent_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_control_assignment": {
-      "proven": false,
-      "description": "Controls/options menu.",
-      "edits": [
-        "regional_input_control_assignment_01",
-        "regional_input_control_assignment_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_numeric_adjustment": {
-      "proven": false,
-      "description": "Position/calibration-style options screen.",
-      "edits": [
-        "regional_input_numeric_adjustment_01",
-        "regional_input_numeric_adjustment_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_four_way_options": {
-      "proven": false,
-      "description": "Options or configuration submenu.",
-      "edits": [
-        "regional_input_four_way_options_01",
-        "regional_input_four_way_options_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_numeric_selector": {
-      "proven": false,
-      "description": "Options/list modal.",
-      "edits": [
-        "regional_input_numeric_selector_01",
-        "regional_input_numeric_selector_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_player_join": {
-      "proven": false,
-      "description": "Multiplayer player-join or character-selection UI.",
-      "edits": [
-        "regional_input_player_join_01",
-        "regional_input_player_join_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_five_item_selector": {
-      "proven": false,
-      "description": "Multiplayer/front-end selection list.",
-      "edits": [
-        "regional_input_five_item_selector_01",
-        "regional_input_five_item_selector_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_save_load_confirm": {
-      "proven": false,
-      "description": "Save/load helper prompt.",
-      "edits": [
-        "regional_input_save_load_confirm_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_save_load_prompt": {
-      "proven": false,
-      "description": "Save/load or memory-card prompt.",
-      "edits": [
-        "regional_input_save_load_prompt_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_overlay_close": {
-      "proven": false,
-      "description": "Unclassified front-end overlay.",
-      "edits": [
-        "regional_input_overlay_close_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_player_action_decoder": {
-      "proven": false,
-      "description": "Free/Practice setup or selection controller.",
-      "edits": [
-        "regional_input_player_action_decoder_01",
-        "regional_input_player_action_decoder_02",
-        "regional_input_player_action_decoder_03"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_control_assignment_player": {
-      "proven": false,
-      "description": "Control Settings.",
-      "edits": [
-        "regional_input_control_assignment_player_01",
-        "regional_input_control_assignment_player_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_sound_settings": {
-      "proven": false,
-      "description": "Sound Settings.",
-      "edits": [
-        "regional_input_sound_settings_01",
-        "regional_input_sound_settings_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_delayed_advance": {
-      "proven": false,
-      "description": "Unclassified proceed/result prompt.",
-      "edits": [
-        "regional_input_delayed_advance_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_two_item_submenu": {
-      "proven": false,
-      "description": "Free/Practice setup submenu.",
-      "edits": [
-        "regional_input_two_item_submenu_01",
-        "regional_input_two_item_submenu_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_yes_no_modal": {
-      "proven": false,
-      "description": "Save/load, overwrite, and return-to-title confirmation prompts.",
-      "edits": [
-        "regional_input_yes_no_modal_01",
-        "regional_input_yes_no_modal_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_title_controller": {
-      "proven": false,
-      "description": "Title zoom/advance and New Game/Continue title flow.",
-      "edits": [
-        "regional_input_title_controller_01",
-        "regional_input_title_controller_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_character_selection": {
-      "proven": false,
-      "description": "Free Battle and Practice character/linked-character selection.",
-      "edits": [
-        "regional_input_character_selection_01",
-        "regional_input_character_selection_02",
-        "regional_input_character_selection_03",
-        "regional_input_character_selection_04",
-        "regional_input_character_selection_05",
-        "regional_input_character_selection_06"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_new_game_continue": {
-      "proven": false,
-      "description": "Title-screen New Game/Continue list.",
-      "edits": [
-        "regional_input_new_game_continue_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_support_selection": {
-      "proven": false,
-      "description": "Free Battle and Practice support selection.",
-      "edits": [
-        "regional_input_support_selection_01",
-        "regional_input_support_selection_02",
-        "regional_input_support_selection_03",
-        "regional_input_support_selection_04",
-        "regional_input_support_selection_05",
-        "regional_input_support_selection_06"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_021": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_021_01",
-        "regional_input_candidate_021_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_022": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_022_01",
-        "regional_input_candidate_022_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_023": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_023_01",
-        "regional_input_candidate_023_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_024": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_024_01",
-        "regional_input_candidate_024_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_025": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_025_01",
-        "regional_input_candidate_025_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_026": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_026_01",
-        "regional_input_candidate_026_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_027": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_027_01",
-        "regional_input_candidate_027_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_028": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_028_01",
-        "regional_input_candidate_028_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_029": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_029_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_030": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_030_01",
-        "regional_input_candidate_030_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_031": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_031_01",
-        "regional_input_candidate_031_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_032": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_032_01",
-        "regional_input_candidate_032_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_033": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_033_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_034": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_034_01",
-        "regional_input_candidate_034_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_035": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_035_01",
-        "regional_input_candidate_035_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_036": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_036_01",
-        "regional_input_candidate_036_02"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_037": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_037_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_038": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_038_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_candidate_039": {
-      "proven": false,
-      "description": "ETC front-end UI. Runtime confirms ETC ownership in Collection and Shop; the individual screen for this range remains unclassified.",
-      "edits": [
-        "regional_input_candidate_039_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    },
-    "regional_input_battle_results_tally": {
-      "proven": false,
-      "description": "During the animated post-battle score and currency calculation, Cross fast-forwards the tally to its final values. The later result-menu proceed handler remains separate.",
-      "edits": [
-        "regional_input_battle_results_tally_01"
-      ],
-      "injections": [
-        "localization"
-      ]
-    }
+    "proven": false,
+    "description": "Apply regional confirm, cancel, navigation, and related menu-input behavior consistently across the game.",
+    "edits": [
+      "regional_input_candidate_001_01",
+      "regional_input_candidate_001_02",
+      "regional_input_candidate_001_03",
+      "regional_input_candidate_001_04",
+      "regional_input_candidate_001_05",
+      "regional_input_candidate_002_01",
+      "regional_input_candidate_002_02",
+      "regional_input_candidate_002_03",
+      "regional_input_candidate_002_04",
+      "regional_input_candidate_003_01",
+      "regional_input_candidate_003_02",
+      "regional_input_candidate_004_01",
+      "regional_input_candidate_004_02",
+      "regional_input_candidate_005_01",
+      "regional_input_candidate_005_02",
+      "regional_input_candidate_006_01",
+      "regional_input_candidate_006_02",
+      "regional_input_candidate_007_01",
+      "regional_input_candidate_008_01",
+      "regional_input_candidate_008_02",
+      "regional_input_candidate_009_01",
+      "regional_input_candidate_009_02",
+      "regional_input_candidate_010_01",
+      "regional_input_candidate_011_01",
+      "regional_input_candidate_011_02",
+      "regional_input_candidate_012_01",
+      "regional_input_candidate_012_02",
+      "regional_input_candidate_012_03",
+      "regional_input_candidate_013_01",
+      "regional_input_candidate_013_02",
+      "regional_input_candidate_013_03",
+      "regional_input_candidate_014_01",
+      "regional_input_candidate_014_02",
+      "regional_input_candidate_015_01",
+      "regional_input_candidate_015_02",
+      "regional_input_candidate_016_01",
+      "regional_input_candidate_017_01",
+      "regional_input_candidate_018_01",
+      "regional_input_pause_commands_01",
+      "regional_input_pause_commands_02",
+      "regional_input_pause_commands_03",
+      "regional_input_candidate_019_01",
+      "regional_input_candidate_019_02",
+      "regional_input_candidate_020_01",
+      "regional_input_candidate_020_02",
+      "regional_input_save_load_parent_01",
+      "regional_input_save_load_parent_02",
+      "regional_input_save_load_parent_03",
+      "regional_input_save_load_parent_04",
+      "regional_input_save_load_parent_05",
+      "regional_input_save_load_parent_06",
+      "regional_input_save_load_confirmation_01",
+      "regional_input_save_load_confirmation_02",
+      "regional_input_save_load_acknowledgment_01",
+      "regional_input_animated_transition_01",
+      "regional_input_player_transition_01",
+      "regional_input_timed_prompt_01",
+      "regional_input_timed_prompt_02",
+      "regional_input_player_list_01",
+      "regional_input_selectable_modal_01",
+      "regional_input_selectable_modal_02",
+      "regional_input_menu_parent_01",
+      "regional_input_menu_parent_02",
+      "regional_input_control_assignment_01",
+      "regional_input_control_assignment_02",
+      "regional_input_numeric_adjustment_01",
+      "regional_input_numeric_adjustment_02",
+      "regional_input_four_way_options_01",
+      "regional_input_four_way_options_02",
+      "regional_input_numeric_selector_01",
+      "regional_input_numeric_selector_02",
+      "regional_input_player_join_01",
+      "regional_input_player_join_02",
+      "regional_input_five_item_selector_01",
+      "regional_input_five_item_selector_02",
+      "regional_input_save_load_confirm_01",
+      "regional_input_save_load_prompt_01",
+      "regional_input_overlay_close_01",
+      "regional_input_player_action_decoder_01",
+      "regional_input_player_action_decoder_02",
+      "regional_input_player_action_decoder_03",
+      "regional_input_control_assignment_player_01",
+      "regional_input_control_assignment_player_02",
+      "regional_input_sound_settings_01",
+      "regional_input_sound_settings_02",
+      "regional_input_delayed_advance_01",
+      "regional_input_two_item_submenu_01",
+      "regional_input_two_item_submenu_02",
+      "regional_input_yes_no_modal_01",
+      "regional_input_yes_no_modal_02",
+      "regional_input_title_controller_01",
+      "regional_input_title_controller_02",
+      "regional_input_character_selection_01",
+      "regional_input_character_selection_02",
+      "regional_input_character_selection_03",
+      "regional_input_character_selection_04",
+      "regional_input_character_selection_05",
+      "regional_input_character_selection_06",
+      "regional_input_new_game_continue_01",
+      "regional_input_support_selection_01",
+      "regional_input_support_selection_02",
+      "regional_input_support_selection_03",
+      "regional_input_support_selection_04",
+      "regional_input_support_selection_05",
+      "regional_input_support_selection_06",
+      "regional_input_candidate_021_01",
+      "regional_input_candidate_021_02",
+      "regional_input_candidate_022_01",
+      "regional_input_candidate_022_02",
+      "regional_input_candidate_023_01",
+      "regional_input_candidate_023_02",
+      "regional_input_candidate_024_01",
+      "regional_input_candidate_024_02",
+      "regional_input_candidate_025_01",
+      "regional_input_candidate_025_02",
+      "regional_input_candidate_026_01",
+      "regional_input_candidate_026_02",
+      "regional_input_candidate_027_01",
+      "regional_input_candidate_027_02",
+      "regional_input_candidate_028_01",
+      "regional_input_candidate_028_02",
+      "regional_input_candidate_029_01",
+      "regional_input_candidate_030_01",
+      "regional_input_candidate_030_02",
+      "regional_input_candidate_031_01",
+      "regional_input_candidate_031_02",
+      "regional_input_candidate_032_01",
+      "regional_input_candidate_032_02",
+      "regional_input_candidate_033_01",
+      "regional_input_candidate_034_01",
+      "regional_input_candidate_034_02",
+      "regional_input_candidate_035_01",
+      "regional_input_candidate_035_02",
+      "regional_input_candidate_036_01",
+      "regional_input_candidate_036_02",
+      "regional_input_candidate_037_01",
+      "regional_input_candidate_038_01",
+      "regional_input_candidate_039_01",
+      "regional_input_battle_results_tally_01"
+    ],
+    "injections": [
+      "localization"
+    ]
   }
 }

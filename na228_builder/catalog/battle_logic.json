@@ -16,7 +16,7 @@
       "disable_the_extra_hit_while_retaining_aura_punishment_for_the_initiator"
     ]
   },
-  "sub_cost_3_15": {
+  "substitution_cost_3_15": {
     "proven": false,
     "description": "Substitution cost setting.",
     "edits": [

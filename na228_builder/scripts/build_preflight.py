@@ -23,7 +23,6 @@ NON_COMPOSING_BUILDER_FILES = {
     "scripts/build_preflight.py",
     "release_manifest.json",
     "scripts/release_runtime.py",
-    "requirements.txt",
 }
 
 

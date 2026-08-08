@@ -32,6 +32,22 @@ try {
     foreach ($name in 'paths.ps1', 'run_log.ps1', 'build_log.ps1') {
         Copy-Item -LiteralPath (Join-Path $sourceRepository "scripts\lib\$name") -Destination $libRoot
     }
+    $fakePythonRunner = @'
+[CmdletBinding()]
+param(
+    [string]$PackageSet,
+    [string]$Module,
+    [string[]]$ArgumentList,
+    [switch]$NoBytecode
+)
+
+& python '-B' '-m' $Module @ArgumentList
+exit $LASTEXITCODE
+'@
+    [IO.File]::WriteAllText(
+        (Join-Path $libRoot 'run_python.ps1'),
+        $fakePythonRunner
+    )
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'e2e\scripts\config.ps1') -Destination $e2eScripts
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'e2e\config.json') -Destination (Join-Path $repository 'e2e')
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'product.json') -Destination $repository

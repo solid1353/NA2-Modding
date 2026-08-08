@@ -10,6 +10,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\build_log.ps1')
 . (Join-Path $PSScriptRoot 'worker_paths.ps1')
 $paths = Get-Na2Paths
+$pythonRunner = Join-Path $paths.repository 'scripts\lib\run_python.ps1'
 $e2eBuild = $null
 if (-not [string]::IsNullOrWhiteSpace($E2eVariant)) {
     . (Join-Path $paths.repository 'e2e\scripts\config.ps1')
@@ -51,6 +52,25 @@ function Test-FileContentEqual {
     $leftHash -ceq $rightHash
 }
 
+function Invoke-Na2BuilderModule {
+    param(
+        [Parameter(Mandatory = $true)][string]$Module,
+        [Parameter(Mandatory = $true)][string[]]$ArgumentList
+    )
+
+    $output = @(
+        & $pythonRunner `
+            -PackageSet builder `
+            -Module $Module `
+            -ArgumentList $ArgumentList `
+            -NoBytecode
+    )
+    [pscustomobject]@{
+        Output = $output
+        ExitCode = $LASTEXITCODE
+    }
+}
+
 function Invoke-Na2BuildPreflight {
     param(
         [Parameter(Mandatory = $true)][ValidateSet('check', 'record')][string]$Command,
@@ -65,8 +85,6 @@ function Invoke-Na2BuildPreflight {
     )
 
     $arguments = @(
-        '-B'
-        '-m', 'na228_builder.scripts.build_preflight'
         $Command
         '--na2-iso', $Na2Iso
         '--nun5-iso', $Nun5Iso
@@ -84,8 +102,11 @@ function Invoke-Na2BuildPreflight {
 
     Push-Location $Repository
     try {
-        $output = @(& python @arguments)
-        $exitCode = $LASTEXITCODE
+        $execution = Invoke-Na2BuilderModule `
+            -Module 'na228_builder.scripts.build_preflight' `
+            -ArgumentList $arguments
+        $output = @($execution.Output)
+        $exitCode = $execution.ExitCode
     }
     finally {
         Pop-Location
@@ -293,8 +314,6 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         0
     }
     $isolatedArguments = @(
-        '-B'
-        '-m', 'na228_builder.scripts.build_configuration'
         '--source', $inputIso
         '--output', $isolatedOutputIso
         '--configuration', $configuration
@@ -412,8 +431,11 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         }
         Push-Location $paths.repository
         try {
-            $isolatedOutput = & python @isolatedArguments
-            $isolatedExitCode = $LASTEXITCODE
+            $isolatedExecution = Invoke-Na2BuilderModule `
+                -Module 'na228_builder.scripts.build_configuration' `
+                -ArgumentList $isolatedArguments
+            $isolatedOutput = @($isolatedExecution.Output)
+            $isolatedExitCode = $isolatedExecution.ExitCode
         }
         finally {
             Pop-Location
@@ -673,8 +695,6 @@ $configurationLogDirectory = [IO.Path]::GetRelativePath(
     $configurationLog
 )
 $arguments = @(
-    '-B'
-    '-m', 'na228_builder.scripts.build_configuration'
     '--source', $inputIso
     '--output', $resolvedLatestIso
     '--configuration', $configuration
@@ -685,8 +705,11 @@ $promotionCompleted = $false
 try {
     Push-Location $paths.repository
     try {
-        $buildOutput = & python @arguments
-        $buildExitCode = $LASTEXITCODE
+        $buildExecution = Invoke-Na2BuilderModule `
+            -Module 'na228_builder.scripts.build_configuration' `
+            -ArgumentList $arguments
+        $buildOutput = @($buildExecution.Output)
+        $buildExitCode = $buildExecution.ExitCode
     }
     finally {
         Pop-Location

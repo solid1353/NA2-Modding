@@ -48,23 +48,22 @@ from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
 The engine searches deterministic zlib encodings first. Twenty-eight
 fixed-capacity members require Zopfli, and indexed-region translations use it
 to avoid zlib-version-dependent replacement bytes;
-`na228_builder/requirements.txt` pins the verified `zopfli==0.4.3`
-implementation. A normal build fails clearly instead of using different or
-unpinned output bytes when that dependency is unavailable.
+The `builder` package set in `packages.json` pins the verified
+`zopfli==0.4.3` implementation. A normal build fails clearly instead of using
+different or unpinned output bytes when that dependency is unavailable.
 
 ## Commands
-
-Install the pinned builder dependency:
-
-```powershell
-python -m pip install -r na228_builder/requirements.txt
-```
 
 Derive and verify every pinned production replacement from the repository root:
 
 ```powershell
-python -m na228_builder.modules.texture_patcher.engine verify `
-  --package na228_builder/localization/texture_patcher
+& .\scripts\lib\run_python.ps1 `
+  -PackageSet builder `
+  -Module na228_builder.modules.texture_patcher.engine `
+  -ArgumentList @(
+    'verify',
+    '--package', 'na228_builder/localization/texture_patcher'
+  )
 ```
 
 Regenerate the reviewed Victory rows and hashes after an intentional source or

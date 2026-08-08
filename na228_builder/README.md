@@ -58,17 +58,21 @@ objects, so end users do not need the project PS2 toolchain.
 ## Build
 
 ```powershell
-python -m pip install -r na228_builder/requirements.txt
 & scripts/na228/build.ps1
 ```
 
-`scripts/na228/build.ps1` uses `configurations/release.json`. Direct composition uses:
+`scripts/na228/build.ps1` resolves the `builder` package set from
+`packages.json` and uses `configurations/release.json`. Direct composition uses:
 
 ```powershell
-python -m na228_builder.scripts.build_configuration `
-  --source <NA2.iso> `
-  --configuration na228_builder/configurations/release.json `
-  --compose-only
+& .\scripts\lib\run_python.ps1 `
+  -PackageSet builder `
+  -Module na228_builder.scripts.build_configuration `
+  -ArgumentList @(
+    '--source', '<NA2.iso>',
+    '--configuration', 'na228_builder/configurations/release.json',
+    '--compose-only'
+  )
 ```
 
 Preflight fingerprints both canonical source ISOs, ISO-composing builder code, the exact selected configuration resources, product/path configuration, and active Python/Zlib/Zopfli versions. `scripts/module_pipeline.py` prepares internal invocations and shared payload contributions; `scripts/build_configuration.py` composes them; `scripts/composer.py` closes typed image operations; and `image_assembler/` alone stages and verifies the ISO.

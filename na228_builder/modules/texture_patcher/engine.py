@@ -938,7 +938,7 @@ def repack_gzip_exact(
         if zopfli_gzip is None:
             raise RuntimeError(
                 "Fixed-capacity CCS derivation requires zopfli==0.4.3; "
-                "install na228_builder/requirements.txt"
+                "run through scripts/lib/run_python.ps1 with package set builder"
             )
         raise RuntimeError(
             f"Recompressed CCS is {len(stream) - len(original)} bytes larger than its fixed capacity"

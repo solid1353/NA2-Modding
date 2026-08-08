@@ -60,8 +60,5 @@ including the [builder](na228_builder/README.md) and reusable module READMEs.
 Substantial supporting documentation belongs under `docs/` and is linked from
 those local entrypoints.
 
-Install the pinned builder dependency before building the release configuration:
-
-```powershell
-python -m pip install -r na228_builder/requirements.txt
-```
+Builder dependencies are declared by the `builder` set in `packages.json` and
+resolved by the maintained build entrypoint.

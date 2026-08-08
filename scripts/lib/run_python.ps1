@@ -33,11 +33,11 @@ if ($null -eq $setProperty) {
     $available = @($config.sets.PSObject.Properties.Name) -join ', '
     throw "Unknown Python package set '$PackageSet'. Available: $available"
 }
-$requiredModules = @($setProperty.Value)
-foreach ($requiredModule in $requiredModules) {
-    if ($requiredModule -isnot [string] -or
-        $requiredModule -cnotmatch '^[A-Za-z_][A-Za-z0-9_.]*$') {
-        throw "Invalid Python module in package set '$PackageSet': $requiredModule"
+$requirements = @($setProperty.Value)
+foreach ($requirement in $requirements) {
+    if ($requirement -isnot [string] -or
+        $requirement -cnotmatch '^[A-Za-z_][A-Za-z0-9_.]*(==[A-Za-z0-9][A-Za-z0-9._+-]*)?$') {
+        throw "Invalid Python requirement in package set '$PackageSet': $requirement"
     }
 }
 
@@ -61,10 +61,24 @@ $seen = [Collections.Generic.HashSet[string]]::new(
 )
 $runtime = $null
 $probe = @'
+import importlib.metadata
 import importlib.util
 import sys
 
-missing = [name for name in sys.argv[1:] if importlib.util.find_spec(name) is None]
+missing = []
+for requirement in sys.argv[1:]:
+    module, separator, expected_version = requirement.partition("==")
+    if importlib.util.find_spec(module) is None:
+        missing.append(requirement)
+        continue
+    if separator:
+        try:
+            actual_version = importlib.metadata.version(module)
+        except importlib.metadata.PackageNotFoundError:
+            missing.append(requirement)
+            continue
+        if actual_version != expected_version:
+            missing.append(requirement)
 raise SystemExit(1 if missing else 0)
 '@
 foreach ($candidate in $candidates) {
@@ -75,7 +89,7 @@ foreach ($candidate in $candidates) {
         continue
     }
 
-    & $candidatePath -B -c $probe @requiredModules *> $null
+    & $candidatePath -B -c $probe @requirements *> $null
     if ($LASTEXITCODE -eq 0) {
         $runtime = $candidatePath
         break
@@ -83,15 +97,15 @@ foreach ($candidate in $candidates) {
 }
 
 if ($null -eq $runtime) {
-    $modules = if ($requiredModules.Count -eq 0) {
+    $requirementText = if ($requirements.Count -eq 0) {
         'standard library'
     }
     else {
-        $requiredModules -join ', '
+        $requirements -join ', '
     }
     throw (
         "No unified Python runtime satisfies package set '$PackageSet' " +
-        "($modules). Set NA228_PYTHON to a compatible python.exe."
+        "($requirementText). Set NA228_PYTHON to a compatible python.exe."
     )
 }
 

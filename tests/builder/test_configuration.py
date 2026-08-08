@@ -35,6 +35,8 @@ class ConfigurationTests(unittest.TestCase):
         pcsx2 = root / "pcsx2"
         localization.mkdir()
         write_tsv(root / "targets.tsv", binary_patcher.TARGET_FIELDS, [])
+        self.create_module(localization, "translation_importer")
+        self.create_module(localization, "texture_patcher")
         source.mkdir()
         configurations.mkdir()
         build.mkdir()
@@ -85,7 +87,7 @@ class ConfigurationTests(unittest.TestCase):
 
     def create_module(self, feature: Path, module_type: str) -> Path:
         module = feature / module_type
-        module.mkdir(parents=True)
+        module.mkdir(parents=True, exist_ok=True)
         if module_type == "binary_patcher":
             targets = feature.parent / "targets.tsv"
             if not targets.is_file():
@@ -196,18 +198,8 @@ class ConfigurationTests(unittest.TestCase):
             configuration_path = self.create_configuration(
                 configurations,
                 source,
-                {
-                    "localization": {
-                        "translated_text": {"description": "Text"},
-                        "translated_textures": {"description": "Textures"},
-                    }
-                },
-                {
-                    "localization": {
-                        "translated_text": True,
-                        "translated_textures": True,
-                    }
-                },
+                {"localization": {"description": "Localization"}},
+                {"localization": True},
             )
             configuration = load_configuration(configuration_path, root, root)
             self.assertEqual(configuration.configuration_id, "test")
@@ -241,11 +233,11 @@ class ConfigurationTests(unittest.TestCase):
                 configurations,
                 source,
                 {
-                    "localization": {"translated_text": {"description": "Text"}},
+                    "localization": {"description": "Localization"},
                     "catalog_only": {"description": "Catalog-only leaf"},
                 },
                 {
-                    "localization": {"translated_text": True},
+                    "localization": True,
                     "catalog_only": False,
                 },
             )
@@ -265,8 +257,8 @@ class ConfigurationTests(unittest.TestCase):
             configuration = self.create_configuration(
                 configurations,
                 source,
-                {"localization": {"translated_text": {"description": "Text"}}},
-                {"localization": {"translated_text": True}},
+                {"localization": {"description": "Localization"}},
+                {"localization": True},
             )
             loaded = load_configuration(configuration, root, root)
             resources = set(configuration_resource_files(loaded))
@@ -287,13 +279,16 @@ class ConfigurationTests(unittest.TestCase):
             configuration = self.create_configuration(
                 configurations,
                 source,
-                {"localization": {"translated_text": {"description": "Text"}}},
-                {"localization": {"translated_text": True}},
+                {"localization": {"description": "Localization"}},
+                {"localization": True},
             )
             loaded = load_configuration(configuration, root, root)
             self.assertEqual(
                 [module.module_id for module in loaded.modules],
-                ["localization.translation_importer"],
+                [
+                    "localization.translation_importer",
+                    "localization.texture_patcher",
+                ],
             )
 
     def test_loader_does_not_enumerate_builder_metadata_as_feature_input(self) -> None:
@@ -307,8 +302,8 @@ class ConfigurationTests(unittest.TestCase):
             configuration = self.create_configuration(
                 configurations,
                 source,
-                {"localization": {"translated_text": {"description": "Text"}}},
-                {"localization": {"translated_text": True}},
+                {"localization": {"description": "Localization"}},
+                {"localization": True},
             )
             loaded = load_configuration(configuration, root, root)
             resources = set(configuration_resource_files(loaded))
@@ -322,8 +317,8 @@ class ConfigurationTests(unittest.TestCase):
             configuration = self.create_configuration(
                 configurations,
                 source,
-                {"localization": {"translated_text": {"description": "Text"}}},
-                {"localization": {"translated_text": True}},
+                {"localization": {"description": "Localization"}},
+                {"localization": True},
             )
             loaded = load_configuration(configuration, root, root)
             self.assertEqual(resolve_module_order(loaded.modules), loaded.modules)
@@ -336,8 +331,8 @@ class ConfigurationTests(unittest.TestCase):
             configuration = self.create_configuration(
                 configurations,
                 source,
-                {"localization": {"translated_text": {"description": "Text"}}},
-                {"localization": {"translated_text": True}},
+                {"localization": {"description": "Localization"}},
+                {"localization": True},
             )
             product_path = root / "product.json"
             product = json.loads(product_path.read_text(encoding="utf-8"))
@@ -465,13 +460,13 @@ class ConfigurationTests(unittest.TestCase):
         features_root = repository / "na228_builder" / "features"
         self.assertFalse(features_root.exists())
 
-    def test_complete_release_resources_include_disabled_flat_modules(self) -> None:
+    def test_complete_release_resources_include_disabled_feature_inputs(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         builder_root = repository / "na228_builder"
         default_path = builder_root / "configurations" / "release.json"
         configuration = json.loads(default_path.read_text(encoding="utf-8"))
         configuration["overrides"] = {
-            "features": {"localization": {"translated_textures": False}}
+            "features": {"localization": False}
         }
         marker = builder_root / "release_manifest.json"
         texture_root = builder_root / "localization" / "texture_patcher"

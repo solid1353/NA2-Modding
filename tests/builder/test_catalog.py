@@ -267,6 +267,9 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(sum(len(package.fragments) for package in runtime), 118)
         self.assertEqual(sum(len(package.edits) for package in runtime), 68)
         raw_catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+        localization = raw_catalog["features"]["localization"]
+        self.assertNotIn("translated_text", localization)
+        self.assertNotIn("translated_textures", localization)
         forbidden = {
             "features",
             "modules",

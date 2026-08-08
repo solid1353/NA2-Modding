@@ -38,6 +38,10 @@ class BuildPreflightTests(unittest.TestCase):
         module = feature / "translation_importer"
         module.mkdir(parents=True)
         (module / "mappings.tsv").write_text("id\n", encoding="utf-8")
+        texture = feature / "texture_patcher"
+        texture.mkdir()
+        for name in ("containers.tsv", "mappings.tsv", "strategies.tsv"):
+            (texture / name).write_text("id\n", encoding="utf-8")
         targets = builder / "targets.tsv"
         targets.write_text(
             "\t".join(binary_patcher.TARGET_FIELDS) + "\n",
@@ -47,9 +51,7 @@ class BuildPreflightTests(unittest.TestCase):
             json.dumps(
                 {
                     "features": {
-                        "localization": {
-                            "translated_text": {"description": "Text"}
-                        }
+                        "localization": {"description": "Localization"}
                     }
                 }
             ),

@@ -25,14 +25,10 @@ MODULE_TYPE_ORDER = (
     "binary_patcher",
 )
 MODULE_TYPES = frozenset(MODULE_TYPE_ORDER)
-CATALOG_MODULE_INPUTS = {
-    ("localization", "translation_importer"): (
-        ("features", "localization", "translated_text"),
-        ("localization", "translation_importer"),
-    ),
-    ("localization", "texture_patcher"): (
-        ("features", "localization", "translated_textures"),
-        ("localization", "texture_patcher"),
+FEATURE_MODULE_INPUTS = {
+    "localization": (
+        ("translation_importer", ("localization", "translation_importer")),
+        ("texture_patcher", ("localization", "texture_patcher")),
     ),
 }
 BINARY_PATCHER_CONTROL_FILES = (
@@ -527,21 +523,16 @@ def _resolved_roots(
     return roots
 
 
-def _catalog_module_inputs(
+def _feature_module_inputs(
     builder_root: Path,
     feature_id: str,
-    selection: CatalogSelection,
-) -> list[tuple[str, tuple[str, ...], Path]]:
-    inputs: list[tuple[str, tuple[str, ...], Path]] = []
-    for (owner, module_type), (node_path, relative_path) in CATALOG_MODULE_INPUTS.items():
-        if owner != feature_id:
-            continue
-        if not any(node.path == node_path for node in selection.nodes):
-            continue
+) -> list[tuple[str, Path]]:
+    inputs: list[tuple[str, Path]] = []
+    for module_type, relative_path in FEATURE_MODULE_INPUTS.get(feature_id, ()):
         module_path = builder_root.joinpath(*relative_path).resolve()
         if not module_path.is_dir():
             raise FileNotFoundError(module_path)
-        inputs.append((module_type, node_path, module_path))
+        inputs.append((module_type, module_path))
     return sorted(inputs, key=lambda item: MODULE_TYPE_ORDER.index(item[0]))
 
 
@@ -549,7 +540,7 @@ def _catalog_feature_sha256(
     selection: CatalogSelection,
     feature_id: str,
     repository: Path,
-    module_inputs: list[tuple[str, tuple[str, ...], Path]],
+    module_inputs: list[tuple[str, Path]],
     targets_path: Path,
 ) -> str:
     from . import catalog as catalog_module
@@ -565,7 +556,7 @@ def _catalog_feature_sha256(
             json.dumps(feature_value, ensure_ascii=False, separators=(",", ":")).encode("utf-8"),
         )
     ]
-    for module_type, _, module_path in module_inputs:
+    for module_type, module_path in module_inputs:
         for file in _module_content_files(module_path, module_type):
             entries.append((file.relative_to(repository).as_posix(), file.read_bytes()))
     if catalog_module.feature_has(selection, feature_id, "edits") or catalog_module.feature_has(
@@ -612,7 +603,7 @@ def _load_configuration(
     features: list[SelectedFeature] = []
     modules: list[ModuleInvocation] = []
     for feature_id in selection.feature_ids:
-        module_inputs = _catalog_module_inputs(builder_root, feature_id, selection)
+        module_inputs = _feature_module_inputs(builder_root, feature_id)
         actual = _catalog_feature_sha256(
             selection,
             feature_id,
@@ -621,8 +612,8 @@ def _load_configuration(
             targets_path,
         )
         available: dict[str, Path] = {}
-        for module_type, node_path, module_path in module_inputs:
-            if selection.node_enabled(*node_path):
+        for module_type, module_path in module_inputs:
+            if selection.node_enabled("features", feature_id):
                 available[module_type] = module_path
         if catalog_module.feature_has(
             selection,
@@ -717,8 +708,8 @@ def configuration_resource_files(
     if include_disabled:
         builder_root = configuration.selection.catalog_path.parent
         for feature in configuration.features:
-            for module_type, _, module_path in _catalog_module_inputs(
-                builder_root, feature.feature_id, configuration.selection
+            for module_type, module_path in _feature_module_inputs(
+                builder_root, feature.feature_id
             ):
                 files.extend(_module_content_files(module_path, module_type))
     else:

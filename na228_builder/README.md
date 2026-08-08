@@ -9,7 +9,7 @@ The builder creates a reproducible product from one configuration and one integr
 - `targets.tsv` is the single target registry used by catalog edits and hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.
 - `localization/assets/` owns the catalog-referenced localization binary assets.
-- `features.localization.translated_text` and `features.localization.translated_textures` select the retained translation-importer and texture-patcher inputs under `localization/`.
+- Enabling `features.localization` includes the retained translation-importer and texture-patcher inputs under `localization/`; they are real inputs, not empty catalog selector nodes.
 - `scripts/` contains every builder Python implementation file. Reusable engines and their code-only contracts remain under `modules/`.
 - Root `product.json` owns source inputs, output identity, and named build variants.
 

@@ -51,9 +51,7 @@ This document records the accepted builder catalog and configuration design. It 
   "features": true,
   "overrides": {
     "features": {
-      "localization": {
-        "translated_textures": false
-      }
+      "localization": false
     }
   }
 }

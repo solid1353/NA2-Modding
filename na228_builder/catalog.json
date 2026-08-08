@@ -1,12 +1,6 @@
 {
   "features": {
     "localization": {
-      "translated_text": {
-        "description": "Import the translated text and apply its derived string patches."
-      },
-      "translated_textures": {
-        "description": "Import the translated UI textures from the retained texture inputs."
-      },
       "font_glyphs": {
         "description": "Static native-font glyph, metric-table, and geometry inputs. Resident native-font metric decoding and draw adjustment.",
         "font_glyphs_native": {

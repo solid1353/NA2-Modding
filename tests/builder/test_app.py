@@ -33,10 +33,10 @@ class ReleaseAppTests(unittest.TestCase):
             schema_version=1,
             product_name="Narutimate Accel v2.28",
             product_version="v-test",
-            executable_name="NA2.28_test.exe",
+            executable_name="Narutimate Accel v2.28_test.exe",
             output_name="Narutimate Accel v2.28.iso",
             configuration="na228_builder/configurations/release.json",
-            configuration_name="NA2.28.json",
+            configuration_name="Narutimate Accel v2.28.json",
             images=(
                 self.image("na2", "original NA2 ISO", na2),
                 self.image("nun5", "original NUN5 ISO", nun5),
@@ -44,13 +44,13 @@ class ReleaseAppTests(unittest.TestCase):
         )
 
     def write_configuration(self, root: Path, value: object | None = None) -> Path:
-        path = root / "NA2.28.json"
+        path = root / "Narutimate Accel v2.28.json"
         path.write_text(json.dumps({} if value is None else value), encoding="utf-8")
         return path
 
     def test_application_directory_uses_explicit_executable_parent(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            executable = Path(directory) / "folder" / "NA2.28.exe"
+            executable = Path(directory) / "folder" / "Narutimate Accel v2.28.exe"
             self.assertEqual(
                 application_directory(executable=executable),
                 executable.resolve().parent,
@@ -61,10 +61,10 @@ class ReleaseAppTests(unittest.TestCase):
             "schema_version": 1,
             "product_name": "Narutimate Accel v2.28",
             "product_version": "1.0.0",
-            "executable_name": "NA2.28.exe",
+            "executable_name": "Narutimate Accel v2.28.exe",
             "output_name": "Narutimate Accel v2.28.iso",
             "configuration": "na228_builder/configurations/release.json",
-            "configuration_name": "NA2.28.json",
+            "configuration_name": "Narutimate Accel v2.28.json",
             "images": [
                 {
                     "id": "NA2",
@@ -86,17 +86,20 @@ class ReleaseAppTests(unittest.TestCase):
         self.assertEqual(manifest.images[0].image_id, "na2")
         self.assertEqual(manifest.images[0].sha256, "AB" * 32)
         self.assertEqual(manifest.output_name, "Narutimate Accel v2.28.iso")
-        self.assertEqual(manifest.configuration_name, "NA2.28.json")
+        self.assertEqual(
+            manifest.configuration_name,
+            "Narutimate Accel v2.28.json",
+        )
 
     def test_manifest_parser_rejects_unsafe_output_name(self) -> None:
         data = {
             "schema_version": 1,
             "product_name": "Narutimate Accel v2.28",
             "product_version": "1.0.0",
-            "executable_name": "NA2.28.exe",
+            "executable_name": "Narutimate Accel v2.28.exe",
             "output_name": "build/Narutimate Accel v2.28.iso",
             "configuration": "na228_builder/configurations/release.json",
-            "configuration_name": "NA2.28.json",
+            "configuration_name": "Narutimate Accel v2.28.json",
             "images": [
                 {
                     "id": "na2",

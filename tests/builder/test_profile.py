@@ -512,7 +512,9 @@ class ProfileTests(unittest.TestCase):
         }
 
         with tempfile.TemporaryDirectory() as directory:
-            configuration_path = Path(directory) / "custom.json"
+            configuration_path = (
+                Path(directory) / "Narutimate Accel v2.28.json"
+            )
             configuration_path.write_text(
                 json.dumps(configuration, indent=2) + "\n",
                 encoding="utf-8",
@@ -523,6 +525,7 @@ class ProfileTests(unittest.TestCase):
                 builder_root,
                 root_overrides={"na2": marker, "nun5": marker},
             )
+            self.assertEqual(loaded.profile_id, "Narutimate Accel v2.28")
             selected = set(profile_resource_files(loaded))
             complete = set(
                 profile_resource_files(loaded, include_disabled=True)

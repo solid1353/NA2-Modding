@@ -673,7 +673,7 @@ def _load_configuration(
     from . import catalog as catalog_module
 
     configuration_id = definition_path.stem
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", configuration_id):
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_. -]*", configuration_id):
         raise ValueError(f"Invalid configuration name: {configuration_id!r}")
     catalog_path = builder_root / "catalog.json"
     pins_path = builder_root / "profiles" / "default.tsv"

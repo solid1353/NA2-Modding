@@ -57,13 +57,13 @@ if ($targetVersion -notmatch '^\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)
 
 $executableMatch = [regex]::Match(
     [string]$manifest.executable_name,
-    '^(?<stem>.+)_v[^/\\]+\.exe$',
+    '^(?<stem>.+)_[^/\\]+\.exe$',
     [Text.RegularExpressions.RegexOptions]::IgnoreCase
 )
 if (-not $executableMatch.Success) {
-    throw 'Release executable_name must follow <product>_v<version>.exe.'
+    throw 'Release executable_name must follow <product>_<version>.exe.'
 }
-$targetExecutable = "$($executableMatch.Groups['stem'].Value)_v$targetVersion.exe"
+$targetExecutable = "$($executableMatch.Groups['stem'].Value)_$targetVersion.exe"
 $tag = "v$targetVersion"
 
 $status = @(Invoke-ReleaseGit -GitArguments @(

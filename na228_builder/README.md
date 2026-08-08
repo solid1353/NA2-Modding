@@ -49,7 +49,8 @@ The release configuration composes, in order:
 3. Battle-logic behavior, with the substitution-cost node disabled.
 4. Rendering data retained in the catalog, with native 16:9 scaling disabled.
 
-Release packages include this configuration as editable `NA2.28.json`. The
+Release packages include this configuration as editable
+`Narutimate Accel v2.28.json`. The
 packaged EXE validates that external file against its embedded catalog and
 contains resources for every selectable catalog node, including nodes disabled
 by the default release selection. Catalog-owned runtime C sources have packaged

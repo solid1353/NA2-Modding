@@ -26,11 +26,9 @@ if str(REPOSITORY) not in sys.path:
 from scripts.lib.paths import load_paths  # noqa: E402
 
 
-PACKAGE = load_paths(REPOSITORY).path(
-    "features", "localization", "binary_patcher"
-)
-ATLAS_OUTPUT = PACKAGE / "assets" / "nun5_semantic_14x20.bin"
-PACKED_MAP_OUTPUT = PACKAGE / "assets" / "nun5_semantic_14x20_packed_map.bin"
+ASSETS = load_paths(REPOSITORY).path("features", "localization", "assets")
+ATLAS_OUTPUT = ASSETS / "nun5_semantic_14x20.bin"
+PACKED_MAP_OUTPUT = ASSETS / "nun5_semantic_14x20_packed_map.bin"
 
 NA2_GF4_SHA256 = "472E297E6B7B158232CD0BCD87941079D51885D65AEF5CFE7052CBE8D88FC4F5"
 NA2_GF4C_SHA256 = "5A811B40E328F236A739A8F51CCDC61B52FD409420712F2D2BC02E087ACBC3BE"

@@ -23,6 +23,6 @@ pointer without depending on heap placement.
 This is the verified good-enough file-backed implementation. It affects every
 call through the shared rendering-state writer.
 
-## Binary patcher
-
-The downstream module is `binary_patcher`.
+The guarded implementation lives directly in the `rendering` catalog subtree.
+Its release-configuration leaf is currently `false`; internal application uses
+the binary-patcher engine without exposing a module in the data model.

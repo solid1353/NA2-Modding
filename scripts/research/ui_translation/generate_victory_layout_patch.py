@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import hashlib
 import json
 import os
@@ -15,7 +14,6 @@ REPOSITORY = Path(__file__).resolve().parents[3]
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
-from na228_builder.modules.binary_patcher import engine  # noqa: E402
 from scripts.lib.paths import load_paths  # noqa: E402
 
 
@@ -39,29 +37,6 @@ NUN5_ENGLISH_WIDTH_TABLE_OFFSET = 0x004DE6D0
 NUN5_TEMPLATE_OFFSETS = (0x0021B9C0, 0x0021B9E0)
 DESCRIPTOR_SIZE = 24
 WIDTH_OFFSET = 4
-
-
-def read_rows(path: Path) -> list[dict[str, str]]:
-    with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        return list(csv.DictReader(handle, delimiter="\t"))
-
-
-def write_rows(
-    path: Path,
-    fieldnames: list[str],
-    rows: list[dict[str, str]],
-) -> None:
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    with temporary.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(
-            handle,
-            fieldnames=fieldnames,
-            delimiter="\t",
-            lineterminator="\n",
-        )
-        writer.writeheader()
-        writer.writerows(rows)
-    os.replace(temporary, path)
 
 
 def read_verified(
@@ -238,7 +213,7 @@ def main() -> int:
     parser.add_argument(
         "--write",
         action="store_true",
-        help="Replace the ui_layout_victory_names package rows after validation.",
+        help="Replace the ui_layout_victory_names catalog edits after validation.",
     )
     parser.add_argument(
         "--state-plan",
@@ -251,29 +226,27 @@ def main() -> int:
     args = parser.parse_args()
 
     patch, generated_edits = build_patch_rows()
-    data_root = (
-        load_paths(REPOSITORY).path("features")
-        / "localization"
-        / "binary_patcher"
-    )
-    patches_path = data_root / "patches.tsv"
-    edits_path = data_root / "edits.tsv"
-    patches = [
-        row
-        for row in read_rows(patches_path)
-        if row["patch_id"] != PATCH_ID
-    ]
-    edits = [
-        row
-        for row in read_rows(edits_path)
-        if row["patch_id"] != PATCH_ID
-    ]
-    patches.append(patch)
-    edits.extend(generated_edits)
-
     if args.write:
-        write_rows(patches_path, engine.PATCH_FIELDS, patches)
-        write_rows(edits_path, engine.EDIT_FIELDS, edits)
+        catalog_path = REPOSITORY / "na228_builder" / "catalog.json"
+        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+        node = catalog["localization"]["ui_layout"][PATCH_ID]
+        node["description"] = patch["description"]
+        node["edits"] = {
+            edit["edit_id"]: {
+                "operation": edit["operation"],
+                "destination_target_id": edit["destination_target_id"],
+                "destination_offset": edit["destination_offset"],
+                "expected_hex": edit["expected_hex"],
+                "replacement_hex": edit["replacement_hex"],
+            }
+            for edit in sorted(generated_edits, key=lambda item: int(item["order"]))
+        }
+        temporary = catalog_path.with_suffix(".json.tmp")
+        temporary.write_text(
+            json.dumps(catalog, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        os.replace(temporary, catalog_path)
     if args.state_plan is not None:
         plan_path = args.state_plan
         if plan_path.is_absolute():

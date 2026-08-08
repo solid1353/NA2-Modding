@@ -1,0 +1,8 @@
+field	required	type
+description	0	text
+operation	1	text
+destination_target_id	1	text
+destination_offset	1	integer
+length	1	integer
+expected_hex	1	hex
+fill_hex	1	hex

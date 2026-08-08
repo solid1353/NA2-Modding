@@ -812,7 +812,7 @@ Add-Content `
         -Rotated $true `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $paths.files.previous_iso `
-        -Profile (Join-Path $paths.builder 'profiles\default.tsv') `
+        -Configuration (Join-Path $paths.builder 'configurations\release.json') `
         -Paths $paths
     Assert-Na2Test -Condition ($record.BuildId -eq 'new-latest') -Message 'Updated build was not retained.'
     $updatedBuildMap = Read-Na2BuildMap `
@@ -849,7 +849,7 @@ Add-Content `
         -Rotated $false `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $paths.files.previous_iso `
-        -Profile 'na228_builder/profiles/default.tsv' `
+        -Configuration 'na228_builder/configurations/release.json' `
         -Paths $paths
     Assert-Na2Test `
         -Condition ($unchanged.BuildId -eq 'duplicate') `
@@ -872,7 +872,7 @@ Add-Content `
         -Rotated $false `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $null `
-        -Profile 'na228_builder/profiles/default.tsv' `
+        -Configuration 'na228_builder/configurations/release.json' `
         -Paths $paths
     Assert-Na2Test `
         -Condition ($firstUnchanged.BuildId -eq $firstBuildId) `

@@ -127,7 +127,7 @@ def profile_resources_entry(workspace: Path, profile_path: Path) -> dict[str, ob
         try:
             relative = path.resolve().relative_to(workspace).as_posix()
         except ValueError as error:
-            raise ValueError(f"Profile resource is outside the repository: {path}") from error
+            raise ValueError(f"Configuration resource is outside the repository: {path}") from error
         if path.suffix.casefold() == ".md":
             size = 0
             content_hash = "STRUCTURAL-PRESENCE-ONLY"
@@ -184,7 +184,7 @@ def collect_build_state(
     try:
         profile = profile_path.relative_to(builder).as_posix()
     except ValueError as error:
-        raise ValueError("Profile must be inside na228_builder") from error
+        raise ValueError("Configuration must be inside na228_builder") from error
     if not profile_path.is_file():
         raise FileNotFoundError(profile_path)
     return {
@@ -346,7 +346,7 @@ def write_receipt(
         return {"status": "skipped", "reason": "receipt-error", "detail": str(error)}
 
 
-def _profile_path(value: Path, workspace: Path) -> Path:
+def _configuration_path(value: Path, workspace: Path) -> Path:
     return value if value.is_absolute() else workspace / value
 
 
@@ -364,7 +364,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         command.add_argument("--na2-iso", required=True, type=Path)
         command.add_argument("--nun5-iso", required=True, type=Path)
         command.add_argument("--output", required=True, type=Path)
-        command.add_argument("--profile", required=True, type=Path)
+        command.add_argument("--configuration", required=True, type=Path)
         command.add_argument("--receipt", required=True, type=Path)
         command.add_argument("--payload-shift", type=int, default=0)
         if name == "record":
@@ -377,7 +377,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         "na2_iso": args.na2_iso,
         "nun5_iso": args.nun5_iso,
         "output_iso": args.output,
-        "profile_path": _profile_path(args.profile, workspace),
+        "profile_path": _configuration_path(args.configuration, workspace),
         "receipt_path": args.receipt,
         "payload_shift": args.payload_shift,
     }

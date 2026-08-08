@@ -241,8 +241,8 @@ component separately.
 - `scripts/research/menu_input/`: range disassembler, direct-call finder,
   address-reference finder, MIPS mask analyzer, and Ghidra-export comparison
   helpers for targeted EE work.
-- `na228_builder/features/localization/binary_patcher/`: reusable overlay and
-  boot-ELF function maps, exact edits, provenance, and runtime tests.
+- `na228_builder/catalog.json`: guarded overlay and boot-ELF edits;
+  provenance and runtime conclusions are retained in feature/knowledge docs.
 - `docs/knowledge/localization/substitution.md`,
   `docs/knowledge/runtime/menu_input.md`, and
   `docs/knowledge/localization/font/`:

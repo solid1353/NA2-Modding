@@ -57,7 +57,7 @@ function Invoke-Na2BuildPreflight {
         [Parameter(Mandatory = $true)][string]$Na2Iso,
         [Parameter(Mandatory = $true)][string]$Nun5Iso,
         [Parameter(Mandatory = $true)][string]$OutputIso,
-        [Parameter(Mandatory = $true)][string]$Profile,
+        [Parameter(Mandatory = $true)][string]$Configuration,
         [Parameter(Mandatory = $true)][string]$Receipt,
         [Parameter(Mandatory = $true)][int]$PayloadShift,
         [AllowNull()][string]$ExpectedFingerprint,
@@ -71,7 +71,7 @@ function Invoke-Na2BuildPreflight {
         '--na2-iso', $Na2Iso
         '--nun5-iso', $Nun5Iso
         '--output', $OutputIso
-        '--profile', $Profile
+        '--configuration', $Configuration
         '--receipt', $Receipt
         '--payload-shift', [string]$PayloadShift
     )
@@ -222,9 +222,9 @@ $nun5Iso = $paths.files.nun5_iso
 $resolvedLatestIso = [IO.Path]::GetFullPath($paths.files.latest_iso)
 $resolvedPreviousIso = [IO.Path]::GetFullPath($paths.files.previous_iso)
 $resolvedManualTestIso = [IO.Path]::GetFullPath($paths.files.manual_test_iso)
-$profile = [IO.Path]::GetRelativePath(
+$configuration = [IO.Path]::GetRelativePath(
     $paths.repository,
-    (Join-Path $paths.builder 'profiles\default.tsv')
+    (Join-Path $paths.builder 'configurations\release.json')
 )
 $logDirectory = Join-Path $paths.logs 'na228'
 $buildLogRoot = Join-Path $logDirectory 'builds'
@@ -297,7 +297,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         '-m', 'na228_builder.build_profile'
         '--source', $inputIso
         '--output', $isolatedOutputIso
-        '--profile', $profile
+        '--configuration', $configuration
         '--profile-log-directory', $isolatedProfileLogDirectory
         '--payload-shift', [string]$payloadShift
     )
@@ -313,7 +313,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
             -Na2Iso $inputIso `
             -Nun5Iso $nun5Iso `
             -OutputIso $isolatedOutputIso `
-            -Profile $profile `
+            -Configuration $configuration `
             -Receipt $isolatedReceiptPath `
             -PayloadShift $payloadShift `
             -Repository $paths.repository
@@ -438,8 +438,8 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         $isolatedState = if ($isolatedChanged) { 'updated' } else { 'unchanged' }
 
         if ($isolatedKind -ne 'e2e-test') {
-            $profilePortable = ConvertTo-Na2PortableText `
-                -Text $profile `
+            $configurationPortable = ConvertTo-Na2PortableText `
+                -Text $configuration `
                 -Paths $paths
             $outputPortable = ConvertTo-Na2PortableText `
                 -Text $isolatedOutputIso `
@@ -448,10 +448,10 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
                 -Text $isolatedProfileLog `
                 -Paths $paths
             $resultContent = @(
-                "timestamp_utc`tresult`toutput_state`trotation`tpcsx2_closed`tprofile`toutput_iso`tbuild_record"
+                "timestamp_utc`tresult`toutput_state`trotation`tpcsx2_closed`tconfiguration`toutput_iso`tbuild_record"
                 (
                     (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" +
-                    "$isolatedKind`t$isolatedState`tno`tno`t$profilePortable`t$outputPortable`t$recordPortable"
+                    "$isolatedKind`t$isolatedState`tno`tno`t$configurationPortable`t$outputPortable`t$recordPortable"
                 )
             ) -join "`n"
             $resultContent += "`n"
@@ -476,7 +476,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
                 -BuildId $isolatedBuildId `
                 -Variant $E2eVariant `
                 -OutputIso $isolatedOutputIso `
-                -Profile $profile `
+                -Configuration $configuration `
                 -PayloadShift $payloadShift `
                 -Paths $paths
         }
@@ -502,7 +502,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
                     -Na2Iso $inputIso `
                     -Nun5Iso $nun5Iso `
                     -OutputIso $isolatedOutputIso `
-                    -Profile $profile `
+                    -Configuration $configuration `
                     -Receipt $isolatedReceiptPath `
                     -PayloadShift $payloadShift `
                     -ExpectedFingerprint $isolatedPreflightFingerprint `
@@ -599,7 +599,7 @@ try {
         -Na2Iso $inputIso `
         -Nun5Iso $nun5Iso `
         -OutputIso $resolvedLatestIso `
-        -Profile $profile `
+        -Configuration $configuration `
         -Receipt $latestReceiptPath `
         -PayloadShift 0 `
         -Repository $paths.repository
@@ -674,7 +674,7 @@ $arguments = @(
     '-m', 'na228_builder.build_profile'
     '--source', $inputIso
     '--output', $resolvedLatestIso
-    '--profile', $profile
+    '--configuration', $configuration
     '--profile-log-directory', $profileLogDirectory
 )
 
@@ -690,7 +690,7 @@ try {
     }
     $buildOutput | ForEach-Object { Write-Host $_ }
     if ($buildExitCode -ne 0) {
-        throw "NA2 profile build failed (exit $buildExitCode)."
+        throw "NA2 configuration build failed (exit $buildExitCode)."
     }
     if (-not (Test-Path -LiteralPath $profileLog -PathType Container)) {
         throw 'Profile build completed without creating its structured build record.'
@@ -707,7 +707,7 @@ try {
         -Rotated $promotion.Rotated `
         -LatestIso $promotion.LatestIso `
         -PreviousIso $promotion.PreviousIso `
-        -Profile $profile `
+        -Configuration $configuration `
         -Paths $paths
     $buildRecordPath = Join-Path $buildLogRoot $buildRecord.BuildId
     Write-Host "[na228] Build record: retained $buildRecordPath" -ForegroundColor Cyan
@@ -721,7 +721,7 @@ try {
                 -Na2Iso $inputIso `
                 -Nun5Iso $nun5Iso `
                 -OutputIso $resolvedLatestIso `
-                -Profile $profile `
+                -Configuration $configuration `
                 -Receipt $latestReceiptPath `
                 -PayloadShift 0 `
                 -ExpectedFingerprint $preflightFingerprint `

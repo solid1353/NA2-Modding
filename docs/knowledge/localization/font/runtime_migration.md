@@ -289,10 +289,9 @@ reproducible project surface:
 - `measure_font_capture_regions.ps1` and
   `measure_font_capture_regions.py` measure configured regions without turning
   tiny subpixel differences into automatic defects.
-- `set_font_patch_state.ps1` atomically toggles the enabled columns in the two
-  canonical Font patch tables for controlled isolation runs. It supports the
-  `GlobalOnly` and `AllEnabled` presets plus explicit patch overrides; it never
-  edits displayed text.
+- Controlled isolation uses booleans in a task-selected configuration JSON.
+  Its structure must continue to match the catalog exactly; there is no
+  separate patch-state script or executable `enabled` field.
 
 Generated ISOs, captures, logs, and comparison products remain task-owned
 under `work/Font 3/`; only reusable scripts and canonical findings are tracked.

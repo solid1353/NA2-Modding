@@ -1,6 +1,6 @@
 # Modding and source policy
 
-**Applies when:** changing profiles, builder features/modules, binary data,
+**Applies when:** changing configurations, catalog features, builder engines, binary data,
 source media, PNACH, donor data, or encoded game text.
 
 ## Canonical builder contract
@@ -8,14 +8,18 @@ source media, PNACH, donor data, or encoded game text.
 - Before modifying builder composition, read the relevant sections of
   `na228_builder/README.md` and the affected component documentation. Do not
   recreate retired schemas or assumptions from historical notes.
-- `na228_builder/profiles/default.tsv` is the normal reproducible build
-  definition. Root `product.json` owns canonical inputs and output identity.
-- Only the user may change profile `bypass_check`; agents preserve every existing
-  value exactly. Accepted reproducible checkpoints use real pins with
+- `na228_builder/configurations/release.json` is the normal reproducible build
+  selection. `na228_builder/catalog.json` owns selectable definitions and
+  migrated binary/runtime data. Root `product.json` owns canonical inputs and
+  output identity.
+- Pin values remain in `na228_builder/profiles/default.tsv` until their storage
+  is redesigned; its `enabled` column is ignored. Only the user may change a pin
+  or `bypass_check`; agents preserve every existing value exactly. Accepted reproducible checkpoints use real pins with
   `bypass_check=0` and may be marked by annotated Git tags.
-- Reusable engines, schemas, and tools belong under `na228_builder/modules/`;
-  reproducible feature-owned inputs belong under the owning feature.
-- Feature module directories contain executable inputs, not placeholders,
+- Reusable engines, operation definitions, and tools belong under
+  `na228_builder/modules/`; migrated executable definitions belong in the
+  catalog and non-inline inputs remain under the owning feature.
+- Remaining feature engine directories contain executable inputs, not placeholders,
   identity manifests, `.gitkeep`, or header-only files used only to register an
   engine.
 - Each reusable module README identifies its downstream module invocations or
@@ -39,8 +43,9 @@ source media, PNACH, donor data, or encoded game text.
 - Prefer verified canonical NUN5 data/bytes when suitable. When donor data is
   unsuitable, document the intended NA2 behavior and evidence for replacement
   bytes.
-- Every binary patch records target file, offset, original bytes, replacement
-  bytes, and reason.
+- Every binary edit records its target, offset, destination guard, and
+  replacement operation. Rationale and evidence belong in documentation, not
+  executable fields.
 - Check encoded byte length before writing strings. `[S]`/`shorten` exceptions
   are manual fit decisions only when they retain an exact official NUN5 source
   reference. Prefer Shift-JIS/CP932-compatible text unless proven otherwise.

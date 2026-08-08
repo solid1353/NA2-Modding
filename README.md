@@ -22,7 +22,7 @@ The project combines:
 - Gameplay, rendering, and default-setting changes through reproducible
   file-backed patch modules, with PNACH reserved for stable resident/runtime
   behavior and bounded hypotheses.
-- Hash-pinned profile composition, verified ISO assembly, PCSX2-based runtime
+- Hash-pinned catalog/configuration composition, verified ISO assembly, PCSX2-based runtime
   validation, and self-contained release packaging.
 
 Shared source-game, PCSX2, media, input, savestate, and Ghidra tooling lives in
@@ -60,7 +60,7 @@ including the [builder](na228_builder/README.md) and reusable module READMEs.
 Substantial supporting documentation belongs under `docs/` and is linked from
 those local entrypoints.
 
-Install the pinned builder dependency before building the current profile:
+Install the pinned builder dependency before building the release configuration:
 
 ```powershell
 python -m pip install -r na228_builder/requirements.txt

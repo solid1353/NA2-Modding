@@ -1,2 +1,0 @@
-source_id	language	path	namespace
-startup_loading	c	src/startup_loading.c	qol.startup.loading

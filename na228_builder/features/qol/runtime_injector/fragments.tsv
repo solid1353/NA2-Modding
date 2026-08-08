@@ -1,2 +1,0 @@
-fragment_id	order	kind	alignment	payload_hex	blob_path	blob_offset	length	blob_sha256	init
-qol.startup.loading.state	1	data	4	0000000000000000			8		0

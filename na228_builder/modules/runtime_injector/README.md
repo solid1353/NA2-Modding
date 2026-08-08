@@ -8,33 +8,22 @@ engine compiles the concrete writes into an in-memory `binary_patcher`
 package. A feature never chooses an offset inside `PRG/228.BIN` or owns its
 loader, memory reservation, or final runtime address.
 
-Canonical inputs are the shared `na228_builder/features/targets.tsv` registry
-plus local `groups.tsv`, `patches.tsv`, `fragments.tsv`, `c_sources.tsv`,
-`c_imports.tsv`, `c_fragments.tsv`,
-`relocations.tsv`, and `edits.tsv`, plus only the source files and blobs
-referenced by those tables. A package retains only the shared destination
-targets referenced by its symbolic edits. Static fragments may contain their
-bytes inline or select a guarded range from a referenced blob. Canonical project C sources live
-under root `src/`; feature `c_sources.tsv` rows reference those repository paths,
-and their contents remain covered by the owning feature hash. Declared C
-sources are compiled with the pinned EE toolchain during normal package loading; the
-generic object extractor converts their sections and relocations directly into
-the same address-independent fragment model. Compiler objects and aggregate
-payload blobs are temporary and are not canonical feature inputs.
+Canonical production inputs are the shared
+`na228_builder/features/targets.tsv` registry and the owning catalog nodes'
+`hooks` and `payload` objects, plus referenced repository sources and assets.
+There is no feature-local runtime-injector directory.
 
-Fragment IDs are exported payload symbols. `c_fragments.tsv` aliases extracted
-object-section symbols to those stable IDs and assigns their global order.
-Relocations may target any exported symbol in the complete linked payload.
-Symbolic edit templates preserve surrounding instructions such as branch or
-jump delay slots while replacing only the declared relocation field.
+A `payload` declaration is either a C source or a static code/data/rodata
+fragment. C sources contain their path, namespace, private imports, emitted
+fragment aliases, and optional ABI metadata. Static fragments contain their
+bytes or guarded blob, alignment, initialization marker, and private
+relocations. Shared declarations are stored only at the nearest common
+selectable owner of their consumers.
 
-Runtime-injection patches use the same hierarchical `enabled` selection contract as
-ordinary binary patches. A disabled group masks every member patch without
-changing the member switches. Disabled rows, their symbolic edits, and all
-fragment/blob declarations remain validated and hash-covered, but they
-contribute no hooks. When every runtime-injection patch in a feature is effectively
-disabled, that feature contributes no resident fragments and composes as a
-no-op `runtime_injector` module without deleting its retained implementation.
+Configuration selection controls hooks. A parent payload declaration
+contributes only when at least one selected descendant consumes that owner.
+When every hook in a feature is disabled, the internal runtime-injector
+invocation contributes no payload or target writes.
 
 ## Invokes
 

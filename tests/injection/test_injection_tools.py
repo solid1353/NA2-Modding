@@ -184,6 +184,7 @@ class InjectionBuildTests(unittest.TestCase):
                 "font_v2_core",
                 "font_numeric",
                 "font_glyph_metrics",
+                "startup_loading",
             ],
         )
         self.assertEqual(

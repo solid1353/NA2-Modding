@@ -16,19 +16,19 @@ def packaged_workspace() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def load_release_profile(na2_iso: Path, nun5_iso: Path) -> tuple[Path, Profile]:
+def load_release_configuration(na2_iso: Path, nun5_iso: Path) -> tuple[Path, Profile]:
     workspace = packaged_workspace()
     manifest = load_release_manifest()
-    profile_path = (workspace / manifest.profile).resolve()
+    configuration_path = (workspace / manifest.configuration).resolve()
     try:
-        profile_path.relative_to(workspace)
+        configuration_path.relative_to(workspace)
     except ValueError as exc:
-        raise RuntimeError("Packaged profile path escapes release data") from exc
-    if not profile_path.is_file():
-        raise FileNotFoundError("Packaged default profile is missing")
+        raise RuntimeError("Packaged configuration path escapes release data") from exc
+    if not configuration_path.is_file():
+        raise FileNotFoundError("Packaged release configuration is missing")
 
     profile = load_profile(
-        profile_path,
+        configuration_path,
         workspace,
         root_overrides={"na2": na2_iso, "nun5": nun5_iso},
     )
@@ -40,13 +40,13 @@ def load_release_profile(na2_iso: Path, nun5_iso: Path) -> tuple[Path, Profile]:
 
 
 def validate_packaged_release() -> int:
-    """Verify embedded profile data without requiring copyrighted source ISOs."""
+    """Verify embedded configuration data without requiring copyrighted source ISOs."""
     workspace = packaged_workspace()
     manifest = load_release_manifest()
     marker = workspace / "na228_builder" / "release_manifest.json"
-    _, profile = load_release_profile(marker, marker)
+    _, profile = load_release_configuration(marker, marker)
     if not profile.modules:
-        raise RuntimeError("Packaged default profile has no module invocations")
+        raise RuntimeError("Packaged release configuration has no module invocations")
     return len(profile.modules)
 
 
@@ -56,14 +56,14 @@ def build_release_iso(
     building_iso: Path,
     emit: Emit,
 ) -> None:
-    """Apply the packaged default profile without writing runtime logs."""
+    """Apply the packaged release configuration without writing runtime logs."""
     if not building_iso.name.endswith(".building"):
         raise ValueError("Release staging path must end in .building")
     output_iso = building_iso.with_name(
         building_iso.name[: -len(".building")]
     )
-    emit("Loading and verifying the packaged profile...")
-    workspace, profile = load_release_profile(na2_iso, nun5_iso)
+    emit("Loading and verifying the packaged configuration...")
+    workspace, profile = load_release_configuration(na2_iso, nun5_iso)
     emit("Applying modules and assembling the output image...")
     build = build_profile_candidate(
         source_iso=na2_iso,

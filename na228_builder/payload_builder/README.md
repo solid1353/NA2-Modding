@@ -23,7 +23,7 @@ rather than research artifacts.
 
 No feature owns the file, its load address, its entrypoint, or the global loader
 and memory-reservation integration. Modules never declare offsets inside
-`228.BIN` or calculate final runtime addresses. The profile composer resolves
+`228.BIN` or calculate final runtime addresses. The configuration composer resolves
 their symbolic game-file references after linking, and `binary_patcher` applies
 the resulting concrete guarded edits. `image_assembler` receives only the
 finished insertion and remains unaware of the payload's internal format.

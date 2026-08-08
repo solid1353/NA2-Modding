@@ -391,16 +391,15 @@ compiled from C during composition and is not stored as an asset.
 `scripts/research/localization/verify_font_renderer.py` deterministically
 reconstructs the accepted v2 renderer, numeric formatter, and retained ABI-shim
 fragments as an independent verifier. Normal composition does not persist its
-aggregate outputs: `runtime_injector/c_sources.tsv` declares the three canonical
-C units under `src/localization/font/`, compiles them with the pinned EE toolchain, and
+aggregate outputs: catalog `payload` declarations own the three canonical C
+units under `src/localization/font/`, compile them with the pinned EE toolchain, and
 converts their sections and relocations directly into normalized fragments.
-Static ABI/data fragments remain inline in `fragments.tsv`; the shared payload
+Static ABI/data fragments remain inline in their owning catalog payload; the shared payload
 builder links both kinds into the final `228.BIN`. The only retained generated
 MIPS in the numeric layer is the pair of typed-to-variadic native `sprintf`
 bridges and the minimal call-site register setup.
-`runtime_injector/entries.tsv` is the development-only ABI entry allowlist used
-by `scripts/injection/build.py`; it does not invoke the feature, enter the
-profile content hash, or change normal payload composition.
+ABI and purpose metadata lives on the owning emitted fragment or static adapter
+and is used by `scripts/injection/build.py` for development entry selection.
 `scripts/research/localization/generate_ninja_song_ascii_numbers.py`
 deterministically verifies the five shared clean-BTL formatter calls, emits
 their symbolic redirects, and guards the canonical ASCII multiplication
@@ -408,6 +407,6 @@ mapping. Its resident helper is declared by the canonical runtime-injector
 package and independently reconstructed by
 `scripts/research/localization/verify_font_renderer.py`.
 Exact static and symbolic hooks, guards, replacement templates, and reasons are
-recorded in the two module-owned `edits.tsv` files; the Font knowledge
+recorded as `edits` and `hooks` in the owning catalog nodes; the Font knowledge
 [index](../../knowledge/localization/font/README.md) routes to confirmed evidence
 and negative results.

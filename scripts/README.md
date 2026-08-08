@@ -41,7 +41,7 @@ Shared infrastructure is not duplicated here:
 
 ## Build and validation ownership
 
-- `na228_builder/` owns profile/module composition and verified image assembly;
+- `na228_builder/` owns configuration composition and verified image assembly;
   see [`../na228_builder/README.md`](../na228_builder/README.md).
 - `scripts/na228/` owns the user-command implementation and output promotion.
 - `e2e/` owns emulator-driven test infrastructure and suite definitions; see

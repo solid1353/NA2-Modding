@@ -38,7 +38,7 @@ class BuildProfileCliTests(unittest.TestCase):
                 "build_profile",
                 "--source",
                 str(source_iso),
-                "--profile",
+                "--configuration",
                 str(profile_path),
                 "--compose-only",
             ]
@@ -108,7 +108,7 @@ class BuildProfileCliTests(unittest.TestCase):
                 str(source_iso),
                 "--output",
                 str(output_iso),
-                "--profile",
+                "--configuration",
                 str(profile_path),
                 "--profile-log-directory",
                 "logs/profile",

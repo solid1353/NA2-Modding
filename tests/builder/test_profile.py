@@ -473,14 +473,28 @@ class ProfileTests(unittest.TestCase):
                 first, module_content_sha256(module, "runtime_injector")
             )
 
-    def test_default_profile_loads(self) -> None:
+    def test_release_configuration_loads(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        profile_path = repository / "na228_builder" / "profiles" / "default.tsv"
+        profile_path = (
+            repository / "na228_builder" / "configurations" / "release.json"
+        )
         marker = repository / "na228_builder" / "release_manifest.json"
-        load_profile(
+        loaded = load_profile(
             profile_path,
             repository,
             root_overrides={"na2": marker, "nun5": marker},
+        )
+        self.assertEqual(
+            [module.module_id for module in loaded.modules],
+            [
+                "localization.translation_importer",
+                "localization.runtime_injector",
+                "localization.texture_patcher",
+                "localization.binary_patcher",
+                "qol.runtime_injector",
+                "qol.binary_patcher",
+                "battle_logic.binary_patcher",
+            ],
         )
 
     def test_registered_module_readmes_declare_downstream_invocations(self) -> None:

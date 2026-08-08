@@ -200,7 +200,7 @@ function Write-Na2BuildResult {
         [Parameter(Mandatory = $true)][bool]$Rotated,
         [Parameter(Mandatory = $true)][string]$LatestIso,
         [AllowNull()][string]$PreviousIso,
-        [Parameter(Mandatory = $true)][string]$Profile,
+        [Parameter(Mandatory = $true)][string]$Configuration,
         [Parameter(Mandatory = $true)][psobject]$Paths
     )
 
@@ -212,13 +212,13 @@ function Write-Na2BuildResult {
     else {
         ConvertTo-Na2PortableText -Text $PreviousIso -Paths $Paths
     }
-    $profilePortable = ConvertTo-Na2PortableText -Text $Profile -Paths $Paths
+    $configurationPortable = ConvertTo-Na2PortableText -Text $Configuration -Paths $Paths
     $recordPortable = ConvertTo-Na2PortableText -Text $RecordDirectory -Paths $Paths
     $content = @(
-        "timestamp_utc`tresult`trotation`tprofile`tlatest_iso`tprevious_iso`tbuild_record"
+        "timestamp_utc`tresult`trotation`tconfiguration`tlatest_iso`tprevious_iso`tbuild_record"
         (
             (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" +
-            "$Result`t$rotation`t$profilePortable`t$latestPortable`t$previousPortable`t$recordPortable"
+            "$Result`t$rotation`t$configurationPortable`t$latestPortable`t$previousPortable`t$recordPortable"
         )
     ) -join "`n"
     $content += "`n"
@@ -234,22 +234,22 @@ function Write-Na2E2eBuildResult {
         [Parameter(Mandatory = $true)][string]$RecordDirectory,
         [Parameter(Mandatory = $true)][ValidateSet('normal', 'shifted')][string]$Variant,
         [Parameter(Mandatory = $true)][string]$OutputIso,
-        [Parameter(Mandatory = $true)][string]$Profile,
+        [Parameter(Mandatory = $true)][string]$Configuration,
         [Parameter(Mandatory = $true)][int]$PayloadShift,
         [Parameter(Mandatory = $true)][psobject]$Paths
     )
 
     $outputPortable = ConvertTo-Na2PortableText -Text $OutputIso -Paths $Paths
-    $profilePortable = ConvertTo-Na2PortableText -Text $Profile -Paths $Paths
+    $configurationPortable = ConvertTo-Na2PortableText -Text $Configuration -Paths $Paths
     $recordPortable = ConvertTo-Na2PortableText -Text $RecordDirectory -Paths $Paths
     $content = @(
         (
-            "timestamp_utc`tresult`tvariant`tprofile`toutput_iso`tpayload_shift`tbuild_record"
+            "timestamp_utc`tresult`tvariant`tconfiguration`toutput_iso`tpayload_shift`tbuild_record"
         )
         (
             (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" +
             (
-                "built`t$Variant`t$profilePortable`t$outputPortable`t$PayloadShift`t$recordPortable"
+                "built`t$Variant`t$configurationPortable`t$outputPortable`t$PayloadShift`t$recordPortable"
             )
         )
     ) -join "`n"
@@ -333,14 +333,14 @@ function Complete-Na2BuildRecord {
         [Parameter(Mandatory = $true)][bool]$Rotated,
         [Parameter(Mandatory = $true)][string]$LatestIso,
         [AllowNull()][string]$PreviousIso,
-        [Parameter(Mandatory = $true)][string]$Profile,
+        [Parameter(Mandatory = $true)][string]$Configuration,
         [Parameter(Mandatory = $true)][psobject]$Paths
     )
 
     $buildRoot = Join-Path $LogDirectory 'builds'
     $recordDirectory = Join-Path $buildRoot $BuildId
     if (-not (Test-Path -LiteralPath $recordDirectory -PathType Container)) {
-        throw "Profile build record does not exist: builds/$BuildId"
+        throw "Configuration build record does not exist: builds/$BuildId"
     }
     Write-Na2BuildResult `
         -RecordDirectory $recordDirectory `
@@ -348,7 +348,7 @@ function Complete-Na2BuildRecord {
         -Rotated $Rotated `
         -LatestIso $LatestIso `
         -PreviousIso $PreviousIso `
-        -Profile $Profile `
+        -Configuration $Configuration `
         -Paths $Paths
     $lock = Enter-Na2BuildMapLock -LogDirectory $LogDirectory
     try {
@@ -398,7 +398,7 @@ function Complete-Na2E2eBuildRecord {
         [Parameter(Mandatory = $true)][string]$BuildId,
         [Parameter(Mandatory = $true)][ValidateSet('normal', 'shifted')][string]$Variant,
         [Parameter(Mandatory = $true)][string]$OutputIso,
-        [Parameter(Mandatory = $true)][string]$Profile,
+        [Parameter(Mandatory = $true)][string]$Configuration,
         [Parameter(Mandatory = $true)][int]$PayloadShift,
         [Parameter(Mandatory = $true)][psobject]$Paths
     )
@@ -411,7 +411,7 @@ function Complete-Na2E2eBuildRecord {
         -RecordDirectory $recordDirectory `
         -Variant $Variant `
         -OutputIso $OutputIso `
-        -Profile $Profile `
+        -Configuration $Configuration `
         -PayloadShift $PayloadShift `
         -Paths $Paths
 

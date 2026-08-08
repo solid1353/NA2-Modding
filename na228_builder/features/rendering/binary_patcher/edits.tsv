@@ -1,2 +1,0 @@
-edit_id	patch_id	order	destination_target_id	destination_offset	operation	length	expected_hex	expected_sha256	replacement_hex	source_target_id	source_offset	source_expected_hex	source_expected_sha256	blob_path	blob_offset	blob_sha256	fill_hex	reason
-ELF-R001-01	ELF-R001	10	na2_elf	0xEDC0	replace	16	74028CE478028DE40800E00300000000		403F023C740282AC0800E00378028DE4									Force 0.75f at the renderer's horizontal-scale store while preserving the caller-provided vertical scale.

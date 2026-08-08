@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from . import catalog as catalog_module
 from .composer import CompositionResult, compose_assembly_plan
 from .image_assembler.assembler import (
     assemble_image,
@@ -473,8 +474,21 @@ def apply_profile_modules(
             )
             continue
         if module.module == "binary_patcher":
+            package = None
+            if profile.selection is not None:
+                package = catalog_module.load_binary_package(
+                    profile.selection,
+                    module.feature_id,
+                    profile.targets_path,
+                    profile.selection.catalog_path.parent.parent,
+                    profile.selection.catalog_path.parent
+                    / "modules"
+                    / "binary_patcher"
+                    / "operations",
+                )
             result = apply_binary_patch_set(
                 module.input_path,
+                package=package,
                 targets_path=profile.targets_path,
                 roots=profile.roots,
                 feature_id=module.feature_id,
@@ -910,7 +924,7 @@ def print_profile_summary(
 ) -> None:
     green = "\033[32m"
     reset = "\033[0m"
-    print(f"Applied profile: {profile.profile_id}")
+    print(f"Applied configuration: {profile.profile_id}")
     bypassed_features = [
         feature for feature in profile.features if feature.hash_check_bypassed
     ]
@@ -952,11 +966,11 @@ def print_profile_summary(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Build a verified staged NA2 ISO from one hash-pinned profile."
+        description="Build a verified staged NA2 ISO from one configuration."
     )
     parser.add_argument("--source", required=True, type=Path)
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--profile", required=True, type=Path)
+    parser.add_argument("--configuration", required=True, type=Path)
     parser.add_argument("--profile-log-directory", type=Path)
     parser.add_argument(
         "--payload-shift",
@@ -967,7 +981,7 @@ def main() -> int:
     parser.add_argument(
         "--compose-only",
         action="store_true",
-        help="Compose and conflict-check the profile without staging an ISO.",
+        help="Compose and conflict-check the configuration without staging an ISO.",
     )
     args = parser.parse_args()
 
@@ -976,8 +990,12 @@ def main() -> int:
     if not source_iso.is_file():
         raise FileNotFoundError(source_iso)
 
-    profile_path = args.profile if args.profile.is_absolute() else workspace / args.profile
-    profile = load_profile(profile_path, workspace)
+    configuration_path = (
+        args.configuration
+        if args.configuration.is_absolute()
+        else workspace / args.configuration
+    )
+    profile = load_profile(configuration_path, workspace)
     if args.compose_only:
         composed = compose_profile_candidate(
             source_iso=source_iso,

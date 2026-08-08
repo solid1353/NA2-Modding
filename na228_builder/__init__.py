@@ -1,1 +1,1 @@
-"""NA2.28 profile-driven image builder."""
+"""NA2.28 configuration-driven image builder."""

@@ -23,11 +23,10 @@ $repository = [IO.Path]::GetFullPath(
 )
 . (Join-Path $repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
-$packageRoot = Join-Path $repository (
-    'na228_builder\features\localization\runtime_injector'
+$catalogPath = Join-Path $repository 'na228_builder\catalog.json'
+$configurationPath = Join-Path $repository (
+    'na228_builder\configurations\development.json'
 )
-$entriesPath = Join-Path $packageRoot 'entries.tsv'
-$sourceTable = Join-Path $packageRoot 'c_sources.tsv'
 $buildScript = Join-Path $PSScriptRoot 'build.py'
 $applyScript = Join-Path $PSScriptRoot 'apply.py'
 $pineScript = [string]$paths.files.pcsx2_pine_command
@@ -39,6 +38,29 @@ function Resolve-RepositoryPath([string]$Path) {
         return [IO.Path]::GetFullPath($Path)
     }
     return [IO.Path]::GetFullPath((Join-Path $repository $Path))
+}
+
+function Get-CatalogPayloadEntry {
+    param([Parameter(Mandatory = $true)][Collections.IDictionary]$Node)
+
+    foreach ($key in $Node.Keys) {
+        $value = $Node[$key]
+        if ($key -ceq 'payload') {
+            foreach ($payloadId in $value.Keys) {
+                [pscustomobject]@{
+                    Id = [string]$payloadId
+                    Value = $value[$payloadId]
+                }
+            }
+            continue
+        }
+        if ($key -in @('description', 'proven', 'edits', 'hooks')) {
+            continue
+        }
+        if ($value -is [Collections.IDictionary]) {
+            Get-CatalogPayloadEntry -Node $value
+        }
+    }
 }
 
 function Get-ConfiguredDevelopmentPinePort {
@@ -169,13 +191,40 @@ else {
         $canonicalSource = Join-Path $repository 'src\hot_reload_message.c'
     }
     else {
+        $catalog = Get-Content -Raw -LiteralPath $catalogPath |
+            ConvertFrom-Json -AsHashtable
+        $payloadEntries = @(
+            Get-CatalogPayloadEntry -Node $catalog
+        )
+        $sourceRows = @(
+            $payloadEntries |
+                Where-Object { $_.Value['kind'] -ceq 'c' }
+        )
         if (-not $resolvedOverlayPlan) {
-            $entryRows = @(
-                Import-Csv -LiteralPath $entriesPath -Delimiter "`t" |
-                    Where-Object { $_.entry_symbol -ceq $Entry }
-            )
+            $entryRows = [Collections.Generic.List[object]]::new()
+            foreach ($sourceRow in $sourceRows) {
+                $fragments = $sourceRow.Value['fragments']
+                if ($fragments.Contains($Entry)) {
+                    $entryRows.Add([pscustomobject]@{
+                        source_id = $sourceRow.Id
+                        entry_symbol = $Entry
+                    })
+                }
+            }
+            foreach ($payloadEntry in $payloadEntries) {
+                if (
+                    $payloadEntry.Id -ceq $Entry -and
+                    $payloadEntry.Value.Contains('abi') -and
+                    $payloadEntry.Value.Contains('source')
+                ) {
+                    $entryRows.Add([pscustomobject]@{
+                        source_id = [string]$payloadEntry.Value['source']
+                        entry_symbol = $Entry
+                    })
+                }
+            }
             if ($entryRows.Count -ne 1) {
-                throw "Entry '$Entry' must match exactly one entries.tsv row."
+                throw "Entry '$Entry' must match exactly one catalog ABI declaration."
             }
             if (-not $SourceId) {
                 $SourceId = [string]$entryRows[0].source_id
@@ -185,26 +234,16 @@ else {
             }
         }
 
-        $sourceRows = @(
-            Import-Csv -LiteralPath $sourceTable -Delimiter "`t" |
-                Where-Object {
-                    $_.source_id -ceq $SourceId -and $_.language -ceq 'c'
-                }
+        $selectedSources = @(
+            $sourceRows | Where-Object { $_.Id -ceq $SourceId }
         )
-        if ($sourceRows.Count -ne 1) {
+        if ($selectedSources.Count -ne 1) {
             throw "Source '$SourceId' must match exactly one canonical C source."
         }
-        $sourceDeclaration = [string]$sourceRows[0].path
-        if ($sourceDeclaration.Replace('\', '/').StartsWith('src/')) {
-            $canonicalSource = [IO.Path]::GetFullPath(
-                (Join-Path $repository $sourceDeclaration)
-            )
-        }
-        else {
-            $canonicalSource = [IO.Path]::GetFullPath(
-                (Join-Path $packageRoot $sourceDeclaration)
-            )
-        }
+        $sourceDeclaration = [string]$selectedSources[0].Value['path']
+        $canonicalSource = [IO.Path]::GetFullPath(
+            (Join-Path $repository $sourceDeclaration)
+        )
     }
     if (-not $SourcePath) {
         $SourcePath = $canonicalSource
@@ -270,12 +309,8 @@ if (-not $BuildOnly) {
 
 $watchPaths = @(
     $resolvedSourcePath,
-    $entriesPath,
-    $sourceTable,
-    (Join-Path $packageRoot 'c_imports.tsv'),
-    (Join-Path $packageRoot 'c_fragments.tsv'),
-    (Join-Path $packageRoot 'fragments.tsv'),
-    (Join-Path $packageRoot 'relocations.tsv')
+    $catalogPath,
+    $configurationPath
 )
 $markerPath = Join-Path $repository 'src\hot_reload_message.c'
 if (

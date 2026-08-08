@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from . import catalog as catalog_module
 from .composer import (
     MODULE_ARTIFACT_CONTRACTS,
     resolve_module_order,
@@ -102,11 +103,20 @@ def prepare_module_pipeline(
     for module in ordered_modules:
         if module.module != "runtime_injector":
             continue
-        declaration = runtime_injector_module.load_package(
-            module.input_path,
-            owner=module.module_id,
-            targets_path=profile.targets_path,
-        )
+        if profile.selection is not None:
+            declaration = catalog_module.load_runtime_package(
+                profile.selection,
+                module.feature_id,
+                profile.targets_path,
+                profile.selection.catalog_path.parent.parent,
+                module.module_id,
+            )
+        else:
+            declaration = runtime_injector_module.load_package(
+                module.input_path,
+                owner=module.module_id,
+                targets_path=profile.targets_path,
+            )
         if module.module_id in owners:
             raise ValueError(
                 f"Duplicate resident-payload owner: {module.module_id}"

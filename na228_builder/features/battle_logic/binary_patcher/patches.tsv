@@ -1,4 +1,0 @@
-patch_id	group_id	enabled	status	confidence	name	description	evidence_id	review_notes
-ELF-B001	battle_logic	1	runtime_proven	verified	Disable Shadowblur Extra Hit	Shadowblur extra-hit behavior.	pnach_shadowblur_extra_hit	Runtime: Runtime-proven in PNACH and confirmed after static migration. | Exact file-backed conversion.
-ELF-B002	battle_logic	1	runtime_proven	verified	Disable extra hit with aura punishment for initiator	Extra-hit and aura-punishment behavior.	pnach_aura_punishment	Runtime: Runtime-proven in PNACH and confirmed after static migration. | Exact file-backed conversion.
-ELF-S001	battle_logic	0	runtime_proven	verified	Sub cost = 3/15	Substitution cost setting.	pnach_sub_cost	Runtime: Runtime-proven PNACH option; not enabled in the current profile. | Converted from a disabled 16-bit EE write.

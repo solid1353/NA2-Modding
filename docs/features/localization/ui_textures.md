@@ -43,7 +43,7 @@ from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
   NUN5's Cross/OK and Triangle/Back legends wherever the common panel is used.
 - The NUN5 one-part `OUGI.CCS` layout also requires the paired,
   size-preserving `ui_layout_ultimate_jutsu_label` semantic port in
-  `na228_builder/features/localization/binary_patcher/`.
+  the owning `localization.ui_layout` catalog node.
 
 The engine searches deterministic zlib encodings first. Twenty-eight
 fixed-capacity members require Zopfli, and indexed-region translations use it
@@ -85,7 +85,7 @@ python -m na228_builder.modules.texture_patcher.engine preview `
 
 Changing a mapping, strategy, compressor version, or canonical source must
 produce the exact pinned payload and replacement hashes or fail. Any intentional
-hash change therefore requires explicit review and a profile-pin update; there
+hash change therefore requires explicit review and a pin update; there
 is no blob-authoring command or stored binary fallback.
 
 ## Evidence and tools

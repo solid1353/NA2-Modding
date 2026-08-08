@@ -106,9 +106,9 @@ print(json.dumps([
     for path in profile_resource_files(profile)
 ]))
 '@
-    $profilePath = [IO.Path]::GetFullPath((Join-Path $repository $manifest.profile))
-    $resourceText = & $python -B -c $resourceProbe $repository $profilePath $manifestPath
-    if ($LASTEXITCODE -ne 0) { throw 'Could not inventory packaged profile resources.' }
+    $configurationPath = [IO.Path]::GetFullPath((Join-Path $repository $manifest.configuration))
+    $resourceText = & $python -B -c $resourceProbe $repository $configurationPath $manifestPath
+    if ($LASTEXITCODE -ne 0) { throw 'Could not inventory packaged configuration resources.' }
     $resources = @($resourceText | ConvertFrom-Json)
     $resources += @(
         [IO.Path]::GetRelativePath($repository, $paths.ManifestPath).Replace('\', '/'),

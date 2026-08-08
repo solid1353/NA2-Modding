@@ -4,7 +4,7 @@
   "product_version": "0.1.1",
   "executable_name": "NA2.28_v0.1.1.exe",
   "output_name": "NA2.28.iso",
-  "profile": "na228_builder/profiles/default.tsv",
+  "configuration": "na228_builder/configurations/release.json",
   "images": [
     {
       "id": "na2",

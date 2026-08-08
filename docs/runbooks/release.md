@@ -15,14 +15,14 @@ one exact clean NUN5 ISO beside the EXE.
    hashes, an existing `NA2.28.iso`, or an existing
    `NA2.28.iso.building`.
 5. It locks both inputs read-only and hashes them again after locking.
-6. It applies the embedded default profile directly from the two ISOs, creates
+6. It applies the embedded release configuration and catalog directly from the two ISOs, creates
    `NA2.28.iso.building`, verifies the complete staged image and its size, then
    atomically renames it to `NA2.28.iso`.
 7. It never modifies either input, creates no runtime log files, removes its
    staging file after failure, and waits for Enter before closing.
 
-The executable embeds the interpreter, builder engines, default profile,
-feature inputs, payload-builder configuration, and Zopfli runtime. It does not
+The executable embeds the interpreter, builder engines, release configuration,
+catalog, feature inputs, payload-builder configuration, and Zopfli runtime. It does not
 embed original/donor ISOs, extracted source trees, or derived game payloads.
 
 ## Developer build
@@ -55,7 +55,7 @@ workflow from a tagged commit.
 ## Release manifest
 
 `na228_builder/release_manifest.json` is authoritative for the product name,
-version, executable name, output name, embedded profile, and supported source
+version, executable name, output name, embedded configuration, and supported source
 identities. The pinned source identities are:
 
 - NA2: 1,928,429,568 bytes,
@@ -82,8 +82,8 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
 
 - `na228_builder/app.py` owns end-user discovery, hashing, locking, collision
   refusal, staging cleanup, promotion, console messages, and the Enter pause.
-- `na228_builder/release_runtime.py` loads the embedded default profile with the
-  two verified source ISOs as root overrides and calls the ordinary profile
+- `na228_builder/release_runtime.py` loads the embedded release configuration with the
+  two verified source ISOs as root overrides and calls the ordinary configuration
   builder without runtime logs.
 - `na228_builder/source_media.py` gives engines one read-only boundary for files
   from either extracted roots or original ISOs.
@@ -96,7 +96,10 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
 
 The ordinary `na228`, `na228 b`, and `na228 mt` workflows are unchanged.
 
-## Validation evidence
+## Pre-refactor validation evidence
+
+The following evidence predates the catalog/configuration refactor and must not
+be treated as validation of the current uncommitted implementation:
 
 The integrated development candidate was built on Windows x64 with Python
 3.14.6, PyInstaller 6.21.0, and the exact hash-pinned requirements.
@@ -105,16 +108,16 @@ The integrated development candidate was built on Windows x64 with Python
 - EXE size: 9,907,358 bytes
 - EXE SHA-256:
   `EACCED2C942A97E7C70B76E6D34857671953F1EF28F4DD429820023EB2A8A9DB`
-- packaged self-test: passed with five current-profile module invocations
+- packaged self-test: passed with five then-current module invocations
 - isolated end-user run: exit 0; no runtime files other than
   `NA2.28.iso`
 - output ISO size: 1,928,429,568 bytes
 - output ISO SHA-256:
   `EC4A67D44B4B325A76E2FFAACAE55EFF3FFB6DC8AFAB4F9FAFB3313E3970A38F`
-- normal current-profile ISO SHA-256:
+- normal then-current ISO SHA-256:
   `EC4A67D44B4B325A76E2FFAACAE55EFF3FFB6DC8AFAB4F9FAFB3313E3970A38F`
 
-The packaged output is therefore byte-identical to the normal current-profile
+That packaged output was byte-identical to the normal then-current
 image. The test used read-only hard links to the exact clean sources and proved
 the inputs remained the same files. Clean-machine testing and code signing are
 publication gates, not prerequisites for keeping the implemented development
@@ -130,7 +133,7 @@ publish a GitHub Release and mark SemVer suffixes as prereleases.
 
 A production publication sequence, automated by `na228 release [version]`, is:
 
-1. update and validate the default profile and release manifest;
+1. update and validate the release configuration, catalog, and release manifest;
 2. run the production builder from a clean committed tree;
 3. perform any desired clean-machine/runtime acceptance;
 4. create an annotated `v<product_version>` tag;

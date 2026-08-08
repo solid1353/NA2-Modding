@@ -14,31 +14,24 @@ from pathlib import Path
 
 SCRIPT_ROOT = Path(__file__).resolve().parent
 REPOSITORY = SCRIPT_ROOT.parents[1]
-PACKAGE_ROOT = (
-    REPOSITORY
-    / "na228_builder"
-    / "features"
-    / "localization"
-    / "runtime_injector"
+CATALOG_PATH = REPOSITORY / "na228_builder" / "catalog.json"
+CONFIGURATION_PATH = (
+    REPOSITORY / "na228_builder" / "configurations" / "development.json"
 )
 sys.path.insert(0, str(REPOSITORY))
 
+from na228_builder import catalog as catalog_module
 from na228_builder.payload_builder import ee_c_fragments
 from na228_builder.payload_builder.operations import (
     PayloadFragment,
     PayloadRelocation,
     encode_symbol_reference,
 )
-from na228_builder.modules.runtime_injector.engine import _load_static_fragments
 from na228_builder.image_assembler.iso9660 import Iso9660
 from scripts.lib.paths import load_paths
 
 
 SYMBOL_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
-SOURCE_FIELDS = ["source_id", "language", "path", "namespace"]
-IMPORT_FIELDS = ["source_id", "name", "symbol", "addend"]
-FRAGMENT_FIELDS = ["source_id", "order", "object_fragment", "fragment_id"]
-ENTRY_FIELDS = ["source_id", "entry_symbol", "abi", "purpose"]
 SYMBOL_MAP_FIELDS = [
     "owner",
     "symbol",
@@ -52,6 +45,10 @@ SYMBOL_MAP_FIELDS = [
 HOT_RELOAD_SOURCE = "hot_reload_message"
 HOT_RELOAD_ENTRY = "project.hot_reload_message"
 FIXED_EXTERNAL_ADDRESSES: dict[str, int] = {}
+CATALOG_SELECTION = catalog_module.load_selection(
+    CATALOG_PATH,
+    CONFIGURATION_PATH,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -449,6 +446,74 @@ def load_symbol_map(
     return result
 
 
+def configured_payload() -> dict[str, tuple[object, dict[str, object]]]:
+    result: dict[str, tuple[object, dict[str, object]]] = {}
+    for feature_id in CATALOG_SELECTION.feature_ids:
+        for node, payload_id, value in catalog_module.payload_entries(
+            CATALOG_SELECTION,
+            feature_id,
+        ):
+            if payload_id in result:
+                raise ValueError(f"Duplicate configured payload ID: {payload_id}")
+            result[payload_id] = (node, value)
+    return result
+
+
+def production_sources() -> dict[str, dict[str, object]]:
+    values = [
+        (payload_id, node.feature_id, value)
+        for payload_id, (node, value) in configured_payload().items()
+        if value.get("kind") == "c"
+    ]
+
+    feature_order = {
+        feature_id: index
+        for index, feature_id in enumerate(CATALOG_SELECTION.feature_ids)
+    }
+
+    def source_order(
+        item: tuple[str, str, dict[str, object]],
+    ) -> tuple[int, int]:
+        fragments = item[2].get("fragments", {})
+        if not isinstance(fragments, dict):
+            return feature_order[item[1]], 1 << 30
+        orders = [
+            value.get("order")
+            for value in fragments.values()
+            if isinstance(value, dict) and isinstance(value.get("order"), int)
+        ]
+        return feature_order[item[1]], min(orders, default=1 << 30)
+
+    return {
+        payload_id: value
+        for payload_id, _feature_id, value in sorted(values, key=source_order)
+    }
+
+
+def production_source_owner(source_id: str) -> str:
+    selected = configured_payload().get(source_id)
+    if selected is None or selected[1].get("kind") != "c":
+        raise ValueError(f"Unknown production C source: {source_id!r}")
+    node = selected[0]
+    return f"{node.feature_id}.runtime_injector"
+
+
+def _load_static_fragments() -> list[tuple[int, int, PayloadFragment]]:
+    result: list[tuple[int, int, PayloadFragment]] = []
+    for payload_id, (node, value) in configured_payload().items():
+        if value.get("kind") == "c":
+            continue
+        order, fragment = catalog_module.load_static_fragment(
+            REPOSITORY,
+            f"{node.feature_id}.runtime_injector",
+            payload_id,
+            value,
+            f"{node.node_id}.payload.{payload_id}",
+        )
+        result.append((order, 1, fragment))
+    return result
+
+
 def load_source(
     source_id: str,
 ) -> tuple[
@@ -469,64 +534,72 @@ def load_source(
             ],
         )
 
-    package_root = PACKAGE_ROOT
-    source_rows = read_tsv(package_root / "c_sources.tsv", SOURCE_FIELDS)
-    selected = [row for row in source_rows if row["source_id"] == source_id]
-    if len(selected) != 1:
-        raise ValueError(
-            f"Production source {source_id!r} must match exactly one c_sources.tsv row"
-        )
-    row = selected[0]
-    if row["language"] != "c":
-        raise ValueError(f"Production source {source_id!r} is not C")
-    relative_source = Path(row["path"].replace("\\", "/"))
+    row = production_sources().get(source_id)
+    if row is None:
+        raise ValueError(f"Unknown production C source: {source_id!r}")
+    source_value = row.get("path")
+    if not isinstance(source_value, str):
+        raise ValueError(f"Catalog C source {source_id!r} has no path")
+    relative_source = Path(source_value.replace("\\", "/"))
     if relative_source.is_absolute() or ".." in relative_source.parts:
-        raise ValueError(f"Production source path is invalid: {row['path']}")
-    if relative_source.parts and relative_source.parts[0] == "src":
-        source_path = (REPOSITORY / relative_source).resolve()
-        allowed_root = (REPOSITORY / "src").resolve()
-    else:
-        source_path = (package_root / relative_source).resolve()
-        allowed_root = package_root.resolve()
-    if allowed_root not in source_path.parents or not source_path.is_file():
+        raise ValueError(f"Production source path is invalid: {source_value}")
+    source_path = (REPOSITORY / relative_source).resolve()
+    if REPOSITORY not in source_path.parents or not source_path.is_file():
         raise ValueError(f"Production source was not found: {source_path}")
-    namespace = identifier(row["namespace"], "c_sources.tsv namespace")
+    namespace_value = row.get("namespace")
+    if not isinstance(namespace_value, str):
+        raise ValueError(f"Catalog C source {source_id!r} has no namespace")
+    namespace = identifier(namespace_value, "catalog namespace")
 
     imports: dict[str, ee_c_fragments.SymbolReference] = {}
-    for line, import_row in enumerate(
-        read_tsv(package_root / "c_imports.tsv", IMPORT_FIELDS), 2
-    ):
-        if import_row["source_id"] != source_id:
-            continue
-        name = identifier(import_row["name"], f"c_imports.tsv:{line} name")
+    raw_imports = row.get("imports", {})
+    if not isinstance(raw_imports, dict):
+        raise ValueError(f"Catalog C source {source_id!r} imports must be an object")
+    for name, import_value in raw_imports.items():
+        name = identifier(name, f"catalog source {source_id} import name")
         if name in imports:
-            raise ValueError(f"c_imports.tsv:{line}: duplicate import {name}")
+            raise ValueError(f"Catalog source {source_id}: duplicate import {name}")
+        if isinstance(import_value, str):
+            symbol = import_value
+            addend = 0
+        elif isinstance(import_value, dict):
+            symbol = import_value.get("symbol")
+            addend_value = import_value.get("addend", 0)
+            if isinstance(addend_value, bool) or not isinstance(addend_value, int):
+                raise ValueError(f"Catalog source {source_id} import {name} addend is invalid")
+            addend = addend_value
+        else:
+            raise ValueError(f"Catalog source {source_id} import {name} is invalid")
+        if not isinstance(symbol, str):
+            raise ValueError(f"Catalog source {source_id} import {name} has no symbol")
         imports[name] = ee_c_fragments.SymbolReference(
-            symbol=identifier(
-                import_row["symbol"], f"c_imports.tsv:{line} symbol"
-            ),
-            addend=integer(import_row["addend"], f"c_imports.tsv:{line} addend"),
+            symbol=identifier(symbol, f"catalog source {source_id} import symbol"),
+            addend=addend,
         )
 
     mappings: list[tuple[int, str, str]] = []
     seen_objects: set[str] = set()
     seen_final: set[str] = set()
-    for line, fragment_row in enumerate(
-        read_tsv(package_root / "c_fragments.tsv", FRAGMENT_FIELDS), 2
-    ):
-        if fragment_row["source_id"] != source_id:
-            continue
-        order = integer(fragment_row["order"], f"c_fragments.tsv:{line} order")
+    raw_fragments = row.get("fragments")
+    if not isinstance(raw_fragments, dict):
+        raise ValueError(f"Catalog C source {source_id!r} fragments must be an object")
+    for fragment_id, fragment_row in raw_fragments.items():
+        if not isinstance(fragment_row, dict):
+            raise ValueError(f"Catalog source {source_id} fragment {fragment_id} is invalid")
+        order_value = fragment_row.get("order")
+        if isinstance(order_value, bool) or not isinstance(order_value, int):
+            raise ValueError(f"Catalog source {source_id} fragment {fragment_id} order is invalid")
+        order = order_value
         object_fragment = identifier(
-            fragment_row["object_fragment"],
-            f"c_fragments.tsv:{line} object_fragment",
+            str(fragment_row.get("object", "")),
+            f"catalog source {source_id} fragment object",
         )
         fragment_id = identifier(
-            fragment_row["fragment_id"], f"c_fragments.tsv:{line} fragment_id"
+            fragment_id, f"catalog source {source_id} fragment ID"
         )
         if object_fragment in seen_objects or fragment_id in seen_final:
             raise ValueError(
-                f"c_fragments.tsv:{line}: duplicate production fragment mapping"
+                f"Catalog source {source_id}: duplicate production fragment mapping"
             )
         seen_objects.add(object_fragment)
         seen_final.add(fragment_id)
@@ -548,25 +621,29 @@ def load_declared_entry(
             "purpose": "Project C hot-reload smoke entry.",
         }
 
-    entries = read_tsv(PACKAGE_ROOT / "entries.tsv", ENTRY_FIELDS)
-    selected = [
-        row
-        for row in entries
-        if row["source_id"] == source_id and row["entry_symbol"] == entry_symbol
-    ]
-    if len(selected) != 1:
+    source = production_sources().get(source_id)
+    payload = {key: value for key, (_node, value) in configured_payload().items()}
+    fragment: object = None
+    if source is not None and isinstance(source.get("fragments"), dict):
+        fragment = source["fragments"].get(entry_symbol)
+    if not isinstance(fragment, dict):
+        fragment = payload.get(entry_symbol)
+    if not isinstance(fragment, dict):
         raise ValueError(
             "The selected production source/entry is not an explicitly "
-            "declared runtime-injector ABI boundary"
+            "declared catalog ABI boundary"
         )
-    entry = selected[0]
-    identifier(entry["abi"], "entries.tsv abi")
-    if not entry["purpose"]:
-        raise ValueError("entries.tsv purpose must not be empty")
+    abi = fragment.get("abi")
+    purpose = fragment.get("description")
+    if not isinstance(abi, str):
+        raise ValueError(f"Catalog entry {entry_symbol} has no ABI")
+    identifier(abi, "catalog entry ABI")
+    if not isinstance(purpose, str) or not purpose:
+        raise ValueError(f"Catalog entry {entry_symbol} has no description")
     return {
-        "symbol": entry["entry_symbol"],
-        "abi": entry["abi"],
-        "purpose": entry["purpose"],
+        "symbol": entry_symbol,
+        "abi": abi,
+        "purpose": purpose,
     }
 
 
@@ -588,7 +665,11 @@ def compile_fragments(
         object_path,
         namespace=namespace,
         toolchain_bin=ee_c_fragments.default_toolchain_bin(REPOSITORY),
-        owner="localization.runtime_injector",
+        owner=(
+            "localization.runtime_injector"
+            if source_id == HOT_RELOAD_SOURCE
+            else production_source_owner(source_id)
+        ),
         defines=defines,
         external_symbols=imports,
     )
@@ -642,9 +723,7 @@ def select_fragment_closure(
     catalog: dict[str, tuple[int, int, PayloadFragment]] = {}
     for fragment in c_fragments:
         catalog[fragment.symbol] = (c_orders[fragment.symbol], 1, fragment)
-    for order, line, fragment in _load_static_fragments(
-        PACKAGE_ROOT, "localization.runtime_injector"
-    ):
+    for order, line, fragment in _load_static_fragments():
         if fragment.symbol in catalog:
             raise ValueError(
                 f"Duplicate canonical fragment symbol {fragment.symbol!r}"
@@ -835,8 +914,8 @@ def source_ids_for_path(value: Path) -> tuple[Path, list[str]]:
     registered: list[tuple[str, Path]] = [
         (HOT_RELOAD_SOURCE, (source_root / "hot_reload_message.c").resolve())
     ]
-    for row in read_tsv(PACKAGE_ROOT / "c_sources.tsv", SOURCE_FIELDS):
-        source_id = identifier(row["source_id"], "c_sources.tsv source_id")
+    for source_id in production_sources():
+        source_id = identifier(source_id, "catalog C source ID")
         source_path, _namespace, _imports, _mappings = load_source(source_id)
         registered.append((source_id, source_path.resolve()))
 
@@ -999,15 +1078,23 @@ def main() -> int:
             for fragment in compiled_c_fragments
             if fragment.kind == "code"
         ]
-        declared_entries = {
-            row["entry_symbol"]: {
-                "symbol": row["entry_symbol"],
-                "abi": row["abi"],
-                "purpose": row["purpose"],
-            }
-            for row in read_tsv(PACKAGE_ROOT / "entries.tsv", ENTRY_FIELDS)
-            if row["source_id"] in source_ids
-        }
+        declared_entries: dict[str, dict[str, str]] = {}
+        for selected_source_id in source_ids:
+            source = production_sources()[selected_source_id]
+            fragments = source.get("fragments", {})
+            if not isinstance(fragments, dict):
+                continue
+            for symbol, value in fragments.items():
+                if not isinstance(value, dict):
+                    continue
+                abi = value.get("abi")
+                purpose = value.get("description")
+                if isinstance(abi, str) and isinstance(purpose, str):
+                    declared_entries[symbol] = {
+                        "symbol": symbol,
+                        "abi": abi,
+                        "purpose": purpose,
+                    }
         entry_symbols = [
             symbol
             for symbol in root_symbols

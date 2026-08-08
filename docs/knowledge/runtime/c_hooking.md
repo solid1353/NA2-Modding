@@ -33,7 +33,7 @@ C source → EE MIPS compiler → relocatable code fragments
    - calls its initialization entrypoint;
    - resumes the original game constructor.
 
-5. `edits.tsv` identifies exact game call sites and the C symbols they should invoke. After final addresses are known, the builder creates actual MIPS `j` or `jal` instructions.
+5. Catalog `hooks` identify exact game call sites and the payload symbols they should invoke. After final addresses are known, the builder creates actual MIPS `j` or `jal` instructions.
 
 For example, the Controls draw at ELF file offset `0x288848` originally calls the native text renderer. The build replaces it with:
 

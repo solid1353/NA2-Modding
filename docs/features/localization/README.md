@@ -1,15 +1,15 @@
 # Localization feature documentation
 
-The canonical executable inputs live under
-`na228_builder/features/localization/`. This directory owns the substantial
-feature documentation while the code-local README remains a concise contract
-and index.
+The selectable hierarchy and migrated executable inputs live in the
+`localization` subtree of `na228_builder/catalog.json`. Non-inline assets and
+the remaining translation/texture TSV inputs live under
+`na228_builder/features/localization/`.
 
 Localization composes the accepted English translation, source-derived UI
 textures, guarded UI layout edits, the native NUN5-derived Font stack, compact
 external strings, and regional menu input behavior. Enabling the feature
-enables all of its owned module directories; one aggregate profile pin covers
-their canonical inputs.
+is selected by a structurally matching configuration; one aggregate pin covers
+its canonical inputs.
 
 ## Documents
 
@@ -43,7 +43,6 @@ The memory-card title is output identity and is therefore declared by root
 
 ## Regional menu input
 
-The Localization feature owns these declarative `binary_patcher` patches for
-the accepted menu, overlay, setup, stage, pause, result-tally, and audio input behavior.
-`binary_patcher/` contains the guarded targets, enabled patches, edits,
-evidence, and runtime classifications.
+The Localization catalog subtree owns guarded edits for accepted menu, overlay,
+setup, stage, pause, result-tally, and audio input behavior. Enablement lives in
+configuration JSON; evidence and runtime conclusions live in documentation.

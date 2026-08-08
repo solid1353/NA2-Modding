@@ -26,19 +26,15 @@ REPOSITORY = find_repository(Path(__file__))
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
-from na228_builder.modules.runtime_injector import engine  # noqa: E402
+from na228_builder import catalog  # noqa: E402
 from na228_builder.payload_builder import mips  # noqa: E402
 from scripts.lib.paths import load_paths  # noqa: E402
 from na228_builder.payload_builder import ee_c_fragments  # noqa: E402
 
 
-MODULE = load_paths(REPOSITORY).path(
-    "features", "localization", "runtime_injector"
-)
 PACKED_METRICS_INPUT = load_paths(REPOSITORY).path(
     "features",
     "localization",
-    "binary_patcher",
     "assets",
     "nun5_semantic_14x20_packed_map.bin",
 )
@@ -3269,8 +3265,16 @@ def numeric_fragments() -> tuple[Fragment, ...]:
 
 
 def main() -> None:
-    declaration = engine.load_package(
-        MODULE, owner="localization.runtime_injector"
+    selection = catalog.load_selection(
+        REPOSITORY / "na228_builder" / "catalog.json",
+        REPOSITORY / "na228_builder" / "configurations" / "development.json",
+    )
+    declaration = catalog.load_runtime_package(
+        selection,
+        "localization",
+        REPOSITORY / "na228_builder" / "features" / "targets.tsv",
+        REPOSITORY,
+        "localization.runtime_injector",
     )
     v2 = v2_fragments()
     expected = (*v2[:-2], *numeric_fragments(), *v2[-2:])

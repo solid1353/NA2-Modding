@@ -1,5 +1,0 @@
-group_id	enabled	name	description	review_notes
-startup	1	Startup	Independent startup-sequence skips.	""
-practice	1	Practice	Independent Practice-mode default settings.	""
-mode_select	1	Mode Select	Mode availability and selection behavior.	""
-save_load	1	Save/Load	Save and load modal presentation.	""

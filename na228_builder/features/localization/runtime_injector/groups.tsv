@@ -1,4 +1,0 @@
-group_id	enabled	name	description	review_notes
-font_glyphs	1	Font glyphs	Resident native-font metric decoding and draw adjustment.	Generated C is linked into the shared payload; only two guarded hooks remain in the boot ELF.
-font_layout	1	Font layout	Resident font measurement, fitting, wrapping, positioning, and caller adapters.	Generated code is linked into the shared payload; only guarded hooks remain in game executables.
-font_numeric_formatting	1	Font numeric formatting	Resident ASCII numeric formatting for dynamic UI values.	Generated code is linked into the shared payload; guarded hooks select only accepted numeric fields.

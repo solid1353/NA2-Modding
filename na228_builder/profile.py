@@ -8,8 +8,12 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from scripts.lib.paths import Paths, load_paths, resolve_alias
+
+if TYPE_CHECKING:
+    from .catalog import CatalogSelection
 
 
 FEATURE_FIELDS = ["feature_id", "enabled", "expected_sha256", "bypass_check"]
@@ -22,6 +26,13 @@ MODULE_TYPE_ORDER = (
     "binary_patcher",
 )
 MODULE_TYPES = frozenset(MODULE_TYPE_ORDER)
+CATALOG_FLAT_MODULE_NODES = {
+    ("localization", "translation_importer"): ("localization", "translated_text"),
+    ("localization", "texture_patcher"): (
+        "localization",
+        "translated_textures",
+    ),
+}
 BINARY_PATCHER_CONTROL_FILES = (
     "groups.tsv",
     "patches.tsv",
@@ -98,6 +109,8 @@ class Profile:
     identity: ProfileIdentity
     features: tuple[ProfileFeature, ...]
     modules: tuple[ProfileModule, ...]
+    selection: CatalogSelection | None = None
+    pins_path: Path | None = None
 
 
 def _read_tsv(path: Path, fields: list[str]) -> list[dict[str, str]]:
@@ -484,8 +497,328 @@ def feature_content_sha256(path: Path) -> str:
     return _tree_digest(path, unique_files, external_labels=external_labels)
 
 
+def _validated_identity(product_path: Path) -> tuple[ProfileIdentity, dict[str, str]]:
+    identity, product_inputs = _read_product(product_path)
+    if identity.memory_card_title_offset < 0 or identity.memory_card_title_capacity <= 0:
+        raise ValueError(
+            "Profile identity title offset must be non-negative and capacity positive"
+        )
+    if (
+        identity.game_title_mapping_count <= 0
+        or identity.game_title_occurrence_count < identity.game_title_mapping_count
+    ):
+        raise ValueError("Profile identity game-title coverage is invalid")
+    try:
+        encoding = codecs.lookup(identity.memory_card_title_encoding).name
+    except LookupError as exc:
+        raise ValueError("Profile identity has an unknown title encoding") from exc
+    identity = replace(identity, memory_card_title_encoding=encoding)
+    from .image_assembler.iso9660 import normalize_iso_path
+
+    for label, value in (
+        ("source_boot_path", identity.source_boot_path),
+        ("output_boot_path", identity.output_boot_path),
+        ("system_cnf_path", identity.system_cnf_path),
+    ):
+        if normalize_iso_path(value) != value:
+            raise ValueError(f"Profile identity {label} must be normalized: {value!r}")
+    if identity.source_boot_path == identity.output_boot_path:
+        raise ValueError("Profile identity boot paths must differ")
+    if len(identity.source_boot_path.encode("ascii")) != len(
+        identity.output_boot_path.encode("ascii")
+    ):
+        raise ValueError("Profile identity boot paths must have equal byte lengths")
+    for label, text in (
+        ("source_memory_card_title", identity.source_memory_card_title),
+        ("output_memory_card_title", identity.output_memory_card_title),
+    ):
+        if "\0" in text:
+            raise ValueError(f"Profile identity {label} contains an embedded NUL")
+        try:
+            encoded = text.encode(identity.memory_card_title_encoding)
+        except UnicodeEncodeError as exc:
+            raise ValueError(
+                f"Profile identity {label} is not encodable as "
+                f"{identity.memory_card_title_encoding}"
+            ) from exc
+        if len(encoded) >= identity.memory_card_title_capacity:
+            raise ValueError(
+                f"Profile identity {label} does not fit its NUL-padded capacity"
+            )
+    if (
+        not identity.imported_game_title
+        or not identity.output_game_title
+        or identity.imported_game_title == identity.output_game_title
+    ):
+        raise ValueError("Profile identity must replace one non-empty game title")
+    for label, text in (
+        ("imported_game_title", identity.imported_game_title),
+        ("output_game_title", identity.output_game_title),
+    ):
+        if "\0" in text:
+            raise ValueError(f"Profile identity {label} contains an embedded NUL")
+        try:
+            text.encode("cp1252")
+        except UnicodeEncodeError as exc:
+            raise ValueError(f"Profile identity {label} must be CP1252") from exc
+    return identity, product_inputs
+
+
+def _resolved_roots(
+    product_inputs: dict[str, str],
+    workspace: Path,
+    paths: Paths,
+    root_overrides: Mapping[str, Path] | None,
+) -> dict[str, Path]:
+    overrides = {
+        key: Path(value).resolve() for key, value in (root_overrides or {}).items()
+    }
+    roots: dict[str, Path] = {}
+    for root_id, value in product_inputs.items():
+        root = overrides.get(root_id)
+        if root is None:
+            root = _product_input_path(
+                value, f"product input {root_id}", workspace, paths
+            )
+        if not root.exists():
+            raise FileNotFoundError(root)
+        roots[root_id] = root
+    unknown_overrides = sorted(overrides.keys() - roots.keys())
+    if unknown_overrides:
+        raise ValueError(
+            "Profile root overrides contain unknown IDs: "
+            + ", ".join(unknown_overrides)
+        )
+    return roots
+
+
+def _catalog_module_directories(path: Path) -> list[tuple[str, Path]]:
+    path = path.resolve()
+    if not path.is_dir():
+        raise FileNotFoundError(path)
+    if not (path / "README.md").is_file():
+        raise FileNotFoundError(f"Feature package is missing README.md: {path}")
+    unexpected_files = sorted(
+        item.name for item in path.iterdir() if item.is_file() and item.name != "README.md"
+    )
+    if unexpected_files:
+        raise ValueError(
+            f"Feature root contains unsupported files: {', '.join(unexpected_files)}"
+        )
+    directories = {item.name: item for item in path.iterdir() if item.is_dir()}
+    flat_types = {"translation_importer", "string_patcher", "texture_patcher"}
+    transition_only = {"assets", "binary_patcher", "runtime_injector"}
+    unknown = sorted(set(directories) - flat_types - transition_only)
+    if unknown:
+        raise ValueError(f"Feature contains unknown directories: {', '.join(unknown)}")
+    return [
+        (module_type, directories[module_type])
+        for module_type in MODULE_TYPE_ORDER
+        if module_type in flat_types and module_type in directories
+    ]
+
+
+def _catalog_feature_sha256(
+    selection: CatalogSelection,
+    feature_id: str,
+    feature_path: Path,
+    repository: Path,
+    flat_modules: list[tuple[str, Path]],
+    targets_path: Path,
+) -> str:
+    from . import catalog as catalog_module
+
+    raw_catalog = json.loads(selection.catalog_path.read_text(encoding="utf-8"))
+    feature_value = raw_catalog[feature_id]
+    entries: list[tuple[str, bytes]] = [
+        (
+            f"catalog/{feature_id}.json",
+            json.dumps(feature_value, ensure_ascii=False, separators=(",", ":")).encode("utf-8"),
+        ),
+        (
+            f"features/{feature_id}/README.md",
+            (feature_path / "README.md").read_bytes(),
+        ),
+    ]
+    for module_type, module_path in flat_modules:
+        for file in _module_content_files(module_path, module_type):
+            entries.append((file.relative_to(repository).as_posix(), file.read_bytes()))
+    if catalog_module.feature_has(selection, feature_id, "edits") or catalog_module.feature_has(
+        selection, feature_id, "hooks"
+    ):
+        entries.append((targets_path.relative_to(repository).as_posix(), targets_path.read_bytes()))
+    if catalog_module.feature_has(selection, feature_id, "edits"):
+        operations = repository / "na228_builder" / "modules" / "binary_patcher" / "operations"
+        for file in sorted(operations.glob("*.tsv")):
+            entries.append((file.relative_to(repository).as_posix(), file.read_bytes()))
+    for file in catalog_module.referenced_files(selection, repository, feature_id):
+        entries.append((file.relative_to(repository).as_posix(), file.read_bytes()))
+    digest = hashlib.sha256()
+    for label, payload in sorted(entries):
+        digest.update(label.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(payload)
+        digest.update(b"\0")
+    return digest.hexdigest().upper()
+
+
+def _load_configuration(
+    definition_path: Path,
+    workspace: Path,
+    *,
+    root_overrides: Mapping[str, Path] | None,
+) -> Profile:
+    from . import catalog as catalog_module
+
+    configuration_id = definition_path.stem
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", configuration_id):
+        raise ValueError(f"Invalid configuration name: {configuration_id!r}")
+    builder_root = definition_path.parent.parent
+    catalog_path = builder_root / "catalog.json"
+    pins_path = builder_root / "profiles" / "default.tsv"
+    selection = catalog_module.load_selection(catalog_path, definition_path)
+    pins = catalog_module.read_pins(pins_path)
+    pin_by_feature = {pin.feature_id: pin for pin in pins}
+    if set(pin_by_feature) != set(selection.feature_ids):
+        raise ValueError(
+            "Pin features differ from catalog; "
+            f"missing={sorted(set(selection.feature_ids) - set(pin_by_feature))}, "
+            f"extra={sorted(set(pin_by_feature) - set(selection.feature_ids))}"
+        )
+    paths = load_paths(workspace, allow_missing=True)
+    product_path = paths.file("product_config").resolve()
+    identity, product_inputs = _validated_identity(product_path)
+    roots = _resolved_roots(product_inputs, workspace, paths, root_overrides)
+    features_root = paths.path("features").resolve()
+    targets_path = features_root / FEATURE_TARGETS_FILE
+    features: list[ProfileFeature] = []
+    modules: list[ProfileModule] = []
+    for feature_id in selection.feature_ids:
+        feature_path = (features_root / feature_id).resolve()
+        try:
+            feature_path.relative_to(features_root)
+        except ValueError as exc:
+            raise ValueError(f"Feature path escapes configured root: {feature_id}") from exc
+        flat_modules = _catalog_module_directories(feature_path)
+        actual = _catalog_feature_sha256(
+            selection,
+            feature_id,
+            feature_path,
+            workspace,
+            flat_modules,
+            targets_path,
+        )
+        pin = pin_by_feature[feature_id]
+        if not pin.bypass_check and actual != pin.expected_sha256:
+            raise ValueError(
+                f"Feature {feature_id}: input SHA-256 {actual} does not match "
+                f"{pin.expected_sha256}"
+            )
+        available: dict[str, Path] = {}
+        for module_type, module_path in flat_modules:
+            node_path = CATALOG_FLAT_MODULE_NODES.get((feature_id, module_type))
+            if node_path is None:
+                raise ValueError(
+                    f"Flat module {feature_id}.{module_type} has no catalog owner"
+                )
+            if selection.node_enabled(*node_path):
+                available[module_type] = module_path
+        if catalog_module.feature_has(
+            selection,
+            feature_id,
+            "hooks",
+            enabled_only=True,
+        ):
+            available["runtime_injector"] = feature_path
+        if catalog_module.feature_has(
+            selection,
+            feature_id,
+            "edits",
+            enabled_only=True,
+        ):
+            available["binary_patcher"] = feature_path
+        module_ids: list[str] = []
+        for module_type in MODULE_TYPE_ORDER:
+            module_path = available.get(module_type)
+            if module_path is None:
+                continue
+            module_id = f"{feature_id}.{module_type}"
+            module_ids.append(module_id)
+            module_hash = (
+                actual
+                if module_type in {"binary_patcher", "runtime_injector"}
+                else module_content_sha256(module_path, module_type)
+            )
+            modules.append(
+                ProfileModule(
+                    module_id=module_id,
+                    order=len(modules) + 1,
+                    module=module_type,
+                    input_path=module_path,
+                    input_sha256=module_hash,
+                    feature_id=feature_id,
+                )
+            )
+        if selection.node_enabled(feature_id) and not module_ids:
+            raise ValueError(f"Catalog feature owns no executable data: {feature_id}")
+        features.append(
+            ProfileFeature(
+                feature_id=feature_id,
+                input_path=feature_path,
+                expected_sha256=pin.expected_sha256,
+                actual_sha256=actual,
+                bypass_check=pin.bypass_check,
+                module_ids=tuple(module_ids),
+            )
+        )
+    return Profile(
+        definition_path=definition_path,
+        profile_id=configuration_id,
+        product_path=product_path,
+        targets_path=targets_path,
+        roots=roots,
+        identity=identity,
+        features=tuple(features),
+        modules=tuple(modules),
+        selection=selection,
+        pins_path=pins_path,
+    )
+
+
 def profile_resource_files(profile: Profile) -> tuple[Path, ...]:
     """Return the exact structural and hash-covered files needed to load a profile."""
+    if profile.selection is not None:
+        from . import catalog as catalog_module
+
+        files = [
+            profile.definition_path,
+            profile.product_path,
+            profile.selection.catalog_path,
+            profile.targets_path,
+        ]
+        if profile.pins_path is not None:
+            files.append(profile.pins_path)
+        if any(module.module == "binary_patcher" for module in profile.modules):
+            operations = (
+                profile.selection.catalog_path.parent
+                / "modules"
+                / "binary_patcher"
+                / "operations"
+            )
+            files.extend(sorted(operations.glob("*.tsv")))
+        files.extend(feature.input_path / "README.md" for feature in profile.features)
+        for feature in profile.features:
+            files.extend(
+                catalog_module.referenced_files(
+                    profile.selection,
+                    profile.selection.catalog_path.parent.parent,
+                    feature.feature_id,
+                )
+            )
+        for module in profile.modules:
+            if module.module not in {"binary_patcher", "runtime_injector"}:
+                files.extend(_module_content_files(module.input_path, module.module))
+        return tuple(sorted(set(files), key=lambda path: path.as_posix()))
     files = [
         profile.definition_path,
         profile.product_path,
@@ -510,6 +843,12 @@ def load_profile(
         raise ValueError(
             f"Profile must be inside the repository: {definition_path}"
         ) from exc
+    if definition_path.is_file() and definition_path.suffix.lower() == ".json":
+        return _load_configuration(
+            definition_path,
+            workspace,
+            root_overrides=root_overrides,
+        )
     if not definition_path.is_file() or definition_path.suffix.lower() != ".tsv":
         raise FileNotFoundError(f"Profile definition is not a TSV file: {definition_path}")
     profile_id = definition_path.stem

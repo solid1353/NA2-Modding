@@ -1,9 +1,8 @@
 # QoL
 
-File-backed quality-of-life patches for the NA2 boot ELF. The original three
-patches are exact static migrations of the canonical PNACH `QoL` section. Each
-row in `patches.tsv` is an atomic patch and its rows in `edits.tsv` are the
-guarded binary edits.
+File-backed and resident quality-of-life behavior. Selectable nodes, guarded
+binary edits, runtime hooks, and payload declarations live in the `qol` subtree
+of `na228_builder/catalog.json`.
 
 ## ELF-Q010: Display only first save
 
@@ -28,7 +27,7 @@ instruction panel and all of its contents remain unchanged.
 The guarded edit is statically verified against the clean instruction
 `slti v1,s2,3`, `andi v0,a0,0x4000`, `andi v0,a0,0x1000`, and the four renderer
 constants. Integrated runtime validation remains pending, so the patch is
-enabled with status `approved_for_test`.
+enabled in the release configuration and still requires integrated runtime validation.
 
 ## ELF-Q009: Loading screen then main menu
 
@@ -83,7 +82,7 @@ NUN6 variant. The source ELF remains untouched and the output size is preserved.
 
 Runtime testing of the integrated Current ISO confirmed that Adventure is absent
 and the remaining Mode Select entries work normally. `ELF-Q004` is therefore
-enabled by default with status `runtime_proven`.
+enabled in the release configuration; its runtime proof is retained in documentation.
 
 ## ELF-Q008: Remove Shop
 
@@ -99,4 +98,4 @@ source ELF remains untouched and the output size is preserved.
 The canonical `Restore Shop` cheat writes value `5` back to `0x005D51E0`,
 re-enabling Shop without changing the file-backed default. The table mapping
 and patch guards are statically verified; integrated runtime validation remains
-pending, so `ELF-Q008` is enabled by default with status `approved_for_test`.
+pending, so the corresponding catalog node remains marked `proven: false`.

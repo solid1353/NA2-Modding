@@ -1,21 +1,14 @@
 # Localization feature
 
-This feature owns the canonical declarative inputs for the accepted English
-localization. Reusable engines remain under `na228_builder/modules/`; enabling
-Localization enables every module directory present here.
+The `localization` subtree in [`../../catalog.json`](../../catalog.json) owns its nested selection, guarded binary edits, runtime hooks, resident sources/fragments, relocations, and ABI metadata.
+Its `translated_text` and `translated_textures` leaves select the retained TSV-backed importer inputs without exposing those internal engines to configurations.
 
-Owned module inputs:
+Files retained here are only non-inline owned inputs:
 
+- `assets/`: catalog-referenced native font assets;
 - `translation_importer/`: canonical text mappings and donor provenance;
-- `runtime_injector/`: resident Font/layout and numeric-formatting code;
-- `texture_patcher/`: source-derived English UI containers;
-- `binary_patcher/`: guarded Font, UI-layout, and regional-input edits.
+- `texture_patcher/`: source-derived English UI containers.
 
-The importer invokes the shared string-patcher engine as a derived consumer, so
-there is no placeholder `string_patcher/` directory. Module group IDs remain
-local to their module and do not declare cross-module dependencies.
+There are no binary-patcher or runtime-injector data directories. Those engines are internal consumers of catalog data. The translation importer still invokes the shared string-patcher engine as a derived stage.
 
-Substantial documentation is under
-[`docs/features/localization/`](../../../docs/features/localization/README.md),
-including the translation contract/history, UI texture and layout derivation,
-compact external strings, Font integration, and regional input behavior.
+Substantial documentation is under [`docs/features/localization/`](../../../docs/features/localization/README.md), including translation, UI texture/layout, compact external strings, font integration, and regional input behavior.

@@ -13,7 +13,7 @@ knowledge.
 - Persist only repository-relative paths or configured `@root/...` aliases.
   Machine-specific absolute paths are forbidden.
 - Keep enough detail to reproduce or diagnose the operation: inputs, selected
-  profile or patches, result, binary edits, validation, and failure state.
+  configuration or selected catalog nodes, result, binary edits, validation, and failure state.
 - Generated logs are ignored by Git and may be deleted. Git is not their
   recovery mechanism.
 - Before deleting logs, inspect them for confirmed reusable findings and useful
@@ -44,7 +44,7 @@ untouched.
 - `latest.log`: the latest completed operational invocation.
 - `rolling.log`: the newest 20 completed operational invocations, stored as
   bounded sections in one file.
-- `builds/<build-id>/`: structured profile records retained only while they
+- `builds/<build-id>/`: structured configuration records retained only while they
   correspond to the catalog-derived Latest, Previous, normal E2E Test, or
   shifted E2E Test ISO.
 - `builds.tsv`: a single atomically replaced `iso` / `build_record` mapping.
@@ -59,7 +59,7 @@ untouched.
   output-specific receipts for the normal and shifted E2E Test variants. Their
   fingerprints include both the resident-payload layout shift and the build role's
   boot-ELF CRC discriminator.
-- `manual_tests/<build-id>/`: the latest Manual Test-only profile record, including
+- `manual_tests/<build-id>/`: the latest Manual Test-only configuration record, including
   `manual_test_result.tsv`. It is independent of `builds.tsv` and the Latest
   receipt; a successful Manual Test build replaces the previous Manual Test record.
 
@@ -89,7 +89,7 @@ promoting reusable findings.
 Persistent command logs must be normalized after transcript capture. They omit
 PowerShell transcript boilerplate, replace configured roots with aliases, and
 record command mode, start/end time, duration, outcome, ISO result/rotation and
-profile record when applicable. `act` records input-profile synchronization.
+configuration record when applicable. `act` records source-input synchronization.
 
 ## Other task logs
 

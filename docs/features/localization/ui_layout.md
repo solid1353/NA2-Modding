@@ -25,18 +25,10 @@ instruction, so this row correctly remains an authored semantic port rather
 than claiming an arbitrary donor copy. It preserves the file size and is
 runtime-proven with the imported one-part container.
 
-Validate and inspect the planned edit from the repository root:
-
-```powershell
-python -m na228_builder.modules.binary_patcher.engine validate `
-  --package na228_builder/features/localization/binary_patcher `
-  --root na2=@source_na2
-
-python -m na228_builder.modules.binary_patcher.engine plan `
-  --package na228_builder/features/localization/binary_patcher `
-  --root na2=@source_na2 `
-  --patch ui_layout_ultimate_jutsu_label
-```
+The executable definition is
+`catalog.json -> localization -> ui_layout -> ui_layout_ultimate_jutsu_label`.
+Catalog loading validates its operation contract; normal configuration
+composition verifies its target identity and destination guard.
 
 Evidence and the broader container/layout analysis are recorded in
 `docs/workstreams/ui_translation/context.md`.
@@ -686,42 +678,6 @@ The complete homolog mappings, reconstruction, runtime evidence, and rejected
 wrong-table probe are preserved in
 `docs/knowledge/localization/ui/options.md`.
 
-Inspect all 27 UI companion patches together:
-
-```powershell
-python -m na228_builder.modules.binary_patcher.engine validate `
-  --package na228_builder/features/localization/binary_patcher `
-  --root na2=@source_na2 `
-  --root nun5=@source_nun5
-
-python -m na228_builder.modules.binary_patcher.engine plan `
-  --package na228_builder/features/localization/binary_patcher `
-  --root na2=@source_na2 `
-  --root nun5=@source_nun5 `
-  --patch ui_layout_ultimate_jutsu_label `
-  --patch ui_layout_stage_select `
-  --patch ui_layout_battle_hud_names `
-  --patch ui_layout_practice_settings_prompt `
-  --patch ui_layout_vs_confirmation `
-  --patch ui_layout_round_label `
-  --patch ui_layout_jutsu_selector_arrows `
-  --patch ui_layout_command_scroll_arrows `
-  --patch ui_layout_item_status_paired `
-  --patch ui_layout_item_status_numeric `
-  --patch ui_layout_item_status_single `
-  --patch ui_layout_item_status_fixed `
-  --patch ui_layout_mash_prompts `
-  --patch ui_layout_victory_names `
-  --patch ui_layout_settings_footers `
-  --patch ui_layout_battle_results `
-  --patch ui_layout_collection_submenu `
-  --patch ui_layout_character_name_rectangles `
-  --patch ui_layout_options_labels `
-  --patch ui_layout_difficulty_sprite `
-  --patch ui_layout_battle_hud_name_rectangles `
-  --patch ui_layout_mode_select `
-  --patch ui_layout_controls_vibration `
-  --patch ui_layout_character_select_footer `
-  --patch ui_layout_common_prompts `
-  --patch ui_layout_options_footers
-```
+All UI companion definitions are direct children of
+`catalog.json -> localization -> ui_layout`. Their selection is mirrored under
+the same path in each configuration.

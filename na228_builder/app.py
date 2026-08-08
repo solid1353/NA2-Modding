@@ -39,7 +39,7 @@ class ReleaseManifest:
     product_version: str
     executable_name: str
     output_name: str
-    profile: str
+    configuration: str
     images: tuple[SupportedImage, ...]
 
 
@@ -94,10 +94,10 @@ def _validate_executable_name(value: str) -> str:
     return value
 
 
-def _validate_profile(value: str) -> str:
+def _validate_configuration(value: str) -> str:
     path = Path(value)
     if path.is_absolute() or ".." in path.parts:
-        raise ReleaseError("Release profile must be a repository-relative path")
+        raise ReleaseError("Release configuration must be a repository-relative path")
     return value.replace("\\", "/")
 
 
@@ -176,7 +176,9 @@ def parse_release_manifest(text: str) -> ReleaseManifest:
             _required_text(data, "executable_name")
         ),
         output_name=_validate_output_name(_required_text(data, "output_name")),
-        profile=_validate_profile(_required_text(data, "profile")),
+        configuration=_validate_configuration(
+            _required_text(data, "configuration")
+        ),
         images=tuple(images),
     )
 

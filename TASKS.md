@@ -13,9 +13,7 @@
 ## Backlog
 
 ### [Project](docs/workstreams/project/README.md)
-- Release: add feature/group/patch config + instructions + default release config.
 - Investigate cross-platform development/deployment possibilities.
-- Make injection development tooling package-aware across feature runtime injectors.
 - Global cleanup - preserve/promote what is needed, delete the rest.
 
 ### Bugs

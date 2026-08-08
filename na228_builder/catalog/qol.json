@@ -1,0 +1,116 @@
+{
+  "startup": {
+    "description": "Independent startup-sequence skips.",
+    "skip_cc2_intro": {
+      "proven": false,
+      "description": "Skip the CyberConnect2 intro.",
+      "edits": [
+        "skip_cc2_intro"
+      ]
+    },
+    "skip_opening": {
+      "proven": false,
+      "description": "Skip the opening sequence.",
+      "edits": [
+        "skip_opening"
+      ]
+    },
+    "loading_screen_then_main_menu": {
+      "proven": false,
+      "description": "Skip the four splash screens and opening, preserve required startup loading, bypass the title, and enter the native main-menu path after the existing loading screen has been shown.",
+      "edits": [
+        "enter_the_title_input_state_immediately_after_required_startup_loading_and_splash_cleanup_bypassing_the_post_splash_sequence",
+        "return_the_native_start_accepted_result_without_constructing_or_displaying_the_title_screen_selecting_main_menu_state_4_substate_1_through_the_existing_caller"
+      ]
+    }
+  },
+  "practice": {
+    "description": "Independent Practice-mode default settings.",
+    "voice_off_by_default": {
+      "proven": false,
+      "description": "Start Practice with voice disabled.",
+      "edits": [
+        "voice_off_by_default"
+      ]
+    },
+    "support_off_by_default": {
+      "proven": false,
+      "description": "Start Practice with support disabled.",
+      "edits": [
+        "force_support_off_instead_of_leaving_the_previous_settings_block_value_unchanged"
+      ]
+    },
+    "command_display_off_by_default": {
+      "proven": false,
+      "description": "Start Practice with command display disabled.",
+      "edits": [
+        "force_command_display_off_while_preserving_the_following_settings_field_reload"
+      ]
+    },
+    "simple_display_off": {
+      "proven": false,
+      "description": "Simple-display default control.",
+      "edits": [
+        "simple_display_off_by_default"
+      ]
+    }
+  },
+  "mode_select": {
+    "description": "Mode availability and selection behavior.",
+    "remove_adventure_mode": {
+      "proven": false,
+      "description": "Omit Adventure from Mode Select using the NUN6 negative availability sentinel.",
+      "edits": [
+        "mark_only_the_adventure_mode_select_entry_unavailable_matching_nun6_s_filtered_carousel_behavior"
+      ]
+    },
+    "remove_shop": {
+      "proven": false,
+      "description": "Omit Shop from Mode Select using the same negative availability sentinel as the Adventure omission.",
+      "edits": [
+        "mark_only_the_shop_mode_select_entry_unavailable_using_the_existing_filtered_carousel_behavior"
+      ]
+    }
+  },
+  "save_load": {
+    "description": "Save and load modal presentation.",
+    "display_only_first_save": {
+      "proven": false,
+      "description": "Render only the first record in the shared Save/Load slot modal.",
+      "edits": [
+        "limit_the_shared_save_load_slot_row_renderer_to_its_first_record",
+        "ignore_downward_slot_navigation_before_it_changes_selection_or_plays_the_navigation_sound",
+        "ignore_upward_slot_navigation_before_it_changes_selection_or_plays_the_navigation_sound",
+        "center_the_date_and_play_time_block_at_local_x_45_inside_the_compact_panel",
+        "center_the_single_save_record_at_local_y_20_inside_the_compact_panel",
+        "move_the_redundant_slot_number_record_outside_the_viewport",
+        "suppress_row_separators_when_only_one_record_is_rendered",
+        "move_the_upper_save_load_panel_to_centered_x_146",
+        "move_the_upper_save_load_panel_to_detached_y_90_above_the_lower_panel",
+        "shrink_the_upper_save_load_panel_width_from_400_to_224",
+        "shrink_the_upper_save_load_panel_height_from_224_to_96",
+        "suppress_the_obsolete_independent_save_slot_cursor_model_draw",
+        "enter_the_sole_slot_save_path_before_constructing_the_redundant_slot_list_screen",
+        "select_slot_zero_and_enter_its_native_save_confirmation_without_rendering_the_slot_list",
+        "route_memory_card_status_dispatch_through_the_unformatted_screen_bypass",
+        "advance_status_0x0a_without_constructing_its_informational_screen_then_retain_native_dispatch_for_every_other_status",
+        "exit_the_save_controller_when_the_final_confirmation_returns_no_instead_of_reopening_the_removed_slot_list",
+        "prepare_the_status_0x0a_modal_helper_argument_before_its_save_flow_bypass",
+        "skip_the_unformatted_card_informational_modal_helper_and_supply_its_completed_result_in_the_save_flow",
+        "retain_the_helper_s_zero_second_argument_when_the_unformatted_save_flow_bypass_is_not_taken",
+        "return_to_the_main_menu_when_the_unformatted_format_confirmation_returns_no_instead_of_entering_the_save_restart_state",
+        "exit_the_save_controller_when_the_no_save_data_confirmation_returns_no_instead_of_resetting_the_save_flow_to_its_initial_prompt"
+      ]
+    }
+  },
+  "startup_loading": {
+    "description": "Present a timed loading counter during the boot loader wait.",
+    "startup_loading_screen": {
+      "proven": false,
+      "description": "Replace the boot splashes with a large primitive percentage and progress bar paced across the measured 25-second load while the original startup loaders run.",
+      "injections": [
+        "startup_loading_screen"
+      ]
+    }
+  }
+}

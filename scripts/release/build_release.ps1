@@ -207,7 +207,7 @@ sys.path.insert(0, str(repository))
 from na228_builder.scripts.catalog import materialized_configuration
 
 print(json.dumps(materialized_configuration(
-    repository / "na228_builder" / "catalog.json",
+    repository / "na228_builder" / "catalog",
     Path(sys.argv[2]),
 ), indent=2))
 '@
@@ -241,7 +241,7 @@ from na228_builder.scripts.catalog import all_enabled_configuration
 
 print(json.dumps(all_enabled_configuration(Path(sys.argv[2])), indent=2))
 '@
-    $catalogPath = Join-Path $repository 'na228_builder\catalog.json'
+    $catalogPath = Join-Path $repository 'na228_builder\catalog'
     $allEnabledText = @(& $python -B -c $allEnabledProbe $repository $catalogPath)
     if ($LASTEXITCODE -ne 0) {
         throw 'Could not create the transient all-enabled configuration.'

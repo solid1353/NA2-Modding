@@ -2,17 +2,22 @@
 Status: approved and implemented.
 This document records the accepted builder catalog and configuration design. It is not a JSON schema.
 ## Scope
-- Use repository-wide `catalog.json`, `edits.json`, and `injections.json` files
-  as the canonical selectable and executable definitions.
-- `catalog.json` owns the complete feature hierarchy and leaf references;
-  `edits.json` owns binary-patcher definitions; `injections.json` owns
-  runtime-injector units.
+- Use feature-named JSON files under `na228_builder/catalog/` as the canonical
+  selectable definitions. Keep non-feature implementation data flat under
+  `na228_builder/catalog/implementation/`.
+- Catalog feature files own the complete feature hierarchy and leaf references;
+  `implementation/edits.json` owns binary-patcher definitions;
+  `implementation/injections.json` owns runtime-injector units.
 - Keep texture-patcher, translation-importer, targets, and operation definitions in TSV for now.
+- Keep `na228_builder/release_manifest.json` at the builder root, outside the
+  catalog.
 - Represent retained translation and texture behavior as selectable catalog leaves; their executable TSV data remains outside the catalog and is invoked internally when the corresponding leaf is enabled.
 - Do not represent modules in the catalog or configurations. Builder engines remain internal implementation details.
 - Do not introduce schemas, schema versions, or migrations while this design is changing.
 ## Catalog hierarchy
-- `catalog.json` has one top-level `features` parent whose children are the actual feature keys.
+- The loader reconstructs one logical top-level `features` parent. Each
+  `catalog/<feature>.json` file supplies the direct node named by its filename
+  and contains that node's contents, without another feature wrapper.
 - Eliminate groups as a concept.
 - Catalog nodes may nest directly to any depth; there is no fixed feature/group/patch hierarchy and no `children` wrapper.
 - Use meaningful, stable `snake_case` keys. Do not retain opaque IDs, generated sequence IDs, or separate ID/name fields.
@@ -26,7 +31,7 @@ This document records the accepted builder catalog and configuration design. It 
 ## Ownership and extraction
 - Keep every edit and injection definition in its owning root map.
 - Reference a shared injection unit from every consuming catalog leaf; store the
-  unit only once in `injections.json`.
+  unit only once in `catalog/implementation/injections.json`.
 - Keep a source's private imports, emitted fragments, relocations, and other private declarations inside that source or its owning patch.
 - Keep patch-specific hooks and payload declarations together in one injection
   unit when they share a catalog owner.
@@ -67,12 +72,12 @@ This document records the accepted builder catalog and configuration design. It 
 }
 ```
 ## Targets
-- Keep shared target definitions outside the three JSON definition files in one
-  flat `targets.tsv` registry. Edits and injection hooks reference targets by
-  ID.
-- The registry path is `na228_builder/targets.tsv`.
+- Keep shared target definitions in one flat `targets.tsv` registry. Edits and
+  injection hooks reference targets by ID.
+- The registry path is `na228_builder/catalog/implementation/targets.tsv`.
 ## Binary edits
-- Store binary edits in the direct root map of `edits.json`.
+- Store binary edits in the direct root map of
+  `catalog/implementation/edits.json`.
 - Catalog leaf `edits` arrays reference meaningful edit IDs. Do not retain a
   separate `edit_id` field inside a definition.
 - Remove edit `order`; it changes no current binary-patcher or runtime-injector output.
@@ -93,7 +98,7 @@ This document records the accepted builder catalog and configuration design. It 
 ## Injected code and hooks
 - Runtime-injection target changes are hooks, not generic edits.
 - Store hooks and payload declarations together in direct-root injection units
-  under `injections.json`.
+  under `catalog/implementation/injections.json`.
 - Catalog leaf `injections` arrays reference injection-unit IDs. Multiple leaves
   may reference the same unit.
 - Represent hook identity with a meaningful JSON key. Do not retain a separate hook or edit ID field.

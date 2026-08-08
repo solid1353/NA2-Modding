@@ -42,23 +42,24 @@ class BuildPreflightTests(unittest.TestCase):
         texture.mkdir()
         for name in ("containers.tsv", "mappings.tsv", "strategies.tsv"):
             (texture / name).write_text("id\n", encoding="utf-8")
-        targets = builder / "targets.tsv"
+        catalog_root = builder / "catalog"
+        implementation_root = catalog_root / "implementation"
+        implementation_root.mkdir(parents=True)
+        targets = implementation_root / "targets.tsv"
         targets.write_text(
             "\t".join(binary_patcher.TARGET_FIELDS) + "\n",
             encoding="utf-8",
         )
-        (builder / "catalog.json").write_text(
+        (catalog_root / "localization.json").write_text(
             json.dumps(
-                {
-                    "features": {
-                        "localization": {"description": "Localization"}
-                    }
-                }
+                {"description": "Localization"}
             ),
             encoding="utf-8",
         )
-        (builder / "edits.json").write_text("{}\n", encoding="utf-8")
-        (builder / "injections.json").write_text("{}\n", encoding="utf-8")
+        (implementation_root / "edits.json").write_text("{}\n", encoding="utf-8")
+        (implementation_root / "injections.json").write_text(
+            "{}\n", encoding="utf-8"
+        )
         (configuration.parent / "base.json").write_text(
             json.dumps({"features": True, "overrides": {}}),
             encoding="utf-8",
@@ -298,7 +299,12 @@ class BuildPreflightTests(unittest.TestCase):
             (feature / "translation_importer" / "mappings.tsv").write_text(
                 "id\n", encoding="utf-8"
             )
-            targets = paths["builder"] / "targets.tsv"
+            targets = (
+                paths["builder"]
+                / "catalog"
+                / "implementation"
+                / "targets.tsv"
+            )
             targets.write_text(
                 targets.read_text(encoding="utf-8")
                 + "boot\tna2\tdestination\tSLPS_258.37\t16\t"

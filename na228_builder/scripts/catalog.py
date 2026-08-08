@@ -26,6 +26,12 @@ RESERVED_NODE_FIELDS = frozenset(
 )
 OPERATION_FIELDS = ["field", "required", "type"]
 FIELD_TYPES = {"hex", "integer", "path", "sha256", "text"}
+CATALOG_FEATURE_ORDER = (
+    "localization",
+    "qol",
+    "battle_logic",
+    "rendering",
+)
 
 
 @dataclass(frozen=True)
@@ -50,6 +56,7 @@ class CatalogNode:
 @dataclass(frozen=True)
 class CatalogSelection:
     catalog_path: Path
+    catalog_files: tuple[Path, ...]
     edits_path: Path
     injections_path: Path
     base_configuration_path: Path | None
@@ -116,6 +123,32 @@ def _read_json(
         qualifier = "an object" if allow_empty else "a non-empty object"
         raise ValueError(f"{label} root must be {qualifier}")
     return value
+
+
+def _read_catalog(path: Path) -> tuple[dict[str, object], tuple[Path, ...]]:
+    path = path.resolve()
+    if not path.is_dir():
+        raise FileNotFoundError(path)
+    feature_paths = {item.stem: item.resolve() for item in path.glob("*.json")}
+    if not feature_paths:
+        raise ValueError(f"Catalog contains no feature files: {path}")
+    order = {feature_id: index for index, feature_id in enumerate(CATALOG_FEATURE_ORDER)}
+    feature_ids = sorted(
+        feature_paths,
+        key=lambda feature_id: (order.get(feature_id, len(order)), feature_id),
+    )
+    features: dict[str, object] = {}
+    files: list[Path] = []
+    for feature_id in feature_ids:
+        _identifier(feature_id, "Catalog feature filename")
+        feature_path = feature_paths[feature_id]
+        features[feature_id] = _read_json(
+            feature_path,
+            f"Catalog feature {feature_id!r}",
+            allow_empty=True,
+        )
+        files.append(feature_path)
+    return {"features": features}, tuple(files)
 
 
 def _identifier(value: str, label: str) -> str:
@@ -217,9 +250,10 @@ def _reference_ids(
 def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelection:
     catalog_path = catalog_path.resolve()
     configuration_path = configuration_path.resolve()
-    catalog = _read_json(catalog_path, "Catalog")
-    edits_path = catalog_path.with_name("edits.json")
-    injections_path = catalog_path.with_name("injections.json")
+    catalog, catalog_files = _read_catalog(catalog_path)
+    implementation_path = catalog_path / "implementation"
+    edits_path = implementation_path / "edits.json"
+    injections_path = implementation_path / "injections.json"
     raw_edits = _read_json(edits_path, "Edits", allow_empty=True)
     raw_injections = _read_json(injections_path, "Injections", allow_empty=True)
     edits: dict[str, dict[str, object]] = {}
@@ -380,6 +414,7 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
     visit(features_value, effective, ("features",), True)
     return CatalogSelection(
         catalog_path,
+        catalog_files,
         edits_path,
         injections_path,
         base_configuration_path,
@@ -393,7 +428,7 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
 
 def all_enabled_configuration(catalog_path: Path) -> dict[str, object]:
     """Return a compact self-contained configuration that enables every node."""
-    catalog = _read_json(catalog_path.resolve(), "Catalog")
+    catalog, _catalog_files = _read_catalog(catalog_path)
     catalog_children = _selectable_children(catalog, "catalog")
     if set(catalog_children) != {"features"}:
         raise ValueError("Catalog root must contain only the features parent")

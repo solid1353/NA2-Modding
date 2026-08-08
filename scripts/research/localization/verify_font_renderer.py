@@ -3266,13 +3266,17 @@ def numeric_fragments() -> tuple[Fragment, ...]:
 
 def main() -> None:
     selection = catalog.load_selection(
-        REPOSITORY / "na228_builder" / "catalog.json",
+        REPOSITORY / "na228_builder" / "catalog",
         REPOSITORY / "na228_builder" / "configurations" / "development.json",
     )
     declaration = catalog.load_runtime_package(
         selection,
         "localization",
-        REPOSITORY / "na228_builder" / "targets.tsv",
+        REPOSITORY
+        / "na228_builder"
+        / "catalog"
+        / "implementation"
+        / "targets.tsv",
         REPOSITORY,
         "localization.runtime_injector",
     )

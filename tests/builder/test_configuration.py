@@ -35,7 +35,11 @@ class ConfigurationTests(unittest.TestCase):
         build = root / "build"
         pcsx2 = root / "pcsx2"
         localization.mkdir()
-        write_tsv(root / "targets.tsv", binary_patcher.TARGET_FIELDS, [])
+        write_tsv(
+            root / "catalog" / "implementation" / "targets.tsv",
+            binary_patcher.TARGET_FIELDS,
+            [],
+        )
         self.create_module(localization, "translation_importer")
         self.create_module(localization, "texture_patcher")
         source.mkdir()
@@ -90,14 +94,14 @@ class ConfigurationTests(unittest.TestCase):
         module = feature / module_type
         module.mkdir(parents=True, exist_ok=True)
         if module_type == "binary_patcher":
-            targets = feature.parent / "targets.tsv"
+            targets = feature.parent / "catalog" / "implementation" / "targets.tsv"
             if not targets.is_file():
                 write_tsv(targets, binary_patcher.TARGET_FIELDS, [])
             write_tsv(module / "groups.tsv", binary_patcher.GROUP_FIELDS, [])
             write_tsv(module / "patches.tsv", binary_patcher.PATCH_FIELDS, [])
             write_tsv(module / "edits.tsv", binary_patcher.EDIT_FIELDS, [])
         elif module_type == "runtime_injector":
-            targets = feature.parent / "targets.tsv"
+            targets = feature.parent / "catalog" / "implementation" / "targets.tsv"
             if not targets.is_file():
                 write_tsv(targets, runtime_injector.TARGET_FIELDS, [])
             for name, fields in (
@@ -142,12 +146,16 @@ class ConfigurationTests(unittest.TestCase):
     ) -> Path:
         root = configurations.parent
         configuration = configurations / f"{configuration_id}.json"
-        (root / "catalog.json").write_text(
-            json.dumps({"features": catalog}, indent=2) + "\n",
-            encoding="utf-8",
-        )
+        catalog_root = root / "catalog"
+        implementation_root = catalog_root / "implementation"
+        implementation_root.mkdir(parents=True, exist_ok=True)
+        for feature_id, feature in catalog.items():
+            (catalog_root / f"{feature_id}.json").write_text(
+                json.dumps(feature, indent=2) + "\n",
+                encoding="utf-8",
+            )
         for name in ("edits.json", "injections.json"):
-            (root / name).write_text("{}\n", encoding="utf-8")
+            (implementation_root / name).write_text("{}\n", encoding="utf-8")
         (configurations / "base.json").write_text(
             json.dumps({"features": True, "overrides": {}}, indent=2) + "\n",
             encoding="utf-8",
@@ -270,15 +278,24 @@ class ConfigurationTests(unittest.TestCase):
             loaded = load_configuration(configuration, root, root)
             resources = set(configuration_resource_files(loaded))
             self.assertIn((root / "product.json").resolve(), resources)
-            self.assertIn((root / "catalog.json").resolve(), resources)
-            self.assertIn((root / "edits.json").resolve(), resources)
-            self.assertIn((root / "injections.json").resolve(), resources)
+            self.assertIn((root / "catalog" / "localization.json").resolve(), resources)
+            self.assertIn(
+                (root / "catalog" / "implementation" / "edits.json").resolve(),
+                resources,
+            )
+            self.assertIn(
+                (root / "catalog" / "implementation" / "injections.json").resolve(),
+                resources,
+            )
             self.assertIn(
                 (root / "configurations" / "base.json").resolve(), resources
             )
             self.assertIn(configuration.resolve(), resources)
             self.assertIn((feature / "translation_importer" / "mappings.tsv").resolve(), resources)
-            self.assertIn((builder / "targets.tsv").resolve(), resources)
+            self.assertIn(
+                (builder / "catalog" / "implementation" / "targets.tsv").resolve(),
+                resources,
+            )
             self.assertNotIn(helper.resolve(), resources)
 
     def test_loader_does_not_discover_modules_from_directories(self) -> None:
@@ -362,7 +379,12 @@ class ConfigurationTests(unittest.TestCase):
             first = module_content_sha256(module, "binary_patcher")
             (module / "helper.py").write_text("print('one')\n", encoding="utf-8")
             self.assertEqual(first, module_content_sha256(module, "binary_patcher"))
-            targets = feature.parent / "targets.tsv"
+            targets = (
+                feature.parent
+                / "catalog"
+                / "implementation"
+                / "targets.tsv"
+            )
             targets.write_text(
                 targets.read_text(encoding="utf-8")
                 + "boot\tna2\tdestination\tSLPS_258.37\t16\t"
@@ -477,7 +499,7 @@ class ConfigurationTests(unittest.TestCase):
         builder_root = repository / "na228_builder"
         default_path = builder_root / "configurations" / "release.json"
         configuration = catalog_module.materialized_configuration(
-            builder_root / "catalog.json", default_path
+            builder_root / "catalog", default_path
         )
         configuration["overrides"] = {"localization": False}
         marker = builder_root / "release_manifest.json"

@@ -1,8 +1,8 @@
 # QoL
 
 File-backed and resident quality-of-life behavior. Selectable nodes, guarded
-binary edits, runtime hooks, and payload declarations live in the `qol` subtree
-of `na228_builder/catalog.json`.
+binary edits, runtime hooks, and payload declarations are selected by
+`na228_builder/catalog/qol.json`.
 
 ## ELF-Q010: Display only first save
 

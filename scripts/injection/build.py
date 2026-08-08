@@ -14,7 +14,7 @@ from pathlib import Path
 
 SCRIPT_ROOT = Path(__file__).resolve().parent
 REPOSITORY = SCRIPT_ROOT.parents[1]
-CATALOG_PATH = REPOSITORY / "na228_builder" / "catalog.json"
+CATALOG_PATH = REPOSITORY / "na228_builder" / "catalog"
 CONFIGURATION_PATH = (
     REPOSITORY / "na228_builder" / "configurations" / "development.json"
 )

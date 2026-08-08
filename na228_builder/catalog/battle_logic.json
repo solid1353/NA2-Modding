@@ -1,0 +1,26 @@
+{
+  "description": "Runtime-proven battle behavior and substitution settings.",
+  "disable_shadowblur_extra_hit": {
+    "proven": false,
+    "description": "Shadowblur extra-hit behavior.",
+    "edits": [
+      "change_the_shadowblur_extra_hit_condition_branch",
+      "skip_the_shadowblur_extra_hit_path",
+      "clear_the_shadowblur_branch_delay_slot"
+    ]
+  },
+  "disable_extra_hit_with_aura_punishment_for_initiator": {
+    "proven": false,
+    "description": "Extra-hit and aura-punishment behavior.",
+    "edits": [
+      "disable_the_extra_hit_while_retaining_aura_punishment_for_the_initiator"
+    ]
+  },
+  "sub_cost_3_15": {
+    "proven": false,
+    "description": "Substitution cost setting.",
+    "edits": [
+      "set_substitution_cost_to_3_15"
+    ]
+  }
+}

@@ -11,25 +11,35 @@ from na228_builder.scripts import catalog
 
 class CatalogTests(unittest.TestCase):
     def write_json(self, path: Path, value: object) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
-        if path.name == "catalog.json":
-            for name in ("edits.json", "injections.json"):
-                definition_path = path.with_name(name)
-                if not definition_path.exists():
-                    definition_path.write_text("{}\n", encoding="utf-8")
-            configurations = path.parent / "configurations"
-            configurations.mkdir(exist_ok=True)
-            self.write_json(
-                configurations / "base.json",
-                {"features": True, "overrides": {}},
-            )
+
+    def write_catalog(self, path: Path, value: object) -> None:
+        if not isinstance(value, dict) or set(value) != {"features"}:
+            raise ValueError("Test catalog must contain only features")
+        features = value["features"]
+        if not isinstance(features, dict):
+            raise ValueError("Test catalog features must be an object")
+        path.mkdir(parents=True, exist_ok=True)
+        for feature_id, feature in features.items():
+            self.write_json(path / f"{feature_id}.json", feature)
+        implementation = path / "implementation"
+        implementation.mkdir(exist_ok=True)
+        for name in ("edits.json", "injections.json"):
+            definition_path = implementation / name
+            if not definition_path.exists():
+                definition_path.write_text("{}\n", encoding="utf-8")
+        self.write_json(
+            path.parent / "configurations" / "base.json",
+            {"features": True, "overrides": {}},
+        )
 
     def test_configuration_must_match_catalog_at_every_descended_level(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            catalog_path = root / "catalog.json"
+            catalog_path = root / "catalog"
             configuration_path = root / "configuration.json"
-            self.write_json(
+            self.write_catalog(
                 catalog_path,
                 {
                     "features": {
@@ -57,9 +67,9 @@ class CatalogTests(unittest.TestCase):
     def test_configuration_leaf_cannot_be_an_object(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            catalog_path = root / "catalog.json"
+            catalog_path = root / "catalog"
             configuration_path = root / "configuration.json"
-            self.write_json(catalog_path, {"features": {"feature": {"leaf": {}}}})
+            self.write_catalog(catalog_path, {"features": {"feature": {"leaf": {}}}})
             self.write_json(
                 configuration_path,
                 {"overrides": {"feature": {"leaf": {}}}},
@@ -70,9 +80,9 @@ class CatalogTests(unittest.TestCase):
     def test_proven_can_only_be_false(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            catalog_path = root / "catalog.json"
+            catalog_path = root / "catalog"
             configuration_path = root / "configuration.json"
-            self.write_json(
+            self.write_catalog(
                 catalog_path,
                 {"features": {"feature": {"leaf": {"proven": True}}}},
             )
@@ -83,10 +93,11 @@ class CatalogTests(unittest.TestCase):
     def test_duplicate_json_keys_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            catalog_path = root / "catalog.json"
+            catalog_path = root / "catalog"
             configuration_path = root / "configuration.json"
-            catalog_path.write_text(
-                '{"features":{"feature":{"leaf":{},"leaf":{}}}}\n', encoding="utf-8"
+            self.write_catalog(catalog_path, {"features": {"feature": {}}})
+            (catalog_path / "feature.json").write_text(
+                '{"leaf":{},"leaf":{}}\n', encoding="utf-8"
             )
             self.write_json(configuration_path, {"overrides": {}})
             with self.assertRaisesRegex(ValueError, "duplicate key"):
@@ -95,9 +106,9 @@ class CatalogTests(unittest.TestCase):
     def test_all_enabled_configuration_mirrors_every_selectable_leaf(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            catalog_path = root / "catalog.json"
+            catalog_path = root / "catalog"
             configuration_path = root / "configuration.json"
-            self.write_json(
+            self.write_catalog(
                 catalog_path,
                 {
                     "features": {
@@ -125,9 +136,9 @@ class CatalogTests(unittest.TestCase):
     def test_partial_overrides_merge_over_compact_features_setting(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            catalog_path = root / "catalog.json"
+            catalog_path = root / "catalog"
             configuration_path = root / "configuration.json"
-            self.write_json(
+            self.write_catalog(
                 catalog_path,
                 {
                     "features": {
@@ -162,9 +173,9 @@ class CatalogTests(unittest.TestCase):
     def test_base_then_base_overrides_then_configuration_overrides(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            catalog_path = root / "catalog.json"
+            catalog_path = root / "catalog"
             configuration_path = root / "configuration.json"
-            self.write_json(
+            self.write_catalog(
                 catalog_path,
                 {
                     "features": {
@@ -224,9 +235,9 @@ class CatalogTests(unittest.TestCase):
     def test_self_contained_configuration_does_not_load_base(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            catalog_path = root / "catalog.json"
+            catalog_path = root / "catalog"
             configuration_path = root / "configuration.json"
-            self.write_json(catalog_path, {"features": {"feature": {}}})
+            self.write_catalog(catalog_path, {"features": {"feature": {}}})
             (root / "configurations" / "base.json").write_text(
                 "not json\n", encoding="utf-8"
             )
@@ -241,8 +252,8 @@ class CatalogTests(unittest.TestCase):
     def test_repository_configuration_rejects_self_contained_shape(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            catalog_path = root / "catalog.json"
-            self.write_json(catalog_path, {"features": {"feature": {}}})
+            catalog_path = root / "catalog"
+            self.write_catalog(catalog_path, {"features": {"feature": {}}})
             configuration_path = root / "configurations" / "release.json"
             self.write_json(
                 configuration_path,
@@ -313,9 +324,10 @@ class CatalogTests(unittest.TestCase):
 
     def test_live_catalog_and_configurations_reconstruct_migrated_data(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        catalog_path = repository / "na228_builder" / "catalog.json"
+        catalog_path = repository / "na228_builder" / "catalog"
         configuration_root = repository / "na228_builder" / "configurations"
-        targets = repository / "na228_builder" / "targets.tsv"
+        implementation_root = catalog_path / "implementation"
+        targets = implementation_root / "targets.tsv"
         operations = (
             repository
             / "na228_builder"
@@ -363,12 +375,17 @@ class CatalogTests(unittest.TestCase):
         ]
         self.assertEqual(sum(len(package.fragments) for package in runtime), 118)
         self.assertEqual(sum(len(package.edits) for package in runtime), 68)
-        raw_catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+        raw_catalog = {
+            "features": {
+                path.stem: json.loads(path.read_text(encoding="utf-8"))
+                for path in selections[0].catalog_files
+            }
+        }
         raw_edits = json.loads(
-            catalog_path.with_name("edits.json").read_text(encoding="utf-8")
+            (implementation_root / "edits.json").read_text(encoding="utf-8")
         )
         raw_injections = json.loads(
-            catalog_path.with_name("injections.json").read_text(encoding="utf-8")
+            (implementation_root / "injections.json").read_text(encoding="utf-8")
         )
         self.assertEqual(
             json.loads((configuration_root / "base.json").read_text(encoding="utf-8")),
@@ -433,9 +450,9 @@ class CatalogTests(unittest.TestCase):
             for hook_id, hook in injection.get("hooks", {}).items():
                 self.assertNotIn("operation", hook, hook_id)
         for path in [
-            catalog_path,
-            catalog_path.with_name("edits.json"),
-            catalog_path.with_name("injections.json"),
+            *selections[0].catalog_files,
+            implementation_root / "edits.json",
+            implementation_root / "injections.json",
             *configuration_root.glob("*.json"),
         ]:
             self.assertNotIn("\n\n", path.read_text(encoding="utf-8"))

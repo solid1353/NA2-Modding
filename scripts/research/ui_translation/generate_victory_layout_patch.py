@@ -227,11 +227,12 @@ def main() -> int:
 
     patch, generated_edits = build_patch_rows()
     if args.write:
-        catalog_path = REPOSITORY / "na228_builder" / "catalog.json"
-        edits_path = REPOSITORY / "na228_builder" / "edits.json"
-        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+        catalog_root = REPOSITORY / "na228_builder" / "catalog"
+        catalog_path = catalog_root / "localization.json"
+        edits_path = catalog_root / "implementation" / "edits.json"
+        feature = json.loads(catalog_path.read_text(encoding="utf-8"))
         edits = json.loads(edits_path.read_text(encoding="utf-8"))
-        node = catalog["features"]["localization"]["ui_layout"][PATCH_ID]
+        node = feature["ui_layout"][PATCH_ID]
         node["description"] = patch["description"]
         generated = {
             edit["edit_id"]: {
@@ -253,7 +254,7 @@ def main() -> int:
             edits[edit_id] = definition
         catalog_temporary = catalog_path.with_suffix(".json.tmp")
         catalog_temporary.write_text(
-            json.dumps(catalog, indent=2, ensure_ascii=False) + "\n",
+            json.dumps(feature, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
         edits_temporary = edits_path.with_suffix(".json.tmp")

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from .catalog import CatalogSelection
 
 
-BUILDER_TARGETS_FILE = "targets.tsv"
+BUILDER_TARGETS_FILE = Path("catalog") / "implementation" / "targets.tsv"
 MODULE_TYPE_ORDER = (
     "translation_importer",
     "string_patcher",
@@ -421,7 +421,9 @@ def module_content_sha256(path: Path, module_type: str) -> str:
         raise FileNotFoundError(path)
     files = _module_content_files(path, module_type)
     external_labels = (
-        {_builder_targets_file(path): "@builder/targets.tsv"}
+        {
+            _builder_targets_file(path): "@builder/catalog/implementation/targets.tsv"
+        }
         if module_type in {"binary_patcher", "runtime_injector"}
         else None
     )
@@ -616,7 +618,7 @@ def _load_configuration(
     configuration_id = definition_path.stem
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_. -]*", configuration_id):
         raise ValueError(f"Invalid configuration name: {configuration_id!r}")
-    catalog_path = builder_root / "catalog.json"
+    catalog_path = builder_root / "catalog"
     selection = catalog_module.load_selection(catalog_path, definition_path)
     paths = project_paths or load_paths(workspace, allow_missing=True)
     product_path = paths.file("product_config").resolve()
@@ -709,7 +711,7 @@ def configuration_resource_files(
     files = [
         configuration.definition_path,
         configuration.product_path,
-        configuration.selection.catalog_path,
+        *configuration.selection.catalog_files,
         configuration.selection.edits_path,
         configuration.selection.injections_path,
         configuration.targets_path,

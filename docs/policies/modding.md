@@ -12,17 +12,19 @@ source media, PNACH, donor data, or encoded game text.
   and base `overrides`; `release.json` is the normal reproducible build overlay.
   Loading applies base features, base overrides, then the selected configuration
   overrides. Release packaging merges base and release into exactly one
-  self-contained external configuration. `na228_builder/catalog.json` owns
-  selectable definitions, `edits.json` owns guarded binary edits, and
-  `injections.json` owns runtime hooks and payload declarations. Root
-  `product.json` owns canonical inputs and output identity.
+  self-contained external configuration. Feature-named JSON files under
+  `na228_builder/catalog/` own selectable definitions; files under
+  `na228_builder/catalog/implementation/` own guarded binary edits, runtime
+  hooks and payload declarations, and targets. Root `product.json` owns
+  canonical inputs and output identity.
 - JSON files under `na228_builder/configurations/` are the only repository build
   definitions. Feature enablement and nested selection live only there; there
   is no separate profile or feature-pin table.
 - Reusable engines, operation definitions, and tools belong under
-  `na228_builder/modules/`; executable definitions belong in `edits.json` or
-  `injections.json`, catalog leaves reference them by ID, and non-inline inputs
-  remain under the owning feature.
+  `na228_builder/modules/`; executable definitions belong in
+  `catalog/implementation/edits.json` or
+  `catalog/implementation/injections.json`, catalog leaves reference them by
+  ID, and non-inline inputs remain under the owning feature.
 - Remaining feature engine directories contain executable inputs, not placeholders,
   identity manifests, `.gitkeep`, or header-only files used only to register an
   engine.

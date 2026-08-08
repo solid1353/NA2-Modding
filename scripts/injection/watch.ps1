@@ -23,7 +23,9 @@ $repository = [IO.Path]::GetFullPath(
 )
 . (Join-Path $repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
-$injectionsPath = Join-Path $repository 'na228_builder\injections.json'
+$injectionsPath = Join-Path $repository (
+    'na228_builder\catalog\implementation\injections.json'
+)
 $configurationPath = Join-Path $repository (
     'na228_builder\configurations\development.json'
 )
@@ -302,7 +304,7 @@ if (-not $BuildOnly) {
 
 $watchPaths = @(
     $resolvedSourcePath,
-    $catalogPath,
+    $injectionsPath,
     $configurationPath
 )
 $markerPath = Join-Path $repository 'src\hot_reload_message.c'

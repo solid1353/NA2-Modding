@@ -26,7 +26,7 @@ than claiming an arbitrary donor copy. It preserves the file size and is
 runtime-proven with the imported one-part container.
 
 The executable definition is
-`catalog.json -> localization -> ui_layout -> ui_layout_ultimate_jutsu_label`.
+`catalog/localization.json -> ui_layout -> ui_layout_ultimate_jutsu_label`.
 Catalog loading validates its operation contract; normal configuration
 composition verifies its target identity and destination guard.
 
@@ -679,5 +679,5 @@ wrong-table probe are preserved in
 `docs/knowledge/localization/ui/options.md`.
 
 All UI companion definitions are direct children of
-`catalog.json -> localization -> ui_layout`. Their selection is mirrored under
+`catalog/localization.json -> ui_layout`. Their selection is mirrored under
 the same path in each configuration.

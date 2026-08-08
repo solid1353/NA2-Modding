@@ -1,27 +1,32 @@
 # NA2.28 builder
 
-The builder creates a reproducible product from one configuration and three
-integrated definition files.
+The builder creates a reproducible product from one configuration and the
+integrated catalog data.
 
 ## Canonical data
 
-- `catalog.json` owns the complete nested selectable hierarchy under its one
-  top-level `features` parent. Catalog leaves contain ordered `edits` and
+- `catalog/*.json` owns the complete nested selectable hierarchy. Each file is
+  named for one direct child of the logical top-level `features` parent and
+  contains that child's node. Catalog leaves contain ordered `edits` and
   `injections` ID arrays; there is no `groups`, `patches`, `children`, or
   module wrapper.
-- `edits.json` is the direct root map of guarded binary edit definitions.
-- `injections.json` is the direct root map of runtime injection units. Each
-  unit contains `hooks`, `payload`, or both.
+- `catalog/implementation/edits.json` is the direct root map of guarded binary
+  edit definitions.
+- `catalog/implementation/injections.json` is the direct root map of runtime
+  injection units. Each unit contains `hooks`, `payload`, or both.
 - `configurations/base.json` contains the shared `features` setting and its
   `overrides`. `test.json`, `release.json`, and `development.json` contain
   concrete `overrides`. Each overrides object may be empty or partially mirror
   the catalog's feature tree directly. The loader applies `base.features`, then
   `base.overrides`, then the concrete configuration's `overrides`.
-- `targets.tsv` is the single target registry used by edits and injection hooks.
+- `catalog/implementation/targets.tsv` is the single target registry used by
+  edits and injection hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.
 - `localization/assets/` owns edit-referenced localization binary assets.
 - Enabling `features.localization` includes the retained translation-importer and texture-patcher inputs under `localization/`; they are real inputs, not empty catalog selector nodes.
 - `scripts/` contains every builder Python implementation file. Reusable engines and their code-only contracts remain under `modules/`.
+- Root `release_manifest.json` owns release packaging metadata and remains
+  outside the catalog.
 - Root `product.json` owns source inputs, output identity, and named build variants.
 
 JSON configurations are the only build definitions. There is no separate pin or enablement table.
@@ -104,4 +109,6 @@ objects, so end users do not need the project PS2 toolchain.
 
 Preflight fingerprints both canonical source ISOs, ISO-composing builder code, the exact selected configuration resources, product/path configuration, and active Python/Zlib/Zopfli versions. `scripts/module_pipeline.py` prepares internal invocations and shared payload contributions; `scripts/build_configuration.py` composes them; `scripts/composer.py` closes typed image operations; and `image_assembler/` alone stages and verifies the ISO.
 
-The development injector reads `catalog.json` with `configurations/development.json`. It no longer has a separate runtime TSV registry.
+The development injector reads the feature files under `catalog/` with
+`configurations/development.json`. It no longer has a separate runtime TSV
+registry.

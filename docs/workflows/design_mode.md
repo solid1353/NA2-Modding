@@ -11,7 +11,8 @@ No other wording enters Design mode. Plain `des` and `design` do not enter it.
 2. Resume an existing draft for the same design, or create
    `docs/designs/<topic>.md` when none exists.
 3. Give a new document the status `Draft` and write an initial proposal into it.
-4. Report the draft path and begin grooming the proposal with the user.
+4. Open the design document in VS Code.
+5. Report the draft path and begin grooming the proposal with the user.
 
 ## Discussion
 

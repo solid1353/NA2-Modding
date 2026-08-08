@@ -10,6 +10,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from na228_builder.modules.binary_patcher import engine as patcher
+from na228_builder.scripts.build_configuration import write_binary_patch_log
 
 
 def sha256(data: bytes) -> str:
@@ -180,6 +181,47 @@ class BinaryPatcherTests(unittest.TestCase):
             self.assertEqual(row["effective_selected"], "1")
             self.assertEqual(row["selection_mode"], "explicit")
             self.assertEqual((roots["na2"] / "target.bin").read_bytes(), bytes(range(16)))
+
+    def test_configuration_log_uses_unversioned_binary_patch_summary(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            package, _, target_data = self.make_fixture(root)
+            selected = ["test_patch"]
+            edits = patcher.validate_selection(package, selected, for_apply=True)
+            buffers, patch_rows, before_hashes = patcher.compose_edits(
+                package,
+                target_data,
+                edits,
+            )
+            after_hashes = {
+                target_id: sha256(bytes(data))
+                for target_id, data in buffers.items()
+            }
+            logs = root / "logs"
+
+            write_binary_patch_log(
+                {
+                    "package": package,
+                    "selected": selected,
+                    "selection_mode": "explicit",
+                    "edits": edits,
+                    "patch_rows": patch_rows,
+                    "before_hashes": before_hashes,
+                    "after_hashes": after_hashes,
+                },
+                logs,
+                output_iso_text="build/NA2.28.iso",
+                log_directory_text="logs/binary_patcher",
+            )
+
+            with (logs / "run_summary.tsv").open(
+                encoding="utf-8", newline=""
+            ) as handle:
+                reader = csv.DictReader(handle, delimiter="\t")
+                summary = next(reader)
+
+            self.assertNotIn("schema_version", reader.fieldnames)
+            self.assertEqual(summary["package_id"], package.package_id)
 
     def test_pending_patch_cannot_apply(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

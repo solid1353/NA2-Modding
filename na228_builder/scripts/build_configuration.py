@@ -228,13 +228,12 @@ def write_binary_patch_log(
     binary_patcher_module.write_tsv(
         log_directory / "run_summary.tsv",
         [
-            "timestamp_utc", "schema_version", "package_id",
+            "timestamp_utc", "package_id",
             "output_iso", "log_directory", "group_count", "patch_count",
             "unique_patch_count", "edit_count",
         ],
         [{
             "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "schema_version": binary_patcher_module.BINARY_PATCHER_SCHEMA_VERSION,
             "package_id": package.package_id,
             "output_iso": output_iso_text.replace("\\", "/"),
             "log_directory": log_directory_text.replace("\\", "/"),

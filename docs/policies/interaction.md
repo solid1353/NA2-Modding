@@ -6,9 +6,9 @@ completion.
 
 ## Discussion and action
 
-- Questions about feasibility, preference, design, or current behavior request
-  an answer, not mutation, unless the same message contains an explicit action
-  request.
+- Questions authorize answers only, never actions or changes. During active
+  work, continue only the already-authorized scope; anything newly inferred
+  from a question requires explicit authorization.
 - During explicit discussion, design, planning, or brainstorming, later messages
   refine the proposed result. They do not authorize implementation until the
   applicable approval boundary is reached.

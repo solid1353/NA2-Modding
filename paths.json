@@ -10,7 +10,6 @@
     "logs": "logs",
     "workstream_logs": "@logs/workstreams",
     "builder": "na228_builder",
-    "features": "@builder/features",
     "scripts": "scripts",
     "work": "work",
     "project_work": "@work/Project",

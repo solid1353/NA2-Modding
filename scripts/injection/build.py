@@ -20,7 +20,7 @@ CONFIGURATION_PATH = (
 )
 sys.path.insert(0, str(REPOSITORY))
 
-from na228_builder import catalog as catalog_module
+from na228_builder.scripts import catalog as catalog_module
 from na228_builder.payload_builder import ee_c_fragments
 from na228_builder.payload_builder.operations import (
     PayloadFragment,

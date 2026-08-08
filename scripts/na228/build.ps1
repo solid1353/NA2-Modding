@@ -66,7 +66,7 @@ function Invoke-Na2BuildPreflight {
 
     $arguments = @(
         '-B'
-        '-m', 'na228_builder.build_preflight'
+        '-m', 'na228_builder.scripts.build_preflight'
         $Command
         '--na2-iso', $Na2Iso
         '--nun5-iso', $Nun5Iso
@@ -280,10 +280,10 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
     else {
         Join-Path $logDirectory 'preflight\manual_test.json'
     }
-    $isolatedProfileLog = Join-Path $isolatedLogRoot $isolatedBuildId
-    $isolatedProfileLogDirectory = [IO.Path]::GetRelativePath(
+    $isolatedConfigurationLog = Join-Path $isolatedLogRoot $isolatedBuildId
+    $isolatedConfigurationLogDirectory = [IO.Path]::GetRelativePath(
         $paths.repository,
-        $isolatedProfileLog
+        $isolatedConfigurationLog
     )
     $isolatedBuildingIso = "$isolatedOutputIso.building"
     $payloadShift = if ($null -ne $e2eBuild) {
@@ -294,11 +294,11 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
     }
     $isolatedArguments = @(
         '-B'
-        '-m', 'na228_builder.build_profile'
+        '-m', 'na228_builder.scripts.build_configuration'
         '--source', $inputIso
         '--output', $isolatedOutputIso
         '--configuration', $configuration
-        '--profile-log-directory', $isolatedProfileLogDirectory
+        '--configuration-log-directory', $isolatedConfigurationLogDirectory
         '--payload-shift', [string]$payloadShift
     )
 
@@ -360,7 +360,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
                 PreviousIso = $resolvedPreviousIso
                 Rotated = $false
                 BuildId = $retainedRecord.Name
-                ProfileLogDirectory = $retainedRecordPath
+                ConfigurationLogDirectory = $retainedRecordPath
                 PreflightCacheHit = $true
                 ChangedRoles = [string[]]@()
             }
@@ -422,7 +422,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         if ($isolatedExitCode -ne 0) {
             throw "NA2 $isolatedKind build failed (exit $isolatedExitCode)."
         }
-        if (-not (Test-Path -LiteralPath $isolatedProfileLog -PathType Container)) {
+        if (-not (Test-Path -LiteralPath $isolatedConfigurationLog -PathType Container)) {
             throw "$isolatedLabel completed without creating its structured build record."
         }
         if (-not (Test-Path -LiteralPath $isolatedBuildingIso -PathType Leaf)) {
@@ -445,7 +445,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
                 -Text $isolatedOutputIso `
                 -Paths $paths
             $recordPortable = ConvertTo-Na2PortableText `
-                -Text $isolatedProfileLog `
+                -Text $isolatedConfigurationLog `
                 -Paths $paths
             $resultContent = @(
                 "timestamp_utc`tresult`toutput_state`trotation`tpcsx2_closed`tconfiguration`toutput_iso`tbuild_record"
@@ -459,7 +459,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
                 throw "Refusing to write the $isolatedKind result with an absolute path."
             }
             Set-Na2Utf8FileAtomic `
-                -Path (Join-Path $isolatedProfileLog $resultFilename) `
+                -Path (Join-Path $isolatedConfigurationLog $resultFilename) `
                 -Content $resultContent
         }
 
@@ -482,13 +482,13 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         }
         elseif ($isolatedKind -eq 'manual-test') {
             Get-ChildItem -LiteralPath $isolatedLogRoot -Directory |
-                Where-Object FullName -CNE $isolatedProfileLog |
+                Where-Object FullName -CNE $isolatedConfigurationLog |
                 Remove-Item -Recurse -Force
         }
         else {
             Get-ChildItem -LiteralPath $isolatedLogRoot -Directory |
                 Where-Object {
-                    $_.FullName -CNE $isolatedProfileLog -and
+                    $_.FullName -CNE $isolatedConfigurationLog -and
                     (Test-Path -LiteralPath (Join-Path $_.FullName 'build_result.tsv') -PathType Leaf)
                 } |
                 Sort-Object LastWriteTimeUtc -Descending |
@@ -534,7 +534,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         }
         $isolatedCompleted = $true
         $isolatedRecord = ConvertTo-Na2ProjectPath `
-            -Path $isolatedProfileLog `
+            -Path $isolatedConfigurationLog `
             -Paths $paths
         Write-Host (
             "[na228] ISO result: $isolatedKind ($isolatedState); Latest/Previous unchanged; " +
@@ -542,7 +542,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         ) -ForegroundColor Cyan
         Write-Host (
             "[na228] $isolatedLabel record: retained " +
-            $isolatedProfileLog
+            $isolatedConfigurationLog
         ) -ForegroundColor Cyan
         return [pscustomobject]@{
             Status = $isolatedKind
@@ -557,7 +557,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
             PreviousIso = $resolvedPreviousIso
             Rotated = $false
             BuildId = $isolatedBuildId
-            ProfileLogDirectory = $isolatedRecord
+            ConfigurationLogDirectory = $isolatedRecord
             PreflightCacheHit = $false
             ChangedRoles = [string[]]@(
                 if ($isolatedKind -eq 'manual-test' -and $isolatedChanged) {
@@ -577,8 +577,8 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
             Remove-Item -LiteralPath $activeBuildMarker -Force
         }
         if (-not $isolatedCompleted -and
-            (Test-Path -LiteralPath $isolatedProfileLog -PathType Container)) {
-            Remove-Item -LiteralPath $isolatedProfileLog -Recurse -Force
+            (Test-Path -LiteralPath $isolatedConfigurationLog -PathType Container)) {
+            Remove-Item -LiteralPath $isolatedConfigurationLog -Recurse -Force
         }
         if ($null -ne $workerBuild) {
             Remove-Na2EmptyWorkerAncestors `
@@ -634,7 +634,7 @@ if ($preflight.status -eq 'hit') {
             PreviousIso = $resolvedPreviousIso
             Rotated = $false
             BuildId = $buildMap.LatestBuildId
-            ProfileLogDirectory = $buildRecord
+            ConfigurationLogDirectory = $buildRecord
             PreflightCacheHit = $true
             ChangedRoles = [string[]]@()
         }
@@ -667,15 +667,18 @@ else {
 }
 
 $buildId = (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
-$profileLog = Join-Path $buildLogRoot $buildId
-$profileLogDirectory = [IO.Path]::GetRelativePath($paths.repository, $profileLog)
+$configurationLog = Join-Path $buildLogRoot $buildId
+$configurationLogDirectory = [IO.Path]::GetRelativePath(
+    $paths.repository,
+    $configurationLog
+)
 $arguments = @(
     '-B'
-    '-m', 'na228_builder.build_profile'
+    '-m', 'na228_builder.scripts.build_configuration'
     '--source', $inputIso
     '--output', $resolvedLatestIso
     '--configuration', $configuration
-    '--profile-log-directory', $profileLogDirectory
+    '--configuration-log-directory', $configurationLogDirectory
 )
 
 $promotionCompleted = $false
@@ -692,8 +695,8 @@ try {
     if ($buildExitCode -ne 0) {
         throw "NA2 configuration build failed (exit $buildExitCode)."
     }
-    if (-not (Test-Path -LiteralPath $profileLog -PathType Container)) {
-        throw 'Profile build completed without creating its structured build record.'
+    if (-not (Test-Path -LiteralPath $configurationLog -PathType Container)) {
+        throw 'Configuration build completed without creating its structured build record.'
     }
 
     $promotion = Promote-VerifiedIso `
@@ -712,7 +715,7 @@ try {
     $buildRecordPath = Join-Path $buildLogRoot $buildRecord.BuildId
     Write-Host "[na228] Build record: retained $buildRecordPath" -ForegroundColor Cyan
     $promotion | Add-Member -NotePropertyName BuildId -NotePropertyValue $buildRecord.BuildId
-    $promotion | Add-Member -NotePropertyName ProfileLogDirectory -NotePropertyValue $buildRecord.BuildRecord
+    $promotion | Add-Member -NotePropertyName ConfigurationLogDirectory -NotePropertyValue $buildRecord.BuildRecord
     $promotion | Add-Member -NotePropertyName PreflightCacheHit -NotePropertyValue $false
     if (-not [string]::IsNullOrWhiteSpace($preflightFingerprint)) {
         try {
@@ -755,7 +758,7 @@ finally {
     if (Test-Path -LiteralPath $stagedIso) {
         Remove-Item -Force -LiteralPath $stagedIso
     }
-    if (-not $promotionCompleted -and (Test-Path -LiteralPath $profileLog -PathType Container)) {
-        Remove-Item -LiteralPath $profileLog -Recurse -Force
+    if (-not $promotionCompleted -and (Test-Path -LiteralPath $configurationLog -PathType Container)) {
+        Remove-Item -LiteralPath $configurationLog -Recurse -Force
     }
 }

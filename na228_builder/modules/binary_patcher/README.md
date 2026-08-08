@@ -31,6 +31,6 @@ guarded file edits.
 
 The catalog loader validates an edit against its operation manifest, resolves
 the shared target registry, and constructs the engine's in-memory package.
-Normal builds do not load feature-local binary-patcher TSV packages. Build logs
+Normal builds do not load separate binary-patcher TSV data packages. Build logs
 retain the selected edit inventory and before/after hashes beneath the
 configuration build record.

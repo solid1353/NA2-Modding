@@ -130,7 +130,7 @@ and complete executable `replacement`. Source and donor fields are
 informational. Historical donor transforms were materialized into replacement
 text; only three parent-message `split_br` views remain.
 
-After profile title policy is applied, `string_patcher` encodes each final
+After product title policy is applied, `string_patcher` encodes each final
 replacement. A slot that fits is compiled inline. An overflowing slot is linked
 externally only when that same row declares validated pointer references;
 otherwise the build fails. Sequences must fit inline. This makes placement a
@@ -197,7 +197,7 @@ mappings.
 
 A clean-source full in-memory plan was validated with all three targets:
 
-- the v37 mappings hash, profile title-policy counts, and reference guards matched;
+- the v37 mappings hash, product title-policy counts, and reference guards matched;
 - 2,434 generated import rows and 2,172 applied text mappings;
 - all six title-bearing results use `Narutimate Accel v2.28`;
 - `M0566`/`M0799` resolved to `NO`/`YES` in v37 (reverted in v38);
@@ -389,7 +389,7 @@ A clean-source full build was validated with all three targets selected:
 - 33 shortened mappings;
 - zero active structural patches;
 - unchanged target file sizes;
-- a relative ten-column import inventory in the profile module log;
+- a relative ten-column import inventory in the configuration module log;
 - `M0745=1` and all new v32 IDs retaining their packaged enabled defaults.
 
 ## Version 31 changes

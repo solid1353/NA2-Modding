@@ -97,8 +97,8 @@ try {
     function python {
         $arguments = @($args)
         $global:Na2PreflightTestCalls += ,$arguments
-        if ($arguments -contains 'na228_builder.build_preflight') {
-            $commandIndex = [Array]::IndexOf($arguments, 'na228_builder.build_preflight') + 1
+        if ($arguments -contains 'na228_builder.scripts.build_preflight') {
+            $commandIndex = [Array]::IndexOf($arguments, 'na228_builder.scripts.build_preflight') + 1
             $command = $arguments[$commandIndex]
             if ($command -eq 'check' -and $global:Na2PreflightTestMode -eq 'hit') {
                 $global:LASTEXITCODE = 0
@@ -113,10 +113,10 @@ try {
                 return '{"fingerprint":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","output_sha256":"BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB","reason":"successful-build","status":"written"}'
             }
         }
-        if ($arguments -contains 'na228_builder.build_profile') {
+        if ($arguments -contains 'na228_builder.scripts.build_configuration') {
             $sourceIndex = [Array]::IndexOf($arguments, '--source') + 1
             $outputIndex = [Array]::IndexOf($arguments, '--output') + 1
-            $profileLogIndex = [Array]::IndexOf($arguments, '--profile-log-directory') + 1
+            $configurationLogIndex = [Array]::IndexOf($arguments, '--configuration-log-directory') + 1
             $fixtureSource = if (Test-Path -LiteralPath $arguments[$outputIndex] -PathType Leaf) {
                 $arguments[$outputIndex]
             }
@@ -127,7 +127,7 @@ try {
                 -Path ([IO.Path]::GetDirectoryName($arguments[$outputIndex])) | Out-Null
             [IO.File]::Copy($fixtureSource, "$($arguments[$outputIndex]).building", $true)
             New-Item -ItemType Directory -Force `
-                -Path (Join-Path $global:Na2PreflightTestRepository $arguments[$profileLogIndex]) | Out-Null
+                -Path (Join-Path $global:Na2PreflightTestRepository $arguments[$configurationLogIndex]) | Out-Null
             $global:LASTEXITCODE = 0
             return 'synthetic verified build'
         }
@@ -172,8 +172,8 @@ try {
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 3) `
         -Message 'Manual Test-only miss did not check, build, and record exactly once.'
     Assert-Na2PreflightTest `
-        -Condition ($global:Na2PreflightTestCalls[1] -contains 'na228_builder.build_profile') `
-        -Message 'Manual Test-only build did not run the full profile builder.'
+        -Condition ($global:Na2PreflightTestCalls[1] -contains 'na228_builder.scripts.build_configuration') `
+        -Message 'Manual Test-only build did not run the full configuration builder.'
     Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $testIso -PathType Leaf) `
         -Message 'Manual Test-only build did not retain its verified ISO.'
     Assert-Na2PreflightTest `
@@ -182,7 +182,7 @@ try {
     Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$testIso.building")) `
         -Message 'Manual Test-only build left its .building ISO.'
     Assert-Na2PreflightTest `
-        -Condition (Test-Path -LiteralPath (Join-Path $repository $test.ProfileLogDirectory.Replace('@logs/', 'logs/')) -PathType Container) `
+        -Condition (Test-Path -LiteralPath (Join-Path $repository $test.ConfigurationLogDirectory.Replace('@logs/', 'logs/')) -PathType Container) `
         -Message 'Manual Test-only build did not retain its structured record.'
 
     $global:Na2PreflightTestMode = 'hit'
@@ -220,7 +220,7 @@ try {
     Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$e2eNormalIso.building")) `
         -Message 'Normal E2E Test build left its .building ISO.'
     $e2eNormalRecord = Join-Path $repository (
-        $e2eNormal.ProfileLogDirectory.Replace('@logs/', 'logs/')
+        $e2eNormal.ConfigurationLogDirectory.Replace('@logs/', 'logs/')
     )
     Assert-Na2PreflightTest `
         -Condition (Test-Path -LiteralPath (Join-Path $e2eNormalRecord 'build_result.tsv') -PathType Leaf) `
@@ -254,10 +254,10 @@ try {
         -Message 'Shifted E2E Test build did not retain its verified ISO.'
     $shiftedBuildCalls = @(
         $global:Na2PreflightTestCalls |
-            Where-Object { $_ -contains 'na228_builder.build_profile' }
+            Where-Object { $_ -contains 'na228_builder.scripts.build_configuration' }
     )
     Assert-Na2PreflightTest -Condition ($shiftedBuildCalls.Count -eq 1) `
-        -Message 'Shifted E2E Test did not run exactly one full profile build.'
+        -Message 'Shifted E2E Test did not run exactly one full configuration build.'
     $shiftedBuildCall = $shiftedBuildCalls[0]
     $shiftIndex = [Array]::IndexOf($shiftedBuildCall, '--payload-shift') + 1
     Assert-Na2PreflightTest `
@@ -287,7 +287,7 @@ try {
     Assert-Na2PreflightTest `
         -Condition (-not (Test-Path -LiteralPath ((Join-Path $repository $generalOutput) + '.building'))) `
         -Message 'Worker build left its .building ISO.'
-    $generalRecord = Join-Path $repository ($general.ProfileLogDirectory.Replace('@work/', 'work/'))
+    $generalRecord = Join-Path $repository ($general.ConfigurationLogDirectory.Replace('@work/', 'work/'))
     Assert-Na2PreflightTest `
         -Condition (Test-Path -LiteralPath (Join-Path $generalRecord 'build_result.tsv') -PathType Leaf) `
         -Message 'Worker build record was not retained under the worker logs.'

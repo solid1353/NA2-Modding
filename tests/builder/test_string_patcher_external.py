@@ -5,7 +5,7 @@ import unittest
 from dataclasses import replace
 from pathlib import Path
 
-from na228_builder.composer import resolve_symbolic_patches
+from na228_builder.scripts.composer import resolve_symbolic_patches
 from na228_builder.modules.string_patcher import engine as string_patcher
 from na228_builder.modules.translation_importer import engine as translation_importer
 from na228_builder.payload_builder import builder as payload_builder
@@ -23,7 +23,7 @@ class IntegratedExternalStringTests(unittest.TestCase):
             raise unittest.SkipTest(
                 "External string verification requires the extracted NA2 source"
             )
-        cls.localization = cls.repository / "na228_builder/features/localization"
+        cls.localization = cls.repository / "na228_builder/localization"
         cls.import_plan = translation_importer.build_translation_import_plan(
             na2_folder=cls.roots["na2"],
             data_root=cls.localization / "translation_importer",

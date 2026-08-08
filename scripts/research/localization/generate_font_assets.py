@@ -26,7 +26,7 @@ if str(REPOSITORY) not in sys.path:
 from scripts.lib.paths import load_paths  # noqa: E402
 
 
-ASSETS = load_paths(REPOSITORY).path("features", "localization", "assets")
+ASSETS = load_paths(REPOSITORY).path("builder", "localization", "assets")
 ATLAS_OUTPUT = ASSETS / "nun5_semantic_14x20.bin"
 PACKED_MAP_OUTPUT = ASSETS / "nun5_semantic_14x20_packed_map.bin"
 

@@ -1,7 +1,7 @@
 # Image assembler
 
 The image assembler is mandatory build infrastructure, not a feature module.
-Modules and the profile composer produce one closed `AssemblyPlan`; the
+Modules and the configuration composer produce one closed `AssemblyPlan`; the
 assembler alone copies the clean source into the reserved `.building` path,
 applies guarded equal-size file replacements, inserts declared files into
 verified free extents, mirrors file-tree changes across ISO9660 and UDF, and

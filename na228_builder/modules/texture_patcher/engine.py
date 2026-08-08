@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from scripts.lib.paths import load_paths, resolve_alias
-from ...source_media import IsoFileView, cvm_members
+from ...scripts.source_media import IsoFileView, cvm_members
 
 try:
     import zopfli.gzip as zopfli_gzip

@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path, PurePosixPath
 
-from na228_builder.build_profile import apply_binary_patch_set
-from na228_builder.composer import resolve_symbolic_patches
+from na228_builder.scripts.build_configuration import apply_binary_patch_set
+from na228_builder.scripts.composer import resolve_symbolic_patches
 from na228_builder.modules.binary_patcher import engine as binary_engine
 from na228_builder.modules.runtime_injector import engine
 from na228_builder.payload_builder.builder import build_resident_payload

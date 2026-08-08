@@ -10,7 +10,7 @@ This document records the accepted builder catalog and configuration design. It 
 - Do not represent modules in the catalog or configurations. Builder engines remain internal implementation details.
 - Do not introduce schemas, schema versions, or migrations while this design is changing.
 ## Catalog hierarchy
-- `catalog.json` has no `features` root wrapper. Its top-level keys are actual feature keys.
+- `catalog.json` has one top-level `features` parent whose children are the actual feature keys.
 - Eliminate groups as a concept.
 - Catalog nodes may nest directly to any depth; there is no fixed feature/group/patch hierarchy and no `children` wrapper.
 - Use meaningful, stable `snake_case` keys. Do not retain opaque IDs, generated sequence IDs, or separate ID/name fields.
@@ -33,9 +33,12 @@ This document records the accepted builder catalog and configuration design. It 
 - Migrated executable patches may temporarily contain `"proven": false`. Presence means the patch still needs proof. Remove the field when the patch is proven; never set it to `true`; never add it to new patches. Remove the concept after the migrated set is proven.
 - Move useful `evidence_id`, `review_notes`, and `reason` content to the appropriate documentation, discard stale or duplicated content, and remove those fields from executable data.
 ## Configurations
-- Replace profiles with configurations named `test`, `release`, and `development`.
+- Use configurations named `test`, `release`, and `development`.
 - Configurations are the sole owners of enablement and contain no canonical definitions, patch data, or module information.
-- Configurations have no `features` root wrapper. Their top-level feature keys correspond directly to the catalog's top-level selectable keys.
+- Configurations have exactly two top-level fields: `features` and `overrides`.
+- The base `features` setting is `true`, `false`, or a complete object matching the catalog's `features` children. The maintained configurations use `true`.
+- `overrides` is an object. It may be empty or partially mirror the configuration structure under `features`; unspecified descendants retain their base value.
+- Build and release loading recursively merge `overrides` over the base `features` setting before deriving module invocations.
 - A configuration value corresponding to a catalog node is `true`, `false`, or an object.
 - `true` enables the node's complete selectable catalog subtree.
 - `false` disables the node's complete selectable catalog subtree.
@@ -45,19 +48,19 @@ This document records the accepted builder catalog and configuration design. It 
 - Configurations contain no `enabled` or `description` fields.
 ```json
 {
-  "battle_logic": true,
-  "localization": {
-    "font_layout": {
-      "command_relationships": true,
-      "character_modal": false
-    },
-    "textures": false
+  "features": true,
+  "overrides": {
+    "features": {
+      "localization": {
+        "translated_textures": false
+      }
+    }
   }
 }
 ```
 ## Targets
 - Keep shared target definitions outside `catalog.json` in one flat `targets.tsv` registry. Catalog edits and hooks reference targets by ID.
-- The current registry path is `na228_builder/features/targets.tsv`, but restructuring may move it; the final path is not fixed.
+- The registry path is `na228_builder/targets.tsv`.
 ## Binary edits
 - Store binary edits under the owning patch's `edits` object before injected-code data.
 - Represent edit identity with a meaningful JSON key. Do not retain a separate `edit_id` field.

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from .catalog import CatalogSelection
 
 
-FEATURE_TARGETS_FILE = "targets.tsv"
+BUILDER_TARGETS_FILE = "targets.tsv"
 MODULE_TYPE_ORDER = (
     "translation_importer",
     "string_patcher",
@@ -25,11 +25,14 @@ MODULE_TYPE_ORDER = (
     "binary_patcher",
 )
 MODULE_TYPES = frozenset(MODULE_TYPE_ORDER)
-CATALOG_FLAT_MODULE_NODES = {
-    ("localization", "translation_importer"): ("localization", "translated_text"),
+CATALOG_MODULE_INPUTS = {
+    ("localization", "translation_importer"): (
+        ("features", "localization", "translated_text"),
+        ("localization", "translation_importer"),
+    ),
     ("localization", "texture_patcher"): (
-        "localization",
-        "translated_textures",
+        ("features", "localization", "translated_textures"),
+        ("localization", "texture_patcher"),
     ),
 }
 BINARY_PATCHER_CONTROL_FILES = (
@@ -59,7 +62,7 @@ TEXTURE_PATCHER_CONTROL_FILES = (
 
 
 @dataclass(frozen=True)
-class ProfileIdentity:
+class ProductIdentity:
     source_boot_path: str
     output_boot_path: str
     system_cnf_path: str
@@ -75,15 +78,14 @@ class ProfileIdentity:
 
 
 @dataclass(frozen=True)
-class ProfileFeature:
+class SelectedFeature:
     feature_id: str
-    input_path: Path
     input_sha256: str
     module_ids: tuple[str, ...]
 
 
 @dataclass(frozen=True)
-class ProfileModule:
+class ModuleInvocation:
     module_id: str
     order: int
     module: str
@@ -93,15 +95,15 @@ class ProfileModule:
 
 
 @dataclass(frozen=True)
-class Profile:
+class BuildConfiguration:
     definition_path: Path
-    profile_id: str
+    configuration_id: str
     product_path: Path
     targets_path: Path
     roots: dict[str, Path]
-    identity: ProfileIdentity
-    features: tuple[ProfileFeature, ...]
-    modules: tuple[ProfileModule, ...]
+    identity: ProductIdentity
+    features: tuple[SelectedFeature, ...]
+    modules: tuple[ModuleInvocation, ...]
     selection: CatalogSelection
 
 
@@ -124,7 +126,7 @@ def _identity_int(value: object, label: str) -> int:
     return value
 
 
-def _read_product(path: Path) -> tuple[ProfileIdentity, dict[str, str]]:
+def _read_product(path: Path) -> tuple[ProductIdentity, dict[str, str]]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
@@ -168,7 +170,7 @@ def _read_product(path: Path) -> tuple[ProfileIdentity, dict[str, str]]:
         ):
             raise ValueError(f"Invalid product input: {root_id!r}")
         normalized_inputs[root_id] = value
-    identity = ProfileIdentity(
+    identity = ProductIdentity(
         source_boot_path=_identity_text(image["source_boot_path"], "image.source_boot_path"),
         output_boot_path=_identity_text(image["output_boot_path"], "image.output_boot_path"),
         system_cnf_path=_identity_text(image["system_cnf_path"], "image.system_cnf_path"),
@@ -279,13 +281,14 @@ def _required_files(path: Path, names: tuple[str, ...], label: str) -> list[Path
     return files
 
 
-def _feature_targets_file(module_path: Path) -> Path:
-    targets_path = module_path.resolve().parent.parent / FEATURE_TARGETS_FILE
-    if not targets_path.is_file():
-        raise FileNotFoundError(
-            f"Feature target registry is missing: {targets_path}"
-        )
-    return targets_path
+def _builder_targets_file(module_path: Path) -> Path:
+    for parent in (module_path.resolve(), *module_path.resolve().parents):
+        targets_path = parent / BUILDER_TARGETS_FILE
+        if targets_path.is_file():
+            return targets_path
+    raise FileNotFoundError(
+        f"Builder target registry is missing above: {module_path.resolve()}"
+    )
 
 
 def _binary_patcher_content_files(path: Path) -> list[Path]:
@@ -293,7 +296,7 @@ def _binary_patcher_content_files(path: Path) -> list[Path]:
     files = _required_files(
         path, BINARY_PATCHER_CONTROL_FILES, "Binary-patcher module"
     )
-    files.append(_feature_targets_file(path))
+    files.append(_builder_targets_file(path))
     edits_path = path / "edits.tsv"
     with edits_path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
@@ -327,7 +330,7 @@ def _runtime_injector_content_files(path: Path) -> list[Path]:
     files = _required_files(
         path, RUNTIME_INJECTOR_CONTROL_FILES, "runtime_injector module"
     )
-    files.append(_feature_targets_file(path))
+    files.append(_builder_targets_file(path))
     fragments_path = path / "fragments.tsv"
     with fragments_path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
@@ -422,30 +425,30 @@ def module_content_sha256(path: Path, module_type: str) -> str:
         raise FileNotFoundError(path)
     files = _module_content_files(path, module_type)
     external_labels = (
-        {_feature_targets_file(path): "@features/targets.tsv"}
+        {_builder_targets_file(path): "@builder/targets.tsv"}
         if module_type in {"binary_patcher", "runtime_injector"}
         else None
     )
     return _tree_digest(path, files, external_labels=external_labels)
 
 
-def _validated_identity(product_path: Path) -> tuple[ProfileIdentity, dict[str, str]]:
+def _validated_identity(product_path: Path) -> tuple[ProductIdentity, dict[str, str]]:
     identity, product_inputs = _read_product(product_path)
     if identity.memory_card_title_offset < 0 or identity.memory_card_title_capacity <= 0:
         raise ValueError(
-            "Profile identity title offset must be non-negative and capacity positive"
+            "Product identity title offset must be non-negative and capacity positive"
         )
     if (
         identity.game_title_mapping_count <= 0
         or identity.game_title_occurrence_count < identity.game_title_mapping_count
     ):
-        raise ValueError("Profile identity game-title coverage is invalid")
+        raise ValueError("Product identity game-title coverage is invalid")
     try:
         encoding = codecs.lookup(identity.memory_card_title_encoding).name
     except LookupError as exc:
-        raise ValueError("Profile identity has an unknown title encoding") from exc
+        raise ValueError("Product identity has an unknown title encoding") from exc
     identity = replace(identity, memory_card_title_encoding=encoding)
-    from .image_assembler.iso9660 import normalize_iso_path
+    from ..image_assembler.iso9660 import normalize_iso_path
 
     for label, value in (
         ("source_boot_path", identity.source_boot_path),
@@ -453,46 +456,46 @@ def _validated_identity(product_path: Path) -> tuple[ProfileIdentity, dict[str, 
         ("system_cnf_path", identity.system_cnf_path),
     ):
         if normalize_iso_path(value) != value:
-            raise ValueError(f"Profile identity {label} must be normalized: {value!r}")
+            raise ValueError(f"Product identity {label} must be normalized: {value!r}")
     if identity.source_boot_path == identity.output_boot_path:
-        raise ValueError("Profile identity boot paths must differ")
+        raise ValueError("Product identity boot paths must differ")
     if len(identity.source_boot_path.encode("ascii")) != len(
         identity.output_boot_path.encode("ascii")
     ):
-        raise ValueError("Profile identity boot paths must have equal byte lengths")
+        raise ValueError("Product identity boot paths must have equal byte lengths")
     for label, text in (
         ("source_memory_card_title", identity.source_memory_card_title),
         ("output_memory_card_title", identity.output_memory_card_title),
     ):
         if "\0" in text:
-            raise ValueError(f"Profile identity {label} contains an embedded NUL")
+            raise ValueError(f"Product identity {label} contains an embedded NUL")
         try:
             encoded = text.encode(identity.memory_card_title_encoding)
         except UnicodeEncodeError as exc:
             raise ValueError(
-                f"Profile identity {label} is not encodable as "
+                f"Product identity {label} is not encodable as "
                 f"{identity.memory_card_title_encoding}"
             ) from exc
         if len(encoded) >= identity.memory_card_title_capacity:
             raise ValueError(
-                f"Profile identity {label} does not fit its NUL-padded capacity"
+                f"Product identity {label} does not fit its NUL-padded capacity"
             )
     if (
         not identity.imported_game_title
         or not identity.output_game_title
         or identity.imported_game_title == identity.output_game_title
     ):
-        raise ValueError("Profile identity must replace one non-empty game title")
+        raise ValueError("Product identity must replace one non-empty game title")
     for label, text in (
         ("imported_game_title", identity.imported_game_title),
         ("output_game_title", identity.output_game_title),
     ):
         if "\0" in text:
-            raise ValueError(f"Profile identity {label} contains an embedded NUL")
+            raise ValueError(f"Product identity {label} contains an embedded NUL")
         try:
             text.encode("cp1252")
         except UnicodeEncodeError as exc:
-            raise ValueError(f"Profile identity {label} must be CP1252") from exc
+            raise ValueError(f"Product identity {label} must be CP1252") from exc
     return identity, product_inputs
 
 
@@ -518,57 +521,51 @@ def _resolved_roots(
     unknown_overrides = sorted(overrides.keys() - roots.keys())
     if unknown_overrides:
         raise ValueError(
-            "Profile root overrides contain unknown IDs: "
+            "Configuration root overrides contain unknown IDs: "
             + ", ".join(unknown_overrides)
         )
     return roots
 
 
-def _catalog_module_directories(path: Path) -> list[tuple[str, Path]]:
-    path = path.resolve()
-    if not path.exists():
-        return []
-    if not path.is_dir():
-        raise FileNotFoundError(path)
-    unexpected_files = sorted(
-        item.name for item in path.iterdir() if item.is_file()
-    )
-    if unexpected_files:
-        raise ValueError(
-            f"Feature root contains unsupported files: {', '.join(unexpected_files)}"
-        )
-    directories = {item.name: item for item in path.iterdir() if item.is_dir()}
-    flat_types = {"translation_importer", "string_patcher", "texture_patcher"}
-    transition_only = {"assets"}
-    unknown = sorted(set(directories) - flat_types - transition_only)
-    if unknown:
-        raise ValueError(f"Feature contains unknown directories: {', '.join(unknown)}")
-    return [
-        (module_type, directories[module_type])
-        for module_type in MODULE_TYPE_ORDER
-        if module_type in flat_types and module_type in directories
-    ]
+def _catalog_module_inputs(
+    builder_root: Path,
+    feature_id: str,
+    selection: CatalogSelection,
+) -> list[tuple[str, tuple[str, ...], Path]]:
+    inputs: list[tuple[str, tuple[str, ...], Path]] = []
+    for (owner, module_type), (node_path, relative_path) in CATALOG_MODULE_INPUTS.items():
+        if owner != feature_id:
+            continue
+        if not any(node.path == node_path for node in selection.nodes):
+            continue
+        module_path = builder_root.joinpath(*relative_path).resolve()
+        if not module_path.is_dir():
+            raise FileNotFoundError(module_path)
+        inputs.append((module_type, node_path, module_path))
+    return sorted(inputs, key=lambda item: MODULE_TYPE_ORDER.index(item[0]))
 
 
 def _catalog_feature_sha256(
     selection: CatalogSelection,
     feature_id: str,
-    feature_path: Path,
     repository: Path,
-    flat_modules: list[tuple[str, Path]],
+    module_inputs: list[tuple[str, tuple[str, ...], Path]],
     targets_path: Path,
 ) -> str:
     from . import catalog as catalog_module
 
     raw_catalog = json.loads(selection.catalog_path.read_text(encoding="utf-8"))
-    feature_value = raw_catalog[feature_id]
+    raw_features = raw_catalog.get("features")
+    if not isinstance(raw_features, dict):
+        raise ValueError("Catalog root must contain a features object")
+    feature_value = raw_features[feature_id]
     entries: list[tuple[str, bytes]] = [
         (
             f"catalog/{feature_id}.json",
             json.dumps(feature_value, ensure_ascii=False, separators=(",", ":")).encode("utf-8"),
         )
     ]
-    for module_type, module_path in flat_modules:
+    for module_type, _, module_path in module_inputs:
         for file in _module_content_files(module_path, module_type):
             entries.append((file.relative_to(repository).as_posix(), file.read_bytes()))
     if catalog_module.feature_has(selection, feature_id, "edits") or catalog_module.feature_has(
@@ -597,7 +594,7 @@ def _load_configuration(
     *,
     project_paths: Paths | None,
     root_overrides: Mapping[str, Path] | None,
-) -> Profile:
+) -> BuildConfiguration:
     from . import catalog as catalog_module
 
     configuration_id = definition_path.stem
@@ -609,32 +606,22 @@ def _load_configuration(
     product_path = paths.file("product_config").resolve()
     identity, product_inputs = _validated_identity(product_path)
     roots = _resolved_roots(product_inputs, workspace, paths, root_overrides)
-    features_root = paths.path("features").resolve()
-    targets_path = features_root / FEATURE_TARGETS_FILE
-    features: list[ProfileFeature] = []
-    modules: list[ProfileModule] = []
+    targets_path = builder_root / BUILDER_TARGETS_FILE
+    if not targets_path.is_file():
+        raise FileNotFoundError(targets_path)
+    features: list[SelectedFeature] = []
+    modules: list[ModuleInvocation] = []
     for feature_id in selection.feature_ids:
-        feature_path = (features_root / feature_id).resolve()
-        try:
-            feature_path.relative_to(features_root)
-        except ValueError as exc:
-            raise ValueError(f"Feature path escapes configured root: {feature_id}") from exc
-        flat_modules = _catalog_module_directories(feature_path)
+        module_inputs = _catalog_module_inputs(builder_root, feature_id, selection)
         actual = _catalog_feature_sha256(
             selection,
             feature_id,
-            feature_path,
             workspace,
-            flat_modules,
+            module_inputs,
             targets_path,
         )
         available: dict[str, Path] = {}
-        for module_type, module_path in flat_modules:
-            node_path = CATALOG_FLAT_MODULE_NODES.get((feature_id, module_type))
-            if node_path is None:
-                raise ValueError(
-                    f"Flat module {feature_id}.{module_type} has no catalog owner"
-                )
+        for module_type, node_path, module_path in module_inputs:
             if selection.node_enabled(*node_path):
                 available[module_type] = module_path
         if catalog_module.feature_has(
@@ -643,14 +630,14 @@ def _load_configuration(
             "hooks",
             enabled_only=True,
         ):
-            available["runtime_injector"] = feature_path
+            available["runtime_injector"] = builder_root
         if catalog_module.feature_has(
             selection,
             feature_id,
             "edits",
             enabled_only=True,
         ):
-            available["binary_patcher"] = feature_path
+            available["binary_patcher"] = builder_root
         module_ids: list[str] = []
         for module_type in MODULE_TYPE_ORDER:
             module_path = available.get(module_type)
@@ -664,7 +651,7 @@ def _load_configuration(
                 else module_content_sha256(module_path, module_type)
             )
             modules.append(
-                ProfileModule(
+                ModuleInvocation(
                     module_id=module_id,
                     order=len(modules) + 1,
                     module=module_type,
@@ -673,19 +660,18 @@ def _load_configuration(
                     feature_id=feature_id,
                 )
             )
-        if selection.node_enabled(feature_id) and not module_ids:
+        if selection.node_enabled("features", feature_id) and not module_ids:
             raise ValueError(f"Catalog feature owns no executable data: {feature_id}")
         features.append(
-            ProfileFeature(
+            SelectedFeature(
                 feature_id=feature_id,
-                input_path=feature_path,
                 input_sha256=actual,
                 module_ids=tuple(module_ids),
             )
         )
-    return Profile(
+    return BuildConfiguration(
         definition_path=definition_path,
-        profile_id=configuration_id,
+        configuration_id=configuration_id,
         product_path=product_path,
         targets_path=targets_path,
         roots=roots,
@@ -696,8 +682,8 @@ def _load_configuration(
     )
 
 
-def profile_resource_files(
-    profile: Profile,
+def configuration_resource_files(
+    configuration: BuildConfiguration,
     *,
     include_disabled: bool = False,
 ) -> tuple[Path, ...]:
@@ -705,38 +691,38 @@ def profile_resource_files(
     from . import catalog as catalog_module
 
     files = [
-        profile.definition_path,
-        profile.product_path,
-        profile.selection.catalog_path,
-        profile.targets_path,
+        configuration.definition_path,
+        configuration.product_path,
+        configuration.selection.catalog_path,
+        configuration.targets_path,
     ]
     if include_disabled or any(
-        module.module == "binary_patcher" for module in profile.modules
+        module.module == "binary_patcher" for module in configuration.modules
     ):
         operations = (
-            profile.selection.catalog_path.parent
+            configuration.selection.catalog_path.parent
             / "modules"
             / "binary_patcher"
             / "operations"
         )
         files.extend(sorted(operations.glob("*.tsv")))
-    for feature in profile.features:
+    for feature in configuration.features:
         files.extend(
             catalog_module.referenced_files(
-                profile.selection,
-                profile.selection.catalog_path.parent.parent,
+                configuration.selection,
+                configuration.selection.catalog_path.parent.parent,
                 feature.feature_id,
             )
         )
     if include_disabled:
-        for feature in profile.features:
-            for module_type, module_path in _catalog_module_directories(
-                feature.input_path
+        builder_root = configuration.selection.catalog_path.parent
+        for feature in configuration.features:
+            for module_type, _, module_path in _catalog_module_inputs(
+                builder_root, feature.feature_id, configuration.selection
             ):
-                if module_type not in {"binary_patcher", "runtime_injector"}:
-                    files.extend(_module_content_files(module_path, module_type))
+                files.extend(_module_content_files(module_path, module_type))
     else:
-        for module in profile.modules:
+        for module in configuration.modules:
             if module.module not in {"binary_patcher", "runtime_injector"}:
                 files.extend(_module_content_files(module.input_path, module.module))
     return tuple(sorted(set(files), key=lambda path: path.as_posix()))
@@ -749,7 +735,7 @@ def load_configuration(
     *,
     project_paths: Paths | None = None,
     root_overrides: Mapping[str, Path] | None = None,
-) -> Profile:
+) -> BuildConfiguration:
     workspace = workspace.resolve()
     definition_path = definition_path.resolve()
     builder_root = builder_root.resolve()

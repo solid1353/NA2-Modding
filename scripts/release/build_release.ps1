@@ -108,10 +108,10 @@ from pathlib import Path
 
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
-from na228_builder.profile import load_configuration, profile_resource_files
+from na228_builder.scripts.configuration import configuration_resource_files, load_configuration
 
 marker = Path(sys.argv[3]).resolve()
-profile = load_configuration(
+configuration = load_configuration(
     Path(sys.argv[2]),
     repository,
     repository / "na228_builder",
@@ -119,7 +119,7 @@ profile = load_configuration(
 )
 print(json.dumps([
     path.relative_to(repository).as_posix()
-    for path in profile_resource_files(profile, include_disabled=True)
+    for path in configuration_resource_files(configuration, include_disabled=True)
     if path.resolve() != Path(sys.argv[2]).resolve()
 ]))
 '@
@@ -171,12 +171,12 @@ compile_ee_c(
 import os
 
 if os.environ.get("NA2_RELEASE_SELF_TEST") == "1":
-    from na228_builder.release_runtime import validate_packaged_release
+    from na228_builder.scripts.release_runtime import validate_packaged_release
     count = validate_packaged_release()
     print(f"Release package self-test: OK ({count} module invocations)")
     raise SystemExit(0)
 
-from na228_builder.app import main
+from na228_builder.scripts.app import main
 
 raise SystemExit(main())
 '@
@@ -185,7 +185,7 @@ raise SystemExit(main())
     $env:PYINSTALLER_CONFIG_DIR = $cacheRoot
     $baseName = [IO.Path]::GetFileNameWithoutExtension([string]$manifest.executable_name)
     $addData = "${resourceRoot}:."
-    & $python -B -m PyInstaller --noconfirm --clean --onefile --console --noupx --name $baseName --icon $iconPath --paths $repository --add-data $addData --collect-all zopfli --hidden-import na228_builder.release_runtime --distpath $distRoot --workpath (Join-Path $workRoot 'work') --specpath $specRoot $bootstrap
+    & $python -B -m PyInstaller --noconfirm --clean --onefile --console --noupx --name $baseName --icon $iconPath --paths $repository --add-data $addData --collect-all zopfli --hidden-import na228_builder.scripts.release_runtime --distpath $distRoot --workpath (Join-Path $workRoot 'work') --specpath $specRoot $bootstrap
     if ($LASTEXITCODE -ne 0) { throw 'PyInstaller failed.' }
 
     $built = Join-Path $distRoot ([string]$manifest.executable_name)
@@ -212,7 +212,7 @@ from pathlib import Path
 
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
-from na228_builder.catalog import all_enabled_configuration
+from na228_builder.scripts.catalog import all_enabled_configuration
 
 print(json.dumps(all_enabled_configuration(Path(sys.argv[2])), indent=2))
 '@

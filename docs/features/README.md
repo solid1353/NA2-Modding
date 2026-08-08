@@ -1,8 +1,9 @@
 # Feature documentation
 
-Feature contracts and history live here. Builder feature directories exist only
-when a feature owns non-inline executable inputs or assets; catalog-only
-features require no directory.
+Feature contracts and history live here. The builder has no physical `features/`
+directory: selectable structure lives in `na228_builder/catalog.json`, while
+non-inline executable inputs and assets live under their concrete builder data
+area. Catalog-only features require no directory.
 
 - [Battle logic](battle_logic.md)
 - [Localization](localization/README.md)

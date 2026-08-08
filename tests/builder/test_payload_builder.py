@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.composer import resolve_symbolic_patches
+from na228_builder.scripts.composer import resolve_symbolic_patches
 from na228_builder.payload_builder.builder import build_resident_payload, load_config
 from na228_builder.payload_builder.integration import build_integration_patches
 from na228_builder.payload_builder.operations import (

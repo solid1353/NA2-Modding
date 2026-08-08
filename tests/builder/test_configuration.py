@@ -9,12 +9,12 @@ from pathlib import Path
 
 from na228_builder.modules.binary_patcher import engine as binary_patcher
 from na228_builder.modules.runtime_injector import engine as runtime_injector
-from na228_builder.composer import resolve_module_order
-from na228_builder.profile import (
+from na228_builder.scripts.composer import resolve_module_order
+from na228_builder.scripts.configuration import (
     MODULE_TYPE_ORDER,
     load_configuration,
     module_content_sha256,
-    profile_resource_files,
+    configuration_resource_files,
 )
 
 
@@ -26,15 +26,15 @@ def write_tsv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> N
         writer.writerows(rows)
 
 
-class ProfileTests(unittest.TestCase):
+class ConfigurationTests(unittest.TestCase):
     def create_workspace(self, root: Path) -> tuple[Path, Path, Path]:
-        features = root / "features"
+        localization = root / "localization"
         source = root / "source"
         configurations = root / "configurations"
         build = root / "build"
         pcsx2 = root / "pcsx2"
-        features.mkdir()
-        write_tsv(features / "targets.tsv", binary_patcher.TARGET_FIELDS, [])
+        localization.mkdir()
+        write_tsv(root / "targets.tsv", binary_patcher.TARGET_FIELDS, [])
         source.mkdir()
         configurations.mkdir()
         build.mkdir()
@@ -51,7 +51,6 @@ class ProfileTests(unittest.TestCase):
                     "schema_version": 1,
                     "roots": {
                         "repository": ".",
-                        "features": "features",
                         "source": "source",
                         "build": "build",
                         "pcsx2_cheats": "pcsx2/cheats",
@@ -82,7 +81,7 @@ class ProfileTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        return features, source, configurations
+        return root, source, configurations
 
     def create_module(self, feature: Path, module_type: str) -> Path:
         module = feature / module_type
@@ -120,9 +119,11 @@ class ProfileTests(unittest.TestCase):
             self.fail(f"unsupported test module {module_type}")
         return module
 
-    def create_feature(self, features: Path, feature_id: str, *module_types: str) -> Path:
-        feature = features / feature_id
-        feature.mkdir()
+    def create_feature_inputs(
+        self, builder: Path, feature_id: str, *module_types: str
+    ) -> Path:
+        feature = builder / feature_id
+        feature.mkdir(exist_ok=True)
         for module_type in module_types:
             self.create_module(feature, module_type)
         return feature
@@ -139,11 +140,11 @@ class ProfileTests(unittest.TestCase):
         root = configurations.parent
         configuration = configurations / f"{configuration_id}.json"
         (root / "catalog.json").write_text(
-            json.dumps(catalog, indent=2) + "\n",
+            json.dumps({"features": catalog}, indent=2) + "\n",
             encoding="utf-8",
         )
         configuration.write_text(
-            json.dumps(selection, indent=2) + "\n",
+            json.dumps({"features": selection, "overrides": {}}, indent=2) + "\n",
             encoding="utf-8",
         )
         (root / "product.json").write_text(
@@ -185,9 +186,9 @@ class ProfileTests(unittest.TestCase):
     def test_configuration_derives_identity_modules_and_order(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            features, source, configurations = self.create_workspace(root)
-            self.create_feature(
-                features,
+            builder, source, configurations = self.create_workspace(root)
+            self.create_feature_inputs(
+                builder,
                 "localization",
                 "translation_importer",
                 "texture_patcher",
@@ -208,17 +209,19 @@ class ProfileTests(unittest.TestCase):
                     }
                 },
             )
-            profile = load_configuration(configuration_path, root, root)
-            self.assertEqual(profile.profile_id, "test")
-            self.assertEqual([item.feature_id for item in profile.features], ["localization"])
+            configuration = load_configuration(configuration_path, root, root)
+            self.assertEqual(configuration.configuration_id, "test")
             self.assertEqual(
-                [item.module_id for item in profile.modules],
+                [item.feature_id for item in configuration.features], ["localization"]
+            )
+            self.assertEqual(
+                [item.module_id for item in configuration.modules],
                 [
                     "localization.translation_importer",
                     "localization.texture_patcher",
                 ],
             )
-            self.assertEqual([item.order for item in profile.modules], [1, 2])
+            self.assertEqual([item.order for item in configuration.modules], [1, 2])
 
     def test_configuration_definition_must_be_json(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -232,8 +235,8 @@ class ProfileTests(unittest.TestCase):
     def test_disabled_catalog_only_feature_requires_no_directory(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            features, source, configurations = self.create_workspace(root)
-            self.create_feature(features, "localization", "translation_importer")
+            builder, source, configurations = self.create_workspace(root)
+            self.create_feature_inputs(builder, "localization", "translation_importer")
             configuration = self.create_configuration(
                 configurations,
                 source,
@@ -247,14 +250,16 @@ class ProfileTests(unittest.TestCase):
                 },
             )
             loaded = load_configuration(configuration, root, root)
-            self.assertFalse((features / "catalog_only").exists())
+            self.assertFalse((builder / "catalog_only").exists())
             self.assertEqual(loaded.features[1].module_ids, ())
 
     def test_resources_include_only_canonical_configuration_inputs(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            features, source, configurations = self.create_workspace(root)
-            feature = self.create_feature(features, "localization", "translation_importer")
+            builder, source, configurations = self.create_workspace(root)
+            feature = self.create_feature_inputs(
+                builder, "localization", "translation_importer"
+            )
             helper = feature / "translation_importer" / "helper.py"
             helper.write_text("raise SystemExit\n", encoding="utf-8")
             configuration = self.create_configuration(
@@ -264,35 +269,40 @@ class ProfileTests(unittest.TestCase):
                 {"localization": {"translated_text": True}},
             )
             loaded = load_configuration(configuration, root, root)
-            resources = set(profile_resource_files(loaded))
+            resources = set(configuration_resource_files(loaded))
             self.assertIn((root / "product.json").resolve(), resources)
             self.assertIn((root / "catalog.json").resolve(), resources)
             self.assertIn(configuration.resolve(), resources)
             self.assertIn((feature / "translation_importer" / "mappings.tsv").resolve(), resources)
-            self.assertIn((features / "targets.tsv").resolve(), resources)
+            self.assertIn((builder / "targets.tsv").resolve(), resources)
             self.assertNotIn(helper.resolve(), resources)
 
-    def test_rejects_unknown_module_directory(self) -> None:
+    def test_loader_does_not_discover_modules_from_directories(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            features, source, configurations = self.create_workspace(root)
-            feature = features / "localization"
-            feature.mkdir()
+            builder, source, configurations = self.create_workspace(root)
+            feature = builder / "localization"
             (feature / "unknown").mkdir()
+            self.create_module(feature, "translation_importer")
             configuration = self.create_configuration(
                 configurations,
                 source,
                 {"localization": {"translated_text": {"description": "Text"}}},
-                {"localization": {"translated_text": False}},
+                {"localization": {"translated_text": True}},
             )
-            with self.assertRaisesRegex(ValueError, "unknown directories"):
-                load_configuration(configuration, root, root)
+            loaded = load_configuration(configuration, root, root)
+            self.assertEqual(
+                [module.module_id for module in loaded.modules],
+                ["localization.translation_importer"],
+            )
 
-    def test_rejects_feature_root_metadata_file(self) -> None:
+    def test_loader_does_not_enumerate_builder_metadata_as_feature_input(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            features, source, configurations = self.create_workspace(root)
-            feature = self.create_feature(features, "localization", "translation_importer")
+            builder, source, configurations = self.create_workspace(root)
+            feature = self.create_feature_inputs(
+                builder, "localization", "translation_importer"
+            )
             (feature / "manifest.tsv").write_text("key\tvalue\n", encoding="utf-8")
             configuration = self.create_configuration(
                 configurations,
@@ -300,14 +310,15 @@ class ProfileTests(unittest.TestCase):
                 {"localization": {"translated_text": {"description": "Text"}}},
                 {"localization": {"translated_text": True}},
             )
-            with self.assertRaisesRegex(ValueError, "unsupported files"):
-                load_configuration(configuration, root, root)
+            loaded = load_configuration(configuration, root, root)
+            resources = set(configuration_resource_files(loaded))
+            self.assertNotIn((feature / "manifest.tsv").resolve(), resources)
 
     def test_importer_uses_derived_string_consumer_without_string_directory(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            features, source, configurations = self.create_workspace(root)
-            self.create_feature(features, "localization", "translation_importer")
+            builder, source, configurations = self.create_workspace(root)
+            self.create_feature_inputs(builder, "localization", "translation_importer")
             configuration = self.create_configuration(
                 configurations,
                 source,
@@ -320,8 +331,8 @@ class ProfileTests(unittest.TestCase):
     def test_configuration_identity_requires_equal_length_boot_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            features, source, configurations = self.create_workspace(root)
-            self.create_feature(features, "localization", "translation_importer")
+            builder, source, configurations = self.create_workspace(root)
+            self.create_feature_inputs(builder, "localization", "translation_importer")
             configuration = self.create_configuration(
                 configurations,
                 source,
@@ -428,12 +439,12 @@ class ProfileTests(unittest.TestCase):
 
     def test_release_configuration_loads(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        profile_path = (
+        configuration_path = (
             repository / "na228_builder" / "configurations" / "release.json"
         )
         marker = repository / "na228_builder" / "release_manifest.json"
         loaded = load_configuration(
-            profile_path,
+            configuration_path,
             repository,
             repository / "na228_builder",
             root_overrides={"na2": marker, "nun5": marker},
@@ -448,20 +459,22 @@ class ProfileTests(unittest.TestCase):
                 "qol.runtime_injector",
                 "qol.binary_patcher",
                 "battle_logic.binary_patcher",
+                "rendering.binary_patcher",
             ],
         )
         features_root = repository / "na228_builder" / "features"
-        for feature_id in ("battle_logic", "qol", "rendering"):
-            self.assertFalse((features_root / feature_id).exists())
+        self.assertFalse(features_root.exists())
 
     def test_complete_release_resources_include_disabled_flat_modules(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         builder_root = repository / "na228_builder"
         default_path = builder_root / "configurations" / "release.json"
         configuration = json.loads(default_path.read_text(encoding="utf-8"))
-        configuration["localization"]["translated_textures"] = False
+        configuration["overrides"] = {
+            "features": {"localization": {"translated_textures": False}}
+        }
         marker = builder_root / "release_manifest.json"
-        texture_root = builder_root / "features" / "localization" / "texture_patcher"
+        texture_root = builder_root / "localization" / "texture_patcher"
         texture_files = {
             (texture_root / name).resolve()
             for name in ("containers.tsv", "mappings.tsv", "strategies.tsv")
@@ -481,10 +494,10 @@ class ProfileTests(unittest.TestCase):
                 builder_root,
                 root_overrides={"na2": marker, "nun5": marker},
             )
-            self.assertEqual(loaded.profile_id, "Narutimate Accel v2.28")
-            selected = set(profile_resource_files(loaded))
+            self.assertEqual(loaded.configuration_id, "Narutimate Accel v2.28")
+            selected = set(configuration_resource_files(loaded))
             complete = set(
-                profile_resource_files(loaded, include_disabled=True)
+                configuration_resource_files(loaded, include_disabled=True)
             )
 
         self.assertTrue(texture_files.isdisjoint(selected))

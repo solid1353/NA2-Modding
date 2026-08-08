@@ -86,7 +86,7 @@ try {
                 -not $buildResult -or
                 $buildResult.Status -notin @('unchanged', 'updated')
             ) {
-                throw 'Profile build did not return a valid promotion result.'
+                throw 'Configuration build did not return a valid promotion result.'
             }
         }
         'latest-build-and-launch' {
@@ -96,7 +96,7 @@ try {
                 -not $buildResult -or
                 $buildResult.Status -notin @('unchanged', 'updated')
             ) {
-                throw 'Profile build did not return a valid promotion result.'
+                throw 'Configuration build did not return a valid promotion result.'
             }
             Write-Na2Stage "2/2 Launch $latestIsoName"
             & $paths.files.pcsx2_launch_command `

@@ -9,22 +9,22 @@ from .composer import (
     resolve_module_order,
     resolve_symbolic_patches,
 )
-from .modules import translation_importer as translation_importer_module
-from .modules import runtime_injector as runtime_injector_module
-from .modules.binary_patcher import engine as binary_patcher_module
-from .modules.string_patcher import engine as string_patcher_module
-from .payload_builder import builder as payload_builder_module
-from .payload_builder.operations import (
+from ..modules import translation_importer as translation_importer_module
+from ..modules import runtime_injector as runtime_injector_module
+from ..modules.binary_patcher import engine as binary_patcher_module
+from ..modules.string_patcher import engine as string_patcher_module
+from ..payload_builder import builder as payload_builder_module
+from ..payload_builder.operations import (
     PayloadFragment,
     ResidentPayloadBuild,
     ResolvedPatch,
 )
-from .profile import Profile, ProfileModule
+from .configuration import BuildConfiguration, ModuleInvocation
 
 
 @dataclass(frozen=True)
 class PreparedModulePipeline:
-    ordered_modules: tuple[ProfileModule, ...]
+    ordered_modules: tuple[ModuleInvocation, ...]
     import_plans: dict[
         str, translation_importer_module.TranslationImportPlan
     ]
@@ -39,8 +39,8 @@ class PreparedModulePipeline:
 
 @dataclass(frozen=True)
 class _StringPreparation:
-    provider: ProfileModule
-    consumer: ProfileModule | None
+    provider: ModuleInvocation
+    consumer: ModuleInvocation | None
     owner: str
     draft: string_patcher_module.StringPatchDraft
 
@@ -54,9 +54,9 @@ def _translation_source_arguments(root: Path, prefix: str) -> dict[str, Path]:
 
 
 def _bind_string_consumer(
-    provider: ProfileModule,
-    ordered_modules: tuple[ProfileModule, ...],
-) -> ProfileModule | None:
+    provider: ModuleInvocation,
+    ordered_modules: tuple[ModuleInvocation, ...],
+) -> ModuleInvocation | None:
     consumers = [
         module
         for module in ordered_modules
@@ -78,7 +78,7 @@ def _bind_string_consumer(
 
 
 def prepare_module_pipeline(
-    profile: Profile,
+    configuration: BuildConfiguration,
     *,
     payload_shift: int = 0,
 ) -> PreparedModulePipeline:
@@ -87,10 +87,10 @@ def prepare_module_pipeline(
         raise ValueError(
             "Payload shift must be a 16-byte multiple from 0 through 65536"
         )
-    ordered_modules = resolve_module_order(profile.modules)
+    ordered_modules = resolve_module_order(configuration.modules)
     if any(module.module == "translation_importer" for module in ordered_modules):
-        if "na2" not in profile.roots:
-            raise ValueError("Translation importer requires the na2 profile root")
+        if "na2" not in configuration.roots:
+            raise ValueError("Translation importer requires the na2 configuration root")
 
     import_plans: dict[
         str, translation_importer_module.TranslationImportPlan
@@ -103,19 +103,19 @@ def prepare_module_pipeline(
     for module in ordered_modules:
         if module.module != "runtime_injector":
             continue
-        if profile.selection is not None:
+        if configuration.selection is not None:
             declaration = catalog_module.load_runtime_package(
-                profile.selection,
+                configuration.selection,
                 module.feature_id,
-                profile.targets_path,
-                profile.selection.catalog_path.parent.parent,
+                configuration.targets_path,
+                configuration.selection.catalog_path.parent.parent,
                 module.module_id,
             )
         else:
             declaration = runtime_injector_module.load_package(
                 module.input_path,
                 owner=module.module_id,
-                targets_path=profile.targets_path,
+                targets_path=configuration.targets_path,
             )
         if module.module_id in owners:
             raise ValueError(
@@ -128,7 +128,7 @@ def prepare_module_pipeline(
         if provider.module != "translation_importer":
             continue
         source_arguments = _translation_source_arguments(
-            profile.roots["na2"], "na2"
+            configuration.roots["na2"], "na2"
         )
         import_plan = translation_importer_module.build_translation_import_plan(
             **source_arguments,
@@ -148,13 +148,13 @@ def prepare_module_pipeline(
             translation_plan=import_plan,
             owner=owner,
             title_policy=string_patcher_module.GameTitlePolicy(
-                imported_title=profile.identity.imported_game_title,
-                output_title=profile.identity.output_game_title,
+                imported_title=configuration.identity.imported_game_title,
+                output_title=configuration.identity.output_game_title,
                 expected_mapping_count=(
-                    profile.identity.game_title_mapping_count
+                    configuration.identity.game_title_mapping_count
                 ),
                 expected_occurrence_count=(
-                    profile.identity.game_title_occurrence_count
+                    configuration.identity.game_title_occurrence_count
                 ),
             ),
         )

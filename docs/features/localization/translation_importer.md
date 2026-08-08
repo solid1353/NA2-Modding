@@ -2,8 +2,8 @@
 
 This first-class `na228_builder` module imports and validates strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
-It never writes BIN or ELF payloads. Profile builds pass its canonical in-memory
-artifact to `string_patcher`, which applies profile output identity, derives
+It never writes BIN or ELF payloads. Configuration builds pass its canonical in-memory
+artifact to `string_patcher`, which applies product output identity, derives
 inline versus linked placement from encoded fit and pointer availability, and
 compiles one shared `binary_patcher` package. There is no standalone export
 command or file-backed inter-stage handoff.
@@ -54,10 +54,10 @@ The 16 columns are:
 - `id` is a stable mapping identifier.
 - `enabled=1` imports the row for downstream `string_patcher` composition.
 - `enabled=0` retains the row without applying it.
-- `mappings.tsv` is the only enabled-state source. Profile builds never rewrite it
+- `mappings.tsv` is the only enabled-state source. Configuration builds never rewrite it
   or inherit flags from external state.
 - Changing an enabled flag changes the canonical module input and therefore
-  requires an explicit profile hash update.
+  requires an explicit configuration-resource hash update.
 - The current evidence-scoped table contains only executable rows, so all
   current rows are enabled. Unconfirmed rows are absent instead of retained as
   disabled inventory.
@@ -141,7 +141,7 @@ and whether the row used the official donor, an override, or a prefix.
 
 ## Output
 
-Each profile build records the translation importer under:
+Each configuration build records the translation importer under:
 
 `logs/na228/builds/<build-id>/<module-id>/`
 
@@ -155,7 +155,7 @@ The generated import TSV contains exactly ten columns:
 `import_id`, `group_id`, `path`, `offset`, `expected_hex`, `replacement_hex`,
 `source_text`, `replacement_text`, `source_mapping_id`, `reason`
 
-All ISO target paths inside the TSV remain ISO-root-relative. The profile-level module inventory also records only repository-relative paths.
+All ISO target paths inside the TSV remain ISO-root-relative. The configuration-level module inventory also records only repository-relative paths.
 
 `translation_import_summary.json` contains general and aggregate information:
 
@@ -206,11 +206,11 @@ The original NA2 target is authoritative for renderer-specific color forms:
 
 - The reusable engine lives in `na228_builder/modules/translation_importer/`; this feature-owned directory contains the live mappings and their documentation.
 - Do not replace the integrated module by extracting a legacy builder archive over the project.
-- Do not copy generated profile-log plans back into the module.
+- Do not copy generated configuration-log plans back into the module.
 - Do not add patched `BTL.BIN`, `ETC.BIN`, or `SLPS_258.37` payloads to the importer or checkpoint commits; binary deliverables belong only in the frozen release archive.
 - `string_patcher` owns conversion of imported rows into enabled BTL,
   ETC, and SLPS patches; `binary_patcher` owns guards, conflicts, writes, and logs.
-- The profile orchestrator owns composition and ISO application. The importer
+- The configuration orchestrator owns composition and ISO application. The importer
   must run immediately before its consuming `string_patcher` instance.
 
 The module has no standalone CLI. Mapping `enabled` flags determine imported

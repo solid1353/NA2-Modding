@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from na228_builder.app import (
+from na228_builder.scripts.app import (
     ReleaseError,
     ReleaseManifest,
     SupportedImage,
@@ -181,7 +181,7 @@ class ReleaseAppTests(unittest.TestCase):
             (root / "NUN5.iso").write_bytes(nun5)
             manifest = self.manifest(na2, nun5)
 
-            with mock.patch("na228_builder.app.file_sha256") as hash_file:
+            with mock.patch("na228_builder.scripts.app.file_sha256") as hash_file:
                 with self.assertRaisesRegex(ReleaseError, "Configuration is missing"):
                     run_release(
                         root,
@@ -192,7 +192,7 @@ class ReleaseAppTests(unittest.TestCase):
                 hash_file.assert_not_called()
 
             (root / manifest.configuration_name).write_text("not json", encoding="utf-8")
-            with mock.patch("na228_builder.app.file_sha256") as hash_file:
+            with mock.patch("na228_builder.scripts.app.file_sha256") as hash_file:
                 with self.assertRaisesRegex(ReleaseError, "not valid JSON"):
                     run_release(
                         root,
@@ -207,7 +207,7 @@ class ReleaseAppTests(unittest.TestCase):
             def reject_configuration(_path: Path) -> None:
                 raise ValueError("structure mismatch")
 
-            with mock.patch("na228_builder.app.file_sha256") as hash_file:
+            with mock.patch("na228_builder.scripts.app.file_sha256") as hash_file:
                 with self.assertRaisesRegex(ValueError, "structure mismatch"):
                     run_release(
                         root,
@@ -377,7 +377,7 @@ class ReleaseAppTests(unittest.TestCase):
                 called = True
 
             with mock.patch(
-                "na228_builder.app.identify_supported_images",
+                "na228_builder.scripts.app.identify_supported_images",
                 side_effect=identify_then_change,
             ):
                 with self.assertRaisesRegex(ReleaseError, "changed after identification"):

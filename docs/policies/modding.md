@@ -27,7 +27,7 @@ source media, PNACH, donor data, or encoded game text.
   integration. Feature engines contribute fragments/symbols but do not choose
   global offsets or construct the final file.
 - Localization normal builds use
-  `na228_builder/features/localization/translation_importer/mappings.tsv` as the
+  `na228_builder/localization/translation_importer/mappings.tsv` as the
   sole translation source of truth.
 - Preflight dependency closure covers every input capable of changing the
   selected ISO. Any build-affecting input/dependency change updates the closure

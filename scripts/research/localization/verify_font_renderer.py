@@ -26,14 +26,14 @@ REPOSITORY = find_repository(Path(__file__))
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
-from na228_builder import catalog  # noqa: E402
+from na228_builder.scripts import catalog  # noqa: E402
 from na228_builder.payload_builder import mips  # noqa: E402
 from scripts.lib.paths import load_paths  # noqa: E402
 from na228_builder.payload_builder import ee_c_fragments  # noqa: E402
 
 
 PACKED_METRICS_INPUT = load_paths(REPOSITORY).path(
-    "features",
+    "builder",
     "localization",
     "assets",
     "nun5_semantic_14x20_packed_map.bin",
@@ -3272,7 +3272,7 @@ def main() -> None:
     declaration = catalog.load_runtime_package(
         selection,
         "localization",
-        REPOSITORY / "na228_builder" / "features" / "targets.tsv",
+        REPOSITORY / "na228_builder" / "targets.tsv",
         REPOSITORY,
         "localization.runtime_injector",
     )

@@ -114,7 +114,7 @@ def _apply_game_title_policy(
         or sum(hits.values()) != policy.expected_occurrence_count
     ):
         raise ValueError(
-            "string-patcher game-title policy coverage differs from profile identity: "
+            "string-patcher game-title policy coverage differs from product identity: "
             f"{len(hits)} mappings/{sum(hits.values())} occurrences"
         )
 

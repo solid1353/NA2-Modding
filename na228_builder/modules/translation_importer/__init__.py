@@ -1,4 +1,4 @@
-"""Official-string importing for profile composition."""
+"""Official-string importing for configuration composition."""
 
 from .engine import (
     TranslationImportPlan,

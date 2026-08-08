@@ -4,7 +4,7 @@ from pathlib import Path, PurePosixPath
 from typing import Protocol
 
 from .cvm import CvmIso
-from .image_assembler.iso9660 import Iso9660, IsoRecord, normalize_iso_path
+from ..image_assembler.iso9660 import Iso9660, IsoRecord, normalize_iso_path
 
 
 class IsoFileView(Protocol):

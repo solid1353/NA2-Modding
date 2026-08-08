@@ -6,18 +6,18 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-from na228_builder.composer import (
+from na228_builder.scripts.composer import (
     MODULE_ARTIFACT_CONTRACTS,
     compose_assembly_plan,
     resolve_module_order,
     resolve_source_ref,
 )
 from na228_builder.image_assembler.operations import IsoFileRef, IsoRangeRef
-from na228_builder.profile import ProfileIdentity, ProfileModule
+from na228_builder.scripts.configuration import ModuleInvocation, ProductIdentity
 
 
-def module(module_id: str, order: int, module_type: str) -> ProfileModule:
-    return ProfileModule(
+def module(module_id: str, order: int, module_type: str) -> ModuleInvocation:
+    return ModuleInvocation(
         module_id=module_id,
         order=order,
         module=module_type,
@@ -73,7 +73,7 @@ class ComposerTests(unittest.TestCase):
                 b"3456",
             )
 
-    def test_profile_identity_becomes_guarded_edits_and_rename(self) -> None:
+    def test_product_identity_becomes_guarded_edits_and_rename(self) -> None:
         system = b"BOOT2 = cdrom0:\\SLPS_258.37;1\r\n"
         source_title = b"Original" + bytes(8)
         boot = b"HEAD" + source_title + b"TAIL"
@@ -90,7 +90,7 @@ class ComposerTests(unittest.TestCase):
             by_path=records,
             read_file=lambda supplied: payloads[supplied.path],
         )
-        identity = ProfileIdentity(
+        identity = ProductIdentity(
             source_boot_path="SLPS_258.37",
             output_boot_path="SLOP_NA2.28",
             system_cnf_path="SYSTEM.CNF",
@@ -127,7 +127,7 @@ class ComposerTests(unittest.TestCase):
             ["SYSTEM.CNF", "SLPS_258.37"],
         )
 
-    def test_profile_identity_rejects_title_guard_mismatch(self) -> None:
+    def test_product_identity_rejects_title_guard_mismatch(self) -> None:
         system = b"BOOT2 = cdrom0:\\SLPS_258.37;1\r\n"
         boot = b"HEAD" + b"Unexpected" + bytes(6) + b"TAIL"
         records = {
@@ -143,7 +143,7 @@ class ComposerTests(unittest.TestCase):
             by_path=records,
             read_file=lambda supplied: payloads[supplied.path],
         )
-        identity = ProfileIdentity(
+        identity = ProductIdentity(
             source_boot_path="SLPS_258.37",
             output_boot_path="SLOP_NA2.28",
             system_cnf_path="SYSTEM.CNF",

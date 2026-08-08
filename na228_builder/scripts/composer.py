@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
 
-from .image_assembler.iso9660 import Iso9660, normalize_iso_path
-from .image_assembler.operations import (
+from ..image_assembler.iso9660 import Iso9660, normalize_iso_path
+from ..image_assembler.operations import (
     AssemblyPlan,
     FileInsertion,
     FileRename,
@@ -14,8 +14,8 @@ from .image_assembler.operations import (
     IsoFileRef,
     IsoRangeRef,
 )
-from .profile import ProfileIdentity, ProfileModule
-from .payload_builder.operations import (
+from .configuration import ModuleInvocation, ProductIdentity
+from ..payload_builder.operations import (
     ResidentPayloadBuild,
     ResolvedPatch,
     SymbolicPatch,
@@ -111,10 +111,10 @@ def resolve_symbolic_patches(
 
 
 def resolve_module_order(
-    modules: Sequence[ProfileModule],
-) -> tuple[ProfileModule, ...]:
+    modules: Sequence[ModuleInvocation],
+) -> tuple[ModuleInvocation, ...]:
     """Resolve declared module-artifact dependencies with stable peer ordering."""
-    by_feature: dict[str, list[ProfileModule]] = {}
+    by_feature: dict[str, list[ModuleInvocation]] = {}
     for module in modules:
         if module.module not in MODULE_ARTIFACT_CONTRACTS:
             raise ValueError(f"No artifact contract for module type: {module.module}")
@@ -124,8 +124,8 @@ def resolve_module_order(
     indegree = {module.module_id: 0 for module in modules}
     by_id = {module.module_id: module for module in modules}
     for feature_id, feature_modules in by_feature.items():
-        providers: dict[str, ProfileModule] = {}
-        consumers: dict[str, list[ProfileModule]] = {}
+        providers: dict[str, ModuleInvocation] = {}
+        consumers: dict[str, list[ModuleInvocation]] = {}
         for module in feature_modules:
             contract = MODULE_ARTIFACT_CONTRACTS[module.module]
             for artifact in contract.provides:
@@ -159,7 +159,7 @@ def resolve_module_order(
         (module_id for module_id, degree in indegree.items() if degree == 0),
         key=order_index.__getitem__,
     )
-    resolved: list[ProfileModule] = []
+    resolved: list[ModuleInvocation] = []
     while ready:
         module_id = ready.pop(0)
         resolved.append(by_id[module_id])
@@ -226,13 +226,13 @@ def resolve_source_ref(
 def compose_assembly_plan(
     *,
     source: Iso9660,
-    identity: ProfileIdentity,
+    identity: ProductIdentity,
     payloads: Mapping[str, bytes | bytearray],
     owners: Mapping[str, str],
     insertions: Mapping[str, bytes],
     insertion_owners: Mapping[str, str],
 ) -> CompositionResult:
-    """Close composed module payloads plus the profile output identity."""
+    """Close composed module payloads plus the product output identity."""
     composed_payloads = {
         normalize_iso_path(path): bytearray(data) for path, data in payloads.items()
     }
@@ -240,7 +240,7 @@ def compose_assembly_plan(
     system_path = normalize_iso_path(identity.system_cnf_path)
     system_record = source.by_path.get(system_path)
     if system_record is None or system_record.is_dir:
-        raise RuntimeError(f"Profile identity requires source file: {system_path}")
+        raise RuntimeError(f"Product identity requires source file: {system_path}")
     system_data = composed_payloads.get(
         system_path,
         bytearray(source.read_file(system_record)),
@@ -255,7 +255,7 @@ def compose_assembly_plan(
     system_data[offset:offset + len(source_boot)] = output_boot
     composed_payloads[system_path] = system_data
 
-    boot_reason = "Apply the profile's declared output boot identity"
+    boot_reason = "Apply the configuration's declared output boot identity"
     identity_edits.append({
         "target": system_path,
         "offset": f"0x{offset:X}",
@@ -263,13 +263,13 @@ def compose_assembly_plan(
         "original_hex": source_boot.hex().upper(),
         "new_hex": output_boot.hex().upper(),
         "reason": boot_reason,
-        "owner": "profile.identity",
+        "owner": "configuration.identity",
     })
 
     boot_path = normalize_iso_path(identity.source_boot_path)
     boot_record = source.by_path.get(boot_path)
     if boot_record is None or boot_record.is_dir:
-        raise RuntimeError(f"Profile identity requires source file: {boot_path}")
+        raise RuntimeError(f"Product identity requires source file: {boot_path}")
     boot_data = composed_payloads.get(
         boot_path,
         bytearray(source.read_file(boot_record)),
@@ -285,18 +285,18 @@ def compose_assembly_plan(
     title_end = title_offset + identity.memory_card_title_capacity
     if title_end > len(boot_data):
         raise RuntimeError(
-            f"Profile identity title slot exceeds {boot_path}: "
+            f"Product identity title slot exceeds {boot_path}: "
             f"0x{title_end:X} > 0x{len(boot_data):X}"
         )
     actual_title = bytes(boot_data[title_offset:title_end])
     if actual_title != expected_title:
         raise RuntimeError(
-            f"Profile identity title guard failed for {boot_path} at "
+            f"Product identity title guard failed for {boot_path} at "
             f"0x{title_offset:X}"
         )
     boot_data[title_offset:title_end] = output_title
     composed_payloads[boot_path] = boot_data
-    title_reason = "Apply the profile's declared memory-card title identity"
+    title_reason = "Apply the configuration's declared memory-card title identity"
     identity_edits.append({
         "target": boot_path,
         "offset": f"0x{title_offset:X}",
@@ -304,14 +304,14 @@ def compose_assembly_plan(
         "original_hex": expected_title.hex().upper(),
         "new_hex": output_title.hex().upper(),
         "reason": title_reason,
-        "owner": "profile.identity",
+        "owner": "configuration.identity",
     })
     replacements = tuple(
         FileReplacement(
             path=path,
             expected=source.read_file(source.by_path[path]),
             replacement=bytes(composed_payloads[path]),
-            owner=owners.get(path, "profile.identity"),
+            owner=owners.get(path, "configuration.identity"),
             reason=(
                 boot_reason
                 if path == system_path and path not in payloads
@@ -332,7 +332,7 @@ def compose_assembly_plan(
     rename = FileRename(
         source_path=identity.source_boot_path,
         replacement_path=identity.output_boot_path,
-        owner="profile.identity",
+        owner="configuration.identity",
         reason=boot_reason,
     )
     return CompositionResult(

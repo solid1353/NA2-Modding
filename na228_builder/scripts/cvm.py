@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from .image_assembler.iso9660 import Iso9660, IsoRecord, SECTOR
+from ..image_assembler.iso9660 import Iso9660, IsoRecord, SECTOR
 
 
 DEFAULT_ROFS_PASSWORD = "cc2fuku"

@@ -94,17 +94,17 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
 
 ## Architecture
 
-- `na228_builder/app.py` owns external configuration preflight, end-user source
+- `na228_builder/scripts/app.py` owns external configuration preflight, end-user source
   discovery, hashing, locking, staging cleanup, atomic output replacement,
   console messages, and the Enter pause.
-- `na228_builder/release_runtime.py` loads the sibling configuration against the
+- `na228_builder/scripts/release_runtime.py` loads the sibling configuration against the
   embedded catalog with the two verified source ISOs as root overrides and calls
   the ordinary configuration builder without runtime logs.
-- `na228_builder/source_media.py` gives engines one read-only boundary for files
+- `na228_builder/scripts/source_media.py` gives engines one read-only boundary for files
   from either extracted roots or original ISOs.
-- `na228_builder/cvm.py` reads encrypted `DATA.CVM` members directly using the
+- `na228_builder/scripts/cvm.py` reads encrypted `DATA.CVM` members directly using the
   confirmed `cc2fuku` password; it does not extract or modify the container.
-- `na228_builder/build_profile.py` exposes the same staged-image composition used
+- `na228_builder/scripts/build_configuration.py` exposes the same staged-image composition used
   by the normal CLI and the release adapter.
 - `scripts/release/build_release.ps1` owns packaging; the GitHub workflow calls
   that same script rather than implementing another packager.

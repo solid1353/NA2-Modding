@@ -3,7 +3,7 @@
 The selectable hierarchy and migrated executable inputs live in the
 `localization` subtree of `na228_builder/catalog.json`. Non-inline assets and
 the remaining translation/texture TSV inputs live under
-`na228_builder/features/localization/`.
+`na228_builder/localization/`.
 
 Localization composes the accepted English translation, source-derived UI
 textures, guarded UI layout edits, the native NUN5-derived Font stack, compact
@@ -16,13 +16,13 @@ fingerprint covers its canonical executable inputs.
 The `localization` subtree of `na228_builder/catalog.json` owns its nested
 selection, guarded binary edits, runtime hooks, resident sources and fragments,
 relocations, and ABI metadata. Files retained under
-`na228_builder/features/localization/` are only non-inline inputs:
+`na228_builder/localization/` are only non-inline inputs:
 
 - `assets/`: catalog-referenced native Font assets;
 - `translation_importer/`: canonical text mappings and donor provenance;
 - `texture_patcher/`: source-derived English UI containers.
 
-There are no feature-local binary-patcher or runtime-injector data directories.
+There are no separate binary-patcher or runtime-injector data directories.
 Those engines consume catalog data, and the translation importer invokes the
 shared string-patcher engine as a derived stage.
 
@@ -43,7 +43,7 @@ shared string-patcher engine as a derived stage.
 ## String placement boundary
 
 The generic module owns string placement policy. Localization has no
-`string_patcher/` feature directory because it owns no local string declarations;
+`string_patcher/` data directory because it owns no local string declarations;
 the importer artifact invokes the engine as a derived consumer. It accepts
 validated in-memory rows, resolved source text, and references, compiles inline
 imports, contributes external strings as named read-only-data fragments, and

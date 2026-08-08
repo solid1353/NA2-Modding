@@ -158,7 +158,6 @@ def verify_multiplication_mapping() -> Path:
     mappings = (
         REPOSITORY
         / "na228_builder"
-        / "features"
         / "localization"
         / "translation_importer"
         / "mappings.tsv"

@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from na228_builder import catalog
+from na228_builder.scripts import catalog
 
 
 class CatalogTests(unittest.TestCase):
@@ -21,18 +21,23 @@ class CatalogTests(unittest.TestCase):
             self.write_json(
                 catalog_path,
                 {
-                    "feature": {
+                    "features": {
+                        "feature": {
                         "description": "ignored",
                         "nested": {
                             "first_leaf": {"proven": False},
                             "second_leaf": {},
                         },
-                    }
+                        }
+                    },
                 },
             )
             self.write_json(
                 configuration_path,
-                {"feature": {"nested": {"first_leaf": True}}},
+                {
+                    "features": {"feature": {"nested": {"first_leaf": True}}},
+                    "overrides": {},
+                },
             )
             with self.assertRaisesRegex(ValueError, "children differ"):
                 catalog.load_selection(catalog_path, configuration_path)
@@ -42,8 +47,11 @@ class CatalogTests(unittest.TestCase):
             root = Path(directory)
             catalog_path = root / "catalog.json"
             configuration_path = root / "configuration.json"
-            self.write_json(catalog_path, {"feature": {"leaf": {}}})
-            self.write_json(configuration_path, {"feature": {"leaf": {}}})
+            self.write_json(catalog_path, {"features": {"feature": {"leaf": {}}}})
+            self.write_json(
+                configuration_path,
+                {"features": {"feature": {"leaf": {}}}, "overrides": {}},
+            )
             with self.assertRaisesRegex(ValueError, "must be true or false"):
                 catalog.load_selection(catalog_path, configuration_path)
 
@@ -54,9 +62,12 @@ class CatalogTests(unittest.TestCase):
             configuration_path = root / "configuration.json"
             self.write_json(
                 catalog_path,
-                {"feature": {"leaf": {"proven": True}}},
+                {"features": {"feature": {"leaf": {"proven": True}}}},
             )
-            self.write_json(configuration_path, {"feature": {"leaf": True}})
+            self.write_json(
+                configuration_path,
+                {"features": {"feature": {"leaf": True}}, "overrides": {}},
+            )
             with self.assertRaisesRegex(ValueError, "proven must be false"):
                 catalog.load_selection(catalog_path, configuration_path)
 
@@ -66,9 +77,12 @@ class CatalogTests(unittest.TestCase):
             catalog_path = root / "catalog.json"
             configuration_path = root / "configuration.json"
             catalog_path.write_text(
-                '{"feature":{"leaf":{},"leaf":{}}}\n', encoding="utf-8"
+                '{"features":{"feature":{"leaf":{},"leaf":{}}}}\n', encoding="utf-8"
             )
-            self.write_json(configuration_path, {"feature": {"leaf": True}})
+            self.write_json(
+                configuration_path,
+                {"features": {"feature": {"leaf": True}}, "overrides": {}},
+            )
             with self.assertRaisesRegex(ValueError, "duplicate key"):
                 catalog.load_selection(catalog_path, configuration_path)
 
@@ -80,25 +94,67 @@ class CatalogTests(unittest.TestCase):
             self.write_json(
                 catalog_path,
                 {
-                    "feature": {
+                    "features": {
+                        "feature": {
                         "description": "ignored",
                         "first": {},
                         "nested": {
                             "description": "ignored",
                             "second": {"proven": False},
                         },
-                    }
+                        }
+                    },
                 },
             )
 
             configuration = catalog.all_enabled_configuration(catalog_path)
             self.assertEqual(
                 configuration,
-                {"feature": {"first": True, "nested": {"second": True}}},
+                {"features": True, "overrides": {}},
             )
             self.write_json(configuration_path, configuration)
             selection = catalog.load_selection(catalog_path, configuration_path)
             self.assertTrue(all(node.enabled for node in selection.nodes))
+
+    def test_partial_overrides_merge_over_compact_features_setting(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path = root / "catalog.json"
+            configuration_path = root / "configuration.json"
+            self.write_json(
+                catalog_path,
+                {
+                    "features": {
+                        "feature": {
+                            "first": {},
+                            "nested": {"second": {}, "third": {}},
+                        }
+                    }
+                },
+            )
+            self.write_json(
+                configuration_path,
+                {
+                    "features": True,
+                    "overrides": {
+                        "features": {"feature": {"nested": {"second": False}}}
+                    },
+                },
+            )
+            selection = catalog.load_selection(catalog_path, configuration_path)
+            self.assertTrue(selection.node_enabled("features", "feature", "first"))
+            self.assertFalse(
+                selection.node_enabled("features", "feature", "nested", "second")
+            )
+            self.assertTrue(
+                selection.node_enabled("features", "feature", "nested", "third")
+            )
+            third = next(
+                node
+                for node in selection.nodes
+                if node.path == ("features", "feature", "nested", "third")
+            )
+            self.assertEqual(third.node_id, "feature.nested.third")
 
     def test_runtime_source_uses_packaged_object_without_toolchain(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -162,7 +218,7 @@ class CatalogTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         catalog_path = repository / "na228_builder" / "catalog.json"
         configuration_root = repository / "na228_builder" / "configurations"
-        targets = repository / "na228_builder" / "features" / "targets.tsv"
+        targets = repository / "na228_builder" / "targets.tsv"
         operations = (
             repository
             / "na228_builder"
@@ -235,8 +291,9 @@ class CatalogTests(unittest.TestCase):
                 return
             if not isinstance(value, dict):
                 return
+            disallowed = forbidden - ({"features"} if not path else set())
             self.assertFalse(
-                forbidden & value.keys(),
+                disallowed & value.keys(),
                 ".".join(path) or "catalog",
             )
             if "hooks" in value:

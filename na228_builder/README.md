@@ -4,15 +4,16 @@ The builder creates a reproducible product from one configuration and one integr
 
 ## Canonical data
 
-- `catalog.json` owns the complete nested selectable hierarchy plus binary edits, runtime hooks, and runtime payload declarations. Its top-level keys are feature keys; there is no `features`, `groups`, `patches`, `children`, or module wrapper.
-- `configurations/test.json`, `release.json`, and `development.json` mirror the selectable catalog structure exactly. Every value is `true`, `false`, or a nested object; leaf values must be booleans.
-- `features/targets.tsv` is the single target registry used by catalog edits and hooks.
+- `catalog.json` owns the complete nested selectable hierarchy plus binary edits, runtime hooks, and runtime payload declarations under its one top-level `features` parent. There is no `groups`, `patches`, `children`, or module wrapper.
+- `configurations/test.json`, `release.json`, and `development.json` contain `"features": true` plus an `overrides` object. Overrides may be empty or partially mirror the selectable structure under `features`; the loader recursively applies them over the base setting.
+- `targets.tsv` is the single target registry used by catalog edits and hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.
-- `features/<feature>/assets/` owns catalog-referenced binary assets.
-- `localization.translated_text` and `localization.translated_textures` select the retained translation-importer and texture-patcher inputs. Their executable data remains in feature-local TSV directories for now.
+- `localization/assets/` owns the catalog-referenced localization binary assets.
+- `features.localization.translated_text` and `features.localization.translated_textures` select the retained translation-importer and texture-patcher inputs under `localization/`.
+- `scripts/` contains every builder Python implementation file. Reusable engines and their code-only contracts remain under `modules/`.
 - Root `product.json` owns source inputs, output identity, and named build variants.
 
-JSON configurations are the only build definitions. There is no separate profile, pin, or enablement table.
+JSON configurations are the only build definitions. There is no separate pin or enablement table.
 
 ## Catalog nodes
 
@@ -36,7 +37,7 @@ The localization importer invokes the string patcher as a derived consumer. Runt
 
 ## Resource fingerprinting
 
-The build-resource fingerprint covers the selected configuration, catalog, product and path configuration, shared targets, applicable binary operation definitions, catalog-referenced assets and sources, and selected feature-local TSV inputs. Release packaging inventories the same closure for every selectable catalog node, including disabled nodes. Documentation is not an executable builder input.
+The build-resource fingerprint covers the selected configuration, catalog, product and path configuration, shared targets, applicable binary operation definitions, catalog-referenced assets and sources, and selected localization TSV inputs. Release packaging inventories the same closure for every selectable catalog node, including disabled nodes. Documentation is not an executable builder input.
 
 ## Current release configuration
 
@@ -44,8 +45,8 @@ The release configuration composes, in order:
 
 1. Localization text import, resident font/layout and numeric logic, textures, native font assets, regional input, and UI edits.
 2. QoL startup, Practice, mode-selection, and Save/Load behavior.
-3. Battle-logic behavior, with the substitution-cost node disabled.
-4. Rendering data retained in the catalog, with native 16:9 scaling disabled.
+3. Battle-logic behavior.
+4. Rendering behavior.
 
 Release packages include this configuration as editable
 `Narutimate Accel v2.28.json`. The
@@ -64,12 +65,12 @@ python -m pip install -r na228_builder/requirements.txt
 `scripts/na228/build.ps1` uses `configurations/release.json`. Direct composition uses:
 
 ```powershell
-python -m na228_builder.build_profile `
+python -m na228_builder.scripts.build_configuration `
   --source <NA2.iso> `
   --configuration na228_builder/configurations/release.json `
   --compose-only
 ```
 
-Preflight fingerprints both canonical source ISOs, ISO-composing builder code, the exact selected configuration resources, product/path configuration, and active Python/Zlib/Zopfli versions. `module_pipeline.py` prepares internal invocations and shared payload contributions; `build_profile.py` composes them; `composer.py` closes typed image operations; and `image_assembler/` alone stages and verifies the ISO.
+Preflight fingerprints both canonical source ISOs, ISO-composing builder code, the exact selected configuration resources, product/path configuration, and active Python/Zlib/Zopfli versions. `scripts/module_pipeline.py` prepares internal invocations and shared payload contributions; `scripts/build_configuration.py` composes them; `scripts/composer.py` closes typed image operations; and `image_assembler/` alone stages and verifies the ISO.
 
 The development injector reads `catalog.json` with `configurations/development.json`. It no longer has a separate runtime TSV registry.

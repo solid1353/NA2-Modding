@@ -19,7 +19,7 @@ if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
 from scripts.lib.paths import load_paths, resolve_alias
-from na228_builder.source_media import read_root_file
+from na228_builder.scripts.source_media import read_root_file
 
 
 @lru_cache(maxsize=1)

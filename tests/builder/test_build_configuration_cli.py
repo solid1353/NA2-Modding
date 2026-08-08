@@ -9,23 +9,25 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from na228_builder import build_profile
+from na228_builder.scripts import build_configuration
 
 
-class BuildProfileCliTests(unittest.TestCase):
-    def test_compose_only_skips_output_staging_and_profile_logs(self) -> None:
+class BuildConfigurationCliTests(unittest.TestCase):
+    def test_compose_only_skips_output_staging_and_configuration_logs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory).resolve()
             source_iso = workspace / "source.iso"
             source_iso.write_bytes(b"source")
-            profile_path = workspace / "configurations" / "default.json"
-            profile = SimpleNamespace(profile_id="default", features=(), modules=())
+            configuration_path = workspace / "configurations" / "default.json"
+            configuration = SimpleNamespace(
+                configuration_id="default", features=(), modules=()
+            )
             plan = SimpleNamespace(
                 replacements=(object(), object()),
                 insertions=(object(),),
                 renames=(object(),),
             )
-            composed = build_profile.ProfileCompositionResult(
+            composed = build_configuration.ConfigurationCompositionResult(
                 results=(),
                 payload_result=None,
                 composition=SimpleNamespace(
@@ -35,11 +37,11 @@ class BuildProfileCliTests(unittest.TestCase):
                 insertion_owners={},
             )
             arguments = [
-                "build_profile",
+                "build_configuration",
                 "--source",
                 str(source_iso),
                 "--configuration",
-                str(profile_path),
+                str(configuration_path),
                 "--compose-only",
             ]
 
@@ -47,24 +49,30 @@ class BuildProfileCliTests(unittest.TestCase):
             with (
                 patch.object(sys, "argv", arguments),
                 patch.object(
-                    build_profile,
+                    build_configuration,
                     "PATHS",
                     new=SimpleNamespace(repository=workspace),
                 ),
-                patch.object(build_profile, "load_configuration", return_value=profile),
                 patch.object(
-                    build_profile,
-                    "compose_profile_candidate",
+                    build_configuration,
+                    "load_configuration",
+                    return_value=configuration,
+                ),
+                patch.object(
+                    build_configuration,
+                    "compose_configuration_candidate",
                     return_value=composed,
                 ) as compose,
-                patch.object(build_profile, "build_profile_candidate") as build,
+                patch.object(
+                    build_configuration, "build_configuration_candidate"
+                ) as build,
                 redirect_stdout(output),
             ):
-                self.assertEqual(build_profile.main(), 0)
+                self.assertEqual(build_configuration.main(), 0)
 
             compose.assert_called_once_with(
                 source_iso=source_iso,
-                profile=profile,
+                configuration=configuration,
                 payload_shift=0,
             )
             build.assert_not_called()
@@ -81,11 +89,13 @@ class BuildProfileCliTests(unittest.TestCase):
             source_iso = workspace / "source.iso"
             source_iso.write_bytes(b"source")
             output_iso = workspace / "build" / "NA2.28 - Latest.iso"
-            profile_path = workspace / "configurations" / "default.json"
-            profile_log_directory = workspace / "logs" / "profile"
-            profile = SimpleNamespace(profile_id="default", features=(), modules=())
-            staged_iso = build_profile.building_image_path(output_iso)
-            payload_build = build_profile.ResidentPayloadBuild(
+            configuration_path = workspace / "configurations" / "default.json"
+            configuration_log_directory = workspace / "logs" / "configuration"
+            configuration = SimpleNamespace(
+                configuration_id="default", features=(), modules=()
+            )
+            staged_iso = build_configuration.building_image_path(output_iso)
+            payload_build = build_configuration.ResidentPayloadBuild(
                 output_path="PRG/228.BIN",
                 payload=b"payload",
                 load_base=0,
@@ -96,50 +106,57 @@ class BuildProfileCliTests(unittest.TestCase):
                 map_rows=(),
                 summary={},
             )
-            result = build_profile.ProfileBuildResult(
+            result = build_configuration.ConfigurationBuildResult(
                 (),
                 {"build": payload_build, "paths": ["PRG/228.BIN"]},
                 ({"target": "SYSTEM.CNF"},),
                 staged_iso,
             )
             arguments = [
-                "build_profile",
+                "build_configuration",
                 "--source",
                 str(source_iso),
                 "--output",
                 str(output_iso),
                 "--configuration",
-                str(profile_path),
-                "--profile-log-directory",
-                "logs/profile",
+                str(configuration_path),
+                "--configuration-log-directory",
+                "logs/configuration",
             ]
 
             output = io.StringIO()
             with (
                 patch.object(sys, "argv", arguments),
                 patch.object(
-                    build_profile,
+                    build_configuration,
                     "PATHS",
                     new=SimpleNamespace(repository=workspace),
                 ),
-                patch.object(build_profile, "load_configuration", return_value=profile),
                 patch.object(
-                    build_profile.binary_patcher_module,
-                    "command_relative_path",
-                    return_value=profile_log_directory,
+                    build_configuration,
+                    "load_configuration",
+                    return_value=configuration,
                 ),
                 patch.object(
-                    build_profile,
-                    "build_profile_candidate",
+                    build_configuration.binary_patcher_module,
+                    "command_relative_path",
+                    return_value=configuration_log_directory,
+                ),
+                patch.object(
+                    build_configuration,
+                    "build_configuration_candidate",
                     return_value=result,
                 ) as compose,
                 redirect_stdout(output),
             ):
-                self.assertEqual(build_profile.main(), 0)
+                self.assertEqual(build_configuration.main(), 0)
 
             kwargs = compose.call_args.kwargs
             self.assertEqual(kwargs["output_iso"], output_iso)
-            self.assertEqual(kwargs["profile_log_directory"], profile_log_directory)
+            self.assertEqual(
+                kwargs["configuration_log_directory"],
+                configuration_log_directory,
+            )
             self.assertIn("payload_builder (0 symbols, 7 bytes)", output.getvalue())
             self.assertIn("identity (1 edits)", output.getvalue())
             self.assertIn(

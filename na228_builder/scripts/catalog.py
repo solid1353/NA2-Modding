@@ -8,10 +8,10 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
-from .modules.binary_patcher import engine as binary_patcher
-from .modules.runtime_injector import engine as runtime_injector
-from .payload_builder import ee_c_fragments
-from .payload_builder.operations import (
+from ..modules.binary_patcher import engine as binary_patcher
+from ..modules.runtime_injector import engine as runtime_injector
+from ..payload_builder import ee_c_fragments
+from ..payload_builder.operations import (
     FRAGMENT_KINDS,
     RELOCATION_KINDS,
     PayloadFragment,
@@ -36,10 +36,14 @@ class CatalogNode:
 
     @property
     def feature_id(self) -> str:
-        return self.path[0]
+        if len(self.path) < 2 or self.path[0] != "features":
+            raise ValueError(f"Catalog node is outside the features root: {self.node_id}")
+        return self.path[1]
 
     @property
     def node_id(self) -> str:
+        if len(self.path) > 1 and self.path[0] == "features":
+            return ".".join(self.path[1:])
         return ".".join(self.path)
 
 
@@ -55,10 +59,20 @@ class CatalogSelection:
 
     @property
     def feature_ids(self) -> tuple[str, ...]:
-        return tuple(node.path[0] for node in self.nodes if len(node.path) == 1)
+        return tuple(
+            node.path[1]
+            for node in self.nodes
+            if len(node.path) == 2 and node.path[0] == "features"
+        )
 
     def feature_nodes(self, feature_id: str) -> tuple[CatalogNode, ...]:
-        return tuple(node for node in self.nodes if node.feature_id == feature_id)
+        return tuple(
+            node
+            for node in self.nodes
+            if len(node.path) >= 2
+            and node.path[0] == "features"
+            and node.path[1] == feature_id
+        )
 
     def node_enabled(self, *path: str) -> bool:
         matches = [node for node in self.nodes if node.path == path]
@@ -124,6 +138,7 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
     catalog = _read_json(catalog_path, "Catalog")
     configuration = _read_json(configuration_path, "Configuration")
     nodes: list[CatalogNode] = []
+    missing = object()
 
     def setting_enabled(setting: object) -> bool:
         if isinstance(setting, bool):
@@ -168,36 +183,90 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
         for key, child in children.items():
             visit(child, setting[key], (*path, key), enabled)
 
+    def merge_setting(
+        value: dict[str, object],
+        base: object,
+        override: object,
+        path: tuple[str, ...],
+    ) -> object:
+        if override is missing:
+            return base
+        label = ".".join(path)
+        if isinstance(override, bool):
+            return override
+        if not isinstance(override, dict):
+            raise ValueError(
+                f"Configuration override {label} must be true, false, or an object"
+            )
+        children = _selectable_children(value, label)
+        if not children:
+            raise ValueError(
+                f"Configuration override leaf {label} must be true or false"
+            )
+        extra = sorted(set(override) - set(children))
+        if extra:
+            raise ValueError(
+                f"Configuration override {label} has unknown children: {extra}"
+            )
+        if isinstance(base, bool):
+            merged = {key: base for key in children}
+        elif isinstance(base, dict):
+            if set(base) != set(children):
+                missing_keys = sorted(set(children) - set(base))
+                extra_keys = sorted(set(base) - set(children))
+                raise ValueError(
+                    f"Configuration {label} children differ from catalog; "
+                    f"missing={missing_keys}, extra={extra_keys}"
+                )
+            merged = dict(base)
+        else:
+            raise ValueError(
+                f"Configuration {label} must be true, false, or an object"
+            )
+        for key, child_override in override.items():
+            merged[key] = merge_setting(
+                children[key],
+                merged[key],
+                child_override,
+                (*path, key),
+            )
+        return merged
+
     catalog_children = _selectable_children(catalog, "catalog")
-    if set(configuration) != set(catalog_children):
-        missing = sorted(set(catalog_children) - set(configuration))
-        extra = sorted(set(configuration) - set(catalog_children))
+    if set(catalog_children) != {"features"}:
+        raise ValueError("Catalog root must contain only the features parent")
+    if set(configuration) != {"features", "overrides"}:
+        missing_keys = sorted({"features", "overrides"} - set(configuration))
+        extra_keys = sorted(set(configuration) - {"features", "overrides"})
         raise ValueError(
-            "Configuration root differs from catalog; "
-            f"missing={missing}, extra={extra}"
+            "Configuration root keys must be features and overrides; "
+            f"missing={missing_keys}, extra={extra_keys}"
         )
-    for key, value in catalog_children.items():
-        visit(value, configuration[key], (key,), True)
+    overrides = configuration["overrides"]
+    if not isinstance(overrides, dict):
+        raise ValueError("Configuration overrides must be an object")
+    extra_overrides = sorted(set(overrides) - {"features"})
+    if extra_overrides:
+        raise ValueError(
+            f"Configuration overrides have unknown root keys: {extra_overrides}"
+        )
+    features_value = catalog_children["features"]
+    effective = merge_setting(
+        features_value,
+        configuration["features"],
+        overrides.get("features", missing),
+        ("features",),
+    )
+    visit(features_value, effective, ("features",), True)
     return CatalogSelection(catalog_path, configuration_path, tuple(nodes))
 
 
 def all_enabled_configuration(catalog_path: Path) -> dict[str, object]:
-    """Return a structurally complete configuration with every leaf enabled."""
+    """Return the compact configuration that enables the complete feature tree."""
     catalog = _read_json(catalog_path.resolve(), "Catalog")
-
-    def enabled_node(value: dict[str, object], label: str) -> object:
-        children = _selectable_children(value, label)
-        if not children:
-            return True
-        return {
-            key: enabled_node(child, f"{label}.{key}")
-            for key, child in children.items()
-        }
-
-    return {
-        key: enabled_node(value, key)
-        for key, value in _selectable_children(catalog, "catalog").items()
-    }
+    if set(_selectable_children(catalog, "catalog")) != {"features"}:
+        raise ValueError("Catalog root must contain only the features parent")
+    return {"features": True, "overrides": {}}
 
 
 def _parse_int(value: object, label: str, *, minimum: int = 0) -> int:
@@ -304,7 +373,8 @@ def _validate_operation(
 
 
 def _group_id(node: CatalogNode) -> str:
-    return ".".join(node.path[:-1]) or node.feature_id
+    path = node.path[1:] if node.path[:1] == ("features",) else node.path
+    return ".".join(path[:-1]) or node.feature_id
 
 
 def _internal_patch(node: CatalogNode) -> binary_patcher.Patch:

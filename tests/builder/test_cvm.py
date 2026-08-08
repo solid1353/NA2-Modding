@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-from na228_builder.cvm import CvmError, CvmIso, _crypt_sector, _rofs_key
+from na228_builder.scripts.cvm import CvmError, CvmIso, _crypt_sector, _rofs_key
 from na228_builder.image_assembler.iso9660 import Iso9660, IsoRecord, SECTOR
 from scripts.lib.paths import load_paths
 

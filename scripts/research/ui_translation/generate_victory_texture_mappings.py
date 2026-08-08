@@ -123,7 +123,7 @@ def build_rows() -> tuple[
     list[tuple[str, int]],
 ]:
     paths = load_paths(REPOSITORY)
-    data_root = paths.path("features") / "localization" / "texture_patcher"
+    data_root = paths.path("builder") / "localization" / "texture_patcher"
     container_path = data_root / "containers.tsv"
     mapping_path = data_root / "mappings.tsv"
     strategy_path = data_root / "strategies.tsv"
@@ -477,7 +477,7 @@ def main() -> int:
 
     containers, mappings, strategies, capacities = build_rows()
     data_root = (
-        load_paths(REPOSITORY).path("features")
+        load_paths(REPOSITORY).path("builder")
         / "localization"
         / "texture_patcher"
     )

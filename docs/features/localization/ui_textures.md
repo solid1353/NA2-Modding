@@ -64,7 +64,7 @@ Derive and verify every pinned production replacement from the repository root:
 
 ```powershell
 python -m na228_builder.modules.texture_patcher.engine verify `
-  --package na228_builder/features/localization/texture_patcher
+  --package na228_builder/localization/texture_patcher
 ```
 
 Regenerate the reviewed Victory rows and hashes after an intentional source or
@@ -79,7 +79,7 @@ Write a review-only generated extraction outside the source roots:
 
 ```powershell
 python -m na228_builder.modules.texture_patcher.engine preview `
-  --package na228_builder/features/localization/texture_patcher `
+  --package na228_builder/localization/texture_patcher `
   --output "work/UI translation/temp/ui_texture_preview"
 ```
 

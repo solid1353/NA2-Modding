@@ -144,9 +144,10 @@ supporting documentation belongs under the repository root `docs/` hierarchy.
 - A code area may retain one concise local `README.md` when nearby orientation
   or a component contract is useful. Link to substantial documentation instead
   of accumulating multiple Markdown files beside code.
-- Builder feature directories contain only executable inputs or assets that
-  cannot live inline in the catalog. Catalog-only features require no directory;
-  feature documentation belongs under `docs/features/`.
+- The builder has no physical `features/` directory. Selectable structure lives
+  in `na228_builder/catalog.json`; non-inline executable inputs and assets live
+  under their concrete builder data area, and feature documentation belongs
+  under `docs/features/`. Catalog-only features require no directory.
 - Current operational documentation describes the current system. Delete
   superseded policy, stale incident explanations, and obsolete retirement notes
   when they no longer provide concrete current value; Git preserves history.

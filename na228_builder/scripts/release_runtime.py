@@ -5,8 +5,8 @@ from typing import Callable
 
 from . import catalog as catalog_module
 from .app import application_directory, load_release_manifest
-from .build_profile import build_profile_candidate
-from .profile import Profile, load_configuration
+from .build_configuration import build_configuration_candidate
+from .configuration import BuildConfiguration, load_configuration
 from scripts.lib.paths import load_local_paths
 
 
@@ -15,14 +15,14 @@ Emit = Callable[[str], None]
 
 def packaged_workspace() -> Path:
     """Return the checkout or PyInstaller extraction root containing release data."""
-    return Path(__file__).resolve().parents[1]
+    return Path(__file__).resolve().parents[2]
 
 
 def load_release_configuration(
     configuration_path: Path,
     na2_iso: Path,
     nun5_iso: Path,
-) -> tuple[Path, Profile]:
+) -> tuple[Path, BuildConfiguration]:
     workspace = packaged_workspace()
     manifest = load_release_manifest()
     configuration_path = configuration_path.resolve()
@@ -36,28 +36,28 @@ def load_release_configuration(
             f"Release configuration is missing: {configuration_path.name}"
         )
 
-    profile = load_configuration(
+    configuration = load_configuration(
         configuration_path,
         workspace,
         builder_root,
         project_paths=load_local_paths(workspace, allow_missing=True),
         root_overrides={"na2": na2_iso, "nun5": nun5_iso},
     )
-    if profile.identity.output_game_title != manifest.product_name:
+    if configuration.identity.output_game_title != manifest.product_name:
         raise RuntimeError(
             "Packaged product name does not match the product identity"
         )
-    return workspace, profile
+    return workspace, configuration
 
 
 def validate_release_configuration(configuration_path: Path) -> int:
     """Validate one external configuration without requiring copyrighted ISOs."""
     workspace = packaged_workspace()
     marker = workspace / "na228_builder" / "release_manifest.json"
-    _, profile = load_release_configuration(configuration_path, marker, marker)
-    if not profile.modules:
+    _, configuration = load_release_configuration(configuration_path, marker, marker)
+    if not configuration.modules:
         raise RuntimeError("Release configuration has no module invocations")
-    return len(profile.modules)
+    return len(configuration.modules)
 
 
 def validate_packaged_release() -> int:
@@ -65,16 +65,16 @@ def validate_packaged_release() -> int:
     manifest = load_release_manifest()
     configuration_path = application_directory() / manifest.configuration_name
     marker = packaged_workspace() / "na228_builder" / "release_manifest.json"
-    workspace, profile = load_release_configuration(
+    workspace, configuration = load_release_configuration(
         configuration_path,
         marker,
         marker,
     )
-    if profile.selection is None:
+    if configuration.selection is None:
         raise RuntimeError("Release configuration has no catalog selection")
-    for feature_id in profile.selection.feature_ids:
+    for feature_id in configuration.selection.feature_ids:
         for source in catalog_module.referenced_files(
-            profile.selection,
+            configuration.selection,
             workspace,
             feature_id,
         ):
@@ -84,9 +84,9 @@ def validate_packaged_release() -> int:
                     raise FileNotFoundError(
                         f"Packaged runtime object is missing: {packaged_object}"
                     )
-    if not profile.modules:
+    if not configuration.modules:
         raise RuntimeError("Release configuration has no module invocations")
-    return len(profile.modules)
+    return len(configuration.modules)
 
 
 def build_release_iso(
@@ -103,18 +103,18 @@ def build_release_iso(
         building_iso.name[: -len(".building")]
     )
     emit("Loading and verifying the selected configuration...")
-    workspace, profile = load_release_configuration(
+    workspace, configuration = load_release_configuration(
         configuration_path,
         na2_iso,
         nun5_iso,
     )
     emit("Applying modules and assembling the output image...")
-    build = build_profile_candidate(
+    build = build_configuration_candidate(
         source_iso=na2_iso,
         output_iso=output_iso,
-        profile=profile,
+        configuration=configuration,
         workspace=workspace,
-        profile_log_directory=None,
+        configuration_log_directory=None,
     )
     if build.staged_iso != building_iso.resolve():
         raise RuntimeError("Build engine produced an unexpected staging path")

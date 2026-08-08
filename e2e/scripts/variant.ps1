@@ -64,7 +64,7 @@ $buildResult = [ordered]@{
     build = [string]$buildVariant.build
     iso = [string]$build.OutputIso
     build_id = [string]$build.BuildId
-    build_record = [string]$build.ProfileLogDirectory
+    build_record = [string]$build.ConfigurationLogDirectory
     preflight_cache_hit = [bool]$build.PreflightCacheHit
 }
 [IO.File]::WriteAllText(

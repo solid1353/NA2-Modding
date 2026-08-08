@@ -10,19 +10,19 @@ import zlib
 from pathlib import Path
 from typing import Iterable
 
-from na228_builder.profile import load_configuration, profile_resource_files
+from .configuration import configuration_resource_files, load_configuration
 from scripts.lib.paths import load_paths
 
 
 RECEIPT_SCHEMA_VERSION = 1
-FINGERPRINT_SCHEMA_VERSION = 5
+FINGERPRINT_SCHEMA_VERSION = 6
 SHA256_HEX_LENGTH = 64
 GENERATED_SUFFIXES = {".pyc", ".pyo"}
 NON_COMPOSING_BUILDER_FILES = {
-    "app.py",
-    "build_preflight.py",
+    "scripts/app.py",
+    "scripts/build_preflight.py",
     "release_manifest.json",
-    "release_runtime.py",
+    "scripts/release_runtime.py",
     "requirements.txt",
 }
 
@@ -81,7 +81,6 @@ def _builder_files(builder: Path) -> list[Path]:
             and "__pycache__" not in path.relative_to(builder).parts
             and path.suffix.casefold() not in GENERATED_SUFFIXES
             and path.suffix.casefold() != ".md"
-            and path.relative_to(builder).parts[0] != "features"
             and path.relative_to(builder).as_posix() not in NON_COMPOSING_BUILDER_FILES
         ),
         key=lambda path: path.relative_to(builder).as_posix(),
@@ -112,15 +111,18 @@ def builder_tree_entry(builder: Path) -> dict[str, object]:
     }
 
 
-def profile_resources_entry(workspace: Path, profile_path: Path) -> dict[str, object]:
-    profile = load_configuration(
-        profile_path,
+def configuration_resources_entry(
+    workspace: Path,
+    configuration_path: Path,
+) -> dict[str, object]:
+    configuration = load_configuration(
+        configuration_path,
         workspace,
         workspace / "na228_builder",
     )
     paths_file = workspace / "paths.json"
     files = sorted(
-        set(profile_resource_files(profile)) | {paths_file},
+        set(configuration_resource_files(configuration)) | {paths_file},
         key=lambda path: path.as_posix(),
     )
     digest = hashlib.sha256()
@@ -146,7 +148,7 @@ def profile_resources_entry(workspace: Path, profile_path: Path) -> dict[str, ob
         digest.update(content_hash.encode("ascii"))
         digest.update(b"\n")
     return {
-        "label": "profile_resources",
+        "label": "configuration_resources",
         "file_count": len(files),
         "size": total_size,
         "sha256": digest.hexdigest().upper(),
@@ -172,25 +174,25 @@ def collect_build_state(
     workspace: Path,
     na2_iso: Path,
     nun5_iso: Path,
-    profile_path: Path,
+    configuration_path: Path,
     payload_shift: int = 0,
     dependencies: dict[str, str] | None = None,
 ) -> dict[str, object]:
     workspace = workspace.resolve()
     na2_iso = na2_iso.resolve()
     nun5_iso = nun5_iso.resolve()
-    profile_path = profile_path.resolve()
+    configuration_path = configuration_path.resolve()
     if payload_shift < 0 or payload_shift > 0x10000 or payload_shift & 0xF:
         raise ValueError(
             "Payload shift must be a 16-byte multiple from 0 through 65536"
         )
     builder = (workspace / "na228_builder").resolve()
     try:
-        profile = profile_path.relative_to(builder).as_posix()
+        configuration_name = configuration_path.relative_to(builder).as_posix()
     except ValueError as error:
         raise ValueError("Configuration must be inside na228_builder") from error
-    if not profile_path.is_file():
-        raise FileNotFoundError(profile_path)
+    if not configuration_path.is_file():
+        raise FileNotFoundError(configuration_path)
     return {
         "fingerprint_schema_version": FINGERPRINT_SCHEMA_VERSION,
         "source_isos": [
@@ -198,8 +200,10 @@ def collect_build_state(
             _file_entry(f"source/{nun5_iso.name}", nun5_iso),
         ],
         "builder_tree": builder_tree_entry(builder),
-        "profile_resources": profile_resources_entry(workspace, profile_path),
-        "profile": profile,
+        "configuration_resources": configuration_resources_entry(
+            workspace, configuration_path
+        ),
+        "configuration": configuration_name,
         "payload_shift": payload_shift,
         "dependencies": dependencies if dependencies is not None else dependency_versions(),
     }
@@ -244,7 +248,7 @@ def check_preflight(
     na2_iso: Path,
     nun5_iso: Path,
     output_iso: Path,
-    profile_path: Path,
+    configuration_path: Path,
     receipt_path: Path,
     payload_shift: int = 0,
     dependencies: dict[str, str] | None = None,
@@ -254,7 +258,7 @@ def check_preflight(
             workspace=workspace,
             na2_iso=na2_iso,
             nun5_iso=nun5_iso,
-            profile_path=profile_path,
+            configuration_path=configuration_path,
             payload_shift=payload_shift,
             dependencies=dependencies,
         )
@@ -295,7 +299,7 @@ def write_receipt(
     na2_iso: Path,
     nun5_iso: Path,
     output_iso: Path,
-    profile_path: Path,
+    configuration_path: Path,
     receipt_path: Path,
     expected_fingerprint: str,
     payload_shift: int = 0,
@@ -306,7 +310,7 @@ def write_receipt(
             workspace=workspace,
             na2_iso=na2_iso,
             nun5_iso=nun5_iso,
-            profile_path=profile_path,
+            configuration_path=configuration_path,
             payload_shift=payload_shift,
             dependencies=dependencies,
         )
@@ -381,7 +385,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         "na2_iso": args.na2_iso,
         "nun5_iso": args.nun5_iso,
         "output_iso": args.output,
-        "profile_path": _configuration_path(args.configuration, workspace),
+        "configuration_path": _configuration_path(args.configuration, workspace),
         "receipt_path": args.receipt,
         "payload_shift": args.payload_shift,
     }

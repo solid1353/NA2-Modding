@@ -8,20 +8,20 @@ from pathlib import Path
 
 from . import catalog as catalog_module
 from .composer import CompositionResult, compose_assembly_plan
-from .image_assembler.assembler import (
+from ..image_assembler.assembler import (
     assemble_image,
     building_image_path,
 )
-from .image_assembler.iso9660 import Iso9660, IsoInsertion, normalize_iso_path
+from ..image_assembler.iso9660 import Iso9660, IsoInsertion, normalize_iso_path
 from .module_pipeline import prepare_module_pipeline
-from .modules import translation_importer as translation_importer_module
-from .modules.binary_patcher import engine as binary_patcher_module
-from .modules.string_patcher import engine as string_patcher_module
-from .modules.texture_patcher import engine as texture_patcher_module
-from .payload_builder import builder as payload_builder_module
-from .payload_builder import integration as payload_integration_module
-from .payload_builder.operations import ResidentPayloadBuild
-from .profile import Profile, ProfileModule, load_configuration
+from ..modules import translation_importer as translation_importer_module
+from ..modules.binary_patcher import engine as binary_patcher_module
+from ..modules.string_patcher import engine as string_patcher_module
+from ..modules.texture_patcher import engine as texture_patcher_module
+from ..payload_builder import builder as payload_builder_module
+from ..payload_builder import integration as payload_integration_module
+from ..payload_builder.operations import ResidentPayloadBuild
+from .configuration import BuildConfiguration, ModuleInvocation, load_configuration
 from scripts.lib.paths import load_paths
 
 
@@ -29,7 +29,7 @@ PATHS = None
 
 
 @dataclass(frozen=True)
-class ProfileBuildResult:
+class ConfigurationBuildResult:
     results: tuple[dict[str, object], ...]
     payload_result: dict[str, object] | None
     identity_edits: tuple[dict[str, object], ...]
@@ -37,7 +37,7 @@ class ProfileBuildResult:
 
 
 @dataclass(frozen=True)
-class ProfileCompositionResult:
+class ConfigurationCompositionResult:
     results: tuple[dict[str, object], ...]
     payload_result: dict[str, object] | None
     composition: CompositionResult
@@ -142,7 +142,7 @@ def apply_texture_patch_package(
     owners: dict[str, str],
 ) -> tuple[texture_patcher_module.TexturePatchPlan, str]:
     if "na2" not in roots or "nun5" not in roots:
-        raise ValueError("Texture-patcher module requires na2 and nun5 profile roots")
+        raise ValueError("Texture-patcher module requires na2 and nun5 configuration roots")
     if not all(
         root.is_dir() or root.is_file()
         for root in (roots["na2"], roots["nun5"])
@@ -426,8 +426,8 @@ def write_payload_builder_log(
     )
 
 
-def apply_profile_modules(
-    profile: Profile,
+def apply_configuration_modules(
+    configuration: BuildConfiguration,
     *,
     source: Iso9660,
     payloads: dict[str, bytearray],
@@ -436,7 +436,7 @@ def apply_profile_modules(
     insertion_owners: dict[str, str],
     payload_shift: int = 0,
 ) -> tuple[list[dict[str, object]], dict[str, object] | None]:
-    pipeline = prepare_module_pipeline(profile, payload_shift=payload_shift)
+    pipeline = prepare_module_pipeline(configuration, payload_shift=payload_shift)
     ordered_modules = pipeline.ordered_modules
     import_plans = pipeline.import_plans
     string_plans = pipeline.string_plans
@@ -457,7 +457,7 @@ def apply_profile_modules(
             result = apply_binary_patch_set(
                 module.input_path,
                 package=compiled_package,
-                roots=profile.roots,
+                roots=configuration.roots,
                 feature_id=module.feature_id,
                 source=source,
                 payloads=payloads,
@@ -475,13 +475,13 @@ def apply_profile_modules(
             continue
         if module.module == "binary_patcher":
             package = None
-            if profile.selection is not None:
+            if configuration.selection is not None:
                 package = catalog_module.load_binary_package(
-                    profile.selection,
+                    configuration.selection,
                     module.feature_id,
-                    profile.targets_path,
-                    profile.selection.catalog_path.parent.parent,
-                    profile.selection.catalog_path.parent
+                    configuration.targets_path,
+                    configuration.selection.catalog_path.parent.parent,
+                    configuration.selection.catalog_path.parent
                     / "modules"
                     / "binary_patcher"
                     / "operations",
@@ -489,8 +489,8 @@ def apply_profile_modules(
             result = apply_binary_patch_set(
                 module.input_path,
                 package=package,
-                targets_path=profile.targets_path,
-                roots=profile.roots,
+                targets_path=configuration.targets_path,
+                roots=configuration.roots,
                 feature_id=module.feature_id,
                 source=source,
                 payloads=payloads,
@@ -510,7 +510,7 @@ def apply_profile_modules(
             result = apply_binary_patch_set(
                 module.input_path,
                 package=runtime_injection_packages[module.module_id],
-                roots=profile.roots,
+                roots=configuration.roots,
                 feature_id=module.feature_id,
                 source=source,
                 payloads=payloads,
@@ -539,7 +539,7 @@ def apply_profile_modules(
                 derived_result = apply_binary_patch_set(
                     Path(string_patcher_module.__file__).resolve().parent,
                     package=derived.package,
-                    roots=profile.roots,
+                    roots=configuration.roots,
                     feature_id=module.feature_id,
                     source=source,
                     payloads=payloads,
@@ -555,7 +555,7 @@ def apply_profile_modules(
             plan, path = apply_texture_patch_package(
                 module.input_path,
                 module_id=module.module_id,
-                roots=profile.roots,
+                roots=configuration.roots,
                 source=source,
                 payloads=payloads,
                 owners=owners,
@@ -573,7 +573,7 @@ def apply_profile_modules(
     payload_result: dict[str, object] | None = None
     if payload_build is not None:
         config = payload_builder_module.load_config()
-        boot_path = normalize(profile.identity.source_boot_path)
+        boot_path = normalize(configuration.identity.source_boot_path)
         boot_record = source.by_path.get(boot_path)
         if boot_record is None or boot_record.is_dir:
             raise RuntimeError(f"Payload integration requires source boot ELF: {boot_path}")
@@ -592,7 +592,7 @@ def apply_profile_modules(
         integration_result = apply_binary_patch_set(
             Path(payload_builder_module.__file__).resolve().parent,
             package=integration_package,
-            roots=profile.roots,
+            roots=configuration.roots,
             feature_id="payload_builder",
             source=source,
             payloads=payloads,
@@ -611,8 +611,8 @@ def apply_profile_modules(
     return results, payload_result
 
 
-def write_profile_log(
-    profile: Profile,
+def write_configuration_log(
+    configuration: BuildConfiguration,
     results: list[dict[str, object]],
     payload_result: dict[str, object] | None,
     log_directory: Path,
@@ -625,7 +625,7 @@ def write_profile_log(
     module_rows: list[dict[str, object]] = []
     for item in results:
         module = item["module"]
-        assert isinstance(module, ProfileModule)
+        assert isinstance(module, ModuleInvocation)
         paths = item.get("paths", [])
         assert isinstance(paths, list)
         module_rows.append(
@@ -700,7 +700,7 @@ def write_profile_log(
                 "feature_id": feature.feature_id,
                 "input_sha256": feature.input_sha256,
             }
-            for feature in profile.features
+            for feature in configuration.features
         ],
     )
     identity_log = log_directory / "identity"
@@ -731,20 +731,20 @@ def write_profile_log(
         ],
         [
             {
-                "source_boot_path": profile.identity.source_boot_path,
-                "output_boot_path": profile.identity.output_boot_path,
-                "system_cnf_path": profile.identity.system_cnf_path,
+                "source_boot_path": configuration.identity.source_boot_path,
+                "output_boot_path": configuration.identity.output_boot_path,
+                "system_cnf_path": configuration.identity.system_cnf_path,
                 "memory_card_title_offset": (
-                    f"0x{profile.identity.memory_card_title_offset:X}"
+                    f"0x{configuration.identity.memory_card_title_offset:X}"
                 ),
                 "memory_card_title_capacity": (
-                    profile.identity.memory_card_title_capacity
+                    configuration.identity.memory_card_title_capacity
                 ),
                 "memory_card_title_encoding": (
-                    profile.identity.memory_card_title_encoding
+                    configuration.identity.memory_card_title_encoding
                 ),
                 "output_memory_card_title": (
-                    profile.identity.output_memory_card_title
+                    configuration.identity.output_memory_card_title
                 ),
                 "edit_count": len(identity_edits),
             }
@@ -766,28 +766,28 @@ def write_profile_log(
     binary_patcher_module.write_tsv(
         log_directory / "run_summary.tsv",
         [
-            "timestamp_utc", "profile_id", "output_iso", "feature_count",
+            "timestamp_utc", "configuration_id", "output_iso", "feature_count",
             "module_count",
         ],
         [
             {
                 "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "profile_id": profile.profile_id,
+                "configuration_id": configuration.configuration_id,
                 "output_iso": output_iso_text.replace("\\", "/"),
-                "feature_count": len(profile.features),
+                "feature_count": len(configuration.features),
                 "module_count": len(results),
             }
         ],
     )
 
 
-def compose_profile_candidate(
+def compose_configuration_candidate(
     *,
     source_iso: Path,
-    profile: Profile,
+    configuration: BuildConfiguration,
     payload_shift: int = 0,
-) -> ProfileCompositionResult:
-    """Compose and conflict-check one profile without staging an image."""
+) -> ConfigurationCompositionResult:
+    """Compose and conflict-check one configuration without staging an image."""
     source_iso = source_iso.resolve()
     if not source_iso.is_file():
         raise FileNotFoundError(source_iso)
@@ -797,8 +797,8 @@ def compose_profile_candidate(
     owners: dict[str, str] = {}
     insertions: dict[str, bytes] = {}
     insertion_owners: dict[str, str] = {}
-    profile_results, payload_result = apply_profile_modules(
-        profile,
+    configuration_results, payload_result = apply_configuration_modules(
+        configuration,
         source=source,
         payloads=payloads,
         owners=owners,
@@ -808,30 +808,30 @@ def compose_profile_candidate(
     )
     composition = compose_assembly_plan(
         source=source,
-        identity=profile.identity,
+        identity=configuration.identity,
         payloads=payloads,
         owners=owners,
         insertions=insertions,
         insertion_owners=insertion_owners,
     )
-    return ProfileCompositionResult(
-        results=tuple(profile_results),
+    return ConfigurationCompositionResult(
+        results=tuple(configuration_results),
         payload_result=payload_result,
         composition=composition,
         insertion_owners=insertion_owners,
     )
 
 
-def build_profile_candidate(
+def build_configuration_candidate(
     *,
     source_iso: Path,
     output_iso: Path,
-    profile: Profile,
+    configuration: BuildConfiguration,
     workspace: Path,
-    profile_log_directory: Path | None,
+    configuration_log_directory: Path | None,
     payload_shift: int = 0,
-) -> ProfileBuildResult:
-    """Compose and verify one staged profile image without promoting it."""
+) -> ConfigurationBuildResult:
+    """Compose and verify one staged configuration image without promoting it."""
     source_iso = source_iso.resolve()
     output_iso = output_iso.resolve()
     workspace = workspace.resolve()
@@ -839,15 +839,15 @@ def build_profile_candidate(
         raise FileNotFoundError(source_iso)
     if source_iso == output_iso:
         raise ValueError("Source and output ISO paths must differ")
-    if profile_log_directory is not None and profile_log_directory.exists():
-        raise FileExistsError(profile_log_directory)
+    if configuration_log_directory is not None and configuration_log_directory.exists():
+        raise FileExistsError(configuration_log_directory)
 
-    composed = compose_profile_candidate(
+    composed = compose_configuration_candidate(
         source_iso=source_iso,
-        profile=profile,
+        configuration=configuration,
         payload_shift=payload_shift,
     )
-    profile_results = list(composed.results)
+    configuration_results = list(composed.results)
     payload_result = composed.payload_result
     composition = composed.composition
     assembly = assemble_image(source_iso, output_iso, composition.plan)
@@ -855,9 +855,9 @@ def build_profile_candidate(
     for insertion in assembly.insertions:
         owner = composed.insertion_owners[insertion.path]
         results_by_owner.setdefault(owner, []).append(insertion)
-    for item in profile_results:
+    for item in configuration_results:
         module = item["module"]
-        assert isinstance(module, ProfileModule)
+        assert isinstance(module, ModuleInvocation)
         owned = results_by_owner.get(module.module_id)
         if owned:
             item["insertion_results"] = tuple(owned)
@@ -875,22 +875,22 @@ def build_profile_candidate(
             "length": len(rename.original_identifier),
             "original_hex": rename.original_identifier.hex().upper(),
             "new_hex": rename.replacement_identifier.hex().upper(),
-            "reason": "Mirror the profile identity rename in the UDF tree",
-            "owner": "profile.identity",
+            "reason": "Mirror the configuration identity rename in the UDF tree",
+            "owner": "configuration.identity",
         }
         for rename in assembly.udf_renames
     )
     try:
-        if profile_log_directory is not None:
+        if configuration_log_directory is not None:
             try:
                 output_iso_text = output_iso.relative_to(workspace).as_posix()
             except ValueError:
                 output_iso_text = output_iso.name
-            write_profile_log(
-                profile,
-                profile_results,
+            write_configuration_log(
+                configuration,
+                configuration_results,
                 payload_result,
-                profile_log_directory,
+                configuration_log_directory,
                 workspace=workspace,
                 output_iso_text=output_iso_text,
                 identity_edits=tuple(identity_edits),
@@ -901,25 +901,25 @@ def build_profile_candidate(
             staged.unlink()
         raise
 
-    return ProfileBuildResult(
-        results=tuple(profile_results),
+    return ConfigurationBuildResult(
+        results=tuple(configuration_results),
         payload_result=payload_result,
         identity_edits=tuple(identity_edits),
         staged_iso=building_image_path(output_iso),
     )
 
 
-def print_profile_summary(
-    profile: Profile,
-    profile_results: tuple[dict[str, object], ...] | list[dict[str, object]],
+def print_configuration_summary(
+    configuration: BuildConfiguration,
+    configuration_results: tuple[dict[str, object], ...] | list[dict[str, object]],
     payload_result: dict[str, object] | None,
 ) -> None:
     green = "\033[32m"
     reset = "\033[0m"
-    print(f"Applied configuration: {profile.profile_id}")
-    for item in profile_results:
+    print(f"Applied configuration: {configuration.configuration_id}")
+    for item in configuration_results:
         module = item["module"]
-        assert isinstance(module, ProfileModule)
+        assert isinstance(module, ModuleInvocation)
         detail = ""
         if "binary_patch_result" in item:
             detail = f", {len(item['binary_patch_result']['edits'])} edits"
@@ -955,7 +955,7 @@ def main() -> int:
     parser.add_argument("--source", required=True, type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--configuration", required=True, type=Path)
-    parser.add_argument("--profile-log-directory", type=Path)
+    parser.add_argument("--configuration-log-directory", type=Path)
     parser.add_argument(
         "--payload-shift",
         type=int,
@@ -980,18 +980,20 @@ def main() -> int:
         if args.configuration.is_absolute()
         else workspace / args.configuration
     )
-    profile = load_configuration(
+    configuration = load_configuration(
         configuration_path,
         workspace,
         workspace / "na228_builder",
     )
     if args.compose_only:
-        composed = compose_profile_candidate(
+        composed = compose_configuration_candidate(
             source_iso=source_iso,
-            profile=profile,
+            configuration=configuration,
             payload_shift=args.payload_shift,
         )
-        print_profile_summary(profile, composed.results, composed.payload_result)
+        print_configuration_summary(
+            configuration, composed.results, composed.payload_result
+        )
         plan = composed.composition.plan
         print(f"  identity ({len(composed.composition.identity_edits)} edits)")
         print(
@@ -1004,31 +1006,33 @@ def main() -> int:
 
     if args.output is None:
         parser.error("--output is required unless --compose-only is used")
-    if args.profile_log_directory is None:
+    if args.configuration_log_directory is None:
         parser.error(
-            "--profile-log-directory is required unless --compose-only is used"
+            "--configuration-log-directory is required unless --compose-only is used"
         )
     output_iso = args.output.resolve()
     if source_iso == output_iso:
         raise ValueError("Source and output ISO paths must differ")
-    profile_log_directory = binary_patcher_module.command_relative_path(
-        str(args.profile_log_directory), "--profile-log-directory", workspace
+    configuration_log_directory = binary_patcher_module.command_relative_path(
+        str(args.configuration_log_directory),
+        "--configuration-log-directory",
+        workspace,
     )
-    if profile_log_directory.exists():
-        raise FileExistsError(profile_log_directory)
+    if configuration_log_directory.exists():
+        raise FileExistsError(configuration_log_directory)
 
-    build = build_profile_candidate(
+    build = build_configuration_candidate(
         source_iso=source_iso,
         output_iso=output_iso,
-        profile=profile,
+        configuration=configuration,
         workspace=workspace,
-        profile_log_directory=profile_log_directory,
+        configuration_log_directory=configuration_log_directory,
         payload_shift=args.payload_shift,
     )
-    profile_results = build.results
+    configuration_results = build.results
     payload_result = build.payload_result
 
-    print_profile_summary(profile, profile_results, payload_result)
+    print_configuration_summary(configuration, configuration_results, payload_result)
     print(f"  identity ({len(build.identity_edits)} edits)")
     print(f"Verified staged ISO: {build.staged_iso.name}")
     return 0

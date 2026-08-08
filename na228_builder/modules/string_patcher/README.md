@@ -9,7 +9,7 @@ symbolic pointer writes; `payload_builder` assigns their offsets and constructs
 guarded writes and conflict validation. The engine never owns the shared file,
 loader, memory reservation, or final runtime addresses.
 
-Localization owns no `string_patcher/` feature directory because it currently
+Localization owns no `string_patcher/` data directory because it currently
 has no local string declarations. Its importer artifact invokes this generic
 consumer as a derived stage. A feature creates `string_patcher/strings.tsv` only
 when it owns actual local declarations.

@@ -3,7 +3,7 @@
 This reusable engine interprets feature-owned container, mapping, and strategy
 tables and derives fixed-size texture replacements from canonical sources. The
 active UI translation package lives under
-`na228_builder/features/localization/texture_patcher/`.
+`na228_builder/localization/texture_patcher/`.
 
 `whole` strategies use the complete donor payload and may apply a guarded
 upward translation to one bounded region of an 8-bit indexed donor texture
@@ -20,4 +20,4 @@ encoder so their replacement bytes do not vary with the host zlib version.
 
 ## Invokes
 
-None. The profile orchestrator applies its fixed-size texture results directly.
+None. The configuration orchestrator applies its fixed-size texture results directly.

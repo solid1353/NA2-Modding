@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.build_preflight import (
+from na228_builder.scripts.build_preflight import (
     check_preflight,
     collect_build_state,
     builder_tree_entry,
@@ -28,15 +28,17 @@ class BuildPreflightTests(unittest.TestCase):
     def create_workspace(self, root: Path) -> dict[str, Path]:
         workspace = root / "repository"
         builder = workspace / "na228_builder"
-        profile = builder / "configurations" / "release.json"
-        profile.parent.mkdir(parents=True)
-        (builder / "engine.py").write_text("ENGINE = 1\n", encoding="utf-8")
+        configuration = builder / "configurations" / "release.json"
+        configuration.parent.mkdir(parents=True)
+        scripts = builder / "scripts"
+        scripts.mkdir()
+        (scripts / "engine.py").write_text("ENGINE = 1\n", encoding="utf-8")
         (builder / "schema.tsv").write_text("schema\t1\n", encoding="utf-8")
-        feature = builder / "features" / "localization"
+        feature = builder / "localization"
         module = feature / "translation_importer"
         module.mkdir(parents=True)
         (module / "mappings.tsv").write_text("id\n", encoding="utf-8")
-        targets = builder / "features" / "targets.tsv"
+        targets = builder / "targets.tsv"
         targets.write_text(
             "\t".join(binary_patcher.TARGET_FIELDS) + "\n",
             encoding="utf-8",
@@ -44,15 +46,17 @@ class BuildPreflightTests(unittest.TestCase):
         (builder / "catalog.json").write_text(
             json.dumps(
                 {
-                    "localization": {
-                        "translated_text": {"description": "Text"}
+                    "features": {
+                        "localization": {
+                            "translated_text": {"description": "Text"}
+                        }
                     }
                 }
             ),
             encoding="utf-8",
         )
-        profile.write_text(
-            json.dumps({"localization": {"translated_text": True}}),
+        configuration.write_text(
+            json.dumps({"features": True, "overrides": {}}),
             encoding="utf-8",
         )
         source_roots = workspace / "source_roots"
@@ -75,7 +79,6 @@ class BuildPreflightTests(unittest.TestCase):
                     "roots": {
                         "repository": ".",
                         "builder": "na228_builder",
-                        "features": "@builder/features",
                         "source": "source_roots",
                         "build": "build",
                         "pcsx2_cheats": "shared/cheats",
@@ -146,7 +149,7 @@ class BuildPreflightTests(unittest.TestCase):
         return {
             "workspace": workspace,
             "builder": builder,
-            "profile": profile,
+            "configuration": configuration,
             "na2_iso": na2_iso,
             "nun5_iso": nun5_iso,
             "latest_iso": latest_iso,
@@ -158,7 +161,7 @@ class BuildPreflightTests(unittest.TestCase):
             "workspace": paths["workspace"],
             "na2_iso": paths["na2_iso"],
             "nun5_iso": paths["nun5_iso"],
-            "profile_path": paths["profile"],
+            "configuration_path": paths["configuration"],
             "dependencies": DEPENDENCIES,
         }
         arguments.update(overrides)
@@ -170,7 +173,7 @@ class BuildPreflightTests(unittest.TestCase):
             na2_iso=paths["na2_iso"],
             nun5_iso=paths["nun5_iso"],
             output_iso=paths["latest_iso"],
-            profile_path=paths["profile"],
+            configuration_path=paths["configuration"],
             receipt_path=paths["receipt"],
             dependencies=DEPENDENCIES,
         )
@@ -185,7 +188,7 @@ class BuildPreflightTests(unittest.TestCase):
             na2_iso=paths["na2_iso"],
             nun5_iso=paths["nun5_iso"],
             output_iso=paths["latest_iso"],
-            profile_path=paths["profile"],
+            configuration_path=paths["configuration"],
             receipt_path=paths["receipt"],
             expected_fingerprint=expected_fingerprint,
             dependencies=DEPENDENCIES,
@@ -201,11 +204,11 @@ class BuildPreflightTests(unittest.TestCase):
                 initial,
                 state_fingerprint(self.state(paths, payload_shift=32)),
             )
-            (paths["builder"] / "engine.py").write_text(
+            (paths["builder"] / "scripts" / "engine.py").write_text(
                 "ENGINE = 2\n", encoding="utf-8"
             )
             self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
-            (paths["builder"] / "engine.py").write_text(
+            (paths["builder"] / "scripts" / "engine.py").write_text(
                 "ENGINE = 1\n", encoding="utf-8"
             )
 
@@ -234,7 +237,7 @@ class BuildPreflightTests(unittest.TestCase):
             with_documentation = builder_tree_entry(paths["builder"])
             self.assertEqual(initial["sha256"], with_documentation["sha256"])
 
-            (paths["builder"] / "release_runtime.py").write_text(
+            (paths["builder"] / "scripts" / "release_runtime.py").write_text(
                 "RELEASE_ONLY = True\n", encoding="utf-8"
             )
             self.assertEqual(
@@ -250,11 +253,11 @@ class BuildPreflightTests(unittest.TestCase):
                 builder_tree_entry(paths["builder"])["sha256"],
             )
 
-    def test_profile_resources_invalidate_but_documentation_content_does_not(self) -> None:
+    def test_configuration_resources_invalidate_but_documentation_content_does_not(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             initial = state_fingerprint(self.state(paths))
-            feature = paths["builder"] / "features" / "localization"
+            feature = paths["builder"] / "localization"
 
             documentation = paths["workspace"] / "docs" / "features" / "localization.md"
             documentation.parent.mkdir(parents=True)
@@ -271,7 +274,7 @@ class BuildPreflightTests(unittest.TestCase):
             (feature / "translation_importer" / "mappings.tsv").write_text(
                 "id\n", encoding="utf-8"
             )
-            targets = paths["builder"] / "features" / "targets.tsv"
+            targets = paths["builder"] / "targets.tsv"
             targets.write_text(
                 targets.read_text(encoding="utf-8")
                 + "boot\tna2\tdestination\tSLPS_258.37\t16\t"
@@ -305,7 +308,7 @@ class BuildPreflightTests(unittest.TestCase):
             self.assertEqual(self.check(paths)["reason"], "output-iso-hash-mismatch")
             paths["latest_iso"].write_bytes(original)
 
-            paths["builder"].joinpath("engine.py").write_text(
+            paths["builder"].joinpath("scripts", "engine.py").write_text(
                 "ENGINE = 3\n", encoding="utf-8"
             )
             self.assertEqual(self.check(paths)["reason"], "fingerprint-mismatch")
@@ -321,7 +324,7 @@ class BuildPreflightTests(unittest.TestCase):
 
             self.record(paths, fingerprint)
             receipt = json.loads(paths["receipt"].read_text(encoding="utf-8"))
-            receipt["state"]["profile"] = "configurations/tampered.json"
+            receipt["state"]["configuration"] = "configurations/tampered.json"
             paths["receipt"].write_text(json.dumps(receipt), encoding="utf-8")
             self.assertEqual(self.check(paths)["reason"], "receipt-invalid")
 
@@ -332,7 +335,7 @@ class BuildPreflightTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             fingerprint = state_fingerprint(self.state(paths))
-            paths["builder"].joinpath("engine.py").write_text(
+            paths["builder"].joinpath("scripts", "engine.py").write_text(
                 "ENGINE = 4\n", encoding="utf-8"
             )
             result = self.record(paths, fingerprint)
@@ -346,7 +349,7 @@ class BuildPreflightTests(unittest.TestCase):
             self.record(paths, fingerprint)
             text = paths["receipt"].read_text(encoding="utf-8")
             self.assertNotIn(str(paths["workspace"]), text)
-            self.assertIn('"profile": "configurations/release.json"', text)
+            self.assertIn('"configuration": "configurations/release.json"', text)
 
 
 if __name__ == "__main__":

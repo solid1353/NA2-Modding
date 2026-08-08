@@ -52,13 +52,13 @@ def application_directory(
 
     PyInstaller sets ``sys.frozen`` and points ``sys.executable`` at the
     packaged EXE. During source execution, use the repository root so
-    ``python -m na228_builder.app`` remains predictable.
+    ``python -m na228_builder.scripts.app`` remains predictable.
     """
     if executable is not None:
         return Path(executable).resolve().parent
     if getattr(sys, "frozen", False):
         return Path(sys.executable).resolve().parent
-    return Path(__file__).resolve().parent.parent
+    return Path(__file__).resolve().parents[2]
 
 
 def _required_text(data: dict[str, object], key: str) -> str:

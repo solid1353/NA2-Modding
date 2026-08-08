@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.build_profile import write_texture_patch_log
+from na228_builder.scripts.build_configuration import write_texture_patch_log
 from na228_builder.modules.texture_patcher import engine
 from scripts.lib.paths import load_paths
 
@@ -20,7 +20,6 @@ class UiTextureTests(unittest.TestCase):
         data_root = (
             repository
             / "na228_builder"
-            / "features"
             / "localization"
             / "texture_patcher"
         )
@@ -78,7 +77,7 @@ class UiTextureTests(unittest.TestCase):
         self.assertEqual(bytes(cvm[result.outer_cvm_offset:end]), result.replacement)
         self.assertEqual(bytes(cvm[end:]), before[end:])
 
-    def test_profile_log_records_every_container_patch(self) -> None:
+    def test_configuration_log_records_every_container_patch(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "texture_patcher"
             write_texture_patch_log(self.plan, output)

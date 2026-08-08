@@ -9,9 +9,9 @@ package. A feature never chooses an offset inside `PRG/228.BIN` or owns its
 loader, memory reservation, or final runtime address.
 
 Canonical production inputs are the shared
-`na228_builder/features/targets.tsv` registry and the owning catalog nodes'
+`na228_builder/targets.tsv` registry and the owning catalog nodes'
 `hooks` and `payload` objects, plus referenced repository sources and assets.
-There is no feature-local runtime-injector directory.
+There is no separate runtime-injector data directory.
 
 A `payload` declaration is either a C source or a static code/data/rodata
 fragment. C sources contain their path, namespace, private imports, emitted

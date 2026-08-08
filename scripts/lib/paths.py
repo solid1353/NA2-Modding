@@ -4,6 +4,7 @@ import json
 import importlib.util
 import os
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from types import MappingProxyType
 from typing import Mapping
@@ -11,6 +12,7 @@ from typing import Mapping
 MANIFEST_NAME = "paths.json"
 
 
+@lru_cache(maxsize=1)
 def _load_workshop_game_catalog():
     repository = Path(__file__).resolve().parents[2]
     manifest = json.loads(
@@ -34,7 +36,13 @@ def _load_workshop_game_catalog():
     return module
 
 
-derive_game_paths = _load_workshop_game_catalog().derive_game_paths
+def derive_game_paths(
+    game_name: str,
+    catalog: dict[str, object],
+    roots: Mapping[str, Path],
+) -> dict[str, Path]:
+    """Load Workshop game-path derivation only for callers that need it."""
+    return _load_workshop_game_catalog().derive_game_paths(game_name, catalog, roots)
 
 
 @dataclass(frozen=True)
@@ -79,6 +87,7 @@ def _load_paths(
     *,
     allow_missing: bool = False,
     include_catalog: bool = True,
+    include_imports: bool = True,
 ) -> Paths:
     manifest_path = _find_manifest(start or Path.cwd())
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -113,7 +122,8 @@ def _load_paths(
     imports = data.get("imports", {})
     if not isinstance(imports, dict):
         raise ValueError("Project path manifest imports must be an object")
-    for import_name, raw_manifest in imports.items():
+    selected_imports = imports.items() if include_imports else ()
+    for import_name, raw_manifest in selected_imports:
         if (
             not isinstance(import_name, str)
             or not import_name
@@ -473,6 +483,18 @@ def load_base_paths(
 ) -> Paths:
     return _load_paths(
         start, allow_missing=allow_missing, include_catalog=False
+    )
+
+
+def load_local_paths(
+    start: Path | None = None, *, allow_missing: bool = False
+) -> Paths:
+    """Load only paths owned by this repository, without imported projects."""
+    return _load_paths(
+        start,
+        allow_missing=allow_missing,
+        include_catalog=False,
+        include_imports=False,
     )
 
 

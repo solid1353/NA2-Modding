@@ -190,6 +190,25 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
     return CatalogSelection(catalog_path, configuration_path, tuple(nodes))
 
 
+def all_enabled_configuration(catalog_path: Path) -> dict[str, object]:
+    """Return a structurally complete configuration with every leaf enabled."""
+    catalog = _read_json(catalog_path.resolve(), "Catalog")
+
+    def enabled_node(value: dict[str, object], label: str) -> object:
+        children = _selectable_children(value, label)
+        if not children:
+            return True
+        return {
+            key: enabled_node(child, f"{label}.{key}")
+            for key, child in children.items()
+        }
+
+    return {
+        key: enabled_node(value, key)
+        for key, value in _selectable_children(catalog, "catalog").items()
+    }
+
+
 def read_pins(path: Path) -> tuple[FeaturePin, ...]:
     pins: list[FeaturePin] = []
     seen: set[str] = set()
@@ -602,16 +621,25 @@ def _compile_source(
             _parse_int(raw.get("order"), f"{label}.fragments.{fragment_id}.order", minimum=1),
             fragment_id,
         )
-    toolchain = ee_c_fragments.default_toolchain_bin(repository)
-    with tempfile.TemporaryDirectory(prefix="na2-catalog-c-") as temporary:
-        extracted = ee_c_fragments.compile_and_extract(
-            source_path,
-            Path(temporary) / f"{source_id}.o",
+    packaged_object = source_path.with_name(source_path.name + ".o")
+    if packaged_object.is_file():
+        extracted = ee_c_fragments.extract_ee_object(
+            packaged_object,
             namespace=namespace,
-            toolchain_bin=toolchain,
             owner=owner,
             external_symbols=imports,
         )
+    else:
+        toolchain = ee_c_fragments.default_toolchain_bin(repository)
+        with tempfile.TemporaryDirectory(prefix="na2-catalog-c-") as temporary:
+            extracted = ee_c_fragments.compile_and_extract(
+                source_path,
+                Path(temporary) / f"{source_id}.o",
+                namespace=namespace,
+                toolchain_bin=toolchain,
+                owner=owner,
+                external_symbols=imports,
+            )
     actual = {fragment.symbol for fragment in extracted.fragments}
     if actual != set(aliases):
         raise ValueError(

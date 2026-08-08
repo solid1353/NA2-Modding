@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build Windows EXE
+    name: Build Windows package
     runs-on: windows-latest
     timeout-minutes: 30
 
@@ -50,7 +50,8 @@ jobs:
           $manifest = Get-Content -Raw na228_builder/release_manifest.json | ConvertFrom-Json
           . ./scripts/lib/paths.ps1
           $paths = Get-Na2LocalPaths -AllowMissing
-          $candidate = Join-Path $paths.release_candidates $manifest.executable_name
+          $packageName = [IO.Path]::ChangeExtension([string]$manifest.executable_name, '.zip')
+          $candidate = Join-Path $paths.release_candidates $packageName
           if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
               throw "Release candidate is missing: $candidate"
           }
@@ -71,7 +72,7 @@ jobs:
           $hash = (Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash.ToLowerInvariant()
           $checksumLine = "$hash  $([IO.Path]::GetFileName($candidate))`n"
           [IO.File]::WriteAllText($checksum, $checksumLine, [Text.UTF8Encoding]::new($false))
-          "executable=$candidate" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "package=$candidate" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "checksum=$checksum" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "artifact_name=$([IO.Path]::GetFileNameWithoutExtension($candidate))" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "version=$($manifest.product_version)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
@@ -81,7 +82,7 @@ jobs:
         with:
           name: ${{ steps.release.outputs.artifact_name }}
           path: |
-            ${{ steps.release.outputs.executable }}
+            ${{ steps.release.outputs.package }}
             ${{ steps.release.outputs.checksum }}
           if-no-files-found: error
           compression-level: 0
@@ -94,12 +95,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
-          RELEASE_EXE: ${{ steps.release.outputs.executable }}
+          RELEASE_PACKAGE: ${{ steps.release.outputs.package }}
           RELEASE_CHECKSUM: ${{ steps.release.outputs.checksum }}
         run: |
           $arguments = @(
               'release', 'create', $env:RELEASE_TAG,
-              $env:RELEASE_EXE, $env:RELEASE_CHECKSUM,
+              $env:RELEASE_PACKAGE, $env:RELEASE_CHECKSUM,
               '--verify-tag', '--notes-from-tag'
           )
           if ($env:RELEASE_VERSION.Contains('-')) {

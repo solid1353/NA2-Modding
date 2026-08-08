@@ -17,7 +17,8 @@ REQUIRED_IMAGE_IDS = ("na2", "nun5")
 HASH_CHUNK_SIZE = 8 * 1024 * 1024
 
 Emit = Callable[[str], None]
-ReleaseBuilder = Callable[[Path, Path, Path, Emit], None]
+ReleaseBuilder = Callable[[Path, Path, Path, Path, Emit], None]
+ReleaseConfigurationValidator = Callable[[Path], None]
 
 
 class ReleaseError(RuntimeError):
@@ -40,6 +41,7 @@ class ReleaseManifest:
     executable_name: str
     output_name: str
     configuration: str
+    configuration_name: str
     images: tuple[SupportedImage, ...]
 
 
@@ -99,6 +101,19 @@ def _validate_configuration(value: str) -> str:
     if path.is_absolute() or ".." in path.parts:
         raise ReleaseError("Release configuration must be a repository-relative path")
     return value.replace("\\", "/")
+
+
+def _validate_configuration_name(value: str) -> str:
+    path = Path(value)
+    if (
+        path.is_absolute()
+        or path.name != value
+        or "/" in value
+        or "\\" in value
+        or path.suffix.casefold() != ".json"
+    ):
+        raise ReleaseError("Release configuration_name must be one .json filename")
+    return value
 
 
 def parse_release_manifest(text: str) -> ReleaseManifest:
@@ -179,6 +194,9 @@ def parse_release_manifest(text: str) -> ReleaseManifest:
         configuration=_validate_configuration(
             _required_text(data, "configuration")
         ),
+        configuration_name=_validate_configuration_name(
+            _required_text(data, "configuration_name")
+        ),
         images=tuple(images),
     )
 
@@ -194,14 +212,19 @@ def load_release_manifest() -> ReleaseManifest:
     return parse_release_manifest(text)
 
 
-def iso_candidates(directory: Path) -> list[Path]:
+def iso_candidates(
+    directory: Path,
+    *,
+    ignored_names: Iterable[str] = (),
+) -> list[Path]:
     try:
         entries = list(directory.iterdir())
     except OSError as exc:
         raise ReleaseError(f"Could not scan the application directory: {exc}") from exc
+    ignored = {name.casefold() for name in ignored_names}
     candidates: list[Path] = []
     for path in entries:
-        if path.suffix.casefold() != ".iso":
+        if path.suffix.casefold() != ".iso" or path.name.casefold() in ignored:
             continue
         try:
             is_file = path.is_file()
@@ -247,6 +270,7 @@ def identify_supported_images(
     directory: Path,
     images: Iterable[SupportedImage],
     *,
+    ignored_names: Iterable[str] = (),
     emit: Emit = print,
 ) -> dict[str, Path]:
     specs = tuple(images)
@@ -254,7 +278,7 @@ def identify_supported_images(
     for image in specs:
         by_size.setdefault(image.size, []).append(image)
 
-    candidates = iso_candidates(directory)
+    candidates = iso_candidates(directory, ignored_names=ignored_names)
     emit(
         f"Found {len(candidates)} ISO file"
         f"{'s' if len(candidates) != 1 else ''} beside this program."
@@ -403,12 +427,35 @@ def _remove_staging(path: Path) -> OSError | None:
 def _runtime_builder(
     na2_iso: Path,
     nun5_iso: Path,
+    configuration_path: Path,
     building_iso: Path,
     emit: Emit,
 ) -> None:
     from .release_runtime import build_release_iso
 
-    build_release_iso(na2_iso, nun5_iso, building_iso, emit)
+    build_release_iso(na2_iso, nun5_iso, configuration_path, building_iso, emit)
+
+
+def _runtime_configuration_validator(configuration_path: Path) -> None:
+    from .release_runtime import validate_release_configuration
+
+    validate_release_configuration(configuration_path)
+
+
+def _validate_user_configuration(configuration_path: Path) -> None:
+    if not configuration_path.is_file():
+        raise ReleaseError(
+            f"Configuration is missing: {configuration_path.name}. "
+            "Keep the JSON file supplied with this program beside the EXE."
+        )
+    try:
+        value = json.loads(configuration_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ReleaseError(
+            f"Configuration is not valid JSON: {configuration_path.name}: {exc}"
+        ) from exc
+    if not isinstance(value, dict):
+        raise ReleaseError("Configuration root must be an object")
 
 
 def run_release(
@@ -416,6 +463,7 @@ def run_release(
     manifest: ReleaseManifest,
     builder: ReleaseBuilder,
     *,
+    configuration_validator: ReleaseConfigurationValidator | None = None,
     emit: Emit = print,
 ) -> Path:
     directory = directory.resolve()
@@ -424,10 +472,7 @@ def run_release(
 
     output_iso = directory / manifest.output_name
     building_iso = output_iso.with_name(output_iso.name + ".building")
-    if _occupied(output_iso):
-        raise ReleaseError(
-            f"Output already exists: {output_iso.name}. Move or rename it and try again."
-        )
+    configuration_path = directory / manifest.configuration_name
     if _occupied(building_iso):
         raise ReleaseError(
             f"Reserved temporary output already exists: {building_iso.name}. "
@@ -435,15 +480,25 @@ def run_release(
         )
 
     emit(f"{manifest.product_name} {manifest.product_version}")
+    emit(f"Loading {configuration_path.name}...")
+    _validate_user_configuration(configuration_path)
+    if configuration_validator is not None:
+        configuration_validator(configuration_path)
     emit("Scanning for supported ISO files...")
-    selected = identify_supported_images(directory, manifest.images, emit=emit)
+    selected = identify_supported_images(
+        directory,
+        manifest.images,
+        ignored_names=(manifest.output_name, building_iso.name),
+        emit=emit,
+    )
     try:
         with locked_input_files(selected.values()):
             verify_locked_images(selected, manifest.images, emit=emit)
-            emit("Building NA2.28.iso...")
+            emit(f"Building {manifest.output_name}...")
             builder(
                 selected["na2"],
                 selected["nun5"],
+                configuration_path,
                 building_iso,
                 emit,
             )
@@ -458,11 +513,7 @@ def run_release(
                 "The built ISO has the wrong size "
                 f"({actual_size} bytes; expected {na2_size})"
             )
-        if _occupied(output_iso):
-            raise ReleaseError(
-                f"Output appeared during the build: {output_iso.name}; refusing to overwrite it"
-            )
-        os.rename(building_iso, output_iso)
+        os.replace(building_iso, output_iso)
     except BaseException as exc:
         cleanup_error = _remove_staging(building_iso)
         if cleanup_error is not None:
@@ -488,16 +539,22 @@ def main(
     directory: Path | None = None,
     manifest: ReleaseManifest | None = None,
     builder: ReleaseBuilder | None = None,
+    configuration_validator: ReleaseConfigurationValidator | None = None,
     emit: Emit = print,
     read: Callable[[str], str] = input,
 ) -> int:
     exit_code = 0
     try:
         release_manifest = manifest or load_release_manifest()
+        selected_builder = builder or _runtime_builder
+        selected_validator = configuration_validator
+        if builder is None and selected_validator is None:
+            selected_validator = _runtime_configuration_validator
         run_release(
             directory or application_directory(),
             release_manifest,
-            builder or _runtime_builder,
+            selected_builder,
+            configuration_validator=selected_validator,
             emit=emit,
         )
     except KeyboardInterrupt:

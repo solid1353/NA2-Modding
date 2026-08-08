@@ -665,7 +665,9 @@ def _catalog_feature_sha256(
 def _load_configuration(
     definition_path: Path,
     workspace: Path,
+    builder_root: Path,
     *,
+    project_paths: Paths | None,
     root_overrides: Mapping[str, Path] | None,
 ) -> Profile:
     from . import catalog as catalog_module
@@ -673,7 +675,6 @@ def _load_configuration(
     configuration_id = definition_path.stem
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", configuration_id):
         raise ValueError(f"Invalid configuration name: {configuration_id!r}")
-    builder_root = definition_path.parent.parent
     catalog_path = builder_root / "catalog.json"
     pins_path = builder_root / "profiles" / "default.tsv"
     selection = catalog_module.load_selection(catalog_path, definition_path)
@@ -685,7 +686,7 @@ def _load_configuration(
             f"missing={sorted(set(selection.feature_ids) - set(pin_by_feature))}, "
             f"extra={sorted(set(pin_by_feature) - set(selection.feature_ids))}"
         )
-    paths = load_paths(workspace, allow_missing=True)
+    paths = project_paths or load_paths(workspace, allow_missing=True)
     product_path = paths.file("product_config").resolve()
     identity, product_inputs = _validated_identity(product_path)
     roots = _resolved_roots(product_inputs, workspace, paths, root_overrides)
@@ -785,8 +786,12 @@ def _load_configuration(
     )
 
 
-def profile_resource_files(profile: Profile) -> tuple[Path, ...]:
-    """Return the exact structural and hash-covered files needed to load a profile."""
+def profile_resource_files(
+    profile: Profile,
+    *,
+    include_disabled: bool = False,
+) -> tuple[Path, ...]:
+    """Return structural and hash-covered files needed to load a configuration."""
     if profile.selection is not None:
         from . import catalog as catalog_module
 
@@ -798,7 +803,9 @@ def profile_resource_files(profile: Profile) -> tuple[Path, ...]:
         ]
         if profile.pins_path is not None:
             files.append(profile.pins_path)
-        if any(module.module == "binary_patcher" for module in profile.modules):
+        if include_disabled or any(
+            module.module == "binary_patcher" for module in profile.modules
+        ):
             operations = (
                 profile.selection.catalog_path.parent
                 / "modules"
@@ -815,9 +822,17 @@ def profile_resource_files(profile: Profile) -> tuple[Path, ...]:
                     feature.feature_id,
                 )
             )
-        for module in profile.modules:
-            if module.module not in {"binary_patcher", "runtime_injector"}:
-                files.extend(_module_content_files(module.input_path, module.module))
+        if include_disabled:
+            for feature in profile.features:
+                for module_type, module_path in _catalog_module_directories(
+                    feature.input_path
+                ):
+                    if module_type not in {"binary_patcher", "runtime_injector"}:
+                        files.extend(_module_content_files(module_path, module_type))
+        else:
+            for module in profile.modules:
+                if module.module not in {"binary_patcher", "runtime_injector"}:
+                    files.extend(_module_content_files(module.input_path, module.module))
         return tuple(sorted(set(files), key=lambda path: path.as_posix()))
     files = [
         profile.definition_path,
@@ -827,6 +842,36 @@ def profile_resource_files(profile: Profile) -> tuple[Path, ...]:
     for module in profile.modules:
         files.extend(_module_content_files(module.input_path, module.module))
     return tuple(sorted(set(files), key=lambda path: path.as_posix()))
+
+
+def load_configuration(
+    definition_path: Path,
+    workspace: Path,
+    builder_root: Path,
+    *,
+    project_paths: Paths | None = None,
+    root_overrides: Mapping[str, Path] | None = None,
+) -> Profile:
+    workspace = workspace.resolve()
+    definition_path = definition_path.resolve()
+    builder_root = builder_root.resolve()
+    try:
+        builder_root.relative_to(workspace)
+    except ValueError as exc:
+        raise ValueError(
+            f"Configuration builder root must be inside the workspace: {builder_root}"
+        ) from exc
+    if not definition_path.is_file() or definition_path.suffix.lower() != ".json":
+        raise FileNotFoundError(
+            f"Configuration definition is not a JSON file: {definition_path}"
+        )
+    return _load_configuration(
+        definition_path,
+        workspace,
+        builder_root,
+        project_paths=project_paths,
+        root_overrides=root_overrides,
+    )
 
 
 def load_profile(
@@ -844,9 +889,11 @@ def load_profile(
             f"Profile must be inside the repository: {definition_path}"
         ) from exc
     if definition_path.is_file() and definition_path.suffix.lower() == ".json":
-        return _load_configuration(
+        return load_configuration(
             definition_path,
             workspace,
+            definition_path.parent.parent,
+            project_paths=None,
             root_overrides=root_overrides,
         )
     if not definition_path.is_file() or definition_path.suffix.lower() != ".tsv":

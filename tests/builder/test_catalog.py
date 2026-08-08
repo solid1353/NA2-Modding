@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from na228_builder import catalog
 
@@ -70,6 +71,92 @@ class CatalogTests(unittest.TestCase):
             self.write_json(configuration_path, {"feature": {"leaf": True}})
             with self.assertRaisesRegex(ValueError, "duplicate key"):
                 catalog.load_selection(catalog_path, configuration_path)
+
+    def test_all_enabled_configuration_mirrors_every_selectable_leaf(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path = root / "catalog.json"
+            configuration_path = root / "configuration.json"
+            self.write_json(
+                catalog_path,
+                {
+                    "feature": {
+                        "description": "ignored",
+                        "first": {},
+                        "nested": {
+                            "description": "ignored",
+                            "second": {"proven": False},
+                        },
+                    }
+                },
+            )
+
+            configuration = catalog.all_enabled_configuration(catalog_path)
+            self.assertEqual(
+                configuration,
+                {"feature": {"first": True, "nested": {"second": True}}},
+            )
+            self.write_json(configuration_path, configuration)
+            selection = catalog.load_selection(catalog_path, configuration_path)
+            self.assertTrue(all(node.enabled for node in selection.nodes))
+
+    def test_runtime_source_uses_packaged_object_without_toolchain(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            source = repository / "runtime.c"
+            source.write_text("void runtime(void) {}\n", encoding="utf-8")
+            packaged_object = repository / "runtime.c.o"
+            packaged_object.write_bytes(b"packaged object")
+            extracted = catalog.ee_c_fragments.ExtractedEeObject(
+                fragments=(
+                    catalog.PayloadFragment(
+                        owner="feature.runtime_injector",
+                        symbol="runtime.text",
+                        kind="code",
+                        alignment=4,
+                        payload=b"\0\0\0\0",
+                    ),
+                ),
+                symbols={},
+            )
+            value = {
+                "path": "runtime.c",
+                "namespace": "runtime",
+                "imports": {},
+                "fragments": {
+                    "runtime_code": {
+                        "object": "runtime.text",
+                        "order": 1,
+                    }
+                },
+            }
+            with mock.patch.object(
+                catalog.ee_c_fragments,
+                "extract_ee_object",
+                return_value=extracted,
+            ) as extract, mock.patch.object(
+                catalog.ee_c_fragments,
+                "compile_and_extract",
+            ) as compile_source, mock.patch.object(
+                catalog.ee_c_fragments,
+                "default_toolchain_bin",
+            ) as toolchain:
+                fragments = catalog._compile_source(
+                    repository,
+                    "feature.runtime_injector",
+                    "runtime_source",
+                    value,
+                    "feature.payload.runtime_source",
+                )
+            self.assertEqual(fragments[0][1].symbol, "runtime_code")
+            extract.assert_called_once_with(
+                packaged_object.resolve(),
+                namespace="runtime",
+                owner="feature.runtime_injector",
+                external_symbols={},
+            )
+            compile_source.assert_not_called()
+            toolchain.assert_not_called()
 
     def test_live_catalog_and_configurations_reconstruct_migrated_data(self) -> None:
         repository = Path(__file__).resolve().parents[2]

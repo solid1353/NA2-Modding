@@ -25,7 +25,7 @@ from .profile import Profile, ProfileModule, load_profile
 from scripts.lib.paths import load_paths
 
 
-PATHS = load_paths(Path(__file__).resolve(), allow_missing=True)
+PATHS = None
 
 
 @dataclass(frozen=True)
@@ -985,7 +985,8 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    workspace = PATHS.repository
+    paths = PATHS or load_paths(Path(__file__).resolve(), allow_missing=True)
+    workspace = paths.repository
     source_iso = args.source.resolve()
     if not source_iso.is_file():
         raise FileNotFoundError(source_iso)

@@ -1,29 +1,40 @@
 # Release process
 
-The release process produces one self-contained Windows x64 console EXE. End
-users need no Python installation and supply only one exact clean NA2 ISO and
-one exact clean NUN5 ISO beside the EXE.
+The release process produces one Windows x64 ZIP containing the console EXE, an
+editable default configuration, and end-user instructions. End users need no
+Python installation and supply only one exact clean NA2 ISO and one exact clean
+NUN5 ISO.
 
 ## End-user contract
 
-1. Put the EXE and the two supported clean ISOs in one directory. ISO filenames
-   do not matter.
-2. Double-click the EXE.
-3. The program scans sibling `*.iso` files non-recursively, prefilters by size,
-   then identifies NA2 and NUN5 by streaming SHA-256.
-4. It refuses missing or duplicate supported images, modified inputs, unsupported
-   hashes, an existing `NA2.28.iso`, or an existing
-   `NA2.28.iso.building`.
-5. It locks both inputs read-only and hashes them again after locking.
-6. It applies the embedded release configuration and catalog directly from the two ISOs, creates
-   `NA2.28.iso.building`, verifies the complete staged image and its size, then
-   atomically renames it to `NA2.28.iso`.
-7. It never modifies either input, creates no runtime log files, removes its
-   staging file after failure, and waits for Enter before closing.
+1. Extract the complete ZIP into one directory.
+2. Put the two supported clean ISOs in that directory. ISO filenames do not
+   matter.
+3. Optionally edit `NA2.28.json`, preserving its complete key structure and
+   using only `true`, `false`, or nested objects.
+4. Double-click the EXE. It validates the external configuration against its
+   embedded catalog before hashing either ISO.
+5. The program scans sibling `*.iso` files non-recursively, excluding the
+   reserved output and staging names, then identifies NA2 and NUN5 by size and
+   streaming SHA-256.
+6. It refuses missing or duplicate supported source images, modified inputs,
+   unsupported hashes, or an existing
+   `Narutimate Accel v2.28.iso.building`.
+7. It locks both inputs read-only and hashes them again after locking.
+8. It applies the selected configuration, creates
+   `Narutimate Accel v2.28.iso.building`, verifies the complete staged image and
+   its size, then atomically creates or replaces
+   `Narutimate Accel v2.28.iso`.
+9. It never modifies either input, creates no runtime log files, preserves an
+   existing output when a build fails, removes its staging file after failure,
+   and waits for Enter before closing.
 
-The executable embeds the interpreter, builder engines, release configuration,
-catalog, feature inputs, payload-builder configuration, and Zopfli runtime. It does not
-embed original/donor ISOs, extracted source trees, or derived game payloads.
+The ZIP contains the versioned EXE, `NA2.28.json`, and `README.txt`. The
+executable embeds the interpreter, builder engines, catalog, resources for the
+complete selectable catalog rather than only the default selection,
+payload-builder configuration, precompiled objects for catalog-owned runtime C
+sources, and Zopfli runtime. It does not embed the project PS2 toolchain, source
+ISOs, extracted source trees, or derived game payloads.
 
 ## Developer build
 
@@ -43,20 +54,23 @@ uncommitted release work:
 The toolchain is pinned by `scripts/release/toolchain.json` and
 `scripts/release/requirements.txt`. The builder creates an isolated virtual
 environment under the configured Project task temporary root, runs the complete
-builder test suite, stages only canonical release data, builds a PyInstaller
-one-file console EXE, runs its embedded-data self-test, and atomically updates
-the configured candidate path. Temporary packaging state is removed afterward.
+builder test suite, inventories the full catalog resource closure, builds a
+precompiled object for each catalog-owned runtime C source, builds a PyInstaller
+one-file console EXE, self-tests the packaged data with both the default and a
+transient all-enabled configuration, and atomically updates the configured ZIP
+candidate. Temporary packaging state is removed afterward.
 
-Development candidates are placed under
+Development ZIP candidates are placed under
 `@release_candidates/development/`; clean production candidates use
-`@release_candidates/`. Published binaries are created by the GitHub release
+`@release_candidates/`. Published packages are created by the GitHub release
 workflow from a tagged commit.
 
 ## Release manifest
 
 `na228_builder/release_manifest.json` is authoritative for the product name,
-version, executable name, output name, embedded configuration, and supported source
-identities. The pinned source identities are:
+version, executable name, output name, canonical default configuration, external
+configuration filename, and supported source identities. The pinned source
+identities are:
 
 - NA2: 1,928,429,568 bytes,
   SHA-256 `CA105F7BDBEEAA3275F871C9702B9C77ED985CE140FAE8EAC28CB153E263D0C3`
@@ -80,11 +94,12 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
 
 ## Architecture
 
-- `na228_builder/app.py` owns end-user discovery, hashing, locking, collision
-  refusal, staging cleanup, promotion, console messages, and the Enter pause.
-- `na228_builder/release_runtime.py` loads the embedded release configuration with the
-  two verified source ISOs as root overrides and calls the ordinary configuration
-  builder without runtime logs.
+- `na228_builder/app.py` owns external configuration preflight, end-user source
+  discovery, hashing, locking, staging cleanup, atomic output replacement,
+  console messages, and the Enter pause.
+- `na228_builder/release_runtime.py` loads the sibling configuration against the
+  embedded catalog with the two verified source ISOs as root overrides and calls
+  the ordinary configuration builder without runtime logs.
 - `na228_builder/source_media.py` gives engines one read-only boundary for files
   from either extracted roots or original ISOs.
 - `na228_builder/cvm.py` reads encrypted `DATA.CVM` members directly using the
@@ -96,38 +111,11 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
 
 The ordinary `na228`, `na228 b`, and `na228 mt` workflows are unchanged.
 
-## Pre-refactor validation evidence
-
-The following evidence predates the catalog/configuration refactor and must not
-be treated as validation of the current uncommitted implementation:
-
-The integrated development candidate was built on Windows x64 with Python
-3.14.6, PyInstaller 6.21.0, and the exact hash-pinned requirements.
-
-- full builder suite: 126/126 passed
-- EXE size: 9,907,358 bytes
-- EXE SHA-256:
-  `EACCED2C942A97E7C70B76E6D34857671953F1EF28F4DD429820023EB2A8A9DB`
-- packaged self-test: passed with five then-current module invocations
-- isolated end-user run: exit 0; no runtime files other than
-  `NA2.28.iso`
-- output ISO size: 1,928,429,568 bytes
-- output ISO SHA-256:
-  `EC4A67D44B4B325A76E2FFAACAE55EFF3FFB6DC8AFAB4F9FAFB3313E3970A38F`
-- normal then-current ISO SHA-256:
-  `EC4A67D44B4B325A76E2FFAACAE55EFF3FFB6DC8AFAB4F9FAFB3313E3970A38F`
-
-That packaged output was byte-identical to the normal then-current
-image. The test used read-only hard links to the exact clean sources and proved
-the inputs remained the same files. Clean-machine testing and code signing are
-publication gates, not prerequisites for keeping the implemented development
-pipeline.
-
 ## GitHub releases
 
 `.github/workflows/build-release.yml` supports manual dispatch and annotated
 `v*` tags. Both paths run the pinned PowerShell builder on
-`windows-latest`, calculate a SHA-256 sidecar, and upload the EXE plus checksum.
+`windows-latest`, calculate a SHA-256 sidecar, and upload the ZIP plus checksum.
 A tag must be annotated and exactly equal `v<product_version>`; tagged runs
 publish a GitHub Release and mark SemVer suffixes as prereleases.
 
@@ -141,5 +129,5 @@ A production publication sequence, automated by `na228 release [version]`, is:
 6. verify the workflow artifact or GitHub Release.
 
 The workflow never receives copyrighted game ISOs. Its validation covers the
-embedded product and packaging; byte-parity validation remains a controlled
-local gate using the canonical source media.
+packaged product and full selectable resource closure; output-image validation
+remains a controlled local gate using the canonical source media.

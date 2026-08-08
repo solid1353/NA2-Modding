@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.lib.paths import derive_game_paths, load_paths
+from scripts.lib.paths import derive_game_paths, load_local_paths, load_paths
 
 
 class ProjectPathTests(unittest.TestCase):
@@ -52,6 +52,26 @@ class ProjectPathTests(unittest.TestCase):
                 paths.file("previous_iso"),
                 root.resolve() / "build" / "NA2.28 - Previous.iso",
             )
+
+    def test_local_paths_do_not_load_missing_imported_projects(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = {
+                "schema_version": 1,
+                "imports": {"workshop": "../missing/paths.json"},
+                "roots": {"repository": ".", "build": "build"},
+                "files": {"product_config": "product.json"},
+            }
+            (root / "paths.json").write_text(
+                json.dumps(manifest), encoding="utf-8"
+            )
+            (root / "build").mkdir()
+
+            paths = load_local_paths(root)
+
+            self.assertEqual(paths.repository, root.resolve())
+            self.assertEqual(paths.path("build"), root.resolve() / "build")
+            self.assertNotIn("workshop", paths.roots)
 
     def test_rejects_file_outside_repository(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

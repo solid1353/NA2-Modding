@@ -14,6 +14,7 @@ from na228_builder.profile import (
     FEATURE_FIELDS,
     MODULE_TYPE_ORDER,
     feature_content_sha256,
+    load_configuration,
     load_profile,
     module_content_sha256,
     profile_resource_files,
@@ -496,6 +497,39 @@ class ProfileTests(unittest.TestCase):
                 "battle_logic.binary_patcher",
             ],
         )
+
+    def test_complete_release_resources_include_disabled_flat_modules(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        builder_root = repository / "na228_builder"
+        default_path = builder_root / "configurations" / "release.json"
+        configuration = json.loads(default_path.read_text(encoding="utf-8"))
+        configuration["localization"]["translated_textures"] = False
+        marker = builder_root / "release_manifest.json"
+        texture_root = builder_root / "features" / "localization" / "texture_patcher"
+        texture_files = {
+            (texture_root / name).resolve()
+            for name in ("containers.tsv", "mappings.tsv", "strategies.tsv")
+        }
+
+        with tempfile.TemporaryDirectory() as directory:
+            configuration_path = Path(directory) / "custom.json"
+            configuration_path.write_text(
+                json.dumps(configuration, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            loaded = load_configuration(
+                configuration_path,
+                repository,
+                builder_root,
+                root_overrides={"na2": marker, "nun5": marker},
+            )
+            selected = set(profile_resource_files(loaded))
+            complete = set(
+                profile_resource_files(loaded, include_disabled=True)
+            )
+
+        self.assertTrue(texture_files.isdisjoint(selected))
+        self.assertTrue(texture_files <= complete)
 
     def test_registered_module_readmes_declare_downstream_invocations(self) -> None:
         repository = Path(__file__).resolve().parents[2]

@@ -3,9 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Callable
 
-from .app import load_release_manifest
+from . import catalog as catalog_module
+from .app import application_directory, load_release_manifest
 from .build_profile import build_profile_candidate
-from .profile import Profile, load_profile
+from .profile import Profile, load_configuration
+from scripts.lib.paths import load_local_paths
 
 
 Emit = Callable[[str], None]
@@ -16,20 +18,29 @@ def packaged_workspace() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def load_release_configuration(na2_iso: Path, nun5_iso: Path) -> tuple[Path, Profile]:
+def load_release_configuration(
+    configuration_path: Path,
+    na2_iso: Path,
+    nun5_iso: Path,
+) -> tuple[Path, Profile]:
     workspace = packaged_workspace()
     manifest = load_release_manifest()
-    configuration_path = (workspace / manifest.configuration).resolve()
+    configuration_path = configuration_path.resolve()
+    builder_root = (workspace / "na228_builder").resolve()
     try:
-        configuration_path.relative_to(workspace)
+        builder_root.relative_to(workspace)
     except ValueError as exc:
-        raise RuntimeError("Packaged configuration path escapes release data") from exc
+        raise RuntimeError("Packaged builder root escapes release data") from exc
     if not configuration_path.is_file():
-        raise FileNotFoundError("Packaged release configuration is missing")
+        raise FileNotFoundError(
+            f"Release configuration is missing: {configuration_path.name}"
+        )
 
-    profile = load_profile(
+    profile = load_configuration(
         configuration_path,
         workspace,
+        builder_root,
+        project_paths=load_local_paths(workspace, allow_missing=True),
         root_overrides={"na2": na2_iso, "nun5": nun5_iso},
     )
     if profile.identity.output_game_title != manifest.product_name:
@@ -39,20 +50,49 @@ def load_release_configuration(na2_iso: Path, nun5_iso: Path) -> tuple[Path, Pro
     return workspace, profile
 
 
-def validate_packaged_release() -> int:
-    """Verify embedded configuration data without requiring copyrighted source ISOs."""
+def validate_release_configuration(configuration_path: Path) -> int:
+    """Validate one external configuration without requiring copyrighted ISOs."""
     workspace = packaged_workspace()
-    manifest = load_release_manifest()
     marker = workspace / "na228_builder" / "release_manifest.json"
-    _, profile = load_release_configuration(marker, marker)
+    _, profile = load_release_configuration(configuration_path, marker, marker)
     if not profile.modules:
-        raise RuntimeError("Packaged release configuration has no module invocations")
+        raise RuntimeError("Release configuration has no module invocations")
+    return len(profile.modules)
+
+
+def validate_packaged_release() -> int:
+    """Verify the external configuration and packaged data without source ISOs."""
+    manifest = load_release_manifest()
+    configuration_path = application_directory() / manifest.configuration_name
+    marker = packaged_workspace() / "na228_builder" / "release_manifest.json"
+    workspace, profile = load_release_configuration(
+        configuration_path,
+        marker,
+        marker,
+    )
+    if profile.selection is None:
+        raise RuntimeError("Release configuration has no catalog selection")
+    for feature_id in profile.selection.feature_ids:
+        for source in catalog_module.referenced_files(
+            profile.selection,
+            workspace,
+            feature_id,
+        ):
+            if source.suffix.lower() == ".c":
+                packaged_object = source.with_name(source.name + ".o")
+                if not packaged_object.is_file():
+                    raise FileNotFoundError(
+                        f"Packaged runtime object is missing: {packaged_object}"
+                    )
+    if not profile.modules:
+        raise RuntimeError("Release configuration has no module invocations")
     return len(profile.modules)
 
 
 def build_release_iso(
     na2_iso: Path,
     nun5_iso: Path,
+    configuration_path: Path,
     building_iso: Path,
     emit: Emit,
 ) -> None:
@@ -62,8 +102,12 @@ def build_release_iso(
     output_iso = building_iso.with_name(
         building_iso.name[: -len(".building")]
     )
-    emit("Loading and verifying the packaged configuration...")
-    workspace, profile = load_release_configuration(na2_iso, nun5_iso)
+    emit("Loading and verifying the selected configuration...")
+    workspace, profile = load_release_configuration(
+        configuration_path,
+        na2_iso,
+        nun5_iso,
+    )
     emit("Applying modules and assembling the output image...")
     build = build_profile_candidate(
         source_iso=na2_iso,

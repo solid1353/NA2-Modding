@@ -34,13 +34,19 @@ class ReleaseAppTests(unittest.TestCase):
             product_name="Narutimate Accel v2.28",
             product_version="v-test",
             executable_name="NA2.28_test.exe",
-            output_name="NA2.28.iso",
+            output_name="Narutimate Accel v2.28.iso",
             configuration="na228_builder/configurations/release.json",
+            configuration_name="NA2.28.json",
             images=(
                 self.image("na2", "original NA2 ISO", na2),
                 self.image("nun5", "original NUN5 ISO", nun5),
             ),
         )
+
+    def write_configuration(self, root: Path, value: object | None = None) -> Path:
+        path = root / "NA2.28.json"
+        path.write_text(json.dumps({} if value is None else value), encoding="utf-8")
+        return path
 
     def test_application_directory_uses_explicit_executable_parent(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -56,8 +62,9 @@ class ReleaseAppTests(unittest.TestCase):
             "product_name": "Narutimate Accel v2.28",
             "product_version": "1.0.0",
             "executable_name": "NA2.28.exe",
-            "output_name": "NA2.28.iso",
+            "output_name": "Narutimate Accel v2.28.iso",
             "configuration": "na228_builder/configurations/release.json",
+            "configuration_name": "NA2.28.json",
             "images": [
                 {
                     "id": "NA2",
@@ -78,7 +85,8 @@ class ReleaseAppTests(unittest.TestCase):
 
         self.assertEqual(manifest.images[0].image_id, "na2")
         self.assertEqual(manifest.images[0].sha256, "AB" * 32)
-        self.assertEqual(manifest.output_name, "NA2.28.iso")
+        self.assertEqual(manifest.output_name, "Narutimate Accel v2.28.iso")
+        self.assertEqual(manifest.configuration_name, "NA2.28.json")
 
     def test_manifest_parser_rejects_unsafe_output_name(self) -> None:
         data = {
@@ -86,8 +94,9 @@ class ReleaseAppTests(unittest.TestCase):
             "product_name": "Narutimate Accel v2.28",
             "product_version": "1.0.0",
             "executable_name": "NA2.28.exe",
-            "output_name": "build/NA2.28.iso",
+            "output_name": "build/Narutimate Accel v2.28.iso",
             "configuration": "na228_builder/configurations/release.json",
+            "configuration_name": "NA2.28.json",
             "images": [
                 {
                     "id": "na2",
@@ -160,6 +169,52 @@ class ReleaseAppTests(unittest.TestCase):
                     emit=lambda _message: None,
                 )
 
+    def test_configuration_failures_happen_before_iso_hashing(self) -> None:
+        na2 = b"clean-na2"
+        nun5 = b"clean-nun5"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "NA2.iso").write_bytes(na2)
+            (root / "NUN5.iso").write_bytes(nun5)
+            manifest = self.manifest(na2, nun5)
+
+            with mock.patch("na228_builder.app.file_sha256") as hash_file:
+                with self.assertRaisesRegex(ReleaseError, "Configuration is missing"):
+                    run_release(
+                        root,
+                        manifest,
+                        lambda *_args: None,
+                        emit=lambda _message: None,
+                    )
+                hash_file.assert_not_called()
+
+            (root / manifest.configuration_name).write_text("not json", encoding="utf-8")
+            with mock.patch("na228_builder.app.file_sha256") as hash_file:
+                with self.assertRaisesRegex(ReleaseError, "not valid JSON"):
+                    run_release(
+                        root,
+                        manifest,
+                        lambda *_args: None,
+                        emit=lambda _message: None,
+                    )
+                hash_file.assert_not_called()
+
+            self.write_configuration(root)
+
+            def reject_configuration(_path: Path) -> None:
+                raise ValueError("structure mismatch")
+
+            with mock.patch("na228_builder.app.file_sha256") as hash_file:
+                with self.assertRaisesRegex(ValueError, "structure mismatch"):
+                    run_release(
+                        root,
+                        manifest,
+                        lambda *_args: None,
+                        configuration_validator=reject_configuration,
+                        emit=lambda _message: None,
+                    )
+                hash_file.assert_not_called()
+
     def test_success_promotes_building_iso_and_preserves_inputs(self) -> None:
         na2 = b"clean-na2"
         nun5 = b"clean-nun5"
@@ -169,15 +224,17 @@ class ReleaseAppTests(unittest.TestCase):
             nun5_path = root / "something.ISO"
             na2_path.write_bytes(na2)
             nun5_path.write_bytes(nun5)
-            calls: list[tuple[Path, Path, Path]] = []
+            configuration_path = self.write_configuration(root)
+            calls: list[tuple[Path, Path, Path, Path]] = []
 
             def builder(
                 source_na2: Path,
                 source_nun5: Path,
+                configuration: Path,
                 building: Path,
                 _emit,
             ) -> None:
-                calls.append((source_na2, source_nun5, building))
+                calls.append((source_na2, source_nun5, configuration, building))
                 building.write_bytes(na2)
 
             output = run_release(
@@ -187,41 +244,80 @@ class ReleaseAppTests(unittest.TestCase):
                 emit=lambda _message: None,
             )
 
-            self.assertEqual(output, root.resolve() / "NA2.28.iso")
+            self.assertEqual(
+                output,
+                root.resolve() / "Narutimate Accel v2.28.iso",
+            )
             self.assertEqual(output.read_bytes(), na2)
-            self.assertFalse((root / "NA2.28.iso.building").exists())
+            self.assertFalse(
+                (root / "Narutimate Accel v2.28.iso.building").exists()
+            )
             self.assertEqual(na2_path.read_bytes(), na2)
             self.assertEqual(nun5_path.read_bytes(), nun5)
             self.assertEqual(
                 calls[0][:2],
                 (na2_path.resolve(), nun5_path.resolve()),
             )
+            self.assertEqual(calls[0][2], configuration_path.resolve())
 
-    def test_existing_output_or_building_path_is_refused_before_builder(self) -> None:
+    def test_existing_output_is_replaced_and_ignored_during_source_discovery(self) -> None:
         na2 = b"clean-na2"
         nun5 = b"clean-nun5"
-        for occupied_name in ("NA2.28.iso", "NA2.28.iso.building"):
-            with self.subTest(occupied_name=occupied_name):
-                with tempfile.TemporaryDirectory() as directory:
-                    root = Path(directory)
-                    (root / "NA2.iso").write_bytes(na2)
-                    (root / "NUN5.iso").write_bytes(nun5)
-                    (root / occupied_name).write_bytes(b"keep")
-                    called = False
+        replacement = b"built-na2"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "NA2.iso").write_bytes(na2)
+            (root / "NUN5.iso").write_bytes(nun5)
+            output = root / "Narutimate Accel v2.28.iso"
+            output.write_bytes(na2)
+            self.write_configuration(root)
 
-                    def builder(*_args) -> None:
-                        nonlocal called
-                        called = True
+            def builder(
+                _na2: Path,
+                _nun5: Path,
+                _configuration: Path,
+                building: Path,
+                _emit,
+            ) -> None:
+                building.write_bytes(replacement)
 
-                    with self.assertRaisesRegex(ReleaseError, "already exists"):
-                        run_release(
-                            root,
-                            self.manifest(na2, nun5),
-                            builder,
-                            emit=lambda _message: None,
-                        )
-                    self.assertFalse(called)
-                    self.assertEqual((root / occupied_name).read_bytes(), b"keep")
+            result = run_release(
+                root,
+                self.manifest(na2, nun5),
+                builder,
+                emit=lambda _message: None,
+            )
+
+            self.assertEqual(result.read_bytes(), replacement)
+            self.assertFalse(
+                (root / "Narutimate Accel v2.28.iso.building").exists()
+            )
+
+    def test_existing_building_path_is_refused_before_builder(self) -> None:
+        na2 = b"clean-na2"
+        nun5 = b"clean-nun5"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "NA2.iso").write_bytes(na2)
+            (root / "NUN5.iso").write_bytes(nun5)
+            building = root / "Narutimate Accel v2.28.iso.building"
+            building.write_bytes(b"keep")
+            self.write_configuration(root)
+            called = False
+
+            def builder(*_args) -> None:
+                nonlocal called
+                called = True
+
+            with self.assertRaisesRegex(ReleaseError, "already exists"):
+                run_release(
+                    root,
+                    self.manifest(na2, nun5),
+                    builder,
+                    emit=lambda _message: None,
+                )
+            self.assertFalse(called)
+            self.assertEqual(building.read_bytes(), b"keep")
 
     def test_builder_failure_removes_only_new_temporary_output(self) -> None:
         na2 = b"clean-na2"
@@ -230,8 +326,17 @@ class ReleaseAppTests(unittest.TestCase):
             root = Path(directory)
             (root / "NA2.iso").write_bytes(na2)
             (root / "NUN5.iso").write_bytes(nun5)
+            output = root / "Narutimate Accel v2.28.iso"
+            output.write_bytes(b"previous")
+            self.write_configuration(root)
 
-            def builder(_na2: Path, _nun5: Path, building: Path, _emit) -> None:
+            def builder(
+                _na2: Path,
+                _nun5: Path,
+                _configuration: Path,
+                building: Path,
+                _emit,
+            ) -> None:
                 building.write_bytes(b"partial")
                 raise RuntimeError("synthetic failure")
 
@@ -243,8 +348,10 @@ class ReleaseAppTests(unittest.TestCase):
                     emit=lambda _message: None,
                 )
 
-            self.assertFalse((root / "NA2.28.iso").exists())
-            self.assertFalse((root / "NA2.28.iso.building").exists())
+            self.assertEqual(output.read_bytes(), b"previous")
+            self.assertFalse(
+                (root / "Narutimate Accel v2.28.iso.building").exists()
+            )
 
     def test_selected_inputs_are_rechecked_after_locking(self) -> None:
         na2 = b"clean-na2"
@@ -253,6 +360,7 @@ class ReleaseAppTests(unittest.TestCase):
             root = Path(directory)
             (root / "NA2.iso").write_bytes(na2)
             (root / "NUN5.iso").write_bytes(nun5)
+            self.write_configuration(root)
             real_identify = identify_supported_images
             called = False
 
@@ -285,8 +393,15 @@ class ReleaseAppTests(unittest.TestCase):
             root = Path(directory)
             (root / "NA2.iso").write_bytes(na2)
             (root / "NUN5.iso").write_bytes(nun5)
+            self.write_configuration(root)
 
-            def builder(_na2: Path, _nun5: Path, building: Path, _emit) -> None:
+            def builder(
+                _na2: Path,
+                _nun5: Path,
+                _configuration: Path,
+                building: Path,
+                _emit,
+            ) -> None:
                 building.write_bytes(b"wrong")
 
             with self.assertRaisesRegex(ReleaseError, "wrong size"):
@@ -297,7 +412,9 @@ class ReleaseAppTests(unittest.TestCase):
                     emit=lambda _message: None,
                 )
 
-            self.assertFalse((root / "NA2.28.iso.building").exists())
+            self.assertFalse(
+                (root / "Narutimate Accel v2.28.iso.building").exists()
+            )
 
     def test_missing_build_output_is_reported(self) -> None:
         na2 = b"clean-na2"
@@ -306,6 +423,7 @@ class ReleaseAppTests(unittest.TestCase):
             root = Path(directory)
             (root / "NA2.iso").write_bytes(na2)
             (root / "NUN5.iso").write_bytes(nun5)
+            self.write_configuration(root)
 
             with self.assertRaisesRegex(ReleaseError, "did not produce"):
                 run_release(
@@ -324,11 +442,16 @@ class ReleaseAppTests(unittest.TestCase):
                     root = Path(directory)
                     (root / "NA2.iso").write_bytes(na2)
                     (root / "NUN5.iso").write_bytes(nun5)
+                    self.write_configuration(root)
                     prompts: list[str] = []
                     messages: list[str] = []
 
                     def builder(
-                        _na2: Path, _nun5: Path, building: Path, _emit
+                        _na2: Path,
+                        _nun5: Path,
+                        _configuration: Path,
+                        building: Path,
+                        _emit,
                     ) -> None:
                         if should_fail:
                             raise RuntimeError("boom")

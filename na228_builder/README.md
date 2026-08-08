@@ -1,14 +1,21 @@
 # NA2.28 builder
 
-The builder creates a reproducible product from one configuration and one integrated catalog.
+The builder creates a reproducible product from one configuration and three
+integrated definition files.
 
 ## Canonical data
 
-- `catalog.json` owns the complete nested selectable hierarchy plus binary edits, runtime hooks, and runtime payload declarations under its one top-level `features` parent. There is no `groups`, `patches`, `children`, or module wrapper.
+- `catalog.json` owns the complete nested selectable hierarchy under its one
+  top-level `features` parent. Catalog leaves contain ordered `edits` and
+  `injections` ID arrays; there is no `groups`, `patches`, `children`, or
+  module wrapper.
+- `edits.json` is the direct root map of guarded binary edit definitions.
+- `injections.json` is the direct root map of runtime injection units. Each
+  unit contains `hooks`, `payload`, or both.
 - `configurations/test.json`, `release.json`, and `development.json` contain `"features": true` plus an `overrides` object. Overrides may be empty or partially mirror the selectable structure under `features`; the loader recursively applies them over the base setting.
-- `targets.tsv` is the single target registry used by catalog edits and hooks.
+- `targets.tsv` is the single target registry used by edits and injection hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.
-- `localization/assets/` owns the catalog-referenced localization binary assets.
+- `localization/assets/` owns edit-referenced localization binary assets.
 - Enabling `features.localization` includes the retained translation-importer and texture-patcher inputs under `localization/`; they are real inputs, not empty catalog selector nodes.
 - `scripts/` contains every builder Python implementation file. Reusable engines and their code-only contracts remain under `modules/`.
 - Root `product.json` owns source inputs, output identity, and named build variants.
@@ -17,11 +24,17 @@ JSON configurations are the only build definitions. There is no separate pin or 
 
 ## Catalog nodes
 
-Catalog nodes may nest to any depth. `description`, `proven`, `edits`, `hooks`, and `payload` are reserved implementation or metadata fields; every other object key is a selectable child.
+Catalog nodes may nest to any depth. `description` and `proven` are metadata;
+`edits` and `injections` are implementation-reference arrays allowed only on
+leaves. Every other object key is a selectable child.
 
 `description` is optional and ignored by the parser. Migrated nodes may contain only `"proven": false`; the field is removed when proof is complete and is never added to new values.
 
-Binary edits always contain an explicit `operation`. Runtime target changes live under `hooks` and therefore have no operation discriminator. Runtime sources, fragments, imports, relocations, and ABI metadata live directly under the nearest owning `payload`; declarations are extracted only when multiple selectable nodes actually share them.
+Binary edit definitions always contain an explicit `operation`. Runtime target
+changes live under an injection unit's `hooks` and therefore have no operation
+discriminator. Runtime sources, fragments, imports, relocations, and ABI
+metadata live under that unit's `payload`. Multiple catalog leaves may
+reference the same shared injection unit.
 
 ## Internal execution
 
@@ -33,11 +46,19 @@ Reusable engines remain internal under `modules/` and are not represented in cat
 4. `texture_patcher`
 5. `binary_patcher`
 
-The localization importer invokes the string patcher as a derived consumer. Runtime payload declarations are compiled and linked into the shared resident `PRG/228.BIN`; resolved hooks then become guarded in-memory binary replacements. The binary patcher applies catalog edits last.
+The localization importer invokes the string patcher as a derived consumer.
+Selected injection payload declarations are compiled and linked into the shared
+resident `PRG/228.BIN`; resolved hooks then become guarded in-memory binary
+replacements. The binary patcher applies selected edits last.
 
 ## Resource fingerprinting
 
-The build-resource fingerprint covers the selected configuration, catalog, product and path configuration, shared targets, applicable binary operation definitions, catalog-referenced assets and sources, and selected localization TSV inputs. Release packaging inventories the same closure for every selectable catalog node, including disabled nodes. Documentation is not an executable builder input.
+The build-resource fingerprint covers the selected configuration, catalog,
+edits, injections, product and path configuration, shared targets, applicable
+binary operation definitions, referenced assets and sources, and selected
+localization TSV inputs. Release packaging inventories the same closure for
+every selectable catalog node, including disabled nodes. Documentation is not
+an executable builder input.
 
 ## Current release configuration
 

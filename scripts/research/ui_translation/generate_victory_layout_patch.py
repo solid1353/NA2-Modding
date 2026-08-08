@@ -213,7 +213,7 @@ def main() -> int:
     parser.add_argument(
         "--write",
         action="store_true",
-        help="Replace the ui_layout_victory_names catalog edits after validation.",
+        help="Replace the ui_layout_victory_names edit definitions after validation.",
     )
     parser.add_argument(
         "--state-plan",
@@ -228,10 +228,12 @@ def main() -> int:
     patch, generated_edits = build_patch_rows()
     if args.write:
         catalog_path = REPOSITORY / "na228_builder" / "catalog.json"
+        edits_path = REPOSITORY / "na228_builder" / "edits.json"
         catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
-        node = catalog["localization"]["ui_layout"][PATCH_ID]
+        edits = json.loads(edits_path.read_text(encoding="utf-8"))
+        node = catalog["features"]["localization"]["ui_layout"][PATCH_ID]
         node["description"] = patch["description"]
-        node["edits"] = {
+        generated = {
             edit["edit_id"]: {
                 "operation": edit["operation"],
                 "destination_target_id": edit["destination_target_id"],
@@ -241,12 +243,26 @@ def main() -> int:
             }
             for edit in sorted(generated_edits, key=lambda item: int(item["order"]))
         }
-        temporary = catalog_path.with_suffix(".json.tmp")
-        temporary.write_text(
+        old_ids = node["edits"]
+        if set(old_ids) != set(generated):
+            raise ValueError(
+                "Generated Victory edit IDs differ from the catalog references"
+            )
+        node["edits"] = list(generated)
+        for edit_id, definition in generated.items():
+            edits[edit_id] = definition
+        catalog_temporary = catalog_path.with_suffix(".json.tmp")
+        catalog_temporary.write_text(
             json.dumps(catalog, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
-        os.replace(temporary, catalog_path)
+        edits_temporary = edits_path.with_suffix(".json.tmp")
+        edits_temporary.write_text(
+            json.dumps(edits, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        os.replace(catalog_temporary, catalog_path)
+        os.replace(edits_temporary, edits_path)
     if args.state_plan is not None:
         plan_path = args.state_plan
         if plan_path.is_absolute():

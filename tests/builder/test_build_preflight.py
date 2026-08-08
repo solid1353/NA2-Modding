@@ -57,6 +57,8 @@ class BuildPreflightTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
+        (builder / "edits.json").write_text("{}\n", encoding="utf-8")
+        (builder / "injections.json").write_text("{}\n", encoding="utf-8")
         configuration.write_text(
             json.dumps({"features": True, "overrides": {}}),
             encoding="utf-8",

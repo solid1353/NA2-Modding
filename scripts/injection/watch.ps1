@@ -23,7 +23,7 @@ $repository = [IO.Path]::GetFullPath(
 )
 . (Join-Path $repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
-$catalogPath = Join-Path $repository 'na228_builder\catalog.json'
+$injectionsPath = Join-Path $repository 'na228_builder\injections.json'
 $configurationPath = Join-Path $repository (
     'na228_builder\configurations\development.json'
 )
@@ -40,25 +40,18 @@ function Resolve-RepositoryPath([string]$Path) {
     return [IO.Path]::GetFullPath((Join-Path $repository $Path))
 }
 
-function Get-CatalogPayloadEntry {
-    param([Parameter(Mandatory = $true)][Collections.IDictionary]$Node)
+function Get-InjectionPayloadEntry {
+    param([Parameter(Mandatory = $true)][Collections.IDictionary]$Injections)
 
-    foreach ($key in $Node.Keys) {
-        $value = $Node[$key]
-        if ($key -ceq 'payload') {
-            foreach ($payloadId in $value.Keys) {
+    foreach ($injectionId in $Injections.Keys) {
+        $injection = $Injections[$injectionId]
+        if ($injection.Contains('payload')) {
+            foreach ($payloadId in $injection['payload'].Keys) {
                 [pscustomobject]@{
                     Id = [string]$payloadId
-                    Value = $value[$payloadId]
+                    Value = $injection['payload'][$payloadId]
                 }
             }
-            continue
-        }
-        if ($key -in @('description', 'proven', 'edits', 'hooks')) {
-            continue
-        }
-        if ($value -is [Collections.IDictionary]) {
-            Get-CatalogPayloadEntry -Node $value
         }
     }
 }
@@ -191,10 +184,10 @@ else {
         $canonicalSource = Join-Path $repository 'src\hot_reload_message.c'
     }
     else {
-        $catalog = Get-Content -Raw -LiteralPath $catalogPath |
+        $injections = Get-Content -Raw -LiteralPath $injectionsPath |
             ConvertFrom-Json -AsHashtable
         $payloadEntries = @(
-            Get-CatalogPayloadEntry -Node $catalog
+            Get-InjectionPayloadEntry -Injections $injections
         )
         $sourceRows = @(
             $payloadEntries |

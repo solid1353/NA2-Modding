@@ -9,19 +9,20 @@ package. A feature never chooses an offset inside `PRG/228.BIN` or owns its
 loader, memory reservation, or final runtime address.
 
 Canonical production inputs are the shared
-`na228_builder/targets.tsv` registry and the owning catalog nodes'
-`hooks` and `payload` objects, plus referenced repository sources and assets.
+`na228_builder/targets.tsv` registry, injection units from
+`na228_builder/injections.json`, and referenced repository sources and assets.
+Catalog leaves select injection units by ID.
 There is no separate runtime-injector data directory.
 
 A `payload` declaration is either a C source or a static code/data/rodata
 fragment. C sources contain their path, namespace, private imports, emitted
 fragment aliases, and optional ABI metadata. Static fragments contain their
 bytes or guarded blob, alignment, initialization marker, and private
-relocations. Shared declarations are stored only at the nearest common
-selectable owner of their consumers.
+relocations. Shared declarations are stored once in an injection unit
+referenced by every consuming catalog leaf.
 
-Configuration selection controls hooks. A parent payload declaration
-contributes only when at least one selected descendant consumes that owner.
+Configuration selection controls hooks. A shared payload declaration
+contributes only when at least one selected leaf references its injection unit.
 When every hook in a feature is disabled, the internal runtime-injector
 invocation contributes no payload or target writes.
 

@@ -545,8 +545,7 @@ def _catalog_feature_sha256(
 ) -> str:
     from . import catalog as catalog_module
 
-    raw_catalog = json.loads(selection.catalog_path.read_text(encoding="utf-8"))
-    raw_features = raw_catalog.get("features")
+    raw_features = selection.catalog.get("features")
     if not isinstance(raw_features, dict):
         raise ValueError("Catalog root must contain a features object")
     feature_value = raw_features[feature_id]
@@ -556,11 +555,37 @@ def _catalog_feature_sha256(
             json.dumps(feature_value, ensure_ascii=False, separators=(",", ":")).encode("utf-8"),
         )
     ]
+    for edit_id in catalog_module.feature_reference_ids(
+        selection, feature_id, "edits"
+    ):
+        entries.append(
+            (
+                f"edits/{edit_id}.json",
+                json.dumps(
+                    selection.edits[edit_id],
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                ).encode("utf-8"),
+            )
+        )
+    for injection_id in catalog_module.feature_reference_ids(
+        selection, feature_id, "injections"
+    ):
+        entries.append(
+            (
+                f"injections/{injection_id}.json",
+                json.dumps(
+                    selection.injections[injection_id],
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                ).encode("utf-8"),
+            )
+        )
     for module_type, module_path in module_inputs:
         for file in _module_content_files(module_path, module_type):
             entries.append((file.relative_to(repository).as_posix(), file.read_bytes()))
     if catalog_module.feature_has(selection, feature_id, "edits") or catalog_module.feature_has(
-        selection, feature_id, "hooks"
+        selection, feature_id, "injections"
     ):
         entries.append((targets_path.relative_to(repository).as_posix(), targets_path.read_bytes()))
     if catalog_module.feature_has(selection, feature_id, "edits"):
@@ -618,7 +643,7 @@ def _load_configuration(
         if catalog_module.feature_has(
             selection,
             feature_id,
-            "hooks",
+            "injections",
             enabled_only=True,
         ):
             available["runtime_injector"] = builder_root
@@ -685,6 +710,8 @@ def configuration_resource_files(
         configuration.definition_path,
         configuration.product_path,
         configuration.selection.catalog_path,
+        configuration.selection.edits_path,
+        configuration.selection.injections_path,
         configuration.targets_path,
     ]
     if include_disabled or any(

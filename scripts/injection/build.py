@@ -449,7 +449,7 @@ def load_symbol_map(
 def configured_payload() -> dict[str, tuple[object, dict[str, object]]]:
     result: dict[str, tuple[object, dict[str, object]]] = {}
     for feature_id in CATALOG_SELECTION.feature_ids:
-        for node, payload_id, value in catalog_module.payload_entries(
+        for node, _injection_id, payload_id, value in catalog_module.payload_entries(
             CATALOG_SELECTION,
             feature_id,
         ):

@@ -5,7 +5,7 @@ import hashlib
 import json
 import re
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path, PurePosixPath
 
 from ..modules.binary_patcher import engine as binary_patcher
@@ -22,7 +22,7 @@ from ..payload_builder.operations import (
 
 IDENTIFIER = re.compile(r"[a-z][a-z0-9_]*\Z")
 RESERVED_NODE_FIELDS = frozenset(
-    {"description", "proven", "edits", "hooks", "payload"}
+    {"description", "proven", "edits", "injections", "hooks", "payload"}
 )
 OPERATION_FIELDS = ["field", "required", "type"]
 FIELD_TYPES = {"hex", "integer", "path", "sha256", "text"}
@@ -50,7 +50,12 @@ class CatalogNode:
 @dataclass(frozen=True)
 class CatalogSelection:
     catalog_path: Path
+    edits_path: Path
+    injections_path: Path
     configuration_path: Path
+    catalog: dict[str, object]
+    edits: dict[str, dict[str, object]]
+    injections: dict[str, dict[str, object]]
     nodes: tuple[CatalogNode, ...]
 
     @property
@@ -88,7 +93,12 @@ class OperationField:
     type: str
 
 
-def _read_json(path: Path, label: str) -> dict[str, object]:
+def _read_json(
+    path: Path,
+    label: str,
+    *,
+    allow_empty: bool = False,
+) -> dict[str, object]:
     def unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
         value: dict[str, object] = {}
         for key, item in pairs:
@@ -101,8 +111,9 @@ def _read_json(path: Path, label: str) -> dict[str, object]:
         value = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=unique_object)
     except json.JSONDecodeError as exc:
         raise ValueError(f"{label} is not valid JSON: {path}") from exc
-    if not isinstance(value, dict) or not value:
-        raise ValueError(f"{label} root must be a non-empty object")
+    if not isinstance(value, dict) or (not value and not allow_empty):
+        qualifier = "an object" if allow_empty else "a non-empty object"
+        raise ValueError(f"{label} root must be {qualifier}")
     return value
 
 
@@ -132,10 +143,56 @@ def _selectable_children(value: dict[str, object], label: str) -> dict[str, dict
     return children
 
 
+def _reference_ids(
+    value: dict[str, object],
+    field: str,
+    label: str,
+) -> tuple[str, ...]:
+    raw = value.get(field)
+    if raw is None:
+        return ()
+    if not isinstance(raw, list):
+        raise ValueError(f"{label}.{field} must be an array")
+    result: list[str] = []
+    for index, item in enumerate(raw):
+        if not isinstance(item, str):
+            raise ValueError(f"{label}.{field}[{index}] must be text")
+        result.append(_identifier(item, f"{label}.{field}[{index}]"))
+    if len(result) != len(set(result)):
+        raise ValueError(f"{label}.{field} contains duplicate references")
+    return tuple(result)
+
+
 def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelection:
     catalog_path = catalog_path.resolve()
     configuration_path = configuration_path.resolve()
     catalog = _read_json(catalog_path, "Catalog")
+    edits_path = catalog_path.with_name("edits.json")
+    injections_path = catalog_path.with_name("injections.json")
+    raw_edits = _read_json(edits_path, "Edits", allow_empty=True)
+    raw_injections = _read_json(injections_path, "Injections", allow_empty=True)
+    edits: dict[str, dict[str, object]] = {}
+    injections: dict[str, dict[str, object]] = {}
+    for edit_id, edit in raw_edits.items():
+        _identifier(edit_id, "Edit ID")
+        if not isinstance(edit, dict):
+            raise ValueError(f"Edit {edit_id!r} must be an object")
+        edits[edit_id] = edit
+    for injection_id, injection in raw_injections.items():
+        _identifier(injection_id, "Injection ID")
+        if not isinstance(injection, dict):
+            raise ValueError(f"Injection {injection_id!r} must be an object")
+        extra = sorted(set(injection) - {"hooks", "payload"})
+        if extra:
+            raise ValueError(
+                f"Injection {injection_id!r} has unknown fields: {extra}"
+            )
+        if not injection:
+            raise ValueError(f"Injection {injection_id!r} must not be empty")
+        for field in ("hooks", "payload"):
+            if field in injection and not isinstance(injection[field], dict):
+                raise ValueError(f"Injection {injection_id!r}.{field} must be an object")
+        injections[injection_id] = injection
     configuration = _read_json(configuration_path, "Configuration")
     nodes: list[CatalogNode] = []
     missing = object()
@@ -157,10 +214,31 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
         _description(value.get("description"), label)
         if "proven" in value and value["proven"] is not False:
             raise ValueError(f"{label}.proven must be false when present")
-        for field in ("edits", "hooks", "payload"):
-            if field in value and not isinstance(value[field], dict):
-                raise ValueError(f"{label}.{field} must be an object")
+        for field in ("hooks", "payload"):
+            if field in value:
+                raise ValueError(
+                    f"{label}.{field} must be extracted to injections.json"
+                )
         children = _selectable_children(value, label)
+        edit_ids = _reference_ids(value, "edits", label)
+        injection_ids = _reference_ids(value, "injections", label)
+        if children and (edit_ids or injection_ids):
+            raise ValueError(
+                f"{label} implementation references must be on catalog leaves"
+            )
+        missing_edits = [edit_id for edit_id in edit_ids if edit_id not in edits]
+        if missing_edits:
+            raise ValueError(f"{label}.edits references unknown edits: {missing_edits}")
+        missing_injections = [
+            injection_id
+            for injection_id in injection_ids
+            if injection_id not in injections
+        ]
+        if missing_injections:
+            raise ValueError(
+                f"{label}.injections references unknown injections: "
+                f"{missing_injections}"
+            )
         if isinstance(setting, bool):
             enabled = inherited_enabled and setting
             nodes.append(CatalogNode(path, value, enabled))
@@ -258,7 +336,16 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
         ("features",),
     )
     visit(features_value, effective, ("features",), True)
-    return CatalogSelection(catalog_path, configuration_path, tuple(nodes))
+    return CatalogSelection(
+        catalog_path,
+        edits_path,
+        injections_path,
+        configuration_path,
+        catalog,
+        edits,
+        injections,
+        tuple(nodes),
+    )
 
 
 def all_enabled_configuration(catalog_path: Path) -> dict[str, object]:
@@ -418,7 +505,7 @@ def load_binary_package(
     nodes = [
         node
         for node in selection.feature_nodes(feature_id)
-        if isinstance(node.value.get("edits"), dict) and node.value["edits"]
+        if _reference_ids(node.value, "edits", node.node_id)
     ]
     targets = binary_patcher.load_targets(targets_path)
     contracts = load_operation_contracts(operations_path)
@@ -427,13 +514,9 @@ def load_binary_package(
     used_targets: set[str] = set()
     order = 0
     for node in nodes:
-        raw_edits = node.value["edits"]
-        assert isinstance(raw_edits, dict)
-        for edit_key, raw_edit in raw_edits.items():
-            _identifier(edit_key, f"{node.node_id}.edits key")
-            if not isinstance(raw_edit, dict):
-                raise ValueError(f"{node.node_id}.edits.{edit_key} must be an object")
-            label = f"{node.node_id}.edits.{edit_key}"
+        for edit_key in _reference_ids(node.value, "edits", node.node_id):
+            raw_edit = selection.edits[edit_key]
+            label = f"edits.{edit_key}"
             operation = _validate_operation(raw_edit, label, contracts)
             destination_id = str(raw_edit["destination_target_id"])
             if destination_id not in targets:
@@ -513,23 +596,53 @@ def load_binary_package(
 def payload_entries(
     selection: CatalogSelection,
     feature_id: str,
-) -> list[tuple[CatalogNode, str, dict[str, object]]]:
-    entries: list[tuple[CatalogNode, str, dict[str, object]]] = []
-    seen: set[str] = set()
-    for node in selection.feature_nodes(feature_id):
-        payload = node.value.get("payload")
+) -> list[tuple[CatalogNode, str, str, dict[str, object]]]:
+    entries: list[tuple[CatalogNode, str, str, dict[str, object]]] = []
+    seen_payloads: set[str] = set()
+    for node, injection_id, injection in injection_entries(selection, feature_id):
+        if not node.enabled:
+            continue
+        payload = injection.get("payload")
         if not isinstance(payload, dict):
             continue
-        for key, value in payload.items():
-            if not runtime_injector.IDENTIFIER.fullmatch(key):
-                raise ValueError(f"{node.node_id}.payload key is invalid: {key!r}")
-            if key in seen:
-                raise ValueError(f"Duplicate payload declaration {key!r} in {feature_id}")
-            seen.add(key)
+        for payload_id, value in payload.items():
+            if not runtime_injector.IDENTIFIER.fullmatch(payload_id):
+                raise ValueError(
+                    f"injections.{injection_id}.payload key is invalid: "
+                    f"{payload_id!r}"
+                )
+            if payload_id in seen_payloads:
+                raise ValueError(
+                    f"Duplicate payload declaration {payload_id!r} in {feature_id}"
+                )
+            seen_payloads.add(payload_id)
             if not isinstance(value, dict):
-                raise ValueError(f"{node.node_id}.payload.{key} must be an object")
-            if node.enabled:
-                entries.append((node, key, value))
+                raise ValueError(
+                    f"injections.{injection_id}.payload.{payload_id} must be an object"
+                )
+            entries.append((node, injection_id, payload_id, value))
+    return entries
+
+
+def injection_entries(
+    selection: CatalogSelection,
+    feature_id: str,
+) -> list[tuple[CatalogNode, str, dict[str, object]]]:
+    entries: list[tuple[CatalogNode, str, dict[str, object]]] = []
+    references: dict[str, list[CatalogNode]] = {}
+    for node in selection.feature_nodes(feature_id):
+        for injection_id in _reference_ids(
+            node.value, "injections", node.node_id
+        ):
+            references.setdefault(injection_id, []).append(node)
+    for injection_id, nodes in references.items():
+        representative = replace(
+            nodes[0],
+            enabled=any(node.enabled for node in nodes),
+        )
+        entries.append(
+            (representative, injection_id, selection.injections[injection_id])
+        )
     return entries
 
 
@@ -713,24 +826,28 @@ def load_runtime_package(
     repository: Path,
     owner: str,
 ) -> runtime_injector.RuntimeInjectionPackage:
-    hook_nodes = [
-        node
-        for node in selection.feature_nodes(feature_id)
-        if isinstance(node.value.get("hooks"), dict) and node.value["hooks"]
+    runtime_entries = injection_entries(selection, feature_id)
+    hook_entries = [
+        (node, injection_id, injection)
+        for node, injection_id, injection in runtime_entries
+        if isinstance(injection.get("hooks"), dict) and injection["hooks"]
     ]
+    hook_nodes = [node for node, _, _ in hook_entries]
     targets = binary_patcher.load_targets(targets_path)
     patches = {node.node_id: _internal_patch(node) for node in hook_nodes}
     edits: list[runtime_injector.RuntimeSymbolicEdit] = []
     used_targets: set[str] = set()
     order = 0
-    for node in hook_nodes:
-        raw_hooks = node.value["hooks"]
+    for node, injection_id, injection in hook_entries:
+        raw_hooks = injection["hooks"]
         assert isinstance(raw_hooks, dict)
         for hook_key, raw in raw_hooks.items():
-            _identifier(hook_key, f"{node.node_id}.hooks key")
+            _identifier(hook_key, f"injections.{injection_id}.hooks key")
             if not isinstance(raw, dict):
-                raise ValueError(f"{node.node_id}.hooks.{hook_key} must be an object")
-            label = f"{node.node_id}.hooks.{hook_key}"
+                raise ValueError(
+                    f"injections.{injection_id}.hooks.{hook_key} must be an object"
+                )
+            label = f"injections.{injection_id}.hooks.{hook_key}"
             allowed = {
                 "description", "target_id", "offset", "expected_hex",
                 "replacement_hex", "relocation_offset", "symbol", "encoding", "addend",
@@ -777,8 +894,8 @@ def load_runtime_package(
                 )
             )
     declared: list[tuple[int, PayloadFragment]] = []
-    for node, payload_id, raw in payload_entries(selection, feature_id):
-        label = f"{node.node_id}.payload.{payload_id}"
+    for _, injection_id, payload_id, raw in payload_entries(selection, feature_id):
+        label = f"injections.{injection_id}.payload.{payload_id}"
         if raw.get("kind") == "c":
             declared.extend(_compile_source(repository, owner, payload_id, raw, label))
         else:
@@ -802,6 +919,23 @@ def load_runtime_package(
     )
 
 
+def feature_reference_ids(
+    selection: CatalogSelection,
+    feature_id: str,
+    field: str,
+) -> tuple[str, ...]:
+    if field not in {"edits", "injections"}:
+        raise ValueError(f"Unsupported catalog implementation field: {field}")
+    result: list[str] = []
+    seen: set[str] = set()
+    for node in selection.feature_nodes(feature_id):
+        for reference_id in _reference_ids(node.value, field, node.node_id):
+            if reference_id not in seen:
+                seen.add(reference_id)
+                result.append(reference_id)
+    return tuple(result)
+
+
 def feature_has(
     selection: CatalogSelection,
     feature_id: str,
@@ -809,30 +943,61 @@ def feature_has(
     *,
     enabled_only: bool = False,
 ) -> bool:
-    return any(
-        (not enabled_only or node.enabled)
-        and isinstance(node.value.get(field), dict)
-        and node.value[field]
-        for node in selection.feature_nodes(feature_id)
-    )
+    if field == "edits":
+        return any(
+            (not enabled_only or node.enabled)
+            and _reference_ids(node.value, "edits", node.node_id)
+            for node in selection.feature_nodes(feature_id)
+        )
+    if field == "injections":
+        return any(
+            (not enabled_only or node.enabled)
+            and any(
+                isinstance(selection.injections[injection_id].get("hooks"), dict)
+                and selection.injections[injection_id]["hooks"]
+                for injection_id in _reference_ids(
+                    node.value, "injections", node.node_id
+                )
+            )
+            for node in selection.feature_nodes(feature_id)
+        )
+    raise ValueError(f"Unsupported catalog implementation field: {field}")
 
 
 def referenced_files(selection: CatalogSelection, repository: Path, feature_id: str) -> tuple[Path, ...]:
     files: set[Path] = set()
     for node in selection.feature_nodes(feature_id):
-        edits = node.value.get("edits")
-        if isinstance(edits, dict):
-            for raw in edits.values():
-                if isinstance(raw, dict) and "blob_path" in raw:
-                    files.add(_source_path(repository, raw["blob_path"], f"{node.node_id}.blob_path"))
-        payload = node.value.get("payload")
+        for edit_id in _reference_ids(node.value, "edits", node.node_id):
+            raw = selection.edits[edit_id]
+            if "blob_path" in raw:
+                files.add(
+                    _source_path(
+                        repository,
+                        raw["blob_path"],
+                        f"edits.{edit_id}.blob_path",
+                    )
+                )
+    for _, injection_id, injection in injection_entries(selection, feature_id):
+        payload = injection.get("payload")
         if not isinstance(payload, dict):
             continue
         for payload_id, raw in payload.items():
             if not isinstance(raw, dict):
                 continue
             if raw.get("kind") == "c":
-                files.add(_source_path(repository, raw.get("path"), f"{node.node_id}.payload.{payload_id}.path"))
+                files.add(
+                    _source_path(
+                        repository,
+                        raw.get("path"),
+                        f"injections.{injection_id}.payload.{payload_id}.path",
+                    )
+                )
             elif "blob_path" in raw:
-                files.add(_source_path(repository, raw["blob_path"], f"{node.node_id}.payload.{payload_id}.blob_path"))
+                files.add(
+                    _source_path(
+                        repository,
+                        raw["blob_path"],
+                        f"injections.{injection_id}.payload.{payload_id}.blob_path",
+                    )
+                )
     return tuple(sorted(files, key=lambda path: path.as_posix()))

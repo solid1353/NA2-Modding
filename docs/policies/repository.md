@@ -145,9 +145,10 @@ supporting documentation belongs under the repository root `docs/` hierarchy.
   or a component contract is useful. Link to substantial documentation instead
   of accumulating multiple Markdown files beside code.
 - The builder has no physical `features/` directory. Selectable structure lives
-  in `na228_builder/catalog.json`; non-inline executable inputs and assets live
-  under their concrete builder data area, and feature documentation belongs
-  under `docs/features/`. Catalog-only features require no directory.
+  in `na228_builder/catalog.json`; guarded edits live in `edits.json`; runtime
+  injection units live in `injections.json`. Non-inline executable inputs and
+  assets live under their concrete builder data area, and feature documentation
+  belongs under `docs/features/`. Catalog-only features require no directory.
 - Current operational documentation describes the current system. Delete
   superseded policy, stale incident explanations, and obsolete retirement notes
   when they no longer provide concrete current value; Git preserves history.

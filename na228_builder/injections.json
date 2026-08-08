@@ -1,0 +1,1389 @@
+{
+  "localization": {
+    "payload": {
+      "font_numeric": {
+        "kind": "c",
+        "path": "src/localization/font/font_numeric.c",
+        "namespace": "localization.font.numeric.c",
+        "imports": {
+          "font_numeric_format_decimal": "localization.font.c.numeric_format_decimal",
+          "font_numeric_format_two_decimal": "localization.font.c.numeric_format_two_decimal"
+        },
+        "fragments": {
+          "localization.font.ninja_song_ascii_number": {
+            "order": 48,
+            "object": "localization.font.numeric.c.text.font.ninja.song.ascii.number"
+          },
+          "localization.font.save_load_day": {
+            "order": 49,
+            "object": "localization.font.numeric.c.text.font.save.load.day"
+          },
+          "localization.font.save_load_two": {
+            "order": 50,
+            "object": "localization.font.numeric.c.text.font.save.load.two"
+          },
+          "localization.font.save_load_year": {
+            "order": 51,
+            "object": "localization.font.numeric.c.text.font.save.load.year"
+          },
+          "localization.font.save_load_hour": {
+            "order": 52,
+            "object": "localization.font.numeric.c.text.font.save.load.hour"
+          },
+          "localization.font.battle_settings_time": {
+            "order": 53,
+            "object": "localization.font.numeric.c.text.font.battle.settings.time"
+          }
+        }
+      },
+      "localization.font.c.numeric_format_decimal": {
+        "kind": "code",
+        "order": 54,
+        "alignment": 4,
+        "value": "2130A0006000053CD342A53428EF050800000000"
+      },
+      "localization.font.c.numeric_format_two_decimal": {
+        "kind": "code",
+        "order": 55,
+        "alignment": 4,
+        "value": "2130A0006000053C205CA53428EF050800000000"
+      }
+    }
+  },
+  "font_glyphs_metrics": {
+    "hooks": {
+      "font_glyphs_metrics_01": {
+        "target_id": "na2_elf",
+        "offset": "0x87374",
+        "expected_hex": "6800638E1800648C4C008010000000008018020021288300",
+        "symbol": "localization.font.glyph_metric_apply",
+        "encoding": "jal26",
+        "replacement_hex": "2D2060022D2840000000000000000000ED1C060800000000",
+        "relocation_offset": "0x8"
+      },
+      "font_glyphs_metrics_02": {
+        "target_id": "na2_elf",
+        "offset": "0x87B60",
+        "expected_hex": "030020A2020020A2010020A2000020A23D00001000000000",
+        "symbol": "localization.font.glyph_metric_lookup",
+        "encoding": "jal26",
+        "replacement_hex": "2D206002000045920000000000000000DA1E0608000022AE",
+        "relocation_offset": "0x8"
+      }
+    },
+    "payload": {
+      "font_glyph_metrics": {
+        "kind": "c",
+        "path": "src/localization/font/font_glyph_metrics.c",
+        "namespace": "localization.font.glyph.c",
+        "imports": {},
+        "fragments": {
+          "localization.font.glyph_metric_lookup": {
+            "order": 58,
+            "object": "localization.font.glyph.c.text.font.glyph.metric.lookup"
+          },
+          "localization.font.glyph_metric_apply": {
+            "order": 59,
+            "object": "localization.font.glyph.c.text.font.glyph.metric.apply"
+          }
+        }
+      }
+    }
+  },
+  "font_layout": {
+    "payload": {
+      "font_v2_core": {
+        "kind": "c",
+        "path": "src/localization/font/font_v2_core.c",
+        "namespace": "localization.font.v2.c",
+        "imports": {
+          "font_v2_ascii_widths": "localization.font.v2.ascii_widths",
+          "font_v2_active_session": "localization.font.v2.session_pointer",
+          "font_v2_controls_callback": "localization.font.v2.controls_callback",
+          "font_v2_title_callback": "localization.font.v2.title_callback",
+          "font_v2_pause_list_callback": "localization.font.v2.pause_list_callback",
+          "font_v2_pause_list_selected_callback": "localization.font.v2.pause_list_selected_callback",
+          "font_v2_quit_active": "localization.font.v2.quit_active",
+          "font_v2_quit_unselected_callback": "localization.font.v2.c.quit_unselected_callback",
+          "font_v2_special_choice_selected_callback": "localization.font.v2.special_choice_selected_callback",
+          "font_v2_quit_body_callback": "localization.font.v2.quit_body_callback",
+          "font_v2_special_controls_body_callback": "localization.font.v2.special_controls_body_callback",
+          "font_v2_native_measure_callback": "localization.font.v2.c.native_measure_callback",
+          "font_v2_practice_tokens": "localization.font.v2.practice_tokens",
+          "font_v2_practice_icon_map": "localization.font.v2.practice_icon_map",
+          "font_v2_practice_icon_draw_callback": "localization.font.v2.c.practice_icon_draw_callback",
+          "font_v2_practice_callback": "localization.font.v2.practice_callback",
+          "font_ninja_song_ascii_number": "localization.font.ninja_song_ascii_number"
+        },
+        "fragments": {
+          "localization.font.v2.c.is_br": {
+            "order": 6,
+            "object": "localization.font.v2.c.text"
+          },
+          "localization.font.v2.measure": {
+            "order": 7,
+            "object": "localization.font.v2.c.text.font.v2.measure"
+          },
+          "localization.font.v2.prepare": {
+            "order": 8,
+            "object": "localization.font.v2.c.text.font.v2.prepare"
+          },
+          "localization.font.v2.adapter_call": {
+            "order": 9,
+            "object": "localization.font.v2.c.text.font.v2.adapter.call"
+          },
+          "localization.font.v2.controls_adapter": {
+            "order": 10,
+            "object": "localization.font.v2.c.text.font.v2.controls.adapter",
+            "abi": "text_style_center_x_draw_y",
+            "description": "Controls and Special Controls one-line labels"
+          },
+          "localization.font.v2.title_adapter": {
+            "order": 11,
+            "object": "localization.font.v2.c.text.font.v2.title.adapter.common"
+          },
+          "localization.font.v2.command_title_entry": {
+            "order": 12,
+            "object": "localization.font.v2.c.text.font.v2.command.title.entry",
+            "abi": "arg0_text_arg2_native_x_native_y",
+            "description": "Command Chart title"
+          },
+          "localization.font.v2.practice_title_entry": {
+            "order": 13,
+            "object": "localization.font.v2.c.text.font.v2.practice.title.entry",
+            "abi": "arg0_text_arg2_native_x_native_y",
+            "description": "Practice title"
+          },
+          "localization.font.v2.pause_list_adapter": {
+            "order": 14,
+            "object": "localization.font.v2.c.text.font.v2.pause.list.adapter",
+            "abi": "arg0_text_arg2_native_x_native_y",
+            "description": "Pause-list row"
+          },
+          "localization.font.v2.c.pause_list_selected_impl": {
+            "order": 15,
+            "object": "localization.font.v2.c.text.font.v2.pause.list.selected.impl"
+          },
+          "localization.font.v2.c.quit_scope_enter": {
+            "order": 16,
+            "object": "localization.font.v2.c.text.font.v2.quit.scope.enter"
+          },
+          "localization.font.v2.c.quit_scope_leave": {
+            "order": 17,
+            "object": "localization.font.v2.c.text.font.v2.quit.scope.leave"
+          },
+          "localization.font.v2.c.map_choice": {
+            "order": 18,
+            "object": "localization.font.v2.c.text.font.v2.map.choice"
+          },
+          "localization.font.v2.c.quit_selected_map": {
+            "order": 19,
+            "object": "localization.font.v2.c.text.font.v2.quit.selected.map"
+          },
+          "localization.font.v2.quit_unselected_adapter": {
+            "order": 20,
+            "object": "localization.font.v2.c.text.font.v2.quit.unselected.adapter",
+            "abi": "arg0_record_arg2_arg3",
+            "description": "Quit choice not selected"
+          },
+          "localization.font.v2.native_measure": {
+            "order": 21,
+            "object": "localization.font.v2.c.text.font.v2.native.measure"
+          },
+          "localization.font.v2.wrap_native": {
+            "order": 22,
+            "object": "localization.font.v2.c.text.font.v2.wrap.native"
+          },
+          "localization.font.v2.c.wrapped_body_common": {
+            "order": 23,
+            "object": "localization.font.v2.c.text.font.v2.wrapped.body.common"
+          },
+          "localization.font.v2.quit_body_adapter": {
+            "order": 24,
+            "object": "localization.font.v2.c.text.font.v2.quit.body.adapter",
+            "abi": "arg0_text_arg2",
+            "description": "Quit confirmation body"
+          },
+          "localization.font.v2.special_controls_body_adapter": {
+            "order": 25,
+            "object": "localization.font.v2.c.text.font.v2.special.controls.body.adapter",
+            "abi": "arg0_text_arg2",
+            "description": "Special Controls explanatory body"
+          },
+          "localization.font.v2.practice_append": {
+            "order": 26,
+            "object": "localization.font.v2.c.text.font.v2.practice.append"
+          },
+          "localization.font.v2.c.icon_record": {
+            "order": 27,
+            "object": "localization.font.v2.c.text.font.v2.icon.record"
+          },
+          "localization.font.v2.practice_icon_metric": {
+            "order": 28,
+            "object": "localization.font.v2.c.text.font.v2.practice.icon.metric"
+          },
+          "localization.font.v2.practice_icon_draw": {
+            "order": 29,
+            "object": "localization.font.v2.c.text.font.v2.practice.icon.draw"
+          },
+          "localization.font.v2.c.practice_adapter_impl": {
+            "order": 30,
+            "object": "localization.font.v2.c.text.font.v2.practice.adapter.impl"
+          },
+          "localization.font.v2.c.command_relationship_impl": {
+            "order": 60,
+            "object": "localization.font.v2.c.text.font.v2.command.relationship.impl"
+          },
+          "localization.font.v2.c.command_icon_offset": {
+            "order": 61,
+            "object": "localization.font.v2.c.text.font.v2.command.icon.offset"
+          },
+          "localization.font.v2.character_confirmation_body_adapter": {
+            "order": 64,
+            "object": "localization.font.v2.c.text.font.v2.character.confirmation.body.adapter",
+            "abi": "arg0_text_arg2",
+            "description": "Character Select return-confirmation body"
+          },
+          "localization.font.v2.character_selected_adapter": {
+            "order": 65,
+            "object": "localization.font.v2.c.text.font.v2.character.selected.adapter",
+            "abi": "object_draw_x_draw_y_text",
+            "description": "Character Select selected modal row"
+          },
+          "localization.font.v2.c.character_confirmation_body_callback": {
+            "order": 66,
+            "object": "localization.font.v2.c.text.font.v2.character.confirmation.body.callback"
+          },
+          "localization.font.v2.c.jutsu_draw_callback": {
+            "order": 67,
+            "object": "localization.font.v2.c.text.font.v2.jutsu.draw.callback"
+          },
+          "localization.font.v2.jutsu_draw_entry": {
+            "order": 68,
+            "object": "localization.font.v2.c.text.font.v2.jutsu.draw.entry"
+          },
+          "localization.font.v2.collection_body_adapter": {
+            "order": 69,
+            "object": "localization.font.v2.c.text.font.v2.collection.body.adapter"
+          },
+          "localization.font.v2.character_unselected_adapter": {
+            "order": 70,
+            "object": "localization.font.v2.c.text.font.v2.character.unselected.adapter"
+          },
+          "localization.font.v2.c.collection_list_callback": {
+            "order": 71,
+            "object": "localization.font.v2.c.text.font.v2.collection.list.callback"
+          },
+          "localization.font.v2.collection_list_entry": {
+            "order": 72,
+            "object": "localization.font.v2.c.text.font.v2.collection.list.entry",
+            "abi": "text_highlight_native_x_native_y",
+            "description": "Shared Collection list row classifier"
+          },
+          "localization.font.v2.c.collection_body_callback": {
+            "order": 73,
+            "object": "localization.font.v2.c.text.font.v2.collection.body.callback"
+          },
+          "localization.font.v2.c.settings_label_callback": {
+            "order": 74,
+            "object": "localization.font.v2.c.text.font.v2.settings.label.callback"
+          },
+          "localization.font.v2.c.settings_heading_callback": {
+            "order": 75,
+            "object": "localization.font.v2.c.text.font.v2.settings.heading.callback"
+          },
+          "localization.font.v2.c.settings_value_callback": {
+            "order": 76,
+            "object": "localization.font.v2.c.text.font.v2.settings.value.callback"
+          },
+          "localization.font.v2.c.settings_row_common": {
+            "order": 77,
+            "object": "localization.font.v2.c.text.font.v2.settings.row.common"
+          },
+          "localization.font.v2.battle_settings_label_adapter": {
+            "order": 78,
+            "object": "localization.font.v2.c.text.font.v2.battle.settings.label.adapter",
+            "abi": "text_style_native_x_native_y",
+            "description": "Battle Settings label row"
+          },
+          "localization.font.v2.practice_settings_label_adapter": {
+            "order": 79,
+            "object": "localization.font.v2.c.text.font.v2.practice.settings.label.adapter",
+            "abi": "text_style_native_x_native_y",
+            "description": "Practice Settings label row"
+          },
+          "localization.font.v2.settings_value_adapter": {
+            "order": 80,
+            "object": "localization.font.v2.c.text.font.v2.settings.value.adapter",
+            "abi": "text_color_native_x_native_y",
+            "description": "Practice Settings centered value"
+          },
+          "localization.font.v2.practice_settings_heading_adapter": {
+            "order": 81,
+            "object": "localization.font.v2.c.text.font.v2.practice.settings.heading.adapter",
+            "abi": "text_color_native_x_native_y",
+            "description": "Practice Settings section heading"
+          },
+          "localization.font.v2.c.ninja_text_callback": {
+            "order": 82,
+            "object": "localization.font.v2.c.text.font.v2.ninja.text.callback"
+          },
+          "localization.font.v2.c.ninja_text_common": {
+            "order": 83,
+            "object": "localization.font.v2.c.text.font.v2.ninja.text.common"
+          },
+          "localization.font.v2.ninja_compact_adapter": {
+            "order": 84,
+            "object": "localization.font.v2.c.text.font.v2.ninja.compact.adapter"
+          },
+          "localization.font.v2.ninja_unit_adapter": {
+            "order": 85,
+            "object": "localization.font.v2.c.text.font.v2.ninja.unit.adapter"
+          },
+          "localization.font.v2.ninja_equals_adapter": {
+            "order": 86,
+            "object": "localization.font.v2.c.text.font.v2.ninja.equals.adapter"
+          },
+          "localization.font.v2.ninja_total_adapter": {
+            "order": 87,
+            "object": "localization.font.v2.c.text.font.v2.ninja.total.adapter"
+          },
+          "localization.font.v2.ninja_empty_adapter": {
+            "order": 88,
+            "object": "localization.font.v2.c.text.font.v2.ninja.empty.adapter"
+          },
+          "localization.font.v2.c.ninja_objective_callback": {
+            "order": 89,
+            "object": "localization.font.v2.c.text.font.v2.ninja.objective.callback"
+          },
+          "localization.font.v2.c.ninja_objective_draw": {
+            "order": 90,
+            "object": "localization.font.v2.c.text.font.v2.ninja.objective.draw"
+          },
+          "localization.font.v2.ninja_arithmetic_template": {
+            "order": 91,
+            "object": "localization.font.v2.c.text.font.v2.ninja.arithmetic.template",
+            "abi": "native_x_native_y_row_set_row_index",
+            "description": "Shared data-driven Ninja Song formula renderer for all fifteen rows"
+          },
+          "localization.font.v2.ninja_objective_row_adapter": {
+            "order": 92,
+            "object": "localization.font.v2.c.text.font.v2.ninja.objective.row.adapter",
+            "abi": "page_row_record_display_index_row_y_bits",
+            "description": "Shared Ninja Song visible objective-row renderer preserving the native index, marker, and prose strings"
+          },
+          "localization.font.v2.collection_figure_music_header_adapter": {
+            "order": 93,
+            "object": "localization.font.v2.c.text.font.v2.collection.figure.music.header.adapter",
+            "abi": "native_x_native_y_text_style",
+            "description": "Shared Collection Figure and Music header origin formula"
+          },
+          "localization.font.v2.c.special_choice_session_init": {
+            "order": 94,
+            "object": "localization.font.v2.c.text.font.v2.special.choice.session.init"
+          },
+          "localization.font.v2.c.special_choice_selected_adapter": {
+            "order": 95,
+            "object": "localization.font.v2.c.text.font.v2.special.choice.selected.adapter"
+          },
+          "localization.font.v2.c.wrap_retry": {
+            "order": 101,
+            "object": "localization.font.v2.c.text.font.v2.wrap.retry"
+          },
+          "localization.font.v2.collection_jutsu_header_adapter": {
+            "order": 102,
+            "object": "localization.font.v2.c.text.font.v2.collection.jutsu.header.adapter",
+            "abi": "native_x_native_y_text_style",
+            "description": "Shared Collection Ultimate Jutsu header origin formula"
+          },
+          "localization.font.v2.battle_settings_value_adapter": {
+            "order": 103,
+            "object": "localization.font.v2.c.text.font.v2.battle.settings.value.adapter",
+            "abi": "text_color_native_x_native_y",
+            "description": "Battle Settings centered value with page-local raster phase"
+          },
+          "localization.font.v2.c.character_scope_enter": {
+            "order": 104,
+            "object": "localization.font.v2.c.text.font.v2.character.scope.enter"
+          },
+          "localization.font.v2.c.linked_choice_session_prepare": {
+            "order": 106,
+            "object": "localization.font.v2.c.text.font.v2.linked.choice.session.prepare"
+          },
+          "localization.font.v2.c.linked_choice_selected_impl": {
+            "order": 107,
+            "object": "localization.font.v2.c.text.font.v2.linked.choice.selected.impl"
+          },
+          "localization.font.v2.linked_choice_unselected_adapter": {
+            "order": 108,
+            "object": "localization.font.v2.c.text.font.v2.linked.choice.unselected.adapter",
+            "abi": "arg0_text_arg2_native_x_native_y",
+            "description": "Linked Mode ordinary centered choice"
+          }
+        }
+      },
+      "localization.font.v2.session_pointer": {
+        "kind": "data",
+        "order": 1,
+        "alignment": 4,
+        "value": "00000000"
+      },
+      "localization.font.v2.quit_active": {
+        "kind": "data",
+        "order": 2,
+        "alignment": 4,
+        "value": "00000000"
+      },
+      "localization.font.v2.ascii_widths": {
+        "kind": "rodata",
+        "order": 3,
+        "alignment": 1,
+        "value": "0805090B0B0C0D0508080C0A0507050A0A080A0A0C0A0A0B0A0A05050A0A0A0A0E0C0B0D0B0B0A0C0C050A0B0A0E0C0C0B0C0B0B0C0C0D0E0D0D0B080C07060E050A0A0B0A0A080A0A05070A050E0A0B0A0A080A090A0A0D0A0A0906050608"
+      },
+      "localization.font.v2.practice_tokens": {
+        "kind": "rodata",
+        "order": 4,
+        "alignment": 1,
+        "value": "3C69636F6E55503E00000000000000003C69636F6E444F574E3E0000000000003C69636F6E52494748543E00000000003C69636F6E4C4546543E0000000000003C69636F6E434952434C453E000000003C69636F6E545249414E474C453E00003C69636F6E5351554152453E000000003C69636F6E43524F53533E00000000003C69636F6E455443303E0000000000003C69636F6E4C313E00000000000000003C69636F6E52313E00000000000000003C69636F6E4C323E00000000000000003C69636F6E52323E00000000000000002000"
+      },
+      "localization.font.v2.practice_icon_map": {
+        "kind": "rodata",
+        "order": 5,
+        "alignment": 1,
+        "value": "05040706090B0A0CFFFFFF00010302FFFF08"
+      },
+      "localization.font.v2.controls_callback": {
+        "kind": "code",
+        "order": 31,
+        "alignment": 4,
+        "value": "E0FFBD271C00BFAF1800B0AF1400B1AF1000B2AF218080002188A0002190C0002128000038E60D0C0000000043400200000088442000804648004CC6006300464C004DC6212000022128200290E40D0C000000001000B28F1400B18F1800B08F1C00BF8F0800E0032000BD27"
+      },
+      "localization.font.v2.title_callback": {
+        "kind": "code",
+        "order": 32,
+        "alignment": 4,
+        "value": "4800ECC44C00EDC4C4080E0800000000"
+      },
+      "localization.font.v2.pause_list_callback": {
+        "kind": "code",
+        "order": 33,
+        "alignment": 4,
+        "value": "4800ECC44C00EDC41C090E0800000000"
+      },
+      "localization.font.v2.pause_list_selected_callback": {
+        "kind": "code",
+        "order": 34,
+        "alignment": 4,
+        "value": "4800E0C424000046000005444C00E1C464080046000806446800E88C0400E78CE8090E0800000000"
+      },
+      "localization.font.v2.quit_choices_scope": {
+        "kind": "code",
+        "order": 36,
+        "alignment": 4,
+        "value": "C0FFBD273C00BFAF1000A4AF1400A5AF1800A6AF1C00A7AF2000ACE72400ADE70000000C000000002800A2AF1000A48F1400A58F1800A68F1C00A78F2000ACC72400ADC7800D0E0C000000002C00A2AF2800A48F0000000C000000002C00A28F3C00BF8F0800E0034000BD27",
+        "relocations": {
+          "fr_v2_r073": {
+            "offset": "0x20",
+            "encoding": "jal26",
+            "symbol": "localization.font.v2.c.quit_scope_enter"
+          },
+          "fr_v2_r074": {
+            "offset": "0x54",
+            "encoding": "jal26",
+            "symbol": "localization.font.v2.c.quit_scope_leave"
+          }
+        }
+      },
+      "localization.font.v2.c.quit_unselected_callback": {
+        "kind": "code",
+        "order": 38,
+        "alignment": 4,
+        "value": "88E60D0800000000"
+      },
+      "localization.font.v2.quit_body_callback": {
+        "kind": "code",
+        "order": 39,
+        "alignment": 4,
+        "value": "D0FFBD272C00BFAF9841083C0000A8AF4041083C0400A8AF0800A5AF0C00A6AF62008890060000117400868C7800848C0000A527FFFF072488E60D0C000000002C00BF8F0800E0033000BD27"
+      },
+      "localization.font.v2.c.native_measure_callback": {
+        "kind": "code",
+        "order": 40,
+        "alignment": 4,
+        "value": "2128000038E60D0800000000"
+      },
+      "localization.font.v2.c.practice_icon_draw_callback": {
+        "kind": "code",
+        "order": 41,
+        "alignment": 4,
+        "value": "D0EE0D0800000000"
+      },
+      "localization.font.v2.practice_callback": {
+        "kind": "code",
+        "order": 42,
+        "alignment": 4,
+        "value": "4800ECC44C00EDC4C4080E0800000000"
+      },
+      "localization.font.v2.special_controls_body_callback": {
+        "kind": "code",
+        "order": 57,
+        "alignment": 4,
+        "value": "D0FFBD272C00BFAFC041083C0000A8AF4041083C0400A8AF0800A5AF0C00A6AF62008890060000117400868C7800848C0000A527FFFF072488E60D0C000000002C00BF8F0800E0033000BD27"
+      },
+      "localization.font.v2.special_choice_selected_callback": {
+        "kind": "code",
+        "order": 96,
+        "alignment": 4,
+        "value": "4800ECC44C00EDC46C00E78C54E40D0800000000"
+      }
+    }
+  },
+  "font_layout_linked_mode_modal": {
+    "hooks": {
+      "font_layout_linked_mode_modal_01": {
+        "target_id": "na2_elf",
+        "offset": "0x2B91DC",
+        "expected_hex": "84090E0C00000000",
+        "symbol": "localization.font.v2.linked_choice_selected_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_linked_mode_modal_02": {
+        "target_id": "na2_elf",
+        "offset": "0x2B91FC",
+        "expected_hex": "1C090E0C00000000",
+        "symbol": "localization.font.v2.linked_choice_unselected_adapter",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "localization.font.v2.linked_choice_selected_adapter": {
+        "kind": "code",
+        "order": 109,
+        "alignment": 4,
+        "value": "E0FFBD271C00BFAF0000000C000000001C00BF8F0800E0032000BD27",
+        "relocations": {
+          "fr_v2_linked_r001": {
+            "offset": "0x8",
+            "encoding": "jal26",
+            "symbol": "localization.font.v2.c.linked_choice_selected_impl"
+          }
+        }
+      }
+    }
+  },
+  "font_layout_command_relationships": {
+    "hooks": {
+      "font_layout_command_relationships_01": {
+        "target_id": "na2_btl",
+        "offset": "0x1C6A70",
+        "expected_hex": "C4080E0C00000000",
+        "symbol": "localization.font.v2.command_relationship_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_command_relationships_02": {
+        "target_id": "na2_btl",
+        "offset": "0x1C6ACC",
+        "expected_hex": "A041023C00008244",
+        "symbol": "localization.font.v2.command_icon_offset_adapter",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "localization.font.v2.command_relationship_adapter": {
+        "kind": "code",
+        "order": 62,
+        "alignment": 4,
+        "value": "E0FFBD271C00BFAF21282002006807440000000C000000001C00BF8F0800E0032000BD27",
+        "relocations": {
+          "fr_v2_cmd_r001": {
+            "offset": "0x10",
+            "encoding": "jal26",
+            "symbol": "localization.font.v2.c.command_relationship_impl"
+          }
+        },
+        "abi": "command_relationship_native",
+        "description": "Command Chart relationship row",
+        "source": "font_v2_core"
+      },
+      "localization.font.v2.command_icon_offset_adapter": {
+        "kind": "code",
+        "order": 63,
+        "alignment": 4,
+        "value": "212020020000000000000000",
+        "relocations": {
+          "fr_v2_cmd_r002": {
+            "offset": "0x4",
+            "encoding": "j26",
+            "symbol": "localization.font.v2.c.command_icon_offset"
+          }
+        }
+      }
+    }
+  },
+  "font_layout_core": {
+    "hooks": {
+      "font_layout_core_01": {
+        "target_id": "na2_elf",
+        "offset": "0x893EC",
+        "expected_hex": "040060C640000146",
+        "symbol": "localization.font.v2.plain_space",
+        "encoding": "j26"
+      },
+      "font_layout_core_02": {
+        "target_id": "na2_elf",
+        "offset": "0x88704",
+        "expected_hex": "400060C640080046",
+        "symbol": "localization.font.v2.newline_advance",
+        "encoding": "j26"
+      },
+      "font_layout_core_03": {
+        "target_id": "na2_elf",
+        "offset": "0x88070",
+        "expected_hex": "400D0046200020C6",
+        "symbol": "localization.font.v2.right_edge",
+        "encoding": "j26"
+      },
+      "font_layout_core_04": {
+        "target_id": "na2_elf",
+        "offset": "0x88B7C",
+        "expected_hex": "1C1003461C0060E6",
+        "symbol": "localization.font.v2.half_space",
+        "encoding": "j26"
+      },
+      "font_layout_core_05": {
+        "target_id": "na2_elf",
+        "offset": "0x897D8",
+        "expected_hex": "400002461C0060C6",
+        "symbol": "localization.font.v2.glyph_advance",
+        "encoding": "j26"
+      }
+    },
+    "payload": {
+      "localization.font.v2.plain_space": {
+        "kind": "code",
+        "order": 44,
+        "alignment": 4,
+        "value": "F0FFBD270000A2AF0400A3AF0000023C0000438C0C006010040060C640000146C0C0023C0010824440080246380062C4420802460000A28F0400A38F1000BD27BD24060800000000400001460000A28F0400A38F1000BD27BD24060800000000",
+        "relocations": {
+          "fr_v2_r077": {
+            "offset": "0xC",
+            "encoding": "hi16",
+            "symbol": "localization.font.v2.session_pointer"
+          },
+          "fr_v2_r078": {
+            "offset": "0x10",
+            "encoding": "lo16",
+            "symbol": "localization.font.v2.session_pointer"
+          }
+        }
+      },
+      "localization.font.v2.newline_advance": {
+        "kind": "code",
+        "order": 45,
+        "alignment": 4,
+        "value": "F0FFBD270000A2AF0400A3AF0000023C0000438C0F006010400060C64008004680C0023C00008244400800463C0062C442080246200060C600000146200060E60000A28F0400A38F1000BD279C21060800000000400800460000A28F0400A38F1000BD278321060800000000",
+        "relocations": {
+          "fr_v2_r079": {
+            "offset": "0xC",
+            "encoding": "hi16",
+            "symbol": "localization.font.v2.session_pointer"
+          },
+          "fr_v2_r080": {
+            "offset": "0x10",
+            "encoding": "lo16",
+            "symbol": "localization.font.v2.session_pointer"
+          }
+        }
+      },
+      "localization.font.v2.right_edge": {
+        "kind": "code",
+        "order": 46,
+        "alignment": 4,
+        "value": "F0FFBD270000A2AF0400A3AF0000023C0000438C15006010400D0046380062C48208024640150046200020C62000628C400042300800401000000000680061C4000501460000A28F0400A38F1000BD27E01F06086CCA848F0000A28F0400A38F1000BD27DE1F060800000000200020C60000A28F0400A38F1000BD27DE1F060800000000",
+        "relocations": {
+          "fr_v2_r081": {
+            "offset": "0xC",
+            "encoding": "hi16",
+            "symbol": "localization.font.v2.session_pointer"
+          },
+          "fr_v2_r082": {
+            "offset": "0x10",
+            "encoding": "lo16",
+            "symbol": "localization.font.v2.session_pointer"
+          }
+        }
+      },
+      "localization.font.v2.half_space": {
+        "kind": "code",
+        "order": 47,
+        "alignment": 4,
+        "value": "F0FFBD270000A2AF0400A3AF0000023C0000438C0A00601000000000380064C4021904461C1004461C0060E60000A28F0400A38F1000BD27A1220608000000001C1003461C0060E60000A28F0400A38F1000BD27A122060800000000",
+        "relocations": {
+          "fr_v2_r083": {
+            "offset": "0xC",
+            "encoding": "hi16",
+            "symbol": "localization.font.v2.session_pointer"
+          },
+          "fr_v2_r084": {
+            "offset": "0x10",
+            "encoding": "lo16",
+            "symbol": "localization.font.v2.session_pointer"
+          }
+        }
+      },
+      "localization.font.v2.glyph_advance": {
+        "kind": "code",
+        "order": 56,
+        "alignment": 4,
+        "value": "F0FFBD270000A2AF0400A3AF0000023C0000438C0900601040000246380063C4420803461C0060C60000A28F0400A38F1000BD27B8250608000000001C0060C60000A28F0400A38F1000BD27B825060800000000",
+        "relocations": {
+          "fr_v2_ss1_r001": {
+            "offset": "0xC",
+            "encoding": "hi16",
+            "symbol": "localization.font.v2.session_pointer"
+          },
+          "fr_v2_ss1_r002": {
+            "offset": "0x10",
+            "encoding": "lo16",
+            "symbol": "localization.font.v2.session_pointer"
+          }
+        }
+      }
+    }
+  },
+  "font_layout_global_selected_style": {
+    "hooks": {
+      "font_layout_global_selected_style_01": {
+        "target_id": "na2_elf",
+        "offset": "0x279168",
+        "expected_hex": "80CA848F80FF0234",
+        "symbol": "localization.font.v2.global_selected_style",
+        "encoding": "jal26"
+      },
+      "font_layout_global_selected_style_02": {
+        "target_id": "na2_elf",
+        "offset": "0x279278",
+        "expected_hex": "80CA848F80FF0234",
+        "symbol": "localization.font.v2.global_selected_style",
+        "encoding": "jal26"
+      },
+      "font_layout_global_selected_style_03": {
+        "target_id": "na2_elf",
+        "offset": "0x279D30",
+        "expected_hex": "A0FFBD275000BFFF",
+        "symbol": "localization.font.v2.global_two_choice_draw",
+        "encoding": "j26"
+      },
+      "font_layout_global_selected_style_04": {
+        "target_id": "na2_elf",
+        "offset": "0xE6374",
+        "expected_hex": "74080E0C00000000",
+        "symbol": "localization.font.v2.global_selected_record_draw",
+        "encoding": "jal26"
+      },
+      "font_layout_global_selected_style_05": {
+        "target_id": "na2_elf",
+        "offset": "0xE63D0",
+        "expected_hex": "74080E0C00000000",
+        "symbol": "localization.font.v2.global_selected_record_draw",
+        "encoding": "jal26"
+      },
+      "font_layout_global_selected_style_06": {
+        "target_id": "na2_elf",
+        "offset": "0xE6964",
+        "expected_hex": "74080E0C00000000",
+        "symbol": "localization.font.v2.global_selected_record_draw",
+        "encoding": "jal26"
+      },
+      "font_layout_global_selected_style_07": {
+        "target_id": "na2_elf",
+        "offset": "0xE6978",
+        "expected_hex": "74080E0C00000000",
+        "symbol": "localization.font.v2.global_selected_record_draw",
+        "encoding": "jal26"
+      },
+      "font_layout_global_selected_style_08": {
+        "target_id": "na2_elf",
+        "offset": "0xE698C",
+        "expected_hex": "74080E0C00000000",
+        "symbol": "localization.font.v2.global_selected_record_draw",
+        "encoding": "jal26"
+      },
+      "font_layout_global_selected_style_09": {
+        "target_id": "na2_elf",
+        "offset": "0xE6FB4",
+        "expected_hex": "74080E0C00000000",
+        "symbol": "localization.font.v2.global_selected_record_draw",
+        "encoding": "jal26"
+      },
+      "font_layout_global_selected_style_10": {
+        "target_id": "na2_elf",
+        "offset": "0xE7010",
+        "expected_hex": "74080E0C00000000",
+        "symbol": "localization.font.v2.global_selected_record_draw",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "localization.font.v2.global_selected_style": {
+        "kind": "code",
+        "order": 97,
+        "alignment": 4,
+        "value": "803F083C000088440000000040AD00460040083C000088440000000000A5004680CA848F80FF02340800E00300000000"
+      },
+      "localization.font.v2.global_selected_record_draw": {
+        "kind": "code",
+        "order": 98,
+        "alignment": 4,
+        "value": "803F083C000088440000A1C400000000400800460000A1E40040083C000088440400A1C400000000400800460400A1E474080E0800000000"
+      },
+      "localization.font.v2.global_two_choice_draw": {
+        "kind": "code",
+        "order": 99,
+        "alignment": 4,
+        "value": "C0FFBD273000B2AF3400B1AF3800B0AF3C00BFAF218080002188A0005B00123C8012523680CA848F1C00058EB419060C0000000010004CC614004DC61800448E01000824060028120000000000FF053CD4E30D0C00000000050000100000000000FF053CD400A53454E40D0C0000000000004CC604004DC60800448E060020120000000000FF053CD4E30D0C00000000050000100000000000FF053CD400A53454E40D0C0000000080CA848F84CA858FB419060C000000003000B28F3400B18F3800B08F3C00BF8F0800E0034000BD27"
+      }
+    }
+  },
+  "font_layout_controls": {
+    "hooks": {
+      "font_layout_controls_01": {
+        "target_id": "na2_elf",
+        "offset": "0x288848",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "localization.font.v2.controls_adapter",
+        "encoding": "jal26"
+      }
+    }
+  },
+  "font_layout_titles": {
+    "hooks": {
+      "font_layout_titles_01": {
+        "target_id": "na2_btl",
+        "offset": "0x1C6A28",
+        "expected_hex": "C4080E0C00000000",
+        "symbol": "localization.font.v2.command_title_entry",
+        "encoding": "jal26"
+      },
+      "font_layout_titles_02": {
+        "target_id": "na2_btl",
+        "offset": "0x1C4B98",
+        "expected_hex": "C4080E0C00000000",
+        "symbol": "localization.font.v2.practice_title_entry",
+        "encoding": "jal26"
+      }
+    }
+  },
+  "font_layout_pause_controls": {
+    "hooks": {
+      "font_layout_pause_controls_01": {
+        "target_id": "na2_btl",
+        "offset": "0x1C97D8",
+        "expected_hex": "1C090E0C00000000",
+        "symbol": "localization.font.v2.pause_list_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_pause_controls_02": {
+        "target_id": "na2_btl",
+        "offset": "0x1C9794",
+        "expected_hex": "E8090E0C00000000",
+        "symbol": "localization.font.v2.pause_list_selected_adapter",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "localization.font.v2.pause_list_selected_adapter": {
+        "kind": "code",
+        "order": 35,
+        "alignment": 4,
+        "value": "E0FFBD271C00BFAF0000000C000000001C00BF8F0800E0032000BD27",
+        "relocations": {
+          "fr_v2_r072": {
+            "offset": "0x8",
+            "encoding": "jal26",
+            "symbol": "localization.font.v2.c.pause_list_selected_impl"
+          }
+        }
+      }
+    }
+  },
+  "font_layout_quit_confirmation": {
+    "hooks": {
+      "font_layout_quit_confirmation_01": {
+        "target_id": "na2_btl",
+        "offset": "0x1C4048",
+        "expected_hex": "800D0E0C00000000",
+        "symbol": "localization.font.v2.quit_choices_scope",
+        "encoding": "jal26"
+      },
+      "font_layout_quit_confirmation_02": {
+        "target_id": "na2_btl",
+        "offset": "0x1C407C",
+        "expected_hex": "6C090E0C00000000",
+        "symbol": "localization.font.v2.quit_body_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_quit_confirmation_03": {
+        "target_id": "na2_elf",
+        "offset": "0x283914",
+        "expected_hex": "54E40D0C00000000",
+        "symbol": "localization.font.v2.quit_selected_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_quit_confirmation_04": {
+        "target_id": "na2_elf",
+        "offset": "0x283A60",
+        "expected_hex": "88E60D0C00000000",
+        "symbol": "localization.font.v2.quit_unselected_adapter",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "localization.font.v2.quit_selected_adapter": {
+        "kind": "code",
+        "order": 37,
+        "alignment": 4,
+        "value": "D0FFBD272C00BFAF1000A4AF1400A5AF1800A6AF1C00A7AF6000083CF059083505008810000000006000083CF8590835080088140000000000600844006809440000000C000000002C00BF8F0800E0033000BD2700680544006006442000A7270000000C00000000006082442000A88F006888441000A48F1400A58F1800A68F1C00A78F2C00BF8F3000BD2754E40D0800000000",
+        "relocations": {
+          "fr_v2_special_r001": {
+            "offset": "0x40",
+            "encoding": "jal26",
+            "symbol": "localization.font.v2.c.special_choice_selected_adapter"
+          },
+          "fr_v2_r075": {
+            "offset": "0x60",
+            "encoding": "jal26",
+            "symbol": "localization.font.v2.c.quit_selected_map"
+          }
+        }
+      }
+    }
+  },
+  "font_layout_mode_select_confirmation": {
+    "hooks": {
+      "font_layout_mode_select_confirmation_01": {
+        "target_id": "na2_elf",
+        "offset": "0x285E98",
+        "expected_hex": "800D0E0C00000000",
+        "symbol": "localization.font.v2.quit_choices_scope",
+        "encoding": "jal26"
+      },
+      "font_layout_mode_select_confirmation_02": {
+        "target_id": "na2_elf",
+        "offset": "0x285E68",
+        "expected_hex": "6C090E0C00000000",
+        "symbol": "localization.font.v2.collection_body_adapter",
+        "encoding": "jal26"
+      }
+    }
+  },
+  "font_layout_character_select_modal": {
+    "hooks": {
+      "font_layout_character_select_modal_01": {
+        "target_id": "na2_elf",
+        "offset": "0x2BC984",
+        "expected_hex": "84090E0C00000000",
+        "symbol": "localization.font.v2.character_selected_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_character_select_modal_02": {
+        "target_id": "na2_elf",
+        "offset": "0x2BCB54",
+        "expected_hex": "C4080E0C00000000",
+        "symbol": "localization.font.v2.character_confirmation_body_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_character_select_modal_03": {
+        "target_id": "na2_elf",
+        "offset": "0x2BCAAC",
+        "expected_hex": "800D0E0C00000000",
+        "symbol": "localization.font.v2.character_choices_scope",
+        "encoding": "jal26"
+      },
+      "font_layout_character_select_modal_04": {
+        "target_id": "na2_elf",
+        "offset": "0x2BC9BC",
+        "expected_hex": "1C090E0C00000000",
+        "symbol": "localization.font.v2.character_unselected_adapter",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "localization.font.v2.character_choices_scope": {
+        "kind": "code",
+        "order": 105,
+        "alignment": 4,
+        "value": "C0FFBD273C00BFAF1000A4AF1400A5AF1800A6AF1C00A7AF2000ACE72400ADE70000000C000000002800A2AF1000A48F1400A58F1800A68F1C00A78F2000ACC72400ADC7800D0E0C000000002C00A2AF2800A48F0000000C000000002C00A28F3C00BF8F0800E0034000BD27",
+        "relocations": {
+          "fr_v2_char_scope_r001": {
+            "offset": "0x20",
+            "encoding": "jal26",
+            "symbol": "localization.font.v2.c.character_scope_enter"
+          },
+          "fr_v2_char_scope_r002": {
+            "offset": "0x54",
+            "encoding": "jal26",
+            "symbol": "localization.font.v2.c.quit_scope_leave"
+          }
+        }
+      }
+    }
+  },
+  "font_layout_collection_confirmation": {
+    "hooks": {
+      "font_layout_collection_confirmation_01": {
+        "target_id": "na2_etc",
+        "offset": "0x12680",
+        "expected_hex": "6C090E0C00000000",
+        "symbol": "localization.font.v2.collection_body_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_collection_confirmation_02": {
+        "target_id": "na2_etc",
+        "offset": "0x126A0",
+        "expected_hex": "800D0E0C00000000",
+        "symbol": "localization.font.v2.quit_choices_scope",
+        "encoding": "jal26"
+      },
+      "font_layout_collection_confirmation_03": {
+        "target_id": "na2_etc",
+        "offset": "0x148C8",
+        "expected_hex": "6C090E0C00000000",
+        "symbol": "localization.font.v2.collection_body_adapter",
+        "encoding": "jal26"
+      }
+    }
+  },
+  "font_layout_collection_lists": {
+    "hooks": {
+      "font_layout_collection_lists_01": {
+        "target_id": "na2_etc",
+        "offset": "0xFD8",
+        "expected_hex": "10E40D0C00000000",
+        "symbol": "localization.font.v2.collection_list_entry",
+        "encoding": "jal26"
+      },
+      "font_layout_collection_lists_02": {
+        "target_id": "na2_etc",
+        "offset": "0x7640",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "localization.font.v2.collection_figure_music_header_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_collection_lists_03": {
+        "target_id": "na2_etc",
+        "offset": "0xD4B4",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "localization.font.v2.collection_jutsu_header_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_collection_lists_04": {
+        "target_id": "na2_etc",
+        "offset": "0xF2B8",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "localization.font.v2.collection_figure_music_header_adapter",
+        "encoding": "jal26"
+      }
+    }
+  },
+  "font_layout_jutsu_selector": {
+    "hooks": {
+      "font_layout_jutsu_selector_01": {
+        "target_id": "na2_btl",
+        "offset": "0x90DC",
+        "expected_hex": "5020060C00000000",
+        "symbol": "localization.font.v2.jutsu_draw_entry",
+        "encoding": "jal26"
+      }
+    }
+  },
+  "font_layout_special_controls_body": {
+    "hooks": {
+      "font_layout_special_controls_body_01": {
+        "target_id": "na2_btl",
+        "offset": "0x1C3D38",
+        "expected_hex": "6C090E0C00000000",
+        "symbol": "localization.font.v2.special_controls_body_adapter",
+        "encoding": "jal26"
+      }
+    }
+  },
+  "font_layout_practice_explanations": {
+    "hooks": {
+      "font_layout_practice_explanations_01": {
+        "target_id": "na2_btl",
+        "offset": "0x1C4BA0",
+        "expected_hex": "0042023C00A882440000000000AD16462D8800008400001000000000",
+        "symbol": "localization.font.v2.practice_adapter",
+        "encoding": "jal26",
+        "replacement_hex": "2128000206B300464804868E00000000212080028900001000000000",
+        "relocation_offset": "0xC"
+      }
+    },
+    "payload": {
+      "localization.font.v2.practice_adapter": {
+        "kind": "code",
+        "order": 43,
+        "alignment": 4,
+        "value": "D0FFBD272C00BFAF2138600221404002006009440000000C000000002C00BF8F0800E0033000BD27",
+        "relocations": {
+          "fr_v2_r076": {
+            "offset": "0x14",
+            "encoding": "jal26",
+            "symbol": "localization.font.v2.c.practice_adapter_impl"
+          }
+        }
+      }
+    }
+  },
+  "font_layout_settings_rows": {
+    "hooks": {
+      "font_layout_settings_rows_01": {
+        "target_id": "na2_btl",
+        "offset": "0x1CC368",
+        "expected_hex": "10E40D0C00000000",
+        "symbol": "localization.font.v2.battle_settings_label_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_settings_rows_02": {
+        "target_id": "na2_btl",
+        "offset": "0x1CC424",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "localization.font.v2.battle_settings_value_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_settings_rows_03": {
+        "target_id": "na2_btl",
+        "offset": "0x1CC598",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "localization.font.v2.battle_settings_value_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_settings_rows_04": {
+        "target_id": "na2_btl",
+        "offset": "0x1CE528",
+        "expected_hex": "F4E30D0C00000000",
+        "symbol": "localization.font.v2.practice_settings_heading_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_settings_rows_05": {
+        "target_id": "na2_btl",
+        "offset": "0x1CE56C",
+        "expected_hex": "10E40D0C00000000",
+        "symbol": "localization.font.v2.practice_settings_label_adapter",
+        "encoding": "jal26"
+      },
+      "font_layout_settings_rows_06": {
+        "target_id": "na2_btl",
+        "offset": "0x1CE5D4",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "localization.font.v2.settings_value_adapter",
+        "encoding": "jal26"
+      }
+    }
+  },
+  "font_layout_ninja_song_details": {
+    "hooks": {
+      "font_layout_ninja_song_details_01": {
+        "target_id": "na2_btl",
+        "offset": "0x64A60",
+        "expected_hex": "A0FFBD273000BFFF2000B17F1000B07F0400B5E70000B4E72D88A000",
+        "symbol": "localization.font.v2.ninja_arithmetic_template",
+        "encoding": "jal26",
+        "replacement_hex": "A0FFBD273000BFFF00000000000000003000BFDF0800E0036000BD27",
+        "relocation_offset": "0x8"
+      },
+      "font_layout_ninja_song_details_02": {
+        "target_id": "na2_btl",
+        "offset": "0x64630",
+        "expected_hex": "80CA848F0A00052401000624B01A060C00000000A042023C0060824480CA848F46A30046C019060C00000000801813008A00023CE09342242110430080CA848F0000458C5020060C0000000080CA848F0F00052401000624B01A060C0000000080CA848F8A00023C9C9A458C5020060C000000000000428E80CA848F0800458C5020060C00000000",
+        "symbol": "localization.font.v2.ninja_objective_row_adapter",
+        "encoding": "jal26",
+        "replacement_hex": "2D2020022D2840022D30600200A00744000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "relocation_offset": "0x10"
+      }
+    }
+  },
+  "font_numeric_ninja_song": {
+    "hooks": {
+      "font_numeric_ninja_song_01": {
+        "target_id": "na2_btl",
+        "offset": "0x64B28",
+        "expected_hex": "44E10D0C",
+        "symbol": "localization.font.ninja_song_ascii_number",
+        "encoding": "jal26"
+      },
+      "font_numeric_ninja_song_02": {
+        "target_id": "na2_btl",
+        "offset": "0x64BA8",
+        "expected_hex": "44E10D0C",
+        "symbol": "localization.font.ninja_song_ascii_number",
+        "encoding": "jal26"
+      },
+      "font_numeric_ninja_song_03": {
+        "target_id": "na2_btl",
+        "offset": "0x64CE4",
+        "expected_hex": "44E10D0C",
+        "symbol": "localization.font.ninja_song_ascii_number",
+        "encoding": "jal26"
+      },
+      "font_numeric_ninja_song_04": {
+        "target_id": "na2_btl",
+        "offset": "0x64E4C",
+        "expected_hex": "44E10D0C",
+        "symbol": "localization.font.ninja_song_ascii_number",
+        "encoding": "jal26"
+      },
+      "font_numeric_ninja_song_05": {
+        "target_id": "na2_btl",
+        "offset": "0x64ED4",
+        "expected_hex": "44E10D0C",
+        "symbol": "localization.font.ninja_song_ascii_number",
+        "encoding": "jal26"
+      }
+    }
+  },
+  "font_numeric_save_load": {
+    "hooks": {
+      "font_numeric_save_load_01": {
+        "target_id": "na2_elf",
+        "offset": "0xE660C",
+        "expected_hex": "0E0065942D200000040006249000A7270100082444E10D0C00000000",
+        "symbol": "localization.font.save_load_day",
+        "encoding": "jal26",
+        "replacement_hex": "2D2060009000A52700000000000000002DB040000000000000000000",
+        "relocation_offset": "0x8"
+      },
+      "font_numeric_save_load_02": {
+        "target_id": "na2_elf",
+        "offset": "0xE6650",
+        "expected_hex": "2D2000002D282002020006249000A7272D40C00044E10D0C00000000",
+        "symbol": "localization.font.save_load_two",
+        "encoding": "jal26",
+        "replacement_hex": "2D2020029000A5270000000000000000000000000000000000000000",
+        "relocation_offset": "0x8"
+      },
+      "font_numeric_save_load_03": {
+        "target_id": "na2_elf",
+        "offset": "0xE6694",
+        "expected_hex": "2D2000002D28A002020006249000A7272D40C00044E10D0C00000000",
+        "symbol": "localization.font.save_load_year",
+        "encoding": "jal26",
+        "replacement_hex": "2D20C0029000A5270000000000000000000000000000000000000000",
+        "relocation_offset": "0x8"
+      },
+      "font_numeric_save_load_04": {
+        "target_id": "na2_elf",
+        "offset": "0xE67A4",
+        "expected_hex": "2D2000002D28A002030006249000A7270200082444E10D0C00000000",
+        "symbol": "localization.font.save_load_hour",
+        "encoding": "jal26",
+        "replacement_hex": "2D20A0029000A5270000000000000000000000000000000000000000",
+        "relocation_offset": "0x8"
+      },
+      "font_numeric_save_load_05": {
+        "target_id": "na2_elf",
+        "offset": "0xE67E8",
+        "expected_hex": "2D2000002D282002020006249000A7272D40C00044E10D0C00000000",
+        "symbol": "localization.font.save_load_two",
+        "encoding": "jal26",
+        "replacement_hex": "2D2020029000A5270000000000000000000000000000000000000000",
+        "relocation_offset": "0x8"
+      },
+      "font_numeric_save_load_06": {
+        "target_id": "na2_elf",
+        "offset": "0xE682C",
+        "expected_hex": "2D2000002D28C002020006249000A7272D40C00044E10D0C00000000",
+        "symbol": "localization.font.save_load_two",
+        "encoding": "jal26",
+        "replacement_hex": "2D20C0029000A5270000000000000000000000000000000000000000",
+        "relocation_offset": "0x8"
+      }
+    }
+  },
+  "font_numeric_battle_settings": {
+    "hooks": {
+      "font_numeric_battle_settings_01": {
+        "target_id": "na2_btl",
+        "offset": "0x1CC3D8",
+        "expected_hex": "2D200000030006246000A7270100082444E10D0C00000000",
+        "symbol": "localization.font.battle_settings_time",
+        "encoding": "jal26",
+        "replacement_hex": "2D20A0006000A52700000000000000000000000000000000",
+        "relocation_offset": "0x8"
+      }
+    }
+  },
+  "startup_loading_screen": {
+    "hooks": {
+      "startup_loading_screen_01": {
+        "target_id": "na2_elf",
+        "offset": "0xE11A0",
+        "expected_hex": "6082070C",
+        "symbol": "qol.startup.loading.hook",
+        "encoding": "jal26"
+      },
+      "startup_loading_screen_02": {
+        "target_id": "na2_elf",
+        "offset": "0xE11E0",
+        "expected_hex": "3880070C",
+        "symbol": "qol.startup.loading.draw",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "startup_loading": {
+        "kind": "c",
+        "path": "src/startup_loading.c",
+        "namespace": "qol.startup.loading",
+        "imports": {
+          "startup_loading_state": "qol.startup.loading.state"
+        },
+        "fragments": {
+          "qol.startup.loading.hook": {
+            "order": 10,
+            "object": "qol.startup.loading.text.startup.loading.hook"
+          },
+          "qol.startup.loading.constants": {
+            "order": 20,
+            "object": "qol.startup.loading.rodata"
+          },
+          "qol.startup.loading.vertex": {
+            "order": 30,
+            "object": "qol.startup.loading.text.startup.loading.vertex"
+          },
+          "qol.startup.loading.rect": {
+            "order": 40,
+            "object": "qol.startup.loading.text.startup.loading.rect"
+          },
+          "qol.startup.loading.color": {
+            "order": 50,
+            "object": "qol.startup.loading.text.startup.loading.color"
+          },
+          "qol.startup.loading.digit.mask": {
+            "order": 60,
+            "object": "qol.startup.loading.text.startup.loading.digit.mask"
+          },
+          "qol.startup.loading.digit": {
+            "order": 70,
+            "object": "qol.startup.loading.text.startup.loading.digit"
+          },
+          "qol.startup.loading.percent.sign": {
+            "order": 80,
+            "object": "qol.startup.loading.text.startup.loading.percent.sign"
+          },
+          "qol.startup.loading.draw": {
+            "order": 90,
+            "object": "qol.startup.loading.text.startup.loading.draw"
+          }
+        }
+      },
+      "qol.startup.loading.state": {
+        "kind": "data",
+        "order": 1,
+        "alignment": 4,
+        "value": "0000000000000000"
+      }
+    }
+  }
+}

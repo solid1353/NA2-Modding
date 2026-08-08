@@ -391,10 +391,10 @@ compiled from C during composition and is not stored as an asset.
 `scripts/research/localization/verify_font_renderer.py` deterministically
 reconstructs the accepted v2 renderer, numeric formatter, and retained ABI-shim
 fragments as an independent verifier. Normal composition does not persist its
-aggregate outputs: catalog `payload` declarations own the three canonical C
+aggregate outputs: `injections.json` payload declarations own the three canonical C
 units under `src/localization/font/`, compile them with the pinned EE toolchain, and
 converts their sections and relocations directly into normalized fragments.
-Static ABI/data fragments remain inline in their owning catalog payload; the shared payload
+Static ABI/data fragments remain in their owning injection payload; the shared payload
 builder links both kinds into the final `228.BIN`. The only retained generated
 MIPS in the numeric layer is the pair of typed-to-variadic native `sprintf`
 bridges and the minimal call-site register setup.
@@ -407,6 +407,6 @@ mapping. Its resident helper is declared by the canonical runtime-injector
 package and independently reconstructed by
 `scripts/research/localization/verify_font_renderer.py`.
 Exact static and symbolic hooks, guards, replacement templates, and reasons are
-recorded as `edits` and `hooks` in the owning catalog nodes; the Font knowledge
+recorded in `edits.json` and `injections.json`; the Font knowledge
 [index](../../knowledge/localization/font/README.md) routes to confirmed evidence
 and negative results.

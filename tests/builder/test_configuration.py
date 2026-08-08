@@ -145,6 +145,8 @@ class ConfigurationTests(unittest.TestCase):
             json.dumps({"features": catalog}, indent=2) + "\n",
             encoding="utf-8",
         )
+        for name in ("edits.json", "injections.json"):
+            (root / name).write_text("{}\n", encoding="utf-8")
         configuration.write_text(
             json.dumps({"features": selection, "overrides": {}}, indent=2) + "\n",
             encoding="utf-8",
@@ -264,6 +266,8 @@ class ConfigurationTests(unittest.TestCase):
             resources = set(configuration_resource_files(loaded))
             self.assertIn((root / "product.json").resolve(), resources)
             self.assertIn((root / "catalog.json").resolve(), resources)
+            self.assertIn((root / "edits.json").resolve(), resources)
+            self.assertIn((root / "injections.json").resolve(), resources)
             self.assertIn(configuration.resolve(), resources)
             self.assertIn((feature / "translation_importer" / "mappings.tsv").resolve(), resources)
             self.assertIn((builder / "targets.tsv").resolve(), resources)

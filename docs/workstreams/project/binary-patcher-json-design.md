@@ -2,11 +2,13 @@
 Status: approved and implemented.
 This document records the accepted builder catalog and configuration design. It is not a JSON schema.
 ## Scope
-- Introduce one repository-wide `catalog.json` as the master definition of the complete feature hierarchy and its executable patch data.
-- Migrate only binary-patcher and runtime-injector executable data to the catalog for now.
+- Use repository-wide `catalog.json`, `edits.json`, and `injections.json` files
+  as the canonical selectable and executable definitions.
+- `catalog.json` owns the complete feature hierarchy and leaf references;
+  `edits.json` owns binary-patcher definitions; `injections.json` owns
+  runtime-injector units.
 - Keep texture-patcher, translation-importer, targets, and operation definitions in TSV for now.
 - Represent retained translation and texture behavior as selectable catalog leaves; their executable TSV data remains outside the catalog and is invoked internally when the corresponding leaf is enabled.
-- Do not create separate module-data or patch-data JSON files.
 - Do not represent modules in the catalog or configurations. Builder engines remain internal implementation details.
 - Do not introduce schemas, schema versions, or migrations while this design is changing.
 ## Catalog hierarchy
@@ -16,18 +18,18 @@ This document records the accepted builder catalog and configuration design. It 
 - Use meaningful, stable `snake_case` keys. Do not retain opaque IDs, generated sequence IDs, or separate ID/name fields.
 - Preserve every existing `description`. The field is optional at any catalog level and ignored by the parser.
 - Keep enablement out of the catalog.
-- The reserved catalog fields are `description`, `proven`, `edits`, `hooks`, and `payload`. Every other key is a directly nested selectable node.
+- The reserved catalog fields are `description`, `proven`, `edits`, and
+  `injections`. Every other key is a directly nested selectable node.
 - A selectable patch is an ordinary meaningful node in the hierarchy. There is no `patches` wrapper, separate `patch_id`, or patch-name field.
-- Binary edits, hooks, and payload declarations may coexist in the same selectable node. There is no module discriminator or module-owned wrapper around them.
-- In canonical patch field order, binary `edits` appear before injected-code data.
+- Catalog leaves contain ordered arrays of edit and injection IDs. Definitions
+  do not appear inline in the feature tree.
 ## Ownership and extraction
-- Keep every declaration inside the patch that owns it by default.
-- Extract a declaration only when more than one patch actually consumes that declaration.
-- Place extracted shared data at the smallest common catalog owner of all consumers, not automatically at the catalog root.
+- Keep every edit and injection definition in its owning root map.
+- Reference a shared injection unit from every consuming catalog leaf; store the
+  unit only once in `injections.json`.
 - Keep a source's private imports, emitted fragments, relocations, and other private declarations inside that source or its owning patch.
-- Keep patch-specific hooks and binary edits inside their patch.
-- Do not preserve separate registries merely because the previous TSV representation used separate tables.
-- Shared injected-code declarations live in `payload` at the nearest common selectable owner of their consumers.
+- Keep patch-specific hooks and payload declarations together in one injection
+  unit when they share a catalog owner.
 ## Executable fields
 - Remove `enabled`, `confidence`, and `status` from executable definitions.
 - Migrated executable patches may temporarily contain `"proven": false`. Presence means the patch still needs proof. Remove the field when the patch is proven; never set it to `true`; never add it to new patches. Remove the concept after the migrated set is proven.
@@ -57,11 +59,14 @@ This document records the accepted builder catalog and configuration design. It 
 }
 ```
 ## Targets
-- Keep shared target definitions outside `catalog.json` in one flat `targets.tsv` registry. Catalog edits and hooks reference targets by ID.
+- Keep shared target definitions outside the three JSON definition files in one
+  flat `targets.tsv` registry. Edits and injection hooks reference targets by
+  ID.
 - The registry path is `na228_builder/targets.tsv`.
 ## Binary edits
-- Store binary edits under the owning patch's `edits` object before injected-code data.
-- Represent edit identity with a meaningful JSON key. Do not retain a separate `edit_id` field.
+- Store binary edits in the direct root map of `edits.json`.
+- Catalog leaf `edits` arrays reference meaningful edit IDs. Do not retain a
+  separate `edit_id` field inside a definition.
 - Remove edit `order`; it changes no current binary-patcher or runtime-injector output.
 - Preserve an explicit `operation` discriminator. The parser reads it directly and never infers an operation from object shape.
 - Preserve `destination_target_id` on each edit.
@@ -79,14 +84,26 @@ This document records the accepted builder catalog and configuration design. It 
 - Do not introduce manifest inheritance or schema versions.
 ## Injected code and hooks
 - Runtime-injection target changes are hooks, not generic edits.
-- Store every patch-specific hook inside its owning patch; extract only declarations genuinely consumed by multiple patches.
+- Store hooks and payload declarations together in direct-root injection units
+  under `injections.json`.
+- Catalog leaf `injections` arrays reference injection-unit IDs. Multiple leaves
+  may reference the same unit.
 - Represent hook identity with a meaningful JSON key. Do not retain a separate hook or edit ID field.
 - Hooks have no `operation` field because the containing structure already defines them as hooks.
 - Preserve hook encoding because current hooks use both non-linking `j26` and linking `jal26` encodings.
 - The runtime-injection engine continues resolving payload symbols after final payload placement and turning resolved hooks into guarded concrete binary replacements for application.
-- `payload` directly maps meaningful payload IDs to declarations. A C source declaration contains `kind: "c"`, its repository-relative `path`, `namespace`, private `imports`, and its emitted `fragments`. A static fragment declaration contains its fragment kind, order, alignment, inline value or guarded blob, optional relocations, and optional initialization marker.
+- Each injection unit contains `hooks`, `payload`, or both. `payload` maps
+  meaningful payload IDs to declarations. A C source declaration contains
+  `kind: "c"`, its repository-relative `path`, `namespace`, private `imports`,
+  and emitted `fragments`. A static fragment declaration contains its fragment
+  kind, order, alignment, inline value or guarded blob, optional relocations,
+  and optional initialization marker.
 - C-fragment ABI and purpose metadata lives on the specific emitted fragment. Static adapter ABI metadata lives on that adapter declaration; it names its source only when ownership cannot be inferred from nesting.
 - Static-fragment relocations remain inside the fragment that owns them. Source imports remain inside the source that owns them.
 ## Validation
-- The loader rejects duplicate JSON keys, invalid selectable keys, configuration/catalog structural mismatches, objects at configuration leaves, non-false `proven` values, unknown binary-operation fields, missing required fields, malformed types, invalid targets, bad ranges, and bad asset hashes.
+- The loader rejects duplicate JSON keys, invalid selectable keys, non-leaf
+  implementation references, missing edit/injection IDs,
+  configuration/catalog structural mismatches, objects at configuration leaves,
+  non-false `proven` values, unknown binary-operation fields, missing required
+  fields, malformed types, invalid targets, bad ranges, and bad asset hashes.
 - Migration equivalence covers all binary edits, enabled selections, runtime fragments, runtime hooks, the linked resident payload, exported symbols, and resolved hook writes before removal of the superseded TSV inputs.

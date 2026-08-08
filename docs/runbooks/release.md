@@ -32,7 +32,7 @@ NUN5 ISO.
 The ZIP contains the versioned EXE, `Narutimate Accel v2.28.json`, and
 `README.txt`. The executable embeds the interpreter, builder engines, catalog,
 resources for the complete selectable catalog rather than only the default
-selection, payload-builder configuration, precompiled objects for catalog-owned
+selection, payload-builder configuration, precompiled objects for injection-owned
 runtime C sources, and Zopfli runtime. It does not embed the project PS2
 toolchain, source ISOs, extracted source trees, or derived game payloads.
 
@@ -54,8 +54,8 @@ uncommitted release work:
 The toolchain is pinned by `scripts/release/toolchain.json` and
 `scripts/release/requirements.txt`. The builder creates an isolated virtual
 environment under the configured Project task temporary root, runs the complete
-builder test suite, inventories the full catalog resource closure, builds a
-precompiled object for each catalog-owned runtime C source, builds a PyInstaller
+builder test suite, inventories the full definition resource closure, builds a
+precompiled object for each injection-owned runtime C source, builds a PyInstaller
 one-file console EXE, self-tests the packaged data with both the default and a
 transient all-enabled configuration, and atomically updates the configured ZIP
 candidate. Temporary packaging state is removed afterward.

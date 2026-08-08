@@ -112,7 +112,8 @@ Workshop map; Workshop never imports NA2.
 
 ## Migration rule
 
-Move the canonical owner first and update `paths.json` or the owning catalog.
+Move the canonical owner first and update `paths.json` or the owning builder
+definition file.
 For an NA2 path/catalog change, validate the PowerShell loader and its existing
 Python unit tests with:
 

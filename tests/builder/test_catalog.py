@@ -12,6 +12,11 @@ from na228_builder.scripts import catalog
 class CatalogTests(unittest.TestCase):
     def write_json(self, path: Path, value: object) -> None:
         path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+        if path.name == "catalog.json":
+            for name in ("edits.json", "injections.json"):
+                definition_path = path.with_name(name)
+                if not definition_path.exists():
+                    definition_path.write_text("{}\n", encoding="utf-8")
 
     def test_configuration_must_match_catalog_at_every_descended_level(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -262,11 +267,19 @@ class CatalogTests(unittest.TestCase):
                 f"{feature_id}.runtime_injector",
             )
             for feature_id in release.feature_ids
-            if catalog.feature_has(release, feature_id, "hooks")
+            if catalog.feature_has(release, feature_id, "injections")
         ]
         self.assertEqual(sum(len(package.fragments) for package in runtime), 118)
         self.assertEqual(sum(len(package.edits) for package in runtime), 68)
         raw_catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+        raw_edits = json.loads(
+            catalog_path.with_name("edits.json").read_text(encoding="utf-8")
+        )
+        raw_injections = json.loads(
+            catalog_path.with_name("injections.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(len(raw_edits), 491)
+        self.assertEqual(len(raw_injections), 24)
         localization = raw_catalog["features"]["localization"]
         self.assertNotIn("translated_text", localization)
         self.assertNotIn("translated_textures", localization)
@@ -299,19 +312,29 @@ class CatalogTests(unittest.TestCase):
                 disallowed & value.keys(),
                 ".".join(path) or "catalog",
             )
-            if "hooks" in value:
-                for hook_id, hook in value["hooks"].items():
-                    self.assertNotIn("operation", hook, ".".join((*path, hook_id)))
-            keys = list(value)
+            self.assertNotIn("hooks", value, ".".join(path))
+            self.assertNotIn("payload", value, ".".join(path))
             if "edits" in value:
-                for later in ("hooks", "payload"):
-                    if later in value:
-                        self.assertLess(keys.index("edits"), keys.index(later))
+                self.assertIsInstance(value["edits"], list)
+                self.assertTrue(set(value["edits"]) <= set(raw_edits))
+            if "injections" in value:
+                self.assertIsInstance(value["injections"], list)
+                self.assertTrue(set(value["injections"]) <= set(raw_injections))
             for key, item in value.items():
                 inspect(item, (*path, key))
 
         inspect(raw_catalog)
-        for path in [catalog_path, *configuration_root.glob("*.json")]:
+        for injection_id, injection in raw_injections.items():
+            self.assertTrue(set(injection) <= {"hooks", "payload"}, injection_id)
+            self.assertTrue(injection, injection_id)
+            for hook_id, hook in injection.get("hooks", {}).items():
+                self.assertNotIn("operation", hook, hook_id)
+        for path in [
+            catalog_path,
+            catalog_path.with_name("edits.json"),
+            catalog_path.with_name("injections.json"),
+            *configuration_root.glob("*.json"),
+        ]:
             self.assertNotIn("\n\n", path.read_text(encoding="utf-8"))
 
 if __name__ == "__main__":

@@ -41,9 +41,6 @@
 - Create an upscaled texture pack for pcsx2 (currently blocked by UI translation).
 
 ### Testing
-- Decouple E2E execution from permanent/unit tests and split the CLI: keep
-  `na228 test` for permanent/unit tests; add global `na228 e2e [-s]`; move E2E
-  create/rename/delete under `na228 e2e`.
 - Isolate and promote runtime-proven patches.
 - Test translation thoroughout the whole game.
 

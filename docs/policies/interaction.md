@@ -9,6 +9,9 @@ completion.
 - During explicit discussion, design, planning, or brainstorming, later messages
   refine the proposed result. They do not authorize implementation until the
   applicable approval boundary is reached.
+- Do not infer or enter a workflow mode from ordinary conversation. Workflow
+  documents are not default context; use the exact-phrase routing in root
+  `AGENTS.md` and load only the selected workflow.
 - A user correction changes the named point only. Preserve unaffected approved
   work and continue it unless the user explicitly stops, pauses, cancels, or
   replaces it.
@@ -48,13 +51,14 @@ provided.
   behavior, compatibility, or coordinated changes across multiple components.
 - Design serious work through normal responsive dialogue. Read-only inspection
   is allowed; canonical implementation changes are not.
+- Design mode is optional and is not required merely because work is serious.
 - Natural-language agreement such as `yes`, `good`, or `do that` approves the
   current design point only. Once settled, present one concise implementation
   snapshot containing the intended outcome, scope, important architecture or
   behavior, proposed persistent mechanisms, and planned validation.
-- Begin implementation only after `approved`, `qwe`, or its same-key
-  keyboard-layout equivalent. If implementation requires a material change to
-  the snapshot, present that changed part and wait for the same approval.
+- Begin implementation of serious work only after `qwe`. If implementation
+  requires a material change to the snapshot, stop and request user direction
+  rather than extending the authorization.
 
 ## Implementation boundaries
 

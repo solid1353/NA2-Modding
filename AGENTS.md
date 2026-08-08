@@ -33,10 +33,8 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 - Small, direct tasks do not require a separate design phase.
 - Work is serious when it requires design decisions about architecture,
   user-visible behavior, compatibility, or coordinated changes across multiple
-  components. Design serious work interactively; do not
-  implement it until the user approves the consolidated implementation snapshot
-  with `approved`, `qwe`, or the same physical keys under another keyboard
-  layout.
+  components. Design serious work interactively; do not implement it until the
+  user approves the consolidated implementation snapshot with `qwe`.
 - A serious-work snapshot states the outcome, scope, important architecture or
   behavior, proposed persistent mechanisms, and planned validation.
 - When the user asks a question, the agent MUST answer it and MUST NOT perform,
@@ -49,13 +47,24 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 Detailed interaction and authorization rules are in
 [`docs/policies/interaction.md`](docs/policies/interaction.md).
 
+## Workflow modes
+
+Workflow documents are not default context. Enter a mode only on an exact
+phrase below, then read only that workflow. While a mode remains active, keep
+following its workflow. No other wording enters a mode.
+
+| Exact phrase | Read |
+| --- | --- |
+| `des mode`, `design mode` | [`docs/workflows/design_mode.md`](docs/workflows/design_mode.md) |
+| `int mode`, `interactive mode` | [`docs/workflows/interactive_mode.md`](docs/workflows/interactive_mode.md) |
+
 ## Agent commands
 
 Canonical command semantics are in
 [`docs/AGENT_COMMANDS.md`](docs/AGENT_COMMANDS.md). The command index is:
 
-`approved`, `qwe`, `tasks`, `task done`, `dnf`, `ag`, `q:`, `con`, `e2e`,
-`sum`, `eff`, `report`, `sw`, `ss`, `zxc`, `mute`, `unmute`.
+`qwe`, `tasks`, `task done`, `dnf`, `ag`, `q:`, `con`, `e2e`, `sum`, `eff`,
+`report`, `sw`, `ss`, `zxc`, `mute`, `unmute`.
 
 ## Policy routing
 

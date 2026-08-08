@@ -21,10 +21,12 @@
     "C_Cpp.errorSquiggles": "disabled",
     "files.trimTrailingWhitespace": true,
     "files.exclude": {
+      "**/.gitkeep": true,
       "**/__pycache__": true,
       "**/__init__.py": true
     },
     "search.exclude": {
+      "**/.gitkeep": true,
       "**/__pycache__": true,
       "**/__init__.py": true
     },

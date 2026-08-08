@@ -7,9 +7,9 @@ those.
 
 ## Approval and task control
 
-- `approved`, `qwe`, or the same physical keys under another keyboard layout:
-  approve the current serious-work implementation snapshot or the currently
-  presented material change to it, including when used inside a longer message.
+- `qwe`, or the same physical keys under another keyboard layout: follow the
+  active workflow's `qwe` rule; outside a workflow mode, authorize the current
+  serious-work implementation snapshot.
 - `tasks`: read and present `TASKS.md`.
 - `task done`: remove the uniquely identifiable current task from `TASKS.md`.
   If its workstream becomes empty, move the workstream to `Archive`. Ask when

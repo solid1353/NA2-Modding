@@ -84,6 +84,8 @@ work directories, or documentation layout.
 - A task that moves or deletes files is incomplete until its affected parent
   directories have been inspected on disk and every unintended empty directory
   has been removed.
+- `docs/designs/` is an intentional permanent directory and is never removed,
+  including when it contains no active design document.
 - Do not create or preserve a directory containing only one file unless it has a
   clear structural, ownership, namespace, tooling, or future-extension purpose.
   Otherwise move the file to the nearest appropriate existing directory and
@@ -130,6 +132,9 @@ Give each document one job and canonical authority:
 
 - root `AGENTS.md` owns universal rules and scoped-document routing;
 - routed policies own scoped normative rules;
+- workflow documents under `docs/workflows/` own complete interaction
+  workflows;
+- active design documents live under the permanent `docs/designs/` directory;
 - runbooks own exact operational procedures;
 - `docs/AGENT_COMMANDS.md` owns commands interpreted by agents;
 - the implementing repository or component owns user-facing CLI help;

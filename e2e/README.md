@@ -7,29 +7,27 @@ nested local Git repository at `captures/`.
 ## Current command surface
 
 ```powershell
-na228 test [suite] [-s]
-na228 test create <suite> [game]
-na228 test rename <suite> <new-suite>
-na228 test delete <suite>
+na228 e2e [-s]
+na228 e2e create <suite> [game]
+na228 e2e rename <suite> <new-suite>
+na228 e2e delete <suite>
 ```
 
-This is the current implementation interface. `na228 test [suite]` starts the
-permanent project tests and E2E build/replay pipeline together. Project policy
-treats permanent tests and E2E as independently selectable validation;
-`TASKS.md` tracks the implementation work to split those lanes and move E2E
-under a dedicated `na228 e2e` command family.
+`na228 e2e` owns E2E execution and suite lifecycle. Permanent/unit tests are an
+independent lane invoked with `na228 test`.
 
-Without a suite, the current command replays all suites. Agent E2E validation is
-global across the tracked suite set; a suite/capture named in an agent request
-identifies expected evidence, not a narrower execution boundary.
+E2E execution is global across the tracked suite set. A suite/capture named in
+an agent request identifies expected evidence, not a narrower execution
+boundary. The E2E runner retains internal single-suite execution only for suite
+creation and its repeatability transaction.
 
 `-s` adds the shifted E2E Test build and replays the same suites against it.
 Normal and shifted non-ignored captures must match.
 
-`test create` creates or replaces a suite from the matching Workshop recording,
+`e2e create` creates or replaces a suite from the matching Workshop recording,
 resets `ignore.txt`, optionally captures a reference game, and runs repeatability
-capture. `test rename` moves the suite definition and capture history together;
-`test delete` removes both.
+capture. `e2e rename` moves the suite definition and capture history together;
+`e2e delete` removes both.
 
 ## Execution and publication
 

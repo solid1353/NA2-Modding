@@ -28,7 +28,7 @@ one cannot silently invalidate the other.
   baseline; the July v1 renderer is retired.
 - The resident payload now uses a fixed `0x00940100` heap reservation boundary.
   Payload-size changes within that envelope no longer relocate the game heap;
-  `na228 test -s` replays every E2E suite against normal and internally shifted
+  `na228 e2e -s` replays every E2E suite against normal and internally shifted
   `+32`-byte layouts and requires identical non-ignored screenshots.
 - Controls, Command Chart, Pause Controls, Character Select option/modal paths,
   Collection exit confirmation, Movie lists, Jutsu selector, Settings page

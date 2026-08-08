@@ -58,10 +58,11 @@ if ($mode -eq 'help') {
         '  additional launch arguments  See workshop help'
         ''
         '  na228 build l|mt            Build Latest or Manual Test without running it'
-        '  na228 test [suite] [-s]                 Run permanent tests and normal E2E suites concurrently; -s also qualifies against shifted'
-        '  na228 test create <suite> [game]  Create or replace a suite from its matching shared recording; capture its optional reference alongside the test run'
-        '  na228 test rename <suite> <new-suite>          Rename a suite and its capture history'
-        '  na228 test delete <suite>                      Delete a suite and its capture history'
+        '  na228 test                  Run permanent/unit tests'
+        '  na228 e2e [-s]              Run all E2E suites; -s also qualifies against shifted'
+        '  na228 e2e create <suite> [game]       Create or replace a suite from its matching shared recording; optionally capture a reference game'
+        '  na228 e2e rename <suite> <new-suite>  Rename a suite and its capture history'
+        '  na228 e2e delete <suite>               Delete a suite and its capture history'
         '  na228 worker work/<worker>/build/<name>.iso  Build an isolated worker ISO'
         '  na228 release [version]     Publish a GitHub release'
         '  na228 help                  Show this help'
@@ -73,6 +74,18 @@ if ($mode -eq 'help') {
 }
 
 if ($mode -eq 'test') {
+    if ($arguments.Count -gt 0) {
+        throw 'Usage: na228 test'
+    }
+    $testRun = Join-Path $PSScriptRoot 'tests\run.ps1'
+    if (-not (Test-Path -LiteralPath $testRun -PathType Leaf)) {
+        throw "The permanent-test infrastructure is unavailable: $testRun"
+    }
+    & $testRun
+    return
+}
+
+if ($mode -eq 'e2e') {
     $visualScripts = Join-Path $PSScriptRoot 'e2e\scripts'
     $visualRun = Join-Path $visualScripts 'run.ps1'
     $visualCreate = Join-Path $visualScripts 'create_suite.ps1'
@@ -90,7 +103,7 @@ if ($mode -eq 'test') {
     }
     $shiftFlags = @($arguments | Where-Object { $_ -ceq '-s' })
     if ($shiftFlags.Count -gt 1) {
-        throw 'na228 test accepts -s at most once.'
+        throw 'na228 e2e accepts -s at most once.'
     }
     if ($shiftFlags.Count -eq 1) {
         $positional = @($arguments | Where-Object { $_ -cne '-s' })
@@ -98,19 +111,12 @@ if ($mode -eq 'test') {
             & $visualRun -Shifted
             return
         }
-        if (
-            $positional.Count -eq 1 -and
-            $positional[0].ToLowerInvariant() -cnotin @('create', 'rename', 'delete')
-        ) {
-            & $visualRun -Suite $positional[0] -Shifted
-            return
-        }
-        throw 'Usage: na228 test [suite] [-s]'
+        throw 'Usage: na228 e2e [-s]'
     }
     $testCommand = $arguments[0].ToLowerInvariant()
     if ($testCommand -ceq 'create') {
         if ($arguments.Count -notin 2, 3) {
-            throw 'Usage: na228 test create <suite> [game]'
+            throw 'Usage: na228 e2e create <suite> [game]'
         }
         $createArguments = @{
             Suite = $arguments[1]
@@ -123,23 +129,19 @@ if ($mode -eq 'test') {
     }
     if ($testCommand -ceq 'rename') {
         if ($arguments.Count -ne 3) {
-            throw 'Usage: na228 test rename <suite> <new-suite>'
+            throw 'Usage: na228 e2e rename <suite> <new-suite>'
         }
         & $visualRename -Suite $arguments[1] -NewSuite $arguments[2]
         return
     }
     if ($testCommand -ceq 'delete') {
         if ($arguments.Count -ne 2) {
-            throw 'Usage: na228 test delete <suite>'
+            throw 'Usage: na228 e2e delete <suite>'
         }
         & $visualDelete -Suite $arguments[1]
         return
     }
-    if ($arguments.Count -eq 1) {
-        & $visualRun -Suite $arguments[0]
-        return
-    }
-    throw 'Usage: na228 test [suite] [-s] | na228 test create <suite> [game] | na228 test rename <suite> <new-suite> | na228 test delete <suite>'
+    throw 'Usage: na228 e2e [-s] | na228 e2e create <suite> [game] | na228 e2e rename <suite> <new-suite> | na228 e2e delete <suite>'
 }
 
 if ($mode -eq 'release') {

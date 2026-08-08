@@ -10,7 +10,6 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'suite.ps1')
 . (Join-Path $PSScriptRoot 'config.ps1')
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
 $configuration = Get-E2eConfiguration -Root $root
 $suiteRoot = Join-Path $root 'suites'
 if (-not [string]::IsNullOrWhiteSpace($CaptureRoot) -and
@@ -139,23 +138,9 @@ try {
         $replayNames += "$publishedVariant-repeat"
     }
     Write-Host (
-        "E2E pipeline started for $($suites -join ', '): permanent tests and " +
+        "E2E pipeline started for $($suites -join ', '): " +
         "build/replay lanes $($replayNames -join ', ') run concurrently."
     ) -ForegroundColor Cyan
-    $testsJob = Start-Job -Name 'tests' -ScriptBlock {
-        param($Repository, $Transaction)
-        $ErrorActionPreference = 'Stop'
-        $jobRoot = Join-Path (Join-Path $Transaction 'jobs') 'tests'
-        [void](New-Item -ItemType Directory -Path $jobRoot -Force)
-        & (Join-Path $Repository 'tests\run.ps1') *>&1 |
-            Tee-Object -FilePath (Join-Path $jobRoot 'output.log')
-        [IO.File]::WriteAllText(
-            (Join-Path $jobRoot 'result.json'),
-            "{`"schema_version`":1,`"status`":`"passed`"}`n",
-            [Text.UTF8Encoding]::new($false)
-        )
-    } -ArgumentList $repository, $transaction
-    $jobs.Add($testsJob)
     foreach ($variant in $runVariants) {
         $variantName = [string]$variant.name
         $variantJob = Start-Job -Name $variantName -ScriptBlock {

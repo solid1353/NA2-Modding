@@ -16,9 +16,8 @@ The internal permanent/unit-test runner is:
 .\tests\run.ps1
 ```
 
-The current `na228 test` CLI also starts this runner while performing E2E.
-Validation policy treats permanent tests and E2E as independent selections, and
-`TASKS.md` tracks the command/execution-lane split.
+`na228 test` invokes this permanent/unit-test runner only. E2E is an independent
+validation lane invoked globally with `na228 e2e`.
 
 `scripts/injection/inject_candidate.ps1` is an operational agent injection
 command, not a test. It remains under `scripts/` accordingly. Reusable PCSX2 and

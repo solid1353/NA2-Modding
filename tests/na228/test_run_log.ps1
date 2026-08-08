@@ -219,10 +219,17 @@ print(json.dumps(result))
         'source', 'utils', 'build', 'logs', 'na228_builder', 'pcsx2_stable',
         'pcsx2_files\cheats', 'pcsx2_files\game_settings',
         'pcsx2_files\input_profiles', 'pcsx2_files\memory_cards', 'scripts', 'source\NA2.iso.files',
-        'source\NUN5.iso.files', 'work'
+        'source\NUN5.iso.files', 'tests', 'work'
     )) {
         New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository $directory) | Out-Null
     }
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'tests\run.ps1') -Content @'
+param()
+Add-Content `
+    -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
+    -Value 'run'
+Write-Output '[fake] permanent tests'
+'@
     $helpText = (& (Join-Path $fakeRepository 'na228.ps1') help) -join "`n"
     Assert-Na2Test `
         -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'logs\na228'))) `
@@ -243,16 +250,19 @@ print(json.dumps(result))
         -Condition ($helpText -match '(?m)^\s*na228 build l\|mt\s') `
         -Message 'Root help omitted the explicit build-only command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test \[suite\] \[-s\]\s+Run permanent tests and normal E2E suites concurrently; -s also qualifies against shifted$') `
-        -Message 'Root help omitted the complete one-command E2E pipeline.'
+        -Condition ($helpText -match '(?m)^\s*na228 test\s+Run permanent/unit tests$') `
+        -Message 'Root help omitted the permanent/unit-test command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test create <suite> \[game\]\s+Create or replace a suite from its matching shared recording; capture its optional reference alongside the test run$') `
+        -Condition ($helpText -match '(?m)^\s*na228 e2e \[-s\]\s+Run all E2E suites; -s also qualifies against shifted$') `
+        -Message 'Root help omitted the global E2E command.'
+    Assert-Na2Test `
+        -Condition ($helpText -match '(?m)^\s*na228 e2e create <suite> \[game\]\s+Create or replace a suite from its matching shared recording; optionally capture a reference game$') `
         -Message 'Root help omitted suite replacement with an optional reference game.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test rename <suite> <new-suite>\s+Rename a suite and its capture history$') `
+        -Condition ($helpText -match '(?m)^\s*na228 e2e rename <suite> <new-suite>\s+Rename a suite and its capture history$') `
         -Message 'Root help omitted suite rename.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test delete <suite>\s+Delete a suite and its capture history$') `
+        -Condition ($helpText -match '(?m)^\s*na228 e2e delete <suite>\s+Delete a suite and its capture history$') `
         -Message 'Root help omitted suite deletion.'
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 test new\b') `
@@ -437,36 +447,58 @@ Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
     -Value "delete suite=$Suite"
 '@
+    $permanentCalls = Join-Path $fakeRepository 'tests\calls.txt'
     $visualCalls = Join-Path $fakeVisualScripts 'calls.txt'
     & (Join-Path $fakeRepository 'na228.ps1') test
-    $calls = @(Get-Content -LiteralPath $visualCalls)
-    Assert-Na2Test -Condition (($calls -join ',') -ceq 'run suite= shifted=False') `
-        -Message 'Bare na228 test did not dispatch the complete E2E pipeline exactly once.'
-    Remove-Item -LiteralPath $visualCalls
-    & (Join-Path $fakeRepository 'na228.ps1') test alpha
-    & (Join-Path $fakeRepository 'na228.ps1') test -s
-    & (Join-Path $fakeRepository 'na228.ps1') test alpha -s
-    & (Join-Path $fakeRepository 'na228.ps1') test create font/character_select
-    & (Join-Path $fakeRepository 'na228.ps1') test create font/with_reference nun5
-    & (Join-Path $fakeRepository 'na228.ps1') test rename font/character_select font/characters
-    & (Join-Path $fakeRepository 'na228.ps1') test delete font/characters
-    $calls = @(Get-Content -LiteralPath $visualCalls)
+    $testCalls = @(Get-Content -LiteralPath $permanentCalls)
     Assert-Na2Test `
-        -Condition ($calls.Count -eq 7 -and
-            $calls[0] -ceq 'run suite=alpha shifted=False' -and
-            $calls[1] -ceq 'run suite= shifted=True' -and
-            $calls[2] -ceq 'run suite=alpha shifted=True' -and
-            $calls[3] -ceq 'create suite=font/character_select game=' -and
-            $calls[4] -ceq 'create suite=font/with_reference game=nun5' -and
-            $calls[5] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
-            $calls[6] -ceq 'delete suite=font/characters') `
-        -Message 'Suite selection or lifecycle-command dispatch was incorrect.'
-    $retiredReferenceRejected = $false
+        -Condition (
+            ($testCalls -join ',') -ceq 'run' -and
+            -not (Test-Path -LiteralPath $visualCalls)
+        ) `
+        -Message 'Bare na228 test did not dispatch only the permanent test runner.'
+    $testArgumentsRejected = $false
     try {
-        & (Join-Path $fakeRepository 'na228.ps1') test reference alpha nun5
+        & (Join-Path $fakeRepository 'na228.ps1') test alpha
     }
     catch {
-        $retiredReferenceRejected = $_.Exception.Message -match '^Usage: na228 test'
+        $testArgumentsRejected = $_.Exception.Message -ceq 'Usage: na228 test'
+    }
+    Assert-Na2Test `
+        -Condition $testArgumentsRejected `
+        -Message 'na228 test accepted an argument after the command split.'
+    & (Join-Path $fakeRepository 'na228.ps1') e2e
+    & (Join-Path $fakeRepository 'na228.ps1') e2e -s
+    & (Join-Path $fakeRepository 'na228.ps1') e2e create font/character_select
+    & (Join-Path $fakeRepository 'na228.ps1') e2e create font/with_reference nun5
+    & (Join-Path $fakeRepository 'na228.ps1') e2e rename font/character_select font/characters
+    & (Join-Path $fakeRepository 'na228.ps1') e2e delete font/characters
+    $calls = @(Get-Content -LiteralPath $visualCalls)
+    Assert-Na2Test `
+        -Condition ($calls.Count -eq 6 -and
+            $calls[0] -ceq 'run suite= shifted=False' -and
+            $calls[1] -ceq 'run suite= shifted=True' -and
+            $calls[2] -ceq 'create suite=font/character_select game=' -and
+            $calls[3] -ceq 'create suite=font/with_reference game=nun5' -and
+            $calls[4] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
+            $calls[5] -ceq 'delete suite=font/characters') `
+        -Message 'Global E2E or lifecycle-command dispatch was incorrect.'
+    $suiteSelectionRejected = $false
+    try {
+        & (Join-Path $fakeRepository 'na228.ps1') e2e alpha
+    }
+    catch {
+        $suiteSelectionRejected = $_.Exception.Message -match '^Usage: na228 e2e'
+    }
+    Assert-Na2Test `
+        -Condition $suiteSelectionRejected `
+        -Message 'The public E2E command accepted a single-suite execution.'
+    $retiredReferenceRejected = $false
+    try {
+        & (Join-Path $fakeRepository 'na228.ps1') e2e reference alpha nun5
+    }
+    catch {
+        $retiredReferenceRejected = $_.Exception.Message -match '^Usage: na228 e2e'
     }
     Assert-Na2Test -Condition $retiredReferenceRejected `
         -Message 'The retired reference command was accepted.'

@@ -19,8 +19,6 @@ those.
 
 ## Conversation and metadata
 
-- `dnf`: do not forward, relay, quote, or summarize the attached message to
-  another task. It grants no other authority.
 - `ag`: reread live root `AGENTS.md` and apply it immediately.
 - `q:`: the request was queued earlier and may be stale. Compare it with the
   current state before acting. Perform only the still-relevant portion; do not
@@ -31,7 +29,6 @@ those.
   corrections integrated. Exclude rejected or withdrawn wording and add no new
   points. The boundary resets only when the discussion explicitly moves on.
 - `eff`: report the currently recommended effort without changing it.
-- `report`: provide the factual textual account requested by the user.
 - `sw`: resume after the user changed the chat to the recommended effort;
   preserve prior approval.
 - `ss`, `ss<number>`: identify a savestate or numbered savestate slot. The

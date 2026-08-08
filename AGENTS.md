@@ -63,8 +63,8 @@ following its workflow. No other wording enters a mode.
 Canonical command semantics are in
 [`docs/AGENT_COMMANDS.md`](docs/AGENT_COMMANDS.md). The command index is:
 
-`qwe`, `snapshot`, `tasks`, `task done`, `dnf`, `ag`, `q:`, `con`, `e2e`,
-`sum`, `eff`, `report`, `sw`, `ss`, `zxc`, `mute`, `unmute`.
+`qwe`, `snapshot`, `tasks`, `task done`, `ag`, `q:`, `con`, `e2e`, `sum`,
+`eff`, `sw`, `ss`, `zxc`, `mute`, `unmute`.
 
 ## Policy routing
 

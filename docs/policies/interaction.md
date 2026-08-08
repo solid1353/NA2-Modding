@@ -6,9 +6,6 @@ completion.
 
 ## Discussion and action
 
-- Questions authorize answers only, never actions or changes. During active
-  work, continue only the already-authorized scope; anything newly inferred
-  from a question requires explicit authorization.
 - During explicit discussion, design, planning, or brainstorming, later messages
   refine the proposed result. They do not authorize implementation until the
   applicable approval boundary is reached.
@@ -39,7 +36,8 @@ provided.
 - The user may add any number of tasks. Keep them in order and work through them
   in that order.
 - A new task does not interrupt current work unless the user says to do it
-  immediately. After the immediate item, resume the interrupted work.
+  immediately. `Immediately` changes priority, not cancellation; afterward,
+  resume the interrupted work automatically.
 - If a later item is serious, finish already-authorized small items in order and
   queue the serious item for design unless the user makes it immediate.
 
@@ -80,13 +78,6 @@ provided.
 - “Active work” means an ongoing user request. An open task, workstream,
   uncommitted candidate, dirty files, or other repository state is not a user
   request and cannot make work active.
-- While authorized work is active, the agent MUST continue executing it after
-  responding to every user message and agent command. The agent MUST NOT send a
-  final response unless the work is complete or one of the explicit stopping
-  conditions below applies. Ending the turn for any other reason is an
-  instruction violation.
-- `Immediately` changes priority; it does not cancel or abandon the interrupted
-  implementation.
 - Stop only for an explicit stop/pause/cancel, required user input, or a required
   user decision such as a material change to an approved serious-work design.
 

@@ -39,9 +39,12 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
   layout.
 - A serious-work snapshot states the outcome, scope, important architecture or
   behavior, proposed persistent mechanisms, and planned validation.
-- User comments, questions, corrections, and newly queued work do not cancel
-  current authorized work. `Immediately` changes priority; after the immediate
-  item, resume the interrupted work automatically.
+- When the user asks a question, the agent MUST answer it and MUST NOT perform,
+  start, authorize, infer, schedule, or resume any action based on that
+  question. The agent also MUST NOT stop, pause, abandon, replace, or end active
+  authorized work because the question was asked. After answering, the agent
+  MUST continue only the work already authorized before the question. A
+  question never grants approval and never satisfies a requested decision.
 
 Detailed interaction and authorization rules are in
 [`docs/policies/interaction.md`](docs/policies/interaction.md).

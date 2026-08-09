@@ -22,10 +22,12 @@ files, reverse-engineered behavior, hypotheses, or reusable research tooling.
 - Record new unresolved hypotheses as explicitly labelled sections in the
   relevant domain-owned knowledge document.
 - Every substantive disassembly, decompilation, or live-memory task promotes
-  reusable findings before cleanup. Record game/binary identity, ranges,
+  reusable findings before any derived implementation candidate or research
+  result is presented, and before cleanup. Record game/binary identity, ranges,
   file/runtime mapping, reconstructed behavior, meaningful names,
   callers/callees, side effects/state, cross-game equivalents, evidence, useful
-  negative results, and explicit confidence.
+  negative results, and explicit confidence. An instruction to stop or skip
+  validation does not defer this promotion requirement.
 - Before committing an implementation derived from reverse engineering, include
   its reusable knowledge update in the same delivery. Do not discard supporting
   analysis until every reusable finding and useful negative result is promoted.

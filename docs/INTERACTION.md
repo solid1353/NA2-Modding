@@ -72,6 +72,8 @@ results. For serious work, report:
 - user-visible behavior changes;
 - every new persistent mechanism or contract, or explicitly that none were
   introduced;
+- for work routed through the research policy, the canonical knowledge files
+  updated and the disposition of supporting analysis;
 - exact validation and its result;
 - remaining limitations, uncertainty, risks, or unverified areas;
 - commit and push state.

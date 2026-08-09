@@ -119,5 +119,8 @@ UI elements, and similar visible game behavior.
 - Permanent tests must detect a meaningful regression in accepted behavior or a
   documented safety contract. Do not freeze incidental implementation details
   or reconstruct the implementation and compare it with itself.
-- Disassembly findings and other reusable general knowledge may be documented at
-  any time, with facts, inferences, hypotheses, and confidence kept distinct.
+- Disassembly findings and other reusable general knowledge must be promoted on
+  the schedule required by the research policy even while patch acceptance is
+  pending. This records research evidence, not established candidate behavior,
+  and does not claim or imply that the patch works. Keep facts, inferences,
+  hypotheses, and confidence distinct.

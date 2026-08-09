@@ -9,30 +9,11 @@ completion.
 - During explicit discussion, design, planning, or brainstorming, later messages
   refine the proposed result. They do not authorize implementation until the
   applicable approval boundary is reached.
-- Do not infer or enter a workflow mode from ordinary conversation. Workflow
-  documents are not default context; use the exact-phrase routing in root
-  `AGENTS.md` and load only the selected workflow.
 - A user correction changes the named point only. Preserve unaffected approved
   work and continue it unless the user explicitly stops, pauses, cancels, or
   replaces it.
 - A discussion summary preserves every accepted point, integrates corrections,
   excludes rejected wording, and adds nothing new.
-
-## Work announcement and user inputs
-
-Before starting changes, state:
-
-```text
-Changes: <what will be changed>
-Needed from you: <required input or nothing>
-```
-
-If `Needed from you` is not `nothing`, do not start. Ask early for any
-savestate, screenshot, dump, file, reproduction, access, decision, or other
-user input that is required or would noticeably improve efficiency or quality.
-The ability to continue through a substantially slower or more speculative
-route is not a reason to avoid asking. Resume automatically after the input is
-provided.
 
 ## Task sequencing
 
@@ -41,24 +22,6 @@ provided.
 - A new task does not interrupt current work unless the user says to do it
   immediately. `Immediately` changes priority, not cancellation; afterward,
   resume the interrupted work automatically.
-- If a later item is serious, finish already-authorized small items in order and
-  queue the serious item for design unless the user makes it immediate.
-
-## Small and serious work
-
-- Small, direct work does not require a separate design phase.
-- Work is serious when it requires decisions about architecture, user-visible
-  behavior, compatibility, or coordinated changes across multiple components.
-- Design serious work through normal responsive dialogue. Read-only inspection
-  is allowed; canonical implementation changes are not.
-- Design mode is optional and is not required merely because work is serious.
-- Natural-language agreement such as `yes`, `good`, or `do that` approves the
-  current design point only. Once settled, present one concise implementation
-  snapshot containing the intended outcome, scope, important architecture or
-  behavior, proposed persistent mechanisms, and planned validation.
-- Begin implementation of serious work only after `qwe`. If implementation
-  requires a material change to the snapshot, stop and request user direction
-  rather than extending the authorization.
 
 ## Implementation boundaries
 

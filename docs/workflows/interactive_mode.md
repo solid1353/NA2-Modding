@@ -14,4 +14,4 @@ While Interactive mode is active:
 
 Continue discussion, implementation, validation, and correction until the user
 sends `qwe`. Then commit and push the accumulated result and exit Interactive
-mode.
+mode. Normal mode resumes.

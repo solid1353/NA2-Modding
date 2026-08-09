@@ -36,7 +36,7 @@ knowledge, tests, and release behavior.
 - [Agent commands](docs/AGENT_COMMANDS.md): commands interpreted by project
   agents.
 - Policies:
-  [interaction](docs/policies/interaction.md),
+  [interaction](docs/INTERACTION.md),
   [repository](docs/policies/repository.md),
   [coordination](docs/policies/coordination.md),
   [validation](docs/policies/testing.md),

@@ -25,11 +25,13 @@ No other wording enters Design mode. Plain `des` and `design` do not enter it.
 - Only `qwe` authorizes implementation. Agreement with individual points or any
   other wording does not authorize it.
 - An explicit instruction to stop or switch work may end Design mode without
-  authorizing implementation.
+  authorizing implementation. Normal mode resumes unless another workflow is
+  entered.
 
 ## Implementation and review
 
-1. `qwe` ends Design mode and starts implementation of the consolidated design.
+1. `qwe` ends Design mode, returns to Normal mode, and starts implementation of
+   the consolidated design.
 2. Implement and validate the design.
 3. Add an implementation summary to the design document.
 4. Commit and push the implementation together with the updated design

@@ -14,9 +14,6 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
   fork, and future repositories added to this maintained project may be changed
   together when the task requires it. Cross-repository work needs no separate
   approval.
-- Before making changes, state `Changes:` and `Needed from you:`. If useful user
-  input is required, ask for it and wait instead of pursuing a materially less
-  efficient substitute. This applies throughout the work, not only at startup.
 - Run every shell, filesystem, script, and Git operation elevated from the first
   attempt. If the elevated operation still fails, report the exact failure; do
   not invent alternate workflows or helper machinery to evade it.
@@ -30,13 +27,6 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 
 ## Task authorization
 
-- Small, direct tasks do not require a separate design phase.
-- Work is serious when it requires design decisions about architecture,
-  user-visible behavior, compatibility, or coordinated changes across multiple
-  components. Design serious work interactively; do not implement it until the
-  user approves the consolidated implementation snapshot with `qwe`.
-- A serious-work snapshot states the outcome, scope, important architecture or
-  behavior, proposed persistent mechanisms, and planned validation.
 - When the user asks a question, the agent MUST answer it and MUST NOT perform,
   start, authorize, infer, schedule, or resume any action based on that
   question. The agent also MUST NOT stop, pause, abandon, replace, or end active
@@ -45,26 +35,20 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
   question never grants approval and never satisfies a requested decision.
 
 Detailed interaction and authorization rules are in
-[`docs/policies/interaction.md`](docs/policies/interaction.md).
-
-## Workflow modes
-
-Workflow documents are not default context. Enter a mode only on an exact
-phrase below, then read only that workflow. While a mode remains active, keep
-following its workflow. No other wording enters a mode.
-
-| Exact phrase | Read |
-| --- | --- |
-| `des mode`, `design mode` | [`docs/workflows/design_mode.md`](docs/workflows/design_mode.md) |
-| `int mode`, `interactive mode` | [`docs/workflows/interactive_mode.md`](docs/workflows/interactive_mode.md) |
+[`docs/INTERACTION.md`](docs/INTERACTION.md).
 
 ## Agent commands
 
-Canonical command semantics are in
-[`docs/AGENT_COMMANDS.md`](docs/AGENT_COMMANDS.md). The command index is:
+Read and follow [`Normal mode`](docs/workflows/normal_mode.md) by default. Exact
+mode-entry commands and other directly routed commands are listed below. No
+other wording enters a mode; when a mode exits, Normal mode resumes.
 
-`qwe`, `snapshot`, `tasks`, `task done`, `ag`, `q:`, `con`, `e2e`, `sum`,
-`eff`, `sw`, `ss`, `zxc`, `mute`, `unmute`.
+| Command | Read |
+| --- | --- |
+| `des mode`, `design mode` | [`docs/workflows/design_mode.md`](docs/workflows/design_mode.md) |
+| `int mode`, `interactive mode` | [`docs/workflows/interactive_mode.md`](docs/workflows/interactive_mode.md) |
+| `zxc` | [`docs/workflows/procedures/graceful_stop.md`](docs/workflows/procedures/graceful_stop.md) |
+| `qwe`, `snapshot`, `tasks`, `task done`, `ag`, `q:`, `con`, `e2e`, `sum`, `eff`, `sw`, `ss`, `mute`, `unmute` | [`docs/AGENT_COMMANDS.md`](docs/AGENT_COMMANDS.md) |
 
 ## Policy routing
 
@@ -72,7 +56,7 @@ Read only the routed policy whose trigger applies:
 
 | Work | Read |
 | --- | --- |
-| conversation, authorization, sequencing, user inputs, completion reports | [`docs/policies/interaction.md`](docs/policies/interaction.md) |
+| conversation, authorization, sequencing, user inputs, completion reports | [`docs/INTERACTION.md`](docs/INTERACTION.md) |
 | Git, paths, work directories, elevation, cleanup, scripts, documentation layout | [`docs/policies/repository.md`](docs/policies/repository.md) |
 | validation, tests, builds, PCSX2, runtime injection, E2E | [`docs/policies/testing.md`](docs/policies/testing.md) |
 | profiles, builder inputs, binaries, donor data, source media, PNACH | [`docs/policies/modding.md`](docs/policies/modding.md) |

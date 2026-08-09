@@ -42,13 +42,16 @@ No other wording enters Design mode. Plain `des` and `design` do not enter it.
 
 ## Implementation and review
 
-1. `qwe` ends Design mode, returns to Normal mode, and starts implementation of
-   the consolidated design.
-2. Implement and validate the design.
-3. Add an implementation summary to the design document.
-4. Commit and push the implementation together with the updated design
+1. On `qwe`, finalize the design document, set its status to
+   `Ready for implementation`, and commit and push it before implementation
+   begins.
+2. `qwe` then ends Design mode, returns to Normal mode, and starts
+   implementation of the consolidated design.
+3. Implement and validate the design.
+4. Add an implementation summary to the design document.
+5. Commit and push the implementation together with the updated design
    document.
-5. Report the result in chat and request user review.
+6. Report the result in chat and request user review.
 
 Review may remain pending indefinitely. Do not impose a deadline, restriction,
 or automatic cleanup.

@@ -152,8 +152,7 @@ Give each document one job and canonical authority:
 - `docs/INTERACTION.md` owns shared interaction and task rules;
 - routed policies own other scoped normative rules;
 - workflow documents under `docs/workflows/` own complete interaction modes;
-- procedure documents under `docs/workflows/procedures/` own non-mode agent
-  procedures;
+- procedure documents under `docs/procedures/` own non-mode agent procedures;
 - active design documents live under the permanent `docs/designs/` directory;
 - runbooks own exact operational procedures;
 - `docs/AGENT_COMMANDS.md` owns commands interpreted by agents;

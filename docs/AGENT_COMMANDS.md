@@ -28,7 +28,7 @@ those.
   current task-owned pending Normal mode changes. No other wording triggers
   this command.
 - `zxc`: follow the
-  [`graceful-stop procedure`](workflows/procedures/graceful_stop.md).
+  [`graceful-stop procedure`](procedures/graceful_stop.md).
 
 ## Conversation and metadata
 

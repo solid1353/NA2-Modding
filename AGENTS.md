@@ -57,7 +57,7 @@ policies remain active in every mode.
 | --- | --- |
 | `des mode`, `design mode` | [`docs/workflows/design_mode.md`](docs/workflows/design_mode.md) |
 | `int mode`, `interactive mode` | [`docs/workflows/interactive_mode.md`](docs/workflows/interactive_mode.md) |
-| `zxc` | [`docs/workflows/procedures/graceful_stop.md`](docs/workflows/procedures/graceful_stop.md) |
+| `zxc` | [`docs/procedures/graceful_stop.md`](docs/procedures/graceful_stop.md) |
 | `qwe`, `snapshot`, `tasks`, `task done`, `c`, `c on`, `c off`, `ver`, `mode`, `n`, `ag`, `q:`, `con`, `e2e`, `sum`, `eff`, `sw`, `ss`, `mute`, `unmute` | [`docs/AGENT_COMMANDS.md`](docs/AGENT_COMMANDS.md) |
 
 ## Policy routing

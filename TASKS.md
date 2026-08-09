@@ -15,6 +15,7 @@
 ### [Project](docs/workstreams/project/README.md)
 - Investigate cross-platform development/deployment possibilities.
 - Global cleanup - preserve/promote what is needed, delete the rest.
+- Rename workstream-log terminology and configured paths to task logs.
 
 ### Bugs
 - **UI Translation:** long character names.

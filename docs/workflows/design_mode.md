@@ -24,6 +24,8 @@ No other wording enters Design mode. Plain `des` and `design` do not enter it.
 
 - Discuss the design freely. The document is a consolidated design, not a
   conversation transcript.
+- After each user approval of a design point, propose the next unresolved
+  design question if one remains.
 - Update the document only at milestones or when the user explicitly requests
   an update.
 - A milestone occurs when a coherent part of the design has stabilized enough

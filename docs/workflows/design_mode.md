@@ -47,7 +47,8 @@ No other wording enters Design mode. Plain `des` and `design` do not enter it.
    begins.
 2. Start implementation of the consolidated design without leaving Design mode.
 3. Implement and validate the design.
-4. Add an implementation summary to the design document.
+4. Add an implementation summary to the design document and set its status to
+   `Pending review`.
 5. Commit and push the implementation together with the updated design
    document.
 6. Report the result in chat and request user review.

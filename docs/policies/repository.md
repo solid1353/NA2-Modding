@@ -42,14 +42,18 @@ work directories, or documentation layout.
   a clean working tree. If work is blocked or incomplete, do not create a WIP
   commit merely to clean the tree; report the exact task-owned dirty state.
   `zxc` is the explicit recoverable graceful-stop exception.
-- Every task-owned commit must be immediately followed by a push.
+- When a remote exists, immediately push each task-owned commit unless it
+  belongs to a coherent multi-repository delivery. For such a delivery, create
+  every intended commit before pushing any repository; if any commit fails,
+  push none. Once all commits exist, push every remote-backed participating
+  repository without unrelated intervening work. If a push fails partway,
+  report the exact partial delivery; do not rewrite or roll back published
+  history automatically. Report every participating repository's commit, push,
+  and dirty state.
   Normal pushes to the configured current branch/origin have standing
   authorization; do not ask for it again. Changing remotes, force-pushing, or
   rewriting published history
   still requires explicit instruction.
-- A coherent delivery spanning maintained repositories has one completion
-  boundary: create every intended commit before pushing any participating
-  repository, then report each repository's commit, push, and dirty state.
 - Never modify Git identity configuration at any scope, including system,
   global, local, and worktree configuration. Resolve the matching agent identity
   from `@workshop/settings/git-authors.tsv`, or use

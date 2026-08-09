@@ -53,10 +53,8 @@ work directories, or documentation layout.
   `<agent-name>@agent.invalid` when it has no entry, and apply it only to the
   individual commit operation. Do not use or override the user's persistent
   identity. Use the concise task-authored subject
-  `[<workstream/category>] <imperative summary>`, with the owning workstream or
-  category as the prefix. When no meaningful owner or category applies, use
-  `[Other] <imperative summary>`. Do not use the full task title or invent
-  another prefix taxonomy. Verify the subject before pushing.
+  `[<chat name>] <imperative summary>`, with the current chat name in square
+  brackets. Verify the subject before pushing.
 - Git history is the recovery mechanism for tracked files. Preserve
   irreplaceable untracked inputs deliberately before deleting them.
 

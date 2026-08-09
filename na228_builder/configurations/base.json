@@ -33,7 +33,7 @@
     "battle_logic": {
       "disable_shadowblur_extra_hit": true,
       "disable_extra_hit_with_aura_punishment_for_initiator": true,
-      "substitution_cost": 1
+      "substitution_cost": 0.5
     },
     "rendering": {
       "native_16_9_horizontal_scale": false

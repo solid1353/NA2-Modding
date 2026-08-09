@@ -21,6 +21,7 @@ those.
 
 ## Conversation and metadata
 
+- `n`: proceed to the next item.
 - `mode`: only when the entire user message, after trimming surrounding
   whitespace, is exactly `mode`, respond with only `Normal mode`, `Design
   mode`, or `Interactive mode`, whichever is active. It does not change the

@@ -19,8 +19,8 @@ files, reverse-engineered behavior, hypotheses, or reusable research tooling.
 - Confirmed function roles, callers/callees, state behavior, mappings, runtime
   observations, and useful negative results belong in `docs/knowledge/` or
   beside canonical component data.
-- New unresolved hypotheses belong in a topic-local hypothesis document beside
-  the relevant subsystem or research area.
+- Record new unresolved hypotheses as explicitly labelled sections in the
+  relevant domain-owned knowledge document.
 - Every substantive disassembly, decompilation, or live-memory task promotes
   reusable findings before cleanup. Record game/binary identity, ranges,
   file/runtime mapping, reconstructed behavior, meaningful names,

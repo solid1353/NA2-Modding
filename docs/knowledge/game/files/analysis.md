@@ -176,8 +176,9 @@ component separately.
    evidence that points to an artifact, function, address, string, or format.
    Do not begin with an instruction to disassemble everything.
 2. **Reuse existing knowledge.** Check `docs/knowledge/`, module-local evidence,
-   topic-local hypotheses, current patch definitions, preserved exports, and
-   `@analysis/disassembly/<target>/` before creating another analysis workspace.
+   topic-local unresolved sections, current patch definitions, preserved
+   exports, and `@analysis/disassembly/<target>/` before creating another
+   analysis workspace.
 3. **Identify the exact input.** Record the configured-root path, size, content
    hash, signature/format, and whether the file is an original, extraction,
    baseline copy, or modified copy. Keep `@source/` untouched.
@@ -207,9 +208,9 @@ component separately.
    proven load-state/signature guard exists.
 10. **Promote the result.** Put confirmed reusable behavior and mappings in
     `docs/knowledge/` or module-local evidence; put unresolved interpretations
-    in a topic-local hypothesis document beside the relevant subsystem. Remove
-    disposable exports and experiments after their durable information is
-    preserved.
+    in explicitly labelled sections of the relevant domain-owned knowledge
+    document. Remove disposable exports and experiments after their durable
+    information is preserved.
 
 ## Existing reusable analysis
 

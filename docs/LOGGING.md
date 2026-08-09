@@ -119,8 +119,8 @@ rediscovery. Size alone is not a reason to split or delete a useful record.
   knowledge index.
 - Durable supporting inventories or visual evidence:
   `docs/knowledge/<domain>/<topic>/`.
-- Unconfirmed interpretations and future experiments: a topic-local
-  hypothesis document beside the relevant subsystem or research area.
+- Unconfirmed interpretations and future experiments: explicitly labelled
+  sections in the relevant domain-owned knowledge document.
 
 When evidence changes a conclusion, update the durable knowledge entry and its
 canonical data together. Do not expect a future agent to reconstruct the result

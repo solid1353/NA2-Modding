@@ -200,8 +200,8 @@ When new evidence appears:
 2. Keep exact paths, offsets, and sizes in the media TSV inventories.
 3. Keep disassembly scope and cohort metadata in
    `analysis_inventory.tsv` and `analysis.md`.
-4. Put an unresolved interpretation in a topic-local hypothesis document
-   beside the relevant subsystem; promote it here only when the evidence
-   supports the stated confidence.
+4. Put an unresolved interpretation in an explicitly labelled section of the
+   relevant domain-owned knowledge document; promote it here only when the
+   evidence supports the stated confidence.
 5. Link detailed subsystem findings rather than duplicating their complete
    analysis in this overview.

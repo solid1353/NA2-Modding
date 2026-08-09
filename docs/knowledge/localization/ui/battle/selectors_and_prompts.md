@@ -286,3 +286,9 @@ BTL files, decoded `TEX_xselect` crops, and complete-function comparison.
 The user then verified the integrated Current build on both Command Menu and
 Command Chart and accepted both screens as good. Confidence is **verified** and
 the shared correction is **runtime-proven**.
+
+## Unresolved Jutsu-name display lead
+
+An old note near EE `0x001F64A4` proposes forcing part or all of `v0` to zero
+in a branch delay slot. The intended bit or byte and the affected screen
+behavior are unspecified.

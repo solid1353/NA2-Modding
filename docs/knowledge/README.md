@@ -2,8 +2,9 @@
 
 This directory is the long-term record for established reverse-engineering
 and game-behavior knowledge that would otherwise be lost when operational
-logs are cleaned. New unresolved hypotheses belong in topic-local documents beside the
-relevant subsystem or research area.
+logs are cleaned. Record unresolved hypotheses as explicitly labelled sections
+in the relevant domain-owned document rather than organizing documents by
+evidence type.
 
 ## What belongs here
 
@@ -35,10 +36,10 @@ Operational logs remain disposable after their durable findings are promoted. Gi
 
 ## Current domains
 
-- `game/`: disc identity and the `game/files/` collection, which contains the
-  canonical human-readable game-file map, minimum useful analysis levels, the
-  reusable escalation workflow, and exact outer-ISO, `DATA.CVM`, and AFS layout
-  inventories.
+- `game/`: disc identity, [character assets](game/character_assets.md), and the
+  `game/files/` collection, which contains the canonical human-readable
+  game-file map, minimum useful analysis levels, the reusable escalation
+  workflow, and exact outer-ISO, `DATA.CVM`, and AFS layout inventories.
 - `runtime/`: EE address-space, allocator, overlay-lifetime, injection-capacity,
   and menu-input runtime findings.
 - `gameplay/`: substitution behavior, other gameplay-behavior findings, and

@@ -20,6 +20,5 @@ parents or active patch inputs.
   payload composition, and deterministic runtime boundaries.
 - [Experiments and negative results](experiments.md): superseded baselines and
   rejected renderer/asset approaches.
-- [Open hypotheses](hypotheses.md): unresolved Font-specific hypotheses only.
 - [2026-07-24 matched savestate analysis](savestate_analysis_2026-07-24.md):
   focused paired-screen evidence used by the later work.

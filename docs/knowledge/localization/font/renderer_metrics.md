@@ -122,6 +122,19 @@ NUN5, while visible-ink mass is `0.965854`; the remaining horizontal deficit
 is therefore advance/spacing behavior rather than excess palette weight.
 Confidence is **high** for the byte-level palette and guarded runtime results.
 
+### Unresolved selective palette refinement
+
+Clean NA2's primary GF4 raster and the accepted secondary raster both use
+palette indices 13 and 14 zero times. Those two GF4C entries may therefore be
+candidates for exact NUN5 white-alpha levels without changing any currently
+referenced primary pixel. This remains a bounded asset lead only if a matched
+review still finds a halfwidth-Latin weight difference.
+
+No palette bytes or raster indices have been changed or runtime-tested for this
+lead. Any experiment must start from the accepted native package and remain a
+small, call-local or asset-local, script-generated change. A full NUN5 text
+renderer transplant is outside its scope.
+
 
 ### Native NA2 selected-row offset behavior
 

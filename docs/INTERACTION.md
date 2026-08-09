@@ -12,8 +12,8 @@ completion.
 - A user correction changes the named point only. Preserve unaffected approved
   work and continue it unless the user explicitly stops, pauses, cancels, or
   replaces it.
-- A discussion summary preserves every accepted point, integrates corrections,
-  excludes rejected wording, and adds nothing new.
+- A discussion summary contains only the intended changes, integrates accepted
+  corrections, excludes rejected or withdrawn changes, and adds no new changes.
 
 ## Task sequencing
 

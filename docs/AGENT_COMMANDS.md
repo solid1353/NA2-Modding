@@ -42,9 +42,10 @@ those.
   repeat, undo, or conflict with work completed while it waited.
 - `con`: resume the current work with scope, effort, progress, and approval
   state intact.
-- `sum`: summarize the complete current discussion topic with accepted
-  corrections integrated. Exclude rejected or withdrawn wording and add no new
-  points. The boundary resets only when the discussion explicitly moves on.
+- `sum`: summarize only the intended changes from the current discussion, with
+  accepted corrections integrated. Exclude rejected or withdrawn changes and
+  add no new changes. The boundary resets only when the discussion explicitly
+  moves on.
 - `eff`: report the currently recommended effort without changing it.
 - `sw`: resume after the user changed the chat to the recommended effort;
   preserve prior approval.

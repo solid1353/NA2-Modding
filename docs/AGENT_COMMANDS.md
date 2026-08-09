@@ -19,6 +19,9 @@ those.
 - `c on`, `c off`: change the current chat's persistent Normal mode
   commit setting as defined in
   [`normal_mode.md`](workflows/normal_mode.md#commit-setting).
+- `c`: respond only with `Commit: on` or `Commit: off`, reporting the current
+  chat's persistent Normal mode commit setting. It does not change the setting
+  or grant authority.
 - `zxc`: follow the
   [`graceful-stop procedure`](workflows/procedures/graceful_stop.md).
 

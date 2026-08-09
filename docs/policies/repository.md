@@ -39,9 +39,10 @@ work directories, or documentation layout.
   a clean working tree. If work is blocked or incomplete, do not create a WIP
   commit merely to clean the tree; report the exact task-owned dirty state.
   `zxc` is the explicit recoverable graceful-stop exception.
-- Every created task-owned commit is pushed automatically. Normal pushes to the
-  configured current branch/origin have standing authorization; do not ask for
-  it again. Changing remotes, force-pushing, or rewriting published history
+- Every task-owned commit must be immediately followed by a push.
+  Normal pushes to the configured current branch/origin have standing
+  authorization; do not ask for it again. Changing remotes, force-pushing, or
+  rewriting published history
   still requires explicit instruction.
 - A coherent delivery spanning maintained repositories has one completion
   boundary: create every intended commit before pushing any participating

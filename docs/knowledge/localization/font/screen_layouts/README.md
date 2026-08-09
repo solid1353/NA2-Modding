@@ -4,8 +4,11 @@ This domain owns caller- and screen-family-specific Font layout evidence. Load
 only the family relevant to the affected screen; shared selected-state behavior
 and the matched-screen baseline have their own document.
 
-- [Controls and Practice](controls_and_practice.md): Command Chart, Pause
-  Controls, Special Controls, and Practice layouts.
+- [Command Chart and Practice titles](command_and_practice_titles.md): shared
+  title-adapter metrics, distinct geometry, guarded callers, and validation.
+- [Controls](controls.md): Command Chart relationship rows, Pause Controls,
+  and Special Controls.
+- [Practice](practice.md): explanation wrapping and Settings layouts.
 - [Confirmations](confirmations.md): Battle, Practice, Mode Select, and
   Collection confirmation layouts.
 - [Collection](collection.md): fixed-cadence lists and structural Collection

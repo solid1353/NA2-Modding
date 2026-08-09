@@ -4,14 +4,6 @@ These are unverified historical leads retained because they identify concrete
 addresses or functions. The labels and effects must be re-established from
 current disassembly or runtime evidence before implementation.
 
-## Substitution cost variant
-
-Historical notes record EE `0x202298BC` / ELF file `0x1299BC` value `0x4040`
-as 3/15 and `0x40A0` as 5/15. The 3/15 form is preserved as disabled,
-runtime-proven patch `ELF-S001`; see
-[`../localization/substitution.md`](../localization/substitution.md). The 5/15
-form has not been revalidated.
-
 ## Extra-hit branch lead
 
 A historical one-branch candidate exists at EE `0x20241F40`, labelled “extra

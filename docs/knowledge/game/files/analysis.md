@@ -245,7 +245,7 @@ component separately.
   `na228_builder/catalog/implementation/edits.json`: their guarded edits.
   Provenance and runtime
   conclusions are retained in feature/knowledge docs.
-- `docs/knowledge/localization/substitution.md`,
+- `docs/knowledge/gameplay/substitution.md`,
   `docs/knowledge/runtime/menu_input.md`, and
   `docs/knowledge/localization/font/`:
   established analysis boundaries and negative results

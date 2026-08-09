@@ -41,9 +41,10 @@ Operational logs remain disposable after their durable findings are promoted. Gi
   inventories.
 - `runtime/`: EE address-space, allocator, overlay-lifetime, injection-capacity,
   and menu-input runtime findings.
-- `gameplay/`: gameplay-behavior findings and topic-local unresolved leads.
-- `localization/`: string placement, substitution, binary evidence, function
-  maps, runtime tests, UI draw-path findings, and font research.
+- `gameplay/`: substitution behavior, other gameplay-behavior findings, and
+  topic-local unresolved leads.
+- `localization/`: string placement, binary evidence, function maps, runtime
+  tests, UI draw-path findings, and font research.
 
 Keep this index shallow. Add a subdirectory when a technical domain has several
 related records; do not organize records by the workstream that happened to

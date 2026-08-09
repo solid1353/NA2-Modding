@@ -1,9 +1,16 @@
-# Substitution Reliability Knowledge
+# Substitution Knowledge
 
-This document promotes the durable findings from the 2026-07-05 substitution-reliability investigation. It records tested negative results and the established control-flow boundary so the same hit-processing gates are not investigated again without new evidence.
+This document records the confirmed substitution-cost mechanism and the
+durable findings from the 2026-07-05 substitution-reliability investigation.
+It preserves the established behavior, tested negative results, and
+control-flow boundary so they are not investigated again without new evidence.
 
 ## Stable references
 
+- Target: *Naruto Shippuuden: Narutimate Accel 2*, `SLPS-25837`, boot ELF
+  `SLPS_258.37`.
+- Clean source: `@source/NA2.iso.files/SLPS_258.37`, SHA-256
+  `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`.
 - Current serial-wide cheat file: `@pcsx2_cheats/SLOP-NA228.pnach`.
 - Historical CRC alias during the investigation: `@pcsx2_cheats/SLPS-25837_E0F064C5.pnach`. The current workflow no longer generates CRC aliases.
 - Historical NA2 decompiler/Ghidra evidence remains available through Git
@@ -20,6 +27,37 @@ declarative rows remain recoverable through Git history.
 
 Function names below are Ghidra-generated names for the NA2 boot ELF and are stable only within the preserved analysis project.
 
+## Substitution-cost mechanism
+
+Clean bytes and the maintained Ghidra export confirmed this mechanism on
+2026-08-09. At EE address `0x202298BC` / ELF file offset `0x1299BC`,
+`FUN_002297d0` contains `lui v0, 0x3F80`, represented by little-endian
+instruction bytes `80 3F 02 3C`. The function moves the resulting float32
+`1.0` to `f0`, subtracts it from the object's `+0x70` float field, and clamps
+the result to zero.
+
+Integer costs from 1 through 15 have exact IEEE-754 float32 encodings whose
+low 16 bits are zero. The existing `lui` can therefore represent any value in
+that range by changing only its immediate while preserving its opcode and
+destination register.
+
+| Cost | LUI immediate | Complete instruction bytes |
+| ---: | ---: | --- |
+| 1 | `0x3F80` | `803F023C` |
+| 3 | `0x4040` | `4040023C` |
+| 5 | `0x40A0` | `A040023C` |
+| 15 | `0x4170` | `7041023C` |
+
+The historical 16-bit PNACH write changed the immediate bytes from `80 3F` to
+`40 40`, making the decrement 3/15. It is preserved as disabled,
+runtime-proven binary-patcher patch `ELF-S001`. Use that guarded module patch
+rather than restoring a permanent PNACH write.
+
+The instruction site, float encoding, and decrement mechanism are confirmed,
+not hypotheses. The 3/15 form is runtime-proven; the other configurable costs
+have not each been runtime-tested. Substitution cost is not the
+substitution-reliability gate.
+
 ## Runtime tests that did not improve reliability
 
 Three temporary EE branch edits were tested and then disabled:
@@ -31,12 +69,6 @@ Three temporary EE branch edits were tested and then disabled:
 | `0x20190FD4` | Allow the primary action path outside mode bits `== 3` | No difference | The mode-bit gate near this address was not the observed reliability gate. |
 
 The first test appears to call `FUN_001921c0` with invalid context. These results constrain future work; they do not prove that the affected code is irrelevant in every state.
-
-## Known substitution-cost patch
-
-The historical 16-bit PNACH write at EE address `0x202298BC` changes a downstream substitution packet/cost field in `FUN_001c3da0` to `0x4040` (3/15). It affects an already-built packet and is not the reliability gate.
-
-It is preserved as disabled, runtime-proven binary-patcher patch `ELF-S001`, which guards boot-ELF file offset `0x1299BC` and replaces `80 3F` with `40 40`. Use the module patch rather than restoring a permanent PNACH write.
 
 ## Established control flow
 

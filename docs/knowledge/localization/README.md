@@ -9,7 +9,6 @@ specialized area belong here.
 - [External string payload](external_string_payload.md)
 - [Font knowledge](font/README.md)
 - [UI knowledge](ui/README.md)
-- [Substitution behavior](substitution.md)
 - [Localization and asset hypotheses](hypotheses.md)
 - [Legacy 2022 artifact audit](legacy_2022_artifacts.md)
 

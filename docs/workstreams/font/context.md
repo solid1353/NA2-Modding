@@ -188,4 +188,4 @@ and task behavior always come from live repository policies, not this context.
 ## Detailed knowledge
 
 - [Font renderer and asset findings](../../knowledge/localization/font/README.md)
-- [Matched-screen baseline](../../knowledge/localization/font/screen_layouts.md#matched-screen-baseline)
+- [Matched-screen baseline](../../knowledge/localization/font/screen_layouts/shared_style.md#matched-screen-baseline)

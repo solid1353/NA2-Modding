@@ -86,6 +86,22 @@ outside the translation importer.
 - Memory-card notices use packed sequence mappings so every official fragment
   remains reachable without changing file size.
 
+### Battle and Practice quit confirmations
+
+Paired Battle and Practice states for both return destinations prove that the
+BTL modal assembles its body from four independently selected strings:
+
+`mode head + connective + destination + terminator`
+
+The mode head is T63 (`Battle`) or T64 (`Practice`), the shared connective is
+T66, and T67 terminates the question. The destination is not the T68/T69 pause
+menu label. The modal selects separate short BTL slots at `0x208DA0`
+(`Character Select`) and `0x208DC0` (`Game Mode Select`), represented by T2201
+and T2202. T63/T64 must resolve only through the donor's `%1`; including the
+text before `%2` duplicates T66 at runtime. This split produces all four NUN5
+sentences without storing newlines in canonical mappings; draw-time wrapping
+remains renderer-owned.
+
 Version-by-version counts, generated hashes, old runtime checklists, and
 superseded issue logs remain in Git history rather than canonical
 documentation.

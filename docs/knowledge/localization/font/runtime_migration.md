@@ -1,8 +1,16 @@
 # Font runtime migration and composition
 
-## 2026-07-24 weight and spacing refinement
+This document owns the runtime-lifetime, compiled-payload, ABI, and validation
+constraints behind the current Font implementation. Current selectable
+membership remains canonical in the catalog; historical detail is retained
+only where it explains a live constraint, negative result, or validation
+boundary.
 
-### 2026-07-25 confirmed Load-screen helper erasure
+## Resident relocation and C migration
+
+### Load-screen helper erasure
+
+Evidence date: 2026-07-25.
 
 The user captured a state after the game froze while entering the Load screen.
 The source was read from
@@ -43,7 +51,9 @@ matched renderer formulas and layout decisions remained valid and were
 relocated through the shared resident payload as described below.
 
 
-### 2026-07-25 resident relocation and regression
+### Resident relocation and regression
+
+Evidence date: 2026-07-25.
 
 All executable Font helpers and trampolines are now feature-owned
 `runtime_injector` fragments linked by the shared payload builder into
@@ -116,7 +126,9 @@ The ten converted captures and the untouched-state controls are retained under
 remaining caller families are implemented.
 
 
-### 2026-07-28 accepted remaining-layout C migration
+### Accepted remaining-layout C migration
+
+Evidence date: 2026-07-28.
 
 The remaining v2 behavioral layout implementation can be expressed as ordinary
 EE C without changing its canonical payload symbols or guarded game hooks.
@@ -134,20 +146,14 @@ generation. The corrected selected-Pause bridge leaves the live color in
 `t0`, while the Practice bridge moves its secondary object into `t0` and the
 native Y float bits into `t1`.
 
-The accepted implementation contains 49 v2 fragments in 5,924 bytes, SHA-256
-`7F021178787EA9A845EED8AE348B731345C3459BF1AF29D48CA02B26E84D5F28`.
-The separate 188-byte numeric formatter is unchanged. Static evidence covers
-compiler extraction, supported relocations, exact exported-symbol closure,
-session/frame offset assertions, bounded buffers, package loading, and the
-combined feature hash. The normal build promoted Current CRC `12369AA2`; the
-user manually regressed every affected caller family and reported `no diff`.
-Only after that explicit acceptance were permanent tests updated. They protect
-the relocatable C and native-ABI safety contracts without freezing compiler
-hashes or old assembly layouts; focused tests pass 11/11 and the full builder
-suite passes 201/201.
+The accepted boundary keeps layout policy in relocatable C while retaining
+small assembly bridges only for game-specific entry ABIs, displaced
+instructions, and native tail calls. Historical fragment counts, payload
+hashes, and test totals are recoverable from Git and are not current contracts.
 
+## Renderer-family architecture
 
-## 2026-08-02 Font 3 global layout overhaul
+Evidence date: 2026-08-02.
 
 The Font 3 overhaul moves layout ownership from individual visible rows to
 structural renderer families in `src/localization/font/font_v2_core.c`. Thin
@@ -239,18 +245,11 @@ retirement.
 
 ### Runtime and static result
 
-The last captured isolated build used for the main and Collection evidence is
-`work/Font 3/build/font-overhaul-final-red.iso`, SHA-256
-`39F7EF26AB833559E6AD2EC1905D14599724B259E6066F40085F13DB9F607C09`,
-with retained build record
-`work/Font 3/logs/builds/20260802_171859_865_pid38392/`. After those captures,
-the final source replaced the objective-only `320`-unit wrap threshold with the
-same `288`-unit constant used by its render box. That source is not claimed to
-be byte-identical to the captured ISO. The latest compose-only result retains
-`138` resident symbols, `18,512` payload bytes, and `66` runtime-injector
-edits. Deterministic reconstruction reports `104` Font fragments within `108`
-compiled/static declarations, and full default-profile composition succeeds
-without conflicts.
+The captured runtime evidence predates the final source change that replaced
+the objective-only `320`-unit wrap threshold with the same `288`-unit constant
+used by its render box. The final objective implementation therefore requires
+its own synchronized replay; older captures are not presented as proof of
+byte-identical current output.
 
 The synchronized main replay provides valid post-change cases 1-49 under
 `work/Font 3/overhaul/comparisons/font-overhaul-final-red-main-1-49-vs-nun5/`.
@@ -319,26 +318,21 @@ be used for smaller raster-phase differences. Content differences between
 games, animation timing, and absent native sections are recorded but are not
 Font defects.
 
-## 2026-07-28 composition-time C cutover
+## Composition-time C integration
 
-The two accepted Font C units are now compiled during normal
-`runtime_injector` package loading. `c_sources.tsv` declares the source and
-namespace, `c_imports.tsv` binds its external symbols, and `c_fragments.tsv`
-maps extracted object sections to stable payload symbols and global order.
-Compiler objects exist only in a temporary directory. Retained native ABI/data
-shims are represented directly in `fragments.tsv`; the payload builder links
-all normalized fragments into the one final `PRG/228.BIN`.
+Evidence date: 2026-07-28.
 
-This is an architecture-only cutover. Comparison against the preceding
-canonical package produced the same 57 fragments, the same 6,480-byte
-runtime-injector link with SHA-256
-`48621B34B8183866BA2D420B7D6691D110825BE090424E7C44B3A305BF9332FF`,
-and the same 7,968-byte complete profile payload with SHA-256
-`56748DA8F0D3C2BFE3AC689B1899DBF4EA358D5316DC387F562165CCCDB9C99C`;
-the linked memory end remains `0x008F5C20`. The removed aggregate blobs were
-therefore redundant build intermediates, not runtime resources. Confidence is
-high because equality covers compiled section bytes, relocations, fragment
-order, and the final linked payload.
+The accepted Font C units compile during runtime-injector loading. The current
+catalog implementation store declares each source, namespace, imported symbol,
+extracted object fragment, global order, hook, and relocation. Compiler objects
+remain temporary; the payload builder links normalized compiled and inline
+fragments into the final `PRG/228.BIN`. Checked-in aggregate MIPS payload blobs
+are not production inputs.
+
+The original cutover was architecture-only and reproduced the preceding linked
+fragment bytes, relocations, order, and complete payload. That equivalence is
+the retained reason aggregate blobs were removed; version-specific counts and
+hashes remain in Git history rather than this current architecture record.
 
 ### Secondary metric decoder cutover
 
@@ -353,28 +347,23 @@ through `s2`, converted printable secondary codes to cells `0..122`, returned
 the same expanded four-byte metric row, stored it through `s1`, and rejoined
 cleanup at `0x00187B68`.
 
-`font_glyph_metrics.c` now implements both contracts in expandable
-`PRG/228.BIN`. The compiled lookup entry is 208 bytes and the draw-application
-entry is 328 bytes; neither has an external relocation. Boot-ELF file
-`0x87374` now contains only a 24-byte register-setup/link/cleanup hook to
-`glyph_metric_apply`; file `0x87B60` contains the analogous
-24-byte hook to `glyph_metric_lookup`. Static composition
-places the candidate entries at runtime `0x008F3EE8` and `0x008F3DA0`
-respectively, but these addresses are payload-builder results rather than
-feature-owned constants. The complete candidate payload is 8,512 bytes,
-SHA-256
-`81DED6B73DAB6B2B72B52FC158FD7F3C9C4A05CE8654EB1A273C81779AAF6E2D`,
-ending at runtime `0x008F5E40`.
+`font_glyph_metrics.c` implements both contracts in expandable `PRG/228.BIN`.
+The catalog keeps only guarded register-setup/link/cleanup hooks at boot-ELF
+files `0x87374` and `0x87B60`, targeting `glyph_metric_apply` and
+`glyph_metric_lookup`. Their final runtime addresses are payload-builder
+results rather than feature-owned constants.
 
 The atlas, packed map, descriptor, secondary-cell guard, horizontal scale word,
 and secondary-only quad-height path remain unchanged. The pre-generated
-decoder and measurement blobs are removed. Static confidence is high from
-clean-byte guards, bounded disassembly of both native contexts, compiler
-instruction review, and resolved-hook inspection. Runtime status remains
-`approved_for_test` until the user verifies representative secondary-font
-drawing/fitting and an unaffected primary/fullwidth case.
+decoder and measurement blobs are removed. At cutover, static confidence came
+from clean-byte guards, bounded disassembly of both native contexts,
+compiler-instruction review, and resolved-hook inspection. That evidence does
+not by itself claim representative current secondary-font and unaffected
+primary/fullwidth runtime coverage.
 
-## 2026-08-03 stable heap boundary and screenshot determinism
+## Stable heap reservation and screenshot determinism
+
+Evidence date: 2026-08-03.
 
 A 32-byte zero-filled tail fragment proved that the former exact-end payload
 reservation made unrelated Font regression captures depend on resident code

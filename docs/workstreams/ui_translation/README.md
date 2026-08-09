@@ -13,7 +13,7 @@ findings remain in the shared knowledge base rather than being duplicated here.
 ## References
 
 - [Status, architecture, and accepted outcomes](context.md)
-- [Battle UI knowledge](../../knowledge/localization/ui/battle.md)
+- [Battle UI knowledge](../../knowledge/localization/ui/battle/README.md)
 - [Character Select UI knowledge](../../knowledge/localization/ui/character_select.md)
 - [Collection UI knowledge](../../knowledge/localization/ui/collection.md)
 - [Options UI knowledge](../../knowledge/localization/ui/options.md)

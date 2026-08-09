@@ -11,11 +11,11 @@ evidence.
 
 ## Documents
 
-- [Selectors and prompts](battle/selectors_and_prompts.md): awakening labels,
+- [Selectors and prompts](selectors_and_prompts.md): awakening labels,
   VS Jutsu selection, confirmation prompts, and scroll indicators.
-- [Item status](battle/item_status.md): paired, numeric, single, fixed, and
+- [Item status](item_status.md): paired, numeric, single, fixed, and
   substitution-doll item-status paths.
-- [Settings and results](battle/settings_and_results.md): Mash prompts,
+- [Settings and results](settings_and_results.md): Mash prompts,
   Settings footers, and Battle Results/rank rendering.
 
 ## Intentional exclusion

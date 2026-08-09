@@ -143,7 +143,7 @@ back to disc assets, and broader NUN6 comparison.
 
 ## Detailed knowledge
 
-- [Battle UI](../../knowledge/localization/ui/battle.md)
+- [Battle UI](../../knowledge/localization/ui/battle/README.md)
 - [Character Select UI](../../knowledge/localization/ui/character_select.md)
 - [Collection UI](../../knowledge/localization/ui/collection.md)
 - [Options UI](../../knowledge/localization/ui/options.md)

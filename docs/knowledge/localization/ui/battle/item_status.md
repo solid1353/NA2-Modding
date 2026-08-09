@@ -1,6 +1,6 @@
 # Battle UI item-status paths
 
-Binary identities and address conventions are defined in the [Battle UI index](../battle.md#binary-identities-and-address-convention).
+Binary identities and address conventions are defined in the [Battle UI index](README.md#binary-identities-and-address-convention).
 
 ## Paired item-status labels
 

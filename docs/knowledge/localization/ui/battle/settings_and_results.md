@@ -1,6 +1,6 @@
 # Battle UI settings and results
 
-Binary identities and address conventions are defined in the [Battle UI index](../battle.md#binary-identities-and-address-convention).
+Binary identities and address conventions are defined in the [Battle UI index](README.md#binary-identities-and-address-convention).
 
 ## Battle Mash prompt rectangles
 
@@ -75,7 +75,7 @@ with **verified confidence**.
 
 ### Function and address map
 
-This finding uses the BTL identities and `+0x40` Ghidra/live convention recorded in the [Battle UI index](../battle.md#binary-identities-and-address-convention).
+This finding uses the BTL identities and `+0x40` Ghidra/live convention recorded in the [Battle UI index](README.md#binary-identities-and-address-convention).
 
 | Role | NA2 v2.28 | NUN5 |
 | --- | --- | --- |
@@ -154,7 +154,7 @@ are **runtime-proven** with **verified confidence**.
 
 ### Function and address map
 
-This finding uses the BTL identities and `+0x40` Ghidra/live convention recorded in the [Battle UI index](../battle.md#binary-identities-and-address-convention).
+This finding uses the BTL identities and `+0x40` Ghidra/live convention recorded in the [Battle UI index](README.md#binary-identities-and-address-convention).
 
 | Role | NA2 v2.28 | NUN5 |
 | --- | --- | --- |

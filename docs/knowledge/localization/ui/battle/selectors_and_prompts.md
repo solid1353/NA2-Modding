@@ -1,6 +1,6 @@
 # Battle UI selectors and prompts
 
-Binary identities and address conventions are defined in the [Battle UI index](../battle.md#binary-identities-and-address-convention).
+Binary identities and address conventions are defined in the [Battle UI index](README.md#binary-identities-and-address-convention).
 
 ## Ordinary awakening-label composition
 

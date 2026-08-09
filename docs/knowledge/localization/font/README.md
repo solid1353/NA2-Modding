@@ -16,7 +16,7 @@ parents or active patch inputs.
   Song, and related numeric formatting.
 - [Renderer metrics](renderer_metrics.md): geometry, tracking, spacing,
   bearings, and the retired v1 metric port.
-- [Screen layouts](screen_layouts.md): caller-specific menu, modal, list, and
-  selected-state layout findings.
+- [Screen layouts](screen_layouts/README.md): caller-specific menu, modal,
+  list, and selected-state layout findings split by screen family.
 - [Runtime migration](runtime_migration.md): resident relocation, C migration,
   payload composition, and deterministic runtime boundaries.

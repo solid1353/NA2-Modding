@@ -48,7 +48,7 @@ Song details; and the shared selected-style paths proven by those callers.
 - [Font assets](../../knowledge/localization/font/assets.md)
 - [Integration baseline](../../knowledge/localization/font/integration_baseline.md)
 - [Renderer metrics](../../knowledge/localization/font/renderer_metrics.md)
-- [Screen layouts](../../knowledge/localization/font/screen_layouts.md)
+- [Screen layouts](../../knowledge/localization/font/screen_layouts/README.md)
 - [Numeric rendering](../../knowledge/localization/font/numeric_rendering.md)
 - [Runtime migration and composition](../../knowledge/localization/font/runtime_migration.md)
 

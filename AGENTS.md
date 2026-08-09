@@ -47,6 +47,12 @@ Read and follow [`Normal mode`](docs/workflows/normal_mode.md) by default. Exact
 mode-entry commands and other directly routed commands are listed below. No
 other wording enters a mode; when a mode exits, Normal mode resumes.
 
+Exactly one workflow mode is active at a time. Only the active mode's workflow
+document applies; all other mode workflow documents are inactive. Entering a
+mode deactivates the previous mode. When Design mode or Interactive mode exits,
+Normal mode becomes active again. Universal rules and applicable routed
+policies remain active in every mode.
+
 | Command | Read |
 | --- | --- |
 | `des mode`, `design mode` | [`docs/workflows/design_mode.md`](docs/workflows/design_mode.md) |

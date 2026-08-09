@@ -24,6 +24,10 @@ work directories, or documentation layout.
 
 ## Git and concurrent work
 
+- Treat `e2e/captures/` as a separate maintained Git repository for every
+  repository-wide Git operation, including identity configuration, status
+  checks, commits, and completion reporting, even though it is local-only and
+  has no remote.
 - User edits and commits are expected. Refresh status/history before Git
   operations, preserve unrelated work, and stage only task-owned paths or hunks.
 - Independent changes may proceed concurrently. Pause only for overlapping or

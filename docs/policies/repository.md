@@ -32,9 +32,12 @@ work directories, or documentation layout.
   operations, preserve unrelated work, and stage only task-owned paths or hunks.
 - Independent changes may proceed concurrently. Pause only for overlapping or
   logically conflicting changes or exclusive mutable resources.
-- Completed refactors and other completed non-patch changes are committed after
-  their selected validation, then pushed automatically. Game/runtime patches
-  follow the proof and commit boundary in [`testing.md`](testing.md).
+- Completed refactors and other completed non-patch changes follow the active
+  workflow's commit behavior after their selected validation. In Normal mode,
+  this is controlled by its
+  [chat-local commit setting](../workflows/normal_mode.md#commit-setting).
+  Game/runtime patches follow the proof and commit boundary in
+  [`testing.md`](testing.md).
 - Ordinary pauses, questions, reviews, and requests for user input do not require
   a clean working tree. If work is blocked or incomplete, do not create a WIP
   commit merely to clean the tree; report the exact task-owned dirty state.

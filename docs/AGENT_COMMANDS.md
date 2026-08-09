@@ -16,6 +16,9 @@ those.
 - `task done`: remove the uniquely identifiable current task from `TASKS.md`.
   If its workstream becomes empty, move the workstream to `Archive`. Ask when
   the task is not uniquely identifiable.
+- `c on`, `c off`: change the current chat's persistent Normal mode
+  commit setting as defined in
+  [`normal_mode.md`](workflows/normal_mode.md#commit-setting).
 - `zxc`: follow the
   [`graceful-stop procedure`](workflows/procedures/graceful_stop.md).
 

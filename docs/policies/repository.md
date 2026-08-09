@@ -42,9 +42,12 @@ work directories, or documentation layout.
 - A coherent delivery spanning maintained repositories has one completion
   boundary: create every intended commit before pushing any participating
   repository, then report each repository's commit, push, and dirty state.
-- Use the matching identity from `@workshop/settings/git-authors.tsv`, or
-  `<agent-name>@agent.invalid` when it has no entry. Do not use the user's
-  personal identity. Use the concise task-authored subject
+- Never modify Git identity configuration at any scope, including system,
+  global, local, and worktree configuration. Resolve the matching agent identity
+  from `@workshop/settings/git-authors.tsv`, or use
+  `<agent-name>@agent.invalid` when it has no entry, and apply it only to the
+  individual commit operation. Do not use or override the user's persistent
+  identity. Use the concise task-authored subject
   `[<workstream/category>] <imperative summary>`, with the owning workstream or
   category as the prefix. When no meaningful owner or category applies, use
   `[Other] <imperative summary>`. Do not use the full task title or invent

@@ -844,7 +844,7 @@ Add-Content `
         -Rotated $true `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $paths.files.previous_iso `
-        -Configuration (Join-Path $paths.builder 'configurations\release.json') `
+        -Configuration (Join-Path $paths.builder 'configurations\development.json') `
         -Paths $paths
     Assert-Na2Test -Condition ($record.BuildId -eq 'new-latest') -Message 'Updated build was not retained.'
     $updatedBuildMap = Read-Na2BuildMap `
@@ -881,7 +881,7 @@ Add-Content `
         -Rotated $false `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $paths.files.previous_iso `
-        -Configuration 'na228_builder/configurations/release.json' `
+        -Configuration 'na228_builder/configurations/development.json' `
         -Paths $paths
     Assert-Na2Test `
         -Condition ($unchanged.BuildId -eq 'duplicate') `
@@ -904,7 +904,7 @@ Add-Content `
         -Rotated $false `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $null `
-        -Configuration 'na228_builder/configurations/release.json' `
+        -Configuration 'na228_builder/configurations/development.json' `
         -Paths $paths
     Assert-Na2Test `
         -Condition ($firstUnchanged.BuildId -eq $firstBuildId) `

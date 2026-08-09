@@ -1,112 +1,97 @@
 {
   "startup": {
-    "description": "Independent startup-sequence skips and a timed loading counter during the boot loader wait.",
     "skip_cc2_intro": {
       "proven": false,
-      "description": "Skip the CyberConnect2 intro.",
       "edits": [
-        "skip_cc2_intro"
+        "qol__startup__skip_cc2_intro__skip_cc2_intro"
       ]
     },
     "skip_opening": {
       "proven": false,
-      "description": "Skip the opening sequence.",
       "edits": [
-        "skip_opening"
+        "qol__startup__skip_opening__skip_opening"
       ]
     },
     "loading_screen_then_main_menu": {
       "proven": false,
-      "description": "Skip the four splash screens and opening, preserve required startup loading, bypass the title, and enter the native main-menu path after the existing loading screen has been shown.",
       "edits": [
-        "enter_the_title_input_state_immediately_after_required_startup_loading_and_splash_cleanup_bypassing_the_post_splash_sequence",
-        "return_the_native_start_accepted_result_without_constructing_or_displaying_the_title_screen_selecting_main_menu_state_4_substate_1_through_the_existing_caller"
+        "qol__startup__loading_screen_then_main_menu__enter_title_input_state_immediately",
+        "qol__startup__loading_screen_then_main_menu__return_native_start_accepted_result"
       ]
     },
     "loading_screen": {
       "proven": false,
-      "description": "Replace the boot splashes with a large primitive percentage and progress bar paced across the measured 25-second load while the original startup loaders run.",
       "injections": [
-        "startup_loading_screen"
+        "qol__startup__loading_screen__runtime"
       ]
     }
   },
   "practice": {
-    "description": "Independent Practice-mode default settings.",
     "voice_off_by_default": {
       "proven": false,
-      "description": "Start Practice with voice disabled.",
       "edits": [
-        "voice_off_by_default"
+        "qol__practice__voice_off_by_default__voice_off_by_default"
       ]
     },
     "support_off_by_default": {
       "proven": false,
-      "description": "Start Practice with support disabled.",
       "edits": [
-        "force_support_off_instead_of_leaving_the_previous_settings_block_value_unchanged"
+        "qol__practice__support_off_by_default__force_instead_leaving_previous_settings"
       ]
     },
     "command_display_off_by_default": {
       "proven": false,
-      "description": "Start Practice with command display disabled.",
       "edits": [
-        "force_command_display_off_while_preserving_the_following_settings_field_reload"
+        "qol__practice__command_display_off_by_default__force_preserving_following_settings_field"
       ]
     },
     "simple_display_off": {
       "proven": false,
-      "description": "Simple-display default control.",
       "edits": [
-        "simple_display_off_by_default"
+        "qol__practice__simple_display_off__by_default"
       ]
     }
   },
   "mode_select": {
-    "description": "Mode availability and selection behavior.",
     "remove_adventure": {
       "proven": false,
-      "description": "Omit Adventure from Mode Select using the NUN6 negative availability sentinel.",
       "edits": [
-        "mark_only_the_adventure_mode_select_entry_unavailable_matching_nun6_s_filtered_carousel_behavior"
+        "qol__mode_select__remove_adventure__mark_entry_unavailable_matching_nun6"
       ]
     },
     "remove_shop": {
       "proven": false,
-      "description": "Omit Shop from Mode Select using the same negative availability sentinel as the Adventure omission.",
       "edits": [
-        "mark_only_the_shop_mode_select_entry_unavailable_using_the_existing_filtered_carousel_behavior"
+        "qol__mode_select__remove_shop__mark_entry_unavailable_using_existing"
       ]
     }
   },
   "save_load": {
-    "description": "Save and load modal presentation.",
     "display_only_first_save": {
       "proven": false,
-      "description": "Render only the first record in the shared Save/Load slot modal.",
       "edits": [
-        "limit_the_shared_save_load_slot_row_renderer_to_its_first_record",
-        "ignore_downward_slot_navigation_before_it_changes_selection_or_plays_the_navigation_sound",
-        "ignore_upward_slot_navigation_before_it_changes_selection_or_plays_the_navigation_sound",
-        "center_the_date_and_play_time_block_at_local_x_45_inside_the_compact_panel",
-        "center_the_single_save_record_at_local_y_20_inside_the_compact_panel",
-        "move_the_redundant_slot_number_record_outside_the_viewport",
-        "suppress_row_separators_when_only_one_record_is_rendered",
-        "move_the_upper_save_load_panel_to_centered_x_146",
-        "move_the_upper_save_load_panel_to_detached_y_90_above_the_lower_panel",
-        "shrink_the_upper_save_load_panel_width_from_400_to_224",
-        "shrink_the_upper_save_load_panel_height_from_224_to_96",
-        "suppress_the_obsolete_independent_save_slot_cursor_model_draw",
-        "enter_the_sole_slot_save_path_before_constructing_the_redundant_slot_list_screen",
-        "select_slot_zero_and_enter_its_native_save_confirmation_without_rendering_the_slot_list",
-        "route_memory_card_status_dispatch_through_the_unformatted_screen_bypass",
-        "advance_status_0x0a_without_constructing_its_informational_screen_then_retain_native_dispatch_for_every_other_status",
-        "exit_the_save_controller_when_the_final_confirmation_returns_no_instead_of_reopening_the_removed_slot_list",
-        "prepare_the_status_0x0a_modal_helper_argument_before_its_save_flow_bypass",
-        "skip_the_unformatted_card_informational_modal_helper_and_supply_its_completed_result_in_the_save_flow",
-        "retain_the_helper_s_zero_second_argument_when_the_unformatted_save_flow_bypass_is_not_taken",
-        "return_to_the_main_menu_when_the_unformatted_format_confirmation_returns_no_instead_of_entering_the_save_restart_state",
-        "exit_the_save_controller_when_the_no_save_data_confirmation_returns_no_instead_of_resetting_the_save_flow_to_its_initial_prompt"
+        "qol__save_load__display_only_first_save__advance_status_0x0a_without_constructing",
+        "qol__save_load__display_only_first_save__center_date_play_time_block",
+        "qol__save_load__display_only_first_save__center_single_record_local_y",
+        "qol__save_load__display_only_first_save__enter_sole_slot_path_before",
+        "qol__save_load__display_only_first_save__exit_controller_when_final_confirmation",
+        "qol__save_load__display_only_first_save__exit_controller_when_no_data",
+        "qol__save_load__display_only_first_save__ignore_downward_slot_navigation_before",
+        "qol__save_load__display_only_first_save__ignore_upward_slot_navigation_before",
+        "qol__save_load__display_only_first_save__limit_shared_slot_row_renderer",
+        "qol__save_load__display_only_first_save__move_redundant_slot_number_record",
+        "qol__save_load__display_only_first_save__move_the_upper_panel_to_centered_x",
+        "qol__save_load__display_only_first_save__move_upper_panel_detached_y",
+        "qol__save_load__display_only_first_save__prepare_status_0x0a_modal_helper",
+        "qol__save_load__display_only_first_save__retain_helper_s_zero_second",
+        "qol__save_load__display_only_first_save__return_main_menu_when_unformatted",
+        "qol__save_load__display_only_first_save__route_memory_card_status_dispatch",
+        "qol__save_load__display_only_first_save__select_slot_zero_enter_its",
+        "qol__save_load__display_only_first_save__shrink_the_upper_panel_height_from_224_to",
+        "qol__save_load__display_only_first_save__shrink_the_upper_panel_width_from_400_to",
+        "qol__save_load__display_only_first_save__skip_unformatted_card_informational_modal",
+        "qol__save_load__display_only_first_save__suppress_obsolete_independent_slot_cursor",
+        "qol__save_load__display_only_first_save__suppress_row_separators_when_one"
       ]
     }
   }

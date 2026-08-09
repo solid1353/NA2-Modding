@@ -154,7 +154,10 @@ def build_patch_rows() -> tuple[dict[str, str], list[dict[str, str]]]:
         )
         edits.append(
             {
-                "edit_id": f"{PATCH_ID}_{len(edits) + 1:02d}",
+                "edit_id": (
+                    "localization__ui_layout__victory_names_na2_btl_at_"
+                    f"{descriptor_offset:08x}"
+                ),
                 "patch_id": PATCH_ID,
                 "order": str((len(edits) + 1) * 10),
                 "destination_target_id": "na2_btl",
@@ -232,10 +235,10 @@ def main() -> int:
         edits_path = catalog_root / "implementation" / "edits.json"
         feature = json.loads(catalog_path.read_text(encoding="utf-8"))
         edits = json.loads(edits_path.read_text(encoding="utf-8"))
-        node = feature["ui_layout"][PATCH_ID]
-        node["description"] = patch["description"]
+        node = feature["ui_layout"]
         generated = {
             edit["edit_id"]: {
+                "description": edit["reason"],
                 "operation": edit["operation"],
                 "destination_target_id": edit["destination_target_id"],
                 "destination_offset": edit["destination_offset"],
@@ -244,12 +247,18 @@ def main() -> int:
             }
             for edit in sorted(generated_edits, key=lambda item: int(item["order"]))
         }
-        old_ids = node["edits"]
+        old_ids = [
+            edit_id
+            for edit_id in node["edits"]
+            if "__victory_names_" in edit_id
+        ]
         if set(old_ids) != set(generated):
             raise ValueError(
                 "Generated Victory edit IDs differ from the catalog references"
             )
-        node["edits"] = list(generated)
+        node["edits"] = sorted(
+            (set(node["edits"]) - set(old_ids)) | set(generated)
+        )
         for edit_id, definition in generated.items():
             edits[edit_id] = definition
         catalog_temporary = catalog_path.with_suffix(".json.tmp")
@@ -259,7 +268,7 @@ def main() -> int:
         )
         edits_temporary = edits_path.with_suffix(".json.tmp")
         edits_temporary.write_text(
-            json.dumps(edits, indent=2, ensure_ascii=False) + "\n",
+            json.dumps(dict(sorted(edits.items())), indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
         os.replace(catalog_temporary, catalog_path)

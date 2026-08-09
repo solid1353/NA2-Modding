@@ -69,7 +69,7 @@ bottom = y + (float)descriptor->output_height * scale_y;
 ```
 
 The accepted NA2 secondary descriptor retains its original 24x28 output quad,
-as recorded by `font_glyphs_native_01`, but NA2 therefore presents its normal
+as recorded by `localization__font__glyphs__native_data_gf4_bin_at_0000004e`, but NA2 therefore presents its normal
 glyph as 24x24. NUN5 uses all 28 vertical pixels. This matches the reviewed
 median two-to-three pixel height deficit and explains why the rejected
 file-offset `0x88064` experiment was wrong: changing the shared width load from
@@ -173,7 +173,7 @@ of that expansion. For `Linked Attack`, twelve visible glyphs gain six units
 and its one space loses five, predicting a net one-unit width increase while
 correcting the visibly compressed letters and oversized word gap.
 
-The existing `font_controls_auto_fit_05` hook at ELF offset `0x88B7C`
+The existing `route_inline_markup_half_space_advance` hook at ELF offset `0x88B7C`
 (runtime `0x00188A7C`) is not this branch. It lies in the inline-markup
 half-space case at `0x00188A20..0x00188A84`, so it does not scale ordinary
 Control Settings spaces. This is a confirmed classification error in the

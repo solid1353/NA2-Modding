@@ -9,7 +9,9 @@ source media, PNACH, donor data, or encoded game text.
   `na228_builder/README.md` and the affected component documentation. Do not
   recreate retired schemas or assumptions from historical notes.
 - `na228_builder/configurations/base.json` owns the shared `features` setting
-  and base `overrides`; `release.json` is the normal reproducible build overlay.
+  and base `overrides`. Normal development builds use `development.json`,
+  test, worker, and E2E builds use `test.json`, and only release packaging uses
+  `release.json`.
   Loading applies base features, base overrides, then the selected configuration
   overrides. Release packaging merges base and release into exactly one
   self-contained external configuration. Feature-named JSON files under

@@ -21,6 +21,10 @@ small deterministic instruction/relocation encoder used only for unavoidable
 native ABI shims and guarded hook templates. Both are maintained build inputs
 rather than research artifacts.
 
+Payload-fragment numeric `order` values are retained and validated while named
+JSON maps are serialized canonically. Final placement remains deterministic by
+fragment kind, owner, and semantic symbol, independent of source-map order.
+
 No feature owns the file, its load address, its entrypoint, or the global loader
 and memory-reservation integration. Modules never declare offsets inside
 `228.BIN` or calculate final runtime addresses. The configuration composer resolves

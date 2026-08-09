@@ -1,12 +1,26 @@
 # Catalog data redesign
 
-Status: design in progress. Implementation is not approved.
+Status: implemented and validated; awaiting implemented-result review. Retain
+this design until the user approves that result, then retire it.
 
-This document defines the pending coordinated redesign of catalog implementation
+This document defines the implemented coordinated redesign of catalog implementation
 identities, human-readable descriptions, canonical ordering, the bundled
 self-documenting release configuration, and consolidation of the current
-project design documentation. It is temporary and must be retired when the task
-is complete.
+project design documentation. It remains the active review record until the
+implemented result is approved.
+
+## Implemented result
+
+- Migrated 491 edits, 24 injections, 68 hooks, and 118 named payload fragments
+  one-to-one while preserving guarded executable values and relationships.
+- Moved catalog-node descriptions to `catalog/__reference.json`; optional
+  definition-local descriptions now live with edits, injections, and hooks.
+- Added canonical source-order tests and removed the hardcoded feature-order
+  list.
+- Release packaging now bundles one annotated `config.json`; repository
+  development, test, and release configurations retain their distinct roles.
+- Retired the two superseded project workstream design documents after moving
+  their useful current content to canonical component documentation.
 
 ## Outcome
 
@@ -18,7 +32,7 @@ is complete.
 - Move catalog-node descriptions into canonical description data and make that
   information available to release users.
 - Integrate the useful current content of the project design documents into its
-  canonical documentation owners and retire every current design document.
+  canonical documentation owners and retire every superseded design document.
 - Preserve executable behavior and binary output.
 
 ## Scope
@@ -33,7 +47,7 @@ is complete.
 - Documentation made obsolete by information moved during this redesign.
 - Canonical integration of the accepted binary-patcher JSON design and useful
   remaining binary-runtime migration documentation.
-- Retirement of every current design document under `docs/workstreams/project/`
+- Retirement of every superseded design document under `docs/workstreams/project/`
   when the implemented result has canonical documentation.
 
 ## Identity redesign
@@ -201,8 +215,9 @@ The bundled structure is:
 - Do not transfer obsolete, redundant, low-value, or purely transitional
   material merely to preserve it.
 - After the implementation and documentation are complete, delete
-  `binary-patcher-json-design.md`,
-  `binary-runtime-migration-documentation.md`, and this design document.
+  `binary-patcher-json-design.md` and
+  `binary-runtime-migration-documentation.md`. Retain this active design until
+  the implemented result is reviewed and approved.
 - Update the project workstream index so it contains no links to retired design
   documents.
 
@@ -243,8 +258,9 @@ The canonical destination mapping is:
   output.
 - Validate the bundled `config.json` annotated feature tree against the real
   catalog, compact merged repository configuration, and `__reference.json`.
-- Validate that all useful current material from the retired design documents
-  has a canonical owner and that no current project design document remains.
+- Validate that all useful current material from the retired workstream design
+  documents has a canonical owner and that no superseded project design
+  document remains.
 
 ## Outside this task
 

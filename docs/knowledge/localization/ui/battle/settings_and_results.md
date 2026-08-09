@@ -290,7 +290,7 @@ Their scalar fields and corresponding parent scalar fields match. Two guarded
 task-clone trials then disproved the assumption that this object controls the
 visible label:
 
-- changing both the `ui_layout_battle_results_11` live Y constant at `0x007173E8` and the
+- changing both the `localization__ui_layout__battle_results_na2_btl_at_002100b0` live Y constant at `0x007173E8` and the
   object's anchor Y at `0x00C6E194` by `-16` pixels persisted in a fresh state
   but changed zero visible rank pixels;
 - changing the first donor rectangle U at `0x005B13A0` from `0` to `80` and
@@ -329,7 +329,7 @@ user-accepted.
 
 The user directed a clean matched capture after the whole-column trial mixed
 neighboring 44-row label cells. The canonical baseline therefore removes only
-rank-specific interventions: `ui_layout_battle_results_11` no longer replaces the NA2 rank
+rank-specific interventions: `localization__ui_layout__battle_results_na2_btl_at_002100b0` no longer replaces the NA2 rank
 renderer, and `UI-NINKA-001` now uses `transform=copy`, preserving the complete
 official NUN5 `XNINKA.CCS` payload and its atlas unchanged. The other twelve
 `ui_layout_battle_results` edits remain active.
@@ -411,7 +411,7 @@ duplicate existing behavior.
 The complete official NUN5 `XNINKA.CCS` remains the internally coherent donor.
 Its stamp animation has 21 frames and no material/UV controller; its stamp
 model uses the same UVs as NA2 but English-aspect geometry. Selection belongs
-to the BTL rectangle table, not the model defaults. `ui_layout_battle_results_11` therefore
+to the BTL rectangle table, not the model defaults. `localization__ui_layout__battle_results_na2_btl_at_002100b0` therefore
 copies exactly the five NUN5 records from SLES file `0x4DDCE0` to NA2 BTL file
 `0x2100B0`. Because index 3 is copied with the other records, the existing
 delta calculation stays coherent. The edit changes no result value, selector
@@ -449,9 +449,9 @@ The complete paired functions provide the same result: NUN5 reads
 `iGpffff9a7c` before the nominal 395 call and the already-established
 `iGpffff9a78=-8` before the nominal 470 call. NA2 has neither addition.
 
-`ui_layout_battle_results_12` replaces the NA2 instruction pair at file `0x649CC`
+`localization__ui_layout__battle_results_na2_btl_at_000649cc` replaces the NA2 instruction pair at file `0x649CC`
 (`0x0071888C`) with X=`375` (`BB43023C00804234`).
-`ui_layout_battle_results_13` replaces the word at file `0x649F4` (`0x007188B4`) with
+`localization__ui_layout__battle_results_na2_btl_at_000649f4` replaces the word at file `0x649F4` (`0x007188B4`) with
 X=`462` (`E743023C`). These are authored same-register ports because NUN5's
 GP-relative globals are not ABI-compatible with NA2. The proven summary-footer
 call sites at `0x62B24..0x62B5B` remain untouched.

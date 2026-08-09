@@ -43,15 +43,33 @@ C_NUMERIC_SOURCE = C_CORE_SOURCE.with_name("font_numeric.c")
 C_TOOLCHAIN_BIN = ee_c_fragments.default_toolchain_bin(REPOSITORY)
 
 PREFIX = "localization.font"
-NINJA_SONG_ASCII_NUMBER = f"{PREFIX}.ninja_song_ascii_number"
-NUMERIC_FORMAT_DECIMAL = f"{PREFIX}.c.numeric_format_decimal"
-NUMERIC_FORMAT_TWO_DECIMAL = f"{PREFIX}.c.numeric_format_two_decimal"
+
+
+def _concise_payload_symbol(symbol: str) -> str:
+    v2_prefix = f"{PREFIX}.v2."
+    if symbol.startswith(v2_prefix):
+        return "v2_" + symbol.removeprefix(v2_prefix).replace(".", "_")
+    font_prefix = f"{PREFIX}."
+    if symbol.startswith(font_prefix):
+        return symbol.removeprefix(font_prefix).replace(".", "_")
+    return symbol
+
+
+NINJA_SONG_ASCII_NUMBER = _concise_payload_symbol(
+    f"{PREFIX}.ninja_song_ascii_number"
+)
+NUMERIC_FORMAT_DECIMAL = _concise_payload_symbol(
+    f"{PREFIX}.c.numeric_format_decimal"
+)
+NUMERIC_FORMAT_TWO_DECIMAL = _concise_payload_symbol(
+    f"{PREFIX}.c.numeric_format_two_decimal"
+)
 NINJA_SONG_FORMAT_DECIMAL = NUMERIC_FORMAT_DECIMAL
-SAVE_LOAD_DAY = f"{PREFIX}.save_load_day"
-SAVE_LOAD_TWO = f"{PREFIX}.save_load_two"
-SAVE_LOAD_YEAR = f"{PREFIX}.save_load_year"
-SAVE_LOAD_HOUR = f"{PREFIX}.save_load_hour"
-BATTLE_SETTINGS_TIME = f"{PREFIX}.battle_settings_time"
+SAVE_LOAD_DAY = _concise_payload_symbol(f"{PREFIX}.save_load_day")
+SAVE_LOAD_TWO = _concise_payload_symbol(f"{PREFIX}.save_load_two")
+SAVE_LOAD_YEAR = _concise_payload_symbol(f"{PREFIX}.save_load_year")
+SAVE_LOAD_HOUR = _concise_payload_symbol(f"{PREFIX}.save_load_hour")
+BATTLE_SETTINGS_TIME = _concise_payload_symbol(f"{PREFIX}.battle_settings_time")
 
 V2_PREFIX = f"{PREFIX}.v2"
 V2_SESSION_POINTER = f"{V2_PREFIX}.session_pointer"
@@ -195,6 +213,15 @@ V2_NEWLINE_ADVANCE = f"{V2_PREFIX}.newline_advance"
 V2_RIGHT_EDGE = f"{V2_PREFIX}.right_edge"
 V2_HALF_SPACE = f"{V2_PREFIX}.half_space"
 V2_GLYPH_ADVANCE = f"{V2_PREFIX}.glyph_advance"
+
+for _constant_name, _constant_value in tuple(globals().items()):
+    if (
+        _constant_name.startswith("V2_")
+        and _constant_name != "V2_PREFIX"
+        and isinstance(_constant_value, str)
+    ):
+        globals()[_constant_name] = _concise_payload_symbol(_constant_value)
+del _constant_name, _constant_value
 
 SCALE_ADDRESS = 0x0060737C
 FONT_RENDERER_POINTER = 0x00607470
@@ -742,7 +769,12 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
             f"expected={sorted(helper_aliases)}, "
             f"actual={sorted(helper_symbols)}"
         )
-    aliases.update(helper_aliases)
+    aliases.update(
+        {
+            source: _concise_payload_symbol(target)
+            for source, target in helper_aliases.items()
+        }
+    )
 
     result = tuple(
         Fragment(
@@ -767,7 +799,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         for fragment in extracted.fragments
     )
     if {fragment.symbol for fragment in result} != {
-        f"{V2_PREFIX}.c.is_br",
+        _concise_payload_symbol(f"{V2_PREFIX}.c.is_br"),
         V2_MEASURE,
         V2_PREPARE,
         V2_ADAPTER_CALL,
@@ -777,21 +809,21 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_PRACTICE_TITLE_ENTRY,
         V2_PAUSE_LIST_ADAPTER,
         V2_PAUSE_LIST_SELECTED_IMPL,
-        f"{V2_PREFIX}.c.linked_choice_session_prepare",
+        _concise_payload_symbol(f"{V2_PREFIX}.c.linked_choice_session_prepare"),
         V2_LINKED_CHOICE_SELECTED_IMPL,
         V2_LINKED_CHOICE_UNSELECTED_ADAPTER,
         V2_QUIT_SCOPE_ENTER,
         V2_CHARACTER_SCOPE_ENTER,
         V2_QUIT_SCOPE_LEAVE,
-        f"{V2_PREFIX}.c.map_choice",
-        f"{V2_PREFIX}.c.special_choice_session_init",
+        _concise_payload_symbol(f"{V2_PREFIX}.c.map_choice"),
+        _concise_payload_symbol(f"{V2_PREFIX}.c.special_choice_session_init"),
         V2_QUIT_SELECTED_MAP,
         V2_SPECIAL_CHOICE_SELECTED_ADAPTER,
         V2_QUIT_UNSELECTED_ADAPTER,
         V2_NATIVE_MEASURE,
         V2_WRAP_NATIVE,
         V2_WRAP_RETRY,
-        f"{V2_PREFIX}.c.wrapped_body_common",
+        _concise_payload_symbol(f"{V2_PREFIX}.c.wrapped_body_common"),
         V2_QUIT_BODY_ADAPTER,
         V2_SPECIAL_CONTROLS_BODY_ADAPTER,
         V2_COLLECTION_BODY_ADAPTER,
@@ -808,8 +840,8 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_COLLECTION_LIST_ENTRY,
         V2_COLLECTION_FIGURE_MUSIC_HEADER_ADAPTER,
         V2_COLLECTION_JUTSU_HEADER_ADAPTER,
-        f"{V2_PREFIX}.c.collection_body_callback",
-        f"{V2_PREFIX}.c.icon_record",
+        _concise_payload_symbol(f"{V2_PREFIX}.c.collection_body_callback"),
+        _concise_payload_symbol(f"{V2_PREFIX}.c.icon_record"),
         V2_PRACTICE_ICON_METRIC,
         V2_PRACTICE_ICON_DRAW,
         V2_PRACTICE_ADAPTER_IMPL,
@@ -3064,7 +3096,7 @@ def _hook_payload(
 def numeric_hooks() -> tuple[NumericHook, ...]:
     save_specs = (
         (
-            "font_numeric_save_load_01",
+            "call_eu_day_c_formatter_resume",
             10,
             0x0E660C,
             "0E0065942D200000040006249000A7270100082444E10D0C00000000",
@@ -3074,7 +3106,7 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
             "Format the EU day in C and return the loaded year for s6.",
         ),
         (
-            "font_numeric_save_load_02",
+            "call_shared_c_two_digit_month",
             20,
             0x0E6650,
             "2D2000002D282002020006249000A7272D40C00044E10D0C00000000",
@@ -3084,7 +3116,7 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
             "Format the EU month through the shared C two-digit entry.",
         ),
         (
-            "font_numeric_save_load_03",
+            "call_c_four_digit_year_formatter",
             30,
             0x0E6694,
             "2D2000002D28A002020006249000A7272D40C00044E10D0C00000000",
@@ -3094,7 +3126,7 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
             "Format the preserved four-digit year through C.",
         ),
         (
-            "font_numeric_save_load_04",
+            "call_accepted_signed_99_hour_c",
             40,
             0x0E67A4,
             "2D2000002D28A002030006249000A7270200082444E10D0C00000000",
@@ -3104,7 +3136,7 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
             "Apply the accepted signed 99-hour cap and two-digit format in C.",
         ),
         (
-            "font_numeric_save_load_05",
+            "call_shared_c_two_digit_minute",
             50,
             0x0E67E8,
             "2D2000002D282002020006249000A7272D40C00044E10D0C00000000",
@@ -3114,7 +3146,7 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
             "Format minutes through the shared C two-digit entry.",
         ),
         (
-            "font_numeric_save_load_06",
+            "call_shared_c_two_digit_second",
             60,
             0x0E682C,
             "2D2000002D28C002020006249000A7272D40C00044E10D0C00000000",
@@ -3127,7 +3159,7 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
     hooks = [
         NumericHook(
             edit_id=edit_id,
-            patch_id="font_numeric_save_load",
+            patch_id="localization__font__numeric_formatting__save_load",
             order=order,
             target_id="na2_elf",
             offset=offset,
@@ -3155,8 +3187,8 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
     ]
     hooks.append(
         NumericHook(
-            edit_id="font_numeric_battle_settings_01",
-            patch_id="font_numeric_battle_settings",
+            edit_id="call_ordinary_battle_settings_time_c",
+            patch_id="localization__font__numeric_formatting__battle_settings",
             order=10,
             target_id="na2_btl",
             offset=0x1CC3D8,
@@ -3295,22 +3327,26 @@ def main() -> None:
     for generated in expected:
         actual = actual_by_symbol[generated.symbol]
         actual_relocations = tuple(
-            (
-                relocation.offset,
-                relocation.kind,
-                relocation.symbol,
-                relocation.addend,
+            sorted(
+                (
+                    relocation.offset,
+                    relocation.kind,
+                    relocation.symbol,
+                    relocation.addend,
+                )
+                for relocation in actual.relocations
             )
-            for relocation in actual.relocations
         )
         generated_relocations = tuple(
-            (
-                relocation.offset,
-                relocation.kind,
-                relocation.symbol,
-                relocation.addend,
+            sorted(
+                (
+                    relocation.offset,
+                    relocation.kind,
+                    relocation.symbol,
+                    relocation.addend,
+                )
+                for relocation in generated.relocations
             )
-            for relocation in generated.relocations
         )
         if (
             actual.kind != generated.kind

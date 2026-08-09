@@ -91,7 +91,7 @@ state retained those offsets through alpha `0.0`.
 The earlier hypothesis that the BTL wrapper passed its anisotropic arguments
 in the wrong order was disproven: changing that order moved the bubbles and
 did not correct the foreground transition. No wrapper, object field, timing,
-atlas, or item-effect change is needed. `ui_layout_item_status_paired_27` therefore copies only
+atlas, or item-effect change is needed. `localization__ui_layout__item_status_paired_na2_elf_at_002772f4` therefore copies only
 the exact four-byte NUN5 instruction. Confidence is **verified** from both
 preserved ELF exports, exact clean-file bytes, paired saved-memory fields, and
 fresh isolated runtime captures.
@@ -331,7 +331,7 @@ three pixels at the captured animation phase. After one updater pass, Current
 record `0x0A` supplies `(161,193,30,30)`, which selects the green `Recovery`
 artwork from the imported NUN5 atlas. NUN5 record `0x0A` supplies
 `(161,225,30,30)`, which selects the substitution doll.
-`ui_layout_item_pickup_doll_01` therefore performs one guarded same-index
+`localization__ui_layout__item_pickup_doll` therefore performs one guarded same-index
 12-byte copy from NUN5 ELF file `0x4B80C8` to NA2 ELF file `0x4B0BD8`.
 
 The rejected cross-index copy from NUN5 record `0x0A` to NA2 record `0x2E` is a

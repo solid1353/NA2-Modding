@@ -93,7 +93,7 @@ foundation exports:
 - separate ordinary-space, newline, right-edge, inline-half-space and
   glyph-advance hooks.
 
-The second foundation adds `localization.font.v2.adapter_call`. A caller-owned
+The second foundation adds `v2_adapter_call`. A caller-owned
 104-byte record carries the text, container, requested alignment, four native
 callback arguments and calculated scale/origin. The adapter validates and
 prepares the request before publishing it, saves the previous session pointer,
@@ -103,8 +103,8 @@ Nested callbacks use distinct caller records and restore the prior active
 session.
 
 The first family-specific fragments are now
-`localization.font.v2.controls_adapter` and
-`localization.font.v2.controls_callback`. The guarded call at NA2 runtime
+`v2_controls_adapter` and
+`v2_controls_callback`. The guarded call at NA2 runtime
 `0x00388748` / ELF file `0x288848` is shared by only the first eight Controls
 action labels. The adapter constructs one stack-local session with NUN5's
 128-unit width, scale `1` for fitting labels, `128 / 178` for
@@ -182,7 +182,7 @@ guards, hook isolation, placement, and shared draw-state geometry.
 The earlier identification of `FUN_003885B0` and its call at runtime
 `0x003887D4` / ELF file `0x2888D4` as this ss1 modal was incorrect. Retained
 telemetry identifies that path as Control Settings, with the ninth call drawing
-its vibration row. The provisional second `font_layout_controls` hook is removed;
+its vibration row. The provisional second `localization__font__layout__controls` hook is removed;
 the runtime evidence is a useful negative result against reusing that call site
 for Special Controls.
 

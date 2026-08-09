@@ -36,7 +36,7 @@ class ReleaseAppTests(unittest.TestCase):
             executable_name="Narutimate Accel v2.28_test.exe",
             output_name="Narutimate Accel v2.28.iso",
             configuration="na228_builder/configurations/release.json",
-            configuration_name="Narutimate Accel v2.28.json",
+            configuration_name="config.json",
             images=(
                 self.image("na2", "original NA2 ISO", na2),
                 self.image("nun5", "original NUN5 ISO", nun5),
@@ -44,7 +44,7 @@ class ReleaseAppTests(unittest.TestCase):
         )
 
     def write_configuration(self, root: Path, value: object | None = None) -> Path:
-        path = root / "Narutimate Accel v2.28.json"
+        path = root / "config.json"
         path.write_text(json.dumps({} if value is None else value), encoding="utf-8")
         return path
 
@@ -86,7 +86,7 @@ class ReleaseAppTests(unittest.TestCase):
             "executable_name": "Narutimate Accel v2.28.exe",
             "output_name": "Narutimate Accel v2.28.iso",
             "configuration": "na228_builder/configurations/release.json",
-            "configuration_name": "Narutimate Accel v2.28.json",
+            "configuration_name": "config.json",
             "images": [
                 {
                     "id": "NA2",
@@ -110,7 +110,7 @@ class ReleaseAppTests(unittest.TestCase):
         self.assertEqual(manifest.output_name, "Narutimate Accel v2.28.iso")
         self.assertEqual(
             manifest.configuration_name,
-            "Narutimate Accel v2.28.json",
+            "config.json",
         )
 
     def test_manifest_parser_rejects_unsafe_output_name(self) -> None:
@@ -121,7 +121,7 @@ class ReleaseAppTests(unittest.TestCase):
             "executable_name": "Narutimate Accel v2.28.exe",
             "output_name": "build/Narutimate Accel v2.28.iso",
             "configuration": "na228_builder/configurations/release.json",
-            "configuration_name": "Narutimate Accel v2.28.json",
+            "configuration_name": "config.json",
             "images": [
                 {
                     "id": "na2",

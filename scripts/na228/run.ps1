@@ -90,7 +90,7 @@ try {
             }
         }
         'latest-build-and-launch' {
-            Write-Na2Stage '1/2 Build release configuration'
+            Write-Na2Stage '1/2 Build development configuration'
             $buildResult = & (Join-Path $PSScriptRoot 'build.ps1')
             if (
                 -not $buildResult -or

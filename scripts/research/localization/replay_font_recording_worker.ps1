@@ -286,8 +286,8 @@ $verificationHost = (Get-Process -Id $PID).Path
     -Crc ([string]$isoIdentity.CRC) `
     -OutputPath $residentIdentityPath `
     -RequiredSymbols (
-        'localization.font.v2.global_selected_style;' +
-        'localization.font.v2.ninja_objective_row_adapter'
+        'v2_global_selected_style;' +
+        'v2_ninja_objective_row_adapter'
     )
 if ($LASTEXITCODE -ne 0) {
     throw "Worker ISO/build-record verification failed (exit $LASTEXITCODE)."

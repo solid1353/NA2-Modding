@@ -7,18 +7,25 @@ integrated catalog data.
 
 - `catalog/*.json` owns the complete nested selectable hierarchy. Each file is
   named for one direct child of the logical top-level `features` parent and
-  contains that child's node. Catalog leaves contain ordered `edits` and
+  contains that child's node. Files are discovered in alphabetical filename
+  order; root files named `__*.json` are metadata rather than selectable
+  features. Catalog leaves contain `edits` and
   `injections` ID arrays; there is no `groups`, `patches`, `children`, or
   module wrapper.
+- `catalog/__reference.json` is the sparse canonical owner of selectable-node
+  descriptions. It mirrors only described catalog paths and is merged into the
+  self-documenting configuration distributed with releases.
 - `catalog/implementation/edits.json` is the direct root map of guarded binary
   edit definitions.
 - `catalog/implementation/injections.json` is the direct root map of runtime
   injection units. Each unit contains `hooks`, `payload`, or both.
 - `configurations/base.json` contains the shared `features` setting and its
-  `overrides`. `test.json`, `release.json`, and `development.json` contain
+  `overrides`. `development.json`, `test.json`, and `release.json` contain
   concrete `overrides`. Each overrides object may be empty or partially mirror
   the catalog's feature tree directly. The loader applies `base.features`, then
-  `base.overrides`, then the concrete configuration's `overrides`.
+  `base.overrides`, then the concrete configuration's `overrides`. Normal local
+  builds use `development.json`; Manual Test, worker, and E2E builds use
+  `test.json`; only release packaging uses `release.json`.
 - `catalog/implementation/targets.tsv` is the single target registry used by
   edits and injection hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.
@@ -33,17 +40,31 @@ JSON configurations are the only build definitions. There is no separate pin or 
 
 ## Catalog nodes
 
-Catalog nodes may nest to any depth. `description` and `proven` are metadata;
-`edits` and `injections` are implementation-reference arrays allowed only on
-leaves. Every other object key is a selectable child.
+Catalog nodes may nest to any depth. `proven` is metadata; `edits` and
+`injections` are implementation-reference arrays allowed only on leaves. Every
+other object key is a selectable child. Node descriptions do not live in the
+selectable files: `catalog/__reference.json` may partially mirror the tree with
+nonempty `description` strings, and every referenced path must exist.
 
-`description` is optional and ignored by the parser. Migrated nodes may contain only `"proven": false`; the field is removed when proof is complete and is never added to new values.
+Migrated nodes may contain only `"proven": false`; the field is removed when
+proof is complete and is never added to new values.
 
 Binary edit definitions always contain an explicit `operation`. Runtime target
 changes live under an injection unit's `hooks` and therefore have no operation
 discriminator. Runtime sources, fragments, imports, relocations, and ABI
 metadata live under that unit's `payload`. Multiple catalog leaves may
 reference the same shared injection unit.
+
+Root edit and injection identities use
+`<catalog_path>__<semantic_identity>`. Definition maps and unordered nested
+maps are serialized alphabetically and permanent tests enforce that source
+convention without making source order a loader requirement. Hook and payload
+fragment identities are concise within their owning injection. Payload
+fragment numeric `order` values remain explicit, validated declaration data;
+final payload placement is deterministic by fragment kind, owner, and semantic
+symbol. Edit, injection, and hook descriptions are optional definition-local
+documentation; a present description must be nonempty and never affects
+execution.
 
 ## Internal execution
 
@@ -71,21 +92,21 @@ Documentation is not an executable builder input.
 
 ## Current release configuration
 
-The release configuration composes, in order:
+Feature files are discovered in alphabetical filename order. Module execution
+within each feature remains derived from the stable internal engine order above.
 
-1. Localization text import, resident font/layout and numeric logic, textures, native font assets, regional input, and UI edits.
-2. QoL startup, Practice, mode-selection, and Save/Load behavior.
-3. Battle-logic behavior.
-4. Rendering behavior.
-
-Release packaging merges `configurations/base.json` with
-`configurations/release.json` and writes exactly one editable, self-contained
-configuration named `Narutimate Accel v2.28.json`. It contains `features` and
-`overrides`; neither repository configuration source is embedded. The packaged
-EXE validates the external file against its embedded catalog and contains
-resources for every selectable catalog node, including nodes disabled by the
-default release selection. Catalog-owned runtime C sources have packaged
-objects, so end users do not need the project PS2 toolchain.
+Release packaging applies `base.features`, `base.overrides`, and
+`release.overrides`, then writes exactly one editable, self-documenting
+configuration named `config.json`. It contains `features` and `overrides`;
+every selectable feature node is an object with an `enabled` boolean, its
+direct children, and its canonical description when one exists. A false branch
+disables its complete subtree; a true branch descends into its child settings. Neither
+repository configuration source nor a separate reference file is distributed.
+The packaged EXE unwraps the enabled tree, applies `overrides`, and validates it
+against its embedded catalog. It contains resources for every selectable
+catalog node, including nodes disabled by the default release selection.
+Catalog-owned runtime C sources have packaged objects, so end users do not need
+the project PS2 toolchain.
 
 ## Build
 
@@ -94,7 +115,9 @@ objects, so end users do not need the project PS2 toolchain.
 ```
 
 `scripts/na228/build.ps1` resolves the `builder` package set from
-`packages.json` and uses `configurations/release.json`. Direct composition uses:
+`packages.json` and uses `configurations/development.json` for normal builds or
+`configurations/test.json` for test, worker, and E2E outputs. Direct development
+composition uses:
 
 ```powershell
 & .\scripts\lib\run_python.ps1 `
@@ -102,7 +125,7 @@ objects, so end users do not need the project PS2 toolchain.
   -Module na228_builder.scripts.build_configuration `
   -ArgumentList @(
     '--source', '<NA2.iso>',
-    '--configuration', 'na228_builder/configurations/release.json',
+    '--configuration', 'na228_builder/configurations/development.json',
     '--compose-only'
   )
 ```

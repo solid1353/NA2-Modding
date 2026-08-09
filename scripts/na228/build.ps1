@@ -243,9 +243,17 @@ $nun5Iso = $paths.files.nun5_iso
 $resolvedLatestIso = [IO.Path]::GetFullPath($paths.files.latest_iso)
 $resolvedPreviousIso = [IO.Path]::GetFullPath($paths.files.previous_iso)
 $resolvedManualTestIso = [IO.Path]::GetFullPath($paths.files.manual_test_iso)
+$configurationName = if (
+    $ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild
+) {
+    'test.json'
+}
+else {
+    'development.json'
+}
 $configuration = [IO.Path]::GetRelativePath(
     $paths.repository,
-    (Join-Path $paths.builder 'configurations\release.json')
+    (Join-Path $paths.builder "configurations\$configurationName")
 )
 $logDirectory = Join-Path $paths.logs 'na228'
 $buildLogRoot = Join-Path $logDirectory 'builds'

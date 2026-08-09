@@ -51,9 +51,11 @@ class BuildPreflightTests(unittest.TestCase):
             encoding="utf-8",
         )
         (catalog_root / "localization.json").write_text(
-            json.dumps(
-                {"description": "Localization"}
-            ),
+            "{}\n",
+            encoding="utf-8",
+        )
+        (catalog_root / "__reference.json").write_text(
+            json.dumps({"localization": {"description": "Localization"}}),
             encoding="utf-8",
         )
         (implementation_root / "edits.json").write_text("{}\n", encoding="utf-8")

@@ -26,14 +26,6 @@ RESERVED_NODE_FIELDS = frozenset(
 )
 OPERATION_FIELDS = ["field", "required", "type"]
 FIELD_TYPES = {"hex", "integer", "path", "sha256", "text"}
-CATALOG_FEATURE_ORDER = (
-    "localization",
-    "qol",
-    "battle_logic",
-    "rendering",
-)
-
-
 @dataclass(frozen=True)
 class CatalogNode:
     path: tuple[str, ...]
@@ -57,11 +49,13 @@ class CatalogNode:
 class CatalogSelection:
     catalog_path: Path
     catalog_files: tuple[Path, ...]
+    reference_path: Path
     edits_path: Path
     injections_path: Path
     base_configuration_path: Path | None
     configuration_path: Path
     catalog: dict[str, object]
+    reference: dict[str, object]
     edits: dict[str, dict[str, object]]
     injections: dict[str, dict[str, object]]
     nodes: tuple[CatalogNode, ...]
@@ -129,14 +123,14 @@ def _read_catalog(path: Path) -> tuple[dict[str, object], tuple[Path, ...]]:
     path = path.resolve()
     if not path.is_dir():
         raise FileNotFoundError(path)
-    feature_paths = {item.stem: item.resolve() for item in path.glob("*.json")}
+    feature_paths = {
+        item.stem: item.resolve()
+        for item in path.glob("*.json")
+        if not item.name.startswith("__")
+    }
     if not feature_paths:
         raise ValueError(f"Catalog contains no feature files: {path}")
-    order = {feature_id: index for index, feature_id in enumerate(CATALOG_FEATURE_ORDER)}
-    feature_ids = sorted(
-        feature_paths,
-        key=lambda feature_id: (order.get(feature_id, len(order)), feature_id),
-    )
+    feature_ids = sorted(feature_paths)
     features: dict[str, object] = {}
     files: list[Path] = []
     for feature_id in feature_ids:
@@ -162,7 +156,39 @@ def _description(value: object, label: str) -> str:
         return ""
     if not isinstance(value, str):
         raise ValueError(f"{label} description must be text")
+    if not value.strip():
+        raise ValueError(f"{label} description must be nonempty")
     return value
+
+
+def _read_reference(
+    catalog_path: Path,
+    catalog: dict[str, object],
+) -> tuple[Path, dict[str, object]]:
+    reference_path = (catalog_path / "__reference.json").resolve()
+    reference = _read_json(reference_path, "Catalog reference", allow_empty=True)
+    features = _selectable_children(catalog, "catalog")["features"]
+
+    def validate(
+        supplied: dict[str, object],
+        selectable: dict[str, object],
+        path: tuple[str, ...],
+    ) -> None:
+        children = _selectable_children(selectable, ".".join(path))
+        for key, value in supplied.items():
+            label = ".".join((*path, key))
+            if key == "description":
+                _description(value, ".".join(path))
+                continue
+            _identifier(key, f"Catalog reference {label}")
+            if key not in children:
+                raise ValueError(f"Catalog reference path does not exist: {label}")
+            if not isinstance(value, dict):
+                raise ValueError(f"Catalog reference {label} must be an object")
+            validate(value, children[key], (*path, key))
+
+    validate(reference, features, ("features",))
+    return reference_path, reference
 
 
 def _selectable_children(value: dict[str, object], label: str) -> dict[str, dict[str, object]]:
@@ -227,6 +253,125 @@ def _merge_setting(
     return merged
 
 
+def _setting_enabled(setting: object) -> bool:
+    if isinstance(setting, bool):
+        return setting
+    if isinstance(setting, dict):
+        return any(_setting_enabled(child) for child in setting.values())
+    return False
+
+
+def _unwrap_annotated_features(
+    catalog_features: dict[str, object],
+    supplied: dict[str, object],
+) -> dict[str, object]:
+    catalog_children = _selectable_children(catalog_features, "features")
+    if set(supplied) != set(catalog_children):
+        missing = sorted(set(catalog_children) - set(supplied))
+        extra = sorted(set(supplied) - set(catalog_children))
+        raise ValueError(
+            "Annotated configuration features differ from catalog; "
+            f"missing={missing}, extra={extra}"
+        )
+
+    def unwrap(
+        catalog_value: dict[str, object],
+        supplied_value: object,
+        path: tuple[str, ...],
+    ) -> object:
+        label = ".".join(path)
+        if not isinstance(supplied_value, dict):
+            raise ValueError(f"Annotated configuration {label} must be an object")
+        enabled = supplied_value.get("enabled")
+        if not isinstance(enabled, bool):
+            raise ValueError(
+                f"Annotated configuration {label}.enabled must be true or false"
+            )
+        if "description" in supplied_value:
+            _description(supplied_value["description"], label)
+        catalog_children = _selectable_children(catalog_value, label)
+        supplied_children = {
+            key: value
+            for key, value in supplied_value.items()
+            if key not in {"enabled", "description"}
+        }
+        if set(supplied_children) != set(catalog_children):
+            missing = sorted(set(catalog_children) - set(supplied_children))
+            extra = sorted(set(supplied_children) - set(catalog_children))
+            raise ValueError(
+                f"Annotated configuration {label} children differ from catalog; "
+                f"missing={missing}, extra={extra}"
+            )
+        if not catalog_children:
+            return enabled
+        children = {
+            key: unwrap(
+                catalog_children[key],
+                supplied_children[key],
+                (*path, key),
+            )
+            for key in catalog_children
+        }
+        return children if enabled else False
+
+    return {
+        key: unwrap(catalog_children[key], supplied[key], ("features", key))
+        for key in catalog_children
+    }
+
+
+def _annotate_features(
+    catalog_features: dict[str, object],
+    setting: object,
+    reference: dict[str, object],
+) -> dict[str, object]:
+    catalog_children = _selectable_children(catalog_features, "features")
+    if isinstance(setting, bool):
+        settings = {key: setting for key in catalog_children}
+    elif isinstance(setting, dict) and set(setting) == set(catalog_children):
+        settings = setting
+    else:
+        raise ValueError("Configuration features differ from catalog")
+
+    def annotate(
+        catalog_value: dict[str, object],
+        node_setting: object,
+        reference_value: object,
+        path: tuple[str, ...],
+    ) -> dict[str, object]:
+        label = ".".join(path)
+        children = _selectable_children(catalog_value, label)
+        if isinstance(node_setting, bool):
+            child_settings = {key: node_setting for key in children}
+        elif isinstance(node_setting, dict) and set(node_setting) == set(children):
+            child_settings = node_setting
+        else:
+            raise ValueError(f"Configuration {label} differs from catalog")
+        reference_node = reference_value if isinstance(reference_value, dict) else {}
+        result: dict[str, object] = {"enabled": _setting_enabled(node_setting)}
+        description = reference_node.get("description")
+        if description is not None:
+            result["description"] = _description(description, label)
+        for key, child in children.items():
+            result[key] = annotate(
+                child,
+                child_settings[key],
+                reference_node.get(key, {}),
+                (*path, key),
+            )
+        return result
+
+    return {
+        key: annotate(
+            catalog_children[key],
+            settings[key],
+            reference.get(key, {}),
+            ("features", key),
+        )
+        for key in catalog_children
+    }
+
+
 def _reference_ids(
     value: dict[str, object],
     field: str,
@@ -251,6 +396,7 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
     catalog_path = catalog_path.resolve()
     configuration_path = configuration_path.resolve()
     catalog, catalog_files = _read_catalog(catalog_path)
+    reference_path, reference = _read_reference(catalog_path, catalog)
     implementation_path = catalog_path / "implementation"
     edits_path = implementation_path / "edits.json"
     injections_path = implementation_path / "injections.json"
@@ -262,31 +408,38 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
         _identifier(edit_id, "Edit ID")
         if not isinstance(edit, dict):
             raise ValueError(f"Edit {edit_id!r} must be an object")
+        _description(edit.get("description"), f"Edit {edit_id!r}")
         edits[edit_id] = edit
     for injection_id, injection in raw_injections.items():
         _identifier(injection_id, "Injection ID")
         if not isinstance(injection, dict):
             raise ValueError(f"Injection {injection_id!r} must be an object")
-        extra = sorted(set(injection) - {"hooks", "payload"})
+        extra = sorted(set(injection) - {"description", "hooks", "payload"})
         if extra:
             raise ValueError(
                 f"Injection {injection_id!r} has unknown fields: {extra}"
             )
         if not injection:
             raise ValueError(f"Injection {injection_id!r} must not be empty")
+        _description(injection.get("description"), f"Injection {injection_id!r}")
         for field in ("hooks", "payload"):
             if field in injection and not isinstance(injection[field], dict):
                 raise ValueError(f"Injection {injection_id!r}.{field} must be an object")
+        hooks = injection.get("hooks", {})
+        if isinstance(hooks, dict):
+            for hook_id, hook in hooks.items():
+                _identifier(hook_id, f"Injection {injection_id!r} hook ID")
+                if not isinstance(hook, dict):
+                    raise ValueError(
+                        f"Injection {injection_id!r} hook {hook_id!r} must be an object"
+                    )
+                _description(
+                    hook.get("description"),
+                    f"Injection {injection_id!r} hook {hook_id!r}",
+                )
         injections[injection_id] = injection
     configuration = _read_json(configuration_path, "Configuration")
     nodes: list[CatalogNode] = []
-
-    def setting_enabled(setting: object) -> bool:
-        if isinstance(setting, bool):
-            return setting
-        if isinstance(setting, dict):
-            return any(setting_enabled(child) for child in setting.values())
-        return False
 
     def visit(
         value: dict[str, object],
@@ -295,7 +448,10 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
         inherited_enabled: bool,
     ) -> None:
         label = ".".join(path)
-        _description(value.get("description"), label)
+        if "description" in value:
+            raise ValueError(
+                f"{label}.description must be stored in catalog/__reference.json"
+            )
         if "proven" in value and value["proven"] is not False:
             raise ValueError(f"{label}.proven must be false when present")
         for field in ("hooks", "payload"):
@@ -340,7 +496,7 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
                 f"Configuration {label} children differ from catalog; "
                 f"missing={missing}, extra={extra}"
             )
-        enabled = inherited_enabled and setting_enabled(setting)
+        enabled = inherited_enabled and _setting_enabled(setting)
         nodes.append(CatalogNode(path, value, enabled))
         for key, child in children.items():
             visit(child, setting[key], (*path, key), enabled)
@@ -400,9 +556,18 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
         configuration_overrides = configuration["overrides"]
         if not isinstance(configuration_overrides, dict):
             raise ValueError("Configuration overrides must be an object")
+        supplied_features = configuration["features"]
+        if isinstance(supplied_features, dict) and supplied_features and all(
+            isinstance(item, dict) and "enabled" in item
+            for item in supplied_features.values()
+        ):
+            supplied_features = _unwrap_annotated_features(
+                features_value,
+                supplied_features,
+            )
         effective = _merge_setting(
             features_value,
-            configuration["features"],
+            supplied_features,
             configuration_overrides,
             ("features",),
         )
@@ -415,11 +580,13 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
     return CatalogSelection(
         catalog_path,
         catalog_files,
+        reference_path,
         edits_path,
         injections_path,
         base_configuration_path,
         configuration_path,
         catalog,
+        reference,
         edits,
         injections,
         tuple(nodes),
@@ -427,12 +594,17 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
 
 
 def all_enabled_configuration(catalog_path: Path) -> dict[str, object]:
-    """Return a compact self-contained configuration that enables every node."""
+    """Return an annotated self-contained configuration that enables every node."""
     catalog, _catalog_files = _read_catalog(catalog_path)
+    _reference_path, reference = _read_reference(catalog_path.resolve(), catalog)
     catalog_children = _selectable_children(catalog, "catalog")
     if set(catalog_children) != {"features"}:
         raise ValueError("Catalog root must contain only the features parent")
-    return {"features": True, "overrides": {}}
+    features_value = catalog_children["features"]
+    return {
+        "features": _annotate_features(features_value, True, reference),
+        "overrides": {},
+    }
 
 
 def materialized_configuration(
@@ -457,6 +629,24 @@ def materialized_configuration(
     return {
         "features": features,
         "overrides": configuration["overrides"],
+    }
+
+
+def annotated_configuration(
+    catalog_path: Path,
+    configuration_path: Path,
+) -> dict[str, object]:
+    """Return the bundled self-documenting configuration for one repository overlay."""
+    selection = load_selection(catalog_path, configuration_path)
+    materialized = materialized_configuration(catalog_path, configuration_path)
+    features_value = _selectable_children(selection.catalog, "catalog")["features"]
+    return {
+        "features": _annotate_features(
+            features_value,
+            materialized["features"],
+            selection.reference,
+        ),
+        "overrides": materialized["overrides"],
     }
 
 
@@ -684,7 +874,7 @@ def load_binary_package(
                     blob_offset=0 if blob_path is not None else None,
                     blob_sha256=blob_sha256,
                     fill_hex=fill_hex,
-                    reason="",
+                    reason=_description(raw_edit.get("description"), label),
                 )
             )
     return binary_patcher.Package(
@@ -990,7 +1180,7 @@ def load_runtime_package(
                         encoding=str(encoding),
                         mapping_id=mapping_id,
                         kind=_group_id(node),
-                        reason="",
+                        reason=_description(raw.get("description"), label),
                         addend=_parse_int(raw.get("addend", 0), f"{label}.addend", minimum=-0x80000000),
                         replacement_template=template,
                         relocation_offset=_parse_int(raw.get("relocation_offset", 0), f"{label}.relocation_offset"),

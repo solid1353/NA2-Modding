@@ -150,13 +150,13 @@ class FontCSharedCoreTests(unittest.TestCase):
         fragments = {fragment.symbol: fragment for fragment in first}
         self.assertTrue(
             {
-                "localization.font.v2.measure",
-                "localization.font.v2.prepare",
-                "localization.font.v2.adapter_call",
-                "localization.font.v2.pause_list_adapter",
-                "localization.font.v2.quit_unselected_adapter",
-                "localization.font.v2.wrap_native",
-                "localization.font.v2.c.practice_adapter_impl",
+                "v2_measure",
+                "v2_prepare",
+                "v2_adapter_call",
+                "v2_pause_list_adapter",
+                "v2_quit_unselected_adapter",
+                "v2_wrap_native",
+                "v2_c_practice_adapter_impl",
             }.issubset(fragments)
         )
         for fragment in first:

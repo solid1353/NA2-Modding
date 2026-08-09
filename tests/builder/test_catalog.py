@@ -21,8 +21,31 @@ class CatalogTests(unittest.TestCase):
         if not isinstance(features, dict):
             raise ValueError("Test catalog features must be an object")
         path.mkdir(parents=True, exist_ok=True)
+        reference: dict[str, object] = {}
+
+        def separate(node: dict[str, object]) -> tuple[dict[str, object], dict[str, object]]:
+            catalog_node: dict[str, object] = {}
+            reference_node: dict[str, object] = {}
+            for key, item in node.items():
+                if key == "description":
+                    reference_node[key] = item
+                elif isinstance(item, dict) and key not in {
+                    "edits", "injections", "proven"
+                }:
+                    catalog_child, reference_child = separate(item)
+                    catalog_node[key] = catalog_child
+                    if reference_child:
+                        reference_node[key] = reference_child
+                else:
+                    catalog_node[key] = item
+            return catalog_node, reference_node
+
         for feature_id, feature in features.items():
-            self.write_json(path / f"{feature_id}.json", feature)
+            catalog_feature, reference_feature = separate(feature)
+            self.write_json(path / f"{feature_id}.json", catalog_feature)
+            if reference_feature:
+                reference[feature_id] = reference_feature
+        self.write_json(path / "__reference.json", reference)
         implementation = path / "implementation"
         implementation.mkdir(exist_ok=True)
         for name in ("edits.json", "injections.json"):
@@ -127,7 +150,21 @@ class CatalogTests(unittest.TestCase):
             configuration = catalog.all_enabled_configuration(catalog_path)
             self.assertEqual(
                 configuration,
-                {"features": True, "overrides": {}},
+                {
+                    "features": {
+                        "feature": {
+                            "enabled": True,
+                            "description": "ignored",
+                            "first": {"enabled": True},
+                            "nested": {
+                                "enabled": True,
+                                "description": "ignored",
+                                "second": {"enabled": True},
+                            },
+                        }
+                    },
+                    "overrides": {},
+                },
             )
             self.write_json(configuration_path, configuration)
             selection = catalog.load_selection(catalog_path, configuration_path)
@@ -264,6 +301,81 @@ class CatalogTests(unittest.TestCase):
             ):
                 catalog.load_selection(catalog_path, configuration_path)
 
+    def test_annotated_configuration_round_trips_compact_selection(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path = root / "catalog"
+            configuration_path = root / "configurations" / "release.json"
+            self.write_catalog(
+                catalog_path,
+                {
+                    "features": {
+                        "feature": {
+                            "description": "Feature description.",
+                            "first": {},
+                            "second": {"description": "Second description."},
+                        }
+                    }
+                },
+            )
+            self.write_json(
+                root / "configurations" / "base.json",
+                {
+                    "features": {"feature": {"first": True, "second": False}},
+                    "overrides": {"feature": {"second": True}},
+                },
+            )
+            self.write_json(
+                configuration_path,
+                {"overrides": {"feature": {"first": False}}},
+            )
+
+            annotated = catalog.annotated_configuration(
+                catalog_path, configuration_path
+            )
+            self.assertEqual(annotated["features"]["feature"]["enabled"], True)
+            self.assertEqual(
+                annotated["features"]["feature"]["description"],
+                "Feature description.",
+            )
+            bundled_path = root / "config.json"
+            self.write_json(bundled_path, annotated)
+            repository_selection = catalog.load_selection(
+                catalog_path, configuration_path
+            )
+            bundled_selection = catalog.load_selection(catalog_path, bundled_path)
+            self.assertEqual(
+                [node.enabled for node in bundled_selection.nodes],
+                [node.enabled for node in repository_selection.nodes],
+            )
+
+    def test_reference_and_definition_descriptions_must_be_nonempty(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path = root / "catalog"
+            configuration_path = root / "configuration.json"
+            self.write_catalog(catalog_path, {"features": {"feature": {}}})
+            self.write_json(configuration_path, {"overrides": {}})
+            self.write_json(
+                catalog_path / "__reference.json",
+                {"feature": {"description": ""}},
+            )
+            with self.assertRaisesRegex(ValueError, "description must be nonempty"):
+                catalog.load_selection(catalog_path, configuration_path)
+
+            self.write_json(catalog_path / "__reference.json", {})
+            self.write_json(
+                catalog_path / "implementation" / "edits.json",
+                {
+                    "feature__empty": {
+                        "description": "",
+                        "operation": "replace",
+                    }
+                },
+            )
+            with self.assertRaisesRegex(ValueError, "description must be nonempty"):
+                catalog.load_selection(catalog_path, configuration_path)
+
     def test_runtime_source_uses_packaged_object_without_toolchain(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory)
@@ -342,9 +454,9 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(
             [selection.feature_ids for selection in selections],
             [
-                ("localization", "qol", "battle_logic", "rendering"),
-                ("localization", "qol", "battle_logic", "rendering"),
-                ("localization", "qol", "battle_logic", "rendering"),
+                ("battle_logic", "localization", "qol", "rendering"),
+                ("battle_logic", "localization", "qol", "rendering"),
+                ("battle_logic", "localization", "qol", "rendering"),
             ],
         )
         release = selections[1]
@@ -387,10 +499,15 @@ class CatalogTests(unittest.TestCase):
         raw_injections = json.loads(
             (implementation_root / "injections.json").read_text(encoding="utf-8")
         )
-        self.assertEqual(
-            json.loads((configuration_root / "base.json").read_text(encoding="utf-8")),
-            {"features": True, "overrides": {}},
+        raw_reference = json.loads(
+            (catalog_path / "__reference.json").read_text(encoding="utf-8")
         )
+        base_configuration = json.loads(
+            (configuration_root / "base.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(set(base_configuration), {"features", "overrides"})
+        self.assertIsInstance(base_configuration["features"], dict)
+        self.assertEqual(base_configuration["overrides"], {})
         for name in ("test", "release", "development"):
             self.assertEqual(
                 json.loads(
@@ -418,7 +535,10 @@ class CatalogTests(unittest.TestCase):
             "group_id",
             "patch_id",
             "edit_id",
+            "description",
         }
+
+        injection_owners: dict[str, list[tuple[str, ...]]] = {}
 
         def inspect(value: object, path: tuple[str, ...] = ()) -> None:
             if isinstance(value, list):
@@ -437,20 +557,80 @@ class CatalogTests(unittest.TestCase):
             if "edits" in value:
                 self.assertIsInstance(value["edits"], list)
                 self.assertTrue(set(value["edits"]) <= set(raw_edits))
+                prefix = "__".join(path[1:]) + "__"
+                self.assertTrue(
+                    all(edit_id.startswith(prefix) for edit_id in value["edits"])
+                )
             if "injections" in value:
                 self.assertIsInstance(value["injections"], list)
                 self.assertTrue(set(value["injections"]) <= set(raw_injections))
+                for injection_id in value["injections"]:
+                    injection_owners.setdefault(injection_id, []).append(path[1:])
             for key, item in value.items():
                 inspect(item, (*path, key))
 
         inspect(raw_catalog)
+        for injection_id, owners in injection_owners.items():
+            common: list[str] = []
+            for parts in zip(*owners):
+                if len(set(parts)) != 1:
+                    break
+                common.append(parts[0])
+            self.assertTrue(injection_id.startswith("__".join(common) + "__"))
+        self.assertTrue(raw_reference)
+        for definition in (*raw_edits.values(), *raw_injections.values()):
+            if "description" in definition:
+                self.assertTrue(definition["description"].strip())
         for injection_id, injection in raw_injections.items():
-            self.assertTrue(set(injection) <= {"hooks", "payload"}, injection_id)
+            self.assertTrue(
+                set(injection) <= {"description", "hooks", "payload"},
+                injection_id,
+            )
             self.assertTrue(injection, injection_id)
             for hook_id, hook in injection.get("hooks", {}).items():
                 self.assertNotIn("operation", hook, hook_id)
+                self.assertRegex(hook_id, catalog.IDENTIFIER)
+                if "description" in hook:
+                    self.assertTrue(hook["description"].strip())
+            for payload_id, payload in injection.get("payload", {}).items():
+                self.assertRegex(payload_id, catalog.IDENTIFIER)
+                for fragment_id in payload.get("fragments", {}):
+                    self.assertRegex(fragment_id, catalog.IDENTIFIER)
+        self.assertEqual(list(raw_edits), sorted(raw_edits))
+        self.assertEqual(list(raw_injections), sorted(raw_injections))
+        for feature in raw_catalog["features"].values():
+            def inspect_order(value: object) -> None:
+                if not isinstance(value, dict):
+                    return
+                for field in ("edits", "injections"):
+                    if field in value:
+                        self.assertEqual(value[field], sorted(value[field]))
+                for item in value.values():
+                    inspect_order(item)
+            inspect_order(feature)
+        for injection in raw_injections.values():
+            for field in ("hooks", "payload"):
+                if field in injection:
+                    self.assertEqual(
+                        list(injection[field]),
+                        sorted(injection[field]),
+                    )
+            for payload in injection.get("payload", {}).values():
+                for field in ("imports", "relocations"):
+                    if field in payload:
+                        self.assertEqual(
+                            list(payload[field]),
+                            sorted(payload[field]),
+                        )
+                if "fragments" in payload:
+                    orders = [
+                        fragment["order"]
+                        for fragment in payload["fragments"].values()
+                    ]
+                    self.assertEqual(orders, sorted(orders))
         for path in [
             *selections[0].catalog_files,
+            selections[0].reference_path,
             implementation_root / "edits.json",
             implementation_root / "injections.json",
             *configuration_root.glob("*.json"),

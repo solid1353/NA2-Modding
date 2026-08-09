@@ -23,9 +23,7 @@ establishes the failure:
   only mismatch is the separately initialized scale word at runtime
   `0x0060737C`;
 - the frozen state still matches all permanent hooks and ordinary ELF edits,
-  but all six injected helper/trampoline edits are entirely zero:
-  `font_layout_wrappers_01..04`, `font_controls_auto_fit_10`, and
-  `font_renderer_metrics_01`;
+  but all six injected helper/trampoline edits are entirely zero;
 - the frozen state's zero run is exactly
   `0x003D3DB6..0x003D5D30`, 8,058 bytes, which is the whole clean-file
   common-zero interval containing every new helper;
@@ -359,8 +357,8 @@ cleanup at `0x00187B68`.
 `PRG/228.BIN`. The compiled lookup entry is 208 bytes and the draw-application
 entry is 328 bytes; neither has an external relocation. Boot-ELF file
 `0x87374` now contains only a 24-byte register-setup/link/cleanup hook to
-`localization.font.glyph_metric_apply`; file `0x87B60` contains the analogous
-24-byte hook to `localization.font.glyph_metric_lookup`. Static composition
+`glyph_metric_apply`; file `0x87B60` contains the analogous
+24-byte hook to `glyph_metric_lookup`. Static composition
 places the candidate entries at runtime `0x008F3EE8` and `0x008F3DA0`
 respectively, but these addresses are payload-builder results rather than
 feature-owned constants. The complete candidate payload is 8,512 bytes,

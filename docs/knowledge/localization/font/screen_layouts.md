@@ -183,7 +183,7 @@ spacing, and all other BTL callers remain native.
 
 Those supplied `092FEF8A` states restore an older resident payload than the
 later on-disc Current build. Offline `eeMemory.bin` signature recovery proves
-that `localization.font.v2.adapter_call` remains stable at `0x008F4130`, but
+that `v2_adapter_call` remains stable at `0x008F4130`, but
 `practice_append` is at `0x008F4D68` rather than Current `0x008F4F30`,
 `title_callback` is at `0x008F5500` rather than `0x008F56E8`, and the
 native-measure callback is at `0x008F4320` rather than `0x008F44C0`.
@@ -512,7 +512,7 @@ symbol retains its prior address.
 The producer is the row loop in NA2 main-ELF `FUN_003BC780`. When the loop index
 is four, its branch at runtime `0x003BC824` adds the footer-only Y term before
 the selected call at file `0x2BC984` or the ordinary call at file `0x2BC9BC`.
-The existing guarded `font_layout_character_modal_02` replacement owns that
+The existing guarded `localization__font__layout__character_modal_na2_elf_at_002bc924` replacement owns that
 block at files `0x2BC924..0x2BC94F`: the first four iterations advance from
 local Y `8` by four `24`-unit intervals to `104`, and its instruction at file
 `0x2BC940` now loads `11.0` (`lui v0,0x4130`) instead of `12.0`, producing the
@@ -545,7 +545,7 @@ The user accepted that lower confirmation body as good enough on 2026-07-30.
 The same replacement-batch ss1 proves that the body remains correct while the
 native top Yes/No list does not share NUN5's relative placement. Redirecting
 only file `0x2BCAAC` to the existing
-`localization.font.v2.quit_choices_scope` reuses the already-proven Yes
+`v2_quit_choices_scope` reuses the already-proven Yes
 `(64.5,31.5)` and No `(68.5,49)` map without introducing another C formula or
 assembly fragment. A hidden direct-PINE trial loaded the supplied ss1,
 installed only that guarded call, and produced a native 640x480 capture. The

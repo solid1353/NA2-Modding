@@ -149,11 +149,35 @@ class ConfigurationTests(unittest.TestCase):
         catalog_root = root / "catalog"
         implementation_root = catalog_root / "implementation"
         implementation_root.mkdir(parents=True, exist_ok=True)
+        reference: dict[str, object] = {}
+
+        def separate(node: dict[str, object]) -> tuple[dict[str, object], dict[str, object]]:
+            catalog_node: dict[str, object] = {}
+            reference_node: dict[str, object] = {}
+            for key, item in node.items():
+                if key == "description":
+                    reference_node[key] = item
+                elif isinstance(item, dict):
+                    catalog_child, reference_child = separate(item)
+                    catalog_node[key] = catalog_child
+                    if reference_child:
+                        reference_node[key] = reference_child
+                else:
+                    catalog_node[key] = item
+            return catalog_node, reference_node
+
         for feature_id, feature in catalog.items():
+            catalog_feature, reference_feature = separate(feature)
             (catalog_root / f"{feature_id}.json").write_text(
-                json.dumps(feature, indent=2) + "\n",
+                json.dumps(catalog_feature, indent=2) + "\n",
                 encoding="utf-8",
             )
+            if reference_feature:
+                reference[feature_id] = reference_feature
+        (catalog_root / "__reference.json").write_text(
+            json.dumps(reference, indent=2) + "\n",
+            encoding="utf-8",
+        )
         for name in ("edits.json", "injections.json"):
             (implementation_root / name).write_text("{}\n", encoding="utf-8")
         (configurations / "base.json").write_text(
@@ -258,7 +282,12 @@ class ConfigurationTests(unittest.TestCase):
             )
             loaded = load_configuration(configuration, root, root)
             self.assertFalse((builder / "catalog_only").exists())
-            self.assertEqual(loaded.features[1].module_ids, ())
+            catalog_only = next(
+                feature
+                for feature in loaded.features
+                if feature.feature_id == "catalog_only"
+            )
+            self.assertEqual(catalog_only.module_ids, ())
 
     def test_resources_include_only_canonical_configuration_inputs(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -279,6 +308,7 @@ class ConfigurationTests(unittest.TestCase):
             resources = set(configuration_resource_files(loaded))
             self.assertIn((root / "product.json").resolve(), resources)
             self.assertIn((root / "catalog" / "localization.json").resolve(), resources)
+            self.assertIn((root / "catalog" / "__reference.json").resolve(), resources)
             self.assertIn(
                 (root / "catalog" / "implementation" / "edits.json").resolve(),
                 resources,
@@ -481,14 +511,13 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(
             [module.module_id for module in loaded.modules],
             [
+                "battle_logic.binary_patcher",
                 "localization.translation_importer",
                 "localization.runtime_injector",
                 "localization.texture_patcher",
                 "localization.binary_patcher",
                 "qol.runtime_injector",
                 "qol.binary_patcher",
-                "battle_logic.binary_patcher",
-                "rendering.binary_patcher",
             ],
         )
         features_root = repository / "na228_builder" / "features"
@@ -510,9 +539,7 @@ class ConfigurationTests(unittest.TestCase):
         }
 
         with tempfile.TemporaryDirectory() as directory:
-            configuration_path = (
-                Path(directory) / "Narutimate Accel v2.28.json"
-            )
+            configuration_path = Path(directory) / "config.json"
             configuration_path.write_text(
                 json.dumps(configuration, indent=2) + "\n",
                 encoding="utf-8",
@@ -523,7 +550,7 @@ class ConfigurationTests(unittest.TestCase):
                 builder_root,
                 root_overrides={"na2": marker, "nun5": marker},
             )
-            self.assertEqual(loaded.configuration_id, "Narutimate Accel v2.28")
+            self.assertEqual(loaded.configuration_id, "config")
             selected = set(configuration_resource_files(loaded))
             complete = set(
                 configuration_resource_files(loaded, include_disabled=True)

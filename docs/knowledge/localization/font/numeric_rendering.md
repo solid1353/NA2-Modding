@@ -76,7 +76,7 @@ branch. Every other value reaches the fullwidth formatter through the guarded
 runtime `0x008802D8`). The NUN5 homolog is `FUN_0089cbd0`, called by
 `FUN_0089d280`.
 
-`font_numeric_battle_settings` changes only that ordinary-value block to
+`localization__font__numeric_formatting__battle_settings` changes only that ordinary-value block to
 set up the value and stack buffer, then call the compiled C entry through a
 linking `jal26` runtime-injector hook. The rejected consolidated candidate used
 the same non-linking `j26` control-flow error as Save/Load; the correction
@@ -112,7 +112,7 @@ functions reach the same fullwidth CP932 formatter `FUN_00378510`:
 The NUN5 formatter homolog preserves the caller ABI but emits ASCII decimal.
 Mode 0 left-pads with ASCII spaces to the requested width, mode 1 emits an
 unpadded value, and mode 2 left-pads with ASCII zeroes. The shared
-`localization.font.ninja_song_ascii_number` helper reproduces those modes
+`ninja_song_ascii_number` helper reproduces those modes
 behind NA2's existing ABI and calls the immutable `%d` formatter at runtime
 `0x0017BCA0`. Exactly the five guarded BTL JAL instructions above redirect to
 it; no per-screen duplicate formatter is introduced.
@@ -309,7 +309,7 @@ value-class formulas, not per-row coordinates or visible-string identities.
 
 Ninja Song arithmetic is likewise one function-level redirect, not a set of
 token or row hooks. NA2 `FUN_00718920` is replaced from BTL file `0x64A60` by
-one call to `localization.font.v2.ninja_arithmetic_template`; the template
+one call to `v2_ninja_arithmetic_template`; the template
 reads the native 12-byte row record and renders all fifteen entries. The full
 15-entry live table confirms the native routine has three structural outputs:
 expanded arithmetic, total-only, and N/A. NA2 carries the total-only routing

@@ -10,8 +10,10 @@ NUN5 ISO.
 1. Extract the complete ZIP into one directory.
 2. Put the two supported clean ISOs in that directory. ISO filenames do not
    matter.
-3. Optionally edit `Narutimate Accel v2.28.json`. Its `features` value is the
-   base selection, and its `overrides` object may contain only the feature-tree
+3. Optionally edit `config.json`. Its expanded `features` tree documents every
+   selectable node with an `enabled` boolean and, where available, a
+   description. A false branch disables its complete subtree; a true branch
+   descends into its child settings. Its `overrides` object may contain only the feature-tree
    branches being changed.
 4. Double-click the EXE. It validates the external configuration against its
    embedded catalog before hashing either ISO.
@@ -31,7 +33,10 @@ NUN5 ISO.
    and waits for Enter before closing.
 
 The ZIP contains the versioned EXE, exactly one merged configuration named
-`Narutimate Accel v2.28.json`, and `README.txt`. The executable embeds the
+`config.json`, and `README.txt`. Release packaging constructs it only from
+`base.json`, `release.json`, the catalog, and `catalog/__reference.json`; the
+reference is merged into `config.json` rather than distributed separately. The
+executable embeds the
 interpreter, builder engines, catalog, resources for the complete selectable
 catalog rather than only the default selection, payload-builder configuration,
 precompiled objects for injection-owned runtime C sources, and Zopfli runtime.
@@ -112,6 +117,9 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
   that same script rather than implementing another packager.
 
 The ordinary `na228`, `na228 b`, and `na228 mt` workflows are unchanged.
+Normal development builds use `development.json`; Manual Test, worker, and E2E
+builds use `test.json`. `release.json` is used only by this release-packaging
+pipeline.
 
 ## GitHub releases
 

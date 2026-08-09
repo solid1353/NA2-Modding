@@ -181,9 +181,9 @@ class InjectionBuildTests(unittest.TestCase):
             root_sources,
             [
                 "hot_reload_message",
-                "font_v2_core",
+                "v2_core",
                 "font_numeric",
-                "font_glyph_metrics",
+                "glyph_metrics",
                 "startup_loading",
             ],
         )
@@ -220,8 +220,8 @@ class InjectionBuildTests(unittest.TestCase):
                             }
                         ],
                         "resident_symbol_overrides": {
-                            "localization.font.v2.title_callback": "0x008F5500",
-                            "localization.font.v2.wrap_native": "0x008F5510",
+                            "v2_title_callback": "0x008F5500",
+                            "v2_wrap_native": "0x008F5510",
                         },
                     }
                 ),
@@ -246,35 +246,35 @@ class InjectionBuildTests(unittest.TestCase):
         self.assertEqual(
             overrides,
             {
-                "localization.font.v2.title_callback": 0x008F5500,
-                "localization.font.v2.wrap_native": 0x008F5510,
+                "v2_title_callback": 0x008F5500,
+                "v2_wrap_native": 0x008F5510,
             },
         )
 
     def test_resident_symbol_overrides_replace_selected_imports(self) -> None:
         addresses = build_injection.resolve_external_addresses(
             {
-                "localization.font.v2.title_callback",
-                "localization.font.v2.wrap_native",
+                "v2_title_callback",
+                "v2_wrap_native",
             },
             {
-                "localization.font.v2.title_callback": {
+                "v2_title_callback": {
                     "address": 0x008F56E8,
                 },
-                "localization.font.v2.wrap_native": {
+                "v2_wrap_native": {
                     "address": 0x008F56F8,
                 },
             },
             {
-                "localization.font.v2.title_callback": 0x008F5500,
+                "v2_title_callback": 0x008F5500,
             },
         )
 
         self.assertEqual(
             addresses,
             {
-                "localization.font.v2.title_callback": 0x008F5500,
-                "localization.font.v2.wrap_native": 0x008F56F8,
+                "v2_title_callback": 0x008F5500,
+                "v2_wrap_native": 0x008F56F8,
             },
         )
 

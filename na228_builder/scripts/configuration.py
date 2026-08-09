@@ -712,6 +712,7 @@ def configuration_resource_files(
         configuration.definition_path,
         configuration.product_path,
         *configuration.selection.catalog_files,
+        configuration.selection.reference_path,
         configuration.selection.edits_path,
         configuration.selection.injections_path,
         configuration.targets_path,

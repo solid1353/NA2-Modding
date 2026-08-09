@@ -15,12 +15,24 @@ repository sources and assets.
 Catalog leaves select injection units by ID.
 There is no separate runtime-injector data directory.
 
+Each root injection identity begins with its catalog ownership path and ends
+with a semantic unit identity, using `__` between segments. The root map and
+unordered nested maps are serialized alphabetically. Hooks and named payload
+fragments use concise local semantic identities rather than repeating their
+owner's catalog prefix. Optional nonempty injection and hook descriptions hold
+only definition-local purpose or provenance and never affect execution.
+
 A `payload` declaration is either a C source or a static code/data/rodata
 fragment. C sources contain their path, namespace, private imports, emitted
 fragment aliases, and optional ABI metadata. Static fragments contain their
 bytes or guarded blob, alignment, initialization marker, and private
 relocations. Shared declarations are stored once in an injection unit
 referenced by every consuming catalog leaf.
+
+Hooks and payload fragments are not one-to-one: several hooks may target one
+fragment, and one hook may depend on multiple fragments. Their guards,
+relocations, and symbolic references remain together in the owning injection
+unit.
 
 Configuration selection controls hooks. A shared payload declaration
 contributes only when at least one selected leaf references its injection unit.

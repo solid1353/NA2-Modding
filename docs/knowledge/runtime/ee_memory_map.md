@@ -478,12 +478,12 @@ disk but cannot undo either write already applied to EE memory.
 
 The 2026-07-29 generic-to-production trial proved the resulting hazard. The
 same PCSX2 session first activated the generic dispatcher, removed its PNACH,
-then installed production entry `localization.font.v2.controls_adapter`
+then installed production entry `v2_controls_adapter`
 without restarting Current. Production repointed the dispatcher while the
 old generic per-frame call remained live. That stale call invoked the Font
 entry with unrelated registers, including `a0 = 0x7`, producing repeated
 loads from address `0x7` at hot-linked PC `0x008F01A0`
-(`localization.font.v2.measure + 0x58`) and cascading native renderer TLB
+(`v2_measure + 0x58`) and cascading native renderer TLB
 misses at `0x001858D0` and `0x001896E8`.
 
 This was a lifecycle conflict, not a different Font ABI or bad C compilation:

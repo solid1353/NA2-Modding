@@ -197,27 +197,27 @@ raise SystemExit(main())
     }
     $packagedConfiguration = Join-Path $distRoot ([string]$manifest.configuration_name)
     $packagedInstructions = Join-Path $distRoot 'README.txt'
-    $materializedProbe = @'
+    $annotatedProbe = @'
 import json
 import sys
 from pathlib import Path
 
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
-from na228_builder.scripts.catalog import materialized_configuration
+from na228_builder.scripts.catalog import annotated_configuration
 
-print(json.dumps(materialized_configuration(
+print(json.dumps(annotated_configuration(
     repository / "na228_builder" / "catalog",
     Path(sys.argv[2]),
 ), indent=2))
 '@
-    $materializedText = @(& $python -B -c $materializedProbe $repository $configurationPath)
+    $annotatedText = @(& $python -B -c $annotatedProbe $repository $configurationPath)
     if ($LASTEXITCODE -ne 0) {
         throw 'Could not construct the merged release configuration.'
     }
     [IO.File]::WriteAllText(
         $packagedConfiguration,
-        ($materializedText -join "`n") + "`n",
+        ($annotatedText -join "`n") + "`n",
         [Text.UTF8Encoding]::new($false)
     )
     Copy-Item -LiteralPath $instructionsPath -Destination $packagedInstructions
@@ -261,7 +261,7 @@ print(json.dumps(all_enabled_configuration(Path(sys.argv[2])), indent=2))
     }
     [IO.File]::WriteAllText(
         $packagedConfiguration,
-        ($materializedText -join "`n") + "`n",
+        ($annotatedText -join "`n") + "`n",
         [Text.UTF8Encoding]::new($false)
     )
     if ((Get-Item -LiteralPath $built).Length -lt 1MB) {

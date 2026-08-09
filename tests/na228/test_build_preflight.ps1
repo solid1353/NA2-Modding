@@ -85,10 +85,12 @@ exit $LASTEXITCODE
     }
     New-Item -ItemType Directory -Force `
         -Path (Join-Path $repository 'na228_builder\configurations') | Out-Null
-    [IO.File]::WriteAllText(
-        (Join-Path $repository 'na228_builder\configurations\release.json'),
-        "{}`n"
-    )
+    foreach ($name in 'development', 'test', 'release') {
+        [IO.File]::WriteAllText(
+            (Join-Path $repository "na228_builder\configurations\$name.json"),
+            "{}`n"
+        )
+    }
     [IO.File]::WriteAllText((Join-Path $repository 'source\NA2.iso'), 'clean na2')
     [IO.File]::WriteAllText((Join-Path $repository 'source\NUN5.iso'), 'clean nun5')
     . (Join-Path $libRoot 'paths.ps1')
@@ -159,6 +161,9 @@ exit $LASTEXITCODE
         -Message 'Cache hit incorrectly reported changed build roles.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
         -Message 'Cache hit invoked module derivation or receipt recording.'
+    Assert-Na2PreflightTest `
+        -Condition ($global:Na2PreflightTestCalls[0] -contains 'na228_builder\configurations\development.json') `
+        -Message 'Normal development build did not use development.json.'
     Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$latestIso.building")) `
         -Message 'Cache hit created a .building ISO.'
 
@@ -190,6 +195,9 @@ exit $LASTEXITCODE
     Assert-Na2PreflightTest `
         -Condition ($global:Na2PreflightTestCalls[1] -contains 'na228_builder.scripts.build_configuration') `
         -Message 'Manual Test-only build did not run the full configuration builder.'
+    Assert-Na2PreflightTest `
+        -Condition ($global:Na2PreflightTestCalls[1] -contains 'na228_builder\configurations\test.json') `
+        -Message 'Manual Test-only build did not use test.json.'
     Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $testIso -PathType Leaf) `
         -Message 'Manual Test-only build did not retain its verified ISO.'
     Assert-Na2PreflightTest `
@@ -228,6 +236,9 @@ exit $LASTEXITCODE
         -Message 'Changed normal E2E Test build did not report only its own role.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 3) `
         -Message 'Normal E2E Test miss did not check, build, and record exactly once.'
+    Assert-Na2PreflightTest `
+        -Condition ($global:Na2PreflightTestCalls[1] -contains 'na228_builder\configurations\test.json') `
+        -Message 'E2E Test build did not use test.json.'
     Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $e2eNormalIso -PathType Leaf) `
         -Message 'Normal E2E Test build did not retain its verified ISO.'
     Assert-Na2PreflightTest `
@@ -297,6 +308,9 @@ exit $LASTEXITCODE
         -Message 'Worker build did not return worker status.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 3) `
         -Message 'Worker miss did not check, build, and record exactly once.'
+    Assert-Na2PreflightTest `
+        -Condition ($global:Na2PreflightTestCalls[1] -contains 'na228_builder\configurations\test.json') `
+        -Message 'Worker build did not use test.json.'
     Assert-Na2PreflightTest `
         -Condition (Test-Path -LiteralPath (Join-Path $repository $generalOutput) -PathType Leaf) `
         -Message 'Worker build did not retain its requested ISO.'

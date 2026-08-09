@@ -1,10 +1,8 @@
 {
-  "description": "Game-wide rendering and output geometry.",
   "native_16_9_horizontal_scale": {
     "proven": false,
-    "description": "Force the renderer's horizontal-scale field to 0.75 through its object pointer.",
     "edits": [
-      "force_0_75f_at_the_renderer_s_horizontal_scale_store_while_preserving_the_caller_provided_vertical_scale"
+      "rendering__native_16_9_horizontal_scale__force_0"
     ]
   }
 }

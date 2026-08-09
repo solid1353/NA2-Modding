@@ -5,6 +5,15 @@ This internal engine applies selected guarded edits to verified clean binaries.
 definitions; feature files under `na228_builder/catalog/` assign their IDs to
 selectable leaves. The TSV
 files in `operations/` define each operation's allowed fields and basic types.
+The root definition map is serialized alphabetically. Each identity begins
+with its catalog ownership path and ends with a semantic operation identity,
+using `__` between the segments. Catalog leaves reference those identities in
+alphabetical order.
+
+An edit may contain a nonempty `description` when concise purpose or provenance
+belongs specifically to that operation. Description text is logged as the
+edit reason but never changes execution. Broader feature behavior, research,
+analysis, procedures, and history remain in their canonical documentation.
 
 ## Invokes
 
@@ -22,6 +31,9 @@ guarded file edits.
 - Patch ranges may overlap; ordered composition accepts compatible chains and rejects guard conflicts.
 - Concrete edits are simulated in deterministic order before output creation. Already-satisfied
   writes and guarded chains are allowed; incompatible staged bytes are rejected as conflicts.
+- JSON source order is a maintained serialization convention, not an execution
+  contract. The loader derives execution order from catalog selection and the
+  composer resolves edits by target and destination offset.
 - Migrated nodes marked `proven: false` remain executable while they await
   individual proof; the marker is catalog metadata, not an engine status.
 - Outputs must be new, stay outside input roots, and preserve target sizes.

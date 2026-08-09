@@ -21,9 +21,9 @@ C source → EE MIPS compiler → relocatable code fragments
 
 2. The compiler output is split into named fragments such as:
 
-   - `localization.font.v2.measure`
-   - `localization.font.v2.controls_adapter`
-   - `localization.font.v2.collection_list_entry`
+   - `v2_measure`
+   - `v2_controls_adapter`
+   - `v2_collection_list_entry`
 
 3. The payload builder places all selected fragments inside `PRG/228.BIN`, beginning at `0x008F3D00`, and resolves calls between them.
 
@@ -38,7 +38,7 @@ C source → EE MIPS compiler → relocatable code fragments
 For example, the Controls draw at ELF file offset `0x288848` originally calls the native text renderer. The build replaces it with:
 
 ```text
-jal localization.font.v2.controls_adapter
+jal v2_controls_adapter
 nop
 ```
 

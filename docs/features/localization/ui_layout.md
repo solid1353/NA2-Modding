@@ -303,7 +303,7 @@ all four item classes. Its first NA2 port correctly preserved the NUN5 scale in
 `f22` and alpha in `f21`, but the final centered-offset calculation still
 negated `f21`. At partial alpha, that scaled each local half-width/half-height
 offset and made the foreground appear to slide into and out of a stationary
-bubble. `ui_layout_item_status_paired_27` copies NUN5's exact `neg.s f2,f22` instruction from
+bubble. `localization__ui_layout__item_status_paired_na2_elf_at_002772f4` copies NUN5's exact `neg.s f2,f22` instruction from
 ELF file `0x284418` to NA2 file `0x2772F4`. Alpha continues to fade normally,
 while local geometry remains constant; fully visible placement is unchanged.
 
@@ -472,7 +472,7 @@ corresponding 44-row cells in the packed `XNINKA.CCS` label column. The earlier
 authored centered-renderer replacement and whole-column upward translation
 obscured the untouched per-value behavior. At the user's request, both
 rank-specific corrections are disabled for matched baseline capture:
-`ui_layout_battle_results_11` is absent and `UI-NINKA-001` imports the complete official
+`localization__ui_layout__battle_results_na2_btl_at_002100b0` is absent and `UI-NINKA-001` imports the complete official
 NUN5 container with the unmodified donor atlas. Every other Battle Results
 layout edit remains active.
 

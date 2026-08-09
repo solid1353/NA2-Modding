@@ -36,17 +36,16 @@ No other wording enters Design mode. Plain `des` and `design` do not enter it.
   keep unresolved decisions explicit.
 - Only `qwe` authorizes implementation. Agreement with individual points or any
   other wording does not authorize it.
-- An explicit instruction to stop or switch work may end Design mode without
-  authorizing implementation. Normal mode resumes unless another workflow is
-  entered.
+- Design mode remains active until the user approves the reviewed implementation
+  with `qwe` or explicitly requests to exit the mode. An instruction to stop or
+  switch work does not itself exit Design mode.
 
 ## Implementation and review
 
-1. On `qwe`, finalize the design document, set its status to
+1. On `qwe` before implementation, finalize the design document, set its status to
    `Ready for implementation`, and commit and push it before implementation
    begins.
-2. `qwe` then ends Design mode, returns to Normal mode, and starts
-   implementation of the consolidated design.
+2. Start implementation of the consolidated design without leaving Design mode.
 3. Implement and validate the design.
 4. Add an implementation summary to the design document.
 5. Commit and push the implementation together with the updated design
@@ -54,12 +53,16 @@ No other wording enters Design mode. Plain `des` and `design` do not enter it.
 6. Report the result in chat and request user review.
 
 Review may remain pending indefinitely. Do not impose a deadline, restriction,
-or automatic cleanup.
+or automatic cleanup. Design mode remains active during review.
 
 There is no standardized correction workflow after review. If the result is
-wrong or incomplete, the user may ask questions, enter
-[`Interactive mode`](interactive_mode.md), or give an ordinary implementation
-order. Do not choose or enter a correction workflow automatically.
+wrong or incomplete, the user may ask questions or request further changes. Do
+not choose or enter a correction workflow automatically.
 
-When the user approves the implementation, delete its individual design
-document, commit the deletion, and push it. Never delete `docs/designs/`.
+When the user enters `qwe` after reviewing the implementation, treat it as
+implementation approval: delete the individual design document, commit the
+deletion, push it, and exit Design mode. Never delete `docs/designs/`.
+
+If the user explicitly requests to exit Design mode without approving the
+implementation, exit to Normal mode without deleting the individual design
+document. Entering another workflow mode also exits Design mode.

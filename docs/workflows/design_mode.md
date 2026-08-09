@@ -60,8 +60,13 @@ wrong or incomplete, the user may ask questions or request further changes. Do
 not choose or enter a correction workflow automatically.
 
 When the user enters `qwe` after reviewing the implementation, treat it as
-implementation approval: delete the individual design document, commit the
-deletion, push it, and exit Design mode. Never delete `docs/designs/`.
+implementation approval. Before deleting the individual design document,
+review it against the implemented result and promote every still-useful
+decision, contract, explanation, example, limitation, and validation finding
+to its canonical current documentation. Verify that no useful content remains
+owned only by the design document. Then delete the individual design document,
+commit and push the promotion and deletion, and exit Design mode. Never delete
+`docs/designs/`.
 
 If the user explicitly requests to exit Design mode without approving the
 implementation, exit to Normal mode without deleting the individual design

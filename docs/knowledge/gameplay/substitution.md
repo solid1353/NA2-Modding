@@ -15,8 +15,9 @@ control-flow boundary so they are not investigated again without new evidence.
 - Historical CRC alias during the investigation: `@pcsx2_cheats/SLPS-25837_E0F064C5.pnach`. The current workflow no longer generates CRC aliases.
 - Historical NA2 decompiler/Ghidra evidence remains available through Git
   history. Restore reusable analysis only under `@analysis/disassembly/NA2/`.
-- Reproducible substitution-cost patch: catalog node
-  `battle_logic.sub_cost_3_15` (legacy evidence ID `ELF-S001`).
+- Reproducible substitution-cost setting: catalog node
+  `battle_logic.substitution_cost`, backed by patch definition
+  `e__battle_logic__substitution_cost` (legacy evidence ID `ELF-S001`).
 
 The retired generic Testing feature preserved the four edits below as
 `ELF-H001`. That executable duplicate was removed after this evidence became
@@ -49,13 +50,14 @@ destination register.
 | 15 | `0x4170` | `7041023C` |
 
 The historical 16-bit PNACH write changed the immediate bytes from `80 3F` to
-`40 40`, making the decrement 3/15. It is preserved as disabled,
-runtime-proven binary-patcher patch `ELF-S001`. Use that guarded module patch
-rather than restoring a permanent PNACH write.
+`40 40`, making the decrement cost `3`. That form is runtime-proven. The current
+catalog exposes the mechanism as `setting<int & 1..15>` and applies the guarded
+`mips_lui_float32` adapter; use that setting rather than restoring a permanent
+PNACH write. The base configuration selects the clean cost `1`.
 
 The instruction site, float encoding, and decrement mechanism are confirmed,
-not hypotheses. The 3/15 form is runtime-proven; the other configurable costs
-have not each been runtime-tested. Substitution cost is not the
+not hypotheses. Cost `3` is runtime-proven; the other non-default configurable
+costs have not each been runtime-tested. Substitution cost is not the
 substitution-reliability gate.
 
 ## Runtime tests that did not improve reliability

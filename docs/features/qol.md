@@ -72,6 +72,14 @@ remain unchanged. Static, supplied-savestate, and rejected-candidate evidence
 is recorded in `docs/knowledge/game/startup.md`; user runtime validation
 confirmed the integrated behavior.
 
+The catalog exposes this confirmed flow as
+`qol.startup.save_loading: setting<"manual">`; the base configuration selects
+`"manual"`, with no separate default. Automatic background first-save loading
+is not implemented. A future implementation can add a disjoint branch without
+changing the catalog model. `qol.save_load.display_only_first_save` remains an
+independent setting because it controls Save/Load presentation rather than
+startup behavior.
+
 ## ELF-Q004: Remove Adventure mode
 
 NUN6 A35 removes Adventure from the Mode Select carousel by storing the signed

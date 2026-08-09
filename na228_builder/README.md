@@ -9,6 +9,8 @@ integrated catalog data.
   is named for one direct child of the logical `features` root. The custom
   declarative syntax uses JSON-like objects and TypeScript-like value types and
   is parsed directly by the Python builder.
+  [`catalog/README.md`](catalog/README.md) is the complete authoring and
+  configuration-semantics reference.
 - Catalog settings contain their descriptions and one `patches` array. IDs
   beginning with `e__` resolve to guarded edits; IDs beginning with `i__`
   resolve to injection units. Implementation details never appear in the

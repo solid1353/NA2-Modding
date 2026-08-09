@@ -15,9 +15,11 @@ acceptance remain canonical in
   when the user requests it or the approved task is a stable compatibility or
   release check. That authorization covers the launch only.
 - User savestates and screenshots under either installation are read-only input
-  libraries. Copy selected files with provenance into the task's `inputs/`
-  tree. If the required state was not supplied, ask for that exact state rather
-  than navigating to or manufacturing a substitute.
+  libraries. Outside maintained E2E, savestates may be copied with provenance
+  and inspected only as immutable diagnostic evidence; agents do not create,
+  modify, convert, patch, load, replay, or inject through them. Maintained E2E
+  is the only agent-executed savestate path and applies only to selected visual
+  validation.
 - Builds, direct game-selector launches, and `workshop input [profile]` are
   user-facing operations. Agents use the isolated commands described below.
 - Build commands and single-ISO launch commands do not probe or close existing
@@ -49,30 +51,17 @@ Create the runtime only with:
   game menus. A visible runtime is permitted only when the user must personally
   inspect or interact with it; state the required user action before launch.
 
-## Worker ISOs and savestate provenance
+## Worker ISOs and runtime provenance
 
 - Worker processes never open shared Latest, Previous, Manual Test, or E2E Test
   ISO paths. Use an independent full copy under
   `work/<task>/inputs/isos/`; symlinks and hardlinks are forbidden.
-- Treat each NA2 savestate batch and its runtime dependencies as one intake
-  bundle. Before implementation or runtime iteration, preserve:
-  - the compatible independent ISO;
-  - its SHA-256, serial, and CRC;
-  - hashes of every resident/overlay payload whose addresses are imported;
-  - either the matching payload-builder record and `symbol_map.tsv`, or complete
-    independently verified resident-symbol overrides for the selected closure.
-- Copy rotation-sensitive records into
-  `work/<task>/inputs/runtime-records/<payload-sha256>/` while available and link
-  them from the batch provenance.
-- A state/ISO pair is not injection-ready when required payload identity or
-  linking metadata is absent. Ask immediately for the smallest exact replacement
-  input; do not substitute the newest shared ISO or create a replacement build.
-- Before using a savestate to validate file-backed overlays or resident payloads,
-  determine whether loading it restores the modified executable regions. If it
-  does, use an exact guarded conversion or a user-supplied post-build state.
-- Retain ISO copies and runtime metadata while an active compatible batch/test
-  needs them. Remove superseded images only after no active case references
-  them; preserve compact provenance records.
+- Preserve the independent ISO's SHA-256, serial, CRC, applicable build record,
+  payload hashes, and symbol map before relying on it for runtime evidence.
+- Do not substitute the newest shared ISO when the required identity or linking
+  metadata is absent. Ask for the smallest exact missing input.
+- Retain compact provenance records, but delete disposable ISO copies after the
+  selected validation and evidence extraction.
 
 ## Agent ISO builds
 
@@ -86,11 +75,12 @@ na228 worker work/<exact task title>/build/<name>.iso
   structured records under `work/<task>/logs/`.
 - They do not touch Latest/Previous, Manual/E2E Test outputs, shared preflight,
   promotion, shared records, PNACH, GameSettings, or PCSX2 state.
-- Build only when an available compatible savestate reaches the target without
-  navigation, when testing boot/startup behavior needs no navigation, or when
-  the user explicitly requests the build.
-- Temporary/hypothesis ISOs remain task-owned only while they have a named use
-  and are deleted when no longer useful.
+- Build only when the selected validation genuinely requires image assembly or
+  runtime execution. The ISO is an internal agent validation artifact, never a
+  user testing ground or deliverable.
+- Do not build or launch an ISO merely to prepare user verification. After the
+  selected validation and evidence extraction, delete the ISO whether
+  validation passes or fails.
 
 Current shared-build and user-facing command behavior is documented by
 `na228 help`, [`../../scripts/README.md`](../../scripts/README.md), and
@@ -104,23 +94,9 @@ acceptance. Every development injection candidate compiles and links
 source as a rebuild input; the marker never enters normal profile or release
 composition.
 
-Agent savestate-based C iteration uses only:
-
-```powershell
-scripts/injection/inject_candidate.ps1 `
-  -SourceId <source> `
-  -Entry <symbol> `
-  -OverlayPlan work/<task>/<plan>.json `
-  -IsoPath work/<task>/inputs/isos/<matching>.iso `
-  -StateSlot <slot> `
-  -PinePort <task-port>
-```
-
-- The command builds/links canonical C and the task-owned overlay plan, reloads
-  the supplied state and waits for completion, applies guarded writes through
-  PINE while paused, refreshes execution caches, and restores the prior VM state.
-- Do not invoke its internal build/apply stages separately for agent runtime
-  testing. Do not transport candidates through PNACH, cheat-folder sync,
+- Agents do not use `scripts/injection/inject_candidate.ps1` for validation
+  because it loads a savestate. Do not invoke its internal build/apply stages
+  separately or transport candidates through PNACH, cheat-folder sync,
   install/restore state, or filesystem watchers.
 - `scripts/injection/watch.ps1` is user-only live-editing convenience. Agents do
   not run or depend on it.
@@ -134,4 +110,4 @@ scripts/injection/inject_candidate.ps1 `
   that worker's `snaps/` tree for the new PNG.
 - Do not use window capture, screenshot hotkeys, window messages, or
   foregrounding as substitutes.
-- Create a new savestate only when the state itself is a required artifact.
+- Agents do not create savestates outside maintained E2E.

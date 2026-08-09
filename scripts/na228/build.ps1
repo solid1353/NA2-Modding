@@ -1,5 +1,6 @@
 [CmdletBinding()]
 param(
+    [switch]$DryRun,
     [switch]$ManualTestOnly,
     [ValidateSet('normal', 'shifted')][string]$E2eVariant,
     [string]$WorkerOutputIso
@@ -19,12 +20,13 @@ if (-not [string]::IsNullOrWhiteSpace($E2eVariant)) {
 
 if (
     @(
+        $DryRun.IsPresent
         $ManualTestOnly.IsPresent
         $null -ne $e2eBuild
         -not [string]::IsNullOrWhiteSpace($WorkerOutputIso)
     ).Where({ $_ }).Count -gt 1
 ) {
-    throw '-ManualTestOnly, -E2eVariant, and -WorkerOutputIso are mutually exclusive.'
+    throw '-DryRun, -ManualTestOnly, -E2eVariant, and -WorkerOutputIso are mutually exclusive.'
 }
 $workerBuild = if (-not [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
     Get-Na2WorkerBuildContext `
@@ -273,6 +275,29 @@ $configuration = [IO.Path]::GetRelativePath(
     $paths.repository,
     (Join-Path $paths.builder "configurations\$configurationName")
 )
+if ($DryRun) {
+    $dryRunArguments = @(
+        '--source', $inputIso
+        '--configuration', $configuration
+        '--compose-only'
+    )
+    Push-Location $paths.repository
+    try {
+        $dryRunExecution = Invoke-Na2BuilderModule `
+            -Module 'na228_builder.scripts.build_configuration' `
+            -ArgumentList $dryRunArguments
+    }
+    finally {
+        Pop-Location
+    }
+    if ($dryRunExecution.ExitCode -ne 0) {
+        Throw-Na2BuilderFailure `
+            -Execution $dryRunExecution `
+            -FallbackMessage "NA2 development composition failed (exit $($dryRunExecution.ExitCode))."
+    }
+    $dryRunExecution.Output | ForEach-Object { Write-Host $_ }
+    return
+}
 $logDirectory = Join-Path $paths.logs 'na228'
 $buildLogRoot = Join-Path $logDirectory 'builds'
 $latestReceiptPath = Join-Path $logDirectory 'preflight\latest.json'

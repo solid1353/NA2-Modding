@@ -48,6 +48,32 @@ that behavior.
   none is specified, default to runtime testing by the user.
 - The agent must not claim runtime success until the user confirms it.
 
+### Savestates
+
+- Outside maintained E2E, agents may inspect savestates only as immutable
+  diagnostic evidence. They must not create, modify, convert, patch, load,
+  replay, or inject through them for validation.
+- Maintained E2E is the only agent-executed savestate path, and it is available
+  only when E2E has been selected for a visual change.
+- A savestate never validates a nonvisual change.
+
+### Build validation
+
+- `na228 build -d` validates the development configuration against the real
+  source ISO through the builder's compose-only path. It checks configuration,
+  catalog and patch guards, compilation and linking, derived changes, and
+  composition conflicts without staging or retaining an ISO or build record.
+- A dry run does not prove image assembly, boot, or runtime behavior. Run it
+  only when the selected validation plan names it; it is not an automatic
+  additional check.
+- Build a task-owned worker ISO only when the selected validation genuinely
+  requires image assembly or runtime execution. It is an internal agent
+  artifact, never a user testing ground or deliverable. Delete it after the
+  selected validation and evidence extraction, whether validation passes or
+  fails.
+- Do not build or launch an ISO merely to prepare user verification. The user
+  uses their normal build and run workflow.
+
 ### Visual game changes
 
 Visual changes include fonts, menus, HUD, textures, layout, rendering, removed

@@ -68,6 +68,7 @@ if ($mode -eq 'help') {
         '  additional launch arguments  See workshop help'
         ''
         '  na228 build l|mt            Build Latest or Manual Test without running it'
+        '  na228 build -d              Validate development composition without creating an ISO'
         '  na228 test                  Run permanent/unit tests'
         '  na228 e2e [-s]              Run all E2E suites; -s also qualifies against shifted'
         '  na228 e2e create <suite> [game]       Create or replace a suite from its matching shared recording; optionally capture a reference game'
@@ -168,7 +169,7 @@ if ($mode -eq 'release') {
 
 if ($mode -eq 'build') {
     if ($arguments.Count -ne 1) {
-        throw 'na228 build requires exactly one target: l or mt.'
+        throw 'na228 build requires exactly one target: l, mt, or -d.'
     }
     $target = $arguments[0].ToLowerInvariant()
     switch ($target) {
@@ -182,8 +183,12 @@ if ($mode -eq 'build') {
                 -Action manual-test-build
             return
         }
+        '-d' {
+            & (Join-Path $paths.scripts 'na228\build.ps1') -DryRun
+            return
+        }
         default {
-            throw "na228 build target must be l or mt: $target"
+            throw "na228 build target must be l, mt, or -d: $target"
         }
     }
 }

@@ -128,19 +128,18 @@ than showing them in the user-facing window. Successful runs create no log.
 
 `scripts/na228/build.ps1` resolves the `builder` package set from
 `packages.json` and uses `configurations/development.json` for normal builds or
-`configurations/test.json` for test, worker, and E2E outputs. Direct development
-composition uses:
+`configurations/test.json` for test, worker, and E2E outputs. The public
+development dry run uses:
 
 ```powershell
-& .\scripts\lib\run_python.ps1 `
-  -PackageSet builder `
-  -Module na228_builder.scripts.build_configuration `
-  -ArgumentList @(
-    '--source', '<NA2.iso>',
-    '--configuration', 'na228_builder/configurations/development.json',
-    '--compose-only'
-)
+na228 build -d
 ```
+
+It exposes the builder's existing `--compose-only` path: configuration loading,
+patch guards, compilation and linking, derived changes, and full composition
+conflict checks run against the source ISO, while no ISO or build record is
+created. Temporary compiler artifacts are removed by the builder. This does not
+validate final image assembly, boot, or runtime behavior.
 
 The public `na228` development commands present configuration failures as one
 concise path/value/expectation message. Their existing `latest.log` and

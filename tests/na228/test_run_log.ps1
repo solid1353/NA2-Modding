@@ -265,6 +265,9 @@ Write-Output '[fake] permanent tests'
         -Condition ($helpText -match '(?m)^\s*na228 build l\|mt\s') `
         -Message 'Root help omitted the explicit build-only command.'
     Assert-Na2Test `
+        -Condition ($helpText -match '(?m)^\s*na228 build -d\s+Validate development composition without creating an ISO$') `
+        -Message 'Root help omitted the development dry-run command.'
+    Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 test\s+Run permanent/unit tests$') `
         -Message 'Root help omitted the permanent/unit-test command.'
     Assert-Na2Test `
@@ -403,6 +406,7 @@ Write-Output "[fake] release $Version"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'build.ps1') -Content @'
 param(
+    [switch]$DryRun,
     [switch]$ManualTestOnly,
     [string]$WorkerOutputIso
 )
@@ -418,7 +422,10 @@ if ($env:NA228_TEST_CONFIG_ERROR -ceq '1') {
     )
     throw $exception
 }
-if ($WorkerOutputIso) {
+if ($DryRun) {
+    Write-Host '[na228] Validated development composition; no ISO staged.'
+}
+elseif ($WorkerOutputIso) {
     Write-Host '[na228] ISO result: worker; rotation: no; PCSX2 left running.'
     [pscustomobject]@{ Status = 'worker'; ChangedRoles = [string[]]@() }
 }
@@ -691,6 +698,10 @@ Add-Content `
     & (Join-Path $fakeRepository 'na228.ps1') worker 'work\General\build\agent.iso'
     & (Join-Path $fakeRepository 'na228.ps1') build l
     & (Join-Path $fakeRepository 'na228.ps1') build mt
+    $dryRun = (& (Join-Path $fakeRepository 'na228.ps1') build -d *>&1) -join "`n"
+    Assert-Na2Test `
+        -Condition ($dryRun -match 'Validated development composition; no ISO staged') `
+        -Message 'Development dry run did not dispatch to compose-only build mode.'
     $composedRecipe = (
         & (Join-Path $fakeRepository 'na228.ps1') nun5 bmtw
     ) -join "`n"

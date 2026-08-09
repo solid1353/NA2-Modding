@@ -132,6 +132,10 @@ exit $LASTEXITCODE
             }
         }
         if ($arguments -contains 'na228_builder.scripts.build_configuration') {
+            if ($arguments -contains '--compose-only') {
+                $global:LASTEXITCODE = 0
+                return 'Validated composition: synthetic; no ISO staged.'
+            }
             $sourceIndex = [Array]::IndexOf($arguments, '--source') + 1
             $outputIndex = [Array]::IndexOf($arguments, '--output') + 1
             $configurationLogIndex = [Array]::IndexOf($arguments, '--configuration-log-directory') + 1
@@ -152,6 +156,29 @@ exit $LASTEXITCODE
         throw "Unexpected python invocation: $($arguments -join ' ')"
     }
 
+    $global:Na2PreflightTestCalls = @()
+    $dryRunOutput = (& (Join-Path $scriptRoot 'build.ps1') -DryRun *>&1) -join "`n"
+    Assert-Na2PreflightTest `
+        -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
+        -Message 'Development dry run did not invoke the builder exactly once.'
+    $dryRunCall = $global:Na2PreflightTestCalls[0]
+    Assert-Na2PreflightTest `
+        -Condition (
+            $dryRunCall -contains 'na228_builder.scripts.build_configuration' -and
+            $dryRunCall -contains 'na228_builder\configurations\development.json' -and
+            $dryRunCall -contains '--compose-only' -and
+            $dryRunCall -notcontains '--output' -and
+            $dryRunCall -notcontains '--configuration-log-directory'
+        ) `
+        -Message 'Development dry run did not use the compose-only development route.'
+    Assert-Na2PreflightTest `
+        -Condition ($dryRunOutput -match 'Validated composition: synthetic; no ISO staged') `
+        -Message 'Development dry run did not report composition success.'
+    Assert-Na2PreflightTest `
+        -Condition (-not (Test-Path -LiteralPath "$latestIso.building")) `
+        -Message 'Development dry run staged an ISO.'
+
+    $global:Na2PreflightTestCalls = @()
     $hit = & (Join-Path $scriptRoot 'build.ps1')
     Assert-Na2PreflightTest -Condition ($hit.Status -eq 'unchanged') `
         -Message 'Cache hit did not return unchanged.'

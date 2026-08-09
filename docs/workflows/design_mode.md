@@ -4,6 +4,9 @@
 
 No other wording enters Design mode. Plain `des` and `design` do not enter it.
 
+Design mode is primarily used for refactorings, project-wide changes, and other
+serious structural work.
+
 ## Draft creation
 
 1. Infer the design topic from the conversation. Ask only when genuinely unclear.

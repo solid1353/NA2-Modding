@@ -38,6 +38,11 @@ work directories, or documentation layout.
   [chat-local commit setting](../workflows/normal_mode.md#commit-setting).
   Game/runtime patches follow the proof and commit boundary in
   [`testing.md`](testing.md).
+- A one-time override commits the specified task-owned changes, pushes them when
+  a remote exists, and announces the override before acting. It does not change
+  the persistent Normal mode commit setting or the active workflow mode. An
+  explicit `commit` instruction is a one-time override; an explicit `push`
+  instruction authorizes only the requested push.
 - Ordinary pauses, questions, reviews, and requests for user input do not require
   a clean working tree. If work is blocked or incomplete, do not create a WIP
   commit merely to clean the tree; report the exact task-owned dirty state.

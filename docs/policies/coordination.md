@@ -42,7 +42,7 @@ or an explicit cross-chat handoff.
   `Backlog` only on explicit user instruction.
 - `task done` removes the exact task through its owning workstream. If the
   subsection becomes empty, move it to `Archive` without deleting it.
-- Commit and push requested task-list edits automatically.
+- Requested task-list edits are a one-time override across every workflow mode.
 
 ## Workstreams
 

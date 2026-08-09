@@ -38,18 +38,16 @@ in the repository.
 
 - `c on` makes completed Normal mode work commit and push automatically.
 - `c off` leaves completed Normal mode work uncommitted and unpushed.
-- Exact `ver` commits and pushes the current task-owned pending Normal mode
-  changes as a one-time override. It does not change the persistent setting;
-  no other acceptance or approval wording triggers it.
+- Exact `ver` is a one-time override for the current task-owned pending Normal
+  mode changes. No other acceptance or approval wording triggers it.
 
-Design mode and Interactive mode retain their own commit behavior. An explicit
-commit or push instruction overrides the setting only for the requested action
-and does not change it. Only `c on` or `c off` changes the persistent
-setting.
+One-time override behavior is defined in the
+[repository policy](../policies/repository.md#git-and-concurrent-work). Only
+`c on` or `c off` changes the persistent setting. Design mode and Interactive
+mode retain their own commit behavior.
 
 Game/runtime patches remain uncommitted until exact `ver`, regardless of
-the persistent setting. Starting or verifying a patch does not change that
-setting.
+the persistent setting. Starting a patch does not change that setting.
 
 ## Action boundary
 
@@ -63,11 +61,9 @@ Needed from you: <required input or nothing>
 Commit: <on or off>
 ```
 
-`Commit` reports the persistent setting. If an explicit instruction overrides
-it for the announced operation, append that fact, for example
-`Commit: off (explicit commit requested)`, without changing the setting.
-For `ver`, append `ver authorizes commit and push` to the reported
-setting.
+`Commit` reports the persistent setting. For a one-time override, append the
+override to the reported setting, for example
+`Commit: off (ver authorizes commit and push)`.
 
 If `Needed from you` is not `nothing`, do not begin the operation. Ask for any
 savestate, screenshot, dump, file, reproduction, access, decision, or other

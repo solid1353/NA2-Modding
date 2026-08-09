@@ -21,6 +21,11 @@ those.
 
 ## Conversation and metadata
 
+- `mode`: only when the entire user message, after trimming surrounding
+  whitespace, is exactly `mode`, respond with only `Normal mode`, `Design
+  mode`, or `Interactive mode`, whichever is active. It does not change the
+  mode or grant authority. Do not trigger it from a longer message, quoted
+  text, or supplied context.
 - `ag`: reread live root `AGENTS.md` and apply it immediately.
 - `q:`: the request was queued earlier and may be stale. Compare it with the
   current state before acting. Perform only the still-relevant portion; do not

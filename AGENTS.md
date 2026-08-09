@@ -48,7 +48,7 @@ other wording enters a mode; when a mode exits, Normal mode resumes.
 | `des mode`, `design mode` | [`docs/workflows/design_mode.md`](docs/workflows/design_mode.md) |
 | `int mode`, `interactive mode` | [`docs/workflows/interactive_mode.md`](docs/workflows/interactive_mode.md) |
 | `zxc` | [`docs/workflows/procedures/graceful_stop.md`](docs/workflows/procedures/graceful_stop.md) |
-| `qwe`, `snapshot`, `tasks`, `task done`, `ag`, `q:`, `con`, `e2e`, `sum`, `eff`, `sw`, `ss`, `mute`, `unmute` | [`docs/AGENT_COMMANDS.md`](docs/AGENT_COMMANDS.md) |
+| `qwe`, `snapshot`, `tasks`, `task done`, `mode`, `ag`, `q:`, `con`, `e2e`, `sum`, `eff`, `sw`, `ss`, `mute`, `unmute` | [`docs/AGENT_COMMANDS.md`](docs/AGENT_COMMANDS.md) |
 
 ## Policy routing
 

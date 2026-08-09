@@ -3,9 +3,10 @@
 Status: design in progress. Implementation is not approved.
 
 This document defines the pending coordinated redesign of catalog implementation
-identities, human-readable descriptions, canonical ordering, release catalog
-documentation, and consolidation of the current project design documentation.
-It is temporary and must be retired when the task is complete.
+identities, human-readable descriptions, canonical ordering, the bundled
+self-documenting release configuration, and consolidation of the current
+project design documentation. It is temporary and must be retired when the task
+is complete.
 
 ## Outcome
 
@@ -28,7 +29,7 @@ It is temporary and must be retired when the task is complete.
 - Maintained generators that emit or update affected definitions.
 - Canonical ordering tests.
 - Edit and injection descriptions.
-- Catalog-node description data and release documentation.
+- Catalog-node description data and the bundled release configuration.
 - Documentation made obsolete by information moved during this redesign.
 - Canonical integration of the accepted binary-patcher JSON design and useful
   remaining binary-runtime migration documentation.
@@ -38,16 +39,18 @@ It is temporary and must be retired when the task is complete.
 ## Identity redesign
 
 - Redesign edit and injection identities together.
-- Replace opaque edit IDs with meaningful identities.
-- Replace opaque injection, hook, and named payload-fragment IDs with meaningful
-  behavioral identities.
+- Replace opaque root edit and injection IDs with meaningful identities using
+  the same `<catalog_path>__<semantic_identity>` format.
+- Encode each catalog-path level and the semantic suffix as `snake_case`, with
+  `__` separating the levels and suffix.
+- Do not repeat catalog-path meaning in the semantic suffix unless it is needed
+  to keep the identity clear.
+- Give nested hooks and named payload fragments concise local semantic names;
+  do not repeat their owning root definition's catalog-path prefix.
 - Update every catalog reference and maintained generator affected by renamed
   identities.
 - Do not retain redundant identity fields inside definitions when the containing
   JSON key already owns identity.
-
-The exact naming scheme is unresolved. It must be designed explicitly before
-implementation approval and must not be inferred from the discarded candidate.
 
 ## Injection ownership
 
@@ -66,9 +69,26 @@ implementation approval and must not be inferred from the discarded candidate.
 - Alphabetically serialize root edit and injection definition maps.
 - Alphabetically serialize nested named maps whose ordering has no execution
   meaning.
+- Order root edit and injection identities by their catalog-derived prefixes.
+- Remove `CATALOG_FEATURE_ORDER` and load discovered feature files in
+  alphabetical filename order.
 - Enforce canonical ordering through permanent repository tests.
 - Do not make source ordering a build-loader contract, and do not make the
   loader reject otherwise valid unsorted definitions.
+
+## Catalog file discovery
+
+- Treat root catalog JSON files matching `__*.json` as catalog metadata, not as
+  selectable feature files.
+- Discover every other root catalog `*.json` as a feature file.
+
+## Definition descriptions
+
+Keep edit, injection, and hook descriptions limited to concise information that
+belongs specifically to that definition. Do not place information there when
+its canonical owner is feature, component, operational, knowledge, research, or
+other documentation, including broader behavior, contracts, procedures,
+evidence, analysis, derivations, and history.
 
 ## Edit descriptions
 
@@ -89,8 +109,7 @@ Do not transfer content merely because it exists. Exclude:
   unrelated evidence;
 - disassembly analysis, research evidence, hypotheses, detailed derivations,
   and broader feature history;
-- information that belongs in its existing documentation context rather than
-  with one edit.
+- information excluded by the shared definition-description boundary above.
 
 Moving information into an edit description must not leave a duplicate at its
 source:
@@ -116,14 +135,48 @@ its useful current content has been moved to the appropriate canonical owners.
 ## Catalog and release descriptions
 
 - Move catalog-node descriptions out of executable feature-tree files into
-  canonical JSON description data.
-- Bundle the description data with releases so users can discover the available
-  selectable nodes.
-- Produce human-readable catalog documentation from the canonical description
-  data.
+  canonical JSON description data at
+  `na228_builder/catalog/__reference.json`.
+- Let `__reference.json` partially mirror the catalog tree and contain only
+  `description` fields and the ancestor keys needed to reach them. Do not
+  duplicate catalog nodes that have no description.
+- Require every path supplied by `__reference.json` to exist in the selectable
+  catalog. Descriptions are optional, but every present description must be a
+  nonempty string.
+- Keep repository configurations in their current compact format.
+- Name the single bundled release configuration `config.json` and give it a
+  distinct self-documenting format. Expand its `features` tree so every
+  selectable node contains the reserved boolean field `enabled` and its
+  canonical `description` when one exists, alongside its directly nested
+  selectable children.
+- Keep `overrides` as the other top-level release-configuration field. The
+  release loader reads `enabled` values from the annotated `features` tree and
+  then applies `overrides` normally.
+- Merge `__reference.json` into the bundled release configuration during
+  packaging by expanding the structure from the real catalog and overlaying the
+  sparse descriptions. Do not bundle a separate reference file and do not
+  generate Markdown documentation.
+- Validate that removing descriptions and unwrapping every `enabled` value
+  produces the same effective selection as the compact merged repository
+  configuration.
 
-The description-file path, JSON structure, and generated documentation format
-are unresolved and must be designed before implementation approval.
+The bundled structure is:
+
+```json
+{
+  "features": {
+    "localization": {
+      "enabled": true,
+      "description": "Translated game content.",
+      "translated_text": {
+        "enabled": true,
+        "description": "Imports translated text and applies its derived string patches."
+      }
+    }
+  },
+  "overrides": {}
+}
+```
 
 ## Preservation
 
@@ -131,8 +184,8 @@ are unresolved and must be designed before implementation approval.
   replacement, blob identity, and catalog selection.
 - Preserve every injection relationship and executable declaration.
 - Preserve catalog behavior, configuration behavior, build behavior, release
-  behavior, and binary output except for the separately designed addition of
-  release catalog documentation.
+  behavior, and binary output except for the approved self-documenting release
+  configuration format.
 
 ## Documentation consolidation and retirement
 
@@ -153,6 +206,29 @@ are unresolved and must be designed before implementation approval.
 - Update the project workstream index so it contains no links to retired design
   documents.
 
+The canonical destination mapping is:
+
+- Move catalog hierarchy, repository configuration, reference ownership, and
+  loader-validation contracts from `binary-patcher-json-design.md` into
+  `na228_builder/README.md`.
+- Move edit and operation contracts into
+  `na228_builder/modules/binary_patcher/README.md`.
+- Move injection-unit, hook, and payload contracts into
+  `na228_builder/modules/runtime_injector/README.md`.
+- Move shared payload-placement contracts into
+  `na228_builder/payload_builder/README.md`.
+- Move bundled `config.json` and packaging behavior into
+  `docs/runbooks/release.md`.
+- Move concise definition-local information from
+  `binary-runtime-migration-documentation.md` into the corresponding edit,
+  injection, or hook descriptions; move selectable-node descriptions into
+  `catalog/__reference.json`; move current feature behavior into the existing
+  owning `docs/features/` documents; and move only unique durable research
+  evidence into an existing appropriate `docs/knowledge/` owner.
+- Discard legacy IDs, evidence IDs, migration chatter, duplicated notes,
+  obsolete candidates, low-value history, and other content with no current
+  canonical value.
+
 ## Validation
 
 - Audit one-to-one identity migration for every edit, injection, hook, named
@@ -165,13 +241,13 @@ are unresolved and must be designed before implementation approval.
   tests.
 - Run the full permanent test suite and a real build proving unchanged binary
   output.
-- Validate the release bundle's description data and generated catalog
-  documentation against their canonical source.
+- Validate the bundled `config.json` annotated feature tree against the real
+  catalog, compact merged repository configuration, and `__reference.json`.
 - Validate that all useful current material from the retired design documents
   has a canonical owner and that no current project design document remains.
 
 ## Outside this task
 
-- Redesigning binary-patcher operations, targets, configurations, or build
-  behavior.
+- Redesigning binary-patcher operations, targets, repository configuration
+  inheritance, or unrelated build behavior.
 - Moving or splitting implementation files.

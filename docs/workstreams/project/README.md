@@ -8,4 +8,4 @@ Durable scope for the `Project` workstream.
 - Domain-specific scripts remain with their owning area until they become shared
   project infrastructure.
 - The pending catalog data redesign is documented in
-  [`catalog-data-redesign.md`](catalog-data-redesign.md).
+  [`catalog-data-redesign.md`](../../designs/catalog-data-redesign.md).

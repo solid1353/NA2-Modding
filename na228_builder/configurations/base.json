@@ -1,5 +1,44 @@
 {
-  "features": true,
+  "features": {
+    "localization": {
+      "font": {
+        "glyphs": true,
+        "layout": true,
+        "numeric_formatting": true
+      },
+      "ui_layout": true,
+      "regional_input": true
+    },
+    "qol": {
+      "startup": {
+        "skip_cc2_intro": true,
+        "skip_opening": true,
+        "loading_screen_then_main_menu": true,
+        "loading_screen": true
+      },
+      "practice": {
+        "voice_off_by_default": true,
+        "support_off_by_default": true,
+        "command_display_off_by_default": true,
+        "simple_display_off": true
+      },
+      "mode_select": {
+        "remove_adventure": true,
+        "remove_shop": true
+      },
+      "save_load": {
+        "display_only_first_save": true
+      }
+    },
+    "battle_logic": {
+      "disable_shadowblur_extra_hit": true,
+      "disable_extra_hit_with_aura_punishment_for_initiator": true,
+      "substitution_cost_3_15": true
+    },
+    "rendering": {
+      "native_16_9_horizontal_scale": true
+    }
+  },
   "overrides": {
     "rendering": {
       "native_16_9_horizontal_scale": false

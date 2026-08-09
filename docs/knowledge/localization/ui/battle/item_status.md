@@ -331,8 +331,10 @@ three pixels at the captured animation phase. After one updater pass, Current
 record `0x0A` supplies `(161,193,30,30)`, which selects the green `Recovery`
 artwork from the imported NUN5 atlas. NUN5 record `0x0A` supplies
 `(161,225,30,30)`, which selects the substitution doll.
-`localization__ui_layout__item_pickup_doll` therefore performs one guarded same-index
-12-byte copy from NUN5 ELF file `0x4B80C8` to NA2 ELF file `0x4B0BD8`.
+The `ui_layout_item_pickup_doll` group, implemented by
+`localization__ui_layout__item_pickup_doll`, therefore performs one guarded
+same-index 12-byte copy from NUN5 ELF file `0x4B80C8` to NA2 ELF file
+`0x4B0BD8`.
 
 The rejected cross-index copy from NUN5 record `0x0A` to NA2 record `0x2E` is a
 useful negative result. It altered only geometry serialized in the restored

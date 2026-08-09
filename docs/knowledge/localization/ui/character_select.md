@@ -27,8 +27,8 @@ Each record is four signed 16-bit values `(u, v, width, height)`. Forty-four
 English records already match NA2; the other 52 change dimensions,
 coordinates, or blank sentinels. Copying the complete 768-byte NUN5 range is
 the minimal complete fix shared by Character Select, VS, the battle HUD, and
-Battle Set. The edit is source/destination range-hash guarded and preserves the
-ELF size.
+Battle Set. `ui_layout_character_name_rectangles` owns that complete copy. The
+edit is source/destination range-hash guarded and preserves the ELF size.
 
 The nearby NUN5 range at ELF file `0x4DC120` is deliberately excluded. It is
 the separate uniform 38x46 portrait grid used by `FUN_0038c3a0`, not the

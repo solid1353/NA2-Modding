@@ -292,3 +292,30 @@ the shared correction is **runtime-proven**.
 An old note near EE `0x001F64A4` proposes forcing part or all of `v0` to zero
 in a branch delay slot. The intended bit or byte and the affected screen
 behavior are unspecified.
+
+## Ultimate Jutsu one-part label
+
+NA2's Ultimate Jutsu banner uses two 64x64 label halves. Official NUN5 and
+Brazilian NUN6 both use one 128x64 label and one-part construction behavior.
+The whole-container `OUGI.CCS` import supplies the one-part model, UV, texture,
+and animation layout.
+
+At BTL file offset `0xB5E80`, NA2 contains `02 00 42 2A`
+(`slti v0,s2,2`). `ui_layout_ultimate_jutsu_label` replaces it with
+`01 00 42 2A` (`slti v0,s2,1`) to port the donor behavior into NA2's loop.
+The canonical NUN5 executables do not contain that exact instruction, so this
+is an authored semantic port rather than an arbitrary donor copy. It preserves
+BTL size and is runtime-proven with the imported one-part container.
+
+## Round label
+
+NA2 constructs `Round` from two Japanese 38x38 glyph rectangles at X=`216`,
+Y=`44`, and scale `1.4`. NUN5 uses one English 94x30 rectangle at X=`256`,
+Y=`24`, with scale `1.2` and a Y=`64` render constant.
+
+`ui_layout_round_label` copies the exact NUN5 rectangle from ELF file offset
+`0x4DE110`, zeros the unused second-glyph record, ports the differently stored
+X/Y fields, and copies four structurally equivalent scale/render instruction
+ranges into NA2 BTL offsets `0xCCB4`, `0xCD5C`, `0xCD64`, and `0xCDA4`. Eight
+guarded live writes were read back exactly, and the one-part result matched the
+paired NUN5 capture apart from normal pulse-phase differences.

@@ -8,6 +8,8 @@ parents or active patch inputs.
 
 ## Documents
 
+- [Font assets](assets.md): glyph cells, descriptors, palettes, rejected donor
+  combinations, and unresolved asset refinements.
 - [Integration baseline](integration_baseline.md): accepted native 14x20
   integration, staged autofit reset, and contextual selector behavior.
 - [Numeric rendering](numeric_rendering.md): Save/Load, Battle Settings, Ninja
@@ -18,7 +20,3 @@ parents or active patch inputs.
   selected-state layout findings.
 - [Runtime migration](runtime_migration.md): resident relocation, C migration,
   payload composition, and deterministic runtime boundaries.
-- [Experiments and negative results](experiments.md): superseded baselines and
-  rejected renderer/asset approaches.
-- [2026-07-24 matched savestate analysis](savestate_analysis_2026-07-24.md):
-  focused paired-screen evidence used by the later work.

@@ -8,6 +8,9 @@ inline versus linked placement from encoded fit and pointer availability, and
 compiles one shared `binary_patcher` package. There is no standalone export
 command or file-backed inter-stage handoff.
 
+Durable structural evidence, semantic boundaries, and rejected approaches are
+in [translation importer knowledge](../../knowledge/localization/translation_importer.md).
+
 ## Mapping metadata
 
 - Canonical `mappings.tsv` rows: `2,075`

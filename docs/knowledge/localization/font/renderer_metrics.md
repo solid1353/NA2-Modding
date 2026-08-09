@@ -122,20 +122,6 @@ NUN5, while visible-ink mass is `0.965854`; the remaining horizontal deficit
 is therefore advance/spacing behavior rather than excess palette weight.
 Confidence is **high** for the byte-level palette and guarded runtime results.
 
-### Unresolved selective palette refinement
-
-Clean NA2's primary GF4 raster and the accepted secondary raster both use
-palette indices 13 and 14 zero times. Those two GF4C entries may therefore be
-candidates for exact NUN5 white-alpha levels without changing any currently
-referenced primary pixel. This remains a bounded asset lead only if a matched
-review still finds a halfwidth-Latin weight difference.
-
-No palette bytes or raster indices have been changed or runtime-tested for this
-lead. Any experiment must start from the accepted native package and remain a
-small, call-local or asset-local, script-generated change. A full NUN5 text
-renderer transplant is outside its scope.
-
-
 ### Native NA2 selected-row offset behavior
 
 Using the same clean NA2 and NUN5 ELF identities and preserved exports above,
@@ -361,3 +347,37 @@ correction to the Practice pause list, aligns Practice and Collection
 confirmation bodies, and routes the character-return body through a centered
 368-unit box after selecting the accepted secondary renderer. Unrelated
 callers resume through the resident displaced-code trampolines.
+
+## Rejected tracking and threshold-only fitting
+
+### Global zero-tracking edit
+
+A historical test changed `SLPS_258.37` file offset `0x866E0` from
+`80 BF 02 3C` to `00 00 02 3C`, matching NUN5's ASCII-mode horizontal-tracking
+initialization of `0.0` instead of NA2's `-1.0`. It produced no meaningful
+visual improvement: text remained oversized, spacing remained inconsistent,
+and long Control Settings labels still clipped.
+
+Do not repeat this single-field edit. It does not prove tracking or
+`FUN_00186510` irrelevant; later analysis established that tracking must remain
+coupled to ordinary-space and boxed-measurement behavior. Relevant static
+counterparts are NA2 `FUN_00186510`, NUN5 `FUN_001878e0`, NUN5 boxed-fit
+`FUN_00389df0` and `FUN_0018b1b0`, and NA2 menu path `FUN_003885b0`.
+
+### Threshold-only Control Settings fit
+
+A size-preserving experiment applied NUN5's shrink-only
+`128 / measured_width` rule to the two NA2 `FUN_003885b0` text calls through a
+Controls-only wrapper and shared horizontal renderer hooks. Runtime comparison
+rejected it because it narrowed `Linked Attack`, which remains full width in
+NUN5.
+
+NUN5 routes its first eight action labels through
+`FUN_00399df0 -> FUN_00389df0 -> FUN_0018b1b0 -> FUN_0018ca40` and measures
+through `FUN_0018b7f0`; the rejected NA2 wrapper used the legacy
+`FUN_003798e0 -> FUN_001859a0 -> FUN_00184e60` measurement path. Copying only
+the box threshold and scale formula therefore made a different fit decision,
+and it incorrectly routed the final `OFF` row through the wrapper. The accepted
+implementation uses the current measurement path, preserves the 13-byte
+full-width decision, scales only the required draw surfaces, and restores the
+factor immediately. Do not reinstate the threshold-only wrapper.

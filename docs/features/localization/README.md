@@ -34,8 +34,6 @@ shared string-patcher engine as a derived stage.
 
 - [Translation importer](translation_importer.md): current mapping schema,
   source/donor contract, output, safety, and integration behavior.
-- [Translation history](translation_history.md): mapping-version history,
-  runtime issue log, and historical validation checklist.
 - [UI textures](ui_textures.md): source-derived fixed-size CCS replacements.
 - [UI layout patches](ui_layout.md): guarded executable layout edits paired
   with the localized UI containers.

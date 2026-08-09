@@ -1,6 +1,6 @@
 # Feature documentation
 
-Feature contracts and history live here. The builder has no physical `features/`
+Feature contracts live here. The builder has no physical `features/`
 directory: selectable structure is split by feature under
 `na228_builder/catalog/`, while guarded edits, runtime units, and targets live
 under `na228_builder/catalog/implementation/`. Non-inline executable inputs and

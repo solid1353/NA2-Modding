@@ -1,6 +1,8 @@
 # Menu Input Runtime Knowledge
 
-This record preserves runtime behavior that was previously available only in dated binary-patcher logs. The canonical per-screen results are in `../localization/runtime_tests.tsv`.
+This record preserves runtime behavior that was previously available only in
+dated binary-patcher logs. The canonical per-screen results are in
+[`runtime_tests.tsv`](runtime_tests.tsv).
 
 ## Save/load handler family
 
@@ -97,20 +99,25 @@ status-`0x2C` branch; neither candidate was retained.
 
 The module already retains the reusable subroutine and regional comparison data:
 
-- `../localization/function_map.tsv` maps NA2/NUN5 functions, file offsets, input masks, scope, and evidence.
+- [`function_map.tsv`](function_map.tsv) maps NA2/NUN5 functions, file offsets,
+  input masks, scope, and evidence.
 - `na228_builder/catalog/localization.json` records the selectable regional-input
   nodes; `na228_builder/catalog/implementation/edits.json` records the exact
   guarded byte edits they reference.
 - This document and the linked evidence tables record runtime classification
   and review conclusions.
-- `../localization/binary_evidence.tsv` records import and validation provenance.
-- `../localization/runtime_tests.tsv` records the complete four-test runtime matrix.
+- [`binary_evidence.tsv`](binary_evidence.tsv) records import and validation
+  provenance.
+- [`runtime_tests.tsv`](runtime_tests.tsv) records the complete four-test
+  runtime matrix.
 
 The catalog and edit store remain the executable definition; the three evidence
-tables under `docs/knowledge/localization/` are canonical research evidence.
-This document is the interpretation and navigation layer, not a second patch
-definition.
+tables beside this document are canonical research evidence. This document is
+the interpretation and navigation layer, not a second patch definition.
 
 ## Provenance
 
-The matrices were observed on 2026-07-16 local time in four test builds represented by the former `@logs/raw_binary_patcher/save_load_*` run directories. Their UTC build timestamps and exact candidate sets are retained in `../localization/runtime_tests.tsv`.
+The matrices were observed on 2026-07-16 local time in four test builds
+represented by the former `@logs/raw_binary_patcher/save_load_*` run
+directories. Their UTC build timestamps and exact candidate sets are retained
+in [`runtime_tests.tsv`](runtime_tests.tsv).

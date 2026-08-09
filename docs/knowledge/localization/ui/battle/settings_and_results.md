@@ -461,3 +461,18 @@ earlier `ui_layout_battle_results` summary-footer bytes, including X=`287`, Y=`3
 localized record-2 geometry. Reapplying or changing those rows would target
 the wrong screen. The two new rows are **statically verified with high
 confidence** and remain **awaiting normal-build runtime and user validation**.
+
+## Practice Settings prompt
+
+The VS-screen Practice Settings prompt requires both the English atlas
+rectangle and its localized horizontal anchor. NA2 `FUN_006c0cc0` uses static
+rectangle `(1,281,112,22)` at BTL file `0x20C9D8` and X=`60.0` at `0xCFA0`.
+NUN5 `FUN_006d4170` selects English rectangle `(0,280,176,24)` through its
+localized table and passes X=`100.0`.
+
+`ui_layout_practice_settings_prompt` copies the official NUN5 rectangle and
+the structurally equivalent `lui v0,0x42c8` instruction. Both edits are exactly
+guarded, preserve BTL size, and remain confined to the Practice Settings path.
+A paused Current runtime read back both writes exactly; after redraw the sprite
+reported X=`276`, Y=`356`, size `176x24`, and UV `(0,280)`, matching the
+archived NUN5 bottom-left label and Square-icon placement.

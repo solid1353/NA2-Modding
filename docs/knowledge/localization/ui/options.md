@@ -235,3 +235,32 @@ Confidence is **verified**: complete-function comparison establishes the shared
 algorithms and caller anchors, all destination and donor ranges match the clean
 binaries, and the exact donor Select instructions plus the bounded effective
 Music constants reproduce the NUN5 geometry at runtime.
+
+## Options labels and difficulty values
+
+Importing complete NUN5 `OPTION.CCS` does not change the boot-ELF rectangle
+tables consumed by the Options renderer. NA2 `FUN_0038c160` reads five menu
+labels at EE `0x005D52E0` and six difficulty labels at `0x005D5310`; NUN5
+`FUN_0039dba0` obtains the homologous English records through localized table
+accessors.
+
+`ui_layout_options_labels` copies the complete 96-byte official block—five
+menu labels, an eight-byte zero separator, and six difficulty labels—from NUN5
+ELF file `0x4DDD10` to NA2 file `0x4D53E0`. Positions, `0.9` scales, and the
+byte-identical arrow rectangle remain unchanged.
+
+The widest difficulty value also needs NUN5's alternate sprite routing. NA2
+selects that object for indices `{0,5}`, while NUN5 selects `{0,4,5}`.
+`ui_layout_difficulty_sprite` replaces NA2's `index == 5` test at ELF file
+`0x28C40C` with `index >= 4` while retaining the following `index == 0` test.
+For the proven domain `0..5`, this yields the exact donor set. Guarded runtime
+readback passed, and `INSANE`, `HARD`, `EASY`, and `SIMPLE` rendered cleanly.
+
+## Controls Vibration label
+
+The NUN5 `CMN/GAUGE.CCS` import supplies English `TEX_xmenu`, but NA2's
+boot-ELF table still selects Japanese rectangle `(1,69,42,22)` at file
+`0x4D53C0`. `ui_layout_controls_vibration` copies the official NUN5 rectangle
+`(64,88,64,20)` from file `0x4DEA28` into the homologous NA2 slot. The edit
+changes only the graphical Vibration label selection; surrounding OFF/On text
+and font rendering remain separate.

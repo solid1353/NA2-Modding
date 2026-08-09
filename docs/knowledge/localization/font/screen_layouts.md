@@ -921,3 +921,42 @@ also retains `character-index_NA228.png`; the user reported no Font defect on
 the Characters index, so it remains reference-only. Synchronized final-red
 font2 cases 1-7 cover Sakura and legacy-character variants plus Movie without a
 large Font defect; later desynchronized cases are excluded from evidence.
+
+## Matched-screen baseline
+
+Ten timestamp-matched NUN5/NA2 savestate pairs supplied on 2026-07-24 provided
+the initial cross-screen baseline. Their embedded 640x480 screenshots were
+measured with fixed dark-ink bounds on manually verified crops. Those
+measurements support relative screen comparison, not replacement of renderer
+metrics recovered from code.
+
+| Screen family | Initial NA2 result | Durable conclusion |
+| --- | --- | --- |
+| Practice pause list | Long label clipped | Caller needed fitting or corrected advances. |
+| Control Settings | Long and short rows made the correct fit decisions | Existing boxed-fit boundary passed. |
+| Command Chart | Long move name clipped | Caller needed fitting or corrected advances. |
+| Practice explanations | Descriptions clipped on one line | Caller needed wrapping and layout behavior. |
+| Practice Settings | Rows fit at the wrong local origin | Positioning was caller-local. |
+| Quit confirmation | Body clipped; choices were misaligned | Body wrapping and shared modal layout were separate concerns. |
+| Character Select confirmation | Choices matched the same modal defect | The repeated defect was shared, not screen-specific. |
+| Collection confirmation | Choices matched the same modal defect | The repeated defect was shared, not screen-specific. |
+| Collection Movie list | Long entries did not wrap | List-specific wrapping was required. |
+| No-memory-card prompt | Only three clipped lines were visible | System-prompt wrapping was required. |
+
+Across 20 identical black-text samples, median NA2 differences from NUN5 were
+-2 pixels in visible width, -2 pixels in visible height, `0.850782x` total
+dark-ink pixels, and `1.018280x` dark-ink density inside the smaller bounds.
+The font was therefore not a uniformly enlarged or uniformly heavier raster.
+String-dependent width errors and caller-dependent vertical offsets proved
+that one global scale, tracking, X, or Y correction could not establish
+parity.
+
+The three confirmation screens reproduced the same choice geometry: NUN5
+placed `Yes` and `No` about 25 pixels apart vertically, while NA2 placed them
+about 43 pixels apart and shifted both left. This justified one shared modal
+correction. The baseline also separated raster appearance from missing
+wrapping: improving glyphs alone could not fix Practice explanations,
+confirmation bodies, Collection lists, or system prompts. Earlier screens with
+different scrolling-help animation phases were excluded from alignment
+comparisons. The domain sections above record the resulting caller-family
+implementations and accepted outcomes.

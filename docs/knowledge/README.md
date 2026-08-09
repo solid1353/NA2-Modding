@@ -36,16 +36,14 @@ Operational logs remain disposable after their durable findings are promoted. Gi
 
 ## Current domains
 
-- `game/`: disc identity, [character assets](game/character_assets.md), and the
-  `game/files/` collection, which contains the canonical human-readable
-  game-file map, minimum useful analysis levels, the reusable escalation
-  workflow, and exact outer-ISO, `DATA.CVM`, and AFS layout inventories.
-- `runtime/`: EE address-space, allocator, overlay-lifetime, injection-capacity,
-  and menu-input runtime findings.
-- `gameplay/`: substitution behavior, other gameplay-behavior findings, and
+- [`game/`](game/README.md): disc identity, startup behavior, character assets,
+  and the canonical human-readable game-file and media-layout references.
+- [`runtime/`](runtime/README.md): EE address-space, allocator,
+  overlay-lifetime, injection-capacity, and menu-input runtime findings.
+- [`gameplay/`](gameplay/README.md): battle behavior, substitution, and
   topic-local unresolved leads.
-- `localization/`: string placement, binary evidence, function maps, runtime
-  tests, UI draw-path findings, and font research.
+- [`localization/`](localization/README.md): translation, string placement, UI
+  draw paths, character-facing assets, and font research.
 
 Keep this index shallow. Add a subdirectory when a technical domain has several
 related records; do not organize records by the workstream that happened to

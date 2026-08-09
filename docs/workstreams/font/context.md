@@ -188,4 +188,4 @@ and task behavior always come from live repository policies, not this context.
 ## Detailed knowledge
 
 - [Font renderer and asset findings](../../knowledge/localization/font/README.md)
-- [2026-07-24 paired savestate analysis](../../knowledge/localization/font/savestate_analysis_2026-07-24.md)
+- [Matched-screen baseline](../../knowledge/localization/font/screen_layouts.md#matched-screen-baseline)

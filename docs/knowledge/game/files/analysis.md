@@ -247,7 +247,7 @@ component separately.
   Provenance and runtime
   conclusions are retained in feature/knowledge docs.
 - `docs/knowledge/gameplay/substitution.md`,
-  `docs/knowledge/runtime/menu_input.md`, and
+  `docs/knowledge/runtime/menu_input/README.md`, and
   `docs/knowledge/localization/font/`:
   established analysis boundaries and negative results
   that should not be rediscovered.

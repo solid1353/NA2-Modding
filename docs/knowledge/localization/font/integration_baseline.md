@@ -2,7 +2,7 @@
 
 ## Current savestate comparison
 
-The [2026-07-24 matched savestate analysis](savestate_analysis_2026-07-24.md)
+The [matched-screen baseline](screen_layouts.md#matched-screen-baseline)
 compares ten NUN5/NA2 pairs and separates raster/metric, call-local position,
 generic-modal, and missing-wrap defects. It confirms that Control Settings is
 the only boxed-fit path proven correct by this sample and that multiple other

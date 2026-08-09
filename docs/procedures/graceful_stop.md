@@ -8,7 +8,7 @@
 2. Create a named stash containing only the current task-owned uncommitted work;
    include the workstream and task in the stash name.
 3. Write a temporary resume handoff under
-   `docs/workstreams/<workstream>/<date>-<task>-resume.md`.
+   `docs/handoffs/<date>-<task>-resume.md`.
 4. Create or update the corresponding `TASKS.md` entry and link it to the
    handoff.
 5. Commit and push only the handoff and `TASKS.md` update. Never commit the

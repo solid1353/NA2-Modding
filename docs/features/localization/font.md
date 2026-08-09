@@ -35,6 +35,29 @@ MIPS payload blobs are not production inputs.
 - Font does not own translated wording, graphical UI rectangles, gameplay
   behavior, or regional input semantics.
 
+## Maintenance and validation
+
+- Broad Font layout analysis is complete. Repeat it only when new evidence
+  proves the retained findings insufficient or indicates that a shared fix is
+  better than separate caller corrections.
+- During live editing, never attribute unchanged visible output to caching. If
+  a requested metric or coordinate change does not visibly move, retain the
+  current screen and trace forward from the proven live entry to the first
+  incorrect value or consumer. Do not ask the user to reopen or reconstruct the
+  same screen.
+- Compare official NUN5 and current NA2.28 under matching conditions. Choose
+  the broadest correction layer supported by evidence: shared core, repeated
+  caller family, or genuinely local container.
+- Validate visible bounds, origins, line breaks, spacing, glyph height, and
+  native style. Compilation and hook application are not visual results, and
+  runtime-injected output remains candidate evidence until reproduced through
+  the integrated build.
+- Recheck previously accepted caller families after a shared-core change.
+
+The accepted layout baseline has no known large defect in its maintained
+comparison cases. A small raster-appearance mismatch against NUN5 and one
+synchronized final-build Ninja Song objective capture remain deferred.
+
 ## Covered layout families
 
 The current layout component covers Control Settings; Practice and Special

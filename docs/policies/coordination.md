@@ -46,16 +46,14 @@ or an explicit cross-chat handoff.
 
 ## Workstreams
 
-- A workstream is a named tracked area represented by a `TASKS.md` subsection.
-- Workstream documentation is optional. Create
-  `docs/workstreams/<workstream>/` only for durable workstream-specific context
-  that has no better canonical owner. Do not require a landing README,
-  `context.md`, or fixed section structure.
-- Link useful durable workstream documents directly from `TASKS.md` when they
-  exist. Keep reusable technical knowledge, component contracts, procedures,
-  and policy in their canonical topic/component documents.
-- When entering or resuming a workstream, read its applicable durable documents
-  once; do not reread them before every message.
+- A workstream is only a named task grouping represented by a `TASKS.md`
+  subsection. It does not own chats, documentation, commits, implementation, or
+  a repository directory.
+- Link a task's temporary handoff or other task-specific document directly from
+  its task entry. Keep durable knowledge, component contracts, procedures, and
+  policy in their canonical domain documents.
+- When entering or resuming a task, read its directly linked documents once; do
+  not reread them before every message.
 
 ## Project chats
 

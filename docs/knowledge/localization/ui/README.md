@@ -10,3 +10,6 @@ Load only the document for the affected UI family.
 - [Options](options.md)
 - [Stage Select](stage_select.md)
 - [Victory](victory.md)
+
+Optional future research includes `LOGO.CCS`, mapping the NUN5 upscale pack
+back to disc assets, and broader NUN6 comparison.

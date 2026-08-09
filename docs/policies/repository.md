@@ -119,6 +119,8 @@ work directories, or documentation layout.
 - Keep root `na228.ps1` a short parser/router; substantive implementation belongs
   under `scripts/` by responsibility. Shared PCSX2, media, and Ghidra tooling
   belongs in Workshop.
+- Domain-specific scripts remain with their owning area until they become
+  shared project infrastructure.
 - When a task changes the shared PowerShell profile, locate it through
   `$env:USERPROFILE`; keep the profile change to a thin alias or dot-source and
   keep reusable implementation in the project `scripts/` tree.
@@ -154,6 +156,8 @@ Give each document one job and canonical authority:
 - workflow documents under `docs/workflows/` own complete interaction modes;
 - procedure documents under `docs/procedures/` own non-mode agent procedures;
 - active design documents live under the permanent `docs/designs/` directory;
+- temporary resume handoffs live under `docs/handoffs/` and are linked from
+  their `TASKS.md` entries;
 - runbooks own exact operational procedures;
 - `docs/AGENT_COMMANDS.md` owns commands interpreted by agents;
 - the implementing repository or component owns user-facing CLI help;

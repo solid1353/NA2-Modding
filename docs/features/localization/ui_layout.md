@@ -21,6 +21,24 @@ units are owned by the catalog implementation stores.
 - Treat the catalog and implementation stores as the executable definition;
   this document does not duplicate offsets or patch rows.
 
+## Maintenance and validation
+
+- Broad UI analysis is complete. Repeat it only when new evidence proves the
+  retained findings insufficient or indicates that a broader shared fix may be
+  better than separate screen corrections.
+- The user has standing authorization for exact-target deletion of confirmed
+  disposable UI artifacts. Verify every target and keep protected sources,
+  user-owned PCSX2 files, and unrelated task work out of scope.
+- Compare official NUN5 with current NA2.28 under matching game and emulator
+  conditions. Treat ordinary pulse-phase differences as capture noise, but
+  treat semantic mismatch, clipping, artwork, ordering, visibility, animation,
+  and placement differences as defects.
+- Runtime-injected output remains candidate evidence until reproduced through
+  the integrated build.
+
+The declared UI Translation comparison work is complete, and no comparison
+case is currently awaiting approval.
+
 ## Current behavior groups
 
 | Domain | Shipped behavior | Knowledge |

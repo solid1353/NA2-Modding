@@ -73,9 +73,9 @@ Read only the routed policy whose trigger applies:
 | reverse engineering, disassembly, evidence, knowledge, hypotheses | [`docs/policies/research.md`](docs/policies/research.md) |
 | `TASKS.md`, workstreams, project chats, Notifications | [`docs/policies/coordination.md`](docs/policies/coordination.md) |
 
-Read component documentation only when working on that component. Read durable
-workstream-specific documentation when entering or resuming that workstream,
-not before every message. `TASKS.md`, knowledge, research, hypothesis, and large
+Read component documentation only when working on that component. Read a task's
+directly linked documentation when entering or resuming that task, not before
+every message. `TASKS.md`, handoffs, knowledge, research, hypothesis, and large
 technical documents are not default context; load them only when the current
 request requires them. For a large technical document, read only the relevant
 sections unless broader context is necessary.

@@ -5,14 +5,14 @@
 ### General
 - Create notifications.
 - Restructure pcsx2 stuff.
-- [Make startup load the first save automatically](docs/workstreams/general/2026-08-07-auto-load-first-save-resume.md).
+- [Make startup load the first save automatically](docs/handoffs/2026-08-07-auto-load-first-save-resume.md).
 
-### [Font](docs/workstreams/font/README.md)
+### Font
 - Layout/autofit.
 
 ## Backlog
 
-### [Project](docs/workstreams/project/README.md)
+### Project
 - Investigate cross-platform development/deployment possibilities.
 - Global cleanup - preserve/promote what is needed, delete the rest.
 - Rename workstream-log terminology and configured paths to task logs.
@@ -49,9 +49,9 @@
 
 ### Docs
 
-### [UI Translation](docs/workstreams/ui_translation/README.md)
+### UI Translation
 
-### [String Translation](docs/workstreams/string_translation/README.md)
+### String Translation
 
 ### Code Injection
 

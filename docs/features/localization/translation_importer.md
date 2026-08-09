@@ -40,6 +40,16 @@ and ordinary overrides remain complete. T30 uses the complete user-authored
 `Ultimate` translation and the validated pointer at `NA2_BTL@0x209CB4`; encoded
 fit therefore externalizes it automatically.
 
+Treat PCSX2 operator overlays and the underlying game screen as separate
+evidence. Compare NA2 and NUN5 memory-card formatting and data-creation flows by
+meaning rather than assuming their screen sequences correspond one-to-one. Do
+not replace identifiers, placeholders, or data of uncertain display purpose
+with arbitrary text.
+
+The translation importer owns game text and its mapping and reference data.
+Font owns glyph rendering and fitting; UI layout and texture modules own
+graphical assets and their placement.
+
 ## Canonical mapping table
 
 `mappings.tsv` is the canonical mapping table used by normal builds.

@@ -41,7 +41,7 @@ replacement stash was created.
   `work/General/temp/auto-load-first-save-candidate-v1/SLPS_258.37` with SHA-256
   `8265FB9A2B244E80CD485191C1A15F31DB748EDEBD7AD16132243A2F199D4C93`.
 - Reusable startup and Save/Load-controller findings are in
-  [`../../knowledge/game/startup.md`](../../knowledge/game/startup.md).
+  [`../knowledge/game/startup.md`](../knowledge/game/startup.md).
 
 ## Current candidate
 

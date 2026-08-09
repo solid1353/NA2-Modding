@@ -538,7 +538,7 @@ class CatalogTests(unittest.TestCase):
             ("battle_logic", "localization", "qol", "rendering"),
         )
         self.assertEqual(len(release.edits), 493)
-        self.assertEqual(len(release.injections), 24)
+        self.assertEqual(len(release.injections), 25)
         self.assertTrue(
             release.node_enabled("features", "qol", "startup", "save_loading")
         )

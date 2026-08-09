@@ -62,6 +62,9 @@ class ProductIdentity:
     source_boot_path: str
     output_boot_path: str
     system_cnf_path: str
+    source_memory_card_directory: str
+    output_memory_card_directory: str
+    memory_card_directory_occurrence_count: int
     memory_card_title_offset: int
     memory_card_title_capacity: int
     memory_card_title_encoding: str
@@ -144,7 +147,16 @@ def _read_product(path: Path) -> tuple[ProductIdentity, dict[str, str]]:
     )
     memory = _identity_object(
         root["memory_card"],
-        {"title_offset", "title_capacity", "title_encoding", "source_title", "output_title"},
+        {
+            "source_directory",
+            "output_directory",
+            "expected_directory_occurrence_count",
+            "title_offset",
+            "title_capacity",
+            "title_encoding",
+            "source_title",
+            "output_title",
+        },
         "memory_card",
     )
     title = _identity_object(
@@ -170,6 +182,16 @@ def _read_product(path: Path) -> tuple[ProductIdentity, dict[str, str]]:
         source_boot_path=_identity_text(image["source_boot_path"], "image.source_boot_path"),
         output_boot_path=_identity_text(image["output_boot_path"], "image.output_boot_path"),
         system_cnf_path=_identity_text(image["system_cnf_path"], "image.system_cnf_path"),
+        source_memory_card_directory=_identity_text(
+            memory["source_directory"], "memory_card.source_directory"
+        ),
+        output_memory_card_directory=_identity_text(
+            memory["output_directory"], "memory_card.output_directory"
+        ),
+        memory_card_directory_occurrence_count=_identity_int(
+            memory["expected_directory_occurrence_count"],
+            "memory_card.expected_directory_occurrence_count",
+        ),
         memory_card_title_offset=_identity_int(
             memory["title_offset"], "memory_card.title_offset"
         ),
@@ -436,6 +458,10 @@ def _validated_identity(product_path: Path) -> tuple[ProductIdentity, dict[str, 
         raise ValueError(
             "Product identity title offset must be non-negative and capacity positive"
         )
+    if identity.memory_card_directory_occurrence_count <= 0:
+        raise ValueError(
+            "Product identity memory-card directory occurrence count must be positive"
+        )
     if (
         identity.game_title_mapping_count <= 0
         or identity.game_title_occurrence_count < identity.game_title_mapping_count
@@ -461,6 +487,27 @@ def _validated_identity(product_path: Path) -> tuple[ProductIdentity, dict[str, 
         identity.output_boot_path.encode("ascii")
     ):
         raise ValueError("Product identity boot paths must have equal byte lengths")
+    directory_bytes: dict[str, bytes] = {}
+    for label, text in (
+        ("source_memory_card_directory", identity.source_memory_card_directory),
+        ("output_memory_card_directory", identity.output_memory_card_directory),
+    ):
+        if "\0" in text:
+            raise ValueError(f"Product identity {label} contains an embedded NUL")
+        try:
+            directory_bytes[label] = text.encode("ascii")
+        except UnicodeEncodeError as exc:
+            raise ValueError(f"Product identity {label} must be ASCII") from exc
+    if directory_bytes["source_memory_card_directory"] == directory_bytes[
+        "output_memory_card_directory"
+    ]:
+        raise ValueError("Product identity memory-card directories must differ")
+    if len(directory_bytes["source_memory_card_directory"]) != len(
+        directory_bytes["output_memory_card_directory"]
+    ):
+        raise ValueError(
+            "Product identity memory-card directories must have equal byte lengths"
+        )
     for label, text in (
         ("source_memory_card_title", identity.source_memory_card_title),
         ("output_memory_card_title", identity.output_memory_card_title),

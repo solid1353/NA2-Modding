@@ -104,8 +104,8 @@ exit $LASTEXITCODE
         -Path (Join-Path $logDirectory 'builds\existing') | Out-Null
     $buildMap = @(
         "iso`tbuild_record"
-        "@build/NA2.28 - Latest.iso`t@logs/na228/builds/existing"
-        "@build/NA2.28 - Previous.iso`t"
+        "@build/Legacy Product - Latest.iso`t@logs/na228/builds/existing"
+        "@build/Legacy Product - Previous.iso`t"
     ) -join "`n"
     [IO.File]::WriteAllText((Join-Path $logDirectory 'builds.tsv'), $buildMap + "`n")
 
@@ -193,6 +193,14 @@ exit $LASTEXITCODE
         -Message 'Normal development build did not use development.json.'
     Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$latestIso.building")) `
         -Message 'Cache hit created a .building ISO.'
+    $migratedBuildMap = [IO.File]::ReadAllText((Join-Path $logDirectory 'builds.tsv'))
+    Assert-Na2PreflightTest `
+        -Condition (
+            $migratedBuildMap.Contains("@build/NA2.28 - Latest.iso`t@logs/na228/builds/existing") -and
+            $migratedBuildMap.Contains("@build/NA2.28 - Previous.iso`t") -and
+            -not $migratedBuildMap.Contains('@build/Legacy Product')
+        ) `
+        -Message 'Product-title change did not migrate builds.tsv to the configured ISO names.'
 
     $global:Na2PreflightTestMode = 'miss'
     $global:Na2PreflightTestCalls = @()

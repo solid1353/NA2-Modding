@@ -82,7 +82,8 @@ function Read-Na2BuildMap {
     if ($null -eq $latestRow) {
         $legacyLatest = @(
             $rows | Where-Object {
-                ([string]$_.iso).EndsWith(' - Current.iso', [StringComparison]::Ordinal)
+                ([string]$_.iso).EndsWith(' - Current.iso', [StringComparison]::Ordinal) -or
+                ([string]$_.iso).EndsWith(' - Latest.iso', [StringComparison]::Ordinal)
             }
         )
         if ($legacyLatest.Count -ne 1) {

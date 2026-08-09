@@ -264,7 +264,7 @@ class ProjectPathTests(unittest.TestCase):
             }
             product_config = {
                 "schema_version": 1,
-                "title": "NA v2.28",
+                "title": "Narutimate Accel v2.28",
                 "serial": "SLOP-NA228",
                 "builds": {
                     "latest": {
@@ -285,6 +285,10 @@ class ProjectPathTests(unittest.TestCase):
             (root / "product.json").write_text(
                 json.dumps(product_config), encoding="utf-8"
             )
+            (root / "pcsx2/game_settings/SLOP-NA228.ini").write_text(
+                "[MemoryCards]\nSlot1_Filename = NA v2.28.ps2\n",
+                encoding="utf-8",
+            )
             override_directory = (
                 root / "pcsx2/input_profiles/sources/overrides/games"
             )
@@ -298,7 +302,7 @@ class ProjectPathTests(unittest.TestCase):
 
             self.assertEqual(
                 paths.file("latest_iso"),
-                root.resolve() / "build" / "NA v2.28 - Latest.iso",
+                root.resolve() / "build" / "Narutimate Accel v2.28 - Latest.iso",
             )
             self.assertEqual(
                 paths.file("latest_memory_card"),

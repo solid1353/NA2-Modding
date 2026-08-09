@@ -143,6 +143,9 @@ class BuildPreflightTests(unittest.TestCase):
                             "system_cnf_path": "SYSTEM.CNF",
                         },
                         "memory_card": {
+                            "source_directory": "BISLPS-25837NARUTO5",
+                            "output_directory": "BASLOP-NA228NARUTO6",
+                            "expected_directory_occurrence_count": 2,
                             "title_offset": 4,
                             "title_capacity": 16,
                             "title_encoding": "ascii",

@@ -208,6 +208,9 @@ class ConfigurationTests(unittest.TestCase):
                             "system_cnf_path": "SYSTEM.CNF",
                         },
                         "memory_card": {
+                            "source_directory": "BISLPS-25837NARUTO5",
+                            "output_directory": "BASLOP-NA228NARUTO6",
+                            "expected_directory_occurrence_count": 2,
                             "title_offset": 4,
                             "title_capacity": 16,
                             "title_encoding": "ascii",
@@ -403,6 +406,26 @@ class ConfigurationTests(unittest.TestCase):
             product["identity"]["image"]["output_boot_path"] = "BOOT.ELF"
             product_path.write_text(json.dumps(product, indent=2) + "\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "equal byte lengths"):
+                load_configuration(configuration, root, root)
+
+    def test_configuration_identity_requires_equal_length_save_directories(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            builder, source, configurations = self.create_workspace(root)
+            self.create_feature_inputs(builder, "localization", "translation_importer")
+            configuration = self.create_configuration(
+                configurations,
+                source,
+                {"localization": {"description": "Localization"}},
+                {"localization": True},
+            )
+            product_path = root / "product.json"
+            product = json.loads(product_path.read_text(encoding="utf-8"))
+            product["identity"]["memory_card"]["output_directory"] = "BASLOP-NA228"
+            product_path.write_text(json.dumps(product, indent=2) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(
+                ValueError, "memory-card directories must have equal byte lengths"
+            ):
                 load_configuration(configuration, root, root)
 
     def test_binary_hash_ignores_helpers_but_includes_referenced_blobs(self) -> None:

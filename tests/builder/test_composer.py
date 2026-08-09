@@ -75,8 +75,11 @@ class ComposerTests(unittest.TestCase):
 
     def test_product_identity_becomes_guarded_edits_and_rename(self) -> None:
         system = b"BOOT2 = cdrom0:\\SLPS_258.37;1\r\n"
+        source_directory = b"BISLPS-25837NARUTO5"
+        output_directory = b"BASLOP-NA228NARUTO6"
         source_title = b"Original" + bytes(8)
-        boot = b"HEAD" + source_title + b"TAIL"
+        title_offset = len(source_directory) + 1
+        boot = source_directory + b":" + source_title + b":" + source_directory
         records = {
             "SYSTEM.CNF": SimpleNamespace(
                 path="SYSTEM.CNF", is_dir=False, size=len(system)
@@ -94,7 +97,10 @@ class ComposerTests(unittest.TestCase):
             source_boot_path="SLPS_258.37",
             output_boot_path="SLOP_NA2.28",
             system_cnf_path="SYSTEM.CNF",
-            memory_card_title_offset=4,
+            source_memory_card_directory=source_directory.decode("ascii"),
+            output_memory_card_directory=output_directory.decode("ascii"),
+            memory_card_directory_occurrence_count=2,
+            memory_card_title_offset=title_offset,
             memory_card_title_capacity=16,
             memory_card_title_encoding="ascii",
             source_memory_card_title="Original",
@@ -117,19 +123,43 @@ class ComposerTests(unittest.TestCase):
         self.assertEqual(replacements["SYSTEM.CNF"].expected, system)
         self.assertIn(b"SLOP_NA2.28", replacements["SYSTEM.CNF"].replacement)
         self.assertEqual(
-            replacements["SLPS_258.37"].replacement[4:20],
+            replacements["SLPS_258.37"].replacement[
+                title_offset:title_offset + 16
+            ],
             b"NA 2.28" + bytes(9),
+        )
+        self.assertEqual(
+            replacements["SLPS_258.37"].replacement.count(output_directory),
+            2,
+        )
+        self.assertNotIn(
+            source_directory,
+            replacements["SLPS_258.37"].replacement,
         )
         self.assertEqual(result.plan.renames[0].source_path, "SLPS_258.37")
         self.assertEqual(result.plan.renames[0].replacement_path, "SLOP_NA2.28")
         self.assertEqual(
             [row["target"] for row in result.identity_edits],
-            ["SYSTEM.CNF", "SLPS_258.37"],
+            ["SYSTEM.CNF", "SLPS_258.37", "SLPS_258.37", "SLPS_258.37"],
+        )
+        self.assertEqual(
+            [row["offset"] for row in result.identity_edits[1:3]],
+            ["0x0", f"0x{title_offset + 17:X}"],
         )
 
     def test_product_identity_rejects_title_guard_mismatch(self) -> None:
         system = b"BOOT2 = cdrom0:\\SLPS_258.37;1\r\n"
-        boot = b"HEAD" + b"Unexpected" + bytes(6) + b"TAIL"
+        source_directory = b"BISLPS-25837NARUTO5"
+        output_directory = b"BASLOP-NA228NARUTO6"
+        title_offset = len(source_directory) + 1
+        boot = (
+            source_directory
+            + b":"
+            + b"Unexpected"
+            + bytes(6)
+            + b":"
+            + source_directory
+        )
         records = {
             "SYSTEM.CNF": SimpleNamespace(
                 path="SYSTEM.CNF", is_dir=False, size=len(system)
@@ -147,7 +177,10 @@ class ComposerTests(unittest.TestCase):
             source_boot_path="SLPS_258.37",
             output_boot_path="SLOP_NA2.28",
             system_cnf_path="SYSTEM.CNF",
-            memory_card_title_offset=4,
+            source_memory_card_directory=source_directory.decode("ascii"),
+            output_memory_card_directory=output_directory.decode("ascii"),
+            memory_card_directory_occurrence_count=2,
+            memory_card_title_offset=title_offset,
             memory_card_title_capacity=16,
             memory_card_title_encoding="ascii",
             source_memory_card_title="Original",
@@ -158,6 +191,51 @@ class ComposerTests(unittest.TestCase):
             game_title_occurrence_count=1,
         )
         with self.assertRaisesRegex(RuntimeError, "title guard failed"):
+            compose_assembly_plan(
+                source=source,
+                identity=identity,
+                payloads={},
+                owners={},
+                insertions={},
+                insertion_owners={},
+            )
+
+    def test_product_identity_rejects_memory_card_directory_count_mismatch(self) -> None:
+        system = b"BOOT2 = cdrom0:\\SLPS_258.37;1\r\n"
+        source_directory = b"BISLPS-25837NARUTO5"
+        source_title = b"Original" + bytes(8)
+        boot = source_directory + b":" + source_title
+        records = {
+            "SYSTEM.CNF": SimpleNamespace(
+                path="SYSTEM.CNF", is_dir=False, size=len(system)
+            ),
+            "SLPS_258.37": SimpleNamespace(
+                path="SLPS_258.37", is_dir=False, size=len(boot)
+            ),
+        }
+        payloads = {"SYSTEM.CNF": system, "SLPS_258.37": boot}
+        source = SimpleNamespace(
+            by_path=records,
+            read_file=lambda supplied: payloads[supplied.path],
+        )
+        identity = ProductIdentity(
+            source_boot_path="SLPS_258.37",
+            output_boot_path="SLOP_NA2.28",
+            system_cnf_path="SYSTEM.CNF",
+            source_memory_card_directory=source_directory.decode("ascii"),
+            output_memory_card_directory="BASLOP-NA228NARUTO6",
+            memory_card_directory_occurrence_count=2,
+            memory_card_title_offset=len(source_directory) + 1,
+            memory_card_title_capacity=16,
+            memory_card_title_encoding="ascii",
+            source_memory_card_title="Original",
+            output_memory_card_title="NA 2.28",
+            imported_game_title="Imported Game",
+            output_game_title="Output Game",
+            game_title_mapping_count=1,
+            game_title_occurrence_count=1,
+        )
+        with self.assertRaisesRegex(RuntimeError, "exactly 2 times; found 1"):
             compose_assembly_plan(
                 source=source,
                 identity=identity,

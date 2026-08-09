@@ -16,24 +16,29 @@ The serial alternatives considered on 2026-07-18 were rejected as follows:
 
 ## Reproducible implementation
 
-Root `product.json` declares the clean boot path, output boot
-path, `SYSTEM.CNF` path, and guarded CP932 memory-card title. After feature
-modules have been composed, the product composer emits two guarded replacements
-and one equal-length file rename:
+Root `product.json` declares the clean boot path, output boot path,
+`SYSTEM.CNF` path, guarded memory-card directory identity, and guarded CP932
+memory-card title. After feature modules have been composed, the product
+composer emits four guarded replacements and one equal-length file rename:
 
 1. `SYSTEM.CNF` changes `SLPS_258.37` to `SLOP_NA2.28`.
-2. The clean boot ELF's 64-byte title slot at `0x2FBAE0` changes from
+2. The clean boot ELF's two 19-byte memory-card directory fields at `0x2FBAC1`
+   and `0x2FBBF0` change from `BISLPS-25837NARUTO5` to
+   `BASLOP-NA228NARUTO6`.
+3. The clean boot ELF's 64-byte title slot at `0x2FBAE0` changes from
    `ＮＡＲＵＴＯ－ナルト－　疾風伝ナルティメットアクセル２` to `ＮＡ　ｖ２．２８`.
-3. The ISO9660 root directory record changes `SLPS_258.37;1` to
+4. The ISO9660 root directory record changes `SLPS_258.37;1` to
    `SLOP_NA2.28;1`.
 
-The third operation is ISO filesystem metadata, not an ELF string replacement,
+The fourth operation is ISO filesystem metadata, not an ELF string replacement,
 so it deliberately does not belong to a feature module. The mandatory image
-assembler applies it to both ISO9660 and UDF, logs all four identity edits, and
+assembler applies it to both ISO9660 and UDF, logs all six identity edits, and
 verifies the declared final tree. No file extent, file size, or ISO size changes.
 
-The internal save-data directory `BISLPS-25837NARUTO5` remains unchanged. This
-preserves compatibility with existing saves.
+The new directory identity intentionally ends compatibility with the stock
+save directory. Existing `.ps2` memory cards and data remain untouched, while
+new builds read and write `BASLOP-NA228NARUTO6` beside any retained
+`BISLPS-25837NARUTO5` data.
 
 The full-width title form follows the official NUN5 memory-card convention. A
 half-width ASCII test copied into a new save correctly but rendered as a blank
@@ -50,14 +55,14 @@ PCSX2 uses its GameDB title for known serials. For a serial absent from the
 GameDB, the Game List falls back to the scanned image filename. The local cache
 confirmed this for the unknown `SLUS-55606`: `NUN6_A35.iso` appears as
 `NUN6 A35`. Because normal project images are intentionally named
-`NA v2.28 - Latest.iso` and `NA v2.28 - Previous.iso`, `SLOP-NA228` appears in the
-Game List as `NA v2.28 - Latest` or `NA v2.28 - Previous` rather than
-`Narutimate Accel v2.28`.
+`Narutimate Accel v2.28 - Latest.iso` and
+`Narutimate Accel v2.28 - Previous.iso`, `SLOP-NA228` appears in the Game List
+under those corresponding names.
 
 The runtime window title is a separate path. A game started from the populated
 Game List has the path's scanned title available, so normal Game List launches
-can retain `NA v2.28 - Latest` or `NUN6 A35`. A direct command-line/`-batch`
-launch has no
+can retain `Narutimate Accel v2.28 - Latest` or `NUN6 A35`. A direct
+command-line/`-batch` launch has no
 scanned-entry title available during boot. PCSX2 2.6.3 then deliberately formats
 an unknown serial as `<serial> [?]`. This was runtime-confirmed as
 `SLUS-55606 [?]` for NUN6 A35 and `SLPS-22228 [?]` for an earlier modified

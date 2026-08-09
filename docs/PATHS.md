@@ -89,7 +89,7 @@ inputs, identity, and builds sections:
 ```json
 {
   "schema_version": 1,
-  "title": "NA v2.28",
+  "title": "Narutimate Accel v2.28",
   "serial": "SLOP-NA228",
   "inputs": { "na2": "@source_na2", "nun5": "@source_nun5" },
   "identity": { "image": {}, "memory_card": {}, "game_title": {} },
@@ -102,8 +102,9 @@ inputs, identity, and builds sections:
 Workshop `resolve_game.py <selector> [--project-root <path>]` resolves one
 selector case-insensitively and emits one JSON object containing fully resolved
 absolute paths. Source paths derive from the canonical key plus serial/CRC.
-Build paths derive from title, serial, and postfix. The command is independent
-of the caller's current working directory.
+Build ISO paths derive from title and postfix; PCSX2 files derive from serial,
+and build memory-card paths retain the GameSettings card base plus the build
+postfix. The command is independent of the caller's current working directory.
 
 PowerShell callers use `Get-Na2Paths`; Python callers use
 `load_paths()` or Workshop's `resolve_game.py`. They do not

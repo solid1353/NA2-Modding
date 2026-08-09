@@ -275,6 +275,35 @@ def compose_assembly_plan(
         bytearray(source.read_file(boot_record)),
     )
 
+    source_directory = identity.source_memory_card_directory.encode("ascii")
+    output_directory = identity.output_memory_card_directory.encode("ascii")
+    boot_snapshot = bytes(boot_data)
+    directory_count = boot_snapshot.count(source_directory)
+    if directory_count != identity.memory_card_directory_occurrence_count:
+        raise RuntimeError(
+            f"{boot_path} must contain {identity.source_memory_card_directory} "
+            f"exactly {identity.memory_card_directory_occurrence_count} times; "
+            f"found {directory_count}"
+        )
+    directory_reason = (
+        "Apply the configuration's declared memory-card directory identity"
+    )
+    directory_offset = 0
+    for _ in range(directory_count):
+        directory_offset = boot_snapshot.index(source_directory, directory_offset)
+        directory_end = directory_offset + len(source_directory)
+        boot_data[directory_offset:directory_end] = output_directory
+        identity_edits.append({
+            "target": boot_path,
+            "offset": f"0x{directory_offset:X}",
+            "length": len(source_directory),
+            "original_hex": source_directory.hex().upper(),
+            "new_hex": output_directory.hex().upper(),
+            "reason": directory_reason,
+            "owner": "configuration.identity",
+        })
+        directory_offset = directory_end
+
     def title_slot(text: str) -> bytes:
         encoded = text.encode(identity.memory_card_title_encoding)
         return encoded + bytes(identity.memory_card_title_capacity - len(encoded))

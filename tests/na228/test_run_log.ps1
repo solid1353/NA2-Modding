@@ -180,7 +180,7 @@ try {
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'product.json') -Content @'
 {
   "schema_version": 1,
-  "title": "NA v2.28",
+  "title": "Narutimate Accel v2.28",
   "serial": "SLOP-NA228",
   "builds": {
     "latest": { "aliases": ["l"], "postfix": "Latest" },
@@ -210,12 +210,12 @@ builds = {
 aliases = {"l": "latest", "p": "previous", "mt": "manual_test"}
 name = aliases.get(name.casefold(), name)
 if name in builds:
-    title = "NA v2.28"
+    title = "Narutimate Accel v2.28"
     result = {
         "iso": str(root / "build" / f"{title} - {builds[name]}.iso"),
         "cheats": str(root / "pcsx2_files" / "cheats" / "SLOP-NA228.pnach"),
         "game_settings": str(root / "pcsx2_files" / "game_settings" / "SLOP-NA228.ini"),
-        "memory_card": str(root / "pcsx2_files" / "memory_cards" / f"{title} - {builds[name]}.ps2"),
+        "memory_card": str(root / "pcsx2_files" / "memory_cards" / f"NA v2.28 - {builds[name]}.ps2"),
         "input_profile": str(root / "pcsx2_files" / "input_profiles" / "Default_Base.ini"),
     }
 else:
@@ -886,8 +886,8 @@ Add-Content `
         )
     $renamedPaths = $paths.PSObject.Copy()
     $renamedFiles = $paths.files.PSObject.Copy()
-    $renamedFiles.latest_iso = Join-Path $build 'NA v2.28 - Latest.iso'
-    $renamedFiles.previous_iso = Join-Path $build 'NA v2.28 - Previous.iso'
+    $renamedFiles.latest_iso = Join-Path $build 'Narutimate Accel v2.28 - Latest.iso'
+    $renamedFiles.previous_iso = Join-Path $build 'Narutimate Accel v2.28 - Previous.iso'
     $renamedPaths.files = $renamedFiles
     $migratedMap = Read-Na2BuildMap `
         -LogDirectory $structuredLog `
@@ -900,7 +900,7 @@ Add-Content `
         -Message 'Renamed Previous ISO key lost its retained build record.'
     $migratedMapText = [IO.File]::ReadAllText((Join-Path $structuredLog 'builds.tsv'))
     Assert-Na2Test `
-        -Condition ($migratedMapText -match '@build/NA v2\.28 - Latest\.iso') `
+        -Condition ($migratedMapText -match '@build/Narutimate Accel v2\.28 - Latest\.iso') `
         -Message 'Renamed Latest ISO key was not migrated in builds.tsv.'
     Assert-Na2Test `
         -Condition ($migratedMapText -notmatch '@build/NA2\.28 - Current\.iso') `

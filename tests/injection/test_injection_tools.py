@@ -185,6 +185,7 @@ class InjectionBuildTests(unittest.TestCase):
                 "font_numeric",
                 "glyph_metrics",
                 "startup_loading",
+                "unlock_all",
             ],
         )
         self.assertEqual(

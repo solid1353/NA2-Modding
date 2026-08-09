@@ -722,6 +722,7 @@ def write_configuration_log(
             "source_boot_path",
             "output_boot_path",
             "system_cnf_path",
+            "output_memory_card_directory",
             "memory_card_title_offset",
             "memory_card_title_capacity",
             "memory_card_title_encoding",
@@ -733,6 +734,9 @@ def write_configuration_log(
                 "source_boot_path": configuration.identity.source_boot_path,
                 "output_boot_path": configuration.identity.output_boot_path,
                 "system_cnf_path": configuration.identity.system_cnf_path,
+                "output_memory_card_directory": (
+                    configuration.identity.output_memory_card_directory
+                ),
                 "memory_card_title_offset": (
                     f"0x{configuration.identity.memory_card_title_offset:X}"
                 ),

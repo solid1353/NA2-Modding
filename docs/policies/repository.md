@@ -167,8 +167,8 @@ Give each document one job and canonical authority:
 - historical docs contain only non-current material with concrete continuing
   value.
 
-Link to the canonical owner instead of copying its content. Substantial
-supporting documentation belongs under the repository root `docs/` hierarchy.
+Substantial supporting documentation belongs under the repository root `docs/`
+hierarchy.
 - A code area may retain one concise local `README.md` when nearby orientation
   or a component contract is useful. Link to substantial documentation instead
   of accumulating multiple Markdown files beside code.

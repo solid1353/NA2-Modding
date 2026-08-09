@@ -8,8 +8,9 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 - Read this file first. Communicate with the user in English.
 - The user may override any repository instruction. The scope and duration of an
   override follow the user's wording; unrelated rules remain active.
-- Do not alter or extend the requested contract. If you believe a different
-  contract would be better, ask the user before changing it.
+- For implementation work, do not alter or extend the requested outcome or
+  scope; ask before implementing a different contract. This does not govern
+  policy wording or documentation structure.
 - `NA2-Modding`, `UN-Workshop`, maintained subrepositories such as the PCSX2
   fork, and future repositories added to this maintained project may be changed
   together when the task requires it. Cross-repository work needs no separate
@@ -80,11 +81,14 @@ technical documents are not default context; load them only when the current
 request requires them. For a large technical document, read only the relevant
 sections unless broader context is necessary.
 
-## Maintaining this file
+## Maintaining policy
+
+Refine, consolidate, move, or restructure existing rules instead of layering
+new rules on top of them. Do not duplicate policy; when touching duplicated
+policy, reduce or eliminate the duplication.
 
 Keep this file a small universal entrypoint and router. Add a rule here only
 when it genuinely applies to nearly every task. Put scoped rules in their
-routed policy or component document, link to the canonical owner instead of
-copying it, and consolidate existing wording rather than appending an overlap.
-Materially expanding this file's purpose or scope requires explicit user
-approval.
+routed policy or component document and link to the canonical owner instead of
+copying it. Materially expanding this file's purpose or scope requires explicit
+user approval.

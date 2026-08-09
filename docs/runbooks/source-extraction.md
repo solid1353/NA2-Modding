@@ -20,9 +20,8 @@ Keep original archives under `@source/`. Extract each archive beside itself into
   DATA/SOUND.AFS.files/
 ```
 
-Do not edit anything in `@source/` in place. Copy a required file/archive to the
-owning task/build tree before patching it. Shared generated inventories use
-configured work/log roots and source-relative paths, never the source tree.
+Shared generated inventories use configured work/log roots and source-relative
+paths, never the source tree.
 
 ## Canonical ISO extraction
 

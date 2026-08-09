@@ -15,14 +15,17 @@ files, reverse-engineered behavior, hypotheses, or reusable research tooling.
   contents or metadata. Never open a Ghidra project there in write mode,
   reanalyze it, rename its symbols, regenerate or replace its exports, change
   its filesystem protection, or bypass that protection through a writable copy.
+  Do not preserve unfiltered listings or transient guesses merely to satisfy
+  documentation.
 - Keep observations, inferences, hypotheses, contradictions, confidence, and
   discriminating experiments distinct. A plausible interpretation is not a
   fact or an implementation model another agent must inherit.
 - Confirmed function roles, callers/callees, state behavior, mappings, runtime
-  observations, and useful negative results belong in `docs/knowledge/` or
-  beside canonical component data. Record meaningful function and variable
-  names there with the original disassembly symbol and address; do not write
-  those names back into the disassembly archive.
+  observations, and useful negative results belong in the
+  [domain-owned knowledge hierarchy](../knowledge/README.md) or beside
+  canonical component data. Record meaningful function and variable names
+  there with the original disassembly symbol and address; do not write those
+  names back into the disassembly archive.
 - Record new unresolved hypotheses as explicitly labelled sections in the
   relevant domain-owned knowledge document.
 - Every substantive disassembly, decompilation, or live-memory task promotes
@@ -40,8 +43,4 @@ files, reverse-engineered behavior, hypotheses, or reusable research tooling.
   boundary in [`INTERACTION.md`](../INTERACTION.md). Do not preserve ordinary
   scratch scripts or integrate a tool into production/build/CI/runtime without
   authorization.
-- `@tools/CCSFileExplorerMSF` is the default CCS explorer. Treat `@tools/old/` as
-  untrusted historical material; inspect a selected tool before execution.
-- Use the existing Ghidra projects and focused exports preserved under
-  `@analysis/disassembly/<target>/` only as read-only inputs. Do not preserve
-  unfiltered listings or transient guesses merely to satisfy documentation.
+- `@tools/CCSFileExplorerMSF` is the default CCS explorer.

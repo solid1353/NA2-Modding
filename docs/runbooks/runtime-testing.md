@@ -14,12 +14,6 @@ acceptance remain canonical in
 - An explicit ISO-launch request uses `@pcsx2_dev` by default; use stable only
   when the user requests it or the approved task is a stable compatibility or
   release check. That authorization covers the launch only.
-- User savestates and screenshots under either installation are read-only input
-  libraries. Outside maintained E2E, savestates may be copied with provenance
-  and inspected only as immutable diagnostic evidence; agents do not create,
-  modify, convert, patch, load, replay, or inject through them. Maintained E2E
-  is the only agent-executed savestate path and applies only to selected visual
-  validation.
 - Builds, direct game-selector launches, and `workshop input [profile]` are
   user-facing operations. Agents use the isolated commands described below.
 - Build commands and single-ISO launch commands do not probe or close existing
@@ -75,12 +69,6 @@ na228 worker work/<exact task title>/build/<name>.iso
   structured records under `work/<task>/logs/`.
 - They do not touch Latest/Previous, Manual/E2E Test outputs, shared preflight,
   promotion, shared records, PNACH, GameSettings, or PCSX2 state.
-- Build only when the selected validation genuinely requires image assembly or
-  runtime execution. The ISO is an internal agent validation artifact, never a
-  user testing ground or deliverable.
-- Do not build or launch an ISO merely to prepare user verification. After the
-  selected validation and evidence extraction, delete the ISO whether
-  validation passes or fails.
 
 Current shared-build and user-facing command behavior is documented by
 `na228 help`, [`../../scripts/README.md`](../../scripts/README.md), and
@@ -95,4 +83,3 @@ Current shared-build and user-facing command behavior is documented by
   that worker's `snaps/` tree for the new PNG.
 - Do not use window capture, screenshot hotkeys, window messages, or
   foregrounding as substitutes.
-- Agents do not create savestates outside maintained E2E.

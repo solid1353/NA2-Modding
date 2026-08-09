@@ -4,16 +4,11 @@ This is the canonical human-readable map of the files on the original NA2 disc
 and the major families nested inside them. Read it before investigating a game
 file and update it when evidence improves a role or resolves an unknown.
 
-This document explains semantics. It does not duplicate the exact structural
-inventories:
-
-- [`media/na2_iso9660.tsv`](media/na2_iso9660.tsv): every outer-disc path,
-  extent, byte offset, and size;
-- [`media/data_cvm_iso9660.tsv`](media/data_cvm_iso9660.tsv): every path in the
-  decrypted `DATA.CVM` ISO payload;
-- [`media/afs_members.tsv`](media/afs_members.tsv): every extracted AFS member;
-- [`analysis_inventory.tsv`](analysis_inventory.tsv): analysis
-  level, size, evidence source, and confidence for important artifacts.
+This document explains semantics. The
+[media-layout inventory index](media/README.md) owns the exact structural
+inventories and their provenance. [`analysis_inventory.tsv`](analysis_inventory.tsv)
+owns analysis level, size, evidence source, and confidence for important
+artifacts.
 
 ## Evidence labels
 

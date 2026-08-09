@@ -52,8 +52,6 @@ or an explicit cross-chat handoff.
 - Link a task's temporary handoff or other task-specific document directly from
   its task entry. Keep durable knowledge, component contracts, procedures, and
   policy in their canonical domain documents.
-- When entering or resuming a task, read its directly linked documents once; do
-  not reread them before every message.
 
 ## Project chats
 

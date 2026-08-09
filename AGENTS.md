@@ -15,9 +15,6 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
   fork, and future repositories added to this maintained project may be changed
   together when the task requires it. Cross-repository work needs no separate
   approval.
-- Run every shell, filesystem, script, and Git operation elevated from the first
-  attempt. If the elevated operation still fails, report the exact failure; do
-  not invent alternate workflows or helper machinery to evade it.
 - Preserve unrelated work. Protect original source media and user-owned PCSX2
   installations. Binary changes must be reproducible, guarded, and script-owned.
 - Do not introduce a new long-lived project mechanism or project-wide contract

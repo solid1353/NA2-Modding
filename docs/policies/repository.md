@@ -5,17 +5,8 @@ work directories, or documentation layout.
 
 ## Paths and repository boundaries
 
-- Canonical project files, scripts, configuration, logs, metadata, and generated
-  artifacts use repository-relative paths or configured `@root/...` references.
-  Machine-specific absolute paths are limited to transient tool arguments,
-  diagnostics, and user-facing clickable links unless explicitly authorized.
-- Workshop root `paths.json` owns shared roots and named files. Workshop
-  `games.json` owns source-game identity. NA2 root `paths.json` imports Workshop
-  and adds NA2-local paths; `product.json` owns NA2 inputs, output identity,
-  build roles, and aliases. Use the maintained loaders rather than duplicating
-  derivation logic.
-- When moving a configured root or direct manifest file, update its canonical
-  owner and every affected reference, then validate the existing loaders.
+- Canonical path ownership, configured-root syntax, maintained loaders, and
+  migration validation are defined in [`../PATHS.md`](../PATHS.md).
 - For a requested `from <source> to <destination>` link, preserve the source and
   create the link at the destination. Do not redesign ownership unless asked.
 - Treat `@source/`, `@pcsx2_dev`, `@pcsx2_stable`, and the clean PCSX2 worker
@@ -136,9 +127,8 @@ work directories, or documentation layout.
   successful run. Do not add workflow-blocking identity, expected-state, guard,
   backup, recovery, or restart validation unless it is explicitly authorized by
   the applicable validation plan.
-- Write logs only to the configured purpose-specific log/work roots. Promote
-  reusable findings before deleting disposable logs; follow
-  [`../LOGGING.md`](../LOGGING.md).
+- Follow [`../LOGGING.md`](../LOGGING.md) for log roots, retention, and
+  knowledge promotion.
 - Prefer cohesive responsibility-based files. Split independent concerns when
   it improves ownership, navigation, testing, or concurrency, not merely by
   size.

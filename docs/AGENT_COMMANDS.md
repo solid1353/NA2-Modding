@@ -12,10 +12,10 @@ those.
   serious-work implementation snapshot.
 - `snapshot`: present the current consolidated implementation snapshot. It
   requests the snapshot only and does not authorize implementation.
-- `tasks`: read and present `TASKS.md`.
-- `task done`: remove the uniquely identifiable current task from `TASKS.md`.
-  If its workstream becomes empty, move the workstream to `Archive`. Ask when
-  the task is not uniquely identifiable.
+- `tasks`: read and present `TASKS.md` under the
+  [coordination policy](policies/coordination.md).
+- `task done`: apply the task-completion behavior defined by the
+  [coordination policy](policies/coordination.md).
 - `c on`, `c off`: change the current chat's persistent Normal mode
   commit setting as defined in
   [`normal_mode.md`](workflows/normal_mode.md#commit-setting).
@@ -42,9 +42,9 @@ those.
   repeat, undo, or conflict with work completed while it waited.
 - `con`: resume the current work with scope, effort, progress, and approval
   state intact.
-- `sum`: summarize only the intended changes from the current discussion, with
-  accepted corrections integrated. Exclude rejected or withdrawn changes and
-  add no new changes. The boundary resets only when the discussion explicitly
+- `sum`: apply the
+  [discussion-summary rule](INTERACTION.md#discussion-and-action) to the current
+  discussion topic. The boundary resets only when the discussion explicitly
   moves on.
 - `eff`: report the currently recommended effort without changing it.
 - `sw`: resume after the user changed the chat to the recommended effort;

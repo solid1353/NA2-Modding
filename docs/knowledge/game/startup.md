@@ -64,11 +64,12 @@ After all three values are ready, the native code writes state `2` at virtual
 address `0x001E12CC` (file offset `0xE12CC`). The current patch changes that
 assignment to state `3`, bypassing the opening path. The title dispatcher at
 virtual address `0x001E1340` (file offset `0xE1340`) normally calls
-`0x001DE840`; return value `1` is the accepted-Start result. The patch changes
-bytes `10 7A 07 0C` to `01 00 02 24`, returning that result immediately. The
-unchanged caller then writes main state `4` and substate `1`, matching ss2-ss4,
-and the native menu controller advances through its loading phases to the usable
-main menu.
+`0x001DE840`. Return value `1` is New Game and return value `2` is Continue;
+the unchanged caller writes main state `4` and the matching substate. The
+previous candidate changed bytes `10 7A 07 0C` to `01 00 02 24`, selecting New
+Game and therefore skipping the load controller. The accepted patch uses
+`02 00 02 24` instead, selecting Continue without constructing or displaying
+the title controller.
 
 ## Automatic first-save investigation boundary
 
@@ -93,9 +94,42 @@ The bytes were confirmed present in the tested Latest ISO, but the user observed
 no automatic load. The current states show why: the direct startup path reaches
 the main menu without allocating the shared Save/Load controller, so changing
 that controller cannot implement startup loading. This is a **high-confidence
-negative result**. A future candidate must instead locate the native first-save
-operation within the title/startup path bypassed at `0x001E1340`; its exact
-integration point remains unresolved.
+negative result**.
+
+Static tracing resolves the missing title/startup integration point. Native
+title result `2` makes `FUN_001e9980` select its state-`3` Continue
+subcontroller `FUN_001e9eb0`. That subcontroller allocates the shared Save/Load
+parent through `FUN_001e3db0`, invokes it through `FUN_001e3f00` with mode `1`,
+waits for result `1`, releases it, and then enters the normal main-menu loading
+sequence. Title result `1` instead selects the New Game subcontroller and never
+allocates the Save/Load parent.
+
+The accepted patch therefore combines title result `2` at
+`0x001E1340` with a guarded first-record dispatch at `0x001E5008`. The latter
+sets record zero before the list update, calls the unchanged native load
+operation in mode `1`, branches to the unchanged native save operation in other
+modes, and advances through the original post-operation states. The replacement
+ends before the existing guarded edit at `0x001E5140`.
+
+Two user-supplied NA2.28 savestates from CRC `7E79CCB3` establish the current
+load-confirmation loop. Slot 1 captures the initial `Load this data? Yes / No`
+modal; slot 2 captures the same modal after choosing No. Their embedded
+screenshots are byte-identical. Both states contain the same active controller
+graph: main state `3`, Continue state `1` with result `0`, Save/Load state `6`
+with record `0`, modal result `0`, and memory-card operation `1` with status
+`0x10`, result type `3`, and record `0`.
+
+Static tracing identifies the loop mechanism. In Save/Load state `6`, modal
+result `2` (No) closes the confirmation and writes state `4` at runtime
+`0x001E5474` (file offset `0xE5574`). The first-record edit replaces state `4`'s
+record-list dispatch with an immediate load-confirmation dispatch, so the next
+update reconstructs the same modal. The correction changes the clean
+`li v0,4` instruction (`04 00 02 24`) to `li v0,8` (`08 00 02 24`), routing No
+through the native Save/Load completion path. At runtime `0x001E9FB8` (file
+offset `0xEA0B8`), it also changes the Continue result immediate from `-1`
+(`FF FF 02 24`) to `1` (`01 00 02 24`) so the unchanged Continue success path
+enters the main menu without loaded save data. User runtime validation
+confirmed the integrated behavior.
 
 ## Early native loading screen
 

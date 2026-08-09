@@ -41,7 +41,7 @@
         "description": "Skip the opening sequence."
       },
       "loading_screen_then_main_menu": {
-        "description": "Skip the four splash screens and opening, preserve required startup loading, bypass the title, and enter the native main-menu path after the existing loading screen has been shown."
+        "description": "Skip the four splash screens and opening, preserve required startup loading, bypass the title, and enter the native Continue path; the retained confirmation loads the first save on Yes or enters the main menu without loading on No."
       },
       "loading_screen": {
         "description": "Replace the boot splashes with a large primitive percentage and progress bar paced across the measured 25-second load while the original startup loaders run."
@@ -74,7 +74,7 @@
     "save_load": {
       "description": "Save and load modal presentation.",
       "display_only_first_save": {
-        "description": "Render only the first record in the shared Save/Load slot modal."
+        "description": "Select record zero directly in Save and Load flows while retaining the native memory-card scan, confirmation, load/save operations, and non-record status handling; No completes without reopening the removed record list."
       }
     }
   },

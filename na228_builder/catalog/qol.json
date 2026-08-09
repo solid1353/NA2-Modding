@@ -13,10 +13,10 @@
       ]
     },
     "loading_screen_then_main_menu": {
-      "proven": false,
       "edits": [
         "qol__startup__loading_screen_then_main_menu__enter_title_input_state_immediately",
-        "qol__startup__loading_screen_then_main_menu__return_native_start_accepted_result"
+        "qol__startup__loading_screen_then_main_menu__return_native_start_accepted_result",
+        "qol__startup__loading_screen_then_main_menu__treat_no_load_completion_as_menu_success"
       ]
     },
     "loading_screen": {
@@ -68,7 +68,6 @@
   },
   "save_load": {
     "display_only_first_save": {
-      "proven": false,
       "edits": [
         "qol__save_load__display_only_first_save__advance_status_0x0a_without_constructing",
         "qol__save_load__display_only_first_save__center_date_play_time_block",
@@ -85,6 +84,7 @@
         "qol__save_load__display_only_first_save__prepare_status_0x0a_modal_helper",
         "qol__save_load__display_only_first_save__retain_helper_s_zero_second",
         "qol__save_load__display_only_first_save__return_main_menu_when_unformatted",
+        "qol__save_load__display_only_first_save__route_load_confirmation_no_to_completion",
         "qol__save_load__display_only_first_save__route_memory_card_status_dispatch",
         "qol__save_load__display_only_first_save__select_slot_zero_enter_its",
         "qol__save_load__display_only_first_save__shrink_the_upper_panel_height_from_224_to",

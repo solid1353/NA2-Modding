@@ -4,17 +4,15 @@ File-backed and resident quality-of-life behavior. Selectable nodes, guarded
 binary edits, runtime hooks, and payload declarations are selected by
 `na228_builder/catalog/qol.json`.
 
-## ELF-Q010: Display only first save
+## ELF-Q010: Use only first save
 
 `ELF-Q010` changes the shared Save/Load slot-row renderer's loop limit from
 three records to one at boot-ELF virtual address `0x001E6970` (file offset
-`0xE6A70`). The three-slot occupancy scan, selection handler, save data, and
-memory card remain unchanged. The modal therefore displays only its first save
-record while retaining the native modal frame and first-row behavior. Two
-additional guarded edits replace the handler's Down and Up input-mask results
-with zero before either movement branch. Vertical input therefore cannot change
-the selected slot or play the slot-navigation sound; confirm and cancel remain
-native.
+`0xE6A70`). The three-slot occupancy scan, save data, and memory card remain
+unchanged. Any fallback slot display therefore contains only its first record.
+Two additional guarded edits replace the handler's Down and Up input-mask
+results with zero before either movement branch, so vertical input cannot
+change the selected slot or play the slot-navigation sound.
 
 The upper frame is reduced from X/Y/width/height `58/10/400/224` to
 `146/90/224/96`, placing a compact one-record panel above and visibly detached
@@ -24,12 +22,23 @@ record moves outside the viewport, the row-separator condition is disabled, and
 the now-meaningless independent slot-cursor model is not drawn. The lower
 instruction panel and all of its contents remain unchanged.
 
-The guarded edit is statically verified against the clean instruction
-`slti v1,s2,3`, `andi v0,a0,0x4000`, `andi v0,a0,0x1000`, and the four renderer
-constants. Integrated runtime validation remains pending, so the patch is
-enabled in the release configuration and still requires integrated runtime validation.
+The normal record-selection path is bypassed before its list update. The
+guarded edit at runtime `0x001E5008` sets the child selection to record zero,
+calls the existing `FUN_001e1e10` load operation when the controller mode is
+`1`, and branches to the unchanged `FUN_001e1e50` save body for every other
+mode. It then uses the controller's unchanged post-operation states.
 
-## ELF-Q009: Loading screen then main menu
+The native `Load this data?` confirmation remains visible. Yes continues the
+record-zero load. The guarded correction changes the No branch at
+runtime `0x001E5474` (file offset `0xE5574`) from Save/Load state `4` to its
+native completion state `8`, avoiding reconstruction of the removed record
+list. The startup Continue result mapping at runtime `0x001E9FB8` (file offset
+`0xEA0B8`) then maps that no-load completion to the existing success path, which
+enters the main menu without loaded save data. The clean
+instructions, replacement branch targets, and immediates are statically
+verified, and user runtime validation confirmed the integrated behavior.
+
+## ELF-Q009: Loading screen then first-save load
 
 `ELF-Q009` replaces the four splash screens with the game's existing main-menu
 presentation while preserving the two native startup-loader checks. The QoL
@@ -49,14 +58,19 @@ estimate, determine when startup may continue.
 
 After the required startup loaders complete, the file-backed binary patch
 writes state `3` instead of state `2` at `0x001E12CC`, bypassing the opening
-sequence. At `0x001E1340`, it returns the same result produced by pressing
-Start, so the unchanged caller enters main-menu state `4`, substate `1`.
-`Skip opening` remains enabled as a second guard on the opening path.
+sequence. The patch at `0x001E1340` returns native title result `2`
+(`Continue`), so the unchanged caller enters main state `4`, substate `2`.
+That substate constructs the shared Save/Load controller in mode `1`; the
+`ELF-Q010` first-record dispatch retains the native Yes/No load confirmation.
+Yes performs the native load before the normal main-menu loader continues; No
+enters the main menu without loading. `Skip opening` remains enabled as a
+second guard on the opening path.
 
-The notice, Bandai Namco, Bandai, CRIWARE, opening, and interactive title screen
-are therefore bypassed. The source ELF and file size remain unchanged. Static,
-supplied-savestate, and rejected-candidate evidence is recorded in
-`docs/knowledge/game/startup.md`; integrated runtime validation remains pending.
+The sequence bypasses the notice, Bandai Namco, Bandai, CRIWARE,
+opening, interactive title, and Load-list screens. The source ELF and file size
+remain unchanged. Static, supplied-savestate, and rejected-candidate evidence
+is recorded in `docs/knowledge/game/startup.md`; user runtime validation
+confirmed the integrated behavior.
 
 ## ELF-Q004: Remove Adventure mode
 

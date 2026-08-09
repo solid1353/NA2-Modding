@@ -4229,6 +4229,14 @@
     "expected_hex": "04CC848F6087070C00000000",
     "replacement_hex": "010015243004001000000000"
   },
+  "qol__save_load__display_only_first_save__route_load_confirmation_no_to_completion": {
+    "description": "Route load-confirmation No to the native Save/Load completion state instead of returning to the removed record-list state.",
+    "operation": "replace",
+    "destination_target_id": "na2_elf",
+    "destination_offset": "0xE5574",
+    "expected_hex": "04000224",
+    "replacement_hex": "08000224"
+  },
   "qol__save_load__display_only_first_save__route_memory_card_status_dispatch": {
     "description": "Route memory-card status dispatch through the unformatted-screen bypass.",
     "operation": "replace",
@@ -4238,12 +4246,12 @@
     "replacement_hex": "BC03001004CC828F"
   },
   "qol__save_load__display_only_first_save__select_slot_zero_enter_its": {
-    "description": "Select slot zero and enter its native save confirmation without rendering the slot list.",
+    "description": "Select record zero without updating the slot list; call the native load operation in mode 1, or branch to the unchanged native save operation in every other mode.",
     "operation": "replace",
     "destination_target_id": "na2_elf",
     "destination_offset": "0xE5108",
-    "expected_hex": "2400848E6C9A070C000000000300032432004310000000000200032422004310",
-    "replacement_hex": "2400838E1000658C04CC848F9487070C05000224140060ACD2FC0010080082AE"
+    "expected_hex": "2400848E6C9A070C00000000030003243200431000000000020003242200431000000000010003240300431000000000",
+    "replacement_hex": "2400838E010002241A006216100060AC04CC848F8487070C2D2800002400838E140060AC060002249D010010080082AE"
   },
   "qol__save_load__display_only_first_save__shrink_the_upper_panel_height_from_224_to": {
     "description": "Shrink the upper Save/Load panel height from 224 to 96.",
@@ -4294,11 +4302,19 @@
     "replacement_hex": "03000324"
   },
   "qol__startup__loading_screen_then_main_menu__return_native_start_accepted_result": {
-    "description": "Return the native Start-accepted result without constructing or displaying the title screen, selecting main-menu state 4 substate 1 through the existing caller.",
+    "description": "Return the native Continue result without constructing or displaying the title screen, selecting main-menu state 4 substate 2 and its first-save load path through the existing caller.",
     "operation": "replace",
     "destination_target_id": "na2_elf",
     "destination_offset": "0xE1340",
     "expected_hex": "107A070C",
+    "replacement_hex": "02000224"
+  },
+  "qol__startup__loading_screen_then_main_menu__treat_no_load_completion_as_menu_success": {
+    "description": "Treat the no-load completion as a successful Continue result so startup enters the main menu without loaded save data.",
+    "operation": "replace",
+    "destination_target_id": "na2_elf",
+    "destination_offset": "0xEA0B8",
+    "expected_hex": "FFFF0224",
     "replacement_hex": "01000224"
   },
   "qol__startup__skip_cc2_intro__skip_cc2_intro": {

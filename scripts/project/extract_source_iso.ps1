@@ -95,7 +95,9 @@ $taskWorkRoot = Join-Path $paths.work $TaskTitle
 $stageParent = Join-Path $taskWorkRoot 'temp\source_extraction'
 $stageRun = Join-Path $stageParent $runId
 $stageRoot = Join-Path $stageRun ($isoItem.Name + '.files')
-$logDir = Join-Path $paths.workstream_logs ("Project\extraction\" + $runId)
+$logDir = Join-Path (Join-Path $paths.task_logs $TaskTitle) (
+    "source_extraction\" + $runId
+)
 $summaryPath = Join-Path $logDir 'summary.tsv'
 $inventoryPath = Join-Path $logDir 'inventory.tsv'
 

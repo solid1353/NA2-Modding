@@ -9,11 +9,11 @@ It also accepts the numeric savestate names retained below an E2E transaction's
 and marker number from that structure.
 
 Run the preserved matched capture set and write disposable reports below the
-owning workstream's shared log root:
+owning task's shared log root:
 
 ```powershell
 python scripts/research/ee_memory_map/analyze_savestates.py `
-  --output-dir '@workstream_logs/EE Runtime Memory Map/<run-id>'
+  --output-dir '@task_logs/EE Runtime Memory Map/<run-id>'
 ```
 
 Run the focused unit tests with:

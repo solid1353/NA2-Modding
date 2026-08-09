@@ -3,12 +3,12 @@
   "imports": {
     "workshop": "../UN Workshop/paths.json"
   },
-  "existence_deferred_roots": ["workstream_logs"],
+  "existence_deferred_roots": ["task_logs"],
   "roots": {
     "repository": ".",
     "build": "build",
     "logs": "logs",
-    "workstream_logs": "@logs/workstreams",
+    "task_logs": "@logs/tasks",
     "builder": "na228_builder",
     "scripts": "scripts",
     "work": "work",

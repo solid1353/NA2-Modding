@@ -44,7 +44,9 @@ feature donor, not an official successor or English authority.
 
 - `repository`: this repository; always `.`.
 - `workshop`, `source`, `analysis`, and `tools`: imported Workshop roots.
-- `build`, `logs`, `builder`, `features`, `scripts`, `work`: NA2 roots.
+- `build`, `logs`, `task_logs`, `builder`, `features`, `scripts`, `work`: NA2
+  roots. `task_logs` resolves to deferred generated records under
+  `@logs/tasks/`.
 - `pcsx2_scripts`: `@workshop/scripts/pcsx2`.
 - `pcsx2_stable`, `pcsx2_dev`, `pcsx2_clean`: protected configured runtimes
   and the external clean worker template.
@@ -122,8 +124,9 @@ Python unit tests with:
 & { . .\scripts\lib\paths.ps1; Get-Na2Paths | Out-Null }
 & .\scripts\lib\run_python.ps1 `
   -PackageSet builder `
-  -Script tests/builder/test_paths.py `
-  -NoBytecode
+  -Module unittest `
+  -NoBytecode `
+  -ArgumentList @('discover', '-s', 'tests/builder', '-p', 'test_paths.py')
 ```
 
 Never persist resolved machine-specific paths in project files.

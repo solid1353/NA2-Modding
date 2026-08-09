@@ -6,10 +6,10 @@ knowledge.
 
 ## General rules
 
-- Write bounded shared workflow logs below `@logs/`, shared generated
-  workstream records below `@workstream_logs/<exact task title>/`, and worker
-  build/runtime logs below `work/<task title>/logs/`. Do not write files
-  directly in `@logs/` or `@workstream_logs/`.
+- Write bounded shared workflow logs below `@logs/`, generated task records
+  below `@task_logs/<exact task title>/`, and worker build/runtime logs below
+  `work/<task title>/logs/`. Do not write files directly in `@logs/` or
+  `@task_logs/`.
 - Persist only repository-relative paths or configured `@root/...` aliases.
   Machine-specific absolute paths are forbidden.
 - Keep enough detail to reproduce or diagnose the operation: inputs, selected
@@ -20,13 +20,13 @@ knowledge.
   negative results. Promote those findings into `docs/knowledge/` or canonical
   module-local TSV/README data first.
 
-## Shared workstream logs
+## Shared task logs
 
-`@workstream_logs/<exact task title>/` contains generated evidence that is
-shared across tasks in one workstream but is not canonical project knowledge.
-Examples include expensive media inventories and reproducible analyzer reports.
-The exact workstream-title directory makes ownership explicit; producers must
-not create anonymous folders directly below `@workstream_logs/`.
+`@task_logs/<exact task title>/` contains non-canonical generated evidence that
+agents may share while working on that task. Examples include expensive media
+inventories and reproducible analyzer reports. The exact task-title directory
+makes ownership explicit; producers must not create anonymous folders directly
+below `@task_logs/`.
 
 A task cleans the records it produced or consumed before reporting completion.
 It first promotes every reusable conclusion and useful negative result into

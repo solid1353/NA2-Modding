@@ -24,8 +24,12 @@ No other wording enters Design mode. Plain `des` and `design` do not enter it.
 
 - Discuss the design freely. The document is a consolidated design, not a
   conversation transcript.
-- Update the document at agent-determined milestones and whenever the user
-  explicitly requests an update.
+- Update the document only at milestones or when the user explicitly requests
+  an update.
+- A milestone occurs when a coherent part of the design has stabilized enough
+  to be recorded as a consolidated result, normally when discussion moves to
+  another part or the complete design is ready for implementation. Individual
+  messages, approvals, corrections, and wording changes are not milestones.
 - Preserve accepted points, integrate corrections, remove rejected content, and
   keep unresolved decisions explicit.
 - Only `qwe` authorizes implementation. Agreement with individual points or any

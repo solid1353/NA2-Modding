@@ -5,6 +5,7 @@ import json
 import os
 import re
 import sys
+import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass
 from importlib import resources
@@ -15,6 +16,7 @@ from typing import Callable, Iterable
 RELEASE_MANIFEST_NAME = "release_manifest.json"
 REQUIRED_IMAGE_IDS = ("na2", "nun5")
 HASH_CHUNK_SIZE = 8 * 1024 * 1024
+ERROR_LOG_NAME = "builder-error.log"
 
 Emit = Callable[[str], None]
 ReleaseBuilder = Callable[[Path, Path, Path, Path, Emit], None]
@@ -439,7 +441,14 @@ def _runtime_builder(
 def _runtime_configuration_validator(configuration_path: Path) -> None:
     from .release_runtime import validate_release_configuration
 
-    validate_release_configuration(configuration_path)
+    try:
+        validate_release_configuration(configuration_path)
+    except ReleaseError:
+        raise
+    except Exception as exc:
+        raise ReleaseError(
+            f"Invalid {configuration_path.name}: {exc}"
+        ) from exc
 
 
 def _validate_user_configuration(configuration_path: Path) -> None:
@@ -450,12 +459,20 @@ def _validate_user_configuration(configuration_path: Path) -> None:
         )
     try:
         value = json.loads(configuration_path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+    except json.JSONDecodeError as exc:
         raise ReleaseError(
-            f"Configuration is not valid JSON: {configuration_path.name}: {exc}"
+            f"{configuration_path.name} is not valid JSON at line {exc.lineno}, "
+            f"column {exc.colno}: {exc.msg}"
+        ) from exc
+    except (OSError, UnicodeError) as exc:
+        raise ReleaseError(
+            f"Could not read {configuration_path.name}: {exc}"
         ) from exc
     if not isinstance(value, dict):
-        raise ReleaseError("Configuration root must be an object")
+        raise ReleaseError(
+            f"Invalid config value at the root: got {type(value).__name__}; "
+            "expected an object"
+        )
 
 
 def run_release(
@@ -534,6 +551,27 @@ def _pause(read: Callable[[str], str]) -> None:
         pass
 
 
+def _write_error_log(
+    path: Path,
+    messages: Iterable[str],
+    *,
+    failure: BaseException,
+) -> None:
+    lines = [
+        "Outcome: failed",
+        "",
+        *messages,
+        "",
+        "Technical details:",
+        "".join(
+            traceback.format_exception(
+                type(failure), failure, failure.__traceback__
+            )
+        ).rstrip(),
+    ]
+    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+
+
 def main(
     *,
     directory: Path | None = None,
@@ -544,6 +582,15 @@ def main(
     read: Callable[[str], str] = input,
 ) -> int:
     exit_code = 0
+    failure: BaseException | None = None
+    outcome = "success"
+    messages: list[str] = []
+
+    def report(message: str) -> None:
+        messages.append(message)
+        emit(message)
+
+    release_directory = (directory or application_directory()).resolve()
     try:
         release_manifest = manifest or load_release_manifest()
         selected_builder = builder or _runtime_builder
@@ -551,22 +598,34 @@ def main(
         if builder is None and selected_validator is None:
             selected_validator = _runtime_configuration_validator
         run_release(
-            directory or application_directory(),
+            release_directory,
             release_manifest,
             selected_builder,
             configuration_validator=selected_validator,
-            emit=emit,
+            emit=report,
         )
-    except KeyboardInterrupt:
-        emit("")
-        emit("Build cancelled.")
+    except KeyboardInterrupt as exc:
+        failure = exc
+        outcome = "cancelled"
+        report("")
+        report("Build cancelled.")
         exit_code = 1
     except Exception as exc:
-        emit("")
-        emit(f"Build failed: {exc}")
+        failure = exc
+        outcome = "failed"
+        report("")
+        report(f"Build failed: {exc}")
         exit_code = 1
     finally:
-        emit("")
+        if failure is not None and outcome == "failed":
+            log_path = release_directory / ERROR_LOG_NAME
+            try:
+                _write_error_log(log_path, messages, failure=failure)
+            except (OSError, UnicodeError) as log_error:
+                report(f"Could not write {ERROR_LOG_NAME}: {log_error}")
+            else:
+                report(f"Technical details: {ERROR_LOG_NAME}")
+        report("")
         _pause(read)
     return exit_code
 

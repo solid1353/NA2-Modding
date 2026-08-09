@@ -73,7 +73,7 @@ class CatalogTests(unittest.TestCase):
             description: "Boolean data wrapped in an object.",
             patches: ["e__feature__supplied_bool"],
           },
-          numeric: setting<(int & 1..15) | (decimal & >0 & <=1)> {
+          numeric: setting<(int & 1..15) | (decimal & >0 & <1)> {
             description: "Disjoint numeric union.",
             patches: ["e__feature__numeric"],
           },
@@ -111,6 +111,48 @@ class CatalogTests(unittest.TestCase):
             {"feature": parsed}, include_patches=False
         )
         self.assertIn("\n      |\n      {\n", rendered)
+
+    def test_decimal_includes_integers_and_step_is_zero_anchored(self) -> None:
+        source = '''{
+          value: setting<decimal & 0..15 & step 0.25> {
+            description: "Quarter-step value.",
+            patches: ["e__feature__value"],
+          },
+        }'''
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "feature.modcat"
+            path.write_text(source, encoding="utf-8")
+            parsed = catalog_format.parse_catalog(path)
+
+        value_type = parsed.fields[0].node.value_type
+        for value in (0, 1, 1.25, 15):
+            with self.subTest(accepted=value):
+                self.assertTrue(catalog_format.matches_type(value_type, value))
+        for value in (-0.25, 0.1, 1.1, 15.25):
+            with self.subTest(rejected=value):
+                self.assertFalse(catalog_format.matches_type(value_type, value))
+        rendered = catalog_format.serialize_feature(parsed)
+        self.assertIn("setting<decimal & 0..15 & step 0.25>", rendered)
+
+        for invalid_type in (
+            "decimal & step 0",
+            "decimal & step -0.25",
+            "decimal & 0.1..0.2 & step 1",
+            "int | decimal",
+        ):
+            with (
+                self.subTest(invalid_type=invalid_type),
+                tempfile.TemporaryDirectory() as directory,
+            ):
+                invalid = Path(directory) / "invalid.modcat"
+                invalid.write_text(
+                    "{ value: setting<"
+                    + invalid_type
+                    + '> { description: "Invalid.", patches: ["e__x__y"] } }',
+                    encoding="utf-8",
+                )
+                with self.assertRaises(ValueError):
+                    catalog_format.parse_catalog(invalid)
 
     def test_direct_boolean_setting_types_are_forbidden(self) -> None:
         for value_type in ("bool", "true", "false", 'string | false'):
@@ -275,13 +317,31 @@ class CatalogTests(unittest.TestCase):
                 configuration_path,
                 {"overrides": {"feature": {"nested": True}}},
             )
-            with self.assertRaisesRegex(ValueError, "must be false or an object"):
+            with self.assertRaisesRegex(
+                catalog.ConfigurationError,
+                "Invalid config value at features.feature.nested: "
+                "got true; expected an object override, or false to disable it",
+            ):
                 catalog.load_selection(catalog_path, configuration_path)
             self.write_json(
                 configuration_path,
                 {"overrides": {"feature": {"integer": True}}},
             )
-            with self.assertRaisesRegex(ValueError, "does not match"):
+            with self.assertRaisesRegex(
+                catalog.ConfigurationError,
+                "Invalid config value at features.feature.integer: "
+                "got true; expected int, or false to disable it",
+            ):
+                catalog.load_selection(catalog_path, configuration_path)
+
+            self.write_json(
+                configuration_path,
+                {"overrides": {"feature": {"unknown": True}}},
+            )
+            with self.assertRaisesRegex(
+                catalog.ConfigurationError,
+                "Invalid config override at features.feature: unknown keys: unknown",
+            ):
                 catalog.load_selection(catalog_path, configuration_path)
 
             self.write_json(
@@ -379,7 +439,7 @@ class CatalogTests(unittest.TestCase):
 
     def test_public_catalog_keeps_contract_and_strips_implementation(self) -> None:
         source = '''{
-          value: setting<int & 1..15> {
+          value: setting<decimal & 0..15 & step 0.25> {
             description: "Bounded value.", patches: ["e__f__value"],
           },
         }'''
@@ -390,20 +450,25 @@ class CatalogTests(unittest.TestCase):
             )
             public = catalog.public_catalog(catalog_path)
         self.assertIn("features:", public)
-        self.assertIn("setting<int & 1..15>", public)
+        self.assertIn("setting<decimal & 0..15 & step 0.25>", public)
         self.assertIn('description: "Bounded value."', public)
         self.assertNotIn("patches", public)
         self.assertNotIn("e__f__value", public)
 
     def test_mips_lui_float32_adapter_preserves_instruction_and_rejects_bad_guards(self) -> None:
         replacements = {
-            value: adapters.apply_adapter("mips_lui_float32", "803F023C", value)
-            for value in range(1, 16)
+            quarter / 4: adapters.apply_adapter(
+                "mips_lui_float32", "803F023C", quarter / 4
+            )
+            for quarter in range(61)
         }
         self.assertEqual(replacements[1], "803F023C")
+        self.assertEqual(replacements[1.25], "A03F023C")
         self.assertEqual(replacements[3], "4040023C")
         self.assertEqual(replacements[15], "7041023C")
         self.assertTrue(all(value.endswith("023C") for value in replacements.values()))
+        with self.assertRaisesRegex(ValueError, "cannot encode"):
+            adapters.apply_adapter("mips_lui_float32", "803F023C", 0.1)
         with self.assertRaisesRegex(ValueError, "four-byte"):
             adapters.apply_adapter("mips_lui_float32", "803F", 3)
         with self.assertRaisesRegex(ValueError, "not a MIPS LUI"):
@@ -477,7 +542,7 @@ class CatalogTests(unittest.TestCase):
         self.assertTrue(
             release.node_enabled("features", "qol", "startup", "save_loading")
         )
-        self.assertFalse(
+        self.assertTrue(
             release.node_enabled("features", "battle_logic", "substitution_cost")
         )
         self.assertTrue(all(key.startswith("e__") for key in release.edits))
@@ -499,12 +564,12 @@ class CatalogTests(unittest.TestCase):
             for feature_id in release.feature_ids
             if catalog.feature_has(release, feature_id, "edits", enabled_only=True)
         )
-        self.assertEqual(release_binary_count, 491)
+        self.assertEqual(release_binary_count, 492)
 
         configured = catalog.materialized_configuration(
             catalog_path, configurations / "release.json"
         )
-        configured["features"]["battle_logic"]["substitution_cost"] = 3
+        configured["features"]["battle_logic"]["substitution_cost"] = 1.25
         with tempfile.TemporaryDirectory() as directory:
             configuration_path = Path(directory) / "config.json"
             self.write_json(configuration_path, configured)
@@ -522,7 +587,7 @@ class CatalogTests(unittest.TestCase):
             if item.edit_id.endswith("e__battle_logic__substitution_cost")
         )
         self.assertEqual(edit.expected_hex, "803F023C")
-        self.assertEqual(edit.replacement_hex, "4040023C")
+        self.assertEqual(edit.replacement_hex, "A03F023C")
         self.assertEqual(edit.length, 4)
 
 

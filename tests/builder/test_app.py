@@ -11,6 +11,7 @@ from na228_builder.scripts.app import (
     ReleaseError,
     ReleaseManifest,
     SupportedImage,
+    _runtime_configuration_validator,
     application_directory,
     identify_supported_images,
     main,
@@ -240,6 +241,24 @@ class ReleaseAppTests(unittest.TestCase):
                     )
                 hash_file.assert_not_called()
 
+    def test_runtime_config_validation_wraps_internal_details_for_users(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            configuration = Path(directory) / "config.json"
+            self.write_configuration(configuration.parent)
+            with mock.patch(
+                "na228_builder.scripts.release_runtime.validate_release_configuration",
+                side_effect=ValueError(
+                    "Invalid config value at features.battle_logic.substitution_cost: "
+                    "got 0.1; expected decimal & 0..15 & step 0.25, or false to disable it"
+                ),
+            ):
+                with self.assertRaisesRegex(
+                    ReleaseError,
+                    "Invalid config.json: Invalid config value at "
+                    "features.battle_logic.substitution_cost",
+                ):
+                    _runtime_configuration_validator(configuration)
+
     def test_success_promotes_building_iso_and_preserves_inputs(self) -> None:
         na2 = b"clean-na2"
         nun5 = b"clean-nun5"
@@ -458,7 +477,7 @@ class ReleaseAppTests(unittest.TestCase):
                     emit=lambda _message: None,
                 )
 
-    def test_main_waits_on_success_and_failure_without_writing_logs(self) -> None:
+    def test_main_writes_failure_log_and_keeps_traceback_out_of_console(self) -> None:
         na2 = b"clean-na2"
         nun5 = b"clean-nun5"
         for should_fail in (False, True):
@@ -492,9 +511,17 @@ class ReleaseAppTests(unittest.TestCase):
 
                     self.assertEqual(code, 1 if should_fail else 0)
                     self.assertEqual(prompts, ["Press Enter to close."])
-                    self.assertFalse(any(path.suffix == ".log" for path in root.iterdir()))
                     expected = "Build failed" if should_fail else "Build completed"
                     self.assertTrue(any(expected in message for message in messages))
+                    self.assertNotIn("Traceback", "\n".join(messages))
+                    if should_fail:
+                        log = (root / "builder-error.log").read_text(encoding="utf-8")
+                        self.assertIn("Technical details: builder-error.log", messages)
+                        self.assertIn("Outcome: failed", log)
+                        self.assertIn("Traceback", log)
+                        self.assertIn("RuntimeError: boom", log)
+                    else:
+                        self.assertFalse(any(path.suffix == ".log" for path in root.iterdir()))
 
 
 if __name__ == "__main__":

@@ -55,8 +55,8 @@ Union branches must be provably disjoint and are never selected by order.
 
 The grammar supports `bool`, `int`, `decimal`, and `string`, literal types,
 closed object types with optional fields, disjoint `|` unions, numeric `&`
-constraints and ranges, parentheses, `//` comments, and trailing commas. It
-rejects every unlisted construct, including `null`.
+comparisons, ranges, and steps, parentheses, `//` comments, and trailing
+commas. It rejects every unlisted construct, including `null`.
 
 Binary edit definitions always contain an explicit `operation`. Runtime target
 changes live under an injection unit's `hooks` and therefore have no operation
@@ -115,7 +115,10 @@ The packaged EXE validates `config.json` against its embedded complete catalog
 and never reads the external catalog reference. It contains resources for every selectable
 catalog node, including nodes disabled by the default release selection.
 Catalog-owned runtime C sources have packaged objects, so end users do not need
-the project PS2 toolchain.
+the project PS2 toolchain. Invalid configuration errors identify the exact path,
+supplied value, and expected type or shape. After a failure, the EXE creates or
+replaces `builder-error.log` with full exception details and stack traces rather
+than showing them in the user-facing window. Successful runs create no log.
 
 ## Build
 
@@ -136,8 +139,14 @@ composition uses:
     '--source', '<NA2.iso>',
     '--configuration', 'na228_builder/configurations/development.json',
     '--compose-only'
-  )
+)
 ```
+
+The public `na228` development commands present configuration failures as one
+concise path/value/expectation message. Their existing `latest.log` and
+`rolling.log` records retain the corresponding traceback under
+`technical_details`; catalog-authoring and internal failures remain developer
+errors and keep their existing presentation.
 
 Preflight fingerprints both canonical source ISOs, ISO-composing builder code, the exact selected configuration resources, product/path configuration, and active Python/Zlib/Zopfli versions. `scripts/module_pipeline.py` prepares internal invocations and shared payload contributions; `scripts/build_configuration.py` composes them; `scripts/composer.py` closes typed image operations; and `image_assembler/` alone stages and verifies the ISO.
 

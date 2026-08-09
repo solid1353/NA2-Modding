@@ -63,12 +63,30 @@ function Invoke-Na2BuilderModule {
             -PackageSet builder `
             -Module $Module `
             -ArgumentList $ArgumentList `
-            -NoBytecode
+            -NoBytecode 2>&1
     )
     [pscustomobject]@{
-        Output = $output
+        Output = [string[]]@($output | ForEach-Object { [string]$_ })
         ExitCode = $LASTEXITCODE
     }
+}
+
+function Throw-Na2BuilderFailure {
+    param(
+        [Parameter(Mandatory = $true)][psobject]$Execution,
+        [Parameter(Mandatory = $true)][string]$FallbackMessage
+    )
+
+    $configurationFailure = Get-Na2ConfigurationFailure -Output $Execution.Output
+    if ($null -ne $configurationFailure) {
+        $exception = [InvalidOperationException]::new($configurationFailure.Message)
+        $exception.Data['Na2ConfigurationError'] = $true
+        $exception.Data['Na2TechnicalDetails'] = $configurationFailure.TechnicalDetails
+        throw $exception
+    }
+
+    $Execution.Output | ForEach-Object { Write-Host $_ }
+    throw $FallbackMessage
 }
 
 function Invoke-Na2BuildPreflight {
@@ -448,10 +466,12 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         finally {
             Pop-Location
         }
-        $isolatedOutput | ForEach-Object { Write-Host $_ }
         if ($isolatedExitCode -ne 0) {
-            throw "NA2 $isolatedKind build failed (exit $isolatedExitCode)."
+            Throw-Na2BuilderFailure `
+                -Execution $isolatedExecution `
+                -FallbackMessage "NA2 $isolatedKind build failed (exit $isolatedExitCode)."
         }
+        $isolatedOutput | ForEach-Object { Write-Host $_ }
         if (-not (Test-Path -LiteralPath $isolatedConfigurationLog -PathType Container)) {
             throw "$isolatedLabel completed without creating its structured build record."
         }
@@ -722,10 +742,12 @@ try {
     finally {
         Pop-Location
     }
-    $buildOutput | ForEach-Object { Write-Host $_ }
     if ($buildExitCode -ne 0) {
-        throw "NA2 configuration build failed (exit $buildExitCode)."
+        Throw-Na2BuilderFailure `
+            -Execution $buildExecution `
+            -FallbackMessage "NA2 configuration build failed (exit $buildExitCode)."
     }
+    $buildOutput | ForEach-Object { Write-Host $_ }
     if (-not (Test-Path -LiteralPath $configurationLog -PathType Container)) {
         throw 'Configuration build completed without creating its structured build record.'
     }

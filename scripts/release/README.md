@@ -31,7 +31,12 @@ output and removes only its temporary `.building` file.
   complete values.
 
 Invalid keys, values, ranges, or ambiguous union values are rejected before
-the builder modifies an ISO.
+the builder modifies an ISO. The error names the invalid configuration path,
+shows the supplied value, and states the expected type or shape.
+
+After a failure, the builder creates or replaces `builder-error.log`. The
+window shows a concise error and points to that file; full technical exception
+details and stack traces appear only in the log. Successful runs create no log.
 
 ## `catalog.modcat`
 

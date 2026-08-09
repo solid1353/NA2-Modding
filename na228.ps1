@@ -2,6 +2,16 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'scripts\lib\paths.ps1')
 . (Join-Path $PSScriptRoot 'scripts\na228\worker_paths.ps1')
 $paths = Get-Na2Paths
+
+trap {
+    if ([bool]$_.Exception.Data['Na2ConfigurationError']) {
+        Write-Host "[na228] Build failed: $($_.Exception.Message)" -ForegroundColor Red
+        $global:LASTEXITCODE = 1
+        return
+    }
+    break
+}
+
 $gameAliases = @(
     $paths.games.Aliases.PSObject.Properties |
         Where-Object { [string]$_.Name -cne [string]$_.Value } |

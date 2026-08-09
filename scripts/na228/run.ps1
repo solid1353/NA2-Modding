@@ -59,6 +59,7 @@ catch {
 
 $runOutcome = 'failed'
 $runFailure = ''
+$runTechnicalDetails = ''
 try {
     switch ($Action) {
         'worker-build' {
@@ -107,6 +108,9 @@ try {
 }
 catch {
     $runFailure = $_.Exception.Message
+    if ([bool]$_.Exception.Data['Na2ConfigurationError']) {
+        $runTechnicalDetails = [string]$_.Exception.Data['Na2TechnicalDetails']
+    }
     throw
 }
 finally {
@@ -115,7 +119,8 @@ finally {
             Complete-Na2RunLog `
                 -Context $runLog `
                 -Outcome $runOutcome `
-                -FailureMessage $runFailure
+                -FailureMessage $runFailure `
+                -TechnicalDetails $runTechnicalDetails
         }
         catch {
             Write-Warning "Could not finalize NA2 logs: $($_.Exception.Message)"

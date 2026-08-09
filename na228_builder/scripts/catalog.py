@@ -27,6 +27,10 @@ OPERATION_FIELDS = ["field", "required", "type"]
 FIELD_TYPES = {"hex", "integer", "path", "sha256", "text"}
 
 
+class ConfigurationError(ValueError):
+    """A user-supplied configuration does not satisfy the catalog contract."""
+
+
 @dataclass(frozen=True)
 class CatalogNode:
     path: tuple[str, ...]
@@ -205,6 +209,32 @@ def _catalog_patches(
     raise TypeError(type(node))
 
 
+def _configured_value_text(value: object, *, limit: int = 160) -> str:
+    try:
+        text = json.dumps(
+            value,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+    except (TypeError, ValueError):
+        text = repr(value)
+    if len(text) <= limit:
+        return text
+    return text[: limit - 3] + "..."
+
+
+def _invalid_configuration_value(
+    path: tuple[str, ...],
+    value: object,
+    expected: str,
+) -> ConfigurationError:
+    return ConfigurationError(
+        f"Invalid config value at {'.'.join(path)}: "
+        f"got {_configured_value_text(value)}; expected {expected}"
+    )
+
+
 def _validate_configuration_value(
     node: catalog_format.CatalogNodeExpression,
     value: object,
@@ -216,20 +246,31 @@ def _validate_configuration_value(
     if isinstance(node, catalog_format.SettingNode):
         if node.value_type is None:
             if value is not True:
-                raise ValueError(f"Configuration {label} must be true or false")
+                raise _invalid_configuration_value(path, value, "true or false")
         elif not catalog_format.matches_type(node.value_type, value):
-            raise ValueError(f"Configuration {label} does not match its setting type")
+            expected = " ".join(catalog_format.type_text(node.value_type).split())
+            raise _invalid_configuration_value(
+                path,
+                value,
+                f"{expected}, or false to disable it",
+            )
         return
     if isinstance(node, catalog_format.ContainerNode):
         if not isinstance(value, dict):
-            raise ValueError(f"Configuration {label} must be false or an object")
+            raise _invalid_configuration_value(
+                path, value, "an object, or false to disable it"
+            )
         fields = _container_fields(node)
         if set(value) != set(fields):
             missing = sorted(set(fields) - set(value))
             extra = sorted(set(value) - set(fields))
-            raise ValueError(
-                f"Configuration {label} children differ from catalog; "
-                f"missing={missing}, extra={extra}"
+            problems: list[str] = []
+            if missing:
+                problems.append("missing keys: " + ", ".join(missing))
+            if extra:
+                problems.append("unknown keys: " + ", ".join(extra))
+            raise ConfigurationError(
+                f"Invalid config object at {label}: {'; '.join(problems)}"
             )
         for key, child in fields.items():
             _validate_configuration_value(child, value[key], (*path, key))
@@ -241,8 +282,13 @@ def _validate_configuration_value(
             if catalog_format.matches_type(catalog_format.active_type(branch), value)
         ]
         if len(matches) != 1:
-            raise ValueError(
-                f"Configuration {label} must match exactly one catalog union branch"
+            expected = " ".join(
+                catalog_format.type_text(catalog_format.active_type(node)).split()
+            )
+            raise _invalid_configuration_value(
+                path,
+                value,
+                f"exactly one of {expected}, or false to disable it",
             )
         _validate_configuration_value(matches[0], value, path)
         return
@@ -264,24 +310,34 @@ def _merge_configuration_value(
     if not isinstance(node, catalog_format.ContainerNode):
         raise TypeError(type(node))
     if not isinstance(override, dict):
-        raise ValueError(f"Configuration override {label} must be false or an object")
+        raise _invalid_configuration_value(
+            path, override, "an object override, or false to disable it"
+        )
     fields = _container_fields(node)
     extra = sorted(set(override) - set(fields))
     if extra:
-        raise ValueError(f"Configuration override {label} has unknown children: {extra}")
+        raise ConfigurationError(
+            f"Invalid config override at {label}: unknown keys: {', '.join(extra)}"
+        )
     if base is False:
         merged: dict[str, object] = {key: False for key in fields}
     elif isinstance(base, dict):
         if set(base) != set(fields):
             missing = sorted(set(fields) - set(base))
             extra_base = sorted(set(base) - set(fields))
-            raise ValueError(
-                f"Configuration {label} children differ from catalog; "
-                f"missing={missing}, extra={extra_base}"
+            problems: list[str] = []
+            if missing:
+                problems.append("missing keys: " + ", ".join(missing))
+            if extra_base:
+                problems.append("unknown keys: " + ", ".join(extra_base))
+            raise ConfigurationError(
+                f"Invalid config object at {label}: {'; '.join(problems)}"
             )
         merged = dict(base)
     else:
-        raise ValueError(f"Configuration {label} must be false or an object")
+        raise _invalid_configuration_value(
+            path, base, "an object, or false to disable it"
+        )
     for key, child_override in override.items():
         merged[key] = _merge_configuration_value(
             fields[key], merged[key], child_override, (*path, key)
@@ -336,15 +392,19 @@ def _selected_nodes(
                 )
             ]
             if len(matches) != 1:
-                raise ValueError(
-                    f"Configuration {'.'.join(path)} must match exactly one "
-                    "catalog union branch"
+                expected = " ".join(
+                    catalog_format.type_text(catalog_format.active_type(node)).split()
+                )
+                raise _invalid_configuration_value(
+                    path,
+                    configured,
+                    f"exactly one of {expected}, or false to disable it",
                 )
             return visit(matches[0], configured, path)
         if not isinstance(node, catalog_format.ContainerNode):
             raise TypeError(type(node))
         if not isinstance(configured, dict):
-            raise ValueError(f"Configuration {'.'.join(path)} must be an object")
+            raise _invalid_configuration_value(path, configured, "an object")
         insertion = len(nodes)
         nodes.append(CatalogNode(path, False, (), node.description))
         enabled = False
@@ -442,7 +502,10 @@ def _effective_configuration(
     configuration_path: Path,
     features: dict[str, catalog_format.ContainerNode],
 ) -> tuple[Path | None, object, dict[str, object]]:
-    configuration = _read_json(configuration_path, "Configuration")
+    try:
+        configuration = _read_json(configuration_path, "Configuration")
+    except ValueError as exc:
+        raise ConfigurationError(str(exc)) from exc
     root = _feature_root(features)
     repository_configuration_root = (catalog_path.parent / "configurations").resolve()
     if (
@@ -450,16 +513,25 @@ def _effective_configuration(
         and configuration_path.name != "base.json"
         and set(configuration) != {"overrides"}
     ):
-        raise ValueError("Repository configurations must contain only the overrides root key")
+        raise ConfigurationError(
+            "Repository configurations must contain only the overrides root key"
+        )
     if set(configuration) == {"overrides"}:
         base_path = (repository_configuration_root / "base.json").resolve()
-        base = _read_json(base_path, "Base configuration")
+        try:
+            base = _read_json(base_path, "Base configuration")
+        except ValueError as exc:
+            raise ConfigurationError(str(exc)) from exc
         if set(base) != {"features", "overrides"}:
-            raise ValueError("Base configuration root keys must be features and overrides")
+            raise ConfigurationError(
+                "Base configuration root keys must be features and overrides"
+            )
         if not isinstance(base["overrides"], dict):
-            raise ValueError("Base configuration overrides must be an object")
+            raise ConfigurationError("Base configuration overrides must be an object")
         if not isinstance(configuration["overrides"], dict):
-            raise ValueError("Configuration overrides must be an object")
+            raise _invalid_configuration_value(
+                ("overrides",), configuration["overrides"], "an object"
+            )
         _validate_configuration_value(root, base["features"], ("features",))
         base_effective = _merge_configuration_value(
             root, base["features"], base["overrides"], ("features",)
@@ -471,7 +543,9 @@ def _effective_configuration(
     elif set(configuration) == {"features", "overrides"}:
         base_path = None
         if not isinstance(configuration["overrides"], dict):
-            raise ValueError("Configuration overrides must be an object")
+            raise _invalid_configuration_value(
+                ("overrides",), configuration["overrides"], "an object"
+            )
         _validate_configuration_value(root, configuration["features"], ("features",))
         effective = _merge_configuration_value(
             root,
@@ -481,9 +555,16 @@ def _effective_configuration(
         )
         overrides = configuration["overrides"]
     else:
-        raise ValueError(
-            "Configuration root keys must be either overrides or features and overrides"
-        )
+        expected = {"features", "overrides"}
+        actual = set(configuration)
+        missing = sorted(expected - actual)
+        extra = sorted(actual - expected)
+        problems: list[str] = []
+        if missing:
+            problems.append("missing keys: " + ", ".join(missing))
+        if extra:
+            problems.append("unknown keys: " + ", ".join(extra))
+        raise ConfigurationError(f"Invalid config root: {'; '.join(problems)}")
     _validate_configuration_value(root, effective, ("features",))
     assert isinstance(overrides, dict)
     return base_path, effective, overrides

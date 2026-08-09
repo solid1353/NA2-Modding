@@ -38,7 +38,7 @@ selects a child, or chooses a default branch.
 `setting<T>` accepts one supplied JSON value described by `T`:
 
 ```text
-substitution_cost: setting<int & 1..15> {
+substitution_cost: setting<decimal & 0..15 & step 0.25> {
   description: "Substitution cost setting.",
   patches: ["e__battle_logic__substitution_cost"],
 },
@@ -80,14 +80,21 @@ The complete approved type grammar consists of:
 - closed object types, with required fields by default and `?` for optional
   fields;
 - pairwise-disjoint unions using `|`;
-- numeric constraints using `&` with inclusive ranges (`1..15`) or comparisons
-  (`>`, `>=`, `<`, and `<=`); and
+- numeric constraints using `&` with inclusive ranges (`1..15`), comparisons
+  (`>`, `>=`, `<`, and `<=`), or a positive zero-anchored multiple constraint
+  (`step 0.25`); and
 - parentheses for explicit grouping.
 
 `&` binds more tightly than `|`. `int` accepts mathematically integral finite
-JSON numbers, including `5.0`. `decimal` accepts only finite non-integral JSON
-numbers. There is no `number` type. Object types are closed: undeclared fields
-are invalid, and every non-optional field is required.
+JSON numbers, including `5.0`. `decimal` accepts every finite JSON number,
+including integers, so `int` is its narrower subset. A union containing
+overlapping `int` and `decimal` branches is invalid. There is no `number` type.
+Object types are closed: undeclared fields are invalid, and every non-optional
+field is required.
+
+`step N` accepts exact multiples of the positive number `N`, anchored at zero.
+For example, `decimal & 0..15 & step 0.25` accepts `0`, `1`, `1.25`, and `15`,
+but rejects `0.1`, `1.1`, and values outside the inclusive range.
 
 The source syntax also supports quoted or identifier keys, JSON strings and
 numbers, `//` line comments, and trailing commas. Catalog keys and feature

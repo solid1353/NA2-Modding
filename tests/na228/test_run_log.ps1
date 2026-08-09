@@ -55,6 +55,21 @@ try {
         -Condition (-not (Test-Na2WindowsAbsolutePath -Text $portable)) `
         -Message 'Portable text retained a Windows absolute path.'
 
+    $parsedConfigurationFailure = Get-Na2ConfigurationFailure -Output @(
+        'Traceback (most recent call last):'
+        '  File "builder.py", line 1, in main'
+        'na228_builder.scripts.catalog.ConfigurationError: Invalid config value at features.example.value: got 0.1; expected int'
+    )
+    Assert-Na2Test `
+        -Condition (
+            $null -ne $parsedConfigurationFailure -and
+            $parsedConfigurationFailure.Message -ceq (
+                'Invalid config value at features.example.value: got 0.1; expected int'
+            ) -and
+            $parsedConfigurationFailure.TechnicalDetails -match '^Traceback'
+        ) `
+        -Message 'Python configuration failure was not separated into user and technical details.'
+
     foreach ($index in 1..22) {
         $context = Start-Na2RunLog `
             -Mode "test-$index" `
@@ -391,6 +406,18 @@ param(
     [switch]$ManualTestOnly,
     [string]$WorkerOutputIso
 )
+if ($env:NA228_TEST_CONFIG_ERROR -ceq '1') {
+    $exception = [InvalidOperationException]::new(
+        'Invalid config value at features.example.value: got 0.1; expected int'
+    )
+    $exception.Data['Na2ConfigurationError'] = $true
+    $exception.Data['Na2TechnicalDetails'] = (
+        "Traceback (most recent call last):`n" +
+        "  File `"$PSScriptRoot\builder.py`", line 1, in main`n" +
+        'na228_builder.scripts.catalog.ConfigurationError: Invalid config value at features.example.value: got 0.1; expected int'
+    )
+    throw $exception
+}
 if ($WorkerOutputIso) {
     Write-Host '[na228] ISO result: worker; rotation: no; PCSX2 left running.'
     [pscustomobject]@{ Status = 'worker'; ChangedRoles = [string[]]@() }
@@ -797,6 +824,41 @@ Add-Content `
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: updated').Count -eq 4) `
         -Message 'Build-only and build-and-launch did not use the standard build pipeline.'
+    $oldLastExitCode = $global:LASTEXITCODE
+    try {
+        $env:NA228_TEST_CONFIG_ERROR = '1'
+        $global:LASTEXITCODE = 0
+        $configurationFailureOutput = (
+            & (Join-Path $fakeRepository 'na228.ps1') build l *>&1
+        ) -join "`n"
+        $configurationFailureExitCode = $LASTEXITCODE
+    }
+    finally {
+        Remove-Item Env:NA228_TEST_CONFIG_ERROR -ErrorAction SilentlyContinue
+        $global:LASTEXITCODE = $oldLastExitCode
+    }
+    Assert-Na2Test `
+        -Condition (
+            $configurationFailureExitCode -eq 1 -and
+            $configurationFailureOutput -match (
+                '\[na228\] Build failed: Invalid config value at ' +
+                'features\.example\.value: got 0\.1; expected int'
+            ) -and
+            $configurationFailureOutput -notmatch 'Traceback'
+        ) `
+        -Message 'Development config failure was not concise or returned the wrong exit code.'
+    $configurationFailureLog = [IO.File]::ReadAllText(
+        (Join-Path $fakeRepository 'logs\na228\latest.log')
+    )
+    Assert-Na2Test `
+        -Condition (
+            $configurationFailureLog -match '(?m)^outcome: failed$' -and
+            $configurationFailureLog -match '(?m)^error: Invalid config value at ' -and
+            $configurationFailureLog -match '(?m)^technical_details:$' -and
+            $configurationFailureLog -match 'Traceback \(most recent call last\):' -and
+            $configurationFailureLog -match '@scripts/na228/builder\.py'
+        ) `
+        -Message 'Development config traceback was not retained in the portable run log.'
     $structuredLog = Join-Path $logs 'na228'
     $buildRecords = Join-Path $structuredLog 'builds'
     foreach ($buildId in 'old-previous', 'old-latest', 'new-latest', 'orphan') {

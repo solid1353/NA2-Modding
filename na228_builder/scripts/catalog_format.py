@@ -4,6 +4,7 @@ import json
 import math
 import re
 from dataclasses import dataclass
+from fractions import Fraction
 from pathlib import Path
 from typing import TypeAlias
 
@@ -444,6 +445,10 @@ class _Parser:
 
     def numeric_constraint(self) -> NumericConstraint:
         token = self.current
+        if token.kind == "IDENT" and token.value == "step":
+            self.index += 1
+            number = self.expect("NUMBER", "step constraint requires a number")
+            return NumericConstraint("step", number.value)  # type: ignore[arg-type]
         if token.kind in {">", ">=", "<", "<="}:
             self.index += 1
             number = self.expect("NUMBER", "numeric comparison requires a number")
@@ -480,19 +485,26 @@ def _number(value: object) -> float | None:
     return result if math.isfinite(result) else None
 
 
-def _constraint_matches(constraint: NumericConstraint, value: float) -> bool:
-    first = float(constraint.first)
+def _fraction(value: int | float) -> Fraction:
+    return Fraction(str(value))
+
+
+def _constraint_matches(constraint: NumericConstraint, value: int | float) -> bool:
+    numeric = _fraction(value)
+    first = _fraction(constraint.first)
     if constraint.operator == "range":
         assert constraint.second is not None
-        return first <= value <= float(constraint.second)
+        return first <= numeric <= _fraction(constraint.second)
     if constraint.operator == ">":
-        return value > first
+        return numeric > first
     if constraint.operator == ">=":
-        return value >= first
+        return numeric >= first
     if constraint.operator == "<":
-        return value < first
+        return numeric < first
     if constraint.operator == "<=":
-        return value <= first
+        return numeric <= first
+    if constraint.operator == "step":
+        return first > 0 and numeric % first == 0
     raise ValueError(f"Unsupported numeric constraint: {constraint.operator}")
 
 
@@ -508,7 +520,7 @@ def matches_type(value_type: TypeExpression, value: object) -> bool:
         if value_type.name == "int":
             return number.is_integer()
         if value_type.name == "decimal":
-            return not number.is_integer()
+            return True
         raise ValueError(f"Unsupported primitive type: {value_type.name}")
     if isinstance(value_type, LiteralType):
         return _json_equal(value_type.value, value)
@@ -538,16 +550,25 @@ def matches_type(value_type: TypeExpression, value: object) -> bool:
 
 @dataclass(frozen=True)
 class _Interval:
-    kind: str
-    lower: float | None = None
+    lower: Fraction | None = None
     lower_inclusive: bool = True
-    upper: float | None = None
+    upper: Fraction | None = None
     upper_inclusive: bool = True
+    step: Fraction | None = None
+
+
+def _common_step(left: Fraction, right: Fraction) -> Fraction:
+    return Fraction(
+        math.lcm(left.numerator, right.numerator),
+        math.gcd(left.denominator, right.denominator),
+    )
 
 
 def _numeric_interval(value_type: TypeExpression) -> _Interval | None:
     if isinstance(value_type, PrimitiveType) and value_type.name in {"int", "decimal"}:
-        return _Interval(value_type.name)
+        return _Interval(
+            step=Fraction(1) if value_type.name == "int" else None,
+        )
     if not isinstance(value_type, ConstrainedType):
         return None
     base = _numeric_interval(value_type.base)
@@ -557,17 +578,16 @@ def _numeric_interval(value_type: TypeExpression) -> _Interval | None:
     lower_inclusive = base.lower_inclusive
     upper = base.upper
     upper_inclusive = base.upper_inclusive
+    step = base.step
     for constraint in value_type.constraints:
-        first = float(constraint.first)
+        first = _fraction(constraint.first)
         if constraint.operator == "range":
             assert constraint.second is not None
-            candidate_upper = float(constraint.second)
-            if lower is None or first > lower or (first == lower and not lower_inclusive):
+            candidate_upper = _fraction(constraint.second)
+            if lower is None or first > lower:
                 lower = first
                 lower_inclusive = True
-            if upper is None or candidate_upper < upper or (
-                candidate_upper == upper and not upper_inclusive
-            ):
+            if upper is None or candidate_upper < upper:
                 upper = candidate_upper
                 upper_inclusive = True
         elif constraint.operator in {">", ">="}:
@@ -577,19 +597,28 @@ def _numeric_interval(value_type: TypeExpression) -> _Interval | None:
                 lower_inclusive = inclusive
             elif first == lower:
                 lower_inclusive = lower_inclusive and inclusive
-        else:
+        elif constraint.operator in {"<", "<="}:
             inclusive = constraint.operator == "<="
             if upper is None or first < upper:
                 upper = first
                 upper_inclusive = inclusive
             elif first == upper:
                 upper_inclusive = upper_inclusive and inclusive
-    return _Interval(base.kind, lower, lower_inclusive, upper, upper_inclusive)
+        elif constraint.operator == "step":
+            assert first > 0
+            step = first if step is None else _common_step(step, first)
+        else:
+            raise ValueError(f"Unsupported numeric constraint: {constraint.operator}")
+    return _Interval(
+        lower=lower,
+        lower_inclusive=lower_inclusive,
+        upper=upper,
+        upper_inclusive=upper_inclusive,
+        step=step,
+    )
 
 
 def _intersect_intervals(left: _Interval, right: _Interval) -> bool:
-    if left.kind != right.kind:
-        return False
     lower = left.lower
     lower_inclusive = left.lower_inclusive
     if right.lower is not None and (
@@ -614,20 +643,27 @@ def _intersect_intervals(left: _Interval, right: _Interval) -> bool:
         if lower == upper:
             if not (lower_inclusive and upper_inclusive):
                 return False
-            return lower.is_integer() if left.kind == "int" else not lower.is_integer()
-    if left.kind == "decimal":
+    if left.step is None:
+        step = right.step
+    elif right.step is None:
+        step = left.step
+    else:
+        step = _common_step(left.step, right.step)
+    if step is None:
         return True
-    minimum = -math.inf
-    maximum = math.inf
+    minimum: int | None = None
+    maximum: int | None = None
     if lower is not None:
-        minimum = math.ceil(lower)
-        if minimum == lower and not lower_inclusive:
+        scaled_lower = lower / step
+        minimum = math.ceil(scaled_lower)
+        if minimum == scaled_lower and not lower_inclusive:
             minimum += 1
     if upper is not None:
-        maximum = math.floor(upper)
-        if maximum == upper and not upper_inclusive:
+        scaled_upper = upper / step
+        maximum = math.floor(scaled_upper)
+        if maximum == scaled_upper and not upper_inclusive:
             maximum -= 1
-    return minimum <= maximum
+    return minimum is None or maximum is None or minimum <= maximum
 
 
 def types_overlap(left: TypeExpression, right: TypeExpression) -> bool:
@@ -674,6 +710,9 @@ def _validate_type(value_type: TypeExpression, label: str) -> None:
         return
     if isinstance(value_type, ConstrainedType):
         _validate_type(value_type.base, label)
+        for constraint in value_type.constraints:
+            if constraint.operator == "step" and constraint.first <= 0:
+                raise ValueError(f"{label}: step constraint must be positive")
         interval = _numeric_interval(value_type)
         if interval is None:
             raise ValueError(f"{label}: '&' constraints require int or decimal")
@@ -781,6 +820,8 @@ def _type_text(value_type: TypeExpression, indent: int, precedence: int = 0) -> 
         for constraint in value_type.constraints:
             if constraint.operator == "range":
                 text += f" & {constraint.first}..{constraint.second}"
+            elif constraint.operator == "step":
+                text += f" & step {constraint.first}"
             else:
                 text += f" & {constraint.operator}{constraint.first}"
         return f"({text})" if precedence > 2 else text
@@ -788,6 +829,11 @@ def _type_text(value_type: TypeExpression, indent: int, precedence: int = 0) -> 
         text = " | ".join(_type_text(branch, indent, 1) for branch in value_type.branches)
         return f"({text})" if precedence > 1 else text
     raise TypeError(type(value_type))
+
+
+def type_text(value_type: TypeExpression) -> str:
+    """Return the canonical user-facing spelling of a catalog value type."""
+    return _type_text(value_type, 0)
 
 
 def _node_lines(

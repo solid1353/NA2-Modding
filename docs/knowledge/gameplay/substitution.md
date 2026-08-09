@@ -37,10 +37,10 @@ instruction bytes `80 3F 02 3C`. The function moves the resulting float32
 `1.0` to `f0`, subtracts it from the object's `+0x70` float field, and clamps
 the result to zero.
 
-Integer costs from 1 through 15 have exact IEEE-754 float32 encodings whose
-low 16 bits are zero. The existing `lui` can therefore represent any value in
-that range by changing only its immediate while preserving its opcode and
-destination register.
+Quarter-step costs from 0 through 15 have exact IEEE-754 float32 encodings whose
+low 16 bits are zero. The existing `lui` can therefore represent every value in
+that stepped range by changing only its immediate while preserving its opcode
+and destination register.
 
 | Cost | LUI immediate | Complete instruction bytes |
 | ---: | ---: | --- |
@@ -51,14 +51,15 @@ destination register.
 
 The historical 16-bit PNACH write changed the immediate bytes from `80 3F` to
 `40 40`, making the decrement cost `3`. That form is runtime-proven. The current
-catalog exposes the mechanism as `setting<int & 1..15>` and applies the guarded
+catalog exposes the mechanism as
+`setting<decimal & 0..15 & step 0.25>` and applies the guarded
 `mips_lui_float32` adapter; use that setting rather than restoring a permanent
 PNACH write. The base configuration selects the clean cost `1`.
 
 The instruction site, float encoding, and decrement mechanism are confirmed,
-not hypotheses. Cost `3` is runtime-proven; the other non-default configurable
-costs have not each been runtime-tested. Substitution cost is not the
-substitution-reliability gate.
+not hypotheses. Cost `3` is runtime-proven; the other configurable costs,
+including zero and fractional values, have not each been runtime-tested.
+Substitution cost is not the substitution-reliability gate.
 
 ## Runtime tests that did not improve reliability
 

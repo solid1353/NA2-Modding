@@ -82,6 +82,25 @@ function ConvertTo-Na2PortableText {
     return $portable
 }
 
+function Get-Na2ConfigurationFailure {
+    [CmdletBinding()]
+    param([Parameter(Mandatory = $true)][string[]]$Output)
+
+    $message = $null
+    foreach ($line in $Output) {
+        if ($line -match '(?:^|\.)ConfigurationError:\s*(?<message>.+)$') {
+            $message = $Matches.message.Trim()
+        }
+    }
+    if ($null -eq $message) {
+        return $null
+    }
+    return [pscustomobject]@{
+        Message = $message
+        TechnicalDetails = $Output -join "`n"
+    }
+}
+
 function Remove-Na2TranscriptBoilerplate {
     [CmdletBinding()]
     param([AllowEmptyString()][string]$Text)
@@ -174,7 +193,8 @@ function Complete-Na2RunLog {
     param(
         [Parameter(Mandatory = $true)][psobject]$Context,
         [Parameter(Mandatory = $true)][ValidateSet('succeeded', 'failed')][string]$Outcome,
-        [AllowEmptyString()][string]$FailureMessage = ''
+        [AllowEmptyString()][string]$FailureMessage = '',
+        [AllowEmptyString()][string]$TechnicalDetails = ''
     )
 
     $ended = Get-Date
@@ -198,6 +218,9 @@ function Complete-Na2RunLog {
         $portableFailure = ConvertTo-Na2PortableText `
             -Text $FailureMessage `
             -Paths $Context.Paths
+        $portableTechnicalDetails = ConvertTo-Na2PortableText `
+            -Text $TechnicalDetails `
+            -Paths $Context.Paths
 
         $durationMilliseconds = [math]::Max(
             0,
@@ -212,6 +235,11 @@ function Complete-Na2RunLog {
         $sectionLines.Add("duration_ms: $durationMilliseconds")
         if (-not [string]::IsNullOrWhiteSpace($portableFailure)) {
             $sectionLines.Add("error: $portableFailure")
+        }
+        if (-not [string]::IsNullOrWhiteSpace($portableTechnicalDetails)) {
+            $sectionLines.Add('')
+            $sectionLines.Add('technical_details:')
+            $sectionLines.Add($portableTechnicalDetails)
         }
         if (-not [string]::IsNullOrWhiteSpace($body)) {
             $sectionLines.Add('')

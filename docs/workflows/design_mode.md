@@ -6,13 +6,19 @@ No other wording enters Design mode. Plain `des` and `design` do not enter it.
 
 ## Draft creation
 
-1. Infer the design topic from the conversation. Ask only when it is genuinely
-   unclear.
-2. Resume an existing draft for the same design, or create
-   `docs/designs/<topic>.md` when none exists.
-3. Give a new document the status `Draft` and write an initial proposal into it.
-4. Open the design document in VS Code.
-5. Report the draft path and begin grooming the proposal with the user.
+1. Infer the design topic from the conversation. Ask only when genuinely unclear.
+2. Resume the existing draft for that topic, or create
+   `docs/designs/<topic>.md`.
+3. A new draft contains its title, `Status: Draft`, and only points explicitly
+   stated or approved by the user.
+4. Do not add inferred requirements, proposals, decisions, questions,
+   alternatives, implementation details, or validation plans.
+5. Present agent-generated proposals in chat first. Add them only after explicit
+   user approval.
+6. If no design points are approved, leave the draft otherwise empty.
+7. Open the draft in VS Code and report its path.
+8. Removing discussed content does not authorize deleting the draft. Delete the
+   draft only on an explicit instruction to delete the draft.
 
 ## Discussion
 

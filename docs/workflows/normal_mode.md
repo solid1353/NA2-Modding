@@ -38,16 +38,16 @@ in the repository.
 
 - `c on` makes completed Normal mode work commit and push automatically.
 - `c off` leaves completed Normal mode work uncommitted and unpushed.
-- Exact `ver` is a one-time override for the current task-owned pending Normal
-  mode changes. No other acceptance or approval wording triggers it.
+- `ver` is a one-time override for the current task-owned pending Normal mode
+  changes.
 
 One-time override behavior is defined in the
 [repository policy](../policies/repository.md#git-and-concurrent-work). Only
 `c on` or `c off` changes the persistent setting. Design mode and Interactive
 mode retain their own commit behavior.
 
-Game/runtime patches remain uncommitted until exact `ver`, regardless of
-the persistent setting. Starting a patch does not change that setting.
+Game/runtime patches remain uncommitted until `ver`, regardless of the
+persistent setting. Starting a patch does not change that setting.
 
 ## Action boundary
 

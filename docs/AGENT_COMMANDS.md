@@ -22,11 +22,9 @@ those.
 - `c`: respond only with `Commit: on` or `Commit: off`, reporting the current
   chat's persistent Normal mode commit setting. It does not change the setting
   or grant authority.
-- `ver`: only when the entire user message, after trimming surrounding
-  whitespace, is exactly `ver`, apply the
+- `ver`: apply the
   [one-time override](policies/repository.md#git-and-concurrent-work) to the
-  current task-owned pending Normal mode changes. No other wording triggers
-  this command.
+  current task-owned pending Normal mode changes.
 - `zxc`: follow the
   [`graceful-stop procedure`](procedures/graceful_stop.md).
 

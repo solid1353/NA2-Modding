@@ -86,21 +86,6 @@ Current shared-build and user-facing command behavior is documented by
 `na228 help`, [`../../scripts/README.md`](../../scripts/README.md), and
 [`../../e2e/README.md`](../../e2e/README.md), not redefined here.
 
-## Direct-PINE candidate injection
-
-Direct injection is development evidence, not integrated-build or release
-acceptance. Every development injection candidate compiles and links
-`src/hot_reload_message.c`, installs its visible marker call, and treats that
-source as a rebuild input; the marker never enters normal profile or release
-composition.
-
-- Agents do not use `scripts/injection/inject_candidate.ps1` for validation
-  because it loads a savestate. Do not invoke its internal build/apply stages
-  separately or transport candidates through PNACH, cheat-folder sync,
-  install/restore state, or filesystem watchers.
-- `scripts/injection/watch.ps1` is user-only live-editing convenience. Agents do
-  not run or depend on it.
-
 ## Screenshots and evidence
 
 - Extract `Screenshot.png` from an existing savestate when that frame is enough;

@@ -1,5 +1,5 @@
 {
-  "localization__font__glyphs__metrics": {
+  "i__localization__font__glyphs__metrics": {
     "description": "Decode the accepted packed 14x20 metric rows for measurement and drawing from composition-time C in 228.BIN, leaving only guarded register-setup hooks in the fixed boot ELF.",
     "hooks": {
       "expand_current_secondary_byte_compiled_packed": {
@@ -42,7 +42,7 @@
       }
     }
   },
-  "localization__font__layout__character_select_modal": {
+  "i__localization__font__layout__character_select_modal": {
     "description": "Route both selected and ordinary five-row entries through one bounded NUN5-metric session, render the return-confirmation body through NUN5's 368x24 secondary-font box, and scope only that confirmation's top Yes/No list through the shared NUN5 coordinate mapper.",
     "hooks": {
       "publish_character_confirmation_scope_around_yes": {
@@ -99,7 +99,7 @@
       }
     }
   },
-  "localization__font__layout__collection_confirmation": {
+  "i__localization__font__layout__collection_confirmation": {
     "description": "Route both Collection exit-confirmation body consumers and the bounded Yes/No list through NUN5-matched C geometry.",
     "hooks": {
       "publish_existing_c_owned_nun5_yes": {
@@ -128,7 +128,7 @@
       }
     }
   },
-  "localization__font__layout__collection_lists": {
+  "i__localization__font__layout__collection_lists": {
     "description": "Route the shared Collection row draw through family boxes and move the three character-header callers through two shared plaque-origin formulas without changing any displayed string.",
     "hooks": {
       "move_every_character_specific_music_header": {
@@ -165,7 +165,7 @@
       }
     }
   },
-  "localization__font__layout__command_relationships": {
+  "i__localization__font__layout__command_relationships": {
     "description": "Combine each Command Chart row's two optional relationship strings and render them once through one bounded two-line layout, then select the homologous icon-row offset according to whether the row has relationship text.",
     "hooks": {
       "replace_native_fixed_plus_20_icon": {
@@ -217,7 +217,7 @@
       }
     }
   },
-  "localization__font__layout__controls": {
+  "i__localization__font__layout__controls": {
     "description": "Route the first eight Control Settings action labels through the v2 128-unit NUN5 box.",
     "hooks": {
       "replace_shared_first_eight_label_controls": {
@@ -230,7 +230,7 @@
       }
     }
   },
-  "localization__font__layout__core": {
+  "i__localization__font__layout__core": {
     "description": "Provide independent NUN5-compatible printable-ASCII measurement, shrink-only fitting, box positioning, explicit line measurement, and session-guarded renderer hooks for accepted caller-family adapters.",
     "hooks": {
       "route_inline_markup_half_space_advance": {
@@ -367,7 +367,7 @@
       }
     }
   },
-  "localization__font__layout__global_selected_style": {
+  "i__localization__font__layout__global_selected_style": {
     "description": "Apply one origin rule across every native NA2 gray-shadow selected renderer: keep the colored glyph at its ordinary origin and place its shadow one unit right and two units below.",
     "hooks": {
       "apply_same_record_origin_formula_second": {
@@ -472,7 +472,7 @@
       }
     }
   },
-  "localization__font__layout__jutsu_selector": {
+  "i__localization__font__layout__jutsu_selector": {
     "description": "Route the exact Battle Settings Jutsu-row draw through a selective C entry that preserves native one-line rendering and uses the NUN5-homologous 186x32 two-line compositor only when wrapping is required.",
     "hooks": {
       "route_final_visible_jutsu_row_text": {
@@ -485,7 +485,7 @@
       }
     }
   },
-  "localization__font__layout__linked_mode_modal": {
+  "i__localization__font__layout__linked_mode_modal": {
     "description": "Apply one shared centered 1.05 horizontal-scale session to both Linked Mode choices while retaining the accepted title, base-row, and interval geometry.",
     "hooks": {
       "route_every_ordinary_linked_mode_choice": {
@@ -521,7 +521,7 @@
       }
     }
   },
-  "localization__font__layout__mode_select_confirmation": {
+  "i__localization__font__layout__mode_select_confirmation": {
     "description": "Route the dedicated Return to Title Screen body draw through NUN5 renderer state and retain the scoped Yes/No coordinate mapper for the top selector.",
     "hooks": {
       "publish_existing_c_owned_yes_no": {
@@ -542,7 +542,7 @@
       }
     }
   },
-  "localization__font__layout__ninja_song_details": {
+  "i__localization__font__layout__ninja_song_details": {
     "description": "Replace the shared data-driven formula renderer used by all fifteen rows, retaining its three native formula variants while applying the NUN5 term boxes and positions; wrap every objective through one separate 288x32 prose template.",
     "hooks": {
       "replace_shared_data_driven_ninja_song": {
@@ -567,7 +567,7 @@
       }
     }
   },
-  "localization__font__layout__pause_controls": {
+  "i__localization__font__layout__pause_controls": {
     "description": "Route both normal and selected Pause Controls rows through one shared 216-unit shrink-only box with the retained NUN5 four-unit Y correction.",
     "hooks": {
       "route_pause_controls_list_row_draw": {
@@ -603,7 +603,7 @@
       }
     }
   },
-  "localization__font__layout__practice_explanations": {
+  "i__localization__font__layout__practice_explanations": {
     "description": "Replace the per-token Practice explanation renderer with one NUN5-equivalent mixed text/icon buffer, unlimited word wrapping inside the 364x48 box, and call-local icon callbacks.",
     "hooks": {
       "route_every_practice_explanation_row_one": {
@@ -633,7 +633,7 @@
       }
     }
   },
-  "localization__font__layout__quit_confirmation": {
+  "i__localization__font__layout__quit_confirmation": {
     "description": "Route the shared quit-confirmation body and Yes/No list through draw-time wrapping and scoped NUN5 coordinate adapters, while exact Special Controls string-pointer guards reuse the same selected/unselected hooks.",
     "hooks": {
       "copy_wrap_exact_ss4_confirmation_body": {
@@ -690,7 +690,7 @@
       }
     }
   },
-  "localization__font__layout__runtime": {
+  "i__localization__font__layout__runtime": {
     "payload": {
       "v2_ascii_widths": {
         "kind": "rodata",
@@ -1138,7 +1138,7 @@
       }
     }
   },
-  "localization__font__layout__settings_rows": {
+  "i__localization__font__layout__settings_rows": {
     "description": "Route the exact Battle Settings and Practice Settings loops through page-level label, heading, compact-token value, descriptive-phrase value, and digit-leading value templates.",
     "hooks": {
       "route_alternate_battle_settings_value_branch": {
@@ -1191,7 +1191,7 @@
       }
     }
   },
-  "localization__font__layout__special_controls_body": {
+  "i__localization__font__layout__special_controls_body": {
     "description": "Route only the exact Special Controls explanatory-body call through the shared draw-time word wrapper using the NUN5 400x60 two-line container.",
     "hooks": {
       "copy_wrap_exact_ss1_special_controls": {
@@ -1204,7 +1204,7 @@
       }
     }
   },
-  "localization__font__layout__titles": {
+  "i__localization__font__layout__titles": {
     "description": "Route the two title-only BTL draw calls through one configurable v2 adapter with distinct 288-unit Command Chart and 352-unit Practice containers.",
     "hooks": {
       "route_command_chart_title_draw_shared": {
@@ -1225,7 +1225,7 @@
       }
     }
   },
-  "localization__font__numeric_formatting__battle_settings": {
+  "i__localization__font__numeric_formatting__battle_settings": {
     "description": "Route only ordinary Battle Settings Time through the shared ASCII C formatting layer while preserving the special 100/infinity path.",
     "hooks": {
       "call_ordinary_battle_settings_time_c": {
@@ -1240,7 +1240,7 @@
       }
     }
   },
-  "localization__font__numeric_formatting__ninja_song": {
+  "i__localization__font__numeric_formatting__ninja_song": {
     "description": "Route all five dynamic Ninja Song decimal fields through one NUN5-compatible ASCII formatter while preserving each caller's width and padding mode.",
     "hooks": {
       "render_left_ninja_song_arithmetic_factor": {
@@ -1285,7 +1285,7 @@
       }
     }
   },
-  "localization__font__numeric_formatting__save_load": {
+  "i__localization__font__numeric_formatting__save_load": {
     "description": "Route the six accepted Save/Load numeric fields through typed C entries while retaining only register setup and symbolic hooks at the native call sites.",
     "hooks": {
       "call_accepted_signed_99_hour_c": {
@@ -1350,7 +1350,7 @@
       }
     }
   },
-  "localization__shared_font_payload": {
+  "i__localization__shared_font_payload": {
     "payload": {
       "c_numeric_format_decimal": {
         "kind": "code",
@@ -1401,7 +1401,7 @@
       }
     }
   },
-  "qol__startup__loading_screen__runtime": {
+  "i__qol__startup__loading_screen__runtime": {
     "description": "Replace the boot splashes with a large primitive percentage and progress bar paced across the measured 25-second load while the original startup loaders run.",
     "hooks": {
       "initialize_hold_splash_controller_s_first": {

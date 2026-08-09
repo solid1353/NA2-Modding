@@ -5,10 +5,10 @@ This internal engine applies selected guarded edits to verified clean binaries.
 definitions; feature files under `na228_builder/catalog/` assign their IDs to
 selectable leaves. The TSV
 files in `operations/` define each operation's allowed fields and basic types.
-The root definition map is serialized alphabetically. Each identity begins
-with its catalog ownership path and ends with a semantic operation identity,
-using `__` between the segments. Catalog leaves reference those identities in
-alphabetical order.
+The root definition map is serialized alphabetically. Every edit identity uses
+the `e__` prefix, then its catalog ownership path and semantic operation
+identity. Catalog settings reference those identities through their single
+`patches` array.
 
 An edit may contain a nonempty `description` when concise purpose or provenance
 belongs specifically to that operation. Description text is logged as the
@@ -25,6 +25,9 @@ guarded file edits.
 - All persisted paths are relative.
 - Every input target is checked by size and SHA-256.
 - Every destination range is checked by exact bytes or a range SHA-256.
+- A `replace` edit declares exactly one of a static `replacement_hex` or an
+  adapter. Adapters in `adapters.py` convert a validated typed catalog value to
+  concrete replacement bytes without weakening the destination guard.
 - Copy sources are covered by the complete source target's size and SHA-256.
 - Configuration selection determines which catalog nodes apply; the engine's
   synthetic groups and patches are internal execution objects only.
@@ -34,8 +37,6 @@ guarded file edits.
 - JSON source order is a maintained serialization convention, not an execution
   contract. The loader derives execution order from catalog selection and the
   composer resolves edits by target and destination offset.
-- Migrated nodes marked `proven: false` remain executable while they await
-  individual proof; the marker is catalog metadata, not an engine status.
 - Outputs must be new, stay outside input roots, and preserve target sizes.
 - Every applied edit and before/after file hash is logged.
 - Do not use fixed-address PNACH writes against on-demand overlays such as

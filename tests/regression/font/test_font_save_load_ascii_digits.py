@@ -13,7 +13,7 @@ class SaveLoadAsciiDigitsTests(unittest.TestCase):
             hook
             for hook in verify_font_renderer.numeric_hooks()
             if hook.patch_id
-            == "localization__font__numeric_formatting__save_load"
+            == "i__localization__font__numeric_formatting__save_load"
         )
 
     def test_date_order_and_year_lifetime_are_explicit(self) -> None:

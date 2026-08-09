@@ -12,11 +12,11 @@ Canonical production inputs are the shared
 `na228_builder/catalog/implementation/targets.tsv` registry, injection units
 from `na228_builder/catalog/implementation/injections.json`, and referenced
 repository sources and assets.
-Catalog leaves select injection units by ID.
+Catalog settings select injection units through `i__` patch IDs.
 There is no separate runtime-injector data directory.
 
-Each root injection identity begins with its catalog ownership path and ends
-with a semantic unit identity, using `__` between segments. The root map and
+Each root injection identity begins with `i__`, followed by its catalog
+ownership path and semantic unit identity. The root map and
 unordered nested maps are serialized alphabetically. Hooks and named payload
 fragments use concise local semantic identities rather than repeating their
 owner's catalog prefix. Optional nonempty injection and hook descriptions hold

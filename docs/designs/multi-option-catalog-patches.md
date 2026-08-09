@@ -1,6 +1,6 @@
 # Multi-option patch behavior
 
-Status: Ready for implementation
+Status: Implemented
 
 ## Repository-wide changes
 
@@ -119,13 +119,8 @@ The approved catalog shape is:
         },
         save_loading:
           setting<"manual"> {
-            description: "Enter the main menu without automatically loading a save.",
+            description: "Use the current confirmed startup save-loading flow.",
             patches: ["e__qol__startup__save_loading__manual"],
-          }
-          |
-          setting<"auto"> {
-            description: "Load a save automatically during startup.",
-            patches: ["i__qol__startup__save_loading__auto"],
           },
       },
     },
@@ -176,7 +171,7 @@ The corresponding JSON configuration is:
     "qol": {
       "startup": {
         "skip_opening": true,
-        "save_loading": "auto"
+        "save_loading": "manual"
       }
     },
     "example": {
@@ -277,12 +272,12 @@ semantic paths and values through the embedded implementation data.
 
 ## Startup behavior patch
 
-- `qol.startup.save_loading` is a union of `setting<"manual">` and
-  `setting<"auto">` branches.
-- `manual` is the current loading-screen-then-main-menu behavior.
-- `auto` is background first-save autoload.
-- The behavior values are mutually exclusive.
-- The base configuration uses `manual` for now. There is no separate default.
+- `qol.startup.save_loading` is currently `setting<"manual">` and owns the
+  confirmed loading-screen-then-main-menu behavior.
+- The base configuration uses `manual`; there is no separate default.
+- Automatic background first-save loading is not implemented and is not added
+  by this change. If implemented later, it can become a disjoint second branch
+  without changing the catalog model.
 - `qol.save_load.display_only_first_save` remains independent because it owns
   Save/Load presentation rather than startup behavior.
 

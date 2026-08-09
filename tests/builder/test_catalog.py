@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
-from na228_builder.scripts import catalog
+from na228_builder.modules.binary_patcher import adapters
+from na228_builder.scripts import catalog, catalog_format
+
+
+PATCH_ID = re.compile(r'"((?:e|i)__[a-z0-9_]+)"')
 
 
 class CatalogTests(unittest.TestCase):
@@ -14,234 +19,303 @@ class CatalogTests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
 
-    def write_catalog(self, path: Path, value: object) -> None:
-        if not isinstance(value, dict) or set(value) != {"features"}:
-            raise ValueError("Test catalog must contain only features")
-        features = value["features"]
-        if not isinstance(features, dict):
-            raise ValueError("Test catalog features must be an object")
-        path.mkdir(parents=True, exist_ok=True)
-        reference: dict[str, object] = {}
-
-        def separate(node: dict[str, object]) -> tuple[dict[str, object], dict[str, object]]:
-            catalog_node: dict[str, object] = {}
-            reference_node: dict[str, object] = {}
-            for key, item in node.items():
-                if key == "description":
-                    reference_node[key] = item
-                elif isinstance(item, dict) and key not in {
-                    "edits", "injections", "proven"
-                }:
-                    catalog_child, reference_child = separate(item)
-                    catalog_node[key] = catalog_child
-                    if reference_child:
-                        reference_node[key] = reference_child
-                else:
-                    catalog_node[key] = item
-            return catalog_node, reference_node
-
-        for feature_id, feature in features.items():
-            catalog_feature, reference_feature = separate(feature)
-            self.write_json(path / f"{feature_id}.json", catalog_feature)
-            if reference_feature:
-                reference[feature_id] = reference_feature
-        self.write_json(path / "__reference.json", reference)
-        implementation = path / "implementation"
-        implementation.mkdir(exist_ok=True)
-        for name in ("edits.json", "injections.json"):
-            definition_path = implementation / name
-            if not definition_path.exists():
-                definition_path.write_text("{}\n", encoding="utf-8")
+    def write_project(
+        self,
+        root: Path,
+        sources: dict[str, str],
+        features: dict[str, object],
+        *,
+        overrides: dict[str, object] | None = None,
+        edits: dict[str, object] | None = None,
+        injections: dict[str, object] | None = None,
+    ) -> tuple[Path, Path]:
+        catalog_path = root / "catalog"
+        implementation = catalog_path / "implementation"
+        implementation.mkdir(parents=True)
+        referenced = {
+            patch for source in sources.values() for patch in PATCH_ID.findall(source)
+        }
+        generated_edits = {
+            patch: {"description": f"Synthetic edit {patch}."}
+            for patch in sorted(referenced)
+            if patch.startswith("e__")
+        }
+        generated_injections = {
+            patch: {"description": f"Synthetic injection {patch}."}
+            for patch in sorted(referenced)
+            if patch.startswith("i__")
+        }
+        generated_edits.update(edits or {})
+        generated_injections.update(injections or {})
+        for feature_id, source in sources.items():
+            (catalog_path / f"{feature_id}.modcat").write_text(
+                source, encoding="utf-8"
+            )
+        self.write_json(implementation / "edits.json", generated_edits)
+        self.write_json(implementation / "injections.json", generated_injections)
         self.write_json(
-            path.parent / "configurations" / "base.json",
-            {"features": True, "overrides": {}},
+            root / "configurations" / "base.json",
+            {"features": features, "overrides": overrides or {}},
         )
+        configuration_path = root / "configuration.json"
+        self.write_json(configuration_path, {"overrides": {}})
+        return catalog_path, configuration_path
 
-    def test_configuration_must_match_catalog_at_every_descended_level(self) -> None:
+    def test_complete_minimal_grammar_and_type_matching(self) -> None:
+        source = r'''
+        {
+          // Plain switch.
+          plain: setting {
+            description: "Plain setting.",
+            patches: ["e__feature__plain",],
+          },
+          supplied_bool: setting<{ value: bool, label?: string, }> {
+            description: "Boolean data wrapped in an object.",
+            patches: ["e__feature__supplied_bool"],
+          },
+          numeric: setting<(int & 1..15) | (decimal & >0 & <=1)> {
+            description: "Disjoint numeric union.",
+            patches: ["e__feature__numeric"],
+          },
+          alternative:
+            setting<int> {
+              description: "Direct integer.",
+              patches: ["e__feature__direct"],
+            }
+            |
+            {
+              ratio: setting<{ numerator: int & >0, denominator: int & >0 }> {
+                description: "Named ratio.",
+                patches: ["e__feature__ratio"],
+              },
+            },
+        }
+        '''
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            catalog_path = root / "catalog"
-            configuration_path = root / "configuration.json"
-            self.write_catalog(
-                catalog_path,
-                {
-                    "features": {
-                        "feature": {
-                        "description": "ignored",
-                        "nested": {
-                            "first_leaf": {"proven": False},
-                            "second_leaf": {},
-                        },
-                        }
+            path = Path(directory) / "feature.modcat"
+            path.write_text(source, encoding="utf-8")
+            parsed = catalog_format.parse_catalog(path)
+
+        fields = {field.name: field.node for field in parsed.fields}
+        self.assertTrue(catalog_format.matches_type(fields["numeric"].value_type, 5))
+        self.assertTrue(catalog_format.matches_type(fields["numeric"].value_type, 0.5))
+        self.assertFalse(catalog_format.matches_type(fields["numeric"].value_type, 16))
+        supplied = fields["supplied_bool"]
+        self.assertTrue(catalog_format.matches_type(supplied.value_type, {"value": False}))
+        self.assertFalse(
+            catalog_format.matches_type(
+                supplied.value_type, {"value": False, "extra": True}
+            )
+        )
+        rendered = catalog_format.serialize_catalog(
+            {"feature": parsed}, include_patches=False
+        )
+        self.assertIn("\n      |\n      {\n", rendered)
+
+    def test_direct_boolean_setting_types_are_forbidden(self) -> None:
+        for value_type in ("bool", "true", "false", 'string | false'):
+            with self.subTest(value_type=value_type), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "feature.modcat"
+                path.write_text(
+                    "{ value: setting<"
+                    + value_type
+                    + '> { description: "Invalid.", patches: ["e__x__y"] } }',
+                    encoding="utf-8",
+                )
+                with self.assertRaisesRegex(ValueError, "boolean setting types"):
+                    catalog_format.parse_catalog(path)
+
+    def test_overlapping_unions_are_rejected_at_catalog_load(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "feature.modcat"
+            path.write_text(
+                '''{
+                  value:
+                    setting<int> {
+                      description: "Any integer.", patches: ["e__x__any"],
+                    }
+                    |
+                    setting<int & 1..3> {
+                      description: "Small integer.", patches: ["e__x__small"],
                     },
-                },
+                }''',
+                encoding="utf-8",
             )
-            self.write_json(
-                root / "configurations" / "base.json",
-                {
-                    "features": {"feature": {"nested": {"first_leaf": True}}},
-                    "overrides": {},
-                },
-            )
-            self.write_json(configuration_path, {"overrides": {}})
-            with self.assertRaisesRegex(ValueError, "children differ"):
-                catalog.load_selection(catalog_path, configuration_path)
+            with self.assertRaisesRegex(ValueError, "branches 1 and 2 overlap"):
+                catalog_format.parse_catalog(path)
 
-    def test_configuration_leaf_cannot_be_an_object(self) -> None:
+    def test_false_disables_every_node_and_bool_remains_object_data(self) -> None:
+        source = '''{
+          plain: setting {
+            description: "Plain.", patches: ["e__feature__plain"],
+          },
+          integer: setting<int> {
+            description: "Integer.", patches: ["e__feature__integer"],
+          },
+          supplied_bool: setting<{ value: bool }> {
+            description: "Supplied bool.", patches: ["e__feature__bool"],
+          },
+          alternative:
+            setting<int> {
+              description: "Direct.", patches: ["e__feature__direct"],
+            }
+            |
+            { fixed: setting<int> {
+              description: "Fixed.", patches: ["e__feature__fixed"],
+            } },
+        }'''
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            catalog_path = root / "catalog"
-            configuration_path = root / "configuration.json"
-            self.write_catalog(catalog_path, {"features": {"feature": {"leaf": {}}}})
+            catalog_path, configuration_path = self.write_project(
+                root,
+                {"feature": source},
+                {
+                    "feature": {
+                        "plain": True,
+                        "integer": False,
+                        "supplied_bool": {"value": False},
+                        "alternative": False,
+                    }
+                },
+            )
+            selection = catalog.load_selection(catalog_path, configuration_path)
+
+        self.assertTrue(selection.node_enabled("features", "feature", "plain"))
+        self.assertFalse(selection.node_enabled("features", "feature", "integer"))
+        boolean_node = next(
+            node for node in selection.nodes if node.node_id == "feature.supplied_bool"
+        )
+        self.assertTrue(boolean_node.enabled)
+        self.assertEqual(boolean_node.configured_value, {"value": False})
+        self.assertFalse(selection.node_enabled("features", "feature", "alternative"))
+
+    def test_containers_merge_recursively_but_settings_and_unions_are_atomic(self) -> None:
+        source = '''{
+          nested: {
+            first: setting { description: "First.", patches: ["e__f__first"] },
+            second: setting { description: "Second.", patches: ["e__f__second"] },
+          },
+          scalar: setting<int> {
+            description: "Scalar.", patches: ["e__f__scalar"],
+          },
+          named:
+            { pair: {
+              left: setting<int> {
+                description: "Left.", patches: ["e__f__left"],
+              },
+              right: setting<int> {
+                description: "Right.", patches: ["e__f__right"],
+              },
+            } }
+            |
+            setting<string> {
+              description: "Text.", patches: ["e__f__text"],
+            },
+        }'''
+        base = {
+            "feature": {
+                "nested": {"first": True, "second": True},
+                "scalar": 3,
+                "named": {"pair": {"left": 1, "right": 2}},
+            }
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path, configuration_path = self.write_project(
+                root, {"feature": source}, base
+            )
             self.write_json(
                 configuration_path,
-                {"overrides": {"feature": {"leaf": {}}}},
-            )
-            with self.assertRaisesRegex(ValueError, "must be true or false"):
-                catalog.load_selection(catalog_path, configuration_path)
-
-    def test_proven_can_only_be_false(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            catalog_path = root / "catalog"
-            configuration_path = root / "configuration.json"
-            self.write_catalog(
-                catalog_path,
-                {"features": {"feature": {"leaf": {"proven": True}}}},
-            )
-            self.write_json(configuration_path, {"overrides": {}})
-            with self.assertRaisesRegex(ValueError, "proven must be false"):
-                catalog.load_selection(catalog_path, configuration_path)
-
-    def test_duplicate_json_keys_are_rejected(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            catalog_path = root / "catalog"
-            configuration_path = root / "configuration.json"
-            self.write_catalog(catalog_path, {"features": {"feature": {}}})
-            (catalog_path / "feature.json").write_text(
-                '{"leaf":{},"leaf":{}}\n', encoding="utf-8"
-            )
-            self.write_json(configuration_path, {"overrides": {}})
-            with self.assertRaisesRegex(ValueError, "duplicate key"):
-                catalog.load_selection(catalog_path, configuration_path)
-
-    def test_all_enabled_configuration_mirrors_every_selectable_leaf(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            catalog_path = root / "catalog"
-            configuration_path = root / "configuration.json"
-            self.write_catalog(
-                catalog_path,
                 {
-                    "features": {
+                    "overrides": {
                         "feature": {
-                        "description": "ignored",
-                        "first": {},
-                        "nested": {
-                            "description": "ignored",
-                            "second": {"proven": False},
-                        },
-                        }
-                    },
-                },
-            )
-
-            configuration = catalog.all_enabled_configuration(catalog_path)
-            self.assertEqual(
-                configuration,
-                {
-                    "features": {
-                        "feature": {
-                            "enabled": True,
-                            "description": "ignored",
-                            "first": {"enabled": True},
-                            "nested": {
-                                "enabled": True,
-                                "description": "ignored",
-                                "second": {"enabled": True},
-                            },
-                        }
-                    },
-                    "overrides": {},
-                },
-            )
-            self.write_json(configuration_path, configuration)
-            selection = catalog.load_selection(catalog_path, configuration_path)
-            self.assertTrue(all(node.enabled for node in selection.nodes))
-
-    def test_partial_overrides_merge_over_compact_features_setting(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            catalog_path = root / "catalog"
-            configuration_path = root / "configuration.json"
-            self.write_catalog(
-                catalog_path,
-                {
-                    "features": {
-                        "feature": {
-                            "first": {},
-                            "nested": {"second": {}, "third": {}},
+                            "nested": {"first": False},
+                            "scalar": 7,
+                            "named": "custom",
                         }
                     }
                 },
             )
-            self.write_json(
-                configuration_path,
-                {
-                    "overrides": {"feature": {"nested": {"second": False}}},
-                },
-            )
             selection = catalog.load_selection(catalog_path, configuration_path)
-            self.assertTrue(selection.node_enabled("features", "feature", "first"))
+            scalar = next(node for node in selection.nodes if node.node_id == "feature.scalar")
+            text = next(node for node in selection.nodes if node.node_id == "feature.named")
+            self.assertEqual(scalar.configured_value, 7)
+            self.assertEqual(text.configured_value, "custom")
             self.assertFalse(
-                selection.node_enabled("features", "feature", "nested", "second")
+                selection.node_enabled("features", "feature", "nested", "first")
             )
             self.assertTrue(
-                selection.node_enabled("features", "feature", "nested", "third")
+                selection.node_enabled("features", "feature", "nested", "second")
             )
-            third = next(
-                node
-                for node in selection.nodes
-                if node.path == ("features", "feature", "nested", "third")
-            )
-            self.assertEqual(third.node_id, "feature.nested.third")
 
-    def test_base_then_base_overrides_then_configuration_overrides(self) -> None:
+            self.write_json(
+                configuration_path,
+                {"overrides": {"feature": {"named": {"pair": {"left": 9}}}}},
+            )
+            with self.assertRaisesRegex(ValueError, "does not match its setting type|exactly one"):
+                catalog.load_selection(catalog_path, configuration_path)
+
+    def test_parent_true_and_invalid_typed_values_are_rejected(self) -> None:
+        source = '''{
+          nested: {
+            leaf: setting { description: "Leaf.", patches: ["e__f__leaf"] },
+          },
+          integer: setting<int> {
+            description: "Integer.", patches: ["e__f__integer"],
+          },
+        }'''
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            catalog_path = root / "catalog"
-            configuration_path = root / "configuration.json"
-            self.write_catalog(
-                catalog_path,
-                {
-                    "features": {
-                        "feature": {
-                            "first": {},
-                            "second": {},
-                            "third": {},
-                        }
-                    }
-                },
+            catalog_path, configuration_path = self.write_project(
+                root,
+                {"feature": source},
+                {"feature": {"nested": {"leaf": True}, "integer": 2}},
             )
             self.write_json(
+                configuration_path,
+                {"overrides": {"feature": {"nested": True}}},
+            )
+            with self.assertRaisesRegex(ValueError, "must be false or an object"):
+                catalog.load_selection(catalog_path, configuration_path)
+            self.write_json(
+                configuration_path,
+                {"overrides": {"feature": {"integer": True}}},
+            )
+            with self.assertRaisesRegex(ValueError, "does not match"):
+                catalog.load_selection(catalog_path, configuration_path)
+
+            self.write_json(
                 root / "configurations" / "base.json",
-                {
-                    "features": True,
-                    "overrides": {"feature": {"second": False}},
-                },
+                {"features": False, "overrides": {}},
+            )
+            self.write_json(configuration_path, {"overrides": {}})
+            disabled = catalog.load_selection(catalog_path, configuration_path)
+            self.assertFalse(disabled.node_enabled("features", "feature"))
+            self.assertFalse(
+                disabled.node_enabled("features", "feature", "nested", "leaf")
+            )
+            self.assertFalse(
+                disabled.node_enabled("features", "feature", "integer")
+            )
+
+    def test_materialized_configuration_applies_both_override_layers(self) -> None:
+        source = '''{
+          first: setting { description: "First.", patches: ["e__f__first"] },
+          second: setting { description: "Second.", patches: ["e__f__second"] },
+          third: setting { description: "Third.", patches: ["e__f__third"] },
+        }'''
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path, configuration_path = self.write_project(
+                root,
+                {"feature": source},
+                {"feature": {"first": True, "second": True, "third": True}},
+                overrides={"feature": {"second": False}},
             )
             self.write_json(
                 configuration_path,
                 {"overrides": {"feature": {"second": True, "third": False}}},
             )
-
-            selection = catalog.load_selection(catalog_path, configuration_path)
-
-            self.assertTrue(selection.node_enabled("features", "feature", "first"))
-            self.assertTrue(selection.node_enabled("features", "feature", "second"))
-            self.assertFalse(selection.node_enabled("features", "feature", "third"))
-
             materialized = catalog.materialized_configuration(
                 catalog_path, configuration_path
             )
@@ -251,130 +325,91 @@ class CatalogTests(unittest.TestCase):
                     "features": {
                         "feature": {
                             "first": True,
-                            "second": False,
-                            "third": True,
+                            "second": True,
+                            "third": False,
                         }
                     },
-                    "overrides": {
-                        "feature": {"second": True, "third": False}
-                    },
+                    "overrides": {},
                 },
             )
-            bundled_path = root / "bundled.json"
-            self.write_json(bundled_path, materialized)
-            bundled = catalog.load_selection(catalog_path, bundled_path)
-            self.assertIsNone(bundled.base_configuration_path)
-            self.assertEqual(
-                [node.enabled for node in selection.nodes],
-                [node.enabled for node in bundled.nodes],
+            bundled = root / "config.json"
+            self.write_json(bundled, materialized)
+            self.assertIsNone(
+                catalog.load_selection(catalog_path, bundled).base_configuration_path
             )
 
-    def test_self_contained_configuration_does_not_load_base(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            catalog_path = root / "catalog"
-            configuration_path = root / "configuration.json"
-            self.write_catalog(catalog_path, {"features": {"feature": {}}})
-            (root / "configurations" / "base.json").write_text(
-                "not json\n", encoding="utf-8"
-            )
-            self.write_json(
-                configuration_path,
-                {"features": True, "overrides": {}},
-            )
-            selection = catalog.load_selection(catalog_path, configuration_path)
-            self.assertIsNone(selection.base_configuration_path)
-            self.assertTrue(selection.node_enabled("features", "feature"))
+    def test_descriptions_and_patch_references_are_mandatory(self) -> None:
+        invalid_sources = (
+            '{ leaf: setting { patches: ["e__f__leaf"] } }',
+            '{ leaf: setting { description: "", patches: ["e__f__leaf"] } }',
+            '{ leaf: setting { description: "Leaf.", patches: [] } }',
+        )
+        for source in invalid_sources:
+            with self.subTest(source=source), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "feature.modcat"
+                path.write_text(source, encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "requires"):
+                    catalog_format.parse_catalog(path)
 
-    def test_repository_configuration_rejects_self_contained_shape(self) -> None:
+    def test_unknown_and_orphaned_implementation_ids_are_rejected(self) -> None:
+        source = '''{
+          leaf: setting {
+            description: "Leaf.", patches: ["e__f__missing"],
+          },
+        }'''
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            catalog_path = root / "catalog"
-            self.write_catalog(catalog_path, {"features": {"feature": {}}})
-            configuration_path = root / "configurations" / "release.json"
-            self.write_json(
-                configuration_path,
-                {"features": True, "overrides": {}},
+            catalog_path, configuration_path = self.write_project(
+                root,
+                {"feature": source},
+                {"feature": {"leaf": True}},
+                edits={"e__f__orphan": {"description": "Orphan."}},
             )
-            with self.assertRaisesRegex(
-                ValueError, "Repository configurations must contain only"
-            ):
+            edits_path = catalog_path / "implementation" / "edits.json"
+            values = json.loads(edits_path.read_text(encoding="utf-8"))
+            values.pop("e__f__missing")
+            self.write_json(edits_path, values)
+            with self.assertRaisesRegex(ValueError, "unknown edit"):
                 catalog.load_selection(catalog_path, configuration_path)
 
-    def test_annotated_configuration_round_trips_compact_selection(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            catalog_path = root / "catalog"
-            configuration_path = root / "configurations" / "release.json"
-            self.write_catalog(
-                catalog_path,
-                {
-                    "features": {
-                        "feature": {
-                            "description": "Feature description.",
-                            "first": {},
-                            "second": {"description": "Second description."},
-                        }
-                    }
-                },
-            )
-            self.write_json(
-                root / "configurations" / "base.json",
-                {
-                    "features": {"feature": {"first": True, "second": False}},
-                    "overrides": {"feature": {"second": True}},
-                },
-            )
-            self.write_json(
-                configuration_path,
-                {"overrides": {"feature": {"first": False}}},
-            )
-
-            annotated = catalog.annotated_configuration(
-                catalog_path, configuration_path
-            )
-            self.assertEqual(annotated["features"]["feature"]["enabled"], True)
-            self.assertEqual(
-                annotated["features"]["feature"]["description"],
-                "Feature description.",
-            )
-            bundled_path = root / "config.json"
-            self.write_json(bundled_path, annotated)
-            repository_selection = catalog.load_selection(
-                catalog_path, configuration_path
-            )
-            bundled_selection = catalog.load_selection(catalog_path, bundled_path)
-            self.assertEqual(
-                [node.enabled for node in bundled_selection.nodes],
-                [node.enabled for node in repository_selection.nodes],
-            )
-
-    def test_reference_and_definition_descriptions_must_be_nonempty(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            catalog_path = root / "catalog"
-            configuration_path = root / "configuration.json"
-            self.write_catalog(catalog_path, {"features": {"feature": {}}})
-            self.write_json(configuration_path, {"overrides": {}})
-            self.write_json(
-                catalog_path / "__reference.json",
-                {"feature": {"description": ""}},
-            )
-            with self.assertRaisesRegex(ValueError, "description must be nonempty"):
+            values["e__f__missing"] = {"description": "Present."}
+            self.write_json(edits_path, values)
+            with self.assertRaisesRegex(ValueError, "not catalog-referenced"):
                 catalog.load_selection(catalog_path, configuration_path)
 
-            self.write_json(catalog_path / "__reference.json", {})
-            self.write_json(
-                catalog_path / "implementation" / "edits.json",
-                {
-                    "feature__empty": {
-                        "description": "",
-                        "operation": "replace",
-                    }
-                },
+    def test_public_catalog_keeps_contract_and_strips_implementation(self) -> None:
+        source = '''{
+          value: setting<int & 1..15> {
+            description: "Bounded value.", patches: ["e__f__value"],
+          },
+        }'''
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path, _ = self.write_project(
+                root, {"feature": source}, {"feature": {"value": 5}}
             )
-            with self.assertRaisesRegex(ValueError, "description must be nonempty"):
-                catalog.load_selection(catalog_path, configuration_path)
+            public = catalog.public_catalog(catalog_path)
+        self.assertIn("features:", public)
+        self.assertIn("setting<int & 1..15>", public)
+        self.assertIn('description: "Bounded value."', public)
+        self.assertNotIn("patches", public)
+        self.assertNotIn("e__f__value", public)
+
+    def test_mips_lui_float32_adapter_preserves_instruction_and_rejects_bad_guards(self) -> None:
+        replacements = {
+            value: adapters.apply_adapter("mips_lui_float32", "803F023C", value)
+            for value in range(1, 16)
+        }
+        self.assertEqual(replacements[1], "803F023C")
+        self.assertEqual(replacements[3], "4040023C")
+        self.assertEqual(replacements[15], "7041023C")
+        self.assertTrue(all(value.endswith("023C") for value in replacements.values()))
+        with self.assertRaisesRegex(ValueError, "four-byte"):
+            adapters.apply_adapter("mips_lui_float32", "803F", 3)
+        with self.assertRaisesRegex(ValueError, "not a MIPS LUI"):
+            adapters.apply_adapter("mips_lui_float32", "00000000", 3)
+        with self.assertRaisesRegex(ValueError, "Unsupported"):
+            adapters.apply_adapter("unknown", "803F023C", 3)
 
     def test_runtime_source_uses_packaged_object_without_toolchain(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -400,22 +435,15 @@ class CatalogTests(unittest.TestCase):
                 "namespace": "runtime",
                 "imports": {},
                 "fragments": {
-                    "runtime_code": {
-                        "object": "runtime.text",
-                        "order": 1,
-                    }
+                    "runtime_code": {"object": "runtime.text", "order": 1}
                 },
             }
             with mock.patch.object(
-                catalog.ee_c_fragments,
-                "extract_ee_object",
-                return_value=extracted,
+                catalog.ee_c_fragments, "extract_ee_object", return_value=extracted
             ) as extract, mock.patch.object(
-                catalog.ee_c_fragments,
-                "compile_and_extract",
+                catalog.ee_c_fragments, "compile_and_extract"
             ) as compile_source, mock.patch.object(
-                catalog.ee_c_fragments,
-                "default_toolchain_bin",
+                catalog.ee_c_fragments, "default_toolchain_bin"
             ) as toolchain:
                 fragments = catalog._compile_source(
                     repository,
@@ -434,208 +462,69 @@ class CatalogTests(unittest.TestCase):
             compile_source.assert_not_called()
             toolchain.assert_not_called()
 
-    def test_live_catalog_and_configurations_reconstruct_migrated_data(self) -> None:
+    def test_live_catalog_configurations_and_value_adapter(self) -> None:
         repository = Path(__file__).resolve().parents[2]
-        catalog_path = repository / "na228_builder" / "catalog"
-        configuration_root = repository / "na228_builder" / "configurations"
-        implementation_root = catalog_path / "implementation"
-        targets = implementation_root / "targets.tsv"
-        operations = (
-            repository
-            / "na228_builder"
-            / "modules"
-            / "binary_patcher"
-            / "operations"
-        )
-        selections = [
-            catalog.load_selection(catalog_path, configuration_root / f"{name}.json")
-            for name in ("test", "release", "development")
-        ]
+        builder = repository / "na228_builder"
+        catalog_path = builder / "catalog"
+        configurations = builder / "configurations"
+        release = catalog.load_selection(catalog_path, configurations / "release.json")
         self.assertEqual(
-            [selection.feature_ids for selection in selections],
-            [
-                ("battle_logic", "localization", "qol", "rendering"),
-                ("battle_logic", "localization", "qol", "rendering"),
-                ("battle_logic", "localization", "qol", "rendering"),
-            ],
+            release.feature_ids,
+            ("battle_logic", "localization", "qol", "rendering"),
         )
-        release = selections[1]
-        binary_count = sum(
+        self.assertEqual(len(release.edits), 493)
+        self.assertEqual(len(release.injections), 24)
+        self.assertTrue(
+            release.node_enabled("features", "qol", "startup", "save_loading")
+        )
+        self.assertFalse(
+            release.node_enabled("features", "battle_logic", "substitution_cost")
+        )
+        self.assertTrue(all(key.startswith("e__") for key in release.edits))
+        self.assertTrue(all(key.startswith("i__") for key in release.injections))
+        self.assertFalse((catalog_path / "__reference.json").exists())
+        self.assertEqual(
+            {path.suffix for path in release.catalog_files}, {".modcat"}
+        )
+        release_binary_count = sum(
             len(
                 catalog.load_binary_package(
                     release,
                     feature_id,
-                    targets,
+                    catalog_path / "implementation" / "targets.tsv",
                     repository,
-                    operations,
+                    builder / "modules" / "binary_patcher" / "operations",
                 ).edits
             )
             for feature_id in release.feature_ids
-            if catalog.feature_has(release, feature_id, "edits")
+            if catalog.feature_has(release, feature_id, "edits", enabled_only=True)
         )
-        self.assertEqual(binary_count, 491)
-        runtime = [
-            catalog.load_runtime_package(
-                release,
-                feature_id,
-                targets,
+        self.assertEqual(release_binary_count, 491)
+
+        configured = catalog.materialized_configuration(
+            catalog_path, configurations / "release.json"
+        )
+        configured["features"]["battle_logic"]["substitution_cost"] = 3
+        with tempfile.TemporaryDirectory() as directory:
+            configuration_path = Path(directory) / "config.json"
+            self.write_json(configuration_path, configured)
+            selection = catalog.load_selection(catalog_path, configuration_path)
+            package = catalog.load_binary_package(
+                selection,
+                "battle_logic",
+                catalog_path / "implementation" / "targets.tsv",
                 repository,
-                f"{feature_id}.runtime_injector",
+                builder / "modules" / "binary_patcher" / "operations",
             )
-            for feature_id in release.feature_ids
-            if catalog.feature_has(release, feature_id, "injections")
-        ]
-        self.assertEqual(sum(len(package.fragments) for package in runtime), 118)
-        self.assertEqual(sum(len(package.edits) for package in runtime), 68)
-        raw_catalog = {
-            "features": {
-                path.stem: json.loads(path.read_text(encoding="utf-8"))
-                for path in selections[0].catalog_files
-            }
-        }
-        raw_edits = json.loads(
-            (implementation_root / "edits.json").read_text(encoding="utf-8")
+        edit = next(
+            item
+            for item in package.edits
+            if item.edit_id.endswith("e__battle_logic__substitution_cost")
         )
-        raw_injections = json.loads(
-            (implementation_root / "injections.json").read_text(encoding="utf-8")
-        )
-        raw_reference = json.loads(
-            (catalog_path / "__reference.json").read_text(encoding="utf-8")
-        )
-        base_configuration = json.loads(
-            (configuration_root / "base.json").read_text(encoding="utf-8")
-        )
-        self.assertEqual(set(base_configuration), {"features", "overrides"})
-        self.assertIsInstance(base_configuration["features"], dict)
-        self.assertEqual(base_configuration["overrides"], {})
-        for name in ("test", "release", "development"):
-            self.assertEqual(
-                json.loads(
-                    (configuration_root / f"{name}.json").read_text(encoding="utf-8")
-                ),
-                {"overrides": {}},
-            )
-        self.assertEqual(len(raw_edits), 491)
-        self.assertEqual(len(raw_injections), 24)
-        localization = raw_catalog["features"]["localization"]
-        self.assertNotIn("translated_text", localization)
-        self.assertNotIn("translated_textures", localization)
-        forbidden = {
-            "features",
-            "modules",
-            "groups",
-            "patches",
-            "children",
-            "enabled",
-            "status",
-            "confidence",
-            "evidence_id",
-            "review_notes",
-            "reason",
-            "group_id",
-            "patch_id",
-            "edit_id",
-            "description",
-        }
+        self.assertEqual(edit.expected_hex, "803F023C")
+        self.assertEqual(edit.replacement_hex, "4040023C")
+        self.assertEqual(edit.length, 4)
 
-        injection_owners: dict[str, list[tuple[str, ...]]] = {}
-
-        def inspect(value: object, path: tuple[str, ...] = ()) -> None:
-            if isinstance(value, list):
-                for index, item in enumerate(value):
-                    inspect(item, (*path, str(index)))
-                return
-            if not isinstance(value, dict):
-                return
-            disallowed = forbidden - ({"features"} if not path else set())
-            self.assertFalse(
-                disallowed & value.keys(),
-                ".".join(path) or "catalog",
-            )
-            self.assertNotIn("hooks", value, ".".join(path))
-            self.assertNotIn("payload", value, ".".join(path))
-            if "edits" in value:
-                self.assertIsInstance(value["edits"], list)
-                self.assertTrue(set(value["edits"]) <= set(raw_edits))
-                prefix = "__".join(path[1:]) + "__"
-                self.assertTrue(
-                    all(edit_id.startswith(prefix) for edit_id in value["edits"])
-                )
-            if "injections" in value:
-                self.assertIsInstance(value["injections"], list)
-                self.assertTrue(set(value["injections"]) <= set(raw_injections))
-                for injection_id in value["injections"]:
-                    injection_owners.setdefault(injection_id, []).append(path[1:])
-            for key, item in value.items():
-                inspect(item, (*path, key))
-
-        inspect(raw_catalog)
-        for injection_id, owners in injection_owners.items():
-            common: list[str] = []
-            for parts in zip(*owners):
-                if len(set(parts)) != 1:
-                    break
-                common.append(parts[0])
-            self.assertTrue(injection_id.startswith("__".join(common) + "__"))
-        self.assertTrue(raw_reference)
-        for definition in (*raw_edits.values(), *raw_injections.values()):
-            if "description" in definition:
-                self.assertTrue(definition["description"].strip())
-        for injection_id, injection in raw_injections.items():
-            self.assertTrue(
-                set(injection) <= {"description", "hooks", "payload"},
-                injection_id,
-            )
-            self.assertTrue(injection, injection_id)
-            for hook_id, hook in injection.get("hooks", {}).items():
-                self.assertNotIn("operation", hook, hook_id)
-                self.assertRegex(hook_id, catalog.IDENTIFIER)
-                if "description" in hook:
-                    self.assertTrue(hook["description"].strip())
-            for payload_id, payload in injection.get("payload", {}).items():
-                self.assertRegex(payload_id, catalog.IDENTIFIER)
-                for fragment_id in payload.get("fragments", {}):
-                    self.assertRegex(fragment_id, catalog.IDENTIFIER)
-        self.assertEqual(list(raw_edits), sorted(raw_edits))
-        self.assertEqual(list(raw_injections), sorted(raw_injections))
-        for feature in raw_catalog["features"].values():
-            def inspect_order(value: object) -> None:
-                if not isinstance(value, dict):
-                    return
-                for field in ("edits", "injections"):
-                    if field in value:
-                        self.assertEqual(value[field], sorted(value[field]))
-                for item in value.values():
-                    inspect_order(item)
-            inspect_order(feature)
-        for injection in raw_injections.values():
-            for field in ("hooks", "payload"):
-                if field in injection:
-                    self.assertEqual(
-                        list(injection[field]),
-                        sorted(injection[field]),
-                    )
-            for payload in injection.get("payload", {}).values():
-                for field in ("imports", "relocations"):
-                    if field in payload:
-                        self.assertEqual(
-                            list(payload[field]),
-                            sorted(payload[field]),
-                        )
-                if "fragments" in payload:
-                    orders = [
-                        fragment["order"]
-                        for fragment in payload["fragments"].values()
-                    ]
-                    self.assertEqual(orders, sorted(orders))
-        for path in [
-            *selections[0].catalog_files,
-            selections[0].reference_path,
-            implementation_root / "edits.json",
-            implementation_root / "injections.json",
-            *configuration_root.glob("*.json"),
-        ]:
-            self.assertNotIn("\n\n", path.read_text(encoding="utf-8"))
 
 if __name__ == "__main__":
     unittest.main()

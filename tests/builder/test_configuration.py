@@ -149,43 +149,49 @@ class ConfigurationTests(unittest.TestCase):
         catalog_root = root / "catalog"
         implementation_root = catalog_root / "implementation"
         implementation_root.mkdir(parents=True, exist_ok=True)
-        reference: dict[str, object] = {}
-
-        def separate(node: dict[str, object]) -> tuple[dict[str, object], dict[str, object]]:
-            catalog_node: dict[str, object] = {}
-            reference_node: dict[str, object] = {}
-            for key, item in node.items():
-                if key == "description":
-                    reference_node[key] = item
-                elif isinstance(item, dict):
-                    catalog_child, reference_child = separate(item)
-                    catalog_node[key] = catalog_child
-                    if reference_child:
-                        reference_node[key] = reference_child
-                else:
-                    catalog_node[key] = item
-            return catalog_node, reference_node
-
+        injections: dict[str, object] = {}
         for feature_id, feature in catalog.items():
-            catalog_feature, reference_feature = separate(feature)
-            (catalog_root / f"{feature_id}.json").write_text(
-                json.dumps(catalog_feature, indent=2) + "\n",
+            if not isinstance(feature, dict):
+                raise ValueError("Test catalog feature must be an object")
+            description = feature.get("description", f"{feature_id} feature")
+            injection_id = f"i__{feature_id}__enabled"
+            (catalog_root / f"{feature_id}.modcat").write_text(
+                "{\n"
+                f"  description: {json.dumps(description)},\n"
+                "  enabled: setting {\n"
+                f"    description: {json.dumps(description)},\n"
+                f"    patches: [{json.dumps(injection_id)}],\n"
+                "  },\n"
+                "}\n",
                 encoding="utf-8",
             )
-            if reference_feature:
-                reference[feature_id] = reference_feature
-        (catalog_root / "__reference.json").write_text(
-            json.dumps(reference, indent=2) + "\n",
-            encoding="utf-8",
+            injections[injection_id] = {"description": str(description)}
+        (implementation_root / "edits.json").write_text("{}\n", encoding="utf-8")
+        (implementation_root / "injections.json").write_text(
+            json.dumps(injections, indent=2) + "\n", encoding="utf-8"
         )
-        for name in ("edits.json", "injections.json"):
-            (implementation_root / name).write_text("{}\n", encoding="utf-8")
         (configurations / "base.json").write_text(
-            json.dumps({"features": True, "overrides": {}}, indent=2) + "\n",
+            json.dumps(
+                {
+                    "features": {
+                        feature_id: {"enabled": True}
+                        for feature_id in catalog
+                    },
+                    "overrides": {},
+                },
+                indent=2,
+            )
+            + "\n",
             encoding="utf-8",
         )
+        normalized_selection = {
+            feature_id: {"enabled": value}
+            if isinstance(value, bool)
+            else value
+            for feature_id, value in selection.items()
+        }
         configuration.write_text(
-            json.dumps({"overrides": selection}, indent=2) + "\n",
+            json.dumps({"overrides": normalized_selection}, indent=2) + "\n",
             encoding="utf-8",
         )
         (root / "product.json").write_text(
@@ -307,8 +313,7 @@ class ConfigurationTests(unittest.TestCase):
             loaded = load_configuration(configuration, root, root)
             resources = set(configuration_resource_files(loaded))
             self.assertIn((root / "product.json").resolve(), resources)
-            self.assertIn((root / "catalog" / "localization.json").resolve(), resources)
-            self.assertIn((root / "catalog" / "__reference.json").resolve(), resources)
+            self.assertIn((root / "catalog" / "localization.modcat").resolve(), resources)
             self.assertIn(
                 (root / "catalog" / "implementation" / "edits.json").resolve(),
                 resources,

@@ -3159,7 +3159,7 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
     hooks = [
         NumericHook(
             edit_id=edit_id,
-            patch_id="localization__font__numeric_formatting__save_load",
+            patch_id="i__localization__font__numeric_formatting__save_load",
             order=order,
             target_id="na2_elf",
             offset=offset,
@@ -3188,7 +3188,7 @@ def numeric_hooks() -> tuple[NumericHook, ...]:
     hooks.append(
         NumericHook(
             edit_id="call_ordinary_battle_settings_time_c",
-            patch_id="localization__font__numeric_formatting__battle_settings",
+            patch_id="i__localization__font__numeric_formatting__battle_settings",
             order=10,
             target_id="na2_btl",
             offset=0x1CC3D8,

@@ -1,0 +1,9 @@
+{
+  description: "Game-wide rendering and output geometry.",
+  native_16_9_horizontal_scale: setting {
+    description: "Force the renderer's horizontal-scale field to 0.75 through its object pointer.",
+    patches: [
+      "e__rendering__native_16_9_horizontal_scale__force_0",
+    ],
+  },
+}

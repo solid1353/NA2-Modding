@@ -1,6 +1,6 @@
 # Localization feature documentation
 
-The selectable hierarchy lives in `na228_builder/catalog/localization.json`;
+The selectable hierarchy lives in `na228_builder/catalog/localization.modcat`;
 its guarded edits and runtime units live in
 `na228_builder/catalog/implementation/edits.json` and
 `na228_builder/catalog/implementation/injections.json`. Non-inline assets and
@@ -15,7 +15,7 @@ fingerprint covers its canonical executable inputs.
 
 ## Canonical builder inputs
 
-`na228_builder/catalog/localization.json` owns localization's nested selection
+`na228_builder/catalog/localization.modcat` owns localization's nested selection
 and leaf references. `na228_builder/catalog/implementation/edits.json` owns
 guarded binary edits;
 `na228_builder/catalog/implementation/injections.json` owns runtime hooks,

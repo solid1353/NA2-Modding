@@ -13,7 +13,7 @@
       "startup": {
         "skip_cc2_intro": true,
         "skip_opening": true,
-        "loading_screen_then_main_menu": true,
+        "save_loading": "manual",
         "loading_screen": true
       },
       "practice": {
@@ -33,7 +33,7 @@
     "battle_logic": {
       "disable_shadowblur_extra_hit": true,
       "disable_extra_hit_with_aura_punishment_for_initiator": true,
-      "substitution_cost_3_15": false
+      "substitution_cost": false
     },
     "rendering": {
       "native_16_9_horizontal_scale": false

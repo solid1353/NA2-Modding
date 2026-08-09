@@ -1,20 +1,19 @@
 # Release process
 
-The release process produces one Windows x64 ZIP containing the console EXE, an
-editable default configuration, and end-user instructions. End users need no
-Python installation and supply only one exact clean NA2 ISO and one exact clean
-NUN5 ISO.
+The release process produces one Windows x64 ZIP containing the console EXE,
+an editable default configuration, an inert catalog reference, and end-user
+instructions. End users need no Python installation and supply only one exact
+clean NA2 ISO and one exact clean NUN5 ISO.
 
 ## End-user contract
 
 1. Extract the complete ZIP into one directory.
 2. Put the two supported clean ISOs in that directory. ISO filenames do not
    matter.
-3. Optionally edit `config.json`. Its expanded `features` tree documents every
-   selectable node with an `enabled` boolean and, where available, a
-   description. A false branch disables its complete subtree; a true branch
-   descends into its child settings. Its `overrides` object may contain only the feature-tree
-   branches being changed.
+3. Optionally edit `config.json`. A bare setting uses `true` or `false`; a
+   typed setting uses the scalar or object value declared by `catalog.modcat`.
+   `false` disables any node. Container objects merge recursively through
+   `overrides`, while settings and unions are replaced atomically.
 4. Double-click the EXE. It validates the external configuration against its
    embedded catalog before hashing either ISO.
 5. The program scans sibling `*.iso` files non-recursively, excluding the
@@ -32,11 +31,12 @@ NUN5 ISO.
    existing output when a build fails, removes its staging file after failure,
    and waits for Enter before closing.
 
-The ZIP contains the versioned EXE, exactly one merged configuration named
-`config.json`, and `README.txt`. Release packaging constructs it only from
-`base.json`, `release.json`, the catalog, and `catalog/__reference.json`; the
-reference is merged into `config.json` rather than distributed separately. The
-executable embeds the
+The ZIP contains exactly the versioned EXE, `config.json`, `catalog.modcat`,
+and `README.md`. Release packaging derives `config.json` from `base.features`,
+`base.overrides`, and `release.overrides`. It derives the consolidated
+`catalog.modcat` from the canonical feature catalogs, strips every patch and
+implementation detail, and distributes it only as a readable reference. The
+executable never reads that external reference. The executable embeds the
 interpreter, builder engines, catalog, resources for the complete selectable
 catalog rather than only the default selection, payload-builder configuration,
 precompiled objects for injection-owned runtime C sources, and Zopfli runtime.
@@ -63,8 +63,8 @@ The toolchain is pinned by `scripts/release/toolchain.json` and
 environment under the configured Project task temporary root, runs the complete
 builder test suite, inventories the full definition resource closure, builds a
 precompiled object for each injection-owned runtime C source, builds a PyInstaller
-one-file console EXE, self-tests the packaged data with both the default and a
-transient all-enabled configuration, and atomically updates the configured ZIP
+one-file console EXE, self-tests the packaged data with the derived default
+configuration, and atomically updates the configured ZIP
 candidate. Temporary packaging state is removed afterward.
 
 Development ZIP candidates are placed under

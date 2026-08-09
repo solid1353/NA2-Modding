@@ -7,6 +7,7 @@ import os
 import struct
 import sys
 from collections import defaultdict
+from dataclasses import replace
 from pathlib import Path
 
 
@@ -15,6 +16,7 @@ if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
 from scripts.lib.paths import load_paths  # noqa: E402
+from na228_builder.scripts import catalog_format  # noqa: E402
 
 
 PATCH_ID = "ui_layout_victory_names"
@@ -155,7 +157,7 @@ def build_patch_rows() -> tuple[dict[str, str], list[dict[str, str]]]:
         edits.append(
             {
                 "edit_id": (
-                    "localization__ui_layout__victory_names_na2_btl_at_"
+                    "e__localization__ui_layout__victory_names_na2_btl_at_"
                     f"{descriptor_offset:08x}"
                 ),
                 "patch_id": PATCH_ID,
@@ -231,11 +233,14 @@ def main() -> int:
     patch, generated_edits = build_patch_rows()
     if args.write:
         catalog_root = REPOSITORY / "na228_builder" / "catalog"
-        catalog_path = catalog_root / "localization.json"
+        catalog_path = catalog_root / "localization.modcat"
         edits_path = catalog_root / "implementation" / "edits.json"
-        feature = json.loads(catalog_path.read_text(encoding="utf-8"))
+        feature = catalog_format.parse_catalog(catalog_path)
         edits = json.loads(edits_path.read_text(encoding="utf-8"))
-        node = feature["ui_layout"]
+        fields = {field.name: field for field in feature.fields}
+        ui_layout = fields["ui_layout"].node
+        if not isinstance(ui_layout, catalog_format.SettingNode):
+            raise ValueError("localization.ui_layout must be one setting")
         generated = {
             edit["edit_id"]: {
                 "description": edit["reason"],
@@ -249,21 +254,33 @@ def main() -> int:
         }
         old_ids = [
             edit_id
-            for edit_id in node["edits"]
+            for edit_id in ui_layout.patches
             if "__victory_names_" in edit_id
         ]
         if set(old_ids) != set(generated):
             raise ValueError(
                 "Generated Victory edit IDs differ from the catalog references"
             )
-        node["edits"] = sorted(
-            (set(node["edits"]) - set(old_ids)) | set(generated)
+        replacement = replace(
+            ui_layout,
+            patches=tuple(
+                sorted((set(ui_layout.patches) - set(old_ids)) | set(generated))
+            ),
+        )
+        feature = replace(
+            feature,
+            fields=tuple(
+                replace(field, node=replacement)
+                if field.name == "ui_layout"
+                else field
+                for field in feature.fields
+            ),
         )
         for edit_id, definition in generated.items():
             edits[edit_id] = definition
-        catalog_temporary = catalog_path.with_suffix(".json.tmp")
+        catalog_temporary = catalog_path.with_suffix(".modcat.tmp")
         catalog_temporary.write_text(
-            json.dumps(feature, indent=2, ensure_ascii=False) + "\n",
+            catalog_format.serialize_feature(feature),
             encoding="utf-8",
         )
         edits_temporary = edits_path.with_suffix(".json.tmp")

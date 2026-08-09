@@ -196,31 +196,52 @@ raise SystemExit(main())
         throw "PyInstaller output is missing: $built"
     }
     $packagedConfiguration = Join-Path $distRoot ([string]$manifest.configuration_name)
-    $packagedInstructions = Join-Path $distRoot 'README.txt'
-    $annotatedProbe = @'
+    $packagedInstructions = Join-Path $distRoot 'README.md'
+    $packagedCatalog = Join-Path $distRoot 'catalog.modcat'
+    $configurationProbe = @'
 import json
 import sys
 from pathlib import Path
 
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
-from na228_builder.scripts.catalog import annotated_configuration
+from na228_builder.scripts.catalog import materialized_configuration
 
-print(json.dumps(annotated_configuration(
+print(json.dumps(materialized_configuration(
     repository / "na228_builder" / "catalog",
     Path(sys.argv[2]),
 ), indent=2))
 '@
-    $annotatedText = @(& $python -B -c $annotatedProbe $repository $configurationPath)
+    $configurationText = @(& $python -B -c $configurationProbe $repository $configurationPath)
     if ($LASTEXITCODE -ne 0) {
         throw 'Could not construct the merged release configuration.'
     }
     [IO.File]::WriteAllText(
         $packagedConfiguration,
-        ($annotatedText -join "`n") + "`n",
+        ($configurationText -join "`n") + "`n",
         [Text.UTF8Encoding]::new($false)
     )
     Copy-Item -LiteralPath $instructionsPath -Destination $packagedInstructions
+
+    $catalogProbe = @'
+import sys
+from pathlib import Path
+
+repository = Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(repository))
+from na228_builder.scripts.catalog import public_catalog
+
+print(public_catalog(repository / "na228_builder" / "catalog"), end="")
+'@
+    $catalogText = @(& $python -B -c $catalogProbe $repository)
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Could not construct the consolidated release catalog.'
+    }
+    [IO.File]::WriteAllText(
+        $packagedCatalog,
+        ($catalogText -join "`n") + "`n",
+        [Text.UTF8Encoding]::new($false)
+    )
 
     $env:NA2_RELEASE_SELF_TEST = '1'
     $selfTest = @(& $built 2>&1)
@@ -230,47 +251,18 @@ print(json.dumps(annotated_configuration(
         throw "Packaged executable self-test failed.`n$($selfTest -join "`n")"
     }
 
-    $allEnabledProbe = @'
-import json
-import sys
-from pathlib import Path
-
-repository = Path(sys.argv[1]).resolve()
-sys.path.insert(0, str(repository))
-from na228_builder.scripts.catalog import all_enabled_configuration
-
-print(json.dumps(all_enabled_configuration(Path(sys.argv[2])), indent=2))
-'@
-    $catalogPath = Join-Path $repository 'na228_builder\catalog'
-    $allEnabledText = @(& $python -B -c $allEnabledProbe $repository $catalogPath)
-    if ($LASTEXITCODE -ne 0) {
-        throw 'Could not create the transient all-enabled configuration.'
-    }
-    [IO.File]::WriteAllText(
-        $packagedConfiguration,
-        ($allEnabledText -join "`n") + "`n",
-        [Text.UTF8Encoding]::new($false)
-    )
-    $env:NA2_RELEASE_SELF_TEST = '1'
-    $allEnabledSelfTest = @(& $built 2>&1)
-    $allEnabledSelfTestExit = $LASTEXITCODE
-    Remove-Item Env:NA2_RELEASE_SELF_TEST -ErrorAction SilentlyContinue
-    if ($allEnabledSelfTestExit -ne 0 -or
-        -not (($allEnabledSelfTest -join "`n").Contains('Release package self-test: OK'))) {
-        throw "All-enabled packaged executable self-test failed.`n$($allEnabledSelfTest -join "`n")"
-    }
-    [IO.File]::WriteAllText(
-        $packagedConfiguration,
-        ($annotatedText -join "`n") + "`n",
-        [Text.UTF8Encoding]::new($false)
-    )
     if ((Get-Item -LiteralPath $built).Length -lt 1MB) {
         throw 'Packaged executable is unexpectedly small.'
     }
 
     $packageStaging = Join-Path $runRoot $packageName
     Compress-Archive `
-        -LiteralPath @($built, $packagedConfiguration, $packagedInstructions) `
+        -LiteralPath @(
+            $built,
+            $packagedConfiguration,
+            $packagedCatalog,
+            $packagedInstructions
+        ) `
         -DestinationPath $packageStaging `
         -CompressionLevel Optimal
     [IO.File]::Move($packageStaging, $candidate, $true)

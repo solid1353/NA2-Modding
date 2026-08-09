@@ -2,7 +2,7 @@
 
 File-backed and resident quality-of-life behavior. Selectable nodes, guarded
 binary edits, runtime hooks, and payload declarations are selected by
-`na228_builder/catalog/qol.json`.
+`na228_builder/catalog/qol.modcat`.
 
 ## ELF-Q010: Use only first save
 
@@ -112,4 +112,4 @@ source ELF remains untouched and the output size is preserved.
 The canonical `Restore Shop` cheat writes value `5` back to `0x005D51E0`,
 re-enabling Shop without changing the file-backed default. The table mapping
 and patch guards are statically verified; integrated runtime validation remains
-pending, so the corresponding catalog node remains marked `proven: false`.
+pending.

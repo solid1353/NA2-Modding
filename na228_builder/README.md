@@ -5,18 +5,17 @@ integrated catalog data.
 
 ## Canonical data
 
-- `catalog/*.json` owns the complete nested selectable hierarchy. Each file is
-  named for one direct child of the logical top-level `features` parent and
-  contains that child's node. Files are discovered in alphabetical filename
-  order; root files named `__*.json` are metadata rather than selectable
-  features. Catalog leaves contain `edits` and
-  `injections` ID arrays; there is no `groups`, `patches`, `children`, or
-  module wrapper.
-- `catalog/__reference.json` is the sparse canonical owner of selectable-node
-  descriptions. It mirrors only described catalog paths and is merged into the
-  self-documenting configuration distributed with releases.
+- `catalog/*.modcat` owns the complete nested selectable hierarchy. Each file
+  is named for one direct child of the logical `features` root. The custom
+  declarative syntax uses JSON-like objects and TypeScript-like value types and
+  is parsed directly by the Python builder.
+- Catalog settings contain their descriptions and one `patches` array. IDs
+  beginning with `e__` resolve to guarded edits; IDs beginning with `i__`
+  resolve to injection units. Implementation details never appear in the
+  release catalog reference.
 - `catalog/implementation/edits.json` is the direct root map of guarded binary
-  edit definitions.
+  edit definitions. A typed setting may feed its validated value to a declared
+  binary adapter instead of storing a fixed `replacement_hex`.
 - `catalog/implementation/injections.json` is the direct root map of runtime
   injection units. Each unit contains `hooks`, `payload`, or both.
 - `configurations/base.json` contains the shared `features` setting and its
@@ -40,14 +39,22 @@ JSON configurations are the only build definitions. There is no separate pin or 
 
 ## Catalog nodes
 
-Catalog nodes may nest to any depth. `proven` is metadata; `edits` and
-`injections` are implementation-reference arrays allowed only on leaves. Every
-other object key is a selectable child. Node descriptions do not live in the
-selectable files: `catalog/__reference.json` may partially mirror the tree with
-nonempty `description` strings, and every referenced path must exist.
+Catalog nodes may nest to any depth. A bare `setting` accepts `true` to apply
+its patches and `false` to disable it. `setting<T>` accepts a typed scalar or
+closed object value. Direct boolean typed settings are forbidden so `true` and
+`false` remain unambiguous node controls; boolean data is supplied through an
+object such as `setting<{ value: bool }>`.
 
-Migrated nodes may contain only `"proven": false`; the field is removed when
-proof is complete and is never added to new values.
+`false` disables any setting, union, or structural parent before type
+validation. Structural parents otherwise require explicit objects; `true`
+does not expand a parent. Plain containers merge recursively through
+configuration overrides, while settings and node unions replace atomically.
+Union branches must be provably disjoint and are never selected by order.
+
+The grammar supports `bool`, `int`, `decimal`, and `string`, literal types,
+closed object types with optional fields, disjoint `|` unions, numeric `&`
+constraints and ranges, parentheses, `//` comments, and trailing commas. It
+rejects every unlisted construct, including `null`.
 
 Binary edit definitions always contain an explicit `operation`. Runtime target
 changes live under an injection unit's `hooks` and therefore have no operation
@@ -55,8 +62,8 @@ discriminator. Runtime sources, fragments, imports, relocations, and ABI
 metadata live under that unit's `payload`. Multiple catalog leaves may
 reference the same shared injection unit.
 
-Root edit and injection identities use
-`<catalog_path>__<semantic_identity>`. Definition maps and unordered nested
+Root edit and injection identities use `e__` and `i__` prefixes. Definition
+maps and unordered nested
 maps are serialized alphabetically and permanent tests enforce that source
 convention without making source order a loader requirement. Hook and payload
 fragment identities are concise within their owning injection. Payload
@@ -84,7 +91,7 @@ replacements. The binary patcher applies selected edits last.
 ## Resource fingerprinting
 
 The build-resource fingerprint covers the base and selected configurations,
-catalog, edits, injections, product and path configuration, shared targets,
+`.modcat` sources, edits, injections, product and path configuration, shared targets,
 applicable binary operation definitions, referenced assets and sources, and
 selected localization TSV inputs. Release packaging inventories the same
 closure for every selectable catalog node, including disabled nodes.
@@ -96,14 +103,14 @@ Feature files are discovered in alphabetical filename order. Module execution
 within each feature remains derived from the stable internal engine order above.
 
 Release packaging applies `base.features`, `base.overrides`, and
-`release.overrides`, then writes exactly one editable, self-documenting
-configuration named `config.json`. It contains `features` and `overrides`;
-every selectable feature node is an object with an `enabled` boolean, its
-direct children, and its canonical description when one exists. A false branch
-disables its complete subtree; a true branch descends into its child settings. Neither
-repository configuration source nor a separate reference file is distributed.
-The packaged EXE unwraps the enabled tree, applies `overrides`, and validates it
-against its embedded catalog. It contains resources for every selectable
+`release.overrides`, then writes one editable JSON configuration named
+`config.json`. It also writes one consolidated, inert `catalog.modcat`
+reference with the same public hierarchy, types, constraints, unions, and
+descriptions but no patch mappings or implementation details. `README.md`
+explains both files in simple terms.
+
+The packaged EXE validates `config.json` against its embedded complete catalog
+and never reads the external catalog reference. It contains resources for every selectable
 catalog node, including nodes disabled by the default release selection.
 Catalog-owned runtime C sources have packaged objects, so end users do not need
 the project PS2 toolchain.

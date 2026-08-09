@@ -8,5 +8,5 @@
   "release_manifest": "na228_builder/release_manifest.json",
   "temporary_root": "@project_work/temp/release",
   "icon": "assets/icons/detailed/NA2.28.ico",
-  "instructions": "scripts/release/README.txt"
+  "instructions": "scripts/release/README.md"
 }

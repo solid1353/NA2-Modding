@@ -50,20 +50,32 @@ class BuildPreflightTests(unittest.TestCase):
             "\t".join(binary_patcher.TARGET_FIELDS) + "\n",
             encoding="utf-8",
         )
-        (catalog_root / "localization.json").write_text(
-            "{}\n",
-            encoding="utf-8",
-        )
-        (catalog_root / "__reference.json").write_text(
-            json.dumps({"localization": {"description": "Localization"}}),
+        (catalog_root / "localization.modcat").write_text(
+            '''{
+  enabled: setting {
+    description: "Localization.",
+    patches: ["i__localization__enabled"],
+  },
+}
+''',
             encoding="utf-8",
         )
         (implementation_root / "edits.json").write_text("{}\n", encoding="utf-8")
         (implementation_root / "injections.json").write_text(
-            "{}\n", encoding="utf-8"
+            json.dumps(
+                {
+                    "i__localization__enabled": {
+                        "description": "Synthetic localization selector."
+                    }
+                }
+            )
+            + "\n",
+            encoding="utf-8",
         )
         (configuration.parent / "base.json").write_text(
-            json.dumps({"features": True, "overrides": {}}),
+            json.dumps(
+                {"features": {"localization": {"enabled": True}}, "overrides": {}}
+            ),
             encoding="utf-8",
         )
         configuration.write_text(
@@ -281,7 +293,7 @@ class BuildPreflightTests(unittest.TestCase):
             base_configuration.write_text(
                 json.dumps(
                     {
-                        "features": True,
+                        "features": {"localization": {"enabled": True}},
                         "overrides": {"localization": False},
                     }
                 ),
@@ -289,7 +301,12 @@ class BuildPreflightTests(unittest.TestCase):
             )
             self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
             base_configuration.write_text(
-                json.dumps({"features": True, "overrides": {}}),
+                json.dumps(
+                    {
+                        "features": {"localization": {"enabled": True}},
+                        "overrides": {},
+                    }
+                ),
                 encoding="utf-8",
             )
 

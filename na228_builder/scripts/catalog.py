@@ -8,9 +8,11 @@ import tempfile
 from dataclasses import dataclass, replace
 from pathlib import Path, PurePosixPath
 
+from ..modules.binary_patcher import adapters as binary_adapters
 from ..modules.binary_patcher import engine as binary_patcher
 from ..modules.runtime_injector import engine as runtime_injector
 from ..payload_builder import ee_c_fragments
+from . import catalog_format
 from ..payload_builder.operations import (
     FRAGMENT_KINDS,
     RELOCATION_KINDS,
@@ -21,16 +23,18 @@ from ..payload_builder.operations import (
 
 
 IDENTIFIER = re.compile(r"[a-z][a-z0-9_]*\Z")
-RESERVED_NODE_FIELDS = frozenset(
-    {"description", "proven", "edits", "injections", "hooks", "payload"}
-)
 OPERATION_FIELDS = ["field", "required", "type"]
 FIELD_TYPES = {"hex", "integer", "path", "sha256", "text"}
+
+
 @dataclass(frozen=True)
 class CatalogNode:
     path: tuple[str, ...]
-    value: dict[str, object]
     enabled: bool
+    patches: tuple[str, ...] = ()
+    description: str = ""
+    configured_value: object = None
+    has_configured_value: bool = False
 
     @property
     def feature_id(self) -> str:
@@ -44,18 +48,24 @@ class CatalogNode:
             return ".".join(self.path[1:])
         return ".".join(self.path)
 
+    @property
+    def edit_ids(self) -> tuple[str, ...]:
+        return tuple(item for item in self.patches if item.startswith("e__"))
+
+    @property
+    def injection_ids(self) -> tuple[str, ...]:
+        return tuple(item for item in self.patches if item.startswith("i__"))
+
 
 @dataclass(frozen=True)
 class CatalogSelection:
     catalog_path: Path
     catalog_files: tuple[Path, ...]
-    reference_path: Path
     edits_path: Path
     injections_path: Path
     base_configuration_path: Path | None
     configuration_path: Path
-    catalog: dict[str, object]
-    reference: dict[str, object]
+    catalog: dict[str, catalog_format.ContainerNode]
     edits: dict[str, dict[str, object]]
     injections: dict[str, dict[str, object]]
     nodes: tuple[CatalogNode, ...]
@@ -119,30 +129,27 @@ def _read_json(
     return value
 
 
-def _read_catalog(path: Path) -> tuple[dict[str, object], tuple[Path, ...]]:
+def _read_catalog(
+    path: Path,
+) -> tuple[dict[str, catalog_format.ContainerNode], tuple[Path, ...]]:
     path = path.resolve()
     if not path.is_dir():
         raise FileNotFoundError(path)
-    feature_paths = {
+    feature_paths: dict[str, Path] = {
         item.stem: item.resolve()
-        for item in path.glob("*.json")
-        if not item.name.startswith("__")
+        for item in path.glob("*.modcat")
     }
     if not feature_paths:
         raise ValueError(f"Catalog contains no feature files: {path}")
     feature_ids = sorted(feature_paths)
-    features: dict[str, object] = {}
+    features: dict[str, catalog_format.ContainerNode] = {}
     files: list[Path] = []
     for feature_id in feature_ids:
         _identifier(feature_id, "Catalog feature filename")
         feature_path = feature_paths[feature_id]
-        features[feature_id] = _read_json(
-            feature_path,
-            f"Catalog feature {feature_id!r}",
-            allow_empty=True,
-        )
+        features[feature_id] = catalog_format.parse_catalog(feature_path)
         files.append(feature_path)
-    return {"features": features}, tuple(files)
+    return features, tuple(files)
 
 
 def _identifier(value: str, label: str) -> str:
@@ -161,242 +168,204 @@ def _description(value: object, label: str) -> str:
     return value
 
 
-def _read_reference(
-    catalog_path: Path,
-    catalog: dict[str, object],
-) -> tuple[Path, dict[str, object]]:
-    reference_path = (catalog_path / "__reference.json").resolve()
-    reference = _read_json(reference_path, "Catalog reference", allow_empty=True)
-    features = _selectable_children(catalog, "catalog")["features"]
-
-    def validate(
-        supplied: dict[str, object],
-        selectable: dict[str, object],
-        path: tuple[str, ...],
-    ) -> None:
-        children = _selectable_children(selectable, ".".join(path))
-        for key, value in supplied.items():
-            label = ".".join((*path, key))
-            if key == "description":
-                _description(value, ".".join(path))
-                continue
-            _identifier(key, f"Catalog reference {label}")
-            if key not in children:
-                raise ValueError(f"Catalog reference path does not exist: {label}")
-            if not isinstance(value, dict):
-                raise ValueError(f"Catalog reference {label} must be an object")
-            validate(value, children[key], (*path, key))
-
-    validate(reference, features, ("features",))
-    return reference_path, reference
+def _container_fields(
+    node: catalog_format.ContainerNode,
+) -> dict[str, catalog_format.CatalogNodeExpression]:
+    return {field.name: field.node for field in node.fields}
 
 
-def _selectable_children(value: dict[str, object], label: str) -> dict[str, dict[str, object]]:
-    children: dict[str, dict[str, object]] = {}
-    for key, child in value.items():
-        if key in RESERVED_NODE_FIELDS:
-            continue
-        _identifier(key, f"{label} key")
-        if not isinstance(child, dict):
-            raise ValueError(f"{label}.{key} must be an object")
-        children[key] = child
-    return children
+def _feature_root(
+    features: dict[str, catalog_format.ContainerNode],
+) -> catalog_format.ContainerNode:
+    return catalog_format.ContainerNode(
+        tuple(
+            catalog_format.ContainerField(feature_id, features[feature_id])
+            for feature_id in sorted(features)
+        )
+    )
 
 
-def _merge_setting(
-    value: dict[str, object],
+def _catalog_patches(
+    node: catalog_format.CatalogNodeExpression,
+) -> tuple[str, ...]:
+    if isinstance(node, catalog_format.SettingNode):
+        return node.patches
+    if isinstance(node, catalog_format.ContainerNode):
+        return tuple(
+            patch
+            for field in node.fields
+            for patch in _catalog_patches(field.node)
+        )
+    if isinstance(node, catalog_format.UnionNode):
+        return tuple(
+            patch
+            for branch in node.branches
+            for patch in _catalog_patches(branch)
+        )
+    raise TypeError(type(node))
+
+
+def _validate_configuration_value(
+    node: catalog_format.CatalogNodeExpression,
+    value: object,
+    path: tuple[str, ...],
+) -> None:
+    label = ".".join(path)
+    if value is False:
+        return
+    if isinstance(node, catalog_format.SettingNode):
+        if node.value_type is None:
+            if value is not True:
+                raise ValueError(f"Configuration {label} must be true or false")
+        elif not catalog_format.matches_type(node.value_type, value):
+            raise ValueError(f"Configuration {label} does not match its setting type")
+        return
+    if isinstance(node, catalog_format.ContainerNode):
+        if not isinstance(value, dict):
+            raise ValueError(f"Configuration {label} must be false or an object")
+        fields = _container_fields(node)
+        if set(value) != set(fields):
+            missing = sorted(set(fields) - set(value))
+            extra = sorted(set(value) - set(fields))
+            raise ValueError(
+                f"Configuration {label} children differ from catalog; "
+                f"missing={missing}, extra={extra}"
+            )
+        for key, child in fields.items():
+            _validate_configuration_value(child, value[key], (*path, key))
+        return
+    if isinstance(node, catalog_format.UnionNode):
+        matches = [
+            branch
+            for branch in node.branches
+            if catalog_format.matches_type(catalog_format.active_type(branch), value)
+        ]
+        if len(matches) != 1:
+            raise ValueError(
+                f"Configuration {label} must match exactly one catalog union branch"
+            )
+        _validate_configuration_value(matches[0], value, path)
+        return
+    raise TypeError(type(node))
+
+
+def _merge_configuration_value(
+    node: catalog_format.CatalogNodeExpression,
     base: object,
     override: object,
     path: tuple[str, ...],
 ) -> object:
     label = ".".join(path)
-    if isinstance(override, bool):
+    if override is False:
+        return False
+    if isinstance(node, (catalog_format.SettingNode, catalog_format.UnionNode)):
+        _validate_configuration_value(node, override, path)
         return override
+    if not isinstance(node, catalog_format.ContainerNode):
+        raise TypeError(type(node))
     if not isinstance(override, dict):
-        raise ValueError(
-            f"Configuration override {label} must be true, false, or an object"
-        )
-    children = _selectable_children(value, label)
-    if not children:
-        raise ValueError(
-            f"Configuration override leaf {label} must be true or false"
-        )
-    if not override:
-        return base
-    extra = sorted(set(override) - set(children))
+        raise ValueError(f"Configuration override {label} must be false or an object")
+    fields = _container_fields(node)
+    extra = sorted(set(override) - set(fields))
     if extra:
-        raise ValueError(
-            f"Configuration override {label} has unknown children: {extra}"
-        )
-    if isinstance(base, bool):
-        merged = {key: base for key in children}
+        raise ValueError(f"Configuration override {label} has unknown children: {extra}")
+    if base is False:
+        merged: dict[str, object] = {key: False for key in fields}
     elif isinstance(base, dict):
-        if set(base) != set(children):
-            missing_keys = sorted(set(children) - set(base))
-            extra_keys = sorted(set(base) - set(children))
+        if set(base) != set(fields):
+            missing = sorted(set(fields) - set(base))
+            extra_base = sorted(set(base) - set(fields))
             raise ValueError(
                 f"Configuration {label} children differ from catalog; "
-                f"missing={missing_keys}, extra={extra_keys}"
+                f"missing={missing}, extra={extra_base}"
             )
         merged = dict(base)
     else:
-        raise ValueError(
-            f"Configuration {label} must be true, false, or an object"
-        )
+        raise ValueError(f"Configuration {label} must be false or an object")
     for key, child_override in override.items():
-        merged[key] = _merge_setting(
-            children[key],
-            merged[key],
-            child_override,
-            (*path, key),
+        merged[key] = _merge_configuration_value(
+            fields[key], merged[key], child_override, (*path, key)
         )
     return merged
 
 
-def _setting_enabled(setting: object) -> bool:
-    if isinstance(setting, bool):
-        return setting
-    if isinstance(setting, dict):
-        return any(_setting_enabled(child) for child in setting.values())
-    return False
+def _selected_nodes(
+    root: catalog_format.ContainerNode,
+    value: object,
+) -> tuple[CatalogNode, ...]:
+    nodes: list[CatalogNode] = []
 
-
-def _unwrap_annotated_features(
-    catalog_features: dict[str, object],
-    supplied: dict[str, object],
-) -> dict[str, object]:
-    catalog_children = _selectable_children(catalog_features, "features")
-    if set(supplied) != set(catalog_children):
-        missing = sorted(set(catalog_children) - set(supplied))
-        extra = sorted(set(supplied) - set(catalog_children))
-        raise ValueError(
-            "Annotated configuration features differ from catalog; "
-            f"missing={missing}, extra={extra}"
-        )
-
-    def unwrap(
-        catalog_value: dict[str, object],
-        supplied_value: object,
+    def visit(
+        node: catalog_format.CatalogNodeExpression,
+        configured: object,
         path: tuple[str, ...],
-    ) -> object:
-        label = ".".join(path)
-        if not isinstance(supplied_value, dict):
-            raise ValueError(f"Annotated configuration {label} must be an object")
-        enabled = supplied_value.get("enabled")
-        if not isinstance(enabled, bool):
-            raise ValueError(
-                f"Annotated configuration {label}.enabled must be true or false"
+    ) -> bool:
+        if configured is False:
+            description = (
+                node.description
+                if isinstance(
+                    node, (catalog_format.ContainerNode, catalog_format.SettingNode)
+                )
+                else ""
             )
-        if "description" in supplied_value:
-            _description(supplied_value["description"], label)
-        catalog_children = _selectable_children(catalog_value, label)
-        supplied_children = {
-            key: value
-            for key, value in supplied_value.items()
-            if key not in {"enabled", "description"}
-        }
-        if set(supplied_children) != set(catalog_children):
-            missing = sorted(set(catalog_children) - set(supplied_children))
-            extra = sorted(set(supplied_children) - set(catalog_children))
-            raise ValueError(
-                f"Annotated configuration {label} children differ from catalog; "
-                f"missing={missing}, extra={extra}"
+            patches = node.patches if isinstance(node, catalog_format.SettingNode) else ()
+            nodes.append(CatalogNode(path, False, patches, description))
+            if isinstance(node, catalog_format.ContainerNode):
+                for field in node.fields:
+                    visit(field.node, False, (*path, field.name))
+            return False
+        if isinstance(node, catalog_format.SettingNode):
+            has_value = node.value_type is not None
+            nodes.append(
+                CatalogNode(
+                    path,
+                    True,
+                    node.patches,
+                    node.description,
+                    configured if has_value else None,
+                    has_value,
+                )
             )
-        if not catalog_children:
-            return enabled
-        children = {
-            key: unwrap(
-                catalog_children[key],
-                supplied_children[key],
-                (*path, key),
-            )
-            for key in catalog_children
-        }
-        return children if enabled else False
+            return True
+        if isinstance(node, catalog_format.UnionNode):
+            matches = [
+                branch
+                for branch in node.branches
+                if catalog_format.matches_type(
+                    catalog_format.active_type(branch), configured
+                )
+            ]
+            if len(matches) != 1:
+                raise ValueError(
+                    f"Configuration {'.'.join(path)} must match exactly one "
+                    "catalog union branch"
+                )
+            return visit(matches[0], configured, path)
+        if not isinstance(node, catalog_format.ContainerNode):
+            raise TypeError(type(node))
+        if not isinstance(configured, dict):
+            raise ValueError(f"Configuration {'.'.join(path)} must be an object")
+        insertion = len(nodes)
+        nodes.append(CatalogNode(path, False, (), node.description))
+        enabled = False
+        for field in node.fields:
+            enabled = visit(field.node, configured[field.name], (*path, field.name)) or enabled
+        nodes[insertion] = CatalogNode(path, enabled, (), node.description)
+        return enabled
 
-    return {
-        key: unwrap(catalog_children[key], supplied[key], ("features", key))
-        for key in catalog_children
-    }
-
-
-def _annotate_features(
-    catalog_features: dict[str, object],
-    setting: object,
-    reference: dict[str, object],
-) -> dict[str, object]:
-    catalog_children = _selectable_children(catalog_features, "features")
-    if isinstance(setting, bool):
-        settings = {key: setting for key in catalog_children}
-    elif isinstance(setting, dict) and set(setting) == set(catalog_children):
-        settings = setting
-    else:
-        raise ValueError("Configuration features differ from catalog")
-
-    def annotate(
-        catalog_value: dict[str, object],
-        node_setting: object,
-        reference_value: object,
-        path: tuple[str, ...],
-    ) -> dict[str, object]:
-        label = ".".join(path)
-        children = _selectable_children(catalog_value, label)
-        if isinstance(node_setting, bool):
-            child_settings = {key: node_setting for key in children}
-        elif isinstance(node_setting, dict) and set(node_setting) == set(children):
-            child_settings = node_setting
-        else:
-            raise ValueError(f"Configuration {label} differs from catalog")
-        reference_node = reference_value if isinstance(reference_value, dict) else {}
-        result: dict[str, object] = {"enabled": _setting_enabled(node_setting)}
-        description = reference_node.get("description")
-        if description is not None:
-            result["description"] = _description(description, label)
-        for key, child in children.items():
-            result[key] = annotate(
-                child,
-                child_settings[key],
-                reference_node.get(key, {}),
-                (*path, key),
-            )
-        return result
-
-    return {
-        key: annotate(
-            catalog_children[key],
-            settings[key],
-            reference.get(key, {}),
-            ("features", key),
-        )
-        for key in catalog_children
-    }
+    visit(root, value, ("features",))
+    return tuple(nodes)
 
 
-def _reference_ids(
-    value: dict[str, object],
-    field: str,
-    label: str,
-) -> tuple[str, ...]:
-    raw = value.get(field)
-    if raw is None:
-        return ()
-    if not isinstance(raw, list):
-        raise ValueError(f"{label}.{field} must be an array")
-    result: list[str] = []
-    for index, item in enumerate(raw):
-        if not isinstance(item, str):
-            raise ValueError(f"{label}.{field}[{index}] must be text")
-        result.append(_identifier(item, f"{label}.{field}[{index}]"))
-    if len(result) != len(set(result)):
-        raise ValueError(f"{label}.{field} contains duplicate references")
-    return tuple(result)
-
-
-def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelection:
-    catalog_path = catalog_path.resolve()
-    configuration_path = configuration_path.resolve()
-    catalog, catalog_files = _read_catalog(catalog_path)
-    reference_path, reference = _read_reference(catalog_path, catalog)
+def _load_implementation(
+    catalog_path: Path,
+    features: dict[str, catalog_format.ContainerNode],
+) -> tuple[
+    Path,
+    Path,
+    dict[str, dict[str, object]],
+    dict[str, dict[str, object]],
+]:
     implementation_path = catalog_path / "implementation"
     edits_path = implementation_path / "edits.json"
     injections_path = implementation_path / "injections.json"
@@ -406,12 +375,20 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
     injections: dict[str, dict[str, object]] = {}
     for edit_id, edit in raw_edits.items():
         _identifier(edit_id, "Edit ID")
+        if not edit_id.startswith("e__"):
+            raise ValueError(f"Edit ID must start with 'e__': {edit_id!r}")
         if not isinstance(edit, dict):
             raise ValueError(f"Edit {edit_id!r} must be an object")
         _description(edit.get("description"), f"Edit {edit_id!r}")
+        if "adapter" in edit:
+            binary_adapters.validate_adapter_name(edit["adapter"])
         edits[edit_id] = edit
     for injection_id, injection in raw_injections.items():
         _identifier(injection_id, "Injection ID")
+        if not injection_id.startswith("i__"):
+            raise ValueError(
+                f"Injection ID must start with 'i__': {injection_id!r}"
+            )
         if not isinstance(injection, dict):
             raise ValueError(f"Injection {injection_id!r} must be an object")
         extra = sorted(set(injection) - {"description", "hooks", "payload"})
@@ -438,216 +415,123 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
                     f"Injection {injection_id!r} hook {hook_id!r}",
                 )
         injections[injection_id] = injection
+    references = [
+        patch
+        for feature in features.values()
+        for patch in _catalog_patches(feature)
+    ]
+    referenced = set(references)
+    for patch in references:
+        _identifier(patch, "Catalog patch ID")
+        if patch.startswith("e__"):
+            if patch not in edits:
+                raise ValueError(f"Catalog references unknown edit: {patch}")
+        elif patch.startswith("i__"):
+            if patch not in injections:
+                raise ValueError(f"Catalog references unknown injection: {patch}")
+        else:
+            raise ValueError(f"Catalog patch ID has invalid prefix: {patch!r}")
+    orphaned = sorted((set(edits) | set(injections)) - referenced)
+    if orphaned:
+        raise ValueError(f"Implementation definitions are not catalog-referenced: {orphaned}")
+    return edits_path, injections_path, edits, injections
+
+
+def _effective_configuration(
+    catalog_path: Path,
+    configuration_path: Path,
+    features: dict[str, catalog_format.ContainerNode],
+) -> tuple[Path | None, object, dict[str, object]]:
     configuration = _read_json(configuration_path, "Configuration")
-    nodes: list[CatalogNode] = []
-
-    def visit(
-        value: dict[str, object],
-        setting: object,
-        path: tuple[str, ...],
-        inherited_enabled: bool,
-    ) -> None:
-        label = ".".join(path)
-        if "description" in value:
-            raise ValueError(
-                f"{label}.description must be stored in catalog/__reference.json"
-            )
-        if "proven" in value and value["proven"] is not False:
-            raise ValueError(f"{label}.proven must be false when present")
-        for field in ("hooks", "payload"):
-            if field in value:
-                raise ValueError(
-                    f"{label}.{field} must be extracted to injections.json"
-                )
-        children = _selectable_children(value, label)
-        edit_ids = _reference_ids(value, "edits", label)
-        injection_ids = _reference_ids(value, "injections", label)
-        if children and (edit_ids or injection_ids):
-            raise ValueError(
-                f"{label} implementation references must be on catalog leaves"
-            )
-        missing_edits = [edit_id for edit_id in edit_ids if edit_id not in edits]
-        if missing_edits:
-            raise ValueError(f"{label}.edits references unknown edits: {missing_edits}")
-        missing_injections = [
-            injection_id
-            for injection_id in injection_ids
-            if injection_id not in injections
-        ]
-        if missing_injections:
-            raise ValueError(
-                f"{label}.injections references unknown injections: "
-                f"{missing_injections}"
-            )
-        if isinstance(setting, bool):
-            enabled = inherited_enabled and setting
-            nodes.append(CatalogNode(path, value, enabled))
-            for key, child in children.items():
-                visit(child, setting, (*path, key), enabled)
-            return
-        if not isinstance(setting, dict):
-            raise ValueError(f"Configuration {label} must be true, false, or an object")
-        if not children:
-            raise ValueError(f"Configuration leaf {label} must be true or false")
-        if set(setting) != set(children):
-            missing = sorted(set(children) - set(setting))
-            extra = sorted(set(setting) - set(children))
-            raise ValueError(
-                f"Configuration {label} children differ from catalog; "
-                f"missing={missing}, extra={extra}"
-            )
-        enabled = inherited_enabled and _setting_enabled(setting)
-        nodes.append(CatalogNode(path, value, enabled))
-        for key, child in children.items():
-            visit(child, setting[key], (*path, key), enabled)
-
-    catalog_children = _selectable_children(catalog, "catalog")
-    if set(catalog_children) != {"features"}:
-        raise ValueError("Catalog root must contain only the features parent")
-    features_value = catalog_children["features"]
-    repository_configuration_root = (
-        catalog_path.parent / "configurations"
-    ).resolve()
+    root = _feature_root(features)
+    repository_configuration_root = (catalog_path.parent / "configurations").resolve()
     if (
         configuration_path.parent == repository_configuration_root
+        and configuration_path.name != "base.json"
         and set(configuration) != {"overrides"}
     ):
-        raise ValueError(
-            "Repository configurations must contain only the overrides root key"
-        )
+        raise ValueError("Repository configurations must contain only the overrides root key")
     if set(configuration) == {"overrides"}:
-        base_configuration_path = (
-            catalog_path.parent / "configurations" / "base.json"
-        ).resolve()
-        base_configuration = _read_json(
-            base_configuration_path, "Base configuration"
-        )
-        if set(base_configuration) != {"features", "overrides"}:
-            missing_keys = sorted(
-                {"features", "overrides"} - set(base_configuration)
-            )
-            extra_keys = sorted(
-                set(base_configuration) - {"features", "overrides"}
-            )
-            raise ValueError(
-                "Base configuration root keys must be features and overrides; "
-                f"missing={missing_keys}, extra={extra_keys}"
-            )
-        base_overrides = base_configuration["overrides"]
-        if not isinstance(base_overrides, dict):
+        base_path = (repository_configuration_root / "base.json").resolve()
+        base = _read_json(base_path, "Base configuration")
+        if set(base) != {"features", "overrides"}:
+            raise ValueError("Base configuration root keys must be features and overrides")
+        if not isinstance(base["overrides"], dict):
             raise ValueError("Base configuration overrides must be an object")
-        configuration_overrides = configuration["overrides"]
-        if not isinstance(configuration_overrides, dict):
+        if not isinstance(configuration["overrides"], dict):
             raise ValueError("Configuration overrides must be an object")
-        base_effective = _merge_setting(
-            features_value,
-            base_configuration["features"],
-            base_overrides,
-            ("features",),
+        _validate_configuration_value(root, base["features"], ("features",))
+        base_effective = _merge_configuration_value(
+            root, base["features"], base["overrides"], ("features",)
         )
-        effective = _merge_setting(
-            features_value,
-            base_effective,
-            configuration_overrides,
-            ("features",),
+        effective = _merge_configuration_value(
+            root, base_effective, configuration["overrides"], ("features",)
         )
+        overrides = configuration["overrides"]
     elif set(configuration) == {"features", "overrides"}:
-        base_configuration_path = None
-        configuration_overrides = configuration["overrides"]
-        if not isinstance(configuration_overrides, dict):
+        base_path = None
+        if not isinstance(configuration["overrides"], dict):
             raise ValueError("Configuration overrides must be an object")
-        supplied_features = configuration["features"]
-        if isinstance(supplied_features, dict) and supplied_features and all(
-            isinstance(item, dict) and "enabled" in item
-            for item in supplied_features.values()
-        ):
-            supplied_features = _unwrap_annotated_features(
-                features_value,
-                supplied_features,
-            )
-        effective = _merge_setting(
-            features_value,
-            supplied_features,
-            configuration_overrides,
+        _validate_configuration_value(root, configuration["features"], ("features",))
+        effective = _merge_configuration_value(
+            root,
+            configuration["features"],
+            configuration["overrides"],
             ("features",),
         )
+        overrides = configuration["overrides"]
     else:
         raise ValueError(
-            "Configuration root keys must be either overrides or "
-            "features and overrides"
+            "Configuration root keys must be either overrides or features and overrides"
         )
-    visit(features_value, effective, ("features",), True)
+    _validate_configuration_value(root, effective, ("features",))
+    assert isinstance(overrides, dict)
+    return base_path, effective, overrides
+
+
+def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelection:
+    catalog_path = catalog_path.resolve()
+    configuration_path = configuration_path.resolve()
+    features, catalog_files = _read_catalog(catalog_path)
+    edits_path, injections_path, edits, injections = _load_implementation(
+        catalog_path, features
+    )
+    base_path, effective, _overrides = _effective_configuration(
+        catalog_path, configuration_path, features
+    )
+    nodes = _selected_nodes(_feature_root(features), effective)
     return CatalogSelection(
         catalog_path,
         catalog_files,
-        reference_path,
         edits_path,
         injections_path,
-        base_configuration_path,
+        base_path,
         configuration_path,
-        catalog,
-        reference,
+        features,
         edits,
         injections,
-        tuple(nodes),
+        nodes,
     )
-
-
-def all_enabled_configuration(catalog_path: Path) -> dict[str, object]:
-    """Return an annotated self-contained configuration that enables every node."""
-    catalog, _catalog_files = _read_catalog(catalog_path)
-    _reference_path, reference = _read_reference(catalog_path.resolve(), catalog)
-    catalog_children = _selectable_children(catalog, "catalog")
-    if set(catalog_children) != {"features"}:
-        raise ValueError("Catalog root must contain only the features parent")
-    features_value = catalog_children["features"]
-    return {
-        "features": _annotate_features(features_value, True, reference),
-        "overrides": {},
-    }
 
 
 def materialized_configuration(
     catalog_path: Path,
     configuration_path: Path,
 ) -> dict[str, object]:
-    """Return one self-contained configuration with base settings applied."""
-    selection = load_selection(catalog_path, configuration_path)
-    configuration = _read_json(selection.configuration_path, "Configuration")
-    if selection.base_configuration_path is None:
-        return configuration
-    base_configuration = _read_json(
-        selection.base_configuration_path, "Base configuration"
+    """Return one self-contained JSON configuration with base values applied."""
+    catalog_path = catalog_path.resolve()
+    configuration_path = configuration_path.resolve()
+    features, _catalog_files = _read_catalog(catalog_path)
+    _base_path, effective, _overrides = _effective_configuration(
+        catalog_path, configuration_path, features
     )
-    features_value = _selectable_children(selection.catalog, "catalog")["features"]
-    features = _merge_setting(
-        features_value,
-        base_configuration["features"],
-        base_configuration["overrides"],
-        ("features",),
-    )
-    return {
-        "features": features,
-        "overrides": configuration["overrides"],
-    }
+    return {"features": effective, "overrides": {}}
 
 
-def annotated_configuration(
-    catalog_path: Path,
-    configuration_path: Path,
-) -> dict[str, object]:
-    """Return the bundled self-documenting configuration for one repository overlay."""
-    selection = load_selection(catalog_path, configuration_path)
-    materialized = materialized_configuration(catalog_path, configuration_path)
-    features_value = _selectable_children(selection.catalog, "catalog")["features"]
-    return {
-        "features": _annotate_features(
-            features_value,
-            materialized["features"],
-            selection.reference,
-        ),
-        "overrides": materialized["overrides"],
-    }
+def public_catalog(catalog_path: Path) -> str:
+    """Return the consolidated inert release reference without implementation data."""
+    features, _catalog_files = _read_catalog(catalog_path)
+    return catalog_format.serialize_catalog(features, include_patches=False)
 
 
 def _parse_int(value: object, label: str, *, minimum: int = 0) -> int:
@@ -750,6 +634,14 @@ def _validate_operation(
             _relative_path(value, field_label)
         elif not isinstance(value, str):
             raise ValueError(f"{field_label} must be text")
+    if operation == "replace":
+        replacements = [
+            field for field in ("replacement_hex", "adapter") if field in edit
+        ]
+        if len(replacements) != 1:
+            raise ValueError(
+                f"{label} requires exactly one of replacement_hex or adapter"
+            )
     return operation
 
 
@@ -759,7 +651,6 @@ def _group_id(node: CatalogNode) -> str:
 
 
 def _internal_patch(node: CatalogNode) -> binary_patcher.Patch:
-    description = _description(node.value.get("description"), node.node_id)
     return binary_patcher.Patch(
         patch_id=node.node_id,
         group_id=_group_id(node),
@@ -767,7 +658,7 @@ def _internal_patch(node: CatalogNode) -> binary_patcher.Patch:
         status="approved_for_test",
         confidence="verified",
         name=node.path[-1],
-        description=description,
+        description=_description(node.description, node.node_id),
         evidence_id="",
         review_notes="",
     )
@@ -799,7 +690,7 @@ def load_binary_package(
     nodes = [
         node
         for node in selection.feature_nodes(feature_id)
-        if _reference_ids(node.value, "edits", node.node_id)
+        if node.enabled and node.edit_ids
     ]
     targets = binary_patcher.load_targets(targets_path)
     contracts = load_operation_contracts(operations_path)
@@ -808,7 +699,7 @@ def load_binary_package(
     used_targets: set[str] = set()
     order = 0
     for node in nodes:
-        for edit_key in _reference_ids(node.value, "edits", node.node_id):
+        for edit_key in node.edit_ids:
             raw_edit = selection.edits[edit_key]
             label = f"edits.{edit_key}"
             operation = _validate_operation(raw_edit, label, contracts)
@@ -829,7 +720,22 @@ def load_binary_package(
             blob_sha256 = ""
             fill_hex = ""
             if operation == "replace":
-                replacement_hex = _hex(raw_edit["replacement_hex"], f"{label}.replacement_hex")
+                if "adapter" in raw_edit:
+                    if not node.has_configured_value:
+                        raise ValueError(
+                            f"{label}.adapter requires a typed catalog setting"
+                        )
+                    if not expected_hex or "expected_sha256" in raw_edit:
+                        raise ValueError(
+                            f"{label}.adapter requires expected_hex, not expected_sha256"
+                        )
+                    replacement_hex = binary_adapters.apply_adapter(
+                        raw_edit["adapter"], expected_hex, node.configured_value
+                    )
+                else:
+                    replacement_hex = _hex(
+                        raw_edit["replacement_hex"], f"{label}.replacement_hex"
+                    )
                 length = len(bytes.fromhex(replacement_hex))
             elif operation == "copy":
                 length = _parse_int(raw_edit["length"], f"{label}.length", minimum=1)
@@ -925,9 +831,7 @@ def injection_entries(
     entries: list[tuple[CatalogNode, str, dict[str, object]]] = []
     references: dict[str, list[CatalogNode]] = {}
     for node in selection.feature_nodes(feature_id):
-        for injection_id in _reference_ids(
-            node.value, "injections", node.node_id
-        ):
+        for injection_id in node.injection_ids:
             references.setdefault(injection_id, []).append(node)
     for injection_id, nodes in references.items():
         representative = replace(
@@ -1124,7 +1028,9 @@ def load_runtime_package(
     hook_entries = [
         (node, injection_id, injection)
         for node, injection_id, injection in runtime_entries
-        if isinstance(injection.get("hooks"), dict) and injection["hooks"]
+        if node.enabled
+        and isinstance(injection.get("hooks"), dict)
+        and injection["hooks"]
     ]
     hook_nodes = [node for node, _, _ in hook_entries]
     targets = binary_patcher.load_targets(targets_path)
@@ -1220,14 +1126,16 @@ def feature_reference_ids(
 ) -> tuple[str, ...]:
     if field not in {"edits", "injections"}:
         raise ValueError(f"Unsupported catalog implementation field: {field}")
-    result: list[str] = []
-    seen: set[str] = set()
-    for node in selection.feature_nodes(feature_id):
-        for reference_id in _reference_ids(node.value, field, node.node_id):
-            if reference_id not in seen:
-                seen.add(reference_id)
-                result.append(reference_id)
-    return tuple(result)
+    if feature_id not in selection.catalog:
+        raise ValueError(f"Unknown catalog feature: {feature_id}")
+    prefix = "e__" if field == "edits" else "i__"
+    return tuple(
+        dict.fromkeys(
+            patch
+            for patch in _catalog_patches(selection.catalog[feature_id])
+            if patch.startswith(prefix)
+        )
+    )
 
 
 def feature_has(
@@ -1238,40 +1146,50 @@ def feature_has(
     enabled_only: bool = False,
 ) -> bool:
     if field == "edits":
-        return any(
-            (not enabled_only or node.enabled)
-            and _reference_ids(node.value, "edits", node.node_id)
-            for node in selection.feature_nodes(feature_id)
-        )
-    if field == "injections":
-        return any(
-            (not enabled_only or node.enabled)
-            and any(
-                isinstance(selection.injections[injection_id].get("hooks"), dict)
-                and selection.injections[injection_id]["hooks"]
-                for injection_id in _reference_ids(
-                    node.value, "injections", node.node_id
-                )
+        references = (
+            tuple(
+                edit_id
+                for node in selection.feature_nodes(feature_id)
+                if node.enabled
+                for edit_id in node.edit_ids
             )
-            for node in selection.feature_nodes(feature_id)
+            if enabled_only
+            else feature_reference_ids(selection, feature_id, "edits")
+        )
+        return bool(references)
+    if field == "injections":
+        references = (
+            tuple(
+                injection_id
+                for node in selection.feature_nodes(feature_id)
+                if node.enabled
+                for injection_id in node.injection_ids
+            )
+            if enabled_only
+            else feature_reference_ids(selection, feature_id, "injections")
+        )
+        return any(
+            isinstance(selection.injections[injection_id].get("hooks"), dict)
+            and selection.injections[injection_id]["hooks"]
+            for injection_id in references
         )
     raise ValueError(f"Unsupported catalog implementation field: {field}")
 
 
 def referenced_files(selection: CatalogSelection, repository: Path, feature_id: str) -> tuple[Path, ...]:
     files: set[Path] = set()
-    for node in selection.feature_nodes(feature_id):
-        for edit_id in _reference_ids(node.value, "edits", node.node_id):
-            raw = selection.edits[edit_id]
-            if "blob_path" in raw:
-                files.add(
-                    _source_path(
-                        repository,
-                        raw["blob_path"],
-                        f"edits.{edit_id}.blob_path",
-                    )
+    for edit_id in feature_reference_ids(selection, feature_id, "edits"):
+        raw = selection.edits[edit_id]
+        if "blob_path" in raw:
+            files.add(
+                _source_path(
+                    repository,
+                    raw["blob_path"],
+                    f"edits.{edit_id}.blob_path",
                 )
-    for _, injection_id, injection in injection_entries(selection, feature_id):
+            )
+    for injection_id in feature_reference_ids(selection, feature_id, "injections"):
+        injection = selection.injections[injection_id]
         payload = injection.get("payload")
         if not isinstance(payload, dict):
             continue

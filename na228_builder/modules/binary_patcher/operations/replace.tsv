@@ -5,4 +5,5 @@ destination_target_id	1	text
 destination_offset	1	integer
 expected_hex	0	hex
 expected_sha256	0	sha256
-replacement_hex	1	hex
+replacement_hex	0	hex
+adapter	0	text

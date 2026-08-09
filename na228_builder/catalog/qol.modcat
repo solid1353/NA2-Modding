@@ -1,0 +1,104 @@
+{
+  startup: {
+    description: "Independent startup-sequence skips and a timed loading counter during the boot loader wait.",
+    skip_cc2_intro: setting {
+      description: "Skip the CyberConnect2 intro.",
+      patches: [
+        "e__qol__startup__skip_cc2_intro__skip_cc2_intro",
+      ],
+    },
+    skip_opening: setting {
+      description: "Skip the opening sequence.",
+      patches: [
+        "e__qol__startup__skip_opening__skip_opening",
+      ],
+    },
+    save_loading: setting<"manual"> {
+      description: "Skip the four splash screens and opening, preserve required startup loading, bypass the title, and enter the native Continue path; the retained confirmation loads the first save on Yes or enters the main menu without loading on No.",
+      patches: [
+        "e__qol__startup__save_loading__manual__enter_title_input_state_immediately",
+        "e__qol__startup__save_loading__manual__return_native_start_accepted_result",
+        "e__qol__startup__save_loading__manual__treat_no_load_completion_as_menu_success",
+      ],
+    },
+    loading_screen: setting {
+      description: "Replace the boot splashes with a large primitive percentage and progress bar paced across the measured 25-second load while the original startup loaders run.",
+      patches: [
+        "i__qol__startup__loading_screen__runtime",
+      ],
+    },
+  },
+  practice: {
+    description: "Independent Practice-mode default settings.",
+    voice_off_by_default: setting {
+      description: "Start Practice with voice disabled.",
+      patches: [
+        "e__qol__practice__voice_off_by_default__voice_off_by_default",
+      ],
+    },
+    support_off_by_default: setting {
+      description: "Start Practice with support disabled.",
+      patches: [
+        "e__qol__practice__support_off_by_default__force_instead_leaving_previous_settings",
+      ],
+    },
+    command_display_off_by_default: setting {
+      description: "Start Practice with command display disabled.",
+      patches: [
+        "e__qol__practice__command_display_off_by_default__force_preserving_following_settings_field",
+      ],
+    },
+    simple_display_off: setting {
+      description: "Simple-display default control.",
+      patches: [
+        "e__qol__practice__simple_display_off__by_default",
+      ],
+    },
+  },
+  mode_select: {
+    description: "Mode availability and selection behavior.",
+    remove_adventure: setting {
+      description: "Omit Adventure from Mode Select using the NUN6 negative availability sentinel.",
+      patches: [
+        "e__qol__mode_select__remove_adventure__mark_entry_unavailable_matching_nun6",
+      ],
+    },
+    remove_shop: setting {
+      description: "Omit Shop from Mode Select using the same negative availability sentinel as the Adventure omission.",
+      patches: [
+        "e__qol__mode_select__remove_shop__mark_entry_unavailable_using_existing",
+      ],
+    },
+  },
+  save_load: {
+    description: "Save and load modal presentation.",
+    display_only_first_save: setting {
+      description: "Select record zero directly in Save and Load flows while retaining the native memory-card scan, confirmation, load/save operations, and non-record status handling; No completes without reopening the removed record list.",
+      patches: [
+        "e__qol__save_load__display_only_first_save__advance_status_0x0a_without_constructing",
+        "e__qol__save_load__display_only_first_save__center_date_play_time_block",
+        "e__qol__save_load__display_only_first_save__center_single_record_local_y",
+        "e__qol__save_load__display_only_first_save__enter_sole_slot_path_before",
+        "e__qol__save_load__display_only_first_save__exit_controller_when_final_confirmation",
+        "e__qol__save_load__display_only_first_save__exit_controller_when_no_data",
+        "e__qol__save_load__display_only_first_save__ignore_downward_slot_navigation_before",
+        "e__qol__save_load__display_only_first_save__ignore_upward_slot_navigation_before",
+        "e__qol__save_load__display_only_first_save__limit_shared_slot_row_renderer",
+        "e__qol__save_load__display_only_first_save__move_redundant_slot_number_record",
+        "e__qol__save_load__display_only_first_save__move_the_upper_panel_to_centered_x",
+        "e__qol__save_load__display_only_first_save__move_upper_panel_detached_y",
+        "e__qol__save_load__display_only_first_save__prepare_status_0x0a_modal_helper",
+        "e__qol__save_load__display_only_first_save__retain_helper_s_zero_second",
+        "e__qol__save_load__display_only_first_save__return_main_menu_when_unformatted",
+        "e__qol__save_load__display_only_first_save__route_load_confirmation_no_to_completion",
+        "e__qol__save_load__display_only_first_save__route_memory_card_status_dispatch",
+        "e__qol__save_load__display_only_first_save__select_slot_zero_enter_its",
+        "e__qol__save_load__display_only_first_save__shrink_the_upper_panel_height_from_224_to",
+        "e__qol__save_load__display_only_first_save__shrink_the_upper_panel_width_from_400_to",
+        "e__qol__save_load__display_only_first_save__skip_unformatted_card_informational_modal",
+        "e__qol__save_load__display_only_first_save__suppress_obsolete_independent_slot_cursor",
+        "e__qol__save_load__display_only_first_save__suppress_row_separators_when_one",
+      ],
+    },
+  },
+}

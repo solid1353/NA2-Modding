@@ -547,14 +547,16 @@ def _catalog_feature_sha256(
 ) -> str:
     from . import catalog as catalog_module
 
-    raw_features = selection.catalog.get("features")
-    if not isinstance(raw_features, dict):
-        raise ValueError("Catalog root must contain a features object")
-    feature_value = raw_features[feature_id]
+    catalog_file = next(
+        (path for path in selection.catalog_files if path.stem == feature_id),
+        None,
+    )
+    if catalog_file is None:
+        raise ValueError(f"Catalog feature has no source file: {feature_id}")
     entries: list[tuple[str, bytes]] = [
         (
-            f"catalog/{feature_id}.json",
-            json.dumps(feature_value, ensure_ascii=False, separators=(",", ":")).encode("utf-8"),
+            f"catalog/{feature_id}.modcat",
+            catalog_file.read_bytes(),
         )
     ]
     for edit_id in catalog_module.feature_reference_ids(
@@ -712,7 +714,6 @@ def configuration_resource_files(
         configuration.definition_path,
         configuration.product_path,
         *configuration.selection.catalog_files,
-        configuration.selection.reference_path,
         configuration.selection.edits_path,
         configuration.selection.injections_path,
         configuration.targets_path,

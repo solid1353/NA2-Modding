@@ -42,6 +42,9 @@ Refactors, documentation, and internal tooling are not patches unless they alter
 that behavior.
 
 - A patch remains uncommitted until the user accepts its result.
+- In Normal mode, only exact `ver` constitutes acceptance for this commit
+  boundary. It commits and pushes the accepted patch without changing the
+  persistent Normal mode commit setting.
 - For nonvisual patches, use the route specified or agreed during the task. If
   none is specified, default to runtime testing by the user.
 - The agent must not claim runtime success until the user confirms it.

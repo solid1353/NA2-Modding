@@ -57,8 +57,10 @@ Review may remain pending indefinitely. Do not impose a deadline, restriction,
 or automatic cleanup. Design mode remains active during review.
 
 There is no standardized correction workflow after review. If the result is
-wrong or incomplete, the user may ask questions or request further changes. Do
-not choose or enter a correction workflow automatically.
+wrong or incomplete, the user may ask questions or request further changes.
+Questions do not authorize implementation; explicit change instructions do,
+under the general interaction rules. Further corrections do not require
+another `qwe`. Do not choose or enter a correction workflow automatically.
 
 When the user enters `qwe` after reviewing the implementation, treat it as
 implementation approval. Before deleting the individual design document,

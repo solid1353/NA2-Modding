@@ -4,6 +4,29 @@ File-backed and resident quality-of-life behavior. Selectable nodes, guarded
 binary edits, runtime hooks, and payload declarations are selected by
 `na228_builder/catalog/qol.modcat`.
 
+## Unlock all content without loading a save
+
+`qol.content.unlock_all` selects the resident injection
+`i__qol__content__unlock_all__availability`. Five guarded hooks replace only
+the save-backed availability reads for characters, secondary content, the
+32-entry small table, the six grouped tables, and metadata-valid jutsu. The
+injected helpers reproduce the bounded values observed in a fully unlocked
+reference save; native wrappers, metadata checks, and callers remain intact.
+
+The feature performs no save-data writes. It therefore exposes characters,
+supports, stages, jutsu, Shop items, and Collection entries without importing
+the reference save's settings, progress, currency, inventory, statistics, or
+availability bytes. Disabling the setting restores the native save-dependent
+readers.
+
+The first character candidate used an invalid mask derived through the wrong
+global and produced an incorrect, displaced roster. The corrected helper makes
+all 94 stored character IDs available and leaves native roster filtering to
+the existing callers. User runtime testing on 2026-08-10 confirmed the
+correction. The reader contracts, stored values, hook seams, evidence, and
+rejected-mask failure are recorded in
+[`../knowledge/game/content_availability.md`](../knowledge/game/content_availability.md).
+
 ## ELF-Q010: Use only first save
 
 `ELF-Q010` changes the shared Save/Load slot-row renderer's loop limit from

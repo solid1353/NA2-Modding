@@ -26,6 +26,9 @@
         "remove_adventure": true,
         "remove_shop": true
       },
+      "content": {
+        "unlock_all": true
+      },
       "save_load": {
         "display_only_first_save": true
       }

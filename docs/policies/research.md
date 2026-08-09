@@ -10,15 +10,19 @@ files, reverse-engineered behavior, hypotheses, or reusable research tooling.
 - Read the relevant topic/component knowledge before repeating research. For
   game-file investigations, begin with
   [`../knowledge/game/files/README.md`](../knowledge/game/files/README.md).
-- Reuse and update preserved analysis under
-  `@analysis/disassembly/<target>/`; do not repeatedly disassemble the same
-  binary from scratch.
+- Treat the entire `@analysis/disassembly/` tree as a read-only evidence
+  archive. Inspect its existing projects and exports without modifying their
+  contents or metadata. Never open a Ghidra project there in write mode,
+  reanalyze it, rename its symbols, regenerate or replace its exports, change
+  its filesystem protection, or bypass that protection through a writable copy.
 - Keep observations, inferences, hypotheses, contradictions, confidence, and
   discriminating experiments distinct. A plausible interpretation is not a
   fact or an implementation model another agent must inherit.
 - Confirmed function roles, callers/callees, state behavior, mappings, runtime
   observations, and useful negative results belong in `docs/knowledge/` or
-  beside canonical component data.
+  beside canonical component data. Record meaningful function and variable
+  names there with the original disassembly symbol and address; do not write
+  those names back into the disassembly archive.
 - Record new unresolved hypotheses as explicitly labelled sections in the
   relevant domain-owned knowledge document.
 - Every substantive disassembly, decompilation, or live-memory task promotes
@@ -38,6 +42,6 @@ files, reverse-engineered behavior, hypotheses, or reusable research tooling.
   authorization.
 - `@tools/CCSFileExplorerMSF` is the default CCS explorer. Treat `@tools/old/` as
   untrusted historical material; inspect a selected tool before execution.
-- Keep reusable Ghidra projects or focused exports under
-  `@analysis/disassembly/<target>/`. Do not preserve unfiltered listings or
-  transient guesses merely to satisfy documentation.
+- Use the existing Ghidra projects and focused exports preserved under
+  `@analysis/disassembly/<target>/` only as read-only inputs. Do not preserve
+  unfiltered listings or transient guesses merely to satisfy documentation.

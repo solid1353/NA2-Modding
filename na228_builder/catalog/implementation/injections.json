@@ -1401,6 +1401,91 @@
       }
     }
   },
+  "i__qol__content__unlock_all__availability": {
+    "description": "Report the fully unlocked reference save's content availability through bounded read-only helpers without changing the live save structure.",
+    "hooks": {
+      "route_character_unlock_read_through_bounded_reference_result": {
+        "description": "Replace only the character-status byte read with the fully unlocked reference result for one bounded character ID; native callers retain their metadata filters.",
+        "target_id": "na2_elf",
+        "offset": "0xF55D0",
+        "expected_hex": "D08D070C",
+        "symbol": "character",
+        "encoding": "jal26"
+      },
+      "route_grouped_unlock_read_through_reference_values": {
+        "description": "Replace only the bounded grouped-availability byte read with the fully unlocked reference values.",
+        "target_id": "na2_elf",
+        "offset": "0xF71D0",
+        "expected_hex": "448E070C",
+        "symbol": "grouped",
+        "encoding": "jal26"
+      },
+      "route_jutsu_unlock_read_after_native_metadata_check": {
+        "description": "Return available only after the native character-and-jutsu metadata checks accept the pair.",
+        "target_id": "na2_elf",
+        "offset": "0xF739C",
+        "expected_hex": "D8FD070C",
+        "symbol": "jutsu",
+        "encoding": "jal26"
+      },
+      "route_secondary_unlock_read_through_bounded_reference_bits": {
+        "description": "Replace only the secondary-availability bit read with the fully unlocked reference bit range.",
+        "target_id": "na2_elf",
+        "offset": "0xF5860",
+        "expected_hex": "008E070C",
+        "symbol": "secondary",
+        "encoding": "jal26"
+      },
+      "route_small_unlock_read_through_bounded_reference_values": {
+        "description": "Replace only the 32-byte availability-table read with the fully unlocked reference values.",
+        "target_id": "na2_elf",
+        "offset": "0xF7140",
+        "expected_hex": "1C8E070C",
+        "symbol": "small_table",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "unlock_all": {
+        "kind": "c",
+        "path": "src/qol/unlock_all.c",
+        "namespace": "qol.content.unlock.all",
+        "imports": {},
+        "fragments": {
+          "character": {
+            "order": 100,
+            "object": "qol.content.unlock.all.text.qol.unlock.all.character",
+            "abi": "unused_save_data_character_id",
+            "description": "Return available for one of the 94 character-status entries enabled by the fully unlocked reference save."
+          },
+          "secondary": {
+            "order": 101,
+            "object": "qol.content.unlock.all.text.qol.unlock.all.secondary",
+            "abi": "unused_save_data_content_id",
+            "description": "Return availability for one bounded secondary-content ID."
+          },
+          "small_table": {
+            "order": 102,
+            "object": "qol.content.unlock.all.text.qol.unlock.all.small.table",
+            "abi": "unused_save_data_content_id",
+            "description": "Return the fully unlocked value for one bounded small-table content ID."
+          },
+          "grouped": {
+            "order": 103,
+            "object": "qol.content.unlock.all.text.qol.unlock.all.grouped",
+            "abi": "unused_save_data_group_id_content_id",
+            "description": "Return the fully unlocked reference value for one bounded grouped content ID."
+          },
+          "jutsu": {
+            "order": 104,
+            "object": "qol.content.unlock.all.text.qol.unlock.all.jutsu",
+            "abi": "unused_character_record_character_id_jutsu_id",
+            "description": "Return available for a character-and-jutsu pair already accepted by native metadata checks."
+          }
+        }
+      }
+    }
+  },
   "i__qol__startup__loading_screen__runtime": {
     "description": "Replace the boot splashes with a large primitive percentage and progress bar paced across the measured 25-second load while the original startup loaders run.",
     "hooks": {

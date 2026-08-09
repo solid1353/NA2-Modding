@@ -70,6 +70,15 @@
       ],
     },
   },
+  content: {
+    description: "Runtime content availability independent of loaded save progress.",
+    unlock_all: setting {
+      description: "Expose the characters, supports, stages, jutsu, Shop items, and Collection entries present in a fully unlocked save without changing saved progress, currency, inventory, or settings.",
+      patches: [
+        "i__qol__content__unlock_all__availability",
+      ],
+    },
+  },
   save_load: {
     description: "Save and load modal presentation.",
     display_only_first_save: setting {

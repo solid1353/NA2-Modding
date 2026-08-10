@@ -72,6 +72,20 @@ message or commit instead of assuming it is still `stash@{0}`.
 - The user reported the selective substitution behavior works.
 - The final centered/stacked overlay layout remains runtime-unverified.
 
+## Retained task workspace
+
+`work/Battle mechanics/` remains on disk and is intentionally excluded from
+the Git stash:
+
+- `inputs/savestates/` retains the copied Practice states, screenshots, and EE
+  memory used to verify Naruto/Sakura identity and character-record values.
+- `character-id-tsv/` retains the selector screenshots, contact sheets, and
+  previews used to establish the named roster. Keep it until the character
+  table no longer needs visual provenance or correction.
+- `node_modules` is a junction to the bundled Codex runtime dependencies used
+  by task-local image/table tooling. It contains no task-owned package copy and
+  may be removed when that tooling is no longer needed.
+
 ## Remaining work
 
 1. Apply the named stash and verify all 14 paths were recovered before dropping

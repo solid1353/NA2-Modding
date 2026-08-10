@@ -9,9 +9,6 @@ completion.
 - During explicit discussion, design, planning, or brainstorming, later messages
   refine the proposed result. They do not authorize implementation until the
   applicable approval boundary is reached.
-- A user correction changes the named point only. Preserve unaffected approved
-  work and continue it unless the user explicitly stops, pauses, cancels, or
-  replaces it.
 - A discussion summary contains only the intended changes, integrates accepted
   corrections, excludes rejected or withdrawn changes, and adds no new changes.
 
@@ -54,9 +51,6 @@ completion.
 
 ## Evidence and troubleshooting
 
-- When asked why a failure occurred, identify the causal mechanism and propose a
-  concrete prevention. Do not merely restate the failure, name the violated
-  rule, or assign blame as the explanation.
 - Treat explicit user observations and established evidence as current facts
   unless specific new evidence contradicts them.
 - When the task concerns a state currently visible or running, inspect that

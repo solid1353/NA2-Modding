@@ -5,40 +5,16 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 
 ## Universal rules
 
-- Read this file first. Communicate with the user in English.
-- The user may override any repository instruction. The scope and duration of an
-  override follow the user's wording; unrelated rules remain active.
-- For implementation work, do not alter or extend the requested outcome or
-  scope; ask before implementing a different contract. This does not govern
-  policy wording or documentation structure.
+- Read this file first.
 - `NA2-Modding`, `UN-Workshop`, maintained subrepositories such as the PCSX2
   fork, and future repositories added to this maintained project may be changed
   together when the task requires it. Cross-repository work needs no separate
   approval.
-- Preserve unrelated work. Protect original source media and user-owned PCSX2
-  installations. Binary changes must be reproducible, guarded, and script-owned.
+- Protect original source media and user-owned PCSX2 installations. Binary
+  changes must be reproducible, guarded, and script-owned.
 - Do not introduce a new long-lived project mechanism or project-wide contract
   without explicit approval. Ordinary code-level implementation choices inside
   approved scope do not need separate approval.
-- Never claim validation, runtime behavior, user acceptance, or completion that
-  has not actually occurred.
-
-## Task authorization
-
-- **NEVER send a final response while authorized work remains unfinished and
-  executable. Answer interruptions in commentary and continue working until
-  completion, explicit cancellation, or a hard blocker.**
-- When the user asks a question, the agent MUST answer it. If an accurate answer
-  depends on information that has not already been verified, the agent may
-  perform any necessary non-mutating inspection or research—including
-  repository inspection, current-state checks, and web searches—before
-  answering. The agent MUST NOT treat a question as authorization to modify
-  state, implement work, schedule work, or perform any other state-changing
-  action. A question is not approval and does not satisfy a requested decision.
-
-Detailed interaction and authorization rules are in
-[`docs/INTERACTION.md`](docs/INTERACTION.md).
-
 ## Agent commands
 
 On every new task, read and follow

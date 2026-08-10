@@ -45,6 +45,10 @@ completion.
 - “Active work” means an ongoing user request. An open task, workstream,
   uncommitted candidate, dirty files, or other repository state is not a user
   request and cannot make work active.
+- Work remains executable while an in-scope next action can be performed without
+  required user input or a required material decision.
+- Questions, corrections, status requests, and other interruptions do not end
+  active work. Answer them in commentary, then continue the authorized work.
 - Stop only for an explicit stop/pause/cancel, required user input, or a required
   user decision such as a material change to an approved serious-work design.
 

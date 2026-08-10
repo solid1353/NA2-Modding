@@ -25,16 +25,16 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 
 ## Task authorization
 
+- **NEVER send a final response while authorized work remains unfinished and
+  executable. Answer interruptions in commentary and continue working until
+  completion, explicit cancellation, or a hard blocker.**
 - When the user asks a question, the agent MUST answer it. If an accurate answer
   depends on information that has not already been verified, the agent may
   perform any necessary non-mutating inspection or research—including
   repository inspection, current-state checks, and web searches—before
   answering. The agent MUST NOT treat a question as authorization to modify
   state, implement work, schedule work, or perform any other state-changing
-  action. The agent also MUST NOT stop, pause, abandon, replace, or end active
-  authorized work because a question was asked. After answering, the agent MUST
-  continue only work authorized before the question. The agent MUST NOT treat a
-  question as approval or as satisfying a requested decision.
+  action. A question is not approval and does not satisfy a requested decision.
 
 Detailed interaction and authorization rules are in
 [`docs/INTERACTION.md`](docs/INTERACTION.md).

@@ -41,9 +41,13 @@ Detailed interaction and authorization rules are in
 
 ## Agent commands
 
-Read and follow [`Normal mode`](docs/workflows/normal_mode.md) by default. Exact
-mode-entry commands and other directly routed commands are listed below. No
-other wording enters a mode; when a mode exits, Normal mode resumes.
+On every new task, read and follow
+[`Normal mode`](docs/workflows/normal_mode.md) and every routed policy triggered
+by the request before stating implementation intent, scope, approach, or
+validation. Any required pre-tool commentary may state only that the applicable
+context is being loaded. Exact mode-entry commands and other directly routed
+commands are listed below. No other wording enters a mode; when a mode exits,
+Normal mode resumes.
 
 Exactly one workflow mode is active at a time. Only the active mode's workflow
 document applies; all other mode workflow documents are inactive. Entering a

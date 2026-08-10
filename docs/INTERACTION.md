@@ -54,6 +54,9 @@ completion.
 
 ## Evidence and troubleshooting
 
+- When asked why a failure occurred, identify the causal mechanism and propose a
+  concrete prevention. Do not merely restate the failure, name the violated
+  rule, or assign blame as the explanation.
 - Treat explicit user observations and established evidence as current facts
   unless specific new evidence contradicts them.
 - When the task concerns a state currently visible or running, inspect that

@@ -10,7 +10,7 @@ those.
 - `qwe`, or the same physical keys under another keyboard layout: follow the
   active workflow's `qwe` rule; in Normal mode, authorize the current
   serious-work implementation snapshot.
-- `snapshot`: present the current consolidated implementation snapshot. It
+- `snap`: present the current consolidated implementation snapshot. It
   requests the snapshot only and does not authorize implementation.
 - `tasks`: read and present `TASKS.md` under the
   [coordination policy](policies/coordination.md).

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -819,6 +820,7 @@ def build_configuration_candidate(
     workspace: Path,
     configuration_log_directory: Path | None,
     payload_shift: int = 0,
+    best_effort_metadata: bool = False,
 ) -> ConfigurationBuildResult:
     """Compose and verify one staged configuration image without promoting it."""
     source_iso = source_iso.resolve()
@@ -828,8 +830,27 @@ def build_configuration_candidate(
         raise FileNotFoundError(source_iso)
     if source_iso == output_iso:
         raise ValueError("Source and output ISO paths must differ")
-    if configuration_log_directory is not None and configuration_log_directory.exists():
-        raise FileExistsError(configuration_log_directory)
+    if configuration_log_directory is not None:
+        try:
+            log_directory_exists = configuration_log_directory.exists()
+        except OSError as error:
+            if not best_effort_metadata:
+                raise
+            print(
+                f"WARNING: Configuration build record path is unavailable: {error}",
+                file=sys.stderr,
+            )
+            configuration_log_directory = None
+        else:
+            if log_directory_exists:
+                if not best_effort_metadata:
+                    raise FileExistsError(configuration_log_directory)
+                print(
+                    "WARNING: Configuration build record path already exists; "
+                    f"metadata will be skipped: {configuration_log_directory}",
+                    file=sys.stderr,
+                )
+                configuration_log_directory = None
 
     composed = compose_configuration_candidate(
         source_iso=source_iso,
@@ -884,11 +905,17 @@ def build_configuration_candidate(
                 output_iso_text=output_iso_text,
                 identity_edits=tuple(identity_edits),
             )
-    except BaseException:
-        staged = building_image_path(output_iso)
-        if staged.exists() or staged.is_symlink():
-            staged.unlink()
-        raise
+    except BaseException as error:
+        if best_effort_metadata and isinstance(error, Exception):
+            print(
+                f"WARNING: Configuration build record was not written: {error}",
+                file=sys.stderr,
+            )
+        else:
+            staged = building_image_path(output_iso)
+            if staged.exists() or staged.is_symlink():
+                staged.unlink()
+            raise
 
     return ConfigurationBuildResult(
         results=tuple(configuration_results),
@@ -956,6 +983,11 @@ def main() -> int:
         action="store_true",
         help="Compose and conflict-check the configuration without staging an ISO.",
     )
+    parser.add_argument(
+        "--best-effort-metadata",
+        action="store_true",
+        help="Keep a verified staged ISO when writing auxiliary build metadata fails.",
+    )
     args = parser.parse_args()
 
     paths = PATHS or load_paths(Path(__file__).resolve(), allow_missing=True)
@@ -1007,8 +1039,6 @@ def main() -> int:
         "--configuration-log-directory",
         workspace,
     )
-    if configuration_log_directory.exists():
-        raise FileExistsError(configuration_log_directory)
 
     build = build_configuration_candidate(
         source_iso=source_iso,
@@ -1017,6 +1047,7 @@ def main() -> int:
         workspace=workspace,
         configuration_log_directory=configuration_log_directory,
         payload_shift=args.payload_shift,
+        best_effort_metadata=args.best_effort_metadata,
     )
     configuration_results = build.results
     payload_result = build.payload_result

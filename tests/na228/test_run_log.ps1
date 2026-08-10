@@ -206,6 +206,8 @@ builds = {
     "latest": "Latest",
     "previous": "Previous",
     "manual_test": "Manual Test",
+    "e2e_test": "E2E Test",
+    "e2e_test_shifted": "E2E Test Shifted",
 }
 aliases = {"l": "latest", "p": "previous", "mt": "manual_test"}
 name = aliases.get(name.casefold(), name)
@@ -213,6 +215,7 @@ if name in builds:
     title = "Narutimate Accel v2.28"
     result = {
         "iso": str(root / "build" / f"{title} - {builds[name]}.iso"),
+        "postfix": builds[name],
         "cheats": str(root / "pcsx2_files" / "cheats" / "SLOP-NA228.pnach"),
         "game_settings": str(root / "pcsx2_files" / "game_settings" / "SLOP-NA228.ini"),
         "memory_card": str(root / "pcsx2_files" / "memory_cards" / f"NA v2.28 - {builds[name]}.ps2"),
@@ -255,6 +258,9 @@ Write-Output '[fake] permanent tests'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 <token> \[token\]') `
         -Message 'Root help omitted the ordered token grammar.'
+    Assert-Na2Test `
+        -Condition ($helpText -match '(?m)^\s*na228 \[-f\]\s+Build and run Latest; -f ignores auxiliary failures$') `
+        -Message 'Root help did not present default and force build-and-launch in one row.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 worker work/') `
         -Message 'Root help omitted the explicit worker-build command.'
@@ -408,7 +414,8 @@ Write-Output "[fake] release $Version"
 param(
     [switch]$DryRun,
     [switch]$ManualTestOnly,
-    [string]$WorkerOutputIso
+    [string]$WorkerOutputIso,
+    [switch]$Force
 )
 if ($env:NA228_TEST_CONFIG_ERROR -ceq '1') {
     $exception = [InvalidOperationException]::new(
@@ -434,10 +441,11 @@ elseif ($ManualTestOnly) {
     [pscustomobject]@{ Status = 'manual-test'; ChangedRoles = [string[]]@('manual_test') }
 }
 else {
-    Write-Host '[na228] ISO result: updated; rotation: yes.'
+    Write-Host "[na228] ISO result: updated; rotation: yes; force=$($Force.IsPresent)."
     [pscustomobject]@{
         Status = 'updated'
         ChangedRoles = [string[]]@('latest', 'previous')
+        LaunchIso = if ($Force) { 'force-output.iso' } else { $null }
     }
 }
 '@
@@ -791,6 +799,14 @@ Add-Content `
             $latestWatch -match '\[fake\] watch 28014'
         ) `
         -Message 'Latest watch token did not launch and watch Latest.'
+    $forceLaunch = (& (Join-Path $fakeRepository 'na228.ps1') -f *>&1) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $forceLaunch -match 'force=True' -and
+            $forceLaunch -match '\[fake\] launch dev force-output\.iso' -and
+            $forceLaunch -notmatch '\[fake\] workshop args=.*-f'
+        ) `
+        -Message 'Force mode was not consumed by na228 and routed through build-and-launch.'
     & (Join-Path $fakeRepository 'na228.ps1')
     $fakeLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\latest.log'))
     $fakeRolling = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\rolling.log'))
@@ -808,7 +824,7 @@ Add-Content `
         '(?m)^--- NA2 RUN BEGIN ---$'
     ).Count
     Assert-Na2Test `
-        -Condition ($rollingSectionCount -eq 7) `
+        -Condition ($rollingSectionCount -eq 8) `
         -Message (
             'Root dispatch test produced the wrong rolling-log section count: ' +
             $rollingSectionCount
@@ -817,10 +833,10 @@ Add-Content `
         -Condition (-not (Test-Na2WindowsAbsolutePath -Text $fakeRolling)) `
         -Message 'Root dispatch persisted an absolute path.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch .+$').Count -eq 1) `
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch .+$').Count -eq 2) `
         -Message 'Root build-and-launch produced the wrong direct launch count.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch dev .+$').Count -eq 1) `
+        -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch dev .+$').Count -eq 2) `
         -Message 'Root dispatch did not preserve the configured development-launch default.'
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: manual-test').Count -eq 3) `
@@ -833,7 +849,7 @@ Add-Content `
         -Condition ($workerLatest -match 'ISO result: worker') `
         -Message 'Explicit worker build did not dispatch to worker-output mode.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, 'ISO result: updated').Count -eq 4) `
+        -Condition ([regex]::Matches($fakeRolling, 'ISO result: updated').Count -eq 5) `
         -Message 'Build-only and build-and-launch did not use the standard build pipeline.'
     $oldLastExitCode = $global:LASTEXITCODE
     try {

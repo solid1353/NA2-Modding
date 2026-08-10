@@ -10,7 +10,8 @@ param(
     [string]$Action,
 
     [string]$WorkerOutputIso,
-    [string]$WorkerLogDirectory
+    [string]$WorkerLogDirectory,
+    [switch]$Force
 )
 
 $ErrorActionPreference = 'Stop'
@@ -35,6 +36,9 @@ if ($Action -eq 'worker-build') {
 }
 elseif ($WorkerOutputIso -or $WorkerLogDirectory) {
     throw 'Worker output arguments are valid only for worker-build.'
+}
+if ($Force -and $Action -ne 'latest-build-and-launch') {
+    throw 'Force mode is valid only for the Latest build-and-launch action.'
 }
 
 $runMode = switch ($Action) {
@@ -92,16 +96,25 @@ try {
         }
         'latest-build-and-launch' {
             Write-Na2Stage '1/2 Build development configuration'
-            $buildResult = & (Join-Path $PSScriptRoot 'build.ps1')
+            $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') -Force:$Force
             if (
                 -not $buildResult -or
-                $buildResult.Status -notin @('unchanged', 'updated')
+                $buildResult.Status -notin @('unchanged', 'updated', 'forced-staged')
             ) {
                 throw 'Configuration build did not return a valid promotion result.'
             }
-            Write-Na2Stage "2/2 Launch $latestIsoName"
+            $launchIso = if (
+                $null -ne $buildResult.PSObject.Properties['LaunchIso'] -and
+                -not [string]::IsNullOrWhiteSpace([string]$buildResult.LaunchIso)
+            ) {
+                [string]$buildResult.LaunchIso
+            }
+            else {
+                $paths.files.latest_iso
+            }
+            Write-Na2Stage "2/2 Launch $([IO.Path]::GetFileName($launchIso))"
             & $paths.files.pcsx2_launch_command `
-                -IsoPath $paths.files.latest_iso
+                -IsoPath $launchIso
         }
     }
     $runOutcome = 'succeeded'

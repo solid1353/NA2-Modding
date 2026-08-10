@@ -39,6 +39,13 @@ function Get-Na228WatchArguments {
 }
 
 $commandTokens = @($args)
+$forceLatestBuild = (
+    $commandTokens.Count -eq 1 -and
+    $commandTokens[0] -ieq '-f'
+)
+if ($forceLatestBuild) {
+    $commandTokens = @()
+}
 $mode = if ($commandTokens.Count -gt 0) {
     $commandTokens[0].ToLowerInvariant()
 }
@@ -58,7 +65,7 @@ if ($mode -eq 'help') {
     @(
         'NA2.28'
         ''
-        '  na228                      Build and run Latest'
+        '  na228 [-f]                 Build and run Latest; -f ignores auxiliary failures'
         '  na228 w [C path|plan]      Watch all registered C by default'
         '  na228 w injection_test     Watch only the reload-message smoke test'
         '  na228 <token> [token]      Run one or two games in window order'
@@ -210,7 +217,8 @@ if ($mode -eq 'worker') {
 
 if (-not $mode) {
     & (Join-Path $paths.scripts 'na228\run.ps1') `
-        -Action latest-build-and-launch
+        -Action latest-build-and-launch `
+        -Force:$forceLatestBuild
     return
 }
 

@@ -4,7 +4,7 @@ import io
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -157,12 +157,117 @@ class BuildConfigurationCliTests(unittest.TestCase):
                 kwargs["configuration_log_directory"],
                 configuration_log_directory,
             )
+            self.assertFalse(kwargs["best_effort_metadata"])
             self.assertIn("payload_builder (0 symbols, 7 bytes)", output.getvalue())
             self.assertIn("identity (1 edits)", output.getvalue())
             self.assertIn(
                 "Verified staged ISO: NA2.28 - Latest.iso.building",
                 output.getvalue(),
             )
+
+    def test_best_effort_metadata_keeps_verified_staging_on_log_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory).resolve()
+            source_iso = workspace / "source.iso"
+            source_iso.write_bytes(b"source")
+            output_iso = workspace / "build" / "Latest.iso"
+            staged_iso = build_configuration.building_image_path(output_iso)
+            log_directory = workspace / "logs" / "configuration"
+            configuration = SimpleNamespace(identity=SimpleNamespace())
+            composed = build_configuration.ConfigurationCompositionResult(
+                results=(),
+                payload_result=None,
+                composition=SimpleNamespace(plan=object(), identity_edits=()),
+                insertion_owners={},
+            )
+
+            def assemble(*_args: object) -> SimpleNamespace:
+                staged_iso.parent.mkdir(parents=True, exist_ok=True)
+                staged_iso.write_bytes(b"verified")
+                return SimpleNamespace(
+                    insertions=(), iso9660_renames=(), udf_renames=()
+                )
+
+            errors = io.StringIO()
+            with (
+                patch.object(
+                    build_configuration,
+                    "compose_configuration_candidate",
+                    return_value=composed,
+                ),
+                patch.object(
+                    build_configuration, "assemble_image", side_effect=assemble
+                ),
+                patch.object(
+                    build_configuration,
+                    "write_configuration_log",
+                    side_effect=OSError("metadata unavailable"),
+                ),
+                redirect_stderr(errors),
+            ):
+                result = build_configuration.build_configuration_candidate(
+                    source_iso=source_iso,
+                    output_iso=output_iso,
+                    configuration=configuration,
+                    workspace=workspace,
+                    configuration_log_directory=log_directory,
+                    best_effort_metadata=True,
+                )
+
+            self.assertEqual(result.staged_iso, staged_iso)
+            self.assertEqual(staged_iso.read_bytes(), b"verified")
+            self.assertIn(
+                "WARNING: Configuration build record was not written: metadata unavailable",
+                errors.getvalue(),
+            )
+
+    def test_default_metadata_failure_discards_staging(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory).resolve()
+            source_iso = workspace / "source.iso"
+            source_iso.write_bytes(b"source")
+            output_iso = workspace / "build" / "Latest.iso"
+            staged_iso = build_configuration.building_image_path(output_iso)
+            configuration = SimpleNamespace(identity=SimpleNamespace())
+            composed = build_configuration.ConfigurationCompositionResult(
+                results=(),
+                payload_result=None,
+                composition=SimpleNamespace(plan=object(), identity_edits=()),
+                insertion_owners={},
+            )
+
+            def assemble(*_args: object) -> SimpleNamespace:
+                staged_iso.parent.mkdir(parents=True, exist_ok=True)
+                staged_iso.write_bytes(b"verified")
+                return SimpleNamespace(
+                    insertions=(), iso9660_renames=(), udf_renames=()
+                )
+
+            with (
+                patch.object(
+                    build_configuration,
+                    "compose_configuration_candidate",
+                    return_value=composed,
+                ),
+                patch.object(
+                    build_configuration, "assemble_image", side_effect=assemble
+                ),
+                patch.object(
+                    build_configuration,
+                    "write_configuration_log",
+                    side_effect=OSError("metadata unavailable"),
+                ),
+                self.assertRaisesRegex(OSError, "metadata unavailable"),
+            ):
+                build_configuration.build_configuration_candidate(
+                    source_iso=source_iso,
+                    output_iso=output_iso,
+                    configuration=configuration,
+                    workspace=workspace,
+                    configuration_log_directory=workspace / "logs" / "configuration",
+                )
+
+            self.assertFalse(staged_iso.exists())
 
 
 if __name__ == "__main__":

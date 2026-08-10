@@ -3,7 +3,8 @@ param(
     [switch]$DryRun,
     [switch]$ManualTestOnly,
     [ValidateSet('normal', 'shifted')][string]$E2eVariant,
-    [string]$WorkerOutputIso
+    [string]$WorkerOutputIso,
+    [switch]$Force
 )
 
 $ErrorActionPreference = 'Stop'
@@ -27,6 +28,14 @@ if (
     ).Where({ $_ }).Count -gt 1
 ) {
     throw '-DryRun, -ManualTestOnly, -E2eVariant, and -WorkerOutputIso are mutually exclusive.'
+}
+if ($Force -and (
+    $DryRun -or
+    $ManualTestOnly -or
+    $null -ne $e2eBuild -or
+    -not [string]::IsNullOrWhiteSpace($WorkerOutputIso)
+)) {
+    throw '-Force is valid only for the normal Latest build.'
 }
 $workerBuild = if (-not [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
     Get-Na2WorkerBuildContext `
@@ -666,7 +675,15 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
     }
 }
 
-New-Item -ItemType Directory -Path $buildLogRoot -Force | Out-Null
+try {
+    New-Item -ItemType Directory -Path $buildLogRoot -Force | Out-Null
+}
+catch {
+    if (-not $Force) {
+        throw
+    }
+    Write-Warning "Force mode could not prepare build logs: $($_.Exception.Message)"
+}
 
 try {
     $preflight = Invoke-Na2BuildPreflight `
@@ -753,8 +770,12 @@ $arguments = @(
     '--configuration', $configuration
     '--configuration-log-directory', $configurationLogDirectory
 )
+if ($Force) {
+    $arguments += '--best-effort-metadata'
+}
 
 $promotionCompleted = $false
+$preserveStagedIso = $false
 try {
     Push-Location $paths.repository
     try {
@@ -774,28 +795,67 @@ try {
     }
     $buildOutput | ForEach-Object { Write-Host $_ }
     if (-not (Test-Path -LiteralPath $configurationLog -PathType Container)) {
-        throw 'Configuration build completed without creating its structured build record.'
+        if (-not $Force) {
+            throw 'Configuration build completed without creating its structured build record.'
+        }
+        Write-Warning 'Force mode is continuing without a structured configuration build record.'
     }
 
-    $promotion = Promote-VerifiedIso `
-        -LatestIso $resolvedLatestIso `
-        -PreviousIso $resolvedPreviousIso
-    $promotionCompleted = $true
-    $buildRecord = Complete-Na2BuildRecord `
-        -LogDirectory $logDirectory `
-        -BuildId $buildId `
-        -Result $promotion.Status `
-        -Rotated $promotion.Rotated `
-        -LatestIso $promotion.LatestIso `
-        -PreviousIso $promotion.PreviousIso `
-        -Configuration $configuration `
-        -Paths $paths
-    $buildRecordPath = Join-Path $buildLogRoot $buildRecord.BuildId
-    Write-Host "[na228] Build record: retained $buildRecordPath" -ForegroundColor Cyan
-    $promotion | Add-Member -NotePropertyName BuildId -NotePropertyValue $buildRecord.BuildId
-    $promotion | Add-Member -NotePropertyName ConfigurationLogDirectory -NotePropertyValue $buildRecord.BuildRecord
+    try {
+        $promotion = Promote-VerifiedIso `
+            -LatestIso $resolvedLatestIso `
+            -PreviousIso $resolvedPreviousIso
+        $promotionCompleted = $true
+    }
+    catch {
+        if (-not $Force -or -not (Test-Path -LiteralPath $stagedIso -PathType Leaf)) {
+            throw
+        }
+        $preserveStagedIso = $true
+        Write-Warning (
+            "Force mode could not promote Latest: $($_.Exception.Message) " +
+            "The verified staged ISO will be launched directly: $stagedIso"
+        )
+        $promotion = [pscustomobject]@{
+            Status = 'forced-staged'
+            LatestIso = $resolvedLatestIso
+            PreviousIso = $resolvedPreviousIso
+            Rotated = $false
+            ChangedRoles = [string[]]@()
+            LaunchIso = $stagedIso
+        }
+    }
+
+    $buildRecord = $null
+    if (-not $preserveStagedIso) {
+        try {
+            $buildRecord = Complete-Na2BuildRecord `
+                -LogDirectory $logDirectory `
+                -BuildId $buildId `
+                -Result $promotion.Status `
+                -Rotated $promotion.Rotated `
+                -LatestIso $promotion.LatestIso `
+                -PreviousIso $promotion.PreviousIso `
+                -Configuration $configuration `
+                -Paths $paths
+            $buildRecordPath = Join-Path $buildLogRoot $buildRecord.BuildId
+            Write-Host "[na228] Build record: retained $buildRecordPath" -ForegroundColor Cyan
+        }
+        catch {
+            if (-not $Force) {
+                throw
+            }
+            Write-Warning "Force mode could not retain the build record: $($_.Exception.Message)"
+        }
+    }
+    $promotion | Add-Member -NotePropertyName BuildId -NotePropertyValue $(
+        if ($null -ne $buildRecord) { $buildRecord.BuildId } else { $null }
+    )
+    $promotion | Add-Member -NotePropertyName ConfigurationLogDirectory -NotePropertyValue $(
+        if ($null -ne $buildRecord) { $buildRecord.BuildRecord } else { $null }
+    )
     $promotion | Add-Member -NotePropertyName PreflightCacheHit -NotePropertyValue $false
-    if (-not [string]::IsNullOrWhiteSpace($preflightFingerprint)) {
+    if (-not $preserveStagedIso -and -not [string]::IsNullOrWhiteSpace($preflightFingerprint)) {
         try {
             $receiptResult = Invoke-Na2BuildPreflight `
                 -Command record `
@@ -833,7 +893,7 @@ try {
     $promotion
 }
 finally {
-    if (Test-Path -LiteralPath $stagedIso) {
+    if (-not $preserveStagedIso -and (Test-Path -LiteralPath $stagedIso)) {
         Remove-Item -Force -LiteralPath $stagedIso
     }
     if (-not $promotionCompleted -and (Test-Path -LiteralPath $configurationLog -PathType Container)) {

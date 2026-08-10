@@ -112,6 +112,7 @@ exit $LASTEXITCODE
     $global:Na2PreflightTestMode = 'hit'
     $global:Na2PreflightTestCalls = @()
     $global:Na2PreflightTestRepository = $repository
+    $global:Na2PreflightTestSkipConfigurationLog = $false
     function python {
         $arguments = @($args)
         $global:Na2PreflightTestCalls += ,$arguments
@@ -148,8 +149,10 @@ exit $LASTEXITCODE
             New-Item -ItemType Directory -Force `
                 -Path ([IO.Path]::GetDirectoryName($arguments[$outputIndex])) | Out-Null
             [IO.File]::Copy($fixtureSource, "$($arguments[$outputIndex]).building", $true)
-            New-Item -ItemType Directory -Force `
-                -Path (Join-Path $global:Na2PreflightTestRepository $arguments[$configurationLogIndex]) | Out-Null
+            if (-not $global:Na2PreflightTestSkipConfigurationLog) {
+                New-Item -ItemType Directory -Force `
+                    -Path (Join-Path $global:Na2PreflightTestRepository $arguments[$configurationLogIndex]) | Out-Null
+            }
             $global:LASTEXITCODE = 0
             return 'synthetic verified build'
         }
@@ -201,6 +204,84 @@ exit $LASTEXITCODE
             -not $migratedBuildMap.Contains('@build/Legacy Product')
         ) `
         -Message 'Product-title change did not migrate builds.tsv to the configured ISO names.'
+
+    $global:Na2PreflightTestMode = 'hit'
+    $global:Na2PreflightTestCalls = @()
+    $forcedHit = & (Join-Path $scriptRoot 'build.ps1') -Force
+    Assert-Na2PreflightTest `
+        -Condition ($forcedHit.Status -eq 'unchanged' -and $forcedHit.PreflightCacheHit) `
+        -Message 'Force mode did not reuse a valid cached ISO.'
+    Assert-Na2PreflightTest `
+        -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
+        -Message 'Force mode invoked the builder after a preflight cache hit.'
+    Assert-Na2PreflightTest `
+        -Condition (-not (Test-Path -LiteralPath "$latestIso.building")) `
+        -Message 'Force mode staged an ISO after a preflight cache hit.'
+
+    $global:Na2PreflightTestMode = 'miss'
+    $global:Na2PreflightTestCalls = @()
+    $global:Na2PreflightTestSkipConfigurationLog = $true
+    $forcedItems = @(& (Join-Path $scriptRoot 'build.ps1') -Force *>&1)
+    $global:Na2PreflightTestSkipConfigurationLog = $false
+    $forced = @(
+        $forcedItems |
+            Where-Object { $null -ne $_.PSObject.Properties['Status'] }
+    )[-1]
+    $forcedText = ($forcedItems | ForEach-Object { [string]$_ }) -join "`n"
+    Assert-Na2PreflightTest `
+        -Condition ($forced.Status -eq 'unchanged' -and -not $forced.PreflightCacheHit) `
+        -Message 'Force mode did not retain a usable result after a real cache miss.'
+    Assert-Na2PreflightTest `
+        -Condition ($global:Na2PreflightTestCalls.Count -eq 3) `
+        -Message 'Force mode did not check, build, and record exactly once.'
+    $forcedBuildCall = @(
+        $global:Na2PreflightTestCalls |
+            Where-Object { $_ -contains 'na228_builder.scripts.build_configuration' }
+    )[-1]
+    Assert-Na2PreflightTest `
+        -Condition ($forcedBuildCall -contains '--best-effort-metadata') `
+        -Message 'Force mode did not enable best-effort builder metadata.'
+    Assert-Na2PreflightTest `
+        -Condition (
+            $forcedText -match 'continuing without a structured configuration build record' -and
+            $forcedText -match 'could not retain the build record'
+        ) `
+        -Message 'Force mode did not downgrade missing build metadata to warnings.'
+    Assert-Na2PreflightTest `
+        -Condition (-not (Test-Path -LiteralPath "$latestIso.building")) `
+        -Message 'Force mode left an unnecessary staged ISO after successful promotion.'
+
+    $latestBackup = "$latestIso.force-test"
+    Move-Item -LiteralPath $latestIso -Destination $latestBackup
+    New-Item -ItemType Directory -Path $latestIso | Out-Null
+    try {
+        $global:Na2PreflightTestMode = 'miss'
+        $global:Na2PreflightTestCalls = @()
+        $forcedStagedItems = @(& (Join-Path $scriptRoot 'build.ps1') -Force *>&1)
+        $forcedStaged = @(
+            $forcedStagedItems |
+                Where-Object { $null -ne $_.PSObject.Properties['Status'] }
+        )[-1]
+        Assert-Na2PreflightTest `
+            -Condition (
+                $forcedStaged.Status -eq 'forced-staged' -and
+                $forcedStaged.LaunchIso -ceq "$latestIso.building" -and
+                (Test-Path -LiteralPath $forcedStaged.LaunchIso -PathType Leaf)
+            ) `
+            -Message 'Force mode did not preserve a verified staged ISO after promotion failed.'
+        Assert-Na2PreflightTest `
+            -Condition ($global:Na2PreflightTestCalls.Count -eq 2) `
+            -Message 'Staged force fallback unexpectedly wrote a preflight receipt.'
+    }
+    finally {
+        if (Test-Path -LiteralPath "$latestIso.building" -PathType Leaf) {
+            Remove-Item -LiteralPath "$latestIso.building" -Force
+        }
+        if (Test-Path -LiteralPath $latestIso -PathType Container) {
+            Remove-Item -LiteralPath $latestIso -Force
+        }
+        Move-Item -LiteralPath $latestBackup -Destination $latestIso
+    }
 
     $global:Na2PreflightTestMode = 'miss'
     $global:Na2PreflightTestCalls = @()
@@ -410,6 +491,7 @@ finally {
     Remove-Variable -Name Na2PreflightTestMode -Scope Global -ErrorAction SilentlyContinue
     Remove-Variable -Name Na2PreflightTestCalls -Scope Global -ErrorAction SilentlyContinue
     Remove-Variable -Name Na2PreflightTestRepository -Scope Global -ErrorAction SilentlyContinue
+    Remove-Variable -Name Na2PreflightTestSkipConfigurationLog -Scope Global -ErrorAction SilentlyContinue
     if (Test-Path -LiteralPath $testRoot) {
         Remove-Item -LiteralPath $testRoot -Recurse -Force
     }

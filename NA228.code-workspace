@@ -7,6 +7,14 @@
     {
       "name": "UN Workshop",
       "path": "../UN Workshop"
+    },
+    {
+      "name": "Codex Utils",
+      "path": "../../codex-utils"
+    },
+    {
+      "name": "PCSX2",
+      "path": "../../PCSX2"
     }
   ],
   "settings": {

@@ -36,7 +36,7 @@ policies remain active in every mode.
 | `des mode`, `design mode` | [`docs/workflows/design_mode.md`](docs/workflows/design_mode.md) |
 | `int mode`, `interactive mode` | [`docs/workflows/interactive_mode.md`](docs/workflows/interactive_mode.md) |
 | `zxc` | [`docs/procedures/graceful_stop.md`](docs/procedures/graceful_stop.md) |
-| `qwe`, `snapshot`, `tasks`, `task done`, `c`, `c on`, `c off`, `ver`, `mode`, `n`, `ag`, `q:`, `con`, `e2e`, `sum`, `eff`, `sw`, `ss`, `mute`, `unmute` | [`docs/AGENT_COMMANDS.md`](docs/AGENT_COMMANDS.md) |
+| `qwe`, `snap`, `tasks`, `task done`, `c`, `c on`, `c off`, `ver`, `mode`, `n`, `ag`, `q:`, `con`, `e2e`, `sum`, `eff`, `sw`, `ss`, `mute`, `unmute` | [`AGENT_COMMANDS.md`](AGENT_COMMANDS.md) |
 
 ## Policy routing
 
@@ -44,7 +44,7 @@ Read only the routed policy whose trigger applies:
 
 | Work | Read |
 | --- | --- |
-| conversation, authorization, sequencing, user inputs, completion reports | [`docs/INTERACTION.md`](docs/INTERACTION.md) |
+| conversation, authorization, sequencing, user inputs, completion reports | [`INTERACTION.md`](INTERACTION.md) |
 | Git, paths, work directories, elevation, cleanup, scripts, documentation layout | [`docs/policies/repository.md`](docs/policies/repository.md) |
 | validation, tests, builds, PCSX2, runtime injection, E2E | [`docs/policies/testing.md`](docs/policies/testing.md) |
 | profiles, builder inputs, binaries, donor data, source media, PNACH | [`docs/policies/modding.md`](docs/policies/modding.md) |

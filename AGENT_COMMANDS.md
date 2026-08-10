@@ -13,20 +13,20 @@ those.
 - `snap`: present the current consolidated implementation snapshot. It
   requests the snapshot only and does not authorize implementation.
 - `tasks`: read and present `TASKS.md` under the
-  [coordination policy](policies/coordination.md).
+  [coordination policy](docs/policies/coordination.md).
 - `task done`: apply the task-completion behavior defined by the
-  [coordination policy](policies/coordination.md).
+  [coordination policy](docs/policies/coordination.md).
 - `c on`, `c off`: change the current chat's persistent Normal mode
   commit setting as defined in
-  [`normal_mode.md`](workflows/normal_mode.md#commit-setting).
+  [`normal_mode.md`](docs/workflows/normal_mode.md#commit-setting).
 - `c`: respond only with `Commit: on` or `Commit: off`, reporting the current
   chat's persistent Normal mode commit setting. It does not change the setting
   or grant authority.
 - `ver`: apply the
-  [one-time override](policies/repository.md#git-and-concurrent-work) to the
+  [one-time override](docs/policies/repository.md#git-and-concurrent-work) to the
   current task-owned pending Normal mode changes.
 - `zxc`: follow the
-  [`graceful-stop procedure`](procedures/graceful_stop.md).
+  [`graceful-stop procedure`](docs/procedures/graceful_stop.md).
 
 ## Conversation and metadata
 
@@ -58,7 +58,7 @@ those.
   validation for the current work under the normal validation policy. Suite and
   capture identifiers name expected evidence; execution remains global across
   the tracked suite set. The command authorizes E2E only, not unrelated
-  validation. Follow [`../e2e/AGENT_GUIDE.md`](../e2e/AGENT_GUIDE.md).
+  validation. Follow [`e2e/AGENT_GUIDE.md`](e2e/AGENT_GUIDE.md).
 
 ## Notifications
 

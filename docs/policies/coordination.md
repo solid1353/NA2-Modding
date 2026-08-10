@@ -22,7 +22,7 @@ or an explicit cross-chat handoff.
 - Send a concise notification immediately before handing control back and
   include the source title, result/problem, and exact requested user action.
 - Respect the shared muted state. `mute` and `unmute` behavior is defined in
-  [`../AGENT_COMMANDS.md`](../AGENT_COMMANDS.md).
+  [`AGENT_COMMANDS.md`](../../AGENT_COMMANDS.md).
 
 ## `TASKS.md`
 

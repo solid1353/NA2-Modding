@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import codecs
 import csv
 import hashlib
 import json
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -17,6 +16,8 @@ if TYPE_CHECKING:
 
 
 BUILDER_TARGETS_FILE = Path("catalog") / "implementation" / "targets.tsv"
+SOURCE_BOOT_PATH = "SLPS_258.37"
+SYSTEM_CNF_PATH = "SYSTEM.CNF"
 MODULE_TYPE_ORDER = (
     "translation_importer",
     "string_patcher",
@@ -58,25 +59,6 @@ TEXTURE_PATCHER_CONTROL_FILES = (
 
 
 @dataclass(frozen=True)
-class ProductIdentity:
-    source_boot_path: str
-    output_boot_path: str
-    system_cnf_path: str
-    source_memory_card_directory: str
-    output_memory_card_directory: str
-    memory_card_directory_occurrence_count: int
-    memory_card_title_offset: int
-    memory_card_title_capacity: int
-    memory_card_title_encoding: str
-    source_memory_card_title: str
-    output_memory_card_title: str
-    imported_game_title: str
-    output_game_title: str
-    game_title_mapping_count: int
-    game_title_occurrence_count: int
-
-
-@dataclass(frozen=True)
 class SelectedFeature:
     feature_id: str
     input_sha256: str
@@ -98,71 +80,50 @@ class BuildConfiguration:
     definition_path: Path
     configuration_id: str
     product_path: Path
+    product_title: str
+    output_boot_path: str
     targets_path: Path
     roots: dict[str, Path]
-    identity: ProductIdentity
     features: tuple[SelectedFeature, ...]
     modules: tuple[ModuleInvocation, ...]
     selection: CatalogSelection
 
 
-def _identity_object(value: object, keys: set[str], label: str) -> dict[str, object]:
+def _product_object(value: object, keys: set[str], label: str) -> dict[str, object]:
     if not isinstance(value, dict) or set(value) != keys:
         expected = ", ".join(sorted(keys))
         raise ValueError(f"Product {label} keys must be: {expected}")
     return value
 
 
-def _identity_text(value: object, label: str) -> str:
+def _product_text(value: object, label: str) -> str:
     if not isinstance(value, str) or not value:
-        raise ValueError(f"Product identity {label} must be non-empty text")
+        raise ValueError(f"Product {label} must be non-empty text")
     return value
 
 
-def _identity_int(value: object, label: str) -> int:
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise ValueError(f"Product identity {label} must be an integer")
-    return value
-
-
-def _read_product(path: Path) -> tuple[ProductIdentity, dict[str, str]]:
+def _read_product(path: Path) -> tuple[str, dict[str, str], str]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ValueError(f"Product config is not valid JSON: {path}") from exc
-    product = _identity_object(
+    product = _product_object(
         data,
-        {"schema_version", "title", "serial", "inputs", "identity", "builds"},
+        {
+            "schema_version",
+            "title",
+            "serial",
+            "output_boot_path",
+            "inputs",
+            "builds",
+        },
         "product",
     )
     if product["schema_version"] != 1:
         raise ValueError("Unsupported product schema_version")
-    root = _identity_object(
-        product["identity"], {"image", "memory_card", "game_title"}, "identity"
-    )
-    image = _identity_object(
-        root["image"],
-        {"source_boot_path", "output_boot_path", "system_cnf_path"},
-        "image",
-    )
-    memory = _identity_object(
-        root["memory_card"],
-        {
-            "source_directory",
-            "output_directory",
-            "expected_directory_occurrence_count",
-            "title_offset",
-            "title_capacity",
-            "title_encoding",
-            "source_title",
-            "output_title",
-        },
-        "memory_card",
-    )
-    title = _identity_object(
-        root["game_title"],
-        {"imported", "output", "expected_mapping_count", "expected_occurrence_count"},
-        "game_title",
+    product_title = _product_text(product["title"], "title")
+    output_boot_path = _product_text(
+        product["output_boot_path"], "output_boot_path"
     )
     inputs = product["inputs"]
     if not isinstance(inputs, dict) or not inputs:
@@ -178,45 +139,7 @@ def _read_product(path: Path) -> tuple[ProductIdentity, dict[str, str]]:
         ):
             raise ValueError(f"Invalid product input: {root_id!r}")
         normalized_inputs[root_id] = value
-    identity = ProductIdentity(
-        source_boot_path=_identity_text(image["source_boot_path"], "image.source_boot_path"),
-        output_boot_path=_identity_text(image["output_boot_path"], "image.output_boot_path"),
-        system_cnf_path=_identity_text(image["system_cnf_path"], "image.system_cnf_path"),
-        source_memory_card_directory=_identity_text(
-            memory["source_directory"], "memory_card.source_directory"
-        ),
-        output_memory_card_directory=_identity_text(
-            memory["output_directory"], "memory_card.output_directory"
-        ),
-        memory_card_directory_occurrence_count=_identity_int(
-            memory["expected_directory_occurrence_count"],
-            "memory_card.expected_directory_occurrence_count",
-        ),
-        memory_card_title_offset=_identity_int(
-            memory["title_offset"], "memory_card.title_offset"
-        ),
-        memory_card_title_capacity=_identity_int(
-            memory["title_capacity"], "memory_card.title_capacity"
-        ),
-        memory_card_title_encoding=_identity_text(
-            memory["title_encoding"], "memory_card.title_encoding"
-        ),
-        source_memory_card_title=_identity_text(
-            memory["source_title"], "memory_card.source_title"
-        ),
-        output_memory_card_title=_identity_text(
-            memory["output_title"], "memory_card.output_title"
-        ),
-        imported_game_title=_identity_text(title["imported"], "game_title.imported"),
-        output_game_title=_identity_text(title["output"], "game_title.output"),
-        game_title_mapping_count=_identity_int(
-            title["expected_mapping_count"], "game_title.expected_mapping_count"
-        ),
-        game_title_occurrence_count=_identity_int(
-            title["expected_occurrence_count"], "game_title.expected_occurrence_count"
-        ),
-    )
-    return identity, normalized_inputs
+    return output_boot_path, normalized_inputs, product_title
 
 
 def _workspace_path(value: str, label: str, workspace: Path) -> Path:
@@ -452,96 +375,29 @@ def module_content_sha256(path: Path, module_type: str) -> str:
     return _tree_digest(path, files, external_labels=external_labels)
 
 
-def _validated_identity(product_path: Path) -> tuple[ProductIdentity, dict[str, str]]:
-    identity, product_inputs = _read_product(product_path)
-    if identity.memory_card_title_offset < 0 or identity.memory_card_title_capacity <= 0:
-        raise ValueError(
-            "Product identity title offset must be non-negative and capacity positive"
-        )
-    if identity.memory_card_directory_occurrence_count <= 0:
-        raise ValueError(
-            "Product identity memory-card directory occurrence count must be positive"
-        )
-    if (
-        identity.game_title_mapping_count <= 0
-        or identity.game_title_occurrence_count < identity.game_title_mapping_count
-    ):
-        raise ValueError("Product identity game-title coverage is invalid")
-    try:
-        encoding = codecs.lookup(identity.memory_card_title_encoding).name
-    except LookupError as exc:
-        raise ValueError("Product identity has an unknown title encoding") from exc
-    identity = replace(identity, memory_card_title_encoding=encoding)
+def _validated_product(
+    product_path: Path,
+) -> tuple[str, dict[str, str], str]:
+    output_boot_path, product_inputs, product_title = _read_product(product_path)
     from ..image_assembler.iso9660 import normalize_iso_path
 
-    for label, value in (
-        ("source_boot_path", identity.source_boot_path),
-        ("output_boot_path", identity.output_boot_path),
-        ("system_cnf_path", identity.system_cnf_path),
-    ):
-        if normalize_iso_path(value) != value:
-            raise ValueError(f"Product identity {label} must be normalized: {value!r}")
-    if identity.source_boot_path == identity.output_boot_path:
-        raise ValueError("Product identity boot paths must differ")
-    if len(identity.source_boot_path.encode("ascii")) != len(
-        identity.output_boot_path.encode("ascii")
-    ):
-        raise ValueError("Product identity boot paths must have equal byte lengths")
-    directory_bytes: dict[str, bytes] = {}
-    for label, text in (
-        ("source_memory_card_directory", identity.source_memory_card_directory),
-        ("output_memory_card_directory", identity.output_memory_card_directory),
-    ):
-        if "\0" in text:
-            raise ValueError(f"Product identity {label} contains an embedded NUL")
-        try:
-            directory_bytes[label] = text.encode("ascii")
-        except UnicodeEncodeError as exc:
-            raise ValueError(f"Product identity {label} must be ASCII") from exc
-    if directory_bytes["source_memory_card_directory"] == directory_bytes[
-        "output_memory_card_directory"
-    ]:
-        raise ValueError("Product identity memory-card directories must differ")
-    if len(directory_bytes["source_memory_card_directory"]) != len(
-        directory_bytes["output_memory_card_directory"]
-    ):
+    if normalize_iso_path(output_boot_path) != output_boot_path:
         raise ValueError(
-            "Product identity memory-card directories must have equal byte lengths"
+            f"Product output_boot_path must be normalized: {output_boot_path!r}"
         )
-    for label, text in (
-        ("source_memory_card_title", identity.source_memory_card_title),
-        ("output_memory_card_title", identity.output_memory_card_title),
-    ):
-        if "\0" in text:
-            raise ValueError(f"Product identity {label} contains an embedded NUL")
-        try:
-            encoded = text.encode(identity.memory_card_title_encoding)
-        except UnicodeEncodeError as exc:
-            raise ValueError(
-                f"Product identity {label} is not encodable as "
-                f"{identity.memory_card_title_encoding}"
-            ) from exc
-        if len(encoded) >= identity.memory_card_title_capacity:
-            raise ValueError(
-                f"Product identity {label} does not fit its NUL-padded capacity"
-            )
-    if (
-        not identity.imported_game_title
-        or not identity.output_game_title
-        or identity.imported_game_title == identity.output_game_title
-    ):
-        raise ValueError("Product identity must replace one non-empty game title")
-    for label, text in (
-        ("imported_game_title", identity.imported_game_title),
-        ("output_game_title", identity.output_game_title),
-    ):
-        if "\0" in text:
-            raise ValueError(f"Product identity {label} contains an embedded NUL")
-        try:
-            text.encode("cp1252")
-        except UnicodeEncodeError as exc:
-            raise ValueError(f"Product identity {label} must be CP1252") from exc
-    return identity, product_inputs
+    if output_boot_path == SOURCE_BOOT_PATH:
+        raise ValueError("Product output_boot_path must differ from the source boot path")
+    if len(SOURCE_BOOT_PATH.encode("ascii")) != len(output_boot_path.encode("ascii")):
+        raise ValueError(
+            "Product output_boot_path must have the source boot path's byte length"
+        )
+    if "\0" in product_title:
+        raise ValueError("Product title contains an embedded NUL")
+    try:
+        product_title.encode("cp1252")
+    except UnicodeEncodeError as exc:
+        raise ValueError("Product title must be CP1252") from exc
+    return output_boot_path, product_inputs, product_title
 
 
 def _resolved_roots(
@@ -632,6 +488,19 @@ def _catalog_feature_sha256(
                 ).encode("utf-8"),
             )
         )
+    for patch_id in catalog_module.feature_reference_ids(
+        selection, feature_id, "string_patches"
+    ):
+        entries.append(
+            (
+                f"string_patches/{patch_id}.json",
+                json.dumps(
+                    selection.string_patches[patch_id],
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                ).encode("utf-8"),
+            )
+        )
     for module_type, module_path in module_inputs:
         for file in _module_content_files(module_path, module_type):
             entries.append((file.relative_to(repository).as_posix(), file.read_bytes()))
@@ -671,7 +540,7 @@ def _load_configuration(
     selection = catalog_module.load_selection(catalog_path, definition_path)
     paths = project_paths or load_paths(workspace, allow_missing=True)
     product_path = paths.file("product_config").resolve()
-    identity, product_inputs = _validated_identity(product_path)
+    output_boot_path, product_inputs, product_title = _validated_product(product_path)
     roots = _resolved_roots(product_inputs, workspace, paths, root_overrides)
     targets_path = builder_root / BUILDER_TARGETS_FILE
     if not targets_path.is_file():
@@ -727,7 +596,16 @@ def _load_configuration(
                     feature_id=feature_id,
                 )
             )
-        if selection.node_enabled("features", feature_id) and not module_ids:
+        if (
+            selection.node_enabled("features", feature_id)
+            and not module_ids
+            and not catalog_module.feature_has(
+                selection,
+                feature_id,
+                "string_patches",
+                enabled_only=True,
+            )
+        ):
             raise ValueError(f"Catalog feature owns no executable data: {feature_id}")
         features.append(
             SelectedFeature(
@@ -736,13 +614,26 @@ def _load_configuration(
                 module_ids=tuple(module_ids),
             )
         )
+    if any(
+        catalog_module.feature_has(
+            selection,
+            feature_id,
+            "string_patches",
+            enabled_only=True,
+        )
+        for feature_id in selection.feature_ids
+    ) and not any(module.module == "translation_importer" for module in modules):
+        raise ValueError(
+            "Selected string patches require an enabled translation importer"
+        )
     return BuildConfiguration(
         definition_path=definition_path,
         configuration_id=configuration_id,
         product_path=product_path,
+        product_title=product_title,
+        output_boot_path=output_boot_path,
         targets_path=targets_path,
         roots=roots,
-        identity=identity,
         features=tuple(features),
         modules=tuple(modules),
         selection=selection,
@@ -763,6 +654,7 @@ def configuration_resource_files(
         *configuration.selection.catalog_files,
         configuration.selection.edits_path,
         configuration.selection.injections_path,
+        configuration.selection.string_patches_path,
         configuration.targets_path,
     ]
     if configuration.selection.base_configuration_path is not None:

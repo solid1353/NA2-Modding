@@ -235,11 +235,13 @@ children remain disabled.
 Every setting has one `patches` array. Edit IDs use the `e__` prefix and must
 resolve to exactly one guarded definition in
 `catalog/implementation/edits.json`. Injection IDs use `i__` and must resolve
-to exactly one unit in `catalog/implementation/injections.json`. Every other
-prefix is invalid.
+to exactly one unit in `catalog/implementation/injections.json`. Semantic
+string-patch IDs use `s__` and must resolve to exactly one definition in
+`catalog/implementation/string_patches.json`. Every other prefix is invalid.
 
-Multiple setting branches may share a patch ID. Every edit and injection must
-be referenced by at least one catalog branch; orphan definitions are rejected.
+Multiple setting branches may share a patch ID. Every edit, injection, and
+string patch must be referenced by at least one catalog branch; orphan
+definitions are rejected.
 Every target, adapter, asset, source, runtime object, and operation reachable
 through a referenced definition must also pass its owning component's normal
 validation.
@@ -249,6 +251,30 @@ and destination guard. It declares an adapter instead of `replacement_hex`;
 the adapter turns the validated setting value into concrete replacement bytes
 before normal guarded composition. Adapters are owned by
 `modules/binary_patcher/adapters.py`; there is no separate adapter operation.
+
+A bare setting may select a fixed-value adapter edit. For example,
+`ascii_fixed` accepts readable `expected_value` and `replacement_value` fields
+in the implementation definition, requires equal-length nonempty ASCII, and
+encodes both values before the same guarded composition. These fixed values are
+implementation details and do not appear in the release catalog reference.
+
+`nul_padded_text` additionally accepts an `encoding` and fixed byte `length`.
+It encodes each nonempty value, requires room for a terminating NUL, and pads
+the remaining bytes with zeroes. This keeps fixed text slots readable without
+weakening their exact byte guard.
+
+The currently supported semantic string operation is
+`replace_imported_game_title`. Its definition guards the imported text plus
+the expected mapping and occurrence counts; when selected, the string patcher
+replaces that text with root `product.title` before choosing inline or linked
+external placement. Disabling its catalog setting leaves the imported text
+unchanged.
+
+A `replace` definition may use `destination_offsets` instead of
+`destination_offset` when the same guarded replacement applies at multiple
+known locations in one target. The list must be nonempty and unique. The loader
+expands it into independently guarded and logged concrete edits; it never
+searches the target or derives an occurrence count.
 
 The examples in this document are illustrative authoring fragments. A real
 catalog must provide implementation definitions for every shown patch ID.

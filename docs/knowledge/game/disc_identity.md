@@ -16,36 +16,48 @@ The serial alternatives considered on 2026-07-18 were rejected as follows:
 
 ## Reproducible implementation
 
-Root `product.json` declares the clean boot path, output boot path,
-`SYSTEM.CNF` path, guarded memory-card directory identity, and guarded CP932
-memory-card title. After feature modules have been composed, the product
-composer emits four guarded replacements and one equal-length file rename:
+Root `product.json` declares the product title and explicit output boot path.
+The builder supports the fixed clean NA2 boot path `SLPS_258.37` and root
+`SYSTEM.CNF` directly. After feature modules have been composed, the product
+composer emits one guarded replacement and one equal-length file rename:
 
 1. `SYSTEM.CNF` changes `SLPS_258.37` to `SLOP_NA2.28`.
-2. The clean boot ELF's two 19-byte memory-card directory fields at `0x2FBAC1`
-   and `0x2FBBF0` change from `BISLPS-25837NARUTO5` to
-   `BASLOP-NA228NARUTO6`.
-3. The clean boot ELF's 64-byte title slot at `0x2FBAE0` changes from
-   `ＮＡＲＵＴＯ－ナルト－　疾風伝ナルティメットアクセル２` to `ＮＡ　ｖ２．２８`.
-4. The ISO9660 root directory record changes `SLPS_258.37;1` to
+2. The ISO9660 root directory record changes `SLPS_258.37;1` to
    `SLOP_NA2.28;1`.
 
-The fourth operation is ISO filesystem metadata, not an ELF string replacement,
+The second operation is ISO filesystem metadata, not an ELF string replacement,
 so it deliberately does not belong to a feature module. The mandatory image
-assembler applies it to both ISO9660 and UDF, logs all six identity edits, and
+assembler applies it to both ISO9660 and UDF, logs the identity edits, and
 verifies the declared final tree. No file extent, file size, or ISO size changes.
 
-The new directory identity intentionally ends compatibility with the stock
-save directory. Existing `.ps2` memory cards and data remain untouched, while
-new builds read and write `BASLOP-NA228NARUTO6` beside any retained
-`BISLPS-25837NARUTO5` data.
+The separate `general.dedicated_save_namespace` catalog setting owns the clean
+boot ELF's two 19-byte memory-card directory fields at `0x2FBAC1` and
+`0x2FBBF0`. When enabled, its guarded binary edits change
+`BISLPS-25837NARUTO5` to `BASLOP-NA228NARUTO6`. It is enabled in the base
+configuration. Setting it to `false` leaves the stock name intact, so NA228
+shares NA2's save data. Existing `.ps2` memory cards and data remain untouched,
+and changing the setting does not migrate data between the two names.
+
+The separate `general.replace_memory_card_title` setting owns the clean boot
+ELF's 64-byte CP932 title slot at `0x2FBAE0`. Its fixed-value adapter guards the
+original Japanese title and replaces it with `ＮＡ　ｖ２．２８`, with both values
+NUL-terminated and zero-padded through the slot. The base configuration enables
+it; setting it to `false` leaves the original title intact.
+
+`general.replace_imported_game_title` owns the semantic replacement of
+`Naruto Shippuden: Ultimate Ninja 5` in imported strings. Its catalog definition
+guards the known six mappings and seven occurrences, and the string patcher
+substitutes root `product.title` before inline or linked-external placement. The
+base configuration enables it; setting it to `false` leaves the imported title
+unchanged. It is independent of both memory-card settings.
 
 The full-width title form follows the official NUN5 memory-card convention. A
 half-width ASCII test copied into a new save correctly but rendered as a blank
 title in the USA PS2 BIOS. A longer full-width
 `Ｎａｒｕｔｉｍａｔｅ　Ａｃｃｅｌ　ｖ２．２８` test rendered but wrapped at an unattractive
-position, so the profile uses the shorter full-width title. Its 16 encoded bytes
-are followed by a NUL and 47 zero-padding bytes through the original slot.
+position, so the memory-card-title patch uses the shorter full-width title. Its
+16 encoded bytes are followed by a NUL and 47 zero-padding bytes through the
+original slot.
 The shorter final title still requires acceptance in the PS2 memory-card
 browser; this does not weaken the exact static guard or size-preservation proof.
 

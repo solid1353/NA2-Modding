@@ -269,12 +269,8 @@ class ProjectPathTests(unittest.TestCase):
                 "builds": {
                     "latest": {
                         "aliases": ["l"],
-                        "postfix": "Latest",
                     },
-                    "previous": {
-                        "aliases": ["p"],
-                        "postfix": "Previous",
-                    },
+                    "e2e_test_shifted": {},
                 },
             }
             manifest_path = root / "paths.json"
@@ -307,6 +303,11 @@ class ProjectPathTests(unittest.TestCase):
             self.assertEqual(
                 paths.file("latest_memory_card"),
                 root.resolve() / "pcsx2/memory_cards/NA v2.28 - Latest.ps2",
+            )
+            self.assertEqual(
+                paths.file("e2e_test_shifted_iso"),
+                root.resolve()
+                / "build/Narutimate Accel v2.28 - E2E Test Shifted.iso",
             )
             self.assertEqual(
                 paths.file("nun5_iso"),

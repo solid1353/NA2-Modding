@@ -1,0 +1,20 @@
+{
+  dedicated_save_namespace: setting {
+    description: "Use a dedicated NA228 save namespace instead of sharing the original NA2 save namespace.",
+    patches: [
+      "e__general__dedicated_save_namespace__directory_references",
+    ],
+  },
+  replace_imported_game_title: setting {
+    description: "Replace the imported NUN5 game title with the NA228 product title.",
+    patches: [
+      "s__general__replace_imported_game_title",
+    ],
+  },
+  replace_memory_card_title: setting {
+    description: "Replace the original memory-card title with the NA228 title.",
+    patches: [
+      "e__general__replace_memory_card_title",
+    ],
+  },
+}

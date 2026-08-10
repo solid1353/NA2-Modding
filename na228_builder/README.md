@@ -9,17 +9,22 @@ integrated catalog data.
   is named for one direct child of the logical `features` root. The custom
   declarative syntax uses JSON-like objects and TypeScript-like value types and
   is parsed directly by the Python builder.
-  [`catalog/README.md`](catalog/README.md) is the complete authoring and
+  [`CATALOG.md`](CATALOG.md) is the complete authoring and
   configuration-semantics reference.
 - Catalog settings contain their descriptions and one `patches` array. IDs
   beginning with `e__` resolve to guarded edits; IDs beginning with `i__`
-  resolve to injection units. Implementation details never appear in the
-  release catalog reference.
+  resolve to injection units; IDs beginning with `s__` resolve to semantic
+  string patches. Implementation details never appear in the release catalog
+  reference.
 - `catalog/implementation/edits.json` is the direct root map of guarded binary
   edit definitions. A typed setting may feed its validated value to a declared
-  binary adapter instead of storing a fixed `replacement_hex`.
+  binary adapter instead of storing a fixed `replacement_hex`. A bare setting
+  may also select an adapter-backed fixed edit whose readable expected and
+  replacement values are encoded by the adapter.
 - `catalog/implementation/injections.json` is the direct root map of runtime
   injection units. Each unit contains `hooks`, `payload`, or both.
+- `catalog/implementation/string_patches.json` owns semantic transformations
+  performed by the string patcher before inline and external string layout.
 - `configurations/base.json` contains the shared `features` setting and its
   `overrides`. `development.json`, `test.json`, and `release.json` contain
   concrete `overrides`. Each overrides object may be empty or partially mirror
@@ -35,7 +40,8 @@ integrated catalog data.
 - `scripts/` contains every builder Python implementation file. Reusable engines and their code-only contracts remain under `modules/`.
 - Root `release_manifest.json` owns release packaging metadata and remains
   outside the catalog.
-- Root `product.json` owns source inputs, output identity, and named build variants.
+- Root `product.json` owns the product title, explicit output boot path, source
+  inputs, and named build variants.
 
 JSON configurations are the only build definitions. There is no separate pin or enablement table.
 

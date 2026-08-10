@@ -1,0 +1,9 @@
+{
+  "s__general__replace_imported_game_title": {
+    "description": "Replace the imported NUN5 game title with the configured product title before string layout.",
+    "operation": "replace_imported_game_title",
+    "expected_value": "Naruto Shippuden: Ultimate Ninja 5",
+    "expected_mapping_count": 6,
+    "expected_occurrence_count": 7
+  }
+}

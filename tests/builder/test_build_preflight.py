@@ -61,6 +61,9 @@ class BuildPreflightTests(unittest.TestCase):
             encoding="utf-8",
         )
         (implementation_root / "edits.json").write_text("{}\n", encoding="utf-8")
+        (implementation_root / "string_patches.json").write_text(
+            "{}\n", encoding="utf-8"
+        )
         (implementation_root / "injections.json").write_text(
             json.dumps(
                 {
@@ -135,31 +138,9 @@ class BuildPreflightTests(unittest.TestCase):
                     "schema_version": 1,
                     "title": "Test Product",
                     "serial": "TEST-00000",
+                    "output_boot_path": "SLOP_NA2.28",
                     "inputs": {"na2": "@source_na2", "nun5": "@source_nun5"},
-                    "identity": {
-                        "image": {
-                            "source_boot_path": "SLPS_258.37",
-                            "output_boot_path": "SLOP_NA2.28",
-                            "system_cnf_path": "SYSTEM.CNF",
-                        },
-                        "memory_card": {
-                            "source_directory": "BISLPS-25837NARUTO5",
-                            "output_directory": "BASLOP-NA228NARUTO6",
-                            "expected_directory_occurrence_count": 2,
-                            "title_offset": 4,
-                            "title_capacity": 16,
-                            "title_encoding": "ascii",
-                            "source_title": "Original",
-                            "output_title": "Output",
-                        },
-                        "game_title": {
-                            "imported": "Imported",
-                            "output": "Output",
-                            "expected_mapping_count": 1,
-                            "expected_occurrence_count": 1,
-                        },
-                    },
-                    "builds": {"latest": {"postfix": "Latest"}},
+                    "builds": {"latest": {}},
                 }
             ),
             encoding="utf-8",

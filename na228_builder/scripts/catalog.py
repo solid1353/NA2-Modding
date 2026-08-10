@@ -24,7 +24,7 @@ from ..payload_builder.operations import (
 
 IDENTIFIER = re.compile(r"[a-z][a-z0-9_]*\Z")
 OPERATION_FIELDS = ["field", "required", "type"]
-FIELD_TYPES = {"hex", "integer", "path", "sha256", "text"}
+FIELD_TYPES = {"hex", "integer", "integer_list", "path", "sha256", "text"}
 
 
 class ConfigurationError(ValueError):
@@ -60,6 +60,10 @@ class CatalogNode:
     def injection_ids(self) -> tuple[str, ...]:
         return tuple(item for item in self.patches if item.startswith("i__"))
 
+    @property
+    def string_patch_ids(self) -> tuple[str, ...]:
+        return tuple(item for item in self.patches if item.startswith("s__"))
+
 
 @dataclass(frozen=True)
 class CatalogSelection:
@@ -67,11 +71,13 @@ class CatalogSelection:
     catalog_files: tuple[Path, ...]
     edits_path: Path
     injections_path: Path
+    string_patches_path: Path
     base_configuration_path: Path | None
     configuration_path: Path
     catalog: dict[str, catalog_format.ContainerNode]
     edits: dict[str, dict[str, object]]
     injections: dict[str, dict[str, object]]
+    string_patches: dict[str, dict[str, object]]
     nodes: tuple[CatalogNode, ...]
 
     @property
@@ -423,16 +429,23 @@ def _load_implementation(
 ) -> tuple[
     Path,
     Path,
+    Path,
+    dict[str, dict[str, object]],
     dict[str, dict[str, object]],
     dict[str, dict[str, object]],
 ]:
     implementation_path = catalog_path / "implementation"
     edits_path = implementation_path / "edits.json"
     injections_path = implementation_path / "injections.json"
+    string_patches_path = implementation_path / "string_patches.json"
     raw_edits = _read_json(edits_path, "Edits", allow_empty=True)
     raw_injections = _read_json(injections_path, "Injections", allow_empty=True)
+    raw_string_patches = _read_json(
+        string_patches_path, "String patches", allow_empty=True
+    )
     edits: dict[str, dict[str, object]] = {}
     injections: dict[str, dict[str, object]] = {}
+    string_patches: dict[str, dict[str, object]] = {}
     for edit_id, edit in raw_edits.items():
         _identifier(edit_id, "Edit ID")
         if not edit_id.startswith("e__"):
@@ -475,6 +488,60 @@ def _load_implementation(
                     f"Injection {injection_id!r} hook {hook_id!r}",
                 )
         injections[injection_id] = injection
+    required_string_patch_fields = {
+        "description",
+        "operation",
+        "expected_value",
+        "expected_mapping_count",
+        "expected_occurrence_count",
+    }
+    for patch_id, patch in raw_string_patches.items():
+        _identifier(patch_id, "String patch ID")
+        if not patch_id.startswith("s__"):
+            raise ValueError(f"String patch ID must start with 's__': {patch_id!r}")
+        if not isinstance(patch, dict):
+            raise ValueError(f"String patch {patch_id!r} must be an object")
+        if set(patch) != required_string_patch_fields:
+            missing = sorted(required_string_patch_fields - set(patch))
+            extra = sorted(set(patch) - required_string_patch_fields)
+            problems = []
+            if missing:
+                problems.append("missing fields: " + ", ".join(missing))
+            if extra:
+                problems.append("unknown fields: " + ", ".join(extra))
+            raise ValueError(
+                f"String patch {patch_id!r} is invalid: {'; '.join(problems)}"
+            )
+        _description(patch["description"], f"String patch {patch_id!r}")
+        if patch["operation"] != "replace_imported_game_title":
+            raise ValueError(
+                f"String patch {patch_id!r} has unsupported operation: "
+                f"{patch['operation']!r}"
+            )
+        expected_value = patch["expected_value"]
+        if (
+            not isinstance(expected_value, str)
+            or not expected_value
+            or "\0" in expected_value
+        ):
+            raise ValueError(
+                f"String patch {patch_id!r}.expected_value must be non-empty text "
+                "without an embedded NUL"
+            )
+        mapping_count = patch["expected_mapping_count"]
+        occurrence_count = patch["expected_occurrence_count"]
+        if (
+            isinstance(mapping_count, bool)
+            or not isinstance(mapping_count, int)
+            or mapping_count <= 0
+            or isinstance(occurrence_count, bool)
+            or not isinstance(occurrence_count, int)
+            or occurrence_count < mapping_count
+        ):
+            raise ValueError(
+                f"String patch {patch_id!r} has invalid expected coverage"
+            )
+        string_patches[patch_id] = patch
     references = [
         patch
         for feature in features.values()
@@ -489,12 +556,24 @@ def _load_implementation(
         elif patch.startswith("i__"):
             if patch not in injections:
                 raise ValueError(f"Catalog references unknown injection: {patch}")
+        elif patch.startswith("s__"):
+            if patch not in string_patches:
+                raise ValueError(f"Catalog references unknown string patch: {patch}")
         else:
             raise ValueError(f"Catalog patch ID has invalid prefix: {patch!r}")
-    orphaned = sorted((set(edits) | set(injections)) - referenced)
+    orphaned = sorted(
+        (set(edits) | set(injections) | set(string_patches)) - referenced
+    )
     if orphaned:
         raise ValueError(f"Implementation definitions are not catalog-referenced: {orphaned}")
-    return edits_path, injections_path, edits, injections
+    return (
+        edits_path,
+        injections_path,
+        string_patches_path,
+        edits,
+        injections,
+        string_patches,
+    )
 
 
 def _effective_configuration(
@@ -574,24 +653,31 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
     catalog_path = catalog_path.resolve()
     configuration_path = configuration_path.resolve()
     features, catalog_files = _read_catalog(catalog_path)
-    edits_path, injections_path, edits, injections = _load_implementation(
-        catalog_path, features
-    )
+    (
+        edits_path,
+        injections_path,
+        string_patches_path,
+        edits,
+        injections,
+        string_patches,
+    ) = _load_implementation(catalog_path, features)
     base_path, effective, _overrides = _effective_configuration(
         catalog_path, configuration_path, features
     )
     nodes = _selected_nodes(_feature_root(features), effective)
     return CatalogSelection(
-        catalog_path,
-        catalog_files,
-        edits_path,
-        injections_path,
-        base_path,
-        configuration_path,
-        features,
-        edits,
-        injections,
-        nodes,
+        catalog_path=catalog_path,
+        catalog_files=catalog_files,
+        edits_path=edits_path,
+        injections_path=injections_path,
+        string_patches_path=string_patches_path,
+        base_configuration_path=base_path,
+        configuration_path=configuration_path,
+        catalog=features,
+        edits=edits,
+        injections=injections,
+        string_patches=string_patches,
+        nodes=nodes,
     )
 
 
@@ -643,6 +729,18 @@ def _relative_path(value: object, label: str) -> PurePosixPath:
     if not isinstance(value, str):
         raise ValueError(f"{label} must be path text")
     return binary_patcher.relative_posix(value, label)
+
+
+def _parse_int_list(value: object, label: str) -> tuple[int, ...]:
+    if not isinstance(value, list) or not value:
+        raise ValueError(f"{label} must be a non-empty integer list")
+    parsed = tuple(
+        _parse_int(item, f"{label}[{index}]")
+        for index, item in enumerate(value)
+    )
+    if len(set(parsed)) != len(parsed):
+        raise ValueError(f"{label} must contain unique offsets")
+    return parsed
 
 
 def load_operation_contracts(directory: Path) -> dict[str, tuple[OperationField, ...]]:
@@ -707,6 +805,8 @@ def _validate_operation(
         field_label = f"{label}.{field.name}"
         if field.type == "integer":
             _parse_int(value, field_label)
+        elif field.type == "integer_list":
+            _parse_int_list(value, field_label)
         elif field.type == "hex":
             _hex(value, field_label)
         elif field.type == "sha256":
@@ -716,6 +816,16 @@ def _validate_operation(
         elif not isinstance(value, str):
             raise ValueError(f"{field_label} must be text")
     if operation == "replace":
+        destinations = [
+            field
+            for field in ("destination_offset", "destination_offsets")
+            if field in edit
+        ]
+        if len(destinations) != 1:
+            raise ValueError(
+                f"{label} requires exactly one of destination_offset "
+                "or destination_offsets"
+            )
         replacements = [
             field for field in ("replacement_hex", "adapter") if field in edit
         ]
@@ -723,6 +833,24 @@ def _validate_operation(
             raise ValueError(
                 f"{label} requires exactly one of replacement_hex or adapter"
             )
+        fixed_fields = {
+            field for field in ("expected_value", "replacement_value")
+            if field in edit
+        }
+        if "adapter" in edit:
+            fixed_adapter = binary_adapters.is_fixed_value_adapter(edit["adapter"])
+            if fixed_adapter and fixed_fields != {
+                "expected_value", "replacement_value"
+            }:
+                raise ValueError(
+                    f"{label}.adapter requires expected_value and replacement_value"
+                )
+            if not fixed_adapter and fixed_fields:
+                raise ValueError(
+                    f"{label}.adapter does not accept fixed value fields"
+                )
+        elif fixed_fields:
+            raise ValueError(f"{label} fixed value fields require an adapter")
     return operation
 
 
@@ -793,7 +921,19 @@ def load_binary_package(
                 expected_hex = _hex(raw_edit["expected_hex"], f"{label}.expected_hex")
             if "expected_sha256" in raw_edit:
                 expected_sha256 = _sha256(raw_edit["expected_sha256"], f"{label}.expected_sha256")
-            destination_offset = _parse_int(raw_edit["destination_offset"], f"{label}.destination_offset")
+            destination_offsets = (
+                _parse_int_list(
+                    raw_edit["destination_offsets"],
+                    f"{label}.destination_offsets",
+                )
+                if "destination_offsets" in raw_edit
+                else (
+                    _parse_int(
+                        raw_edit["destination_offset"],
+                        f"{label}.destination_offset",
+                    ),
+                )
+            )
             replacement_hex = ""
             source_id = ""
             source_offset: int | None = None
@@ -802,17 +942,32 @@ def load_binary_package(
             fill_hex = ""
             if operation == "replace":
                 if "adapter" in raw_edit:
-                    if not node.has_configured_value:
-                        raise ValueError(
-                            f"{label}.adapter requires a typed catalog setting"
+                    if binary_adapters.is_fixed_value_adapter(raw_edit["adapter"]):
+                        if node.has_configured_value:
+                            raise ValueError(
+                                f"{label}.adapter requires a bare catalog setting"
+                            )
+                        expected_hex, replacement_hex = (
+                            binary_adapters.apply_fixed_adapter(
+                                raw_edit["adapter"],
+                                raw_edit["expected_value"],
+                                raw_edit["replacement_value"],
+                                encoding=raw_edit.get("encoding"),
+                                length=raw_edit.get("length"),
+                            )
                         )
-                    if not expected_hex or "expected_sha256" in raw_edit:
-                        raise ValueError(
-                            f"{label}.adapter requires expected_hex, not expected_sha256"
+                    else:
+                        if not node.has_configured_value:
+                            raise ValueError(
+                                f"{label}.adapter requires a typed catalog setting"
+                            )
+                        if not expected_hex or "expected_sha256" in raw_edit:
+                            raise ValueError(
+                                f"{label}.adapter requires expected_hex, not expected_sha256"
+                            )
+                        replacement_hex = binary_adapters.apply_adapter(
+                            raw_edit["adapter"], expected_hex, node.configured_value
                         )
-                    replacement_hex = binary_adapters.apply_adapter(
-                        raw_edit["adapter"], expected_hex, node.configured_value
-                    )
                 else:
                     replacement_hex = _hex(
                         raw_edit["replacement_hex"], f"{label}.replacement_hex"
@@ -839,31 +994,37 @@ def load_binary_package(
                     raise ValueError(f"{label}.fill_hex must be exactly one byte")
             if expected_hex and len(bytes.fromhex(expected_hex)) != length:
                 raise ValueError(f"{label}.expected_hex length mismatch")
-            order += 1
             used_targets.add(destination_id)
-            edits.append(
-                binary_patcher.Edit(
-                    edit_id=f"{node.node_id}.{edit_key}",
-                    patch_id=node.node_id,
-                    order=order,
-                    destination_target_id=destination_id,
-                    destination_offset=destination_offset,
-                    operation=operation,
-                    length=length,
-                    expected_hex=expected_hex,
-                    expected_sha256=expected_sha256,
-                    replacement_hex=replacement_hex,
-                    source_target_id=source_id,
-                    source_offset=source_offset,
-                    source_expected_hex="",
-                    source_expected_sha256="",
-                    blob_path=blob_path,
-                    blob_offset=0 if blob_path is not None else None,
-                    blob_sha256=blob_sha256,
-                    fill_hex=fill_hex,
-                    reason=_description(raw_edit.get("description"), label),
+            reason = _description(raw_edit.get("description"), label)
+            multiple_destinations = len(destination_offsets) > 1
+            for destination_offset in destination_offsets:
+                order += 1
+                edit_id = f"{node.node_id}.{edit_key}"
+                if multiple_destinations:
+                    edit_id += f".at_{destination_offset:08x}"
+                edits.append(
+                    binary_patcher.Edit(
+                        edit_id=edit_id,
+                        patch_id=node.node_id,
+                        order=order,
+                        destination_target_id=destination_id,
+                        destination_offset=destination_offset,
+                        operation=operation,
+                        length=length,
+                        expected_hex=expected_hex,
+                        expected_sha256=expected_sha256,
+                        replacement_hex=replacement_hex,
+                        source_target_id=source_id,
+                        source_offset=source_offset,
+                        source_expected_hex="",
+                        source_expected_sha256="",
+                        blob_path=blob_path,
+                        blob_offset=0 if blob_path is not None else None,
+                        blob_sha256=blob_sha256,
+                        fill_hex=fill_hex,
+                        reason=reason,
+                    )
                 )
-            )
     return binary_patcher.Package(
         directory=repository,
         package_id=f"{feature_id}.binary_patcher",
@@ -1205,11 +1366,12 @@ def feature_reference_ids(
     feature_id: str,
     field: str,
 ) -> tuple[str, ...]:
-    if field not in {"edits", "injections"}:
+    prefixes = {"edits": "e__", "injections": "i__", "string_patches": "s__"}
+    if field not in prefixes:
         raise ValueError(f"Unsupported catalog implementation field: {field}")
     if feature_id not in selection.catalog:
         raise ValueError(f"Unknown catalog feature: {feature_id}")
-    prefix = "e__" if field == "edits" else "i__"
+    prefix = prefixes[field]
     return tuple(
         dict.fromkeys(
             patch
@@ -1254,7 +1416,33 @@ def feature_has(
             and selection.injections[injection_id]["hooks"]
             for injection_id in references
         )
+    if field == "string_patches":
+        references = (
+            tuple(
+                patch_id
+                for node in selection.feature_nodes(feature_id)
+                if node.enabled
+                for patch_id in node.string_patch_ids
+            )
+            if enabled_only
+            else feature_reference_ids(selection, feature_id, "string_patches")
+        )
+        return bool(references)
     raise ValueError(f"Unsupported catalog implementation field: {field}")
+
+
+def selected_string_patches(
+    selection: CatalogSelection,
+    operation: str,
+) -> tuple[tuple[CatalogNode, str, dict[str, object]], ...]:
+    """Return enabled semantic string patches for one supported operation."""
+    return tuple(
+        (node, patch_id, selection.string_patches[patch_id])
+        for node in selection.nodes
+        if node.enabled
+        for patch_id in node.string_patch_ids
+        if selection.string_patches[patch_id]["operation"] == operation
+    )
 
 
 def referenced_files(selection: CatalogSelection, repository: Path, feature_id: str) -> tuple[Path, ...]:

@@ -8,6 +8,7 @@ assets live under their concrete builder data area. Catalog-only features
 require no directory.
 
 - [Battle logic](battle_logic.md)
+- [General](general.md)
 - [Localization](localization/README.md)
 - [Quality of life](qol.md)
 - [Rendering](rendering.md)

@@ -86,27 +86,31 @@ Workshop source games use a direct map:
 ```
 
 The NA2 product configuration is deliberately flat apart from its explicit
-inputs, identity, and builds sections:
+inputs and builds sections:
 
 ```json
 {
   "schema_version": 1,
   "title": "Narutimate Accel v2.28",
   "serial": "SLOP-NA228",
+  "output_boot_path": "SLOP_NA2.28",
   "inputs": { "na2": "@source_na2", "nun5": "@source_nun5" },
-  "identity": { "image": {}, "memory_card": {}, "game_title": {} },
   "builds": {
-    "latest": { "aliases": ["l"], "postfix": "Latest" }
+    "latest": { "aliases": ["l"] },
+    "e2e_test": {}
   }
 }
 ```
 
 Workshop `resolve_game.py <selector> [--project-root <path>]` resolves one
 selector case-insensitively and emits one JSON object containing fully resolved
-absolute paths. Source paths derive from the canonical key plus serial/CRC.
-Build ISO paths derive from title and postfix; PCSX2 files derive from serial,
-and build memory-card paths retain the GameSettings card base plus the build
-postfix. The command is independent of the caller's current working directory.
+absolute paths, plus the derived postfix for project builds. Source paths derive
+from the canonical key plus serial/CRC.
+Build postfixes derive from canonical keys by replacing underscores with spaces
+and title-casing the result (`e2e_test` becomes `E2E Test`). Build ISO paths
+derive from title and that postfix; PCSX2 files derive from serial, and build
+memory-card paths retain the GameSettings card base plus the derived postfix.
+The command is independent of the caller's current working directory.
 
 PowerShell callers use `Get-Na2Paths`; Python callers use
 `load_paths()` or Workshop's `resolve_game.py`. They do not

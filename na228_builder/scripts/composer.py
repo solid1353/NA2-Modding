@@ -14,7 +14,7 @@ from ..image_assembler.operations import (
     IsoFileRef,
     IsoRangeRef,
 )
-from .configuration import ModuleInvocation, ProductIdentity
+from .configuration import ModuleInvocation, SOURCE_BOOT_PATH, SYSTEM_CNF_PATH
 from ..payload_builder.operations import (
     ResidentPayloadBuild,
     ResolvedPatch,
@@ -226,7 +226,7 @@ def resolve_source_ref(
 def compose_assembly_plan(
     *,
     source: Iso9660,
-    identity: ProductIdentity,
+    output_boot_path: str,
     payloads: Mapping[str, bytes | bytearray],
     owners: Mapping[str, str],
     insertions: Mapping[str, bytes],
@@ -237,25 +237,27 @@ def compose_assembly_plan(
         normalize_iso_path(path): bytearray(data) for path, data in payloads.items()
     }
     identity_edits: list[dict[str, object]] = []
-    system_path = normalize_iso_path(identity.system_cnf_path)
+    system_path = SYSTEM_CNF_PATH
     system_record = source.by_path.get(system_path)
     if system_record is None or system_record.is_dir:
-        raise RuntimeError(f"Product identity requires source file: {system_path}")
+        raise RuntimeError(f"Product composition requires source file: {system_path}")
     system_data = composed_payloads.get(
         system_path,
         bytearray(source.read_file(system_record)),
     )
-    source_boot = identity.source_boot_path.encode("ascii")
-    output_boot = identity.output_boot_path.encode("ascii")
+    source_boot = SOURCE_BOOT_PATH.encode("ascii")
+    output_boot = output_boot_path.encode("ascii")
+    if len(source_boot) != len(output_boot):
+        raise ValueError("Output boot path must preserve the source boot-path length")
     if bytes(system_data).count(source_boot) != 1:
         raise RuntimeError(
-            f"{system_path} must contain {identity.source_boot_path} exactly once"
+            f"{system_path} must contain {SOURCE_BOOT_PATH} exactly once"
         )
     offset = bytes(system_data).index(source_boot)
     system_data[offset:offset + len(source_boot)] = output_boot
     composed_payloads[system_path] = system_data
 
-    boot_reason = "Apply the configuration's declared output boot identity"
+    boot_reason = "Apply the product's declared output boot path"
     identity_edits.append({
         "target": system_path,
         "offset": f"0x{offset:X}",
@@ -263,84 +265,15 @@ def compose_assembly_plan(
         "original_hex": source_boot.hex().upper(),
         "new_hex": output_boot.hex().upper(),
         "reason": boot_reason,
-        "owner": "configuration.identity",
+        "owner": "product.output_boot_path",
     })
 
-    boot_path = normalize_iso_path(identity.source_boot_path)
-    boot_record = source.by_path.get(boot_path)
-    if boot_record is None or boot_record.is_dir:
-        raise RuntimeError(f"Product identity requires source file: {boot_path}")
-    boot_data = composed_payloads.get(
-        boot_path,
-        bytearray(source.read_file(boot_record)),
-    )
-
-    source_directory = identity.source_memory_card_directory.encode("ascii")
-    output_directory = identity.output_memory_card_directory.encode("ascii")
-    boot_snapshot = bytes(boot_data)
-    directory_count = boot_snapshot.count(source_directory)
-    if directory_count != identity.memory_card_directory_occurrence_count:
-        raise RuntimeError(
-            f"{boot_path} must contain {identity.source_memory_card_directory} "
-            f"exactly {identity.memory_card_directory_occurrence_count} times; "
-            f"found {directory_count}"
-        )
-    directory_reason = (
-        "Apply the configuration's declared memory-card directory identity"
-    )
-    directory_offset = 0
-    for _ in range(directory_count):
-        directory_offset = boot_snapshot.index(source_directory, directory_offset)
-        directory_end = directory_offset + len(source_directory)
-        boot_data[directory_offset:directory_end] = output_directory
-        identity_edits.append({
-            "target": boot_path,
-            "offset": f"0x{directory_offset:X}",
-            "length": len(source_directory),
-            "original_hex": source_directory.hex().upper(),
-            "new_hex": output_directory.hex().upper(),
-            "reason": directory_reason,
-            "owner": "configuration.identity",
-        })
-        directory_offset = directory_end
-
-    def title_slot(text: str) -> bytes:
-        encoded = text.encode(identity.memory_card_title_encoding)
-        return encoded + bytes(identity.memory_card_title_capacity - len(encoded))
-
-    expected_title = title_slot(identity.source_memory_card_title)
-    output_title = title_slot(identity.output_memory_card_title)
-    title_offset = identity.memory_card_title_offset
-    title_end = title_offset + identity.memory_card_title_capacity
-    if title_end > len(boot_data):
-        raise RuntimeError(
-            f"Product identity title slot exceeds {boot_path}: "
-            f"0x{title_end:X} > 0x{len(boot_data):X}"
-        )
-    actual_title = bytes(boot_data[title_offset:title_end])
-    if actual_title != expected_title:
-        raise RuntimeError(
-            f"Product identity title guard failed for {boot_path} at "
-            f"0x{title_offset:X}"
-        )
-    boot_data[title_offset:title_end] = output_title
-    composed_payloads[boot_path] = boot_data
-    title_reason = "Apply the configuration's declared memory-card title identity"
-    identity_edits.append({
-        "target": boot_path,
-        "offset": f"0x{title_offset:X}",
-        "length": identity.memory_card_title_capacity,
-        "original_hex": expected_title.hex().upper(),
-        "new_hex": output_title.hex().upper(),
-        "reason": title_reason,
-        "owner": "configuration.identity",
-    })
     replacements = tuple(
         FileReplacement(
             path=path,
             expected=source.read_file(source.by_path[path]),
             replacement=bytes(composed_payloads[path]),
-            owner=owners.get(path, "configuration.identity"),
+            owner=owners.get(path, "product.output_boot_path"),
             reason=(
                 boot_reason
                 if path == system_path and path not in payloads
@@ -359,9 +292,9 @@ def compose_assembly_plan(
         for path, payload in sorted(insertions.items())
     )
     rename = FileRename(
-        source_path=identity.source_boot_path,
-        replacement_path=identity.output_boot_path,
-        owner="configuration.identity",
+        source_path=SOURCE_BOOT_PATH,
+        replacement_path=output_boot_path,
+        owner="product.output_boot_path",
         reason=boot_reason,
     )
     return CompositionResult(

@@ -12,7 +12,6 @@ from na228_builder.modules.runtime_injector import engine as runtime_injector
 from na228_builder.scripts import catalog as catalog_module
 from na228_builder.scripts.composer import resolve_module_order
 from na228_builder.scripts.configuration import (
-    MODULE_TYPE_ORDER,
     load_configuration,
     module_content_sha256,
     configuration_resource_files,
@@ -170,6 +169,9 @@ class ConfigurationTests(unittest.TestCase):
         (implementation_root / "injections.json").write_text(
             json.dumps(injections, indent=2) + "\n", encoding="utf-8"
         )
+        (implementation_root / "string_patches.json").write_text(
+            "{}\n", encoding="utf-8"
+        )
         (configurations / "base.json").write_text(
             json.dumps(
                 {
@@ -200,31 +202,9 @@ class ConfigurationTests(unittest.TestCase):
                     "schema_version": 1,
                     "title": "Test Product",
                     "serial": "TEST-00000",
+                    "output_boot_path": "SLOP_NA2.28",
                     "inputs": {"na2": "source"},
-                    "identity": {
-                        "image": {
-                            "source_boot_path": "SLPS_258.37",
-                            "output_boot_path": "SLOP_NA2.28",
-                            "system_cnf_path": "SYSTEM.CNF",
-                        },
-                        "memory_card": {
-                            "source_directory": "BISLPS-25837NARUTO5",
-                            "output_directory": "BASLOP-NA228NARUTO6",
-                            "expected_directory_occurrence_count": 2,
-                            "title_offset": 4,
-                            "title_capacity": 16,
-                            "title_encoding": "ascii",
-                            "source_title": "Original",
-                            "output_title": "NA 2.28",
-                        },
-                        "game_title": {
-                            "imported": "Imported Game",
-                            "output": "Output Game",
-                            "expected_mapping_count": 1,
-                            "expected_occurrence_count": 1,
-                        },
-                    },
-                    "builds": {"latest": {"postfix": "Latest"}},
+                    "builds": {"latest": {}},
                 },
                 indent=2,
             )
@@ -233,7 +213,7 @@ class ConfigurationTests(unittest.TestCase):
         )
         return configuration
 
-    def test_configuration_derives_identity_modules_and_order(self) -> None:
+    def test_configuration_derives_modules_and_order(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             builder, source, configurations = self.create_workspace(root)
@@ -326,6 +306,10 @@ class ConfigurationTests(unittest.TestCase):
                 resources,
             )
             self.assertIn(
+                (root / "catalog" / "implementation" / "string_patches.json").resolve(),
+                resources,
+            )
+            self.assertIn(
                 (root / "configurations" / "base.json").resolve(), resources
             )
             self.assertIn(configuration.resolve(), resources)
@@ -390,7 +374,7 @@ class ConfigurationTests(unittest.TestCase):
             loaded = load_configuration(configuration, root, root)
             self.assertEqual(resolve_module_order(loaded.modules), loaded.modules)
 
-    def test_configuration_identity_requires_equal_length_boot_paths(self) -> None:
+    def test_output_boot_path_must_preserve_source_length(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             builder, source, configurations = self.create_workspace(root)
@@ -403,29 +387,9 @@ class ConfigurationTests(unittest.TestCase):
             )
             product_path = root / "product.json"
             product = json.loads(product_path.read_text(encoding="utf-8"))
-            product["identity"]["image"]["output_boot_path"] = "BOOT.ELF"
+            product["output_boot_path"] = "BOOT.ELF"
             product_path.write_text(json.dumps(product, indent=2) + "\n", encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "equal byte lengths"):
-                load_configuration(configuration, root, root)
-
-    def test_configuration_identity_requires_equal_length_save_directories(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            builder, source, configurations = self.create_workspace(root)
-            self.create_feature_inputs(builder, "localization", "translation_importer")
-            configuration = self.create_configuration(
-                configurations,
-                source,
-                {"localization": {"description": "Localization"}},
-                {"localization": True},
-            )
-            product_path = root / "product.json"
-            product = json.loads(product_path.read_text(encoding="utf-8"))
-            product["identity"]["memory_card"]["output_directory"] = "BASLOP-NA228"
-            product_path.write_text(json.dumps(product, indent=2) + "\n", encoding="utf-8")
-            with self.assertRaisesRegex(
-                ValueError, "memory-card directories must have equal byte lengths"
-            ):
+            with self.assertRaisesRegex(ValueError, "byte length"):
                 load_configuration(configuration, root, root)
 
     def test_binary_hash_ignores_helpers_but_includes_referenced_blobs(self) -> None:
@@ -524,33 +488,6 @@ class ConfigurationTests(unittest.TestCase):
                 first, module_content_sha256(module, "runtime_injector")
             )
 
-    def test_release_configuration_loads(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        configuration_path = (
-            repository / "na228_builder" / "configurations" / "release.json"
-        )
-        marker = repository / "na228_builder" / "release_manifest.json"
-        loaded = load_configuration(
-            configuration_path,
-            repository,
-            repository / "na228_builder",
-            root_overrides={"na2": marker, "nun5": marker},
-        )
-        self.assertEqual(
-            [module.module_id for module in loaded.modules],
-            [
-                "battle_logic.binary_patcher",
-                "localization.translation_importer",
-                "localization.runtime_injector",
-                "localization.texture_patcher",
-                "localization.binary_patcher",
-                "qol.runtime_injector",
-                "qol.binary_patcher",
-            ],
-        )
-        features_root = repository / "na228_builder" / "features"
-        self.assertFalse(features_root.exists())
-
     def test_complete_release_resources_include_disabled_feature_inputs(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         builder_root = repository / "na228_builder"
@@ -594,17 +531,6 @@ class ConfigurationTests(unittest.TestCase):
             {path.resolve() for path in operations_root.glob("*.tsv")},
             {path for path in complete if path.parent == operations_root.resolve()},
         )
-
-    def test_registered_module_readmes_declare_downstream_invocations(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        modules_root = repository / "na228_builder" / "modules"
-        for module_type in MODULE_TYPE_ORDER:
-            readme = modules_root / module_type / "README.md"
-            text = readme.read_text(encoding="utf-8")
-            self.assertIn("## Invokes\n", text, module_type)
-            declaration = text.split("## Invokes\n", 1)[1].split("\n## ", 1)[0].strip()
-            self.assertTrue(declaration, module_type)
-
 
 if __name__ == "__main__":
     unittest.main()

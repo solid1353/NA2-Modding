@@ -24,6 +24,11 @@ belong inside one source slot remain `<br>`. This preserves NA2's multi-slot
 message traversal and prevents it from falling through into the next payload
 fragment.
 
+Catalog-selected semantic string patches are applied after import and before
+this placement decision. `replace_imported_game_title` guards the imported
+title's mapping and occurrence coverage, then substitutes root `product.title`.
+When the setting is disabled, the imported strings proceed unchanged.
+
 ## Invokes
 
 - `binary_patcher` for concrete guarded inline and resolved-pointer writes.

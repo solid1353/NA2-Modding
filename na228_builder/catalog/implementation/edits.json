@@ -39,6 +39,29 @@
     "expected_hex": "803F023C",
     "adapter": "mips_lui_float32"
   },
+  "e__general__dedicated_save_namespace__directory_references": {
+    "description": "Use the dedicated NA228 save namespace at both memory-card directory references.",
+    "operation": "replace",
+    "destination_target_id": "na2_elf",
+    "destination_offsets": [
+      "0x2FBAC1",
+      "0x2FBBF0"
+    ],
+    "expected_value": "BISLPS-25837NARUTO5",
+    "replacement_value": "BASLOP-NA228NARUTO6",
+    "adapter": "ascii_fixed"
+  },
+  "e__general__replace_memory_card_title": {
+    "description": "Replace the original memory-card title with the dedicated NA228 title.",
+    "operation": "replace",
+    "destination_target_id": "na2_elf",
+    "destination_offset": "0x2FBAE0",
+    "expected_value": "ＮＡＲＵＴＯ－ナルト－　疾風伝ナルティメットアクセル２",
+    "replacement_value": "ＮＡ　ｖ２．２８",
+    "adapter": "nul_padded_text",
+    "encoding": "cp932",
+    "length": 64
+  },
   "e__localization__font__glyphs__native_data_gf4_bin_at_0000004e": {
     "description": "Set the secondary descriptor to native 14x20 packed cells with a 140-byte stride and 123 reachable entries while retaining its original 24x28 output quad.",
     "operation": "replace",

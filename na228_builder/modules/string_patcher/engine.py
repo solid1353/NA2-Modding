@@ -114,7 +114,7 @@ def _apply_game_title_policy(
         or sum(hits.values()) != policy.expected_occurrence_count
     ):
         raise ValueError(
-            "string-patcher game-title policy coverage differs from product identity: "
+            "string-patcher game-title coverage differs from the catalog guard: "
             f"{len(hits)} mappings/{sum(hits.values())} occurrences"
         )
 
@@ -509,12 +509,13 @@ def build_translation_draft(
     *,
     translation_plan: translation_importer.TranslationImportPlan,
     owner: str,
-    title_policy: GameTitlePolicy,
+    title_policy: GameTitlePolicy | None,
 ) -> StringPatchDraft:
     """Declare external text fragments and symbolic pointer writes."""
-    transformed_plan = _apply_game_title_policy(
-        translation_plan,
-        title_policy,
+    transformed_plan = (
+        _apply_game_title_policy(translation_plan, title_policy)
+        if title_policy is not None
+        else translation_plan
     )
     external_draft = linked_strings.build_external_string_draft(
         translation_plan=transformed_plan,
@@ -527,13 +528,17 @@ def build_translation_draft(
     return StringPatchDraft(
         translation_plan=transformed_plan,
         external_draft=external_draft,
-        game_title_policy={
-            "applied": True,
-            "imported_title": title_policy.imported_title,
-            "output_title": title_policy.output_title,
-            "mapping_count": title_policy.expected_mapping_count,
-            "occurrence_count": title_policy.expected_occurrence_count,
-        },
+        game_title_policy=(
+            {
+                "applied": True,
+                "imported_title": title_policy.imported_title,
+                "output_title": title_policy.output_title,
+                "mapping_count": title_policy.expected_mapping_count,
+                "occurrence_count": title_policy.expected_occurrence_count,
+            }
+            if title_policy is not None
+            else {"applied": False}
+        ),
     )
 
 

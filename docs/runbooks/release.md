@@ -84,7 +84,7 @@ identities are:
 - NUN5: 1,926,234,112 bytes,
   SHA-256 `2E1B9A885F4E94E6B8C4204F139C53ABD568FE49D6521D4D8921FE9460C07BFF`
 
-Root `product.json` output game title must equal the manifest product name.
+Root `product.json` title must equal the manifest product name.
 
 The maintained publication command performs the version update and complete
 Git/tag sequence:

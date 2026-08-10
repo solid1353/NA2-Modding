@@ -59,20 +59,36 @@ that behavior.
 
 ### Build validation
 
+- Agents do not run the default/no-argument `na228` or `na228.ps1` workflow or
+  any other normal user build route. They do not create, replace, promote,
+  retain, or launch a user-facing build such as `Latest`, `Previous`, or Manual
+  Test, or write its normal build record. Normal builds and their records belong
+  to the user.
+- Internal PowerShell or Python entrypoints do not bypass these build
+  boundaries.
 - `na228 build -d` validates the development configuration against the real
   source ISO through the builder's compose-only path. It checks configuration,
   catalog and patch guards, compilation and linking, derived changes, and
   composition conflicts without staging or retaining an ISO or build record.
 - A dry run does not prove image assembly, boot, or runtime behavior. Run it
-  only when the selected validation plan names it; it is not an automatic
-  additional check.
-- Build a task-owned worker ISO only when the selected validation genuinely
-  requires image assembly or runtime execution. It is an internal agent
-  artifact, never a user testing ground or deliverable. Delete it after the
-  selected validation and evidence extraction, whether validation passes or
-  fails.
-- Do not build or launch an ISO merely to prepare user verification. The user
-  uses their normal build and run workflow.
+  only when the agreed validation plan explicitly includes `na228 build -d`; it
+  is not an automatic additional check.
+- The only ordinary full-ISO build route for an agent is
+  `na228 worker work/<task>/build/<name>.iso`. Build a task-owned worker ISO only
+  when the selected validation requires image assembly. It is an internal agent
+  artifact, never a user testing ground or deliverable. Agents do not launch or
+  runtime-execute it. Maintained E2E is a separate explicitly selected route.
+- Agent-authorized builds are final validation steps, not development or
+  diagnostic tools. Before building, review the final diff and confirm that all
+  in-scope implementation changes are complete and all earlier selected checks
+  passed. Do not build while implementation remains incomplete or use repeated
+  builds to discover missing work. If a final build exposes a failure, fix that
+  failure, re-review the completed candidate, and only then rerun the selected
+  build validation. Any subsequent implementation change invalidates the prior
+  build result.
+- Delete a worker ISO after the selected validation and evidence extraction,
+  whether validation passes or fails. Do not build an ISO merely to prepare
+  user verification; the user uses their normal build and run workflow.
 
 ### Visual game changes
 
@@ -117,8 +133,15 @@ UI elements, and similar visible game behavior.
 - After acceptance, finalize useful patch-specific tests and documentation,
   discard rejected candidate checks, then commit and push the complete feature.
 - Permanent tests must detect a meaningful regression in accepted behavior or a
-  documented safety contract. Do not freeze incidental implementation details
-  or reconstruct the implementation and compare it with itself.
+  documented safety contract. They must not merely restate fixture, catalog,
+  manifest, or table contents; freeze incidental implementation details; or
+  reconstruct the implementation and compare it with itself. Cover isolated
+  logic, guards, and failure behavior using the smallest practical synthetic
+  inputs. Do not rerun production inputs through work already performed and
+  guarded by the normal build merely to prove that the build succeeds.
+  Real-source, production-scale, or full-pipeline tests require explicit user
+  approval and must detect a specific regression that the normal build cannot
+  detect.
 - Disassembly findings and other reusable general knowledge must be promoted on
   the schedule required by the research policy even while patch acceptance is
   pending. This records research evidence, not established candidate behavior,

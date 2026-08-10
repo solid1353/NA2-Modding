@@ -183,11 +183,11 @@ try {
   "title": "Narutimate Accel v2.28",
   "serial": "SLOP-NA228",
   "builds": {
-    "latest": { "aliases": ["l"], "postfix": "Latest" },
-    "previous": { "aliases": ["p"], "postfix": "Previous" },
-    "manual_test": { "aliases": ["mt"], "postfix": "Manual Test" },
-    "e2e_test": { "postfix": "E2E Test" },
-    "e2e_test_shifted": { "postfix": "E2E Test Shifted" }
+    "latest": { "aliases": ["l"] },
+    "previous": { "aliases": ["p"] },
+    "manual_test": { "aliases": ["mt"] },
+    "e2e_test": {},
+    "e2e_test_shifted": {}
   }
 }
 '@

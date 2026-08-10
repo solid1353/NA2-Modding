@@ -64,8 +64,8 @@ and constructs `PRG/228.BIN`; the composer resolves symbols; `binary_patcher`
 owns byte guards, conflict handling, replacement, and logging. If Localization
 later owns local declarations, it can add `string_patcher/strings.tsv` then.
 
-The memory-card title is output identity and is therefore declared by root
-`product.json`; its evidence is documented in
+The selectable memory-card title is owned by
+`general.replace_memory_card_title`; its evidence is documented in
 `docs/knowledge/game/disc_identity.md`.
 
 ## Regional menu input

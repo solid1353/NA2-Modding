@@ -25,9 +25,17 @@ guarded file edits.
 - All persisted paths are relative.
 - Every input target is checked by size and SHA-256.
 - Every destination range is checked by exact bytes or a range SHA-256.
+- A `replace` edit uses one `destination_offset` or a nonempty unique
+  `destination_offsets` list. Multiple offsets expand into independently
+  guarded and logged concrete edits with otherwise identical behavior.
 - A `replace` edit declares exactly one of a static `replacement_hex` or an
-  adapter. Adapters in `adapters.py` convert a validated typed catalog value to
-  concrete replacement bytes without weakening the destination guard.
+  adapter. Adapters in `adapters.py` either convert a validated typed catalog
+  value or encode fixed readable values selected by a bare setting. Fixed-value
+  adapters produce both the destination guard and replacement bytes without
+  weakening the ordinary guarded-replacement contract.
+- `nul_padded_text` encodes fixed readable text with a declared codec and exact
+  slot length, requires room for a NUL terminator, and zero-pads both guarded
+  and replacement values to that length.
 - Copy sources are covered by the complete source target's size and SHA-256.
 - Configuration selection determines which catalog nodes apply; the engine's
   synthetic groups and patches are internal execution objects only.

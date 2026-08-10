@@ -3,7 +3,7 @@
 This first-class `na228_builder` module imports and validates strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
 It never writes BIN or ELF payloads. Configuration builds pass its canonical in-memory
-artifact to `string_patcher`, which applies product output identity, derives
+artifact to `string_patcher`, which applies selected semantic string patches, derives
 inline versus linked placement from encoded fit and pointer availability, and
 compiles one shared `binary_patcher` package. There is no standalone export
 command or file-backed inter-stage handoff.
@@ -20,8 +20,9 @@ The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.
 `mappings.tsv` owns the canonical executable donor translations, overrides,
 and optional pointer inventory. Normal builds import only `mappings.tsv`. Root
-`product.json` owns the imported/output title declaration; `string_patcher`
-applies its fixed coverage to the normal translation path.
+`catalog/implementation/string_patches.json` owns the guarded imported-title
+declaration, while root `product.title` supplies its replacement;
+`string_patcher` applies that selected operation to the normal translation path.
 
 ## Source and target scope
 

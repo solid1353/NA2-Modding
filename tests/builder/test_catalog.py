@@ -11,7 +11,7 @@ from na228_builder.modules.binary_patcher import adapters
 from na228_builder.scripts import catalog, catalog_format
 
 
-PATCH_ID = re.compile(r'"((?:e|i)__[a-z0-9_]+)"')
+PATCH_ID = re.compile(r'"((?:e|i|s)__[a-z0-9_]+)"')
 
 
 class CatalogTests(unittest.TestCase):
@@ -28,6 +28,7 @@ class CatalogTests(unittest.TestCase):
         overrides: dict[str, object] | None = None,
         edits: dict[str, object] | None = None,
         injections: dict[str, object] | None = None,
+        string_patches: dict[str, object] | None = None,
     ) -> tuple[Path, Path]:
         catalog_path = root / "catalog"
         implementation = catalog_path / "implementation"
@@ -45,14 +46,29 @@ class CatalogTests(unittest.TestCase):
             for patch in sorted(referenced)
             if patch.startswith("i__")
         }
+        generated_string_patches = {
+            patch: {
+                "description": f"Synthetic string patch {patch}.",
+                "operation": "replace_imported_game_title",
+                "expected_value": "Imported Game",
+                "expected_mapping_count": 1,
+                "expected_occurrence_count": 1,
+            }
+            for patch in sorted(referenced)
+            if patch.startswith("s__")
+        }
         generated_edits.update(edits or {})
         generated_injections.update(injections or {})
+        generated_string_patches.update(string_patches or {})
         for feature_id, source in sources.items():
             (catalog_path / f"{feature_id}.modcat").write_text(
                 source, encoding="utf-8"
             )
         self.write_json(implementation / "edits.json", generated_edits)
         self.write_json(implementation / "injections.json", generated_injections)
+        self.write_json(
+            implementation / "string_patches.json", generated_string_patches
+        )
         self.write_json(
             root / "configurations" / "base.json",
             {"features": features, "overrides": overrides or {}},
@@ -476,6 +492,107 @@ class CatalogTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Unsupported"):
             adapters.apply_adapter("unknown", "803F023C", 3)
 
+    def test_ascii_fixed_adapter_encodes_equal_length_values(self) -> None:
+        expected, replacement = adapters.apply_fixed_adapter(
+            "ascii_fixed",
+            "BISLPS-25837NARUTO5",
+            "BASLOP-NA228NARUTO6",
+        )
+        self.assertEqual(bytes.fromhex(expected), b"BISLPS-25837NARUTO5")
+        self.assertEqual(bytes.fromhex(replacement), b"BASLOP-NA228NARUTO6")
+        with self.assertRaisesRegex(ValueError, "equal encoded lengths"):
+            adapters.apply_fixed_adapter("ascii_fixed", "short", "longer")
+        with self.assertRaisesRegex(ValueError, "must be ASCII"):
+            adapters.apply_fixed_adapter("ascii_fixed", "clean", "not ASCII: 日")
+
+    def test_nul_padded_text_adapter_encodes_fixed_length_text(self) -> None:
+        expected, replacement = adapters.apply_fixed_adapter(
+            "nul_padded_text",
+            "original",
+            "ＮＡ",
+            encoding="cp932",
+            length=16,
+        )
+        self.assertEqual(len(bytes.fromhex(expected)), 16)
+        self.assertEqual(len(bytes.fromhex(replacement)), 16)
+        self.assertTrue(bytes.fromhex(expected).startswith(b"original\0"))
+        self.assertTrue(bytes.fromhex(replacement).startswith("ＮＡ".encode("cp932") + b"\0"))
+        with self.assertRaisesRegex(ValueError, "does not fit"):
+            adapters.apply_fixed_adapter(
+                "nul_padded_text",
+                "exactly16bytes!!",
+                "short",
+                encoding="ascii",
+                length=16,
+            )
+        with self.assertRaisesRegex(ValueError, "unknown"):
+            adapters.apply_fixed_adapter(
+                "nul_padded_text",
+                "original",
+                "replacement",
+                encoding="not-a-codec",
+                length=32,
+            )
+        with self.assertRaisesRegex(ValueError, "without a NUL"):
+            adapters.apply_fixed_adapter(
+                "nul_padded_text",
+                "bad\0value",
+                "replacement",
+                encoding="ascii",
+                length=32,
+            )
+        with self.assertRaisesRegex(ValueError, "not encodable"):
+            adapters.apply_fixed_adapter(
+                "nul_padded_text",
+                "original",
+                "🙂",
+                encoding="cp932",
+                length=32,
+            )
+
+    def test_string_patch_selection_is_explicit_and_disableable(self) -> None:
+        source = '''{
+          replace_title: setting {
+            description: "Replace title.",
+            patches: ["s__feature__replace_title"],
+          },
+        }'''
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path, configuration_path = self.write_project(
+                root,
+                {"feature": source},
+                {"feature": {"replace_title": True}},
+            )
+            enabled = catalog.load_selection(catalog_path, configuration_path)
+            self.assertEqual(
+                [item[1] for item in catalog.selected_string_patches(
+                    enabled, "replace_imported_game_title"
+                )],
+                ["s__feature__replace_title"],
+            )
+            self.write_json(
+                configuration_path,
+                {"overrides": {"feature": {"replace_title": False}}},
+            )
+            disabled = catalog.load_selection(catalog_path, configuration_path)
+            self.assertEqual(
+                catalog.selected_string_patches(
+                    disabled, "replace_imported_game_title"
+                ),
+                (),
+            )
+
+    def test_destination_offset_list_requires_nonempty_unique_offsets(self) -> None:
+        self.assertEqual(
+            catalog._parse_int_list(["0x10", "0x20"], "offsets"),
+            (0x10, 0x20),
+        )
+        with self.assertRaisesRegex(ValueError, "non-empty integer list"):
+            catalog._parse_int_list([], "offsets")
+        with self.assertRaisesRegex(ValueError, "unique offsets"):
+            catalog._parse_int_list(["0x10", "0x10"], "offsets")
+
     def test_runtime_source_uses_packaged_object_without_toolchain(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory)
@@ -535,9 +652,8 @@ class CatalogTests(unittest.TestCase):
         release = catalog.load_selection(catalog_path, configurations / "release.json")
         self.assertEqual(
             release.feature_ids,
-            ("battle_logic", "localization", "qol", "rendering"),
+            ("battle_logic", "general", "localization", "qol", "rendering"),
         )
-        self.assertEqual(len(release.edits), 493)
         self.assertEqual(len(release.injections), 25)
         self.assertTrue(
             release.node_enabled("features", "qol", "startup", "save_loading")
@@ -545,26 +661,71 @@ class CatalogTests(unittest.TestCase):
         self.assertTrue(
             release.node_enabled("features", "battle_logic", "substitution_cost")
         )
+        self.assertTrue(
+            release.node_enabled(
+                "features", "general", "dedicated_save_namespace"
+            )
+        )
+        dedicated_namespace = next(
+            node
+            for node in release.nodes
+            if node.node_id == "general.dedicated_save_namespace"
+        )
+        self.assertEqual(
+            dedicated_namespace.edit_ids,
+            (
+                "e__general__dedicated_save_namespace__directory_references",
+            ),
+        )
+        general_package = catalog.load_binary_package(
+            release,
+            "general",
+            catalog_path / "implementation" / "targets.tsv",
+            repository,
+            builder / "modules" / "binary_patcher" / "operations",
+        )
+        self.assertEqual(len(general_package.edits), 3)
+        dedicated_edits = tuple(
+            edit
+            for edit in general_package.edits
+            if edit.patch_id == "general.dedicated_save_namespace"
+        )
+        self.assertEqual(
+            tuple(edit.destination_offset for edit in dedicated_edits),
+            (0x2FBAC1, 0x2FBBF0),
+        )
+        self.assertTrue(
+            all(
+                bytes.fromhex(edit.expected_hex) == b"BISLPS-25837NARUTO5"
+                and bytes.fromhex(edit.replacement_hex) == b"BASLOP-NA228NARUTO6"
+                for edit in dedicated_edits
+            )
+        )
         self.assertTrue(all(key.startswith("e__") for key in release.edits))
         self.assertTrue(all(key.startswith("i__") for key in release.injections))
+        self.assertTrue(
+            all(key.startswith("s__") for key in release.string_patches)
+        )
         self.assertFalse((catalog_path / "__reference.json").exists())
         self.assertEqual(
             {path.suffix for path in release.catalog_files}, {".modcat"}
         )
-        release_binary_count = sum(
-            len(
-                catalog.load_binary_package(
-                    release,
-                    feature_id,
-                    catalog_path / "implementation" / "targets.tsv",
-                    repository,
-                    builder / "modules" / "binary_patcher" / "operations",
-                ).edits
-            )
-            for feature_id in release.feature_ids
-            if catalog.feature_has(release, feature_id, "edits", enabled_only=True)
+        configured = catalog.materialized_configuration(
+            catalog_path, configurations / "release.json"
         )
-        self.assertEqual(release_binary_count, 492)
+        configured["features"]["general"]["dedicated_save_namespace"] = False
+        with tempfile.TemporaryDirectory() as directory:
+            configuration_path = Path(directory) / "config.json"
+            self.write_json(configuration_path, configured)
+            disabled = catalog.load_selection(catalog_path, configuration_path)
+        self.assertFalse(
+            disabled.node_enabled(
+                "features", "general", "dedicated_save_namespace"
+            )
+        )
+        self.assertFalse(
+            catalog.feature_has(disabled, "general", "edits", enabled_only=True)
+        )
 
         configured = catalog.materialized_configuration(
             catalog_path, configurations / "release.json"

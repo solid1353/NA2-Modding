@@ -1,5 +1,10 @@
 {
   "features": {
+    "general": {
+      "dedicated_save_namespace": true,
+      "replace_imported_game_title": true,
+      "replace_memory_card_title": true
+    },
     "localization": {
       "font": {
         "glyphs": true,

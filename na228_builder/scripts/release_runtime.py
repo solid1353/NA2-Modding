@@ -43,9 +43,9 @@ def load_release_configuration(
         project_paths=load_local_paths(workspace, allow_missing=True),
         root_overrides={"na2": na2_iso, "nun5": nun5_iso},
     )
-    if configuration.identity.output_game_title != manifest.product_name:
+    if configuration.product_title != manifest.product_name:
         raise RuntimeError(
-            "Packaged product name does not match the product identity"
+            "Packaged product name does not match the product title"
         )
     return workspace, configuration
 

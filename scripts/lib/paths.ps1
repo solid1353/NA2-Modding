@@ -369,7 +369,7 @@ function Resolve-Na2PathManifest {
                     $resolvedFiles['input_profile'] = $resolvedGameConfig.input_profile
                 }
                 $postfix = if ($category -eq 'builds') {
-                    [string]$definition.postfix
+                    [string]$derived.postfix
                 }
                 else { '' }
                 if ($category -eq 'builds') {

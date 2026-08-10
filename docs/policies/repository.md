@@ -6,7 +6,7 @@ work directories, or documentation layout.
 ## Paths and repository boundaries
 
 - Canonical path ownership, configured-root syntax, maintained loaders, and
-  migration validation are defined in [`../PATHS.md`](../PATHS.md).
+  migration validation are defined in [`paths.md`](paths.md).
 - For a requested `from <source> to <destination>` link, preserve the source and
   create the link at the destination. Do not redesign ownership unless asked.
 - Treat `@source/`, `@pcsx2_dev`, `@pcsx2_stable`, and the clean PCSX2 worker
@@ -127,7 +127,7 @@ work directories, or documentation layout.
   successful run. Do not add workflow-blocking identity, expected-state, guard,
   backup, recovery, or restart validation unless it is explicitly authorized by
   the applicable validation plan.
-- Follow [`../LOGGING.md`](../LOGGING.md) for log roots, retention, and
+- Follow [`logging.md`](logging.md) for log roots, retention, and
   knowledge promotion.
 - Prefer cohesive responsibility-based files. Split independent concerns when
   it improves ownership, navigation, testing, or concurrency, not merely by

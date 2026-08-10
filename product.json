@@ -2,51 +2,22 @@
   "schema_version": 1,
   "title": "Narutimate Accel v2.28",
   "serial": "SLOP-NA228",
+  "output_boot_path": "SLOP_NA2.28",
   "inputs": {
     "na2": "@source_na2",
     "nun5": "@source_nun5"
   },
-  "identity": {
-    "image": {
-      "source_boot_path": "SLPS_258.37",
-      "output_boot_path": "SLOP_NA2.28",
-      "system_cnf_path": "SYSTEM.CNF"
-    },
-    "memory_card": {
-      "source_directory": "BISLPS-25837NARUTO5",
-      "output_directory": "BASLOP-NA228NARUTO6",
-      "expected_directory_occurrence_count": 2,
-      "title_offset": 3128032,
-      "title_capacity": 64,
-      "title_encoding": "cp932",
-      "source_title": "ＮＡＲＵＴＯ－ナルト－　疾風伝ナルティメットアクセル２",
-      "output_title": "ＮＡ　ｖ２．２８"
-    },
-    "game_title": {
-      "imported": "Naruto Shippuden: Ultimate Ninja 5",
-      "output": "Narutimate Accel v2.28",
-      "expected_mapping_count": 6,
-      "expected_occurrence_count": 7
-    }
-  },
   "builds": {
     "latest": {
-      "aliases": ["l"],
-      "postfix": "Latest"
+      "aliases": ["l"]
     },
     "previous": {
-      "aliases": ["p"],
-      "postfix": "Previous"
+      "aliases": ["p"]
     },
     "manual_test": {
-      "aliases": ["mt"],
-      "postfix": "Manual Test"
+      "aliases": ["mt"]
     },
-    "e2e_test": {
-      "postfix": "E2E Test"
-    },
-    "e2e_test_shifted": {
-      "postfix": "E2E Test Shifted"
-    }
+    "e2e_test": {},
+    "e2e_test_shifted": {}
   }
 }

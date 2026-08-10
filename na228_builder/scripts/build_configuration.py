@@ -21,7 +21,13 @@ from ..modules.texture_patcher import engine as texture_patcher_module
 from ..payload_builder import builder as payload_builder_module
 from ..payload_builder import integration as payload_integration_module
 from ..payload_builder.operations import ResidentPayloadBuild
-from .configuration import BuildConfiguration, ModuleInvocation, load_configuration
+from .configuration import (
+    BuildConfiguration,
+    ModuleInvocation,
+    SOURCE_BOOT_PATH,
+    SYSTEM_CNF_PATH,
+    load_configuration,
+)
 from scripts.lib.paths import load_paths
 
 
@@ -572,7 +578,7 @@ def apply_configuration_modules(
     payload_result: dict[str, object] | None = None
     if payload_build is not None:
         config = payload_builder_module.load_config()
-        boot_path = normalize(configuration.identity.source_boot_path)
+        boot_path = SOURCE_BOOT_PATH
         boot_record = source.by_path.get(boot_path)
         if boot_record is None or boot_record.is_dir:
             raise RuntimeError(f"Payload integration requires source boot ELF: {boot_path}")
@@ -722,33 +728,13 @@ def write_configuration_log(
             "source_boot_path",
             "output_boot_path",
             "system_cnf_path",
-            "output_memory_card_directory",
-            "memory_card_title_offset",
-            "memory_card_title_capacity",
-            "memory_card_title_encoding",
-            "output_memory_card_title",
             "edit_count",
         ],
         [
             {
-                "source_boot_path": configuration.identity.source_boot_path,
-                "output_boot_path": configuration.identity.output_boot_path,
-                "system_cnf_path": configuration.identity.system_cnf_path,
-                "output_memory_card_directory": (
-                    configuration.identity.output_memory_card_directory
-                ),
-                "memory_card_title_offset": (
-                    f"0x{configuration.identity.memory_card_title_offset:X}"
-                ),
-                "memory_card_title_capacity": (
-                    configuration.identity.memory_card_title_capacity
-                ),
-                "memory_card_title_encoding": (
-                    configuration.identity.memory_card_title_encoding
-                ),
-                "output_memory_card_title": (
-                    configuration.identity.output_memory_card_title
-                ),
+                "source_boot_path": SOURCE_BOOT_PATH,
+                "output_boot_path": configuration.output_boot_path,
+                "system_cnf_path": SYSTEM_CNF_PATH,
                 "edit_count": len(identity_edits),
             }
         ],
@@ -811,7 +797,7 @@ def compose_configuration_candidate(
     )
     composition = compose_assembly_plan(
         source=source,
-        identity=configuration.identity,
+        output_boot_path=configuration.output_boot_path,
         payloads=payloads,
         owners=owners,
         insertions=insertions,
@@ -878,8 +864,8 @@ def build_configuration_candidate(
             "length": len(rename.original_identifier),
             "original_hex": rename.original_identifier.hex().upper(),
             "new_hex": rename.replacement_identifier.hex().upper(),
-            "reason": "Mirror the configuration identity rename in the UDF tree",
-            "owner": "configuration.identity",
+            "reason": "Mirror the product boot-path rename in the UDF tree",
+            "owner": "product.output_boot_path",
         }
         for rename in assembly.udf_renames
     )

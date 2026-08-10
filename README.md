@@ -45,8 +45,8 @@ knowledge, tests, and release behavior.
 - Runbooks:
   [runtime testing](docs/runbooks/runtime-testing.md) and
   [source extraction](docs/runbooks/source-extraction.md).
-- [Path configuration](docs/PATHS.md) and
-  [logging/retention](docs/LOGGING.md).
+- [Path configuration](docs/policies/paths.md) and
+  [logging/retention](docs/policies/logging.md).
 - [Feature documentation](docs/features/README.md) and
   [knowledge index](docs/knowledge/README.md) for current contracts and durable
   technical findings.

@@ -77,6 +77,28 @@ def _bind_string_consumer(
     return None
 
 
+def _selected_game_title_policy(
+    configuration: BuildConfiguration,
+) -> string_patcher_module.GameTitlePolicy | None:
+    selected = catalog_module.selected_string_patches(
+        configuration.selection,
+        "replace_imported_game_title",
+    )
+    if len(selected) > 1:
+        raise ValueError(
+            "Configuration selects multiple imported game-title replacements"
+        )
+    if not selected:
+        return None
+    _node, _patch_id, definition = selected[0]
+    return string_patcher_module.GameTitlePolicy(
+        imported_title=str(definition["expected_value"]),
+        output_title=configuration.product_title,
+        expected_mapping_count=int(definition["expected_mapping_count"]),
+        expected_occurrence_count=int(definition["expected_occurrence_count"]),
+    )
+
+
 def prepare_module_pipeline(
     configuration: BuildConfiguration,
     *,
@@ -100,6 +122,7 @@ def prepare_module_pipeline(
     runtime_injection_declarations: dict[
         str, runtime_injector_module.RuntimeInjectionPackage
     ] = {}
+    title_policy = _selected_game_title_policy(configuration)
     for module in ordered_modules:
         if module.module != "runtime_injector":
             continue
@@ -147,16 +170,7 @@ def prepare_module_pipeline(
         draft = string_patcher_module.build_translation_draft(
             translation_plan=import_plan,
             owner=owner,
-            title_policy=string_patcher_module.GameTitlePolicy(
-                imported_title=configuration.identity.imported_game_title,
-                output_title=configuration.identity.output_game_title,
-                expected_mapping_count=(
-                    configuration.identity.game_title_mapping_count
-                ),
-                expected_occurrence_count=(
-                    configuration.identity.game_title_occurrence_count
-                ),
-            ),
+            title_policy=title_policy,
         )
         import_plans[provider.module_id] = draft.translation_plan
         preparations.append(

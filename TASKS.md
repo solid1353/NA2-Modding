@@ -23,7 +23,7 @@
 - **General:** practice menu entries (like Damage) flicker again (unstable).
 
 ### Logic
-- Make knj cost selective.
+- [Make knj cost selective](docs/handoffs/2026-08-10-battle-mechanics-resume.md).
 - Make xDash cost 1 chakra.
 - Add damage scaling?
 - [Improve substitution reliability](docs/knowledge/gameplay/substitution.md)

@@ -43,7 +43,7 @@ those.
 - `con`: resume the current work with scope, effort, progress, and approval
   state intact.
 - `sum`: apply the
-  [discussion-summary rule](INTERACTION.md#discussion-and-action) to the current
+  [discussion-summary rule](AGENTS.md#discussion-and-action) to the current
   discussion topic. The boundary resets only when the discussion explicitly
   moves on.
 - `eff`: report the currently recommended effort without changing it.

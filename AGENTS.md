@@ -12,9 +12,85 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
   approval.
 - Protect original source media and user-owned PCSX2 installations. Binary
   changes must be reproducible, guarded, and script-owned.
-- Do not introduce a new long-lived project mechanism or project-wide contract
-  without explicit approval. Ordinary code-level implementation choices inside
-  approved scope do not need separate approval.
+
+## Discussion and action
+
+- During explicit discussion, design, planning, or brainstorming, later messages
+  refine the proposed result. They do not authorize implementation until the
+  applicable approval boundary is reached.
+- A discussion summary contains only the intended changes, integrates accepted
+  corrections, excludes rejected or withdrawn changes, and adds no new changes.
+
+## Task sequencing
+
+- The user may add any number of tasks. Keep them in order and work through them
+  in that order.
+- A new task does not interrupt current work unless the user says to do it
+  immediately. `Immediately` changes priority, not cancellation; afterward,
+  resume the interrupted work automatically.
+
+## Implementation boundaries
+
+- Choose ordinary code-level implementation details inside the approved outcome
+  and scope.
+- Ask before changing unrequested user-visible behavior or introducing a new
+  long-lived project mechanism or project-wide contract.
+- A new mandatory workflow, pipeline stage, public wrapper/command, canonical
+  generator output, manifest, schema, configuration contract, required
+  persistent state, or production/build/CI/runtime integration requires
+  approval.
+- Dependencies use the existing dependency mechanism of the affected component
+  and need no separate approval. A new package-management mechanism does.
+- A command, recipe, selector, profile, or other interface presented for a
+  requested scope must actually cover that scope. State a limitation instead of
+  presenting a narrower case as the full solution.
+
+## Continuation and stopping
+
+- “Active work” means an ongoing user request. An open task, workstream,
+  uncommitted candidate, dirty files, or other repository state is not a user
+  request and cannot make work active.
+- Work remains executable while an in-scope next action can be performed without
+  required user input or a required material decision.
+- Questions, corrections, status requests, and other interruptions do not end
+  active work. Answer them in commentary, then continue the authorized work.
+- Stop only for an explicit stop/pause/cancel, required user input, or a required
+  user decision such as a material change to an approved serious-work design.
+
+## Evidence and troubleshooting
+
+- Treat explicit user observations and established evidence as current facts
+  unless specific new evidence contradicts them.
+- When the task concerns a state currently visible or running, inspect that
+  state or ask for the exact missing input; historical artifacts are context,
+  not a substitute.
+- If a proven execution path produces no requested observable change, trace
+  forward from the last proven point to the first unproven consumer rather than
+  restarting earlier layers or reviving rejected theories.
+- Do not claim observable success from configuration, compilation, an applied
+  write, or an intended code path alone.
+
+## Completion reports
+
+Before reporting completion, review the actual final diff and validation
+results. For serious work, report:
+
+- the achieved outcome and how it matches the approved snapshot;
+- deviations, omitted items, or additional changes;
+- important implementation changes grouped by purpose;
+- user-visible behavior changes;
+- every new persistent mechanism or contract, or explicitly that none were
+  introduced;
+- for work routed through the research policy, the canonical knowledge files
+  updated and the disposition of supporting analysis;
+- exact validation and its result;
+- remaining limitations, uncertainty, risks, or unverified areas;
+- commit and push state.
+
+Use enough concrete detail that the user can understand the result without
+reviewing the source. Do not add empty template sections or repeat information
+merely to satisfy a format.
+
 ## Agent commands
 
 On every new task, read and follow
@@ -44,7 +120,6 @@ Read only the routed policy whose trigger applies:
 
 | Work | Read |
 | --- | --- |
-| conversation, authorization, sequencing, user inputs, completion reports | [`INTERACTION.md`](INTERACTION.md) |
 | Git, paths, work directories, elevation, cleanup, scripts, documentation layout | [`docs/policies/repository.md`](docs/policies/repository.md) |
 | validation, tests, builds, PCSX2, runtime injection, E2E | [`docs/policies/testing.md`](docs/policies/testing.md) |
 | profiles, builder inputs, binaries, donor data, source media, PNACH | [`docs/policies/modding.md`](docs/policies/modding.md) |

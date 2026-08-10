@@ -32,11 +32,11 @@ knowledge, tests, and release behavior.
 
 ## Documentation
 
-- [Agent entrypoint](AGENTS.md): universal rules and scoped-document routing.
+- [Agent entrypoint](AGENTS.md): universal and shared interaction rules plus
+  scoped-document routing.
 - [Agent commands](AGENT_COMMANDS.md): commands interpreted by project
   agents.
 - Policies:
-  [interaction](INTERACTION.md),
   [repository](docs/policies/repository.md),
   [coordination](docs/policies/coordination.md),
   [validation](docs/policies/testing.md),

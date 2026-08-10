@@ -1,8 +1,6 @@
 # Normal mode
 
 Normal mode is active by default whenever no other workflow mode is active.
-Follow the shared discussion, authorization, sequencing, and completion rules
-in [`INTERACTION.md`](../../INTERACTION.md).
 
 ## Small, direct work
 

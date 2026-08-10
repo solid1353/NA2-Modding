@@ -117,7 +117,8 @@ work directories, or documentation layout.
   keep reusable implementation in the project `scripts/` tree.
 - Optional reusable analysis/research tools belong in an existing tooling area;
   task-local scratch tools remain under the task and are deleted when no longer
-  useful. See the implementation boundary in [`INTERACTION.md`](../../INTERACTION.md).
+  useful. See the implementation boundary in root
+  [`AGENTS.md`](../../AGENTS.md#implementation-boundaries).
 - Third-party packages use the affected component's existing central dependency
   set and runtime resolver. Do not select interpreters, install packages, or add
   fallback discovery independently in a task or script.
@@ -140,8 +141,8 @@ work directories, or documentation layout.
 
 Give each document one job and canonical authority:
 
-- root `AGENTS.md` owns universal rules and scoped-document routing;
-- root `INTERACTION.md` owns shared interaction and task rules;
+- root `AGENTS.md` owns universal rules, shared interaction and task rules, and
+  scoped-document routing;
 - routed policies own other scoped normative rules;
 - workflow documents under `docs/workflows/` own complete interaction modes;
 - procedure documents under `docs/procedures/` own non-mode agent procedures;

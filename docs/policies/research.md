@@ -40,7 +40,8 @@ files, reverse-engineered behavior, hypotheses, or reusable research tooling.
   analysis until every reusable finding and useful negative result is promoted.
 - Optional reusable analysis, diagnostic, extraction, or research tools may be
   promoted to an existing research/tooling area under the implementation
-  boundary in [`INTERACTION.md`](../../INTERACTION.md). Do not preserve ordinary
-  scratch scripts or integrate a tool into production/build/CI/runtime without
-  authorization.
+  boundary in root
+  [`AGENTS.md`](../../AGENTS.md#implementation-boundaries). Do not preserve
+  ordinary scratch scripts or integrate a tool into
+  production/build/CI/runtime without authorization.
 - `@tools/CCSFileExplorerMSF` is the default CCS explorer.

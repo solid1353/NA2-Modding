@@ -1639,14 +1639,22 @@
     }
   },
   "i__qol__startup__save_loading__automatic__first_save": {
-    "description": "Silently drive the native asynchronous memory-card worker through port-zero scan, record-zero selection, confirmation, and verified load completion before the normal main-menu loader.",
+    "description": "Silently drive the native asynchronous memory-card worker through port-zero scan, record-zero selection, confirmation, and verified load completion before the normal main-menu loader, then report the outcome for ten seconds in the usable main menu.",
     "hooks": {
+      "draw_savedata_outcome_in_main_menu_screen_context": {
+        "description": "Retain the native main-menu update, temporarily select its frame-wide screen context, draw a non-blocking right-aligned savedata outcome, and restore the prior context.",
+        "target_id": "na2_elf",
+        "offset": "0xE9CAC",
+        "expected_hex": "140F080C",
+        "symbol": "savedata_notification_draw",
+        "encoding": "jal26"
+      },
       "replace_visible_save_load_controller_update": {
         "description": "Replace only Continue's visible Save/Load controller update with the silent first-record state machine while retaining native allocation, cleanup, result handling, and post-load setup.",
         "target_id": "na2_elf",
         "offset": "0xEA084",
         "expected_hex": "C08F070C",
-        "symbol": "update",
+        "symbol": "automatic_save_loading_update",
         "encoding": "jal26"
       }
     },
@@ -1655,13 +1663,29 @@
         "kind": "c",
         "path": "src/qol/startup_automatic_save_loading.c",
         "namespace": "qol.startup.save.loading.automatic",
-        "imports": {},
+        "imports": {
+          "startup_save_notification_state": "savedata_notification_state"
+        },
         "fragments": {
-          "update": {
+          "automatic_save_loading_update": {
             "order": 110,
             "object": "qol.startup.save.loading.automatic.text.startup.automatic.save.loading"
+          },
+          "savedata_notification_constants": {
+            "order": 111,
+            "object": "qol.startup.save.loading.automatic.rodata"
+          },
+          "savedata_notification_draw": {
+            "order": 112,
+            "object": "qol.startup.save.loading.automatic.text.startup.save.notification.draw"
           }
         }
+      },
+      "savedata_notification_state": {
+        "kind": "data",
+        "order": 113,
+        "alignment": 4,
+        "value": "0000000000000000000000000000000000000000"
       }
     }
   }

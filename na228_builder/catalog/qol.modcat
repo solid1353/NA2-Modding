@@ -39,7 +39,7 @@
           }
           |
           setting<"automatic"> {
-            description: "Silently load record zero when it exists, and otherwise proceed to the main menu without showing Save/Load UI or requiring input.",
+            description: "Silently load record zero when it exists, and otherwise proceed to the main menu without showing Save/Load UI or requiring input. Report the outcome in black for ten seconds in the top-right corner of the usable menu; successful loads also show play time and the saved date/time.",
             patches: [
               "e__qol__startup__save_loading__enter_title_input_state_immediately",
               "e__qol__startup__save_loading__return_native_continue_result",

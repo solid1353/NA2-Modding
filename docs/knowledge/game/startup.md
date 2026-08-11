@@ -135,7 +135,7 @@ The worker thread runs `FUN_001e2140`; its relevant layout is:
 
 | Offset | Meaning |
 | ---: | --- |
-| `+0x00..+0x3F` | Four `0x10`-byte record descriptors; byte zero of each descriptor is nonzero when that record exists. |
+| `+0x00..+0x3F` | Four `0x10`-byte record descriptors, detailed below. |
 | `+0x40` | Memory-card port. |
 | `+0x44` | Record index. |
 | `+0x48` | Requested worker operation. |
@@ -144,6 +144,51 @@ The worker thread runs `FUN_001e2140`; its relevant layout is:
 | `+0x54` | Save/Load mode hint; `1` is load mode. |
 | `+0x58` | Latest lower-level card classification. |
 | `+0x5C` | Worker thread handle. |
+
+Each `0x10`-byte record descriptor has this layout:
+
+| Descriptor offset | Meaning |
+| ---: | --- |
+| `+0x00` | Occupancy; nonzero means that record exists. |
+| `+0x01` | Native descriptor class, validated as `0..4` for occupied records. |
+| `+0x02` | Stored checksum for the corresponding `0x2400`-byte save record. |
+| `+0x04` | Play time in 30 Hz ticks. |
+| `+0x08` | Reserved byte from the memory-card modification timestamp. |
+| `+0x09` | Saved second. |
+| `+0x0A` | Saved minute. |
+| `+0x0B` | Saved hour. |
+| `+0x0C` | Saved day. |
+| `+0x0D` | Saved month. |
+| `+0x0E` | Saved year as a little-endian `u16`. |
+
+`FUN_001c2c80` finds the record's `dataNN` entry in the native 64-byte
+memory-card directory table and copies that entry's eight-byte modification
+timestamp at table offsets `+0x08..+0x0F` into descriptor offsets
+`+0x08..+0x0F`. The project's local PS2SDK `libmc.h` identifies those bytes as
+reserved, second, minute, hour, day, month, and little-endian year. The native
+record-list renderer `FUN_001e6370` independently consumes descriptor day,
+month, and year, and converts the play-time field using 108,000 ticks per hour,
+1,800 per minute, and 30 per second. Its overflow display is `999:59:59`.
+Consequently, the complete play time and saved date/time are already available
+after the existing scan; reading them requires no additional memory-card
+operation.
+
+Memory-card directory timestamps use the PS2 clock's fixed JST (`UTC+9`)
+representation. They are not already local time. The PS2SDK conversion contract
+applies `configured timezone - 540 minutes`, plus the configured daylight-saving
+hour. The game links `GetOsdConfigParam` at `0x0015DD90`; timezone is its signed
+11-bit field at bits `21..31`, while configuration version is bits `13..15`.
+Version zero is the early-Japanese fallback and therefore remains at `UTC+9`.
+For later configurations, syscall `0x6F` (`GetOsdConfigParam2`) exposes the
+daylight-saving flag through bit `4` of parameter byte one.
+
+User runtime evidence at `UTC+3` showed the unconverted defect directly: a save
+made around `11/08/2026 19:20` was displayed as `12/08/2026 01:20`, exactly the
+six-hour difference between JST and `UTC+3`. The notification therefore converts
+the directory timestamp to the currently configured PS2 timezone before storing
+its packed display date and time, including minute offsets, daylight saving,
+month/year rollover, and leap years. It does not alter the memory card or the
+save payload.
 
 The normal load path first writes load mode `1`, calls `FUN_001e1d80`, and
 performs the native preparation call `FUN_001d9600(0)`. It scans a card through
@@ -202,13 +247,16 @@ copying save data itself:
 | Load | Busy is `4/0`; native read progress is `0x11/4` or `0x12/4`; success is `0x13/1` | Wait through the native read. Return loaded-save result `1` only after the worker has verified and copied the save. Any other terminal status returns `2`. |
 
 The lower-level classifier `FUN_001c20a0` and the worker provide explicit
-failure cases before the first-record decision:
+failure cases before the first-record decision. Classifier result `2` is the
+unformatted-card case: it is returned for PS2 card type `2` with format flag
+`0`, as well as when a following memory-card operation reports native result
+`-2`. The load-mode worker maps it to status `0x28`:
 
 | Physical/data case | Worker outcome in load mode | Automatic outcome |
 | --- | --- | --- |
 | No memory card in port zero | status `5`, result `2` | Enter main menu without loading. |
 | Non-PS2/wrong card type | status `7`, result `2` | Enter main menu without loading. |
-| Unformatted or not-ready PS2 card | status `0x28`, result `1` | Enter main menu without loading. |
+| Unformatted PS2 card | status `0x28`, result `1` | Enter main menu without loading. |
 | No game directory or insufficient directory capacity | status `0x29`, result `1` | Enter main menu without loading. |
 | Game directory exists but record zero is absent | scan success `1/0`, descriptor zero byte `0` | Enter main menu without loading. |
 | Record-zero read or checksum failure; card changes during the operation; any other non-success terminal status | status/result other than the accepted pairs above | Enter main menu without loading. |
@@ -237,6 +285,74 @@ behavior: a valid first save is loaded silently before the main menu, while the
 no-load path reaches the main menu without input or visible Save/Load UI. The
 individual physical-card rows above remain the statically established native
 outcome mapping unless separately exercised at runtime.
+
+### Main-menu savedata notification seam
+
+The usable menu is the established controller state/mode `4/1`. The native font
+path provides `FUN_00378f50(x, y, text, rgba)` for one colored string and
+`FUN_003798e0(text, 0)` for its horizontal extent. Nominal-speed runtime timing
+of the visibility-gated candidate showed that a `737,280,000`-tick threshold
+lasted 2.5 seconds, establishing an effective EE coprocessor Count rate of
+294,912,000 ticks per second. Unsigned elapsed-Count arithmetic therefore uses
+2,949,120,000 ticks for the requested ten-second display interval and remains
+valid across counter wraparound.
+
+Outer menu state/mode `4/1` is not itself the first visible Mode Select frame.
+`FUN_001ea240` owns a second controller through global pointer `0x0060760C`.
+Its states `0..3` allocate and prepare resources; only state `4` updates the
+Mode Select object and draws it through `FUN_00385c00`. User runtime testing at
+nominal speed found that a timer started from outer `4/1` left the notification
+visible for only about one second. The corrected visibility gate therefore
+requires both outer `4/1` and inner state `4`, starting the ten-second interval
+on the first drawable Mode Select state rather than during its preparation.
+
+The first notification candidate wrapped the `FUN_00203c50` call made by
+`FUN_001e9980` at runtime `0x001E9BAC` (ELF offset `0xE9CAC`). User `ss1` from
+CRC `3755A284` proves that the automatic load, outcome publication, timer, text
+formatting, and draw wrapper all ran: its injected state contains outcome `1`,
+play time `0x349` ticks, date `2026-08-11`, and time `23:10`, and its embedded
+screenshot contains `Save data loaded.` and `Play Time 0:00:28`. However, that
+call site inherits Mode Select's bottom-body text context. The notification was
+therefore drawn at the bottom-right and its third line was clipped below the
+screen. This is a confirmed unsuitable presentation seam, not a savedata-load
+or outcome-capture failure.
+
+`FUN_00108490` establishes the global end-of-frame renderer context through
+`FUN_001866d0(renderer, frame + 0x150)`, calls `FUN_0018b8e0`, then executes the
+reserved hot-reload no-op and flushes through `FUN_00186000`. The call to
+`FUN_0018b8e0` is at runtime `0x00108598` (ELF offset `0x8698`, clean instruction
+`38 2E 06 0C`). This is a valid native drawing phase, but it is not a valid
+resident-payload hook: it runs during initial boot, before `228.BIN` has been
+loaded.
+
+User `ss1` from CRC `375B83A8` proves the resulting launch failure. The hook at
+runtime `0x00108598` had already been replaced by `08 E3 23 0C`, targeting the
+notification wrapper at `0x008F8C20`, while that target and the rest of the
+`228.BIN` load range were still zero. The EE then executed zero words through
+the unloaded reservation and trapped when the data word at EPC `0x00940124`
+decoded as a trap instruction; the saved Cause value is `0x34`. The embedded
+screenshot is black. This rejects every unconditional boot-wide hook from the
+main ELF into the resident payload, even when its renderer phase is otherwise
+correct. The reserved hot-reload no-op at runtime `0x001085A0` remains untouched.
+
+The replacement keeps the proven post-load main-menu hook at runtime
+`0x001E9BAC`. After retaining `FUN_00203c50`, it saves the renderer's current
+context at `+0x6C`, temporarily selects the frame-wide context through
+`FUN_001866d0(renderer, frame + 0x150)`, draws the notification, and restores
+the saved context. The frame and renderer pointers come from `0x006073FC` and
+`0x00607470`; a missing pointer suppresses only the notification. This confines
+the resident call to the menu lifetime while replacing the transient
+bottom-body context that misplaced the first candidate.
+
+The candidate stores only the classified outcome, timer start, play ticks,
+packed date, and packed time. It starts the timer when outer menu `4/1` and
+inner Mode Select state `4` are both active, then clears the state after ten
+seconds or when the usable menu is left. Current outcome messages use black
+text and omit terminal periods.
+Successful-load text uses unpadded hours with two-digit minutes and seconds,
+followed by the descriptor's timezone-corrected `DD/MM/YYYY HH:MM` modification
+time. The user accepted the final placement, duration, presentation, and
+timezone-conversion flow on 2026-08-11.
 
 ### Early memory-card overlap experiment
 
@@ -374,9 +490,11 @@ type `5` joined the separate rectangles into one triangle strip, creating large
 diagonal wedges. The corrected renderer mirrors the known solid-rectangle
 function `0x0019FD20`: every segment and bar rectangle performs its own setup,
 color, four-vertex submission, and flush. The displayed value reads the EE
-Count register at the 147.456 MHz bus-clock rate and maps 9,584,640 ticks to
-each percentage point, producing a 6.5-second estimate. It caps at `99%` and
-never substitutes for real loader completion. This draw hook is also the
+Count register and maps 9,584,640 ticks to each percentage point. Later
+nominal-speed notification timing established an effective 294.912 MHz Count
+rate, so this historical divisor reaches its `99%` cap after about 3.22 seconds;
+the earlier 6.5-second derivation used the rejected half-rate assumption. The
+counter never substitutes for real loader completion. This draw hook is also the
 presentation boundary where a custom loading-screen background can be added
 later without changing loader control flow.
 
@@ -395,8 +513,9 @@ Together with the enabled opening skip, the intended sequence is the timed
 loading counter during the boot wait, native menu transition, then main menu.
 Confidence is high for the control flow, clean instruction guards, triangle-strip
 failure localization, and corrected independent-rectangle sequence. User
-runtime validation on 2026-08-11 confirmed the 6.5-second counter itself. Frame
-delivery drops during the later portion of the loading screen, approximately
+runtime validation on 2026-08-11 confirmed the counter presentation, not the
+later-rejected half-rate timing derivation. Frame delivery drops during the
+later portion of the loading screen, approximately
 from `30%` through `99%`, but the time-derived percentage remains correct; the
 user accepted that loading-screen presentation characteristic.
 

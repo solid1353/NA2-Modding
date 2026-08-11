@@ -21,6 +21,14 @@ work directories, or documentation layout.
   has no remote.
 - User edits and commits are expected. Refresh status/history before Git
   operations, preserve unrelated work, and stage only task-owned paths or hunks.
+- When the active workflow calls for staging, use
+  `D:\Games\Modding\codex-utils\codex\staging\stage_task_changes.ps1 -Changes`
+  for every participating repository. Include only current-task changes. If a
+  staged contribution needs revision, release it through the helper before
+  editing, then validate and stage its replacement once.
+- Commit helper-managed staging only through the helper's owner-only `-Commit`
+  operation; never use raw `git commit` for it. The active workflow and the
+  rules below still determine whether and when to commit or push.
 - Independent changes may proceed concurrently. Pause only for overlapping or
   logically conflicting changes or exclusive mutable resources.
 - Completed refactors and other completed non-patch changes follow the active

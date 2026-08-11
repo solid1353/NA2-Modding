@@ -45,18 +45,6 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
   requested scope must actually cover that scope. State a limitation instead of
   presenting a narrower case as the full solution.
 
-## Continuation and stopping
-
-- “Active work” means an ongoing user request. An open task, workstream,
-  uncommitted candidate, dirty files, or other repository state is not a user
-  request and cannot make work active.
-- Work remains executable while an in-scope next action can be performed without
-  required user input or a required material decision.
-- Questions, corrections, status requests, and other interruptions do not end
-  active work. Answer them in commentary, then continue the authorized work.
-- Stop only for an explicit stop/pause/cancel, required user input, or a required
-  user decision such as a material change to an approved serious-work design.
-
 ## Evidence and troubleshooting
 
 - Treat explicit user observations and established evidence as current facts
@@ -67,9 +55,6 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 - If a proven execution path produces no requested observable change, trace
   forward from the last proven point to the first unproven consumer rather than
   restarting earlier layers or reviving rejected theories.
-- Do not claim observable success from configuration, compilation, an applied
-  write, or an intended code path alone.
-
 ## Completion reports
 
 Before reporting completion, review the actual final diff and validation

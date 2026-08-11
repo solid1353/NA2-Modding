@@ -16,9 +16,7 @@
     },
     "qol": {
       "startup": {
-        "skip_cc2_intro": true,
-        "skip_opening": true,
-        "save_loading": "automatic",
+        "savedata_loading": "automatic",
         "loading_screen": true
       },
       "practice": {

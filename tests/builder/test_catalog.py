@@ -656,9 +656,6 @@ class CatalogTests(unittest.TestCase):
         )
         self.assertEqual(len(release.injections), 25)
         self.assertTrue(
-            release.node_enabled("features", "qol", "startup", "save_loading")
-        )
-        self.assertTrue(
             release.node_enabled("features", "battle_logic", "substitution_cost")
         )
         self.assertTrue(

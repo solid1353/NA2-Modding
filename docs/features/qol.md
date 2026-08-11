@@ -91,21 +91,26 @@ state `3` instead of state `2` at virtual address `0x001E11CC` (file offset
 `0xE12CC`) and return native title result `2` (`Continue`) at virtual address
 `0x001E1240` (file offset `0xE1340`). The unchanged caller enters main state
 `4`, substate `2` and constructs the shared Save/Load controller in load mode.
-`Skip opening` remains enabled as a second guard on the opening path.
+This route bypasses the CyberConnect2 intro and opening itself, so neither
+independent skip edit is selected with a save-loading branch.
 
-The catalog exposes two disjoint literal branches at
-`qol.startup.save_loading`:
+The `qol.startup` catalog node is a union of two closed object shapes. The title
+branch contains `skip_cc2_intro` and `skip_opening`; they remain independent and
+may both be enabled. The direct-loading branch instead contains
+`savedata_loading` and `loading_screen`, so neither skip can be selected when
+either direct-loading control is present.
 
-- `"manual"` retains the full Save/Load controller. With
-  `qol.save_load.display_only_first_save`, it shows the native record-zero
-  confirmation; Yes loads the save and No enters the menu without loading.
-- `"automatic"` replaces only Continue's per-frame visible-controller update
-  with a silent generated-C driver for the same asynchronous memory-card
-  worker. It scans port zero, requests record zero when present, internally
-  resolves the native load confirmation as Yes, waits through checksum-verified
-  load completion, and then lets Continue perform its unchanged cleanup,
-  save-dependent setup, and main-menu loading. Its separate guarded no-op at
-  file offset `0xEA0D0` prevents the Save/Load child from drawing.
+Within the direct-loading branch, `savedata_loading: "manual"` retains the full
+Save/Load controller. With
+`qol.save_load.display_only_first_save`, it shows the native record-zero
+confirmation; Yes loads the save and No enters the menu without loading.
+`savedata_loading: "automatic"` instead replaces only Continue's per-frame
+visible-controller update with a silent generated-C driver for the same
+asynchronous memory-card worker. It scans port zero, requests record zero when
+present, internally resolves the native load confirmation as Yes, waits through
+checksum-verified load completion, and then lets Continue perform its unchanged
+cleanup, save-dependent setup, and main-menu loading. Its separate guarded
+no-op at file offset `0xEA0D0` prevents the Save/Load child from drawing.
 
 The automatic branch treats no card, a wrong card type, an unformatted card, no
 game directory, an empty first record, read/checksum failure, a card change, and
@@ -114,13 +119,14 @@ those cases the existing guarded result mapping enters the main menu without
 loaded data. It does not synthesize a timeout while the native worker reports a
 busy state.
 
-The base configuration selects `"automatic"`; `"manual"` remains available as
-the confirmed visible fallback. The sequence bypasses the notice, Bandai Namco,
+The base configuration selects `savedata_loading: "automatic"` and enables
+`loading_screen`; `savedata_loading: "manual"` remains available as the
+confirmed visible fallback. The sequence bypasses the notice, Bandai Namco,
 Bandai, CRIWARE, opening, interactive title, Load list, card-status messages,
 and load confirmation before the main-menu loading screen. Full development
-build `20260811_054948_801_pid12700` succeeded, and user runtime validation on
-2026-08-11 confirmed the integrated automatic behavior. The manual branch also
-remains user-confirmed.
+build `20260811_065428_218_pid37624` succeeded, and user runtime validation on
+2026-08-11 confirmed the integrated automatic behavior with the exclusive
+startup union. The manual branch also remains user-confirmed.
 The complete disassembly findings, worker layout, outcome matrix, and state
 machine are recorded in
 [`../knowledge/game/startup.md`](../knowledge/game/startup.md).

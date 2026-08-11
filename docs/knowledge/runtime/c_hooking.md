@@ -76,6 +76,6 @@ for 300 frames.
 
 So the concise distinction is:
 
-- Font production hooking: C is stored in `228.BIN`; game-file call sites permanently point to it.
+- Font production hooking: C is stored in `228.BIN`; game-file call sites point to it in the patched image.
 - Font hot reload: the resident Font entry temporarily jumps to a newer C copy written through PINE.
 - Reload message: a separate end-of-frame hook proves the new memory transaction occurred visibly.

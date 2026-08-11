@@ -238,6 +238,74 @@ no-load path reaches the main menu without input or visible Save/Load UI. The
 individual physical-card rows above remain the statically established native
 outcome mapping unless separately exercised at runtime.
 
+### Early memory-card overlap experiment
+
+An implemented experiment moved the accepted automatic worker's scan and
+record-zero load into the startup-resource wait. It retained the worker
+operations, accepted status/result pairs, no-load mapping, Continue cleanup,
+and post-load save-dependent setup. On 2026-08-11, user runtime testing found
+no observable loading-time improvement. The overlap hooks and state were
+therefore removed, and automatic loading again starts at Continue. This is a
+negative performance result; it does not contradict the static dependency
+findings below.
+
+Read-only Ghidra 12.1.2 exports under
+`@analysis/disassembly/NA2/exports/SLPS_258.37/` establish the dependency
+boundary. `FUN_001e0ee0` allocates both the `0x60`-byte memory-card worker at
+global `0x006075F4` and the `0x2400`-byte live save object at global
+`0x006075F8` before it starts the audio and ROFS tasks. The worker's record-load
+case in `FUN_001e2140` allocates a temporary `0x2400`-byte buffer, reads the
+record, recomputes and compares its checksum, and copies the validated sections
+into that preallocated live object through `FUN_001e30f0`, `FUN_001e2e20`, and
+`FUN_001e2c90`. `FUN_001e1e10`, used to request record zero, writes only the
+worker's operation, status, result, and record-index fields. For status `0x10`,
+`FUN_001e3120(worker, 1)` likewise advances only that worker's operation,
+status, and result fields. The pre-controller automatic transition therefore
+does not depend on a constructed Save/Load controller, and the record-load path
+contains no direct sound-manager call.
+
+Before those tasks are created, startup calls `FUN_001e71b0`, whose
+`FUN_001e72e0` child starts the same worker in mode `0` for the native card
+environment probe, waits for that probe, and then calls `FUN_001e1d20`.
+`FUN_001e1d20` terminates the worker task and clears its handle at offset
+`+0x5C`. The tested overlap seam was later, so the experiment restarted an
+allocated but stopped worker rather than competing with the probe's worker
+task.
+
+The previously unresolved `FUN_001d9600(0)` preparation call is not a
+memory-card prerequisite. `FUN_001d9600` delegates only to `FUN_001d9760`,
+which gates the sound-manager state byte at offset `+0x186`, calls
+`FUN_001d6980` on the sound manager, and resets its current selection at
+offset `+0xC0`. The experiment therefore deferred this call until the original
+Continue boundary, when the startup audio-ready check had already succeeded,
+while allowing the independent card worker to progress earlier.
+
+The experiment used four clean guarded seams:
+
+| Role | Runtime address | ELF offset | Clean instruction |
+| --- | ---: | ---: | --- |
+| Start the card load immediately before starting the startup audio task | `0x001E1024` | `0xE1124` | `C0 3F 07 0C` (`jal FUN_001cff00`) |
+| Advance the automatic phases after each startup-task yield | `0x001E1124` | `0xE1224` | `D0 40 07 0C` (`jal FUN_001d0340`) |
+| Reuse the early worker once when the shared Save/Load parent is constructed | `0x001E3DD0` | `0xE3ED0` | `28 87 07 0C` (`jal FUN_001e1ca0`) |
+| Consume the overlapped state in Continue | `0x001E9F84` | `0xEA084` | `C0 8F 07 0C` (`jal FUN_001e3f00`) |
+
+A four-byte injected phase word recorded scan, confirmation, load, loaded, or
+no-load and one constructor-reuse flag. The begin hook required the native probe
+to have left the shared worker with a zero task handle. The startup-yield hook
+then drove the same native operations and status transitions as the accepted
+late state machine. At Continue, the constructor hook preserved the active
+worker instead of creating a duplicate thread, the update hook performed the
+deferred sound preparation once, and the controller resumed at the matching
+phase. After that one reuse, the injected state was cleared, so later Save/Load
+controllers called the native worker constructor normally. If no early state
+was established, the accepted late-start implementation remained the fallback.
+
+The worker/save allocation order, direct call graph, hook guards, and absence
+of a direct audio dependency in the card operation remain high-confidence
+static findings. Runtime testing rejected only the performance hypothesis: the
+implemented overlap produced no observable loading-time reduction. The result
+does not establish why the overlap was ineffective.
+
 ## Early native loading screen
 
 A third user-supplied NA2.28 batch from CRC `C9AB0A4F` narrows the transition
@@ -429,14 +497,13 @@ The evidence supports the following order of work:
    boot. This is the largest plausible startup reduction, but it needs a proven
    safe transition and the exact character-to-bank mapping; otherwise it merely
    moves the same wait to the first battle.
-3. **Overlap memory-card work only after the audio dependency is separated.**
-   The global memory-card worker exists before the startup loop, so scanning
-   port zero could in principle overlap audio initialization. The current
-   automatic-load state machine cannot simply be called early because its
-   native preparation includes `FUN_001d9600`, which operates on the sound
-   manager initialized by the bottlenecking task. A boot-specific sequence
-   would have to defer or prove that preparation call. This can save only the
-   subsequent card/load wait; it does not address the 188 audio-index loads.
+3. **Do not reintroduce the tested memory-card overlap as a loading-time
+   optimization.** The experiment used the independent worker boundary above,
+   drove the native scan and record-zero load during the startup wait, and
+   deferred the sound-only `FUN_001d9600` call until Continue. User runtime
+   testing found no observable loading-time reduction. The static separation
+   remains useful knowledge, but the performance hypothesis is rejected for
+   this implementation and startup path.
 
 Reducing primitive submissions in the enabled loading-screen renderer may save
 minor CPU/GS work per frame, but the renderer is not a completion dependency

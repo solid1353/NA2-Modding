@@ -14,7 +14,7 @@ na228 e2e delete <suite>
 na228 e2e commit [-s]
 ```
 
-`na228 e2e` owns E2E execution and suite lifecycle. Permanent/unit tests are an
+`na228 e2e` owns E2E execution and suite lifecycle. Unit tests are an
 independent lane invoked with `na228 test`.
 
 E2E execution is global across the tracked suite set. A suite/capture named in

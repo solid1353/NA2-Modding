@@ -30,7 +30,7 @@ integrated catalog data.
   concrete `overrides`. Each overrides object may be empty or partially mirror
   the catalog's feature tree directly. The loader applies `base.features`, then
   `base.overrides`, then the concrete configuration's `overrides`. Normal local
-  builds use `development.json`; Manual Test, worker, and E2E builds use
+  builds use `development.json`; Manual, worker, and E2E builds use
   `test.json`; only release packaging uses `release.json`.
 - `catalog/implementation/targets.tsv` is the single target registry used by
   edits and injection hooks.
@@ -76,7 +76,7 @@ reference the same shared injection unit.
 
 Root edit and injection identities use `e__` and `i__` prefixes. Definition
 maps and unordered nested
-maps are serialized alphabetically and permanent tests enforce that source
+maps are serialized alphabetically and unit tests enforce that source
 convention without making source order a loader requirement. Hook and payload
 fragment identities are concise within their owning injection. Payload
 fragment numeric `order` values remain explicit, validated declaration data;
@@ -150,6 +150,20 @@ patch guards, compilation and linking, derived changes, and full composition
 conflict checks run against the source ISO, while no ISO or build record is
 created. Temporary compiler artifacts are removed by the builder. This does not
 validate final image assembly, boot, or runtime behavior.
+
+The public `-f` option applies to ordinary Latest and Manual build routes,
+including build-only and build-and-run commands. It keeps building when a
+non-critical validation or bookkeeping step fails: preflight and retained-record
+lookup, configuration/build-record metadata, receipt updates, and obsolete
+Manual-record pruning. The default Latest build-and-run route may also launch a
+fully verified `.building` image when only promotion to the retained Latest path
+fails. Every bypassed failure remains visible as a warning.
+
+Force mode never bypasses checks required to construct a valid image. Catalog
+and configuration structure, compilation and linking, source and patch guards,
+edit conflicts, resident-payload layout, image layout, and final image-content
+verification remain fatal. `-f` is not valid for a pure launch, `build -d`, a
+worker build, E2E, unit tests, or release packaging.
 
 The public `na228` development commands present configuration failures as one
 concise path/value/expectation message. Their existing `latest.log` and

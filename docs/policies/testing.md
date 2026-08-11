@@ -21,11 +21,13 @@ command behavior and artifact layout are in
   4. the repository default for the change type below.
 - The selected level is the complete validation plan. Lower levels do not add
   checks on top of it.
-- Name the exact command, suite, route, or component rule that authorizes each
-  validation. Do not invent an additional validation campaign.
-- Permanent/unit tests and E2E are independently selectable. Choosing one does
+- Name the exact command, suite, route, or component rule planned for each
+  validation. A planned validation is not an executed validation. Report the
+  exact command actually run and its observed result; otherwise state `not
+  run`. Do not invent an additional validation campaign.
+- Unit tests and E2E are independently selectable. Choosing one does
   not authorize the other.
-- Do not add permanent tests whose only purpose is rejecting a retired field,
+- Do not add unit tests whose only purpose is rejecting a retired field,
   interface, or migration input when the canonical schema already excludes it.
   Verify removal during the refactor with searches, one-off scripts, or
   temporary tests removed before completion. Retain tests only for supported
@@ -69,9 +71,9 @@ that behavior.
   configuration, then compare hashes. Otherwise, do not build.
 - Agents do not run the default/no-argument `na228` or `na228.ps1` workflow or
   any other normal user build route. They do not create, replace, promote,
-  retain, or launch a user-facing build such as `Latest`, `Previous`, or Manual
-  Test, or write its normal build record. Normal builds and their records belong
-  to the user.
+  retain, or launch user-facing builds—including `Latest`, `Previous`, and
+  Manual—or write their normal build records. Normal builds and their records
+  belong to the user.
 - Internal PowerShell or Python entrypoints do not bypass these build
   boundaries.
 - `na228 build -d` validates the development configuration against the real
@@ -143,10 +145,10 @@ UI elements, and similar visible game behavior.
 - Provisional candidate checks or new E2E coverage may remain with the
   uncommitted candidate while validation is in progress.
 - Before user acceptance, do not document the patch behavior as established fact
-  or encode it into permanent tests.
+  or encode it into unit tests.
 - After acceptance, finalize useful patch-specific tests and documentation,
   discard rejected candidate checks, then commit and push the complete feature.
-- Permanent tests must detect a meaningful regression in accepted behavior or a
+- Unit tests must detect a meaningful regression in accepted behavior or a
   documented safety contract. They must not merely restate fixture, catalog,
   manifest, or table contents; freeze incidental implementation details; or
   reconstruct the implementation and compare it with itself. Cover isolated

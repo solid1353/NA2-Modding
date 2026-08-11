@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [switch]$DryRun,
-    [switch]$ManualTestOnly,
+    [switch]$ManualOnly,
     [ValidateSet('normal', 'shifted')][string]$E2eVariant,
     [string]$WorkerOutputIso,
     [switch]$WorkerEphemeral,
@@ -23,20 +23,19 @@ if (-not [string]::IsNullOrWhiteSpace($E2eVariant)) {
 if (
     @(
         $DryRun.IsPresent
-        $ManualTestOnly.IsPresent
+        $ManualOnly.IsPresent
         $null -ne $e2eBuild
         -not [string]::IsNullOrWhiteSpace($WorkerOutputIso)
     ).Where({ $_ }).Count -gt 1
 ) {
-    throw '-DryRun, -ManualTestOnly, -E2eVariant, and -WorkerOutputIso are mutually exclusive.'
+    throw '-DryRun, -ManualOnly, -E2eVariant, and -WorkerOutputIso are mutually exclusive.'
 }
 if ($Force -and (
     $DryRun -or
-    $ManualTestOnly -or
     $null -ne $e2eBuild -or
     -not [string]::IsNullOrWhiteSpace($WorkerOutputIso)
 )) {
-    throw '-Force is valid only for the normal Latest build.'
+    throw '-Force is valid only for ordinary Latest or Manual builds.'
 }
 if ($WorkerEphemeral -and [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
     throw '-WorkerEphemeral requires -WorkerOutputIso.'
@@ -281,9 +280,9 @@ $inputIso = $paths.files.na2_iso
 $nun5Iso = $paths.files.nun5_iso
 $resolvedLatestIso = [IO.Path]::GetFullPath($paths.files.latest_iso)
 $resolvedPreviousIso = [IO.Path]::GetFullPath($paths.files.previous_iso)
-$resolvedManualTestIso = [IO.Path]::GetFullPath($paths.files.manual_test_iso)
+$resolvedManualIso = [IO.Path]::GetFullPath($paths.files.manual_iso)
 $configurationName = if (
-    $ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild
+    $ManualOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild
 ) {
     'test.json'
 }
@@ -321,7 +320,7 @@ $logDirectory = Join-Path $paths.logs 'na228'
 $buildLogRoot = Join-Path $logDirectory 'builds'
 $latestReceiptPath = Join-Path $logDirectory 'preflight\latest.json'
 $stagedIso = "$resolvedLatestIso.building"
-if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
+if ($ManualOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
     $isolatedBuildId = (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + "_pid$PID"
     $isolatedKind = if ($null -ne $workerBuild) {
         'worker'
@@ -330,7 +329,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         'e2e-test'
     }
     else {
-        'manual-test'
+        'manual'
     }
     $isolatedOutputIso = if ($null -ne $workerBuild) {
         $workerBuild.OutputIso
@@ -344,7 +343,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         [IO.Path]::GetFullPath([string]$configuredOutput.Value)
     }
     else {
-        $resolvedManualTestIso
+        $resolvedManualIso
     }
     $isolatedLogRoot = if ($null -ne $workerBuild) {
         Join-Path $workerBuild.Logs 'builds'
@@ -353,12 +352,12 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         $buildLogRoot
     }
     else {
-        Join-Path $logDirectory 'manual_tests'
+        Join-Path $logDirectory 'manual'
     }
     $resultFilename = switch ($isolatedKind) {
         'worker' { 'build_result.tsv' }
         'e2e-test' { 'build_result.tsv' }
-        default { 'manual_test_result.tsv' }
+        default { 'manual_result.tsv' }
     }
     $isolatedReceiptPath = if ($null -ne $workerBuild) {
         Join-Path $workerBuild.Logs (
@@ -369,7 +368,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         Join-Path $logDirectory "preflight\e2e_test_$E2eVariant.json"
     }
     else {
-        Join-Path $logDirectory 'preflight\manual_test.json'
+        Join-Path $logDirectory 'preflight\manual.json'
     }
     $isolatedConfigurationLog = Join-Path $isolatedLogRoot $isolatedBuildId
     $isolatedConfigurationLogDirectory = [IO.Path]::GetRelativePath(
@@ -393,11 +392,14 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
     if ($WorkerEphemeral) {
         $isolatedArguments += '--digest-only'
     }
+    if ($Force) {
+        $isolatedArguments += '--best-effort-metadata'
+    }
 
     $isolatedLabel = switch ($isolatedKind) {
         'worker' { 'Worker-output mode' }
         'e2e-test' { "E2E Test $E2eVariant mode" }
-        default { 'Manual Test mode' }
+        default { 'Manual mode' }
     }
     try {
         $isolatedPreflight = Invoke-Na2BuildPreflight `
@@ -426,12 +428,21 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         }
     }
     if ($isolatedPreflight.status -eq 'hit') {
-        $retainedRecord = Find-Na2IsolatedBuildRecord `
-            -LogRoot $isolatedLogRoot `
-            -ResultFilename $resultFilename `
-            -OutputIso $isolatedOutputIso `
-            -Variant $(if ($isolatedKind -eq 'e2e-test') { $E2eVariant } else { $null }) `
-            -Paths $paths
+        try {
+            $retainedRecord = Find-Na2IsolatedBuildRecord `
+                -LogRoot $isolatedLogRoot `
+                -ResultFilename $resultFilename `
+                -OutputIso $isolatedOutputIso `
+                -Variant $(if ($isolatedKind -eq 'e2e-test') { $E2eVariant } else { $null }) `
+                -Paths $paths
+        }
+        catch {
+            if (-not $Force) {
+                throw
+            }
+            Write-Warning "Force mode could not validate the retained build record: $($_.Exception.Message)"
+            $retainedRecord = $null
+        }
         if ($null -ne $retainedRecord) {
             $retainedRecordPath = ConvertTo-Na2ProjectPath `
                 -Path $retainedRecord.FullName `
@@ -449,11 +460,11 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
             ) -ForegroundColor Cyan
             return [pscustomobject]@{
                 Status = $isolatedKind
-                ManualTestState = if ($isolatedKind -eq 'manual-test') { 'unchanged' } else { $null }
+                ManualState = if ($isolatedKind -eq 'manual') { 'unchanged' } else { $null }
                 E2eTestState = if ($isolatedKind -eq 'e2e-test') { 'unchanged' } else { $null }
                 OutputState = 'unchanged'
                 OutputIso = $isolatedOutputIso
-                ManualTestIso = if ($isolatedKind -eq 'manual-test') { $isolatedOutputIso } else { $null }
+                ManualIso = if ($isolatedKind -eq 'manual') { $isolatedOutputIso } else { $null }
                 E2eTestIso = if ($isolatedKind -eq 'e2e-test') { $isolatedOutputIso } else { $null }
                 E2eVariant = if ($isolatedKind -eq 'e2e-test') { $E2eVariant } else { $null }
                 LatestIso = $resolvedLatestIso
@@ -504,6 +515,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
     }
     $isolatedCompleted = $false
     $ephemeralOutputOwned = $false
+    $isolatedConfigurationLogAvailable = $false
     try {
         if ($null -ne $activeBuildMarker) {
             [void](New-Item -ItemType Directory -Path $buildLogRoot -Force)
@@ -528,8 +540,14 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
                 -FallbackMessage "NA2 $isolatedKind build failed (exit $isolatedExitCode)."
         }
         $isolatedOutput | ForEach-Object { Write-Host $_ }
-        if (-not (Test-Path -LiteralPath $isolatedConfigurationLog -PathType Container)) {
-            throw "$isolatedLabel completed without creating its structured build record."
+        $isolatedConfigurationLogAvailable = Test-Path `
+            -LiteralPath $isolatedConfigurationLog `
+            -PathType Container
+        if (-not $isolatedConfigurationLogAvailable) {
+            if (-not $Force) {
+                throw "$isolatedLabel completed without creating its structured build record."
+            }
+            Write-Warning "$isolatedLabel is continuing without a structured build record."
         }
         if (-not $WorkerEphemeral -and
             -not (Test-Path -LiteralPath $isolatedBuildingIso -PathType Leaf)) {
@@ -599,32 +617,40 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
             ).Hash
         }
 
-        if ($isolatedKind -ne 'e2e-test') {
-            $configurationPortable = ConvertTo-Na2PortableText `
-                -Text $configuration `
-                -Paths $paths
-            $outputPortable = ConvertTo-Na2PortableText `
-                -Text $isolatedOutputIso `
-                -Paths $paths
-            $recordPortable = ConvertTo-Na2PortableText `
-                -Text $isolatedConfigurationLog `
-                -Paths $paths
-            $outputRetained = if ($WorkerEphemeral) { 'no' } else { 'yes' }
-            $resultContent = @(
-                "timestamp_utc`tresult`toutput_state`trotation`tpcsx2_closed`tconfiguration`toutput_iso`toutput_size_bytes`toutput_sha256`toutput_retained`tbuild_record"
-                (
-                    (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" +
-                    "$isolatedKind`t$isolatedState`tno`tno`t$configurationPortable`t$outputPortable`t" +
-                    "$isolatedOutputSizeBytes`t$isolatedOutputSha256`t$outputRetained`t$recordPortable"
-                )
-            ) -join "`n"
-            $resultContent += "`n"
-            if (Test-Na2WindowsAbsolutePath -Text $resultContent) {
-                throw "Refusing to write the $isolatedKind result with an absolute path."
+        if ($isolatedKind -ne 'e2e-test' -and $isolatedConfigurationLogAvailable) {
+            try {
+                $configurationPortable = ConvertTo-Na2PortableText `
+                    -Text $configuration `
+                    -Paths $paths
+                $outputPortable = ConvertTo-Na2PortableText `
+                    -Text $isolatedOutputIso `
+                    -Paths $paths
+                $recordPortable = ConvertTo-Na2PortableText `
+                    -Text $isolatedConfigurationLog `
+                    -Paths $paths
+                $outputRetained = if ($WorkerEphemeral) { 'no' } else { 'yes' }
+                $resultContent = @(
+                    "timestamp_utc`tresult`toutput_state`trotation`tpcsx2_closed`tconfiguration`toutput_iso`toutput_size_bytes`toutput_sha256`toutput_retained`tbuild_record"
+                    (
+                        (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" +
+                        "$isolatedKind`t$isolatedState`tno`tno`t$configurationPortable`t$outputPortable`t" +
+                        "$isolatedOutputSizeBytes`t$isolatedOutputSha256`t$outputRetained`t$recordPortable"
+                    )
+                ) -join "`n"
+                $resultContent += "`n"
+                if (Test-Na2WindowsAbsolutePath -Text $resultContent) {
+                    throw "Refusing to write the $isolatedKind result with an absolute path."
+                }
+                Set-Na2Utf8FileAtomic `
+                    -Path (Join-Path $isolatedConfigurationLog $resultFilename) `
+                    -Content $resultContent
             }
-            Set-Na2Utf8FileAtomic `
-                -Path (Join-Path $isolatedConfigurationLog $resultFilename) `
-                -Content $resultContent
+            catch {
+                if (-not $Force) {
+                    throw
+                }
+                Write-Warning "Force mode could not retain the $isolatedKind result: $($_.Exception.Message)"
+            }
         }
 
         if ($isolatedKind -eq 'e2e-test') {
@@ -637,10 +663,20 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
                 -PayloadShift $payloadShift `
                 -Paths $paths
         }
-        elseif ($isolatedKind -eq 'manual-test') {
-            Get-ChildItem -LiteralPath $isolatedLogRoot -Directory |
-                Where-Object FullName -CNE $isolatedConfigurationLog |
-                Remove-Item -Recurse -Force
+        elseif ($isolatedKind -eq 'manual') {
+            if ($isolatedConfigurationLogAvailable) {
+                try {
+                    Get-ChildItem -LiteralPath $isolatedLogRoot -Directory |
+                        Where-Object FullName -CNE $isolatedConfigurationLog |
+                        Remove-Item -Recurse -Force
+                }
+                catch {
+                    if (-not $Force) {
+                        throw
+                    }
+                    Write-Warning "Force mode could not prune Manual records: $($_.Exception.Message)"
+                }
+            }
         }
         else {
             Get-ChildItem -LiteralPath $isolatedLogRoot -Directory |
@@ -693,9 +729,14 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
             )
         }
         $isolatedCompleted = $true
-        $isolatedRecord = ConvertTo-Na2ProjectPath `
-            -Path $isolatedConfigurationLog `
-            -Paths $paths
+        $isolatedRecord = if ($isolatedConfigurationLogAvailable) {
+            ConvertTo-Na2ProjectPath `
+                -Path $isolatedConfigurationLog `
+                -Paths $paths
+        }
+        else {
+            $null
+        }
         if ($WorkerEphemeral) {
             Write-Host (
                 "[na228] Ephemeral worker ISO: $isolatedOutputSizeBytes bytes; " +
@@ -712,31 +753,36 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
                 'rotation: no; PCSX2 left running.'
             ) -ForegroundColor Cyan
         }
-        Write-Host (
-            "[na228] $isolatedLabel record: retained " +
-            $isolatedConfigurationLog
-        ) -ForegroundColor Cyan
+        if ($isolatedConfigurationLogAvailable) {
+            Write-Host (
+                "[na228] $isolatedLabel record: retained " +
+                $isolatedConfigurationLog
+            ) -ForegroundColor Cyan
+        }
+        else {
+            Write-Warning "$isolatedLabel record: unavailable; force mode retained the verified ISO."
+        }
         return [pscustomobject]@{
             Status = $isolatedKind
-            ManualTestState = if ($isolatedKind -eq 'manual-test') { $isolatedState } else { $null }
+            ManualState = if ($isolatedKind -eq 'manual') { $isolatedState } else { $null }
             E2eTestState = if ($isolatedKind -eq 'e2e-test') { $isolatedState } else { $null }
             OutputState = $isolatedState
             OutputIso = $isolatedOutputIso
             OutputSizeBytes = $isolatedOutputSizeBytes
             OutputSha256 = $isolatedOutputSha256
             OutputRetained = -not $WorkerEphemeral
-            ManualTestIso = if ($isolatedKind -eq 'manual-test') { $isolatedOutputIso } else { $null }
+            ManualIso = if ($isolatedKind -eq 'manual') { $isolatedOutputIso } else { $null }
             E2eTestIso = if ($isolatedKind -eq 'e2e-test') { $isolatedOutputIso } else { $null }
             E2eVariant = if ($isolatedKind -eq 'e2e-test') { $E2eVariant } else { $null }
             LatestIso = $resolvedLatestIso
             PreviousIso = $resolvedPreviousIso
             Rotated = $false
-            BuildId = $isolatedBuildId
+            BuildId = if ($isolatedConfigurationLogAvailable) { $isolatedBuildId } else { $null }
             ConfigurationLogDirectory = $isolatedRecord
             PreflightCacheHit = $false
             ChangedRoles = [string[]]@(
-                if ($isolatedKind -eq 'manual-test' -and $isolatedChanged) {
-                    'manual_test'
+                if ($isolatedKind -eq 'manual' -and $isolatedChanged) {
+                    'manual'
                 }
                 elseif ($isolatedKind -eq 'e2e-test' -and $isolatedChanged) {
                     "e2e_test_$E2eVariant"

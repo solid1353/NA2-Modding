@@ -30,7 +30,7 @@ establishes the failure:
 - the pre-Load state matches 19 of the 20 exact canonical Font ELF edits; its
   only mismatch is the separately initialized scale word at runtime
   `0x0060737C`;
-- the frozen state still matches all permanent hooks and ordinary ELF edits,
+- the frozen state still matches all installed hooks and ordinary ELF edits,
   but all six injected helper/trampoline edits are entirely zero;
 - the frozen state's zero run is exactly
   `0x003D3DB6..0x003D5D30`, 8,058 bytes, which is the whole clean-file
@@ -38,7 +38,7 @@ establishes the failure:
 - the UI scratch record at `0x003FAD20..0x003FAD60` is also zero, but no
   scratch corruption is needed to explain the freeze.
 
-The permanent UI, selected-choice, ordinary-space, and newline hooks therefore
+The installed UI, selected-choice, ordinary-space, and newline hooks therefore
 survive while their destinations at `0x003D3E00..0x003D4388` disappear. A
 hook entering that range executes zeros instead of a returning helper, which
 explains the blank Load screen and hang. Confidence is **high**: the

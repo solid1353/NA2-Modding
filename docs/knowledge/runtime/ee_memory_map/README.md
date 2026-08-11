@@ -41,7 +41,7 @@ conclusions above were promoted.
   owns the chosen subrange. The same addresses are heap memory in vanilla.
 - Loaded executable code requires correct EE instruction/data cache maintenance;
   stable RAM alone is not sufficient.
-- Do not use overlay slack for permanent data or unguarded fixed-address PNACH
+- Do not use overlay slack for resident data or unguarded fixed-address PNACH
   writes. `BTL.BIN` can overwrite the whole overlay reservation.
 - Do not use allocator gaps as fixed caves. Allocate through the game allocator
   and keep the pointer for the required lifetime.

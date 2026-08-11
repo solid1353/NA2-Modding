@@ -73,7 +73,7 @@ exit $LASTEXITCODE
     "nun5_iso": "@source/NUN5.iso",
     "latest_iso": "@build/NA2.28 - Latest.iso",
     "previous_iso": "@build/NA2.28 - Previous.iso",
-    "manual_test_iso": "@build/NA2.28 - Manual Test.iso",
+    "manual_iso": "@build/NA2.28 - Manual.iso",
     "e2e_test_iso": "@build/NA2.28 - E2E Test.iso",
     "e2e_test_shifted_iso": "@build/NA2.28 - E2E Test Shifted.iso"
   }
@@ -304,47 +304,85 @@ exit $LASTEXITCODE
 
     $global:Na2PreflightTestMode = 'miss'
     $global:Na2PreflightTestCalls = @()
-    $test = & (Join-Path $scriptRoot 'build.ps1') -ManualTestOnly
-    $testIso = Join-Path $repository 'build\NA2.28 - Manual Test.iso'
-    Assert-Na2PreflightTest -Condition ($test.Status -eq 'manual-test') `
-        -Message 'Manual Test-only build did not return manual-test status.'
+    $test = & (Join-Path $scriptRoot 'build.ps1') -ManualOnly
+    $testIso = Join-Path $repository 'build\NA2.28 - Manual.iso'
+    Assert-Na2PreflightTest -Condition ($test.Status -eq 'manual') `
+        -Message 'Manual-only build did not return manual status.'
     Assert-Na2PreflightTest `
-        -Condition ((@($test.ChangedRoles) -join ',') -ceq 'manual_test') `
-        -Message 'Changed Manual Test build did not report only its own role.'
+        -Condition ((@($test.ChangedRoles) -join ',') -ceq 'manual') `
+        -Message 'Changed Manual build did not report only its own role.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 3) `
-        -Message 'Manual Test-only miss did not check, build, and record exactly once.'
+        -Message 'Manual-only miss did not check, build, and record exactly once.'
     Assert-Na2PreflightTest `
         -Condition ($global:Na2PreflightTestCalls[1] -contains 'na228_builder.scripts.build_configuration') `
-        -Message 'Manual Test-only build did not run the full configuration builder.'
+        -Message 'Manual-only build did not run the full configuration builder.'
     Assert-Na2PreflightTest `
         -Condition ($global:Na2PreflightTestCalls[1] -contains 'na228_builder\configurations\test.json') `
-        -Message 'Manual Test-only build did not use test.json.'
+        -Message 'Manual-only build did not use test.json.'
     Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $testIso -PathType Leaf) `
-        -Message 'Manual Test-only build did not retain its verified ISO.'
+        -Message 'Manual-only build did not retain its verified ISO.'
     Assert-Na2PreflightTest `
         -Condition ([IO.File]::ReadAllText($latestIso) -ceq 'verified latest') `
-        -Message 'Manual Test-only build changed the Latest ISO.'
+        -Message 'Manual-only build changed the Latest ISO.'
     Assert-Na2PreflightTest -Condition (-not (Test-Path -LiteralPath "$testIso.building")) `
-        -Message 'Manual Test-only build left its .building ISO.'
+        -Message 'Manual-only build left its .building ISO.'
     Assert-Na2PreflightTest `
         -Condition (Test-Path -LiteralPath (Join-Path $repository $test.ConfigurationLogDirectory.Replace('@logs/', 'logs/')) -PathType Container) `
-        -Message 'Manual Test-only build did not retain its structured record.'
+        -Message 'Manual-only build did not retain its structured record.'
+
+    $global:Na2PreflightTestMode = 'miss'
+    $global:Na2PreflightTestCalls = @()
+    $global:Na2PreflightTestSkipConfigurationLog = $true
+    $forcedManualItems = @(
+        & (Join-Path $scriptRoot 'build.ps1') -ManualOnly -Force *>&1
+    )
+    $global:Na2PreflightTestSkipConfigurationLog = $false
+    $forcedManual = @(
+        $forcedManualItems |
+            Where-Object { $null -ne $_.PSObject.Properties['Status'] }
+    )[-1]
+    $forcedManualText = ($forcedManualItems | ForEach-Object { [string]$_ }) -join "`n"
+    Assert-Na2PreflightTest `
+        -Condition (
+            $forcedManual.Status -eq 'manual' -and
+            -not $forcedManual.PreflightCacheHit -and
+            $null -eq $forcedManual.ConfigurationLogDirectory
+        ) `
+        -Message 'Forced Manual build did not retain its verified output without metadata.'
+    Assert-Na2PreflightTest `
+        -Condition ($global:Na2PreflightTestCalls.Count -eq 3) `
+        -Message 'Forced Manual build did not check, build, and record exactly once.'
+    $forcedManualBuildCall = @(
+        $global:Na2PreflightTestCalls |
+            Where-Object { $_ -contains 'na228_builder.scripts.build_configuration' }
+    )[-1]
+    Assert-Na2PreflightTest `
+        -Condition ($forcedManualBuildCall -contains '--best-effort-metadata') `
+        -Message 'Forced Manual build did not enable best-effort builder metadata.'
+    Assert-Na2PreflightTest `
+        -Condition (
+            $forcedManualText -match 'continuing without a structured build record' -and
+            $forcedManualText -match 'force mode retained the verified ISO'
+        ) `
+        -Message 'Forced Manual build did not downgrade missing metadata to warnings.'
+    Assert-Na2PreflightTest -Condition (Test-Path -LiteralPath $testIso -PathType Leaf) `
+        -Message 'Forced Manual build lost its verified ISO.'
 
     $global:Na2PreflightTestMode = 'hit'
     $global:Na2PreflightTestCalls = @()
-    $unchangedTest = & (Join-Path $scriptRoot 'build.ps1') -ManualTestOnly
-    Assert-Na2PreflightTest -Condition ($unchangedTest.ManualTestState -eq 'unchanged') `
-        -Message 'Repeated Manual Test-only build did not detect unchanged output.'
+    $unchangedTest = & (Join-Path $scriptRoot 'build.ps1') -ManualOnly
+    Assert-Na2PreflightTest -Condition ($unchangedTest.ManualState -eq 'unchanged') `
+        -Message 'Repeated Manual-only build did not detect unchanged output.'
     Assert-Na2PreflightTest `
         -Condition (@($unchangedTest.ChangedRoles).Count -eq 0) `
-        -Message 'Unchanged Manual Test build incorrectly reported a changed role.'
+        -Message 'Unchanged Manual build incorrectly reported a changed role.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
-        -Message 'Repeated Manual Test-only cache hit invoked composition or receipt recording.'
+        -Message 'Repeated Manual-only cache hit invoked composition or receipt recording.'
     Assert-Na2PreflightTest -Condition $unchangedTest.PreflightCacheHit `
-        -Message 'Repeated Manual Test-only build was not marked as a preflight hit.'
+        -Message 'Repeated Manual-only build was not marked as a preflight hit.'
     Assert-Na2PreflightTest `
-        -Condition (@(Get-ChildItem -LiteralPath (Join-Path $logDirectory 'manual_tests') -Directory).Count -eq 1) `
-        -Message 'Manual Test-only build retained obsolete test records.'
+        -Condition (@(Get-ChildItem -LiteralPath (Join-Path $logDirectory 'manual') -Directory).Count -eq 1) `
+        -Message 'Manual-only build retained obsolete records.'
 
     $global:Na2PreflightTestMode = 'miss'
     $global:Na2PreflightTestCalls = @()
@@ -551,14 +589,14 @@ exit $LASTEXITCODE
         -Message 'Worker build changed Latest.'
     Assert-Na2PreflightTest `
         -Condition ([IO.File]::ReadAllText($testIso) -ceq $testBeforeWorkers) `
-        -Message 'Worker build changed Manual Test.'
+        -Message 'Worker build changed Manual.'
 
     foreach ($invalidOutput in @(
         'build\agent.iso',
         'work\General\agent.iso',
         'work\General\build\agent.bin',
         'work\General\nested\build\agent.iso',
-        'build\NA2.28 - Manual Test.iso',
+        'build\NA2.28 - Manual.iso',
         'build\NA2.28 - E2E Test.iso',
         'build\NA2.28 - E2E Test Shifted.iso'
     )) {

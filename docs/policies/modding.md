@@ -80,8 +80,8 @@ source media, PNACH, donor data, or encoded game text.
 ## PNACH
 
 - PNACH owns emulator settings, confirmed resident/runtime patches, and bounded
-  temporary hypotheses not yet expressible as file-backed modules. Permanent
-  file-backed changes belong in named binary-patcher patch sets.
+  temporary hypotheses not yet expressible as file-backed modules. File-backed
+  changes belong in named binary-patcher patch sets.
 - A PNACH item is enabled only when its executable `patch=` or setting line is
   uncommented; `// [Name]` is only a label.
 - Fixed-address hypothesis writes require a boot ELF or another region proven

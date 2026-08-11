@@ -185,7 +185,7 @@ try {
   "builds": {
     "latest": { "aliases": ["l"] },
     "previous": { "aliases": ["p"] },
-    "manual_test": { "aliases": ["mt"] },
+    "manual": { "aliases": ["m"] },
     "e2e_test": {},
     "e2e_test_shifted": {}
   }
@@ -205,11 +205,11 @@ name = args.selector
 builds = {
     "latest": "Latest",
     "previous": "Previous",
-    "manual_test": "Manual Test",
+    "manual": "Manual",
     "e2e_test": "E2E Test",
     "e2e_test_shifted": "E2E Test Shifted",
 }
-aliases = {"l": "latest", "p": "previous", "mt": "manual_test"}
+aliases = {"l": "latest", "p": "previous", "m": "manual"}
 name = aliases.get(name.casefold(), name)
 if name in builds:
     title = "Narutimate Accel v2.28"
@@ -246,7 +246,7 @@ param()
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
     -Value 'run'
-Write-Output '[fake] permanent tests'
+Write-Output '[fake] unit tests'
 '@
     $helpText = (& (Join-Path $fakeRepository 'na228.ps1') help) -join "`n"
     Assert-Na2Test `
@@ -259,8 +259,8 @@ Write-Output '[fake] permanent tests'
         -Condition ($helpText -match '(?m)^\s*na228 <token> \[token\]') `
         -Message 'Root help omitted the ordered token grammar.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 \[-f\]\s+Build and run Latest in turbo; -f ignores auxiliary failures$') `
-        -Message 'Root help did not present default and force build-and-launch in one row.'
+        -Condition ($helpText -match '(?m)^\s*na228 \[-f\]\s+Build and run Latest in turbo; -f bypasses non-critical validation errors$') `
+        -Message 'Root help did not explain default force build-and-launch in one row.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 worker \[--ephemeral\] work/') `
         -Message 'Root help omitted the explicit worker-build command.'
@@ -268,14 +268,14 @@ Write-Output '[fake] permanent tests'
         -Condition ($helpText -notmatch '(?m)^\s*na228 validate\s') `
         -Message 'Root help still exposes the retired separate validation command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 build l\|mt\s') `
+        -Condition ($helpText -match '(?m)^\s*na228 build l\|m\s') `
         -Message 'Root help omitted the explicit build-only command.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 build -d\s+Validate development composition without creating an ISO$') `
         -Message 'Root help omitted the development dry-run command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test\s+Run permanent/unit tests$') `
-        -Message 'Root help omitted the permanent/unit-test command.'
+        -Condition ($helpText -match '(?m)^\s*na228 test\s+Run unit tests$') `
+        -Message 'Root help omitted the unit-test command.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 e2e \[-s\]\s+Run all E2E suites; -s also qualifies against shifted$') `
         -Message 'Root help omitted the global E2E command.'
@@ -319,13 +319,13 @@ param(
 $aliases = @{
     l = 'latest'
     p = 'previous'
-    mt = 'manual_test'
+    m = 'manual'
 }
 $canonical = @($Games | ForEach-Object {
     if ($aliases.ContainsKey($_)) { $aliases[$_] } else { $_ }
 })
 if (@($canonical | Where-Object { $_ -notin @(
-    'latest', 'previous', 'manual_test', 'na2', 'nun5'
+    'latest', 'previous', 'manual', 'na2', 'nun5'
 ) }).Count -gt 0) {
     throw "Unknown game name: $($Games -join ',')"
 }
@@ -372,7 +372,7 @@ for ($index = 0; $index -lt $tokens.Count; $index++) {
         }
     }
 }
-$aliases = @{ l = 'latest'; p = 'previous'; mt = 'manual_test' }
+$aliases = @{ l = 'latest'; p = 'previous'; m = 'manual' }
 $canonical = @($games | ForEach-Object {
     if ($aliases.ContainsKey($_)) { $aliases[$_] } else { $_ }
 })
@@ -380,7 +380,7 @@ if ($canonical.Count -eq 0) {
     throw 'Workshop launch requires at least one game.'
 }
 if (@($canonical | Where-Object { $_ -notin @(
-    'latest', 'previous', 'manual_test', 'na2', 'nun5'
+    'latest', 'previous', 'manual', 'na2', 'nun5'
 ) }).Count -gt 0) {
     throw "Unknown game name: $($games -join ',')"
 }
@@ -419,7 +419,7 @@ Write-Output "[fake] release $Version"
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'build.ps1') -Content @'
 param(
     [switch]$DryRun,
-    [switch]$ManualTestOnly,
+    [switch]$ManualOnly,
     [string]$WorkerOutputIso,
     [switch]$WorkerEphemeral,
     [switch]$Force
@@ -458,9 +458,9 @@ elseif ($WorkerOutputIso) {
         [pscustomobject]@{ Status = 'worker'; ChangedRoles = [string[]]@() }
     }
 }
-elseif ($ManualTestOnly) {
-    Write-Host '[na228] ISO result: manual-test; rotation: no; PCSX2 left running.'
-    [pscustomobject]@{ Status = 'manual-test'; ChangedRoles = [string[]]@('manual_test') }
+elseif ($ManualOnly) {
+    Write-Host "[na228] ISO result: manual; rotation: no; PCSX2 left running; force=$($Force.IsPresent)."
+    [pscustomobject]@{ Status = 'manual'; ChangedRoles = [string[]]@('manual') }
 }
 else {
     Write-Host "[na228] ISO result: updated; rotation: yes; force=$($Force.IsPresent)."
@@ -517,16 +517,16 @@ Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
     -Value "commit squash=$($Squash.IsPresent)"
 '@
-    $permanentCalls = Join-Path $fakeRepository 'tests\calls.txt'
+    $unitTestCallsPath = Join-Path $fakeRepository 'tests\calls.txt'
     $visualCalls = Join-Path $fakeVisualScripts 'calls.txt'
     & (Join-Path $fakeRepository 'na228.ps1') test
-    $testCalls = @(Get-Content -LiteralPath $permanentCalls)
+    $testCalls = @(Get-Content -LiteralPath $unitTestCallsPath)
     Assert-Na2Test `
         -Condition (
             ($testCalls -join ',') -ceq 'run' -and
             -not (Test-Path -LiteralPath $visualCalls)
         ) `
-        -Message 'Bare na228 test did not dispatch only the permanent test runner.'
+        -Message 'Bare na228 test did not dispatch only the unit-test runner.'
     $testArgumentsRejected = $false
     try {
         & (Join-Path $fakeRepository 'na228.ps1') test alpha
@@ -732,13 +732,13 @@ Add-Content `
         ) `
         -Message 'Previous selector alias did not resolve through game launch.'
     $testLaunch = (
-        & (Join-Path $fakeRepository 'na228.ps1') mt
+        & (Join-Path $fakeRepository 'na228.ps1') m
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $testLaunch -match 'multi-game launch manual_test'
+            $testLaunch -match 'multi-game launch manual'
         ) `
-        -Message 'Manual Test selector alias did not resolve through game launch.'
+        -Message 'Manual selector alias did not resolve through game launch.'
     & (Join-Path $fakeRepository 'na228.ps1') worker 'work\General\build\agent.iso'
     $ephemeralRelativePath = 'work\Equivalence\build\candidate.iso'
     $ephemeralDispatch = (
@@ -754,16 +754,16 @@ Add-Content `
         ) `
         -Message 'Root ephemeral worker command did not forward the switch or avoid output creation.'
     & (Join-Path $fakeRepository 'na228.ps1') build l
-    & (Join-Path $fakeRepository 'na228.ps1') build mt
+    & (Join-Path $fakeRepository 'na228.ps1') build m
     $dryRun = (& (Join-Path $fakeRepository 'na228.ps1') build -d *>&1) -join "`n"
     Assert-Na2Test `
         -Condition ($dryRun -match 'Validated development composition; no ISO staged') `
         -Message 'Development dry run did not dispatch to compose-only build mode.'
     $composedRecipe = (
-        & (Join-Path $fakeRepository 'na228.ps1') nun5 bmtw
+        & (Join-Path $fakeRepository 'na228.ps1') nun5 bmw
     ) -join "`n"
     Assert-Na2Test `
-        -Condition ($composedRecipe -match 'multi-game launch nun5,manual_test') `
+        -Condition ($composedRecipe -match 'multi-game launch nun5,manual') `
         -Message 'Trailing build/watch token did not preserve window order.'
     Assert-Na2Test `
         -Condition ($composedRecipe -match '\[fake\] watch 28015') `
@@ -794,12 +794,12 @@ Add-Content `
     $directPlanWatch = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
-            bmtw `
+            bmw `
             'work\Font\operations\jutsu_names_overlay.json'
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $directPlanWatch -match 'multi-game launch nun5,manual_test' -and
+            $directPlanWatch -match 'multi-game launch nun5,manual' -and
             $directPlanWatch -match (
                 'plan=work\\Font\\operations\\jutsu_names_overlay\.json'
             )
@@ -856,12 +856,31 @@ Add-Content `
             $forceLaunch -notmatch '\[fake\] workshop args=.*-f'
         ) `
         -Message 'Force mode and turbo were not routed through build-and-launch.'
+    $forcedManualBuild = (
+        & (Join-Path $fakeRepository 'na228.ps1') build m -f *>&1
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $forcedManualBuild -match 'ISO result: manual.*force=True' -and
+            $forcedManualBuild -notmatch '\[fake\] workshop'
+        ) `
+        -Message 'Force mode was not routed through the build-only Manual command.'
+    $forcedManualLaunch = (
+        & (Join-Path $fakeRepository 'na228.ps1') bm -f *>&1
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $forcedManualLaunch -match 'ISO result: manual.*force=True' -and
+            $forcedManualLaunch -match 'multi-game launch manual' -and
+            $forcedManualLaunch -notmatch '\[fake\] workshop args=.*-f'
+        ) `
+        -Message 'Force mode was not consumed by the build-and-run Manual command.'
     & (Join-Path $fakeRepository 'na228.ps1')
     $fakeLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\latest.log'))
     $fakeRolling = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\rolling.log'))
     Assert-Na2Test -Condition ($fakeLatest -match '(?m)^mode: build$') -Message 'Root build mode was not logged.'
     foreach ($mode in (
-        'manual-test-build',
+        'manual-build',
         'build'
     )) {
         Assert-Na2Test `
@@ -873,7 +892,7 @@ Add-Content `
         '(?m)^--- NA2 RUN BEGIN ---$'
     ).Count
     Assert-Na2Test `
-        -Condition ($rollingSectionCount -eq 8) `
+        -Condition ($rollingSectionCount -eq 10) `
         -Message (
             'Root dispatch test produced the wrong rolling-log section count: ' +
             $rollingSectionCount
@@ -888,8 +907,8 @@ Add-Content `
         -Condition ([regex]::Matches($fakeRolling, '(?m)^\[fake\] launch dev .+$').Count -eq 2) `
         -Message 'Root dispatch did not preserve the configured development-launch default.'
     Assert-Na2Test `
-        -Condition ([regex]::Matches($fakeRolling, 'ISO result: manual-test').Count -eq 3) `
-        -Message 'Manual Test build recipes did not dispatch exactly three times.'
+        -Condition ([regex]::Matches($fakeRolling, 'ISO result: manual').Count -eq 5) `
+        -Message 'Manual build recipes did not dispatch exactly five times.'
     $workerLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'work\General\logs\latest.log'))
     Assert-Na2Test `
         -Condition ($workerLatest -match '(?m)^mode: worker-build$') `

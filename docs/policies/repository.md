@@ -79,7 +79,7 @@ work directories, or documentation layout.
   or artifact root. Set `NA228_TASK_WORK_ROOT` to the acting task's
   `work/<exact task title>/` before maintained commands that create temporary
   files.
-- The permanent-test runner uses `work/General/` as its technical default when
+- The unit-test runner uses `work/General/` as its technical default when
   `NA228_TASK_WORK_ROOT` is unset. This path has no special chat-role meaning.
 - Keep inputs, experiments, intermediates, outputs, builds, runtime artifacts,
   and logs in clearly named subdirectories. Do not use top-level `work/temp/`.
@@ -93,7 +93,7 @@ work directories, or documentation layout.
 - A task that moves or deletes files is incomplete until its affected parent
   directories have been inspected on disk and every unintended empty directory
   has been removed.
-- `docs/designs/` is an intentional permanent directory and is never removed,
+- `docs/designs/` is an intentionally retained directory and is never removed,
   including when it contains no active design document.
 - Do not create or preserve a directory containing only one file unless it has a
   clear structural, ownership, namespace, tooling, or future-extension purpose.
@@ -146,7 +146,7 @@ Give each document one job and canonical authority:
 - routed policies own other scoped normative rules;
 - workflow documents under `docs/workflows/` own complete interaction modes;
 - procedure documents under `docs/procedures/` own non-mode agent procedures;
-- active design documents live under the permanent `docs/designs/` directory;
+- active design documents live under the always-retained `docs/designs/` directory;
 - temporary resume handoffs live under `docs/handoffs/` and are linked from
   their `TASKS.md` entries;
 - runbooks own exact operational procedures;

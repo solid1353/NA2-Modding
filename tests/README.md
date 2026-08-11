@@ -10,13 +10,13 @@ Tests live here and are grouped by the responsibility they verify:
   contracts.
 - `research/`: maintained research-tool tests.
 
-The internal permanent/unit-test runner is:
+The internal unit-test runner is:
 
 ```powershell
 .\tests\run.ps1
 ```
 
-`na228 test` invokes this permanent/unit-test runner only. E2E is an independent
+`na228 test` invokes this unit-test runner only. E2E is an independent
 validation lane invoked globally with `na228 e2e`.
 
 `scripts/injection/inject_candidate.ps1` is an operational agent injection

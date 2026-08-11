@@ -20,6 +20,6 @@ high immediate. Every accepted quarter-step value has an exact single-`lui`
 encoding; for example, `1.25` produces `A0 3F 02 3C` and `3` produces
 `40 40 02 3C`.
 
-The adapter and guarded selection path are covered by permanent tests. The
+The adapter and guarded selection path are covered by unit tests. The
 historical cost `3` form is runtime-proven; the other configurable costs,
 including zero and fractional values, have not each been runtime-tested.

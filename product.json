@@ -10,8 +10,8 @@
     "previous": {
       "aliases": ["p"]
     },
-    "manual_test": {
-      "aliases": ["mt"]
+    "manual": {
+      "aliases": ["m"]
     },
     "e2e_test": {},
     "e2e_test_shifted": {}

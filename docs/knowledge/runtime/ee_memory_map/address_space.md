@@ -175,7 +175,7 @@ Accordingly, the working target is `0x00B0AA04`; three current savestates
 field still equal to `1.0f`, while the old address was empty.
 
 Confidence is **high for this exact build identity**. The address is not a
-permanent game constant: recalculate and validate it whenever the linked
+fixed game constant: recalculate and validate it whenever the linked
 resident-payload end changes.
 
 Rendering patch `ELF-R001` replaces the shared rendering-state writer at

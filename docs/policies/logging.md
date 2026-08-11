@@ -59,9 +59,9 @@ untouched.
   output-specific receipts for the normal and shifted E2E Test variants. Their
   fingerprints include both the resident-payload layout shift and the build role's
   boot-ELF CRC discriminator.
-- `manual_tests/<build-id>/`: the latest Manual Test-only configuration record, including
-  `manual_test_result.tsv`. It is independent of `builds.tsv` and the Latest
-  receipt; a successful Manual Test build replaces the previous Manual Test record.
+- `manual/<build-id>/`: the latest Manual-only configuration record, including
+  `manual_result.tsv`. It is independent of `builds.tsv` and the Latest
+  receipt; a successful Manual build replaces the previous Manual record.
 
 Help output is not logged. A preflight cache hit reuses the Latest ISO's
 structured record. A full verified build always retains its new structured
@@ -73,8 +73,8 @@ latest record rotates with the outgoing ISO. Unreferenced structured records
 are deleted only after the complete four-role mapping has been replaced.
 Deleting or corrupting the preflight receipt is safe: the next invocation runs
 the complete verified build and recreates the receipt only after success.
-Manual Test-only builds always perform complete composition, report whether the
-Manual Test ISO changed, and record that rotation is disabled and PCSX2 is left
+Manual-only builds always perform complete composition, report whether the
+Manual ISO changed, and record that rotation is disabled and PCSX2 is left
 running.
 
 ## Worker build and runtime logs

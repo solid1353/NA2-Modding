@@ -131,7 +131,7 @@ opening, interactive title, Load list, card-status messages, and load
 confirmation before the main-menu loading screen. Full development build
 `20260811_065428_218_pid37624` succeeded, and user runtime validation on
 2026-08-11 confirmed the integrated automatic behavior before the loading-time
-loading-time patch was added. The manual branch also remains user-confirmed.
+patch was added. The manual branch also remains user-confirmed.
 
 The `faster_loading` setting keeps the four audio archives open and the 13
 general sound indexes initialized at boot, but defers all 82 RPG-voice and 93

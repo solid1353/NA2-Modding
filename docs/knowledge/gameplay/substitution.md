@@ -53,7 +53,7 @@ The historical 16-bit PNACH write changed the immediate bytes from `80 3F` to
 `40 40`, making the decrement cost `3`. That form is runtime-proven. The current
 catalog exposes the mechanism as
 `setting<decimal & 0..15 & step 0.25>` and applies the guarded
-`mips_lui_float32` adapter; use that setting rather than restoring a permanent
+`mips_lui_float32` adapter; use that setting rather than restoring a
 PNACH write. The base configuration selects the clean cost `1`.
 
 The instruction site, float encoding, and decrement mechanism are confirmed,

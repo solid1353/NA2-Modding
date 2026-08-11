@@ -49,7 +49,7 @@ sizes, and every formatter outside this family remain unchanged. Runtime
 acceptance is complete: after the fresh corrected build, the user verified
 that Load and Save open without freezing and retain the accepted date/time
 presentation. Independent fragment reconstruction is retained in
-`scripts/research/localization/verify_font_renderer.py`. Permanent coverage now
+`scripts/research/localization/verify_font_renderer.py`. Unit-test coverage now
 protects the independently established linking-call contract for all six
 Save/Load hooks.
 
@@ -87,7 +87,7 @@ stored timer value, the other five settings rows, and every other fullwidth
 formatter caller remain unchanged. Independent fragment reconstruction is
 retained in `scripts/research/localization/verify_font_renderer.py`. After the
 corrected fresh build, the user verified the ordinary below-100 value and the separate
-100/infinity behavior. The patch is therefore `runtime_proven`, and permanent
+100/infinity behavior. The patch is therefore `runtime_proven`, and unit-test
 coverage protects its linking-call contract.
 
 ## Ninja Song ASCII dynamic numbers
@@ -173,7 +173,7 @@ bridge; its 16-byte decimal buffer is disjoint from the saved-register area;
 the accepted space, no-padding, and zero-padding modes are retained; and the
 native decimal length remains the public return value. The normal build
 promoted Current CRC `12369A62`; the user manually checked the supplied Ninja
-Song ss2–ss5 screens and reported that the result is good. Permanent tests
+Song ss2–ss5 screens and reported that the result is good. Unit tests
 were updated only after that acceptance.
 
 This migration does not cover the separately accepted Save/Load date/time and

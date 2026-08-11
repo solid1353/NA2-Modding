@@ -47,7 +47,7 @@ Create the runtime only with:
 
 ## Worker ISOs and runtime provenance
 
-- Worker processes never open shared Latest, Previous, Manual Test, or E2E Test
+- Worker processes never open shared Latest, Previous, Manual, or E2E Test
   ISO paths. Use an independent full copy under
   `work/<task>/inputs/isos/`; symlinks and hardlinks are forbidden.
 - Preserve the independent ISO's SHA-256, serial, CRC, applicable build record,

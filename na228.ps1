@@ -39,13 +39,12 @@ function Get-Na228WatchArguments {
 }
 
 $commandTokens = @($args)
-$forceLatestBuild = (
-    $commandTokens.Count -eq 1 -and
-    $commandTokens[0] -ieq '-f'
-)
-if ($forceLatestBuild) {
-    $commandTokens = @()
+$forceTokens = @($commandTokens | Where-Object { $_ -ieq '-f' })
+if ($forceTokens.Count -gt 1) {
+    throw '-f may be specified only once.'
 }
+$forceBuild = $forceTokens.Count -eq 1
+$commandTokens = @($commandTokens | Where-Object { $_ -ine '-f' })
 $mode = if ($commandTokens.Count -gt 0) {
     $commandTokens[0].ToLowerInvariant()
 }
@@ -65,18 +64,18 @@ if ($mode -eq 'help') {
     @(
         'NA2.28'
         ''
-        '  na228 [-f]                 Build and run Latest in turbo; -f ignores auxiliary failures'
+        '  na228 [-f]                 Build and run Latest in turbo; -f bypasses non-critical validation errors'
         '  na228 w [C path|plan]      Watch all registered C by default'
         '  na228 w injection_test     Watch only the reload-message smoke test'
         '  na228 <token> [token]      Run one or two games in turbo/window order'
-        '  l | p | mt                 Latest | Previous | Manual Test'
-        '  bl | bmt                   Build and run Latest | Manual Test'
+        '  l | p | m                  Latest | Previous | Manual'
+        '  bl | bm [-f]               Build and run Latest | Manual'
         '  <token>w [C path|plan]     Watch that game; selection follows its token'
         '  additional launch arguments  See workshop help'
         ''
-        '  na228 build l|mt            Build Latest or Manual Test without running it'
+        '  na228 build l|m [-f]        Build Latest or Manual without running it'
         '  na228 build -d              Validate development composition without creating an ISO'
-        '  na228 test                  Run permanent/unit tests'
+        '  na228 test                  Run unit tests'
         '  na228 e2e [-s]              Run all E2E suites; -s also qualifies against shifted'
         '  na228 e2e create <suite> [game]       Create or replace a suite from its matching shared recording; optionally capture a reference game'
         '  na228 e2e rename <suite> <new-suite>  Rename a suite and its capture history'
@@ -93,18 +92,24 @@ if ($mode -eq 'help') {
 }
 
 if ($mode -eq 'test') {
+    if ($forceBuild) {
+        throw '-f is valid only for ordinary Latest or Manual builds.'
+    }
     if ($arguments.Count -gt 0) {
         throw 'Usage: na228 test'
     }
     $testRun = Join-Path $PSScriptRoot 'tests\run.ps1'
     if (-not (Test-Path -LiteralPath $testRun -PathType Leaf)) {
-        throw "The permanent-test infrastructure is unavailable: $testRun"
+        throw "The unit-test infrastructure is unavailable: $testRun"
     }
     & $testRun
     return
 }
 
 if ($mode -eq 'e2e') {
+    if ($forceBuild) {
+        throw '-f is valid only for ordinary Latest or Manual builds.'
+    }
     $visualScripts = Join-Path $PSScriptRoot 'e2e\scripts'
     $visualRun = Join-Path $visualScripts 'run.ps1'
     $visualCreate = Join-Path $visualScripts 'create_suite.ps1'
@@ -173,6 +178,9 @@ if ($mode -eq 'e2e') {
 }
 
 if ($mode -eq 'release') {
+    if ($forceBuild) {
+        throw '-f is valid only for ordinary Latest or Manual builds.'
+    }
     if ($arguments.Count -gt 1) {
         throw 'na228 release accepts at most one version argument.'
     }
@@ -186,31 +194,39 @@ if ($mode -eq 'release') {
 
 if ($mode -eq 'build') {
     if ($arguments.Count -ne 1) {
-        throw 'na228 build requires exactly one target: l, mt, or -d.'
+        throw 'na228 build requires exactly one target: l, m, or -d.'
     }
     $target = $arguments[0].ToLowerInvariant()
     switch ($target) {
         { $_ -in @('l', 'latest') } {
             & (Join-Path $paths.scripts 'na228\run.ps1') `
-                -Action latest-build
+                -Action latest-build `
+                -Force:$forceBuild
             return
         }
-        { $_ -in @('mt', 'manual_test') } {
+        { $_ -in @('m', 'manual') } {
             & (Join-Path $paths.scripts 'na228\run.ps1') `
-                -Action manual-test-build
+                -Action manual-build `
+                -Force:$forceBuild
             return
         }
         '-d' {
+            if ($forceBuild) {
+                throw '-f cannot be used with build -d.'
+            }
             & (Join-Path $paths.scripts 'na228\build.ps1') -DryRun
             return
         }
         default {
-            throw "na228 build target must be l, mt, or -d: $target"
+            throw "na228 build target must be l, m, or -d: $target"
         }
     }
 }
 
 if ($mode -eq 'worker') {
+    if ($forceBuild) {
+        throw '-f is valid only for ordinary Latest or Manual builds.'
+    }
     $workerEphemeral = $false
     $workerOutputArgument = $null
     if ($arguments.Count -eq 1) {
@@ -238,11 +254,14 @@ if ($mode -eq 'worker') {
 if (-not $mode) {
     & (Join-Path $paths.scripts 'na228\run.ps1') `
         -Action latest-build-and-launch `
-        -Force:$forceLatestBuild
+        -Force:$forceBuild
     return
 }
 
 if ($mode -eq 'w') {
+    if ($forceBuild) {
+        throw '-f is valid only for ordinary Latest or Manual builds.'
+    }
     if ($arguments.Count -gt 1) {
         throw 'na228 w accepts at most one watch target or overlay-plan path.'
     }
@@ -259,7 +278,7 @@ function Test-Na228GameToken {
     if ($candidate.Length -gt 1 -and $candidate.EndsWith('w')) {
         $candidate = $candidate.Substring(0, $candidate.Length - 1)
     }
-    if ($candidate -in @('b', 'bl', 'bmt', 'l', 'p', 'mt')) {
+    if ($candidate -in @('b', 'bl', 'bm', 'l', 'p', 'm')) {
         return $true
     }
     return $null -ne $paths.games.Aliases.PSObject.Properties[$candidate]
@@ -305,13 +324,13 @@ for ($index = 0; $index -lt $runTokens.Count; $index++) {
             $games.Add('latest')
             $buildActions.Add('latest-build')
         }
-        'bmt' {
-            $games.Add('manual_test')
-            $buildActions.Add('manual-test-build')
+        'bm' {
+            $games.Add('manual')
+            $buildActions.Add('manual-build')
         }
         'l' { $games.Add('latest') }
         'p' { $games.Add('previous') }
-        'mt' { $games.Add('manual_test') }
+        'm' { $games.Add('manual') }
         default { $games.Add($token) }
     }
     if (
@@ -326,9 +345,14 @@ for ($index = 0; $index -lt $runTokens.Count; $index++) {
 if ($games.Count -gt 2) {
     throw 'na228 accepts at most two game tokens.'
 }
+if ($forceBuild -and $buildActions.Count -eq 0) {
+    throw '-f requires an ordinary Latest or Manual build token.'
+}
 
 foreach ($buildAction in @($buildActions | Select-Object -Unique)) {
-    & (Join-Path $paths.scripts 'na228\run.ps1') -Action $buildAction
+    & (Join-Path $paths.scripts 'na228\run.ps1') `
+        -Action $buildAction `
+        -Force:$forceBuild
 }
 
 $workshopArguments = @($games) + $forwardedLaunchArguments

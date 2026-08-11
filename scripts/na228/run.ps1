@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)]
     [ValidateSet(
         'worker-build',
-        'manual-test-build',
+        'manual-build',
         'latest-build',
         'latest-build-and-launch'
     )]
@@ -20,7 +20,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\run_log.ps1')
 $paths = Get-Na2Paths
 $latestIsoName = [IO.Path]::GetFileName($paths.files.latest_iso)
-$manualTestIsoName = [IO.Path]::GetFileName($paths.files.manual_test_iso)
+$manualIsoName = [IO.Path]::GetFileName($paths.files.manual_iso)
 
 function Write-Na2Stage {
     param([string]$Message)
@@ -38,13 +38,17 @@ if ($Action -eq 'worker-build') {
 elseif ($WorkerOutputIso -or $WorkerLogDirectory -or $WorkerEphemeral) {
     throw 'Worker output arguments are valid only for worker-build.'
 }
-if ($Force -and $Action -ne 'latest-build-and-launch') {
-    throw 'Force mode is valid only for the Latest build-and-launch action.'
+if ($Force -and $Action -notin @(
+    'manual-build',
+    'latest-build',
+    'latest-build-and-launch'
+)) {
+    throw 'Force mode is valid only for ordinary Latest or Manual builds.'
 }
 
 $runMode = switch ($Action) {
     'worker-build' { 'worker-build' }
-    'manual-test-build' { 'manual-test-build' }
+    'manual-build' { 'manual-build' }
     default { 'build' }
 }
 $runLog = $null
@@ -80,16 +84,18 @@ try {
                 throw 'Worker build did not return a valid result.'
             }
         }
-        'manual-test-build' {
-            Write-Na2Stage "Build $manualTestIsoName"
-            $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') -ManualTestOnly
-            if (-not $buildResult -or $buildResult.Status -ne 'manual-test') {
-                throw 'Manual Test build did not return a valid result.'
+        'manual-build' {
+            Write-Na2Stage "Build $manualIsoName"
+            $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') `
+                -ManualOnly `
+                -Force:$Force
+            if (-not $buildResult -or $buildResult.Status -ne 'manual') {
+                throw 'Manual build did not return a valid result.'
             }
         }
         'latest-build' {
             Write-Na2Stage "Build $latestIsoName"
-            $buildResult = & (Join-Path $PSScriptRoot 'build.ps1')
+            $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') -Force:$Force
             if (
                 -not $buildResult -or
                 $buildResult.Status -notin @('unchanged', 'updated')

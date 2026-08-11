@@ -46,7 +46,7 @@ Shared infrastructure is not duplicated here:
 - `scripts/na228/` owns the user-command implementation and output promotion.
 - `e2e/` owns emulator-driven test infrastructure and suite definitions; see
   [`../e2e/README.md`](../e2e/README.md).
-- `tests/` owns the current repository-wide permanent-test runner. Component
+- `tests/` owns the current repository-wide unit-test runner. Component
   documentation may expose narrower existing unit-test invocations where they
   are supported.
 - Exact agent runtime and worker-PCSX2 procedures are in

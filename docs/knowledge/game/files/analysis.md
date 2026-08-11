@@ -201,7 +201,7 @@ component separately.
    Prefer focused exports over whole-program dumps.
 8. **Patch through the canonical module.** Guard original bytes or hashes,
    preserve sizes unless separately authorized, record every binary edit, and
-   keep permanent file-backed changes out of PNACH.
+   keep file-backed changes out of PNACH.
 9. **Test according to lifetime.** A stable boot-ELF hypothesis may use a
    temporary disabled PNACH candidate. An on-demand overlay such as `BTL.BIN`
    or `ETC.BIN` must be tested through a file patch and rebuilt ISO unless a
